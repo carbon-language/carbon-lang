@@ -540,7 +540,7 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
 #endif
   --SuccSU->NumPredsLeft;
 
-  // Standard scheduler algorithms will recomute the depth of the successor
+  // Standard scheduler algorithms will recompute the depth of the successor
   // here as such:
   //   SuccSU->setDepthToAtLeast(SU->getDepth() + SuccEdge->getLatency());
   //
