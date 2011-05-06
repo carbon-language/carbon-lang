@@ -21,8 +21,8 @@ class LoadUnloadTestCase(TestBase):
         self.line_d_function = line_number('d.c',
                                            '// Find this line number within d_dunction().')
 
-    def test_image_search_paths(self):
-        """Test image list after moving libd.dylib, and verifies that it works with 'target image-search-paths add'."""
+    def test_modules_search_paths(self):
+        """Test target modules list after moving libd.dylib, and verifies that it works with 'target modules search-paths add'."""
 
         # Invoke the default build rule.
         self.buildDefault()
@@ -50,14 +50,18 @@ class LoadUnloadTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
-        self.expect("image list",
+        self.expect("target modules list",
             substrs = [old_dylib])
-        self.expect("image list -t 3",
+        self.expect("target modules list -t 3",
             patterns = ["%s-[^-]*-[^-]*" % self.getArchitecture()])
-        self.runCmd("target image-search-paths add %s %s" % (os.getcwd(), new_dir))
+        self.runCmd("target modules search-paths add %s %s" % (os.getcwd(), new_dir))
+
+        self.expect("target modules search-paths list",
+            substrs = [os.getcwd(), new_dir])
+
         # Add teardown hook to clear image-search-paths after the test.
-        self.addTearDownHook(lambda: self.runCmd("target image-search-paths clear"))
-        self.expect("image list", "LLDB successfully locates the relocated dynamic library",
+        self.addTearDownHook(lambda: self.runCmd("target modules search-paths clear"))
+        self.expect("target modules list", "LLDB successfully locates the relocated dynamic library",
             substrs = [new_dylib])
 
         
