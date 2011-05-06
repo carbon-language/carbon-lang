@@ -34,7 +34,7 @@ fi
 
 case $TRIPLE in
   *-apple-*)
-    if [ -z $RC_BUILDIT ]
+    if [ -z $RC_XBS ]
     then
       RC_CFLAGS="-arch i386 -arch x86_64"
     fi
@@ -79,7 +79,7 @@ case $TRIPLE in
     ;;
 esac
 
-if [ -z $RC_BUILDIT ]
+if [ -z $RC_XBS ]
 then
     rm -f libc++.1.$SOEXT*
 fi
@@ -95,7 +95,7 @@ $CC *.o $RC_CFLAGS $LDSHARED_FLAGS $EXTRA_FLAGS
 
 #libtool -static -o libc++.a *.o
 
-if [ -z $RC_BUILDIT ]
+if [ -z $RC_XBS ]
 then
     rm *.o
 fi
