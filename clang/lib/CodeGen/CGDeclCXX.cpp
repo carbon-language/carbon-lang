@@ -248,6 +248,8 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
                                                      &CXXGlobalInits[0],
                                                      CXXGlobalInits.size());
   AddGlobalCtor(Fn);
+  CXXGlobalInits.clear();
+  PrioritizedCXXGlobalInits.clear();
 }
 
 void CodeGenModule::EmitCXXGlobalDtorFunc() {
