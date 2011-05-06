@@ -180,6 +180,8 @@ VALID_BREAKPOINT = "Got a valid breakpoint"
 
 VALID_BREAKPOINT_LOCATION = "Got a valid breakpoint location"
 
+VALID_COMMAND_INTERPRETER = "Got a valid command interpreter"
+
 VALID_FILESPEC = "Got a valid filespec"
 
 VALID_MODULE = "Got a valid module"
