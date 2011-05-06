@@ -265,16 +265,40 @@ namespace Test11 {
   struct C : B         { virtual C* f(); };
   C* C::f() { return 0; }
 
+  //  C::f itself.
+  // CHECK: define {{.*}} @_ZN6Test111C1fEv(
+
   //  The this-adjustment and return-adjustment thunk required when
   //  C::f appears in a vtable where A is at a nonzero offset from C.
   // CHECK: define {{.*}} @_ZTcv0_n24_v0_n32_N6Test111C1fEv(
 
-  //  C::f itself.
-  // CHECK: define {{.*}} @_ZN6Test111C1fEv(
-
   //  The return-adjustment thunk required when C::f appears in a vtable
   //  where A is at a zero offset from C.
   // CHECK: define {{.*}} @_ZTch0_v0_n32_N6Test111C1fEv(
+}
+
+// Varargs thunk test.
+namespace Test12 {
+  struct A {
+    virtual A* f(int x, ...);
+  };
+  struct B {
+    virtual B* f(int x, ...);
+  };
+  struct C : A, B {
+    virtual void c();
+    virtual C* f(int x, ...);
+  };
+  C* C::f(int x, ...) { return this; }
+
+  // C::f
+  // CHECK: define {{.*}} @_ZN6Test121C1fEiz
+
+  // Varargs thunk; check that both the this and covariant adjustments
+  // are generated.
+  // CHECK: define {{.*}} @_ZTchn8_h8_N6Test121C1fEiz
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK: getelementptr inbounds i8* {{.*}}, i64 8
 }
 
 /**** The following has to go at the end of the file ****/

@@ -21,6 +21,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 #include <algorithm>
 #include <cstdio>
 
@@ -2636,6 +2637,131 @@ static bool similar(const ABIArgInfo &infoL, CanQualType typeL,
 }
 #endif
 
+static RValue PerformReturnAdjustment(CodeGenFunction &CGF,
+                                      QualType ResultType, RValue RV,
+                                      const ThunkInfo &Thunk) {
+  // Emit the return adjustment.
+  bool NullCheckValue = !ResultType->isReferenceType();
+  
+  llvm::BasicBlock *AdjustNull = 0;
+  llvm::BasicBlock *AdjustNotNull = 0;
+  llvm::BasicBlock *AdjustEnd = 0;
+  
+  llvm::Value *ReturnValue = RV.getScalarVal();
+
+  if (NullCheckValue) {
+    AdjustNull = CGF.createBasicBlock("adjust.null");
+    AdjustNotNull = CGF.createBasicBlock("adjust.notnull");
+    AdjustEnd = CGF.createBasicBlock("adjust.end");
+  
+    llvm::Value *IsNull = CGF.Builder.CreateIsNull(ReturnValue);
+    CGF.Builder.CreateCondBr(IsNull, AdjustNull, AdjustNotNull);
+    CGF.EmitBlock(AdjustNotNull);
+  }
+  
+  ReturnValue = PerformTypeAdjustment(CGF, ReturnValue, 
+                                      Thunk.Return.NonVirtual, 
+                                      Thunk.Return.VBaseOffsetOffset);
+  
+  if (NullCheckValue) {
+    CGF.Builder.CreateBr(AdjustEnd);
+    CGF.EmitBlock(AdjustNull);
+    CGF.Builder.CreateBr(AdjustEnd);
+    CGF.EmitBlock(AdjustEnd);
+  
+    llvm::PHINode *PHI = CGF.Builder.CreatePHI(ReturnValue->getType(), 2);
+    PHI->addIncoming(ReturnValue, AdjustNotNull);
+    PHI->addIncoming(llvm::Constant::getNullValue(ReturnValue->getType()), 
+                     AdjustNull);
+    ReturnValue = PHI;
+  }
+  
+  return RValue::get(ReturnValue);
+}
+
+// This function does roughly the same thing as GenerateThunk, but in a
+// very different way, so that va_start and va_end work correctly.
+// FIXME: This function assumes "this" is the first non-sret LLVM argument of
+//        a function, and that there is an alloca built in the entry block
+//        for all accesses to "this".
+// FIXME: This function assumes there is only one "ret" statement per function.
+// FIXME: Cloning isn't correct in the presence of indirect goto!
+// FIXME: This implementation of thunks bloats codesize by duplicating the
+//        function definition.  There are alternatives:
+//        1. Add some sort of stub support to LLVM for cases where we can
+//           do a this adjustment, then a sibcall.
+//        2. We could transform the definition to take a va_list instead of an
+//           actual variable argument list, then have the thunks (including a
+//           no-op thunk for the regular definition) call va_start/va_end.
+//           There's a bit of per-call overhead for this solution, but it's
+//           better for codesize if the definition is long.
+void CodeGenFunction::GenerateVarArgsThunk(
+                                      llvm::Function *Fn,
+                                      const CGFunctionInfo &FnInfo,
+                                      GlobalDecl GD, const ThunkInfo &Thunk) {
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+  QualType ResultType = FPT->getResultType();
+
+  // Get the original function
+  const llvm::Type *Ty =
+    CGM.getTypes().GetFunctionType(FnInfo, /*IsVariadic*/true);
+  llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
+  llvm::Function *BaseFn = cast<llvm::Function>(Callee);
+
+  // Clone to thunk.
+  llvm::Function *NewFn = llvm::CloneFunction(BaseFn);
+  CGM.getModule().getFunctionList().push_back(NewFn);
+  Fn->replaceAllUsesWith(NewFn);
+  NewFn->takeName(Fn);
+  Fn->eraseFromParent();
+  Fn = NewFn;
+
+  // "Initialize" CGF (minimally).
+  CurFn = Fn;
+
+  // Get the "this" value
+  llvm::Function::arg_iterator AI = Fn->arg_begin();
+  if (CGM.ReturnTypeUsesSRet(FnInfo))
+    ++AI;
+
+  // Find the first store of "this", which will be to the alloca associated
+  // with "this".
+  llvm::Value *ThisPtr = &*AI;
+  llvm::BasicBlock *EntryBB = Fn->begin();
+  llvm::Instruction *ThisStore = 0;
+  for (llvm::BasicBlock::iterator I = EntryBB->begin(), E = EntryBB->end();
+       I != E; I++) {
+    if (isa<llvm::StoreInst>(I) && I->getOperand(0) == ThisPtr) {
+      ThisStore = cast<llvm::StoreInst>(I);
+      break;
+    }
+  }
+  assert(ThisStore && "Store of this should be in entry block?");
+  // Adjust "this", if necessary.
+  Builder.SetInsertPoint(ThisStore);
+  llvm::Value *AdjustedThisPtr = 
+    PerformTypeAdjustment(*this, ThisPtr, 
+                          Thunk.This.NonVirtual, 
+                          Thunk.This.VCallOffsetOffset);
+  ThisStore->setOperand(0, AdjustedThisPtr);
+
+  if (!Thunk.Return.isEmpty()) {
+    // Fix up the returned value, if necessary.
+    for (llvm::Function::iterator I = Fn->begin(), E = Fn->end(); I != E; I++) {
+      llvm::Instruction *T = I->getTerminator();
+      if (isa<llvm::ReturnInst>(T)) {
+        RValue RV = RValue::get(T->getOperand(0));
+        T->eraseFromParent();
+        Builder.SetInsertPoint(&*I);
+        RV = PerformReturnAdjustment(*this, ResultType, RV, Thunk);
+        Builder.CreateRet(RV.getScalarVal());
+        break;
+      }
+    }
+  }
+}
+
 void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                                     const CGFunctionInfo &FnInfo,
                                     GlobalDecl GD, const ThunkInfo &Thunk) {
@@ -2715,45 +2841,8 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   // Now emit our call.
   RValue RV = EmitCall(FnInfo, Callee, Slot, CallArgs, MD);
   
-  if (!Thunk.Return.isEmpty()) {
-    // Emit the return adjustment.
-    bool NullCheckValue = !ResultType->isReferenceType();
-    
-    llvm::BasicBlock *AdjustNull = 0;
-    llvm::BasicBlock *AdjustNotNull = 0;
-    llvm::BasicBlock *AdjustEnd = 0;
-    
-    llvm::Value *ReturnValue = RV.getScalarVal();
-
-    if (NullCheckValue) {
-      AdjustNull = createBasicBlock("adjust.null");
-      AdjustNotNull = createBasicBlock("adjust.notnull");
-      AdjustEnd = createBasicBlock("adjust.end");
-    
-      llvm::Value *IsNull = Builder.CreateIsNull(ReturnValue);
-      Builder.CreateCondBr(IsNull, AdjustNull, AdjustNotNull);
-      EmitBlock(AdjustNotNull);
-    }
-    
-    ReturnValue = PerformTypeAdjustment(*this, ReturnValue, 
-                                        Thunk.Return.NonVirtual, 
-                                        Thunk.Return.VBaseOffsetOffset);
-    
-    if (NullCheckValue) {
-      Builder.CreateBr(AdjustEnd);
-      EmitBlock(AdjustNull);
-      Builder.CreateBr(AdjustEnd);
-      EmitBlock(AdjustEnd);
-    
-      llvm::PHINode *PHI = Builder.CreatePHI(ReturnValue->getType(), 2);
-      PHI->addIncoming(ReturnValue, AdjustNotNull);
-      PHI->addIncoming(llvm::Constant::getNullValue(ReturnValue->getType()), 
-                       AdjustNull);
-      ReturnValue = PHI;
-    }
-    
-    RV = RValue::get(ReturnValue);
-  }
+  if (!Thunk.Return.isEmpty())
+    RV = PerformReturnAdjustment(*this, ResultType, RV, Thunk);
 
   if (!ResultType->isVoidType() && Slot.isNull())
     CGM.getCXXABI().EmitReturnFromThunk(*this, RV, ResultType);
@@ -2823,8 +2912,18 @@ void CodeGenVTables::EmitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
     return;
   }
 
-  // Actually generate the thunk body.
-  CodeGenFunction(CGM).GenerateThunk(ThunkFn, FnInfo, GD, Thunk);
+  if (ThunkFn->isVarArg()) {
+    // Varargs thunks are special; we can't just generate a call because
+    // we can't copy the varargs.  Our implementation is rather
+    // expensive/sucky at the moment, so don't generate the thunk unless
+    // we have to.
+    // FIXME: Do something better here; GenerateVarArgsThunk is extremely ugly.
+    if (!UseAvailableExternallyLinkage)
+      CodeGenFunction(CGM).GenerateVarArgsThunk(ThunkFn, FnInfo, GD, Thunk);
+  } else {
+    // Normal thunk body generation.
+    CodeGenFunction(CGM).GenerateThunk(ThunkFn, FnInfo, GD, Thunk);
+  }
 
   if (UseAvailableExternallyLinkage)
     ThunkFn->setLinkage(llvm::GlobalValue::AvailableExternallyLinkage);
