@@ -90,6 +90,12 @@ public:
     OptionArgVectorSP
     GetAliasOptions (const char *alias_name);
 
+
+    bool
+    ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp, 
+                             const char *options_args,
+                             OptionArgVectorSP &option_arg_vector_sp);
+
     void
     RemoveAliasOptions (const char *alias_name);
 

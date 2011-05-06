@@ -351,33 +351,13 @@ public:
             OptionArgVectorSP option_arg_vector_sp = OptionArgVectorSP (new OptionArgVector);
             OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
             
-            // Check to see if there's anything left in the input command string.
-            if (raw_command_string.size() > 0)
+            CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj->GetCommandName(), false);
+
+            if (!m_interpreter.ProcessAliasOptionsArgs (cmd_obj_sp, raw_command_string.c_str(), option_arg_vector_sp))
             {
-            
-                // Check to see if the command being aliased can take any command options.
-                Options *options = cmd_obj->GetOptions();
-                if (options)
-                {
-                    // See if any options were specified as part of the alias; if so, handle them appropriately
-                    options->NotifyOptionParsingStarting ();
-                    Args tmp_args (raw_command_string.c_str());
-                    args.Unshift ("dummy_arg");
-                    args.ParseAliasOptions (*options, result, option_arg_vector, raw_command_string);
-                    args.Shift ();
-                    if (result.Succeeded())
-                        options->VerifyPartialOptions (result);
-                    if (!result.Succeeded() && result.GetStatus() != lldb::eReturnStatusStarted)
-                    {
-                        result.AppendError ("Unable to create requested alias.\n");
-                        return false;
-                    }
-                }
-                // Anything remaining must be plain raw input.  Push it in as a single raw input argument.
-                if (raw_command_string.size() > 0)
-                    option_arg_vector->push_back (OptionArgPair ("<argument>",
-                                                                 OptionArgValue (-1,
-                                                                                  raw_command_string)));
+                result.AppendError ("Unable to create requested alias.\n");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
             }
             
             // Create the alias
@@ -394,7 +374,6 @@ public:
                                                 alias_command.c_str());
             }
             
-            CommandObjectSP cmd_obj_sp = m_interpreter.GetCommandSPExact (cmd_obj->GetCommandName(), false);
             if (cmd_obj_sp)
             {
                 m_interpreter.AddAlias (alias_command.c_str(), cmd_obj_sp);
@@ -483,37 +462,19 @@ public:
 
                  if (args.GetArgumentCount () > 0)
                  {
-                     if ((!use_subcommand && (cmd_obj->GetOptions() != NULL))
-                         || (use_subcommand && (sub_cmd_obj->GetOptions() != NULL)))
-                     {
-                         Options *options;
-                         if (use_subcommand)
-                             options = sub_cmd_obj->GetOptions();
-                         else
-                             options = cmd_obj->GetOptions();
-                         options->NotifyOptionParsingStarting ();
-                         std::string empty_string;
-                         args.Unshift ("dummy_arg");
-                         args.ParseAliasOptions (*options, result, option_arg_vector, empty_string);
-                         args.Shift ();
-                         if (result.Succeeded())
-                             options->VerifyPartialOptions (result);
-                         if (!result.Succeeded() && result.GetStatus() != lldb::eReturnStatusStarted)
-                        {
-                            result.AppendError ("Unable to create requested command alias.\n");
-                            return false;
-                        }
-                     }
-
-                     // Anything remaining in args must be a plain argument.
-                     
-                     argc = args.GetArgumentCount();
-                     for (size_t i = 0; i < argc; ++i)
-                         if (strcmp (args.GetArgumentAtIndex (i), "") != 0)
-                             option_arg_vector->push_back 
-                                           (OptionArgPair ("<argument>",
-                                                           OptionArgValue (-1,
-                                                                           std::string (args.GetArgumentAtIndex (i)))));
+                    CommandObjectSP tmp_sp = m_interpreter.GetCommandSPExact (cmd_obj->GetCommandName(), false);
+                    if (use_subcommand)
+                        tmp_sp = m_interpreter.GetCommandSPExact (sub_cmd_obj->GetCommandName(), false);
+                        
+                    std::string args_string;
+                    args.GetCommandString (args_string);
+                    
+                    if (!m_interpreter.ProcessAliasOptionsArgs (tmp_sp, args_string.c_str(), option_arg_vector_sp))
+                    {
+                        result.AppendError ("Unable to create requested alias.\n");
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
                  }
 
                  // Create the alias.

@@ -39,6 +39,7 @@
 #include "../Commands/CommandObjectVersion.h"
 
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/Stream.h"
@@ -92,33 +93,111 @@ CommandInterpreter::Initialize ()
     LoadCommandDictionary ();
 
     // Set up some initial aliases.
-    HandleCommand ("command alias q        quit", false, result);
-    HandleCommand ("command alias run      process launch --", false, result);
-    HandleCommand ("command alias r        process launch --", false, result);
-    HandleCommand ("command alias c        process continue", false, result);
-    HandleCommand ("command alias continue process continue", false, result);
-    HandleCommand ("command alias expr     expression", false, result);
-    HandleCommand ("command alias exit     quit", false, result);
-    HandleCommand ("command alias b        _regexp-break", false, result);
-    HandleCommand ("command alias bt       thread backtrace", false, result);
-    HandleCommand ("command alias si       thread step-inst", false, result);
-    HandleCommand ("command alias step     thread step-in", false, result);
-    HandleCommand ("command alias s        thread step-in", false, result);
-    HandleCommand ("command alias next     thread step-over", false, result);
-    HandleCommand ("command alias n        thread step-over", false, result);
-    HandleCommand ("command alias f        thread step-out", false, result);
-    HandleCommand ("command alias finish   thread step-out", false, result);
-    HandleCommand ("command alias x        memory read", false, result);
-    HandleCommand ("command alias l        source list", false, result);
-    HandleCommand ("command alias list     source list", false, result);
-    HandleCommand ("command alias p        expression --", false, result);
-    HandleCommand ("command alias print    expression --", false, result);
-    HandleCommand ("command alias po       expression -o --", false, result);
-    HandleCommand ("command alias up       _regexp-up", false, result);
-    HandleCommand ("command alias down     _regexp-down", false, result);
-    HandleCommand ("command alias file     target create", false, result);
-    HandleCommand ("command alias image    target modules", false, result);
+    CommandObjectSP cmd_obj_sp = GetCommandSPExact ("quit", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("q", cmd_obj_sp);
+        AddAlias ("exit", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("process continue", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("c", cmd_obj_sp);
+        AddAlias ("continue", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("_regexp-break",false);
+    if (cmd_obj_sp)
+        AddAlias ("b", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("thread backtrace", false);
+    if (cmd_obj_sp)
+        AddAlias ("bt", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("thread step-inst", false);
+    if (cmd_obj_sp)
+        AddAlias ("si", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("thread step-in", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("s", cmd_obj_sp);
+        AddAlias ("step", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("thread step-over", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("n", cmd_obj_sp);
+        AddAlias ("next", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("thread step-out", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("f", cmd_obj_sp);
+        AddAlias ("finish", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("source list", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("l", cmd_obj_sp);
+        AddAlias ("list", cmd_obj_sp);
+    }
+
+    cmd_obj_sp = GetCommandSPExact ("memory read", false);
+    if (cmd_obj_sp)
+        AddAlias ("x", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("_regexp-up", false);
+    if (cmd_obj_sp)
+        AddAlias ("up", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("_regexp-down", false);
+    if (cmd_obj_sp)
+        AddAlias ("down", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("target create", false);
+    if (cmd_obj_sp)
+        AddAlias ("file", cmd_obj_sp);
+
+    cmd_obj_sp = GetCommandSPExact ("target modules", false);
+    if (cmd_obj_sp)
+        AddAlias ("image", cmd_obj_sp);
+
+
+    OptionArgVectorSP alias_arguments_vector_sp (new OptionArgVector);
     
+    cmd_obj_sp = GetCommandSPExact ("expression", false);
+    if (cmd_obj_sp)
+    {
+        AddAlias ("expr", cmd_obj_sp);
+        
+        ProcessAliasOptionsArgs (cmd_obj_sp, "--", alias_arguments_vector_sp);
+        AddAlias ("p", cmd_obj_sp);
+        AddAlias ("print", cmd_obj_sp);
+        AddOrReplaceAliasOptions ("p", alias_arguments_vector_sp);
+        AddOrReplaceAliasOptions ("print", alias_arguments_vector_sp);
+
+        alias_arguments_vector_sp.reset (new OptionArgVector);
+        ProcessAliasOptionsArgs (cmd_obj_sp, "-o --", alias_arguments_vector_sp);
+        AddAlias ("po", cmd_obj_sp);
+        AddOrReplaceAliasOptions ("po", alias_arguments_vector_sp);
+    }
+    
+    cmd_obj_sp = GetCommandSPExact ("process launch", false);
+    if (cmd_obj_sp)
+    {
+        alias_arguments_vector_sp.reset (new OptionArgVector);
+        ProcessAliasOptionsArgs (cmd_obj_sp, "--", alias_arguments_vector_sp);
+        AddAlias ("r", cmd_obj_sp);
+        AddAlias ("run", cmd_obj_sp);
+        AddOrReplaceAliasOptions ("r", alias_arguments_vector_sp);
+        AddOrReplaceAliasOptions ("run", alias_arguments_vector_sp);
+    }
+
 }
 
 const char *
@@ -450,6 +529,59 @@ bool
 CommandInterpreter::CommandExists (const char *cmd)
 {
     return m_command_dict.find(cmd) != m_command_dict.end();
+}
+
+bool
+CommandInterpreter::ProcessAliasOptionsArgs (lldb::CommandObjectSP &cmd_obj_sp, 
+                                            const char *options_args, 
+                                            OptionArgVectorSP &option_arg_vector_sp)
+{
+    bool success = true;
+    OptionArgVector *option_arg_vector = option_arg_vector_sp.get();
+    
+    if (!options_args || (strlen (options_args) < 1))
+        return true;
+
+    std::string options_string (options_args);
+    Args args (options_args);
+    CommandReturnObject result;
+    // Check to see if the command being aliased can take any command options.
+    Options *options = cmd_obj_sp->GetOptions ();
+    if (options)
+    {
+        // See if any options were specified as part of the alias;  if so, handle them appropriately.
+        options->NotifyOptionParsingStarting ();
+        args.Unshift ("dummy_arg");
+        args.ParseAliasOptions (*options, result, option_arg_vector, options_string);
+        args.Shift ();
+        if (result.Succeeded())
+            options->VerifyPartialOptions (result);
+        if (!result.Succeeded() && result.GetStatus() != lldb::eReturnStatusStarted)
+        {
+            result.AppendError ("Unable to create requested alias.\n");
+            return false;
+        }
+    }
+    
+    if (options_string.size() > 0)
+    {
+        if (cmd_obj_sp->WantsRawCommandString ())
+            option_arg_vector->push_back (OptionArgPair ("<argument>",
+                                                          OptionArgValue (-1,
+                                                                          options_string)));
+        else
+        {
+            int argc = args.GetArgumentCount();
+            for (size_t i = 0; i < argc; ++i)
+                if (strcmp (args.GetArgumentAtIndex (i), "") != 0)
+                    option_arg_vector->push_back 
+                                (OptionArgPair ("<argument>",
+                                                OptionArgValue (-1,
+                                                                std::string (args.GetArgumentAtIndex (i)))));
+        }
+    }
+        
+    return success;
 }
 
 bool
