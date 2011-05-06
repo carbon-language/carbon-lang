@@ -403,7 +403,7 @@ CodeGenFunction::EmitCXXConstructExpr(const CXXConstructExpr *E,
                                E->arg_begin(), E->arg_end());
   }
   else {
-    CXXCtorType Type;
+    CXXCtorType Type = Ctor_Complete;
     bool ForVirtualBase = false;
 
     switch (E->getConstructionKind()) {
