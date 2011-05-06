@@ -228,14 +228,21 @@ ExecutionEngine *JIT::createJIT(Module *M,
                                 StringRef MCPU,
                                 const SmallVectorImpl<std::string>& MAttrs) {
   // Try to register the program as a source of symbols to resolve against.
+  //
+  // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(0, NULL);
 
   // Pick a target either via -march or by guessing the native arch.
-  TargetMachine *TM = JIT::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
+  //
+  // FIXME: This should be lifted out of here, it isn't something which should
+  // be part of the JIT policy, rather the burden for this selection should be
+  // pushed to clients.
+  TargetMachine *TM =
+          ExecutionEngine::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
   TM->setCodeModel(CMM);
 
-  // If the target supports JIT code generation, create a the JIT.
+  // If the target supports JIT code generation, create the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo()) {
     return new JIT(M, *TM, *TJ, JMM, OptLevel, GVsWithCode);
   } else {
