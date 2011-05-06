@@ -228,19 +228,19 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
 
 
-  // Parse the input file.
-  if (ParseFile(InputFilename, IncludeDirs, SrcMgr, Records))
-    return 1;
-
-  std::string Error;
-  tool_output_file Out(OutputFilename.c_str(), Error);
-  if (!Error.empty()) {
-    errs() << argv[0] << ": error opening " << OutputFilename
-           << ":" << Error << "\n";
-    return 1;
-  }
-
   try {
+    // Parse the input file.
+    if (ParseFile(InputFilename, IncludeDirs, SrcMgr, Records))
+      return 1;
+
+    std::string Error;
+    tool_output_file Out(OutputFilename.c_str(), Error);
+    if (!Error.empty()) {
+      errs() << argv[0] << ": error opening " << OutputFilename
+        << ":" << Error << "\n";
+      return 1;
+    }
+
     switch (Action) {
     case PrintRecords:
       Out.os() << Records;           // No argument, dump all contents
