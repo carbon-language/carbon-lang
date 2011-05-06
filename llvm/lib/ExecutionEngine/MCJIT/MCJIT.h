@@ -81,10 +81,7 @@ public:
                                     JITMemoryManager *JMM,
                                     CodeGenOpt::Level OptLevel,
                                     bool GVsWithCode,
-                                    CodeModel::Model CMM,
-                                    StringRef MArch,
-                                    StringRef MCPU,
-                                    const SmallVectorImpl<std::string>& MAttrs);
+                                    TargetMachine *TM);
 
   // @}
 };

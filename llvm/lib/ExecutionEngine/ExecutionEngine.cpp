@@ -29,6 +29,7 @@
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
 #include <cmath>
 #include <cstring>
 using namespace llvm;
@@ -42,20 +43,14 @@ ExecutionEngine *(*ExecutionEngine::JITCtor)(
   JITMemoryManager *JMM,
   CodeGenOpt::Level OptLevel,
   bool GVsWithCode,
-  CodeModel::Model CMM,
-  StringRef MArch,
-  StringRef MCPU,
-  const SmallVectorImpl<std::string>& MAttrs) = 0;
+  TargetMachine *TM) = 0;
 ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
   Module *M,
   std::string *ErrorStr,
   JITMemoryManager *JMM,
   CodeGenOpt::Level OptLevel,
   bool GVsWithCode,
-  CodeModel::Model CMM,
-  StringRef MArch,
-  StringRef MCPU,
-  const SmallVectorImpl<std::string>& MAttrs) = 0;
+  TargetMachine *TM) = 0;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
                                                 std::string *ErrorStr) = 0;
 
@@ -441,17 +436,20 @@ ExecutionEngine *EngineBuilder::create() {
   // Unless the interpreter was explicitly selected or the JIT is not linked,
   // try making a JIT.
   if (WhichEngine & EngineKind::JIT) {
+    TargetMachine *TM =
+        ExecutionEngine::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
+    if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
+    TM->setCodeModel(CMModel);
+
     if (UseMCJIT && ExecutionEngine::MCJITCtor) {
       ExecutionEngine *EE =
         ExecutionEngine::MCJITCtor(M, ErrorStr, JMM, OptLevel,
-                                   AllocateGVsWithCode, CMModel,
-                                   MArch, MCPU, MAttrs);
+                                   AllocateGVsWithCode, TM);
       if (EE) return EE;
     } else if (ExecutionEngine::JITCtor) {
       ExecutionEngine *EE =
         ExecutionEngine::JITCtor(M, ErrorStr, JMM, OptLevel,
-                                 AllocateGVsWithCode, CMModel,
-                                 MArch, MCPU, MAttrs);
+                                 AllocateGVsWithCode, TM);
       if (EE) return EE;
     }
   }
