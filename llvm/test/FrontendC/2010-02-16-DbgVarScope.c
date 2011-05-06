@@ -1,5 +1,5 @@
 // RUN: %llvmgcc -S -O0 -g %s -o - | \
-// RUN:    llc --disable-fp-elim -o %t.s -O0 -relocation-model=pic
+// RUN:    llc -disable-cfi --disable-fp-elim -o %t.s -O0 -relocation-model=pic
 // RUN: %compile_c %t.s -o %t.o
 // RUN: %link %t.o -o %t.exe
 // RUN: echo {break 24\nrun\np loc\n} > %t.in 
