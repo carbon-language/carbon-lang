@@ -225,10 +225,8 @@ static bool FunctionCallsSetJmp(const Function *F) {
     "vfork",
     "getcontext"
   };
-  static const size_t NumReturnsTwiceFns = sizeof(ReturnsTwiceFns) /
-                                           sizeof(const char *);
 
-  for (unsigned I = 0; I < NumReturnsTwiceFns; ++I)
+  for (unsigned I = 0; I < array_lengthof(ReturnsTwiceFns); ++I)
     if (const Function *Callee = M->getFunction(ReturnsTwiceFns[I])) {
       if (!Callee->use_empty())
         for (Value::const_use_iterator
