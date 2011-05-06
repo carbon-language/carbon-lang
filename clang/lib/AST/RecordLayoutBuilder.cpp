@@ -1269,15 +1269,19 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
       // ignored:
       else if (Context.ZeroBitfieldFollowsNonBitfield(FD, LastFD))
         continue;
+      // FIXME. streamline these conditions into a simple one.
       else if (Context.BitfieldFollowsBitfield(FD, LastFD) ||
-               Context.BitfieldFollowsNoneBitfield(FD, LastFD)) {
-        // Adjacent bit fields are packed into the same 1-, 2-, or
+               Context.BitfieldFollowsNoneBitfield(FD, LastFD) ||
+               Context.NoneBitfieldFollowsBitfield(FD, LastFD)) {
+        // 1) Adjacent bit fields are packed into the same 1-, 2-, or
         // 4-byte allocation unit if the integral types are the same
         // size and if the next bit field fits into the current
         // allocation unit without crossing the boundary imposed by the
         // common alignment requirements of the bit fields.
-        // Also, establish a new alignment for a bitfield following
+        // 2) Establish a new alignment for a bitfield following
         // a non-bitfield if size of their types differ.
+        // 3) Establish a new alignment for a non-bitfield following
+        // a bitfield if size of their types differ.
         std::pair<uint64_t, unsigned> FieldInfo = 
           Context.getTypeInfo(FD->getType());
         uint64_t TypeSize = FieldInfo.first;
