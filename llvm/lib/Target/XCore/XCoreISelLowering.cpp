@@ -156,6 +156,8 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ADD);
+
+  setMinFunctionAlignment(1);
 }
 
 SDValue XCoreTargetLowering::
@@ -199,12 +201,6 @@ void XCoreTargetLowering::ReplaceNodeResults(SDNode *N,
     Results.push_back(ExpandADDSUB(N, DAG));
     return;
   }
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned XCoreTargetLowering::
-getFunctionAlignment(const Function *) const {
-  return 1;
 }
 
 //===----------------------------------------------------------------------===//

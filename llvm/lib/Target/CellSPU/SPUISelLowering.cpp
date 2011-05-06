@@ -445,6 +445,8 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setTargetDAGCombine(ISD::SIGN_EXTEND);
   setTargetDAGCombine(ISD::ANY_EXTEND);
 
+  setMinFunctionAlignment(3);
+
   computeRegisterProperties();
 
   // Set pre-RA register scheduler default to BURR, which produces slightly
@@ -487,11 +489,6 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
   std::map<unsigned, const char *>::iterator i = node_names.find(Opcode);
 
   return ((i != node_names.end()) ? i->second : 0);
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned SPUTargetLowering::getFunctionAlignment(const Function *) const {
-  return 3;
 }
 
 //===----------------------------------------------------------------------===//

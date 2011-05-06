@@ -761,6 +761,18 @@ public:
     return MinStackArgumentAlignment;
   }
 
+  /// getMinFunctionAlignment - return the minimum function alignment.
+  ///
+  unsigned getMinFunctionAlignment() const {
+    return MinFunctionAlignment;
+  }
+
+  /// getPrefFunctionAlignment - return the preferred function alignment.
+  ///
+  unsigned getPrefFunctionAlignment() const {
+    return PrefFunctionAlignment;
+  }
+
   /// getPrefLoopAlignment - return the preferred loop alignment.
   ///
   unsigned getPrefLoopAlignment() const {
@@ -823,9 +835,6 @@ public:
   /// with the given GlobalAddress is legal.  It is frequently not legal in
   /// PIC relocation models.
   virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
-
-  /// getFunctionAlignment - Return the Log2 alignment of this function.
-  virtual unsigned getFunctionAlignment(const Function *) const = 0;
 
   /// getStackCookieLocation - Return true if the target stores stack
   /// protector cookies at a fixed offset in some non-standard address
@@ -1165,6 +1174,18 @@ protected:
   /// alignment (in bytes); default is 0
   void setJumpBufAlignment(unsigned Align) {
     JumpBufAlignment = Align;
+  }
+
+  /// setMinFunctionAlignment - Set the target's minimum function alignment.
+  void setMinFunctionAlignment(unsigned Align) {
+    MinFunctionAlignment = Align;
+  }
+
+  /// setPrefFunctionAlignment - Set the target's preferred function alignment.
+  /// This should be set if there is a small performance benefit to
+  /// higher-than-minimum alignment
+  void setPrefFunctionAlignment(unsigned Align) {
+    PrefFunctionAlignment = Align;
   }
 
   /// setPrefLoopAlignment - Set the target's preferred loop alignment. Default
@@ -1700,6 +1721,17 @@ private:
   /// on the stack needs to have.
   ///
   unsigned MinStackArgumentAlignment;
+
+  /// MinFunctionAlignment - The minimum function alignment (used when
+  /// optimizing for size, and to prevent explicitly provided alignment
+  /// from leading to incorrect code).
+  ///
+  unsigned MinFunctionAlignment;
+
+  /// PrefFunctionAlignment - The perferred function alignment (used when
+  /// alignment unspecified and optimizing for speed).
+  ///
+  unsigned PrefFunctionAlignment;
 
   /// PrefLoopAlignment - The perferred loop alignment.
   ///

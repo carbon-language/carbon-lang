@@ -327,9 +327,6 @@ namespace llvm {
     /// specified value type.
     virtual TargetRegisterClass *getRegClassFor(EVT VT) const;
 
-    /// getFunctionAlignment - Return the Log2 alignment of this function.
-    virtual unsigned getFunctionAlignment(const Function *F) const;
-
     /// getMaximalGlobalOffset - Returns the maximal possible offset which can
     /// be used for loads / stores from the global.
     virtual unsigned getMaximalGlobalOffset() const;

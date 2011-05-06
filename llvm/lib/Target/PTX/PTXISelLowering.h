@@ -37,9 +37,6 @@ class PTXTargetLowering : public TargetLowering {
 
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
-    virtual unsigned getFunctionAlignment(const Function *F) const {
-      return 2; }
-
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
     virtual SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;

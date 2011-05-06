@@ -121,6 +121,8 @@ BlackfinTargetLowering::BlackfinTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::VAEND, MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+
+  setMinFunctionAlignment(2);
 }
 
 const char *BlackfinTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -495,11 +497,6 @@ BlackfinTargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   }
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned BlackfinTargetLowering::getFunctionAlignment(const Function *F) const {
-  return 2;
 }
 
 //===----------------------------------------------------------------------===//

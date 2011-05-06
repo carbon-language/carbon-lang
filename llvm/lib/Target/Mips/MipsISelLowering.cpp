@@ -171,17 +171,14 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setTargetDAGCombine(ISD::UDIVREM);
   setTargetDAGCombine(ISD::SETCC);
 
+  setMinFunctionAlignment(2);
+
   setStackPointerRegisterToSaveRestore(Mips::SP);
   computeRegisterProperties();
 }
 
 MVT::SimpleValueType MipsTargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i32;
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned MipsTargetLowering::getFunctionAlignment(const Function *) const {
-  return 2;
 }
 
 // SelectMadd -

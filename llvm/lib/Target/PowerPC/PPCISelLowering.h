@@ -364,9 +364,6 @@ namespace llvm {
                         bool NonScalarIntSafe, bool MemcpyStrSrc,
                         MachineFunction &MF) const;
 
-    /// getFunctionAlignment - Return the Log2 alignment of this function.
-    virtual unsigned getFunctionAlignment(const Function *F) const;
-
   private:
     SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;

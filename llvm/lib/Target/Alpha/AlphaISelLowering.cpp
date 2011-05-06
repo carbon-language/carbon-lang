@@ -155,6 +155,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   setJumpBufSize(272);
   setJumpBufAlignment(16);
 
+  setMinFunctionAlignment(4);
+
   computeRegisterProperties();
 }
 
@@ -178,11 +180,6 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AlphaISD::COND_BRANCH_I: return "Alpha::COND_BRANCH_I";
   case AlphaISD::COND_BRANCH_F: return "Alpha::COND_BRANCH_F";
   }
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned AlphaTargetLowering::getFunctionAlignment(const Function *F) const {
-  return 4;
 }
 
 static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {

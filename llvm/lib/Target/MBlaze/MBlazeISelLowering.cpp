@@ -180,17 +180,14 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
+  setMinFunctionAlignment(2);
+
   setStackPointerRegisterToSaveRestore(MBlaze::R1);
   computeRegisterProperties();
 }
 
 MVT::SimpleValueType MBlazeTargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i32;
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned MBlazeTargetLowering::getFunctionAlignment(const Function *) const {
-  return 2;
 }
 
 SDValue MBlazeTargetLowering::LowerOperation(SDValue Op,

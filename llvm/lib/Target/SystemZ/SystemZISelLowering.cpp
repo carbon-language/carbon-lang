@@ -153,6 +153,8 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::FP_TO_UINT,       MVT::i64, Expand);
 
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+
+  setMinFunctionAlignment(1);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op,

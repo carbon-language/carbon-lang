@@ -799,6 +799,8 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   if (TM.getSubtarget<SparcSubtarget>().isV9())
     setOperationAction(ISD::CTPOP, MVT::i32, Legal);
 
+  setMinFunctionAlignment(2);
+
   computeRegisterProperties();
 }
 
@@ -1287,9 +1289,4 @@ bool
 SparcTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   // The Sparc target isn't yet aware of offsets.
   return false;
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned SparcTargetLowering::getFunctionAlignment(const Function *) const {
-  return 2;
 }

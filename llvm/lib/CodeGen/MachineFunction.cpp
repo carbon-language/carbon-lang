@@ -65,7 +65,11 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
     FrameInfo->setMaxAlignment(Attribute::getStackAlignmentFromAttrs(
         Fn->getAttributes().getFnAttributes()));
   ConstantPool = new (Allocator) MachineConstantPool(TM.getTargetData());
-  Alignment = TM.getTargetLowering()->getFunctionAlignment(F);
+  Alignment = TM.getTargetLowering()->getMinFunctionAlignment();
+  // FIXME: Shouldn't use pref alignment if explicit alignment is set on Fn.
+  if (!Fn->hasFnAttr(Attribute::OptimizeForSize))
+    Alignment = std::max(Alignment,
+                         TM.getTargetLowering()->getPrefFunctionAlignment());
   FunctionNumber = FunctionNum;
   JumpTableInfo = 0;
 }

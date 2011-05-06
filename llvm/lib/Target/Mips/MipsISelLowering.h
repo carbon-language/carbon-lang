@@ -89,9 +89,6 @@ namespace llvm {
     /// getSetCCResultType - get the ISD::SETCC result ValueType
     MVT::SimpleValueType getSetCCResultType(EVT VT) const;
 
-    /// getFunctionAlignment - Return the Log2 alignment of this function.
-    virtual unsigned getFunctionAlignment(const Function *F) const;
-
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   private:
     // Subtarget Info

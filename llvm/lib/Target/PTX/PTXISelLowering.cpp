@@ -65,7 +65,9 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   
   // need to lower SETCC of Preds into bitwise logic
   setOperationAction(ISD::SETCC, MVT::i1, Custom);
-  
+
+  setMinFunctionAlignment(2);
+
   // Compute derived properties from the register classes
   computeRegisterProperties();
 }

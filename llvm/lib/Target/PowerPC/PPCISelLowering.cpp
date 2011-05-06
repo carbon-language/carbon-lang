@@ -394,6 +394,10 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     setLibcallName(RTLIB::EXP2_PPCF128, "exp2l$LDBL128");
   }
 
+  setMinFunctionAlignment(2);
+  if (PPCSubTarget.isDarwin())
+    setPrefFunctionAlignment(4);
+
   computeRegisterProperties();
 }
 
@@ -458,14 +462,6 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
 
 MVT::SimpleValueType PPCTargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i32;
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned PPCTargetLowering::getFunctionAlignment(const Function *F) const {
-  if (getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin())
-    return F->hasFnAttr(Attribute::OptimizeForSize) ? 2 : 4;
-  else
-    return 2;
 }
 
 //===----------------------------------------------------------------------===//

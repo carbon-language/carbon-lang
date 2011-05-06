@@ -724,6 +724,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setMinStackArgumentAlignment(4);
 
   benefitFromCodePlacementOpt = true;
+
+  setMinFunctionAlignment(Subtarget->isThumb() ? 1 : 2);
 }
 
 // FIXME: It might make sense to define the representative register class as the
@@ -923,11 +925,6 @@ TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
 FastISel *
 ARMTargetLowering::createFastISel(FunctionLoweringInfo &funcInfo) const {
   return ARM::createFastISel(funcInfo);
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned ARMTargetLowering::getFunctionAlignment(const Function *F) const {
-  return getTargetMachine().getSubtarget<ARMSubtarget>().isThumb() ? 1 : 2;
 }
 
 /// getMaximalGlobalOffset - Returns the maximal possible offset which can

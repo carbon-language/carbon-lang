@@ -1096,6 +1096,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   maxStoresPerMemmoveOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
   setPrefLoopAlignment(16);
   benefitFromCodePlacementOpt = true;
+
+  setPrefFunctionAlignment(4);
 }
 
 
@@ -1245,11 +1247,6 @@ getPICJumpTableRelocBaseExpr(const MachineFunction *MF, unsigned JTI,
 
   // Otherwise, the reference is relative to the PIC base.
   return MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), Ctx);
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned X86TargetLowering::getFunctionAlignment(const Function *F) const {
-  return F->hasFnAttr(Attribute::OptimizeForSize) ? 0 : 4;
 }
 
 // FIXME: Why this routine is here? Move to RegInfo!

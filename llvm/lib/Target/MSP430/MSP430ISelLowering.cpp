@@ -170,6 +170,9 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
     setLibcallName(RTLIB::MUL_I8,  "__mulqi3hw_noint");
     setLibcallName(RTLIB::MUL_I16, "__mulhi3hw_noint");
   }
+
+  setMinFunctionAlignment(1);
+  setPrefFunctionAlignment(2);
 }
 
 SDValue MSP430TargetLowering::LowerOperation(SDValue Op,
@@ -191,11 +194,6 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op,
     llvm_unreachable("unimplemented operand");
     return SDValue();
   }
-}
-
-/// getFunctionAlignment - Return the Log2 alignment of this function.
-unsigned MSP430TargetLowering::getFunctionAlignment(const Function *F) const {
-  return F->hasFnAttr(Attribute::OptimizeForSize) ? 1 : 2;
 }
 
 //===----------------------------------------------------------------------===//

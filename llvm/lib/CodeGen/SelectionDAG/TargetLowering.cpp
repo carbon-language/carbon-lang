@@ -596,6 +596,8 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   SchedPreferenceInfo = Sched::Latency;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
+  MinFunctionAlignment = 0;
+  PrefFunctionAlignment = 0;
   PrefLoopAlignment = 0;
   MinStackArgumentAlignment = 1;
   ShouldFoldAtomicFences = false;

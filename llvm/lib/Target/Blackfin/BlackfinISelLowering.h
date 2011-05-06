@@ -53,7 +53,6 @@ namespace llvm {
                                       EVT VT) const;
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
     const char *getTargetNodeName(unsigned Opcode) const;
-    unsigned getFunctionAlignment(const Function *F) const;
 
   private:
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
