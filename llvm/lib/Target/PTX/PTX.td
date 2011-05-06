@@ -38,6 +38,10 @@ def FeaturePTX22 : SubtargetFeature<"ptx22", "PTXVersion", "PTX_VERSION_2_2",
                                     "Use PTX Language Version 2.2",
                                     [FeaturePTX21]>;
 
+def FeaturePTX23 : SubtargetFeature<"ptx23", "PTXVersion", "PTX_VERSION_2_3",
+                                    "Use PTX Language Version 2.3",
+                                    [FeaturePTX22]>;
+
 //===- PTX Shader Model ---------------------------------------------------===//
 
 def FeatureSM10 : SubtargetFeature<"sm10", "PTXShaderModel", "PTX_SM_1_0",

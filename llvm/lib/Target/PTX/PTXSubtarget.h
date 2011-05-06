@@ -37,7 +37,8 @@ namespace llvm {
       enum PTXVersionEnum {
         PTX_VERSION_2_0,  /*< PTX Version 2.0 */
         PTX_VERSION_2_1,  /*< PTX Version 2.1 */
-        PTX_VERSION_2_2   /*< PTX Version 2.2 */
+        PTX_VERSION_2_2,  /*< PTX Version 2.2 */
+        PTX_VERSION_2_3   /*< PTX Version 2.3 */
       };
 
       /// Shader Model supported on the target GPU.
