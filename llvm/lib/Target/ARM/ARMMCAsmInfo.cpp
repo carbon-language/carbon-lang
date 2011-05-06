@@ -70,8 +70,6 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo() {
   WeakRefDirective = "\t.weak\t";
   HasLCOMMDirective = true;
 
-  DwarfRequiresFrameSection = false;
-
   SupportsDebugInformation = true;
 
   // Exceptions handling

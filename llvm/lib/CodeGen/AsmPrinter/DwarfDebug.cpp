@@ -256,7 +256,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     CurrentFnDbgScope(0), PrevLabel(NULL) {
   NextStringPoolNumber = 0;
 
-  DwarfFrameSectionSym = DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
+  DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
@@ -1261,14 +1261,6 @@ void DwarfDebug::endModule() {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("section_end", i));
   }
 
-  // Emit common frame information.
-  emitCommonDebugFrame();
-
-  // Emit function debug frame information
-  for (std::vector<FunctionDebugFrameInfo>::iterator I = DebugFrames.begin(),
-         E = DebugFrames.end(); I != E; ++I)
-    emitFunctionDebugFrame(*I);
-
   // Compute DIE offsets and sizes.
   computeSizeAndOffsets();
 
@@ -2261,11 +2253,6 @@ void DwarfDebug::EmitSectionLabels() {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
 
   // Dwarf sections base addresses.
-  if (Asm->MAI->doesDwarfRequireFrameSection()) {
-    DwarfFrameSectionSym =
-      EmitSectionSym(Asm, TLOF.getDwarfFrameSection(), "section_debug_frame");
-   }
-
   DwarfInfoSectionSym =
     EmitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
   DwarfAbbrevSectionSym =
@@ -2471,91 +2458,6 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   Asm->EmitInt8(0);
   Asm->EmitInt8(1);
   Asm->EmitInt8(1);
-}
-
-/// emitCommonDebugFrame - Emit common frame info into a debug frame section.
-///
-void DwarfDebug::emitCommonDebugFrame() {
-  if (!Asm->MAI->doesDwarfRequireFrameSection())
-    return;
-
-  int stackGrowth = Asm->getTargetData().getPointerSize();
-  if (Asm->TM.getFrameLowering()->getStackGrowthDirection() ==
-      TargetFrameLowering::StackGrowsDown)
-    stackGrowth *= -1;
-
-  // Start the dwarf frame section.
-  Asm->OutStreamer.SwitchSection(
-                              Asm->getObjFileLowering().getDwarfFrameSection());
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_frame_common"));
-  Asm->OutStreamer.AddComment("Length of Common Information Entry");
-  Asm->EmitLabelDifference(Asm->GetTempSymbol("debug_frame_common_end"),
-                           Asm->GetTempSymbol("debug_frame_common_begin"), 4);
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_frame_common_begin"));
-  Asm->OutStreamer.AddComment("CIE Identifier Tag");
-  Asm->EmitInt32((int)dwarf::DW_CIE_ID);
-  Asm->OutStreamer.AddComment("CIE Version");
-  Asm->EmitInt8(dwarf::DW_CIE_VERSION);
-  Asm->OutStreamer.AddComment("CIE Augmentation");
-  Asm->OutStreamer.EmitIntValue(0, 1, /*addrspace*/0); // nul terminator.
-  Asm->EmitULEB128(1, "CIE Code Alignment Factor");
-  Asm->EmitSLEB128(stackGrowth, "CIE Data Alignment Factor");
-  Asm->OutStreamer.AddComment("CIE RA Column");
-  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
-  const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
-  Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), false));
-
-  std::vector<MachineMove> Moves;
-  TFI->getInitialFrameState(Moves);
-
-  Asm->EmitFrameMoves(Moves, 0, false);
-
-  Asm->EmitAlignment(2);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_frame_common_end"));
-}
-
-/// emitFunctionDebugFrame - Emit per function frame info into a debug frame
-/// section.
-void DwarfDebug::
-emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo) {
-  if (!Asm->MAI->doesDwarfRequireFrameSection())
-    return;
-
-  // Start the dwarf frame section.
-  Asm->OutStreamer.SwitchSection(
-                              Asm->getObjFileLowering().getDwarfFrameSection());
-
-  Asm->OutStreamer.AddComment("Length of Frame Information Entry");
-  MCSymbol *DebugFrameBegin =
-    Asm->GetTempSymbol("debug_frame_begin", DebugFrameInfo.Number);
-  MCSymbol *DebugFrameEnd =
-    Asm->GetTempSymbol("debug_frame_end", DebugFrameInfo.Number);
-  Asm->EmitLabelDifference(DebugFrameEnd, DebugFrameBegin, 4);
-
-  Asm->OutStreamer.EmitLabel(DebugFrameBegin);
-
-  Asm->OutStreamer.AddComment("FDE CIE offset");
-  Asm->EmitSectionOffset(Asm->GetTempSymbol("debug_frame_common"),
-                         DwarfFrameSectionSym);
-
-  Asm->OutStreamer.AddComment("FDE initial location");
-  MCSymbol *FuncBeginSym =
-    Asm->GetTempSymbol("func_begin", DebugFrameInfo.Number);
-  Asm->OutStreamer.EmitSymbolValue(FuncBeginSym,
-                                   Asm->getTargetData().getPointerSize(),
-                                   0/*AddrSpace*/);
-
-
-  Asm->OutStreamer.AddComment("FDE address range");
-  Asm->EmitLabelDifference(Asm->GetTempSymbol("func_end",DebugFrameInfo.Number),
-                           FuncBeginSym, Asm->getTargetData().getPointerSize());
-
-  Asm->EmitFrameMoves(DebugFrameInfo.Moves, FuncBeginSym, false);
-
-  Asm->EmitAlignment(2);
-  Asm->OutStreamer.EmitLabel(DebugFrameEnd);
 }
 
 /// emitDebugPubNames - Emit visible names into a debug pubnames section.

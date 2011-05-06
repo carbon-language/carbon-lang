@@ -269,7 +269,7 @@ class DwarfDebug {
   // Section Symbols: these are assembler temporary labels that are emitted at
   // the beginning of each supported dwarf section.  These are used to form
   // section offsets and are created by EmitSectionLabels.
-  MCSymbol *DwarfFrameSectionSym, *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
+  MCSymbol *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
   MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
   MCSymbol *DwarfDebugLocSectionSym;
   MCSymbol *FunctionBeginSym, *FunctionEndSym;
@@ -337,14 +337,6 @@ private:
   /// the line matrix.
   ///
   void emitEndOfLineMatrix(unsigned SectionEnd);
-
-  /// emitCommonDebugFrame - Emit common frame info into a debug frame section.
-  ///
-  void emitCommonDebugFrame();
-
-  /// emitFunctionDebugFrame - Emit per function frame info into a debug frame
-  /// section.
-  void emitFunctionDebugFrame(const FunctionDebugFrameInfo &DebugFrameInfo);
 
   /// emitDebugPubNames - Emit visible names into a debug pubnames section.
   ///

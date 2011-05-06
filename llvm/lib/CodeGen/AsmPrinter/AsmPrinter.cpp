@@ -596,7 +596,7 @@ bool AsmPrinter::needsCFIMoves() {
   if (UnwindTablesMandatory)
     return true;
 
-  if (MMI->hasDebugInfo() && !MAI->doesDwarfRequireFrameSection())
+  if (MMI->hasDebugInfo())
     return true;
 
   if (MF->getFunction()->doesNotThrow())
@@ -608,8 +608,7 @@ bool AsmPrinter::needsCFIMoves() {
 void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   MCSymbol *Label = MI.getOperand(0).getMCSymbol();
 
-  if (MAI->doesDwarfRequireFrameSection() ||
-      MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
+  if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
     OutStreamer.EmitLabel(Label);
 
   if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)

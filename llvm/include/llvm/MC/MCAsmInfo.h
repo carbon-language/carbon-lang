@@ -269,9 +269,6 @@ namespace llvm {
     /// SupportsExceptionHandling - True if target supports exception handling.
     ExceptionHandling::ExceptionsType ExceptionsType; // Defaults to None
 
-    /// RequiresFrameSection - true if the Dwarf2 output needs a frame section
-    bool DwarfRequiresFrameSection;          // Defaults to true.
-
     /// DwarfUsesInlineInfoSection - True if DwarfDebugInlineSection is used to
     /// encode inline subroutine information.
     bool DwarfUsesInlineInfoSection;         // Defaults to false.
@@ -464,10 +461,6 @@ namespace llvm {
       return
         (ExceptionsType == ExceptionHandling::DwarfCFI ||
          ExceptionsType == ExceptionHandling::ARM);
-    }
-
-    bool doesDwarfRequireFrameSection() const {
-      return DwarfRequiresFrameSection;
     }
     bool doesDwarfUsesInlineInfoSection() const {
       return DwarfUsesInlineInfoSection;
