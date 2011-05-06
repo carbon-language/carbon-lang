@@ -5555,7 +5555,9 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
   std::set<unsigned> OutputRegs, InputRegs;
 
-  TargetLowering::AsmOperandInfoVector TargetConstraints = TLI.ParseConstraints(CS);
+  TargetLowering::AsmOperandInfoVector
+    TargetConstraints = TLI.ParseConstraints(CS);
+
   bool hasMemory = false;
 
   unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
@@ -5614,7 +5616,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       hasMemory = true;
     else {
       for (unsigned j = 0, ee = OpInfo.Codes.size(); j != ee; ++j) {
-        TargetLowering::ConstraintType CType = TLI.getConstraintType(OpInfo.Codes[j]);
+        TargetLowering::ConstraintType
+          CType = TLI.getConstraintType(OpInfo.Codes[j]);
         if (CType == TargetLowering::C_Memory) {
           hasMemory = true;
           break;
@@ -5664,7 +5667,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     // need to to provide an address for the memory input.
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         !OpInfo.isIndirect) {
-      assert((OpInfo.isMultipleAlternative || (OpInfo.Type == InlineAsm::isInput)) &&
+      assert((OpInfo.isMultipleAlternative ||
+              (OpInfo.Type == InlineAsm::isInput)) &&
              "Can only indirectify direct input operands!");
 
       // Memory operands really want the address of the value.  If we don't have
