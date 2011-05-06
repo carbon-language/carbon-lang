@@ -228,7 +228,7 @@ public:
   /// Only first one needs DebugLoc to identify variable's lexical scope
   /// in source file.
   DebugLoc findDebugLoc();
-  void print(raw_ostream&, const TargetRegisterInfo*);
+  void print(raw_ostream&, const TargetMachine*);
 };
 } // namespace
 
@@ -300,7 +300,7 @@ public:
 };
 } // namespace
 
-void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
+void UserValue::print(raw_ostream &OS, const TargetMachine *TM) {
   if (const MDString *MDS = dyn_cast<MDString>(variable->getOperand(2)))
     OS << "!\"" << MDS->getString() << "\"\t";
   if (offset)
@@ -312,15 +312,17 @@ void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
     else
       OS << I.value();
   }
-  for (unsigned i = 0, e = locations.size(); i != e; ++i)
-    OS << " Loc" << i << '=' << locations[i];
+  for (unsigned i = 0, e = locations.size(); i != e; ++i) {
+    OS << " Loc" << i << '=';
+    locations[i].print(OS, TM);
+  }
   OS << '\n';
 }
 
 void LDVImpl::print(raw_ostream &OS) {
   OS << "********** DEBUG VARIABLES **********\n";
   for (unsigned i = 0, e = userValues.size(); i != e; ++i)
-    userValues[i]->print(OS, TRI);
+    userValues[i]->print(OS, &MF->getTarget());
 }
 
 void UserValue::coalesceLocation(unsigned LocNo) {
@@ -701,7 +703,6 @@ UserValue::rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI) {
     }
     coalesceLocation(LocNo);
   }
-  DEBUG(print(dbgs(), &TRI));
 }
 
 /// findInsertLocation - Find an iterator for inserting a DBG_VALUE
