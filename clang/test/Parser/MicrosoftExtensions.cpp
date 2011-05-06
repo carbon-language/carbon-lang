@@ -164,3 +164,36 @@ __interface MicrosoftInterface {
 };
 
 __int64 x7 = __int64(0);
+
+
+
+
+class IF_EXISTS {
+private:
+    typedef int Type;
+};
+
+int __if_exists_test() {
+
+  int b=0;
+
+
+  __if_exists(IF_EXISTS::Type) {
+     b++;
+     b++;
+  }
+
+  __if_exists(IF_EXISTS::Type_not) {
+     this wont compile.
+  }
+
+  __if_not_exists(IF_EXISTS::Type) {
+     this wont compile.
+  }
+
+  __if_not_exists(IF_EXISTS::Type_not) {
+     b++;
+     b++;
+  }
+
+}

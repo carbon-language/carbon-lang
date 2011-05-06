@@ -2385,6 +2385,8 @@ public:
 
   bool CheckCaseExpression(Expr *expr);
 
+  bool CheckMicrosoftIfExistsSymbol(CXXScopeSpec &SS, UnqualifiedId &Name);
+
   //===------------------------- "Block" Extension ------------------------===//
 
   /// ActOnBlockStart - This callback is invoked when a block literal is

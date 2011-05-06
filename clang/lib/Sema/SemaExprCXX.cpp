@@ -4295,3 +4295,18 @@ StmtResult Sema::ActOnFinishFullStmt(Stmt *FullStmt) {
 
   return MaybeCreateStmtWithCleanups(FullStmt);
 }
+
+bool Sema::CheckMicrosoftIfExistsSymbol(CXXScopeSpec &SS,
+                                        UnqualifiedId &Name) {
+  DeclarationNameInfo TargetNameInfo = GetNameFromUnqualifiedId(Name);
+  DeclarationName TargetName = TargetNameInfo.getName();
+  if (!TargetName)
+    return false;
+
+  // Do the redeclaration lookup in the current scope.
+  LookupResult R(*this, TargetNameInfo, Sema::LookupAnyName,
+                 Sema::NotForRedeclaration);
+  R.suppressDiagnostics();
+  LookupParsedName(R, getCurScope(), &SS);
+  return !R.empty(); 
+}
