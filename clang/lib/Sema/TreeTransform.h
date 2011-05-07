@@ -2568,9 +2568,13 @@ TreeTransform<Derived>::TransformNestedNameSpecifierLoc(
                   Q.getLocalEndLoc());
         break;
       }
-      
-      SemaRef.Diag(TL.getBeginLoc(), diag::err_nested_name_spec_non_tag) 
-        << TL.getType() << SS.getRange();
+      // If the nested-name-specifier is an invalid type def, don't emit an
+      // error because a previous error should have already been emitted.
+      TypedefTypeLoc* TTL = dyn_cast<TypedefTypeLoc>(&TL);
+      if (!TTL || !TTL->getTypedefNameDecl()->isInvalidDecl()) {
+        SemaRef.Diag(TL.getBeginLoc(), diag::err_nested_name_spec_non_tag) 
+          << TL.getType() << SS.getRange();
+      }
       return NestedNameSpecifierLoc();
     }
     }

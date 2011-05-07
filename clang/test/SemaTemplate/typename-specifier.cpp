@@ -71,3 +71,34 @@ struct C {
 ::Y<A>::type ip7 = &i;
 ::Y<B>::type ip8 = &i; // expected-note{{in instantiation of template class 'Y<B>' requested here}}
 ::Y<C>::type ip9 = &i; // expected-note{{in instantiation of template class 'Y<C>' requested here}}
+
+template<typename T> struct D {
+  typedef typename T::foo foo;  // expected-error {{type 'long' cannot be used prior to '::' because it has no members}}
+  typedef typename foo::bar bar;
+};
+
+D<long> struct_D;  // expected-note {{in instantiation of template class 'D<long>' requested here}}
+
+template<typename T> struct E {
+  typedef typename T::foo foo;
+  typedef typename foo::bar bar;  // expected-error {{type 'foo' (aka 'double') cannot be used prior to '::' because it has no members}}
+};
+
+struct F {
+  typedef double foo;
+};
+
+E<F> struct_E; // expected-note {{in instantiation of template class 'E<F>' requested here}}
+
+template<typename T> struct G {
+  typedef typename T::foo foo;
+  typedef typename foo::bar bar;
+};
+
+struct H {
+  struct foo {
+    typedef double bar;
+  };
+};
+
+G<H> struct_G;
