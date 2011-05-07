@@ -938,14 +938,17 @@ CodeGenModule::CreateRuntimeFunction(const llvm::FunctionType *FTy,
   return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(), /*ForVTable=*/false);
 }
 
-static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D) {
+static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D,
+                                 bool ConstantInit) {
   if (!D->getType().isConstant(Context) && !D->getType()->isReferenceType())
     return false;
-  if (Context.getLangOptions().CPlusPlus &&
-      Context.getBaseElementType(D->getType())->getAs<RecordType>()) {
-    // FIXME: We should do something fancier here!
-    return false;
+  
+  if (Context.getLangOptions().CPlusPlus) {
+    if (const RecordType *Record 
+          = Context.getBaseElementType(D->getType())->getAs<RecordType>())
+      return ConstantInit && cast<CXXRecordDecl>(Record->getDecl())->isPOD();
   }
+  
   return true;
 }
 
@@ -1002,7 +1005,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
   if (D) {
     // FIXME: This code is overly simple and should be merged with other global
     // handling.
-    GV->setConstant(DeclIsConstantGlobal(Context, D));
+    GV->setConstant(DeclIsConstantGlobal(Context, D, false));
 
     // Set linkage and visibility in case we never see a definition.
     NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
@@ -1284,7 +1287,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   // If it is safe to mark the global 'constant', do so now.
   GV->setConstant(false);
-  if (!NonConstInit && DeclIsConstantGlobal(Context, D))
+  if (!NonConstInit && DeclIsConstantGlobal(Context, D, true))
     GV->setConstant(true);
 
   GV->setAlignment(getContext().getDeclAlign(D).getQuantity());
