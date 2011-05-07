@@ -30,18 +30,6 @@ def ssub_0  : SubRegIndex;
 def ssub_1  : SubRegIndex;
 def ssub_2  : SubRegIndex; // In a Q reg.
 def ssub_3  : SubRegIndex;
-def ssub_4  : SubRegIndex; // In a QQ reg.
-def ssub_5  : SubRegIndex;
-def ssub_6  : SubRegIndex;
-def ssub_7  : SubRegIndex;
-def ssub_8  : SubRegIndex; // In a QQQQ reg.
-def ssub_9  : SubRegIndex;
-def ssub_10 : SubRegIndex;
-def ssub_11 : SubRegIndex;
-def ssub_12 : SubRegIndex;
-def ssub_13 : SubRegIndex;
-def ssub_14 : SubRegIndex;
-def ssub_15 : SubRegIndex;
 
 def dsub_0 : SubRegIndex;
 def dsub_1 : SubRegIndex;
@@ -169,42 +157,27 @@ def Q15 : ARMReg<15, "q15", [D30, D31]>;
 // starting D register number doesn't have to be multiple of 4, e.g.,
 // D1, D2, D3, D4 would be a legal quad, but that would make the subregister
 // stuff very messy.
-let SubRegIndices = [qsub_0, qsub_1] in {
-let CompositeIndices = [(dsub_2 qsub_1, dsub_0), (dsub_3 qsub_1, dsub_1),
-                        (ssub_4 qsub_1, ssub_0), (ssub_5 qsub_1, ssub_1),
-                        (ssub_6 qsub_1, ssub_2), (ssub_7 qsub_1, ssub_3)] in {
+let SubRegIndices = [qsub_0, qsub_1],
+ CompositeIndices = [(dsub_2 qsub_1, dsub_0), (dsub_3 qsub_1, dsub_1)] in {
 def QQ0 : ARMReg<0, "qq0", [Q0,  Q1]>;
 def QQ1 : ARMReg<1, "qq1", [Q2,  Q3]>;
 def QQ2 : ARMReg<2, "qq2", [Q4,  Q5]>;
 def QQ3 : ARMReg<3, "qq3", [Q6,  Q7]>;
-}
-let CompositeIndices = [(dsub_2 qsub_1, dsub_0), (dsub_3 qsub_1, dsub_1)] in {
 def QQ4 : ARMReg<4, "qq4", [Q8,  Q9]>;
 def QQ5 : ARMReg<5, "qq5", [Q10, Q11]>;
 def QQ6 : ARMReg<6, "qq6", [Q12, Q13]>;
 def QQ7 : ARMReg<7, "qq7", [Q14, Q15]>;
 }
-}
 
 // Pseudo 512-bit registers to represent four consecutive Q registers.
-let SubRegIndices = [qqsub_0, qqsub_1] in {
-let CompositeIndices = [(qsub_2  qqsub_1, qsub_0), (qsub_3  qqsub_1, qsub_1),
-                        (dsub_4  qqsub_1, dsub_0), (dsub_5  qqsub_1, dsub_1),
-                        (dsub_6  qqsub_1, dsub_2), (dsub_7  qqsub_1, dsub_3),
-                        (ssub_8  qqsub_1, ssub_0), (ssub_9  qqsub_1, ssub_1),
-                        (ssub_10 qqsub_1, ssub_2), (ssub_11 qqsub_1, ssub_3),
-                        (ssub_12 qqsub_1, ssub_4), (ssub_13 qqsub_1, ssub_5),
-                        (ssub_14 qqsub_1, ssub_6), (ssub_15 qqsub_1, ssub_7)] in
-{
+let SubRegIndices = [qqsub_0, qqsub_1],
+ CompositeIndices = [(qsub_2  qqsub_1, qsub_0), (qsub_3  qqsub_1, qsub_1),
+                     (dsub_4  qqsub_1, dsub_0), (dsub_5  qqsub_1, dsub_1),
+                     (dsub_6  qqsub_1, dsub_2), (dsub_7  qqsub_1, dsub_3)] in {
 def QQQQ0 : ARMReg<0, "qqqq0", [QQ0, QQ1]>;
 def QQQQ1 : ARMReg<1, "qqqq1", [QQ2, QQ3]>;
-}
-let CompositeIndices = [(qsub_2 qqsub_1, qsub_0), (qsub_3 qqsub_1, qsub_1),
-                        (dsub_4 qqsub_1, dsub_0), (dsub_5 qqsub_1, dsub_1),
-                        (dsub_6 qqsub_1, dsub_2), (dsub_7 qqsub_1, dsub_3)] in {
 def QQQQ2 : ARMReg<2, "qqqq2", [QQ4, QQ5]>;
 def QQQQ3 : ARMReg<3, "qqqq3", [QQ6, QQ7]>;
-}
 }
 
 // Current Program Status Register.
