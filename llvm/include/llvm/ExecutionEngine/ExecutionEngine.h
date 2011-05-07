@@ -135,14 +135,20 @@ protected:
     JITMemoryManager *JMM,
     CodeGenOpt::Level OptLevel,
     bool GVsWithCode,
-    TargetMachine *TM);
+    CodeModel::Model CMM,
+    StringRef MArch,
+    StringRef MCPU,
+    const SmallVectorImpl<std::string>& MAttrs);
   static ExecutionEngine *(*MCJITCtor)(
     Module *M,
     std::string *ErrorStr,
     JITMemoryManager *JMM,
     CodeGenOpt::Level OptLevel,
     bool GVsWithCode,
-    TargetMachine *TM);
+    CodeModel::Model CMM,
+    StringRef MArch,
+    StringRef MCPU,
+    const SmallVectorImpl<std::string>& MAttrs);
   static ExecutionEngine *(*InterpCtor)(Module *M,
                                         std::string *ErrorStr);
 
@@ -203,14 +209,6 @@ public:
                                     bool GVsWithCode = true,
                                     CodeModel::Model CMM =
                                       CodeModel::Default);
-
-  /// selectTarget - Pick a target either via -march or by guessing the native
-  /// arch.  Add any CPU features specified via -mcpu or -mattr.
-  static TargetMachine *selectTarget(Module *M,
-                                     StringRef MArch,
-                                     StringRef MCPU,
-                                     const SmallVectorImpl<std::string>& MAttrs,
-                                     std::string *Err);
 
   /// addModule - Add a Module to the list of modules that we can JIT from.
   /// Note that this takes ownership of the Module: when the ExecutionEngine is

@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "MCJIT.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"
@@ -26,7 +26,7 @@ using namespace llvm;
 
 /// selectTarget - Pick a target either via -march or by guessing the native
 /// arch.  Add any CPU features specified via -mcpu or -mattr.
-TargetMachine *ExecutionEngine::selectTarget(Module *Mod,
+TargetMachine *MCJIT::selectTarget(Module *Mod,
                                  StringRef MArch,
                                  StringRef MCPU,
                                  const SmallVectorImpl<std::string>& MAttrs,

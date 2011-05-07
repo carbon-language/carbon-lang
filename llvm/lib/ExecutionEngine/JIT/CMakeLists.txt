@@ -9,4 +9,5 @@ add_llvm_library(LLVMJIT
   JITEmitter.cpp
   JITMemoryManager.cpp
   OProfileJITEventListener.cpp
+  TargetSelect.cpp
   )

@@ -203,18 +203,39 @@ void DarwinRegisterFrame(void* FrameBegin) {
 /// createJIT - This is the factory method for creating a JIT for the current
 /// machine, it does not fall back to the interpreter.  This takes ownership
 /// of the module.
+ExecutionEngine *ExecutionEngine::createJIT(Module *M,
+                                            std::string *ErrorStr,
+                                            JITMemoryManager *JMM,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool GVsWithCode,
+                                            CodeModel::Model CMM) {
+  // Use the defaults for extra parameters.  Users can use EngineBuilder to
+  // set them.
+  StringRef MArch = "";
+  StringRef MCPU = "";
+  SmallVector<std::string, 1> MAttrs;
+  return JIT::createJIT(M, ErrorStr, JMM, OptLevel, GVsWithCode, CMM,
+                        MArch, MCPU, MAttrs);
+}
+
 ExecutionEngine *JIT::createJIT(Module *M,
                                 std::string *ErrorStr,
                                 JITMemoryManager *JMM,
                                 CodeGenOpt::Level OptLevel,
                                 bool GVsWithCode,
-                                TargetMachine *TM) {
+                                CodeModel::Model CMM,
+                                StringRef MArch,
+                                StringRef MCPU,
+                                const SmallVectorImpl<std::string>& MAttrs) {
   // Try to register the program as a source of symbols to resolve against.
-  //
-  // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(0, NULL);
 
-  // If the target supports JIT code generation, create the JIT.
+  // Pick a target either via -march or by guessing the native arch.
+  TargetMachine *TM = JIT::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
+  if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
+  TM->setCodeModel(CMM);
+
+  // If the target supports JIT code generation, create a the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo()) {
     return new JIT(M, *TM, *TJ, JMM, OptLevel, GVsWithCode);
   } else {
