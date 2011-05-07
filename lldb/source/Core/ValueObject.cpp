@@ -389,7 +389,7 @@ ValueObject::SetName (const ConstString &name)
 ValueObject *
 ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int32_t synthetic_index)
 {
-    ValueObject *valobj;
+    ValueObject *valobj = NULL;
     
     if (UpdateValueIfNeeded())
     {
