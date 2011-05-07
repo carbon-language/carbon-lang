@@ -1246,14 +1246,13 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 ExecutionContext exe_ctx;
                 frame_sp->CalculateExecutionContext (exe_ctx);
                 bool unwind_on_error = true;
-                bool keep_in_memory = false;
                 StreamString expr;
                 char path[PATH_MAX];
                 image_spec.GetPath(path, sizeof(path));
                 expr.Printf("dlopen (\"%s\", 2)", path);
                 const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
                 lldb::ValueObjectSP result_valobj_sp;
-                ClangUserExpression::Evaluate (exe_ctx, keep_in_memory, unwind_on_error, expr.GetData(), prefix, result_valobj_sp);
+                ClangUserExpression::Evaluate (exe_ctx, unwind_on_error, expr.GetData(), prefix, result_valobj_sp);
                 if (result_valobj_sp->GetError().Success())
                 {
                     Scalar scalar;
@@ -1314,12 +1313,11 @@ Process::UnloadImage (uint32_t image_token)
                         ExecutionContext exe_ctx;
                         frame_sp->CalculateExecutionContext (exe_ctx);
                         bool unwind_on_error = true;
-                        bool keep_in_memory = false;
                         StreamString expr;
                         expr.Printf("dlclose ((void *)0x%llx)", image_addr);
                         const char *prefix = "extern \"C\" int dlclose(void* handle);\n";
                         lldb::ValueObjectSP result_valobj_sp;
-                        ClangUserExpression::Evaluate (exe_ctx, unwind_on_error, keep_in_memory, expr.GetData(), prefix, result_valobj_sp);
+                        ClangUserExpression::Evaluate (exe_ctx, unwind_on_error, expr.GetData(), prefix, result_valobj_sp);
                         if (result_valobj_sp->GetError().Success())
                         {
                             Scalar scalar;

@@ -108,8 +108,10 @@ ClangUtilityFunction::Install (Stream &error_stream,
     //////////////////////////////////
     // JIT the output of the parser
     //
+    
+    lldb::ClangExpressionVariableSP const_result;
         
-    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx);
+    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, const_result);
     
     if (exe_ctx.process && m_jit_start_addr != LLDB_INVALID_ADDRESS)
         m_jit_process_sp = exe_ctx.process->GetSP();

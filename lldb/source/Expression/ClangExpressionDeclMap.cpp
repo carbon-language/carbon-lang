@@ -139,7 +139,7 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
                                                      type.GetASTContext(),
                                                      type.GetOpaqueQualType()),
                            context);
-    
+        
     if (!m_parser_vars->m_persistent_vars->CreatePersistentVariable (exe_ctx->GetBestExecutionContextScope (),
                                                                      name, 
                                                                      user_type, 
@@ -194,7 +194,78 @@ ClangExpressionDeclMap::BuildIntegerVariable (const ConstString &name,
     }
     
     pvar_sp->m_flags |= ClangExpressionVariable::EVIsFreezeDried;
+    pvar_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+    pvar_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
 
+    return pvar_sp;
+}
+
+lldb::ClangExpressionVariableSP
+ClangExpressionDeclMap::BuildCastVariable (const ConstString &name,
+                                           clang::VarDecl *decl,
+                                           lldb_private::TypeFromParser type)
+{
+    assert (m_parser_vars.get());
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    ExecutionContext *exe_ctx = m_parser_vars->m_exe_ctx;
+    clang::ASTContext *context(exe_ctx->target->GetScratchClangASTContext()->getASTContext());
+    
+    ClangExpressionVariableSP var_sp (m_found_entities.GetVariable(decl));
+    
+    if (!var_sp)
+        var_sp = m_parser_vars->m_persistent_vars->GetVariable(decl);
+    
+    if (!var_sp)
+        return ClangExpressionVariableSP();
+    
+    TypeFromUser user_type(ClangASTContext::CopyType(context, 
+                                                     type.GetASTContext(),
+                                                     type.GetOpaqueQualType()),
+                           context);
+    
+    TypeFromUser var_type = var_sp->GetTypeFromUser();
+    
+    VariableSP var = FindVariableInScope (*exe_ctx->frame, var_sp->GetName(), &var_type);
+    
+    if (!var)
+        return lldb::ClangExpressionVariableSP(); // but we should handle this; it may be a persistent variable
+    
+    ValueObjectSP var_valobj = exe_ctx->frame->GetValueObjectForFrameVariable(var, lldb::eNoDynamicValues);
+
+    if (!var_valobj)
+        return lldb::ClangExpressionVariableSP();
+    
+    ValueObjectSP var_casted_valobj = var_valobj->CastPointerType(name.GetCString(), user_type);
+    
+    if (!var_casted_valobj)
+        return lldb::ClangExpressionVariableSP();
+    
+    if (log)
+    {
+        StreamString my_stream_string;
+        
+        ClangASTType::DumpTypeDescription (var_type.GetASTContext(),
+                                           var_type.GetOpaqueQualType(),
+                                           &my_stream_string);
+        
+        
+        log->Printf("Building cast variable to type: %s", my_stream_string.GetString().c_str());
+    }
+    
+    ClangExpressionVariableSP pvar_sp = m_parser_vars->m_persistent_vars->CreatePersistentVariable (var_casted_valobj);
+    
+    if (!pvar_sp)
+        return lldb::ClangExpressionVariableSP();
+    
+    if (pvar_sp != m_parser_vars->m_persistent_vars->GetVariable(name))
+        return lldb::ClangExpressionVariableSP();
+    
+    pvar_sp->m_flags |= ClangExpressionVariable::EVIsFreezeDried;
+    pvar_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+    pvar_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+            
     return pvar_sp;
 }
 
@@ -535,9 +606,9 @@ ClangExpressionDeclMap::GetObjectPointer
         return false;
     }
     
-    Variable *object_ptr_var = FindVariableInScope (*exe_ctx.frame,
-                                                    object_name, 
-                                                    (suppress_type_check ? NULL : &m_struct_vars->m_object_pointer_type));
+    VariableSP object_ptr_var = FindVariableInScope (*exe_ctx.frame,
+                                                     object_name, 
+                                                     (suppress_type_check ? NULL : &m_struct_vars->m_object_pointer_type));
     
     if (!object_ptr_var)
     {
@@ -1122,7 +1193,7 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
             if (log)
                 log->Printf("Materialized %s into 0x%llx", var_sp->GetName().GetCString(), (uint64_t)mem);
         }
-        else if (!var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference)
+        else if (!(var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference))
         {
             err.SetErrorStringWithFormat("Persistent variables without separate allocations are not currently supported.");
             return false;
@@ -1153,7 +1224,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     const ConstString &name(expr_var->GetName());
     TypeFromUser type(expr_var->GetTypeFromUser());
     
-    Variable *var = FindVariableInScope (*exe_ctx.frame, name, &type);
+    VariableSP var = FindVariableInScope (*exe_ctx.frame, name, &type);
     
     if (!var)
     {
@@ -1495,7 +1566,7 @@ ClangExpressionDeclMap::DoMaterializeOneRegister
     return true;
 }
 
-Variable *
+lldb::VariableSP
 ClangExpressionDeclMap::FindVariableInScope
 (
     StackFrame &frame,
@@ -1508,7 +1579,7 @@ ClangExpressionDeclMap::FindVariableInScope
     VariableList *var_list = frame.GetVariableList(true);
     
     if (!var_list)
-        return NULL;
+        return lldb::VariableSP();
     
     lldb::VariableSP var_sp (var_list->FindVariable(name));
         
@@ -1543,17 +1614,17 @@ ClangExpressionDeclMap::FindVariableInScope
         if (type->GetASTContext() == var_sp->GetType()->GetClangAST())
         {
             if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var_sp->GetType()->GetClangFullType()))
-                return NULL;
+                return lldb::VariableSP();
         }
         else
         {
             if (log)
                 log->PutCString("Skipping a candidate variable because of different AST contexts");
-            return NULL;
+            return lldb::VariableSP();
         }
     }
 
-    return var_sp.get();
+    return var_sp;
 }
 
 // Interface for ClangASTSource
@@ -1590,7 +1661,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
     // doesn't start with our phony prefix of '$'
     if (name_unique_cstr[0] != '$')
     {
-        Variable *var = FindVariableInScope(*m_parser_vars->m_exe_ctx->frame, name);
+        VariableSP var = FindVariableInScope(*m_parser_vars->m_exe_ctx->frame, name);
         
         // If we found a variable in scope, no need to pull up function names
         if (var != NULL)
@@ -1797,7 +1868,7 @@ Value *
 ClangExpressionDeclMap::GetVariableValue
 (
     ExecutionContext &exe_ctx,
-    Variable *var,
+    VariableSP var,
     clang::ASTContext *parser_ast_context,
     TypeFromUser *user_type,
     TypeFromParser *parser_type
@@ -1904,7 +1975,7 @@ ClangExpressionDeclMap::GetVariableValue
 }
 
 void
-ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, Variable* var)
+ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, VariableSP var)
 {
     assert (m_parser_vars.get());
     
@@ -1936,6 +2007,7 @@ ClangExpressionDeclMap::AddOneVariable (NameSearchContext &context, Variable* va
     entity->m_parser_vars->m_named_decl  = var_decl;
     entity->m_parser_vars->m_llvm_value  = NULL;
     entity->m_parser_vars->m_lldb_value  = var_location;
+    entity->m_parser_vars->m_lldb_var    = var;
     
     if (log)
     {

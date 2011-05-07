@@ -103,9 +103,13 @@ public:
     ///     The execution context to write the function into.
     ///
     /// @param[out] const_result
-    ///     If non-NULL, the result of the expression is constant, and the
+    ///     If the result of the expression is constant, and the
     ///     expression has no side effects, this is set to the result of the 
-    ///     expression.  
+    ///     expression.
+    ///
+    /// @param[in] jit_only_if_needed
+    ///     True if the expression must be compiled, regardless of whether a
+    ///     constant result could be extracted from the IR or no.
     ///
     /// @return
     ///     An error code indicating the success or failure of the operation.
@@ -116,7 +120,8 @@ public:
              lldb::addr_t &func_addr,
              lldb::addr_t &func_end,
              ExecutionContext &exe_ctx,
-             lldb::ClangExpressionVariableSP *const_result = NULL);
+             lldb::ClangExpressionVariableSP &const_result,
+             bool jit_only_if_needed = false);
     
     //------------------------------------------------------------------
     /// Disassemble the machine code for a JITted function from the target 

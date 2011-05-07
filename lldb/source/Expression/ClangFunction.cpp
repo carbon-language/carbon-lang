@@ -251,7 +251,9 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     if (m_JITted)
         return true;
     
-    Error jit_error (m_parser->MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx));
+    lldb::ClangExpressionVariableSP const_result;
+    
+    Error jit_error (m_parser->MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, const_result));
     
     if (!jit_error.Success())
         return false;

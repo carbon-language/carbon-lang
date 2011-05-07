@@ -456,7 +456,8 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
                                 lldb::addr_t &func_addr, 
                                 lldb::addr_t &func_end, 
                                 ExecutionContext &exe_ctx,
-                                lldb::ClangExpressionVariableSP *const_result)
+                                lldb::ClangExpressionVariableSP &const_result,
+                                bool jit_only_if_needed)
 {
     func_allocation_addr = LLDB_INVALID_ADDRESS;
 	func_addr = LLDB_INVALID_ADDRESS;
@@ -509,6 +510,12 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
         {
             err.SetErrorToGenericError();
             err.SetErrorString("Couldn't convert the expression to DWARF");
+            return err;
+        }
+        
+        if (jit_only_if_needed && const_result.get())
+        {
+            err.Clear();
             return err;
         }
         

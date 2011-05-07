@@ -49,7 +49,8 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_cplusplus (false),
     m_objectivec (false),
     m_needs_object_ptr (false),
-    m_const_object (false)
+    m_const_object (false),
+    m_const_result ()
 {
 }
 
@@ -147,8 +148,7 @@ bool
 ClangUserExpression::Parse (Stream &error_stream, 
                             ExecutionContext &exe_ctx,
                             TypeFromUser desired_type,
-                            bool keep_result_in_memory,
-                            lldb::ClangExpressionVariableSP *const_result)
+                            bool keep_result_in_memory)
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
@@ -284,7 +284,7 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     m_dwarf_opcodes.reset();
     
-    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, const_result);
+    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, m_const_result, true);
     
     m_expr_decl_map->DidParse();
     
@@ -457,7 +457,6 @@ ExecutionResults
 ClangUserExpression::Execute (Stream &error_stream,
                               ExecutionContext &exe_ctx,
                               bool discard_on_error,
-                              bool keep_in_memory,
                               ClangUserExpression::ClangUserExpressionSP &shared_ptr_to_me,
                               lldb::ClangExpressionVariableSP &result)
 {
@@ -556,7 +555,6 @@ ClangUserExpression::DwarfOpcodeStream ()
 ExecutionResults
 ClangUserExpression::Evaluate (ExecutionContext &exe_ctx, 
                                bool discard_on_error,
-                               bool keep_in_memory,
                                const char *expr_cstr,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp)
@@ -603,13 +601,11 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     ClangUserExpressionSP user_expression_sp (new ClangUserExpression (expr_cstr, expr_prefix));
 
     StreamString error_stream;
-    
-    lldb::ClangExpressionVariableSP const_result;
-    
+        
     if (log)
         log->Printf("== [ClangUserExpression::Evaluate] Parsing expression %s ==", expr_cstr);
     
-    if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL), &const_result))
+    if (!user_expression_sp->Parse (error_stream, exe_ctx, TypeFromUser(NULL, NULL), true))
     {
         if (error_stream.GetString().empty())
             error.SetErrorString ("expression failed to parse, unknown error");
@@ -620,12 +616,12 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     {
         lldb::ClangExpressionVariableSP expr_result;
 
-        if (const_result.get() && !keep_in_memory)
+        if (user_expression_sp->m_const_result.get())
         {
             if (log)
                 log->Printf("== [ClangUserExpression::Evaluate] Expression evaluated as a constant ==");
             
-            result_valobj_sp = const_result->GetValueObject();
+            result_valobj_sp = user_expression_sp->m_const_result->GetValueObject();
         }
         else
         {    
@@ -637,7 +633,6 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
             execution_results = user_expression_sp->Execute (error_stream, 
                                                              exe_ctx, 
                                                              discard_on_error,
-                                                             keep_in_memory,
                                                              user_expression_sp, 
                                                              expr_result);
             

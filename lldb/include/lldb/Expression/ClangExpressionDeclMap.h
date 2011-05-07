@@ -127,6 +127,28 @@ public:
                           const llvm::APInt& value);
     
     //------------------------------------------------------------------
+    /// [Used by IRForTarget] Cast an existing variable given a Decl and
+    ///     a type.
+    ///
+    /// @param[in] name
+    ///     The name of the new variable
+    ///
+    /// @param[in] decl
+    ///     The Clang variable declaration for the original variable,
+    ///     which must be looked up in the map
+    ///
+    /// @param[in] type
+    ///     The desired type of the variable after casting
+    ///
+    /// @return
+    ///     The created variable
+    //------------------------------------------------------------------
+    lldb::ClangExpressionVariableSP
+    BuildCastVariable (const ConstString &name,
+                       clang::VarDecl *decl,
+                       lldb_private::TypeFromParser type);
+    
+    //------------------------------------------------------------------
     /// [Used by IRForTarget] Add a variable to the list of persistent
     ///     variables for the process.
     ///
@@ -620,7 +642,7 @@ private:
     /// @return
     ///     The LLDB Variable found, or NULL if none was found.
     //------------------------------------------------------------------
-    Variable *
+    lldb::VariableSP
     FindVariableInScope (StackFrame &frame,
                          const ConstString &name,
                          TypeFromUser *type = NULL);
@@ -656,7 +678,7 @@ private:
     //------------------------------------------------------------------
     Value *
     GetVariableValue (ExecutionContext &exe_ctx,
-                      Variable *var,
+                      lldb::VariableSP var,
                       clang::ASTContext *parser_ast_context,
                       TypeFromUser *found_type = NULL,
                       TypeFromParser *parser_type = NULL);
@@ -673,7 +695,7 @@ private:
     //------------------------------------------------------------------
     void 
     AddOneVariable (NameSearchContext &context, 
-                    Variable *var);
+                    lldb::VariableSP var);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given

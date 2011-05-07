@@ -26,6 +26,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "lldb/Symbol/ClangASTContext.h"
 
 #include <map>
 
@@ -35,7 +36,7 @@ static char ID;
 
 IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
                           bool resolve_vars,
-                          lldb::ClangExpressionVariableSP *const_result,
+                          lldb::ClangExpressionVariableSP &const_result,
                           lldb_private::Stream *error_stream,
                           const char *func_name) :
     ModulePass(ID),
@@ -44,10 +45,11 @@ IRForTarget::IRForTarget (lldb_private::ClangExpressionDeclMap *decl_map,
     m_decl_map(decl_map),
     m_CFStringCreateWithBytes(NULL),
     m_sel_registerName(NULL),
-    m_const_result(const_result),
     m_error_stream(error_stream),
     m_has_side_effects(false),
-    m_result_is_pointer(false)
+    m_result_store(NULL),
+    m_result_is_pointer(false),
+    m_const_result(const_result)
 {
 }
 
@@ -87,7 +89,7 @@ IRForTarget::HasSideEffects (llvm::Module &llvm_module,
 {
     llvm::Function::iterator bbi;
     BasicBlock::iterator ii;
-    
+        
     for (bbi = llvm_function.begin();
          bbi != llvm_function.end();
          ++bbi)
@@ -108,15 +110,33 @@ IRForTarget::HasSideEffects (llvm::Module &llvm_module,
                     
                     Value *store_ptr = store_inst->getPointerOperand();
                     
-                    if (!isa <AllocaInst> (store_ptr))
-                        return true;
-                    else
+                    std::string ptr_name;
+                    
+                    if (store_ptr->hasName())
+                        ptr_name = store_ptr->getNameStr();
+                    
+                    if (isa <AllocaInst> (store_ptr))
                         break;
+
+                    if (ptr_name.find("$__lldb_expr_result") != std::string::npos)
+                    {
+                        if (ptr_name.find("GV") == std::string::npos)
+                            m_result_store = store_inst;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                        
+                    break;
                 }
             case Instruction::Load:
             case Instruction::Alloca:
             case Instruction::GetElementPtr:
+            case Instruction::BitCast:
             case Instruction::Ret:
+            case Instruction::ICmp:
+            case Instruction::Br:
                 break;
             }
         }
@@ -125,18 +145,133 @@ IRForTarget::HasSideEffects (llvm::Module &llvm_module,
     return false;
 }
 
+clang::NamedDecl *
+IRForTarget::DeclForGlobal (llvm::Module &module, GlobalValue *global_val)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    NamedMDNode *named_metadata = module.getNamedMetadata("clang.global.decl.ptrs");
+    
+    if (!named_metadata)
+        return NULL;
+    
+    unsigned num_nodes = named_metadata->getNumOperands();
+    unsigned node_index;
+    
+    for (node_index = 0;
+         node_index < num_nodes;
+         ++node_index)
+    {
+        MDNode *metadata_node = named_metadata->getOperand(node_index);
+        
+        if (!metadata_node)
+            return NULL;
+        
+        if (metadata_node->getNumOperands() != 2)
+            continue;
+        
+        if (metadata_node->getOperand(0) != global_val)
+            continue;
+        
+        ConstantInt *constant_int = dyn_cast<ConstantInt>(metadata_node->getOperand(1));
+        
+        if (!constant_int)
+            return NULL;
+        
+        uintptr_t ptr = constant_int->getZExtValue();
+        
+        return reinterpret_cast<clang::NamedDecl *>(ptr);
+    }
+    
+    return NULL;
+}
+
 void 
 IRForTarget::MaybeSetConstantResult (llvm::Constant *initializer,
                                      const lldb_private::ConstString &name,
                                      lldb_private::TypeFromParser type)
 {
-    if (!m_const_result)
+    if (llvm::ConstantExpr *init_expr = dyn_cast<llvm::ConstantExpr>(initializer))
+    {
+        switch (init_expr->getOpcode())
+        {
+        default:
+            return;
+        case Instruction::IntToPtr:
+            MaybeSetConstantResult (init_expr->getOperand(0), name, type);
+            return;
+        }
+    }
+    else if (llvm::ConstantInt *init_int = dyn_cast<llvm::ConstantInt>(initializer))
+    {
+        m_const_result = m_decl_map->BuildIntegerVariable(name, type, init_int->getValue());
+    }
+}
+
+void
+IRForTarget::MaybeSetCastResult (llvm::Module &llvm_module, lldb_private::TypeFromParser type)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    if (!m_result_store)
         return;
     
-    if (llvm::ConstantInt *init_int = dyn_cast<llvm::ConstantInt>(initializer))
+    LoadInst *original_load = NULL;
+        
+    for (llvm::Value *current_value = m_result_store->getValueOperand(), *next_value;
+         current_value != NULL;
+         current_value = next_value)
     {
-        *m_const_result = m_decl_map->BuildIntegerVariable(name, type, init_int->getValue());
+        CastInst *cast_inst = dyn_cast<CastInst>(current_value);
+        LoadInst *load_inst = dyn_cast<LoadInst>(current_value);
+        
+        if (cast_inst)
+        {
+            next_value = cast_inst->getOperand(0);
+        }
+        else if(load_inst)
+        {
+            if (isa<LoadInst>(load_inst->getPointerOperand()))
+            {
+                next_value = load_inst->getPointerOperand();
+            }
+            else
+            {
+                original_load = load_inst;
+                break;
+            }
+        }
+        else
+        {
+            return;
+        }
     }
+    
+    Value *loaded_value = original_load->getPointerOperand();
+    GlobalVariable *loaded_global = dyn_cast<GlobalVariable>(loaded_value);
+    
+    if (!loaded_global)
+        return;
+    
+    clang::NamedDecl *loaded_decl = DeclForGlobal(llvm_module, loaded_global);
+    
+    if (!loaded_decl)
+        return;
+    
+    clang::VarDecl *loaded_var = dyn_cast<clang::VarDecl>(loaded_decl);
+    
+    if (!loaded_var)
+        return;
+    
+    if (log)
+    {
+        lldb_private::StreamString type_desc_stream;
+        type.DumpTypeDescription(&type_desc_stream);
+        
+        log->Printf("Type to cast variable to: \"%s\"", type_desc_stream.GetString().c_str());
+    }
+    
+    m_const_result = m_decl_map->BuildCastVariable(m_result_name, loaded_var, type);
 }
 
 bool 
@@ -214,64 +349,50 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
         return false;
     }
     
-    // Find the metadata and follow it to the VarDecl
-    
-    NamedMDNode *named_metadata = llvm_module.getNamedMetadata("clang.global.decl.ptrs");
-    
-    if (!named_metadata)
+    clang::NamedDecl *result_decl = DeclForGlobal (llvm_module, result_global);
+    if (!result_decl)
     {
         if (log)
-            log->PutCString("No global metadata");
+            log->PutCString("Result variable doesn't have a corresponding Decl");
         
         if (m_error_stream)
-            m_error_stream->Printf("Internal error [IRForTarget]: No metadata\n");
+            m_error_stream->Printf("Internal error [IRForTarget]: Result variable (%s) does not have a corresponding Clang entity\n", result_name);
         
         return false;
     }
-        
-    unsigned num_nodes = named_metadata->getNumOperands();
-    unsigned node_index;
     
-    MDNode *metadata_node = NULL;
-    
-    for (node_index = 0;
-         node_index < num_nodes;
-         ++node_index)
+    if (log)
     {
-        metadata_node = named_metadata->getOperand(node_index);
+        std::string decl_desc_str;
+        raw_string_ostream decl_desc_stream(decl_desc_str);
+        result_decl->print(decl_desc_stream);
+        decl_desc_stream.flush();
         
-        if (metadata_node->getNumOperands() != 2)
-            continue;
-        
-        if (metadata_node->getOperand(0) == result_global)
-            break;
+        log->Printf("Found result decl: \"%s\"", decl_desc_str.c_str());
     }
     
-    if (!metadata_node)
+    clang::VarDecl *result_var = dyn_cast<clang::VarDecl>(result_decl);
+    if (!result_var)
     {
         if (log)
-            log->PutCString("Couldn't find result metadata");
+            log->PutCString("Result variable Decl isn't a VarDecl");
         
         if (m_error_stream)
-            m_error_stream->Printf("Internal error [IRForTarget]: Result variable (%s) is a global variable, but has no metadata\n", result_name);
+            m_error_stream->Printf("Internal error [IRForTarget]: Result variable (%s)'s corresponding Clang entity isn't a variable\n", result_name);
         
         return false;
     }
-        
-    ConstantInt *constant_int = dyn_cast<ConstantInt>(metadata_node->getOperand(1));
-        
-    lldb::addr_t result_decl_intptr = constant_int->getZExtValue();
     
-    clang::VarDecl *result_decl = reinterpret_cast<clang::VarDecl *>(result_decl_intptr);
-        
     // Get the next available result name from m_decl_map and create the persistent
     // variable for it
     
     lldb_private::TypeFromParser result_decl_type;
     
+    // If the result is an Lvalue, it is emitted as a pointer; see
+    // ASTResultSynthesizer::SynthesizeBodyResult.
     if (m_result_is_pointer)
     {
-        clang::QualType pointer_qual_type = result_decl->getType();
+        clang::QualType pointer_qual_type = result_var->getType();
         const clang::Type *pointer_type = pointer_qual_type.getTypePtr();
         const clang::PointerType *pointer_pointertype = dyn_cast<clang::PointerType>(pointer_type);
         
@@ -293,18 +414,19 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     }
     else
     {
-        result_decl_type = lldb_private::TypeFromParser(result_decl->getType().getAsOpaquePtr(),
+        result_decl_type = lldb_private::TypeFromParser(result_var->getType().getAsOpaquePtr(),
                                                         &result_decl->getASTContext());
     }
     
+    if (log)
+    {
+        lldb_private::StreamString type_desc_stream;
+        result_decl_type.DumpTypeDescription(&type_desc_stream);
+        
+        log->Printf("Result decl type: \"%s\"", type_desc_stream.GetString().c_str());
+    }
+    
     m_result_name = m_decl_map->GetPersistentResultName();
-    // If the result is an Lvalue, it is emitted as a pointer; see
-    // ASTResultSynthesizer::SynthesizeBodyResult.
-    m_decl_map->AddPersistentVariable(result_decl, 
-                                      m_result_name, 
-                                      result_decl_type,
-                                      true,
-                                      m_result_is_pointer);
     
     if (log)
         log->Printf("Creating a new result global: \"%s\"", m_result_name.GetCString());
@@ -325,8 +447,8 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     // ClangExpressionDeclMap::DoMaterialize, and the name of the variable is
     // fixed up.
     
-    ConstantInt *new_constant_int = ConstantInt::get(constant_int->getType(), 
-                                                     result_decl_intptr,
+    ConstantInt *new_constant_int = ConstantInt::get(llvm::Type::getInt64Ty(llvm_module.getContext()),
+                                                     reinterpret_cast<uint64_t>(result_decl),
                                                      false);
     
     llvm::Value* values[2];
@@ -334,6 +456,7 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     values[1] = new_constant_int;
     
     MDNode *persistent_global_md = MDNode::get(llvm_module.getContext(), values, 2);
+    NamedMDNode *named_metadata = llvm_module.getNamedMetadata("clang.global.decl.ptrs");
     named_metadata->addOperand(persistent_global_md);
     
     if (log)
@@ -384,8 +507,20 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     }
     else
     {
+        if (!m_has_side_effects && lldb_private::ClangASTContext::IsPointerType (result_decl_type.GetOpaqueQualType()))
+        {
+            MaybeSetCastResult (llvm_module, result_decl_type);
+        }
+        
         result_global->replaceAllUsesWith(new_result_global);
     }
+    
+    if (!m_const_result)
+        m_decl_map->AddPersistentVariable(result_decl, 
+                                          m_result_name, 
+                                          result_decl_type,
+                                          true,
+                                          m_result_is_pointer);
         
     result_global->eraseFromParent();
     
@@ -1047,45 +1182,6 @@ IRForTarget::RewritePersistentAllocs(llvm::Module &llvm_module, llvm::BasicBlock
     return true;
 }
 
-static clang::NamedDecl *
-DeclForGlobalValue(Module &module, GlobalValue *global_value)
-{
-    NamedMDNode *named_metadata = module.getNamedMetadata("clang.global.decl.ptrs");
-    
-    if (!named_metadata)
-        return NULL;
-    
-    unsigned num_nodes = named_metadata->getNumOperands();
-    unsigned node_index;
-    
-    for (node_index = 0;
-         node_index < num_nodes;
-         ++node_index)
-    {
-        MDNode *metadata_node = named_metadata->getOperand(node_index);
-        
-        if (!metadata_node)
-            return NULL;
-        
-        if (metadata_node->getNumOperands() != 2)
-            continue;
-        
-        if (metadata_node->getOperand(0) != global_value)
-            continue;
-        
-        ConstantInt *constant_int = dyn_cast<ConstantInt>(metadata_node->getOperand(1));
-        
-        if (!constant_int)
-            return NULL;
-        
-        uintptr_t ptr = constant_int->getZExtValue();
-        
-        return reinterpret_cast<clang::NamedDecl *>(ptr);
-    }
-    
-    return NULL;
-}
-
 // This function does not report errors; its callers are responsible.
 bool 
 IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
@@ -1110,7 +1206,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
     }
     else if (GlobalVariable *global_variable = dyn_cast<GlobalVariable>(llvm_value_ptr))
     {
-        clang::NamedDecl *named_decl = DeclForGlobalValue(llvm_module, global_variable);
+        clang::NamedDecl *named_decl = DeclForGlobal(llvm_module, global_variable);
         
         if (!named_decl)
         {
@@ -1331,7 +1427,7 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
         str.SetCStringWithLength (fun->getName().data(), fun->getName().size());
     }
     
-    clang::NamedDecl *fun_decl = DeclForGlobalValue (llvm_module, fun);
+    clang::NamedDecl *fun_decl = DeclForGlobal (llvm_module, fun);
     lldb::addr_t fun_addr = LLDB_INVALID_ADDRESS;
     Value **fun_value_ptr = NULL;
     
@@ -1445,7 +1541,7 @@ IRForTarget::ResolveExternals (Module &llvm_module, Function &llvm_function)
         if (log)
             log->Printf("Examining %s, DeclForGlobalValue returns %p", 
                         (*global).getName().str().c_str(),
-                        DeclForGlobalValue(llvm_module, global));
+                        DeclForGlobal(llvm_module, global));
     
         if ((*global).getName().str().find("OBJC_IVAR") == 0)
         {
@@ -1457,7 +1553,7 @@ IRForTarget::ResolveExternals (Module &llvm_module, Function &llvm_function)
                 return false;
             }
         }
-        else if (DeclForGlobalValue(llvm_module, global))
+        else if (DeclForGlobal(llvm_module, global))
         {
             if (!MaybeHandleVariable (llvm_module, global))
             {
@@ -1881,6 +1977,9 @@ IRForTarget::runOnModule (Module &llvm_module)
         
         return false;
     }
+    
+    if (m_const_result)
+        return true;
     
     ///////////////////////////////////////////////////////////////////////////////
     // Fix all Objective-C constant strings to use NSStringWithCString:encoding:

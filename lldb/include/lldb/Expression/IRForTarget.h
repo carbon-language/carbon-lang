@@ -21,9 +21,11 @@ namespace llvm {
     class CallInst;
     class Constant;
     class Function;
+    class GlobalValue;
     class GlobalVariable;
     class Instruction;
     class Module;
+    class StoreInst;
     class Value;
 }
 
@@ -62,10 +64,9 @@ public:
     ///     are resolved.
     ///
     /// @param[in] const_result
-    ///     If non-NULL, a shared pointer to a ClangExpressionVariable that
-    ///     is populated with the statically-computed result of the function,
-    ///     if it has no side-effects and the result can be computed
-    ///     statically.
+    ///     This variable is populated with the statically-computed result
+    ///     of the function, if it has no side-effects and the result can
+    ///     be computed statically.
     ///
     /// @param[in] error_stream
     ///     If non-NULL, a stream on which errors can be printed.
@@ -75,7 +76,7 @@ public:
     //------------------------------------------------------------------
     IRForTarget(lldb_private::ClangExpressionDeclMap *decl_map,
                 bool resolve_vars,
-                lldb::ClangExpressionVariableSP *const_result,
+                lldb::ClangExpressionVariableSP &const_result,
                 lldb_private::Stream *error_stream,
                 const char* func_name = "$__lldb_expr");
     
@@ -153,6 +154,24 @@ private:
     /// constant, assuming it can be evaluated.  The result variable
     /// will be reset to NULL later if the expression has side effects.
     ///
+    /// @param[in] llvm_module
+    ///     The module currently being processed.
+    ///
+    /// @param[in] global
+    ///     The global entity to search for
+    ///
+    /// @return
+    ///     The corresponding variable declaration
+    //------------------------------------------------------------------   
+    clang::NamedDecl *
+    DeclForGlobal (llvm::Module &llvm_module,
+                   llvm::GlobalValue *global);
+    
+    //------------------------------------------------------------------
+    /// Set the constant result variable m_const_result to the provided
+    /// constant, assuming it can be evaluated.  The result variable
+    /// will be reset to NULL later if the expression has side effects.
+    ///
     /// @param[in] initializer
     ///     The constant initializer for the variable.
     ///
@@ -161,14 +180,26 @@ private:
     ///
     /// @param[in] type
     ///     The Clang type of the result variable.
-    ///
-    /// @return
-    ///     True on success; false otherwise
     //------------------------------------------------------------------    
     void 
     MaybeSetConstantResult (llvm::Constant *initializer,
                             const lldb_private::ConstString &name,
                             lldb_private::TypeFromParser type);
+    
+    //------------------------------------------------------------------
+    /// If the IR represents a cast of a variable, set m_const_result
+    /// to the result of the cast.  The result variable will be reset to
+    /// NULL latger if the expression has side effects.
+    ///
+    /// @param[in] llvm_module
+    ///     The module currently being processed.
+    ///
+    /// @param[in] type
+    ///     The Clang type of the result variable.
+    //------------------------------------------------------------------  
+    void
+    MaybeSetCastResult (llvm::Module &llvm_module,
+                        lldb_private::TypeFromParser type);
     
     //------------------------------------------------------------------
     /// The top-level pass implementation
@@ -476,10 +507,11 @@ private:
     lldb_private::ClangExpressionDeclMap   *m_decl_map;                 ///< The DeclMap containing the Decls 
     llvm::Constant                         *m_CFStringCreateWithBytes;  ///< The address of the function CFStringCreateWithBytes, cast to the appropriate function pointer type
     llvm::Constant                         *m_sel_registerName;         ///< The address of the function sel_registerName, cast to the appropriate function pointer type
-    lldb::ClangExpressionVariableSP        *m_const_result;             ///< If non-NULL, this value should be set to the return value of the expression if it is constant and the expression has no side effects
+    lldb::ClangExpressionVariableSP        &m_const_result;             ///< This value should be set to the return value of the expression if it is constant and the expression has no side effects
     lldb_private::Stream                   *m_error_stream;             ///< If non-NULL, the stream on which errors should be printed
     
     bool                                    m_has_side_effects;         ///< True if the function's result cannot be simply determined statically
+    llvm::StoreInst                        *m_result_store;             ///< If non-NULL, the store instruction that writes to the result variable.  If m_has_side_effects is true, this is NULL.
     bool                                    m_result_is_pointer;        ///< True if the function's result in the AST is a pointer (see comments in ASTResultSynthesizer::SynthesizeBodyResult)
     
 private:

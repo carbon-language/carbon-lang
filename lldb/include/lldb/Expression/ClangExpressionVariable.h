@@ -97,7 +97,8 @@ public:
             m_parser_type(),
             m_named_decl (NULL),
             m_llvm_value (NULL),
-            m_lldb_value (NULL)
+            m_lldb_value (NULL),
+            m_lldb_var   ()
         {
         }
 
@@ -105,6 +106,7 @@ public:
         const clang::NamedDecl *m_named_decl;   ///< The Decl corresponding to this variable
         llvm::Value            *m_llvm_value;   ///< The IR value corresponding to this variable; usually a GlobalValue
         lldb_private::Value    *m_lldb_value;   ///< The value found in LLDB for this variable
+        lldb::VariableSP        m_lldb_var;     ///< The original variable for this variable
 
     private:
         DISALLOW_COPY_AND_ASSIGN (ParserVars);

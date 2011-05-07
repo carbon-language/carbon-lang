@@ -994,7 +994,6 @@ Target::EvaluateExpression
         
             execution_results = ClangUserExpression::Evaluate (exe_ctx, 
                                                                unwind_on_error,
-                                                               keep_in_memory,
                                                                expr_cstr, 
                                                                prefix, 
                                                                result_valobj_sp);

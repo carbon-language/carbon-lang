@@ -85,11 +85,6 @@ public:
     ///     True if the resulting persistent variable should reside in 
     ///     target memory, if applicable.
     ///
-    /// @param[out] const_result
-    ///     If this is non-NULL, the expression has no side effects, and 
-    ///     the expression returns a constant result, then that result 
-    ///     is put into this variable.
-    ///
     /// @return
     ///     True on success (no errors); false otherwise.
     //------------------------------------------------------------------
@@ -97,8 +92,7 @@ public:
     Parse (Stream &error_stream, 
            ExecutionContext &exe_ctx,
            TypeFromUser desired_type,
-           bool keep_result_in_memory,
-           lldb::ClangExpressionVariableSP *const_result = NULL);
+           bool keep_result_in_memory);
     
     //------------------------------------------------------------------
     /// Execute the parsed expression
@@ -133,7 +127,6 @@ public:
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
              bool discard_on_error,
-             bool keep_in_memory,
              ClangUserExpressionSP &shared_ptr_to_me,
              lldb::ClangExpressionVariableSP &result);
              
@@ -244,10 +237,6 @@ public:
     ///     True if the thread's state should be restored in the case 
     ///     of an error.
     ///
-    /// @param[in] keep_in_memory
-    ///     True if the resulting persistent variable should reside in 
-    ///     target memory, if applicable.
-    ///
     /// @param[in] expr_cstr
     ///     A C string containing the expression to be evaluated.
     ///
@@ -264,7 +253,6 @@ public:
     static ExecutionResults
     Evaluate (ExecutionContext &exe_ctx, 
               bool discard_on_error,
-              bool keep_in_memory,
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp);
@@ -289,13 +277,15 @@ private:
     TypeFromUser                                m_desired_type;         ///< The type to coerce the expression's result to.  If NULL, inferred from the expression.
     
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
-    std::auto_ptr<ClangExpressionVariableList> m_local_variables;      ///< The local expression variables, if the expression is DWARF.
+    std::auto_ptr<ClangExpressionVariableList>  m_local_variables;      ///< The local expression variables, if the expression is DWARF.
     std::auto_ptr<StreamString>                 m_dwarf_opcodes;        ///< The DWARF opcodes for the expression.  May be NULL.
     
     bool                                        m_cplusplus;            ///< True if the expression is compiled as a C++ member function (true if it was parsed when exe_ctx was in a C++ method).
     bool                                        m_objectivec;           ///< True if the expression is compiled as an Objective-C method (true if it was parsed when exe_ctx was in an Objective-C method).
     bool                                        m_needs_object_ptr;     ///< True if "this" or "self" must be looked up and passed in.  False if the expression doesn't really use them and they can be NULL.
     bool                                        m_const_object;         ///< True if "this" is const.
+    
+    lldb::ClangExpressionVariableSP             m_const_result;         ///< The statically-computed result of the expression.  NULL if it could not be computed statically or the expression has side effects.
 };
     
 } // namespace lldb_private
