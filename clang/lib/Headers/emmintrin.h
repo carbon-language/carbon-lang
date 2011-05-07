@@ -478,13 +478,13 @@ _mm_load_sd(double const *dp)
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_loadh_pd(__m128d a, double const *dp)
 {
-  return __builtin_shufflevector(a, *(__m128d *)dp, 0, 2);
+  return (__m128d){ a[0], *dp };
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_loadl_pd(__m128d a, double const *dp)
 {
-  return __builtin_shufflevector(a, *(__m128d *)dp, 2, 1);
+  return (__m128d){ *dp, a[1] };
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
