@@ -233,7 +233,7 @@ lldb_private::ListLogCategories (Stream *strm)
         "\tprocess - log process events and activities\n"
         "\tthread - log thread events and activities\n"
         "\tscript - log events about the script interpreter\n"
-        "\dyld - log shared library related activities\n"
+        "\tdyld - log shared library related activities\n"
         "\tstate - log private and public process state changes\n"
         "\tstep - log step related activities\n"
         "\tunwind - log stack unwind activities\n"
