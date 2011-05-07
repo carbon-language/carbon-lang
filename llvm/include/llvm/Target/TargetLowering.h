@@ -1182,7 +1182,7 @@ protected:
   }
 
   /// setPrefFunctionAlignment - Set the target's preferred function alignment.
-  /// This should be set if there is a small performance benefit to
+  /// This should be set if there is a performance benefit to
   /// higher-than-minimum alignment
   void setPrefFunctionAlignment(unsigned Align) {
     PrefFunctionAlignment = Align;
@@ -1728,12 +1728,12 @@ private:
   ///
   unsigned MinFunctionAlignment;
 
-  /// PrefFunctionAlignment - The perferred function alignment (used when
+  /// PrefFunctionAlignment - The preferred function alignment (used when
   /// alignment unspecified and optimizing for speed).
   ///
   unsigned PrefFunctionAlignment;
 
-  /// PrefLoopAlignment - The perferred loop alignment.
+  /// PrefLoopAlignment - The preferred loop alignment.
   ///
   unsigned PrefLoopAlignment;
 
