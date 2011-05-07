@@ -343,6 +343,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
       // Since we define wchar_t in C++ mode.
       Builder.defineMacro("_WCHAR_T_DEFINED");
       Builder.defineMacro("_NATIVE_WCHAR_T_DEFINED");
+      Builder.append("#define __identifier(x) x");
       Builder.append("class type_info;");
     }
 

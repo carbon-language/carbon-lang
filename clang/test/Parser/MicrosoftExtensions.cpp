@@ -207,3 +207,6 @@ __if_not_exists(IF_EXISTS::Type) {
 __if_not_exists(IF_EXISTS::Type_not) {
   int var244;
 }
+
+int __identifier(generic) = 3;
+
