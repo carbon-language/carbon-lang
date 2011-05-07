@@ -121,6 +121,9 @@ public:
     return (i - SubRegIndices.begin()) + 1;
   }
 
+  // Create a new SubRegIndex with the given name.
+  Record *createSubRegIndex(const std::string &Name);
+
   const std::vector<CodeGenRegisterClass> &getRegisterClasses() const {
     if (RegisterClasses.empty()) ReadRegisterClasses();
     return RegisterClasses;

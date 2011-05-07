@@ -98,12 +98,12 @@ std::string llvm::getEnumName(MVT::SimpleValueType T) {
 /// namespace qualifier if the record contains one.
 ///
 std::string llvm::getQualifiedName(const Record *R) {
-  std::string Namespace = R->getValueAsString("Namespace");
+  std::string Namespace;
+  if (R->getValue("Namespace"))
+     Namespace = R->getValueAsString("Namespace");
   if (Namespace.empty()) return R->getName();
   return Namespace + "::" + R->getName();
 }
-
-
 
 
 /// getTarget - Return the current instance of the Target class.
@@ -180,6 +180,13 @@ const std::string &CodeGenRegister::getName() const {
 void CodeGenTarget::ReadSubRegIndices() const {
   SubRegIndices = Records.getAllDerivedDefinitions("SubRegIndex");
   std::sort(SubRegIndices.begin(), SubRegIndices.end(), LessRecord());
+}
+
+Record *CodeGenTarget::createSubRegIndex(const std::string &Name) {
+  Record *R = new Record(Name, SMLoc(), Records);
+  Records.addDef(R);
+  SubRegIndices.push_back(R);
+  return R;
 }
 
 void CodeGenTarget::ReadRegisterClasses() const {
