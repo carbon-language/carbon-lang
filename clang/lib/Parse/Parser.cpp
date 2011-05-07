@@ -20,6 +20,7 @@
 #include "RAIIObjectsForParser.h"
 #include "ParsePragma.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/ASTConsumer.h"
 using namespace clang;
 
 Parser::Parser(Preprocessor &pp, Sema &actions)
@@ -652,6 +653,11 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     }
     // FIXME: Detect C++ linkage specifications here?
     goto dont_know;
+
+  case tok::kw___if_exists:
+  case tok::kw___if_not_exists:
+    ParseMicrosoftIfExistsDeclaration();
+    return DeclGroupPtrTy();
 
   default:
   dont_know:
@@ -1373,4 +1379,81 @@ void Parser::CodeCompleteMacroArgument(IdentifierInfo *Macro,
 
 void Parser::CodeCompleteNaturalLanguage() {
   Actions.CodeCompleteNaturalLanguage();
+}
+
+bool Parser::ParseMicrosoftIfExistsCondition(bool& Result) {
+  assert((Tok.is(tok::kw___if_exists) || Tok.is(tok::kw___if_not_exists)) &&
+         "Expected '__if_exists' or '__if_not_exists'");
+  Token Condition = Tok;
+  SourceLocation IfExistsLoc = ConsumeToken();
+
+  SourceLocation LParenLoc = Tok.getLocation();
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(Tok, diag::err_expected_lparen_after) << IfExistsLoc;
+    SkipUntil(tok::semi);
+    return true;
+  }
+  ConsumeParen(); // eat the '('.
+  
+  // Parse nested-name-specifier.
+  CXXScopeSpec SS;
+  ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
+
+  // Check nested-name specifier.
+  if (SS.isInvalid()) {
+    SkipUntil(tok::semi);
+    return true;
+  }
+
+  // Parse the unqualified-id. 
+  UnqualifiedId Name;
+  if (ParseUnqualifiedId(SS, false, true, true, ParsedType(), Name)) {
+    SkipUntil(tok::semi);
+    return true;
+  }
+
+  if (MatchRHSPunctuation(tok::r_paren, LParenLoc).isInvalid())
+    return true;
+
+  // Check if the symbol exists.
+  bool Exist = Actions.CheckMicrosoftIfExistsSymbol(SS, Name);
+
+  Result = ((Condition.is(tok::kw___if_exists) && Exist) ||
+            (Condition.is(tok::kw___if_not_exists) && !Exist));
+
+  return false;
+}
+
+void Parser::ParseMicrosoftIfExistsDeclaration() {
+  bool Result;
+  if (ParseMicrosoftIfExistsCondition(Result))
+    return;
+  
+  if (Tok.isNot(tok::l_brace)) {
+    Diag(Tok, diag::err_expected_lbrace);
+    return;
+  }
+  ConsumeBrace();
+
+  // Condition is false skip all inside the {}.
+  if (!Result) {
+    SkipUntil(tok::r_brace, false);
+    return;
+  }
+
+  // Condition is true, parse the declaration.
+  while (Tok.isNot(tok::r_brace)) {
+    ParsedAttributesWithRange attrs(AttrFactory);
+    MaybeParseCXX0XAttributes(attrs);
+    MaybeParseMicrosoftAttributes(attrs);
+    DeclGroupPtrTy Result = ParseExternalDeclaration(attrs);
+    if (Result && !getCurScope()->getParent())
+      Actions.getASTConsumer().HandleTopLevelDecl(Result.get());
+  }
+
+  if (Tok.isNot(tok::r_brace)) {
+    Diag(Tok, diag::err_expected_rbrace);
+    return;
+  }
+  ConsumeBrace();
 }

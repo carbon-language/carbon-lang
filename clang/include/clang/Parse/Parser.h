@@ -1308,7 +1308,9 @@ private:
   StmtResult ParseReturnStatement(ParsedAttributes &Attr);
   StmtResult ParseAsmStatement(bool &msAsm);
   StmtResult FuzzyParseMicrosoftAsmStatement(SourceLocation AsmLoc);
+  bool ParseMicrosoftIfExistsCondition(bool& Result);
   void ParseMicrosoftIfExistsStatement(StmtVector &Stmts);
+  void ParseMicrosoftIfExistsDeclaration();
 bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
                            llvm::SmallVectorImpl<ExprTy *> &Constraints,
                            llvm::SmallVectorImpl<ExprTy *> &Exprs);
