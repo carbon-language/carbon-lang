@@ -231,3 +231,39 @@ define i1 @maxmin8(i32 %x, i32 %y, i32 %z) {
   ret i1 %c
 ; CHECK: ret i1 false
 }
+
+define i1 @eqcmp1(i32 %x, i32 %y) {
+; CHECK: @eqcmp1
+  %c = icmp sge i32 %x, %y
+  %max = select i1 %c, i32 %x, i32 %y
+  %r = icmp eq i32 %max, %x
+  ret i1 %r
+; CHECK: ret i1 %c
+}
+
+define i1 @eqcmp2(i32 %x, i32 %y) {
+; CHECK: @eqcmp2
+  %c = icmp sge i32 %x, %y
+  %max = select i1 %c, i32 %x, i32 %y
+  %r = icmp eq i32 %x, %max
+  ret i1 %r
+; CHECK: ret i1 %c
+}
+
+define i1 @eqcmp3(i32 %x, i32 %y) {
+; CHECK: @eqcmp3
+  %c = icmp uge i32 %x, %y
+  %max = select i1 %c, i32 %x, i32 %y
+  %r = icmp eq i32 %max, %x
+  ret i1 %r
+; CHECK: ret i1 %c
+}
+
+define i1 @eqcmp4(i32 %x, i32 %y) {
+; CHECK: @eqcmp4
+  %c = icmp uge i32 %x, %y
+  %max = select i1 %c, i32 %x, i32 %y
+  %r = icmp eq i32 %x, %max
+  ret i1 %r
+; CHECK: ret i1 %c
+}

@@ -1376,6 +1376,26 @@ static const Type *GetCompareTy(Value *Op) {
   return CmpInst::makeCmpResultType(Op->getType());
 }
 
+/// ExtractEquivalentCondition - Rummage around inside V looking for something
+/// equivalent to the comparison "LHS Pred RHS".  Return such a value if found,
+/// otherwise return null.  Helper function for analyzing max/min idioms.
+static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
+                                         Value *LHS, Value *RHS) {
+  SelectInst *SI = dyn_cast<SelectInst>(V);
+  if (!SI)
+    return 0;
+  CmpInst *Cmp = dyn_cast<CmpInst>(SI->getCondition());
+  if (!Cmp)
+    return 0;
+  Value *CmpLHS = Cmp->getOperand(0), *CmpRHS = Cmp->getOperand(1);
+  if (Pred == Cmp->getPredicate() && LHS == CmpLHS && RHS == CmpRHS)
+    return Cmp;
+  if (Pred == CmpInst::getSwappedPredicate(Cmp->getPredicate()) &&
+      LHS == CmpRHS && RHS == CmpLHS)
+    return Cmp;
+  return 0;
+}
+
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
@@ -1907,19 +1927,32 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       break;
     case CmpInst::ICMP_EQ:
     case CmpInst::ICMP_SLE:
-      // Equivalent to "A EqP B".
+      // Equivalent to "A EqP B".  This may be the same as the condition tested
+      // in the max/min; if so, we can just return that.
+      if (Value *V = ExtractEquivalentCondition(LHS, EqP, A, B))
+        return V;
+      if (Value *V = ExtractEquivalentCondition(RHS, EqP, A, B))
+        return V;
+      // Otherwise, see if "A EqP B" simplifies.
       if (MaxRecurse)
         if (Value *V = SimplifyICmpInst(EqP, A, B, TD, DT, MaxRecurse-1))
           return V;
       break;
     case CmpInst::ICMP_NE:
-    case CmpInst::ICMP_SGT:
-      // Equivalent to "A inverse-EqP B".
+    case CmpInst::ICMP_SGT: {
+      CmpInst::Predicate InvEqP = CmpInst::getInversePredicate(EqP);
+      // Equivalent to "A InvEqP B".  This may be the same as the condition
+      // tested in the max/min; if so, we can just return that.
+      if (Value *V = ExtractEquivalentCondition(LHS, InvEqP, A, B))
+        return V;
+      if (Value *V = ExtractEquivalentCondition(RHS, InvEqP, A, B))
+        return V;
+      // Otherwise, see if "A InvEqP B" simplifies.
       if (MaxRecurse)
-        if (Value *V = SimplifyICmpInst(CmpInst::getInversePredicate(EqP), A, B,
-                                        TD, DT, MaxRecurse-1))
+        if (Value *V = SimplifyICmpInst(InvEqP, A, B, TD, DT, MaxRecurse-1))
           return V;
       break;
+    }
     case CmpInst::ICMP_SGE:
       // Always true.
       return Constant::getAllOnesValue(ITy);
@@ -1964,19 +1997,32 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       break;
     case CmpInst::ICMP_EQ:
     case CmpInst::ICMP_ULE:
-      // Equivalent to "A EqP B".
+      // Equivalent to "A EqP B".  This may be the same as the condition tested
+      // in the max/min; if so, we can just return that.
+      if (Value *V = ExtractEquivalentCondition(LHS, EqP, A, B))
+        return V;
+      if (Value *V = ExtractEquivalentCondition(RHS, EqP, A, B))
+        return V;
+      // Otherwise, see if "A EqP B" simplifies.
       if (MaxRecurse)
         if (Value *V = SimplifyICmpInst(EqP, A, B, TD, DT, MaxRecurse-1))
           return V;
       break;
     case CmpInst::ICMP_NE:
-    case CmpInst::ICMP_UGT:
-      // Equivalent to "A inverse-EqP B".
+    case CmpInst::ICMP_UGT: {
+      CmpInst::Predicate InvEqP = CmpInst::getInversePredicate(EqP);
+      // Equivalent to "A InvEqP B".  This may be the same as the condition
+      // tested in the max/min; if so, we can just return that.
+      if (Value *V = ExtractEquivalentCondition(LHS, InvEqP, A, B))
+        return V;
+      if (Value *V = ExtractEquivalentCondition(RHS, InvEqP, A, B))
+        return V;
+      // Otherwise, see if "A InvEqP B" simplifies.
       if (MaxRecurse)
-        if (Value *V = SimplifyICmpInst(CmpInst::getInversePredicate(EqP), A, B,
-                                        TD, DT, MaxRecurse-1))
+        if (Value *V = SimplifyICmpInst(InvEqP, A, B, TD, DT, MaxRecurse-1))
           return V;
       break;
+    }
     case CmpInst::ICMP_UGE:
       // Always true.
       return Constant::getAllOnesValue(ITy);
