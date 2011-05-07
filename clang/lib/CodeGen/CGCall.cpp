@@ -1166,15 +1166,6 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
     return args.add(EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0),
                     type);
 
-  if (hasAggregateLLVMType(type) && isa<ImplicitCastExpr>(E) &&
-      cast<CastExpr>(E)->getCastKind() == CK_LValueToRValue) {
-    LValue L = EmitLValue(cast<CastExpr>(E)->getSubExpr());
-    assert(L.isSimple());
-    args.add(RValue::getAggregate(L.getAddress(), L.isVolatileQualified()),
-             type, /*NeedsCopy*/true);
-    return;
-  }
-
   args.add(EmitAnyExprToTemp(E), type);
 }
 
@@ -1240,10 +1231,6 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                             Alignment, I->Ty);
         else
           StoreComplexToAddr(RV.getComplexVal(), Args.back(), false);
-      } else if (I->NeedsCopy && !ArgInfo.getIndirectByVal()) {
-        Args.push_back(CreateMemTemp(I->Ty));
-        EmitAggregateCopy(Args.back(), RV.getAggregateAddr(), I->Ty,
-                          RV.isVolatileQualified());
       } else {
         Args.push_back(RV.getAggregateAddr());
       }

@@ -47,9 +47,8 @@ namespace CodeGen {
   struct CallArg {
     RValue RV;
     QualType Ty;
-    bool NeedsCopy;
-    CallArg(RValue rv, QualType ty, bool needscopy)
-    : RV(rv), Ty(ty), NeedsCopy(needscopy)
+    CallArg(RValue rv, QualType ty)
+    : RV(rv), Ty(ty)
     { }
   };
 
@@ -58,8 +57,8 @@ namespace CodeGen {
   class CallArgList :
     public llvm::SmallVector<CallArg, 16> {
   public:
-    void add(RValue rvalue, QualType type, bool needscopy = false) {
-      push_back(CallArg(rvalue, type, needscopy));
+    void add(RValue rvalue, QualType type) {
+      push_back(CallArg(rvalue, type));
     }
   };
 
