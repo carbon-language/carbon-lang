@@ -1372,6 +1372,12 @@ void ARMCodeEmitter::emitMiscArithInstruction(const MachineInstr &MI) {
   // Set the conditional execution predicate
   Binary |= II->getPredicate(&MI) << ARMII::CondShift;
 
+  // PKH instructions are finished at this point
+  if (TID.Opcode == ARM::PKHBT || TID.Opcode == ARM::PKHTB) {
+    emitWordLE(Binary);
+    return;
+  }
+
   unsigned OpIdx = 0;
 
   // Encode Rd
