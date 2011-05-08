@@ -1628,6 +1628,15 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   }
 
+  // MSVC allows implicit function to void* type conversion.
+  if (getLangOptions().Microsoft && FromPointeeType->isFunctionType() &&
+      ToPointeeType->isVoidType()) {
+    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
+                                                       ToPointeeType,
+                                                       ToType, Context);
+    return true;
+  }
+
   // When we're overloading in C, we allow a special kind of pointer
   // conversion for compatible-but-not-identical pointee types.
   if (!getLangOptions().CPlusPlus &&
