@@ -187,6 +187,5 @@ long (*function_ptr)(int a);
 void function_to_voidptr_conv() {
    void *a1 = function_prototype;
    void *a2 = &function_prototype;
-   void *a1 = function_ptr;
-   void *a2 = &function_ptr;
+   void *a3 = function_ptr;
 }
