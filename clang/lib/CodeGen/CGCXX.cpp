@@ -187,7 +187,10 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
   // The constructor used for constructing this as a complete class;
   // constucts the virtual bases, then calls the base constructor.
-  EmitGlobal(GlobalDecl(D, Ctor_Complete));
+  if (!D->getParent()->isAbstract()) {
+    // We don't need to emit the complete ctor if the class is abstract.
+    EmitGlobal(GlobalDecl(D, Ctor_Complete));
+  }
 
   // The constructor used for constructing this as a base class;
   // ignores virtual bases.
@@ -244,7 +247,11 @@ void CodeGenModule::EmitCXXDestructors(const CXXDestructorDecl *D) {
 
   // The destructor used for destructing this as a most-derived class;
   // call the base destructor and then destructs any virtual bases.
-  EmitGlobal(GlobalDecl(D, Dtor_Complete));
+  if (!D->getParent()->isAbstract() || D->isVirtual()) {
+    // We don't need to emit the complete ctor if the class is abstract,
+    // unless the destructor is virtual and needs to be in the vtable.
+    EmitGlobal(GlobalDecl(D, Dtor_Complete));
+  }
 
   // The destructor used for destructing this as a base class; ignores
   // virtual bases.
