@@ -283,8 +283,7 @@ namespace llvm {
     //
     static void Emit(MCStreamer &streamer, bool usingCFI);
     static void EmitAdvanceLoc(MCStreamer &Streamer, uint64_t AddrDelta);
-    static void EncodeAdvanceLoc(uint64_t AddrDelta, raw_ostream &OS,
-                                 const TargetAsmInfo &AsmInfo);
+    static void EncodeAdvanceLoc(uint64_t AddrDelta, raw_ostream &OS);
   };
 } // end namespace llvm
 

@@ -868,27 +868,21 @@ void MCDwarfFrameEmitter::EmitAdvanceLoc(MCStreamer &Streamer,
   SmallString<256> Tmp;
   raw_svector_ostream OS(Tmp);
   const TargetAsmInfo &AsmInfo = Streamer.getContext().getTargetAsmInfo();
-  MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OS, AsmInfo);
+  MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OS);
   Streamer.EmitBytes(OS.str(), /*AddrSpace=*/0);
 }
 
 void MCDwarfFrameEmitter::EncodeAdvanceLoc(uint64_t AddrDelta,
-                                           raw_ostream &OS,
-                                           const TargetAsmInfo &AsmInfo) {
-  // This is a small hack to facilitate the transition to CFI on OS X. It
-  // relaxes all address advances which lets us produces identical output
-  // to the one produce by CodeGen.
-  const bool Relax = !AsmInfo.isFunctionEHFrameSymbolPrivate();
-
+                                           raw_ostream &OS) {
   // FIXME: Assumes the code alignment factor is 1.
   if (AddrDelta == 0) {
-  } else if (isUIntN(6, AddrDelta) && !Relax) {
+  } else if (isUIntN(6, AddrDelta)) {
     uint8_t Opcode = dwarf::DW_CFA_advance_loc | AddrDelta;
     OS << Opcode;
-  } else if (isUInt<8>(AddrDelta) && !Relax) {
+  } else if (isUInt<8>(AddrDelta)) {
     OS << uint8_t(dwarf::DW_CFA_advance_loc1);
     OS << uint8_t(AddrDelta);
-  } else if (isUInt<16>(AddrDelta) && !Relax) {
+  } else if (isUInt<16>(AddrDelta)) {
     // FIXME: check what is the correct behavior on a big endian machine.
     OS << uint8_t(dwarf::DW_CFA_advance_loc2);
     OS << uint8_t( AddrDelta       & 0xff);
