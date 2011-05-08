@@ -186,28 +186,46 @@ public:
 };
 
 class AddOperator
-  : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Add> {};
+  : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Add> {
+  ~AddOperator(); // DO NOT IMPLEMENT
+};
 class SubOperator
-  : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Sub> {};
+  : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Sub> {
+  ~SubOperator(); // DO NOT IMPLEMENT
+};
 class MulOperator
-  : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Mul> {};
+  : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Mul> {
+  ~MulOperator(); // DO NOT IMPLEMENT
+};
 class ShlOperator
-  : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Shl> {};
+  : public ConcreteOperator<OverflowingBinaryOperator, Instruction::Shl> {
+  ~ShlOperator(); // DO NOT IMPLEMENT
+};
 
   
 class SDivOperator
-  : public ConcreteOperator<PossiblyExactOperator, Instruction::SDiv> {};
+  : public ConcreteOperator<PossiblyExactOperator, Instruction::SDiv> {
+  ~SDivOperator(); // DO NOT IMPLEMENT
+};
 class UDivOperator
-  : public ConcreteOperator<PossiblyExactOperator, Instruction::UDiv> {};
+  : public ConcreteOperator<PossiblyExactOperator, Instruction::UDiv> {
+  ~UDivOperator(); // DO NOT IMPLEMENT
+};
 class AShrOperator
-  : public ConcreteOperator<PossiblyExactOperator, Instruction::AShr> {};
+  : public ConcreteOperator<PossiblyExactOperator, Instruction::AShr> {
+  ~AShrOperator(); // DO NOT IMPLEMENT
+};
 class LShrOperator
-  : public ConcreteOperator<PossiblyExactOperator, Instruction::LShr> {};
+  : public ConcreteOperator<PossiblyExactOperator, Instruction::LShr> {
+  ~LShrOperator(); // DO NOT IMPLEMENT
+};
   
   
   
 class GEPOperator
   : public ConcreteOperator<Operator, Instruction::GetElementPtr> {
+  ~GEPOperator(); // DO NOT IMPLEMENT
+
   enum {
     IsInBounds = (1 << 0)
   };
