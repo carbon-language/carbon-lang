@@ -4,9 +4,9 @@
 define i32 @test1(i32 %sum, i32 %x) nounwind readnone ssp {
 entry:
 ; CHECK: test1:
-; CHECK:	sbbl	%ecx, %ecx
+; CHECK: cmpl %ecx, %eax
 ; CHECK-NOT: addl
-; CHECK: subl	%ecx, %eax
+; CHECK: adcl $0, %eax
   %add4 = add i32 %x, %sum
   %cmp = icmp ult i32 %add4, %x
   %inc = zext i1 %cmp to i32
@@ -18,8 +18,7 @@ entry:
 ; CHECK: test2:
 ; CHECK: movl
 ; CHECK-NEXT: addl
-; CHECK-NEXT: sbbl
-; CHECK-NEXT: subl
+; CHECK-NEXT: adcl $0
 ; CHECK-NEXT: ret
 define i32 @test2(i32 %sum, i32 %x) nounwind readnone ssp {
 entry:
