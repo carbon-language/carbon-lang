@@ -404,3 +404,25 @@ def print_stacktraces(process, string_buffer = False):
 
     if string_buffer:
         return output.getvalue()
+
+# ===================================
+# Utility functions related to Frames
+# ===================================
+
+def print_registers(frame, string_buffer = False):
+    """Prints the all the register sets of the frame."""
+
+    output = StringIO.StringIO() if string_buffer else sys.stdout
+
+    print >> output, "Register sets for " + repr(frame)
+
+    registerList = frame.GetRegisters()
+    print >> output, "Frame registers (size of register set = %d):" % registerList.GetSize()
+    for value in registerList:
+        #print >> output, value 
+        print >> output, "%s (number of children = %d):" % (value.GetName(), value.GetNumChildren())
+        for child in value:
+            print >> output, "Name: %s, Value: %s" % (child.GetName(), child.GetValue(frame))
+
+    if string_buffer:
+        return output.getvalue()

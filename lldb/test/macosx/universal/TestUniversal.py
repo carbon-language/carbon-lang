@@ -20,6 +20,7 @@ class UniversalTestCase(TestBase):
                           "requires Darwin & i386")
     def test_process_launch_for_universal(self):
         """Test process launch of a universal binary."""
+        from lldbutil import print_registers
 
         # Invoke the default build rule.
         self.buildDefault()
@@ -48,6 +49,11 @@ class UniversalTestCase(TestBase):
                         self.invoke(process, 'GetAddressByteSize') == 8,
                         "64-bit process launched")
 
+        frame = process.GetThreadAtIndex(0).GetFrameAtIndex(0)
+        registers = print_registers(frame, string_buffer=True)
+        self.expect(registers, exe=False,
+            substrs = ['Name: rax'])
+
         self.runCmd("continue")
 
         # Now specify i386 as the architecture for "testit".
@@ -73,6 +79,11 @@ class UniversalTestCase(TestBase):
         pointerSize = self.invoke(process, 'GetAddressByteSize')
         self.assertTrue(pointerSize == 4,
                         "AddressByteSize of 32-bit process should be 4, got %d instead." % pointerSize)
+
+        frame = process.GetThreadAtIndex(0).GetFrameAtIndex(0)
+        registers = print_registers(frame, string_buffer=True)
+        self.expect(registers, exe=False,
+            substrs = ['Name: eax'])
 
         self.runCmd("continue")
 
