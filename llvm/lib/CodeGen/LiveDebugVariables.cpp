@@ -840,6 +840,9 @@ UserValue::rewriteLocations(VirtRegMap &VRM, const TargetRegisterInfo &TRI) {
     unsigned VirtReg = Loc.getReg();
     if (VRM.isAssignedReg(VirtReg) &&
         TargetRegisterInfo::isPhysicalRegister(VRM.getPhys(VirtReg))) {
+      // This can create a %noreg operand in rare cases when the sub-register
+      // index is no longer available. That means the user value is in a
+      // non-existent sub-register, and %noreg is exactly what we want.
       Loc.substPhysReg(VRM.getPhys(VirtReg), TRI);
     } else if (VRM.getStackSlot(VirtReg) != VirtRegMap::NO_STACK_SLOT &&
                VRM.isSpillSlotUsed(VRM.getStackSlot(VirtReg))) {
@@ -942,6 +945,7 @@ void LDVImpl::emitDebugValues(VirtRegMap *VRM) {
   DEBUG(dbgs() << "********** EMITTING LIVE DEBUG VARIABLES **********\n");
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   for (unsigned i = 0, e = userValues.size(); i != e; ++i) {
+    DEBUG(userValues[i]->print(dbgs(), &MF->getTarget()));
     userValues[i]->rewriteLocations(*VRM, *TRI);
     userValues[i]->emitDebugValues(VRM, *LIS, *TII);
   }

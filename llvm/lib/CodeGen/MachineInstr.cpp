@@ -125,7 +125,8 @@ void MachineOperand::substPhysReg(unsigned Reg, const TargetRegisterInfo &TRI) {
   assert(TargetRegisterInfo::isPhysicalRegister(Reg));
   if (getSubReg()) {
     Reg = TRI.getSubReg(Reg, getSubReg());
-    assert(Reg && "Invalid SubReg for physical register");
+    // Note that getSubReg() may return 0 if the sub-register doesn't exist.
+    // That won't happen in legal code.
     setSubReg(0);
   }
   setReg(Reg);
