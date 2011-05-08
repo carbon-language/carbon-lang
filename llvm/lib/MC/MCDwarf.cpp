@@ -867,7 +867,6 @@ void MCDwarfFrameEmitter::EmitAdvanceLoc(MCStreamer &Streamer,
                                          uint64_t AddrDelta) {
   SmallString<256> Tmp;
   raw_svector_ostream OS(Tmp);
-  const TargetAsmInfo &AsmInfo = Streamer.getContext().getTargetAsmInfo();
   MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OS);
   Streamer.EmitBytes(OS.str(), /*AddrSpace=*/0);
 }
