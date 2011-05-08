@@ -486,6 +486,7 @@ ProcessGDBRemote::DoLaunch
 
             m_gdb_comm.SetDisableASLR (launch_flags & eLaunchFlagDisableASLR);
 
+            m_gdb_comm.SendLaunchArchPacket (m_target.GetArchitecture().GetArchitectureName());
             
             if (working_dir && working_dir[0])
             {

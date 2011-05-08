@@ -705,6 +705,26 @@ GDBRemoteCommunicationClient::SendEnvironmentPacket (char const *name_equal_valu
     return -1;
 }
 
+int
+GDBRemoteCommunicationClient::SendLaunchArchPacket (char const *arch)
+{
+    if (arch && arch[0])
+    {
+        StreamString packet;
+        packet.Printf("QLaunchArch:%s", arch);
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
+        {
+            if (response.IsOKResponse())
+                return 0;
+            uint8_t error = response.GetError();
+            if (error)
+                return error;
+        }
+    }
+    return -1;
+}
+
 bool
 GDBRemoteCommunicationClient::GetOSVersion (uint32_t &major, 
                                             uint32_t &minor, 

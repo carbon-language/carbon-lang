@@ -175,6 +175,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (set_max_packet_size,           &RNBRemote::HandlePacket_QSetMaxPacketSize      , NULL, "QSetMaxPacketSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized packet gdb can handle"));
     t.push_back (Packet (set_max_payload_size,          &RNBRemote::HandlePacket_QSetMaxPayloadSize     , NULL, "QSetMaxPayloadSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized payload gdb can handle"));
     t.push_back (Packet (set_environment_variable,      &RNBRemote::HandlePacket_QEnvironment           , NULL, "QEnvironment:", "Add an environment variable to the inferior's environment"));
+    t.push_back (Packet (set_launch_arch,               &RNBRemote::HandlePacket_QLaunchArch            , NULL, "QLaunchArch:", "Set the architecture to use when launching a process for hosts that can run multiple architecture slices from universal files."));
     t.push_back (Packet (set_disable_aslr,              &RNBRemote::HandlePacket_QSetDisableASLR        , NULL, "QSetDisableASLR:", "Set wether to disable ASLR when launching the process with the set argv ('A') packet"));
     t.push_back (Packet (set_stdin,                     &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDIN:", "Set the standard input for a process to be launched with the 'A' packet"));
     t.push_back (Packet (set_stdout,                    &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDOUT:", "Set the standard output for a process to be launched with the 'A' packet"));
@@ -1881,6 +1882,15 @@ RNBRemote::HandlePacket_QEnvironment (const char *p)
 
     ctx.PushEnvironment (p);
     return SendPacket ("OK");
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_QLaunchArch (const char *p)
+{
+    p += sizeof ("QLaunchArch:") - 1;
+    if (DNBSetArchitecture(p))
+        return SendPacket ("OK");
+    return SendPacket ("E63");
 }
 
 void

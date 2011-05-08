@@ -98,6 +98,7 @@ public:
         set_max_packet_size,            // 'QSetMaxPacketSize:'
         set_max_payload_size,           // 'QSetMaxPayloadSize:'
         set_environment_variable,       // 'QEnvironment:'
+        set_launch_arch,                // 'QLaunchArch:'
         set_disable_aslr,               // 'QSetDisableASLR:'
         set_stdin,                      // 'QSetSTDIN:'
         set_stdout,                     // 'QSetSTDOUT:'
@@ -170,6 +171,7 @@ public:
     rnb_err_t HandlePacket_QSetMaxPayloadSize (const char *p);
     rnb_err_t HandlePacket_QSetMaxPacketSize (const char *p);
     rnb_err_t HandlePacket_QEnvironment (const char *p);
+    rnb_err_t HandlePacket_QLaunchArch (const char *p);
     rnb_err_t HandlePacket_QPrefixRegisterPacketsWithThreadID (const char *p);
     rnb_err_t HandlePacket_last_signal (const char *p);
     rnb_err_t HandlePacket_m (const char *p);

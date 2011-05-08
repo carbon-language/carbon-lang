@@ -123,6 +123,8 @@ public:
     int
     SendEnvironmentPacket (char const *name_equal_value);
 
+    int
+    SendLaunchArchPacket (const char *arch);
     //------------------------------------------------------------------
     /// Sends a "vAttach:PID" where PID is in hex. 
     ///
