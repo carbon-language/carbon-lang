@@ -937,7 +937,10 @@ public:
             if (thread == NULL)
             {
                 const uint32_t num_threads = process->GetThreadList().GetSize();
-                result.AppendErrorWithFormat ("Thread index %u is out of range (valid values are 0 - %u).\n", m_options.m_thread_idx, 0, num_threads);
+                result.AppendErrorWithFormat ("Thread index %u is out of range (valid values are 0 - %u).\n", 
+                                              m_options.m_thread_idx, 
+                                              0, 
+                                              num_threads);
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
@@ -948,7 +951,9 @@ public:
             if (frame == NULL)
             {
 
-                result.AppendErrorWithFormat ("Frame index %u is out of range for thread %u.\n", m_options.m_frame_idx, m_options.m_thread_idx);
+                result.AppendErrorWithFormat ("Frame index %u is out of range for thread %u.\n", 
+                                              m_options.m_frame_idx, 
+                                              m_options.m_thread_idx);
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
@@ -980,9 +985,12 @@ public:
                 Address fun_start_addr = fun_addr_range.GetBaseAddress();
                 line_table->FindLineEntryByAddress (fun_start_addr, function_start, &index_ptr);
 
-                Address fun_end_addr(fun_start_addr.GetSection(), fun_start_addr.GetOffset() + fun_addr_range.GetByteSize());
+                Address fun_end_addr(fun_start_addr.GetSection(), 
+                                     fun_start_addr.GetOffset() + fun_addr_range.GetByteSize());
                 line_table->FindLineEntryByAddress (fun_end_addr, function_start, &end_ptr);
 
+                bool all_in_function = true;
+                
                 while (index_ptr <= end_ptr)
                 {
                     LineEntry line_entry;
@@ -992,16 +1000,38 @@ public:
 
                     addr_t address = line_entry.range.GetBaseAddress().GetLoadAddress(target);
                     if (address != LLDB_INVALID_ADDRESS)
-                        address_list.push_back (address);
+                    {
+                        if (fun_addr_range.ContainsLoadAddress (address, target))
+                            address_list.push_back (address);
+                        else
+                            all_in_function = false;
+                    }
                     index_ptr++;
                 }
 
-                new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans, &address_list.front(), address_list.size(), m_options.m_stop_others, thread->GetSelectedFrameIndex ());
+                if (address_list.size() == 0)
+                {
+                    if (all_in_function)
+                        result.AppendErrorWithFormat ("No line entries matching until target.\n");
+                    else
+                        result.AppendErrorWithFormat ("Until target outside of the current function.\n");
+                        
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                
+                new_plan = thread->QueueThreadPlanForStepUntil (abort_other_plans, 
+                                                                &address_list.front(), 
+                                                                address_list.size(), 
+                                                                m_options.m_stop_others, 
+                                                                thread->GetSelectedFrameIndex ());
                 new_plan->SetOkayToDiscard(false);
             }
             else
             {
-                result.AppendErrorWithFormat ("Frame index %u of thread %u has no debug information.\n", m_options.m_frame_idx, m_options.m_thread_idx);
+                result.AppendErrorWithFormat ("Frame index %u of thread %u has no debug information.\n", 
+                                              m_options.m_frame_idx, 
+                                              m_options.m_thread_idx);
                 result.SetStatus (eReturnStatusFailed);
                 return false;
 

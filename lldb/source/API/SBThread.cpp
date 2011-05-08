@@ -683,14 +683,28 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
             }
         }
     
+        // Grab the current function, then we will make sure the "until" address is
+        // within the function.  We discard addresses that are out of the current
+        // function, and then if there are no addresses remaining, give an appropriate
+        // error message.
+        
+        bool all_in_function = true;
+        AddressRange fun_range = frame_sc.function->GetAddressRange();
+        
         std::vector<addr_t> step_over_until_addrs;
         const bool abort_other_plans = true;
         const bool stop_other_threads = true;
         const bool check_inlines = true;
         const bool exact = false;
+        Target *target = &m_opaque_sp->GetProcess().GetTarget();
 
         SymbolContextList sc_list;
-        const uint32_t num_matches = frame_sc.comp_unit->ResolveSymbolContext (step_file_spec, line, check_inlines, exact, eSymbolContextLineEntry, sc_list);
+        const uint32_t num_matches = frame_sc.comp_unit->ResolveSymbolContext (step_file_spec, 
+                                                                               line, 
+                                                                               check_inlines, 
+                                                                               exact, 
+                                                                               eSymbolContextLineEntry, 
+                                                                               sc_list);
         if (num_matches > 0)
         {
             SymbolContext sc;
@@ -698,19 +712,27 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
             {
                 if (sc_list.GetContextAtIndex(i, sc))
                 {
-                    addr_t step_addr = sc.line_entry.range.GetBaseAddress().GetLoadAddress(&m_opaque_sp->GetProcess().GetTarget());
+                    addr_t step_addr = sc.line_entry.range.GetBaseAddress().GetLoadAddress(target);
                     if (step_addr != LLDB_INVALID_ADDRESS)
                     {
-                        step_over_until_addrs.push_back(step_addr);
+                        if (fun_range.ContainsLoadAddress(step_addr, target))
+                            step_over_until_addrs.push_back(step_addr);
+                        else
+                            all_in_function = false;
                     }
                 }
             }
         }
-
+        
         if (step_over_until_addrs.empty())
         {
-            step_file_spec.GetPath (path, sizeof(path));
-            sb_error.SetErrorStringWithFormat("No line entries for %s:u", path, line);
+            if (all_in_function)
+            {
+                step_file_spec.GetPath (path, sizeof(path));
+                sb_error.SetErrorStringWithFormat("No line entries for %s:u", path, line);
+            }
+            else
+                sb_error.SetErrorString ("Step until target not in current function.\n");
         }
         else
         {
