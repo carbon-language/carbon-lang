@@ -345,18 +345,7 @@ CodeGenFunction::EmitCXXOperatorMemberCallExpr(const CXXOperatorCallExpr *E,
     }
   }
 
-  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
-  const llvm::Type *Ty =
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                   FPT->isVariadic());
-  llvm::Value *Callee;
-  if (MD->isVirtual() && 
-      !canDevirtualizeMemberFunctionCalls(getContext(),
-                                           E->getArg(0), MD))
-    Callee = BuildVirtualCall(MD, This, Ty);
-  else
-    Callee = CGM.GetAddrOfFunction(MD, Ty);
-
+  llvm::Value *Callee = EmitCXXOperatorMemberCallee(E, MD, This);
   return EmitCXXMemberCall(MD, Callee, ReturnValue, This, /*VTT=*/0,
                            E->arg_begin() + 1, E->arg_end());
 }
