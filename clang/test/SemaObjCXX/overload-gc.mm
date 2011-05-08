@@ -1,9 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -triple i386-apple-darwin9 -fobjc-gc -verify %s
 
-void f0(__weak id *); // expected-note{{candidate function not viable: 1st argument ('id *') has no lifetime, but parameter has __weak lifetime}}
+void f0(__weak id *);
 
 void test_f0(id *x) {
-  f0(x); // expected-error{{no matching function for call to 'f0'}}
+  f0(x);
 }
 
 @interface A

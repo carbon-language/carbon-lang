@@ -2197,6 +2197,13 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
     Qualifiers FromQuals = FromType.getQualifiers();
     Qualifiers ToQuals = ToType.getQualifiers();
     
+    // Allow addition/removal of GC attributes but not changing GC attributes.
+    if (FromQuals.getObjCGCAttr() != ToQuals.getObjCGCAttr() &&
+        (!FromQuals.hasObjCGCAttr() || !ToQuals.hasObjCGCAttr())) {
+      FromQuals.removeObjCGCAttr();
+      ToQuals.removeObjCGCAttr();
+    }
+    
     //   -- for every j > 0, if const is in cv 1,j then const is in cv
     //      2,j, and similarly for volatile.
     if (!CStyle && !ToQuals.compatiblyIncludes(FromQuals))

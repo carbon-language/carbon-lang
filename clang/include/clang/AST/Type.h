@@ -294,9 +294,15 @@ public:
   /// Generally this answers the question of whether an object with the other
   /// qualifiers can be safely used as an object with these qualifiers.
   bool compatiblyIncludes(Qualifiers other) const {
-    // Non-CVR qualifiers must match exactly.  CVR qualifiers may subset.
-    return ((Mask & ~CVRMask) == (other.Mask & ~CVRMask)) &&
-           (((Mask & CVRMask) | (other.Mask & CVRMask)) == (Mask & CVRMask));
+    return 
+      // Address spaces must match exactly.
+      getAddressSpace() == other.getAddressSpace() &&
+      // ObjC GC qualifiers can match, be added, or be removed, but can't be
+      // changed.
+      (getObjCGCAttr() == other.getObjCGCAttr() ||
+       !hasObjCGCAttr() || !other.hasObjCGCAttr()) &&
+      // CVR qualifiers may subset.
+      (((Mask & CVRMask) | (other.Mask & CVRMask)) == (Mask & CVRMask));
   }
 
   /// \brief Determine whether this set of qualifiers is a strict superset of
