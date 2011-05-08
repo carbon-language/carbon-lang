@@ -385,13 +385,14 @@ static UuidAttr *GetUuidAttrOfType(QualType QT) {
   else if (QT->isArrayType())
     Ty = cast<ArrayType>(QT)->getElementType().getTypePtr();
 
-  // Loop all class definition and declaration looking for an uuid attribute.
+  // Loop all record redeclaration looking for an uuid attribute.
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
-  while (RD) {
-    if (UuidAttr *Uuid = RD->getAttr<UuidAttr>())
+  for (CXXRecordDecl::redecl_iterator I = RD->redecls_begin(),
+       E = RD->redecls_end(); I != E; ++I) {
+    if (UuidAttr *Uuid = I->getAttr<UuidAttr>())
       return Uuid;
-    RD = RD->getPreviousDeclaration();
   }
+
   return 0;
 }
 
