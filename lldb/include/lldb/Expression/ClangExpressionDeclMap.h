@@ -316,6 +316,10 @@ public:
     /// [Used by IRForTarget] Get the address of a symbol given nothing
     /// but its name.
     ///
+    /// @param[in] target
+    ///     The target to find the symbol in.  If not provided,
+    ///     then the current parsing context's Target.
+    ///
     /// @param[in] name
     ///     The name of the symbol.  
     ///
@@ -325,6 +329,11 @@ public:
     /// @return
     ///     True if the address could be retrieved; false otherwise.
     //------------------------------------------------------------------
+    bool 
+    GetSymbolAddress (Target &target,
+                      const ConstString &name,
+                      uint64_t &ptr);
+    
     bool 
     GetSymbolAddress (const ConstString &name,
                       uint64_t &ptr);
@@ -648,6 +657,22 @@ private:
                          TypeFromUser *type = NULL);
     
     //------------------------------------------------------------------
+    /// Given a target, find a data symbol that has the given name.
+    ///
+    /// @param[in] target
+    ///     The target to use as the basis for the search.
+    ///
+    /// @param[in] name
+    ///     The name as a plain C string.
+    ///
+    /// @return
+    ///     The LLDB Symbol found, or NULL if none was found.
+    //---------------------------------------------------------
+    Symbol *
+    FindGlobalDataSymbol (Target &target,
+                          const ConstString &name);
+    
+    //------------------------------------------------------------------
     /// Get the value of a variable in a given execution context and return
     /// the associated Types if needed.
     ///
@@ -699,7 +724,7 @@ private:
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given
-    /// persistent variable, and put it in the Tuple list.
+    /// persistent variable, and put it in the list of found entities.
     ///
     /// @param[in] context
     ///     The NameSearchContext to use when constructing the Decl.
@@ -710,6 +735,21 @@ private:
     void 
     AddOneVariable (NameSearchContext &context, 
                     lldb::ClangExpressionVariableSP &pvar_sp);
+    
+    //------------------------------------------------------------------
+    /// Use the NameSearchContext to generate a Decl for the given LLDB
+    /// symbol (treated as a variable), and put it in the list of found
+    /// entities.
+    ///
+    /// @param[in] context
+    ///     The NameSearchContext to use when constructing the Decl.
+    ///
+    /// @param[in] var
+    ///     The LLDB Variable that needs a Decl.
+    //------------------------------------------------------------------
+    void
+    AddOneGenericVariable (NameSearchContext &context,
+                           Symbol &symbol);
     
     //------------------------------------------------------------------
     /// Use the NameSearchContext to generate a Decl for the given

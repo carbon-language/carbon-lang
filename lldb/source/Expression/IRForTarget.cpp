@@ -1295,7 +1295,7 @@ IRForTarget::MaybeHandleVariable (Module &llvm_module, Value *llvm_value_ptr)
 bool
 IRForTarget::HandleSymbol (Module &llvm_module,
                            Value *symbol)
-{
+{    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     lldb_private::ConstString name(symbol->getName().str().c_str());

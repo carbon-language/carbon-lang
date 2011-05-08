@@ -533,19 +533,14 @@ ClangExpressionDeclMap::GetFunctionAddress
 bool 
 ClangExpressionDeclMap::GetSymbolAddress
 (
+    Target &target,
     const ConstString &name,
     uint64_t &ptr
 )
 {
-    assert (m_parser_vars.get());
-    
-    // Back out in all cases where we're not fully initialized
-    if (m_parser_vars->m_exe_ctx->target == NULL)
-        return false;
-    
     SymbolContextList sc_list;
     
-    m_parser_vars->m_exe_ctx->target->GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
+    target.GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
     
     if (!sc_list.GetSize())
         return false;
@@ -555,9 +550,27 @@ ClangExpressionDeclMap::GetSymbolAddress
     
     const Address *sym_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
     
-    ptr = sym_address->GetLoadAddress (m_parser_vars->m_exe_ctx->target);
+    ptr = sym_address->GetLoadAddress(&target);
     
     return true;
+}
+
+bool 
+ClangExpressionDeclMap::GetSymbolAddress
+(
+    const ConstString &name,
+    uint64_t &ptr
+)
+{
+    assert (m_parser_vars.get());
+    
+    if (!m_parser_vars->m_exe_ctx ||
+        !m_parser_vars->m_exe_ctx->target)
+        return false;
+    
+    return GetSymbolAddress(*m_parser_vars->m_exe_ctx->target,
+                            name,
+                            ptr);
 }
 
 // Interface for CommandObjectExpression
@@ -1225,8 +1238,32 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     TypeFromUser type(expr_var->GetTypeFromUser());
     
     VariableSP var = FindVariableInScope (*exe_ctx.frame, name, &type);
+    Symbol *sym = FindGlobalDataSymbol(*exe_ctx.target, name);
     
-    if (!var)
+    std::auto_ptr<lldb_private::Value> location_value;
+    
+    if (var)
+    {
+        location_value.reset(GetVariableValue(exe_ctx,
+                                              var,
+                                              NULL));
+    }
+    else if (sym)
+    {
+        location_value.reset(new Value);
+        
+        uint64_t location_load_addr;
+        
+        if (!GetSymbolAddress(*exe_ctx.target, name, location_load_addr))
+        {
+            if (log)
+                err.SetErrorStringWithFormat("Couldn't find value for global symbol %s", name.GetCString());
+        }
+        
+        location_value->SetValueType(Value::eValueTypeLoadAddress);
+        location_value->GetScalar() = location_load_addr;
+    }
+    else
     {
         err.SetErrorStringWithFormat("Couldn't find %s with appropriate type", name.GetCString());
         return false;
@@ -1235,9 +1272,6 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     if (log)
         log->Printf("%s %s with type %p", (dematerialize ? "Dematerializing" : "Materializing"), name.GetCString(), type.GetOpaqueQualType());
     
-    std::auto_ptr<lldb_private::Value> location_value(GetVariableValue(exe_ctx,
-                                                                       var,
-                                                                       NULL));
     
     if (!location_value.get())
     {
@@ -1627,6 +1661,30 @@ ClangExpressionDeclMap::FindVariableInScope
     return var_sp;
 }
 
+Symbol *
+ClangExpressionDeclMap::FindGlobalDataSymbol
+(
+    Target &target,
+    const ConstString &name
+)
+{
+    SymbolContextList sc_list;
+    
+    target.GetImages().FindSymbolsWithNameAndType(name, 
+                                                   eSymbolTypeData, 
+                                                   sc_list);
+    
+    if (sc_list.GetSize())
+    {
+        SymbolContext sym_ctx;
+        sc_list.GetContextAtIndex(0, sym_ctx);
+        
+        return sym_ctx.symbol;
+    }
+    
+    return NULL;
+}
+
 // Interface for ClangASTSource
 void 
 ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString &name)
@@ -1677,48 +1735,61 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
                                                           append, 
                                                           sc_list);
         
-            bool found_specific = false;
-            Symbol *generic_symbol = NULL;
-            Symbol *non_extern_symbol = NULL;
-            
-            for (uint32_t index = 0, num_indices = sc_list.GetSize();
-                 index < num_indices;
-                 ++index)
+            if (sc_list.GetSize())
             {
-                SymbolContext sym_ctx;
-                sc_list.GetContextAtIndex(index, sym_ctx);
-
-                if (sym_ctx.function)
+                bool found_specific = false;
+                Symbol *generic_symbol = NULL;
+                Symbol *non_extern_symbol = NULL;
+                
+                for (uint32_t index = 0, num_indices = sc_list.GetSize();
+                     index < num_indices;
+                     ++index)
                 {
-                    // TODO only do this if it's a C function; C++ functions may be
-                    // overloaded
-                    if (!found_specific)
-                        AddOneFunction(context, sym_ctx.function, NULL);
-                    found_specific = true;
+                    SymbolContext sym_ctx;
+                    sc_list.GetContextAtIndex(index, sym_ctx);
+                    
+                    if (sym_ctx.function)
+                    {
+                        // TODO only do this if it's a C function; C++ functions may be
+                        // overloaded
+                        if (!found_specific)
+                            AddOneFunction(context, sym_ctx.function, NULL);
+                        found_specific = true;
+                    }
+                    else if (sym_ctx.symbol)
+                    {
+                        if (sym_ctx.symbol->IsExternal())
+                            generic_symbol = sym_ctx.symbol;
+                        else
+                            non_extern_symbol = sym_ctx.symbol;
+                    }
                 }
-                else if (sym_ctx.symbol)
+                
+                if (!found_specific)
                 {
-                    if (sym_ctx.symbol->IsExternal())
-                        generic_symbol = sym_ctx.symbol;
-                    else
-                        non_extern_symbol = sym_ctx.symbol;
+                    if (generic_symbol)
+                        AddOneFunction (context, NULL, generic_symbol);
+                    else if (non_extern_symbol)
+                        AddOneFunction (context, NULL, non_extern_symbol);
+                }
+                
+                ClangNamespaceDecl namespace_decl (m_parser_vars->m_sym_ctx.FindNamespace(name));
+                if (namespace_decl)
+                {
+                    clang::NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decl);
+                    if (clang_namespace_decl)
+                        clang_namespace_decl->setHasExternalLexicalStorage();
                 }
             }
-        
-            if (!found_specific)
+            else
             {
-                if (generic_symbol)
-                    AddOneFunction (context, NULL, generic_symbol);
-                else if (non_extern_symbol)
-                    AddOneFunction (context, NULL, non_extern_symbol);
-            }
-
-            ClangNamespaceDecl namespace_decl (m_parser_vars->m_sym_ctx.FindNamespace(name));
-            if (namespace_decl)
-            {
-                clang::NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decl);
-                if (clang_namespace_decl)
-                    clang_namespace_decl->setHasExternalLexicalStorage();
+                // We couldn't find a variable or function for this.  Now we'll hunt for a generic 
+                // data symbol, and -- if it is found -- treat it as a variable.
+                
+                Symbol *data_symbol = FindGlobalDataSymbol(*m_parser_vars->m_exe_ctx->target, name);
+                
+                if (data_symbol)
+                    AddOneGenericVariable(context, *data_symbol);
             }
         }
     }
@@ -2056,6 +2127,68 @@ ClangExpressionDeclMap::AddOneVariable(NameSearchContext &context,
         var_decl_print_stream.flush();
         
         log->Printf("Added pvar %s, returned %s", pvar_sp->GetName().GetCString(), var_decl_print_string.c_str());
+    }
+}
+
+void
+ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context, 
+                                              Symbol &symbol)
+{
+    assert(m_parser_vars.get());
+    
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    clang::ASTContext *scratch_ast_context = m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext()->getASTContext();
+    
+    TypeFromUser user_type (ClangASTContext::GetVoidPtrType(scratch_ast_context, false),
+                            scratch_ast_context);
+    
+    TypeFromParser parser_type (ClangASTContext::GetVoidPtrType(context.GetASTContext(), false),
+                                context.GetASTContext());
+    
+    NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(parser_type.GetASTContext(), parser_type.GetOpaqueQualType()));
+    
+    std::string decl_name(context.m_decl_name.getAsString());
+    ConstString entity_name(decl_name.c_str());
+    ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx->GetBestExecutionContextScope (),
+                                                                      entity_name, 
+                                                                      user_type,
+                                                                      m_parser_vars->m_exe_ctx->process->GetByteOrder(),
+                                                                      m_parser_vars->m_exe_ctx->process->GetAddressByteSize()));
+    assert (entity.get());
+    entity->EnableParserVars();
+    
+    std::auto_ptr<Value> symbol_location(new Value);
+    
+    AddressRange &symbol_range = symbol.GetAddressRangeRef();
+    Address &symbol_address = symbol_range.GetBaseAddress();
+    lldb::addr_t symbol_load_addr = symbol_address.GetLoadAddress(m_parser_vars->m_exe_ctx->target);
+    
+    symbol_location->SetContext(Value::eContextTypeClangType, user_type.GetOpaqueQualType());
+    symbol_location->GetScalar() = symbol_load_addr;
+    symbol_location->SetValueType(Value::eValueTypeLoadAddress);
+    
+    entity->m_parser_vars->m_parser_type = parser_type;
+    entity->m_parser_vars->m_named_decl  = var_decl;
+    entity->m_parser_vars->m_llvm_value  = NULL;
+    entity->m_parser_vars->m_lldb_value  = symbol_location.release();
+    entity->m_parser_vars->m_lldb_sym    = &symbol;
+    
+    if (log)
+    {
+        std::string var_decl_print_string;
+        llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
+        var_decl->print(var_decl_print_stream);
+        var_decl_print_stream.flush();
+        
+        log->Printf("Found variable %s, returned %s", decl_name.c_str(), var_decl_print_string.c_str());
+        
+        if (log->GetVerbose())
+        {
+            StreamString var_decl_dump_string;
+            ASTDumper::DumpDecl(var_decl_dump_string, var_decl);
+            log->Printf("%s\n", var_decl_dump_string.GetData());
+        }
     }
 }
 
