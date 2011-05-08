@@ -410,7 +410,7 @@ def print_stacktraces(process, string_buffer = False):
 # ===================================
 
 def print_registers(frame, string_buffer = False):
-    """Prints the all the register sets of the frame."""
+    """Prints all the register sets of the frame."""
 
     output = StringIO.StringIO() if string_buffer else sys.stdout
 
