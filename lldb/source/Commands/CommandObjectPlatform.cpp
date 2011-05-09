@@ -831,8 +831,8 @@ public:
             }
             else
             {
-                // Bad args
-                result.AppendError ("\"platform disconnect\" doesn't take any arguments");
+                // No args
+                result.AppendError ("one or more process id(s) must be specified");
                 result.SetStatus (eReturnStatusFailed);            
             }
         }
