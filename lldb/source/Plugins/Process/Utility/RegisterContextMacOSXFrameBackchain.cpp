@@ -102,7 +102,7 @@ RegisterContextMacOSXFrameBackchain::ReadRegisterValue (uint32_t reg, Scalar &va
     case LLDB_REGNUM_GENERIC_FP:
         if (m_cursor.fp == LLDB_INVALID_ADDRESS)
             return false;
-        reg_value = m_cursor.pc;
+        reg_value = m_cursor.fp;
         break;
     
     default:
