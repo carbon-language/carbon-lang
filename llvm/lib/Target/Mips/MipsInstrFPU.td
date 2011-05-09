@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Mips implementation of the TargetInstrInfo class.
+// This file describes the Mips FPU instruction set.
 //
 //===----------------------------------------------------------------------===//
 
