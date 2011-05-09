@@ -6494,18 +6494,18 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // (vextract (scalar_to_vector val, 0) -> val
   SDValue InVec = N->getOperand(0);
 
- if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR) {
-   // Check if the result type doesn't match the inserted element type. A
-   // SCALAR_TO_VECTOR may truncate the inserted element and the
-   // EXTRACT_VECTOR_ELT may widen the extracted vector.
-   SDValue InOp = InVec.getOperand(0);
-   EVT NVT = N->getValueType(0);
-   if (InOp.getValueType() != NVT) {
-     assert(InOp.getValueType().isInteger() && NVT.isInteger());
-     return DAG.getSExtOrTrunc(InOp, InVec.getDebugLoc(), NVT);
-   }
-   return InOp;
- }
+  if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR) {
+    // Check if the result type doesn't match the inserted element type. A
+    // SCALAR_TO_VECTOR may truncate the inserted element and the
+    // EXTRACT_VECTOR_ELT may widen the extracted vector.
+    SDValue InOp = InVec.getOperand(0);
+    EVT NVT = N->getValueType(0);
+    if (InOp.getValueType() != NVT) {
+      assert(InOp.getValueType().isInteger() && NVT.isInteger());
+      return DAG.getSExtOrTrunc(InOp, InVec.getDebugLoc(), NVT);
+    }
+    return InOp;
+  }
 
   // Perform only after legalization to ensure build_vector / vector_shuffle
   // optimizations have already been done.
