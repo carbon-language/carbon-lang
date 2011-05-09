@@ -122,6 +122,12 @@ public:
     {
         return m_debugger;
     }
+    
+    bool
+    EditlineReaderIsTop ()
+    {
+        return m_debugger.InputReaderIsTopReader (m_editline_reader);
+    }
 
 private:
     lldb::SBDebugger m_debugger;

@@ -499,7 +499,7 @@ IOChannel::OutWrite (const char *buffer, size_t len, bool asynchronous)
 
     // Use the mutex to make sure OutWrite and ErrWrite do not interfere with each other's output.
     IOLocker locker (m_output_mutex);
-    if (asynchronous)
+    if (m_driver->EditlineReaderIsTop() && asynchronous)
         ::fwrite (undo_prompt_string, 1, 4, m_out_file);
     ::fwrite (buffer, 1, len, m_out_file);
     if (asynchronous)

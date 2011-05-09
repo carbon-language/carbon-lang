@@ -619,6 +619,24 @@ SBDebugger::DispatchInputEndOfFile ()
     if (m_opaque_sp)
         m_opaque_sp->DispatchInputEndOfFile ();
 }
+    
+bool
+SBDebugger::InputReaderIsTopReader (const lldb::SBInputReader &reader)
+{
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    if (log)
+        log->Printf ("SBDebugger(%p)::InputReaderIsTopReader (SBInputReader(%p))", m_opaque_sp.get(), &reader);
+
+    if (m_opaque_sp && reader.IsValid())
+    {
+        InputReaderSP reader_sp (*reader);
+        return m_opaque_sp->InputReaderIsTopReader (reader_sp);
+    }
+
+    return false;
+}
+
 
 void
 SBDebugger::PushInputReader (SBInputReader &reader)

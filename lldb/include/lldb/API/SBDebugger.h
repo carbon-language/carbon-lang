@@ -166,6 +166,9 @@ public:
     void
     NotifyTopInputReader (lldb::InputReaderAction notification);
 
+    bool
+    InputReaderIsTopReader (const lldb::SBInputReader &reader);
+
     const char *
     GetInstanceName  ();
 

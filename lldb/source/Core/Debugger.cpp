@@ -437,6 +437,25 @@ Debugger::NotifyTopInputReader (InputReaderAction notification)
     }
 }
 
+bool
+Debugger::InputReaderIsTopReader (const lldb::InputReaderSP& reader_sp)
+{
+    if (reader_sp)
+    {
+        InputReaderSP top_reader_sp (GetCurrentInputReader());
+        if (top_reader_sp)
+        {
+            return (reader_sp.get() == top_reader_sp.get());
+        }
+        else
+            return false;
+    }
+    else
+        return false;
+
+}
+    
+
 void
 Debugger::WriteToDefaultReader (const char *bytes, size_t bytes_len)
 {

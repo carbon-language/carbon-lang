@@ -391,6 +391,9 @@ public:
     void
     NotifyTopInputReader (lldb::InputReaderAction notification);
 
+    bool
+    InputReaderIsTopReader (const lldb::InputReaderSP& reader_sp);
+    
     static lldb::DebuggerSP
     FindDebuggerWithID (lldb::user_id_t id);
     
