@@ -531,6 +531,17 @@ class VLD1LN<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
                                          imm:$lane))]> {
   let Rm = 0b1111;
 }
+class VLD1LN32<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
+             PatFrag LoadOp>
+  : NLdStLn<1, 0b10, op11_8, op7_4, (outs DPR:$Vd),
+          (ins addrmode6oneL32:$Rn, DPR:$src, nohash_imm:$lane),
+          IIC_VLD1ln, "vld1", Dt, "\\{$Vd[$lane]\\}, $Rn",
+          "$src = $Vd",
+          [(set DPR:$Vd, (vector_insert (Ty DPR:$src),
+                                         (i32 (LoadOp addrmode6oneL32:$Rn)),
+                                         imm:$lane))]> {
+  let Rm = 0b1111;
+}
 class VLD1QLNPseudo<ValueType Ty, PatFrag LoadOp> : VLDQLNPseudo<IIC_VLD1ln> {
   let Pattern = [(set QPR:$dst, (vector_insert (Ty QPR:$src),
                                                (i32 (LoadOp addrmode6:$addr)),
@@ -544,7 +555,7 @@ def VLD1LNd16 : VLD1LN<0b0100, {?,?,0,?}, "16", v4i16, extloadi16> {
   let Inst{7-6} = lane{1-0};
   let Inst{4}   = Rn{4};
 }
-def VLD1LNd32 : VLD1LN<0b1000, {?,0,?,?}, "32", v2i32, load> {
+def VLD1LNd32 : VLD1LN32<0b1000, {?,0,?,?}, "32", v2i32, load> {
   let Inst{7} = lane{0};
   let Inst{5} = Rn{4};
   let Inst{4} = Rn{4};
@@ -1371,6 +1382,14 @@ class VST1LN<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
           [(StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane), addrmode6:$Rn)]> {
   let Rm = 0b1111;
 }
+class VST1LN32<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
+             PatFrag StoreOp, SDNode ExtractOp>
+  : NLdStLn<1, 0b00, op11_8, op7_4, (outs),
+          (ins addrmode6oneL32:$Rn, DPR:$Vd, nohash_imm:$lane),
+          IIC_VST1ln, "vst1", Dt, "\\{$Vd[$lane]\\}, $Rn", "",
+          [(StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane), addrmode6oneL32:$Rn)]> {
+  let Rm = 0b1111;
+}
 class VST1QLNPseudo<ValueType Ty, PatFrag StoreOp, SDNode ExtractOp>
   : VSTQLNPseudo<IIC_VST1ln> {
   let Pattern = [(StoreOp (ExtractOp (Ty QPR:$src), imm:$lane),
@@ -1386,7 +1405,8 @@ def VST1LNd16 : VST1LN<0b0100, {?,?,0,?}, "16", v4i16, truncstorei16,
   let Inst{7-6} = lane{1-0};
   let Inst{4}   = Rn{5};
 }
-def VST1LNd32 : VST1LN<0b1000, {?,0,?,?}, "32", v2i32, store, extractelt> {
+
+def VST1LNd32 : VST1LN32<0b1000, {?,0,?,?}, "32", v2i32, store, extractelt> {
   let Inst{7}   = lane{0};
   let Inst{5-4} = Rn{5-4};
 }

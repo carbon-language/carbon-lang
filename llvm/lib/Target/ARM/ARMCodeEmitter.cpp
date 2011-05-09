@@ -221,6 +221,9 @@ namespace {
       const { return 0; }
     unsigned getAddrMode6AddressOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
+    unsigned getAddrMode6OneLane32AddressOpValue(const MachineInstr &MI,
+                                                 unsigned Op)
+      const { return 0; }
     unsigned getAddrMode6DupAddressOpValue(const MachineInstr &MI, unsigned Op)
       const { return 0; }
     unsigned getAddrMode6OffsetOpValue(const MachineInstr &MI, unsigned Op)

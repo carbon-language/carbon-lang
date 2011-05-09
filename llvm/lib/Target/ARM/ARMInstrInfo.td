@@ -588,6 +588,15 @@ def am6offset : Operand<i32>,
   let EncoderMethod = "getAddrMode6OffsetOpValue";
 }
 
+// Special version of addrmode6 to handle alignment encoding for VST1/VLD1
+// (single element from one lane) for size 32.
+def addrmode6oneL32 : Operand<i32>,
+                ComplexPattern<i32, 2, "SelectAddrMode6", [], [SDNPWantParent]>{
+  let PrintMethod = "printAddrMode6Operand";
+  let MIOperandInfo = (ops GPR:$addr, i32imm);
+  let EncoderMethod = "getAddrMode6OneLane32AddressOpValue";
+}
+
 // Special version of addrmode6 to handle alignment encoding for VLD-dup
 // instructions, specifically VLD4-dup.
 def addrmode6dup : Operand<i32>,
