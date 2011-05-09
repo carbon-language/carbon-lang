@@ -1286,9 +1286,15 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
           Context.getTypeInfo(FD->getType());
         uint64_t TypeSize = FieldInfo.first;
         unsigned FieldAlign = FieldInfo.second;
+        // This check is needed for 'long long' in -m32 mode.
+        if (TypeSize > FieldAlign)
+          FieldAlign = TypeSize;
         FieldInfo = Context.getTypeInfo(LastFD->getType());
         uint64_t TypeSizeLastFD = FieldInfo.first;
         unsigned FieldAlignLastFD = FieldInfo.second;
+        // This check is needed for 'long long' in -m32 mode.
+        if (TypeSizeLastFD > FieldAlignLastFD)
+          FieldAlignLastFD = TypeSizeLastFD;
         if (TypeSizeLastFD != TypeSize) {
           uint64_t UnpaddedFieldOffset = 
             getDataSizeInBits() - UnfilledBitsInLastByte;
@@ -1381,6 +1387,10 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   std::pair<uint64_t, unsigned> FieldInfo = Context.getTypeInfo(D->getType());
   uint64_t TypeSize = FieldInfo.first;
   unsigned FieldAlign = FieldInfo.second;
+  
+  // This check is needed for 'long long' in -m32 mode.
+  if (IsMsStruct && (TypeSize > FieldAlign))
+    FieldAlign = TypeSize;
   
   if (ZeroLengthBitfield) {
     // If a zero-length bitfield is inserted after a bitfield,

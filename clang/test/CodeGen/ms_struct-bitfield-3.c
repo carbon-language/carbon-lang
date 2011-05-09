@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm-only  -triple x86_64-apple-darwin9 %s
+// RUN: %clang_cc1 -emit-llvm-only  -triple i386-apple-darwin9 %s
 // rdar://8823265
 
 #define ATTR __attribute__((__ms_struct__))
@@ -37,3 +37,13 @@ typedef struct _struct_1 struct_1;
 struct_1 test_struct_1 = { 18557917, 'a', 3, 'b' };
 
 static int a1[(size_struct_1 == sizeof (struct_1)) -1];
+
+struct ten {
+  long long a:3;
+  long long b:3;
+  char c;
+} __attribute__ ((ms_struct));
+
+#define size_struct_2 16
+
+static int a2[(size_struct_2 == sizeof (struct ten)) -1];
