@@ -6,6 +6,19 @@
 
 Description := Static runtime libraries for clang/Darwin.
 
+# A function that ensures we don't try to build for architectures that we
+# don't have working toolchains for.
+CheckArches = \
+  $(shell \
+    result=""; \
+    for arch in $(1); do \
+      gcc -arch $$arch; \
+      if test $$? == 1; then result="$$result$$arch "; fi; \
+    done; \
+    echo $$result)
+
+###
+
 Configs :=
 UniversalArchs :=
 
@@ -13,23 +26,23 @@ UniversalArchs :=
 # still be referenced from Darwin system headers. This symbol is only ever
 # needed on i386.
 Configs += eprintf
-UniversalArchs.eprintf := i386
+UniversalArchs.eprintf := $(call CheckArches,i386)
 
 # Configuration for targetting 10.4. We need a few functions missing from
 # libgcc_s.10.4.dylib. We only build x86 slices since clang doesn't really
 # support targetting PowerPC.
 Configs += 10.4
-UniversalArchs.10.4 := i386 x86_64
+UniversalArchs.10.4 := $(call CheckArches,i386 x86_64)
 
 # Configuration for targetting iOS, for some ARMv6 functions, which must be
 # in the same linkage unit, and for a couple of other functions that didn't
 # make it into libSystem.
 Configs += ios
-UniversalArchs.ios := i386 x86_64 armv6 armv7
+UniversalArchs.ios := $(call CheckArches,i386 x86_64 armv6 armv7)
 
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
-UniversalArchs.cc_kext := armv6 armv7 i386 x86_64
+UniversalArchs.cc_kext := $(call CheckArches,armv6 armv7 i386 x86_64)
 
 ###
 
