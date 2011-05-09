@@ -107,7 +107,7 @@ DNBArchImplX86_64::GetGPRState(bool force)
     if (force || m_state.GetError(e_regSetGPR, Read))
     {
         kern_return_t kret = ::thread_abort_safely(m_thread->ThreadID());
-        DNBLogThreaded("thread = 0x%4.4x calling thread_abort_safely (tid) => %u (GetGPRState() for stop_count = %u)", m_thread->ThreadID(), kret, m_thread->Process()->StopCount());    
+        DNBLogThreadedIf (LOG_THREAD, "thread = 0x%4.4x calling thread_abort_safely (tid) => %u (GetGPRState() for stop_count = %u)", m_thread->ThreadID(), kret, m_thread->Process()->StopCount());    
 
 #if DEBUG_GPR_VALUES
         m_state.context.gpr.__rax = ('a' << 8) + 'x';
@@ -395,7 +395,7 @@ kern_return_t
 DNBArchImplX86_64::SetGPRState()
 {
     kern_return_t kret = ::thread_abort_safely(m_thread->ThreadID());
-    DNBLogThreaded("thread = 0x%4.4x calling thread_abort_safely (tid) => %u (SetGPRState() for stop_count = %u)", m_thread->ThreadID(), kret, m_thread->Process()->StopCount());    
+    DNBLogThreadedIf (LOG_THREAD, "thread = 0x%4.4x calling thread_abort_safely (tid) => %u (SetGPRState() for stop_count = %u)", m_thread->ThreadID(), kret, m_thread->Process()->StopCount());    
 
     m_state.SetError(e_regSetGPR, Write, ::thread_set_state(m_thread->ThreadID(), __x86_64_THREAD_STATE, (thread_state_t)&m_state.context.gpr, e_regSetWordSizeGPR));
     DNBLogThreadedIf (LOG_THREAD, "::thread_set_state (0x%4.4x, %u, &gpr, %u) => 0x%8.8x"
