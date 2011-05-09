@@ -462,6 +462,14 @@ public:
   SourceLocation getRestrictSpecLoc() const { return TQ_restrictLoc; }
   SourceLocation getVolatileSpecLoc() const { return TQ_volatileLoc; }
 
+  /// \brief Clear out all of the type qualifiers.
+  void ClearTypeQualifiers() {
+    TypeQualifiers = 0;
+    TQ_constLoc = SourceLocation();
+    TQ_restrictLoc = SourceLocation();
+    TQ_volatileLoc = SourceLocation();
+  }
+
   // function-specifier
   bool isInlineSpecified() const { return FS_inline_specified; }
   SourceLocation getInlineSpecLoc() const { return FS_inlineLoc; }

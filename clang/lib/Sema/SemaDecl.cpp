@@ -2489,6 +2489,24 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                              PrevSpec, DiagID, getLangOptions());
     }
 
+    // Ignore const/volatile/restrict qualifiers.
+    if (DS.getTypeQualifiers()) {
+      if (DS.getTypeQualifiers() & DeclSpec::TQ_const)
+        Diag(DS.getConstSpecLoc(), diag::ext_anonymous_struct_union_qualified)
+          << Record->isUnion() << 0 
+          << FixItHint::CreateRemoval(DS.getConstSpecLoc());
+      if (DS.getTypeQualifiers() & DeclSpec::TQ_volatile)
+        Diag(DS.getVolatileSpecLoc(), diag::ext_anonymous_struct_union_qualified)
+          << Record->isUnion() << 1
+          << FixItHint::CreateRemoval(DS.getVolatileSpecLoc());
+      if (DS.getTypeQualifiers() & DeclSpec::TQ_restrict)
+        Diag(DS.getRestrictSpecLoc(), diag::ext_anonymous_struct_union_qualified)
+          << Record->isUnion() << 2 
+          << FixItHint::CreateRemoval(DS.getRestrictSpecLoc());
+
+      DS.ClearTypeQualifiers();
+    }
+
     // C++ [class.union]p2:
     //   The member-specification of an anonymous union shall only
     //   define non-static data members. [Note: nested types and

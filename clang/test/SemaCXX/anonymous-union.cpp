@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -pedantic %s
 struct X {
   union {
     float f3;
@@ -17,7 +17,7 @@ struct X {
 
   void test_unqual_references();
 
-  struct {
+  struct { // expected-warning{{anonymous structs are a GNU extension}}
     int a;
     float b;
   };
@@ -125,7 +125,7 @@ typedef struct _s {
 // <rdar://problem/7987650>
 namespace test4 {
   class A {
-    struct {
+    struct { // expected-warning{{anonymous structs are a GNU extension}}
       int s0; // expected-note {{declared private here}}
       double s1; // expected-note {{declared private here}}
       union {
@@ -136,7 +136,7 @@ namespace test4 {
     union {
       int u0; // expected-note {{declared private here}}
       double u1; // expected-note {{declared private here}}
-      struct {
+      struct { // expected-warning{{anonymous structs are a GNU extension}}
         int us0; // expected-note {{declared private here}}
         double us1; // expected-note {{declared private here}}
       };
@@ -174,4 +174,26 @@ void foo_PR6741() {
             int *m_b;
         };
     }
+}
+
+namespace PR8326 {
+  template <class T>
+  class Foo {
+  public:
+    Foo()
+      : x(0)
+      , y(1){
+    }
+  
+  private:
+    const union { // expected-warning{{anonymous union cannot be 'const'}}
+      struct { // expected-warning{{anonymous structs are a GNU extension}}
+        T x;
+        T y;
+      };
+      T v[2];
+    };
+  };
+
+  Foo<int> baz;
 }
