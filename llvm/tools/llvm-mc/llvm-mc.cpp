@@ -183,10 +183,10 @@ static int AsLexInput(const char *ProgName) {
   MemoryBuffer *Buffer = BufferPtr.take();
 
   SourceMgr SrcMgr;
-  
+
   // Tell SrcMgr about this buffer, which is what TGParser will pick up.
   SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
-  
+
   // Record the location of the include directories so that the lexer can find
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
@@ -279,7 +279,7 @@ static int AsLexInput(const char *ProgName) {
 
   // Keep output if no errors.
   if (Error == 0) Out->keep();
- 
+
   return Error;
 }
 
@@ -294,20 +294,20 @@ static int AssembleInput(const char *ProgName) {
     return 1;
   }
   MemoryBuffer *Buffer = BufferPtr.take();
-  
+
   SourceMgr SrcMgr;
-  
+
   // Tell SrcMgr about this buffer, which is what the parser will pick up.
   SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
-  
+
   // Record the location of the include directories so that the lexer can find
   // it later.
   SrcMgr.setIncludeDirs(IncludeDirs);
-  
-  
+
+
   llvm::OwningPtr<MCAsmInfo> MAI(TheTarget->createAsmInfo(TripleName));
   assert(MAI && "Unable to create target asm info!");
-  
+
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
   if (MCPU.size()) {
@@ -378,7 +378,7 @@ static int AssembleInput(const char *ProgName) {
                                                    *Str.get(), *MAI));
   OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(*Parser, *TM));
   if (!TAP) {
-    errs() << ProgName 
+    errs() << ProgName
            << ": error: this target does not support assembly parsing.\n";
     return 1;
   }
@@ -404,7 +404,7 @@ static int DisassembleInput(const char *ProgName, bool Enhanced) {
     errs() << ProgName << ": " << ec.message() << '\n';
     return 1;
   }
-  
+
   OwningPtr<tool_output_file> Out(GetOutputStream());
   if (!Out)
     return 1;
@@ -459,7 +459,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();
-  
+
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
   TripleName = Triple::normalize(TripleName);
 
@@ -474,7 +474,7 @@ int main(int argc, char **argv) {
   case AC_EDisassemble:
     return DisassembleInput(argv[0], true);
   }
-  
+
   return 0;
 }
 

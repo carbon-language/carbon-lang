@@ -31,12 +31,12 @@ public:
                          const std::string &tripleString,
                          MemoryBuffer &buffer,
                          raw_ostream &Out);
-  
+
   static int disassembleEnhanced(const std::string &tripleString,
                                  MemoryBuffer &buffer,
                                  raw_ostream &Out);
 };
-  
+
 } // namespace llvm
 
 #endif

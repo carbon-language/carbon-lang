@@ -39,7 +39,7 @@ private:
   const ByteArrayTy &Bytes;
 public:
   VectorMemoryObject(const ByteArrayTy &bytes) : Bytes(bytes) {}
-  
+
   uint64_t getBase() const { return 0; }
   uint64_t getExtent() const { return Bytes.size(); }
 
@@ -57,15 +57,15 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
                        SourceMgr &SM, raw_ostream &Out) {
   // Wrap the vector in a MemoryObject.
   VectorMemoryObject memoryObject(Bytes);
-  
+
   // Disassemble it to strings.
   uint64_t Size;
   uint64_t Index;
-  
+
   for (Index = 0; Index < Bytes.size(); Index += Size) {
     MCInst Inst;
-    
-    if (DisAsm.getInstruction(Inst, Size, memoryObject, Index, 
+
+    if (DisAsm.getInstruction(Inst, Size, memoryObject, Index,
                                /*REMOVE*/ nulls())) {
       Printer.printInst(&Inst, Out);
       Out << "\n";
@@ -76,12 +76,12 @@ static bool PrintInsts(const MCDisassembler &DisAsm,
         Size = 1; // skip illegible bytes
     }
   }
-  
+
   return false;
 }
 
-static bool ByteArrayFromString(ByteArrayTy &ByteArray, 
-                                StringRef &Str, 
+static bool ByteArrayFromString(ByteArrayTy &ByteArray,
+                                StringRef &Str,
                                 SourceMgr &SM) {
   while (!Str.empty()) {
     // Strip horizontal whitespace.
@@ -89,7 +89,7 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
       Str = Str.substr(Pos);
       continue;
     }
-    
+
     // If this is the end of a line or start of a comment, remove the rest of
     // the line.
     if (Str[0] == '\n' || Str[0] == '#') {
@@ -104,11 +104,11 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
       }
       continue;
     }
-    
+
     // Get the current token.
     size_t Next = Str.find_first_of(" \t\n\r#");
     StringRef Value = Str.substr(0, Next);
-    
+
     // Convert to a byte and add to the byte vector.
     unsigned ByteVal;
     if (Value.getAsInteger(0, ByteVal) || ByteVal > 255) {
@@ -119,11 +119,11 @@ static bool ByteArrayFromString(ByteArrayTy &ByteArray,
       ByteArray.clear();
       continue;
     }
-    
+
     ByteArray.push_back(std::make_pair((unsigned char)ByteVal, Value.data()));
     Str = Str.substr(Next);
   }
-  
+
   return false;
 }
 
@@ -133,18 +133,18 @@ int Disassembler::disassemble(const Target &T,  TargetMachine &TM,
                               raw_ostream &Out) {
   // Set up disassembler.
   OwningPtr<const MCAsmInfo> AsmInfo(T.createAsmInfo(Triple));
-  
+
   if (!AsmInfo) {
     errs() << "error: no assembly info for target " << Triple << "\n";
     return -1;
   }
-  
+
   OwningPtr<const MCDisassembler> DisAsm(T.createMCDisassembler());
   if (!DisAsm) {
     errs() << "error: no disassembler for target " << Triple << "\n";
     return -1;
   }
-  
+
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(TM, AsmPrinterVariant,
                                                     *AsmInfo));
@@ -152,67 +152,67 @@ int Disassembler::disassemble(const Target &T,  TargetMachine &TM,
     errs() << "error: no instruction printer for target " << Triple << '\n';
     return -1;
   }
-  
+
   bool ErrorOccurred = false;
-  
+
   SourceMgr SM;
   SM.AddNewSourceBuffer(&Buffer, SMLoc());
-  
+
   // Convert the input to a vector for disassembly.
   ByteArrayTy ByteArray;
   StringRef Str = Buffer.getBuffer();
-  
+
   ErrorOccurred |= ByteArrayFromString(ByteArray, Str, SM);
-  
+
   if (!ByteArray.empty())
     ErrorOccurred |= PrintInsts(*DisAsm, *IP, ByteArray, SM, Out);
-    
+
   return ErrorOccurred;
 }
 
 static int byteArrayReader(uint8_t *B, uint64_t A, void *Arg) {
   ByteArrayTy &ByteArray = *((ByteArrayTy*)Arg);
-  
+
   if (A >= ByteArray.size())
     return -1;
-  
+
   *B = ByteArray[A].first;
-  
+
   return 0;
 }
 
 static int verboseEvaluator(uint64_t *V, unsigned R, void *Arg) {
   EDDisassembler &disassembler = *(EDDisassembler *)((void **)Arg)[0];
   raw_ostream &Out = *(raw_ostream *)((void **)Arg)[1];
-  
+
   if (const char *regName = disassembler.nameWithRegisterID(R))
     Out << "[" << regName << "/" << R << "]";
-  
+
   if (disassembler.registerIsStackPointer(R))
     Out << "(sp)";
   if (disassembler.registerIsProgramCounter(R))
     Out << "(pc)";
-  
+
   *V = 0;
   return 0;
 }
 
-int Disassembler::disassembleEnhanced(const std::string &TS, 
+int Disassembler::disassembleEnhanced(const std::string &TS,
                                       MemoryBuffer &Buffer,
                                       raw_ostream &Out) {
   ByteArrayTy ByteArray;
   StringRef Str = Buffer.getBuffer();
   SourceMgr SM;
-  
+
   SM.AddNewSourceBuffer(&Buffer, SMLoc());
-  
+
   if (ByteArrayFromString(ByteArray, Str, SM)) {
     return -1;
   }
-  
+
   Triple T(TS);
   EDDisassembler::AssemblySyntax AS;
-  
+
   switch (T.getArch()) {
   default:
     errs() << "error: no default assembly syntax for " << TS.c_str() << "\n";
@@ -226,53 +226,53 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
     AS = EDDisassembler::kEDAssemblySyntaxX86ATT;
     break;
   }
-  
+
   EDDisassembler::initialize();
   OwningPtr<EDDisassembler>
     disassembler(EDDisassembler::getDisassembler(TS.c_str(), AS));
-  
+
   if (disassembler == 0) {
     errs() << "error: couldn't get disassembler for " << TS << '\n';
     return -1;
   }
-  
+
   while (ByteArray.size()) {
     OwningPtr<EDInst>
       inst(disassembler->createInst(byteArrayReader, 0, &ByteArray));
-  
+
     if (inst == 0) {
       errs() << "error: Didn't get an instruction\n";
       return -1;
     }
 
     ByteArray.erase (ByteArray.begin(), ByteArray.begin() + inst->byteSize());
-    
+
     unsigned numTokens = inst->numTokens();
     if ((int)numTokens < 0) {
       errs() << "error: couldn't count the instruction's tokens\n";
       return -1;
     }
-    
+
     for (unsigned tokenIndex = 0; tokenIndex != numTokens; ++tokenIndex) {
       EDToken *token;
-      
+
       if (inst->getToken(token, tokenIndex)) {
         errs() << "error: Couldn't get token\n";
         return -1;
       }
-      
+
       const char *buf;
       if (token->getString(buf)) {
         errs() << "error: Couldn't get string for token\n";
         return -1;
       }
-      
+
       Out << '[';
       int operandIndex = token->operandID();
-      
+
       if (operandIndex >= 0)
         Out << operandIndex << "-";
-      
+
       switch (token->type()) {
       default: Out << "?"; break;
       case EDToken::kTokenWhitespace: Out << "w"; break;
@@ -281,9 +281,9 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
       case EDToken::kTokenLiteral: Out << "l"; break;
       case EDToken::kTokenRegister: Out << "r"; break;
       }
-      
+
       Out << ":" << buf;
-    
+
       if (token->type() == EDToken::kTokenLiteral) {
         Out << "=";
         if (token->literalSign())
@@ -303,33 +303,34 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
         }
         Out << "r" << regID;
       }
-      
+
       Out << "]";
     }
-    
+
     Out << " ";
-      
+
     if (inst->isBranch())
       Out << "<br> ";
     if (inst->isMove())
       Out << "<mov> ";
-    
+
     unsigned numOperands = inst->numOperands();
-    
+
     if ((int)numOperands < 0) {
       errs() << "error: Couldn't count operands\n";
       return -1;
     }
-    
-    for (unsigned operandIndex = 0; operandIndex != numOperands; ++operandIndex) {
+
+    for (unsigned operandIndex = 0; operandIndex != numOperands;
+         ++operandIndex) {
       Out << operandIndex << ":";
-      
+
       EDOperand *operand;
       if (inst->getOperand(operand, operandIndex)) {
         errs() << "error: couldn't get operand\n";
         return -1;
       }
-      
+
       uint64_t evaluatedResult;
       void *Arg[] = { disassembler.get(), &Out };
       if (operand->evaluate(evaluatedResult, verboseEvaluator, Arg)) {
@@ -338,10 +339,10 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
       }
       Out << "=" << evaluatedResult << " ";
     }
-    
+
     Out << '\n';
   }
-  
+
   return 0;
 }
 
