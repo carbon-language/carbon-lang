@@ -110,7 +110,7 @@ changed.  Please see:
 
 <tr>
 <td><tt>is_constructible&lt;T, Args...&gt;</tt></td>
-<td bgcolor="#FF5965"><tt>__is_constructible(T, Args...)</tt></td>
+<td bgcolor="#FF5965">Needs CWG 1170 or <tt>__is_constructible(T, Args...)</tt></td>
 </tr>
 
 <tr>
@@ -130,7 +130,7 @@ changed.  Please see:
 
 <tr>
 <td><tt>is_assignable&lt;T, U&gt;</tt></td>
-<td bgcolor="#FF5965"><tt>__is_assignable(T, U)</tt></td>
+<td bgcolor="#FF5965">Needs CWG 1170 or <code>__is_assignable(T, U)</code></td>
 </tr>
 
 <tr>
@@ -145,7 +145,7 @@ changed.  Please see:
 
 <tr>
 <td><tt>is_destructible&lt;T&gt;</tt></td>
-<td bgcolor="#FF5965"><tt>__is_destructible(T)</tt></td>
+<td bgcolor="#FF5965">Needs CWG 1170 or <tt>__is_destructible(T)</tt></td>
 </tr>
 
 <tr>
@@ -245,12 +245,12 @@ changed.  Please see:
 
 <tr>
 <td><tt>is_literal_type&lt;T&gt;</tt></td>
-<td bgcolor="#FF5965"><tt>__is_literal_type(T)</tt></td>
+<td bgcolor="#80FF80"><tt>__is_literal_type(T)</tt></td>
 </tr>
 
 <tr>
 <td><tt>is_convertible&lt;T, U&gt;</tt></td>
-<td bgcolor="#FF5965"><tt>__is_convertible(T, U)</tt></td>
+<td bgcolor="#80FF80"><tt>__is_convertible_to(T, U)</tt></td>
 </tr>
 
 <tr>
@@ -261,6 +261,21 @@ changed.  Please see:
 <tr>
 <td><tt>underlying_type&lt;T&gt;</tt></td>
 <td bgcolor="#FF5965"><tt>__underlying_type(T)</tt></td>
+</tr>
+
+<tr>
+<td><tt>is_polymorphic&lt;T&gt;</tt></td>
+<td><tt>__is_polymorphic(T)</tt></td>
+</tr>
+
+<tr>
+<td><tt>is_empty&lt;T&gt;</tt></td>
+<td><tt>__is_empty(T)</tt></td>
+</tr>
+
+<tr>
+<td><tt>is_abstract&lt;T&gt;</tt></td>
+<td><tt>__is_abstract(T)</tt></td>
 </tr>
 
 </table>

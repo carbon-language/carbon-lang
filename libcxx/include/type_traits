@@ -292,27 +292,27 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_reference<_Tp&&> : public true_ty
 
 // is_union
 
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(is_union) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_union
     : public integral_constant<bool, __is_union(_Tp)> {};
 
-#else  // _LIBCPP_HAS_TYPE_TRAITS
+#else
 
 template <class _Tp> struct __libcpp_union : public false_type {};
 template <class _Tp> struct _LIBCPP_VISIBLE is_union
     : public __libcpp_union<typename remove_cv<_Tp>::type> {};
 
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
+#endif
 
 // is_class
 
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(is_class) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_class
     : public integral_constant<bool, __is_class(_Tp)> {};
 
-#else  // _LIBCPP_HAS_TYPE_TRAITS
+#else
 
 namespace __is_class_imp
 {
@@ -323,7 +323,7 @@ template <class _Tp> __two __test(...);
 template <class _Tp> struct _LIBCPP_VISIBLE is_class
     : public integral_constant<bool, sizeof(__is_class_imp::__test<_Tp>(0)) == 1 && !is_union<_Tp>::value> {};
 
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
+#endif
 
 // is_function
 
@@ -370,12 +370,12 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_member_object_pointer
 
 // is_enum
 
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(is_enum) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_enum
     : public integral_constant<bool, __is_enum(_Tp)> {};
 
-#else  // _LIBCPP_HAS_TYPE_TRAITS
+#else
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_enum
     : public integral_constant<bool, !is_void<_Tp>::value             &&
@@ -389,7 +389,7 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_enum
                                      !is_class<_Tp>::value            &&
                                      !is_function<_Tp>::value         > {};
 
-#endif  // _LIBCPP_HAS_TYPE_TRAITS
+#endif
 
 // is_arithmetic
 
@@ -814,7 +814,7 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_polymorphic
 
 // has_virtual_destructor
 
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#ifdef __has_feature(has_virtual_destructor) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct _LIBCPP_VISIBLE has_virtual_destructor
     : public integral_constant<bool, __has_virtual_destructor(_Tp)> {};
@@ -1920,7 +1920,7 @@ struct _LIBCPP_VISIBLE is_trivially_constructible
 
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_constructor) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_constructor(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -1934,7 +1934,7 @@ struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp&&>
 #else
 struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp>
 #endif
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -1944,7 +1944,7 @@ struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp>
 
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, const _Tp&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -1954,7 +1954,7 @@ struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, const _Tp&>
 
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -1974,7 +1974,7 @@ struct _LIBCPP_VISIBLE is_trivially_constructible
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, __is_construct::__nat,
                                                        __is_construct::__nat>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_constructor) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_constructor(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -1985,7 +1985,7 @@ struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, __is_construct::__nat,
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp,
                                                        __is_construct::__nat>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -1996,7 +1996,7 @@ struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp,
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, const _Tp&,
                                                        __is_construct::__nat>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2007,7 +2007,7 @@ struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, const _Tp&,
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_trivially_constructible<_Tp, _Tp&,
                                                        __is_construct::__nat>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2047,7 +2047,7 @@ struct is_trivially_assignable
 
 template <class _Tp>
 struct is_trivially_assignable<_Tp&, _Tp>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_assign(_Tp)> {};
 #else
     : integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -2055,7 +2055,7 @@ struct is_trivially_assignable<_Tp&, _Tp>
 
 template <class _Tp>
 struct is_trivially_assignable<_Tp&, _Tp&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_assign(_Tp)> {};
 #else
     : integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -2063,7 +2063,7 @@ struct is_trivially_assignable<_Tp&, _Tp&>
 
 template <class _Tp>
 struct is_trivially_assignable<_Tp&, const _Tp&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_assign(_Tp)> {};
 #else
     : integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -2073,7 +2073,7 @@ struct is_trivially_assignable<_Tp&, const _Tp&>
 
 template <class _Tp>
 struct is_trivially_assignable<_Tp&, _Tp&&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_trivial_assign(_Tp)> {};
 #else
     : integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -2101,7 +2101,7 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_move_assignable
 
 // is_trivially_destructible
 
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_trivial_destructor) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_destructible
     : public integral_constant<bool, __has_trivial_destructor(_Tp)> {};
@@ -2129,7 +2129,7 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible
 
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_constructor) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_constructor(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2143,7 +2143,7 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp&&>
 #else
 struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp>
 #endif
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2153,7 +2153,7 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp>
 
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, const _Tp&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2163,7 +2163,7 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, const _Tp&>
 
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2183,7 +2183,7 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, __is_construct::__nat,
                                                        __is_construct::__nat>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_constructor) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_constructor(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2194,7 +2194,7 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, __is_construct::__nat,
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp,
                                                        __is_construct::__nat>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2205,7 +2205,7 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp,
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, const _Tp&,
                                                        __is_construct::__nat>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2216,7 +2216,7 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, const _Tp&,
 template <class _Tp>
 struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp&,
                                                        __is_construct::__nat>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_copy) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_copy(_Tp)>
 #else
     : integral_constant<bool, is_scalar<_Tp>::value>
@@ -2256,7 +2256,7 @@ struct is_nothrow_assignable
 
 template <class _Tp>
 struct is_nothrow_assignable<_Tp&, _Tp>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 #else
     : integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -2264,7 +2264,7 @@ struct is_nothrow_assignable<_Tp&, _Tp>
 
 template <class _Tp>
 struct is_nothrow_assignable<_Tp&, _Tp&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 #else
     : integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -2272,7 +2272,7 @@ struct is_nothrow_assignable<_Tp&, _Tp&>
 
 template <class _Tp>
 struct is_nothrow_assignable<_Tp&, const _Tp&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 #else
     : integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -2282,7 +2282,7 @@ struct is_nothrow_assignable<_Tp&, const _Tp&>
 
 template <class _Tp>
 struct is_nothrow_assignable<_Tp&, _Tp&&>
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(has_nothrow_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 #else
     : integral_constant<bool, is_scalar<_Tp>::value> {};
@@ -2319,7 +2319,7 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_destructible
 
 // is_pod
 
-#ifdef _LIBCPP_HAS_TYPE_TRAITS
+#if __has_feature(is_pod) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_pod
     : public integral_constant<bool, __is_pod(_Tp)> {};
@@ -2334,6 +2334,17 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_pod
 
 #endif  // _LIBCPP_HAS_TYPE_TRAITS
 
+// is_literal_type;
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_literal_type
+#if __has_feature(is_literal)
+    : public integral_constant<bool, __is_literal(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<typename remove_all_extents<_Tp>::type>::value ||
+                              is_reference<typename remove_all_extents<_Tp>::type>::value>
+#endif
+    {};
+    
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
