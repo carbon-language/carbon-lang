@@ -1388,6 +1388,12 @@ static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
   for (unsigned I = 0, E = FP.getNumArgs(); I != E; ++I) {
     ParmVarDecl *P = FP.getArg(I);
 
+    // The parameter's type as written might be dependent even if the
+    // decayed type was not dependent.
+    if (TypeSourceInfo *TSInfo = P->getTypeSourceInfo())
+      if (TSInfo->getType()->isDependentType())
+        return true;
+
     // TODO: currently we always rebuild expressions.  When we
     // properly get lazier about this, we should use the same
     // logic to avoid rebuilding prototypes here.
