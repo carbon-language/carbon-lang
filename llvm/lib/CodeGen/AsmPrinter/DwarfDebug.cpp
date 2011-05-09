@@ -1815,6 +1815,13 @@ static DebugLoc FindFirstDebugLoc(const MachineFunction *MF) {
   return DebugLoc();
 }
 
+/// getScopeNode - Get MDNode for DebugLoc's scope.
+static MDNode *getScopeNode(DebugLoc DL, const LLVMContext &Ctx) {
+  if (MDNode *InlinedAt = DL.getInlinedAt(Ctx))
+    return getScopeNode(DebugLoc::getFromDILocation(InlinedAt), Ctx);
+  return DL.getScope(Ctx);
+}
+
 /// beginFunction - Gather pre-function debug information.  Assumes being
 /// emitted immediately after the function entry point.
 void DwarfDebug::beginFunction(const MachineFunction *MF) {
@@ -1831,7 +1838,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   DebugLoc FDL = FindFirstDebugLoc(MF);
   if (FDL.isUnknown()) return;
 
-  const MDNode *Scope = FDL.getScope(MF->getFunction()->getContext());
+  const MDNode *Scope = getScopeNode(FDL, MF->getFunction()->getContext());
   const MDNode *TheScope = 0;
 
   DISubprogram SP = getDISubprogram(Scope);
