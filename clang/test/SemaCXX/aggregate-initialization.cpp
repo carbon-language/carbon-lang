@@ -2,6 +2,8 @@
 
 // Verify that we can't initialize non-aggregates with an initializer
 // list.
+// FIXME: Note that due to a (likely) standard bug, this is technically an
+//        aggregate.
 struct NonAggr1 {
   NonAggr1(int) { }
 
@@ -22,7 +24,7 @@ struct NonAggr4 {
   virtual void f();
 };
 
-NonAggr1 na1 = { 17 }; // expected-error{{non-aggregate type 'NonAggr1' cannot be initialized with an initializer list}}
+NonAggr1 na1 = { 17 };
 NonAggr2 na2 = { 17 }; // expected-error{{non-aggregate type 'NonAggr2' cannot be initialized with an initializer list}}
 NonAggr3 na3 = { 17 }; // expected-error{{non-aggregate type 'NonAggr3' cannot be initialized with an initializer list}}
 NonAggr4 na4 = { 17 }; // expected-error{{non-aggregate type 'NonAggr4' cannot be initialized with an initializer list}}

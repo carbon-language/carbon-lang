@@ -5005,7 +5005,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
     
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-      if (!BaseClassDecl->hasDeclaredDefaultConstructor())
+      if (!BaseClassDecl->needsImplicitDefaultConstructor())
         ExceptSpec.CalledDecl(DeclareImplicitDefaultConstructor(BaseClassDecl));
       else if (CXXConstructorDecl *Constructor
                             = getDefaultConstructorUnsafe(*this, BaseClassDecl))
@@ -5019,7 +5019,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
        B != BEnd; ++B) {
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-      if (!BaseClassDecl->hasDeclaredDefaultConstructor())
+      if (!BaseClassDecl->needsImplicitDefaultConstructor())
         ExceptSpec.CalledDecl(DeclareImplicitDefaultConstructor(BaseClassDecl));
       else if (CXXConstructorDecl *Constructor
                             = getDefaultConstructorUnsafe(*this, BaseClassDecl))
@@ -5034,7 +5034,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
     if (const RecordType *RecordTy
               = Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
-      if (!FieldClassDecl->hasDeclaredDefaultConstructor())
+      if (!FieldClassDecl->needsImplicitDefaultConstructor())
         ExceptSpec.CalledDecl(
                             DeclareImplicitDefaultConstructor(FieldClassDecl));
       else if (CXXConstructorDecl *Constructor

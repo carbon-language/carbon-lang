@@ -534,7 +534,7 @@ void Sema::ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class) {
     return;
 
   // If the default constructor has not yet been declared, do so now.
-  if (!Class->hasDeclaredDefaultConstructor())
+  if (!Class->needsImplicitDefaultConstructor())
     DeclareImplicitDefaultConstructor(Class);
 
   // If the copy constructor has not yet been declared, do so now.
@@ -581,7 +581,7 @@ static void DeclareImplicitMemberFunctionsWithName(Sema &S,
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(DC))
       if (Record->getDefinition() &&
           CanDeclareSpecialMemberFunction(S.Context, Record)) {
-        if (!Record->hasDeclaredDefaultConstructor())
+        if (!Record->needsImplicitDefaultConstructor())
           S.DeclareImplicitDefaultConstructor(
                                            const_cast<CXXRecordDecl *>(Record));
         if (!Record->hasDeclaredCopyConstructor())
@@ -2140,7 +2140,7 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
 DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
   // If the copy constructor has not yet been declared, do so now.
   if (CanDeclareSpecialMemberFunction(Context, Class)) {
-    if (!Class->hasDeclaredDefaultConstructor())
+    if (!Class->needsImplicitDefaultConstructor())
       DeclareImplicitDefaultConstructor(Class);
     if (!Class->hasDeclaredCopyConstructor())
       DeclareImplicitCopyConstructor(Class);

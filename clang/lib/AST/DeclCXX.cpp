@@ -38,10 +38,10 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasTrivialMoveConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialMoveAssignment(true), HasTrivialDestructor(true),
     HasNonLiteralTypeFieldsOrBases(false), ComputedVisibleConversions(false),
-    DeclaredDefaultConstructor(false), DeclaredCopyConstructor(false), 
-    DeclaredCopyAssignment(false), DeclaredDestructor(false),
-    NumBases(0), NumVBases(0), Bases(), VBases(),
-  Definition(D), FirstFriend(0) {
+    NeedsImplicitDefaultConstructor(false), DeclaredDefaultConstructor(false),
+    DeclaredCopyConstructor(false), DeclaredCopyAssignment(false),
+    DeclaredDestructor(false), NumBases(0), NumVBases(0), Bases(), VBases(),
+    Definition(D), FirstFriend(0) {
 }
 
 CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
@@ -458,8 +458,10 @@ void CXXRecordDecl::addedMember(Decl *D) {
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
       // If this is the implicit default constructor, note that we have now
       // declared it.
-      if (Constructor->isDefaultConstructor())
+      if (Constructor->isDefaultConstructor()) {
         data().DeclaredDefaultConstructor = true;
+        data().NeedsImplicitDefaultConstructor = true;
+      }
       // If this is the implicit copy constructor, note that we have now
       // declared it.
       else if (Constructor->isCopyConstructor())
@@ -490,21 +492,21 @@ void CXXRecordDecl::addedMember(Decl *D) {
     data().UserDeclaredConstructor = true;
 
     // Note that we have no need of an implicitly-declared default constructor.
-    data().DeclaredDefaultConstructor = true;
+    data().NeedsImplicitDefaultConstructor = true;
     
-    // C++ [dcl.init.aggr]p1:
-    //   An aggregate is an array or a class (clause 9) with no
-    //   user-declared constructors (12.1) [...].
-    data().Aggregate = false;
-
-    // C++ [class]p4:
-    //   A POD-struct is an aggregate class [...]
-    data().PlainOldData = false;
+    // FIXME: Under C++0x, /only/ special member functions may be user-provided.
+    //        This is probably a defect.
+    bool UserProvided = false;
 
     // C++0x [class.ctor]p5:
     //   A default constructor is trivial if it is not user-provided [...]
-    if (Constructor->isUserProvided())
-      data().HasTrivialDefaultConstructor = false;
+    if (Constructor->isDefaultConstructor()) {
+      data().DeclaredDefaultConstructor = true;
+      if (Constructor->isUserProvided()) {
+        data().HasTrivialDefaultConstructor = false;
+        UserProvided = true;
+      }
+    }
 
     // Note when we have a user-declared copy or move constructor, which will
     // suppress the implicit declaration of those constructors.
@@ -516,14 +518,18 @@ void CXXRecordDecl::addedMember(Decl *D) {
         // C++0x [class.copy]p13:
         //   A copy/move constructor for class X is trivial if it is not
         //   user-provided [...]
-        if (Constructor->isUserProvided())
+        if (Constructor->isUserProvided()) {
           data().HasTrivialCopyConstructor = false;
+          UserProvided = true;
+        }
       } else if (Constructor->isMoveConstructor()) {
         // C++0x [class.copy]p13:
         //   A copy/move constructor for class X is trivial if it is not
         //   user-provided [...]
-        if (Constructor->isUserProvided())
+        if (Constructor->isUserProvided()) {
           data().HasTrivialMoveConstructor = false;
+          UserProvided = true;
+        }
       }
     }
     if (Constructor->isConstExpr() &&
@@ -532,6 +538,21 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // nor move constructors.
       data().HasConstExprNonCopyMoveConstructor = true;
     }
+
+    // C++ [dcl.init.aggr]p1:
+    //   An aggregate is an array or a class with no user-declared
+    //   constructors [...].
+    // C++0x [dcl.init.aggr]p1:
+    //   An aggregate is an array or a class with no user-provided
+    //   constructors [...].
+    if (!getASTContext().getLangOptions().CPlusPlus0x || UserProvided)
+      data().Aggregate = false;
+
+    // C++ [class]p4:
+    //   A POD-struct is an aggregate class [...]
+    // Since the POD bit is meant to be C++03 POD-ness, clear it even if the
+    // type is technically an aggregate in C++0x since it wouldn't be in 03.
+    data().PlainOldData = false;
 
     return;
   }

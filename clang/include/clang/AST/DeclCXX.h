@@ -337,8 +337,8 @@ class CXXRecordDecl : public RecordDecl {
     /// HasPublicFields - True when there are private non-static data members.
     bool HasPublicFields : 1;
 
-    /// HasTrivialDefaultConstructor - True when this class has a trivial
-    /// default constructor.
+    /// HasTrivialDefaultConstructor - True when, if this class has a default
+    /// constructor, this default constructor is trivial.
     ///
     /// C++0x [class.ctor]p5
     ///    A default constructor is trivial if it is not user-provided and if
@@ -438,6 +438,9 @@ class CXXRecordDecl : public RecordDecl {
 
     /// \brief Whether we have already declared the default constructor or 
     /// do not need to have one declared.
+    bool NeedsImplicitDefaultConstructor : 1;
+
+    /// \brief Whether we have already declared the default constructor.
     bool DeclaredDefaultConstructor : 1;
 
     /// \brief Whether we have already declared the copy constructor.
@@ -676,8 +679,8 @@ public:
   /// declared implicitly or does not need one declared implicitly.
   ///
   /// This value is used for lazy creation of default constructors.
-  bool hasDeclaredDefaultConstructor() const {
-    return data().DeclaredDefaultConstructor;
+  bool needsImplicitDefaultConstructor() const {
+    return data().NeedsImplicitDefaultConstructor;
   }
   
   /// hasConstCopyConstructor - Determines whether this class has a
@@ -810,7 +813,9 @@ public:
   // constructor
   // (C++0x [class.ctor]p5)
   bool hasTrivialDefaultConstructor() const {
-    return data().HasTrivialDefaultConstructor;
+    return data().HasTrivialDefaultConstructor &&
+           (!data().UserDeclaredConstructor ||
+             data().DeclaredDefaultConstructor);
   }
 
   // hasConstExprNonCopyMoveConstructor - Whether this class has at least one
