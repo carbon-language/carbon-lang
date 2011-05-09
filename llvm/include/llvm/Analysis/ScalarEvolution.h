@@ -270,30 +270,30 @@ namespace llvm {
 
     /// BackedgeTakenCounts - Cache the backedge-taken count of the loops for
     /// this function as they are computed.
-    std::map<const Loop*, BackedgeTakenInfo> BackedgeTakenCounts;
+    DenseMap<const Loop*, BackedgeTakenInfo> BackedgeTakenCounts;
 
     /// ConstantEvolutionLoopExitValue - This map contains entries for all of
     /// the PHI instructions that we attempt to compute constant evolutions for.
     /// This allows us to avoid potentially expensive recomputation of these
     /// properties.  An instruction maps to null if we are unable to compute its
     /// exit value.
-    std::map<PHINode*, Constant*> ConstantEvolutionLoopExitValue;
+    DenseMap<PHINode*, Constant*> ConstantEvolutionLoopExitValue;
 
     /// ValuesAtScopes - This map contains entries for all the expressions
     /// that we attempt to compute getSCEVAtScope information for, which can
     /// be expensive in extreme cases.
-    std::map<const SCEV *,
+    DenseMap<const SCEV *,
              std::map<const Loop *, const SCEV *> > ValuesAtScopes;
 
     /// LoopDispositions - Memoized computeLoopDisposition results.
-    std::map<const SCEV *,
+    DenseMap<const SCEV *,
              std::map<const Loop *, LoopDisposition> > LoopDispositions;
 
     /// computeLoopDisposition - Compute a LoopDisposition value.
     LoopDisposition computeLoopDisposition(const SCEV *S, const Loop *L);
 
     /// BlockDispositions - Memoized computeBlockDisposition results.
-    std::map<const SCEV *,
+    DenseMap<const SCEV *,
              std::map<const BasicBlock *, BlockDisposition> > BlockDispositions;
 
     /// computeBlockDisposition - Compute a BlockDisposition value.
