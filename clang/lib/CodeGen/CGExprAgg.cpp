@@ -642,7 +642,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       if (const RecordType *RT = CGF.getContext()
                         .getBaseElementType(ElementType)->getAs<RecordType>()) {
         const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-        hasNonTrivialCXXConstructor = !RD->hasTrivialConstructor();
+        hasNonTrivialCXXConstructor = !RD->hasTrivialDefaultConstructor();
       }
 
     // FIXME: were we intentionally ignoring address spaces and GC attributes?

@@ -5065,7 +5065,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
                                  /*isImplicitlyDeclared=*/true);
   DefaultCon->setAccess(AS_public);
   DefaultCon->setImplicit();
-  DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
+  DefaultCon->setTrivial(ClassDecl->hasTrivialDefaultConstructor());
   
   // Note that we have declared this constructor.
   ++ASTContext::NumImplicitDefaultConstructorsDeclared;

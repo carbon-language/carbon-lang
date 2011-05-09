@@ -4020,7 +4020,8 @@ InitializationSequence::Perform(Sema &S,
         CXXRecordDecl *ClassDecl = Constructor->getParent();
         assert(ClassDecl && "No parent class for constructor.");
         if (Constructor->isImplicit() && Constructor->isDefaultConstructor() &&
-            ClassDecl->hasTrivialConstructor() && !Constructor->isUsed(false))
+            ClassDecl->hasTrivialDefaultConstructor() &&
+            !Constructor->isUsed(false))
           S.DefineImplicitDefaultConstructor(Loc, Constructor);
       }
 

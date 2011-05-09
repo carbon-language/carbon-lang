@@ -954,11 +954,7 @@ bool Type::isTrivialType() const {
   if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
     if (const CXXRecordDecl *ClassDecl =
         dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      // C++0x [class]p5:
-      //   A trivial class is a class that has a trivial default constructor
-      if (!ClassDecl->hasTrivialConstructor()) return false;
-      //   and is trivially copyable.
-      if (!ClassDecl->isTriviallyCopyable()) return false;
+      if (!ClassDecl->isTrivial()) return false;
     }
 
     return true;
@@ -1027,11 +1023,7 @@ bool Type::isCXX11PODType() const {
         dyn_cast<CXXRecordDecl>(RT->getDecl())) {
       // C++11 [class]p10:
       //   A POD struct is a non-union class that is both a trivial class [...]
-      // C++11 [class]p5:
-      //   A trivial class is a class that has a trivial default constructor
-      if (!ClassDecl->hasTrivialConstructor()) return false;
-      //   and is trivially copyable.
-      if (!ClassDecl->isTriviallyCopyable()) return false;
+      if (!ClassDecl->isTrivial()) return false;
 
       // C++11 [class]p10:
       //   A POD struct is a non-union class that is both a trivial class and

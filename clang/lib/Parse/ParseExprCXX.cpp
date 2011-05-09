@@ -1924,7 +1924,8 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___has_nothrow_constructor: return UTT_HasNothrowConstructor;
   case tok::kw___has_nothrow_copy:           return UTT_HasNothrowCopy;
   case tok::kw___has_trivial_assign:      return UTT_HasTrivialAssign;
-  case tok::kw___has_trivial_constructor: return UTT_HasTrivialConstructor;
+  case tok::kw___has_trivial_constructor:
+                                    return UTT_HasTrivialDefaultConstructor;
   case tok::kw___has_trivial_copy:           return UTT_HasTrivialCopy;
   case tok::kw___has_trivial_destructor:  return UTT_HasTrivialDestructor;
   case tok::kw___has_virtual_destructor:  return UTT_HasVirtualDestructor;

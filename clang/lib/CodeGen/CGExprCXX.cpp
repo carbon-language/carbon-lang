@@ -738,7 +738,7 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
   if (E->isArray()) {
     if (CXXConstructorDecl *Ctor = E->getConstructor()) {
       bool RequiresZeroInitialization = false;
-      if (Ctor->getParent()->hasTrivialConstructor()) {
+      if (Ctor->getParent()->hasTrivialDefaultConstructor()) {
         // If new expression did not specify value-initialization, then there
         // is no initialization.
         if (!E->hasInitializer() || Ctor->getParent()->isEmpty())

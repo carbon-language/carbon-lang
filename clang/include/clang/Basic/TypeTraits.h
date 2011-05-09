@@ -23,7 +23,7 @@ namespace clang {
     UTT_HasNothrowConstructor,
     UTT_HasTrivialAssign,
     UTT_HasTrivialCopy,
-    UTT_HasTrivialConstructor,
+    UTT_HasTrivialDefaultConstructor,
     UTT_HasTrivialDestructor,
     UTT_HasVirtualDestructor,
     UTT_IsAbstract,

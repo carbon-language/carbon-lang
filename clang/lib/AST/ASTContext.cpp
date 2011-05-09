@@ -6149,10 +6149,13 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   // Structs that have non-trivial constructors or destructors are required.
 
   // FIXME: Handle references.
+  // FIXME: Be more selective about which constructors we care about.
   if (const RecordType *RT = VD->getType()->getAs<RecordType>()) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      if (RD->hasDefinition() &&
-          (!RD->hasTrivialConstructor() || !RD->hasTrivialDestructor()))
+      if (RD->hasDefinition() && !(RD->hasTrivialDefaultConstructor() &&
+                                   RD->hasTrivialCopyConstructor() &&
+                                   RD->hasTrivialMoveConstructor() &&
+                                   RD->hasTrivialDestructor()))
         return true;
     }
   }

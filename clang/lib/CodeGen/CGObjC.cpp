@@ -292,7 +292,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
         const CXXRecordDecl *classDecl = IVART->getAsCXXRecordDecl();
         
         if (PID->getGetterCXXConstructor() &&
-            classDecl && !classDecl->hasTrivialConstructor()) {
+            classDecl && !classDecl->hasTrivialDefaultConstructor()) {
           ReturnStmt *Stmt = 
             new (getContext()) ReturnStmt(SourceLocation(), 
                                           PID->getGetterCXXConstructor(),

@@ -7653,7 +7653,7 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
       CXXSpecialMember member = CXXInvalid;
       if (!RDecl->hasTrivialCopyConstructor())
         member = CXXCopyConstructor;
-      else if (!RDecl->hasTrivialConstructor())
+      else if (!RDecl->hasTrivialDefaultConstructor())
         member = CXXConstructor;
       else if (!RDecl->hasTrivialCopyAssignment())
         member = CXXCopyAssignment;
@@ -7758,7 +7758,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   bool (CXXRecordDecl::*hasTrivial)() const;
   switch (member) {
   case CXXConstructor:
-    hasTrivial = &CXXRecordDecl::hasTrivialConstructor; break;
+    hasTrivial = &CXXRecordDecl::hasTrivialDefaultConstructor; break;
   case CXXCopyConstructor:
     hasTrivial = &CXXRecordDecl::hasTrivialCopyConstructor; break;
   case CXXCopyAssignment:

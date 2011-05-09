@@ -1297,7 +1297,7 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_HasNothrowConstructor: return "__has_nothrow_constructor";
   case UTT_HasNothrowCopy:          return "__has_nothrow_copy";
   case UTT_HasTrivialAssign:      return "__has_trivial_assign";
-  case UTT_HasTrivialConstructor: return "__has_trivial_constructor";
+  case UTT_HasTrivialDefaultConstructor: return "__has_trivial_constructor";
   case UTT_HasTrivialCopy:          return "__has_trivial_copy";
   case UTT_HasTrivialDestructor:  return "__has_trivial_destructor";
   case UTT_HasVirtualDestructor:  return "__has_virtual_destructor";
