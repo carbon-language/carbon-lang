@@ -49,7 +49,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_args (NULL),
     m_process (thread.GetProcess()),
     m_thread (thread),
-    m_takedown_done (false)
+    m_takedown_done (false),
+    m_function_sp(NULL)
 {
     SetOkayToDiscard (discard_on_error);
 
@@ -64,7 +65,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     
     SetBreakpoints();
     
-    lldb::addr_t spBelowRedZone = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
+    m_function_sp = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
     
     ModuleSP executableModuleSP (target.GetExecutableModule());
 
@@ -110,7 +111,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     lldb::addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
         
     if (!abi->PrepareTrivialCall(thread, 
-                                 spBelowRedZone, 
+                                 m_function_sp, 
                                  FunctionLoadAddr, 
                                  StartLoadAddr, 
                                  m_arg_addr,

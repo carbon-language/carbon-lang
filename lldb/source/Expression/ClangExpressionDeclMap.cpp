@@ -588,7 +588,12 @@ ClangExpressionDeclMap::Materialize
     
     m_material_vars->m_process = exe_ctx.process;
     
-    bool result = DoMaterialize(false /* dematerialize */, exe_ctx, NULL, err);
+    bool result = DoMaterialize(false /* dematerialize */, 
+                                exe_ctx, 
+                                LLDB_INVALID_ADDRESS /* top of stack frame */, 
+                                LLDB_INVALID_ADDRESS /* bottom of stack frame */, 
+                                NULL, /* result SP */
+                                err);
     
     if (result)
         struct_address = m_material_vars->m_materialized_location;
@@ -717,10 +722,12 @@ ClangExpressionDeclMap::Dematerialize
 (
     ExecutionContext &exe_ctx,
     ClangExpressionVariableSP &result_sp,
+    lldb::addr_t stack_frame_top,
+    lldb::addr_t stack_frame_bottom,
     Error &err
 )
 {
-    return DoMaterialize(true, exe_ctx, &result_sp, err);
+    return DoMaterialize(true, exe_ctx, stack_frame_top, stack_frame_bottom, &result_sp, err);
     
     DidDematerialize();
 }
@@ -825,6 +832,8 @@ ClangExpressionDeclMap::DoMaterialize
 (
     bool dematerialize,
     ExecutionContext &exe_ctx,
+    lldb::addr_t stack_frame_top,
+    lldb::addr_t stack_frame_bottom,
     lldb::ClangExpressionVariableSP *result_sp_ptr,
     Error &err
 )
@@ -948,7 +957,9 @@ ClangExpressionDeclMap::DoMaterialize
                 if (!DoMaterializeOnePersistentVariable (dematerialize, 
                                                          exe_ctx,
                                                          member_sp, 
-                                                         m_material_vars->m_materialized_location + member_sp->m_jit_vars->m_offset, 
+                                                         m_material_vars->m_materialized_location + member_sp->m_jit_vars->m_offset,
+                                                         stack_frame_top,
+                                                         stack_frame_bottom,
                                                          err))
                     return false;
             }
@@ -1027,6 +1038,8 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
     ExecutionContext &exe_ctx,
     ClangExpressionVariableSP &var_sp,
     lldb::addr_t addr,
+    lldb::addr_t stack_frame_top,
+    lldb::addr_t stack_frame_bottom,
     Error &err
 )
 {
@@ -1103,15 +1116,26 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
                     log->Printf("Dematerializing %s from 0x%llx", var_sp->GetName().GetCString(), (uint64_t)mem);
                 
                 // Read the contents of the spare memory area
-                
-                if (log)
-                    log->Printf("Read");
-                
+                                
                 var_sp->ValueUpdated ();
                 if (exe_ctx.process->ReadMemory (mem, pvar_data, pvar_byte_size, error) != pvar_byte_size)
                 {
                     err.SetErrorStringWithFormat ("Couldn't read a composite type from the target: %s", error.AsCString());
                     return false;
+                }
+                
+                if (stack_frame_top != LLDB_INVALID_ADDRESS &&
+                    stack_frame_bottom != LLDB_INVALID_ADDRESS &&
+                    mem >= stack_frame_bottom &&
+                    mem <= stack_frame_top)
+                {
+                    // If the variable is resident in the stack frame created by the expression,
+                    // then it cannot be relied upon to stay around.  We treat it as needing
+                    // reallocation.
+                    
+                    var_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
+                    var_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
+                    var_sp->m_flags &= ~ClangExpressionVariable::EVIsProgramReference;
                 }
                 
                 var_sp->m_flags &= ~ClangExpressionVariable::EVNeedsFreezeDry;

@@ -421,7 +421,8 @@ ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
 bool
 ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
                                            ExecutionContext &exe_ctx,
-                                           lldb::ClangExpressionVariableSP &result)
+                                           lldb::ClangExpressionVariableSP &result,
+                                           lldb::addr_t function_stack_pointer)
 {
     Error expr_error;
     
@@ -444,8 +445,11 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
             log->Printf("  Structure contents:\n%s", args.GetData());
         }
     }
+    
+    lldb::addr_t function_stack_bottom = function_stack_pointer - Host::GetPageSize();
+    
         
-    if (!m_expr_decl_map->Dematerialize(exe_ctx, result, expr_error))
+    if (!m_expr_decl_map->Dematerialize(exe_ctx, result, function_stack_pointer, function_stack_bottom, expr_error))
     {
         error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
         return false;
@@ -497,6 +501,8 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         if (call_plan_sp == NULL || !call_plan_sp->ValidatePlan (NULL))
             return eExecutionSetupError;
+        
+        lldb::addr_t function_stack_pointer = static_cast<ThreadPlanCallFunction *>(call_plan_sp.get())->GetFunctionStackPointer();
     
         call_plan_sp->SetPrivate(true);
     
@@ -506,12 +512,12 @@ ClangUserExpression::Execute (Stream &error_stream,
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression begins --");
         
         ExecutionResults execution_result = exe_ctx.process->RunThreadPlan (exe_ctx, 
-                                                                                  call_plan_sp, 
-                                                                                  stop_others, 
-                                                                                  try_all_threads, 
-                                                                                  discard_on_error,
-                                                                                  single_thread_timeout_usec, 
-                                                                                  error_stream);
+                                                                            call_plan_sp, 
+                                                                            stop_others, 
+                                                                            try_all_threads, 
+                                                                            discard_on_error,
+                                                                            single_thread_timeout_usec, 
+                                                                            error_stream);
         
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression completed --");
@@ -531,7 +537,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             return execution_result;
         }
         
-        if  (FinalizeJITExecution (error_stream, exe_ctx, result))
+        if  (FinalizeJITExecution (error_stream, exe_ctx, result, function_stack_pointer))
             return eExecutionCompleted;
         else
             return eExecutionSetupError;

@@ -70,6 +70,16 @@ public:
         return true;
     }
     
+    // Return the stack pointer that the function received
+    // on entry.  Any stack address below this should be 
+    // considered invalid after the function has been
+    // cleaned up.
+    lldb::addr_t
+    GetFunctionStackPointer()
+    {
+        return m_function_sp;
+    }
+    
     // Classes that derive from ClangFunction, and implement
     // their own WillPop methods should call this so that the
     // thread state gets restored if the plan gets discarded.
@@ -97,6 +107,7 @@ private:
     Address                                         m_function_addr;
     Address                                         m_start_addr;
     lldb::addr_t                                    m_arg_addr;
+    lldb::addr_t                                    m_function_sp;
     ValueList                                      *m_args;
     Process                                        &m_process;
     Thread                                         &m_thread;

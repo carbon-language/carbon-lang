@@ -134,10 +134,34 @@ public:
     GetThreadPlanToExecuteJITExpression (Stream &error_stream,
                                          ExecutionContext &exe_ctx);
     
+    //------------------------------------------------------------------
+    /// Apply the side effects of the function to program state.
+    ///
+    /// @param[in] error_stream
+    ///     A stream to print errors to.
+    ///
+    /// @param[in] exe_ctx
+    ///     The execution context to use when looking up entities that
+    ///     are needed for parsing (locations of variables, etc.)
+    /// 
+    /// @param[in] result
+    ///     A pointer to direct at the persistent variable in which the
+    ///     expression's result is stored.
+    ///
+    /// @param[in] function_stack_pointer
+    ///     A pointer to the base of the function's stack frame.  This
+    ///     is used to determine whether the expession result resides in
+    ///     memory that will still be valid, or whether it needs to be
+    ///     treated as homeless for the purpose of future expressions.
+    ///
+    /// @return
+    ///     A Process::Execution results value.
+    //------------------------------------------------------------------
     bool
     FinalizeJITExecution (Stream &error_stream,
                           ExecutionContext &exe_ctx,
-                          lldb::ClangExpressionVariableSP &result);
+                          lldb::ClangExpressionVariableSP &result,
+                          lldb::addr_t function_stack_pointer = LLDB_INVALID_ADDRESS);
     
     //------------------------------------------------------------------
     /// Return the string that the parser should parse.  Must be a full
