@@ -2812,6 +2812,12 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
           report_fatal_error("Indirect operand for inline asm not a pointer!");
         OpTy = PtrTy->getElementType();
       }
+      
+      // Look for vector wrapped in a struct. e.g. { <16 x i8> }.
+      if (const StructType *STy = dyn_cast<StructType>(OpTy))
+        if (STy->getNumElements() == 1)
+          OpTy = STy->getElementType(0);
+
       // If OpTy is not a single value, it may be a struct/union that we
       // can tile with integers.
       if (!OpTy->isSingleValueType() && OpTy->isSized()) {

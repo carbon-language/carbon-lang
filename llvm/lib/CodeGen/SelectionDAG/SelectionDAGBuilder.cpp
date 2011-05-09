@@ -5268,6 +5268,7 @@ public:
 
     const llvm::Type *OpTy = CallOperandVal->getType();
 
+    // FIXME: code duplicated from TargetLowering::ParseConstraints().
     // If this is an indirect operand, the operand is a pointer to the
     // accessed type.
     if (isIndirect) {
@@ -5276,6 +5277,11 @@ public:
         report_fatal_error("Indirect operand for inline asm not a pointer!");
       OpTy = PtrTy->getElementType();
     }
+
+    // Look for vector wrapped in a struct. e.g. { <16 x i8> }.
+    if (const StructType *STy = dyn_cast<StructType>(OpTy))
+      if (STy->getNumElements() == 1)
+        OpTy = STy->getElementType(0);
 
     // If OpTy is not a single value, it may be a struct/union that we
     // can tile with integers.
