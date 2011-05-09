@@ -22,6 +22,11 @@ class PlatformCommandTestCase(TestBase):
         self.expect("platform process list",
             substrs = ['PID', 'ARCH', 'NAME'])
 
+    def test_process_info_with_no_arg(self):
+        """This is expected to fail and to return a proper error message."""
+        self.expect("platform process info", error=True,
+            substrs = ['one or more process id(s) must be specified'])
+
     def test_status(self):
         self.expect("platform status",
             substrs = ['Platform', 'Triple', 'OS Version', 'Kernel', 'Hostname'])
