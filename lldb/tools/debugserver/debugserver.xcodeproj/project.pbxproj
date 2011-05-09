@@ -359,6 +359,7 @@
 				26CE05C7115C36870022F371 /* ShellScript */,
 				26CE0591115C31C20022F371 /* Sources */,
 				26CE0592115C31C20022F371 /* Frameworks */,
+				26C6886A13787FC900407EDF /* Codesign hack */,
 			);
 			buildRules = (
 			);
@@ -397,6 +398,20 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		26C6886A13787FC900407EDF /* Codesign hack */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Codesign hack";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "codesign --force --keychain ~/Library/Keychains/login.keychain --sign lldb_codesign \"$CODESIGNING_FOLDER_PATH\"";
+		};
 		26CE05C7115C36870022F371 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -565,7 +580,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 131;
 				FRAMEWORK_SEARCH_PATHS = $SDKROOT/System/Library/PrivateFrameworks;
@@ -595,7 +609,6 @@
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;
-				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};
@@ -605,7 +618,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "source/debugserver-entitlements.plist";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 131;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -635,7 +647,6 @@
 				);
 				OTHER_MIGFLAGS = "-I$(DERIVED_FILE_DIR)";
 				PRODUCT_NAME = debugserver;
-				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
 				ZERO_LINK = NO;
 			};

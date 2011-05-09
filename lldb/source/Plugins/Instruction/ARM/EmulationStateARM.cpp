@@ -9,6 +9,7 @@
 
 #include "EmulationStateARM.h"
 
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/RegisterContext.h"
@@ -33,33 +34,18 @@ EmulationStateARM::~EmulationStateARM ()
 bool
 EmulationStateARM::LoadPseudoRegistersFromFrame (StackFrame &frame)
 {
-    RegisterContext *reg_context = frame.GetRegisterContext().get();
-    Scalar value;
-    uint64_t reg_value64;
-    uint32_t reg_value32;
-    
+    RegisterContext *reg_ctx = frame.GetRegisterContext().get();
     bool success = true;
+    uint32_t reg_num;
     
     for (int i = dwarf_r0; i < dwarf_r0 + 17; ++i)
     {
-        uint32_t internal_reg_num = reg_context->ConvertRegisterKindToRegisterNumber (eRegisterKindDWARF, i);
-        if (reg_context->ReadRegisterValue (internal_reg_num, value))
+        reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindDWARF, i);
+        const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex (reg_num);
+        RegisterValue reg_value;
+        if (reg_ctx->ReadRegister (reg_info, reg_value))
         {
-            reg_value32 = (uint32_t) value.GetRawBits64 (0);
-            m_gpr[i - dwarf_r0] = reg_value32;
-        }
-        else
-            success = false;
-    }
-    
-    for (int i = dwarf_s0; i < dwarf_s0 + 32; ++i)
-    {
-        uint32_t internal_reg_num = reg_context->ConvertRegisterKindToRegisterNumber (eRegisterKindDWARF, i);
-        if (reg_context->ReadRegisterValue (internal_reg_num, value))
-        {
-            uint32_t idx = i - dwarf_s0;
-            reg_value32 = (uint32_t) value.GetRawBits64 (0);
-            m_vfp_regs.sd_regs[idx / 2].s_reg[idx % 2] = reg_value32;
+            m_gpr[i - dwarf_r0] = reg_value.GetAsUInt32();
         }
         else
             success = false;
@@ -67,15 +53,17 @@ EmulationStateARM::LoadPseudoRegistersFromFrame (StackFrame &frame)
     
     for (int i = dwarf_d0; i < dwarf_d0 + 32; ++i)
     {
-        uint32_t internal_reg_num = reg_context->ConvertRegisterKindToRegisterNumber (eRegisterKindDWARF, i);
-        if (reg_context->ReadRegisterValue (internal_reg_num, value))
+        reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindDWARF, i);
+        RegisterValue reg_value;
+        const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex (reg_num);
+
+        if (reg_ctx->ReadRegister (reg_info, reg_value))
         {
             uint32_t idx = i - dwarf_d0;
-            reg_value64 = value.GetRawBits64 (0);
             if (i < 16)
-                m_vfp_regs.sd_regs[idx].d_reg = reg_value64;
+                m_vfp_regs.sd_regs[idx].d_reg = reg_value.GetAsUInt64();
             else
-                m_vfp_regs.d_regs[idx - 16] = reg_value64;
+                m_vfp_regs.d_regs[idx - 16] = reg_value.GetAsUInt64();
         }
         else
             success = false;
@@ -254,18 +242,20 @@ EmulationStateARM::WritePseudoMemory (EmulateInstruction *instruction,
 bool
 EmulationStateARM::ReadPseudoRegister (EmulateInstruction *instruction,
                                        void *baton,
-                                       const RegisterInfo &reg_info,
-                                       uint64_t &reg_value)
+                                       const lldb_private::RegisterInfo *reg_info,
+                                       lldb_private::RegisterValue &reg_value)
 {
-    if (!baton)
+    if (!baton || !reg_info)
         return false;
         
     bool success = true;
     EmulationStateARM *pseudo_state = (EmulationStateARM *) baton;
+    const uint32_t dwarf_reg_num = reg_info->kinds[eRegisterKindDWARF];
+    assert (dwarf_reg_num != LLDB_INVALID_REGNUM);
+    uint64_t reg_uval = pseudo_state->ReadPseudoRegisterValue (dwarf_reg_num, success);
     
-    assert (reg_info.kinds[eRegisterKindDWARF] != LLDB_INVALID_REGNUM);
-    reg_value = pseudo_state->ReadPseudoRegisterValue (reg_info.kinds[eRegisterKindDWARF], success);
-    
+    if (success)
+        success = reg_value.SetUInt(reg_uval, reg_info->byte_size);
     return success;
     
 }
@@ -274,15 +264,16 @@ bool
 EmulationStateARM::WritePseudoRegister (EmulateInstruction *instruction,
                                         void *baton,
                                         const EmulateInstruction::Context &context,
-                                        const RegisterInfo &reg_info,
-                                        uint64_t reg_value)
+                                        const lldb_private::RegisterInfo *reg_info,
+                                        const lldb_private::RegisterValue &reg_value)
 {
-    if (!baton)
+    if (!baton || !reg_info)
         return false;
 
-    assert (reg_info.kinds[eRegisterKindDWARF] != LLDB_INVALID_REGNUM);
     EmulationStateARM *pseudo_state = (EmulationStateARM *) baton;
-    return pseudo_state->StorePseudoRegisterValue (reg_info.kinds[eRegisterKindDWARF], reg_value);
+    const uint32_t dwarf_reg_num = reg_info->kinds[eRegisterKindDWARF];
+    assert (dwarf_reg_num != LLDB_INVALID_REGNUM);
+    return pseudo_state->StorePseudoRegisterValue (dwarf_reg_num, reg_value.GetAsUInt64());
 }
                          
 bool

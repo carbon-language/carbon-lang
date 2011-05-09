@@ -103,7 +103,8 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
             // We use the address byte size to be safe for any future addresss sizes
             RegisterInfo sp_reg_info;
             m_inst_emulator_ap->GetRegisterInfo (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, sp_reg_info);
-            SetRegisterValue(sp_reg_info, (1ull << ((addr_byte_size * 8) - 1)));
+            m_initial_sp = (1ull << ((addr_byte_size * 8) - 1));
+            SetRegisterValue(sp_reg_info, m_initial_sp);
                 
             const InstructionList &inst_list = disasm_sp->GetInstructionList ();
             const size_t num_instructions = inst_list.GetSize();
@@ -155,7 +156,7 @@ UnwindAssemblyInstEmulation::FirstNonPrologueInsn (AddressRange& func,
 UnwindAssembly *
 UnwindAssemblyInstEmulation::CreateInstance (const ArchSpec &arch)
 {
-    std::auto_ptr<lldb_private::EmulateInstruction> inst_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypePrologueEpilogue, NULL));
+    std::auto_ptr<EmulateInstruction> inst_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypePrologueEpilogue, NULL));
     // Make sure that all prologue instructions are handled
     if (inst_emulator_ap.get())
         return new UnwindAssemblyInstEmulation (arch, inst_emulator_ap.release());
@@ -215,28 +216,34 @@ UnwindAssemblyInstEmulation::GetPluginDescriptionStatic()
 
 
 uint64_t 
-UnwindAssemblyInstEmulation::MakeRegisterKindValuePair (const lldb_private::RegisterInfo &reg_info)
+UnwindAssemblyInstEmulation::MakeRegisterKindValuePair (const RegisterInfo &reg_info)
 {
     uint32_t reg_kind, reg_num;
-    if (EmulateInstruction::GetBestRegisterKindAndNumber (reg_info, reg_kind, reg_num))
+    if (EmulateInstruction::GetBestRegisterKindAndNumber (&reg_info, reg_kind, reg_num))
         return (uint64_t)reg_kind << 24 | reg_num;
     return 0ull;
 }
 
 void
-UnwindAssemblyInstEmulation::SetRegisterValue (const lldb_private::RegisterInfo &reg_info, uint64_t reg_value)
+UnwindAssemblyInstEmulation::SetRegisterValue (const RegisterInfo &reg_info, const RegisterValue &reg_value)
 {
     m_register_values[MakeRegisterKindValuePair (reg_info)] = reg_value;
 }
 
-uint64_t
-UnwindAssemblyInstEmulation::GetRegisterValue (const lldb_private::RegisterInfo &reg_info)
+bool
+UnwindAssemblyInstEmulation::GetRegisterValue (const RegisterInfo &reg_info, RegisterValue &reg_value)
 {
     const uint64_t reg_id = MakeRegisterKindValuePair (reg_info);
     RegisterValueMap::const_iterator pos = m_register_values.find(reg_id);
     if (pos != m_register_values.end())
-        return pos->second;
-    return MakeRegisterKindValuePair (reg_info);
+    {
+        reg_value = pos->second;
+        return true; // We had a real value that comes from an opcode that wrote
+                     // to it...
+    }
+    // We are making up a value that is recognizable...
+    reg_value.SetUInt(reg_id, reg_info.byte_size);
+    return false;
 }
 
 
@@ -280,6 +287,7 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
     
     switch (context.type)
     {
+        default:
         case EmulateInstruction::eContextInvalid:
         case EmulateInstruction::eContextReadOpcode:
         case EmulateInstruction::eContextImmediate:
@@ -299,6 +307,7 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
         case EmulateInstruction::eContextReturnFromException:
         case EmulateInstruction::eContextPopRegisterOffStack:
         case EmulateInstruction::eContextAdjustStackPointer:
+            assert (!"unhandled case, add code to handle this!");
             break;
             
         case EmulateInstruction::eContextPushRegisterOnStack:
@@ -308,8 +317,8 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
                     {
                         UnwindPlan::Row::RegisterLocation regloc;
                         const uint32_t dwarf_reg_num = context.info.RegisterToRegisterPlusOffset.data_reg.kinds[eRegisterKindDWARF];
-                        const addr_t reg_cfa_offset = inst_emulator->m_curr_row.GetCFAOffset() + context.info.RegisterToRegisterPlusOffset.offset;
-                        regloc.SetIsCFAPlusOffset (reg_cfa_offset);
+                        //const addr_t reg_cfa_offset = inst_emulator->m_curr_row.GetCFAOffset() + context.info.RegisterToRegisterPlusOffset.offset;
+                        regloc.SetAtCFAPlusOffset (addr - inst_emulator->m_initial_sp);
                         inst_emulator->m_curr_row.SetRegisterInfo (dwarf_reg_num, regloc);
                     }
                     break;
@@ -320,8 +329,6 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
             }
             break;
             
-            break;
-            
     }
 
     return dst_len;
@@ -330,14 +337,19 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
 bool
 UnwindAssemblyInstEmulation::ReadRegister (EmulateInstruction *instruction,
                                            void *baton,
-                                           const RegisterInfo &reg_info,
-                                           uint64_t &reg_value)
+                                           const RegisterInfo *reg_info,
+                                           RegisterValue &reg_value)
 {
-    UnwindAssemblyInstEmulation *inst_emulator = (UnwindAssemblyInstEmulation *)baton;
-    reg_value = inst_emulator->GetRegisterValue (reg_info);
+    if (baton && reg_info)
+    {
+        UnwindAssemblyInstEmulation *inst_emulator = (UnwindAssemblyInstEmulation *)baton;
+        bool synthetic = inst_emulator->GetRegisterValue (*reg_info, reg_value);
 
-    printf ("UnwindAssemblyInstEmulation::ReadRegister  (name = \"%s\") => value = 0x%16.16llx\n", reg_info.name, reg_value);
-
+        StreamFile strm (stdout, false);
+        strm.Printf ("UnwindAssemblyInstEmulation::ReadRegister  (name = \"%s\") => synthetic_value = %i, value = ", reg_info->name, synthetic);
+        reg_value.Dump(&strm, reg_info, false, eFormatDefault);
+        strm.EOL();
+    }
     return true;
 }
 
@@ -345,20 +357,24 @@ bool
 UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                                             void *baton,
                                             const EmulateInstruction::Context &context, 
-                                            const RegisterInfo &reg_info,
-                                            uint64_t reg_value)
+                                            const RegisterInfo *reg_info,
+                                            const RegisterValue &reg_value)
 {
+    if (!baton || !reg_info)
+        return false;
+
     UnwindAssemblyInstEmulation *inst_emulator = (UnwindAssemblyInstEmulation *)baton;
-    
-    printf ("UnwindAssemblyInstEmulation::WriteRegister (name = \"%s\", value = 0x%16.16llx, context =", 
-            reg_info.name,
-            reg_value);
+    StreamFile strm (stdout, false);
+    strm.Printf ("UnwindAssemblyInstEmulation::WriteRegister (name = \"%s\", value = ", reg_info->name);
+    reg_value.Dump(&strm, reg_info, false, eFormatDefault);
+    strm.PutCString (", context = ");
     context.Dump(stdout, instruction);
 
-    inst_emulator->SetRegisterValue (reg_info, reg_value);
+    inst_emulator->SetRegisterValue (*reg_info, reg_value);
 
     switch (context.type)
     {
+        default:
         case EmulateInstruction::eContextInvalid:
         case EmulateInstruction::eContextReadOpcode:
         case EmulateInstruction::eContextImmediate:
@@ -377,6 +393,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         case EmulateInstruction::eContextAdvancePC:    
         case EmulateInstruction::eContextReturnFromException:
         case EmulateInstruction::eContextPushRegisterOnStack:
+            assert (!"unhandled case, add code to handle this!");
             break;
 
         case EmulateInstruction::eContextPopRegisterOffStack:
@@ -385,7 +402,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 {
                     case EmulateInstruction::eInfoTypeRegisterPlusOffset:
                         {
-                            const uint32_t dwarf_reg_num = reg_info.kinds[eRegisterKindDWARF];
+                            const uint32_t dwarf_reg_num = reg_info->kinds[eRegisterKindDWARF];
                             UnwindPlan::Row::RegisterLocation regloc;
                             regloc.SetSame();
                             inst_emulator->m_curr_row.SetRegisterInfo (dwarf_reg_num, regloc);
@@ -400,16 +417,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
             break;
 
         case EmulateInstruction::eContextAdjustStackPointer:
-            switch (context.info_type)
-            {
-                case EmulateInstruction::eInfoTypeImmediateSigned:
-                    inst_emulator->m_curr_row.SetCFAOffset (inst_emulator->m_curr_row.GetCFAOffset() + context.info.signed_immediate);
-                    break;
-
-                default:
-                    assert (!"unhandled case, add code to handle this!");
-                    break;
-            }
+            inst_emulator->m_curr_row.SetCFAOffset (reg_value.GetAsUInt64() - inst_emulator->m_initial_sp);
             break;
     }
     return true;

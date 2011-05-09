@@ -782,10 +782,10 @@ bool
 Instruction::Emulate (const ArchSpec &arch,
                       uint32_t evaluate_options,
                       void *baton,
-                      EmulateInstruction::ReadMemory read_mem_callback,
-                      EmulateInstruction::WriteMemory write_mem_callback,
-                      EmulateInstruction::ReadRegister read_reg_callback,
-                      EmulateInstruction::WriteRegister write_reg_callback)
+                      EmulateInstruction::ReadMemoryCallback read_mem_callback,
+                      EmulateInstruction::WriteMemoryCallback write_mem_callback,
+                      EmulateInstruction::ReadRegisterCallback read_reg_callback,
+                      EmulateInstruction::WriteRegisterCallback write_reg_callback)
 {
 	std::auto_ptr<EmulateInstruction> insn_emulator_ap (EmulateInstruction::FindPlugin (arch, eInstructionTypeAny, NULL));
 	if (insn_emulator_ap.get())

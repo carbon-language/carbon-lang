@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/ValueObject.h"
 
 namespace lldb_private {
@@ -161,14 +162,14 @@ protected:
     UpdateValue ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
-    const RegisterInfo *m_reg_info;
-    uint32_t m_reg_num;
+    RegisterInfo m_reg_info;
+    RegisterValue m_reg_value;
     ConstString m_type_name;
     void *m_clang_type;
 
 private:
     void
-    ConstructObject ();
+    ConstructObject (uint32_t reg_num);
     
     friend class ValueObjectRegisterSet;
     ValueObjectRegister (ValueObject &parent, lldb::RegisterContextSP &reg_ctx_sp, uint32_t reg_num);

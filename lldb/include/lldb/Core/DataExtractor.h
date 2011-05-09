@@ -418,6 +418,52 @@ public:
     //------------------------------------------------------------------
     const void*
     GetData (uint32_t *offset_ptr, uint32_t length) const;
+    
+    //------------------------------------------------------------------
+    /// Copy \a dst_len bytes from \a *offset_ptr and ensure the copied
+    /// data is treated as a value that can be swapped to match the
+    /// specified byte order.
+    ///
+    /// For values that are larger than the supported integer sizes,
+    /// this function can be used to extract data in a specified byte
+    /// order. It can also be used to copy a smaller integer value from
+    /// to a larger value. The extra bytes left over will be padded
+    /// correctly according to the byte order of this object and the
+    /// \a dst_byte_order. This can be very handy when say copying a 
+    /// partial data value into a register.
+    ///
+    /// @param[in] src_offset
+    ///     The offset into this data from which to start copying an
+    ///     endian entity
+    ///
+    /// @param[in] src_len
+    ///     The length of the endian data to copy from this object
+    ///     into the \a dst object
+    ///
+    /// @param[out] dst
+    ///     The buffer where to place the endian data. The data might 
+    ///     need to be byte swapped (and appropriately padded with 
+    ///     zeroes if \a src_len != \a dst_len) if \a dst_byte_order 
+    ///     does not match the byte order in this object.
+    ///
+    /// @param[in] dst_len
+    ///     The length number of bytes that the endian value will 
+    ///     occupy is \a dst.
+    ///
+    /// @param[in] byte_order
+    ///     The byte order that the endian value should be in the \a dst
+    ///     buffer.
+    ///
+    /// @return
+    ///     Returns the number of bytes that were copied, or zero if 
+    ///     anything goes wrong.
+    //------------------------------------------------------------------
+    uint32_t
+    CopyByteOrderedData (uint32_t src_offset, 
+                         uint32_t src_len,
+                         void *dst, 
+                         uint32_t dst_len, 
+                         lldb::ByteOrder dst_byte_order) const;
 
     //------------------------------------------------------------------
     /// Get the data end pointer.

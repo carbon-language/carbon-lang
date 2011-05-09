@@ -50,13 +50,13 @@ public:
     GetRegisterSet (uint32_t reg_set);
 
     virtual bool
-    ReadRegisterBytes (uint32_t reg, lldb_private::DataExtractor &data);
+    ReadRegister (const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);
 
+    virtual bool
+    WriteRegister (const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
+    
     virtual bool
     ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
-
-    virtual bool
-    WriteRegisterBytes (uint32_t reg, lldb_private::DataExtractor &data, uint32_t data_offset = 0);
 
     virtual bool
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
@@ -92,7 +92,7 @@ private:
         eRegisterSavedAtMemoryLocation, // register is saved at a specific word of target mem (target_memory_location)
         eRegisterInRegister,            // register is available in a (possible other) register (register_number)
         eRegisterSavedAtHostMemoryLocation, // register is saved at a word in lldb's address space
-        eRegisterValueInferred          // register val was computed (and is in register_value)
+        eRegisterValueInferred          // register val was computed (and is in inferred_value)
     };
 
     struct RegisterLocation
@@ -103,7 +103,7 @@ private:
             lldb::addr_t target_memory_location;
             uint32_t     register_number;       // in eRegisterKindLLDB register numbering system
             void*        host_memory_location;
-            uint64_t     register_value;        // eRegisterValueInferred - e.g. stack pointer == cfa + offset
+            uint64_t     inferred_value;        // eRegisterValueInferred - e.g. stack pointer == cfa + offset
         } location;
     };
 
@@ -138,10 +138,14 @@ private:
     SavedLocationForRegister (uint32_t lldb_regnum, RegisterLocation &regloc);
 
     bool
-    ReadRegisterBytesFromRegisterLocation (uint32_t regnum, RegisterLocation regloc, lldb_private::DataExtractor &data);
+    ReadRegisterValueFromRegisterLocation (RegisterLocation regloc, 
+                                           const lldb_private::RegisterInfo *reg_info,
+                                           lldb_private::RegisterValue &value);
 
     bool
-    WriteRegisterBytesToRegisterLocation (uint32_t regnum, RegisterLocation regloc, lldb_private::DataExtractor &data, uint32_t data_offset);
+    WriteRegisterValueToRegisterLocation (RegisterLocation regloc, 
+                                          const lldb_private::RegisterInfo *reg_info,
+                                          const lldb_private::RegisterValue &value);
 
     // Get the contents of a general purpose (address-size) register for this frame 
     // (usually retrieved from the m_next_frame)

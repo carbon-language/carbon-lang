@@ -386,6 +386,7 @@
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC511368AE38006DC050 /* OptionGroupFormat.cpp */; };
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
+		26C6886F137880C400407EDF /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
 		26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1014,6 +1015,8 @@
 		26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileLineResolver.cpp; path = source/Core/FileLineResolver.cpp; sourceTree = "<group>"; };
 		26C5577B132575AD008FD8FE /* PlatformMacOSX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformMacOSX.cpp; sourceTree = "<group>"; };
 		26C5577C132575AD008FD8FE /* PlatformMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformMacOSX.h; sourceTree = "<group>"; };
+		26C6886D137880B900407EDF /* RegisterValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegisterValue.h; path = include/lldb/Core/RegisterValue.h; sourceTree = "<group>"; };
+		26C6886E137880C400407EDF /* RegisterValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterValue.cpp; path = source/Core/RegisterValue.cpp; sourceTree = "<group>"; };
 		26C72C93124322890068DC16 /* SBStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBStream.h; path = include/lldb/API/SBStream.h; sourceTree = "<group>"; };
 		26C72C951243229A0068DC16 /* SBStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBStream.cpp; path = source/API/SBStream.cpp; sourceTree = "<group>"; };
 		26C81CA411335651004BDC5A /* UUID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UUID.h; path = include/lldb/Core/UUID.h; sourceTree = "<group>"; };
@@ -1974,6 +1977,8 @@
 				26BC7D7010F1B77400F91463 /* PluginInterface.h */,
 				26BC7D7110F1B77400F91463 /* PluginManager.h */,
 				26BC7E8A10F1B85900F91463 /* PluginManager.cpp */,
+				26C6886D137880B900407EDF /* RegisterValue.h */,
+				26C6886E137880C400407EDF /* RegisterValue.cpp */,
 				26BC7D7310F1B77400F91463 /* RegularExpression.h */,
 				26BC7E8C10F1B85900F91463 /* RegularExpression.cpp */,
 				26BC7D7410F1B77400F91463 /* Scalar.h */,
@@ -3283,6 +3288,7 @@
 				260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */,
 				2686536C1370ACB200D186A3 /* OptionGroupBoolean.cpp in Sources */,
 				268653701370AE7200D186A3 /* OptionGroupUInt64.cpp in Sources */,
+				26C6886F137880C400407EDF /* RegisterValue.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3862,7 +3868,6 @@
 		26F5C26C10F3D9A5009D5894 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = lldb_codesign;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 46;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -3895,7 +3900,6 @@
 		26F5C26D10F3D9A5009D5894 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 46;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";

@@ -1035,6 +1035,116 @@ DataExtractor::GetData (uint32_t *offset_ptr, uint32_t length) const
     return bytes;
 }
 
+// Extract data and swap if needed when doing the copy
+uint32_t
+DataExtractor::CopyByteOrderedData (uint32_t src_offset, 
+                                    uint32_t src_len,
+                                    void *dst_void_ptr, 
+                                    uint32_t dst_len, 
+                                    ByteOrder dst_byte_order) const
+{
+    // Validate the source info
+    assert (ValidOffsetForDataOfSize(src_offset, src_len));
+    assert (src_len > 0);
+    assert (m_byte_order == eByteOrderBig || m_byte_order == eByteOrderLittle);
+
+    // Validate the destination info
+    assert (dst_void_ptr != NULL);
+    assert (dst_len > 0);
+    assert (dst_byte_order == eByteOrderBig || dst_byte_order == eByteOrderLittle);
+    
+    // Must have valid byte orders set in this object and for destination
+    if (!(dst_byte_order == eByteOrderBig || dst_byte_order == eByteOrderLittle) ||
+        !(m_byte_order == eByteOrderBig || m_byte_order == eByteOrderLittle))
+        return 0;
+
+    uint32_t i;
+    uint8_t* dst = (uint8_t*)dst_void_ptr;
+    const uint8_t* src = (const uint8_t *)PeekData (src_offset, src_len);
+    if (src)
+    {
+        if (src_len >= dst_len)
+        {
+            // We are copying the entire value from src into dst.
+            // Calculate how many, if any, zeroes we need for the most 
+            // significant bytes if "dst_len" is greater than "src_len"...
+            const uint32_t num_zeroes = dst_len - src_len;
+            if (dst_byte_order == eByteOrderBig)
+            {
+                // Big endian, so we lead with zeroes...
+                if (num_zeroes > 0)
+                    ::memset (dst, 0, num_zeroes);
+                // Then either copy or swap the rest
+                if (m_byte_order == eByteOrderBig)
+                {
+                    ::memcpy (dst + num_zeroes, src, src_len);
+                }
+                else
+                {
+                    for (i=0; i<src_len; ++i)
+                        dst[i+num_zeroes] = src[src_len - 1 - i];
+                }
+            }
+            else
+            {
+                // Little endian destination, so we lead the value bytes
+                if (m_byte_order == eByteOrderBig)
+                {
+                    for (i=0; i<src_len; ++i)
+                        dst[i] = src[src_len - 1 - i];
+                }
+                else
+                {
+                    ::memcpy (dst, src, src_len);
+                }
+                // And zero the rest...
+                if (num_zeroes > 0)
+                    ::memset (dst + src_len, 0, num_zeroes);
+            }
+            return src_len;
+        }
+        else
+        {
+            // We are only copying some of the value from src into dst..
+
+            if (dst_byte_order == eByteOrderBig)
+            {
+                // Big endian dst
+                if (m_byte_order == eByteOrderBig)
+                {
+                    // Big endian dst, with big endian src
+                    ::memcpy (dst, src + (src_len - dst_len), dst_len);
+                }
+                else
+                {
+                    // Big endian dst, with little endian src
+                    for (i=0; i<dst_len; ++i)
+                        dst[i] = src[dst_len - 1 - i];
+                }
+            }
+            else
+            {
+                // Little endian dst
+                if (m_byte_order == eByteOrderBig)
+                {
+                    // Little endian dst, with big endian src
+                    for (i=0; i<dst_len; ++i)
+                        dst[i] = src[src_len - 1 - i];
+                }
+                else
+                {
+                    // Little endian dst, with big endian src
+                    ::memcpy (dst, src, dst_len);
+                }
+            }
+            return dst_len;
+        }            
+
+    }
+    return 0;
+}
+
+
 //----------------------------------------------------------------------
 // Extracts a AsCString (fixed length, or variable length) from
 // the data at the offset pointed to by "offset_ptr". If

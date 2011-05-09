@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Target/Thread.h"
@@ -80,17 +81,14 @@ RegisterContextMacOSXFrameBackchain::GetRegisterSet (uint32_t reg_set)
 
 
 bool
-RegisterContextMacOSXFrameBackchain::ReadRegisterValue (uint32_t reg, Scalar &value)
+RegisterContextMacOSXFrameBackchain::ReadRegister (const RegisterInfo *reg_info,
+                                                   RegisterValue &value)
 {
     if (!m_cursor_is_valid)
         return false;
 
     uint64_t reg_value = LLDB_INVALID_ADDRESS;
     
-    const RegisterInfo *reg_info = m_thread.GetRegisterContext()->GetRegisterInfoAtIndex (reg);
-    if (reg_info == NULL)
-        return false;
-
     switch (reg_info->kinds[eRegisterKindGeneric])
     {
     case LLDB_REGNUM_GENERIC_PC:
@@ -116,34 +114,9 @@ RegisterContextMacOSXFrameBackchain::ReadRegisterValue (uint32_t reg, Scalar &va
         break;
 
     case eEncodingUint:
-        switch (reg_info->byte_size)
-        {
-        case 1:
-        case 2:
-        case 4:
-            value = (uint32_t)reg_value;
-            return true;
-
-        case 8:
-            value = (uint64_t)reg_value;
-            return true;
-        }
-        break;
-
     case eEncodingSint:
-        switch (reg_info->byte_size)
-        {
-        case 1:
-        case 2:
-        case 4:
-            value = (int32_t)reg_value;
-            return true;
-
-        case 8:
-            value = (int64_t)reg_value;
-            return true;
-        }
-        break;
+        value.SetUInt(reg_value, reg_info->byte_size);
+        return true;
 
     case eEncodingIEEE754:
         switch (reg_info->byte_size)
@@ -151,12 +124,12 @@ RegisterContextMacOSXFrameBackchain::ReadRegisterValue (uint32_t reg, Scalar &va
         case sizeof (float):
             if (sizeof (float) == sizeof(uint32_t))
             {
-                value = (uint32_t)reg_value;
+                value.SetUInt32(reg_value, RegisterValue::eTypeFloat);
                 return true;
             }
             else if (sizeof (float) == sizeof(uint64_t))
             {
-                value = (uint64_t)reg_value;
+                value.SetUInt64(reg_value, RegisterValue::eTypeFloat);
                 return true;
             }
             break;
@@ -164,12 +137,12 @@ RegisterContextMacOSXFrameBackchain::ReadRegisterValue (uint32_t reg, Scalar &va
         case sizeof (double):
             if (sizeof (double) == sizeof(uint32_t))
             {
-                value = (uint32_t)reg_value;
+                value.SetUInt32(reg_value, RegisterValue::eTypeDouble);
                 return true;
             }
             else if (sizeof (double) == sizeof(uint64_t))
             {
-                value = (uint64_t)reg_value;
+                value.SetUInt64(reg_value, RegisterValue::eTypeDouble);
                 return true;
             }
             break;
@@ -177,12 +150,12 @@ RegisterContextMacOSXFrameBackchain::ReadRegisterValue (uint32_t reg, Scalar &va
         case sizeof (long double):
             if (sizeof (long double) == sizeof(uint32_t))
             {
-                value = (uint32_t)reg_value;
+                value.SetUInt32(reg_value, RegisterValue::eTypeLongDouble);
                 return true;
             }
             else if (sizeof (long double) == sizeof(uint64_t))
             {
-                value = (uint64_t)reg_value;
+                value.SetUInt64(reg_value, RegisterValue::eTypeLongDouble);
                 return true;
             }
             break;
@@ -192,44 +165,14 @@ RegisterContextMacOSXFrameBackchain::ReadRegisterValue (uint32_t reg, Scalar &va
     return false;
 }
 
-
 bool
-RegisterContextMacOSXFrameBackchain::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
-{
-    Scalar reg_value;
-    
-    if (ReadRegisterValue (reg, reg_value))
-    {
-        if (reg_value.GetData(data))
-        {
-            // "reg_value" is local and now "data" points to the data within
-            // "reg_value", so we must make a copy that will live within "data"
-            DataBufferSP data_sp (new DataBufferHeap (data.GetDataStart(), data.GetByteSize()));
-            data.SetData (data_sp, 0, data.GetByteSize());
-            return true;
-        }
-    }
-    return false;
-}
-
-
-bool
-RegisterContextMacOSXFrameBackchain::WriteRegisterValue (uint32_t reg, const Scalar &value)
+RegisterContextMacOSXFrameBackchain::WriteRegister (const RegisterInfo *reg_info,
+                                                    const RegisterValue &value)
 {
     // Not supported yet. We could easily add support for this by remembering
     // the address of each entry (it would need to be part of the cursor)
     return false;
 }
-
-
-bool
-RegisterContextMacOSXFrameBackchain::WriteRegisterBytes (uint32_t reg, DataExtractor &data, uint32_t data_offset)
-{
-    // Not supported yet. We could easily add support for this by remembering
-    // the address of each entry (it would need to be part of the cursor)
-    return false;
-}
-
 
 bool
 RegisterContextMacOSXFrameBackchain::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)

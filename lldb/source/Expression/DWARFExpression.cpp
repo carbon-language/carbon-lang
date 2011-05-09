@@ -13,6 +13,7 @@
 
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Value.h"
@@ -612,21 +613,21 @@ DWARFExpression::GetDescription (Stream *s, lldb::DescriptionLevel level, addr_t
 static bool
 ReadRegisterValueAsScalar
 (
-    RegisterContext *reg_context,
+    RegisterContext *reg_ctx,
     uint32_t reg_kind,
     uint32_t reg_num,
     Error *error_ptr,
     Value &value
 )
 {
-    if (reg_context == NULL)
+    if (reg_ctx == NULL)
     {
         if (error_ptr)
             error_ptr->SetErrorStringWithFormat("No register context in frame.\n");
     }
     else
     {
-        uint32_t native_reg = reg_context->ConvertRegisterKindToRegisterNumber(reg_kind, reg_num);
+        uint32_t native_reg = reg_ctx->ConvertRegisterKindToRegisterNumber(reg_kind, reg_num);
         if (native_reg == LLDB_INVALID_REGNUM)
         {
             if (error_ptr)
@@ -634,14 +635,29 @@ ReadRegisterValueAsScalar
         }
         else
         {
-            value.SetValueType (Value::eValueTypeScalar);
-            value.SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_context->GetRegisterInfoAtIndex(native_reg)));
-
-            if (reg_context->ReadRegisterValue (native_reg, value.GetScalar()))
-                return true;
-
-            if (error_ptr)
-                error_ptr->SetErrorStringWithFormat("Failed to read register %u.\n", native_reg);
+            const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex(native_reg);
+            RegisterValue reg_value;
+            if (reg_ctx->ReadRegister (reg_info, reg_value))
+            {
+                if (reg_value.GetScalarValue(value.GetScalar()))
+                {
+                    value.SetValueType (Value::eValueTypeScalar);
+                    value.SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_info));
+                    if (error_ptr)
+                        error_ptr->Clear();
+                    return true;
+                }
+                else
+                {
+                    if (error_ptr)
+                        error_ptr->SetErrorStringWithFormat("Failed to read register %u.\n", native_reg);
+                }
+            }
+            else
+            {
+                if (error_ptr)
+                    error_ptr->SetErrorStringWithFormat("Failed to read register %u.\n", native_reg);
+            }
         }
     }
     return false;

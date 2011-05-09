@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Interpreter/Args.h"
@@ -77,26 +78,24 @@ public:
     {
         if (reg_info)
         {
-            uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+            RegisterValue reg_value;
 
-            DataExtractor reg_data;
-
-            if (reg_ctx->ReadRegisterBytes(reg, reg_data))
+            if (reg_ctx->ReadRegister (reg_info, reg_value))
             {
                 strm.Indent ();
-                strm.Printf ("%-12s = ", reg_info ? reg_info->name : "<INVALID REGINFO>");
                 Format format;
                 if (m_options.format == eFormatDefault)
                     format = reg_info->format;
                 else
                     format = m_options.format;
 
-                reg_data.Dump(&strm, 0, format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
+                bool prefix_with_name = true;
+                reg_value.Dump(&strm, reg_info, prefix_with_name, m_options.format);
                 if (((reg_info->encoding == eEncodingUint) || (reg_info->encoding == eEncodingSint)) && 
                     (reg_info->byte_size == reg_ctx->GetThread().GetProcess().GetAddressByteSize()))
                 {
-                    addr_t reg_addr = reg_ctx->ReadRegisterAsUnsigned (reg, 0);
-                    if (reg_addr)
+                    addr_t reg_addr = reg_value.GetAsUInt64(LLDB_INVALID_ADDRESS);
+                    if (reg_addr != LLDB_INVALID_ADDRESS)
                     {
                         Address so_reg_addr;
                         if (exe_ctx.target->GetSectionLoadList().ResolveLoadAddress(reg_addr, so_reg_addr))
@@ -393,11 +392,12 @@ public:
 
                 if (reg_info)
                 {
-                    Scalar scalar;
-                    Error error(scalar.SetValueFromCString (value_str, reg_info->encoding, reg_info->byte_size));
+                    RegisterValue reg_value;
+                    
+                    Error error (reg_value.SetValueFromCString (reg_info, value_str));
                     if (error.Success())
                     {
-                        if (reg_ctx->WriteRegisterValue(reg_info->kinds[eRegisterKindLLDB], scalar))
+                        if (reg_ctx->WriteRegister (reg_info, reg_value))
                         {
                             result.SetStatus (eReturnStatusSuccessFinishNoResult);
                             return true;

@@ -11,6 +11,7 @@
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/InputReader.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
@@ -1088,10 +1089,11 @@ Debugger::FormatPrompt
                             
                             if (reg_info != NULL)
                             {
-                                DataExtractor reg_data;
-                                var_success = reg_ctx->ReadRegisterBytes (reg_info->kinds[eRegisterKindLLDB], reg_data);
+                                RegisterValue reg_value;
+                                var_success = reg_ctx->ReadRegister (reg_info, reg_value);
+                                if (var_success)
                                 {
-                                    reg_data.Dump(&s, 0, reg_info->format, reg_info->byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, 0, 0);
+                                    reg_value.Dump(&s, reg_info, false);
                                 }
                             }                            
                             

@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
 // Project includes
@@ -115,65 +116,14 @@ GDBRemoteRegisterContext::GetRegisterSet (uint32_t reg_set)
 
 
 bool
-GDBRemoteRegisterContext::ReadRegisterValue (uint32_t reg, Scalar &value)
+GDBRemoteRegisterContext::ReadRegister (const RegisterInfo *reg_info, RegisterValue &value)
 {
     // Read the register
-    if (ReadRegisterBytes (reg, m_reg_data))
+    if (ReadRegisterBytes (reg_info, value, m_reg_data))
     {
-        const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
-        uint32_t offset = reg_info->byte_offset;
-        switch (reg_info->encoding)
-        {
-        case eEncodingUint:
-            switch (reg_info->byte_size)
-            {
-            case 1:
-            case 2:
-            case 4:
-                value = m_reg_data.GetMaxU32 (&offset, reg_info->byte_size);
-                return true;
-
-            case 8:
-                value = m_reg_data.GetMaxU64 (&offset, reg_info->byte_size);
-                return true;
-            }
-            break;
-
-        case eEncodingSint:
-            switch (reg_info->byte_size)
-            {
-            case 1:
-            case 2:
-            case 4:
-                value = (int32_t)m_reg_data.GetMaxU32 (&offset, reg_info->byte_size);
-                return true;
-
-            case 8:
-                value = m_reg_data.GetMaxS64 (&offset, reg_info->byte_size);
-                return true;
-            }
-            break;
-
-        case eEncodingIEEE754:
-            switch (reg_info->byte_size)
-            {
-            case sizeof (float):
-                value = m_reg_data.GetFloat (&offset);
-                return true;
-
-            case sizeof (double):
-                value = m_reg_data.GetDouble (&offset);
-                return true;
-
-            case sizeof (long double):
-                value = m_reg_data.GetLongDouble (&offset);
-                return true;
-            }
-            break;
-
-        default:
-            break;
-        }        
+        const bool partial_data_ok = false;
+        Error error (value.SetValueFromData(reg_info, m_reg_data, reg_info->byte_offset, partial_data_ok));
+        return error.Success();
     }
     return false;
 }
@@ -206,14 +156,14 @@ GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor
 
 
 bool
-GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
+GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, RegisterValue &value, DataExtractor &data)
 {
     GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
 
     InvalidateIfNeeded(false);
 
-    const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
-    assert (reg_info);
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+
     if (!m_reg_valid[reg])
     {
         Mutex::Locker locker;
@@ -243,6 +193,7 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
                 else
                 {
                     // Get each register individually
+
                     if (thread_suffix_supported)
                         packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4x;", reg, m_thread.GetID());
                     else
@@ -274,21 +225,18 @@ GDBRemoteRegisterContext::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
 
 
 bool
-GDBRemoteRegisterContext::WriteRegisterValue (uint32_t reg, const Scalar &value)
+GDBRemoteRegisterContext::WriteRegister (const RegisterInfo *reg_info,
+                                         const RegisterValue &value)
 {
-    const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
-    if (reg_info)
-    {
-        DataExtractor data;
-        if (value.GetData (data, reg_info->byte_size))
-            return WriteRegisterBytes (reg, data, 0);
-    }
+    DataExtractor data;
+    if (value.GetData (data))
+        return WriteRegisterBytes (reg_info, value, data, 0);
     return false;
 }
 
 
 bool
-GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data, uint32_t data_offset)
+GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info, const RegisterValue &value, DataExtractor &data, uint32_t data_offset)
 {
     GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
 // FIXME: This check isn't right because IsRunning checks the Public state, but this
@@ -297,34 +245,21 @@ GDBRemoteRegisterContext::WriteRegisterBytes (uint32_t reg, DataExtractor &data,
 //    if (gdb_comm.IsRunning())
 //        return false;
 
-    const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
 
-    if (reg_info)
+    // Grab a pointer to where we are going to put this register
+    uint8_t *dst = const_cast<uint8_t*>(m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size));
+
+    if (dst == NULL)
+        return false;
+    
+    
+    if (data.CopyByteOrderedData (data_offset,                  // src offset
+                                  reg_info->byte_size,          // src length
+                                  dst,                          // dst
+                                  reg_info->byte_size,          // dst length
+                                  m_reg_data.GetByteOrder()))   // dst byte order
     {
-        // Grab a pointer to where we are going to put this register
-        uint8_t *dst = const_cast<uint8_t*>(m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size));
-
-        if (dst == NULL)
-            return false;
-
-        // Grab a pointer to where we are going to grab the new value from
-        const uint8_t *src = data.PeekData(0, reg_info->byte_size);
-
-        if (src == NULL)
-            return false;
-
-        if (data.GetByteOrder() == m_reg_data.GetByteOrder())
-        {
-            // No swapping, just copy the bytes
-            ::memcpy (dst, src, reg_info->byte_size);
-        }
-        else
-        {
-            // Swap the bytes
-            for (uint32_t i=0; i<reg_info->byte_size; ++i)
-                dst[i] = src[reg_info->byte_size - 1 - i];
-        }
-
         Mutex::Locker locker;
         if (gdb_comm.GetSequenceMutex (locker))
         {

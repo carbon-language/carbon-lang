@@ -1,4 +1,4 @@
-//===-- lldb_InstructionUtils.h ---------------------------------*- C++ -*-===//
+//===-- InstructionUtils.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -36,7 +36,13 @@ Bits32 (const uint32_t bits, const uint32_t msbit, const uint32_t lsbit)
 static inline uint32_t
 Bit32 (const uint32_t bits, const uint32_t bit)
 {
-    return Bits32(bits, bit, bit);
+    return (bits >> bit) & 1u;
+}
+
+static inline uint64_t
+Bit64 (const uint64_t bits, const uint32_t bit)
+{
+    return (bits >> bit) & 1ull;
 }
 
 // Set the bit field(s) from the most significant bit (msbit) to the

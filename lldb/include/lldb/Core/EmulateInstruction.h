@@ -17,6 +17,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/Opcode.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Interpreter/NamedOptionValue.h"
 
 //----------------------------------------------------------------------
@@ -351,30 +352,30 @@ public:
 
     };
 
-    typedef size_t (*ReadMemory) (EmulateInstruction *instruction,
-                                  void *baton,
-                                  const Context &context, 
-                                  lldb::addr_t addr, 
-                                  void *dst,
-                                  size_t length);
+    typedef size_t (*ReadMemoryCallback) (EmulateInstruction *instruction,
+                                          void *baton,
+                                          const Context &context, 
+                                          lldb::addr_t addr, 
+                                          void *dst,
+                                          size_t length);
     
-    typedef size_t (*WriteMemory) (EmulateInstruction *instruction,
-                                   void *baton,
-                                   const Context &context, 
-                                   lldb::addr_t addr, 
-                                   const void *dst,
-                                   size_t length);
+    typedef size_t (*WriteMemoryCallback) (EmulateInstruction *instruction,
+                                           void *baton,
+                                           const Context &context, 
+                                           lldb::addr_t addr, 
+                                           const void *dst,
+                                           size_t length);
     
-    typedef bool   (*ReadRegister)  (EmulateInstruction *instruction,
-                                     void *baton,
-                                     const RegisterInfo &reg_info, 
-                                     uint64_t &reg_value);
+    typedef bool   (*ReadRegisterCallback)  (EmulateInstruction *instruction,
+                                             void *baton,
+                                             const RegisterInfo *reg_info,
+                                             RegisterValue &reg_value);
 
-    typedef bool   (*WriteRegister) (EmulateInstruction *instruction,
-                                     void *baton,
-                                     const Context &context, 
-                                     const RegisterInfo &reg_info, 
-                                     uint64_t reg_value);
+    typedef bool   (*WriteRegisterCallback) (EmulateInstruction *instruction,
+                                             void *baton,
+                                             const Context &context, 
+                                             const RegisterInfo *reg_info,
+                                             const RegisterValue &reg_value);
 
     EmulateInstruction (const ArchSpec &arch);
 
@@ -414,27 +415,60 @@ public:
     static const char *
     TranslateRegister (uint32_t reg_kind, uint32_t reg_num, std::string &reg_name);
     
-    uint64_t
-    ReadRegisterUnsigned (uint32_t reg_kind, 
-                          uint32_t reg_num, 
-                          uint64_t fail_value, 
-                          bool *success_ptr);
+    //----------------------------------------------------------------------
+    // RegisterInfo variants
+    //----------------------------------------------------------------------
+    bool
+    ReadRegister (const RegisterInfo *reg_info, 
+                  RegisterValue& reg_value);
 
     uint64_t
-    ReadRegisterUnsigned (const RegisterInfo &reg_info, 
+    ReadRegisterUnsigned (const RegisterInfo *reg_info,
+                          uint64_t fail_value, 
+                          bool *success_ptr);
+    
+    bool
+    WriteRegister (const Context &context, 
+                   const RegisterInfo *ref_info, 
+                   const RegisterValue& reg_value);
+
+    bool
+    WriteRegisterUnsigned (const Context &context,
+                           const RegisterInfo *reg_info,
+                           uint64_t reg_value);
+
+    //----------------------------------------------------------------------
+    // Register kind and number variants
+    //----------------------------------------------------------------------
+    bool
+    ReadRegister (uint32_t reg_kind, 
+                  uint32_t reg_num, 
+                  RegisterValue& reg_value);
+
+    bool
+    WriteRegister (const Context &context, 
+                   uint32_t reg_kind, 
+                   uint32_t reg_num, 
+                   const RegisterValue& reg_value);
+
+    uint64_t
+    ReadRegisterUnsigned (uint32_t reg_kind, 
+                          uint32_t reg_num,
                           uint64_t fail_value, 
                           bool *success_ptr);
 
     bool
-    WriteRegisterUnsigned (const Context &context, 
+    WriteRegisterUnsigned (const Context &context,
                            uint32_t reg_kind, 
                            uint32_t reg_num,
                            uint64_t reg_value);
 
-    bool
-    WriteRegisterUnsigned (const Context &context, 
-                           const RegisterInfo &reg_info, 
-                           uint64_t reg_value);
+
+    size_t
+    ReadMemory (const Context &context, 
+                lldb::addr_t addr, 
+                void *dst,
+                size_t dst_len);
 
     uint64_t
     ReadMemoryUnsigned (const Context &context, 
@@ -442,6 +476,12 @@ public:
                         size_t byte_size, 
                         uint64_t fail_value, 
                         bool *success_ptr);
+
+    bool
+    WriteMemory (const Context &context, 
+                 lldb::addr_t addr, 
+                 const void *src,
+                 size_t src_len);
 
     bool
     WriteMemoryUnsigned (const Context &context, 
@@ -499,16 +539,16 @@ public:
     static bool   
     ReadRegisterFrame  (EmulateInstruction *instruction,
                         void *baton,
-                        const RegisterInfo &reg_info,
-                        uint64_t &reg_value);
+                        const RegisterInfo *reg_info,
+                        RegisterValue &reg_value);
     
     
     static bool   
     WriteRegisterFrame (EmulateInstruction *instruction,
                         void *baton,
                         const Context &context, 
-                        const RegisterInfo &reg_info,
-                        uint64_t reg_value);
+                        const RegisterInfo *reg_info,
+                        const RegisterValue &reg_value);
                           
     static size_t 
     ReadMemoryDefault (EmulateInstruction *instruction,
@@ -529,40 +569,40 @@ public:
     static bool   
     ReadRegisterDefault  (EmulateInstruction *instruction,
                           void *baton,
-                          const RegisterInfo &reg_info,
-                          uint64_t &reg_value);
+                          const RegisterInfo *reg_info,
+                          RegisterValue &reg_value);
     
     
     static bool   
     WriteRegisterDefault (EmulateInstruction *instruction,
                           void *baton,
                           const Context &context, 
-                          const RegisterInfo &reg_info,
-                          uint64_t reg_value);
+                          const RegisterInfo *reg_info,
+                          const RegisterValue &reg_value);
    
     void
     SetBaton (void *baton);
     
     void
-    SetCallbacks (ReadMemory read_mem_callback,
-                  WriteMemory write_mem_callback,
-                  ReadRegister read_reg_callback,
-                  WriteRegister write_reg_callback);
+    SetCallbacks (ReadMemoryCallback read_mem_callback,
+                  WriteMemoryCallback write_mem_callback,
+                  ReadRegisterCallback read_reg_callback,
+                  WriteRegisterCallback write_reg_callback);
                   
     void
-    SetReadMemCallback (ReadMemory read_mem_callback);
+    SetReadMemCallback (ReadMemoryCallback read_mem_callback);
     
     void
-    SetWriteMemCallback (WriteMemory write_mem_callback);
+    SetWriteMemCallback (WriteMemoryCallback write_mem_callback);
     
     void
-    SetReadRegCallback (ReadRegister read_reg_callback);
+    SetReadRegCallback (ReadRegisterCallback read_reg_callback);
     
     void
-    SetWriteRegCallback (WriteRegister write_reg_callback);
+    SetWriteRegCallback (WriteRegisterCallback write_reg_callback);
 
     static bool
-    GetBestRegisterKindAndNumber (const RegisterInfo &reg_info, 
+    GetBestRegisterKindAndNumber (const RegisterInfo *reg_info, 
                                   uint32_t &reg_kind,
                                   uint32_t &reg_num);
     
@@ -571,14 +611,14 @@ public:
                                const RegisterInfo &reg_info);
 
 protected:
-    ArchSpec            m_arch;
-    void *              m_baton;
-    ReadMemory          m_read_mem_callback;
-    WriteMemory         m_write_mem_callback;
-    ReadRegister        m_read_reg_callback;
-    WriteRegister       m_write_reg_callback;
-    lldb::addr_t        m_addr;
-    Opcode              m_opcode;
+    ArchSpec                m_arch;
+    void *                  m_baton;
+    ReadMemoryCallback      m_read_mem_callback;
+    WriteMemoryCallback     m_write_mem_callback;
+    ReadRegisterCallback    m_read_reg_callback;
+    WriteRegisterCallback   m_write_reg_callback;
+    lldb::addr_t            m_addr;
+    Opcode                  m_opcode;
     
 
 private:

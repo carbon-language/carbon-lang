@@ -14,6 +14,7 @@
 #include "lldb/Core/AddressRange.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/Function.h"
@@ -658,132 +659,99 @@ RegisterContextLLDB::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_
 }
 
 bool
-RegisterContextLLDB::ReadRegisterBytesFromRegisterLocation (uint32_t regnum, RegisterLocation regloc, DataExtractor &data)
+RegisterContextLLDB::ReadRegisterValueFromRegisterLocation (RegisterLocation regloc, 
+                                                            const RegisterInfo *reg_info,
+                                                            RegisterValue &value)
 {
     if (!IsValid())
         return false;
+    bool success = false;
 
-    if (regloc.type == eRegisterInRegister)
+    switch (regloc.type)
     {
-        data.SetAddressByteSize (m_thread.GetProcess().GetAddressByteSize());
-        data.SetByteOrder (m_thread.GetProcess().GetByteOrder());
-        if (IsFrameZero ())
+    case eRegisterInRegister:
         {
-            return m_thread.GetRegisterContext()->ReadRegisterBytes (regloc.location.register_number, data);
+            const RegisterInfo *other_reg_info = GetRegisterInfoAtIndex(regloc.location.register_number);
+            if (IsFrameZero ()) 
+            {
+                success = m_thread.GetRegisterContext()->ReadRegister (other_reg_info, value);
+            }
+            else
+            {
+                success = m_next_frame->ReadRegister (other_reg_info, value);
+            }
         }
-        else
-        {
-            return m_next_frame->ReadRegisterBytes (regloc.location.register_number, data);
-        }
-    }
-    if (regloc.type == eRegisterNotSaved)
-    {
-        return false;
-    }
-    if (regloc.type == eRegisterSavedAtHostMemoryLocation)
-    {
+        break;
+    case eRegisterValueInferred:
+        success = value.SetUInt (regloc.location.inferred_value, reg_info->byte_size);
+        break;
+            
+    case eRegisterNotSaved:
+        break;
+    case eRegisterSavedAtHostMemoryLocation:
         assert ("FIXME debugger inferior function call unwind");
-    }
-    if (regloc.type != eRegisterSavedAtMemoryLocation)
-    {
-        assert ("Unknown RegisterLocation type.");
-    }
-
-    const RegisterInfo *reg_info = m_thread.GetRegisterContext()->GetRegisterInfoAtIndex (regnum);
-    DataBufferSP data_sp (new DataBufferHeap (reg_info->byte_size, 0));
-    data.SetData (data_sp, 0, reg_info->byte_size);
-    data.SetAddressByteSize (m_thread.GetProcess().GetAddressByteSize());
-
-    if (regloc.type == eRegisterValueInferred)
-    {
-        data.SetByteOrder (lldb::endian::InlHostByteOrder());
-        switch (reg_info->byte_size)
+        break;
+    case eRegisterSavedAtMemoryLocation:
         {
-            case 1:
-            {
-                uint8_t val = regloc.location.register_value;
-                memcpy (data_sp->GetBytes(), &val, sizeof (val));
-                data.SetByteOrder (lldb::endian::InlHostByteOrder());
-                return true;
-            }
-            case 2:
-            {
-                uint16_t val = regloc.location.register_value;
-                memcpy (data_sp->GetBytes(), &val, sizeof (val));
-                data.SetByteOrder (lldb::endian::InlHostByteOrder());
-                return true;
-            }
-            case 4:
-            {
-                uint32_t val = regloc.location.register_value;
-                memcpy (data_sp->GetBytes(), &val, sizeof (val));
-                data.SetByteOrder (lldb::endian::InlHostByteOrder());
-                return true;
-            }
-            case 8:
-            {
-                uint64_t val = regloc.location.register_value;
-                memcpy (data_sp->GetBytes(), &val, sizeof (val));
-                data.SetByteOrder (lldb::endian::InlHostByteOrder());
-                return true;
-            }
+            Error error (ReadRegisterValueFromMemory(reg_info, 
+                                                     regloc.location.target_memory_location, 
+                                                     reg_info->byte_size, 
+                                                     value));
+            success = error.Success();
         }
-        return false;
+        break;
+    default:
+        assert ("Unknown RegisterLocation type.");
+        break;
     }
-
-    assert (regloc.type == eRegisterSavedAtMemoryLocation);
-    Error error;
-    data.SetByteOrder (m_thread.GetProcess().GetByteOrder());
-    if (!m_thread.GetProcess().ReadMemory (regloc.location.target_memory_location, data_sp->GetBytes(), reg_info->byte_size, error))
-        return false;
-    return true;
+    return success;
 }
 
 bool
-RegisterContextLLDB::WriteRegisterBytesToRegisterLocation (uint32_t regnum, RegisterLocation regloc, DataExtractor &data, uint32_t data_offset)
+RegisterContextLLDB::WriteRegisterValueToRegisterLocation (RegisterLocation regloc, 
+                                                           const RegisterInfo *reg_info,
+                                                           const RegisterValue &value)
 {
     if (!IsValid())
         return false;
 
-    if (regloc.type == eRegisterInRegister)
+    bool success = false;
+    
+    switch (regloc.type)
     {
-        if (IsFrameZero ())
-        {
-            return m_thread.GetRegisterContext()->WriteRegisterBytes (regloc.location.register_number, data, data_offset);
-        }
-        else
-        {
-            return m_next_frame->WriteRegisterBytes (regloc.location.register_number, data, data_offset);
-        }
+        case eRegisterInRegister:
+            {
+                const RegisterInfo *other_reg_info = GetRegisterInfoAtIndex(regloc.location.register_number);
+                if (IsFrameZero ()) 
+                {
+                    success = m_thread.GetRegisterContext()->WriteRegister (other_reg_info, value);
+                }
+                else
+                {
+                    success = m_next_frame->WriteRegister (other_reg_info, value);
+                }
+            }
+            break;
+        case eRegisterValueInferred:
+        case eRegisterNotSaved:
+            break;
+        case eRegisterSavedAtHostMemoryLocation:
+            assert ("FIXME debugger inferior function call unwind");
+            break;
+        case eRegisterSavedAtMemoryLocation:
+            {
+                Error error (WriteRegisterValueToMemory (reg_info, 
+                                                         regloc.location.target_memory_location, 
+                                                         reg_info->byte_size, 
+                                                         value));
+                success = error.Success();
+            }
+            break;
+        default:
+            assert ("Unknown RegisterLocation type.");
+            break;
     }
-    if (regloc.type == eRegisterNotSaved)
-    {
-        return false;
-    }
-    if (regloc.type == eRegisterValueInferred)
-    {
-        return false;
-    }
-    if (regloc.type == eRegisterSavedAtHostMemoryLocation)
-    {
-        assert ("FIXME debugger inferior function call unwind");
-    }
-    if (regloc.type != eRegisterSavedAtMemoryLocation)
-    {
-        assert ("Unknown RegisterLocation type.");
-    }
-
-    Error error;
-    const RegisterInfo *reg_info = m_thread.GetRegisterContext()->GetRegisterInfoAtIndex (regnum);
-    if (reg_info->byte_size == 0)
-        return false;
-    uint8_t *buf = (uint8_t*) alloca (reg_info->byte_size);
-    if (data.ExtractBytes (data_offset, reg_info->byte_size, m_thread.GetProcess().GetByteOrder(), buf) != reg_info->byte_size)
-        return false;
-    if (m_thread.GetProcess().WriteMemory (regloc.location.target_memory_location, buf, reg_info->byte_size, error) != reg_info->byte_size)
-        return false;
-
-    return true;
+    return success;
 }
 
 
@@ -818,10 +786,10 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
     if (m_thread.GetRegisterContext()->ConvertBetweenRegisterKinds (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP, eRegisterKindLLDB, sp_regnum)
         && sp_regnum == lldb_regnum)
     {
-        // make sure we won't lose precision copying an addr_t (m_cfa) into a uint64_t (.register_value)
+        // make sure we won't lose precision copying an addr_t (m_cfa) into a uint64_t (.inferred_value)
         assert (sizeof (addr_t) <= sizeof (uint64_t));
         regloc.type = eRegisterValueInferred;
-        regloc.location.register_value = m_cfa;
+        regloc.location.inferred_value = m_cfa;
         m_registers[lldb_regnum] = regloc;
         return true;
     }
@@ -976,7 +944,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
     {
         int offset = unwindplan_regloc.GetOffset();
         regloc.type = eRegisterValueInferred;
-        regloc.location.register_value = m_cfa + offset;
+        regloc.location.inferred_value = m_cfa + offset;
         m_registers[lldb_regnum] = regloc;
         return true;
     }
@@ -1027,7 +995,7 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
             if (unwindplan_regloc.IsDWARFExpression())
              {
                 regloc.type = eRegisterValueInferred;
-                regloc.location.register_value = val;
+                regloc.location.inferred_value = val;
                 m_registers[lldb_regnum] = regloc;
                 return true;
             }
@@ -1090,18 +1058,14 @@ RegisterContextLLDB::ReadGPRValue (int register_kind, uint32_t regnum, addr_t &v
         return false;
     }
 
-    uint32_t offset = 0;
-    DataExtractor data;
-    data.SetAddressByteSize (m_thread.GetProcess().GetAddressByteSize());
-    data.SetByteOrder (m_thread.GetProcess().GetByteOrder());
-
+    const RegisterInfo *reg_info = GetRegisterInfoAtIndex(lldb_regnum);
+    RegisterValue reg_value;
     // if this is frame 0 (currently executing frame), get the requested reg contents from the actual thread registers
     if (IsFrameZero ())
     {
-        if (m_thread.GetRegisterContext()->ReadRegisterBytes (lldb_regnum, data))
+        if (m_thread.GetRegisterContext()->ReadRegister (reg_info, reg_value))
         {
-            data.SetAddressByteSize (m_thread.GetProcess().GetAddressByteSize());
-            value = data.GetAddress (&offset);
+            value = reg_value.GetAsUInt64();
             return true;
         }
         return false;
@@ -1112,29 +1076,29 @@ RegisterContextLLDB::ReadGPRValue (int register_kind, uint32_t regnum, addr_t &v
     {
         return false;
     }
-    if (!ReadRegisterBytesFromRegisterLocation (lldb_regnum, regloc, data))
+    if (ReadRegisterValueFromRegisterLocation (regloc, reg_info, reg_value))
     {
-        return false;
+        value = reg_value.GetAsUInt64();
+        return true;
     }
-    data.SetAddressByteSize (m_thread.GetProcess().GetAddressByteSize());
-    value = data.GetAddress (&offset);
-    return true;
+    return false;
 }
 
 // Find the value of a register in THIS frame
 
 bool
-RegisterContextLLDB::ReadRegisterBytes (uint32_t lldb_reg, DataExtractor& data)
+RegisterContextLLDB::ReadRegister (const RegisterInfo *reg_info, RegisterValue &value)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     if (!IsValid())
         return false;
 
+    const uint32_t lldb_regnum = reg_info->kinds[eRegisterKindLLDB];
     if (log && IsLogVerbose ())
     {
         log->Printf("%*sFrame %u looking for register saved location for reg %d",
                     m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                    lldb_reg);
+                    lldb_regnum);
     }
 
     // If this is the 0th frame, hand this over to the live register context
@@ -1144,31 +1108,32 @@ RegisterContextLLDB::ReadRegisterBytes (uint32_t lldb_reg, DataExtractor& data)
         {
             log->Printf("%*sFrame %u passing along to the live register context for reg %d",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                        lldb_reg);
+                        lldb_regnum);
         }
-        return m_thread.GetRegisterContext()->ReadRegisterBytes (lldb_reg, data);
+        return m_thread.GetRegisterContext()->ReadRegister (reg_info, value);
     }
 
     RegisterLocation regloc;
     // Find out where the NEXT frame saved THIS frame's register contents
-    if (!m_next_frame->SavedLocationForRegister (lldb_reg, regloc))
+    if (!m_next_frame->SavedLocationForRegister (lldb_regnum, regloc))
         return false;
 
-    return ReadRegisterBytesFromRegisterLocation (lldb_reg, regloc, data);
+    return ReadRegisterValueFromRegisterLocation (regloc, reg_info, value);
 }
 
 bool
-RegisterContextLLDB::WriteRegisterBytes (uint32_t lldb_reg, DataExtractor &data, uint32_t data_offset)
+RegisterContextLLDB::WriteRegister (const RegisterInfo *reg_info, const RegisterValue &value)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     if (!IsValid())
         return false;
 
+    const uint32_t lldb_regnum = reg_info->kinds[eRegisterKindLLDB];
     if (log && IsLogVerbose ())
     {
         log->Printf("%*sFrame %u looking for register saved location for reg %d",
                     m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                    lldb_reg);
+                    lldb_regnum);
     }
 
     // If this is the 0th frame, hand this over to the live register context
@@ -1178,17 +1143,17 @@ RegisterContextLLDB::WriteRegisterBytes (uint32_t lldb_reg, DataExtractor &data,
         {
             log->Printf("%*sFrame %u passing along to the live register context for reg %d",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                        lldb_reg);
+                        lldb_regnum);
         }
-        return m_thread.GetRegisterContext()->WriteRegisterBytes (lldb_reg, data, data_offset);
+        return m_thread.GetRegisterContext()->WriteRegister (reg_info, value);
     }
 
     RegisterLocation regloc;
     // Find out where the NEXT frame saved THIS frame's register contents
-    if (!m_next_frame->SavedLocationForRegister (lldb_reg, regloc))
+    if (!m_next_frame->SavedLocationForRegister (lldb_regnum, regloc))
         return false;
 
-    return WriteRegisterBytesToRegisterLocation (lldb_reg, regloc, data, data_offset);
+    return WriteRegisterValueToRegisterLocation (regloc, reg_info, value);
 }
 
 // Don't need to implement this one

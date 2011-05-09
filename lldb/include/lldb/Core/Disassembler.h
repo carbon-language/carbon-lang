@@ -88,10 +88,10 @@ public:
     Emulate (const ArchSpec &arch,
              uint32_t evaluate_options,
              void *baton,
-             EmulateInstruction::ReadMemory read_mem_callback,
-             EmulateInstruction::WriteMemory write_mem_calback,
-             EmulateInstruction::ReadRegister read_reg_callback,
-             EmulateInstruction::WriteRegister write_reg_callback);
+             EmulateInstruction::ReadMemoryCallback read_mem_callback,
+             EmulateInstruction::WriteMemoryCallback write_mem_calback,
+             EmulateInstruction::ReadRegisterCallback read_reg_callback,
+             EmulateInstruction::WriteRegisterCallback write_reg_callback);
                       
     const Opcode &
     GetOpcode () const

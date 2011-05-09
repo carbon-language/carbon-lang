@@ -112,6 +112,7 @@ class   ProcessLaunchInfo;
 class   RegisterContext;
 class   RegisterLocation;
 class   RegisterLocationList;
+class   RegisterValue;
 class   RegularExpression;
 class   Scalar;
 class   ScriptInterpreter;

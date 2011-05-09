@@ -12,6 +12,7 @@
 
 #include "lldb/lldb-private.h"
 #include "lldb/Core/EmulateInstruction.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/UnwindAssembly.h"
 
@@ -89,15 +90,15 @@ private:
     static bool
     ReadRegister (lldb_private::EmulateInstruction *instruction,
                   void *baton,
-                  const lldb_private::RegisterInfo &reg_info,
-                  uint64_t &reg_value);
+                  const lldb_private::RegisterInfo *reg_info,
+                  lldb_private::RegisterValue &reg_value);
     
     static bool
     WriteRegister (lldb_private::EmulateInstruction *instruction,
                    void *baton,
                    const lldb_private::EmulateInstruction::Context &context, 
-                   const lldb_private::RegisterInfo &reg_info,
-                   uint64_t reg_value);
+                   const lldb_private::RegisterInfo *reg_info,
+                   const lldb_private::RegisterValue &reg_value);
 
 
     // Call CreateInstance to get an instance of this class
@@ -120,17 +121,20 @@ private:
     MakeRegisterKindValuePair (const lldb_private::RegisterInfo &reg_info);
     
     void
-    SetRegisterValue (const lldb_private::RegisterInfo &reg_info, uint64_t reg_value);
+    SetRegisterValue (const lldb_private::RegisterInfo &reg_info, 
+                      const lldb_private::RegisterValue &reg_value);
 
-    uint64_t
-    GetRegisterValue (const lldb_private::RegisterInfo &reg_info);
+    bool
+    GetRegisterValue (const lldb_private::RegisterInfo &reg_info, 
+                      lldb_private::RegisterValue &reg_value);
 
     std::auto_ptr<lldb_private::EmulateInstruction> m_inst_emulator_ap;    
     lldb_private::AddressRange* m_range_ptr; 
     lldb_private::Thread* m_thread_ptr;
     lldb_private::UnwindPlan* m_unwind_plan_ptr;
     lldb_private::UnwindPlan::Row m_curr_row;
-    typedef std::map<uint64_t, uint64_t> RegisterValueMap;
+    uint64_t m_initial_sp;
+    typedef std::map<uint64_t, lldb_private::RegisterValue> RegisterValueMap;
     RegisterValueMap m_register_values;
 };
 

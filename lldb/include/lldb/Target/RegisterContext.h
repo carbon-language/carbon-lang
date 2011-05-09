@@ -53,29 +53,23 @@ public:
     GetRegisterSet (uint32_t reg_set) = 0;
 
     virtual bool
-    ReadRegisterBytes (uint32_t reg, DataExtractor &data) = 0;
+    ReadRegister (const RegisterInfo *reg_info, RegisterValue &reg_value) = 0;
 
+    virtual bool
+    WriteRegister (const RegisterInfo *reg_info, const RegisterValue &reg_value) = 0;
+    
     virtual bool
     ReadAllRegisterValues (lldb::DataBufferSP &data_sp) = 0;
 
     virtual bool
-    WriteRegisterBytes (uint32_t reg, DataExtractor &data, uint32_t data_offset = 0) = 0;
-
-    virtual bool
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) = 0;
-
+    
     virtual uint32_t
     ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num) = 0;
 
     //------------------------------------------------------------------
     // Subclasses can override these functions if desired
     //------------------------------------------------------------------
-    virtual bool
-    ReadRegisterValue (uint32_t reg, Scalar &value);
-
-    virtual bool
-    WriteRegisterValue (uint32_t reg, const Scalar &value);
-
     virtual uint32_t
     NumSupportedHardwareBreakpoints ();
 
@@ -96,6 +90,12 @@ public:
 
     virtual bool
     HardwareSingleStep (bool enable);
+    
+    virtual Error
+    ReadRegisterValueFromMemory (const lldb_private::RegisterInfo *reg_info, lldb::addr_t src_addr, uint32_t src_len, RegisterValue &reg_value);
+
+    virtual Error
+    WriteRegisterValueToMemory (const lldb_private::RegisterInfo *reg_info, lldb::addr_t dst_addr, uint32_t dst_len, const RegisterValue &reg_value);
 
     //------------------------------------------------------------------
     // Subclasses should not override these

@@ -347,6 +347,33 @@ public:
     static uint64_t
     StringToUInt64 (const char *s, uint64_t fail_value = 0, int base = 0, bool *success_ptr = NULL);
 
+    static bool
+    UInt64ValueIsValidForByteSize (uint64_t uval64, size_t total_byte_size)
+    {
+        if (total_byte_size > 8)
+            return false;
+        
+        if (total_byte_size == 8)
+            return true;
+        
+        const uint64_t max = ((uint64_t)1 << (uint64_t)(total_byte_size * 8)) - 1;
+        return uval64 <= max;
+    }
+
+    static bool
+    SInt64ValueIsValidForByteSize (int64_t sval64, size_t total_byte_size)
+    {
+        if (total_byte_size > 8)
+            return false;
+        
+        if (total_byte_size == 8)
+            return true;
+        
+        const int64_t max = ((int64_t)1 << (uint64_t)(total_byte_size * 8 - 1)) - 1;
+        const int64_t min = ~(max);
+        return min <= sval64 && sval64 <= max;
+    }
+
     static lldb::addr_t
     StringToAddress (const char *s, lldb::addr_t fail_value = LLDB_INVALID_ADDRESS, bool *success_ptr = NULL);
 

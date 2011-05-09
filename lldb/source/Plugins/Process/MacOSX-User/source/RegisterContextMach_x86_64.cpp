@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Host/Endian.h"
 
@@ -600,10 +601,11 @@ RegisterContextMach_x86_64::WriteRegisterSet(uint32_t set)
 
 
 bool
-RegisterContextMach_x86_64::ReadRegisterValue (uint32_t reg, Scalar &value)
+RegisterContextMach_x86_64::ReadRegister (const RegisterInfo *reg_info,
+                                          RegisterValue &value)
 {
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     int set = RegisterContextMach_x86_64::GetSetForNativeRegNum (reg);
-
     if (set == -1)
         return false;
 
@@ -684,11 +686,8 @@ RegisterContextMach_x86_64::ReadRegisterValue (uint32_t reg, Scalar &value)
     case fpu_stmm5:
     case fpu_stmm6:
     case fpu_stmm7:
-        // These values don't fit into scalar types,
-        // RegisterContext::ReadRegisterBytes() must be used for these
-        // registers
-        //::memcpy (reg_value.value.vector.uint8, fpu.stmm[reg - fpu_stmm0].bytes, 10);
-        return false;
+        value.SetBytes(fpu.stmm[reg - fpu_stmm0].bytes, reg_info->byte_size, lldb::endian::InlHostByteOrder());
+        break;
 
     case fpu_xmm0:
     case fpu_xmm1:
@@ -706,10 +705,8 @@ RegisterContextMach_x86_64::ReadRegisterValue (uint32_t reg, Scalar &value)
     case fpu_xmm13:
     case fpu_xmm14:
     case fpu_xmm15:
-        // These values don't fit into scalar types, RegisterContext::ReadRegisterBytes()
-        // must be used for these registers
-        //::memcpy (reg_value.value.vector.uint8, fpu.xmm[reg - fpu_xmm0].bytes, 16);
-        return false;
+        value.SetBytes(fpu.xmm[reg - fpu_xmm0].bytes, reg_info->byte_size, lldb::endian::InlHostByteOrder());
+        break;
 
     case exc_trapno:
         value = exc.trapno;
@@ -731,8 +728,10 @@ RegisterContextMach_x86_64::ReadRegisterValue (uint32_t reg, Scalar &value)
 
 
 bool
-RegisterContextMach_x86_64::WriteRegisterValue (uint32_t reg, const Scalar &value)
+RegisterContextMach_x86_64::WriteRegister (const RegisterInfo *reg_info,
+                                           const RegisterValue &value)
 {
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     int set = RegisterContextMach_x86_64::GetSetForNativeRegNum (reg);
 
     if (set == -1)
@@ -764,47 +763,47 @@ RegisterContextMach_x86_64::WriteRegisterValue (uint32_t reg, const Scalar &valu
     case gpr_cs:
     case gpr_fs:
     case gpr_gs:
-        (&gpr.rax)[reg - gpr_rax] = value.ULongLong(0);
+        (&gpr.rax)[reg - gpr_rax] = value.GetAsUInt64();
         break;
 
     case fpu_fcw:
-        fpu.fcw = value.UInt(0);
+        fpu.fcw = value.GetAsUInt16();
         break;
 
     case fpu_fsw:
-        fpu.fsw = value.UInt(0);
+        fpu.fsw = value.GetAsUInt16();
         break;
 
     case fpu_ftw:
-        fpu.ftw = value.UInt(0);
+        fpu.ftw = value.GetAsUInt8();
         break;
 
     case fpu_fop:
-        fpu.fop = value.UInt(0);
+        fpu.fop = value.GetAsUInt16();
         break;
 
     case fpu_ip:
-        fpu.ip = value.UInt(0);
+        fpu.ip = value.GetAsUInt32();
         break;
 
     case fpu_cs:
-        fpu.cs = value.UInt(0);
+        fpu.cs = value.GetAsUInt16();
         break;
 
     case fpu_dp:
-        fpu.dp = value.UInt(0);
+        fpu.dp = value.GetAsUInt32();
         break;
 
     case fpu_ds:
-        fpu.ds = value.UInt(0);
+        fpu.ds = value.GetAsUInt16();
         break;
 
     case fpu_mxcsr:
-        fpu.mxcsr = value.UInt(0);
+        fpu.mxcsr = value.GetAsUInt32();
         break;
 
     case fpu_mxcsrmask:
-        fpu.mxcsrmask = value.UInt(0);
+        fpu.mxcsrmask = value.GetAsUInt32();
         break;
 
     case fpu_stmm0:
@@ -815,139 +814,7 @@ RegisterContextMach_x86_64::WriteRegisterValue (uint32_t reg, const Scalar &valu
     case fpu_stmm5:
     case fpu_stmm6:
     case fpu_stmm7:
-        // These values don't fit into scalar types, RegisterContext::ReadRegisterBytes()
-        // must be used for these registers
-        //::memcpy (fpu.stmm[reg - fpu_stmm0].bytes, reg_value.value.vector.uint8, 10);
-        return false;
-
-    case fpu_xmm0:
-    case fpu_xmm1:
-    case fpu_xmm2:
-    case fpu_xmm3:
-    case fpu_xmm4:
-    case fpu_xmm5:
-    case fpu_xmm6:
-    case fpu_xmm7:
-    case fpu_xmm8:
-    case fpu_xmm9:
-    case fpu_xmm10:
-    case fpu_xmm11:
-    case fpu_xmm12:
-    case fpu_xmm13:
-    case fpu_xmm14:
-    case fpu_xmm15:
-        // These values don't fit into scalar types, RegisterContext::ReadRegisterBytes()
-        // must be used for these registers
-        //::memcpy (fpu.xmm[reg - fpu_xmm0].bytes, reg_value.value.vector.uint8, 16);
-        return false;
-
-    case exc_trapno:
-        exc.trapno = value.UInt(0);
-        break;
-
-    case exc_err:
-        exc.err = value.UInt(0);
-        break;
-
-    case exc_faultvaddr:
-        exc.faultvaddr = value.UInt(0);
-        break;
-
-    default:
-        return false;
-    }
-    return WriteRegisterSet(set) == KERN_SUCCESS;
-}
-
-bool
-RegisterContextMach_x86_64::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
-{
-    int set = RegisterContextMach_x86_64::GetSetForNativeRegNum (reg);
-    if (set == -1)
-        return false;
-
-    if (ReadRegisterSet(set, false) != KERN_SUCCESS)
-        return false;
-
-    const RegisterInfo * reg_info = GetRegisterInfoAtIndex (reg);
-    if (reg_info == NULL)
-        return false;
-
-    switch (reg)
-    {
-    case gpr_rax:
-    case gpr_rbx:
-    case gpr_rcx:
-    case gpr_rdx:
-    case gpr_rdi:
-    case gpr_rsi:
-    case gpr_rbp:
-    case gpr_rsp:
-    case gpr_r8:
-    case gpr_r9:
-    case gpr_r10:
-    case gpr_r11:
-    case gpr_r12:
-    case gpr_r13:
-    case gpr_r14:
-    case gpr_r15:
-    case gpr_rip:
-    case gpr_rflags:
-    case gpr_cs:
-    case gpr_fs:
-    case gpr_gs:
-        data.SetData(&gpr.rax + reg - gpr_rax, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_fcw:
-        data.SetData(&fpu.fcw, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_fsw:
-        data.SetData(&fpu.fsw, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_ftw:
-        data.SetData(&fpu.ftw, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_fop:
-        data.SetData(&fpu.fop, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_ip:
-        data.SetData(&fpu.ip, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_cs:
-        data.SetData(&fpu.cs, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_dp:
-        data.SetData(&fpu.dp, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_ds:
-        data.SetData(&fpu.ds, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_mxcsr:
-        data.SetData(&fpu.mxcsr, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_mxcsrmask:
-        data.SetData(&fpu.mxcsrmask, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_stmm0:
-    case fpu_stmm1:
-    case fpu_stmm2:
-    case fpu_stmm3:
-    case fpu_stmm4:
-    case fpu_stmm5:
-    case fpu_stmm6:
-    case fpu_stmm7:
-        data.SetData(fpu.stmm[reg - fpu_stmm0].bytes, reg_info->byte_size, lldb::endian::InlHostByteOrder());
+        ::memcpy (fpu.stmm[reg - fpu_stmm0].bytes, value.GetBytes(), value.GetByteSize());
         break;
 
     case fpu_xmm0:
@@ -966,152 +833,19 @@ RegisterContextMach_x86_64::ReadRegisterBytes (uint32_t reg, DataExtractor &data
     case fpu_xmm13:
     case fpu_xmm14:
     case fpu_xmm15:
-        data.SetData(fpu.xmm[reg - fpu_xmm0].bytes, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case exc_trapno:
-        data.SetData(&exc.trapno, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case exc_err:
-        data.SetData(&exc.err, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case exc_faultvaddr:
-        data.SetData(&exc.faultvaddr, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    default:
-        return false;
-    }
-    return true;
-}
-
-bool
-RegisterContextMach_x86_64::WriteRegisterBytes (uint32_t reg, DataExtractor &data, uint32_t data_offset)
-{
-    int set = RegisterContextMach_x86_64::GetSetForNativeRegNum (reg);
-
-    if (set == -1)
-        return false;
-
-    if (ReadRegisterSet(set, false) != KERN_SUCCESS)
-        return false;
-
-
-    const RegisterInfo * reg_info = GetRegisterInfoAtIndex (reg);
-    if (reg_info == NULL && data.ValidOffsetForDataOfSize(data_offset, reg_info->byte_size))
-        return false;
-
-    uint32_t offset = data_offset;
-    switch (reg)
-    {
-    case gpr_rax:
-    case gpr_rbx:
-    case gpr_rcx:
-    case gpr_rdx:
-    case gpr_rdi:
-    case gpr_rsi:
-    case gpr_rbp:
-    case gpr_rsp:
-    case gpr_r8:
-    case gpr_r9:
-    case gpr_r10:
-    case gpr_r11:
-    case gpr_r12:
-    case gpr_r13:
-    case gpr_r14:
-    case gpr_r15:
-    case gpr_rip:
-    case gpr_rflags:
-    case gpr_cs:
-    case gpr_fs:
-    case gpr_gs:
-        (&gpr.rax)[reg - gpr_rax] = data.GetU32 (&offset);
-        break;
-
-    case fpu_fcw:
-        fpu.fcw = data.GetU16(&offset);
-        break;
-
-    case fpu_fsw:
-        fpu.fsw = data.GetU16(&offset);
-        break;
-
-    case fpu_ftw:
-        fpu.ftw = data.GetU8(&offset);
-        break;
-
-    case fpu_fop:
-        fpu.fop = data.GetU16(&offset);
-        break;
-
-    case fpu_ip:
-        fpu.ip = data.GetU32(&offset);
-        break;
-
-    case fpu_cs:
-        fpu.cs = data.GetU16(&offset);
-        break;
-
-    case fpu_dp:
-        fpu.dp = data.GetU32(&offset);
-        break;
-
-    case fpu_ds:
-        fpu.ds = data.GetU16(&offset);
-        break;
-
-    case fpu_mxcsr:
-        fpu.mxcsr = data.GetU32(&offset);
-        break;
-
-    case fpu_mxcsrmask:
-        fpu.mxcsrmask = data.GetU32(&offset);
-        break;
-
-    case fpu_stmm0:
-    case fpu_stmm1:
-    case fpu_stmm2:
-    case fpu_stmm3:
-    case fpu_stmm4:
-    case fpu_stmm5:
-    case fpu_stmm6:
-    case fpu_stmm7:
-        ::memcpy (fpu.stmm[reg - fpu_stmm0].bytes, data.PeekData(offset, reg_info->byte_size), reg_info->byte_size);
-        return false;
-
-    case fpu_xmm0:
-    case fpu_xmm1:
-    case fpu_xmm2:
-    case fpu_xmm3:
-    case fpu_xmm4:
-    case fpu_xmm5:
-    case fpu_xmm6:
-    case fpu_xmm7:
-    case fpu_xmm8:
-    case fpu_xmm9:
-    case fpu_xmm10:
-    case fpu_xmm11:
-    case fpu_xmm12:
-    case fpu_xmm13:
-    case fpu_xmm14:
-    case fpu_xmm15:
-        // These values don't fit into scalar types, RegisterContext::ReadRegisterBytes()
-        // must be used for these registers
-        ::memcpy (fpu.xmm[reg - fpu_xmm0].bytes, data.PeekData(offset, reg_info->byte_size), reg_info->byte_size);
+        ::memcpy (fpu.xmm[reg - fpu_xmm0].bytes, value.GetBytes(), value.GetByteSize());
         return false;
 
     case exc_trapno:
-        exc.trapno = data.GetU32 (&offset);
+        exc.trapno = value.GetAsUInt32();
         break;
 
     case exc_err:
-        exc.err = data.GetU32 (&offset);
+        exc.err = value.GetAsUInt32();
         break;
 
     case exc_faultvaddr:
-        exc.faultvaddr = data.GetU32 (&offset);
+        exc.faultvaddr = value.GetAsUInt64();
         break;
 
     default:

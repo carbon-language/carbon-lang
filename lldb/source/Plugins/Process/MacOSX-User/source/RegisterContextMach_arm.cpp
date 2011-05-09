@@ -17,6 +17,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Host/Endian.h"
 
@@ -627,8 +628,9 @@ RegisterContextMach_arm::LogDBGRegisters (Log *log, const DBG& dbg)
 
 
 bool
-RegisterContextMach_arm::ReadRegisterValue (uint32_t reg, Scalar &value)
+RegisterContextMach_arm::ReadRegister (const RegisterInfo *reg_info, RegisterValue &value)
 {
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     int set = RegisterContextMach_arm::GetSetForNativeRegNum (reg);
 
     if (set == -1)
@@ -656,7 +658,7 @@ RegisterContextMach_arm::ReadRegisterValue (uint32_t reg, Scalar &value)
     case gpr_lr:
     case gpr_pc:
     case gpr_cpsr:
-        value = gpr.r[reg - gpr_r0];
+        value.SetUInt32 (gpr.r[reg - gpr_r0]);
         break;
 
     case fpu_s0:
@@ -691,24 +693,25 @@ RegisterContextMach_arm::ReadRegisterValue (uint32_t reg, Scalar &value)
     case fpu_s29:
     case fpu_s30:
     case fpu_s31:
-        value = fpu.floats.s[reg];
+        value.SetUInt32 (fpu.floats.s[reg], RegisterValue::eTypeFloat);
         break;
 
     case fpu_fpscr:
-        value = fpu.fpscr;
+        value.SetUInt32 (fpu.fpscr);
         break;
 
     case exc_exception:
-        value = exc.exception;
+        value.SetUInt32 (exc.exception);
         break;
     case exc_fsr:
-        value = exc.fsr;
+        value.SetUInt32 (exc.fsr);
         break;
     case exc_far:
-        value = exc.far;
+        value.SetUInt32 (exc.far);
         break;
 
     default:
+        value.SetValueToInvalid();
         return false;
 
     }
@@ -717,8 +720,10 @@ RegisterContextMach_arm::ReadRegisterValue (uint32_t reg, Scalar &value)
 
 
 bool
-RegisterContextMach_arm::WriteRegisterValue (uint32_t reg, const Scalar &value)
+RegisterContextMach_arm::WriteRegister (const RegisterInfo *reg_info,
+                                        const RegisterValue &value)
 {
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     int set = GetSetForNativeRegNum (reg);
 
     if (set == -1)
@@ -746,7 +751,7 @@ RegisterContextMach_arm::WriteRegisterValue (uint32_t reg, const Scalar &value)
     case gpr_lr:
     case gpr_pc:
     case gpr_cpsr:
-        gpr.r[reg - gpr_r0] = value.UInt(0);
+            gpr.r[reg - gpr_r0] = value.GetAsUInt32();
         break;
 
     case fpu_s0:
@@ -781,215 +786,26 @@ RegisterContextMach_arm::WriteRegisterValue (uint32_t reg, const Scalar &value)
     case fpu_s29:
     case fpu_s30:
     case fpu_s31:
-        fpu.floats.s[reg] = value.UInt(0);
+        fpu.floats.s[reg] = value.GetAsUInt32();
         break;
 
     case fpu_fpscr:
-        fpu.fpscr = value.UInt(0);
+        fpu.fpscr = value.GetAsUInt32();
         break;
 
     case exc_exception:
-        exc.exception = value.UInt(0);
+        exc.exception = value.GetAsUInt32();
         break;
     case exc_fsr:
-        exc.fsr = value.UInt(0);
+        exc.fsr = value.GetAsUInt32();
         break;
     case exc_far:
-        exc.far = value.UInt(0);
+        exc.far = value.GetAsUInt32();
         break;
 
     default:
         return false;
 
-    }
-    return WriteRegisterSet(set) == KERN_SUCCESS;
-}
-
-bool
-RegisterContextMach_arm::ReadRegisterBytes (uint32_t reg, DataExtractor &data)
-{
-    int set = RegisterContextMach_arm::GetSetForNativeRegNum (reg);
-    if (set == -1)
-        return false;
-
-    if (ReadRegisterSet(set, false) != KERN_SUCCESS)
-        return false;
-
-    const RegisterInfo * reg_info = GetRegisterInfoAtIndex (reg);
-    if (reg_info == NULL)
-        return false;
-
-    switch (reg)
-    {
-    case gpr_r0:
-    case gpr_r1:
-    case gpr_r2:
-    case gpr_r3:
-    case gpr_r4:
-    case gpr_r5:
-    case gpr_r6:
-    case gpr_r7:
-    case gpr_r8:
-    case gpr_r9:
-    case gpr_r10:
-    case gpr_r11:
-    case gpr_r12:
-    case gpr_sp:
-    case gpr_lr:
-    case gpr_pc:
-    case gpr_cpsr:
-        data.SetData(&gpr.r[reg - gpr_r0], reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_s0:
-    case fpu_s1:
-    case fpu_s2:
-    case fpu_s3:
-    case fpu_s4:
-    case fpu_s5:
-    case fpu_s6:
-    case fpu_s7:
-    case fpu_s8:
-    case fpu_s9:
-    case fpu_s10:
-    case fpu_s11:
-    case fpu_s12:
-    case fpu_s13:
-    case fpu_s14:
-    case fpu_s15:
-    case fpu_s16:
-    case fpu_s17:
-    case fpu_s18:
-    case fpu_s19:
-    case fpu_s20:
-    case fpu_s21:
-    case fpu_s22:
-    case fpu_s23:
-    case fpu_s24:
-    case fpu_s25:
-    case fpu_s26:
-    case fpu_s27:
-    case fpu_s28:
-    case fpu_s29:
-    case fpu_s30:
-    case fpu_s31:
-        data.SetData(&fpu.floats.s[reg - fpu_s0], reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case fpu_fpscr:
-        data.SetData(&fpu.fpscr, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case exc_exception:
-        data.SetData(&exc.exception, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case exc_fsr:
-        data.SetData(&exc.fsr, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    case exc_far:
-        data.SetData(&exc.far, reg_info->byte_size, lldb::endian::InlHostByteOrder());
-        break;
-
-    default:
-        return false;
-    }
-    return true;
-}
-
-bool
-RegisterContextMach_arm::WriteRegisterBytes (uint32_t reg, DataExtractor &data, uint32_t data_offset)
-{
-    int set = GetSetForNativeRegNum (reg);
-
-    if (set == -1)
-        return false;
-
-    if (ReadRegisterSet(set, false) != KERN_SUCCESS)
-        return false;
-
-
-    const RegisterInfo * reg_info = GetRegisterInfoAtIndex (reg);
-    if (reg_info == NULL && data.ValidOffsetForDataOfSize(data_offset, reg_info->byte_size))
-        return false;
-
-    uint32_t offset = data_offset;
-    switch (reg)
-    {
-    case gpr_r0:
-    case gpr_r1:
-    case gpr_r2:
-    case gpr_r3:
-    case gpr_r4:
-    case gpr_r5:
-    case gpr_r6:
-    case gpr_r7:
-    case gpr_r8:
-    case gpr_r9:
-    case gpr_r10:
-    case gpr_r11:
-    case gpr_r12:
-    case gpr_sp:
-    case gpr_lr:
-    case gpr_pc:
-    case gpr_cpsr:
-        gpr.r[reg - gpr_r0] = data.GetU32 (&offset);
-        break;
-
-    case fpu_s0:
-    case fpu_s1:
-    case fpu_s2:
-    case fpu_s3:
-    case fpu_s4:
-    case fpu_s5:
-    case fpu_s6:
-    case fpu_s7:
-    case fpu_s8:
-    case fpu_s9:
-    case fpu_s10:
-    case fpu_s11:
-    case fpu_s12:
-    case fpu_s13:
-    case fpu_s14:
-    case fpu_s15:
-    case fpu_s16:
-    case fpu_s17:
-    case fpu_s18:
-    case fpu_s19:
-    case fpu_s20:
-    case fpu_s21:
-    case fpu_s22:
-    case fpu_s23:
-    case fpu_s24:
-    case fpu_s25:
-    case fpu_s26:
-    case fpu_s27:
-    case fpu_s28:
-    case fpu_s29:
-    case fpu_s30:
-    case fpu_s31:
-        fpu.floats.s[reg - fpu_s0] = data.GetU32 (&offset);
-        break;
-
-    case fpu_fpscr:
-        fpu.fpscr = data.GetU32 (&offset);
-        break;
-
-    case exc_exception:
-        fpu.fpscr = data.GetU32 (&offset);
-        break;
-
-    case exc_fsr:
-        exc.fsr = data.GetU32 (&offset);
-        break;
-
-    case exc_far:
-        exc.far = data.GetU32 (&offset);
-        break;
-
-    default:
-        return false;
     }
     return WriteRegisterSet(set) == KERN_SUCCESS;
 }

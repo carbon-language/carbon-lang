@@ -208,19 +208,13 @@ public:
     GetRegisterSet (uint32_t reg_set);
 
     virtual bool
-    ReadRegisterValue (uint32_t reg, lldb_private::Scalar &value);
+    ReadRegister (const lldb_private::RegisterInfo *reg_info, lldb_private::RegisterValue &value);
 
     virtual bool
-    ReadRegisterBytes (uint32_t reg, lldb_private::DataExtractor &data);
-
+    WriteRegister (const lldb_private::RegisterInfo *reg_info, const lldb_private::RegisterValue &value);
+    
     virtual bool
     ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
-
-    virtual bool
-    WriteRegisterValue (uint32_t reg, const lldb_private::Scalar &value);
-
-    virtual bool
-    WriteRegisterBytes (uint32_t reg, lldb_private::DataExtractor &data, uint32_t data_offset);
 
     virtual bool
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
@@ -230,6 +224,17 @@ public:
 
 protected:
     friend class ThreadGDBRemote;
+
+    bool
+    ReadRegisterBytes (const lldb_private::RegisterInfo *reg_info,
+                       lldb_private::RegisterValue &value, 
+                       lldb_private::DataExtractor &data);
+
+    bool
+    WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info,
+                        const lldb_private::RegisterValue &value, 
+                        lldb_private::DataExtractor &data, 
+                        uint32_t data_offset);
 
     bool
     PrivateSetRegisterValue (uint32_t reg, StringExtractor &response);

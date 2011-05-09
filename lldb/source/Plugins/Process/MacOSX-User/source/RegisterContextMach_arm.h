@@ -75,19 +75,15 @@ public:
     GetRegisterSet (uint32_t set);
 
     virtual bool
-    ReadRegisterValue (uint32_t reg, lldb_private::Scalar &value);
-
+    ReadRegister (const lldb_private::RegisterInfo *reg_info, 
+                  lldb_private::RegisterValue &reg_value);
+    
     virtual bool
-    ReadRegisterBytes (uint32_t reg, lldb_private::DataExtractor &data);
-
+    WriteRegister (const lldb_private::RegisterInfo *reg_info,
+                   const lldb_private::RegisterValue &reg_value);
+    
     virtual bool
     ReadAllRegisterValues (lldb::DataBufferSP &data_sp);
-
-    virtual bool
-    WriteRegisterValue (uint32_t reg, const lldb_private::Scalar &value);
-
-    virtual bool
-    WriteRegisterBytes (uint32_t reg, lldb_private::DataExtractor &data, uint32_t data_offset = 0);
 
     virtual bool
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
