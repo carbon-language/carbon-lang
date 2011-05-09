@@ -9,3 +9,8 @@ void __clear_cache(char*, char*);
 void __clear_cache(void*, void*);
 #endif
 
+// va_list on ARM is void*.
+void test2() {
+  __builtin_va_list ptr = "x";
+  *ptr = '0'; // expected-error {{incomplete type 'void' is not assignable}}
+}

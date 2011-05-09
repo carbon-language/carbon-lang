@@ -2020,7 +2020,7 @@ public:
     NumRecords = clang::ARM::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
   virtual const char *getVAListDeclaration() const {
-    return "typedef char* __builtin_va_list;";
+    return "typedef void* __builtin_va_list;";
   }
   virtual void getGCCRegNames(const char * const *&Names,
                               unsigned &NumNames) const;
