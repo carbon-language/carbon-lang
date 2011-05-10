@@ -3491,6 +3491,7 @@ public:
                                   TemplateParamListContext TPC);
   TemplateParameterList *
   MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
+                                          SourceLocation DeclLoc,
                                           const CXXScopeSpec &SS,
                                           TemplateParameterList **ParamLists,
                                           unsigned NumParamLists,

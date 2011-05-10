@@ -3557,7 +3557,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     bool Invalid = false;
     if (TemplateParameterList *TemplateParams
         = MatchTemplateParametersToScopeSpecifier(
-                                                  D.getDeclSpec().getSourceRange().getBegin(),
+                                  D.getDeclSpec().getSourceRange().getBegin(),
+                                                  D.getIdentifierLoc(),
                                                   D.getCXXScopeSpec(),
                                                   TemplateParamLists.get(),
                                                   TemplateParamLists.size(),
@@ -3579,7 +3580,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           << II
           << SourceRange(TemplateParams->getTemplateLoc(),
                          TemplateParams->getRAngleLoc());
-        isExplicitSpecialization = true;
       }
     }
 
@@ -4252,6 +4252,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     if (TemplateParameterList *TemplateParams
           = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
+                                  D.getIdentifierLoc(),
                                   D.getCXXScopeSpec(),
                                   TemplateParamLists.get(),
                                   TemplateParamLists.size(),
@@ -6650,7 +6651,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   if (TemplateParameterLists.size() > 0 ||
       (SS.isNotEmpty() && TUK != TUK_Reference)) {
     if (TemplateParameterList *TemplateParams
-          = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
+          = MatchTemplateParametersToScopeSpecifier(KWLoc, NameLoc, SS,
                                                 TemplateParameterLists.get(),
                                                 TemplateParameterLists.size(),
                                                     TUK == TUK_Friend,

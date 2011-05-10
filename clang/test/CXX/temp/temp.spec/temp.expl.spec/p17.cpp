@@ -24,12 +24,11 @@ namespace test1 {
 
   template <> class A<double> { 
   public:
-    static int foo; // expected-note{{attempt to specialize}}
+    static int foo;
     static int bar;    
   };
 
   typedef A<double> AB;
-  template <> int AB::foo = 0; // expected-error{{extraneous 'template<>'}} \
-                               // expected-error{{does not specialize}}
+  template <> int AB::foo = 0; // expected-error{{extraneous 'template<>'}}
   int AB::bar = 1;
 }

@@ -7259,7 +7259,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
   bool Invalid = false;
 
   if (TemplateParameterList *TemplateParams
-        = MatchTemplateParametersToScopeSpecifier(TagLoc, SS,
+        = MatchTemplateParametersToScopeSpecifier(TagLoc, NameLoc, SS,
                                                   TempParamLists.get(),
                                                   TempParamLists.size(),
                                                   /*friend*/ true,
