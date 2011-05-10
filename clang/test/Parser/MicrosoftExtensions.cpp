@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -Wno-unused-value -Wmicrosoft -verify -fms-extensions
+// RUN: %clang_cc1 %s -fsyntax-only -Wno-unused-value -Wmicrosoft -verify -fms-extensions -fdelayed-template-parsing
 
 /* Microsoft attribute tests */
 [repeatable][source_annotation_attribute( Parameter|ReturnValue )]
@@ -105,6 +105,13 @@ template <class T, const GUID& g>
 class COM_CLASS_TEMPLATE_REF  { };
 typedef COM_CLASS_TEMPLATE<struct_with_uuid, __uuidof(struct_with_uuid)> COM_TYPE_REF;
 
+  struct late_defined_uuid;
+  template<typename T>
+  void test_late_defined_uuid() {
+    __uuidof(late_defined_uuid);
+  }
+  struct __declspec(uuid("000000A0-0000-0000-C000-000000000049")) late_defined_uuid;
+
 
 class CtorCall { 
 public:
@@ -136,7 +143,7 @@ class C2  {
 };
 
 template <class T>
-void f(){
+void missing_template_keyword(){
   typename C1<T>:: /*template*/ Iterator<0> Mypos; // expected-warning {{use 'template' keyword to treat 'Iterator' as a dependent template name}}
 }
 
@@ -149,11 +156,6 @@ void redundant_typename() {
    typename T t;// expected-warning {{expected a qualified name after 'typename'}}
    typename AAAA a;// expected-warning {{expected a qualified name after 'typename'}}
    t = 3;
-}
-
-int main() {
-  redundant_typename<int>();
-  f<int>();
 }
 
 
@@ -209,4 +211,12 @@ __if_not_exists(IF_EXISTS::Type_not) {
 }
 
 int __identifier(generic) = 3;
+
+
+int main () {
+  // Necessary to force instantiation in -fdelayed-template-parsing mode.
+  test_late_defined_uuid<int>(); 
+  redundant_typename<int>();
+  missing_template_keyword<int>();
+}
 
