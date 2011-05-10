@@ -293,14 +293,13 @@ void RegisterMaps::computeComposites() {
           if (i1d->second == Reg3) {
             std::pair<CompositeMap::iterator,bool> Ins =
               Composite.insert(std::make_pair(IdxPair, i1d->first));
-            // Conflicting composition?
+            // Conflicting composition? Emit a warning but allow it.
             if (!Ins.second && Ins.first->second != i1d->first) {
-              errs() << "Error: SubRegIndex " << getQualifiedName(Idx1)
+              errs() << "Warning: SubRegIndex " << getQualifiedName(Idx1)
                      << " and " << getQualifiedName(IdxPair.second)
                      << " compose ambiguously as "
                      << getQualifiedName(Ins.first->second) << " or "
                      << getQualifiedName(i1d->first) << "\n";
-              abort();
             }
           }
         }
