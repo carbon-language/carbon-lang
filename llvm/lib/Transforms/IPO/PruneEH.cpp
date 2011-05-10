@@ -180,6 +180,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
         Call->takeName(II);
         Call->setCallingConv(II->getCallingConv());
         Call->setAttributes(II->getAttributes());
+        Call->setDebugLoc(II->getDebugLoc());
 
         // Anything that used the value produced by the invoke instruction
         // now uses the value produced by the call instruction.  Note that we
