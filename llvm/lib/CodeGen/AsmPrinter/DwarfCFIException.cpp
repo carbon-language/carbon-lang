@@ -41,8 +41,8 @@ using namespace llvm;
 
 DwarfCFIException::DwarfCFIException(AsmPrinter *A)
   : DwarfException(A),
-    shouldEmitPersonality(false), shouldEmitLSDA(false), shouldEmitMoves(false)
-    {}
+    shouldEmitPersonality(false), shouldEmitLSDA(false), shouldEmitMoves(false),
+    moveTypeModule(AsmPrinter::CFI_M_None) {}
 
 DwarfCFIException::~DwarfCFIException() {}
 
