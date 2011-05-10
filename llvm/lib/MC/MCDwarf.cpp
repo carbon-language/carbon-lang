@@ -752,9 +752,13 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
 
   streamer.EmitLabel(fdeStart);
   // CIE Pointer
-  const MCExpr *offset = MakeStartMinusEndExpr(streamer, cieStart, *fdeStart,
-                                               0);
-  streamer.EmitAbsValue(offset, 4);
+  if (IsEH) {
+    const MCExpr *offset = MakeStartMinusEndExpr(streamer, cieStart, *fdeStart,
+                                                 0);
+    streamer.EmitAbsValue(offset, 4);
+  } else {
+    streamer.EmitSymbolValue(&cieStart, 4);
+  }
   unsigned fdeEncoding = asmInfo.getFDEEncoding(UsingCFI);
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
