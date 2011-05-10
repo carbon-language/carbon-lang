@@ -1,4 +1,4 @@
-; RUN: llc %s -o - | FileCheck %s
+; RUN: llc %s -mtriple=i686-pc-linux-gnu -o - | FileCheck %s
 
 ; Test that we produce a .debug_frame, not an .eh_frame
 
