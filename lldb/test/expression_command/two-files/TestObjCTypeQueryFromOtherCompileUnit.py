@@ -43,7 +43,7 @@ class ObjCTypeQueryTestCase(TestBase):
 
         # Now do a NSArry type query from the 'main.c' compile uint.
         self.expect("expression (NSArray*)array_token",
-            substrs = ['(NSArray *) $0 ='])
+            substrs = ['(NSArray *) $0 = 0x'])
         # (NSArray *) $0 = 0x00007fff70118398
 
 
