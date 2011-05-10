@@ -509,11 +509,12 @@ def err_unexpected_friend : Error<
 def ext_enum_friend : ExtWarn<
   "enumeration type %0 cannot be a friend">;
 def ext_nonclass_type_friend : ExtWarn<
-  "non-class type %0 cannot be a friend">;
+  "non-class friend type %0 is a C++0x extension">, InGroup<CXX0x>;
 def err_friend_is_member : Error<
   "friends cannot be members of the declaring class">;
 def ext_unelaborated_friend_type : ExtWarn<
-  "must specify '%select{struct|union|class|enum}0' to befriend %1">;
+  "specify '%select{struct|union|class|enum}0' to befriend %1; accepted "
+  "as a C++0x extension">, InGroup<CXX0x>;
 def err_qualified_friend_not_found : Error<
   "no function named %0 with type %1 was found in the specified scope">;
 def err_introducing_special_friend : Error<

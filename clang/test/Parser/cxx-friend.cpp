@@ -21,9 +21,9 @@ class B {
   // 'A' here should refer to the declaration above.  
   friend class A;
 
-  friend C; // expected-warning {{must specify 'class' to befriend}}
-  friend U; // expected-warning {{must specify 'union' to befriend}}
-  friend int; // expected-warning {{non-class type 'int' cannot be a friend}}
+  friend C; // expected-warning {{specify 'class' to befriend}}
+  friend U; // expected-warning {{specify 'union' to befriend}}
+  friend int; // expected-warning {{non-class friend type 'int'}}
 
   friend void myfunc();
 

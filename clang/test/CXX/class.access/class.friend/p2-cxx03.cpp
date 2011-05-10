@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 template<typename T>
 class X0 {
-  friend T; // expected-warning{{non-class type 'T' cannot be a friend}}
+  friend T; // expected-warning{{non-class friend type 'T' is a C++0x extension}}
 };
 
 class X1 { };
