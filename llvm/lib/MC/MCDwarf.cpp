@@ -514,8 +514,7 @@ namespace {
                             unsigned lsdaEncoding);
     MCSymbol *EmitFDE(MCStreamer &streamer,
                       const MCSymbol &cieStart,
-                      const MCDwarfFrameInfo &frame,
-                      bool forceLsda);
+                      const MCDwarfFrameInfo &frame);
     void EmitCFIInstructions(MCStreamer &streamer,
                              const std::vector<MCCFIInstruction> &Instrs,
                              MCSymbol *BaseLabel);
@@ -732,8 +731,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
 MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
                                     const MCSymbol &cieStart,
-                                    const MCDwarfFrameInfo &frame,
-                                    bool forceLsda) {
+                                    const MCDwarfFrameInfo &frame) {
   MCContext &context = streamer.getContext();
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
@@ -769,20 +767,14 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   // Augmentation Data Length
   unsigned augmentationLength = 0;
 
-  if (frame.Lsda || forceLsda)
+  if (frame.Lsda)
     augmentationLength += getSizeForEncoding(streamer, frame.LsdaEncoding);
 
   streamer.EmitULEB128IntValue(augmentationLength);
 
   // Augmentation Data
-
-  // When running in "CodeGen compatibility mode" a FDE with no LSDA can be
-  // assigned to a CIE that requires one. In that case we output a 0 (as does
-  // CodeGen).
   if (frame.Lsda)
     EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding);
-  else if (forceLsda)
-    streamer.EmitIntValue(0, getSizeForEncoding(streamer, frame.LsdaEncoding));
 
   // Call Frame Instructions
 
@@ -853,7 +845,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &streamer,
       cieStart = &Emitter.EmitCIE(streamer, frame.Personality,
                                   frame.PersonalityEncoding, frame.Lsda,
                                   frame.LsdaEncoding);
-    fdeEnd = Emitter.EmitFDE(streamer, *cieStart, frame, false);
+    fdeEnd = Emitter.EmitFDE(streamer, *cieStart, frame);
     if (i != n - 1)
       streamer.EmitLabel(fdeEnd);
   }
