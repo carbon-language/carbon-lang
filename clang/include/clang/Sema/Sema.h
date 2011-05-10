@@ -1105,7 +1105,7 @@ public:
 
   enum CXXSpecialMember {
     CXXInvalid = -1,
-    CXXConstructor = 0,
+    CXXDefaultConstructor = 0,
     CXXCopyConstructor = 1,
     CXXCopyAssignment = 2,
     CXXDestructor = 3
