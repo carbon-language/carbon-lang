@@ -72,6 +72,8 @@ namespace llvm {
 
       bool supportsPTX22() const { return PTXVersion >= PTX_VERSION_2_2; }
 
+      bool supportsPTX23() const { return PTXVersion >= PTX_VERSION_2_3; }
+
       std::string ParseSubtargetFeatures(const std::string &FS,
                                          const std::string &CPU);
   }; // class PTXSubtarget

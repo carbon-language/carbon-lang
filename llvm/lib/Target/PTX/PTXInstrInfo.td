@@ -36,6 +36,8 @@ def SupportsPTX21       : Predicate<"getSubtarget().supportsPTX21()">;
 def DoesNotSupportPTX21 : Predicate<"!getSubtarget().supportsPTX21()">;
 def SupportsPTX22       : Predicate<"getSubtarget().supportsPTX22()">;
 def DoesNotSupportPTX22 : Predicate<"!getSubtarget().supportsPTX22()">;
+def SupportsPTX23       : Predicate<"getSubtarget().supportsPTX23()">;
+def DoesNotSupportPTX23 : Predicate<"!getSubtarget().supportsPTX23()">;
 
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff
