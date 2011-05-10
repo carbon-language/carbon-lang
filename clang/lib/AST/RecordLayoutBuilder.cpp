@@ -1299,6 +1299,13 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
           uint64_t UnpaddedFieldOffset = 
             getDataSizeInBits() - UnfilledBitsInLastByte;
           FieldAlign = std::max(FieldAlign, FieldAlignLastFD);
+          // The maximum field alignment overrides the aligned attribute.
+          if (!MaxFieldAlignment.isZero()) {
+            unsigned MaxFieldAlignmentInBits = 
+              Context.toBits(MaxFieldAlignment);
+            FieldAlign = std::min(FieldAlign, MaxFieldAlignmentInBits);
+          }
+
           uint64_t NewSizeInBits = 
             llvm::RoundUpToAlignment(UnpaddedFieldOffset, FieldAlign);
           setDataSize(llvm::RoundUpToAlignment(NewSizeInBits,
