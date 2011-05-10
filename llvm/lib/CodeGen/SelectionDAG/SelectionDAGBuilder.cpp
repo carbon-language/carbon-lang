@@ -6440,10 +6440,11 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
     // If this argument is live outside of the entry block, insert a copy from
     // wherever we got it to the vreg that other BB's will reference it as.
-    if (Res.getOpcode() == ISD::CopyFromReg) {
+    if (!EnableFastISel && Res.getOpcode() == ISD::CopyFromReg) {
       // If we can, though, try to skip creating an unnecessary vreg.
       // FIXME: This isn't very clean... it would be nice to make this more
-      // general.
+      // general.  It's also subtly incompatible with the hacks FastISel
+      // uses with vregs.
       unsigned Reg = cast<RegisterSDNode>(Res.getOperand(1))->getReg();
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         FuncInfo->ValueMap[I] = Reg;
