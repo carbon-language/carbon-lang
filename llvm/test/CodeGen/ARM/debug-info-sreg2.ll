@@ -4,8 +4,8 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 target triple = "thumbv7-apple-macosx10.6.7"
 
 ;CHECK: Ldebug_loc0:
-;CHECK-NEXT:        .long   Ltmp0
-;CHECK-NEXT:        .long   Ltmp2
+;CHECK-NEXT:        .long   Ltmp1
+;CHECK-NEXT:        .long   Ltmp3
 ;CHECK-NEXT:        .short  6                       @ Loc expr size
 ;CHECK-NEXT:        .byte   144                     @ DW_OP_regx for S register
 

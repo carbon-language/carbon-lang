@@ -193,8 +193,6 @@ bool AsmPrinter::doInitialization(Module &M) {
   case ExceptionHandling::None:
     return false;
   case ExceptionHandling::SjLj:
-    DE = new DwarfSjLjException(this);
-    return false;
   case ExceptionHandling::DwarfCFI:
     DE = new DwarfCFIException(this);
     return false;
@@ -593,11 +591,13 @@ static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
 }
 
 AsmPrinter::CFIMoveType AsmPrinter::needsCFIMoves() {
-  if (UnwindTablesMandatory)
-    return CFI_M_EH;
+  if (MAI->getExceptionHandlingType() == ExceptionHandling::DwarfCFI) {
+    if (UnwindTablesMandatory)
+      return CFI_M_EH;
 
-  if (!MF->getFunction()->doesNotThrow())
-    return CFI_M_EH;
+    if (!MF->getFunction()->doesNotThrow())
+      return CFI_M_EH;
+  }
 
   if (MMI->hasDebugInfo())
     return CFI_M_Debug;
