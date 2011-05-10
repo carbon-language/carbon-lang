@@ -501,10 +501,12 @@ namespace {
     int CFAOffset;
     int CIENum;
     bool UsingCFI;
+    bool IsEH;
 
   public:
-    FrameEmitterImpl(bool usingCFI) : CFAOffset(0), CIENum(0),
-                     UsingCFI(usingCFI) {
+    FrameEmitterImpl(bool usingCFI, bool isEH) : CFAOffset(0), CIENum(0),
+                                                 UsingCFI(usingCFI),
+                                                 IsEH(isEH) {
     }
 
     const MCSymbol &EmitCIE(MCStreamer &streamer,
@@ -647,20 +649,23 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   streamer.EmitAbsValue(Length, 4);
 
   // CIE ID
-  streamer.EmitIntValue(0, 4);
+  unsigned CIE_ID = IsEH ? 0 : -1;
+  streamer.EmitIntValue(CIE_ID, 4);
 
   // Version
   streamer.EmitIntValue(dwarf::DW_CIE_VERSION, 1);
 
   // Augmentation String
   SmallString<8> Augmentation;
-  Augmentation += "z";
-  if (personality)
-    Augmentation += "P";
-  if (lsda)
-    Augmentation += "L";
-  Augmentation += "R";
-  streamer.EmitBytes(Augmentation.str(), 0);
+  if (IsEH) {
+    Augmentation += "z";
+    if (personality)
+      Augmentation += "P";
+    if (lsda)
+      Augmentation += "L";
+    Augmentation += "R";
+    streamer.EmitBytes(Augmentation.str(), 0);
+  }
   streamer.EmitIntValue(0, 1);
 
   // Code Alignment Factor
@@ -675,30 +680,32 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   // Augmentation Data Length (optional)
 
   unsigned augmentationLength = 0;
-  if (personality) {
-    // Personality Encoding
+  if (IsEH) {
+    if (personality) {
+      // Personality Encoding
+      augmentationLength += 1;
+      // Personality
+      augmentationLength += getSizeForEncoding(streamer, personalityEncoding);
+    }
+    if (lsda)
+      augmentationLength += 1;
+    // Encoding of the FDE pointers
     augmentationLength += 1;
-    // Personality
-    augmentationLength += getSizeForEncoding(streamer, personalityEncoding);
-  }
-  if (lsda)
-    augmentationLength += 1;
-  // Encoding of the FDE pointers
-  augmentationLength += 1;
 
-  streamer.EmitULEB128IntValue(augmentationLength);
+    streamer.EmitULEB128IntValue(augmentationLength);
 
-  // Augmentation Data (optional)
-  if (personality) {
-    // Personality Encoding
-    streamer.EmitIntValue(personalityEncoding, 1);
-    // Personality
-    EmitPersonality(streamer, *personality, personalityEncoding);
+    // Augmentation Data (optional)
+    if (personality) {
+      // Personality Encoding
+      streamer.EmitIntValue(personalityEncoding, 1);
+      // Personality
+      EmitPersonality(streamer, *personality, personalityEncoding);
+    }
+    if (lsda)
+      streamer.EmitIntValue(lsdaEncoding, 1); // LSDA Encoding
+    // Encoding of the FDE pointers
+    streamer.EmitIntValue(asmInfo.getFDEEncoding(UsingCFI), 1);
   }
-  if (lsda)
-    streamer.EmitIntValue(lsdaEncoding, 1); // LSDA Encoding
-  // Encoding of the FDE pointers
-  streamer.EmitIntValue(asmInfo.getFDEEncoding(UsingCFI), 1);
 
   // Initial Instructions
 
@@ -718,7 +725,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   EmitCFIInstructions(streamer, Instructions, NULL);
 
   // Padding
-  streamer.EmitValueToAlignment(4);
+  streamer.EmitValueToAlignment(IsEH ? 4 : asmInfo.getPointerSize());
 
   streamer.EmitLabel(sectionEnd);
   return *sectionStart;
@@ -752,31 +759,35 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
   // PC Begin
-  EmitSymbol(streamer, *frame.Begin, fdeEncoding);
+  unsigned PCBeginEncoding = IsEH ? fdeEncoding : dwarf::DW_EH_PE_absptr;
+  unsigned PCBeginSize = getSizeForEncoding(streamer, PCBeginEncoding);
+  EmitSymbol(streamer, *frame.Begin, PCBeginEncoding);
 
   // PC Range
   const MCExpr *Range = MakeStartMinusEndExpr(streamer, *frame.Begin,
                                               *frame.End, 0);
   streamer.EmitAbsValue(Range, size);
 
-  // Augmentation Data Length
-  unsigned augmentationLength = 0;
+  if (IsEH) {
+    // Augmentation Data Length
+    unsigned augmentationLength = 0;
 
-  if (frame.Lsda)
-    augmentationLength += getSizeForEncoding(streamer, frame.LsdaEncoding);
+    if (frame.Lsda)
+      augmentationLength += getSizeForEncoding(streamer, frame.LsdaEncoding);
 
-  streamer.EmitULEB128IntValue(augmentationLength);
+    streamer.EmitULEB128IntValue(augmentationLength);
 
-  // Augmentation Data
-  if (frame.Lsda)
-    EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding);
+    // Augmentation Data
+    if (frame.Lsda)
+      EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding);
+  }
 
   // Call Frame Instructions
 
   EmitCFIInstructions(streamer, frame.Instructions, frame.Begin);
 
   // Padding
-  streamer.EmitValueToAlignment(size);
+  streamer.EmitValueToAlignment(PCBeginSize);
 
   return fdeEnd;
 }
@@ -823,21 +834,24 @@ namespace llvm {
 }
 
 void MCDwarfFrameEmitter::Emit(MCStreamer &streamer,
-                               bool usingCFI) {
+                               bool usingCFI,
+                               bool isEH) {
   const MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  const MCSection &section = *asmInfo.getEHFrameSection();
+  const MCSection &section = isEH ?
+    *asmInfo.getEHFrameSection() : *asmInfo.getDwarfFrameSection();
   streamer.SwitchSection(&section);
 
   MCSymbol *fdeEnd = NULL;
   DenseMap<CIEKey, const MCSymbol*> CIEStarts;
-  FrameEmitterImpl Emitter(usingCFI);
+  FrameEmitterImpl Emitter(usingCFI, isEH);
 
+  const MCSymbol *DummyDebugKey = NULL;
   for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
     const MCDwarfFrameInfo &frame = streamer.getFrameInfo(i);
     CIEKey key(frame.Personality, frame.PersonalityEncoding,
                frame.LsdaEncoding);
-    const MCSymbol *&cieStart = CIEStarts[key];
+    const MCSymbol *&cieStart = isEH ? CIEStarts[key] : DummyDebugKey;
     if (!cieStart)
       cieStart = &Emitter.EmitCIE(streamer, frame.Personality,
                                   frame.PersonalityEncoding, frame.Lsda,

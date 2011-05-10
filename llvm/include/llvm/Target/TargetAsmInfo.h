@@ -58,6 +58,10 @@ public:
     return TLOF->getEHFrameSection();
   }
 
+  const MCSection *getDwarfFrameSection() const {
+    return TLOF->getDwarfFrameSection();
+  }
+
   unsigned getFDEEncoding(bool CFI) const {
     return TLOF->getFDEEncoding(CFI);
   }

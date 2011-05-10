@@ -369,5 +369,8 @@ void MCStreamer::EmitFrames(bool usingCFI) {
     return;
 
   if (EmitEHFrame)
-    MCDwarfFrameEmitter::Emit(*this, usingCFI);
+    MCDwarfFrameEmitter::Emit(*this, usingCFI, true);
+
+  if (EmitDebugFrame)
+    MCDwarfFrameEmitter::Emit(*this, usingCFI, false);
 }
