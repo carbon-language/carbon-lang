@@ -75,7 +75,7 @@ MCAsmInfo::MCAsmInfo() {
   SupportsDebugInformation = false;
   ExceptionsType = ExceptionHandling::None;
   DwarfUsesInlineInfoSection = false;
-  DwarfRequiresRelocationForStmtList = true;
+  DwarfRequiresRelocationForSectionOffset = true;
   DwarfSectionOffsetDirective = 0;
   DwarfUsesLabelOffsetForRanges = true;
   HasMicrosoftFastStdCallMangling = false;

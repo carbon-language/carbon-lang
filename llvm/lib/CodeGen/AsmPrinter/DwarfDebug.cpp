@@ -860,7 +860,7 @@ void DwarfDebug::constructCompileUnit(const MDNode *N) {
   NewCU->addUInt(Die, dwarf::DW_AT_entry_pc, dwarf::DW_FORM_addr, 0);
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
-  if(Asm->MAI->doesDwarfRequireRelocationForStmtList())
+  if(Asm->MAI->doesDwarfRequireRelocationForSectionOffset())
     NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
                     Asm->GetTempSymbol("section_line"));
   else

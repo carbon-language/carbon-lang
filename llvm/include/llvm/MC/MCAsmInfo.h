@@ -276,9 +276,9 @@ namespace llvm {
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
 
-    /// DwarfRequiresRelocationForStmtList - True if DW_AT_stmt_list needs
-    /// a relocation to the correct offset.
-    bool DwarfRequiresRelocationForStmtList;  // Defaults to true;
+    /// DwarfRequiresRelocationForSectionOffset - True if we need to produce a
+    // relocation when we want a section offset in dwarf.
+    bool DwarfRequiresRelocationForSectionOffset;  // Defaults to true;
 
     // DwarfUsesLabelOffsetDifference - True if Dwarf2 output can
     // use EmitLabelOffsetDifference.
@@ -468,8 +468,8 @@ namespace llvm {
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;
     }
-    bool doesDwarfRequireRelocationForStmtList() const {
-      return DwarfRequiresRelocationForStmtList;
+    bool doesDwarfRequireRelocationForSectionOffset() const {
+      return DwarfRequiresRelocationForSectionOffset;
     }
     bool doesDwarfUsesLabelOffsetForRanges() const {
       return DwarfUsesLabelOffsetForRanges;
