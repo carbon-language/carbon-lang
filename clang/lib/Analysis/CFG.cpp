@@ -1314,6 +1314,11 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(AbstractConditionalOperator *C,
 }
 
 CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {
+  // Check if the Decl is for an __label__.  If so, elide it from the
+  // CFG entirely.
+  if (isa<LabelDecl>(*DS->decl_begin()))
+    return Block;
+  
   if (DS->isSingleDecl())
     return VisitDeclSubExpr(DS);
 

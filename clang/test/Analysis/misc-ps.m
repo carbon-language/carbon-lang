@@ -1301,3 +1301,14 @@ static void test(unsigned int bit_mask)
     }
   }
 }
+
+// Don't crash on code containing __label__.
+int radar9414427_aux();
+void radar9414427() {
+  __label__ mylabel;
+  if (radar9414427_aux()) {
+  mylabel: do {}
+  while (0);
+  }
+}
+
