@@ -416,9 +416,9 @@ def print_registers(frame, string_buffer = False):
 
     print >> output, "Register sets for " + repr(frame)
 
-    registerList = frame.GetRegisters()
-    print >> output, "Frame registers (size of register set = %d):" % registerList.GetSize()
-    for value in registerList:
+    registerSet = frame.GetRegisters() # Return type of SBValueList.
+    print >> output, "Frame registers (size of register set = %d):" % registerSet.GetSize()
+    for value in registerSet:
         #print >> output, value 
         print >> output, "%s (number of children = %d):" % (value.GetName(), value.GetNumChildren())
         for child in value:
@@ -426,3 +426,36 @@ def print_registers(frame, string_buffer = False):
 
     if string_buffer:
         return output.getvalue()
+
+def get_registers(frame, kind):
+    """Returns the registers given the frame and the kind of registers desired.
+
+    Returns None if there's no such kind.
+    """
+    registerSet = frame.GetRegisters() # Return type of SBValueList.
+    for value in registerSet:
+        if kind.lower() in value.GetName().lower():
+            return value
+
+    return None
+
+def get_GPRs(frame):
+    """Returns the general purpose registers of the frame as an SBValue.
+
+    The returned SBValue object is iterable.
+    """
+    return get_registers(frame, "general purpose")
+
+def get_FPRs(frame):
+    """Returns the floating point registers of the frame as an SBValue.
+
+    The returned SBValue object is iterable.
+    """
+    return get_registers(frame, "floating point")
+
+def get_ESRs(frame):
+    """Returns the exception state registers of the frame as an SBValue.
+
+    The returned SBValue object is iterable.
+    """
+    return get_registers(frame, "exception state")
