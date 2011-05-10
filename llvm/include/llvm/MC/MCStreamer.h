@@ -73,6 +73,8 @@ namespace llvm {
     const MCExpr *ForceExpAbs(MCStreamer *Streamer, MCContext &Context,
                               const MCExpr* Expr);
 
+    void EmitFrames(bool usingCFI);
+
   public:
     virtual ~MCStreamer();
 

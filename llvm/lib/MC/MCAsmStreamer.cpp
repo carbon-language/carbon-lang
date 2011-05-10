@@ -1070,8 +1070,8 @@ void MCAsmStreamer::Finish() {
   if (getContext().hasDwarfFiles() && !UseLoc)
     MCDwarfFileTable::Emit(this);
 
-  if (getNumFrameInfos() && !UseCFI)
-    MCDwarfFrameEmitter::Emit(*this, false);
+  if (!UseCFI)
+    EmitFrames(false);
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,

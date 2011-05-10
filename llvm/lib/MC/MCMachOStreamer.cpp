@@ -377,8 +377,7 @@ void MCMachOStreamer::EmitInstToData(const MCInst &Inst) {
 }
 
 void MCMachOStreamer::Finish() {
-  if (getNumFrameInfos())
-    MCDwarfFrameEmitter::Emit(*this, true);
+  EmitFrames(true);
 
   // We have to set the fragment atom associations so we can relax properly for
   // Mach-O.

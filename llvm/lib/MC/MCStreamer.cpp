@@ -363,3 +363,11 @@ void MCStreamer::EmitRawText(const Twine &T) {
   T.toVector(Str);
   EmitRawText(Str.str());
 }
+
+void MCStreamer::EmitFrames(bool usingCFI) {
+  if (!getNumFrameInfos())
+    return;
+
+  if (EmitEHFrame)
+    MCDwarfFrameEmitter::Emit(*this, usingCFI);
+}
