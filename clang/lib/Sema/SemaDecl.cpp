@@ -1730,6 +1730,11 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
             << New << getSpecialMember(OldMethod);
           return true;
         }
+      } else if (OldMethod->isExplicitlyDefaulted()) {
+        Diag(NewMethod->getLocation(),
+             diag::err_definition_of_explicitly_defaulted_member)
+          << getSpecialMember(OldMethod);
+        return true;
       }
     }
 
@@ -4137,16 +4142,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                          /*isImplicitlyDeclared=*/false);
 
       NewFD = NewCD;
-
-      if (DefaultLoc.isValid()) {
-        if (NewCD->isDefaultConstructor() ||
-            NewCD->isCopyOrMoveConstructor()) {
-          NewFD->setDefaulted();
-          NewFD->setExplicitlyDefaulted();
-        } else {
-          Diag(DefaultLoc, diag::err_default_special_members);
-        }
-      }
     } else if (Name.getNameKind() == DeclarationName::CXXDestructorName) {
       // This is a C++ destructor declaration.
       if (DC->isRecord()) {
@@ -4159,11 +4154,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                           isInline,
                                           /*isImplicitlyDeclared=*/false);
         isVirtualOkay = true;
-
-        if (DefaultLoc.isValid()) {
-          NewFD->setDefaulted();
-          NewFD->setExplicitlyDefaulted();
-        }
       } else {
         Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
 
@@ -4181,9 +4171,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
              diag::err_conv_function_not_member);
         return 0;
       }
-
-      if (DefaultLoc.isValid())
-        Diag(DefaultLoc, diag::err_default_special_members);
 
       CheckConversionDeclarator(D, R, SC);
       NewFD = CXXConversionDecl::Create(Context, cast<CXXRecordDecl>(DC),
@@ -4232,16 +4219,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       NewFD = NewMD;
 
       isVirtualOkay = !isStatic;
-
-      if (DefaultLoc.isValid()) {
-        if (NewMD->isCopyAssignmentOperator() /* ||
-            NewMD->isMoveAssignmentOperator() */) {
-          NewFD->setDefaulted();
-          NewFD->setExplicitlyDefaulted();
-        } else {
-          Diag(DefaultLoc, diag::err_default_special_members);
-        }
-      }
     } else {
       if (DefaultLoc.isValid())
         Diag(DefaultLoc, diag::err_default_special_members);
@@ -4715,7 +4692,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     } else if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
                !isFriend && !isFunctionTemplateSpecialization &&
-               !isExplicitSpecialization) {
+               !isExplicitSpecialization && !DefaultLoc.isValid()) {
       // An out-of-line member function declaration must also be a
       // definition (C++ [dcl.meaning]p1).
       // Note that this is not the case for explicit specializations of
@@ -4799,6 +4776,36 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           Context.setcudaConfigureCallDecl(NewFD);
         }
       }
+
+  // Check explicitly defaulted methods
+  // FIXME: This could be made better through CXXSpecialMember if it did
+  // default constructors (which it should rather than any constructor).
+  if (NewFD && DefaultLoc.isValid() && getLangOptions().CPlusPlus) {
+    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD)) {
+      if (CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(MD)) {
+        if (CD->isDefaultConstructor() || CD->isCopyOrMoveConstructor()) {
+          CD->setDefaulted();
+          CD->setExplicitlyDefaulted();
+          if (CD != CD->getCanonicalDecl() && CD->isDefaultConstructor())
+            CheckExplicitlyDefaultedDefaultConstructor(CD);
+          // FIXME: Do copy/move ctors here.
+        } else {
+          Diag(DefaultLoc, diag::err_default_special_members);
+        }
+      } else if (CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
+        DD->setDefaulted();
+        DD->setExplicitlyDefaulted();
+        // FIXME: Add a checking method
+      } else if (MD->isCopyAssignmentOperator() /* ||
+                 MD->isMoveAssignmentOperator() */) {
+        MD->setDefaulted();
+        MD->setExplicitlyDefaulted();
+        // FIXME: Add a checking method
+      } else {
+        Diag(DefaultLoc, diag::err_default_special_members);
+      }
+    }
+  }
 
   return NewFD;
 }

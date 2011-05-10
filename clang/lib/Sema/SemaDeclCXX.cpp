@@ -111,6 +111,69 @@ namespace {
   }
 }
 
+void Sema::ImplicitExceptionSpecification::CalledDecl(CXXMethodDecl *Method) {
+  // If we have an MSAny spec already, don't bother.
+  if (!Method || ComputedEST == EST_MSAny)
+    return;
+
+  const FunctionProtoType *Proto
+    = Method->getType()->getAs<FunctionProtoType>();
+
+  ExceptionSpecificationType EST = Proto->getExceptionSpecType();
+
+  // If this function can throw any exceptions, make a note of that.
+  if (EST == EST_MSAny || EST == EST_None) {
+    ClearExceptions();
+    ComputedEST = EST;
+    return;
+  }
+
+  // If this function has a basic noexcept, it doesn't affect the outcome.
+  if (EST == EST_BasicNoexcept)
+    return;
+
+  // If we have a throw-all spec at this point, ignore the function.
+  if (ComputedEST == EST_None)
+    return;
+
+  // If we're still at noexcept(true) and there's a nothrow() callee,
+  // change to that specification.
+  if (EST == EST_DynamicNone) {
+    if (ComputedEST == EST_BasicNoexcept)
+      ComputedEST = EST_DynamicNone;
+    return;
+  }
+
+  // Check out noexcept specs.
+  if (EST == EST_ComputedNoexcept) {
+    FunctionProtoType::NoexceptResult NR = Proto->getNoexceptSpec(Context);
+    assert(NR != FunctionProtoType::NR_NoNoexcept &&
+           "Must have noexcept result for EST_ComputedNoexcept.");
+    assert(NR != FunctionProtoType::NR_Dependent &&
+           "Should not generate implicit declarations for dependent cases, "
+           "and don't know how to handle them anyway.");
+
+    // noexcept(false) -> no spec on the new function
+    if (NR == FunctionProtoType::NR_Throw) {
+      ClearExceptions();
+      ComputedEST = EST_None;
+    }
+    // noexcept(true) won't change anything either.
+    return;
+  }
+
+  assert(EST == EST_Dynamic && "EST case not considered earlier.");
+  assert(ComputedEST != EST_None &&
+         "Shouldn't collect exceptions when throw-all is guaranteed.");
+  ComputedEST = EST_Dynamic;
+  // Record the exceptions in this function's exception specification.
+  for (FunctionProtoType::exception_iterator E = Proto->exception_begin(),
+                                          EEnd = Proto->exception_end();
+       E != EEnd; ++E)
+    if (ExceptionsSeen.insert(Context.getCanonicalType(*E)))
+      Exceptions.push_back(*E);
+}
+
 bool
 Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
                               SourceLocation EqualLoc) {
@@ -2937,6 +3000,64 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   //   instantiated (e.g. meta-functions). This doesn't apply to classes that
   //   have inherited constructors.
   DeclareInheritedConstructors(Record);
+
+  CheckExplicitlyDefaultedMethods(Record);
+}
+
+void Sema::CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record) {
+  for (CXXRecordDecl::ctor_iterator CI = Record->ctor_begin(),
+                                    CE = Record->ctor_end();
+       CI != CE; ++CI) {
+    if (!CI->isInvalidDecl() && CI->isExplicitlyDefaulted()) {
+      if (CI->isDefaultConstructor()) {
+        CheckExplicitlyDefaultedDefaultConstructor(*CI);
+      }
+
+      // FIXME: Do copy and move constructors
+    }
+  }
+
+  // FIXME: Do copy and move assignment and destructors
+}
+
+void Sema::CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *CD) {
+  assert(CD->isExplicitlyDefaulted() && CD->isDefaultConstructor());
+  
+  // Whether this was the first-declared instance of the constructor.
+  // This affects whether we implicitly add an exception spec (and, eventually,
+  // constexpr). It is also ill-formed to explicitly default a constructor such
+  // that it would be deleted. (C++0x [decl.fct.def.default])
+  bool First = CD == CD->getCanonicalDecl();
+
+  if (CD->getNumParams() != 0) {
+    Diag(CD->getLocation(), diag::err_defaulted_default_ctor_params)
+      << CD->getSourceRange();
+    CD->setInvalidDecl();
+    return;
+  }
+
+  ImplicitExceptionSpecification Spec
+    = ComputeDefaultedDefaultCtorExceptionSpec(CD->getParent());
+  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
+  const FunctionProtoType *CtorType = CD->getType()->getAs<FunctionProtoType>(),
+                          *ExceptionType = Context.getFunctionType(
+                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
+
+  if (CtorType->hasExceptionSpec()) {
+    if (CheckEquivalentExceptionSpec(
+          PDiag(diag::err_incorrect_defaulted_exception_spec),
+          PDiag(),
+          ExceptionType, SourceLocation(),
+          CtorType, CD->getLocation())) {
+      CD->setInvalidDecl();
+      return;
+    }
+  } else if (First) {
+    // We set the declaration to have the computed exception spec here.
+    // We know there are no parameters.
+    CD->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
+  }
+
 }
 
 /// \brief Data used with FindHiddenVirtualMethod
@@ -3052,113 +3173,6 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
   CheckCompletedCXXClass(
                         dyn_cast_or_null<CXXRecordDecl>(TagDecl));
 }
-
-namespace {
-  /// \brief Helper class that collects exception specifications for 
-  /// implicitly-declared special member functions.
-  class ImplicitExceptionSpecification {
-    ASTContext &Context;
-    // We order exception specifications thus:
-    // noexcept is the most restrictive, but is only used in C++0x.
-    // throw() comes next.
-    // Then a throw(collected exceptions)
-    // Finally no specification.
-    // throw(...) is used instead if any called function uses it.
-    ExceptionSpecificationType ComputedEST;
-    llvm::SmallPtrSet<CanQualType, 4> ExceptionsSeen;
-    llvm::SmallVector<QualType, 4> Exceptions;
-
-    void ClearExceptions() {
-      ExceptionsSeen.clear();
-      Exceptions.clear();
-    }
-
-  public:
-    explicit ImplicitExceptionSpecification(ASTContext &Context) 
-      : Context(Context), ComputedEST(EST_BasicNoexcept) {
-      if (!Context.getLangOptions().CPlusPlus0x)
-        ComputedEST = EST_DynamicNone;
-    }
-
-    /// \brief Get the computed exception specification type.
-    ExceptionSpecificationType getExceptionSpecType() const {
-      assert(ComputedEST != EST_ComputedNoexcept &&
-             "noexcept(expr) should not be a possible result");
-      return ComputedEST;
-    }
-
-    /// \brief The number of exceptions in the exception specification.
-    unsigned size() const { return Exceptions.size(); }
-
-    /// \brief The set of exceptions in the exception specification.
-    const QualType *data() const { return Exceptions.data(); }
-
-    /// \brief Integrate another called method into the collected data.
-    void CalledDecl(CXXMethodDecl *Method) {
-      // If we have an MSAny spec already, don't bother.
-      if (!Method || ComputedEST == EST_MSAny)
-        return;
-
-      const FunctionProtoType *Proto
-        = Method->getType()->getAs<FunctionProtoType>();
-
-      ExceptionSpecificationType EST = Proto->getExceptionSpecType();
-
-      // If this function can throw any exceptions, make a note of that.
-      if (EST == EST_MSAny || EST == EST_None) {
-        ClearExceptions();
-        ComputedEST = EST;
-        return;
-      }
-
-      // If this function has a basic noexcept, it doesn't affect the outcome.
-      if (EST == EST_BasicNoexcept)
-        return;
-
-      // If we have a throw-all spec at this point, ignore the function.
-      if (ComputedEST == EST_None)
-        return;
-
-      // If we're still at noexcept(true) and there's a nothrow() callee,
-      // change to that specification.
-      if (EST == EST_DynamicNone) {
-        if (ComputedEST == EST_BasicNoexcept)
-          ComputedEST = EST_DynamicNone;
-        return;
-      }
-
-      // Check out noexcept specs.
-      if (EST == EST_ComputedNoexcept) {
-        FunctionProtoType::NoexceptResult NR = Proto->getNoexceptSpec(Context);
-        assert(NR != FunctionProtoType::NR_NoNoexcept &&
-               "Must have noexcept result for EST_ComputedNoexcept.");
-        assert(NR != FunctionProtoType::NR_Dependent &&
-               "Should not generate implicit declarations for dependent cases, "
-               "and don't know how to handle them anyway.");
-
-        // noexcept(false) -> no spec on the new function
-        if (NR == FunctionProtoType::NR_Throw) {
-          ClearExceptions();
-          ComputedEST = EST_None;
-        }
-        // noexcept(true) won't change anything either.
-        return;
-      }
-
-      assert(EST == EST_Dynamic && "EST case not considered earlier.");
-      assert(ComputedEST != EST_None &&
-             "Shouldn't collect exceptions when throw-all is guaranteed.");
-      ComputedEST = EST_Dynamic;
-      // Record the exceptions in this function's exception specification.
-      for (FunctionProtoType::exception_iterator E = Proto->exception_begin(),
-                                              EEnd = Proto->exception_end();
-           E != EEnd; ++E)
-        if (ExceptionsSeen.insert(Context.getCanonicalType(*E)))
-          Exceptions.push_back(*E);
-    }
-  };
-}
-
 
 /// AddImplicitlyDeclaredMembersToClass - Adds any implicitly-declared
 /// special functions, such as the default constructor, copy
@@ -4980,17 +4994,8 @@ static CXXConstructorDecl *getDefaultConstructorUnsafe(Sema &Self,
   return 0;
 }
 
-CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
-                                                     CXXRecordDecl *ClassDecl) {
-  // C++ [class.ctor]p5:
-  //   A default constructor for a class X is a constructor of class X
-  //   that can be called without an argument. If there is no
-  //   user-declared constructor for class X, a default constructor is
-  //   implicitly declared. An implicitly-declared default constructor
-  //   is an inline public member of its class.
-  assert(!ClassDecl->hasUserDeclaredConstructor() && 
-         "Should not build implicit default constructor!");
-  
+Sema::ImplicitExceptionSpecification
+Sema::ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
   // C++ [except.spec]p14:
   //   An implicitly declared special member function (Clause 12) shall have an 
   //   exception-specification. [...]
@@ -5043,10 +5048,23 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
     }
   }
 
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = ExceptSpec.getExceptionSpecType();
-  EPI.NumExceptions = ExceptSpec.size();
-  EPI.Exceptions = ExceptSpec.data();
+  return ExceptSpec;
+}
+
+CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
+                                                     CXXRecordDecl *ClassDecl) {
+  // C++ [class.ctor]p5:
+  //   A default constructor for a class X is a constructor of class X
+  //   that can be called without an argument. If there is no
+  //   user-declared constructor for class X, a default constructor is
+  //   implicitly declared. An implicitly-declared default constructor
+  //   is an inline public member of its class.
+  assert(!ClassDecl->hasUserDeclaredConstructor() && 
+         "Should not build implicit default constructor!");
+
+  ImplicitExceptionSpecification Spec = 
+    ComputeDefaultedDefaultCtorExceptionSpec(ClassDecl);
+  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
 
   // Create the actual constructor declaration.
   CanQualType ClassType

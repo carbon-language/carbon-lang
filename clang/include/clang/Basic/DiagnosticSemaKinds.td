@@ -2149,6 +2149,9 @@ def err_redefinition : Error<"redefinition of %0">;
 def err_definition_of_implicitly_declared_member : Error<
   "definition of implicitly declared %select{constructor|copy constructor|"
   "copy assignment operator|destructor}1">;
+def err_definition_of_explicitly_defaulted_member : Error<
+  "definition of explicitly defaulted %select{constructor|copy constructor|"
+  "copy assignment operator|destructor}0">;
 def err_redefinition_extern_inline : Error<
   "redefinition of a 'extern inline' function %0 is not supported in "
   "%select{C99 mode|C++}1">;
@@ -3618,6 +3621,12 @@ def warn_not_compound_assign : Warning<
 // C++0x explicit conversion operators
 def warn_explicit_conversion_functions : Warning<
   "explicit conversion functions are a C++0x extension">, InGroup<CXX0x>;
+
+// C++0x defaulted functions
+def err_defaulted_default_ctor_params : Error<
+  "an explicitly-defaulted default constructor must have no parameters">;
+def err_incorrect_defaulted_exception_spec : Error<
+  "exception specification of explicitly defaulted function is incorrect">;
 
 def warn_array_index_precedes_bounds : Warning<
   "array index of '%0' indexes before the beginning of the array">,

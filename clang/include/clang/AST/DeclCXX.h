@@ -682,7 +682,7 @@ public:
   bool needsImplicitDefaultConstructor() const {
     return data().NeedsImplicitDefaultConstructor;
   }
-  
+
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.
   bool hasConstCopyConstructor(const ASTContext &Context) const;
