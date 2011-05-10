@@ -339,3 +339,16 @@ int test51(void)
     return a; // no-warning
 }
 
+// FIXME: This is a false positive, but it tests logical operations in switch statements.
+int test52(int a, int b) {
+  int x;  // expected-note {{variable 'x' is declared here}} expected-note {{add initialization to silence this warning}}
+  switch (a || b) { // expected-warning {{switch condition has boolean value}}
+    case 0:
+      x = 1;
+      break;
+    case 1:
+      x = 2;
+      break;
+  }
+  return x; // expected-warning {{variable 'x' may be uninitialized when used here}}
+}
