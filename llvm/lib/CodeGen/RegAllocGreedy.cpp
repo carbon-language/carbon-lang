@@ -1325,9 +1325,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
   // an assertion when the coalescer is fixed.
   if (SA->didRepairRange()) {
     // VirtReg has changed, so all cached queries are invalid.
-    Order.rewind();
-    while (unsigned PhysReg = Order.next())
-      query(VirtReg, PhysReg).clear();
+    invalidateVirtRegs();
     if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs))
       return PhysReg;
   }
