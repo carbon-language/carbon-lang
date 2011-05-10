@@ -178,6 +178,7 @@ void MCStreamer::EmitLabel(MCSymbol *Symbol) {
 }
 
 void MCStreamer::EmitCFISections(bool EH, bool Debug) {
+  assert(EH || Debug);
   EmitEHFrame = EH;
   EmitDebugFrame = Debug;
 }

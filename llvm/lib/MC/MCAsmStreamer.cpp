@@ -193,6 +193,7 @@ public:
                                      unsigned Isa, unsigned Discriminator,
                                      StringRef FileName);
 
+  virtual void EmitCFISections(bool EH, bool Debug);
   virtual void EmitCFIStartProc();
   virtual void EmitCFIEndProc();
   virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
@@ -761,6 +762,24 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
     OS << MAI.getCommentString() << ' ' << FileName << ':' 
        << Line << ':' << Column;
   }
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitCFISections(bool EH, bool Debug) {
+  MCStreamer::EmitCFISections(EH, Debug);
+
+  if (!UseCFI)
+    return;
+
+  OS << "\t.cfi_sections ";
+  if (EH) {
+    OS << ".eh_frame";
+    if (Debug)
+      OS << ", .debug_frame";
+  } else if (Debug) {
+    OS << ".debug_frame";
+  }
+
   EmitEOL();
 }
 
