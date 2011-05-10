@@ -324,6 +324,7 @@ static SDNode *FindCallStartFromCallEnd(SDNode *Node) {
     case ISD::CALLSEQ_START:
       if (!nested)
         return Node;
+      Node = Node->getOperand(0).getNode();
       nested--;
       break;
     case ISD::CALLSEQ_END:
@@ -331,7 +332,7 @@ static SDNode *FindCallStartFromCallEnd(SDNode *Node) {
       break;
     }
   }
-  return 0;
+  return (Node->getOpcode() == ISD::CALLSEQ_START) ? Node : 0;
 }
 
 /// LegalizeAllNodesNotLeadingTo - Recursively walk the uses of N, looking to
