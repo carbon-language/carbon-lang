@@ -76,7 +76,8 @@ void Lexer::InitLexer(const char *BufStart, const char *BufPtr,
   // skip the UTF-8 BOM if it's present.
   if (BufferStart == BufferPtr) {
     // Determine the size of the BOM.
-    size_t BOMLength = llvm::StringSwitch<size_t>(BufferStart)
+    llvm::StringRef Buf(BufferStart, BufferEnd - BufferStart);
+    size_t BOMLength = llvm::StringSwitch<size_t>(Buf)
       .StartsWith("\xEF\xBB\xBF", 3) // UTF-8 BOM
       .Default(0);
 
