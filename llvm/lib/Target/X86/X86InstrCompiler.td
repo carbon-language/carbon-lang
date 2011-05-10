@@ -580,7 +580,7 @@ def #NAME#8mi : Ii8<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
                      ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 0 },
                      ImmMod, (outs), (ins i8mem :$dst, i8imm :$src2),
                      !strconcat("lock\n\t", mnemonic, "{b}\t",
-                     "{$src2, $dst|$dst, $src2}"),
+                                "{$src2, $dst|$dst, $src2}"),
                      []>, LOCK;
 
 def #NAME#16mi : Ii16<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
@@ -629,6 +629,7 @@ def #NAME#64mi8 : RIi8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
 
 defm LOCK_ADD : LOCK_ArithBinOp<0x00, 0x80, 0x83, MRM0m, "add">;
 defm LOCK_SUB : LOCK_ArithBinOp<0x28, 0x80, 0x83, MRM5m, "sub">;
+defm LOCK_OR  : LOCK_ArithBinOp<0x08, 0x80, 0x83, MRM1m, "or">;
 
 // Optimized codegen when the non-memory output is not used.
 let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {

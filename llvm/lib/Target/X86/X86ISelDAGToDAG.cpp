@@ -189,6 +189,7 @@ namespace {
     SDNode *Select(SDNode *N);
     SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
     SDNode *SelectAtomicLoadAdd(SDNode *Node, EVT NVT);
+    SDNode *SelectAtomicLoadOr(SDNode *Node, EVT NVT);
 
     bool MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM);
     bool MatchWrapper(SDValue N, X86ISelAddressMode &AM);
@@ -1329,6 +1330,8 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
   return ResNode;
 }
 
+// FIXME: Figure out some way to unify this with the 'or' and other code
+// below.
 SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   if (Node->hasAnyUseOfValue(0))
     return 0;
@@ -1479,6 +1482,78 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   }
 }
 
+SDNode *X86DAGToDAGISel::SelectAtomicLoadOr(SDNode *Node, EVT NVT) {
+  if (Node->hasAnyUseOfValue(0))
+    return 0;
+  
+  // Optimize common patterns for __sync_or_and_fetch  where the result
+  // is not used. This allows us to use the "lock" version of the or
+  // instruction.
+  // FIXME: Same as for 'add' and 'sub'.
+  SDValue Chain = Node->getOperand(0);
+  SDValue Ptr = Node->getOperand(1);
+  SDValue Val = Node->getOperand(2);
+  SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
+  if (!SelectAddr(Node, Ptr, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
+    return 0;
+
+  bool isCN = false;
+  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Val);
+  if (CN) {
+    isCN = true;
+    Val = CurDAG->getTargetConstant(CN->getSExtValue(), NVT);
+  }
+  
+  unsigned Opc = 0;
+  switch (NVT.getSimpleVT().SimpleTy) {
+    default: return 0;
+    case MVT::i8:
+      if (isCN)
+        Opc = X86::LOCK_OR8mi;
+      else
+        Opc = X86::LOCK_OR8mr;
+      break;
+    case MVT::i16:
+      if (isCN) {
+        if (immSext8(Val.getNode()))
+          Opc = X86::LOCK_OR16mi8;
+        else
+          Opc = X86::LOCK_OR16mi;
+      } else
+        Opc = X86::LOCK_OR16mr;
+      break;
+    case MVT::i32:
+      if (isCN) {
+        if (immSext8(Val.getNode()))
+          Opc = X86::LOCK_OR32mi8;
+        else
+          Opc = X86::LOCK_OR32mi;
+      } else
+        Opc = X86::LOCK_OR32mr;
+      break;
+    case MVT::i64:
+      if (isCN) {
+        if (immSext8(Val.getNode()))
+          Opc = X86::LOCK_OR64mi8;
+        else if (i64immSExt32(Val.getNode()))
+          Opc = X86::LOCK_OR64mi32;
+      } else
+        Opc = X86::LOCK_OR64mr;
+      break;
+  }
+  
+  DebugLoc dl = Node->getDebugLoc();
+  SDValue Undef = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
+                                                 dl, NVT), 0);
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemSDNode>(Node)->getMemOperand();
+  SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Val, Chain };
+  SDValue Ret = SDValue(CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops, 7), 0);
+  cast<MachineSDNode>(Ret)->setMemRefs(MemOp, MemOp + 1);
+  SDValue RetVals[] = { Undef, Ret };
+  return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
+}
+
 /// HasNoSignedComparisonUses - Test whether the given X86ISD::CMP node has
 /// any uses which require the SF or OF bits to be accurate.
 static bool HasNoSignedComparisonUses(SDNode *N) {
@@ -1576,6 +1651,12 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
   case ISD::ATOMIC_LOAD_ADD: {
     SDNode *RetVal = SelectAtomicLoadAdd(Node, NVT);
+    if (RetVal)
+      return RetVal;
+    break;
+  }
+  case ISD::ATOMIC_LOAD_OR: {
+    SDNode *RetVal = SelectAtomicLoadOr(Node, NVT);
     if (RetVal)
       return RetVal;
     break;
