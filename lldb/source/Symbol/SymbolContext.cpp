@@ -9,6 +9,7 @@
 
 #include "lldb/Symbol/SymbolContext.h"
 
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -453,7 +454,11 @@ SymbolContext::FindTypeByName (const ConstString &name) const
     if (module_sp && module_sp->FindTypes (*this, name, false, 1, types))
         return types.GetTypeAtIndex(0);
     
-    if (!return_value.get() && target_sp && target_sp->GetImages().FindTypes (*this, name, false, 1, types))
+    SymbolContext sc_for_global_search;
+    
+    sc_for_global_search.target_sp = target_sp;
+    
+    if (!return_value.get() && target_sp && target_sp->GetImages().FindTypes (sc_for_global_search, name, false, 1, types))
         return types.GetTypeAtIndex(0);
     
     return return_value;
