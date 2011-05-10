@@ -96,8 +96,8 @@ int main(int argc, char **argv) {
       if (!clang::tooling::RunToolWithFlags(
                new clang::SyntaxOnlyAction,
                LookupResult.CommandLine.size(),
-               clang::tooling::CommandLineToArgv(
-                   &LookupResult.CommandLine).data())) {
+               &clang::tooling::CommandLineToArgv(
+                   &LookupResult.CommandLine)[0])) {
         llvm::outs() << "Error while processing " << File << ".\n";
       }
     } else {
