@@ -633,7 +633,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
 
   MCSymbol *sectionStart;
-  if (asmInfo.isFunctionEHFrameSymbolPrivate())
+  if (asmInfo.isFunctionEHFrameSymbolPrivate() || !IsEH)
     sectionStart = context.CreateTempSymbol();
   else
     sectionStart = context.GetOrCreateSymbol(Twine("EH_frame") + Twine(CIENum));
@@ -739,7 +739,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   MCSymbol *fdeEnd = context.CreateTempSymbol();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
 
-  if (!asmInfo.isFunctionEHFrameSymbolPrivate()) {
+  if (!asmInfo.isFunctionEHFrameSymbolPrivate() && IsEH) {
     MCSymbol *EHSym = context.GetOrCreateSymbol(
       frame.Function->getName() + Twine(".eh"));
     streamer.EmitEHSymAttributes(frame.Function, EHSym);
