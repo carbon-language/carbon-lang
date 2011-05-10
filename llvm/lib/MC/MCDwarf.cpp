@@ -502,11 +502,12 @@ namespace {
     int CIENum;
     bool UsingCFI;
     bool IsEH;
+    const MCSymbol *SectionStart;
 
   public:
-    FrameEmitterImpl(bool usingCFI, bool isEH) : CFAOffset(0), CIENum(0),
-                                                 UsingCFI(usingCFI),
-                                                 IsEH(isEH) {
+    FrameEmitterImpl(bool usingCFI, bool isEH, const MCSymbol *sectionStart) :
+      CFAOffset(0), CIENum(0), UsingCFI(usingCFI), IsEH(isEH),
+      SectionStart(sectionStart) {
     }
 
     const MCSymbol &EmitCIE(MCStreamer &streamer,
@@ -737,9 +738,9 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   MCContext &context = streamer.getContext();
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  const TargetAsmInfo &TAsmInfo = context.getTargetAsmInfo();
 
-  if (!asmInfo.isFunctionEHFrameSymbolPrivate() && IsEH) {
+  if (!TAsmInfo.isFunctionEHFrameSymbolPrivate() && IsEH) {
     MCSymbol *EHSym = context.GetOrCreateSymbol(
       frame.Function->getName() + Twine(".eh"));
     streamer.EmitEHSymAttributes(frame.Function, EHSym);
@@ -751,15 +752,21 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   streamer.EmitAbsValue(Length, 4);
 
   streamer.EmitLabel(fdeStart);
+
   // CIE Pointer
+  const MCAsmInfo &asmInfo = context.getAsmInfo();
   if (IsEH) {
     const MCExpr *offset = MakeStartMinusEndExpr(streamer, cieStart, *fdeStart,
                                                  0);
     streamer.EmitAbsValue(offset, 4);
+  } else if (!asmInfo.doesDwarfRequireRelocationForSectionOffset()) {
+    const MCExpr *offset = MakeStartMinusEndExpr(streamer, *SectionStart,
+                                                 cieStart, 0);
+    streamer.EmitAbsValue(offset, 4);
   } else {
     streamer.EmitSymbolValue(&cieStart, 4);
   }
-  unsigned fdeEncoding = asmInfo.getFDEEncoding(UsingCFI);
+  unsigned fdeEncoding = TAsmInfo.getFDEEncoding(UsingCFI);
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
   // PC Begin
@@ -840,15 +847,17 @@ namespace llvm {
 void MCDwarfFrameEmitter::Emit(MCStreamer &streamer,
                                bool usingCFI,
                                bool isEH) {
-  const MCContext &context = streamer.getContext();
+  MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
   const MCSection &section = isEH ?
     *asmInfo.getEHFrameSection() : *asmInfo.getDwarfFrameSection();
   streamer.SwitchSection(&section);
+  MCSymbol *SectionStart = context.CreateTempSymbol();
+  streamer.EmitLabel(SectionStart);
 
   MCSymbol *fdeEnd = NULL;
   DenseMap<CIEKey, const MCSymbol*> CIEStarts;
-  FrameEmitterImpl Emitter(usingCFI, isEH);
+  FrameEmitterImpl Emitter(usingCFI, isEH, SectionStart);
 
   const MCSymbol *DummyDebugKey = NULL;
   for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
