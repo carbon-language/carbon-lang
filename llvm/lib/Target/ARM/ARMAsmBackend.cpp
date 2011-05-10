@@ -404,7 +404,6 @@ void ELFARMAsmBackend::ApplyFixup(const MCFixup &Fixup, char *Data,
   if (!Value) return;           // Doesn't change encoding.
 
   unsigned Offset = Fixup.getOffset();
-  assert(Offset % NumBytes == 0 && "Offset mod NumBytes is nonzero!");
 
   // For each byte of the fragment that the fixup touches, mask in the bits from
   // the fixup value. The Value has been "split up" into the appropriate
