@@ -20,7 +20,8 @@
 #include <cstdlib>
 using namespace llvm;
 
-MCStreamer::MCStreamer(MCContext &Ctx) : Context(Ctx) {
+MCStreamer::MCStreamer(MCContext &Ctx) : Context(Ctx), EmitEHFrame(true),
+                                         EmitDebugFrame(false) {
   const MCSection *section = NULL;
   SectionStack.push_back(std::make_pair(section, section));
 }
@@ -174,6 +175,11 @@ void MCStreamer::EmitLabel(MCSymbol *Symbol) {
   StringRef Prefix = getContext().getAsmInfo().getPrivateGlobalPrefix();
   if (!Symbol->getName().startswith(Prefix))
     LastNonPrivate = Symbol;
+}
+
+void MCStreamer::EmitCFISections(bool EH, bool Debug) {
+  EmitEHFrame = EH;
+  EmitDebugFrame = Debug;
 }
 
 void MCStreamer::EmitCFIStartProc() {

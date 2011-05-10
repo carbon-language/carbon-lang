@@ -50,6 +50,9 @@ namespace llvm {
     MCStreamer(const MCStreamer&); // DO NOT IMPLEMENT
     MCStreamer &operator=(const MCStreamer&); // DO NOT IMPLEMENT
 
+    bool EmitEHFrame;
+    bool EmitDebugFrame;
+
     std::vector<MCDwarfFrameInfo> FrameInfos;
     MCDwarfFrameInfo *getCurrentFrameInfo();
     void EnsureValidFrame();
@@ -436,6 +439,7 @@ namespace llvm {
     void EmitDwarfSetLineAddr(int64_t LineDelta, const MCSymbol *Label,
                               int PointerSize);
 
+    virtual void EmitCFISections(bool EH, bool Debug);
     virtual void EmitCFIStartProc();
     virtual void EmitCFIEndProc();
     virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);

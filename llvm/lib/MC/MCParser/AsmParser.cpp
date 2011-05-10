@@ -243,6 +243,8 @@ public:
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveStabs>(".stabs");
 
     // CFI directives.
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFISections>(
+                                                               ".cfi_sections");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIStartProc>(
                                                               ".cfi_startproc");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFIEndProc>(
@@ -289,6 +291,7 @@ public:
   bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveStabs(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveCFISections(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIStartProc(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIDefCfa(StringRef, SMLoc DirectiveLoc);
@@ -2263,6 +2266,39 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
 bool GenericAsmParser::ParseDirectiveStabs(StringRef Directive,
                                            SMLoc DirectiveLoc) {
   return TokError("unsupported directive '" + Directive + "'");
+}
+
+/// ParseDirectiveCFISections
+/// ::= .cfi_sections section [, section]
+bool GenericAsmParser::ParseDirectiveCFISections(StringRef,
+                                                 SMLoc DirectiveLoc) {
+  StringRef Name;
+  bool EH = false;
+  bool Debug = false;
+
+  if (getParser().ParseIdentifier(Name))
+    return TokError("Expected an identifier");
+
+  if (Name == ".eh_frame")
+    EH = true;
+  else if (Name == ".debug_frame")
+    Debug = true;
+
+  if (getLexer().is(AsmToken::Comma)) {
+    Lex();
+
+    if (getParser().ParseIdentifier(Name))
+      return TokError("Expected an identifier");
+
+    if (Name == ".eh_frame")
+      EH = true;
+    else if (Name == ".debug_frame")
+      Debug = true;
+  }
+
+  getStreamer().EmitCFISections(EH, Debug);
+
+  return false;
 }
 
 /// ParseDirectiveCFIStartProc
