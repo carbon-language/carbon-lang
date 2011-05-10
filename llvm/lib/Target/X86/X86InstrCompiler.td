@@ -543,85 +543,95 @@ def Int_MemBarrierNoSSE64  : RI<0x09, MRM1r, (outs), (ins GR64:$zero),
                            Requires<[In64BitMode]>, LOCK;
 
 
+// RegOpc corresponds to the mr version of the instruction
+// ImmOpc corresponds to the mi version of the instruction
+// ImmOpc8 corresponds to the mi8 version of the instruction
+// ImmMod corresponds to the instruction format of the mi and mi8 versions
+multiclass LOCK_ArithBinOp<bits<8> RegOpc, bits<8> ImmOpc, bits<8> ImmOpc8,
+                           Format ImmMod, string mnemonic> {
+let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {
+
+def #NAME#8mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
+                   RegOpc{3}, RegOpc{2}, RegOpc{1}, 0 },
+                   MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
+                   !strconcat("lock\n\t", mnemonic, "{b}\t",
+                              "{$src2, $dst|$dst, $src2}"),
+                   []>, LOCK;
+def #NAME#16mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
+                    RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
+                    MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
+                    !strconcat("lock\n\t", mnemonic, "{w}\t",
+                               "{$src2, $dst|$dst, $src2}"),
+                    []>, OpSize, LOCK;
+def #NAME#32mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
+                    RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
+                    MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
+                    !strconcat("lock\n\t", mnemonic, "{l}\t",
+                               "{$src2, $dst|$dst, $src2}"),
+                    []>, LOCK;
+def #NAME#64mr : RI<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
+                     RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
+                     MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
+                     !strconcat("lock\n\t", mnemonic, "{q}\t",
+                                "{$src2, $dst|$dst, $src2}"),
+                     []>, LOCK;
+
+def #NAME#8mi : Ii8<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                     ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 0 },
+                     ImmMod, (outs), (ins i8mem :$dst, i8imm :$src2),
+                     !strconcat("lock\n\t", mnemonic, "{b}\t",
+                     "{$src2, $dst|$dst, $src2}"),
+                     []>, LOCK;
+
+def #NAME#16mi : Ii16<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                       ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
+                       ImmMod, (outs), (ins i16mem :$dst, i16imm :$src2),
+                       !strconcat("lock\n\t", mnemonic, "{w}\t",
+                                  "{$src2, $dst|$dst, $src2}"),
+                       []>, LOCK;
+
+def #NAME#32mi : Ii32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                       ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
+                       ImmMod, (outs), (ins i32mem :$dst, i32imm :$src2),
+                       !strconcat("lock\n\t", mnemonic, "{l}\t",
+                                  "{$src2, $dst|$dst, $src2}"),
+                       []>, LOCK;
+
+def #NAME#64mi32 : RIi32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                          ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
+                          ImmMod, (outs), (ins i64mem :$dst, i64i32imm :$src2),
+                          !strconcat("lock\n\t", mnemonic, "{q}\t",
+                                     "{$src2, $dst|$dst, $src2}"),
+                          []>, LOCK;
+
+def #NAME#16mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
+                       ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
+                       ImmMod, (outs), (ins i16mem :$dst, i16i8imm :$src2),
+                       !strconcat("lock\n\t", mnemonic, "{w}\t",
+                                  "{$src2, $dst|$dst, $src2}"),
+                       []>, LOCK;
+def #NAME#32mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
+                       ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
+                       ImmMod, (outs), (ins i32mem :$dst, i32i8imm :$src2),
+                       !strconcat("lock\n\t", mnemonic, "{l}\t",
+                                  "{$src2, $dst|$dst, $src2}"),
+                       []>, LOCK;
+def #NAME#64mi8 : RIi8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
+                        ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
+                        ImmMod, (outs), (ins i64mem :$dst, i64i8imm :$src2),
+                        !strconcat("lock\n\t", mnemonic, "{q}\t",
+                                   "{$src2, $dst|$dst, $src2}"),
+                        []>, LOCK;
+
+}
+
+}
+
+defm LOCK_ADD : LOCK_ArithBinOp<0x00, 0x80, 0x83, MRM0m, "add">;
+defm LOCK_SUB : LOCK_ArithBinOp<0x28, 0x80, 0x83, MRM5m, "sub">;
+
 // Optimized codegen when the non-memory output is not used.
 let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {
-def LOCK_ADD8mr  : I<0x00, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
-                    "lock\n\t"
-                    "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD16mr  : I<0x01, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
-                    "lock\n\t"
-                    "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_ADD32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
-                    "lock\n\t"
-                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD64mr : RI<0x01, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                      "lock\n\t"
-                      "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-
-def LOCK_ADD8mi   : Ii8<0x80, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src2),
-                    "lock\n\t"
-                    "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD16mi  : Ii16<0x81, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src2),
-                    "lock\n\t"
-                     "add{w}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
-                    "lock\n\t"
-                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD64mi32 : RIi32<0x81, MRM0m, (outs),
-                                        (ins i64mem:$dst, i64i32imm :$src2),
-                      "lock\n\t"
-                      "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-
-def LOCK_ADD16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
-                    "lock\n\t"
-                    "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_ADD32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
-                    "lock\n\t"
-                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_ADD64mi8 : RIi8<0x83, MRM0m, (outs),
-                                      (ins i64mem:$dst, i64i8imm :$src2),
-                    "lock\n\t"
-                    "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-
-def LOCK_SUB8mr   : I<0x28, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
-                    "lock\n\t"
-                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB16mr  : I<0x29, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
-                    "lock\n\t"
-                    "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_SUB32mr  : I<0x29, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
-                    "lock\n\t"
-                    "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB64mr : RI<0x29, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                      "lock\n\t"
-                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-
-
-def LOCK_SUB8mi   : Ii8<0x80, MRM5m, (outs), (ins i8mem :$dst, i8imm:$src2),
-                    "lock\n\t"
-                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB16mi  : Ii16<0x81, MRM5m, (outs), (ins i16mem:$dst, i16imm:$src2),
-                    "lock\n\t"
-                    "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_SUB32mi  : Ii32<0x81, MRM5m, (outs), (ins i32mem:$dst, i32imm:$src2),
-                    "lock\n\t"
-                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB64mi32 : RIi32<0x81, MRM5m, (outs),
-                                        (ins i64mem:$dst, i64i32imm:$src2),
-                      "lock\n\t"
-                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-
-
-def LOCK_SUB16mi8 : Ii8<0x83, MRM5m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
-                    "lock\n\t"
-                     "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
-def LOCK_SUB32mi8 : Ii8<0x83, MRM5m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
-                    "lock\n\t"
-                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
-def LOCK_SUB64mi8 : RIi8<0x83, MRM5m, (outs),
-                                      (ins i64mem:$dst, i64i8imm :$src2),
-                      "lock\n\t"
-                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
 
 def LOCK_INC8m  : I<0xFE, MRM0m, (outs), (ins i8mem :$dst),
                     "lock\n\t"
