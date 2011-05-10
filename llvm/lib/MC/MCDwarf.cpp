@@ -629,8 +629,6 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
                                           unsigned lsdaEncoding) {
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  const MCSection &section = *asmInfo.getEHFrameSection();
-  streamer.SwitchSection(&section);
 
   MCSymbol *sectionStart;
   if (asmInfo.isFunctionEHFrameSymbolPrivate())
@@ -683,9 +681,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
     // Personality
     augmentationLength += getSizeForEncoding(streamer, personalityEncoding);
   }
-  if (lsda) {
+  if (lsda)
     augmentationLength += 1;
-  }
   // Encoding of the FDE pointers
   augmentationLength += 1;
 
@@ -698,10 +695,8 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
     // Personality
     EmitPersonality(streamer, *personality, personalityEncoding);
   }
-  if (lsda) {
-    // LSDA Encoding
-    streamer.EmitIntValue(lsdaEncoding, 1);
-  }
+  if (lsda)
+    streamer.EmitIntValue(lsdaEncoding, 1); // LSDA Encoding
   // Encoding of the FDE pointers
   streamer.EmitIntValue(asmInfo.getFDEEncoding(UsingCFI), 1);
 
@@ -831,6 +826,8 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &streamer,
                                bool usingCFI) {
   const MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  const MCSection &section = *asmInfo.getEHFrameSection();
+  streamer.SwitchSection(&section);
 
   MCSymbol *fdeEnd = NULL;
   DenseMap<CIEKey, const MCSymbol*> CIEStarts;
