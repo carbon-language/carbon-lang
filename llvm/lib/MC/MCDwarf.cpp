@@ -770,7 +770,8 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
   // PC Begin
-  unsigned PCBeginEncoding = IsEH ? fdeEncoding : dwarf::DW_EH_PE_absptr;
+  unsigned PCBeginEncoding = IsEH ? fdeEncoding :
+    (unsigned)dwarf::DW_EH_PE_absptr;
   unsigned PCBeginSize = getSizeForEncoding(streamer, PCBeginEncoding);
   EmitSymbol(streamer, *frame.Begin, PCBeginEncoding);
 
