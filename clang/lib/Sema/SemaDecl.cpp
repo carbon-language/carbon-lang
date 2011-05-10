@@ -1508,15 +1508,18 @@ Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
     if (Ctor->isCopyConstructor())
       return Sema::CXXCopyConstructor;
     
-    return Sema::CXXConstructor;
+    if (Ctor->isDefaultConstructor())
+      return Sema::CXXDefaultConstructor;
   } 
   
   if (isa<CXXDestructorDecl>(MD))
     return Sema::CXXDestructor;
   
-  assert(MD->isCopyAssignmentOperator() && 
-         "Must have copy assignment operator");
-  return Sema::CXXCopyAssignment;
+  if (MD->isCopyAssignmentOperator())
+    return Sema::CXXCopyAssignment;
+
+  llvm_unreachable("getSpecialMember on non-special member");
+  return Sema::CXXInvalid;
 }
 
 /// canRedefineFunction - checks if a function can be redefined. Currently,
@@ -7678,7 +7681,7 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
       if (!RDecl->hasTrivialCopyConstructor())
         member = CXXCopyConstructor;
       else if (!RDecl->hasTrivialDefaultConstructor())
-        member = CXXConstructor;
+        member = CXXDefaultConstructor;
       else if (!RDecl->hasTrivialCopyAssignment())
         member = CXXCopyAssignment;
       else if (!RDecl->hasTrivialDestructor())
@@ -7707,7 +7710,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   case CXXInvalid:
     break;
 
-  case CXXConstructor:
+  case CXXDefaultConstructor:
     if (RD->hasUserDeclaredConstructor()) {
       typedef CXXRecordDecl::ctor_iterator ctor_iter;
       for (ctor_iter ci = RD->ctor_begin(), ce = RD->ctor_end(); ci != ce;++ci){
@@ -7781,7 +7784,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
 
   bool (CXXRecordDecl::*hasTrivial)() const;
   switch (member) {
-  case CXXConstructor:
+  case CXXDefaultConstructor:
     hasTrivial = &CXXRecordDecl::hasTrivialDefaultConstructor; break;
   case CXXCopyConstructor:
     hasTrivial = &CXXRecordDecl::hasTrivialCopyConstructor; break;

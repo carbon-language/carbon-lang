@@ -600,13 +600,11 @@ def ext_rvalue_to_reference_access_ctor : ExtWarn<
   "C++98 requires an accessible copy constructor for class %2 when binding "
   "a reference to a temporary; was %select{private|protected}0">,
   AccessControl, InGroup<BindToTemporaryCopy>;
-def err_access_base : Error<
+def err_access_base_ctor : Error<
   "%select{base class|inherited virtual base class}0 %1 has %select{private|"
-  "protected}3 %select{constructor|copy constructor|copy assignment operator|"
-  "destructor}2">, AccessControl;
-def err_access_field: Error<
-  "field of type %0 has %select{private|protected}2 %select{constructor|copy "
-  "constructor|copy assignment operator|destructor}1">, AccessControl;
+  "protected}2 constructor">, AccessControl;
+def err_access_field_ctor : Error<
+  "field of type %0 has %select{private|protected}1 constructor">, AccessControl;
 
 def err_access_ctor_field :
     Error<"field of type %1 has %select{private|protected}2 constructor">,
@@ -2135,7 +2133,8 @@ def err_unavailable_message : Error<"%0 is unavailable: %1">;
 def warn_unavailable_fwdclass_message : Warning<
     "%0 maybe unavailable because receiver type is unknown">;
 def note_unavailable_here : Note<
-  "function has been explicitly marked %select{unavailable|deleted|deprecated}0 here">;
+  "function has been explicitly marked "
+  "%select{unavailable|deleted|deprecated}0 here">;
 def warn_not_enough_argument : Warning<
   "not enough variable arguments in %0 declaration to fit a sentinel">;
 def warn_missing_sentinel : Warning <
@@ -2147,11 +2146,11 @@ def warn_missing_prototype : Warning<
   InGroup<DiagGroup<"missing-prototypes">>, DefaultIgnore;
 def err_redefinition : Error<"redefinition of %0">;
 def err_definition_of_implicitly_declared_member : Error<
-  "definition of implicitly declared %select{constructor|copy constructor|"
-  "copy assignment operator|destructor}1">;
+  "definition of implicitly declared %select{default constructor|copy "
+  "constructor|copy assignment operator|destructor}1">;
 def err_definition_of_explicitly_defaulted_member : Error<
-  "definition of explicitly defaulted %select{constructor|copy constructor|"
-  "copy assignment operator|destructor}0">;
+  "definition of explicitly defaulted %select{default constructor|copy "
+  "constructor|copy assignment operator|destructor}0">;
 def err_redefinition_extern_inline : Error<
   "redefinition of a 'extern inline' function %0 is not supported in "
   "%select{C99 mode|C++}1">;

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
 struct A { };
-A::A() { } // expected-error {{definition of implicitly declared constructor}}
+A::A() { } // expected-error {{definition of implicitly declared default constructor}}
 
 struct B { };
 B::B(const B&) { } // expected-error {{definition of implicitly declared copy constructor}}

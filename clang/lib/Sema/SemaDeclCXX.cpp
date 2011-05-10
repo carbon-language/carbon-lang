@@ -5109,7 +5109,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   if (SetCtorInitializers(Constructor, 0, 0, /*AnyErrors=*/false) ||
       Trap.hasErrorOccurred()) {
     Diag(CurrentLocation, diag::note_member_synthesized_at) 
-      << CXXConstructor << Context.getTagDeclType(ClassDecl);
+      << CXXDefaultConstructor << Context.getTagDeclType(ClassDecl);
     Constructor->setInvalidDecl();
     return;
   }
