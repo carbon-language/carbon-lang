@@ -2016,7 +2016,9 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (InputDomain == AD_Int && OutputDomain == AD_Int &&
         !isOperandMentioned(InputOpNo, Pieces) &&
         InputExpr->isEvaluatable(Context)) {
-      InputExpr = ImpCastExprToType(InputExpr, OutTy, CK_IntegralCast).take();
+      CastKind castKind =
+        (OutTy->isBooleanType() ? CK_IntegralToBoolean : CK_IntegralCast);
+      InputExpr = ImpCastExprToType(InputExpr, OutTy, castKind).take();
       Exprs[InputOpNo] = InputExpr;
       NS->setInputExpr(i, InputExpr);
       continue;

@@ -105,3 +105,11 @@ void test10(void){
   register int r asm ("cx");
   register int rr asm ("rr_asm"); // expected-error{{unknown register name 'rr_asm' in asm}}
 }
+
+// This is just an assert because of the boolean conversion.
+// Feel free to change the assembly to something sensible if it causes a problem.
+// rdar://problem/9414925
+void test11(void) {
+  _Bool b;
+  asm volatile ("movb %%gs:%P2,%b0" : "=q"(b) : "0"(0), "i"(5L));
+}
