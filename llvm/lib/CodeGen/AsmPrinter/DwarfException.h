@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include <vector>
 
 namespace llvm {
@@ -151,6 +152,8 @@ class DwarfCFIException : public DwarfException {
   /// shouldEmitMoves - Per-function flag to indicate if frame moves info
   /// should be emitted.
   bool shouldEmitMoves;
+
+  AsmPrinter::CFIMoveType moveTypeModule;
 
 public:
   //===--------------------------------------------------------------------===//

@@ -185,7 +185,12 @@ namespace llvm {
 
     void emitPrologLabel(const MachineInstr &MI);
 
-    bool needsCFIMoves();
+    enum CFIMoveType {
+      CFI_M_None,
+      CFI_M_EH,
+      CFI_M_Debug
+    };
+    CFIMoveType needsCFIMoves();
 
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is

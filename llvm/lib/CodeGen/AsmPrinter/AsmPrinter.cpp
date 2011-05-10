@@ -592,17 +592,17 @@ static bool EmitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
   return true;
 }
 
-bool AsmPrinter::needsCFIMoves() {
+AsmPrinter::CFIMoveType AsmPrinter::needsCFIMoves() {
   if (UnwindTablesMandatory)
-    return true;
+    return CFI_M_EH;
+
+  if (!MF->getFunction()->doesNotThrow())
+    return CFI_M_EH;
 
   if (MMI->hasDebugInfo())
-    return true;
+    return CFI_M_Debug;
 
-  if (MF->getFunction()->doesNotThrow())
-    return false;
-
-  return true;
+  return CFI_M_None;
 }
 
 void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
@@ -611,7 +611,7 @@ void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   if (MAI->getExceptionHandlingType() != ExceptionHandling::DwarfCFI)
     return;
 
-  if (!needsCFIMoves())
+  if (needsCFIMoves() == CFI_M_None)
     return;
 
   MachineModuleInfo &MMI = MF->getMMI();
