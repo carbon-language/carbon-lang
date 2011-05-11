@@ -140,15 +140,18 @@ class ELFObjectWriter : public MCObjectWriter {
     unsigned ShstrtabIndex;
 
 
-    const MCSymbol *SymbolToReloc(const MCAssembler &Asm,
-                                  const MCValue &Target,
-                                  const MCFragment &F) const;
+    virtual const MCSymbol *SymbolToReloc(const MCAssembler &Asm,
+                                          const MCValue &Target,
+                                          const MCFragment &F,
+                                          const MCFixup &Fixup,
+                                          bool IsPCRel) const;
 
     // For arch-specific emission of explicit reloc symbol
     virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                            const MCValue &Target,
                                            const MCFragment &F,
-                                           bool IsBSS) const {
+                                           const MCFixup &Fixup,
+                                           bool IsPCRel) const {
       return NULL;
     }
 
@@ -380,11 +383,16 @@ class ELFObjectWriter : public MCObjectWriter {
     virtual const MCSymbol *ExplicitRelSym(const MCAssembler &Asm,
                                            const MCValue &Target,
                                            const MCFragment &F,
-                                           bool IsBSS) const;
+                                           const MCFixup &Fixup,
+                                           bool IsPCRel) const;
 
     virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                   bool IsPCRel, bool IsRelocWithSymbol,
                                   int64_t Addend);
+  private:
+    unsigned GetRelocTypeInner(const MCValue &Target,
+                               const MCFixup &Fixup, bool IsPCRel) const;
+    
   };
 
   //===- MBlazeELFObjectWriter -------------------------------------------===//
