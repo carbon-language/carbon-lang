@@ -1,5 +1,11 @@
 include(AddLLVMDefinitions)
 
+if( CMAKE_COMPILER_IS_GNUCXX )
+  set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
+elseif( "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" )
+  set(LLVM_COMPILER_IS_GCC_COMPATIBLE ON)
+endif()
+
 # Run-time build mode; It is used for unittests.
 if(MSVC_IDE)
   # Expect "$(Configuration)", "$(OutDir)", etc.
@@ -167,7 +173,7 @@ if( MSVC )
   if (LLVM_ENABLE_WERROR)
     add_llvm_definitions( /WX )
   endif (LLVM_ENABLE_WERROR)
-elseif( CMAKE_COMPILER_IS_GNUCXX )
+elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
   if (LLVM_ENABLE_WARNINGS)
     add_llvm_definitions( -Wall -W -Wno-unused-parameter -Wwrite-strings )
     if (LLVM_ENABLE_PEDANTIC)
