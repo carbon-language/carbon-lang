@@ -973,7 +973,7 @@ private:
 
   Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
-                                const VirtSpecifiers& VS);
+                                const VirtSpecifiers& VS, ExprResult& Init);
   void ParseLexedMethodDeclarations(ParsingClass &Class);
   void ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM);
   void ParseLexedMethodDefs(ParsingClass &Class);

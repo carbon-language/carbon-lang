@@ -212,6 +212,11 @@ __if_not_exists(IF_EXISTS::Type_not) {
 
 int __identifier(generic) = 3;
 
+class inline_definition_pure_spec {
+   virtual int f() = 0 { return 0; }// expected-warning {{function definition with pure-specifier is a Microsoft extension}}
+   virtual int f2() = 0;
+};
+
 
 int main () {
   // Necessary to force instantiation in -fdelayed-template-parsing mode.

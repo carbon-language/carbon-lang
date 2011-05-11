@@ -23,7 +23,7 @@ using namespace clang;
 /// and store its tokens for parsing after the C++ class is complete.
 Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
-                                const VirtSpecifiers& VS) {
+                                const VirtSpecifiers& VS, ExprResult& Init) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
   assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) &&
          "Current token not a '{', ':' or 'try'!");
@@ -40,7 +40,8 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
   else { // FIXME: pass template information through
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
                                            move(TemplateParams), 0, 
-                                           VS, 0, /*IsDefinition*/true);
+                                           VS, Init.release(),
+                                           /*IsDefinition*/true);
   }
 
   HandleMemberFunctionDefaultArgs(D, FnD);

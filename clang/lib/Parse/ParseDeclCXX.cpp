@@ -1581,6 +1581,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   ParsingDeclarator DeclaratorInfo(*this, DS, Declarator::MemberContext);
   VirtSpecifiers VS;
+  ExprResult Init;
 
   if (Tok.isNot(tok::colon)) {
     // Don't parse FOO:BAR as if it were a typo for FOO::BAR.
@@ -1601,6 +1602,17 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     // If attributes exist after the declarator, but before an '{', parse them.
     MaybeParseGNUAttributes(DeclaratorInfo);
+
+    // MSVC permits pure specifier on inline functions declared at class scope.
+    // Hence check for =0 before checking for function definition.
+    if (getLang().Microsoft && Tok.is(tok::equal) &&
+        DeclaratorInfo.isFunctionDeclarator() && 
+        NextToken().is(tok::numeric_constant)) {
+      ConsumeToken();
+      Init = ParseInitializer();
+      if (Init.isInvalid())
+        SkipUntil(tok::comma, true, true);
+    }
 
     // function-definition:
     if (Tok.is(tok::l_brace)
@@ -1631,7 +1643,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         return;
       }
 
-      ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo, VS);
+      ParseCXXInlineMethodDef(AS, DeclaratorInfo, TemplateInfo, VS, Init);
       // Consume the optional ';'
       if (Tok.is(tok::semi))
         ConsumeToken();
@@ -1646,7 +1658,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   llvm::SmallVector<Decl *, 8> DeclsInGroup;
   ExprResult BitfieldSize;
-  ExprResult Init;
   bool Deleted = false;
   SourceLocation DefaultLoc;
 

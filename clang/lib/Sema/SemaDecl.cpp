@@ -6308,6 +6308,11 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       WP.disableCheckFallThrough();
     }
 
+    // MSVC permits the use of pure specifier (=0) on function definition,
+    // defined at class scope, warn about this non standard construct.
+    if (getLangOptions().Microsoft && FD->isPure())
+      Diag(FD->getLocation(), diag::warn_pure_function_definition);
+
     if (!FD->isInvalidDecl()) {
       DiagnoseUnusedParameters(FD->param_begin(), FD->param_end());
       DiagnoseSizeOfParametersAndReturnValue(FD->param_begin(), FD->param_end(),

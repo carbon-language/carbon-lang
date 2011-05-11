@@ -721,6 +721,9 @@ def err_member_function_initialization : Error<
   "initializer on function does not look like a pure-specifier">;
 def err_non_virtual_pure : Error<
   "%0 is not virtual and cannot be declared pure">;
+def warn_pure_function_definition : ExtWarn<
+  "function definition with pure-specifier is a Microsoft extension">,
+  InGroup<Microsoft>;
 def err_implicit_object_parameter_init : Error<
   "cannot initialize object parameter of type %0 with an expression "
   "of type %1">;
