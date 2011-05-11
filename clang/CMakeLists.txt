@@ -103,7 +103,7 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/include/clang/Basic/Version.inc)
 
 # Add appropriate flags for GCC
-if (CMAKE_COMPILER_IS_GNUCXX)
+if (LLVM_COMPILER_IS_GCC_COMPATIBLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-common -Woverloaded-virtual -Wcast-qual -fno-strict-aliasing -pedantic -Wno-long-long -Wall -W -Wno-unused-parameter -Wwrite-strings")
 endif ()
 
