@@ -490,7 +490,7 @@ template <>          struct _LIBCPP_VISIBLE add_rvalue_reference<const volatile 
 
 template <class _Tp>
 typename add_rvalue_reference<_Tp>::type
-declval();
+declval() _NOEXCEPT;
 
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -2121,6 +2121,30 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_destructible
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
+#if __has_feature(cxx_noexcept)
+
+template <bool, class _Tp, class... _Args> struct __is_nothrow_constructible;
+
+template <class _Tp, class... _Args>
+struct __is_nothrow_constructible<true, _Tp, _Args...>
+    : public integral_constant<bool, noexcept(_Tp(declval<_Args>()...))>
+{
+};
+
+template <class _Tp, class... _Args>
+struct __is_nothrow_constructible<false, _Tp, _Args...>
+    : public false_type
+{
+};
+
+template <class _Tp, class... _Args>
+struct _LIBCPP_VISIBLE is_nothrow_constructible
+    : __is_nothrow_constructible<is_constructible<_Tp, _Args...>::value, _Tp, _Args...>
+{
+};
+
+#else  // __has_feature(cxx_noexcept)
+
 template <class _Tp, class... _Args>
 struct _LIBCPP_VISIBLE is_nothrow_constructible
     : false_type
@@ -2170,6 +2194,8 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp, _Tp&>
 #endif
 {
 };
+
+#endif  // __has_feature(cxx_noexcept)
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
 
@@ -2250,12 +2276,36 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_move_constructible
 
 // is_nothrow_assignable
 
+#if __has_feature(cxx_noexcept)
+
+template <bool, class _Tp, class _Arg> struct __is_nothrow_assignable;
+
 template <class _Tp, class _Arg>
-struct is_nothrow_assignable
+struct __is_nothrow_assignable<false, _Tp, _Arg>
+    : public false_type
+{
+};
+
+template <class _Tp, class _Arg>
+struct __is_nothrow_assignable<true, _Tp, _Arg>
+    : public integral_constant<bool, noexcept(_STD::declval<_Tp>() = _STD::declval<_Arg>()) >
+{
+};
+
+template <class _Tp, class _Arg>
+struct _LIBCPP_VISIBLE is_nothrow_assignable
+    : public __is_nothrow_assignable<is_assignable<_Tp, _Arg>::value, _Tp, _Arg>
+{
+};
+
+#else  // __has_feature(cxx_noexcept)
+
+template <class _Tp, class _Arg>
+struct _LIBCPP_VISIBLE is_nothrow_assignable
     : public false_type {};
 
 template <class _Tp>
-struct is_nothrow_assignable<_Tp&, _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_assignable<_Tp&, _Tp>
 #if __has_feature(has_nothrow_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 #else
@@ -2263,7 +2313,7 @@ struct is_nothrow_assignable<_Tp&, _Tp>
 #endif
 
 template <class _Tp>
-struct is_nothrow_assignable<_Tp&, _Tp&>
+struct _LIBCPP_VISIBLE is_nothrow_assignable<_Tp&, _Tp&>
 #if __has_feature(has_nothrow_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 #else
@@ -2271,7 +2321,7 @@ struct is_nothrow_assignable<_Tp&, _Tp&>
 #endif
 
 template <class _Tp>
-struct is_nothrow_assignable<_Tp&, const _Tp&>
+struct _LIBCPP_VISIBLE is_nothrow_assignable<_Tp&, const _Tp&>
 #if __has_feature(has_nothrow_assign) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
     : integral_constant<bool, __has_nothrow_assign(_Tp)> {};
 #else
@@ -2289,6 +2339,8 @@ struct is_nothrow_assignable<_Tp&, _Tp&&>
 #endif
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#endif  // __has_feature(cxx_noexcept)
 
 // is_nothrow_copy_assignable
 
@@ -2310,12 +2362,38 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_move_assignable
 
 // is_nothrow_destructible
 
+#if __has_feature(cxx_noexcept)
+
+template <bool, class _Tp> struct __is_nothrow_destructible;
+
+template <class _Tp>
+struct __is_nothrow_destructible<false, _Tp>
+    : public false_type
+{
+};
+
+template <class _Tp>
+struct __is_nothrow_destructible<true, _Tp>
+    : public integral_constant<bool, noexcept(_STD::declval<_Tp>().~_Tp()) >
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_destructible
+    : public __is_nothrow_destructible<is_destructible<_Tp>::value, _Tp>
+{
+};
+
+#else
+
 template <class _Tp> struct __libcpp_nothrow_destructor
     : public integral_constant<bool, is_scalar<_Tp>::value ||
                                      is_reference<_Tp>::value> {};
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_nothrow_destructible
     : public __libcpp_nothrow_destructor<typename remove_all_extents<_Tp>::type> {};
+
+#endif
 
 // is_pod
 

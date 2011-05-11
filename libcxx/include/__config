@@ -86,8 +86,9 @@
 
 #if defined(__clang__)
 
-#define _LIBCPP_HAS_NO_ADVANCED_SFINAE
+//#if !__has_feature(cxx_alias_templates)
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+//#endif
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 #ifdef __linux__
@@ -138,6 +139,7 @@ typedef __char32_t char32_t;
 
 #if !(__has_feature(cxx_auto_type))
 #define _LIBCPP_HAS_NO_AUTO_TYPE
+#define _LIBCPP_HAS_NO_ADVANCED_SFINAE
 #endif
 
 #if !(__has_feature(cxx_variadic_templates))
@@ -162,6 +164,14 @@ namespace std {
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #endif
 
+#if (__has_feature(cxx_noexcept))
+#  define _NOEXCEPT noexcept
+#  define _NOEXCEPT_(x) noexcept(x)
+#else
+#  define _NOEXCEPT throw()
+#  define _NOEXCEPT_(x)
+#endif
+
 // end defined(__clang__)
 
 #elif defined(__GNUC__)
@@ -172,6 +182,9 @@ namespace std {
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #define _LIBCPP_HAS_NO_CONSTEXPR
+
+#define _NOEXCEPT throw()
+#define _NOEXCEPT_(x)
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 
