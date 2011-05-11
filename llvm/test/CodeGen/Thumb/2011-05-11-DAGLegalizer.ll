@@ -1,4 +1,4 @@
-; RUN: llc < %s
+; RUN: llc -mtriple=thumbv6-apple-darwin < %s
 ; rdar://problem/9416774
 ; ModuleID = 'reduced.ll'
 
