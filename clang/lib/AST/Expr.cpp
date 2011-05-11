@@ -1693,6 +1693,9 @@ static Expr::CanThrowResult CanDynamicCastThrow(const CXXDynamicCastExpr *DC) {
   if (!DC->getTypeAsWritten()->isReferenceType())
     return Expr::CT_Cannot;
 
+  if (DC->getSubExpr()->isTypeDependent())
+    return Expr::CT_Dependent;
+
   return DC->getCastKind() == clang::CK_Dynamic? Expr::CT_Can : Expr::CT_Cannot;
 }
 
@@ -1747,7 +1750,11 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case CallExprClass:
   case CXXOperatorCallExprClass:
   case CXXMemberCallExprClass: {
-    CanThrowResult CT = CanCalleeThrow(C,cast<CallExpr>(this)->getCalleeDecl());
+    CanThrowResult CT;
+    if (isTypeDependent())
+      CT = CT_Dependent;
+    else
+      CT = CanCalleeThrow(C, cast<CallExpr>(this)->getCalleeDecl());
     if (CT == CT_Can)
       return CT;
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));
@@ -1763,7 +1770,11 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   }
 
   case CXXNewExprClass: {
-    CanThrowResult CT = MergeCanThrow(
+    CanThrowResult CT;
+    if (isTypeDependent())
+      CT = CT_Dependent;
+    else
+      CT = MergeCanThrow(
         CanCalleeThrow(C, cast<CXXNewExpr>(this)->getOperatorNew()),
         CanCalleeThrow(C, cast<CXXNewExpr>(this)->getConstructor(),
                        /*NullThrows*/false));
@@ -1773,22 +1784,18 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   }
 
   case CXXDeleteExprClass: {
-    CanThrowResult CT = CanCalleeThrow(C,
-        cast<CXXDeleteExpr>(this)->getOperatorDelete());
-    if (CT == CT_Can)
-      return CT;
-    const Expr *Arg = cast<CXXDeleteExpr>(this)->getArgument();
-    // Unwrap exactly one implicit cast, which converts all pointers to void*.
-    if (const ImplicitCastExpr *Cast = dyn_cast<ImplicitCastExpr>(Arg))
-      Arg = Cast->getSubExpr();
-    if (const PointerType *PT = Arg->getType()->getAs<PointerType>()) {
-      if (const RecordType *RT = PT->getPointeeType()->getAs<RecordType>()) {
-        CanThrowResult CT2 = CanCalleeThrow(C,
-            cast<CXXRecordDecl>(RT->getDecl())->getDestructor());
-        if (CT2 == CT_Can)
-          return CT2;
-        CT = MergeCanThrow(CT, CT2);
+    CanThrowResult CT;
+    QualType DTy = cast<CXXDeleteExpr>(this)->getDestroyedType();
+    if (DTy.isNull() || DTy->isDependentType()) {
+      CT = CT_Dependent;
+    } else {
+      CT = CanCalleeThrow(C, cast<CXXDeleteExpr>(this)->getOperatorDelete());
+      if (const RecordType *RT = DTy->getAs<RecordType>()) {
+        const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+        CT = MergeCanThrow(CT, CanCalleeThrow(C, RD->getDestructor()));
       }
+      if (CT == CT_Can)
+        return CT;
     }
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));
   }
