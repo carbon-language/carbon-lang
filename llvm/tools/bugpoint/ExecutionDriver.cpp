@@ -475,7 +475,7 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
 /// diffProgram - This method executes the specified module and diffs the
 /// output against the file specified by ReferenceOutputFile.  If the output
 /// is different, 1 is returned.  If there is a problem with the code
-/// generator (e.g., llc crashes), this will return -1 and set Error.
+/// generator (e.g., llc crashes), this will set ErrMsg.
 ///
 bool BugDriver::diffProgram(const Module *Program,
                             const std::string &BitcodeFile,

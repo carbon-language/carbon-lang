@@ -624,9 +624,10 @@ DebugAMiscompilation(BugDriver &BD,
   if (!BugpointIsInterrupted)
     ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions,
                                                        Error);
-  if (!Error.empty())
+  if (!Error.empty()) {
+    errs() << "\n***Cannot reduce functions: ";
     return MiscompiledFunctions;
-
+  }
   outs() << "\n*** The following function"
          << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
          << " being miscompiled: ";

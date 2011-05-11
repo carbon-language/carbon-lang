@@ -96,9 +96,11 @@ namespace sys {
       ///< expires, the child is killed and this call returns. If zero,
       ///< this function will wait until the child finishes or forever if
       ///< it doesn't.
-      std::string* ErrMsg ///< If non-zero, provides a pointer to a string
+      std::string* ErrMsg, ///< If non-zero, provides a pointer to a string
       ///< instance in which error messages will be returned. If the string
       ///< is non-empty upon return an error occurred while waiting.
+      const char *SignalPrefix ///< If non-zero, provides a prefix to be
+      ///< prepended to ErrMsg if the process is terminated abnormally.
       );
 
     /// This function terminates the program.
@@ -137,7 +139,8 @@ namespace sys {
                               const sys::Path** redirects = 0,
                               unsigned secondsToWait = 0,
                               unsigned memoryLimit = 0,
-                              std::string* ErrMsg = 0);
+                              std::string* ErrMsg = 0,
+                              const char *SignalPrefix = 0);
 
     /// A convenience function equivalent to Program prg; prg.Execute(..);
     /// @see Execute

@@ -298,7 +298,8 @@ Program::Execute(const Path &path, const char **args, const char **envp,
 int
 Program::Wait(const sys::Path &path,
               unsigned secondsToWait,
-              std::string* ErrMsg)
+              std::string* ErrMsg,
+              const char* SignalPrefix)
 {
 #ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
@@ -376,7 +377,9 @@ Program::Wait(const sys::Path &path,
     }
   } else if (WIFSIGNALED(status)) {
     if (ErrMsg) {
-      *ErrMsg = strsignal(WTERMSIG(status));
+      if (SignalPrefix)
+        *ErrMsg = SignalPrefix;
+      *ErrMsg += strsignal(WTERMSIG(status));
 #ifdef WCOREDUMP
       if (WCOREDUMP(status))
         *ErrMsg += " (core dumped)";
