@@ -332,7 +332,8 @@ Program::Execute(const Path& path,
 int
 Program::Wait(const Path &path,
               unsigned secondsToWait,
-              std::string* ErrMsg) {
+              std::string* ErrMsg,
+              const char* /*SignalPrefix*/) {
   if (Data_ == 0) {
     MakeErrMsg(ErrMsg, "Process not started!");
     return -1;

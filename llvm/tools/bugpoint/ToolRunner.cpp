@@ -52,7 +52,7 @@ namespace {
 
 // Add a prefix to ErrMsg if the program is terminated by a signal to
 // distinguish compiled program crashes from other execution
-// failures. Miscompilation likely to results in SIGSEGV.
+// failures. Miscompilation likely results in SIGSEGV.
 static const char *SignalPrefix = "Signal - ";
 
 /// RunProgramWithTimeout - This function provides an alternate interface
