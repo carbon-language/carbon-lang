@@ -32,6 +32,7 @@ td {
   </ul>
 <li><a href="#checking_upcoming_features">Checks for Upcoming Standard Language Features</a></li>
   <ul>
+  <li><a href="#cxx_access_control_sfinae">C++0x SFINAE includes access control</a></li>
   <li><a href="#cxx_alias_templates">C++0x alias templates</a></li>
   <li><a href="#cxx_attributes">C++0x attributes</a></li>
   <li><a href="#cxx_decltype">C++0x <tt>decltype()</tt></a></li>
@@ -378,6 +379,10 @@ not yet implemented will be noted.</p>
 
 <p>Use <tt>__has_feature(cxx_decltype)</tt> to determine if support for the
 <tt>decltype()</tt> specifier is enabled.</p>
+
+<h3 id="cxx_access_control_sfinae">C++0x SFINAE includes access control</h3>
+
+<p>Use <tt>__has_feature(cxx_access_control_sfinae)</tt> to determine whether access-control errors (e.g., calling a private constructor) are considered to be template argument deduction errors (aka SFINAE errors), per <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1170">C++ DR1170</a>.</p>
 
 <h3 id="cxx_alias_templates">C++0x alias templates</h3>
 
