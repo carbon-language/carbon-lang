@@ -855,6 +855,7 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
 
 /// spillAroundUses - insert spill code around each use of Reg.
 void InlineSpiller::spillAroundUses(unsigned Reg) {
+  DEBUG(dbgs() << "spillAroundUses " << PrintReg(Reg) << '\n');
   LiveInterval &OldLI = LIS.getInterval(Reg);
 
   // Iterate over instructions using Reg.
@@ -902,6 +903,12 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
     // Check for a sibling copy.
     unsigned SibReg = isFullCopyOf(MI, Reg);
     if (SibReg && isSibling(SibReg)) {
+      // This may actually be a copy between snippets.
+      if (isRegToSpill(SibReg)) {
+        DEBUG(dbgs() << "Found new snippet copy: " << *MI);
+        SnippetCopies.insert(MI);
+        continue;
+      }
       if (Writes) {
         // Hoist the spill of a sib-reg copy.
         if (hoistSpill(OldLI, MI)) {
@@ -983,13 +990,15 @@ void InlineSpiller::spillAll() {
   }
 
   // Finally delete the SnippetCopies.
-  for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(Edit->getReg());
-       MachineInstr *MI = RI.skipInstruction();) {
-    assert(SnippetCopies.count(MI) && "Remaining use wasn't a snippet copy");
-    // FIXME: Do this with a LiveRangeEdit callback.
-    VRM.RemoveMachineInstrFromMaps(MI);
-    LIS.RemoveMachineInstrFromMaps(MI);
-    MI->eraseFromParent();
+  for (unsigned i = 0, e = RegsToSpill.size(); i != e; ++i) {
+    for (MachineRegisterInfo::reg_iterator RI = MRI.reg_begin(RegsToSpill[i]);
+         MachineInstr *MI = RI.skipInstruction();) {
+      assert(SnippetCopies.count(MI) && "Remaining use wasn't a snippet copy");
+      // FIXME: Do this with a LiveRangeEdit callback.
+      VRM.RemoveMachineInstrFromMaps(MI);
+      LIS.RemoveMachineInstrFromMaps(MI);
+      MI->eraseFromParent();
+    }
   }
 
   // Delete all spilled registers.
