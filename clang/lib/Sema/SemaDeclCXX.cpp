@@ -3210,7 +3210,7 @@ bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
           return true;
 
         // Don't try to initialize the anonymous union
-        // This is technically non-conformant, but sanity deamands it.
+        // This is technically non-conformant, but sanity demands it.
         continue;
       }
     }

@@ -5657,13 +5657,25 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       //   program is ill-formed.
       // C++0x [dcl.init]p11:
       //   If no initializer is specified for an object, the object is
-      //   default-intiialized; [...].
+      //   default-intialized; [...].
     } else {
       // Check for jumps past the implicit initializer.  C++0x
       // clarifies that this applies to a "variable with automatic
       // storage duration", not a "local variable".
-      if (getLangOptions().CPlusPlus && Var->hasLocalStorage())
-        getCurFunction()->setHasBranchProtectedScope();
+      // C++0x [stmt.dcl]p3
+      //   A program that jumps from a point where a variable with automatic
+      //   storage duration is not ins cope to a point where it is in scope is
+      //   ill-formed unless the variable has scalar type, class type with a
+      //   trivial defautl constructor and a trivial destructor, a cv-qualified
+      //   version of one of these types, or an array of one of the preceding
+      //   types and is declared without an initializer.
+      if (getLangOptions().CPlusPlus && Var->hasLocalStorage() && Record) {
+        CXXRecordDecl *CXXRecord = cast<CXXRecordDecl>(Record->getDecl());
+        if (!getLangOptions().CPlusPlus0x ||
+            !CXXRecord->hasTrivialDefaultConstructor() ||
+            !CXXRecord->hasTrivialDestructor())
+          getCurFunction()->setHasBranchProtectedScope();
+      }
 
       InitializedEntity Entity = InitializedEntity::InitializeVariable(Var);
       InitializationKind Kind
