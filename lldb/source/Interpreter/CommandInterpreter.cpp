@@ -789,7 +789,7 @@ CommandInterpreter::GetCommandObjectForCommand (std::string &command_string)
 }
 
 bool
-CommandInterpreter::StripFirstWord (std::string &command_string, std::string &word)
+CommandInterpreter::StripFirstWord (std::string &command_string, std::string &word, bool &was_quoted, char &quote_char)
 {
     std::string white_space (" \t\v");
     size_t start;
@@ -798,19 +798,48 @@ CommandInterpreter::StripFirstWord (std::string &command_string, std::string &wo
     start = command_string.find_first_not_of (white_space);
     if (start != std::string::npos)
     {
-        end = command_string.find_first_of (white_space, start);
-        if (end != std::string::npos)
+        size_t len = command_string.size() - start;
+        if (len >= 2
+                && ((command_string[start] == '\'') || (command_string[start] == '"')))
         {
-            word = command_string.substr (start, end - start);
-            command_string = command_string.substr (end);
-            size_t pos = command_string.find_first_not_of (white_space);
-            if ((pos != 0) && (pos != std::string::npos))
-                command_string = command_string.substr (pos);
+            was_quoted = true;
+            quote_char = command_string[start];
+            std::string quote_string = command_string.substr (start, 1);
+            start = start + 1;
+            end = command_string.find (quote_string, start);
+            if (end != std::string::npos)
+            {
+                word = command_string.substr (start, end - start);
+                if (end + 1 < len)
+                    command_string = command_string.substr (end+1);
+                else
+                    command_string.erase ();
+                size_t pos = command_string.find_first_not_of (white_space);
+                if ((pos != 0) && (pos != std::string::npos))
+                    command_string = command_string.substr (pos);
+            }
+            else
+            {
+                word = command_string.substr (start - 1);
+                command_string.erase ();
+            }
         }
         else
         {
-            word = command_string.substr (start);
-            command_string.erase();
+            end = command_string.find_first_of (white_space, start);
+            if (end != std::string::npos)
+            {
+                word = command_string.substr (start, end - start);
+                command_string = command_string.substr (end);
+                size_t pos = command_string.find_first_not_of (white_space);
+                if ((pos != 0) && (pos != std::string::npos))
+                    command_string = command_string.substr (pos);
+            }
+            else
+            {
+                word = command_string.substr (start);
+                command_string.erase();
+            }
         }
 
     }
@@ -964,7 +993,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         return true;
     }
-
+    
     // Phase 1.
     
     // Before we do ANY kind of argument processing, etc. we need to figure out what the real/final command object
@@ -979,7 +1008,9 @@ CommandInterpreter::HandleCommand (const char *command_line,
     size_t actual_cmd_name_len = 0;
     while (!done)
     {
-        StripFirstWord (command_string, next_word);
+        bool was_quoted = false;
+        char quote_char = '\0';
+        StripFirstWord (command_string, next_word, was_quoted, quote_char);
         if (!cmd_obj && AliasExists (next_word.c_str())) 
         {
             std::string alias_result;
@@ -1017,13 +1048,29 @@ CommandInterpreter::HandleCommand (const char *command_line,
             }
             else
             {
-                revised_command_line.Printf (" %s", next_word.c_str());
+                if (was_quoted)
+                {
+                    if (quote_char == '"')
+                        revised_command_line.Printf (" \"%s\"", next_word.c_str());
+                    else
+                        revised_command_line.Printf (" '%s'", next_word.c_str());
+                }
+                else
+                    revised_command_line.Printf (" %s", next_word.c_str());
                 done = true;
             }
         }
         else
         {
-            revised_command_line.Printf (" %s", next_word.c_str());
+            if (was_quoted)
+            {
+                if (quote_char == '"')
+                    revised_command_line.Printf (" \"%s\"", next_word.c_str());
+                else
+                    revised_command_line.Printf (" '%s'", next_word.c_str());
+            }
+            else
+                revised_command_line.Printf (" %s", next_word.c_str());
             done = true;
         }
 

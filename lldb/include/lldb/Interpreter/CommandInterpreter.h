@@ -105,7 +105,9 @@ public:
 
     bool
     StripFirstWord (std::string &command_string, 
-                    std::string &next_word);
+                    std::string &next_word,
+                    bool &was_quoted,
+                    char &quote_char);
 
     void
     BuildAliasResult (const char *alias_name, 
