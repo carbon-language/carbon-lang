@@ -6566,7 +6566,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       }
     }
 
-    if (!LN0 || !LN0->hasOneUse() || LN0->isVolatile())
+    if (!LN0 || !LN0->hasNUsesOfValue(1,0) || LN0->isVolatile())
       return SDValue();
 
     // If Idx was -1 above, Elt is going to be -1, so just return undef.

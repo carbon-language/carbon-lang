@@ -1,8 +1,8 @@
-; RUN: llc < %s -march=x86 -mattr=+sse41 -o %t
-; RUN: grep extractps   %t | count 1
-; RUN: grep pextrd      %t | count 1
+; RUN: llc < %s -mcpu=corei7 -march=x86 -mattr=+sse41 -o %t
+; RUN: not grep extractps   %t
+; RUN: not grep pextrd      %t
 ; RUN: not grep pshufd  %t
-; RUN: not grep movss   %t
+; RUN: grep movss   %t | count 2
 
 define void @t1(float* %R, <4 x float>* %P1) nounwind {
 	%X = load <4 x float>* %P1

@@ -54,7 +54,8 @@ define void @vst1lanef(float* %A, <2 x float>* %B) nounwind {
 
 define void @vst1laneQi8(i8* %A, <16 x i8>* %B) nounwind {
 ;CHECK: vst1laneQi8:
-;CHECK: vst1.8 {d17[1]}, [r0]
+; // Can use scalar load. No need to use vectors.
+; // CHE-CK: vst1.8 {d17[1]}, [r0]
 	%tmp1 = load <16 x i8>* %B
         %tmp2 = extractelement <16 x i8> %tmp1, i32 9
         store i8 %tmp2, i8* %A, align 8
@@ -72,7 +73,8 @@ define void @vst1laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 
 define void @vst1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 ;CHECK: vst1laneQi32:
-;CHECK: vst1.32 {d17[1]}, [r0, :32]
+; // Can use scalar load. No need to use vectors.
+; // CHE-CK: vst1.32 {d17[1]}, [r0, :32]
 	%tmp1 = load <4 x i32>* %B
         %tmp2 = extractelement <4 x i32> %tmp1, i32 3
         store i32 %tmp2, i32* %A, align 8
@@ -82,7 +84,8 @@ define void @vst1laneQi32(i32* %A, <4 x i32>* %B) nounwind {
 ;Check for a post-increment updating store.
 define void @vst1laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
 ;CHECK: vst1laneQi32_update:
-;CHECK: vst1.32 {d17[1]}, [r1, :32]!
+; // Can use scalar load. No need to use vectors.
+; // CHE-CK: vst1.32 {d17[1]}, [r1, :32]!
 	%A = load i32** %ptr
 	%tmp1 = load <4 x i32>* %B
 	%tmp2 = extractelement <4 x i32> %tmp1, i32 3
@@ -94,7 +97,8 @@ define void @vst1laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
 
 define void @vst1laneQf(float* %A, <4 x float>* %B) nounwind {
 ;CHECK: vst1laneQf:
-;CHECK: vst1.32 {d17[1]}, [r0]
+; // Can use scalar load. No need to use vectors.
+; // CHE-CK: vst1.32 {d17[1]}, [r0]
 	%tmp1 = load <4 x float>* %B
         %tmp2 = extractelement <4 x float> %tmp1, i32 3
         store float %tmp2, float* %A

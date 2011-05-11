@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=x86 -mattr=+sse2,-sse41 -o %t
-; RUN: grep movss    %t | count 3
+; RUN: llc < %s -mcpu=corei7 -march=x86 -mattr=+sse2,-sse41 -o %t
+; RUN: grep movss    %t | count 4
 ; RUN: grep movhlps  %t | count 1
-; RUN: grep pshufd   %t | count 1
+; RUN: not grep pshufd   %t 
 ; RUN: grep unpckhpd %t | count 1
 
 define void @test1(<4 x float>* %F, float* %f) nounwind {
