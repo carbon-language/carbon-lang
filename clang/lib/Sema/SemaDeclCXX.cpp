@@ -3057,7 +3057,180 @@ void Sema::CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *CD) {
     // We know there are no parameters.
     CD->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
   }
+}
 
+bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
+  CXXRecordDecl *RD = CD->getParent();
+  assert(!RD->isDependentType() && "do deletion after instantiation");
+  if (!LangOpts.CPlusPlus0x)
+    return false;
+
+  // Do access control from the constructor
+  ContextRAII CtorContext(*this, CD);
+
+  bool Union = RD->isUnion();
+  bool AllConst = true;
+
+  DiagnosticErrorTrap Trap(Diags);
+
+  // We do this because we should never actually use an anonymous
+  // union's constructor.
+  if (Union && RD->isAnonymousStructOrUnion())
+    return false;
+
+  // FIXME: We should put some diagnostic logic right into this function.
+
+  // C++0x [class.ctor]/5
+  //    A defaulted default constructor for class X is defined as delete if:
+
+  for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
+                                          BE = RD->bases_end();
+       BI != BE; ++BI) {
+    CXXRecordDecl *BaseDecl = BI->getType()->getAsCXXRecordDecl();
+    assert(BaseDecl && "base isn't a CXXRecordDecl");
+
+    // -- any [direct base class] has a type with a destructor that is
+    //    delete or inaccessible from the defaulted default constructor
+    CXXDestructorDecl *BaseDtor = LookupDestructor(BaseDecl);
+    if (BaseDtor->isDeleted())
+      return true;
+    if (CheckDestructorAccess(SourceLocation(), BaseDtor, PDiag()) !=
+        AR_accessible)
+      return true;
+
+    // We'll handle this one later
+    if (BI->isVirtual())
+      continue;
+
+    // -- any [direct base class either] has no default constructor or
+    //    overload resolution as applied to [its] default constructor
+    //    results in an ambiguity or in a function that is deleted or
+    //    inaccessible from the defaulted default constructor
+    InitializedEntity BaseEntity =
+      InitializedEntity::InitializeBase(Context, BI, 0);
+    InitializationKind Kind =
+      InitializationKind::CreateDirect(SourceLocation(), SourceLocation(),
+                                       SourceLocation());
+
+    InitializationSequence InitSeq(*this, BaseEntity, Kind, 0, 0);
+
+    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+      return true;
+  }
+
+  for (CXXRecordDecl::base_class_iterator BI = RD->vbases_begin(),
+                                          BE = RD->vbases_end();
+       BI != BE; ++BI) {
+    CXXRecordDecl *BaseDecl = BI->getType()->getAsCXXRecordDecl();
+    assert(BaseDecl && "base isn't a CXXRecordDecl");
+
+    // -- any [virtual base class] has a type with a destructor that is
+    //    delete or inaccessible from the defaulted default constructor
+    CXXDestructorDecl *BaseDtor = LookupDestructor(BaseDecl);
+    if (BaseDtor->isDeleted())
+      return true;
+    if (CheckDestructorAccess(SourceLocation(), BaseDtor, PDiag()) !=
+        AR_accessible)
+      return true;
+
+    // -- any [virtual base class either] has no default constructor or
+    //    overload resolution as applied to [its] default constructor
+    //    results in an ambiguity or in a function that is deleted or
+    //    inaccessible from the defaulted default constructor
+    InitializedEntity BaseEntity =
+      InitializedEntity::InitializeBase(Context, BI, BI);
+    InitializationKind Kind =
+      InitializationKind::CreateDirect(SourceLocation(), SourceLocation(),
+                                       SourceLocation());
+
+    InitializationSequence InitSeq(*this, BaseEntity, Kind, 0, 0);
+
+    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+      return true;
+  }
+
+  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
+                                     FE = RD->field_end();
+       FI != FE; ++FI) {
+    QualType FieldType = Context.getBaseElementType(FI->getType());
+    CXXRecordDecl *FieldRecord = FieldType->getAsCXXRecordDecl();
+    
+    // -- any non-static data member with no brace-or-equal-initializer is of
+    //    reference type
+    if (FieldType->isReferenceType())
+      return true;
+
+    // -- X is a union and all its variant members are of const-qualified type
+    //    (or array thereof)
+    if (Union && !FieldType.isConstQualified())
+      AllConst = false;
+
+    if (FieldRecord) {
+      // -- X is a union-like class that has a variant member with a non-trivial
+      //    default constructor
+      if (Union && !FieldRecord->hasTrivialDefaultConstructor())
+        return true;
+
+      CXXDestructorDecl *FieldDtor = LookupDestructor(FieldRecord);
+      if (FieldDtor->isDeleted())
+        return true;
+      if (CheckDestructorAccess(SourceLocation(), FieldDtor, PDiag()) !=
+          AR_accessible)
+        return true;
+
+      // -- any non-variant non-static data member of const-qualified type (or
+      //    array thereof) with no brace-or-equal-initializer does not have a
+      //    user-provided default constructor
+      if (FieldType.isConstQualified() &&
+          !FieldRecord->hasUserProvidedDefaultConstructor())
+        return true;
+ 
+      if (!Union && FieldRecord->isUnion() &&
+          FieldRecord->isAnonymousStructOrUnion()) {
+        // We're okay to reuse AllConst here since we only care about the
+        // value otherwise if we're in a union.
+        AllConst = true;
+
+        for (CXXRecordDecl::field_iterator UI = FieldRecord->field_begin(),
+                                           UE = FieldRecord->field_end();
+             UI != UE; ++UI) {
+          QualType UnionFieldType = Context.getBaseElementType(UI->getType());
+          CXXRecordDecl *UnionFieldRecord =
+            UnionFieldType->getAsCXXRecordDecl();
+
+          if (!UnionFieldType.isConstQualified())
+            AllConst = false;
+
+          if (UnionFieldRecord &&
+              !UnionFieldRecord->hasTrivialDefaultConstructor())
+            return true;
+        }
+        
+        if (AllConst)
+          return true;
+
+        // Don't try to initialize the anonymous union
+        // This is technically non-conformant, but sanity deamands it.
+        continue;
+      }
+    }
+
+    InitializedEntity MemberEntity =
+      InitializedEntity::InitializeMember(*FI, 0);
+    InitializationKind Kind = 
+      InitializationKind::CreateDirect(SourceLocation(), SourceLocation(),
+                                       SourceLocation());
+    
+    InitializationSequence InitSeq(*this, MemberEntity, Kind, 0, 0);
+
+    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+      return true;
+  }
+
+  if (Union && AllConst)
+    return true;
+
+  return false;
 }
 
 /// \brief Data used with FindHiddenVirtualMethod
@@ -5010,7 +5183,7 @@ Sema::ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
     
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-      if (!BaseClassDecl->needsImplicitDefaultConstructor())
+      if (BaseClassDecl->needsImplicitDefaultConstructor())
         ExceptSpec.CalledDecl(DeclareImplicitDefaultConstructor(BaseClassDecl));
       else if (CXXConstructorDecl *Constructor
                             = getDefaultConstructorUnsafe(*this, BaseClassDecl))
@@ -5024,7 +5197,7 @@ Sema::ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
        B != BEnd; ++B) {
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>()) {
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(BaseType->getDecl());
-      if (!BaseClassDecl->needsImplicitDefaultConstructor())
+      if (BaseClassDecl->needsImplicitDefaultConstructor())
         ExceptSpec.CalledDecl(DeclareImplicitDefaultConstructor(BaseClassDecl));
       else if (CXXConstructorDecl *Constructor
                             = getDefaultConstructorUnsafe(*this, BaseClassDecl))
@@ -5039,7 +5212,7 @@ Sema::ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
     if (const RecordType *RecordTy
               = Context.getBaseElementType(F->getType())->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RecordTy->getDecl());
-      if (!FieldClassDecl->needsImplicitDefaultConstructor())
+      if (FieldClassDecl->needsImplicitDefaultConstructor())
         ExceptSpec.CalledDecl(
                             DeclareImplicitDefaultConstructor(FieldClassDecl));
       else if (CXXConstructorDecl *Constructor
@@ -5087,6 +5260,11 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   
   // Note that we have declared this constructor.
   ++ASTContext::NumImplicitDefaultConstructorsDeclared;
+
+  // Do not delete this yet if we're in a template
+  if (!ClassDecl->isDependentType() &&
+      ShouldDeleteDefaultConstructor(DefaultCon))
+    DefaultCon->setDeletedAsWritten();
   
   if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(DefaultCon, S, false);
@@ -5098,7 +5276,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
 void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                             CXXConstructorDecl *Constructor) {
   assert((Constructor->isImplicit() && Constructor->isDefaultConstructor() &&
-          !Constructor->isUsed(false)) &&
+          !Constructor->isUsed(false) && !Constructor->isDeleted()) &&
     "DefineImplicitDefaultConstructor - call it for implicit default ctor");
 
   CXXRecordDecl *ClassDecl = Constructor->getParent();

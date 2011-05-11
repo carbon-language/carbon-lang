@@ -2582,6 +2582,10 @@ public:
   ImplicitExceptionSpecification
   ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl);
 
+  /// \brief Determine if a defaulted default constructor ought to be
+  /// deleted.
+  bool ShouldDeleteDefaultConstructor(CXXConstructorDecl *RD);
+
   /// \brief Declare the implicit default constructor for the given class.
   ///
   /// \param ClassDecl The class declaration into which the implicit 

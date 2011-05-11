@@ -436,9 +436,9 @@ class CXXRecordDecl : public RecordDecl {
     /// already computed and are available.
     bool ComputedVisibleConversions : 1;
 
-    /// \brief Whether we have already declared the default constructor or 
-    /// do not need to have one declared.
-    bool NeedsImplicitDefaultConstructor : 1;
+    /// \brief Whether we have a C++0x user-provided default constructor (not
+    /// explicitly deleted or defaulted.
+    bool UserProvidedDefaultConstructor : 1;
 
     /// \brief Whether we have already declared the default constructor.
     bool DeclaredDefaultConstructor : 1;
@@ -675,12 +675,13 @@ public:
     return data().FirstFriend != 0;
   }
 
-  /// \brief Determine whether this class has had its default constructor 
-  /// declared implicitly or does not need one declared implicitly.
+  /// \brief Determine if we need to declare a default constructor for
+  /// this class.
   ///
   /// This value is used for lazy creation of default constructors.
   bool needsImplicitDefaultConstructor() const {
-    return data().NeedsImplicitDefaultConstructor;
+    return !data().UserDeclaredConstructor && 
+           !data().DeclaredDefaultConstructor;
   }
 
   /// hasConstCopyConstructor - Determines whether this class has a
@@ -708,6 +709,12 @@ public:
   /// will not be implicitly declared.
   bool hasUserDeclaredConstructor() const {
     return data().UserDeclaredConstructor;
+  }
+
+  /// hasUserProvidedDefaultconstructor - Whether this class has a
+  /// user-provided default constructor per C++0x.
+  bool hasUserProvidedDefaultConstructor() const {
+    return data().UserProvidedDefaultConstructor;
   }
 
   /// hasUserDeclaredCopyConstructor - Whether this class has a

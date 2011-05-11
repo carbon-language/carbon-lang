@@ -38,7 +38,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasTrivialMoveConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialMoveAssignment(true), HasTrivialDestructor(true),
     HasNonLiteralTypeFieldsOrBases(false), ComputedVisibleConversions(false),
-    NeedsImplicitDefaultConstructor(false), DeclaredDefaultConstructor(false),
+    UserProvidedDefaultConstructor(false), DeclaredDefaultConstructor(false),
     DeclaredCopyConstructor(false), DeclaredCopyAssignment(false),
     DeclaredDestructor(false), NumBases(0), NumVBases(0), Bases(), VBases(),
     Definition(D), FirstFriend(0) {
@@ -460,7 +460,6 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // declared it.
       if (Constructor->isDefaultConstructor()) {
         data().DeclaredDefaultConstructor = true;
-        data().NeedsImplicitDefaultConstructor = true;
       }
       // If this is the implicit copy constructor, note that we have now
       // declared it.
@@ -491,9 +490,6 @@ void CXXRecordDecl::addedMember(Decl *D) {
     // Note that we have a user-declared constructor.
     data().UserDeclaredConstructor = true;
 
-    // Note that we have no need of an implicitly-declared default constructor.
-    data().NeedsImplicitDefaultConstructor = true;
-    
     // FIXME: Under C++0x, /only/ special member functions may be user-provided.
     //        This is probably a defect.
     bool UserProvided = false;
@@ -504,6 +500,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       data().DeclaredDefaultConstructor = true;
       if (Constructor->isUserProvided()) {
         data().HasTrivialDefaultConstructor = false;
+        data().UserProvidedDefaultConstructor = true;
         UserProvided = true;
       }
     }

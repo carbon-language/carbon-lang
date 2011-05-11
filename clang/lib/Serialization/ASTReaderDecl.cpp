@@ -867,7 +867,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.HasTrivialDestructor = Record[Idx++];
   Data.HasNonLiteralTypeFieldsOrBases = Record[Idx++];
   Data.ComputedVisibleConversions = Record[Idx++];
-  Data.NeedsImplicitDefaultConstructor = Record[Idx++];
+  Data.UserProvidedDefaultConstructor = Record[Idx++];
   Data.DeclaredDefaultConstructor = Record[Idx++];
   Data.DeclaredCopyConstructor = Record[Idx++];
   Data.DeclaredCopyAssignment = Record[Idx++];
