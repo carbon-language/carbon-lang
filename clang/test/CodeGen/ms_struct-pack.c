@@ -2,6 +2,36 @@
 // rdar://8823265
 
 #pragma pack(1)
+struct _one_ms {
+        short m:9;      // size is 2
+        int q:27;       // size is 6
+        short w:13;     // size is 8
+        short e:3;      // size is 8
+        char r:4;       // size is 9
+        char t:7;       // size is 10
+        short y:16;     // size is 12
+        short u:1;      // size is 14
+        char i:2;       // size is 15
+        int a;          // size is 19
+        char o:6;       // size is 20
+        char s:2;       // size is 20
+        short d:10;     // size is 22
+        short f:4;      // size is 22
+        char b;         // size is 23
+        char g:1;       // size is 24
+        short h:13;     // size is 26
+        char j:8;       // size is 27
+        char k:5;       // size is 28
+        char c;         // size is 29
+        int l:28;       // size is 33
+        char z:7;       // size is 34
+        int x:20;       // size is 38
+} __attribute__((__ms_struct__));
+typedef struct _one_ms one_ms;
+
+static int a1[(sizeof(one_ms) == 38) - 1];
+
+#pragma pack(2)
 struct _two_ms {
         short m:9;      // size is 2
         int q:27;       // size is 6
@@ -10,25 +40,86 @@ struct _two_ms {
         char r:4;       // size is 9
         char t:7;       // size is 10
         short y:16;     // size is 12
-// clang and gcc start differing here. clang seems to follow the rules.
-        short u:1;      // size is clang: 13 gcc:14 
-        char i:2;       // size is 14
-        int a;          // size is 18
-        char o:6;       // size is 19
-        char s:2;       // size is 19
-        short d:10;     // size is 21
-        short f:4;      // size is 21
-        char b;         // size is 22
-        char g:1;       // size is 23
-        short h:13;     // size is 25
-        char j:8;       // size is 26
-        char k:5;       // size is 27
-        char c;         // size is 28
-        int l:28;       // size is 32
-        char z:7;       // size is 33
-        int x:20;       // size is clang: 36 gcc:38
-        } __attribute__((__ms_struct__));
+        short u:1;      // size is 14
+        char i:2;       // size is 15
+        int a;          // size is 19
+        char o:6;       // size is 20
+        char s:2;       // size is 20
+        short d:10;     // size is 22
+        short f:4;      // size is 22
+        char b;         // size is 23
+        char g:1;       // size is 24
+        short h:13;     // size is 26
+        char j:8;       // size is 27
+        char k:5;       // size is 28
+        char c;         // size is 29
+        int l:28;       // size is 33
+        char z:7;       // size is 34
+        int x:20;       // size is 38
+} __attribute__((__ms_struct__));
+
 typedef struct _two_ms two_ms;
 
-// gcc says size is 38, but its does not seem right!
-static int a1[(sizeof(two_ms) == 36) - 1];
+static int a2[(sizeof(two_ms) == 42) - 1];
+
+#pragma pack(4)
+struct _four_ms {
+        short m:9;      // size is 2
+        int q:27;       // size is 6
+        short w:13;     // size is 8
+        short e:3;      // size is 8
+        char r:4;       // size is 9
+        char t:7;       // size is 10
+        short y:16;     // size is 12
+        short u:1;      // size is 14
+        char i:2;       // size is 15
+        int a;          // size is 19
+        char o:6;       // size is 20
+        char s:2;       // size is 20
+        short d:10;     // size is 22
+        short f:4;      // size is 22
+        char b;         // size is 23
+        char g:1;       // size is 24
+        short h:13;     // size is 26
+        char j:8;       // size is 27
+        char k:5;       // size is 28
+        char c;         // size is 29
+        int l:28;       // size is 33
+        char z:7;       // size is 34
+        int x:20;       // size is 38
+} __attribute__((__ms_struct__));
+typedef struct _four_ms four_ms;
+
+static int a4[(sizeof(four_ms) == 48) - 1];
+
+#pragma pack(8)
+struct _eight_ms {
+        short m:9;      // size is 2
+        int q:27;       // size is 6
+        short w:13;     // size is 8
+        short e:3;      // size is 8
+        char r:4;       // size is 9
+        char t:7;       // size is 10
+        short y:16;     // size is 12
+        short u:1;      // size is 14
+        char i:2;       // size is 15
+        int a;          // size is 19
+        char o:6;       // size is 20
+        char s:2;       // size is 20
+        short d:10;     // size is 22
+        short f:4;      // size is 22
+        char b;         // size is 23
+        char g:1;       // size is 24
+        short h:13;     // size is 26
+        char j:8;       // size is 27
+        char k:5;       // size is 28
+        char c;         // size is 29
+        int l:28;       // size is 33
+        char z:7;       // size is 34
+        int x:20;       // size is 38
+} __attribute__((__ms_struct__));
+
+typedef struct _eight_ms eight_ms;
+
+static int a8[(sizeof(eight_ms) == 48) - 1];
+

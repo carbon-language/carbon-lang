@@ -1259,6 +1259,7 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   // the future, this will need to be tweakable by targets.
   const FieldDecl *LastFD = 0;
   ZeroLengthBitfield = 0;
+  unsigned RemainingInAlignment = 0;
   for (RecordDecl::field_iterator Field = D->field_begin(),
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field) {
     if (IsMsStruct) {
@@ -1295,17 +1296,33 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
         // This check is needed for 'long long' in -m32 mode.
         if (TypeSizeLastFD > FieldAlignLastFD)
           FieldAlignLastFD = TypeSizeLastFD;
+        
         if (TypeSizeLastFD != TypeSize) {
+          if (RemainingInAlignment &&
+              LastFD && LastFD->isBitField() &&
+              LastFD->getBitWidth()->EvaluateAsInt(Context).getZExtValue()) {
+            // If previous field was a bitfield with some remaining unfilled
+            // bits, pad the field so current field starts on its type boundary.
+            uint64_t FieldOffset = 
+            getDataSizeInBits() - UnfilledBitsInLastByte;
+            uint64_t NewSizeInBits = RemainingInAlignment + FieldOffset;
+            setDataSize(llvm::RoundUpToAlignment(NewSizeInBits,
+                                                 Context.Target.getCharAlign()));
+            setSize(std::max(getSizeInBits(), getDataSizeInBits()));
+            RemainingInAlignment = 0;
+          }
+          
           uint64_t UnpaddedFieldOffset = 
             getDataSizeInBits() - UnfilledBitsInLastByte;
           FieldAlign = std::max(FieldAlign, FieldAlignLastFD);
+          
           // The maximum field alignment overrides the aligned attribute.
           if (!MaxFieldAlignment.isZero()) {
             unsigned MaxFieldAlignmentInBits = 
               Context.toBits(MaxFieldAlignment);
             FieldAlign = std::min(FieldAlign, MaxFieldAlignmentInBits);
           }
-
+          
           uint64_t NewSizeInBits = 
             llvm::RoundUpToAlignment(UnpaddedFieldOffset, FieldAlign);
           setDataSize(llvm::RoundUpToAlignment(NewSizeInBits,
@@ -1313,10 +1330,39 @@ void RecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
           UnfilledBitsInLastByte = getDataSizeInBits() - NewSizeInBits;
           setSize(std::max(getSizeInBits(), getDataSizeInBits()));
         }
+        if (FD->isBitField()) {
+          uint64_t FieldSize = 
+            FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
+          assert (FieldSize > 0 && "LayoutFields - ms_struct layout");
+          if (RemainingInAlignment < FieldSize)
+            RemainingInAlignment = TypeSize - FieldSize;
+          else
+            RemainingInAlignment -= FieldSize;
+        }
+      }
+      else if (FD->isBitField()) {
+        uint64_t FieldSize = 
+          FD->getBitWidth()->EvaluateAsInt(Context).getZExtValue();
+        std::pair<uint64_t, unsigned> FieldInfo = 
+          Context.getTypeInfo(FD->getType());
+        uint64_t TypeSize = FieldInfo.first;
+        RemainingInAlignment = TypeSize - FieldSize;
       }
       LastFD = FD;
     }
     LayoutField(*Field);
+  }
+  if (IsMsStruct && RemainingInAlignment &&
+      LastFD && LastFD->isBitField() &&
+      LastFD->getBitWidth()->EvaluateAsInt(Context).getZExtValue()) {
+    // If we ended a bitfield before the full length of the type then
+    // pad the struct out to the full length of the last type.
+    uint64_t FieldOffset = 
+      getDataSizeInBits() - UnfilledBitsInLastByte;
+    uint64_t NewSizeInBits = RemainingInAlignment + FieldOffset;
+    setDataSize(llvm::RoundUpToAlignment(NewSizeInBits,
+                                         Context.Target.getCharAlign()));
+    setSize(std::max(getSizeInBits(), getDataSizeInBits()));
   }
 }
 
