@@ -1291,16 +1291,16 @@ const MCSymbol *ARMELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
 
   const MCSectionELF &Section =
     static_cast<const MCSectionELF&>(Symbol.getSection());
-  const SectionKind secKind = Section.getKind();
-  const MCSymbolRefExpr::VariantKind Kind = Target.getSymA()->getKind();
-  MCSymbolRefExpr::VariantKind Kind2; 
-  Kind2 = Target.getSymB() ?  Target.getSymB()->getKind() :
-    MCSymbolRefExpr::VK_None;
   bool InNormalSection = true;
   unsigned RelocType = 0;
   RelocType = GetRelocTypeInner(Target, Fixup, IsPCRel);
 
-  DEBUG(dbgs() << "considering symbol "
+  DEBUG(
+      const MCSymbolRefExpr::VariantKind Kind = Target.getSymA()->getKind();
+      MCSymbolRefExpr::VariantKind Kind2;
+      Kind2 = Target.getSymB() ?  Target.getSymB()->getKind() :
+        MCSymbolRefExpr::VK_None;
+      dbgs() << "considering symbol "
         << Section.getSectionName() << "/"
         << Symbol.getName() << "/"
         << " Rel:" << (unsigned)RelocType
