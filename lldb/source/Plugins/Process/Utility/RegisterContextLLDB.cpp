@@ -21,8 +21,7 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Expression/DWARFExpression.h"
-#include "lldb/Target/ArchDefaultUnwindPlan.h"
-#include "lldb/Target/ArchVolatileRegs.h"
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
@@ -247,12 +246,12 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             log->Printf("%*sFrame %u using architectural default unwind method",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
         }
-        const ArchSpec &arch = m_thread.GetProcess().GetTarget().GetArchitecture ();
-        ArchDefaultUnwindPlanSP arch_default_sp (ArchDefaultUnwindPlan::FindPlugin (arch));
-        if (arch_default_sp)
+        ABI *abi = m_thread.GetProcess().GetABI().get();
+        if (abi)
         {
-            m_fast_unwind_plan_sp.reset();
-            m_full_unwind_plan_sp = arch_default_sp->GetArchDefaultUnwindPlan (m_thread, m_current_pc);
+            m_fast_unwind_plan_sp.reset ();
+            m_full_unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+            abi->CreateDefaultUnwindPlan(*m_full_unwind_plan_sp);
             m_frame_type = eNormalFrame;
             m_all_registers_available = false;
             m_current_offset = -1;
@@ -519,10 +518,14 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     UnwindPlanSP unwind_plan_sp;
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     UnwindPlanSP arch_default_unwind_plan_sp;
-    const ArchSpec &arch = m_thread.GetProcess().GetTarget().GetArchitecture ();
-    ArchDefaultUnwindPlanSP arch_default_sp (ArchDefaultUnwindPlan::FindPlugin (arch));
-    if (arch_default_sp)
-        arch_default_unwind_plan_sp = arch_default_sp->GetArchDefaultUnwindPlan (m_thread, m_current_pc);
+    
+    
+    ABI *abi = m_thread.GetProcess().GetABI().get();
+    if (abi)
+    {
+        arch_default_unwind_plan_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+        abi->CreateDefaultUnwindPlan(*arch_default_unwind_plan_sp);
+    }
 
     bool behaves_like_zeroth_frame = false;
     if (IsFrameZero () 
@@ -871,18 +874,21 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, RegisterLoc
     {
         // If a volatile register is being requested, we don't want to forward m_next_frame's register contents 
         // up the stack -- the register is not retrievable at this frame.
-        const ArchSpec &arch = m_thread.GetProcess().GetTarget().GetArchitecture ();
-        ArchVolatileRegs *volatile_regs = ArchVolatileRegs::FindPlugin (arch);
-        if (volatile_regs && volatile_regs->RegisterIsVolatile (m_thread, lldb_regnum))
+        ABI *abi = m_thread.GetProcess().GetABI().get();
+        if (abi)
         {
-            if (log)
+            const RegisterInfo *reg_info = GetRegisterInfoAtIndex(lldb_regnum);
+            if (reg_info && abi->RegisterIsVolatile (reg_info))
             {
-                log->Printf("%*sFrame %u did not supply reg location for %d because it is volatile",
-                            m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
-                            lldb_regnum);
-            }
-            return false;
-        }  
+                if (log)
+                {
+                    log->Printf("%*sFrame %u did not supply reg location for %d because it is volatile",
+                                m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number,
+                                lldb_regnum);
+                }
+                return false;
+            }  
+        }
 
         if (IsFrameZero ())
         {

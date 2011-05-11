@@ -16,7 +16,7 @@
 
 namespace lldb_private
 {
-    typedef ABI* (*ABICreateInstance) (const ArchSpec &arch);
+    typedef lldb::ABISP (*ABICreateInstance) (const ArchSpec &arch);
     typedef Disassembler* (*DisassemblerCreateInstance) (const ArchSpec &arch);
     typedef DynamicLoader* (*DynamicLoaderCreateInstance) (Process* process, bool force);
     typedef ObjectContainer* (*ObjectContainerCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec *file, lldb::addr_t offset, lldb::addr_t length);
@@ -32,8 +32,6 @@ namespace lldb_private
     typedef bool (*WatchpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t watch_id, uint32_t type);
     typedef ThreadPlan * (*ThreadPlanShouldStopHereCallback) (ThreadPlan *current_plan, Flags &flags, void *baton);
     typedef UnwindAssembly* (*UnwindAssemblyCreateInstance) (const ArchSpec &arch);
-    typedef ArchDefaultUnwindPlan* (*ArchDefaultUnwindPlanCreateInstance) (const ArchSpec &arch);
-    typedef ArchVolatileRegs* (*ArchVolatileRegsCreateInstance) (const ArchSpec &arch);
     typedef int (*ComparisonFunction)(const void *, const void *);
 
 } // namespace lldb_private

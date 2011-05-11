@@ -50,8 +50,8 @@ public:
                     unspecified,        // not specified, we may be able to assume this 
                                         // is the same register. gcc doesn't specify all 
                                         // initial values so we really don't know...
-                    isUndefined,        // reg is not available, e.g. volatile reg
-                    isSame,             // reg is unchanged
+                    undefined,          // reg is not available, e.g. volatile reg
+                    same,               // reg is unchanged
                     atCFAPlusOffset,    // reg = deref(CFA + offset)
                     isCFAPlusOffset,    // reg = CFA + offset
                     inOtherRegister,    // reg = other reg
@@ -68,39 +68,129 @@ public:
             bool
             operator == (const RegisterLocation& rhs) const;
     
-            void SetUnspecified();
-
-            void SetUndefined();
-    
-            void SetSame();
-    
-            bool IsSame () const { return m_type == isSame; }
-
-            bool IsUnspecified () const { return m_type == unspecified; }
-
-            bool IsCFAPlusOffset () const { return m_type == isCFAPlusOffset; }
-
-            bool IsAtCFAPlusOffset () const { return m_type == atCFAPlusOffset; }
-
-            bool IsInOtherRegister () const { return m_type == inOtherRegister; }
-
-            bool IsAtDWARFExpression () const { return m_type == atDWARFExpression; }
-
-            bool IsDWARFExpression () const { return m_type == isDWARFExpression; }
-
-            void SetAtCFAPlusOffset (int32_t offset);
-    
-            void SetIsCFAPlusOffset (int32_t offset);
-    
-            void SetInRegister (uint32_t reg_num);
-    
-            uint32_t GetRegisterNumber () const { return m_location.reg_num; }
-
-            RestoreType GetLocationType () const { return m_type; }
-
-            int32_t GetOffset () const { return m_location.offset; }
+            bool
+            operator != (const RegisterLocation &rhs) const
+            {
+                return !(*this == rhs);
+            }
             
-            void GetDWARFExpr (const uint8_t **opcodes, uint16_t& len) const { *opcodes = m_location.expr.opcodes; len = m_location.expr.length; }
+            void 
+            SetUnspecified()
+            {
+                m_type = unspecified;
+            }
+
+            void 
+            SetUndefined()
+            {
+                m_type = undefined;
+            }
+    
+            void 
+            SetSame()
+            {
+                m_type = same;
+            }
+    
+            bool 
+            IsSame () const 
+            { 
+                return m_type == same; 
+            }
+
+            bool 
+            IsUnspecified () const
+            {
+                return m_type == unspecified; 
+            }
+
+            bool 
+            IsCFAPlusOffset () const
+            {
+                return m_type == isCFAPlusOffset; 
+            }
+
+            bool 
+            IsAtCFAPlusOffset () const
+            {
+                return m_type == atCFAPlusOffset; 
+            }
+
+            bool
+            IsInOtherRegister () const
+            {
+                return m_type == inOtherRegister; 
+            }
+
+            bool
+            IsAtDWARFExpression () const
+            {
+                return m_type == atDWARFExpression; 
+            }
+
+            bool
+            IsDWARFExpression () const
+            { 
+                return m_type == isDWARFExpression; 
+            }
+
+            void
+            SetAtCFAPlusOffset (int32_t offset)
+            {
+                m_type = atCFAPlusOffset;
+                m_location.offset = offset;
+            }
+    
+            void
+            SetIsCFAPlusOffset (int32_t offset)
+            {
+                m_type = isCFAPlusOffset;
+                m_location.offset = offset;
+            }
+    
+            void 
+            SetInRegister (uint32_t reg_num)
+            {
+                m_type = inOtherRegister;
+                m_location.reg_num = reg_num;
+            }
+    
+            uint32_t
+            GetRegisterNumber () const
+            {
+                if (m_type == inOtherRegister)
+                    return m_location.reg_num; 
+                return LLDB_INVALID_REGNUM;
+            }
+
+            RestoreType
+            GetLocationType () const
+            {
+                return m_type; 
+            }
+
+            int32_t
+            GetOffset () const
+            {
+                if (m_type == atCFAPlusOffset || m_type == isCFAPlusOffset)
+                    return m_location.offset;
+                return 0;
+            }
+            
+            void
+            GetDWARFExpr (const uint8_t **opcodes, uint16_t& len) const
+            {
+                if (m_type == atDWARFExpression || m_type == isDWARFExpression)
+                {
+                    *opcodes = m_location.expr.opcodes; 
+                    len = m_location.expr.length; 
+                }
+                else
+                {
+                    *opcodes = NULL;
+                    len = 0;
+                }
+            }
 
             void
             SetAtDWARFExpression (const uint8_t *opcodes, uint32_t len);
@@ -109,13 +199,27 @@ public:
             SetIsDWARFExpression (const uint8_t *opcodes, uint32_t len);
 
             const uint8_t *
-            GetDWARFExpressionBytes () { return m_location.expr.opcodes; }
+            GetDWARFExpressionBytes () 
+            {
+                if (m_type == atDWARFExpression || m_type == isDWARFExpression)
+                    return m_location.expr.opcodes; 
+                return NULL;
+            }
 
             int
-            GetDWARFExpressionLength () { return m_location.expr.length; }
+            GetDWARFExpressionLength ()
+            {
+                if (m_type == atDWARFExpression || m_type == isDWARFExpression)
+                    return m_location.expr.length; 
+                return 0;
+            }
 
             void
-            Dump (Stream &s) const;
+            Dump (Stream &s, 
+                  const UnwindPlan* unwind_plan, 
+                  const UnwindPlan::Row* row, 
+                  Thread* thread, 
+                  bool verbose) const;
 
         private:
             RestoreType m_type;            // How do we locate this register?
@@ -165,12 +269,39 @@ public:
         {
             return m_cfa_reg_num;
         }
+        
+        bool
+        SetRegisterLocationToAtCFAPlusOffset (uint32_t reg_num, 
+                                              int32_t offset, 
+                                              bool can_replace);
+
+        bool
+        SetRegisterLocationToIsCFAPlusOffset (uint32_t reg_num, 
+                                              int32_t offset, 
+                                              bool can_replace);
+
+        bool
+        SetRegisterLocationToUndefined (uint32_t reg_num, 
+                                        bool can_replace, 
+                                        bool can_replace_only_if_unspecified);
+
+        bool
+        SetRegisterLocationToUnspecified (uint32_t reg_num, 
+                                          bool can_replace);
+
+        bool
+        SetRegisterLocationToRegister (uint32_t reg_num, 
+                                       uint32_t other_reg_num,
+                                       bool can_replace);
+
+        bool
+        SetRegisterLocationToSame (uint32_t reg_num, 
+                                   bool must_replace);
+
+
 
         void
-        SetCFARegister (uint32_t reg_num)
-        {
-            m_cfa_reg_num = reg_num;
-        }
+        SetCFARegister (uint32_t reg_num);
 
         int32_t
         GetCFAOffset () const
@@ -195,7 +326,28 @@ public:
         Clear ();
 
         void
-        Dump (Stream& s, int register_kind, Thread* thread) const;
+        Dump (Stream& s, const UnwindPlan* unwind_plan, Thread* thread, lldb::addr_t base_addr) const;
+
+        bool
+        operator == (const Row &rhs) const
+        {
+            if (m_offset == rhs.m_offset && 
+                m_cfa_reg_num != rhs.m_cfa_reg_num &&
+                m_cfa_offset != rhs.m_cfa_offset)
+                return m_register_locations == rhs.m_register_locations;
+            return false;
+        }
+
+        bool
+        operator != (const Row &rhs) const
+        {
+            if (m_offset != rhs.m_offset ||
+                m_cfa_reg_num != rhs.m_cfa_reg_num ||
+                m_cfa_offset != rhs.m_cfa_offset)
+                return true;
+            
+            return m_register_locations != rhs.m_register_locations;
+        }
 
     protected:
         typedef std::map<uint32_t, RegisterLocation> collection;
@@ -208,10 +360,10 @@ public:
 
 public:
 
-    UnwindPlan () : 
+    UnwindPlan (uint32_t reg_kind) : 
         m_row_list (), 
         m_plan_valid_address_range (), 
-        m_register_kind (UINT32_MAX), 
+        m_register_kind (reg_kind), 
         m_source_name ()
     {
     }
@@ -221,7 +373,7 @@ public:
 	}
 
     void 
-    Dump (Stream& s, Thread* thread) const;
+    Dump (Stream& s, Thread* thread, lldb::addr_t base_addr) const;
 
     void 
     AppendRow (const Row& row);
@@ -233,17 +385,37 @@ public:
     const Row*
     GetRowForFunctionOffset (int offset) const;
 
-    void
-    SetRegisterKind (uint32_t rk);
-
     uint32_t
-    GetRegisterKind (void) const;
+    GetRegisterKind () const
+    {
+        return m_register_kind;
+    }
+
+    void
+    SetRegisterKind (uint32_t kind)
+    {
+        m_register_kind = kind;
+    }
+    
+    uint32_t
+    GetInitialCFARegister () const
+    {
+        if (m_row_list.empty())
+            return LLDB_INVALID_REGNUM;
+        return m_row_list.front().GetCFARegister();
+    }
 
     // This UnwindPlan may not be valid at every address of the function span.  
     // For instance, a FastUnwindPlan will not be valid at the prologue setup 
     // instructions - only in the body of the function.
     void
     SetPlanValidAddressRange (const AddressRange& range);
+
+    const AddressRange &
+    GetAddressRange () const
+    {
+        return m_plan_valid_address_range;
+    }
 
     bool
     PlanValidAtAddress (Address addr);
@@ -253,6 +425,9 @@ public:
 
     const UnwindPlan::Row&
     GetRowAtIndex (uint32_t idx) const;
+
+    const UnwindPlan::Row&
+    GetLastRow () const;
 
     lldb_private::ConstString
     GetSourceName () const;
@@ -268,12 +443,16 @@ public:
     {
         m_row_list.clear();
         m_plan_valid_address_range.Clear();
-        m_register_kind = UINT32_MAX;
+        m_register_kind = lldb::eRegisterKindDWARF;
         m_source_name.Clear();
     }
 
+    const RegisterInfo *
+    GetRegisterInfo (Thread* thread, uint32_t reg_num) const;
+
 private:
 
+    
     typedef std::vector<Row> collection;
     collection m_row_list;
     AddressRange m_plan_valid_address_range;

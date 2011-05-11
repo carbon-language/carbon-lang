@@ -56,7 +56,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 
     Process& process = thread.GetProcess();
     Target& target = process.GetTarget();
-    const ABI *abi = process.GetABI();
+    const ABI *abi = process.GetABI().get();
     
     if (!abi)
         return;

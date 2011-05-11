@@ -21,7 +21,6 @@ namespace lldb {
 
     typedef SharedPtr<lldb_private::ABI>::Type ABISP;
     typedef SharedPtr<lldb_private::AddressResolver>::Type AddressResolverSP;
-    typedef SharedPtr<lldb_private::ArchDefaultUnwindPlan>::Type ArchDefaultUnwindPlanSP;
     typedef SharedPtr<lldb_private::Baton>::Type BatonSP;
     typedef SharedPtr<lldb_private::Block>::Type BlockSP;
     typedef SharedPtr<lldb_private::Breakpoint>::Type BreakpointSP;

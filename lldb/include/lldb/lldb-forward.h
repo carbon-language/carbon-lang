@@ -22,8 +22,6 @@ class   Address;
 class   AddressRange;
 class   AddressResolver;
 class   ArchSpec;
-class   ArchDefaultUnwindPlan;
-class   ArchVolatileRegs;
 class   Args;
 class   Baton;
 class   Block;

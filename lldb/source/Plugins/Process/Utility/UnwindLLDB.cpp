@@ -12,7 +12,6 @@
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/UnwindPlan.h"
-#include "lldb/Target/ArchDefaultUnwindPlan.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Process.h"

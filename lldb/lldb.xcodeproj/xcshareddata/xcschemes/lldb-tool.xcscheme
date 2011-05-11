@@ -75,7 +75,8 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
-      useCustomWorkingDirectory = "NO"
+      useCustomWorkingDirectory = "YES"
+      customWorkingDirectory = "/Volumes/work/gclayton/Documents/devb/attach"
       buildConfiguration = "Debug"
       ignoresPersistentStateOnLaunch = "YES">
       <BuildableProductRunnable>

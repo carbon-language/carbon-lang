@@ -113,6 +113,9 @@ public:
         // Add or subtract a value from the stack
         eContextAdjustStackPointer,
         
+        // Adjust the frame pointer for the current frame
+        eContextSetFramePointer,
+        
         // Add or subtract a value from a base address register (other than SP)
         eContextAdjustBaseRegister,
 
@@ -234,6 +237,12 @@ public:
                         
         } info;
         
+        Context () :
+            type (eContextInvalid),
+            info_type (eInfoTypeNoArgs)
+        {
+        }
+
         void 
         SetRegisterPlusOffset (RegisterInfo base_reg,
                                int64_t signed_offset)
@@ -347,7 +356,7 @@ public:
         }
 
         void
-        Dump (FILE *fh,
+        Dump (Stream &s,
               EmulateInstruction *instruction) const;
 
     };

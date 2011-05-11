@@ -17,6 +17,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -32,6 +33,8 @@ static const char *pluginName = "ABISysV_x86_64";
 static const char *pluginDesc = "System V ABI for x86_64 targets";
 static const char *pluginShort = "abi.sysv-x86_64";
 
+
+
 size_t
 ABISysV_x86_64::GetRedZoneSize () const
 {
@@ -41,12 +44,17 @@ ABISysV_x86_64::GetRedZoneSize () const
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
-lldb_private::ABI *
+ABISP
 ABISysV_x86_64::CreateInstance (const ArchSpec &arch)
 {
+    static ABISP g_abi_sp;
     if (arch.GetTriple().getArch() == llvm::Triple::x86_64)
-        return new ABISysV_x86_64;
-    return NULL;
+    {
+        if (!g_abi_sp)
+            g_abi_sp.reset (new ABISysV_x86_64);
+        return g_abi_sp;
+    }
+    return ABISP();
 }
 
 bool
@@ -445,6 +453,143 @@ ABISysV_x86_64::GetReturnValue (Thread &thread,
     
     return true;
 }
+
+bool
+ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
+{
+    uint32_t reg_kind = unwind_plan.GetRegisterKind();
+    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
+    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
+    
+    switch (reg_kind)
+    {
+    case eRegisterKindDWARF:
+    case eRegisterKindGCC:
+        sp_reg_num = gcc_dwarf_rsp;
+        pc_reg_num = gcc_dwarf_rip;
+        break;
+
+    case eRegisterKindGDB:
+        sp_reg_num = gdb_rsp;
+        pc_reg_num = gdb_rip;
+        break;
+
+    case eRegisterKindGeneric:
+        sp_reg_num = LLDB_REGNUM_GENERIC_SP;
+        pc_reg_num = LLDB_REGNUM_GENERIC_PC;
+        break;
+    }
+
+    if (sp_reg_num == LLDB_INVALID_REGNUM ||
+        pc_reg_num == LLDB_INVALID_REGNUM)
+        return false;
+
+    UnwindPlan::Row row;
+    row.SetCFARegister (sp_reg_num);
+    row.SetCFAOffset (8);
+    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -8, false);    
+    unwind_plan.AppendRow (row);
+    unwind_plan.SetSourceName (pluginName);
+    return true;
+}
+
+bool
+ABISysV_x86_64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
+{
+    uint32_t reg_kind = unwind_plan.GetRegisterKind();
+    uint32_t fp_reg_num = LLDB_INVALID_REGNUM;
+    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
+    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
+    
+    switch (reg_kind)
+    {
+        case eRegisterKindDWARF:
+        case eRegisterKindGCC:
+            fp_reg_num = gcc_dwarf_rbp;
+            sp_reg_num = gcc_dwarf_rsp;
+            pc_reg_num = gcc_dwarf_rip;
+            break;
+            
+        case eRegisterKindGDB:
+            fp_reg_num = gdb_rbp;
+            sp_reg_num = gdb_rsp;
+            pc_reg_num = gdb_rip;
+            break;
+            
+        case eRegisterKindGeneric:
+            fp_reg_num = LLDB_REGNUM_GENERIC_FP;
+            sp_reg_num = LLDB_REGNUM_GENERIC_SP;
+            pc_reg_num = LLDB_REGNUM_GENERIC_PC;
+            break;
+    }
+
+    if (fp_reg_num == LLDB_INVALID_REGNUM ||
+        sp_reg_num == LLDB_INVALID_REGNUM ||
+        pc_reg_num == LLDB_INVALID_REGNUM)
+        return false;
+
+    UnwindPlan::Row row;
+
+    const int32_t ptr_size = 8;
+    row.SetCFARegister (LLDB_REGNUM_GENERIC_FP);
+    row.SetCFAOffset (2 * ptr_size);
+    row.SetOffset (0);
+    
+    row.SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
+    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
+    row.SetRegisterLocationToAtCFAPlusOffset(sp_reg_num, ptr_size *  0, true);
+
+    unwind_plan.AppendRow (row);
+    unwind_plan.SetSourceName ("x86_64 default unwind plan");
+    return true;
+}
+
+bool
+ABISysV_x86_64::RegisterIsVolatile (const RegisterInfo *reg_info)
+{
+    return !RegisterIsCalleeSaved (reg_info);
+}
+
+bool
+ABISysV_x86_64::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
+{
+    if (reg_info)
+    {
+        // Volatile registers include: rbx, rbp, rsp, r12, r13, r14, r15, rip
+        const char *name = reg_info->name;
+        if (name[0] == 'r')
+        {
+            switch (name[1])
+            {
+            case '1': // r12, r13, r14, r15
+                if (name[2] >= '2' && name[2] <= '5')
+                    return name[3] == '\0';
+                break;
+
+            case 'b': // rbp, rbx
+                if (name[2] == 'p' || name[2] == 'x')
+                    return name[3] == '\0';
+                break;
+
+            case 'i': // rip
+                if (name[2] == 'p')
+                    return name[3] == '\0'; 
+                break;
+
+            case 's': // rsp
+                if (name[2] == 'p')
+                    return name[3] == '\0';
+                break;
+
+            default:
+                break;
+            }
+        }
+    }
+    return false;
+}
+
+
 
 void
 ABISysV_x86_64::Initialize()

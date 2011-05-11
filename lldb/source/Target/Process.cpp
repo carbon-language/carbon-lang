@@ -1349,13 +1349,12 @@ Process::UnloadImage (uint32_t image_token)
     return error;
 }
 
-const ABI *
+const lldb::ABISP &
 Process::GetABI()
 {
-    if (m_abi_sp.get() == NULL)
-        m_abi_sp.reset(ABI::FindPlugin(m_target.GetArchitecture()));
-
-    return m_abi_sp.get();
+    if (!m_abi_sp)
+        m_abi_sp = ABI::FindPlugin(m_target.GetArchitecture());
+    return m_abi_sp;
 }
 
 LanguageRuntime *

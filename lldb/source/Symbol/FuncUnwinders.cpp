@@ -14,7 +14,8 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/UnwindTable.h"
-#include "lldb/Target/ArchDefaultUnwindPlan.h"
+#include "lldb/Target/ABI.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/UnwindAssembly.h"
@@ -83,7 +84,7 @@ FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
             DWARFCallFrameInfo *eh_frame = m_unwind_table.GetEHFrameInfo();
             if (eh_frame)
             {
-                m_unwind_plan_call_site_sp.reset (new UnwindPlan);
+                m_unwind_plan_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
                 if (!eh_frame->GetUnwindPlan (current_pc, *m_unwind_plan_call_site_sp))
                     m_unwind_plan_call_site_sp.reset();
             }
@@ -111,7 +112,7 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
     if (m_tried_unwind_at_non_call_site == false && m_unwind_plan_non_call_site_sp.get() == NULL)
     {
         m_tried_unwind_at_non_call_site = true;
-        m_unwind_plan_non_call_site_sp.reset (new UnwindPlan);
+        m_unwind_plan_non_call_site_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
         if (!m_assembly_profiler->GetNonCallSiteUnwindPlanFromAssembly (m_range, thread, *m_unwind_plan_non_call_site_sp))
             m_unwind_plan_non_call_site_sp.reset();
     }
@@ -137,7 +138,7 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
     if (m_tried_unwind_fast == false && m_unwind_plan_fast_sp.get() == NULL)
     {
         m_tried_unwind_fast = true;
-        m_unwind_plan_fast_sp.reset (new UnwindPlan);
+        m_unwind_plan_fast_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
         if (!m_assembly_profiler->GetFastUnwindPlan (m_range, thread, *m_unwind_plan_fast_sp))
             m_unwind_plan_fast_sp.reset();
     }
@@ -167,9 +168,13 @@ FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
         Target *target = thread.CalculateTarget();
         if (target)
         {
-            ArchDefaultUnwindPlanSP arch_default_sp (ArchDefaultUnwindPlan::FindPlugin (target->GetArchitecture ()));
-            if (arch_default_sp)
-                m_unwind_plan_arch_default_sp = arch_default_sp->GetArchDefaultUnwindPlan (thread, current_pc);
+            ABI *abi = thread.GetProcess().GetABI().get();
+            if (abi)
+            {
+                m_unwind_plan_arch_default_sp.reset (new UnwindPlan (lldb::eRegisterKindGeneric));
+                if (m_unwind_plan_arch_default_sp)
+                    abi->CreateDefaultUnwindPlan(*m_unwind_plan_arch_default_sp);
+            }
         }
     }
 

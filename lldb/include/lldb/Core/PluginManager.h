@@ -270,40 +270,6 @@ public:
     static UnwindAssemblyCreateInstance
     GetUnwindAssemblyCreateCallbackForPluginName (const char *name);
 
-    //------------------------------------------------------------------
-    // ArchDefaultUnwindPlan
-    //------------------------------------------------------------------
-    static bool
-    RegisterPlugin (const char *name,
-                    const char *description,
-                    ArchDefaultUnwindPlanCreateInstance create_callback);
-
-    static bool
-    UnregisterPlugin (ArchDefaultUnwindPlanCreateInstance create_callback);
-
-    static ArchDefaultUnwindPlanCreateInstance
-    GetArchDefaultUnwindPlanCreateCallbackAtIndex (uint32_t idx);
-
-    static ArchDefaultUnwindPlanCreateInstance
-    GetArchDefaultUnwindPlanCreateCallbackForPluginName (const char *name);
-
-    //------------------------------------------------------------------
-    // ArchVolatileRegs
-    //------------------------------------------------------------------
-    static bool
-    RegisterPlugin (const char *name,
-                    const char *description,
-                    ArchVolatileRegsCreateInstance create_callback);
-
-    static bool
-    UnregisterPlugin (ArchVolatileRegsCreateInstance create_callback);
-
-    static ArchVolatileRegsCreateInstance
-    GetArchVolatileRegsCreateCallbackAtIndex (uint32_t idx);
-
-    static ArchVolatileRegsCreateInstance
-    GetArchVolatileRegsCreateCallbackForPluginName (const char *name);
-
 };
 
 

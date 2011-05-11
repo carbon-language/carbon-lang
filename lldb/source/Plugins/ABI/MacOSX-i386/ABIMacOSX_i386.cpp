@@ -15,6 +15,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -40,13 +41,17 @@ ABIMacOSX_i386::GetRedZoneSize () const
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
-lldb_private::ABI *
+ABISP
 ABIMacOSX_i386::CreateInstance (const ArchSpec &arch)
 {
+    static ABISP g_abi_sp;
     if (arch.GetTriple().getArch() == llvm::Triple::x86)
-        return new ABIMacOSX_i386;
-
-    return NULL;
+    {
+        if (!g_abi_sp)
+            g_abi_sp.reset (new ABIMacOSX_i386);
+        return g_abi_sp;
+    }
+    return ABISP();
 }
 
 bool
@@ -558,6 +563,145 @@ ABIMacOSX_i386::GetReturnValue (Thread &thread,
     }
     
     return true;
+}
+
+bool
+ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
+{
+    uint32_t reg_kind = unwind_plan.GetRegisterKind();
+    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
+    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
+    
+    switch (reg_kind)
+    {
+        case eRegisterKindDWARF:
+            sp_reg_num = dwarf_esp;
+            pc_reg_num = dwarf_eip;
+            break;
+
+        case eRegisterKindGCC:
+            sp_reg_num = gcc_esp;
+            pc_reg_num = gcc_eip;
+            break;
+            
+        case eRegisterKindGDB:
+            sp_reg_num = gdb_esp;
+            pc_reg_num = gdb_eip;
+            break;
+            
+        case eRegisterKindGeneric:
+            sp_reg_num = LLDB_REGNUM_GENERIC_SP;
+            pc_reg_num = LLDB_REGNUM_GENERIC_PC;
+            break;
+    }
+    
+    if (sp_reg_num == LLDB_INVALID_REGNUM ||
+        pc_reg_num == LLDB_INVALID_REGNUM)
+        return false;
+
+    UnwindPlan::Row row;
+    row.SetCFARegister (sp_reg_num);
+    row.SetCFAOffset (4);
+    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -4, false);    
+    unwind_plan.AppendRow (row);
+    unwind_plan.SetSourceName (pluginName);
+    return true;
+}
+
+bool
+ABIMacOSX_i386::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
+{
+    uint32_t reg_kind = unwind_plan.GetRegisterKind();
+    uint32_t fp_reg_num = LLDB_INVALID_REGNUM;
+    uint32_t sp_reg_num = LLDB_INVALID_REGNUM;
+    uint32_t pc_reg_num = LLDB_INVALID_REGNUM;
+    
+    switch (reg_kind)
+    {
+        case eRegisterKindDWARF:
+            fp_reg_num = dwarf_ebp;
+            sp_reg_num = dwarf_esp;
+            pc_reg_num = dwarf_eip;
+            break;
+            
+        case eRegisterKindGCC:
+            fp_reg_num = gcc_ebp;
+            sp_reg_num = gcc_esp;
+            pc_reg_num = gcc_eip;
+            break;
+            
+        case eRegisterKindGDB:
+            fp_reg_num = gdb_ebp;
+            sp_reg_num = gdb_esp;
+            pc_reg_num = gdb_eip;
+            break;
+            
+        case eRegisterKindGeneric:
+            fp_reg_num = LLDB_REGNUM_GENERIC_FP;
+            sp_reg_num = LLDB_REGNUM_GENERIC_SP;
+            pc_reg_num = LLDB_REGNUM_GENERIC_PC;
+            break;
+    }
+    
+    if (fp_reg_num == LLDB_INVALID_REGNUM ||
+        sp_reg_num == LLDB_INVALID_REGNUM ||
+        pc_reg_num == LLDB_INVALID_REGNUM)
+        return false;
+
+    UnwindPlan::Row row;    
+    const int32_t ptr_size = 4;
+
+    unwind_plan.SetRegisterKind (eRegisterKindGeneric);
+    row.SetCFARegister (fp_reg_num);
+    row.SetCFAOffset (2 * ptr_size);
+    row.SetOffset (0);
+    
+    row.SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
+    row.SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * -1, true);
+    row.SetRegisterLocationToAtCFAPlusOffset(sp_reg_num, ptr_size *  0, true);
+
+    unwind_plan.AppendRow (row);
+    unwind_plan.SetSourceName ("i386 default unwind plan");
+    return true;
+}
+
+bool
+ABIMacOSX_i386::RegisterIsVolatile (const RegisterInfo *reg_info)
+{
+    return RegisterIsCalleeSaved (reg_info);
+}
+
+bool
+ABIMacOSX_i386::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
+{
+    if (reg_info)
+    {
+        // Volatile registers include: ebx, ebp, esi, edi, esp, eip
+        const char *name = reg_info->name;
+        if (name[0] == 'e')
+        {
+            switch (name[1])
+            {
+            case 'b': 
+                if (name[2] == 'x' || name[2] == 'p')
+                    return name[0] == '\0';
+                break;
+            case 'd':
+                if (name[2] == 'i')
+                    return name[0] == '\0';
+                break;
+            case 'i': 
+                if (name[2] == 'p')
+                    return name[0] == '\0';
+                break;
+            case 's':
+                if (name[2] == 'i' || name[2] == 'p')
+                    return name[0] == '\0';
+                break;
+            }
+        }
+    }
+    return false;
 }
 
 void

@@ -112,7 +112,7 @@ ThreadPlanAssemblyTracer::InitializeTracer()
     
     m_disassembler = Disassembler::FindPlugin(arch, NULL);
     
-    m_abi = process.GetABI();
+    m_abi = process.GetABI().get();
     
     ModuleSP exe_module_sp (target.GetExecutableModule());
     

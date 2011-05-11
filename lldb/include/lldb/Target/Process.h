@@ -2457,7 +2457,7 @@ protected:
     ShouldBroadcastEvent (Event *event_ptr);
 
 public:
-    const ABI *
+    const lldb::ABISP &
     GetABI ();
 
     DynamicLoader *

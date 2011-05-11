@@ -372,8 +372,10 @@ EmulateInstruction::ReadMemoryDefault (EmulateInstruction *instruction,
                                        void *dst,
                                        size_t length)
 {
-    fprintf (stdout, "    Read from Memory (address = 0x%llx, length = %zu, context = ", addr, length);
-    context.Dump (stdout, instruction);    
+    StreamFile strm (stdout, false);
+    strm.Printf ("    Read from Memory (address = 0x%llx, length = %zu, context = ", addr, length);
+    context.Dump (strm, instruction);    
+    strm.EOL();
     *((uint64_t *) dst) = 0xdeadbeef;
     return length;
 }
@@ -386,8 +388,10 @@ EmulateInstruction::WriteMemoryDefault (EmulateInstruction *instruction,
                                         const void *dst,
                                         size_t length)
 {
-    fprintf (stdout, "    Write to Memory (address = 0x%llx, length = %zu, context = ", addr, length);
-    context.Dump (stdout, instruction);    
+    StreamFile strm (stdout, false);
+    strm.Printf ("    Write to Memory (address = 0x%llx, length = %zu, context = ", addr, length);
+    context.Dump (strm, instruction);    
+    strm.EOL();
     return length;
 }
 
@@ -397,7 +401,8 @@ EmulateInstruction::ReadRegisterDefault  (EmulateInstruction *instruction,
                                           const RegisterInfo *reg_info,
                                           RegisterValue &reg_value)
 {
-    fprintf (stdout, "  Read Register (%s)\n", reg_info->name);
+    StreamFile strm (stdout, false);
+    strm.Printf ("  Read Register (%s)\n", reg_info->name);
     uint32_t reg_kind, reg_num;
     if (GetBestRegisterKindAndNumber (reg_info, reg_kind, reg_num))
         reg_value.SetUInt64((uint64_t)reg_kind << 24 | reg_num);
@@ -418,86 +423,87 @@ EmulateInstruction::WriteRegisterDefault (EmulateInstruction *instruction,
     strm.Printf ("    Write to Register (name = %s, value = " , reg_info->name);
     reg_value.Dump(&strm, reg_info, false);
     strm.PutCString (", context = ");
-    context.Dump (stdout, instruction);        
+    context.Dump (strm, instruction);        
+    strm.EOL();
     return true;
 }
 
 void
-EmulateInstruction::Context::Dump (FILE *fh, 
+EmulateInstruction::Context::Dump (Stream &strm, 
                                    EmulateInstruction *instruction) const
 {
     switch (type)
     {
         case eContextReadOpcode:
-            fprintf (fh, "reading opcode");
+            strm.PutCString ("reading opcode");
             break;
             
         case eContextImmediate:
-            fprintf (fh, "immediate");
+            strm.PutCString ("immediate");
             break;
             
         case eContextPushRegisterOnStack:
-            fprintf (fh, "push register");
+            strm.PutCString ("push register");
             break;
             
         case eContextPopRegisterOffStack:
-            fprintf (fh, "pop register");
+            strm.PutCString ("pop register");
             break;
             
         case eContextAdjustStackPointer:
-            fprintf (fh, "adjust sp");
+            strm.PutCString ("adjust sp");
             break;
             
         case eContextAdjustBaseRegister:
-            fprintf (fh, "adjusting (writing value back to) a base register");
+            strm.PutCString ("adjusting (writing value back to) a base register");
             break;
             
         case eContextRegisterPlusOffset:
-            fprintf (fh, "register + offset");
+            strm.PutCString ("register + offset");
             break;
             
         case eContextRegisterStore:
-            fprintf (fh, "store register");
+            strm.PutCString ("store register");
             break;
             
         case eContextRegisterLoad:
-            fprintf (fh, "load register");
+            strm.PutCString ("load register");
             break;
             
         case eContextRelativeBranchImmediate:
-            fprintf (fh, "relative branch immediate");
+            strm.PutCString ("relative branch immediate");
             break;
             
         case eContextAbsoluteBranchRegister:
-            fprintf (fh, "absolute branch register");
+            strm.PutCString ("absolute branch register");
             break;
             
         case eContextSupervisorCall:
-            fprintf (fh, "supervisor call");
+            strm.PutCString ("supervisor call");
             break;
             
         case eContextTableBranchReadMemory:
-            fprintf (fh, "table branch read memory");
+            strm.PutCString ("table branch read memory");
             break;
             
         case eContextWriteRegisterRandomBits:
-            fprintf (fh, "write random bits to a register");
+            strm.PutCString ("write random bits to a register");
             break;
             
         case eContextWriteMemoryRandomBits:
-            fprintf (fh, "write random bits to a memory address");
+            strm.PutCString ("write random bits to a memory address");
             break;
             
         case eContextArithmetic:
-            fprintf (fh, "arithmetic");
+            strm.PutCString ("arithmetic");
             break;
             
         case eContextReturnFromException:
-            fprintf (fh, "return from exception");
+            strm.PutCString ("return from exception");
             break;
             
         default:
-            fprintf (fh, "unrecognized context.");
+            strm.PutCString ("unrecognized context.");
             break;
     }
     
@@ -505,99 +511,93 @@ EmulateInstruction::Context::Dump (FILE *fh,
     {
     case eInfoTypeRegisterPlusOffset:
         {
-            fprintf (fh, 
-                     " (reg_plus_offset = %s%+lld)\n",
-                     info.RegisterPlusOffset.reg.name,
-                     info.RegisterPlusOffset.signed_offset);
+            strm.Printf (" (reg_plus_offset = %s%+lld)",
+                         info.RegisterPlusOffset.reg.name,
+                         info.RegisterPlusOffset.signed_offset);
         }
         break;
 
     case eInfoTypeRegisterPlusIndirectOffset:
         {
-            fprintf (fh, " (reg_plus_reg = %s + %s)\n",
-                     info.RegisterPlusIndirectOffset.base_reg.name,
-                     info.RegisterPlusIndirectOffset.offset_reg.name);
+            strm.Printf (" (reg_plus_reg = %s + %s)",
+                         info.RegisterPlusIndirectOffset.base_reg.name,
+                         info.RegisterPlusIndirectOffset.offset_reg.name);
         }
         break;
 
     case eInfoTypeRegisterToRegisterPlusOffset:
         {
-            fprintf (fh, " (base_and_imm_offset = %s%+lld, data_reg = %s)\n", 
-                     info.RegisterToRegisterPlusOffset.base_reg.name, 
-                     info.RegisterToRegisterPlusOffset.offset,
-                     info.RegisterToRegisterPlusOffset.data_reg.name);
+            strm.Printf (" (base_and_imm_offset = %s%+lld, data_reg = %s)", 
+                         info.RegisterToRegisterPlusOffset.base_reg.name, 
+                         info.RegisterToRegisterPlusOffset.offset,
+                         info.RegisterToRegisterPlusOffset.data_reg.name);
         }
         break;
 
     case eInfoTypeRegisterToRegisterPlusIndirectOffset:
         {
-            fprintf (fh, " (base_and_reg_offset = %s + %s, data_reg = %s)\n",
-                     info.RegisterToRegisterPlusIndirectOffset.base_reg.name, 
-                     info.RegisterToRegisterPlusIndirectOffset.offset_reg.name, 
-                     info.RegisterToRegisterPlusIndirectOffset.data_reg.name);
+            strm.Printf (" (base_and_reg_offset = %s + %s, data_reg = %s)",
+                         info.RegisterToRegisterPlusIndirectOffset.base_reg.name, 
+                         info.RegisterToRegisterPlusIndirectOffset.offset_reg.name, 
+                         info.RegisterToRegisterPlusIndirectOffset.data_reg.name);
         }
         break;
     
     case eInfoTypeRegisterRegisterOperands:
         {
-            fprintf (fh, " (register to register binary op: %s and %s)\n", 
-                     info.RegisterRegisterOperands.operand1.name,
-                     info.RegisterRegisterOperands.operand2.name);
+            strm.Printf (" (register to register binary op: %s and %s)", 
+                         info.RegisterRegisterOperands.operand1.name,
+                         info.RegisterRegisterOperands.operand2.name);
         }
         break;
 
     case eInfoTypeOffset:
-        fprintf (fh, " (signed_offset = %+lld)\n", info.signed_offset);
+        strm.Printf (" (signed_offset = %+lld)", info.signed_offset);
         break;
         
     case eInfoTypeRegister:
-        fprintf (fh, " (reg = %s)\n", info.reg.name);
+        strm.Printf (" (reg = %s)", info.reg.name);
         break;
         
     case eInfoTypeImmediate:
-        fprintf (fh, 
-                 " (unsigned_immediate = %llu (0x%16.16llx))\n", 
-                 info.unsigned_immediate, 
-                 info.unsigned_immediate);
+        strm.Printf (" (unsigned_immediate = %llu (0x%16.16llx))", 
+                     info.unsigned_immediate, 
+                     info.unsigned_immediate);
         break;
 
     case eInfoTypeImmediateSigned:
-        fprintf (fh, 
-                 " (signed_immediate = %+lld (0x%16.16llx))\n", 
-                 info.signed_immediate, 
-                 info.signed_immediate);
+        strm.Printf (" (signed_immediate = %+lld (0x%16.16llx))", 
+                     info.signed_immediate, 
+                     info.signed_immediate);
         break;
         
     case eInfoTypeAddress:
-        fprintf (fh, " (address = 0x%llx)\n", info.address);
+        strm.Printf (" (address = 0x%llx)", info.address);
         break;
         
     case eInfoTypeISAAndImmediate:
-        fprintf (fh, 
-                 " (isa = %u, unsigned_immediate = %u (0x%8.8x))\n", 
-                 info.ISAAndImmediate.isa,
-                 info.ISAAndImmediate.unsigned_data32,
-                 info.ISAAndImmediate.unsigned_data32);
+        strm.Printf (" (isa = %u, unsigned_immediate = %u (0x%8.8x))", 
+                     info.ISAAndImmediate.isa,
+                     info.ISAAndImmediate.unsigned_data32,
+                     info.ISAAndImmediate.unsigned_data32);
         break;
         
     case eInfoTypeISAAndImmediateSigned:
-        fprintf (fh,
-                 " (isa = %u, signed_immediate = %i (0x%8.8x))\n", 
-                 info.ISAAndImmediateSigned.isa,
-                 info.ISAAndImmediateSigned.signed_data32,
-                 info.ISAAndImmediateSigned.signed_data32);
+        strm.Printf (" (isa = %u, signed_immediate = %i (0x%8.8x))", 
+                     info.ISAAndImmediateSigned.isa,
+                     info.ISAAndImmediateSigned.signed_data32,
+                     info.ISAAndImmediateSigned.signed_data32);
         break;
         
     case eInfoTypeISA:
-        fprintf (fh, " (isa = %u)\n", info.isa);
+        strm.Printf (" (isa = %u)", info.isa);
         break;
         
     case eInfoTypeNoArgs:
-        fprintf (fh, " \n");
         break;
 
     default:
-        fprintf (fh, " (unknown <info_type>)\n");
+        strm.Printf (" (unknown <info_type>)");
         break;
     }
 }

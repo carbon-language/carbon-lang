@@ -13,23 +13,23 @@
 using namespace lldb;
 using namespace lldb_private;
 
-ABI*
+ABISP
 ABI::FindPlugin (const ArchSpec &arch)
 {
-    std::auto_ptr<ABI> abi_ap;
+    ABISP abi_sp;
     ABICreateInstance create_callback;
 
     for (uint32_t idx = 0;
          (create_callback = PluginManager::GetABICreateCallbackAtIndex(idx)) != NULL;
          ++idx)
     {
-        abi_ap.reset (create_callback(arch));
+        abi_sp = create_callback(arch);
 
-        if (abi_ap.get())
-            return abi_ap.release();
+        if (abi_sp)
+            return abi_sp;
     }
-
-    return NULL;
+    abi_sp.reset();
+    return abi_sp;
 }
 
 //----------------------------------------------------------------------

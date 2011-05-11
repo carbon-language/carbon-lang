@@ -391,7 +391,7 @@ AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton,
         // The Update function is called with the address of an added region.  So we grab that address, and
         // feed it into ReadRegions.  Of course, our friend the ABI will get the values for us.
         Process *process = context->exe_ctx.process;
-        const ABI *abi = process->GetABI();
+        const ABI *abi = process->GetABI().get();
         
         ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
         ValueList argument_values;
@@ -624,7 +624,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         lldb::StackFrameSP thread_cur_frame = thread.GetStackFrameAtIndex(0);
         
         Process *process = thread.CalculateProcess();
-        const ABI *abi = process->GetABI();
+        const ABI *abi = process->GetABI().get();
         if (abi == NULL)
             return ret_plan_sp;
             

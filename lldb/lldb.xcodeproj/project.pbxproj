@@ -13,8 +13,6 @@
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
-		2630BFAF1365F3220070C534 /* ArchDefaultUnwindPlan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2630BFAD1365F3220070C534 /* ArchDefaultUnwindPlan.cpp */; };
-		2630BFB01365F3220070C534 /* ArchVolatileRegs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2630BFAE1365F3220070C534 /* ArchVolatileRegs.cpp */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */; };
@@ -214,8 +212,6 @@
 		2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */; };
 		2689008813353E2200698AC0 /* ScriptInterpreterNone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A2771FC1135A37500E6ADB6 /* ScriptInterpreterNone.cpp */; };
 		2689008913353E2200698AC0 /* ScriptInterpreterPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0C10F1B8DD00F91463 /* ScriptInterpreterPython.cpp */; };
-		2689008A13353E4200698AC0 /* ABIMacOSX_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 497650CE11A21BEE008DDB57 /* ABIMacOSX_i386.cpp */; };
-		2689008B13353E4200698AC0 /* ABISysV_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 493C63F11189203300914D5E /* ABISysV_x86_64.cpp */; };
 		2689008C13353E4200698AC0 /* DisassemblerLLVM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C897410F57C5600BB2B04 /* DisassemblerLLVM.cpp */; };
 		2689008D13353E4200698AC0 /* DynamicLoaderMacOSXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C897A10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.cpp */; };
 		2689008E13353E4200698AC0 /* DynamicLoaderStatic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */; };
@@ -370,10 +366,9 @@
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2692BA13136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp */; };
 		2692BA16136610C100F9E14D /* UnwindAssemblyInstEmulation.h in Headers */ = {isa = PBXBuildFile; fileRef = 2692BA14136610C100F9E14D /* UnwindAssemblyInstEmulation.h */; };
-		2692BA1F136614D800F9E14D /* ArchDefaultUnwindPlan-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2692BA1D136614D000F9E14D /* ArchDefaultUnwindPlan-x86.cpp */; };
-		2692BA231366150100F9E14D /* ArchVolatileRegs-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2692BA21136614FC00F9E14D /* ArchVolatileRegs-x86.cpp */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
 		2697A54E133A6305004E4240 /* PlatformDarwin.h in Headers */ = {isa = PBXBuildFile; fileRef = 2697A54C133A6305004E4240 /* PlatformDarwin.h */; };
+		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */; };
 		26B1FA1413380E61002886E2 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; };
 		26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
@@ -386,13 +381,15 @@
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC511368AE38006DC050 /* OptionGroupFormat.cpp */; };
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
-		26C6886F137880C400407EDF /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
 		26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D265BC136B4269002EEE45 /* lldb-public.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A14133BEC76005B64B7 /* lldb-public.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
 		26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */; };
+		26DB3E161379E7AD0080DC73 /* ABIMacOSX_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */; };
+		26DB3E1C1379E7AD0080DC73 /* ABIMacOSX_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E0F1379E7AD0080DC73 /* ABIMacOSX_i386.cpp */; };
+		26DB3E1F1379E7AD0080DC73 /* ABISysV_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E131379E7AD0080DC73 /* ABISysV_x86_64.cpp */; };
 		26DC6A171337FE8000FF7998 /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
 		26DC6A1D1337FECA00FF7998 /* lldb-platform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */; };
 		26DE1E6B11616C2E00A093E2 /* lldb-forward-rtti.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DE1E6911616C2E00A093E2 /* lldb-forward-rtti.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -650,10 +647,6 @@
 		261B5A5311C3F2AD00AABD0A /* SharingPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SharingPtr.h; path = include/lldb/Utility/SharingPtr.h; sourceTree = "<group>"; };
 		26217930133BC8640083B112 /* lldb-private-types.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-types.h"; path = "include/lldb/lldb-private-types.h"; sourceTree = "<group>"; };
 		26217932133BCB850083B112 /* lldb-private-enumerations.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-private-enumerations.h"; path = "include/lldb/lldb-private-enumerations.h"; sourceTree = "<group>"; };
-		2630BFAB1365F3140070C534 /* ArchDefaultUnwindPlan.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArchDefaultUnwindPlan.h; path = include/lldb/Target/ArchDefaultUnwindPlan.h; sourceTree = "<group>"; };
-		2630BFAC1365F3140070C534 /* ArchVolatileRegs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ArchVolatileRegs.h; path = include/lldb/Target/ArchVolatileRegs.h; sourceTree = "<group>"; };
-		2630BFAD1365F3220070C534 /* ArchDefaultUnwindPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArchDefaultUnwindPlan.cpp; path = source/Target/ArchDefaultUnwindPlan.cpp; sourceTree = "<group>"; };
-		2630BFAE1365F3220070C534 /* ArchVolatileRegs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArchVolatileRegs.cpp; path = source/Target/ArchVolatileRegs.cpp; sourceTree = "<group>"; };
 		263664921140A4930075843B /* Debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Debugger.cpp; path = source/Core/Debugger.cpp; sourceTree = "<group>"; };
 		263664941140A4C10075843B /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Debugger.h; path = include/lldb/Core/Debugger.h; sourceTree = "<group>"; };
 		26368A3B126B697600E8659F /* darwin-debug.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "darwin-debug.cpp"; path = "tools/darwin-debug/darwin-debug.cpp"; sourceTree = "<group>"; };
@@ -734,10 +727,6 @@
 		268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbolContextList.cpp; path = source/API/SBSymbolContextList.cpp; sourceTree = "<group>"; };
 		2692BA13136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnwindAssemblyInstEmulation.cpp; sourceTree = "<group>"; };
 		2692BA14136610C100F9E14D /* UnwindAssemblyInstEmulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnwindAssemblyInstEmulation.h; sourceTree = "<group>"; };
-		2692BA1D136614D000F9E14D /* ArchDefaultUnwindPlan-x86.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "ArchDefaultUnwindPlan-x86.cpp"; sourceTree = "<group>"; };
-		2692BA1E136614D000F9E14D /* ArchDefaultUnwindPlan-x86.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ArchDefaultUnwindPlan-x86.h"; sourceTree = "<group>"; };
-		2692BA21136614FC00F9E14D /* ArchVolatileRegs-x86.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "ArchVolatileRegs-x86.cpp"; sourceTree = "<group>"; };
-		2692BA22136614FC00F9E14D /* ArchVolatileRegs-x86.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ArchVolatileRegs-x86.h"; sourceTree = "<group>"; };
 		269416AD119A024800FF2715 /* CommandObjectTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTarget.cpp; path = source/Commands/CommandObjectTarget.cpp; sourceTree = "<group>"; };
 		269416AE119A024800FF2715 /* CommandObjectTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectTarget.h; path = source/Commands/CommandObjectTarget.h; sourceTree = "<group>"; };
 		2697A54B133A6305004E4240 /* PlatformDarwin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformDarwin.cpp; sourceTree = "<group>"; };
@@ -1036,6 +1025,12 @@
 		26D9FDC612F784E60003F2EE /* EmulateInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstruction.h; path = include/lldb/Core/EmulateInstruction.h; sourceTree = "<group>"; };
 		26D9FDC812F784FD0003F2EE /* EmulateInstruction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EmulateInstruction.cpp; path = source/Core/EmulateInstruction.cpp; sourceTree = "<group>"; };
 		26DAFD9711529BC7005A394E /* ExecutionContextScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExecutionContextScope.h; path = include/lldb/Target/ExecutionContextScope.h; sourceTree = "<group>"; };
+		26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABIMacOSX_arm.cpp; sourceTree = "<group>"; };
+		26DB3E081379E7AD0080DC73 /* ABIMacOSX_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABIMacOSX_arm.h; sourceTree = "<group>"; };
+		26DB3E0F1379E7AD0080DC73 /* ABIMacOSX_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABIMacOSX_i386.cpp; sourceTree = "<group>"; };
+		26DB3E101379E7AD0080DC73 /* ABIMacOSX_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABIMacOSX_i386.h; sourceTree = "<group>"; };
+		26DB3E131379E7AD0080DC73 /* ABISysV_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABISysV_x86_64.cpp; sourceTree = "<group>"; };
+		26DB3E141379E7AD0080DC73 /* ABISysV_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABISysV_x86_64.h; sourceTree = "<group>"; };
 		26DC6A101337FE6900FF7998 /* lldb-platform */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-platform"; sourceTree = BUILT_PRODUCTS_DIR; };
 		26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "lldb-platform.cpp"; path = "tools/lldb-platform/lldb-platform.cpp"; sourceTree = "<group>"; };
 		26DE1E6911616C2E00A093E2 /* lldb-forward-rtti.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-forward-rtti.h"; path = "include/lldb/lldb-forward-rtti.h"; sourceTree = "<group>"; };
@@ -1091,15 +1086,11 @@
 		491193501226386000578B7F /* ASTStructExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTStructExtractor.cpp; path = source/Expression/ASTStructExtractor.cpp; sourceTree = "<group>"; };
 		49307AAD11DEA4D90081F992 /* IRForTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRForTarget.cpp; path = source/Expression/IRForTarget.cpp; sourceTree = "<group>"; };
 		49307AB111DEA4F20081F992 /* IRForTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRForTarget.h; path = include/lldb/Expression/IRForTarget.h; sourceTree = "<group>"; };
-		493C63F01189203300914D5E /* ABISysV_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_x86_64.h; path = "ABI/SysV-x86_64/ABISysV_x86_64.h"; sourceTree = "<group>"; };
-		493C63F11189203300914D5E /* ABISysV_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_x86_64.cpp; path = "ABI/SysV-x86_64/ABISysV_x86_64.cpp"; sourceTree = "<group>"; };
 		49445C2512245E3600C11A81 /* ClangExpressionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangExpressionParser.cpp; path = source/Expression/ClangExpressionParser.cpp; sourceTree = "<group>"; };
 		49445C2912245E5500C11A81 /* ClangExpressionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangExpressionParser.h; path = include/lldb/Expression/ClangExpressionParser.h; sourceTree = "<group>"; };
 		49445E341225AB6A00C11A81 /* ClangUserExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangUserExpression.h; path = include/lldb/Expression/ClangUserExpression.h; sourceTree = "<group>"; };
 		495BBACB119A0DBE00418BEA /* PathMappingList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PathMappingList.cpp; path = source/Target/PathMappingList.cpp; sourceTree = "<group>"; };
 		495BBACF119A0DE700418BEA /* PathMappingList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PathMappingList.h; path = include/lldb/Target/PathMappingList.h; sourceTree = "<group>"; };
-		497650CE11A21BEE008DDB57 /* ABIMacOSX_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABIMacOSX_i386.cpp; path = "ABI/MacOSX-i386/ABIMacOSX_i386.cpp"; sourceTree = "<group>"; };
-		497650CF11A21BEE008DDB57 /* ABIMacOSX_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABIMacOSX_i386.h; path = "ABI/MacOSX-i386/ABIMacOSX_i386.h"; sourceTree = "<group>"; };
 		497C86BD122823D800B54702 /* ClangUtilityFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangUtilityFunction.cpp; path = source/Expression/ClangUtilityFunction.cpp; sourceTree = "<group>"; };
 		497C86C1122823F300B54702 /* ClangUtilityFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangUtilityFunction.h; path = include/lldb/Expression/ClangUtilityFunction.h; sourceTree = "<group>"; };
 		497E7B331188ED300065CCA1 /* ABI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABI.h; path = include/lldb/Target/ABI.h; sourceTree = "<group>"; };
@@ -1376,9 +1367,7 @@
 		260C897110F57C5600BB2B04 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
-				26AC3F481365F4620065C7EF /* ArchDefaultUnwindPlan */,
-				26AC3F4C1365F5260065C7EF /* ArchVolatileRegs */,
-				493C63D711891A8000914D5E /* ABI */,
+				26DB3E051379E7AD0080DC73 /* ABI */,
 				260C897210F57C5600BB2B04 /* Disassembler */,
 				260C897810F57C5600BB2B04 /* DynamicLoader */,
 				26D9FDCA12F785120003F2EE /* Instruction */,
@@ -1828,24 +1817,6 @@
 			path = x86;
 			sourceTree = "<group>";
 		};
-		2692BA1C136614D000F9E14D /* x86 */ = {
-			isa = PBXGroup;
-			children = (
-				2692BA1D136614D000F9E14D /* ArchDefaultUnwindPlan-x86.cpp */,
-				2692BA1E136614D000F9E14D /* ArchDefaultUnwindPlan-x86.h */,
-			);
-			path = x86;
-			sourceTree = "<group>";
-		};
-		2692BA20136614FC00F9E14D /* x86 */ = {
-			isa = PBXGroup;
-			children = (
-				2692BA21136614FC00F9E14D /* ArchVolatileRegs-x86.cpp */,
-				2692BA22136614FC00F9E14D /* ArchVolatileRegs-x86.h */,
-			);
-			path = x86;
-			sourceTree = "<group>";
-		};
 		26A3B4AB1181454800381BC2 /* BSD-Archive */ = {
 			isa = PBXGroup;
 			children = (
@@ -1862,22 +1833,6 @@
 				2692BA17136611CD00F9E14D /* x86 */,
 			);
 			path = UnwindAssembly;
-			sourceTree = "<group>";
-		};
-		26AC3F481365F4620065C7EF /* ArchDefaultUnwindPlan */ = {
-			isa = PBXGroup;
-			children = (
-				2692BA1C136614D000F9E14D /* x86 */,
-			);
-			path = ArchDefaultUnwindPlan;
-			sourceTree = "<group>";
-		};
-		26AC3F4C1365F5260065C7EF /* ArchVolatileRegs */ = {
-			isa = PBXGroup;
-			children = (
-				2692BA20136614FC00F9E14D /* x86 */,
-			);
-			path = ArchVolatileRegs;
 			sourceTree = "<group>";
 		};
 		26B4666E11A2080F00CF6220 /* Utility */ = {
@@ -2308,10 +2263,6 @@
 			children = (
 				497E7B331188ED300065CCA1 /* ABI.h */,
 				497E7B9D1188F6690065CCA1 /* ABI.cpp */,
-				2630BFAB1365F3140070C534 /* ArchDefaultUnwindPlan.h */,
-				2630BFAD1365F3220070C534 /* ArchDefaultUnwindPlan.cpp */,
-				2630BFAC1365F3140070C534 /* ArchVolatileRegs.h */,
-				2630BFAE1365F3220070C534 /* ArchVolatileRegs.cpp */,
 				4CB443BB1249920C00C13DC2 /* CPPLanguageRuntime.h */,
 				4CB443BC1249920C00C13DC2 /* CPPLanguageRuntime.cpp */,
 				26BC7DF110F1B81A00F91463 /* DynamicLoader.h */,
@@ -2455,6 +2406,43 @@
 			path = ARM;
 			sourceTree = "<group>";
 		};
+		26DB3E051379E7AD0080DC73 /* ABI */ = {
+			isa = PBXGroup;
+			children = (
+				26DB3E061379E7AD0080DC73 /* MacOSX-arm */,
+				26DB3E0E1379E7AD0080DC73 /* MacOSX-i386 */,
+				26DB3E121379E7AD0080DC73 /* SysV-x86_64 */,
+			);
+			path = ABI;
+			sourceTree = "<group>";
+		};
+		26DB3E061379E7AD0080DC73 /* MacOSX-arm */ = {
+			isa = PBXGroup;
+			children = (
+				26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */,
+				26DB3E081379E7AD0080DC73 /* ABIMacOSX_arm.h */,
+			);
+			path = "MacOSX-arm";
+			sourceTree = "<group>";
+		};
+		26DB3E0E1379E7AD0080DC73 /* MacOSX-i386 */ = {
+			isa = PBXGroup;
+			children = (
+				26DB3E0F1379E7AD0080DC73 /* ABIMacOSX_i386.cpp */,
+				26DB3E101379E7AD0080DC73 /* ABIMacOSX_i386.h */,
+			);
+			path = "MacOSX-i386";
+			sourceTree = "<group>";
+		};
+		26DB3E121379E7AD0080DC73 /* SysV-x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+				26DB3E131379E7AD0080DC73 /* ABISysV_x86_64.cpp */,
+				26DB3E141379E7AD0080DC73 /* ABISysV_x86_64.h */,
+			);
+			path = "SysV-x86_64";
+			sourceTree = "<group>";
+		};
 		26DC6A1B1337FEA400FF7998 /* lldb-platform */ = {
 			isa = PBXGroup;
 			children = (
@@ -2502,33 +2490,6 @@
 			name = Libraries;
 			sourceTree = "<group>";
 			usesTabs = 0;
-		};
-		493C63D711891A8000914D5E /* ABI */ = {
-			isa = PBXGroup;
-			children = (
-				497650CD11A21BD8008DDB57 /* MacOSX-i386 */,
-				493C63EA11891FCD00914D5E /* SysV-x86_64 */,
-			);
-			name = ABI;
-			sourceTree = "<group>";
-		};
-		493C63EA11891FCD00914D5E /* SysV-x86_64 */ = {
-			isa = PBXGroup;
-			children = (
-				493C63F11189203300914D5E /* ABISysV_x86_64.cpp */,
-				493C63F01189203300914D5E /* ABISysV_x86_64.h */,
-			);
-			name = "SysV-x86_64";
-			sourceTree = "<group>";
-		};
-		497650CD11A21BD8008DDB57 /* MacOSX-i386 */ = {
-			isa = PBXGroup;
-			children = (
-				497650CE11A21BEE008DDB57 /* ABIMacOSX_i386.cpp */,
-				497650CF11A21BEE008DDB57 /* ABIMacOSX_i386.h */,
-			);
-			name = "MacOSX-i386";
-			sourceTree = "<group>";
 		};
 		4C139EA0124A8AC7000BFF8D /* CPlusPlus */ = {
 			isa = PBXGroup;
@@ -3125,8 +3086,6 @@
 				2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */,
 				2689008813353E2200698AC0 /* ScriptInterpreterNone.cpp in Sources */,
 				2689008913353E2200698AC0 /* ScriptInterpreterPython.cpp in Sources */,
-				2689008A13353E4200698AC0 /* ABIMacOSX_i386.cpp in Sources */,
-				2689008B13353E4200698AC0 /* ABISysV_x86_64.cpp in Sources */,
 				2689008C13353E4200698AC0 /* DisassemblerLLVM.cpp in Sources */,
 				2689008D13353E4200698AC0 /* DynamicLoaderMacOSXDYLD.cpp in Sources */,
 				2689008E13353E4200698AC0 /* DynamicLoaderStatic.cpp in Sources */,
@@ -3273,11 +3232,7 @@
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
 				9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */,
-				2630BFAF1365F3220070C534 /* ArchDefaultUnwindPlan.cpp in Sources */,
-				2630BFB01365F3220070C534 /* ArchVolatileRegs.cpp in Sources */,
 				2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */,
-				2692BA1F136614D800F9E14D /* ArchDefaultUnwindPlan-x86.cpp in Sources */,
-				2692BA231366150100F9E14D /* ArchVolatileRegs-x86.cpp in Sources */,
 				263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */,
 				264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */,
 				26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */,
@@ -3288,7 +3243,10 @@
 				260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */,
 				2686536C1370ACB200D186A3 /* OptionGroupBoolean.cpp in Sources */,
 				268653701370AE7200D186A3 /* OptionGroupUInt64.cpp in Sources */,
-				26C6886F137880C400407EDF /* RegisterValue.cpp in Sources */,
+				26DB3E161379E7AD0080DC73 /* ABIMacOSX_arm.cpp in Sources */,
+				26DB3E1C1379E7AD0080DC73 /* ABIMacOSX_i386.cpp in Sources */,
+				26DB3E1F1379E7AD0080DC73 /* ABISysV_x86_64.cpp in Sources */,
+				26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3488,8 +3446,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = "Debug+Asserts";
 				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -3539,8 +3495,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = "Debug+Asserts";
 				OTHER_CFLAGS = "-Wparentheses";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-fno-rtti",
@@ -3582,8 +3536,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = "Debug+Asserts";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -3624,8 +3576,6 @@
 					"$(inherited)",
 					"$(LLVM_BUILD_DIR)",
 				);
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
-				LLVM_CONFIGURATION = "Debug+Asserts";
 				MACH_O_TYPE = staticlib;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_CFLAGS = "-Wparentheses";
@@ -3868,7 +3818,6 @@
 		26F5C26C10F3D9A5009D5894 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = lldb_codesign;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 46;
 				DEBUG_INFORMATION_FORMAT = dwarf;
@@ -3901,7 +3850,6 @@
 		26F5C26D10F3D9A5009D5894 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = lldb_codesign;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 46;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";

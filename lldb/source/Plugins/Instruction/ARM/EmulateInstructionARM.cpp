@@ -576,7 +576,7 @@ EmulateInstructionARM::EmulateADDRdSPImm (const uint32_t opcode, const ARMEncodi
         addr_t addr = sp + sp_offset; // a pointer to the stack area
         
         EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextAdjustStackPointer;
+        context.type = eContextSetFramePointer;
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
         context.SetRegisterPlusOffset (sp_reg, sp_offset);
@@ -13413,17 +13413,16 @@ EmulateInstructionARM::TestEmulation (Stream *out_stream, ArchSpec &arch, Option
 bool
 EmulateInstructionARM::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
 {
+    unwind_plan.Clear();
     unwind_plan.SetRegisterKind (eRegisterKindDWARF);
 
     UnwindPlan::Row row;
-    UnwindPlan::Row::RegisterLocation regloc;
 
     // Our previous Call Frame Address is the stack pointer
     row.SetCFARegister (dwarf_sp);
     
     // Our previous PC is in the LR
-    regloc.SetInRegister(dwarf_lr);
-    row.SetRegisterInfo (dwarf_pc, regloc);
+    row.SetRegisterLocationToRegister(dwarf_pc, dwarf_lr, true);
     unwind_plan.AppendRow (row);
 
     // All other registers are the same.

@@ -113,7 +113,7 @@ CommandObjectArgs::Execute
         return false;
     }
     
-    const ABI *abi = process->GetABI ();
+    const ABI *abi = process->GetABI().get();
     if (!abi)
     {
         result.AppendError ("The current process has no ABI.");

@@ -45,9 +45,19 @@ public:
     virtual bool
     GetReturnValue (Thread &thread,
                     Value &value) const = 0;
-    
-    static ABI* 
+
+    virtual bool
+    CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan) = 0;
+
+    virtual bool
+    CreateDefaultUnwindPlan (UnwindPlan &unwind_plan) = 0;
+
+    virtual bool
+    RegisterIsVolatile (const RegisterInfo *reg_info) = 0;
+
+    static lldb::ABISP
     FindPlugin (const ArchSpec &arch);
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ABI can see and modify these

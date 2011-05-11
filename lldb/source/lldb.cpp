@@ -32,11 +32,10 @@
 #include "Plugins/SymbolFile/Symtab/SymbolFileSymtab.h"
 #include "Plugins/UnwindAssembly/x86/UnwindAssembly-x86.h"
 #include "Plugins/UnwindAssembly/InstEmulation/UnwindAssemblyInstEmulation.h"
-#include "Plugins/ArchDefaultUnwindPlan/x86/ArchDefaultUnwindPlan-x86.h"
-#include "Plugins/ArchVolatileRegs/x86/ArchVolatileRegs-x86.h"
 
 #if defined (__APPLE__)
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
+#include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
@@ -85,17 +84,15 @@ lldb_private::Initialize ()
         SymbolFileSymtab::Initialize();
         UnwindAssemblyInstEmulation::Initialize();
         UnwindAssembly_x86::Initialize();
-        ArchDefaultUnwindPlan_x86_64::Initialize();
-        ArchDefaultUnwindPlan_i386::Initialize();
-        ArchVolatileRegs_x86::Initialize();
         EmulateInstructionARM::Initialize ();
+        ABIMacOSX_i386::Initialize();
+        ABIMacOSX_arm::Initialize();
+        ABISysV_x86_64::Initialize();
 
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
         // Apple/Darwin hosted plugins
         //----------------------------------------------------------------------
-        ABIMacOSX_i386::Initialize();
-        ABISysV_x86_64::Initialize();
         DynamicLoaderMacOSXDYLD::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
         ItaniumABILanguageRuntime::Initialize();
@@ -154,10 +151,10 @@ lldb_private::Terminate ()
     SymbolFileSymtab::Terminate();
     UnwindAssembly_x86::Terminate();
     UnwindAssemblyInstEmulation::Terminate();
-    ArchDefaultUnwindPlan_i386::Terminate();
-    ArchDefaultUnwindPlan_x86_64::Terminate();
-    ArchVolatileRegs_x86::Terminate();
     EmulateInstructionARM::Terminate ();
+    ABIMacOSX_i386::Terminate();
+    ABIMacOSX_arm::Terminate();
+    ABISysV_x86_64::Terminate();
 
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
