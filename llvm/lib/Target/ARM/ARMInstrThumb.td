@@ -457,7 +457,11 @@ let isCall = 1,
                   "blx\t$func",
                   [(ARMtcall GPR:$func)]>,
               Requires<[IsThumb, HasV5T, IsNotDarwin]>,
-              T1Special<{1,1,1,?}>; // A6.2.3 & A8.6.24;
+              T1Special<{1,1,1,?}> { // A6.2.3 & A8.6.24;
+    bits<4> func;
+    let Inst{6-3} = func;
+    let Inst{2-0} = 0b000;
+  }
 
   // ARMv4T
   // FIXME: Should be a pseudo.
@@ -600,7 +604,7 @@ def tSVC : T1pI<(outs), (ins i32imm:$imm), IIC_Br,
 
 // The assembler uses 0xDEFE for a trap instruction.
 let isBarrier = 1, isTerminator = 1 in
-def tTRAP : TI<(outs), (ins), IIC_Br, 
+def tTRAP : TI<(outs), (ins), IIC_Br,
                "trap", [(trap)]>, Encoding16 {
   let Inst = 0xdefe;
 }
@@ -807,7 +811,7 @@ defm tLDM : thumb_ldst_mult<"ldm", IIC_iLoad_m, IIC_iLoad_mu,
 let mayStore = 1, hasExtraSrcRegAllocReq = 1 in
 defm tSTM : thumb_ldst_mult<"stm", IIC_iStore_m, IIC_iStore_mu,
                             {1,1,0,0,0,?}, 0>;
- 
+
 } // neverHasSideEffects
 
 let mayLoad = 1, Uses = [SP], Defs = [SP], hasExtraDefRegAllocReq = 1 in
@@ -1451,7 +1455,7 @@ def tTPsoft : TIx2<0b11110, 0b11, 1, (outs), (ins), IIC_Br,
 
 //===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics
-// 
+//
 
 // eh_sjlj_setjmp() is an instruction sequence to store the return address and
 // save #0 in R0 for the non-longjmp case.  Since by its nature we may be coming

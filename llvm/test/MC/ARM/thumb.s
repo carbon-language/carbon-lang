@@ -12,6 +12,8 @@
 
 @ CHECK: blx	r9                   @ encoding: [0xc8,0x47]
 	blx	r9
+@ CHECK: blx	r10                     @ encoding: [0xd0,0x47]
+  blx r10
 
 @ CHECK: rev	r2, r3               @ encoding: [0x1a,0xba]
 @ CHECK: rev16	r3, r4               @ encoding: [0x63,0xba]
