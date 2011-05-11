@@ -1,5 +1,22 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
+// Reachability tests have to come first because they get suppressed
+// if any errors have occurred.
+namespace test5 {
+  struct A {
+    __attribute__((noreturn)) void fail();
+    void nofail();
+  } a;
+
+  int &test1() {
+    a.nofail();
+  } // expected-warning {{control reaches end of non-void function}}
+
+  int &test2() {
+    a.fail();
+  }
+}
+
 // PR5620
 void f0() __attribute__((__noreturn__));
 void f1(void (*)()); 

@@ -320,7 +320,6 @@ private:
                                        AddStmtChoice asc);
   CFGBlock *VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *C, 
                                         AddStmtChoice asc);
-  CFGBlock *VisitCXXMemberCallExpr(CXXMemberCallExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCallExpr(CallExpr *C, AddStmtChoice asc);
   CFGBlock *VisitCaseStmt(CaseStmt *C);
   CFGBlock *VisitChooseExpr(ChooseExpr *C, AddStmtChoice asc);
@@ -868,6 +867,7 @@ tryAgain:
 
     case Stmt::CallExprClass:
     case Stmt::CXXOperatorCallExprClass:
+    case Stmt::CXXMemberCallExprClass:
       return VisitCallExpr(cast<CallExpr>(S), asc);
 
     case Stmt::CaseStmtClass:
@@ -902,9 +902,6 @@ tryAgain:
 
     case Stmt::CXXTemporaryObjectExprClass:
       return VisitCXXTemporaryObjectExpr(cast<CXXTemporaryObjectExpr>(S), asc);
-
-    case Stmt::CXXMemberCallExprClass:
-      return VisitCXXMemberCallExpr(cast<CXXMemberCallExpr>(S), asc);
 
     case Stmt::CXXThrowExprClass:
       return VisitCXXThrowExpr(cast<CXXThrowExpr>(S));
@@ -1153,11 +1150,18 @@ static bool CanThrow(Expr *E, ASTContext &Ctx) {
 }
 
 CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
-  // If this is a call to a no-return function, this stops the block here.
-  bool NoReturn = false;
-  if (getFunctionExtInfo(*C->getCallee()->getType()).getNoReturn()) {
-    NoReturn = true;
+  // Compute the callee type.
+  QualType calleeType = C->getCallee()->getType();
+  if (calleeType == Context->BoundMemberTy) {
+    QualType boundType = Expr::findBoundMemberType(C->getCallee());
+
+    // We should only get a null bound type if processing a dependent
+    // CFG.  Recover by assuming nothing.
+    if (!boundType.isNull()) calleeType = boundType;
   }
+
+  // If this is a call to a no-return function, this stops the block here.
+  bool NoReturn = getFunctionExtInfo(*calleeType).getNoReturn();
 
   bool AddEHEdge = false;
 
@@ -2686,13 +2690,6 @@ CFGBlock *CFGBuilder::VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *E,
 
 CFGBlock *CFGBuilder::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *C,
                                                   AddStmtChoice asc) {
-  autoCreateBlock();
-  appendStmt(Block, C);
-  return VisitChildren(C);
-}
-
-CFGBlock *CFGBuilder::VisitCXXMemberCallExpr(CXXMemberCallExpr *C,
-                                             AddStmtChoice asc) {
   autoCreateBlock();
   appendStmt(Block, C);
   return VisitChildren(C);

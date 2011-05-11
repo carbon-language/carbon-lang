@@ -196,7 +196,12 @@ static ControlFlowKind CheckFallThrough(AnalysisContext &AC) {
         continue;
       }
       Expr *CEE = C->getCallee()->IgnoreParenCasts();
-      if (getFunctionExtInfo(CEE->getType()).getNoReturn()) {
+      QualType calleeType = CEE->getType();
+      if (calleeType == AC.getASTContext().BoundMemberTy) {
+        calleeType = Expr::findBoundMemberType(CEE);
+        assert(!calleeType.isNull() && "analyzing unresolved call?");
+      }
+      if (getFunctionExtInfo(calleeType).getNoReturn()) {
         NoReturnEdge = true;
         HasFakeEdge = true;
       } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
