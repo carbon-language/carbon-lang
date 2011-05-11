@@ -927,7 +927,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // Can turn SHL into an integer multiply.
     setOperationAction(ISD::SHL,                MVT::v4i32, Custom);
     setOperationAction(ISD::SHL,                MVT::v16i8, Custom);
-    setOperationAction(ISD::SRL,                MVT::v4i32, Legal);
 
     // i8 and i16 vectors are custom , because the source register and source
     // source memory operand types are not the same width.  f32 vectors are
@@ -947,6 +946,19 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2i64, Legal);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Legal);
     }
+  }
+
+  if (Subtarget->hasSSE2()) {
+    setOperationAction(ISD::SRL,               MVT::v2i64, Custom);
+    setOperationAction(ISD::SRL,               MVT::v4i32, Custom);
+    setOperationAction(ISD::SRL,               MVT::v16i8, Custom);
+
+    setOperationAction(ISD::SHL,               MVT::v2i64, Custom);
+    setOperationAction(ISD::SHL,               MVT::v4i32, Custom);
+    setOperationAction(ISD::SHL,               MVT::v8i16, Custom);
+
+    setOperationAction(ISD::SRA,               MVT::v4i32, Custom);
+    setOperationAction(ISD::SRA,               MVT::v8i16, Custom);
   }
 
   if (Subtarget->hasSSE42())
@@ -6616,9 +6628,9 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 }
 
 
-/// LowerShift - Lower SRA_PARTS and friends, which return two i32 values and
+/// LowerShiftParts - Lower SRA_PARTS and friends, which return two i32 values and
 /// take a 2 x i32 value to shift plus a shift amount.
-SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
+SDValue X86TargetLowering::LowerShiftParts(SDValue Op, SelectionDAG &DAG) const {
   assert(Op.getNumOperands() == 3 && "Not a double-shift!");
   EVT VT = Op.getValueType();
   unsigned VTBits = VT.getSizeInBits();
@@ -8778,16 +8790,71 @@ SDValue X86TargetLowering::LowerMUL_V2I64(SDValue Op, SelectionDAG &DAG) const {
   return Res;
 }
 
-SDValue X86TargetLowering::LowerSHL(SDValue Op, SelectionDAG &DAG) const {
+SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
+
   EVT VT = Op.getValueType();
   DebugLoc dl = Op.getDebugLoc();
   SDValue R = Op.getOperand(0);
+  SDValue Amt = Op.getOperand(1);
 
   LLVMContext *Context = DAG.getContext();
 
-  assert(Subtarget->hasSSE41() && "Cannot lower SHL without SSE4.1 or later");
+  // Must have SSE2.
+  if (!Subtarget->hasSSE2()) return SDValue();
 
-  if (VT == MVT::v4i32) {
+  // Optimize shl/srl/sra with constant shift amount.
+  if (isSplatVector(Amt.getNode())) {
+    SDValue SclrAmt = Amt->getOperand(0);
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(SclrAmt)) {
+      uint64_t ShiftAmt = C->getZExtValue();
+
+      if (VT == MVT::v2i64 && Op.getOpcode() == ISD::SHL)
+       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                     DAG.getConstant(Intrinsic::x86_sse2_pslli_q, MVT::i32),
+                     R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v4i32 && Op.getOpcode() == ISD::SHL)
+       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                     DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
+                     R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v8i16 && Op.getOpcode() == ISD::SHL)
+       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                     DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
+                     R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v2i64 && Op.getOpcode() == ISD::SRL)
+       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                     DAG.getConstant(Intrinsic::x86_sse2_psrli_q, MVT::i32),
+                     R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v4i32 && Op.getOpcode() == ISD::SRL)
+       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                     DAG.getConstant(Intrinsic::x86_sse2_psrli_d, MVT::i32),
+                     R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v8i16 && Op.getOpcode() == ISD::SRL)
+       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                     DAG.getConstant(Intrinsic::x86_sse2_psrli_w, MVT::i32),
+                     R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v4i32 && Op.getOpcode() == ISD::SRA)
+       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                     DAG.getConstant(Intrinsic::x86_sse2_psrai_d, MVT::i32),
+                     R, DAG.getConstant(ShiftAmt, MVT::i32));
+
+      if (VT == MVT::v8i16 && Op.getOpcode() == ISD::SRA)
+       return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
+                     DAG.getConstant(Intrinsic::x86_sse2_psrai_w, MVT::i32),
+                     R, DAG.getConstant(ShiftAmt, MVT::i32));
+    }
+  }
+
+  // Lower SHL with variable shift amount.
+  // Cannot lower SHL without SSE4.1 or later.
+  if (!Subtarget->hasSSE41()) return SDValue();
+
+  if (VT == MVT::v4i32 && Op->getOpcode() == ISD::SHL) {
     Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                      DAG.getConstant(Intrinsic::x86_sse2_pslli_d, MVT::i32),
                      Op.getOperand(1), DAG.getConstant(23, MVT::i32));
@@ -8806,7 +8873,7 @@ SDValue X86TargetLowering::LowerSHL(SDValue Op, SelectionDAG &DAG) const {
     Op = DAG.getNode(ISD::FP_TO_SINT, dl, VT, Op);
     return DAG.getNode(ISD::MUL, dl, VT, Op, R);
   }
-  if (VT == MVT::v16i8) {
+  if (VT == MVT::v16i8 && Op->getOpcode() == ISD::SHL) {
     // a = a << 5;
     Op = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
                      DAG.getConstant(Intrinsic::x86_sse2_pslli_w, MVT::i32),
@@ -9111,7 +9178,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
-  case ISD::SRL_PARTS:          return LowerShift(Op, DAG);
+  case ISD::SRL_PARTS:          return LowerShiftParts(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::UINT_TO_FP:         return LowerUINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
@@ -9139,7 +9206,9 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
   case ISD::MUL:                return LowerMUL_V2I64(Op, DAG);
-  case ISD::SHL:                return LowerSHL(Op, DAG);
+  case ISD::SRA:
+  case ISD::SRL:
+  case ISD::SHL:                return LowerShift(Op, DAG);
   case ISD::SADDO:
   case ISD::UADDO:
   case ISD::SSUBO:

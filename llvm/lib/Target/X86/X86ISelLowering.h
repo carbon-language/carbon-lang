@@ -770,7 +770,7 @@ namespace llvm {
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerShift(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerShiftParts(SDValue Op, SelectionDAG &DAG) const;
     SDValue BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain, SDValue StackSlot,
                       SelectionDAG &DAG) const;
     SDValue LowerBITCAST(SDValue op, SelectionDAG &DAG) const;
@@ -805,7 +805,7 @@ namespace llvm {
     SDValue LowerCTLZ(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerMUL_V2I64(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerSHL(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerShift(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) const;
 
     SDValue LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) const;
