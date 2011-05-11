@@ -79,3 +79,11 @@ struct X0 {
 enum : long long {  // expected-warning{{enumeration types with a fixed underlying type are a Microsoft extension}}
   SomeValue = 0x100000000
 };
+
+
+void pointer_to_integral_type_conv(char* ptr) {
+   char ch = (char)ptr;
+   short sh = (short)ptr;
+   ch = (char)ptr;
+   sh = (short)ptr;
+} 
