@@ -265,7 +265,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   if (!TII) return false;
 
   // Tail merge tend to expose more if-conversion opportunities.
-  BranchFolder BF(true, false);
+  BranchFolder BF(true);
   bool BFChange = BF.OptimizeFunction(MF, TII,
                                    MF.getTarget().getRegisterInfo(),
                                    getAnalysisIfAvailable<MachineModuleInfo>());
@@ -399,7 +399,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   BBAnalysis.clear();
 
   if (MadeChange && IfCvtBranchFold) {
-    BranchFolder BF(false, false);
+    BranchFolder BF(false);
     BF.OptimizeFunction(MF, TII,
                         MF.getTarget().getRegisterInfo(),
                         getAnalysisIfAvailable<MachineModuleInfo>());

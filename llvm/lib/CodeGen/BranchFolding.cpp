@@ -41,7 +41,6 @@ using namespace llvm;
 STATISTIC(NumDeadBlocks, "Number of dead blocks removed");
 STATISTIC(NumBranchOpts, "Number of branches optimized");
 STATISTIC(NumTailMerge , "Number of block tails merged");
-STATISTIC(NumHoist     , "Number of times common instructions are hoisted");
 
 static cl::opt<cl::boolOrDefault> FlagEnableTailMerge("enable-tail-merge",
                               cl::init(cl::BOU_UNSET), cl::Hidden);
@@ -66,7 +65,7 @@ namespace {
   public:
     static char ID;
     explicit BranchFolderPass(bool defaultEnableTailMerge)
-      : MachineFunctionPass(ID), BranchFolder(defaultEnableTailMerge, true) {}
+      : MachineFunctionPass(ID), BranchFolder(defaultEnableTailMerge) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Control Flow Optimizer"; }
@@ -87,14 +86,12 @@ bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
 }
 
 
-BranchFolder::BranchFolder(bool defaultEnableTailMerge, bool CommonHoist) {
+BranchFolder::BranchFolder(bool defaultEnableTailMerge) {
   switch (FlagEnableTailMerge) {
   case cl::BOU_UNSET: EnableTailMerge = defaultEnableTailMerge; break;
   case cl::BOU_TRUE: EnableTailMerge = true; break;
   case cl::BOU_FALSE: EnableTailMerge = false; break;
   }
-
-  EnableHoistCommonCode = CommonHoist;
 }
 
 /// RemoveDeadBlock - Remove the specified dead machine basic block from the
@@ -189,10 +186,9 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
 
   bool MadeChangeThisIteration = true;
   while (MadeChangeThisIteration) {
-    MadeChangeThisIteration    = TailMergeBlocks(MF);
-    MadeChangeThisIteration   |= OptimizeBranches(MF);
-    if (EnableHoistCommonCode)
-      MadeChangeThisIteration |= HoistCommonCode(MF);
+    MadeChangeThisIteration = false;
+    MadeChangeThisIteration |= TailMergeBlocks(MF);
+    MadeChangeThisIteration |= OptimizeBranches(MF);
     MadeChange |= MadeChangeThisIteration;
   }
 
@@ -914,8 +910,7 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
   // Make sure blocks are numbered in order
   MF.RenumberBlocks();
 
-  for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
-       I != E; ) {
+  for (MachineFunction::iterator I = ++MF.begin(), E = MF.end(); I != E; ) {
     MachineBasicBlock *MBB = I++;
     MadeChange |= OptimizeBlock(MBB);
 
@@ -1343,254 +1338,4 @@ ReoptimizeBlock:
   }
 
   return MadeChange;
-}
-
-//===----------------------------------------------------------------------===//
-//  Hoist Common Code
-//===----------------------------------------------------------------------===//
-
-/// HoistCommonCode - Hoist common instruction sequences at the start of basic
-/// blocks to their common predecessor.
-/// NOTE: This optimization does not update live-in information so it must be
-/// run after all passes that require correct liveness information.
-bool BranchFolder::HoistCommonCode(MachineFunction &MF) {
-  bool MadeChange = false;
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ) {
-    MachineBasicBlock *MBB = I++;
-    MadeChange |= HoistCommonCodeInSuccs(MBB);
-  }
-
-  return MadeChange;
-}
-
-/// findFalseBlock - BB has a fallthrough. Find its 'false' successor given
-/// its 'true' successor.
-static MachineBasicBlock *findFalseBlock(MachineBasicBlock *BB,
-                                         MachineBasicBlock *TrueBB) {
-  for (MachineBasicBlock::succ_iterator SI = BB->succ_begin(),
-         E = BB->succ_end(); SI != E; ++SI) {
-    MachineBasicBlock *SuccBB = *SI;
-    if (SuccBB != TrueBB)
-      return SuccBB;
-  }
-  return NULL;
-}
-
-/// findHoistingInsertPosAndDeps - Find the location to move common instructions
-/// in successors to. The location is ususally just before the terminator,
-/// however if the terminator is a conditional branch and its previous
-/// instruction is the flag setting instruction, the previous instruction is
-/// the preferred location. This function also gathers uses and defs of the
-/// instructions from the insertion point to the end of the block. The data is
-/// used by HoistCommonCodeInSuccs to ensure safety.
-static
-MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
-                                                  const TargetInstrInfo *TII,
-                                                  const TargetRegisterInfo *TRI,
-                                                  SmallSet<unsigned,4> &Uses,
-                                                  SmallSet<unsigned,4> &Defs) {
-  MachineBasicBlock::iterator Loc = MBB->getFirstTerminator();
-  if (!TII->isUnpredicatedTerminator(Loc))
-    return MBB->end();
-
-  for (unsigned i = 0, e = Loc->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = Loc->getOperand(i);
-    if (!MO.isReg())
-      continue;
-    unsigned Reg = MO.getReg();
-    if (!Reg)
-      continue;
-    if (MO.isUse()) {
-      Uses.insert(Reg);
-      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
-        Uses.insert(*AS);
-    } else if (!MO.isDead())
-      // Don't try to hoist code in the rare case the terminator defines a
-      // register that is later used.
-      return MBB->end();
-  }
-
-  if (Uses.empty())
-    return Loc;
-  if (Loc == MBB->begin())
-    return MBB->end();
-
-  // The terminator is probably a conditional branch, try not to separate the
-  // branch from condition setting instruction.
-  MachineBasicBlock::iterator PI = Loc;
-  --PI;
-  while (PI != MBB->begin() && Loc->isDebugValue())
-    --PI;
-
-  bool IsDef = false;
-  for (unsigned i = 0, e = PI->getNumOperands(); !IsDef && i != e; ++i) {
-    const MachineOperand &MO = PI->getOperand(i);
-    if (!MO.isReg() || MO.isUse())
-      continue;
-    unsigned Reg = MO.getReg();
-    if (!Reg)
-      continue;
-    if (Uses.count(Reg))
-      IsDef = true;
-  }
-  if (!IsDef)
-    // The condition setting instruction is not just before the conditional
-    // branch.
-    return Loc;
-
-  // Be conservative, don't insert instruction above something that may have
-  // side-effects. And since it's potentially bad to separate flag setting
-  // instruction from the conditional branch, just abort the optimization
-  // completely.
-  // Also avoid moving code above predicated instruction since it's hard to
-  // reason about register liveness with predicated instruction.
-  bool DontMoveAcrossStore = true;
-  if (!PI->isSafeToMove(TII, 0, DontMoveAcrossStore) ||
-      TII->isPredicated(PI))
-    return MBB->end();
-
-
-  // Find out what registers are live. Note this routine is ignoring other live
-  // registers which are only used by instructions in successor blocks.
-  for (unsigned i = 0, e = PI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = PI->getOperand(i);
-    if (!MO.isReg())
-      continue;
-    unsigned Reg = MO.getReg();
-    if (!Reg)
-      continue;
-    if (MO.isUse()) {
-      Uses.insert(Reg);
-      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
-        Uses.insert(*AS);
-    } else {
-      if (Uses.count(Reg)) {
-        Uses.erase(Reg);
-        for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-          Uses.erase(*SR); // Use getSubRegisters to be conservative
-        Defs.insert(Reg);
-        for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
-          Defs.insert(*AS);
-      }
-    }
-  }
-
-  return PI;
-}
-
-/// HoistCommonCodeInSuccs - If the successors of MBB has common instruction
-/// sequence at the start of the function, move the instructions before MBB
-/// terminator if it's legal.
-bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
-  MachineBasicBlock *TBB = 0, *FBB = 0;
-  SmallVector<MachineOperand, 4> Cond;
-  if (TII->AnalyzeBranch(*MBB, TBB, FBB, Cond, true) || !TBB || Cond.empty())
-    return false;
-
-  if (!FBB) FBB = findFalseBlock(MBB, TBB);
-  if (!FBB)
-    // Malformed bcc? True and false blocks are the same?
-    return false;
-
-  // Restrict the optimization to cases where MBB is the only predecessor,
-  // it is an obvious win.
-  if (TBB->pred_size() > 1 || FBB->pred_size() > 1)
-    return false;
-
-  // Find a suitable position to hoist the common instructions to. Also figure
-  // out which registers are used or defined by instructions from the insertion
-  // point to the end of the block.
-  SmallSet<unsigned, 4> Uses, Defs;
-  MachineBasicBlock::iterator Loc =
-    findHoistingInsertPosAndDeps(MBB, TII, TRI, Uses, Defs);
-  if (Loc == MBB->end())
-    return false;
-
-  SmallSet<unsigned, 4> LocalDefs;
-  unsigned NumDups = 0;
-  MachineBasicBlock::iterator TIB = TBB->begin();
-  MachineBasicBlock::iterator FIB = FBB->begin();
-  MachineBasicBlock::iterator TIE = TBB->end();
-  MachineBasicBlock::iterator FIE = FBB->end();
-  while (TIB != TIE && FIB != FIE) {
-    // Skip dbg_value instructions. These do not count.
-    if (TIB->isDebugValue()) {
-      while (TIB != TIE && TIB->isDebugValue())
-        ++TIB;
-      if (TIB == TIE)
-        break;
-    }
-    if (FIB->isDebugValue()) {
-      while (FIB != FIE && FIB->isDebugValue())
-        ++FIB;
-      if (FIB == FIE)
-        break;
-    }
-    if (!TIB->isIdenticalTo(FIB))
-      break;
-
-    if (TII->isPredicated(TIB))
-      // Hard to reason about register liveness with predicated instruction.
-      break;
-
-    bool IsSafe = true;
-    for (unsigned i = 0, e = TIB->getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = TIB->getOperand(i);
-      if (!MO.isReg())
-        continue;
-      unsigned Reg = MO.getReg();
-      if (!Reg)
-        continue;
-      if (MO.isDef()) {
-        if (Uses.count(Reg)) {
-          // Avoid clobbering a register that's used by the instruction at
-          // the point of insertion.
-          IsSafe = false;
-          break;
-        }
-        if (!MO.isDead() && Defs.count(Reg)) {
-          // Don't hoist the instruction if the def would be clobber by the
-          // instruction at the point insertion. FIXME: This is overly
-          // conservative. It should be possible to hoist the instructions
-          // in BB2 in the following example:
-          // BB1:
-          // r1, eflag = op1 r2, r3
-          // brcc eflag
-          //
-          // BB2:
-          // r1 = op2, ...
-          //    = op3, r1<kill>
-          IsSafe = false;
-          break;
-        }
-        LocalDefs.insert(Reg);
-        for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-          LocalDefs.insert(*SR);
-      } else if (!LocalDefs.count(Reg)) {
-        if (Defs.count(Reg)) {
-          // Use is defined by the instruction at the point of insertion.
-          IsSafe = false;
-          break;
-        }
-      }
-    }
-    if (!IsSafe)
-      break;
-
-    bool DontMoveAcrossStore = true;
-    if (!TIB->isSafeToMove(TII, 0, DontMoveAcrossStore))
-      break;
-
-    ++NumDups;
-    ++TIB;
-    ++FIB;
-  }
-
-  if (!NumDups)
-    return false;
-
-  MBB->splice(Loc, TBB, TBB->begin(), TIB);
-  FBB->erase(FBB->begin(), FIB);
-  ++NumHoist;
-  return true;
 }
