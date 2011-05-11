@@ -1482,6 +1482,22 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   }
 }
 
+static const unsigned int AtomicOpcTbl[1][11] = {
+  {
+    X86::LOCK_OR8mi,
+    X86::LOCK_OR8mr,
+    X86::LOCK_OR16mi8,
+    X86::LOCK_OR16mi,
+    X86::LOCK_OR16mr,
+    X86::LOCK_OR32mi8,
+    X86::LOCK_OR32mi,
+    X86::LOCK_OR32mr,
+    X86::LOCK_OR64mi8,
+    X86::LOCK_OR64mi32,
+    X86::LOCK_OR64mr
+  }
+};
+
 SDNode *X86DAGToDAGISel::SelectAtomicLoadOr(SDNode *Node, EVT NVT) {
   if (Node->hasAnyUseOfValue(0))
     return 0;
@@ -1504,41 +1520,43 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadOr(SDNode *Node, EVT NVT) {
     Val = CurDAG->getTargetConstant(CN->getSExtValue(), NVT);
   }
   
+  // Which index into the table.
+  unsigned index = 0;  
   unsigned Opc = 0;
   switch (NVT.getSimpleVT().SimpleTy) {
     default: return 0;
     case MVT::i8:
       if (isCN)
-        Opc = X86::LOCK_OR8mi;
+        Opc = AtomicOpcTbl[index][0];
       else
-        Opc = X86::LOCK_OR8mr;
+        Opc = AtomicOpcTbl[index][1];
       break;
     case MVT::i16:
       if (isCN) {
         if (immSext8(Val.getNode()))
-          Opc = X86::LOCK_OR16mi8;
+          Opc = AtomicOpcTbl[index][2];
         else
-          Opc = X86::LOCK_OR16mi;
+          Opc = AtomicOpcTbl[index][3];
       } else
-        Opc = X86::LOCK_OR16mr;
+        Opc = AtomicOpcTbl[index][4];
       break;
     case MVT::i32:
       if (isCN) {
         if (immSext8(Val.getNode()))
-          Opc = X86::LOCK_OR32mi8;
+          Opc = AtomicOpcTbl[index][5];
         else
-          Opc = X86::LOCK_OR32mi;
+          Opc = AtomicOpcTbl[index][6];
       } else
-        Opc = X86::LOCK_OR32mr;
+        Opc = AtomicOpcTbl[index][7];
       break;
     case MVT::i64:
       if (isCN) {
         if (immSext8(Val.getNode()))
-          Opc = X86::LOCK_OR64mi8;
+          Opc = AtomicOpcTbl[index][8];
         else if (i64immSExt32(Val.getNode()))
-          Opc = X86::LOCK_OR64mi32;
+          Opc = AtomicOpcTbl[index][9];
       } else
-        Opc = X86::LOCK_OR64mr;
+        Opc = AtomicOpcTbl[index][10];
       break;
   }
   
