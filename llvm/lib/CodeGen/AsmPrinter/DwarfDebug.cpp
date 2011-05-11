@@ -1483,12 +1483,17 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   if (!MI->isDebugValue()) {
     DebugLoc DL = MI->getDebugLoc();
     if (DL != PrevInstLoc && (!DL.isUnknown() || UnknownLocations)) {
+      unsigned Flags = DWARF2_FLAG_IS_STMT;
       PrevInstLoc = DL;
+      if (DL == PrologEndLoc) {
+        Flags |= DWARF2_FLAG_PROLOGUE_END;
+        PrologEndLoc = DebugLoc();
+      }
       if (!DL.isUnknown()) {
         const MDNode *Scope = DL.getScope(Asm->MF->getFunction()->getContext());
-        recordSourceLine(DL.getLine(), DL.getCol(), Scope);
+        recordSourceLine(DL.getLine(), DL.getCol(), Scope, Flags);
       } else
-        recordSourceLine(0, 0, 0);
+        recordSourceLine(0, 0, 0, 0);
     }
   }
 
@@ -1800,26 +1805,21 @@ void DwarfDebug::identifyScopeMarkers() {
   }
 }
 
-/// FindFirstDebugLoc - Find the first debug location in the function. This
-/// is intended to be an approximation for the source position of the
-/// beginning of the function.
-static DebugLoc FindFirstDebugLoc(const MachineFunction *MF) {
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
-       I != E; ++I)
-    for (MachineBasicBlock::const_iterator MBBI = I->begin(), MBBE = I->end();
-         MBBI != MBBE; ++MBBI) {
-      DebugLoc DL = MBBI->getDebugLoc();
-      if (!DL.isUnknown())
-        return DL;
-    }
-  return DebugLoc();
-}
-
 /// getScopeNode - Get MDNode for DebugLoc's scope.
 static MDNode *getScopeNode(DebugLoc DL, const LLVMContext &Ctx) {
   if (MDNode *InlinedAt = DL.getInlinedAt(Ctx))
     return getScopeNode(DebugLoc::getFromDILocation(InlinedAt), Ctx);
   return DL.getScope(Ctx);
+}
+
+/// getFnDebugLoc - Walk up the scope chain of given debug loc and find
+/// line number  info for the function.
+static DebugLoc getFnDebugLoc(DebugLoc DL, const LLVMContext &Ctx) {
+  const MDNode *Scope = getScopeNode(DL, Ctx);
+  DISubprogram SP = getDISubprogram(Scope);
+  if (SP.Verify()) 
+    return DebugLoc::get(SP.getLineNumber(), 0, SP);
+  return DebugLoc();
 }
 
 /// beginFunction - Gather pre-function debug information.  Assumes being
@@ -1833,35 +1833,11 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // Assumes in correct section after the entry point.
   Asm->OutStreamer.EmitLabel(FunctionBeginSym);
 
-  // Emit label for the implicitly defined dbg.stoppoint at the start of the
-  // function.
-  DebugLoc FDL = FindFirstDebugLoc(MF);
-  if (FDL.isUnknown()) return;
-
-  const MDNode *Scope = getScopeNode(FDL, MF->getFunction()->getContext());
-  const MDNode *TheScope = 0;
-
-  DISubprogram SP = getDISubprogram(Scope);
-  unsigned Line, Col;
-  if (SP.Verify()) {
-    Line = SP.getLineNumber();
-    Col = 0;
-    TheScope = SP;
-  } else {
-    Line = FDL.getLine();
-    Col = FDL.getCol();
-    TheScope = Scope;
-  }
-
-  recordSourceLine(Line, Col, TheScope);
-
   assert(UserVariables.empty() && DbgValues.empty() && "Maps weren't cleaned");
 
   /// ProcessedArgs - Collection of arguments already processed.
   SmallPtrSet<const MDNode *, 8> ProcessedArgs;
-
   const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
-
   /// LiveUserVar - Map physreg numbers to the MDNode they contain.
   std::vector<const MDNode*> LiveUserVar(TRI->getNumRegs());
 
@@ -1926,6 +1902,11 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
         // Not a DBG_VALUE instruction.
         if (!MI->isLabel())
           AtBlockEntry = false;
+
+        // First known non DBG_VALUE location marks beginning of function
+        // body.
+        if (PrologEndLoc.isUnknown() && !MI->getDebugLoc().isUnknown())
+          PrologEndLoc = MI->getDebugLoc();
 
         // Check if the instruction clobbers any registers with debug vars.
         for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
@@ -1995,6 +1976,15 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   PrevInstLoc = DebugLoc();
   PrevLabel = FunctionBeginSym;
+
+  // Record beginning of function.
+  if (!PrologEndLoc.isUnknown()) {
+    DebugLoc FnStartDL = getFnDebugLoc(PrologEndLoc,
+                                       MF->getFunction()->getContext());
+    recordSourceLine(FnStartDL.getLine(), FnStartDL.getCol(),
+                     FnStartDL.getScope(MF->getFunction()->getContext()),
+                     DWARF2_FLAG_IS_STMT);
+  }
 }
 
 /// endFunction - Gather and emit post-function debug information.
@@ -2109,7 +2099,8 @@ DbgScope *DwarfDebug::findDbgScope(const MachineInstr *MInsn) {
 /// recordSourceLine - Register a source line with debug info. Returns the
 /// unique label that was emitted and which provides correspondence to
 /// the source line list.
-void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S){
+void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
+                                  unsigned Flags) {
   StringRef Fn;
   StringRef Dir;
   unsigned Src = 1;
@@ -2137,7 +2128,7 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S){
 
     Src = GetOrCreateSourceID(Fn, Dir);
   }
-  Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, DWARF2_FLAG_IS_STMT,
+  Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags,
                                          0, 0, Fn);
 }
 

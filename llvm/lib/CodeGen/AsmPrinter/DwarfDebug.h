@@ -253,6 +253,10 @@ class DwarfDebug {
   DebugLoc PrevInstLoc;
   MCSymbol *PrevLabel;
 
+  /// PrologEndLoc - This location indicates end of function prologue and
+  /// beginning of function body.
+  DebugLoc PrologEndLoc;
+
   struct FunctionDebugFrameInfo {
     unsigned Number;
     std::vector<MachineMove> Moves;
@@ -402,7 +406,8 @@ private:
   /// recordSourceLine - Register a source line with debug info. Returns the
   /// unique label that was emitted and which provides correspondence to
   /// the source line list.
-  void recordSourceLine(unsigned Line, unsigned Col, const MDNode *Scope);
+  void recordSourceLine(unsigned Line, unsigned Col, const MDNode *Scope,
+                        unsigned Flags);
   
   /// recordVariableFrameIndex - Record a variable's index.
   void recordVariableFrameIndex(const DbgVariable *V, int Index);
