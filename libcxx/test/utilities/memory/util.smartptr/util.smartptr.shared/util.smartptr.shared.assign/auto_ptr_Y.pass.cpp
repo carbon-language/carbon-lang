@@ -47,7 +47,7 @@ int main()
         A* ptrA = pA.get();
         {
             std::shared_ptr<B> pB(new B);
-            pB = pA;
+            pB = std::move(pA);
             assert(B::count == 1);
             assert(A::count == 1);
             assert(pB.use_count() == 1);
@@ -64,7 +64,7 @@ int main()
         A* ptrA = pA.get();
         {
             std::shared_ptr<B> pB(new B);
-            pB = pA;
+            pB = std::move(pA);
             assert(B::count == 0);
             assert(A::count == 0);
             assert(pB.use_count() == 1);
@@ -81,7 +81,7 @@ int main()
         A* ptrA = pA.get();
         {
             std::shared_ptr<B> pB;
-            pB = pA;
+            pB = std::move(pA);
             assert(B::count == 1);
             assert(A::count == 1);
             assert(pB.use_count() == 1);
@@ -98,7 +98,7 @@ int main()
         A* ptrA = pA.get();
         {
             std::shared_ptr<B> pB;
-            pB = pA;
+            pB = std::move(pA);
             assert(B::count == 0);
             assert(A::count == 0);
             assert(pB.use_count() == 1);

@@ -794,7 +794,7 @@ struct _LIBCPP_VISIBLE pointer_traits
     typedef typename __pointer_traits_difference_type<pointer>::type difference_type;
 
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-    template <class _Up> using rebind = __pointer_traits_rebind<pointer, _Up>::type;
+    template <class _Up> using rebind = typename __pointer_traits_rebind<pointer, _Up>::type;
 #else
     template <class _Up> struct rebind
         {typedef typename __pointer_traits_rebind<pointer, _Up>::type other;};
@@ -1331,7 +1331,7 @@ struct _LIBCPP_VISIBLE allocator_traits
 
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
     template <class _Tp> using rebind_alloc =
-                           __allocator_traits_rebind<allocator_type, _Tp>::type;
+                  typename __allocator_traits_rebind<allocator_type, _Tp>::type;
     template <class _Tp> using rebind_traits = allocator_traits<rebind_alloc<_Tp>>;
 #else  // _LIBCPP_HAS_NO_TEMPLATE_ALIASES
     template <class _Tp> struct rebind_alloc
@@ -3338,7 +3338,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>&
 shared_ptr<_Tp>::operator=(auto_ptr<_Yp>&& __r)
 {
-    shared_ptr(__r).swap(*this);
+    shared_ptr(_STD::move(__r)).swap(*this);
     return *this;
 }
 

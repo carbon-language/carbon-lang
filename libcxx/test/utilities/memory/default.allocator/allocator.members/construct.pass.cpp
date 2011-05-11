@@ -64,7 +64,7 @@ public:
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     move_only(move_only&&) {++move_only_constructed;}
-    move_only& operator=(move_only&&) {}
+    move_only& operator=(move_only&&) {return *this;}
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     operator std::__rv<move_only> () {return std::__rv<move_only>(*this);}
     move_only(std::__rv<move_only>) {++move_only_constructed;}
