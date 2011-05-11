@@ -2151,7 +2151,7 @@ ARMTargetLowering::LowerEH_SJLJ_DISPATCHSETUP(SDValue Op, SelectionDAG &DAG)
   const {
   DebugLoc dl = Op.getDebugLoc();
   return DAG.getNode(ARMISD::EH_SJLJ_DISPATCHSETUP, dl, MVT::Other,
-                     Op.getOperand(0));
+                     Op.getOperand(0), Op.getOperand(1));
 }
 
 SDValue

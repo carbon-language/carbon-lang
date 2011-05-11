@@ -58,7 +58,7 @@ def SDT_ARMEH_SJLJ_Setjmp : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisPtrTy<1>,
                                                  SDTCisInt<2>]>;
 def SDT_ARMEH_SJLJ_Longjmp: SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisInt<1>]>;
 
-def SDT_ARMEH_SJLJ_DispatchSetup: SDTypeProfile<0, 0, []>;
+def SDT_ARMEH_SJLJ_DispatchSetup: SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
 def SDT_ARMMEMBARRIER     : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
@@ -3786,8 +3786,8 @@ def Int_eh_sjlj_longjmp : PseudoInst<(outs), (ins GPR:$src, GPR:$scratch),
 // that need the instruction size).
 let isBarrier = 1, hasSideEffects = 1 in
 def Int_eh_sjlj_dispatchsetup :
- PseudoInst<(outs), (ins), NoItinerary,
-            [(ARMeh_sjlj_dispatchsetup)]>,
+ PseudoInst<(outs), (ins GPR:$src), NoItinerary,
+            [(ARMeh_sjlj_dispatchsetup GPR:$src)]>,
               Requires<[IsDarwin]>;
 
 //===----------------------------------------------------------------------===//

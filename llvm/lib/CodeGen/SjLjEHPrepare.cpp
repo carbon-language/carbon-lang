@@ -520,7 +520,7 @@ bool SjLjEHPass::insertSjLjEHSupport(Function &F) {
 
   // Add a call to dispatch_setup after the setjmp call. This is expanded to any
   // target-specific setup that needs to be done.
-  CallInst::Create(DispatchSetupFn, "", EntryBB->getTerminator());
+  CallInst::Create(DispatchSetupFn, DispatchVal, "", EntryBB->getTerminator());
 
   // check the return value of the setjmp. non-zero goes to dispatcher.
   Value *IsNormal = new ICmpInst(EntryBB->getTerminator(),

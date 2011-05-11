@@ -4403,7 +4403,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::eh_sjlj_dispatch_setup: {
     DAG.setRoot(DAG.getNode(ISD::EH_SJLJ_DISPATCHSETUP, dl, MVT::Other,
-                            getRoot()));
+                            getRoot(), getValue(I.getArgOperand(0))));
     return 0;
   }
 
