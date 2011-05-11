@@ -1514,9 +1514,11 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   if (DestType->isIntegralType(Self.Context)) {
     assert(srcIsPtr && "One type must be a pointer");
     // C++ 5.2.10p4: A pointer can be explicitly converted to any integral
-    //   type large enough to hold it.
-    if (Self.Context.getTypeSize(SrcType) >
-        Self.Context.getTypeSize(DestType)) {
+    //   type large enough to hold it; except in Microsoft mode, where the
+    //   integral type size doesn't matter.
+    if ((Self.Context.getTypeSize(SrcType) >
+         Self.Context.getTypeSize(DestType)) &&
+         !Self.getLangOptions().Microsoft) {
       msg = diag::err_bad_reinterpret_cast_small_int;
       return TC_Failed;
     }

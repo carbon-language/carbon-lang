@@ -189,3 +189,11 @@ void function_to_voidptr_conv() {
    void *a2 = &function_prototype;
    void *a3 = function_ptr;
 }
+
+
+void pointer_to_integral_type_conv(char* ptr) {
+   char ch = (char)ptr;
+   short sh = (short)ptr;
+   ch = (char)ptr;
+   sh = (short)ptr;
+} 
