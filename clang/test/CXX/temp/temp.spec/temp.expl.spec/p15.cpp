@@ -20,3 +20,14 @@ NonDefaultConstructible &test(bool b) {
   return b? X<NonDefaultConstructible, int>::member // expected-note{{instantiation}}
           : X<NonDefaultConstructible, long>::member;
 }
+
+namespace rdar9422013 {
+  template<int>
+  struct X {
+    struct Inner {
+      static unsigned array[17];
+    };
+  };
+
+  template<> unsigned X<1>::Inner::array[]; // okay
+}

@@ -1614,6 +1614,11 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
     // expect to see.
     TemplateParameterList *ExpectedTemplateParams = 0;
 
+    // C++0x [temp.expl.spec]p15:
+    //   A member or a member template may be nested within many enclosing 
+    //   class templates. In an explicit specialization for such a member, the 
+    //   member declaration shall be preceded by a template<> for each 
+    //   enclosing class template that is explicitly specialized.
     if (CXXRecordDecl *Record = T->getAsCXXRecordDecl()) {
       if (ClassTemplatePartialSpecializationDecl *Partial
             = dyn_cast<ClassTemplatePartialSpecializationDecl>(Record)) {
@@ -1637,10 +1642,11 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
           break;
       } else if (Record->getTemplateSpecializationKind()) {
         if (Record->getTemplateSpecializationKind() 
-                                                  != TSK_ExplicitSpecialization)
-          NeedEmptyTemplateHeader = true;
-        else
-          break;
+                                                != TSK_ExplicitSpecialization &&
+            TypeIdx == NumTypes - 1)
+          IsExplicitSpecialization = true;
+        
+        continue;
       }
     } else if (const TemplateSpecializationType *TST
                                      = T->getAs<TemplateSpecializationType>()) {

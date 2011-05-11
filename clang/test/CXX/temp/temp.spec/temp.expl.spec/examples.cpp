@@ -165,3 +165,4 @@ namespace PR9877 {
   const int X<0>::Y::Z;
   template<> const int X<1>::Y::Z; // expected-error{{extraneous 'template<>' in declaration of variable 'Z'}}
 }
+
