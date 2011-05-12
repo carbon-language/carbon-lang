@@ -4739,7 +4739,8 @@ public:
   void CheckForwardProtocolDeclarationForCircularDependency(
     IdentifierInfo *PName,
     SourceLocation &PLoc, SourceLocation PrevLoc,
-    const ObjCList<ObjCProtocolDecl> &PList);
+    const ObjCList<ObjCProtocolDecl> &PList,
+    bool &err);
 
   Decl *ActOnStartProtocolInterface(
                     SourceLocation AtProtoInterfaceLoc,
