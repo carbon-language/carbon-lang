@@ -9866,7 +9866,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
 
     MarkVTableUsed(Loc, Constructor->getParent());
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
-    if (Destructor->isImplicit() && !Destructor->isUsed(false))
+    if (Destructor->isDefaulted() && !Destructor->isUsed(false))
       DefineImplicitDestructor(Loc, Destructor);
     if (Destructor->isVirtual())
       MarkVTableUsed(Loc, Destructor->getParent());

@@ -3629,7 +3629,9 @@ def warn_explicit_conversion_functions : Warning<
 def err_defaulted_default_ctor_params : Error<
   "an explicitly-defaulted default constructor must have no parameters">;
 def err_incorrect_defaulted_exception_spec : Error<
-  "exception specification of explicitly defaulted function is incorrect">;
+  "exception specification of explicitly defaulted %select{default constructor|"
+  "copy constructor|copy assignment operator|destructor}0 does not match the "
+  "calculated one">;
 def err_out_of_line_default_deletes : Error<
   "defaulting this %select{default constructor|copy constructor|copy "
   "assignment operator|destructor}0 would delete it after its first "

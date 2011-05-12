@@ -2582,9 +2582,17 @@ public:
   ImplicitExceptionSpecification
   ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl);
 
+  /// \brief Determine what sort of exception specification a defaulted
+  /// destructor of a class will have.
+  ImplicitExceptionSpecification
+  ComputeDefaultedDtorExceptionSpec(CXXRecordDecl *ClassDecl);
+
   /// \brief Determine if a defaulted default constructor ought to be
   /// deleted.
-  bool ShouldDeleteDefaultConstructor(CXXConstructorDecl *RD);
+  bool ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD);
+
+  /// \brief Determine if a defaulted destructor ought to be deleted.
+  bool ShouldDeleteDestructor(CXXDestructorDecl *DD);
 
   /// \brief Declare the implicit default constructor for the given class.
   ///
@@ -2794,7 +2802,8 @@ public:
                                        bool addMallocAttr = false);
 
   bool FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
-                                DeclarationName Name, FunctionDecl* &Operator);
+                                DeclarationName Name, FunctionDecl* &Operator,
+                                bool AllowMissing = false);
 
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
   ExprResult ActOnCXXDelete(SourceLocation StartLoc,
@@ -3259,6 +3268,7 @@ public:
 
   void CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record);
   void CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *Ctor);
+  void CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *Dtor);
 
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes
@@ -3347,7 +3357,8 @@ public:
   AccessResult CheckAllocationAccess(SourceLocation OperatorLoc,
                                      SourceRange PlacementRange,
                                      CXXRecordDecl *NamingClass,
-                                     DeclAccessPair FoundDecl);
+                                     DeclAccessPair FoundDecl,
+                                     bool Diagnose = true);
   AccessResult CheckConstructorAccess(SourceLocation Loc,
                                       CXXConstructorDecl *D,
                                       const InitializedEntity &Entity,

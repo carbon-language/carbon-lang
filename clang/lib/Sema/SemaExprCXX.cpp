@@ -1569,7 +1569,7 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 
 bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
                                     DeclarationName Name,
-                                    FunctionDecl* &Operator) {
+                                    FunctionDecl* &Operator, bool AllowMissing) {
   LookupResult Found(*this, Name, StartLoc, LookupOrdinaryName);
   // Try to find operator delete/operator delete[] in class scope.
   LookupQualifiedName(Found, RD);
@@ -1597,32 +1597,35 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
   if (Matches.size() == 1) {
     Operator = cast<CXXMethodDecl>(Matches[0]->getUnderlyingDecl());
     CheckAllocationAccess(StartLoc, SourceRange(), Found.getNamingClass(),
-                          Matches[0]);
+                          Matches[0], !AllowMissing);
     return false;
 
   // We found multiple suitable operators;  complain about the ambiguity.
   } else if (!Matches.empty()) {
-    Diag(StartLoc, diag::err_ambiguous_suitable_delete_member_function_found)
-      << Name << RD;
+    if (!AllowMissing) {
+      Diag(StartLoc, diag::err_ambiguous_suitable_delete_member_function_found)
+        << Name << RD;
 
-    for (llvm::SmallVectorImpl<DeclAccessPair>::iterator
-           F = Matches.begin(), FEnd = Matches.end(); F != FEnd; ++F)
-      Diag((*F)->getUnderlyingDecl()->getLocation(),
-           diag::note_member_declared_here) << Name;
+      for (llvm::SmallVectorImpl<DeclAccessPair>::iterator
+             F = Matches.begin(), FEnd = Matches.end(); F != FEnd; ++F)
+        Diag((*F)->getUnderlyingDecl()->getLocation(),
+             diag::note_member_declared_here) << Name;
+    }
     return true;
   }
 
   // We did find operator delete/operator delete[] declarations, but
   // none of them were suitable.
   if (!Found.empty()) {
-    Diag(StartLoc, diag::err_no_suitable_delete_member_function_found)
-      << Name << RD;
+    if (!AllowMissing) {
+      Diag(StartLoc, diag::err_no_suitable_delete_member_function_found)
+        << Name << RD;
 
-    for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
-         F != FEnd; ++F)
-      Diag((*F)->getUnderlyingDecl()->getLocation(),
-           diag::note_member_declared_here) << Name;
-
+      for (LookupResult::iterator F = Found.begin(), FEnd = Found.end();
+           F != FEnd; ++F)
+        Diag((*F)->getUnderlyingDecl()->getLocation(),
+             diag::note_member_declared_here) << Name;
+    }
     return true;
   }
 
@@ -1634,7 +1637,7 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
   Expr* DeallocArgs[1];
   DeallocArgs[0] = &Null;
   if (FindAllocationOverload(StartLoc, SourceRange(), Name,
-                             DeallocArgs, 1, TUDecl, /*AllowMissing=*/false,
+                             DeallocArgs, 1, TUDecl, AllowMissing,
                              Operator))
     return true;
 
