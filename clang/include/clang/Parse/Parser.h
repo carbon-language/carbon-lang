@@ -1000,7 +1000,7 @@ private:
 
   DeclGroupPtrTy ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
                                           ParsingDeclSpec *DS = 0);
-  bool isDeclarationAfterDeclarator() const;
+  bool isDeclarationAfterDeclarator();
   bool isStartOfFunctionDefinition(const ParsingDeclarator &Declarator);
   DeclGroupPtrTy ParseDeclarationOrFunctionDefinition(ParsedAttributes &attrs,
                                                   AccessSpecifier AS = AS_none);

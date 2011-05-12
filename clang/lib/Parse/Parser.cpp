@@ -677,7 +677,14 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
 
 /// \brief Determine whether the current token, if it occurs after a
 /// declarator, continues a declaration or declaration list.
-bool Parser::isDeclarationAfterDeclarator() const {
+bool Parser::isDeclarationAfterDeclarator() {
+  // Check for '= delete' or '= default'
+  if (getLang().CPlusPlus && Tok.is(tok::equal)) {
+    const Token &KW = NextToken();
+    if (KW.is(tok::kw_default) || KW.is(tok::kw_delete))
+      return false;
+  }
+
   return Tok.is(tok::equal) ||      // int X()=  -> not a function def
     Tok.is(tok::comma) ||           // int X(),  -> not a function def
     Tok.is(tok::semi)  ||           // int X();  -> not a function def
@@ -698,6 +705,11 @@ bool Parser::isStartOfFunctionDefinition(const ParsingDeclarator &Declarator) {
   if (!getLang().CPlusPlus &&
       Declarator.getFunctionTypeInfo().isKNRPrototype()) 
     return isDeclarationSpecifier();
+
+  if (getLang().CPlusPlus && Tok.is(tok::equal)) {
+    const Token &KW = NextToken();
+    return KW.is(tok::kw_default) || KW.is(tok::kw_delete);
+  }
   
   return Tok.is(tok::colon) ||         // X() : Base() {} (used for ctors)
          Tok.is(tok::kw_try);          // X() try { ... }
@@ -819,6 +831,73 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   // int foo(a,b) int a; float b; {}
   if (FTI.isKNRPrototype())
     ParseKNRParamDeclarations(D);
+
+  if (Tok.is(tok::equal)) {
+    assert(getLang().CPlusPlus && "Only C++ function definitions have '='");
+    ConsumeToken();
+
+    Decl *Decl = 0;
+    // Here we complete the declaration as if it were normal
+    switch (TemplateInfo.Kind) {
+    case ParsedTemplateInfo::NonTemplate:
+      Decl = Actions.ActOnDeclarator(getCurScope(), D, true);
+      break;
+
+    case ParsedTemplateInfo::Template:
+    case ParsedTemplateInfo::ExplicitSpecialization:
+      Decl = Actions.ActOnTemplateDeclarator(getCurScope(),
+                                   MultiTemplateParamsArg(Actions,
+                                          TemplateInfo.TemplateParams->data(),
+                                          TemplateInfo.TemplateParams->size()),
+                                             D);
+      break;
+
+    case ParsedTemplateInfo::ExplicitInstantiation: {
+      DeclResult Result
+        = Actions.ActOnExplicitInstantiation(getCurScope(),
+                                             TemplateInfo.ExternLoc,
+                                             TemplateInfo.TemplateLoc,
+                                             D);
+      if (Result.isInvalid()) {
+        SkipUntil(tok::semi);
+        return 0;
+      }
+
+      Decl = Result.get();
+      break;
+    }
+    }
+      
+    bool Delete = false;
+    SourceLocation KWLoc;
+    if (Tok.is(tok::kw_delete)) {
+      if (!getLang().CPlusPlus0x)
+        Diag(Tok, diag::warn_deleted_function_accepted_as_extension);
+
+      KWLoc = ConsumeToken();
+      Actions.SetDeclDeleted(Decl, KWLoc);
+      Delete = true;
+    } else if (Tok.is(tok::kw_default)) {
+      if (!getLang().CPlusPlus0x)
+        Diag(Tok, diag::warn_defaulted_function_accepted_as_extension);
+
+      KWLoc = ConsumeToken();
+      Actions.SetDeclDefaulted(Decl, KWLoc);
+    } else {
+      llvm_unreachable("function definition after = not 'delete' or 'default'");
+    }
+
+    if (Tok.is(tok::comma)) {
+      Diag(KWLoc, diag::err_default_delete_in_multiple_declaration)
+        << Delete;
+      SkipUntil(tok::semi);
+    } else {
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+                       Delete ? "delete" : "default", tok::semi);
+    }
+
+    return Decl;
+  }
 
   // We should have either an opening brace or, in a C++ constructor,
   // we may have a colon.

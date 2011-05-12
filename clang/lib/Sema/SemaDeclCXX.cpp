@@ -1025,8 +1025,7 @@ Decl *
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
                                ExprTy *BW, const VirtSpecifiers &VS,
-                               ExprTy *InitExpr, bool IsDefinition,
-                               bool Deleted, SourceLocation DefaultLoc) {
+                               ExprTy *InitExpr, bool IsDefinition) {
   const DeclSpec &DS = D.getDeclSpec();
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -1091,9 +1090,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (isInstField) {
     CXXScopeSpec &SS = D.getCXXScopeSpec();
     
-    if (DefaultLoc.isValid())
-      Diag(DefaultLoc, diag::err_default_special_members);
-    
     if (SS.isSet() && !SS.isInvalid()) {
       // The user provided a superfluous scope specifier inside a class
       // definition:
@@ -1118,8 +1114,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                          AS);
     assert(Member && "HandleField never returns null");
   } else {
-    Member = HandleDeclarator(S, D, move(TemplateParameterLists), IsDefinition,
-                              DefaultLoc);
+    Member = HandleDeclarator(S, D, move(TemplateParameterLists), IsDefinition);
     if (!Member) {
       return 0;
     }
@@ -1189,8 +1184,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   if (Init)
     AddInitializerToDecl(Member, Init, false,
                          DS.getTypeSpecType() == DeclSpec::TST_auto);
-  if (Deleted) // FIXME: Source location is not very good.
-    SetDeclDeleted(Member, D.getSourceRange().getBegin());
 
   FinalizeDeclaration(Member);
 
@@ -7863,6 +7856,39 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     // recovery.
   }
   Fn->setDeletedAsWritten();
+}
+
+void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Dcl);
+
+  if (MD) {
+    CXXSpecialMember Member = getSpecialMember(MD);
+    if (Member == CXXInvalid) {
+      Diag(DefaultLoc, diag::err_default_special_members);
+      return;
+    }
+
+    MD->setDefaulted();
+    MD->setExplicitlyDefaulted();
+
+    // We'll check it when the record is done
+    if (MD == MD->getCanonicalDecl())
+      return;
+
+    switch (Member) {
+    case CXXDefaultConstructor: {
+      CXXConstructorDecl *CD = cast<CXXConstructorDecl>(MD);
+      CheckExplicitlyDefaultedDefaultConstructor(CD);
+      DefineImplicitDefaultConstructor(DefaultLoc, CD);
+      break;
+    }
+    default:
+      // FIXME: Do the rest once we have functions
+      break;
+    }
+  } else {
+    Diag(DefaultLoc, diag::err_default_special_members);
+  }
 }
 
 static void SearchForReturnInStmt(Sema &Self, Stmt *S) {

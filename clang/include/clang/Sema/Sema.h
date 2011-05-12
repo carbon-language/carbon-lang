@@ -931,12 +931,12 @@ public:
                                   SourceLocation NameLoc,
                                   const Token &NextToken);
   
-  Decl *ActOnDeclarator(Scope *S, Declarator &D);
+  Decl *ActOnDeclarator(Scope *S, Declarator &D,
+                        bool IsFunctionDefintion = false);
 
   Decl *HandleDeclarator(Scope *S, Declarator &D,
                          MultiTemplateParamsArg TemplateParameterLists,
-                         bool IsFunctionDefinition,
-                         SourceLocation DefaultLoc = SourceLocation());
+                         bool IsFunctionDefinition);
   void RegisterLocallyScopedExternCDecl(NamedDecl *ND,
                                         const LookupResult &Previous,
                                         Scope *S);
@@ -964,8 +964,7 @@ public:
                                      LookupResult &Previous,
                                      MultiTemplateParamsArg TemplateParamLists,
                                      bool IsFunctionDefinition,
-                                     bool &Redeclaration,
-                                   SourceLocation DefaultLoc = SourceLocation());
+                                     bool &Redeclaration);
   bool AddOverriddenMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
   void DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
   void CheckFunctionDeclaration(Scope *S,
@@ -997,6 +996,7 @@ public:
   void ActOnInitializerError(Decl *Dcl);
   void ActOnCXXForRangeDecl(Decl *D);
   void SetDeclDeleted(Decl *dcl, SourceLocation DelLoc);
+  void SetDeclDefaulted(Decl *dcl, SourceLocation DefaultLoc);
   void FinalizeDeclaration(Decl *D);
   DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
                                          Decl **Group,
@@ -3126,9 +3126,7 @@ public:
                                  Declarator &D,
                                  MultiTemplateParamsArg TemplateParameterLists,
                                  Expr *BitfieldWidth, const VirtSpecifiers &VS,
-                                 Expr *Init, bool IsDefinition,
-                                 bool Deleted = false,
-                                 SourceLocation DefaultLoc = SourceLocation());
+                                 Expr *Init, bool IsDefinition);
 
   MemInitResult ActOnMemInitializer(Decl *ConstructorD,
                                     Scope *S,

@@ -2913,8 +2913,10 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   return false;
 }
 
-Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D) {
-  return HandleDeclarator(S, D, MultiTemplateParamsArg(*this), false);
+Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D,
+                            bool IsFunctionDefinition) {
+  return HandleDeclarator(S, D, MultiTemplateParamsArg(*this),
+                          IsFunctionDefinition);
 }
 
 /// DiagnoseClassNameShadow - Implement C++ [class.mem]p13:
@@ -2939,8 +2941,7 @@ bool Sema::DiagnoseClassNameShadow(DeclContext *DC,
   
 Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
                              MultiTemplateParamsArg TemplateParamLists,
-                             bool IsFunctionDefinition,
-                             SourceLocation DefaultLoc) {
+                             bool IsFunctionDefinition) {
   // TODO: consider using NameInfo for diagnostic.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -3141,9 +3142,6 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
 
   bool Redeclaration = false;
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    if (DefaultLoc.isValid())
-      Diag(DefaultLoc, diag::err_default_special_members);
-
     if (TemplateParamLists.size()) {
       Diag(D.getIdentifierLoc(), diag::err_template_typedef);
       return 0;
@@ -3153,10 +3151,8 @@ Decl *Sema::HandleDeclarator(Scope *S, Declarator &D,
   } else if (R->isFunctionType()) {
     New = ActOnFunctionDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
-                                  IsFunctionDefinition, Redeclaration,
-                                  DefaultLoc);
+                                  IsFunctionDefinition, Redeclaration);
   } else {
-    assert(!DefaultLoc.isValid() && "We should have caught this in a caller");
     New = ActOnVariableDeclarator(S, D, DC, R, TInfo, Previous,
                                   move(TemplateParamLists),
                                   Redeclaration);
@@ -4028,8 +4024,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R, TypeSourceInfo *TInfo,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
-                              bool IsFunctionDefinition, bool &Redeclaration,
-                              SourceLocation DefaultLoc) {
+                              bool IsFunctionDefinition, bool &Redeclaration) {
   assert(R.getTypePtr()->isFunctionType());
 
   // TODO: consider using NameInfo for diagnostic.
@@ -4086,8 +4081,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   bool isFunctionTemplateSpecialization = false;
 
   if (!getLangOptions().CPlusPlus) {
-    assert(!DefaultLoc.isValid() && "Defaulted functions are a C++ feature");
-
     // Determine whether the function was written with a
     // prototype. This true when:
     //   - there is a prototype in the declarator, or
@@ -4689,7 +4682,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
     } else if (!IsFunctionDefinition && D.getCXXScopeSpec().isSet() &&
                !isFriend && !isFunctionTemplateSpecialization &&
-               !isExplicitSpecialization && !DefaultLoc.isValid()) {
+               !isExplicitSpecialization) {
       // An out-of-line member function declaration must also be a
       // definition (C++ [dcl.meaning]p1).
       // Note that this is not the case for explicit specializations of
@@ -4700,8 +4693,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         << D.getCXXScopeSpec().getRange();
     }
   }
-  
-  
+ 
+ 
   // Handle attributes. We need to have merged decls when handling attributes
   // (for example to check for conflicts, etc).
   // FIXME: This needs to happen before we merge declarations. Then,
@@ -4773,16 +4766,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
           Context.setcudaConfigureCallDecl(NewFD);
         }
       }
-
-  if (DefaultLoc.isValid()) {
-    CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
-    if (MD && getSpecialMember(MD) != CXXInvalid) {
-      MD->setExplicitlyDefaulted();
-      MD->setDefaulted();
-    } else {
-      Diag(DefaultLoc, diag::err_default_special_members);
-    }
-  }
 
   return NewFD;
 }

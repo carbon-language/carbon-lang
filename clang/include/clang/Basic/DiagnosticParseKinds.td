@@ -343,6 +343,9 @@ def err_operator_string_not_empty : Error<
 // Classes.
 def err_anon_type_definition : Error<
   "declaration of anonymous %0 must be a definition">;
+def err_default_delete_in_multiple_declaration : Error<
+  "'= %select{default|delete}0' is a function definition and must occur in a "
+  "standalone declaration">;
 
 def err_cxx0x_attribute_forbids_arguments : Error<
   "C++0x attribute '%0' cannot have an argument list">;

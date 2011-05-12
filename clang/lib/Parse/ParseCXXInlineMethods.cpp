@@ -25,8 +25,9 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
                                 const VirtSpecifiers& VS, ExprResult& Init) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
-  assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) &&
-         "Current token not a '{', ':' or 'try'!");
+  assert((Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try) ||
+          Tok.is(tok::equal)) &&
+         "Current token not a '{', ':', '=', or 'try'!");
 
   MultiTemplateParamsArg TemplateParams(Actions,
           TemplateInfo.TemplateParams ? TemplateInfo.TemplateParams->data() : 0,
@@ -47,6 +48,40 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
   HandleMemberFunctionDefaultArgs(D, FnD);
 
   D.complete(FnD);
+
+  if (Tok.is(tok::equal)) {
+    ConsumeToken();
+
+    bool Delete = false;
+    SourceLocation KWLoc;
+    if (Tok.is(tok::kw_delete)) {
+      if (!getLang().CPlusPlus0x)
+        Diag(Tok, diag::warn_deleted_function_accepted_as_extension);
+
+      KWLoc = ConsumeToken();
+      Actions.SetDeclDeleted(FnD, KWLoc);
+      Delete = true;
+    } else if (Tok.is(tok::kw_default)) {
+      if (!getLang().CPlusPlus0x)
+        Diag(Tok, diag::warn_defaulted_function_accepted_as_extension);
+
+      KWLoc = ConsumeToken();
+      Actions.SetDeclDefaulted(FnD, KWLoc);
+    } else {
+      llvm_unreachable("function definition after = not 'delete' or 'default'");
+    }
+
+    if (Tok.is(tok::comma)) {
+      Diag(KWLoc, diag::err_default_delete_in_multiple_declaration)
+        << Delete;
+      SkipUntil(tok::semi);
+    } else {
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+                       Delete ? "delete" : "default", tok::semi);
+    }
+
+    return FnD;
+  }
 
   // In delayed template parsing mode, if we are within a class template
   // or if we are about to parse function member template then consume
