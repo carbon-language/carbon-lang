@@ -324,6 +324,8 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->hasWrittenPrototype());
   Record.push_back(D->isDeletedAsWritten());
   Record.push_back(D->isTrivial());
+  Record.push_back(D->isDefaulted());
+  Record.push_back(D->isExplicitlyDefaulted());
   Record.push_back(D->hasImplicitReturnZero());
   Writer.AddSourceLocation(D->getLocEnd(), Record);
 

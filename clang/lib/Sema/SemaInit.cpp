@@ -4723,6 +4723,21 @@ void InitializationSequence::dump() const {
 //===----------------------------------------------------------------------===//
 // Initialization helper functions
 //===----------------------------------------------------------------------===//
+bool
+Sema::CanPerformCopyInitialization(const InitializedEntity &Entity,
+                                   ExprResult Init) {
+  if (Init.isInvalid())
+    return false;
+
+  Expr *InitE = Init.get();
+  assert(InitE && "No initialization expression");
+
+  InitializationKind Kind = InitializationKind::CreateCopy(SourceLocation(),
+                                                           SourceLocation());
+  InitializationSequence Seq(*this, Entity, Kind, &InitE, 1);
+  return Seq.getKind() != InitializationSequence::FailedSequence;
+}
+
 ExprResult
 Sema::PerformCopyInitialization(const InitializedEntity &Entity,
                                 SourceLocation EqualLoc,

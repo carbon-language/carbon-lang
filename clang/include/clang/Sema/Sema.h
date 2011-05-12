@@ -1293,6 +1293,8 @@ public:
                                              QualType ResultType,
                                              Expr *Value);
   
+  bool CanPerformCopyInitialization(const InitializedEntity &Entity,
+                                    ExprResult Init);
   ExprResult PerformCopyInitialization(const InitializedEntity &Entity,
                                        SourceLocation EqualLoc,
                                        ExprResult Init);
@@ -2795,7 +2797,8 @@ public:
   bool FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
                               DeclarationName Name, Expr** Args,
                               unsigned NumArgs, DeclContext *Ctx,
-                              bool AllowMissing, FunctionDecl *&Operator);
+                              bool AllowMissing, FunctionDecl *&Operator,
+                              bool Diagnose = true);
   void DeclareGlobalNewDelete();
   void DeclareGlobalAllocationFunction(DeclarationName Name, QualType Return,
                                        QualType Argument,
@@ -2803,7 +2806,7 @@ public:
 
   bool FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
                                 DeclarationName Name, FunctionDecl* &Operator,
-                                bool AllowMissing = false);
+                                bool Diagnose = true);
 
   /// ActOnCXXDelete - Parsed a C++ 'delete' expression
   ExprResult ActOnCXXDelete(SourceLocation StartLoc,

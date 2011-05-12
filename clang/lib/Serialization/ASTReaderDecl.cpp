@@ -429,6 +429,8 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->HasWrittenPrototype = Record[Idx++];
   FD->IsDeleted = Record[Idx++];
   FD->IsTrivial = Record[Idx++];
+  FD->IsDefaulted = Record[Idx++];
+  FD->IsExplicitlyDefaulted = Record[Idx++];
   FD->HasImplicitReturnZero = Record[Idx++];
   FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
 

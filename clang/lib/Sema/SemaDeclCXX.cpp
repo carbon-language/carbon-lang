@@ -3109,8 +3109,6 @@ void Sema::CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *DD) {
       Diag(DD->getLocation(), diag::err_out_of_line_default_deletes)
         << 3 /* destructor */;
   }
-
-  CheckDestructor(DD);
 }
 
 bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
@@ -3257,7 +3255,7 @@ bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
               !UnionFieldRecord->hasTrivialDefaultConstructor())
             return true;
         }
-        
+
         if (AllConst)
           return true;
 
