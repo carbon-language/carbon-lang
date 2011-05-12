@@ -1351,8 +1351,6 @@ ReoptimizeBlock:
 
 /// HoistCommonCode - Hoist common instruction sequences at the start of basic
 /// blocks to their common predecessor.
-/// NOTE: This optimization does not update live-in information so it must be
-/// run after all passes that require correct liveness information.
 bool BranchFolder::HoistCommonCode(MachineFunction &MF) {
   bool MadeChange = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ) {
