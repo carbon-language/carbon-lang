@@ -1855,6 +1855,9 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 
     // Only substitute for the innermost template argument list.
     MultiLevelTemplateArgumentList TemplateArgLists;
+    unsigned Depth = AliasTemplate->getTemplateParameters()->getDepth();
+    for (unsigned I = 0; I < Depth; ++I)
+      TemplateArgLists.addOuterTemplateArguments(0, 0);
     TemplateArgLists.addOuterTemplateArguments(&TemplateArgs);
 
     InstantiatingTemplate Inst(*this, TemplateLoc, Template);
