@@ -1750,11 +1750,14 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case CallExprClass:
   case CXXOperatorCallExprClass:
   case CXXMemberCallExprClass: {
+    const CallExpr *CE = cast<CallExpr>(this);
     CanThrowResult CT;
     if (isTypeDependent())
       CT = CT_Dependent;
+    else if (isa<CXXPseudoDestructorExpr>(CE->getCallee()->IgnoreParens()))
+      CT = CT_Cannot;
     else
-      CT = CanCalleeThrow(C, cast<CallExpr>(this)->getCalleeDecl());
+      CT = CanCalleeThrow(C, CE->getCalleeDecl());
     if (CT == CT_Can)
       return CT;
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));

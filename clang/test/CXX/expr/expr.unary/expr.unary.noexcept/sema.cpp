@@ -97,6 +97,8 @@ struct Bad2 {
   void operator delete(void*) throw(int);
 };
 
+typedef int X;
+
 void implicits() {
   N(new int);
   P(new (0) int);
@@ -113,6 +115,7 @@ void implicits() {
   N(static_cast<int>(s));
   P(static_cast<float>(s));
   N(Bad1());
+  P(X().~X());
 }
 
 struct V {
