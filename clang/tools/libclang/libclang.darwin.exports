@@ -1,6 +1,7 @@
 _clang_CXCursorSet_contains
 _clang_CXCursorSet_insert
 _clang_CXXMethod_isStatic
+_clang_CXXMethod_isVirtual
 _clang_annotateTokens
 _clang_codeCompleteAt
 _clang_codeCompleteGetDiagnostic

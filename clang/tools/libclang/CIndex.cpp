@@ -5192,6 +5192,19 @@ unsigned clang_CXXMethod_isStatic(CXCursor C) {
   return (Method && Method->isStatic()) ? 1 : 0;
 }
 
+unsigned clang_CXXMethod_isVirtual(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return 0;
+  
+  CXXMethodDecl *Method = 0;
+  Decl *D = cxcursor::getCursorDecl(C);
+  if (FunctionTemplateDecl *FunTmpl = dyn_cast_or_null<FunctionTemplateDecl>(D))
+    Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
+  else
+    Method = dyn_cast_or_null<CXXMethodDecl>(D);
+  return (Method && Method->isVirtual()) ? 1 : 0;
+}
+
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
