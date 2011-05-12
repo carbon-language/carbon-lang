@@ -1241,9 +1241,14 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
+  unsigned Flags = 0;
+  if (ID->getFirstClassExtension() || 
+      (ID->getImplementation() && !ID->getImplementation()->ivar_empty()))
+    Flags |= llvm::DIDescriptor::FlagObjcClassExtension;
+
   llvm::DIType RealDecl =
     DBuilder.createStructType(Unit, ID->getName(), DefUnit,
-                                  Line, Size, Align, 0,
+                                  Line, Size, Align, Flags,
                                   Elements, RuntimeLang);
 
   // Now that we have a real decl for the struct, replace anything using the
