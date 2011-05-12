@@ -5263,6 +5263,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
                                  /*isInline=*/true,
                                  /*isImplicitlyDeclared=*/true);
   DefaultCon->setAccess(AS_public);
+  DefaultCon->setDefaulted();
   DefaultCon->setImplicit();
   DefaultCon->setTrivial(ClassDecl->hasTrivialDefaultConstructor());
   
@@ -5283,7 +5284,7 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
 
 void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                             CXXConstructorDecl *Constructor) {
-  assert((Constructor->isImplicit() && Constructor->isDefaultConstructor() &&
+  assert((Constructor->isDefaulted() && Constructor->isDefaultConstructor() &&
           !Constructor->isUsed(false) && !Constructor->isDeleted()) &&
     "DefineImplicitDefaultConstructor - call it for implicit default ctor");
 

@@ -4019,7 +4019,7 @@ InitializationSequence::Perform(Sema &S,
         // the definition for completely trivial constructors.
         CXXRecordDecl *ClassDecl = Constructor->getParent();
         assert(ClassDecl && "No parent class for constructor.");
-        if (Constructor->isImplicit() && Constructor->isDefaultConstructor() &&
+        if (Constructor->isDefaulted() && Constructor->isDefaultConstructor() &&
             ClassDecl->hasTrivialDefaultConstructor() &&
             !Constructor->isUsed(false))
           S.DefineImplicitDefaultConstructor(Loc, Constructor);
