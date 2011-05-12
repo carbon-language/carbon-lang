@@ -247,10 +247,7 @@ public:
   /// @brief Remove a region and its children from valid region set.
   ///
   /// @param R The region to remove.
-  void forgetScop(const Region &R) {
-    assert(isMaxRegionInScop(R) && "R is not a Scop!");
-    ValidRegions.erase(&R);
-  }
+  void forgetScop(const Region &R);
 
   /// @brief Mark the function as invalid so we will not extract any scop from
   ///        the function.
