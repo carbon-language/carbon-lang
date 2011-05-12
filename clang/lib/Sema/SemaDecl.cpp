@@ -1518,7 +1518,6 @@ Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
   if (MD->isCopyAssignmentOperator())
     return Sema::CXXCopyAssignment;
 
-  llvm_unreachable("getSpecialMember on non-special member");
   return Sema::CXXInvalid;
 }
 
@@ -4220,9 +4219,6 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
       isVirtualOkay = !isStatic;
     } else {
-      if (DefaultLoc.isValid())
-        Diag(DefaultLoc, diag::err_default_special_members);
-
       // Determine whether the function was written with a
       // prototype. This true when:
       //   - we're in C++ (where every function has a prototype),
@@ -4778,33 +4774,13 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         }
       }
 
-  // Check explicitly defaulted methods
-  // FIXME: This could be made better through CXXSpecialMember if it did
-  // default constructors (which it should rather than any constructor).
-  if (NewFD && DefaultLoc.isValid() && getLangOptions().CPlusPlus) {
-    if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD)) {
-      if (CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(MD)) {
-        if (CD->isDefaultConstructor() || CD->isCopyOrMoveConstructor()) {
-          CD->setDefaulted();
-          CD->setExplicitlyDefaulted();
-          if (CD != CD->getCanonicalDecl() && CD->isDefaultConstructor())
-            CheckExplicitlyDefaultedDefaultConstructor(CD);
-          // FIXME: Do copy/move ctors here.
-        } else {
-          Diag(DefaultLoc, diag::err_default_special_members);
-        }
-      } else if (CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD)) {
-        DD->setDefaulted();
-        DD->setExplicitlyDefaulted();
-        // FIXME: Add a checking method
-      } else if (MD->isCopyAssignmentOperator() /* ||
-                 MD->isMoveAssignmentOperator() */) {
-        MD->setDefaulted();
-        MD->setExplicitlyDefaulted();
-        // FIXME: Add a checking method
-      } else {
-        Diag(DefaultLoc, diag::err_default_special_members);
-      }
+  if (DefaultLoc.isValid()) {
+    CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
+    if (MD && getSpecialMember(MD) != CXXInvalid) {
+      MD->setExplicitlyDefaulted();
+      MD->setDefaulted();
+    } else {
+      Diag(DefaultLoc, diag::err_default_special_members);
     }
   }
 

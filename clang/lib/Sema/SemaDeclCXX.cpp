@@ -3057,6 +3057,14 @@ void Sema::CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *CD) {
     // We know there are no parameters.
     CD->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
   }
+
+  if (ShouldDeleteDefaultConstructor(CD)) {
+    if (First)
+      CD->setDeletedAsWritten();
+    else
+      Diag(CD->getLocation(), diag::err_out_of_line_default_deletes)
+        << getSpecialMember(CD);
+  }
 }
 
 bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {

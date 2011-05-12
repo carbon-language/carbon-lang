@@ -3632,6 +3632,10 @@ def err_defaulted_default_ctor_params : Error<
   "an explicitly-defaulted default constructor must have no parameters">;
 def err_incorrect_defaulted_exception_spec : Error<
   "exception specification of explicitly defaulted function is incorrect">;
+def err_out_of_line_default_deletes : Error<
+  "defaulting this %select{default constructor|copy constructor|copy "
+  "assignment operator|destructor}0 would delete it after its first "
+  "declaration">;
 
 def warn_array_index_precedes_bounds : Warning<
   "array index of '%0' indexes before the beginning of the array">,
