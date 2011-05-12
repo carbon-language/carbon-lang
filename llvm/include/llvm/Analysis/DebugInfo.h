@@ -58,7 +58,7 @@ namespace llvm {
       FlagArtificial         = 1 << 6,
       FlagExplicit           = 1 << 7,
       FlagPrototyped         = 1 << 8,
-      FlagObjcClassExtension = 1 << 9
+      FlagObjcClassComplete  = 1 << 9
     };
   protected:
     const MDNode *DbgNode;
@@ -272,8 +272,8 @@ namespace llvm {
     bool isArtificial() const {
       return (getFlags() & FlagArtificial) != 0;
     }
-    bool isObjcClassExtension() const {
-      return (getFlags() & FlagObjcClassExtension) != 0;
+    bool isObjcClassComplete() const {
+      return (getFlags() & FlagObjcClassComplete) != 0;
     }
     bool isValid() const {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
