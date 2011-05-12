@@ -145,17 +145,19 @@ def addr : ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], []>;
 //===----------------------------------------------------------------------===//
 
 // Arithmetic 3 register operands
-let isCommutable = 1 in
 class ArithR<bits<6> op, bits<6> func, string instr_asm, SDNode OpNode,
-             InstrItinClass itin>:
+             InstrItinClass itin, bit isComm = 0>:
   FR<op, func, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
      !strconcat(instr_asm, "\t$dst, $b, $c"),
-     [(set CPURegs:$dst, (OpNode CPURegs:$b, CPURegs:$c))], itin>;
+     [(set CPURegs:$dst, (OpNode CPURegs:$b, CPURegs:$c))], itin> {
+  let isCommutable = isComm;
+}
 
-let isCommutable = 1 in
-class ArithOverflowR<bits<6> op, bits<6> func, string instr_asm>:
+class ArithOverflowR<bits<6> op, bits<6> func, string instr_asm, bit isComm = 0>:
   FR<op, func, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
-     !strconcat(instr_asm, "\t$dst, $b, $c"), [], IIAlu>;
+     !strconcat(instr_asm, "\t$dst, $b, $c"), [], IIAlu> {
+  let isCommutable = isComm;
+}
 
 // Arithmetic 2 register operands
 class ArithI<bits<6> op, string instr_asm, SDNode OpNode,
@@ -171,12 +173,15 @@ class ArithOverflowI<bits<6> op, string instr_asm, SDNode OpNode,
 
 // Arithmetic Multiply ADD/SUB
 let rd = 0, shamt = 0, Defs = [HI, LO], Uses = [HI, LO] in
-class MArithR<bits<6> func, string instr_asm, SDNode op> :
+class MArithR<bits<6> func, string instr_asm, SDNode op, bit isComm = 0> :
   FR<0x1c, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
      !strconcat(instr_asm, "\t$rs, $rt"),
-     [(op CPURegs:$rs, CPURegs:$rt, LO, HI)], IIImul>;
+     [(op CPURegs:$rs, CPURegs:$rt, LO, HI)], IIImul> {
+  let isCommutable = isComm;
+}
 
 //  Logical
+let isCommutable = 1 in
 class LogicR<bits<6> func, string instr_asm, SDNode OpNode>:
   FR<0x00, func, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
      !strconcat(instr_asm, "\t$dst, $b, $c"),
@@ -187,6 +192,7 @@ class LogicI<bits<6> op, string instr_asm, SDNode OpNode>:
      !strconcat(instr_asm, "\t$dst, $b, $c"),
      [(set CPURegs:$dst, (OpNode CPURegs:$b, immZExt16:$c))], IIAlu>;
 
+let isCommutable = 1 in
 class LogicNOR<bits<6> op, bits<6> func, string instr_asm>:
   FR<op, func, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
      !strconcat(instr_asm, "\t$dst, $b, $c"),
@@ -292,6 +298,7 @@ let isCall=1, hasDelaySlot=1,
 
 // Mul, Div
 let Defs = [HI, LO] in {
+  let isCommutable = 1 in
   class Mul<bits<6> func, string instr_asm, InstrItinClass itin>:
     FR<0x00, func, (outs), (ins CPURegs:$a, CPURegs:$b),
        !strconcat(instr_asm, "\t$a, $b"), [], itin>;
@@ -394,9 +401,9 @@ def XORi    : LogicI<0x0e, "xori",  xor>;
 def LUi     : LoadUpper<0x0f, "lui">;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
-def ADDu    : ArithR<0x00, 0x21, "addu", add, IIAlu>;
+def ADDu    : ArithR<0x00, 0x21, "addu", add, IIAlu, 1>;
 def SUBu    : ArithR<0x00, 0x23, "subu", sub, IIAlu>;
-def ADD     : ArithOverflowR<0x00, 0x20, "add">;
+def ADD     : ArithOverflowR<0x00, 0x20, "add", 1>;
 def SUB     : ArithOverflowR<0x00, 0x22, "sub">;
 def SLT     : SetCC_R<0x00, 0x2a, "slt", setlt>;
 def SLTu    : SetCC_R<0x00, 0x2b, "sltu", setult>;
@@ -520,14 +527,14 @@ let addr=0 in
 def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
 
 // MADD*/MSUB*
-def MADD  : MArithR<0, "madd", MipsMAdd>;
-def MADDU : MArithR<1, "maddu", MipsMAddu>;
+def MADD  : MArithR<0, "madd", MipsMAdd, 1>;
+def MADDU : MArithR<1, "maddu", MipsMAddu, 1>;
 def MSUB  : MArithR<4, "msub", MipsMSub>;
 def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 
 // MUL is a assembly macro in the current used ISAs. In recent ISA's
 // it is a real instruction.
-def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul>, Requires<[IsMips32]>;
+def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul, 1>, Requires<[IsMips32]>;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

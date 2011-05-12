@@ -100,7 +100,8 @@ class FFR1_3<bits<6> funct, bits<5> fmt, RegisterClass RcSrc,
       !strconcat(asmstr, " $fd, $fs"), []>;
 
 
-multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp> {
+multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp, bit isComm = 0> {
+  let isCommutable = isComm in {
   def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd),
                  (ins FGR32:$fs, FGR32:$ft),
                  !strconcat(asmstr, ".s $fd, $fs, $ft"),
@@ -111,6 +112,7 @@ multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp> {
                  !strconcat(asmstr, ".d $fd, $fs, $ft"),
                  [(set AFGR64:$fd, (FOp AFGR64:$fs, AFGR64:$ft))]>,
                  Requires<[In32BitMode]>;
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -203,9 +205,9 @@ def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr), "swc1 $ft, $addr",
                [(store FGR32:$ft, addr:$addr)]>;
 
 /// Floating-point Aritmetic
-defm FADD : FFR1_4<0x10, "add", fadd>;
+defm FADD : FFR1_4<0x10, "add", fadd, 1>;
 defm FDIV : FFR1_4<0x03, "div", fdiv>;
-defm FMUL : FFR1_4<0x02, "mul", fmul>;
+defm FMUL : FFR1_4<0x02, "mul", fmul, 1>;
 defm FSUB : FFR1_4<0x01, "sub", fsub>;
 
 //===----------------------------------------------------------------------===//
