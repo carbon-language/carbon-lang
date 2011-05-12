@@ -109,8 +109,11 @@ namespace {
   private:
     bool isValidRewrite(Value *FromVal, Value *ToVal);
 
-    void EliminateIVComparisons();
-    void EliminateIVRemainders();
+    void SimplifyIVUsers();
+    void EliminateIVComparison(ICmpInst *ICmp, Value *IVOperand);
+    void EliminateIVRemainder(BinaryOperator *Rem,
+                              Value *IVOperand,
+                              bool isSigned);
     void RewriteNonIntegerIVs(Loop *L);
     const Type *WidenIVs(Loop *L, SCEVExpander &Rewriter);
 
@@ -451,96 +454,111 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
     SE->forgetLoop(L);
 }
 
-void IndVarSimplify::EliminateIVComparisons() {
-  // Look for ICmp users.
+/// SimplifyIVUsers - Iteratively perform simplification on IVUsers within this
+/// loop. IVUsers is treated as a worklist. Each successive simplification may
+/// push more users which may themselves be candidates for simplification.
+void IndVarSimplify::SimplifyIVUsers() {
   for (IVUsers::iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
-    IVStrideUse &UI = *I;
-    ICmpInst *ICmp = dyn_cast<ICmpInst>(UI.getUser());
-    if (!ICmp) continue;
+    Instruction *UseInst = I->getUser();
+    Value *IVOperand = I->getOperandValToReplace();
 
-    bool Swapped = UI.getOperandValToReplace() == ICmp->getOperand(1);
-    ICmpInst::Predicate Pred = ICmp->getPredicate();
-    if (Swapped) Pred = ICmpInst::getSwappedPredicate(Pred);
-
-    // Get the SCEVs for the ICmp operands.
-    const SCEV *S = IU->getReplacementExpr(UI);
-    const SCEV *X = SE->getSCEV(ICmp->getOperand(!Swapped));
-
-    // Simplify unnecessary loops away.
-    const Loop *ICmpLoop = LI->getLoopFor(ICmp->getParent());
-    S = SE->getSCEVAtScope(S, ICmpLoop);
-    X = SE->getSCEVAtScope(X, ICmpLoop);
-
-    // If the condition is always true or always false, replace it with
-    // a constant value.
-    if (SE->isKnownPredicate(Pred, S, X))
-      ICmp->replaceAllUsesWith(ConstantInt::getTrue(ICmp->getContext()));
-    else if (SE->isKnownPredicate(ICmpInst::getInversePredicate(Pred), S, X))
-      ICmp->replaceAllUsesWith(ConstantInt::getFalse(ICmp->getContext()));
-    else
+    if (ICmpInst *ICmp = dyn_cast<ICmpInst>(UseInst)) {
+      EliminateIVComparison(ICmp, IVOperand);
       continue;
+    }
 
-    DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
-    DeadInsts.push_back(ICmp);
+    if (BinaryOperator *Rem = dyn_cast<BinaryOperator>(UseInst)) {
+      bool isSigned = Rem->getOpcode() == Instruction::SRem;
+      if (isSigned || Rem->getOpcode() == Instruction::URem) {
+        EliminateIVRemainder(Rem, IVOperand, isSigned);
+        continue;
+      }
+    }
   }
 }
 
-void IndVarSimplify::EliminateIVRemainders() {
-  // Look for SRem and URem users.
-  for (IVUsers::iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
-    IVStrideUse &UI = *I;
-    BinaryOperator *Rem = dyn_cast<BinaryOperator>(UI.getUser());
-    if (!Rem) continue;
-
-    bool isSigned = Rem->getOpcode() == Instruction::SRem;
-    if (!isSigned && Rem->getOpcode() != Instruction::URem)
-      continue;
-
-    // We're only interested in the case where we know something about
-    // the numerator.
-    if (UI.getOperandValToReplace() != Rem->getOperand(0))
-      continue;
-
-    // Get the SCEVs for the ICmp operands.
-    const SCEV *S = SE->getSCEV(Rem->getOperand(0));
-    const SCEV *X = SE->getSCEV(Rem->getOperand(1));
-
-    // Simplify unnecessary loops away.
-    const Loop *ICmpLoop = LI->getLoopFor(Rem->getParent());
-    S = SE->getSCEVAtScope(S, ICmpLoop);
-    X = SE->getSCEVAtScope(X, ICmpLoop);
-
-    // i % n  -->  i  if i is in [0,n).
-    if ((!isSigned || SE->isKnownNonNegative(S)) &&
-        SE->isKnownPredicate(isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                             S, X))
-      Rem->replaceAllUsesWith(Rem->getOperand(0));
-    else {
-      // (i+1) % n  -->  (i+1)==n?0:(i+1)  if i is in [0,n).
-      const SCEV *LessOne =
-        SE->getMinusSCEV(S, SE->getConstant(S->getType(), 1));
-      if ((!isSigned || SE->isKnownNonNegative(LessOne)) &&
-          SE->isKnownPredicate(isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                               LessOne, X)) {
-        ICmpInst *ICmp = new ICmpInst(Rem, ICmpInst::ICMP_EQ,
-                                      Rem->getOperand(0), Rem->getOperand(1),
-                                      "tmp");
-        SelectInst *Sel =
-          SelectInst::Create(ICmp,
-                             ConstantInt::get(Rem->getType(), 0),
-                             Rem->getOperand(0), "tmp", Rem);
-        Rem->replaceAllUsesWith(Sel);
-      } else
-        continue;
-    }
-
-    // Inform IVUsers about the new users.
-    if (Instruction *I = dyn_cast<Instruction>(Rem->getOperand(0)))
-      IU->AddUsersIfInteresting(I);
-
-    DEBUG(dbgs() << "INDVARS: Simplified rem: " << *Rem << '\n');
-    DeadInsts.push_back(Rem);
+void IndVarSimplify::EliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
+  unsigned IVOperIdx = 0;
+  ICmpInst::Predicate Pred = ICmp->getPredicate();
+  if (IVOperand != ICmp->getOperand(0)) {
+    // Swapped
+    assert(IVOperand == ICmp->getOperand(1) && "Can't find IVOperand");
+    IVOperIdx = 1;
+    Pred = ICmpInst::getSwappedPredicate(Pred);
   }
+
+  // Get the SCEVs for the ICmp operands.
+  const SCEV *S = SE->getSCEV(ICmp->getOperand(IVOperIdx));
+  const SCEV *X = SE->getSCEV(ICmp->getOperand(1 - IVOperIdx));
+
+  // Simplify unnecessary loops away.
+  const Loop *ICmpLoop = LI->getLoopFor(ICmp->getParent());
+  S = SE->getSCEVAtScope(S, ICmpLoop);
+  X = SE->getSCEVAtScope(X, ICmpLoop);
+
+  // If the condition is always true or always false, replace it with
+  // a constant value.
+  if (SE->isKnownPredicate(Pred, S, X))
+    ICmp->replaceAllUsesWith(ConstantInt::getTrue(ICmp->getContext()));
+  else if (SE->isKnownPredicate(ICmpInst::getInversePredicate(Pred), S, X))
+    ICmp->replaceAllUsesWith(ConstantInt::getFalse(ICmp->getContext()));
+  else
+    return;
+
+  DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
+  DeadInsts.push_back(ICmp);
+}
+
+void IndVarSimplify::EliminateIVRemainder(BinaryOperator *Rem,
+                                          Value *IVOperand,
+                                          bool isSigned) {
+  // We're only interested in the case where we know something about
+  // the numerator.
+  if (IVOperand != Rem->getOperand(0))
+    return;
+
+  // Get the SCEVs for the ICmp operands.
+  const SCEV *S = SE->getSCEV(Rem->getOperand(0));
+  const SCEV *X = SE->getSCEV(Rem->getOperand(1));
+
+  // Simplify unnecessary loops away.
+  const Loop *ICmpLoop = LI->getLoopFor(Rem->getParent());
+  S = SE->getSCEVAtScope(S, ICmpLoop);
+  X = SE->getSCEVAtScope(X, ICmpLoop);
+
+  // i % n  -->  i  if i is in [0,n).
+  if ((!isSigned || SE->isKnownNonNegative(S)) &&
+      SE->isKnownPredicate(isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                           S, X))
+    Rem->replaceAllUsesWith(Rem->getOperand(0));
+  else {
+    // (i+1) % n  -->  (i+1)==n?0:(i+1)  if i is in [0,n).
+    const SCEV *LessOne =
+      SE->getMinusSCEV(S, SE->getConstant(S->getType(), 1));
+    if (isSigned && !SE->isKnownNonNegative(LessOne))
+      return;
+
+    if (!SE->isKnownPredicate(isSigned ?
+                              ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                              LessOne, X))
+      return;
+
+    ICmpInst *ICmp = new ICmpInst(Rem, ICmpInst::ICMP_EQ,
+                                  Rem->getOperand(0), Rem->getOperand(1),
+                                  "tmp");
+    SelectInst *Sel =
+      SelectInst::Create(ICmp,
+                         ConstantInt::get(Rem->getType(), 0),
+                         Rem->getOperand(0), "tmp", Rem);
+    Rem->replaceAllUsesWith(Sel);
+  }
+
+  // Inform IVUsers about the new users.
+  if (Instruction *I = dyn_cast<Instruction>(Rem->getOperand(0)))
+    IU->AddUsersIfInteresting(I);
+
+  DEBUG(dbgs() << "INDVARS: Simplified rem: " << *Rem << '\n');
+  DeadInsts.push_back(Rem);
 }
 
 bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -589,11 +607,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     RewriteLoopExitValues(L, Rewriter);
 
-  // Simplify ICmp IV users.
-  EliminateIVComparisons();
-
-  // Simplify SRem and URem IV users.
-  EliminateIVRemainders();
+  SimplifyIVUsers();
 
   // Compute the type of the largest recurrence expression, and decide whether
   // a canonical induction variable should be inserted.
