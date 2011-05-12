@@ -26,7 +26,7 @@ class MCJITMemoryManager : public RTDyldMemoryManager {
   // FIXME: Multiple modules.
   Module *M;
 public:
-  MCJITMemoryManager(JITMemoryManager *jmm) : JMM(jmm) {}
+  MCJITMemoryManager(JITMemoryManager *jmm, Module *m) : JMM(jmm), M(m) {}
 
   // Allocate ActualSize bytes, or more, for the named function. Return
   // a pointer to the allocated memory and update Size to reflect how much

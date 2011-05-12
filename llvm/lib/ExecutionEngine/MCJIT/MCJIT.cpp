@@ -58,7 +58,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 
   // If the target supports JIT code generation, create the JIT.
   if (TargetJITInfo *TJ = TM->getJITInfo())
-    return new MCJIT(M, TM, *TJ, new MCJITMemoryManager(JMM), OptLevel,
+    return new MCJIT(M, TM, *TJ, new MCJITMemoryManager(JMM, M), OptLevel,
                      GVsWithCode);
 
   if (ErrorStr)
