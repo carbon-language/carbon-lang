@@ -49,15 +49,16 @@ namespace llvm {
   class DIDescriptor {
   public:
     enum {
-      FlagPrivate          = 1 << 0,
-      FlagProtected        = 1 << 1,
-      FlagFwdDecl          = 1 << 2,
-      FlagAppleBlock       = 1 << 3,
-      FlagBlockByrefStruct = 1 << 4,
-      FlagVirtual          = 1 << 5,
-      FlagArtificial       = 1 << 6,
-      FlagExplicit         = 1 << 7,
-      FlagPrototyped       = 1 << 8
+      FlagPrivate            = 1 << 0,
+      FlagProtected          = 1 << 1,
+      FlagFwdDecl            = 1 << 2,
+      FlagAppleBlock         = 1 << 3,
+      FlagBlockByrefStruct   = 1 << 4,
+      FlagVirtual            = 1 << 5,
+      FlagArtificial         = 1 << 6,
+      FlagExplicit           = 1 << 7,
+      FlagPrototyped         = 1 << 8,
+      FlagObjcClassExtension = 1 << 9
     };
   protected:
     const MDNode *DbgNode;
@@ -270,6 +271,9 @@ namespace llvm {
     }
     bool isArtificial() const {
       return (getFlags() & FlagArtificial) != 0;
+    }
+    bool isObjcClassExtension() const {
+      return (getFlags() & FlagObjcClassExtension) != 0;
     }
     bool isValid() const {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());

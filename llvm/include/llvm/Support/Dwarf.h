@@ -235,6 +235,7 @@ enum dwarf_constants {
   DW_AT_APPLE_property_getter = 0x3fe9,
   DW_AT_APPLE_property_setter = 0x3fea,
   DW_AT_APPLE_property_attribute = 0x3feb,
+  DW_AT_APPLE_objc_class_extension = 0x3fec,
 
   // Attribute form encodings
   DW_FORM_addr = 0x01,

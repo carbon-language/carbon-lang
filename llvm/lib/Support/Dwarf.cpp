@@ -207,6 +207,7 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_APPLE_property_getter:      return "DW_AT_APPLE_property_getter";
   case DW_AT_APPLE_property_setter:      return "DW_AT_APPLE_property_setter";
   case DW_AT_APPLE_property_attribute:   return "DW_AT_APPLE_property_attribute";
+  case DW_AT_APPLE_objc_class_extension: return "DW_AT_APPLE_objc_class_extension";
   }
   return 0;
 }

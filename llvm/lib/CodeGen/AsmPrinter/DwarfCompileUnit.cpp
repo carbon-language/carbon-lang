@@ -766,6 +766,10 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       addToContextOwner(&Buffer, Context);
     }
 
+    if (CTy.isObjcClassExtension())
+      addUInt(&Buffer, dwarf::DW_AT_APPLE_objc_class_extension,
+              dwarf::DW_FORM_flag, 1);
+
     if (Tag == dwarf::DW_TAG_class_type) 
       addTemplateParams(Buffer, CTy.getTemplateParams());
 
