@@ -168,13 +168,13 @@ InstructionLLVM::Dump
     {
         addr_t base_addr = LLDB_INVALID_ADDRESS;
         
-        RegisterReaderArg rra(base_addr + EDInstByteSize(m_inst), m_disassembler);
-        
         if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty())
             base_addr = GetAddress().GetLoadAddress (exe_ctx->target);
         if (base_addr == LLDB_INVALID_ADDRESS)
             base_addr = GetAddress().GetFileAddress ();
                     
+        RegisterReaderArg rra(base_addr + EDInstByteSize(m_inst), m_disassembler);
+        
         printTokenized = true;
 
         // Handle the opcode column.
