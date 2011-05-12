@@ -22,7 +22,7 @@ public:
     InstructionLLVM (const lldb_private::Address &addr,
                      lldb_private::AddressClass addr_class,
                      EDDisassemblerRef disassembler,
-                     bool force_raw);
+                     llvm::Triple::ArchType arch_type);
     
     virtual
     ~InstructionLLVM();
@@ -46,7 +46,7 @@ public:
 protected:
     EDDisassemblerRef m_disassembler;
     EDInstRef m_inst;
-    bool m_force_raw;
+    llvm::Triple::ArchType m_arch_type;
 };
 
 

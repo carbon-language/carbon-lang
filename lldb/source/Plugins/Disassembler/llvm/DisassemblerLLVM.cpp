@@ -77,10 +77,10 @@ static int IPRegisterReader(uint64_t *value, unsigned regID, void* arg)
 InstructionLLVM::InstructionLLVM (const Address &addr, 
                                   AddressClass addr_class,
                                   EDDisassemblerRef disassembler,
-                                  bool force_raw) :
+                                  llvm::Triple::ArchType arch_type) :
     Instruction (addr, addr_class),
     m_disassembler (disassembler),
-    m_force_raw (force_raw)
+    m_arch_type (arch_type)
 {
 }
 
@@ -154,8 +154,13 @@ InstructionLLVM::Dump
 
     int numTokens = -1;
     
+    // FIXME!!!
+    /* Remove the following section of code related to force_raw .... */
+    bool force_raw = m_arch_type == llvm::Triple::arm ||
+                     m_arch_type == llvm::Triple::thumb;
     if (!raw)
-        raw = m_force_raw;
+        raw = force_raw;
+    /* .... when we fix the edis for arm/thumb. */
 
     if (!raw)
         numTokens = EDNumTokens(m_inst);
@@ -173,7 +178,16 @@ InstructionLLVM::Dump
         if (base_addr == LLDB_INVALID_ADDRESS)
             base_addr = GetAddress().GetFileAddress ();
                     
-        RegisterReaderArg rra(base_addr + EDInstByteSize(m_inst), m_disassembler);
+        lldb::addr_t PC = base_addr + EDInstByteSize(m_inst);
+
+        // When executing an ARM instruction, PC reads as the address of the
+        // current instruction plus 8.  And for Thumb, it is plus 4.
+        if (m_arch_type == llvm::Triple::arm)
+          PC = base_addr + 8;
+        else if (m_arch_type == llvm::Triple::thumb)
+          PC = base_addr + 4;
+
+        RegisterReaderArg rra(PC, m_disassembler);
         
         printTokenized = true;
 
@@ -488,20 +502,11 @@ DisassemblerLLVM::DecodeInstructions
             if (inst_address_class == eAddressClassCodeAlternateISA)
                 use_thumb = true;
         }
-        bool force_raw = false;
-        switch (m_arch.GetMachine())
-        {
-            case llvm::Triple::arm:
-            case llvm::Triple::thumb:
-                force_raw = true;
-                break;
-            default:
-                break;
-        }
+        
         InstructionSP inst_sp (new InstructionLLVM (inst_addr, 
                                                     inst_address_class,
                                                     use_thumb ? m_disassembler_thumb : m_disassembler,
-                                                    force_raw));
+                                                    m_arch.GetMachine()));
 
         size_t inst_byte_size = inst_sp->Decode (*this, data, data_offset);
 
