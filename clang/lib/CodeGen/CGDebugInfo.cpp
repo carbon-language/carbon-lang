@@ -1242,8 +1242,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
 
   unsigned Flags = 0;
-  if (ID->getFirstClassExtension() || 
-      (ID->getImplementation() && !ID->getImplementation()->ivar_empty()))
+  if (ID->getImplementation())
     Flags |= llvm::DIDescriptor::FlagObjcClassExtension;
 
   llvm::DIType RealDecl =
