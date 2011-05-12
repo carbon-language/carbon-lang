@@ -897,6 +897,12 @@ ClangASTContext::GetBuiltInType_objc_selector()
 }
 
 clang_type_t
+ClangASTContext::GetUnknownAnyType(clang::ASTContext *ast)
+{
+    return ast->UnknownAnyTy.getAsOpaquePtr();
+}
+
+clang_type_t
 ClangASTContext::GetCStringType (bool is_const)
 {
     QualType char_type(getASTContext()->CharTy);

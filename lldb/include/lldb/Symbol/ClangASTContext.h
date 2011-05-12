@@ -159,6 +159,15 @@ public:
 
     lldb::clang_type_t
     GetBuiltInType_objc_Class();
+    
+    static lldb::clang_type_t
+    GetUnknownAnyType(clang::ASTContext *ast);
+    
+    lldb::clang_type_t
+    GetUnknownAnyType()
+    {
+        return ClangASTContext::GetUnknownAnyType(getASTContext());
+    }
 
     lldb::clang_type_t
     GetBuiltInType_objc_selector();

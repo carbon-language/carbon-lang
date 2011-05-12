@@ -182,36 +182,36 @@ class BasicExprCommandsTestCase(TestBase):
             substrs = ['(char) $',
                        "'a'"])
 
-        # runCmd: expression printf ("\n\n\tHello there!\n")
-        # output: (unsigned long) $1 = 16
-        self.expect(r'''expression printf ("\n\n\tHello there!\n")''',
-            substrs = ['(unsigned long) $',
+        # runCmd: expression (int) printf ("\n\n\tHello there!\n")
+        # output: (int) $1 = 16
+        self.expect(r'''expression (int) printf ("\n\n\tHello there!\n")''',
+            substrs = ['(int) $',
                        '16'])
 
-        # runCmd: expression printf("\t\x68\n")
-        # output: (unsigned long) $2 = 3
-        self.expect(r'''expression printf("\t\x68\n")''',
-            substrs = ['(unsigned long) $',
+        # runCmd: expression (int) printf("\t\x68\n")
+        # output: (int) $2 = 3
+        self.expect(r'''expression (int) printf("\t\x68\n")''',
+            substrs = ['(int) $',
                        '3'])
 
-        # runCmd: expression printf("\"\n")
-        # output: (unsigned long) $3 = 2
-        self.expect(r'''expression printf("\"\n")''',
-            substrs = ['(unsigned long) $',
+        # runCmd: expression (int) printf("\"\n")
+        # output: (int) $3 = 2
+        self.expect(r'''expression (int) printf("\"\n")''',
+            substrs = ['(int) $',
                        '2'])
 
-        # runCmd: expression printf("'\n")
-        # output: (unsigned long) $4 = 2
-        self.expect(r'''expression printf("'\n")''',
-            substrs = ['(unsigned long) $',
+        # runCmd: expression (int) printf("'\n")
+        # output: (int) $4 = 2
+        self.expect(r'''expression (int) printf("'\n")''',
+            substrs = ['(int) $',
                        '2'])
 
-        # runCmd: command alias print_hi expression printf ("\n\tHi!\n")
+        # runCmd: command alias print_hi expression (int) printf ("\n\tHi!\n")
         # output: 
-        self.runCmd(r'''command alias print_hi expression printf ("\n\tHi!\n")''')
+        self.runCmd(r'''command alias print_hi expression (int) printf ("\n\tHi!\n")''')
         # This fails currently.
         self.expect('print_hi',
-            substrs = ['(unsigned long) $',
+            substrs = ['(int) $',
                        '6'])
 
 

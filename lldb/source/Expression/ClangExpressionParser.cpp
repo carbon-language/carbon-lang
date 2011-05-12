@@ -17,6 +17,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Expression/ClangASTSource.h"
 #include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/IRToDWARF.h"
@@ -352,7 +353,7 @@ ClangExpressionParser::Parse (Stream &stream)
         ParseAST(m_compiler->getPreprocessor(), m_code_generator.get(), m_compiler->getASTContext());    
     
     diag_buf->EndSourceFile();
-    
+        
     TextDiagnosticBuffer::const_iterator diag_iterator;
     
     int num_errors = 0;
@@ -376,6 +377,15 @@ ClangExpressionParser::Parse (Stream &stream)
          diag_iterator != diag_buf->note_end();
          ++diag_iterator)
         stream.Printf("note: %s\n", (*diag_iterator).second.c_str());
+    
+    if (!num_errors)
+    {
+        if (m_expr.DeclMap() && !m_expr.DeclMap()->ResolveUnknownTypes())
+        {
+            stream.Printf("error: Couldn't infer the type of a variable\n");
+            num_errors++;
+        }
+    }
     
     return num_errors;
 }

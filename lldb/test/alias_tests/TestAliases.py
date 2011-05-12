@@ -94,8 +94,8 @@ class AliasTestCase(TestBase):
         self.expect ("run",
                      patterns = [ "Process .* launched: .*a.out" ])
 
-        self.expect (r'''expression printf("\x68\x65\x6c\x6c\x6f\n")''',
-                     substrs = [ "(unsigned long) $",
+        self.expect (r'''expression (int) printf("\x68\x65\x6c\x6c\x6f\n")''',
+                     substrs = [ "(int) $",
                                  "= 6" ])
 
         self.expect ("hello",

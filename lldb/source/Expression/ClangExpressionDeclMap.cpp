@@ -1295,8 +1295,15 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     }
     
     if (log)
-        log->Printf("%s %s with type %p", (dematerialize ? "Dematerializing" : "Materializing"), name.GetCString(), type.GetOpaqueQualType());
-    
+    {
+        StreamString my_stream_string;
+        
+        ClangASTType::DumpTypeDescription (type.GetASTContext(),
+                                           type.GetOpaqueQualType(),
+                                           &my_stream_string);
+        
+        log->Printf("%s %s with type %s", (dematerialize ? "Dematerializing" : "Materializing"), name.GetCString(), my_stream_string.GetString().c_str());
+    }
     
     if (!location_value.get())
     {
@@ -2095,13 +2102,13 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     
     clang::ASTContext *scratch_ast_context = m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext()->getASTContext();
     
-    TypeFromUser user_type (ClangASTContext::GetVoidPtrType(scratch_ast_context, false),
+    TypeFromUser user_type (ClangASTContext::CreateLValueReferenceType(scratch_ast_context, ClangASTContext::GetVoidPtrType(scratch_ast_context, true)),
                             scratch_ast_context);
     
-    TypeFromParser parser_type (ClangASTContext::GetVoidPtrType(context.GetASTContext(), false),
+    TypeFromParser parser_type (ClangASTContext::CreateLValueReferenceType(scratch_ast_context, ClangASTContext::GetVoidPtrType(context.GetASTContext(), true)),
                                 context.GetASTContext());
     
-    NamedDecl *var_decl = context.AddVarDecl(ClangASTContext::CreateLValueReferenceType(parser_type.GetASTContext(), parser_type.GetOpaqueQualType()));
+    NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
     
     std::string decl_name(context.m_decl_name.getAsString());
     ConstString entity_name(decl_name.c_str());
@@ -2111,7 +2118,6 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
                                                                       m_parser_vars->m_exe_ctx->process->GetByteOrder(),
                                                                       m_parser_vars->m_exe_ctx->process->GetAddressByteSize()));
     assert (entity.get());
-    entity->EnableParserVars();
     
     std::auto_ptr<Value> symbol_location(new Value);
     
@@ -2123,11 +2129,13 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     symbol_location->GetScalar() = symbol_load_addr;
     symbol_location->SetValueType(Value::eValueTypeLoadAddress);
     
+    entity->EnableParserVars();
     entity->m_parser_vars->m_parser_type = parser_type;
     entity->m_parser_vars->m_named_decl  = var_decl;
     entity->m_parser_vars->m_llvm_value  = NULL;
     entity->m_parser_vars->m_lldb_value  = symbol_location.release();
     entity->m_parser_vars->m_lldb_sym    = &symbol;
+    //entity->m_flags                      |= ClangExpressionVariable::EVUnknownType;
     
     if (log)
     {
@@ -2145,6 +2153,61 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
             log->Printf("%s\n", var_decl_dump_string.GetData());
         }
     }
+}
+
+bool 
+ClangExpressionDeclMap::ResolveUnknownTypes()
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
+    clang::ASTContext *scratch_ast_context = m_parser_vars->m_exe_ctx->target->GetScratchClangASTContext()->getASTContext();
+
+    for (size_t index = 0, num_entities = m_found_entities.GetSize();
+         index < num_entities;
+         ++index)
+    {
+        ClangExpressionVariableSP entity = m_found_entities.GetVariableAtIndex(index);
+        
+        if (entity->m_flags & ClangExpressionVariable::EVUnknownType)
+        {
+            const NamedDecl *named_decl = entity->m_parser_vars->m_named_decl;
+            const VarDecl *var_decl = dyn_cast<VarDecl>(named_decl);
+            
+            if (!var_decl)
+            {
+                if (log)
+                    log->Printf("Entity of unknown type does not have a VarDecl");
+                return false;
+            }
+            
+            if (log)
+            {
+                std::string var_decl_print_string;
+                llvm::raw_string_ostream var_decl_print_stream(var_decl_print_string);
+                var_decl->print(var_decl_print_stream);
+                var_decl_print_stream.flush();
+            
+                log->Printf("Variable of unknown type now has Decl %s", var_decl_print_string.c_str());
+            }
+                
+            QualType var_type = var_decl->getType();
+            TypeFromParser parser_type(var_type.getAsOpaquePtr(), &var_decl->getASTContext());
+            
+            lldb::clang_type_t copied_type = ClangASTContext::CopyType(scratch_ast_context, &var_decl->getASTContext(), var_type.getAsOpaquePtr());
+            
+            TypeFromUser user_type(copied_type, scratch_ast_context);
+                        
+            entity->m_parser_vars->m_lldb_value->SetContext(Value::eContextTypeClangType, user_type.GetOpaqueQualType());
+            entity->m_parser_vars->m_parser_type = parser_type;
+            
+            entity->SetClangAST(user_type.GetASTContext());
+            entity->SetClangType(user_type.GetOpaqueQualType());
+            
+            entity->m_flags &= ~(ClangExpressionVariable::EVUnknownType);
+        }
+    }
+            
+    return true;
 }
 
 void

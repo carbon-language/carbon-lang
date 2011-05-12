@@ -232,9 +232,9 @@ NameSearchContext::AddGenericFunDecl()
     
     proto_info.Variadic = true;
     
-    QualType generic_function_type(m_ast_source.m_ast_context.getFunctionType (m_ast_source.m_ast_context.getSizeType(),   // result
-                                                                               NULL,                                // argument types
-                                                                               0,                                   // number of arguments
+    QualType generic_function_type(m_ast_source.m_ast_context.getFunctionType (m_ast_source.m_ast_context.UnknownAnyTy,     // result
+                                                                               NULL,                                        // argument types
+                                                                               0,                                           // number of arguments
                                                                                proto_info));
     
     return AddFunDecl(generic_function_type.getAsOpaquePtr());
