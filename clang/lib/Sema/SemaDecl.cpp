@@ -5657,7 +5657,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
       //   program is ill-formed.
       // C++0x [dcl.init]p11:
       //   If no initializer is specified for an object, the object is
-      //   default-intialized; [...].
+      //   default-initialized; [...].
     } else {
       // Check for jumps past the implicit initializer.  C++0x
       // clarifies that this applies to a "variable with automatic
