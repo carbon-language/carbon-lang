@@ -229,6 +229,7 @@ public:
 
   enum MICheckType {
     CheckDefs,      // Check all operands for equality
+    CheckKillDead,  // Check all operands including kill / dead markers
     IgnoreDefs,     // Ignore all definitions
     IgnoreVRegDefs  // Ignore virtual register definitions
   };

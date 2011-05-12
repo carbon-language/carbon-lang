@@ -19,11 +19,10 @@ namespace llvm {
   class RegScavenger;
   class TargetInstrInfo;
   class TargetRegisterInfo;
-  template<typename T> class SmallVectorImpl;
 
   class BranchFolder {
   public:
-    explicit BranchFolder(bool defaultEnableTailMerge);
+    explicit BranchFolder(bool defaultEnableTailMerge, bool CommonHoist);
 
     bool OptimizeFunction(MachineFunction &MF,
                           const TargetInstrInfo *tii,
@@ -85,6 +84,7 @@ namespace llvm {
     std::vector<SameTailElt> SameTails;
 
     bool EnableTailMerge;
+    bool EnableHoistCommonCode;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     MachineModuleInfo *MMI;
@@ -110,6 +110,9 @@ namespace llvm {
     bool OptimizeBlock(MachineBasicBlock *MBB);
     void RemoveDeadBlock(MachineBasicBlock *MBB);
     bool OptimizeImpDefsBlock(MachineBasicBlock *MBB);
+
+    bool HoistCommonCode(MachineFunction &MF);
+    bool HoistCommonCodeInSuccs(MachineBasicBlock *MBB);
   };
 }
 

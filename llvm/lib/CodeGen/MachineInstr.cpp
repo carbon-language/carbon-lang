@@ -764,19 +764,35 @@ bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
     const MachineOperand &OMO = Other->getOperand(i);
+    if (!MO.isReg()) {
+      if (!MO.isIdenticalTo(OMO))
+        return false;
+      continue;
+    }
+
     // Clients may or may not want to ignore defs when testing for equality.
     // For example, machine CSE pass only cares about finding common
     // subexpressions, so it's safe to ignore virtual register defs.
-    if (Check != CheckDefs && MO.isReg() && MO.isDef()) {
+    if (MO.isDef()) {
       if (Check == IgnoreDefs)
         continue;
-      // Check == IgnoreVRegDefs
-      if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) ||
-          TargetRegisterInfo::isPhysicalRegister(OMO.getReg()))
-        if (MO.getReg() != OMO.getReg())
+      else if (Check == IgnoreVRegDefs) {
+        if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) ||
+            TargetRegisterInfo::isPhysicalRegister(OMO.getReg()))
+          if (MO.getReg() != OMO.getReg())
+            return false;
+      } else {
+        if (!MO.isIdenticalTo(OMO))
           return false;
-    } else if (!MO.isIdenticalTo(OMO))
-      return false;
+        if (Check == CheckKillDead && MO.isDead() != OMO.isDead())
+          return false;
+      }
+    } else {
+      if (!MO.isIdenticalTo(OMO))
+        return false;
+      if (Check == CheckKillDead && MO.isKill() != OMO.isKill())
+        return false;
+    }
   }
   return true;
 }
