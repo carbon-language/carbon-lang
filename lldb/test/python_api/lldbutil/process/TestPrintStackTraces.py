@@ -10,7 +10,7 @@ from lldbtest import *
 
 class ThreadsStackTracesTestCase(TestBase):
 
-    mydir = "python_api/lldbutil"
+    mydir = "python_api/lldbutil/process"
 
     def setUp(self):
         # Call super's setUp().

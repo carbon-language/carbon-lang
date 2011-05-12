@@ -409,6 +409,37 @@ def print_stacktraces(process, string_buffer = False):
 # Utility functions related to Frames
 # ===================================
 
+def get_parent_frame(frame):
+    """
+    Returns the parent frame of the input frame object; None if not available.
+    """
+    thread = frame.GetThread()
+    parent_found = False
+    for f in thread:
+        if parent_found:
+            return f
+        if f.GetFrameID() == frame.GetFrameID():
+            parent_found = True
+
+    # If we reach here, no parent has been found, return None.
+    return None
+
+def get_args_as_string(frame):
+    """
+    Returns the args of the input frame object as a string.
+    """
+    # arguments     => True
+    # locals        => False
+    # statics       => False
+    # in_scope_only => True
+    vars = frame.GetVariables(True, False, False, True) # type of SBValueList
+    args = [] # list of strings
+    for var in vars:
+        args.append("(%s)%s=%s" % (var.GetTypeName(),
+                                   var.GetName(),
+                                   var.GetValue(frame)))
+    return "%s(%s)" % (frame.GetFunction().GetName(), ", ".join(args))
+
 def print_registers(frame, string_buffer = False):
     """Prints all the register sets of the frame."""
 

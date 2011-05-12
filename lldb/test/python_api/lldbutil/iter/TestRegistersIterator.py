@@ -10,7 +10,7 @@ from lldbtest import *
 
 class RegistersIteratorTestCase(TestBase):
 
-    mydir = "python_api/lldbutil"
+    mydir = "python_api/lldbutil/iter"
 
     def setUp(self):
         # Call super's setUp().
