@@ -59,7 +59,8 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_scratch_ast_context_ap (NULL),
     m_persistent_variables (),
     m_stop_hooks (),
-    m_stop_hook_next_id (0)
+    m_stop_hook_next_id (0),
+    m_suppress_stop_hooks (false)
 {
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
@@ -900,6 +901,11 @@ Target::EvaluateExpression
     ExecutionResults execution_results = eExecutionSetupError;
 
     result_valobj_sp.reset();
+    
+    // We shouldn't run stop hooks in expressions.
+    // Be sure to reset this if you return anywhere within this function.
+    bool old_suppress_value = m_suppress_stop_hooks;
+    m_suppress_stop_hooks = true;
 
     ExecutionContext exe_ctx;
     if (frame)
@@ -1002,6 +1008,9 @@ Target::EvaluateExpression
                                                                result_valobj_sp);
         }
     }
+    
+    m_suppress_stop_hooks = old_suppress_value;
+    
     return execution_results;
 }
 
@@ -1068,6 +1077,9 @@ Target::SetAllStopHooksActiveState (bool active_state)
 void
 Target::RunStopHooks ()
 {
+    if (m_suppress_stop_hooks)
+        return;
+        
     if (!m_process_sp)
         return;
         

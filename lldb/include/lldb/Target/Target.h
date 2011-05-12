@@ -591,6 +591,20 @@ public:
     size_t
     GetStopHookSize();
     
+    bool
+    SetSuppresStopHooks (bool suppress)
+    {
+        bool old_value = m_suppress_stop_hooks;
+        m_suppress_stop_hooks = suppress;
+        return old_value;
+    }
+    
+    bool
+    GetSuppressStopHooks ()
+    {
+        return m_suppress_stop_hooks;
+    }
+    
 //    StopHookSP &
 //    GetStopHookByIndex (size_t index);
 //    
@@ -709,6 +723,7 @@ protected:
     typedef std::map<lldb::user_id_t, StopHookSP> StopHookCollection;
     StopHookCollection      m_stop_hooks;
     lldb::user_id_t         m_stop_hook_next_id;
+    bool                    m_suppress_stop_hooks;
     
     //------------------------------------------------------------------
     // Methods.
