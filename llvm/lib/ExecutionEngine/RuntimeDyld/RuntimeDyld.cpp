@@ -268,9 +268,9 @@ loadSegment32(const MachOObject *Obj,
     if (!Sect)
       return Error("unable to load section: '" + Twine(SectNum) + "'");
 
-    // FIXME: Improve check.
+    // FIXME: For the time being, we're only loading text segments.
     if (Sect->Flags != 0x80000400)
-      return Error("unsupported section type!");
+      continue;
 
     // Address and names of symbols in the section.
     typedef std::pair<uint64_t, StringRef> SymbolEntry;
@@ -403,9 +403,9 @@ loadSegment64(const MachOObject *Obj,
     if (!Sect)
       return Error("unable to load section: '" + Twine(SectNum) + "'");
 
-    // FIXME: Improve check.
+    // FIXME: For the time being, we're only loading text segments.
     if (Sect->Flags != 0x80000400)
-      return Error("unsupported section type!");
+      continue;
 
     // Address and names of symbols in the section.
     typedef std::pair<uint64_t, StringRef> SymbolEntry;
