@@ -1,7 +1,9 @@
-set(LLVM_BINUTILS_INCDIR "/usr/include" CACHE PATH
+set(LLVM_BINUTILS_INCDIR "" CACHE PATH
   "PATH to binutils/include containing plugin-api.h for gold plugin.")
 
-if( NOT EXISTS "${LLVM_BINUTILS_INCDIR}/plugin-api.h" )
+if( NOT LLVM_BINUTILS_INCDIR )
+  # Nothing to say.
+elseif( NOT EXISTS "${LLVM_BINUTILS_INCDIR}/plugin-api.h" )
   message(STATUS "plugin-api.h not found. gold plugin excluded from the build.")
 else()
   include_directories( ${LLVM_BINUTILS_INCDIR} )
