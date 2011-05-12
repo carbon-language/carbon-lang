@@ -110,14 +110,39 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_function_addr = function;
     lldb::addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
         
-    if (!abi->PrepareTrivialCall(thread, 
-                                 m_function_sp, 
-                                 FunctionLoadAddr, 
-                                 StartLoadAddr, 
-                                 m_arg_addr,
-                                 this_arg,
-                                 cmd_arg))
-        return;
+    if (this_arg && cmd_arg)
+    {
+        if (!abi->PrepareTrivialCall (thread, 
+                                      m_function_sp, 
+                                      FunctionLoadAddr, 
+                                      StartLoadAddr, 
+                                      this_arg,
+                                      cmd_arg,
+                                      &m_arg_addr))
+            return;
+    }
+    else if (this_arg)
+    {
+        if (!abi->PrepareTrivialCall (thread, 
+                                      m_function_sp, 
+                                      FunctionLoadAddr, 
+                                      StartLoadAddr, 
+                                      this_arg,
+                                      &m_arg_addr,
+                                      NULL))
+            return;
+    }
+    else
+    {
+        if (!abi->PrepareTrivialCall (thread, 
+                                      m_function_sp, 
+                                      FunctionLoadAddr, 
+                                      StartLoadAddr, 
+                                      &m_arg_addr,
+                                      NULL,
+                                      NULL))
+            return;
+    }
     
     ReportRegisterState ("Function call was set up.  Register state was:");
     

@@ -13,6 +13,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/UnwindPlan.h"
@@ -57,93 +58,105 @@ ABIMacOSX_i386::CreateInstance (const ArchSpec &arch)
 bool
 ABIMacOSX_i386::PrepareTrivialCall (Thread &thread, 
                                     lldb::addr_t sp, 
-                                    lldb::addr_t functionAddress, 
-                                    lldb::addr_t returnAddress, 
-                                    lldb::addr_t arg,
-                                    lldb::addr_t *this_arg,
-                                    lldb::addr_t *cmd_arg) const
+                                    lldb::addr_t func_addr, 
+                                    lldb::addr_t return_addr, 
+                                    lldb::addr_t *arg1_ptr,
+                                    lldb::addr_t *arg2_ptr,
+                                    lldb::addr_t *arg3_ptr) const
+//                                    lldb::addr_t arg,
+//                                    lldb::addr_t *this_arg,
+//                                    lldb::addr_t *cmd_arg) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return false;    
-#define CHAIN_EBP
+    uint32_t pc_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+    uint32_t sp_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+    
+    // When writing a register value down to memory, the register info used 
+    // to write memory just needs to have the correct size of a 32 bit register, 
+    // the actual register it pertains to is not important, just the size needs 
+    // to be correct. Here we use "eax"...
+    const RegisterInfo *reg_info_32 = reg_ctx->GetRegisterInfoByName("eax");
 
-#ifndef CHAIN_EBP
-    uint32_t ebpID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
-#endif
-    uint32_t eipID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
-    uint32_t espID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
-    
     // Make room for the argument(s) on the stack
+
+    Error error;
+    RegisterValue reg_value;
     
-    if (this_arg && cmd_arg)
+    // Write any arguments onto the stack
+    if (arg1_ptr && arg2_ptr && arg3_ptr)
         sp -= 12;
-    else if (this_arg)
+    else if (arg1_ptr && arg2_ptr)
         sp -= 8;
-    else
+    else if (arg1_ptr)
         sp -= 4;
-    
-    // Align the SP
-    
+
+    // Align the SP    
     sp &= ~(0xfull); // 16-byte alignment
     
-    // Write the argument on the stack
-    
-    Error error;
-    
-    if (this_arg && cmd_arg)
+    if (arg1_ptr)
     {
-        uint32_t cmd_argU32 = *cmd_arg & 0xffffffffull;
-        uint32_t this_argU32 = *this_arg & 0xffffffffull;
-        uint32_t argU32 = arg & 0xffffffffull;
-        
-        if (thread.GetProcess().WriteMemory(sp, &this_argU32, sizeof(this_argU32), error) != sizeof(this_argU32))
+        reg_value.SetUInt32(*arg1_ptr);
+        error = reg_ctx->WriteRegisterValueToMemory (reg_info_32, 
+                                                     sp, 
+                                                     reg_info_32->byte_size, 
+                                                     reg_value);
+        if (error.Fail())
             return false;
-        if (thread.GetProcess().WriteMemory(sp + 4, &cmd_argU32, sizeof(cmd_argU32), error) != sizeof(cmd_argU32))
-            return false;
-        if (thread.GetProcess().WriteMemory(sp + 8, &argU32, sizeof(argU32), error) != sizeof(argU32))
-            return false;
-    }
-    else if (this_arg)
-    {
-        uint32_t this_argU32 = *this_arg & 0xffffffffull;
-        uint32_t argU32 = arg & 0xffffffffull;
-                
-        if (thread.GetProcess().WriteMemory(sp, &this_argU32, sizeof(this_argU32), error) != sizeof(this_argU32))
-            return false;
-        if (thread.GetProcess().WriteMemory(sp + 4, &argU32, sizeof(argU32), error) != sizeof(argU32))
-            return false;
-    }
-    else
-    {
-        uint32_t argU32 = arg & 0xffffffffull;
 
-        if (thread.GetProcess().WriteMemory (sp, &argU32, sizeof(argU32), error) != sizeof(argU32))
-            return false;
+        if (arg2_ptr)
+        {
+            assert (arg1_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
+            reg_value.SetUInt32(*arg2_ptr);
+            // The register info used to write memory just needs to have the correct
+            // size of a 32 bit register, the actual register it pertains to is not
+            // important, just the size needs to be correct. Here we use "eax"...
+            error = reg_ctx->WriteRegisterValueToMemory (reg_info_32, 
+                                                         sp + 4, 
+                                                         reg_info_32->byte_size, 
+                                                         reg_value);
+            if (error.Fail())
+                return false;
+            
+            if (arg3_ptr)
+            {
+                assert (arg1_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
+                assert (arg2_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
+                reg_value.SetUInt32(*arg3_ptr);
+                // The register info used to write memory just needs to have the correct
+                // size of a 32 bit register, the actual register it pertains to is not
+                // important, just the size needs to be correct. Here we use "eax"...
+                error = reg_ctx->WriteRegisterValueToMemory (reg_info_32, 
+                                                             sp + 8, 
+                                                             reg_info_32->byte_size, 
+                                                             reg_value);
+                if (error.Fail())
+                    return false;
+            }
+        }
     }
     
-    // The return address is pushed onto the stack.
     
+    // The return address is pushed onto the stack (yes after we just set the
+    // alignment above!).
     sp -= 4;
-    uint32_t returnAddressU32 = returnAddress;
-    if (thread.GetProcess().WriteMemory (sp, &returnAddressU32, sizeof(returnAddressU32), error) != sizeof(returnAddressU32))
+    reg_value.SetUInt32(return_addr);
+    error = reg_ctx->WriteRegisterValueToMemory (reg_info_32, 
+                                                 sp, 
+                                                 reg_info_32->byte_size, 
+                                                 reg_value);
+    if (error.Fail())
         return false;
     
     // %esp is set to the actual stack value.
     
-    if (!reg_ctx->WriteRegisterFromUnsigned(espID, sp))
+    if (!reg_ctx->WriteRegisterFromUnsigned (sp_reg_num, sp))
         return false;
-    
-#ifndef CHAIN_EBP
-    // %ebp is set to a fake value, in our case 0x0x00000000
-    
-    if (!reg_ctx->WriteRegisterFromUnsigned(ebpID, 0x00000000))
-        return false;
-#endif
     
     // %eip is set to the address of the called function.
     
-    if (!reg_ctx->WriteRegisterFromUnsigned(eipID, functionAddress))
+    if (!reg_ctx->WriteRegisterFromUnsigned (pc_reg_num, func_addr))
         return false;
     
     return true;
@@ -152,17 +165,17 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
 bool
 ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
                                    lldb::addr_t sp,
-                                   lldb::addr_t functionAddress,
-                                   lldb::addr_t returnAddress,
+                                   lldb::addr_t func_addr,
+                                   lldb::addr_t return_addr,
                                    ValueList &args) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return false;
     Error error;
-    uint32_t ebpID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
-    uint32_t eipID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
-    uint32_t espID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+    uint32_t fp_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
+    uint32_t pc_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+    uint32_t sp_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
     
     // Do the argument layout
     
@@ -307,23 +320,23 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
     // The return address is pushed onto the stack.
     
     sp -= 4;
-    uint32_t returnAddressU32 = returnAddress;
+    uint32_t returnAddressU32 = return_addr;
     if (thread.GetProcess().WriteMemory (sp, &returnAddressU32, sizeof(returnAddressU32), error) != sizeof(returnAddressU32))
         return false;
     
     // %esp is set to the actual stack value.
     
-    if (!reg_ctx->WriteRegisterFromUnsigned(espID, sp))
+    if (!reg_ctx->WriteRegisterFromUnsigned(sp_reg_num, sp))
         return false;
     
     // %ebp is set to a fake value, in our case 0x0x00000000
     
-    if (!reg_ctx->WriteRegisterFromUnsigned(ebpID, 0x00000000))
+    if (!reg_ctx->WriteRegisterFromUnsigned(fp_reg_num, 0x00000000))
         return false;
     
     // %eip is set to the address of the called function.
     
-    if (!reg_ctx->WriteRegisterFromUnsigned(eipID, functionAddress))
+    if (!reg_ctx->WriteRegisterFromUnsigned(pc_reg_num, func_addr))
         return false;
     
     return true;    

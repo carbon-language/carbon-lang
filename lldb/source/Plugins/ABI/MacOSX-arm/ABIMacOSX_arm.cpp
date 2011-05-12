@@ -13,6 +13,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -62,279 +63,63 @@ ABIMacOSX_arm::CreateInstance (const ArchSpec &arch)
 bool
 ABIMacOSX_arm::PrepareTrivialCall (Thread &thread, 
                                    addr_t sp, 
-                                   addr_t functionAddress, 
-                                   addr_t returnAddress, 
-                                   addr_t arg,
-                                   addr_t *this_arg,
-                                   addr_t *cmd_arg) const
+                                   addr_t function_addr, 
+                                   addr_t return_addr, 
+                                   lldb::addr_t *arg1_ptr,
+                                   lldb::addr_t *arg2_ptr,
+                                   lldb::addr_t *arg3_ptr) const
 {
-//    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
-//    if (!reg_ctx)
-//        return false;    
-//#define CHAIN_EBP
-//
-//#ifndef CHAIN_EBP
-//    uint32_t ebpID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
-//#endif
-//    uint32_t eipID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
-//    uint32_t espID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
-//    
-//    // Make room for the argument(s) on the stack
-//    
-//    if (this_arg && cmd_arg)
-//        sp -= 12;
-//    else if (this_arg)
-//        sp -= 8;
-//    else
-//        sp -= 4;
-//    
-//    // Align the SP
-//    
-//    sp &= ~(0xfull); // 16-byte alignment
-//    
-//    // Write the argument on the stack
-//    
-//    Error error;
-//    
-//    if (this_arg && cmd_arg)
-//    {
-//        uint32_t cmd_argU32 = *cmd_arg & 0xffffffffull;
-//        uint32_t this_argU32 = *this_arg & 0xffffffffull;
-//        uint32_t argU32 = arg & 0xffffffffull;
-//        
-//        if (thread.GetProcess().WriteMemory(sp, &this_argU32, sizeof(this_argU32), error) != sizeof(this_argU32))
-//            return false;
-//        if (thread.GetProcess().WriteMemory(sp + 4, &cmd_argU32, sizeof(cmd_argU32), error) != sizeof(cmd_argU32))
-//            return false;
-//        if (thread.GetProcess().WriteMemory(sp + 8, &argU32, sizeof(argU32), error) != sizeof(argU32))
-//            return false;
-//    }
-//    else if (this_arg)
-//    {
-//        uint32_t this_argU32 = *this_arg & 0xffffffffull;
-//        uint32_t argU32 = arg & 0xffffffffull;
-//                
-//        if (thread.GetProcess().WriteMemory(sp, &this_argU32, sizeof(this_argU32), error) != sizeof(this_argU32))
-//            return false;
-//        if (thread.GetProcess().WriteMemory(sp + 4, &argU32, sizeof(argU32), error) != sizeof(argU32))
-//            return false;
-//    }
-//    else
-//    {
-//        uint32_t argU32 = arg & 0xffffffffull;
-//
-//        if (thread.GetProcess().WriteMemory (sp, &argU32, sizeof(argU32), error) != sizeof(argU32))
-//            return false;
-//    }
-//    
-//    // The return address is pushed onto the stack.
-//    
-//    sp -= 4;
-//    uint32_t returnAddressU32 = returnAddress;
-//    if (thread.GetProcess().WriteMemory (sp, &returnAddressU32, sizeof(returnAddressU32), error) != sizeof(returnAddressU32))
-//        return false;
-//    
-//    // %esp is set to the actual stack value.
-//    
-//    if (!reg_ctx->WriteRegisterFromUnsigned(espID, sp))
-//        return false;
-//    
-//#ifndef CHAIN_EBP
-//    // %ebp is set to a fake value, in our case 0x0x00000000
-//    
-//    if (!reg_ctx->WriteRegisterFromUnsigned(ebpID, 0x00000000))
-//        return false;
-//#endif
-//    
-//    // %eip is set to the address of the called function.
-//    
-//    if (!reg_ctx->WriteRegisterFromUnsigned(eipID, functionAddress))
-//        return false;
-//    
-//    return true;
-    return false;
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
+    if (!reg_ctx)
+        return false;    
+
+    const uint32_t pc_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
+    const uint32_t sp_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+    const uint32_t ra_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA);
+
+    RegisterValue reg_value;
+
+    if (arg1_ptr)
+    {
+        reg_value.SetUInt32(*arg1_ptr);
+        if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r0"), reg_value))
+            return false;
+    }
+
+    if (arg2_ptr)
+    {
+        assert (arg1_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
+
+        reg_value.SetUInt32(*arg2_ptr);
+        if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r1"), reg_value))
+            return false;
+    }
+
+    if (arg3_ptr)
+    {
+        assert (arg1_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
+        assert (arg2_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
+
+        reg_value.SetUInt32(*arg3_ptr);
+        if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r2"), reg_value))
+            return false;
+    }
+
+    // Set "lr" to the return address into "lr"
+    if (!reg_ctx->WriteRegisterFromUnsigned (ra_reg_num, return_addr))
+        return false;
+
+    // Set "sp" to the requested value
+    if (!reg_ctx->WriteRegisterFromUnsigned (sp_reg_num, sp))
+        return false;
+    
+    // Set "pc" to the address requested
+    if (!reg_ctx->WriteRegisterFromUnsigned (pc_reg_num, function_addr))
+        return false;
+    
+    return true;
 }
 
-bool
-ABIMacOSX_arm::PrepareNormalCall (Thread &thread,
-                                  addr_t sp,
-                                  addr_t functionAddress,
-                                  addr_t returnAddress,
-                                  ValueList &args) const
-{
-//    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
-//    if (!reg_ctx)
-//        return false;
-//    Error error;
-//    uint32_t ebpID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
-//    uint32_t eipID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
-//    uint32_t espID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
-//    
-//    // Do the argument layout
-//    
-//    std::vector <uint32_t> argLayout;   // 4-byte chunks, as discussed in the ABI Function Call Guide
-//    
-//    size_t numArgs = args.GetSize();
-//    size_t index;
-//    
-//    for (index = 0; index < numArgs; ++index)
-//    {
-//        Value *val = args.GetValueAtIndex(index);
-//        
-//        if (!val)
-//            return false;
-//        
-//        switch (val->GetValueType())
-//        {
-//        case Value::eValueTypeScalar:
-//            {
-//                Scalar &scalar = val->GetScalar();
-//                switch (scalar.GetType())
-//                {
-//                case Scalar::e_void:
-//                default:
-//                    return false;
-//                case Scalar::e_sint: 
-//                case Scalar::e_uint:
-//                case Scalar::e_slong:
-//                case Scalar::e_ulong:
-//                case Scalar::e_slonglong:
-//                case Scalar::e_ulonglong:
-//                    {
-//                        uint64_t data = scalar.ULongLong();
-//                        
-//                        switch (scalar.GetByteSize())
-//                        {
-//                        default:
-//                            return false;
-//                        case 1:
-//                            argLayout.push_back((uint32_t)(data & 0xffull));
-//                            break;
-//                        case 2:
-//                            argLayout.push_back((uint32_t)(data & 0xffffull));
-//                            break;
-//                        case 4:
-//                            argLayout.push_back((uint32_t)(data & 0xffffffffull));
-//                            break;
-//                        case 8:
-//                            argLayout.push_back((uint32_t)(data & 0xffffffffull));
-//                            argLayout.push_back((uint32_t)(data >> 32));
-//                            break;
-//                        }
-//                    }
-//                    break;
-//                case Scalar::e_float:
-//                    {
-//                        float data = scalar.Float();
-//                        uint32_t dataRaw = *((uint32_t*)(&data));
-//                        argLayout.push_back(dataRaw);
-//                    }
-//                    break;
-//                case Scalar::e_double:
-//                    {
-//                        double data = scalar.Double();
-//                        uint32_t *dataRaw = ((uint32_t*)(&data));
-//                        argLayout.push_back(dataRaw[0]);
-//                        argLayout.push_back(dataRaw[1]);
-//                    }
-//                    break;
-//                case Scalar::e_long_double:
-//                    {
-//                        long double data = scalar.Double();
-//                        uint32_t *dataRaw = ((uint32_t*)(&data));
-//                        while ((argLayout.size() * 4) & 0xf)
-//                            argLayout.push_back(0);
-//                        argLayout.push_back(dataRaw[0]);
-//                        argLayout.push_back(dataRaw[1]);
-//                        argLayout.push_back(dataRaw[2]);
-//                        argLayout.push_back(dataRaw[3]);
-//                    }
-//                    break;
-//                }
-//            }
-//            break;
-//        case Value::eValueTypeHostAddress:
-//            switch (val->GetContextType()) 
-//            {
-//            default:
-//                return false;
-//            case Value::eContextTypeClangType:
-//                {
-//                    void *val_type = val->GetClangType();
-//                    uint32_t cstr_length;
-//                    
-//                    if (ClangASTContext::IsCStringType (val_type, cstr_length))
-//                    {
-//                        const char *cstr = (const char*)val->GetScalar().ULongLong();
-//                        cstr_length = strlen(cstr);
-//                        
-//                        // Push the string onto the stack immediately.
-//                        
-//                        sp -= (cstr_length + 1);
-//                        
-//                        if (thread.GetProcess().WriteMemory(sp, cstr, cstr_length + 1, error) != (cstr_length + 1))
-//                            return false;
-//                        
-//                        // Put the address of the string into the argument array.
-//                        
-//                        argLayout.push_back((uint32_t)(sp & 0xffffffff));
-//                    }
-//                    else
-//                    {
-//                        return false;
-//                    }
-//                }
-//                break;
-//            }
-//            break;
-//        case Value::eValueTypeFileAddress:
-//        case Value::eValueTypeLoadAddress:
-//        default:
-//            return false;
-//        }
-//    }
-//    
-//    // Make room for the arguments on the stack
-//    
-//    sp -= 4 * argLayout.size();
-//    
-//    // Align the SP
-//    
-//    sp &= ~(0xfull); // 16-byte alignment
-//    
-//    // Write the arguments on the stack
-//    
-//    size_t numChunks = argLayout.size();
-//
-//    for (index = 0; index < numChunks; ++index)
-//        if (thread.GetProcess().WriteMemory(sp + (index * 4), &argLayout[index], sizeof(uint32_t), error) != sizeof(uint32_t))
-//            return false;
-//    
-//    // The return address is pushed onto the stack.
-//    
-//    sp -= 4;
-//    uint32_t returnAddressU32 = returnAddress;
-//    if (thread.GetProcess().WriteMemory (sp, &returnAddressU32, sizeof(returnAddressU32), error) != sizeof(returnAddressU32))
-//        return false;
-//    
-//    // %esp is set to the actual stack value.
-//    
-//    if (!reg_ctx->WriteRegisterFromUnsigned(espID, sp))
-//        return false;
-//    
-//    // %ebp is set to a fake value, in our case 0x0x00000000
-//    
-//    if (!reg_ctx->WriteRegisterFromUnsigned(ebpID, 0x00000000))
-//        return false;
-//    
-//    // %eip is set to the address of the called function.
-//    
-//    if (!reg_ctx->WriteRegisterFromUnsigned(eipID, functionAddress))
-//        return false;
-//    
-//    return true;    
-    return false;
-}
 
 static bool 
 ReadIntegerArgument (Scalar &scalar,

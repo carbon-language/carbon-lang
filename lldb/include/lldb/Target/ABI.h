@@ -34,9 +34,9 @@ public:
                         lldb::addr_t sp,
                         lldb::addr_t functionAddress,
                         lldb::addr_t returnAddress, 
-                        lldb::addr_t arg,
-                        lldb::addr_t *this_arg,
-                        lldb::addr_t *cmd_arg) const = 0;
+                        lldb::addr_t *arg1_ptr,
+                        lldb::addr_t *arg2_ptr,
+                        lldb::addr_t *arg3_ptr) const = 0;
     
     virtual bool
     GetArgumentValues (Thread &thread,

@@ -15,6 +15,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/UnwindPlan.h"
@@ -60,116 +61,77 @@ ABISysV_x86_64::CreateInstance (const ArchSpec &arch)
 bool
 ABISysV_x86_64::PrepareTrivialCall (Thread &thread, 
                                     lldb::addr_t sp, 
-                                    lldb::addr_t functionAddress, 
-                                    lldb::addr_t returnAddress, 
-                                    lldb::addr_t arg,
-                                    lldb::addr_t *this_arg,
-                                    lldb::addr_t *cmd_arg) const
+                                    lldb::addr_t func_addr, 
+                                    lldb::addr_t return_addr, 
+                                    lldb::addr_t *arg1_ptr,
+                                    lldb::addr_t *arg2_ptr,
+                                    lldb::addr_t *arg3_ptr) const
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)
-        log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%llx\n  functionAddress = 0x%llx\n  returnAddress = 0x%llx\n  arg = 0x%llx\n  this_arg = %p(0x%llx)\n  cmd_arg = %p(0x%llx)\n)",
+        log->Printf("ABISysV_x86_64::PrepareTrivialCall\n(\n  thread = %p\n  sp = 0x%llx\n  func_addr = 0x%llx\n  return_addr = 0x%llx\n  arg1_ptr = %p (0x%llx)\n  arg2_ptr = %p (0x%llx)\n  arg3_ptr = %p (0x%llx)\n)",
                     (void*)&thread,
                     (uint64_t)sp,
-                    (uint64_t)functionAddress,
-                    (uint64_t)returnAddress,
-                    (void*)arg,
-                    this_arg,
-                    this_arg ? (uint64_t)*this_arg : (uint64_t)0,
-                    cmd_arg,
-                    cmd_arg ? (uint64_t)*cmd_arg : (uint64_t)0);
+                    (uint64_t)func_addr,
+                    (uint64_t)return_addr,
+                    arg1_ptr, arg1_ptr ? (uint64_t)*arg1_ptr : (uint64_t) 0,
+                    arg2_ptr, arg2_ptr ? (uint64_t)*arg2_ptr : (uint64_t) 0,
+                    arg3_ptr, arg3_ptr ? (uint64_t)*arg3_ptr : (uint64_t) 0);
     
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return false;
+    
+    RegisterValue reg_value;
+    if (arg1_ptr)
+    {
+        if (log)
+            log->Printf("About to write arg1 (0x%llx) into RDI", (uint64_t)*arg1_ptr);
 
-    uint32_t rdiID = reg_ctx->GetRegisterInfoByName("rdi", 0)->kinds[eRegisterKindLLDB];
-#define CHAIN_RBP
-    
-#ifndef CHAIN_RBP
-    uint32_t rbpID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
-#endif
-    
-    uint32_t ripID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
-    uint32_t rspID = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
+        reg_value.SetUInt64(*arg1_ptr);
+        if (!reg_ctx->WriteRegister(reg_ctx->GetRegisterInfoByName("rdi", 0), reg_value))
+            return false;
 
-    // The argument is in %rdi, and not on the stack.
-    
-    if (cmd_arg)
-    {
-        if (log)
-            log->PutCString("The trivial call has a self and a _cmd pointer");
-        
-        uint32_t rsiID = reg_ctx->GetRegisterInfoByName("rsi", 0)->kinds[eRegisterKindLLDB];
-        uint32_t rdxID = reg_ctx->GetRegisterInfoByName("rdx", 0)->kinds[eRegisterKindLLDB];
-        
-        if (log)
-            log->Printf("About to write 'self' (0x%llx) into RDI", (uint64_t)*this_arg);
-        
-        if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, *this_arg))
-            return false;
-        
-        if (log)
-            log->Printf("About to write '_cmd' (0x%llx) into RSI", (uint64_t)*cmd_arg);
-        
-        if (!reg_ctx->WriteRegisterFromUnsigned(rsiID, *cmd_arg))
-            return false;
-        
-        if (log)
-            log->Printf("About to write the argument (0x%llx) into RDX", (uint64_t)arg);
-        
-        if (!reg_ctx->WriteRegisterFromUnsigned(rdxID, arg))
-            return false;    
+        if (arg2_ptr)
+        {
+            if (log)
+                log->Printf("About to write arg2 (0x%llx) into RSI", (uint64_t)*arg2_ptr);
+            
+            reg_value.SetUInt64(*arg2_ptr);
+            if (!reg_ctx->WriteRegister(reg_ctx->GetRegisterInfoByName("rsi", 0), reg_value))
+                return false;
+
+            if (arg3_ptr)
+            {
+                if (log)
+                    log->Printf("About to write arg3 (0x%llx) into RDX", (uint64_t)*arg3_ptr);
+                reg_value.SetUInt64(*arg3_ptr);
+                if (!reg_ctx->WriteRegister(reg_ctx->GetRegisterInfoByName("rdx", 0), reg_value))
+                    return false;
+            }
+        }
     }
-    else if (this_arg)
-    {
-        if (log)
-            log->PutCString("The trivial call has a this pointer");
-        
-        uint32_t rsiID = reg_ctx->GetRegisterInfoByName("rsi", 0)->kinds[eRegisterKindLLDB];
-        
-        if (log)
-            log->Printf("About to write 'this' (0x%llx) into RDI", (uint64_t)*this_arg);
-        
-        if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, *this_arg))
-            return false;
-        
-        if (log)
-            log->Printf("About to write the argument (0x%llx) into RSI", (uint64_t)arg);
-        
-        if (!reg_ctx->WriteRegisterFromUnsigned(rsiID, arg))
-            return false;
-    }
-    else
-    {
-        if (log)
-            log->PutCString("The trivial call does not have a this pointer");
-        
-        if (log)
-            log->Printf("About to write the argument (0x%llx) into RDI", (uint64_t)arg);
-        
-        if (!reg_ctx->WriteRegisterFromUnsigned(rdiID, arg))
-            return false;
-    }
+
 
     // First, align the SP
-    
+
     if (log)
         log->Printf("16-byte aligning SP: 0x%llx to 0x%llx", (uint64_t)sp, (uint64_t)(sp & ~0xfull));
 
     sp &= ~(0xfull); // 16-byte alignment
 
-    // The return address is pushed onto the stack.
-
+    // The return address is pushed onto the stack (yes after the alignment...)
     sp -= 8;
-    uint64_t returnAddressU64 = returnAddress;
-    Error error;
-    
+
+    reg_value.SetUInt64 (return_addr);
+
     if (log)
-        log->Printf("Pushing the return address onto the stack: new SP 0x%llx, return address 0x%llx", (uint64_t)sp, (uint64_t)returnAddressU64);
-    
-    if (thread.GetProcess().WriteMemory (sp, &returnAddressU64, sizeof(returnAddressU64), error) != sizeof(returnAddressU64))
+        log->Printf("Pushing the return address onto the stack: new SP 0x%llx, return address 0x%llx", (uint64_t)sp, (uint64_t)return_addr);
+
+    const RegisterInfo *pc_reg_info = reg_ctx->GetRegisterInfoByName("rip");
+    Error error (reg_ctx->WriteRegisterValueToMemory(pc_reg_info, sp, pc_reg_info->byte_size, reg_value));
+    if (error.Fail())
         return false;
 
     // %rsp is set to the actual stack value.
@@ -177,35 +139,21 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     if (log)
         log->Printf("Writing SP (0x%llx) down", (uint64_t)sp);
     
-    if (!reg_ctx->WriteRegisterFromUnsigned(rspID, sp))
+    reg_value.SetUInt64(sp);
+    if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("rsp"), reg_value))
         return false;
-
-#ifndef CHAIN_RBP
-    // %rbp is set to a fake value, in our case 0x0000000000000000.
-
-    if (!reg_ctx->WriteRegisterFromUnsigned(rbpID, 0x000000000000000))
-        return false;
-#endif
 
     // %rip is set to the address of the called function.
     
     if (log)
-        log->Printf("Writing new IP (0x%llx) down", (uint64_t)functionAddress);
+        log->Printf("Writing new IP (0x%llx) down", (uint64_t)func_addr);
 
-    if (!reg_ctx->WriteRegisterFromUnsigned(ripID, functionAddress))
+    reg_value.SetUInt64(func_addr);
+
+    if (!reg_ctx->WriteRegister(pc_reg_info, func_addr))
         return false;
 
     return true;
-}
-
-bool
-ABISysV_x86_64::PrepareNormalCall (Thread &thread,
-                                   lldb::addr_t sp,
-                                   lldb::addr_t functionAddress,
-                                   lldb::addr_t returnAddress,
-                                   ValueList &args) const
-{
-    return false;    
 }
 
 static bool ReadIntegerArgument(Scalar           &scalar,
