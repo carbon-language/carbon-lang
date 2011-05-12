@@ -1243,7 +1243,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
   unsigned Flags = 0;
   if (ID->getImplementation())
-    Flags |= llvm::DIDescriptor::FlagObjcClassExtension;
+    Flags |= llvm::DIDescriptor::FlagObjcClassComplete;
 
   llvm::DIType RealDecl =
     DBuilder.createStructType(Unit, ID->getName(), DefUnit,
