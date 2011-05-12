@@ -97,7 +97,10 @@ Target::Dump (Stream *s, lldb::DescriptionLevel description_level)
     }
     else
     {
-        s->PutCString (GetExecutableModule()->GetFileSpec().GetFilename().GetCString());
+        if (GetExecutableModule())
+            s->PutCString (GetExecutableModule()->GetFileSpec().GetFilename().GetCString());
+        else
+            s->PutCString ("No executable module.");
     }
 }
 
