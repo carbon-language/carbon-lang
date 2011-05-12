@@ -233,6 +233,8 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
       cast<llvm::CallInst>(Exn)->setDoesNotThrow();
     }
 
+    CodeGenFunction::RunCleanupsScope cleanups(CGF);
+
     if (endCatchFn) {
       // Add a cleanup to leave the catch.
       bool EndCatchMightThrow = (Handler.Variable == 0);
@@ -255,9 +257,8 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
     CGF.EmitStmt(Handler.Body);
     CGF.ObjCEHValueStack.pop_back();
 
-    // Leave the earlier cleanup.
-    if (endCatchFn) 
-      CGF.PopCleanupBlock();
+    // Leave any cleanups associated with the catch.
+    cleanups.ForceCleanup();
 
     CGF.EmitBranchThroughCleanup(Cont);
   }  
