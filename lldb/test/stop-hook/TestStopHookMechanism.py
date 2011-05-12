@@ -69,7 +69,7 @@ class StopHookMechanismTestCase(TestBase):
         #self.DebugPExpect(child)
         # Verify that the 'Stop Hooks' mechanism is fired off.
         self.expect(child.before, exe=False,
-            substrs = ['(void *) $0 = 0x'])
+            substrs = ['(void *) $'])
 
         # Now continue the inferior, we'll stop at another breakpoint which is outside the stop-hook range.
         child.sendline('process continue')
@@ -80,7 +80,7 @@ class StopHookMechanismTestCase(TestBase):
         #self.DebugPExpect(child)
         # Verify that the 'Stop Hooks' mechanism is NOT BEING fired off.
         self.expect(child.before, exe=False, matching=False,
-            substrs = ['(void *) $0 = 0x'])
+            substrs = ['(void *) $'])
         
 
 if __name__ == '__main__':
