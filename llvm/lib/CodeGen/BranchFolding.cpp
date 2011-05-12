@@ -1354,10 +1354,6 @@ ReoptimizeBlock:
 /// NOTE: This optimization does not update live-in information so it must be
 /// run after all passes that require correct liveness information.
 bool BranchFolder::HoistCommonCode(MachineFunction &MF) {
-#if 1
-  // FIXME: Temporarily disabled.
-  return false;
-#endif
   bool MadeChange = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ) {
     MachineBasicBlock *MBB = I++;
@@ -1472,10 +1468,10 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
         Uses.erase(Reg);
         for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
           Uses.erase(*SR); // Use getSubRegisters to be conservative
-        Defs.insert(Reg);
-        for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
-          Defs.insert(*AS);
       }
+      Defs.insert(Reg);
+      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+        Defs.insert(*AS);
     }
   }
 
@@ -1511,7 +1507,8 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
     return false;
 
   bool HasDups = false;
-  SmallSet<unsigned, 4> LocalDefs;
+  SmallVector<unsigned, 4> LocalDefs;
+  SmallSet<unsigned, 4> LocalDefsSet;
   MachineBasicBlock::iterator TIB = TBB->begin();
   MachineBasicBlock::iterator FIB = FBB->begin();
   MachineBasicBlock::iterator TIE = TBB->end();
@@ -1568,11 +1565,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
           IsSafe = false;
           break;
         }
-
-        LocalDefs.insert(Reg);
-        for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
-          LocalDefs.insert(*SR);
-      } else if (!LocalDefs.count(Reg)) {
+      } else if (!LocalDefsSet.count(Reg)) {
         if (Defs.count(Reg)) {
           // Use is defined by the instruction at the point of insertion.
           IsSafe = false;
@@ -1587,6 +1580,28 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
     if (!TIB->isSafeToMove(TII, 0, DontMoveAcrossStore))
       break;
 
+    // Track local defs so we can update liveins.
+    for (unsigned i = 0, e = TIB->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = TIB->getOperand(i);
+      if (!MO.isReg())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (!Reg)
+        continue;
+      if (MO.isDef()) {
+        if (!MO.isDead()) {
+          LocalDefs.push_back(Reg);
+          LocalDefsSet.insert(Reg);
+          for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+            LocalDefsSet.insert(*SR);
+        }
+      } else if (MO.isKill() && LocalDefsSet.count(Reg)) {
+        LocalDefsSet.erase(Reg);
+        for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+          LocalDefsSet.erase(*SR);
+      }
+    }
+
     HasDups = true;;
     ++TIB;
     ++FIB;
@@ -1597,6 +1612,16 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
 
   MBB->splice(Loc, TBB, TBB->begin(), TIB);
   FBB->erase(FBB->begin(), FIB);
+
+  // Update livein's.
+  for (unsigned i = 0, e = LocalDefs.size(); i != e; ++i) {
+    unsigned Def = LocalDefs[i];
+    if (LocalDefsSet.count(Def)) {
+      TBB->addLiveIn(Def);
+      FBB->addLiveIn(Def);
+    }
+  }
+
   ++NumHoist;
   return true;
 }
