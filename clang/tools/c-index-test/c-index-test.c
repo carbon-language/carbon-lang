@@ -221,6 +221,11 @@ static void PrintCursor(CXTranslationUnit TU, CXCursor Cursor) {
         break;
     }
     
+    if (clang_CXXMethod_isStatic(Cursor))
+      printf(" (static)");
+    if (clang_CXXMethod_isVirtual(Cursor))
+      printf(" (virtual)");
+    
     if (Cursor.kind == CXCursor_IBOutletCollectionAttr) {
       CXType T =
         clang_getCanonicalType(clang_getIBOutletCollectionType(Cursor));

@@ -399,13 +399,13 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ";" [32:6 - 32:7] ClassDecl=AttributeList:12:9 (Definition)
 // CHECK-tokens: Keyword: "static" [33:5 - 33:11] ClassDecl=AttributeList:12:9 (Definition)
 // CHECK-tokens: Identifier: "Kind" [33:12 - 33:16] TypeRef=enum clang::AttributeList::Kind:13:10
-// CHECK-tokens: Identifier: "getKind" [33:17 - 33:24] CXXMethod=getKind:33:17
-// CHECK-tokens: Punctuation: "(" [33:24 - 33:25] CXXMethod=getKind:33:17
-// CHECK-tokens: Keyword: "const" [33:25 - 33:30] CXXMethod=getKind:33:17
+// CHECK-tokens: Identifier: "getKind" [33:17 - 33:24] CXXMethod=getKind:33:17 (static)
+// CHECK-tokens: Punctuation: "(" [33:24 - 33:25] CXXMethod=getKind:33:17 (static)
+// CHECK-tokens: Keyword: "const" [33:25 - 33:30] CXXMethod=getKind:33:17 (static)
 // CHECK-tokens: Identifier: "IdentifierInfo" [33:31 - 33:45] TypeRef=class clang::IdentifierInfo:66:7
 // CHECK-tokens: Punctuation: "*" [33:46 - 33:47] ParmDecl=Name:33:48 (Definition)
 // CHECK-tokens: Identifier: "Name" [33:48 - 33:52] ParmDecl=Name:33:48 (Definition)
-// CHECK-tokens: Punctuation: ")" [33:52 - 33:53] CXXMethod=getKind:33:17
+// CHECK-tokens: Punctuation: ")" [33:52 - 33:53] CXXMethod=getKind:33:17 (static)
 // CHECK-tokens: Punctuation: ";" [33:53 - 33:54] ClassDecl=AttributeList:12:9 (Definition)
 // CHECK-tokens: Punctuation: "}" [34:3 - 34:4] ClassDecl=AttributeList:12:9 (Definition)
 // CHECK-tokens: Punctuation: ";" [34:4 - 34:5] Namespace=clang:10:17 (Definition)
@@ -456,14 +456,14 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ";" [44:16 - 44:17] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Keyword: "static" [45:3 - 45:9] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Identifier: "size_t" [45:10 - 45:16] TypeRef=size_t:2:25
-// CHECK-tokens: Identifier: "min" [45:17 - 45:20] CXXMethod=min:45:17 (Definition)
-// CHECK-tokens: Punctuation: "(" [45:20 - 45:21] CXXMethod=min:45:17 (Definition)
+// CHECK-tokens: Identifier: "min" [45:17 - 45:20] CXXMethod=min:45:17 (Definition) (static)
+// CHECK-tokens: Punctuation: "(" [45:20 - 45:21] CXXMethod=min:45:17 (Definition) (static)
 // CHECK-tokens: Identifier: "size_t" [45:21 - 45:27] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "a" [45:28 - 45:29] ParmDecl=a:45:28 (Definition)
-// CHECK-tokens: Punctuation: "," [45:29 - 45:30] CXXMethod=min:45:17 (Definition)
+// CHECK-tokens: Punctuation: "," [45:29 - 45:30] CXXMethod=min:45:17 (Definition) (static)
 // CHECK-tokens: Identifier: "size_t" [45:31 - 45:37] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "b" [45:38 - 45:39] ParmDecl=b:45:38 (Definition)
-// CHECK-tokens: Punctuation: ")" [45:39 - 45:40] CXXMethod=min:45:17 (Definition)
+// CHECK-tokens: Punctuation: ")" [45:39 - 45:40] CXXMethod=min:45:17 (Definition) (static)
 // CHECK-tokens: Punctuation: "{" [45:41 - 45:42] UnexposedStmt=
 // CHECK-tokens: Keyword: "return" [45:43 - 45:49] UnexposedStmt=
 // CHECK-tokens: Identifier: "a" [45:50 - 45:51] DeclRefExpr=a:45:28
@@ -893,17 +893,17 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "clang" [98:17 - 98:22] NamespaceRef=clang:10:17
 // CHECK-tokens: Punctuation: ";" [98:22 - 98:23]
 // CHECK-tokens: Identifier: "AttributeList" [100:1 - 100:14] TypeRef=class clang::AttributeList:12:9
-// CHECK-tokens: Punctuation: "::" [100:14 - 100:16] CXXMethod=getKind:100:36 (Definition)
+// CHECK-tokens: Punctuation: "::" [100:14 - 100:16] CXXMethod=getKind:100:36 (Definition) (static)
 // CHECK-tokens: Identifier: "Kind" [100:16 - 100:20] TypeRef=enum clang::AttributeList::Kind:13:10
 // CHECK-tokens: Identifier: "AttributeList" [100:21 - 100:34] TypeRef=class clang::AttributeList:12:9
-// CHECK-tokens: Punctuation: "::" [100:34 - 100:36] CXXMethod=getKind:100:36 (Definition)
-// CHECK-tokens: Identifier: "getKind" [100:36 - 100:43] CXXMethod=getKind:100:36 (Definition)
-// CHECK-tokens: Punctuation: "(" [100:43 - 100:44] CXXMethod=getKind:100:36 (Definition)
-// CHECK-tokens: Keyword: "const" [100:44 - 100:49] CXXMethod=getKind:100:36 (Definition)
+// CHECK-tokens: Punctuation: "::" [100:34 - 100:36] CXXMethod=getKind:100:36 (Definition) (static)
+// CHECK-tokens: Identifier: "getKind" [100:36 - 100:43] CXXMethod=getKind:100:36 (Definition) (static)
+// CHECK-tokens: Punctuation: "(" [100:43 - 100:44] CXXMethod=getKind:100:36 (Definition) (static)
+// CHECK-tokens: Keyword: "const" [100:44 - 100:49] CXXMethod=getKind:100:36 (Definition) (static)
 // CHECK-tokens: Identifier: "IdentifierInfo" [100:50 - 100:64] TypeRef=class clang::IdentifierInfo:66:7
 // CHECK-tokens: Punctuation: "*" [100:65 - 100:66] ParmDecl=Name:100:67 (Definition)
 // CHECK-tokens: Identifier: "Name" [100:67 - 100:71] ParmDecl=Name:100:67 (Definition)
-// CHECK-tokens: Punctuation: ")" [100:71 - 100:72] CXXMethod=getKind:100:36 (Definition)
+// CHECK-tokens: Punctuation: ")" [100:71 - 100:72] CXXMethod=getKind:100:36 (Definition) (static)
 // CHECK-tokens: Punctuation: "{" [100:73 - 100:74] UnexposedStmt=
 // CHECK-tokens: Identifier: "llvm" [101:3 - 101:7] NamespaceRef=llvm:82:11
 // CHECK-tokens: Punctuation: "::" [101:7 - 101:9] VarDecl=AttrName:101:19 (Definition)
@@ -1616,7 +1616,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 30:40: EnumConstantDecl=AT_init_priority:30:40 (Definition) Extent=[30:40 - 30:56]
 // CHECK: 31:7: EnumConstantDecl=IgnoredAttribute:31:7 (Definition) Extent=[31:7 - 31:23]
 // CHECK: 31:25: EnumConstantDecl=UnknownAttribute:31:25 (Definition) Extent=[31:25 - 31:41]
-// CHECK: 33:17: CXXMethod=getKind:33:17 Extent=[33:5 - 33:53]
+// CHECK: 33:17: CXXMethod=getKind:33:17 (static) Extent=[33:5 - 33:53]
 // CHECK: 33:12: TypeRef=enum clang::AttributeList::Kind:13:10 Extent=[33:12 - 33:16]
 // CHECK: 33:48: ParmDecl=Name:33:48 (Definition) Extent=[33:25 - 33:52]
 // CHECK: 33:31: TypeRef=class clang::IdentifierInfo:66:7 Extent=[33:31 - 33:45]
@@ -1638,7 +1638,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 43:15: FieldDecl=Data:43:15 (Definition) Extent=[43:3 - 43:19]
 // CHECK: 44:10: FieldDecl=Length:44:10 (Definition) Extent=[44:3 - 44:16]
 // CHECK: 44:3: TypeRef=size_t:2:25 Extent=[44:3 - 44:9]
-// CHECK: 45:17: CXXMethod=min:45:17 (Definition) Extent=[45:3 - 45:66]
+// CHECK: 45:17: CXXMethod=min:45:17 (Definition) (static) Extent=[45:3 - 45:66]
 // CHECK: 45:10: TypeRef=size_t:2:25 Extent=[45:10 - 45:16]
 // CHECK: 45:28: ParmDecl=a:45:28 (Definition) Extent=[45:21 - 45:29]
 // CHECK: 45:21: TypeRef=size_t:2:25 Extent=[45:21 - 45:27]
@@ -1865,7 +1865,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 93:12: DeclRefExpr=Value:92:23 Extent=[93:12 - 93:17]
 // CHECK: 98:17: UsingDirective=:98:17 Extent=[98:1 - 98:22]
 // CHECK: 98:17: NamespaceRef=clang:10:17 Extent=[98:17 - 98:22]
-// CHECK: 100:36: CXXMethod=getKind:100:36 (Definition) Extent=[100:1 - 186:2]
+// CHECK: 100:36: CXXMethod=getKind:100:36 (Definition) (static) Extent=[100:1 - 186:2]
 // CHECK: 100:21: TypeRef=class clang::AttributeList:12:9 Extent=[100:21 - 100:34]
 // CHECK: 100:67: ParmDecl=Name:100:67 (Definition) Extent=[100:44 - 100:71]
 // CHECK: 100:50: TypeRef=class clang::IdentifierInfo:66:7 Extent=[100:50 - 100:64]
