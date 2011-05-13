@@ -541,7 +541,7 @@ _mm_loadu_ps(const float *p)
 {
   struct __loadu_ps {
     __m128 v;
-  } __attribute__((packed));
+  } __attribute__((packed, may_alias));
   return ((struct __loadu_ps*)p)->v;
 }
 
