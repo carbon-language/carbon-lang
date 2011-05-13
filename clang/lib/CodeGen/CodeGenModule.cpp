@@ -1580,7 +1580,7 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
   // If the builtin has been declared explicitly with an assembler label,
   // use the mangled name. This differs from the plain label on platforms
   // that prefix labels.
-  if (const AsmLabelAttr *ALA = FD->getAttr<AsmLabelAttr>())
+  if (FD->hasAttr<AsmLabelAttr>())
     Name = getMangledName(D);
   else if (Context.BuiltinInfo.isLibFunction(BuiltinID))
     Name = Context.BuiltinInfo.GetName(BuiltinID) + 10;
