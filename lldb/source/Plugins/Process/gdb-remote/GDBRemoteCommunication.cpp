@@ -11,6 +11,7 @@
 #include "GDBRemoteCommunication.h"
 
 // C Includes
+#include <limits.h>
 #include <string.h>
 
 // C++ Includes
