@@ -1173,19 +1173,4 @@ LaunchApplication (const FileSpec &app_file_spec)
     return LLDB_INVALID_PROCESS_ID;
 }
 
-lldb::pid_t
-Host::LaunchInNewTerminal 
-(
-    const char *tty_name,
-    const char **argv, 
-    const char **envp,
-    const char *working_dir,
-    const ArchSpec *arch_spec,
-    bool stop_at_entry,
-    bool disable_aslr
-)
-{
-    return LLDB_INVALID_PROCESS_ID;
-}
-
 #endif
