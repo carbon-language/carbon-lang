@@ -337,6 +337,9 @@ class CXXRecordDecl : public RecordDecl {
     /// HasPublicFields - True when there are private non-static data members.
     bool HasPublicFields : 1;
 
+    /// \brief True if this class (or any subobject) has mutable fields.
+    bool HasMutableFields : 1;
+    
     /// HasTrivialDefaultConstructor - True when, if this class has a default
     /// constructor, this default constructor is trivial.
     ///
@@ -822,6 +825,10 @@ public:
   /// (C++ [class]p7)
   bool isStandardLayout() const { return data().IsStandardLayout; }
 
+  /// \brief Whether this class, or any of its class subobjects, contains a
+  /// mutable field.
+  bool hasMutableFields() const { return data().HasMutableFields; }
+  
   // hasTrivialDefaultConstructor - Whether this class has a trivial default
   // constructor
   // (C++0x [class.ctor]p5)

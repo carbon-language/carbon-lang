@@ -860,6 +860,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.HasPrivateFields = Record[Idx++];
   Data.HasProtectedFields = Record[Idx++];
   Data.HasPublicFields = Record[Idx++];
+  Data.HasMutableFields = Record[Idx++];
   Data.HasTrivialDefaultConstructor = Record[Idx++];
   Data.HasConstExprNonCopyMoveConstructor = Record[Idx++];
   Data.HasTrivialCopyConstructor = Record[Idx++];

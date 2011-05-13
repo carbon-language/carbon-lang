@@ -33,7 +33,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
     Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
-    HasTrivialDefaultConstructor(true),
+    HasMutableFields(false), HasTrivialDefaultConstructor(true),
     HasConstExprNonCopyMoveConstructor(false), HasTrivialCopyConstructor(true),
     HasTrivialMoveConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialMoveAssignment(true), HasTrivialDestructor(true),
@@ -225,6 +225,10 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     //   have trivial destructors.
     if (!BaseClassDecl->hasTrivialDestructor())
       data().HasTrivialDestructor = false;
+    
+    // Keep track of the presence of mutable fields.
+    if (BaseClassDecl->hasMutableFields())
+      data().HasMutableFields = true;
   }
   
   if (VBases.empty())
@@ -688,6 +692,10 @@ void CXXRecordDecl::addedMember(Decl *D) {
          data().HasPublicFields) > 1)
       data().IsStandardLayout = false;
 
+    // Keep track of the presence of mutable fields.
+    if (Field->isMutable())
+      data().HasMutableFields = true;
+    
     // C++0x [class]p9:
     //   A POD struct is a class that is both a trivial class and a 
     //   standard-layout class, and has no non-static data members of type 
@@ -779,6 +787,10 @@ void CXXRecordDecl::addedMember(Decl *D) {
             }
           }
         }
+        
+        // Keep track of the presence of mutable fields.
+        if (FieldRec->hasMutableFields())
+          data().HasMutableFields = true;
       }
     }
 

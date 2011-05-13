@@ -189,23 +189,6 @@ namespace {
   }
 }
 
-/// Determines if the given record type has a mutable field.
-static bool hasMutableField(const CXXRecordDecl *record) {
-  for (CXXRecordDecl::field_iterator
-         i = record->field_begin(), e = record->field_end(); i != e; ++i)
-    if ((*i)->isMutable())
-      return true;
-
-  for (CXXRecordDecl::base_class_const_iterator
-         i = record->bases_begin(), e = record->bases_end(); i != e; ++i) {
-    const RecordType *record = i->getType()->castAs<RecordType>();
-    if (hasMutableField(cast<CXXRecordDecl>(record->getDecl())))
-      return true;
-  }
-
-  return false;
-}
-
 /// Determines if the given type is safe for constant capture in C++.
 static bool isSafeForCXXConstantCapture(QualType type) {
   const RecordType *recordType =
@@ -222,7 +205,7 @@ static bool isSafeForCXXConstantCapture(QualType type) {
 
   // Otherwise, we just have to make sure there aren't any mutable
   // fields that might have changed since initialization.
-  return !hasMutableField(record);
+  return !record->hasMutableFields();
 }
 
 /// It is illegal to modify a const object after initialization.

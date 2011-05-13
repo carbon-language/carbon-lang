@@ -946,7 +946,9 @@ static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D,
   if (Context.getLangOptions().CPlusPlus) {
     if (const RecordType *Record 
           = Context.getBaseElementType(D->getType())->getAs<RecordType>())
-      return ConstantInit && cast<CXXRecordDecl>(Record->getDecl())->isPOD();
+      return ConstantInit && 
+             cast<CXXRecordDecl>(Record->getDecl())->isPOD() &&
+             !cast<CXXRecordDecl>(Record->getDecl())->hasMutableFields();
   }
   
   return true;
