@@ -181,14 +181,6 @@ public:
   ///
   JITCodeEmitter *getCodeEmitter() const { return JCE; }
 
-  /// selectTarget - Pick a target either via -march or by guessing the native
-  /// arch.  Add any CPU features specified via -mcpu or -mattr.
-  static TargetMachine *selectTarget(Module *M,
-                                     StringRef MArch,
-                                     StringRef MCPU,
-                                     const SmallVectorImpl<std::string>& MAttrs,
-                                     std::string *Err);
-
   static ExecutionEngine *createJIT(Module *M,
                                     std::string *ErrorStr,
                                     JITMemoryManager *JMM,

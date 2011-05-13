@@ -569,6 +569,14 @@ public:
     return *this;
   }
 
+  /// selectTarget - Pick a target either via -march or by guessing the native
+  /// arch.  Add any CPU features specified via -mcpu or -mattr.
+  static TargetMachine *selectTarget(Module *M,
+                                     StringRef MArch,
+                                     StringRef MCPU,
+                                     const SmallVectorImpl<std::string>& MAttrs,
+                                     std::string *Err);
+
   ExecutionEngine *create();
 };
 

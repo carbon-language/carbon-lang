@@ -52,7 +52,8 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
   // FIXME: This should be lifted out of here, it isn't something which should
   // be part of the JIT policy, rather the burden for this selection should be
   // pushed to clients.
-  TargetMachine *TM = MCJIT::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
+  TargetMachine *TM =
+          EngineBuilder::selectTarget(M, MArch, MCPU, MAttrs, ErrorStr);
   if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
   TM->setCodeModel(CMM);
 
