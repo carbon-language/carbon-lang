@@ -1641,6 +1641,16 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
   return Map.GetOrCreateValue(llvm::StringRef(AsBytes.data(), AsBytes.size()));
 }
 
+static llvm::StringMapEntry<llvm::Constant*> &
+GetConstantStringEntry(llvm::StringMap<llvm::Constant*> &Map,
+		       const StringLiteral *Literal,
+		       unsigned &StringLength)
+{
+	llvm::StringRef String = Literal->getString();
+	StringLength = String.size();
+	return Map.GetOrCreateValue(String);
+}
+
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
@@ -1734,11 +1744,8 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
-  bool isUTF16 = false;
   llvm::StringMapEntry<llvm::Constant*> &Entry =
-    GetConstantCFStringEntry(CFConstantStringMap, Literal,
-                             getTargetData().isLittleEndian(),
-                             isUTF16, StringLength);
+    GetConstantStringEntry(CFConstantStringMap, Literal, StringLength);
   
   if (llvm::Constant *C = Entry.getValue())
     return C;
@@ -1786,28 +1793,15 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   
   llvm::GlobalValue::LinkageTypes Linkage;
   bool isConstant;
-  if (isUTF16) {
-    // FIXME: why do utf strings get "_" labels instead of "L" labels?
-    Linkage = llvm::GlobalValue::InternalLinkage;
-    // Note: -fwritable-strings doesn't make unicode NSStrings writable, but
-    // does make plain ascii ones writable.
-    isConstant = true;
-  } else {
-    Linkage = llvm::GlobalValue::PrivateLinkage;
-    isConstant = !Features.WritableStrings;
-  }
+  Linkage = llvm::GlobalValue::PrivateLinkage;
+  isConstant = !Features.WritableStrings;
   
   llvm::GlobalVariable *GV =
   new llvm::GlobalVariable(getModule(), C->getType(), isConstant, Linkage, C,
                            ".str");
   GV->setUnnamedAddr(true);
-  if (isUTF16) {
-    CharUnits Align = getContext().getTypeAlignInChars(getContext().ShortTy);
-    GV->setAlignment(Align.getQuantity());
-  } else {
-    CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
-    GV->setAlignment(Align.getQuantity());
-  }
+  CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
+  GV->setAlignment(Align.getQuantity());
   Fields[1] = llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
   
   // String length.
