@@ -18,8 +18,6 @@ void test_is_nothrow_copy_constructible()
 {
     static_assert( std::is_nothrow_copy_constructible<T>::value, "");
     static_assert( std::is_nothrow_copy_constructible<const T>::value, "");
-    static_assert( std::is_nothrow_copy_constructible<volatile T>::value, "");
-    static_assert( std::is_nothrow_copy_constructible<const volatile T>::value, "");
 }
 
 template <class T>
@@ -33,12 +31,6 @@ void test_has_not_nothrow_copy_constructor()
 
 class Empty
 {
-};
-
-class NotEmpty
-{
-public:
-    virtual ~NotEmpty();
 };
 
 union Union {};
@@ -65,6 +57,5 @@ int main()
     test_is_nothrow_copy_constructible<double>();
     test_is_nothrow_copy_constructible<int*>();
     test_is_nothrow_copy_constructible<const int*>();
-    test_is_nothrow_copy_constructible<NotEmpty>();
     test_is_nothrow_copy_constructible<bit_zero>();
 }

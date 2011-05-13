@@ -31,4 +31,8 @@ int main()
     static_assert(( std::is_assignable<int&, double>::value), "");
     static_assert(( std::is_assignable<B, A>::value), "");
     static_assert((!std::is_assignable<A, B>::value), "");
+    static_assert((!std::is_assignable<void, const void>::value), "");
+    static_assert((!std::is_assignable<const void, const void>::value), "");
+    static_assert(( std::is_assignable<void*&, void*>::value), "");
+    static_assert((!std::is_assignable<int(), int>::value), "");
 }

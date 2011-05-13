@@ -13,9 +13,19 @@
 
 #include <type_traits>
 
+struct A {};
+
+class B
+{
+public:
+    B();
+};
+
 int main()
 {
     static_assert( std::is_trivial<int>::value, "");
     static_assert(!std::is_trivial<int&>::value, "");
     static_assert(!std::is_trivial<volatile int&>::value, "");
+    static_assert( std::is_trivial<A>::value, "");
+    static_assert(!std::is_trivial<B>::value, "");
 }

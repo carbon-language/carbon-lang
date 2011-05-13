@@ -25,6 +25,12 @@ struct B
     ~B() {assert(i_ == 0);}
 };
 
+class C
+{
+public:
+    C();
+};
+
 int main()
 {
     static_assert( std::is_trivially_copyable<int>::value, "");
@@ -34,4 +40,5 @@ int main()
     static_assert( std::is_trivially_copyable<const A>::value, "");
     static_assert(!std::is_trivially_copyable<const A&>::value, "");
     static_assert(!std::is_trivially_copyable<B>::value, "");
+    static_assert( std::is_trivially_copyable<C>::value, "");
 }

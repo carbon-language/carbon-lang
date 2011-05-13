@@ -35,6 +35,11 @@ struct A
     A();
 };
 
+class B
+{
+    B& operator=(const B&);
+};
+
 int main()
 {
     static_assert(( std::is_copy_assignable<int>::value), "");
@@ -47,4 +52,6 @@ int main()
     static_assert(( std::is_copy_assignable<Union>::value), "");
     static_assert(( std::is_copy_assignable<NotEmpty>::value), "");
     static_assert(( std::is_copy_assignable<Empty>::value), "");
+    static_assert((!std::is_copy_assignable<B>::value), "");
+    static_assert((!std::is_copy_assignable<void>::value), "");
 }

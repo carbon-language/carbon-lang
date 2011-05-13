@@ -129,7 +129,6 @@ namespace std
     template <class T> struct alignment_of;
     template <size_t Len, size_t Align = most_stringent_alignment_requirement>
         struct aligned_storage;
-    template <std::size_t Len, class... Types> struct aligned_union;
 
     template <class T> struct decay;
     template <class... T> struct common_type;
@@ -169,11 +168,15 @@ struct _LIBCPP_VISIBLE integral_constant
 #ifndef _LIBCPP_HAS_NO_CONSTEXPR
     constexpr
 #endif
-         operator value_type() const {return value;}
+         operator value_type()
+#ifdef _LIBCPP_HAS_NO_CONSTEXPR
+                               const
+#endif
+                                     {return value;}
 };
 
 template <class _Tp, _Tp __v>
-const _Tp integral_constant<_Tp, __v>::value;
+constexpr _Tp integral_constant<_Tp, __v>::value;
 
 typedef integral_constant<bool, true>  true_type;
 typedef integral_constant<bool, false> false_type;
@@ -1200,7 +1203,7 @@ decltype((_STD::declval<_Tp>() = _STD::declval<_Arg>(), true_type()))
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __is_assignable_test(_Tp&&, _Arg&&);
 #else
-__is_assignable_test(_Tp&, _Arg&);
+__is_assignable_test(_Tp, _Arg&);
 #endif
 
 template <class _Arg>
@@ -1211,12 +1214,18 @@ __is_assignable_test(__any, _Arg&&);
 __is_assignable_test(__any, _Arg&);
 #endif
 
-template <class _Tp, class _Arg>
+template <class _Tp, class _Arg, bool = is_void<_Tp>::value || is_void<_Arg>::value>
 struct __is_assignable_imp
     : public common_type
         <
             decltype(__is_assignable_test(declval<_Tp>(), declval<_Arg>()))
         >::type {};
+
+template <class _Tp, class _Arg>
+struct __is_assignable_imp<_Tp, _Arg, true>
+    : public false_type
+{
+};
 
 template <class _Tp, class _Arg>
 struct is_assignable
@@ -1225,13 +1234,15 @@ struct is_assignable
 // is_copy_assignable
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_copy_assignable
-    : public is_assignable<_Tp&, const _Tp&> {};
+    : public is_assignable<typename add_lvalue_reference<_Tp>::type,
+                     const typename add_lvalue_reference<_Tp>::type> {};
 
 // is_move_assignable
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_move_assignable
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    : public is_assignable<_Tp&, _Tp&&> {};
+    : public is_assignable<typename add_lvalue_reference<_Tp>::type,
+                     const typename add_rvalue_reference<_Tp>::type> {};
 #else
     : public is_copy_assignable<_Tp> {};
 #endif
@@ -2143,6 +2154,12 @@ struct _LIBCPP_VISIBLE is_nothrow_constructible
 {
 };
 
+template <class _Tp, size_t _Ns>
+struct _LIBCPP_VISIBLE is_nothrow_constructible<_Tp[_Ns]>
+    : __is_nothrow_constructible<is_constructible<_Tp>::value, _Tp>
+{
+};
+
 #else  // __has_feature(cxx_noexcept)
 
 template <class _Tp, class... _Args>
@@ -2384,6 +2401,28 @@ struct _LIBCPP_VISIBLE is_nothrow_destructible
 {
 };
 
+template <class _Tp, size_t _Ns>
+struct _LIBCPP_VISIBLE is_nothrow_destructible<_Tp[_Ns]>
+    : public is_nothrow_destructible<_Tp>
+{
+};
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_destructible<_Tp&>
+    : public true_type
+{
+};
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_nothrow_destructible<_Tp&&>
+    : public true_type
+{
+};
+
+#endif
+
 #else
 
 template <class _Tp> struct __libcpp_nothrow_destructor
@@ -2420,6 +2459,37 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_literal_type
 #else
     : integral_constant<bool, is_scalar<typename remove_all_extents<_Tp>::type>::value ||
                               is_reference<typename remove_all_extents<_Tp>::type>::value>
+#endif
+    {};
+    
+// is_standard_layout;
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_standard_layout
+#if __has_feature(is_standard_layout)
+    : public integral_constant<bool, __is_standard_layout(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<typename remove_all_extents<_Tp>::type>::value>
+#endif
+    {};
+    
+// is_trivially_copyable;
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivially_copyable
+#if __has_feature(is_trivially_copyable)
+    : public integral_constant<bool, __is_trivially_copyable(_Tp)>
+#else
+    : integral_constant<bool, is_scalar<typename remove_all_extents<_Tp>::type>::value>
+#endif
+    {};
+    
+// is_trivial;
+
+template <class _Tp> struct _LIBCPP_VISIBLE is_trivial
+#if __has_feature(is_trivial)
+    : public integral_constant<bool, __is_trivial(_Tp)>
+#else
+    : integral_constant<bool, is_trivially_copyable<_Tp>::value &&
+                           is_trivially_default_constructible<T>::value>::value>
 #endif
     {};
     

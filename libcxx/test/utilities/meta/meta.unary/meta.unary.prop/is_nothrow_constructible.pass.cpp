@@ -47,4 +47,6 @@ int main()
     static_assert((!std::is_nothrow_constructible<A, int>::value), "");
     static_assert((!std::is_nothrow_constructible<A, int, double>::value), "");
     static_assert((!std::is_nothrow_constructible<A>::value), "");
+    static_assert(( std::is_nothrow_constructible<Empty>::value), "");
+    static_assert(( std::is_nothrow_constructible<Empty, const Empty&>::value), "");
 }

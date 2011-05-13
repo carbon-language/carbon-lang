@@ -18,8 +18,6 @@ void test_is_nothrow_move_constructible()
 {
     static_assert( std::is_nothrow_move_constructible<T>::value, "");
     static_assert( std::is_nothrow_move_constructible<const T>::value, "");
-    static_assert( std::is_nothrow_move_constructible<volatile T>::value, "");
-    static_assert( std::is_nothrow_move_constructible<const volatile T>::value, "");
 }
 
 template <class T>
@@ -33,12 +31,6 @@ void test_has_not_nothrow_move_constructor()
 
 class Empty
 {
-};
-
-class NotEmpty
-{
-public:
-    virtual ~NotEmpty();
 };
 
 union Union {};
@@ -58,13 +50,12 @@ int main()
     test_has_not_nothrow_move_constructor<void>();
     test_has_not_nothrow_move_constructor<A>();
 
-    test_has_not_nothrow_move_constructor<int&>();
+    test_is_nothrow_move_constructible<int&>();
     test_is_nothrow_move_constructible<Union>();
     test_is_nothrow_move_constructible<Empty>();
     test_is_nothrow_move_constructible<int>();
     test_is_nothrow_move_constructible<double>();
     test_is_nothrow_move_constructible<int*>();
     test_is_nothrow_move_constructible<const int*>();
-    test_is_nothrow_move_constructible<NotEmpty>();
     test_is_nothrow_move_constructible<bit_zero>();
 }

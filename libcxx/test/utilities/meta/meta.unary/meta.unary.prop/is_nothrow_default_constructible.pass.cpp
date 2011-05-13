@@ -35,12 +35,6 @@ class Empty
 {
 };
 
-class NotEmpty
-{
-public:
-    virtual ~NotEmpty();
-};
-
 union Union {};
 
 struct bit_zero
@@ -66,6 +60,5 @@ int main()
     test_is_nothrow_default_constructible<int*>();
     test_is_nothrow_default_constructible<const int*>();
     test_is_nothrow_default_constructible<char[3]>();
-    test_is_nothrow_default_constructible<NotEmpty>();
     test_is_nothrow_default_constructible<bit_zero>();
 }

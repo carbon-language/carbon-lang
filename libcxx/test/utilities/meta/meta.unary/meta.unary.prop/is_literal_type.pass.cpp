@@ -13,10 +13,21 @@
 
 #include <type_traits>
 
+struct A
+{
+};
+
+struct B
+{
+    B();
+};
+
 int main()
 {
     static_assert( std::is_literal_type<int>::value, "");
     static_assert( std::is_literal_type<const int>::value, "");
-    static_assert(!std::is_literal_type<int&>::value, "");
-    static_assert(!std::is_literal_type<volatile int&>::value, "");
+    static_assert( std::is_literal_type<int&>::value, "");
+    static_assert( std::is_literal_type<volatile int&>::value, "");
+    static_assert( std::is_literal_type<A>::value, "");
+    static_assert(!std::is_literal_type<B>::value, "");
 }

@@ -41,7 +41,8 @@ int main()
     static_assert((!std::is_move_assignable<const int>::value), "");
     static_assert((!std::is_move_assignable<int[]>::value), "");
     static_assert((!std::is_move_assignable<int[3]>::value), "");
-    static_assert(( std::is_move_assignable<int&>::value), "");
+    static_assert((!std::is_move_assignable<int[3]>::value), "");
+    static_assert((!std::is_move_assignable<void>::value), "");
     static_assert(( std::is_move_assignable<A>::value), "");
     static_assert(( std::is_move_assignable<bit_zero>::value), "");
     static_assert(( std::is_move_assignable<Union>::value), "");

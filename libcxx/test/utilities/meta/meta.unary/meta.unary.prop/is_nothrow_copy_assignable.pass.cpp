@@ -42,6 +42,7 @@ struct A
 
 int main()
 {
+    test_has_nothrow_assign<const int, false>();
     test_has_nothrow_assign<void, false>();
     test_has_nothrow_assign<A, false>();
     test_has_nothrow_assign<int&, true>();

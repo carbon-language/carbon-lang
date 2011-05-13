@@ -50,6 +50,11 @@ struct A
     A();
 };
 
+class B
+{
+    B();
+};
+
 int main()
 {
     test_is_default_constructible<void, false>();
@@ -58,6 +63,7 @@ int main()
     test_is_default_constructible<Abstract, false>();
 
     test_is_default_constructible<A, true>();
+    test_is_default_constructible<B, false>();
     test_is_default_constructible<Union, true>();
     test_is_default_constructible<Empty, true>();
     test_is_default_constructible<int, true>();

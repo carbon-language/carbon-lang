@@ -47,6 +47,11 @@ struct A
     A(const A&);
 };
 
+class B
+{
+    B(const B&);
+};
+
 int main()
 {
     test_is_copy_constructible<char[3], false>();
@@ -55,6 +60,7 @@ int main()
     test_is_copy_constructible<Abstract, false>();
 
     test_is_copy_constructible<A, true>();
+    test_is_copy_constructible<B, false>();
     test_is_copy_constructible<int&, true>();
     test_is_copy_constructible<Union, true>();
     test_is_copy_constructible<Empty, true>();
