@@ -129,18 +129,19 @@ void RuntimeDyldImpl::extractFunction(StringRef Name, uint8_t *StartAddress,
                                       uint8_t *EndAddress) {
   // Allocate memory for the function via the memory manager.
   uintptr_t Size = EndAddress - StartAddress + 1;
-  uint8_t *Mem = MemMgr->startFunctionBody(Name.data(), Size);
+  uintptr_t AllocSize = Size;
+  uint8_t *Mem = MemMgr->startFunctionBody(Name.data(), AllocSize);
   assert(Size >= (uint64_t)(EndAddress - StartAddress + 1) &&
          "Memory manager failed to allocate enough memory!");
   // Copy the function payload into the memory block.
-  memcpy(Mem, StartAddress, EndAddress - StartAddress + 1);
+  memcpy(Mem, StartAddress, Size);
   MemMgr->endFunctionBody(Name.data(), Mem, Mem + Size);
   // Remember where we put it.
   Functions[Name] = sys::MemoryBlock(Mem, Size);
   // Default the assigned address for this symbol to wherever this
   // allocated it.
   SymbolTable[Name] = Mem;
-  DEBUG(dbgs() << "    allocated to " << Mem << "\n");
+  DEBUG(dbgs() << "    allocated to [" << Mem << ", " << Mem + Size << "]\n");
 }
 
 bool RuntimeDyldImpl::
