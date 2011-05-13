@@ -24,7 +24,7 @@ public:
     bool operator==(const Emplaceable& x) const
         {return int_ == x.int_ && double_ == x.double_;}
     bool operator<(const Emplaceable& x) const
-        {return int_ < x.int_ || int_ == x.int_ && double_ < x.double_;}
+        {return int_ < x.int_ || (int_ == x.int_ && double_ < x.double_);}
 
     int get() const {return int_;}
 };
