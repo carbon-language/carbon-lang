@@ -438,7 +438,13 @@ def get_args_as_string(frame):
         args.append("(%s)%s=%s" % (var.GetTypeName(),
                                    var.GetName(),
                                    var.GetValue(frame)))
-    return "%s(%s)" % (frame.GetFunction().GetName(), ", ".join(args))
+    if frame.GetFunction().IsValid():
+        name = frame.GetFunction().GetName()
+    elif frame.GetSymbol().IsValid():
+        name = frame.GetSymbol().GetName()
+    else:
+        name = ""
+    return "%s(%s)" % (name, ", ".join(args))
 
 def print_registers(frame, string_buffer = False):
     """Prints all the register sets of the frame."""
