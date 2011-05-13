@@ -83,7 +83,8 @@ bool DTE::runOnModule(Module &M) {
   bool Changed = false;
 
   TypeSymbolTable &ST = M.getTypeSymbolTable();
-  std::set<const Type *> UsedTypes = getAnalysis<FindUsedTypes>().getTypes();
+  const SetVector<const Type*> &T = getAnalysis<FindUsedTypes>().getTypes();
+  std::set<const Type*> UsedTypes(T.begin(), T.end());
 
   // Check the symbol table for superfluous type entries...
   //

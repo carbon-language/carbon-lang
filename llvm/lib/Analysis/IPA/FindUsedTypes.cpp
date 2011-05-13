@@ -32,7 +32,7 @@ INITIALIZE_PASS(FindUsedTypes, "print-used-types",
 void FindUsedTypes::IncorporateType(const Type *Ty) {
   // If ty doesn't already exist in the used types map, add it now, otherwise
   // return.
-  if (!UsedTypes.insert(Ty).second) return;  // Already contain Ty.
+  if (!UsedTypes.insert(Ty)) return;  // Already contain Ty.
 
   // Make sure to add any types this type references now.
   //
@@ -94,7 +94,7 @@ bool FindUsedTypes::runOnModule(Module &m) {
 //
 void FindUsedTypes::print(raw_ostream &OS, const Module *M) const {
   OS << "Types in use by this module:\n";
-  for (std::set<const Type *>::const_iterator I = UsedTypes.begin(),
+  for (SetVector<const Type *>::const_iterator I = UsedTypes.begin(),
        E = UsedTypes.end(); I != E; ++I) {
     OS << "   ";
     WriteTypeSymbolic(OS, *I, M);
