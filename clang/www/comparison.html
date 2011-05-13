@@ -50,10 +50,8 @@
     <ul>
     <li>GCC supports languages that clang does not aim to, such as Java, Ada,
         FORTRAN, etc.</li>
-    <li><a href="cxx_status.html">Clang support for C++</a> is more compliant 
-        than GCC's in many ways, but is not as mature as GCC's.  GCC has several
-        C++'0x features that Clang does not yet support (e.g. variadic 
-        templates).</li>
+    <li>GCC has a few <a href="cxx_status.html">C++'0x features</a> that Clang
+        does not yet support.</li>
     <li>GCC supports more targets than LLVM.</li>
     <li>GCC is popular and widely adopted.</li>
     <li>GCC does not require a C++ compiler to build it.</li>
@@ -114,6 +112,9 @@
         including support for a bytecode representation for intermediate code,
         pluggable optimizers, link-time optimization support, Just-In-Time
         compilation, ability to link in multiple code generators, etc.</li>
+    <li><a href="compatibility.html#c++">Clang's support for C++</a> is more
+        compliant than GCC's in many ways (e.g. conformant two phase name
+        lookup).</li>
     </ul>
 
     <!--=====================================================================-->
@@ -131,6 +132,8 @@
     <p>Pro's of clang vs Elsa:</p>
     
     <ul>
+    <li>Clang's C and C++ support is far more mature and practically useful than
+        Elsa's, and includes many C++'0x features.</li>
     <li>The Elsa community is extremely small and major development work seems
         to have ceased in 2005. Work continued to be used by other small 
         projects (e.g. Oink), but Oink is apparently dead now too.  Clang has a
@@ -157,12 +160,6 @@
     <li>Elsa does not support native code generation.</li>
     </ul>
     
-    <p>Note that there is a fork of Elsa known as "Pork". It addresses some of
-       these shortcomings by loosely integrating a preprocessor. This allows it
-       to map from a source location in the AST to the original position before
-       preprocessing, providing it better support for static analysis and
-       refactoring.  Note that Pork is in stasis now too.</p>
-
     
     <!--=====================================================================-->
     <h2><a name="pcc">Clang vs PCC (Portable C Compiler)</a></h2>
