@@ -2531,7 +2531,8 @@ public:
   /// \brief Helper class that collects exception specifications for 
   /// implicitly-declared special member functions.
   class ImplicitExceptionSpecification {
-    ASTContext &Context;
+    // Pointer to allow copying
+    ASTContext *Context;
     // We order exception specifications thus:
     // noexcept is the most restrictive, but is only used in C++0x.
     // throw() comes next.
@@ -2549,7 +2550,7 @@ public:
 
   public:
     explicit ImplicitExceptionSpecification(ASTContext &Context) 
-      : Context(Context), ComputedEST(EST_BasicNoexcept) {
+      : Context(&Context), ComputedEST(EST_BasicNoexcept) {
       if (!Context.getLangOptions().CPlusPlus0x)
         ComputedEST = EST_DynamicNone;
     }
@@ -2585,6 +2586,11 @@ public:
   ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl);
 
   /// \brief Determine what sort of exception specification a defaulted
+  /// constructor of a class will have.
+  std::pair<ImplicitExceptionSpecification, bool>
+  ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl);
+
+  /// \brief Determine what sort of exception specification a defaulted
   /// destructor of a class will have.
   ImplicitExceptionSpecification
   ComputeDefaultedDtorExceptionSpec(CXXRecordDecl *ClassDecl);
@@ -2592,6 +2598,10 @@ public:
   /// \brief Determine if a defaulted default constructor ought to be
   /// deleted.
   bool ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD);
+
+  /// \brief Determine if a defaulted copy constructor ought to be
+  /// deleted.
+  bool ShouldDeleteCopyConstructor(CXXConstructorDecl *CD);
 
   /// \brief Determine if a defaulted destructor ought to be deleted.
   bool ShouldDeleteDestructor(CXXDestructorDecl *DD);
@@ -2643,8 +2653,7 @@ public:
   /// DefineImplicitCopyConstructor - Checks for feasibility of
   /// defining this constructor as the copy constructor.
   void DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
-                                     CXXConstructorDecl *Constructor,
-                                     unsigned TypeQuals);
+                                     CXXConstructorDecl *Constructor);
 
   /// \brief Declare the implicit copy assignment operator for the given class.
   ///
@@ -3271,6 +3280,7 @@ public:
 
   void CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record);
   void CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *Ctor);
+  void CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *Ctor);
   void CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *Dtor);
 
   //===--------------------------------------------------------------------===//

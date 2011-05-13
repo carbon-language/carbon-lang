@@ -3628,6 +3628,14 @@ def warn_explicit_conversion_functions : Warning<
 // C++0x defaulted functions
 def err_defaulted_default_ctor_params : Error<
   "an explicitly-defaulted default constructor must have no parameters">;
+def err_defaulted_copy_ctor_params : Error<
+  "an explicitly-defaulted copy constructor must have exactly one parameter">;
+def err_defaulted_copy_ctor_volatile_param : Error<
+  "the parameter for an explicitly-defaulted copy constructor may not be "
+  "volatile">;
+def err_defaulted_copy_ctor_const_param : Error<
+  "the parameter for this explicitly-defaulted copy constructor is const, but "
+  "a member or base requires it to be non-const">;
 def err_incorrect_defaulted_exception_spec : Error<
   "exception specification of explicitly defaulted %select{default constructor|"
   "copy constructor|copy assignment operator|destructor}0 does not match the "

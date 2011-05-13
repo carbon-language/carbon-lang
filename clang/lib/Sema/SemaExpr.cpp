@@ -9852,16 +9852,15 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
 
   // Note that this declaration has been used.
   if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
-    unsigned TypeQuals;
     if (Constructor->isDefaulted() && Constructor->isDefaultConstructor()) {
       if (Constructor->isTrivial())
         return;
       if (!Constructor->isUsed(false))
         DefineImplicitDefaultConstructor(Loc, Constructor);
     } else if (Constructor->isImplicit() &&
-               Constructor->isCopyConstructor(TypeQuals)) {
+               Constructor->isCopyConstructor()) {
       if (!Constructor->isUsed(false))
-        DefineImplicitCopyConstructor(Loc, Constructor, TypeQuals);
+        DefineImplicitCopyConstructor(Loc, Constructor);
     }
 
     MarkVTableUsed(Loc, Constructor->getParent());
