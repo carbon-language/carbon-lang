@@ -1,5 +1,7 @@
 """
 This LLDB module contains miscellaneous utilities.
+Some of the test suite takes advantage of the utility functions defined here.
+They can also be useful for general purpose lldb scripting.
 """
 
 import lldb
