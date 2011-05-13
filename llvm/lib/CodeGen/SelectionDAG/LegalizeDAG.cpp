@@ -3535,9 +3535,13 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
                          Tmp2.getOperand(0), Tmp2.getOperand(1),
                          Node->getOperand(2));
     } else {
+      // We test only the i1 bit.  Skip the AND if UNDEF.
+      Tmp3 = (Tmp2.getOpcode() == ISD::UNDEF) ? Tmp2 :
+        DAG.getNode(ISD::AND, dl, Tmp2.getValueType(), Tmp2,
+                    DAG.getConstant(1, Tmp2.getValueType()));
       Tmp1 = DAG.getNode(ISD::BR_CC, dl, MVT::Other, Tmp1,
-                         DAG.getCondCode(ISD::SETNE), Tmp2,
-                         DAG.getConstant(0, Tmp2.getValueType()),
+                         DAG.getCondCode(ISD::SETNE), Tmp3,
+                         DAG.getConstant(0, Tmp3.getValueType()),
                          Node->getOperand(2));
     }
     Results.push_back(Tmp1);
