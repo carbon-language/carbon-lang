@@ -500,6 +500,8 @@ ClangExpressionDeclMap::GetFunctionAddress
 {
     assert (m_parser_vars.get());
     
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
     // Back out in all cases where we're not fully initialized
     if (m_parser_vars->m_exe_ctx->target == NULL)
         return false;
@@ -510,6 +512,30 @@ ClangExpressionDeclMap::GetFunctionAddress
     const bool include_symbols = true;
     const bool append = false;
     m_parser_vars->m_sym_ctx.FindFunctionsByName(name, include_symbols, append, sc_list);
+    
+    if (!sc_list.GetSize())
+    {
+        // We occasionally get debug information in which a const function is reported 
+        // as non-const, so the mangled name is wrong.  This is a hack to compensate.
+        
+        Mangled mangled(name.GetCString(), true);
+        
+        ConstString demangled_name = mangled.GetDemangledName();
+        
+        if (strlen(demangled_name.GetCString()))
+        {
+            std::string const_name_scratch(demangled_name.GetCString());
+            
+            const_name_scratch.append(" const");
+            
+            ConstString const_name(const_name_scratch.c_str());
+                        
+            m_parser_vars->m_sym_ctx.FindFunctionsByName(const_name, include_symbols, append, sc_list);
+            
+            if (log)
+                log->Printf("Found %d results with const name %s", sc_list.GetSize(), const_name.GetCString());
+        }
+    }
     
     if (!sc_list.GetSize())
         return false;
