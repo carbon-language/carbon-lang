@@ -466,7 +466,10 @@ _mm_loadr_pd(double const *dp)
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_loadu_pd(double const *dp)
 {
-  return __builtin_ia32_loadupd(dp);
+  struct __loadu_pd {
+    __m128d v;
+  } __attribute__((packed));
+  return ((struct __loadu_pd*)dp)->v;
 }
 
 static __inline__ __m128d __attribute__((__always_inline__, __nodebug__))
@@ -1011,7 +1014,10 @@ _mm_load_si128(__m128i const *p)
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_loadu_si128(__m128i const *p)
 {
-  return (__m128i)__builtin_ia32_loaddqu((char const *)p);
+  struct __loadu_si128 {
+    __m128i v;
+  } __attribute__((packed));
+  return ((struct __loadu_si128*)p)->v;
 }
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
