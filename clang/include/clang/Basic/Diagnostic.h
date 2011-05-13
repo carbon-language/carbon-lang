@@ -401,6 +401,7 @@ public:
   void setExtensionHandlingBehavior(ExtensionHandling H) {
     ExtBehavior = H;
   }
+  ExtensionHandling getExtensionHandlingBehavior() const { return ExtBehavior; }
 
   /// AllExtensionsSilenced - This is a counter bumped when an __extension__
   /// block is encountered.  When non-zero, all extension diagnostics are

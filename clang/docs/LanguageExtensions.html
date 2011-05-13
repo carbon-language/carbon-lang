@@ -32,30 +32,37 @@ td {
   </ul>
 <li><a href="#checking_upcoming_features">Checks for Upcoming Standard Language Features</a></li>
   <ul>
-  <li><a href="#cxx_access_control_sfinae">C++0x SFINAE includes access control</a></li>
-  <li><a href="#cxx_alias_templates">C++0x alias templates</a></li>
-  <li><a href="#cxx_attributes">C++0x attributes</a></li>
-  <li><a href="#cxx_decltype">C++0x <tt>decltype()</tt></a></li>
-  <li><a href="#cxx_default_function_template_args">C++0x default template arguments in function templates</a></li>
-  <li><a href="#cxx_deleted_functions">C++0x deleted functions</a></li>
-  <li><a href="#cxx_lambdas">C++0x lambdas</a></li>
-  <li><a href="#cxx_nullptr">C++0x nullptr</a></li>
-  <li><a href="#cxx_override_control">C++0x override control</a></li>
-  <li><a href="#cxx_range_for">C++0x range-based for loop</a></li>
-  <li><a href="#cxx_rvalue_references">C++0x rvalue references</a></li>
-  <li><a href="#cxx_reference_qualified_functions">C++0x reference-qualified functions</a></li>
-  <li><a href="#cxx_static_assert">C++0x <tt>static_assert()</tt></a></li>
-  <li><a href="#cxx_auto_type">C++0x type inference</a></li>
-  <li><a href="#cxx_variadic_templates">C++0x variadic templates</a></li>
-  <li><a href="#cxx_inline_namespaces">C++0x inline namespaces</a></li>
-  <li><a href="#cxx_strong_enums">C++0x strongly-typed enumerations</a></li>
-  <li><a href="#cxx_trailing_return">C++0x trailing return type</a></li>
-  <li><a href="#cxx_noexcept">C++0x noexcept specification</a></li>
+  <li><a href="#cxx0x">C++0x</a>
+    <ul>
+    <li><a href="#cxx_decltype">C++0x <tt>decltype()</tt></a></li>
+    <li><a href="#cxx_access_control_sfinae">C++0x SFINAE includes access control</a></li>
+    <li><a href="#cxx_alias_templates">C++0x alias templates</a></li>
+    <li><a href="#cxx_attributes">C++0x attributes</a></li>
+    <li><a href="#cxx_default_function_template_args">C++0x default template arguments in function templates</a></li>
+    <li><a href="#cxx_deleted_functions">C++0x deleted functions</a></li>
+    <li><a href="#cxx_lambdas">C++0x lambdas</a></li>
+    <li><a href="#cxx_nullptr">C++0x nullptr</a></li>
+    <li><a href="#cxx_override_control">C++0x override control</a></li>
+    <li><a href="#cxx_range_for">C++0x range-based for loop</a></li>
+    <li><a href="#cxx_rvalue_references">C++0x rvalue references</a></li>
+    <li><a href="#cxx_reference_qualified_functions">C++0x reference-qualified functions</a></li>
+    <li><a href="#cxx_static_assert">C++0x <tt>static_assert()</tt></a></li>
+    <li><a href="#cxx_auto_type">C++0x type inference</a></li>
+    <li><a href="#cxx_variadic_templates">C++0x variadic templates</a></li>
+    <li><a href="#cxx_inline_namespaces">C++0x inline namespaces</a></li>
+    <li><a href="#cxx_strong_enums">C++0x strongly-typed enumerations</a></li>
+    <li><a href="#cxx_trailing_return">C++0x trailing return type</a></li>
+    <li><a href="#cxx_noexcept">C++0x noexcept specification</a></li>
+    </ul>
+  <li><a href="#c1x">C1X</a>
+    <ul>
+    <li><a href="#c_generic_selections">C1X generic selections</a></li>
+    <li><a href="#c_static_assert">C1X <tt>_Static_assert()</tt></a></li>
+    </ul>
   </ul>
 <li><a href="#checking_type_traits">Checks for Type Traits</a></li>
 <li><a href="#blocks">Blocks</a></li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
-<li><a href="#generic-selections">Generic Selections</a></li>
 <li><a href="#builtins">Builtin Functions</a>
   <ul>
   <li><a href="#__builtin_shufflevector">__builtin_shufflevector</a></li>
@@ -117,27 +124,47 @@ not.  It can be used like this:</p>
 
 
 <!-- ======================================================================= -->
-<h3 id="__has_feature">__has_feature</h3>
+<h3 id="__has_feature_extension">__has_feature and __has_extension</h3>
 <!-- ======================================================================= -->
 
-<p>This function-like macro takes a single identifier argument that is the name
-of a feature.  It evaluates to 1 if the feature is supported or 0 if not.  It
-can be used like this:</p>
+<p>These function-like macros take a single identifier argument that is the
+name of a feature.  <code>__has_feature</code> evaluates to 1 if the feature
+is both supported by Clang and standardized in the current language standard
+or 0 if not (but see <a href="#has_feature_back_compat">below</a>), while
+<code>__has_extension</code> evaluates to 1 if the feature is supported by
+Clang in the current language (either as a language extension or a standard
+language feature) or 0 if not.  They can be used like this:</p>
 
 <blockquote>
 <pre>
 #ifndef __has_feature         // Optional of course.
   #define __has_feature(x) 0  // Compatibility with non-clang compilers.
 #endif
+#ifndef __has_extension
+  #define __has_extension __has_feature // Compatibility with pre-3.0 compilers.
+#endif
 
 ...
-#if __has_feature(attribute_overloadable) || \
-    __has_feature(blocks)
-...
+#if __has_feature(cxx_rvalue_references)
+// This code will only be compiled with the -std=c++0x and -std=gnu++0x
+// options, because rvalue references are only standardized in C++0x.
 #endif
-...
+
+#if __has_extension(cxx_rvalue_references)
+// This code will be compiled with the -std=c++0x, -std=gnu++0x, -std=c++98
+// and -std=gnu++98 options, because rvalue references are supported as a
+// language extension in C++98.
+#endif
 </pre>
 </blockquote>
+
+<p id="has_feature_back_compat">For backwards compatibility reasons,
+<code>__has_feature</code> can also be used to test for support for
+non-standardized features, i.e. features not prefixed <code>c_</code>,
+<code>cxx_</code> or <code>objc_</code>.</p>
+
+<p>If the <code>-pedantic-errors</code> option is given,
+<code>__has_extension</code> is equivalent to <code>__has_feature</code>.</p>
 
 <p>The feature tag is described along with the language feature below.</p>
 
@@ -295,7 +322,7 @@ float4 foo(float2 a, float2 b) {
 </pre>
 </blockquote>
 
-<p>Query for this feature with __has_feature(attribute_ext_vector_type).</p>
+<p>Query for this feature with __has_extension(attribute_ext_vector_type).</p>
 
 <p>See also <a href="#__builtin_shufflevector">__builtin_shufflevector</a>.</p>
 
@@ -320,8 +347,8 @@ will be incorporated into the appropriate diagnostic:</p>
 </blockquote>
 
 <p>Query for this feature
-with <tt>__has_feature(attribute_deprecated_with_message)</tt>
-and <tt>__has_feature(attribute_unavailable_with_message)</tt>.</p>
+with <tt>__has_extension(attribute_deprecated_with_message)</tt>
+and <tt>__has_extension(attribute_unavailable_with_message)</tt>.</p>
 
 <!-- ======================================================================= -->
 <h2 id="attributes-on-enumerators">Attributes on Enumerators</h2>
@@ -344,7 +371,7 @@ initializer, like so:</p>
 <p>Attributes on the <tt>enum</tt> declaration do not apply to
 individual enumerators.</p>
 
-<p>Query for this feature with <tt>__has_feature(enumerator_attributes)</tt>.</p>
+<p>Query for this feature with <tt>__has_extension(enumerator_attributes)</tt>.</p>
 
 <!-- ======================================================================= -->
 <h2 id="checking_language_features">Checks for Standard Language Features</h2>
@@ -367,115 +394,166 @@ compiling code with <tt>-fno-rtti</tt> disables the use of RTTI.</p>
 <h2 id="checking_upcoming_features">Checks for Upcoming Standard Language Features</h2>
 <!-- ======================================================================= -->
 
-<p>The <tt>__has_feature</tt> macro can be used to query if certain upcoming
-standard language features are enabled.  Those features are listed here.</p>
+<p>The <tt>__has_feature</tt> or <tt>__has_extension</tt> macros can be used
+to query if certain upcoming standard language features are enabled.  Those
+features are listed here.  Features that are not yet implemented will be
+noted.</p>
 
-<p>Currently, all features listed here are slated for inclusion in the upcoming
-C++0x standard. As a result, all the features that clang supports are enabled
-with the <tt>-std=c++0x</tt> option when compiling C++ code. Features that are
-not yet implemented will be noted.</p>
+<h3 id="cxx0x">C++0x</h3>
 
-<h3 id="cxx_decltype">C++0x <tt>decltype()</tt></h3>
+<p>The features listed below are slated for inclusion in the upcoming
+C++0x standard. As a result, all these features are enabled
+with the <tt>-std=c++0x</tt> option when compiling C++ code.</p>
 
-<p>Use <tt>__has_feature(cxx_decltype)</tt> to determine if support for the
+<h4 id="cxx_decltype">C++0x <tt>decltype()</tt></h3>
+
+<p>Use <tt>__has_feature(cxx_decltype)</tt> or
+<tt>__has_extension(cxx_decltype)</tt> to determine if support for the
 <tt>decltype()</tt> specifier is enabled.</p>
 
-<h3 id="cxx_access_control_sfinae">C++0x SFINAE includes access control</h3>
+<h4 id="cxx_access_control_sfinae">C++0x SFINAE includes access control</h3>
 
-<p>Use <tt>__has_feature(cxx_access_control_sfinae)</tt> to determine whether access-control errors (e.g., calling a private constructor) are considered to be template argument deduction errors (aka SFINAE errors), per <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1170">C++ DR1170</a>.</p>
+<p>Use <tt>__has_feature(cxx_access_control_sfinae)</tt> or <tt>__has_extension(cxx_access_control_sfinae)</tt> to determine whether access-control errors (e.g., calling a private constructor) are considered to be template argument deduction errors (aka SFINAE errors), per <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1170">C++ DR1170</a>.</p>
 
-<h3 id="cxx_alias_templates">C++0x alias templates</h3>
+<h4 id="cxx_alias_templates">C++0x alias templates</h3>
 
-<p>Use <tt>__has_feature(cxx_alias_templates)</tt> to determine if support for
+<p>Use <tt>__has_feature(cxx_alias_templates)</tt> or
+<tt>__has_extension(cxx_alias_templates)</tt> to determine if support for
 C++0x's alias declarations and alias templates is enabled.</p>
 
-<h3 id="cxx_attributes">C++0x attributes</h3>
+<h4 id="cxx_attributes">C++0x attributes</h3>
 
-<p>Use <tt>__has_feature(cxx_attributes)</tt> to determine if support for
-attribute parsing with C++0x's square bracket notation is enabled.</p>
+<p>Use <tt>__has_feature(cxx_attributes)</tt> or
+<tt>__has_extension(cxx_attributes)</tt> to determine if support for attribute
+parsing with C++0x's square bracket notation is enabled.</p>
 
-<h3 id="cxx_default_function_template_args">C++0x default template arguments in function templates</h3>
+<h4 id="cxx_default_function_template_args">C++0x default template arguments in function templates</h3>
 
-<p>Use <tt>__has_feature(cxx_default_function_template_args)</tt> to determine if support for default template arguments in function templates is enabled.</p>
+<p>Use <tt>__has_feature(cxx_default_function_template_args)</tt> or
+<tt>__has_extension(cxx_default_function_template_args)</tt> to determine
+if support for default template arguments in function templates is enabled.</p>
 
-<h3 id="cxx_deleted_functions">C++0x deleted functions</tt></h3>
+<h4 id="cxx_deleted_functions">C++0x deleted functions</tt></h3>
 
-<p>Use <tt>__has_feature(cxx_deleted_functions)</tt> to determine if support for
+<p>Use <tt>__has_feature(cxx_deleted_functions)</tt> or
+<tt>__has_extension(cxx_deleted_functions)</tt> to determine if support for
 deleted function definitions (with <tt>= delete</tt>) is enabled.</p>
 
-<h3 id="cxx_lambdas">C++0x lambdas</h3>
+<h4 id="cxx_lambdas">C++0x lambdas</h3>
 
-<p>Use <tt>__has_feature(cxx_lambdas)</tt> to determine if support for
-lambdas is enabled. clang does not currently implement this feature.</p>
+<p>Use <tt>__has_feature(cxx_lambdas)</tt> or
+<tt>__has_extension(cxx_lambdas)</tt> to determine if support for lambdas
+is enabled. clang does not currently implement this feature.</p>
 
-<h3 id="cxx_nullptr">C++0x <tt>nullptr</tt></h3>
+<h4 id="cxx_nullptr">C++0x <tt>nullptr</tt></h3>
 
-<p>Use <tt>__has_feature(cxx_nullptr)</tt> to determine if support for
+<p>Use <tt>__has_feature(cxx_nullptr)</tt> or
+<tt>__has_extension(cxx_nullptr)</tt> to determine if support for
 <tt>nullptr</tt> is enabled. clang does not yet fully implement this
 feature.</p>
 
-<h3 id="cxx_override_control">C++0x <tt>override control</tt></h3>
+<h4 id="cxx_override_control">C++0x <tt>override control</tt></h3>
 
-<p>Use <tt>__has_feature(cxx_override_control)</tt> to determine if support for
+<p>Use <tt>__has_feature(cxx_override_control)</tt> or
+<tt>__has_extension(cxx_override_control)</tt> to determine if support for
 the override control keywords is enabled.</p>
 
-<h3 id="cxx_reference_qualified_functions">C++0x reference-qualified functions</h3>
-<p>Use <tt>__has_feature(cxx_reference_qualified_functions)</tt> to determine if support for reference-qualified functions (e.g., member functions with <code>&amp;</code> or <code>&amp;&amp;</code> applied to <code>*this</code>) is enabled.</p>
+<h4 id="cxx_reference_qualified_functions">C++0x reference-qualified functions</h3>
+<p>Use <tt>__has_feature(cxx_reference_qualified_functions)</tt> or
+<tt>__has_extension(cxx_reference_qualified_functions)</tt> to determine
+if support for reference-qualified functions (e.g., member functions with
+<code>&amp;</code> or <code>&amp;&amp;</code> applied to <code>*this</code>)
+is enabled.</p>
 
-<h3 id="cxx_range_for">C++0x range-based for loop</tt></h3>
+<h4 id="cxx_range_for">C++0x range-based for loop</tt></h3>
 
-<p>Use <tt>__has_feature(cxx_range_for)</tt> to determine if support for
-the range-based for loop is enabled. </p>
+<p>Use <tt>__has_feature(cxx_range_for)</tt> or
+<tt>__has_extension(cxx_range_for)</tt> to determine if support for the
+range-based for loop is enabled. </p>
 
-<h3 id="cxx_rvalue_references">C++0x rvalue references</tt></h3>
+<h4 id="cxx_rvalue_references">C++0x rvalue references</tt></h3>
 
-<p>Use <tt>__has_feature(cxx_rvalue_references)</tt> to determine if support for
+<p>Use <tt>__has_feature(cxx_rvalue_references)</tt> or
+<tt>__has_extension(cxx_rvalue_references)</tt> to determine if support for
 rvalue references is enabled. </p>
 
-<h3 id="cxx_static_assert">C++0x <tt>static_assert()</tt></h3>
+<h4 id="cxx_static_assert">C++0x <tt>static_assert()</tt></h3>
 
-<p>Use <tt>__has_feature(cxx_static_assert)</tt> to determine if support for
+<p>Use <tt>__has_feature(cxx_static_assert)</tt> or
+<tt>__has_extension(cxx_static_assert)</tt> to determine if support for
 compile-time assertions using <tt>static_assert</tt> is enabled.</p>
 
-<h3 id="cxx_auto_type">C++0x type inference</h3>
+<h4 id="cxx_auto_type">C++0x type inference</h3>
 
-<p>Use <tt>__has_feature(cxx_auto_type)</tt> to determine C++0x type inference
-is supported using the <tt>auto</tt> specifier. If this is disabled,
-<tt>auto</tt> will instead be a storage class specifier, as in C or C++98.</p>
+<p>Use <tt>__has_feature(cxx_auto_type)</tt> or
+<tt>__has_extension(cxx_auto_type)</tt> to determine C++0x type inference is
+supported using the <tt>auto</tt> specifier. If this is disabled, <tt>auto</tt>
+will instead be a storage class specifier, as in C or C++98.</p>
 
-<h3 id="cxx_variadic_templates">C++0x variadic templates</h3>
+<h4 id="cxx_variadic_templates">C++0x variadic templates</h3>
 
-<p>Use <tt>__has_feature(cxx_variadic_templates)</tt> to determine if support
+<p>Use <tt>__has_feature(cxx_variadic_templates)</tt> or
+<tt>__has_extension(cxx_variadic_templates)</tt> to determine if support
 for variadic templates is enabled.</p>
 
-<h3 id="cxx_inline_namespaces">C++0x inline namespaces</h3>
+<h4 id="cxx_inline_namespaces">C++0x inline namespaces</h3>
 
-<p>Use <tt>__has_feature(cxx_inline_namespaces)</tt> to determine if support for
+<p>Use <tt>__has_feature(cxx_inline_namespaces)</tt> or
+<tt>__has_extension(cxx_inline_namespaces)</tt> to determine if support for
 inline namespaces is enabled.</p>
 
-<h3 id="cxx_trailing_return">C++0x trailing return type</h3>
+<h4 id="cxx_trailing_return">C++0x trailing return type</h3>
 
-<p>Use <tt>__has_feature(cxx_trailing_return)</tt> to determine if support for
-the alternate function declaration syntax with trailing return type is enabled.</p>
+<p>Use <tt>__has_feature(cxx_trailing_return)</tt> or
+<tt>__has_extension(cxx_trailing_return)</tt> to determine if support for the
+alternate function declaration syntax with trailing return type is enabled.</p>
 
-<h3 id="cxx_noexcept">C++0x noexcept</h3>
+<h4 id="cxx_noexcept">C++0x noexcept</h3>
 
-<p>Use <tt>__has_feature(cxx_noexcept)</tt> to determine if support for
-noexcept exception specifications is enabled.</p>
+<p>Use <tt>__has_feature(cxx_noexcept)</tt> or
+<tt>__has_extension(cxx_noexcept)</tt> to determine if support for noexcept
+exception specifications is enabled.</p>
 
-<h3 id="cxx_strong_enums">C++0x strongly typed enumerations</h3>
+<h4 id="cxx_strong_enums">C++0x strongly typed enumerations</h3>
 
-<p>Use <tt>__has_feature(cxx_strong_enums)</tt> to determine if support for
+<p>Use <tt>__has_feature(cxx_strong_enums)</tt> or
+<tt>__has_extension(cxx_strong_enums)</tt> to determine if support for
 strongly typed, scoped enumerations is enabled.</p>
+
+<h3 id="c1x">C1X</h3>
+
+<p>The features listed below are slated for inclusion in the upcoming
+C1X standard. As a result, all these features are enabled
+with the <tt>-std=c1x</tt> option when compiling C code.</p>
+
+<h4 id="c_generic_selections">C1X generic selections</h2>
+
+<p>Use <tt>__has_feature(c_generic_selections)</tt> or
+<tt>__has_extension(c_generic_selections)</tt> to determine if support for
+generic selections is enabled.</p>
+
+<p>As an extension, the C1X generic selection expression is available in all
+languages supported by Clang.  The syntax is the same as that given in the
+C1X draft standard.</p>
+
+<p>In C, type compatibility is decided according to the rules given in the
+appropriate standard, but in C++, which lacks the type compatibility rules
+used in C, types are considered compatible only if they are equivalent.</p>
+
+<h4 id="c_static_assert">C1X <tt>_Static_assert()</tt></h3>
+
+<p>Use <tt>__has_feature(c_static_assert)</tt> or
+<tt>__has_extension(c_static_assert)</tt> to determine if support for
+compile-time assertions using <tt>_Static_assert</tt> is enabled.</p>
 
 <!-- ======================================================================= -->
 <h2 id="checking_type_traits">Checks for Type Traits</h2>
 <!-- ======================================================================= -->
 
-<p>Clang supports the <a hef="http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html">GNU C++ type traits</a> and a subset of the <a href="http://msdn.microsoft.com/en-us/library/ms177194(v=VS.100).aspx">Microsoft Visual C++ Type traits</a>. For each supported type trait <code>__X</code>, <code>__has_feature(X)</code> indicates the presence of the type trait. For example:
+<p>Clang supports the <a hef="http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html">GNU C++ type traits</a> and a subset of the <a href="http://msdn.microsoft.com/en-us/library/ms177194(v=VS.100).aspx">Microsoft Visual C++ Type traits</a>. For each supported type trait <code>__X</code>, <code>__has_extension(X)</code> indicates the presence of the type trait. For example:
 <blockquote>
 <pre>
-#if __has_feature(is_convertible_to)
+#if __has_extension(is_convertible_to)
 template&lt;typename From, typename To&gt;
 struct is_convertible_to {
   static const bool value = __is_convertible_to(From, To);
@@ -518,7 +596,7 @@ details for the clang implementation are in <a
 href="Block-ABI-Apple.txt">Block-ABI-Apple.txt</a>.</p>
 
 
-<p>Query for this feature with __has_feature(blocks).</p>
+<p>Query for this feature with __has_extension(blocks).</p>
 
 <!-- ======================================================================= -->
 <h2 id="overloading-in-c">Function Overloading in C</h2>
@@ -618,22 +696,8 @@ caveats to this use of name mangling:</p>
   C.</li>
 </ul>
 
-<p>Query for this feature with __has_feature(attribute_overloadable).</p>
+<p>Query for this feature with __has_extension(attribute_overloadable).</p>
 
-
-<!-- ======================================================================= -->
-<h2 id="generic-selections">Generic Selections</h2>
-<!-- ======================================================================= -->
-
-<p>The C1X generic selection expression is available in all languages
-supported by Clang.  The syntax is the same as that given in the C1X draft
-standard.</p>
-
-<p>In C, type compatibility is decided according to the rules given in the
-appropriate standard, but in C++, which lacks the type compatibility rules
-used in C, types are considered compatible only if they are equivalent.</p>
-
-<p>Query for this feature with __has_feature(generic_selections).</p>
 
 <!-- ======================================================================= -->
 <h2 id="builtins">Builtin Functions</h2>

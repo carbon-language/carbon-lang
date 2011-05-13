@@ -84,6 +84,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   IdentifierInfo *Ident_Pragma, *Ident__pragma;    // _Pragma, __pragma
   IdentifierInfo *Ident__VA_ARGS__;                // __VA_ARGS__
   IdentifierInfo *Ident__has_feature;              // __has_feature
+  IdentifierInfo *Ident__has_extension;            // __has_extension
   IdentifierInfo *Ident__has_builtin;              // __has_builtin
   IdentifierInfo *Ident__has_attribute;            // __has_attribute
   IdentifierInfo *Ident__has_include;              // __has_include
