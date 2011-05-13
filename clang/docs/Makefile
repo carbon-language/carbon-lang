@@ -16,10 +16,10 @@ DOXYGEN = doxygen
 
 $(PROJ_OBJ_DIR)/doxygen.cfg: doxygen.cfg.in
 	cat $< | sed \
-	  -e 's/@abs_top_srcdir@/../g' \
+	  -e 's/@abs_srcdir@/./g' \
 	  -e 's/@DOT@/dot/g' \
 	  -e 's/@PACKAGE_VERSION@/mainline/' \
-	  -e 's/@abs_top_builddir@/../g' > $@
+	  -e 's/@abs_builddir@/./g' > $@
 endif
 
 include $(CLANG_LEVEL)/Makefile
