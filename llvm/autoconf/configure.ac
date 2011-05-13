@@ -1723,6 +1723,12 @@ AC_CONFIG_FILES([Makefile.config])
 dnl Configure the RPM spec file for LLVM
 AC_CONFIG_FILES([llvm.spec])
 
+dnl Configure doxygen's configuration file
+AC_CONFIG_FILES([docs/doxygen.cfg])
+if test -f ${srcdir}/tools/clang/README.txt; then
+  AC_CONFIG_FILES([tools/clang/docs/doxygen.cfg])
+fi
+
 dnl Configure llvmc's Base plugin
 AC_CONFIG_FILES([tools/llvmc/src/Base.td])
 
