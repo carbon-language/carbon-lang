@@ -1430,6 +1430,10 @@ struct DependencyChecker : RecursiveASTVisitor<DependencyChecker> {
     }
     return super::VisitDeclRefExpr(E);
   }
+  
+  bool TraverseInjectedClassNameType(const InjectedClassNameType *T) {
+    return TraverseType(T->getInjectedSpecializationType());
+  }
 };
 }
 
