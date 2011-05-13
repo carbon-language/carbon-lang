@@ -447,6 +447,10 @@ namespace llvm {
     return LHS.compare(RHS) != -1;
   }
 
+  inline std::string &operator+=(std::string &buffer, llvm::StringRef string) {
+    return buffer.append(string.data(), string.size());
+  }
+
   /// @}
 
   // StringRefs can be treated like a POD type.
