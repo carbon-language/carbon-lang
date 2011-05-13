@@ -64,10 +64,7 @@ class FrameAPITestCase(TestBase):
                 frame = thread.GetFrameAtIndex(i)
                 if self.TraceOn():
                     print "frame:", frame
-                #print "frame.FindValue('val', lldb.eValueTypeVariableArgument)", frame.FindValue('val', lldb.eValueTypeVariableArgument).GetValue(frame)
-                #print "frame.FindValue('ch', lldb.eValueTypeVariableArgument)", frame.FindValue('ch', lldb.eValueTypeVariableArgument).GetValue(frame)
-                #print "frame.EvaluateExpression('val'):", frame.EvaluateExpression('val').GetValue(frame)
-                #print "frame.EvaluateExpression('ch'):", frame.EvaluateExpression('ch').GetValue(frame)
+
                 name = frame.GetFunction().GetName()
                 if name == 'a':
                     callsOfA = callsOfA + 1
@@ -81,17 +78,14 @@ class FrameAPITestCase(TestBase):
                 valList = frame.GetVariables(True, False, False, True)
                 argList = []
                 for val in valList:
-                    #self.DebugSBValue(frame, val)
                     argList.append("(%s)%s=%s" % (val.GetTypeName(),
                                                   val.GetName(),
                                                   val.GetValue(frame)))
                 print >> session, "%s(%s)" % (name, ", ".join(argList))
                 
                 # Also check the generic pc & stack pointer.  We can't test their absolute values,
-                # but they should be valid.  
-                # It is kind of goofy that the register set is a value, and then we just have 
-                # to magically know that element 0 is the GPR set...
-                gpr_reg_set = frame.GetRegisters().GetValueAtIndex(0)
+                # but they should be valid.  Uses get_GPRs() from the lldbutil module.
+                gpr_reg_set = lldbutil.get_GPRs(frame)
                 pc_value = gpr_reg_set.GetChildMemberWithName("pc")
                 self.assertTrue (pc_value.IsValid(), "We should have a valid PC.")
                 self.assertTrue (int(pc_value.GetValue(frame), 0) == frame.GetPC(), "PC gotten as a value should equal frame's GetPC")
