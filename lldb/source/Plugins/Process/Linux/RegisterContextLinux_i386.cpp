@@ -1,4 +1,4 @@
-//===-- RegisterContextLinux_i386.cpp ----------------------------*- C++ -*-===//
+//===-- RegisterContextLinux_i386.cpp ---------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -411,6 +411,17 @@ RegisterContextLinux_i386::GetRegisterSet(uint32_t set)
 }
 
 bool
+RegisterContextLinux_i386::ReadRegister(const RegisterInfo *reg_info,
+                                        RegisterValue &value)
+{
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.ReadRegisterValue(GetRegOffset(reg), value);
+}
+
+#if 0
+
+bool
 RegisterContextLinux_i386::ReadRegisterValue(uint32_t reg,
                                                Scalar &value)
 {
@@ -441,11 +452,15 @@ RegisterContextLinux_i386::ReadRegisterBytes(uint32_t reg,
     return status;
 }
 
+#endif
+
 bool
 RegisterContextLinux_i386::ReadAllRegisterValues(DataBufferSP &data_sp)
 {
     return false;
 }
+
+#if 0
 
 bool
 RegisterContextLinux_i386::WriteRegisterValue(uint32_t reg,
@@ -459,6 +474,14 @@ bool
 RegisterContextLinux_i386::WriteRegisterBytes(uint32_t reg,
                                               DataExtractor &data,
                                               uint32_t data_offset)
+{
+    return false;
+}
+
+#endif
+
+bool RegisterContextLinux_i386::WriteRegister(const RegisterInfo *reg_info,
+                                              const RegisterValue &value)
 {
     return false;
 }

@@ -475,6 +475,7 @@ RegisterContextLinux_x86_64::GetRegisterSet(uint32_t set)
         return NULL;
 }
 
+#if 0
 bool
 RegisterContextLinux_x86_64::ReadRegisterValue(uint32_t reg,
                                                Scalar &value)
@@ -506,12 +507,15 @@ RegisterContextLinux_x86_64::ReadRegisterBytes(uint32_t reg,
     return status;
 }
 
+#endif
+
 bool
 RegisterContextLinux_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
 {
     return false;
 }
 
+#if 0
 bool
 RegisterContextLinux_x86_64::WriteRegisterValue(uint32_t reg,
                                                 const Scalar &value)
@@ -527,6 +531,7 @@ RegisterContextLinux_x86_64::WriteRegisterBytes(uint32_t reg,
 {
     return false;
 }
+#endif
 
 bool
 RegisterContextLinux_x86_64::WriteAllRegisterValues(const DataBufferSP &data)

@@ -85,7 +85,7 @@ namespace lldb_private {
                  const UUID* uuid, FileSpec &local_file);
 
         virtual bool
-        GetProcessInfo (lldb::pid_t pid, ProcessInfo &proc_info);
+        GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);
 
         virtual bool
         GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch);
@@ -93,6 +93,10 @@ namespace lldb_private {
         virtual size_t
         GetSoftwareBreakpointTrapOpcode (Target &target, 
                                          BreakpointSite *bp_site);
+
+        virtual lldb::ProcessSP
+        Attach(lldb::pid_t pid, Debugger &debugger, Target *target,
+               Listener &listener, Error &error);
 
     protected:
         

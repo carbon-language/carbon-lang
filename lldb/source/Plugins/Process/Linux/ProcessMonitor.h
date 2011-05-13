@@ -100,14 +100,14 @@ public:
     ///
     /// This method is provided for use by RegisterContextLinux derivatives.
     bool
-    ReadRegisterValue(unsigned offset, lldb_private::Scalar &value);
+    ReadRegisterValue(unsigned offset, lldb_private::RegisterValue &value);
 
     /// Writes the given value to the register identified by the given
     /// (architecture dependent) offset.
     ///
     /// This method is provided for use by RegisterContextLinux derivatives.
     bool
-    WriteRegisterValue(unsigned offset, const lldb_private::Scalar &value);
+    WriteRegisterValue(unsigned offset, const lldb_private::RegisterValue &value);
 
     /// Reads all general purpose registers into the specified buffer.
     bool

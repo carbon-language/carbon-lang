@@ -192,7 +192,7 @@ PlatformLinux::~PlatformLinux()
 }
 
 bool
-PlatformLinux::GetProcessInfo (lldb::pid_t pid, ProcessInfo &process_info)
+PlatformLinux::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     return Host::GetProcessInfo (pid, process_info);
 }
@@ -246,4 +246,16 @@ PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target,
 
     bp_site->SetTrapOpcode(opcode, opcode_size);
     return opcode_size;
+}
+
+lldb::ProcessSP
+PlatformLinux::Attach(lldb::pid_t pid,
+                      Debugger &debugger,
+                      Target *target,
+                      Listener &listener,
+                      Error &error)
+{
+    ProcessSP processSP;
+    assert(!"Not implemented yet!");
+    return processSP;
 }

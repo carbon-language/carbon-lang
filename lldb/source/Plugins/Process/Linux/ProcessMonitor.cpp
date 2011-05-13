@@ -20,6 +20,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/Error.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Thread.h"
@@ -221,7 +222,7 @@ WriteOperation::Execute(ProcessMonitor *monitor)
 class ReadRegOperation : public Operation
 {
 public:
-    ReadRegOperation(unsigned offset, Scalar &value, bool &result)
+    ReadRegOperation(unsigned offset, RegisterValue &value, bool &result)
         : m_offset(offset), m_value(value), m_result(result)
         { }
 
@@ -229,7 +230,7 @@ public:
 
 private:
     unsigned m_offset;
-    Scalar &m_value;
+    RegisterValue &m_value;
     bool &m_result;
 };
 
@@ -257,7 +258,7 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
 class WriteRegOperation : public Operation
 {
 public:
-    WriteRegOperation(unsigned offset, const Scalar &value, bool &result)
+    WriteRegOperation(unsigned offset, const RegisterValue &value, bool &result)
         : m_offset(offset), m_value(value), m_result(result)
         { }
 
@@ -265,7 +266,7 @@ public:
 
 private:
     unsigned m_offset;
-    const Scalar &m_value;
+    const RegisterValue &m_value;
     bool &m_result;
 };
 
@@ -274,7 +275,7 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
 {
     lldb::pid_t pid = monitor->GetPID();
 
-    if (ptrace(PTRACE_POKEUSER, pid, m_offset, m_value.ULong()))
+    if (ptrace(PTRACE_POKEUSER, pid, m_offset, m_value.GetAsUInt64()))
         m_result = false;
     else
         m_result = true;
@@ -1097,7 +1098,7 @@ ProcessMonitor::WriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size,
 }
 
 bool
-ProcessMonitor::ReadRegisterValue(unsigned offset, Scalar &value)
+ProcessMonitor::ReadRegisterValue(unsigned offset, RegisterValue &value)
 {
     bool result;
     ReadRegOperation op(offset, value, result);
@@ -1106,7 +1107,7 @@ ProcessMonitor::ReadRegisterValue(unsigned offset, Scalar &value)
 }
 
 bool
-ProcessMonitor::WriteRegisterValue(unsigned offset, const Scalar &value)
+ProcessMonitor::WriteRegisterValue(unsigned offset, const RegisterValue &value)
 {
     bool result;
     WriteRegOperation op(offset, value, result);
