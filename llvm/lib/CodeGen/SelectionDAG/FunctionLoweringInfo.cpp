@@ -155,6 +155,10 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
          const PHINode *PN = dyn_cast<PHINode>(I); ++I) {
       if (PN->use_empty()) continue;
 
+      // Skip empty types
+      if (PN->getType()->isEmptyTy())
+        continue;
+
       DebugLoc DL = PN->getDebugLoc();
       unsigned PHIReg = ValueMap[PN];
       assert(PHIReg && "PHI node does not have an assigned virtual register!");

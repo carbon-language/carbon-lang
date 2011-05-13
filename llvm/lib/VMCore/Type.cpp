@@ -197,6 +197,25 @@ bool Type::canLosslesslyBitCastTo(const Type *Ty) const {
   return false;  // Other types have no identity values
 }
 
+bool Type::isEmptyTy() const {
+  const ArrayType *ATy = dyn_cast<ArrayType>(this);
+  if (ATy) {
+    unsigned NumElements = ATy->getNumElements();
+    return NumElements == 0 || ATy->getElementType()->isEmptyTy();
+  }
+
+  const StructType *STy = dyn_cast<StructType>(this);
+  if (STy) {
+    unsigned NumElements = STy->getNumElements();
+    for (unsigned i = 0; i < NumElements; ++i)
+      if (!STy->getElementType(i)->isEmptyTy())
+        return false;
+    return true;
+  }
+
+  return false;
+}
+
 unsigned Type::getPrimitiveSizeInBits() const {
   switch (getTypeID()) {
   case Type::FloatTyID: return 32;

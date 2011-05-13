@@ -273,6 +273,9 @@ public:
   /// @brief Determine if this type could be losslessly bitcast to Ty
   bool canLosslesslyBitCastTo(const Type *Ty) const;
 
+  /// isEmptyTy - Return true if this type is empty, that is, it has no
+  /// elements or all its elements are empty.
+  bool isEmptyTy() const;
 
   /// Here are some useful little methods to query what type derived types are
   /// Note that all other types can just compare to see if this == Type::xxxTy;
