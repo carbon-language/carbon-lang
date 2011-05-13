@@ -20,6 +20,7 @@ namespace std
 template<class charT> struct char_traits;
 template<class T>     class allocator;
 
+class ios_base;
 template <class charT, class traits = char_traits<charT> > class basic_ios;
 
 template <class charT, class traits = char_traits<charT> > class basic_streambuf;

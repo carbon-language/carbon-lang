@@ -13,6 +13,8 @@
 #include <type_traits>
 #include <cassert>
 
+#include "../../hexfloat.h"
+
 void test_abs()
 {
     static_assert((std::is_same<decltype(std::abs((float)0)), float>::value), "");
@@ -1089,7 +1091,7 @@ void test_nextafter()
     static_assert((std::is_same<decltype(std::nextafterf(0,0)), float>::value), "");
     static_assert((std::is_same<decltype(std::nextafterl(0,0)), long double>::value), "");
     static_assert((std::is_same<decltype(std::nextafter((int)0, (int)0)), double>::value), "");
-    assert(std::nextafter(0,1) == 0x1p-1074);
+    assert(std::nextafter(0,1) == hexfloat<double>(0x1, 0, -1074));
 }
 
 void test_nexttoward()
@@ -1107,7 +1109,7 @@ void test_nexttoward()
     static_assert((std::is_same<decltype(std::nexttoward((long double)0, (long double)0)), long double>::value), "");
     static_assert((std::is_same<decltype(std::nexttowardf(0, (long double)0)), float>::value), "");
     static_assert((std::is_same<decltype(std::nexttowardl(0, (long double)0)), long double>::value), "");
-    assert(std::nexttoward(0, 1) == 0x1p-1074);
+    assert(std::nexttoward(0, 1) == hexfloat<double>(0x1, 0, -1074));
 }
 
 void test_remainder()

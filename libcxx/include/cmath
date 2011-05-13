@@ -303,7 +303,339 @@ long double    truncl(long double x);
 
 #pragma GCC system_header
 
+// signbit
+
+#ifdef signbit
+
+template <class _A1>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_signbit(_A1 __x)
+{
+    return signbit(__x);
+}
+
+#undef signbit
+
+template <class _A1>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+signbit(_A1 __x)
+{
+    return __libcpp_signbit(__x);
+}
+
+#endif  // signbit
+
+// fpclassify
+
+#ifdef fpclassify
+
+template <class _A1>
+_LIBCPP_ALWAYS_INLINE
+int
+__libcpp_fpclassify(_A1 __x)
+{
+    return fpclassify(__x);
+}
+
+#undef fpclassify
+
+template <class _A1>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if<std::is_floating_point<_A1>::value, int>::type
+fpclassify(_A1 __x)
+{
+    return __libcpp_fpclassify(__x);
+}
+
+#endif  // fpclassify
+
+// isfinite
+
+#ifdef isfinite
+
+template <class _A1>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_isfinite(_A1 __x)
+{
+    return isfinite(__x);
+}
+
+#undef isfinite
+
+template <class _A1>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+isfinite(_A1 __x)
+{
+    return __libcpp_isfinite(__x);
+}
+
+#endif  // isfinite
+
+// isinf
+
+#ifdef isinf
+
+template <class _A1>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_isinf(_A1 __x)
+{
+    return isinf(__x);
+}
+
+#undef isinf
+
+template <class _A1>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+isinf(_A1 __x)
+{
+    return __libcpp_isinf(__x);
+}
+
+#endif  // isinf
+
+// isnan
+
+#ifdef isnan
+
+template <class _A1>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_isnan(_A1 __x)
+{
+    return isnan(__x);
+}
+
+#undef isnan
+
+template <class _A1>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+isnan(_A1 __x)
+{
+    return __libcpp_isnan(__x);
+}
+
+#endif  // isnan
+
+// isnormal
+
+#ifdef isnormal
+
+template <class _A1>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_isnormal(_A1 __x)
+{
+    return isnormal(__x);
+}
+
+#undef isnormal
+
+template <class _A1>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+isnormal(_A1 __x)
+{
+    return __libcpp_isnormal(__x);
+}
+
+#endif  // isnormal
+
+// isgreater
+
+#ifdef isgreater
+
+template <class _A1, class _A2>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_isgreater(_A1 __x, _A2 __y)
+{
+    return isgreater(__x, __y);
+}
+
+#undef isgreater
+
+template <class _A1, class _A2>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if
+<
+    std::is_floating_point<_A1>::value &&
+    std::is_floating_point<_A2>::value,
+    bool
+>::type
+isgreater(_A1 __x, _A2 __y)
+{
+    return __libcpp_isgreater(__x, __y);
+}
+
+#endif  // isgreater
+
+// isgreaterequal
+
+#ifdef isgreaterequal
+
+template <class _A1, class _A2>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_isgreaterequal(_A1 __x, _A2 __y)
+{
+    return isgreaterequal(__x, __y);
+}
+
+#undef isgreaterequal
+
+template <class _A1, class _A2>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if
+<
+    std::is_floating_point<_A1>::value &&
+    std::is_floating_point<_A2>::value,
+    bool
+>::type
+isgreaterequal(_A1 __x, _A2 __y)
+{
+    return __libcpp_isgreaterequal(__x, __y);
+}
+
+#endif  // isgreaterequal
+
+// isless
+
+#ifdef isless
+
+template <class _A1, class _A2>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_isless(_A1 __x, _A2 __y)
+{
+    return isless(__x, __y);
+}
+
+#undef isless
+
+template <class _A1, class _A2>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if
+<
+    std::is_floating_point<_A1>::value &&
+    std::is_floating_point<_A2>::value,
+    bool
+>::type
+isless(_A1 __x, _A2 __y)
+{
+    return __libcpp_isless(__x, __y);
+}
+
+#endif  // isless
+
+// islessequal
+
+#ifdef islessequal
+
+template <class _A1, class _A2>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_islessequal(_A1 __x, _A2 __y)
+{
+    return islessequal(__x, __y);
+}
+
+#undef islessequal
+
+template <class _A1, class _A2>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if
+<
+    std::is_floating_point<_A1>::value &&
+    std::is_floating_point<_A2>::value,
+    bool
+>::type
+islessequal(_A1 __x, _A2 __y)
+{
+    return __libcpp_islessequal(__x, __y);
+}
+
+#endif  // islessequal
+
+// islessgreater
+
+#ifdef islessgreater
+
+template <class _A1, class _A2>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_islessgreater(_A1 __x, _A2 __y)
+{
+    return islessgreater(__x, __y);
+}
+
+#undef islessgreater
+
+template <class _A1, class _A2>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if
+<
+    std::is_floating_point<_A1>::value &&
+    std::is_floating_point<_A2>::value,
+    bool
+>::type
+islessgreater(_A1 __x, _A2 __y)
+{
+    return __libcpp_islessgreater(__x, __y);
+}
+
+#endif  // islessgreater
+
+// isunordered
+
+#ifdef isunordered
+
+template <class _A1, class _A2>
+_LIBCPP_ALWAYS_INLINE
+bool
+__libcpp_isunordered(_A1 __x, _A2 __y)
+{
+    return isunordered(__x, __y);
+}
+
+#undef isunordered
+
+template <class _A1, class _A2>
+inline _LIBCPP_INLINE_VISIBILITY
+typename std::enable_if
+<
+    std::is_floating_point<_A1>::value &&
+    std::is_floating_point<_A2>::value,
+    bool
+>::type
+isunordered(_A1 __x, _A2 __y)
+{
+    return __libcpp_isunordered(__x, __y);
+}
+
+#endif  // isunordered
+
 _LIBCPP_BEGIN_NAMESPACE_STD
+
+using ::signbit;
+using ::fpclassify;
+using ::isfinite;
+using ::isinf;
+using ::isnan;
+using ::isnormal;
+using ::isgreater;
+using ::isgreaterequal;
+using ::isless;
+using ::islessequal;
+using ::islessgreater;
+using ::isunordered;
+using ::isunordered;
 
 using ::float_t;
 using ::double_t;
@@ -628,348 +960,6 @@ template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 tanh(_A1 __x) {return tanh((double)__x);}
-
-// signbit
-
-#ifndef signbit
-#error Implementation error: signbit not defined
-#else
-
-template <class _A1>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_signbit(_A1 __x)
-{
-    return signbit(__x);
-}
-
-#undef signbit
-
-template <class _A1>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if<is_floating_point<_A1>::value, bool>::type
-signbit(_A1 __x)
-{
-    return __libcpp_signbit(__x);
-}
-
-#endif  // signbit
-
-// fpclassify
-
-#ifndef fpclassify
-#error Implementation error: fpclassify not defined
-#else
-
-template <class _A1>
-_LIBCPP_ALWAYS_INLINE
-int
-__libcpp_fpclassify(_A1 __x)
-{
-    return fpclassify(__x);
-}
-
-#undef fpclassify
-
-template <class _A1>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if<is_floating_point<_A1>::value, int>::type
-fpclassify(_A1 __x)
-{
-    return __libcpp_fpclassify(__x);
-}
-
-#endif  // fpclassify
-
-// isfinite
-
-#ifndef isfinite
-#error Implementation error: isfinite not defined
-#else
-
-template <class _A1>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_isfinite(_A1 __x)
-{
-    return isfinite(__x);
-}
-
-#undef isfinite
-
-template <class _A1>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if<is_floating_point<_A1>::value, bool>::type
-isfinite(_A1 __x)
-{
-    return __libcpp_isfinite(__x);
-}
-
-#endif  // isfinite
-
-// isinf
-
-#ifndef isinf
-#error Implementation error: isinf not defined
-#else
-
-template <class _A1>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_isinf(_A1 __x)
-{
-    return isinf(__x);
-}
-
-#undef isinf
-
-template <class _A1>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if<is_floating_point<_A1>::value, bool>::type
-isinf(_A1 __x)
-{
-    return __libcpp_isinf(__x);
-}
-
-#endif  // isinf
-
-// isnan
-
-#ifndef isnan
-#error Implementation error: isnan not defined
-#else
-
-template <class _A1>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_isnan(_A1 __x)
-{
-    return isnan(__x);
-}
-
-#undef isnan
-
-template <class _A1>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if<is_floating_point<_A1>::value, bool>::type
-isnan(_A1 __x)
-{
-    return __libcpp_isnan(__x);
-}
-
-#endif  // isnan
-
-// isnormal
-
-#ifndef isnormal
-#error Implementation error: isnormal not defined
-#else
-
-template <class _A1>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_isnormal(_A1 __x)
-{
-    return isnormal(__x);
-}
-
-#undef isnormal
-
-template <class _A1>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if<is_floating_point<_A1>::value, bool>::type
-isnormal(_A1 __x)
-{
-    return __libcpp_isnormal(__x);
-}
-
-#endif  // isnormal
-
-// isgreater
-
-#ifndef isgreater
-#error Implementation error: isgreater not defined
-#else
-
-template <class _A1, class _A2>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_isgreater(_A1 __x, _A2 __y)
-{
-    return isgreater(__x, __y);
-}
-
-#undef isgreater
-
-template <class _A1, class _A2>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_floating_point<_A1>::value &&
-    is_floating_point<_A2>::value,
-    bool
->::type
-isgreater(_A1 __x, _A2 __y)
-{
-    return __libcpp_isgreater(__x, __y);
-}
-
-#endif  // isgreater
-
-// isgreaterequal
-
-#ifndef isgreaterequal
-#error Implementation error: isgreaterequal not defined
-#else
-
-template <class _A1, class _A2>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_isgreaterequal(_A1 __x, _A2 __y)
-{
-    return isgreaterequal(__x, __y);
-}
-
-#undef isgreaterequal
-
-template <class _A1, class _A2>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_floating_point<_A1>::value &&
-    is_floating_point<_A2>::value,
-    bool
->::type
-isgreaterequal(_A1 __x, _A2 __y)
-{
-    return __libcpp_isgreaterequal(__x, __y);
-}
-
-#endif  // isgreaterequal
-
-// isless
-
-#ifndef isless
-#error Implementation error: isless not defined
-#else
-
-template <class _A1, class _A2>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_isless(_A1 __x, _A2 __y)
-{
-    return isless(__x, __y);
-}
-
-#undef isless
-
-template <class _A1, class _A2>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_floating_point<_A1>::value &&
-    is_floating_point<_A2>::value,
-    bool
->::type
-isless(_A1 __x, _A2 __y)
-{
-    return __libcpp_isless(__x, __y);
-}
-
-#endif  // isless
-
-// islessequal
-
-#ifndef islessequal
-#error Implementation error: islessequal not defined
-#else
-
-template <class _A1, class _A2>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_islessequal(_A1 __x, _A2 __y)
-{
-    return islessequal(__x, __y);
-}
-
-#undef islessequal
-
-template <class _A1, class _A2>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_floating_point<_A1>::value &&
-    is_floating_point<_A2>::value,
-    bool
->::type
-islessequal(_A1 __x, _A2 __y)
-{
-    return __libcpp_islessequal(__x, __y);
-}
-
-#endif  // islessequal
-
-// islessgreater
-
-#ifndef islessgreater
-#error Implementation error: islessgreater not defined
-#else
-
-template <class _A1, class _A2>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_islessgreater(_A1 __x, _A2 __y)
-{
-    return islessgreater(__x, __y);
-}
-
-#undef islessgreater
-
-template <class _A1, class _A2>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_floating_point<_A1>::value &&
-    is_floating_point<_A2>::value,
-    bool
->::type
-islessgreater(_A1 __x, _A2 __y)
-{
-    return __libcpp_islessgreater(__x, __y);
-}
-
-#endif  // islessgreater
-
-// isunordered
-
-#ifndef isunordered
-#error Implementation error: isunordered not defined
-#else
-
-template <class _A1, class _A2>
-_LIBCPP_ALWAYS_INLINE
-bool
-__libcpp_isunordered(_A1 __x, _A2 __y)
-{
-    return isunordered(__x, __y);
-}
-
-#undef isunordered
-
-template <class _A1, class _A2>
-inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    is_floating_point<_A1>::value &&
-    is_floating_point<_A2>::value,
-    bool
->::type
-isunordered(_A1 __x, _A2 __y)
-{
-    return __libcpp_isunordered(__x, __y);
-}
-
-#endif  // isunordered
 
 // acosh
 

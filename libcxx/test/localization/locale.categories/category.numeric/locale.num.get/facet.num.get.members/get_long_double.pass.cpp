@@ -20,6 +20,7 @@
 #include <streambuf>
 #include <cmath>
 #include "iterators.h"
+#include "../../../../../hexfloat.h"
 
 typedef std::num_get<char, input_iterator<const char*> > F;
 
@@ -93,7 +94,7 @@ int main()
                   ios, err, v);
         assert(iter.base() == str+sizeof(str)-1);
         assert(err == ios.goodbit);
-        assert(v == 0x125p-1);
+        assert(v == hexfloat<long double>(0x125, 0, -1));
     }
     {
         const char str[] = "inf";

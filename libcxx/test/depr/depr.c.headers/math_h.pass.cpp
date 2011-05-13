@@ -13,6 +13,8 @@
 #include <type_traits>
 #include <cassert>
 
+#include "../../hexfloat.h"
+
 void test_acos()
 {
     static_assert((std::is_same<decltype(acos((double)0)), double>::value), "");
@@ -194,9 +196,9 @@ void test_tanh()
 
 void test_signbit()
 {
-    static_assert((std::is_same<decltype(signbit((float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(signbit((double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(signbit((long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(signbit((float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(signbit((double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(signbit((long double)0)), bool>::value), "");
     assert(signbit(-1.0) == true);
 }
 
@@ -210,117 +212,117 @@ void test_fpclassify()
 
 void test_isfinite()
 {
-    static_assert((std::is_same<decltype(isfinite((float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isfinite((double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isfinite((long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(isfinite((float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isfinite((double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isfinite((long double)0)), bool>::value), "");
     assert(isfinite(-1.0) == true);
 }
 
 void test_isinf()
 {
-    static_assert((std::is_same<decltype(isinf((float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isinf((double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isinf((long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(isinf((float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isinf((double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isinf((long double)0)), bool>::value), "");
     assert(isinf(-1.0) == false);
 }
 
 void test_isnan()
 {
-    static_assert((std::is_same<decltype(isnan((float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isnan((double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isnan((long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(isnan((float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isnan((double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isnan((long double)0)), bool>::value), "");
     assert(isnan(-1.0) == false);
 }
 
 void test_isnormal()
 {
-    static_assert((std::is_same<decltype(isnormal((float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isnormal((double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isnormal((long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(isnormal((float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isnormal((double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isnormal((long double)0)), bool>::value), "");
     assert(isnormal(-1.0) == true);
 }
 
 void test_isgreater()
 {
-    static_assert((std::is_same<decltype(isgreater((float)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreater((float)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreater((float)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreater((double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreater((double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreater((double)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreater((long double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreater((long double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreater((long double)0, (long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(isgreater((float)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreater((float)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreater((float)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreater((double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreater((double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreater((double)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreater((long double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreater((long double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreater((long double)0, (long double)0)), bool>::value), "");
     assert(isgreater(-1.0, 0.F) == false);
 }
 
 void test_isgreaterequal()
 {
-    static_assert((std::is_same<decltype(isgreaterequal((float)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreaterequal((float)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreaterequal((float)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreaterequal((double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreaterequal((double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreaterequal((double)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreaterequal((long double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreaterequal((long double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isgreaterequal((long double)0, (long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((float)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((float)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((float)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((double)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((long double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((long double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isgreaterequal((long double)0, (long double)0)), bool>::value), "");
     assert(isgreaterequal(-1.0, 0.F) == false);
 }
 
 void test_isless()
 {
-    static_assert((std::is_same<decltype(isless((float)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isless((float)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isless((float)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isless((double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isless((double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isless((double)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isless((long double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isless((long double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isless((long double)0, (long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(isless((float)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isless((float)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isless((float)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isless((double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isless((double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isless((double)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isless((long double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isless((long double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isless((long double)0, (long double)0)), bool>::value), "");
     assert(isless(-1.0, 0.F) == true);
 }
 
 void test_islessequal()
 {
-    static_assert((std::is_same<decltype(islessequal((float)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessequal((float)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessequal((float)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessequal((double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessequal((double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessequal((double)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessequal((long double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessequal((long double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessequal((long double)0, (long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(islessequal((float)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessequal((float)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessequal((float)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessequal((double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessequal((double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessequal((double)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessequal((long double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessequal((long double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessequal((long double)0, (long double)0)), bool>::value), "");
     assert(islessequal(-1.0, 0.F) == true);
 }
 
 void test_islessgreater()
 {
-    static_assert((std::is_same<decltype(islessgreater((float)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessgreater((float)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessgreater((float)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessgreater((double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessgreater((double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessgreater((double)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessgreater((long double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessgreater((long double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(islessgreater((long double)0, (long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((float)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((float)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((float)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((double)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((long double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((long double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(islessgreater((long double)0, (long double)0)), bool>::value), "");
     assert(islessgreater(-1.0, 0.F) == true);
 }
 
 void test_isunordered()
 {
-    static_assert((std::is_same<decltype(isunordered((float)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isunordered((float)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isunordered((float)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isunordered((double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isunordered((double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isunordered((double)0, (long double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isunordered((long double)0, (float)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isunordered((long double)0, (double)0)), int>::value), "");
-    static_assert((std::is_same<decltype(isunordered((long double)0, (long double)0)), int>::value), "");
+    static_assert((std::is_same<decltype(isunordered((float)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isunordered((float)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isunordered((float)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isunordered((double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isunordered((double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isunordered((double)0, (long double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isunordered((long double)0, (float)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isunordered((long double)0, (double)0)), bool>::value), "");
+    static_assert((std::is_same<decltype(isunordered((long double)0, (long double)0)), bool>::value), "");
     assert(isunordered(-1.0, 0.F) == false);
 }
 
@@ -528,7 +530,7 @@ void test_nextafter()
     static_assert((std::is_same<decltype(nextafter((double)0, (double)0)), double>::value), "");
     static_assert((std::is_same<decltype(nextafterf(0,0)), float>::value), "");
     static_assert((std::is_same<decltype(nextafterl(0,0)), long double>::value), "");
-    assert(nextafter(0,1) == 0x1p-1074);
+    assert(nextafter(0,1) == hexfloat<double>(0x1, 0, -1074));
 }
 
 void test_nexttoward()
@@ -536,7 +538,7 @@ void test_nexttoward()
     static_assert((std::is_same<decltype(nexttoward((double)0, (long double)0)), double>::value), "");
     static_assert((std::is_same<decltype(nexttowardf(0, (long double)0)), float>::value), "");
     static_assert((std::is_same<decltype(nexttowardl(0, (long double)0)), long double>::value), "");
-    assert(nexttoward(0, 1) == 0x1p-1074);
+    assert(nexttoward(0, 1) == hexfloat<double>(0x1, 0, -1074));
 }
 
 void test_remainder()
