@@ -3521,8 +3521,15 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
       }
     }
 
-    InitializedEntity MemberEntity =
-      InitializedEntity::InitializeMember(*FI, 0);
+    llvm::SmallVector<InitializedEntity, 4> Entities;
+    QualType CurType = FI->getType();
+    Entities.push_back(InitializedEntity::InitializeMember(*FI, 0));
+    while (CurType->isArrayType()) {
+      Entities.push_back(InitializedEntity::InitializeElement(Context, 0, 
+                                                              Entities.back()));
+      CurType = Context.getAsArrayType(CurType)->getElementType();
+    }
+
     InitializationKind Kind = 
       InitializationKind::CreateDirect(SourceLocation(), SourceLocation(),
                                        SourceLocation());
@@ -3536,7 +3543,7 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
     Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
                                               VK_LValue);
    
-    InitializationSequence InitSeq(*this, MemberEntity, Kind, &Arg, 1);
+    InitializationSequence InitSeq(*this, Entities.back(), Kind, &Arg, 1);
 
     if (InitSeq.getKind() == InitializationSequence::FailedSequence)
       return true;
