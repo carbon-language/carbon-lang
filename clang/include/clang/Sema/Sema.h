@@ -4760,11 +4760,10 @@ public:
                     IdentifierInfo *AliasName,  SourceLocation AliasLocation,
                     IdentifierInfo *ClassName, SourceLocation ClassLocation);
 
-  void CheckForwardProtocolDeclarationForCircularDependency(
+  bool CheckForwardProtocolDeclarationForCircularDependency(
     IdentifierInfo *PName,
     SourceLocation &PLoc, SourceLocation PrevLoc,
-    const ObjCList<ObjCProtocolDecl> &PList,
-    bool &err);
+    const ObjCList<ObjCProtocolDecl> &PList);
 
   Decl *ActOnStartProtocolInterface(
                     SourceLocation AtProtoInterfaceLoc,
