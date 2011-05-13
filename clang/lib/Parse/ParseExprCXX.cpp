@@ -1958,6 +1958,7 @@ static UnaryTypeTrait UnaryTypeTraitFromTokKind(tok::TokenKind kind) {
   case tok::kw___is_signed:                  return UTT_IsSigned;
   case tok::kw___is_standard_layout:         return UTT_IsStandardLayout;
   case tok::kw___is_trivial:                 return UTT_IsTrivial;
+  case tok::kw___is_trivially_copyable:      return UTT_IsTriviallyCopyable;
   case tok::kw___is_union:                return UTT_IsUnion;
   case tok::kw___is_unsigned:                return UTT_IsUnsigned;
   case tok::kw___is_void:                    return UTT_IsVoid;

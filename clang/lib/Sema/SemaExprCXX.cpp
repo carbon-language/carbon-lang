@@ -2436,6 +2436,7 @@ static bool CheckUnaryTypeTraitTypeCompleteness(Sema &S,
     // C++0x [meta.unary.prop] Table 49 requires the following traits to be
     // applied to a complete type.
   case UTT_IsTrivial:
+  case UTT_IsTriviallyCopyable:
   case UTT_IsStandardLayout:
   case UTT_IsPOD:
   case UTT_IsLiteral:
@@ -2532,6 +2533,8 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     return T.isVolatileQualified();
   case UTT_IsTrivial:
     return T->isTrivialType();
+  case UTT_IsTriviallyCopyable:
+    return T->isTriviallyCopyableType();
   case UTT_IsStandardLayout:
     return T->isStandardLayoutType();
   case UTT_IsPOD:

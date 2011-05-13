@@ -1189,6 +1189,10 @@ public:
   /// (C++0x [basic.types]p9)
   bool isTrivialType() const;
 
+  /// isTriviallyCopyableType - Return true if this is a trivially copyable type
+  /// (C++0x [basic.types]p9
+  bool isTriviallyCopyableType() const;
+
   /// \brief Test if this type is a standard-layout type.
   /// (C++0x [basic.type]p9)
   bool isStandardLayoutType() const;

@@ -964,6 +964,37 @@ bool Type::isTrivialType() const {
   return false;
 }
 
+bool Type::isTriviallyCopyableType() const {
+  if (isDependentType())
+    return false;
+
+  // C++0x [basic.types]p9
+  //   Scalar types, trivially copyable class types, arrays of such types, and
+  //   cv-qualified versions of these types are collectively called trivial
+  //   types.
+  const Type *BaseTy = getBaseElementTypeUnsafe();
+  assert(BaseTy && "NULL element type");
+
+  // Return false for incomplete types after skipping any incomplete array types
+  // which are expressly allowed by the standard and thus our API.
+  if (BaseTy->isIncompleteType())
+    return false;
+ 
+  // As an extension, Clang treats vector types as Scalar types.
+  if (BaseTy->isScalarType() || BaseTy->isVectorType()) return true;
+  if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
+    if (const CXXRecordDecl *ClassDecl =
+        dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      if (!ClassDecl->isTriviallyCopyable()) return false;
+    }
+
+    return true;
+  }
+
+  // No other types can match.
+  return false;
+}
+
 bool Type::isStandardLayoutType() const {
   if (isDependentType())
     return false;

@@ -346,6 +346,9 @@ KEYWORD(__is_polymorphic            , KEYCXX)
 KEYWORD(__is_trivial                , KEYCXX)
 KEYWORD(__is_union                  , KEYCXX)
 
+// Clang-only C++ Type Traits
+KEYWORD(__is_trivially_copyable     , KEYCXX)
+
 // Embarcadero Expression Traits
 KEYWORD(__is_lvalue_expr            , KEYCXX)
 KEYWORD(__is_rvalue_expr            , KEYCXX)

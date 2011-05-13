@@ -1329,6 +1329,7 @@ static const char *getTypeTraitName(UnaryTypeTrait UTT) {
   case UTT_IsSigned:                return "__is_signed";
   case UTT_IsStandardLayout:        return "__is_standard_layout";
   case UTT_IsTrivial:               return "__is_trivial";
+  case UTT_IsTriviallyCopyable:     return "__is_trivially_copyable";
   case UTT_IsUnion:               return "__is_union";
   case UTT_IsUnsigned:              return "__is_unsigned";
   case UTT_IsVoid:                  return "__is_void";

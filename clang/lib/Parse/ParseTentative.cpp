@@ -664,6 +664,7 @@ Parser::isExpressionOrTypeSpecifierSimple(tok::TokenKind Kind) {
   case tok::kw___is_pod:
   case tok::kw___is_polymorphic:
   case tok::kw___is_trivial:
+  case tok::kw___is_trivially_copyable:
   case tok::kw___is_union:
   case tok::kw___uuidof:
     return TPResult::True();

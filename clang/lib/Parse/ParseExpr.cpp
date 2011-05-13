@@ -566,6 +566,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ///                   '__is_trivial'
 ///                   '__is_union'
 ///
+/// [Clang] unary-type-trait:
+///                   '__trivially_copyable'
+///
 ///       binary-type-trait:
 /// [GNU]             '__is_base_of'       
 /// [MS]              '__is_convertible_to'
@@ -1060,6 +1063,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_pod:
   case tok::kw___is_polymorphic:
   case tok::kw___is_trivial:
+  case tok::kw___is_trivially_copyable:
   case tok::kw___is_union:
   case tok::kw___has_trivial_constructor:
   case tok::kw___has_trivial_copy:
