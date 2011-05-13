@@ -5527,90 +5527,122 @@ llvm::Value *CGObjCNonFragileABIMac::EmitIvarOffset(
   return CGF.Builder.CreateLoad(ObjCIvarOffsetVariable(Interface, Ivar),"ivar");
 }
 
-CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
-  CodeGen::CodeGenFunction &CGF,
-  ReturnValueSlot Return,
-  QualType ResultType,
-  Selector Sel,
-  llvm::Value *Receiver,
-  QualType Arg0Ty,
-  bool IsSuper,
-  const CallArgList &CallArgs,
-  const ObjCMethodDecl *Method) {
-  // FIXME. Even though IsSuper is passes. This function doese not handle calls
-  // to 'super' receivers.
-  CodeGenTypes &Types = CGM.getTypes();
-  llvm::Value *Arg0 = Receiver;
-  if (!IsSuper)
-    Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
+static void appendSelectorForMessageRefTable(std::string &buffer,
+                                             Selector selector) {
+  if (selector.isUnarySelector()) {
+    buffer += selector.getNameForSlot(0);
+    return;
+  }
 
-  // Find the message function name.
-  // FIXME. This is too much work to get the ABI-specific result type needed to
-  // find the message name.
-  const CGFunctionInfo &FnInfo
-      = Types.getFunctionInfo(ResultType, CallArgList(),
-                              FunctionType::ExtInfo());
-  llvm::Constant *Fn = 0;
-  std::string Name("\01l_");
-  if (CGM.ReturnTypeUsesSRet(FnInfo)) {
-    EmitNullReturnInitialization(CGF, Return, ResultType);
-    if (IsSuper) {
-      Fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
-      Name += "objc_msgSendSuper2_stret_fixup";
+  for (unsigned i = 0, e = selector.getNumArgs(); i != e; ++i) {
+    buffer += selector.getNameForSlot(i);
+    buffer += '_';
+  }
+}
+
+/// Emit a message send for the non-fragile ABI.
+///
+/// Note that we intentionally don't emit a call to objc_msgSend*
+/// directly because doing so will require the call to go through a
+/// lazy call stub.  In general, that overhead is considered
+/// worthwhile because it
+RValue CGObjCNonFragileABIMac::EmitMessageSend(CodeGenFunction &CGF,
+                                               ReturnValueSlot returnSlot,
+                                               QualType resultType,
+                                               Selector selector,
+                                               llvm::Value *receiver,
+                                               QualType receiverType,
+                                               bool isSuper,
+                                               const CallArgList &formalArgs,
+                                               const ObjCMethodDecl *method) {
+  // Compute the actual arguments.
+  CallArgList args;
+
+  // First argument: the receiver.
+  // FIXME: this method doesn't really support super receivers anyway.
+  if (!isSuper)
+    receiver = CGF.Builder.CreateBitCast(receiver, ObjCTypes.ObjectPtrTy);
+  args.add(RValue::get(receiver), receiverType);
+
+  // Second argument: a message reference pointer.  Leave the actual
+  // r-value blank for now.
+  args.add(RValue::get(0), ObjCTypes.MessageRefCPtrTy);
+
+  args.insert(args.end(), formalArgs.begin(), formalArgs.end());
+
+  const CGFunctionInfo &fnInfo =
+    CGM.getTypes().getFunctionInfo(resultType, args,
+                                   FunctionType::ExtInfo());
+
+  // Find the function to call and the name of the message ref table
+  // entry.
+  llvm::Constant *fn = 0;
+  std::string messageRefName("\01l_");
+  if (CGM.ReturnTypeUsesSRet(fnInfo)) {
+    EmitNullReturnInitialization(CGF, returnSlot, resultType);
+    if (isSuper) {
+      fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
+      messageRefName += "objc_msgSendSuper2_stret_fixup";
     } else {
-      Fn = ObjCTypes.getMessageSendStretFixupFn();
-      Name += "objc_msgSend_stret_fixup";
+      fn = ObjCTypes.getMessageSendStretFixupFn();
+      messageRefName += "objc_msgSend_stret_fixup";
     }
-  } else if (!IsSuper && CGM.ReturnTypeUsesFPRet(ResultType)) {
-    Fn = ObjCTypes.getMessageSendFpretFixupFn();
-    Name += "objc_msgSend_fpret_fixup";
+  } else if (!isSuper && CGM.ReturnTypeUsesFPRet(resultType)) {
+    fn = ObjCTypes.getMessageSendFpretFixupFn();
+    messageRefName += "objc_msgSend_fpret_fixup";
   } else {
-    if (IsSuper) {
-      Fn = ObjCTypes.getMessageSendSuper2FixupFn();
-      Name += "objc_msgSendSuper2_fixup";
+    if (isSuper) {
+      fn = ObjCTypes.getMessageSendSuper2FixupFn();
+      messageRefName += "objc_msgSendSuper2_fixup";
     } else {
-      Fn = ObjCTypes.getMessageSendFixupFn();
-      Name += "objc_msgSend_fixup";
+      fn = ObjCTypes.getMessageSendFixupFn();
+      messageRefName += "objc_msgSend_fixup";
     }
   }
-  assert(Fn && "CGObjCNonFragileABIMac::EmitMessageSend");
-  Name += '_';
-  std::string SelName(Sel.getAsString());
-  // Replace all ':' in selector name with '_'  ouch!
-  for (unsigned i = 0; i < SelName.size(); i++)
-    if (SelName[i] == ':')
-      SelName[i] = '_';
-  Name += SelName;
-  llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
-  if (!GV) {
-    // Build message ref table entry.
-    std::vector<llvm::Constant*> Values(2);
-    Values[0] = Fn;
-    Values[1] = GetMethodVarName(Sel);
-    llvm::Constant *Init = llvm::ConstantStruct::get(VMContext, Values, false);
-    GV =  new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
-                                   llvm::GlobalValue::WeakAnyLinkage,
-                                   Init,
-                                   Name);
-    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-    GV->setAlignment(16);
-    GV->setSection("__DATA, __objc_msgrefs, coalesced");
-  }
-  llvm::Value *Arg1 = CGF.Builder.CreateBitCast(GV, ObjCTypes.MessageRefPtrTy);
+  assert(fn && "CGObjCNonFragileABIMac::EmitMessageSend");
+  messageRefName += '_';
 
-  CallArgList ActualArgs;
-  ActualArgs.add(RValue::get(Arg0), Arg0Ty);
-  ActualArgs.add(RValue::get(Arg1), ObjCTypes.MessageRefCPtrTy);
-  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
-  const CGFunctionInfo &FnInfo1 = Types.getFunctionInfo(ResultType, ActualArgs,
-                                                      FunctionType::ExtInfo());
-  llvm::Value *Callee = CGF.Builder.CreateStructGEP(Arg1, 0);
-  Callee = CGF.Builder.CreateLoad(Callee);
-  const llvm::FunctionType *FTy = 
-    Types.GetFunctionType(FnInfo1, Method ? Method->isVariadic() : false);
-  Callee = CGF.Builder.CreateBitCast(Callee,
-                                     llvm::PointerType::getUnqual(FTy));
-  return CGF.EmitCall(FnInfo1, Callee, Return, ActualArgs);
+  // Append the selector name, except use underscores anywhere we
+  // would have used colons.
+  appendSelectorForMessageRefTable(messageRefName, selector);
+
+  llvm::GlobalVariable *messageRef
+    = CGM.getModule().getGlobalVariable(messageRefName);
+  if (!messageRef) {
+    // Build the message ref table entry.  It needs to be non-constant
+    // because otherwise the optimizer will elide the load, which we
+    // don't want --- in fact, the whole point of this exercise is to
+    // get an indirect call.
+    llvm::Constant *values[] = { fn, GetMethodVarName(selector) };
+    llvm::Constant *init =
+      llvm::ConstantStruct::get(VMContext, values, 2, false);
+    messageRef = new llvm::GlobalVariable(CGM.getModule(),
+                                          init->getType(),
+                                          /*constant*/ false,
+                                          llvm::GlobalValue::WeakAnyLinkage,
+                                          init,
+                                          messageRefName);
+    messageRef->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    messageRef->setAlignment(16);
+    messageRef->setSection("__DATA, __objc_msgrefs, coalesced");
+  }
+  llvm::Value *mref =
+    CGF.Builder.CreateBitCast(messageRef, ObjCTypes.MessageRefPtrTy);
+
+  // Update the message reference in the arguments.
+  args[1].RV = RValue::get(mref);
+
+  // Load the function to call from the message ref table.
+  llvm::Value *callee = CGF.Builder.CreateStructGEP(mref, 0);
+  callee = CGF.Builder.CreateLoad(callee, "msgSend_fn");
+
+  bool variadic = method ? method->isVariadic() : false;
+  const llvm::FunctionType *fnType = 
+    CGF.getTypes().GetFunctionType(fnInfo, variadic);
+  callee = CGF.Builder.CreateBitCast(callee,
+                                     llvm::PointerType::getUnqual(fnType));
+
+  return CGF.EmitCall(fnInfo, callee, returnSlot, args);
 }
 
 /// Generate code for a message send expression in the nonfragile abi.
