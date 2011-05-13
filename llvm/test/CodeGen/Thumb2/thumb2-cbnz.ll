@@ -3,27 +3,29 @@
 
 declare double @floor(double) nounwind readnone
 
-define void @t(i1 %a, double %b) {
+define void @t(i32 %c, double %b) {
 entry:
-  br i1 %a, label %bb3, label %bb1
+  %cmp1 = icmp ne i32 %c, 0
+  br i1 %cmp1, label %bb3, label %bb1
 
 bb1:                                              ; preds = %entry
   unreachable
 
 bb3:                                              ; preds = %entry
-  br i1 %a, label %bb7, label %bb5
+  %cmp2 = icmp ne i32 %c, 0
+  br i1 %cmp2, label %bb7, label %bb5
 
 bb5:                                              ; preds = %bb3
   unreachable
 
 bb7:                                              ; preds = %bb3
-  br i1 %a, label %bb11, label %bb9
+  %cmp3 = icmp ne i32 %c, 0
+  br i1 %cmp3, label %bb11, label %bb9
 
 bb9:                                              ; preds = %bb7
-; CHECK:      tst.w	r0, #1
-; CHECK:      tst.w	r0, #1
-; CHECK:      tst.w	r0, #1
-; CHECK:      bne
+; CHECK:      cmp	r0, #0
+; CHECK:      cmp	r0, #0
+; CHECK-NEXT:      cbnz
   %0 = tail call  double @floor(double %b) nounwind readnone ; <double> [#uses=0]
   br label %bb11
 
