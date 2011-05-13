@@ -1993,11 +1993,11 @@ public:
     if (CPU == "xscale")
       Builder.defineMacro("__XSCALE__");
 
-    bool IsThumb2 = IsThumb && (CPUArch == "6T2" || CPUArch.startswith("7"));
+    bool IsARMv7 = CPUArch.startswith("7");
     if (IsThumb) {
       Builder.defineMacro("__THUMBEL__");
       Builder.defineMacro("__thumb__");
-      if (IsThumb2)
+      if (CPUArch == "6T2" || IsARMv7)
         Builder.defineMacro("__thumb2__");
     }
 
@@ -2011,7 +2011,7 @@ public:
     // the VFP define, hence the soft float and arch check. This is subtly
     // different from gcc, we follow the intent which was that it should be set
     // when Neon instructions are actually available.
-    if (FPU == NeonFPU && !SoftFloat && IsThumb2)
+    if (FPU == NeonFPU && !SoftFloat && IsARMv7)
       Builder.defineMacro("__ARM_NEON__");
   }
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
