@@ -135,20 +135,14 @@ protected:
     JITMemoryManager *JMM,
     CodeGenOpt::Level OptLevel,
     bool GVsWithCode,
-    CodeModel::Model CMM,
-    StringRef MArch,
-    StringRef MCPU,
-    const SmallVectorImpl<std::string>& MAttrs);
+    TargetMachine *TM);
   static ExecutionEngine *(*MCJITCtor)(
     Module *M,
     std::string *ErrorStr,
     JITMemoryManager *JMM,
     CodeGenOpt::Level OptLevel,
     bool GVsWithCode,
-    CodeModel::Model CMM,
-    StringRef MArch,
-    StringRef MCPU,
-    const SmallVectorImpl<std::string>& MAttrs);
+    TargetMachine *TM);
   static ExecutionEngine *(*InterpCtor)(Module *M,
                                         std::string *ErrorStr);
 
