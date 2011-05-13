@@ -443,7 +443,7 @@ private:
       return Result.Val.getInt().getBoolValue();
 
     if (Result.Val.isLValue()) {
-      Expr *e = Result.Val.getLValueBase();
+      const Expr *e = Result.Val.getLValueBase();
       const CharUnits &c = Result.Val.getLValueOffset();        
       if (!e && c.isZero())
         return false;        

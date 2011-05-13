@@ -85,10 +85,10 @@ public:
   APValue(const APValue &RHS) : Kind(Uninitialized) {
     *this = RHS;
   }
-  APValue(Expr* B, const CharUnits &O) : Kind(Uninitialized) {
+  APValue(const Expr* B, const CharUnits &O) : Kind(Uninitialized) {
     MakeLValue(); setLValue(B, O);
   }
-  APValue(Expr* B);
+  APValue(const Expr* B);
 
   ~APValue() {
     MakeUninit();
@@ -167,7 +167,7 @@ public:
     return const_cast<APValue*>(this)->getComplexFloatImag();
   }
 
-  Expr* getLValueBase() const;
+  const Expr* getLValueBase() const;
   CharUnits getLValueOffset() const;
 
   void setInt(const APSInt &I) {
@@ -199,7 +199,7 @@ public:
     ((ComplexAPFloat*)(char*)Data)->Real = R;
     ((ComplexAPFloat*)(char*)Data)->Imag = I;
   }
-  void setLValue(Expr *B, const CharUnits &O);
+  void setLValue(const Expr *B, const CharUnits &O);
 
   const APValue &operator=(const APValue &RHS);
 

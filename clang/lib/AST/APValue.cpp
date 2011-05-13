@@ -18,12 +18,12 @@ using namespace clang;
 
 namespace {
   struct LV {
-    Expr* Base;
+    const Expr* Base;
     CharUnits Offset;
   };
 }
 
-APValue::APValue(Expr* B) : Kind(Uninitialized) {
+APValue::APValue(const Expr* B) : Kind(Uninitialized) {
   MakeLValue(); setLValue(B, CharUnits::Zero());
 }
 
@@ -118,7 +118,7 @@ void APValue::print(llvm::raw_ostream &OS) const {
   }
 }
 
-Expr* APValue::getLValueBase() const {
+const Expr* APValue::getLValueBase() const {
   assert(isLValue() && "Invalid accessor");
   return ((const LV*)(const void*)Data)->Base;
 }
@@ -128,7 +128,7 @@ CharUnits APValue::getLValueOffset() const {
     return ((const LV*)(const void*)Data)->Offset;
 }
 
-void APValue::setLValue(Expr *B, const CharUnits &O) {
+void APValue::setLValue(const Expr *B, const CharUnits &O) {
   assert(isLValue() && "Invalid accessor");
   ((LV*)(char*)Data)->Base = B;
   ((LV*)(char*)Data)->Offset = O;

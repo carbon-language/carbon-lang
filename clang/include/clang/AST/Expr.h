@@ -1560,9 +1560,9 @@ public:
     TSInfo = tsi;
   }
   
-  const OffsetOfNode &getComponent(unsigned Idx) {
+  const OffsetOfNode &getComponent(unsigned Idx) const {
     assert(Idx < NumComps && "Subscript out of range");
-    return reinterpret_cast<OffsetOfNode *> (this + 1)[Idx];
+    return reinterpret_cast<const OffsetOfNode *> (this + 1)[Idx];
   }
 
   void setComponent(unsigned Idx, OffsetOfNode ON) {
@@ -1578,6 +1578,9 @@ public:
     assert(Idx < NumExprs && "Subscript out of range");
     return reinterpret_cast<Expr **>(
                     reinterpret_cast<OffsetOfNode *>(this+1) + NumComps)[Idx];
+  }
+  const Expr *getIndexExpr(unsigned Idx) const {
+    return const_cast<OffsetOfExpr*>(this)->getIndexExpr(Idx);
   }
 
   void setIndexExpr(unsigned Idx, Expr* E) {
@@ -3304,6 +3307,9 @@ public:
   Expr *getArrayFiller() {
     return ArrayFillerOrUnionFieldInit.dyn_cast<Expr *>();
   }
+  const Expr *getArrayFiller() const {
+    return const_cast<InitListExpr *>(this)->getArrayFiller();
+  }
   void setArrayFiller(Expr *filler);
 
   /// \brief If this initializes a union, specifies which field in the
@@ -3314,6 +3320,9 @@ public:
   /// initialization of a different field within the union.
   FieldDecl *getInitializedFieldInUnion() {
     return ArrayFillerOrUnionFieldInit.dyn_cast<FieldDecl *>();
+  }
+  const FieldDecl *getInitializedFieldInUnion() const {
+    return const_cast<InitListExpr *>(this)->getInitializedFieldInUnion();
   }
   void setInitializedFieldInUnion(FieldDecl *FD) {
     ArrayFillerOrUnionFieldInit = FD;
