@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "OptionGroupValueObjectDisplay.h"
+#include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 
 // C Includes
 // C++ Includes

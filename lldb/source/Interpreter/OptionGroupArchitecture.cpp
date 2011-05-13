@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "OptionGroupArchitecture.h"
+#include "lldb/Interpreter/OptionGroupArchitecture.h"
 
 // C Includes
 // C++ Includes

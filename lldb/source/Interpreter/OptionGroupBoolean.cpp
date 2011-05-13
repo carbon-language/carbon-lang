@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "OptionGroupBoolean.h"
+#include "lldb/Interpreter/OptionGroupBoolean.h"
 
 // C Includes
 // C++ Includes

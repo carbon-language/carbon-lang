@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "OptionGroupUUID.h"
+#include "lldb/Interpreter/OptionGroupUUID.h"
 
 // C Includes
 // C++ Includes

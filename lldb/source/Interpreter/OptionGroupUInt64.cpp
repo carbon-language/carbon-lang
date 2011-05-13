@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "OptionGroupUInt64.h"
+#include "lldb/Interpreter/OptionGroupUInt64.h"
 
 // C Includes
 // C++ Includes
