@@ -296,11 +296,11 @@ loadSegment32(const MachOObject *Obj,
 
       // FIXME: Check the symbol type and flags.
       if (STE->Type != 0xF)  // external, defined in this section.
-        return Error("unexpected symbol type!");
+        continue;
       // Flags == 0x8 marks a thumb function for ARM, which is fine as it
       // doesn't require any special handling here.
       if (STE->Flags != 0x0 && STE->Flags != 0x8)
-        return Error("unexpected symbol type!");
+        continue;
 
       // Remember the symbol.
       Symbols.push_back(SymbolEntry(STE->Value, Name));
@@ -310,6 +310,10 @@ loadSegment32(const MachOObject *Obj,
     }
     // Sort the symbols by address, just in case they didn't come in that way.
     array_pod_sort(Symbols.begin(), Symbols.end());
+
+    // If there weren't any functions (odd, but just in case...)
+    if (!Symbols.size())
+      continue;
 
     // Extract the function data.
     uint8_t *Base = (uint8_t*)Obj->getData(SegmentLC->FileOffset,
@@ -431,9 +435,9 @@ loadSegment64(const MachOObject *Obj,
 
       // FIXME: Check the symbol type and flags.
       if (STE->Type != 0xF)  // external, defined in this section.
-        return Error("unexpected symbol type!");
+        continue;
       if (STE->Flags != 0x0)
-        return Error("unexpected symbol type!");
+        continue;
 
       // Remember the symbol.
       Symbols.push_back(SymbolEntry(STE->Value, Name));
@@ -443,6 +447,10 @@ loadSegment64(const MachOObject *Obj,
     }
     // Sort the symbols by address, just in case they didn't come in that way.
     array_pod_sort(Symbols.begin(), Symbols.end());
+
+    // If there weren't any functions (odd, but just in case...)
+    if (!Symbols.size())
+      continue;
 
     // Extract the function data.
     uint8_t *Base = (uint8_t*)Obj->getData(Segment64LC->FileOffset,
