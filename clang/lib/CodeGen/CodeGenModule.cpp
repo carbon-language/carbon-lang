@@ -1574,14 +1574,24 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
          "isn't a lib fn");
 
   // Get the name, skip over the __builtin_ prefix (if necessary).
-  const char *Name = Context.BuiltinInfo.GetName(BuiltinID);
-  if (Context.BuiltinInfo.isLibFunction(BuiltinID))
-    Name += 10;
+  llvm::StringRef Name;
+  GlobalDecl D(FD);
+
+  // If the builtin has been declared explicitly with an assembler label,
+  // use the mangled name. This differs from the plain label on platforms
+  // that prefix labels.
+  if (const AsmLabelAttr *ALA = FD->getAttr<AsmLabelAttr>())
+    Name = getMangledName(D);
+  else if (Context.BuiltinInfo.isLibFunction(BuiltinID))
+    Name = Context.BuiltinInfo.GetName(BuiltinID) + 10;
+  else
+    Name = Context.BuiltinInfo.GetName(BuiltinID);
+
 
   const llvm::FunctionType *Ty =
     cast<llvm::FunctionType>(getTypes().ConvertType(FD->getType()));
 
-  return GetOrCreateLLVMFunction(Name, Ty, GlobalDecl(FD), /*ForVTable=*/false);
+  return GetOrCreateLLVMFunction(Name, Ty, D, /*ForVTable=*/false);
 }
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,
