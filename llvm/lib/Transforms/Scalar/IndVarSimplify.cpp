@@ -458,7 +458,7 @@ void IndVarSimplify::RewriteNonIntegerIVs(Loop *L) {
 /// loop. IVUsers is treated as a worklist. Each successive simplification may
 /// push more users which may themselves be candidates for simplification.
 void IndVarSimplify::SimplifyIVUsers() {
-  for (IVUsers::iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
+  for (IVUsers::iterator I = IU->begin(); I != IU->end(); ++I) {
     Instruction *UseInst = I->getUser();
     Value *IVOperand = I->getOperandValToReplace();
 
