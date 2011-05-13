@@ -47,6 +47,11 @@
 # endif  // _BYTE_ORDER == _LITTLE_ENDIAN
 #endif  // __FreeBSD__
 
+#ifdef _WIN32
+#  define _LIBCPP_LITTLE_ENDIAN 1
+#  define _LIBCPP_BIG_ENDIAN    0
+#endif  // _WIN32
+
 #if !defined(_LIBCPP_LITTLE_ENDIAN) || !defined(_LIBCPP_BIG_ENDIAN)
 # include <endian.h>
 # if __BYTE_ORDER == __LITTLE_ENDIAN
