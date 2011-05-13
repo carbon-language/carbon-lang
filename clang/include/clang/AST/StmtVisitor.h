@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the StmtVisitor interface.
+//  This file defines the StmtVisitor and ConstStmtVisitor interfaces.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,20 +21,26 @@
 
 namespace clang {
 
-#define DISPATCH(NAME, CLASS) \
-  return static_cast<ImplClass*>(this)->Visit ## NAME(static_cast<CLASS*>(S))
+template <typename T> struct make_ptr       { typedef       T *type; };
+template <typename T> struct make_const_ptr { typedef const T *type; };
 
-/// StmtVisitor - This class implements a simple visitor for Stmt subclasses.
-/// Since Expr derives from Stmt, this also includes support for visiting Exprs.
-template<typename ImplClass, typename RetTy=void>
-class StmtVisitor {
+/// StmtVisitorBase - This class implements a simple visitor for Stmt
+/// subclasses. Since Expr derives from Stmt, this also includes support for
+/// visiting Exprs.
+template<template <typename> class Ptr, typename ImplClass, typename RetTy=void>
+class StmtVisitorBase {
 public:
-  RetTy Visit(Stmt *S) {
+
+#define PTR(CLASS) typename Ptr<CLASS>::type
+#define DISPATCH(NAME, CLASS) \
+ return static_cast<ImplClass*>(this)->Visit ## NAME(static_cast<PTR(CLASS)>(S))
+
+  RetTy Visit(PTR(Stmt) S) {
 
     // If we have a binary expr, dispatch to the subcode of the binop.  A smart
     // optimizer (e.g. LLVM) will fold this comparison into the switch stmt
     // below.
-    if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(S)) {
+    if (PTR(BinaryOperator) BinOp = dyn_cast<BinaryOperator>(S)) {
       switch (BinOp->getOpcode()) {
       default: assert(0 && "Unknown binary operator!");
       case BO_PtrMemD:   DISPATCH(BinPtrMemD,   BinaryOperator);
@@ -72,7 +78,7 @@ public:
       case BO_XorAssign: DISPATCH(BinXorAssign, CompoundAssignOperator);
       case BO_Comma:     DISPATCH(BinComma,     BinaryOperator);
       }
-    } else if (UnaryOperator *UnOp = dyn_cast<UnaryOperator>(S)) {
+    } else if (PTR(UnaryOperator) UnOp = dyn_cast<UnaryOperator>(S)) {
       switch (UnOp->getOpcode()) {
       default: assert(0 && "Unknown unary operator!");
       case UO_PostInc:   DISPATCH(UnaryPostInc,   UnaryOperator);
@@ -104,13 +110,13 @@ public:
   // If the implementation chooses not to implement a certain visit method, fall
   // back on VisitExpr or whatever else is the superclass.
 #define STMT(CLASS, PARENT)                                   \
-  RetTy Visit ## CLASS(CLASS *S) { DISPATCH(PARENT, PARENT); }
+  RetTy Visit ## CLASS(PTR(CLASS) S) { DISPATCH(PARENT, PARENT); }
 #include "clang/AST/StmtNodes.inc"
 
   // If the implementation doesn't implement binary operator methods, fall back
   // on VisitBinaryOperator.
 #define BINOP_FALLBACK(NAME) \
-  RetTy VisitBin ## NAME(BinaryOperator *S) { \
+  RetTy VisitBin ## NAME(PTR(BinaryOperator) S) { \
     DISPATCH(BinaryOperator, BinaryOperator); \
   }
   BINOP_FALLBACK(PtrMemD)                    BINOP_FALLBACK(PtrMemI)
@@ -130,7 +136,7 @@ public:
   // If the implementation doesn't implement compound assignment operator
   // methods, fall back on VisitCompoundAssignOperator.
 #define CAO_FALLBACK(NAME) \
-  RetTy VisitBin ## NAME(CompoundAssignOperator *S) { \
+  RetTy VisitBin ## NAME(PTR(CompoundAssignOperator) S) { \
     DISPATCH(CompoundAssignOperator, CompoundAssignOperator); \
   }
   CAO_FALLBACK(MulAssign) CAO_FALLBACK(DivAssign) CAO_FALLBACK(RemAssign)
@@ -142,7 +148,7 @@ public:
   // If the implementation doesn't implement unary operator methods, fall back
   // on VisitUnaryOperator.
 #define UNARYOP_FALLBACK(NAME) \
-  RetTy VisitUnary ## NAME(UnaryOperator *S) { \
+  RetTy VisitUnary ## NAME(PTR(UnaryOperator) S) { \
     DISPATCH(UnaryOperator, UnaryOperator);    \
   }
   UNARYOP_FALLBACK(PostInc)   UNARYOP_FALLBACK(PostDec)
@@ -156,10 +162,29 @@ public:
 #undef UNARYOP_FALLBACK
 
   // Base case, ignore it. :)
-  RetTy VisitStmt(Stmt *Node) { return RetTy(); }
+  RetTy VisitStmt(PTR(Stmt) Node) { return RetTy(); }
+
+#undef PTR
+#undef DISPATCH
 };
 
-#undef DISPATCH
+/// StmtVisitor - This class implements a simple visitor for Stmt subclasses.
+/// Since Expr derives from Stmt, this also includes support for visiting Exprs.
+///
+/// This class does not preserve constness of Stmt pointers (see also
+/// ConstStmtVisitor).
+template<typename ImplClass, typename RetTy=void>
+class StmtVisitor
+ : public StmtVisitorBase<make_ptr, ImplClass, RetTy> {};
+
+/// ConstStmtVisitor - This class implements a simple visitor for Stmt
+/// subclasses. Since Expr derives from Stmt, this also includes support for
+/// visiting Exprs.
+///
+/// This class preserves constness of Stmt pointers (see also StmtVisitor).
+template<typename ImplClass, typename RetTy=void>
+class ConstStmtVisitor
+ : public StmtVisitorBase<make_const_ptr, ImplClass, RetTy> {};
 
 }  // end namespace clang
 
