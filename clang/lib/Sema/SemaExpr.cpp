@@ -9857,7 +9857,7 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
         return;
       if (!Constructor->isUsed(false))
         DefineImplicitDefaultConstructor(Loc, Constructor);
-    } else if (Constructor->isImplicit() &&
+    } else if (Constructor->isDefaulted() &&
                Constructor->isCopyConstructor()) {
       if (!Constructor->isUsed(false))
         DefineImplicitCopyConstructor(Loc, Constructor);
