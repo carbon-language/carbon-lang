@@ -94,6 +94,12 @@ def createAssemblyFile(tmpDir, file, number, args, polly):
     if args.fpluto:
       commandLine.append('-polly-optimize')
 
+    if args.foptimize:
+      commandLine.append('-polly-optimize-isl')
+
+    if args.fatLeastOnce:
+      commandLine.append('-enable-polly-atLeastOnce')
+
     if args.faligned:
       commandLine.append('-enable-polly-aligned')
 
@@ -232,7 +238,13 @@ def parseArguments():
   parser.add_argument('-fpolly', help='enable polly', action='store_true')
   parser.add_argument('-fpluto', help='enable pluto', action='store_true')
   parser.add_argument('-fpluto-fuse', dest='pluto_fuse', help='enable pluto')
+  parser.add_argument('-foptimize',
+                      help='Optimize schedule with isl pluto like algorithm',
+                      action='store_true')
   parser.add_argument('-faligned', help='Assume aligned vector accesses',
+                      action='store_true')
+  parser.add_argument('-fatLeastOnce',
+                      help='Assume all loops are executed at least once',
                       action='store_true')
   parser.add_argument('-fview-scops', dest='view',
                       help='Show the scops with graphviz',
@@ -283,6 +295,9 @@ def parseArguments():
     arguments.fpolly = True
 
   if arguments.fpluto:
+    arguments.fpolly = True
+
+  if arguments.foptimize:
     arguments.fpolly = True
 
   return arguments

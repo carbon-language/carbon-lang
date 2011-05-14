@@ -43,6 +43,7 @@ namespace polly {
   Pass *createJSONImporterPass();
   Pass *createRegionSimplifyPass();
   Pass *createScopInfoPass();
+  Pass *createScheduleOptimizerPass();
 
 #ifdef OPENSCOP_FOUND
   Pass *createScopExporterPass();
@@ -87,6 +88,7 @@ namespace {
        createJSONImporterPass();
        createRegionSimplifyPass();
        createScopInfoPass();
+       createScheduleOptimizerPass();
 
 #ifdef OPENSCOP_FOUND
        createScopExporterPass();
