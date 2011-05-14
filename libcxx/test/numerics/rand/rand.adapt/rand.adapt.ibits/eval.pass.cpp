@@ -39,8 +39,6 @@ public:
 
     explicit rand1(result_type sd = Min) : x_(sd)
     {
-        if (x_ < Min)
-            x_ = Min;
         if (x_ > Max)
             x_ = Max;
     }
