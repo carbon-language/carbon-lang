@@ -869,16 +869,16 @@ protected:
                                           unsigned Align,
                                           bool AddToUsed);
 
-  CodeGen::RValue EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
-                                        ReturnValueSlot Return,
-                                        QualType ResultType,
-                                        llvm::Value *Sel,
-                                        llvm::Value *Arg0,
-                                        QualType Arg0Ty,
-                                        bool IsSuper,
-                                        const CallArgList &CallArgs,
-                                        const ObjCMethodDecl *OMD,
-                                        const ObjCCommonTypesHelper &ObjCTypes);
+  CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
+                                  ReturnValueSlot Return,
+                                  QualType ResultType,
+                                  llvm::Value *Sel,
+                                  llvm::Value *Arg0,
+                                  QualType Arg0Ty,
+                                  bool IsSuper,
+                                  const CallArgList &CallArgs,
+                                  const ObjCMethodDecl *OMD,
+                                  const ObjCCommonTypesHelper &ObjCTypes);
 
   /// EmitImageInfo - Emit the image info marker used to encode some module
   /// level information.
@@ -1114,16 +1114,16 @@ private:
   /// EHTypeReferences - uniqued class ehtype references.
   llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*> EHTypeReferences;
 
-  /// NonLegacyDispatchMethods - List of methods for which we do *not* generate
-  /// legacy messaging dispatch.
-  llvm::DenseSet<Selector> NonLegacyDispatchMethods;
+  /// VTableDispatchMethods - List of methods for which we generate
+  /// vtable-based message dispatch.
+  llvm::DenseSet<Selector> VTableDispatchMethods;
 
   /// DefinedMetaClasses - List of defined meta-classes.
   std::vector<llvm::GlobalValue*> DefinedMetaClasses;
   
-  /// LegacyDispatchedSelector - Returns true if SEL is not in the list of
-  /// NonLegacyDispatchMethods; false otherwise.
-  bool LegacyDispatchedSelector(Selector Sel);
+  /// isVTableDispatchedSelector - Returns true if SEL is a
+  /// vtable-based selector.
+  bool isVTableDispatchedSelector(Selector Sel);
 
   /// FinishNonFragileABIModule - Write out global data structures at the end of
   /// processing a translation unit.
@@ -1182,15 +1182,15 @@ private:
                                    ObjCProtocolDecl::protocol_iterator begin,
                                    ObjCProtocolDecl::protocol_iterator end);
 
-  CodeGen::RValue EmitMessageSend(CodeGen::CodeGenFunction &CGF,
-                                  ReturnValueSlot Return,
-                                  QualType ResultType,
-                                  Selector Sel,
-                                  llvm::Value *Receiver,
-                                  QualType Arg0Ty,
-                                  bool IsSuper,
-                                  const CallArgList &CallArgs,
-                                  const ObjCMethodDecl *Method);
+  CodeGen::RValue EmitVTableMessageSend(CodeGen::CodeGenFunction &CGF,
+                                        ReturnValueSlot Return,
+                                        QualType ResultType,
+                                        Selector Sel,
+                                        llvm::Value *Receiver,
+                                        QualType Arg0Ty,
+                                        bool IsSuper,
+                                        const CallArgList &CallArgs,
+                                        const ObjCMethodDecl *Method);
 
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
@@ -1491,10 +1491,10 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   Target = CGF.Builder.CreateBitCast(Target, ClassTy);
   CGF.Builder.CreateStore(Target,
                           CGF.Builder.CreateStructGEP(ObjCSuper, 1));
-  return EmitLegacyMessageSend(CGF, Return, ResultType,
-                               EmitSelector(CGF.Builder, Sel),
-                               ObjCSuper, ObjCTypes.SuperPtrCTy,
-                               true, CallArgs, Method, ObjCTypes);
+  return EmitMessageSend(CGF, Return, ResultType,
+                         EmitSelector(CGF.Builder, Sel),
+                         ObjCSuper, ObjCTypes.SuperPtrCTy,
+                         true, CallArgs, Method, ObjCTypes);
 }
 
 /// Generate code for a message send expression.
@@ -1506,23 +1506,23 @@ CodeGen::RValue CGObjCMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                                const CallArgList &CallArgs,
                                                const ObjCInterfaceDecl *Class,
                                                const ObjCMethodDecl *Method) {
-  return EmitLegacyMessageSend(CGF, Return, ResultType,
-                               EmitSelector(CGF.Builder, Sel),
-                               Receiver, CGF.getContext().getObjCIdType(),
-                               false, CallArgs, Method, ObjCTypes);
+  return EmitMessageSend(CGF, Return, ResultType,
+                         EmitSelector(CGF.Builder, Sel),
+                         Receiver, CGF.getContext().getObjCIdType(),
+                         false, CallArgs, Method, ObjCTypes);
 }
 
 CodeGen::RValue
-CGObjCCommonMac::EmitLegacyMessageSend(CodeGen::CodeGenFunction &CGF,
-                                       ReturnValueSlot Return,
-                                       QualType ResultType,
-                                       llvm::Value *Sel,
-                                       llvm::Value *Arg0,
-                                       QualType Arg0Ty,
-                                       bool IsSuper,
-                                       const CallArgList &CallArgs,
-                                       const ObjCMethodDecl *Method,
-                                       const ObjCCommonTypesHelper &ObjCTypes) {
+CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
+                                 ReturnValueSlot Return,
+                                 QualType ResultType,
+                                 llvm::Value *Sel,
+                                 llvm::Value *Arg0,
+                                 QualType Arg0Ty,
+                                 bool IsSuper,
+                                 const CallArgList &CallArgs,
+                                 const ObjCMethodDecl *Method,
+                                 const ObjCCommonTypesHelper &ObjCTypes) {
   CallArgList ActualArgs;
   if (!IsSuper)
     Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
@@ -4662,56 +4662,68 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   EmitImageInfo();
 }
 
-/// LegacyDispatchedSelector - Returns true if SEL is not in the list of
-/// NonLegacyDispatchMethods; false otherwise. What this means is that
+/// isVTableDispatchedSelector - Returns true if SEL is not in the list of
+/// VTableDispatchMethods; false otherwise. What this means is that
 /// except for the 19 selectors in the list, we generate 32bit-style
 /// message dispatch call for all the rest.
-///
-bool CGObjCNonFragileABIMac::LegacyDispatchedSelector(Selector Sel) {
+bool CGObjCNonFragileABIMac::isVTableDispatchedSelector(Selector Sel) {
+  // At various points we've experimented with using vtable-based
+  // dispatch for all methods.
   switch (CGM.getCodeGenOpts().getObjCDispatchMethod()) {
   default:
-    assert(0 && "Invalid dispatch method!");
+    llvm_unreachable("Invalid dispatch method!");
   case CodeGenOptions::Legacy:
-    return true;
-  case CodeGenOptions::NonLegacy:
     return false;
+  case CodeGenOptions::NonLegacy:
+    return true;
   case CodeGenOptions::Mixed:
     break;
   }
 
   // If so, see whether this selector is in the white-list of things which must
   // use the new dispatch convention. We lazily build a dense set for this.
-  if (NonLegacyDispatchMethods.empty()) {
-    NonLegacyDispatchMethods.insert(GetNullarySelector("alloc"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("class"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("self"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("isFlipped"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("length"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("count"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("retain"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("release"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("autorelease"));
-    NonLegacyDispatchMethods.insert(GetNullarySelector("hash"));
+  if (VTableDispatchMethods.empty()) {
+    VTableDispatchMethods.insert(GetNullarySelector("alloc"));
+    VTableDispatchMethods.insert(GetNullarySelector("class"));
+    VTableDispatchMethods.insert(GetNullarySelector("self"));
+    VTableDispatchMethods.insert(GetNullarySelector("isFlipped"));
+    VTableDispatchMethods.insert(GetNullarySelector("length"));
+    VTableDispatchMethods.insert(GetNullarySelector("count"));
 
-    NonLegacyDispatchMethods.insert(GetUnarySelector("allocWithZone"));
-    NonLegacyDispatchMethods.insert(GetUnarySelector("isKindOfClass"));
-    NonLegacyDispatchMethods.insert(GetUnarySelector("respondsToSelector"));
-    NonLegacyDispatchMethods.insert(GetUnarySelector("objectForKey"));
-    NonLegacyDispatchMethods.insert(GetUnarySelector("objectAtIndex"));
-    NonLegacyDispatchMethods.insert(GetUnarySelector("isEqualToString"));
-    NonLegacyDispatchMethods.insert(GetUnarySelector("isEqual"));
-    NonLegacyDispatchMethods.insert(GetUnarySelector("addObject"));
-    // "countByEnumeratingWithState:objects:count"
-    IdentifierInfo *KeyIdents[] = {
-      &CGM.getContext().Idents.get("countByEnumeratingWithState"),
-      &CGM.getContext().Idents.get("objects"),
-      &CGM.getContext().Idents.get("count")
-    };
-    NonLegacyDispatchMethods.insert(
-      CGM.getContext().Selectors.getSelector(3, KeyIdents));
+    // These are vtable-based if GC is disabled.
+    // Optimistically use vtable dispatch for hybrid compiles.
+    if (CGM.getLangOptions().getGCMode() != LangOptions::GCOnly) {
+      VTableDispatchMethods.insert(GetNullarySelector("retain"));
+      VTableDispatchMethods.insert(GetNullarySelector("release"));
+      VTableDispatchMethods.insert(GetNullarySelector("autorelease"));
+    }
+
+    VTableDispatchMethods.insert(GetUnarySelector("allocWithZone"));
+    VTableDispatchMethods.insert(GetUnarySelector("isKindOfClass"));
+    VTableDispatchMethods.insert(GetUnarySelector("respondsToSelector"));
+    VTableDispatchMethods.insert(GetUnarySelector("objectForKey"));
+    VTableDispatchMethods.insert(GetUnarySelector("objectAtIndex"));
+    VTableDispatchMethods.insert(GetUnarySelector("isEqualToString"));
+    VTableDispatchMethods.insert(GetUnarySelector("isEqual"));
+
+    // These are vtable-based if GC is enabled.
+    // Optimistically use vtable dispatch for hybrid compiles.
+    if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
+      VTableDispatchMethods.insert(GetNullarySelector("hash"));
+      VTableDispatchMethods.insert(GetUnarySelector("addObject"));
+    
+      // "countByEnumeratingWithState:objects:count"
+      IdentifierInfo *KeyIdents[] = {
+        &CGM.getContext().Idents.get("countByEnumeratingWithState"),
+        &CGM.getContext().Idents.get("objects"),
+        &CGM.getContext().Idents.get("count")
+      };
+      VTableDispatchMethods.insert(
+        CGM.getContext().Selectors.getSelector(3, KeyIdents));
+    }
   }
 
-  return (NonLegacyDispatchMethods.count(Sel) == 0);
+  return VTableDispatchMethods.count(Sel);
 }
 
 // Metadata flags
@@ -5540,32 +5552,36 @@ static void appendSelectorForMessageRefTable(std::string &buffer,
   }
 }
 
-/// Emit a message send for the non-fragile ABI.
-///
-/// Note that we intentionally don't emit a call to objc_msgSend*
-/// directly because doing so will require the call to go through a
-/// lazy call stub.  In general, that overhead is considered
-/// worthwhile because it
-RValue CGObjCNonFragileABIMac::EmitMessageSend(CodeGenFunction &CGF,
-                                               ReturnValueSlot returnSlot,
-                                               QualType resultType,
-                                               Selector selector,
-                                               llvm::Value *receiver,
-                                               QualType receiverType,
-                                               bool isSuper,
-                                               const CallArgList &formalArgs,
-                                               const ObjCMethodDecl *method) {
+/// Emit a "v-table" message send.  We emit a weak hidden-visibility
+/// struct, initially containing the selector pointer and a pointer to
+/// a "fixup" variant of the appropriate objc_msgSend.  To call, we
+/// load and call the function pointer, passing the address of the
+/// struct as the second parameter.  The runtime determines whether
+/// the selector is currently emitted using vtable dispatch; if so, it
+/// substitutes a stub function which simply tail-calls through the
+/// appropriate vtable slot, and if not, it substitues a stub function
+/// which tail-calls objc_msgSend.  Both stubs adjust the selector
+/// argument to correctly point to the selector.
+RValue
+CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
+                                              ReturnValueSlot returnSlot,
+                                              QualType resultType,
+                                              Selector selector,
+                                              llvm::Value *arg0,
+                                              QualType arg0Type,
+                                              bool isSuper,
+                                              const CallArgList &formalArgs,
+                                              const ObjCMethodDecl *method) {
   // Compute the actual arguments.
   CallArgList args;
 
-  // First argument: the receiver.
-  // FIXME: this method doesn't really support super receivers anyway.
+  // First argument: the receiver / super-call structure.
   if (!isSuper)
-    receiver = CGF.Builder.CreateBitCast(receiver, ObjCTypes.ObjectPtrTy);
-  args.add(RValue::get(receiver), receiverType);
+    arg0 = CGF.Builder.CreateBitCast(arg0, ObjCTypes.ObjectPtrTy);
+  args.add(RValue::get(arg0), arg0Type);
 
-  // Second argument: a message reference pointer.  Leave the actual
-  // r-value blank for now.
+  // Second argument: a pointer to the message ref structure.  Leave
+  // the actual argument value blank for now.
   args.add(RValue::get(0), ObjCTypes.MessageRefCPtrTy);
 
   args.insert(args.end(), formalArgs.begin(), formalArgs.end());
@@ -5574,8 +5590,13 @@ RValue CGObjCNonFragileABIMac::EmitMessageSend(CodeGenFunction &CGF,
     CGM.getTypes().getFunctionInfo(resultType, args,
                                    FunctionType::ExtInfo());
 
-  // Find the function to call and the name of the message ref table
-  // entry.
+  // Find the function to call and the mangled name for the message
+  // ref structure.  Using a different mangled name wouldn't actually
+  // be a problem; it would just be a waste.
+  //
+  // The runtime currently never uses vtable dispatch for anything
+  // except normal, non-super message-sends.
+  // FIXME: don't use this for that.
   llvm::Constant *fn = 0;
   std::string messageRefName("\01l_");
   if (CGM.ReturnTypeUsesSRet(fnInfo)) {
@@ -5609,10 +5630,7 @@ RValue CGObjCNonFragileABIMac::EmitMessageSend(CodeGenFunction &CGF,
   llvm::GlobalVariable *messageRef
     = CGM.getModule().getGlobalVariable(messageRefName);
   if (!messageRef) {
-    // Build the message ref table entry.  It needs to be non-constant
-    // because otherwise the optimizer will elide the load, which we
-    // don't want --- in fact, the whole point of this exercise is to
-    // get an indirect call.
+    // Build the message ref structure.
     llvm::Constant *values[] = { fn, GetMethodVarName(selector) };
     llvm::Constant *init =
       llvm::ConstantStruct::get(VMContext, values, 2, false);
@@ -5629,7 +5647,7 @@ RValue CGObjCNonFragileABIMac::EmitMessageSend(CodeGenFunction &CGF,
   llvm::Value *mref =
     CGF.Builder.CreateBitCast(messageRef, ObjCTypes.MessageRefPtrTy);
 
-  // Update the message reference in the arguments.
+  // Update the message ref argument.
   args[1].RV = RValue::get(mref);
 
   // Load the function to call from the message ref table.
@@ -5655,14 +5673,14 @@ CGObjCNonFragileABIMac::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
                                             const CallArgList &CallArgs,
                                             const ObjCInterfaceDecl *Class,
                                             const ObjCMethodDecl *Method) {
-  return LegacyDispatchedSelector(Sel)
-    ? EmitLegacyMessageSend(CGF, Return, ResultType,
-                            EmitSelector(CGF.Builder, Sel),
+  return isVTableDispatchedSelector(Sel)
+    ? EmitVTableMessageSend(CGF, Return, ResultType, Sel,
                             Receiver, CGF.getContext().getObjCIdType(),
-                            false, CallArgs, Method, ObjCTypes)
-    : EmitMessageSend(CGF, Return, ResultType, Sel,
+                            false, CallArgs, Method)
+    : EmitMessageSend(CGF, Return, ResultType,
+                      EmitSelector(CGF.Builder, Sel),
                       Receiver, CGF.getContext().getObjCIdType(),
-                      false, CallArgs, Method);
+                      false, CallArgs, Method, ObjCTypes);
 }
 
 llvm::GlobalVariable *
@@ -5809,14 +5827,14 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
   CGF.Builder.CreateStore(Target,
                           CGF.Builder.CreateStructGEP(ObjCSuper, 1));
 
-  return (LegacyDispatchedSelector(Sel))
-    ? EmitLegacyMessageSend(CGF, Return, ResultType,
-                            EmitSelector(CGF.Builder, Sel),
+  return (isVTableDispatchedSelector(Sel))
+    ? EmitVTableMessageSend(CGF, Return, ResultType, Sel,
                             ObjCSuper, ObjCTypes.SuperPtrCTy,
-                            true, CallArgs, Method, ObjCTypes)
-    : EmitMessageSend(CGF, Return, ResultType, Sel,
+                            true, CallArgs, Method)
+    : EmitMessageSend(CGF, Return, ResultType,
+                      EmitSelector(CGF.Builder, Sel),
                       ObjCSuper, ObjCTypes.SuperPtrCTy,
-                      true, CallArgs, Method);
+                      true, CallArgs, Method, ObjCTypes);
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
