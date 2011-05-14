@@ -1470,9 +1470,6 @@ class CodeGeneration : public ScopPass {
 
     mergeControlFlow(splitBlock, &builder);
 
-    // Forget the Scop.
-    SD->forgetScop(*region);
-
     return false;
   }
 

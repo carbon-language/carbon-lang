@@ -624,11 +624,6 @@ void polly::ScopDetection::verifyAnalysis() const {
     verifyRegion(**I);
 }
 
-void ScopDetection::forgetScop(const Region &R) {
-  assert(isMaxRegionInScop(R) && "R is not a Scop!");
-  ValidRegions.erase(&R);
-}
-
 void ScopDetection::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTree>();
   AU.addRequired<PostDominatorTree>();
