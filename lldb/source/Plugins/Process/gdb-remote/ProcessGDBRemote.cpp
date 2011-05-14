@@ -11,8 +11,9 @@
 #include <errno.h>
 #include <spawn.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <sys/mman.h>       // for mmap
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <time.h>
 
 // C++ Includes
@@ -38,6 +39,7 @@
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
+#include "lldb/Target/ThreadPlanCallFunction.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
 // Project includes
@@ -1541,7 +1543,93 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
 lldb::addr_t
 ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &error)
 {
-    addr_t allocated_addr = m_gdb_comm.AllocateMemory (size, permissions);
+    addr_t allocated_addr = LLDB_INVALID_ADDRESS;
+    
+    LazyBool supported = m_gdb_comm.SupportsAllocateMemory();
+    switch (supported)
+    {
+        case eLazyBoolCalculate:
+        case eLazyBoolYes:
+            allocated_addr = m_gdb_comm.AllocateMemory (size, permissions);
+            if (allocated_addr != LLDB_INVALID_ADDRESS || supported == eLazyBoolYes)
+                return allocated_addr;
+
+        case eLazyBoolNo:
+            // Call mmap() to create executable memory in the inferior..
+            {
+                Thread *thread = GetThreadList().GetSelectedThread().get();
+                if (thread == NULL)
+                    thread = GetThreadList().GetThreadAtIndex(0).get();
+
+                const bool append = true;
+                const bool include_symbols = true;
+                SymbolContextList sc_list;
+                const uint32_t count = m_target.GetImages().FindFunctions (ConstString ("mmap"), 
+                                                                           eFunctionNameTypeFull,
+                                                                           include_symbols, 
+                                                                           append, 
+                                                                           sc_list);
+                if (count > 0)
+                {
+                    SymbolContext sc;
+                    if (sc_list.GetContextAtIndex(0, sc))
+                    {
+                        const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
+                        const bool use_inline_block_range = false;
+                        const bool stop_other_threads = true;
+                        const bool discard_on_error = true;
+                        const bool try_all_threads = true;
+                        const uint32_t single_thread_timeout_usec = 500000;
+                        addr_t arg1_addr = 0;
+                        addr_t arg2_len = size;
+                        addr_t arg3_prot = PROT_NONE;
+                        addr_t arg4_flags = MAP_ANON;
+                        addr_t arg5_fd = -1;
+                        addr_t arg6_offset = 0;
+                        if (permissions & lldb::ePermissionsReadable)
+                            arg3_prot |= PROT_READ;
+                        if (permissions & lldb::ePermissionsWritable)
+                            arg3_prot |= PROT_WRITE;
+                        if (permissions & lldb::ePermissionsExecutable)
+                            arg3_prot |= PROT_EXEC;
+
+                        AddressRange mmap_range;
+                        if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, mmap_range))
+                        {
+                            lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
+                                                                                         mmap_range.GetBaseAddress(),
+                                                                                         stop_other_threads,
+                                                                                         discard_on_error,
+                                                                                         &arg1_addr,
+                                                                                         &arg2_len,
+                                                                                         &arg3_prot,
+                                                                                         &arg4_flags,
+                                                                                         &arg5_fd,
+                                                                                         &arg6_offset));
+                            if (call_plan_sp)
+                            {
+                                StreamFile error_strm;
+                                StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
+                                if (frame)
+                                {
+                                    ExecutionContext exe_ctx;
+                                    frame->CalculateExecutionContext (exe_ctx);
+                                    ExecutionResults results = RunThreadPlan (exe_ctx,
+                                                                              call_plan_sp,        
+                                                                              stop_other_threads,
+                                                                              try_all_threads,
+                                                                              discard_on_error,
+                                                                              single_thread_timeout_usec,
+                                                                              error_strm);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+    }
+    
     if (allocated_addr == LLDB_INVALID_ADDRESS)
         error.SetErrorStringWithFormat("unable to allocate %zu bytes of memory with permissions %u", size, permissions);
     else

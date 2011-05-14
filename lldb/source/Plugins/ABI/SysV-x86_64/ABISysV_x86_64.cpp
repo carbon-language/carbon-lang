@@ -60,13 +60,19 @@ ABISysV_x86_64::CreateInstance (const ArchSpec &arch)
 
 bool
 ABISysV_x86_64::PrepareTrivialCall (Thread &thread, 
-                                    lldb::addr_t sp, 
-                                    lldb::addr_t func_addr, 
-                                    lldb::addr_t return_addr, 
-                                    lldb::addr_t *arg1_ptr,
-                                    lldb::addr_t *arg2_ptr,
-                                    lldb::addr_t *arg3_ptr) const
+                                    addr_t sp, 
+                                    addr_t func_addr, 
+                                    addr_t return_addr, 
+                                    addr_t *arg1_ptr,
+                                    addr_t *arg2_ptr,
+                                    addr_t *arg3_ptr,
+                                    addr_t *arg4_ptr,
+                                    addr_t *arg5_ptr,
+                                    addr_t *arg6_ptr) const
 {
+    if (arg4_ptr || arg5_ptr || arg6_ptr)
+        return false;
+    
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     if (log)

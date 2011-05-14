@@ -57,15 +57,15 @@ ABIMacOSX_i386::CreateInstance (const ArchSpec &arch)
 
 bool
 ABIMacOSX_i386::PrepareTrivialCall (Thread &thread, 
-                                    lldb::addr_t sp, 
-                                    lldb::addr_t func_addr, 
-                                    lldb::addr_t return_addr, 
-                                    lldb::addr_t *arg1_ptr,
-                                    lldb::addr_t *arg2_ptr,
-                                    lldb::addr_t *arg3_ptr) const
-//                                    lldb::addr_t arg,
-//                                    lldb::addr_t *this_arg,
-//                                    lldb::addr_t *cmd_arg) const
+                                    addr_t sp, 
+                                    addr_t func_addr, 
+                                    addr_t return_addr, 
+                                    addr_t *arg1_ptr,
+                                    addr_t *arg2_ptr,
+                                    addr_t *arg3_ptr,
+                                    addr_t *arg4_ptr,
+                                    addr_t *arg5_ptr,
+                                    addr_t *arg6_ptr) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
@@ -85,12 +85,30 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
     RegisterValue reg_value;
     
     // Write any arguments onto the stack
-    if (arg1_ptr && arg2_ptr && arg3_ptr)
-        sp -= 12;
-    else if (arg1_ptr && arg2_ptr)
-        sp -= 8;
-    else if (arg1_ptr)
+    if (arg1_ptr)
+    {
         sp -= 4;
+        if (arg2_ptr)
+        {
+            sp -= 4;
+            if (arg3_ptr)
+            {
+                sp -= 4;
+                if (arg4_ptr)
+                {
+                    sp -= 4;
+                    if (arg5_ptr)
+                    {
+                        sp -= 4;
+                        if (arg6_ptr)
+                        {
+                            sp -= 4;
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // Align the SP    
     sp &= ~(0xfull); // 16-byte alignment
@@ -107,7 +125,6 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
 
         if (arg2_ptr)
         {
-            assert (arg1_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
             reg_value.SetUInt32(*arg2_ptr);
             // The register info used to write memory just needs to have the correct
             // size of a 32 bit register, the actual register it pertains to is not
@@ -121,8 +138,6 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
             
             if (arg3_ptr)
             {
-                assert (arg1_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
-                assert (arg2_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
                 reg_value.SetUInt32(*arg3_ptr);
                 // The register info used to write memory just needs to have the correct
                 // size of a 32 bit register, the actual register it pertains to is not
@@ -133,6 +148,46 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
                                                              reg_value);
                 if (error.Fail())
                     return false;
+
+                if (arg4_ptr)
+                {
+                    reg_value.SetUInt32(*arg4_ptr);
+                    // The register info used to write memory just needs to have the correct
+                    // size of a 32 bit register, the actual register it pertains to is not
+                    // important, just the size needs to be correct. Here we use "eax"...
+                    error = reg_ctx->WriteRegisterValueToMemory (reg_info_32, 
+                                                                 sp + 12, 
+                                                                 reg_info_32->byte_size, 
+                                                                 reg_value);
+                    if (error.Fail())
+                        return false;
+                    if (arg5_ptr)
+                    {
+                        reg_value.SetUInt32(*arg5_ptr);
+                        // The register info used to write memory just needs to have the correct
+                        // size of a 32 bit register, the actual register it pertains to is not
+                        // important, just the size needs to be correct. Here we use "eax"...
+                        error = reg_ctx->WriteRegisterValueToMemory (reg_info_32, 
+                                                                     sp + 16, 
+                                                                     reg_info_32->byte_size, 
+                                                                     reg_value);
+                        if (error.Fail())
+                            return false;
+                        if (arg6_ptr)
+                        {
+                            reg_value.SetUInt32(*arg6_ptr);
+                            // The register info used to write memory just needs to have the correct
+                            // size of a 32 bit register, the actual register it pertains to is not
+                            // important, just the size needs to be correct. Here we use "eax"...
+                            error = reg_ctx->WriteRegisterValueToMemory (reg_info_32, 
+                                                                         sp + 20, 
+                                                                         reg_info_32->byte_size, 
+                                                                         reg_value);
+                            if (error.Fail())
+                                return false;
+                        }
+                    }
+                }
             }
         }
     }
@@ -164,9 +219,9 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
 
 bool
 ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
-                                   lldb::addr_t sp,
-                                   lldb::addr_t func_addr,
-                                   lldb::addr_t return_addr,
+                                   addr_t sp,
+                                   addr_t func_addr,
+                                   addr_t return_addr,
                                    ValueList &args) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();

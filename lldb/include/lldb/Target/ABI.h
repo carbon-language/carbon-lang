@@ -34,10 +34,13 @@ public:
                         lldb::addr_t sp,
                         lldb::addr_t functionAddress,
                         lldb::addr_t returnAddress, 
-                        lldb::addr_t *arg1_ptr,
-                        lldb::addr_t *arg2_ptr,
-                        lldb::addr_t *arg3_ptr) const = 0;
-    
+                        lldb::addr_t *arg1_ptr = NULL,
+                        lldb::addr_t *arg2_ptr = NULL,
+                        lldb::addr_t *arg3_ptr = NULL,
+                        lldb::addr_t *arg4_ptr = NULL,
+                        lldb::addr_t *arg5_ptr = NULL,
+                        lldb::addr_t *arg6_ptr = NULL) const = 0;
+
     virtual bool
     GetArgumentValues (Thread &thread,
                        ValueList &values) const = 0;

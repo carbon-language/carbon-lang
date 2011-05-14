@@ -30,7 +30,18 @@ public:
                             bool discard_on_error = true,
                             lldb::addr_t *this_arg = 0,
                             lldb::addr_t *cmd_arg = 0);
-    
+
+    ThreadPlanCallFunction (Thread &thread,
+                            Address &function,
+                            bool stop_other_threads,
+                            bool discard_on_error,
+                            lldb::addr_t *arg1_ptr = NULL,
+                            lldb::addr_t *arg2_ptr = NULL,
+                            lldb::addr_t *arg3_ptr = NULL,
+                            lldb::addr_t *arg4_ptr = NULL,
+                            lldb::addr_t *arg5_ptr = NULL,
+                            lldb::addr_t *arg6_ptr = NULL);
+
     virtual
     ~ThreadPlanCallFunction ();
 
@@ -106,9 +117,7 @@ private:
     bool                                            m_stop_other_threads;
     Address                                         m_function_addr;
     Address                                         m_start_addr;
-    lldb::addr_t                                    m_arg_addr;
     lldb::addr_t                                    m_function_sp;
-    ValueList                                      *m_args;
     Process                                        &m_process;
     Thread                                         &m_thread;
     Thread::RegisterCheckpoint                      m_register_backup;

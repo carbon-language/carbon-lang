@@ -65,9 +65,12 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
                                    addr_t sp, 
                                    addr_t function_addr, 
                                    addr_t return_addr, 
-                                   lldb::addr_t *arg1_ptr,
-                                   lldb::addr_t *arg2_ptr,
-                                   lldb::addr_t *arg3_ptr) const
+                                   addr_t *arg1_ptr,
+                                   addr_t *arg2_ptr,
+                                   addr_t *arg3_ptr,
+                                   addr_t *arg4_ptr,
+                                   addr_t *arg5_ptr,
+                                   addr_t *arg6_ptr) const
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
@@ -84,25 +87,41 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
         reg_value.SetUInt32(*arg1_ptr);
         if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r0"), reg_value))
             return false;
-    }
 
-    if (arg2_ptr)
-    {
-        assert (arg1_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
+        if (arg2_ptr)
+        {
+            reg_value.SetUInt32(*arg2_ptr);
+            if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r1"), reg_value))
+                return false;
 
-        reg_value.SetUInt32(*arg2_ptr);
-        if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r1"), reg_value))
-            return false;
-    }
-
-    if (arg3_ptr)
-    {
-        assert (arg1_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
-        assert (arg2_ptr != NULL); // Remove this after we know the assertion isn't firing (5/11/2011)
-
-        reg_value.SetUInt32(*arg3_ptr);
-        if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r2"), reg_value))
-            return false;
+            if (arg3_ptr)
+            {
+                reg_value.SetUInt32(*arg3_ptr);
+                if (!reg_ctx->WriteRegister (reg_ctx->GetRegisterInfoByName("r2"), reg_value))
+                    return false;
+                if (arg4_ptr)
+                {
+                    reg_value.SetUInt32(*arg4_ptr);
+                    const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName("r3");
+                    if (!reg_ctx->WriteRegister (reg_info, reg_value))
+                        return false;
+                    if (arg5_ptr)
+                    {
+                        reg_value.SetUInt32(*arg5_ptr);
+                        sp -= 4;
+                        if (reg_ctx->WriteRegisterValueToMemory (reg_info, sp, reg_info->byte_size, reg_value).Fail())
+                            return false;
+                        if (arg6_ptr)
+                        {
+                            reg_value.SetUInt32(*arg6_ptr);
+                            sp -= 4;
+                            if (reg_ctx->WriteRegisterValueToMemory (reg_info, sp, reg_info->byte_size, reg_value).Fail())
+                                return false;
+                        }
+                    }
+                }
+            }            
+        }
     }
 
     // Set "lr" to the return address into "lr"

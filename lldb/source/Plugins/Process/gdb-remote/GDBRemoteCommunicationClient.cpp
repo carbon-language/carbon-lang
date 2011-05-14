@@ -45,6 +45,8 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_vCont_s (eLazyBoolCalculate),
     m_supports_vCont_S (eLazyBoolCalculate),
     m_qHostInfo_is_valid (eLazyBoolCalculate),
+    m_supports__m (eLazyBoolCalculate),
+    m_supports__M (eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -130,6 +132,9 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_vCont_s = eLazyBoolCalculate;
     m_supports_vCont_S = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
+    m_supports__m = eLazyBoolCalculate;
+    m_supports__M = eLazyBoolCalculate;
+
     m_supports_qProcessInfoPID = true;
     m_supports_qfProcessInfo = true;
     m_supports_qUserName = true;
@@ -1016,17 +1021,23 @@ GDBRemoteCommunicationClient::GetHostArchitecture ()
 addr_t
 GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
 {
-    char packet[64];
-    const int packet_len = ::snprintf (packet, sizeof(packet), "_M%zx,%s%s%s", size,
-                                       permissions & lldb::ePermissionsReadable ? "r" : "",
-                                       permissions & lldb::ePermissionsWritable ? "w" : "",
-                                       permissions & lldb::ePermissionsExecutable ? "x" : "");
-    assert (packet_len < sizeof(packet));
-    StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+    if (m_supports__M != eLazyBoolNo)
     {
-        if (!response.IsErrorResponse())
-            return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
+        m_supports__M = eLazyBoolYes;
+        char packet[64];
+        const int packet_len = ::snprintf (packet, sizeof(packet), "_M%zx,%s%s%s", size,
+                                           permissions & lldb::ePermissionsReadable ? "r" : "",
+                                           permissions & lldb::ePermissionsWritable ? "w" : "",
+                                           permissions & lldb::ePermissionsExecutable ? "x" : "");
+        assert (packet_len < sizeof(packet));
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+        {
+            if (response.IsUnsupportedResponse())
+                m_supports__M = eLazyBoolNo;
+            else if (!response.IsErrorResponse())
+                return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
+        }
     }
     return LLDB_INVALID_ADDRESS;
 }
@@ -1034,14 +1045,20 @@ GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
 bool
 GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
 {
-    char packet[64];
-    const int packet_len = ::snprintf(packet, sizeof(packet), "_m%llx", (uint64_t)addr);
-    assert (packet_len < sizeof(packet));
-    StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+    if (m_supports__m != eLazyBoolNo)
     {
-        if (response.IsOKResponse())
-            return true;
+        m_supports__m = eLazyBoolYes;
+        char packet[64];
+        const int packet_len = ::snprintf(packet, sizeof(packet), "_m%llx", (uint64_t)addr);
+        assert (packet_len < sizeof(packet));
+        StringExtractorGDBRemote response;
+        if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
+        {
+            if (response.IsOKResponse())
+                return true;
+            else if (response.IsUnsupportedResponse())
+                m_supports__m = eLazyBoolNo;
+        }
     }
     return false;
 }

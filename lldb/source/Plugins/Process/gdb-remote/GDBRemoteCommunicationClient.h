@@ -305,6 +305,18 @@ public:
     bool
     SetCurrentThreadForRun (int tid);
 
+    lldb_private::LazyBool
+    SupportsAllocateMemory () const
+    {
+        return m_supports__M;
+    }
+
+    lldb_private::LazyBool
+    SupportsDeallocateMemory () const
+    {
+        return m_supports__m;
+    }
+
 protected:
 
     //------------------------------------------------------------------
@@ -319,6 +331,9 @@ protected:
     lldb_private::LazyBool m_supports_vCont_s;
     lldb_private::LazyBool m_supports_vCont_S;
     lldb_private::LazyBool m_qHostInfo_is_valid;
+    lldb_private::LazyBool m_supports__m;
+    lldb_private::LazyBool m_supports__M;
+
     bool
         m_supports_qProcessInfoPID:1,
         m_supports_qfProcessInfo:1,
@@ -330,6 +345,7 @@ protected:
         m_supports_z2:1,
         m_supports_z3:1,
         m_supports_z4:1;
+    
 
     lldb::tid_t m_curr_tid;         // Current gdb remote protocol thread index for all other operations
     lldb::tid_t m_curr_tid_run;     // Current gdb remote protocol thread index for continue, step, etc
