@@ -2489,7 +2489,7 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_trivial
     : public integral_constant<bool, __is_trivial(_Tp)>
 #else
     : integral_constant<bool, is_trivially_copyable<_Tp>::value &&
-                         is_trivially_default_constructible<_Tp>::value>::value>
+                                 is_trivially_default_constructible<_Tp>::value>
 #endif
     {};
     
