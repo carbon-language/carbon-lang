@@ -1470,7 +1470,7 @@ class CodeGeneration : public ScopPass {
 
     mergeControlFlow(splitBlock, &builder);
 
-    return false;
+    return true;
   }
 
   virtual void printScop(raw_ostream &OS) const {
