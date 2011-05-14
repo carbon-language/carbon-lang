@@ -3552,6 +3552,193 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
   return false;
 }
 
+bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
+  CXXRecordDecl *RD = MD->getParent();
+  assert(!RD->isDependentType() && "do deletion after instantiation");
+  if (!LangOpts.CPlusPlus0x)
+    return false;
+
+  // Do access control from the constructor
+  ContextRAII MethodContext(*this, MD);
+
+  bool Union = RD->isUnion();
+
+  bool ConstArg = MD->getParamDecl(0)->getType().isConstQualified();
+
+  // We do this because we should never actually use an anonymous
+  // union's constructor.
+  if (Union && RD->isAnonymousStructOrUnion())
+    return false;
+
+  DeclarationName OperatorName =
+    Context.DeclarationNames.getCXXOperatorName(OO_Equal);
+  LookupResult R(*this, OperatorName, SourceLocation(), LookupOrdinaryName);
+  R.suppressDiagnostics();
+
+  // FIXME: We should put some diagnostic logic right into this function.
+
+  // C++0x [class.copy]/11
+  //    A defaulted [copy] assignment operator for class X is defined as deleted
+  //    if X has:
+
+  for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
+                                          BE = RD->bases_end();
+       BI != BE; ++BI) {
+    // We'll handle this one later
+    if (BI->isVirtual())
+      continue;
+
+    QualType BaseType = BI->getType();
+    CXXRecordDecl *BaseDecl = BaseType->getAsCXXRecordDecl();
+    assert(BaseDecl && "base isn't a CXXRecordDecl");
+
+    // -- a [direct base class] B that cannot be [copied] because overload
+    //    resolution, as applied to B's [copy] assignment operator, results in
+    //    an ambiguity or a function that is deleted or inaccessibl from the
+    //    assignment operator
+
+    LookupQualifiedName(R, BaseDecl, false);
+
+    // Filter out any result that isn't a copy-assignment operator.
+    LookupResult::Filter F = R.makeFilter();
+    while (F.hasNext()) {
+      NamedDecl *D = F.next();
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+        if (Method->isCopyAssignmentOperator())
+          continue;
+      
+      F.erase();
+    }
+    F.done();
+ 
+    // Build a fake argument expression
+    QualType ArgType = BaseType;
+    if (ConstArg)
+      ArgType.addConst();
+    Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
+                                              VK_LValue);
+
+    OverloadCandidateSet OCS((SourceLocation()));
+    OverloadCandidateSet::iterator Best;
+
+    AddFunctionCandidates(R.asUnresolvedSet(), &Arg, 1, OCS);
+
+    if (OCS.BestViableFunction(*this, SourceLocation(), Best, false) !=
+        OR_Success)
+      return true;
+  }
+
+  for (CXXRecordDecl::base_class_iterator BI = RD->vbases_begin(),
+                                          BE = RD->vbases_end();
+       BI != BE; ++BI) {
+    QualType BaseType = BI->getType();
+    CXXRecordDecl *BaseDecl = BaseType->getAsCXXRecordDecl();
+    assert(BaseDecl && "base isn't a CXXRecordDecl");
+
+    /*
+    // -- a [virtual base class] B that cannot be [copied] because overload
+    //    resolution, as applied to B's [copy] assignment operator, results in an
+    //    ambiguity or a function that is deleted or inaccessible from the
+    //    defaulted assignment operator
+    InitializedEntity BaseEntity =
+      InitializedEntity::InitializeBase(Context, BI, BI);
+    InitializationKind Kind =
+      InitializationKind::CreateDirect(SourceLocation(), SourceLocation(),
+                                       SourceLocation());
+
+    // Construct a fake expression to perform the copy overloading.
+    QualType ArgType = BaseType.getUnqualifiedType();
+    if (ArgType->isReferenceType())
+      ArgType = ArgType->getPointeeType();
+    if (ConstArg)
+      ArgType.addConst();
+    Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
+                                              VK_LValue);
+
+    InitializationSequence InitSeq(*this, BaseEntity, Kind, &Arg, 1);
+
+    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+      return true;
+    */
+  }
+
+  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
+                                     FE = RD->field_end();
+       FI != FE; ++FI) {
+    QualType FieldType = Context.getBaseElementType(FI->getType());
+    
+    // -- a non-static data member of reference type
+    if (FieldType->isReferenceType())
+      return true;
+
+    // -- a non-static data member of const non-class type (or array thereof)
+    if (FieldType.isConstQualified() && !FieldType->isRecordType())
+      return true;
+ 
+    CXXRecordDecl *FieldRecord = FieldType->getAsCXXRecordDecl();
+
+    if (FieldRecord) {
+      // This is an anonymous union
+      if (FieldRecord->isUnion() && FieldRecord->isAnonymousStructOrUnion()) {
+        // Anonymous unions inside unions do not variant members create
+        if (!Union) {
+          for (CXXRecordDecl::field_iterator UI = FieldRecord->field_begin(),
+                                             UE = FieldRecord->field_end();
+               UI != UE; ++UI) {
+            QualType UnionFieldType = Context.getBaseElementType(UI->getType());
+            CXXRecordDecl *UnionFieldRecord =
+              UnionFieldType->getAsCXXRecordDecl();
+
+            // -- a variant member with a non-trivial [copy] assignment operator
+            //    and X is a union-like class
+            if (UnionFieldRecord &&
+                !UnionFieldRecord->hasTrivialCopyAssignment())
+              return true;
+          }
+        }
+
+        // Don't try to initalize an anonymous union
+        continue;
+      // -- a variant member with a non-trivial [copy] assignment operator
+      //    and X is a union-like class
+      } else if (Union && !FieldRecord->hasTrivialCopyAssignment()) {
+          return true;
+      }
+    }
+
+    /*
+    llvm::SmallVector<InitializedEntity, 4> Entities;
+    QualType CurType = FI->getType();
+    Entities.push_back(InitializedEntity::InitializeMember(*FI, 0));
+    while (CurType->isArrayType()) {
+      Entities.push_back(InitializedEntity::InitializeElement(Context, 0, 
+                                                              Entities.back()));
+      CurType = Context.getAsArrayType(CurType)->getElementType();
+    }
+
+    InitializationKind Kind = 
+      InitializationKind::CreateDirect(SourceLocation(), SourceLocation(),
+                                       SourceLocation());
+ 
+    // Construct a fake expression to perform the copy overloading.
+    QualType ArgType = FieldType;
+    if (ArgType->isReferenceType())
+      ArgType = ArgType->getPointeeType();
+    if (ConstArg)
+      ArgType.addConst();
+    Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
+                                              VK_LValue);
+   
+    InitializationSequence InitSeq(*this, Entities.back(), Kind, &Arg, 1);
+
+    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+      return true;
+    */
+  }
+
+  return false;
+}
+
 bool Sema::ShouldDeleteDestructor(CXXDestructorDecl *DD) {
   CXXRecordDecl *RD = DD->getParent();
   assert(!RD->isDependentType() && "do deletion after instantiation");
@@ -6383,6 +6570,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
                             /*isInline=*/true,
                             SourceLocation());
   CopyAssignment->setAccess(AS_public);
+  CopyAssignment->setDefaulted();
   CopyAssignment->setImplicit();
   CopyAssignment->setTrivial(ClassDecl->hasTrivialCopyAssignment());
   
@@ -6397,6 +6585,9 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   // Note that we have added this copy-assignment operator.
   ++ASTContext::NumImplicitCopyAssignmentOperatorsDeclared;
   
+  if (ShouldDeleteCopyAssignmentOperator(CopyAssignment))
+    CopyAssignment->setDeletedAsWritten();
+
   if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(CopyAssignment, S, false);
   ClassDecl->addDecl(CopyAssignment);
@@ -6407,7 +6598,7 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
 
 void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
                                         CXXMethodDecl *CopyAssignOperator) {
-  assert((CopyAssignOperator->isImplicit() && 
+  assert((CopyAssignOperator->isDefaulted() && 
           CopyAssignOperator->isOverloadedOperator() &&
           CopyAssignOperator->getOverloadedOperator() == OO_Equal &&
           !CopyAssignOperator->isUsed(false)) &&

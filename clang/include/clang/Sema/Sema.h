@@ -2610,6 +2610,10 @@ public:
   /// deleted.
   bool ShouldDeleteCopyConstructor(CXXConstructorDecl *CD);
 
+  /// \brief Determine if a defaulted copy assignment operator ought to be
+  /// deleted.
+  bool ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD);
+
   /// \brief Determine if a defaulted destructor ought to be deleted.
   bool ShouldDeleteDestructor(CXXDestructorDecl *DD);
 
