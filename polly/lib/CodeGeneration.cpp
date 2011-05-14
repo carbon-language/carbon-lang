@@ -1497,7 +1497,6 @@ class CodeGeneration : public ScopPass {
     AU.addPreserved<Dependences>();
     AU.addPreserved<LoopInfo>();
     AU.addPreserved<DominatorTree>();
-    AU.addPreserved<PostDominatorTree>();
     AU.addPreserved<ScopDetection>();
     AU.addPreserved<ScalarEvolution>();
     AU.addPreserved<RegionInfo>();
