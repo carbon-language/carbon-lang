@@ -1364,6 +1364,8 @@ class CodeGeneration : public ScopPass {
       return false;
     }
 
+    assert(R->isSimple() && "Only simple regions supported");
+
     createSeSeEdges(R);
 
     // Create a basic block in which to start code generation.
