@@ -1515,6 +1515,10 @@ public:
     return hasBody(Definition);
   }
 
+  /// hasTrivialBody - Returns whether the function has a trivial body that does
+  /// not require any specific codegen.
+  bool hasTrivialBody() const;
+
   /// isDefined - Returns true if the function is defined at all, including
   /// a deleted definition. Except for the behavior when the function is
   /// deleted, behaves like hasBody.

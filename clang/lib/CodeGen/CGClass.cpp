@@ -741,6 +741,38 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
     EmitMemberInitializer(*this, ClassDecl, MemberInitializers[I], CD, Args);
 }
 
+/// CanSkipVTablePointerInitialization - Check whether we need to initialize
+/// any vtable pointers before calling this destructor.
+static bool CanSkipVTablePointerInitialization(ASTContext &Context,
+                                           const CXXDestructorDecl *Dtor) {
+  if (!Dtor->hasTrivialBody())
+    return false;
+
+  // Check the fields.
+  const CXXRecordDecl *ClassDecl = Dtor->getParent();
+  for (CXXRecordDecl::field_iterator I = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); I != E; ++I) {
+    const FieldDecl *Field = *I;
+    
+    QualType FieldBaseElementType = 
+      Context.getBaseElementType(Field->getType());
+
+    const RecordType *RT = FieldBaseElementType->getAs<RecordType>();
+    if (!RT)
+      continue;
+    
+    CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+    if (FieldClassDecl->hasTrivialDestructor())
+      continue;
+    if (FieldClassDecl->getDestructor()->hasTrivialBody())
+      continue;
+
+    return false;
+  }
+
+  return true;
+}
+
 /// EmitDestructorBody - Emits the body of the current destructor.
 void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
   const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(CurGD.getDecl());
@@ -792,7 +824,8 @@ void CodeGenFunction::EmitDestructorBody(FunctionArgList &Args) {
     EnterDtorCleanups(Dtor, Dtor_Base);
 
     // Initialize the vtable pointers before entering the body.
-    InitializeVTablePointers(Dtor->getParent());
+    if (!CanSkipVTablePointerInitialization(getContext(), Dtor))
+        InitializeVTablePointers(Dtor->getParent());
 
     if (isTryBody)
       EmitStmt(cast<CXXTryStmt>(Body)->getTryBlock());
