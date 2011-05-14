@@ -420,7 +420,9 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
         break;
     }
 
-    if (show_locations)
+    // The brief description is just the location name (1.2 or whatever).  That's pointless to
+    // show in the breakpoint's description, so suppress it.
+    if (show_locations && level != lldb::eDescriptionLevelBrief)
     {
         s->IndentMore();
         for (size_t i = 0; i < num_locations; ++i)
