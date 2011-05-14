@@ -108,8 +108,6 @@ private:
   bool X86SelectFPExt(const Instruction *I);
   bool X86SelectFPTrunc(const Instruction *I);
 
-  bool X86SelectExtractValue(const Instruction *I);
-
   bool X86VisitIntrinsicCall(const IntrinsicInst &I);
   bool X86SelectCall(const Instruction *I);
 
@@ -1303,31 +1301,6 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
   return true;
 }
 
-bool X86FastISel::X86SelectExtractValue(const Instruction *I) {
-  const ExtractValueInst *EI = cast<ExtractValueInst>(I);
-  const Value *Agg = EI->getAggregateOperand();
-
-  if (const IntrinsicInst *CI = dyn_cast<IntrinsicInst>(Agg)) {
-    switch (CI->getIntrinsicID()) {
-    default: break;
-    case Intrinsic::sadd_with_overflow:
-    case Intrinsic::uadd_with_overflow: {
-      // Cheat a little. We know that the registers for "add" and "seto" are
-      // allocated sequentially. However, we only keep track of the register
-      // for "add" in the value map. Use extractvalue's index to get the
-      // correct register for "seto".
-      unsigned OpReg = getRegForValue(Agg);
-      if (OpReg == 0)
-        return false;
-      UpdateValueMap(I, OpReg + *EI->idx_begin());
-      return true;
-    }
-    }
-  }
-
-  return false;
-}
-
 bool X86FastISel::TryEmitSmallMemcpy(X86AddressMode DestAM,
                                      X86AddressMode SrcAM, uint64_t Len) {
   // Make sure we don't bloat code by inlining very large memcpy's.
@@ -1911,8 +1884,6 @@ X86FastISel::TargetSelectInstruction(const Instruction *I)  {
     return X86SelectFPExt(I);
   case Instruction::FPTrunc:
     return X86SelectFPTrunc(I);
-  case Instruction::ExtractValue:
-    return X86SelectExtractValue(I);
   case Instruction::IntToPtr: // Deliberate fall-through.
   case Instruction::PtrToInt: {
     EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
