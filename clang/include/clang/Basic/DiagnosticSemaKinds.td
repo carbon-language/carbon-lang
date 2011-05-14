@@ -1775,6 +1775,9 @@ def err_template_spec_decl_function_scope : Error<
   "explicit specialization of %0 in function scope">;
 def err_template_spec_decl_class_scope : Error<
   "explicit specialization of %0 in class scope">;
+def war_template_spec_decl_class_scope : ExtWarn<
+  "Allowing explicit specialization of %0 in class scope is a Microsoft "
+  "extension">, InGroup<Microsoft>;
 def err_template_spec_decl_friend : Error<
   "cannot declare an explicit specialization in a friend">;
 def err_template_spec_decl_out_of_scope_global : Error<

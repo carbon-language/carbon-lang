@@ -1685,10 +1685,14 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     if (OldMethod && NewMethod) {
       // Preserve triviality.
       NewMethod->setTrivial(OldMethod->isTrivial());
-
+   
+      // MSVC allows explicit template specialization at class scope.
+      bool IsMSExplicitSpecialization = getLangOptions().Microsoft &&
+                                 NewMethod->isFunctionTemplateSpecialization();
       bool isFriend = NewMethod->getFriendObjectKind();
 
-      if (!isFriend && NewMethod->getLexicalDeclContext()->isRecord()) {
+      if (!isFriend && NewMethod->getLexicalDeclContext()->isRecord() &&
+          !IsMSExplicitSpecialization) {
         //    -- Member function declarations with the same name and the
         //       same parameter types cannot be overloaded if any of them
         //       is a static member function declaration.
