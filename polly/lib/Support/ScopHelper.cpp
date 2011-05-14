@@ -223,39 +223,6 @@ bool polly::hasInvokeEdge(const PHINode *PN) {
   return false;
 }
 
-// Helper function for LLVM-IR about Scop
-BasicBlock *polly::createSingleEntryEdge(Region *R, Pass *P) {
-  BasicBlock *BB = R->getEntry();
-
-  BasicBlock::iterator SplitIt = BB->begin();
-
-  while (isa<PHINode>(SplitIt))
-    ++SplitIt;
-
-  BasicBlock *newBB = SplitBlock(BB, SplitIt, P);
-
-  for (BasicBlock::iterator PI = BB->begin(); isa<PHINode>(PI); ++PI) {
-    PHINode *PN = cast<PHINode>(PI);
-    PHINode *NPN =
-      PHINode::Create(PN->getType(), 2, PN->getName()+".ph", newBB->begin());
-
-    for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
-      if (R->contains(*PI)) {
-        Value *V = PN->removeIncomingValue(*PI, false);
-        NPN->addIncoming(V, *PI);
-      }
-    }
-    PN->replaceAllUsesWith(NPN);
-    NPN->addIncoming(PN,BB);
-  }
-
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI)
-    if (R->contains(*PI))
-      (*PI)->getTerminator()->replaceUsesOfWith(BB, newBB);
-
-  return newBB;
-}
-
 BasicBlock *polly::createSingleExitEdge(Region *R, Pass *P) {
   BasicBlock *BB = R->getExit();
 

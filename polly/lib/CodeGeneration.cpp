@@ -34,6 +34,7 @@
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SetVector.h"
@@ -1271,6 +1272,7 @@ class CodeGeneration : public ScopPass {
   CloogInfo *C;
   LoopInfo *LI;
   TargetData *TD;
+  RegionInfo *RI;
 
   std::vector<std::string> parallelLoops;
 
@@ -1278,17 +1280,6 @@ class CodeGeneration : public ScopPass {
   static char ID;
 
   CodeGeneration() : ScopPass(ID) {}
-
-  void createSeSeEdges(Region *R) {
-    BasicBlock *newEntry = createSingleEntryEdge(R, this);
-
-    for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI)
-      if ((*SI)->getBasicBlock() == R->getEntry())
-        (*SI)->setBasicBlock(newEntry);
-
-    createSingleExitEdge(R, this);
-  }
-
 
   // Adding prototypes required if OpenMP is enabled.
   void addOpenMPDefinitions(IRBuilder<> &Builder)
@@ -1342,10 +1333,90 @@ class CodeGeneration : public ScopPass {
     }
   }
 
+  // Split the entry edge of the region and generate a new basic block on this
+  // edge. This function also updates ScopInfo and RegionInfo.
+  //
+  // @param region The region where the entry edge will be splitted.
+  BasicBlock *splitEdgeAdvanced(Region *region) {
+    BasicBlock *newBlock;
+    BasicBlock *splitBlock;
+
+    newBlock = SplitEdge(region->getEnteringBlock(), region->getEntry(), this);
+
+    if (DT->dominates(region->getEntry(), newBlock)) {
+      // Update ScopInfo.
+      for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI)
+        if ((*SI)->getBasicBlock() == newBlock) {
+          (*SI)->setBasicBlock(newBlock);
+          break;
+        }
+
+      // Update RegionInfo.
+      splitBlock = region->getEntry();
+      region->replaceEntry(newBlock);
+    } else {
+      RI->setRegionFor(newBlock, region->getParent());
+      splitBlock = newBlock;
+    }
+
+    return splitBlock;
+  }
+
+  // Create a split block that branches either to the old code or to a new basic
+  // block where the new code can be inserted.
+  //
+  // @param builder A builder that will be set to point to a basic block, where
+  //                the new code can be generated.
+  // @return The split basic block.
+  BasicBlock *addSplitAndStartBlock(IRBuilder<> *builder) {
+    BasicBlock *splitBlock = splitEdgeAdvanced(region);
+
+    splitBlock->setName("polly.enterScop");
+
+    Function *function = splitBlock->getParent();
+    BasicBlock *startBlock = BasicBlock::Create(function->getContext(),
+                                                "polly.start", function);
+    splitBlock->getTerminator()->eraseFromParent();
+    builder->SetInsertPoint(splitBlock);
+    builder->CreateCondBr(builder->getTrue(), startBlock, region->getEntry());
+    DT->addNewBlock(startBlock, splitBlock);
+
+    // Start code generation here.
+    builder->SetInsertPoint(startBlock);
+    return splitBlock;
+  }
+
+  // Merge the control flow of the newly generated code with the existing code.
+  //
+  // @param splitBlock The basic block where the control flow was split between
+  //                   old and new version of the Scop.
+  // @param builder    An IRBuilder that points to the last instruction of the
+  //                   newly generated code.
+  void mergeControlFlow(BasicBlock *splitBlock, IRBuilder<> *builder) {
+    BasicBlock *mergeBlock;
+    Region *R = region;
+
+    if (R->getExit()->getSinglePredecessor())
+      // No splitEdge required.  A block with a single predecessor cannot have
+      // PHI nodes that would complicate life.
+      mergeBlock = R->getExit();
+    else {
+      mergeBlock = SplitEdge(R->getExitingBlock(), R->getExit(), this);
+      // SplitEdge will never split R->getExit(), as R->getExit() has more than
+      // one predecessor. Hence, mergeBlock is always a newly generated block.
+      mergeBlock->setName("polly.finalMerge");
+      R->replaceExit(mergeBlock);
+    }
+
+    builder->CreateBr(mergeBlock);
+
+    if (DT->dominates(splitBlock, mergeBlock))
+      DT->changeImmediateDominator(mergeBlock, splitBlock);
+  }
+
   bool runOnScop(Scop &scop) {
     S = &scop;
     region = &S->getRegion();
-    Region *R = region;
     DT = &getAnalysis<DominatorTree>();
     Dependences *DP = &getAnalysis<Dependences>();
     SE = &getAnalysis<ScalarEvolution>();
@@ -1353,91 +1424,66 @@ class CodeGeneration : public ScopPass {
     C = &getAnalysis<CloogInfo>();
     SD = &getAnalysis<ScopDetection>();
     TD = &getAnalysis<TargetData>();
-
-    Function *F = R->getEntry()->getParent();
+    RI = &getAnalysis<RegionInfo>();
 
     parallelLoops.clear();
 
+    Function *F = region->getEntry()->getParent();
     if (CodegenOnly != "" && CodegenOnly != F->getNameStr()) {
       errs() << "Codegenerating only function '" << CodegenOnly
         << "' skipping '" << F->getNameStr() << "' \n";
       return false;
     }
 
-    assert(R->isSimple() && "Only simple regions supported");
+    assert(region->isSimple() && "Only simple regions are supported");
 
-    createSeSeEdges(R);
+    // In the CFG and we generate next to original code of the Scop the
+    // optimized version.  Both the new and the original version of the code
+    // remain in the CFG. A branch statement decides which version is executed.
+    // At the moment, we always execute the newly generated version (the old one
+    // is dead code eliminated by the cleanup passes). Later we may decide to
+    // execute the new version only under certain conditions. This will be the
+    // case if we support constructs for which we cannot prove all assumptions
+    // at compile time.
+    //
+    // Before transformation:
+    //
+    //                        bb0
+    //                         |
+    //                     orig_scop
+    //                         |
+    //                        bb1
+    //
+    // After transformation:
+    //                        bb0
+    //                         |
+    //                  polly.splitBlock
+    //                     /       \
+    //                     |     startBlock
+    //                     |        |
+    //               orig_scop   new_scop
+    //                     \      /
+    //                      \    /
+    //                        bb1 (joinBlock)
+    IRBuilder<> builder(region->getEntry());
 
-    // Create a basic block in which to start code generation.
-    BasicBlock *PollyBB = BasicBlock::Create(F->getContext(), "pollyBB", F);
-    IRBuilder<> Builder(PollyBB);
-    DT->addNewBlock(PollyBB, R->getEntry());
-
-    const clast_root *clast = (const clast_root *) C->getClast();
-
-    ClastStmtCodeGen CodeGen(S, *SE, DT, SD, DP, TD, Builder);
+    // The builder will be set to startBlock.
+    BasicBlock *splitBlock = addSplitAndStartBlock(&builder);
 
     if (OpenMP)
-      addOpenMPDefinitions(Builder);
+      addOpenMPDefinitions(builder);
 
-    CodeGen.codegen(clast);
+    ClastStmtCodeGen CodeGen(S, *SE, DT, SD, DP, TD, builder);
+    CodeGen.codegen((const clast_root *) C->getClast());
 
-    // Save the parallel loops generated.
     parallelLoops.insert(parallelLoops.begin(),
                          CodeGen.getParallelLoops().begin(),
                          CodeGen.getParallelLoops().end());
 
-    BasicBlock *AfterScop = *pred_begin(R->getExit());
-    Builder.CreateBr(AfterScop);
+    mergeControlFlow(splitBlock, &builder);
 
-    BasicBlock *successorBlock = *succ_begin(R->getEntry());
-
-    // Update old PHI nodes to pass LLVM verification.
-    std::vector<PHINode*> PHINodes;
-    for (BasicBlock::iterator SI = successorBlock->begin(),
-         SE = successorBlock->getFirstNonPHI(); SI != SE; ++SI) {
-      PHINode *PN = static_cast<PHINode*>(&*SI);
-      PHINodes.push_back(PN);
-    }
-
-    for (std::vector<PHINode*>::iterator PI = PHINodes.begin(),
-         PE = PHINodes.end(); PI != PE; ++PI)
-      (*PI)->removeIncomingValue(R->getEntry());
-
-    DT->changeImmediateDominator(AfterScop, Builder.GetInsertBlock());
-
-    BasicBlock *OldRegionEntry = *succ_begin(R->getEntry());
-
-    // Enable the new polly code.
-    R->getEntry()->getTerminator()->setSuccessor(0, PollyBB);
-
-    // Remove old Scop nodes from dominator tree.
-    std::vector<DomTreeNode*> ToVisit;
-    std::vector<DomTreeNode*> Visited;
-    ToVisit.push_back(DT->getNode(OldRegionEntry));
-
-    while (!ToVisit.empty()) {
-      DomTreeNode *Node = ToVisit.back();
-
-      ToVisit.pop_back();
-
-      if (AfterScop == Node->getBlock())
-        continue;
-
-      Visited.push_back(Node);
-
-      std::vector<DomTreeNode*> Children = Node->getChildren();
-      ToVisit.insert(ToVisit.end(), Children.begin(), Children.end());
-    }
-
-    for (std::vector<DomTreeNode*>::reverse_iterator I = Visited.rbegin(),
-         E = Visited.rend(); I != E; ++I)
-      DT->eraseNode((*I)->getBlock());
-
-    R->getParent()->removeSubRegion(R);
-
-    // And forget the Scop if we remove the region.
-    SD->forgetScop(*R);
+    // Forget the Scop.
+    SD->forgetScop(*region);
 
     return false;
   }

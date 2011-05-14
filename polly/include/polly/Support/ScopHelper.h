@@ -72,7 +72,6 @@ namespace polly {
   llvm::Value *getPointerOperand(llvm::Instruction &Inst);
 
   // Helper function for LLVM-IR about Scop.
-  llvm::BasicBlock *createSingleEntryEdge(llvm::Region *R, llvm::Pass *P);
   llvm::BasicBlock *createSingleExitEdge(llvm::Region *R, llvm::Pass *P);
 
   /// @brief Split the entry block of a function to store the newly inserted
