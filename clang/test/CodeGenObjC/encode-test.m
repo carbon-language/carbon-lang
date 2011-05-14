@@ -144,3 +144,10 @@ struct s8 {
   long double x;
 };
 const char g8[] = @encode(struct s8);
+
+// CHECK: @g9 = constant [11 x i8] c"{S9=i[0i]}\00"
+struct S9 {
+  int x;
+  int flex[];
+};
+const char g9[] = @encode(struct S9);

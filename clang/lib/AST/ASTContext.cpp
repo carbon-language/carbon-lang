@@ -31,6 +31,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "CXXABI.h"
+#include <map>
 
 using namespace clang;
 
@@ -4152,7 +4153,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool ExpandStructures,
                                             const FieldDecl *FD,
                                             bool OutermostType,
-                                            bool EncodingProperty) const {
+                                            bool EncodingProperty,
+                                            bool StructField) const {
   if (T->getAs<BuiltinType>()) {
     if (FD && FD->isBitField())
       return EncodeBitField(this, S, T, FD);
@@ -4237,7 +4239,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   if (const ArrayType *AT =
       // Ignore type qualifiers etc.
         dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
-    if (isa<IncompleteArrayType>(AT)) {
+    if (isa<IncompleteArrayType>(AT) && !StructField) {
       // Incomplete arrays are encoded as a pointer to the array element.
       S += '^';
 
@@ -4250,7 +4252,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         S += llvm::utostr(CAT->getSize().getZExtValue());
       else {
         //Variable length arrays are encoded as a regular array with 0 elements.
-        assert(isa<VariableArrayType>(AT) && "Unknown array type!");
+        assert((isa<VariableArrayType>(AT) || isa<IncompleteArrayType>(AT)) &&
+               "Unknown array type!");
         S += '0';
       }
 
@@ -4288,24 +4291,30 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     if (ExpandStructures) {
       S += '=';
-      for (RecordDecl::field_iterator Field = RDecl->field_begin(),
-                                   FieldEnd = RDecl->field_end();
-           Field != FieldEnd; ++Field) {
-        if (FD) {
-          S += '"';
-          S += Field->getNameAsString();
-          S += '"';
-        }
+      if (!RDecl->isUnion()) {
+        getObjCEncodingForStructureImpl(RDecl, S, FD);
+      } else {
+        for (RecordDecl::field_iterator Field = RDecl->field_begin(),
+                                     FieldEnd = RDecl->field_end();
+             Field != FieldEnd; ++Field) {
+          if (FD) {
+            S += '"';
+            S += Field->getNameAsString();
+            S += '"';
+          }
 
-        // Special case bit-fields.
-        if (Field->isBitField()) {
-          getObjCEncodingForTypeImpl(Field->getType(), S, false, true,
-                                     (*Field));
-        } else {
-          QualType qt = Field->getType();
-          getLegacyIntegralTypeEncoding(qt);
-          getObjCEncodingForTypeImpl(qt, S, false, true,
-                                     FD);
+          // Special case bit-fields.
+          if (Field->isBitField()) {
+            getObjCEncodingForTypeImpl(Field->getType(), S, false, true,
+                                       (*Field));
+          } else {
+            QualType qt = Field->getType();
+            getLegacyIntegralTypeEncoding(qt);
+            getObjCEncodingForTypeImpl(qt, S, false, true,
+                                       FD, /*OutermostType*/false,
+                                       /*EncodingProperty*/false,
+                                       /*StructField*/true);
+          }
         }
       }
     }
@@ -4424,6 +4433,129 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   }
   
   assert(0 && "@encode for type not implemented!");
+}
+
+void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
+                                                 std::string &S,
+                                                 const FieldDecl *FD,
+                                                 bool includeVBases) const {
+  assert(RDecl && "Expected non-null RecordDecl");
+  assert(!RDecl->isUnion() && "Should not be called for unions");
+  if (!RDecl->getDefinition())
+    return;
+
+  CXXRecordDecl *CXXRec = dyn_cast<CXXRecordDecl>(RDecl);
+  std::map<uint64_t, NamedDecl *> FieldOrBaseOffsets;
+  const ASTRecordLayout &layout = getASTRecordLayout(RDecl);
+  
+  unsigned i = 0;
+  for (RecordDecl::field_iterator Field = RDecl->field_begin(),
+                               FieldEnd = RDecl->field_end();
+       Field != FieldEnd; ++Field, ++i) {
+    assert(!FieldOrBaseOffsets[layout.getFieldOffset(i)]);
+    FieldOrBaseOffsets[layout.getFieldOffset(i)] = *Field;
+  }
+  
+  if (CXXRec) {
+    for (CXXRecordDecl::base_class_iterator
+           BI = CXXRec->bases_begin(),
+           BE = CXXRec->bases_end(); BI != BE; ++BI) {
+      if (!BI->isVirtual()) {
+        CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
+        assert(!FieldOrBaseOffsets[layout.getBaseClassOffsetInBits(base)]);
+        FieldOrBaseOffsets[layout.getBaseClassOffsetInBits(base)] = base;
+      }
+    }
+    if (includeVBases) {
+      for (CXXRecordDecl::base_class_iterator
+             BI = CXXRec->vbases_begin(),
+             BE = CXXRec->vbases_end(); BI != BE; ++BI) {
+        CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
+        assert(!FieldOrBaseOffsets[layout.getVBaseClassOffsetInBits(base)]);
+        FieldOrBaseOffsets[layout.getVBaseClassOffsetInBits(base)] = base;
+      }
+    }
+  }
+
+  CharUnits size;
+  if (CXXRec) {
+    size = includeVBases ? layout.getSize() : layout.getNonVirtualSize();
+  } else {
+    size = layout.getSize();
+  }
+
+  uint64_t CurOffs = 0;
+  std::map<uint64_t, NamedDecl *>::iterator
+    CurLayObj = FieldOrBaseOffsets.begin();
+
+  if (CurLayObj != FieldOrBaseOffsets.end() && CurLayObj->first != 0) {
+    assert(CXXRec && CXXRec->isDynamicClass() &&
+           "Offset 0 was empty but no VTable ?");
+    if (FD) {
+      S += "\"_vptr$";
+      std::string recname = CXXRec->getNameAsString();
+      if (recname.empty()) recname = "?";
+      S += recname;
+      S += '"';
+    }
+    S += "^^?";
+    CurOffs += getTypeSize(VoidPtrTy);
+  }
+
+  if (!RDecl->hasFlexibleArrayMember()) {
+    // Mark the end of the structure.
+    assert(!FieldOrBaseOffsets[toBits(size)]);
+    FieldOrBaseOffsets[toBits(size)] = 0;
+  }
+
+  for (; CurLayObj != FieldOrBaseOffsets.end(); ++CurLayObj) {
+    assert(CurOffs <= CurLayObj->first);
+
+    if (CurOffs < CurLayObj->first) {
+      uint64_t padding = CurLayObj->first - CurOffs; 
+      // FIXME: There doesn't seem to be a way to indicate in the encoding that
+      // packing/alignment of members is different that normal, in which case
+      // the encoding will be out-of-sync with the real layout.
+      // If the runtime switches to just consider the size of types without
+      // taking into account alignment, we could make padding explicit in the
+      // encoding (e.g. using arrays of chars). The encoding strings would be
+      // longer then though.
+      CurOffs += padding;
+    }
+
+    NamedDecl *dcl = CurLayObj->second;
+    if (dcl == 0)
+      break; // reached end of structure.
+
+    if (CXXRecordDecl *base = dyn_cast<CXXRecordDecl>(dcl)) {
+      // We expand the bases without their virtual bases since those are going
+      // in the initial structure. Note that this differs from gcc which
+      // expands virtual bases each time one is encountered in the hierarchy,
+      // making the encoding type bigger than it really is.
+      getObjCEncodingForStructureImpl(base, S, FD, /*includeVBases*/false);
+      CurOffs += toBits(getASTRecordLayout(base).getNonVirtualSize());
+    } else {
+      FieldDecl *field = cast<FieldDecl>(dcl);
+      if (FD) {
+        S += '"';
+        S += field->getNameAsString();
+        S += '"';
+      }
+
+      if (field->isBitField()) {
+        EncodeBitField(this, S, field->getType(), field);
+        CurOffs += field->getBitWidth()->EvaluateAsInt(*this).getZExtValue();
+      } else {
+        QualType qt = field->getType();
+        getLegacyIntegralTypeEncoding(qt);
+        getObjCEncodingForTypeImpl(qt, S, false, true, FD,
+                                   /*OutermostType*/false,
+                                   /*EncodingProperty*/false,
+                                   /*StructField*/true);
+        CurOffs += getTypeSize(field->getType());
+      }
+    }
+  }
 }
 
 void ASTContext::getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT,

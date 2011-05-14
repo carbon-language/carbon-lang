@@ -62,3 +62,60 @@ typedef float HGVec4f __attribute__ ((vector_size(16)));
 @implementation RedBalloonHGXFormWrapper
 @end
 
+// rdar://9357400
+namespace rdar9357400 {
+  template<int Dim1 = -1, int Dim2 = -1> struct fixed {
+      template<int D> struct rebind { typedef fixed<D> other; };
+  };
+  
+  template<typename Element, int Size>
+  class fixed_1D
+  {
+  public:
+      typedef Element value_type;
+      typedef value_type array_impl[Size];
+    protected:
+      array_impl                  m_data;
+  };
+  
+  template<typename Element, typename Alloc>
+  class vector;
+  
+  template<typename Element, int Size>
+  class vector< Element, fixed<Size> >
+  : public fixed_1D<Element,Size> { };
+
+  typedef vector< float,  fixed<4> > vector4f;
+
+  // CHECK: @_ZN11rdar9357400L2ggE = internal constant [49 x i8] c"{vector<float, rdar9357400::fixed<4, -1> >=[4f]}\00"
+  const char gg[] = @encode(vector4f);
+}
+
+struct Base1 {
+  char x;
+};
+
+struct DBase : public Base1 {
+  double x;
+  virtual ~DBase();
+};
+
+struct Sub_with_virt : virtual DBase {
+  long x;
+};
+
+struct Sub2 : public Sub_with_virt, public Base1, virtual DBase {
+  float x;
+};
+
+// CHECK: @_ZL2g1 = internal constant [10 x i8] c"{Base1=c}\00"
+const char g1[] = @encode(Base1);
+
+// CHECK: @_ZL2g2 = internal constant [14 x i8] c"{DBase=^^?cd}\00"
+const char g2[] = @encode(DBase);
+
+// CHECK: @_ZL2g3 = internal constant [26 x i8] c"{Sub_with_virt=^^?q^^?cd}\00"
+const char g3[] = @encode(Sub_with_virt);
+
+// CHECK: @_ZL2g4 = internal constant [19 x i8] c"{Sub2=^^?qcf^^?cd}\00"
+const char g4[] = @encode(Sub2);
