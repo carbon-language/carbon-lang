@@ -44,7 +44,7 @@ int main()
     F32_8::extern_type c8[4];
     for (F32_8::intern_type c32x = 0; c32x < 0x110003; ++c32x)
     {
-        if (0xD800 <= c32x && c32x < 0xE000 || c32x >= 0x110000)
+        if ((0xD800 <= c32x && c32x < 0xE000) || c32x >= 0x110000)
         {
             assert(f32_16.out(mbs, &c32x, &c32x+1, c_c32p, c16c+0, c16c+4, c16cp) == F32_8::error);
             assert(f32_8.out(mbs, &c32x, &c32x+1, c_c32p, c8, c8+4, c8p) == F32_8::error);
