@@ -1263,7 +1263,6 @@ class CodeGeneration : public ScopPass {
   DominatorTree *DT;
   ScalarEvolution *SE;
   ScopDetection *SD;
-  LoopInfo *LI;
   TargetData *TD;
   RegionInfo *RI;
 
@@ -1414,7 +1413,6 @@ class CodeGeneration : public ScopPass {
     DT = &getAnalysis<DominatorTree>();
     Dependences *DP = &getAnalysis<Dependences>();
     SE = &getAnalysis<ScalarEvolution>();
-    LI = &getAnalysis<LoopInfo>();
     SD = &getAnalysis<ScopDetection>();
     TD = &getAnalysis<TargetData>();
     RI = &getAnalysis<RegionInfo>();
@@ -1483,7 +1481,6 @@ class CodeGeneration : public ScopPass {
     AU.addRequired<Dependences>();
     AU.addRequired<DominatorTree>();
     AU.addRequired<ScalarEvolution>();
-    AU.addRequired<LoopInfo>();
     AU.addRequired<RegionInfo>();
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
@@ -1491,10 +1488,15 @@ class CodeGeneration : public ScopPass {
 
     AU.addPreserved<CloogInfo>();
     AU.addPreserved<Dependences>();
+
+    // XXX: We do not create LoopInfo for the newly generated loops.
     AU.addPreserved<LoopInfo>();
     AU.addPreserved<DominatorTree>();
     AU.addPreserved<ScopDetection>();
     AU.addPreserved<ScalarEvolution>();
+
+    // XXX: We do not yet add regions for the newly generated code to the region
+    //      tree.
     AU.addPreserved<RegionInfo>();
     AU.addPreserved<TempScopInfo>();
     AU.addPreserved<ScopInfo>();
