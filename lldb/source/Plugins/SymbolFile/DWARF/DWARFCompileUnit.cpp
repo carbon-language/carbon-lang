@@ -809,6 +809,24 @@ DWARFCompileUnit::Index
                                 // accelerator tables
                                 size_t method_name_len = name_len - (method_name - name) - 1;                                
                                 func_selectors.Insert (ConstString (method_name, method_name_len), die_info);
+                                
+                                // Also see if this is a "category" on our class.  If so strip off the category name,
+                                // and add the class name without it to the basename table. 
+                                
+                                const char *first_paren = strnstr (name, "(", method_name - name);
+                                if (first_paren)
+                                {
+                                    const char *second_paren = strnstr (first_paren, ")", method_name - first_paren);
+                                    if (second_paren)
+                                    {
+                                        std::string buffer (name, first_paren - name);
+                                        buffer.append (second_paren + 1);
+                                        ConstString uncategoried_name (buffer.c_str());
+                                        func_basenames.Insert (uncategoried_name, die_info);
+                                        func_fullnames.Insert (uncategoried_name, die_info);
+
+                                    }
+                                }
                             }
                         }
                     }
