@@ -3292,6 +3292,7 @@ public:
   void CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record);
   void CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *Ctor);
   void CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *Ctor);
+  void CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *Method);
   void CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *Dtor);
 
   //===--------------------------------------------------------------------===//

@@ -3018,10 +3018,11 @@ void Sema::CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record) {
         break;
 
       case CXXCopyAssignment:
-      // FIXME: Do copy assignment operators and moves
+        CheckExplicitlyDefaultedCopyAssignment(*MI);
         break;
 
       default:
+        // FIXME: Do moves once they exist
         llvm_unreachable("non-special member explicitly defaulted!");
       }
     }
@@ -3064,6 +3065,7 @@ void Sema::CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *CD) {
   } else if (First) {
     // We set the declaration to have the computed exception spec here.
     // We know there are no parameters.
+    EPI.ExtInfo = CtorType->getExtInfo();
     CD->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
   }
 
@@ -3130,6 +3132,7 @@ void Sema::CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *CD) {
   } else if (First) {
     // We set the declaration to have the computed exception spec here.
     // We duplicate the one parameter type.
+    EPI.ExtInfo = CtorType->getExtInfo();
     CD->setType(Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
   }
 
@@ -3145,6 +3148,88 @@ void Sema::CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *CD) {
       Diag(CD->getLocation(), diag::err_out_of_line_default_deletes)
         << 1 /* copy constructor */;
       CD->setInvalidDecl();
+    }
+  }
+}
+
+void Sema::CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *MD) {
+  assert(MD->isExplicitlyDefaulted());
+
+  // Whether this was the first-declared instance of the operator
+  bool First = MD == MD->getCanonicalDecl();
+
+  bool HadError = false;
+  if (MD->getNumParams() != 1) {
+    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_params)
+      << MD->getSourceRange();
+    HadError = true;
+  }
+
+  QualType ReturnType =
+    MD->getType()->getAs<FunctionType>()->getResultType();
+  if (!ReturnType->isLValueReferenceType() ||
+      !Context.hasSameType(
+        Context.getCanonicalType(ReturnType->getPointeeType()),
+        Context.getCanonicalType(Context.getTypeDeclType(MD->getParent())))) {
+    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_return_type);
+    HadError = true;
+  }
+
+  ImplicitExceptionSpecification Spec(Context);
+  bool Const;
+  llvm::tie(Spec, Const) =
+    ComputeDefaultedCopyCtorExceptionSpecAndConst(MD->getParent());
+  
+  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
+  const FunctionProtoType *OperType = MD->getType()->getAs<FunctionProtoType>(),
+                          *ExceptionType = Context.getFunctionType(
+                         Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
+
+  // Check for parameter type matching.
+  // This is a copy ctor so we know it's a cv-qualified reference to T.
+  QualType ArgType = OperType->getArgType(0);
+  if (ArgType->getPointeeType().isVolatileQualified()) {
+    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_volatile_param);
+    HadError = true;
+  }
+  if (ArgType->getPointeeType().isConstQualified() && !Const) {
+    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_const_param);
+    HadError = true;
+  }
+  if (OperType->getTypeQuals()) {
+    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_quals);
+    HadError = true;
+  }
+
+  if (OperType->hasExceptionSpec()) {
+    if (CheckEquivalentExceptionSpec(
+          PDiag(diag::err_incorrect_defaulted_exception_spec)
+            << 2 /* copy assignment operator */,
+          PDiag(),
+          ExceptionType, SourceLocation(),
+          OperType, MD->getLocation())) {
+      HadError = true;
+    }
+  } else if (First) {
+    // We set the declaration to have the computed exception spec here.
+    // We duplicate the one parameter type.
+    EPI.RefQualifier = OperType->getRefQualifier();
+    EPI.ExtInfo = OperType->getExtInfo();
+    MD->setType(Context.getFunctionType(ReturnType, &ArgType, 1, EPI));
+  }
+
+  if (HadError) {
+    MD->setInvalidDecl();
+    return;
+  }
+
+  if (ShouldDeleteCopyAssignmentOperator(MD)) {
+    if (First) {
+      MD->setDeletedAsWritten();
+    } else {
+      Diag(MD->getLocation(), diag::err_out_of_line_default_deletes)
+        << 2 /* copy assignment operator  */;
+      MD->setInvalidDecl();
     }
   }
 }
@@ -3175,6 +3260,7 @@ void Sema::CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *DD) {
   } else if (First) {
     // We set the declaration to have the computed exception spec here.
     // There are no parameters.
+    EPI.ExtInfo = DtorType->getExtInfo();
     DD->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
   }
 
@@ -3370,9 +3456,12 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
   // Do access control from the constructor
   ContextRAII CtorContext(*this, CD);
 
-  bool Union = RD->isUnion();
+    bool Union = RD->isUnion();
 
-  bool ConstArg = CD->getParamDecl(0)->getType().isConstQualified();
+  assert(!CD->getParamDecl(0)->getType()->getPointeeType().isNull() &&
+         "copy assignment arg has no pointee type");
+  bool ConstArg =
+    CD->getParamDecl(0)->getType()->getPointeeType().isConstQualified();
 
   // We do this because we should never actually use an anonymous
   // union's constructor.
@@ -3416,8 +3505,6 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
 
     // Construct a fake expression to perform the copy overloading.
     QualType ArgType = BaseType.getUnqualifiedType();
-    if (ArgType->isReferenceType())
-      ArgType = ArgType->getPointeeType();
     if (ConstArg)
       ArgType.addConst();
     Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
@@ -3457,8 +3544,6 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
 
     // Construct a fake expression to perform the copy overloading.
     QualType ArgType = BaseType.getUnqualifiedType();
-    if (ArgType->isReferenceType())
-      ArgType = ArgType->getPointeeType();
     if (ConstArg)
       ArgType.addConst();
     Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
@@ -3538,7 +3623,7 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
     QualType ArgType = FieldType;
     if (ArgType->isReferenceType())
       ArgType = ArgType->getPointeeType();
-    if (ConstArg)
+    else if (ConstArg)
       ArgType.addConst();
     Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
                                               VK_LValue);
@@ -3563,7 +3648,8 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
 
   bool Union = RD->isUnion();
 
-  bool ConstArg = MD->getParamDecl(0)->getType().isConstQualified();
+  bool ConstArg =
+    MD->getParamDecl(0)->getType()->getPointeeType().isConstQualified();
 
   // We do this because we should never actually use an anonymous
   // union's constructor.
@@ -3594,7 +3680,7 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
 
     // -- a [direct base class] B that cannot be [copied] because overload
     //    resolution, as applied to B's [copy] assignment operator, results in
-    //    an ambiguity or a function that is deleted or inaccessibl from the
+    //    an ambiguity or a function that is deleted or inaccessible from the
     //    assignment operator
 
     LookupQualifiedName(R, BaseDecl, false);
@@ -3613,15 +3699,19 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
  
     // Build a fake argument expression
     QualType ArgType = BaseType;
+    QualType ThisType = BaseType;
     if (ConstArg)
       ArgType.addConst();
-    Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
-                                              VK_LValue);
+    Expr *Args[] = { new (Context) OpaqueValueExpr(SourceLocation(), ThisType,
+                                                   VK_LValue)
+                   , new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
+                                                   VK_LValue)
+                   };
 
     OverloadCandidateSet OCS((SourceLocation()));
     OverloadCandidateSet::iterator Best;
 
-    AddFunctionCandidates(R.asUnresolvedSet(), &Arg, 1, OCS);
+    AddFunctionCandidates(R.asUnresolvedSet(), Args, 2, OCS);
 
     if (OCS.BestViableFunction(*this, SourceLocation(), Best, false) !=
         OR_Success)
@@ -3635,31 +3725,44 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
     CXXRecordDecl *BaseDecl = BaseType->getAsCXXRecordDecl();
     assert(BaseDecl && "base isn't a CXXRecordDecl");
 
-    /*
     // -- a [virtual base class] B that cannot be [copied] because overload
-    //    resolution, as applied to B's [copy] assignment operator, results in an
-    //    ambiguity or a function that is deleted or inaccessible from the
-    //    defaulted assignment operator
-    InitializedEntity BaseEntity =
-      InitializedEntity::InitializeBase(Context, BI, BI);
-    InitializationKind Kind =
-      InitializationKind::CreateDirect(SourceLocation(), SourceLocation(),
-                                       SourceLocation());
+    //    resolution, as applied to B's [copy] assignment operator, results in
+    //    an ambiguity or a function that is deleted or inaccessible from the
+    //    assignment operator
 
-    // Construct a fake expression to perform the copy overloading.
-    QualType ArgType = BaseType.getUnqualifiedType();
-    if (ArgType->isReferenceType())
-      ArgType = ArgType->getPointeeType();
+    LookupQualifiedName(R, BaseDecl, false);
+
+    // Filter out any result that isn't a copy-assignment operator.
+    LookupResult::Filter F = R.makeFilter();
+    while (F.hasNext()) {
+      NamedDecl *D = F.next();
+      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+        if (Method->isCopyAssignmentOperator())
+          continue;
+      
+      F.erase();
+    }
+    F.done();
+ 
+    // Build a fake argument expression
+    QualType ArgType = BaseType;
+    QualType ThisType = BaseType;
     if (ConstArg)
       ArgType.addConst();
-    Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
-                                              VK_LValue);
+    Expr *Args[] = { new (Context) OpaqueValueExpr(SourceLocation(), ThisType,
+                                                   VK_LValue)
+                   , new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
+                                                   VK_LValue)
+                   };
 
-    InitializationSequence InitSeq(*this, BaseEntity, Kind, &Arg, 1);
+    OverloadCandidateSet OCS((SourceLocation()));
+    OverloadCandidateSet::iterator Best;
 
-    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+    AddFunctionCandidates(R.asUnresolvedSet(), Args, 2, OCS);
+
+    if (OCS.BestViableFunction(*this, SourceLocation(), Best, false) !=
+        OR_Success)
       return true;
-    */
   }
 
   for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
@@ -3704,36 +3807,41 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
       } else if (Union && !FieldRecord->hasTrivialCopyAssignment()) {
           return true;
       }
-    }
 
-    /*
-    llvm::SmallVector<InitializedEntity, 4> Entities;
-    QualType CurType = FI->getType();
-    Entities.push_back(InitializedEntity::InitializeMember(*FI, 0));
-    while (CurType->isArrayType()) {
-      Entities.push_back(InitializedEntity::InitializeElement(Context, 0, 
-                                                              Entities.back()));
-      CurType = Context.getAsArrayType(CurType)->getElementType();
-    }
+      LookupQualifiedName(R, FieldRecord, false);
 
-    InitializationKind Kind = 
-      InitializationKind::CreateDirect(SourceLocation(), SourceLocation(),
-                                       SourceLocation());
- 
-    // Construct a fake expression to perform the copy overloading.
-    QualType ArgType = FieldType;
-    if (ArgType->isReferenceType())
-      ArgType = ArgType->getPointeeType();
-    if (ConstArg)
-      ArgType.addConst();
-    Expr *Arg = new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
-                                              VK_LValue);
+      // Filter out any result that isn't a copy-assignment operator.
+      LookupResult::Filter F = R.makeFilter();
+      while (F.hasNext()) {
+        NamedDecl *D = F.next();
+        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+          if (Method->isCopyAssignmentOperator())
+            continue;
+        
+        F.erase();
+      }
+      F.done();
    
-    InitializationSequence InitSeq(*this, Entities.back(), Kind, &Arg, 1);
+      // Build a fake argument expression
+      QualType ArgType = FieldType;
+      QualType ThisType = FieldType;
+      if (ConstArg)
+        ArgType.addConst();
+      Expr *Args[] = { new (Context) OpaqueValueExpr(SourceLocation(), ThisType,
+                                                     VK_LValue)
+                     , new (Context) OpaqueValueExpr(SourceLocation(), ArgType,
+                                                     VK_LValue)
+                     };
 
-    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
-      return true;
-    */
+      OverloadCandidateSet OCS((SourceLocation()));
+      OverloadCandidateSet::iterator Best;
+
+      AddFunctionCandidates(R.asUnresolvedSet(), Args, 2, OCS);
+
+      if (OCS.BestViableFunction(*this, SourceLocation(), Best, false) !=
+          OR_Success)
+        return true;
+    }
   }
 
   return false;
@@ -8539,6 +8647,13 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
       break;
     }
 
+    case CXXCopyAssignment: {
+      CheckExplicitlyDefaultedCopyAssignment(MD);
+      if (!MD->isInvalidDecl())
+        DefineImplicitCopyAssignment(DefaultLoc, MD);
+      break;
+    }
+
     case CXXDestructor: {
       CXXDestructorDecl *DD = cast<CXXDestructorDecl>(MD);
       CheckExplicitlyDefaultedDestructor(DD);
@@ -8548,7 +8663,7 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
     }
 
     default:
-      // FIXME: Do the rest once we have functions
+      // FIXME: Do the rest once we have move functions
       break;
     }
   } else {

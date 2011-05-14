@@ -3636,6 +3636,21 @@ def err_defaulted_copy_ctor_volatile_param : Error<
 def err_defaulted_copy_ctor_const_param : Error<
   "the parameter for this explicitly-defaulted copy constructor is const, but "
   "a member or base requires it to be non-const">;
+def err_defaulted_copy_assign_params : Error<
+  "an explicitly-defaulted copy assignment operator must have exactly one "
+  "parameter">;
+def err_defaulted_copy_assign_return_type : Error<
+  "an explicitly-defaulted copy assignment operator must return an unqualified "
+  "lvalue reference to its class type">;
+def err_defaulted_copy_assign_volatile_param : Error<
+  "the parameter for an explicitly-defaulted copy assignment operator may not "
+  "be volatile">;
+def err_defaulted_copy_assign_const_param : Error<
+  "the parameter for this explicitly-defaulted copy assignment operator is "
+  "const, but a member or base requires it to be non-const">;
+def err_defaulted_copy_assign_quals : Error<
+  "an explicitly-defaulted copy assignment operator may not have 'const' "
+  "or 'volatile' qualifiers">;
 def err_incorrect_defaulted_exception_spec : Error<
   "exception specification of explicitly defaulted %select{default constructor|"
   "copy constructor|copy assignment operator|destructor}0 does not match the "
