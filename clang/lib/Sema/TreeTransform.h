@@ -4504,14 +4504,16 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
   //   If the identifier resolves to a typedef-name or the simple-template-id
   //   resolves to an alias template specialization, the
   //   elaborated-type-specifier is ill-formed.
-  if (const TemplateSpecializationType *TST =
-        NamedT->getAs<TemplateSpecializationType>()) {
-    TemplateName Template = TST->getTemplateName();
-    if (TypeAliasTemplateDecl *TAT =
-        dyn_cast_or_null<TypeAliasTemplateDecl>(Template.getAsTemplateDecl())) {
-      SemaRef.Diag(TL.getNamedTypeLoc().getBeginLoc(),
-                   diag::err_tag_reference_non_tag) << 4;
-      SemaRef.Diag(TAT->getLocation(), diag::note_declared_at);
+  if (T->getKeyword() != ETK_None && T->getKeyword() != ETK_Typename) {
+    if (const TemplateSpecializationType *TST =
+          NamedT->getAs<TemplateSpecializationType>()) {
+      TemplateName Template = TST->getTemplateName();
+      if (TypeAliasTemplateDecl *TAT =
+          dyn_cast_or_null<TypeAliasTemplateDecl>(Template.getAsTemplateDecl())) {
+        SemaRef.Diag(TL.getNamedTypeLoc().getBeginLoc(),
+                     diag::err_tag_reference_non_tag) << 4;
+        SemaRef.Diag(TAT->getLocation(), diag::note_declared_at);
+      }
     }
   }
 
