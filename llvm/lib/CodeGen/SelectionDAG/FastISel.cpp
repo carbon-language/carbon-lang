@@ -628,6 +628,16 @@ bool FastISel::SelectCall(const User *I) {
 
     return true;
   }
+  case Intrinsic::objectsize: {
+    ConstantInt *CI = cast<ConstantInt>(Call->getArgOperand(1));
+    unsigned long long Res = CI->isZero() ? -1ULL : 0;
+    Constant *ResCI = ConstantInt::get(Call->getType(), Res);
+    unsigned ResultReg = getRegForValue(ResCI);
+    if (ResultReg == 0)
+      return false;
+    UpdateValueMap(Call, ResultReg);
+    return true;
+  }
   }
 
   // An arbitrary call. Bail.

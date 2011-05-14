@@ -1369,29 +1369,6 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     if (!X86FastEmitStore(PtrTy, Op1, AM)) return false;
     return true;
   }
-  case Intrinsic::objectsize: {
-    // FIXME: This should be moved to generic code!
-    ConstantInt *CI = cast<ConstantInt>(I.getArgOperand(1));
-    const Type *Ty = I.getCalledFunction()->getReturnType();
-
-    MVT VT;
-    if (!isTypeLegal(Ty, VT))
-      return false;
-
-    unsigned OpC = 0;
-    if (VT == MVT::i32)
-      OpC = X86::MOV32ri;
-    else if (VT == MVT::i64)
-      OpC = X86::MOV64ri;
-    else
-      return false;
-
-    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(OpC), ResultReg).
-                                  addImm(CI->isZero() ? -1ULL : 0);
-    UpdateValueMap(&I, ResultReg);
-    return true;
-  }
   case Intrinsic::dbg_declare: {
     const DbgDeclareInst *DI = cast<DbgDeclareInst>(&I);
     X86AddressMode AM;
