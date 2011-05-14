@@ -93,6 +93,12 @@ int main(int argc, char **argv) {
         clang::tooling::FindCompileArgsInJsonDatabase(
             File.str(), JsonDatabase->getBuffer(), ErrorMessage);
     if (!LookupResult.CommandLine.empty()) {
+      if (LookupResult.Directory.size()) {
+        // FIXME: What should happen if CommandLine includes -working-directory
+        // as well?
+        LookupResult.CommandLine.push_back(
+            "-working-directory=" + LookupResult.Directory);
+      }
       if (!clang::tooling::RunToolWithFlags(
                new clang::SyntaxOnlyAction,
                LookupResult.CommandLine.size(),

@@ -78,7 +78,7 @@ class JsonCompileCommandLineParser {
                                CompileCommandHandler *CommandHandler);
 
   /// \brief Parses the specified input. Returns true if no parsing errors were
-  /// foudn.
+  /// found.
   bool Parse();
 
   /// \brief Returns an error message if Parse() returned false previously.
