@@ -4401,12 +4401,9 @@ static bool CheckTemplateSpecializationScope(Sema &S,
   }
 
   if (S.CurContext->isRecord() && !IsPartialSpecialization) {
-    if (S.getLangOptions().Microsoft)
-      S.Diag(Loc, diag::war_template_spec_decl_class_scope) << Specialized;
-    else {    
-      S.Diag(Loc, diag::err_template_spec_decl_class_scope) << Specialized;
-      return true;
-    }
+    S.Diag(Loc, diag::err_template_spec_decl_class_scope)
+      << Specialized;
+    return true;
   }
 
   // C++ [temp.class.spec]p6:

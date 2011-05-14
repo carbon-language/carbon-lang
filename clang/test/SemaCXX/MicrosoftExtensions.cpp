@@ -197,10 +197,3 @@ void pointer_to_integral_type_conv(char* ptr) {
    ch = (char)ptr;
    sh = (short)ptr;
 } 
-
-
-struct X1 {
-  template<typename T> void f(T);
-
-  template<> void f(int) { } // expected-warning{{Allowing explicit specialization of 'f' in class scope is a Microsoft extension}}
-};

@@ -1685,14 +1685,10 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     if (OldMethod && NewMethod) {
       // Preserve triviality.
       NewMethod->setTrivial(OldMethod->isTrivial());
-   
-      // MSVC allows explicit template specialization at class scope.
-      bool IsMSExplicitSpecialization = getLangOptions().Microsoft &&
-                                 NewMethod->isFunctionTemplateSpecialization();
+
       bool isFriend = NewMethod->getFriendObjectKind();
 
-      if (!isFriend && NewMethod->getLexicalDeclContext()->isRecord() &&
-          !IsMSExplicitSpecialization) {
+      if (!isFriend && NewMethod->getLexicalDeclContext()->isRecord()) {
         //    -- Member function declarations with the same name and the
         //       same parameter types cannot be overloaded if any of them
         //       is a static member function declaration.
@@ -4573,7 +4569,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         NewFD->setInvalidDecl();
     } else if (isFunctionTemplateSpecialization) {
       if (CurContext->isDependentContext() && CurContext->isRecord() 
-          && !isFriend) {
+          && !isFriend && !getLangOptions().Microsoft) {
         Diag(NewFD->getLocation(), diag::err_function_specialization_in_class)
           << NewFD->getDeclName();
         NewFD->setInvalidDecl();
