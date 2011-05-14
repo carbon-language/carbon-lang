@@ -43,18 +43,6 @@ using namespace clang;
 using namespace CodeGen;
 
 
-static void EmitNullReturnInitialization(CodeGenFunction &CGF,
-                                         ReturnValueSlot &returnSlot,
-                                         QualType resultType) {
-  // Force the return slot to exist.
-  if (!returnSlot.getValue())
-    returnSlot = ReturnValueSlot(CGF.CreateMemTemp(resultType), false);
-  CGF.EmitNullInitialization(returnSlot.getValue(), resultType);
-}
-
-
-///
-
 namespace {
 
 typedef std::vector<llvm::Constant*> ConstantVector;
@@ -1351,6 +1339,46 @@ public:
                                       const ObjCIvarDecl *Ivar);
 };
 
+/// A helper class for performing the null-initialization of a return
+/// value.
+struct NullReturnState {
+  llvm::BasicBlock *NullBB;
+
+  NullReturnState() : NullBB(0) {}
+
+  void init(CodeGenFunction &CGF, llvm::Value *receiver) {
+    // Make blocks for the null-init and call edges.
+    NullBB = CGF.createBasicBlock("msgSend.nullinit");
+    llvm::BasicBlock *callBB = CGF.createBasicBlock("msgSend.call");
+
+    // Check for a null receiver and, if there is one, jump to the
+    // null-init test.
+    llvm::Value *isNull = CGF.Builder.CreateIsNull(receiver);
+    CGF.Builder.CreateCondBr(isNull, NullBB, callBB);
+
+    // Otherwise, start performing the call.
+    CGF.EmitBlock(callBB);
+  }
+
+  RValue complete(CodeGenFunction &CGF, RValue result, QualType resultType) {
+    if (!NullBB) return result;
+
+    // Finish the call path.
+    llvm::BasicBlock *contBB = CGF.createBasicBlock("msgSend.cont");
+    if (CGF.HaveInsertPoint()) CGF.Builder.CreateBr(contBB);
+
+    // Emit the null-init block and perform the null-initialization there.
+    CGF.EmitBlock(NullBB);
+    assert(result.isAggregate() && "null init of non-aggregate result?");
+    CGF.EmitNullInitialization(result.getAggregateAddr(), resultType);
+
+    // Jump to the continuation block.
+    CGF.EmitBlock(contBB);
+
+    return result;
+  }
+};
+
 } // end anonymous namespace
 
 /* *** Helper Functions *** */
@@ -1541,9 +1569,11 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
            CGM.getContext().getCanonicalType(ResultType) &&
            "Result type mismatch!");
 
+  NullReturnState nullReturn;
+
   llvm::Constant *Fn = NULL;
   if (CGM.ReturnTypeUsesSRet(FnInfo)) {
-    EmitNullReturnInitialization(CGF, Return, ResultType);
+    if (!IsSuper) nullReturn.init(CGF, Arg0);
     Fn = (ObjCABI == 2) ?  ObjCTypes.getSendStretFn2(IsSuper)
       : ObjCTypes.getSendStretFn(IsSuper);
   } else if (CGM.ReturnTypeUsesFPRet(ResultType)) {
@@ -1554,7 +1584,8 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
       : ObjCTypes.getSendFn(IsSuper);
   }
   Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
-  return CGF.EmitCall(FnInfo, Fn, Return, ActualArgs);
+  RValue rvalue = CGF.EmitCall(FnInfo, Fn, Return, ActualArgs);
+  return nullReturn.complete(CGF, rvalue, ResultType);
 }
 
 static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
@@ -5590,6 +5621,8 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
     CGM.getTypes().getFunctionInfo(resultType, args,
                                    FunctionType::ExtInfo());
 
+  NullReturnState nullReturn;
+
   // Find the function to call and the mangled name for the message
   // ref structure.  Using a different mangled name wouldn't actually
   // be a problem; it would just be a waste.
@@ -5600,11 +5633,11 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
   llvm::Constant *fn = 0;
   std::string messageRefName("\01l_");
   if (CGM.ReturnTypeUsesSRet(fnInfo)) {
-    EmitNullReturnInitialization(CGF, returnSlot, resultType);
     if (isSuper) {
       fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
       messageRefName += "objc_msgSendSuper2_stret_fixup";
     } else {
+      nullReturn.init(CGF, arg0);
       fn = ObjCTypes.getMessageSendStretFixupFn();
       messageRefName += "objc_msgSend_stret_fixup";
     }
@@ -5660,7 +5693,8 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
   callee = CGF.Builder.CreateBitCast(callee,
                                      llvm::PointerType::getUnqual(fnType));
 
-  return CGF.EmitCall(fnInfo, callee, returnSlot, args);
+  RValue result = CGF.EmitCall(fnInfo, callee, returnSlot, args);
+  return nullReturn.complete(CGF, result, resultType);
 }
 
 /// Generate code for a message send expression in the nonfragile abi.

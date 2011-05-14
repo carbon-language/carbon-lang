@@ -147,17 +147,29 @@ typedef struct {
 // rdar://problem/7854674
 // CHECK:    define void @test0([[A:%.*]]*
 // CHECK-NF: define void @test0([[A:%.*]]*
-void test0(A *a) {
-  // CHECK:         alloca [[A]]*
+void test0(A *x) {
+  // CHECK:         [[X:%.*]] = alloca [[A]]*
   // CHECK-NEXT:    [[POINT:%.*]] = alloca [[POINT_T:%.*]],
-  // CHECK-NF:      alloca [[A]]*
-  // CHECK-NF-NEXT: [[POINT:%.*]] = alloca [[POINT_T:%.*]],
-
+  // CHECK:         [[T0:%.*]] = load [[A]]** [[X]]
+  // CHECK:         [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
+  // CHECK-NEXT:    icmp eq i8* [[T1]], null
+  // CHECK-NEXT:    br i1
+  // CHECK:         call {{.*}} @objc_msgSend_stret to
+  // CHECK-NEXT:    br label
   // CHECK:         [[T0:%.*]] = bitcast [[POINT_T]]* [[POINT]] to i8*
   // CHECK-NEXT:    call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 48, i32 4, i1 false)
-  // CHECK-NEXT:    call {{.*}} @objc_msgSend_stret to
+  // CHECK-NEXT:    br label
+
+  // CHECK-NF:      [[X:%.*]] = alloca [[A]]*
+  // CHECK-NF-NEXT: [[POINT:%.*]] = alloca [[POINT_T:%.*]],
+  // CHECK-NF:      [[T0:%.*]] = load [[A]]** [[X]]
+  // CHECK-NF:      [[T1:%.*]] = bitcast [[A]]* [[T0]] to i8*
+  // CHECK-NF-NEXT: icmp eq i8* [[T1]], null
+  // CHECK-NF-NEXT: br i1
+  // CHECK-NF:      call {{.*}} @objc_msgSend_stret to
+  // CHECK-NF-NEXT: br label
   // CHECK-NF:      [[T0:%.*]] = bitcast [[POINT_T]]* [[POINT]] to i8*
   // CHECK-NF-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 48, i32 4, i1 false)
-  // CHECK-NF-NEXT: call {{.*}} @objc_msgSend_stret to
-  MyPoint point = [a returnAPoint];
+  // CHECK-NF-NEXT: br label
+  MyPoint point = [x returnAPoint];
 }
