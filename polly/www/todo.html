@@ -23,36 +23,36 @@
 </th></tr>
 <tr>
 <th align="left"> Move to LLVM SVN
-</th><td align="center"> done</br>
+</th><td class="done" align="center"> done</br>
 <a
 href="http://llvm.org/svn/llvm-project/polly"
->http://llvm.org/svn/llvm-project/polly/trunk/www</a>
+>http://llvm.org/svn/llvm-project/polly</a>
 </td><td> Tobias
 
 </td></tr>
 <tr>
 <th align="left"> Git mirror
-</th><td align="center"> done<br />
+</th><td class="done" align="center"> done<br />
 git://llvm.org/git/polly.git
 </td><td> Tobias
 </td></tr>
 <tr>
 <th align="left"> Commit mails
-</th><td align="center"> done <br />
+</th><td class="done" align="center"> done <br />
 llvm-commits@cs.uiuc.edu
 </td><td> Tobias
 </td></tr>
 <tr>
 
 <th align="left"> LLVM Bugzilla category
-</th><td align="center"> done <br />
+</th><td class="done" align="center"> done <br />
 <a href="http://llvm.org/bugs/enter_bug.cgi?product=Projects">LLVM Bugzilla</a>
 <br />
 (Product is 'Projects', Component is 'Polly')
 </td><td> Tobias
 <tr>
 <th align="left"> Website
-</th><td align="center"> in progress
+</th><td class="inprogress" align="center"> in progress
 <br />
 <a href="http://polly.grosser.es">http://polly.grosser.es</a>,
 later maybe polly.llvm.org
@@ -61,7 +61,7 @@ later maybe polly.llvm.org
 <tr>
 <th align="left">Buildbot that runs 'make polly-test'
 </th><td align="center">
-</th><td> Raghesh, Andreas
+</th><td> Raghesh,<br /> Andreas
 </td></tr>
 <tr>
 <th align="left"> Nightly performance/coverage tests<br /> (with the llvm
@@ -118,25 +118,25 @@ build system will be improved to simplify deployment.
 </th></tr>
 <tr>
 <th align="left"> Implement ISL dependency analysis pass
-</th><td align="center"> working
+</th><td class="done" align="center"> working
 </td><td> Tobias
 </td></tr>
 <tr>
 <th align="left"> Connect pocc/pluto
 
-</th><td align="center"> working
+</th><td class="done" align="center"> working
 </td><td> Tobias
 </td></tr>
 <tr>
 <th align="left"> Finish OpenSCoP support
-</th><td>
+</th><td class="open">Blocked (waiting for OpenSCoP)
 </td><td>
 </td><td>
 </td></tr>
 
 <tr>
 <th align="left"> Add SCoPLib 0.2 support to connect pocc
-</th><td align="center">done
+</th><td class="done" align="center">done
 
 </td><td> Tobias
 </td></tr>
@@ -164,20 +164,20 @@ build system will be improved to simplify deployment.
 </td></tr>
 <tr>
 <th align="left"> Add write support for data access functions
-</th><td>
+</th><td class="open">Still open
 </td><td>
 </td><td>
 
 </td></tr>
 <tr>
 <th align="left"> Create vector loops
-</th><td align="center">70% done
+</th><td class="inprogress">70% done
 </td><td>Tobias
 </td></tr>
 <tr>
 <th align="left">Create OpenMP
 loops
-</th><td align="center">90% done
+</th><td class="inprogress">90% done
 </td><td> Raghesh &amp; Tobias
 
 </td></tr>
@@ -193,18 +193,18 @@ loops
 
 <tr>
 <th align="left"> Commit RegionPass patch upstream
-</th><td align="center"> done
+</th><td class="done" align="center"> done
 
 </td><td> Tobias
 </td></tr>
 <tr>
 <th align="left"> Build against an installed LLVM
-</th><td> works for cmake
+</th><td class="inprogress"> Partial (cmake build without tests)
 </td><td> ether
 </td></tr>
 <tr>
 <th align="left"> Setup buildbot regression testers using LNT
-</th><td>
+</th><td class="open">Still open
 </td><td>
 </td><td>
 
@@ -231,34 +231,34 @@ and back to LLVM-IR without applying any transformations.
 </th></tr>
 <tr>
 <th align="left"> Region detection
-</td><td> works + Committed upstream
+</td><td class="done"> Working + Committed upstream
 </td><td>Ether
 </td></tr>
 <tr>
 <th align="left"> Access Functions
-</td><td> Working
-</td><td> John + Ether
+</td><td class="done"> Working
+</td><td>John + Ether
 </td></tr>
 <tr>
 <th align="left"> Alias sets
-</td><td> Still open
+</td><td class="open"> Still open
 </td></tr>
 <tr>
 <th align="left"> Scalar evolution to affine expression
-</td><td> Done
+</td><td class="done"> Done
 
 </td><td>
 Ether
 </td></tr>
 <tr>
 <th align="left"> SCoP extraction
-</td><td> Working
+</td><td class="done"> Working
 </td><td>Tobias + Ether
 
 </td></tr>
 <tr>
 <th align="left"> SCoPs to polyhedral model
-</td><td> Working
+</td><td class="done"> Working
 </td><td>Tobias + Ether
 </td></tr>
 <tr>
@@ -273,13 +273,13 @@ Ether
 </th></tr>
 <tr>
 <th align="left"> Define polyhedral description
-</td><td> Working
+</td><td class="done"> Working
 </td><td>Tobias
 
 </td></tr>
 <tr>
-<th align="left"> Import/Export using openscop
-</td><td> working
+<th align="left"> Import/Export using current openscop version
+</td><td class="done"> Working
 </td><td>Tobias
 </td></tr>
 <tr>
@@ -294,7 +294,7 @@ Ether
 </th></tr>
 <tr>
 <th align="left"> Create LLVM-IR using CLooG
-</td><td> Working
+</td><td class="done"> Working
 </td><td> Tobias
 
 </td></tr>
@@ -310,12 +310,12 @@ Ether
 <tr>
 <th align="left"> Setup git repositories
 
-</td><td> Done
+</td><td class="done"> Done
 </td><td> Tobias
 </td></tr>
 <tr>
 <th align="left"> Add CLooG/isl to build system
-</td><td> Works on Unix
+</td><td class="done"> Works on Unix
 </td><td> Tobias
 
 </td></tr></tbody></table>
