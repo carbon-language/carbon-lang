@@ -1263,7 +1263,6 @@ class CodeGeneration : public ScopPass {
   DominatorTree *DT;
   ScalarEvolution *SE;
   ScopDetection *SD;
-  CloogInfo *C;
   LoopInfo *LI;
   TargetData *TD;
   RegionInfo *RI;
@@ -1416,7 +1415,6 @@ class CodeGeneration : public ScopPass {
     Dependences *DP = &getAnalysis<Dependences>();
     SE = &getAnalysis<ScalarEvolution>();
     LI = &getAnalysis<LoopInfo>();
-    C = &getAnalysis<CloogInfo>();
     SD = &getAnalysis<ScopDetection>();
     TD = &getAnalysis<TargetData>();
     RI = &getAnalysis<RegionInfo>();
@@ -1462,7 +1460,8 @@ class CodeGeneration : public ScopPass {
       addOpenMPDefinitions(builder);
 
     ClastStmtCodeGen CodeGen(S, *SE, DT, SD, DP, TD, builder);
-    CodeGen.codegen(C->getClast());
+    CloogInfo &C = getAnalysis<CloogInfo>();
+    CodeGen.codegen(C.getClast());
 
     parallelLoops.insert(parallelLoops.begin(),
                          CodeGen.getParallelLoops().begin(),
