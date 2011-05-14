@@ -2581,14 +2581,21 @@ public:
   };
 
   /// \brief Determine what sort of exception specification a defaulted
-  /// constructor of a class will have.
+  /// copy constructor of a class will have.
   ImplicitExceptionSpecification
   ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl);
 
   /// \brief Determine what sort of exception specification a defaulted
-  /// constructor of a class will have.
+  /// default constructor of a class will have, and whether the parameter
+  /// will be const.
   std::pair<ImplicitExceptionSpecification, bool>
   ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl);
+
+  /// \brief Determine what sort of exception specification a defautled
+  /// copy assignment operator of a class will have, and whether the
+  /// parameter will be const.
+  std::pair<ImplicitExceptionSpecification, bool>
+  ComputeDefaultedCopyAssignmentExceptionSpecAndConst(CXXRecordDecl *ClassDecl);
 
   /// \brief Determine what sort of exception specification a defaulted
   /// destructor of a class will have.

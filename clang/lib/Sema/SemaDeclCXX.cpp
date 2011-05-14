@@ -6266,13 +6266,9 @@ static bool hasConstCopyAssignment(Sema &S, const CXXRecordDecl *CClass) {
   return false;  
 }
 
-CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
-  // Note: The following rules are largely analoguous to the copy
-  // constructor rules. Note that virtual bases are not taken into account
-  // for determining the argument type of the operator. Note also that
-  // operators taking an object instead of a reference are allowed.
-  
-  
+std::pair<Sema::ImplicitExceptionSpecification, bool>
+Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
+                                                   CXXRecordDecl *ClassDecl) {
   // C++ [class.copy]p10:
   //   If the class definition does not explicitly declare a copy
   //   assignment operator, one is declared implicitly.
@@ -6317,11 +6313,6 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   //   have the form
   //
   //       X& X::operator=(X&)
-  QualType ArgType = Context.getTypeDeclType(ClassDecl);
-  QualType RetType = Context.getLValueReferenceType(ArgType);
-  if (HasConstCopyAssignment)
-    ArgType = ArgType.withConst();
-  ArgType = Context.getLValueReferenceType(ArgType);
   
   // C++ [except.spec]p14:
   //   An implicitly declared special member function (Clause 12) shall have an 
@@ -6358,12 +6349,29 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
     }      
   }
 
+  return std::make_pair(ExceptSpec, HasConstCopyAssignment);
+}
+
+CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
+  // Note: The following rules are largely analoguous to the copy
+  // constructor rules. Note that virtual bases are not taken into account
+  // for determining the argument type of the operator. Note also that
+  // operators taking an object instead of a reference are allowed.
+
+  ImplicitExceptionSpecification Spec(Context);
+  bool Const;
+  llvm::tie(Spec, Const) =
+    ComputeDefaultedCopyAssignmentExceptionSpecAndConst(ClassDecl);
+
+  QualType ArgType = Context.getTypeDeclType(ClassDecl);
+  QualType RetType = Context.getLValueReferenceType(ArgType);
+  if (Const)
+    ArgType = ArgType.withConst();
+  ArgType = Context.getLValueReferenceType(ArgType);
+
   //   An implicitly-declared copy assignment operator is an inline public
   //   member of its class.
-  FunctionProtoType::ExtProtoInfo EPI;
-  EPI.ExceptionSpecType = ExceptSpec.getExceptionSpecType();
-  EPI.NumExceptions = ExceptSpec.size();
-  EPI.Exceptions = ExceptSpec.data();
+  FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
   DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
   SourceLocation ClassLoc = ClassDecl->getLocation();
   DeclarationNameInfo NameInfo(Name, ClassLoc);
