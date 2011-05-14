@@ -57,7 +57,7 @@ public:
   void pprint(llvm::raw_ostream &OS);
 
   /// Create the Cloog AST from this program.
-  struct clast_stmt *getClast();
+  struct clast_root *getClast();
 };
 
 Cloog::Cloog(Scop *Scop) : S(Scop) {
@@ -137,8 +137,8 @@ void Cloog::pprint(raw_ostream &OS) {
 }
 
 /// Create the Cloog AST from this program.
-struct clast_stmt *Cloog::getClast() {
-  return ClastRoot;
+struct clast_root *Cloog::getClast() {
+  return (clast_root*)ClastRoot;
 }
 
 void Cloog::buildCloogOptions() {
@@ -261,7 +261,7 @@ void CloogInfo::pprint(llvm::raw_ostream &OS) {
 }
 
 /// Create the Cloog AST from this program.
-const struct clast_stmt *CloogInfo::getClast() {
+const struct clast_root *CloogInfo::getClast() {
   return C->getClast();
 }
 

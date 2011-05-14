@@ -53,7 +53,7 @@ namespace polly {
     void pprint(llvm::raw_ostream &OS);
 
     /// Create the CLooG AST from this program.
-    const struct clast_stmt *getClast();
+    const struct clast_root *getClast();
 
     bool runOnScop(Scop &S);
     void printScop(llvm::raw_ostream &OS) const;

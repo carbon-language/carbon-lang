@@ -1462,7 +1462,7 @@ class CodeGeneration : public ScopPass {
       addOpenMPDefinitions(builder);
 
     ClastStmtCodeGen CodeGen(S, *SE, DT, SD, DP, TD, builder);
-    CodeGen.codegen((const clast_root *) C->getClast());
+    CodeGen.codegen(C->getClast());
 
     parallelLoops.insert(parallelLoops.begin(),
                          CodeGen.getParallelLoops().begin(),
