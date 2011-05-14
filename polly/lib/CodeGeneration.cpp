@@ -78,12 +78,6 @@ Aligned("enable-polly-aligned",
        cl::value_desc("OpenMP code generation enabled if true"),
        cl::init(false));
 
-static cl::opt<std::string>
-CodegenOnly("polly-codegen-only",
-            cl::desc("Codegen only this function"), cl::Hidden,
-            cl::value_desc("The function name to codegen"),
-            cl::ValueRequired, cl::init(""));
-
 typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef DenseMap<const char*, Value*> CharMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
@@ -1354,6 +1348,7 @@ class CodeGeneration : public ScopPass {
       // Update RegionInfo.
       splitBlock = region->getEntry();
       region->replaceEntry(newBlock);
+      RI->setRegionFor(newBlock, region);
     } else {
       RI->setRegionFor(newBlock, region->getParent());
       splitBlock = newBlock;
@@ -1427,13 +1422,6 @@ class CodeGeneration : public ScopPass {
     RI = &getAnalysis<RegionInfo>();
 
     parallelLoops.clear();
-
-    Function *F = region->getEntry()->getParent();
-    if (CodegenOnly != "" && CodegenOnly != F->getNameStr()) {
-      errs() << "Codegenerating only function '" << CodegenOnly
-        << "' skipping '" << F->getNameStr() << "' \n";
-      return false;
-    }
 
     assert(region->isSimple() && "Only simple regions are supported");
 
