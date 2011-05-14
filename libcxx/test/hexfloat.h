@@ -24,11 +24,12 @@ class hexfloat
 {
     T value_;
 public:
-    hexfloat(unsigned long long m1, unsigned long long m0, int exp)
+    hexfloat(long long m1, unsigned long long m0, int exp)
     {
         const std::size_t n = sizeof(unsigned long long) * CHAR_BIT;
-        value_ = std::ldexp(m1 + std::ldexp(T(m0), -static_cast<int>(n -
-                                                         std::__clz(m0))), exp);
+        int s = m1 < 0 ? -1 : 1;
+        value_ = std::ldexp(m1 + s * std::ldexp(T(m0), -static_cast<int>(n -
+                                                     std::__clz(m0)/4*4)), exp);
     }
 
     operator T() const {return value_;}
