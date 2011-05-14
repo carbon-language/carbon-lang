@@ -2869,6 +2869,8 @@ def err_objc_pointer_cxx_catch_fragile : Error<
   "exception model">;
 def err_objc_object_catch : Error<
   "can't catch an Objective C object by value">;
+def err_incomplete_type_objc_at_encode : Error<
+  "'@encode' of incomplete type %0">;
 
 def warn_setter_getter_impl_required : Warning<
   "property %0 requires method %1 to be defined - "

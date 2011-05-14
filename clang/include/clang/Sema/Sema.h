@@ -3105,7 +3105,7 @@ public:
                                     Expr **Strings,
                                     unsigned NumStrings);
 
-  Expr *BuildObjCEncodeExpression(SourceLocation AtLoc,
+  ExprResult BuildObjCEncodeExpression(SourceLocation AtLoc,
                                   TypeSourceInfo *EncodedTypeInfo,
                                   SourceLocation RParenLoc);
   ExprResult BuildCXXMemberCallExpr(Expr *Exp, NamedDecl *FoundDecl,

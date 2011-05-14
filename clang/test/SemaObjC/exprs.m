@@ -32,3 +32,13 @@ void test3(Object *o) {
   // this is ok.
   __sync_bool_compare_and_swap(&g, 0, o);
 }
+
+@class Incomplete_ObjC_class;
+struct Incomplete_struct; // expected-note {{forward declaration}}
+
+void test_encode() {
+  (void)@encode(Incomplete_ObjC_class); // expected-error {{incomplete type}}
+  (void)@encode(struct Incomplete_struct); // expected-error {{incomplete type}}
+  (void)@encode(Incomplete_ObjC_class*);
+  (void)@encode(id);
+}

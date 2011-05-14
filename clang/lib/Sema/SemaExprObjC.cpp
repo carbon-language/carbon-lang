@@ -119,7 +119,7 @@ ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   return new (Context) ObjCStringLiteral(S, Ty, AtLocs[0]);
 }
 
-Expr *Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
+ExprResult Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
                                       TypeSourceInfo *EncodedTypeInfo,
                                       SourceLocation RParenLoc) {
   QualType EncodedType = EncodedTypeInfo->getType();
@@ -127,6 +127,12 @@ Expr *Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,
   if (EncodedType->isDependentType())
     StrTy = Context.DependentTy;
   else {
+    if (!EncodedType->getAsArrayTypeUnsafe()) // Incomplete array is handled.
+      if (RequireCompleteType(AtLoc, EncodedType,
+                         PDiag(diag::err_incomplete_type_objc_at_encode)
+                             << EncodedTypeInfo->getTypeLoc().getSourceRange()))
+        return ExprError();
+
     std::string Str;
     Context.getObjCEncodingForType(EncodedType, Str);
 
