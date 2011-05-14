@@ -20,6 +20,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/DenseMap.h"
@@ -2383,6 +2384,36 @@ static bool TurnSwitchRangeIntoICmp(SwitchInst *SI) {
   return true;
 }
 
+/// EliminateDeadSwitchCases - Compute masked bits for the condition of a switch
+/// and use it to remove dead cases.
+static bool EliminateDeadSwitchCases(SwitchInst *SI) {
+  Value *Cond = SI->getCondition();
+  unsigned Bits = cast<IntegerType>(Cond->getType())->getBitWidth();
+  APInt KnownZero(Bits, 0), KnownOne(Bits, 0);
+  ComputeMaskedBits(Cond, APInt::getAllOnesValue(Bits), KnownZero, KnownOne);
+
+  // Gather dead cases.
+  SmallVector<ConstantInt*, 8> DeadCases;
+  for (unsigned I = 1, E = SI->getNumCases(); I != E; ++I) {
+    if ((SI->getCaseValue(I)->getValue() & KnownZero) != 0 ||
+        (SI->getCaseValue(I)->getValue() & KnownOne) != KnownOne) {
+      DeadCases.push_back(SI->getCaseValue(I));
+      DEBUG(dbgs() << "SimplifyCFG: switch case '"
+                   << SI->getCaseValue(I)->getValue() << "' is dead.\n");
+    }
+  }
+
+  // Remove dead cases from the switch.
+  for (unsigned I = 0, E = DeadCases.size(); I != E; ++I) {
+    unsigned Case = SI->findCaseValue(DeadCases[I]);
+    // Prune unused values from PHI nodes.
+    SI->getSuccessor(Case)->removePredecessor(SI->getParent());
+    SI->removeCase(Case);
+  }
+
+  return !DeadCases.empty();
+}
+
 bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
   // If this switch is too complex to want to look at, ignore it.
   if (!isValueEqualityComparison(SI))
@@ -2414,7 +2445,11 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
   // Try to transform the switch into an icmp and a branch.
   if (TurnSwitchRangeIntoICmp(SI))
     return SimplifyCFG(BB) | true;
-  
+
+  // Remove unreachable cases.
+  if (EliminateDeadSwitchCases(SI))
+    return SimplifyCFG(BB) | true;
+
   return false;
 }
 
