@@ -80,7 +80,7 @@ int main()
         assert(!is.fail());
         assert(c == L'b');
         is >> c;
-        assert( is.eof());
+        assert(!is.eof());
         assert(!is.fail());
         assert(c == L'c');
     }
