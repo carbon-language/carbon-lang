@@ -1900,7 +1900,7 @@ let AddedComplexity = 400 in { // Prefer non-temporal versions
                                                      addr:$dst)]>, VEX;
 
   def : Pat<(alignednontemporalstore (v2i64 VR128:$src), addr:$dst),
-            (VMOVNTDQmr addr:$dst, VR128:$src)>;
+            (VMOVNTDQmr addr:$dst, VR128:$src)>, Requires<[HasAVX]>;
 
   def VMOVNTPSYmr : VPSI<0x2B, MRMDestMem, (outs),
                        (ins f256mem:$dst, VR256:$src),
