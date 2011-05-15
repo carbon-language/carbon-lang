@@ -2355,6 +2355,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
         case clang::BuiltinType::ObjCId:
         case clang::BuiltinType::ObjCClass:
         case clang::BuiltinType::ObjCSel:
+        case clang::BuiltinType::BoundMember:
             return 1;
         }
         break;
@@ -4338,7 +4339,7 @@ ClangASTContext::GetTypeName (clang_type_t opaque_qual_type)
     const TypedefType *typedef_type = qual_type->getAs<TypedefType>();
     if (typedef_type)
     {
-        const TypedefDecl *typedef_decl = typedef_type->getDecl();
+        const TypedefNameDecl *typedef_decl = typedef_type->getDecl();
         return_name = typedef_decl->getQualifiedNameAsString();
     }
     else

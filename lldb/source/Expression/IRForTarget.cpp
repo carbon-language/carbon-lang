@@ -455,7 +455,9 @@ IRForTarget::CreateResultVariable (llvm::Module &llvm_module, llvm::Function &ll
     values[0] = new_result_global;
     values[1] = new_constant_int;
     
-    MDNode *persistent_global_md = MDNode::get(llvm_module.getContext(), values, 2);
+    ArrayRef<Value*> value_ref(values, 2);
+    
+    MDNode *persistent_global_md = MDNode::get(llvm_module.getContext(), value_ref);
     NamedMDNode *named_metadata = llvm_module.getNamedMetadata("clang.global.decl.ptrs");
     named_metadata->addOperand(persistent_global_md);
     
@@ -1097,8 +1099,10 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc,
     llvm::Value* values[2];
     values[0] = persistent_global;
     values[1] = constant_int;
+    
+    ArrayRef<llvm::Value*> value_ref(values, 2);
 
-    MDNode *persistent_global_md = MDNode::get(llvm_module.getContext(), values, 2);
+    MDNode *persistent_global_md = MDNode::get(llvm_module.getContext(), value_ref);
     named_metadata->addOperand(persistent_global_md);
     
     // Now, since the variable is a pointer variable, we will drop in a load of that
@@ -1490,7 +1494,9 @@ IRForTarget::MaybeHandleCall (Module &llvm_module, CallInst *llvm_call_inst)
     
     Value *values[1];
     values[0] = func_name;
-    MDNode *func_metadata = MDNode::get(llvm_module.getContext(), values, 1);
+    ArrayRef<Value*> value_ref(values, 1);
+    
+    MDNode *func_metadata = MDNode::get(llvm_module.getContext(), value_ref);
     
     llvm_call_inst->setMetadata("lldb.call.realName", func_metadata);
     

@@ -60,7 +60,7 @@ ClangASTType::GetClangTypeName (clang_type_t clang_type)
         const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
         if (typedef_type)
         {
-            const clang::TypedefDecl *typedef_decl = typedef_type->getDecl();
+            const clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
             std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
             if (!clang_typedef_name.empty())
                 clang_type_name.SetCString (clang_typedef_name.c_str());
@@ -1014,7 +1014,7 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
                     const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
                     if (typedef_type)
                     {
-                        const clang::TypedefDecl *typedef_decl = typedef_type->getDecl();
+                        const clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
                         std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
                         if (!clang_typedef_name.empty())
                             s->PutCString (clang_typedef_name.c_str());
