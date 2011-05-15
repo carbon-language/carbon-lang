@@ -8,8 +8,8 @@
 // CHECK: @_ZTCSd0_Si = linkonce_odr unnamed_addr constant 
 // CHECK: @_ZTCSd16_So = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTTSo = linkonce_odr unnamed_addr constant
-// CHECK: @_ZTTSi = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTVSo = linkonce_odr unnamed_addr constant
+// CHECK: @_ZTTSi = linkonce_odr unnamed_addr constant
 // CHECK: @_ZTVSi = linkonce_odr unnamed_addr constant
 namespace std {
   struct A { A(); };

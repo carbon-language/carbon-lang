@@ -745,6 +745,10 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD,
 /// any vtable pointers before calling this destructor.
 static bool CanSkipVTablePointerInitialization(ASTContext &Context,
                                            const CXXDestructorDecl *Dtor) {
+  // FIXME: We need to check dtors of bases of members too. 
+  // Re-enable once this has been fixed.
+  return false;
+
   if (!Dtor->hasTrivialBody())
     return false;
 
