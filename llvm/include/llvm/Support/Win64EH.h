@@ -19,8 +19,6 @@
 namespace llvm {
 namespace Win64EH {
 
-extern "C" {
-
 /// UnwindOpcodes - Enumeration whose values specify a single operation in
 /// the prolog of a function.
 enum UnwindOpcodes {
@@ -91,8 +89,6 @@ inline void *getExceptionData(UnwindInfo &info) {
   return reinterpret_cast<void *>(reinterpret_cast<uint64_t *>(
                                               getLanguageSpecificData(info))+1);
 }
-
-} // End of extern "C"
 
 } // End of namespace Win64EH
 } // End of namespace llvm
