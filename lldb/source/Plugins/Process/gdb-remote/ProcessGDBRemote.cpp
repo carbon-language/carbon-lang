@@ -1637,7 +1637,13 @@ ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &er
                                     if (result == eExecutionCompleted)
                                     {
                                         allocated_addr = return_value_sp->GetScalar().ULongLong();
-                                        m_addr_to_mmap_size[allocated_addr] = size;
+                                        if (GetAddressByteSize() == 4)
+                                        {
+                                            if (allocated_addr == UINT32_MAX)
+                                                allocated_addr = LLDB_INVALID_ADDRESS;
+                                        }
+                                        if (allocated_addr != LLDB_INVALID_ADDRESS)
+                                            m_addr_to_mmap_size[allocated_addr] = size;
                                     }
                                 }
                             }

@@ -620,9 +620,14 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
     
     std::map<uint8_t *, uint8_t *>::iterator fun_pos = jit_memory_manager->m_functions.begin();
     std::map<uint8_t *, uint8_t *>::iterator fun_end = jit_memory_manager->m_functions.end();
-    
+
     for (; fun_pos != fun_end; ++fun_pos)
-        alloc_size += (*fun_pos).second - (*fun_pos).first;
+    {
+        size_t mem_size = fun_pos->second - fun_pos->first;
+        if (log)
+            log->Printf ("JIT memory: [%p - %p) size = %zu", fun_pos->first, fun_pos->second, mem_size);
+        alloc_size += mem_size;
+    }
     
     Error alloc_error;
     func_allocation_addr = exc_context.process->AllocateMemory (alloc_size, 
