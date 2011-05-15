@@ -1644,9 +1644,24 @@ public:
   bool isDeletedAsWritten() const { return IsDeleted && !IsDefaulted; }
   void setDeletedAsWritten(bool D = true) { IsDeleted = D; }
 
-  /// \brief Determines whether this is a function "main", which is
-  /// the entry point into an executable program.
+  /// \brief Determines whether this function is "main", which is the
+  /// entry point into an executable program.
   bool isMain() const;
+
+  /// \brief Determines whether this operator new or delete is one
+  /// of the reserved global placement operators:
+  ///    void *operator new(size_t, void *);
+  ///    void *operator new[](size_t, void *);
+  ///    void operator delete(void *, void *);
+  ///    void operator delete[](void *, void *);
+  /// These functions have special behavior under [new.delete.placement]:
+  ///    These functions are reserved, a C++ program may not define
+  ///    functions that displace the versions in the Standard C++ library.
+  ///    The provisions of [basic.stc.dynamic] do not apply to these
+  ///    reserved placement forms of operator new and operator delete.
+  ///
+  /// This function must be an allocation or deallocation function.
+  bool isReservedGlobalPlacementOperator() const;
 
   /// \brief Determines whether this function is a function with
   /// external, C linkage.

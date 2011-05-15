@@ -1475,10 +1475,34 @@ void FunctionDecl::setPure(bool P) {
 }
 
 bool FunctionDecl::isMain() const {
-  ASTContext &Context = getASTContext();
-  return !Context.getLangOptions().Freestanding &&
-    getDeclContext()->getRedeclContext()->isTranslationUnit() &&
-    getIdentifier() && getIdentifier()->isStr("main");
+  const TranslationUnitDecl *tunit =
+    dyn_cast<TranslationUnitDecl>(getDeclContext()->getRedeclContext());
+  return tunit &&
+         tunit->getASTContext().getLangOptions().Freestanding &&
+         getIdentifier() &&
+         getIdentifier()->isStr("main");
+}
+
+bool FunctionDecl::isReservedGlobalPlacementOperator() const {
+  assert(getDeclName().getNameKind() == DeclarationName::CXXOperatorName);
+  assert(getDeclName().getCXXOverloadedOperator() == OO_New ||
+         getDeclName().getCXXOverloadedOperator() == OO_Delete ||
+         getDeclName().getCXXOverloadedOperator() == OO_Array_New ||
+         getDeclName().getCXXOverloadedOperator() == OO_Array_Delete);
+
+  if (isa<CXXRecordDecl>(getDeclContext())) return false;
+  assert(getDeclContext()->getRedeclContext()->isTranslationUnit());
+
+  const FunctionProtoType *proto = getType()->castAs<FunctionProtoType>();
+  if (proto->getNumArgs() != 2 || proto->isVariadic()) return false;
+
+  ASTContext &Context =
+    cast<TranslationUnitDecl>(getDeclContext()->getRedeclContext())
+      ->getASTContext();
+
+  // The result type and first argument type are constant across all
+  // these operators.  The second argument must be exactly void*.
+  return (proto->getArgType(1).getCanonicalType() == Context.VoidPtrTy);
 }
 
 bool FunctionDecl::isExternC() const {
