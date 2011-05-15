@@ -2544,10 +2544,10 @@ enum
 const DNBRegisterInfo
 DNBArchMachARM::g_gpr_registers[] =
 {
-    DEFINE_GPR_IDX ( 0,  r0,  NULL, INVALID_NUB_REGNUM   ),
-    DEFINE_GPR_IDX ( 1,  r1,  NULL, INVALID_NUB_REGNUM   ),
-    DEFINE_GPR_IDX ( 2,  r2,  NULL, INVALID_NUB_REGNUM   ),
-    DEFINE_GPR_IDX ( 3,  r3,  NULL, INVALID_NUB_REGNUM   ),
+    DEFINE_GPR_IDX ( 0,  r0,"arg1", GENERIC_REGNUM_ARG1  ),
+    DEFINE_GPR_IDX ( 1,  r1,"arg2", GENERIC_REGNUM_ARG2  ),
+    DEFINE_GPR_IDX ( 2,  r2,"arg3", GENERIC_REGNUM_ARG3  ),
+    DEFINE_GPR_IDX ( 3,  r3,"arg4", GENERIC_REGNUM_ARG4  ),
     DEFINE_GPR_IDX ( 4,  r4,  NULL, INVALID_NUB_REGNUM   ),
     DEFINE_GPR_IDX ( 5,  r5,  NULL, INVALID_NUB_REGNUM   ),
     DEFINE_GPR_IDX ( 6,  r6,  NULL, INVALID_NUB_REGNUM   ),
@@ -2560,7 +2560,7 @@ DNBArchMachARM::g_gpr_registers[] =
     DEFINE_GPR_NAME (sp, "r13", GENERIC_REGNUM_SP    ),
     DEFINE_GPR_NAME (lr, "r14", GENERIC_REGNUM_RA    ),
     DEFINE_GPR_NAME (pc, "r15", GENERIC_REGNUM_PC    ),
-    DEFINE_GPR_NAME (cpsr,  NULL, GENERIC_REGNUM_FLAGS )
+    DEFINE_GPR_NAME (cpsr, "flags", GENERIC_REGNUM_FLAGS )
 };
 
 // Floating point registers

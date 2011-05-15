@@ -334,7 +334,8 @@ namespace lldb_private {
         Dump (Stream *s, 
               const RegisterInfo *reg_info, 
               bool prefix_with_name,
-              lldb::Format format = lldb::eFormatDefault) const;
+              bool prefix_with_alt_name,
+              lldb::Format format) const;
 
         void *
         GetBytes ();

@@ -412,7 +412,7 @@ UnwindAssemblyInstEmulation::ReadRegister (EmulateInstruction *instruction,
         
         StreamString strm;
         strm.Printf ("UnwindAssemblyInstEmulation::ReadRegister  (name = \"%s\") => synthetic_value = %i, value = ", reg_info->name, synthetic);
-        reg_value.Dump(&strm, reg_info, false, eFormatDefault);
+        reg_value.Dump(&strm, reg_info, false, false, eFormatDefault);
         log->PutCString(strm.GetData());
     }
     return true;
@@ -442,7 +442,7 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         
         StreamString strm;
         strm.Printf ("UnwindAssemblyInstEmulation::WriteRegister (name = \"%s\", value = ", reg_info->name);
-        reg_value.Dump(&strm, reg_info, false, eFormatDefault);
+        reg_value.Dump(&strm, reg_info, false, false, eFormatDefault);
         strm.PutCString (", context = ");
         context.Dump(strm, instruction);
         log->PutCString(strm.GetData());

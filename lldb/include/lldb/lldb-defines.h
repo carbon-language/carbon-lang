@@ -56,8 +56,15 @@
 #define LLDB_REGNUM_GENERIC_FP          2   // Frame Pointer
 #define LLDB_REGNUM_GENERIC_RA          3   // Return Address
 #define LLDB_REGNUM_GENERIC_FLAGS       4   // Processor flags register
-
-//----------------------------------------------------------------------
+#define LLDB_REGNUM_GENERIC_ARG1        5   // The register that would contain pointer size or less argument 1 (if any)
+#define LLDB_REGNUM_GENERIC_ARG2        6   // The register that would contain pointer size or less argument 2 (if any)
+#define LLDB_REGNUM_GENERIC_ARG3        7   // The register that would contain pointer size or less argument 3 (if any)
+#define LLDB_REGNUM_GENERIC_ARG4        8   // The register that would contain pointer size or less argument 4 (if any)
+#define LLDB_REGNUM_GENERIC_ARG5        9   // The register that would contain pointer size or less argument 5 (if any)
+#define LLDB_REGNUM_GENERIC_ARG6        10  // The register that would contain pointer size or less argument 6 (if any)
+#define LLDB_REGNUM_GENERIC_ARG7        11  // The register that would contain pointer size or less argument 7 (if any)
+#define LLDB_REGNUM_GENERIC_ARG8        12  // The register that would contain pointer size or less argument 8 (if any)
+//---------------------------------------------------------------------
 /// Invalid value definitions
 //----------------------------------------------------------------------
 #define LLDB_INVALID_ADDRESS            UINT64_MAX

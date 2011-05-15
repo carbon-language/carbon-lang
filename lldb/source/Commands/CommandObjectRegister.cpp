@@ -89,8 +89,9 @@ public:
                 else
                     format = m_options.format;
 
-                bool prefix_with_name = true;
-                reg_value.Dump(&strm, reg_info, prefix_with_name, m_options.format);
+                bool prefix_with_altname = m_options.alternate_name;
+                bool prefix_with_name = !prefix_with_altname;
+                reg_value.Dump(&strm, reg_info, prefix_with_name, prefix_with_altname, m_options.format);
                 if (((reg_info->encoding == eEncodingUint) || (reg_info->encoding == eEncodingSint)) && 
                     (reg_info->byte_size == reg_ctx->GetThread().GetProcess().GetAddressByteSize()))
                 {
@@ -245,7 +246,8 @@ protected:
         CommandOptions (CommandInterpreter &interpreter) :
             Options(interpreter),
             set_indexes (OptionValue::ConvertTypeToMask (OptionValue::eTypeUInt64)),
-            dump_all_sets (false, false) // Initial and default values are false
+            dump_all_sets (false, false), // Initial and default values are false
+            alternate_name (false, false)
         {
             OptionParsingStarting();
         }
@@ -275,9 +277,21 @@ protected:
                     break;
 
                 case 'a':
-                    dump_all_sets.SetCurrentValue(true);
+                    // When we don't use OptionValue::SetValueFromCString(const char *) to 
+                    // set an option value, it won't be marked as being set in the options
+                    // so we make a call to let users know the value was set via option
+                    dump_all_sets.SetCurrentValue (true);
+                    dump_all_sets.SetOptionWasSet ();
                     break;
 
+                case 'A':
+                    // When we don't use OptionValue::SetValueFromCString(const char *) to 
+                    // set an option value, it won't be marked as being set in the options
+                    // so we make a call to let users know the value was set via option
+                    alternate_name.SetCurrentValue (true);
+                    dump_all_sets.SetOptionWasSet ();
+                    break;
+                    
                 default:
                     error.SetErrorStringWithFormat("Unrecognized short option '%c'\n", short_option);
                     break;
@@ -291,6 +305,7 @@ protected:
             format = eFormatDefault;
             set_indexes.Clear();
             dump_all_sets.Clear();
+            alternate_name.Clear();
         }
         
         const OptionDefinition*
@@ -307,6 +322,7 @@ protected:
         lldb::Format format;
         OptionValueArray set_indexes;
         OptionValueBoolean dump_all_sets;
+        OptionValueBoolean alternate_name;
     };
 
     CommandOptions m_options;
@@ -315,9 +331,10 @@ protected:
 OptionDefinition
 CommandObjectRegisterRead::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "format", 'f', required_argument, NULL, 0, eArgTypeExprFormat,  "Specify the format to use when dumping register values."},
-    { LLDB_OPT_SET_1  , false, "set"   , 's', required_argument, NULL, 0, eArgTypeIndex     , "Specify which register sets to dump by index."},
-    { LLDB_OPT_SET_2  , false, "all"   , 'a', no_argument      , NULL, 0, eArgTypeNone      , "Show all register sets."},
+    { LLDB_OPT_SET_ALL, false, "format"   , 'f', required_argument, NULL, 0, eArgTypeExprFormat, "Specify the format to use when dumping register values."},
+    { LLDB_OPT_SET_ALL, false, "alternate", 'A', no_argument      , NULL, 0, eArgTypeNone      , "Display register names using the alternate register name if there is one."},
+    { LLDB_OPT_SET_1  , false, "set"      , 's', required_argument, NULL, 0, eArgTypeIndex     , "Specify which register sets to dump by index."},
+    { LLDB_OPT_SET_2  , false, "all"      , 'a', no_argument      , NULL, 0, eArgTypeNone      , "Show all register sets."},
     { 0, false, NULL, 0, 0, NULL, NULL, eArgTypeNone, NULL }
 };
 

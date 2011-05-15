@@ -163,6 +163,14 @@ enum
 #define GENERIC_REGNUM_FP       2   // Frame Pointer
 #define GENERIC_REGNUM_RA       3   // Return Address
 #define GENERIC_REGNUM_FLAGS    4   // Processor flags register
+#define GENERIC_REGNUM_ARG1     5   // The register that would contain pointer size or less argument 1 (if any)
+#define GENERIC_REGNUM_ARG2     6   // The register that would contain pointer size or less argument 2 (if any)
+#define GENERIC_REGNUM_ARG3     7   // The register that would contain pointer size or less argument 3 (if any)
+#define GENERIC_REGNUM_ARG4     8   // The register that would contain pointer size or less argument 4 (if any)
+#define GENERIC_REGNUM_ARG5     9   // The register that would contain pointer size or less argument 5 (if any)
+#define GENERIC_REGNUM_ARG6     10  // The register that would contain pointer size or less argument 6 (if any)
+#define GENERIC_REGNUM_ARG7     11  // The register that would contain pointer size or less argument 7 (if any)
+#define GENERIC_REGNUM_ARG8     12  // The register that would contain pointer size or less argument 8 (if any)
 
 enum DNBRegisterType
 {

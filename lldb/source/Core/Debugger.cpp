@@ -1112,7 +1112,7 @@ Debugger::FormatPrompt
                                 var_success = reg_ctx->ReadRegister (reg_info, reg_value);
                                 if (var_success)
                                 {
-                                    reg_value.Dump(&s, reg_info, false);
+                                    reg_value.Dump(&s, reg_info, false, false, eFormatDefault);
                                 }
                             }                            
                             

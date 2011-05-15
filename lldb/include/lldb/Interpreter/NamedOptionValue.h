@@ -134,6 +134,12 @@ namespace lldb_private {
         {
             return m_value_was_set;
         }
+        
+        void
+        SetOptionWasSet ()
+        {
+            m_value_was_set = true;
+        }
 
     protected:
         bool m_value_was_set; // This can be used to see if a value has been set

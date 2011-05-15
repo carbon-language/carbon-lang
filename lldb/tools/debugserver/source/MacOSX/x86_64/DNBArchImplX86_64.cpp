@@ -819,6 +819,7 @@ enum gdb_regnums
 #define DEFINE_GPR(reg) { e_regSetGPR, gpr_##reg, #reg, NULL, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), gcc_dwarf_##reg, gcc_dwarf_##reg, INVALID_NUB_REGNUM, gdb_##reg }
 #define DEFINE_GPR_ALT(reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), gcc_dwarf_##reg, gcc_dwarf_##reg, gen, gdb_##reg }
 #define DEFINE_GPR_ALT2(reg, alt) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gdb_##reg }
+#define DEFINE_GPR_ALT3(reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gen, gdb_##reg }
 
 // General purpose registers for 64 bit
 const DNBRegisterInfo
@@ -826,22 +827,22 @@ DNBArchImplX86_64::g_gpr_registers[] =
 {
     DEFINE_GPR      (rax),
     DEFINE_GPR      (rbx),
-    DEFINE_GPR      (rcx),
-    DEFINE_GPR      (rdx),
-    DEFINE_GPR      (rdi),
-    DEFINE_GPR      (rsi),
-    DEFINE_GPR_ALT  (rbp, "fp", GENERIC_REGNUM_FP),
-    DEFINE_GPR_ALT  (rsp, "sp", GENERIC_REGNUM_SP),
-    DEFINE_GPR      (r8),
-    DEFINE_GPR      (r9),
+    DEFINE_GPR_ALT  (rcx , "arg4", GENERIC_REGNUM_ARG4),
+    DEFINE_GPR_ALT  (rdx , "arg3", GENERIC_REGNUM_ARG3),
+    DEFINE_GPR_ALT  (rdi , "arg1", GENERIC_REGNUM_ARG1),
+    DEFINE_GPR_ALT  (rsi , "arg2", GENERIC_REGNUM_ARG2),
+    DEFINE_GPR_ALT  (rbp , "fp"  , GENERIC_REGNUM_FP),
+    DEFINE_GPR_ALT  (rsp , "sp"  , GENERIC_REGNUM_SP),
+    DEFINE_GPR_ALT  (r8  , "arg5", GENERIC_REGNUM_ARG5),
+    DEFINE_GPR_ALT  (r9  , "arg6", GENERIC_REGNUM_ARG6),
     DEFINE_GPR      (r10),
     DEFINE_GPR      (r11),
     DEFINE_GPR      (r12),
     DEFINE_GPR      (r13),
     DEFINE_GPR      (r14),
     DEFINE_GPR      (r15),
-    DEFINE_GPR_ALT  (rip, "pc", GENERIC_REGNUM_PC),
-    DEFINE_GPR_ALT2 (rflags, "flags"),
+    DEFINE_GPR_ALT  (rip , "pc", GENERIC_REGNUM_PC),
+    DEFINE_GPR_ALT3 (rflags, "flags", GENERIC_REGNUM_FLAGS),
     DEFINE_GPR_ALT2 (cs,        NULL),
     DEFINE_GPR_ALT2 (fs,        NULL),
     DEFINE_GPR_ALT2 (gs,        NULL),

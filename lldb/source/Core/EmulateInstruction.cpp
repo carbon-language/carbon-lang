@@ -421,7 +421,7 @@ EmulateInstruction::WriteRegisterDefault (EmulateInstruction *instruction,
 {
     StreamFile strm (stdout, false);
     strm.Printf ("    Write to Register (name = %s, value = " , reg_info->name);
-    reg_value.Dump(&strm, reg_info, false);
+    reg_value.Dump(&strm, reg_info, false, false, eFormatDefault);
     strm.PutCString (", context = ");
     context.Dump (strm, instruction);        
     strm.EOL();
