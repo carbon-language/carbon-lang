@@ -136,8 +136,8 @@ namespace test3 {
   void d(int n) {
     // CHECK: define void @_ZN5test31dEi(
     // CHECK: [[N:%.*]] = load i32*
-    // CHECK: [[NE:%.*]] = mul i32 [[N]], 20
     // CHECK: @llvm.umul.with.overflow.i32(i32 [[N]], i32 80)
+    // CHECK: [[NE:%.*]] = mul i32 [[N]], 20
     // CHECK: @llvm.uadd.with.overflow.i32(i32 {{.*}}, i32 8)
     // CHECK: [[SZ:%.*]] = select
     // CHECK: call noalias i8* @_Znam(i32 [[SZ]])
@@ -208,8 +208,8 @@ namespace test4 {
   void d(int n) {
     // CHECK: define void @_ZN5test41dEi(
     // CHECK: [[N:%.*]] = load i32*
-    // CHECK: [[NE:%.*]] = mul i32 [[N]], 20
     // CHECK: @llvm.umul.with.overflow.i32(i32 [[N]], i32 80)
+    // CHECK: [[NE:%.*]] = mul i32 [[N]], 20
     // CHECK: @llvm.uadd.with.overflow.i32(i32 {{.*}}, i32 8)
     // CHECK: [[SZ:%.*]] = select
     // CHECK: call noalias i8* @_Znam(i32 [[SZ]])

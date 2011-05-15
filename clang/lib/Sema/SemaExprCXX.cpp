@@ -951,8 +951,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       }
     }
 
-    ArraySize = ImpCastExprToType(ArraySize, Context.getSizeType(),
-                      CK_IntegralCast).take();
+    // Note that we do *not* convert the argument in any way.  It can
+    // be signed, larger than size_t, whatever.
   }
 
   FunctionDecl *OperatorNew = 0;
