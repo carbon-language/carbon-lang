@@ -293,6 +293,7 @@ namespace llvm {
     /// if non-zero.  This must be a power of 2 on some targets.
     virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                                 uint64_t Size, unsigned ByteAlignment = 0) = 0;
+
     /// @}
     /// @name Generating Data
     /// @{
@@ -455,6 +456,13 @@ namespace llvm {
     virtual void EmitCFISameValue(int64_t Register);
     virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
     virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
+
+    virtual void EmitWin64EHFrame(MCSymbol *Symbol, MCSymbol *EHandler = 0);
+    virtual void EmitWin64EHPushReg(int64_t Register);
+    virtual void EmitWin64EHSetFrame(int64_t Register, int64_t Offset);
+    virtual void EmitWin64EHAllocStack(int64_t Size);
+    virtual void EmitWin64EHSaveReg(int64_t Register, int64_t Offset);
+    virtual void EmitWin64EHPushFrame(bool Code);
 
     /// EmitInstruction - Emit the given @p Instruction into the current
     /// section.
