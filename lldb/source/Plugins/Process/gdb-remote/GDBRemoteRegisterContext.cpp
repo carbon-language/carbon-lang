@@ -412,10 +412,10 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
     static RegisterInfo g_register_infos[] = {
 //   NAME    ALT    SZ  OFF  ENCODING          FORMAT          COMPILER             DWARF                GENERIC                 GDB    LLDB
 //   ======  ====== === ===  =============     ============    ===================  ===================  ======================  ===    ====
-    { "r0",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r0,              dwarf_r0,            LLDB_INVALID_REGNUM,     0,      0 }},
-    { "r1",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r1,              dwarf_r1,            LLDB_INVALID_REGNUM,     1,      1 }},
-    { "r2",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r2,              dwarf_r2,            LLDB_INVALID_REGNUM,     2,      2 }},
-    { "r3",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r3,              dwarf_r3,            LLDB_INVALID_REGNUM,     3,      3 }},
+    { "r0", "arg1",   4,   0, eEncodingUint,    eFormatHex,   { gcc_r0,              dwarf_r0,            LLDB_REGNUM_GENERIC_ARG1,0,      0 }},
+    { "r1", "arg2",   4,   0, eEncodingUint,    eFormatHex,   { gcc_r1,              dwarf_r1,            LLDB_REGNUM_GENERIC_ARG2,1,      1 }},
+    { "r2", "arg3",   4,   0, eEncodingUint,    eFormatHex,   { gcc_r2,              dwarf_r2,            LLDB_REGNUM_GENERIC_ARG3,2,      2 }},
+    { "r3", "arg4",   4,   0, eEncodingUint,    eFormatHex,   { gcc_r3,              dwarf_r3,            LLDB_REGNUM_GENERIC_ARG4,3,      3 }},
     { "r4",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r4,              dwarf_r4,            LLDB_INVALID_REGNUM,     4,      4 }},
     { "r5",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r5,              dwarf_r5,            LLDB_INVALID_REGNUM,     5,      5 }},
     { "r6",   NULL,   4,   0, eEncodingUint,    eFormatHex,   { gcc_r6,              dwarf_r6,            LLDB_INVALID_REGNUM,     6,      6 }},
@@ -437,7 +437,7 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
     { "f6",   NULL,  12,   0, eEncodingIEEE754, eFormatHex,   { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,    22,     22 }},
     { "f7",   NULL,  12,   0, eEncodingIEEE754, eFormatHex,   { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,    23,     23 }},
     { "fps",  NULL,   4,   0, eEncodingIEEE754, eFormatHex,   { LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,    24,     24 }},
-    { "cpsr", "psr",  4,   0, eEncodingUint,    eFormatHex,   { gcc_cpsr,            dwarf_cpsr,          LLDB_INVALID_REGNUM,    25,     25 }},
+    { "cpsr","flags", 4,   0, eEncodingUint,    eFormatHex,   { gcc_cpsr,            dwarf_cpsr,          LLDB_INVALID_REGNUM,    25,     25 }},
     { "s0",   NULL,   4,   0, eEncodingIEEE754, eFormatHex,   { LLDB_INVALID_REGNUM, dwarf_s0,            LLDB_INVALID_REGNUM,    26,     26 }},
     { "s1",   NULL,   4,   0, eEncodingIEEE754, eFormatHex,   { LLDB_INVALID_REGNUM, dwarf_s1,            LLDB_INVALID_REGNUM,    27,     27 }},
     { "s2",   NULL,   4,   0, eEncodingIEEE754, eFormatHex,   { LLDB_INVALID_REGNUM, dwarf_s2,            LLDB_INVALID_REGNUM,    28,     28 }},
