@@ -151,16 +151,14 @@ void CodeGenFunction::GenerateObjCGetterBody(ObjCIvarDecl *Ivar,
   // objc_copyStruct (ReturnValue, &structIvar, 
   //                  sizeof (Type of Ivar), isAtomic, false);
   CallArgList Args;
-  RValue RV = RValue::get(Builder.CreateBitCast(ReturnValue,
-                                                Types.ConvertType(getContext().VoidPtrTy)));
+  RValue RV = RValue::get(Builder.CreateBitCast(ReturnValue, VoidPtrTy));
   Args.add(RV, getContext().VoidPtrTy);
-  RV = RValue::get(Builder.CreateBitCast(LV.getAddress(),
-                                         Types.ConvertType(getContext().VoidPtrTy)));
+  RV = RValue::get(Builder.CreateBitCast(LV.getAddress(), VoidPtrTy));
   Args.add(RV, getContext().VoidPtrTy);
   // sizeof (Type of Ivar)
   CharUnits Size =  getContext().getTypeSizeInChars(Ivar->getType());
   llvm::Value *SizeVal =
-  llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy), 
+  llvm::ConstantInt::get(Types.ConvertType(getContext().LongTy),
                          Size.getQuantity());
   Args.add(RValue::get(SizeVal), getContext().LongTy);
   llvm::Value *isAtomic =

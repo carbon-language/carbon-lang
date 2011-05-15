@@ -90,9 +90,10 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 
   // Initialize the type cache.
   llvm::LLVMContext &LLVMContext = M.getContext();
-  Int8Ty  = llvm::Type::getInt8Ty(LLVMContext);
-  Int32Ty  = llvm::Type::getInt32Ty(LLVMContext);
-  Int64Ty  = llvm::Type::getInt64Ty(LLVMContext);
+  VoidTy = llvm::Type::getVoidTy(LLVMContext);
+  Int8Ty = llvm::Type::getInt8Ty(LLVMContext);
+  Int32Ty = llvm::Type::getInt32Ty(LLVMContext);
+  Int64Ty = llvm::Type::getInt64Ty(LLVMContext);
   PointerWidthInBits = C.Target.getPointerWidth(0);
   PointerAlignInBytes =
     C.toCharUnitsFromBits(C.Target.getPointerAlign(0)).getQuantity();
@@ -342,8 +343,7 @@ void CodeGenModule::AddGlobalDtor(llvm::Function * Dtor, int Priority) {
 
 void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
   // Ctor function type is void()*.
-  llvm::FunctionType* CtorFTy =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), false);
+  llvm::FunctionType* CtorFTy = llvm::FunctionType::get(VoidTy, false);
   llvm::Type *CtorPFTy = llvm::PointerType::getUnqual(CtorFTy);
 
   // Get the type of a ctor entry, { i32, void ()* }.
@@ -856,7 +856,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
   if (isa<llvm::FunctionType>(Ty)) {
     FTy = cast<llvm::FunctionType>(Ty);
   } else {
-    FTy = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext), false);
+    FTy = llvm::FunctionType::get(VoidTy, false);
     IsIncompleteFunction = true;
   }
   
@@ -2269,14 +2269,11 @@ llvm::Constant *CodeGenModule::getBlockObjectDispose() {
   }
 
   // Otherwise construct the function by hand.
-  const llvm::FunctionType *FTy;
-  std::vector<const llvm::Type*> ArgTys;
-  const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
-  ArgTys.push_back(Int8PtrTy);
-  ArgTys.push_back(llvm::Type::getInt32Ty(VMContext));
-  FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+  const llvm::Type *args[] = { Int8PtrTy, Int32Ty };
+  const llvm::FunctionType *fty
+    = llvm::FunctionType::get(VoidTy, args, false);
   return BlockObjectDispose =
-    CreateRuntimeFunction(FTy, "_Block_object_dispose");
+    CreateRuntimeFunction(fty, "_Block_object_dispose");
 }
 
 llvm::Constant *CodeGenModule::getBlockObjectAssign() {
@@ -2291,15 +2288,11 @@ llvm::Constant *CodeGenModule::getBlockObjectAssign() {
   }
 
   // Otherwise construct the function by hand.
-  const llvm::FunctionType *FTy;
-  std::vector<const llvm::Type*> ArgTys;
-  const llvm::Type *ResultType = llvm::Type::getVoidTy(VMContext);
-  ArgTys.push_back(Int8PtrTy);
-  ArgTys.push_back(Int8PtrTy);
-  ArgTys.push_back(llvm::Type::getInt32Ty(VMContext));
-  FTy = llvm::FunctionType::get(ResultType, ArgTys, false);
+  const llvm::Type *args[] = { Int8PtrTy, Int8PtrTy, Int32Ty };
+  const llvm::FunctionType *fty
+    = llvm::FunctionType::get(VoidTy, args, false);
   return BlockObjectAssign =
-    CreateRuntimeFunction(FTy, "_Block_object_assign");
+    CreateRuntimeFunction(fty, "_Block_object_assign");
 }
 
 llvm::Constant *CodeGenModule::getNSConcreteGlobalBlock() {

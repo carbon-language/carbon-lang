@@ -97,16 +97,20 @@ namespace CodeGen {
   };
 
   struct CodeGenTypeCache {
+    /// void
+    const llvm::Type *VoidTy;
+
     /// i8, i32, and i64
     const llvm::IntegerType *Int8Ty, *Int32Ty, *Int64Ty;
 
     /// int
     const llvm::IntegerType *IntTy;
 
-    /// intptr_t and size_t, which we assume are the same
+    /// intptr_t, size_t, and ptrdiff_t, which we assume are the same size.
     union {
       const llvm::IntegerType *IntPtrTy;
       const llvm::IntegerType *SizeTy;
+      const llvm::IntegerType *PtrDiffTy;
     };
 
     /// void* in address space 0
