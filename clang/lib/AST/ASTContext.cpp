@@ -4248,9 +4248,12 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     } else {
       S += '[';
 
-      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
-        S += llvm::utostr(CAT->getSize().getZExtValue());
-      else {
+      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
+        if (getTypeSize(CAT->getElementType()) == 0)
+          S += '0';
+        else
+          S += llvm::utostr(CAT->getSize().getZExtValue());
+      } else {
         //Variable length arrays are encoded as a regular array with 0 elements.
         assert((isa<VariableArrayType>(AT) || isa<IncompleteArrayType>(AT)) &&
                "Unknown array type!");
@@ -4445,35 +4448,39 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
     return;
 
   CXXRecordDecl *CXXRec = dyn_cast<CXXRecordDecl>(RDecl);
-  std::map<uint64_t, NamedDecl *> FieldOrBaseOffsets;
+  std::multimap<uint64_t, NamedDecl *> FieldOrBaseOffsets;
   const ASTRecordLayout &layout = getASTRecordLayout(RDecl);
-  
-  unsigned i = 0;
-  for (RecordDecl::field_iterator Field = RDecl->field_begin(),
-                               FieldEnd = RDecl->field_end();
-       Field != FieldEnd; ++Field, ++i) {
-    assert(!FieldOrBaseOffsets[layout.getFieldOffset(i)]);
-    FieldOrBaseOffsets[layout.getFieldOffset(i)] = *Field;
-  }
-  
+
   if (CXXRec) {
     for (CXXRecordDecl::base_class_iterator
            BI = CXXRec->bases_begin(),
            BE = CXXRec->bases_end(); BI != BE; ++BI) {
       if (!BI->isVirtual()) {
         CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
-        assert(!FieldOrBaseOffsets[layout.getBaseClassOffsetInBits(base)]);
-        FieldOrBaseOffsets[layout.getBaseClassOffsetInBits(base)] = base;
+        uint64_t offs = layout.getBaseClassOffsetInBits(base);
+        FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
+                                  std::make_pair(offs, base));
       }
     }
-    if (includeVBases) {
-      for (CXXRecordDecl::base_class_iterator
-             BI = CXXRec->vbases_begin(),
-             BE = CXXRec->vbases_end(); BI != BE; ++BI) {
-        CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
-        assert(!FieldOrBaseOffsets[layout.getVBaseClassOffsetInBits(base)]);
-        FieldOrBaseOffsets[layout.getVBaseClassOffsetInBits(base)] = base;
-      }
+  }
+  
+  unsigned i = 0;
+  for (RecordDecl::field_iterator Field = RDecl->field_begin(),
+                               FieldEnd = RDecl->field_end();
+       Field != FieldEnd; ++Field, ++i) {
+    uint64_t offs = layout.getFieldOffset(i);
+    FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
+                              std::make_pair(offs, *Field));
+  }
+
+  if (CXXRec && includeVBases) {
+    for (CXXRecordDecl::base_class_iterator
+           BI = CXXRec->vbases_begin(),
+           BE = CXXRec->vbases_end(); BI != BE; ++BI) {
+      CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
+      uint64_t offs = layout.getVBaseClassOffsetInBits(base);
+      FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
+                                std::make_pair(offs, base));
     }
   }
 
@@ -4504,8 +4511,9 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
 
   if (!RDecl->hasFlexibleArrayMember()) {
     // Mark the end of the structure.
-    assert(!FieldOrBaseOffsets[toBits(size)]);
-    FieldOrBaseOffsets[toBits(size)] = 0;
+    uint64_t offs = toBits(size);
+    FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
+                              std::make_pair(offs, (NamedDecl*)0));
   }
 
   for (; CurLayObj != FieldOrBaseOffsets.end(); ++CurLayObj) {
