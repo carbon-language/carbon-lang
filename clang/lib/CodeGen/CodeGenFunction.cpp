@@ -44,10 +44,6 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   CGM.getCXXABI().getMangleContext().startNewFunction();
 }
 
-ASTContext &CodeGenFunction::getContext() const {
-  return CGM.getContext();
-}
-
 
 const llvm::Type *CodeGenFunction::ConvertTypeForMem(QualType T) {
   return CGM.getTypes().ConvertTypeForMem(T);
@@ -57,9 +53,41 @@ const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
   return CGM.getTypes().ConvertType(T);
 }
 
-bool CodeGenFunction::hasAggregateLLVMType(QualType T) {
-  return T->isRecordType() || T->isArrayType() || T->isAnyComplexType() ||
-    T->isObjCObjectType();
+bool CodeGenFunction::hasAggregateLLVMType(QualType type) {
+  switch (type.getCanonicalType()->getTypeClass()) {
+#define TYPE(name, parent)
+#define ABSTRACT_TYPE(name, parent)
+#define NON_CANONICAL_TYPE(name, parent) case Type::name:
+#define DEPENDENT_TYPE(name, parent) case Type::name:
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(name, parent) case Type::name:
+#include "clang/AST/TypeNodes.def"
+    llvm_unreachable("non-canonical or dependent type in IR-generation");
+
+  case Type::Builtin:
+  case Type::Pointer:
+  case Type::BlockPointer:
+  case Type::LValueReference:
+  case Type::RValueReference:
+  case Type::MemberPointer:
+  case Type::Vector:
+  case Type::ExtVector:
+  case Type::FunctionProto:
+  case Type::FunctionNoProto:
+  case Type::Enum:
+  case Type::ObjCObjectPointer:
+    return false;
+
+  // Complexes, arrays, records, and Objective-C objects.
+  case Type::Complex:
+  case Type::ConstantArray:
+  case Type::IncompleteArray:
+  case Type::VariableArray:
+  case Type::Record:
+  case Type::ObjCObject:
+  case Type::ObjCInterface:
+    return true;
+  }
+  llvm_unreachable("unknown type kind!");
 }
 
 void CodeGenFunction::EmitReturnBlock() {

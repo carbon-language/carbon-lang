@@ -1035,7 +1035,7 @@ public:
   CodeGenFunction(CodeGenModule &cgm);
 
   CodeGenTypes &getTypes() const { return CGM.getTypes(); }
-  ASTContext &getContext() const;
+  ASTContext &getContext() const { return CGM.getContext(); }
   CGDebugInfo *getDebugInfo() { 
     if (DisableDebugInfo) 
       return NULL;
