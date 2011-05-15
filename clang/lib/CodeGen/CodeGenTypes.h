@@ -220,8 +220,9 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// GetExpandedTypes - Expand the type \arg Ty into the LLVM
   /// argument types it would be passed as on the provided vector \arg
   /// ArgTys. See ABIArgInfo::Expand.
-  void GetExpandedTypes(QualType Ty, std::vector<const llvm::Type*> &ArgTys,
-                        bool IsRecursive);
+  void GetExpandedTypes(QualType type,
+                        llvm::SmallVectorImpl<const llvm::Type*> &expanded,
+                        bool isRecursive);
 
   /// IsZeroInitializable - Return whether a type can be
   /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
