@@ -4492,7 +4492,7 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
   }
 
   uint64_t CurOffs = 0;
-  std::map<uint64_t, NamedDecl *>::iterator
+  std::multimap<uint64_t, NamedDecl *>::iterator
     CurLayObj = FieldOrBaseOffsets.begin();
 
   if (CurLayObj != FieldOrBaseOffsets.end() && CurLayObj->first != 0) {
