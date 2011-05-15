@@ -1478,7 +1478,7 @@ bool FunctionDecl::isMain() const {
   const TranslationUnitDecl *tunit =
     dyn_cast<TranslationUnitDecl>(getDeclContext()->getRedeclContext());
   return tunit &&
-         tunit->getASTContext().getLangOptions().Freestanding &&
+         !tunit->getASTContext().getLangOptions().Freestanding &&
          getIdentifier() &&
          getIdentifier()->isStr("main");
 }
