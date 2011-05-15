@@ -166,3 +166,13 @@ namespace PR9877 {
   template<> const int X<1>::Y::Z; // expected-error{{extraneous 'template<>' in declaration of variable 'Z'}}
 }
 
+namespace PR9913 {
+  template<class,class=int>struct S;
+  template<class X>struct S<X> {
+    template<class T> class F;
+  };
+
+  template<class A>
+  template<class B>
+  class S<A>::F{};
+}

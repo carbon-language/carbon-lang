@@ -423,7 +423,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
       //   class-name or namespace-name. [...]
       //
       // Qualified name lookup into a class will not find a namespace-name,
-      // so we do not need to diagnoste that case specifically. However,
+      // so we do not need to diagnose that case specifically. However,
       // this qualified name lookup may find nothing. In that case, perform
       // unqualified name lookup in the given scope (if available) or
       // reconstruct the result from when name lookup was performed at template
