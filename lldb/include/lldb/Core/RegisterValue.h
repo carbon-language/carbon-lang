@@ -51,24 +51,28 @@ namespace lldb_private {
         {
         }
 
+        explicit 
         RegisterValue (uint8_t inst) : 
             m_type (eTypeUInt8)
         {
             m_data.uint8 = inst;
         }
 
+        explicit 
         RegisterValue (uint16_t inst) : 
             m_type (eTypeUInt16)
         {
             m_data.uint16 = inst;
         }
 
+        explicit 
         RegisterValue (uint32_t inst) : 
             m_type (eTypeUInt32)
         {
             m_data.uint32 = inst;
         }
 
+        explicit 
         RegisterValue (uint64_t inst) : 
             m_type (eTypeUInt64)
         {
@@ -76,30 +80,35 @@ namespace lldb_private {
         }
 
 #if defined (ENABLE_128_BIT_SUPPORT)
+        explicit 
         RegisterValue (__uint128_t inst) : 
             m_type (eTypeUInt128)
         {
             m_data.uint128 = inst;
         }
 #endif        
+        explicit 
         RegisterValue (float value) : 
             m_type (eTypeFloat)
         {
             m_data.ieee_float = value;
         }
 
+        explicit 
         RegisterValue (double value) : 
             m_type (eTypeDouble)
         {
             m_data.ieee_double = value;
         }
 
+        explicit 
         RegisterValue (long double value) : 
             m_type (eTypeLongDouble)
         {
             m_data.ieee_long_double = value;
         }
 
+        explicit 
         RegisterValue (uint8_t *bytes, size_t length, lldb::ByteOrder byte_order)
         {
             SetBytes (bytes, length, byte_order);

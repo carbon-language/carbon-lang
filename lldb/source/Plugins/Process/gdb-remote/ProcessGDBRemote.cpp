@@ -34,6 +34,7 @@
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Core/Value.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
@@ -654,14 +655,18 @@ ProcessGDBRemote::DidLaunchOrAttach ()
                     // Fill in what is missing in the triple
                     const llvm::Triple &remote_triple = gdb_remote_arch.GetTriple();
                     llvm::Triple &target_triple = target_arch.GetTriple();
-                    if (target_triple.getVendor() == llvm::Triple::UnknownVendor)
+                    if (target_triple.getVendorName().size() == 0)
+                    {
                         target_triple.setVendor (remote_triple.getVendor());
 
-                    if (target_triple.getOS() == llvm::Triple::UnknownOS)
-                        target_triple.setOS (remote_triple.getOS());
+                        if (target_triple.getOSName().size() == 0)
+                        {
+                            target_triple.setOS (remote_triple.getOS());
 
-                    if (target_triple.getEnvironment() == llvm::Triple::UnknownEnvironment)
-                        target_triple.setEnvironment (remote_triple.getEnvironment());
+                            if (target_triple.getEnvironmentName().size() == 0)
+                                target_triple.setEnvironment (remote_triple.getEnvironment());
+                        }
+                    }
                 }
             }
             else
@@ -1545,7 +1550,7 @@ ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &er
 {
     addr_t allocated_addr = LLDB_INVALID_ADDRESS;
     
-    LazyBool supported = m_gdb_comm.SupportsAllocateMemory();
+    LazyBool supported = m_gdb_comm.SupportsAllocDeallocMemory();
     switch (supported)
     {
         case eLazyBoolCalculate:
@@ -1596,31 +1601,44 @@ ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &er
                         AddressRange mmap_range;
                         if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, mmap_range))
                         {
-                            lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
-                                                                                         mmap_range.GetBaseAddress(),
-                                                                                         stop_other_threads,
-                                                                                         discard_on_error,
-                                                                                         &arg1_addr,
-                                                                                         &arg2_len,
-                                                                                         &arg3_prot,
-                                                                                         &arg4_flags,
-                                                                                         &arg5_fd,
-                                                                                         &arg6_offset));
+                            ThreadPlanCallFunction *call_function_thread_plan = new ThreadPlanCallFunction (*thread,
+                                                                                                            mmap_range.GetBaseAddress(),
+                                                                                                            stop_other_threads,
+                                                                                                            discard_on_error,
+                                                                                                            &arg1_addr,
+                                                                                                            &arg2_len,
+                                                                                                            &arg3_prot,
+                                                                                                            &arg4_flags,
+                                                                                                            &arg5_fd,
+                                                                                                            &arg6_offset);
+                            lldb::ThreadPlanSP call_plan_sp (call_function_thread_plan);
                             if (call_plan_sp)
                             {
+                                ValueSP return_value_sp (new Value);
+                                ClangASTContext *clang_ast_context = m_target.GetScratchClangASTContext();
+                                lldb::clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
+                                return_value_sp->SetValueType (Value::eValueTypeScalar);
+                                return_value_sp->SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
+                                call_function_thread_plan->RequestReturnValue (return_value_sp);
+    
                                 StreamFile error_strm;
                                 StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
                                 if (frame)
                                 {
                                     ExecutionContext exe_ctx;
                                     frame->CalculateExecutionContext (exe_ctx);
-                                    ExecutionResults results = RunThreadPlan (exe_ctx,
-                                                                              call_plan_sp,        
-                                                                              stop_other_threads,
-                                                                              try_all_threads,
-                                                                              discard_on_error,
-                                                                              single_thread_timeout_usec,
-                                                                              error_strm);
+                                    ExecutionResults result = RunThreadPlan (exe_ctx,
+                                                                             call_plan_sp,        
+                                                                             stop_other_threads,
+                                                                             try_all_threads,
+                                                                             discard_on_error,
+                                                                             single_thread_timeout_usec,
+                                                                             error_strm);
+                                    if (result == eExecutionCompleted)
+                                    {
+                                        allocated_addr = return_value_sp->GetScalar().ULongLong();
+                                        m_addr_to_mmap_size[allocated_addr] = size;
+                                    }
                                 }
                             }
                         }
@@ -1641,8 +1659,91 @@ Error
 ProcessGDBRemote::DoDeallocateMemory (lldb::addr_t addr)
 {
     Error error; 
-    if (!m_gdb_comm.DeallocateMemory (addr))
-        error.SetErrorStringWithFormat("unable to deallocate memory at 0x%llx", addr);
+    LazyBool supported = m_gdb_comm.SupportsAllocDeallocMemory();
+
+    switch (supported)
+    {
+        case eLazyBoolCalculate:
+            // We should never be deallocating memory without allocating memory 
+            // first so we should never get eLazyBoolCalculate
+            error.SetErrorString ("tried to deallocate memory without ever allocating memory");
+            break;
+
+        case eLazyBoolYes:
+            if (!m_gdb_comm.DeallocateMemory (addr))
+                error.SetErrorStringWithFormat("unable to deallocate memory at 0x%llx", addr);
+            break;
+            
+        case eLazyBoolNo:
+            // Call munmap() to create executable memory in the inferior..
+            {
+                MMapMap::iterator pos = m_addr_to_mmap_size.find(addr);
+                if (pos != m_addr_to_mmap_size.end())
+                {
+                    Thread *thread = GetThreadList().GetSelectedThread().get();
+                    if (thread == NULL)
+                        thread = GetThreadList().GetThreadAtIndex(0).get();
+                    
+                    const bool append = true;
+                    const bool include_symbols = true;
+                    SymbolContextList sc_list;
+                    const uint32_t count = m_target.GetImages().FindFunctions (ConstString ("munmap"), 
+                                                                               eFunctionNameTypeFull,
+                                                                               include_symbols, 
+                                                                               append, 
+                                                                               sc_list);
+                    if (count > 0)
+                    {
+                        SymbolContext sc;
+                        if (sc_list.GetContextAtIndex(0, sc))
+                        {
+                            const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
+                            const bool use_inline_block_range = false;
+                            const bool stop_other_threads = true;
+                            const bool discard_on_error = true;
+                            const bool try_all_threads = true;
+                            const uint32_t single_thread_timeout_usec = 500000;
+                            addr_t arg1_addr = addr;
+                            addr_t arg2_len = pos->second;
+                            
+                            AddressRange munmap_range;
+                            if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, munmap_range))
+                            {
+                                lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
+                                                                                             munmap_range.GetBaseAddress(),
+                                                                                             stop_other_threads,
+                                                                                             discard_on_error,
+                                                                                             &arg1_addr,
+                                                                                             &arg2_len));
+                                if (call_plan_sp)
+                                {
+                                    StreamFile error_strm;
+                                    StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
+                                    if (frame)
+                                    {
+                                        ExecutionContext exe_ctx;
+                                        frame->CalculateExecutionContext (exe_ctx);
+                                        ExecutionResults result = RunThreadPlan (exe_ctx,
+                                                                                 call_plan_sp,        
+                                                                                 stop_other_threads,
+                                                                                 try_all_threads,
+                                                                                 discard_on_error,
+                                                                                 single_thread_timeout_usec,
+                                                                                 error_strm);
+                                        if (result == eExecutionCompleted)
+                                        {
+                                            m_addr_to_mmap_size.erase (pos);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+    }
+
     return error;
 }
 

@@ -142,9 +142,14 @@ public:
     uint64_t
     ReadRegisterAsUnsigned (uint32_t reg, uint64_t fail_value);
 
+    uint64_t
+    ReadRegisterAsUnsigned (const RegisterInfo *reg_info, uint64_t fail_value);
+    
     bool
     WriteRegisterFromUnsigned (uint32_t reg, uint64_t uval);
 
+    bool
+    WriteRegisterFromUnsigned (const RegisterInfo *reg_info, uint64_t uval);
     bool
     ConvertBetweenRegisterKinds (int source_rk, uint32_t source_regnum, int target_rk, uint32_t& target_regnum);
 

@@ -84,7 +84,9 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
             m_pushed_regs.clear();
 
             m_initial_sp = (1ull << ((addr_byte_size * 8) - 1));
-            SetRegisterValue (m_cfa_reg_info, m_initial_sp);
+            RegisterValue cfa_reg_value;
+            cfa_reg_value.SetUInt (m_initial_sp, m_cfa_reg_info.byte_size);
+            SetRegisterValue (m_cfa_reg_info, cfa_reg_value);
                 
             const InstructionList &inst_list = disasm_sp->GetInstructionList ();
             const size_t num_instructions = inst_list.GetSize();

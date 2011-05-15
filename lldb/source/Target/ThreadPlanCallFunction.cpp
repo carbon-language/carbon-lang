@@ -272,6 +272,13 @@ ThreadPlanCallFunction::DoTakedown ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (!m_takedown_done)
     {
+        // TODO: how do we tell if all went well?
+        if (m_return_value_sp)
+        {
+            const ABI *abi = m_thread.GetProcess().GetABI().get();
+            if (abi)
+                abi->GetReturnValue(m_thread, *m_return_value_sp);
+        }
         if (log)
             log->Printf ("DoTakedown called for thread 0x%4.4x, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;

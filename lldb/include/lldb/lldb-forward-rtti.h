@@ -71,6 +71,8 @@ namespace lldb {
     typedef SharedPtr<lldb_private::UserSettingsController>::Type UserSettingsControllerSP;
     typedef SharedPtr<lldb_private::UnwindPlan>::Type UnwindPlanSP;
     typedef SharedPtr<lldb_private::ValueObject>::Type ValueObjectSP;
+    typedef SharedPtr<lldb_private::Value>::Type ValueSP;
+    typedef SharedPtr<lldb_private::ValueList>::Type ValueListSP;
     typedef SharedPtr<lldb_private::Variable>::Type VariableSP;
     typedef SharedPtr<lldb_private::VariableList>::Type VariableListSP;
     typedef SharedPtr<lldb_private::ValueObjectList>::Type ValueObjectListSP;

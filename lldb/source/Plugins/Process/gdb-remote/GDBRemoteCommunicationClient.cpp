@@ -45,8 +45,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_vCont_s (eLazyBoolCalculate),
     m_supports_vCont_S (eLazyBoolCalculate),
     m_qHostInfo_is_valid (eLazyBoolCalculate),
-    m_supports__m (eLazyBoolCalculate),
-    m_supports__M (eLazyBoolCalculate),
+    m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
     m_supports_qProcessInfoPID (true),
     m_supports_qfProcessInfo (true),
     m_supports_qUserName (true),
@@ -132,8 +131,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_vCont_s = eLazyBoolCalculate;
     m_supports_vCont_S = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
-    m_supports__m = eLazyBoolCalculate;
-    m_supports__M = eLazyBoolCalculate;
+    m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
 
     m_supports_qProcessInfoPID = true;
     m_supports_qfProcessInfo = true;
@@ -1021,9 +1019,9 @@ GDBRemoteCommunicationClient::GetHostArchitecture ()
 addr_t
 GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
 {
-    if (m_supports__M != eLazyBoolNo)
+    if (m_supports_alloc_dealloc_memory != eLazyBoolNo)
     {
-        m_supports__M = eLazyBoolYes;
+        m_supports_alloc_dealloc_memory = eLazyBoolYes;
         char packet[64];
         const int packet_len = ::snprintf (packet, sizeof(packet), "_M%zx,%s%s%s", size,
                                            permissions & lldb::ePermissionsReadable ? "r" : "",
@@ -1034,7 +1032,7 @@ GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
         {
             if (response.IsUnsupportedResponse())
-                m_supports__M = eLazyBoolNo;
+                m_supports_alloc_dealloc_memory = eLazyBoolNo;
             else if (!response.IsErrorResponse())
                 return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
         }
@@ -1045,9 +1043,9 @@ GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
 bool
 GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
 {
-    if (m_supports__m != eLazyBoolNo)
+    if (m_supports_alloc_dealloc_memory != eLazyBoolNo)
     {
-        m_supports__m = eLazyBoolYes;
+        m_supports_alloc_dealloc_memory = eLazyBoolYes;
         char packet[64];
         const int packet_len = ::snprintf(packet, sizeof(packet), "_m%llx", (uint64_t)addr);
         assert (packet_len < sizeof(packet));
@@ -1057,7 +1055,7 @@ GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
             if (response.IsOKResponse())
                 return true;
             else if (response.IsUnsupportedResponse())
-                m_supports__m = eLazyBoolNo;
+                m_supports_alloc_dealloc_memory = eLazyBoolNo;
         }
     }
     return false;

@@ -303,6 +303,7 @@ protected:
     lldb::thread_t m_async_thread;
     typedef std::vector<lldb::tid_t> tid_collection;
     typedef std::vector< std::pair<lldb::tid_t,int> > tid_sig_collection;
+    typedef std::map<lldb::addr_t, lldb::addr_t> MMapMap;
     tid_collection m_continue_c_tids;                  // 'c' for continue
     tid_sig_collection m_continue_C_tids; // 'C' for continue with signal
     tid_collection m_continue_s_tids;                  // 's' for step
@@ -312,7 +313,7 @@ protected:
     bool m_waiting_for_attach;
     bool m_local_debugserver;  // Is the debugserver process we are talking to local or on another machine.
     std::vector<lldb::user_id_t>  m_thread_observation_bps;
-
+    MMapMap m_addr_to_mmap_size;
     bool
     StartAsyncThread ();
 

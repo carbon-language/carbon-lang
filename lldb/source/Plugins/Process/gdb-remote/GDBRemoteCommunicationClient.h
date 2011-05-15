@@ -306,15 +306,9 @@ public:
     SetCurrentThreadForRun (int tid);
 
     lldb_private::LazyBool
-    SupportsAllocateMemory () const
+    SupportsAllocDeallocMemory () const
     {
-        return m_supports__M;
-    }
-
-    lldb_private::LazyBool
-    SupportsDeallocateMemory () const
-    {
-        return m_supports__m;
+        return m_supports_alloc_dealloc_memory;
     }
 
 protected:
@@ -331,8 +325,7 @@ protected:
     lldb_private::LazyBool m_supports_vCont_s;
     lldb_private::LazyBool m_supports_vCont_S;
     lldb_private::LazyBool m_qHostInfo_is_valid;
-    lldb_private::LazyBool m_supports__m;
-    lldb_private::LazyBool m_supports__M;
+    lldb_private::LazyBool m_supports_alloc_dealloc_memory;
 
     bool
         m_supports_qProcessInfoPID:1,

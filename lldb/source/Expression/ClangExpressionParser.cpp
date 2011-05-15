@@ -52,7 +52,13 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+
+#define USE_STANDARD_JIT
+#if defined (USE_STANDARD_JIT)
 #include "llvm/ExecutionEngine/JIT.h"
+#else
+#include "llvm/ExecutionEngine/MCJIT.h"
+#endif
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -550,12 +556,24 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
         
     llvm::TargetMachine::setRelocationModel(llvm::Reloc::PIC_);
     
+#if defined (USE_STANDARD_JIT)
     m_execution_engine.reset(llvm::ExecutionEngine::createJIT (module, 
                                                                &error_string, 
                                                                jit_memory_manager,
                                                                CodeGenOpt::Less,
                                                                true,
                                                                CodeModel::Small));
+#else
+    EngineBuilder builder(module);
+    builder.setEngineKind(EngineKind::JIT)
+        .setErrorStr(&error_string)
+        .setJITMemoryManager(jit_memory_manager)
+        .setOptLevel(CodeGenOpt::Less)
+        .setAllocateGVsWithCode(true)
+        .setCodeModel(CodeModel::Small)
+        .setUseMCJIT(true);
+    m_execution_engine.reset(builder.create());
+#endif
         
     if (!m_execution_engine.get())
     {

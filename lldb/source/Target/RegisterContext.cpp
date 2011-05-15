@@ -150,14 +150,18 @@ uint64_t
 RegisterContext::ReadRegisterAsUnsigned (uint32_t reg, uint64_t fail_value)
 {
     if (reg != LLDB_INVALID_REGNUM)
+        return ReadRegisterAsUnsigned (GetRegisterInfoAtIndex (reg), fail_value);
+    return fail_value;
+}
+
+uint64_t
+RegisterContext::ReadRegisterAsUnsigned (const RegisterInfo *reg_info, uint64_t fail_value)
+{
+    if (reg_info)
     {
-        const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
-        if (reg_info)
-        {
-            RegisterValue value;
-            if (ReadRegister (reg_info, value))
-                return value.GetAsUInt64();
-        }
+        RegisterValue value;
+        if (ReadRegister (reg_info, value))
+            return value.GetAsUInt64();
     }
     return fail_value;
 }
@@ -167,7 +171,12 @@ RegisterContext::WriteRegisterFromUnsigned (uint32_t reg, uint64_t uval)
 {
     if (reg == LLDB_INVALID_REGNUM)
         return false;
-    const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
+    return WriteRegisterFromUnsigned (GetRegisterInfoAtIndex (reg), uval);
+}
+
+bool
+RegisterContext::WriteRegisterFromUnsigned (const RegisterInfo *reg_info, uint64_t uval)
+{
     if (reg_info)
     {
         RegisterValue value;

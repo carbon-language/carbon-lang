@@ -80,7 +80,28 @@ public:
     {
         return true;
     }
-    
+
+    // To get the return value from a function call you must create a 
+    // lldb::ValueSP that contains a valid clang type in its context and call
+    // RequestReturnValue. The ValueSP will be stored and when the function is
+    // done executing, the object will check if there is a requested return 
+    // value. If there is, the return value will be retrieved using the 
+    // ABI::GetReturnValue() for the ABI in the process. Then after the thread
+    // plan is complete, you can call "GetReturnValue()" to retrieve the value
+    // that was extracted.
+
+    const lldb::ValueSP &
+    GetReturnValue ()
+    {
+        return m_return_value_sp;
+    }
+
+    void
+    RequestReturnValue (lldb::ValueSP &return_value_sp)
+    {
+        m_return_value_sp = return_value_sp;
+    }
+
     // Return the stack pointer that the function received
     // on entry.  Any stack address below this should be 
     // considered invalid after the function has been
@@ -112,7 +133,6 @@ private:
     bool
     BreakpointsExplainStop ();
     
-    bool                                            m_use_abi;
     bool                                            m_valid;
     bool                                            m_stop_other_threads;
     Address                                         m_function_addr;
@@ -125,6 +145,7 @@ private:
     LanguageRuntime                                *m_cxx_language_runtime;
     LanguageRuntime                                *m_objc_language_runtime;
     Thread::ThreadStateCheckpoint                   m_stored_thread_state;
+    lldb::ValueSP                                   m_return_value_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
     bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);

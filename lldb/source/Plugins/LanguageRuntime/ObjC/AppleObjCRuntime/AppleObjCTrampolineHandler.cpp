@@ -381,9 +381,9 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
     
 bool 
 AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton, 
-                                    StoppointCallbackContext *context, 
-                                    lldb::user_id_t break_id, 
-                                    lldb::user_id_t break_loc_id)
+                                                                  StoppointCallbackContext *context, 
+                                                                  lldb::user_id_t break_id, 
+                                                                  lldb::user_id_t break_loc_id)
 {
     AppleObjCVTables *vtable_handler = (AppleObjCVTables *) baton;
     if (vtable_handler->InitializeVTableSymbols())
