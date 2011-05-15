@@ -17,13 +17,10 @@
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263E949D13661AE400E7D1CE /* UnwindAssembly-x86.cpp */; };
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
-		264A97C0133918BC0017F0BE /* PlatformRemoteGDBServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 264A97BE133918BC0017F0BE /* PlatformRemoteGDBServer.h */; };
 		264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */; };
 		265ABF6310F42EE900531910 /* DebugSymbols.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 265ABF6210F42EE900531910 /* DebugSymbols.framework */; };
-		26651A16133BF9CD005B64B7 /* Opcode.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A15133BF9CC005B64B7 /* Opcode.h */; };
 		26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26651A17133BF9DF005B64B7 /* Opcode.cpp */; };
 		266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */; };
-		266603CD1345B5C0004DA8B6 /* ConnectionSharedMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 266603CC1345B5C0004DA8B6 /* ConnectionSharedMemory.h */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668020F115FD12C008E1FE4 /* lldb-enumerations.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26680214115FD12C008E1FE4 /* lldb-types.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2910F1B3BC00F91463 /* lldb-types.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -67,33 +64,21 @@
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
 		266E8C6A13528ABC000C2042 /* lldb-platform in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-platform */; };
-		2671A0CE134825F6003A87BB /* ConnectionMachPort.h in Headers */ = {isa = PBXBuildFile; fileRef = 2671A0CD134825F6003A87BB /* ConnectionMachPort.h */; };
 		2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */; };
 		26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */; };
-		26744EF21338317700EF765A /* GDBRemoteCommunicationClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 26744EEE1338317700EF765A /* GDBRemoteCommunicationClient.h */; };
 		26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */; };
-		26744EF41338317700EF765A /* GDBRemoteCommunicationServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 26744EF01338317700EF765A /* GDBRemoteCommunicationServer.h */; };
 		267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */; };
 		267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */; };
 		2686536C1370ACB200D186A3 /* OptionGroupBoolean.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2686536B1370ACB200D186A3 /* OptionGroupBoolean.cpp */; };
 		268653701370AE7200D186A3 /* OptionGroupUInt64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2686536F1370AE7200D186A3 /* OptionGroupUInt64.cpp */; };
-		2689000013353DB600698AC0 /* BreakpointResolverAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D0DD5010FE554D00271C65 /* BreakpointResolverAddress.h */; };
 		2689000113353DB600698AC0 /* BreakpointResolverAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D0DD5310FE555900271C65 /* BreakpointResolverAddress.cpp */; };
-		2689000213353DB600698AC0 /* BreakpointResolverFileLine.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D0DD5110FE554D00271C65 /* BreakpointResolverFileLine.h */; };
 		2689000313353DB600698AC0 /* BreakpointResolverFileLine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D0DD5410FE555900271C65 /* BreakpointResolverFileLine.cpp */; };
-		2689000413353DB600698AC0 /* BreakpointResolverName.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D0DD5210FE554D00271C65 /* BreakpointResolverName.h */; };
 		2689000513353DB600698AC0 /* BreakpointResolverName.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D0DD5510FE555900271C65 /* BreakpointResolverName.cpp */; };
-		2689000613353DB600698AC0 /* BreakpointSite.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF710F1B71400F91463 /* BreakpointSite.h */; };
 		2689000713353DB600698AC0 /* BreakpointSite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1310F1B83100F91463 /* BreakpointSite.cpp */; };
-		2689000813353DB600698AC0 /* BreakpointSiteList.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF810F1B71400F91463 /* BreakpointSiteList.h */; };
 		2689000913353DB600698AC0 /* BreakpointSiteList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1410F1B83100F91463 /* BreakpointSiteList.cpp */; };
-		2689000A13353DB600698AC0 /* Stoppoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CFA10F1B71400F91463 /* Stoppoint.h */; };
 		2689000B13353DB600698AC0 /* Stoppoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1610F1B83100F91463 /* Stoppoint.cpp */; };
-		2689000C13353DB600698AC0 /* StoppointCallbackContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CED10F1B71400F91463 /* StoppointCallbackContext.h */; };
 		2689000D13353DB600698AC0 /* StoppointCallbackContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0910F1B83100F91463 /* StoppointCallbackContext.cpp */; };
-		2689000E13353DB600698AC0 /* StoppointLocation.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CFB10F1B71400F91463 /* StoppointLocation.h */; };
 		2689000F13353DB600698AC0 /* StoppointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1710F1B83100F91463 /* StoppointLocation.cpp */; };
-		2689001013353DB600698AC0 /* WatchpointLocation.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CFC10F1B71400F91463 /* WatchpointLocation.h */; };
 		2689001113353DB600698AC0 /* WatchpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1810F1B83100F91463 /* WatchpointLocation.cpp */; };
 		2689001213353DDE00698AC0 /* CommandObjectApropos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CA9637911B6E99A00780E28 /* CommandObjectApropos.cpp */; };
 		2689001313353DDE00698AC0 /* CommandObjectArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 499F381F11A5B3F300F5CE02 /* CommandObjectArgs.cpp */; };
@@ -344,30 +329,19 @@
 		268901161335BBC300698AC0 /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
 		2689FFDA13353D9D00698AC0 /* lldb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7410F1B85900F91463 /* lldb.cpp */; };
 		2689FFDB13353DA300698AC0 /* lldb-log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E7510F1B85900F91463 /* lldb-log.cpp */; };
-		2689FFEE13353DB600698AC0 /* Breakpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CEE10F1B71400F91463 /* Breakpoint.h */; };
 		2689FFEF13353DB600698AC0 /* Breakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0A10F1B83100F91463 /* Breakpoint.cpp */; };
-		2689FFF013353DB600698AC0 /* BreakpointID.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CEF10F1B71400F91463 /* BreakpointID.h */; };
 		2689FFF113353DB600698AC0 /* BreakpointID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0B10F1B83100F91463 /* BreakpointID.cpp */; };
-		2689FFF213353DB600698AC0 /* BreakpointIDList.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF010F1B71400F91463 /* BreakpointIDList.h */; };
 		2689FFF313353DB600698AC0 /* BreakpointIDList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0C10F1B83100F91463 /* BreakpointIDList.cpp */; };
-		2689FFF413353DB600698AC0 /* BreakpointList.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF110F1B71400F91463 /* BreakpointList.h */; };
 		2689FFF513353DB600698AC0 /* BreakpointList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0D10F1B83100F91463 /* BreakpointList.cpp */; };
-		2689FFF613353DB600698AC0 /* BreakpointLocation.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF210F1B71400F91463 /* BreakpointLocation.h */; };
 		2689FFF713353DB600698AC0 /* BreakpointLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0E10F1B83100F91463 /* BreakpointLocation.cpp */; };
-		2689FFF813353DB600698AC0 /* BreakpointLocationCollection.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF310F1B71400F91463 /* BreakpointLocationCollection.h */; };
 		2689FFF913353DB600698AC0 /* BreakpointLocationCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E0F10F1B83100F91463 /* BreakpointLocationCollection.cpp */; };
-		2689FFFA13353DB600698AC0 /* BreakpointLocationList.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF410F1B71400F91463 /* BreakpointLocationList.h */; };
 		2689FFFB13353DB600698AC0 /* BreakpointLocationList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1010F1B83100F91463 /* BreakpointLocationList.cpp */; };
-		2689FFFC13353DB600698AC0 /* BreakpointOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF510F1B71400F91463 /* BreakpointOptions.h */; };
 		2689FFFD13353DB600698AC0 /* BreakpointOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1110F1B83100F91463 /* BreakpointOptions.cpp */; };
-		2689FFFE13353DB600698AC0 /* BreakpointResolver.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7CF610F1B71400F91463 /* BreakpointResolver.h */; };
 		2689FFFF13353DB600698AC0 /* BreakpointResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1210F1B83100F91463 /* BreakpointResolver.cpp */; };
 		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2692BA13136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp */; };
-		2692BA16136610C100F9E14D /* UnwindAssemblyInstEmulation.h in Headers */ = {isa = PBXBuildFile; fileRef = 2692BA14136610C100F9E14D /* UnwindAssemblyInstEmulation.h */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
-		2697A54E133A6305004E4240 /* PlatformDarwin.h in Headers */ = {isa = PBXBuildFile; fileRef = 2697A54C133A6305004E4240 /* PlatformDarwin.h */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */; };
 		26B1FA1413380E61002886E2 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; };
@@ -418,11 +392,8 @@
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26F5C39110F3FA26009D5894 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
-		4C2FAE2F135E3A70001EDE44 /* SharedCluster.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C2FAE2E135E3A70001EDE44 /* SharedCluster.h */; };
 		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
-		4CABA9DD134A8BA800539BDD /* ValueObjectMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CABA9DC134A8BA700539BDD /* ValueObjectMemory.h */; };
 		4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */; };
-		4CD0BD0D134BFAB600CB44D4 /* ValueObjectDynamicValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 4CD0BD0C134BFAB600CB44D4 /* ValueObjectDynamicValue.h */; };
 		4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CD0BD0E134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
@@ -435,7 +406,6 @@
 		9A3576A8116E9AB700E8ED2F /* SBHostOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A3576A7116E9AB700E8ED2F /* SBHostOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A3576AA116E9AC700E8ED2F /* SBHostOS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A3576A9116E9AC700E8ED2F /* SBHostOS.cpp */; };
 		9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A4F350F1368A51A00823F52 /* StreamAsynchronousIO.cpp */; };
-		9A4F35121368A54100823F52 /* StreamAsynchronousIO.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A4F35111368A54100823F52 /* StreamAsynchronousIO.h */; };
 		9AA69DA61188F52100D753A0 /* PseudoTerminal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */; };
 		9AA69DAF118A023300D753A0 /* SBInputReader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AA69DAE118A023300D753A0 /* SBInputReader.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9AA69DB1118A024600D753A0 /* SBInputReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AA69DB0118A024600D753A0 /* SBInputReader.cpp */; };
@@ -2637,36 +2607,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2689FFEE13353DB600698AC0 /* Breakpoint.h in Headers */,
-				2689FFF013353DB600698AC0 /* BreakpointID.h in Headers */,
-				2689FFF213353DB600698AC0 /* BreakpointIDList.h in Headers */,
-				2689FFF413353DB600698AC0 /* BreakpointList.h in Headers */,
-				2689FFF613353DB600698AC0 /* BreakpointLocation.h in Headers */,
-				2689FFF813353DB600698AC0 /* BreakpointLocationCollection.h in Headers */,
-				2689FFFA13353DB600698AC0 /* BreakpointLocationList.h in Headers */,
-				2689FFFC13353DB600698AC0 /* BreakpointOptions.h in Headers */,
-				2689FFFE13353DB600698AC0 /* BreakpointResolver.h in Headers */,
-				2689000013353DB600698AC0 /* BreakpointResolverAddress.h in Headers */,
-				2689000213353DB600698AC0 /* BreakpointResolverFileLine.h in Headers */,
-				2689000413353DB600698AC0 /* BreakpointResolverName.h in Headers */,
-				2689000613353DB600698AC0 /* BreakpointSite.h in Headers */,
-				2689000813353DB600698AC0 /* BreakpointSiteList.h in Headers */,
-				2689000A13353DB600698AC0 /* Stoppoint.h in Headers */,
-				2689000C13353DB600698AC0 /* StoppointCallbackContext.h in Headers */,
-				2689000E13353DB600698AC0 /* StoppointLocation.h in Headers */,
-				2689001013353DB600698AC0 /* WatchpointLocation.h in Headers */,
-				26744EF21338317700EF765A /* GDBRemoteCommunicationClient.h in Headers */,
-				26744EF41338317700EF765A /* GDBRemoteCommunicationServer.h in Headers */,
-				264A97C0133918BC0017F0BE /* PlatformRemoteGDBServer.h in Headers */,
-				2697A54E133A6305004E4240 /* PlatformDarwin.h in Headers */,
-				26651A16133BF9CD005B64B7 /* Opcode.h in Headers */,
-				266603CD1345B5C0004DA8B6 /* ConnectionSharedMemory.h in Headers */,
-				2671A0CE134825F6003A87BB /* ConnectionMachPort.h in Headers */,
-				4CABA9DD134A8BA800539BDD /* ValueObjectMemory.h in Headers */,
-				4CD0BD0D134BFAB600CB44D4 /* ValueObjectDynamicValue.h in Headers */,
-				9A4F35121368A54100823F52 /* StreamAsynchronousIO.h in Headers */,
-				4C2FAE2F135E3A70001EDE44 /* SharedCluster.h in Headers */,
-				2692BA16136610C100F9E14D /* UnwindAssemblyInstEmulation.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
