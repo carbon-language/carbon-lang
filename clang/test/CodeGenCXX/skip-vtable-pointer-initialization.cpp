@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
-// XFAIL: *
 
 namespace Test1 {
 
@@ -100,6 +99,86 @@ struct A {
 
 // CHECK: define void @_ZN5Test51AD2Ev
 // CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTVN5Test51AE, i64 0, i64 2), i8***
+A::~A()
+{
+}
+
+}
+
+namespace Test6 {
+
+// Check that we do initialize the vtable pointer in A::~A(), since Field has a member
+// variable with a non-trivial destructor body.
+
+struct NonTrivialDestructorBody {
+  ~NonTrivialDestructorBody();
+};
+
+struct Field {
+  NonTrivialDestructorBody nonTrivialDestructorBody;
+};
+
+struct A {
+  virtual void f();
+  ~A();
+
+  Field field;
+};
+
+// CHECK: define void @_ZN5Test61AD2Ev
+// CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTVN5Test61AE, i64 0, i64 2), i8***
+A::~A()
+{
+}
+
+}
+
+namespace Test7 {
+
+// Check that we do initialize the vtable pointer in A::~A(), since Field has a base
+// class with a non-trivial destructor body.
+
+struct NonTrivialDestructorBody {
+  ~NonTrivialDestructorBody();
+};
+
+struct Field : NonTrivialDestructorBody { };
+
+struct A {
+  virtual void f();
+  ~A();
+
+  Field field;
+};
+
+// CHECK: define void @_ZN5Test71AD2Ev
+// CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTVN5Test71AE, i64 0, i64 2), i8***
+A::~A()
+{
+}
+
+}
+
+namespace Test8 {
+
+// Check that we do initialize the vtable pointer in A::~A(), since Field has a virtual base
+// class with a non-trivial destructor body.
+
+struct NonTrivialDestructorBody {
+  ~NonTrivialDestructorBody();
+};
+
+struct Field : virtual NonTrivialDestructorBody { };
+
+struct A {
+  virtual void f();
+  ~A();
+
+  Field field;
+};
+
+// CHECK: define void @_ZN5Test81AD2Ev
+// CHECK: store i8** getelementptr inbounds ([3 x i8*]* @_ZTVN5Test81AE, i64 0, i64 2), i8***
 A::~A()
 {
 }
