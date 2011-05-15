@@ -282,14 +282,18 @@ int main (int argc, char *const *argv, char *const *envp, const char **apple)
     close (s);
 
     system("clear");
+    printf ("Launching: '%s'\n", argv[0]);
     if (working_dir.empty())
     {
         char cwd[PATH_MAX];
         const char *cwd_ptr = getcwd(cwd, sizeof(cwd));
-        printf ("Launching '%s' in '%s' for debug with %u arguments:\n", argv[0], cwd_ptr, argc);
+        printf ("Working directory: '%s'\n", cwd_ptr);
     }
     else
-        printf ("Launching '%s' in '%s' for debug with %u arguments:\n", argv[0], working_dir.c_str(), argc);
+    {
+        printf ("Working directory: '%s'\n", working_dir.c_str());
+    }
+    printf ("%i arguments:\n", argc);
 
     for (int i=0; i<argc; ++i)
         printf ("argv[%u] = '%s'\n", i, argv[i]);
