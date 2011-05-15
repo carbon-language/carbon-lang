@@ -810,11 +810,7 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse ("qHostInfo", response, false))
         {
-            if (response.IsUnsupportedResponse())
-            {
-                return false;
-            }
-            else if (response.IsNormalResponse())
+            if (response.IsNormalResponse())
             {
                 std::string name;
                 std::string value;
@@ -1031,10 +1027,12 @@ GDBRemoteCommunicationClient::AllocateMemory (size_t size, uint32_t permissions)
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
         {
-            if (response.IsUnsupportedResponse())
-                m_supports_alloc_dealloc_memory = eLazyBoolNo;
-            else if (!response.IsErrorResponse())
+            if (!response.IsErrorResponse())
                 return response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
+        }
+        else
+        {
+            m_supports_alloc_dealloc_memory = eLazyBoolNo;
         }
     }
     return LLDB_INVALID_ADDRESS;
@@ -1054,8 +1052,10 @@ GDBRemoteCommunicationClient::DeallocateMemory (addr_t addr)
         {
             if (response.IsOKResponse())
                 return true;
-            else if (response.IsUnsupportedResponse())
-                m_supports_alloc_dealloc_memory = eLazyBoolNo;
+        }
+        else
+        {
+            m_supports_alloc_dealloc_memory = eLazyBoolNo;
         }
     }
     return false;
@@ -1241,13 +1241,12 @@ GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInstanceIn
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
         {
-            if (response.IsUnsupportedResponse())
-            {
-                m_supports_qProcessInfoPID = false;
-                return false;
-            }
-
             return DecodeProcessInfoResponse (response, process_info);
+        }
+        else
+        {
+            m_supports_qProcessInfoPID = false;
+            return false;
         }
     }
     return false;
@@ -1332,12 +1331,6 @@ GDBRemoteCommunicationClient::FindProcesses (const ProcessInstanceInfoMatch &mat
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
         {
-            if (response.IsUnsupportedResponse())
-            {
-                m_supports_qfProcessInfo = false;
-                return 0;
-            }
-
             do
             {
                 ProcessInstanceInfo process_info;
@@ -1347,6 +1340,11 @@ GDBRemoteCommunicationClient::FindProcesses (const ProcessInstanceInfoMatch &mat
                 response.GetStringRef().clear();
                 response.SetFilePos(0);
             } while (SendPacketAndWaitForResponse ("qsProcessInfo", strlen ("qsProcessInfo"), response, false));
+        }
+        else
+        {
+            m_supports_qfProcessInfo = false;
+            return 0;
         }
     }
     return process_infos.GetSize();
@@ -1364,12 +1362,6 @@ GDBRemoteCommunicationClient::GetUserName (uint32_t uid, std::string &name)
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
         {
-            if (response.IsUnsupportedResponse())
-            {
-                m_supports_qUserName = false;
-                return false;
-            }
-                
             if (response.IsNormalResponse())
             {
                 // Make sure we parsed the right number of characters. The response is
@@ -1379,6 +1371,11 @@ GDBRemoteCommunicationClient::GetUserName (uint32_t uid, std::string &name)
                     return true;
             }
         }
+        else
+        {
+            m_supports_qUserName = false;
+            return false;
+        }        
     }
     return false;
 
@@ -1395,12 +1392,6 @@ GDBRemoteCommunicationClient::GetGroupName (uint32_t gid, std::string &name)
         StringExtractorGDBRemote response;
         if (SendPacketAndWaitForResponse (packet, packet_len, response, false))
         {
-            if (response.IsUnsupportedResponse())
-            {
-                m_supports_qGroupName = false;
-                return false;
-            }
-            
             if (response.IsNormalResponse())
             {
                 // Make sure we parsed the right number of characters. The response is
@@ -1409,6 +1400,11 @@ GDBRemoteCommunicationClient::GetGroupName (uint32_t gid, std::string &name)
                 if (response.GetHexByteString (name) * 2 == response.GetStringRef().size())
                     return true;
             }
+        }
+        else
+        {
+            m_supports_qGroupName = false;
+            return false;
         }
     }
     return false;
@@ -1488,12 +1484,7 @@ GDBRemoteCommunicationClient::SendSpeedTestPacket (uint32_t send_size, uint32_t 
     }
 
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false))
-    {
-        if (response.IsUnsupportedResponse())
-            return false;
-        return true;
-    }
+    return SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) > 0;
     return false;
 }
 
@@ -1588,12 +1579,14 @@ GDBRemoteCommunicationClient::GetThreadStopInfo (uint32_t tid, StringExtractorGD
         assert (packet_len < sizeof(packet));
         if (SendPacketAndWaitForResponse(packet, packet_len, response, false))
         {
-            if (response.IsUnsupportedResponse())
-                m_supports_qThreadStopInfo = false;
-            else if (response.IsNormalResponse())
+            if (response.IsNormalResponse())
                 return true;
             else
                 return false;
+        }
+        else
+        {
+            m_supports_qThreadStopInfo = false;
         }
     }
     if (SetCurrentThread (tid))
@@ -1630,20 +1623,21 @@ GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type,
     {
         if (response.IsOKResponse())
             return 0;
-        if (response.IsUnsupportedResponse())
-        {
-            switch (type)
-            {
-                case eBreakpointSoftware:   m_supports_z0 = false; break;
-                case eBreakpointHardware:   m_supports_z1 = false; break;
-                case eWatchpointWrite:      m_supports_z2 = false; break;
-                case eWatchpointRead:       m_supports_z3 = false; break;
-                case eWatchpointReadWrite:  m_supports_z4 = false; break;
-                default:                    break;
-            }
-        }
         else if (response.IsErrorResponse())
             return response.GetError();
     }
+    else
+    {
+        switch (type)
+        {
+            case eBreakpointSoftware:   m_supports_z0 = false; break;
+            case eBreakpointHardware:   m_supports_z1 = false; break;
+            case eWatchpointWrite:      m_supports_z2 = false; break;
+            case eWatchpointRead:       m_supports_z3 = false; break;
+            case eWatchpointReadWrite:  m_supports_z4 = false; break;
+            default:                    break;
+        }
+    }
+
     return UINT8_MAX;
 }
