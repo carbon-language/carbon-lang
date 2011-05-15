@@ -310,7 +310,7 @@ void MCStreamer::EmitCFISameValue(int64_t Register) {
   CurFrame->Instructions.push_back(Instruction);
 }
 
-void MCStreamer::EmitWin64EHFrame(MCSymbol *Symbol, MCSymbol *EHandler = 0)
+void MCStreamer::EmitWin64EHFrame(MCSymbol *Symbol, MCSymbol *EHandler)
 {
   errs() << "Not implemented yet\n";
   abort();
