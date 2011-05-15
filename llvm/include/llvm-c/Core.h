@@ -282,6 +282,8 @@ typedef enum {
   LLVMRealPredicateTrue   /**< Always true (always folded) */
 } LLVMRealPredicate;
 
+void LLVMInitializeCore(LLVMPassRegistryRef R);
+
 
 /*===-- Error handling ----------------------------------------------------===*/
 
