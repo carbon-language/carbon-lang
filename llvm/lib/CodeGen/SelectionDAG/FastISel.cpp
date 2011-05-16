@@ -842,7 +842,7 @@ FastISel::SelectFNeg(const User *I) {
 bool
 FastISel::SelectExtractValue(const User *U) {
   const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(U);
-  if (!U)
+  if (!EVI)
     return false;
 
   // Make sure we only try to handle extracts with a legal result.
