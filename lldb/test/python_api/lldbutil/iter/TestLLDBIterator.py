@@ -19,22 +19,22 @@ class LLDBIteratorTestCase(TestBase):
         self.line1 = line_number('main.cpp', '// Set break point at this line.')
         self.line2 = line_number('main.cpp', '// And that line.')
 
-    def test_lldb_iter_1(self):
+    def test_lldb_iter_module(self):
         """Test module_iter works correctly for SBTarget -> SBModule."""
         self.buildDefault()
-        self.lldb_iter_1()
+        self.lldb_iter_module()
 
-    def test_lldb_iter_2(self):
+    def test_lldb_iter_breakpoint(self):
         """Test breakpoint_iter works correctly for SBTarget -> SBBreakpoint."""
         self.buildDefault()
-        self.lldb_iter_2()
+        self.lldb_iter_breakpoint()
 
-    def test_lldb_iter_3(self):
+    def test_lldb_iter_frame(self):
         """Test iterator works correctly for SBProcess->SBThread->SBFrame."""
         self.buildDefault()
-        self.lldb_iter_3()
+        self.lldb_iter_frame()
 
-    def lldb_iter_1(self):
+    def lldb_iter_module(self):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -66,7 +66,7 @@ class LLDBIteratorTestCase(TestBase):
             self.assertTrue(yours[i] == mine[i],
                             "UUID+FileSpec of yours[{0}] and mine[{0}] matches".format(i))
 
-    def lldb_iter_2(self):
+    def lldb_iter_breakpoint(self):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
@@ -95,7 +95,7 @@ class LLDBIteratorTestCase(TestBase):
             self.assertTrue(yours[i] == mine[i],
                             "ID of yours[{0}] and mine[{0}] matches".format(i))
 
-    def lldb_iter_3(self):
+    def lldb_iter_frame(self):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
