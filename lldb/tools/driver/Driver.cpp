@@ -851,11 +851,16 @@ Driver::HandleIOEvent (const SBEvent &event)
         if (command_string == NULL)
             command_string = "";
         SBCommandReturnObject result;
-        result.SetImmediateOutputFile (m_debugger.GetOutputFileHandle());
-        result.SetImmediateErrorFile (m_debugger.GetErrorFileHandle());
         
-        // We've set the result to dump immediately.
+        // We don't want the result to bypass the OutWrite function in IOChannel, as this can result in odd
+        // output orderings and problems with the prompt.
         m_debugger.GetCommandInterpreter().HandleCommand (command_string, result, true);
+
+        if (result.GetOutputSize() > 0)
+            m_io_channel_ap->OutWrite (result.GetOutput(), result.GetOutputSize(), NO_ASYNC);
+            
+        if (result.GetErrorSize() > 0)
+            m_io_channel_ap->OutWrite (result.GetError(), result.GetErrorSize(), NO_ASYNC);
 
         // We are done getting and running our command, we can now clear the
         // m_waiting_for_command so we can get another one.

@@ -23,6 +23,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamAsynchronousIO.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -802,9 +803,13 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
             // Rig up the results secondary output stream to the debugger's, so the output will come out synchronously
             // if the debugger is set up that way.
                 
-            result.SetImmediateOutputFile (debugger.GetOutputFile().GetStream());
-            result.SetImmediateErrorFile (debugger.GetErrorFile().GetStream());
-
+            StreamSP output_stream (new StreamAsynchronousIO (debugger.GetCommandInterpreter(),
+                                                              CommandInterpreter::eBroadcastBitAsynchronousOutputData));
+            StreamSP error_stream (new StreamAsynchronousIO (debugger.GetCommandInterpreter(),
+                                                             CommandInterpreter::eBroadcastBitAsynchronousErrorData));
+            result.SetImmediateOutputStream (output_stream);
+            result.SetImmediateErrorStream (error_stream);
+    
             bool stop_on_continue = true;
             bool echo_commands    = false;
             bool print_results    = true;
@@ -816,7 +821,9 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
                                                              echo_commands, 
                                                              print_results, 
                                                              result);
-        }
+            result.GetImmediateOutputStream()->Flush();
+            result.GetImmediateErrorStream()->Flush();
+       }
     }
     return ret_value;
 }
