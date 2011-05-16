@@ -36,7 +36,6 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -227,7 +226,6 @@ bool LCSSA::ProcessInstruction(Instruction *Inst,
                                   PredCache.GetNumPreds(ExitBB),
                                   Inst->getName()+".lcssa",
                                   ExitBB->begin());
-    PN->setDebugLoc(GetFirstDebugLocInBasicBlock(ExitBB));
 
     // Add inputs from inside the loop for this PHI.
     for (BasicBlock **PI = PredCache.GetPreds(ExitBB); *PI; ++PI) {
