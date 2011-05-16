@@ -1094,8 +1094,9 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
     {
       SDNode *myCALLSEQ_BEGIN = FindCallStartFromCallEnd(Node);
 
-      // If the CALLSEQ_START node hasn't been legalized first, legalize it.  This
-      // will cause this node to be legalized as well as handling libcalls right.
+      // If the CALLSEQ_START node hasn't been legalized first, legalize it.
+      // This will cause this node to be legalized as well as handling libcalls
+      // right.
       if (getLastCALLSEQ().getNode() != Node) {
         LegalizeOp(SDValue(myCALLSEQ_BEGIN, 0));
         DenseMap<SDValue, SDValue>::iterator I = LegalizedNodes.find(Op);
@@ -2060,14 +2061,14 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   return CallInfo.first;
 }
 
-/// ExpandLibCall - Generate a libcall taking the given operands as arguments 
+/// ExpandLibCall - Generate a libcall taking the given operands as arguments
 /// and returning a result of type RetVT.
 SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, EVT RetVT,
                                             const SDValue *Ops, unsigned NumOps,
                                             bool isSigned, DebugLoc dl) {
   TargetLowering::ArgListTy Args;
   Args.reserve(NumOps);
-  
+
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0; i != NumOps; ++i) {
     Entry.Node = Ops[i];
@@ -2078,14 +2079,14 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, EVT RetVT,
   }
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
                                          TLI.getPointerTy());
-  
+
   const Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
   std::pair<SDValue,SDValue> CallInfo =
   TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                   false, 0, TLI.getLibcallCallingConv(LC), false,
                   /*isReturnValueUsed=*/true,
                   Callee, Args, DAG, dl);
-  
+
   // Legalize the call sequence, starting with the chain.  This will advance
   // the LastCALLSEQ_END to the legalized version of the CALLSEQ_END node that
   // was added by LowerCallTo (guaranteeing proper serialization of calls).
@@ -3433,8 +3434,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       else if (WideVT == MVT::i128)
         LC = RTLIB::MUL_I128;
       assert(LC != RTLIB::UNKNOWN_LIBCALL && "Cannot expand this operation!");
-      
-      // The high part is obtained by SRA'ing all but one of the bits of low 
+
+      // The high part is obtained by SRA'ing all but one of the bits of low
       // part.
       unsigned LoSize = VT.getSizeInBits();
       SDValue HiLHS = DAG.getNode(ISD::SRA, dl, VT, RHS,
@@ -3453,7 +3454,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
       TopHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT, Ret,
                             DAG.getIntPtrConstant(1));
     }
-    
+
     if (isSigned) {
       Tmp1 = DAG.getConstant(VT.getSizeInBits() - 1,
                              TLI.getShiftAmountTy(BottomHalf.getValueType()));
@@ -3756,4 +3757,3 @@ void SelectionDAG::Legalize(CodeGenOpt::Level OptLevel) {
   ///
   SelectionDAGLegalize(*this, OptLevel).LegalizeDAG();
 }
-
