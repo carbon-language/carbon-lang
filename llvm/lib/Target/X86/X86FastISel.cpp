@@ -1008,63 +1008,6 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
       FuncInfo.MBB->addSuccessor(TrueMBB);
       return true;
     }
-  } else if (ExtractValueInst *EI =
-             dyn_cast<ExtractValueInst>(BI->getCondition())) {
-    // Check to see if the branch instruction is from an "arithmetic with
-    // overflow" intrinsic. The main way these intrinsics are used is:
-    //
-    //   %t = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %v1, i32 %v2)
-    //   %sum = extractvalue { i32, i1 } %t, 0
-    //   %obit = extractvalue { i32, i1 } %t, 1
-    //   br i1 %obit, label %overflow, label %normal
-    //
-    // The %sum and %obit are converted in an ADD and a SETO/SETB before
-    // reaching the branch. Therefore, we search backwards through the MBB
-    // looking for the SETO/SETB instruction. If an instruction modifies the
-    // EFLAGS register before we reach the SETO/SETB instruction, then we can't
-    // convert the branch into a JO/JB instruction.
-    if (const IntrinsicInst *CI =
-          dyn_cast<IntrinsicInst>(EI->getAggregateOperand())){
-      if (CI->getIntrinsicID() == Intrinsic::sadd_with_overflow ||
-          CI->getIntrinsicID() == Intrinsic::uadd_with_overflow) {
-        const MachineInstr *SetMI = 0;
-        unsigned Reg = getRegForValue(EI);
-
-        for (MachineBasicBlock::const_reverse_iterator
-               RI = FuncInfo.MBB->rbegin(), RE = FuncInfo.MBB->rend();
-             RI != RE; ++RI) {
-          const MachineInstr &MI = *RI;
-
-          if (MI.definesRegister(Reg)) {
-            if (MI.isCopy()) {
-              Reg = MI.getOperand(1).getReg();
-              continue;
-            }
-
-            SetMI = &MI;
-            break;
-          }
-
-          const TargetInstrDesc &TID = MI.getDesc();
-          if (TID.hasImplicitDefOfPhysReg(X86::EFLAGS) ||
-              MI.hasUnmodeledSideEffects())
-            break;
-        }
-
-        if (SetMI) {
-          unsigned OpCode = SetMI->getOpcode();
-
-          if (OpCode == X86::SETOr || OpCode == X86::SETBr) {
-            BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                    TII.get(OpCode == X86::SETOr ?  X86::JO_4 : X86::JB_4))
-              .addMBB(TrueMBB);
-            FastEmitBranch(FalseMBB, DL);
-            FuncInfo.MBB->addSuccessor(TrueMBB);
-            return true;
-          }
-        }
-      }
-    }
   } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
     // Handle things like "%cond = trunc i32 %X to i1 / br i1 %cond", which
     // typically happen for _Bool and C++ bools.
@@ -1391,10 +1334,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     // FIXME: Should fold immediates.
     
     // Replace "add with overflow" intrinsics with an "add" instruction followed
-    // by a seto/setc instruction. Later on, when the "extractvalue"
-    // instructions are encountered, we use the fact that two registers were
-    // created sequentially to get the correct registers for the "sum" and the
-    // "overflow bit".
+    // by a seto/setc instruction.
     const Function *Callee = I.getCalledFunction();
     const Type *RetTy =
       cast<StructType>(Callee->getReturnType())->getTypeAtIndex(unsigned(0));
@@ -1420,27 +1360,18 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     else
       return false;
 
-    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    // The call to CreateRegs builds two sequential registers, to store the
+    // both the the returned values.
+    unsigned ResultReg = FuncInfo.CreateRegs(I.getType());
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(OpC), ResultReg)
       .addReg(Reg1).addReg(Reg2);
-    unsigned DestReg1 = UpdateValueMap(&I, ResultReg);
-
-    // If the add with overflow is an intra-block value then we just want to
-    // create temporaries for it like normal.  If it is a cross-block value then
-    // UpdateValueMap will return the cross-block register used.  Since we
-    // *really* want the value to be live in the register pair known by
-    // UpdateValueMap, we have to use DestReg1+1 as the destination register in
-    // the cross block case.  In the non-cross-block case, we should just make
-    // another register for the value.
-    if (DestReg1 != ResultReg)
-      ResultReg = DestReg1+1;
-    else
-      ResultReg = createResultReg(TLI.getRegClassFor(MVT::i8));
 
     unsigned Opc = X86::SETBr;
     if (I.getIntrinsicID() == Intrinsic::sadd_with_overflow)
       Opc = X86::SETOr;
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), ResultReg+1);
+
+    UpdateValueMap(&I, ResultReg, 2);
     return true;
   }
   }

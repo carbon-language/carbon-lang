@@ -235,10 +235,10 @@ unsigned FastISel::lookUpRegForValue(const Value *V) {
 /// NOTE: This is only necessary because we might select a block that uses
 /// a value before we select the block that defines the value.  It might be
 /// possible to fix this by selecting blocks in reverse postorder.
-unsigned FastISel::UpdateValueMap(const Value *I, unsigned Reg) {
+void FastISel::UpdateValueMap(const Value *I, unsigned Reg, unsigned NumRegs) {
   if (!isa<Instruction>(I)) {
     LocalValueMap[I] = Reg;
-    return Reg;
+    return;
   }
 
   unsigned &AssignedReg = FuncInfo.ValueMap[I];
@@ -247,12 +247,11 @@ unsigned FastISel::UpdateValueMap(const Value *I, unsigned Reg) {
     AssignedReg = Reg;
   else if (Reg != AssignedReg) {
     // Arrange for uses of AssignedReg to be replaced by uses of Reg.
-    FuncInfo.RegFixups[AssignedReg] = Reg;
+    for (unsigned i = 0; i < NumRegs; i++)
+      FuncInfo.RegFixups[AssignedReg+i] = Reg+i;
 
     AssignedReg = Reg;
   }
-
-  return AssignedReg;
 }
 
 std::pair<unsigned, bool> FastISel::getRegForGEPIndex(const Value *Idx) {
@@ -845,12 +844,13 @@ FastISel::SelectExtractValue(const User *U) {
   if (!EVI)
     return false;
 
-  // Make sure we only try to handle extracts with a legal result.
+  // Make sure we only try to handle extracts with a legal result.  But also
+  // allow i1 because it's easy.
   EVT RealVT = TLI.getValueType(EVI->getType(), /*AllowUnknown=*/true);
   if (!RealVT.isSimple())
     return false;
   MVT VT = RealVT.getSimpleVT();
-  if (!TLI.isTypeLegal(VT))
+  if (!TLI.isTypeLegal(VT) && VT != MVT::i1)
     return false;
 
   const Value *Op0 = EVI->getOperand(0);
