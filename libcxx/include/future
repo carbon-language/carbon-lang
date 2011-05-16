@@ -2062,8 +2062,8 @@ typename enable_if
 >::type
 async(_F&& __f, _Args&&... __args)
 {
-    return async(launch::any, _STD::forward<_F>(__f),
-                              _STD::forward<_Args>(__args)...);
+    return _STD::async(launch::any, _STD::forward<_F>(__f),
+                                    _STD::forward<_Args>(__args)...);
 }
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
