@@ -37,6 +37,10 @@ using namespace llvm;
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "reloc-info"
 
+// FIXME: This switch must be removed. Since GNU as does not
+// need a command line switch for doing its wierd thing with PIC,
+// LLVM should not need it either.
+// --
 // Emulate the wierd behavior of GNU-as for relocation types
 namespace llvm {
 cl::opt<bool>
