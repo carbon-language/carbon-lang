@@ -323,7 +323,8 @@ void MCAsmStreamer::EmitThumbFunc(MCSymbol *Func) {
   // This needs to emit to a temporary string to get properly quoted
   // MCSymbols when they have spaces in them.
   OS << "\t.thumb_func";
-  if (Func)
+  // Only Mach-O hasSubsectionsViaSymbols()
+  if (MAI.hasSubsectionsViaSymbols())
     OS << '\t' << *Func;
   EmitEOL();
 }
