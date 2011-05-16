@@ -44,6 +44,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Operator.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -839,6 +840,44 @@ FastISel::SelectFNeg(const User *I) {
 }
 
 bool
+FastISel::SelectExtractValue(const User *U) {
+  const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(U);
+  if (!U)
+    return false;
+
+  // Make sure we only try to handle extracts with a legal result.
+  EVT RealVT = TLI.getValueType(EVI->getType(), /*AllowUnknown=*/true);
+  if (!RealVT.isSimple())
+    return false;
+  MVT VT = RealVT.getSimpleVT();
+  if (!TLI.isTypeLegal(VT))
+    return false;
+
+  const Value *Op0 = EVI->getOperand(0);
+  const Type *AggTy = Op0->getType();
+
+  // Get the base result register.
+  unsigned ResultReg;
+  DenseMap<const Value *, unsigned>::iterator I = FuncInfo.ValueMap.find(Op0);
+  if (I != FuncInfo.ValueMap.end())
+    ResultReg = I->second;
+  else
+    ResultReg = FuncInfo.InitializeRegForValue(Op0);
+
+  // Get the actual result register, which is an offset from the base register.
+  unsigned VTIndex = ComputeLinearIndex(AggTy, EVI->idx_begin(), EVI->idx_end());
+
+  SmallVector<EVT, 4> AggValueVTs;
+  ComputeValueVTs(TLI, AggTy, AggValueVTs);
+
+  for (unsigned i = 0; i < VTIndex; i++)
+    ResultReg += TLI.getNumRegisters(FuncInfo.Fn->getContext(), AggValueVTs[i]);
+
+  UpdateValueMap(EVI, ResultReg);
+  return true;
+}
+
+bool
 FastISel::SelectOperator(const User *I, unsigned Opcode) {
   switch (Opcode) {
   case Instruction::Add:
@@ -941,6 +980,9 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
     UpdateValueMap(I, Reg);
     return true;
   }
+
+  case Instruction::ExtractValue:
+    return SelectExtractValue(I);
 
   case Instruction::PHI:
     llvm_unreachable("FastISel shouldn't visit PHI nodes!");

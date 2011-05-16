@@ -343,6 +343,8 @@ private:
 
   bool SelectCast(const User *I, unsigned Opcode);
 
+  bool SelectExtractValue(const User *I);
+
   /// HandlePHINodesInSuccessorBlocks - Handle PHI nodes in successor blocks.
   /// Emit code to ensure constants are copied into registers when needed.
   /// Remember the virtual registers that need to be added to the Machine PHI
