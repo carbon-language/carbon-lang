@@ -3175,7 +3175,7 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   Out.flush();
   llvm::StringRef Name = OutName.str();
 
-  ComputeVTableRelatedInformation(RD, true);
+  ComputeVTableRelatedInformation(RD, /*VTableRequired=*/true);
   
   const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 

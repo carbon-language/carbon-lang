@@ -812,7 +812,7 @@ FieldHasTrivialDestructorBody(ASTContext &Context,
 /// CanSkipVTablePointerInitialization - Check whether we need to initialize
 /// any vtable pointers before calling this destructor.
 static bool CanSkipVTablePointerInitialization(ASTContext &Context,
-                                           const CXXDestructorDecl *Dtor) {
+                                               const CXXDestructorDecl *Dtor) {
   if (!Dtor->hasTrivialBody())
     return false;
 

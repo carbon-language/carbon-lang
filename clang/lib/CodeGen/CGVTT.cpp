@@ -411,6 +411,8 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTT(const CXXRecordDecl *RD) {
   Out.flush();
   llvm::StringRef Name = OutName.str();
 
+  ComputeVTableRelatedInformation(RD, /*VTableRequired=*/true);
+
   VTTBuilder Builder(CGM, RD, /*GenerateDefinition=*/false);
 
   const llvm::Type *Int8PtrTy = 

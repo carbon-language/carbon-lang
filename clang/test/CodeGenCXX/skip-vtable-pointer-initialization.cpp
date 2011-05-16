@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 
+// See Test9 for test description.
+// CHECK: @_ZTTN5Test91BE = linkonce_odr unnamed_addr constant
 namespace Test1 {
 
 // Check that we don't initialize the vtable pointer in A::~A(), since the destructor body is trivial.
@@ -182,5 +184,17 @@ struct A {
 A::~A()
 {
 }
+
+}
+
+namespace Test9 {
+
+// Check that we emit a VTT for B, even though we don't initialize the vtable pointer in the destructor.
+struct A { virtual ~A () { } };
+struct B : virtual A {};
+struct C : virtual B { 
+  virtual ~C();
+};
+C::~C() {}
 
 }
