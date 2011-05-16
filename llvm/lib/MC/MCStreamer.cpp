@@ -346,6 +346,12 @@ void MCStreamer::EmitWin64EHPushFrame(bool Code)
   abort();
 }
 
+void MCStreamer::EmitWin64EHEndProlog(void)
+{
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
 void MCStreamer::EmitFnStart() {
   errs() << "Not implemented yet\n";
   abort();

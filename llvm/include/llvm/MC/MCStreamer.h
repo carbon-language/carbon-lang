@@ -463,6 +463,7 @@ namespace llvm {
     virtual void EmitWin64EHAllocStack(int64_t Size);
     virtual void EmitWin64EHSaveReg(int64_t Register, int64_t Offset);
     virtual void EmitWin64EHPushFrame(bool Code);
+    virtual void EmitWin64EHEndProlog(void);
 
     /// EmitInstruction - Emit the given @p Instruction into the current
     /// section.
