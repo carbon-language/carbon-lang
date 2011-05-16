@@ -1527,20 +1527,6 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
         Val = DAG.getNode(ISD::FP_ROUND, dl, VA.getValVT(), Val,
                           // This truncation won't change the value.
                           DAG.getIntPtrConstant(1));
-    } else if (Is64Bit && CopyVT.isVector() && CopyVT.getSizeInBits() == 64) {
-      // For x86-64, MMX values are returned in XMM0 / XMM1 except for v1i64.
-      if (VA.getLocReg() == X86::XMM0 || VA.getLocReg() == X86::XMM1) {
-        Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
-                                   MVT::v2i64, InFlag).getValue(1);
-        Val = Chain.getValue(0);
-        Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64,
-                          Val, DAG.getConstant(0, MVT::i64));
-      } else {
-        Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
-                                   MVT::i64, InFlag).getValue(1);
-        Val = Chain.getValue(0);
-      }
-      Val = DAG.getNode(ISD::BITCAST, dl, CopyVT, Val);
     } else {
       Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
                                  CopyVT, InFlag).getValue(1);
