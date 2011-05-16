@@ -50,7 +50,6 @@ class SelectionDAGLegalize {
   const TargetMachine &TM;
   const TargetLowering &TLI;
   SelectionDAG &DAG;
-  CodeGenOpt::Level OptLevel;
 
   // Libcall insertion helpers.
 
@@ -86,7 +85,7 @@ class SelectionDAGLegalize {
   }
 
 public:
-  SelectionDAGLegalize(SelectionDAG &DAG, CodeGenOpt::Level ol);
+  explicit SelectionDAGLegalize(SelectionDAG &DAG);
 
   /// getTypeAction - Return how we should legalize values of this type, either
   /// it is already legal or we need to expand it into multiple registers of
@@ -219,10 +218,9 @@ SelectionDAGLegalize::ShuffleWithNarrowerEltType(EVT NVT, EVT VT,  DebugLoc dl,
   return DAG.getVectorShuffle(NVT, dl, N1, N2, &NewMask[0]);
 }
 
-SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag,
-                                           CodeGenOpt::Level ol)
+SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
   : TM(dag.getTarget()), TLI(dag.getTargetLoweringInfo()),
-    DAG(dag), OptLevel(ol),
+    DAG(dag),
     ValueTypeActions(TLI.getValueTypeActions()) {
   assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE &&
          "Too many value types for ValueTypeActions to hold!");
@@ -3745,8 +3743,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
 
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
-void SelectionDAG::Legalize(CodeGenOpt::Level OptLevel) {
+void SelectionDAG::Legalize() {
   /// run - This is the main entry point to this class.
   ///
-  SelectionDAGLegalize(*this, OptLevel).LegalizeDAG();
+  SelectionDAGLegalize(*this).LegalizeDAG();
 }

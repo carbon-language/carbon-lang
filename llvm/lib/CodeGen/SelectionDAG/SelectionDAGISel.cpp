@@ -537,7 +537,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
 
   {
     NamedRegionTimer T("DAG Legalization", GroupName, TimePassesIsEnabled);
-    CurDAG->Legalize(OptLevel);
+    CurDAG->Legalize();
   }
 
   DEBUG(dbgs() << "Legalized selection DAG: BB#" << BlockNumber
