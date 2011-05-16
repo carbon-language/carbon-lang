@@ -66,21 +66,13 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB) {
 
       ImmutableCallSite CS(cast<Instruction>(II));
 
-      // If this function contains a call to setjmp or _setjmp, never inline
-      // it.  This is a hack because we depend on the user marking their local
-      // variables as volatile if they are live across a setjmp call, and they
-      // probably won't do this in callers.
       if (const Function *F = CS.getCalledFunction()) {
         // If a function is both internal and has a single use, then it is 
         // extremely likely to get inlined in the future (it was probably 
         // exposed by an interleaved devirtualization pass).
         if (F->hasInternalLinkage() && F->hasOneUse())
           ++NumInlineCandidates;
-        
-        if (F->isDeclaration() && 
-            (F->getName() == "setjmp" || F->getName() == "_setjmp"))
-          callsSetJmp = true;
-       
+
         // If this call is to function itself, then the function is recursive.
         // Inlining it into other functions is a bad idea, because this is
         // basically just a form of loop peeling, and our metrics aren't useful
@@ -226,6 +218,13 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
 /// analyzeFunction - Fill in the current structure with information gleaned
 /// from the specified function.
 void CodeMetrics::analyzeFunction(Function *F) {
+  // If this function contains a call to setjmp or _setjmp, never inline
+  // it.  This is a hack because we depend on the user marking their local
+  // variables as volatile if they are live across a setjmp call, and they
+  // probably won't do this in callers.
+  if (F->callsFunctionThatReturnsTwice())
+    callsSetJmp = true;
+
   // Look at the size of the callee.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
     analyzeBasicBlock(&*BB);
