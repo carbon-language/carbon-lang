@@ -165,7 +165,7 @@ void VirtRegAuxInfo::CalculateWeightAndHint(LiveInterval &li) {
     return;
 
   // Mark li as unspillable if all live ranges are tiny.
-  if (li.isZeroLength()) {
+  if (li.isZeroLength(LIS.getSlotIndexes())) {
     li.markNotSpillable();
     return;
   }

@@ -492,9 +492,10 @@ namespace llvm {
 
     /// Returns true if the live interval is zero length, i.e. no live ranges
     /// span instructions. It doesn't pay to spill such an interval.
-    bool isZeroLength() const {
+    bool isZeroLength(SlotIndexes *Indexes) const {
       for (const_iterator i = begin(), e = end(); i != e; ++i)
-        if (i->end.getPrevIndex() > i->start)
+        if (Indexes->getNextNonNullIndex(i->start).getBaseIndex() <
+            i->end.getBaseIndex())
           return false;
       return true;
     }

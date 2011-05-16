@@ -222,7 +222,7 @@ define <8 x i8> @vld3lanei8(i8* %A, <8 x i8>* %B) nounwind {
 define <4 x i16> @vld3lanei16(i16* %A, <4 x i16>* %B) nounwind {
 ;CHECK: vld3lanei16:
 ;Check the (default) alignment value.  VLD3 does not support alignment.
-;CHECK: vld3.16 {d16[1], d17[1], d18[1]}, [{{r[0-9]+}}]
+;CHECK: vld3.16 {d{{.*}}[1], d{{.*}}[1], d{{.*}}[1]}, [{{r[0-9]+}}]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <4 x i16>* %B
 	%tmp2 = call %struct.__neon_int16x4x3_t @llvm.arm.neon.vld3lane.v4i16(i8* %tmp0, <4 x i16> %tmp1, <4 x i16> %tmp1, <4 x i16> %tmp1, i32 1, i32 8)
@@ -265,7 +265,7 @@ define <2 x float> @vld3lanef(float* %A, <2 x float>* %B) nounwind {
 define <8 x i16> @vld3laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 ;CHECK: vld3laneQi16:
 ;Check the (default) alignment value.  VLD3 does not support alignment.
-;CHECK: vld3.16 {d16[1], d18[1], d20[1]}, [{{r[0-9]+}}]
+;CHECK: vld3.16 {d{{.*}}[1], d{{.*}}[1], d{{.*}}[1]}, [{{r[0-9]+}}]
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
 	%tmp2 = call %struct.__neon_int16x8x3_t @llvm.arm.neon.vld3lane.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1, i32 8)
@@ -280,7 +280,7 @@ define <8 x i16> @vld3laneQi16(i16* %A, <8 x i16>* %B) nounwind {
 ;Check for a post-increment updating load with register increment.
 define <8 x i16> @vld3laneQi16_update(i16** %ptr, <8 x i16>* %B, i32 %inc) nounwind {
 ;CHECK: vld3laneQi16_update:
-;CHECK: vld3.16 {d16[1], d18[1], d20[1]}, [{{r[0-9]+}}], {{r[0-9]+}}
+;CHECK: vld3.16 {d{{.*}}[1], d{{.*}}[1], d{{.*}}[1]}, [{{r[0-9]+}}], {{r[0-9]+}}
 	%A = load i16** %ptr
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
@@ -344,7 +344,7 @@ declare %struct.__neon_float32x4x3_t @llvm.arm.neon.vld3lane.v4f32(i8*, <4 x flo
 define <8 x i8> @vld4lanei8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vld4lanei8:
 ;Check the alignment value.  Max for this instruction is 32 bits:
-;CHECK: vld4.8 {d16[1], d17[1], d18[1], d19[1]}, [{{r[0-9]+}}, :32]
+;CHECK: vld4.8 {d{{.*}}[1], d{{.*}}[1], d{{.*}}[1], d{{.*}}[1]}, [{{r[0-9]+}}, :32]
 	%tmp1 = load <8 x i8>* %B
 	%tmp2 = call %struct.__neon_int8x8x4_t @llvm.arm.neon.vld4lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 8)
         %tmp3 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 0
