@@ -444,33 +444,14 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtor(llvm::Value *Dest,
                                  E->arg_begin(), E->arg_end());
 }
 
-/// Check whether the given operator new[] is the global placement
-/// operator new[].
-static bool IsPlacementOperatorNewArray(ASTContext &Ctx,
-                                        const FunctionDecl *Fn) {
-  // Must be in global scope.  Note that allocation functions can't be
-  // declared in namespaces.
-  if (!Fn->getDeclContext()->getRedeclContext()->isFileContext())
-    return false;
-
-  // Signature must be void *operator new[](size_t, void*).
-  // The size_t is common to all operator new[]s.
-  if (Fn->getNumParams() != 2)
-    return false;
-
-  CanQualType ParamType = Ctx.getCanonicalType(Fn->getParamDecl(1)->getType());
-  return (ParamType == Ctx.VoidPtrTy);
-}
-
 static CharUnits CalculateCookiePadding(CodeGenFunction &CGF,
                                         const CXXNewExpr *E) {
   if (!E->isArray())
     return CharUnits::Zero();
 
-  // No cookie is required if the new operator being used is 
-  // ::operator new[](size_t, void*).
-  const FunctionDecl *OperatorNew = E->getOperatorNew();
-  if (IsPlacementOperatorNewArray(CGF.getContext(), OperatorNew))
+  // No cookie is required if the operator new[] being used is the
+  // reserved placement operator new[].
+  if (E->getOperatorNew()->isReservedGlobalPlacementOperator())
     return CharUnits::Zero();
 
   return CGF.CGM.getCXXABI().GetArrayCookieSize(E);
@@ -1073,11 +1054,19 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     EmitCallArg(allocatorArgs, *placementArg, placementArg->getType());
   }
 
-  // Emit the allocation call.
-  RValue RV =
-    EmitCall(CGM.getTypes().getFunctionInfo(allocatorArgs, allocatorType),
-             CGM.GetAddrOfFunction(allocator), ReturnValueSlot(),
-             allocatorArgs, allocator);
+  // Emit the allocation call.  If the allocator is a global placement
+  // operator, just "inline" it directly.
+  RValue RV;
+  if (allocator->isReservedGlobalPlacementOperator()) {
+    assert(allocatorArgs.size() == 2);
+    RV = allocatorArgs[1].RV;
+    // TODO: kill any unnecessary computations done for the size
+    // argument.
+  } else {
+    RV = EmitCall(CGM.getTypes().getFunctionInfo(allocatorArgs, allocatorType),
+                  CGM.GetAddrOfFunction(allocator), ReturnValueSlot(),
+                  allocatorArgs, allocator);
+  }
 
   // Emit a null check on the allocation result if the allocation
   // function is allowed to return null (because it has a non-throwing
@@ -1122,7 +1111,8 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // If there's an operator delete, enter a cleanup to call it if an
   // exception is thrown.
   EHScopeStack::stable_iterator operatorDeleteCleanup;
-  if (E->getOperatorDelete()) {
+  if (E->getOperatorDelete() &&
+      !E->getOperatorDelete()->isReservedGlobalPlacementOperator()) {
     EnterNewDeleteCleanup(*this, E, allocation, allocSize, allocatorArgs);
     operatorDeleteCleanup = EHStack.stable_begin();
   }

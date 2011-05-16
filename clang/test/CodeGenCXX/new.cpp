@@ -1,12 +1,16 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown %s -emit-llvm -o - | FileCheck %s
-#include <stddef.h>
+
+typedef __typeof__(sizeof(0)) size_t;
 
 void t1() {
   int* a = new int;
 }
 
-// Placement.
-void* operator new(size_t, void*) throw();
+// Declare the reserved placement operators.
+void *operator new(size_t, void*) throw();
+void operator delete(void*, void*) throw();
+void *operator new[](size_t, void*) throw();
+void operator delete[](void*, void*) throw();
 
 void t2(int* a) {
   int* b = new (a) int;
@@ -162,4 +166,46 @@ void f() {
   // CHECK: call void @_ZdlPv(i8*
   delete new bool;
   // CHECK: ret void
+}
+
+namespace test15 {
+  struct A { A(); ~A(); };
+
+  // CHECK:    define void @_ZN6test155test0EPv(
+  // CHECK:      [[P:%.*]] = load i8*
+  // CHECK-NEXT: icmp eq i8* [[P]], null
+  // CHECK-NEXT: br i1
+  // CHECK:      [[T0:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
+  // CHECK-NEXT: call void @_ZN6test151AC1Ev([[A]]* [[T0]])
+  void test0(void *p) {
+    new (p) A();
+  }
+
+  // CHECK:    define void @_ZN6test155test1EPv(
+  // CHECK:      [[P:%.*]] = load i8*
+  // CHECK-NEXT: icmp eq i8* [[P]], null
+  // CHECK-NEXT: br i1
+  // CHECK:      [[T0:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
+  // CHECK:      [[T1:%.*]] = getelementptr inbounds [[A]]* [[T0]],
+  // CHECK-NEXT: call void @_ZN6test151AC1Ev([[A]]* [[T1]])
+  void test1(void *p) {
+    new (p) A[5];
+  }
+
+  // TODO: it's okay if all these size calculations get dropped.
+  // FIXME: maybe we should try to throw on overflow?
+  // CHECK:    define void @_ZN6test155test2EPvi(
+  // CHECK:      [[N:%.*]] = load i32*
+  // CHECK-NEXT: [[T0:%.*]] = sext i32 [[N]] to i64
+  // CHECK-NEXT: [[T1:%.*]] = icmp slt i64 [[T0]], 0
+  // CHECK-NEXT: [[T2:%.*]] = select i1 [[T1]], i64 -1, i64 [[T0]]
+  // CHECK-NEXT: [[P:%.*]] = load i8*
+  // CHECK-NEXT: icmp eq i8* [[P]], null
+  // CHECK-NEXT: br i1
+  // CHECK:      [[T0:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
+  // CHECK:      [[T1:%.*]] = getelementptr inbounds [[A]]* [[T0]],
+  // CHECK-NEXT: call void @_ZN6test151AC1Ev([[A]]* [[T1]])
+  void test2(void *p, int n) {
+    new (p) A[n];
+  }
 }
