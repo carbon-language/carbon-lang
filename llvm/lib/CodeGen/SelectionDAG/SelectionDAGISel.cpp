@@ -208,38 +208,6 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-/// FunctionCallsSetJmp - Return true if the function has a call to setjmp or
-/// other function that gcc recognizes as "returning twice". This is used to
-/// limit code-gen optimizations on the machine function.
-///
-/// FIXME: Remove after <rdar://problem/8031714> is fixed.
-static bool FunctionCallsSetJmp(const Function *F) {
-  const Module *M = F->getParent();
-  static const char *ReturnsTwiceFns[] = {
-    "_setjmp",
-    "setjmp",
-    "sigsetjmp",
-    "setjmp_syscall",
-    "savectx",
-    "qsetjmp",
-    "vfork",
-    "getcontext"
-  };
-
-  for (unsigned I = 0; I < array_lengthof(ReturnsTwiceFns); ++I)
-    if (const Function *Callee = M->getFunction(ReturnsTwiceFns[I])) {
-      if (!Callee->use_empty())
-        for (Value::const_use_iterator
-               I = Callee->use_begin(), E = Callee->use_end();
-             I != E; ++I)
-          if (const CallInst *CI = dyn_cast<CallInst>(*I))
-            if (CI->getParent()->getParent() == F)
-              return true;
-    }
-
-  return false;
-}
-
 /// SplitCriticalSideEffectEdges - Look for critical edges with a PHI value that
 /// may trap on it.  In this case we have to split the edge so that the path
 /// through the predecessor block that doesn't go to the phi block doesn't
@@ -390,7 +358,7 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
   }
 
   // Determine if there is a call to setjmp in the machine function.
-  MF->setCallsSetJmp(FunctionCallsSetJmp(&Fn));
+  MF->setCallsSetJmp(Fn.callsFunctionThatReturnsTwice());
 
   // Replace forward-declared registers with the registers containing
   // the desired value.

@@ -59,6 +59,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/InlineCost.h"
@@ -209,10 +210,10 @@ bool TailCallElim::runOnFunction(Function &F) {
     }
   }
 
-  // Finally, if this function contains no non-escaping allocas, mark all calls
-  // in the function as eligible for tail calls (there is no stack memory for
-  // them to access).
-  if (!FunctionContainsEscapingAllocas)
+  // Finally, if this function contains no non-escaping allocas, or calls
+  // setjmp, mark all calls in the function as eligible for tail calls
+  //(there is no stack memory for them to access).
+  if (!FunctionContainsEscapingAllocas && !F.callsFunctionThatReturnsTwice())
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
