@@ -175,6 +175,9 @@ template<class Callable, class ...Args>
 #include <__config>
 #include <__mutex_base>
 #include <functional>
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+#include <tuple>
+#endif
 
 #pragma GCC system_header
 
@@ -455,6 +458,39 @@ private:
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 };
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+template <class _F>
+class __call_once_param
+{
+    _F __f_;
+public:
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
+    explicit __call_once_param(_F&& __f) : __f_(_STD::move(__f)) {}
+#else
+    _LIBCPP_INLINE_VISIBILITY
+    explicit __call_once_param(const _F& __f) : __f_(__f) {}
+#endif
+
+    _LIBCPP_INLINE_VISIBILITY
+    void operator()()
+    {
+        typedef typename __make_tuple_indices<tuple_size<_F>::value, 1>::type _Index;
+        __execute(_Index());
+    }
+
+private:
+    template <size_t ..._Indices>
+    _LIBCPP_INLINE_VISIBILITY
+    void __execute(__tuple_indices<_Indices...>)
+    {
+        _STD::move(_STD::get<0>(__f_))(_STD::move(_STD::get<_Indices>(__f_))...);
+    }
+};
+
+#else
+
 template <class _F>
 class __call_once_param
 {
@@ -475,6 +511,8 @@ public:
     }
 };
 
+#endif
+
 template <class _F>
 void
 __call_once_proxy(void* __vp)
@@ -494,10 +532,9 @@ call_once(once_flag& __flag, _Callable&& __func, _Args&&... __args)
 {
     if (__builtin_expect(__flag.__state_ , ~0ul) != ~0ul)
     {
-        typedef decltype(std::bind(std::forward<_Callable>(__func),
-                         std::forward<_Args>(__args)...)) _G;
-        __call_once_param<_G> __p(std::bind(std::forward<_Callable>(__func),
-                                 std::forward<_Args>(__args)...));
+        typedef tuple<typename decay<_Callable>::type, typename decay<_Args>::type...> _G;
+        __call_once_param<_G> __p(_G(__decay_copy(_STD::forward<_Callable>(__func)),
+                                __decay_copy(_STD::forward<_Args>(__args))...));
         __call_once(__flag.__state_, &__p, &__call_once_proxy<_G>);
     }
 }

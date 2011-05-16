@@ -129,6 +129,22 @@ void f42()
     std::call_once(flg41, init41);
 }
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+class MoveOnly
+{
+    MoveOnly(const MoveOnly&);
+public:
+    MoveOnly() {}
+    MoveOnly(MoveOnly&&) {}
+
+    void operator()(MoveOnly&&)
+    {
+    }
+};
+
+#endif
+
 int main()
 {
     // check basic functionality
@@ -173,6 +189,10 @@ int main()
         t0.join();
         t1.join();
         assert(init2::called == 5);
+    }
+    {
+        std::once_flag f;
+        std::call_once(f, MoveOnly(), MoveOnly());
     }
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 }
