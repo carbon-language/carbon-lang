@@ -41,6 +41,11 @@ iter_def = "    def __iter__(self): return lldb_iter(self, '%s', '%s')"
 module_iter = "    def module_iter(self): return lldb_iter(self, '%s', '%s')"
 breakpoint_iter = "    def breakpoint_iter(self): return lldb_iter(self, '%s', '%s')"
 #
+# Called to implement the built-in function len().
+# Eligible objects are those containers with unambiguous iteration support.
+#
+len_def = "    def __len__(self): return self.%s()"
+#
 # This supports the rich comparison methods of __eq__ and __ne__.
 eq_def = "    def __eq__(self, other): return isinstance(other, %s) and %s"
 ne_def = "    def __ne__(self, other): return not self.__eq__(other)"
@@ -104,7 +109,7 @@ class_pattern = re.compile("^class (SB.*)\(_object\):$")
 # The pattern for recognizing the beginning of the __init__ method definition.
 init_pattern = re.compile("^    def __init__\(self, \*args\):")
 
-# These define the states of our state machine.
+# These define the states of our finite state machine.
 NORMAL = 0
 DEFINING_ITERATOR = 1
 DEFINING_EQUALITY = 2
@@ -140,6 +145,7 @@ for line in content.splitlines():
             else:
                 if (state & DEFINING_ITERATOR):
                     print >> new_content, iter_def % d[cls]
+                    print >> new_content, len_def % d[cls][0]
                 if (state & DEFINING_EQUALITY):
                     print >> new_content, eq_def % (cls, list_to_frag(e[cls]))
                     print >> new_content, ne_def

@@ -43,25 +43,45 @@ class RegistersIteratorTestCase(TestBase):
         for thread in self.process:
             if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
                 for frame in thread:
-                    # Dump the registers of this frame using iter_registers().
+                    # Dump the registers of this frame using lldbutil.get_GPRs() and friends.
                     if self.TraceOn():
                         print frame
 
+                    REGs = lldbutil.get_GPRs(frame)
+                    num = len(REGs)
+                    if self.TraceOn():
+                        print "\nNumber of general purpose registers: %d" % num
+                    for reg in REGs:
+                        self.assertTrue(reg.IsValid())
+                        if self.TraceOn():
+                            print "%s => %s" % (reg.GetName(), reg.GetValue(frame))
+
+                    REGs = lldbutil.get_FPRs(frame)
+                    num = len(REGs)
+                    if self.TraceOn():
+                        print "\nNumber of floating point registers: %d" % num
+                    for reg in REGs:
+                        self.assertTrue(reg.IsValid())
+                        if self.TraceOn():
+                            print "%s => %s" % (reg.GetName(), reg.GetValue(frame))
+
+                    REGs = lldbutil.get_ESRs(frame)
+                    num = len(REGs)
+                    if self.TraceOn():
+                        print "\nNumber of exception state registers: %d" % num
+                    for reg in REGs:
+                        self.assertTrue(reg.IsValid())
+                        if self.TraceOn():
+                            print "%s => %s" % (reg.GetName(), reg.GetValue(frame))
+
+                    # And these should also work.
                     for kind in ["General Purpose Registers",
                                  "Floating Point Registers",
                                  "Exception State Registers"]:
                         REGs = lldbutil.get_registers(frame, kind)
-                        if self.TraceOn():
-                            print "%s:" % kind
-                        for reg in REGs:
-                            self.assertTrue(reg.IsValid())
-                            if self.TraceOn():
-                                print "%s => %s" % (reg.GetName(), reg.GetValue(frame))
+                        self.assertTrue(REGs.IsValid())
 
-                    # And these should also work.
-                    self.assertTrue(lldbutil.get_GPRs(frame))
-                    self.assertTrue(lldbutil.get_FPRs(frame))
-                    self.assertTrue(lldbutil.get_ESRs(frame))
+                    # We've finished dumping the registers for frame #0.
                     break
 
 
