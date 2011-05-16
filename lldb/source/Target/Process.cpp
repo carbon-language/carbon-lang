@@ -1913,7 +1913,7 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
     BreakpointSiteList::collection::const_iterator end =  m_breakpoint_site_list.GetMap()->end();
 
     if (iter == end || iter->second->GetLoadAddress() > addr + size)
-        return DoWriteMemory(addr, buf, size, error);
+        return WriteMemoryPrivate (addr, buf, size, error);
 
     BreakpointSiteList::collection::const_iterator pos;
     size_t bytes_written = 0;

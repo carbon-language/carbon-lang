@@ -262,6 +262,7 @@ ClangASTType::GetFormat (clang_type_t clang_type)
         //default: assert(0 && "Unknown builtin type!");
         case clang::BuiltinType::UnknownAny:
         case clang::BuiltinType::Void:
+        case clang::BuiltinType::BoundMember:
             break;
 
         case clang::BuiltinType::Bool:          return lldb::eFormatBoolean;

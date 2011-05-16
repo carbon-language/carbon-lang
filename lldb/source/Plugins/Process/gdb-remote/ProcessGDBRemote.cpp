@@ -1520,6 +1520,14 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
 size_t
 ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
 {
+    if (size > m_max_memory_size)
+    {
+        // Keep memory read sizes down to a sane limit. This function will be
+        // called multiple times in order to complete the task by 
+        // lldb_private::Process so it is ok to do this.
+        size = m_max_memory_size;
+    }
+
     StreamString packet;
     packet.Printf("M%llx,%zx:", addr, size);
     packet.PutBytesAsRawHex8(buf, size, lldb::endian::InlHostByteOrder(), lldb::endian::InlHostByteOrder());
