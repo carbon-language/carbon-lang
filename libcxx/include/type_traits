@@ -1419,6 +1419,14 @@ public:
                      >::type type;
 };
 
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+typename decay<_Tp>::type
+__decay_copy(_Tp&& __t)
+{
+    return _STD::forward<_Tp>(__t);
+}
+
 template <class _MP, bool _IsMemberFuctionPtr, bool _IsMemberObjectPtr>
 struct __member_pointer_traits_imp
 {

@@ -71,6 +71,22 @@ public:
 int G::n_alive = 0;
 bool G::op_run = false;
 
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+class MoveOnly
+{
+    MoveOnly(const MoveOnly&);
+public:
+    MoveOnly() {}
+    MoveOnly(MoveOnly&&) {}
+
+    void operator()(MoveOnly&&)
+    {
+    }
+};
+
+#endif
+
 int main()
 {
     {
@@ -125,6 +141,10 @@ int main()
         t.join();
         assert(G::n_alive == 0);
         assert(G::op_run);
+    }
+    {
+        std::thread t = std::thread(MoveOnly(), MoveOnly());
+        t.join();
     }
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 }
