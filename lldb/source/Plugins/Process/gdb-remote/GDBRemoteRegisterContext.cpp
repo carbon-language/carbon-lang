@@ -230,13 +230,13 @@ GDBRemoteRegisterContext::WriteRegister (const RegisterInfo *reg_info,
 {
     DataExtractor data;
     if (value.GetData (data))
-        return WriteRegisterBytes (reg_info, value, data, 0);
+        return WriteRegisterBytes (reg_info, data, 0);
     return false;
 }
 
 
 bool
-GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info, const RegisterValue &value, DataExtractor &data, uint32_t data_offset)
+GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info, DataExtractor &data, uint32_t data_offset)
 {
     GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
 // FIXME: This check isn't right because IsRunning checks the Public state, but this
@@ -386,13 +386,51 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
         const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
         if (thread_suffix_supported || GetGDBProcess().GetGDBRemote().SetCurrentThread(m_thread.GetID()))
         {
-            if (gdb_comm.SendPacketAndWaitForResponse((const char *)data_sp->GetBytes(), 
-                                                      data_sp->GetByteSize(), 
-                                                      response, 
-                                                      false))
+            // The data_sp contains the entire G response packet including the
+            // G, and if the thread suffix is supported, it has the thread suffix
+            // as well.
+            const char *G_packet = (const char *)data_sp->GetBytes();
+            size_t G_packet_len = data_sp->GetByteSize();
+            if (gdb_comm.SendPacketAndWaitForResponse (G_packet, 
+                                                       G_packet_len, 
+                                                       response, 
+                                                       false))
             {
                 if (response.IsOKResponse())
                     return true;
+                else if (response.IsErrorResponse())
+                {
+                    uint32_t num_restored = 0;
+                    // We need to manually go through all of the registers and
+                    // restore them manually
+                    DataExtractor data (G_packet + 1,   // Skip the leading 'G'
+                                        G_packet_len - 1,
+                                        m_reg_data.GetByteOrder(),
+                                        m_reg_data.GetAddressByteSize());
+
+                    //ReadRegisterBytes (const RegisterInfo *reg_info, RegisterValue &value, DataExtractor &data)
+                    const RegisterInfo *reg_info;
+                    for (uint32_t reg_idx=0; (reg_info = GetRegisterInfoAtIndex (reg_idx)) != NULL; ++reg_idx)
+                    {
+                        const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+                        
+                        // Only write down the registers that need to be written 
+                        // if we are going to be doing registers individually.
+                        bool write_reg = true;
+                        const uint32_t reg_byte_offset = reg_info->byte_offset;
+                        const uint32_t reg_byte_size = reg_info->byte_size;
+                        if (m_reg_valid[reg])
+                        {
+                            const uint8_t *current_src = m_reg_data.PeekData(reg_byte_offset, reg_byte_size);
+                            const uint8_t *restore_src = data.PeekData(reg_byte_offset, reg_byte_size);
+                            if (current_src && restore_src)
+                                write_reg = memcmp (current_src, restore_src, reg_byte_size) != 0;
+                        }
+                        if (WriteRegisterBytes(reg_info, data, reg_byte_offset))
+                            ++num_restored;
+                    }
+                    return num_restored > 0;
+                }
             }
         }
     }

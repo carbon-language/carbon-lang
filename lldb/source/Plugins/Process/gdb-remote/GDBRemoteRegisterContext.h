@@ -232,7 +232,6 @@ protected:
 
     bool
     WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info,
-                        const lldb_private::RegisterValue &value, 
                         lldb_private::DataExtractor &data, 
                         uint32_t data_offset);
 
