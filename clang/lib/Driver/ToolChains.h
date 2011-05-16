@@ -308,8 +308,11 @@ public:
 };
 
 class LLVM_LIBRARY_VISIBILITY NetBSD : public Generic_ELF {
+  const llvm::Triple ToolTriple;
+
 public:
-  NetBSD(const HostInfo &Host, const llvm::Triple& Triple);
+  NetBSD(const HostInfo &Host, const llvm::Triple& Triple,
+         const llvm::Triple& ToolTriple);
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
