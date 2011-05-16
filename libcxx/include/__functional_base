@@ -430,6 +430,14 @@ __invoke(_R _T::* __f, _T1&& __t1)
 
 // fifth bullet
 
+template <class _R, class ..._Param, class ..._Args>
+inline _LIBCPP_INLINE_VISIBILITY
+_R
+__invoke(_R (*__f)(_Param...), _Args&& ...__args)
+{
+    return __f(_STD::forward<_Args>(__args)...);
+}
+
 template <class _F, class ..._T>
 inline _LIBCPP_INLINE_VISIBILITY
 typename result_of<_F(_T...)>::type
