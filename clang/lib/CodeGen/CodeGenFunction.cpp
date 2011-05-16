@@ -196,7 +196,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
 bool CodeGenFunction::ShouldInstrumentFunction() {
   if (!CGM.getCodeGenOpts().InstrumentFunctions)
     return false;
-  if (CurFuncDecl->hasAttr<NoInstrumentFunctionAttr>())
+  if (!CurFuncDecl || CurFuncDecl->hasAttr<NoInstrumentFunctionAttr>())
     return false;
   return true;
 }
