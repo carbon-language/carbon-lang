@@ -559,21 +559,20 @@ void CXXRecordDecl::addedMember(Decl *D) {
   }
 
   // Handle (user-declared) destructors.
-  if (isa<CXXDestructorDecl>(D)) {
+  if (CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D)) {
     data().DeclaredDestructor = true;
     data().UserDeclaredDestructor = true;
     
     // C++ [class]p4: 
     //   A POD-struct is an aggregate class that has [...] no user-defined 
     //   destructor.
+    // This bit is the C++03 POD bit, not the 0x one.
     data().PlainOldData = false;
     
-    // C++ [class.dtor]p3: 
-    //   A destructor is trivial if it is an implicitly-declared destructor and
-    //   [...].
-    //
-    // FIXME: C++0x: don't do this for "= default" destructors
-    data().HasTrivialDestructor = false;
+    // C++0x [class.dtor]p5: 
+    //   A destructor is trivial if it is not user-provided and [...]
+    if (DD->isUserProvided())
+      data().HasTrivialDestructor = false;
     
     return;
   }
@@ -611,9 +610,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       // C++ [class]p4:
       //   A POD-struct is an aggregate class that [...] has no user-defined
       //   copy assignment operator [...].
-      // FIXME: This should be probably determined dynamically in terms of
-      // other more precise attributes to correctly model how it is specified
-      // in C++0x. Setting it here happens to do the right thing.
+      // This is the C++03 bit only.
       data().PlainOldData = false;
 
       if (!isRValueRefArg) {
@@ -626,16 +623,16 @@ void CXXRecordDecl::addedMember(Decl *D) {
         // C++0x [class.copy]p27:
         //   A copy/move assignment operator for class X is trivial if it is
         //   neither user-provided nor deleted [...]
-        // FIXME: C++0x: don't do this for "= default" copy operators.
-        data().HasTrivialCopyAssignment = false;
+        if (Method->isUserProvided())
+          data().HasTrivialCopyAssignment = false;
       } else {
         // This is a move assignment operator.
 
         // C++0x [class.copy]p27:
         //   A copy/move assignment operator for class X is trivial if it is
         //   neither user-provided nor deleted [...]
-        // FIXME: C++0x: don't do this for "= default" copy operators.
-        data().HasTrivialMoveAssignment = false;
+        if (Method->isUserProvided())
+          data().HasTrivialMoveAssignment = false;
       }
     }
 
