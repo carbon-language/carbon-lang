@@ -671,17 +671,10 @@ public:
 // Partial specializations of FoldingSetTrait.
 
 template<typename T> struct FoldingSetTrait<T*> {
-  static inline void Profile(const T *X, FoldingSetNodeID &ID) {
+  static inline void Profile(T *X, FoldingSetNodeID &ID) {
     ID.AddPointer(X);
   }
 };
-
-template<typename T> struct FoldingSetTrait<const T*> {
-  static inline void Profile(const T *X, FoldingSetNodeID &ID) {
-    ID.AddPointer(X);
-  }
-};
-
 } // End of namespace llvm.
 
 #endif
