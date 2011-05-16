@@ -35,80 +35,13 @@
 
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/system_error.h"
 
-/// \brief Returns the absolute path of 'File', by prepending it with
-/// 'BaseDirectory' if 'File' is not absolute. Otherwise returns 'File'.
-/// If 'File' starts with "./", the returned path will not contain the "./".
-/// Otherwise, the returned path will contain the literal path-concatenation of
-/// 'BaseDirectory' and 'File'.
-///
-/// \param File Either an absolute or relative path.
-/// \param BaseDirectory An absolute path.
-///
-/// FIXME: Put this somewhere where it is more generally available.
-static std::string GetAbsolutePath(
-    llvm::StringRef File, llvm::StringRef BaseDirectory) {
-  assert(llvm::sys::path::is_absolute(BaseDirectory));
-  if (llvm::sys::path::is_absolute(File)) {
-    return File;
-  }
-  llvm::StringRef RelativePath(File);
-  if (RelativePath.startswith("./")) {
-    RelativePath = RelativePath.substr(strlen("./"));
-  }
-  llvm::SmallString<1024> AbsolutePath(BaseDirectory);
-  llvm::sys::path::append(AbsolutePath, RelativePath);
-  return AbsolutePath.str();
-}
+class SyntaxOnlyActionFactory : public clang::tooling::FrontendActionFactory {
+ public:
+  virtual clang::FrontendAction *New() { return new clang::SyntaxOnlyAction; }
+};
 
 int main(int argc, char **argv) {
-  if (argc < 3) {
-    llvm::outs() << "Usage: " << argv[0] << " <cmake-output-dir> "
-                 << "<file1> <file2> ...\n";
-    return 1;
-  }
-  // FIXME: We should pull how to find the database into the Tooling package.
-  llvm::OwningPtr<llvm::MemoryBuffer> JsonDatabase;
-  llvm::SmallString<1024> JsonDatabasePath(argv[1]);
-  llvm::sys::path::append(JsonDatabasePath, "compile_commands.json");
-  llvm::error_code Result =
-      llvm::MemoryBuffer::getFile(JsonDatabasePath, JsonDatabase);
-  if (Result != 0) {
-    llvm::outs() << "Error while opening JSON database: " << Result.message()
-                 << "\n";
-    return 1;
-  }
-  llvm::StringRef BaseDirectory(::getenv("PWD"));
-  for (int I = 2; I < argc; ++I) {
-    llvm::SmallString<1024> File(GetAbsolutePath(argv[I], BaseDirectory));
-    llvm::outs() << "Processing " << File << ".\n";
-    std::string ErrorMessage;
-    clang::tooling::CompileCommand LookupResult =
-        clang::tooling::FindCompileArgsInJsonDatabase(
-            File.str(), JsonDatabase->getBuffer(), ErrorMessage);
-    if (!LookupResult.CommandLine.empty()) {
-      if (LookupResult.Directory.size()) {
-        // FIXME: What should happen if CommandLine includes -working-directory
-        // as well?
-        LookupResult.CommandLine.push_back(
-            "-working-directory=" + LookupResult.Directory);
-      }
-      if (!clang::tooling::RunToolWithFlags(
-               new clang::SyntaxOnlyAction,
-               LookupResult.CommandLine.size(),
-               &clang::tooling::CommandLineToArgv(
-                   &LookupResult.CommandLine)[0])) {
-        llvm::outs() << "Error while processing " << File << ".\n";
-      }
-    } else {
-      llvm::outs() << "Skipping " << File << ". Command line not found.\n";
-    }
-  }
-  return 0;
+  clang::tooling::ClangTool Tool(argc, argv);
+  return Tool.Run(new SyntaxOnlyActionFactory);
 }

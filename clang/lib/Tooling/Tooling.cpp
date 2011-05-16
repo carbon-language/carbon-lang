@@ -21,6 +21,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
@@ -315,6 +316,86 @@ CompileCommand FindCompileArgsInJsonDatabase(
     return CompileCommand();
   }
   return find_handler.MatchingCommand;
+}
+
+/// \brief Returns the absolute path of 'File', by prepending it with
+/// 'BaseDirectory' if 'File' is not absolute. Otherwise returns 'File'.
+/// If 'File' starts with "./", the returned path will not contain the "./".
+/// Otherwise, the returned path will contain the literal path-concatenation of
+/// 'BaseDirectory' and 'File'.
+///
+/// \param File Either an absolute or relative path.
+/// \param BaseDirectory An absolute path.
+static std::string GetAbsolutePath(
+    llvm::StringRef File, llvm::StringRef BaseDirectory) {
+  assert(llvm::sys::path::is_absolute(BaseDirectory));
+  if (llvm::sys::path::is_absolute(File)) {
+    return File;
+  }
+  llvm::StringRef RelativePath(File);
+  if (RelativePath.startswith("./")) {
+    RelativePath = RelativePath.substr(strlen("./"));
+  }
+  llvm::SmallString<1024> AbsolutePath(BaseDirectory);
+  llvm::sys::path::append(AbsolutePath, RelativePath);
+  return AbsolutePath.str();
+}
+
+FrontendActionFactory::~FrontendActionFactory() {}
+
+ClangTool::ClangTool(int argc, char **argv) {
+  if (argc < 3) {
+    llvm::outs() << "Usage: " << argv[0] << " <cmake-output-dir> "
+                 << "<file1> <file2> ...\n";
+    exit(1);
+  }
+  llvm::SmallString<1024> JsonDatabasePath(argv[1]);
+  llvm::sys::path::append(JsonDatabasePath, "compile_commands.json");
+  llvm::error_code Result =
+      llvm::MemoryBuffer::getFile(JsonDatabasePath, JsonDatabase);
+  if (Result != 0) {
+    llvm::outs() << "Error while opening JSON database: " << Result.message()
+                 << "\n";
+    exit(1);
+  }
+  Files = std::vector<std::string>(argv + 2, argv + argc);
+}
+
+int ClangTool::Run(FrontendActionFactory *ActionFactory) {
+  llvm::StringRef BaseDirectory(::getenv("PWD"));
+  bool ProcessingFailed = false;
+  for (unsigned I = 0; I < Files.size(); ++I) {
+    llvm::SmallString<1024> File(GetAbsolutePath(Files[I], BaseDirectory));
+    llvm::outs() << "Processing " << File << ".\n";
+    std::string ErrorMessage;
+    clang::tooling::CompileCommand LookupResult =
+        clang::tooling::FindCompileArgsInJsonDatabase(
+            File.str(), JsonDatabase->getBuffer(), ErrorMessage);
+    if (!LookupResult.CommandLine.empty()) {
+      if (!LookupResult.Directory.empty()) {
+        // FIXME: What should happen if CommandLine includes -working-directory
+        // as well?
+        LookupResult.CommandLine.push_back(
+            "-working-directory=" + LookupResult.Directory);
+      }
+      if (!clang::tooling::RunToolWithFlags(
+               ActionFactory->New(),
+               LookupResult.CommandLine.size(),
+               &clang::tooling::CommandLineToArgv(
+                   &LookupResult.CommandLine)[0])) {
+        llvm::outs() << "Error while processing " << File << ".\n";
+        ProcessingFailed = true;
+      }
+    } else {
+      // FIXME: There are two use cases here: doing a fuzzy
+      // "find . -name '*.cc' |xargs tool" match, where as a user I don't care
+      // about the .cc files that were not found, and the use case where I
+      // specify all files I want to run over explicitly, where this should
+      // be an error. We'll want to add an option for this.
+      llvm::outs() << "Skipping " << File << ". Command line not found.\n";
+    }
+  }
+  return ProcessingFailed ? 1 : 0;
 }
 
 } // end namespace tooling

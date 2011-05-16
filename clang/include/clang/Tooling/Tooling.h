@@ -16,6 +16,8 @@
 #define LLVM_CLANG_TOOLING_TOOLING_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <string>
 #include <vector>
 
@@ -74,6 +76,65 @@ struct CompileCommand {
 CompileCommand FindCompileArgsInJsonDatabase(
     llvm::StringRef FileName, llvm::StringRef JsonDatabase,
     std::string &ErrorMessage);
+
+// Interface to generate clang::FrontendActions.
+class FrontendActionFactory {
+ public:
+  virtual ~FrontendActionFactory();
+
+  // Returns a new clang::FrontendAction. The caller takes ownership of the
+  // returned action.
+  virtual clang::FrontendAction* New() = 0;
+};
+
+/// \brief Utility to run a FrontendAction over a set of files.
+///
+/// This class is written to be usable for command line utilities.
+class ClangTool {
+ public:
+  /// \brief Construct a clang tool from a command line.
+  ///
+  /// This will parse the command line parameters and print an error message
+  /// and exit the program if the command line does not specify the required
+  /// parameters.
+  ///
+  /// Usage:
+  /// $ tool-name <cmake-output-dir> <file1> <file2> ...
+  ///
+  /// where <cmake-output-dir> is a CMake build directory in which a file named
+  /// compile_commands.json exists (enable -DCMAKE_EXPORT_COMPILE_COMMANDS in
+  /// CMake to get this output).
+  ///
+  /// <file1> ... specify the paths of files in the CMake source tree. This
+  /// path is looked up in the compile command database. If the path of a file
+  /// is absolute, it needs to point into CMake's source tree. If the path is
+  /// relative, the current working directory needs to be in the CMake source
+  /// tree and the file must be in a subdirectory of the current working
+  /// directory. "./" prefixes in the relative files will be automatically
+  /// removed, but the rest of a relative path must be a suffix of a path in
+  /// the compile command line database.
+  ///
+  /// For example, to use a tool on all files in a subtree of the source
+  /// tree, use:
+  ///
+  ///   /path/in/subtree $ find . -name '*.cpp' |
+  ///       xargs tool-name /path/to/source
+  ///
+  /// \param argc The argc argument from main.
+  /// \param argv The argv argument from main.
+  ClangTool(int argc, char **argv);
+
+  /// Runs a frontend action over all files specified in the command line.
+  ///
+  /// \param ActionFactory Factory generating the frontend actions. The function
+  /// takes ownership of this parameter. A new action is generated for every
+  /// processed translation unit.
+  int Run(FrontendActionFactory *ActionFactory);
+
+ private:
+  std::vector<std::string> Files;
+  llvm::OwningPtr<llvm::MemoryBuffer> JsonDatabase;
+};
 
 } // end namespace tooling
 } // end namespace clang
