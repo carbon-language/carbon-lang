@@ -34,6 +34,10 @@ int main()
     static_assert((std::is_same<std::result_of<S&(unsigned char, int&)>::type, double>::value), "Error!");
     static_assert((std::is_same<std::result_of<PF1()>::type, bool>::value), "Error!");
     static_assert((std::is_same<std::result_of<PMS(std::unique_ptr<S>, int)>::type, void>::value), "Error!");
+    static_assert((std::is_same<std::result_of<PMS(S, int)>::type, void>::value), "Error!");
+    static_assert((std::is_same<std::result_of<PMS(const S&, int)>::type, void>::value), "Error!");
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static_assert((std::is_same<std::result_of<PMD(S)>::type, char&&>::value), "Error!");
+#endif
     static_assert((std::is_same<std::result_of<PMD(const S*)>::type, const char&>::value), "Error!");
 }

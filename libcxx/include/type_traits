@@ -1419,11 +1419,239 @@ public:
                      >::type type;
 };
 
+template <class _MP, bool _IsMemberFuctionPtr, bool _IsMemberObjectPtr>
+struct __member_pointer_traits_imp
+{
+};
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+#if __has_feature(cxx_reference_qualified_functions)
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) &, true, false>
+{
+    typedef _Class& _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const&, true, false>
+{
+    typedef _Class const& _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) volatile&, true, false>
+{
+    typedef _Class volatile& _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const volatile&, true, false>
+{
+    typedef _Class const volatile& _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) &&, true, false>
+{
+    typedef _Class&& _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const&&, true, false>
+{
+    typedef _Class const&& _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) volatile&&, true, false>
+{
+    typedef _Class volatile&& _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_R (_Class::*)(_Param...) const volatile&&, true, false>
+{
+    typedef _Class const volatile&& _ClassType;
+    typedef _R _ReturnType;
+};
+
+#endif  // __has_feature(cxx_reference_qualified_functions)
+
+#else  // _LIBCPP_HAS_NO_VARIADICS
+
+template <class _R, class _Class>
+struct __member_pointer_traits_imp<_R (_Class::*)(), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1, _P2), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class>
+struct __member_pointer_traits_imp<_R (_Class::*)() const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1, _P2) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class>
+struct __member_pointer_traits_imp<_R (_Class::*)() volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1, _P2) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class>
+struct __member_pointer_traits_imp<_R (_Class::*)() const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _R, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_R (_Class::*)(_P0, _P1, _P2) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _R _ReturnType;
+};
+
+#endif  // _LIBCPP_HAS_NO_VARIADICS
+
+template <class _R, class _Class>
+struct __member_pointer_traits_imp<_R _Class::*, false, true>
+{
+    typedef _Class _ClassType;
+    typedef _R _ReturnType;
+};
+
+template <class _MP>
+struct __member_pointer_traits
+    : public __member_pointer_traits_imp<_MP,
+                    is_member_function_pointer<_MP>::value,
+                    is_member_object_pointer<_MP>::value>
+{
+//     typedef ... _ClassType;
+//     typedef ... _ReturnType;
+};
+
 // result_of
 
 template <class> class result_of;
 
-template <class _Fn, bool>
+template <class _Fn, bool, bool>
 class __result_of
 {
 };
@@ -1431,39 +1659,21 @@ class __result_of
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Fn, class ..._ArgTypes>
-class __result_of<_Fn(_ArgTypes...), true>
+class __result_of<_Fn(_ArgTypes...), true, false>
 {
 public:
     typedef decltype(declval<_Fn>()(declval<_ArgTypes>()...)) type;
 };
 
-template <class _MP, class _Tp, bool _IsMemberFunctionPtr, class ..._Args>
-struct __result_of_mp {};
+template <class _MP, class _Tp, bool _IsMemberFunctionPtr>
+struct __result_of_mp;
 
 // member function pointer
 
-template <class _R, class _Class, class _Tp, class ..._Params, class ..._Args>
-struct __result_of_mp<_R (_Class::*)(_Params...), _Tp, true, _Args...>
+template <class _MP, class _Tp>
+struct __result_of_mp<_MP, _Tp, true>
+    : public common_type<typename __member_pointer_traits<_MP>::_ReturnType>
 {
-    typedef _R type;
-};
-
-template <class _R, class _Class, class _Tp, class ..._Params, class ..._Args>
-struct __result_of_mp<_R (_Class::*)(_Params...) const, _Tp, true, _Args...>
-{
-    typedef _R type;
-};
-
-template <class _R, class _Class, class _Tp, class ..._Params, class ..._Args>
-struct __result_of_mp<_R (_Class::*)(_Params...) volatile, _Tp, true, _Args...>
-{
-    typedef _R type;
-};
-
-template <class _R, class _Class, class _Tp, class ..._Params, class ..._Args>
-struct __result_of_mp<_R (_Class::*)(_Params...) const volatile, _Tp, true, _Args...>
-{
-    typedef _R type;
 };
 
 // member data pointer
@@ -1474,7 +1684,7 @@ struct __result_of_mdp;
 template <class _R, class _Class, class _Tp>
 struct __result_of_mdp<_R _Class::*, _Tp, false>
 {
-    typedef typename __apply_cv<decltype(*_STD::declval<_Tp>()), _R>::type type;
+    typedef typename __apply_cv<decltype(*_STD::declval<_Tp>()), _R>::type&& type;
 };
 
 template <class _R, class _Class, class _Tp>
@@ -1491,9 +1701,10 @@ struct __result_of_mp<_R _Class::*, _Tp, false>
 };
 
 template <class _Fn, class _Tp, class ..._ArgTypes>
-class __result_of<_Fn(_Tp, _ArgTypes...), false>  // _Fn must be member pointer
-    : public __result_of_mp<_Fn, _Tp, is_member_function_pointer<_Fn>::value,
-                            _ArgTypes...>
+class __result_of<_Fn(_Tp, _ArgTypes...), false, true>  // _Fn must be member pointer
+    : public __result_of_mp<typename remove_reference<_Fn>::type,
+                            _Tp,
+                            is_member_function_pointer<typename remove_reference<_Fn>::type>::value>
 {
 };
 
@@ -1503,10 +1714,8 @@ template <class _Fn, class ..._ArgTypes>
 class _LIBCPP_VISIBLE result_of<_Fn(_ArgTypes...)>
     : public __result_of<_Fn(_ArgTypes...),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_pointer<
-                                        typename remove_reference<_Fn>::type
-                                                            >::type
-                                    >::value
+                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
 };
@@ -1514,41 +1723,110 @@ class _LIBCPP_VISIBLE result_of<_Fn(_ArgTypes...)>
 #else  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Fn>
-class __result_of<_Fn(), true>
+class __result_of<_Fn(), true, false>
 {
 public:
     typedef decltype(declval<_Fn>()()) type;
 };
 
 template <class _Fn, class _A0>
-class __result_of<_Fn(_A0), true>
+class __result_of<_Fn(_A0), true, false>
 {
 public:
     typedef decltype(declval<_Fn>()(declval<_A0>())) type;
 };
 
 template <class _Fn, class _A0, class _A1>
-class __result_of<_Fn(_A0, _A1), true>
+class __result_of<_Fn(_A0, _A1), true, false>
 {
 public:
     typedef decltype(declval<_Fn>()(declval<_A0>(), declval<_A1>())) type;
 };
 
 template <class _Fn, class _A0, class _A1, class _A2>
-class __result_of<_Fn(_A0, _A1, _A2), true>
+class __result_of<_Fn(_A0, _A1, _A2), true, false>
 {
 public:
     typedef decltype(declval<_Fn>()(declval<_A0>(), declval<_A1>(), declval<_A2>())) type;
 };
 
+template <class _MP, class _Tp, bool _IsMemberFunctionPtr>
+struct __result_of_mp;
+
+// member function pointer
+
+template <class _MP, class _Tp>
+struct __result_of_mp<_MP, _Tp, true>
+    : public common_type<typename __member_pointer_traits<_MP>::_ReturnType>
+{
+};
+
+// member data pointer
+
+template <class _MP, class _Tp, bool>
+struct __result_of_mdp;
+
+template <class _R, class _Class, class _Tp>
+struct __result_of_mdp<_R _Class::*, _Tp, false>
+{
+    typedef typename __apply_cv<decltype(*_STD::declval<_Tp>()), _R>::type& type;
+};
+
+template <class _R, class _Class, class _Tp>
+struct __result_of_mdp<_R _Class::*, _Tp, true>
+{
+    typedef typename __apply_cv<_Tp, _R>::type& type;
+};
+
+template <class _R, class _Class, class _Tp>
+struct __result_of_mp<_R _Class::*, _Tp, false>
+    : public __result_of_mdp<_R _Class::*, _Tp,
+            is_base_of<_Class, typename remove_reference<_Tp>::type>::value>
+{
+};
+
+
+
+template <class _Fn, class _Tp>
+class __result_of<_Fn(_Tp), false, true>  // _Fn must be member pointer
+    : public __result_of_mp<typename remove_reference<_Fn>::type,
+                            _Tp,
+                            is_member_function_pointer<typename remove_reference<_Fn>::type>::value>
+{
+};
+
+template <class _Fn, class _Tp, class _A0>
+class __result_of<_Fn(_Tp, _A0), false, true>  // _Fn must be member pointer
+    : public __result_of_mp<typename remove_reference<_Fn>::type,
+                            _Tp,
+                            is_member_function_pointer<typename remove_reference<_Fn>::type>::value>
+{
+};
+
+template <class _Fn, class _Tp, class _A0, class _A1>
+class __result_of<_Fn(_Tp, _A0, _A1), false, true>  // _Fn must be member pointer
+    : public __result_of_mp<typename remove_reference<_Fn>::type,
+                            _Tp,
+                            is_member_function_pointer<typename remove_reference<_Fn>::type>::value>
+{
+};
+
+template <class _Fn, class _Tp, class _A0, class _A1, class _A2>
+class __result_of<_Fn(_Tp, _A0, _A1, _A2), false, true>  // _Fn must be member pointer
+    : public __result_of_mp<typename remove_reference<_Fn>::type,
+                            _Tp,
+                            is_member_function_pointer<typename remove_reference<_Fn>::type>::value>
+{
+};
+
+// result_of
+
 template <class _Fn>
 class _LIBCPP_VISIBLE result_of<_Fn()>
     : public __result_of<_Fn(),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_pointer<
-                                        typename remove_reference<_Fn>::type
-                                                            >::type
-                                    >::value
+                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
 };
@@ -1557,10 +1835,8 @@ template <class _Fn, class _A0>
 class _LIBCPP_VISIBLE result_of<_Fn(_A0)>
     : public __result_of<_Fn(_A0),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_pointer<
-                                        typename remove_reference<_Fn>::type
-                                                            >::type
-                                    >::value
+                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
 };
@@ -1569,10 +1845,8 @@ template <class _Fn, class _A0, class _A1>
 class _LIBCPP_VISIBLE result_of<_Fn(_A0, _A1)>
     : public __result_of<_Fn(_A0, _A1),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_pointer<
-                                        typename remove_reference<_Fn>::type
-                                                            >::type
-                                    >::value
+                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
 };
@@ -1581,10 +1855,8 @@ template <class _Fn, class _A0, class _A1, class _A2>
 class _LIBCPP_VISIBLE result_of<_Fn(_A0, _A1, _A2)>
     : public __result_of<_Fn(_A0, _A1, _A2),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_pointer<
-                                        typename remove_reference<_Fn>::type
-                                                            >::type
-                                    >::value
+                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
 };
