@@ -55,6 +55,7 @@
 using namespace llvm;
 
 STATISTIC(NumFastIselFailures, "Number of instructions fast isel failed on");
+STATISTIC(NumFastIselSuccess, "Number of instructions fast isel selected");
 STATISTIC(NumFastIselBlocks, "Number of blocks selected entirely by fast isel");
 STATISTIC(NumDAGBlocks, "Number of blocks selected using DAG");
 STATISTIC(NumDAGIselRetries,"Number of times dag isel has to try another path");
@@ -927,6 +928,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 
         // Try to select the instruction with FastISel.
         if (FastIS->SelectInstruction(Inst)) {
+          ++NumFastIselSuccess;
           // If fast isel succeeded, skip over all the folded instructions, and
           // then see if there is a load right before the selected instructions.
           // Try to fold the load if so.
