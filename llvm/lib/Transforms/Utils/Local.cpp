@@ -785,10 +785,19 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   if (!DIVar.Verify())
     return false;
 
-  Instruction *DbgVal = 
-    Builder.insertDbgValueIntrinsic(SI->getOperand(0), 0,
-                                    DIVar, SI);
-  
+  Instruction *DbgVal = NULL;
+  // If an argument is zero extended then use argument directly. The ZExt
+  // may be zapped by an optimization pass in future.
+  Argument *ExtendedArg = NULL;
+  if (ZExtInst *ZExt = dyn_cast<ZExtInst>(SI->getOperand(0)))
+    ExtendedArg = dyn_cast<Argument>(ZExt->getOperand(0));
+  if (SExtInst *SExt = dyn_cast<SExtInst>(SI->getOperand(0)))
+    ExtendedArg = dyn_cast<Argument>(SExt->getOperand(0));
+  if (ExtendedArg)
+    DbgVal = Builder.insertDbgValueIntrinsic(ExtendedArg, 0, DIVar, SI);
+  else
+    DbgVal = Builder.insertDbgValueIntrinsic(SI->getOperand(0), 0, DIVar, SI);
+
   // Propagate any debug metadata from the store onto the dbg.value.
   DebugLoc SIDL = SI->getDebugLoc();
   if (!SIDL.isUnknown())

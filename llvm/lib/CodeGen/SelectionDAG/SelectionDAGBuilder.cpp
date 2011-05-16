@@ -4026,6 +4026,24 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
   return DAG.getNode(ISD::FPOWI, DL, LHS.getValueType(), LHS, RHS);
 }
 
+// getTruncatedArgReg - Find underlying register used for an truncated
+// argument.
+static unsigned getTruncatedArgReg(const SDValue &N) {
+  if (N.getOpcode() != ISD::TRUNCATE)
+    return 0;
+
+  const SDValue &Ext = N.getOperand(0);
+  if (Ext.getOpcode() == ISD::AssertZext || Ext.getOpcode() == ISD::AssertSext){
+    const SDValue &CFR = Ext.getOperand(0);
+    if (CFR.getOpcode() == ISD::CopyFromReg)
+      return cast<RegisterSDNode>(CFR.getOperand(1))->getReg();
+    else
+      if (CFR.getOpcode() == ISD::TRUNCATE)
+        return getTruncatedArgReg(CFR);
+  }
+  return 0;
+}
+
 /// EmitFuncArgumentDbgValue - If the DbgValueInst is a dbg_value of a function
 /// argument, create the corresponding DBG_VALUE machine instruction for it now.
 /// At the end of instruction selection, they will be inserted to the entry BB.
@@ -4057,9 +4075,12 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
       Reg = 0;
   }
 
-  if (N.getNode() && N.getOpcode() == ISD::CopyFromReg) {
-    Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
-    if (TargetRegisterInfo::isVirtualRegister(Reg)) {
+  if (N.getNode()) {
+    if (N.getOpcode() == ISD::CopyFromReg)
+      Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();
+    else
+      Reg = getTruncatedArgReg(N);
+    if (Reg && TargetRegisterInfo::isVirtualRegister(Reg)) {
       MachineRegisterInfo &RegInfo = MF.getRegInfo();
       unsigned PR = RegInfo.getLiveInPhysReg(Reg);
       if (PR)
@@ -4221,9 +4242,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
           SDV = DAG.getDbgValue(Variable, FINode->getIndex(),
                                 0, dl, SDNodeOrder);
         else {
-          // Can't do anything with other non-AI cases yet.  This might be a
-          // parameter of a callee function that got inlined, for example.
-          DEBUG(dbgs() << "Dropping debug info for " << DI);
+          // Address is an argument, so try to emit its dbg value using
+          // virtual register info from the FuncInfo.ValueMap.
+          EmitFuncArgumentDbgValue(Address, Variable, 0, N);
           return 0;
         }
       } else if (AI)
