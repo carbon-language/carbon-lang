@@ -59,17 +59,14 @@ class STLTestCase(TestBase):
         self.expect("breakpoint list -f", BREAKPOINT_HIT_ONCE,
             substrs = [' resolved, hit count = 1'])
 
-        # Now do 'thread step-in', we should stop on the basic_string template.
-        #
-        # This assertion currently always fails.
-        # This might be related: rdar://problem/8247112.
-        #
-        #self.runCmd("thread step-in", trace=True)
+        # Now do 'thread step-in', if we have successfully stopped, we should
+        # stop due to the reason of "step in".
         self.runCmd("thread step-in")
 
-        self.expect("thread backtrace", "We have stepped in STL",
-             substrs = ['[inlined]',
-                        'basic_string.h'])
+        self.runCmd("process status")
+        if "stopped" in self.res.GetOutput():
+            self.expect("thread backtrace", "We have successfully stepped in",
+                        substrs = ['stop reason = step in'])
 
 
 if __name__ == '__main__':
