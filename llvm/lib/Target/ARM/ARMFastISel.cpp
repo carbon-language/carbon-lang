@@ -71,12 +71,10 @@ namespace {
     } Base;
 
     int Offset;
-    unsigned Scale;
-    unsigned PlusReg;
 
     // Innocuous defaults for our address.
     Address()
-     : BaseType(RegBase), Offset(0), Scale(0), PlusReg(0) {
+     : BaseType(RegBase), Offset(0) {
        Base.Reg = 0;
      }
   } Address;
