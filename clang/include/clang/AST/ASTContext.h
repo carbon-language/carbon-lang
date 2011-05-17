@@ -1568,7 +1568,13 @@ private:
                                   bool ExpandStructures,
                                   const FieldDecl *Field,
                                   bool OutermostType = false,
-                                  bool EncodingProperty = false) const;
+                                  bool EncodingProperty = false,
+                                  bool StructField = false) const;
+
+  // Adds the encoding of the structure's members.
+  void getObjCEncodingForStructureImpl(RecordDecl *RD, std::string &S,
+                                       const FieldDecl *Field,
+                                       bool includeVBases = true) const;
  
   const ASTRecordLayout &
   getObjCLayout(const ObjCInterfaceDecl *D,
