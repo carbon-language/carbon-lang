@@ -508,7 +508,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         lldb::addr_t function_stack_pointer = static_cast<ThreadPlanCallFunction *>(call_plan_sp.get())->GetFunctionStackPointer();
     
-        // call_plan_sp->SetPrivate(true);
+        call_plan_sp->SetPrivate(true);
     
         uint32_t single_thread_timeout_usec = 500000;
         

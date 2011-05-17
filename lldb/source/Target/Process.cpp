@@ -3226,6 +3226,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         return eExecutionSetupError;
     }
     
+    // We rely on the thread plan we are running returning "PlanCompleted" if when it successfully completes.
+    // For that to be true the plan can't be private - since private plans suppress themselves in the
+    // GetCompletedPlan call. 
+    
+    bool orig_plan_private = thread_plan_sp->GetPrivate();
+    thread_plan_sp->SetPrivate(false);
+    
     if (m_private_state.GetValue() != eStateStopped)
     {
         errors.Printf ("RunThreadPlan called while the private state was not stopped.");
@@ -3390,7 +3397,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             // Now mark this plan as private so it doesn't get reported as the stop reason
                             // after this point.  
                             if (thread_plan_sp)
-                                thread_plan_sp->SetPrivate (true);
+                                thread_plan_sp->SetPrivate (orig_plan_private);
                             return_value = eExecutionCompleted;
                         }
                         else
