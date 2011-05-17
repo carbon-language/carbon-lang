@@ -473,7 +473,7 @@ public:
     Op.setTargetFlags(TargetFlags);
     return Op;
   }
-  static MachineOperand CreateFI(unsigned Idx) {
+  static MachineOperand CreateFI(int Idx) {
     MachineOperand Op(MachineOperand::MO_FrameIndex);
     Op.setIndex(Idx);
     return Op;

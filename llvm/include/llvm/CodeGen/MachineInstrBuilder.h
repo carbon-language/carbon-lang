@@ -88,7 +88,7 @@ public:
     return *this;
   }
 
-  const MachineInstrBuilder &addFrameIndex(unsigned Idx) const {
+  const MachineInstrBuilder &addFrameIndex(int Idx) const {
     MI->addOperand(MachineOperand::CreateFI(Idx));
     return *this;
   }
