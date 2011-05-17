@@ -180,7 +180,8 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
   BasicBlock *NewBB = BasicBlock::Create(TI->getContext(),
                       TIBB->getName() + "." + DestBB->getName() + "_crit_edge");
   // Create our unconditional branch.
-  BranchInst::Create(DestBB, NewBB);
+  BranchInst *NewBI = BranchInst::Create(DestBB, NewBB);
+  NewBI->setDebugLoc(TI->getDebugLoc());
 
   // Branch to the new block, breaking the edge.
   TI->setSuccessor(SuccNum, NewBB);
