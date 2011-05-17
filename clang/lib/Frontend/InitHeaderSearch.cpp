@@ -744,6 +744,13 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
                                 "x86_64-redhat-linux", "", "", triple);
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.2",
                                 "i386-redhat-linux", "", "", triple);
+      
+    // RHEL 5
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.1",
+                                "x86_64-redhat-linux", "32", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.1.1",
+                                "i386-redhat-linux", "", "", triple);
+
 
     //===------------------------------------------------------------------===//
 
