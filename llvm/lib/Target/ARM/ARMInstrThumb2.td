@@ -158,7 +158,7 @@ def t2addrmode_so_reg : Operand<i32>,
 //
 def t2addrmode_reg : Operand<i32> {
   let PrintMethod = "printAddrMode7Operand";
-  let MIOperandInfo = (ops rGPR);
+  let MIOperandInfo = (ops GPR);
   let ParserMatchClass = MemMode7AsmOperand;
 }
 
