@@ -3644,6 +3644,9 @@ def err_defaulted_copy_assign_params : Error<
 def err_defaulted_copy_assign_return_type : Error<
   "an explicitly-defaulted copy assignment operator must return an unqualified "
   "lvalue reference to its class type">;
+def err_defaulted_copy_assign_not_ref : Error<
+  "the parameter for an explicitly-defaulted copy assignment operator must be an "
+  "lvalue reference type">;
 def err_defaulted_copy_assign_volatile_param : Error<
   "the parameter for an explicitly-defaulted copy assignment operator may not "
   "be volatile">;

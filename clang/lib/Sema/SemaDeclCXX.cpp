@@ -3187,17 +3187,21 @@ void Sema::CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *MD) {
                           *ExceptionType = Context.getFunctionType(
                          Context.VoidTy, 0, 0, EPI)->getAs<FunctionProtoType>();
 
-  // Check for parameter type matching.
-  // This is a copy ctor so we know it's a cv-qualified reference to T.
   QualType ArgType = OperType->getArgType(0);
-  if (ArgType->getPointeeType().isVolatileQualified()) {
-    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_volatile_param);
+  if (!ArgType->isReferenceType()) {
+    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_not_ref);
     HadError = true;
+  } else {
+    if (ArgType->getPointeeType().isVolatileQualified()) {
+      Diag(MD->getLocation(), diag::err_defaulted_copy_assign_volatile_param);
+      HadError = true;
+    }
+    if (ArgType->getPointeeType().isConstQualified() && !Const) {
+      Diag(MD->getLocation(), diag::err_defaulted_copy_assign_const_param);
+      HadError = true;
+    }
   }
-  if (ArgType->getPointeeType().isConstQualified() && !Const) {
-    Diag(MD->getLocation(), diag::err_defaulted_copy_assign_const_param);
-    HadError = true;
-  }
+
   if (OperType->getTypeQuals()) {
     Diag(MD->getLocation(), diag::err_defaulted_copy_assign_quals);
     HadError = true;
