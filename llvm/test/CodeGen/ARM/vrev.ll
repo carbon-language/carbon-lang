@@ -147,3 +147,20 @@ define void @test_with_vcombine(<4 x float>* %v) nounwind {
   store <4 x float> %tmp8, <4 x float>* %v, align 16
   ret void
 }
+
+;  Test the shuffle of a 4xi16 which exposed a problem with the perfect shuffle table
+;  entry for vrev. 
+define void @test_vrev64(<4 x i16>* nocapture %source, <2 x i16>* nocapture %dst) nounwind ssp {
+; CHECK: test_vrev64:
+; CHECK: vrev64.16
+; CHECK: vext.16
+entry:
+  %0 = bitcast <4 x i16>* %source to <8 x i16>*
+  %tmp2 = load <8 x i16>* %0, align 4
+  %tmp3 = extractelement <8 x i16> %tmp2, i32 6
+  %tmp5 = insertelement <2 x i16> undef, i16 %tmp3, i32 0
+  %tmp9 = extractelement <8 x i16> %tmp2, i32 5
+  %tmp11 = insertelement <2 x i16> %tmp5, i16 %tmp9, i32 1
+  store <2 x i16> %tmp11, <2 x i16>* %dst, align 4
+  ret void
+}

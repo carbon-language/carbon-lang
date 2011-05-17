@@ -520,7 +520,7 @@ enum {
 };
 
 struct vrev : public Operator {
-  vrev() : Operator(0x1032, "vrev", OP_VREV) {}
+  vrev() : Operator(0x3210, "vrev", OP_VREV) {}
 } the_vrev;
 
 template<unsigned Elt>
