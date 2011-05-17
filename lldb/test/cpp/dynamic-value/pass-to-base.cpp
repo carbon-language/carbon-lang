@@ -17,6 +17,8 @@ public:
   A(int value) : m_a_value (value) {}
   A(int value, A* client_A) : m_a_value (value), m_client_A (client_A) {}
 
+  virtual ~A() {}
+
   virtual void
   doSomething (A &anotherA)
   {
@@ -40,6 +42,9 @@ class B : public Extra, public virtual A
 public:
   B (int b_value, int a_value) : Extra(b_value, a_value), A(a_value), m_b_value(b_value) {}
   B (int b_value, int a_value, A *client_A) : Extra(b_value, a_value), A(a_value, client_A), m_b_value(b_value) {}
+
+  virtual ~B () {}
+
 private:
   int m_b_value;
 };
@@ -58,8 +63,6 @@ main (int argc, char **argv)
 
   A reallyA (500);
   myB.doSomething (reallyA);  // Break here and get real address of reallyA.
-
-  delete my_global_A_ptr;
 
   return 0;
 }
