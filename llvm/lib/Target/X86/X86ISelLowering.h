@@ -263,6 +263,10 @@ namespace llvm {
       PUNPCKHDQ,
       PUNPCKHQDQ,
 
+      PMOVZXBW,
+      PMOVZXWD,
+      PMOVZXDQ,
+
       // VASTART_SAVE_XMM_REGS - Save xmm argument registers to the stack,
       // according to %al. An operator is needed so that this can be expanded
       // with control flow.
@@ -727,8 +731,6 @@ namespace llvm {
                              ISD::ArgFlagsTy Flags) const;
 
     // Call lowering helpers.
-
-    void HandleByVal(CCState *, unsigned &) const;
 
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Targets which want to do tail call
