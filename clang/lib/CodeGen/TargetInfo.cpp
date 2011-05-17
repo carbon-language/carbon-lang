@@ -128,12 +128,9 @@ static bool isEmptyRecord(ASTContext &Context, QualType T, bool AllowArrays) {
   if (RD->hasFlexibleArrayMember())
     return false;
 
-  // If this is a C++ record, check the bases first.
+  // If this is a C++ record, check if it is empty.
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
-    for (CXXRecordDecl::base_class_const_iterator i = CXXRD->bases_begin(),
-           e = CXXRD->bases_end(); i != e; ++i)
-      if (!isEmptyRecord(Context, i->getType(), true))
-        return false;
+    return CXXRD->isEmpty();
 
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
          i != e; ++i)
