@@ -987,8 +987,14 @@ SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned SrcReg,
   LiveInterval &DstInt = li_->getInterval(DstReg);
   unsigned SrcSize = li_->getApproximateInstructionCount(SrcInt);
   unsigned DstSize = li_->getApproximateInstructionCount(DstInt);
-  if (SrcSize <= NewRCCount && DstSize <= NewRCCount)
+
+  // Coalesce aggressively if the intervals are small compared to the number of
+  // registers in the new class. The number 4 is fairly arbitrary, chosen to be
+  // less aggressive than the 8 used for the whole function size.
+  const unsigned ThresSize = 4 * NewRCCount;
+  if (SrcSize <= ThresSize && DstSize <= ThresSize)
     return true;
+
   // Estimate *register use density*. If it doubles or more, abort.
   unsigned SrcUses = std::distance(mri_->use_nodbg_begin(SrcReg),
                                    mri_->use_nodbg_end());
@@ -996,12 +1002,12 @@ SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned SrcReg,
                                    mri_->use_nodbg_end());
   unsigned NewUses = SrcUses + DstUses;
   unsigned NewSize = SrcSize + DstSize;
-  if (SrcRC != NewRC && SrcSize > NewRCCount) {
+  if (SrcRC != NewRC && SrcSize > ThresSize) {
     unsigned SrcRCCount = allocatableRCRegs_[SrcRC].count();
     if (NewUses*SrcSize*SrcRCCount > 2*SrcUses*NewSize*NewRCCount)
       return false;
   }
-  if (DstRC != NewRC && DstSize > NewRCCount) {
+  if (DstRC != NewRC && DstSize > ThresSize) {
     unsigned DstRCCount = allocatableRCRegs_[DstRC].count();
     if (NewUses*DstSize*DstRCCount > 2*DstUses*NewSize*NewRCCount)
       return false;
