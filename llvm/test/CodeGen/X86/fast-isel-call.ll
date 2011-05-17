@@ -1,4 +1,4 @@
-; RUN: llc < %s -fast-isel -march=x86 | FileCheck %s
+; RUN: llc < %s -fast-isel -march=x86 | grep and
 
 define i32 @t() nounwind {
 tak:
@@ -8,8 +8,6 @@ BB1:
 	ret i32 1
 BB2:
 	ret i32 0
-; CHECK: calll
-; CHECK-NEXT: testb	$1
 }
 
 declare i1 @foo() zeroext nounwind

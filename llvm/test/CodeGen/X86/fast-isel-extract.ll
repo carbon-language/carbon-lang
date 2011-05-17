@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple x86_64-apple-darwin11 -O0 -fast-isel-abort | FileCheck %s
+; RUN: llc < %s -mtriple x86_64-apple-darwin11 -O0 | FileCheck %s
 
 %struct.x = type { i64, i64 }
 %addovf = type { i32, i1 }
