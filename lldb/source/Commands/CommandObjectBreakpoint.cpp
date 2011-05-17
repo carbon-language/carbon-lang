@@ -702,7 +702,7 @@ CommandObjectBreakpointList::CommandOptions::SetOptionValue (uint32_t option_idx
 void
 CommandObjectBreakpointList::CommandOptions::OptionParsingStarting ()
 {
-    m_level = lldb::eDescriptionLevelBrief;
+    m_level = lldb::eDescriptionLevelFull;
     m_internal = false;
 }
 
