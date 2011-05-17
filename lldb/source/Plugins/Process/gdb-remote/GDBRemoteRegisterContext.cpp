@@ -364,7 +364,7 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
                     response.GetStringRef().append (thread_id_cstr);
                 }
                 const char *g_data = response.GetStringRef().c_str();
-                size_t g_data_len = strspn(g_data, "0123456789abcdefABCDEF");
+                size_t g_data_len = strspn(g_data + 1, "0123456789abcdefABCDEF");
                 if (g_data_len > 0)
                 {
                     data_sp.reset (new DataBufferHeap (g_data, g_data_len));
