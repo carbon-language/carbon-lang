@@ -1483,7 +1483,8 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
 }
 
 enum AtomicOpc {
-  OR
+  OR,
+  AtomicOpcEnd
 };
 
 enum AtomicSz {
@@ -1497,10 +1498,11 @@ enum AtomicSz {
   I32,
   SextConstantI64,
   ConstantI64,
-  I64
+  I64,
+  AtomicSzEnd
 };
 
-static const unsigned int AtomicOpcTbl[1][11] = {
+static const unsigned int AtomicOpcTbl[AtomicOpcEnd][AtomicSzEnd] = {
   {
     X86::LOCK_OR8mi,
     X86::LOCK_OR8mr,
