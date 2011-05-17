@@ -41,6 +41,9 @@ StateIsStoppedState (lldb::StateType state);
 const char *
 GetFormatAsCString (lldb::Format format);
     
+const char *
+GetPermissionsAsCString (uint32_t permissions);
+    
 } // namespace lldb_private
 
 #endif  // liblldb_State_h_

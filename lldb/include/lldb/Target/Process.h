@@ -37,6 +37,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Target/ExecutionContextScope.h"
+#include "lldb/Target/Memory.h"
 #include "lldb/Target/ThreadList.h"
 #include "lldb/Target/UnixSignals.h"
 
@@ -2602,48 +2603,6 @@ protected:
         std::string m_exit_string;
     };
 
-    
-    class MemoryCache
-    {
-    public:
-        //------------------------------------------------------------------
-        // Constructors and Destructors
-        //------------------------------------------------------------------
-        MemoryCache ();
-        
-        ~MemoryCache ();
-        
-        void
-        Clear();
-        
-        void
-        Flush (lldb::addr_t addr, size_t size);
-
-        size_t
-        Read (Process *process,
-              lldb::addr_t addr, 
-              void *dst, 
-              size_t dst_len,
-              Error &error);
-        
-        uint32_t
-        GetMemoryCacheLineSize() const
-        {
-            return m_cache_line_byte_size ;
-        }
-    protected:
-        typedef std::map<lldb::addr_t, lldb::DataBufferSP> collection;
-        //------------------------------------------------------------------
-        // Classes that inherit from MemoryCache can see and modify these
-        //------------------------------------------------------------------
-        uint32_t m_cache_line_byte_size;
-        Mutex m_cache_mutex;
-        collection m_cache;
-
-    private:
-        DISALLOW_COPY_AND_ASSIGN (MemoryCache);
-    };
-
     bool 
     HijackPrivateProcessEvents (Listener *listener);
     
@@ -2686,6 +2645,7 @@ protected:
     lldb_private::Mutex         m_stdio_communication_mutex;
     std::string                 m_stdout_data;
     MemoryCache                 m_memory_cache;
+    AllocatedMemoryCache        m_allocated_memory_cache;
 
     typedef std::map<lldb::LanguageType, lldb::LanguageRuntimeSP> LanguageRuntimeCollection; 
     LanguageRuntimeCollection m_language_runtimes;

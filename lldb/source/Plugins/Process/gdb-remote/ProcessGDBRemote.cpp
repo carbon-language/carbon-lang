@@ -1663,7 +1663,7 @@ ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &er
     }
     
     if (allocated_addr == LLDB_INVALID_ADDRESS)
-        error.SetErrorStringWithFormat("unable to allocate %zu bytes of memory with permissions %u", size, permissions);
+        error.SetErrorStringWithFormat("unable to allocate %zu bytes of memory with permissions %s", size, GetPermissionsAsCString (permissions));
     else
         error.Clear();
     return allocated_addr;

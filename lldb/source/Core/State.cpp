@@ -84,6 +84,31 @@ lldb_private::GetFormatAsCString (lldb::Format format)
     return unknown_format_string;
 }
 
+
+const char *
+lldb_private::GetPermissionsAsCString (uint32_t permissions)
+{
+    switch (permissions)
+    {
+        case 0:                      return "---";
+        case ePermissionsWritable:   return "-w-";
+        case ePermissionsReadable:   return "r--";
+        case ePermissionsExecutable: return "--x";
+        case ePermissionsReadable | 
+             ePermissionsWritable:   return "rw-";
+        case ePermissionsReadable | 
+             ePermissionsExecutable: return "r-x";
+        case ePermissionsWritable | 
+             ePermissionsExecutable: return "-wx";        
+        case ePermissionsReadable | 
+             ePermissionsWritable | 
+             ePermissionsExecutable: return "rwx";
+        default: 
+            break;
+    }
+    return "???";
+}
+
 bool
 lldb_private::StateIsRunningState (StateType state)
 {

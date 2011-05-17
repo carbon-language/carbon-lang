@@ -340,6 +340,7 @@
 		2689FFFF13353DB600698AC0 /* BreakpointResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7E1210F1B83100F91463 /* BreakpointResolver.cpp */; };
 		268F9D53123AA15200B91E9B /* SBSymbolContextList.h in Headers */ = {isa = PBXBuildFile; fileRef = 268F9D52123AA15200B91E9B /* SBSymbolContextList.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
+		2690B3711381D5C300ECFBAE /* Memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2690B3701381D5C300ECFBAE /* Memory.cpp */; };
 		2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2692BA13136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
@@ -695,6 +696,8 @@
 		268DA873130095ED00C9483A /* Terminal.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Terminal.cpp; sourceTree = "<group>"; };
 		268F9D52123AA15200B91E9B /* SBSymbolContextList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBSymbolContextList.h; path = include/lldb/API/SBSymbolContextList.h; sourceTree = "<group>"; };
 		268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBSymbolContextList.cpp; path = source/API/SBSymbolContextList.cpp; sourceTree = "<group>"; };
+		2690B36F1381D5B600ECFBAE /* Memory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Memory.h; path = include/lldb/Target/Memory.h; sourceTree = "<group>"; };
+		2690B3701381D5C300ECFBAE /* Memory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Memory.cpp; path = source/Target/Memory.cpp; sourceTree = "<group>"; };
 		2692BA13136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UnwindAssemblyInstEmulation.cpp; sourceTree = "<group>"; };
 		2692BA14136610C100F9E14D /* UnwindAssemblyInstEmulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnwindAssemblyInstEmulation.h; sourceTree = "<group>"; };
 		269416AD119A024800FF2715 /* CommandObjectTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTarget.cpp; path = source/Commands/CommandObjectTarget.cpp; sourceTree = "<group>"; };
@@ -2242,6 +2245,8 @@
 				26DAFD9711529BC7005A394E /* ExecutionContextScope.h */,
 				4CB4430912491DDA00C13DC2 /* LanguageRuntime.h */,
 				4CB4430A12491DDA00C13DC2 /* LanguageRuntime.cpp */,
+				2690B36F1381D5B600ECFBAE /* Memory.h */,
+				2690B3701381D5C300ECFBAE /* Memory.cpp */,
 				4CB443F612499B6E00C13DC2 /* ObjCLanguageRuntime.h */,
 				4CB443F212499B5000C13DC2 /* ObjCLanguageRuntime.cpp */,
 				495BBACF119A0DE700418BEA /* PathMappingList.h */,
@@ -3187,6 +3192,7 @@
 				26DB3E1C1379E7AD0080DC73 /* ABIMacOSX_i386.cpp in Sources */,
 				26DB3E1F1379E7AD0080DC73 /* ABISysV_x86_64.cpp in Sources */,
 				26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */,
+				2690B3711381D5C300ECFBAE /* Memory.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

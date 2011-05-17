@@ -539,144 +539,6 @@ ProcessInstanceInfoMatch::Clear()
     m_match_all_users = false;
 }
 
-//----------------------------------------------------------------------
-// MemoryCache constructor
-//----------------------------------------------------------------------
-Process::MemoryCache::MemoryCache() :
-    m_cache_line_byte_size (512),
-    m_cache_mutex (Mutex::eMutexTypeRecursive),
-    m_cache ()
-{
-}
-
-//----------------------------------------------------------------------
-// Destructor
-//----------------------------------------------------------------------
-Process::MemoryCache::~MemoryCache()
-{
-}
-
-void
-Process::MemoryCache::Clear()
-{
-    Mutex::Locker locker (m_cache_mutex);
-    m_cache.clear();
-}
-
-void
-Process::MemoryCache::Flush (addr_t addr, size_t size)
-{
-    if (size == 0)
-        return;
-
-    const uint32_t cache_line_byte_size = m_cache_line_byte_size;
-    const addr_t end_addr = (addr + size - 1);
-    const addr_t flush_start_addr = addr - (addr % cache_line_byte_size);
-    const addr_t flush_end_addr = end_addr - (end_addr % cache_line_byte_size);
-    
-    Mutex::Locker locker (m_cache_mutex);
-    if (m_cache.empty())
-        return;
-
-    assert ((flush_start_addr % cache_line_byte_size) == 0);
-
-    for (addr_t curr_addr = flush_start_addr; curr_addr <= flush_end_addr; curr_addr += cache_line_byte_size)
-    {
-        collection::iterator pos = m_cache.find (curr_addr);
-        if (pos != m_cache.end())
-            m_cache.erase(pos);
-    }
-}
-
-size_t
-Process::MemoryCache::Read 
-(
-    Process *process,
-    addr_t addr, 
-    void *dst, 
-    size_t dst_len,
-    Error &error
-)
-{
-    size_t bytes_left = dst_len;
-    if (dst && bytes_left > 0)
-    {
-        const uint32_t cache_line_byte_size = m_cache_line_byte_size;
-        uint8_t *dst_buf = (uint8_t *)dst;
-        addr_t curr_addr = addr - (addr % cache_line_byte_size);
-        addr_t cache_offset = addr - curr_addr;
-        Mutex::Locker locker (m_cache_mutex);
-        
-        while (bytes_left > 0)
-        {
-            collection::const_iterator pos = m_cache.find (curr_addr);
-            collection::const_iterator end = m_cache.end ();
-
-            if (pos != end)
-            {
-                size_t curr_read_size = cache_line_byte_size - cache_offset;
-                if (curr_read_size > bytes_left)
-                    curr_read_size = bytes_left;
-                    
-                memcpy (dst_buf + dst_len - bytes_left, pos->second->GetBytes() + cache_offset, curr_read_size);
-
-                bytes_left -= curr_read_size;
-                curr_addr += curr_read_size + cache_offset;
-                cache_offset = 0;
-                
-                if (bytes_left > 0)
-                {
-                    // Get sequential cache page hits
-                    for (++pos; (pos != end) && (bytes_left > 0); ++pos)
-                    {
-                        assert ((curr_addr % cache_line_byte_size) == 0);
-
-                        if (pos->first != curr_addr)
-                            break;
-
-                        curr_read_size = pos->second->GetByteSize();
-                        if (curr_read_size > bytes_left)
-                            curr_read_size = bytes_left;
-
-                        memcpy (dst_buf + dst_len - bytes_left, pos->second->GetBytes(), curr_read_size);
-
-                        bytes_left -= curr_read_size;
-                        curr_addr += curr_read_size;
-                        
-                        // We have a cache page that succeeded to read some bytes
-                        // but not an entire page. If this happens, we must cap
-                        // off how much data we are able to read...
-                        if (pos->second->GetByteSize() != cache_line_byte_size)
-                            return dst_len - bytes_left;
-                    }
-                }
-            }
-            
-            // We need to read from the process
-            
-            if (bytes_left > 0)
-            {
-                assert ((curr_addr % cache_line_byte_size) == 0);
-                std::auto_ptr<DataBufferHeap> data_buffer_heap_ap(new DataBufferHeap (cache_line_byte_size, 0));
-                size_t process_bytes_read = process->ReadMemoryFromInferior (curr_addr, 
-                                                                             data_buffer_heap_ap->GetBytes(), 
-                                                                             data_buffer_heap_ap->GetByteSize(), 
-                                                                             error);
-                if (process_bytes_read == 0)
-                    return dst_len - bytes_left;
-
-                if (process_bytes_read != cache_line_byte_size)
-                    data_buffer_heap_ap->SetByteSize (process_bytes_read);
-                m_cache[curr_addr] = DataBufferSP (data_buffer_heap_ap.release());
-                // We have read data and put it into the cache, continue through the
-                // loop again to get the data out of the cache...
-            }
-        }
-    }
-    
-    return dst_len - bytes_left;
-}
-
 Process*
 Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener)
 {
@@ -735,7 +597,8 @@ Process::Process(Target &target, Listener &listener) :
     m_stdio_communication ("process.stdio"),
     m_stdio_communication_mutex (Mutex::eMutexTypeRecursive),
     m_stdout_data (),
-    m_memory_cache (),
+    m_memory_cache (*this),
+    m_allocated_memory_cache (*this),
     m_next_event_action_ap()
 {
     UpdateInstanceName();
@@ -1759,7 +1622,7 @@ size_t
 Process::ReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 {
     // Memory caching enabled, no verification
-    return m_memory_cache.Read (this, addr, buf, size, error);
+    return m_memory_cache.Read (addr, buf, size, error);
 }
 
 #endif  // #else for #if defined (VERIFY_MEMORY_READS)
@@ -1968,29 +1831,36 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
                                              
     return bytes_written;
 }
-
+#define USE_ALLOCATE_MEMORY_CACHE 1
 addr_t
 Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
 {
-    // Fixme: we should track the blocks we've allocated, and clean them up...
-    // We could even do our own allocator here if that ends up being more efficient.
+#if defined (USE_ALLOCATE_MEMORY_CACHE)
+    return m_allocated_memory_cache.AllocateMemory(size, permissions, error);
+#else
     addr_t allocated_addr = DoAllocateMemory (size, permissions, error);
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
-        log->Printf("Process::AllocateMemory(size=%4zu, permissions=%c%c%c) => 0x%16.16llx (m_stop_id = %u)", 
+        log->Printf("Process::AllocateMemory(size=%4zu, permissions=%s) => 0x%16.16llx (m_stop_id = %u)", 
                     size, 
-                    permissions & ePermissionsReadable ? 'r' : '-',
-                    permissions & ePermissionsWritable ? 'w' : '-',
-                    permissions & ePermissionsExecutable ? 'x' : '-',
+                    GetPermissionsAsCString (permissions),
                     (uint64_t)allocated_addr,
                     m_stop_id);
     return allocated_addr;
+#endif
 }
 
 Error
 Process::DeallocateMemory (addr_t ptr)
 {
-    Error error(DoDeallocateMemory (ptr));
+    Error error;
+#if defined (USE_ALLOCATE_MEMORY_CACHE)
+    if (!m_allocated_memory_cache.DeallocateMemory(ptr))
+    {
+        error.SetErrorStringWithFormat ("deallocation of memory at 0x%llx failed.", (uint64_t)ptr);
+    }
+#else
+    error = DoDeallocateMemory (ptr);
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     if (log)
@@ -1998,6 +1868,7 @@ Process::DeallocateMemory (addr_t ptr)
                     ptr, 
                     error.AsCString("SUCCESS"),
                     m_stop_id);
+#endif
     return error;
 }
 
