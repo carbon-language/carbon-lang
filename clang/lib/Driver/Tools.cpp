@@ -910,7 +910,7 @@ static bool ShouldDisableCFI(const ArgList &Args,
                              const ToolChain &TC) {
   if (TC.getTriple().getOS() == llvm::Triple::Darwin) {
     // The native darwin assembler doesn't support cfi directives, so
-    // we disable them if with think the .s file will be passed to it.
+    // we disable them if we think the .s file will be passed to it.
 
     // FIXME: Duplicated code with ToolChains.cpp
     // FIXME: This doesn't belong here, but ideally we will support static soon
