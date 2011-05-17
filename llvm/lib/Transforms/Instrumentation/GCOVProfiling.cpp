@@ -43,11 +43,12 @@ namespace {
   public:
     static char ID;
     GCOVProfiler()
-        : ModulePass(ID), EmitNotes(true), EmitData(true) {
+        : ModulePass(ID), EmitNotes(true), EmitData(true), Use402Format(false) {
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
-    GCOVProfiler(bool EmitNotes, bool EmitData)
-        : ModulePass(ID), EmitNotes(EmitNotes), EmitData(EmitData) {
+    GCOVProfiler(bool EmitNotes, bool EmitData, bool use402Format = false)
+        : ModulePass(ID), EmitNotes(EmitNotes), EmitData(EmitData),
+          Use402Format(use402Format) {
       assert((EmitNotes || EmitData) && "GCOVProfiler asked to do nothing?");
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
@@ -93,6 +94,7 @@ namespace {
 
     bool EmitNotes;
     bool EmitData;
+    bool Use402Format;
 
     Module *M;
     LLVMContext *Ctx;
@@ -103,8 +105,9 @@ char GCOVProfiler::ID = 0;
 INITIALIZE_PASS(GCOVProfiler, "insert-gcov-profiling",
                 "Insert instrumentation for GCOV profiling", false, false)
 
-ModulePass *llvm::createGCOVProfilerPass(bool EmitNotes, bool EmitData) {
-  return new GCOVProfiler(EmitNotes, EmitData);
+ModulePass *llvm::createGCOVProfilerPass(bool EmitNotes, bool EmitData,
+                                         bool Use402Format) {
+  return new GCOVProfiler(EmitNotes, EmitData, Use402Format);
 }
 
 static DISubprogram findSubprogram(DIScope Scope) {
@@ -250,7 +253,7 @@ namespace {
   // object users can construct, the blocks and lines will be rooted here.
   class GCOVFunction : public GCOVRecord {
    public:
-    GCOVFunction(DISubprogram SP, raw_ostream *os) {
+    GCOVFunction(DISubprogram SP, raw_ostream *os, bool Use402Format) {
       this->os = os;
 
       Function *F = SP.getFunction();
@@ -261,13 +264,16 @@ namespace {
       ReturnBlock = new GCOVBlock(i++, os);
 
       writeBytes(FunctionTag, 4);
-      uint32_t BlockLen = 1 + 1 + 1 + 1 + lengthOfGCOVString(SP.getName()) +
+      uint32_t BlockLen = 1 + 1 + 1 + lengthOfGCOVString(SP.getName()) +
           1 + lengthOfGCOVString(SP.getFilename()) + 1;
+      if (!Use402Format)
+        ++BlockLen; // For second checksum.
       write(BlockLen);
       uint32_t Ident = reinterpret_cast<intptr_t>((MDNode*)SP);
       write(Ident);
       write(0);  // checksum #1
-      write(0);  // checksum #2
+      if (!Use402Format)
+        write(0);  // checksum #2
       writeGCOVString(SP.getName());
       writeGCOVString(SP.getFilename());
       write(SP.getLineNumber());
@@ -368,7 +374,10 @@ void GCOVProfiler::emitGCNO(DebugInfoFinder &DIF) {
     std::string ErrorInfo;
     out = new raw_fd_ostream(mangleName(CU, "gcno").c_str(), ErrorInfo,
                              raw_fd_ostream::F_Binary);
-    out->write("oncg*404MVLL", 12);
+    if (!Use402Format)
+      out->write("oncg*404MVLL", 12);
+    else
+      out->write("oncg*402MVLL", 12);
   }
 
   for (DebugInfoFinder::iterator SPI = DIF.subprogram_begin(),
@@ -378,7 +387,7 @@ void GCOVProfiler::emitGCNO(DebugInfoFinder &DIF) {
 
     Function *F = SP.getFunction();
     if (!F) continue;
-    GCOVFunction Func(SP, os);
+    GCOVFunction Func(SP, os, Use402Format);
 
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
       GCOVBlock &Block = Func.getBlock(BB);

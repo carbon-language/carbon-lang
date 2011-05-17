@@ -28,7 +28,8 @@ ModulePass *createOptimalEdgeProfilerPass();
 ModulePass *createPathProfilerPass();
 
 // Insert GCOV profiling instrumentation
-ModulePass *createGCOVProfilerPass(bool EmitNotes = true, bool EmitData = true);
+ModulePass *createGCOVProfilerPass(bool EmitNotes = true, bool EmitData = true,
+                                   bool Use402Format = false);
 
 } // End llvm namespace
 
