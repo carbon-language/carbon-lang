@@ -1550,10 +1550,10 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, EVT NVT) {
   if (Node->hasAnyUseOfValue(0))
     return 0;
   
-  // Optimize common patterns for __sync_or_and_fetch  where the result
-  // is not used. This allows us to use the "lock" version of the or
-  // instruction.
-  // FIXME: Same as for 'add' and 'sub'.
+  // Optimize common patterns for __sync_or_and_fetch and similar arith
+  // operations where the result is not used. This allows us to use the "lock"
+  // version of the arithmetic instruction.
+  // FIXME: Same as for 'add' and 'sub', try to merge those down here.
   SDValue Chain = Node->getOperand(0);
   SDValue Ptr = Node->getOperand(1);
   SDValue Val = Node->getOperand(2);
