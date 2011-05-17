@@ -1706,7 +1706,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     __bind_r(__bind_r&& __b)
-        : base(_STD::move(__b)) {}
+        : base(_STD::forward<base>(__b)) {}
 
     template <class _G, class ..._BA>
       _LIBCPP_INLINE_VISIBILITY
