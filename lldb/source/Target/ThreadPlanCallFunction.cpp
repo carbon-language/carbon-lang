@@ -282,6 +282,7 @@ ThreadPlanCallFunction::DoTakedown ()
         if (log)
             log->Printf ("DoTakedown called for thread 0x%4.4x, m_valid: %d complete: %d.\n", m_thread.GetID(), m_valid, IsPlanComplete());
         m_takedown_done = true;
+        m_real_stop_info_sp = GetPrivateStopReason();
         m_thread.RestoreThreadStateFromCheckpoint(m_stored_thread_state);
         SetPlanComplete();
         ClearBreakpoints();
@@ -327,6 +328,8 @@ ThreadPlanCallFunction::ValidatePlan (Stream *error)
 bool
 ThreadPlanCallFunction::PlanExplainsStop ()
 {    
+    m_real_stop_info_sp = GetPrivateStopReason();
+    
     // If our subplan knows why we stopped, even if it's done (which would forward the question to us)
     // we answer yes.
     if(m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop())
@@ -343,11 +346,10 @@ ThreadPlanCallFunction::PlanExplainsStop ()
             
     // Otherwise, check the case where we stopped for an internal breakpoint, in that case, continue on.
     // If it is not an internal breakpoint, consult OkayToDiscard.
-    StopInfoSP stop_info_sp = GetPrivateStopReason();
     
-    if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
+    if (m_real_stop_info_sp && m_real_stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
     {
-        uint64_t break_site_id = stop_info_sp->GetValue();
+        uint64_t break_site_id = m_real_stop_info_sp->GetValue();
         BreakpointSiteSP bp_site_sp = m_thread.GetProcess().GetBreakpointSiteList().FindByID(break_site_id);
         if (bp_site_sp)
         {

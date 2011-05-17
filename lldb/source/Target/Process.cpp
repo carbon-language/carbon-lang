@@ -3498,11 +3498,40 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 switch (stop_state)
                 {
                 case lldb::eStateStopped:
-                    // Yay, we're done.
-                    if (log)
-                        log->Printf ("Execution completed successfully.");
-                    return_value = eExecutionCompleted;
-                    break;
+                {
+                    // Yay, we're done.  Now make sure that our thread plan actually completed.
+                    ThreadSP thread_sp = exe_ctx.process->GetThreadList().FindThreadByIndexID (tid);
+                    if (!thread_sp)
+                    {
+                        // Ooh, our thread has vanished.  Unlikely that this was successful execution...
+                        if (log)
+                            log->Printf ("Execution completed but our thread has vanished.");
+                        return_value = eExecutionInterrupted;
+                    }
+                    else
+                    {
+                        StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
+                        StopReason stop_reason = stop_info_sp->GetStopReason();
+                        if (stop_reason == eStopReasonPlanComplete)
+                        {
+                            if (log)
+                                log->Printf ("Execution completed successfully.");
+                            // Now mark this plan as private so it doesn't get reported as the stop reason
+                            // after this point.  
+                            if (thread_plan_sp)
+                                thread_plan_sp->SetPrivate (true);
+                            return_value = eExecutionCompleted;
+                        }
+                        else
+                        {
+                            if (log)
+                                log->Printf ("Thread plan didn't successfully complete.");
+                                
+                            return_value = eExecutionInterrupted;
+                        }
+                    }
+                }        
+                break;
                 case lldb::eStateCrashed:
                     if (log)
                         log->Printf ("Execution crashed.");
@@ -3515,6 +3544,8 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 default:
                     if (log)
                         log->Printf("Execution stopped with unexpected state: %s.", StateAsCString(stop_state));
+                        
+                    errors.Printf ("Execution stopped with unexpected state.");
                     return_value = eExecutionInterrupted;
                     break;
                 }

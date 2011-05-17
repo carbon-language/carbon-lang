@@ -504,7 +504,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         lldb::addr_t function_stack_pointer = static_cast<ThreadPlanCallFunction *>(call_plan_sp.get())->GetFunctionStackPointer();
     
-        call_plan_sp->SetPrivate(true);
+        // call_plan_sp->SetPrivate(true);
     
         uint32_t single_thread_timeout_usec = 500000;
         
@@ -524,10 +524,23 @@ ClangUserExpression::Execute (Stream &error_stream,
 
         if (execution_result == eExecutionInterrupted)
         {
-            if (discard_on_error)
-                error_stream.Printf ("Expression execution was interrupted.  The process has been returned to the state before execution.");
+            const char *error_desc = NULL;
+            
+            if (call_plan_sp)
+            {
+                lldb::StopInfoSP real_stop_info_sp = call_plan_sp->GetRealStopInfo();
+                if (real_stop_info_sp)
+                    error_desc = real_stop_info_sp->GetDescription();
+            }
+            if (error_desc)
+                error_stream.Printf ("Execution was interrupted, reason: %s.", error_desc);
             else
-                error_stream.Printf ("Expression execution was interrupted.  The process has been left at the point where it was interrupted.");
+                error_stream.Printf ("Execution was interrupted.", error_desc);
+                
+            if (discard_on_error)
+                error_stream.Printf ("\nThe process has been returned to the state before execution.");
+            else
+                error_stream.Printf ("\nThe process has been left at the point where it was interrupted.");
 
             return execution_result;
         }

@@ -117,6 +117,16 @@ public:
     // thread state gets restored if the plan gets discarded.
     virtual void
     WillPop ();
+    
+    // If the thread plan stops mid-course, this will be the stop reason that interrupted us.
+    // Once DoTakedown is called, this will be the real stop reason at the end of the function call.
+    // This is needed because we want the CallFunction thread plans not to show up as the stop reason.
+    // But if something bad goes wrong, it is nice to be able to tell the user what really happened.
+    virtual lldb::StopInfoSP
+    GetRealStopInfo()
+    {
+        return m_real_stop_info_sp;
+    }
 
 protected:
     void ReportRegisterState (const char *message);
@@ -145,6 +155,10 @@ private:
     LanguageRuntime                                *m_cxx_language_runtime;
     LanguageRuntime                                *m_objc_language_runtime;
     Thread::ThreadStateCheckpoint                   m_stored_thread_state;
+    lldb::StopInfoSP                                m_real_stop_info_sp; // In general we want to hide call function
+                                                                         // thread plans, but for reporting purposes,
+                                                                         // it's nice to know the real stop reason.
+                                                                         // This gets set in DoTakedown.
     lldb::ValueSP                                   m_return_value_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
     bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
 
