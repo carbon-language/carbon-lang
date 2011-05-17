@@ -12,7 +12,7 @@
 // template <class T>
 //     typename conditional
 //     <
-//         !has_nothrow_move_constructor<T>::value && has_copy_constructor<T>::value,
+//         !is_nothrow_move_constructible<T>::value && is_copy_constructible<T>::value,
 //         const T&,
 //         T&&
 //     >::type
@@ -32,24 +32,32 @@ public:
 #endif
 };
 
+struct legacy
+{
+    legacy() {}
+    legacy(const legacy&);
+};
+
 int main()
 {
     int i = 0;
     const int ci = 0;
 
+    legacy l;
     A a;
     const A ca;
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static_assert((std::is_same<decltype(std::move_if_noexcept(i)), int&&>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int&&>::value), "");
-    static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A&>::value), "");
-    static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A&>::value), "");
+    static_assert((std::is_same<decltype(std::move_if_noexcept(a)), A&&>::value), "");
+    static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A&&>::value), "");
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     static_assert((std::is_same<decltype(std::move_if_noexcept(i)), const int>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ci)), const int>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(a)), const A>::value), "");
     static_assert((std::is_same<decltype(std::move_if_noexcept(ca)), const A>::value), "");
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    static_assert((std::is_same<decltype(std::move_if_noexcept(l)), const legacy&>::value), "");
 
 }
