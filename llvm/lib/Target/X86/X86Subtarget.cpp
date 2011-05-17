@@ -265,6 +265,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
   HasCLMUL = IsIntel && ((ECX >> 1) & 0x1);
   HasFMA3  = IsIntel && ((ECX >> 12) & 0x1);
+  HasPOPCNT = IsIntel && ((ECX >> 23) & 0x1);
   HasAES   = IsIntel && ((ECX >> 25) & 0x1);
 
   if (IsIntel || IsAMD) {
