@@ -862,7 +862,14 @@ ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize (const char *type_name
     }
     // This assert should fire for anything that we don't catch above so we know
     // to fix any issues we run into.
-    assert (!"error: ClangASTContext::GetClangTypeForDWARFEncodingAndSize() contains an unhandled encoding. Fix this ASAP!");
+    if (type_name)
+    {
+        fprintf (stderr, "error: need to add support for DW_TAG_base_type '%s' encoded with DW_ATE = 0x%x, bit_size = %u\n", type_name, dw_ate, bit_size);
+    }
+    else
+    {
+        fprintf (stderr, "error: need to add support for DW_TAG_base_type encoded with DW_ATE = 0x%x, bit_size = %u\n", dw_ate, bit_size);
+    }
     return NULL;
 }
 
