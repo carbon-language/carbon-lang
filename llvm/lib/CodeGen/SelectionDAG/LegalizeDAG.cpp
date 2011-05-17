@@ -432,68 +432,67 @@ SDValue ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
       SDValue Result = DAG.getNode(ISD::BITCAST, dl, intVT, Val);
       return DAG.getStore(Chain, dl, Result, Ptr, ST->getPointerInfo(),
                           ST->isVolatile(), ST->isNonTemporal(), Alignment);
-    } else {
-      // Do a (aligned) store to a stack slot, then copy from the stack slot
-      // to the final destination using (unaligned) integer loads and stores.
-      EVT StoredVT = ST->getMemoryVT();
-      EVT RegVT =
-        TLI.getRegisterType(*DAG.getContext(),
-                            EVT::getIntegerVT(*DAG.getContext(),
-                                              StoredVT.getSizeInBits()));
-      unsigned StoredBytes = StoredVT.getSizeInBits() / 8;
-      unsigned RegBytes = RegVT.getSizeInBits() / 8;
-      unsigned NumRegs = (StoredBytes + RegBytes - 1) / RegBytes;
-
-      // Make sure the stack slot is also aligned for the register type.
-      SDValue StackPtr = DAG.CreateStackTemporary(StoredVT, RegVT);
-
-      // Perform the original store, only redirected to the stack slot.
-      SDValue Store = DAG.getTruncStore(Chain, dl,
-                                        Val, StackPtr, MachinePointerInfo(),
-                                        StoredVT, false, false, 0);
-      SDValue Increment = DAG.getConstant(RegBytes, TLI.getPointerTy());
-      SmallVector<SDValue, 8> Stores;
-      unsigned Offset = 0;
-
-      // Do all but one copies using the full register width.
-      for (unsigned i = 1; i < NumRegs; i++) {
-        // Load one integer register's worth from the stack slot.
-        SDValue Load = DAG.getLoad(RegVT, dl, Store, StackPtr,
-                                   MachinePointerInfo(),
-                                   false, false, 0);
-        // Store it to the final location.  Remember the store.
-        Stores.push_back(DAG.getStore(Load.getValue(1), dl, Load, Ptr,
-                                    ST->getPointerInfo().getWithOffset(Offset),
-                                      ST->isVolatile(), ST->isNonTemporal(),
-                                      MinAlign(ST->getAlignment(), Offset)));
-        // Increment the pointers.
-        Offset += RegBytes;
-        StackPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(), StackPtr,
-                               Increment);
-        Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
-      }
-
-      // The last store may be partial.  Do a truncating store.  On big-endian
-      // machines this requires an extending load from the stack slot to ensure
-      // that the bits are in the right place.
-      EVT MemVT = EVT::getIntegerVT(*DAG.getContext(),
-                                    8 * (StoredBytes - Offset));
-
-      // Load from the stack slot.
-      SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, dl, RegVT, Store, StackPtr,
-                                    MachinePointerInfo(),
-                                    MemVT, false, false, 0);
-
-      Stores.push_back(DAG.getTruncStore(Load.getValue(1), dl, Load, Ptr,
-                                         ST->getPointerInfo()
-                                           .getWithOffset(Offset),
-                                         MemVT, ST->isVolatile(),
-                                         ST->isNonTemporal(),
-                                         MinAlign(ST->getAlignment(), Offset)));
-      // The order of the stores doesn't matter - say it with a TokenFactor.
-      return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Stores[0],
-                         Stores.size());
     }
+    // Do a (aligned) store to a stack slot, then copy from the stack slot
+    // to the final destination using (unaligned) integer loads and stores.
+    EVT StoredVT = ST->getMemoryVT();
+    EVT RegVT =
+      TLI.getRegisterType(*DAG.getContext(),
+                          EVT::getIntegerVT(*DAG.getContext(),
+                                            StoredVT.getSizeInBits()));
+    unsigned StoredBytes = StoredVT.getSizeInBits() / 8;
+    unsigned RegBytes = RegVT.getSizeInBits() / 8;
+    unsigned NumRegs = (StoredBytes + RegBytes - 1) / RegBytes;
+
+    // Make sure the stack slot is also aligned for the register type.
+    SDValue StackPtr = DAG.CreateStackTemporary(StoredVT, RegVT);
+
+    // Perform the original store, only redirected to the stack slot.
+    SDValue Store = DAG.getTruncStore(Chain, dl,
+                                      Val, StackPtr, MachinePointerInfo(),
+                                      StoredVT, false, false, 0);
+    SDValue Increment = DAG.getConstant(RegBytes, TLI.getPointerTy());
+    SmallVector<SDValue, 8> Stores;
+    unsigned Offset = 0;
+
+    // Do all but one copies using the full register width.
+    for (unsigned i = 1; i < NumRegs; i++) {
+      // Load one integer register's worth from the stack slot.
+      SDValue Load = DAG.getLoad(RegVT, dl, Store, StackPtr,
+                                 MachinePointerInfo(),
+                                 false, false, 0);
+      // Store it to the final location.  Remember the store.
+      Stores.push_back(DAG.getStore(Load.getValue(1), dl, Load, Ptr,
+                                  ST->getPointerInfo().getWithOffset(Offset),
+                                    ST->isVolatile(), ST->isNonTemporal(),
+                                    MinAlign(ST->getAlignment(), Offset)));
+      // Increment the pointers.
+      Offset += RegBytes;
+      StackPtr = DAG.getNode(ISD::ADD, dl, StackPtr.getValueType(), StackPtr,
+                             Increment);
+      Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
+    }
+
+    // The last store may be partial.  Do a truncating store.  On big-endian
+    // machines this requires an extending load from the stack slot to ensure
+    // that the bits are in the right place.
+    EVT MemVT = EVT::getIntegerVT(*DAG.getContext(),
+                                  8 * (StoredBytes - Offset));
+
+    // Load from the stack slot.
+    SDValue Load = DAG.getExtLoad(ISD::EXTLOAD, dl, RegVT, Store, StackPtr,
+                                  MachinePointerInfo(),
+                                  MemVT, false, false, 0);
+
+    Stores.push_back(DAG.getTruncStore(Load.getValue(1), dl, Load, Ptr,
+                                       ST->getPointerInfo()
+                                         .getWithOffset(Offset),
+                                       MemVT, ST->isVolatile(),
+                                       ST->isNonTemporal(),
+                                       MinAlign(ST->getAlignment(), Offset)));
+    // The order of the stores doesn't matter - say it with a TokenFactor.
+    return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &Stores[0],
+                       Stores.size());
   }
   assert(ST->getMemoryVT().isInteger() &&
          !ST->getMemoryVT().isVector() &&
