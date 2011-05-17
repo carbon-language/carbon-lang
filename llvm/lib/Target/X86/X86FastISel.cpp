@@ -1414,12 +1414,14 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   if (Subtarget->IsCalleePop(isVarArg, CC))
     return false;
 
-  // Handle *simple* calls for now.
-  const Type *RetTy = CS.getType();
-  MVT RetVT;
-  if (RetTy->isVoidTy())
-    RetVT = MVT::isVoid;
-  else if (!isTypeLegal(RetTy, RetVT, true))
+  // Check whether the function can return without sret-demotion.
+  SmallVector<ISD::OutputArg, 4> Outs;
+  SmallVector<uint64_t, 4> Offsets;
+  GetReturnInfo(I->getType(), CS.getAttributes().getRetAttributes(),
+                Outs, TLI, &Offsets);
+  bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(),
+                        FTy->isVarArg(), Outs, FTy->getContext());
+  if (!CanLowerReturn)
     return false;
 
   // Materialize callee address in a register. FIXME: GV address can be
@@ -1435,13 +1437,6 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     CalleeOp = CalleeAM.Base.Reg;
   } else
     return false;
-
-  // Allow calls which produce i1 results.
-  bool AndToI1 = false;
-  if (RetVT == MVT::i1) {
-    RetVT = MVT::i8;
-    AndToI1 = true;
-  }
 
   // Deal with call operands first.
   SmallVector<const Value *, 8> ArgVals;
@@ -1697,62 +1692,72 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackUp))
     .addImm(NumBytes).addImm(NumBytesCallee);
 
-  // Now handle call return value (if any).
-  SmallVector<unsigned, 4> UsedRegs;
-  if (RetVT != MVT::isVoid) {
-    SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CC, false, TM, RVLocs, I->getParent()->getContext());
-    CCInfo.AnalyzeCallResult(RetVT, RetCC_X86);
+  // Build info for return calling conv lowering code.
+  // FIXME: This is practically a copy-paste from TargetLowering::LowerCallTo.
+  SmallVector<ISD::InputArg, 32> Ins;
+  SmallVector<EVT, 4> RetTys;
+  ComputeValueVTs(TLI, I->getType(), RetTys);
+  for (unsigned i = 0, e = RetTys.size(); i != e; ++i) {
+    EVT VT = RetTys[i];
+    EVT RegisterVT = TLI.getRegisterType(I->getParent()->getContext(), VT);
+    unsigned NumRegs = TLI.getNumRegisters(I->getParent()->getContext(), VT);
+    for (unsigned j = 0; j != NumRegs; ++j) {
+      ISD::InputArg MyFlags;
+      MyFlags.VT = RegisterVT.getSimpleVT();
+      MyFlags.Used = !CS.getInstruction()->use_empty();
+      if (CS.paramHasAttr(0, Attribute::SExt))
+        MyFlags.Flags.setSExt();
+      if (CS.paramHasAttr(0, Attribute::ZExt))
+        MyFlags.Flags.setZExt();
+      if (CS.paramHasAttr(0, Attribute::InReg))
+        MyFlags.Flags.setInReg();
+      Ins.push_back(MyFlags);
+    }
+  }
 
-    // Copy all of the result registers out of their specified physreg.
-    assert(RVLocs.size() == 1 && "Can't handle multi-value calls!");
-    EVT CopyVT = RVLocs[0].getValVT();
-    TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
+  // Now handle call return values.
+  SmallVector<unsigned, 4> UsedRegs;
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCRetInfo(CC, false, TM, RVLocs, I->getParent()->getContext());
+  unsigned ResultReg = FuncInfo.CreateRegs(I->getType());
+  CCRetInfo.AnalyzeCallResult(Ins, RetCC_X86);
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    EVT CopyVT = RVLocs[i].getValVT();
+    unsigned CopyReg = ResultReg + i;
 
     // If this is a call to a function that returns an fp value on the x87 fp
     // stack, but where we prefer to use the value in xmm registers, copy it
     // out as F80 and use a truncate to move it from fp stack reg to xmm reg.
-    if ((RVLocs[0].getLocReg() == X86::ST0 ||
-         RVLocs[0].getLocReg() == X86::ST1) &&
+    if ((RVLocs[i].getLocReg() == X86::ST0 ||
+         RVLocs[i].getLocReg() == X86::ST1) &&
         isScalarFPTypeInSSEReg(RVLocs[0].getValVT())) {
       CopyVT = MVT::f80;
-      DstRC = X86::RFP80RegisterClass;
+      CopyReg = createResultReg(X86::RFP80RegisterClass);
     }
 
-    unsigned ResultReg = createResultReg(DstRC);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-            ResultReg).addReg(RVLocs[0].getLocReg());
-    UsedRegs.push_back(RVLocs[0].getLocReg());
+            CopyReg).addReg(RVLocs[i].getLocReg());
+    UsedRegs.push_back(RVLocs[i].getLocReg());
 
-    if (CopyVT != RVLocs[0].getValVT()) {
+    if (CopyVT != RVLocs[i].getValVT()) {
       // Round the F80 the right size, which also moves to the appropriate xmm
       // register. This is accomplished by storing the F80 value in memory and
       // then loading it back. Ewww...
-      EVT ResVT = RVLocs[0].getValVT();
+      EVT ResVT = RVLocs[i].getValVT();
       unsigned Opc = ResVT == MVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
       unsigned MemSize = ResVT.getSizeInBits()/8;
       int FI = MFI.CreateStackObject(MemSize, MemSize, false);
       addFrameReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                                 TII.get(Opc)), FI)
-        .addReg(ResultReg);
-      DstRC = ResVT == MVT::f32
-        ? X86::FR32RegisterClass : X86::FR64RegisterClass;
+        .addReg(CopyReg);
       Opc = ResVT == MVT::f32 ? X86::MOVSSrm : X86::MOVSDrm;
-      ResultReg = createResultReg(DstRC);
       addFrameReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                                TII.get(Opc), ResultReg), FI);
+                                TII.get(Opc), ResultReg + i), FI);
     }
-
-    if (AndToI1) {
-      // Mask out all but lowest bit for some call which produces an i1.
-      unsigned AndResult = createResultReg(X86::GR8RegisterClass);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-              TII.get(X86::AND8ri), AndResult).addReg(ResultReg).addImm(1);
-      ResultReg = AndResult;
-    }
-
-    UpdateValueMap(I, ResultReg);
   }
+
+  if (RVLocs.size())
+    UpdateValueMap(I, ResultReg, RVLocs.size());
 
   // Set all unused physreg defs as dead.
   static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
