@@ -547,11 +547,11 @@ operator==(const scoped_allocator_adaptor<_OuterA1>& __a,
     return __a.outer_allocator() == __b.outer_allocator();
 }
 
-template <class _OuterA1, class _OuterA2, class... _InnerAllocs>
+template <class _OuterA1, class _OuterA2, class _InnerA0, class... _InnerAllocs>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator==(const scoped_allocator_adaptor<_OuterA1, _InnerAllocs...>& __a,
-           const scoped_allocator_adaptor<_OuterA2, _InnerAllocs...>& __b)
+operator==(const scoped_allocator_adaptor<_OuterA1, _InnerA0, _InnerAllocs...>& __a,
+           const scoped_allocator_adaptor<_OuterA2, _InnerA0, _InnerAllocs...>& __b)
 {
     return __a.outer_allocator() == __b.outer_allocator() &&
            __a.inner_allocator() == __b.inner_allocator();
