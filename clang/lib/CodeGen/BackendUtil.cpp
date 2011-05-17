@@ -112,8 +112,8 @@ void EmitAssemblyHelper::CreatePasses() {
 
   FunctionPassManager *FPM = getPerFunctionPasses();
 
-  TargetLibraryInfo *TLI =
-    new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
+  Triple TargetTriple(TheModule->getTargetTriple());
+  TargetLibraryInfo *TLI = new TargetLibraryInfo(TargetTriple);
   if (!CodeGenOpts.SimplifyLibCalls)
     TLI->disableAllFunctions();
   FPM->add(TLI);
@@ -150,14 +150,16 @@ void EmitAssemblyHelper::CreatePasses() {
 
   PassManager *MPM = getPerModulePasses();
 
-  TLI = new TargetLibraryInfo(Triple(TheModule->getTargetTriple()));
+  TLI = new TargetLibraryInfo(TargetTriple);
   if (!CodeGenOpts.SimplifyLibCalls)
     TLI->disableAllFunctions();
   MPM->add(TLI);
 
   if (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes) {
     MPM->add(createGCOVProfilerPass(CodeGenOpts.EmitGcovNotes,
-                                    CodeGenOpts.EmitGcovArcs));
+                                    CodeGenOpts.EmitGcovArcs,
+                                    TargetTriple.isMacOSX()));
+
     if (!CodeGenOpts.DebugInfo)
       MPM->add(createStripSymbolsPass(true));
   }
