@@ -2091,19 +2091,36 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     }
 
     if (VA.isRegLoc()) {
-      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-      if (isVarArg && IsWin64) {
-        // Win64 ABI requires argument XMM reg to be copied to the corresponding
-        // shadow reg if callee is a varargs function.
-        unsigned ShadowReg = 0;
-        switch (VA.getLocReg()) {
-        case X86::XMM0: ShadowReg = X86::RCX; break;
-        case X86::XMM1: ShadowReg = X86::RDX; break;
-        case X86::XMM2: ShadowReg = X86::R8; break;
-        case X86::XMM3: ShadowReg = X86::R9; break;
+      if (isByVal && (!IsSibcall && !isTailCall)) {
+        // 64-bit only.  x86_32 passes everything on the stack.
+        assert(CCInfo.isFirstByValRegValid() && "isByVal, but no valid register assigned!");
+        EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+        unsigned int i, j;
+        for (i = 0, j = CCInfo.getFirstByValReg(); j <= X86::R9; i++, j++) {
+          SDValue Const = DAG.getConstant(8*i, MVT::i64);
+          SDValue AddArg = DAG.getNode(ISD::ADD, dl, PtrVT, Arg, Const);
+          SDValue Load = DAG.getLoad(PtrVT, dl, Chain, AddArg,
+                                     MachinePointerInfo(),
+                                     false, false, 0);
+          MemOpChains.push_back(Load.getValue(1));
+          RegsToPass.push_back(std::make_pair(j, Load));
         }
-        if (ShadowReg)
-          RegsToPass.push_back(std::make_pair(ShadowReg, Arg));
+        CCInfo.clearFirstByValReg();
+      } else {
+        RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+        if (isVarArg && IsWin64) {
+          // Win64 ABI requires argument XMM reg to be copied to the corresponding
+          // shadow reg if callee is a varargs function.
+          unsigned ShadowReg = 0;
+          switch (VA.getLocReg()) {
+          case X86::XMM0: ShadowReg = X86::RCX; break;
+          case X86::XMM1: ShadowReg = X86::RDX; break;
+          case X86::XMM2: ShadowReg = X86::R8; break;
+          case X86::XMM3: ShadowReg = X86::R9; break;
+          }
+          if (ShadowReg)
+            RegsToPass.push_back(std::make_pair(ShadowReg, Arg));
+        }
       }
     } else if (!IsSibcall && (!isTailCall || isByVal)) {
       assert(VA.isMemLoc());
@@ -2438,6 +2455,47 @@ X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
   return Offset;
 }
 
+/// HandleByVal - Every parameter *after* a byval parameter is passed
+/// on the stack.  Remember the next parameter register to allocate,
+/// and then confiscate the rest of the parameter registers to insure
+/// this.
+void
+X86TargetLowering::HandleByVal(CCState *State, unsigned &size) const {
+  // X86_32 passes all parameters on the stack, byval or whatever.
+  // X86_64 does not split parameters between registers and memory; if
+  // the parameter does not fit entirely inside the remaining
+  // parameter registers, it goes on the stack.
+  static const unsigned RegList2[] = {
+    X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
+  };
+
+  if (!Subtarget->is64Bit())
+    return;
+
+  if (size > 16) // X86_64 aggregates > 16 bytes are passed in memory.
+    return;
+
+  unsigned reg = State->getFirstUnallocated(RegList2, 6);
+
+  if (reg == 6) // Out of regs to allocate.
+    return;
+
+  // We expect the size to be 32 bits, or some non-zero multiple of 64 bits.
+  unsigned nregs = size / 8;
+  if (nregs == 0) nregs=1;      // 32-bit case.
+
+  unsigned regs_available = 6 - reg;
+
+  if (nregs <= regs_available) {
+    size = 0;
+    State->setFirstByValReg(RegList2[reg]);
+    while (nregs--) {
+      State->AllocateReg(RegList2[reg]);
+      reg++;
+    }
+  }
+}
+
 /// MatchingStackOffset - Return true if the given stack call argument is
 /// already available in the same position (relatively) of the caller's
 /// incoming argument stack.
@@ -2602,7 +2660,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     }
 
     CCInfo.AnalyzeCallOperands(Outs, CC_X86);
-    if (CCInfo.getNextStackOffset()) {
+    if (ArgLocs.size()) {
       MachineFunction &MF = DAG.getMachineFunction();
       if (MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn())
         return false;
@@ -2618,6 +2676,8 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
         SDValue Arg = OutVals[i];
         ISD::ArgFlagsTy Flags = Outs[i].Flags;
         if (VA.getLocInfo() == CCValAssign::Indirect)
+          return false;
+        if (Flags.isByVal())
           return false;
         if (!VA.isRegLoc()) {
           if (!MatchingStackOffset(Arg, VA.getLocMemOffset(), Flags,

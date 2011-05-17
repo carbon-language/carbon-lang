@@ -728,6 +728,8 @@ namespace llvm {
 
     // Call lowering helpers.
 
+    void HandleByVal(CCState *, unsigned &) const;
+
     /// IsEligibleForTailCallOptimization - Check whether the call is eligible
     /// for tail call optimization. Targets which want to do tail call
     /// optimization should implement this function.
