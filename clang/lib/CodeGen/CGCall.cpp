@@ -513,6 +513,29 @@ static llvm::Value *CreateCoercedLoad(llvm::Value *SrcPtr,
   return CGF.Builder.CreateLoad(Tmp);
 }
 
+// Function to store a first-class aggregate into memory.  We prefer to
+// store the elements rather than the aggregate to be more friendly to
+// fast-isel.
+// FIXME: Do we need to recurse here?
+static void BuildAggStore(CodeGenFunction &CGF, llvm::Value *Val,
+                          llvm::Value *DestPtr, bool DestIsVolatile,
+                          bool LowAlignment) {
+  // Prefer scalar stores to first-class aggregate stores.
+  if (const llvm::StructType *STy =
+        dyn_cast<llvm::StructType>(Val->getType())) {
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+      llvm::Value *EltPtr = CGF.Builder.CreateConstGEP2_32(DestPtr, 0, i);
+      llvm::Value *Elt = CGF.Builder.CreateExtractValue(Val, i);
+      llvm::StoreInst *SI = CGF.Builder.CreateStore(Elt, EltPtr,
+                                                    DestIsVolatile);
+      if (LowAlignment)
+        SI->setAlignment(1);
+    }
+  } else {
+    CGF.Builder.CreateStore(Val, DestPtr, DestIsVolatile);
+  }
+}
+
 /// CreateCoercedStore - Create a store to \arg DstPtr from \arg Src,
 /// where the source and destination may have different types.
 ///
@@ -553,7 +576,7 @@ static void CreateCoercedStore(llvm::Value *Src,
     llvm::Value *Casted =
       CGF.Builder.CreateBitCast(DstPtr, llvm::PointerType::getUnqual(SrcTy));
     // FIXME: Use better alignment / avoid requiring aligned store.
-    CGF.Builder.CreateStore(Src, Casted, DstIsVolatile)->setAlignment(1);
+    BuildAggStore(CGF, Src, Casted, DstIsVolatile, true);
   } else {
     // Otherwise do coercion through memory. This is stupid, but
     // simple.
@@ -1409,7 +1432,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
           DestPtr = CreateMemTemp(RetTy, "agg.tmp");
           DestIsVolatile = false;
         }
-        Builder.CreateStore(CI, DestPtr, DestIsVolatile);
+        BuildAggStore(*this, CI, DestPtr, DestIsVolatile, false);
         return RValue::getAggregate(DestPtr);
       }
       return RValue::get(CI);
