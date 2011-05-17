@@ -46,7 +46,7 @@ int main()
         assert(A::n_copies == 0);
         assert(A::n_moves > 0);
     }
-    A::n_copies == 0;
+    A::n_copies = 0;
     A::n_copies = 0;
     {
         A a(5);

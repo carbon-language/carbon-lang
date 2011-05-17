@@ -51,7 +51,7 @@ int main()
         assert(A::n_moves > 0);
     }
     assert(test_alloc_base::count == 0);
-    A::n_copies == 0;
+    A::n_copies = 0;
     A::n_copies = 0;
     {
         A a(5);

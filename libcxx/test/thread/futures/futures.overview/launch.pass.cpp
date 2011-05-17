@@ -20,7 +20,7 @@
 
 int main()
 {
-    static_assert(std::launch::any == std::launch::async | std::launch::deferred, "");
+    static_assert(std::launch::any == (std::launch::async | std::launch::deferred), "");
     static_assert(std::launch::async == 1, "");
     static_assert(std::launch::deferred == 2, "");
 }

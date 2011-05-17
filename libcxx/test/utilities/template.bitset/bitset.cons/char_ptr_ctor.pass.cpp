@@ -15,6 +15,8 @@
 #include <bitset>
 #include <cassert>
 
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
 template <std::size_t N>
 void test_char_pointer_ctor()
 {

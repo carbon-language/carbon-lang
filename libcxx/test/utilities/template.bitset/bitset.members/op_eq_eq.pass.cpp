@@ -16,6 +16,8 @@
 #include <cstdlib>
 #include <cassert>
 
+#pragma clang diagnostic ignored "-Wtautological-compare"
+
 template <std::size_t N>
 std::bitset<N>
 make_bitset()
