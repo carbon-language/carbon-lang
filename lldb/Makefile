@@ -29,7 +29,7 @@ LEVEL := $(LLDB_LEVEL)/../..
 include $(LEVEL)/Makefile.common
 
 # Set Python include directory
-PYTHON_INC_DIR = /usr/include/python2.6
+PYTHON_INC_DIR = /usr/include/python2.7
 
 # Set common LLDB build flags.
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include 
