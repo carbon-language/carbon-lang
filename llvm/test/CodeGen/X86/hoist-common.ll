@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64  | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-macosx  | FileCheck %s
 
 ; Common "xorb al, al" instruction in the two successor blocks should be
 ; moved to the entry block above the test + je.
