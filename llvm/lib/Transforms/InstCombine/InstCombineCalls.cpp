@@ -588,6 +588,28 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
+
+  case Intrinsic::x86_sse41_pmovsxbw:
+  case Intrinsic::x86_sse41_pmovsxwd:
+  case Intrinsic::x86_sse41_pmovsxdq:
+  case Intrinsic::x86_sse41_pmovzxbw:
+  case Intrinsic::x86_sse41_pmovzxwd:
+  case Intrinsic::x86_sse41_pmovzxdq: {
+    unsigned VWidth =
+      cast<VectorType>(II->getArgOperand(0)->getType())->getNumElements();
+    unsigned LowHalfElts = VWidth / 2;
+    APInt InputDemandedElts(VWidth, 0);
+    InputDemandedElts = InputDemandedElts.getBitsSet(VWidth, 0, LowHalfElts);
+    APInt UndefElts(VWidth, 0);
+    if (Value *TmpV = SimplifyDemandedVectorElts(II->getArgOperand(0),
+                                                 InputDemandedElts,
+                                                 UndefElts)) {
+      II->setArgOperand(0, TmpV);
+      return II;
+    }
+    break;
+  }
+
   case Intrinsic::ppc_altivec_vperm:
     // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
     if (ConstantVector *Mask = dyn_cast<ConstantVector>(II->getArgOperand(2))) {

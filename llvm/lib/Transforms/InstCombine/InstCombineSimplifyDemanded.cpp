@@ -867,7 +867,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
   if (Depth == 10)
     return 0;
 
-  // If multiple users are using the root value, procede with
+  // If multiple users are using the root value, proceed with
   // simplification conservatively assuming that all elements
   // are needed.
   if (!V->hasOneUse()) {
