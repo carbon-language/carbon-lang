@@ -1770,25 +1770,20 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
     const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
     llvm::Constant *GV;
     if (Features.ObjCNonFragileABI) {
-      std::string str;
-      if (StringClass.empty())
-        str = "OBJC_CLASS_$_NSConstantString";
-      else {
-        str = "OBJC_CLASS_$_" + StringClass;
-      }
+      std::string str = 
+        StringClass.empty() ? "OBJC_CLASS_$_NSConstantString" 
+                            : "OBJC_CLASS_$_" + StringClass;
       GV = getObjCRuntime().GetClassGlobal(str);
       // Make sure the result is of the correct type.
       const llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
       ConstantStringClassRef =
         llvm::ConstantExpr::getBitCast(GV, PTy);
     } else {
-      Ty = llvm::ArrayType::get(Ty, 0);
-      if (StringClass.empty())
-        GV = CreateRuntimeVariable(Ty, "_NSConstantStringClassReference");
-      else {
-        std::string str = "_" + StringClass + "ClassReference";
-        GV = CreateRuntimeVariable(Ty, str);
-      }
+      std::string str =
+        StringClass.empty() ? "_NSConstantStringClassReference"
+                            : "_" + StringClass + "ClassReference";
+      const llvm::Type *PTy = llvm::ArrayType::get(Ty, 0);
+      GV = CreateRuntimeVariable(PTy, str);
       // Decay array -> ptr
       ConstantStringClassRef = 
         llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
