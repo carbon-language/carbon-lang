@@ -363,12 +363,17 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
                     ::snprintf (thread_id_cstr, sizeof(thread_id_cstr), ";thread:%4.4x;", m_thread.GetID());
                     response.GetStringRef().append (thread_id_cstr);
                 }
-                data_sp.reset (new DataBufferHeap (response.GetStringRef().c_str(), 
-                                                   response.GetStringRef().size()));
-                return true;
+                const char *g_data = response.GetStringRef().c_str();
+                size_t g_data_len = strspn(g_data, "0123456789abcdefABCDEF");
+                if (g_data_len > 0)
+                {
+                    data_sp.reset (new DataBufferHeap (g_data, g_data_len));
+                    return true;
+                }
             }
         }
     }
+    data_sp.reset();
     return false;
 }
 
@@ -403,10 +408,21 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                     uint32_t num_restored = 0;
                     // We need to manually go through all of the registers and
                     // restore them manually
-                    DataExtractor data (G_packet + 1,   // Skip the leading 'G'
-                                        G_packet_len - 1,
-                                        m_reg_data.GetByteOrder(),
-                                        m_reg_data.GetAddressByteSize());
+                    
+                    response.GetStringRef().assign (G_packet, G_packet_len);
+                    response.SetFilePos(1); // Skip the leading 'G'
+                    DataBufferHeap buffer (m_reg_data.GetByteSize(), 0);
+                    DataExtractor restore_data (buffer.GetBytes(), 
+                                                buffer.GetByteSize(), 
+                                                m_reg_data.GetByteOrder(),
+                                                m_reg_data.GetAddressByteSize());
+                    
+                    const uint32_t bytes_extracted = response.GetHexBytes ((void *)restore_data.GetDataStart(), 
+                                                                           restore_data.GetByteSize(), 
+                                                                           '\xcc');
+
+                    if (bytes_extracted < restore_data.GetByteSize())
+                        restore_data.SetData(restore_data.GetDataStart(), bytes_extracted, m_reg_data.GetByteOrder());
 
                     //ReadRegisterBytes (const RegisterInfo *reg_info, RegisterValue &value, DataExtractor &data)
                     const RegisterInfo *reg_info;
@@ -419,15 +435,40 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                         bool write_reg = true;
                         const uint32_t reg_byte_offset = reg_info->byte_offset;
                         const uint32_t reg_byte_size = reg_info->byte_size;
-                        if (m_reg_valid[reg])
+
+                        const char *restore_src = (const char *)restore_data.PeekData(reg_byte_offset, reg_byte_size);
+                        if (restore_src)
                         {
-                            const uint8_t *current_src = m_reg_data.PeekData(reg_byte_offset, reg_byte_size);
-                            const uint8_t *restore_src = data.PeekData(reg_byte_offset, reg_byte_size);
-                            if (current_src && restore_src)
-                                write_reg = memcmp (current_src, restore_src, reg_byte_size) != 0;
+                            if (m_reg_valid[reg])
+                            {
+                                const char *current_src = (const char *)m_reg_data.PeekData(reg_byte_offset, reg_byte_size);
+                                if (current_src)
+                                    write_reg = memcmp (current_src, restore_src, reg_byte_size) != 0;
+                            }
+                            
+                            if (write_reg)
+                            {
+                                StreamString packet;
+                                packet.Printf ("P%x=", reg);
+                                packet.PutBytesAsRawHex8 (restore_src,
+                                                          reg_byte_size,
+                                                          lldb::endian::InlHostByteOrder(),
+                                                          lldb::endian::InlHostByteOrder());
+
+                                if (thread_suffix_supported)
+                                    packet.Printf (";thread:%4.4x;", m_thread.GetID());
+
+                                m_reg_valid[reg] = false;
+                                if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
+                                                                          packet.GetString().size(),
+                                                                          response,
+                                                                          false))
+                                {
+                                    if (response.IsOKResponse())
+                                        ++num_restored;
+                                }
+                            }
                         }
-                        if (WriteRegisterBytes(reg_info, data, reg_byte_offset))
-                            ++num_restored;
                     }
                     return num_restored > 0;
                 }

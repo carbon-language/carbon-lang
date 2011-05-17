@@ -1596,7 +1596,7 @@ ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &er
                         addr_t arg1_addr = 0;
                         addr_t arg2_len = size;
                         addr_t arg3_prot = PROT_NONE;
-                        addr_t arg4_flags = MAP_ANON;
+                        addr_t arg4_flags = MAP_ANON | MAP_PRIVATE;
                         addr_t arg5_fd = -1;
                         addr_t arg6_offset = 0;
                         if (permissions & lldb::ePermissionsReadable)
