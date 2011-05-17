@@ -174,19 +174,36 @@ SectionLoadList::ResolveLoadAddress (addr_t load_addr, Address &so_addr) const
 {
     // First find the top level section that this load address exists in    
     Mutex::Locker locker(m_mutex);
-    addr_to_sect_collection::const_iterator pos = m_addr_to_sect.lower_bound (load_addr);
-    if (pos != m_addr_to_sect.end())
+    if (!m_addr_to_sect.empty())
     {
-        if (load_addr != pos->first && pos != m_addr_to_sect.begin())
-            --pos;
-        if (load_addr >= pos->first)
+        addr_to_sect_collection::const_iterator pos = m_addr_to_sect.lower_bound (load_addr);
+        if (pos != m_addr_to_sect.end())
         {
-            addr_t offset = load_addr - pos->first;
-            if (offset < pos->second->GetByteSize())
+            if (load_addr != pos->first && pos != m_addr_to_sect.begin())
+                --pos;
+            if (load_addr >= pos->first)
             {
-                // We have found the top level section, now we need to find the
-                // deepest child section.
-                return pos->second->ResolveContainedAddress (offset, so_addr);
+                addr_t offset = load_addr - pos->first;
+                if (offset < pos->second->GetByteSize())
+                {
+                    // We have found the top level section, now we need to find the
+                    // deepest child section.
+                    return pos->second->ResolveContainedAddress (offset, so_addr);
+                }
+            }
+        }
+        else
+        {
+            pos = m_addr_to_sect.begin();
+            if (load_addr >= pos->first)
+            {
+                addr_t offset = load_addr - pos->first;
+                if (offset < pos->second->GetByteSize())
+                {
+                    // We have found the top level section, now we need to find the
+                    // deepest child section.
+                    return pos->second->ResolveContainedAddress (offset, so_addr);
+                }
             }
         }
     }
