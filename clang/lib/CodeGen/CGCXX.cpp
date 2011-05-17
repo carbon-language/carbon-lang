@@ -176,9 +176,8 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
 void CodeGenModule::EmitCXXConstructors(const CXXConstructorDecl *D) {
   // The constructor used for constructing this as a complete class;
   // constucts the virtual bases, then calls the base constructor.
-  if (!D->getParent()->isAbstract() || getLangOptions().AppleKext) {
+  if (!D->getParent()->isAbstract()) {
     // We don't need to emit the complete ctor if the class is abstract.
-    // But kexts somehow manage to violate this assumption.
     EmitGlobal(GlobalDecl(D, Ctor_Complete));
   }
 
