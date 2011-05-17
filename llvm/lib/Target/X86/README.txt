@@ -2040,3 +2040,29 @@ _clamp2:                                ## @clamp2
 The move of 0 could be scheduled above the test to make it is xor reg,reg.
 
 //===---------------------------------------------------------------------===//
+
+GCC PR48986.  We currently compile this:
+
+void bar(void);
+void yyy(int* p) {
+    if (__sync_fetch_and_add(p, -1) == 1)
+      bar();
+}
+
+into:
+	movl	$-1, %eax
+	lock
+	xaddl	%eax, (%rdi)
+	cmpl	$1, %eax
+	je	LBB0_2
+
+Instead we could generate:
+
+	lock
+	dec %rdi
+	je LBB0_2
+
+The trick is to match "fetch_and_add(X, -C) == C".
+
+//===---------------------------------------------------------------------===//
+
