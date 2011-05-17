@@ -31,19 +31,19 @@ public:
     }
 };
 
-void func0(std::packaged_task<double(int, char)>& p)
+void func0(std::packaged_task<double(int, char)> p)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     p.make_ready_at_thread_exit(3, 'a');
 }
 
-void func1(std::packaged_task<double(int, char)>& p)
+void func1(std::packaged_task<double(int, char)> p)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     p.make_ready_at_thread_exit(3, 'z');
 }
 
-void func2(std::packaged_task<double(int, char)>& p)
+void func2(std::packaged_task<double(int, char)> p)
 {
     p.make_ready_at_thread_exit(3, 'a');
     try
@@ -56,7 +56,7 @@ void func2(std::packaged_task<double(int, char)>& p)
     }
 }
 
-void func3(std::packaged_task<double(int, char)>& p)
+void func3(std::packaged_task<double(int, char)> p)
 {
     try
     {

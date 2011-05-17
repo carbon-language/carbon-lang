@@ -16,7 +16,7 @@
 #include <future>
 #include <cassert>
 
-void func1(std::promise<int>& p)
+void func1(std::promise<int> p)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     p.set_value(3);
@@ -24,14 +24,14 @@ void func1(std::promise<int>& p)
 
 int j = 0;
 
-void func3(std::promise<int&>& p)
+void func3(std::promise<int&> p)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     j = 5;
     p.set_value(j);
 }
 
-void func5(std::promise<void>& p)
+void func5(std::promise<void> p)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     p.set_value();

@@ -164,7 +164,7 @@ int main()
         Clock::time_point t1 = Clock::now();
         assert(t1-t0 < ms(100));
     }
-
+/*
     {
         std::future<std::unique_ptr<int>> f =
                                std::async(f4, std::unique_ptr<int>(new int(3)));
@@ -174,4 +174,4 @@ int main()
         Clock::time_point t1 = Clock::now();
         assert(t1-t0 < ms(100));
     }
-}
+*/}

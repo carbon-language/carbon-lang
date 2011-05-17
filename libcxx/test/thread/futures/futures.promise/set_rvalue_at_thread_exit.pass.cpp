@@ -19,7 +19,7 @@
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-void func(std::promise<std::unique_ptr<int>>& p)
+void func(std::promise<std::unique_ptr<int>> p)
 {
     p.set_value_at_thread_exit(std::unique_ptr<int>(new int(5)));
 }

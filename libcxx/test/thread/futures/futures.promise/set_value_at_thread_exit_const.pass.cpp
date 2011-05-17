@@ -16,7 +16,7 @@
 #include <future>
 #include <cassert>
 
-void func(std::promise<int>& p)
+void func(std::promise<int> p)
 {
     const int i = 5;
     p.set_value_at_thread_exit(i);

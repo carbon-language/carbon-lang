@@ -19,7 +19,7 @@
 
 int i = 0;
 
-void func(std::promise<void>& p)
+void func(std::promise<void> p)
 {
     p.set_value_at_thread_exit();
     i = 1;
