@@ -59,3 +59,10 @@ namespace PR7948 {
   struct S { const int x; ~S(); };
   const S arr[2] = { { 42 } };
 }
+
+// This is valid
+union U {
+  const int i;
+  float f;
+};
+U u;
