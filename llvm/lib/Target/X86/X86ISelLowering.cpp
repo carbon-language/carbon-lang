@@ -11038,14 +11038,14 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
        UE = Uses.end(); UI != UE; ++UI) {
     SDNode *Extract = *UI;
 
-    // Compute the element's address.
+    // cOMpute the element's address.
     SDValue Idx = Extract->getOperand(1);
     unsigned EltSize =
         InputVector.getValueType().getVectorElementType().getSizeInBits()/8;
     uint64_t Offset = EltSize * cast<ConstantSDNode>(Idx)->getZExtValue();
     SDValue OffsetVal = DAG.getConstant(Offset, TLI.getPointerTy());
 
-    SDValue ScalarAddr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(),
+    SDValue ScalarAddr = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(),
                                      StackPtr, OffsetVal);
 
     // Load the scalar.
