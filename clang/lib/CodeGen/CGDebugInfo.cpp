@@ -1658,6 +1658,9 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
     if (const NamespaceDecl *NSDecl =
         dyn_cast_or_null<NamespaceDecl>(FD->getDeclContext()))
       FDContext = getOrCreateNameSpace(NSDecl);
+    else if (const RecordDecl *RDecl =
+             dyn_cast_or_null<RecordDecl>(FD->getDeclContext()))
+      FDContext = getContextDescriptor(cast<Decl>(RDecl->getDeclContext()));
 
     // Collect template parameters.
     TParamsArray = CollectFunctionTemplateParams(FD, Unit);
