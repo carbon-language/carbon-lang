@@ -27,15 +27,15 @@ class FrameUtilsTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation("main.c", self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
         self.process = target.LaunchSimple(None, None, os.getcwd())
 
-        if not self.process.IsValid():
+        if not self.process:
             self.fail("SBTarget.LaunchProcess() failed")
         self.assertTrue(self.process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
@@ -45,7 +45,7 @@ class FrameUtilsTestCase(TestBase):
         frame0 = thread.GetFrameAtIndex(0)
         frame1 = thread.GetFrameAtIndex(1)
         parent = lldbutil.get_parent_frame(frame0)
-        self.assertTrue(parent.IsValid() and parent.GetFrameID() == frame1.GetFrameID())
+        self.assertTrue(parent and parent.GetFrameID() == frame1.GetFrameID())
         frame0_args = lldbutil.get_args_as_string(frame0)
         parent_args = lldbutil.get_args_as_string(parent)
         self.assertTrue(frame0_args and parent_args)
