@@ -133,6 +133,9 @@ sdir_name = None
 # Set this flag if there is any session info dumped during the test run.
 sdir_has_content = False
 
+# svn_info stores the output from 'svn info lldb.base.dir'.
+svn_info = ''
+
 # Default verbosity is 0.
 verbose = 0
 
@@ -506,6 +509,7 @@ def setupSysPath():
     global rdir
     global testdirs
     global dumpSysPath
+    global svn_info
 
     # Get the directory containing the current script.
     if "DOTEST_PROFILE" in os.environ and "DOTEST_SCRIPT_DIR" in os.environ:
@@ -581,7 +585,10 @@ def setupSysPath():
         #print "The 'lldb' executable path is", lldbExec
         os.system('%s -v' % lldbExec)
     
-    os.system('svn info %s' % base)
+    import subprocess
+    pipe = subprocess.Popen(["svn", "info", base], stdout = subprocess.PIPE)
+    svn_info = pipe.stdout.read()
+    print svn_info
 
     global ignore
 
@@ -815,6 +822,13 @@ os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
 sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
                  " will go into directory '%s'\n" % sdir_name)
 sys.stderr.write("Command invoked: %s\n" % getMyCommandLine())
+
+if not os.path.isdir(sdir_name):
+    os.mkdir(sdir_name)
+fname = os.path.join(sdir_name, "svn-info")
+with open(fname, "w") as f:
+    print >> f, svn_info
+    print >> f, "Command invoked: %s\n" % getMyCommandLine()
 
 #
 # Invoke the default TextTestRunner to run the test suite, possibly iterating
