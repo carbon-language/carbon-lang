@@ -2102,6 +2102,7 @@ bool GVN::performPRE(Function &F) {
 
       PREInstr->insertBefore(PREPred->getTerminator());
       PREInstr->setName(CurInst->getName() + ".pre");
+      PREInstr->setDebugLoc(CurInst->getDebugLoc());
       predMap[PREPred] = PREInstr;
       VN.add(PREInstr, ValNo);
       ++NumGVNPRE;
