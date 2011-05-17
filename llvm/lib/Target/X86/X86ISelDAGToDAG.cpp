@@ -1482,6 +1482,24 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
   }
 }
 
+enum AtomicOpc {
+  OR
+};
+
+enum AtomicSz {
+  ConstantI8,
+  I8,
+  SextConstantI16,
+  ConstantI16,
+  I16,
+  SextConstantI32,
+  ConstantI32,
+  I32,
+  SextConstantI64,
+  ConstantI64,
+  I64
+};
+
 static const unsigned int AtomicOpcTbl[1][11] = {
   {
     X86::LOCK_OR8mi,
@@ -1521,42 +1539,42 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadOr(SDNode *Node, EVT NVT) {
   }
   
   // Which index into the table.
-  unsigned index = 0;  
+  enum AtomicOpc Op = OR;  
   unsigned Opc = 0;
   switch (NVT.getSimpleVT().SimpleTy) {
     default: return 0;
     case MVT::i8:
       if (isCN)
-        Opc = AtomicOpcTbl[index][0];
+        Opc = AtomicOpcTbl[Op][ConstantI8];
       else
-        Opc = AtomicOpcTbl[index][1];
+        Opc = AtomicOpcTbl[Op][I8];
       break;
     case MVT::i16:
       if (isCN) {
         if (immSext8(Val.getNode()))
-          Opc = AtomicOpcTbl[index][2];
+          Opc = AtomicOpcTbl[Op][SextConstantI16];
         else
-          Opc = AtomicOpcTbl[index][3];
+          Opc = AtomicOpcTbl[Op][ConstantI16];
       } else
-        Opc = AtomicOpcTbl[index][4];
+        Opc = AtomicOpcTbl[Op][I16];
       break;
     case MVT::i32:
       if (isCN) {
         if (immSext8(Val.getNode()))
-          Opc = AtomicOpcTbl[index][5];
+          Opc = AtomicOpcTbl[Op][SextConstantI32];
         else
-          Opc = AtomicOpcTbl[index][6];
+          Opc = AtomicOpcTbl[Op][ConstantI32];
       } else
-        Opc = AtomicOpcTbl[index][7];
+        Opc = AtomicOpcTbl[Op][I32];
       break;
     case MVT::i64:
       if (isCN) {
         if (immSext8(Val.getNode()))
-          Opc = AtomicOpcTbl[index][8];
+          Opc = AtomicOpcTbl[Op][SextConstantI64];
         else if (i64immSExt32(Val.getNode()))
-          Opc = AtomicOpcTbl[index][9];
+          Opc = AtomicOpcTbl[Op][ConstantI64];
       } else
-        Opc = AtomicOpcTbl[index][10];
+        Opc = AtomicOpcTbl[Op][I64];
       break;
   }
   
