@@ -840,16 +840,27 @@ StringLiteralParser::
 StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                     Preprocessor &PP, bool Complain)
   : SM(PP.getSourceManager()), Features(PP.getLangOptions()),
-    Target(PP.getTargetInfo()), Diags(Complain ? &PP.getDiagnostics() : 0) {
+    Target(PP.getTargetInfo()), Diags(Complain ? &PP.getDiagnostics() : 0),
+    MaxTokenLength(0), SizeBound(0), wchar_tByteWidth(0),
+    ResultPtr(ResultBuf.data()), hadError(false), AnyWide(false), Pascal(false) {
   init(StringToks, NumStringToks);
 }
 
 void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
+  // The literal token may have come from an invalid source location (e.g. due
+  // to a PCH error), in which case the token length will be 0.
+  if (NumStringToks == 0 || StringToks[0].getLength() < 2) {
+    hadError = true;
+    return;
+  }
+
   // Scan all of the string portions, remember the max individual token length,
   // computing a bound on the concatenated string length, and see whether any
   // piece is a wide-string.  If any of the string portions is a wide-string
   // literal, the result is a wide-string literal [C99 6.4.5p4].
+  assert(NumStringToks && "expected at least one token");
   MaxTokenLength = StringToks[0].getLength();
+  assert(StringToks[0].getLength() >= 2 && "literal token is invalid!");
   SizeBound = StringToks[0].getLength()-2;  // -2 for "".
   AnyWide = StringToks[0].is(tok::wide_string_literal);
 
@@ -858,8 +869,14 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
   // Implement Translation Phase #6: concatenation of string literals
   /// (C99 5.1.1.2p1).  The common case is only one string fragment.
   for (unsigned i = 1; i != NumStringToks; ++i) {
+    if (StringToks[i].getLength() < 2) {
+      hadError = true;
+      return;
+    }
+
     // The string could be shorter than this if it needs cleaning, but this is a
     // reasonable bound, which is all we need.
+    assert(StringToks[i].getLength() >= 2 && "literal token is invalid!");
     SizeBound += StringToks[i].getLength()-2;  // -2 for "".
 
     // Remember maximum string piece length.

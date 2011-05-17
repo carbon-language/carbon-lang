@@ -156,7 +156,9 @@ public:
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                       const SourceManager &sm, const LangOptions &features,
                       const TargetInfo &target, Diagnostic *diags = 0)
-    : SM(sm), Features(features), Target(target), Diags(diags) {
+    : SM(sm), Features(features), Target(target), Diags(diags),
+      MaxTokenLength(0), SizeBound(0), wchar_tByteWidth(0),
+      ResultPtr(ResultBuf.data()), hadError(false), AnyWide(false), Pascal(false) {
     init(StringToks, NumStringToks);
   }
     
@@ -165,8 +167,8 @@ public:
   bool AnyWide;
   bool Pascal;
 
-  const char *GetString() { return &ResultBuf[0]; }
-  unsigned GetStringLength() const { return ResultPtr-&ResultBuf[0]; }
+  const char *GetString() { return ResultBuf.data(); }
+  unsigned GetStringLength() const { return ResultPtr-ResultBuf.data(); }
 
   unsigned GetNumStringChars() const {
     if (AnyWide)
