@@ -51,12 +51,15 @@ main (int argc, char **argv)
 {
   my_global_A_ptr = new B (100, 200);
   B myB (10, 20, my_global_A_ptr);
-  B otherB (300, 400, my_global_A_ptr);
+  B *second_fake_A_ptr = new B (150, 250);
+  B otherB (300, 400, second_fake_A_ptr);
 
   myB.doSomething(otherB); // Break here and get real addresses of myB and otherB.
 
   A reallyA (500);
   myB.doSomething (reallyA);  // Break here and get real address of reallyA.
+
+  delete my_global_A_ptr;
 
   return 0;
 }

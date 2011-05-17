@@ -102,18 +102,15 @@ class DynamicValueTestCase(TestBase):
         # Set up our breakpoints:
 
         do_something_bpt = target.BreakpointCreateByLocation('pass-to-base.cpp', self.do_something_line)
-        self.assertTrue(do_something_bpt.IsValid() and
-                        do_something_bpt.GetNumLocations() == 1,
+        self.assertTrue(do_something_bpt.IsValid(),
                         VALID_BREAKPOINT)
 
         first_call_bpt = target.BreakpointCreateByLocation('pass-to-base.cpp', self.main_first_call_line)
-        self.assertTrue(first_call_bpt.IsValid() and
-                        first_call_bpt.GetNumLocations() == 1,
+        self.assertTrue(first_call_bpt.IsValid(),
                         VALID_BREAKPOINT)
 
         second_call_bpt = target.BreakpointCreateByLocation('pass-to-base.cpp', self.main_second_call_line)
-        self.assertTrue(second_call_bpt.IsValid() and
-                        second_call_bpt.GetNumLocations() == 1,
+        self.assertTrue(second_call_bpt.IsValid(),
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at the entry point.
