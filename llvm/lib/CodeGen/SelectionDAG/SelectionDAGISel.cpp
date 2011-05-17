@@ -972,9 +972,14 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           continue;
         }
 
-        // Otherwise, give up on FastISel for the rest of the block.
-        // For now, be a little lenient about non-branch terminators.
-        if (!isa<TerminatorInst>(Inst) || isa<BranchInst>(Inst)) {
+        if (isa<TerminatorInst>(Inst) && !isa<BranchInst>(Inst)) {
+          // Don't abort, and use a different message for terminator misses.
+          ++NumFastIselFailures;
+          if (EnableFastISelVerbose || EnableFastISelAbort) {
+            dbgs() << "FastISel missed terminator: ";
+            Inst->dump();
+          }
+        } else {
           ++NumFastIselFailures;
           if (EnableFastISelVerbose || EnableFastISelAbort) {
             dbgs() << "FastISel miss: ";
