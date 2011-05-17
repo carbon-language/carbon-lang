@@ -189,7 +189,7 @@ namespace {
     SDNode *Select(SDNode *N);
     SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
     SDNode *SelectAtomicLoadAdd(SDNode *Node, EVT NVT);
-    SDNode *SelectAtomicLoadOr(SDNode *Node, EVT NVT);
+    SDNode *SelectAtomicLoadArith(SDNode *Node, EVT NVT);
 
     bool MatchLoadInAddress(LoadSDNode *N, X86ISelAddressMode &AM);
     bool MatchWrapper(SDValue N, X86ISelAddressMode &AM);
@@ -1484,6 +1484,8 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
 
 enum AtomicOpc {
   OR,
+  AND,
+  XOR,
   AtomicOpcEnd
 };
 
@@ -1515,10 +1517,36 @@ static const unsigned int AtomicOpcTbl[AtomicOpcEnd][AtomicSzEnd] = {
     X86::LOCK_OR64mi8,
     X86::LOCK_OR64mi32,
     X86::LOCK_OR64mr
+  },
+  {
+    X86::LOCK_AND8mi,
+    X86::LOCK_AND8mr,
+    X86::LOCK_AND16mi8,
+    X86::LOCK_AND16mi,
+    X86::LOCK_AND16mr,
+    X86::LOCK_AND32mi8,
+    X86::LOCK_AND32mi,
+    X86::LOCK_AND32mr,
+    X86::LOCK_AND64mi8,
+    X86::LOCK_AND64mi32,
+    X86::LOCK_AND64mr
+  },
+  {
+    X86::LOCK_XOR8mi,
+    X86::LOCK_XOR8mr,
+    X86::LOCK_XOR16mi8,
+    X86::LOCK_XOR16mi,
+    X86::LOCK_XOR16mr,
+    X86::LOCK_XOR32mi8,
+    X86::LOCK_XOR32mi,
+    X86::LOCK_XOR32mr,
+    X86::LOCK_XOR64mi8,
+    X86::LOCK_XOR64mi32,
+    X86::LOCK_XOR64mr
   }
 };
 
-SDNode *X86DAGToDAGISel::SelectAtomicLoadOr(SDNode *Node, EVT NVT) {
+SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, EVT NVT) {
   if (Node->hasAnyUseOfValue(0))
     return 0;
   
@@ -1533,6 +1561,22 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadOr(SDNode *Node, EVT NVT) {
   if (!SelectAddr(Node, Ptr, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
     return 0;
 
+  // Which index into the table.
+  enum AtomicOpc Op;
+  switch (Node->getOpcode()) {
+    case ISD::ATOMIC_LOAD_OR:
+      Op = OR;
+      break;
+    case ISD::ATOMIC_LOAD_AND:
+      Op = AND;
+      break;
+    case ISD::ATOMIC_LOAD_XOR:
+      Op = XOR;
+      break;
+    default:
+      return 0;
+  }
+  
   bool isCN = false;
   ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Val);
   if (CN) {
@@ -1540,8 +1584,6 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadOr(SDNode *Node, EVT NVT) {
     Val = CurDAG->getTargetConstant(CN->getSExtValue(), NVT);
   }
   
-  // Which index into the table.
-  enum AtomicOpc Op = OR;  
   unsigned Opc = 0;
   switch (NVT.getSimpleVT().SimpleTy) {
     default: return 0;
@@ -1693,8 +1735,10 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       return RetVal;
     break;
   }
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_AND:
   case ISD::ATOMIC_LOAD_OR: {
-    SDNode *RetVal = SelectAtomicLoadOr(Node, NVT);
+    SDNode *RetVal = SelectAtomicLoadArith(Node, NVT);
     if (RetVal)
       return RetVal;
     break;
