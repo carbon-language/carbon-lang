@@ -773,11 +773,13 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
         assert(TD && "Cannot switch on pointer without TargetData");
         CV = new PtrToIntInst(CV, TD->getIntPtrType(CV->getContext()),
                               "magicptr", PTI);
+        cast<PtrToIntInst>(CV)->setDebugLoc(PTI->getDebugLoc());
       }
 
       // Now that the successors are updated, create the new Switch instruction.
       SwitchInst *NewSI = SwitchInst::Create(CV, PredDefault,
                                              PredCases.size(), PTI);
+      NewSI->setDebugLoc(PTI->getDebugLoc());
       for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
         NewSI->addCase(PredCases[i].first, PredCases[i].second);
 
@@ -917,9 +919,11 @@ HoistTerminator:
       // These values do not agree.  Insert a select instruction before NT
       // that determines the right value.
       SelectInst *&SI = InsertedSelects[std::make_pair(BB1V, BB2V)];
-      if (SI == 0)
+      if (SI == 0) {
         SI = SelectInst::Create(BI->getCondition(), BB1V, BB2V,
                                 BB1V->getName()+"."+BB2V->getName(), NT);
+        SI->setDebugLoc(BI->getDebugLoc());
+      }
       // Make the PHI node use the select for all incoming values for BB1/BB2
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (PN->getIncomingBlock(i) == BB1 || PN->getIncomingBlock(i) == BB2)
@@ -1084,6 +1088,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   else
     SI = SelectInst::Create(BrCond, HInst, FalseV,
                             HInst->getName() + "." + FalseV->getName(), BI);
+  SI->setDebugLoc(BI->getDebugLoc());
 
   // Make the PHI node use the select for all incoming values for "then" and
   // "if" blocks.
@@ -1338,7 +1343,8 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
     Value *TrueVal  = PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
     Value *FalseVal = PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
     
-    Value *NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", InsertPt);
+    SelectInst *NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", InsertPt);
+    NV->setDebugLoc(InsertPt->getDebugLoc());
     PN->replaceAllUsesWith(NV);
     NV->takeName(PN);
     PN->eraseFromParent();
@@ -1348,7 +1354,8 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // has been flattened.  Change DomBlock to jump directly to our new block to
   // avoid other simplifycfg's kicking in on the diamond.
   TerminatorInst *OldTI = DomBlock->getTerminator();
-  BranchInst::Create(BB, OldTI);
+  BranchInst *NewBI = BranchInst::Create(BB, OldTI);
+  NewBI->setDebugLoc(OldTI->getDebugLoc());
   OldTI->eraseFromParent();
   return true;
 }
@@ -1601,8 +1608,9 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     New->takeName(Cond);
     Cond->setName(New->getName()+".old");
     
-    Value *NewCond = BinaryOperator::Create(Opc, PBI->getCondition(),
-                                            New, "or.cond", PBI);
+    Instruction *NewCond = BinaryOperator::Create(Opc, PBI->getCondition(),
+                                                  New, "or.cond", PBI);
+    NewCond->setDebugLoc(PBI->getDebugLoc());
     PBI->setCondition(NewCond);
     if (PBI->getSuccessor(0) == BB) {
       AddPredecessorToBlock(TrueDest, PredBlock, BB);
@@ -2078,11 +2086,13 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
     CompVal = new PtrToIntInst(CompVal,
                                TD->getIntPtrType(CompVal->getContext()),
                                "magicptr", BI);
+    cast<PtrToIntInst>(CompVal)->setDebugLoc(BI->getDebugLoc());
   }
   
   // Create the new switch instruction now.
   SwitchInst *New = SwitchInst::Create(CompVal, DefaultBB, Values.size(), BI);
-  
+  New->setDebugLoc(BI->getDebugLoc());
+
   // Add all of the 'cases' to the switch instruction.
   for (unsigned i = 0, e = Values.size(); i != e; ++i)
     New->addCase(Values[i], EdgeBB);
