@@ -47,3 +47,77 @@ struct good : non_trivial {
   non_trivial nt;
 };
 good g;
+
+struct bad_const { // expected-note {{marked deleted here}}
+  const good g;
+};
+bad_const bc; // expected-error {{call to deleted constructor}}
+
+struct good_const {
+  const non_trivial nt;
+};
+good_const gc;
+
+struct no_default {
+  no_default() = delete;
+};
+struct no_dtor {
+  ~no_dtor() = delete;
+};
+
+struct bad_field_default { // expected-note {{marked deleted here}}
+  no_default nd;
+};
+bad_field_default bfd; // expected-error {{call to deleted constructor}}
+struct bad_base_default : no_default { // expected-note {{marked deleted here}}
+};
+bad_base_default bbd; // expected-error {{call to deleted constructor}}
+
+struct bad_field_dtor { // expected-note {{marked deleted here}}
+  no_dtor nd;
+};
+bad_field_dtor bfx; // expected-error {{call to deleted constructor}}
+struct bad_base_dtor : no_dtor { // expected-note {{marked deleted here}}
+};
+bad_base_dtor bbx; // expected-error {{call to deleted constructor}}
+
+struct ambiguous_default {
+  ambiguous_default();
+  ambiguous_default(int = 2);
+};
+struct has_amb_field { // expected-note {{marked deleted here}}
+  ambiguous_default ad;
+};
+has_amb_field haf; // expected-error {{call to deleted constructor}}
+
+// FIXME: This should fail due to deletion
+#if 0
+class inaccessible_default {
+  inaccessible_default();
+};
+struct has_inacc_field {
+  inaccessible_default id;
+};
+has_inacc_field hif;
+#endif
+
+class friend_default {
+  friend struct has_friend;
+  friend_default();
+};
+struct has_friend {
+  friend_default fd;
+};
+has_friend hf;
+
+struct defaulted_delete {
+  no_default nd;
+  defaulted_delete() = default; // expected-note {{marked deleted here}}
+};
+defaulted_delete dd; // expected-error {{call to deleted constructor}}
+
+struct late_delete {
+  no_default nd;
+  late_delete();
+};
+late_delete::late_delete() = default; // expected-error {{would delete it}}
