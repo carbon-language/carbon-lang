@@ -2104,8 +2104,6 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         }
         if (ShadowReg)
           RegsToPass.push_back(std::make_pair(ShadowReg, Arg));
-      } else {        // Usual case: not byval.
-        RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
       }
     } else if (!IsSibcall && (!isTailCall || isByVal)) {
       assert(VA.isMemLoc());
@@ -11063,13 +11061,6 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// PerformEXTRACT_VECTOR_ELTCombine - Detect vector gather/scatter index
-/// generation and convert it from being a bunch of shuffles and extracts
-/// to a simple store and scalar loads to extract the elements.
-static SDValue PerformVectorZeroExtendCombine(SDNode *N, SelectionDAG &DAG) {
-  return SDValue();
-}
-
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT nodes.
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
                                     const X86Subtarget *Subtarget) {
@@ -12130,9 +12121,6 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
   case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG);
   case X86ISD::SETCC:       return PerformSETCCCombine(N, DAG);
-  case X86ISD::PMOVZXBW:
-  case X86ISD::PMOVZXWD:
-  case X86ISD::PMOVZXDQ:    return PerformVectorZeroExtendCombine(N, DAG);
   case X86ISD::SHUFPS:      // Handle all target specific shuffles
   case X86ISD::SHUFPD:
   case X86ISD::PALIGN:
