@@ -400,7 +400,7 @@ DWARFDebugLine::Parse(const DataExtractor& debug_line_data, DWARFDebugLine::Stat
 bool
 DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, dw_offset_t* offset_ptr, Prologue* prologue)
 {
-//  const uint32_t prologue_offset = *offset_ptr;
+    const uint32_t prologue_offset = *offset_ptr;
 
     //DEBUG_PRINTF("0x%8.8x: ParsePrologue()\n", *offset_ptr);
 
@@ -453,7 +453,11 @@ DWARFDebugLine::ParsePrologue(const DataExtractor& debug_line_data, dw_offset_t*
             break;
     }
 
-    assert(*offset_ptr == end_prologue_offset);
+    if (*offset_ptr != end_prologue_offset)
+    {
+        fprintf (stderr, "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
+                 prologue_offset, end_prologue_offset, *offset_ptr);
+    }
     return end_prologue_offset;
 }
 
@@ -532,7 +536,11 @@ DWARFDebugLine::ParseSupportFiles(const DataExtractor& debug_line_data, const ch
         }
     }
 
-    assert(offset == end_prologue_offset);
+    if (offset != end_prologue_offset)
+    {
+        fprintf (stderr, "warning: parsing line table prologue at 0x%8.8x should have ended at 0x%8.8x but it ended ad 0x%8.8x\n", 
+                 stmt_list, end_prologue_offset, offset);
+    }
     return end_prologue_offset;
 }
 
@@ -575,8 +583,6 @@ DWARFDebugLine::ParseStatementTable
         prologue->Dump (log);
 
     const dw_offset_t end_offset = debug_line_offset + prologue->total_length + sizeof(prologue->total_length);
-
-    assert(debug_line_data.ValidOffset(end_offset-1));
 
     State state(prologue, log, callback, userData);
 
