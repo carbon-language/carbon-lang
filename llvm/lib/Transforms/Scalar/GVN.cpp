@@ -1576,6 +1576,9 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
     if (MDNode *Tag = LI->getMetadata(LLVMContext::MD_tbaa))
       NewLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
 
+    // Transfer DebugLoc.
+    NewLoad->setDebugLoc(LI->getDebugLoc());
+
     // Add the newly created load.
     ValuesPerBlock.push_back(AvailableValueInBlock::get(UnavailablePred,
                                                         NewLoad));
