@@ -529,7 +529,8 @@ SDValue DAGCombiner::ReassociateOps(unsigned Opc, DebugLoc DL,
                                    cast<ConstantSDNode>(N0.getOperand(1)),
                                    cast<ConstantSDNode>(N1));
       return DAG.getNode(Opc, DL, VT, N0.getOperand(0), OpNode);
-    } else if (N0.hasOneUse()) {
+    }
+    if (N0.hasOneUse()) {
       // reassoc. (op (op x, c1), y) -> (op (op x, y), c1) iff x+c1 has one use
       SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
                                    N0.getOperand(0), N1);
@@ -546,7 +547,8 @@ SDValue DAGCombiner::ReassociateOps(unsigned Opc, DebugLoc DL,
                                    cast<ConstantSDNode>(N1.getOperand(1)),
                                    cast<ConstantSDNode>(N0));
       return DAG.getNode(Opc, DL, VT, N1.getOperand(0), OpNode);
-    } else if (N1.hasOneUse()) {
+    }
+    if (N1.hasOneUse()) {
       // reassoc. (op y, (op x, c1)) -> (op (op x, y), c1) iff x+c1 has one use
       SDValue OpNode = DAG.getNode(Opc, N0.getDebugLoc(), VT,
                                    N1.getOperand(0), N0);
@@ -1566,7 +1568,8 @@ static SDValue tryFoldToZero(DebugLoc DL, const TargetLowering &TLI, EVT VT,
                              SelectionDAG &DAG, bool LegalOperations) {
   if (!VT.isVector()) {
     return DAG.getConstant(0, VT);
-  } else if (!LegalOperations || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)) {
+  }
+  if (!LegalOperations || TLI.isOperationLegal(ISD::BUILD_VECTOR, VT)) {
     // Produce a vector of zeros.
     SDValue El = DAG.getConstant(0, VT.getVectorElementType());
     std::vector<SDValue> Ops(VT.getVectorNumElements(), El);
@@ -4014,7 +4017,7 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       EVT EltVT = VT.getVectorElementType();
       SmallVector<SDValue,8> OneOps(VT.getVectorNumElements(),
                                     DAG.getConstant(1, EltVT));
-      if (VT.getSizeInBits() == N0VT.getSizeInBits()) {
+      if (VT.getSizeInBits() == N0VT.getSizeInBits())
         // We know that the # elements of the results is the same as the
         // # elements of the compare (and the # elements of the compare result
         // for that matter).  Check to see that they are the same size.  If so,
@@ -4026,25 +4029,24 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
                                  cast<CondCodeSDNode>(N0.getOperand(2))->get()),
                            DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
                                        &OneOps[0], OneOps.size()));
-      } else {
-        // If the desired elements are smaller or larger than the source
-        // elements we can use a matching integer vector type and then
-        // truncate/sign extend
-        EVT MatchingElementType =
-          EVT::getIntegerVT(*DAG.getContext(),
-                            N0VT.getScalarType().getSizeInBits());
-        EVT MatchingVectorType =
-          EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
-                           N0VT.getVectorNumElements());
-        SDValue VsetCC =
-          DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
-                        N0.getOperand(1),
-                        cast<CondCodeSDNode>(N0.getOperand(2))->get());
-        return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
-                           DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT),
-                           DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
-                                       &OneOps[0], OneOps.size()));
-      }
+
+      // If the desired elements are smaller or larger than the source
+      // elements we can use a matching integer vector type and then
+      // truncate/sign extend
+      EVT MatchingElementType =
+        EVT::getIntegerVT(*DAG.getContext(),
+                          N0VT.getScalarType().getSizeInBits());
+      EVT MatchingVectorType =
+        EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
+                         N0VT.getVectorNumElements());
+      SDValue VsetCC =
+        DAG.getVSetCC(N->getDebugLoc(), MatchingVectorType, N0.getOperand(0),
+                      N0.getOperand(1),
+                      cast<CondCodeSDNode>(N0.getOperand(2))->get());
+      return DAG.getNode(ISD::AND, N->getDebugLoc(), VT,
+                         DAG.getSExtOrTrunc(VsetCC, N->getDebugLoc(), VT),
+                         DAG.getNode(ISD::BUILD_VECTOR, N->getDebugLoc(), VT,
+                                     &OneOps[0], OneOps.size()));
     }
 
     // zext(setcc x,y,cc) -> select_cc x, y, 1, 0, cc
@@ -7505,18 +7507,17 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
     SrcValueAlign = LD->getOriginalAlignment();
     TBAAInfo = LD->getTBAAInfo();
     return true;
-  } else if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
+  }
+  if (StoreSDNode *ST = dyn_cast<StoreSDNode>(N)) {
     Ptr = ST->getBasePtr();
     Size = ST->getMemoryVT().getSizeInBits() >> 3;
     SrcValue = ST->getSrcValue();
     SrcValueOffset = ST->getSrcValueOffset();
     SrcValueAlign = ST->getOriginalAlignment();
     TBAAInfo = ST->getTBAAInfo();
-  } else {
-    llvm_unreachable("FindAliasInfo expected a memory operand");
+    return false;
   }
-
-  return false;
+  llvm_unreachable("FindAliasInfo expected a memory operand");
 }
 
 /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
@@ -7629,13 +7630,13 @@ SDValue DAGCombiner::FindBetterChain(SDNode *N, SDValue OldChain) {
   // Accumulate all the aliases to this node.
   GatherAllAliases(N, OldChain, Aliases);
 
-  if (Aliases.size() == 0) {
-    // If no operands then chain to entry token.
+  // If no operands then chain to entry token.
+  if (Aliases.size() == 0)
     return DAG.getEntryNode();
-  } else if (Aliases.size() == 1) {
-    // If a single operand then chain to it.  We don't need to revisit it.
+
+  // If a single operand then chain to it.  We don't need to revisit it.
+  if (Aliases.size() == 1)
     return Aliases[0];
-  }
 
   // Construct a custom tailored token factor.
   return DAG.getNode(ISD::TokenFactor, N->getDebugLoc(), MVT::Other,
