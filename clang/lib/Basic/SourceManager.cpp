@@ -961,6 +961,12 @@ static void ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI,
 /// about to emit a diagnostic.
 unsigned SourceManager::getLineNumber(FileID FID, unsigned FilePos, 
                                       bool *Invalid) const {
+  if (FID.isInvalid()) {
+    if (Invalid)
+      *Invalid = true;
+    return 1;
+  }
+
   ContentCache *Content;
   if (LastLineNoFileIDQuery == FID)
     Content = LastLineNoContentCache;

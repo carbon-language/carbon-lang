@@ -2819,17 +2819,8 @@ void clang_getSpellingLocation(CXSourceLocation location,
                                unsigned *offset) {
   SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
 
-  if (!location.ptr_data[0] || Loc.isInvalid()) {
-    if (file)
-      *file = 0;
-    if (line)
-      *line = 0;
-    if (column)
-      *column = 0;
-    if (offset)
-      *offset = 0;
-    return;
-  }
+  if (!location.ptr_data[0] || Loc.isInvalid())
+    return createNullLocation(file, line, column, offset);
 
   const SourceManager &SM =
     *static_cast<const SourceManager*>(location.ptr_data[0]);
@@ -2846,6 +2837,9 @@ void clang_getSpellingLocation(CXSourceLocation location,
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(SpellLoc);
   FileID FID = LocInfo.first;
   unsigned FileOffset = LocInfo.second;
+
+  if (FID.isInvalid())
+    return createNullLocation(file, line, column, offset);
 
   if (file)
     *file = (void *)SM.getFileEntryForID(FID);
