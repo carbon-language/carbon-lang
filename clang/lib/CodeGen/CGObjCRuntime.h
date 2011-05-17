@@ -243,6 +243,7 @@ public:
                                         llvm::Value *Size) = 0;
   virtual llvm::Constant *BuildGCBlockLayout(CodeGen::CodeGenModule &CGM,
                                   const CodeGen::CGBlockInfo &blockInfo) = 0;
+  virtual llvm::GlobalVariable *GetClassGlobal(const std::string &Name) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.

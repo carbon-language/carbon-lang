@@ -484,6 +484,10 @@ public:
                                              const CGBlockInfo &blockInfo) {
     return NULLPtr;
   }
+  
+  virtual llvm::GlobalVariable *GetClassGlobal(const std::string &Name) {
+    return 0;
+  }
 };
 /// Class representing the legacy GCC Objective-C ABI.  This is the default when
 /// -fobjc-nonfragile-abi is not specified.

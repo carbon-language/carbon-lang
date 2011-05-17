@@ -32,4 +32,4 @@ int main () {
 
 // CHECK-FRAGILE: @_FooClassReference = common global
 // CHECK-NONFRAGILE: @"OBJC_CLASS_$_Object" = external global
-// CHECK-NONFRAGILE: "OBJC_CLASS_$_Foo" = unnamed_addr global
+// CHECK-NONFRAGILE: "OBJC_CLASS_$_Foo" = global

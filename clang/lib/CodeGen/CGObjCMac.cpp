@@ -1048,6 +1048,13 @@ public:
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar);
+  
+  /// GetClassGlobal - Return the global variable for the Objective-C
+  /// class of the given name.
+  virtual llvm::GlobalVariable *GetClassGlobal(const std::string &Name) {
+    assert(false && "CGObjCMac::GetClassGlobal");
+    return 0;
+  }
 };
 
 class CGObjCNonFragileABIMac : public CGObjCCommonMac {
@@ -1142,11 +1149,11 @@ private:
                                         bool IsSuper,
                                         const CallArgList &CallArgs,
                                         const ObjCMethodDecl *Method);
-
+  
   /// GetClassGlobal - Return the global variable for the Objective-C
   /// class of the given name.
   llvm::GlobalVariable *GetClassGlobal(const std::string &Name);
-
+    
   /// EmitClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
   /// for the given class reference.
   llvm::Value *EmitClassRef(CGBuilderTy &Builder,
