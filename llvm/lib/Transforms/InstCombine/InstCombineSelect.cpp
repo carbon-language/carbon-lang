@@ -133,9 +133,8 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     }
 
     // Fold this by inserting a select from the input values.
-    SelectInst *NewSI = SelectInst::Create(SI.getCondition(), TI->getOperand(0),
-                                          FI->getOperand(0), SI.getName()+".v");
-    InsertNewInstBefore(NewSI, SI);
+    Value *NewSI = Builder->CreateSelect(SI.getCondition(), TI->getOperand(0),
+                                         FI->getOperand(0), SI.getName()+".v");
     return CastInst::Create(Instruction::CastOps(TI->getOpcode()), NewSI,
                             TI->getType());
   }
@@ -174,9 +173,8 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
   }
 
   // If we reach here, they do have operations in common.
-  SelectInst *NewSI = SelectInst::Create(SI.getCondition(), OtherOpT,
-                                         OtherOpF, SI.getName()+".v");
-  InsertNewInstBefore(NewSI, SI);
+  Value *NewSI = Builder->CreateSelect(SI.getCondition(), OtherOpT,
+                                       OtherOpF, SI.getName()+".v");
 
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TI)) {
     if (MatchIsOpZero)
@@ -224,8 +222,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
           // Avoid creating select between 2 constants unless it's selecting
           // between 0, 1 and -1.
           if (!isa<Constant>(OOp) || isSelect01(C, cast<Constant>(OOp))) {
-            Instruction *NewSel = SelectInst::Create(SI.getCondition(), OOp, C);
-            InsertNewInstBefore(NewSel, SI);
+            Value *NewSel = Builder->CreateSelect(SI.getCondition(), OOp, C);
             NewSel->takeName(TVI);
             BinaryOperator *TVI_BO = cast<BinaryOperator>(TVI);
             BinaryOperator *BO = BinaryOperator::Create(TVI_BO->getOpcode(),
@@ -260,8 +257,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
           // Avoid creating select between 2 constants unless it's selecting
           // between 0, 1 and -1.
           if (!isa<Constant>(OOp) || isSelect01(C, cast<Constant>(OOp))) {
-            Instruction *NewSel = SelectInst::Create(SI.getCondition(), C, OOp);
-            InsertNewInstBefore(NewSel, SI);
+            Value *NewSel = Builder->CreateSelect(SI.getCondition(), C, OOp);
             NewSel->takeName(FVI);
             BinaryOperator *FVI_BO = cast<BinaryOperator>(FVI);
             BinaryOperator *BO = BinaryOperator::Create(FVI_BO->getOpcode(),
