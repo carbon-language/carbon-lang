@@ -310,7 +310,13 @@ void MCStreamer::EmitCFISameValue(int64_t Register) {
   CurFrame->Instructions.push_back(Instruction);
 }
 
-void MCStreamer::EmitWin64EHFrame(MCSymbol *Symbol, MCSymbol *EHandler)
+void MCStreamer::EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler)
+{
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
+void MCStreamer::EmitWin64EHEndProc()
 {
   errs() << "Not implemented yet\n";
   abort();
@@ -346,7 +352,7 @@ void MCStreamer::EmitWin64EHPushFrame(bool Code)
   abort();
 }
 
-void MCStreamer::EmitWin64EHEndProlog(void)
+void MCStreamer::EmitWin64EHEndProlog()
 {
   errs() << "Not implemented yet\n";
   abort();
