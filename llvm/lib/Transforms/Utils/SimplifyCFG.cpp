@@ -59,7 +59,8 @@ class SimplifyCFGOpt {
   bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
                                                      BasicBlock *Pred,
                                                      IRBuilder<> &Builder);
-  bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI);
+  bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
+                                           IRBuilder<> &Builder);
 
   bool SimplifyReturn(ReturnInst *RI);
   bool SimplifyUnwind(UnwindInst *UI, IRBuilder<> &Builder);
@@ -678,7 +679,8 @@ static int ConstantIntSortPredicate(const void *P1, const void *P2) {
 /// equality comparison instruction (either a switch or a branch on "X == c").
 /// See if any of the predecessors of the terminator block are value comparisons
 /// on the same value.  If so, and if safe to do so, fold them together.
-bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
+bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
+                                                         IRBuilder<> &Builder) {
   BasicBlock *BB = TI->getParent();
   Value *CV = isValueEqualityComparison(TI);  // CondVal
   assert(CV && "Not a comparison?");
@@ -771,17 +773,17 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
       for (unsigned i = 0, e = NewSuccessors.size(); i != e; ++i)
         AddPredecessorToBlock(NewSuccessors[i], Pred, BB);
 
+      Builder.SetInsertPoint(PTI);
       // Convert pointer to int before we switch.
       if (CV->getType()->isPointerTy()) {
         assert(TD && "Cannot switch on pointer without TargetData");
-        CV = new PtrToIntInst(CV, TD->getIntPtrType(CV->getContext()),
-                              "magicptr", PTI);
-        cast<PtrToIntInst>(CV)->setDebugLoc(PTI->getDebugLoc());
+        CV = Builder.CreatePtrToInt(CV, TD->getIntPtrType(CV->getContext()),
+                                    "magicptr");
       }
 
       // Now that the successors are updated, create the new Switch instruction.
-      SwitchInst *NewSI = SwitchInst::Create(CV, PredDefault,
-                                             PredCases.size(), PTI);
+      SwitchInst *NewSI = Builder.CreateSwitch(CV, PredDefault,
+                                               PredCases.size());
       NewSI->setDebugLoc(PTI->getDebugLoc());
       for (unsigned i = 0, e = PredCases.size(); i != e; ++i)
         NewSI->addCase(PredCases[i].first, PredCases[i].second);
@@ -2463,7 +2465,7 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   while (isa<DbgInfoIntrinsic>(BBI))
     ++BBI;
   if (SI == &*BBI)
-    if (FoldValueComparisonIntoPredecessors(SI))
+    if (FoldValueComparisonIntoPredecessors(SI, Builder))
       return SimplifyCFG(BB) | true;
 
   // Try to transform the switch into an icmp and a branch.
@@ -2557,14 +2559,14 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
     while (isa<DbgInfoIntrinsic>(I))
       ++I;
     if (&*I == BI) {
-      if (FoldValueComparisonIntoPredecessors(BI))
+      if (FoldValueComparisonIntoPredecessors(BI, Builder))
         return SimplifyCFG(BB) | true;
     } else if (&*I == cast<Instruction>(BI->getCondition())){
       ++I;
       // Ignore dbg intrinsics.
       while (isa<DbgInfoIntrinsic>(I))
         ++I;
-      if (&*I == BI && FoldValueComparisonIntoPredecessors(BI))
+      if (&*I == BI && FoldValueComparisonIntoPredecessors(BI, Builder))
         return SimplifyCFG(BB) | true;
     }
   }
