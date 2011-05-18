@@ -27,6 +27,7 @@
 #include "llvm/Transforms/IPO.h"
 
 namespace llvm {
+    //template<Pass*(*X)(void)> static Pass *CreatePassFn(void) { return X(); }
 
   /// RegisterStandardPassLists solves a circular dependency problem.  The
   /// default list of passes has to live somewhere.  It can't live in the core
@@ -42,23 +43,36 @@ namespace llvm {
       StandardPass::CreateVerifierPass = CreateVerifierPass;
     }
     private:
+    /// Define a template function that does the casting for us, so that we can
+    /// perform safe function pointer casts, but catch unsafe ones.
+    template<llvm::ImmutablePass*(*X)(void)> static llvm::Pass*
+      CreatePassFn(void) { return X(); }
+    template<llvm::ModulePass*(*X)(void)> static llvm::Pass*
+      CreatePassFn(void) { return X(); }
+    template<llvm::FunctionPass*(*X)(void)> static llvm::Pass*
+      CreatePassFn(void) { return X(); }
+    template<llvm::Pass*(*X)(void)> static llvm::Pass*
+      CreatePassFn(void) { return X(); }
     static llvm::Pass *CreateVerifierPass() { return createVerifierPass(); }
     /// Passes must be registered with functions that take no arguments, so we have
     /// to wrap their existing constructors.  
-    static Pass *createDefaultScalarReplAggregatesPass(void) {
-      return createScalarReplAggregatesPass(-1, false);
+    static Pass *createScalarReplAggregatesPass(void) {
+      return llvm::createScalarReplAggregatesPass(-1, false);
     }
     static Pass *createDefaultLoopUnswitchPass(void) {
       return createLoopUnswitchPass(false);
     }
-    static Pass *createDefaultLoopUnrollPass(void) {
-      return createLoopUnrollPass();
-    }
     static Pass *createSizeOptimizingLoopUnswitchPass(void) {
       return createLoopUnswitchPass(true);
     }
-    static Pass *createDefaultGVNPass(void) {
-      return createGVNPass();
+    static Pass *createArgumentPromotionPass(void) {
+      return llvm::createArgumentPromotionPass();
+    }
+    static Pass *createLoopUnrollPass(void) {
+      return llvm::createLoopUnrollPass();
+    }
+    static Pass *createGVNPass(void) {
+      return llvm::createGVNPass();
     }
     static void RegisterStandardPassList(void) {
       // Standard alias analysis passes
@@ -68,15 +82,15 @@ namespace llvm {
       // support "obvious" type-punning idioms.
 #define DEFAULT_ALIAS_ANALYSIS_PASS(pass, flags)\
   StandardPass::RegisterDefaultPass(\
-    PassInfo::NormalCtor_t(create ## pass ## Pass),\
-    &DefaultStandardPasses::pass ## ID, 0, StandardPass::AliasAnalysis, flags)
+    CreatePassFn<create ## pass ## Pass>,\
+    &DefaultStandardPasses::pass ## ID, (unsigned char*)0, StandardPass::AliasAnalysis, flags)
       DEFAULT_ALIAS_ANALYSIS_PASS(TypeBasedAliasAnalysis, 0);
       DEFAULT_ALIAS_ANALYSIS_PASS(BasicAliasAnalysis, 0);
 #undef DEFAULT_ALIAS_ANALYSIS_PASS
 
 #define DEFAULT_FUNCTION_PASS(pass, flags)\
   StandardPass::RegisterDefaultPass(\
-      PassInfo::NormalCtor_t(create ## pass ## Pass),\
+      CreatePassFn<create ## pass ## Pass>,\
       &DefaultStandardPasses::pass ## ID, 0, StandardPass::Function, flags)
       DEFAULT_FUNCTION_PASS(CFGSimplification,
           StandardPass::OptimzationFlags(1));
@@ -87,7 +101,7 @@ namespace llvm {
 
 #define DEFAULT_MODULE_PASS(pass, flags)\
   StandardPass::RegisterDefaultPass(\
-      PassInfo::NormalCtor_t(create ## pass ## Pass),\
+      CreatePassFn<create ## pass ## Pass>,\
       &DefaultStandardPasses::pass ## ID, 0, StandardPass::Module, flags)
       // Optimize out global vars
       DEFAULT_MODULE_PASS(GlobalOptimizer,
@@ -119,10 +133,7 @@ namespace llvm {
       DEFAULT_MODULE_PASS(ArgumentPromotion, StandardPass::OptimzationFlags(3));
       // Start of function pass.
       // Break up aggregate allocas, using SSAUpdater.
-      StandardPass::RegisterDefaultPass(
-          PassInfo::NormalCtor_t(createDefaultScalarReplAggregatesPass),
-          &DefaultStandardPasses::ScalarReplAggregatesID, 0,
-          StandardPass::Module);
+      DEFAULT_MODULE_PASS(ScalarReplAggregates, 0);
       // Catch trivial redundancies
       DEFAULT_MODULE_PASS(EarlyCSE, 0);
       // Library Call Optimizations
@@ -174,16 +185,10 @@ namespace llvm {
       // Delete dead loops
       DEFAULT_MODULE_PASS(LoopDeletion, 0);
       // Unroll small loops
-      StandardPass::RegisterDefaultPass(
-          PassInfo::NormalCtor_t(createDefaultLoopUnrollPass),
-          &DefaultStandardPasses::LoopUnrollID, 0,
-          StandardPass::Module,
-              StandardPass::OptimzationFlags(0, 0, StandardPass::UnrollLoops));
+      DEFAULT_MODULE_PASS(LoopUnroll, 
+          StandardPass::OptimzationFlags(0, 0, StandardPass::UnrollLoops));
       // Remove redundancies
-      StandardPass::RegisterDefaultPass(
-          PassInfo::NormalCtor_t(createDefaultGVNPass),
-          &DefaultStandardPasses::GVNID, 0,
-          StandardPass::Module, StandardPass::OptimzationFlags(2));
+      DEFAULT_MODULE_PASS(GVN, StandardPass::OptimzationFlags(2));
       // Remove memcpy / form memset
       DEFAULT_MODULE_PASS(MemCpyOpt, 0);
       // Constant prop with SCCP
@@ -223,7 +228,8 @@ namespace llvm {
 
 #define DEFAULT_LTO_PASS(pass, flags)\
   StandardPass::RegisterDefaultPass(\
-      PassInfo::NormalCtor_t(create ## pass ## Pass), &DefaultStandardPasses::pass ## ID, 0, StandardPass::LTO, flags)
+      CreatePassFn<create ## pass ## Pass>,\
+      &DefaultStandardPasses::pass ## ID, 0, StandardPass::LTO, flags)
 
       // LTO passes
 
