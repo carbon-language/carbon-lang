@@ -2023,7 +2023,8 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI,
 /// SimplifyBranchOnICmpChain - The specified branch is a conditional branch.
 /// Check to see if it is branching on an or/and chain of icmp instructions, and
 /// fold it into a switch instruction if so.
-static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
+static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD,
+                                      IRBuilder<> &Builder) {
   Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
   if (Cond == 0) return false;
   
@@ -2079,11 +2080,12 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
     BasicBlock *NewBB = BB->splitBasicBlock(BI, "switch.early.test");
     // Remove the uncond branch added to the old block.
     TerminatorInst *OldTI = BB->getTerminator();
-    
+    Builder.SetInsertPoint(OldTI);
+
     if (TrueWhenEqual)
-      BranchInst::Create(EdgeBB, NewBB, ExtraCase, OldTI);
+      Builder.CreateCondBr(ExtraCase, EdgeBB, NewBB);
     else
-      BranchInst::Create(NewBB, EdgeBB, ExtraCase, OldTI);
+      Builder.CreateCondBr(ExtraCase, NewBB, EdgeBB);
       
     OldTI->eraseFromParent();
     
@@ -2095,19 +2097,18 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
           << "\nEXTRABB = " << *BB);
     BB = NewBB;
   }
-  
+
+  Builder.SetInsertPoint(BI);
   // Convert pointer to int before we switch.
   if (CompVal->getType()->isPointerTy()) {
     assert(TD && "Cannot switch on pointer without TargetData");
-    CompVal = new PtrToIntInst(CompVal,
-                               TD->getIntPtrType(CompVal->getContext()),
-                               "magicptr", BI);
-    cast<PtrToIntInst>(CompVal)->setDebugLoc(BI->getDebugLoc());
+    CompVal = Builder.CreatePtrToInt(CompVal,
+                                     TD->getIntPtrType(CompVal->getContext()),
+                                     "magicptr");
   }
   
   // Create the new switch instruction now.
-  SwitchInst *New = SwitchInst::Create(CompVal, DefaultBB, Values.size(), BI);
-  New->setDebugLoc(BI->getDebugLoc());
+  SwitchInst *New = Builder.CreateSwitch(CompVal, DefaultBB, Values.size());
 
   // Add all of the 'cases' to the switch instruction.
   for (unsigned i = 0, e = Values.size(); i != e; ++i)
@@ -2574,7 +2575,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   }
   
   // Try to turn "br (X == 0 | X == 1), T, F" into a switch instruction.
-  if (SimplifyBranchOnICmpChain(BI, TD))
+  if (SimplifyBranchOnICmpChain(BI, TD, Builder))
     return true;
   
   // We have a conditional branch to two blocks that are only reachable
