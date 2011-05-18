@@ -133,7 +133,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
     // New is the allocation instruction, pointer typed. AI is the original
     // allocation instruction, also pointer typed. Thus, cast to use is BitCast.
     Value *NewCast = AllocaBuilder.CreateBitCast(New, AI.getType(), "tmpcast");
-    AI.replaceAllUsesWith(NewCast);
+    ReplaceInstUsesWith(AI, NewCast);
   }
   return ReplaceInstUsesWith(CI, New);
 }
@@ -1228,7 +1228,7 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
       
       
       // Remove the old Call.  With -fmath-errno, it won't get marked readnone.
-      Call->replaceAllUsesWith(UndefValue::get(Call->getType()));
+      ReplaceInstUsesWith(*Call, UndefValue::get(Call->getType()));
       EraseInstFromFunction(*Call);
       return ret;
     }

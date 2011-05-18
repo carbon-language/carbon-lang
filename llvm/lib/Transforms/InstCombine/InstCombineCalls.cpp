@@ -835,7 +835,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       // If OldCall dues not return void then replaceAllUsesWith undef.
       // This allows ValueHandlers and custom metadata to adjust itself.
       if (!OldCall->getType()->isVoidTy())
-        OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
+        ReplaceInstUsesWith(*OldCall, UndefValue::get(OldCall->getType()));
       if (isa<CallInst>(OldCall))
         return EraseInstFromFunction(*OldCall);
       
@@ -857,8 +857,8 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // If CS does not return void then replaceAllUsesWith undef.
     // This allows ValueHandlers and custom metadata to adjust itself.
     if (!CS.getInstruction()->getType()->isVoidTy())
-      CS.getInstruction()->
-        replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
+      ReplaceInstUsesWith(*CS.getInstruction(),
+                          UndefValue::get(CS.getInstruction()->getType()));
 
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       // Don't break the CFG, insert a dummy cond branch.
@@ -1145,8 +1145,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   }
 
   if (!Caller->use_empty())
-    Caller->replaceAllUsesWith(NV);
-  
+    ReplaceInstUsesWith(*Caller, NV);
+
   EraseInstFromFunction(*Caller);
   return true;
 }
@@ -1291,7 +1291,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
         cast<CallInst>(NewCaller)->setAttributes(NewPAL);
       }
       if (!Caller->getType()->isVoidTy())
-        Caller->replaceAllUsesWith(NewCaller);
+        ReplaceInstUsesWith(*Caller, NewCaller);
       Caller->eraseFromParent();
       Worklist.Remove(Caller);
       return 0;

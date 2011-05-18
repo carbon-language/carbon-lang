@@ -1261,7 +1261,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       case Intrinsic::sadd_with_overflow:
         if (*EV.idx_begin() == 0) {  // Normal result.
           Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-          II->replaceAllUsesWith(UndefValue::get(II->getType()));
+          ReplaceInstUsesWith(*II, UndefValue::get(II->getType()));
           EraseInstFromFunction(*II);
           return BinaryOperator::CreateAdd(LHS, RHS);
         }
@@ -1278,7 +1278,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       case Intrinsic::ssub_with_overflow:
         if (*EV.idx_begin() == 0) {  // Normal result.
           Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-          II->replaceAllUsesWith(UndefValue::get(II->getType()));
+          ReplaceInstUsesWith(*II, UndefValue::get(II->getType()));
           EraseInstFromFunction(*II);
           return BinaryOperator::CreateSub(LHS, RHS);
         }
@@ -1287,7 +1287,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
       case Intrinsic::smul_with_overflow:
         if (*EV.idx_begin() == 0) {  // Normal result.
           Value *LHS = II->getArgOperand(0), *RHS = II->getArgOperand(1);
-          II->replaceAllUsesWith(UndefValue::get(II->getType()));
+          ReplaceInstUsesWith(*II, UndefValue::get(II->getType()));
           EraseInstFromFunction(*II);
           return BinaryOperator::CreateMul(LHS, RHS);
         }
