@@ -1212,7 +1212,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
             // Add the chain argument and attributes.
             Value *NestVal = Tramp->getArgOperand(2);
             if (NestVal->getType() != NestTy)
-              NestVal = new BitCastInst(NestVal, NestTy, "nest", Caller);
+              NestVal = Builder->CreateBitCast(NestVal, NestTy, "nest");
             NewArgs.push_back(NestVal);
             NewAttrs.push_back(AttributeWithIndex::get(NestIdx, NestAttr));
           }

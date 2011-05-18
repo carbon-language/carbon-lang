@@ -57,12 +57,14 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
       Value *Idx[2];
       Idx[0] = NullIdx;
       Idx[1] = NullIdx;
-      Value *V = GetElementPtrInst::CreateInBounds(New, Idx, Idx + 2,
-                                                   New->getName()+".sub", It);
+      Instruction *GEP =
+           GetElementPtrInst::CreateInBounds(New, Idx, Idx + 2,
+                                             New->getName()+".sub");
+      InsertNewInstBefore(GEP, *It);
 
       // Now make everything use the getelementptr instead of the original
       // allocation.
-      return ReplaceInstUsesWith(AI, V);
+      return ReplaceInstUsesWith(AI, GEP);
     } else if (isa<UndefValue>(AI.getArraySize())) {
       return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
     }

@@ -240,9 +240,9 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         Constant *C2 = cast<Constant>(Op1->getOperand(1));
 
         Constant *Folded = ConstantExpr::get(Opcode, C1, C2);
-        Instruction *New = BinaryOperator::Create(Opcode, A, B, Op1->getName(),
-                                                  &I);
-        Worklist.Add(New);
+        Instruction *New = BinaryOperator::Create(Opcode, A, B);
+        InsertNewInstBefore(New, I);
+        New->takeName(Op1);
         I.setOperand(0, New);
         I.setOperand(1, Folded);
         // Conservatively clear the optional flags, since they may not be
@@ -599,7 +599,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
   }
 
   // Okay, we can do the transformation: create the new PHI node.
-  PHINode *NewPN = PHINode::Create(I.getType(), PN->getNumIncomingValues(), "");
+  PHINode *NewPN = PHINode::Create(I.getType(), PN->getNumIncomingValues());
   InsertNewInstBefore(NewPN, *PN);
   NewPN->takeName(PN);
   
@@ -1088,8 +1088,8 @@ Instruction *InstCombiner::visitFree(CallInst &FI) {
   // free undef -> unreachable.
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
-    new StoreInst(ConstantInt::getTrue(FI.getContext()),
-           UndefValue::get(Type::getInt1PtrTy(FI.getContext())), &FI);
+    Builder->CreateStore(ConstantInt::getTrue(FI.getContext()),
+                         UndefValue::get(Type::getInt1PtrTy(FI.getContext())));
     return EraseInstFromFunction(FI);
   }
   
