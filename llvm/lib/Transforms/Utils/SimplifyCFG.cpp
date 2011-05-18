@@ -62,7 +62,7 @@ class SimplifyCFGOpt {
   bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
                                            IRBuilder<> &Builder);
 
-  bool SimplifyReturn(ReturnInst *RI);
+  bool SimplifyReturn(ReturnInst *RI, IRBuilder<> &Builder);
   bool SimplifyUnwind(UnwindInst *UI, IRBuilder<> &Builder);
   bool SimplifyUnreachable(UnreachableInst *UI);
   bool SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder);
@@ -1370,7 +1370,8 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD,
 /// SimplifyCondBranchToTwoReturns - If we found a conditional branch that goes
 /// to two returning blocks, try to merge them together into one return,
 /// introducing a select if the return values disagree.
-static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
+static bool SimplifyCondBranchToTwoReturns(BranchInst *BI, 
+                                           IRBuilder<> &Builder) {
   assert(BI->isConditional() && "Must be a conditional branch");
   BasicBlock *TrueSucc = BI->getSuccessor(0);
   BasicBlock *FalseSucc = BI->getSuccessor(1);
@@ -1385,13 +1386,14 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
   if (!FalseSucc->getFirstNonPHIOrDbg()->isTerminator())
     return false;
 
+  Builder.SetInsertPoint(BI);
   // Okay, we found a branch that is going to two return nodes.  If
   // there is no return value for this function, just change the
   // branch into a return.
   if (FalseRet->getNumOperands() == 0) {
     TrueSucc->removePredecessor(BI->getParent());
     FalseSucc->removePredecessor(BI->getParent());
-    ReturnInst::Create(BI->getContext(), 0, BI);
+    Builder.CreateRetVoid();
     EraseTerminatorInstAndDCECond(BI);
     return true;
   }
@@ -1434,14 +1436,14 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI) {
     } else if (isa<UndefValue>(TrueValue)) {
       TrueValue = FalseValue;
     } else {
-      TrueValue = SelectInst::Create(BrCond, TrueValue,
-                                     FalseValue, "retval", BI);
+      TrueValue = Builder.CreateSelect(BrCond, TrueValue,
+                                       FalseValue, "retval");
     }
   }
 
-  Value *RI = !TrueValue ?
-              ReturnInst::Create(BI->getContext(), BI) :
-              ReturnInst::Create(BI->getContext(), TrueValue, BI);
+  Value *RI = !TrueValue ? 
+    Builder.CreateRetVoid() : Builder.CreateRet(TrueValue);
+
   (void) RI;
       
   DEBUG(dbgs() << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
@@ -2129,7 +2131,7 @@ static bool SimplifyBranchOnICmpChain(BranchInst *BI, const TargetData *TD) {
   return true;
 }
 
-bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI) {
+bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI, IRBuilder<> &Builder) {
   BasicBlock *BB = RI->getParent();
   if (!BB->getFirstNonPHIOrDbg()->isTerminator()) return false;
   
@@ -2173,7 +2175,7 @@ bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI) {
     // Check to see if the non-BB successor is also a return block.
     if (isa<ReturnInst>(BI->getSuccessor(0)->getTerminator()) &&
         isa<ReturnInst>(BI->getSuccessor(1)->getTerminator()) &&
-        SimplifyCondBranchToTwoReturns(BI))
+        SimplifyCondBranchToTwoReturns(BI, Builder))
       return true;
   }
   return false;
@@ -2671,7 +2673,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
       if (SimplifyCondBranch(BI, Builder)) return true;
     }
   } else if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
-    if (SimplifyReturn(RI)) return true;
+    if (SimplifyReturn(RI, Builder)) return true;
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
     if (SimplifySwitch(SI, Builder)) return true;
   } else if (UnreachableInst *UI =
