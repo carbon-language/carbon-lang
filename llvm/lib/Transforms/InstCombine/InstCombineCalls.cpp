@@ -1106,15 +1106,15 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
-    NC = InvokeInst::Create(Callee, II->getNormalDest(), II->getUnwindDest(),
-                            Args.begin(), Args.end(),
-                            Caller->getName(), Caller);
+    NC = Builder->CreateInvoke(Callee, II->getNormalDest(),
+                               II->getUnwindDest(), Args.begin(), Args.end());
+    NC->takeName(II);
     cast<InvokeInst>(NC)->setCallingConv(II->getCallingConv());
     cast<InvokeInst>(NC)->setAttributes(NewCallerPAL);
   } else {
-    NC = CallInst::Create(Callee, Args.begin(), Args.end(),
-                          Caller->getName(), Caller);
     CallInst *CI = cast<CallInst>(Caller);
+    NC = Builder->CreateCall(Callee, Args.begin(), Args.end());
+    NC->takeName(CI);
     if (CI->isTailCall())
       cast<CallInst>(NC)->setTailCall();
     cast<CallInst>(NC)->setCallingConv(CI->getCallingConv());

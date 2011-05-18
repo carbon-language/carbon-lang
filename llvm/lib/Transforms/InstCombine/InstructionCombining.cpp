@@ -1575,6 +1575,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
     // Now that we have an instruction, try combining it to simplify it.
     Builder->SetInsertPoint(I->getParent(), I);
+    Builder->SetCurrentDebugLocation(I->getDebugLoc());
     
 #ifndef NDEBUG
     std::string OrigI;
