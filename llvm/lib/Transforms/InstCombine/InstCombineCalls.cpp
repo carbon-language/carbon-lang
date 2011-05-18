@@ -111,10 +111,10 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   
   Value *Src = Builder->CreateBitCast(MI->getArgOperand(1), NewSrcPtrTy);
   Value *Dest = Builder->CreateBitCast(MI->getArgOperand(0), NewDstPtrTy);
-  Instruction *L = new LoadInst(Src, "tmp", MI->isVolatile(), SrcAlign);
-  InsertNewInstBefore(L, *MI);
-  InsertNewInstBefore(new StoreInst(L, Dest, MI->isVolatile(), DstAlign),
-                      *MI);
+  LoadInst *L = Builder->CreateLoad(Src, MI->isVolatile());
+  L->setAlignment(SrcAlign);
+  StoreInst *S = Builder->CreateStore(L, Dest, MI->isVolatile());
+  S->setAlignment(DstAlign);
 
   // Set the size of the copy to 0, it will be deleted on the next iteration.
   MI->setArgOperand(2, Constant::getNullValue(MemOpLength->getType()));
@@ -154,8 +154,9 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
     
     // Extract the fill value and store.
     uint64_t Fill = FillC->getZExtValue()*0x0101010101010101ULL;
-    InsertNewInstBefore(new StoreInst(ConstantInt::get(ITy, Fill),
-                                      Dest, false, Alignment), *MI);
+    StoreInst *S = Builder->CreateStore(ConstantInt::get(ITy, Fill), Dest,
+                                        MI->isVolatile());
+    S->setAlignment(Alignment);
     
     // Set the size of the copy to 0, it will be deleted on the next iteration.
     MI->setLength(Constant::getNullValue(LenC->getType()));
@@ -405,20 +406,21 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (LHSKnownNegative && RHSKnownNegative) {
         // The sign bit is set in both cases: this MUST overflow.
         // Create a simple add instruction, and insert it into the struct.
-        Instruction *Add = BinaryOperator::CreateAdd(LHS, RHS, "", &CI);
-        Worklist.Add(Add);
+        Value *Add = Builder->CreateAdd(LHS, RHS);
+        Add->takeName(&CI);
         Constant *V[] = {
-          UndefValue::get(LHS->getType()),ConstantInt::getTrue(II->getContext())
+          UndefValue::get(LHS->getType()),
+          ConstantInt::getTrue(II->getContext())
         };
         Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
         return InsertValueInst::Create(Struct, Add, 0);
       }
-      
+
       if (LHSKnownPositive && RHSKnownPositive) {
         // The sign bit is clear in both cases: this CANNOT overflow.
         // Create a simple add instruction, and insert it into the struct.
-        Instruction *Add = BinaryOperator::CreateNUWAdd(LHS, RHS, "", &CI);
-        Worklist.Add(Add);
+        Value *Add = Builder->CreateNUWAdd(LHS, RHS);
+        Add->takeName(&CI);
         Constant *V[] = {
           UndefValue::get(LHS->getType()),
           ConstantInt::getFalse(II->getContext())
@@ -1276,24 +1278,19 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
         NewCaller = InvokeInst::Create(NewCallee,
                                        II->getNormalDest(), II->getUnwindDest(),
-                                       NewArgs.begin(), NewArgs.end(),
-                                       Caller->getName(), Caller);
+                                       NewArgs.begin(), NewArgs.end());
         cast<InvokeInst>(NewCaller)->setCallingConv(II->getCallingConv());
         cast<InvokeInst>(NewCaller)->setAttributes(NewPAL);
       } else {
-        NewCaller = CallInst::Create(NewCallee, NewArgs.begin(), NewArgs.end(),
-                                     Caller->getName(), Caller);
+        NewCaller = CallInst::Create(NewCallee, NewArgs.begin(), NewArgs.end());
         if (cast<CallInst>(Caller)->isTailCall())
           cast<CallInst>(NewCaller)->setTailCall();
         cast<CallInst>(NewCaller)->
           setCallingConv(cast<CallInst>(Caller)->getCallingConv());
         cast<CallInst>(NewCaller)->setAttributes(NewPAL);
       }
-      if (!Caller->getType()->isVoidTy())
-        ReplaceInstUsesWith(*Caller, NewCaller);
-      Caller->eraseFromParent();
-      Worklist.Remove(Caller);
-      return 0;
+
+      return NewCaller;
     }
   }
 

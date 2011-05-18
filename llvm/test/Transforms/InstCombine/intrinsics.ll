@@ -30,9 +30,9 @@ define i8 @uaddtest2(i8 %A, i8 %B, i1* %overflowPtr) {
 ; CHECK: @uaddtest2
 ; CHECK-NEXT: %and.A = and i8 %A, 127
 ; CHECK-NEXT: %and.B = and i8 %B, 127
-; CHECK-NEXT: %1 = add nuw i8 %and.A, %and.B
+; CHECK-NEXT: %x = add nuw i8 %and.A, %and.B
 ; CHECK-NEXT: store i1 false, i1* %overflowPtr
-; CHECK-NEXT: ret i8 %1
+; CHECK-NEXT: ret i8 %x
 }
 
 define i8 @uaddtest3(i8 %A, i8 %B, i1* %overflowPtr) {
@@ -46,9 +46,9 @@ define i8 @uaddtest3(i8 %A, i8 %B, i1* %overflowPtr) {
 ; CHECK: @uaddtest3
 ; CHECK-NEXT: %or.A = or i8 %A, -128
 ; CHECK-NEXT: %or.B = or i8 %B, -128
-; CHECK-NEXT: %1 = add i8 %or.A, %or.B
+; CHECK-NEXT: %x = add i8 %or.A, %or.B
 ; CHECK-NEXT: store i1 true, i1* %overflowPtr
-; CHECK-NEXT: ret i8 %1
+; CHECK-NEXT: ret i8 %x
 }
 
 define i8 @uaddtest4(i8 %A, i1* %overflowPtr) {
