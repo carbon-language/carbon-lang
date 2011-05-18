@@ -32,6 +32,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <set>
@@ -2638,6 +2639,8 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
   if (MergeBlockIntoPredecessor(BB))
     return true;
   
+  IRBuilder<> Builder(BB);
+
   // If there is a trivial two-entry PHI node in this basic block, and we can
   // eliminate it, do so now.
   if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
