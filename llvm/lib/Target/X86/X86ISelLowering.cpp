@@ -2525,15 +2525,28 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   if (RegInfo->needsStackRealignment(MF))
     return false;
 
-  // Do not sibcall optimize vararg calls unless the call site is not passing
-  // any arguments.
-  if (isVarArg && !Outs.empty())
-    return false;
-
   // Also avoid sibcall optimization if either caller or callee uses struct
   // return semantics.
   if (isCalleeStructRet || isCallerStructRet)
     return false;
+
+  // Do not sibcall optimize vararg calls unless all arguments are passed via
+  // registers
+  if (isVarArg && !Outs.empty()) {
+    SmallVector<CCValAssign, 16> ArgLocs;
+    CCState CCInfo(CalleeCC, isVarArg, getTargetMachine(),
+                   ArgLocs, *DAG.getContext());
+
+    // Allocate shadow area for Win64
+    if (Subtarget->isTargetWin64()) {
+      CCInfo.AllocateStack(32, 8);
+    }
+
+    CCInfo.AnalyzeCallOperands(Outs, CC_X86);
+    for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i)
+      if (!ArgLocs[i].isRegLoc())
+        return false;
+  }
 
   // If the call result is in ST0 / ST1, it needs to be popped off the x87 stack.
   // Therefore if it's not used by the call it is not safe to optimize this into
