@@ -272,7 +272,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
   // merge, find the last use and trim the live range. That will also add the
   // isKill marker.
   if (ALR->end == CopyIdx)
-    TrimLiveIntervalToLastUse(CopyUseIdx, CopyMI->getParent(), IntA, ALR);
+    li_->shrinkToUses(&IntA);
 
   ++numExtends;
   return true;
