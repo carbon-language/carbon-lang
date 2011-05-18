@@ -69,6 +69,7 @@ const unsigned* AlphaRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
 BitVector AlphaRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(Alpha::R15);
+  Reserved.set(Alpha::R29);
   Reserved.set(Alpha::R30);
   Reserved.set(Alpha::R31);
   return Reserved;
