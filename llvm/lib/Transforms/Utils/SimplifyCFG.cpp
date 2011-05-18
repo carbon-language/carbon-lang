@@ -1228,7 +1228,8 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const TargetData *TD) {
 
 /// FoldTwoEntryPHINode - Given a BB that starts with the specified two-entry
 /// PHI node, see if we can eliminate it.
-static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
+static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD,
+                                IRBuilder<> &Builder) {
   // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
   // statement", which has a very simple dominance structure.  Basically, we
   // are trying to find the condition that is being branched on, which
@@ -1327,6 +1328,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // If we can still promote the PHI nodes after this gauntlet of tests,
   // do all of the PHI's now.
   Instruction *InsertPt = DomBlock->getTerminator();
+  Builder.SetInsertPoint(InsertPt);
   
   // Move all 'aggressive' instructions, which are defined in the
   // conditional parts of the if's up to the dominating block.
@@ -1344,8 +1346,8 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
     Value *TrueVal  = PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
     Value *FalseVal = PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
     
-    SelectInst *NV = SelectInst::Create(IfCond, TrueVal, FalseVal, "", InsertPt);
-    NV->setDebugLoc(InsertPt->getDebugLoc());
+    SelectInst *NV = 
+      cast<SelectInst>(Builder.CreateSelect(IfCond, TrueVal, FalseVal, ""));
     PN->replaceAllUsesWith(NV);
     NV->takeName(PN);
     PN->eraseFromParent();
@@ -1355,8 +1357,8 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetData *TD) {
   // has been flattened.  Change DomBlock to jump directly to our new block to
   // avoid other simplifycfg's kicking in on the diamond.
   TerminatorInst *OldTI = DomBlock->getTerminator();
-  BranchInst *NewBI = BranchInst::Create(BB, OldTI);
-  NewBI->setDebugLoc(OldTI->getDebugLoc());
+  Builder.SetInsertPoint(OldTI);
+  Builder.CreateBr(BB);
   OldTI->eraseFromParent();
   return true;
 }
@@ -2645,7 +2647,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
   // eliminate it, do so now.
   if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
     if (PN->getNumIncomingValues() == 2)
-      Changed |= FoldTwoEntryPHINode(PN, TD);
+      Changed |= FoldTwoEntryPHINode(PN, TD, Builder);
 
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (BI->isUnconditional()) {
