@@ -506,7 +506,7 @@ DisassemblerLLVM::DecodeInstructions
         InstructionSP inst_sp (new InstructionLLVM (inst_addr, 
                                                     inst_address_class,
                                                     use_thumb ? m_disassembler_thumb : m_disassembler,
-                                                    m_arch.GetMachine()));
+                                                    use_thumb ? llvm::Triple::thumb : m_arch.GetMachine()));
 
         size_t inst_byte_size = inst_sp->Decode (*this, data, data_offset);
 
