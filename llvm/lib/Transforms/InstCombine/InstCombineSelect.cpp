@@ -751,27 +751,20 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
             // So at this point we know we have (Y -> OtherAddOp):
             //        select C, (add X, Y), (sub X, Z)
             Value *NegVal;  // Compute -Z
-            if (Constant *C = dyn_cast<Constant>(SubOp->getOperand(1))) {
-              NegVal = ConstantExpr::getNeg(C);
-            } else if (SI.getType()->isFloatingPointTy()) {
-              NegVal = InsertNewInstBefore(
-                    BinaryOperator::CreateFNeg(SubOp->getOperand(1),
-                                              "tmp"), SI);
+            if (SI.getType()->isFloatingPointTy()) {
+              NegVal = Builder->CreateFNeg(SubOp->getOperand(1));
             } else {
-              NegVal = InsertNewInstBefore(
-                    BinaryOperator::CreateNeg(SubOp->getOperand(1),
-                                              "tmp"), SI);
+              NegVal = Builder->CreateNeg(SubOp->getOperand(1));
             }
 
             Value *NewTrueOp = OtherAddOp;
             Value *NewFalseOp = NegVal;
             if (AddOp != TI)
               std::swap(NewTrueOp, NewFalseOp);
-            Instruction *NewSel =
-              SelectInst::Create(CondVal, NewTrueOp,
-                                 NewFalseOp, SI.getName() + ".p");
+            Value *NewSel = 
+              Builder->CreateSelect(CondVal, NewTrueOp,
+                                    NewFalseOp, SI.getName() + ".p");
 
-            NewSel = InsertNewInstBefore(NewSel, SI);
             if (SI.getType()->isFloatingPointTy())
               return BinaryOperator::CreateFAdd(SubOp->getOperand(0), NewSel);
             else
