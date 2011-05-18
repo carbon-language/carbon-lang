@@ -633,7 +633,7 @@ CommandCompletions::SymbolCompleter::SearchCallback (
                 }
                 else if (sc.symbol && sc.symbol->GetAddressRangePtr())
                 {
-                    m_match_set.insert (sc.symbol->GetMangled().GetDemangledName());
+                    m_match_set.insert (sc.symbol->GetMangled().GetName());
                 }
             }
         }
