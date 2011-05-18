@@ -2279,6 +2279,22 @@ public:
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const {
     return 13;
   }
+
+  bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
+                               llvm::Value *Address) const {
+    CodeGen::CGBuilderTy &Builder = CGF.Builder;
+    llvm::LLVMContext &Context = CGF.getLLVMContext();
+
+    const llvm::IntegerType *i8 = llvm::Type::getInt8Ty(Context);
+    llvm::Value *Four8 = llvm::ConstantInt::get(i8, 4);
+
+    // 0-15 are the 16 integer registers.
+    AssignToArrayRange(Builder, Address, Four8, 0, 15);
+
+    return false;
+  }
+
+
 };
 
 }
