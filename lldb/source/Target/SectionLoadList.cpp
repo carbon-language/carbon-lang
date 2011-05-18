@@ -194,15 +194,17 @@ SectionLoadList::ResolveLoadAddress (addr_t load_addr, Address &so_addr) const
         }
         else
         {
-            pos = m_addr_to_sect.begin();
-            if (load_addr >= pos->first)
+            // There are no entries that have an address that is >= load_addr,
+            // so we need to check the last entry on our collection.
+            addr_to_sect_collection::const_reverse_iterator rpos = m_addr_to_sect.rbegin();
+            if (load_addr >= rpos->first)
             {
-                addr_t offset = load_addr - pos->first;
-                if (offset < pos->second->GetByteSize())
+                addr_t offset = load_addr - rpos->first;
+                if (offset < rpos->second->GetByteSize())
                 {
                     // We have found the top level section, now we need to find the
                     // deepest child section.
-                    return pos->second->ResolveContainedAddress (offset, so_addr);
+                    return rpos->second->ResolveContainedAddress (offset, so_addr);
                 }
             }
         }
