@@ -2693,13 +2693,12 @@ SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       }
 
       if (True.getNode() && False.getNode()) {
-        EVT VT = Cond.getValueType();
+        EVT VT = Op.getValueType();
         SDValue ARMcc = Cond.getOperand(2);
         SDValue CCR = Cond.getOperand(3);
         SDValue Cmp = duplicateCmp(Cond.getOperand(4), DAG);
-        return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(),
-                           DAG.getNode(ARMISD::CMOV, dl, VT, True, False,
-                                       ARMcc, CCR, Cmp));
+        assert(True.getValueType() == VT);
+        return DAG.getNode(ARMISD::CMOV, dl, VT, True, False, ARMcc, CCR, Cmp);
       }
     }
   }
