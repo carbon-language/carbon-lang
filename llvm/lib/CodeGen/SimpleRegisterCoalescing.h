@@ -103,10 +103,6 @@ namespace llvm {
     /// use this information below to update aliases.
     bool JoinIntervals(CoalescerPair &CP);
 
-    /// Return true if the two specified registers belong to different register
-    /// classes.  The registers may be either phys or virt regs.
-    bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
-
     /// AdjustCopiesBackFrom - We found a non-trivially-coalescable copy. If
     /// the source value number is defined by a copy from the destination reg
     /// see if we can merge these two destination reg valno# into a single
@@ -123,13 +119,6 @@ namespace llvm {
     /// its other operand is coalesced to the copy dest register, see if we
     /// can transform the copy into a noop by commuting the definition.
     bool RemoveCopyByCommutingDef(const CoalescerPair &CP,MachineInstr *CopyMI);
-
-    /// TrimLiveIntervalToLastUse - If there is a last use in the same basic
-    /// block as the copy instruction, trim the ive interval to the last use
-    /// and return true.
-    bool TrimLiveIntervalToLastUse(SlotIndex CopyIdx,
-                                   MachineBasicBlock *CopyMBB,
-                                   LiveInterval &li, const LiveRange *LR);
 
     /// ReMaterializeTrivialDef - If the source of a copy is defined by a trivial
     /// computation, replace the copy by rematerialize the definition.
@@ -156,16 +145,6 @@ namespace llvm {
     /// subregister.
     void UpdateRegDefsUses(const CoalescerPair &CP);
 
-    /// ShortenDeadCopyLiveRange - Shorten a live range defined by a dead copy.
-    /// Return true if live interval is removed.
-    bool ShortenDeadCopyLiveRange(LiveInterval &li, MachineInstr *CopyMI);
-
-    /// ShortenDeadCopyLiveRange - Shorten a live range as it's artificially
-    /// extended by a dead copy. Mark the last use (if any) of the val# as kill
-    /// as ends the live range there. If there isn't another use, then this
-    /// live range is dead. Return true if live interval is removed.
-    bool ShortenDeadCopySrcLiveRange(LiveInterval &li, MachineInstr *CopyMI);
-
     /// RemoveDeadDef - If a def of a live interval is now determined dead,
     /// remove the val# it defines. If the live interval becomes empty, remove
     /// it as well.
@@ -174,11 +153,6 @@ namespace llvm {
     /// RemoveCopyFlag - If DstReg is no longer defined by CopyMI, clear the
     /// VNInfo copy flag for DstReg and all aliases.
     void RemoveCopyFlag(unsigned DstReg, const MachineInstr *CopyMI);
-
-    /// lastRegisterUse - Returns the last use of the specific register between
-    /// cycles Start and End or NULL if there are no uses.
-    MachineOperand *lastRegisterUse(SlotIndex Start, SlotIndex End,
-                                    unsigned Reg, SlotIndex &LastUseIdx) const;
 
     /// markAsJoined - Remember that CopyMI has already been joined.
     void markAsJoined(MachineInstr *CopyMI);
