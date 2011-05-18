@@ -380,7 +380,7 @@ Module::FindFunctions (const RegularExpression& regex,
     
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
-        return symbols->FindFunctions(regex, append, sc_list);
+        symbols->FindFunctions(regex, append, sc_list);
     // Now check our symbol table for symbols that are code symbols if requested
     if (include_symbols)
     {
