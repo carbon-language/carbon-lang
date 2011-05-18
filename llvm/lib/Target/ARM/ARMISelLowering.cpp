@@ -2697,7 +2697,9 @@ SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
         SDValue ARMcc = Cond.getOperand(2);
         SDValue CCR = Cond.getOperand(3);
         SDValue Cmp = duplicateCmp(Cond.getOperand(4), DAG);
-        return DAG.getNode(ARMISD::CMOV, dl, VT, True, False, ARMcc, CCR, Cmp);
+        return DAG.getNode(ISD::BITCAST, dl, Op.getValueType(),
+                           DAG.getNode(ARMISD::CMOV, dl, VT, True, False,
+                                       ARMcc, CCR, Cmp));
       }
     }
   }
