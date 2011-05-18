@@ -957,7 +957,7 @@ static bool DisassembleThumb1CondBr(MCInst &MI, unsigned Opcode, uint32_t insn,
 
   unsigned Imm8 = getT1Imm8(insn);
   MI.addOperand(MCOperand::CreateImm(
-                  Opcode == ARM::tBcc ? SignExtend32<9>(Imm8 << 1) + 4
+                  Opcode == ARM::tBcc ? SignExtend32<9>(Imm8 << 1)
                                       : (int)Imm8));
 
   // Predicate operands by ARMBasicMCBuilder::TryPredicateAndSBitModifier().
