@@ -928,102 +928,66 @@ void MCAsmStreamer::EmitCFIAdjustCfaOffset(int64_t Adjustment) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler)
-{
-  //MCStreamer::EmitWin64EHStartProc(Symbol, EHandler);
-
+void MCAsmStreamer::EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler) {
   OS << ".w64_startproc " << *Symbol;
   if (EHandler)
     OS << ", " << *EHandler;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHEndProc()
-{
-  //MCStreamer::EmitWin64EHEndProc();
-
+void MCAsmStreamer::EmitWin64EHEndProc() {
   OS << "\t.w64_endproc";
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHStartChained()
-{
-  //MCStreamer::EmitWin64EHStartChained();
-
+void MCAsmStreamer::EmitWin64EHStartChained() {
   OS << "\t.w64_startchained";
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHEndChained()
-{
-  //MCStreamer::EmitWin64EHEndChained();
-
+void MCAsmStreamer::EmitWin64EHEndChained() {
   OS << "\t.w64_endchained";
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHUnwindOnly()
-{
-  //MCStreamer::EmitWin64EHUnwindOnly();
-
+void MCAsmStreamer::EmitWin64EHUnwindOnly() {
   OS << "\t.w64_unwind_only";
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHLsda(const MCSymbol *Sym, int64_t Size)
-{
-  //MCStreamer::EmitWin64EHLsda(Sym, Size);
-
+void MCAsmStreamer::EmitWin64EHLsda(const MCSymbol *Sym, int64_t Size) {
   OS << "\t.w64_lsda " << *Sym << ", " << Size;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHPushReg(int64_t Register)
-{
-  //MCStreamer::EmitWin64EHPushReg(Register);
-
+void MCAsmStreamer::EmitWin64EHPushReg(int64_t Register) {
   OS << "\t.w64_pushreg " << Register;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHSetFrame(int64_t Register, int64_t Offset)
-{
-  //MCStreamer::EmitWin64EHSetFrame(Register, Offset);
-
+void MCAsmStreamer::EmitWin64EHSetFrame(int64_t Register, int64_t Offset) {
   OS << "\t.w64_setframe " << Register << ", " << Offset;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHAllocStack(int64_t Size)
-{
-  //MCStremaer::EmitWin64EHAllocStack(Size);
-
+void MCAsmStreamer::EmitWin64EHAllocStack(int64_t Size) {
   OS << "\t.w64_allocstack " << Size;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHSaveReg(int64_t Register, int64_t Offset)
-{
-  //MCStreamer::EmitWin64EHSaveReg(Register, Offset)
-
+void MCAsmStreamer::EmitWin64EHSaveReg(int64_t Register, int64_t Offset) {
   OS << "\t.w64_savereg " << Register << ", " << Offset;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHPushFrame(bool Code)
-{
-  //MCStreamer::EmitWin64EHPushFrame(Code);
-
+void MCAsmStreamer::EmitWin64EHPushFrame(bool Code) {
   OS << "\t.w64_pushframe";
   if (Code)
     OS << " " << "code";
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHEndProlog(void)
-{
-  //MCStreamer::EmitWin64EHEndProlog();
-
+void MCAsmStreamer::EmitWin64EHEndProlog(void) {
   OS << "\t.w64_endprolog";
   EmitEOL();
 }
