@@ -722,18 +722,39 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
     // Only handle register returns for now.
     if (!VA.isRegLoc())
       return false;
-    // TODO: For now, don't try to handle cases where getLocInfo()
-    // says Full but the types don't match.
-    if (TLI.getValueType(RV->getType()) != VA.getValVT())
-      return false;
 
     // The calling-convention tables for x87 returns don't tell
     // the whole story.
     if (VA.getLocReg() == X86::ST0 || VA.getLocReg() == X86::ST1)
       return false;
 
-    // Make the copy.
     unsigned SrcReg = Reg + VA.getValNo();
+    EVT SrcVT = TLI.getValueType(RV->getType());
+    EVT DstVT = VA.getValVT();
+    // Special handling for extended integers.
+    if (SrcVT != DstVT) {
+      return false;
+      if (SrcVT != MVT::i1 && SrcVT != MVT::i8 && SrcVT != MVT::i16)
+        return false;
+
+      if (!Outs[0].Flags.isZExt() && !Outs[0].Flags.isSExt())
+        return false;
+
+      assert(DstVT == MVT::i32 && "X86 should always ext to i32");
+
+      if (SrcVT == MVT::i1) {
+        if (Outs[0].Flags.isSExt())
+          return false;
+        SrcReg = FastEmitZExtFromI1(MVT::i8, SrcReg, /*TODO: Kill=*/false);
+        SrcVT = MVT::i8;
+      }
+      unsigned Op = Outs[0].Flags.isZExt() ? ISD::ZERO_EXTEND :
+                                             ISD::SIGN_EXTEND;
+      SrcReg = FastEmit_r(SrcVT.getSimpleVT(), DstVT.getSimpleVT(), Op,
+                          SrcReg, /*TODO: Kill=*/false);
+    }
+
+    // Make the copy.
     unsigned DstReg = VA.getLocReg();
     const TargetRegisterClass* SrcRC = MRI.getRegClass(SrcReg);
     // Avoid a cross-class copy. This is very unlikely.

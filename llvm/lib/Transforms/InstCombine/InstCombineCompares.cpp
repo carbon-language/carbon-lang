@@ -469,8 +469,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
 ///
 /// If we can't emit an optimized form for this expression, this returns null.
 /// 
-static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
-                                          InstCombiner &IC) {
+static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC) {
   TargetData &TD = *IC.getTargetData();
   gep_type_iterator GTI = gep_type_begin(GEP);
   
@@ -533,10 +532,10 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
     // Cast to intptrty in case a truncation occurs.  If an extension is needed,
     // we don't need to bother extending: the extension won't affect where the
     // computation crosses zero.
-    if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth)
-      VariableIdx = new TruncInst(VariableIdx, 
-                                  TD.getIntPtrType(VariableIdx->getContext()),
-                                  VariableIdx->getName(), &I);
+    if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth) {
+      const Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
+      VariableIdx = IC.Builder->CreateTrunc(VariableIdx, IntPtrTy);
+    }
     return VariableIdx;
   }
   
@@ -558,11 +557,10 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
   // Okay, we can do this evaluation.  Start by converting the index to intptr.
   const Type *IntPtrTy = TD.getIntPtrType(VariableIdx->getContext());
   if (VariableIdx->getType() != IntPtrTy)
-    VariableIdx = CastInst::CreateIntegerCast(VariableIdx, IntPtrTy,
-                                              true /*SExt*/, 
-                                              VariableIdx->getName(), &I);
+    VariableIdx = IC.Builder->CreateIntCast(VariableIdx, IntPtrTy,
+                                            true /*Signed*/);
   Constant *OffsetVal = ConstantInt::get(IntPtrTy, NewOffs);
-  return BinaryOperator::CreateAdd(VariableIdx, OffsetVal, "offset", &I);
+  return IC.Builder->CreateAdd(VariableIdx, OffsetVal, "offset");
 }
 
 /// FoldGEPICmp - Fold comparisons between a GEP instruction and something
@@ -580,7 +578,7 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
     // This transformation (ignoring the base and scales) is valid because we
     // know pointers can't overflow since the gep is inbounds.  See if we can
     // output an optimized form.
-    Value *Offset = EvaluateGEPOffsetExpression(GEPLHS, I, *this);
+    Value *Offset = EvaluateGEPOffsetExpression(GEPLHS, *this);
     
     // If not, synthesize the offset the hard way.
     if (Offset == 0)
