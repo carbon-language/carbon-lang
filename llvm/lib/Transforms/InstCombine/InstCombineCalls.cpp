@@ -598,8 +598,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     unsigned VWidth =
       cast<VectorType>(II->getArgOperand(0)->getType())->getNumElements();
     unsigned LowHalfElts = VWidth / 2;
-    APInt InputDemandedElts(VWidth, 0);
-    InputDemandedElts = InputDemandedElts.getBitsSet(VWidth, 0, LowHalfElts);
+    APInt InputDemandedElts(APInt::getBitsSet(VWidth, 0, LowHalfElts));
     APInt UndefElts(VWidth, 0);
     if (Value *TmpV = SimplifyDemandedVectorElts(II->getArgOperand(0),
                                                  InputDemandedElts,
