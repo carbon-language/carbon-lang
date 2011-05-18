@@ -468,6 +468,15 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(X86::ST5);
   Reserved.set(X86::ST6);
   Reserved.set(X86::ST7);
+
+  // Mark the segment registers as reserved.
+  Reserved.set(X86::CS);
+  Reserved.set(X86::SS);
+  Reserved.set(X86::DS);
+  Reserved.set(X86::ES);
+  Reserved.set(X86::FS);
+  Reserved.set(X86::GS);
+
   return Reserved;
 }
 
