@@ -198,7 +198,7 @@ declare i32 @foo6(i32, i32, %struct.t* byval align 4)
 
 ; rdar://r7717598
 %struct.ns = type { i32, i32 }
-%struct.cp = type { float, float }
+%struct.cp = type { float, float, float, float, float }
 
 define %struct.ns* @t13(%struct.cp* %yy) nounwind ssp {
 ; 32: t13:
