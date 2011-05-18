@@ -1,5 +1,5 @@
 ; RUN: llc < %s -fast-isel -fast-isel-abort -march=x86 -mattr=sse2
-; RUN: llc < %s -fast-isel -fast-isel-abort -march=x86-64
+; RUN: llc < %s -fast-isel -fast-isel-abort -mtriple=x86_64-apple-darwin10
 
 ; This tests very minimal fast-isel functionality.
 
