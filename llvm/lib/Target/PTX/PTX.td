@@ -24,6 +24,9 @@ include "llvm/Target/Target.td"
 def FeatureDouble : SubtargetFeature<"double", "SupportsDouble", "true",
                                      "Do not demote .f64 to .f32">;
 
+def FeatureNoFMA  : SubtargetFeature<"no-fma","SupportsFMA", "false",
+                                     "Disable Fused-Multiply Add">;
+
 //===- PTX Version --------------------------------------------------------===//
 
 def FeaturePTX20 : SubtargetFeature<"ptx20", "PTXVersion", "PTX_VERSION_2_0",

@@ -49,7 +49,10 @@ namespace llvm {
 
       // The native .f64 type is supported on the hardware.
       bool SupportsDouble;
-
+      
+      // Support the fused-multiply add (FMA) and multiply-add (MAD) instructions
+      bool SupportsFMA;
+      
       // Use .u64 instead of .u32 for addresses.
       bool Is64Bit;
 
@@ -64,6 +67,8 @@ namespace llvm {
 
       bool is64Bit() const { return Is64Bit; }
 
+      bool supportsFMA() const { return SupportsFMA; }
+      
       bool supportsSM13() const { return PTXShaderModel >= PTX_SM_1_3; }
 
       bool supportsSM20() const { return PTXShaderModel >= PTX_SM_2_0; }

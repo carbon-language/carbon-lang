@@ -39,6 +39,10 @@ def DoesNotSupportPTX22 : Predicate<"!getSubtarget().supportsPTX22()">;
 def SupportsPTX23       : Predicate<"getSubtarget().supportsPTX23()">;
 def DoesNotSupportPTX23 : Predicate<"!getSubtarget().supportsPTX23()">;
 
+// Fused-Multiply Add
+def SupportsFMA         : Predicate<"getSubtarget().supportsFMA()">;
+def DoesNotSupportFMA   : Predicate<"!getSubtarget().supportsFMA()">;
+
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff
 //===----------------------------------------------------------------------===//
@@ -629,8 +633,8 @@ def FDIVri64SM10 : InstPTX<(outs RRegf64:$d),
 // In the short term, mad is supported on all PTX versions and we use a
 // default rounding mode no matter what shader model or PTX version.
 // TODO: Allow the rounding mode to be selectable through llc.
-defm FMADSM13 : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>, Requires<[SupportsSM13]>;
-defm FMAD : PTX_FLOAT_4OP<"mad", fmul, fadd>, Requires<[DoesNotSupportSM13]>;
+defm FMADSM13 : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>, Requires<[SupportsSM13, SupportsFMA]>;
+defm FMAD : PTX_FLOAT_4OP<"mad", fmul, fadd>, Requires<[DoesNotSupportSM13, SupportsFMA]>;
 
 ///===- Floating-Point Intrinsic Instructions -----------------------------===//
 
@@ -666,6 +670,8 @@ def FCOS64 : InstPTX<(outs RRegf64:$d),
 
 
 ///===- Comparison and Selection Instructions -----------------------------===//
+
+// .setp
 
 // Compare u16
 
