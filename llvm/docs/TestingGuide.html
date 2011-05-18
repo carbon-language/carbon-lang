@@ -365,8 +365,8 @@ clang/test directory. </p>
   obtained by using Tcl's glob command.  Any directory that contains only
   directories does not need the <tt>dg.exp</tt> file.</p>
 
-  <p>The <tt>llvm-runtests</tt> function lookas at each file that is passed to
-  it and gathers any lines together that match "RUN:". This are the "RUN" lines
+  <p>The <tt>llvm-runtests</tt> function looks at each file that is passed to
+  it and gathers any lines together that match "RUN:". These are the "RUN" lines
   that specify how the test is to be run. So, each test script must contain
   RUN lines if it is to do anything. If there are no RUN lines, the
   <tt>llvm-runtests</tt> function will issue an error and the test will
