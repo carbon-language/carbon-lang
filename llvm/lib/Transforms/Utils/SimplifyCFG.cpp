@@ -65,7 +65,7 @@ class SimplifyCFGOpt {
   bool SimplifyUnreachable(UnreachableInst *UI);
   bool SimplifySwitch(SwitchInst *SI);
   bool SimplifyIndirectBr(IndirectBrInst *IBI);
-  bool SimplifyUncondBranch(BranchInst *BI);
+  bool SimplifyUncondBranch(BranchInst *BI, IRBuilder <> &Builder);
   bool SimplifyCondBranch(BranchInst *BI);
 
 public:
@@ -1923,8 +1923,10 @@ static bool SimplifyIndirectBrOnSelect(IndirectBrInst *IBI, SelectInst *SI) {
 /// We prefer to split the edge to 'end' so that there is a true/false entry to
 /// the PHI, merging the third icmp into the switch.
 static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI,
-                                                  const TargetData *TD) {
+                                                  const TargetData *TD,
+                                                  IRBuilder<> &Builder) {
   BasicBlock *BB = ICI->getParent();
+
   // If the block has any PHIs in it or the icmp has multiple uses, it is too
   // complex.
   if (isa<PHINode>(BB->begin()) || !ICI->hasOneUse()) return false;
@@ -2002,7 +2004,9 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI,
   SI->addCase(Cst, NewBB);
   
   // NewBB branches to the phi block, add the uncond branch and the phi entry.
-  BranchInst::Create(SuccBlock, NewBB);
+  Builder.SetInsertPoint(NewBB);
+  Builder.SetCurrentDebugLocation(SI->getDebugLoc());
+  Builder.CreateBr(SuccBlock);
   PHIUse->addIncoming(NewCst, NewBB);
   return true;
 }
@@ -2503,7 +2507,7 @@ bool SimplifyCFGOpt::SimplifyIndirectBr(IndirectBrInst *IBI) {
   return Changed;
 }
 
-bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI) {
+bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
   BasicBlock *BB = BI->getParent();
   
   // If the Terminator is the only non-phi instruction, simplify the block.
@@ -2518,7 +2522,8 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI) {
     if (ICI->isEquality() && isa<ConstantInt>(ICI->getOperand(1))) {
       for (++I; isa<DbgInfoIntrinsic>(I); ++I)
         ;
-      if (I->isTerminator() && TryToSimplifyUncondBranchWithICmpInIt(ICI, TD))
+      if (I->isTerminator() 
+          && TryToSimplifyUncondBranchWithICmpInIt(ICI, TD, Builder))
         return true;
     }
   
@@ -2651,7 +2656,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
 
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (BI->isUnconditional()) {
-      if (SimplifyUncondBranch(BI)) return true;
+      if (SimplifyUncondBranch(BI, Builder)) return true;
     } else {
       if (SimplifyCondBranch(BI)) return true;
     }
