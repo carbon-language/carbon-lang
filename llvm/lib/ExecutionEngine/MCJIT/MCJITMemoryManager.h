@@ -36,6 +36,11 @@ public:
     //        prefix.
     if (Name[0] == '_') ++Name;
     Function *F = M->getFunction(Name);
+    // Some ObjC names have a prefixed \01 in the IR. If we failed to find
+    // the symbol and it's of the ObjC conventions (starts with "-"), try
+    // prepending a \01 and see if we can find it that way.
+    if (!F && Name[0] == '-')
+      F = M->getFunction((Twine("\1") + Name).str());
     assert(F && "No matching function in JIT IR Module!");
     return JMM->startFunctionBody(F, Size);
   }
@@ -48,6 +53,11 @@ public:
     //        prefix.
     if (Name[0] == '_') ++Name;
     Function *F = M->getFunction(Name);
+    // Some ObjC names have a prefixed \01 in the IR. If we failed to find
+    // the symbol and it's of the ObjC conventions (starts with "-"), try
+    // prepending a \01 and see if we can find it that way.
+    if (!F && Name[0] == '-')
+      F = M->getFunction((Twine("\1") + Name).str());
     assert(F && "No matching function in JIT IR Module!");
     JMM->endFunctionBody(F, FunctionStart, FunctionEnd);
   }
