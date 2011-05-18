@@ -2073,6 +2073,10 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
         // x == y  -->  x - y == 0
         const SCEV *N = SE.getSCEV(NV);
         if (SE.isLoopInvariant(N, L)) {
+          // S is normalized, so normalize N before folding it into S
+          // to keep the result normalized.
+          N = TransformForPostIncUse(Normalize, N, CI, 0,
+                                     LF.PostIncLoops, SE, DT);
           Kind = LSRUse::ICmpZero;
           S = SE.getMinusSCEV(N, S);
         }
