@@ -2,10 +2,10 @@
 
 struct non_trivial {
   non_trivial();
-  ~non_trivial() noexcept(false);
+  ~non_trivial();
 };
 non_trivial::non_trivial() {}
-non_trivial::~non_trivial() noexcept(false) {}
+non_trivial::~non_trivial() {}
 
 // We use a virtual base to ensure that the constructor
 // delegation optimization (complete->base) can't be

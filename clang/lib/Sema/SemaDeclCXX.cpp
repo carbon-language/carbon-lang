@@ -6222,18 +6222,18 @@ Sema::ComputeDefaultedDtorExceptionSpec(CXXRecordDecl *ClassDecl) {
     
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
       ExceptSpec.CalledDecl(
-                   LookupDestructor(cast<CXXRecordDecl>(BaseType->getDecl())));
+                    LookupDestructor(cast<CXXRecordDecl>(BaseType->getDecl())));
   }
-
+  
   // Virtual base-class destructors.
   for (CXXRecordDecl::base_class_iterator B = ClassDecl->vbases_begin(),
                                        BEnd = ClassDecl->vbases_end();
        B != BEnd; ++B) {
     if (const RecordType *BaseType = B->getType()->getAs<RecordType>())
       ExceptSpec.CalledDecl(
-                  LookupDestructor(cast<CXXRecordDecl>(BaseType->getDecl())));
+                    LookupDestructor(cast<CXXRecordDecl>(BaseType->getDecl())));
   }
-
+  
   // Field destructors.
   for (RecordDecl::field_iterator F = ClassDecl->field_begin(),
                                FEnd = ClassDecl->field_end();
@@ -6241,7 +6241,7 @@ Sema::ComputeDefaultedDtorExceptionSpec(CXXRecordDecl *ClassDecl) {
     if (const RecordType *RecordTy
         = Context.getBaseElementType(F->getType())->getAs<RecordType>())
       ExceptSpec.CalledDecl(
-                  LookupDestructor(cast<CXXRecordDecl>(RecordTy->getDecl())));
+                    LookupDestructor(cast<CXXRecordDecl>(RecordTy->getDecl())));
   }
 
   return ExceptSpec;
@@ -6254,7 +6254,7 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   //   inline public member of its class.
   
   ImplicitExceptionSpecification Spec =
-      ComputeDefaultedDtorExceptionSpec(ClassDecl); 
+   ComputeDefaultedDtorExceptionSpec(ClassDecl); 
   FunctionProtoType::ExtProtoInfo EPI = Spec.getEPI();
 
   // Create the actual destructor declaration.
@@ -6327,35 +6327,6 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(Destructor);
   }
-}
-
-void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *classDecl,
-                                         CXXDestructorDecl *destructor) {
-  // C++11 [class.dtor]p3:
-  //   A declaration of a destructor that does not have an exception-
-  //   specification is implicitly considered to have the same exception-
-  //   specification as an implicit declaration.
-  const FunctionProtoType *dtorType = destructor->getType()->
-                                        getAs<FunctionProtoType>();
-  if (dtorType->hasExceptionSpec())
-    return;
-
-  ImplicitExceptionSpecification exceptSpec =
-      ComputeDefaultedDtorExceptionSpec(classDecl);
-
-  // Replace the destructor's type.
-  FunctionProtoType::ExtProtoInfo epi;
-  epi.ExceptionSpecType = exceptSpec.getExceptionSpecType();
-  epi.NumExceptions = exceptSpec.size();
-  epi.Exceptions = exceptSpec.data();
-  QualType ty = Context.getFunctionType(Context.VoidTy, 0, 0, epi);
-
-  destructor->setType(ty);
-
-  // FIXME: If the destructor has a body that could throw, and the newly created
-  // spec doesn't allow exceptions, we should emit a warning, because this
-  // change in behavior can break conforming C++03 programs at runtime.
-  // However, we don't have a body yet, so it needs to be done somewhere else.
 }
 
 /// \brief Builds a statement that copies the given entity from \p From to
