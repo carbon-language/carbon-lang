@@ -57,16 +57,17 @@ class SimplifyCFGOpt {
   BasicBlock *GetValueEqualityComparisonCases(TerminatorInst *TI,
     std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases);
   bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
-                                                     BasicBlock *Pred);
+                                                     BasicBlock *Pred,
+                                                     IRBuilder<> &Builder);
   bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI);
 
   bool SimplifyReturn(ReturnInst *RI);
   bool SimplifyUnwind(UnwindInst *UI, IRBuilder<> &Builder);
   bool SimplifyUnreachable(UnreachableInst *UI);
-  bool SimplifySwitch(SwitchInst *SI);
+  bool SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder);
   bool SimplifyIndirectBr(IndirectBrInst *IBI);
   bool SimplifyUncondBranch(BranchInst *BI, IRBuilder <> &Builder);
-  bool SimplifyCondBranch(BranchInst *BI);
+  bool SimplifyCondBranch(BranchInst *BI, IRBuilder <>&Builder);
 
 public:
   explicit SimplifyCFGOpt(const TargetData *td) : TD(td) {}
@@ -543,7 +544,8 @@ ValuesOverlap(std::vector<std::pair<ConstantInt*, BasicBlock*> > &C1,
 /// form of jump threading.
 bool SimplifyCFGOpt::
 SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
-                                              BasicBlock *Pred) {
+                                              BasicBlock *Pred,
+                                              IRBuilder<> &Builder) {
   Value *PredVal = isValueEqualityComparison(Pred->getTerminator());
   if (!PredVal) return false;  // Not a value comparison in predecessor.
 
@@ -576,7 +578,7 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
       // uncond br.
       assert(ThisCases.size() == 1 && "Branch can only have one case!");
       // Insert the new branch.
-      Instruction *NI = BranchInst::Create(ThisDef, TI);
+      Instruction *NI = Builder.CreateBr(ThisDef);
       (void) NI;
 
       // Remove PHI node entries for the dead edge.
@@ -641,7 +643,7 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
       CheckEdge = 0;
 
   // Insert the new branch.
-  Instruction *NI = BranchInst::Create(TheRealDest, TI);
+  Instruction *NI = Builder.CreateBr(TheRealDest);
   (void) NI;
 
   DEBUG(dbgs() << "Threading pred instr: " << *Pred->getTerminator()
@@ -2366,7 +2368,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
 
 /// TurnSwitchRangeIntoICmp - Turns a switch with that contains only a
 /// integer range comparison into a sub, an icmp and a branch.
-static bool TurnSwitchRangeIntoICmp(SwitchInst *SI) {
+static bool TurnSwitchRangeIntoICmp(SwitchInst *SI, IRBuilder<> &Builder) {
   assert(SI->getNumCases() > 2 && "Degenerate switch?");
 
   // Make sure all cases point to the same destination and gather the values.
@@ -2393,7 +2395,7 @@ static bool TurnSwitchRangeIntoICmp(SwitchInst *SI) {
   if (!Offset->isNullValue())
     Sub = BinaryOperator::CreateAdd(Sub, Offset, Sub->getName()+".off", SI);
   Value *Cmp = new ICmpInst(SI, ICmpInst::ICMP_ULT, Sub, NumCases, "switch");
-  BranchInst::Create(SI->getSuccessor(1), SI->getDefaultDest(), Cmp, SI);
+  Builder.CreateCondBr(Cmp, SI->getSuccessor(1), SI->getDefaultDest());
 
   // Prune obsolete incoming values off the successor's PHI nodes.
   for (BasicBlock::iterator BBI = SI->getSuccessor(1)->begin();
@@ -2436,7 +2438,7 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI) {
   return !DeadCases.empty();
 }
 
-bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
+bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   // If this switch is too complex to want to look at, ignore it.
   if (!isValueEqualityComparison(SI))
     return false;
@@ -2446,7 +2448,7 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
   // If we only have one predecessor, and if it is a branch on this value,
   // see if that predecessor totally determines the outcome of this switch.
   if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
-    if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred))
+    if (SimplifyEqualityComparisonWithOnlyPredecessor(SI, OnlyPred, Builder))
       return SimplifyCFG(BB) | true;
 
   Value *Cond = SI->getCondition();
@@ -2465,7 +2467,7 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI) {
       return SimplifyCFG(BB) | true;
 
   // Try to transform the switch into an icmp and a branch.
-  if (TurnSwitchRangeIntoICmp(SI))
+  if (TurnSwitchRangeIntoICmp(SI, Builder))
     return SimplifyCFG(BB) | true;
 
   // Remove unreachable cases.
@@ -2536,7 +2538,7 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
 }
 
 
-bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI) {
+bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   BasicBlock *BB = BI->getParent();
   
   // Conditional branch
@@ -2545,7 +2547,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI) {
     // see if that predecessor totally determines the outcome of this
     // switch.
     if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
-      if (SimplifyEqualityComparisonWithOnlyPredecessor(BI, OnlyPred))
+      if (SimplifyEqualityComparisonWithOnlyPredecessor(BI, OnlyPred, Builder))
         return SimplifyCFG(BB) | true;
     
     // This block must be empty, except for the setcond inst, if it exists.
@@ -2659,16 +2661,17 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     if (PN->getNumIncomingValues() == 2)
       Changed |= FoldTwoEntryPHINode(PN, TD, Builder);
 
+  Builder.SetInsertPoint(BB->getTerminator());
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
     if (BI->isUnconditional()) {
       if (SimplifyUncondBranch(BI, Builder)) return true;
     } else {
-      if (SimplifyCondBranch(BI)) return true;
+      if (SimplifyCondBranch(BI, Builder)) return true;
     }
   } else if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
     if (SimplifyReturn(RI)) return true;
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
-    if (SimplifySwitch(SI)) return true;
+    if (SimplifySwitch(SI, Builder)) return true;
   } else if (UnreachableInst *UI =
                dyn_cast<UnreachableInst>(BB->getTerminator())) {
     if (SimplifyUnreachable(UI)) return true;
