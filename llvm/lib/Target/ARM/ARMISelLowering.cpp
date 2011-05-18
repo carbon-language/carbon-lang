@@ -4860,11 +4860,20 @@ ARMTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   unsigned ptr     = MI->getOperand(1).getReg();
   unsigned oldval  = MI->getOperand(2).getReg();
   unsigned newval  = MI->getOperand(3).getReg();
-  unsigned scratch = BB->getParent()->getRegInfo()
-    .createVirtualRegister(ARM::GPRRegisterClass);
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   bool isThumb2 = Subtarget->isThumb2();
+
+  MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
+  unsigned scratch =
+    MRI.createVirtualRegister(isThumb2 ? ARM::tGPRRegisterClass
+                                       : ARM::GPRRegisterClass);
+
+  if (isThumb2) {
+    MRI.constrainRegClass(dest, ARM::tGPRRegisterClass);
+    MRI.constrainRegClass(oldval, ARM::tGPRRegisterClass);
+    MRI.constrainRegClass(newval, ARM::tGPRRegisterClass);
+  }
 
   unsigned ldrOpc, strOpc;
   switch (Size) {
