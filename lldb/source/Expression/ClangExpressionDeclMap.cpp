@@ -495,7 +495,7 @@ bool
 ClangExpressionDeclMap::GetFunctionAddress 
 (
     const ConstString &name,
-    uint64_t &ptr
+    uint64_t &func_addr
 )
 {
     assert (m_parser_vars.get());
@@ -543,17 +543,17 @@ ClangExpressionDeclMap::GetFunctionAddress
     SymbolContext sym_ctx;
     sc_list.GetContextAtIndex(0, sym_ctx);
     
-    const Address *fun_address;
+    const Address *func_so_addr = NULL;
     
     if (sym_ctx.function)
-        fun_address = &sym_ctx.function->GetAddressRange().GetBaseAddress();
+        func_so_addr = &sym_ctx.function->GetAddressRange().GetBaseAddress();
     else if (sym_ctx.symbol)
-        fun_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
+        func_so_addr = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
     else
         return false;
     
-    ptr = fun_address->GetLoadAddress (m_parser_vars->m_exe_ctx->target);
-    
+    func_addr = func_so_addr->GetCallableLoadAddress (m_parser_vars->m_exe_ctx->target);
+
     return true;
 }
 
@@ -577,7 +577,7 @@ ClangExpressionDeclMap::GetSymbolAddress
     
     const Address *sym_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
     
-    ptr = sym_address->GetLoadAddress(&target);
+    ptr = sym_address->GetCallableLoadAddress(&target);
     
     return true;
 }
@@ -2294,9 +2294,9 @@ ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, const ClangNam
 }
 
 void
-ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
-                                       Function* fun,
-                                       Symbol* symbol)
+ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
+                                        Function* fun,
+                                        Symbol* symbol)
 {
     assert (m_parser_vars.get());
     
@@ -2350,7 +2350,7 @@ ClangExpressionDeclMap::AddOneFunction(NameSearchContext &context,
         return;
     }
     
-    lldb::addr_t load_addr = fun_address->GetLoadAddress(m_parser_vars->m_exe_ctx->target);
+    lldb::addr_t load_addr = fun_address->GetCallableLoadAddress(m_parser_vars->m_exe_ctx->target);
     fun_location->SetValueType(Value::eValueTypeLoadAddress);
     fun_location->GetScalar() = load_addr;
     

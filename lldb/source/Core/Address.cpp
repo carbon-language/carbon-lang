@@ -15,6 +15,8 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
+#include "llvm/ADT/Triple.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -292,6 +294,42 @@ Address::GetLoadAddress (Target *target) const
     // The section isn't resolved or no process was supplied so we can't
     // return a valid file address.
     return LLDB_INVALID_ADDRESS;
+}
+
+addr_t
+Address::GetCallableLoadAddress (Target *target) const
+{
+    addr_t code_addr = GetLoadAddress (target);
+    
+    if (m_section && code_addr != LLDB_INVALID_ADDRESS)
+    {
+        switch (target->GetArchitecture().GetMachine())
+        {
+            case llvm::Triple::arm:
+            case llvm::Triple::thumb:
+                // Check if bit zero it no set?
+                if ((code_addr & 1ull) == 0)
+                {
+                    // Bit zero isn't set, check if the address is a multiple of 2?
+                    if (code_addr & 2ull)
+                    {
+                        // The address is a multiple of 2 so it must be thumb, set bit zero
+                        code_addr |= 1ull;
+                    }
+                    else if (GetAddressClass() == eAddressClassCodeAlternateISA)
+                    {
+                        // We checked the address and the address claims to be the alternate ISA
+                        // which means thumb, so set bit zero.
+                        code_addr |= 1ull;
+                    }
+                }
+                break;
+                
+            default:
+                break;
+        }
+    }
+    return code_addr;
 }
 
 bool

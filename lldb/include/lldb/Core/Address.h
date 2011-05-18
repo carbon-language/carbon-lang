@@ -280,6 +280,23 @@ public:
     //------------------------------------------------------------------
     lldb::addr_t
     GetLoadAddress (Target *target) const;
+    
+    //------------------------------------------------------------------
+    /// Get the load address as a callable code load address.
+    ///
+    /// This function will first resolve its address to a load address.
+    /// Then, if the address turns out to be in code address, return the
+    /// load address that would be required to call or return to. The
+    /// address might have extra bits set (bit zero will be set to Thumb
+    /// functions for an ARM target) that are required when changing the
+    /// program counter to setting a return address.
+    ///
+    /// @return
+    ///     The valid load virtual address, or LLDB_INVALID_ADDRESS if
+    ///     the address is currently not loaded.
+    //------------------------------------------------------------------
+    lldb::addr_t
+    GetCallableLoadAddress (Target *target) const;
 
     //------------------------------------------------------------------
     /// Get the section relative offset value.

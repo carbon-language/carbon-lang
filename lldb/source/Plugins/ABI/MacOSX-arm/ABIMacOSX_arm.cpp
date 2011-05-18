@@ -126,24 +126,16 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
         }
     }
     
-    // Figure out if our return address is ARM or Thumb. We assume if we don't
-    // know about an address then it is ARM code.
 
     Target *target = &thread.GetProcess().GetTarget();
     Address so_addr;
-    bool ra_is_thumb = false;
-    if (return_addr & 3)
-        ra_is_thumb = true;
-    else if (so_addr.SetLoadAddress (return_addr, target))
-        ra_is_thumb = so_addr.GetAddressClass() == eAddressClassCodeAlternateISA;
 
-    // Set our clear bit zero for the return address if needed. We should never
-    // need to clear bit zero since the return address will either have bit zero
-    // or bit one (a thumb instruction on a two byte boundary) already set, or
-    // it won't and it will need it.
-    if (ra_is_thumb)
-        return_addr |= 1u;
-        
+    // Figure out if our return address is ARM or Thumb by using the 
+    // Address::GetCallableLoadAddress(Target*) which will figure out the ARM
+    // thumb-ness and set the correct address bits for us.
+    so_addr.SetLoadAddress (return_addr, target);
+    return_addr = so_addr.GetCallableLoadAddress (target);
+
     // Set "lr" to the return address
     if (!reg_ctx->WriteRegisterFromUnsigned (ra_reg_num, return_addr))
         return false;
@@ -152,15 +144,10 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
     if (!reg_ctx->WriteRegisterFromUnsigned (sp_reg_num, sp))
         return false;
     
-    bool pc_is_thumb = false;
-
     // If bit zero or 1 is set, this must be a thumb function, no need to figure
     // this out from the symbols.
-    if (function_addr & 3)
-        pc_is_thumb = true;
-    else if (so_addr.SetLoadAddress (function_addr, target))
-        pc_is_thumb = so_addr.GetAddressClass() == eAddressClassCodeAlternateISA;
-
+    so_addr.SetLoadAddress (function_addr, target);
+    function_addr = so_addr.GetCallableLoadAddress (target);
     
     const RegisterInfo *cpsr_reg_info = reg_ctx->GetRegisterInfoByName("cpsr");
     const uint32_t curr_cpsr = reg_ctx->ReadRegisterAsUnsigned(cpsr_reg_info, 0);
@@ -168,7 +155,7 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
     // Make a new CPSR and mask out any Thumb IT (if/then) bits
     uint32_t new_cpsr = curr_cpsr & ~MASK_CPSR_IT_MASK;
     // If bit zero or 1 is set, this must be thumb...
-    if (pc_is_thumb)
+    if (function_addr & 1ull)
         new_cpsr |= MASK_CPSR_T;    // Set T bit in CPSR
     else
         new_cpsr &= ~MASK_CPSR_T;   // Clear T bit in CPSR
@@ -179,7 +166,7 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
             return false;
     }
 
-    function_addr &= ~1u;   // clear bit zero since the CPSR will take care of the mode for us
+    function_addr &= ~1ull;   // clear bit zero since the CPSR will take care of the mode for us
     
     // Set "pc" to the address requested
     if (!reg_ctx->WriteRegisterFromUnsigned (pc_reg_num, function_addr))
