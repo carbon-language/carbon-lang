@@ -89,7 +89,8 @@ static inline const char *ARMCondCodeToString(uint32_t CC)
 #define CPSR_MODE_SYS  0x1fu
     
 // Masks for CPSR
-#define MASK_CPSR_MODE_MASK     (0x0000001fu)
+#define MASK_CPSR_MODE_MASK (0x0000001fu)
+#define MASK_CPSR_IT_MASK   (0x0600fc00u)
 #define MASK_CPSR_T         (1u << CPSR_T_POS)
 #define MASK_CPSR_F         (1u << CPSR_F_POS)
 #define MASK_CPSR_I         (1u << CPSR_I_POS)

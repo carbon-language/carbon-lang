@@ -137,21 +137,13 @@ ThreadPlanAssemblyTracer::TracingStarted ()
     RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
     
     if (m_register_values.size() == 0)
-    {
-        for (uint32_t reg_index = 0, num_registers = reg_ctx->GetRegisterCount();
-             reg_index < num_registers;
-             ++reg_index)
-            m_register_values.push_back(0);
-    }
+        m_register_values.resize (reg_ctx->GetRegisterCount());
 }
 
 void
 ThreadPlanAssemblyTracer::TracingEnded ()
 {
-    for (uint32_t reg_index = 0, num_registers = m_register_values.size();
-         reg_index < num_registers;
-         ++reg_index)
-        m_register_values[reg_index] = 0;
+    m_register_values.clear();
 }
 
 static void
@@ -178,17 +170,10 @@ ThreadPlanAssemblyTracer::Log ()
     lldb::addr_t pc = reg_ctx->GetPC();
     Address pc_addr;
     bool addr_valid = false;
-    
-    StreamString desc;
-    
-    int desired_width = 0;
-    
+
     addr_valid = m_process.GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, pc_addr);
     
-    pc_addr.Dump(&desc, &m_thread, Address::DumpStyleResolvedDescription, Address::DumpStyleModuleWithFileAddress);
-    
-    desired_width += 64;
-    PadOutTo(desc, desired_width);
+    pc_addr.Dump(stream, &m_thread, Address::DumpStyleResolvedDescription, Address::DumpStyleModuleWithFileAddress);
     
     if (m_disassembler)
     {        
@@ -213,18 +198,17 @@ ThreadPlanAssemblyTracer::Log ()
 
             if (instruction_list.GetSize())
             {
+                const bool show_bytes = true;
+                const bool show_address = true;
                 Instruction *instruction = instruction_list.GetInstructionAtIndex(0).get();
-                instruction->Dump (&desc,
+                instruction->Dump (stream,
                                    max_opcode_byte_size,
-                                   false,
-                                   false,
+                                   show_address,
+                                   show_bytes,
                                    NULL, 
                                    true);
             }
         }
-        
-        desired_width += 32;
-        PadOutTo(desc, desired_width);
     }
     
     if (m_abi && m_intptr_type.GetOpaqueQualType())
@@ -244,30 +228,35 @@ ThreadPlanAssemblyTracer::Log ()
         {                
             for (int arg_index = 0; arg_index < num_args; ++arg_index)
             {
-                desc.Printf("arg[%d]=%llx", arg_index, value_list.GetValueAtIndex(arg_index)->GetScalar().ULongLong());
+                stream->Printf("\n\targ[%d]=%llx", arg_index, value_list.GetValueAtIndex(arg_index)->GetScalar().ULongLong());
                 
                 if (arg_index + 1 < num_args)
-                    desc.Printf(", ");
+                    stream->PutCString (", ");
             }
         }
     }
     
-    desired_width += 20;
-    PadOutTo(desc, desired_width);
     
-    for (uint32_t reg_index = 0, num_registers = reg_ctx->GetRegisterCount();
-         reg_index < num_registers;
-         ++reg_index)
+    RegisterValue reg_value;
+    for (uint32_t reg_num = 0, num_registers = reg_ctx->GetRegisterCount();
+         reg_num < num_registers;
+         ++reg_num)
     {
-        uint64_t reg_value = reg_ctx->ReadRegisterAsUnsigned(reg_index, 0x0);
-        
-        if (reg_value != m_register_values[reg_index])
+        const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex(reg_num);
+        if (reg_ctx->ReadRegister (reg_info, reg_value))
         {
-            desc.Printf ("%s:0x%llx->0x%llx ", reg_ctx->GetRegisterName(reg_index), m_register_values[reg_index], reg_value);
-            
-            m_register_values[reg_index] = reg_value;
+            assert (reg_num < m_register_values.size());
+            if (m_register_values[reg_num].GetType() == RegisterValue::eTypeInvalid || 
+                reg_value != m_register_values[reg_num])
+            {
+                if (reg_value.GetType() != RegisterValue::eTypeInvalid)
+                {
+                    stream->PutCString ("\n\t");
+                    reg_value.Dump(stream, reg_info, true, false, eFormatDefault);
+                }
+            }
+            m_register_values[reg_num] = reg_value;
         }
     }
-    
-    stream->Printf ("Single-step: %s\n", desc.GetString().c_str());
+    stream->EOL();
 }

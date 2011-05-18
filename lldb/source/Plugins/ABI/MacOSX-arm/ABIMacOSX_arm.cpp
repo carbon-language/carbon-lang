@@ -26,6 +26,7 @@
 #include "llvm/ADT/Triple.h"
 
 #include "Utility/ARM_DWARF_Registers.h"
+#include "Plugins/Process/Utility/ARMDefines.h"
 
 #include <vector>
 
@@ -107,6 +108,9 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
                         return false;
                     if (arg5_ptr)
                     {
+                        // Keep the stack 8 byte aligned, not that we need to
+                        sp -= 8;
+                        sp &= ~(8ull-1ull);
                         reg_value.SetUInt32(*arg5_ptr);
                         if (reg_ctx->WriteRegisterValueToMemory (reg_info, sp, reg_info->byte_size, reg_value).Fail())
                             return false;
@@ -121,8 +125,26 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
             }            
         }
     }
+    
+    // Figure out if our return address is ARM or Thumb. We assume if we don't
+    // know about an address then it is ARM code.
 
-    // Set "lr" to the return address into "lr"
+    Target *target = &thread.GetProcess().GetTarget();
+    Address so_addr;
+    bool ra_is_thumb = false;
+    if (return_addr & 3)
+        ra_is_thumb = true;
+    else if (so_addr.SetLoadAddress (return_addr, target))
+        ra_is_thumb = so_addr.GetAddressClass() == eAddressClassCodeAlternateISA;
+
+    // Set our clear bit zero for the return address if needed. We should never
+    // need to clear bit zero since the return address will either have bit zero
+    // or bit one (a thumb instruction on a two byte boundary) already set, or
+    // it won't and it will need it.
+    if (ra_is_thumb)
+        return_addr |= 1u;
+        
+    // Set "lr" to the return address
     if (!reg_ctx->WriteRegisterFromUnsigned (ra_reg_num, return_addr))
         return false;
 
@@ -130,10 +152,39 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
     if (!reg_ctx->WriteRegisterFromUnsigned (sp_reg_num, sp))
         return false;
     
+    bool pc_is_thumb = false;
+
+    // If bit zero or 1 is set, this must be a thumb function, no need to figure
+    // this out from the symbols.
+    if (function_addr & 3)
+        pc_is_thumb = true;
+    else if (so_addr.SetLoadAddress (function_addr, target))
+        pc_is_thumb = so_addr.GetAddressClass() == eAddressClassCodeAlternateISA;
+
+    
+    const RegisterInfo *cpsr_reg_info = reg_ctx->GetRegisterInfoByName("cpsr");
+    const uint32_t curr_cpsr = reg_ctx->ReadRegisterAsUnsigned(cpsr_reg_info, 0);
+
+    // Make a new CPSR and mask out any Thumb IT (if/then) bits
+    uint32_t new_cpsr = curr_cpsr & ~MASK_CPSR_IT_MASK;
+    // If bit zero or 1 is set, this must be thumb...
+    if (pc_is_thumb)
+        new_cpsr |= MASK_CPSR_T;    // Set T bit in CPSR
+    else
+        new_cpsr &= ~MASK_CPSR_T;   // Clear T bit in CPSR
+
+    if (new_cpsr != curr_cpsr)
+    {
+        if (!reg_ctx->WriteRegisterFromUnsigned (cpsr_reg_info, new_cpsr))
+            return false;
+    }
+
+    function_addr &= ~1u;   // clear bit zero since the CPSR will take care of the mode for us
+    
     // Set "pc" to the address requested
     if (!reg_ctx->WriteRegisterFromUnsigned (pc_reg_num, function_addr))
         return false;
-    
+
     return true;
 }
 

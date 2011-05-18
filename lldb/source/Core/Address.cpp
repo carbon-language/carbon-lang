@@ -821,3 +821,14 @@ Address::GetAddressClass () const
     }
     return eAddressClassUnknown;
 }
+
+bool
+Address::SetLoadAddress (lldb::addr_t load_addr, Target *target)
+{
+    if (target && target->GetSectionLoadList().ResolveLoadAddress(load_addr, *this))
+        return true;
+    m_section = NULL;
+    m_offset = load_addr;
+    return false;
+}
+

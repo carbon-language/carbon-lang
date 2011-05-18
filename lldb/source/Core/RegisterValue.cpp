@@ -73,7 +73,7 @@ RegisterValue::Dump (Stream *s,
         data.Dump (s, 
                    0,                       // Offset in "data"
                    format,                  // Format to use when dumping
-                   reg_info->byte_size,        // item_byte_size
+                   reg_info->byte_size,     // item_byte_size
                    1,                       // item_count
                    UINT32_MAX,              // num_per_line
                    LLDB_INVALID_ADDRESS,    // base_addr
@@ -928,5 +928,75 @@ RegisterValue::SetBytes (const void *bytes, size_t length, lldb::ByteOrder byte_
         m_type = eTypeInvalid;
         m_data.buffer.length = 0;
     }
+}
+
+
+bool
+RegisterValue::operator == (const RegisterValue &rhs) const
+{
+    if (m_type == rhs.m_type)
+    {
+        switch (m_type)
+        {
+            case eTypeInvalid:      return true;
+            case eTypeUInt8:        return m_data.uint8 == rhs.m_data.uint8;
+            case eTypeUInt16:       return m_data.uint16 == rhs.m_data.uint16;
+            case eTypeUInt32:       return m_data.uint32 == rhs.m_data.uint32;
+            case eTypeUInt64:       return m_data.uint64 == rhs.m_data.uint64;
+#if defined (ENABLE_128_BIT_SUPPORT)
+            case eTypeUInt128:      return m_data.uint128 == rhs.m_data.uint128;
+#endif
+            case eTypeFloat:        return m_data.ieee_float == rhs.m_data.ieee_float;
+            case eTypeDouble:       return m_data.ieee_double == rhs.m_data.ieee_double;
+            case eTypeLongDouble:   return m_data.ieee_long_double == rhs.m_data.ieee_long_double;
+            case eTypeBytes:        
+                if (m_data.buffer.length != rhs.m_data.buffer.length)
+                    return false;
+                else
+                {
+                    uint8_t length = m_data.buffer.length;
+                    if (length > kMaxRegisterByteSize)
+                        length = kMaxRegisterByteSize;
+                    return memcmp (m_data.buffer.bytes, rhs.m_data.buffer.bytes, length) == 0;
+                }
+                break;
+        }
+    }
+    return false;
+}
+
+bool
+RegisterValue::operator != (const RegisterValue &rhs) const
+{
+    if (m_type != rhs.m_type)
+        return true;
+    switch (m_type)
+    {
+        case eTypeInvalid:      return false;
+        case eTypeUInt8:        return m_data.uint8 != rhs.m_data.uint8;
+        case eTypeUInt16:       return m_data.uint16 != rhs.m_data.uint16;
+        case eTypeUInt32:       return m_data.uint32 != rhs.m_data.uint32;
+        case eTypeUInt64:       return m_data.uint64 != rhs.m_data.uint64;
+#if defined (ENABLE_128_BIT_SUPPORT)
+        case eTypeUInt128:      return m_data.uint128 != rhs.m_data.uint128;
+#endif
+        case eTypeFloat:        return m_data.ieee_float != rhs.m_data.ieee_float;
+        case eTypeDouble:       return m_data.ieee_double != rhs.m_data.ieee_double;
+        case eTypeLongDouble:   return m_data.ieee_long_double != rhs.m_data.ieee_long_double;
+        case eTypeBytes:        
+            if (m_data.buffer.length != rhs.m_data.buffer.length)
+            {
+                return true;
+            }
+            else
+            {
+                uint8_t length = m_data.buffer.length;
+                if (length > kMaxRegisterByteSize)
+                    length = kMaxRegisterByteSize;
+                return memcmp (m_data.buffer.bytes, rhs.m_data.buffer.bytes, length) != 0;
+            }
+            break;
+    }
+    return true;
 }
 

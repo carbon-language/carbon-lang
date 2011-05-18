@@ -111,7 +111,7 @@ ABIMacOSX_i386::PrepareTrivialCall (Thread &thread,
     }
 
     // Align the SP    
-    sp &= ~(0xfull); // 16-byte alignment
+    sp &= ~(16ull-1ull); // 16-byte alignment
     
     if (arg1_ptr)
     {
@@ -362,7 +362,7 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
     
     // Align the SP
     
-    sp &= ~(0xfull); // 16-byte alignment
+    sp &= ~(16ull-1ull); // 16-byte alignment
     
     // Write the arguments on the stack
     

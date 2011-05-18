@@ -197,6 +197,12 @@ namespace lldb_private {
             m_type = eTypeInvalid;
         }
 
+        bool
+        operator == (const RegisterValue &rhs) const;
+
+        bool
+        operator != (const RegisterValue &rhs) const;
+
         void
         operator = (uint8_t uint)
         {

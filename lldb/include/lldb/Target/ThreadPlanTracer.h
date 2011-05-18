@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Core/RegisterValue.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/Thread.h"
 
@@ -117,7 +118,7 @@ private:
     Disassembler           *m_disassembler;
     const ABI              *m_abi;
     TypeFromUser            m_intptr_type;
-    std::vector<uint64_t>   m_register_values;
+    std::vector<RegisterValue> m_register_values;
     lldb::DataBufferSP      m_buffer_sp;
 };
 

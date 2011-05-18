@@ -1871,8 +1871,11 @@ EmulateInstructionARM::EmulateSTRRtSP (const uint32_t opcode, const ARMEncoding 
         EmulateInstruction::Context context;
         context.type = EmulateInstruction::eContextPushRegisterOnStack;
         RegisterInfo sp_reg;
+        RegisterInfo dwarf_reg;
+
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
-        context.SetRegisterPlusOffset (sp_reg, addr - sp);
+        GetRegisterInfo (eRegisterKindDWARF, dwarf_r0 + Rt, dwarf_reg);
+        context.SetRegisterToRegisterPlusOffset ( dwarf_reg, sp_reg, addr - sp);
         if (Rt != 15)
         {
             uint32_t reg_value = ReadCoreReg(Rt, &success);

@@ -357,6 +357,33 @@ public:
     ResolveLinkedAddress ();
 
     //------------------------------------------------------------------
+    /// Set the address to represent \a load_addr.
+    ///
+    /// The address will attempt to find a loaded section within
+    /// \a target that contains \a load_addr. If successful, this 
+    /// address object will have a valid section and offset. Else this
+    /// address object will have no section (NULL) and the offset will
+    /// be \a load_addr.
+    ///
+    /// @param[in] load_addr
+    ///     A load address from a current process.
+    ///
+    /// @param[in] target
+    ///     The target to use when trying resolve the address into
+    ///     a section + offset. The Target's SectionLoadList object
+    ///     is used to resolve the address.
+    ///
+    /// @return
+    ///     Returns \b true if the load address was resolved to be 
+    ///     section/offset, \b false otherwise. It is often ok for an 
+    ///     address no not resolve to a section in a module, this often
+    ///     happens for JIT'ed code, or any load addresses on the stack
+    ///     or heap.
+    //------------------------------------------------------------------
+    bool
+    SetLoadAddress (lldb::addr_t load_addr, Target *target);
+
+    //------------------------------------------------------------------
     /// Get accessor for the module for this address.
     ///
     /// @return

@@ -2184,6 +2184,8 @@ public:
     ///     that a block that isn't set writable can still be written on from lldb,
     ///     just not by the process itself.
     ///
+    /// @param[in/out] error
+    ///     An error object to fill in if things go wrong.
     /// @return
     ///     The address of the allocated buffer in the process, or
     ///     LLDB_INVALID_ADDRESS if the allocation failed.
