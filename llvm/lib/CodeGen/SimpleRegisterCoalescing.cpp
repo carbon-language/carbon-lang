@@ -1038,6 +1038,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // If they are already joined we continue.
   if (CP.getSrcReg() == CP.getDstReg()) {
+    markAsJoined(CopyMI);
     DEBUG(dbgs() << "\tCopy already coalesced.\n");
     return false;  // Not coalescable.
   }
@@ -1696,13 +1697,11 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
           // or else the scavenger may complain. LowerSubregs will
           // delete them later.
           DoDelete = false;
-        
+
         if (MI->allDefsAreDead()) {
-          if (li_->hasInterval(SrcReg)) {
-            LiveInterval &li = li_->getInterval(SrcReg);
-            if (!ShortenDeadCopySrcLiveRange(li, MI))
-              ShortenDeadCopyLiveRange(li, MI);
-          }
+          if (TargetRegisterInfo::isVirtualRegister(SrcReg) &&
+              li_->hasInterval(SrcReg))
+            li_->shrinkToUses(&li_->getInterval(SrcReg));
           DoDelete = true;
         }
         if (!DoDelete) {
@@ -1752,24 +1751,6 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
           continue;
         } else
           DeadDefs.clear();
-      }
-
-      // If the move will be an identity move delete it
-      if (MI->isIdentityCopy()) {
-        unsigned SrcReg = MI->getOperand(1).getReg();
-        if (li_->hasInterval(SrcReg)) {
-          LiveInterval &RegInt = li_->getInterval(SrcReg);
-          // If def of this move instruction is dead, remove its live range
-          // from the destination register's live interval.
-          if (MI->allDefsAreDead()) {
-            if (!ShortenDeadCopySrcLiveRange(RegInt, MI))
-              ShortenDeadCopyLiveRange(RegInt, MI);
-          }
-        }
-        li_->RemoveMachineInstrFromMaps(MI);
-        mii = mbbi->erase(mii);
-        ++numPeep;
-        continue;
       }
 
       ++mii;
