@@ -604,9 +604,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         return BinaryOperator::CreateOr(CondVal, FalseVal);
       }
       // Change: A = select B, false, C --> A = and !B, C
-      Value *NotCond =
-        InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
-                                           "not."+CondVal->getName()), SI);
+      Value *NotCond = Builder->CreateNot(CondVal, "not."+CondVal->getName());
       return BinaryOperator::CreateAnd(NotCond, FalseVal);
     } else if (ConstantInt *C = dyn_cast<ConstantInt>(FalseVal)) {
       if (C->getZExtValue() == false) {
@@ -614,9 +612,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         return BinaryOperator::CreateAnd(CondVal, TrueVal);
       }
       // Change: A = select B, C, true --> A = or !B, C
-      Value *NotCond =
-        InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
-                                           "not."+CondVal->getName()), SI);
+      Value *NotCond = Builder->CreateNot(CondVal, "not."+CondVal->getName());
       return BinaryOperator::CreateOr(NotCond, TrueVal);
     }
 
