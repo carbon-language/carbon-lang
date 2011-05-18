@@ -2997,12 +2997,6 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   //   have inherited constructors.
   DeclareInheritedConstructors(Record);
 
-  // Unfortunately, in C++0x mode, we additionally have to declare all
-  // implicit members in order to ensure we don't get a horrible evil bad
-  // infinite recursion from ShouldDelete*
-  if (getLangOptions().CPlusPlus0x)
-    ForceDeclarationOfImplicitMembers(Record);
-
   CheckExplicitlyDefaultedMethods(Record);
 }
 
@@ -3459,10 +3453,8 @@ bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
 }
 
 bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
-  CXXRecordDecl *RD = CD->getParent()->getDefinition();
+  CXXRecordDecl *RD = CD->getParent();
   assert(!RD->isDependentType() && "do deletion after instantiation");
-  assert(RD);
-  assert(CD->getParent() == RD);
   if (!LangOpts.CPlusPlus0x)
     return false;
 
