@@ -61,7 +61,7 @@ class SimplifyCFGOpt {
   bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI);
 
   bool SimplifyReturn(ReturnInst *RI);
-  bool SimplifyUnwind(UnwindInst *UI);
+  bool SimplifyUnwind(UnwindInst *UI, IRBuilder<> &Builder);
   bool SimplifyUnreachable(UnreachableInst *UI);
   bool SimplifySwitch(SwitchInst *SI);
   bool SimplifyIndirectBr(IndirectBrInst *IBI);
@@ -2175,7 +2175,7 @@ bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI) {
   return false;
 }
 
-bool SimplifyCFGOpt::SimplifyUnwind(UnwindInst *UI) {
+bool SimplifyCFGOpt::SimplifyUnwind(UnwindInst *UI, IRBuilder<> &Builder) {
   // Check to see if the first instruction in this block is just an unwind.
   // If so, replace any invoke instructions which use this as an exception
   // destination with call instructions.
@@ -2190,14 +2190,16 @@ bool SimplifyCFGOpt::SimplifyUnwind(UnwindInst *UI) {
     if (II && II->getUnwindDest() == BB) {
       // Insert a new branch instruction before the invoke, because this
       // is now a fall through.
-      BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
+      Builder.SetInsertPoint(II);
+      BranchInst *BI = Builder.CreateBr(II->getNormalDest());
       Pred->getInstList().remove(II);   // Take out of symbol table
       
       // Insert the call now.
       SmallVector<Value*,8> Args(II->op_begin(), II->op_end()-3);
-      CallInst *CI = CallInst::Create(II->getCalledValue(),
-                                      Args.begin(), Args.end(),
-                                      II->getName(), BI);
+      Builder.SetInsertPoint(BI);
+      CallInst *CI = Builder.CreateCall(II->getCalledValue(),
+                                        Args.begin(), Args.end(),
+                                        II->getName());
       CI->setCallingConv(II->getCallingConv());
       CI->setAttributes(II->getAttributes());
       // If the invoke produced a value, the Call now does instead.
@@ -2671,7 +2673,7 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
                dyn_cast<UnreachableInst>(BB->getTerminator())) {
     if (SimplifyUnreachable(UI)) return true;
   } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-    if (SimplifyUnwind(UI)) return true;
+    if (SimplifyUnwind(UI, Builder)) return true;
   } else if (IndirectBrInst *IBI =
                dyn_cast<IndirectBrInst>(BB->getTerminator())) {
     if (SimplifyIndirectBr(IBI)) return true;
