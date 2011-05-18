@@ -1835,16 +1835,19 @@ static bool SimplifyTerminatorOnSelect(TerminatorInst *OldTerm, Value *Cond,
       Succ->removePredecessor(OldTerm->getParent());
   }
 
+  IRBuilder<> Builder(OldTerm);
+  Builder.SetCurrentDebugLocation(OldTerm->getDebugLoc());
+
   // Insert an appropriate new terminator.
   if ((KeepEdge1 == 0) && (KeepEdge2 == 0)) {
     if (TrueBB == FalseBB)
       // We were only looking for one successor, and it was present.
       // Create an unconditional branch to it.
-      BranchInst::Create(TrueBB, OldTerm);
+      Builder.CreateBr(TrueBB);
     else
       // We found both of the successors we were looking for.
       // Create a conditional branch sharing the condition of the select.
-      BranchInst::Create(TrueBB, FalseBB, Cond, OldTerm);
+      Builder.CreateCondBr(Cond, TrueBB, FalseBB);
   } else if (KeepEdge1 && (KeepEdge2 || TrueBB == FalseBB)) {
     // Neither of the selected blocks were successors, so this
     // terminator must be unreachable.
@@ -1855,10 +1858,10 @@ static bool SimplifyTerminatorOnSelect(TerminatorInst *OldTerm, Value *Cond,
     // the edge to the one that wasn't must be unreachable.
     if (KeepEdge1 == 0)
       // Only TrueBB was found.
-      BranchInst::Create(TrueBB, OldTerm);
+      Builder.CreateBr(TrueBB);
     else
       // Only FalseBB was found.
-      BranchInst::Create(FalseBB, OldTerm);
+      Builder.CreateBr(FalseBB);
   }
 
   EraseTerminatorInstAndDCECond(OldTerm);
