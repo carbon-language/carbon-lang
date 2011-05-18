@@ -208,6 +208,15 @@ public:
   virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
   virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
 
+  virtual void EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler = 0);
+  virtual void EmitWin64EHEndProc();
+  virtual void EmitWin64EHPushReg(int64_t Register);
+  virtual void EmitWin64EHSetFrame(int64_t Register, int64_t Offset);
+  virtual void EmitWin64EHAllocStack(int64_t Size);
+  virtual void EmitWin64EHSaveReg(int64_t Register, int64_t Offset);
+  virtual void EmitWin64EHPushFrame(bool Code);
+  virtual void EmitWin64EHEndProlog();
+
   virtual void EmitFnStart();
   virtual void EmitFnEnd();
   virtual void EmitCantUnwind();
@@ -912,6 +921,74 @@ void MCAsmStreamer::EmitCFIAdjustCfaOffset(int64_t Adjustment) {
     return;
 
   OS << "\t.cfi_adjust_cfa_offset " << Adjustment;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler)
+{
+  //MCStreamer::EmitWin64EHStartProc(Symbol, EHandler);
+
+  OS << ".w64_startproc " << *Symbol;
+  if (EHandler)
+    OS << ", " << *EHandler;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHEndProc()
+{
+  //MCStreamer::EmitWin64EHEndProc();
+
+  OS << "\t.w64_endproc";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHPushReg(int64_t Register)
+{
+  //MCStreamer::EmitWin64EHPushReg(Register);
+
+  OS << "\t.w64_pushreg " << Register;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHSetFrame(int64_t Register, int64_t Offset)
+{
+  //MCStreamer::EmitWin64EHSetFrame(Register, Offset);
+
+  OS << "\t.w64_setframe " << Register << ", " << Offset;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHAllocStack(int64_t Size)
+{
+  //MCStremaer::EmitWin64EHAllocStack(Size);
+
+  OS << "\t.w64_allocstack " << Size;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHSaveReg(int64_t Register, int64_t Offset)
+{
+  //MCStreamer::EmitWin64EHSaveReg(Register, Offset)
+
+  OS << "\t.w64_savereg " << Register << ", " << Offset;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHPushFrame(bool Code)
+{
+  //MCStreamer::EmitWin64EHPushFrame(Code);
+
+  OS << "\t.w64_pushframe";
+  if (Code)
+    OS << " " << "code";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHEndProlog(void)
+{
+  //MCStreamer::EmitWin64EHEndProlog();
+
+  OS << "\t.w64_endprolog";
   EmitEOL();
 }
 
