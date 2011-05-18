@@ -835,7 +835,7 @@ static bool isSafeToHoistInvoke(BasicBlock *BB1, BasicBlock *BB2,
 /// HoistThenElseCodeToIf - Given a conditional branch that goes to BB1 and
 /// BB2, hoist any common code in the two blocks up into the branch block.  The
 /// caller of this function guarantees that BI's block dominates BB1 and BB2.
-static bool HoistThenElseCodeToIf(BranchInst *BI) {
+static bool HoistThenElseCodeToIf(BranchInst *BI, IRBuilder<> &Builder) {
   // This does very trivial matching, with limited scanning, to find identical
   // instructions in the two blocks.  In particular, we don't want to get into
   // O(M*N) situations here where M and N are the sizes of BB1 and BB2.  As
@@ -908,6 +908,7 @@ HoistTerminator:
     NT->takeName(I1);
   }
 
+  Builder.SetInsertPoint(NT);
   // Hoisting one of the terminators from our successor is a great thing.
   // Unfortunately, the successors of the if/else blocks may have PHI nodes in
   // them.  If they do, all PHI entries for BB1/BB2 must agree for all PHI
@@ -924,11 +925,11 @@ HoistTerminator:
       // These values do not agree.  Insert a select instruction before NT
       // that determines the right value.
       SelectInst *&SI = InsertedSelects[std::make_pair(BB1V, BB2V)];
-      if (SI == 0) {
-        SI = SelectInst::Create(BI->getCondition(), BB1V, BB2V,
-                                BB1V->getName()+"."+BB2V->getName(), NT);
-        SI->setDebugLoc(BI->getDebugLoc());
-      }
+      if (SI == 0) 
+        SI = cast<SelectInst>
+          (Builder.CreateSelect(BI->getCondition(), BB1V, BB2V,
+                                BB1V->getName()+"."+BB2V->getName()));
+
       // Make the PHI node use the select for all incoming values for BB1/BB2
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (PN->getIncomingBlock(i) == BB1 || PN->getIncomingBlock(i) == BB2)
@@ -948,7 +949,8 @@ HoistTerminator:
 /// and an BB2 and the only successor of BB1 is BB2, hoist simple code
 /// (for now, restricted to a single instruction that's side effect free) from
 /// the BB1 into the branch block to speculatively execute it.
-static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
+static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1,
+                                   IRBuilder<> &Builder) {
   // Only speculatively execution a single instruction (not counting the
   // terminator) for now.
   Instruction *HInst = NULL;
@@ -1086,14 +1088,16 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
 
   // Create a select whose true value is the speculatively executed value and
   // false value is the previously determined FalseV.
+  Builder.SetInsertPoint(BI);
   SelectInst *SI;
   if (Invert)
-    SI = SelectInst::Create(BrCond, FalseV, HInst,
-                            FalseV->getName() + "." + HInst->getName(), BI);
+    SI = cast<SelectInst>
+      (Builder.CreateSelect(BrCond, FalseV, HInst,
+                            FalseV->getName() + "." + HInst->getName()));
   else
-    SI = SelectInst::Create(BrCond, HInst, FalseV,
-                            HInst->getName() + "." + FalseV->getName(), BI);
-  SI->setDebugLoc(BI->getDebugLoc());
+    SI = cast<SelectInst>
+      (Builder.CreateSelect(BrCond, HInst, FalseV,
+                            HInst->getName() + "." + FalseV->getName()));
 
   // Make the PHI node use the select for all incoming values for "then" and
   // "if" blocks.
@@ -1460,6 +1464,7 @@ static bool SimplifyCondBranchToTwoReturns(BranchInst *BI,
 /// the predecessor and use logical operations to pick the right destination.
 bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
+
   Instruction *Cond = dyn_cast<Instruction>(BI->getCondition());
   if (Cond == 0 || (!isa<CmpInst>(Cond) && !isa<BinaryOperator>(Cond)) ||
     Cond->getParent() != BB || !Cond->hasOneUse())
@@ -1580,7 +1585,8 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     }
 
     DEBUG(dbgs() << "FOLDING BRANCH TO COMMON DEST:\n" << *PBI << *BB);
-    
+    IRBuilder<> Builder(PBI);    
+
     // If we need to invert the condition in the pred block to match, do so now.
     if (InvertPredCond) {
       Value *NewCond = PBI->getCondition();
@@ -1589,8 +1595,8 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
         CmpInst *CI = cast<CmpInst>(NewCond);
         CI->setPredicate(CI->getInversePredicate());
       } else {
-        NewCond = BinaryOperator::CreateNot(NewCond,
-                                  PBI->getCondition()->getName()+".not", PBI);
+        NewCond = Builder.CreateNot(NewCond, 
+                                    PBI->getCondition()->getName()+".not");
       }
       
       PBI->setCondition(NewCond);
@@ -1617,9 +1623,9 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     New->takeName(Cond);
     Cond->setName(New->getName()+".old");
     
-    Instruction *NewCond = BinaryOperator::Create(Opc, PBI->getCondition(),
-                                                  New, "or.cond", PBI);
-    NewCond->setDebugLoc(PBI->getDebugLoc());
+    Instruction *NewCond = 
+      cast<Instruction>(Builder.CreateBinOp(Opc, PBI->getCondition(),
+                                            New, "or.cond"));
     PBI->setCondition(NewCond);
     if (PBI->getSuccessor(0) == BB) {
       AddPredecessorToBlock(TrueDest, PredBlock, BB);
@@ -1762,23 +1768,22 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   }  
   
   DEBUG(dbgs() << *PBI->getParent()->getParent());
-  
+
   // BI may have other predecessors.  Because of this, we leave
   // it alone, but modify PBI.
   
   // Make sure we get to CommonDest on True&True directions.
   Value *PBICond = PBI->getCondition();
+  IRBuilder<> Builder(PBI);
   if (PBIOp)
-    PBICond = BinaryOperator::CreateNot(PBICond,
-                                        PBICond->getName()+".not",
-                                        PBI);
+    PBICond = Builder.CreateNot(PBICond, PBICond->getName()+".not");
+
   Value *BICond = BI->getCondition();
   if (BIOp)
-    BICond = BinaryOperator::CreateNot(BICond,
-                                       BICond->getName()+".not",
-                                       PBI);
+    BICond = Builder.CreateNot(BICond, BICond->getName()+".not");
+
   // Merge the conditions.
-  Value *Cond = BinaryOperator::CreateOr(PBICond, BICond, "brmerge", PBI);
+  Value *Cond = Builder.CreateOr(PBICond, BICond, "brmerge");
   
   // Modify PBI to branch on the new condition to the new dests.
   PBI->setCondition(Cond);
@@ -1801,8 +1806,8 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     Value *PBIV = PN->getIncomingValue(PBBIdx);
     if (BIV != PBIV) {
       // Insert a select in PBI to pick the right value.
-      Value *NV = SelectInst::Create(PBICond, PBIV, BIV,
-                                     PBIV->getName()+".mux", PBI);
+      Value *NV = cast<SelectInst>
+        (Builder.CreateSelect(PBICond, PBIV, BIV, PBIV->getName()+".mux"));
       PN->setIncomingValue(PBBIdx, NV);
     }
   }
@@ -2584,7 +2589,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   // can hoist it up to the branching block.
   if (BI->getSuccessor(0)->getSinglePredecessor() != 0) {
     if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
-      if (HoistThenElseCodeToIf(BI))
+      if (HoistThenElseCodeToIf(BI, Builder))
         return SimplifyCFG(BB) | true;
     } else {
       // If Successor #1 has multiple preds, we may be able to conditionally
@@ -2592,7 +2597,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
       TerminatorInst *Succ0TI = BI->getSuccessor(0)->getTerminator();
       if (Succ0TI->getNumSuccessors() == 1 &&
           Succ0TI->getSuccessor(0) == BI->getSuccessor(1))
-        if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0)))
+        if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0), Builder))
           return SimplifyCFG(BB) | true;
     }
   } else if (BI->getSuccessor(1)->getSinglePredecessor() != 0) {
@@ -2601,7 +2606,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
     TerminatorInst *Succ1TI = BI->getSuccessor(1)->getTerminator();
     if (Succ1TI->getNumSuccessors() == 1 &&
         Succ1TI->getSuccessor(0) == BI->getSuccessor(0))
-      if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1)))
+      if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1), Builder))
         return SimplifyCFG(BB) | true;
   }
   
