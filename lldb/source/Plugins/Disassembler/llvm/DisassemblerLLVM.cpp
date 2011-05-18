@@ -200,35 +200,31 @@ InstructionLLVM::Dump
         EDTokenRef token;
         const char *tokenStr;
 
-        if (EDGetToken(&token, m_inst, tokenIndex))
+        if (EDGetToken(&token, m_inst, tokenIndex)) // 0 on success
+            printTokenized = false;
+        else if (!EDTokenIsOpcode(token))
+            printTokenized = false;
+        else if (EDGetTokenString(&tokenStr, token)) // 0 on success
             printTokenized = false;
 
-        if (!printTokenized || !EDTokenIsOpcode(token))
-            printTokenized = false;
-
-        if (!printTokenized || EDGetTokenString(&tokenStr, token))
-            printTokenized = false;
-
-        // Put the token string into our opcode string
-        opcode.PutCString(tokenStr);
-
-        // If anything follows, it probably starts with some whitespace.  Skip it.
-
-        tokenIndex++;
-
-        if (printTokenized && tokenIndex < numTokens)
+        if (printTokenized)
         {
-            if(!printTokenized || EDGetToken(&token, m_inst, tokenIndex))
-                printTokenized = false;
+            // Put the token string into our opcode string
+            opcode.PutCString(tokenStr);
 
-            if(!printTokenized || !EDTokenIsWhitespace(token))
-                printTokenized = false;
+            // If anything follows, it probably starts with some whitespace.  Skip it.
+            if (++tokenIndex < numTokens)
+            {
+                if (EDGetToken(&token, m_inst, tokenIndex)) // 0 on success
+                    printTokenized = false;
+                else if (!EDTokenIsWhitespace(token))
+                    printTokenized = false;
+            }
+
+            ++tokenIndex;
         }
 
-        tokenIndex++;
-
         // Handle the operands and the comment.
-
         StreamString operands;
         StreamString comment;
 
