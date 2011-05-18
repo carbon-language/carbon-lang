@@ -241,64 +241,56 @@ InstructionLLVM::Dump
                 if (EDGetToken(&token, m_inst, tokenIndex))
                     return;
 
-                if (raw)
-                {
-                    show_token = true;
-                }
-                else
-                {
-                    int operandIndex = EDOperandIndexForToken(token);
+                int operandIndex = EDOperandIndexForToken(token);
 
-                    if (operandIndex >= 0)
+                if (operandIndex >= 0)
+                {
+                    if (operandIndex != currentOpIndex)
                     {
-                        if (operandIndex != currentOpIndex)
+                        show_token = true;
+
+                        currentOpIndex = operandIndex;
+                        EDOperandRef operand;
+
+                        if (!EDGetOperand(&operand, m_inst, currentOpIndex))
                         {
-                            show_token = true;
-
-                            currentOpIndex = operandIndex;
-                            EDOperandRef operand;
-
-                            if (!EDGetOperand(&operand, m_inst, currentOpIndex))
+                            if (EDOperandIsMemory(operand))
                             {
-                                if (EDOperandIsMemory(operand))
+                                uint64_t operand_value;
+
+                                if (!EDEvaluateOperand(&operand_value, operand, IPRegisterReader, &rra))
                                 {
-                                    uint64_t operand_value;
-
-                                    if (!EDEvaluateOperand(&operand_value, operand, IPRegisterReader, &rra))
+                                    if (EDInstIsBranch(m_inst))
                                     {
-                                        if (EDInstIsBranch(m_inst))
-                                        {
-                                            operands.Printf("0x%llx ", operand_value);
-                                            show_token = false;
-                                        }
-                                        else
-                                        {
-                                            // Put the address value into the comment
-                                            comment.Printf("0x%llx ", operand_value);
-                                        }
+                                        operands.Printf("0x%llx ", operand_value);
+                                        show_token = false;
+                                    }
+                                    else
+                                    {
+                                        // Put the address value into the comment
+                                        comment.Printf("0x%llx ", operand_value);
+                                    }
 
-                                        lldb_private::Address so_addr;
-                                        if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty())
+                                    lldb_private::Address so_addr;
+                                    if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty())
+                                    {
+                                        if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress (operand_value, so_addr))
+                                            so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+                                    }
+                                    else
+                                    {
+                                        Module *module = GetAddress().GetModule();
+                                        if (module)
                                         {
-                                            if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress (operand_value, so_addr))
+                                            if (module->ResolveFileAddress (operand_value, so_addr))
                                                 so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
                                         }
-                                        else
-                                        {
-                                            Module *module = GetAddress().GetModule();
-                                            if (module)
-                                            {
-                                                if (module->ResolveFileAddress (operand_value, so_addr))
-                                                    so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
-                                            }
-                                        }
-
-                                    } // EDEvaluateOperand
-                                } // EDOperandIsMemory
-                            } // EDGetOperand
-                        } // operandIndex != currentOpIndex
-                    } // operandIndex >= 0
-                } // else(raw)
+                                    }
+                                } // EDEvaluateOperand
+                            } // EDOperandIsMemory
+                        } // EDGetOperand
+                    } // operandIndex != currentOpIndex
+                } // operandIndex >= 0
 
                 if (show_token)
                 {
