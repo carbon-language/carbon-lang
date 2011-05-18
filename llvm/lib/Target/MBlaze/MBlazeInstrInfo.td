@@ -245,20 +245,25 @@ class PatCmp<bits<6> op, bits<11> flags, string instr_asm> :
 //===----------------------------------------------------------------------===//
 // Memory Access Instructions
 //===----------------------------------------------------------------------===//
+
+let mayLoad = 1 in {
 class LoadM<bits<6> op, bits<11> flags, string instr_asm> :
             TA<op, flags, (outs GPR:$dst), (ins memrr:$addr),
                !strconcat(instr_asm, "   $dst, $addr"),
                [], IIC_MEMl>;
+}
 
 class LoadMI<bits<6> op, string instr_asm, PatFrag OpNode> :
              TB<op, (outs GPR:$dst), (ins memri:$addr),
                 !strconcat(instr_asm, "   $dst, $addr"),
                 [(set (i32 GPR:$dst), (OpNode iaddr:$addr))], IIC_MEMl>;
 
+let mayStore = 1 in {
 class StoreM<bits<6> op, bits<11> flags, string instr_asm> :
              TA<op, flags, (outs), (ins GPR:$dst, memrr:$addr),
                 !strconcat(instr_asm, "   $dst, $addr"),
                 [], IIC_MEMs>;
+}
 
 class StoreMI<bits<6> op, string instr_asm, PatFrag OpNode> :
               TB<op, (outs), (ins GPR:$dst, memri:$addr),
