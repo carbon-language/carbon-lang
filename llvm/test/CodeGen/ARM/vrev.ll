@@ -163,3 +163,18 @@ entry:
   store <2 x i16> %tmp11, <2 x i16>* %dst, align 4
   ret void
 }
+
+; Test vrev of float4
+define void @float_vrev64(float* nocapture %source, <4 x float>* nocapture %dest) nounwind noinline ssp {
+; CHECK: float_vrev64
+; CHECK: vext.32
+; CHECK: vrev64.32
+entry:
+  %0 = bitcast float* %source to <4 x float>*
+  %tmp2 = load <4 x float>* %0, align 4
+  %tmp5 = shufflevector <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, <4 x float> %tmp2, <4 x i32> <i32 0, i32 7, i32 0, i32 0>
+  %arrayidx8 = getelementptr inbounds <4 x float>* %dest, i32 11
+  store <4 x float> %tmp5, <4 x float>* %arrayidx8, align 4
+  ret void
+}
+

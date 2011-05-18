@@ -4184,7 +4184,8 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
   default: llvm_unreachable("Unknown shuffle opcode!");
   case OP_VREV:
     // VREV divides the vector in half and swaps within the half.
-    if (VT.getVectorElementType() == MVT::i32)
+    if (VT.getVectorElementType() == MVT::i32 ||
+        VT.getVectorElementType() == MVT::f32)
       return DAG.getNode(ARMISD::VREV64, dl, VT, OpLHS);
     // vrev <4 x i16> -> VREV32
     if (VT.getVectorElementType() == MVT::i16)
