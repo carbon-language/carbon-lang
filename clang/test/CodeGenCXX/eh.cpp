@@ -159,7 +159,7 @@ namespace test8 {
       // CHECK-NEXT: bitcast
       // CHECK-NEXT: invoke void @_ZN5test81AC1ERKS0_(
       // CHECK:      call i8* @__cxa_begin_catch
-      // CHECK-NEXT: invoke void @_ZN5test81AD1Ev(
+      // CHECK-NEXT: call void @_ZN5test81AD1Ev(
       // CHECK:      call void @__cxa_end_catch()
       // CHECK:      ret void
     }
@@ -272,7 +272,7 @@ namespace test11 {
 
 // PR7686
 namespace test12 {
-  struct A { ~A(); };
+  struct A { ~A() noexcept(false); };
   bool opaque(const A&);
 
   // CHECK: define void @_ZN6test124testEv()
@@ -392,8 +392,8 @@ namespace test15 {
 }
 
 namespace test16 {
-  struct A { A(); ~A(); };
-  struct B { int x; B(const A &); ~B(); };
+  struct A { A(); ~A() noexcept(false); };
+  struct B { int x; B(const A &); ~B() noexcept(false); };
   void foo();
   bool cond();
 

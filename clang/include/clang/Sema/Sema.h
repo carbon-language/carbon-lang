@@ -2644,6 +2644,13 @@ public:
   void DefineImplicitDestructor(SourceLocation CurrentLocation,
                                 CXXDestructorDecl *Destructor);
 
+  /// \brief Build an exception spec for destructors that don't have one.
+  ///
+  /// C++11 says that user-defined destructors with no exception spec get one
+  /// that looks as if the destructor was implicitly declared.
+  void AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
+                                     CXXDestructorDecl *Destructor);
+
   /// \brief Declare all inherited constructors for the given class.
   ///
   /// \param ClassDecl The class declaration into which the inherited

@@ -4143,14 +4143,25 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // This is a C++ destructor declaration.
       if (DC->isRecord()) {
         R = CheckDestructorDeclarator(D, R, SC);
+        CXXRecordDecl *Record = cast<CXXRecordDecl>(DC);
 
-        NewFD = CXXDestructorDecl::Create(Context,
-                                          cast<CXXRecordDecl>(DC),
+        CXXDestructorDecl *NewDD = CXXDestructorDecl::Create(Context, Record,
                                           D.getSourceRange().getBegin(),
                                           NameInfo, R, TInfo,
                                           isInline,
                                           /*isImplicitlyDeclared=*/false);
+        NewFD = NewDD;
         isVirtualOkay = true;
+
+        // If the class is complete, then we now create the implicit exception
+        // specification. If the class is incomplete or dependent, we can't do
+        // it yet.
+        if (getLangOptions().CPlusPlus0x && !Record->isDependentType() &&
+            Record->getDefinition() && !Record->isBeingDefined() &&
+            R->getAs<FunctionProtoType>()->getExceptionSpecType() == EST_None) {
+          AdjustDestructorExceptionSpec(Record, NewDD);
+        }
+
       } else {
         Diag(D.getIdentifierLoc(), diag::err_destructor_not_member);
 
@@ -8128,6 +8139,11 @@ void Sema::ActOnFields(Scope* S,
           Convs->setAccess(I, (*I)->getAccess());
         
         if (!CXXRecord->isDependentType()) {
+          // Adjust user-defined destructor exception spec.
+          if (getLangOptions().CPlusPlus0x &&
+              CXXRecord->hasUserDeclaredDestructor())
+            AdjustDestructorExceptionSpec(CXXRecord,CXXRecord->getDestructor());
+
           // Add any implicitly-declared members to this class.
           AddImplicitlyDeclaredMembersToClass(CXXRecord);
 
