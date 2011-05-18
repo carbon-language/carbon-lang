@@ -70,7 +70,7 @@ void DebugInfoProbeImpl::initialize(StringRef PName, Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); 
          BI != BE; ++BI) {
-      if (BI->getDebugLoc().isUnknown())
+      if (!isa<PHINode>(BI) && BI->getDebugLoc().isUnknown())
         MissingDebugLoc.insert(BI);
       if (!isa<DbgInfoIntrinsic>(BI)) continue;
       Value *Addr = NULL;
@@ -116,7 +116,7 @@ void DebugInfoProbeImpl::finalize(Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
     for (BasicBlock::iterator BI = FI->begin(), BE = FI->end(); 
          BI != BE; ++BI) {
-      if (BI->getDebugLoc().isUnknown() &&
+      if (!isa<PHINode>(BI) && BI->getDebugLoc().isUnknown() &&
           MissingDebugLoc.count(BI) == 0) {
         ++NumDbgLineLost;
         DEBUG(dbgs() << "DebugInfoProbe (" << PassName << "): --- ");

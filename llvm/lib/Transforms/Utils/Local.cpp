@@ -34,6 +34,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/SUpport/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
@@ -49,6 +50,7 @@ using namespace llvm;
 //
 bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
   TerminatorInst *T = BB->getTerminator();
+  IRBuilder<> Builder(T);
 
   // Branch - See if we are conditional jumping on constant
   if (BranchInst *BI = dyn_cast<BranchInst>(T)) {
@@ -71,7 +73,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       OldDest->removePredecessor(BB);
 
       // Replace the conditional branch with an unconditional one.
-      BranchInst::Create(Destination, BI);
+      Builder.CreateBr(Destination);
       BI->eraseFromParent();
       return true;
     }
@@ -86,7 +88,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       Dest1->removePredecessor(BI->getParent());
 
       // Replace the conditional branch with an unconditional one.
-      BranchInst::Create(Dest1, BI);
+      Builder.CreateBr(Dest1);
       BI->eraseFromParent();
       return true;
     }
@@ -136,7 +138,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
     // now.
     if (TheOnlyDest) {
       // Insert the new branch.
-      BranchInst::Create(TheOnlyDest, SI);
+      Builder.CreateBr(TheOnlyDest);
       BasicBlock *BB = SI->getParent();
 
       // Remove entries from PHI nodes which we no longer branch to...
@@ -157,10 +159,11 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
     if (SI->getNumSuccessors() == 2) {
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
-      Value *Cond = new ICmpInst(SI, ICmpInst::ICMP_EQ, SI->getCondition(),
-                                 SI->getSuccessorValue(1), "cond");
+      Value *Cond = Builder.CreateICmpEQ(SI->getCondition(),
+                                         SI->getSuccessorValue(1), "cond");
+
       // Insert the new branch.
-      BranchInst::Create(SI->getSuccessor(1), SI->getSuccessor(0), Cond, SI);
+      Builder.CreateCondBr(Cond, SI->getSuccessor(1), SI->getSuccessor(0));
 
       // Delete the old switch.
       SI->eraseFromParent();
@@ -175,7 +178,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
           dyn_cast<BlockAddress>(IBI->getAddress()->stripPointerCasts())) {
       BasicBlock *TheOnlyDest = BA->getBasicBlock();
       // Insert the new branch.
-      BranchInst::Create(TheOnlyDest, IBI);
+      Builder.CreateBr(TheOnlyDest);
       
       for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {
         if (IBI->getDestination(i) == TheOnlyDest)
