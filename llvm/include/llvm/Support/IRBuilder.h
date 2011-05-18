@@ -80,6 +80,7 @@ public:
   void SetInsertPoint(Instruction *I) {
     BB = I->getParent();
     InsertPt = I;
+    SetCurrentDebugLocation(I->getDebugLoc());
   }
   
   /// SetInsertPoint - This specifies that created instructions should be
