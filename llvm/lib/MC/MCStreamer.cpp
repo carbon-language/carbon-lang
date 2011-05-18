@@ -322,6 +322,30 @@ void MCStreamer::EmitWin64EHEndProc()
   abort();
 }
 
+void MCStreamer::EmitWin64EHStartChained()
+{
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
+void MCStreamer::EmitWin64EHEndChained()
+{
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
+void MCStreamer::EmitWin64EHUnwindOnly()
+{
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
+void MCStreamer::EmitWin64EHLsda(const MCSymbol *Sym, int64_t Size)
+{
+  errs() << "Not implemented yet\n";
+  abort();
+}
+
 void MCStreamer::EmitWin64EHPushReg(int64_t Register)
 {
   errs() << "Not implemented yet\n";

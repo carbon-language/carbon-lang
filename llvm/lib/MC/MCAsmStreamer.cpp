@@ -210,6 +210,10 @@ public:
 
   virtual void EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler = 0);
   virtual void EmitWin64EHEndProc();
+  virtual void EmitWin64EHStartChained();
+  virtual void EmitWin64EHEndChained();
+  virtual void EmitWin64EHUnwindOnly();
+  virtual void EmitWin64EHLsda(cosnt MCSymbol *Sym, int64_t Size);
   virtual void EmitWin64EHPushReg(int64_t Register);
   virtual void EmitWin64EHSetFrame(int64_t Register, int64_t Offset);
   virtual void EmitWin64EHAllocStack(int64_t Size);
@@ -939,6 +943,38 @@ void MCAsmStreamer::EmitWin64EHEndProc()
   //MCStreamer::EmitWin64EHEndProc();
 
   OS << "\t.w64_endproc";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHStartChained()
+{
+  //MCStreamer::EmitWin64EHStartChained();
+
+  OS << "\t.w64_startchained";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHEndChained()
+{
+  //MCStreamer::EmitWin64EHEndChained();
+
+  OS << "\t.w64_endchained";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHUnwindOnly()
+{
+  //MCStreamer::EmitWin64EHUnwindOnly();
+
+  OS << "\t.w64_unwind_only";
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitWin64EHLsda(cosnt MCSymbol *Sym, int64_t Size)
+{
+  //MCStreamer::EmitWin64EHLsda(Sym, Size);
+
+  OS << "\t.w64_lsda " << *Sym << ", " << Size;
   EmitEOL();
 }
 

@@ -459,6 +459,10 @@ namespace llvm {
 
     virtual void EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler = 0);
     virtual void EmitWin64EHEndProc();
+    virtual void EmitWin64EHStartChained();
+    virtual void EmitWin64EHEndChained();
+    virtual void EmitWin64EHUnwindOnly();
+    virtual void EmitWin64EHLsda(const MCSymbol *Sym, int64_t Size);
     virtual void EmitWin64EHPushReg(int64_t Register);
     virtual void EmitWin64EHSetFrame(int64_t Register, int64_t Offset);
     virtual void EmitWin64EHAllocStack(int64_t Size);
