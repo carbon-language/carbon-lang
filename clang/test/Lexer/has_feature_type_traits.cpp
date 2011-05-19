@@ -99,7 +99,3 @@ int is_standard_layout();
 int is_trivially_copyable();
 #endif
 // CHECK: int is_trivially_copyable();
-
-#if __has_feature(underlying_type)
-int underlying_type();
-#endif
