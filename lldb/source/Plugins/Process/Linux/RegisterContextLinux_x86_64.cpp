@@ -475,39 +475,14 @@ RegisterContextLinux_x86_64::GetRegisterSet(uint32_t set)
         return NULL;
 }
 
-#if 0
 bool
-RegisterContextLinux_x86_64::ReadRegisterValue(uint32_t reg,
-                                               Scalar &value)
+RegisterContextLinux_x86_64::ReadRegister(const RegisterInfo *reg_info,
+                                          RegisterValue &value)
 {
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     ProcessMonitor &monitor = GetMonitor();
     return monitor.ReadRegisterValue(GetRegOffset(reg), value);
 }
-
-bool
-RegisterContextLinux_x86_64::ReadRegisterBytes(uint32_t reg,
-                                               DataExtractor &data)
-{
-    uint8_t *buf = reinterpret_cast<uint8_t*>(&user);
-    bool status;
-
-    if (IsGPR(reg))
-        status = ReadGPR();
-    else if (IsFPR(reg))
-        status = ReadFPR();
-    else 
-    {
-        assert(false && "invalid register number");
-        status = false;
-    }
-
-    if (status)
-        data.SetData(buf + GetRegOffset(reg), GetRegSize(reg), lldb::endian::InlHostByteOrder());
-
-    return status;
-}
-
-#endif
 
 bool
 RegisterContextLinux_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
@@ -515,23 +490,14 @@ RegisterContextLinux_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
     return false;
 }
 
-#if 0
 bool
-RegisterContextLinux_x86_64::WriteRegisterValue(uint32_t reg,
-                                                const Scalar &value)
+RegisterContextLinux_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info,
+                                           const lldb_private::RegisterValue &value)
 {
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     ProcessMonitor &monitor = GetMonitor();
     return monitor.WriteRegisterValue(GetRegOffset(reg), value);
 }
-
-bool
-RegisterContextLinux_x86_64::WriteRegisterBytes(uint32_t reg,
-                                                DataExtractor &data,
-                                                uint32_t data_offset)
-{
-    return false;
-}
-#endif
 
 bool
 RegisterContextLinux_x86_64::WriteAllRegisterValues(const DataBufferSP &data)
