@@ -813,10 +813,10 @@ DWARFCompileUnit::Index
                                 // Also see if this is a "category" on our class.  If so strip off the category name,
                                 // and add the class name without it to the basename table. 
                                 
-                                const char *first_paren = strnstr (name, "(", method_name - name);
+                                const char *first_paren = (char *) memchr (name, '(', method_name - name);
                                 if (first_paren)
                                 {
-                                    const char *second_paren = strnstr (first_paren, ")", method_name - first_paren);
+                                    const char *second_paren = (char *) memchr (first_paren, ')', method_name - first_paren);
                                     if (second_paren)
                                     {
                                         std::string buffer (name, first_paren - name);
