@@ -937,6 +937,8 @@ SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 //       yet to hold an argument. Otherwise, use A2, A3 and stack. If A1 is
 //       not used, it must be shadowed. If only A3 is avaiable, shadow it and
 //       go to stack.
+//
+//  For vararg functions, all arguments are passed in A0, A1, A2, A3 and stack.
 //===----------------------------------------------------------------------===//
 
 static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
@@ -955,90 +957,6 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
       Mips::D6, Mips::D7
   };
 
-  unsigned Reg = 0;
-  static bool IntRegUsed = false;
-
-  // This must be the first arg of the call if no regs have been allocated.
-  // Initialize IntRegUsed in that case.
-  if (IntRegs[State.getFirstUnallocated(IntRegs, IntRegsSize)] == Mips::A0 &&
-      F32Regs[State.getFirstUnallocated(F32Regs, FloatRegsSize)] == Mips::F12 &&
-      F64Regs[State.getFirstUnallocated(F64Regs, FloatRegsSize)] == Mips::D6)
-    IntRegUsed = false;
-
-  // Promote i8 and i16
-  if (LocVT == MVT::i8 || LocVT == MVT::i16) {
-    LocVT = MVT::i32;
-    if (ArgFlags.isSExt())
-      LocInfo = CCValAssign::SExt;
-    else if (ArgFlags.isZExt())
-      LocInfo = CCValAssign::ZExt;
-    else
-      LocInfo = CCValAssign::AExt;
-  }
-
-  if (ValVT == MVT::i32) {
-    Reg = State.AllocateReg(IntRegs, IntRegsSize);
-    IntRegUsed = true;
-  } else if (ValVT == MVT::f32) {
-    // An int reg has to be marked allocated regardless of whether or not
-    // IntRegUsed is true.
-    Reg = State.AllocateReg(IntRegs, IntRegsSize);
-
-    if (IntRegUsed) {
-      if (Reg) // Int reg is available
-        LocVT = MVT::i32;
-    } else {
-      unsigned FReg = State.AllocateReg(F32Regs, FloatRegsSize);
-      if (FReg) // F32 reg is available
-        Reg = FReg;
-      else if (Reg) // No F32 regs are available, but an int reg is available.
-        LocVT = MVT::i32;
-    }
-  } else if (ValVT == MVT::f64) {
-    // Int regs have to be marked allocated regardless of whether or not
-    // IntRegUsed is true.
-    Reg = State.AllocateReg(IntRegs, IntRegsSize);
-    if (Reg == Mips::A1)
-      Reg = State.AllocateReg(IntRegs, IntRegsSize);
-    else if (Reg == Mips::A3)
-      Reg = 0;
-    State.AllocateReg(IntRegs, IntRegsSize);
-
-    // At this point, Reg is A0, A2 or 0, and all the unavailable integer regs
-    // are marked as allocated.
-    if (IntRegUsed) {
-      if (Reg)// if int reg is available
-        LocVT = MVT::i32;
-    } else {
-      unsigned FReg = State.AllocateReg(F64Regs, FloatRegsSize);
-      if (FReg) // F64 reg is available.
-        Reg = FReg;
-      else if (Reg) // No F64 regs are available, but an int reg is available.
-        LocVT = MVT::i32;
-    }
-  } else
-    assert(false && "cannot handle this ValVT");
-
-  if (!Reg) {
-    unsigned SizeInBytes = ValVT.getSizeInBits() >> 3;
-    unsigned Offset = State.AllocateStack(SizeInBytes, SizeInBytes);
-    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
-  } else
-    State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-
-  return false; // CC must always match
-}
-
-static bool CC_MipsO32_VarArgs(unsigned ValNo, MVT ValVT,
-                       MVT LocVT, CCValAssign::LocInfo LocInfo,
-                       ISD::ArgFlagsTy ArgFlags, CCState &State) {
-
-  static const unsigned IntRegsSize=4;
-
-  static const unsigned IntRegs[] = {
-      Mips::A0, Mips::A1, Mips::A2, Mips::A3
-  };
-
   // Promote i8 and i16
   if (LocVT == MVT::i8 || LocVT == MVT::i16) {
     LocVT = MVT::i32;
@@ -1052,15 +970,37 @@ static bool CC_MipsO32_VarArgs(unsigned ValNo, MVT ValVT,
 
   unsigned Reg;
 
-  if (ValVT == MVT::i32 || ValVT == MVT::f32) {
+  // f32 and f64 are allocated in A0, A1, A2, A3 when either of the following
+  // is true: function is vararg, argument is 3rd or higher, there is previous
+  // argument which is not f32 or f64.
+  bool AllocateFloatsInIntReg = State.isVarArg() || ValNo > 1
+      || State.getFirstUnallocated(F32Regs, FloatRegsSize) != ValNo;
+
+  if (ValVT == MVT::i32 || (ValVT == MVT::f32 && AllocateFloatsInIntReg)) {
     Reg = State.AllocateReg(IntRegs, IntRegsSize);
     LocVT = MVT::i32;
-  } else if (ValVT == MVT::f64) {
+  } else if (ValVT == MVT::f64 && AllocateFloatsInIntReg) {
+    // Allocate int register and shadow next int register. If first
+    // available register is Mips::A1 or Mips::A3, shadow it too.
     Reg = State.AllocateReg(IntRegs, IntRegsSize);
     if (Reg == Mips::A1 || Reg == Mips::A3)
       Reg = State.AllocateReg(IntRegs, IntRegsSize);
     State.AllocateReg(IntRegs, IntRegsSize);
     LocVT = MVT::i32;
+  } else if (ValVT.isFloatingPoint() && !AllocateFloatsInIntReg) {
+    // we are guaranteed to find an available float register
+    if (ValVT == MVT::f32) {
+      Reg = State.AllocateReg(F32Regs, FloatRegsSize);
+      // Shadow int register
+      State.AllocateReg(IntRegs, IntRegsSize);
+    } else {
+      Reg = State.AllocateReg(F64Regs, FloatRegsSize);
+      // Shadow int registers
+      unsigned Reg2 = State.AllocateReg(IntRegs, IntRegsSize);
+      if (Reg2 == Mips::A1 || Reg2 == Mips::A3)
+        State.AllocateReg(IntRegs, IntRegsSize);
+      State.AllocateReg(IntRegs, IntRegsSize);
+    }
   } else
     llvm_unreachable("Cannot handle this ValVT.");
 
@@ -1107,8 +1047,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (Subtarget->isABI_O32()) {
     int VTsize = MVT(MVT::i32).getSizeInBits()/8;
     MFI->CreateFixedObject(VTsize, (VTsize*3), true);
-    CCInfo.AnalyzeCallOperands(Outs,
-                     isVarArg ? CC_MipsO32_VarArgs : CC_MipsO32);
+    CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
   } else
     CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
 
@@ -1369,8 +1308,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
                  ArgLocs, *DAG.getContext());
 
   if (Subtarget->isABI_O32())
-    CCInfo.AnalyzeFormalArguments(Ins,
-                        isVarArg ? CC_MipsO32_VarArgs : CC_MipsO32);
+    CCInfo.AnalyzeFormalArguments(Ins, CC_MipsO32);
   else
     CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
 
