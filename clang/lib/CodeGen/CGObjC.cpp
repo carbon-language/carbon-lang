@@ -118,7 +118,8 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
 /// the LLVM function and sets the other context used by
 /// CodeGenFunction.
 void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
-                                      const ObjCContainerDecl *CD) {
+                                      const ObjCContainerDecl *CD,
+                                      SourceLocation StartLoc) {
   FunctionArgList args;
   // Check if we should generate debug info for this method.
   if (CGM.getModuleDebugInfo() && !OMD->hasAttr<NoDebugAttr>())
@@ -138,7 +139,7 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
 
   CurGD = OMD;
 
-  StartFunction(OMD, OMD->getResultType(), Fn, FI, args, OMD->getLocStart());
+  StartFunction(OMD, OMD->getResultType(), Fn, FI, args, StartLoc);
 }
 
 void CodeGenFunction::GenerateObjCGetterBody(ObjCIvarDecl *Ivar, 
@@ -177,7 +178,7 @@ void CodeGenFunction::GenerateObjCGetterBody(ObjCIvarDecl *Ivar,
 /// Generate an Objective-C method.  An Objective-C method is a C function with
 /// its pointer, name, and types registered in the class struture.
 void CodeGenFunction::GenerateObjCMethod(const ObjCMethodDecl *OMD) {
-  StartObjCMethod(OMD, OMD->getClassInterface());
+  StartObjCMethod(OMD, OMD->getClassInterface(), OMD->getLocStart());
   EmitStmt(OMD->getBody());
   FinishFunction(OMD->getBodyRBrace());
 }
@@ -197,7 +198,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     !(PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic);
   ObjCMethodDecl *OMD = PD->getGetterMethodDecl();
   assert(OMD && "Invalid call to generate getter (empty method)");
-  StartObjCMethod(OMD, IMP->getClassInterface());
+  StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
   
   // Determine if we should use an objc_getProperty call for
   // this. Non-atomic properties are directly evaluated.
@@ -396,7 +397,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
   const ObjCPropertyDecl *PD = PID->getPropertyDecl();
   ObjCMethodDecl *OMD = PD->getSetterMethodDecl();
   assert(OMD && "Invalid call to generate setter (empty method)");
-  StartObjCMethod(OMD, IMP->getClassInterface());
+  StartObjCMethod(OMD, IMP->getClassInterface(), PID->getLocStart());
   const llvm::Triple &Triple = getContext().Target.getTriple();
   QualType IVART = Ivar->getType();
   bool IsCopy = PD->getSetterKind() == ObjCPropertyDecl::Copy;
@@ -494,7 +495,7 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
     }
     else {
       // FIXME: Find a clean way to avoid AST node creation.
-      SourceLocation Loc = PD->getLocation();
+      SourceLocation Loc = PID->getLocStart();
       ValueDecl *Self = OMD->getSelfDecl();
       ObjCIvarDecl *Ivar = PID->getPropertyIvarDecl();
       DeclRefExpr Base(Self, Self->getType(), VK_RValue, Loc);
@@ -616,7 +617,7 @@ void CodeGenFunction::GenerateObjCCtorDtorMethod(ObjCImplementationDecl *IMP,
                                                  ObjCMethodDecl *MD,
                                                  bool ctor) {
   MD->createImplicitParams(CGM.getContext(), IMP->getClassInterface());
-  StartObjCMethod(MD, IMP->getClassInterface());
+  StartObjCMethod(MD, IMP->getClassInterface(), MD->getLocStart());
 
   // Emit .cxx_construct.
   if (ctor) {

@@ -1076,7 +1076,8 @@ public:
   void GenerateObjCMethod(const ObjCMethodDecl *OMD);
 
   void StartObjCMethod(const ObjCMethodDecl *MD,
-                       const ObjCContainerDecl *CD);
+                       const ObjCContainerDecl *CD,
+                       SourceLocation StartLoc);
 
   /// GenerateObjCGetter - Synthesize an Objective-C property getter function.
   void GenerateObjCGetter(ObjCImplementationDecl *IMP,
