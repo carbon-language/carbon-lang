@@ -110,8 +110,16 @@ getCalleeSavedRegs(const MachineFunction *MF) const
     Mips::F20, Mips::F22, Mips::F24, Mips::F26, Mips::F28, Mips::F30, 0
   };
 
+  static const unsigned Mips32CalleeSavedRegs[] = {
+    Mips::S0, Mips::S1, Mips::S2, Mips::S3,
+    Mips::S4, Mips::S5, Mips::S6, Mips::S7,
+    Mips::D10, Mips::D11, Mips::D12, Mips::D13, Mips::D14, Mips::D15, 0
+  };
+
   if (Subtarget.isSingleFloat())
     return SingleFloatOnlyCalleeSavedRegs;
+  else if (Subtarget.isMips32())
+    return Mips32CalleeSavedRegs;
   else
     return BitMode32CalleeSavedRegs;
 }
@@ -129,7 +137,7 @@ getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(Mips::RA);
 
   // SRV4 requires that odd register can't be used.
-  if (!Subtarget.isSingleFloat())
+  if (!Subtarget.isSingleFloat() && !Subtarget.isMips32())
     for (unsigned FReg=(Mips::F0)+1; FReg < Mips::F30; FReg+=2)
       Reserved.set(FReg);
 

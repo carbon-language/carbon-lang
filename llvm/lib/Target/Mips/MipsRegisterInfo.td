@@ -214,7 +214,7 @@ def FGR32 : RegisterClass<"Mips", [f32], 32,
       const TargetMachine &TM = MF.getTarget();
       const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
 
-      if (Subtarget.isSingleFloat())
+      if (Subtarget.isMips32() || Subtarget.isSingleFloat())
         return MIPS_FGR32;
       else
         return MIPS_SVR4_FGR32;
@@ -225,7 +225,7 @@ def FGR32 : RegisterClass<"Mips", [f32], 32,
       const TargetMachine &TM = MF.getTarget();
       const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
 
-      if (Subtarget.isSingleFloat())
+      if (Subtarget.isMips32() || Subtarget.isSingleFloat())
         return MIPS_FGR32 + (sizeof(MIPS_FGR32) / sizeof(unsigned));
       else
         return MIPS_SVR4_FGR32 + (sizeof(MIPS_SVR4_FGR32) / sizeof(unsigned));
