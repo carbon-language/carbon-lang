@@ -1111,6 +1111,10 @@ materializeFrameBaseRegister(MachineBasicBlock *MBB,
   if (Ins != MBB->end())
     DL = Ins->getDebugLoc();
 
+  const TargetInstrDesc &TID = TII.get(ADDriOpc);
+  MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+  MRI.constrainRegClass(BaseReg, TID.OpInfo[0].getRegClass(this));
+
   MachineInstrBuilder MIB =
     BuildMI(*MBB, Ins, DL, TII.get(ADDriOpc), BaseReg)
     .addFrameIndex(FrameIdx).addImm(Offset);
