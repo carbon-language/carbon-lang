@@ -975,9 +975,15 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
   // argument which is not f32 or f64.
   bool AllocateFloatsInIntReg = State.isVarArg() || ValNo > 1
       || State.getFirstUnallocated(F32Regs, FloatRegsSize) != ValNo;
+  unsigned OrigAlign = ArgFlags.getOrigAlign();
+  bool isI64 = (ValVT == MVT::i32 && OrigAlign == 8);
 
   if (ValVT == MVT::i32 || (ValVT == MVT::f32 && AllocateFloatsInIntReg)) {
     Reg = State.AllocateReg(IntRegs, IntRegsSize);
+    // If this is the first part of an i64 arg,
+    // the allocated register must be either A0 or A2.
+    if (isI64 && (Reg == Mips::A1 || Reg == Mips::A3))
+      Reg = State.AllocateReg(IntRegs, IntRegsSize);
     LocVT = MVT::i32;
   } else if (ValVT == MVT::f64 && AllocateFloatsInIntReg) {
     // Allocate int register and shadow next int register. If first
@@ -1006,7 +1012,7 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
 
   if (!Reg) {
     unsigned SizeInBytes = ValVT.getSizeInBits() >> 3;
-    unsigned Offset = State.AllocateStack(SizeInBytes, SizeInBytes);
+    unsigned Offset = State.AllocateStack(SizeInBytes, OrigAlign);
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
   } else
     State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
