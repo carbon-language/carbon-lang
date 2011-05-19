@@ -299,6 +299,26 @@ public:
     GetCallableLoadAddress (Target *target) const;
 
     //------------------------------------------------------------------
+    /// Get the load address as an opcode load address.
+    ///
+    /// This function will first resolve its address to a load address.
+    /// Then, if the address turns out to be in code address, return the
+    /// load address for a an opcode. This address object might have 
+    /// extra bits set (bit zero will be set to Thumb functions for an
+    /// ARM target) that are required for changing the program counter
+    /// and this function will remove any bits that are intended for
+    /// these special purposes. The result of this function can be used
+    /// to safely write a software breakpoint trap to memory.
+    ///
+    /// @return
+    ///     The valid load virtual address with extra callable bits 
+    ///     removed, or LLDB_INVALID_ADDRESS if the address is currently
+    ///     not loaded.
+    //------------------------------------------------------------------
+    lldb::addr_t
+    GetOpcodeLoadAddress (Target *target) const;
+
+    //------------------------------------------------------------------
     /// Get the section relative offset value.
     ///
     /// @return

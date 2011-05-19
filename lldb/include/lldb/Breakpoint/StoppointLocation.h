@@ -46,37 +46,75 @@ public:
     // Methods
     //------------------------------------------------------------------
     virtual lldb::addr_t
-    GetLoadAddress () const;
+    GetLoadAddress() const
+    {
+        return m_addr;
+    }
+
+    virtual lldb::addr_t
+    SetLoadAddress () const
+    {
+        return m_addr;
+    }
 
     size_t
-    GetByteSize () const;
+    GetByteSize () const
+    {
+        return m_byte_size;
+    }
 
     uint32_t
-    GetHitCount () const;
+    GetHitCount () const
+    {
+        return m_hit_count;
+    }
 
     void
     IncrementHitCount ();
 
     uint32_t
-    GetHardwareIndex () const;
+    GetHardwareIndex () const
+    {
+        return m_hw_index;
+    }
+
 
     bool
-    HardwarePreferred () const;
+    HardwarePreferred () const
+    {
+        return m_hw_preferred;
+    }
 
     bool
-    IsHardware () const;
+    IsHardware () const
+    {
+        return m_hw_index != LLDB_INVALID_INDEX32;
+    }
+
 
     virtual bool
-    ShouldStop (StoppointCallbackContext *context);
+    ShouldStop (StoppointCallbackContext *context)
+    {
+        return true;
+    }
 
     virtual void
-    Dump (Stream *stream) const;
+    Dump (Stream *stream) const
+    {
+    }
 
     void
-    SetHardwareIndex (uint32_t index);
+    SetHardwareIndex (uint32_t index)
+    {
+        m_hw_index = index;
+    }
+
 
     lldb::break_id_t
-    GetID () const;
+    GetID () const
+    {
+        return m_loc_id;
+    }
 
 protected:
     //------------------------------------------------------------------

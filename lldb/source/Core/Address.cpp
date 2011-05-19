@@ -301,6 +301,8 @@ Address::GetCallableLoadAddress (Target *target) const
 {
     addr_t code_addr = GetLoadAddress (target);
     
+    // Make sure we have section, otherwise the call to GetAddressClass() will
+    // fail because it uses the section to get to the module.
     if (m_section && code_addr != LLDB_INVALID_ADDRESS)
     {
         switch (target->GetArchitecture().GetMachine())
@@ -323,6 +325,28 @@ Address::GetCallableLoadAddress (Target *target) const
                         code_addr |= 1ull;
                     }
                 }
+                break;
+                
+            default:
+                break;
+        }
+    }
+    return code_addr;
+}
+
+addr_t
+Address::GetOpcodeLoadAddress (Target *target) const
+{
+    addr_t code_addr = GetLoadAddress (target);
+    
+    if (code_addr != LLDB_INVALID_ADDRESS)
+    {
+        switch (target->GetArchitecture().GetMachine())
+        {
+            case llvm::Triple::arm:
+            case llvm::Triple::thumb:
+                // Strip bit zero to make sure we end up on an opcode boundary
+                return code_addr & ~(1ull);
                 break;
                 
             default:

@@ -1323,7 +1323,7 @@ Process::EnableBreakpointSiteByID (lldb::user_id_t break_id)
 lldb::break_id_t
 Process::CreateBreakpointSite (BreakpointLocationSP &owner, bool use_hardware)
 {
-    const addr_t load_addr = owner->GetAddress().GetLoadAddress (&m_target);
+    const addr_t load_addr = owner->GetAddress().GetOpcodeLoadAddress (&m_target);
     if (load_addr != LLDB_INVALID_ADDRESS)
     {
         BreakpointSiteSP bp_site_sp;
@@ -3240,7 +3240,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     }
     
     // Save this value for restoration of the execution context after we run
-    uint32_t tid = exe_ctx.thread->GetIndexID();
+    const uint32_t thread_idx_id = exe_ctx.thread->GetIndexID();
 
     // N.B. Running the target may unset the currently selected thread and frame.  We don't want to do that either, 
     // so we should arrange to reset them as well.
@@ -3378,12 +3378,12 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 case lldb::eStateStopped:
                 {
                     // Yay, we're done.  Now make sure that our thread plan actually completed.
-                    ThreadSP thread_sp = exe_ctx.process->GetThreadList().FindThreadByIndexID (tid);
+                    ThreadSP thread_sp = exe_ctx.process->GetThreadList().FindThreadByIndexID (thread_idx_id);
                     if (!thread_sp)
                     {
                         // Ooh, our thread has vanished.  Unlikely that this was successful execution...
                         if (log)
-                            log->Printf ("Execution completed but our thread has vanished.");
+                            log->Printf ("Execution completed but our thread (index-id=%u) has vanished.", thread_idx_id);
                         return_value = eExecutionInterrupted;
                     }
                     else
@@ -3733,7 +3733,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 
     // Thread we ran the function in may have gone away because we ran the target
     // Check that it's still there.
-    exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(tid, true).get();
+    exe_ctx.thread = exe_ctx.process->GetThreadList().FindThreadByIndexID(thread_idx_id, true).get();
     if (exe_ctx.thread)
         exe_ctx.frame = exe_ctx.thread->GetStackFrameAtIndex(0).get();
     
