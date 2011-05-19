@@ -240,11 +240,11 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
 
     if (PPCLowering.getPointerTy() == MVT::i32) {
       GlobalBaseReg = RegInfo->createVirtualRegister(PPC::GPRCRegisterClass);
-      BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MovePCtoLR), PPC::LR);
+      BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MovePCtoLR));
       BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MFLR), GlobalBaseReg);
     } else {
       GlobalBaseReg = RegInfo->createVirtualRegister(PPC::G8RCRegisterClass);
-      BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MovePCtoLR8), PPC::LR8);
+      BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MovePCtoLR8));
       BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MFLR8), GlobalBaseReg);
     }
   }

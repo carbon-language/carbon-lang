@@ -300,7 +300,6 @@ def calltarget : Operand<iPTR> {
 def aaddr : Operand<iPTR> {
   let PrintMethod = "printAbsAddrOperand";
 }
-def piclabel: Operand<iPTR> {}
 def symbolHi: Operand<i32> {
   let PrintMethod = "printSymbolHi";
   let EncoderMethod = "getHA16Encoding";
@@ -413,7 +412,7 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
 }
 
 let Defs = [LR] in
-  def MovePCtoLR : Pseudo<(outs), (ins piclabel:$label), "", []>,
+  def MovePCtoLR : Pseudo<(outs), (ins), "", []>,
                    PPC970_Unit_BRU;
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {

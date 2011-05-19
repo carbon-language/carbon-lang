@@ -60,7 +60,7 @@ def HI48_64 : SDNodeXForm<imm, [{
 //
 
 let Defs = [LR8] in
-  def MovePCtoLR8 : Pseudo<(outs), (ins piclabel:$label), "", []>,
+  def MovePCtoLR8 : Pseudo<(outs), (ins), "", []>,
                     PPC970_Unit_BRU;
 
 // Darwin ABI Calls.
