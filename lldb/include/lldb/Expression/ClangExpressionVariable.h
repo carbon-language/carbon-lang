@@ -156,7 +156,7 @@ public:
     EnableJITVars()
     {
         if (!m_jit_vars.get())
-            m_jit_vars.reset(new struct JITVars);
+            m_jit_vars.reset(new JITVars);
     }
     
     //----------------------------------------------------------------------
