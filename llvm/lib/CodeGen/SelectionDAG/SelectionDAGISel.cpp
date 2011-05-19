@@ -2650,11 +2650,45 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       // instructions that access memory and for ComplexPatterns that match
       // loads.
       if (EmitNodeInfo & OPFL_MemRefs) {
+        // Only attach load or store memory operands if the generated
+        // instruction may load or store.
+        const TargetInstrDesc &TID = TM.getInstrInfo()->get(TargetOpc);
+        bool mayLoad = TID.mayLoad();
+        bool mayStore = TID.mayStore();
+
+        unsigned NumMemRefs = 0;
+        for (SmallVector<MachineMemOperand*, 2>::const_iterator I =
+             MatchedMemRefs.begin(), E = MatchedMemRefs.end(); I != E; ++I) {
+          if ((*I)->isLoad()) {
+            if (mayLoad)
+              ++NumMemRefs;
+          } else if ((*I)->isStore()) {
+            if (mayStore)
+              ++NumMemRefs;
+          } else {
+            ++NumMemRefs;
+          }
+        }
+
         MachineSDNode::mmo_iterator MemRefs =
-          MF->allocateMemRefsArray(MatchedMemRefs.size());
-        std::copy(MatchedMemRefs.begin(), MatchedMemRefs.end(), MemRefs);
+          MF->allocateMemRefsArray(NumMemRefs);
+
+        MachineSDNode::mmo_iterator MemRefsPos = MemRefs;
+        for (SmallVector<MachineMemOperand*, 2>::const_iterator I =
+             MatchedMemRefs.begin(), E = MatchedMemRefs.end(); I != E; ++I) {
+          if ((*I)->isLoad()) {
+            if (mayLoad)
+              *MemRefsPos++ = *I;
+          } else if ((*I)->isStore()) {
+            if (mayStore)
+              *MemRefsPos++ = *I;
+          } else {
+            *MemRefsPos++ = *I;
+          }
+        }
+
         cast<MachineSDNode>(Res)
-          ->setMemRefs(MemRefs, MemRefs + MatchedMemRefs.size());
+          ->setMemRefs(MemRefs, MemRefs + NumMemRefs);
       }
 
       DEBUG(errs() << "  "
