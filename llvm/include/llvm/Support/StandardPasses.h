@@ -62,6 +62,9 @@ namespace llvm {
     /// Passes must be registered with functions that take no arguments, so we have
     /// to wrap their existing constructors.  
     static Pass *createScalarReplAggregatesPass(void) {
+      return llvm::createScalarReplAggregatesPass();
+    }
+    static Pass *createSSAScalarReplAggregatesPass(void) {
       return llvm::createScalarReplAggregatesPass(-1, false);
     }
     static Pass *createDefaultLoopUnswitchPass(void) {
@@ -138,7 +141,10 @@ namespace llvm {
       DEFAULT_MODULE_PASS(ArgumentPromotion, StandardPass::OptimzationFlags(3));
       // Start of function pass.
       // Break up aggregate allocas, using SSAUpdater.
-      DEFAULT_MODULE_PASS(ScalarReplAggregates, 0);
+      StandardPass::RegisterDefaultPass(
+          CreatePassFn(createSSAScalarReplAggregatesPass),
+          &DefaultStandardPasses::ScalarReplAggregatesID, 0,
+          StandardPass::Module, 0);
       // Catch trivial redundancies
       DEFAULT_MODULE_PASS(EarlyCSE, 0);
       // Library Call Optimizations
@@ -164,21 +170,21 @@ namespace llvm {
       DEFAULT_MODULE_PASS(LICM, 0);
       // Optimize for size if the optimzation level is 0-2
       StandardPass::RegisterDefaultPass(
-          PassInfo::NormalCtor_t(createSizeOptimizingLoopUnswitchPass),
+          CreatePassFn(createSizeOptimizingLoopUnswitchPass),
           &DefaultStandardPasses::LoopUnswitchID, 0,
           StandardPass::Module,
           StandardPass::OptimzationFlags(0, 2));
       // Optimize for size if the optimzation level is >2, and OptimizeSize is
       // set
       StandardPass::RegisterDefaultPass(
-          PassInfo::NormalCtor_t(createSizeOptimizingLoopUnswitchPass),
+          CreatePassFn(createSizeOptimizingLoopUnswitchPass),
           &DefaultStandardPasses::LoopUnswitchID, 0,
           StandardPass::Module,
           StandardPass::OptimzationFlags(3, 0, StandardPass::OptimizeSize));
       // Don't optimize for size if optimisation level is >2 and OptimizeSize
       // is not set
       StandardPass::RegisterDefaultPass(
-          PassInfo::NormalCtor_t(createDefaultLoopUnswitchPass),
+          CreatePassFn(createDefaultLoopUnswitchPass),
           &DefaultStandardPasses::LoopUnswitchID, 0,
           StandardPass::Module,
           StandardPass::OptimzationFlags(3, 0, 0, StandardPass::OptimizeSize));
