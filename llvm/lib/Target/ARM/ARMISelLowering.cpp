@@ -4663,10 +4663,10 @@ LowerSDIV_v4i16(SDValue N0, SDValue N1, DebugLoc dl, SelectionDAG &DAG) {
   // Because short has a smaller range than ushort, we can actually get away
   // with only a single newton step.  This requires that we use a weird bias
   // of 89, however (again, this has been exhaustively tested).
-  // float4 result = as_float4(as_int4(xf*recip) + 89);
+  // float4 result = as_float4(as_int4(xf*recip) + 0x89);
   N0 = DAG.getNode(ISD::FMUL, dl, MVT::v4f32, N0, N2);
   N0 = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, N0);
-  N1 = DAG.getConstant(89, MVT::i32);
+  N1 = DAG.getConstant(0x89, MVT::i32);
   N1 = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32, N1, N1, N1, N1);
   N0 = DAG.getNode(ISD::ADD, dl, MVT::v4i32, N0, N1);
   N0 = DAG.getNode(ISD::BITCAST, dl, MVT::v4f32, N0);
@@ -4753,26 +4753,26 @@ static SDValue LowerUDIV(SDValue Op, SelectionDAG &DAG) {
   N0 = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::v4i32, N0);
   N1 = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::v4i32, N1);
   N0 = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::v4f32, N0);
-  N1 = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::v4f32, N1);
+  SDValue BN1 = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::v4f32, N1);
 
   // Use reciprocal estimate and two refinement steps.
   // float4 recip = vrecpeq_f32(yf);
   // recip *= vrecpsq_f32(yf, recip);
   // recip *= vrecpsq_f32(yf, recip);
   N2 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::v4f32,
-                   DAG.getConstant(Intrinsic::arm_neon_vrecpe, MVT::i32), N1);
+                   DAG.getConstant(Intrinsic::arm_neon_vrecpe, MVT::i32), BN1);
   N1 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::v4f32,
                    DAG.getConstant(Intrinsic::arm_neon_vrecps, MVT::i32),
-                   N1, N2);
+                   BN1, N2);
   N2 = DAG.getNode(ISD::FMUL, dl, MVT::v4f32, N1, N2);
   N1 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::v4f32,
                    DAG.getConstant(Intrinsic::arm_neon_vrecps, MVT::i32),
-                   N1, N2);
+                   BN1, N2);
   N2 = DAG.getNode(ISD::FMUL, dl, MVT::v4f32, N1, N2);
   // Simply multiplying by the reciprocal estimate can leave us a few ulps
   // too low, so we add 2 ulps (exhaustive testing shows that this is enough,
   // and that it will never cause us to return an answer too large).
-  // float4 result = as_float4(as_int4(xf*recip) + 89);
+  // float4 result = as_float4(as_int4(xf*recip) + 2);
   N0 = DAG.getNode(ISD::FMUL, dl, MVT::v4f32, N0, N2);
   N0 = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, N0);
   N1 = DAG.getConstant(2, MVT::i32);
