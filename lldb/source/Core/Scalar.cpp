@@ -1922,6 +1922,74 @@ Scalar::SetValueFromCString (const char *value_str, Encoding encoding, uint32_t 
 }
 
 bool
+Scalar::SignExtend (uint32_t sign_bit_pos)
+{
+    const uint32_t max_bit_pos = GetByteSize() * 8;
+
+    if (sign_bit_pos < max_bit_pos)
+    {
+        switch (m_type)
+        {
+        default:
+        case Scalar::e_void:
+        case Scalar::e_float:
+        case Scalar::e_double:
+        case Scalar::e_long_double: 
+            return false;
+            
+        case Scalar::e_sint:            
+        case Scalar::e_uint:
+            if (max_bit_pos == sign_bit_pos)
+                return true;
+            else if (sign_bit_pos < (max_bit_pos-1))
+            {
+                unsigned int sign_bit = 1u << sign_bit_pos;
+                if (m_data.uint & sign_bit)
+                {
+                    const unsigned int mask = ~(sign_bit) + 1u;
+                    m_data.uint |= mask;
+                }
+                return true;
+            }
+            break;
+            
+        case Scalar::e_slong:
+        case Scalar::e_ulong:
+            if (max_bit_pos == sign_bit_pos)
+                return true;
+            else if (sign_bit_pos < (max_bit_pos-1))
+            {
+                unsigned long sign_bit = 1ul << sign_bit_pos;
+                if (m_data.uint & sign_bit)
+                {
+                    const unsigned long mask = ~(sign_bit) + 1ul;
+                    m_data.uint |= mask;
+                }
+                return true;
+            }
+            break;
+            
+        case Scalar::e_slonglong:
+        case Scalar::e_ulonglong:
+            if (max_bit_pos == sign_bit_pos)
+                return true;
+            else if (sign_bit_pos < (max_bit_pos-1))
+            {
+                unsigned long long sign_bit = 1ull << sign_bit_pos;
+                if (m_data.uint & sign_bit)
+                {
+                    const unsigned long long mask = ~(sign_bit) + 1ull;
+                    m_data.uint |= mask;
+                }
+                return true;
+            }
+            break;
+        }
+    }
+    return false;
+}
+
+bool
 lldb_private::operator== (const Scalar& lhs, const Scalar& rhs)
 {
     // If either entry is void then we can just compare the types

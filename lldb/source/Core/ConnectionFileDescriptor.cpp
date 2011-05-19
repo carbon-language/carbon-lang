@@ -229,7 +229,6 @@ ConnectionFileDescriptor::Read (void *dst, size_t dst_len, ConnectionStatus &sta
             status = eConnectionStatusSuccess;
             return 0;
 
-        case EBADF:     // fildes is not a valid file or socket descriptor open for reading.
         case EFAULT:    // Buf points outside the allocated address space.
         case EINTR:     // A read from a slow device was interrupted before any data arrived by the delivery of a signal.
         case EINVAL:    // The pointer associated with fildes was negative.
@@ -246,6 +245,7 @@ ConnectionFileDescriptor::Read (void *dst, size_t dst_len, ConnectionStatus &sta
             status = eConnectionStatusError;
             break;  // Break to close....
 
+        case EBADF:     // fildes is not a valid file or socket descriptor open for reading.
         case ENXIO:     // An action is requested of a device that does not exist..
                         // A requested action cannot be performed by the device.
         case ECONNRESET:// The connection is closed by the peer during a read attempt on a socket.
@@ -391,6 +391,8 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
             switch (error.GetError())
             {
             case EBADF:     // One of the descriptor sets specified an invalid descriptor.
+                return eConnectionStatusLostConnection;
+
             case EINVAL:    // The specified time limit is invalid. One of its components is negative or too large.
             default:        // Other unknown error
                 return eConnectionStatusError;

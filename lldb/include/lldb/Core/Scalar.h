@@ -54,6 +54,9 @@ public:
     //Scalar(const RegisterValue& reg_value);
     virtual ~Scalar();
 
+    bool
+    SignExtend (uint32_t bit_pos);
+
     size_t
     GetByteSize() const;
 

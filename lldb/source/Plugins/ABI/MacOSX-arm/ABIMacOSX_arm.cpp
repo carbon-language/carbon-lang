@@ -175,161 +175,118 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
     return true;
 }
 
-
-static bool 
-ReadIntegerArgument (Scalar &scalar,
-                     unsigned int bit_width,
-                     bool is_signed,
-                     Process &process,
-                     addr_t &current_stack_argument)
-{
-//    if (bit_width > 64)
-//        return false; // Scalar can't hold large integer arguments
-//    
-//    uint64_t arg_contents;
-//    uint32_t read_data;
-//    Error error;
-//    
-//    if (bit_width > 32)
-//    {
-//        if (process.ReadMemory(current_stack_argument, &read_data, sizeof(read_data), error) != sizeof(read_data))
-//            return false;
-//        
-//        arg_contents = read_data;
-//        
-//        if (process.ReadMemory(current_stack_argument + 4, &read_data, sizeof(read_data), error) != sizeof(read_data))
-//            return false;
-//        
-//        arg_contents |= ((uint64_t)read_data) << 32;
-//        
-//        current_stack_argument += 8;
-//    }
-//    else {
-//        if (process.ReadMemory(current_stack_argument, &read_data, sizeof(read_data), error) != sizeof(read_data))
-//            return false;
-//        
-//        arg_contents = read_data;
-//        
-//        current_stack_argument += 4;
-//    }
-//    
-//    if (is_signed)
-//    {
-//        switch (bit_width)
-//        {
-//        default:
-//            return false;
-//        case 8:
-//            scalar = (int8_t)(arg_contents & 0xff);
-//            break;
-//        case 16:
-//            scalar = (int16_t)(arg_contents & 0xffff);
-//            break;
-//        case 32:
-//            scalar = (int32_t)(arg_contents & 0xffffffff);
-//            break;
-//        case 64:
-//            scalar = (int64_t)arg_contents;
-//            break;
-//        }
-//    }
-//    else
-//    {
-//        switch (bit_width)
-//        {
-//        default:
-//            return false;
-//        case 8:
-//            scalar = (uint8_t)(arg_contents & 0xff);
-//            break;
-//        case 16:
-//            scalar = (uint16_t)(arg_contents & 0xffff);
-//            break;
-//        case 32:
-//            scalar = (uint32_t)(arg_contents & 0xffffffff);
-//            break;
-//        case 64:
-//            scalar = (uint64_t)arg_contents;
-//            break;
-//        }
-//    }
-//    
-//    return true;
-    return false;
-}
-
 bool
 ABIMacOSX_arm::GetArgumentValues (Thread &thread,
                                   ValueList &values) const
 {
-//    unsigned int num_values = values.GetSize();
-//    unsigned int value_index;
-//    
-//    // Extract the Clang AST context from the PC so that we can figure out type
-//    // sizes
-//    
-//    clang::ASTContext *ast_context = thread.CalculateTarget()->GetScratchClangASTContext()->getASTContext();
-//    
-//    // Get the pointer to the first stack argument so we have a place to start 
-//    // when reading data
-//    
-//    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
-//    
-//    if (!reg_ctx)
-//        return false;
-//    
-//    addr_t sp = reg_ctx->GetSP(0);
-//    
-//    if (!sp)
-//        return false;
-//    
-//    addr_t current_stack_argument = sp + 4; // jump over return address
-//    
-//    for (value_index = 0;
-//         value_index < num_values;
-//         ++value_index)
-//    {
-//        Value *value = values.GetValueAtIndex(value_index);
-//        
-//        if (!value)
-//            return false;
-//        
-//        // We currently only support extracting values with Clang QualTypes.
-//        // Do we care about others?
-//        switch (value->GetContextType())
-//        {
-//            default:
-//                return false;
-//            case Value::eContextTypeClangType:
-//            {
-//                void *value_type = value->GetClangType();
-//                bool is_signed;
-//                
-//                if (ClangASTContext::IsIntegerType (value_type, is_signed))
-//                {
-//                    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
-//                    
-//                    ReadIntegerArgument(value->GetScalar(),
-//                                        bit_width, 
-//                                        is_signed,
-//                                        thread.GetProcess(), 
-//                                        current_stack_argument);
-//                }
-//                else if (ClangASTContext::IsPointerType (value_type))
-//                {
-//                    ReadIntegerArgument(value->GetScalar(),
-//                                        32,
-//                                        false,
-//                                        thread.GetProcess(),
-//                                        current_stack_argument);
-//                }
-//            }
-//                break;
-//        }
-//    }
-//    
-//    return true;
-    return false;
+    uint32_t num_values = values.GetSize();
+    
+    
+    // For now, assume that the types in the AST values come from the Target's 
+    // scratch AST.    
+    
+    clang::ASTContext *ast_context = thread.CalculateTarget()->GetScratchClangASTContext()->getASTContext();
+    
+    // Extract the register context so we can read arguments from registers
+    
+    RegisterContext *reg_ctx = thread.GetRegisterContext().get();
+    
+    if (!reg_ctx)
+        return false;
+        
+    bool arg_regs_exceeded = false;
+    
+    addr_t sp = reg_ctx->GetSP(0);
+    
+    if (!sp)
+        return false;
+
+    for (uint32_t value_idx = 0; value_idx < num_values; ++value_idx)
+    {
+        // We currently only support extracting values with Clang QualTypes.
+        // Do we care about others?
+        Value *value = values.GetValueAtIndex(value_idx);
+        
+        if (!value)
+            return false;
+        
+        void *value_type = value->GetClangType();
+        if (value_type)
+        {
+            bool is_signed = false;
+            size_t bit_width = 0;
+            if (ClangASTContext::IsIntegerType (value_type, is_signed))
+            {
+                bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+            }
+            else if (ClangASTContext::IsPointerOrReferenceType (value_type))
+            {
+                bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+            }
+            else
+            {
+                // We only handle integer, pointer and reference types currently...
+                return false;
+            }
+            
+            if (bit_width <= (thread.GetProcess().GetAddressByteSize() * 8))
+            {
+                if (!arg_regs_exceeded)
+                {
+                    uint32_t arg_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + value_idx);
+                    if (arg_reg_num == LLDB_INVALID_REGNUM)
+                    {
+                        arg_regs_exceeded = true;
+                    }
+                    else
+                    {
+                        const RegisterInfo *arg_reg_info = reg_ctx->GetRegisterInfoAtIndex(arg_reg_num);
+                        RegisterValue reg_value;
+                        
+                        if (reg_ctx->ReadRegister(arg_reg_info, reg_value))
+                        {
+                            if (is_signed)
+                                reg_value.SignExtend(bit_width);
+                            if (!reg_value.GetScalarValue(value->GetScalar()))
+                                return false;
+                            continue;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+                
+                
+                const uint32_t arg_byte_size = (bit_width + (8-1)) / 8;
+                if (arg_byte_size <= sizeof(uint64_t))
+                {
+                    uint8_t arg_data[sizeof(uint64_t)];
+                    Error error;
+                    thread.GetProcess().ReadMemory(sp, arg_data, sizeof(arg_data), error);
+                    DataExtractor arg_data_extractor (arg_data, sizeof(arg_data), 
+                                                      thread.GetProcess().GetTarget().GetArchitecture().GetByteOrder(), 
+                                                      thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
+                    uint32_t offset = 0;
+                    if (arg_byte_size <= 4)
+                        value->GetScalar() = arg_data_extractor.GetMaxU32 (&offset, arg_byte_size);
+                    else if (arg_byte_size <= 8)
+                        value->GetScalar() = arg_data_extractor.GetMaxU64 (&offset, arg_byte_size);
+                    else
+                        return false;
+
+                    if (offset == 0 || offset == UINT32_MAX)
+                        return false;
+
+                    if (is_signed)
+                        value->GetScalar().SignExtend (bit_width);
+                    sp += arg_byte_size;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 bool

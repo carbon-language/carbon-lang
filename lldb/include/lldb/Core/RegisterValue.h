@@ -123,6 +123,12 @@ namespace lldb_private {
         bool
         CopyValue (const RegisterValue &rhs);
 
+        void
+        SetType (RegisterValue::Type type)
+        {
+            m_type = type;
+        }
+
         RegisterValue::Type
         SetType (const RegisterInfo *reg_info);
         
