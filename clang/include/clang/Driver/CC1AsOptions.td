@@ -78,5 +78,5 @@ def relax_all : Flag<"-relax-all">,
 def no_exec_stack : Flag<"--noexecstack">,
     HelpText<"Mark the file as not needing an executable stack">;
 
-def fatal_warnings : Flag<"-fatal-warnings">,
+def fatal_warnings : Flag<"--fatal-warnings">,
     HelpText<"Consider warnings as errors">;
