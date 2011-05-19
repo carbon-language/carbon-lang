@@ -325,7 +325,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 __threaad_execute(tuple<_F, _Args...>& __t, __tuple_indices<_Indices...>)
 {
-    _STD::move(_STD::get<0>(__t))(_STD::move(_STD::get<_Indices>(__t))...);
+    __invoke(_STD::move(_STD::get<0>(__t)), _STD::move(_STD::get<_Indices>(__t))...);
 }
 
 template <class _F>

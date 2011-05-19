@@ -858,6 +858,115 @@ __deferred_assoc_state<void, _F>::__execute()
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
+template <class _R, class _F>
+class __async_assoc_state
+    : public __assoc_state<_R>
+{
+    typedef __assoc_state<_R> base;
+
+    _F __func_;
+
+    virtual void __on_zero_shared();
+public:
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    explicit __async_assoc_state(_F&& __f);
+#endif
+
+    virtual void __execute();
+};
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _R, class _F>
+inline _LIBCPP_INLINE_VISIBILITY
+__async_assoc_state<_R, _F>::__async_assoc_state(_F&& __f)
+    : __func_(_STD::forward<_F>(__f))
+{
+}
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _R, class _F>
+void
+__async_assoc_state<_R, _F>::__execute()
+{
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    try
+    {
+#endif  // _LIBCPP_NO_EXCEPTIONS
+        this->set_value(__func_());
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    }
+    catch (...)
+    {
+        this->set_exception(current_exception());
+    }
+#endif  // _LIBCPP_NO_EXCEPTIONS
+}
+
+template <class _R, class _F>
+void
+__async_assoc_state<_R, _F>::__on_zero_shared()
+{
+    this->wait();
+    base::__on_zero_shared();
+}
+
+template <class _F>
+class __async_assoc_state<void, _F>
+    : public __assoc_sub_state
+{
+    typedef __assoc_sub_state base;
+
+    _F __func_;
+
+    virtual void __on_zero_shared();
+public:
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    explicit __async_assoc_state(_F&& __f);
+#endif
+
+    virtual void __execute();
+};
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _F>
+inline _LIBCPP_INLINE_VISIBILITY
+__async_assoc_state<void, _F>::__async_assoc_state(_F&& __f)
+    : __func_(_STD::forward<_F>(__f))
+{
+}
+
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+template <class _F>
+void
+__async_assoc_state<void, _F>::__execute()
+{
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    try
+    {
+#endif  // _LIBCPP_NO_EXCEPTIONS
+        __func_();
+        this->set_value();
+#ifndef _LIBCPP_NO_EXCEPTIONS
+    }
+    catch (...)
+    {
+        this->set_exception(current_exception());
+    }
+#endif  // _LIBCPP_NO_EXCEPTIONS
+}
+
+template <class _F>
+void
+__async_assoc_state<void, _F>::__on_zero_shared()
+{
+    this->wait();
+    base::__on_zero_shared();
+}
+
 template <class> class promise;
 template <class> class shared_future;
 template <class> class atomic_future;
@@ -874,6 +983,14 @@ __make_deferred_assoc_state(_F&& __f);
 __make_deferred_assoc_state(_F __f);
 #endif
 
+template <class _R, class _F>
+future<_R>
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+__make_async_assoc_state(_F&& __f);
+#else
+__make_async_assoc_state(_F __f);
+#endif
+
 template <class _R>
 class _LIBCPP_VISIBLE future
 {
@@ -885,11 +1002,16 @@ class _LIBCPP_VISIBLE future
     template <class> friend class shared_future;
     template <class> friend class atomic_future;
 
-    template <class _R1, class _F>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    template <class _R1, class _F>
         friend future<_R1> __make_deferred_assoc_state(_F&& __f);
+    template <class _R1, class _F>
+        friend future<_R1> __make_async_assoc_state(_F&& __f);
 #else
+    template <class _R1, class _F>
         friend future<_R1> __make_deferred_assoc_state(_F __f);
+    template <class _R1, class _F>
+        friend future<_R1> __make_async_assoc_state(_F __f);
 #endif
 
 public:
@@ -983,11 +1105,16 @@ class _LIBCPP_VISIBLE future<_R&>
     template <class> friend class shared_future;
     template <class> friend class atomic_future;
 
-    template <class _R1, class _F>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    template <class _R1, class _F>
         friend future<_R1> __make_deferred_assoc_state(_F&& __f);
+    template <class _R1, class _F>
+        friend future<_R1> __make_async_assoc_state(_F&& __f);
 #else
+    template <class _R1, class _F>
         friend future<_R1> __make_deferred_assoc_state(_F __f);
+    template <class _R1, class _F>
+        friend future<_R1> __make_async_assoc_state(_F __f);
 #endif
 
 public:
@@ -1076,11 +1203,16 @@ class _LIBCPP_VISIBLE future<void>
     template <class> friend class shared_future;
     template <class> friend class atomic_future;
 
-    template <class _R1, class _F>
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    template <class _R1, class _F>
         friend future<_R1> __make_deferred_assoc_state(_F&& __f);
+    template <class _R1, class _F>
+        friend future<_R1> __make_async_assoc_state(_F&& __f);
 #else
+    template <class _R1, class _F>
         friend future<_R1> __make_deferred_assoc_state(_F __f);
+    template <class _R1, class _F>
+        friend future<_R1> __make_async_assoc_state(_F __f);
 #endif
 
 public:
@@ -2034,32 +2166,68 @@ __make_deferred_assoc_state(_F __f)
     return future<_R>(__h.get());
 }
 
+template <class _R, class _F>
+future<_R>
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+__make_async_assoc_state(_F&& __f)
+#else
+__make_async_assoc_state(_F __f)
+#endif
+{
+    unique_ptr<__async_assoc_state<_R, _F>, __release_shared_count>
+        __h(new __async_assoc_state<_R, _F>(_STD::forward<_F>(__f)));
+    _STD::thread(&__async_assoc_state<_R, _F>::__execute, __h.get()).detach();
+    return future<_R>(__h.get());
+}
+
 template <class _F, class... _Args>
-future<typename result_of<_F(_Args...)>::type>
+class __async_func
+{
+    tuple<_F, _Args...> __f_;
+
+public:
+    typedef typename __invoke_of<_F, _Args...>::type _R;
+
+    _LIBCPP_INLINE_VISIBILITY
+    explicit __async_func(_F&& __f, _Args&&... __args)
+        : __f_(_STD::move(__f), _STD::move(__args)...) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __async_func(__async_func&& __f) : __f_(_STD::move(__f.__f_)) {}
+
+    _R operator()()
+    {
+        typedef typename __make_tuple_indices<1+sizeof...(_Args), 1>::type _Index;
+        return __execute(_Index());
+    }
+private:
+    template <size_t ..._Indices>
+    _R
+    __execute(__tuple_indices<_Indices...>)
+    {
+        return __invoke(_STD::move(_STD::get<0>(__f_)), _STD::move(_STD::get<_Indices>(__f_))...);
+    }
+};
+
+template <class _F, class... _Args>
+future<typename __invoke_of<typename decay<_F>::type, typename decay<_Args>::type...>::type>
 async(launch __policy, _F&& __f, _Args&&... __args)
 {
-    typedef typename result_of<_F(_Args...)>::type _R;
+    typedef __async_func<typename decay<_F>::type, typename decay<_Args>::type...> _BF;
+    typedef typename _BF::_R _R;
     future<_R> __r;
     if (__policy & launch::async)
-    {
-        packaged_task<_R()> __pk(bind(_STD::forward<_F>(__f),
-                                      _STD::forward<_Args>(__args)...));
-        __r = __pk.get_future();
-        thread(_STD::move(__pk)).detach();
-    }
+        __r = _STD::__make_async_assoc_state<_R>(_BF(__decay_copy(_STD::forward<_F>(__f)),
+                                                     __decay_copy(_STD::forward<_Args>(__args))...));
     else if (__policy & launch::deferred)
-        __r = _STD::__make_deferred_assoc_state<_R>(bind(_STD::forward<_F>(__f),
-                                              _STD::forward<_Args>(__args)...));
+        __r = _STD::__make_deferred_assoc_state<_R>(_BF(__decay_copy(_STD::forward<_F>(__f)),
+                                                        __decay_copy(_STD::forward<_Args>(__args))...));
     return __r;
 }
 
 template <class _F, class... _Args>
 inline _LIBCPP_INLINE_VISIBILITY
-typename enable_if
-<
-    !is_same<typename decay<_F>::type, launch>::value,
-    future<typename result_of<_F(_Args...)>::type>
->::type
+future<typename __invoke_of<typename decay<_F>::type, typename decay<_Args>::type...>::type>
 async(_F&& __f, _Args&&... __args)
 {
     return _STD::async(launch::any, _STD::forward<_F>(__f),
