@@ -17,7 +17,7 @@ set(MSVC_LIB_DEPS_LLVMCBackend LLVMAnalysis LLVMCBackendInfo LLVMCodeGen LLVMCor
 set(MSVC_LIB_DEPS_LLVMCBackendInfo LLVMMC LLVMSupport)
 set(MSVC_LIB_DEPS_LLVMCellSPUCodeGen LLVMAsmPrinter LLVMCellSPUInfo LLVMCodeGen LLVMCore LLVMMC LLVMSelectionDAG LLVMSupport LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMCellSPUInfo LLVMMC LLVMSupport)
-set(MSVC_LIB_DEPS_LLVMCodeGen LLVMAnalysis LLVMCore LLVMInstCombine LLVMMC LLVMScalarOpts LLVMSupport LLVMTarget LLVMTransformUtils LLVMipa LLVMipo)
+set(MSVC_LIB_DEPS_LLVMCodeGen LLVMAnalysis LLVMCore LLVMMC LLVMScalarOpts LLVMSupport LLVMTarget LLVMTransformUtils)
 set(MSVC_LIB_DEPS_LLVMCore LLVMSupport)
 set(MSVC_LIB_DEPS_LLVMCppBackend LLVMCore LLVMCppBackendInfo LLVMSupport LLVMTarget)
 set(MSVC_LIB_DEPS_LLVMCppBackendInfo LLVMMC LLVMSupport)

@@ -35,7 +35,6 @@ add_llvm_library(LLVMSupport
   SmallPtrSet.cpp
   SmallVector.cpp
   SourceMgr.cpp
-  StandardPasses.cpp
   Statistic.cpp
   StringExtras.cpp
   StringMap.cpp
