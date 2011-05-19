@@ -39,6 +39,8 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginProcessGDBRemote.a \
 	lldbPluginSymbolFileDWARF.a \
 	lldbPluginSymbolFileSymtab.a \
+	lldbPluginUnwindAssemblyInstEmulation.a \
+	lldbPluginUnwindAssemblyx86.a \
 	lldbPluginUtility.a \
 	lldbSymbol.a \
 	lldbTarget.a \
