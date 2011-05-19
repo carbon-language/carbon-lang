@@ -12,8 +12,9 @@ CheckArches = \
   $(shell \
     result=""; \
     for arch in $(1); do \
-      gcc -arch $$arch; \
-      if test $$? == 1; then result="$$result$$arch "; fi; \
+      if $(CC) -arch $$arch -dumpversion > /dev/null; then \
+        result="$$result$$arch "; \
+      fi; \
     done; \
     echo $$result)
 
