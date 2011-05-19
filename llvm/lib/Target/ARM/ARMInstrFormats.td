@@ -1750,9 +1750,10 @@ class N2VImm<bit op24, bit op23, bits<4> op11_8, bit op7, bit op6, bit op4,
 
 // NEON 3 vector register format.
 
-class N3VCommon<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
-          dag oops, dag iops, Format f, InstrItinClass itin,
-          string opc, string dt, string asm, string cstr, list<dag> pattern>
+class N3VCommon<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
+                bit op4, dag oops, dag iops, Format f, InstrItinClass itin,
+                string opc, string dt, string asm, string cstr,
+                list<dag> pattern>
   : NDataI<oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
   let Inst{24}    = op24;
   let Inst{23}    = op23;
@@ -1781,9 +1782,10 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
   let Inst{5}     = Vm{4};
 }
 
-class N3VLane32<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
-          dag oops, dag iops, Format f, InstrItinClass itin,
-          string opc, string dt, string asm, string cstr, list<dag> pattern>
+class N3VLane32<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
+                bit op4, dag oops, dag iops, Format f, InstrItinClass itin,
+                string opc, string dt, string asm, string cstr,
+                list<dag> pattern>
   : N3VCommon<op24, op23, op21_20, op11_8, op6, op4,
               oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
 
@@ -1801,9 +1803,10 @@ class N3VLane32<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bi
   let Inst{5}     = lane;
 }
 
-class N3VLane16<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
-          dag oops, dag iops, Format f, InstrItinClass itin,
-          string opc, string dt, string asm, string cstr, list<dag> pattern>
+class N3VLane16<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6,
+                bit op4, dag oops, dag iops, Format f, InstrItinClass itin,
+                string opc, string dt, string asm, string cstr,
+                list<dag> pattern>
   : N3VCommon<op24, op23, op21_20, op11_8, op6, op4,
               oops, iops, f, itin, opc, dt, asm, cstr, pattern> {
 
