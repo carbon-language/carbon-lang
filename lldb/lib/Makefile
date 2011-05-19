@@ -34,6 +34,8 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginDisassemblerLLVM.a \
 	lldbPluginDynamicLoaderStatic.a \
 	lldbPluginEmulateInstructionARM.a \
+	lldbPluginLanguageRuntimeCPlusPlusItaniumABI.a \
+	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
 	lldbPluginObjectContainerBSDArchive.a \
 	lldbPluginObjectFileELF.a \
 	lldbPluginPlatformGDBServer.a \
@@ -63,7 +65,7 @@ USEDLIBS = lldbAPI.a \
 include $(LLDB_LEVEL)/../../Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
-                   ipo selectiondag jit mc instrumentation
+                   instrumentation ipo selectiondag jit mc
 
 ifeq ($(HOST_OS),Darwin)
   USEDLIBS += lldbHostMacOSX.a \
@@ -94,7 +96,8 @@ ifeq ($(HOST_OS),Darwin)
     # extra options to override libtool defaults 
     LLVMLibsOptions += -avoid-version
 	LLVMLibsOptions += -F/System/Library/Frameworks -F/System/Library/PrivateFrameworks
-	LLVMLibsOptions += -framework Foundation -framework CoreFoundation 
+	LLVMLibsOptions += -framework Foundation -framework CoreFoundation
+	LLVMLibsOptions += -framework CoreServices -framework Carbon
 	LLVMLibsOptions += -framework DebugSymbols $(PYTHON_BUILD_FLAGS) -lobjc
 	LLVMLibsOptions += -Wl,-exported_symbols_list -Wl,"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/resources/lldb-framework-exports" 
     # Mac OS X 10.4 and earlier tools do not allow a second -install_name on command line
