@@ -15,7 +15,6 @@
 #ifndef LLVM_MC_MCWIN64EH_H
 #define LLVM_MC_MCWIN64EH_H
 
-#include "llvm/CodeGen/MachineLocation.h" // FIXME
 #include "llvm/Support/Win64EH.h"
 #include <vector>
 
@@ -29,22 +28,20 @@ namespace llvm {
   private:
     OpType Operation;
     unsigned Offset;
-    MachineLocation Destination;
-    MachineLocation Source;
+    unsigned Register;
   public:
-    MCWin64EHInstruction(OpType Op, unsigned Register)
-      : Operation(Op), Offset(0), Destination(0), Source(Register) {
+    MCWin64EHInstruction(OpType Op, unsigned Reg)
+      : Operation(Op), Offset(0), Register(Reg) {
       assert(Op == Win64EH::UOP_PushNonVol);
     }
     MCWin64EHInstruction(unsigned Size)
       : Operation(Size>128 ? Win64EH::UOP_AllocLarge : Win64EH::UOP_AllocSmall),
         Offset(Size) { }
-    MCWin64EHInstruction(unsigned Register, unsigned Off)
-      : Operation(Win64EH::UOP_SetFPReg), Offset(Off), Destination(Register) { }
-    MCWin64EHInstruction(OpType Op, const MachineLocation &D,
-                         unsigned S)
-      : Operation(Op), Destination(D), Source(S) {
-      assert(Op == Win64EH::UOP_SaveNonVol ||
+    MCWin64EHInstruction(OpType Op, unsigned Reg,
+                         unsigned Off)
+      : Operation(Op), Offset(Off), Register(Reg) {
+      assert(Op == Win64EH::UOP_SetFPReg ||
+             Op == Win64EH::UOP_SaveNonVol ||
              Op == Win64EH::UOP_SaveNonVolBig ||
              Op == Win64EH::UOP_SaveXMM128 ||
              Op == Win64EH::UOP_SaveXMM128Big);
@@ -56,9 +53,8 @@ namespace llvm {
     OpType getOperation() const { return Operation; }
     unsigned getOffset() const { return Offset; }
     unsigned getSize() const { return Offset; }
+    unsigned getRegister() const { return Register; }
     bool isPushCodeFrame() const { return Offset == 1; }
-    const MachineLocation &getDestination() const { return Destination; }
-    const MachineLocation &getSource() const { return Source; }
   };
 
   struct MCWin64EHUnwindInfo {

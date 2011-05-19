@@ -378,34 +378,50 @@ void MCStreamer::EmitWin64EHHandlerData() {
   abort();
 }
 
-void MCStreamer::EmitWin64EHPushReg(int64_t Register) {
-  errs() << "Not implemented yet\n";
-  abort();
+void MCStreamer::EmitWin64EHPushReg(unsigned Register) {
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  MCWin64EHInstruction Inst(Win64EH::UOP_PushNonVol, Register);
+  CurFrame->Instructions.push_back(Inst);
 }
 
-void MCStreamer::EmitWin64EHSetFrame(int64_t Register, int64_t Offset) {
-  errs() << "Not implemented yet\n";
-  abort();
+void MCStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, Register, Offset);
+  CurFrame->Instructions.push_back(Inst);
 }
 
-void MCStreamer::EmitWin64EHAllocStack(int64_t Size) {
-  errs() << "Not implemented yet\n";
-  abort();
+void MCStreamer::EmitWin64EHAllocStack(unsigned Size) {
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  MCWin64EHInstruction Inst(Size);
+  CurFrame->Instructions.push_back(Inst);
 }
 
-void MCStreamer::EmitWin64EHSaveReg(int64_t Register, int64_t Offset) {
-  errs() << "Not implemented yet\n";
-  abort();
+void MCStreamer::EmitWin64EHSaveReg(unsigned Register, unsigned Offset) {
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  MCWin64EHInstruction Inst(
+         Offset > 0xFFFF ? Win64EH::UOP_SaveNonVol : Win64EH::UOP_SaveNonVolBig,
+                            Register, Offset);
+  CurFrame->Instructions.push_back(Inst);
 }
 
-void MCStreamer::EmitWin64EHSaveXMM(int64_t Register, int64_t Offset) {
-  errs() << "Not implemented yet\n";
-  abort();
+void MCStreamer::EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) {
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  MCWin64EHInstruction Inst(
+         Offset > 0xFFFF ? Win64EH::UOP_SaveXMM128 : Win64EH::UOP_SaveXMM128Big,
+                            Register, Offset);
+  CurFrame->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWin64EHPushFrame(bool Code) {
-  errs() << "Not implemented yet\n";
-  abort();
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  MCWin64EHInstruction Inst(Win64EH::UOP_PushMachFrame, Code);
+  CurFrame->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWin64EHEndProlog() {

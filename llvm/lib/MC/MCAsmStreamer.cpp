@@ -215,11 +215,11 @@ public:
   virtual void EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
                                   bool Except);
   virtual void EmitWin64EHHandlerData();
-  virtual void EmitWin64EHPushReg(int64_t Register);
-  virtual void EmitWin64EHSetFrame(int64_t Register, int64_t Offset);
-  virtual void EmitWin64EHAllocStack(int64_t Size);
-  virtual void EmitWin64EHSaveReg(int64_t Register, int64_t Offset);
-  virtual void EmitWin64EHSaveXMM(int64_t Register, int64_t Offset);
+  virtual void EmitWin64EHPushReg(unsigned Register);
+  virtual void EmitWin64EHSetFrame(unsigned Register, unsigned Offset);
+  virtual void EmitWin64EHAllocStack(unsigned Size);
+  virtual void EmitWin64EHSaveReg(unsigned Register, unsigned Offset);
+  virtual void EmitWin64EHSaveXMM(unsigned Register, unsigned Offset);
   virtual void EmitWin64EHPushFrame(bool Code);
   virtual void EmitWin64EHEndProlog();
 
@@ -965,27 +965,27 @@ void MCAsmStreamer::EmitWin64EHHandlerData() {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHPushReg(int64_t Register) {
+void MCAsmStreamer::EmitWin64EHPushReg(unsigned Register) {
   OS << "\t.seh_pushreg " << Register;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHSetFrame(int64_t Register, int64_t Offset) {
+void MCAsmStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
   OS << "\t.seh_setframe " << Register << ", " << Offset;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHAllocStack(int64_t Size) {
+void MCAsmStreamer::EmitWin64EHAllocStack(unsigned Size) {
   OS << "\t.seh_stackalloc " << Size;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHSaveReg(int64_t Register, int64_t Offset) {
+void MCAsmStreamer::EmitWin64EHSaveReg(unsigned Register, unsigned Offset) {
   OS << "\t.seh_savereg " << Register << ", " << Offset;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHSaveXMM(int64_t Register, int64_t Offset) {
+void MCAsmStreamer::EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) {
   OS << "\t.seh_savexmm " << Register << ", " << Offset;
   EmitEOL();
 }
