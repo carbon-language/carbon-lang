@@ -104,12 +104,10 @@ void *MCJIT::getPointerToFunction(Function *F) {
 
   // FIXME: Should we be using the mangler for this? Probably.
   StringRef BaseName = F->getName();
-  Twine Name;
   if (BaseName[0] == '\1')
-    Name = BaseName.substr(1);
-  else
-    Name = TM->getMCAsmInfo()->getGlobalPrefix() + BaseName;
-  return (void*)Dyld.getSymbolAddress(Name.str());
+    return (void*)Dyld.getSymbolAddress(BaseName.substr(1));
+  return (void*)Dyld.getSymbolAddress((TM->getMCAsmInfo()->getGlobalPrefix()
+                                       + BaseName).str());
 }
 
 void *MCJIT::recompileAndRelinkFunction(Function *F) {
