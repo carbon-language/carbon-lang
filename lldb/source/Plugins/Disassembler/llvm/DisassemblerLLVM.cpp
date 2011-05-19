@@ -99,6 +99,16 @@ PadString(Stream *s, const std::string &str, size_t width)
         s->Printf("%s ", str.c_str());
 }
 
+#include "llvm/ADT/StringRef.h"
+static void
+StripSpaces(llvm::StringRef &Str)
+{
+    while (!Str.empty() && isspace(Str[0]))
+        Str = Str.substr(1);
+    while (!Str.empty() && isspace(Str.back()))
+        Str = Str.substr(0, Str.size()-1);
+}
+
 void
 InstructionLLVM::Dump
 (
@@ -230,7 +240,7 @@ InstructionLLVM::Dump
 
         if (printTokenized)
         {
-            bool show_token;
+            bool show_token = false;
 
             for (; tokenIndex < numTokens; ++tokenIndex)
             {
@@ -300,40 +310,42 @@ InstructionLLVM::Dump
                 }
             } // for (tokenIndex)
 
-            if (printTokenized)
+            // If both operands and comment are empty, we will just print out
+            // the raw disassembly.
+            if (operands.GetString().empty() && comment.GetString().empty())
             {
-                if (operands.GetString().empty())
-                {
-                    s->PutCString(opcode.GetString().c_str());
-                }
+                const char *str;
+
+                if (EDGetInstString(&str, m_inst))
+                    return;
+                llvm::StringRef raw_disasm(str);
+                StripSpaces(raw_disasm);
+                s->PutCString(raw_disasm.str().c_str());
+            }
+            else
+            {
+                PadString(s, opcode.GetString(), opcodeColumnWidth);
+
+                if (comment.GetString().empty())
+                    s->PutCString(operands.GetString().c_str());
                 else
                 {
-                    PadString(s, opcode.GetString(), opcodeColumnWidth);
+                    PadString(s, operands.GetString(), operandColumnWidth);
 
-                    if (comment.GetString().empty())
-                    {
-                        s->PutCString(operands.GetString().c_str());
-                    }
-                    else
-                    {
-                        PadString(s, operands.GetString(), operandColumnWidth);
-
-                        s->PutCString("; ");
-                        s->PutCString(comment.GetString().c_str());
-                    } // else (comment.GetString().empty())
-                } // else (operands.GetString().empty())
-            } // printTokenized
-        } // for (tokenIndex)
+                    s->PutCString("; ");
+                    s->PutCString(comment.GetString().c_str());
+                } // else (comment.GetString().empty())
+            } // else (operands.GetString().empty() && comment.GetString().empty())
+        } // printTokenized
     } // numTokens != -1
 
     if (!printTokenized)
     {
         const char *str;
 
-        if (EDGetInstString(&str, m_inst))
+        if (EDGetInstString(&str, m_inst)) // 0 on success
             return;
-        else
-            s->Write(str, strlen(str) - 1);
+        s->Write(str, strlen(str) - 1);
     }
 }
 
