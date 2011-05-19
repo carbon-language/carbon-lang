@@ -1063,6 +1063,11 @@ SVal RegionStoreManager::RetrieveElement(Store store,
   //   return *y;
   // FIXME: This is a hack, and doesn't do anything really intelligent yet.
   const RegionRawOffset &O = R->getAsArrayOffset();
+  
+  // If we cannot reason about the offset, return an unknown value.
+  if (!O.getRegion())
+    return UnknownVal();
+  
   if (const TypedRegion *baseR = dyn_cast_or_null<TypedRegion>(O.getRegion())) {
     QualType baseT = baseR->getValueType();
     if (baseT->isScalarType()) {

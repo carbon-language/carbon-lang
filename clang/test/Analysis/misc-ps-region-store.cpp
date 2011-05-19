@@ -395,3 +395,22 @@ unsigned test_invalidate_in_ctor_new() {
   return x; // no-warning
 }
 
+// Test assigning into a symbolic offset.
+struct TestAssignIntoSymbolicOffset {
+  int **stuff[100];
+  void test(int x, int y);
+};
+
+void TestAssignIntoSymbolicOffset::test(int x, int y) {
+  x--;
+  if (x > 8 || x < 0)
+    return;
+  if (stuff[x])
+    return;
+  if (!stuff[x]) {
+    stuff[x] = new int*[y+1];
+    // Previously triggered a null dereference.
+    stuff[x][y] = 0; // no-warning
+  }
+}
+
