@@ -10939,6 +10939,19 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
     KnownZero |= APInt::getHighBitsSet(Mask.getBitWidth(),
                                        Mask.getBitWidth() - 1);
     break;
+
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+    switch (IntNo) {
+      default: break;
+      case Intrinsic::x86_sse42_crc64_8:
+      case Intrinsic::x86_sse42_crc64_64:
+        // crc32 with 64-bit destination zeros high 32-bit.
+        KnownZero |= APInt::getHighBitsSet(64, 32);
+        break;
+    }
+    break;
+  }
   }
 }
 
