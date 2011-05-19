@@ -27,6 +27,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
@@ -35,6 +36,10 @@
 #include <cctype>
 #include <vector>
 using namespace llvm;
+
+static cl::opt<bool>
+FatalAssemblerWarnings("fatal-assembler-warnings",
+                       cl::desc("Consider warnings as error"));
 
 namespace {
 
@@ -128,7 +133,7 @@ public:
   virtual MCContext &getContext() { return Ctx; }
   virtual MCStreamer &getStreamer() { return Out; }
 
-  virtual void Warning(SMLoc L, const Twine &Meg);
+  virtual bool Warning(SMLoc L, const Twine &Meg);
   virtual bool Error(SMLoc L, const Twine &Msg);
 
   const AsmToken &Lex();
@@ -370,9 +375,12 @@ void AsmParser::PrintMacroInstantiations() {
                  "note");
 }
 
-void AsmParser::Warning(SMLoc L, const Twine &Msg) {
+bool AsmParser::Warning(SMLoc L, const Twine &Msg) {
+  if (FatalAssemblerWarnings)
+    return Error(L, Msg);
   PrintMessage(L, Msg, "warning");
   PrintMacroInstantiations();
+  return false;
 }
 
 bool AsmParser::Error(SMLoc L, const Twine &Msg) {
@@ -1129,9 +1137,9 @@ bool AsmParser::ParseStatement() {
     if (!getTargetParser().ParseDirective(ID))
       return false;
 
-    Warning(IDLoc, "ignoring directive for now");
+    bool retval = Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
-    return false;
+    return retval;
   }
 
   CheckForValidSection();

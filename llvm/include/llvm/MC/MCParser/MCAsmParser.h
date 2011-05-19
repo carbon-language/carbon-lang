@@ -71,7 +71,9 @@ public:
 
   /// Warning - Emit a warning at the location \arg L, with the message \arg
   /// Msg.
-  virtual void Warning(SMLoc L, const Twine &Msg) = 0;
+  ///
+  /// \return The return value is true, if warnings are fatal.
+  virtual bool Warning(SMLoc L, const Twine &Msg) = 0;
 
   /// Error - Emit an error at the location \arg L, with the message \arg
   /// Msg.

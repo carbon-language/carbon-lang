@@ -369,11 +369,9 @@ bool DarwinAsmParser::ParseDirectiveDumpOrLoad(StringRef Directive,
   // FIXME: If/when .dump and .load are implemented they will be done in the
   // the assembly parser and not have any need for an MCStreamer API.
   if (IsDump)
-    Warning(IDLoc, "ignoring directive .dump for now");
+    return Warning(IDLoc, "ignoring directive .dump for now");
   else
-    Warning(IDLoc, "ignoring directive .load for now");
-
-  return false;
+    return Warning(IDLoc, "ignoring directive .load for now");
 }
 
 /// ParseDirectiveLsym

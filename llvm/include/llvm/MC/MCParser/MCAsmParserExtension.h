@@ -56,7 +56,7 @@ public:
   MCAsmParser &getParser() { return *Parser; }
   SourceMgr &getSourceManager() { return getParser().getSourceManager(); }
   MCStreamer &getStreamer() { return getParser().getStreamer(); }
-  void Warning(SMLoc L, const Twine &Msg) {
+  bool Warning(SMLoc L, const Twine &Msg) {
     return getParser().Warning(L, Msg);
   }
   bool Error(SMLoc L, const Twine &Msg) {
