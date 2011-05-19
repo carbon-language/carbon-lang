@@ -172,6 +172,8 @@ void AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
     }
   }
   Opts.LLVMArgs = Args->getAllArgValues(OPT_mllvm);
+  if (Args->hasArg(OPT_fatal_warnings))
+    Opts.LLVMArgs.push_back("-fatal-assembler-warnings");
   Opts.OutputPath = Args->getLastArgValue(OPT_o);
   if (Arg *A = Args->getLastArg(OPT_filetype)) {
     StringRef Name = A->getValue(*Args);

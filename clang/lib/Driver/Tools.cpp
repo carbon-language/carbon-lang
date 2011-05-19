@@ -1020,6 +1020,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           // Do nothing, this is the default and we don't support anything else.
         } else if (Value == "-L") {
           CmdArgs.push_back("-msave-temp-labels");
+        } else if (Value == "-fatal-warnings") {
+          CmdArgs.push_back("-mllvm");
+          CmdArgs.push_back("-fatal-assembler-warnings");
         } else {
           D.Diag(clang::diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;
