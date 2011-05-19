@@ -2404,8 +2404,8 @@ static bool TurnSwitchRangeIntoICmp(SwitchInst *SI, IRBuilder<> &Builder) {
 
   Value *Sub = SI->getCondition();
   if (!Offset->isNullValue())
-    Sub = BinaryOperator::CreateAdd(Sub, Offset, Sub->getName()+".off", SI);
-  Value *Cmp = new ICmpInst(SI, ICmpInst::ICMP_ULT, Sub, NumCases, "switch");
+    Sub = Builder.CreateAdd(Sub, Offset, Sub->getName()+".off");
+  Value *Cmp = Builder.CreateICmpULT(Sub, NumCases, "switch");
   Builder.CreateCondBr(Cmp, SI->getSuccessor(1), SI->getDefaultDest());
 
   // Prune obsolete incoming values off the successor's PHI nodes.
