@@ -463,16 +463,18 @@ namespace llvm {
     virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
     virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
 
-    virtual void EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler = 0);
+    virtual void EmitWin64EHStartProc(MCSymbol *Symbol);
     virtual void EmitWin64EHEndProc();
     virtual void EmitWin64EHStartChained();
     virtual void EmitWin64EHEndChained();
-    virtual void EmitWin64EHUnwindOnly();
-    virtual void EmitWin64EHLsda(const MCSymbol *Sym, int64_t Size);
+    virtual void EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
+                                    bool Except);
+    virtual void EmitWin64EHHandlerData();
     virtual void EmitWin64EHPushReg(int64_t Register);
     virtual void EmitWin64EHSetFrame(int64_t Register, int64_t Offset);
     virtual void EmitWin64EHAllocStack(int64_t Size);
     virtual void EmitWin64EHSaveReg(int64_t Register, int64_t Offset);
+    virtual void EmitWin64EHSaveXMM(int64_t Register, int64_t Offset);
     virtual void EmitWin64EHPushFrame(bool Code);
     virtual void EmitWin64EHEndProlog();
 

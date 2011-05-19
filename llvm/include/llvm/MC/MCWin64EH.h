@@ -62,17 +62,15 @@ namespace llvm {
   };
 
   struct MCWin64EHUnwindInfo {
-    MCWin64EHUnwindInfo() : Begin(0), End(0), ExceptionHandler(0), Lsda(0),
-                            Function(0), UnwindOnly(false), LsdaSize(0),
+    MCWin64EHUnwindInfo() : Begin(0), End(0), ExceptionHandler(0),
+                            Function(0), UnwindOnly(false),
                             PrologSize(0), LastFrameInst(-1), ChainedParent(0),
                             Instructions() {}
     MCSymbol *Begin;
     MCSymbol *End;
     const MCSymbol *ExceptionHandler;
-    const MCSymbol *Lsda;
     const MCSymbol *Function;
     bool UnwindOnly;
-    unsigned LsdaSize;
     unsigned PrologSize;
     int LastFrameInst;
     MCWin64EHUnwindInfo *ChainedParent;

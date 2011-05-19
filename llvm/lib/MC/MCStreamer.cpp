@@ -321,14 +321,13 @@ void MCStreamer::EnsureValidW64UnwindInfo() {
     report_fatal_error("No open Win64 EH frame function!");
 }
 
-void MCStreamer::EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler) {
+void MCStreamer::EmitWin64EHStartProc(MCSymbol *Symbol) {
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a function before ending the previous one!");
   MCWin64EHUnwindInfo Frame;
   Frame.Begin = getContext().CreateTempSymbol();
   Frame.Function = Symbol;
-  Frame.ExceptionHandler = EHandler;
   EmitLabel(Frame.Begin);
   setCurrentW64UnwindInfo(&Frame);
 }
@@ -342,8 +341,7 @@ void MCStreamer::EmitWin64EHEndProc() {
   EmitLabel(CurFrame->End);
 }
 
-void MCStreamer::EmitWin64EHStartChained()
-{
+void MCStreamer::EmitWin64EHStartChained() {
   EnsureValidW64UnwindInfo();
   MCWin64EHUnwindInfo Frame;
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
@@ -354,8 +352,7 @@ void MCStreamer::EmitWin64EHStartChained()
   setCurrentW64UnwindInfo(&Frame);
 }
 
-void MCStreamer::EmitWin64EHEndChained()
-{
+void MCStreamer::EmitWin64EHEndChained() {
   EnsureValidW64UnwindInfo();
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   if (!CurFrame->ChainedParent)
@@ -365,50 +362,53 @@ void MCStreamer::EmitWin64EHEndChained()
   CurrentW64UnwindInfo = CurFrame->ChainedParent;
 }
 
-void MCStreamer::EmitWin64EHUnwindOnly()
-{
+void MCStreamer::EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
+                                    bool Except) {
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  CurFrame->ExceptionHandler = Sym;
+  if (Unwind)
+    CurFrame->UnwindOnly = true;
+  else if (!Except)
+    report_fatal_error("Don't know what kind of handler this is!");
+}
+
+void MCStreamer::EmitWin64EHHandlerData() {
   errs() << "Not implemented yet\n";
   abort();
 }
 
-void MCStreamer::EmitWin64EHLsda(const MCSymbol *Sym, int64_t Size)
-{
+void MCStreamer::EmitWin64EHPushReg(int64_t Register) {
   errs() << "Not implemented yet\n";
   abort();
 }
 
-void MCStreamer::EmitWin64EHPushReg(int64_t Register)
-{
+void MCStreamer::EmitWin64EHSetFrame(int64_t Register, int64_t Offset) {
   errs() << "Not implemented yet\n";
   abort();
 }
 
-void MCStreamer::EmitWin64EHSetFrame(int64_t Register, int64_t Offset)
-{
+void MCStreamer::EmitWin64EHAllocStack(int64_t Size) {
   errs() << "Not implemented yet\n";
   abort();
 }
 
-void MCStreamer::EmitWin64EHAllocStack(int64_t Size)
-{
+void MCStreamer::EmitWin64EHSaveReg(int64_t Register, int64_t Offset) {
   errs() << "Not implemented yet\n";
   abort();
 }
 
-void MCStreamer::EmitWin64EHSaveReg(int64_t Register, int64_t Offset)
-{
+void MCStreamer::EmitWin64EHSaveXMM(int64_t Register, int64_t Offset) {
   errs() << "Not implemented yet\n";
   abort();
 }
 
-void MCStreamer::EmitWin64EHPushFrame(bool Code)
-{
+void MCStreamer::EmitWin64EHPushFrame(bool Code) {
   errs() << "Not implemented yet\n";
   abort();
 }
 
-void MCStreamer::EmitWin64EHEndProlog()
-{
+void MCStreamer::EmitWin64EHEndProlog() {
   errs() << "Not implemented yet\n";
   abort();
 }
