@@ -1960,10 +1960,10 @@ Scalar::SignExtend (uint32_t sign_bit_pos)
             else if (sign_bit_pos < (max_bit_pos-1))
             {
                 unsigned long sign_bit = 1ul << sign_bit_pos;
-                if (m_data.uint & sign_bit)
+                if (m_data.ulong & sign_bit)
                 {
                     const unsigned long mask = ~(sign_bit) + 1ul;
-                    m_data.uint |= mask;
+                    m_data.ulong |= mask;
                 }
                 return true;
             }
@@ -1976,10 +1976,10 @@ Scalar::SignExtend (uint32_t sign_bit_pos)
             else if (sign_bit_pos < (max_bit_pos-1))
             {
                 unsigned long long sign_bit = 1ull << sign_bit_pos;
-                if (m_data.uint & sign_bit)
+                if (m_data.ulonglong & sign_bit)
                 {
                     const unsigned long long mask = ~(sign_bit) + 1ull;
-                    m_data.uint |= mask;
+                    m_data.ulonglong |= mask;
                 }
                 return true;
             }
