@@ -266,7 +266,7 @@ Thread::ShouldStop (Event* event_ptr)
         {
             should_stop = current_plan->ShouldStop (event_ptr);
             if (log)
-                log->Printf("Base plan says should stop: %d.", current_plan->GetName(), should_stop);
+                log->Printf("Base plan says should stop: %i.", should_stop);
         }
         else
         {

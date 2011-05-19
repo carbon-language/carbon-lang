@@ -361,14 +361,21 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
     // make change if we are interrupted and we continue after an async packet...
     std::string continue_packet(payload, packet_length);
     
+    bool got_stdout = false;
+    
     while (state == eStateRunning)
     {
-        if (log)
-            log->Printf ("GDBRemoteCommunicationClient::%s () sending continue packet: %s", __FUNCTION__, continue_packet.c_str());
-        if (SendPacket(continue_packet.c_str(), continue_packet.size()) == 0)
-            state = eStateInvalid;
+        if (!got_stdout)
+        {
+            if (log)
+                log->Printf ("GDBRemoteCommunicationClient::%s () sending continue packet: %s", __FUNCTION__, continue_packet.c_str());
+            if (SendPacket(continue_packet.c_str(), continue_packet.size()) == 0)
+                state = eStateInvalid;
         
-        m_private_is_running.SetValue (true, eBroadcastNever);
+            m_private_is_running.SetValue (true, eBroadcastNever);
+        }
+        
+        got_stdout = false;
 
         if (log)
             log->Printf ("GDBRemoteCommunicationClient::%s () WaitForPacket(%.*s)", __FUNCTION__);
@@ -489,6 +496,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                 case 'O':
                     // STDOUT
                     {
+                        got_stdout = true;
                         std::string inferior_stdout;
                         inferior_stdout.reserve(response.GetBytesLeft () / 2);
                         char ch;

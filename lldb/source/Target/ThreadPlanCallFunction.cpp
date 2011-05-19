@@ -197,8 +197,9 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         m_start_addr = objectFile->GetEntryPointAddress();
         if (!m_start_addr.IsValid())
         {
-            log->Printf ("Could not find entry point address for executable module \"%s\".", 
-                         executableModuleSP->GetFileSpec().GetFilename().AsCString());
+            if (log)
+                log->Printf ("Could not find entry point address for executable module \"%s\".", 
+                             executableModuleSP->GetFileSpec().GetFilename().AsCString());
             return;
         }
     }
@@ -247,22 +248,28 @@ ThreadPlanCallFunction::~ThreadPlanCallFunction ()
 void
 ThreadPlanCallFunction::ReportRegisterState (const char *message)
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP | LIBLLDB_LOG_VERBOSE));
     if (log)
     {
+        StreamString strm;
         RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
 
         log->PutCString(message);
 
-        for (uint32_t register_index = 0, num_registers = reg_ctx->GetRegisterCount();
-             register_index < num_registers;
-             ++register_index)
+        RegisterValue reg_value;
+
+        for (uint32_t reg_idx = 0, num_registers = reg_ctx->GetRegisterCount();
+             reg_idx < num_registers;
+             ++reg_idx)
         {
-            const char *register_name = reg_ctx->GetRegisterName(register_index);
-            uint64_t register_value = reg_ctx->ReadRegisterAsUnsigned(register_index, LLDB_INVALID_ADDRESS);
-            
-            log->Printf("  %s = 0x%llx", register_name, register_value);
+            const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex (reg_idx);
+            if (reg_ctx->ReadRegister(reg_info, reg_value))
+            {
+                reg_value.Dump(&strm, reg_info, true, false, eFormatDefault);
+                strm.EOL();
+            }
         }
+        log->PutCString(strm.GetData());
     }
 }
 
