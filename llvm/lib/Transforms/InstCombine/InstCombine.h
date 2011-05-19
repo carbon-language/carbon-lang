@@ -233,7 +233,15 @@ public:
     Worklist.Add(New);
     return New;
   }
-      
+
+  // InsertNewInstWith - same as InsertNewInstBefore, but also sets the 
+  // debug loc.
+  //
+  Instruction *InsertNewInstWith(Instruction *New, Instruction &Old) {
+    New->setDebugLoc(Old.getDebugLoc());
+    return InsertNewInstBefore(New, Old);
+  }
+
   // ReplaceInstUsesWith - This method is to be used when an instruction is
   // found to be dead, replacable with another preexisting expression.  Here
   // we add all uses of I to the worklist, replace all uses of I with the new

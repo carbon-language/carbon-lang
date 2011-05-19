@@ -313,7 +313,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       Instruction *Or = 
         BinaryOperator::CreateOr(I->getOperand(0), I->getOperand(1),
                                  I->getName());
-      return InsertNewInstBefore(Or, *I);
+      return InsertNewInstWith(Or, *I);
     }
     
     // If all of the demanded bits on one side are known, and all of the set
@@ -327,7 +327,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
                                                    ~RHSKnownOne & DemandedMask);
         Instruction *And = 
           BinaryOperator::CreateAnd(I->getOperand(0), AndC, "tmp");
-        return InsertNewInstBefore(And, *I);
+        return InsertNewInstWith(And, *I);
       }
     }
     
@@ -353,13 +353,13 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
           ConstantInt::get(I->getType(), NewMask & AndRHS->getValue());
         Instruction *NewAnd = 
           BinaryOperator::CreateAnd(I->getOperand(0), AndC, "tmp");
-        InsertNewInstBefore(NewAnd, *I);
+        InsertNewInstWith(NewAnd, *I);
         
         Constant *XorC =
           ConstantInt::get(I->getType(), NewMask & XorRHS->getValue());
         Instruction *NewXor =
           BinaryOperator::CreateXor(NewAnd, XorC, "tmp");
-        return InsertNewInstBefore(NewXor, *I);
+        return InsertNewInstWith(NewXor, *I);
       }
 
     // Output known-0 bits are known if clear or set in both the LHS & RHS.
@@ -472,7 +472,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     if (KnownZero[SrcBitWidth-1] || (NewBits & ~DemandedMask) == NewBits) {
       // Convert to ZExt cast
       CastInst *NewCast = new ZExtInst(I->getOperand(0), VTy, I->getName());
-      return InsertNewInstBefore(NewCast, *I);
+      return InsertNewInstWith(NewCast, *I);
     } else if (KnownOne[SrcBitWidth-1]) {    // Input sign bit known set
       KnownOne |= NewBits;
     }
@@ -515,7 +515,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         Instruction *Or =
           BinaryOperator::CreateOr(I->getOperand(0), I->getOperand(1),
                                    I->getName());
-        return InsertNewInstBefore(Or, *I);
+        return InsertNewInstWith(Or, *I);
       }
       
       // We can say something about the output known-zero and known-one bits,
@@ -632,7 +632,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       // Perform the logical shift right.
       Instruction *NewVal = BinaryOperator::CreateLShr(
                         I->getOperand(0), I->getOperand(1), I->getName());
-      return InsertNewInstBefore(NewVal, *I);
+      return InsertNewInstWith(NewVal, *I);
     }    
 
     // If the sign bit is the only bit demanded by this ashr, then there is no
@@ -676,7 +676,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         // Perform the logical shift right.
         Instruction *NewVal = BinaryOperator::CreateLShr(
                           I->getOperand(0), SA, I->getName());
-        return InsertNewInstBefore(NewVal, *I);
+        return InsertNewInstWith(NewVal, *I);
       } else if ((KnownOne & SignBit) != 0) { // New bits are known one.
         KnownOne |= HighBits;
       }
@@ -774,7 +774,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
             NewVal = BinaryOperator::CreateShl(II->getArgOperand(0),
                     ConstantInt::get(I->getType(), ResultBit-InputBit));
           NewVal->takeName(I);
-          return InsertNewInstBefore(NewVal, *I);
+          return InsertNewInstWith(NewVal, *I);
         }
           
         // TODO: Could compute known zero/one bits based on the input.
@@ -1108,21 +1108,21 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           Value *LHS = II->getArgOperand(0);
           Value *RHS = II->getArgOperand(1);
           // Extract the element as scalars.
-          LHS = InsertNewInstBefore(ExtractElementInst::Create(LHS, 
+          LHS = InsertNewInstWith(ExtractElementInst::Create(LHS, 
             ConstantInt::get(Type::getInt32Ty(I->getContext()), 0U)), *II);
-          RHS = InsertNewInstBefore(ExtractElementInst::Create(RHS,
+          RHS = InsertNewInstWith(ExtractElementInst::Create(RHS,
             ConstantInt::get(Type::getInt32Ty(I->getContext()), 0U)), *II);
           
           switch (II->getIntrinsicID()) {
           default: llvm_unreachable("Case stmts out of sync!");
           case Intrinsic::x86_sse_sub_ss:
           case Intrinsic::x86_sse2_sub_sd:
-            TmpV = InsertNewInstBefore(BinaryOperator::CreateFSub(LHS, RHS,
+            TmpV = InsertNewInstWith(BinaryOperator::CreateFSub(LHS, RHS,
                                                         II->getName()), *II);
             break;
           case Intrinsic::x86_sse_mul_ss:
           case Intrinsic::x86_sse2_mul_sd:
-            TmpV = InsertNewInstBefore(BinaryOperator::CreateFMul(LHS, RHS,
+            TmpV = InsertNewInstWith(BinaryOperator::CreateFMul(LHS, RHS,
                                                          II->getName()), *II);
             break;
           }
@@ -1132,7 +1132,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
               UndefValue::get(II->getType()), TmpV,
               ConstantInt::get(Type::getInt32Ty(I->getContext()), 0U, false),
                                       II->getName());
-          InsertNewInstBefore(New, *II);
+          InsertNewInstWith(New, *II);
           return New;
         }            
       }
