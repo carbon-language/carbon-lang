@@ -997,8 +997,7 @@ def : Pat<(extloadi64i32 addr:$src),
 
 // anyext. Define these to do an explicit zero-extend to
 // avoid partial-register updates.
-def : Pat<(i16 (anyext GR8 :$src)), (EXTRACT_SUBREG
-                                     (MOVZX32rr8 GR8 :$src), sub_16bit)>;
+def : Pat<(i16 (anyext GR8 :$src)), (MOVZX16rr8  GR8 :$src)>;
 def : Pat<(i32 (anyext GR8 :$src)), (MOVZX32rr8  GR8 :$src)>;
 
 // Except for i16 -> i32 since isel expect i16 ops to be promoted to i32.
@@ -1165,9 +1164,9 @@ def : Pat<(and GR32:$src1, 0xff),
       Requires<[In32BitMode]>;
 // r & (2^8-1) ==> movz
 def : Pat<(and GR16:$src1, 0xff),
-           (EXTRACT_SUBREG (MOVZX32rr8 (EXTRACT_SUBREG
-            (i16 (COPY_TO_REGCLASS GR16:$src1, GR16_ABCD)), sub_8bit)),
-             sub_16bit)>,
+          (MOVZX16rr8 (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src1,
+                                                             GR16_ABCD)),
+                                      sub_8bit))>,
       Requires<[In32BitMode]>;
 
 // r & (2^32-1) ==> movz
@@ -1185,8 +1184,7 @@ def : Pat<(and GR32:$src1, 0xff),
       Requires<[In64BitMode]>;
 // r & (2^8-1) ==> movz
 def : Pat<(and GR16:$src1, 0xff),
-           (EXTRACT_SUBREG (MOVZX32rr8 (i8
-            (EXTRACT_SUBREG GR16:$src1, sub_8bit))), sub_16bit)>,
+           (MOVZX16rr8 (i8 (EXTRACT_SUBREG GR16:$src1, sub_8bit)))>,
       Requires<[In64BitMode]>;
 
 
@@ -1198,11 +1196,10 @@ def : Pat<(sext_inreg GR32:$src, i8),
                                                              GR32_ABCD)),
                                       sub_8bit))>,
       Requires<[In32BitMode]>;
-
 def : Pat<(sext_inreg GR16:$src, i8),
-           (EXTRACT_SUBREG (i32 (MOVSX32rr8 (EXTRACT_SUBREG
-            (i32 (COPY_TO_REGCLASS GR16:$src, GR16_ABCD)), sub_8bit))),
-             sub_16bit)>,
+          (MOVSX16rr8 (EXTRACT_SUBREG (i16 (COPY_TO_REGCLASS GR16:$src,
+                                                             GR16_ABCD)),
+                                      sub_8bit))>,
       Requires<[In32BitMode]>;
 
 def : Pat<(sext_inreg GR64:$src, i32),
@@ -1215,9 +1212,9 @@ def : Pat<(sext_inreg GR32:$src, i8),
           (MOVSX32rr8 (EXTRACT_SUBREG GR32:$src, sub_8bit))>,
       Requires<[In64BitMode]>;
 def : Pat<(sext_inreg GR16:$src, i8),
-           (EXTRACT_SUBREG (MOVSX32rr8
-            (EXTRACT_SUBREG GR16:$src, sub_8bit)), sub_16bit)>,
+          (MOVSX16rr8 (i8 (EXTRACT_SUBREG GR16:$src, sub_8bit)))>,
       Requires<[In64BitMode]>;
+
 
 // trunc patterns
 def : Pat<(i16 (trunc GR32:$src)),
