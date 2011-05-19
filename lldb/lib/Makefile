@@ -62,7 +62,7 @@ USEDLIBS = lldbAPI.a \
 include $(LLDB_LEVEL)/../../Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
-                   ipo selectiondag jit mc
+                   ipo selectiondag jit mc instrumentation
 
 ifeq ($(HOST_OS),Darwin)
   USEDLIBS += lldbHostMacOSX.a \
