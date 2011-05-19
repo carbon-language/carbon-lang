@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM_DWARF_Registers.h"
+#include <string.h>
 
 using namespace lldb;
 using namespace lldb_private;
