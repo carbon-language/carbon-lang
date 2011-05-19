@@ -16,11 +16,14 @@ DIRS := ABI/MacOSX-arm ABI/MacOSX-i386 ABI/SysV-x86_64 Disassembler/llvm \
 	ObjectContainer/BSD-Archive ObjectFile/ELF SymbolFile/DWARF \
 	SymbolFile/Symtab Process/Utility DynamicLoader/Static \
 	Platform Process/gdb-remote Instruction/ARM \
-	UnwindAssembly/InstEmulation UnwindAssembly/x86
+	UnwindAssembly/InstEmulation UnwindAssembly/x86 \
+	LanguageRuntime/CPlusPlus/ItaniumABI \
+	LanguageRuntime/ObjC/AppleObjCRuntime
 
 ifeq ($(HOST_OS),Darwin)
 DIRS += DynamicLoader/MacOSX-DYLD ObjectContainer/Universal-Mach-O \
-	ObjectFile/Mach-O SymbolVendor/MacOSX Process/MacOSX-User
+	ObjectFile/Mach-O SymbolVendor/MacOSX
+#DIRS += Process/MacOSX-User
 endif
 
 ifeq ($(HOST_OS),Linux)
