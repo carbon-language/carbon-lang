@@ -72,7 +72,7 @@ public:
         dwarf_ymm4 = dwarf_xmm4,
         dwarf_ymm5 = dwarf_xmm5,
         dwarf_ymm6 = dwarf_xmm6,
-        dwarf_ymm7 = dwarf_xmm7,
+        dwarf_ymm7 = dwarf_xmm7
     };
     
     enum

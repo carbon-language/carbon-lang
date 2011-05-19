@@ -74,7 +74,7 @@ private:
         {
              eOBJC_TRAMPOLINE_MESSAGE = (1<<0),   // trampoline acts like objc_msgSend                                                           
              eOBJC_TRAMPOLINE_STRET   = (1<<1),   // trampoline is struct-returning                                                              
-             eOBJC_TRAMPOLINE_VTABLE  = (1<<2),   // trampoline is vtable dispatcher                                                             
+             eOBJC_TRAMPOLINE_VTABLE  = (1<<2)    // trampoline is vtable dispatcher                                                             
         };
             
     private:
