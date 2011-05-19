@@ -28,6 +28,7 @@ USEDLIBS = lldbAPI.a \
 	lldbHostCommon.a \
 	lldbInitAndLog.a \
 	lldbInterpreter.a \
+	lldbPluginABIMacOSX_arm.a \
 	lldbPluginABIMacOSX_i386.a \
 	lldbPluginABISysV_x86_64.a \
 	lldbPluginDisassemblerLLVM.a \
