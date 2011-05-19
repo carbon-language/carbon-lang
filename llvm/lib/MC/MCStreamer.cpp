@@ -425,8 +425,10 @@ void MCStreamer::EmitWin64EHPushFrame(bool Code) {
 }
 
 void MCStreamer::EmitWin64EHEndProlog() {
-  errs() << "Not implemented yet\n";
-  abort();
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  CurFrame->PrologEnd = getContext().CreateTempSymbol();
+  EmitLabel(CurFrame->PrologEnd);
 }
 
 void MCStreamer::EmitFnStart() {
