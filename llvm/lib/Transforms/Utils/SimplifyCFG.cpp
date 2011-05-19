@@ -2270,7 +2270,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
   SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
   for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
     TerminatorInst *TI = Preds[i]->getTerminator();
-    
+    IRBuilder<> Builder(TI);
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
       if (BI->isUnconditional()) {
         if (BI->getSuccessor(0) == BB) {
@@ -2280,10 +2280,10 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
         }
       } else {
         if (BI->getSuccessor(0) == BB) {
-          BranchInst::Create(BI->getSuccessor(1), BI);
+          Builder.CreateBr(BI->getSuccessor(1));
           EraseTerminatorInstAndDCECond(BI);
         } else if (BI->getSuccessor(1) == BB) {
-          BranchInst::Create(BI->getSuccessor(0), BI);
+          Builder.CreateBr(BI->getSuccessor(0));
           EraseTerminatorInstAndDCECond(BI);
           Changed = true;
         }
@@ -2347,14 +2347,15 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
       if (II->getUnwindDest() == BB) {
         // Convert the invoke to a call instruction.  This would be a good
         // place to note that the call does not throw though.
-        BranchInst *BI = BranchInst::Create(II->getNormalDest(), II);
+        BranchInst *BI = Builder.CreateBr(II->getNormalDest());
         II->removeFromParent();   // Take out of symbol table
         
         // Insert the call now...
         SmallVector<Value*, 8> Args(II->op_begin(), II->op_end()-3);
-        CallInst *CI = CallInst::Create(II->getCalledValue(),
-                                        Args.begin(), Args.end(),
-                                        II->getName(), BI);
+        Builder.SetInsertPoint(BI);
+        CallInst *CI = Builder.CreateCall(II->getCalledValue(),
+                                          Args.begin(), Args.end(),
+                                          II->getName());
         CI->setCallingConv(II->getCallingConv());
         CI->setAttributes(II->getAttributes());
         // If the invoke produced a value, the call does now instead.
