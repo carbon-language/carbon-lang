@@ -224,12 +224,12 @@ namespace test6 {
     private: A(const A &); // expected-note 2 {{declared private here}}
   };
 
-  class Test1 { A a; }; // expected-error {{field of type 'test6::A' has private constructor}}
+  class Test1 { A a; }; // expected-error {{field of type 'test6::A' has private copy constructor}}
   void test1(const Test1 &t) {
     Test1 a = t; // expected-note{{implicit default copy}}
   }
 
-  class Test2 : A {}; // expected-error {{base class 'test6::A' has private constructor}}
+  class Test2 : A {}; // expected-error {{base class 'test6::A' has private copy constructor}}
   void test2(const Test2 &t) {
     Test2 a = t; // expected-note{{implicit default copy}}
   }

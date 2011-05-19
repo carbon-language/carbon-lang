@@ -1425,13 +1425,17 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
   case InitializedEntity::EK_Base:
     AccessEntity.setDiag(PDiag(diag::err_access_base_ctor)
                           << Entity.isInheritedVirtualBase()
-                          << Entity.getBaseSpecifier()->getType());
+                          << Entity.getBaseSpecifier()->getType()
+                          << (getSpecialMember(Constructor) ==
+                              Sema::CXXCopyConstructor));
     break;
 
   case InitializedEntity::EK_Member: {
     const FieldDecl *Field = cast<FieldDecl>(Entity.getDecl());
     AccessEntity.setDiag(PDiag(diag::err_access_field_ctor)
-                          << Field->getType());
+                          << Field->getType()
+                          << (getSpecialMember(Constructor) ==
+                              Sema::CXXCopyConstructor));
     break;
   }
 
