@@ -241,8 +241,26 @@ test_void_2()
     }
 }
 
+int f_nested(int i)
+{
+    return i+1;
+}
+
+int g_nested(int i)
+{
+    return i*10;
+}
+
+void test_nested()
+{
+    using namespace std::placeholders;
+    assert(std::bind(f_nested, std::bind(g_nested, _1))(3) == 31);
+}
+
 int main()
 {
     test_void_1();
     test_int_1();
+    test_void_2();
+    test_nested();
 }

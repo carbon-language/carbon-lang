@@ -1510,21 +1510,12 @@ __mu(reference_wrapper<_Tp> __t, _Uj&)
     return __t.get();
 }
 
-template <bool _IsBindExpr, class _Ti, class ..._Uj>
-struct __mu_return1 {};
-
-template <class _Ti, class ..._Uj>
-struct __mu_return1<true, _Ti, _Uj...>
-{
-    typedef typename result_of<_Ti(_Uj...)>::type type;
-};
-
 template <class _Ti, class ..._Uj, size_t ..._Indx>
 inline _LIBCPP_INLINE_VISIBILITY
-typename __mu_return1<true, _Ti, _Uj...>::type
-__mu_expand(_Ti& __ti, tuple<_Uj...>&& __uj, __tuple_indices<_Indx...>)
+typename __invoke_of<_Ti&, _Uj...>::type
+__mu_expand(_Ti& __ti, tuple<_Uj...>& __uj, __tuple_indices<_Indx...>)
 {
-    return __ti(_STD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj))...);
+    return __ti(_STD::forward<_Uj>(get<_Indx>(__uj))...);
 }
 
 template <class _Ti, class ..._Uj>
@@ -1532,7 +1523,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
     is_bind_expression<_Ti>::value,
-    typename __mu_return1<is_bind_expression<_Ti>::value, _Ti, _Uj...>::type
+    typename __invoke_of<_Ti&, _Uj...>::type
 >::type
 __mu(_Ti& __ti, tuple<_Uj...>& __uj)
 {
@@ -1582,7 +1573,7 @@ struct ____mu_return;
 template <class _Ti, class ..._Uj>
 struct ____mu_return<_Ti, true, false, tuple<_Uj...> >
 {
-    typedef typename result_of<_Ti(_Uj...)>::type type;
+    typedef typename __invoke_of<_Ti&, _Uj...>::type type;
 };
 
 template <class _Ti, class _TupleUj>
@@ -1619,7 +1610,7 @@ struct __bind_return;
 template <class _F, class ..._BoundArgs, class _TupleUj>
 struct __bind_return<_F, tuple<_BoundArgs...>, _TupleUj>
 {
-    typedef typename __invoke_return
+    typedef typename __invoke_of
     <
         _F&,
         typename __mu_return
@@ -1633,7 +1624,7 @@ struct __bind_return<_F, tuple<_BoundArgs...>, _TupleUj>
 template <class _F, class ..._BoundArgs, class _TupleUj>
 struct __bind_return<_F, const tuple<_BoundArgs...>, _TupleUj>
 {
-    typedef typename __invoke_return
+    typedef typename __invoke_of
     <
         _F&,
         typename __mu_return
@@ -1655,10 +1646,12 @@ __apply_functor(_F& __f, _BoundArgs& __bound_args, __tuple_indices<_Indx...>,
 
 template<class _F, class ..._BoundArgs>
 class __bind
-    : public __weak_result_type<_F>
+    : public __weak_result_type<typename decay<_F>::type>
 {
-    _F __f_;
-    tuple<_BoundArgs...> __bound_args_;
+    typedef typename decay<_F>::type _Fd;
+    typedef tuple<typename decay<_BoundArgs>::type...> _Td;
+    _Fd __f_;
+    _Td __bound_args_;
 
     typedef typename __make_tuple_indices<sizeof...(_BoundArgs)>::type __indices;
 public:
@@ -1675,17 +1668,16 @@ public:
 
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
-        typename __bind_return<_F, tuple<_BoundArgs...>, tuple<_Args&&...> >::type
+        typename __bind_return<_Fd, _Td, tuple<_Args&&...> >::type
         operator()(_Args&& ...__args)
         {
-            // compiler bug workaround
             return __apply_functor(__f_, __bound_args_, __indices(),
                                   tuple<_Args&&...>(_STD::forward<_Args>(__args)...));
         }
 
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
-        typename __bind_return<_F, tuple<_BoundArgs...>, tuple<_Args&&...> >::type
+        typename __bind_return<_Fd, _Td, tuple<_Args&&...> >::type
         operator()(_Args&& ...__args) const
         {
             return __apply_functor(__f_, __bound_args_, __indices(),
@@ -1736,19 +1728,19 @@ struct __is_bind_expression<__bind_r<_R, _F, _BoundArgs...> > : public true_type
 
 template<class _F, class ..._BoundArgs>
 inline _LIBCPP_INLINE_VISIBILITY
-__bind<typename decay<_F>::type, typename decay<_BoundArgs>::type...>
+__bind<_F, _BoundArgs...>
 bind(_F&& __f, _BoundArgs&&... __bound_args)
 {
-    typedef __bind<typename decay<_F>::type, typename decay<_BoundArgs>::type...> type;
+    typedef __bind<_F, _BoundArgs...> type;
     return type(_STD::forward<_F>(__f), _STD::forward<_BoundArgs>(__bound_args)...);
 }
 
 template<class _R, class _F, class ..._BoundArgs>
 inline _LIBCPP_INLINE_VISIBILITY
-__bind_r<_R, typename decay<_F>::type, typename decay<_BoundArgs>::type...>
+__bind_r<_R, _F, _BoundArgs...>
 bind(_F&& __f, _BoundArgs&&... __bound_args)
 {
-    typedef __bind_r<_R, typename decay<_F>::type, typename decay<_BoundArgs>::type...> type;
+    typedef __bind_r<_R, _F, _BoundArgs...> type;
     return type(_STD::forward<_F>(__f), _STD::forward<_BoundArgs>(__bound_args)...);
 }
 
