@@ -164,23 +164,25 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case FK_Data_4:
     return Value;
   case ARM::fixup_arm_movt_hi16:
-  case ARM::fixup_arm_movt_hi16_pcrel:
     Value >>= 16;
     // Fallthrough
   case ARM::fixup_arm_movw_lo16:
+  case ARM::fixup_arm_movt_hi16_pcrel:
   case ARM::fixup_arm_movw_lo16_pcrel: {
     unsigned Hi4 = (Value & 0xF000) >> 12;
     unsigned Lo12 = Value & 0x0FFF;
+    assert ((((int64_t)Value) >= -0x8000) && (((int64_t)Value) <= 0x7fff) &&
+            "Out of range pc-relative fixup value!");
     // inst{19-16} = Hi4;
     // inst{11-0} = Lo12;
     Value = (Hi4 << 16) | (Lo12);
     return Value;
   }
   case ARM::fixup_t2_movt_hi16:
-  case ARM::fixup_t2_movt_hi16_pcrel:
     Value >>= 16;
     // Fallthrough
   case ARM::fixup_t2_movw_lo16:
+  case ARM::fixup_t2_movt_hi16_pcrel:
   case ARM::fixup_t2_movw_lo16_pcrel: {
     unsigned Hi4 = (Value & 0xF000) >> 12;
     unsigned i = (Value & 0x800) >> 11;
@@ -190,8 +192,9 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     // inst{26} = i;
     // inst{14-12} = Mid3;
     // inst{7-0} = Lo8;
+    assert ((((int64_t)Value) >= -0x8000) && (((int64_t)Value) <= 0x7fff) &&
+            "Out of range pc-relative fixup value!");
     Value = (Hi4 << 16) | (i << 26) | (Mid3 << 12) | (Lo8);
-
     uint64_t swapped = (Value & 0xFFFF0000) >> 16;
     swapped |= (Value & 0x0000FFFF) << 16;
     return swapped;

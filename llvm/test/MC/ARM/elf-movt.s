@@ -9,10 +9,10 @@
 barf:                                   @ @barf
 @ BB#0:                                 @ %entry
 	movw	r0, :lower16:GOT-(.LPC0_2+8)
-	movt	r0, :upper16:GOT-(.LPC0_2+16)
+	movt	r0, :upper16:GOT-(.LPC0_2+8)
 .LPC0_2:
 @ ASM:          movw    r0, :lower16:(GOT-(.LPC0_2+8))
-@ ASM-NEXT:     movt    r0, :upper16:(GOT-(.LPC0_2+16))
+@ ASM-NEXT:     movt    r0, :upper16:(GOT-(.LPC0_2+8))
 
 @@ make sure that the text section fixups are sane too
 @ OBJ:                 '.text'
@@ -25,7 +25,7 @@ barf:                                   @ @barf
 @ OBJ-NEXT:            'sh_info', 0x00000000
 @ OBJ-NEXT:            'sh_addralign', 0x00000004
 @ OBJ-NEXT:            'sh_entsize', 0x00000000
-@ OBJ-NEXT:            '_section_data', 'f00f0fe3 ff0f4fe3'
+@ OBJ-NEXT:            '_section_data', 'f00f0fe3 f40f4fe3'
 
 @ OBJ:              Relocation 0x00000000
 @ OBJ-NEXT:         'r_offset', 0x00000000
