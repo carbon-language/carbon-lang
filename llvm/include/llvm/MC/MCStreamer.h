@@ -18,6 +18,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCDwarf.h"
+#include "llvm/MC/MCWin64EH.h"
 
 namespace llvm {
   class MCAsmInfo;
@@ -56,6 +57,10 @@ namespace llvm {
     std::vector<MCDwarfFrameInfo> FrameInfos;
     MCDwarfFrameInfo *getCurrentFrameInfo();
     void EnsureValidFrame();
+
+    std::vector<MCWin64EHUnwindInfo> W64UnwindInfos;
+    MCWin64EHUnwindInfo *getCurrentW64UnwindInfo();
+    void EnsureValidW64UnwindInfo();
 
     const MCSymbol* LastNonPrivate;
 
