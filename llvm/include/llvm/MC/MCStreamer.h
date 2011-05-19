@@ -76,8 +76,7 @@ namespace llvm {
     const MCExpr *BuildSymbolDiff(MCContext &Context, const MCSymbol *A,
                                   const MCSymbol *B);
 
-    const MCExpr *ForceExpAbs(MCStreamer *Streamer, MCContext &Context,
-                              const MCExpr* Expr);
+    const MCExpr *ForceExpAbs(const MCExpr* Expr);
 
     void EmitFrames(bool usingCFI);
 

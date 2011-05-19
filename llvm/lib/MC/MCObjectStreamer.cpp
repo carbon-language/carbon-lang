@@ -127,7 +127,7 @@ void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value) {
     EmitULEB128IntValue(IntValue);
     return;
   }
-  Value = ForceExpAbs(this, getContext(), Value);
+  Value = ForceExpAbs(Value);
   new MCLEBFragment(*Value, false, getCurrentSectionData());
 }
 
@@ -137,7 +137,7 @@ void MCObjectStreamer::EmitSLEB128Value(const MCExpr *Value) {
     EmitSLEB128IntValue(IntValue);
     return;
   }
-  Value = ForceExpAbs(this, getContext(), Value);
+  Value = ForceExpAbs(Value);
   new MCLEBFragment(*Value, true, getCurrentSectionData());
 }
 
@@ -209,7 +209,7 @@ void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
     MCDwarfLineAddr::Emit(this, LineDelta, Res);
     return;
   }
-  AddrDelta = ForceExpAbs(this, getContext(), AddrDelta);
+  AddrDelta = ForceExpAbs(AddrDelta);
   new MCDwarfLineAddrFragment(LineDelta, *AddrDelta, getCurrentSectionData());
 }
 
@@ -221,7 +221,7 @@ void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
     MCDwarfFrameEmitter::EmitAdvanceLoc(*this, Res);
     return;
   }
-  AddrDelta = ForceExpAbs(this, getContext(), AddrDelta);
+  AddrDelta = ForceExpAbs(AddrDelta);
   new MCDwarfCallFrameFragment(*AddrDelta, getCurrentSectionData());
 }
 

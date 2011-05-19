@@ -368,7 +368,7 @@ void MCAsmStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
                                               const MCSymbol *Label) {
   EmitIntValue(dwarf::DW_CFA_advance_loc4, 1);
   const MCExpr *AddrDelta = BuildSymbolDiff(getContext(), Label, LastLabel);
-  AddrDelta = ForceExpAbs(this, getContext(), AddrDelta);
+  AddrDelta = ForceExpAbs(AddrDelta);
   EmitValue(AddrDelta, 4);
 }
 
