@@ -316,6 +316,13 @@ public:
   /// cycle detection at the end of the TU.
   llvm::SmallVector<CXXConstructorDecl*, 4> DelegatingCtorDecls;
 
+  /// \brief All the overriding destructors seen during a class definition
+  /// (there could be multiple due to nested classes) that had their exception
+  /// spec checks delayed, plus the overridden destructor.
+  llvm::SmallVector<std::pair<const CXXDestructorDecl*,
+                              const CXXDestructorDecl*>, 2>
+      DelayedDestructorExceptionSpecChecks;
+
   /// \brief Callback to the parser to parse templated functions when needed.
   typedef void LateTemplateParserCB(void *P, const FunctionDecl *FD);
   LateTemplateParserCB *LateTemplateParser;
@@ -2643,6 +2650,13 @@ public:
   /// defining this destructor as the default destructor.
   void DefineImplicitDestructor(SourceLocation CurrentLocation,
                                 CXXDestructorDecl *Destructor);
+
+  /// \brief Build an exception spec for destructors that don't have one.
+  ///
+  /// C++11 says that user-defined destructors with no exception spec get one
+  /// that looks as if the destructor was implicitly declared.
+  void AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
+                                     CXXDestructorDecl *Destructor);
 
   /// \brief Declare all inherited constructors for the given class.
   ///
