@@ -43,16 +43,21 @@ namespace llvm {
       StandardPass::CreateVerifierPass = CreateVerifierPass;
     }
     private:
-    /// Define a template function that does the casting for us, so that we can
-    /// perform safe function pointer casts, but catch unsafe ones.
-    template<llvm::ImmutablePass*(*X)(void)> static llvm::Pass*
-      CreatePassFn(void) { return X(); }
-    template<llvm::ModulePass*(*X)(void)> static llvm::Pass*
-      CreatePassFn(void) { return X(); }
-    template<llvm::FunctionPass*(*X)(void)> static llvm::Pass*
-      CreatePassFn(void) { return X(); }
-    template<llvm::Pass*(*X)(void)> static llvm::Pass*
-      CreatePassFn(void) { return X(); }
+    /// Define a set of function overloads that does the casting for us, so
+    /// that we can perform safe function pointer casts, but catch unsafe ones.
+    PassInfo::NormalCtor_t static CreatePassFn(llvm::ImmutablePass*(*X)(void)) {
+     return reinterpret_cast<PassInfo::NormalCtor_t>(X);
+    }
+    PassInfo::NormalCtor_t static CreatePassFn(llvm::ModulePass*(*X)(void)) {
+      return reinterpret_cast<PassInfo::NormalCtor_t>(X);
+    }
+    PassInfo::NormalCtor_t static CreatePassFn(llvm::FunctionPass*(*X)(void)) {
+      return reinterpret_cast<PassInfo::NormalCtor_t>(X);
+    }
+    PassInfo::NormalCtor_t static CreatePassFn(llvm::Pass*(*X)(void)) {
+      return reinterpret_cast<PassInfo::NormalCtor_t>(X);
+    }
+
     static llvm::Pass *CreateVerifierPass() { return createVerifierPass(); }
     /// Passes must be registered with functions that take no arguments, so we have
     /// to wrap their existing constructors.  
@@ -82,7 +87,7 @@ namespace llvm {
       // support "obvious" type-punning idioms.
 #define DEFAULT_ALIAS_ANALYSIS_PASS(pass, flags)\
   StandardPass::RegisterDefaultPass(\
-    CreatePassFn<create ## pass ## Pass>,\
+    CreatePassFn(create ## pass ## Pass),\
     &DefaultStandardPasses::pass ## ID, (unsigned char*)0, StandardPass::AliasAnalysis, flags)
       DEFAULT_ALIAS_ANALYSIS_PASS(TypeBasedAliasAnalysis, 0);
       DEFAULT_ALIAS_ANALYSIS_PASS(BasicAliasAnalysis, 0);
@@ -90,7 +95,7 @@ namespace llvm {
 
 #define DEFAULT_FUNCTION_PASS(pass, flags)\
   StandardPass::RegisterDefaultPass(\
-      CreatePassFn<create ## pass ## Pass>,\
+      CreatePassFn(create ## pass ## Pass),\
       &DefaultStandardPasses::pass ## ID, 0, StandardPass::Function, flags)
       DEFAULT_FUNCTION_PASS(CFGSimplification,
           StandardPass::OptimzationFlags(1));
@@ -101,7 +106,7 @@ namespace llvm {
 
 #define DEFAULT_MODULE_PASS(pass, flags)\
   StandardPass::RegisterDefaultPass(\
-      CreatePassFn<create ## pass ## Pass>,\
+      CreatePassFn(create ## pass ## Pass),\
       &DefaultStandardPasses::pass ## ID, 0, StandardPass::Module, flags)
       // Optimize out global vars
       DEFAULT_MODULE_PASS(GlobalOptimizer,
@@ -228,7 +233,7 @@ namespace llvm {
 
 #define DEFAULT_LTO_PASS(pass, flags)\
   StandardPass::RegisterDefaultPass(\
-      CreatePassFn<create ## pass ## Pass>,\
+      CreatePassFn(create ## pass ## Pass),\
       &DefaultStandardPasses::pass ## ID, 0, StandardPass::LTO, flags)
 
       // LTO passes
