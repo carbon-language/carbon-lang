@@ -200,18 +200,20 @@ void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
         }
         break;
       }
-        
+       
+      case Decl::ObjCCategoryImpl:
       case Decl::ObjCImplementation: {
-        ObjCImplementationDecl* ID = cast<ObjCImplementationDecl>(*I);
+        ObjCImplDecl* ID = cast<ObjCImplDecl>(*I);
         HandleCode(ID);
         
-        for (ObjCImplementationDecl::method_iterator MI = ID->meth_begin(), 
+        for (ObjCContainerDecl::method_iterator MI = ID->meth_begin(), 
              ME = ID->meth_end(); MI != ME; ++MI) {
           checkerMgr->runCheckersOnASTDecl(*MI, *Mgr, BR);
 
           if ((*MI)->isThisDeclarationADefinition()) {
             if (!Opts.AnalyzeSpecificFunction.empty() &&
-                Opts.AnalyzeSpecificFunction != (*MI)->getSelector().getAsString())
+                Opts.AnalyzeSpecificFunction != 
+                  (*MI)->getSelector().getAsString())
               break;
             DisplayFunction(*MI);
             HandleCode(*MI);

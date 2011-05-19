@@ -1312,3 +1312,17 @@ void radar9414427() {
   }
 }
 
+// Analyze methods in @implementation (category)
+@interface RDar9465344
+@end
+
+@implementation RDar9465344 (MyCategory)
+- (void) testcategoryImpl {
+  int *p = 0x0;
+  *p = 0xDEADBEEF; // expected-warning {{null}}
+}
+@end
+
+@implementation RDar9465344
+@end
+
