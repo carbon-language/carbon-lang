@@ -1179,6 +1179,8 @@ enum LinuxDistro {
   Fedora15,
   FedoraRawhide,
   OpenSuse11_3,
+  OpenSuse11_4,
+  OpenSuse12_1,
   UbuntuHardy,
   UbuntuIntrepid,
   UbuntuJaunty,
@@ -1195,7 +1197,8 @@ static bool IsFedora(enum LinuxDistro Distro) {
 }
 
 static bool IsOpenSuse(enum LinuxDistro Distro) {
-  return Distro == OpenSuse11_3;
+  return Distro == OpenSuse11_3 || Distro == OpenSuse11_4 ||
+         Distro == OpenSuse12_1;
 }
 
 static bool IsDebian(enum LinuxDistro Distro) {
@@ -1281,6 +1284,10 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     llvm::StringRef Data = File.get()->getBuffer();
     if (Data.startswith("openSUSE 11.3"))
       return OpenSuse11_3;
+    else if (Data.startswith("openSUSE 11.4"))
+      return OpenSuse11_4;
+    else if (Data.startswith("openSUSE 12.1"))
+      return OpenSuse12_1;
     return UnknownDistro;
   }
 
@@ -1376,7 +1383,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
       GccTriple = "powerpc64-unknown-linux-gnu";
   }
 
-  const char* GccVersions[] = {"4.6.0",
+  const char* GccVersions[] = {"4.6.0", "4.6",
                                "4.5.2", "4.5.1", "4.5",
                                "4.4.5", "4.4.4", "4.4.3", "4.4",
                                "4.3.4", "4.3.3", "4.3.2", "4.3",
