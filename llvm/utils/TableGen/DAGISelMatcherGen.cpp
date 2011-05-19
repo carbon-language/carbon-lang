@@ -646,6 +646,35 @@ GetInstPatternNode(const DAGInstruction &Inst, const TreePatternNode *N) {
   return InstPatNode;
 }
 
+static bool
+mayInstNodeLoadOrStore(const TreePatternNode *N,
+                       const CodeGenDAGPatterns &CGP) {
+  Record *Op = N->getOperator();
+  const CodeGenTarget &CGT = CGP.getTargetInfo();
+  CodeGenInstruction &II = CGT.getInstruction(Op);
+  return II.mayLoad || II.mayStore;
+}
+
+static unsigned
+numNodesThatMayLoadOrStore(const TreePatternNode *N,
+                           const CodeGenDAGPatterns &CGP) {
+  if (N->isLeaf())
+    return 0;
+
+  Record *OpRec = N->getOperator();
+  if (!OpRec->isSubClassOf("Instruction"))
+    return 0;
+
+  unsigned Count = 0;
+  if (mayInstNodeLoadOrStore(N, CGP))
+    ++Count;
+
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+    Count += numNodesThatMayLoadOrStore(N->getChild(i), CGP);
+
+  return Count;
+}
+
 void MatcherGen::
 EmitResultInstructionAsOperand(const TreePatternNode *N,
                                SmallVectorImpl<unsigned> &OutputOps) {
@@ -772,21 +801,26 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
       (Pattern.getSrcPattern()->NodeHasProperty(SDNPVariadic, CGP)))
     NumFixedArityOperands = Pattern.getSrcPattern()->getNumChildren();
 
-  // If this is the root node and any of the nodes matched nodes in the input
-  // pattern have MemRefs in them, have the interpreter collect them and plop
-  // them onto this node.
+  // If this is the root node and multiple matched nodes in the input pattern
+  // have MemRefs in them, have the interpreter collect them and plop them onto
+  // this node. If there is just one node with MemRefs, leave them on that node
+  // even if it is not the root.
   //
-  // FIXME3: This is actively incorrect for result patterns where the root of
-  // the pattern is not the memory reference and is also incorrect when the
-  // result pattern has multiple memory-referencing instructions.  For example,
-  // in the X86 backend, this pattern causes the memrefs to get attached to the
-  // CVTSS2SDrr instead of the MOVSSrm:
-  //
-  //  def : Pat<(extloadf32 addr:$src),
-  //            (CVTSS2SDrr (MOVSSrm addr:$src))>;
-  //
-  bool NodeHasMemRefs =
-    isRoot && Pattern.getSrcPattern()->TreeHasProperty(SDNPMemOperand, CGP);
+  // FIXME3: This is actively incorrect for result patterns with multiple
+  // memory-referencing instructions.
+  bool PatternHasMemOperands =
+    Pattern.getSrcPattern()->TreeHasProperty(SDNPMemOperand, CGP);
+
+  bool NodeHasMemRefs = false;
+  if (PatternHasMemOperands) {
+    unsigned NumNodesThatLoadOrStore =
+      numNodesThatMayLoadOrStore(Pattern.getDstPattern(), CGP);
+    bool NodeIsUniqueLoadOrStore = mayInstNodeLoadOrStore(N, CGP) &&
+                                   NumNodesThatLoadOrStore == 1;
+    NodeHasMemRefs =
+      NodeIsUniqueLoadOrStore || (isRoot && (mayInstNodeLoadOrStore(N, CGP) ||
+                                             NumNodesThatLoadOrStore != 1));
+  }
 
   assert((!ResultVTs.empty() || TreeHasOutGlue || NodeHasChain) &&
          "Node has no result");
