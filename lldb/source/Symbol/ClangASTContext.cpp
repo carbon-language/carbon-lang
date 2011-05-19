@@ -1481,25 +1481,25 @@ ClangASTContext::AddMethodToCXXRecordType
     
     // Populate the method decl with parameter decls
     
-    ParmVarDecl *params[num_params];
+    llvm::SmallVector<ParmVarDecl *, 12> params;
     
     for (int param_index = 0;
          param_index < num_params;
          ++param_index)
     {
-        params[param_index] = ParmVarDecl::Create (*ast,
-                                                   cxx_method_decl,
-                                                   SourceLocation(),
-                                                   SourceLocation(),
-                                                   NULL, // anonymous
-                                                   method_function_prototype->getArgType(param_index), 
-                                                   NULL,
-                                                   SC_None, 
-                                                   SC_None,
-                                                   NULL); 
+        params.push_back (ParmVarDecl::Create (*ast,
+                                               cxx_method_decl,
+                                               SourceLocation(),
+                                               SourceLocation(),
+                                               NULL, // anonymous
+                                               method_function_prototype->getArgType(param_index), 
+                                               NULL,
+                                               SC_None,
+                                               SC_None,
+                                               NULL));
     }
     
-    cxx_method_decl->setParams (params, num_params);
+    cxx_method_decl->setParams (params.data(), num_params);
     
     cxx_record_decl->addDecl (cxx_method_decl);
 
