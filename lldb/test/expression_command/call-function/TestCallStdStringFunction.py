@@ -45,6 +45,7 @@ class ExprCommandCallFunctionTestCase(TestBase):
         self.expect("print str",
             substrs = ['Hello world'])
 
+        # rdar://problem/9471744 test failure: ./dotest.py -C clang -v -w -t -p CallStdString
         # runCmd: print str.c_str()
         # runCmd failed!
         # error: Couldn't convert the expression to DWARF
