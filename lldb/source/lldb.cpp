@@ -22,6 +22,7 @@
 
 #include "llvm/ADT/StringRef.h"
 
+#include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/Disassembler/llvm/DisassemblerLLVM.h"
 #include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
 #include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
@@ -36,7 +37,6 @@
 #if defined (__APPLE__)
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
 #include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
-#include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h"
@@ -77,6 +77,7 @@ lldb_private::Initialize ()
         Timer::Initialize ();
         Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
         
+        ABISysV_x86_64::Initialize();
         DisassemblerLLVM::Initialize();
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
@@ -85,14 +86,13 @@ lldb_private::Initialize ()
         UnwindAssemblyInstEmulation::Initialize();
         UnwindAssembly_x86::Initialize();
         EmulateInstructionARM::Initialize ();
-        ABIMacOSX_i386::Initialize();
-        ABIMacOSX_arm::Initialize();
-        ABISysV_x86_64::Initialize();
 
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
         // Apple/Darwin hosted plugins
         //----------------------------------------------------------------------
+        ABIMacOSX_i386::Initialize();
+        ABIMacOSX_arm::Initialize();
         DynamicLoaderMacOSXDYLD::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
         ItaniumABILanguageRuntime::Initialize();
@@ -144,6 +144,7 @@ lldb_private::Terminate ()
     // Terminate and unload and loaded system or user LLDB plug-ins
     PluginManager::Terminate();
 
+    ABISysV_x86_64::Terminate();
     DisassemblerLLVM::Terminate();
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();
@@ -152,11 +153,10 @@ lldb_private::Terminate ()
     UnwindAssembly_x86::Terminate();
     UnwindAssemblyInstEmulation::Terminate();
     EmulateInstructionARM::Terminate ();
-    ABIMacOSX_i386::Terminate();
-    ABIMacOSX_arm::Terminate();
-    ABISysV_x86_64::Terminate();
 
 #if defined (__APPLE__)
+    ABIMacOSX_i386::Terminate();
+    ABIMacOSX_arm::Terminate();
     DynamicLoaderMacOSXDYLD::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
     ItaniumABILanguageRuntime::Terminate();
