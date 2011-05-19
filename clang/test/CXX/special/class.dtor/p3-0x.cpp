@@ -132,6 +132,10 @@ struct VX
 struct VY : VX
 { virtual ~VY() {} };
 
+template<typename T>
+struct TVY : VX
+{ virtual ~TVY() {} };
+
 
 struct VA {
   B b;
@@ -140,3 +144,28 @@ struct VA {
 
 struct VB : VA
 { virtual ~VB() {} };
+
+template<typename T>
+struct TVB : VA
+{ virtual ~TVB() {} };
+
+void tinst2() {
+  TVY<int> tvy;
+  TVB<int> tvb;
+}
+
+template <typename T>
+struct Sw {
+  T t;
+  ~Sw() {}
+};
+
+void tsw() {
+  Sw<int> swi;
+  Sw<B> swb;
+}
+// CHECK-NOT: define linkonce_odr void @_ZN2SwI1BED1Ev({{.*}} nounwind
+// CHECK: define linkonce_odr void @_ZN2SwI1BED1Ev({{.*}}
+// CHECK: _ZTIi
+// CHECK: __cxa_call_unexpected
+// CHECK: define linkonce_odr void @_ZN2SwIiED1Ev({{.*}} nounwind
