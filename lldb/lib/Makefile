@@ -17,7 +17,7 @@ NO_BUILD_ARCHIVE = 1
 LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
-PYTHON_BUILD_FLAGS = -lpython2.6
+PYTHON_BUILD_FLAGS = $(shell python-config --ldflags)
 
 # Include all archives in liblldb.a files
 USEDLIBS = lldbAPI.a \
