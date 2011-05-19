@@ -597,6 +597,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse41_pmovzxbw:
   case Intrinsic::x86_sse41_pmovzxwd:
   case Intrinsic::x86_sse41_pmovzxdq: {
+    // pmov{s|z}x ignores the upper half of their input vectors.
     unsigned VWidth =
       cast<VectorType>(II->getArgOperand(0)->getType())->getNumElements();
     unsigned LowHalfElts = VWidth / 2;
