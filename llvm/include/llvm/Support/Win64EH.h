@@ -40,7 +40,7 @@ union UnwindCode {
     uint8_t codeOffset;
     uint8_t unwindOp:4,
             opInfo:4;
-  };
+  } u;
   uint16_t frameOffset;
 };
 
@@ -56,6 +56,13 @@ enum {
   UNW_ChainInfo = 0x04
 };
 
+/// RuntimeFunction - An entry in the table of functions with unwind info.
+struct RuntimeFunction {
+  uint64_t startAddress;
+  uint64_t endAddress;
+  uint64_t unwindInfoOffset;
+};
+
 /// UnwindInfo - An entry in the exception table.
 struct UnwindInfo {
   uint8_t version:3,
@@ -65,30 +72,25 @@ struct UnwindInfo {
   uint8_t frameRegister:4,
           frameOffset:4;
   UnwindCode unwindCodes[1];
+
+  void *getLanguageSpecificData() {
+    return reinterpret_cast<void *>(&unwindCodes[(numCodes+1) & ~1]);
+  }
+  uint64_t getLanguageSpecificHandlerOffset() {
+    return *reinterpret_cast<uint64_t *>(getLanguageSpecificData());
+  }
+  void setLanguageSpecificHandlerOffset(uint64_t offset) {
+    *reinterpret_cast<uint64_t *>(getLanguageSpecificData()) = offset;
+  }
+  RuntimeFunction *getChainedFunctionEntry() {
+    return reinterpret_cast<RuntimeFunction *>(getLanguageSpecificData());
+  }
+  void *getExceptionData() {
+    return reinterpret_cast<void *>(reinterpret_cast<uint64_t *>(
+                                                  getLanguageSpecificData())+1);
+  }
 };
 
-inline UnwindCode &getUnwindCodeEntry(UnwindInfo &info, uint32_t index) {
-  return info.unwindCodes[index];
-}
-inline void *getLanguageSpecificData(UnwindInfo &info) {
-  return reinterpret_cast<void *>(&getUnwindCodeEntry(info,info.numCodes+1)&~1);
-}
-inline uint64_t getLanguageSpecificHandlerOffset(UnwindInfo &info) {
-  return *reinterpret_cast<uint64_t *>(getLangaugeSpecificData(info));
-}
-inline void setLanguageSpecificHandlerOffset(UnwindInfo &info, uint64_t offset){
-  *reinterpret_cast<uint64_t *>(getLanguageSpecificData(info)) = offset;
-}
-inline uint64_t getChainedFunctionEntryOffset(UnwindInfo &info) {
-  return *reinterpret_cast<uint64_t *>(getLanguageSpecificData(info));
-}
-inline void setChainedFunctionEntryOffset(UnwindInfo &info, uint64_t offset) {
-  *reinterpret_cast<uint64_t *>(getLanguageSpecificData(info)) = offset;
-}
-inline void *getExceptionData(UnwindInfo &info) {
-  return reinterpret_cast<void *>(reinterpret_cast<uint64_t *>(
-                                              getLanguageSpecificData(info))+1);
-}
 
 } // End of namespace Win64EH
 } // End of namespace llvm

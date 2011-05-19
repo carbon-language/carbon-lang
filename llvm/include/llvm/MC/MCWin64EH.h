@@ -33,12 +33,12 @@ namespace llvm {
     MachineLocation Source;
   public:
     MCWin64EHInstruction(OpType Op, unsigned Register)
-      : Operation(Op), Offset(0), Destination(0), Source(S) {
+      : Operation(Op), Offset(0), Destination(0), Source(Register) {
       assert(Op == Win64EH::UOP_PushNonVol);
     }
     MCWin64EHInstruction(unsigned Size)
       : Operation(Size>128 ? Win64EH::UOP_AllocLarge : Win64EH::UOP_AllocSmall),
-        Offset(size) { }
+        Offset(Size) { }
     MCWin64EHInstruction(unsigned Register, unsigned Off)
       : Operation(Win64EH::UOP_SetFPReg), Offset(Off), Destination(Register) { }
     MCWin64EHInstruction(OpType Op, const MachineLocation &D,
@@ -64,7 +64,7 @@ namespace llvm {
   struct MCWin64EHUnwindInfo {
     MCWin64EHUnwindInfo() : Begin(0), End(0), ExceptionHandler(0), Lsda(0),
                             Function(0), UnwindOnly(false), LsdaSize(0),
-                            PrologSize(0), LastFrameInst(-1), Chained(false)
+                            PrologSize(0), LastFrameInst(-1), Chained(false),
                             Instructions() {}
     MCSymbol *Begin;
     MCSymbol *End;
