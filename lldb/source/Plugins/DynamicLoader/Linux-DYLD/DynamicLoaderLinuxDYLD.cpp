@@ -321,7 +321,7 @@ DynamicLoaderLinuxDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
         AddressRange range;
         if (target_symbols.GetContextAtIndex(i, context))
         {
-            context.GetAddressRange(eSymbolContextEverything, range);
+            context.GetAddressRange(eSymbolContextEverything, 0, false, range);
             lldb::addr_t addr = range.GetBaseAddress().GetLoadAddress(&target);
             if (addr != LLDB_INVALID_ADDRESS)
                 addrs.push_back(addr);

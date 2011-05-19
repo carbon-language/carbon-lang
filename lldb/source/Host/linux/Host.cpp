@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/Error.h"
 #include "lldb/Host/Host.h"
 
 using namespace lldb;
@@ -33,3 +34,12 @@ Host::GetOSVersion(uint32_t &major,
     status = sscanf(un.release, "%u.%u.%u", &major, &minor, &update);
      return status == 3;
 }
+
+Error
+Host::LaunchProcess (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    assert(!"Not implemented yet!!!");
+    return error;
+}
+
