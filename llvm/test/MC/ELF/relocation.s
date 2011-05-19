@@ -17,6 +17,7 @@ bar:
         pushq    $bar
         movq	foo(%rip), %rdx
         leaq    foo-bar(%r14),%r14
+        addq	$bar,%rax         # R_X86_64_32S
 
 
 // CHECK:  # Section 0x00000001
@@ -105,6 +106,12 @@ bar:
 // CHECK-NEXT:  ('r_sym', 0x00000006)
 // CHECK-NEXT:  ('r_type', 0x00000002)
 // CHECK-NEXT:  ('r_addend', 0x0000005c)
+
+// CHECK: # Relocation 0x0000000e
+// CHECK-NEXT: (('r_offset', 0x00000063)
+// CHECK-NEXT:  ('r_sym', 0x00000002)
+// CHECK-NEXT:  ('r_type', 0x0000000b)
+// CHECK-NEXT:  ('r_addend', 0x00000000)
 
 // CHECK:   # Symbol 0x00000002
 // CHECK: (('st_name', 0x00000000) # ''
