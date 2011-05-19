@@ -410,11 +410,6 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
   SmallVector<MachineOperand, 4> Cond;
   if (!TII->AnalyzeBranch(*const_cast<MachineBasicBlock *>(MBB),
                           TBB, FBB, Cond)) {
-    // If the block branches directly to a landing pad successor, pretend that
-    // the landing pad is a normal block.
-    LandingPadSuccs.erase(TBB);
-    LandingPadSuccs.erase(FBB);
-
     // Ok, AnalyzeBranch thinks it knows what's going on with this block. Let's
     // check whether its answers match up with reality.
     if (!TBB && !FBB) {
