@@ -758,19 +758,13 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   Value* V2 = CGF.EmitScalarExpr(E->getExpr(1));
   
   // Handle vec3 special since the index will be off by one for the RHS.
+  const llvm::VectorType *VTy = cast<llvm::VectorType>(V1->getType());
   llvm::SmallVector<llvm::Constant*, 32> indices;
   for (unsigned i = 2; i < E->getNumSubExprs(); i++) {
-    llvm::Constant *C = cast<llvm::Constant>(CGF.EmitScalarExpr(E->getExpr(i)));
-    const llvm::VectorType *VTy = cast<llvm::VectorType>(V1->getType());
-    if (VTy->getNumElements() == 3) {
-      if (llvm::ConstantInt *CI = dyn_cast<llvm::ConstantInt>(C)) {
-        uint64_t cVal = CI->getZExtValue();
-        if (cVal > 3) {
-          C = llvm::ConstantInt::get(C->getType(), cVal-1);
-        }
-      }
-    }
-    indices.push_back(C);
+    unsigned Idx = E->getShuffleMaskIdx(CGF.getContext(), i-2);
+    if (VTy->getNumElements() == 3 && Idx > 3)
+      Idx -= 1;
+    indices.push_back(Builder.getInt32(Idx));
   }
 
   Value *SV = llvm::ConstantVector::get(indices);
