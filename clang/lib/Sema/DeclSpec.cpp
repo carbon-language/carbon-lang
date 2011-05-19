@@ -309,6 +309,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_typeofExpr:  return "typeof";
   case DeclSpec::TST_auto:        return "auto";
   case DeclSpec::TST_decltype:    return "(decltype)";
+  case DeclSpec::TST_underlying_type: return "__underlying_type";
   case DeclSpec::TST_unknown_anytype: return "__unknown_anytype";
   case DeclSpec::TST_error:       return "(error)";
   }

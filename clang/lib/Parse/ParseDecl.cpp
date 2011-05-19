@@ -1859,6 +1859,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       ParseDecltypeSpecifier(DS);
       continue;
 
+    case tok::kw___underlying_type:
+      ParseUnderlyingTypeSpecifier(DS);
+
     // OpenCL qualifiers:
     case tok::kw_private: 
       if (!getLang().OpenCL)
@@ -2127,6 +2130,11 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, bool& isInvalid,
   // C++0x decltype support.
   case tok::kw_decltype:
     ParseDecltypeSpecifier(DS);
+    return true;
+
+  // C++0x type traits support.
+  case tok::kw___underlying_type:
+    ParseUnderlyingTypeSpecifier(DS);
     return true;
 
   // OpenCL qualifiers:

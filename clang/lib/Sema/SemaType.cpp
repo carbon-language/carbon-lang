@@ -836,6 +836,29 @@ static QualType ConvertDeclSpecToType(Sema &S, TypeProcessingState &state) {
     }
     break;
   }
+  case DeclSpec::TST_underlying_type:
+    // FIXME: Preserve type source info?
+    Result = S.GetTypeFromParser(DS.getRepAsType());
+    assert(!Result.isNull() && "Didn't get a type for __underlying_type?");
+    if (!Result->isDependentType()) {
+      if (Result->isEnumeralType()) {
+        EnumDecl *ED = Result->getAs<EnumType>()->getDecl();
+        S.DiagnoseUseOfDecl(ED, DS.getTypeSpecTypeLoc());
+        QualType UnderlyingType = ED->getIntegerType();
+        if (UnderlyingType.isNull()) {
+          declarator.setInvalidType(true);
+          Result = Context.IntTy;
+        } else {
+          Result = UnderlyingType;
+        }
+      } else {
+        S.Diag(DS.getTypeSpecTypeLoc(),
+               diag::err_only_enums_have_underlying_types);
+        Result = Context.IntTy;
+      }
+    }
+    break; 
+
   case DeclSpec::TST_auto: {
     // TypeQuals handled by caller.
     Result = Context.getAutoType(QualType());

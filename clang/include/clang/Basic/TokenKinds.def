@@ -348,6 +348,7 @@ KEYWORD(__is_union                  , KEYCXX)
 
 // Clang-only C++ Type Traits
 KEYWORD(__is_trivially_copyable     , KEYCXX)
+KEYWORD(__underlying_type           , KEYCXX)
 
 // Embarcadero Expression Traits
 KEYWORD(__is_lvalue_expr            , KEYCXX)

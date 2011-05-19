@@ -617,7 +617,8 @@ bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
   const DeclSpec &DS = D.getDeclSpec();
   switch (DS.getTypeSpecType()) {
   case TST_typename:
-  case TST_typeofType: {
+  case TST_typeofType:
+  case TST_underlying_type: {
     QualType T = DS.getRepAsType().get();
     if (!T.isNull() && T->containsUnexpandedParameterPack())
       return true;

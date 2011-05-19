@@ -54,6 +54,7 @@ namespace clang {
     TST_typeofType,
     TST_typeofExpr,
     TST_decltype,     // C++0x decltype
+    TST_underlying_type, // __underlying_type for C++0x
     TST_auto,         // C++0x auto
     TST_unknown_anytype, // __unknown_anytype extension
     TST_error         // erroneous type

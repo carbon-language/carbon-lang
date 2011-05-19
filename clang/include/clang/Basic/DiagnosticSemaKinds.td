@@ -1015,6 +1015,10 @@ def err_enum_redeclare_fixed_mismatch : Error<
   "enumeration previously declared with %select{non|}0fixed underlying type">;
 def err_enum_redeclare_scoped_mismatch : Error<
   "enumeration previously declared as %select{un|}0scoped">;
+def err_only_enums_have_underlying_types : Error<
+  "only enumeration types have underlying types">;
+def err_incomplete_type_no_underlying_type : Error<
+  "an incomplete enumeration type has no underlying type yet">;
 
 // C++0x delegating constructors
 def err_delegation_0x_only : Error<

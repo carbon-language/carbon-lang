@@ -962,6 +962,7 @@ bool Parser::isCXXSimpleTypeSpecifier() const {
   case tok::kw_bool:
   case tok::kw_decltype:
   case tok::kw_typeof:
+  case tok::kw___underlying_type:
     return true;
 
   default:

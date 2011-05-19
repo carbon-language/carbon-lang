@@ -1648,6 +1648,7 @@ bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
 
   void ParseTypeofSpecifier(DeclSpec &DS);
   void ParseDecltypeSpecifier(DeclSpec &DS);
+  void ParseUnderlyingTypeSpecifier(DeclSpec &DS);
   
   ExprResult ParseCXX0XAlignArgument(SourceLocation Start);
 

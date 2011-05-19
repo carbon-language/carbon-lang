@@ -572,6 +572,42 @@ void Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
     Diag(StartLoc, DiagID) << PrevSpec;
 }
 
+void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
+  assert(Tok.is(tok::kw___underlying_type) &&
+         "Not an underlying type specifier");
+
+  SourceLocation StartLoc = ConsumeToken();
+  SourceLocation LParenLoc = Tok.getLocation();
+
+  if (ExpectAndConsume(tok::l_paren, diag::err_expected_lparen_after,
+                       "__underlying_type")) {
+    SkipUntil(tok::r_paren);
+    return;
+  }
+
+  TypeResult Result = ParseTypeName();
+  if (Result.isInvalid()) {
+    SkipUntil(tok::r_paren);
+    return;
+  }
+
+  // Match the ')'
+  SourceLocation RParenLoc;
+  if (Tok.is(tok::r_paren))
+    RParenLoc = ConsumeParen();
+  else
+    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+  if (RParenLoc.isInvalid())
+    return;
+
+  const char *PrevSpec = 0;
+  unsigned DiagID;
+  if (DS.SetTypeSpecType(DeclSpec::TST_underlying_type, StartLoc, PrevSpec,
+                         DiagID, Result.release()))
+    Diag(StartLoc, DiagID) << PrevSpec;
+}
+
 /// ParseClassName - Parse a C++ class-name, which names a class. Note
 /// that we only check that the result names a type; semantic analysis
 /// will need to verify that the type names a class. The result is

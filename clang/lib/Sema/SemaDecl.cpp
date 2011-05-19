@@ -2864,7 +2864,8 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   switch (DS.getTypeSpecType()) {
   case DeclSpec::TST_typename:
   case DeclSpec::TST_typeofType:
-  case DeclSpec::TST_decltype: {
+  case DeclSpec::TST_decltype:
+  case DeclSpec::TST_underlying_type: {
     // Grab the type from the parser.
     TypeSourceInfo *TSI = 0;
     QualType T = S.GetTypeFromParser(DS.getRepAsType(), &TSI);
