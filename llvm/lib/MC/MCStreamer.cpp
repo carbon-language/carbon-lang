@@ -310,20 +310,19 @@ void MCStreamer::EmitCFISameValue(int64_t Register) {
   CurFrame->Instructions.push_back(Instruction);
 }
 
-MCWin64EHUnwindInfo *MCStreamer::getCurrentW64UnwindInfo() {
-  if (W64UnwindInfos.empty())
-    return NULL;
-  return &W64UnwindInfos.back();
+void MCStreamer::setCurrentW64UnwindInfo(MCWin64EHUnwindInfo *Frame) {
+  W64UnwindInfos.push_back(*Frame);
+  CurrentW64UnwindInfo = &W64UnwindInfos.back();
 }
 
 void MCStreamer::EnsureValidW64UnwindInfo() {
-  MCWin64EHUnwindInfo *CurFrame = getCurrentW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   if (!CurFrame || CurFrame->End)
     report_fatal_error("No open Win64 EH frame function!");
 }
 
 void MCStreamer::EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler) {
-  MCWin64EHUnwindInfo *CurFrame = getCurrentW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a function before ending the previous one!");
   MCWin64EHUnwindInfo Frame;
@@ -331,13 +330,13 @@ void MCStreamer::EmitWin64EHStartProc(MCSymbol *Symbol, MCSymbol *EHandler) {
   Frame.Function = Symbol;
   Frame.ExceptionHandler = EHandler;
   EmitLabel(Frame.Begin);
-  W64UnwindInfos.push_back(Frame);
+  setCurrentW64UnwindInfo(&Frame);
 }
 
 void MCStreamer::EmitWin64EHEndProc() {
   EnsureValidW64UnwindInfo();
-  MCWin64EHUnwindInfo *CurFrame = getCurrentW64UnwindInfo();
-  if (CurFrame->Chained)
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  if (CurFrame->ChainedParent)
     report_fatal_error("Not all chained regions terminated!");
   CurFrame->End = getContext().CreateTempSymbol();
   EmitLabel(CurFrame->End);
@@ -345,14 +344,25 @@ void MCStreamer::EmitWin64EHEndProc() {
 
 void MCStreamer::EmitWin64EHStartChained()
 {
-  errs() << "Not implemented yet\n";
-  abort();
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo Frame;
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  Frame.Begin = getContext().CreateTempSymbol();
+  Frame.Function = CurFrame->Function;
+  Frame.ChainedParent = CurFrame;
+  EmitLabel(Frame.Begin);
+  setCurrentW64UnwindInfo(&Frame);
 }
 
 void MCStreamer::EmitWin64EHEndChained()
 {
-  errs() << "Not implemented yet\n";
-  abort();
+  EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  if (!CurFrame->ChainedParent)
+    report_fatal_error("End of a chained region outside a chained region!");
+  CurFrame->End = getContext().CreateTempSymbol();
+  EmitLabel(CurFrame->End);
+  CurrentW64UnwindInfo = CurFrame->ChainedParent;
 }
 
 void MCStreamer::EmitWin64EHUnwindOnly()

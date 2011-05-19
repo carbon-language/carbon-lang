@@ -59,7 +59,8 @@ namespace llvm {
     void EnsureValidFrame();
 
     std::vector<MCWin64EHUnwindInfo> W64UnwindInfos;
-    MCWin64EHUnwindInfo *getCurrentW64UnwindInfo();
+    MCWin64EHUnwindInfo *CurrentW64UnwindInfo;
+    void setCurrentW64UnwindInfo(MCWin64EHUnwindInfo *Frame);
     void EnsureValidW64UnwindInfo();
 
     const MCSymbol* LastNonPrivate;
