@@ -308,7 +308,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     //
     // Note that the halfwords are stored high first, low second; so we need
     // to transpose the fixup value here to map properly.
-    unsigned isNeg = (int64_t(Value) < 0) ? 1 : 0;
+    unsigned isNeg = (int64_t(Value - 4) < 0) ? 1 : 0;
     uint32_t Binary = 0;
     Value = 0x3fffff & ((Value - 4) >> 1);
     Binary  = (Value & 0x7ff) << 16;    // Low imm11 value.
@@ -326,7 +326,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
     //
     // Note that the halfwords are stored high first, low second; so we need
     // to transpose the fixup value here to map properly.
-    unsigned isNeg = (int64_t(Value) < 0) ? 1 : 0;
+    unsigned isNeg = (int64_t(Value-4) < 0) ? 1 : 0;
     uint32_t Binary = 0;
     Value = 0xfffff & ((Value - 2) >> 2);
     Binary  = (Value & 0x3ff) << 17;    // Low imm10L value.

@@ -1441,6 +1441,17 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
     case ARM::fixup_t2_movw_lo16_pcrel:
       Type = ELF::R_ARM_THM_MOVW_PREL_NC;
       break;
+    case ARM::fixup_arm_thumb_bl:
+    case ARM::fixup_arm_thumb_blx:
+      switch (Modifier) {
+      case MCSymbolRefExpr::VK_ARM_PLT:
+        Type = ELF::R_ARM_THM_CALL;
+        break;
+      default:
+        Type = ELF::R_ARM_NONE;
+        break;
+      }
+      break;
     }
   } else {
     switch ((unsigned)Fixup.getKind()) {
