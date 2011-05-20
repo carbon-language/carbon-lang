@@ -348,6 +348,9 @@ SBValue::GetChildAtIndex (uint32_t idx, lldb::DynamicValueType use_dynamic)
 {
     lldb::ValueObjectSP child_sp;
 
+    if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+
     if (m_opaque_sp)
     {
         child_sp = m_opaque_sp->GetChildAtIndex (idx, true);
@@ -400,6 +403,10 @@ SBValue::GetChildMemberWithName (const char *name, lldb::DynamicValueType use_dy
 {
     lldb::ValueObjectSP child_sp;
     const ConstString str_name (name);
+
+    if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+    
 
     if (m_opaque_sp)
     {
