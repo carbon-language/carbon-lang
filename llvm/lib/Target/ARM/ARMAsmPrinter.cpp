@@ -588,6 +588,12 @@ void ARMAsmPrinter::emitAttributes() {
     //
 
     /// ADD additional Else-cases here!
+  } else if (CPUString == "xscale") {
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v5TEJ);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::ARM_ISA_use,
+                               ARMBuildAttrs::Allowed);
+    AttrEmitter->EmitAttribute(ARMBuildAttrs::THUMB_ISA_use,
+                               ARMBuildAttrs::Allowed);
   } else if (CPUString == "generic") {
     // FIXME: Why these defaults?
     AttrEmitter->EmitAttribute(ARMBuildAttrs::CPU_arch, ARMBuildAttrs::v4T);
