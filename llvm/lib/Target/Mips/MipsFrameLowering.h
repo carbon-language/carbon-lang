@@ -40,6 +40,8 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
 
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS) const;
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 };
 

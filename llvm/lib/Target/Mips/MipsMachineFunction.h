@@ -27,14 +27,6 @@ namespace llvm {
 class MipsFunctionInfo : public MachineFunctionInfo {
 
 private:
-  /// Holds for each function where on the stack the Frame Pointer must be
-  /// saved. This is used on Prologue and Epilogue to emit FP save/restore
-  int FPStackOffset;
-
-  /// Holds for each function where on the stack the Return Address must be
-  /// saved. This is used on Prologue and Epilogue to emit RA save/restore
-  int RAStackOffset;
-
   /// At each function entry, two special bitmask directives must be emitted
   /// to help debugging, for CPU and FPU callee saved registers. Both need
   /// the negative offset from the final stack size and its higher registers
@@ -94,18 +86,12 @@ private:
   bool HasCall; // True if function has a function call.
 public:
   MipsFunctionInfo(MachineFunction& MF)
-  : FPStackOffset(0), RAStackOffset(0), CPUTopSavedRegOff(0),
+  : CPUTopSavedRegOff(0),
     FPUTopSavedRegOff(0), GPHolder(-1,-1), HasLoadArgs(false),
     HasStoreVarArgs(false), SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
     OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), HasCall(false)
   {}
-
-  int getFPStackOffset() const { return FPStackOffset; }
-  void setFPStackOffset(int Off) { FPStackOffset = Off; }
-
-  int getRAStackOffset() const { return RAStackOffset; }
-  void setRAStackOffset(int Off) { RAStackOffset = Off; }
 
   int getCPUTopSavedRegOff() const { return CPUTopSavedRegOff; }
   void setCPUTopSavedRegOff(int Off) { CPUTopSavedRegOff = Off; }

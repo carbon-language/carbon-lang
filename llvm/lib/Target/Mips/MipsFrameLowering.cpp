@@ -156,26 +156,6 @@ void MipsFrameLowering::adjustMipsStackFrame(MachineFunction &MF) const {
     StackOffset += MFI->getObjectAlignment(CSI[i].getFrameIdx());
   }
 
-  // Stack locations for FP and RA. If only one of them is used,
-  // the space must be allocated for both, otherwise no space at all.
-  if (hasFP(MF) || MFI->adjustsStack()) {
-    // FP stack location
-    MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true),
-                         StackOffset);
-    MipsFI->setFPStackOffset(StackOffset);
-    TopCPUSavedRegOff = StackOffset;
-    StackOffset += RegSize;
-
-    // SP stack location
-    MFI->setObjectOffset(MFI->CreateStackObject(RegSize, RegSize, true),
-                         StackOffset);
-    MipsFI->setRAStackOffset(StackOffset);
-    StackOffset += RegSize;
-
-    if (MFI->adjustsStack())
-      TopCPUSavedRegOff += RegSize;
-  }
-
   StackOffset = ((StackOffset+StackAlign-1)/StackAlign*StackAlign);
 
   // Adjust FPU Callee Saved Registers Area. This Area must be
@@ -267,9 +247,6 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->adjustsStack()) return;
 
-  int FPOffset = MipsFI->getFPStackOffset();
-  int RAOffset = MipsFI->getRAStackOffset();
-
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOREORDER));
 
   // TODO: check need from GP here.
@@ -288,36 +265,11 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (ATUsed)
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
 
-  // Save the return address only if the function isn't a leaf one.
-  // sw  $ra, stack_loc($sp)
-  if (MFI->adjustsStack()) {
-    ATUsed = expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB,
-                                   MBBI);
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::SW))
-      .addReg(Mips::RA).addImm(NewImm).addReg(NewReg);
-
-    // FIXME: change this when mips goes MC".
-    if (ATUsed)
-      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
-  }
-
-  // if framepointer enabled, save it and set it
-  // to point to the stack pointer
-  if (hasFP(MF)) {
-    // sw  $fp,stack_loc($sp)
-    ATUsed = expandRegLargeImmPair(Mips::SP, FPOffset, NewReg, NewImm, MBB,
-                                   MBBI);
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::SW))
-      .addReg(Mips::FP).addImm(NewImm).addReg(NewReg);
-
-    // FIXME: change this when mips goes MC".
-    if (ATUsed)
-      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
-
+  // if framepointer enabled, set it to point to the stack pointer.
+  if (hasFP(MF))
     // move $fp, $sp
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::FP)
       .addReg(Mips::SP).addReg(Mips::ZERO);
-  }
 
   // Restore GP from the saved stack location
   if (MipsFI->needGPSaveRestore())
@@ -329,7 +281,6 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
                                  MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MachineFrameInfo *MFI            = MF.getFrameInfo();
-  MipsFunctionInfo *MipsFI         = MF.getInfo<MipsFunctionInfo>();
   const MipsInstrInfo &TII =
     *static_cast<const MipsInstrInfo*>(MF.getTarget().getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();
@@ -337,44 +288,15 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
   // Get the number of bytes from FrameInfo
   int NumBytes = (int) MFI->getStackSize();
 
-  // Get the FI's where RA and FP are saved.
-  int FPOffset = MipsFI->getFPStackOffset();
-  int RAOffset = MipsFI->getRAStackOffset();
-
   unsigned NewReg = 0;
   int NewImm = 0;
   bool ATUsed = false;
 
-  // if framepointer enabled, restore it and restore the
-  // stack pointer
-  if (hasFP(MF)) {
+  // if framepointer enabled, restore the stack pointer.
+  if (hasFP(MF))
     // move $sp, $fp
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::SP)
       .addReg(Mips::FP).addReg(Mips::ZERO);
-
-    // lw  $fp,stack_loc($sp)
-    ATUsed = expandRegLargeImmPair(Mips::SP, FPOffset, NewReg, NewImm, MBB,
-                                   MBBI);
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::FP)
-      .addImm(NewImm).addReg(NewReg);
-
-    // FIXME: change this when mips goes MC".
-    if (ATUsed)
-      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
-  }
-
-  // Restore the return address only if the function isn't a leaf one.
-  // lw  $ra, stack_loc($sp)
-  if (MFI->adjustsStack()) {
-    ATUsed = expandRegLargeImmPair(Mips::SP, RAOffset, NewReg, NewImm, MBB,
-                                   MBBI);
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::LW), Mips::RA)
-      .addImm(NewImm).addReg(NewReg);
-
-    // FIXME: change this when mips goes MC".
-    if (ATUsed)
-      BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
-  }
 
   // adjust stack  : insert addi sp, sp, (imm)
   if (NumBytes) {
@@ -387,6 +309,30 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
     if (ATUsed)
       BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
   }
+}
+
+void MipsFrameLowering::
+processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                     RegScavenger *RS) const {
+  MachineRegisterInfo& MRI = MF.getRegInfo();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+
+  // FIXME: remove this code if register allocator can correctly mark
+  //        $fp and $ra used or unused.
+
+  // Mark $fp and $ra as used or unused.
+  if (hasFP(MF))
+    MRI.setPhysRegUsed(Mips::FP);
+
+  // The register allocator might determine $ra is used after seeing 
+  // instruction "jr $ra", but we do not want PrologEpilogInserter to insert
+  // instructions to save/restore $ra unless there is a function call.
+  // To correct this, $ra is explicitly marked unused if there is no
+  // function call.
+  if (MipsFI->hasCall())
+    MRI.setPhysRegUsed(Mips::RA);
+  else
+    MRI.setPhysRegUnused(Mips::RA);
 }
 
 void MipsFrameLowering::

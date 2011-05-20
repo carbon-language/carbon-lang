@@ -1042,6 +1042,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -1065,6 +1066,8 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // "at stack" argument location.
   int LastArgStackLoc = 0;
   unsigned FirstStackArgLoc = (Subtarget->isABI_EABI() ? 0 : 16);
+
+  MipsFI->setHasCall();
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -1226,7 +1229,6 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       // Function can have an arbitrary number of calls, so
       // hold the LastArgStackLoc with the biggest offset.
       int FI;
-      MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
       if (LastArgStackLoc >= MipsFI->getGPStackOffset()) {
         LastArgStackLoc = (!LastArgStackLoc) ? (16) : (LastArgStackLoc+4);
         // Create the frame index only once. SPOffset here can be anything
