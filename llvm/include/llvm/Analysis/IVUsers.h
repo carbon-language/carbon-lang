@@ -37,8 +37,8 @@ class TargetData;
 class IVStrideUse : public CallbackVH, public ilist_node<IVStrideUse> {
   friend class IVUsers;
 public:
-  IVStrideUse(IVUsers *P, Instruction* U, Value *O)
-    : CallbackVH(U), Parent(P), OperandValToReplace(O) {
+  IVStrideUse(IVUsers *P, Instruction* U, Value *O, Value *PN)
+    : CallbackVH(U), Parent(P), OperandValToReplace(O), Phi(PN) {
   }
 
   /// getUser - Return the user instruction for this use.
@@ -49,6 +49,11 @@ public:
   /// setUser - Assign a new user instruction for this use.
   void setUser(Instruction *NewUser) {
     setValPtr(NewUser);
+  }
+
+  /// getPhi - Return the phi node that represents this IV.
+  PHINode *getPhi() const {
+    return cast<PHINode>(Phi);
   }
 
   /// getOperandValToReplace - Return the Value of the operand in the user
@@ -80,6 +85,9 @@ private:
   /// OperandValToReplace - The Value of the operand in the user instruction
   /// that this IVStrideUse is representing.
   WeakVH OperandValToReplace;
+
+  /// Phi - The loop header phi that represents this IV.
+  WeakVH Phi;
 
   /// PostIncLoops - The set of loops for which Expr has been adjusted to
   /// use post-inc mode. This corresponds with SCEVExpander's post-inc concept.
@@ -143,9 +151,9 @@ public:
   /// AddUsersIfInteresting - Inspect the specified Instruction.  If it is a
   /// reducible SCEV, recursively add its users to the IVUsesByStride set and
   /// return true.  Otherwise, return false.
-  bool AddUsersIfInteresting(Instruction *I);
+  bool AddUsersIfInteresting(Instruction *I, PHINode *Phi);
 
-  IVStrideUse &AddUser(Instruction *User, Value *Operand);
+  IVStrideUse &AddUser(Instruction *User, Value *Operand, PHINode *Phi);
 
   /// getReplacementExpr - Return a SCEV expression which computes the
   /// value of the OperandValToReplace of the given IVStrideUse.

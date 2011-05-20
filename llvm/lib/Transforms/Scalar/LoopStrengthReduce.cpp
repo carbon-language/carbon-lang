@@ -1804,7 +1804,8 @@ LSRInstance::OptimizeLoopTermCond() {
         ExitingBlock->getInstList().insert(TermBr, Cond);
 
         // Clone the IVUse, as the old use still exists!
-        CondUse = &IU.AddUser(Cond, CondUse->getOperandValToReplace());
+        CondUse = &IU.AddUser(Cond, CondUse->getOperandValToReplace(),
+                              CondUse->getPhi());
         TermBr->replaceUsesOfWith(OldCond, Cond);
       }
     }
