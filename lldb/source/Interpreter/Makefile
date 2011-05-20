@@ -21,7 +21,7 @@ PYTHON_DIR := $(LLDB_BIN_DIR)
 ifeq ($(HOST_OS),Darwin)
 PYTHON_DEST_DIR := /Library/Python/$(shell python -c 'import sys; print sys.version[:3]')/site-packages
 else
-PYTHON_DEST_DIR := $(shell python -c 'import sys; print sys.exec_prefix')/lib/python$(shell python -c 'import sys; pritn sys.version[:3]')/site-packages
+PYTHON_DEST_DIR := $(shell python -c 'import sys; print sys.exec_prefix')/lib/python$(shell python -c 'import sys; print sys.version[:3]')/site-packages
 endif
 LLDB_SWIG_INCLUDE_DIRS:= -I"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include" -I./.
 LIBLLDB := $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/liblldb$(SHLIBEXT)
