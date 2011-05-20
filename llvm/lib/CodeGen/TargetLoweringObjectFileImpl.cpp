@@ -941,7 +941,6 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                 SectionKind::getMetadata());
   DwarfLineSection =
     getContext().getCOFFSection(".debug_line",
-                                SectionKind::getMetadata());
                                 COFF::IMAGE_SCN_MEM_DISCARDABLE |
                                 COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
