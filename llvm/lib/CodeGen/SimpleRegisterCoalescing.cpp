@@ -430,6 +430,10 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   MachineInstr *NewMI = tii_->commuteInstruction(DefMI);
   if (!NewMI)
     return false;
+  if (TargetRegisterInfo::isVirtualRegister(IntA.reg) &&
+      TargetRegisterInfo::isVirtualRegister(IntB.reg) &&
+      !mri_->constrainRegClass(IntB.reg, mri_->getRegClass(IntA.reg)))
+    return false;
   if (NewMI != DefMI) {
     li_->ReplaceMachineInstrInMaps(DefMI, NewMI);
     MBB->insert(DefMI, NewMI);
