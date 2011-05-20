@@ -2006,17 +2006,17 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
       if (TryFoldLoad(Node, N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
         SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, N0.getOperand(0) };
         Move =
-          SDValue(CurDAG->getMachineNode(X86::MOVZX16rm8, dl, MVT::i16,
+          SDValue(CurDAG->getMachineNode(X86::MOVZX32rm8, dl, MVT::i32,
                                          MVT::Other, Ops,
                                          array_lengthof(Ops)), 0);
         Chain = Move.getValue(1);
         ReplaceUses(N0.getValue(1), Chain);
       } else {
         Move =
-          SDValue(CurDAG->getMachineNode(X86::MOVZX16rr8, dl, MVT::i16, N0),0);
+          SDValue(CurDAG->getMachineNode(X86::MOVZX32rr8, dl, MVT::i32, N0),0);
         Chain = CurDAG->getEntryNode();
       }
-      Chain  = CurDAG->getCopyToReg(Chain, dl, X86::AX, Move, SDValue());
+      Chain  = CurDAG->getCopyToReg(Chain, dl, X86::EAX, Move, SDValue());
       InFlag = Chain.getValue(1);
     } else {
       InFlag =

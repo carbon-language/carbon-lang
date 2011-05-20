@@ -38,22 +38,11 @@ let neverHasSideEffects = 1 in {
 
 
 // Sign/Zero extenders
-// Use movsbl intead of movsbw; we don't care about the high 16 bits
-// of the register here. This has a smaller encoding and avoids a
-// partial-register update.  Actual movsbw included for the disassembler.
-def MOVSX16rr8W : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8:$src),
-                    "movs{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
-def MOVSX16rm8W : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem:$src),
-                    "movs{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
-
-// FIXME: Use a pat pattern or define a syntax here.                    
-let isCodeGenOnly=1 in {
-def MOVSX16rr8 : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
-                   "", [(set GR16:$dst, (sext GR8:$src))]>, TB;
-def MOVSX16rm8 : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
-                   "", [(set GR16:$dst, (sextloadi16i8 addr:$src))]>, TB;
-}
-def MOVSX32rr8 : I<0xBE, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
+def MOVSX16rr8 : I<0xBE, MRMSrcReg, (outs GR16:$dst), (ins GR8:$src),
+                   "movs{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
+def MOVSX16rm8 : I<0xBE, MRMSrcMem, (outs GR16:$dst), (ins i8mem:$src),
+                   "movs{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
+def MOVSX32rr8 : I<0xBE, MRMSrcReg, (outs GR32:$dst), (ins GR8:$src),
                    "movs{bl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (sext GR8:$src))]>, TB;
 def MOVSX32rm8 : I<0xBE, MRMSrcMem, (outs GR32:$dst), (ins i8mem :$src),
@@ -66,20 +55,10 @@ def MOVSX32rm16: I<0xBF, MRMSrcMem, (outs GR32:$dst), (ins i16mem:$src),
                    "movs{wl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (sextloadi32i16 addr:$src))]>, TB;
 
-// Use movzbl intead of movzbw; we don't care about the high 16 bits
-// of the register here. This has a smaller encoding and avoids a
-// partial-register update.  Actual movzbw included for the disassembler.
-def MOVZX16rr8W : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8:$src),
-                    "movz{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
-def MOVZX16rm8W : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem:$src),
-                    "movz{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;  
-// FIXME: Use a pat pattern or define a syntax here.                    
-let isCodeGenOnly=1 in {
-def MOVZX16rr8 : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8 :$src),
-                   "", [(set GR16:$dst, (zext GR8:$src))]>, TB;
-def MOVZX16rm8 : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem :$src),
-                   "", [(set GR16:$dst, (zextloadi16i8 addr:$src))]>, TB;
-}
+def MOVZX16rr8 : I<0xB6, MRMSrcReg, (outs GR16:$dst), (ins GR8:$src),
+                   "movz{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
+def MOVZX16rm8 : I<0xB6, MRMSrcMem, (outs GR16:$dst), (ins i8mem:$src),
+                   "movz{bw|x}\t{$src, $dst|$dst, $src}", []>, TB, OpSize;
 def MOVZX32rr8 : I<0xB6, MRMSrcReg, (outs GR32:$dst), (ins GR8 :$src),
                    "movz{bl|x}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, (zext GR8:$src))]>, TB;
