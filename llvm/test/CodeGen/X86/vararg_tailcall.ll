@@ -12,7 +12,7 @@
 ; X64: @foo
 ; X64: jmp
 ; WIN64: @foo
-; WIN64: jmp
+; WIN64: callq
 define void @foo(i64 %arg) nounwind optsize ssp noredzone {
 entry:
   %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i64 0, i64 0), i64 %arg) nounwind optsize noredzone
@@ -36,7 +36,7 @@ declare void @bar2(i8*, i64) optsize noredzone
 ; X64: @foo2
 ; X64: jmp
 ; WIN64: @foo2
-; WIN64: jmp
+; WIN64: callq
 define i8* @foo2(i8* %arg) nounwind optsize ssp noredzone {
 entry:
   %tmp1 = load i8** @sel, align 8, !tbaa !0

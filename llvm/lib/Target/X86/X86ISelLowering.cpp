@@ -2531,16 +2531,17 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return false;
 
   // Do not sibcall optimize vararg calls unless all arguments are passed via
-  // registers
+  // registers.
   if (isVarArg && !Outs.empty()) {
+
+    // Optimizing for varargs on Win64 is unlikely to be safe without
+    // additional testing.
+    if (Subtarget->isTargetWin64())
+      return false;
+
     SmallVector<CCValAssign, 16> ArgLocs;
     CCState CCInfo(CalleeCC, isVarArg, getTargetMachine(),
                    ArgLocs, *DAG.getContext());
-
-    // Allocate shadow area for Win64
-    if (Subtarget->isTargetWin64()) {
-      CCInfo.AllocateStack(32, 8);
-    }
 
     CCInfo.AnalyzeCallOperands(Outs, CC_X86);
     for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i)
