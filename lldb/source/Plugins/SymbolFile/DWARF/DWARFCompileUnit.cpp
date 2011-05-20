@@ -154,8 +154,11 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
                         m_offset,
                         cu_die_only);
 
-    // Set the offset to that of the first DIE
+    // Set the offset to that of the first DIE and calculate the start of the
+    // next compilation unit header.
     uint32_t offset = GetFirstDIEOffset();
+    uint32_t next_cu_offset = GetNextCompileUnitOffset();
+
     DWARFDebugInfoEntry die;
         // Keep a flat array of the DIE for binary lookup by DIE offset
 //    Log *log = LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO);
@@ -173,7 +176,8 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
     const DataExtractor& debug_info_data = m_dwarf2Data->get_debug_info_data();
 
     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (GetAddressByteSize());
-    while (die.FastExtract (debug_info_data, this, fixed_form_sizes, &offset))
+    while (offset < next_cu_offset &&
+           die.FastExtract (debug_info_data, this, fixed_form_sizes, &offset))
     {
 //        if (log)
 //            log->Printf("0x%8.8x: %*.*s%s%s",
@@ -220,18 +224,22 @@ DWARFCompileUnit::ExtractDIEsIfNeeded (bool cu_die_only)
                 break;  // We are done with this compile unit!
         }
 
-        if (offset > GetNextCompileUnitOffset())
-        {
-            char path[PATH_MAX];
-            ObjectFile *objfile = m_dwarf2Data->GetObjectFile();
-            if (objfile)
-            {
-                objfile->GetFileSpec().GetPath(path, sizeof(path));
-            }
-            fprintf (stderr, "warning: DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x in '%s'\n", GetOffset(), offset, path);
-            break;
-        }
     }
+
+    // Give a little bit of info if we encounter corrupt DWARF (our offset
+    // should always terminate at or before the start of the next compilation
+    // unit header).
+    if (offset > next_cu_offset)
+    {
+        char path[PATH_MAX];
+        ObjectFile *objfile = m_dwarf2Data->GetObjectFile();
+        if (objfile)
+        {
+            objfile->GetFileSpec().GetPath(path, sizeof(path));
+        }
+        fprintf (stderr, "warning: DWARF compile unit extends beyond its bounds cu 0x%8.8x at 0x%8.8x in '%s'\n", GetOffset(), offset, path);
+    }
+
     SetDIERelations();
     return m_die_array.size();
 }
