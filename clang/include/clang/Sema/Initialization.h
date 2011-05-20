@@ -101,7 +101,8 @@ private:
       /// the temporary is being created.
       unsigned Location;
       
-      /// \brief Whether the 
+      /// \brief Whether the entity being initialized may end up using the
+      /// named return value optimization (NRVO).
       bool NRVO;
     } LocAndNRVO;
     

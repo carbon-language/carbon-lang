@@ -1456,7 +1456,10 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 /// \param E The expression being returned from the function or block, or
 /// being thrown.
 ///
-/// \param AllowFunctionParameter
+/// \param AllowFunctionParameter Whether we allow function parameters to
+/// be considered NRVO candidates. C++ prohibits this for NRVO itself, but
+/// we re-use this logic to determine whether we should try to move as part of
+/// a return or throw (which does allow function parameters).
 ///
 /// \returns The NRVO candidate variable, if the return statement may use the
 /// NRVO, or NULL if there is no such candidate.
