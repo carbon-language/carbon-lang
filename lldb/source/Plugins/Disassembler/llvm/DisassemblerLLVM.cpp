@@ -314,7 +314,7 @@ InstructionLLVM::Dump
             // Workaround for llvm::tB's operands not properly parsed by ARMAsmParser.
             if (m_arch_type == llvm::Triple::thumb && opcode.GetString() == "b") {
                 const char *inst_str;
-                char *pos = NULL;
+                const char *pos = NULL;
                 if (EDGetInstString(&inst_str, m_inst) == 0 && (pos = strstr(inst_str, "#")) != NULL) {
                     uint64_t operand_value = PC + atoi(++pos);
                     operands.Printf("0x%llx ", operand_value);
