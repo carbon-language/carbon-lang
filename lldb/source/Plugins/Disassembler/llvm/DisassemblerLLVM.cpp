@@ -310,6 +310,30 @@ InstructionLLVM::Dump
                 }
             } // for (tokenIndex)
 
+            // FIXME!!!
+            // Workaround for llvm::tB's operands not properly parsed by ARMAsmParser.
+            if (m_arch_type == llvm::Triple::thumb && opcode.GetString() == "b") {
+                const char *inst_str;
+                char *pos = NULL;
+                if (EDGetInstString(&inst_str, m_inst) == 0 && (pos = strstr(inst_str, "#")) != NULL) {
+                    uint64_t operand_value = PC + atoi(++pos);
+                    operands.Printf("0x%llx ", operand_value);
+
+                    lldb_private::Address so_addr;
+                    if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty()) {
+                        if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress (operand_value, so_addr))
+                            so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+                    } else {
+                        Module *module = GetAddress().GetModule();
+                        if (module) {
+                            if (module->ResolveFileAddress (operand_value, so_addr))
+                                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+                        }
+                    }
+                }
+            }
+            // END of workaround.
+
             // If both operands and comment are empty, we will just print out
             // the raw disassembly.
             if (operands.GetString().empty() && comment.GetString().empty())
