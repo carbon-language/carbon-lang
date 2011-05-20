@@ -1299,3 +1299,27 @@ RDar9163742_Rect RDar9163742_IntegralRect(RDar9163742_Rect frame)
     return RDar9163742_RectIntegral(integralFrame); // no-warning; all fields initialized
 }
 
+// Test correct handling of prefix '--' operator.
+void rdar9444714() {
+  int   x;
+  char    str[ 32 ];
+  char    buf[ 32 ];
+  char *  dst;
+  char *  ptr;
+
+  x = 1234;
+  dst = str;
+  ptr = buf;
+  do
+  {
+    *ptr++ = (char)( '0' + ( x % 10 ) );
+    x /= 10;  
+  } while( x > 0 );
+
+  while( ptr > buf )
+  {
+    *dst++ = *( --( ptr ) ); // no-warning
+  }
+  *dst = '\0';
+}
+

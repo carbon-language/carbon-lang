@@ -2703,7 +2703,7 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       if (U->isLValue())
         state = state->BindExpr(U, loc);
       else
-        state = state->BindExpr(U, V2);
+        state = state->BindExpr(U, U->isPostfix() ? V2 : Result);
 
       // Perform the store.
       evalStore(Dst, NULL, U, *I2, state, loc, Result);
