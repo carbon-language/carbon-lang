@@ -4657,10 +4657,18 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       // This is an extended namespace definition.
       if (Namespc->isInline() != OrigNS->isInline()) {
         // inline-ness must match
-        Diag(Namespc->getLocation(), diag::err_inline_namespace_mismatch)
-          << Namespc->isInline();
+        if (OrigNS->isInline()) {
+          // The user probably just forgot the 'inline', so suggest that it
+          // be added back.
+          Diag(Namespc->getLocation(), 
+               diag::warn_inline_namespace_reopened_noninline)
+            << FixItHint::CreateInsertion(NamespaceLoc, "inline ");
+        } else {
+          Diag(Namespc->getLocation(), diag::err_inline_namespace_mismatch)
+            << Namespc->isInline();
+        }
         Diag(OrigNS->getLocation(), diag::note_previous_definition);
-        Namespc->setInvalidDecl();
+
         // Recover by ignoring the new namespace's inline status.
         Namespc->setInline(OrigNS->isInline());
       }
