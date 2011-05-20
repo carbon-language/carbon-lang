@@ -1135,17 +1135,6 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
                         &MemOpChains[0], MemOpChains.size());
 
-  // Build a sequence of copy-to-reg nodes chained together with token
-  // chain and flag operands which copy the outgoing args into registers.
-  // The InFlag in necessary since all emitted instructions must be
-  // stuck together.
-  SDValue InFlag;
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
-                             RegsToPass[i].second, InFlag);
-    InFlag = Chain.getValue(1);
-  }
-
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
@@ -1172,6 +1161,8 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     LoadSymAddr = true;
   }
 
+  SDValue InFlag;
+
   // Create nodes that load address of callee and copy it to T9
   if (IsPIC) {
     if (LoadSymAddr) {
@@ -1195,6 +1186,16 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     Chain = DAG.getCopyToReg(Chain, dl, Mips::T9, Callee, SDValue(0, 0));
     InFlag = Chain.getValue(1);
     Callee = DAG.getRegister(Mips::T9, MVT::i32);
+  }
+
+  // Build a sequence of copy-to-reg nodes chained together with token
+  // chain and flag operands which copy the outgoing args into registers.
+  // The InFlag in necessary since all emitted instructions must be
+  // stuck together.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
+                             RegsToPass[i].second, InFlag);
+    InFlag = Chain.getValue(1);
   }
 
   // MipsJmpLink = #chain, #target_address, #opt_in_flags...
