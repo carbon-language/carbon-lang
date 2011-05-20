@@ -2464,7 +2464,7 @@ void ExprEngine::VisitOffsetOfExpr(const OffsetOfExpr* OOE,
     const APSInt &IV = Res.Val.getInt();
     assert(IV.getBitWidth() == getContext().getTypeSize(OOE->getType()));
     assert(OOE->getType()->isIntegerType());
-    assert(IV.isSigned() == OOE->getType()->isSignedIntegerType());
+    assert(IV.isSigned() == OOE->getType()->isSignedIntegerOrEnumerationType());
     SVal X = svalBuilder.makeIntVal(IV);
     MakeNode(Dst, OOE, Pred, GetState(Pred)->BindExpr(OOE, X));
     return;

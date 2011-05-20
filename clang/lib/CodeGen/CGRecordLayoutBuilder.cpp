@@ -234,7 +234,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     CharUnits::fromQuantity(Types.getTargetData().getTypeAllocSize(Ty));
   uint64_t TypeSizeInBits = Types.getContext().toBits(TypeSizeInBytes);
 
-  bool IsSigned = FD->getType()->isSignedIntegerType();
+  bool IsSigned = FD->getType()->isSignedIntegerOrEnumerationType();
 
   if (FieldSize > TypeSizeInBits) {
     // We have a wide bit-field. The extra bits are only used for padding, so

@@ -3707,7 +3707,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       unsigned AllowedBits = Context.getTypeSize(IntegerType);
       if (Value.getBitWidth() != AllowedBits)
         Value = Value.extOrTrunc(AllowedBits);
-      Value.setIsSigned(IntegerType->isSignedIntegerType());
+      Value.setIsSigned(IntegerType->isSignedIntegerOrEnumerationType());
     } else {
       llvm::APSInt OldValue = Value;
       
@@ -3716,10 +3716,10 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       unsigned AllowedBits = Context.getTypeSize(IntegerType);
       if (Value.getBitWidth() != AllowedBits)
         Value = Value.extOrTrunc(AllowedBits);
-      Value.setIsSigned(IntegerType->isSignedIntegerType());
+      Value.setIsSigned(IntegerType->isSignedIntegerOrEnumerationType());
       
       // Complain if an unsigned parameter received a negative value.
-      if (IntegerType->isUnsignedIntegerType()
+      if (IntegerType->isUnsignedIntegerOrEnumerationType()
                && (OldValue.isSigned() && OldValue.isNegative())) {
         Diag(Arg->getSourceRange().getBegin(), diag::warn_template_arg_negative)
           << OldValue.toString(10) << Value.toString(10) << Param->getType()
@@ -3729,7 +3729,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       
       // Complain if we overflowed the template parameter's type.
       unsigned RequiredBits;
-      if (IntegerType->isUnsignedIntegerType())
+      if (IntegerType->isUnsignedIntegerOrEnumerationType())
         RequiredBits = OldValue.getActiveBits();
       else if (OldValue.isUnsigned())
         RequiredBits = OldValue.getActiveBits() + 1;

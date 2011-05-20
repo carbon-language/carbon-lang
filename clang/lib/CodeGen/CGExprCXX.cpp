@@ -489,7 +489,8 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
   // size_t.  That's just a gloss, though, and it's wrong in one
   // important way: if the count is negative, it's an error even if
   // the cookie size would bring the total size >= 0.
-  bool isSigned = e->getArraySize()->getType()->isSignedIntegerType();
+  bool isSigned 
+    = e->getArraySize()->getType()->isSignedIntegerOrEnumerationType();
   const llvm::IntegerType *numElementsType
     = cast<llvm::IntegerType>(numElements->getType());
   unsigned numElementsWidth = numElementsType->getBitWidth();

@@ -1453,7 +1453,8 @@ public:
   /// MakeIntValue - Make an APSInt of the appropriate width and
   /// signedness for the given \arg Value and integer \arg Type.
   llvm::APSInt MakeIntValue(uint64_t Value, QualType Type) const {
-    llvm::APSInt Res(getIntWidth(Type), !Type->isSignedIntegerType());
+    llvm::APSInt Res(getIntWidth(Type), 
+                     !Type->isSignedIntegerOrEnumerationType());
     Res = Value;
     return Res;
   }

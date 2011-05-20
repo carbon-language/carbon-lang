@@ -809,9 +809,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     // sense to do it here because parameters are so messed up.
     switch (AI.getKind()) {
     case ABIArgInfo::Extend:
-      if (ParamType->isSignedIntegerType())
+      if (ParamType->isSignedIntegerOrEnumerationType())
         Attributes |= llvm::Attribute::SExt;
-      else if (ParamType->isUnsignedIntegerType())
+      else if (ParamType->isUnsignedIntegerOrEnumerationType())
         Attributes |= llvm::Attribute::ZExt;
       // FALL THROUGH
     case ABIArgInfo::Direct:

@@ -1436,6 +1436,14 @@ public:
   /// or an enum decl which has an unsigned representation.
   bool isUnsignedIntegerType() const;
 
+  /// Determines whether this is an integer type that is signed or an 
+  /// enumeration types whose underlying type is a signed integer type.
+  bool isSignedIntegerOrEnumerationType() const;
+  
+  /// Determines whether this is an integer type that is unsigned or an 
+  /// enumeration types whose underlying type is a unsigned integer type.
+  bool isUnsignedIntegerOrEnumerationType() const;
+
   /// isConstantSizeType - Return true if this is not a variable sized type,
   /// according to the rules of C99 6.7.5p3.  It is not legal to call this on
   /// incomplete types.

@@ -1334,6 +1334,7 @@ void Sema::CheckCompatibleReinterpretCast(QualType SrcType, QualType DestType,
     return;
   }
 
+  // FIXME: Scoped enums?
   if ((SrcTy->isUnsignedIntegerType() && DestTy->isSignedIntegerType()) ||
       (SrcTy->isSignedIntegerType() && DestTy->isUnsignedIntegerType())) {
     if (Context.getTypeSize(DestTy) == Context.getTypeSize(SrcTy)) {

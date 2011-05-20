@@ -501,7 +501,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     = CondExpr->isTypeDependent() || CondExpr->isValueDependent();
   unsigned CondWidth
     = HasDependentValue ? 0 : Context.getIntWidth(CondTypeBeforePromotion);
-  bool CondIsSigned = CondTypeBeforePromotion->isSignedIntegerType();
+  bool CondIsSigned 
+    = CondTypeBeforePromotion->isSignedIntegerOrEnumerationType();
 
   // Accumulate all of the case values in a vector so that we can sort them
   // and detect duplicates.  This vector contains the APInt for the case after

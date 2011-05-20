@@ -400,7 +400,7 @@ public:
 
   // Binary Operators.
   Value *EmitMul(const BinOpInfo &Ops) {
-    if (Ops.Ty->isSignedIntegerType()) {
+    if (Ops.Ty->isSignedIntegerOrEnumerationType()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWMul(Ops.LHS, Ops.RHS, "mul");
@@ -568,7 +568,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     // First, convert to the correct width so that we control the kind of
     // extension.
     const llvm::Type *MiddleTy = CGF.IntPtrTy;
-    bool InputSigned = SrcType->isSignedIntegerType();
+    bool InputSigned = SrcType->isSignedIntegerOrEnumerationType();
     llvm::Value* IntResult =
         Builder.CreateIntCast(Src, MiddleTy, InputSigned, "conv");
     // Then, cast to pointer.
@@ -610,7 +610,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   // Finally, we have the arithmetic types: real int/float.
   if (isa<llvm::IntegerType>(Src->getType())) {
-    bool InputSigned = SrcType->isSignedIntegerType();
+    bool InputSigned = SrcType->isSignedIntegerOrEnumerationType();
     if (isa<llvm::IntegerType>(DstTy))
       return Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
     else if (InputSigned)
@@ -621,7 +621,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   assert(Src->getType()->isFloatingPointTy() && "Unknown real conversion");
   if (isa<llvm::IntegerType>(DstTy)) {
-    if (DstType->isSignedIntegerType())
+    if (DstType->isSignedIntegerOrEnumerationType())
       return Builder.CreateFPToSI(Src, DstTy, "conv");
     else
       return Builder.CreateFPToUI(Src, DstTy, "conv");
@@ -807,7 +807,7 @@ Value *ScalarExprEmitter::VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
   // integer value.
   Value *Base = Visit(E->getBase());
   Value *Idx  = Visit(E->getIdx());
-  bool IdxSigned = E->getIdx()->getType()->isSignedIntegerType();
+  bool IdxSigned = E->getIdx()->getType()->isSignedIntegerOrEnumerationType();
   Idx = Builder.CreateIntCast(Idx, CGF.Int32Ty, IdxSigned, "vecidxcast");
   return Builder.CreateExtractElement(Base, Idx, "vecext");
 }
@@ -1136,7 +1136,7 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     // First, convert to the correct width so that we control the kind of
     // extension.
     const llvm::Type *MiddleTy = CGF.IntPtrTy;
-    bool InputSigned = E->getType()->isSignedIntegerType();
+    bool InputSigned = E->getType()->isSignedIntegerOrEnumerationType();
     llvm::Value* IntResult =
       Builder.CreateIntCast(Src, MiddleTy, InputSigned, "conv");
 
@@ -1279,7 +1279,7 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
 
     // Note that signed integer inc/dec with width less than int can't
     // overflow because of promotion rules; we're just eliding a few steps here.
-    if (type->isSignedIntegerType() &&
+    if (type->isSignedIntegerOrEnumerationType() &&
         value->getType()->getPrimitiveSizeInBits() >=
             CGF.CGM.IntTy->getBitWidth())
       value = EmitAddConsiderOverflowBehavior(E, value, amt, isInc);
@@ -1438,7 +1438,7 @@ Value *ScalarExprEmitter::VisitOffsetOfExpr(OffsetOfExpr *E) {
       // Compute the index
       Expr *IdxExpr = E->getIndexExpr(ON.getArrayExprIndex());
       llvm::Value* Idx = CGF.EmitScalarExpr(IdxExpr);
-      bool IdxSigned = IdxExpr->getType()->isSignedIntegerType();
+      bool IdxSigned = IdxExpr->getType()->isSignedIntegerOrEnumerationType();
       Idx = Builder.CreateIntCast(Idx, ResultType, IdxSigned, "conv");
 
       // Save the element type
@@ -1820,7 +1820,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (!Ops.Ty->isAnyPointerType()) {
-    if (Ops.Ty->isSignedIntegerType()) {
+    if (Ops.Ty->isSignedIntegerOrEnumerationType()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWAdd(Ops.LHS, Ops.RHS, "add");
@@ -1870,7 +1870,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     // Zero or sign extend the pointer value based on whether the index is
     // signed or not.
     const llvm::Type *IdxType = CGF.IntPtrTy;
-    if (IdxExp->getType()->isSignedIntegerType())
+    if (IdxExp->getType()->isSignedIntegerOrEnumerationType())
       Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
     else
       Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
@@ -1905,7 +1905,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   if (!isa<llvm::PointerType>(Ops.LHS->getType())) {
-    if (Ops.Ty->isSignedIntegerType()) {
+    if (Ops.Ty->isSignedIntegerOrEnumerationType()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
         return Builder.CreateNSWSub(Ops.LHS, Ops.RHS, "sub");
@@ -1945,7 +1945,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
       // Zero or sign extend the pointer value based on whether the index is
       // signed or not.
       const llvm::Type *IdxType = CGF.IntPtrTy;
-      if (BinOp->getRHS()->getType()->isSignedIntegerType())
+      if (BinOp->getRHS()->getType()->isSignedIntegerOrEnumerationType())
         Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
       else
         Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
