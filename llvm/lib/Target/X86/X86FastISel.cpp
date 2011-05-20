@@ -133,6 +133,8 @@ private:
 
   bool isTypeLegal(const Type *Ty, MVT &VT, bool AllowI1 = false);
 
+  bool IsMemcpySmall(uint64_t Len);
+
   bool TryEmitSmallMemcpy(X86AddressMode DestAM,
                           X86AddressMode SrcAM, uint64_t Len);
 };
@@ -1264,11 +1266,18 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
   return true;
 }
 
+bool X86FastISel::IsMemcpySmall(uint64_t Len) {
+  return Len <= (Subtarget->is64Bit() ? 32 : 16);
+}
+
 bool X86FastISel::TryEmitSmallMemcpy(X86AddressMode DestAM,
                                      X86AddressMode SrcAM, uint64_t Len) {
+
   // Make sure we don't bloat code by inlining very large memcpy's.
-  bool i64Legal = TLI.isTypeLegal(MVT::i64);
-  if (Len > (i64Legal ? 32 : 16)) return false;
+  if (!IsMemcpySmall(Len))
+    return false;
+
+  bool i64Legal = Subtarget->is64Bit();
 
   // We don't care about alignment here since we just emit integer accesses.
   while (Len) {
@@ -1477,6 +1486,25 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     if (CS.paramHasAttr(AttrInd, Attribute::ZExt))
       Flags.setZExt();
 
+    if (CS.paramHasAttr(AttrInd, Attribute::ByVal)) {
+      const PointerType *Ty = cast<PointerType>(ArgVal->getType());
+      const Type *ElementTy = Ty->getElementType();
+      unsigned FrameSize = TD.getTypeAllocSize(ElementTy);
+      unsigned FrameAlign = CS.getParamAlignment(AttrInd);
+      if (!FrameAlign)
+        FrameAlign = TLI.getByValTypeAlignment(ElementTy);
+      Flags.setByVal();
+      Flags.setByValSize(FrameSize);
+      Flags.setByValAlign(FrameAlign);
+      if (!IsMemcpySmall(FrameSize))
+        return false;
+    }
+
+    if (CS.paramHasAttr(AttrInd, Attribute::InReg))
+      Flags.setInReg();
+    if (CS.paramHasAttr(AttrInd, Attribute::Nest))
+      Flags.setNest();
+
     // If this is an i1/i8/i16 argument, promote to i32 to avoid an extra
     // instruction.  This is safe because it is common to all fastisel supported
     // calling conventions on x86.
@@ -1512,15 +1540,11 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
 
     if (ArgReg == 0) return false;
 
-    // FIXME: Only handle *easy* calls for now.
-    if (CS.paramHasAttr(AttrInd, Attribute::InReg) ||
-        CS.paramHasAttr(AttrInd, Attribute::Nest) ||
-        CS.paramHasAttr(AttrInd, Attribute::ByVal))
-      return false;
-
     const Type *ArgTy = ArgVal->getType();
     MVT ArgVT;
     if (!isTypeLegal(ArgTy, ArgVT))
+      return false;
+    if (ArgVT == MVT::x86mmx)
       return false;
     unsigned OriginalAlignment = TD.getABITypeAlignment(ArgTy);
     Flags.setOrigAlign(OriginalAlignment);
@@ -1562,6 +1586,8 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     default: llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::SExt: {
+      assert(VA.getLocVT().isInteger() && !VA.getLocVT().isVector() &&
+             "Unexpected extend");
       bool Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
       assert(Emitted && "Failed to emit a sext!"); (void)Emitted;
@@ -1569,6 +1595,8 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
       break;
     }
     case CCValAssign::ZExt: {
+      assert(VA.getLocVT().isInteger() && !VA.getLocVT().isVector() &&
+             "Unexpected extend");
       bool Emitted = X86FastEmitExtend(ISD::ZERO_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
       assert(Emitted && "Failed to emit a zext!"); (void)Emitted;
@@ -1576,9 +1604,8 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
       break;
     }
     case CCValAssign::AExt: {
-      // We don't handle MMX parameters yet.
-      if (VA.getLocVT().isVector() && VA.getLocVT().getSizeInBits() == 128)
-        return false;
+      assert(VA.getLocVT().isInteger() && !VA.getLocVT().isVector() &&
+             "Unexpected extend");
       bool Emitted = X86FastEmitExtend(ISD::ANY_EXTEND, VA.getLocVT(),
                                        Arg, ArgVT, Arg);
       if (!Emitted)
@@ -1612,14 +1639,21 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
       AM.Base.Reg = StackPtr;
       AM.Disp = LocMemOffset;
       const Value *ArgVal = ArgVals[VA.getValNo()];
+      ISD::ArgFlagsTy Flags = ArgFlags[VA.getValNo()];
 
-      // If this is a really simple value, emit this with the Value* version of
-      // X86FastEmitStore.  If it isn't simple, we don't want to do this, as it
-      // can cause us to reevaluate the argument.
-      if (isa<ConstantInt>(ArgVal) || isa<ConstantPointerNull>(ArgVal))
+      if (Flags.isByVal()) {
+        X86AddressMode SrcAM;
+        SrcAM.Base.Reg = Arg;
+        bool Res = TryEmitSmallMemcpy(AM, SrcAM, Flags.getByValSize());
+        assert(Res && "memcpy length already checked!"); (void)Res;
+      } else if (isa<ConstantInt>(ArgVal) || isa<ConstantPointerNull>(ArgVal)) {
+        // If this is a really simple value, emit this with the Value* version
+        //of X86FastEmitStore.  If it isn't simple, we don't want to do this,
+        // as it can cause us to reevaluate the argument.
         X86FastEmitStore(ArgVT, ArgVal, AM);
-      else
+      } else {
         X86FastEmitStore(ArgVT, Arg, AM);
+      }
     }
   }
 
