@@ -2775,105 +2775,61 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_trivial
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
-// __invokable
+// __invoke forward declarations
 
-template <unsigned, class _F, class ..._Args>
-struct __invokable_imp
-    : false_type
-{
-};
-
-// __invokable member function pointer
-
-template <class _A0, class _F, class ..._Args>
-auto
-__invokable_mfp_test(_A0&& __a0, _F __f, _Args&& ...__args)
-    -> decltype((_STD::forward<_A0>(__a0).*__f)(_STD::forward<_Args>(__args)...));
-
-template <class _A0, class _F, class ..._Args>
-auto
-__invokable_mfp_test(_A0&& __a0, _F __f, _Args&& ...__args)
-    -> decltype(((*_STD::forward<_A0>(__a0)).*__f)(_STD::forward<_Args>(__args)...));
-
-template <class _F, class ..._Args>
-auto
-__invokable_mfp_test(__any, _F __f, _Args&& ...__args)
-    -> __nat;
-
-template <class _F, class _A0, class ..._Args>
-struct __invokable_imp<2, _F, _A0, _Args...>
-{
-    typedef decltype(
-            __invokable_mfp_test(_STD::declval<_A0>(), _STD::declval<_F>(),
-                                 _STD::declval<_Args>()...)
-                    ) type;
-    static const bool value = !is_same<type, __nat>::value;
-};
-
-// __invokable member object pointer
-
-template <class _A0, class _F>
-auto
-__invokable_mop_test(_A0&& __a0, _F __f)
-    -> decltype(_STD::forward<_A0>(__a0).*__f);
-
-template <class _A0, class _F>
-auto
-__invokable_mop_test(_A0&& __a0, _F __f)
-    -> decltype((*_STD::forward<_A0>(__a0)).*__f);
-
-template <class _F>
-auto
-__invokable_mop_test(__any, _F __f)
-    -> __nat;
-
-template <class _F, class _A0>
-struct __invokable_imp<1, _F, _A0>
-{
-    typedef decltype(
-                 __invokable_mop_test(_STD::declval<_A0>(), _STD::declval<_F>())
-                    ) type;
-    static const bool value = !is_same<type, __nat>::value;
-};
-
-// __invokable other
-
-template <class _F, class ..._Args>
-auto
-__invokable_other_test(_F&& __f, _Args&& ...__args)
-    -> decltype(_STD::forward<_F>(__f)(_STD::forward<_Args>(__args)...));
+// fall back - none of the bullets
 
 template <class ..._Args>
 auto
-__invokable_other_test(__any, _Args&& ...__args)
+__invoke(__any, _Args&& ...__args)
     -> __nat;
 
+// bullets 1 and 2
+
+template <class _F, class _A0, class ..._Args>
+auto
+__invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
+    -> decltype((_STD::forward<_A0>(__a0).*__f)(_STD::forward<_Args>(__args)...));
+
+template <class _F, class _A0, class ..._Args>
+auto
+__invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
+    -> decltype(((*_STD::forward<_A0>(__a0)).*__f)(_STD::forward<_Args>(__args)...));
+
+// bullets 3 and 4
+
+template <class _F, class _A0>
+auto
+__invoke(_F&& __f, _A0&& __a0)
+    -> decltype(_STD::forward<_A0>(__a0).*__f);
+
+template <class _F, class _A0>
+auto
+__invoke(_F&& __f, _A0&& __a0)
+    -> decltype((*_STD::forward<_A0>(__a0)).*__f);
+
+// bullet 5
+
 template <class _F, class ..._Args>
-struct __invokable_imp<0, _F, _Args...>
+auto
+__invoke(_F&& __f, _Args&& ...__args)
+    -> decltype(_STD::forward<_F>(__f)(_STD::forward<_Args>(__args)...));
+
+// __invokable
+
+template <class _F, class ..._Args>
+struct __invokable_imp
 {
     typedef decltype(
-            __invokable_other_test(_STD::declval<_F>(), _STD::declval<_Args>()...)
+            __invoke(_STD::declval<_F>(), _STD::declval<_Args>()...)
                     ) type;
     static const bool value = !is_same<type, __nat>::value;
-};
-
-// __invokable_classify
-
-template <class _F>
-struct __invokable_classify
-{
-    typedef typename remove_reference<_F>::type _FR;
-    static const unsigned value = is_member_function_pointer<_FR>::value ?
-                                  2 :
-                                  is_member_object_pointer<_FR>::value ?
-                                  1 :
-                                  0;
 };
 
 template <class _F, class ..._Args>
 struct __invokable
     : public integral_constant<bool,
-          __invokable_imp<__invokable_classify<_F>::value, _F, _Args...>::value>
+          __invokable_imp<_F, _Args...>::value>
 {
 };
 
@@ -2887,7 +2843,7 @@ struct __invoke_of_imp  // false
 template <class _F, class ..._Args>
 struct __invoke_of_imp<true, _F, _Args...>
 {
-    typedef typename __invokable_imp<__invokable_classify<_F>::value, _F, _Args...>::type type;
+    typedef typename __invokable_imp<_F, _Args...>::type type;
 };
 
 template <class _F, class ..._Args>
