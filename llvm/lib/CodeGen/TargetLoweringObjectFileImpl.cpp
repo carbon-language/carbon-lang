@@ -941,6 +941,7 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                 SectionKind::getMetadata());
   DwarfLineSection =
     getContext().getCOFFSection(".debug_line",
+                                SectionKind::getMetadata());
                                 COFF::IMAGE_SCN_MEM_DISCARDABLE |
                                 COFF::IMAGE_SCN_MEM_READ,
                                 SectionKind::getMetadata());
@@ -989,6 +990,20 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
     getContext().getCOFFSection(".drectve",
                                 COFF::IMAGE_SCN_LNK_INFO,
                                 SectionKind::getMetadata());
+
+  PDataSection =
+    getContext().getCOFFSection(".pdata",
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
+                                SectionKind::getDataRel());
+
+  XDataSection =
+    getContext().getCOFFSection(".xdata",
+                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_MEM_READ |
+                                COFF::IMAGE_SCN_MEM_WRITE,
+                                SectionKind::getDataRel());
 }
 
 const MCSection *TargetLoweringObjectFileCOFF::getEHFrameSection() const {
