@@ -3433,6 +3433,11 @@ bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
         // This is technically non-conformant, but sanity demands it.
         continue;
       }
+    } else if (!Union && FieldType.isConstQualified()) {
+      // -- any non-variant non-static data member of const-qualified type (or
+      //    array thereof) with no brace-or-equal-initializer does not have a
+      //    user-provided default constructor
+      return true;
     }
 
     InitializedEntity MemberEntity =
