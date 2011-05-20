@@ -1048,11 +1048,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
                  *DAG.getContext());
 
-  // To meet O32 ABI, Mips must always allocate 16 bytes on
-  // the stack (even if less than 4 are used as arguments)
   if (Subtarget->isABI_O32()) {
-    int VTsize = MVT(MVT::i32).getSizeInBits()/8;
-    MFI->CreateFixedObject(VTsize, (VTsize*3), true);
     CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
   } else
     CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
