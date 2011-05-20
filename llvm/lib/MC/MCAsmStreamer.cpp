@@ -825,7 +825,7 @@ void MCAsmStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
   if (!UseCFI)
     return;
 
-  OS << ".cfi_def_cfa " << Register << ", " << Offset;
+  OS << "\t.cfi_def_cfa " << Register << ", " << Offset;
   EmitEOL();
 }
 
