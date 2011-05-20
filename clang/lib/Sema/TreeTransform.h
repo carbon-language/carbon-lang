@@ -7803,20 +7803,21 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
 #ifndef NDEBUG
   // In builds with assertions, make sure that we captured everything we
   // captured before.
+  if (!SemaRef.getDiagnostics().hasErrorOccurred()) {
+    for (BlockDecl::capture_iterator i = oldBlock->capture_begin(),
+           e = oldBlock->capture_end(); i != e; ++i) {
+      VarDecl *oldCapture = i->getVariable();
 
-  for (BlockDecl::capture_iterator i = oldBlock->capture_begin(),
-         e = oldBlock->capture_end(); i != e; ++i) {
-    VarDecl *oldCapture = i->getVariable();
+      // Ignore parameter packs.
+      if (isa<ParmVarDecl>(oldCapture) &&
+          cast<ParmVarDecl>(oldCapture)->isParameterPack())
+        continue;
 
-    // Ignore parameter packs.
-    if (isa<ParmVarDecl>(oldCapture) &&
-        cast<ParmVarDecl>(oldCapture)->isParameterPack())
-      continue;
-
-    VarDecl *newCapture =
-      cast<VarDecl>(getDerived().TransformDecl(E->getCaretLocation(),
-                                               oldCapture));
-    assert(blockScope->CaptureMap.count(newCapture));
+      VarDecl *newCapture =
+        cast<VarDecl>(getDerived().TransformDecl(E->getCaretLocation(),
+                                                 oldCapture));
+      assert(blockScope->CaptureMap.count(newCapture));
+    }
   }
 #endif
 

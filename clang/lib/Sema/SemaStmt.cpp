@@ -1665,6 +1665,10 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
 StmtResult
 Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
+  // Check for unexpanded parameter packs.
+  if (RetValExp && DiagnoseUnexpandedParameterPack(RetValExp))
+    return StmtError();
+  
   if (getCurBlock())
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
 

@@ -37,3 +37,10 @@ int f3(Args ...args) {
 }
 
 template int f3(const char*, int, float, double);
+
+template<typename ...Args>
+int PR9953(Args ...args) {
+  return ^(Args *...block_args) {
+    return f1(block_args); // expected-error{{expression contains unexpanded parameter pack 'block_args'}}
+  }(&args...);
+}
