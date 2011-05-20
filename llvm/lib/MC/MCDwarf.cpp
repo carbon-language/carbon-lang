@@ -539,8 +539,6 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
 
     // If advancing cfa.
     if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
-      assert(!Src.isReg() && "Machine move not supported yet.");
-
       if (Src.getReg() == MachineLocation::VirtualFP) {
         Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_offset, 1);
       } else {

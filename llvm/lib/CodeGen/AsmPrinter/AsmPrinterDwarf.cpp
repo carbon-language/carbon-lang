@@ -215,8 +215,6 @@ void AsmPrinter::EmitCFIFrameMove(const MachineMove &Move) const {
 
   // If advancing cfa.
   if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
-    assert(!Src.isReg() && "Machine move not supported yet.");
-
     if (Src.getReg() == MachineLocation::VirtualFP) {
       OutStreamer.EmitCFIDefCfaOffset(-Src.getOffset());
     } else {
