@@ -46,7 +46,14 @@ namespace llvm {
     // integer works around this bug.
     static size_t min(size_t a, size_t b) { return a < b ? a : b; }
     static size_t max(size_t a, size_t b) { return a > b ? a : b; }
-
+    
+    // Workaround memcmp issue with null pointers (undefined behavior)
+    // by providing a specialized version
+    static int compareMemory(const char *Lhs, const char *Rhs, size_t Length) {
+      if (Length == 0) { return 0; }
+      return ::memcmp(Lhs,Rhs,Length);
+    }
+    
   public:
     /// @name Constructors
     /// @{
@@ -56,11 +63,17 @@ namespace llvm {
 
     /// Construct a string ref from a cstring.
     /*implicit*/ StringRef(const char *Str)
-      : Data(Str), Length(::strlen(Str)) {}
+      : Data(Str) {
+        assert(Str && "StringRef cannot be built from a NULL argument");
+        Length = ::strlen(Str); // invoking strlen(NULL) is undefined behavior
+      }
 
     /// Construct a string ref from a pointer and length.
     /*implicit*/ StringRef(const char *data, size_t length)
-      : Data(data), Length(length) {}
+      : Data(data), Length(length) {
+        assert((data || length == 0) &&
+        "StringRef cannot be built from a NULL argument with non-null length");
+      }
 
     /// Construct a string ref from an std::string.
     /*implicit*/ StringRef(const std::string &Str)
@@ -104,7 +117,7 @@ namespace llvm {
     /// compare() when the relative ordering of inequal strings isn't needed.
     bool equals(StringRef RHS) const {
       return (Length == RHS.Length &&
-              memcmp(Data, RHS.Data, RHS.Length) == 0);
+              compareMemory(Data, RHS.Data, RHS.Length) == 0);
     }
 
     /// equals_lower - Check for string equality, ignoring case.
@@ -116,7 +129,7 @@ namespace llvm {
     /// is lexicographically less than, equal to, or greater than the \arg RHS.
     int compare(StringRef RHS) const {
       // Check the prefix for a mismatch.
-      if (int Res = memcmp(Data, RHS.Data, min(Length, RHS.Length)))
+      if (int Res = compareMemory(Data, RHS.Data, min(Length, RHS.Length)))
         return Res < 0 ? -1 : 1;
 
       // Otherwise the prefixes match, so we only need to check the lengths.
@@ -183,13 +196,13 @@ namespace llvm {
     /// startswith - Check if this string starts with the given \arg Prefix.
     bool startswith(StringRef Prefix) const {
       return Length >= Prefix.Length &&
-             memcmp(Data, Prefix.Data, Prefix.Length) == 0;
+             compareMemory(Data, Prefix.Data, Prefix.Length) == 0;
     }
 
     /// endswith - Check if this string ends with the given \arg Suffix.
     bool endswith(StringRef Suffix) const {
       return Length >= Suffix.Length &&
-             memcmp(end() - Suffix.Length, Suffix.Data, Suffix.Length) == 0;
+        compareMemory(end() - Suffix.Length, Suffix.Data, Suffix.Length) == 0;
     }
 
     /// @}
