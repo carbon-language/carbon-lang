@@ -113,7 +113,7 @@ namespace {
     void EliminateIVComparison(ICmpInst *ICmp, Value *IVOperand);
     void EliminateIVRemainder(BinaryOperator *Rem,
                               Value *IVOperand,
-                              bool isSigned);
+                              bool IsSigned);
     void RewriteNonIntegerIVs(Loop *L);
     const Type *WidenIVs(Loop *L, SCEVExpander &Rewriter);
 
@@ -468,9 +468,9 @@ void IndVarSimplify::SimplifyIVUsers() {
     }
 
     if (BinaryOperator *Rem = dyn_cast<BinaryOperator>(UseInst)) {
-      bool isSigned = Rem->getOpcode() == Instruction::SRem;
-      if (isSigned || Rem->getOpcode() == Instruction::URem) {
-        EliminateIVRemainder(Rem, IVOperand, isSigned);
+      bool IsSigned = Rem->getOpcode() == Instruction::SRem;
+      if (IsSigned || Rem->getOpcode() == Instruction::URem) {
+        EliminateIVRemainder(Rem, IVOperand, IsSigned);
         continue;
       }
     }
@@ -506,12 +506,13 @@ void IndVarSimplify::EliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
     return;
 
   DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
+  Changed = true;
   DeadInsts.push_back(ICmp);
 }
 
 void IndVarSimplify::EliminateIVRemainder(BinaryOperator *Rem,
                                           Value *IVOperand,
-                                          bool isSigned) {
+                                          bool IsSigned) {
   // We're only interested in the case where we know something about
   // the numerator.
   if (IVOperand != Rem->getOperand(0))
@@ -527,18 +528,18 @@ void IndVarSimplify::EliminateIVRemainder(BinaryOperator *Rem,
   X = SE->getSCEVAtScope(X, ICmpLoop);
 
   // i % n  -->  i  if i is in [0,n).
-  if ((!isSigned || SE->isKnownNonNegative(S)) &&
-      SE->isKnownPredicate(isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+  if ((!IsSigned || SE->isKnownNonNegative(S)) &&
+      SE->isKnownPredicate(IsSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                            S, X))
     Rem->replaceAllUsesWith(Rem->getOperand(0));
   else {
     // (i+1) % n  -->  (i+1)==n?0:(i+1)  if i is in [0,n).
     const SCEV *LessOne =
       SE->getMinusSCEV(S, SE->getConstant(S->getType(), 1));
-    if (isSigned && !SE->isKnownNonNegative(LessOne))
+    if (IsSigned && !SE->isKnownNonNegative(LessOne))
       return;
 
-    if (!SE->isKnownPredicate(isSigned ?
+    if (!SE->isKnownPredicate(IsSigned ?
                               ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                               LessOne, X))
       return;
@@ -558,6 +559,7 @@ void IndVarSimplify::EliminateIVRemainder(BinaryOperator *Rem,
     IU->AddUsersIfInteresting(I);
 
   DEBUG(dbgs() << "INDVARS: Simplified rem: " << *Rem << '\n');
+  Changed = true;
   DeadInsts.push_back(Rem);
 }
 
@@ -619,15 +621,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     // canonical induction variable.
     NeedCannIV = true;
     const Type *Ty = BackedgeTakenCount->getType();
-    if (!LargestType ||
-        SE->getTypeSizeInBits(Ty) >
-        SE->getTypeSizeInBits(LargestType))
-      LargestType = SE->getEffectiveSCEVType(Ty);
-  }
-  for (IVUsers::const_iterator I = IU->begin(), E = IU->end(); I != E; ++I) {
-    NeedCannIV = true;
-    const Type *Ty =
-      SE->getEffectiveSCEVType(I->getOperandValToReplace()->getType());
     if (!LargestType ||
         SE->getTypeSizeInBits(Ty) >
         SE->getTypeSizeInBits(LargestType))
