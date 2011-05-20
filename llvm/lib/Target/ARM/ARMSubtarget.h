@@ -87,6 +87,11 @@ protected:
   /// imms (including global addresses).
   bool UseMovt;
 
+  /// SupportsTailCall - True if the OS supports tail call. The dynamic linker
+  /// must be able to synthesize call stubs for interworking between ARM and
+  /// Thumb.
+  bool SupportsTailCall;
+
   /// HasFP16 - True if subtarget supports half-precision FP (We support VFP+HF
   /// only so far)
   bool HasFP16;
@@ -217,6 +222,7 @@ protected:
   bool isR9Reserved() const { return IsR9Reserved; }
 
   bool useMovt() const { return UseMovt && hasV6T2Ops(); }
+  bool supportsTailCall() const { return SupportsTailCall; }
 
   bool allowsUnalignedMem() const { return AllowsUnalignedMem; }
 
