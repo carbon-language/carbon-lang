@@ -252,7 +252,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
 
     if (GetSequenceMutex (locker))
     {
-        if (SendPacketNoLock (payload, strlen(payload)))
+        if (SendPacketNoLock (payload, payload_length))
             return WaitForPacketNoLock (response, &timeout_time);
     }
     else
@@ -1597,8 +1597,8 @@ GDBRemoteCommunicationClient::GetThreadStopInfo (uint32_t tid, StringExtractorGD
             m_supports_qThreadStopInfo = false;
         }
     }
-    if (SetCurrentThread (tid))
-        return GetStopReply (response);
+//    if (SetCurrentThread (tid))
+//        return GetStopReply (response);
     return false;
 }
 

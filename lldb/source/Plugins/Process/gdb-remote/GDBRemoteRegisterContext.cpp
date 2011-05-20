@@ -356,18 +356,17 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
                 if (response.IsErrorResponse())
                     return false;
                 
-                response.GetStringRef().insert(0, 1, 'G');
-                if (thread_suffix_supported)
+                std::string &response_str = response.GetStringRef();
+                if (isxdigit(response_str[0]))
                 {
-                    char thread_id_cstr[64];
-                    ::snprintf (thread_id_cstr, sizeof(thread_id_cstr), ";thread:%4.4x;", m_thread.GetID());
-                    response.GetStringRef().append (thread_id_cstr);
-                }
-                const char *g_data = response.GetStringRef().c_str();
-                size_t g_data_len = strspn(g_data + 1, "0123456789abcdefABCDEF");
-                if (g_data_len > 0)
-                {
-                    data_sp.reset (new DataBufferHeap (g_data, g_data_len));
+                    response_str.insert(0, 1, 'G');
+                    if (thread_suffix_supported)
+                    {
+                        char thread_id_cstr[64];
+                        ::snprintf (thread_id_cstr, sizeof(thread_id_cstr), ";thread:%4.4x;", m_thread.GetID());
+                        response_str.append (thread_id_cstr);
+                    }
+                    data_sp.reset (new DataBufferHeap (response_str.c_str(), response_str.size()));
                     return true;
                 }
             }

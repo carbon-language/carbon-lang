@@ -138,7 +138,7 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
 
         LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
         if (log)
-            log->Printf ("send packet: %s", packet.GetData());
+            log->Printf ("send packet: %.*s", (int)packet.GetSize(), packet.GetData());
         ConnectionStatus status = eConnectionStatusSuccess;
         size_t bytes_written = Write (packet.GetData(), packet.GetSize(), status, NULL);
         if (bytes_written == packet.GetSize())
@@ -156,7 +156,7 @@ GDBRemoteCommunication::SendPacketNoLock (const char *payload, size_t payload_le
         {
             LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
             if (log)
-                log->Printf ("error: failed to send packet: %s", packet.GetData());
+                log->Printf ("error: failed to send packet: %.*s", (int)packet.GetSize(), packet.GetData());
         }
         return bytes_written;
     }
@@ -218,11 +218,11 @@ GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &packet, c
             const EventDataBytes *event_bytes = EventDataBytes::GetEventDataFromEvent(event_sp.get());
             if (event_bytes)
             {
-                const char * packet_data =  (const char *)event_bytes->GetBytes();
+                const char *packet_data =  (const char *)event_bytes->GetBytes();
+                const uint32_t packet_size =  event_bytes->GetByteSize();
                 LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
                 if (log)
-                    log->Printf ("read packet: %s", packet_data);
-                const size_t packet_size =  event_bytes->GetByteSize();
+                    log->Printf ("read packet: %.*s", packet_size, packet_data);
                 if (packet_data && packet_size > 0)
                 {
                     std::string &packet_str = packet.GetStringRef();
@@ -242,9 +242,12 @@ GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &packet, c
                             packet_str.assign (packet_data + 1, packet_size - 4);
                         if (GetSendAcks ())
                         {
-                            char packet_checksum = strtol (&packet_data[packet_size-2], NULL, 16);
-                            char actual_checksum = CalculcateChecksum (&packet_str[0], packet_str.size());
-                            checksum_error = packet_checksum != actual_checksum;
+                            if (success)
+                            {
+                                char packet_checksum = strtol (&packet_data[packet_size-2], NULL, 16);
+                                char actual_checksum = CalculcateChecksum (&packet_str[0], packet_str.size());
+                                checksum_error = packet_checksum != actual_checksum;
+                            }
                             // Send the ack or nack if needed
                             if (checksum_error || !success)
                                 SendNack();
