@@ -369,8 +369,7 @@ void MCStreamer::EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
 }
 
 void MCStreamer::EmitWin64EHHandlerData() {
-  errs() << "Not implemented yet\n";
-  abort();
+  EnsureValidW64UnwindInfo();
 }
 
 void MCStreamer::EmitWin64EHPushReg(unsigned Register) {
