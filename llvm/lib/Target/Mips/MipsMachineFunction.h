@@ -167,7 +167,7 @@ public:
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
   void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
 
-  bool hasCall() const { return HasCall; };
+  bool hasCall() const { return HasCall; }
   void setHasCall() { HasCall = true; }
 };
 

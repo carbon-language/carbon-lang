@@ -37,7 +37,7 @@ struct StandardPassEntry {
   unsigned flags;
 
   StandardPassEntry(PassInfo::NormalCtor_t constructor, unsigned char *ID,
-      unsigned f) : createPass(constructor), passID(ID), flags(f) {};
+      unsigned f) : createPass(constructor), passID(ID), flags(f) {}
 };
 
 /// Standard alias analysis passes

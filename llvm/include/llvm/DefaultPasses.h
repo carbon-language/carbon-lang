@@ -106,10 +106,12 @@ class StandardPass {
   };
   /// Returns the optimisation level from a set of flags.
   static unsigned OptimizationLevel(unsigned flags) {
-      return flags & OptimizationLevelMask ; };
+      return flags & OptimizationLevelMask;
+  }
   /// Returns the maximum optimization level for this set of flags
   static unsigned MaxOptimizationLevel(unsigned flags) {
-      return (flags & MaxOptimizationLevelMask) >> 4; };
+      return (flags & MaxOptimizationLevelMask) >> 4;
+  }
   /// Constructs a set of flags from the specified minimum and maximum
   /// optimisation level
   static unsigned OptimzationFlags(unsigned minLevel=0, unsigned maxLevel=0xf,
@@ -117,13 +119,16 @@ class StandardPass {
     return ((minLevel & OptimizationLevelMask) |
             ((maxLevel<<MaxOptimizationLevelShift) & MaxOptimizationLevelMask)
             | ((requiredFlags<<RequiredFlagShift) & RequiredFlagMask)
-            | ((disallowedFlags<<DisallowedFlagShift) & DisallowedFlagMask)); }
+            | ((disallowedFlags<<DisallowedFlagShift) & DisallowedFlagMask));
+  }
   /// Returns the flags that must be set for this to match
   static unsigned RequiredFlags(unsigned flags) {
-      return (flags & RequiredFlagMask) >> RequiredFlagShift; };
+      return (flags & RequiredFlagMask) >> RequiredFlagShift;
+  }
   /// Returns the flags that must not be set for this to match
   static unsigned DisallowedFlags(unsigned flags) {
-      return (flags & DisallowedFlagMask) >> DisallowedFlagShift; };
+      return (flags & DisallowedFlagMask) >> DisallowedFlagShift;
+  }
   /// Register a standard pass in the specified set.  If flags is non-zero,
   /// then the pass will only be returned when the specified flags are set.
   template<typename passName>
@@ -134,7 +139,7 @@ class StandardPass {
       // Use the pass's ID if one is not specified
       RegisterDefaultPass(PassInfo::NormalCtor_t(callDefaultCtor<passName>),
                ID ? ID : (unsigned char*)&passName::ID, runBefore, set, flags);
-    };
+    }
   };
   /// Adds the passes from the specified set to the provided pass manager
   static void AddPassesFromSet(PassManagerBase *PM,
