@@ -24,7 +24,7 @@ else
 PYTHON_DEST_DIR := $(shell python -c 'import sys; print sys.exec_prefix')/lib/python$(shell python -c 'import sys; print sys.version[:3]')/site-packages
 endif
 LLDB_SWIG_INCLUDE_DIRS:= -I"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include" -I./.
-LIBLLDB := $(PROJ_OBJ_ROOT)/$(BuildMode)/lib/liblldb$(SHLIBEXT)
+LIBLLDB := $(DESTDIR)$(PROJ_libdir)/liblldb$(SHLIBEXT)
 
 # We need Swig to process stdint.h, but by default it will not inspect system
 # include directories.  The following should cover the standard locations on
