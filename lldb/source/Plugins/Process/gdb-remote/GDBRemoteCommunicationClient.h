@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <vector>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ArchSpec.h"
@@ -311,6 +313,10 @@ public:
         return m_supports_alloc_dealloc_memory;
     }
 
+    size_t
+    GetCurrentThreadIDs (std::vector<lldb::tid_t> &thread_ids,
+                         bool &sequence_mutex_unavailable);
+    
 protected:
 
     //------------------------------------------------------------------

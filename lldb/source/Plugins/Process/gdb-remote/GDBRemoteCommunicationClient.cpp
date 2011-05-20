@@ -1649,3 +1649,48 @@ GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type,
 
     return UINT8_MAX;
 }
+
+size_t
+GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thread_ids, 
+                                                   bool &sequence_mutex_unavailable)
+{
+    Mutex::Locker locker;
+    thread_ids.clear();
+    
+    if (GetSequenceMutex (locker))
+    {
+        sequence_mutex_unavailable = false;
+        StringExtractorGDBRemote response;
+        
+        TimeValue timeout_time;
+        timeout_time = TimeValue::Now();
+        timeout_time.OffsetWithSeconds (m_packet_timeout*2); // We will always send at least two packets here...
+
+        for (SendPacketNoLock ("qfThreadInfo", strlen("qfThreadInfo")) && WaitForPacketNoLock (response, &timeout_time);
+             response.IsNormalResponse();
+             SendPacketNoLock ("qsThreadInfo", strlen("qsThreadInfo")) && WaitForPacketNoLock (response, &timeout_time))
+        {
+            char ch = response.GetChar();
+            if (ch == 'l')
+                break;
+            if (ch == 'm')
+            {
+                do
+                {
+                    tid_t tid = response.GetHexMaxU32(false, LLDB_INVALID_THREAD_ID);
+                    
+                    if (tid != LLDB_INVALID_THREAD_ID)
+                    {
+                        thread_ids.push_back (tid);
+                    }
+                    ch = response.GetChar();    // Skip the command separator
+                } while (ch == ',');            // Make sure we got a comma separator
+            }
+        }
+    }
+    else
+    {
+        sequence_mutex_unavailable = true;
+    }
+    return thread_ids.size();
+}

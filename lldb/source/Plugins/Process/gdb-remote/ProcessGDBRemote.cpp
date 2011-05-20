@@ -1052,37 +1052,26 @@ ProcessGDBRemote::UpdateThreadListIfNeeded ()
         ThreadList curr_thread_list (this);
         curr_thread_list.SetStopID(stop_id);
 
-        Error err;
-        StringExtractorGDBRemote response;
-        for (m_gdb_comm.SendPacketAndWaitForResponse("qfThreadInfo", response, false);
-             response.IsNormalResponse();
-             m_gdb_comm.SendPacketAndWaitForResponse("qsThreadInfo", response, false))
+        std::vector<lldb::tid_t> thread_ids;
+        bool sequence_mutex_unavailable = false;
+        const size_t num_thread_ids = m_gdb_comm.GetCurrentThreadIDs (thread_ids, sequence_mutex_unavailable);
+        if (num_thread_ids > 0)
         {
-            char ch = response.GetChar();
-            if (ch == 'l')
-                break;
-            if (ch == 'm')
+            for (size_t i=0; i<num_thread_ids; ++i)
             {
-                do
-                {
-                    tid_t tid = response.GetHexMaxU32(false, LLDB_INVALID_THREAD_ID);
-
-                    if (tid != LLDB_INVALID_THREAD_ID)
-                    {
-                        ThreadSP thread_sp (GetThreadList().FindThreadByID (tid, false));
-                        if (!thread_sp)
-                            thread_sp.reset (new ThreadGDBRemote (*this, tid));
-                        curr_thread_list.AddThread(thread_sp);
-                    }
-
-                    ch = response.GetChar();
-                } while (ch == ',');
+                tid_t tid = thread_ids[i];
+                ThreadSP thread_sp (GetThreadList().FindThreadByID (tid, false));
+                if (!thread_sp)
+                    thread_sp.reset (new ThreadGDBRemote (*this, tid));
+                curr_thread_list.AddThread(thread_sp);
             }
         }
 
-        m_thread_list = curr_thread_list;
-
-        SetThreadStopInfo (m_last_stop_packet);
+        if (sequence_mutex_unavailable == false)
+        {
+            m_thread_list = curr_thread_list;
+            SetThreadStopInfo (m_last_stop_packet);
+        }
     }
     return GetThreadList().GetSize(false);
 }
