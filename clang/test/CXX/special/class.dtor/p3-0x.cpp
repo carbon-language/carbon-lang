@@ -169,3 +169,9 @@ void tsw() {
 // CHECK: _ZTIi
 // CHECK: __cxa_call_unexpected
 // CHECK: define linkonce_odr void @_ZN2SwIiED1Ev({{.*}} nounwind
+
+template <typename T>
+struct TVC : VX
+{ virtual ~TVC(); };
+template <typename T>
+TVC<T>::~TVC() {}

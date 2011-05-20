@@ -701,13 +701,18 @@ bool Sema::CheckExceptionSpecCompatibility(Expr *From, QualType ToType)
 
 bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                                 const CXXMethodDecl *Old) {
-  if (getLangOptions().CPlusPlus0x && New->getParent()->isBeingDefined() &&
-      isa<CXXDestructorDecl>(New)) {
-    // The destructor might be updated once the definition is finished. So
-    // remember it and check later.
-    DelayedDestructorExceptionSpecChecks.push_back(std::make_pair(
-      cast<CXXDestructorDecl>(New), cast<CXXDestructorDecl>(Old)));
-    return false;
+  if (getLangOptions().CPlusPlus0x && isa<CXXDestructorDecl>(New)) {
+    // Don't check uninstantiated template destructors at all. We can only
+    // synthesize correct specs after the template is instantiated.
+    if (New->getParent()->isDependentType())
+      return false;
+    if (New->getParent()->isBeingDefined()) {
+      // The destructor might be updated once the definition is finished. So
+      // remember it and check later.
+      DelayedDestructorExceptionSpecChecks.push_back(std::make_pair(
+        cast<CXXDestructorDecl>(New), cast<CXXDestructorDecl>(Old)));
+      return false;
+    }
   }
   return CheckExceptionSpecSubset(PDiag(diag::err_override_exception_spec),
                                   PDiag(diag::note_overridden_virtual_function),

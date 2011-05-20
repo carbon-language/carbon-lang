@@ -8200,10 +8200,10 @@ void Sema::ActOnFields(Scope* S,
       const CXXDestructorDecl *Dtor =
               DelayedDestructorExceptionSpecChecks.back().first;
       if (Dtor->getParent() == Record) {
-        // Don't check if we're a template. The spec hasn't been adjusted.
-        if (!Dtor->getParent()->isDependentType())
-          CheckOverridingFunctionExceptionSpec(Dtor,
-              DelayedDestructorExceptionSpecChecks.back().second);
+        assert(!Dtor->getParent()->isDependentType() &&
+            "Should not ever add destructors of templates into the list.");
+        CheckOverridingFunctionExceptionSpec(Dtor,
+            DelayedDestructorExceptionSpecChecks.back().second);
         DelayedDestructorExceptionSpecChecks.pop_back();
       }
     }
