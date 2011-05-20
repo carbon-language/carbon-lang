@@ -565,7 +565,7 @@ GetCrashReporterMutex ()
 
 extern "C" {
     const char *__crashreporter_info__ = NULL;
-};
+}
 
 asm(".desc ___crashreporter_info__, 0x10");
 
