@@ -57,6 +57,13 @@ set(CLANG_RESOURCE_DIR "" CACHE STRING
 set(C_INCLUDE_DIRS "" CACHE STRING
   "Colon separated list of directories clang will search for headers.")
 
+set(CLANG_VENDOR "" CACHE STRING
+  "Vendor-specific text for showing with version information.")
+
+if( CLANG_VENDOR )
+  add_definitions( -DCLANG_VENDOR="${CLANG_VENDOR} " )
+endif()
+
 set(CLANG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CLANG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
