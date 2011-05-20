@@ -104,7 +104,7 @@ public:
     MDNodeToDieMap.insert(std::make_pair(N, D));
   }
 
-  /// getDIEEntry - Returns the debug information entry for the speciefied
+  /// getDIEEntry - Returns the debug information entry for the specified
   /// debug variable.
   DIEEntry *getDIEEntry(const MDNode *N) {
     DenseMap<const MDNode *, DIEEntry *>::iterator I =
