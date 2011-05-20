@@ -75,19 +75,6 @@ if(PYTHONINTERP_FOUND)
   add_custom_target(clang-test.deps)
   set_target_properties(clang-test.deps PROPERTIES FOLDER "Clang tests")
 
-  foreach(testdir ${CLANG_TEST_DIRECTORIES})
-    add_custom_target(clang-test-${testdir}
-      COMMAND ${PYTHON_EXECUTABLE}
-                  ${LIT}
-                  --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-                  --param build_config=${CMAKE_CFG_INTDIR}
-                  ${LIT_ARGS}
-                  ${CMAKE_CURRENT_BINARY_DIR}/${testdir}
-                  DEPENDS clang c-index-test FileCheck not count
-                  COMMENT "Running Clang regression tests in ${testdir}")
-    set_target_properties(clang-test-${testdir} PROPERTIES FOLDER "Clang tests")
-  endforeach()
-
   add_custom_target(clang-test
     COMMAND ${PYTHON_EXECUTABLE}
                 ${LIT}
@@ -99,17 +86,6 @@ if(PYTHONINTERP_FOUND)
                 ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Running Clang regression tests")
   set_target_properties(clang-test PROPERTIES FOLDER "Clang tests")
-
-  add_custom_target(clang-c++tests
-    COMMAND ${PYTHON_EXECUTABLE}
-                ${LIT}
-                --param clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-                --param build_config=${CMAKE_CFG_INTDIR}
-                ${LIT_ARGS}
-                ${CMAKE_CURRENT_SOURCE_DIR}/../utils/C++Tests
-                DEPENDS clang c-index-test FileCheck not count
-                COMMENT "Running Clang regression tests")
-  set_target_properties(clang-c++tests PROPERTIES FOLDER "Clang tests")
 
   if( NOT CLANG_BUILT_STANDALONE )
      add_custom_target(check-all
