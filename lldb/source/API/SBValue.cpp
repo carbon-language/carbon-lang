@@ -348,21 +348,20 @@ SBValue::GetChildAtIndex (uint32_t idx, lldb::DynamicValueType use_dynamic)
 {
     lldb::ValueObjectSP child_sp;
 
-    if (m_opaque_sp->GetUpdatePoint().GetTarget())
-        Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-
     if (m_opaque_sp)
     {
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        
         child_sp = m_opaque_sp->GetChildAtIndex (idx, true);
-    }
-
-    if (use_dynamic != lldb::eNoDynamicValues)
-    {
-        if (child_sp)
+        if (use_dynamic != lldb::eNoDynamicValues)
         {
-            lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic);
-            if (dynamic_sp)
-                child_sp = dynamic_sp;
+            if (child_sp)
+            {
+                lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic);
+                if (dynamic_sp)
+                    child_sp = dynamic_sp;
+            }
         }
     }
     
@@ -379,7 +378,12 @@ SBValue::GetIndexOfChildWithName (const char *name)
 {
     uint32_t idx = UINT32_MAX;
     if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+        
         idx = m_opaque_sp->GetIndexOfChildWithName (ConstString(name));
+    }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
@@ -404,22 +408,20 @@ SBValue::GetChildMemberWithName (const char *name, lldb::DynamicValueType use_dy
     lldb::ValueObjectSP child_sp;
     const ConstString str_name (name);
 
-    if (m_opaque_sp->GetUpdatePoint().GetTarget())
-        Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-    
 
     if (m_opaque_sp)
     {
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
         child_sp = m_opaque_sp->GetChildMemberWithName (str_name, true);
-    }
-
-    if (use_dynamic_value != lldb::eNoDynamicValues)
-    {
-        if (child_sp)
+        if (use_dynamic_value != lldb::eNoDynamicValues)
         {
-            lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic_value);
-            if (dynamic_sp)
-                child_sp = dynamic_sp;
+            if (child_sp)
+            {
+                lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic_value);
+                if (dynamic_sp)
+                    child_sp = dynamic_sp;
+            }
         }
     }
     
@@ -439,7 +441,12 @@ SBValue::GetNumChildren ()
     uint32_t num_children = 0;
 
     if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+
         num_children = m_opaque_sp->GetNumChildren();
+    }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -455,6 +462,9 @@ SBValue::Dereference ()
     SBValue sb_value;
     if (m_opaque_sp)
     {
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+
         Error error;
         sb_value = m_opaque_sp->Dereference (error);
     }
@@ -471,7 +481,12 @@ SBValue::TypeIsPointerType ()
     bool is_ptr_type = false;
 
     if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+
         is_ptr_type = m_opaque_sp->IsPointerType();
+    }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -485,7 +500,12 @@ void *
 SBValue::GetOpaqueType()
 {
     if (m_opaque_sp)
+    {
+        if (m_opaque_sp->GetUpdatePoint().GetTarget())
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+
         return m_opaque_sp->GetClangType();
+    }
     return NULL;
 }
 
