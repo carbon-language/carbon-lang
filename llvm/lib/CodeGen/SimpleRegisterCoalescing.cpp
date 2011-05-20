@@ -252,7 +252,12 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
 
   // Okay, merge "B1" into the same value number as "B0".
   if (BValNo != ValLR->valno) {
+    // If B1 is killed by a PHI, then the merged live range must also be killed
+    // by the same PHI, as B0 and B1 can not overlap.
+    bool HasPHIKill = BValNo->hasPHIKill();
     IntB.MergeValueNumberInto(BValNo, ValLR->valno);
+    if (HasPHIKill)
+      ValLR->valno->setHasPHIKill(true);
   }
   DEBUG({
       dbgs() << "   result = ";
