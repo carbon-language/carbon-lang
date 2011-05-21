@@ -97,7 +97,8 @@ SVal SimpleSValBuilder::evalCastFromNonLoc(NonLoc val, QualType castTy) {
     return UnknownVal();
 
   llvm::APSInt i = cast<nonloc::ConcreteInt>(val).getValue();
-  i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::isLocType(castTy));
+  i.setIsUnsigned(castTy->isUnsignedIntegerOrEnumerationType() || 
+                  Loc::isLocType(castTy));
   i = i.extOrTrunc(Context.getTypeSize(castTy));
 
   if (isLocType)
@@ -129,7 +130,8 @@ SVal SimpleSValBuilder::evalCastFromLoc(Loc val, QualType castTy) {
       return makeLocAsInteger(val, BitWidth);
 
     llvm::APSInt i = cast<loc::ConcreteInt>(val).getValue();
-    i.setIsUnsigned(castTy->isUnsignedIntegerType() || Loc::isLocType(castTy));
+    i.setIsUnsigned(castTy->isUnsignedIntegerOrEnumerationType() || 
+                    Loc::isLocType(castTy));
     i = i.extOrTrunc(BitWidth);
     return makeIntVal(i);
   }

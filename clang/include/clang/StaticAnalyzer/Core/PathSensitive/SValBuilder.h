@@ -172,7 +172,7 @@ public:
   nonloc::ConcreteInt makeIntVal(const IntegerLiteral* integer) {
     return nonloc::ConcreteInt(
         BasicVals.getValue(integer->getValue(),
-                           integer->getType()->isUnsignedIntegerType()));
+                     integer->getType()->isUnsignedIntegerOrEnumerationType()));
   }
 
   nonloc::ConcreteInt makeBoolVal(const CXXBoolLiteralExpr *boolean) {
