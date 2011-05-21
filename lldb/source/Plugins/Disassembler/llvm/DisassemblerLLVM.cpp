@@ -369,7 +369,16 @@ InstructionLLVM::Dump
 
         if (EDGetInstString(&str, m_inst)) // 0 on success
             return;
-        s->Write(str, strlen(str) - 1);
+        if (raw)
+          s->Write(str, strlen(str) - 1);
+        else
+        {
+            // EDis fails to parse the tokens of this inst.  Need to align this
+            // raw disassembly with the rest of output.
+            llvm::StringRef raw_disasm(str);
+            StripSpaces(raw_disasm);
+            s->PutCString(raw_disasm.str().c_str());
+        }
     }
 }
 
