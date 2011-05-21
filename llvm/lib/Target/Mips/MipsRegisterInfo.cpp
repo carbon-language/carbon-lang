@@ -161,6 +161,8 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                     RegScavenger *RS) const {
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
 
   unsigned i = 0;
   while (!MI.getOperand(i).isFI()) {
@@ -191,26 +193,45 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   int NewImm = 0;
   MachineBasicBlock &MBB = *MI.getParent();
   bool ATUsed;
-  unsigned OrigReg = getFrameRegister(MF);
-  int OrigImm = Offset;
+  unsigned FrameReg;
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  int MinCSFI = 0;
+  int MaxCSFI = -1;
 
-  // OrigImm fits in the 16-bit field
-  if (OrigImm < 0x8000 && OrigImm >= -0x8000) {
-    NewReg = OrigReg;
-    NewImm = OrigImm;
+  if (CSI.size()) {
+    MinCSFI = CSI[0].getFrameIdx();
+    MaxCSFI = CSI[CSI.size() - 1].getFrameIdx();
+  }
+
+  // The following stack frame objects are always referenced relative to $sp:
+  //  1. Outgoing arguments.
+  //  2. Pointer to dynamically allocated stack space.
+  //  3. Locations for callee-saved registers.
+  // Everything else is referenced relative to whatever register 
+  // getFrameRegister() returns.
+  if (MipsFI->isOutArgFI(FrameIndex) ||
+      (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI))
+    FrameReg = Mips::SP;
+  else
+    FrameReg = getFrameRegister(MF); 
+  
+  // Offset fits in the 16-bit field
+  if (Offset < 0x8000 && Offset >= -0x8000) {
+    NewReg = FrameReg;
+    NewImm = Offset;
     ATUsed = false;
   }
   else {
     const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
     DebugLoc DL = II->getDebugLoc();
-    int ImmLo = OrigImm & 0xffff;
-    int ImmHi = (((unsigned)OrigImm & 0xffff0000) >> 16) +
-                ((OrigImm & 0x8000) != 0);
+    int ImmLo = Offset & 0xffff;
+    int ImmHi = (((unsigned)Offset & 0xffff0000) >> 16) +
+                ((Offset & 0x8000) != 0);
 
     // FIXME: change this when mips goes MC".
     BuildMI(MBB, II, DL, TII->get(Mips::NOAT));
     BuildMI(MBB, II, DL, TII->get(Mips::LUi), Mips::AT).addImm(ImmHi);
-    BuildMI(MBB, II, DL, TII->get(Mips::ADDu), Mips::AT).addReg(OrigReg)
+    BuildMI(MBB, II, DL, TII->get(Mips::ADDu), Mips::AT).addReg(FrameReg)
                                                         .addReg(Mips::AT);
     NewReg = Mips::AT;
     NewImm = ImmLo;
