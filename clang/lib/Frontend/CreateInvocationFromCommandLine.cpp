@@ -65,7 +65,7 @@ clang::createInvocationFromCommandLine(llvm::ArrayRef<const char *> ArgList,
   // We expect to get back exactly one command job, if we didn't something
   // failed.
   const driver::JobList &Jobs = C->getJobs();
-  if (Jobs.size() != 1 || !isa<driver::Command>(Jobs.begin())) {
+  if (Jobs.size() != 1 || !isa<driver::Command>(*Jobs.begin())) {
     llvm::SmallString<256> Msg;
     llvm::raw_svector_ostream OS(Msg);
     C->PrintJob(OS, C->getJobs(), "; ", true);

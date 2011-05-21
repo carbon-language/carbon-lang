@@ -999,7 +999,7 @@ static CSFC_Result CollectStatementsForCase(const Stmt *S,
       // If we're looking for the case, just see if we can skip each of the
       // substatements.
       for (; Case && I != E; ++I) {
-        HadSkippedDecl |= isa<DeclStmt>(I);
+        HadSkippedDecl |= isa<DeclStmt>(*I);
         
         switch (CollectStatementsForCase(*I, Case, FoundCase, ResultStmts)) {
         case CSFC_Failure: return CSFC_Failure;

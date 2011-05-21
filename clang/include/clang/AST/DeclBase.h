@@ -1355,17 +1355,12 @@ struct cast_convert_decl_context<ToTy, true> {
 namespace llvm {
 
 /// isa<T>(DeclContext*)
-template<class ToTy>
-struct isa_impl_wrap<ToTy,
-                     const ::clang::DeclContext,const ::clang::DeclContext> {
+template <typename To>
+struct isa_impl<To, ::clang::DeclContext> {
   static bool doit(const ::clang::DeclContext &Val) {
-    return ToTy::classofKind(Val.getDeclKind());
+    return To::classofKind(Val.getDeclKind());
   }
 };
-template<class ToTy>
-struct isa_impl_wrap<ToTy, ::clang::DeclContext, ::clang::DeclContext>
-  : public isa_impl_wrap<ToTy,
-                      const ::clang::DeclContext,const ::clang::DeclContext> {};
 
 /// cast<T>(DeclContext*)
 template<class ToTy>
