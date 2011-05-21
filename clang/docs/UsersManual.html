@@ -273,6 +273,29 @@ when this is enabled, Clang will print something like:
 </pre>
 </dd>
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fdiagnostics-format"><b>-fdiagnostics-format=clang/msvc/vi</b>:
+Changes diagnostic output format to better match IDEs and command line tools.</dt>
+<dd>This option controls the output format of the filename, line number, and column printed in diagnostic messages. The options, and their affect on formatting a simple conversion diagnostic, follow:
+
+  <dl>
+    <dt><b>clang</b> (default)</dt>
+    <dd>
+      <pre>t.c:3:11: warning: conversion specifies type 'char *' but the argument has type 'int'</pre>
+    </dd>
+
+    <dt><b>msvc</b></dt>
+    <dd>
+      <pre>t.c(3,11) : warning: conversion specifies type 'char *' but the argument has type 'int'</pre>
+    </dd>
+
+    <dt><b>vi</b></dt>
+    <dd>
+      <pre>t.c +3:11: warning: conversion specifies type 'char *' but the argument has type 'int'</pre>
+    </dd>
+  </dl>
+</dd>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <dt id="opt_fdiagnostics-show-option"><b>-f[no-]diagnostics-show-option</b>:
 Enable <tt>[-Woption]</tt> information in diagnostic line.</dt>
 <dd>This option, which defaults to on,

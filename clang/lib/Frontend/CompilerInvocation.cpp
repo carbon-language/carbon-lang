@@ -277,6 +277,14 @@ static void DiagnosticOptsToArgs(const DiagnosticOptions &Opts,
     Res.push_back("-fdiagnostics-show-category=id");
   else if (Opts.ShowCategories == 2)
     Res.push_back("-fdiagnostics-show-category=name");
+  switch (Opts.Format) {
+  case DiagnosticOptions::Clang: 
+    Res.push_back("-fdiagnostics-format=clang"); break;
+  case DiagnosticOptions::Msvc:  
+    Res.push_back("-fdiagnostics-format=msvc");  break;
+  case DiagnosticOptions::Vi:    
+    Res.push_back("-fdiagnostics-format=vi");    break;
+  }
   if (Opts.ErrorLimit) {
     Res.push_back("-ferror-limit");
     Res.push_back(llvm::utostr(Opts.ErrorLimit));
@@ -1011,7 +1019,9 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
   Opts.PedanticErrors = Args.hasArg(OPT_pedantic_errors);
   Opts.ShowCarets = !Args.hasArg(OPT_fno_caret_diagnostics);
   Opts.ShowColors = Args.hasArg(OPT_fcolor_diagnostics);
-  Opts.ShowColumn = !Args.hasArg(OPT_fno_show_column);
+  Opts.ShowColumn = Args.hasFlag(OPT_fshow_column,
+                                 OPT_fno_show_column,
+                                 /*Default=*/true);
   Opts.ShowFixits = !Args.hasArg(OPT_fno_diagnostics_fixit_info);
   Opts.ShowLocation = !Args.hasArg(OPT_fno_show_source_location);
   Opts.ShowNames = Args.hasArg(OPT_fdiagnostics_show_name);
@@ -1048,6 +1058,19 @@ static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
       << Args.getLastArg(OPT_fdiagnostics_show_category)->getAsString(Args)
       << ShowCategory;
 
+  llvm::StringRef Format =
+    Args.getLastArgValue(OPT_fdiagnostics_format, "clang");
+  if (Format == "clang")
+    Opts.Format = DiagnosticOptions::Clang;
+  else if (Format == "msvc") 
+    Opts.Format = DiagnosticOptions::Msvc;
+  else if (Format == "vi") 
+    Opts.Format = DiagnosticOptions::Vi;
+  else 
+    Diags.Report(diag::err_drv_invalid_value)
+      << Args.getLastArg(OPT_fdiagnostics_format)->getAsString(Args)
+      << Format;
+  
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
   Opts.ShowParseableFixits = Args.hasArg(OPT_fdiagnostics_parseable_fixits);
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);

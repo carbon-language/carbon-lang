@@ -216,6 +216,8 @@ def diagnostic_log_file : Separate<"-diagnostic-log-file">,
   HelpText<"Filename (or -) to log diagnostics to">;
 def fno_show_column : Flag<"-fno-show-column">,
   HelpText<"Do not include column number on diagnostics">;
+def fshow_column : Flag<"-fshow-column">,
+  HelpText<"Include column number on diagnostics">;
 def fno_show_source_location : Flag<"-fno-show-source-location">,
   HelpText<"Do not include source location information with diagnostics">;
 def fshow_overloads_EQ : Joined<"-fshow-overloads=">,
@@ -245,6 +247,8 @@ def fdiagnostics_show_name : Flag<"-fdiagnostics-show-name">,
   HelpText<"Print diagnostic name">;
 def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">,
   HelpText<"Print option name with mappable diagnostics">;
+def fdiagnostics_format : Separate<"-fdiagnostics-format">,
+  HelpText<"Change diagnostic formatting to match IDE and command line tools">;
 def fdiagnostics_show_category : Separate<"-fdiagnostics-show-category">,
   HelpText<"Print diagnostic category">;
 def fdiagnostics_show_note_include_stack :

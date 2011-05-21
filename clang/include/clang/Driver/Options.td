@@ -278,6 +278,7 @@ def fdiagnostics_parseable_fixits : Flag<"-fdiagnostics-parseable-fixits">, Grou
 def fdiagnostics_show_option : Flag<"-fdiagnostics-show-option">, Group<f_Group>;
 def fdiagnostics_show_name : Flag<"-fdiagnostics-show-name">, Group<f_Group>;
 def fdiagnostics_show_note_include_stack : Flag<"-fdiagnostics-show-note-include-stack">, Group<f_Group>;
+def fdiagnostics_format_EQ : Joined<"-fdiagnostics-format=">, Group<f_clang_Group>;
 def fdiagnostics_show_category_EQ : Joined<"-fdiagnostics-show-category=">, Group<f_clang_Group>;
 def fdollars_in_identifiers : Flag<"-fdollars-in-identifiers">, Group<f_Group>;
 def fdwarf2_cfi_asm : Flag<"-fdwarf2-cfi-asm">, Group<f_Group>;
@@ -418,6 +419,7 @@ def fshort_enums : Flag<"-fshort-enums">, Group<f_Group>;
 def freorder_blocks : Flag<"-freorder-blocks">, Group<clang_ignored_f_Group>;
 def fshort_wchar : Flag<"-fshort-wchar">, Group<f_Group>;
 def fshow_overloads_EQ : Joined<"-fshow-overloads=">, Group<f_Group>;
+def fshow_column : Flag<"-fshow-column">, Group<f_Group>;
 def fshow_source_location : Flag<"-fshow-source-location">, Group<f_Group>;
 def fspell_checking : Flag<"-fspell-checking">, Group<f_Group>;
 def fsigned_bitfields : Flag<"-fsigned-bitfields">, Group<f_Group>;
