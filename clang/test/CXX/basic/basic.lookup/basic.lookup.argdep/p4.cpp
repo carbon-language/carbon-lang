@@ -45,6 +45,9 @@ namespace Test {
 namespace test1 {
   template <class T> class A {
     template <class U> friend void foo(A &, U); // expected-note {{not viable: 1st argument ('const A<int>') would lose const qualifier}}
+
+  public:
+    A();
   };
 
   void test() {
