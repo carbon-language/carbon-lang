@@ -61,6 +61,12 @@ TargetLibraryInfo::TargetLibraryInfo(const Triple &T) : ImmutablePass(ID) {
   initialize(*this, T);
 }
 
+TargetLibraryInfo::TargetLibraryInfo(const TargetLibraryInfo &TLI)
+  : ImmutablePass(ID) {
+  memcpy(AvailableArray, TLI.AvailableArray, sizeof(AvailableArray));
+}
+
+
 /// disableAllFunctions - This disables all builtins, which is used for options
 /// like -fno-builtin.
 void TargetLibraryInfo::disableAllFunctions() {

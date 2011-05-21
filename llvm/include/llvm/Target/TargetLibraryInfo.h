@@ -51,6 +51,7 @@ public:
   static char ID;
   TargetLibraryInfo();
   TargetLibraryInfo(const Triple &T);
+  explicit TargetLibraryInfo(const TargetLibraryInfo &TLI);
   
   /// has - This function is used by optimizations that want to match on or form
   /// a given library function.
