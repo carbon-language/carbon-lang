@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the MCDwarfFile to support the dwarf
-// .file directive and the .loc directive.
+// This file contains declarations to support the Win64 Exception Handling
+// scheme in MC.
 //
 //===----------------------------------------------------------------------===//
 
@@ -59,26 +59,29 @@ namespace llvm {
 
   struct MCWin64EHUnwindInfo {
     MCWin64EHUnwindInfo() : Begin(0), End(0), ExceptionHandler(0),
-                            Function(0), PrologEnd(0), UnwindOnly(false),
-                            LastFrameInst(-1), ChainedParent(0),
-                            Instructions() {}
+                            Function(0), PrologEnd(0), HandlesUnwind(false),
+                            HandlesExceptions(false), LastFrameInst(-1),
+                            ChainedParent(0), Instructions(), Emitted(false) {}
     MCSymbol *Begin;
     MCSymbol *End;
     const MCSymbol *ExceptionHandler;
     const MCSymbol *Function;
     MCSymbol *PrologEnd;
-    bool UnwindOnly;
+    bool HandlesUnwind;
+    bool HandlesExceptions;
     int LastFrameInst;
     MCWin64EHUnwindInfo *ChainedParent;
     std::vector<MCWin64EHInstruction> Instructions;
+    bool Emitted;
   };
 
   class MCWin64EHUnwindEmitter {
   public:
     //
-    // This emits the unwind info section (.xdata in PE/COFF).
+    // This emits the unwind info sections (.pdata and .xdata in PE/COFF).
     //
     static void Emit(MCStreamer &streamer);
+    static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info);
   };
 } // end namespace llvm
 

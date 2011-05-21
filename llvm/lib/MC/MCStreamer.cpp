@@ -362,10 +362,12 @@ void MCStreamer::EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
   EnsureValidW64UnwindInfo();
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   CurFrame->ExceptionHandler = Sym;
-  if (Unwind)
-    CurFrame->UnwindOnly = true;
-  else if (!Except)
+  if (!Except && !Unwind)
     report_fatal_error("Don't know what kind of handler this is!");
+  if (Unwind)
+    CurFrame->HandlesUnwind = true;
+  if (Except)
+    CurFrame->HandlesExceptions = true;
 }
 
 void MCStreamer::EmitWin64EHHandlerData() {
