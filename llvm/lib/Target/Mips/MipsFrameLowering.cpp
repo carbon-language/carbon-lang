@@ -244,9 +244,6 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo.
   unsigned StackSize = MFI->getStackSize();
 
-  // No need to allocate space on the stack.
-  if (StackSize == 0 && !MFI->adjustsStack()) return;
-
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOREORDER));
 
   // TODO: check need from GP here.
@@ -254,6 +251,9 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, dl, TII.get(Mips::CPLOAD))
       .addReg(RegInfo->getPICCallReg());
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
+
+  // No need to allocate space on the stack.
+  if (StackSize == 0 && !MFI->adjustsStack()) return;
 
   // Adjust stack : addi sp, sp, (-imm)
   ATUsed = expandRegLargeImmPair(Mips::SP, -StackSize, NewReg, NewImm, MBB,
@@ -266,10 +266,18 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
 
   // if framepointer enabled, set it to point to the stack pointer.
-  if (hasFP(MF))
-    // move $fp, $sp
+  if (hasFP(MF)) {
+    // Find the instruction past the last instruction that saves a callee-saved
+    // register to the stack.
+    const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  
+    for (unsigned i = 0; i < CSI.size(); ++i)
+      ++MBBI;
+ 
+    // Insert instruction "move $fp, $sp" at this location.    
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::FP)
       .addReg(Mips::SP).addReg(Mips::ZERO);
+  }
 
   // Restore GP from the saved stack location
   if (MipsFI->needGPSaveRestore())
@@ -286,21 +294,28 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
   DebugLoc dl = MBBI->getDebugLoc();
 
   // Get the number of bytes from FrameInfo
-  int NumBytes = (int) MFI->getStackSize();
+  unsigned StackSize = MFI->getStackSize();
 
   unsigned NewReg = 0;
   int NewImm = 0;
   bool ATUsed = false;
 
   // if framepointer enabled, restore the stack pointer.
-  if (hasFP(MF))
-    // move $sp, $fp
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::SP)
+  if (hasFP(MF)) {
+    // Find the first instruction that restores a callee-saved register.
+    MachineBasicBlock::iterator I = MBBI;
+    
+    for (unsigned i = 0; i < MFI->getCalleeSavedInfo().size(); ++i)
+      --I;
+
+    // Insert instruction "move $sp, $fp" at this location.
+    BuildMI(MBB, I, dl, TII.get(Mips::ADDu), Mips::SP)
       .addReg(Mips::FP).addReg(Mips::ZERO);
+  }
 
   // adjust stack  : insert addi sp, sp, (imm)
-  if (NumBytes) {
-    ATUsed = expandRegLargeImmPair(Mips::SP, NumBytes, NewReg, NewImm, MBB,
+  if (StackSize) {
+    ATUsed = expandRegLargeImmPair(Mips::SP, StackSize, NewReg, NewImm, MBB,
                                    MBBI);
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDiu), Mips::SP)
       .addReg(NewReg).addImm(NewImm);
