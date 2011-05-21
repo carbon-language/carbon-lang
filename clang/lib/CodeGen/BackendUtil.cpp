@@ -110,20 +110,18 @@ void EmitAssemblyHelper::CreatePasses() {
   }
   
   PassManagerBuilder PMBuilder;
-  PMBuilder.setOptimizationLevel(OptLevel);
-  PMBuilder.setSizeLevel(CodeGenOpts.OptimizeSize);
+  PMBuilder.OptLevel = OptLevel;
+  PMBuilder.SizeLevel = CodeGenOpts.OptimizeSize;
 
-  if (!CodeGenOpts.SimplifyLibCalls) PMBuilder.disableSimplifyLibCalls();
-  if (!CodeGenOpts.UnitAtATime) PMBuilder.disableUnitAtATime();
-  if (!CodeGenOpts.UnrollLoops) PMBuilder.disableUnrollLoops();
+  PMBuilder.DisableSimplifyLibCalls = !CodeGenOpts.SimplifyLibCalls;
+  PMBuilder.DisableUnitAtATime = !CodeGenOpts.UnitAtATime;
+  PMBuilder.DisableUnrollLoops = !CodeGenOpts.UnrollLoops;
   
   // Figure out TargetLibraryInfo.
   Triple TargetTriple(TheModule->getTargetTriple());
-  TargetLibraryInfo *TLI = new TargetLibraryInfo(TargetTriple);
+  PMBuilder.LibraryInfo = new TargetLibraryInfo(TargetTriple);
   if (!CodeGenOpts.SimplifyLibCalls)
-    TLI->disableAllFunctions();
-  PMBuilder.setLibraryInfo(TLI);
-  
+    PMBuilder.LibraryInfo->disableAllFunctions();
   
   switch (Inlining) {
   case CodeGenOptions::NoInlining: break;
@@ -136,12 +134,12 @@ void EmitAssemblyHelper::CreatePasses() {
       Threshold = 25;
     else if (OptLevel > 2)
       Threshold = 275;
-    PMBuilder.setInliner(createFunctionInliningPass(Threshold));
+    PMBuilder.Inliner = createFunctionInliningPass(Threshold);
     break;
   }
   case CodeGenOptions::OnlyAlwaysInlining:
     // Respect always_inline.
-    PMBuilder.setInliner(createAlwaysInlinerPass());
+    PMBuilder.Inliner = createAlwaysInlinerPass();
     break;
   }
 
