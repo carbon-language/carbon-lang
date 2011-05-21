@@ -60,7 +60,6 @@ static CallInst *createCallHelper(Value *Callee, Value *const* Ops,
   return CI;  
 }
 
-
 CallInst *IRBuilderBase::
 CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
              bool isVolatile, MDNode *TBAATag) {
@@ -117,4 +116,34 @@ CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
     CI->setMetadata(LLVMContext::MD_tbaa, TBAATag);
   
   return CI;  
+}
+
+CallInst *IRBuilderBase::CreateLifetimeStart(Value *Ptr, ConstantInt *Size) {
+  assert(isa<PointerType>(Ptr->getType()) &&
+	 "lifetime.start only applies to pointers.");
+  Ptr = getCastedInt8PtrValue(Ptr);
+  if (!Size)
+    Size = getInt64(-1);
+  else
+    assert(Size->getType() == getInt64Ty() &&
+	   "lifetime.start requires the size to be an i64");
+  Value *Ops[] = { Size, Ptr };
+  Module *M = BB->getParent()->getParent();
+  Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::lifetime_start);
+  return createCallHelper(TheFn, Ops, 2, this);
+}
+
+CallInst *IRBuilderBase::CreateLifetimeEnd(Value *Ptr, ConstantInt *Size) {
+  assert(isa<PointerType>(Ptr->getType()) &&
+	 "lifetime.end only applies to pointers.");
+  Ptr = getCastedInt8PtrValue(Ptr);
+  if (!Size)
+    Size = getInt64(-1);
+  else
+    assert(Size->getType() == getInt64Ty() &&
+	   "lifetime.end requires the size to be an i64");
+  Value *Ops[] = { Size, Ptr };
+  Module *M = BB->getParent()->getParent();
+  Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::lifetime_end);
+  return createCallHelper(TheFn, Ops, 2, this);
 }
