@@ -1071,6 +1071,9 @@ QualType Sema::BuildPointerType(QualType T,
 QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
                                   SourceLocation Loc,
                                   DeclarationName Entity) {
+  assert(Context.getCanonicalType(T) != Context.OverloadTy && 
+         "Unresolved overloaded function type");
+  
   // C++0x [dcl.ref]p6:
   //   If a typedef (7.1.3), a type template-parameter (14.3.1), or a 
   //   decltype-specifier (7.1.6.2) denotes a type TR that is a reference to a 

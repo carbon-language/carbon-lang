@@ -2507,7 +2507,9 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
     if (isa<RValueReferenceType>(ParamType)) {
       if (!PointeeType.getQualifiers() &&
           isa<TemplateTypeParmType>(PointeeType) &&
-          Arg->Classify(S.Context).isLValue())
+          Arg->Classify(S.Context).isLValue() &&
+          Arg->getType() != S.Context.OverloadTy &&
+          Arg->getType() != S.Context.BoundMemberTy)
         ArgType = S.Context.getLValueReferenceType(ArgType);
     }
 

@@ -33,8 +33,8 @@ struct B {
   int *alt_end();
 };
 
-void f(); // expected-note {{candidate}}
-void f(int); // expected-note {{candidate}}
+void f();
+void f(int);
 
 void g() {
   for (int a : A())
@@ -44,7 +44,7 @@ void g() {
   for (char *a : B()) { // expected-error {{cannot initialize a variable of type 'char *' with an lvalue of type 'int'}}
   }
   // FIXME: Terrible diagnostic here. auto deduction should fail, but does not!
-  for (double a : f) { // expected-error {{address of overloaded function 'f' does not match required type '<overloaded function type>'}}
+  for (double a : f) { // expected-error {{cannot use type '<overloaded function type>' as a range}}
   }
   for (auto a : A()) {
   }

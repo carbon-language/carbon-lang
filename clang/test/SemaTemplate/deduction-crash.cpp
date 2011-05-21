@@ -1,10 +1,10 @@
 // RUN: %clang_cc1 -fsyntax-only %s 2>&1| FileCheck %s
 
-// PR7511
-
 // Note that the error count below doesn't matter. We just want to
 // make sure that the parser doesn't crash.
-// CHECK: 13 errors
+// CHECK: 14 errors
+
+// PR7511
 template<a>
 struct int_;
 
@@ -56,4 +56,34 @@ int a()
 {
   state_machine<int> p;
   p.ant(0);
+}
+
+// PR9974
+template <int> struct enable_if;
+template <class > struct remove_reference ;
+template <class _Tp> struct remove_reference<_Tp&> ;
+
+template <class > struct __tuple_like;
+
+template <class _Tp, class _Up, int = __tuple_like<typename remove_reference<_Tp>::type>::value> 
+struct __tuple_convertible;
+
+struct pair
+{
+template<class _Tuple, int = enable_if<__tuple_convertible<_Tuple, pair>::value>::type> 
+pair(_Tuple&& );
+};
+
+template <class> struct basic_ostream;
+
+template <int> 
+void endl( ) ;
+
+extern basic_ostream<char> cout;
+
+int operator<<( basic_ostream<char> , pair ) ;
+
+void register_object_imp ( )
+{
+cout << endl<1>;
 }
