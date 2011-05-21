@@ -108,6 +108,13 @@ StripSpaces(llvm::StringRef &Str)
     while (!Str.empty() && isspace(Str.back()))
         Str = Str.substr(0, Str.size()-1);
 }
+static void
+Align(Stream *s, const char *str)
+{
+    llvm::StringRef raw_disasm(str);
+    StripSpaces(raw_disasm);
+    s->PutCString(raw_disasm.str().c_str());    
+}
 
 void
 InstructionLLVM::Dump
@@ -342,9 +349,7 @@ InstructionLLVM::Dump
 
                 if (EDGetInstString(&str, m_inst))
                     return;
-                llvm::StringRef raw_disasm(str);
-                StripSpaces(raw_disasm);
-                s->PutCString(raw_disasm.str().c_str());
+                Align(s, str);
             }
             else
             {
@@ -374,10 +379,8 @@ InstructionLLVM::Dump
         else
         {
             // EDis fails to parse the tokens of this inst.  Need to align this
-            // raw disassembly with the rest of output.
-            llvm::StringRef raw_disasm(str);
-            StripSpaces(raw_disasm);
-            s->PutCString(raw_disasm.str().c_str());
+            // raw disassembly's opcode with the rest of output.
+            Align(s, str);
         }
     }
 }
