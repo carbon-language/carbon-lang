@@ -271,3 +271,28 @@ namespace rdar8358512 {
 
   template void B<int>::test0b(); // expected-note {{in instantiation}}
 }
+
+namespace PR9973 {
+  template<class R, class T> struct dm
+  {
+    typedef R T::*F;
+    F f_;
+    template<class U> int & call(U u)
+    { return u->*f_; } // expected-error{{non-const lvalue reference to type 'int' cannot bind to a temporary of type '<bound member function type>'}}
+
+    template<class U> int operator()(U u)
+    { call(u); } // expected-note{{in instantiation of}}
+  };
+
+  template<class R, class T> 
+  dm<R, T> mem_fn(R T::*) ;
+
+  struct test
+  { int nullary_v(); };
+
+  void f()
+  {
+    test* t;
+    mem_fn(&test::nullary_v)(t); // expected-note{{in instantiation of}}
+  }
+}
