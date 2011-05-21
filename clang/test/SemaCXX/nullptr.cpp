@@ -60,6 +60,10 @@ nullptr_t f(nullptr_t null)
 
   // You can reinterpret_cast nullptr to an integer.
   (void)reinterpret_cast<uintptr_t>(nullptr);
+  (void)reinterpret_cast<uintptr_t>(*pn);
+
+  int *ip = *pn;
+  if (*pn) { }
 
   // You can throw nullptr.
   throw nullptr;
@@ -103,4 +107,57 @@ namespace test3 {
     // Don't warn when using nullptr with %p.
     f("%p", nullptr);
   }
+}
+
+int array0[__is_scalar(nullptr_t)? 1 : -1];
+int array1[__is_pod(nullptr_t)? 1 : -1];
+int array2[sizeof(nullptr_t) == sizeof(void*)? 1 : -1];
+
+// FIXME: when we implement constexpr, this will be testable.
+#if 0
+int relational0[nullptr < nullptr? -1 : 1];
+int relational1[nullptr > nullptr? -1 : 1];
+int relational2[nullptr <= nullptr? 1 : -1];
+int relational3[nullptr >= nullptr? 1 : -1];
+int equality[nullptr == nullptr? 1 : -1];
+int inequality[nullptr != nullptr? -1 : 1];
+#endif
+
+namespace overloading {
+  int &f1(int*);
+  float &f1(bool);
+
+  void test_f1() {
+    int &ir = (f1)(nullptr);
+  }
+
+  struct ConvertsToNullPtr {
+    operator nullptr_t() const;
+  };
+
+  void test_conversion(ConvertsToNullPtr ctn) {
+    (void)(ctn == ctn);
+    (void)(ctn != ctn);
+    (void)(ctn <= ctn);
+    (void)(ctn >= ctn);
+    (void)(ctn < ctn);
+    (void)(ctn > ctn);
+  }
+}
+
+namespace templates {
+  template<typename T, nullptr_t Value>
+  struct X { 
+    X() { ptr = Value; }
+
+    T *ptr;
+  };
+  
+  X<int, nullptr> x;
+
+
+  template<int (*fp)(int), int* p, int A::* pmd, int (A::*pmf)(int)>
+  struct X2 {};
+  
+  X2<nullptr, nullptr, nullptr, nullptr> x2;
 }

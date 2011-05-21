@@ -17,7 +17,7 @@ int has_nullptr();
 int no_nullptr();
 #endif
 
-// CHECK-0X: no_nullptr
+// CHECK-0X: has_nullptr
 // CHECK-NO-0X: no_nullptr
 
 
