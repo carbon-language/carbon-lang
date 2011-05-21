@@ -535,6 +535,20 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
         return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
       }
+
+      // [su]mul.with.overflow(X, 2) -> [su]add.with.overflow(X, X)
+      if (RHSI->equalsInt(2)) {
+        Intrinsic::ID Add =
+          II->getIntrinsicID() == Intrinsic::smul_with_overflow ?
+          Intrinsic::sadd_with_overflow : Intrinsic::uadd_with_overflow;
+
+        Module *M = II->getParent()->getParent()->getParent();
+        const Type *Ty = RHSI->getType();
+        Function *F = Intrinsic::getDeclaration(M, Add, &Ty, 1);
+
+        Value *Ops[] = { II->getArgOperand(0), II->getArgOperand(0) };
+        return CallInst::Create(F, Ops, Ops+2);
+      }
     }
     break;
   case Intrinsic::ppc_altivec_lvx:

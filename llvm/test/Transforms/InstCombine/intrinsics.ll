@@ -114,6 +114,7 @@ define i8 @umultest2(i8 %A, i1* %overflowPtr) {
 
 %ov.result.32 = type { i32, i1 }
 declare %ov.result.32 @llvm.umul.with.overflow.i32(i32, i32) nounwind readnone
+declare %ov.result.32 @llvm.smul.with.overflow.i32(i32, i32) nounwind readnone
 
 define i32 @umultest3(i32 %n) nounwind {
   %shr = lshr i32 %n, 2
@@ -137,6 +138,26 @@ define i32 @umultest4(i32 %n) nounwind {
   ret i32 %ret
 ; CHECK: @umultest4
 ; CHECK: umul.with.overflow
+}
+
+define i32 @umultest5(i32 %n) nounwind {
+  %mul = call %ov.result.32 @llvm.umul.with.overflow.i32(i32 %n, i32 2)
+  %ov = extractvalue %ov.result.32 %mul, 1
+  %res = extractvalue %ov.result.32 %mul, 0
+  %ret = select i1 %ov, i32 -1, i32 %res
+  ret i32 %ret
+; CHECK: @umultest5
+; CHECK: llvm.uadd.with.overflow.i32(i32 %n, i32 %n)
+}
+
+define i32 @smultest1(i32 %n) nounwind {
+  %mul = call %ov.result.32 @llvm.smul.with.overflow.i32(i32 %n, i32 2)
+  %ov = extractvalue %ov.result.32 %mul, 1
+  %res = extractvalue %ov.result.32 %mul, 0
+  %ret = select i1 %ov, i32 -1, i32 %res
+  ret i32 %ret
+; CHECK: @smultest1
+; CHECK: llvm.sadd.with.overflow.i32(i32 %n, i32 %n)
 }
 
 define void @powi(double %V, double *%P) {
