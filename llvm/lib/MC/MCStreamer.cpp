@@ -361,6 +361,8 @@ void MCStreamer::EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
                                     bool Except) {
   EnsureValidW64UnwindInfo();
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  if (CurFrame->ChainedParent)
+    report_fatal_error("Chained unwind areas can't have handlers!");
   CurFrame->ExceptionHandler = Sym;
   if (!Except && !Unwind)
     report_fatal_error("Don't know what kind of handler this is!");
@@ -372,6 +374,9 @@ void MCStreamer::EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
 
 void MCStreamer::EmitWin64EHHandlerData() {
   EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  if (CurFrame->ChainedParent)
+    report_fatal_error("Chained unwind areas can't have handlers!");
 }
 
 void MCStreamer::EmitWin64EHPushReg(unsigned Register) {
