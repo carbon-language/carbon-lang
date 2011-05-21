@@ -1827,6 +1827,8 @@ def err_not_class_template_specialization : Error<
   "parameter}0">;
 def err_function_specialization_in_class : Error<
   "cannot specialize a function %0 within class scope">;
+def err_explicit_specialization_storage_class : Error<
+  "explicit specialization cannot have a storage class">;
 
 // C++ class template specializations and out-of-line definitions
 def err_template_spec_needs_header : Error<
@@ -1983,6 +1985,8 @@ def err_explicit_instantiation_requires_name : Error<
   "explicit instantiation declaration requires a name">;
 def err_explicit_instantiation_of_typedef : Error<
   "explicit instantiation of typedef %0">;
+def err_explicit_instantiation_storage_class : Error<
+  "explicit instantiation cannot have a storage class">;
 def err_explicit_instantiation_not_known : Error<
   "explicit instantiation of %0 does not refer to a function template, member "
   "function, member class, or static data member">;

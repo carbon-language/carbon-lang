@@ -5377,7 +5377,7 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                                          SpecInfo->getPointOfInstantiation(),
                                              HasNoEffect))
     return true;
-
+  
   // Mark the prior declaration as an explicit specialization, so that later
   // clients know that this is an explicit specialization.
   if (!isFriend) {
@@ -5397,7 +5397,8 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                                         TemplArgs, /*InsertPos=*/0,
                                     SpecInfo->getTemplateSpecializationKind(),
                                         TemplArgsAsWritten);
-
+  FD->setStorageClass(Specialization->getStorageClass());
+  
   // The "previous declaration" for this function template specialization is
   // the prior function template specialization.
   Previous.clear();
@@ -5998,11 +5999,20 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   if (R.isNull())
     return true;
 
+  // C++ [dcl.stc]p1:
+  //   A storage-class-specifier shall not be specified in [...] an explicit 
+  //   instantiation (14.7.2) directive.
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    // Cannot explicitly instantiate a typedef.
     Diag(D.getIdentifierLoc(), diag::err_explicit_instantiation_of_typedef)
       << Name;
     return true;
+  } else if (D.getDeclSpec().getStorageClassSpec() 
+                                                != DeclSpec::SCS_unspecified) {
+    // Complain about then remove the storage class specifier.
+    Diag(D.getIdentifierLoc(), diag::err_explicit_instantiation_storage_class)
+      << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
+    
+    D.getMutableDeclSpec().ClearStorageClassSpecs();
   }
 
   // C++0x [temp.explicit]p1:
