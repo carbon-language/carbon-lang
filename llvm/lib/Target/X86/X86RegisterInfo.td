@@ -496,7 +496,7 @@ def GR32_TC   : RegisterClass<"X86", [i32], 32, [EAX, ECX, EDX]> {
   let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi), (GR16 sub_16bit)];
 }
 def GR64_TC   : RegisterClass<"X86", [i64], 64, [RAX, RCX, RDX, RSI, RDI,
-                                                 R8, R9, R11]> {
+                                                 R8, R9, R11, RIP]> {
   let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi),
                        (GR16 sub_16bit),
                        (GR32_TC sub_32bit)];
