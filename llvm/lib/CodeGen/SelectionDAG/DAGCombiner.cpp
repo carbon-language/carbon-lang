@@ -165,6 +165,8 @@ namespace {
     SDValue visitMULHS(SDNode *N);
     SDValue visitSMUL_LOHI(SDNode *N);
     SDValue visitUMUL_LOHI(SDNode *N);
+    SDValue visitSMULO(SDNode *N);
+    SDValue visitUMULO(SDNode *N);
     SDValue visitSDIVREM(SDNode *N);
     SDValue visitUDIVREM(SDNode *N);
     SDValue visitAND(SDNode *N);
@@ -1047,6 +1049,8 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::MULHS:              return visitMULHS(N);
   case ISD::SMUL_LOHI:          return visitSMUL_LOHI(N);
   case ISD::UMUL_LOHI:          return visitUMUL_LOHI(N);
+  case ISD::SMULO:              return visitSMULO(N);
+  case ISD::UMULO:              return visitUMULO(N);
   case ISD::SDIVREM:            return visitSDIVREM(N);
   case ISD::UDIVREM:            return visitUDIVREM(N);
   case ISD::AND:                return visitAND(N);
@@ -2173,6 +2177,26 @@ SDValue DAGCombiner::visitUMUL_LOHI(SDNode *N) {
       return CombineTo(N, Lo, Hi);
     }
   }
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitSMULO(SDNode *N) {
+  // (smulo x, 2) -> (saddo x, x)
+  if (ConstantSDNode *C2 = dyn_cast<ConstantSDNode>(N->getOperand(1)))
+    if (C2->getAPIntValue() == 2)
+      return DAG.getNode(ISD::SADDO, N->getDebugLoc(), N->getVTList(),
+                         N->getOperand(0), N->getOperand(0));
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitUMULO(SDNode *N) {
+  // (umulo x, 2) -> (uaddo x, x)
+  if (ConstantSDNode *C2 = dyn_cast<ConstantSDNode>(N->getOperand(1)))
+    if (C2->getAPIntValue() == 2)
+      return DAG.getNode(ISD::UADDO, N->getDebugLoc(), N->getVTList(),
+                         N->getOperand(0), N->getOperand(0));
 
   return SDValue();
 }
