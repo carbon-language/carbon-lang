@@ -3,7 +3,8 @@
 // Radar 9168773
 
 // DEBUGGER: ptype A
-// CHECK: type = struct A {
+// CHECK: type = class A {
+// CHECK-NEXT: public:
 // CHECK-NEXT: int MyData;
 // CHECK-NEXT: }
 class A;
