@@ -28,11 +28,10 @@ Program::ExecuteAndWait(const Path& path,
                         const Path** redirects,
                         unsigned secondsToWait,
                         unsigned memoryLimit,
-                        std::string* ErrMsg,
-                        const char* SignalPrefix) {
+                        std::string* ErrMsg) {
   Program prg;
   if (prg.Execute(path, args, envp, redirects, memoryLimit, ErrMsg))
-    return prg.Wait(path, secondsToWait, ErrMsg, SignalPrefix);
+    return prg.Wait(path, secondsToWait, ErrMsg);
   else
     return -1;
 }

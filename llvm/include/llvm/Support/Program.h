@@ -85,8 +85,9 @@ namespace sys {
     /// This function waits for the program to exit. This function will block
     /// the current program until the invoked program exits.
     /// @returns an integer result code indicating the status of the program.
-    /// A zero or positive value indicates the result code of the program. A
-    /// negative value is the signal number on which it terminated.
+    /// A zero or positive value indicates the result code of the program.
+    /// -1 indicates failure to execute
+    /// -2 indicates a crash during execution or timeout
     /// @see Execute
     /// @brief Waits for the program to exit.
     int Wait
@@ -96,11 +97,9 @@ namespace sys {
       ///< expires, the child is killed and this call returns. If zero,
       ///< this function will wait until the child finishes or forever if
       ///< it doesn't.
-      std::string* ErrMsg, ///< If non-zero, provides a pointer to a string
+      std::string* ErrMsg ///< If non-zero, provides a pointer to a string
       ///< instance in which error messages will be returned. If the string
       ///< is non-empty upon return an error occurred while waiting.
-      const char *SignalPrefix ///< If non-zero, provides a prefix to be
-      ///< prepended to ErrMsg if the process is terminated abnormally.
       );
 
     /// This function terminates the program.
@@ -139,8 +138,7 @@ namespace sys {
                               const sys::Path** redirects = 0,
                               unsigned secondsToWait = 0,
                               unsigned memoryLimit = 0,
-                              std::string* ErrMsg = 0,
-                              const char *SignalPrefix = 0);
+                              std::string* ErrMsg = 0);
 
     /// A convenience function equivalent to Program prg; prg.Execute(..);
     /// @see Execute

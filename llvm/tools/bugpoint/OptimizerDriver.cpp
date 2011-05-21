@@ -223,7 +223,7 @@ bool BugDriver::runPasses(Module *Program,
       if (result == -1)
         outs() << "Execute failed: " << ErrMsg << "\n";
       else
-        outs() << "Crashed with signal #" << abs(result) << "\n";
+        outs() << "Crashed: " << ErrMsg << "\n";
     }
     if (result & 0x01000000)
       outs() << "Dumped core\n";

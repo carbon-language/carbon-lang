@@ -298,8 +298,7 @@ Program::Execute(const Path &path, const char **args, const char **envp,
 int
 Program::Wait(const sys::Path &path,
               unsigned secondsToWait,
-              std::string* ErrMsg,
-              const char* SignalPrefix)
+              std::string* ErrMsg)
 {
 #ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
@@ -339,7 +338,7 @@ Program::Wait(const sys::Path &path,
       else
         MakeErrMsg(ErrMsg, "Child timed out", 0);
 
-      return -1;   // Timeout detected
+      return -2;   // Timeout detected
     } else if (errno != EINTR) {
       MakeErrMsg(ErrMsg, "Error waiting for child process");
       return -1;
@@ -377,15 +376,15 @@ Program::Wait(const sys::Path &path,
     }
   } else if (WIFSIGNALED(status)) {
     if (ErrMsg) {
-      if (SignalPrefix)
-        *ErrMsg = SignalPrefix;
-      *ErrMsg += strsignal(WTERMSIG(status));
+      *ErrMsg = strsignal(WTERMSIG(status));
 #ifdef WCOREDUMP
       if (WCOREDUMP(status))
         *ErrMsg += " (core dumped)";
 #endif
     }
-    return -1;
+    // Return a special value to indicate that the process received an unhandled
+    // signal during execution as opposed to failing to execute.
+    return -2;
   }
   return result;
 #else

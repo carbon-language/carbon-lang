@@ -50,11 +50,6 @@ namespace {
           cl::desc("Remote execution (rsh/ssh) extra options"));
 }
 
-// Add a prefix to ErrMsg if the program is terminated by a signal to
-// distinguish compiled program crashes from other execution
-// failures. Miscompilation likely results in SIGSEGV.
-static const char *SignalPrefix = "Signal - ";
-
 /// RunProgramWithTimeout - This function provides an alternate interface
 /// to the sys::Program::ExecuteAndWait interface.
 /// @see sys::Program::ExecuteAndWait
@@ -82,7 +77,7 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
 
   return
     sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects,
-                                 NumSeconds, MemoryLimit, ErrMsg, SignalPrefix);
+                                 NumSeconds, MemoryLimit, ErrMsg);
 }
 
 /// RunProgramRemotelyWithTimeout - This function runs the given program
@@ -862,9 +857,9 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     int ExitCode = RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
         sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
         Timeout, MemoryLimit, Error);
-    // Treat a signal (usually SIGSEGV) as part of the program output so that
-    // crash-causing miscompilation is handled seamlessly.
-    if (Error->find(SignalPrefix) == 0) {
+    // Treat a signal (usually SIGSEGV) or timeout as part of the program output
+    // so that crash-causing miscompilation is handled seamlessly.
+    if (ExitCode < -1) {
       std::ofstream outFile(OutputFile.c_str(), std::ios_base::app);
       outFile << *Error << '\n';
       outFile.close();
