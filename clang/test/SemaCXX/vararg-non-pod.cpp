@@ -56,15 +56,18 @@ void t4()
 }
 
 class E {
-  E(int, ...);
+  E(int, ...); // expected-note 2{{implicitly declared private here}}
 };
 
 void t5()
 {
   C c(10);
   
-  E e(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic constructor; call will abort at runtime}}
-  (void)E(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic constructor; call will abort at runtime}}
+  E e(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic constructor; call will abort at runtime}} \
+    // expected-error{{calling a private constructor of class 'E'}}
+  (void)E(10, c); // expected-warning{{cannot pass object of non-POD type 'C' through variadic constructor; call will abort at runtime}} \
+    // expected-error{{calling a private constructor of class 'E'}}
+
 }
 
 // PR5761: unevaluated operands and the non-POD warning
