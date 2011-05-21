@@ -21,12 +21,11 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/PassManagerBuilder.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -109,51 +108,52 @@ void EmitAssemblyHelper::CreatePasses() {
     OptLevel = 0;
     Inlining = CodeGenOpts.NoInlining;
   }
+  
+  PassManagerBuilder PMBuilder;
+  PMBuilder.setOptimizationLevel(OptLevel);
+  PMBuilder.setSizeLevel(CodeGenOpts.OptimizeSize);
 
-  FunctionPassManager *FPM = getPerFunctionPasses();
-
+  if (!CodeGenOpts.SimplifyLibCalls) PMBuilder.disableSimplifyLibCalls();
+  if (!CodeGenOpts.UnitAtATime) PMBuilder.disableUnitAtATime();
+  if (!CodeGenOpts.UnrollLoops) PMBuilder.disableUnrollLoops();
+  
+  // Figure out TargetLibraryInfo.
   Triple TargetTriple(TheModule->getTargetTriple());
   TargetLibraryInfo *TLI = new TargetLibraryInfo(TargetTriple);
   if (!CodeGenOpts.SimplifyLibCalls)
     TLI->disableAllFunctions();
-  FPM->add(TLI);
-
-  // In -O0 if checking is disabled, we don't even have per-function passes.
-  if (CodeGenOpts.VerifyModule)
-    FPM->add(createVerifierPass());
-
-  // Assume that standard function passes aren't run for -O0.
-  if (OptLevel > 0)
-    llvm::createStandardFunctionPasses(FPM, OptLevel);
-
-  llvm::Pass *InliningPass = 0;
+  PMBuilder.setLibraryInfo(TLI);
+  
+  
   switch (Inlining) {
   case CodeGenOptions::NoInlining: break;
   case CodeGenOptions::NormalInlining: {
-    // Set the inline threshold following llvm-gcc.
-    //
     // FIXME: Derive these constants in a principled fashion.
     unsigned Threshold = 225;
-    if (CodeGenOpts.OptimizeSize == 1) //-Os
+    if (CodeGenOpts.OptimizeSize == 1)      // -Os
       Threshold = 75;
-    else if (CodeGenOpts.OptimizeSize == 2) //-Oz
+    else if (CodeGenOpts.OptimizeSize == 2) // -Oz
       Threshold = 25;
     else if (OptLevel > 2)
       Threshold = 275;
-    InliningPass = createFunctionInliningPass(Threshold);
+    PMBuilder.setInliner(createFunctionInliningPass(Threshold));
     break;
   }
   case CodeGenOptions::OnlyAlwaysInlining:
-    InliningPass = createAlwaysInlinerPass();         // Respect always_inline
+    // Respect always_inline.
+    PMBuilder.setInliner(createAlwaysInlinerPass());
     break;
   }
 
-  PassManager *MPM = getPerModulePasses();
+ 
+  // Set up the per-function pass manager.
+  FunctionPassManager *FPM = getPerFunctionPasses();
+  if (CodeGenOpts.VerifyModule)
+    FPM->add(createVerifierPass());
+  PMBuilder.populateFunctionPassManager(*FPM);
 
-  TLI = new TargetLibraryInfo(TargetTriple);
-  if (!CodeGenOpts.SimplifyLibCalls)
-    TLI->disableAllFunctions();
-  MPM->add(TLI);
+  // Set up the per-module pass manager.
+  PassManager *MPM = getPerModulePasses();
 
   if (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes) {
     MPM->add(createGCOVProfilerPass(CodeGenOpts.EmitGcovNotes,
@@ -163,15 +163,9 @@ void EmitAssemblyHelper::CreatePasses() {
     if (!CodeGenOpts.DebugInfo)
       MPM->add(createStripSymbolsPass(true));
   }
-
-  // For now we always create per module passes.
-  llvm::createStandardModulePasses(MPM, OptLevel,
-                                   CodeGenOpts.OptimizeSize,
-                                   CodeGenOpts.UnitAtATime,
-                                   CodeGenOpts.UnrollLoops,
-                                   CodeGenOpts.SimplifyLibCalls,
-                                   /*HaveExceptions=*/true,
-                                   InliningPass);
+  
+  
+  PMBuilder.populateModulePassManager(*MPM);
 }
 
 bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
