@@ -6130,14 +6130,15 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
         Flags.setByVal();
         const PointerType *Ty = cast<PointerType>(Args[i].Ty);
         const Type *ElementTy = Ty->getElementType();
-        unsigned FrameAlign = getByValTypeAlignment(ElementTy);
-        unsigned FrameSize  = getTargetData()->getTypeAllocSize(ElementTy);
+        Flags.setByValSize(getTargetData()->getTypeAllocSize(ElementTy));
         // For ByVal, alignment should come from FE.  BE will guess if this
         // info is not there but there are cases it cannot get right.
+        unsigned FrameAlign;
         if (Args[i].Alignment)
           FrameAlign = Args[i].Alignment;
+        else
+          FrameAlign = getByValTypeAlignment(ElementTy);
         Flags.setByValAlign(FrameAlign);
-        Flags.setByValSize(FrameSize);
       }
       if (Args[i].isNest)
         Flags.setNest();
@@ -6355,14 +6356,15 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
         Flags.setByVal();
         const PointerType *Ty = cast<PointerType>(I->getType());
         const Type *ElementTy = Ty->getElementType();
-        unsigned FrameAlign = TLI.getByValTypeAlignment(ElementTy);
-        unsigned FrameSize  = TD->getTypeAllocSize(ElementTy);
+        Flags.setByValSize(TD->getTypeAllocSize(ElementTy));
         // For ByVal, alignment should be passed from FE.  BE will guess if
         // this info is not there but there are cases it cannot get right.
+        unsigned FrameAlign;
         if (F.getParamAlignment(Idx))
           FrameAlign = F.getParamAlignment(Idx);
+        else
+          FrameAlign = TLI.getByValTypeAlignment(ElementTy);
         Flags.setByValAlign(FrameAlign);
-        Flags.setByValSize(FrameSize);
       }
       if (F.paramHasAttr(Idx, Attribute::Nest))
         Flags.setNest();
