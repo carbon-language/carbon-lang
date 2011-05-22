@@ -19,6 +19,31 @@
 using namespace llvm;
 using namespace PatternMatch;
 
+
+/// simplifyValueKnownNonZero - The specific integer value is used in a context
+/// where it is known to be non-zero.  If this allows us to simplify the
+/// computation, do so and return the new operand, otherwise return null.
+static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
+  // If V has multiple uses, then we would have to do more analysis to determine
+  // if this is safe.  For example, the use could be in dynamically unreached
+  // code.
+  if (!V->hasOneUse()) return 0;
+  
+  // ((1 << A) >>u B) --> (1 << (A-B))
+  // Because V cannot be zero, we know that B is less than A.
+  Value *A = 0, *B = 0; ConstantInt *One = 0;
+  if (match(V, m_LShr(m_OneUse(m_Shl(m_ConstantInt(One), m_Value(A))),
+                      m_Value(B))) &&
+      // The "1" can be any value known to be a power of 2.
+      One->getValue().isPowerOf2()) {
+    A = IC.Builder->CreateSub(A, B, "tmp");
+    return IC.Builder->CreateShl(One, A);
+  }
+  
+  return 0;
+}
+
+
 /// MultiplyOverflows - True if the multiply can not be expressed in an int
 /// this size.
 static bool MultiplyOverflows(ConstantInt *C1, ConstantInt *C2, bool sign) {
@@ -293,6 +318,12 @@ bool InstCombiner::SimplifyDivRemOfSelect(BinaryOperator &I) {
 Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
+  // The RHS is known non-zero.
+  if (Value *V = simplifyValueKnownNonZero(I.getOperand(1), *this)) {
+    I.setOperand(1, V);
+    return &I;
+  }
+  
   // Handle cases involving: [su]div X, (select Cond, Y, Z)
   // This does not apply for fdiv.
   if (isa<SelectInst>(Op1) && SimplifyDivRemOfSelect(I))
@@ -498,6 +529,12 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
 /// @brief Common integer remainder transforms
 Instruction *InstCombiner::commonIRemTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  // The RHS is known non-zero.
+  if (Value *V = simplifyValueKnownNonZero(I.getOperand(1), *this)) {
+    I.setOperand(1, V);
+    return &I;
+  }
 
   // Handle cases involving: rem X, (select Cond, Y, Z)
   if (isa<SelectInst>(Op1) && SimplifyDivRemOfSelect(I))

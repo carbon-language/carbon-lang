@@ -118,3 +118,17 @@ define i32 @test14(i8 %x) nounwind {
 ; CHECK: @test14
 ; CHECK-NEXT: ret i32 0
 }
+
+; PR9814
+define i32 @test15(i32 %a, i32 %b) nounwind {
+  %shl = shl i32 1, %b
+  %div = lshr i32 %shl, 2
+  %div2 = udiv i32 %a, %div
+  ret i32 %div2
+; CHECK: @test15
+; CHECK-NEXT: add i32 %b, -2
+; CHECK-NEXT: lshr i32 %a, 
+; CHECK-NEXT: ret i32
+}
+
+
