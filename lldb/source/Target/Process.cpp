@@ -1708,29 +1708,36 @@ Process::ReadMemoryFromInferior (addr_t addr, void *buf, size_t size, Error &err
 }
 
 uint64_t
-Process::ReadUnsignedInteger (lldb::addr_t vm_addr, size_t integer_byte_size, Error &error)
+Process::ReadUnsignedIntegerFromMemory (lldb::addr_t vm_addr, size_t integer_byte_size, uint64_t fail_value, Error &error)
 {
-    if (integer_byte_size > sizeof(uint64_t))
-    {
-        error.SetErrorString ("unsupported integer size");
-    }
+    Scalar scalar;
+    if (ReadScalarIntegerFromMemory(vm_addr, integer_byte_size, false, scalar, error))
+        return scalar.ULongLong(fail_value);
+    return fail_value;
+}
+
+addr_t
+Process::ReadPointerFromMemory (lldb::addr_t vm_addr, Error &error)
+{
+    Scalar scalar;
+    if (ReadScalarIntegerFromMemory(vm_addr, GetAddressByteSize(), false, scalar, error))
+        return scalar.ULongLong(LLDB_INVALID_ADDRESS);
+    return LLDB_INVALID_ADDRESS;
+}
+
+
+bool
+Process::WritePointerToMemory (lldb::addr_t vm_addr, 
+                               lldb::addr_t ptr_value, 
+                               Error &error)
+{
+    Scalar scalar;
+    const uint32_t addr_byte_size = GetAddressByteSize();
+    if (addr_byte_size <= 4)
+        scalar = (uint32_t)ptr_value;
     else
-    {
-        uint8_t tmp[sizeof(uint64_t)];
-        DataExtractor data (tmp, 
-                            integer_byte_size, 
-                            m_target.GetArchitecture().GetByteOrder(), 
-                            m_target.GetArchitecture().GetAddressByteSize());
-        if (ReadMemory (vm_addr, tmp, integer_byte_size, error) == integer_byte_size)
-        {
-            uint32_t offset = 0;
-            return data.GetMaxU64 (&offset, integer_byte_size);
-        }
-    }
-    // Any plug-in that doesn't return success a memory read with the number
-    // of bytes that were requested should be setting the error
-    assert (error.Fail());
-    return 0;
+        scalar = ptr_value;
+    return WriteScalarToMemory(vm_addr, scalar, addr_byte_size, error) == addr_byte_size;
 }
 
 size_t
@@ -1831,6 +1838,61 @@ Process::WriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
                                              
     return bytes_written;
 }
+
+size_t
+Process::WriteScalarToMemory (addr_t addr, const Scalar &scalar, uint32_t byte_size, Error &error)
+{
+    if (byte_size == UINT32_MAX)
+        byte_size = scalar.GetByteSize();
+    if (byte_size > 0)
+    {
+        uint8_t buf[32];
+        const size_t mem_size = scalar.GetAsMemoryData (buf, byte_size, GetByteOrder(), error);
+        if (mem_size > 0)
+            return WriteMemory(addr, buf, mem_size, error);
+        else
+            error.SetErrorString ("failed to get scalar as memory data");
+    }
+    else
+    {
+        error.SetErrorString ("invalid scalar value");
+    }
+    return 0;
+}
+
+size_t
+Process::ReadScalarIntegerFromMemory (addr_t addr, 
+                                      uint32_t byte_size, 
+                                      bool is_signed, 
+                                      Scalar &scalar, 
+                                      Error &error)
+{
+    uint64_t uval;
+
+    if (byte_size <= sizeof(uval))
+    {
+        size_t bytes_read = ReadMemory (addr, &uval, byte_size, error);
+        if (bytes_read == byte_size)
+        {
+            DataExtractor data (&uval, sizeof(uval), GetByteOrder(), GetAddressByteSize());
+            uint32_t offset = 0;
+            if (byte_size <= 4)
+                scalar = data.GetMaxU32 (&offset, byte_size);
+            else
+                scalar = data.GetMaxU64 (&offset, byte_size);
+
+            if (is_signed)
+                scalar.SignExtend(byte_size * 8);
+            return bytes_read;
+        }
+    }
+    else
+    {
+        error.SetErrorStringWithFormat ("byte size of %u is too large for integer scalar type", byte_size);
+    }
+    return 0;
+}
+
 #define USE_ALLOCATE_MEMORY_CACHE 1
 addr_t
 Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)

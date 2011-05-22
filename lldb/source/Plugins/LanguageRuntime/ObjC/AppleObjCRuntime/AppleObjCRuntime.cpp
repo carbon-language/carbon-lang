@@ -64,7 +64,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, ValueObject &object)
                    
 }
 bool
-AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope)
+AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionContextScope *exe_scope)
 {
     if (!m_read_objc_library)
         return false;
@@ -88,7 +88,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
         clang::QualType value_type = clang::QualType::getFromOpaquePtr (value.GetClangType());
         if (!value_type->isObjCObjectPointerType())
         {
-            str.Printf ("Value doesn't point to an ObjC object.\n");
+            strm.Printf ("Value doesn't point to an ObjC object.\n");
             return false;
         }
     }
@@ -138,35 +138,22 @@ AppleObjCRuntime::GetObjectDescription (Stream &str, Value &value, ExecutionCont
                                                      ret);
     if (results != eExecutionCompleted)
     {
-        str.Printf("Error evaluating Print Object function: %d.\n", results);
+        strm.Printf("Error evaluating Print Object function: %d.\n", results);
         return false;
     }
        
     addr_t result_ptr = ret.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
     
-    // FIXME: poor man's strcpy - we should have a "read memory as string interface...
-    
-    Error error;
-    std::vector<char> desc;
-    while (1)
+    char buf[512];
+    size_t cstr_len = 0;    
+    size_t curr_len = sizeof(buf);
+    while (curr_len == sizeof(buf))
     {
-        char byte = '\0';
-        if (exe_ctx.process->ReadMemory(result_ptr + desc.size(), &byte, 1, error) != 1)
-            break;
-        
-        desc.push_back(byte);
-
-        if (byte == '\0')
-            break;
+        curr_len = exe_ctx.process->ReadCStringFromMemory(result_ptr + cstr_len, buf, sizeof(buf));
+        strm.Write (buf, curr_len);
+        cstr_len += curr_len;
     }
-    
-    if (!desc.empty())
-    {
-        str.PutCString(&desc.front());
-        return true;
-    }
-    return false;
-
+    return cstr_len > 0;
 }
 
 Address *

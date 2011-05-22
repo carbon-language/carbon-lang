@@ -1014,6 +1014,81 @@ Target::EvaluateExpression
     return execution_results;
 }
 
+lldb::addr_t
+Target::GetCallableLoadAddress (lldb::addr_t load_addr, AddressClass addr_class) const
+{
+    addr_t code_addr = load_addr;
+    switch (m_arch.GetMachine())
+    {
+    case llvm::Triple::arm:
+    case llvm::Triple::thumb:
+        switch (addr_class)
+        {
+        case eAddressClassData:
+        case eAddressClassDebug:
+            return LLDB_INVALID_ADDRESS;
+            
+        case eAddressClassUnknown:
+        case eAddressClassInvalid:
+        case eAddressClassCode:
+        case eAddressClassCodeAlternateISA:
+        case eAddressClassRuntime:
+            // Check if bit zero it no set?
+            if ((code_addr & 1ull) == 0)
+            {
+                // Bit zero isn't set, check if the address is a multiple of 2?
+                if (code_addr & 2ull)
+                {
+                    // The address is a multiple of 2 so it must be thumb, set bit zero
+                    code_addr |= 1ull;
+                }
+                else if (addr_class == eAddressClassCodeAlternateISA)
+                {
+                    // We checked the address and the address claims to be the alternate ISA
+                    // which means thumb, so set bit zero.
+                    code_addr |= 1ull;
+                }
+            }
+            break;
+        }
+        break;
+            
+    default:
+        break;
+    }
+    return code_addr;
+}
+
+lldb::addr_t
+Target::GetOpcodeLoadAddress (lldb::addr_t load_addr, AddressClass addr_class) const
+{
+    addr_t opcode_addr = load_addr;
+    switch (m_arch.GetMachine())
+    {
+    case llvm::Triple::arm:
+    case llvm::Triple::thumb:
+        switch (addr_class)
+        {
+        case eAddressClassData:
+        case eAddressClassDebug:
+            return LLDB_INVALID_ADDRESS;
+            
+        case eAddressClassInvalid:
+        case eAddressClassUnknown:
+        case eAddressClassCode:
+        case eAddressClassCodeAlternateISA:
+        case eAddressClassRuntime:
+            opcode_addr &= ~(1ull);
+            break;
+        }
+        break;
+            
+    default:
+        break;
+    }
+    return opcode_addr;
+}
+
 lldb::user_id_t
 Target::AddStopHook (Target::StopHookSP &new_hook_sp)
 {

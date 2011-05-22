@@ -194,69 +194,24 @@ static bool ReadIntegerArgument(Scalar           &scalar,
     if (bit_width > 64)
         return false; // Scalar can't hold large integer arguments
     
-    uint64_t arg_contents;
-    
     if (current_argument_register < 6)
     {
-        arg_contents = thread.GetRegisterContext()->ReadRegisterAsUnsigned(argument_register_ids[current_argument_register], 0);
+        scalar = thread.GetRegisterContext()->ReadRegisterAsUnsigned(argument_register_ids[current_argument_register], 0);
         current_argument_register++;
+        if (is_signed)
+            scalar.SignExtend (bit_width);
     }
     else
     {
-        uint8_t arg_data[sizeof(arg_contents)];
+        uint32_t byte_size = (bit_width + (8-1))/8;
         Error error;
-        thread.GetProcess().ReadMemory(current_stack_argument, arg_data, sizeof(arg_contents), error);
-        DataExtractor arg_data_extractor (arg_data, sizeof(arg_contents), 
-                                          thread.GetProcess().GetTarget().GetArchitecture().GetByteOrder(), 
-                                          thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
-        uint32_t offset = 0;
-        arg_contents = arg_data_extractor.GetMaxU64(&offset, bit_width / 8);
-        if (!offset)
-            return false;
-        current_stack_argument += (bit_width / 8);
-    }
-    
-    if (is_signed)
-    {
-        switch (bit_width)
+        if (thread.GetProcess().ReadScalarIntegerFromMemory(current_stack_argument, byte_size, is_signed, scalar, error))
         {
-        default:
-            return false;
-        case 8:
-            scalar = (int8_t)(arg_contents & 0xff);
-            break;
-        case 16:
-            scalar = (int16_t)(arg_contents & 0xffff);
-            break;
-        case 32:
-            scalar = (int32_t)(arg_contents & 0xffffffff);
-            break;
-        case 64:
-            scalar = (int64_t)arg_contents;
-            break;
+            current_stack_argument += byte_size;
+            return true;
         }
+        return false;
     }
-    else
-    {
-        switch (bit_width)
-        {
-        default:
-            return false;
-        case 8:
-            scalar = (uint8_t)(arg_contents & 0xffu);
-            break;
-        case 16:
-            scalar = (uint16_t)(arg_contents & 0xffffu);
-            break;
-        case 32:
-            scalar = (uint32_t)(arg_contents & 0xffffffffu);
-            break;
-        case 64:
-            scalar = (uint64_t)arg_contents;
-            break;
-        }
-    }
-    
     return true;
 }
 

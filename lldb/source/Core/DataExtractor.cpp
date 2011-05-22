@@ -1063,7 +1063,7 @@ DataExtractor::CopyByteOrderedData (uint32_t src_offset,
     const uint8_t* src = (const uint8_t *)PeekData (src_offset, src_len);
     if (src)
     {
-        if (src_len >= dst_len)
+        if (dst_len >= src_len)
         {
             // We are copying the entire value from src into dst.
             // Calculate how many, if any, zeroes we need for the most 

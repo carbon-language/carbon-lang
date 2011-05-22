@@ -300,37 +300,9 @@ addr_t
 Address::GetCallableLoadAddress (Target *target) const
 {
     addr_t code_addr = GetLoadAddress (target);
-    
-    // Make sure we have section, otherwise the call to GetAddressClass() will
-    // fail because it uses the section to get to the module.
-    if (m_section && code_addr != LLDB_INVALID_ADDRESS)
-    {
-        switch (target->GetArchitecture().GetMachine())
-        {
-            case llvm::Triple::arm:
-            case llvm::Triple::thumb:
-                // Check if bit zero it no set?
-                if ((code_addr & 1ull) == 0)
-                {
-                    // Bit zero isn't set, check if the address is a multiple of 2?
-                    if (code_addr & 2ull)
-                    {
-                        // The address is a multiple of 2 so it must be thumb, set bit zero
-                        code_addr |= 1ull;
-                    }
-                    else if (GetAddressClass() == eAddressClassCodeAlternateISA)
-                    {
-                        // We checked the address and the address claims to be the alternate ISA
-                        // which means thumb, so set bit zero.
-                        code_addr |= 1ull;
-                    }
-                }
-                break;
-                
-            default:
-                break;
-        }
-    }
+
+    if (target)
+        return target->GetCallableLoadAddress (code_addr, GetAddressClass());
     return code_addr;
 }
 
@@ -339,57 +311,19 @@ Address::SetCallableLoadAddress (lldb::addr_t load_addr, Target *target)
 {
     if (SetLoadAddress (load_addr, target))
     {
-        switch (target->GetArchitecture().GetMachine())
-        {
-            case llvm::Triple::arm:
-            case llvm::Triple::thumb:
-                // Check if bit zero it no set?
-                if ((m_offset & 1ull) == 0)
-                {
-                    // Bit zero isn't set, check if the address is a multiple of 2?
-                    if (m_offset & 2ull)
-                    {
-                        // The address is a multiple of 2 so it must be thumb, set bit zero
-                        m_offset |= 1ull;
-                    }
-                    else if (GetAddressClass() == eAddressClassCodeAlternateISA)
-                    {
-                        // We checked the address and the address claims to be the alternate ISA
-                        // which means thumb, so set bit zero.
-                        m_offset |= 1ull;
-                    }
-                }
-                break;
-                
-            default:
-                break;
-        }
+        if (target)
+            m_offset = target->GetCallableLoadAddress(m_offset, GetAddressClass());
         return true;
     }
     return false;
 }
 
-
-
 addr_t
 Address::GetOpcodeLoadAddress (Target *target) const
 {
     addr_t code_addr = GetLoadAddress (target);
-    
     if (code_addr != LLDB_INVALID_ADDRESS)
-    {
-        switch (target->GetArchitecture().GetMachine())
-        {
-            case llvm::Triple::arm:
-            case llvm::Triple::thumb:
-                // Strip bit zero to make sure we end up on an opcode boundary
-                return code_addr & ~(1ull);
-                break;
-                
-            default:
-                break;
-        }
-    }
+        code_addr = target->GetOpcodeLoadAddress (code_addr, GetAddressClass());
     return code_addr;
 }
 
@@ -398,17 +332,8 @@ Address::SetOpcodeLoadAddress (lldb::addr_t load_addr, Target *target)
 {
     if (SetLoadAddress (load_addr, target))
     {
-        switch (target->GetArchitecture().GetMachine())
-        {
-            case llvm::Triple::arm:
-            case llvm::Triple::thumb:
-                // Make sure bit zero is clear
-                m_offset &= ~(1ull);
-                break;
-                
-            default:
-                break;
-        }
+        if (target)
+            m_offset = target->GetOpcodeLoadAddress (m_offset, GetAddressClass());
         return true;
     }
     return false;

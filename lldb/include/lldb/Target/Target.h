@@ -280,6 +280,36 @@ public:
     void
     ModulesDidUnload (ModuleList &module_list);
 
+    
+    //------------------------------------------------------------------
+    /// Get \a load_addr as a callable code load address for this target
+    ///
+    /// Take \a load_addr and potentially add any address bits that are 
+    /// needed to make the address callable. For ARM this can set bit
+    /// zero (if it already isn't) if \a load_addr is a thumb function.
+    /// If \a addr_class is set to eAddressClassInvalid, then the address
+    /// adjustment will always happen. If it is set to an address class
+    /// that doesn't have code in it, LLDB_INVALID_ADDRESS will be 
+    /// returned.
+    //------------------------------------------------------------------
+    lldb::addr_t
+    GetCallableLoadAddress (lldb::addr_t load_addr, AddressClass addr_class = lldb_private::eAddressClassInvalid) const;
+
+    //------------------------------------------------------------------
+    /// Get \a load_addr as an opcode for this target.
+    ///
+    /// Take \a load_addr and potentially strip any address bits that are 
+    /// needed to make the address point to an opcode. For ARM this can 
+    /// clear bit zero (if it already isn't) if \a load_addr is a 
+    /// thumb function and load_addr is in code.
+    /// If \a addr_class is set to eAddressClassInvalid, then the address
+    /// adjustment will always happen. If it is set to an address class
+    /// that doesn't have code in it, LLDB_INVALID_ADDRESS will be 
+    /// returned.
+    //------------------------------------------------------------------
+    lldb::addr_t
+    GetOpcodeLoadAddress (lldb::addr_t load_addr, AddressClass addr_class = lldb_private::eAddressClassInvalid) const;
+
 protected:
     void
     ModuleAdded (lldb::ModuleSP &module_sp);

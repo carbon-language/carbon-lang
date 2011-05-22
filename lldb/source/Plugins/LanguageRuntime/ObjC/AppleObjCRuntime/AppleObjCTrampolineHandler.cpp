@@ -340,8 +340,8 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
     if (m_objc_module_sp)
     {
         ConstString trampoline_name ("gdb_objc_trampolines");
-        const Symbol *trampoline_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType(trampoline_name, 
-                                                                                   eSymbolTypeData);
+        const Symbol *trampoline_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (trampoline_name, 
+                                                                                            eSymbolTypeData);
         if (trampoline_symbol != NULL)
         {
             if (!trampoline_symbol->GetValue().IsValid())
@@ -353,18 +353,17 @@ AppleObjCTrampolineHandler::AppleObjCVTables::InitializeVTableSymbols ()
             
             // Next look up the "changed" symbol and set a breakpoint on that...
             ConstString changed_name ("gdb_objc_trampolines_changed");
-            const Symbol *changed_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType(changed_name, 
-                                                                                   eSymbolTypeCode);
+            const Symbol *changed_symbol = m_objc_module_sp->FindFirstSymbolWithNameAndType (changed_name, 
+                                                                                             eSymbolTypeCode);
             if (changed_symbol != NULL)
             {
                 if (!changed_symbol->GetValue().IsValid())
                     return false;
                     
-                lldb::addr_t changed_addr = changed_symbol->GetValue().GetLoadAddress(&target);
+                lldb::addr_t changed_addr = changed_symbol->GetValue().GetOpcodeLoadAddress (&target);
                 if (changed_addr != LLDB_INVALID_ADDRESS)
                 {
-                    BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr,
-                                                                                          true);
+                    BreakpointSP trampolines_changed_bp_sp = target.CreateBreakpoint (changed_addr, true);
                     if (trampolines_changed_bp_sp != NULL)
                     {
                         m_trampolines_changed_bp_id = trampolines_changed_bp_sp->GetID();
@@ -427,18 +426,11 @@ AppleObjCTrampolineHandler::AppleObjCVTables::ReadRegions ()
     m_regions.clear();
     if (!InitializeVTableSymbols())
         return false;
-    char memory_buffer[8];
-    DataExtractor data(memory_buffer, sizeof(memory_buffer), 
-                       m_process_sp->GetByteOrder(), 
-                       m_process_sp->GetAddressByteSize());
     Error error;
-    size_t bytes_read = m_process_sp->ReadMemory (m_trampoline_header, memory_buffer, m_process_sp->GetAddressByteSize(), error);
-    if (bytes_read != m_process_sp->GetAddressByteSize())
-        return false;
-        
-    uint32_t offset_ptr = 0;
-    lldb::addr_t region_addr = data.GetPointer(&offset_ptr);
-    return ReadRegions (region_addr);
+    lldb::addr_t region_addr = m_process_sp->ReadPointerFromMemory (m_trampoline_header, error);
+    if (error.Success())    
+        return ReadRegions (region_addr);
+    return false;
 }
 
 bool
@@ -535,13 +527,13 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, Mo
     const Symbol *msg_forward_stret = m_objc_module_sp->FindFirstSymbolWithNameAndType (msg_forward_stret_name, eSymbolTypeCode);
     
     if (class_getMethodImplementation)
-        m_impl_fn_addr = class_getMethodImplementation->GetValue().GetLoadAddress(target);
+        m_impl_fn_addr = class_getMethodImplementation->GetValue().GetOpcodeLoadAddress (target);
     if  (class_getMethodImplementation_stret)
-        m_impl_stret_fn_addr = class_getMethodImplementation_stret->GetValue().GetLoadAddress(target);
+        m_impl_stret_fn_addr = class_getMethodImplementation_stret->GetValue().GetOpcodeLoadAddress (target);
     if (msg_forward)
-        m_msg_forward_addr = msg_forward->GetValue().GetLoadAddress(target);
+        m_msg_forward_addr = msg_forward->GetValue().GetOpcodeLoadAddress(target);
     if  (msg_forward_stret)
-        m_msg_forward_stret_addr = msg_forward_stret->GetValue().GetLoadAddress(target);
+        m_msg_forward_stret_addr = msg_forward_stret->GetValue().GetOpcodeLoadAddress(target);
     
     // FIXME: Do some kind of logging here.
     if (m_impl_fn_addr == LLDB_INVALID_ADDRESS || m_impl_stret_fn_addr == LLDB_INVALID_ADDRESS)

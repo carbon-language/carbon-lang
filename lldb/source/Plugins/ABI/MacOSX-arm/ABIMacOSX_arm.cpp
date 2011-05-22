@@ -269,29 +269,11 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
                 {
                     // Arguments 5 on up are on the stack
                     const uint32_t arg_byte_size = (bit_width + (8-1)) / 8;
-                    if (arg_byte_size <= sizeof(uint64_t))
-                    {
-                        uint8_t arg_data[sizeof(uint64_t)];
-                        Error error;
-                        thread.GetProcess().ReadMemory(sp, arg_data, sizeof(arg_data), error);
-                        DataExtractor arg_data_extractor (arg_data, sizeof(arg_data), 
-                                                          thread.GetProcess().GetTarget().GetArchitecture().GetByteOrder(), 
-                                                          thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
-                        uint32_t offset = 0;
-                        if (arg_byte_size <= 4)
-                            value->GetScalar() = arg_data_extractor.GetMaxU32 (&offset, arg_byte_size);
-                        else if (arg_byte_size <= 8)
-                            value->GetScalar() = arg_data_extractor.GetMaxU64 (&offset, arg_byte_size);
-                        else
-                            return false;
+                    Error error;
+                    if (!thread.GetProcess().ReadScalarIntegerFromMemory(sp, arg_byte_size, is_signed, value->GetScalar(), error))
+                        return false;
 
-                        if (offset == 0 || offset == UINT32_MAX)
-                            return false;
-
-                        if (is_signed)
-                            value->GetScalar().SignExtend (bit_width);
-                        sp += arg_byte_size;
-                    }
+                    sp += arg_byte_size;
                 }
             }
         }

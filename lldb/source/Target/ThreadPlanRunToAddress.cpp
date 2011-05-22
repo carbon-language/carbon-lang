@@ -39,7 +39,7 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     m_addresses (),
     m_break_ids ()
 {
-    m_addresses.push_back (address.GetLoadAddress(&m_thread.GetProcess().GetTarget()));
+    m_addresses.push_back (address.GetOpcodeLoadAddress (&m_thread.GetProcess().GetTarget()));
     SetInitialBreakpoints();
 }
 
@@ -54,14 +54,14 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     m_addresses (),
     m_break_ids ()
 {
-    m_addresses.push_back(address);
+    m_addresses.push_back(m_thread.GetProcess().GetTarget().GetOpcodeLoadAddress(address));
     SetInitialBreakpoints();
 }
 
 ThreadPlanRunToAddress::ThreadPlanRunToAddress
 (
     Thread &thread,
-    std::vector<lldb::addr_t> &addresses,
+    const std::vector<lldb::addr_t> &addresses,
     bool stop_others
 ) :
     ThreadPlan (ThreadPlan::eKindRunToAddress, "Run to address plan", thread, eVoteNoOpinion, eVoteNoOpinion),
@@ -69,6 +69,13 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     m_addresses (addresses),
     m_break_ids ()
 {
+    // Convert all addressses into opcode addresses to make sure we set 
+    // breakpoints at the correct address.
+    Target &target = thread.GetProcess().GetTarget();
+    std::vector<lldb::addr_t>::iterator pos, end = m_addresses.end();
+    for (pos = m_addresses.begin(); pos != end; ++pos)
+        *pos = target.GetOpcodeLoadAddress (*pos);
+
     SetInitialBreakpoints();
 }
 

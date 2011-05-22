@@ -2083,6 +2083,9 @@ public:
     /// @param[in] byte_size
     ///     The size in byte of the integer to read.
     ///
+    /// @param[in] fail_value
+    ///     The value to return if we fail to read an integer.
+    ///
     /// @param[out] error
     ///     An error that indicates the success or failure of this
     ///     operation. If error indicates success (error.Success()), 
@@ -2098,9 +2101,20 @@ public:
     ///     order.
     //------------------------------------------------------------------
     uint64_t
-    ReadUnsignedInteger (lldb::addr_t load_addr, 
-                         size_t byte_size,
-                         Error &error);
+    ReadUnsignedIntegerFromMemory (lldb::addr_t load_addr, 
+                                   size_t byte_size,
+                                   uint64_t fail_value, 
+                                   Error &error);
+    
+    lldb::addr_t
+    ReadPointerFromMemory (lldb::addr_t vm_addr, 
+                           Error &error);
+
+    bool
+    WritePointerToMemory (lldb::addr_t vm_addr, 
+                          lldb::addr_t ptr_value, 
+                          Error &error);
+
     //------------------------------------------------------------------
     /// Actually do the writing of memory to a process.
     ///
@@ -2115,11 +2129,59 @@ public:
     /// @param[in] size
     ///     The number of bytes to write.
     ///
+    /// @param[out] error
+    ///     An error value in case the memory write fails.
+    ///
     /// @return
     ///     The number of bytes that were actually written.
     //------------------------------------------------------------------
     virtual size_t
     DoWriteMemory (lldb::addr_t vm_addr, const void *buf, size_t size, Error &error) = 0;
+
+    //------------------------------------------------------------------
+    /// Write all or part of a scalar value to memory.
+    ///
+    /// The value contained in \a scalar will be swapped to match the
+    /// byte order of the process that is being debugged. If \a size is
+    /// less than the size of scalar, the least significate \a size bytes
+    /// from scalar will be written. If \a size is larger than the byte
+    /// size of scalar, then the extra space will be padded with zeros
+    /// and the scalar value will be placed in the least significant
+    /// bytes in memory.
+    ///
+    /// @param[in] vm_addr
+    ///     A virtual load address that indicates where to start writing
+    ///     memory to.
+    ///
+    /// @param[in] scalar
+    ///     The scalar to write to the debugged process.
+    ///
+    /// @param[in] size
+    ///     This value can be smaller or larger than the scalar value
+    ///     itself. If \a size is smaller than the size of \a scalar, 
+    ///     the least significant bytes in \a scalar will be used. If
+    ///     \a size is larger than the byte size of \a scalar, then 
+    ///     the extra space will be padded with zeros. If \a size is
+    ///     set to UINT32_MAX, then the size of \a scalar will be used.
+    ///
+    /// @param[out] error
+    ///     An error value in case the memory write fails.
+    ///
+    /// @return
+    ///     The number of bytes that were actually written.
+    //------------------------------------------------------------------
+    size_t
+    WriteScalarToMemory (lldb::addr_t vm_addr, 
+                         const Scalar &scalar, 
+                         uint32_t size, 
+                         Error &error);
+
+    size_t
+    ReadScalarIntegerFromMemory (lldb::addr_t addr, 
+                                 uint32_t byte_size, 
+                                 bool is_signed, 
+                                 Scalar &scalar, 
+                                 Error &error);
 
     //------------------------------------------------------------------
     /// Write memory to a process.

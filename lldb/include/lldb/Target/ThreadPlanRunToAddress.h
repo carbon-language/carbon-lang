@@ -33,7 +33,7 @@ public:
                             bool stop_others);
 
     ThreadPlanRunToAddress (Thread &thread,
-                            std::vector<lldb::addr_t> &addresses,
+                            const std::vector<lldb::addr_t> &addresses,
                             bool stop_others);
 
 

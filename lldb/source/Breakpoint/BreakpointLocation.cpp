@@ -36,7 +36,7 @@ BreakpointLocation::BreakpointLocation
     lldb::tid_t tid,
     bool hardware
 ) :
-    StoppointLocation (loc_id, addr.GetLoadAddress(&owner.GetTarget()), hardware),
+    StoppointLocation (loc_id, addr.GetOpcodeLoadAddress(&owner.GetTarget()), hardware),
     m_address (addr),
     m_owner (owner),
     m_options_ap (),
@@ -53,7 +53,7 @@ BreakpointLocation::~BreakpointLocation()
 lldb::addr_t
 BreakpointLocation::GetLoadAddress () const
 {
-    return m_address.GetLoadAddress(&m_owner.GetTarget());
+    return m_address.GetOpcodeLoadAddress (&m_owner.GetTarget());
 }
 
 Address &
@@ -290,7 +290,7 @@ BreakpointLocation::ResolveBreakpointSite ()
         LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         if (log)
             log->Warning ("Tried to add breakpoint site at 0x%llx but it was already present.\n",
-                          m_address.GetLoadAddress(&m_owner.GetTarget()));
+                          m_address.GetOpcodeLoadAddress (&m_owner.GetTarget()));
         return false;
     }
 
@@ -438,7 +438,7 @@ BreakpointLocation::Dump(Stream *s) const
               "hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
             GetID(),
             GetOptionsNoCreate()->GetThreadSpecNoCreate()->GetTID(),
-            (uint64_t) m_address.GetLoadAddress (&m_owner.GetTarget()),
+            (uint64_t) m_address.GetOpcodeLoadAddress (&m_owner.GetTarget()),
             (m_options_ap.get() ? m_options_ap->IsEnabled() : m_owner.IsEnabled()) ? "enabled " : "disabled",
             IsHardware() ? "hardware" : "software",
             GetHardwareIndex(),

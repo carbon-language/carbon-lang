@@ -220,9 +220,9 @@ AppleObjCRuntimeV2::RunFunctionToFindClassName(lldb::addr_t object_addr, Thread 
 
 bool
 AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value, 
-                                             lldb::DynamicValueType use_dynamic, 
-                                             TypeAndOrName &class_type_or_name, 
-                                             Address &address)
+                                              lldb::DynamicValueType use_dynamic, 
+                                              TypeAndOrName &class_type_or_name, 
+                                              Address &address)
 {
     // The Runtime is attached to a particular process, you shouldn't pass in a value from another process.
     assert (in_value.GetUpdatePoint().GetProcess() == m_process);
@@ -244,9 +244,11 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
         Target *target = m_process->CalculateTarget();
 
         char memory_buffer[16];
-        DataExtractor data(memory_buffer, sizeof(memory_buffer), 
-                           m_process->GetByteOrder(), 
-                           m_process->GetAddressByteSize());
+        DataExtractor data (memory_buffer, 
+                            sizeof(memory_buffer), 
+                            m_process->GetByteOrder(), 
+                            m_process->GetAddressByteSize());
+
         size_t address_byte_size = m_process->GetAddressByteSize();
         Error error;
         size_t bytes_read = m_process->ReadMemory (original_ptr, 
@@ -258,10 +260,10 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
             return false;
         }
         
-        uint32_t offset_ptr = 0;
-        lldb::addr_t isa_addr = data.GetAddress (&offset_ptr);
+        uint32_t offset = 0;
+        lldb::addr_t isa_addr = data.GetAddress (&offset);
             
-        if (offset_ptr == 0)
+        if (offset == 0)
             return false;
             
         // Make sure the class address is readable, otherwise this is not a good object:

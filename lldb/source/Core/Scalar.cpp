@@ -1989,6 +1989,34 @@ Scalar::SignExtend (uint32_t sign_bit_pos)
     return false;
 }
 
+uint32_t
+Scalar::GetAsMemoryData (void *dst,
+                         uint32_t dst_len, 
+                         lldb::ByteOrder dst_byte_order,
+                         Error &error) const
+{
+    // Get a data extractor that points to the native scalar data
+    DataExtractor data;
+    if (!GetData(data))
+    {
+        error.SetErrorString ("invalid scalar value");
+        return 0;
+    }
+
+    const size_t src_len = data.GetByteSize();
+
+    // Prepare a memory buffer that contains some or all of the register value
+    const uint32_t bytes_copied = data.CopyByteOrderedData (0,                  // src offset
+                                                            src_len,            // src length
+                                                            dst,                // dst buffer
+                                                            dst_len,            // dst length
+                                                            dst_byte_order);    // dst byte order
+    if (bytes_copied == 0) 
+        error.SetErrorString ("failed to copy data");
+
+    return bytes_copied;
+}
+
 bool
 lldb_private::operator== (const Scalar& lhs, const Scalar& rhs)
 {

@@ -314,12 +314,10 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         }
     }
 
-    // FIXME: This is fake, and just assumes that it matches that architecture.
-    // Make a data extractor and put the address into the right byte order & size.
-
-    uint64_t fun_addr = function_address.GetLoadAddress(exe_ctx.target);
+    // TODO: verify fun_addr needs to be a callable address
+    Scalar fun_addr (function_address.GetCallableLoadAddress(exe_ctx.target));
     int first_offset = m_member_offsets[0];
-    process->WriteMemory(args_addr_ref + first_offset, &fun_addr, 8, error);
+    process->WriteScalarToMemory(args_addr_ref + first_offset, fun_addr, process->GetAddressByteSize(), error);
 
     // FIXME: We will need to extend this for Variadic functions.
 
@@ -350,13 +348,8 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         
         const Scalar &arg_scalar = arg_value->ResolveValue(&exe_ctx, m_clang_ast_context->getASTContext());
 
-        int byte_size = arg_scalar.GetByteSize();
-        std::vector<uint8_t> buffer;
-        buffer.resize(byte_size);
-        DataExtractor value_data;
-        arg_scalar.GetData (value_data);
-        value_data.ExtractBytes(0, byte_size, process->GetByteOrder(), &buffer.front());
-        process->WriteMemory(args_addr_ref + offset, &buffer.front(), byte_size, error);
+        if (!process->WriteScalarToMemory(args_addr_ref + offset, arg_scalar, arg_scalar.GetByteSize(), error))
+            return false;
     }
 
     return true;
@@ -420,8 +413,6 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     // Read the return value - it is the last field in the struct:
     // FIXME: How does clang tell us there's no return value?  We need to handle that case.
     
-    std::vector<uint8_t> data_buffer;
-    data_buffer.resize(m_return_size);
     Process *process = exe_ctx.process;
     
     if (process == NULL)
@@ -430,25 +421,13 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
         return false;
                 
     Error error;
-    size_t bytes_read = process->ReadMemory(args_addr + m_return_offset, &data_buffer.front(), m_return_size, error);
+    ret_value.GetScalar() = process->ReadUnsignedIntegerFromMemory (args_addr + m_return_offset, m_return_size, 0, error);
 
-    if (bytes_read == 0)
-    {
-        return false;
-    }
-
-    if (bytes_read < m_return_size)
+    if (error.Fail())
         return false;
 
-    DataExtractor data(&data_buffer.front(), m_return_size, process->GetByteOrder(), process->GetAddressByteSize());
-    // FIXME: Assuming an integer scalar for now:
-    
-    uint32_t offset = 0;
-    uint64_t return_integer = data.GetMaxU64(&offset, m_return_size);
-    
     ret_value.SetContext (Value::eContextTypeClangType, m_function_return_qual_type);
     ret_value.SetValueType(Value::eValueTypeScalar);
-    ret_value.GetScalar() = return_integer;
     return true;
 }
 

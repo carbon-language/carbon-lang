@@ -63,11 +63,17 @@ public:
     static size_t
     GetMaxByteSize()
     {
-        return std::max (sizeof(long double), sizeof (unsigned long long));
+        return sizeof(ValueData);
     }
 
     bool
     GetData (DataExtractor &data, size_t limit_byte_size = UINT32_MAX) const;
+
+    uint32_t 
+    GetAsMemoryData (void *dst,
+                     uint32_t dst_len, 
+                     lldb::ByteOrder dst_byte_order,
+                     Error &error) const;
 
     bool
     IsZero() const;

@@ -654,7 +654,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
         if (exc_context.process->WriteMemory(cursor, (void *) lstart, size, write_error) != size)
         {
             err.SetErrorToGenericError();
-            err.SetErrorStringWithFormat("Couldn't copy JITted function into the target: %s", write_error.AsCString("unknown error"));
+            err.SetErrorStringWithFormat("Couldn't copy JIT code for function into the target: %s", write_error.AsCString("unknown error"));
             return err;
         }
             
