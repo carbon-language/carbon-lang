@@ -4302,7 +4302,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = insertvalue &lt;aggregate type&gt; &lt;val&gt;, &lt;ty&gt; &lt;elt&gt;, &lt;idx&gt;    <i>; yields &lt;aggregate type&gt;</i>
+  &lt;result&gt; = insertvalue &lt;aggregate type&gt; &lt;val&gt;, &lt;ty&gt; &lt;elt&gt;, &lt;idx&gt;{, <idx>}*    <i>; yields &lt;aggregate type&gt;</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -4326,8 +4326,9 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
 
 <h5>Example:</h5>
 <pre>
-  %agg1 = insertvalue {i32, float} undef, i32 1, 0         <i>; yields {i32 1, float undef}</i>
-  %agg2 = insertvalue {i32, float} %agg1, float %val, 1    <i>; yields {i32 1, float %val}</i>
+  %agg1 = insertvalue {i32, float} undef, i32 1, 0              <i>; yields {i32 1, float undef}</i>
+  %agg2 = insertvalue {i32, float} %agg1, float %val, 1         <i>; yields {i32 1, float %val}</i>
+  %agg3 = insertvalue {i32, {float}} %agg1, float %val, 1, 0    <i>; yields {i32 1, float %val}</i>
 </pre>
 
 </div>
