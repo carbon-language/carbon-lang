@@ -314,7 +314,7 @@ private:
 
   /// The version of the runtime that this class targets.  Must match the
   /// version in the runtime.
-  const int RuntimeVersion;
+  int RuntimeVersion;
   /// The version of the protocol class.  Used to differentiate between ObjC1
   /// and ObjC2 protocols.  Objective-C 1 protocols can not contain optional
   /// components and can not contain declared properties.  We always emit
@@ -658,7 +658,6 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
   : CGM(cgm), TheModule(CGM.getModule()), VMContext(cgm.getLLVMContext()),
   ClassPtrAlias(0), MetaClassPtrAlias(0), RuntimeVersion(runtimeABIVersion),
   ProtocolVersion(protocolClassVersion) {
-    
 
   msgSendMDKind = VMContext.getMDKindID("GNUObjCMessageSend");
 
@@ -741,6 +740,10 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
 
   // Don't bother initialising the GC stuff unless we're compiling in GC mode
   if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
+    // This is a bit of an hack.  We should sort this out by having a proper
+    // CGObjCGNUstep subclass for GC, but we may want to really support the old
+    // ABI and GC added in ObjectiveC2.framework, so we fudge it a bit for now
+    RuntimeVersion = 10;
     // Get selectors needed in GC mode
     RetainSel = GetNullarySelector("retain", CGM.getContext());
     ReleaseSel = GetNullarySelector("release", CGM.getContext());
@@ -2131,7 +2134,9 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   // The symbol table is contained in a module which has some version-checking
   // constants
   llvm::StructType * ModuleTy = llvm::StructType::get(VMContext, LongTy, LongTy,
-      PtrToInt8Ty, llvm::PointerType::getUnqual(SymTabTy), NULL);
+      PtrToInt8Ty, llvm::PointerType::getUnqual(SymTabTy), 
+      (CGM.getLangOptions().getGCMode() == LangOptions::NonGC) ? NULL : IntTy,
+      NULL);
   Elements.clear();
   // Runtime version, used for ABI compatibility checking.
   Elements.push_back(llvm::ConstantInt::get(LongTy, RuntimeVersion));
@@ -2148,8 +2153,17 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   std::string path =
     std::string(mainFile->getDir()->getName()) + '/' + mainFile->getName();
   Elements.push_back(MakeConstantString(path, ".objc_source_file_name"));
-
   Elements.push_back(SymTab);
+
+  switch (CGM.getLangOptions().getGCMode()) {
+    case LangOptions::GCOnly:
+        Elements.push_back(llvm::ConstantInt::get(IntTy, 2));
+    case LangOptions::NonGC:
+        break;
+    case LangOptions::HybridGC:
+        Elements.push_back(llvm::ConstantInt::get(IntTy, 1));
+  }
+
   llvm::Value *Module = MakeGlobal(ModuleTy, Elements);
 
   // Create the load function calling the runtime entry point with the module
