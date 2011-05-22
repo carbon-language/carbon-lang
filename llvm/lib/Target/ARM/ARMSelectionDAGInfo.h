@@ -35,6 +35,15 @@ public:
                                   bool isVolatile, bool AlwaysInline,
                                   MachinePointerInfo DstPtrInfo,
                                   MachinePointerInfo SrcPtrInfo) const;
+
+  // Adjust parameters for memset, see RTABI section 4.3.4
+  virtual
+  SDValue EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
+                                  SDValue Chain,
+                                  SDValue Op1, SDValue Op2,
+                                  SDValue Op3, unsigned Align,
+                                  bool isVolatile,
+                                  MachinePointerInfo DstPtrInfo) const;
 };
 
 }

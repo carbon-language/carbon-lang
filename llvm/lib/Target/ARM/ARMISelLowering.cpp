@@ -396,6 +396,12 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallCallingConv(RTLIB::UDIV_I8, CallingConv::ARM_AAPCS);
     setLibcallCallingConv(RTLIB::UDIV_I16, CallingConv::ARM_AAPCS);
     setLibcallCallingConv(RTLIB::UDIV_I32, CallingConv::ARM_AAPCS);
+
+    // Memory operations
+    // RTABI chapter 4.3.4
+    setLibcallName(RTLIB::MEMCPY,  "__aeabi_memcpy");
+    setLibcallName(RTLIB::MEMMOVE, "__aeabi_memmove");
+    setLibcallName(RTLIB::MEMSET,  "__aeabi_memset");
   }
 
   if (Subtarget->isThumb1Only())

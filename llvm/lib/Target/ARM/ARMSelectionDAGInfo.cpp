@@ -13,6 +13,8 @@
 
 #define DEBUG_TYPE "arm-selectiondag-info"
 #include "ARMTargetMachine.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 using namespace llvm;
 
 ARMSelectionDAGInfo::ARMSelectionDAGInfo(const TargetMachine &TM)
@@ -131,4 +133,66 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, DebugLoc dl,
     BytesLeft -= VTSize;
   }
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &TFOps[0], i);
+}
+
+// Adjust parameters for memset, EABI uses format (ptr, size, value),
+// GNU library uses (ptr, value, size)
+// See RTABI section 4.3.4
+SDValue
+ARMSelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
+                                             SDValue Chain, SDValue Dst,
+                                             SDValue Src, SDValue Size,
+                                             unsigned Align, bool isVolatile,
+                                             MachinePointerInfo DstPtrInfo) const
+{
+  // Use default for non AAPCS subtargets
+  if (!Subtarget->isAAPCS_ABI())
+    return SDValue();
+
+  const ARMTargetLowering &TLI =
+    *static_cast<const ARMTargetLowering*>(DAG.getTarget().getTargetLowering());
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+
+  // First argument: data pointer
+  const Type *IntPtrTy = TLI.getTargetData()->getIntPtrType(*DAG.getContext());
+  Entry.Node = Dst;
+  Entry.Ty = IntPtrTy;
+  Args.push_back(Entry);
+
+  // Second argument: buffer size
+  Entry.Node = Size;
+  Entry.Ty = IntPtrTy;
+  Entry.isSExt = false;
+  Args.push_back(Entry);
+
+  // Extend or truncate the argument to be an i32 value for the call.
+  if (Src.getValueType().bitsGT(MVT::i32))
+    Src = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, Src);
+  else
+    Src = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, Src);
+
+  // Third argument: value to fill
+  Entry.Node = Src;
+  Entry.Ty = Type::getInt32Ty(*DAG.getContext());
+  Entry.isSExt = true;
+  Args.push_back(Entry);
+
+  // Emit __eabi_memset call
+  std::pair<SDValue,SDValue> CallResult =
+    TLI.LowerCallTo(Chain,
+                    Type::getVoidTy(*DAG.getContext()), // return type
+                    false, // return sign ext
+                    false, // return zero ext
+                    false, // is var arg
+                    false, // is in regs
+                    0,     // number of fixed arguments
+                    TLI.getLibcallCallingConv(RTLIB::MEMSET), // call conv
+                    false, // is tail call
+                    false, // is return val used
+                    DAG.getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET),
+                                          TLI.getPointerTy()), // callee
+                    Args, DAG, dl); // arg list, DAG and debug
+
+  return CallResult.second;
 }
