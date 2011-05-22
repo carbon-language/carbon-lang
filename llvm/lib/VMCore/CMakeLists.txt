@@ -28,7 +28,6 @@ add_llvm_library(LLVMCore
   PassManager.cpp
   PassRegistry.cpp
   PrintModulePass.cpp
-  StandardPasses.cpp
   Type.cpp
   TypeSymbolTable.cpp
   Use.cpp
