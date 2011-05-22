@@ -22,7 +22,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/PassManagerBuilder.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/Valgrind.h"
@@ -146,19 +146,17 @@ int main(int argc, char **argv) {
   
   AddToDriver PM(D);
   if (StandardCompileOpts) {
-    createStandardModulePasses(&PM, 3,
-                               /*OptimizeSize=*/ false,
-                               /*UnitAtATime=*/ true,
-                               /*UnrollLoops=*/ true,
-                               /*SimplifyLibCalls=*/ true,
-                               /*HaveExceptions=*/ true,
-                               createFunctionInliningPass());
+    PassManagerBuilder Builder;
+    Builder.OptLevel = 3;
+    Builder.Inliner = createFunctionInliningPass();
+    Builder.populateModulePassManager(PM);
   }
       
-  if (StandardLinkOpts)
-    createStandardLTOPasses(&PM, /*Internalize=*/true,
-                            /*RunInliner=*/true,
-                            /*VerifyEach=*/false);
+  if (StandardLinkOpts) {
+    PassManagerBuilder Builder;
+    Builder.populateLTOPassManager(PM, /*Internalize=*/true,
+                                   /*RunInliner=*/true);
+  }
 
 
   for (std::vector<const PassInfo*>::iterator I = PassList.begin(),
