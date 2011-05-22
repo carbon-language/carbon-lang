@@ -1567,24 +1567,31 @@ __mu(_Ti& __ti, _Uj& __uj)
     return __ti;
 }
 
-template <class _Ti, bool IsBindEx, bool IsPh, class _TupleUj>
+template <class _Ti, bool IsReferenceWrapper, bool IsBindEx, bool IsPh,
+          class _TupleUj>
 struct ____mu_return;
 
 template <class _Ti, class ..._Uj>
-struct ____mu_return<_Ti, true, false, tuple<_Uj...> >
+struct ____mu_return<_Ti, false, true, false, tuple<_Uj...> >
 {
     typedef typename __invoke_of<_Ti&, _Uj...>::type type;
 };
 
 template <class _Ti, class _TupleUj>
-struct ____mu_return<_Ti, false, true, _TupleUj>
+struct ____mu_return<_Ti, false, false, true, _TupleUj>
 {
     typedef typename tuple_element<is_placeholder<_Ti>::value - 1,
                                    _TupleUj>::type&& type;
 };
 
 template <class _Ti, class _TupleUj>
-struct ____mu_return<_Ti, false, false, _TupleUj>
+struct ____mu_return<_Ti, true, false, false, _TupleUj>
+{
+    typedef typename _Ti::type& type;
+};
+
+template <class _Ti, class _TupleUj>
+struct ____mu_return<_Ti, false, false, false, _TupleUj>
 {
     typedef _Ti& type;
 };
@@ -1592,16 +1599,11 @@ struct ____mu_return<_Ti, false, false, _TupleUj>
 template <class _Ti, class _TupleUj>
 struct __mu_return
     : public ____mu_return<_Ti,
+                           __is_reference_wrapper<_Ti>::value,
                            is_bind_expression<_Ti>::value,
                            0 < is_placeholder<_Ti>::value,
                            _TupleUj>
 {
-};
-
-template <class _Ti, class _TupleUj>
-struct __mu_return<reference_wrapper<_Ti>, _TupleUj>
-{
-    typedef _Ti& type;
 };
 
 template <class _F, class _BoundArgs, class _TupleUj>
