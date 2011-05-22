@@ -940,3 +940,9 @@ pshufw $90, %mm4, %mm0
 // CHECK: fsubp
 // CHECK: encoding: [0xde,0xe1]
 fsubp %st,%st(1)
+
+// PR9164
+// CHECK: fsubp	%st(2)
+// CHECK: encoding: [0xde,0xe2]
+fsubp   %st, %st(2)
+
