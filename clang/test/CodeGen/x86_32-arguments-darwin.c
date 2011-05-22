@@ -53,7 +53,7 @@ void f8_2(struct s8 a0) {}
 
 // FIXME: llvm-gcc expands this, this may have some value for the
 // backend in terms of optimization but doesn't change the ABI.
-// CHECK: define void @f9_2(%struct.s9* byval %a0)
+// CHECK: define void @f9_2(%struct.s9* byval align 4 %a0)
 struct s9 {
   int a : 17;
   int b;
@@ -229,7 +229,7 @@ typedef int v4i32 __attribute__((__vector_size__(16)));
 v4i32 f55(v4i32 arg) { return arg+arg; }
 
 // CHECK: define void @f56(
-// CHECK: i8 signext %a0, %struct.s56_0* byval %a1,
+// CHECK: i8 signext %a0, %struct.s56_0* byval align 4 %a1,
 // CHECK: x86_mmx %a2.coerce, %struct.s56_1* byval align 4,
 // CHECK: i64 %a4.coerce, %struct.s56_2* byval align 4,
 // CHECK: <4 x i32> %a6, %struct.s39* byval align 16 %a7,
@@ -238,7 +238,7 @@ v4i32 f55(v4i32 arg) { return arg+arg; }
 // CHECK: <4 x double> %a12, %struct.s56_6* byval align 4)
 
 // CHECK:   call void (i32, ...)* @f56_0(i32 1,
-// CHECK: i32 %{{[^ ]*}}, %struct.s56_0* byval %{{[^ ]*}},
+// CHECK: i32 %{{[^ ]*}}, %struct.s56_0* byval align 4 %{{[^ ]*}},
 // CHECK: x86_mmx %{{[^ ]*}}, %struct.s56_1* byval align 4 %{{[^ ]*}},
 // CHECK: i64 %{{[^ ]*}}, %struct.s56_2* byval align 4 %{{[^ ]*}},
 // CHECK: <4 x i32> %{{[^ ]*}}, %struct.s39* byval align 16 %{{[^ ]*}},

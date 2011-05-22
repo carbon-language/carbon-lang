@@ -648,7 +648,7 @@ ABIArgInfo X86_32ABIInfo::getIndirectResult(QualType Ty, bool ByVal) const {
   unsigned TypeAlign = getContext().getTypeAlign(Ty) / 8;
   unsigned StackAlign = getTypeStackAlignInBytes(Ty, TypeAlign);
   if (StackAlign == 0)
-    return ABIArgInfo::getIndirect(0);
+    return ABIArgInfo::getIndirect(4);
 
   // If the stack alignment is less than the type alignment, realign the
   // argument.
