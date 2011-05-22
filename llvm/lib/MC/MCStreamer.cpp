@@ -388,6 +388,8 @@ void MCStreamer::EmitWin64EHPushReg(unsigned Register) {
 
 void MCStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
   EnsureValidW64UnwindInfo();
+  if (Offset & 0x0F)
+    report_fatal_error("Misaligned frame pointer offset!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, Register, Offset);
   CurFrame->LastFrameInst = CurFrame->Instructions.size();
@@ -396,6 +398,8 @@ void MCStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
 
 void MCStreamer::EmitWin64EHAllocStack(unsigned Size) {
   EnsureValidW64UnwindInfo();
+  if (Size & 7)
+    report_fatal_error("Misaligned stack allocation!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   MCWin64EHInstruction Inst(Size);
   CurFrame->Instructions.push_back(Inst);
@@ -403,18 +407,22 @@ void MCStreamer::EmitWin64EHAllocStack(unsigned Size) {
 
 void MCStreamer::EmitWin64EHSaveReg(unsigned Register, unsigned Offset) {
   EnsureValidW64UnwindInfo();
+  if (Offset & 7)
+    report_fatal_error("Misaligned saved register offset!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   MCWin64EHInstruction Inst(
-         Offset > 0xFFFF ? Win64EH::UOP_SaveNonVol : Win64EH::UOP_SaveNonVolBig,
+     Offset > 512*1024-8 ? Win64EH::UOP_SaveNonVol : Win64EH::UOP_SaveNonVolBig,
                             Register, Offset);
   CurFrame->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) {
   EnsureValidW64UnwindInfo();
+  if (Offset & 0x0F)
+    report_fatal_error("Misaligned saved vector register offset!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   MCWin64EHInstruction Inst(
-         Offset > 0xFFFF ? Win64EH::UOP_SaveXMM128 : Win64EH::UOP_SaveXMM128Big,
+    Offset > 512*1024-16 ? Win64EH::UOP_SaveXMM128 : Win64EH::UOP_SaveXMM128Big,
                             Register, Offset);
   CurFrame->Instructions.push_back(Inst);
 }
