@@ -151,3 +151,15 @@ dead:
 dead2:
   ret i32 %A
 }
+
+
+; PR9841
+define fastcc i8 @test5(i8* %P) nounwind {
+entry:
+  %0 = load i8* %P, align 2
+
+  %Q = getelementptr i8* %P, i32 1
+  %1 = load i8* %Q, align 1
+  ret i8 %1
+}
+

@@ -1607,6 +1607,11 @@ bool GVN::processLoad(LoadInst *L) {
   if (L->isVolatile())
     return false;
 
+  if (L->use_empty()) {
+    markInstructionForDeletion(L);
+    return true;
+  }
+  
   // ... to a pointer that has been loaded from before...
   MemDepResult Dep = MD->getDependency(L);
 
