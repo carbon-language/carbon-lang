@@ -1033,7 +1033,7 @@ public:
             void
             SetUpdateStateOnRemoval()
             {
-                m_update_state = true;
+                m_update_state++;
             }
             void
             SetRestarted (bool new_value)
@@ -1049,7 +1049,7 @@ public:
             lldb::ProcessSP m_process_sp;
             lldb::StateType m_state;
             bool m_restarted;  // For "eStateStopped" events, this is true if the target was automatically restarted.
-            bool m_update_state;
+            int m_update_state;
             bool m_interrupted;
             DISALLOW_COPY_AND_ASSIGN (ProcessEventData);
 

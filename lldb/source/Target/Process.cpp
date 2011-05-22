@@ -2812,7 +2812,7 @@ Process::ProcessEventData::ProcessEventData () :
     m_process_sp (),
     m_state (eStateInvalid),
     m_restarted (false),
-    m_update_state (false),
+    m_update_state (0),
     m_interrupted (false)
 {
 }
@@ -2822,7 +2822,7 @@ Process::ProcessEventData::ProcessEventData (const ProcessSP &process_sp, StateT
     m_process_sp (process_sp),
     m_state (state),
     m_restarted (false),
-    m_update_state (false),
+    m_update_state (0),
     m_interrupted (false)
 {
 }
@@ -2848,12 +2848,13 @@ void
 Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
 {
     // This function gets called twice for each event, once when the event gets pulled 
-    // off of the private process event queue, and once when it gets pulled off of
-    // the public event queue.  m_update_state is used to distinguish these
-    // two cases; it is false when we're just pulling it off for private handling, 
-    // and we don't want to do the breakpoint command handling then.
+    // off of the private process event queue, and then any number of times, first when it gets pulled off of
+    // the public event queue, then other times when we're pretending that this is where we stopped at the
+    // end of expression evaluation.  m_update_state is used to distinguish these
+    // three cases; it is 0 when we're just pulling it off for private handling, 
+    // and > 1 for expression evaluation, and we don't want to do the breakpoint command handling then.
     
-    if (!m_update_state)
+    if (m_update_state != 1)
         return;
         
     m_process_sp->SetPublicState (m_state);
