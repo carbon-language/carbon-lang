@@ -506,3 +506,10 @@ void MCStreamer::EmitFrames(bool usingCFI) {
   if (EmitDebugFrame)
     MCDwarfFrameEmitter::Emit(*this, usingCFI, false);
 }
+
+void MCStreamer::EmitW64Tables() {
+  if (!getNumW64UnwindInfos())
+    return;
+
+  MCWin64EHUnwindEmitter::Emit(*this);
+}

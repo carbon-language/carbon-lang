@@ -110,7 +110,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCWin64EHInstruction &inst) {
 }
 
 static void EmitRuntimeFunction(MCStreamer &streamer,
-                                MCWin64EHUnwindInfo *info) {
+                                const MCWin64EHUnwindInfo *info) {
   MCContext &context = streamer.getContext();
 
   streamer.EmitValue(MCSymbolRefExpr::Create(info->Begin, context), 4);
@@ -183,6 +183,21 @@ void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
   streamer.SwitchSection(xdataSect);
 
   llvm::EmitUnwindInfo(streamer, info);
+}
+
+void MCWin64EHUnwindEmitter::Emit(MCStreamer &streamer) {
+  MCContext &context = streamer.getContext();
+  // Emit the unwind info structs first.
+  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  const MCSection *xdataSect = asmInfo.getWin64EHTableSection();
+  streamer.SwitchSection(xdataSect);
+  for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i)
+    llvm::EmitUnwindInfo(streamer, &streamer.getW64UnwindInfo(i));
+  // Now emit RUNTIME_FUNCTION entries.
+  const MCSection *pdataSect = asmInfo.getWin64EHFuncTableSection();
+  streamer.SwitchSection(pdataSect);
+  for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i)
+    EmitRuntimeFunction(streamer, &streamer.getW64UnwindInfo(i));
 }
 
 } // End of namespace llvm

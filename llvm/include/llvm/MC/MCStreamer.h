@@ -81,6 +81,7 @@ namespace llvm {
     void EmitFrames(bool usingCFI);
 
     MCWin64EHUnwindInfo *getCurrentW64UnwindInfo(){return CurrentW64UnwindInfo;}
+    void EmitW64Tables();
 
   public:
     virtual ~MCStreamer();
@@ -93,6 +94,14 @@ namespace llvm {
 
     const MCDwarfFrameInfo &getFrameInfo(unsigned i) {
       return FrameInfos[i];
+    }
+
+    unsigned getNumW64UnwindInfos() {
+      return W64UnwindInfos.size();
+    }
+
+    MCWin64EHUnwindInfo &getW64UnwindInfo(unsigned i) {
+      return W64UnwindInfos[i];
     }
 
     /// @name Assembly File Formatting.
