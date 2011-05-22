@@ -1635,7 +1635,8 @@ LValue CodeGenFunction::EmitLValueForAnonRecordField(llvm::Value *BaseValue,
   IndirectFieldDecl::chain_iterator I = Field->chain_begin(),
     IEnd = Field->chain_end();
   while (true) {
-    LValue LV = EmitLValueForField(BaseValue, cast<FieldDecl>(*I), CVRQualifiers);
+    LValue LV = EmitLValueForField(BaseValue, cast<FieldDecl>(*I),
+                                   CVRQualifiers);
     if (++I == IEnd) return LV;
 
     assert(LV.isSimple());
