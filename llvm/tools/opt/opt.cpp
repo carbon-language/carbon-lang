@@ -35,7 +35,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/PassManagerBuilder.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/LinkAllPasses.h"
@@ -387,10 +387,12 @@ struct BreakpointPrinter : public ModulePass {
     AU.setPreservesAll();
   }
 };
+ 
+} // anonymous namespace
 
 char BreakpointPrinter::ID = 0;
 
-inline void addPass(PassManagerBase &PM, Pass *P) {
+static inline void addPass(PassManagerBase &PM, Pass *P) {
   // Add the pass to the pass manager...
   PM.add(P);
 
@@ -403,31 +405,30 @@ inline void addPass(PassManagerBase &PM, Pass *P) {
 /// duplicates llvm-gcc behaviour.
 ///
 /// OptLevel - Optimization Level
-void AddOptimizationPasses(PassManagerBase &MPM, PassManagerBase &FPM,
-                           unsigned OptLevel) {
-  createStandardFunctionPasses(&FPM, OptLevel);
+static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
+                                  unsigned OptLevel) {
+  PassManagerBuilder Builder;
+  Builder.OptLevel = OptLevel;
 
-  llvm::Pass *InliningPass = 0;
   if (DisableInline) {
     // No inlining pass
   } else if (OptLevel) {
     unsigned Threshold = 225;
     if (OptLevel > 2)
       Threshold = 275;
-    InliningPass = createFunctionInliningPass(Threshold);
+    Builder.Inliner = createFunctionInliningPass(Threshold);
   } else {
-    InliningPass = createAlwaysInlinerPass();
+    Builder.Inliner = createAlwaysInlinerPass();
   }
-  createStandardModulePasses(&MPM, OptLevel,
-                             /*OptimizeSize=*/ false,
-                             UnitAtATime,
-                             /*UnrollLoops=*/ OptLevel > 1,
-                             !DisableSimplifyLibCalls,
-                             /*HaveExceptions=*/ true,
-                             InliningPass);
+  Builder.DisableUnitAtATime = !UnitAtATime;
+  Builder.DisableUnrollLoops = OptLevel == 0;
+  Builder.DisableSimplifyLibCalls = DisableSimplifyLibCalls;
+  
+  Builder.populateFunctionPassManager(FPM);
+  Builder.populateModulePassManager(MPM);
 }
 
-void AddStandardCompilePasses(PassManagerBase &PM) {
+static void AddStandardCompilePasses(PassManagerBase &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
 
   addPass(PM, createLowerSetJmpPass());          // Lower llvm.setjmp/.longjmp
@@ -438,19 +439,16 @@ void AddStandardCompilePasses(PassManagerBase &PM) {
 
   if (DisableOptimizations) return;
 
-  llvm::Pass *InliningPass = !DisableInline ? createFunctionInliningPass() : 0;
-
   // -std-compile-opts adds the same module passes as -O3.
-  createStandardModulePasses(&PM, 3,
-                             /*OptimizeSize=*/ false,
-                             /*UnitAtATime=*/ true,
-                             /*UnrollLoops=*/ true,
-                             !DisableSimplifyLibCalls,
-                             /*HaveExceptions=*/ true,
-                             InliningPass);
+  PassManagerBuilder Builder;
+  if (!DisableInline)
+    Builder.Inliner = createFunctionInliningPass();
+  Builder.OptLevel = 3;
+  Builder.DisableSimplifyLibCalls = DisableSimplifyLibCalls;
+  Builder.populateModulePassManager(PM);
 }
 
-void AddStandardLinkPasses(PassManagerBase &PM) {
+static void AddStandardLinkPasses(PassManagerBase &PM) {
   PM.add(createVerifierPass());                  // Verify that input is correct
 
   // If the -strip-debug command line option was specified, do it.
@@ -459,12 +457,10 @@ void AddStandardLinkPasses(PassManagerBase &PM) {
 
   if (DisableOptimizations) return;
 
-  createStandardLTOPasses(&PM, /*Internalize=*/ !DisableInternalize,
-                          /*RunInliner=*/ !DisableInline,
-                          /*VerifyEach=*/ VerifyEach);
+  PassManagerBuilder Builder;
+  Builder.populateLTOPassManager(PM, /*Internalize=*/ !DisableInternalize,
+                                 /*RunInliner=*/ !DisableInline);
 }
-
-} // anonymous namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -566,9 +562,9 @@ int main(int argc, char **argv) {
   if (TD)
     Passes.add(TD);
 
-  OwningPtr<PassManager> FPasses;
+  OwningPtr<FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
-    FPasses.reset(new PassManager());
+    FPasses.reset(new FunctionPassManager(M.get()));
     if (TD)
       FPasses->add(new TargetData(*TD));
   }
@@ -687,7 +683,8 @@ int main(int argc, char **argv) {
     AddOptimizationPasses(Passes, *FPasses, 3);
 
   if (OptLevelO1 || OptLevelO2 || OptLevelO3)
-    FPasses->run(*M.get());
+    for (Module::iterator F = M->begin(), E = M->end(); F != E; ++F)
+      FPasses->run(*F);
 
   // Check that the module is well formed on completion of optimization
   if (!NoVerify && !VerifyEach)
