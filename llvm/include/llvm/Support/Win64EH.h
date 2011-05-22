@@ -16,6 +16,8 @@
 #ifndef LLVM_SUPPORT_WIN64EH_H
 #define LLVM_SUPPORT_WIN64EH_H
 
+#include "llvm/Support/DataTypes.h"
+
 namespace llvm {
 namespace Win64EH {
 
