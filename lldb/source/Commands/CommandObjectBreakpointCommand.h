@@ -130,16 +130,16 @@ private:
 };
 
 //-------------------------------------------------------------------------
-// CommandObjectBreakpointCommandRemove
+// CommandObjectBreakpointCommandDelete
 //-------------------------------------------------------------------------
 
-class CommandObjectBreakpointCommandRemove : public CommandObject
+class CommandObjectBreakpointCommandDelete : public CommandObject
 {
 public:
-    CommandObjectBreakpointCommandRemove (CommandInterpreter &interpreter);
+    CommandObjectBreakpointCommandDelete (CommandInterpreter &interpreter);
 
     virtual
-    ~CommandObjectBreakpointCommandRemove ();
+    ~CommandObjectBreakpointCommandDelete ();
 
     virtual bool
     Execute (Args& command,

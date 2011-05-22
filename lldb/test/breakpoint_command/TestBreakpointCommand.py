@@ -1,5 +1,5 @@
 """
-Test lldb breakpoint command add/list/remove.
+Test lldb breakpoint command add/list/delete.
 """
 
 import os, time
@@ -18,13 +18,13 @@ class BreakpointCommandTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
-        """Test a sequence of breakpoint command add, list, and remove."""
+        """Test a sequence of breakpoint command add, list, and delete."""
         self.buildDsym()
         self.breakpoint_command_sequence()
         self.breakpoint_command_script_parameters ()
 
     def test_with_dwarf(self):
-        """Test a sequence of breakpoint command add, list, and remove."""
+        """Test a sequence of breakpoint command add, list, and delete."""
         self.buildDwarf()
         self.breakpoint_command_sequence()
         self.breakpoint_command_script_parameters ()
@@ -36,7 +36,7 @@ class BreakpointCommandTestCase(TestBase):
         self.line = line_number('main.c', '// Set break point at this line.')
 
     def breakpoint_command_sequence(self):
-        """Test a sequence of breakpoint command add, list, and remove."""
+        """Test a sequence of breakpoint command add, list, and delete."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
@@ -98,7 +98,7 @@ class BreakpointCommandTestCase(TestBase):
         self.runCmd("process continue")
 
         # Remove the breakpoint command associated with breakpoint 1.
-        self.runCmd("breakpoint command remove 1")
+        self.runCmd("breakpoint command delete 1")
 
         # Remove breakpoint 2.
         self.runCmd("breakpoint delete 2")

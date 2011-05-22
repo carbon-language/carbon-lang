@@ -94,7 +94,7 @@ class AbbreviationsTestCase(TestBase):
                                 "Breakpoint commands:",
                                 "print frame" ])
 
-        self.runCmd("br co rem 1")
+        self.runCmd("br co del 1")
         self.expect("breakpoint command list 1",
                     startstr = "Breakpoint 1 does not have an associated command.")
 

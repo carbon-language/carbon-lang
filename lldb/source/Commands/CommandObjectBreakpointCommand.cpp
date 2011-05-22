@@ -520,13 +520,13 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
 
 
 //-------------------------------------------------------------------------
-// CommandObjectBreakpointCommandRemove
+// CommandObjectBreakpointCommandDelete
 //-------------------------------------------------------------------------
 
-CommandObjectBreakpointCommandRemove::CommandObjectBreakpointCommandRemove (CommandInterpreter &interpreter) :
+CommandObjectBreakpointCommandDelete::CommandObjectBreakpointCommandDelete (CommandInterpreter &interpreter) :
     CommandObject (interpreter, 
-                   "remove",
-                   "Remove the set of commands from a breakpoint.",
+                   "delete",
+                   "Delete the set of commands from a breakpoint.",
                    NULL)
 {
     CommandArgumentEntry arg;
@@ -543,12 +543,12 @@ CommandObjectBreakpointCommandRemove::CommandObjectBreakpointCommandRemove (Comm
     m_arguments.push_back (arg);
 }
 
-CommandObjectBreakpointCommandRemove::~CommandObjectBreakpointCommandRemove ()
+CommandObjectBreakpointCommandDelete::~CommandObjectBreakpointCommandDelete ()
 {
 }
 
 bool
-CommandObjectBreakpointCommandRemove::Execute 
+CommandObjectBreakpointCommandDelete::Execute 
 (
     Args& command,
     CommandReturnObject &result
@@ -558,7 +558,7 @@ CommandObjectBreakpointCommandRemove::Execute
 
     if (target == NULL)
     {
-        result.AppendError ("There is not a current executable; there are no breakpoints from which to remove commands");
+        result.AppendError ("There is not a current executable; there are no breakpoints from which to delete commands");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
@@ -568,14 +568,14 @@ CommandObjectBreakpointCommandRemove::Execute
 
     if (num_breakpoints == 0)
     {
-        result.AppendError ("No breakpoints exist to have commands removed");
+        result.AppendError ("No breakpoints exist to have commands deleted");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
 
     if (command.GetArgumentCount() == 0)
     {
-        result.AppendError ("No breakpoint specified from which to remove the commands");
+        result.AppendError ("No breakpoint specified from which to delete the commands");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
@@ -760,15 +760,15 @@ CommandObjectBreakpointCommand::CommandObjectBreakpointCommand (CommandInterpret
 {
     bool status;
     CommandObjectSP add_command_object (new CommandObjectBreakpointCommandAdd (interpreter));
-    CommandObjectSP remove_command_object (new CommandObjectBreakpointCommandRemove (interpreter));
+    CommandObjectSP delete_command_object (new CommandObjectBreakpointCommandDelete (interpreter));
     CommandObjectSP list_command_object (new CommandObjectBreakpointCommandList (interpreter));
 
     add_command_object->SetCommandName ("breakpoint command add");
-    remove_command_object->SetCommandName ("breakpoint command remove");
+    delete_command_object->SetCommandName ("breakpoint command delete");
     list_command_object->SetCommandName ("breakpoint command list");
 
     status = LoadSubCommand ("add",    add_command_object);
-    status = LoadSubCommand ("remove", remove_command_object);
+    status = LoadSubCommand ("delete", delete_command_object);
     status = LoadSubCommand ("list",   list_command_object);
 }
 
