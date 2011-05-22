@@ -240,6 +240,81 @@ public:
         MPM.add(createConstantMergePass());     // Merge dup global constants
     }
   }
+  
+  void populateLTOPassManager(PassManagerBase &PM, bool Internalize,
+                              bool RunInliner) {
+    // Provide AliasAnalysis services for optimizations.
+    addInitialAliasAnalysisPasses(PM);
+    
+    // Now that composite has been compiled, scan through the module, looking
+    // for a main function.  If main is defined, mark all other functions
+    // internal.
+    if (Internalize)
+      PM.add(createInternalizePass(true));
+    
+    // Propagate constants at call sites into the functions they call.  This
+    // opens opportunities for globalopt (and inlining) by substituting function
+    // pointers passed as arguments to direct uses of functions.  
+    PM.add(createIPSCCPPass());
+    
+    // Now that we internalized some globals, see if we can hack on them!
+    PM.add(createGlobalOptimizerPass());
+    
+    // Linking modules together can lead to duplicated global constants, only
+    // keep one copy of each constant.
+    PM.add(createConstantMergePass());
+    
+    // Remove unused arguments from functions.
+    PM.add(createDeadArgEliminationPass());
+    
+    // Reduce the code after globalopt and ipsccp.  Both can open up significant
+    // simplification opportunities, and both can propagate functions through
+    // function pointers.  When this happens, we often have to resolve varargs
+    // calls, etc, so let instcombine do this.
+    PM.add(createInstructionCombiningPass());
+
+    // Inline small functions
+    if (RunInliner)
+      PM.add(createFunctionInliningPass());
+    
+    PM.add(createPruneEHPass());   // Remove dead EH info.
+    
+    // Optimize globals again if we ran the inliner.
+    if (RunInliner)
+      PM.add(createGlobalOptimizerPass());
+    PM.add(createGlobalDCEPass()); // Remove dead functions.
+    
+    // If we didn't decide to inline a function, check to see if we can
+    // transform it to pass arguments by value instead of by reference.
+    PM.add(createArgumentPromotionPass());
+    
+    // The IPO passes may leave cruft around.  Clean up after them.
+    PM.add(createInstructionCombiningPass());
+    PM.add(createJumpThreadingPass());
+    // Break up allocas
+    PM.add(createScalarReplAggregatesPass());
+    
+    // Run a few AA driven optimizations here and now, to cleanup the code.
+    PM.add(createFunctionAttrsPass()); // Add nocapture.
+    PM.add(createGlobalsModRefPass()); // IP alias analysis.
+    
+    PM.add(createLICMPass());      // Hoist loop invariants.
+    PM.add(createGVNPass());       // Remove redundancies.
+    PM.add(createMemCpyOptPass()); // Remove dead memcpys.
+    // Nuke dead stores.
+    PM.add(createDeadStoreEliminationPass());
+    
+    // Cleanup and simplify the code after the scalar optimizations.
+    PM.add(createInstructionCombiningPass());
+    
+    PM.add(createJumpThreadingPass());
+    
+    // Delete basic blocks, which optimization passes may have killed.
+    PM.add(createCFGSimplificationPass());
+   
+    // Now that we have optimized the program, discard unreachable functions.
+    PM.add(createGlobalDCEPass());
+  }
 };
 
   
