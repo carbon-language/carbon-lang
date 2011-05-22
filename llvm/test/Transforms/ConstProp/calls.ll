@@ -7,6 +7,7 @@ declare double @sin(double)
 declare double @tan(double)
 
 declare double @sqrt(double)
+declare double @exp2(double)
 
 define double @T() {
 ; CHECK: @T
@@ -19,7 +20,11 @@ define double @T() {
   %b = fadd double %a, %C
   %D = call double @sqrt(double 4.000000e+00)
   %c = fadd double %b, %D
-  ret double %c
+
+  ; PR9315
+  %E = call double @exp2(double 4.0)
+  %d = fadd double %c, %E 
+  ret double %d
 }
 
 define i1 @test_sse_cvt() nounwind readnone {
