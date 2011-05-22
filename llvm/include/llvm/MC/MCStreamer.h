@@ -80,6 +80,8 @@ namespace llvm {
 
     void EmitFrames(bool usingCFI);
 
+    MCWin64EHUnwindInfo *getCurrentW64UnwindInfo(){return CurrentW64UnwindInfo;}
+
   public:
     virtual ~MCStreamer();
 

@@ -16,6 +16,7 @@
 #define LLVM_MC_MCWIN64EH_H
 
 #include "llvm/Support/Win64EH.h"
+#include <cassert>
 #include <vector>
 
 namespace llvm {
@@ -59,20 +60,21 @@ namespace llvm {
 
   struct MCWin64EHUnwindInfo {
     MCWin64EHUnwindInfo() : Begin(0), End(0), ExceptionHandler(0),
-                            Function(0), PrologEnd(0), HandlesUnwind(false),
-                            HandlesExceptions(false), LastFrameInst(-1),
-                            ChainedParent(0), Instructions(), Emitted(false) {}
+                            Function(0), PrologEnd(0), Symbol(0),
+                            HandlesUnwind(false), HandlesExceptions(false),
+                            LastFrameInst(-1), ChainedParent(0),
+                            Instructions() {}
     MCSymbol *Begin;
     MCSymbol *End;
     const MCSymbol *ExceptionHandler;
     const MCSymbol *Function;
     MCSymbol *PrologEnd;
+    MCSymbol *Symbol;
     bool HandlesUnwind;
     bool HandlesExceptions;
     int LastFrameInst;
     MCWin64EHUnwindInfo *ChainedParent;
     std::vector<MCWin64EHInstruction> Instructions;
-    bool Emitted;
   };
 
   class MCWin64EHUnwindEmitter {

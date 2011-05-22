@@ -23,6 +23,7 @@
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCSectionCOFF.h"
+#include "llvm/MC/MCWin64EH.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/ADT/StringMap.h"
@@ -74,6 +75,7 @@ public:
                                  unsigned MaxBytesToEmit);
   virtual void EmitFileDirective(StringRef Filename);
   virtual void EmitInstruction(const MCInst &Instruction);
+  virtual void EmitWin64EHHandlerData();
   virtual void Finish();
 
 private:
@@ -375,6 +377,14 @@ void WinCOFFStreamer::EmitInstruction(const MCInst &Instruction) {
 
   getAssembler().getEmitter().EncodeInstruction(Instruction, VecOS,
                                                 Fragment->getFixups());
+}
+
+void WinCOFFStreamer::EmitWin64EHHandlerData() {
+  MCStreamer::EmitWin64EHHandlerData();
+
+  // We have to emit the unwind info now, because this directive
+  // actually switches to the .xdata section!
+  MCWin64EHUnwindEmitter::EmitUnwindInfo(*this, getCurrentW64UnwindInfo());
 }
 
 void WinCOFFStreamer::Finish() {

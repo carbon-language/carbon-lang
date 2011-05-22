@@ -30,6 +30,7 @@ add_llvm_library(LLVMMC
   MCStreamer.cpp
   MCSymbol.cpp
   MCValue.cpp
+  MCWin64EH.cpp
   MachObjectWriter.cpp
   WinCOFFStreamer.cpp
   WinCOFFObjectWriter.cpp
