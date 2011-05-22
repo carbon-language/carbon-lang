@@ -2,7 +2,7 @@
 ; RUN: cat %t | grep 123
 
 ; This test tries to catch wrongful removal of return values for a specific case
-; that was break llvm-gcc builds.
+; that was breaking llvm-gcc builds.
 
 ; This function has a live return value, it is used by @alive.
 define internal i32 @test5() {
