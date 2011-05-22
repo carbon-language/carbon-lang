@@ -58,9 +58,13 @@ Sema::getTemplateInstantiationArgs(NamedDecl *D,
     Result.addOuterTemplateArguments(Innermost);
   
   DeclContext *Ctx = dyn_cast<DeclContext>(D);
-  if (!Ctx)
+  if (!Ctx) {
     Ctx = D->getDeclContext();
-
+    
+    assert((!D->isTemplateParameter() || !Ctx->isTranslationUnit()) &&
+           "Template parameter doesn't have its context yet!");
+  }
+  
   while (!Ctx->isFileContext()) {
     // Add template arguments from a class template instantiation.
     if (ClassTemplateSpecializationDecl *Spec
