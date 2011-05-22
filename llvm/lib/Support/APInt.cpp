@@ -1375,7 +1375,7 @@ APInt APInt::sqrt() const {
                  uint64_t(::round(::sqrt(double(isSingleWord()?VAL:pVal[0])))));
 #else
     return APInt(BitWidth,
-                 uint64_t(::sqrt(double(isSingleWord()?VAL:pVal[0]))) + 0.5);
+                 uint64_t(::sqrt(double(isSingleWord()?VAL:pVal[0])) + 0.5));
 #endif
   }
 
