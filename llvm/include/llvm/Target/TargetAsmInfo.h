@@ -62,6 +62,14 @@ public:
     return TLOF->getDwarfFrameSection();
   }
 
+  const MCSection *getWin64EHFuncTableSection() const {
+    return TLOF->getWin64EHFuncTableSection();
+  }
+
+  const MCSection *getWin64EHTableSection() const {
+    return TLOF->getWin64EHTableSection();
+  }
+
   unsigned getFDEEncoding(bool CFI) const {
     return TLOF->getFDEEncoding(CFI);
   }
