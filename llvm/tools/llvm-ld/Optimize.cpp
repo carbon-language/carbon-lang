@@ -13,7 +13,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/PassMAnagerBuilder.h"
+#include "llvm/Support/PassManagerBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
