@@ -157,7 +157,7 @@ public:
   virtual bool SupportsProfiling() const { return true; }
 
   /// Does this tool chain support Objective-C garbage collection.
-  virtual bool SupportsObjCGC() const { return false; }
+  virtual bool SupportsObjCGC() const { return true; }
 
   /// UseDwarfDebugFlags - Embed the compile options to clang into the Dwarf
   /// compile unit information.
