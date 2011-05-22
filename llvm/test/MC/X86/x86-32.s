@@ -934,3 +934,9 @@ pshufw $90, %mm4, %mm0
 // CHECK: strl
 // CHECK: encoding: [0x0f,0x00,0xc8]
 	str %eax
+
+
+// PR9378
+// CHECK: fsubp
+// CHECK: encoding: [0xde,0xe1]
+fsubp %st,%st(1)
