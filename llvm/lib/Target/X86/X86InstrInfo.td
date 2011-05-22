@@ -1485,6 +1485,7 @@ defm : FpUnaryAlias<"fucompi",  UCOM_FIPr>;
 // solely because gas supports it.
 def : InstAlias<"faddp %st(0), $op", (ADD_FPrST0 RST:$op), 0>;
 def : InstAlias<"fmulp %st(0), $op", (MUL_FPrST0 RST:$op)>;
+def : InstAlias<"fsubp %st(0), $op", (SUBR_FPrST0 RST:$op)>;
 def : InstAlias<"fsubrp %st(0), $op", (SUB_FPrST0 RST:$op)>;
 def : InstAlias<"fdivp %st(0), $op", (DIVR_FPrST0 RST:$op)>;
 def : InstAlias<"fdivrp %st(0), $op", (DIV_FPrST0 RST:$op)>;
