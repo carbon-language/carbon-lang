@@ -2058,39 +2058,48 @@ DNBArchMachARM::NumSupportedHardwareBreakpoints()
         // Set this to zero in case we can't tell if there are any HW breakpoints
         g_num_supported_hw_breakpoints = 0;
 
-        // Read the DBGDIDR to get the number of available hardware breakpoints
-        // However, in some of our current armv7 processors, hardware
-        // breakpoints/watchpoints were not properly connected. So detect those
-        // cases using a field in a sysctl. For now we are using "hw.cpusubtype"
-        // field to distinguish CPU architectures. This is a hack until we can
-        // get <rdar://problem/6372672> fixed, at which point we will switch to
-        // using a different sysctl string that will tell us how many BRPs
-        // are available to us directly without having to read DBGDIDR.
-        uint32_t register_DBGDIDR;
-
-        asm("mrc p14, 0, %0, c0, c0, 0" : "=r" (register_DBGDIDR));
-        uint32_t numBRPs = bits(register_DBGDIDR, 27, 24);
-        // Zero is reserved for the BRP count, so don't increment it if it is zero
-        if (numBRPs > 0)
-            numBRPs++;
-        DNBLogThreadedIf(LOG_THREAD, "DBGDIDR=0x%8.8x (number BRP pairs = %u)", register_DBGDIDR, numBRPs);
-
-        if (numBRPs > 0)
+        size_t len;
+        uint32_t n = 0;
+        len = sizeof (n);
+        if (::sysctlbyname("hw.optional.breakpoint", &n, &len, NULL, 0) == 0)
         {
-            uint32_t cpusubtype;
-            size_t len;
-            len = sizeof(cpusubtype);
-            // TODO: remove this hack and change to using hw.optional.xx when implmented
-            if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
+            g_num_supported_hw_breakpoints = n;
+            DNBLogThreadedIf(LOG_THREAD, "hw.optional.breakpoint=%u", n);
+        }
+        else
+        {
+            // Read the DBGDIDR to get the number of available hardware breakpoints
+            // However, in some of our current armv7 processors, hardware
+            // breakpoints/watchpoints were not properly connected. So detect those
+            // cases using a field in a sysctl. For now we are using "hw.cpusubtype"
+            // field to distinguish CPU architectures. This is a hack until we can
+            // get <rdar://problem/6372672> fixed, at which point we will switch to
+            // using a different sysctl string that will tell us how many BRPs
+            // are available to us directly without having to read DBGDIDR.
+            uint32_t register_DBGDIDR;
+
+            asm("mrc p14, 0, %0, c0, c0, 0" : "=r" (register_DBGDIDR));
+            uint32_t numBRPs = bits(register_DBGDIDR, 27, 24);
+            // Zero is reserved for the BRP count, so don't increment it if it is zero
+            if (numBRPs > 0)
+                numBRPs++;
+            DNBLogThreadedIf(LOG_THREAD, "DBGDIDR=0x%8.8x (number BRP pairs = %u)", register_DBGDIDR, numBRPs);
+
+            if (numBRPs > 0)
             {
-                DNBLogThreadedIf(LOG_THREAD, "hw.cpusubtype=0x%d", cpusubtype);
-                if (cpusubtype == CPU_SUBTYPE_ARM_V7)
-                    DNBLogThreadedIf(LOG_THREAD, "Hardware breakpoints disabled for armv7 (rdar://problem/6372672)");
-                else
-                    g_num_supported_hw_breakpoints = numBRPs;
+                uint32_t cpusubtype;
+                len = sizeof(cpusubtype);
+                // TODO: remove this hack and change to using hw.optional.xx when implmented
+                if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
+                {
+                    DNBLogThreadedIf(LOG_THREAD, "hw.cpusubtype=%d", cpusubtype);
+                    if (cpusubtype == CPU_SUBTYPE_ARM_V7)
+                        DNBLogThreadedIf(LOG_THREAD, "Hardware breakpoints disabled for armv7 (rdar://problem/6372672)");
+                    else
+                        g_num_supported_hw_breakpoints = numBRPs;
+                }
             }
         }
-
     }
     return g_num_supported_hw_breakpoints;
 }
@@ -2106,37 +2115,49 @@ DNBArchMachARM::NumSupportedHardwareWatchpoints()
     {
         // Set this to zero in case we can't tell if there are any HW breakpoints
         g_num_supported_hw_watchpoints = 0;
-        // Read the DBGDIDR to get the number of available hardware breakpoints
-        // However, in some of our current armv7 processors, hardware
-        // breakpoints/watchpoints were not properly connected. So detect those
-        // cases using a field in a sysctl. For now we are using "hw.cpusubtype"
-        // field to distinguish CPU architectures. This is a hack until we can
-        // get <rdar://problem/6372672> fixed, at which point we will switch to
-        // using a different sysctl string that will tell us how many WRPs
-        // are available to us directly without having to read DBGDIDR.
-
-        uint32_t register_DBGDIDR;
-        asm("mrc p14, 0, %0, c0, c0, 0" : "=r" (register_DBGDIDR));
-        uint32_t numWRPs = bits(register_DBGDIDR, 31, 28) + 1;
-        DNBLogThreadedIf(LOG_THREAD, "DBGDIDR=0x%8.8x (number WRP pairs = %u)", register_DBGDIDR, numWRPs);
-
-        if (numWRPs > 0)
+        
+        
+        size_t len;
+        uint32_t n = 0;
+        len = sizeof (n);
+        if (::sysctlbyname("hw.optional.watchpoint", &n, &len, NULL, 0) == 0)
         {
-            uint32_t cpusubtype;
-            size_t len;
-            len = sizeof(cpusubtype);
-            // TODO: remove this hack and change to using hw.optional.xx when implmented
-            if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
-            {
-                DNBLogThreadedIf(LOG_THREAD, "hw.cpusubtype=0x%d", cpusubtype);
+            g_num_supported_hw_watchpoints = n;
+            DNBLogThreadedIf(LOG_THREAD, "hw.optional.watchpoint=%u", n);
+        }
+        else
+        {
+            // Read the DBGDIDR to get the number of available hardware breakpoints
+            // However, in some of our current armv7 processors, hardware
+            // breakpoints/watchpoints were not properly connected. So detect those
+            // cases using a field in a sysctl. For now we are using "hw.cpusubtype"
+            // field to distinguish CPU architectures. This is a hack until we can
+            // get <rdar://problem/6372672> fixed, at which point we will switch to
+            // using a different sysctl string that will tell us how many WRPs
+            // are available to us directly without having to read DBGDIDR.
 
-                if (cpusubtype == CPU_SUBTYPE_ARM_V7)
-                    DNBLogThreadedIf(LOG_THREAD, "Hardware watchpoints disabled for armv7 (rdar://problem/6372672)");
-                else
-                    g_num_supported_hw_watchpoints = numWRPs;
+            uint32_t register_DBGDIDR;
+            asm("mrc p14, 0, %0, c0, c0, 0" : "=r" (register_DBGDIDR));
+            uint32_t numWRPs = bits(register_DBGDIDR, 31, 28) + 1;
+            DNBLogThreadedIf(LOG_THREAD, "DBGDIDR=0x%8.8x (number WRP pairs = %u)", register_DBGDIDR, numWRPs);
+
+            if (numWRPs > 0)
+            {
+                uint32_t cpusubtype;
+                size_t len;
+                len = sizeof(cpusubtype);
+                // TODO: remove this hack and change to using hw.optional.xx when implmented
+                if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &len, NULL, 0) == 0)
+                {
+                    DNBLogThreadedIf(LOG_THREAD, "hw.cpusubtype=0x%d", cpusubtype);
+
+                    if (cpusubtype == CPU_SUBTYPE_ARM_V7)
+                        DNBLogThreadedIf(LOG_THREAD, "Hardware watchpoints disabled for armv7 (rdar://problem/6372672)");
+                    else
+                        g_num_supported_hw_watchpoints = numWRPs;
+                }
             }
         }
-
     }
     return g_num_supported_hw_watchpoints;
 }

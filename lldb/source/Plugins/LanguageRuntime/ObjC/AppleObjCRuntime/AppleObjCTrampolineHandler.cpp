@@ -562,7 +562,7 @@ AppleObjCTrampolineHandler::AppleObjCTrampolineHandler (ProcessSP process_sp, Mo
             // Problem is we also need to lookup the dispatch function.  For now we could have a side table of stret & non-stret
             // dispatch functions.  If that's as complex as it gets, we're fine.
             
-            lldb::addr_t sym_addr = msgSend_symbol->GetValue().GetLoadAddress(target);
+            lldb::addr_t sym_addr = msgSend_symbol->GetValue().GetOpcodeLoadAddress(target);
             
             m_msgSend_map.insert(std::pair<lldb::addr_t, int>(sym_addr, i));
         }
@@ -854,7 +854,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                 flag_value.GetScalar() = 1;
             else
                 flag_value.GetScalar() = 0;  // FIXME - Set to 0 when debugging is done.
-                 dispatch_values.PushValue (flag_value);
+            dispatch_values.PushValue (flag_value);
 
             // Now, if we haven't already, make and insert the function as a ClangUtilityFunction, and make and insert 
             // it's runner ClangFunction.
@@ -880,7 +880,7 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
                         if (sc.symbol != NULL)
                             impl_code_address = sc.symbol->GetValue();
                             
-                        //lldb::addr_t addr = impl_code_address.GetLoadAddress (exe_ctx.target);
+                        //lldb::addr_t addr = impl_code_address.GetOpcodeLoadAddress (exe_ctx.target);
                         //printf ("Getting address for our_utility_function: 0x%llx.\n", addr);
                     }
                     else

@@ -194,8 +194,6 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
     if (!reg_ctx)
         return false;
         
-    bool arg_regs_exceeded = false;
-    
     addr_t sp = reg_ctx->GetSP(0);
     
     if (!sp)
@@ -231,16 +229,29 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
             
             if (bit_width <= (thread.GetProcess().GetAddressByteSize() * 8))
             {
-                if (!arg_regs_exceeded)
+                if (value_idx < 4)
                 {
+                    // Arguments 1-4 are in r0-r3...
+                    const RegisterInfo *arg_reg_info = NULL;
+                    // Search by generic ID first, then fall back to by name
                     uint32_t arg_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + value_idx);
-                    if (arg_reg_num == LLDB_INVALID_REGNUM)
+                    if (arg_reg_num != LLDB_INVALID_REGNUM)
                     {
-                        arg_regs_exceeded = true;
+                        arg_reg_info = reg_ctx->GetRegisterInfoAtIndex(arg_reg_num);
                     }
                     else
                     {
-                        const RegisterInfo *arg_reg_info = reg_ctx->GetRegisterInfoAtIndex(arg_reg_num);
+                        switch (value_idx)
+                        {
+                            case 0: arg_reg_info = reg_ctx->GetRegisterInfoByName("r0"); break;
+                            case 1: arg_reg_info = reg_ctx->GetRegisterInfoByName("r1"); break;
+                            case 2: arg_reg_info = reg_ctx->GetRegisterInfoByName("r2"); break;
+                            case 3: arg_reg_info = reg_ctx->GetRegisterInfoByName("r3"); break;
+                        }
+                    }
+
+                    if (arg_reg_info)
+                    {
                         RegisterValue reg_value;
                         
                         if (reg_ctx->ReadRegister(arg_reg_info, reg_value))
@@ -251,37 +262,36 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
                                 return false;
                             continue;
                         }
-                        else
-                        {
-                            return false;
-                        }
                     }
+                    return false;
                 }
-                
-                
-                const uint32_t arg_byte_size = (bit_width + (8-1)) / 8;
-                if (arg_byte_size <= sizeof(uint64_t))
+                else
                 {
-                    uint8_t arg_data[sizeof(uint64_t)];
-                    Error error;
-                    thread.GetProcess().ReadMemory(sp, arg_data, sizeof(arg_data), error);
-                    DataExtractor arg_data_extractor (arg_data, sizeof(arg_data), 
-                                                      thread.GetProcess().GetTarget().GetArchitecture().GetByteOrder(), 
-                                                      thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
-                    uint32_t offset = 0;
-                    if (arg_byte_size <= 4)
-                        value->GetScalar() = arg_data_extractor.GetMaxU32 (&offset, arg_byte_size);
-                    else if (arg_byte_size <= 8)
-                        value->GetScalar() = arg_data_extractor.GetMaxU64 (&offset, arg_byte_size);
-                    else
-                        return false;
+                    // Arguments 5 on up are on the stack
+                    const uint32_t arg_byte_size = (bit_width + (8-1)) / 8;
+                    if (arg_byte_size <= sizeof(uint64_t))
+                    {
+                        uint8_t arg_data[sizeof(uint64_t)];
+                        Error error;
+                        thread.GetProcess().ReadMemory(sp, arg_data, sizeof(arg_data), error);
+                        DataExtractor arg_data_extractor (arg_data, sizeof(arg_data), 
+                                                          thread.GetProcess().GetTarget().GetArchitecture().GetByteOrder(), 
+                                                          thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
+                        uint32_t offset = 0;
+                        if (arg_byte_size <= 4)
+                            value->GetScalar() = arg_data_extractor.GetMaxU32 (&offset, arg_byte_size);
+                        else if (arg_byte_size <= 8)
+                            value->GetScalar() = arg_data_extractor.GetMaxU64 (&offset, arg_byte_size);
+                        else
+                            return false;
 
-                    if (offset == 0 || offset == UINT32_MAX)
-                        return false;
+                        if (offset == 0 || offset == UINT32_MAX)
+                            return false;
 
-                    if (is_signed)
-                        value->GetScalar().SignExtend (bit_width);
-                    sp += arg_byte_size;
+                        if (is_signed)
+                            value->GetScalar().SignExtend (bit_width);
+                        sp += arg_byte_size;
+                    }
                 }
             }
         }

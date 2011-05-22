@@ -1453,6 +1453,14 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
             case GENERIC_REGNUM_SP:     ostrm << "generic:sp;"; break;
             case GENERIC_REGNUM_RA:     ostrm << "generic:ra;"; break;
             case GENERIC_REGNUM_FLAGS:  ostrm << "generic:flags;"; break;
+            case GENERIC_REGNUM_ARG1:   ostrm << "generic:arg1;"; break;
+            case GENERIC_REGNUM_ARG2:   ostrm << "generic:arg2;"; break;
+            case GENERIC_REGNUM_ARG3:   ostrm << "generic:arg3;"; break;
+            case GENERIC_REGNUM_ARG4:   ostrm << "generic:arg4;"; break;
+            case GENERIC_REGNUM_ARG5:   ostrm << "generic:arg5;"; break;
+            case GENERIC_REGNUM_ARG6:   ostrm << "generic:arg6;"; break;
+            case GENERIC_REGNUM_ARG7:   ostrm << "generic:arg7;"; break;
+            case GENERIC_REGNUM_ARG8:   ostrm << "generic:arg8;"; break;
             default: break;
         }
 

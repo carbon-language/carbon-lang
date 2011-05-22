@@ -302,6 +302,23 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                             reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_RA;
                         else if (value.compare("flags") == 0)
                             reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
+                        else if (value.find("arg") == 0)
+                        {
+                            if (value.size() == 4)
+                            {
+                                switch (value[3])
+                                {
+                                    case '1': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG1; break;
+                                    case '2': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG2; break;
+                                    case '3': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG3; break;
+                                    case '4': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG4; break;
+                                    case '5': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG5; break;
+                                    case '6': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG6; break;
+                                    case '7': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG7; break;
+                                    case '8': reg_info.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_ARG8; break;
+                                }
+                            }
+                        }
                     }
                 }
 

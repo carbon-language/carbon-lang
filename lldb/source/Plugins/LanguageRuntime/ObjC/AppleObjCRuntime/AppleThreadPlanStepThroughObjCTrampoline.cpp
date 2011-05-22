@@ -74,7 +74,7 @@ AppleThreadPlanStepThroughObjCTrampoline::DidPush ()
 
 void
 AppleThreadPlanStepThroughObjCTrampoline::GetDescription (Stream *s,
-                lldb::DescriptionLevel level)
+                                                          lldb::DescriptionLevel level)
 {
     if (level == lldb::eDescriptionLevelBrief)
         s->Printf("Step through ObjC trampoline");
@@ -119,7 +119,8 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
             m_impl_function->FetchFunctionResults (exc_context, m_args_addr, target_addr_value);
             m_impl_function->DeallocateFunctionResults(exc_context, m_args_addr);
             lldb::addr_t target_addr = target_addr_value.GetScalar().ULongLong();
-            Address target_address(NULL, target_addr);
+            Address target_so_addr;
+            target_so_addr.SetOpcodeLoadAddress(target_addr, exc_context.target);
             LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
             if (target_addr == 0)
             {
@@ -153,11 +154,11 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
             assert (objc_runtime != NULL);
             objc_runtime->AddToMethodCache (m_isa_addr, m_sel_addr, target_addr);
             if (log)
-                log->Printf("Adding {0x%llx, 0x%llx} = 0x%llx to cache.", m_isa_addr, m_sel_addr, target_addr);
+                log->Printf("Adding {isa-addr=0x%llx, sel-addr=0x%llx} = addr=0x%llx to cache.", m_isa_addr, m_sel_addr, target_addr);
 
             // Extract the target address from the value:
             
-            m_run_to_sp.reset(new ThreadPlanRunToAddress(m_thread, target_address, m_stop_others));
+            m_run_to_sp.reset(new ThreadPlanRunToAddress(m_thread, target_so_addr, m_stop_others));
             m_thread.QueueThreadPlan(m_run_to_sp, false);
             m_run_to_sp->SetPrivate(true);
             return false;

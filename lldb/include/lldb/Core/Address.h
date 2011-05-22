@@ -419,6 +419,12 @@ public:
     //------------------------------------------------------------------
     bool
     SetLoadAddress (lldb::addr_t load_addr, Target *target);
+    
+    bool
+    SetOpcodeLoadAddress (lldb::addr_t load_addr, Target *target);
+
+    bool
+    SetCallableLoadAddress (lldb::addr_t load_addr, Target *target);
 
     //------------------------------------------------------------------
     /// Get accessor for the module for this address.

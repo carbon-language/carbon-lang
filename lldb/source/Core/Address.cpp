@@ -334,6 +334,43 @@ Address::GetCallableLoadAddress (Target *target) const
     return code_addr;
 }
 
+bool
+Address::SetCallableLoadAddress (lldb::addr_t load_addr, Target *target)
+{
+    if (SetLoadAddress (load_addr, target))
+    {
+        switch (target->GetArchitecture().GetMachine())
+        {
+            case llvm::Triple::arm:
+            case llvm::Triple::thumb:
+                // Check if bit zero it no set?
+                if ((m_offset & 1ull) == 0)
+                {
+                    // Bit zero isn't set, check if the address is a multiple of 2?
+                    if (m_offset & 2ull)
+                    {
+                        // The address is a multiple of 2 so it must be thumb, set bit zero
+                        m_offset |= 1ull;
+                    }
+                    else if (GetAddressClass() == eAddressClassCodeAlternateISA)
+                    {
+                        // We checked the address and the address claims to be the alternate ISA
+                        // which means thumb, so set bit zero.
+                        m_offset |= 1ull;
+                    }
+                }
+                break;
+                
+            default:
+                break;
+        }
+        return true;
+    }
+    return false;
+}
+
+
+
 addr_t
 Address::GetOpcodeLoadAddress (Target *target) const
 {
@@ -354,6 +391,27 @@ Address::GetOpcodeLoadAddress (Target *target) const
         }
     }
     return code_addr;
+}
+
+bool
+Address::SetOpcodeLoadAddress (lldb::addr_t load_addr, Target *target)
+{
+    if (SetLoadAddress (load_addr, target))
+    {
+        switch (target->GetArchitecture().GetMachine())
+        {
+            case llvm::Triple::arm:
+            case llvm::Triple::thumb:
+                // Make sure bit zero is clear
+                m_offset &= ~(1ull);
+                break;
+                
+            default:
+                break;
+        }
+        return true;
+    }
+    return false;
 }
 
 bool
