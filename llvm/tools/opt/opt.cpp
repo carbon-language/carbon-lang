@@ -682,9 +682,12 @@ int main(int argc, char **argv) {
   if (OptLevelO3)
     AddOptimizationPasses(Passes, *FPasses, 3);
 
-  if (OptLevelO1 || OptLevelO2 || OptLevelO3)
+  if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+    FPasses->doInitialization();
     for (Module::iterator F = M->begin(), E = M->end(); F != E; ++F)
       FPasses->run(*F);
+    FPasses->doFinalization();
+  }
 
   // Check that the module is well formed on completion of optimization
   if (!NoVerify && !VerifyEach)
