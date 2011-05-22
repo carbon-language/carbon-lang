@@ -2469,11 +2469,14 @@ entry:
 <p>The following target-specific calling conventions are known to backend:</p>
 
 <ul>
-  <li><b>x86_StdCall</b> &mdash; stdcall calling convention seen on Microsoft
-      Windows platform (CC ID = 64).</li>
-
-  <li><b>x86_FastCall</b> &mdash; fastcall calling convention seen on Microsoft
-      Windows platform (CC ID = 65).</li>
+<li><b>x86_StdCall</b> &mdash; stdcall calling convention seen on Microsoft
+    Windows platform (CC ID = 64).</li>
+<li><b>x86_FastCall</b> &mdash; fastcall calling convention seen on Microsoft
+    Windows platform (CC ID = 65).</li>
+<li><b>x86_ThisCall</b> &mdash; Similar to X86_StdCall. Passes first argument
+    in ECX,  others via stack. Callee is responsible for stack cleaning. This
+    convention is used by MSVC by default for methods in its ABI
+    (CC ID = 70).</li>
 </ul>
 
 </div>
