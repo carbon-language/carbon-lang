@@ -330,16 +330,16 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   unsigned FilenameID = SourceMgr.getLineTableFilenameID(PLoc.getFilename(),
                                                          FilenameLen);
 
+  // Notify the client, if desired, that we are in a new source file.
+  if (Callbacks)
+    Callbacks->FileChanged(SysHeaderTok.getLocation(),
+                           PPCallbacks::SystemHeaderPragma, SrcMgr::C_System);
+
   // Emit a line marker.  This will change any source locations from this point
   // forward to realize they are in a system header.
   // Create a line note with this information.
   SourceMgr.AddLineNote(SysHeaderTok.getLocation(), PLoc.getLine(), FilenameID,
                         false, false, true, false);
-
-  // Notify the client, if desired, that we are in a new source file.
-  if (Callbacks)
-    Callbacks->FileChanged(SysHeaderTok.getLocation(),
-                           PPCallbacks::SystemHeaderPragma, SrcMgr::C_System);
 }
 
 /// HandlePragmaDependency - Handle #pragma GCC dependency "foo" blah.
