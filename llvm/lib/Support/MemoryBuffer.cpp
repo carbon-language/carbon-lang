@@ -67,7 +67,7 @@ static void CopyStringRef(char *Memory, StringRef Data) {
 
 /// GetNamedBuffer - Allocates a new MemoryBuffer with Name copied after it.
 template <typename T>
-static T* GetNamedBuffer(StringRef Buffer, StringRef Name,
+static T *GetNamedBuffer(StringRef Buffer, StringRef Name,
                          bool RequiresNullTerminator) {
   char *Mem = static_cast<char*>(operator new(sizeof(T) + Name.size() + 1));
   CopyStringRef(Mem + sizeof(T), Name);
@@ -94,7 +94,7 @@ public:
 }
 
 /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
-/// that EndPtr[0] must be a null byte and be accessible!
+/// that InputData must be a null terminated if RequiresNullTerminator is true!
 MemoryBuffer *MemoryBuffer::getMemBuffer(StringRef InputData,
                                          StringRef BufferName,
                                          bool RequiresNullTerminator) {
@@ -221,9 +221,9 @@ error_code MemoryBuffer::getFile(const char *Filename,
   OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
   int FD = ::open(Filename, OpenFlags);
-  if (FD == -1) {
+  if (FD == -1)
     return error_code(errno, posix_category());
-  }
+
   error_code ret = getOpenFile(FD, Filename, result, FileSize, FileSize,
                                0, RequiresNullTerminator);
   close(FD);

@@ -81,7 +81,7 @@ public:
                                 bool RequiresNullTerminator = true);
 
   /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
-  /// that InputData must be null terminated.
+  /// that InputData must be null terminated if RequiresNullTerminator is true.
   static MemoryBuffer *getMemBuffer(StringRef InputData,
                                     StringRef BufferName = "",
                                     bool RequiresNullTerminator = true);
