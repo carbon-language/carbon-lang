@@ -1313,6 +1313,15 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
     let Inst{3-0}  = dst;
   }
 
+  // For disassembly only.
+  def BX_pred : AXI<(outs), (ins GPR:$dst, pred:$p), BrMiscFrm, IIC_Br,
+                  "bx$p\t$dst", [/* pattern left blank */]>,
+              Requires<[IsARM, HasV4T]> {
+    bits<4> dst;
+    let Inst{27-4} = 0b000100101111111111110001;
+    let Inst{3-0}  = dst;
+  }
+
   // ARMV4 only
   // FIXME: We would really like to define this as a vanilla ARMPat like:
   // ARMPat<(brind GPR:$dst), (MOVr PC, GPR:$dst)>
