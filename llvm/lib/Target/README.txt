@@ -2346,3 +2346,13 @@ Note that bb1 and bb2 are the same.  This doesn't happen at the IR level
 because one call is passing an i32 and the other is passing an i64.
 
 //===---------------------------------------------------------------------===//
+
+I see this sort of pattern in 176.gcc in a few places (e.g. the start of
+store_bit_field).  The rem should be replaced with a multiply and subtract:
+
+  %3 = sdiv i32 %A, %B
+  %4 = srem i32 %A, %B
+
+Similarly for udiv/urem.
+
+//===---------------------------------------------------------------------===//
