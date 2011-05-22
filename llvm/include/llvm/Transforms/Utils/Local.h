@@ -43,8 +43,10 @@ template<typename T> class SmallVectorImpl;
 /// constant value, convert it into an unconditional branch to the constant
 /// destination.  This is a nontrivial operation because the successors of this
 /// basic block must have their PHI nodes updated.
-///
-bool ConstantFoldTerminator(BasicBlock *BB);
+/// Also calls RecursivelyDeleteTriviallyDeadInstructions() on any branch/switch
+/// conditions and indirectbr addresses this might make dead if
+/// DeleteDeadConditions is true.
+bool ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions = false);
 
 //===----------------------------------------------------------------------===//
 //  Local dead code elimination.

@@ -147,7 +147,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   if (!DisableBranchOpts) {
     MadeChange = false;
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-      MadeChange |= ConstantFoldTerminator(BB);
+      MadeChange |= ConstantFoldTerminator(BB, true);
 
     if (MadeChange)
       ModifiedDT = true;

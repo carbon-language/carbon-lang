@@ -706,7 +706,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
     DEBUG(dbgs() << "  In block '" << BB->getName()
           << "' folding terminator: " << *BB->getTerminator() << '\n');
     ++NumFolds;
-    ConstantFoldTerminator(BB);
+    ConstantFoldTerminator(BB, true);
     return true;
   }
 
