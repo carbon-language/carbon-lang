@@ -28,6 +28,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/IRBuilder.h"
 using namespace llvm;
 
 bool llvm::InlineFunction(CallInst *CI, InlineFunctionInfo &IFI) {
@@ -314,6 +315,41 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   return NewAlloca;
 }
 
+// isUsedByLifetimeMarker - Check whether this Value is used by a lifetime
+// intrinsic.
+static bool isUsedByLifetimeMarker(Value *V) {
+  for (Value::use_iterator UI = V->use_begin(), UE = V->use_end(); UI != UE;
+       ++UI) {
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(*UI)) {
+      switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::lifetime_start:
+      case Intrinsic::lifetime_end:
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// hasLifetimeMarkers - Check whether the given alloca already has
+// lifetime.start or lifetime.end intrinsics.
+static bool hasLifetimeMarkers(AllocaInst *AI) {
+  const Type *Int8PtrTy = Type::getInt8PtrTy(AI->getType()->getContext());
+  if (AI->getType() == Int8PtrTy)
+    return isUsedByLifetimeMarker(AI);
+
+  // Do a scan to find all the bitcasts to i8*.
+  for (Value::use_iterator I = AI->use_begin(), E = AI->use_end(); I != E;
+       ++I) {
+    if (I->getType() != Int8PtrTy) continue;
+    if (!isa<BitCastInst>(*I)) continue;
+    if (isUsedByLifetimeMarker(*I))
+      return true;
+  }
+  return false;
+}
+
 // InlineFunction - This function inlines the called function into the basic
 // block of the caller.  This returns false if it is not possible to inline this
 // call.  The program is still in a well defined state if this occurs though.
@@ -457,6 +493,40 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
       Caller->getEntryBlock().getInstList().splice(InsertPoint,
                                                    FirstNewBlock->getInstList(),
                                                    AI, I);
+    }
+  }
+
+  // Leave lifetime markers for the static alloca's, scoping them to the
+  // function we just inlined.
+  if (!IFI.StaticAllocas.empty()) {
+    // Also preserve the call graph, if applicable.
+    CallGraphNode *StartCGN = 0, *EndCGN = 0, *CallerNode = 0;
+    if (CallGraph *CG = IFI.CG) {
+      Function *Start = Intrinsic::getDeclaration(Caller->getParent(),
+                                                  Intrinsic::lifetime_start);
+      Function *End = Intrinsic::getDeclaration(Caller->getParent(),
+                                                Intrinsic::lifetime_end);
+      StartCGN = CG->getOrInsertFunction(Start);
+      EndCGN = CG->getOrInsertFunction(End);
+      CallerNode = (*CG)[Caller];
+    }
+
+    IRBuilder<> builder(FirstNewBlock->begin());
+    for (unsigned ai = 0, ae = IFI.StaticAllocas.size(); ai != ae; ++ai) {
+      AllocaInst *AI = IFI.StaticAllocas[ai];
+
+      // If the alloca is already scoped to something smaller than the whole
+      // function then there's no need to add redundant, less accurate markers.
+      if (hasLifetimeMarkers(AI))
+        continue;
+
+      CallInst *StartCall = builder.CreateLifetimeStart(AI);
+      if (IFI.CG) CallerNode->addCalledFunction(StartCall, StartCGN);
+      for (unsigned ri = 0, re = Returns.size(); ri != re; ++ri) {
+        IRBuilder<> builder(Returns[ri]);
+        CallInst *EndCall = builder.CreateLifetimeEnd(AI);
+        if (IFI.CG) CallerNode->addCalledFunction(EndCall, EndCGN);
+      }
     }
   }
 
