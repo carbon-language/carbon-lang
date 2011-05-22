@@ -799,7 +799,8 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
       // If we get here we could have other crazy uses that are transitively
       // loaded.
       assert((isa<PHINode>(GlobalUser) || isa<SelectInst>(GlobalUser) ||
-              isa<ConstantExpr>(GlobalUser)) && "Only expect load and stores!");
+              isa<ConstantExpr>(GlobalUser) || isa<CmpInst>(GlobalUser)) &&
+             "Only expect load and stores!");
     }
   }
 
@@ -1589,8 +1590,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       GV->getInitializer()->isNullValue()) {
     if (Constant *SOVC = dyn_cast<Constant>(StoredOnceVal)) {
       if (GV->getInitializer()->getType() != SOVC->getType())
-        SOVC =
-         ConstantExpr::getBitCast(SOVC, GV->getInitializer()->getType());
+        SOVC = ConstantExpr::getBitCast(SOVC, GV->getInitializer()->getType());
 
       // Optimize away any trapping uses of the loaded value.
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))

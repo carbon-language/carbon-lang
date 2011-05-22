@@ -64,3 +64,17 @@ define void @memset_with_strange_user() ssp {
   ret void
 }
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
+
+
+; PR9856
+@g_52 = internal global i32** null, align 8
+@g_90 = external global i32*, align 8
+
+define void @icmp_user_of_stored_once() nounwind ssp {
+entry:
+  %tmp4 = load i32*** @g_52, align 8
+  store i32** @g_90, i32*** @g_52
+  %cmp17 = icmp ne i32*** undef, @g_52
+  ret void
+}
+
