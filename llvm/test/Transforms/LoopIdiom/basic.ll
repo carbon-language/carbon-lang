@@ -347,3 +347,40 @@ for.end:                                          ; preds = %for.body
 ; CHECK-NOT: store
 ; CHECK: ret void
 }
+
+
+
+; PR9815 - This is a partial overlap case that cannot be safely transformed
+; into a memcpy.
+@g_50 = global [7 x i32] [i32 0, i32 0, i32 0, i32 0, i32 1, i32 0, i32 0], align 16
+
+define i32 @test14() nounwind {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.inc, %for.body.lr.ph
+  %tmp5 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
+  %add = add nsw i32 %tmp5, 4
+  %idxprom = sext i32 %add to i64
+  %arrayidx = getelementptr inbounds [7 x i32]* @g_50, i32 0, i64 %idxprom
+  %tmp2 = load i32* %arrayidx, align 4
+  %add4 = add nsw i32 %tmp5, 5
+  %idxprom5 = sext i32 %add4 to i64
+  %arrayidx6 = getelementptr inbounds [7 x i32]* @g_50, i32 0, i64 %idxprom5
+  store i32 %tmp2, i32* %arrayidx6, align 4
+  %inc = add nsw i32 %tmp5, 1
+  %cmp = icmp slt i32 %inc, 2
+  br i1 %cmp, label %for.body, label %for.end
+
+for.end:                                          ; preds = %for.inc
+  %tmp8 = load i32* getelementptr inbounds ([7 x i32]* @g_50, i32 0, i64 6), align 4
+  ret i32 %tmp8
+; CHECK: @test14
+; CHECK: for.body:
+; CHECK: load i32
+; CHECK: store i32
+; CHECK: br i1 %cmp
+
+}
+
+

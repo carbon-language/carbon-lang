@@ -128,11 +128,11 @@ INITIALIZE_PASS_END(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
 
 Pass *llvm::createLoopIdiomPass() { return new LoopIdiomRecognize(); }
 
-/// DeleteDeadInstruction - Delete this instruction.  Before we do, go through
+/// deleteDeadInstruction - Delete this instruction.  Before we do, go through
 /// and zero out all the operands of this instruction.  If any of them become
 /// dead, delete them and the computation tree that feeds them.
 ///
-static void DeleteDeadInstruction(Instruction *I, ScalarEvolution &SE) {
+static void deleteDeadInstruction(Instruction *I, ScalarEvolution &SE) {
   SmallVector<Instruction*, 32> NowDeadInsts;
 
   NowDeadInsts.push_back(I);
@@ -160,6 +160,14 @@ static void DeleteDeadInstruction(Instruction *I, ScalarEvolution &SE) {
     DeadInst->eraseFromParent();
 
   } while (!NowDeadInsts.empty());
+}
+
+/// deleteIfDeadInstruction - If the specified value is a dead instruction,
+/// delete it and any recursively used instructions.
+static void deleteIfDeadInstruction(Value *V, ScalarEvolution &SE) {
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    if (isInstructionTriviallyDead(I))
+      deleteDeadInstruction(I, SE);    
 }
 
 bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -454,30 +462,34 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
     return false;
   }
 
-
+  // The trip count of the loop and the base pointer of the addrec SCEV is
+  // guaranteed to be loop invariant, which means that it should dominate the
+  // header.  This allows us to insert code for it in the preheader.
+  BasicBlock *Preheader = CurLoop->getLoopPreheader();
+  IRBuilder<> Builder(Preheader->getTerminator());
+  SCEVExpander Expander(*SE);
+  
   // Okay, we have a strided store "p[i]" of a splattable value.  We can turn
   // this into a memset in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
-  // or write to the aliased location.  Check for an alias.
-  if (mayLoopAccessLocation(DestPtr, AliasAnalysis::ModRef,
-                            CurLoop, BECount,
-                            StoreSize, getAnalysis<AliasAnalysis>(), TheStore))
-    return false;
-
-  // Okay, everything looks good, insert the memset.
-  BasicBlock *Preheader = CurLoop->getLoopPreheader();
-
-  IRBuilder<> Builder(Preheader->getTerminator());
-
-  // The trip count of the loop and the base pointer of the addrec SCEV is
-  // guaranteed to be loop invariant, which means that it should dominate the
-  // header.  Just insert code for it in the preheader.
-  SCEVExpander Expander(*SE);
-
+  // or write to the aliased location.  Check for any overlap by generating the
+  // base pointer and checking the region.
   unsigned AddrSpace = cast<PointerType>(DestPtr->getType())->getAddressSpace();
   Value *BasePtr =
     Expander.expandCodeFor(Ev->getStart(), Builder.getInt8PtrTy(AddrSpace),
                            Preheader->getTerminator());
+
+
+  if (mayLoopAccessLocation(BasePtr, AliasAnalysis::ModRef,
+                            CurLoop, BECount,
+                            StoreSize, getAnalysis<AliasAnalysis>(), TheStore)){
+    Expander.clear();
+    // If we generated new code for the base pointer, clean up.
+    deleteIfDeadInstruction(BasePtr, *SE);
+    return false;
+  }
+  
+  // Okay, everything looks good, insert the memset.
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
@@ -521,7 +533,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
 
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
-  DeleteDeadInstruction(TheStore, *SE);
+  deleteDeadInstruction(TheStore, *SE);
   ++NumMemSet;
   return true;
 }
@@ -539,41 +551,51 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
 
   LoadInst *LI = cast<LoadInst>(SI->getValueOperand());
 
+  // The trip count of the loop and the base pointer of the addrec SCEV is
+  // guaranteed to be loop invariant, which means that it should dominate the
+  // header.  This allows us to insert code for it in the preheader.
+  BasicBlock *Preheader = CurLoop->getLoopPreheader();
+  IRBuilder<> Builder(Preheader->getTerminator());
+  SCEVExpander Expander(*SE);
+  
   // Okay, we have a strided store "p[i]" of a loaded value.  We can turn
   // this into a memcpy in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
-  // or write to the stored location (including the load feeding the stores).
-  // Check for an alias.
-  if (mayLoopAccessLocation(SI->getPointerOperand(), AliasAnalysis::ModRef,
-                            CurLoop, BECount, StoreSize,
-                            getAnalysis<AliasAnalysis>(), SI))
-    return false;
-
-  // For a memcpy, we have to make sure that the input array is not being
-  // mutated by the loop.
-  if (mayLoopAccessLocation(LI->getPointerOperand(), AliasAnalysis::Mod,
-                            CurLoop, BECount, StoreSize,
-                            getAnalysis<AliasAnalysis>(), SI))
-    return false;
-
-  // Okay, everything looks good, insert the memcpy.
-  BasicBlock *Preheader = CurLoop->getLoopPreheader();
-
-  IRBuilder<> Builder(Preheader->getTerminator());
-
-  // The trip count of the loop and the base pointer of the addrec SCEV is
-  // guaranteed to be loop invariant, which means that it should dominate the
-  // header.  Just insert code for it in the preheader.
-  SCEVExpander Expander(*SE);
-
-  Value *LoadBasePtr =
-    Expander.expandCodeFor(LoadEv->getStart(),
-                           Builder.getInt8PtrTy(LI->getPointerAddressSpace()),
-                           Preheader->getTerminator());
+  // or write the memory region we're storing to.  This includes the load that
+  // feeds the stores.  Check for an alias by generating the base address and
+  // checking everything.
   Value *StoreBasePtr =
     Expander.expandCodeFor(StoreEv->getStart(),
                            Builder.getInt8PtrTy(SI->getPointerAddressSpace()),
                            Preheader->getTerminator());
+  
+  if (mayLoopAccessLocation(StoreBasePtr, AliasAnalysis::ModRef,
+                            CurLoop, BECount, StoreSize,
+                            getAnalysis<AliasAnalysis>(), SI)) {
+    Expander.clear();
+    // If we generated new code for the base pointer, clean up.
+    deleteIfDeadInstruction(StoreBasePtr, *SE);
+    return false;
+  }
+
+  // For a memcpy, we have to make sure that the input array is not being
+  // mutated by the loop.
+  Value *LoadBasePtr =
+    Expander.expandCodeFor(LoadEv->getStart(),
+                           Builder.getInt8PtrTy(LI->getPointerAddressSpace()),
+                           Preheader->getTerminator());
+
+  if (mayLoopAccessLocation(LoadBasePtr, AliasAnalysis::Mod, CurLoop, BECount,
+                            StoreSize, getAnalysis<AliasAnalysis>(), SI)) {
+    Expander.clear();
+    // If we generated new code for the base pointer, clean up.
+    deleteIfDeadInstruction(LoadBasePtr, *SE);
+    deleteIfDeadInstruction(StoreBasePtr, *SE);
+    return false;
+  }
+  
+  // Okay, everything is safe, we can transform this!
+  
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
@@ -601,7 +623,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
 
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
-  DeleteDeadInstruction(SI, *SE);
+  deleteDeadInstruction(SI, *SE);
   ++NumMemCpy;
   return true;
 }
