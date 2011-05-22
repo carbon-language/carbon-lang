@@ -147,8 +147,8 @@ size_t LLVMDisasmInstruction(LLVMDisasmContextRef DCR, uint8_t *Bytes,
   if (!DisAsm->getInstruction(Inst, Size, MemoryObject, PC, /*REMOVE*/ nulls()))
     return 0;
 
-  std::string InsnStr;
-  raw_string_ostream OS(InsnStr);
+  SmallVector<char, 64> InsnStr;
+  raw_svector_ostream OS(InsnStr);
   IP->printInst(&Inst, OS);
   OS.flush();
 
