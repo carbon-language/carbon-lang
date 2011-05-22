@@ -316,7 +316,7 @@ void MCStreamer::EnsureValidW64UnwindInfo() {
     report_fatal_error("No open Win64 EH frame function!");
 }
 
-void MCStreamer::EmitWin64EHStartProc(MCSymbol *Symbol) {
+void MCStreamer::EmitWin64EHStartProc(const MCSymbol *Symbol) {
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a function before ending the previous one!");

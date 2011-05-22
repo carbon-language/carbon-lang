@@ -208,7 +208,7 @@ public:
   virtual void EmitCFIRelOffset(int64_t Register, int64_t Offset);
   virtual void EmitCFIAdjustCfaOffset(int64_t Adjustment);
 
-  virtual void EmitWin64EHStartProc(MCSymbol *Symbol);
+  virtual void EmitWin64EHStartProc(const MCSymbol *Symbol);
   virtual void EmitWin64EHEndProc();
   virtual void EmitWin64EHStartChained();
   virtual void EmitWin64EHEndChained();
@@ -930,7 +930,7 @@ void MCAsmStreamer::EmitCFIAdjustCfaOffset(int64_t Adjustment) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHStartProc(MCSymbol *Symbol) {
+void MCAsmStreamer::EmitWin64EHStartProc(const MCSymbol *Symbol) {
   MCStreamer::EmitWin64EHStartProc(Symbol);
 
   OS << ".seh_proc " << *Symbol;
