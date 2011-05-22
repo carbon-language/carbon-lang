@@ -19,7 +19,7 @@ entry:
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT: %A.i = alloca
 ; CHECK-NEXT: %B.i = alloca
-; CHECK-NEXT: call void
+; CHECK-NOT: alloca
   call void @foo() nounwind
   call void @foo() nounwind
   ret void
