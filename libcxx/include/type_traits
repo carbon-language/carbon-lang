@@ -845,7 +845,15 @@ struct __type_list
     typedef _Tp _Tail;
 };
 
-struct __nat {};
+struct __nat
+{
+#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+    __nat() = delete;
+    __nat(const __nat&) = delete;
+    __nat& operator=(const __nat&) = delete;
+    ~__nat() = delete;
+#endif
+};
 
 template <class _Tp>
 struct __align_type
@@ -2775,6 +2783,140 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_trivial
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
+// Check for complete types
+
+template <class ..._T> struct __check_complete;
+
+template <>
+struct __check_complete<>
+{
+};
+
+template <class _H, class _T0, class ..._T>
+struct __check_complete<_H, _T0, _T...>
+    : private __check_complete<_H>,
+      private __check_complete<_T0, _T...>
+{
+};
+
+template <class _H>
+struct __check_complete<_H, _H>
+    : private __check_complete<_H>
+{
+};
+
+template <class _T>
+struct __check_complete<_T>
+{
+    static_assert(sizeof(_T) > 0, "Type must be complete.");
+};
+
+template <class _T>
+struct __check_complete<_T&>
+    : private __check_complete<_T>
+{
+};
+
+template <class _T>
+struct __check_complete<_T&&>
+    : private __check_complete<_T>
+{
+};
+
+template <class _R, class ..._Param>
+struct __check_complete<_R (*)(_Param...)>
+    : private __check_complete<_Param...>
+{
+};
+
+template <class _R, class ..._Param>
+struct __check_complete<_R (_Param...)>
+    : private __check_complete<_Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...)>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) const>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) volatile>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) const volatile>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+#if __has_feature(cxx_reference_qualified_functions)
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) &>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) const&>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) volatile&>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) const volatile&>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) &&>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) const&&>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) volatile&&>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+template <class _R, class _Class, class ..._Param>
+struct __check_complete<_R (_Class::*)(_Param...) const volatile&&>
+    : private __check_complete<_Class, _Param...>
+{
+};
+
+#endif
+
+template <class _R, class _Class>
+struct __check_complete<_R _Class::*>
+    : private __check_complete<_Class>
+{
+};
+
 // __invoke forward declarations
 
 // fall back - none of the bullets
@@ -2819,6 +2961,7 @@ __invoke(_F&& __f, _Args&& ...__args)
 
 template <class _F, class ..._Args>
 struct __invokable_imp
+    : private __check_complete<_F, _Args...>
 {
     typedef decltype(
             __invoke(_STD::declval<_F>(), _STD::declval<_Args>()...)

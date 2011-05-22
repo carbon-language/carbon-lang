@@ -3586,10 +3586,10 @@ private:
 public:
     weak_ptr();
     template<class _Yp> weak_ptr(shared_ptr<_Yp> const& __r,
-                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat());
+                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat*>::type = 0);
     weak_ptr(weak_ptr const& __r);
     template<class _Yp> weak_ptr(weak_ptr<_Yp> const& __r,
-                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type = __nat());
+                   typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat*>::type = 0);
 
     ~weak_ptr();
 
@@ -3640,7 +3640,7 @@ template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
 weak_ptr<_Tp>::weak_ptr(shared_ptr<_Yp> const& __r,
-                        typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type)
+                        typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat*>::type)
     : __ptr_(__r.__ptr_),
       __cntrl_(__r.__cntrl_)
 {
@@ -3652,7 +3652,7 @@ template<class _Tp>
 template<class _Yp>
 inline _LIBCPP_INLINE_VISIBILITY
 weak_ptr<_Tp>::weak_ptr(weak_ptr<_Yp> const& __r,
-                        typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat>::type)
+                        typename enable_if<is_convertible<_Yp*, _Tp*>::value, __nat*>::type)
     : __ptr_(__r.__ptr_),
       __cntrl_(__r.__cntrl_)
 {
