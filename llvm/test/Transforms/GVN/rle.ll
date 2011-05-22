@@ -360,8 +360,11 @@ Cont:
 
 define i32 @chained_load(i32** %p) {
 block1:
+  %A = alloca i32*
+
   %z = load i32** %p
-	br i1 true, label %block2, label %block3
+  store i32* %z, i32** %A
+  br i1 true, label %block2, label %block3
 
 block2:
  %a = load i32** %p
