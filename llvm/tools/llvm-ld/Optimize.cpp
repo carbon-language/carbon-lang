@@ -12,9 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Module.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/PassMAnagerBuilder.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
@@ -71,11 +70,10 @@ static inline void addPass(PassManager &PM, Pass *P) {
 }
 
 namespace llvm {
-
 /// Optimize - Perform link time optimizations. This will run the scalar
 /// optimizations, any loaded plugin-optimization modules, and then the
 /// inter-procedural optimizations if applicable.
-void Optimize(Module* M) {
+void Optimize(Module *M) {
 
   // Instantiate the pass manager to organize the passes.
   PassManager Passes;
@@ -88,8 +86,8 @@ void Optimize(Module* M) {
   addPass(Passes, new TargetData(M));
 
   if (!DisableOptimizations)
-    createStandardLTOPasses(&Passes, !DisableInternalize, !DisableInline,
-                            VerifyEach);
+    PassManagerBuilder().populateLTOPassManager(Passes, !DisableInternalize,
+                                                !DisableInline);
 
   // If the -s or -S command line options were specified, strip the symbols out
   // of the resulting program to make it smaller.  -s and -S are GNU ld options
