@@ -1443,7 +1443,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
 
   LinuxDistro Distro = DetectLinuxDistro(Arch);
 
-  if (IsUbuntu(Distro)) {
+  if (IsOpenSuse(Distro) || IsUbuntu(Distro)) {
     ExtraOpts.push_back("-z");
     ExtraOpts.push_back("relro");
   }
@@ -1451,11 +1451,12 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
     ExtraOpts.push_back("-X");
 
-  if (IsRedhat(Distro) || Distro == UbuntuMaverick || Distro == UbuntuNatty)
+  if (IsRedhat(Distro) || IsOpenSuse(Distro) || Distro == UbuntuMaverick || 
+      Distro == UbuntuNatty)
     ExtraOpts.push_back("--hash-style=gnu");
 
-  if (IsDebian(Distro) || Distro == UbuntuLucid || Distro == UbuntuJaunty ||
-      Distro == UbuntuKarmic)
+  if (IsDebian(Distro) || IsOpenSuse(Distro) || Distro == UbuntuLucid || 
+      Distro == UbuntuJaunty || Distro == UbuntuKarmic)
     ExtraOpts.push_back("--hash-style=both");
 
   if (IsRedhat(Distro))
@@ -1465,6 +1466,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
       IsRedhat(Distro) || Distro == UbuntuLucid || Distro == UbuntuMaverick ||
       Distro == UbuntuKarmic || Distro == UbuntuNatty)
     ExtraOpts.push_back("--build-id");
+
+  if (IsOpenSuse(Distro))
+    ExtraOpts.push_back("--dynamic-tags");
 
   if (Distro == ArchLinux)
     Lib = "lib";
