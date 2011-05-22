@@ -51,6 +51,9 @@ public:
   /// hasByValAttr - Return true if this argument has the byval attribute on it
   /// in its containing function.
   bool hasByValAttr() const;
+  
+  /// getParamAlignment - If this is a byval argument, return its alignment.
+  unsigned getParamAlignment() const;
 
   /// hasNestAttr - Return true if this argument has the nest attribute on
   /// it in its containing function.

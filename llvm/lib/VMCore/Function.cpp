@@ -79,6 +79,12 @@ bool Argument::hasByValAttr() const {
   return getParent()->paramHasAttr(getArgNo()+1, Attribute::ByVal);
 }
 
+unsigned Argument::getParamAlignment() const {
+  assert(getType()->isPointerTy() && "Only pointers have alignments");
+  return getParent()->getParamAlignment(getArgNo()+1);
+  
+}
+
 /// hasNestAttr - Return true if this argument has the nest attribute on
 /// it in its containing function.
 bool Argument::hasNestAttr() const {
