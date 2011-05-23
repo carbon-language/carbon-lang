@@ -109,11 +109,15 @@ StripSpaces(llvm::StringRef &Str)
         Str = Str.substr(0, Str.size()-1);
 }
 static void
-Align(Stream *s, const char *str)
+Align(Stream *s, const char *str, size_t opcodeColWidth, size_t operandColWidth)
 {
     llvm::StringRef raw_disasm(str);
     StripSpaces(raw_disasm);
-    s->PutCString(raw_disasm.str().c_str());    
+    // Split the raw disassembly into opcode and operands.
+    std::pair<llvm::StringRef, llvm::StringRef> p = raw_disasm.split('\t');
+    PadString(s, p.first, opcodeColWidth);
+    if (!p.second.empty())
+        PadString(s, p.second, operandColWidth);
 }
 
 void
@@ -173,10 +177,12 @@ InstructionLLVM::Dump
     
     // FIXME!!!
     /* Remove the following section of code related to force_raw .... */
+    /*
     bool force_raw = m_arch_type == llvm::Triple::arm ||
                      m_arch_type == llvm::Triple::thumb;
     if (!raw)
         raw = force_raw;
+    */
     /* .... when we fix the edis for arm/thumb. */
 
     if (!raw)
@@ -349,7 +355,7 @@ InstructionLLVM::Dump
 
                 if (EDGetInstString(&str, m_inst))
                     return;
-                Align(s, str);
+                Align(s, str, opcodeColumnWidth, operandColumnWidth);
             }
             else
             {
@@ -380,7 +386,7 @@ InstructionLLVM::Dump
         {
             // EDis fails to parse the tokens of this inst.  Need to align this
             // raw disassembly's opcode with the rest of output.
-            Align(s, str);
+            Align(s, str, opcodeColumnWidth, operandColumnWidth);
         }
     }
 }
