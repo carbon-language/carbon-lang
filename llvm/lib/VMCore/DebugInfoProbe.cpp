@@ -65,6 +65,7 @@ void DebugInfoProbeImpl::initialize(StringRef PName, Function &F) {
   PassName = PName;
 
   DbgVariables.clear();
+  MissingDebugLoc.clear();
   TheFn = &F;
 
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
