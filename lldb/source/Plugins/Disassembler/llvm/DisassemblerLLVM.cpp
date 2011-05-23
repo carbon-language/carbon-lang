@@ -328,9 +328,37 @@ InstructionLLVM::Dump
             if (m_arch_type == llvm::Triple::thumb && opcode.GetString() == "b") {
                 const char *inst_str;
                 const char *pos = NULL;
+                operands.Clear(); comment.Clear();
                 if (EDGetInstString(&inst_str, m_inst) == 0 && (pos = strstr(inst_str, "#")) != NULL) {
                     uint64_t operand_value = PC + atoi(++pos);
                     operands.Printf("0x%llx ", operand_value);
+
+                    lldb_private::Address so_addr;
+                    if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty()) {
+                        if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress (operand_value, so_addr))
+                            so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+                    } else {
+                        Module *module = GetAddress().GetModule();
+                        if (module) {
+                            if (module->ResolveFileAddress (operand_value, so_addr))
+                                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+                        }
+                    }
+                }
+            }
+            // Yet more workaround for "bl #..." and "blx #...".
+            if ((m_arch_type == llvm::Triple::arm || m_arch_type == llvm::Triple::thumb) &&
+                (opcode.GetString() == "bl" || opcode.GetString() == "blx")) {
+                const char *inst_str;
+                const char *pos = NULL;
+                operands.Clear(); comment.Clear();
+                if (EDGetInstString(&inst_str, m_inst) == 0 && (pos = strstr(inst_str, "#")) != NULL) {
+                    uint64_t operand_value = PC + atoi(++pos);
+                    // Put the address value into the comment
+                    comment.Printf("0x%llx ", operand_value);
+                    llvm::StringRef string_ref(pos - 1);
+                    llvm::StringRef operand_string_ref = string_ref.split('\n').first;
+                    operands.PutCString(operand_string_ref.str().c_str());
 
                     lldb_private::Address so_addr;
                     if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty()) {
