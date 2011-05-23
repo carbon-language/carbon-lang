@@ -2353,6 +2353,8 @@ store_bit_field).  The rem should be replaced with a multiply and subtract:
   %3 = sdiv i32 %A, %B
   %4 = srem i32 %A, %B
 
-Similarly for udiv/urem.
+Similarly for udiv/urem.  Note that this shouldn't be done on X86 or ARM,
+which can do this in a single operation (instruction or libcall).  It is
+probably best to do this in the code generator.
 
 //===---------------------------------------------------------------------===//
