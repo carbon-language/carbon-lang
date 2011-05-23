@@ -2595,7 +2595,6 @@ void DwarfDebug::emitDebugLoc() {
           MachineLocation Loc(Entry.Loc.getReg(), DV.getAddrElement(1));
           Asm->EmitInt16(Asm->getDwarfRegOpSize(Loc) + N - 2);
           Asm->EmitDwarfRegOp(Loc);
-//          Asm->EmitULEB128(DV.getAddrElement(1));
           i = 2;
         } else {
           Asm->EmitInt16(Asm->getDwarfRegOpSize(Entry.Loc) + N);
