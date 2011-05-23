@@ -25,6 +25,8 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Expression/IRForTarget.h"
+#include "lldb/Expression/ProcessDataAllocator.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Target/Process.h"
 
@@ -285,6 +287,7 @@ private:
     //------------------------------------------------------------------
     /// Populate m_cplusplus and m_objetivec based on the environment.
     //------------------------------------------------------------------
+    
     void
     ScanContext(ExecutionContext &exe_ctx);
 
@@ -303,6 +306,7 @@ private:
     std::auto_ptr<ClangExpressionDeclMap>       m_expr_decl_map;        ///< The map to use when parsing and materializing the expression.
     std::auto_ptr<ClangExpressionVariableList>  m_local_variables;      ///< The local expression variables, if the expression is DWARF.
     std::auto_ptr<StreamString>                 m_dwarf_opcodes;        ///< The DWARF opcodes for the expression.  May be NULL.
+    std::auto_ptr<ProcessDataAllocator>         m_data_allocator;       ///< The allocator that the parser uses to place strings for use by JIT-compiled code.
     
     bool                                        m_cplusplus;            ///< True if the expression is compiled as a C++ member function (true if it was parsed when exe_ctx was in a C++ method).
     bool                                        m_objectivec;           ///< True if the expression is compiled as an Objective-C method (true if it was parsed when exe_ctx was in an Objective-C method).

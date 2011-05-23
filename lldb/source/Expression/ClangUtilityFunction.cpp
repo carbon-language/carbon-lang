@@ -16,6 +16,7 @@
 // C++ Includes
 
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
@@ -64,6 +65,8 @@ bool
 ClangUtilityFunction::Install (Stream &error_stream,
                                ExecutionContext &exe_ctx)
 {
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    
     if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
         error_stream.PutCString("error: already installed\n");
@@ -81,6 +84,14 @@ ClangUtilityFunction::Install (Stream &error_stream,
         error_stream.PutCString ("error: invalid target\n");
         return false;
     }
+    
+    Process *process = exe_ctx.process;
+    
+    if (!process)
+    {
+        error_stream.PutCString ("error: invalid process\n");
+        return false;
+    }
         
     //////////////////////////
     // Parse the expression
@@ -89,6 +100,8 @@ ClangUtilityFunction::Install (Stream &error_stream,
     bool keep_result_in_memory = false;
     
     m_expr_decl_map.reset(new ClangExpressionDeclMap(keep_result_in_memory));
+    
+    m_data_allocator.reset(new ProcessDataAllocator(*exe_ctx.process));
     
     m_expr_decl_map->WillParse(exe_ctx);
         
@@ -110,8 +123,17 @@ ClangUtilityFunction::Install (Stream &error_stream,
     //
     
     lldb::ClangExpressionVariableSP const_result;
+    
         
-    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, const_result);
+    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, m_data_allocator.get(), const_result);
+    
+    if (log)
+    {
+        StreamString dump_string;
+        m_data_allocator->Dump(dump_string);
+        
+        log->Printf("Data buffer contents:\n%s", dump_string.GetString().c_str());
+    }
     
     if (exe_ctx.process && m_jit_start_addr != LLDB_INVALID_ADDRESS)
         m_jit_process_sp = exe_ctx.process->GetSP();

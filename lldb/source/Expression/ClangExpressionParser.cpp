@@ -19,7 +19,6 @@
 #include "lldb/Expression/ClangExpression.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/IRDynamicChecks.h"
-#include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/IRToDWARF.h"
 #include "lldb/Expression/RecordingMemoryManager.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -53,7 +52,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 
-#define USE_STANDARD_JIT
+//#define USE_STANDARD_JIT
 #if defined (USE_STANDARD_JIT)
 #include "llvm/ExecutionEngine/JIT.h"
 #else
@@ -472,6 +471,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
                                 lldb::addr_t &func_addr, 
                                 lldb::addr_t &func_end, 
                                 ExecutionContext &exe_ctx,
+                                IRForTarget::StaticDataAllocator *data_allocator,
                                 lldb::ClangExpressionVariableSP &const_result,
                                 bool jit_only_if_needed)
 {
@@ -519,6 +519,7 @@ ClangExpressionParser::MakeJIT (lldb::addr_t &func_allocation_addr,
         IRForTarget ir_for_target(decl_map, 
                                   m_expr.NeedsVariableResolution(),
                                   const_result,
+                                  data_allocator,
                                   error_stream,
                                   function_name.c_str());
         

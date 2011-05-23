@@ -24,6 +24,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/ClangExpression.h"
+#include "lldb/Expression/ProcessDataAllocator.h"
 
 namespace lldb_private 
 {
@@ -179,6 +180,7 @@ public:
     
 private:
     std::auto_ptr<ClangExpressionDeclMap>   m_expr_decl_map;    ///< The map to use when parsing and materializing the expression.
+    std::auto_ptr<ProcessDataAllocator>     m_data_allocator;   ///< The allocator for static data used in the expression.
     
     std::string                             m_function_text;    ///< The text of the function.  Must be a well-formed translation unit.
     std::string                             m_function_name;    ///< The name of the function.

@@ -97,5 +97,5 @@ if (@ARGV == 4)
 else
 {
 	print "USAGE\n\tcheckpoint-llvm.pl <llvm-sources> <llvm-build> <lldb-build> <llvm-zip>\n\n";
-	print "EXAMPLE\n\tcd lldb\n\t./scripts/checkpoint-llvm.pl llvm build/lldb.build/BuildAndIntegration/lldb-core.build/DerivedSources/llvm.build build/BuildAndIntegration llvm.zip\n";
+	print "EXAMPLE\n\tcd lldb\n\t./scripts/checkpoint-llvm.pl llvm build/llvm build/BuildAndIntegration llvm.zip\n";
 }

@@ -14,6 +14,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Expression/IRForTarget.h"
 
 #include <string>
 #include <vector>
@@ -102,6 +103,9 @@ public:
     /// @param[in] exe_ctx
     ///     The execution context to write the function into.
     ///
+    /// @param[in] data_allocator
+    ///     If non-NULL, he static data allocator to use for literal strings.
+    ///
     /// @param[out] const_result
     ///     If the result of the expression is constant, and the
     ///     expression has no side effects, this is set to the result of the 
@@ -120,6 +124,7 @@ public:
              lldb::addr_t &func_addr,
              lldb::addr_t &func_end,
              ExecutionContext &exe_ctx,
+             IRForTarget::StaticDataAllocator *data_allocator,
              lldb::ClangExpressionVariableSP &const_result,
              bool jit_only_if_needed = false);
     

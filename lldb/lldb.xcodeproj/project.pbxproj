@@ -393,6 +393,8 @@
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F5C37510F3F61B009D5894 /* libobjc.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C37410F3F61B009D5894 /* libobjc.dylib */; };
 		26F5C39110F3FA26009D5894 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
+		49C850771384A02F007DB519 /* ProcessDataAllocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 49C850761384A02F007DB519 /* ProcessDataAllocator.h */; };
+		49C8507C1384A786007DB519 /* ProcessDataAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49C850781384A0CA007DB519 /* ProcessDataAllocator.cpp */; };
 		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */; };
 		4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CD0BD0E134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp */; };
@@ -1073,6 +1075,8 @@
 		49A8A39F11D568A300AD3B68 /* ASTResultSynthesizer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTResultSynthesizer.cpp; path = source/Expression/ASTResultSynthesizer.cpp; sourceTree = "<group>"; };
 		49A8A3A311D568BF00AD3B68 /* ASTResultSynthesizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTResultSynthesizer.h; path = include/lldb/Expression/ASTResultSynthesizer.h; sourceTree = "<group>"; };
 		49BB309511F79450001A4197 /* TaggedASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TaggedASTType.h; path = include/lldb/Symbol/TaggedASTType.h; sourceTree = "<group>"; };
+		49C850761384A02F007DB519 /* ProcessDataAllocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProcessDataAllocator.h; path = include/lldb/Expression/ProcessDataAllocator.h; sourceTree = "<group>"; };
+		49C850781384A0CA007DB519 /* ProcessDataAllocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessDataAllocator.cpp; path = source/Expression/ProcessDataAllocator.cpp; sourceTree = "<group>"; };
 		49CF9829122C70BD007A0B96 /* IRDynamicChecks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRDynamicChecks.cpp; path = source/Expression/IRDynamicChecks.cpp; sourceTree = "<group>"; };
 		49CF9833122C718B007A0B96 /* IRDynamicChecks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRDynamicChecks.h; path = include/lldb/Expression/IRDynamicChecks.h; sourceTree = "<group>"; };
 		49D4FE821210B5FB00CDB854 /* ClangPersistentVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangPersistentVariables.h; path = include/lldb/Expression/ClangPersistentVariables.h; sourceTree = "<group>"; };
@@ -2155,6 +2159,8 @@
 				49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */,
 				4C98D3E1118FB98F00E575D0 /* RecordingMemoryManager.h */,
 				4C98D3DB118FB96F00E575D0 /* RecordingMemoryManager.cpp */,
+				49C850761384A02F007DB519 /* ProcessDataAllocator.h */,
+				49C850781384A0CA007DB519 /* ProcessDataAllocator.cpp */,
 			);
 			name = Expression;
 			sourceTree = "<group>";
@@ -2605,6 +2611,7 @@
 				9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */,
 				26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */,
 				26D265BC136B4269002EEE45 /* lldb-public.h in Headers */,
+				49C850771384A02F007DB519 /* ProcessDataAllocator.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2894,6 +2901,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				49C8507C1384A786007DB519 /* ProcessDataAllocator.cpp in Sources */,
 				2689FFDA13353D9D00698AC0 /* lldb.cpp in Sources */,
 				2689FFDB13353DA300698AC0 /* lldb-log.cpp in Sources */,
 				2689FFEF13353DB600698AC0 /* Breakpoint.cpp in Sources */,

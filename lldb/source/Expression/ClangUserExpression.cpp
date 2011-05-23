@@ -1,4 +1,4 @@
-//===-- ClangUserExpression.cpp -------------------------------------*- C++ -*-===//
+//===-- ClangUserExpression.cpp ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -284,7 +284,17 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     m_dwarf_opcodes.reset();
     
-    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, m_const_result, true);
+    m_data_allocator.reset(new ProcessDataAllocator(*exe_ctx.process));
+    
+    Error jit_error = parser.MakeJIT (m_jit_alloc, m_jit_start_addr, m_jit_end_addr, exe_ctx, m_data_allocator.get(), m_const_result, true);
+    
+    if (log)
+    {
+        StreamString dump_string;
+        m_data_allocator->Dump(dump_string);
+        
+        log->Printf("Data buffer contents:\n%s", dump_string.GetString().c_str());
+    }
     
     m_expr_decl_map->DidParse();
     
