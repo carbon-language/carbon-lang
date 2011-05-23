@@ -165,9 +165,9 @@ namespace {
 
 void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
                                      const ObjCAtTryStmt &S,
-                                     llvm::Function *beginCatchFn,
-                                     llvm::Function *endCatchFn,
-                                     llvm::Function *exceptionRethrowFn) {
+                                     llvm::Constant *beginCatchFn,
+                                     llvm::Constant *endCatchFn,
+                                     llvm::Constant *exceptionRethrowFn) {
   // Jump destination for falling out of catch bodies.
   CodeGenFunction::JumpDest Cont;
   if (S.getNumCatchStmts())

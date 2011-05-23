@@ -52,7 +52,7 @@ class LazyRuntimeFunction {
   CodeGenModule *CGM;
   std::vector<const llvm::Type*> ArgTys;
   const char *FunctionName;
-  llvm::Function *Function;
+  llvm::Constant *Function;
   public:
     /// Constructor leaves this class uninitialized, because it is intended to
     /// be used as a field in another class and not all of the types that are
@@ -78,7 +78,7 @@ class LazyRuntimeFunction {
    }
    /// Overloaded cast operator, allows the class to be implicitly cast to an
    /// LLVM constant.
-   operator llvm::Function*() {
+   operator llvm::Constant*() {
      if (!Function) {
        if (0 == FunctionName) return 0;
        // We put the return type on the end of the vector, so pop it back off
@@ -86,12 +86,15 @@ class LazyRuntimeFunction {
        ArgTys.pop_back();
        llvm::FunctionType *FTy = llvm::FunctionType::get(RetTy, ArgTys, false);
        Function =
-         cast<llvm::Function>(CGM->CreateRuntimeFunction(FTy, FunctionName));
+         cast<llvm::Constant>(CGM->CreateRuntimeFunction(FTy, FunctionName));
        // We won't need to use the types again, so we may as well clean up the
        // vector now
        ArgTys.resize(0);
      }
      return Function;
+   }
+   operator llvm::Function*() {
+     return dyn_cast<llvm::Function>((llvm::Constant*)this);
    }
 };
 
@@ -444,10 +447,10 @@ public:
                                            const ObjCProtocolDecl *PD);
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
   virtual llvm::Function *ModuleInitFunction();
-  virtual llvm::Function *GetPropertyGetFunction();
-  virtual llvm::Function *GetPropertySetFunction();
-  virtual llvm::Function *GetSetStructFunction();
-  virtual llvm::Function *GetGetStructFunction();
+  virtual llvm::Constant *GetPropertyGetFunction();
+  virtual llvm::Constant *GetPropertySetFunction();
+  virtual llvm::Constant *GetSetStructFunction();
+  virtual llvm::Constant *GetGetStructFunction();
   virtual llvm::Constant *EnumerationMutationFunction();
 
   virtual void EmitTryStmt(CodeGenFunction &CGF,
@@ -2210,18 +2213,18 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD,
   return Method;
 }
 
-llvm::Function *CGObjCGNU::GetPropertyGetFunction() {
+llvm::Constant *CGObjCGNU::GetPropertyGetFunction() {
   return GetPropertyFn;
 }
 
-llvm::Function *CGObjCGNU::GetPropertySetFunction() {
+llvm::Constant *CGObjCGNU::GetPropertySetFunction() {
   return SetPropertyFn;
 }
 
-llvm::Function *CGObjCGNU::GetGetStructFunction() {
+llvm::Constant *CGObjCGNU::GetGetStructFunction() {
   return GetStructPropertyFn;
 }
-llvm::Function *CGObjCGNU::GetSetStructFunction() {
+llvm::Constant *CGObjCGNU::GetSetStructFunction() {
   return SetStructPropertyFn;
 }
 

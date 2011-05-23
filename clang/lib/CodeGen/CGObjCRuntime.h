@@ -95,9 +95,9 @@ protected:
   /// thrown object directly.
   void EmitTryCatchStmt(CodeGenFunction &CGF,
                         const ObjCAtTryStmt &S,
-                        llvm::Function *beginCatchFn,
-                        llvm::Function *endCatchFn,
-                        llvm::Function *exceptionRethrowFn);
+                        llvm::Constant *beginCatchFn,
+                        llvm::Constant *endCatchFn,
+                        llvm::Constant *exceptionRethrowFn);
   /// Emits an @synchronize() statement, using the syncEnterFn and syncExitFn
   /// arguments as the functions called to lock and unlock the object.  This
   /// function can be called by subclasses that use zero-cost exception
