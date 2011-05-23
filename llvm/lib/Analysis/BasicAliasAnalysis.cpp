@@ -680,9 +680,12 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
     unsigned ArgNo = 0;
     for (ImmutableCallSite::arg_iterator CI = CS.arg_begin(), CE = CS.arg_end();
          CI != CE; ++CI, ++ArgNo) {
-      // Only look at the no-capture pointer arguments.
+      // Only look at the no-capture or byval pointer arguments.  If this
+      // pointer were passed to arguments that were neither of these, then it
+      // couldn't be no-capture.
       if (!(*CI)->getType()->isPointerTy() ||
-          !CS.paramHasAttr(ArgNo+1, Attribute::NoCapture))
+          (!CS.paramHasAttr(ArgNo+1, Attribute::NoCapture) &&
+           !CS.paramHasAttr(ArgNo+1, Attribute::ByVal)))
         continue;
       
       // If this is a no-capture pointer argument, see if we can tell that it

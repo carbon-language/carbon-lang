@@ -236,3 +236,20 @@ define void @test18(i8* %P, i8* %Q, i8* %R) nounwind ssp {
 ; CHECK-NEXT: call void @llvm.memcpy
 ; CHECK-NEXT: ret
 }
+
+
+; The store here is not dead because the byval call reads it.
+declare void @test19f({i32}* byval align 4 %P)
+
+define void @test19({i32} * nocapture byval align 4 %arg5) nounwind ssp {
+bb:
+  %tmp7 = getelementptr inbounds {i32}* %arg5, i32 0, i32 0
+  store i32 912, i32* %tmp7
+  call void @test19f({i32}* byval align 4 %arg5)
+  ret void
+
+; CHECK: @test19(
+; CHECK: store i32 912
+; CHECK: call void @test19f
+}
+
