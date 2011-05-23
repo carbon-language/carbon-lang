@@ -239,6 +239,8 @@
           <li><a href="#int_sin">'<tt>llvm.sin.*</tt>' Intrinsic</a></li>
           <li><a href="#int_cos">'<tt>llvm.cos.*</tt>' Intrinsic</a></li>
           <li><a href="#int_pow">'<tt>llvm.pow.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_pow">'<tt>llvm.exp.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_pow">'<tt>llvm.log.*</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_manip">Bit Manipulation Intrinsics</a>
@@ -6494,6 +6496,72 @@ LLVM</a>.</p>
    conditions in the same way.</p>
 
 </div>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_exp">'<tt>llvm.exp.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.exp</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.exp.f32(float  %Val)
+  declare double    @llvm.exp.f64(double %Val)
+  declare x86_fp80  @llvm.exp.f80(x86_fp80  %Val)
+  declare fp128     @llvm.exp.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.exp.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.exp.*</tt>' intrinsics perform the exp function.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>exp</tt> functions
+   would, and handles error conditions in the same way.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="int_log">'<tt>llvm.log.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.log</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.log.f32(float  %Val)
+  declare double    @llvm.log.f64(double %Val)
+  declare x86_fp80  @llvm.log.f80(x86_fp80  %Val)
+  declare fp128     @llvm.log.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.log.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.log.*</tt>' intrinsics perform the log function.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>log</tt> functions
+   would, and handles error conditions in the same way.</p>
 
 </div>
 
