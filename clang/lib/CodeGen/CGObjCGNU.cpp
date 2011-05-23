@@ -955,7 +955,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
                                     bool IsClassMessage,
                                     const CallArgList &CallArgs,
                                     const ObjCMethodDecl *Method) {
-  if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
+  if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly) {
     if (Sel == RetainSel || Sel == AutoreleaseSel) {
       return RValue::get(Receiver);
     }
@@ -1063,7 +1063,7 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
                                const ObjCInterfaceDecl *Class,
                                const ObjCMethodDecl *Method) {
   // Strip out message sends to retain / release in GC mode
-  if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC) {
+  if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly) {
     if (Sel == RetainSel || Sel == AutoreleaseSel) {
       return RValue::get(Receiver);
     }
