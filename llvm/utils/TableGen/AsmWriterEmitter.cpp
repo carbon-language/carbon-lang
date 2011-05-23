@@ -670,8 +670,8 @@ public:
 
     for (std::map<StringRef, unsigned>::iterator
            I = OpMap.begin(), E = OpMap.end(); I != E; ++I)
-      O.indent(6) << "OpMap[\"" << I->first << "\"] = "
-                  << I->second << ";\n";
+      O.indent(6) << "OpMap.push_back(std::make_pair(\"" << I->first << "\", "
+                  << I->second << "));\n";
 
     O.indent(6) << "break;\n";
     O.indent(4) << '}';
@@ -751,6 +751,20 @@ static void EmitComputeAvailableFeatures(AsmWriterInfo &Info,
   }
 
   O << "  return Features;\n";
+  O << "}\n\n";
+}
+
+static void EmitGetMapOperandNumber(raw_ostream &O) {
+  O << "static unsigned getMapOperandNumber("
+    << "const SmallVectorImpl<std::pair<StringRef, unsigned> > &OpMap,\n";
+  O << "                                    StringRef Name) {\n";
+  O << "  for (SmallVectorImpl<std::pair<StringRef, unsigned> >::"
+    << "const_iterator\n";
+  O << "         I = OpMap.begin(), E = OpMap.end(); I != E; ++I)\n";
+  O << "    if (I->first == Name)\n";
+  O << "      return I->second;\n";
+  O << "  assert(false && \"Operand not in map!\");\n";
+  O << "  return 0;\n";
   O << "}\n\n";
 }
 
@@ -934,9 +948,12 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   EmitSubtargetFeatureFlagEnumeration(AWI, O);
   EmitComputeAvailableFeatures(AWI, AsmWriter, Target, O);
 
-  O << "bool " << Target.getName() << ClassName
-    << "::printAliasInstr(const " << MachineInstrClassName
-    << " *MI, raw_ostream &OS) {\n";
+  std::string Header;
+  raw_string_ostream HeaderO(Header);
+
+  HeaderO << "bool " << Target.getName() << ClassName
+          << "::printAliasInstr(const " << MachineInstrClassName
+          << " *MI, raw_ostream &OS) {\n";
 
   std::string Cases;
   raw_string_ostream CasesO(Cases);
@@ -979,14 +996,18 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   }
 
   if (CasesO.str().empty() || !isMC) {
+    O << HeaderO.str();
     O << "  return false;\n";
     O << "}\n\n";
     O << "#endif // PRINT_ALIAS_INSTR\n";
     return;
   }
 
+  EmitGetMapOperandNumber(O);
+
+  O << HeaderO.str();
   O.indent(2) << "StringRef AsmString;\n";
-  O.indent(2) << "std::map<StringRef, unsigned> OpMap;\n";
+  O.indent(2) << "SmallVector<std::pair<StringRef, unsigned>, 4> OpMap;\n";
   if (NeedAvailableFeatures)
     O.indent(2) << "unsigned AvailableFeatures = getAvailableFeatures();\n\n";
   O.indent(2) << "switch (MI->getOpcode()) {\n";
@@ -1012,7 +1033,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   O << "                *I == '_'))\n";
   O << "          ++I;\n";
   O << "        StringRef Name(Start, I - Start);\n";
-  O << "        printOperand(MI, OpMap[Name], OS);\n";
+  O << "        printOperand(MI, getMapOperandNumber(OpMap, Name), OS);\n";
   O << "      } else {\n";
   O << "        OS << *I++;\n";
   O << "      }\n";
