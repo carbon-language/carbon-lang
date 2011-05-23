@@ -36,25 +36,25 @@ using namespace llvm;
 
 const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
-    case MipsISD::JmpLink    : return "MipsISD::JmpLink";
-    case MipsISD::Hi         : return "MipsISD::Hi";
-    case MipsISD::Lo         : return "MipsISD::Lo";
-    case MipsISD::GPRel      : return "MipsISD::GPRel";
-    case MipsISD::Ret        : return "MipsISD::Ret";
-    case MipsISD::FPBrcond   : return "MipsISD::FPBrcond";
-    case MipsISD::FPCmp      : return "MipsISD::FPCmp";
-    case MipsISD::CMovFP_T   : return "MipsISD::CMovFP_T";
-    case MipsISD::CMovFP_F   : return "MipsISD::CMovFP_F";
-    case MipsISD::FPRound    : return "MipsISD::FPRound";
-    case MipsISD::MAdd       : return "MipsISD::MAdd";
-    case MipsISD::MAddu      : return "MipsISD::MAddu";
-    case MipsISD::MSub       : return "MipsISD::MSub";
-    case MipsISD::MSubu      : return "MipsISD::MSubu";
-    case MipsISD::DivRem     : return "MipsISD::DivRem";
-    case MipsISD::DivRemU    : return "MipsISD::DivRemU";
-    case MipsISD::BuildPairF64: return "MipsISD::BuildPairF64";
-    case MipsISD::ExtractElementF64: return "MipsISD::ExtractElementF64";
-    default                  : return NULL;
+  case MipsISD::JmpLink:           return "MipsISD::JmpLink";
+  case MipsISD::Hi:                return "MipsISD::Hi";
+  case MipsISD::Lo:                return "MipsISD::Lo";
+  case MipsISD::GPRel:             return "MipsISD::GPRel";
+  case MipsISD::Ret:               return "MipsISD::Ret";
+  case MipsISD::FPBrcond:          return "MipsISD::FPBrcond";
+  case MipsISD::FPCmp:             return "MipsISD::FPCmp";
+  case MipsISD::CMovFP_T:          return "MipsISD::CMovFP_T";
+  case MipsISD::CMovFP_F:          return "MipsISD::CMovFP_F";
+  case MipsISD::FPRound:           return "MipsISD::FPRound";
+  case MipsISD::MAdd:              return "MipsISD::MAdd";
+  case MipsISD::MAddu:             return "MipsISD::MAddu";
+  case MipsISD::MSub:              return "MipsISD::MSub";
+  case MipsISD::MSubu:             return "MipsISD::MSubu";
+  case MipsISD::DivRem:            return "MipsISD::DivRem";
+  case MipsISD::DivRemU:           return "MipsISD::DivRemU";
+  case MipsISD::BuildPairF64:      return "MipsISD::BuildPairF64";
+  case MipsISD::ExtractElementF64: return "MipsISD::ExtractElementF64";
+  default: return NULL;
   }
 }
 
@@ -380,7 +380,7 @@ static SDValue PerformDivRemCombine(SDNode *N, SelectionDAG& DAG,
   // insert MFHI
   if (N->hasAnyUseOfValue(1)) {
     SDValue CopyFromHi = DAG.getCopyFromReg(InChain, dl,
-                                               Mips::HI, MVT::i32, InGlue);
+                                            Mips::HI, MVT::i32, InGlue);
     DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), CopyFromHi);
   }
 
@@ -1051,9 +1051,9 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
                  *DAG.getContext());
 
-  if (Subtarget->isABI_O32()) {
+  if (Subtarget->isABI_O32())
     CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
-  } else
+  else
     CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
 
   // Get a count of how many bytes are to be pushed on the stack.
@@ -1232,20 +1232,20 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // location is used on function prologue to save GP and also after all
   // emitted CALL's to restore GP.
   if (IsPIC) {
-      // Function can have an arbitrary number of calls, so
-      // hold the LastArgStackLoc with the biggest offset.
-      int MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
+    // Function can have an arbitrary number of calls, so
+    // hold the LastArgStackLoc with the biggest offset.
+    int MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
 
-      if (MaxCallFrameSize < (int)NextStackOffset) {
-        MipsFI->setMaxCallFrameSize(NextStackOffset);
+    if (MaxCallFrameSize < (int)NextStackOffset) {
+      MipsFI->setMaxCallFrameSize(NextStackOffset);
 
-        // $gp restore slot must be aligned.
-        unsigned StackAlignment = TFL->getStackAlignment();
-        NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
-                          StackAlignment * StackAlignment;
-        int GPFI = MipsFI->getGPFI();
-        MFI->setObjectOffset(GPFI, NextStackOffset);
-      }
+      // $gp restore slot must be aligned.
+      unsigned StackAlignment = TFL->getStackAlignment();
+      NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
+                        StackAlignment * StackAlignment;
+      int GPFI = MipsFI->getGPFI();
+      MFI->setObjectOffset(GPFI, NextStackOffset);
+    }
   }
 
   // Extend range of indices of frame objects for outgoing arguments that were
