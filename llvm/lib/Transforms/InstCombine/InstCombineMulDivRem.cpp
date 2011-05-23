@@ -29,23 +29,8 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
   // code.
   if (!V->hasOneUse()) return 0;
   
-  
-  // (PowerOfTwo >>u B) --> isExact since shifting out the result would make it
-  // inexact.  Similarly for <<.
-  if (BinaryOperator *I = dyn_cast<BinaryOperator>(V))
-    if (I->isLogicalShift() &&
-        isPowerOfTwo(I->getOperand(0), IC.getTargetData())) {
-      if (I->getOpcode() == Instruction::LShr && !I->isExact()) {
-        I->setIsExact();
-        return I;
-      }
-      
-      if (I->getOpcode() == Instruction::Shl && !I->hasNoUnsignedWrap()) {
-        I->setHasNoUnsignedWrap();
-        return I;
-      }
-    }
-      
+  bool MadeChange = false;
+
   // ((1 << A) >>u B) --> (1 << (A-B))
   // Because V cannot be zero, we know that B is less than A.
   Value *A = 0, *B = 0, *PowerOf2 = 0;
@@ -57,12 +42,34 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
     return IC.Builder->CreateShl(PowerOf2, A);
   }
   
+  // (PowerOfTwo >>u B) --> isExact since shifting out the result would make it
+  // inexact.  Similarly for <<.
+  if (BinaryOperator *I = dyn_cast<BinaryOperator>(V))
+    if (I->isLogicalShift() &&
+        isPowerOfTwo(I->getOperand(0), IC.getTargetData())) {
+      // We know that this is an exact/nuw shift and that the input is a
+      // non-zero context as well.
+      if (Value *V2 = simplifyValueKnownNonZero(I->getOperand(0), IC)) {
+        I->setOperand(0, V2);
+        MadeChange = true;
+      }
+      
+      if (I->getOpcode() == Instruction::LShr && !I->isExact()) {
+        I->setIsExact();
+        MadeChange = true;
+      }
+      
+      if (I->getOpcode() == Instruction::Shl && !I->hasNoUnsignedWrap()) {
+        I->setHasNoUnsignedWrap();
+        MadeChange = true;
+      }
+    }
+
   // TODO: Lots more we could do here:
-  //    "1 >> X" could get an "isexact" bit.
   //    If V is a phi node, we can call this on each of its operands.
   //    "select cond, X, 0" can simplify to "X".
   
-  return 0;
+  return MadeChange ? V : 0;
 }
 
 
