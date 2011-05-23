@@ -2997,7 +2997,8 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   //   have inherited constructors.
   DeclareInheritedConstructors(Record);
 
-  CheckExplicitlyDefaultedMethods(Record);
+  if (!Record->isDependentType())
+    CheckExplicitlyDefaultedMethods(Record);
 }
 
 void Sema::CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record) {
@@ -8657,6 +8658,12 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
   CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Dcl);
 
   if (MD) {
+    if (MD->getParent()->isDependentType()) {
+      MD->setDefaulted();
+      MD->setExplicitlyDefaulted();
+      return;
+    }
+
     CXXSpecialMember Member = getSpecialMember(MD);
     if (Member == CXXInvalid) {
       Diag(DefaultLoc, diag::err_default_special_members);

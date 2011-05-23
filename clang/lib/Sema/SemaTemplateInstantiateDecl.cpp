@@ -1264,6 +1264,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
       PrincipalDecl->isInIdentifierNamespace(Decl::IDNS_Ordinary))
     PrincipalDecl->setNonMemberOperator();
 
+  assert(!D->isDefaulted() && "only methods should be defaulted");
   return Function;
 }
 
@@ -1496,7 +1497,14 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
     else
       Owner->addDecl(DeclToAdd);
   }
-  
+
+  if (D->isExplicitlyDefaulted()) {
+    SemaRef.SetDeclDefaulted(Method, Method->getLocation());
+  } else {
+    assert(!D->isDefaulted() &&
+           "should not implicitly default uninstantiated function");
+  }
+
   return Method;
 }
 
