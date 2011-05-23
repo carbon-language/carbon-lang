@@ -8,7 +8,7 @@ Usage:
 1. Mail.app -> Save As -> api.eml (Raw Message Source)
 2. .../convert.py api.eml
 3. git am --signoff < api.eml
-4. git commit -a
+4. git svn dcommit
 """
 
 import os, re, sys
