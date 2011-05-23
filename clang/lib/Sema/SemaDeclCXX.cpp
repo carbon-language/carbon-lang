@@ -6011,7 +6011,8 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
 void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
                                             CXXConstructorDecl *Constructor) {
   assert((Constructor->isDefaulted() && Constructor->isDefaultConstructor() &&
-          !Constructor->isUsed(false) && !Constructor->isDeleted()) &&
+          !Constructor->doesThisDeclarationHaveABody() &&
+          !Constructor->isDeleted()) &&
     "DefineImplicitDefaultConstructor - call it for implicit default ctor");
 
   CXXRecordDecl *ClassDecl = Constructor->getParent();
@@ -6303,7 +6304,8 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
 
 void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
                                     CXXDestructorDecl *Destructor) {
-  assert((Destructor->isDefaulted() && !Destructor->isUsed(false)) &&
+  assert((Destructor->isDefaulted() &&
+          !Destructor->doesThisDeclarationHaveABody()) &&
          "DefineImplicitDestructor - call it for implicit default dtor");
   CXXRecordDecl *ClassDecl = Destructor->getParent();
   assert(ClassDecl && "DefineImplicitDestructor - invalid destructor");
@@ -6750,7 +6752,7 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   assert((CopyAssignOperator->isDefaulted() && 
           CopyAssignOperator->isOverloadedOperator() &&
           CopyAssignOperator->getOverloadedOperator() == OO_Equal &&
-          !CopyAssignOperator->isUsed(false)) &&
+          !CopyAssignOperator->doesThisDeclarationHaveABody()) &&
          "DefineImplicitCopyAssignment called for wrong function");
 
   CXXRecordDecl *ClassDecl = CopyAssignOperator->getParent();
@@ -7228,7 +7230,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                    CXXConstructorDecl *CopyConstructor) {
   assert((CopyConstructor->isDefaulted() &&
           CopyConstructor->isCopyConstructor() &&
-          !CopyConstructor->isUsed(false)) &&
+          !CopyConstructor->doesThisDeclarationHaveABody()) &&
          "DefineImplicitCopyConstructor - call it for implicit copy ctor");
 
   CXXRecordDecl *ClassDecl = CopyConstructor->getParent();
@@ -8673,8 +8675,15 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
     MD->setDefaulted();
     MD->setExplicitlyDefaulted();
 
-    // We'll check it when the record is done
-    if (MD == MD->getCanonicalDecl())
+    // If this definition appears within the record, do the checking when
+    // the record is complete.
+    const FunctionDecl *Primary = MD;
+    if (MD->getTemplatedKind() != FunctionDecl::TK_NonTemplate)
+      // Find the uninstantiated declaration that actually had the '= default'
+      // on it.
+      MD->getTemplateInstantiationPattern()->isDefined(Primary);
+
+    if (Primary == Primary->getCanonicalDecl())
       return;
 
     switch (Member) {

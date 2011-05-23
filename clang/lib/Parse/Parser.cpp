@@ -832,78 +832,13 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   if (FTI.isKNRPrototype())
     ParseKNRParamDeclarations(D);
 
-  if (Tok.is(tok::equal)) {
-    assert(getLang().CPlusPlus && "Only C++ function definitions have '='");
-    ConsumeToken();
-
-    Decl *Decl = 0;
-    // Here we complete the declaration as if it were normal
-    switch (TemplateInfo.Kind) {
-    case ParsedTemplateInfo::NonTemplate:
-      Decl = Actions.ActOnDeclarator(getCurScope(), D, true);
-      break;
-
-    case ParsedTemplateInfo::Template:
-    case ParsedTemplateInfo::ExplicitSpecialization:
-      Decl = Actions.ActOnTemplateDeclarator(getCurScope(),
-                                   MultiTemplateParamsArg(Actions,
-                                          TemplateInfo.TemplateParams->data(),
-                                          TemplateInfo.TemplateParams->size()),
-                                             D);
-      break;
-
-    case ParsedTemplateInfo::ExplicitInstantiation: {
-      DeclResult Result
-        = Actions.ActOnExplicitInstantiation(getCurScope(),
-                                             TemplateInfo.ExternLoc,
-                                             TemplateInfo.TemplateLoc,
-                                             D);
-      if (Result.isInvalid()) {
-        SkipUntil(tok::semi);
-        return 0;
-      }
-
-      Decl = Result.get();
-      break;
-    }
-    }
-      
-    bool Delete = false;
-    SourceLocation KWLoc;
-    if (Tok.is(tok::kw_delete)) {
-      if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::warn_deleted_function_accepted_as_extension);
-
-      KWLoc = ConsumeToken();
-      Actions.SetDeclDeleted(Decl, KWLoc);
-      Delete = true;
-    } else if (Tok.is(tok::kw_default)) {
-      if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::warn_defaulted_function_accepted_as_extension);
-
-      KWLoc = ConsumeToken();
-      Actions.SetDeclDefaulted(Decl, KWLoc);
-    } else {
-      llvm_unreachable("function definition after = not 'delete' or 'default'");
-    }
-
-    if (Tok.is(tok::comma)) {
-      Diag(KWLoc, diag::err_default_delete_in_multiple_declaration)
-        << Delete;
-      SkipUntil(tok::semi);
-    } else {
-      ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
-                       Delete ? "delete" : "default", tok::semi);
-    }
-
-    return Decl;
-  }
 
   // We should have either an opening brace or, in a C++ constructor,
   // we may have a colon.
   if (Tok.isNot(tok::l_brace) && 
       (!getLang().CPlusPlus ||
-       (Tok.isNot(tok::colon) && Tok.isNot(tok::kw_try)))) {
+       (Tok.isNot(tok::colon) && Tok.isNot(tok::kw_try) &&
+        Tok.isNot(tok::equal)))) {
     Diag(Tok, diag::err_expected_fn_body);
 
     // Skip over garbage, until we get to '{'.  Don't eat the '{'.
@@ -951,7 +886,6 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     return DP;
   }
 
-
   // Enter a scope for the function body.
   ParseScope BodyScope(this, Scope::FnScope|Scope::DeclScope);
 
@@ -971,6 +905,43 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
   // Break out of the ParsingDeclSpec context, too.  This const_cast is
   // safe because we're always the sole owner.
   D.getMutableDeclSpec().abort();
+
+  if (Tok.is(tok::equal)) {
+    assert(getLang().CPlusPlus && "Only C++ function definitions have '='");
+    ConsumeToken();
+
+    Actions.ActOnFinishFunctionBody(Res, 0, false);
+ 
+    bool Delete = false;
+    SourceLocation KWLoc;
+    if (Tok.is(tok::kw_delete)) {
+      if (!getLang().CPlusPlus0x)
+        Diag(Tok, diag::warn_deleted_function_accepted_as_extension);
+
+      KWLoc = ConsumeToken();
+      Actions.SetDeclDeleted(Res, KWLoc);
+      Delete = true;
+    } else if (Tok.is(tok::kw_default)) {
+      if (!getLang().CPlusPlus0x)
+        Diag(Tok, diag::warn_defaulted_function_accepted_as_extension);
+
+      KWLoc = ConsumeToken();
+      Actions.SetDeclDefaulted(Res, KWLoc);
+    } else {
+      llvm_unreachable("function definition after = not 'delete' or 'default'");
+    }
+
+    if (Tok.is(tok::comma)) {
+      Diag(KWLoc, diag::err_default_delete_in_multiple_declaration)
+        << Delete;
+      SkipUntil(tok::semi);
+    } else {
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after,
+                       Delete ? "delete" : "default", tok::semi);
+    }
+
+    return Res;
+  }
 
   if (Tok.is(tok::kw_try))
     return ParseFunctionTryBlock(Res, BodyScope);
