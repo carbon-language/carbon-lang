@@ -34,35 +34,6 @@ private:
   int CPUTopSavedRegOff;
   int FPUTopSavedRegOff;
 
-  /// MipsFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
-  struct MipsFIHolder {
-
-    int FI;
-    int SPOffset;
-
-    MipsFIHolder(int FrameIndex, int StackPointerOffset)
-      : FI(FrameIndex), SPOffset(StackPointerOffset) {}
-  };
-
-  /// When PIC is used the GP must be saved on the stack on the function
-  /// prologue and must be reloaded from this stack location after every
-  /// call. A reference to its stack location and frame index must be kept
-  /// to be used on emitPrologue and processFunctionBeforeFrameFinalized.
-  MipsFIHolder GPHolder;
-
-  /// On LowerFormalArguments the stack size is unknown, so the Stack
-  /// Pointer Offset calculation of "not in register arguments" must be
-  /// postponed to emitPrologue.
-  SmallVector<MipsFIHolder, 16> FnLoadArgs;
-  bool HasLoadArgs;
-
-  // When VarArgs, we must write registers back to caller stack, preserving
-  // on register arguments. Since the stack size is unknown on
-  // LowerFormalArguments, the Stack Pointer Offset calculation must be
-  // postponed to emitPrologue.
-  SmallVector<MipsFIHolder, 4> FnStoreVarArgs;
-  bool HasStoreVarArgs;
-
   /// SRetReturnReg - Some subtargets require that sret lowering includes
   /// returning the value of the returned struct in a register. This field
   /// holds the virtual register into which the sret argument is passed.
@@ -88,8 +59,7 @@ private:
 public:
   MipsFunctionInfo(MachineFunction& MF)
   : CPUTopSavedRegOff(0),
-    FPUTopSavedRegOff(0), GPHolder(-1,-1), HasLoadArgs(false),
-    HasStoreVarArgs(false), SRetReturnReg(0), GlobalBaseReg(0),
+    FPUTopSavedRegOff(0), SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
     OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), HasCall(false),
     MaxCallFrameSize(-1)
@@ -116,35 +86,10 @@ public:
     OutArgFIRange.second = LastFI;
   }
 
-  int getGPStackOffset() const { return GPHolder.SPOffset; }
-  int getGPFI() const { return GPHolder.FI; }
-  void setGPStackOffset(int Off) { GPHolder.SPOffset = Off; }
-  void setGPFI(int FI) { GPHolder.FI = FI; }
-  bool needGPSaveRestore() const { return GPHolder.SPOffset != -1; }
+  int getGPFI() const { return GPFI; }
+  void setGPFI(int FI) { GPFI = FI; }
+  bool needGPSaveRestore() const { return getGPFI(); }
   bool isGPFI(int FI) const { return GPFI && GPFI == FI; }
-
-  bool hasLoadArgs() const { return HasLoadArgs; }
-  bool hasStoreVarArgs() const { return HasStoreVarArgs; }
-
-  void recordLoadArgsFI(int FI, int SPOffset) {
-    if (!HasLoadArgs) HasLoadArgs=true;
-    FnLoadArgs.push_back(MipsFIHolder(FI, SPOffset));
-  }
-  void recordStoreVarArgsFI(int FI, int SPOffset) {
-    if (!HasStoreVarArgs) HasStoreVarArgs=true;
-    FnStoreVarArgs.push_back(MipsFIHolder(FI, SPOffset));
-  }
-
-  void adjustLoadArgsFI(MachineFrameInfo *MFI) const {
-    if (!hasLoadArgs()) return;
-    for (unsigned i = 0, e = FnLoadArgs.size(); i != e; ++i)
-      MFI->setObjectOffset( FnLoadArgs[i].FI, FnLoadArgs[i].SPOffset );
-  }
-  void adjustStoreVarArgsFI(MachineFrameInfo *MFI) const {
-    if (!hasStoreVarArgs()) return;
-    for (unsigned i = 0, e = FnStoreVarArgs.size(); i != e; ++i)
-      MFI->setObjectOffset( FnStoreVarArgs[i].FI, FnStoreVarArgs[i].SPOffset );
-  }
 
   unsigned getSRetReturnReg() const { return SRetReturnReg; }
   void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }

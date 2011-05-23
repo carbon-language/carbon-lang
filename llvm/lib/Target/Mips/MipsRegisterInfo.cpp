@@ -98,22 +98,22 @@ getCalleeSavedRegs(const MachineFunction *MF) const
 {
   // Mips callee-save register range is $16-$23, $f20-$f30
   static const unsigned SingleFloatOnlyCalleeSavedRegs[] = {
-    Mips::S0, Mips::S1, Mips::S2, Mips::S3,
-    Mips::S4, Mips::S5, Mips::S6, Mips::S7, Mips::FP, Mips::RA,
-    Mips::F20, Mips::F21, Mips::F22, Mips::F23, Mips::F24, Mips::F25,
-    Mips::F26, Mips::F27, Mips::F28, Mips::F29, Mips::F30, 0
+    Mips::F30, Mips::F29, Mips::F28, Mips::F27, Mips::F26,
+    Mips::F25, Mips::F24, Mips::F23, Mips::F22, Mips::F21, Mips::F20,
+    Mips::RA, Mips::FP, Mips::S7, Mips::S6, Mips::S5, Mips::S4,
+    Mips::S3, Mips::S2, Mips::S1, Mips::S0, 0
   };
 
   static const unsigned BitMode32CalleeSavedRegs[] = {
-    Mips::S0, Mips::S1, Mips::S2, Mips::S3,
-    Mips::S4, Mips::S5, Mips::S6, Mips::S7, Mips::FP, Mips::RA,
-    Mips::F20, Mips::F22, Mips::F24, Mips::F26, Mips::F28, Mips::F30, 0
+    Mips::F30, Mips::F28, Mips::F26, Mips::F24, Mips::F22, Mips::F20,
+    Mips::RA, Mips::FP, Mips::S7, Mips::S6, Mips::S5, Mips::S4,
+    Mips::S3, Mips::S2, Mips::S1, Mips::S0, 0
   };
 
   static const unsigned Mips32CalleeSavedRegs[] = {
-    Mips::S0, Mips::S1, Mips::S2, Mips::S3,
-    Mips::S4, Mips::S5, Mips::S6, Mips::S7, Mips::FP, Mips::RA,
-    Mips::D10, Mips::D11, Mips::D12, Mips::D13, Mips::D14, Mips::D15, 0
+    Mips::D15, Mips::D14, Mips::D13, Mips::D12, Mips::D11, Mips::D10,
+    Mips::RA, Mips::FP, Mips::S7, Mips::S6, Mips::S5, Mips::S4,
+    Mips::S3, Mips::S2, Mips::S1, Mips::S0, 0
   };
 
   if (Subtarget.isSingleFloat())
@@ -182,9 +182,19 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                << "spOffset   : " << spOffset << "\n"
                << "stackSize  : " << stackSize << "\n");
 
-  // as explained on LowerFormalArguments, detect negative offsets
-  // and adjust SPOffsets considering the final stack size.
-  int Offset = ((spOffset < 0) ? (stackSize + (-(spOffset+4))) : (spOffset));
+  int Offset;
+
+  // Calculate final offset.
+  // - There is no need to change the offset if the frame object is an outgoing
+  //   argument or a $gp restore location,
+  // - If the frame object is any of the following, its offset must be adjusted
+  //   by adding the size of the stack:
+  //   incoming argument, callee-saved register location or local variable.  
+  if (MipsFI->isOutArgFI(FrameIndex) || MipsFI->isGPFI(FrameIndex))
+    Offset = spOffset;
+  else
+    Offset = spOffset + stackSize;
+
   Offset    += MI.getOperand(i-1).getImm();
 
   DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
@@ -245,15 +255,6 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
   MI.getOperand(i).ChangeToRegister(NewReg, false);
   MI.getOperand(i-1).ChangeToImmediate(NewImm);
-}
-
-void MipsRegisterInfo::
-processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
-  // Set the stack offset where GP must be saved/loaded from.
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-  if (MipsFI->needGPSaveRestore())
-    MFI->setObjectOffset(MipsFI->getGPFI(), MipsFI->getGPStackOffset());
 }
 
 unsigned MipsRegisterInfo::

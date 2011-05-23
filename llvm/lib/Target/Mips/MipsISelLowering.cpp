@@ -1069,7 +1069,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Create GP frame object if this is the first call. 
   // SPOffset will be updated after call frame size is known.
-  if (IsPIC && MipsFI->getGPStackOffset() == -1)
+  if (IsPIC && !MipsFI->getGPFI())
     MipsFI->setGPFI(MFI->CreateFixedObject(4, 0, true));
 
   int FirstFI = -MFI->getNumFixedObjects() - 1, LastFI = 0; 
@@ -1124,10 +1124,10 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // This guarantees that when allocating Local Area the firsts
     // 16 bytes which are alwayes reserved won't be overwritten
     // if O32 ABI is used. For EABI the first address is zero.
+    unsigned ArgSize = VA.getValVT().getSizeInBits()/8;
     NextStackOffset = VA.getLocMemOffset();
-    LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
-                                    NextStackOffset, true);
-    NextStackOffset += VA.getValVT().getSizeInBits()/8;
+    LastFI = MFI->CreateFixedObject(ArgSize, NextStackOffset, true);
+    NextStackOffset += ArgSize;
 
     SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
 
@@ -1243,7 +1243,8 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         unsigned StackAlignment = TFL->getStackAlignment();
         NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
                           StackAlignment * StackAlignment;
-        MipsFI->setGPStackOffset(NextStackOffset);
+        int GPFI = MipsFI->getGPFI();
+        MFI->setObjectOffset(GPFI, NextStackOffset);
       }
   }
 
@@ -1405,9 +1406,9 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       // be used on emitPrologue) to avoid mis-calc of the first stack
       // offset on PEI::calculateFrameObjectOffsets.
       unsigned ArgSize = VA.getValVT().getSizeInBits()/8;
-      NextStackOffset = VA.getLocMemOffset() + ArgSize;
-      LastFI = MFI->CreateFixedObject(ArgSize, 0, true);
-      MipsFI->recordLoadArgsFI(LastFI, -(4 + VA.getLocMemOffset()));
+      NextStackOffset = VA.getLocMemOffset();
+      LastFI = MFI->CreateFixedObject(ArgSize, NextStackOffset, true);
+      NextStackOffset += ArgSize;
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(LastFI, getPointerTy());
@@ -1449,8 +1450,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
           unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegEnd, RC);
           SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, MVT::i32);
 
-          LastFI = MFI->CreateFixedObject(4, 0, true);
-          MipsFI->recordStoreVarArgsFI(LastFI, -(4+(ArgRegEnd-Mips::A0)*4));
+          LastFI = MFI->CreateFixedObject(4, (ArgRegEnd-Mips::A0)*4, true);
           SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
           OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff,
                                            MachinePointerInfo(),
@@ -1458,26 +1458,20 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
           // Record the frame index of the first variable argument
           // which is a value necessary to VASTART.
-          if (!MipsFI->getVarArgsFrameIndex()) {
-            MFI->setObjectAlignment(LastFI, 4);
+          if (!MipsFI->getVarArgsFrameIndex())
             MipsFI->setVarArgsFrameIndex(LastFI);
-          }
         }
       } else {
         // Last named formal argument is in register Mips::A3, and the first
         // variable argument is on stack. Record the frame index of the first
         // variable argument.
-        LastFI = MFI->CreateFixedObject(4, 0, true);
-        MFI->setObjectAlignment(LastFI, 4);
-        MipsFI->recordStoreVarArgsFI(LastFI, -20);
+        LastFI = MFI->CreateFixedObject(4, 16, true);
         MipsFI->setVarArgsFrameIndex(LastFI);
       }
     } else {
       // Last named formal argument and all the variable arguments are passed
       // on stack. Record the frame index of the first variable argument.
-      LastFI = MFI->CreateFixedObject(4, 0, true);
-      MFI->setObjectAlignment(LastFI, 4);
-      MipsFI->recordStoreVarArgsFI(LastFI, -(4+NextStackOffset));
+      LastFI = MFI->CreateFixedObject(4, NextStackOffset, true);
       MipsFI->setVarArgsFrameIndex(LastFI);
     }
   }

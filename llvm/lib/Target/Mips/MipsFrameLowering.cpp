@@ -87,102 +87,13 @@ bool MipsFrameLowering::hasFP(const MachineFunction &MF) const {
   return DisableFramePointerElim(MF) || MFI->hasVarSizedObjects();
 }
 
-void MipsFrameLowering::adjustMipsStackFrame(MachineFunction &MF) const {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  unsigned StackAlign = getStackAlignment();
-  unsigned RegSize = STI.isGP32bit() ? 4 : 8;
-  bool HasGP = MipsFI->needGPSaveRestore();
-
-  // Min and Max CSI FrameIndex.
-  int MinCSFI = -1, MaxCSFI = -1;
-
-  // See the description at MipsMachineFunction.h
-  int TopCPUSavedRegOff = -1, TopFPUSavedRegOff = -1;
-
-  // Replace the dummy '0' SPOffset by the negative offsets, as explained on
-  // LowerFormalArguments. Leaving '0' for while is necessary to avoid the
-  // approach done by calculateFrameObjectOffsets to the stack frame.
-  MipsFI->adjustLoadArgsFI(MFI);
-  MipsFI->adjustStoreVarArgsFI(MFI);
-
-  // It happens that the default stack frame allocation order does not directly
-  // map to the convention used for mips. So we must fix it. We move the callee
-  // save register slots after the local variables area, as described in the
-  // stack frame above.
-  unsigned CalleeSavedAreaSize = 0;
-  if (!CSI.empty()) {
-    MinCSFI = CSI[0].getFrameIdx();
-    MaxCSFI = CSI[CSI.size()-1].getFrameIdx();
-  }
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i)
-    CalleeSavedAreaSize += MFI->getObjectAlignment(CSI[i].getFrameIdx());
-
-  unsigned StackOffset = HasGP ? (MipsFI->getGPStackOffset()+RegSize)
-                : (STI.isABI_O32() ? 16 : 0);
-
-  // Adjust local variables. They should come on the stack right
-  // after the arguments.
-  int LastOffsetFI = -1;
-  for (int i = 0, e = MFI->getObjectIndexEnd(); i != e; ++i) {
-    if (i >= MinCSFI && i <= MaxCSFI)
-      continue;
-    if (MFI->isDeadObjectIndex(i))
-      continue;
-    unsigned Offset =
-      StackOffset + MFI->getObjectOffset(i) - CalleeSavedAreaSize;
-    if (LastOffsetFI == -1)
-      LastOffsetFI = i;
-    if (Offset > MFI->getObjectOffset(LastOffsetFI))
-      LastOffsetFI = i;
-    MFI->setObjectOffset(i, Offset);
-  }
-
-  // Adjust CPU Callee Saved Registers Area. Registers RA and FP must
-  // be saved in this CPU Area. This whole area must be aligned to the
-  // default Stack Alignment requirements.
-  if (LastOffsetFI >= 0)
-    StackOffset = MFI->getObjectOffset(LastOffsetFI)+
-                  MFI->getObjectSize(LastOffsetFI);
-  StackOffset = ((StackOffset+StackAlign-1)/StackAlign*StackAlign);
-
-  for (unsigned i = 0, e = CSI.size(); i != e ; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    if (!Mips::CPURegsRegisterClass->contains(Reg))
-      break;
-    MFI->setObjectOffset(CSI[i].getFrameIdx(), StackOffset);
-    TopCPUSavedRegOff = StackOffset;
-    StackOffset += MFI->getObjectAlignment(CSI[i].getFrameIdx());
-  }
-
-  StackOffset = ((StackOffset+StackAlign-1)/StackAlign*StackAlign);
-
-  // Adjust FPU Callee Saved Registers Area. This Area must be
-  // aligned to the default Stack Alignment requirements.
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    if (Mips::CPURegsRegisterClass->contains(Reg))
-      continue;
-    MFI->setObjectOffset(CSI[i].getFrameIdx(), StackOffset);
-    TopFPUSavedRegOff = StackOffset;
-    StackOffset += MFI->getObjectAlignment(CSI[i].getFrameIdx());
-  }
-  StackOffset = ((StackOffset+StackAlign-1)/StackAlign*StackAlign);
-
-  // Update frame info
-  MFI->setStackSize(StackOffset);
-
-  // Recalculate the final tops offset. The final values must be '0'
-  // if there isn't a callee saved register for CPU or FPU, otherwise
-  // a negative offset is needed.
-  if (TopCPUSavedRegOff >= 0)
-    MipsFI->setCPUTopSavedRegOff(TopCPUSavedRegOff-StackOffset);
-
-  if (TopFPUSavedRegOff >= 0)
-    MipsFI->setFPUTopSavedRegOff(TopFPUSavedRegOff-StackOffset);
+bool MipsFrameLowering::targetHandlesStackFrameRounding() const {
+  return true;
 }
 
+static unsigned AlignOffset(unsigned Offset, unsigned Align) {
+  return (Offset + Align - 1) / Align * Align; 
+} 
 
 // expand pair of register and immediate if the immediate doesn't fit in the
 // 16-bit offset field.
@@ -238,12 +149,18 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   int NewImm = 0;
   bool ATUsed;
 
-  // Get the right frame order for Mips.
-  adjustMipsStackFrame(MF);
+  // First, compute final stack size.
+  unsigned RegSize = STI.isGP32bit() ? 4 : 8;
+  unsigned StackAlign = getStackAlignment();
+  unsigned LocalVarAreaOffset = MipsFI->needGPSaveRestore() ? 
+    (MFI->getObjectOffset(MipsFI->getGPFI()) + RegSize) :
+    MFI->getMaxCallFrameSize();
+  unsigned StackSize = AlignOffset(LocalVarAreaOffset, StackAlign) +
+    AlignOffset(MFI->getStackSize(), StackAlign);
 
-  // Get the number of bytes to allocate from the FrameInfo.
-  unsigned StackSize = MFI->getStackSize();
-
+   // Update stack size
+  MFI->setStackSize(StackSize); 
+  
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOREORDER));
 
   // TODO: check need from GP here.
@@ -282,7 +199,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Restore GP from the saved stack location
   if (MipsFI->needGPSaveRestore())
     BuildMI(MBB, MBBI, dl, TII.get(Mips::CPRESTORE))
-      .addImm(MipsFI->getGPStackOffset());
+      .addImm(MFI->getObjectOffset(MipsFI->getGPFI()));
 }
 
 void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
@@ -348,11 +265,4 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     MRI.setPhysRegUsed(Mips::RA);
   else
     MRI.setPhysRegUnused(Mips::RA);
-}
-
-void MipsFrameLowering::
-processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
-  const MipsRegisterInfo *RegInfo =
-    static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
-  RegInfo->processFunctionBeforeFrameFinalized(MF);
 }
