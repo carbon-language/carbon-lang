@@ -126,44 +126,60 @@ namespace {
 // Create a bitmask with all callee saved registers for CPU or Floating Point
 // registers. For CPU registers consider RA, GP and FP for saving if necessary.
 void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
-  const TargetFrameLowering *TFI = TM.getFrameLowering();
-  const TargetRegisterInfo *RI = TM.getRegisterInfo();
-  const MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
-
   // CPU and FPU Saved Registers Bitmasks
-  unsigned int CPUBitmask = 0;
-  unsigned int FPUBitmask = 0;
+  unsigned CPUBitmask = 0, FPUBitmask = 0;
+  int CPUTopSavedRegOff, FPUTopSavedRegOff;
 
   // Set the CPU and FPU Bitmasks
   const MachineFrameInfo *MFI = MF->getFrameInfo();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+  // size of stack area to which FP callee-saved regs are saved.
+  unsigned CPURegSize = Mips::CPURegsRegisterClass->getSize();
+  unsigned FGR32RegSize = Mips::FGR32RegisterClass->getSize();
+  unsigned AFGR64RegSize = Mips::AFGR64RegisterClass->getSize();
+  bool HasAFGR64Reg = false;
+  unsigned CSFPRegsSize = 0;
+  unsigned i, e = CSI.size();
+
+  // Set FPU Bitmask.
+  for (i = 0; i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    unsigned RegNum = MipsRegisterInfo::getRegisterNumbering(Reg);
     if (Mips::CPURegsRegisterClass->contains(Reg))
-      CPUBitmask |= (1 << RegNum);
-    else
-      FPUBitmask |= (1 << RegNum);
+      break;
+
+    unsigned RegNum = MipsRegisterInfo::getRegisterNumbering(Reg);
+    if (Mips::AFGR64RegisterClass->contains(Reg)) {
+      FPUBitmask |= (3 << RegNum);
+      CSFPRegsSize += AFGR64RegSize;
+      HasAFGR64Reg = true;
+      continue;
+    }
+
+    FPUBitmask |= (1 << RegNum);
+    CSFPRegsSize += FGR32RegSize;
   }
 
-  // Return Address and Frame registers must also be set in CPUBitmask.
-  // FIXME: Do we really need hasFP() call here? When no FP is present SP is
-  // just returned -- will it be ok?
-  if (TFI->hasFP(*MF))
-    CPUBitmask |= (1 << MipsRegisterInfo::
-                getRegisterNumbering(RI->getFrameRegister(*MF)));
+  // Set CPU Bitmask.
+  for (; i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    unsigned RegNum = MipsRegisterInfo::getRegisterNumbering(Reg);
+    CPUBitmask |= (1 << RegNum);
+  }
 
-  if (MFI->adjustsStack())
-    CPUBitmask |= (1 << MipsRegisterInfo::
-                getRegisterNumbering(RI->getRARegister()));
+  // FP Regs are saved right below where the virtual frame pointer points to.
+  FPUTopSavedRegOff = FPUBitmask ?
+    (HasAFGR64Reg ? -AFGR64RegSize : -FGR32RegSize) : 0;
+
+  // CPU Regs are saved below FP Regs.
+  CPUTopSavedRegOff = CPUBitmask ? -CSFPRegsSize - CPURegSize : 0;
 
   // Print CPUBitmask
   O << "\t.mask \t"; printHex32(CPUBitmask, O);
-  O << ',' << MipsFI->getCPUTopSavedRegOff() << '\n';
+  O << ',' << CPUTopSavedRegOff << '\n';
 
   // Print FPUBitmask
-  O << "\t.fmask\t"; printHex32(FPUBitmask, O); O << ","
-    << MipsFI->getFPUTopSavedRegOff() << '\n';
+  O << "\t.fmask\t"; printHex32(FPUBitmask, O);
+  O << "," << FPUTopSavedRegOff << '\n';
 }
 
 // Print a 32 bit hex number with all numbers.

@@ -27,13 +27,6 @@ namespace llvm {
 class MipsFunctionInfo : public MachineFunctionInfo {
 
 private:
-  /// At each function entry, two special bitmask directives must be emitted
-  /// to help debugging, for CPU and FPU callee saved registers. Both need
-  /// the negative offset from the final stack size and its higher registers
-  /// location on the stack.
-  int CPUTopSavedRegOff;
-  int FPUTopSavedRegOff;
-
   /// SRetReturnReg - Some subtargets require that sret lowering includes
   /// returning the value of the returned struct in a register. This field
   /// holds the virtual register into which the sret argument is passed.
@@ -58,18 +51,11 @@ private:
   int MaxCallFrameSize;
 public:
   MipsFunctionInfo(MachineFunction& MF)
-  : CPUTopSavedRegOff(0),
-    FPUTopSavedRegOff(0), SRetReturnReg(0), GlobalBaseReg(0),
+  : SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
     OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), HasCall(false),
     MaxCallFrameSize(-1)
   {}
-
-  int getCPUTopSavedRegOff() const { return CPUTopSavedRegOff; }
-  void setCPUTopSavedRegOff(int Off) { CPUTopSavedRegOff = Off; }
-
-  int getFPUTopSavedRegOff() const { return FPUTopSavedRegOff; }
-  void setFPUTopSavedRegOff(int Off) { FPUTopSavedRegOff = Off; }
 
   bool isInArgFI(int FI) const {
     return FI <= InArgFIRange.first && FI >= InArgFIRange.second;
