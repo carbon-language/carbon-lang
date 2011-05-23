@@ -137,11 +137,11 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
                             count = count + 1
                             print "returning symbol:", s.GetName()
                         yield s.GetName()
-                    #print "start address:", s.GetStartAddress()
-                    #print "end address:", s.GetEndAddress()
-                    #s.GetDescription(stream)
-                    #print "symbol description:", stream.GetData()
-                    #stream.Clear()
+                    print "start address:", s.GetStartAddress()
+                    print "end address:", s.GetEndAddress()
+                    s.GetDescription(stream)
+                    print "symbol description:", stream.GetData()
+                    stream.Clear()
 
     # Disassembly time.
     for symbol in symbol_iter(num_symbols, symbols_to_disassemble, target):
