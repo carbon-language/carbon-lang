@@ -177,6 +177,8 @@ StopInfoMachException::GetDescription ()
                 case llvm::Triple::arm:
                     switch (m_exc_code)
                     {
+                    case 0x101: code_desc = "EXC_ARM_DA_ALIGN"; break;
+                    case 0x102: code_desc = "EXC_ARM_DA_DEBUG"; break;
                     case 1: code_desc = "EXC_ARM_BREAKPOINT"; break;
                     }
                     break;
@@ -311,7 +313,13 @@ StopInfoMachException::CreateStopReasonWithMachException
                     break;
                 
                 case llvm::Triple::arm:
-                    is_software_breakpoint = exc_code == 1; // EXC_ARM_BREAKPOINT
+                    if (exc_code == 0x102)
+                    {
+                        // EXC_ARM_DA_DEBUG seems to be reused for EXC_BREAKPOINT as well as EXC_BAD_ACCESS
+                        return StopInfo::CreateStopReasonToTrace(thread);
+                    }
+                    else
+                        is_software_breakpoint = exc_code == 1; // EXC_ARM_BREAKPOINT
                     break;
 
                 default:

@@ -42,9 +42,10 @@ using namespace lldb_private;
 
 // A8.6.50
 // Valid return values are {1, 2, 3, 4}, with 0 signifying an error condition.
-static unsigned short CountITSize(unsigned ITMask) {
+static uint32_t
+CountITSize (uint32_t ITMask) {
     // First count the trailing zeros of the IT mask.
-    unsigned TZ = llvm::CountTrailingZeros_32(ITMask);
+    uint32_t TZ = llvm::CountTrailingZeros_32(ITMask);
     if (TZ > 3)
     {
         printf("Encoding error: IT Mask '0000'\n");
@@ -54,7 +55,7 @@ static unsigned short CountITSize(unsigned ITMask) {
 }
 
 // Init ITState.  Note that at least one bit is always 1 in mask.
-bool ITSession::InitIT(unsigned short bits7_0)
+bool ITSession::InitIT(uint32_t bits7_0)
 {
     ITCounter = CountITSize(Bits32(bits7_0, 3, 0));
     if (ITCounter == 0)
@@ -138,6 +139,7 @@ uint32_t ITSession::GetCond()
 #define ARMV5J_ABOVE  (ARMv5TEJ|ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8)
 #define ARMV6_ABOVE   (ARMv6|ARMv6K|ARMv6T2|ARMv7|ARMv8) 
 #define ARMV6T2_ABOVE (ARMv6T2|ARMv7|ARMv8)
+#define ARMV7_ABOVE   (ARMv7|ARMv8)
 
 #define No_VFP  0
 #define VFPv1   (1u << 1)
@@ -272,6 +274,24 @@ EmulateInstructionARM::GetRegisterInfo (uint32_t reg_kind, uint32_t reg_num, Reg
     if (reg_kind == eRegisterKindDWARF)
         return GetARMDWARFRegisterInfo(reg_num, reg_info);
     return false;
+}
+
+uint32_t
+EmulateInstructionARM::GetFramePointerRegisterNumber () const
+{
+    if (m_opcode_mode == eModeThumb || m_arch.GetTriple().getOS() == llvm::Triple::Darwin)
+        return 7;
+    else
+        return 11;
+}
+
+uint32_t
+EmulateInstructionARM::GetFramePointerDWARFRegisterNumber () const
+{
+    if (m_opcode_mode == eModeThumb || m_arch.GetTriple().getOS() == llvm::Triple::Darwin)
+        return dwarf_r7;
+    else
+        return dwarf_r11;
 }
 
 // Push Multiple Registers stores multiple registers to the stack, storing to
@@ -630,7 +650,10 @@ EmulateInstructionARM::EmulateMOVRdSP (const uint32_t opcode, const ARMEncoding 
         }
                   
         EmulateInstruction::Context context;
-        context.type = EmulateInstruction::eContextRegisterPlusOffset;
+        if (Rd == GetFramePointerRegisterNumber())
+            context.type = EmulateInstruction::eContextSetFramePointer;
+        else
+            context.type = EmulateInstruction::eContextRegisterPlusOffset;
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
         context.SetRegisterPlusOffset (sp_reg, 0);
@@ -2150,6 +2173,13 @@ EmulateInstructionARM::EmulateIT (const uint32_t opcode, const ARMEncoding encod
 #endif
 
     m_it_session.InitIT(Bits32(opcode, 7, 0));
+    return true;
+}
+
+bool
+EmulateInstructionARM::EmulateNop (const uint32_t opcode, const ARMEncoding encoding)
+{
+    // NOP, nothing to do...
     return true;
 }
 
@@ -12377,7 +12407,13 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode, uint
         //----------------------------------------------------------------------
         // If Then makes up to four following instructions conditional.
         //----------------------------------------------------------------------
-        { 0xffffff00, 0x0000bf00, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateIT, "it{<x>{<y>{<z>}}} <firstcond>"},
+        // The next 5 opcode _must_ come before the if then instruction
+        { 0xffffffff, 0x0000bf00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateNop, "nop"},
+        { 0xffffffff, 0x0000bf10, ARMV7_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateNop, "nop YIELD (yield hint)"},
+        { 0xffffffff, 0x0000bf20, ARMV7_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateNop, "nop WFE (wait for event hint)"},
+        { 0xffffffff, 0x0000bf30, ARMV7_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateNop, "nop WFI (wait for interrupt hint)"},
+        { 0xffffffff, 0x0000bf40, ARMV7_ABOVE,   eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateNop, "nop SEV (send event hint)"},
+        { 0xffffff00, 0x0000bf00, ARMV6T2_ABOVE, eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateIT, "it{<x>{<y>{<z>}}} <firstcond>"},
 
         //----------------------------------------------------------------------
         // Branch instructions

@@ -831,7 +831,36 @@ main (int argc, char *argv[])
 
     RNBRunLoopMode start_mode = eRNBRunLoopModeExit;
 
-    while ((ch = getopt_long(argc, argv, "a:A:d:gi:vktl:f:w:x:rs:nu:", g_long_options, &long_option_index)) != -1)
+    char short_options[512];
+    uint32_t short_options_idx = 0;
+    
+     // Handle the two case that don't have short options in g_long_options
+    short_options[short_options_idx++] = 'k';
+    short_options[short_options_idx++] = 't';
+    
+    for (i=0; g_long_options[i].name != NULL; ++i)
+    {
+        if (isalpha(g_long_options[i].val))
+        {
+            short_options[short_options_idx++] = g_long_options[i].val;
+            switch (g_long_options[i].has_arg)
+            {
+                default:
+                case no_argument: 
+                    break;
+
+                case optional_argument:
+                    short_options[short_options_idx++] = ':';
+                    // Fall through to required_argument case below...
+                case required_argument:
+                    short_options[short_options_idx++] = ':';
+                    break;
+            }
+        }
+    }
+    // NULL terminate the short option string.
+    short_options[short_options_idx++] = '\0';
+    while ((ch = getopt_long(argc, argv, short_options, g_long_options, &long_option_index)) != -1)
     {
         DNBLogDebug("option: ch == %c (0x%2.2x) --%s%c%s\n",
                     ch, (uint8_t)ch,

@@ -25,7 +25,7 @@ public:
     ~ITSession() {}
 
     // InitIT - Initializes ITCounter/ITState.
-    bool InitIT(unsigned short bits7_0);
+    bool InitIT(uint32_t bits7_0);
 
     // ITAdvance - Updates ITCounter/ITState as IT Block progresses.
     void ITAdvance();
@@ -370,6 +370,11 @@ protected:
         const char *name;
     }  ARMOpcode;
     
+    uint32_t
+    GetFramePointerRegisterNumber () const;
+
+    uint32_t
+    GetFramePointerDWARFRegisterNumber () const;
 
     static ARMOpcode*
     GetARMOpcodeForInstruction (const uint32_t opcode, uint32_t isa_mask);
@@ -460,6 +465,10 @@ protected:
     // A8.6.50 IT
     bool
     EmulateIT (const uint32_t opcode, const ARMEncoding encoding);
+
+    // NOP
+    bool
+    EmulateNop (const uint32_t opcode, const ARMEncoding encoding);
 
     // A8.6.16 B
     bool

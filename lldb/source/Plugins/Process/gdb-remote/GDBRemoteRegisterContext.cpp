@@ -425,14 +425,16 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
 
                     //ReadRegisterBytes (const RegisterInfo *reg_info, RegisterValue &value, DataExtractor &data)
                     const RegisterInfo *reg_info;
-                    for (uint32_t reg_idx=0; (reg_info = GetRegisterInfoAtIndex (reg_idx)) != NULL; ++reg_idx)
+                    // We have to march the offset of each register along in the
+                    // buffer to make sure we get the right offset.
+                    uint32_t reg_byte_offset = 0;
+                    for (uint32_t reg_idx=0; (reg_info = GetRegisterInfoAtIndex (reg_idx)) != NULL; ++reg_idx, reg_byte_offset += reg_info->byte_size)
                     {
                         const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
                         
                         // Only write down the registers that need to be written 
                         // if we are going to be doing registers individually.
                         bool write_reg = true;
-                        const uint32_t reg_byte_offset = reg_info->byte_offset;
                         const uint32_t reg_byte_size = reg_info->byte_size;
 
                         const char *restore_src = (const char *)restore_data.PeekData(reg_byte_offset, reg_byte_size);
