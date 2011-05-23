@@ -1489,14 +1489,14 @@ class CodeGeneration : public ScopPass {
     AU.addPreserved<CloogInfo>();
     AU.addPreserved<Dependences>();
 
-    // XXX: We do not create LoopInfo for the newly generated loops.
+    // FIXME: We do not create LoopInfo for the newly generated loops.
     AU.addPreserved<LoopInfo>();
     AU.addPreserved<DominatorTree>();
     AU.addPreserved<ScopDetection>();
     AU.addPreserved<ScalarEvolution>();
 
-    // XXX: We do not yet add regions for the newly generated code to the region
-    //      tree.
+    // FIXME: We do not yet add regions for the newly generated code to the
+    //        region tree.
     AU.addPreserved<RegionInfo>();
     AU.addPreserved<TempScopInfo>();
     AU.addPreserved<ScopInfo>();
