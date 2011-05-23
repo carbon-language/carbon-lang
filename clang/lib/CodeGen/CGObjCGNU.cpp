@@ -94,8 +94,9 @@ class LazyRuntimeFunction {
      return Function;
    }
    operator llvm::Function*() {
-     return dyn_cast<llvm::Function>((llvm::Constant*)this);
+     return cast<llvm::Function>((llvm::Constant*)*this);
    }
+
 };
 
 
