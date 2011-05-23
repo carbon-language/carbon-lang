@@ -98,14 +98,38 @@ PadString(Stream *s, const std::string &str, size_t width)
     else
         s->Printf("%s ", str.c_str());
 }
+static void
+AddSymbolicInfo(const ExecutionContext *exe_ctx, ExecutionContextScope *exe_scope,
+                StreamString &comment, uint64_t operand_value, const Address &inst_addr)
+{
+    Address so_addr;
+    if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty())
+    {
+        if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress(operand_value, so_addr))
+            so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+    }
+    else
+    {
+        Module *module = inst_addr.GetModule();
+        if (module)
+        {
+            if (module->ResolveFileAddress(operand_value, so_addr))
+                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+        }
+    }
+}
 
 #include "llvm/ADT/StringRef.h"
-static void
-StripSpaces(llvm::StringRef &Str)
+static inline void StripSpaces(llvm::StringRef &Str)
 {
     while (!Str.empty() && isspace(Str[0]))
         Str = Str.substr(1);
     while (!Str.empty() && isspace(Str.back()))
+        Str = Str.substr(0, Str.size()-1);
+}
+static inline void RStrip(llvm::StringRef &Str, char c)
+{
+    if (!Str.empty() && Str.back() == c)
         Str = Str.substr(0, Str.size()-1);
 }
 static void
@@ -290,21 +314,7 @@ InstructionLLVM::Dump
                                         comment.Printf("0x%llx ", operand_value);
                                     }
 
-                                    lldb_private::Address so_addr;
-                                    if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty())
-                                    {
-                                        if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress (operand_value, so_addr))
-                                            so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
-                                    }
-                                    else
-                                    {
-                                        Module *module = GetAddress().GetModule();
-                                        if (module)
-                                        {
-                                            if (module->ResolveFileAddress (operand_value, so_addr))
-                                                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
-                                        }
-                                    }
+                                    AddSymbolicInfo(exe_ctx, exe_scope, comment, operand_value, GetAddress());
                                 } // EDEvaluateOperand
                             } // EDOperandIsMemory
                         } // EDGetOperand
@@ -331,19 +341,9 @@ InstructionLLVM::Dump
                 operands.Clear(); comment.Clear();
                 if (EDGetInstString(&inst_str, m_inst) == 0 && (pos = strstr(inst_str, "#")) != NULL) {
                     uint64_t operand_value = PC + atoi(++pos);
+                    // Put the address value into the operands.
                     operands.Printf("0x%llx ", operand_value);
-
-                    lldb_private::Address so_addr;
-                    if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty()) {
-                        if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress (operand_value, so_addr))
-                            so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
-                    } else {
-                        Module *module = GetAddress().GetModule();
-                        if (module) {
-                            if (module->ResolveFileAddress (operand_value, so_addr))
-                                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
-                        }
-                    }
+                    AddSymbolicInfo(exe_ctx, exe_scope, comment, operand_value, GetAddress());
                 }
             }
             // Yet more workaround for "bl #..." and "blx #...".
@@ -354,23 +354,13 @@ InstructionLLVM::Dump
                 operands.Clear(); comment.Clear();
                 if (EDGetInstString(&inst_str, m_inst) == 0 && (pos = strstr(inst_str, "#")) != NULL) {
                     uint64_t operand_value = PC + atoi(++pos);
-                    // Put the address value into the comment
+                    // Put the address value into the comment.
                     comment.Printf("0x%llx ", operand_value);
-                    llvm::StringRef string_ref(pos - 1);
-                    llvm::StringRef operand_string_ref = string_ref.split('\n').first;
-                    operands.PutCString(operand_string_ref.str().c_str());
-
-                    lldb_private::Address so_addr;
-                    if (exe_ctx && exe_ctx->target && !exe_ctx->target->GetSectionLoadList().IsEmpty()) {
-                        if (exe_ctx->target->GetSectionLoadList().ResolveLoadAddress (operand_value, so_addr))
-                            so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
-                    } else {
-                        Module *module = GetAddress().GetModule();
-                        if (module) {
-                            if (module->ResolveFileAddress (operand_value, so_addr))
-                                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
-                        }
-                    }
+                    // And the original token string into the operands.
+                    llvm::StringRef Str(pos - 1);
+                    RStrip(Str, '\n');
+                    operands.PutCString(Str.str().c_str());
+                    AddSymbolicInfo(exe_ctx, exe_scope, comment, operand_value, GetAddress());
                 }
             }
             // END of workaround.
