@@ -1019,6 +1019,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
        MBI != MBE; ++MBI)
     CheckLineNumbers(MBI);
 #endif
+  SDB->clearDanglingDebugInfo();
 }
 
 void
