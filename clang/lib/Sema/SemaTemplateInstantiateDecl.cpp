@@ -2439,8 +2439,6 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     ActOnFinishFunctionBody(Function, 0, /*IsInstantiation=*/true);
 
     SetDeclDefaulted(Function, PatternDecl->getLocation());
-
-    return;
   } else {
     // If this is a constructor, instantiate the member initializers.
     if (const CXXConstructorDecl *Ctor =
