@@ -29,6 +29,23 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
   // code.
   if (!V->hasOneUse()) return 0;
   
+  
+  // (PowerOfTwo >>u B) --> isExact since shifting out the result would make it
+  // inexact.  Similarly for <<.
+  if (BinaryOperator *I = dyn_cast<BinaryOperator>(V))
+    if (I->isLogicalShift() &&
+        isPowerOfTwo(I->getOperand(0), IC.getTargetData())) {
+      if (I->getOpcode() == Instruction::LShr && !I->isExact()) {
+        I->setIsExact();
+        return I;
+      }
+      
+      if (I->getOpcode() == Instruction::Shl && !I->hasNoUnsignedWrap()) {
+        I->setHasNoUnsignedWrap();
+        return I;
+      }
+    }
+      
   // ((1 << A) >>u B) --> (1 << (A-B))
   // Because V cannot be zero, we know that B is less than A.
   Value *A = 0, *B = 0, *PowerOf2 = 0;
