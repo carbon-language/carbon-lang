@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=armv6-apple-darwin -mattr=+vfp2 -arm-tail-calls | FileCheck %s -check-prefix=CHECKV6
 ; RUN: llc < %s -mtriple=armv6-linux-gnueabi -relocation-model=pic -mattr=+vfp2 -arm-tail-calls | FileCheck %s -check-prefix=CHECKELF
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -arm-tail-calls | FileCheck %s -check-prefix=CHECKT2
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -arm-tail-calls | FileCheck %s -check-prefix=CHECKT2D
 
 @t = weak global i32 ()* null           ; <i32 ()**> [#uses=1]
 
@@ -26,6 +26,9 @@ define void @t3() {
 ; CHECKV6: b _t2  @ TAILCALL
 ; CHECKELF: t3:
 ; CHECKELF: b t2(PLT) @ TAILCALL
+; CHECKT2D: t3:
+; CHECKT2D: b.w _t2  @ TAILCALL
+
         tail call void @t2( )            ; <i32> [#uses=0]
         ret void
 }
@@ -71,10 +74,10 @@ declare void @foo() nounwind
 
 define void @t7() nounwind {
 entry:
-; CHECKT2: t7:
-; CHECKT2: blxeq _foo
-; CHECKT2-NEXT: pop.w
-; CHECKT2-NEXT: b _foo
+; CHECKT2D: t7:
+; CHECKT2D: blxeq _foo
+; CHECKT2D-NEXT: pop.w
+; CHECKT2D-NEXT: b.w _foo
   br i1 undef, label %bb, label %bb1.lr.ph
 
 bb1.lr.ph:

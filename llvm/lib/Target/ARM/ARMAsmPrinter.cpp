@@ -1832,7 +1832,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::tTAILJMPdND: {
     MCInst TmpInst, TmpInst2;
     LowerARMMachineInstrToMCInst(MI, TmpInst2, *this);
-    TmpInst.setOpcode(ARM::tB);
+    // The Darwin toolchain doesn't support tail call relocations of 16-bit
+    // branches.
+    TmpInst.setOpcode(Opc == ARM::tTAILJMPd ? ARM::t2B : ARM::tB);
     TmpInst.addOperand(TmpInst2.getOperand(0));
     OutStreamer.AddComment("TAILCALL");
     OutStreamer.EmitInstruction(TmpInst);
