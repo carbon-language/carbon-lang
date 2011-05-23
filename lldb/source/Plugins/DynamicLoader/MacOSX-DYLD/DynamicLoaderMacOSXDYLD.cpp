@@ -360,40 +360,6 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
             SectionList *section_list = image_object_file->GetSectionList ();
             if (section_list)
             {
-                // All sections listed in the dyld image info structure will all
-                // either be fixed up already, or they will all be off by a single
-                // slide amount that is determined by finding the first segment
-                // that is at file offset zero which also has bytes (a file size
-                // that is greater than zero) in the object file.
-
-                // Determine the slide amount (if any)
-                info.slide = 0;
-                const size_t num_sections = section_list->GetSize();
-                size_t sect_idx = 0;
-                for (sect_idx = 0; sect_idx < num_sections; ++sect_idx)
-                {
-                    // Iterate through the object file sections to find the
-                    // first section that starts of file offset zero and that
-                    // has bytes in the file...
-                    Section *section = section_list->GetSectionAtIndex (sect_idx).get();
-                    if (section)
-                    {
-                        // Find the first section that begins at file offset zero
-                        // a file size (skip page zero).
-                        if (section->GetFileOffset() == 0 && section->GetFileSize() > 0)
-                        {
-                            // We have now found the section, lets match it up
-                            // with the section in the dyld image info structure.
-                            const Segment *dyld_segment = info.FindSegment (section->GetName());
-                            if (dyld_segment)
-                                info.slide = info.address - dyld_segment->addr;
-                            // We have found the slide amount, so we can exit
-                            // this for loop.
-                            break;
-                        }
-                    }
-                }
-
                 // We now know the slide amount, so go through all sections
                 // and update the load addresses with the correct values.
                 uint32_t num_segments = info.segments.size();
@@ -401,7 +367,7 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
                 {
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
                     assert (section_sp.get() != NULL);
-                    const addr_t new_section_load_addr = info.segments[i].addr + info.slide;
+                    const addr_t new_section_load_addr = info.segments[i].vmaddr + info.slide;
                     const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
                     if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
                         old_section_load_addr != new_section_load_addr)
@@ -437,7 +403,7 @@ DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, DYLDImageInfo& 
                 {
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
                     assert (section_sp.get() != NULL);
-                    const addr_t old_section_load_addr = info.segments[i].addr + info.slide;
+                    const addr_t old_section_load_addr = info.segments[i].vmaddr + info.slide;
                     if (m_process->GetTarget().GetSectionLoadList().SetSectionUnloaded (section_sp.get(), old_section_load_addr))
                         changed = true;
                 }
@@ -912,8 +878,14 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImage
             case llvm::MachO::LoadCommandSegment32:
                 {
                     segment.name.SetTrimmedCStringWithLength ((const char *)data.GetData(&offset, 16), 16);
-                    segment.addr = data.GetU32 (&offset);
-                    segment.size = data.GetU32 (&offset);
+                    // We are putting 4 uint32_t values 4 uint64_t values so
+                    // we have to use multiple 32 bit gets below.
+                    segment.vmaddr = data.GetU32 (&offset);
+                    segment.vmsize = data.GetU32 (&offset);
+                    segment.fileoff = data.GetU32 (&offset);
+                    segment.filesize = data.GetU32 (&offset);
+                    // Extract maxprot, initprot, nsects and flags all at once
+                    data.GetU32(&offset, &segment.maxprot, 4);
                     dylib_info.segments.push_back (segment);
                 }
                 break;
@@ -921,8 +893,10 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImage
             case llvm::MachO::LoadCommandSegment64:
                 {
                     segment.name.SetTrimmedCStringWithLength ((const char *)data.GetData(&offset, 16), 16);
-                    segment.addr = data.GetU64 (&offset);
-                    segment.size = data.GetU64 (&offset);
+                    // Extract vmaddr, vmsize, fileoff, and filesize all at once
+                    data.GetU64(&offset, &segment.vmaddr, 4);
+                    // Extract maxprot, initprot, nsects and flags all at once
+                    data.GetU32(&offset, &segment.maxprot, 4);
                     dylib_info.segments.push_back (segment);
                 }
                 break;
@@ -945,6 +919,28 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImage
             }
             // Set offset to be the beginning of the next load command.
             offset = load_cmd_offset + load_cmd.cmdsize;
+        }
+    }
+    
+    // All sections listed in the dyld image info structure will all
+    // either be fixed up already, or they will all be off by a single
+    // slide amount that is determined by finding the first segment
+    // that is at file offset zero which also has bytes (a file size
+    // that is greater than zero) in the object file.
+    
+    // Determine the slide amount (if any)
+    const size_t num_sections = dylib_info.segments.size();
+    for (size_t i = 0; i < num_sections; ++i)
+    {
+        // Iterate through the object file sections to find the
+        // first section that starts of file offset zero and that
+        // has bytes in the file...
+        if (dylib_info.segments[i].fileoff == 0 && dylib_info.segments[i].filesize > 0)
+        {
+            dylib_info.slide = dylib_info.address - dylib_info.segments[i].vmaddr;
+            // We have found the slide amount, so we can exit
+            // this for loop.
+            break;
         }
     }
     return cmd_idx;
@@ -1011,7 +1007,19 @@ void
 DynamicLoaderMacOSXDYLD::Segment::PutToLog (Log *log, lldb::addr_t slide) const
 {
     if (log)
-        log->Printf("\t\t%16s [0x%16.16llx - 0x%16.16llx)", name.AsCString(""), addr + slide, addr + slide + size);
+    {
+        if (slide == 0)
+            log->Printf ("\t\t%16s [0x%16.16llx - 0x%16.16llx)", 
+                         name.AsCString(""), 
+                         vmaddr + slide, 
+                         vmaddr + slide + vmsize);
+        else
+            log->Printf ("\t\t%16s [0x%16.16llx - 0x%16.16llx) slide = 0x%llx", 
+                         name.AsCString(""), 
+                         vmaddr + slide, 
+                         vmaddr + slide + vmsize, 
+                         slide);
+    }
 }
 
 const DynamicLoaderMacOSXDYLD::Segment *

@@ -168,19 +168,31 @@ protected:
 
         Segment() :
             name(),
-            addr(LLDB_INVALID_ADDRESS),
-            size(0)
+            vmaddr(LLDB_INVALID_ADDRESS),
+            vmsize(0),
+            fileoff(0),
+            filesize(0),
+            maxprot(0),
+            initprot(0),
+            nsects(0),
+            flags(0)
         {
         }
 
         lldb_private::ConstString name;
-        lldb::addr_t addr;
-        lldb::addr_t size;
+        lldb::addr_t vmaddr;
+        lldb::addr_t vmsize;
+        lldb::addr_t fileoff;
+        lldb::addr_t filesize;
+        uint32_t maxprot;
+        uint32_t initprot;
+        uint32_t nsects;
+        uint32_t flags;
 
         bool
         operator==(const Segment& rhs) const
         {
-            return name == rhs.name && addr == rhs.addr && size == rhs.size;
+            return name == rhs.name && vmaddr == rhs.vmaddr && vmsize == rhs.vmsize;
         }
 
         void
