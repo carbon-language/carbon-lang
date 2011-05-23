@@ -256,8 +256,17 @@ bool COFFAsmParser::ParseSEHDirectiveSetFrame(StringRef, SMLoc L) {
   return Error(L, "not implemented yet");
 }
 
-bool COFFAsmParser::ParseSEHDirectiveAllocStack(StringRef, SMLoc L) {
-  return Error(L, "not implemented yet");
+bool COFFAsmParser::ParseSEHDirectiveAllocStack(StringRef, SMLoc) {
+  int64_t Size;
+  if (getParser().ParseAbsoluteExpression(Size))
+    return true;
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  Lex();
+  getStreamer().EmitWin64EHAllocStack(Size);
+  return false;
 }
 
 bool COFFAsmParser::ParseSEHDirectiveSaveReg(StringRef, SMLoc L) {
@@ -268,8 +277,22 @@ bool COFFAsmParser::ParseSEHDirectiveSaveXMM(StringRef, SMLoc L) {
   return Error(L, "not implemented yet");
 }
 
-bool COFFAsmParser::ParseSEHDirectivePushFrame(StringRef, SMLoc L) {
-  return Error(L, "not implemented yet");
+bool COFFAsmParser::ParseSEHDirectivePushFrame(StringRef, SMLoc) {
+  bool Code;
+  StringRef CodeID;
+  SMLoc startLoc = getLexer().getLoc();
+  if (!getParser().ParseIdentifier(CodeID)) {
+    if (CodeID != "@code")
+      return Error(startLoc, "expected @code");
+    Code = true;
+  }
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  Lex();
+  getStreamer().EmitWin64EHPushFrame(Code);
+  return false;
 }
 
 bool COFFAsmParser::ParseSEHDirectiveEndProlog(StringRef, SMLoc) {
