@@ -1528,7 +1528,7 @@ dnl Set the flags needed to emit LLVM IR and to disable optimizations
 dnl in llvmgcc
 if test "$llvm_cv_llvmgcc_dragonegg" = "yes" ; then
   LLVMCC_EMITIR_FLAG="-fplugin-arg-dragonegg-emit-ir"
-  LLVMCC_DISABLEOPT_FLAGS="-fplugin-arg-dragonegg-disable-llvm-optzns"
+  LLVMCC_DISABLEOPT_FLAGS="-fplugin-arg-dragonegg-llvm-ir-optimize=0"
 else
   LLVMCC_EMITIR_FLAG="-emit-llvm"
   LLVMCC_DISABLEOPT_FLAGS="-mllvm -disable-llvm-optzns"
