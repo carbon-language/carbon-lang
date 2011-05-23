@@ -607,10 +607,9 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
 
                         char raw_path[PATH_MAX];
                         m_process->ReadCStringFromMemory (path_addr, raw_path, sizeof(raw_path));
-                        char raw_path2[PATH_MAX];// TODO: remove after assertion doesn't assert
-                        m_process->ReadMemory (path_addr, raw_path2, sizeof(raw_path2), error);// TODO: remove after assertion doesn't assert
-                        assert (strcmp (raw_path, raw_path2) == 0);// TODO: remove after assertion doesn't assert
-                        m_dyld_image_infos[i].file_spec.SetFile(raw_path, true);
+                        // don't resolve the path
+                        const bool resolve_path = false;
+                        m_dyld_image_infos[i].file_spec.SetFile(raw_path, resolve_path);
                     }
                     assert(i == m_dyld_all_image_infos.dylib_info_count);
 
