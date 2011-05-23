@@ -553,7 +553,7 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 
     StringRef Identifier;
     if (ParseIdentifier(Identifier))
-      return false;
+      return true;
 
     // This is a symbol reference.
     std::pair<StringRef, StringRef> Split = Identifier.split('@');
