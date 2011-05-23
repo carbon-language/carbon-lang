@@ -31,13 +31,13 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
   
   // ((1 << A) >>u B) --> (1 << (A-B))
   // Because V cannot be zero, we know that B is less than A.
-  Value *A = 0, *B = 0; ConstantInt *One = 0;
-  if (match(V, m_LShr(m_OneUse(m_Shl(m_ConstantInt(One), m_Value(A))),
+  Value *A = 0, *B = 0, *PowerOf2 = 0;
+  if (match(V, m_LShr(m_OneUse(m_Shl(m_Value(PowerOf2), m_Value(A))),
                       m_Value(B))) &&
       // The "1" can be any value known to be a power of 2.
-      One->getValue().isPowerOf2()) {
+      isPowerOfTwo(PowerOf2, IC.getTargetData())) {
     A = IC.Builder->CreateSub(A, B, "tmp");
-    return IC.Builder->CreateShl(One, A);
+    return IC.Builder->CreateShl(PowerOf2, A);
   }
   
   // TODO: Lots more we could do here:
