@@ -109,3 +109,23 @@ define void @test6(i8 *%P) {
 ; CHECK-NEXT: ret void
 }
 
+
+; PR9794 - Should forward memcpy into byval argument even though the memcpy
+; isn't itself 8 byte aligned.
+%struct.p = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }
+
+define i32 @test7(%struct.p* nocapture byval align 8 %q) nounwind ssp {
+entry:
+  %agg.tmp = alloca %struct.p, align 4
+  %tmp = bitcast %struct.p* %agg.tmp to i8*
+  %tmp1 = bitcast %struct.p* %q to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp, i8* %tmp1, i64 48, i32 4, i1 false)
+  %call = call i32 @g(%struct.p* byval align 8 %agg.tmp) nounwind
+  ret i32 %call
+; CHECK: @test7
+; CHECK: call i32 @g(%struct.p* byval align 8 %q) nounwind
+}
+
+declare i32 @g(%struct.p* byval align 8)
+
+

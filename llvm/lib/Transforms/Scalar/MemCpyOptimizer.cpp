@@ -23,6 +23,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/IRBuilder.h"
@@ -866,12 +867,16 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   if (C1 == 0 || C1->getValue().getZExtValue() < ByValSize)
     return false;
 
-  // Get the alignment of the byval.  If it is greater than the memcpy, then we
-  // can't do the substitution.  If the call doesn't specify the alignment, then
-  // it is some target specific value that we can't know.
+  // Get the alignment of the byval.  If the call doesn't specify the alignment,
+  // then it is some target specific value that we can't know.
   unsigned ByValAlign = CS.getParamAlignment(ArgNo+1);
-  if (ByValAlign == 0 || MDep->getAlignment() < ByValAlign)
-    return false;  
+  if (ByValAlign == 0) return false;
+  
+  // If it is greater than the memcpy, then we check to see if we can force the
+  // source of the memcpy to the alignment we need.  If we fail, we bail out.
+  if (MDep->getAlignment() < ByValAlign &&
+      getOrEnforceKnownAlignment(MDep->getSource(),ByValAlign, TD) < ByValAlign)
+    return false;
   
   // Verify that the copied-from memory doesn't change in between the memcpy and
   // the byval call.

@@ -131,8 +131,18 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     }
     return;
   }
+  
+  if (Argument *A = dyn_cast<Argument>(V)) {
+    // Get alignment information off byval arguments if specified in the IR.
+    if (A->hasByValAttr())
+      if (unsigned Align = A->getParamAlignment())
+        KnownZero = Mask & APInt::getLowBitsSet(BitWidth,
+                                                CountTrailingZeros_32(Align));
+    return;
+  }
 
-  KnownZero.clearAllBits(); KnownOne.clearAllBits();   // Start out not knowing anything.
+  // Start out not knowing anything.
+  KnownZero.clearAllBits(); KnownOne.clearAllBits();
 
   if (Depth == MaxDepth || Mask == 0)
     return;  // Limit search depth.
