@@ -87,14 +87,14 @@ define void @f3(%struct.S2* nocapture byval %s2) nounwind {
 entry:
 ; CHECK: addiu $sp, $sp, -56
 ; CHECK: addiu $[[R0:[0-9]+]], $sp, 56
-; CHECK: ori $[[R0:[0-9]+]], $[[R0:[0-9]+]], 4
+; CHECK: ori $[[R0:[0-9]+]], $[[R0]], 4
 ; CHECK: sw  $4, 56($sp)
-; CHECK: sw  $5, 0($[[R0:[0-9]+]])
+; CHECK: sw  $5, 0($[[R0]])
 ; CHECK: sw  $6, 64($sp)
 ; CHECK: sw  $7, 68($sp)
 ; CHECK: lw  $[[R0:[0-9]+]], 68($sp)
 ; CHECK: lw  $4, 56($sp)
-; CHECK: sw  $[[R0:[0-9]+]], 24($sp)
+; CHECK: sw  $[[R0]], 24($sp)
 
   %arrayidx = getelementptr inbounds %struct.S2* %s2, i32 0, i32 0, i32 0
   %tmp = load i32* %arrayidx, align 4, !tbaa !0
