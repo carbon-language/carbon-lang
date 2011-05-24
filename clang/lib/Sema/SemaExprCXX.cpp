@@ -1800,6 +1800,20 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
                                     const_cast<CXXDestructorDecl*>(Dtor));
           DiagnoseUseOfDecl(Dtor, StartLoc);
         }
+
+      // C++ [expr.delete]p3:
+      //   In the first alternative (delete object), if the static type of the
+      //   object to be deleted is different from its dynamic type, the static
+      //   type shall be a base class of the dynamic type of the object to be
+      //   deleted and the static type shall have a virtual destructor or the
+      //   behavior is undefined.
+      //
+      // Note: a final class cannot be derived from, no issue there
+      if (!ArrayForm && RD->isPolymorphic() && !RD->hasAttr<FinalAttr>()) {
+        CXXDestructorDecl *dtor = RD->getDestructor();
+        if (!dtor || !dtor->isVirtual())
+          Diag(StartLoc, diag::warn_delete_non_virtual_dtor) << PointeeElem;
+      }
     }
 
     if (!OperatorDelete) {

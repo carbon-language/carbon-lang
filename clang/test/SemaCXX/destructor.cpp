@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wnon-virtual-dtor -verify %s
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -Wnon-virtual-dtor -Wdelete-non-virtual-dtor -verify %s
 class A {
 public:
   ~A();
@@ -171,6 +171,179 @@ template<class T> class TS2 { // expected-warning {{'nonvirtualdtor::TS2<int>' h
 };
 
 TS2<int> foo; // expected-note {{instantiation}}
+}
+
+namespace dnvd { // delete-non-virtual-dtor warning
+struct NP {};
+
+struct B { // expected-warning {{has virtual functions but non-virtual destructor}}
+  virtual void foo();
+};
+
+struct D: B {}; // expected-warning {{has virtual functions but non-virtual destructor}}
+
+struct F final: B {}; // expected-warning {{has virtual functions but non-virtual destructor}}
+
+struct VB {
+  virtual void foo();
+  virtual ~VB();
+};
+
+struct VD: VB {};
+
+struct VF final: VB {};
+
+template <typename T>
+class simple_ptr {
+public:
+  simple_ptr(T* t): _ptr(t) {}
+  ~simple_ptr() { delete _ptr; } // \
+    // expected-warning {{delete called on 'dnvd::B' that has virtual functions but non-virtual destructor}} \
+    // expected-warning {{delete called on 'dnvd::D' that has virtual functions but non-virtual destructor}}
+  T& operator*() const { return *_ptr; }
+private:
+  T* _ptr;
+};
+
+template <typename T>
+class simple_ptr2 {
+public:
+  simple_ptr2(T* t): _ptr(t) {}
+  ~simple_ptr2() { delete _ptr; } // expected-warning {{delete called on 'dnvd::B' that has virtual functions but non-virtual destructor}}
+  T& operator*() const { return *_ptr; }
+private:
+  T* _ptr;
+};
+
+void use(B&);
+void use(VB&);
+
+void nowarnstack() {
+  B b; use(b);
+  D d; use(d);
+  F f; use(f);
+  VB vb; use(vb);
+  VD vd; use(vd);
+  VF vf; use(vf);
+}
+
+void nowarnnonpoly() {
+  {
+    NP* np = new NP();
+    delete np;
+  }
+  {
+    NP* np = new NP[4];
+    delete[] np;
+  }
+}
+
+void nowarnarray() {
+  {
+    B* b = new B[4];
+    delete[] b;
+  }
+  {
+    D* d = new D[4];
+    delete[] d;
+  }
+  {
+    VB* vb = new VB[4];
+    delete[] vb;
+  }
+  {
+    VD* vd = new VD[4];
+    delete[] vd;
+  }
+}
+
+template <typename T>
+void nowarntemplate() {
+  {
+    T* t = new T();
+    delete t;
+  }
+  {
+    T* t = new T[4];
+    delete[] t;
+  }
+}
+
+void nowarn0() {
+  {
+    F* f = new F();
+    delete f;
+  }
+  {
+    VB* vb = new VB();
+    delete vb;
+  }
+  {
+    VB* vb = new VD();
+    delete vb;
+  }
+  {
+    VD* vd = new VD();
+    delete vd;
+  }
+  {
+    VF* vf = new VF();
+    delete vf;
+  }
+}
+
+void warn0() {
+  {
+    B* b = new B();
+    delete b; // expected-warning {{delete called on 'dnvd::B' that has virtual functions but non-virtual destructor}}
+  }
+  {
+    B* b = new D();
+    delete b; // expected-warning {{delete called on 'dnvd::B' that has virtual functions but non-virtual destructor}}
+  }
+  {
+    D* d = new D();
+    delete d; // expected-warning {{delete called on 'dnvd::D' that has virtual functions but non-virtual destructor}}
+  }
+}
+
+void nowarn1() {
+  {
+    simple_ptr<F> f(new F());
+    use(*f);
+  }
+  {
+    simple_ptr<VB> vb(new VB());
+    use(*vb);
+  }
+  {
+    simple_ptr<VB> vb(new VD());
+    use(*vb);
+  }
+  {
+    simple_ptr<VD> vd(new VD());
+    use(*vd);
+  }
+  {
+    simple_ptr<VF> vf(new VF());
+    use(*vf);
+  }
+}
+
+void warn1() {
+  {
+    simple_ptr<B> b(new B()); // expected-note {{in instantiation of member function 'dnvd::simple_ptr<dnvd::B>::~simple_ptr' requested here}}
+    use(*b);
+  }
+  {
+    simple_ptr2<B> b(new D()); // expected-note {{in instantiation of member function 'dnvd::simple_ptr2<dnvd::B>::~simple_ptr2' requested here}}
+    use(*b);
+  }
+  {
+    simple_ptr<D> d(new D()); // expected-note {{in instantiation of member function 'dnvd::simple_ptr<dnvd::D>::~simple_ptr' requested here}}
+    use(*d);
+  }
+}
 }
 
 namespace PR9238 {

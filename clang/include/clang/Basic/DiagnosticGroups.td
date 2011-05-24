@@ -35,6 +35,8 @@ def : DiagGroup<"ctor-dtor-privacy">;
 def : DiagGroup<"declaration-after-statement">;
 def GNUDesignator : DiagGroup<"gnu-designator">;
 
+def DeleteNonVirtualDtor : DiagGroup<"delete-non-virtual-dtor">;
+
 def DeprecatedDeclarations : DiagGroup<"deprecated-declarations">;
 def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings">;
 def Deprecated : DiagGroup<"deprecated", [ DeprecatedDeclarations] >,
@@ -235,6 +237,7 @@ def Extra : DiagGroup<"extra", [
 def Most : DiagGroup<"most", [
     CharSubscript,
     Comment,
+    DeleteNonVirtualDtor,
     Format,
     Implicit,
     MismatchedTags,

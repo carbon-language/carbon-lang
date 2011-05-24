@@ -3069,6 +3069,9 @@ def err_objc_exceptions_disabled : Error<
 def warn_non_virtual_dtor : Warning<
   "%0 has virtual functions but non-virtual destructor">,
   InGroup<NonVirtualDtor>, DefaultIgnore;
+def warn_delete_non_virtual_dtor : Warning<
+  "delete called on %0 that has virtual functions but non-virtual destructor">,
+  InGroup<DeleteNonVirtualDtor>, DefaultIgnore;
 def warn_overloaded_virtual : Warning<
   "%q0 hides overloaded virtual %select{function|functions}1">,
   InGroup<OverloadedVirtual>, DefaultIgnore;
