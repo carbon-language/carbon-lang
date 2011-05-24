@@ -132,6 +132,8 @@ static inline void RStrip(llvm::StringRef &Str, char c)
     if (!Str.empty() && Str.back() == c)
         Str = Str.substr(0, Str.size()-1);
 }
+// Aligns the raw disassembly (passed as 'str') with the rest of edis'ed disassembly output.
+// This is called from non-raw mode when edis of the current m_inst fails for some reason.
 static void
 Align(Stream *s, const char *str, size_t opcodeColWidth, size_t operandColWidth)
 {
