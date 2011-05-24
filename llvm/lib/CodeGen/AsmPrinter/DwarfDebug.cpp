@@ -2590,12 +2590,27 @@ void DwarfDebug::emitDebugLoc() {
         unsigned i = 0;
         Asm->OutStreamer.AddComment("Loc expr size");
         if (N >= 2 && DV.getAddrElement(0) == DIBuilder::OpPlus) {
-          // If first address element is OpPlus then emit
-          // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
-          MachineLocation Loc(Entry.Loc.getReg(), DV.getAddrElement(1));
-          Asm->EmitInt16(Asm->getDwarfRegOpSize(Loc) + N - 2);
-          Asm->EmitDwarfRegOp(Loc);
-          i = 2;
+          if (Entry.Loc.getOffset()) {
+            unsigned Size = Asm->getDwarfRegOpSize(Entry.Loc);
+            unsigned OffsetSize = 
+              MCAsmInfo::getSLEB128Size(DV.getAddrElement(1));
+            // breg + deref + plus + offset
+            Asm->EmitInt16(Size + 1 + 1 + OffsetSize + N - 2);
+            i = 2;
+            Asm->EmitDwarfRegOp(Entry.Loc);
+            Asm->OutStreamer.AddComment("DW_OP_deref");
+            Asm->EmitInt8(dwarf::DW_OP_deref);
+            Asm->OutStreamer.AddComment("DW_OP_plus_uconst");
+            Asm->EmitInt8(dwarf::DW_OP_plus_uconst);
+            Asm->EmitSLEB128(DV.getAddrElement(1));
+          } else {
+            // If first address element is OpPlus then emit
+            // DW_OP_breg + Offset instead of DW_OP_reg + Offset.
+            MachineLocation Loc(Entry.Loc.getReg(), DV.getAddrElement(1));
+            Asm->EmitInt16(Asm->getDwarfRegOpSize(Loc) + N - 2);
+            Asm->EmitDwarfRegOp(Loc);
+            i = 2;
+          }
         } else {
           Asm->EmitInt16(Asm->getDwarfRegOpSize(Entry.Loc) + N);
           Asm->EmitDwarfRegOp(Entry.Loc);
