@@ -123,10 +123,10 @@ class LoadAndStorePromoter {
 protected:
   SSAUpdater &SSA;
   DbgDeclareInst *DDI;
-  DIBuilder *&DIB;
+  DIBuilder *DIB;
 public:
   LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
-                       SSAUpdater &S, DbgDeclareInst *DDI, DIBuilder *&DIB,
+                       SSAUpdater &S, DbgDeclareInst *DDI, DIBuilder *DIB,
                        StringRef Name = StringRef());
   virtual ~LoadAndStorePromoter() {}
   

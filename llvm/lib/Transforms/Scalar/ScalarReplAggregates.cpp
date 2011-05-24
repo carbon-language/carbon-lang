@@ -1367,6 +1367,8 @@ bool SROA::performPromotion(Function &F) {
           Insts.push_back(cast<Instruction>(*UI));
 
         DbgDeclareInst *DDI = FindAllocaDbgDeclare(AI);
+        if (DDI && !DIB)
+          DIB = new DIBuilder(*AI->getParent()->getParent()->getParent());
         AllocaPromoter(Insts, SSA, DDI, DIB).run(AI, Insts);
         Insts.clear();
       }

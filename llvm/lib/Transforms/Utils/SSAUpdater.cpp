@@ -358,7 +358,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
 
 LoadAndStorePromoter::
 LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
-                     SSAUpdater &S, DbgDeclareInst *DD, DIBuilder *&DB,
+                     SSAUpdater &S, DbgDeclareInst *DD, DIBuilder *DB,
                      StringRef BaseName) : SSA(S), DDI(DD), DIB(DB) {
   if (Insts.empty()) return;
   
@@ -407,11 +407,8 @@ run(const SmallVectorImpl<Instruction*> &Insts) const {
     if (BlockUses.size() == 1) {
       // If it is a store, it is a trivial def of the value in the block.
       if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
-        if (DDI) {
-          if (!DIB)
-            DIB = new DIBuilder(*SI->getParent()->getParent()->getParent());
+        if (DDI)
           ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
-        }
         SSA.AddAvailableValue(BB, SI->getOperand(0));
       } else 
         // Otherwise it is a load, queue it to rewrite as a live-in load.
@@ -466,11 +463,8 @@ run(const SmallVectorImpl<Instruction*> &Insts) const {
         // If this is a store to an unrelated pointer, ignore it.
         if (!isInstInList(SI, Insts)) continue;
 
-        if (DDI) {
-          if (!DIB)
-            DIB = new DIBuilder(*SI->getParent()->getParent()->getParent());
+        if (DDI)
           ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
-        }
 
         // Remember that this is the active value in the block.
         StoredValue = SI->getOperand(0);
