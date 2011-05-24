@@ -55,6 +55,9 @@ extern void __cxa_bad_typeid();
 // 3.2.6 Pure Virtual Function API
 extern void __cxa_pure_virtual(void);
 
+// 3.2.7 Deleted Virtual Function API
+extern void __cxa_deleted_virtual(void);
+
 // 3.3.2 One-time Construction API
 extern int  __cxa_guard_acquire(uint64_t*);
 extern void __cxa_guard_release(uint64_t*);
