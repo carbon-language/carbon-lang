@@ -809,6 +809,12 @@ public:
   /// getRARegister - This method should return the register where the return
   /// address can be found.
   virtual unsigned getRARegister() const = 0;
+
+  /// getSEHRegNum - Map a target register to an equivalent SEH register
+  /// number.  Returns -1 if there is no equivalent value.
+  virtual int getSEHRegNum(unsigned i) const {
+    return i;
+  }
 };
 
 

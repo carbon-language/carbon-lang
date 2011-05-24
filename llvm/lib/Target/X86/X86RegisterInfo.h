@@ -81,6 +81,9 @@ public:
   /// (created by TableGen) for target dependencies.
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 
+  // FIXME: This should be tablegen'd like getDwarfRegNum is
+  int getSEHRegNum(unsigned i) const;
+
   /// Code Generation virtual methods...
   /// 
 
