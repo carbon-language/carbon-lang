@@ -22,6 +22,7 @@
 namespace llvm {
   class MCSection;
   class MCContext;
+  class MachineFunction;
   class TargetMachine;
   class TargetLoweringObjectFile;
 
@@ -78,6 +79,10 @@ public:
     return TLOF->isFunctionEHFrameSymbolPrivate();
   }
 
+  const unsigned *getCalleeSavedRegs(MachineFunction *MF = 0) const {
+    return TRI->getCalleeSavedRegs(MF);
+  }
+
   unsigned getDwarfRARegNum(bool isEH) const {
     return TRI->getDwarfRegNum(TRI->getRARegister(), isEH);
   }
@@ -88,6 +93,10 @@ public:
 
   int getDwarfRegNum(unsigned RegNum, bool isEH) const {
     return TRI->getDwarfRegNum(RegNum, isEH);
+  }
+
+  int getSEHRegNum(unsigned RegNum) const {
+    return TRI->getSEHRegNum(RegNum);
   }
 };
 

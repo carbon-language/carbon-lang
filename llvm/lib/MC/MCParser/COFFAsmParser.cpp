@@ -15,6 +15,8 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Support/COFF.h"
 using namespace llvm;
 
@@ -106,15 +108,16 @@ class COFFAsmParser : public MCAsmParserExtension {
   bool ParseSEHDirectiveEndChained(StringRef, SMLoc);
   bool ParseSEHDirectiveHandler(StringRef, SMLoc);
   bool ParseSEHDirectiveHandlerData(StringRef, SMLoc);
-  bool ParseSEHDirectivePushReg(StringRef, SMLoc L);
-  bool ParseSEHDirectiveSetFrame(StringRef, SMLoc L);
-  bool ParseSEHDirectiveAllocStack(StringRef, SMLoc L);
-  bool ParseSEHDirectiveSaveReg(StringRef, SMLoc L);
-  bool ParseSEHDirectiveSaveXMM(StringRef, SMLoc L);
-  bool ParseSEHDirectivePushFrame(StringRef, SMLoc L);
+  bool ParseSEHDirectivePushReg(StringRef, SMLoc);
+  bool ParseSEHDirectiveSetFrame(StringRef, SMLoc);
+  bool ParseSEHDirectiveAllocStack(StringRef, SMLoc);
+  bool ParseSEHDirectiveSaveReg(StringRef, SMLoc);
+  bool ParseSEHDirectiveSaveXMM(StringRef, SMLoc);
+  bool ParseSEHDirectivePushFrame(StringRef, SMLoc);
   bool ParseSEHDirectiveEndProlog(StringRef, SMLoc);
 
   bool ParseAtUnwindOrAtExcept(bool &unwind, bool &except);
+  bool ParseSEHRegisterNumber(unsigned &RegNo);
 public:
   COFFAsmParser() {}
 };
@@ -227,8 +230,9 @@ bool COFFAsmParser::ParseSEHDirectiveHandler(StringRef, SMLoc) {
     return Error(startLoc, "expected symbol");
 
   bool unwind = false, except = false;
+  startLoc = getLexer().getLoc();
   if (!ParseAtUnwindOrAtExcept(unwind, except))
-    return true;
+    return Error(startLoc,"you must specify one or both of @unwind or @except");
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
     if (!ParseAtUnwindOrAtExcept(unwind, except))
@@ -249,17 +253,46 @@ bool COFFAsmParser::ParseSEHDirectiveHandlerData(StringRef, SMLoc) {
 }
 
 bool COFFAsmParser::ParseSEHDirectivePushReg(StringRef, SMLoc L) {
-  return Error(L, "not implemented yet");
+  unsigned Reg;
+  if (ParseSEHRegisterNumber(Reg))
+    return true;
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  Lex();
+  getStreamer().EmitWin64EHPushReg(Reg);
+  return false;
 }
 
 bool COFFAsmParser::ParseSEHDirectiveSetFrame(StringRef, SMLoc L) {
-  return Error(L, "not implemented yet");
+  unsigned Reg;
+  int64_t Off;
+  if (ParseSEHRegisterNumber(Reg))
+    return true;
+  SMLoc startLoc = getLexer().getLoc();
+  if (getParser().ParseAbsoluteExpression(Off))
+    return true;
+
+  if (Off & 0x0F)
+    return Error(startLoc, "offset is not a multiple of 16");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  Lex();
+  getStreamer().EmitWin64EHSetFrame(Reg, Off);
+  return false;
 }
 
 bool COFFAsmParser::ParseSEHDirectiveAllocStack(StringRef, SMLoc) {
   int64_t Size;
+  SMLoc startLoc = getLexer().getLoc();
   if (getParser().ParseAbsoluteExpression(Size))
     return true;
+
+  if (Size & 7)
+    return Error(startLoc, "size is not a multiple of 8");
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");
@@ -270,11 +303,47 @@ bool COFFAsmParser::ParseSEHDirectiveAllocStack(StringRef, SMLoc) {
 }
 
 bool COFFAsmParser::ParseSEHDirectiveSaveReg(StringRef, SMLoc L) {
-  return Error(L, "not implemented yet");
+  unsigned Reg;
+  int64_t Off;
+  if (ParseSEHRegisterNumber(Reg))
+    return true;
+  SMLoc startLoc = getLexer().getLoc();
+  if (getParser().ParseAbsoluteExpression(Off))
+    return true;
+
+  if (Off & 7)
+    return Error(startLoc, "size is not a multiple of 8");
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  Lex();
+  // FIXME: Err on %xmm* registers
+  getStreamer().EmitWin64EHSaveReg(Reg, Off);
+  return false;
 }
 
+// FIXME: This method is inherently x86-specific. It should really be in the
+// x86 backend.
 bool COFFAsmParser::ParseSEHDirectiveSaveXMM(StringRef, SMLoc L) {
-  return Error(L, "not implemented yet");
+  unsigned Reg;
+  int64_t Off;
+  if (ParseSEHRegisterNumber(Reg))
+    return true;
+  SMLoc startLoc = getLexer().getLoc();
+  if (getParser().ParseAbsoluteExpression(Off))
+    return true;
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  if (Off & 0x0F)
+    return Error(startLoc, "offset is not a multiple of 16");
+
+  Lex();
+  // FIXME: Err on non-%xmm* registers
+  getStreamer().EmitWin64EHSaveXMM(Reg, Off);
+  return false;
 }
 
 bool COFFAsmParser::ParseSEHDirectivePushFrame(StringRef, SMLoc) {
@@ -312,6 +381,38 @@ bool COFFAsmParser::ParseAtUnwindOrAtExcept(bool &unwind, bool &except) {
     except = true;
   else
     return Error(startLoc, "expected @unwind or @except");
+  return false;
+}
+
+bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
+  int64_t n;
+  SMLoc startLoc = getLexer().getLoc();
+  if (getParser().ParseAbsoluteExpression(n)) {
+    const TargetAsmInfo &asmInfo = getContext().getTargetAsmInfo();
+    SMLoc endLoc;
+    unsigned LLVMRegNo;
+    if (getParser().getTargetParser().ParseRegister(LLVMRegNo,startLoc,endLoc))
+      return Error(startLoc, "expected register or number");
+
+    // Check that this is a non-volatile register.
+    const unsigned *NVRegs = asmInfo.getCalleeSavedRegs();
+    unsigned i;
+    for (i = 0; NVRegs[i] != 0; ++i)
+      if (NVRegs[i] == LLVMRegNo)
+        break;
+    if (NVRegs[i] == 0)
+      return Error(startLoc, "expected non-volatile register");
+
+    int SEHRegNo = asmInfo.getSEHRegNum(LLVMRegNo);
+    if (SEHRegNo < 0)
+      return Error(startLoc,"register can't be represented in SEH unwind info");
+    RegNo = SEHRegNo;
+  }
+  else
+    RegNo = n;
+
+  if (RegNo > 15)
+    return Error(startLoc, "register number is too high");
   return false;
 }
 
