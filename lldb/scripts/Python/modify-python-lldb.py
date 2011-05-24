@@ -54,7 +54,7 @@ ne_def = "    def __ne__(self, other): return not self.__eq__(other)"
 nonzero_def = "    def __nonzero__(self): return self.IsValid()"
 
 #
-# The dictionary defines a mapping from classname to (getsize, getelem) tuple.
+# This dictionary defines a mapping from classname to (getsize, getelem) tuple.
 #
 d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
       'SBCompileUnit': ('GetNumLineEntries', 'GetLineEntryAtIndex'),
