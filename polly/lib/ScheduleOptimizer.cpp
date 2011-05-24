@@ -58,7 +58,7 @@ static int getSingleMap(__isl_take isl_map *map, void *user) {
   return 0;
 }
 
-void extendScattering(Scop &S, unsigned scatDimensions) {
+static void extendScattering(Scop &S, unsigned scatDimensions) {
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
     ScopStmt *stmt = *SI;
 
@@ -100,7 +100,7 @@ void extendScattering(Scop &S, unsigned scatDimensions) {
 //   o_0 % 32 = 0 and o_1 % 32 = 0 and o_2 % 32 = 0
 //   and o0 <= i0 <= o0 + 32 and o1 <= i1 <= o1 + 32 and o2 <= i2 <= o2 + 32
 
-isl_map *tileBand(isl_map *band) {
+static isl_map *tileBand(isl_map *band) {
   int dimensions = isl_map_n_out(band);
   int tileSize = 32;
 
