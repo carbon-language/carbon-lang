@@ -11332,15 +11332,28 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
   if (N->getNumValues() == 2 && !SDValue(N, 1).use_empty())
     return SDValue();
 
+  SDValue FalseOp = N->getOperand(0);
+  SDValue TrueOp = N->getOperand(1);
+  X86::CondCode CC = (X86::CondCode)N->getConstantOperandVal(2);
+  SDValue Cond = N->getOperand(3);
+  if (CC == X86::COND_E || CC == X86::COND_NE) {
+    switch (Cond.getOpcode()) {
+    default: break;
+    case X86ISD::BSR:
+    case X86ISD::BSF:
+      // If operand of BSR / BSF are proven never zero, then ZF cannot be set.
+      if (DAG.isKnownNeverZero(Cond.getOperand(0)))
+        return (CC == X86::COND_E) ? FalseOp : TrueOp;
+    }
+  }
+
   // If this is a select between two integer constants, try to do some
   // optimizations.  Note that the operands are ordered the opposite of SELECT
   // operands.
-  if (ConstantSDNode *TrueC = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
-    if (ConstantSDNode *FalseC = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
+  if (ConstantSDNode *TrueC = dyn_cast<ConstantSDNode>(TrueOp)) {
+    if (ConstantSDNode *FalseC = dyn_cast<ConstantSDNode>(FalseOp)) {
       // Canonicalize the TrueC/FalseC values so that TrueC (the true value) is
       // larger than FalseC (the false value).
-      X86::CondCode CC = (X86::CondCode)N->getConstantOperandVal(2);
-
       if (TrueC->getAPIntValue().ult(FalseC->getAPIntValue())) {
         CC = X86::GetOppositeBranchCondition(CC);
         std::swap(TrueC, FalseC);
@@ -11350,7 +11363,6 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
       // This is efficient for any integer data type (including i8/i16) and
       // shift amount.
       if (FalseC->getAPIntValue() == 0 && TrueC->getAPIntValue().isPowerOf2()) {
-        SDValue Cond = N->getOperand(3);
         Cond = DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
                            DAG.getConstant(CC, MVT::i8), Cond);
 
@@ -11368,7 +11380,6 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
       // Optimize Cond ? cst+1 : cst -> zext(setcc(C)+cst.  This is efficient
       // for any integer data type, including i8/i16.
       if (FalseC->getAPIntValue()+1 == TrueC->getAPIntValue()) {
-        SDValue Cond = N->getOperand(3);
         Cond = DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
                            DAG.getConstant(CC, MVT::i8), Cond);
 
@@ -11407,7 +11418,6 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
 
         if (isFastMultiplier) {
           APInt Diff = TrueC->getAPIntValue()-FalseC->getAPIntValue();
-          SDValue Cond = N->getOperand(3);
           Cond = DAG.getNode(X86ISD::SETCC, DL, MVT::i8,
                              DAG.getConstant(CC, MVT::i8), Cond);
           // Zero extend the condition if needed.

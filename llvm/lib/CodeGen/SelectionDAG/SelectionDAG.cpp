@@ -2050,14 +2050,15 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, const APInt &Mask,
     break;
 
   default:
-    // Allow the target to implement this method for its nodes.
-    if (Op.getOpcode() >= ISD::BUILTIN_OP_END) {
+    if (Op.getOpcode() < ISD::BUILTIN_OP_END)
+      break;
+    // Fallthrough
   case ISD::INTRINSIC_WO_CHAIN:
   case ISD::INTRINSIC_W_CHAIN:
   case ISD::INTRINSIC_VOID:
-      TLI.computeMaskedBitsForTargetNode(Op, Mask, KnownZero, KnownOne, *this,
-                                         Depth);
-    }
+    // Allow the target to implement this method for its nodes.
+    TLI.computeMaskedBitsForTargetNode(Op, Mask, KnownZero, KnownOne, *this,
+                                       Depth);
     return;
   }
 }
@@ -2322,6 +2323,13 @@ bool SelectionDAG::isKnownNeverZero(SDValue Op) const {
     return !C->isZero();
 
   // TODO: Recognize more cases here.
+  switch (Op.getOpcode()) {
+  default: break;
+  case ISD::OR:
+    if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
+      return !C->isNullValue();
+    break;
+  }
 
   return false;
 }
