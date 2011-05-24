@@ -21,3 +21,11 @@ entry:
 call void asm sideeffect ".word ${0:B} \0A\09", "i"(i32 0) nounwind, !srcloc !0
 ret void
 }
+
+define void @f1() nounwind ssp {
+entry:
+; CHECK: f1
+; CHECK: .word 65535
+call void asm sideeffect ".word ${0:L} \0A\09", "i"(i32 -1) nounwind, !srcloc !0
+ret void
+}
