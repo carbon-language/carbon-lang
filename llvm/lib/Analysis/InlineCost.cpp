@@ -593,7 +593,7 @@ InlineCostAnalyzer::growCachedCostInfo(Function *Caller, Function *Callee) {
   CodeMetrics &CallerMetrics = CachedFunctionInfo[Caller].Metrics;
 
   // For small functions we prefer to recalculate the cost for better accuracy.
-  if (CallerMetrics.NumBlocks < 10 || CallerMetrics.NumInsts < 1000) {
+  if (CallerMetrics.NumBlocks < 10 && CallerMetrics.NumInsts < 1000) {
     resetCachedCostInfo(Caller);
     return;
   }
