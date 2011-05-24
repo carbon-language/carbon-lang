@@ -404,6 +404,18 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
     case 'q': // Print a NEON quad precision register.
       printOperand(MI, OpNum, O);
       return false;
+    case 'y': // Print a VFP single precision register as indexed double.
+      // This uses the ordering of the alias table to get the first 'd' register
+      // that overlaps the 's' register. Also, s0 is an odd register, hence the
+      // odd modulus check below.
+      if (MI->getOperand(OpNum).isReg()) {
+        unsigned Reg = MI->getOperand(OpNum).getReg();
+        const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
+        O << ARMInstPrinter::getRegisterName(TRI->getAliasSet(Reg)[0]) <<
+        (((Reg % 2) == 1) ? "[0]" : "[1]");
+        return false;
+      }
+      // Fallthrough to unsupported.
     case 'Q':
     case 'R':
     case 'H':
