@@ -714,7 +714,10 @@ bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
       return false;
     }
   }
-  return CheckExceptionSpecSubset(PDiag(diag::err_override_exception_spec),
+  unsigned DiagID = diag::err_override_exception_spec;
+  if (getLangOptions().Microsoft)
+    DiagID = diag::warn_override_exception_spec;
+  return CheckExceptionSpecSubset(PDiag(DiagID),
                                   PDiag(diag::note_overridden_virtual_function),
                                   Old->getType()->getAs<FunctionProtoType>(),
                                   Old->getLocation(),

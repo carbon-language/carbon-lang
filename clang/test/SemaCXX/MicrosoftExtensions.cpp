@@ -6,6 +6,8 @@ void f(const type_info &a);
 
 
 // Microsoft doesn't validate exception specification.
+namespace microsoft_exception_spec {
+
 void foo(); // expected-note {{previous declaration}}
 void foo() throw(); // expected-warning {{exception specification in declaration does not match previous declaration}}
 
@@ -22,6 +24,15 @@ struct Derived : Base {
   virtual void f3();
 };
 
+class A {
+  virtual ~A() throw();  // expected-note {{overridden virtual function is here}}
+};
+
+class B : public A {
+  virtual ~B();  // expected-warning {{exception specification of overriding function is more lax than base version}}
+};
+
+}
 
 // MSVC allows type definition in anonymous union and struct
 struct A
