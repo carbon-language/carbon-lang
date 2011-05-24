@@ -1385,8 +1385,8 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
   Worklist.push_back(BB);
 
   SmallVector<Instruction*, 128> InstrsForInstCombineWorklist;
-  SmallPtrSet<ConstantExpr*, 64> FoldedConstants;
-  
+  DenseMap<ConstantExpr*, Constant*> FoldedConstants;
+
   do {
     BB = Worklist.pop_back_val();
     
@@ -1421,14 +1421,15 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB,
              i != e; ++i) {
           ConstantExpr *CE = dyn_cast<ConstantExpr>(i);
           if (CE == 0) continue;
-          
-          // If we already folded this constant, don't try again.
-          if (!FoldedConstants.insert(CE))
-            continue;
-          
-          Constant *NewC = ConstantFoldConstantExpression(CE, TD);
-          if (NewC && NewC != CE) {
-            *i = NewC;
+
+          Constant*& FoldRes = FoldedConstants[CE];
+          if (!FoldRes)
+            FoldRes = ConstantFoldConstantExpression(CE, TD);
+          if (!FoldRes)
+            FoldRes = CE;
+
+          if (FoldRes != CE) {
+            *i = FoldRes;
             MadeIRChange = true;
           }
         }
