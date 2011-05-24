@@ -1468,7 +1468,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     ExtraOpts.push_back("--build-id");
 
   if (IsOpenSuse(Distro))
-    ExtraOpts.push_back("--dynamic-tags");
+    ExtraOpts.push_back("--enable-new-dtags");
 
   if (Distro == ArchLinux)
     Lib = "lib";
