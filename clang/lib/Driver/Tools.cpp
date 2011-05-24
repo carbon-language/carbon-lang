@@ -429,6 +429,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   default:
     return true;
 
+  case llvm::Triple::arm:
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
     if (Triple.getOS() == llvm::Triple::Darwin)
