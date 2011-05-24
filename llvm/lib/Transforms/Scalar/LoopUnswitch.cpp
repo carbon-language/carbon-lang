@@ -881,8 +881,8 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     
     for (Value::use_iterator UI = LIC->use_begin(), E = LIC->use_end();
          UI != E; ++UI) {
-      Instruction *U = cast<Instruction>(*UI);
-      if (!L->contains(U))
+      Instruction *U = dyn_cast<Instruction>(*UI);
+      if (!U || !L->contains(U))
         continue;
       U->replaceUsesOfWith(LIC, Replacement);
       Worklist.push_back(U);
@@ -896,8 +896,8 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   // can.  This case occurs when we unswitch switch statements.
   for (Value::use_iterator UI = LIC->use_begin(), E = LIC->use_end();
        UI != E; ++UI) {
-    Instruction *U = cast<Instruction>(*UI);
-    if (!L->contains(U))
+    Instruction *U = dyn_cast<Instruction>(*UI);
+    if (!U || !L->contains(U))
       continue;
 
     Worklist.push_back(U);
