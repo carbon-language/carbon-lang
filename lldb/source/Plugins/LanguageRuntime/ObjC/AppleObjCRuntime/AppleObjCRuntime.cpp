@@ -146,8 +146,9 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     
     char buf[512];
     size_t cstr_len = 0;    
-    size_t curr_len = sizeof(buf);
-    while (curr_len == sizeof(buf))
+    size_t full_buffer_len = sizeof (buf) - 1;
+    size_t curr_len = full_buffer_len;
+    while (curr_len == full_buffer_len)
     {
         curr_len = exe_ctx.process->ReadCStringFromMemory(result_ptr + cstr_len, buf, sizeof(buf));
         strm.Write (buf, curr_len);
