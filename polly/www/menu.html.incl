@@ -5,13 +5,13 @@
 
   <div class="submenu">
     <label>Polly Info</label>
-    <a href="index.html">About</a>
-    <a href="todo.html">Todo</a>
-    <a href="documentation.html">Documentation</a>
-    <a href="examples.html">Examples</a>
-    <a href="performance.html">Performance</a>
-    <a href="publications.html">Publications</a>
-    <a href="contributors.html">Contributors</a>
+    <a href="/index.html">About</a>
+    <a href="/todo.html">Todo</a>
+    <a href="/documentation.html">Documentation</a>
+    <a href="/examples.html">Examples</a>
+    <a href="/performance.html">Performance</a>
+    <a href="/publications.html">Publications</a>
+    <a href="/contributors.html">Contributors</a>
   </div>
 
   <div class="submenu">
@@ -25,9 +25,9 @@
 
   <div class="submenu">
     <label>The Code</label>
-    <a href="get_started.html#prerequisites">Prerequisites</a>
-    <a href="get_started.html#source">Download</a>
-    <a href="get_started.html#build">Build</a>
+    <a href="/get_started.html#prerequisites">Prerequisites</a>
+    <a href="/get_started.html#source">Download</a>
+    <a href="/get_started.html#build">Build</a>
     <a href="http://llvm.org/viewvc/llvm-project/polly/trunk/">
       Browse (ViewVC)
     </a>
