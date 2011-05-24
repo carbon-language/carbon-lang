@@ -24,7 +24,10 @@ fi
 
 if [ -z $MACOSX_DEPLOYMENT_TARGET ]
 then
-  MACOSX_DEPLOYMENT_TARGET=10.6
+	if [ -z $IPHONEOS_DEPLOYMENT_TARGET ]
+	then
+		MACOSX_DEPLOYMENT_TARGET=10.6
+	fi
 fi
 
 if [ -z $RC_ProjectSourceVersion ]
@@ -55,7 +58,10 @@ case $TRIPLE in
 		if [ -n "$SDKROOT" ]
 		then
 			EXTRA_FLAGS+="-isysroot ${SDKROOT}"
-			RE_EXPORT_FILE="libc++sjlj-abi.exp"
+			if [ "${RC_armv7}" = "YES" ]
+			then
+				RE_EXPORT_FILE="libc++sjlj-abi.exp"
+			fi
 			CXX=`xcrun -sdk "${SDKROOT}"  -find clang++`
 			CC=`xcrun -sdk "${SDKROOT}"  -find clang`
 		fi
