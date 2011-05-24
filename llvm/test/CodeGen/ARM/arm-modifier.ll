@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2
+; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s
 
 define i32 @foo(float %scale, float %scale2) nounwind ssp {
 entry:
@@ -13,3 +13,11 @@ entry:
 }
 
 !0 = metadata !{i32 56, i32 89, i32 128, i32 168}
+
+define void @f0() nounwind ssp {
+entry:
+; CHECK: f0
+; CHECK: .word -1
+call void asm sideeffect ".word ${0:B} \0A\09", "i"(i32 0) nounwind, !srcloc !0
+ret void
+}

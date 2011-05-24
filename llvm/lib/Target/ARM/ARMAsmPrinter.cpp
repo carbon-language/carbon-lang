@@ -417,6 +417,10 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       }
       // Fallthrough to unsupported.
     case 'B': // Bitwise inverse of integer or symbol without a preceding #.
+      if (!MI->getOperand(OpNum).isImm())
+        return true;
+      O << ~(MI->getOperand(OpNum).getImm());
+      return false;
     case 'L': // The low 16 bits of an immediate constant.
     case 'm': // The base register of a memory operand.
     case 'M': // A register range suitable for LDM/STM.
