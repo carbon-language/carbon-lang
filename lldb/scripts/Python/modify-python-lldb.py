@@ -3,7 +3,8 @@
 #
 # This script modifies the lldb module (which was automatically generated via
 # running swig) to support iteration and/or equality operations for certain lldb
-# objects, adds a global variable 'debugger_unique_id' and initializes it to 0.
+# objects, implements truth value testing for certain lldb objects, and adds a
+# global variable 'debugger_unique_id' which is initialized to 0.
 #
 # It also calls SBDebugger.Initialize() to initialize the lldb debugger
 # subsystem.
