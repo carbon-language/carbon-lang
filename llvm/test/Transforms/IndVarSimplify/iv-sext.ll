@@ -1,6 +1,4 @@
-; RUN: opt < %s -indvars -S > %t
-; RUN: grep {= sext} %t | count 4
-; RUN: grep {phi i64} %t | count 2
+; RUN: opt < %s -indvars -S | FileCheck %s
 
 ; Indvars should be able to promote the hiPart induction variable in the
 ; inner loop to i64.
@@ -18,6 +16,9 @@ bb.nph22:		; preds = %entry
 	%tmp3 = add i32 %bandEdgeIndex, -1		; <i32> [#uses=2]
 	br label %bb
 
+; CHECK: bb:
+; CHECK: phi i64
+; CHECK-NOT: phi i64
 bb:		; preds = %bb8, %bb.nph22
 	%distERBhi.121 = phi float [ %distERBhi.2.lcssa, %bb8 ], [ 0.000000e+00, %bb.nph22 ]		; <float> [#uses=2]
 	%distERBlo.120 = phi float [ %distERBlo.0.lcssa, %bb8 ], [ 0.000000e+00, %bb.nph22 ]		; <float> [#uses=2]
@@ -28,6 +29,7 @@ bb:		; preds = %bb8, %bb.nph22
 	%tmp4 = icmp sgt i32 %part.016, 0		; <i1> [#uses=1]
 	br i1 %tmp4, label %bb1, label %bb3.preheader
 
+; CHECK: bb1:
 bb1:		; preds = %bb
 	%tmp5 = add i32 %part.016, -1		; <i32> [#uses=1]
 	%tmp6 = sext i32 %tmp5 to i64		; <i64> [#uses=1]
@@ -86,7 +88,10 @@ bb5.preheader:		; preds = %bb3.bb5.preheader_crit_edge, %bb3.preheader
 
 bb.nph12:		; preds = %bb5.preheader
 	br label %bb4
-
+; CHECK: bb4:
+; CHECK: phi i64
+; CHECK-NOT: phi i64
+; CHECK-NOT: sext
 bb4:		; preds = %bb5, %bb.nph12
 	%distERBhi.29 = phi float [ %tmp30, %bb5 ], [ %distERBhi.0.ph, %bb.nph12 ]		; <float> [#uses=1]
 	%hiPart.08 = phi i32 [ %tmp31, %bb5 ], [ %hiPart.119, %bb.nph12 ]		; <i32> [#uses=2]
@@ -102,6 +107,7 @@ bb4:		; preds = %bb5, %bb.nph12
 	%tmp35 = fadd float %tmp34, %peakCount.27		; <float> [#uses=2]
 	br label %bb5
 
+; CHECK: bb5:
 bb5:		; preds = %bb4
 	%.not = fcmp olt float %tmp30, 2.500000e+00		; <i1> [#uses=1]
 	%tmp36 = icmp sgt i32 %tmp3, %tmp31		; <i1> [#uses=1]
