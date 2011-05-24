@@ -105,11 +105,12 @@ class HeaderSearch {
   FileManager &FileMgr;
   /// #include search path information.  Requests for #include "x" search the
   /// directory of the #including file first, then each directory in SearchDirs
-  /// consequtively. Requests for <x> search the current dir first, then each
-  /// directory in SearchDirs, starting at SystemDirIdx, consequtively.  If
+  /// consecutively. Requests for <x> search the current dir first, then each
+  /// directory in SearchDirs, starting at AngledDirIdx, consecutively.  If
   /// NoCurDirSearch is true, then the check for the file in the current
   /// directory is suppressed.
   std::vector<DirectoryLookup> SearchDirs;
+  unsigned AngledDirIdx;
   unsigned SystemDirIdx;
   bool NoCurDirSearch;
 
@@ -160,8 +161,12 @@ public:
   /// SetSearchPaths - Interface for setting the file search paths.
   ///
   void SetSearchPaths(const std::vector<DirectoryLookup> &dirs,
-                      unsigned systemDirIdx, bool noCurDirSearch) {
+                      unsigned angledDirIdx, unsigned systemDirIdx,
+                      bool noCurDirSearch) {
+    assert(angledDirIdx <= systemDirIdx && systemDirIdx <= dirs.size() &&
+        "Directory indicies are unordered");
     SearchDirs = dirs;
+    AngledDirIdx = angledDirIdx;
     SystemDirIdx = systemDirIdx;
     NoCurDirSearch = noCurDirSearch;
     //LookupFileCache.clear();
@@ -297,6 +302,20 @@ public:
   search_dir_iterator search_dir_begin() const { return SearchDirs.begin(); }
   search_dir_iterator search_dir_end() const { return SearchDirs.end(); }
   unsigned search_dir_size() const { return SearchDirs.size(); }
+
+  search_dir_iterator quoted_dir_begin() const {
+    return SearchDirs.begin();
+  }
+  search_dir_iterator quoted_dir_end() const {
+    return SearchDirs.begin() + AngledDirIdx;
+  }
+
+  search_dir_iterator angled_dir_begin() const {
+    return SearchDirs.begin() + AngledDirIdx;
+  }
+  search_dir_iterator angled_dir_end() const {
+    return SearchDirs.begin() + SystemDirIdx;
+  }
 
   search_dir_iterator system_dir_begin() const {
     return SearchDirs.begin() + SystemDirIdx;

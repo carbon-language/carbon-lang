@@ -37,6 +37,7 @@ ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 
 HeaderSearch::HeaderSearch(FileManager &FM)
     : FileMgr(FM), FrameworkMap(64) {
+  AngledDirIdx = 0;
   SystemDirIdx = 0;
   NoCurDirSearch = false;
 
@@ -317,7 +318,7 @@ const FileEntry *HeaderSearch::LookupFile(
   CurDir = 0;
 
   // If this is a system #include, ignore the user #include locs.
-  unsigned i = isAngled ? SystemDirIdx : 0;
+  unsigned i = isAngled ? AngledDirIdx : 0;
 
   // If this is a #include_next request, start searching after the directory the
   // file was found in.
