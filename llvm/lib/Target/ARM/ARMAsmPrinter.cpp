@@ -416,9 +416,19 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return false;
       }
       // Fallthrough to unsupported.
-    case 'Q':
-    case 'R':
-    case 'H':
+    case 'B': // Bitwise inverse of integer or symbol without a preceding #.
+    case 'L': // The low 16 bits of an immediate constant.
+    case 'm': // The base register of a memory operand.
+    case 'M': // A register range suitable for LDM/STM.
+    case 'p': // The high single-precision register of a VFP double-precision
+              // register.
+    case 'e': // The low doubleword register of a NEON quad register.
+    case 'f': // The high doubleword register of a NEON quad register.
+    case 'h': // A range of VFP/NEON registers suitable for VLD1/VST1.
+    case 'A': // A memory operand for a VLD1/VST1 instruction.
+    case 'Q': // The least significant register of a pair.
+    case 'R': // The most significant register of a pair.
+    case 'H': // The highest-numbered register of a pair.
       // These modifiers are not yet supported.
       return true;
     }
