@@ -119,7 +119,7 @@ static bool expandRegLargeImmPair(unsigned OrigReg, int OrigImm,
   MachineFunction* MF = MBB.getParent();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
   DebugLoc DL = I->getDebugLoc();
-  int ImmLo = OrigImm & 0xffff;
+  int ImmLo = (short)(OrigImm & 0xffff);
   int ImmHi = (((unsigned)OrigImm & 0xffff0000) >> 16) +
               ((OrigImm & 0x8000) != 0);
 

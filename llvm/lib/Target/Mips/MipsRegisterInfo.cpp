@@ -234,7 +234,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   else {
     const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
     DebugLoc DL = II->getDebugLoc();
-    int ImmLo = Offset & 0xffff;
+    int ImmLo = (short)(Offset & 0xffff);
     int ImmHi = (((unsigned)Offset & 0xffff0000) >> 16) +
                 ((Offset & 0x8000) != 0);
 

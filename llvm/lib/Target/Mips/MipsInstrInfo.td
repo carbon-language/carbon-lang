@@ -380,7 +380,7 @@ def ATMACRO   : MipsPseudo<(outs), (ins), ".set\tat", []>;
 // are used, we have the same behavior, but get also a bunch of warnings
 // from the assembler.
 def CPLOAD : MipsPseudo<(outs), (ins CPURegs:$picreg), ".cpload\t$picreg", []>;
-def CPRESTORE : MipsPseudo<(outs), (ins uimm16:$loc), ".cprestore\t$loc\n", []>;
+def CPRESTORE : MipsPseudo<(outs), (ins i32imm:$loc), ".cprestore\t$loc\n", []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction definition
