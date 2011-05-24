@@ -119,9 +119,13 @@ namespace PR9564 {
 
 void dereference_reinterpret_cast() {
   struct A {};
+  typedef A A2;
   class B {};
+  typedef B B2;
   A a;
   B b;
+  A2 a2;
+  B2 b2;
   long l;
   double d;
   float f;
@@ -142,6 +146,10 @@ void dereference_reinterpret_cast() {
   (void)*reinterpret_cast<A*>(&b);
   (void)reinterpret_cast<B&>(a);
   (void)*reinterpret_cast<B*>(&a);
+  (void)reinterpret_cast<A2&>(b2);
+  (void)*reinterpret_cast<A2*>(&b2);
+  (void)reinterpret_cast<B2&>(a2);
+  (void)*reinterpret_cast<B2*>(&a2);
 
   // Casting to itself is allowed
   (void)reinterpret_cast<A&>(a);
