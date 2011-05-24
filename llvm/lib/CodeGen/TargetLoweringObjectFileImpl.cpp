@@ -255,7 +255,7 @@ getELFKindForNamedSection(StringRef Name, SectionKind K) {
     return SectionKind::getThreadBSS();
 
   if (Name == ".eh_frame")
-    return SectionKind::getDataRel();
+    return SectionKind::getReadOnlyWithRel();
 
   return K;
 }
@@ -289,7 +289,7 @@ getELFSectionFlags(SectionKind K) {
   if (K.isText())
     Flags |= ELF::SHF_EXECINSTR;
 
-  if (K.isWriteable())
+  if (K.isWriteable() && !K.isReadOnlyWithRel())
     Flags |= ELF::SHF_WRITE;
 
   if (K.isThreadLocal())
