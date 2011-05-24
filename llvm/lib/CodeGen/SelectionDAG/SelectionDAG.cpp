@@ -2347,16 +2347,6 @@ bool SelectionDAG::isEqualTo(SDValue A, SDValue B) const {
   return false;
 }
 
-bool SelectionDAG::isVerifiedDebugInfoDesc(SDValue Op) const {
-  GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Op);
-  if (!GA) return false;
-  if (GA->getOffset() != 0) return false;
-  const GlobalVariable *GV = dyn_cast<GlobalVariable>(GA->getGlobal());
-  if (!GV) return false;
-  return MF->getMMI().hasDebugInfo();
-}
-
-
 /// getNode - Gets or creates the specified node.
 ///
 SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, EVT VT) {

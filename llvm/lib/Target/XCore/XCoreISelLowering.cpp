@@ -244,9 +244,6 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
 {
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   SDValue GA = DAG.getTargetGlobalAddress(GV, Op.getDebugLoc(), MVT::i32);
-  // If it's a debug information descriptor, don't mess with it.
-  if (DAG.isVerifiedDebugInfoDesc(Op))
-    return GA;
   return getGlobalAddressWrapper(GA, GV, DAG);
 }
 

@@ -985,10 +985,6 @@ public:
   /// other positive zero.
   bool isEqualTo(SDValue A, SDValue B) const;
 
-  /// isVerifiedDebugInfoDesc - Returns true if the specified SDValue has
-  /// been verified as a debug information descriptor.
-  bool isVerifiedDebugInfoDesc(SDValue Op) const;
-
   /// UnrollVectorOp - Utility function used by legalize and lowering to
   /// "unroll" a vector operation by splitting out the scalars and operating
   /// on each element individually.  If the ResNE is 0, fully unroll the vector
