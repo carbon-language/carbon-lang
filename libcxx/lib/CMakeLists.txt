@@ -27,6 +27,7 @@ endif()
 append_if(libraries LIBCXX_HAS_PTHREAD_LIB pthread)
 append_if(libraries LIBCXX_HAS_C_LIB c)
 append_if(libraries LIBCXX_HAS_M_LIB m)
+append_if(libraries LIBCXX_HAS_RT_LIB rt)
 append_if(libraries LIBCXX_HAS_GCC_S_LIB gcc_s)
 
 target_link_libraries(cxx ${libraries})
