@@ -133,10 +133,9 @@ lldb_iter_defined = False;
 # method definition in order to insert the appropriate method(s) into the lldb
 # module.
 #
-# Assuming that SWIG puts out the __init__ method definition before other method
-# definitions, the FSM, while in NORMAL state, also checks the current input for
-# IsValid() definition, and inserts a __nonzero__() method definition to
-# implement truth value testing and the built-in operation bool().
+# The FSM, in all possible states, also checks the current input for IsValid()
+# definition, and inserts a __nonzero__() method definition to implement truth
+# value testing and the built-in operation bool().
 state = NORMAL
 for line in content.splitlines():
     if state == NORMAL:
@@ -157,10 +156,6 @@ for line in content.splitlines():
             if cls in e:
                 # Adding support for eq and ne for the matched SB class.
                 state = (state | DEFINING_EQUALITY)
-        # Look for 'def IsValid(*args):', and once located, add implementation
-        # of truth value testing for objects by delegation.
-        elif isvalid_pattern.search(line):
-            print >> new_content, nonzero_def
     elif state > NORMAL:
         match = init_pattern.search(line)
         if match:
@@ -181,6 +176,11 @@ for line in content.splitlines():
 
             # Next state will be NORMAL.
             state = NORMAL
+
+    # Look for 'def IsValid(*args):', and once located, add implementation
+    # of truth value testing for this object by delegation.
+    if isvalid_pattern.search(line):
+        print >> new_content, nonzero_def
 
     # Pass the original line of content to new_content.
     print >> new_content, line
