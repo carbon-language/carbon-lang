@@ -71,6 +71,7 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
       'SBType':  ('GetNumberChildren', 'GetChildAtIndex'),
       'SBValue': ('GetNumChildren',    'GetChildAtIndex'),
 
+      # SBTarget needs special processing, see below.
       'SBTarget': {'module':     ('GetNumModules', 'GetModuleAtIndex'),
                    'breakpoint': ('GetNumBreakpoints', 'GetBreakpointAtIndex')
                    }
