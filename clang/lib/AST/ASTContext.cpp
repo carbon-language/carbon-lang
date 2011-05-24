@@ -975,6 +975,9 @@ ASTContext::getTypeInfo(const Type *T) const {
     return getTypeInfo(cast<DecltypeType>(T)->getUnderlyingExpr()->getType()
                         .getTypePtr());
 
+  case Type::UnaryTransform:
+    return getTypeInfo(cast<UnaryTransformType>(T)->getUnderlyingType());
+
   case Type::Elaborated:
     return getTypeInfo(cast<ElaboratedType>(T)->getNamedType().getTypePtr());
 
@@ -1605,6 +1608,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
   case Type::TypeOfExpr:
   case Type::TypeOf:
   case Type::Decltype:
+  case Type::UnaryTransform:
   case Type::DependentName:
   case Type::InjectedClassName:
   case Type::TemplateSpecialization:
@@ -2800,6 +2804,20 @@ QualType ASTContext::getDecltypeType(Expr *e) const {
   }
   Types.push_back(dt);
   return QualType(dt, 0);
+}
+
+/// getUnaryTransformationType - We don't unique these, since the memory
+/// savings are minimal and these are rare.
+QualType ASTContext::getUnaryTransformType(QualType BaseType,
+                                           QualType UnderlyingType,
+                                           UnaryTransformType::UTTKind Kind)
+    const {
+  UnaryTransformType *Ty =
+    new UnaryTransformType (BaseType, UnderlyingType, Kind,
+                            UnderlyingType->isDependentType() ?
+                              QualType() : UnderlyingType);
+  Types.push_back(Ty);
+  return QualType(Ty, 0);
 }
 
 /// getAutoType - We only unique auto types after they've been deduced.

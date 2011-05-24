@@ -94,6 +94,7 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
     case Type::TypeOfExpr:
     case Type::TypeOf:
     case Type::Decltype:
+    case Type::UnaryTransform:
     case Type::Record:
     case Type::Enum:
     case Type::Elaborated:
@@ -510,6 +511,20 @@ void TypePrinter::printDecltype(const DecltypeType *T, std::string &S) {
   llvm::raw_string_ostream s(Str);
   T->getUnderlyingExpr()->printPretty(s, 0, Policy);
   S = "decltype(" + s.str() + ")" + S;
+}
+
+void TypePrinter::printUnaryTransform(const UnaryTransformType *T,
+                                           std::string &S) {
+  if (!S.empty())
+    S = ' ' + S;
+  std::string Str;
+  print(T->getBaseType(), Str);
+
+  switch (T->getUTTKind()) {
+    case UnaryTransformType::EnumUnderlyingType:
+      S = "__underlying_type(" + Str + ")" + S;
+      break;
+  }
 }
 
 void TypePrinter::printAuto(const AutoType *T, std::string &S) { 

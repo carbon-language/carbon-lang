@@ -702,6 +702,11 @@ public:
   /// By default, builds a new TypeOfType with the given underlying type.
   QualType RebuildTypeOfType(QualType Underlying);
 
+  /// \brief Build a new unary transform type.
+  QualType RebuildUnaryTransformType(QualType BaseType,
+                                     UnaryTransformType::UTTKind UKind,
+                                     SourceLocation Loc);
+
   /// \brief Build a new C++0x decltype type.
   ///
   /// By default, performs semantic analysis when building the decltype type.
@@ -4155,6 +4160,29 @@ QualType TreeTransform<Derived>::TransformDecltypeType(TypeLocBuilder &TLB,
   DecltypeTypeLoc NewTL = TLB.push<DecltypeTypeLoc>(Result);
   NewTL.setNameLoc(TL.getNameLoc());
 
+  return Result;
+}
+
+template<typename Derived>
+QualType TreeTransform<Derived>::TransformUnaryTransformType(
+                                                            TypeLocBuilder &TLB,
+                                                     UnaryTransformTypeLoc TL) {
+  QualType Result = TL.getType();
+  if (Result->isDependentType()) {
+    const UnaryTransformType *T = TL.getTypePtr();
+    QualType NewBase =
+      getDerived().TransformType(TL.getUnderlyingTInfo())->getType();
+    Result = getDerived().RebuildUnaryTransformType(NewBase,
+                                                    T->getUTTKind(),
+                                                    TL.getKWLoc());
+    if (Result.isNull())
+      return QualType();
+  }
+
+  UnaryTransformTypeLoc NewTL = TLB.push<UnaryTransformTypeLoc>(Result);
+  NewTL.setKWLoc(TL.getKWLoc());
+  NewTL.setParensRange(TL.getParensRange());
+  NewTL.setUnderlyingTInfo(TL.getUnderlyingTInfo());
   return Result;
 }
 
@@ -8050,6 +8078,13 @@ template<typename Derived>
 QualType TreeTransform<Derived>::RebuildDecltypeType(Expr *E,
                                                      SourceLocation Loc) {
   return SemaRef.BuildDecltypeType(E, Loc);
+}
+
+template<typename Derived>
+QualType TreeTransform<Derived>::RebuildUnaryTransformType(QualType BaseType,
+                                            UnaryTransformType::UTTKind UKind,
+                                            SourceLocation Loc) {
+  return SemaRef.BuildUnaryTransformType(BaseType, UKind, Loc);
 }
 
 template<typename Derived>

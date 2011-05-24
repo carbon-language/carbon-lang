@@ -779,6 +779,10 @@ public:
   /// getDecltypeType - C++0x decltype.
   QualType getDecltypeType(Expr *e) const;
 
+  /// getUnaryTransformType - unary type transforms
+  QualType getUnaryTransformType(QualType BaseType, QualType UnderlyingType,
+                                 UnaryTransformType::UTTKind UKind) const;
+
   /// getAutoType - C++0x deduced auto type.
   QualType getAutoType(QualType DeducedType) const;
 

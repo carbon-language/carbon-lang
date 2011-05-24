@@ -603,7 +603,7 @@ void Parser::ParseUnderlyingTypeSpecifier(DeclSpec &DS) {
 
   const char *PrevSpec = 0;
   unsigned DiagID;
-  if (DS.SetTypeSpecType(DeclSpec::TST_underlying_type, StartLoc, PrevSpec,
+  if (DS.SetTypeSpecType(DeclSpec::TST_underlyingType, StartLoc, PrevSpec,
                          DiagID, Result.release()))
     Diag(StartLoc, DiagID) << PrevSpec;
 }

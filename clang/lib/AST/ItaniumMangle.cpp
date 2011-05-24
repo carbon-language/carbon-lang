@@ -1939,6 +1939,22 @@ void CXXNameMangler::mangleType(const DecltypeType *T) {
   Out << 'E';
 }
 
+void CXXNameMangler::mangleType(const UnaryTransformType *T) {
+  // If this is dependent, we need to record that. If not, we simply
+  // mangle it as the underlying type since they are equivalent.
+  if (T->isDependentType()) {
+    Out << 'U';
+    
+    switch (T->getUTTKind()) {
+      case UnaryTransformType::EnumUnderlyingType:
+        Out << "3eut";
+        break;
+    }
+  }
+
+  mangleType(T->getUnderlyingType());
+}
+
 void CXXNameMangler::mangleType(const AutoType *T) {
   QualType D = T->getDeducedType();
   // <builtin-type> ::= Da  # dependent auto

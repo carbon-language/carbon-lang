@@ -836,26 +836,15 @@ static QualType ConvertDeclSpecToType(Sema &S, TypeProcessingState &state) {
     }
     break;
   }
-  case DeclSpec::TST_underlying_type:
-    // FIXME: Preserve type source info?
+  case DeclSpec::TST_underlyingType:
     Result = S.GetTypeFromParser(DS.getRepAsType());
     assert(!Result.isNull() && "Didn't get a type for __underlying_type?");
-    if (!Result->isDependentType()) {
-      if (Result->isEnumeralType()) {
-        EnumDecl *ED = Result->getAs<EnumType>()->getDecl();
-        S.DiagnoseUseOfDecl(ED, DS.getTypeSpecTypeLoc());
-        QualType UnderlyingType = ED->getIntegerType();
-        if (UnderlyingType.isNull()) {
-          declarator.setInvalidType(true);
-          Result = Context.IntTy;
-        } else {
-          Result = UnderlyingType;
-        }
-      } else {
-        S.Diag(DS.getTypeSpecTypeLoc(),
-               diag::err_only_enums_have_underlying_types);
-        Result = Context.IntTy;
-      }
+    Result = S.BuildUnaryTransformType(Result,
+                                       UnaryTransformType::EnumUnderlyingType,
+                                       DS.getTypeSpecTypeLoc());
+    if (Result.isNull()) {
+      Result = Context.IntTy;
+      declarator.setInvalidType(true);
     }
     break; 
 
@@ -2397,6 +2386,16 @@ namespace {
       Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
       TL.setUnderlyingTInfo(TInfo);
     }
+    void VisitUnaryTransformTypeLoc(UnaryTransformTypeLoc TL) {
+      // FIXME: This holds only because we only have one unary transform.
+      assert(DS.getTypeSpecType() == DeclSpec::TST_underlyingType);
+      TL.setKWLoc(DS.getTypeSpecTypeLoc());
+      TL.setParensRange(DS.getTypeofParensRange());
+      assert(DS.getRepAsType());
+      TypeSourceInfo *TInfo = 0;
+      Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
+      TL.setUnderlyingTInfo(TInfo);
+    }
     void VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
       // By default, use the source location of the type specifier.
       TL.setBuiltinLoc(DS.getTypeSpecTypeLoc());
@@ -3396,4 +3395,28 @@ QualType Sema::BuildDecltypeType(Expr *E, SourceLocation Loc) {
   E = ER.take();
   
   return Context.getDecltypeType(E);
+}
+
+QualType Sema::BuildUnaryTransformType(QualType BaseType,
+                                       UnaryTransformType::UTTKind UKind,
+                                       SourceLocation Loc) {
+  switch (UKind) {
+  case UnaryTransformType::EnumUnderlyingType:
+    if (!BaseType->isDependentType() && !BaseType->isEnumeralType()) {
+      Diag(Loc, diag::err_only_enums_have_underlying_types);
+      return QualType();
+    } else {
+      QualType Underlying = BaseType;
+      if (!BaseType->isDependentType()) {
+        EnumDecl *ED = BaseType->getAs<EnumType>()->getDecl();
+        assert(ED && "EnumType has no EnumDecl");
+        DiagnoseUseOfDecl(ED, Loc);
+        Underlying = ED->getIntegerType();
+      }
+      assert(!Underlying.isNull());
+      return Context.getUnaryTransformType(BaseType, Underlying,
+                                        UnaryTransformType::EnumUnderlyingType);
+    }
+  }
+  llvm_unreachable("unknown unary transform type");
 }

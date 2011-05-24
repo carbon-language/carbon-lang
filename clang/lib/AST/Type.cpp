@@ -1535,6 +1535,16 @@ static TagDecl *getInterestingTagDecl(TagDecl *decl) {
   return decl;
 }
 
+UnaryTransformType::UnaryTransformType(QualType BaseType,
+                                       QualType UnderlyingType,
+                                       UTTKind UKind,
+                                       QualType CanonicalType)
+  : Type(UnaryTransform, CanonicalType, UnderlyingType->isDependentType(),
+         UnderlyingType->isVariablyModifiedType(),
+         BaseType->containsUnexpandedParameterPack())
+  , BaseType(BaseType), UnderlyingType(UnderlyingType), UKind(UKind)
+{}
+
 TagDecl *TagType::getDecl() const {
   return getInterestingTagDecl(decl);
 }

@@ -1410,6 +1410,53 @@ class DecltypeTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                          DecltypeType> {
 };
 
+struct UnaryTransformTypeLocInfo {
+  // FIXME: While there's only one unary transform right now, future ones may
+  // need different representations
+  SourceLocation KWLoc, LParenLoc, RParenLoc;
+  TypeSourceInfo *UnderlyingTInfo;
+};
+
+class UnaryTransformTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
+                                                    UnaryTransformTypeLoc,
+                                                    UnaryTransformType,
+                                                    UnaryTransformTypeLocInfo> {
+public:
+  SourceLocation getKWLoc() const { return getLocalData()->KWLoc; }
+  void setKWLoc(SourceLocation Loc) { getLocalData()->KWLoc = Loc; }
+
+  SourceLocation getLParenLoc() const { return getLocalData()->LParenLoc; }
+  void setLParenLoc(SourceLocation Loc) { getLocalData()->LParenLoc = Loc; }
+
+  SourceLocation getRParenLoc() const { return getLocalData()->RParenLoc; }
+  void setRParenLoc(SourceLocation Loc) { getLocalData()->RParenLoc = Loc; }
+
+  TypeSourceInfo* getUnderlyingTInfo() const {
+    return getLocalData()->UnderlyingTInfo;
+  }
+  void setUnderlyingTInfo(TypeSourceInfo *TInfo) {
+    getLocalData()->UnderlyingTInfo = TInfo;
+  }
+
+  SourceRange getLocalSourceRange() const {
+    return SourceRange(getKWLoc(), getRParenLoc());
+  }
+
+  SourceRange getParensRange() const {
+    return SourceRange(getLParenLoc(), getRParenLoc());
+  }
+  void setParensRange(SourceRange Range) {
+    setLParenLoc(Range.getBegin());
+    setRParenLoc(Range.getEnd());
+  }
+
+  void initializeLocal(ASTContext &Context, SourceLocation Loc) {
+    setKWLoc(Loc);
+    setRParenLoc(Loc);
+    setLParenLoc(Loc);
+  }
+};
+
 class AutoTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                         AutoTypeLoc,
                                                         AutoType> {

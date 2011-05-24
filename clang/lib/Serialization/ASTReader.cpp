@@ -3199,6 +3199,13 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   case TYPE_DECLTYPE:
     return Context->getDecltypeType(ReadExpr(*Loc.F));
 
+  case TYPE_UNARY_TRANSFORM: {
+    QualType BaseType = GetType(Record[0]);
+    QualType UnderlyingType = GetType(Record[1]);
+    UnaryTransformType::UTTKind UKind = (UnaryTransformType::UTTKind)Record[2];
+    return Context->getUnaryTransformType(BaseType, UnderlyingType, UKind);
+  }
+
   case TYPE_AUTO:
     return Context->getAutoType(GetType(Record[0]));
 
@@ -3514,6 +3521,12 @@ void TypeLocReader::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
 }
 void TypeLocReader::VisitDecltypeTypeLoc(DecltypeTypeLoc TL) {
   TL.setNameLoc(ReadSourceLocation(Record, Idx));
+}
+void TypeLocReader::VisitUnaryTransformTypeLoc(UnaryTransformTypeLoc TL) {
+  TL.setKWLoc(ReadSourceLocation(Record, Idx));
+  TL.setLParenLoc(ReadSourceLocation(Record, Idx));
+  TL.setRParenLoc(ReadSourceLocation(Record, Idx));
+  TL.setUnderlyingTInfo(Reader.GetTypeSourceInfo(F, Record, Idx));
 }
 void TypeLocReader::VisitAutoTypeLoc(AutoTypeLoc TL) {
   TL.setNameLoc(ReadSourceLocation(Record, Idx));

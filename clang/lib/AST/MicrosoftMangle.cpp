@@ -1113,6 +1113,10 @@ void MicrosoftCXXNameMangler::mangleType(const DecltypeType *T) {
   assert(false && "Don't know how to mangle DecltypeTypes yet!");
 }
 
+void MicrosoftCXXNameMangler::mangleType(const UnaryTransformType *T) {
+  assert(false && "Don't know how to mangle UnaryTransformationTypes yet!");
+}
+
 void MicrosoftCXXNameMangler::mangleType(const AutoType *T) {
   assert(false && "Don't know how to mangle AutoTypes yet!");
 }

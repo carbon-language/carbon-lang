@@ -1444,6 +1444,9 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     case Type::Decltype:
       T = cast<DecltypeType>(T)->getUnderlyingType();
       break;
+    case Type::UnaryTransform:
+      T = cast<UnaryTransformType>(T)->getUnderlyingType();
+      break;
     case Type::Attributed:
       T = cast<AttributedType>(T)->getEquivalentType();
       break;
@@ -1559,6 +1562,7 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty,
   case Type::TypeOfExpr:
   case Type::TypeOf:
   case Type::Decltype:
+  case Type::UnaryTransform:
   case Type::Auto:
     llvm_unreachable("type should have been unwrapped!");
     return llvm::DIType();      

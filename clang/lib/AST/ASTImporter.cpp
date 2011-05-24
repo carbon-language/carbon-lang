@@ -64,6 +64,7 @@ namespace {
     // FIXME: DependentTypeOfExprType
     QualType VisitTypeOfType(const TypeOfType *T);
     QualType VisitDecltypeType(const DecltypeType *T);
+    QualType VisitUnaryTransformType(const UnaryTransformType *T);
     QualType VisitAutoType(const AutoType *T);
     // FIXME: DependentDecltypeType
     QualType VisitRecordType(const RecordType *T);
@@ -604,7 +605,14 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                   cast<TypeOfType>(T2)->getUnderlyingType()))
       return false;
     break;
-      
+
+  case Type::UnaryTransform:
+    if (!IsStructurallyEquivalent(Context,
+                             cast<UnaryTransformType>(T1)->getUnderlyingType(),
+                             cast<UnaryTransformType>(T1)->getUnderlyingType()))
+      return false;
+    break;
+
   case Type::Decltype:
     if (!IsStructurallyEquivalent(Context,
                                   cast<DecltypeType>(T1)->getUnderlyingExpr(),
@@ -1570,6 +1578,17 @@ QualType ASTNodeImporter::VisitDecltypeType(const DecltypeType *T) {
     return QualType();
   
   return Importer.getToContext().getDecltypeType(ToExpr);
+}
+
+QualType ASTNodeImporter::VisitUnaryTransformType(const UnaryTransformType *T) {
+  QualType ToBaseType = Importer.Import(T->getBaseType());
+  QualType ToUnderlyingType = Importer.Import(T->getUnderlyingType());
+  if (ToBaseType.isNull() || ToUnderlyingType.isNull())
+    return QualType();
+
+  return Importer.getToContext().getUnaryTransformType(ToBaseType,
+                                                       ToUnderlyingType,
+                                                       T->getUTTKind());
 }
 
 QualType ASTNodeImporter::VisitAutoType(const AutoType *T) {

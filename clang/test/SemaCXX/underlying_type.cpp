@@ -25,3 +25,13 @@ static_assert(is_same_type<int, __underlying_type(g)>::value,
 __underlying_type(f) h;
 static_assert(is_same_type<char, decltype(h)>::value,
               "h has the wrong type");
+
+template <typename T>
+struct underlying_type {
+  typedef __underlying_type(T) type; // expected-error {{only enumeration types}}
+};
+
+static_assert(is_same_type<underlying_type<f>::type, char>::value,
+              "f has the wrong underlying type in the template");
+
+underlying_type<int>::type e; // expected-note {{requested here}}

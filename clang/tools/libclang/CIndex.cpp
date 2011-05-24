@@ -350,6 +350,7 @@ public:
   bool VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL);
   bool VisitPackExpansionTypeLoc(PackExpansionTypeLoc TL);
   bool VisitTypeOfTypeLoc(TypeOfTypeLoc TL);
+  bool VisitUnaryTransformTypeLoc(UnaryTransformTypeLoc TL);
   bool VisitDependentNameTypeLoc(DependentNameTypeLoc TL);
   bool VisitDependentTemplateSpecializationTypeLoc(
                                     DependentTemplateSpecializationTypeLoc TL);
@@ -1547,6 +1548,13 @@ bool CursorVisitor::VisitTypeOfExprTypeLoc(TypeOfExprTypeLoc TL) {
 }
 
 bool CursorVisitor::VisitTypeOfTypeLoc(TypeOfTypeLoc TL) {
+  if (TypeSourceInfo *TSInfo = TL.getUnderlyingTInfo())
+    return Visit(TSInfo->getTypeLoc());
+
+  return false;
+}
+
+bool CursorVisitor::VisitUnaryTransformTypeLoc(UnaryTransformTypeLoc TL) {
   if (TypeSourceInfo *TSInfo = TL.getUnderlyingTInfo())
     return Visit(TSInfo->getTypeLoc());
 

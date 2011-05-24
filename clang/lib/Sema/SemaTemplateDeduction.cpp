@@ -3886,6 +3886,13 @@ MarkUsedTemplateParameters(Sema &SemaRef, QualType T,
                                  OnlyDeduced, Depth, Used);
     break;
 
+  case Type::UnaryTransform:
+    if (!OnlyDeduced)
+      MarkUsedTemplateParameters(SemaRef,
+                               cast<UnaryTransformType>(T)->getUnderlyingType(),
+                                 OnlyDeduced, Depth, Used);
+    break;
+
   case Type::PackExpansion:
     MarkUsedTemplateParameters(SemaRef,
                                cast<PackExpansionType>(T)->getPattern(),

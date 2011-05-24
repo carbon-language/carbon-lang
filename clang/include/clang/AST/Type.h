@@ -2825,6 +2825,39 @@ public:
                       Expr *E);
 };
 
+/// \brief A unary type transform, which is a type constructed from another
+class UnaryTransformType : public Type {
+public:
+  enum UTTKind {
+    EnumUnderlyingType
+  };
+
+private:
+  /// The untransformed type.
+  QualType BaseType;
+  /// The transformed type if not dependent, otherwise the same as BaseType.
+  QualType UnderlyingType;
+
+  UTTKind UKind;
+protected:
+  UnaryTransformType(QualType BaseTy, QualType UnderlyingTy, UTTKind UKind,
+                     QualType CanonicalTy);
+  friend class ASTContext;
+public:
+  bool isSugared() const { return !isDependentType(); }
+  QualType desugar() const { return UnderlyingType; }
+
+  QualType getUnderlyingType() const { return UnderlyingType; }
+  QualType getBaseType() const { return BaseType; }
+
+  UTTKind getUTTKind() const { return UKind; }
+  
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == UnaryTransform;
+  }
+  static bool classof(const UnaryTransformType *) { return true; }
+};
+
 class TagType : public Type {
   /// Stores the TagDecl associated with this type. The decl may point to any
   /// TagDecl that declares the entity.
