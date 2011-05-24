@@ -178,6 +178,10 @@ bool ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
 /// of llvm.dbg.value intrinsics.
 bool LowerDbgDeclare(Function &F);
 
+/// FindAllocaDbgDeclare - Finds the llvm.dbg.declare intrinsic corresponding to
+/// an alloca, if any.
+DbgDeclareInst *FindAllocaDbgDeclare(Value *V);
+
 } // End llvm namespace
 
 #endif

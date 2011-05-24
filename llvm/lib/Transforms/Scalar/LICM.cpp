@@ -602,13 +602,14 @@ namespace {
     SmallPtrSet<Value*, 4> &PointerMustAliases;
     SmallVectorImpl<BasicBlock*> &LoopExitBlocks;
     AliasSetTracker &AST;
+    DIBuilder *DIB; // Only passed to LoadAndStorePromoter.
   public:
     LoopPromoter(Value *SP,
                  const SmallVectorImpl<Instruction*> &Insts, SSAUpdater &S,
                  SmallPtrSet<Value*, 4> &PMA,
                  SmallVectorImpl<BasicBlock*> &LEB, AliasSetTracker &ast)
-      : LoadAndStorePromoter(Insts, S), SomePtr(SP), PointerMustAliases(PMA),
-        LoopExitBlocks(LEB), AST(ast) {}
+      : LoadAndStorePromoter(Insts, S, 0, DIB), SomePtr(SP),
+        PointerMustAliases(PMA), LoopExitBlocks(LEB), AST(ast) {}
     
     virtual bool isInstInList(Instruction *I,
                               const SmallVectorImpl<Instruction*> &) const {

@@ -21,6 +21,8 @@ namespace llvm {
   class PHINode;
   template<typename T> class SmallVectorImpl;
   template<typename T> class SSAUpdaterTraits;
+  class DbgDeclareInst;
+  class DIBuilder;
   class BumpPtrAllocator;
 
 /// SSAUpdater - This class updates SSA form for a set of values defined in
@@ -120,9 +122,12 @@ private:
 class LoadAndStorePromoter {
 protected:
   SSAUpdater &SSA;
+  DbgDeclareInst *DDI;
+  DIBuilder *&DIB;
 public:
   LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
-                       SSAUpdater &S, StringRef Name = StringRef());
+                       SSAUpdater &S, DbgDeclareInst *DDI, DIBuilder *&DIB,
+                       StringRef Name = StringRef());
   virtual ~LoadAndStorePromoter() {}
   
   /// run - This does the promotion.  Insts is a list of loads and stores to

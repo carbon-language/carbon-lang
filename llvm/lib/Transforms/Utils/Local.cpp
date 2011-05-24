@@ -20,6 +20,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/Metadata.h"
 #include "llvm/Operator.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -876,4 +877,16 @@ bool llvm::LowerDbgDeclare(Function &F) {
     }
   }
   return true;
+}
+
+/// FindAllocaDbgDeclare - Finds the llvm.dbg.declare intrinsic describing the
+/// alloca 'V', if any.
+DbgDeclareInst *llvm::FindAllocaDbgDeclare(Value *V) {
+  if (MDNode *DebugNode = MDNode::getIfExists(V->getContext(), V))
+    for (Value::use_iterator UI = DebugNode->use_begin(),
+         E = DebugNode->use_end(); UI != E; ++UI)
+      if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))
+        return DDI;
+
+  return 0;
 }
