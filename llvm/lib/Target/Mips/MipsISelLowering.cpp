@@ -959,6 +959,17 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
       Mips::D6, Mips::D7
   };
 
+  // ByVal Args
+  if (ArgFlags.isByVal()) {
+    State.HandleByVal(ValNo, ValVT, LocVT, LocInfo,
+                      1 /*MinSize*/, 4 /*MinAlign*/, ArgFlags);
+    unsigned NextReg = (State.getNextStackOffset() + 3) / 4;
+    for (unsigned r = State.getFirstUnallocated(IntRegs, IntRegsSize);
+         r < std::min(IntRegsSize, NextReg); ++r)
+      State.AllocateReg(IntRegs[r]);
+    return false;
+  }
+
   // Promote i8 and i16
   if (LocVT == MVT::i8 || LocVT == MVT::i16) {
     LocVT = MVT::i32;
@@ -1026,6 +1037,55 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT,
 //===----------------------------------------------------------------------===//
 //                  Call Calling Convention Implementation
 //===----------------------------------------------------------------------===//
+
+static const unsigned O32IntRegsSize = 4;
+
+static const unsigned O32IntRegs[] = {
+  Mips::A0, Mips::A1, Mips::A2, Mips::A3
+};
+
+// Write ByVal Arg to arg registers and stack.
+static void
+WriteByValArg(SDValue& Chain, DebugLoc dl,
+              SmallVector<std::pair<unsigned, SDValue>, 16>& RegsToPass,
+              SmallVector<SDValue, 8>& MemOpChains, int& LastFI,
+              MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
+              const CCValAssign &VA, const ISD::ArgFlagsTy& Flags, MVT PtrType) {
+  unsigned FirstWord = VA.getLocMemOffset() / 4;
+  unsigned NumWords = (Flags.getByValSize() + 3) / 4;
+  unsigned LastWord = FirstWord + NumWords;
+  unsigned CurWord;
+
+  // copy the first 4 words of byval arg to registers A0 - A3
+  for (CurWord = FirstWord; CurWord < std::min(LastWord, O32IntRegsSize);
+       ++CurWord) {
+    SDValue LoadPtr = DAG.getNode(ISD::ADD, dl, MVT::i32, Arg,
+                                  DAG.getConstant((CurWord - FirstWord) * 4,
+                                                  MVT::i32));
+    SDValue LoadVal = DAG.getLoad(MVT::i32, dl, Chain, LoadPtr,
+                                  MachinePointerInfo(),
+                                  false, false, 0);
+    MemOpChains.push_back(LoadVal.getValue(1));
+    unsigned DstReg = O32IntRegs[CurWord];
+    RegsToPass.push_back(std::make_pair(DstReg, LoadVal));
+  }
+
+  // copy remaining part of byval arg to stack.
+  if (CurWord < LastWord) {
+    unsigned SizeInBytes = (LastWord - CurWord) * 4; 
+    SDValue Src = DAG.getNode(ISD::ADD, dl, MVT::i32, Arg,
+                              DAG.getConstant((CurWord - FirstWord) * 4,
+                                              MVT::i32));
+    LastFI = MFI->CreateFixedObject(SizeInBytes, CurWord * 4, true);
+    SDValue Dst = DAG.getFrameIndex(LastFI, PtrType);
+    Chain = DAG.getMemcpy(Chain, dl, Dst, Src,
+                          DAG.getConstant(SizeInBytes, MVT::i32),
+                          /*Align*/4,
+                          /*isVolatile=*/false, /*AlwaysInline=*/false,
+                          MachinePointerInfo(0), MachinePointerInfo(0));
+    MemOpChains.push_back(Chain);
+  }
+}
 
 /// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
@@ -1120,6 +1180,18 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     // Register can't get to this point...
     assert(VA.isMemLoc());
+
+    // ByVal Arg. 
+    ISD::ArgFlagsTy Flags = Outs[i].Flags;
+    if (Flags.isByVal()) {
+      assert(Subtarget->isABI_O32() &&
+             "No support for ByVal args by ABIs other than O32 yet.");
+      assert(Flags.getByValSize() &&
+             "ByVal args of size 0 should have been ignored by front-end.");
+      WriteByValArg(Chain, dl, RegsToPass, MemOpChains, LastFI, MFI, DAG, Arg,
+                    VA, Flags, getPointerTy());
+      continue;
+    }
 
     // Create the frame index object for this incoming parameter
     // This guarantees that when allocating Local Area the firsts
@@ -1299,6 +1371,29 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 //===----------------------------------------------------------------------===//
 //             Formal Arguments Calling Convention Implementation
 //===----------------------------------------------------------------------===//
+static void ReadByValArg(MachineFunction &MF, SDValue Chain, DebugLoc dl,
+                         std::vector<SDValue>& OutChains,
+                         SelectionDAG &DAG, unsigned NumWords, SDValue FIN,
+                         const CCValAssign &VA, const ISD::ArgFlagsTy& Flags) {
+  unsigned LocMem = VA.getLocMemOffset();
+  unsigned FirstWord = LocMem / 4;
+
+  // copy register A0 - A3 to frame object
+  for (unsigned i = 0; i < NumWords; ++i) {
+    unsigned CurWord = FirstWord + i;
+    if (CurWord >= O32IntRegsSize)
+      break;
+
+    unsigned SrcReg = O32IntRegs[CurWord];
+    unsigned Reg = AddLiveIn(MF, SrcReg, Mips::CPURegsRegisterClass);
+    SDValue StorePtr = DAG.getNode(ISD::ADD, dl, MVT::i32, FIN,
+                                   DAG.getConstant(i * 4, MVT::i32));
+    SDValue Store = DAG.getStore(Chain, dl, DAG.getRegister(Reg, MVT::i32),
+                                 StorePtr, MachinePointerInfo(), false,
+                                 false, 0);
+    OutChains.push_back(Store);
+  }
+}
 
 /// LowerFormalArguments - transform physical registers into virtual registers
 /// and generate load operations for arguments places on the stack.
@@ -1393,6 +1488,23 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       // sanity check
       assert(VA.isMemLoc());
 
+      ISD::ArgFlagsTy Flags = Ins[i].Flags;
+
+      if (Flags.isByVal()) {
+        assert(Subtarget->isABI_O32() &&
+               "No support for ByVal args by ABIs other than O32 yet.");
+        assert(Flags.getByValSize() &&
+               "ByVal args of size 0 should have been ignored by front-end.");
+        unsigned NumWords = (Flags.getByValSize() + 3) / 4;
+        LastFI = MFI->CreateFixedObject(NumWords * 4, VA.getLocMemOffset(),
+                                        true);
+        SDValue FIN = DAG.getFrameIndex(LastFI, getPointerTy());
+        InVals.push_back(FIN);
+        ReadByValArg(MF, Chain, dl, OutChains, DAG, NumWords, FIN, VA, Flags);
+
+        continue;
+      }
+
       // The stack pointer offset is relative to the caller stack frame.
       // Since the real stack size is unknown here, a negative SPOffset
       // is used so there's a way to adjust these offsets when the stack
@@ -1431,14 +1543,12 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     // Record the frame index of the first variable argument
     // which is a value necessary to VASTART.    
     unsigned NextStackOffset = CCInfo.getNextStackOffset();
+    assert(NextStackOffset % 4 == 0 &&
+           "NextStackOffset must be aligned to 4-byte boundaries.");
     LastFI = MFI->CreateFixedObject(4, NextStackOffset, true);
     MipsFI->setVarArgsFrameIndex(LastFI);
     
-    const unsigned O32IntRegs[] = {
-      Mips::A0, Mips::A1, Mips::A2, Mips::A3
-    };
-
-    // Copy variable arguments passed in registers to stack.
+   // Copy variable arguments passed in registers to stack.
     for (; NextStackOffset < 16; NextStackOffset += 4) {
       TargetRegisterClass *RC = Mips::CPURegsRegisterClass;
       unsigned Idx = NextStackOffset / 4;
