@@ -41,7 +41,10 @@ UnwindLLDB::GetFrameCount()
 #endif
         if (!AddFirstFrame ())
             return 0;
-        while (AddOneMoreFrame ())
+
+        ABI *abi = m_thread.GetProcess().GetABI().get();
+
+        while (AddOneMoreFrame (abi))
         {
 #if DEBUG_FRAME_SPEED
             if ((m_frames.size() % FRAME_COUNT) == 0)
@@ -66,32 +69,32 @@ UnwindLLDB::AddFirstFrame ()
 {
     // First, set up the 0th (initial) frame
     CursorSP first_cursor_sp(new Cursor ());
-    std::auto_ptr<RegisterContextLLDB> first_register_ctx_ap (new RegisterContextLLDB (m_thread, 
-                                                                                       RegisterContextLLDB::SharedPtr(), 
-                                                                                       first_cursor_sp->sctx, 
-                                                                                       0));
-    if (first_register_ctx_ap.get() == NULL)
+    RegisterContextLLDB::SharedPtr reg_ctx_sp (new RegisterContextLLDB (m_thread, 
+                                                                        RegisterContextLLDB::SharedPtr(), 
+                                                                        first_cursor_sp->sctx, 
+                                                                        0));
+    if (reg_ctx_sp.get() == NULL)
         return false;
     
-    if (!first_register_ctx_ap->IsValid())
+    if (!reg_ctx_sp->IsValid())
         return false;
 
-    if (!first_register_ctx_ap->GetCFA (first_cursor_sp->cfa))
+    if (!reg_ctx_sp->GetCFA (first_cursor_sp->cfa))
         return false;
 
-    if (!first_register_ctx_ap->ReadPC (first_cursor_sp->start_pc))
+    if (!reg_ctx_sp->ReadPC (first_cursor_sp->start_pc))
         return false;
 
     // Everything checks out, so release the auto pointer value and let the
     // cursor own it in its shared pointer
-    first_cursor_sp->reg_ctx.reset(first_register_ctx_ap.release());
+    first_cursor_sp->reg_ctx = reg_ctx_sp;
     m_frames.push_back (first_cursor_sp);
     return true;
 }
 
 // For adding a non-zero stack frame to m_frames.
 bool
-UnwindLLDB::AddOneMoreFrame ()
+UnwindLLDB::AddOneMoreFrame (ABI *abi)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     CursorSP cursor_sp(new Cursor ());
@@ -101,14 +104,14 @@ UnwindLLDB::AddOneMoreFrame ()
         return false;
 
     uint32_t cur_idx = m_frames.size ();
-    std::auto_ptr<RegisterContextLLDB> register_ctx_ap(new RegisterContextLLDB (m_thread, 
-                                                                                m_frames[cur_idx - 1]->reg_ctx, 
-                                                                                cursor_sp->sctx, 
-                                                                                cur_idx));
-    if (register_ctx_ap.get() == NULL)
+    RegisterContextLLDB::SharedPtr reg_ctx_sp(new RegisterContextLLDB (m_thread, 
+                                                                       m_frames[cur_idx - 1]->reg_ctx, 
+                                                                       cursor_sp->sctx, 
+                                                                       cur_idx));
+    if (reg_ctx_sp.get() == NULL)
         return false;
 
-    if (!register_ctx_ap->IsValid())
+    if (!reg_ctx_sp->IsValid())
     {
         if (log)
         {
@@ -117,7 +120,7 @@ UnwindLLDB::AddOneMoreFrame ()
         }
         return false;
     }
-    if (!register_ctx_ap->GetCFA (cursor_sp->cfa))
+    if (!reg_ctx_sp->GetCFA (cursor_sp->cfa))
     {
         if (log)
         {
@@ -126,7 +129,7 @@ UnwindLLDB::AddOneMoreFrame ()
         }
         return false;
     }
-    if (cursor_sp->cfa == (addr_t) -1 || cursor_sp->cfa == 1 || cursor_sp->cfa == 0)
+    if (abi && !abi->CallFrameAddressIsValid(cursor_sp->cfa))
     {
         if (log)
         {
@@ -135,7 +138,7 @@ UnwindLLDB::AddOneMoreFrame ()
         }
         return false;
     }
-    if (!register_ctx_ap->ReadPC (cursor_sp->start_pc))
+    if (!reg_ctx_sp->ReadPC (cursor_sp->start_pc))
     {
         if (log)
         {
@@ -144,16 +147,28 @@ UnwindLLDB::AddOneMoreFrame ()
         }
         return false;
     }
+    if (abi && !abi->CodeAddressIsValid (cursor_sp->start_pc))
+    {
+        if (log)
+        {
+            log->Printf("%*sFrame %d did not get a valid PC, stopping stack walk",
+                        cur_idx < 100 ? cur_idx : 100, "", cur_idx);
+        }
+        return false;
+    }
     if (!m_frames.empty())
     {
-        if ((m_frames.back()->start_pc == cursor_sp->start_pc) &&
-            (m_frames.back()->cfa      == cursor_sp->cfa))
+        if (m_frames.back()->start_pc == cursor_sp->start_pc)
         {
-            // Infinite loop where the current cursor is the same as the previous one...
-            return false;
+            if (m_frames.back()->cfa == cursor_sp->cfa)
+                return false; // Infinite loop where the current cursor is the same as the previous one...
+            else if (abi->StackUsesFrames())
+            {
+                if (reg_ctx_sp->GetFP() == 0)
+                    return false;
+            }
         }
     }
-    RegisterContextLLDB::SharedPtr reg_ctx_sp(register_ctx_ap.release());
     cursor_sp->reg_ctx = reg_ctx_sp;
     m_frames.push_back (cursor_sp);
     return true;
@@ -168,7 +183,9 @@ UnwindLLDB::GetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
             return false;
     }
 
-    while (idx >= m_frames.size() && AddOneMoreFrame ())
+    ABI *abi = m_thread.GetProcess().GetABI().get();
+
+    while (idx >= m_frames.size() && AddOneMoreFrame (abi))
         ;
 
     if (idx < m_frames.size ())
@@ -197,7 +214,9 @@ UnwindLLDB::CreateRegisterContextForFrame (StackFrame *frame)
             return reg_ctx_sp;
     }
 
-    while (idx >= m_frames.size() && AddOneMoreFrame ())
+    ABI *abi = m_thread.GetProcess().GetABI().get();
+
+    while (idx >= m_frames.size() && AddOneMoreFrame (abi))
         ;
 
     if (idx < m_frames.size ())

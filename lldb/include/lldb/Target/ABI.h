@@ -58,6 +58,15 @@ public:
     virtual bool
     RegisterIsVolatile (const RegisterInfo *reg_info) = 0;
 
+    virtual bool
+    StackUsesFrames () = 0;
+
+    virtual bool
+    CallFrameAddressIsValid (lldb::addr_t cfa) = 0;
+
+    virtual bool
+    CodeAddressIsValid (lldb::addr_t pc) = 0;    
+
     static lldb::ABISP
     FindPlugin (const ArchSpec &arch);
     

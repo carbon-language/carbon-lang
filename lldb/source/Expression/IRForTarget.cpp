@@ -1735,10 +1735,7 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
     
     ConstantIterator constant_iter;
     UserIterator user_iter;
-    
-    const Type *intptr_ty = Type::getIntNTy(m_module->getContext(), 
-                                            (m_module->getPointerSize() == Module::Pointer64) ? 64 : 32);
-    
+        
     for (constant_iter = static_constants.begin(), user_iter = static_users.begin();
          constant_iter != static_constants.end();
          ++constant_iter, ++user_iter)

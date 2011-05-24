@@ -1503,6 +1503,7 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
     struct load_command load_cmd;
     uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t count = 0;
+    const bool resolve_path = false; // Don't resolve the dependend file paths since they may not reside on this system
     uint32_t i;
     for (i=0; i<m_header.ncmds; ++i)
     {
@@ -1526,7 +1527,7 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
                 // @rpath/.../file
                 if (path && path[0] != '@')
                 {
-                    FileSpec file_spec(path, true);
+                    FileSpec file_spec(path, resolve_path);
                     if (files.AppendIfUnique(file_spec))
                         count++;
                 }

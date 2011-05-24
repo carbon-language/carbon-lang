@@ -177,6 +177,30 @@ public:
     virtual bool
     RegisterIsVolatile (const lldb_private::RegisterInfo *reg_info);
     
+    virtual bool
+    StackUsesFrames ()
+    {
+        return true;
+    }
+    
+    virtual bool
+    CallFrameAddressIsValid (lldb::addr_t cfa)
+    {
+        // Make sure the stack call frame addresses are are 8 byte aligned
+        if (cfa & (8ull - 1ull))
+            return false;   // Not 8 byte aligned
+        if (cfa == 0)
+            return false;   // Zero is not a valid stack address
+        return true;
+    }
+
+    virtual bool
+    CodeAddressIsValid (lldb::addr_t pc)
+    {
+        // Just make sure the address is a valid 32 bit address. 
+        return pc <= UINT32_MAX;
+    }
+    
 
     //------------------------------------------------------------------
     // Static Functions
