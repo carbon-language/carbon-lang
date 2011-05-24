@@ -21,7 +21,8 @@
 using namespace llvm;
 
 MCStreamer::MCStreamer(MCContext &Ctx) : Context(Ctx), EmitEHFrame(true),
-                                         EmitDebugFrame(false) {
+                                         EmitDebugFrame(false),
+                                         CurrentW64UnwindInfo(0) {
   const MCSection *section = NULL;
   SectionStack.push_back(std::make_pair(section, section));
 }
