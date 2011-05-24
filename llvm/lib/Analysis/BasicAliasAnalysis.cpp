@@ -281,17 +281,20 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       continue;
     }
 
-    if (const Instruction *I = dyn_cast<Instruction>(V))
-      // TODO: Get a DominatorTree and use it here.
-      if (const Value *Simplified =
-            SimplifyInstruction(const_cast<Instruction *>(I), TD)) {
-        V = Simplified;
-        continue;
-      }
-    
     const GEPOperator *GEPOp = dyn_cast<GEPOperator>(Op);
-    if (GEPOp == 0)
+    if (GEPOp == 0) {
+      // If it's not a GEP, hand it off to SimplifyInstruction to see if it
+      // can come up with something. This matches what GetUnderlyingObject does.
+      if (const Instruction *I = dyn_cast<Instruction>(V))
+        // TODO: Get a DominatorTree and use it here.
+        if (const Value *Simplified =
+              SimplifyInstruction(const_cast<Instruction *>(I), TD)) {
+          V = Simplified;
+          continue;
+        }
+    
       return V;
+    }
     
     // Don't attempt to analyze GEPs over unsized objects.
     if (!cast<PointerType>(GEPOp->getOperand(0)->getType())
