@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-lower"
+//#include <algorithm>
 #include "MipsISelLowering.h"
 #include "MipsMachineFunction.h"
 #include "MipsTargetMachine.h"
@@ -1064,7 +1065,6 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // With EABI is it possible to have 16 args on registers.
   SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
-  unsigned NextStackOffset = (Subtarget->isABI_EABI() ? 0 : 16);
 
   MipsFI->setHasCall();
 
@@ -1125,11 +1125,8 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // This guarantees that when allocating Local Area the firsts
     // 16 bytes which are alwayes reserved won't be overwritten
     // if O32 ABI is used. For EABI the first address is zero.
-    unsigned ArgSize = VA.getValVT().getSizeInBits()/8;
-    NextStackOffset = VA.getLocMemOffset();
-    LastFI = MFI->CreateFixedObject(ArgSize, NextStackOffset, true);
-    NextStackOffset += ArgSize;
-
+    LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8, 
+                                    VA.getLocMemOffset(), true);
     SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
 
     // emit ISD::STORE whichs stores the
@@ -1236,6 +1233,12 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // Function can have an arbitrary number of calls, so
     // hold the LastArgStackLoc with the biggest offset.
     int MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
+    unsigned NextStackOffset = CCInfo.getNextStackOffset();
+
+    // For O32, a minimum of four words (16 bytes) of argument space is
+    // allocated.
+    if (Subtarget->isABI_O32())
+      NextStackOffset = std::max(NextStackOffset, (unsigned)16);
 
     if (MaxCallFrameSize < (int)NextStackOffset) {
       MipsFI->setMaxCallFrameSize(NextStackOffset);
@@ -1318,9 +1321,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   // Used with vargs to acumulate store chains.
   std::vector<SDValue> OutChains;
 
-  // Keep track of the last register used for arguments
-  unsigned ArgRegEnd = 0;
-
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
@@ -1331,8 +1331,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   else
     CCInfo.AnalyzeFormalArguments(Ins, CC_Mips);
 
-  unsigned NextStackOffset = (Subtarget->isABI_EABI() ? 0 : 16);
-  EVT LastRegArgValVT;
   int LastFI = 0;// MipsFI->LastInArgFI is 0 at the entry of this function.
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -1341,8 +1339,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     // Arguments stored on registers
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
-      ArgRegEnd = VA.getLocReg();
-      LastRegArgValVT = VA.getValVT();
+      unsigned ArgReg = VA.getLocReg();
       TargetRegisterClass *RC = 0;
 
       if (RegVT == MVT::i32)
@@ -1357,7 +1354,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
       // Transform the arguments stored on
       // physical registers into virtual ones
-      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegEnd, RC);
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgReg, RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, RegVT);
 
       // If this is an 8 or 16-bit value, it has been passed promoted
@@ -1396,9 +1393,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       // sanity check
       assert(VA.isMemLoc());
 
-      // The last argument is not a register anymore
-      ArgRegEnd = 0;
-
       // The stack pointer offset is relative to the caller stack frame.
       // Since the real stack size is unknown here, a negative SPOffset
       // is used so there's a way to adjust these offsets when the stack
@@ -1406,10 +1400,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       // used instead of a direct negative address (which is recorded to
       // be used on emitPrologue) to avoid mis-calc of the first stack
       // offset on PEI::calculateFrameObjectOffsets.
-      unsigned ArgSize = VA.getValVT().getSizeInBits()/8;
-      NextStackOffset = VA.getLocMemOffset();
-      LastFI = MFI->CreateFixedObject(ArgSize, NextStackOffset, true);
-      NextStackOffset += ArgSize;
+      LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
+                                      VA.getLocMemOffset(), true);
 
       // Create load nodes to retrieve arguments from the stack
       SDValue FIN = DAG.getFrameIndex(LastFI, getPointerTy());
@@ -1436,44 +1428,27 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   // must have their values written to the caller stack frame. If the last
   // argument was placed in the stack, there's no need to save any register.
   if (isVarArg && Subtarget->isABI_O32()) {
-    if (ArgRegEnd) {
-      // Last named formal argument is passed in register.
+    // Record the frame index of the first variable argument
+    // which is a value necessary to VASTART.    
+    unsigned NextStackOffset = CCInfo.getNextStackOffset();
+    LastFI = MFI->CreateFixedObject(4, NextStackOffset, true);
+    MipsFI->setVarArgsFrameIndex(LastFI);
+    
+    const unsigned O32IntRegs[] = {
+      Mips::A0, Mips::A1, Mips::A2, Mips::A3
+    };
 
-      // The last register argument that must be saved is Mips::A3
+    // Copy variable arguments passed in registers to stack.
+    for (; NextStackOffset < 16; NextStackOffset += 4) {
       TargetRegisterClass *RC = Mips::CPURegsRegisterClass;
-      if (LastRegArgValVT == MVT::f64)
-        ArgRegEnd++;
-
-      if (ArgRegEnd < Mips::A3) {
-        // Both the last named formal argument and the first variable
-        // argument are passed in registers.
-        for (++ArgRegEnd; ArgRegEnd <= Mips::A3; ++ArgRegEnd) {
-          unsigned Reg = AddLiveIn(DAG.getMachineFunction(), ArgRegEnd, RC);
-          SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, MVT::i32);
-
-          LastFI = MFI->CreateFixedObject(4, (ArgRegEnd-Mips::A0)*4, true);
-          SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
-          OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff,
-                                           MachinePointerInfo(),
-                                           false, false, 0));
-
-          // Record the frame index of the first variable argument
-          // which is a value necessary to VASTART.
-          if (!MipsFI->getVarArgsFrameIndex())
-            MipsFI->setVarArgsFrameIndex(LastFI);
-        }
-      } else {
-        // Last named formal argument is in register Mips::A3, and the first
-        // variable argument is on stack. Record the frame index of the first
-        // variable argument.
-        LastFI = MFI->CreateFixedObject(4, 16, true);
-        MipsFI->setVarArgsFrameIndex(LastFI);
-      }
-    } else {
-      // Last named formal argument and all the variable arguments are passed
-      // on stack. Record the frame index of the first variable argument.
+      unsigned Idx = NextStackOffset / 4;
+      unsigned Reg = AddLiveIn(DAG.getMachineFunction(), O32IntRegs[Idx], RC);
+      SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, MVT::i32);
       LastFI = MFI->CreateFixedObject(4, NextStackOffset, true);
-      MipsFI->setVarArgsFrameIndex(LastFI);
+      SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
+      OutChains.push_back(DAG.getStore(Chain, dl, ArgValue, PtrOff,
+                                       MachinePointerInfo(),
+                                       false, false, 0));
     }
   }
 
