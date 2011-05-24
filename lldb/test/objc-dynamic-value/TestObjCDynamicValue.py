@@ -39,10 +39,10 @@ class ObjCDynamicValueTestCase(TestBase):
                                                        '// Break here to see if we can step into real method.')
 
     def examine_SourceDerived_ptr (self, object):
-        self.assertTrue (object.IsValid())
+        self.assertTrue (object)
         self.assertTrue (object.GetTypeName().find ('SourceDerived') != -1)
         derivedValue = object.GetChildMemberWithName ('_derivedValue')
-        self.assertTrue (derivedValue.IsValid())
+        self.assertTrue (derivedValue)
         self.assertTrue (int (derivedValue.GetValue(), 0) == 30)
 
     def do_get_dynamic_vals(self):
@@ -52,17 +52,17 @@ class ObjCDynamicValueTestCase(TestBase):
         # Create a target from the debugger.
 
         target = self.dbg.CreateTarget (exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Set up our breakpoints:
 
         handle_SourceBase_bkpt = target.BreakpointCreateByLocation(self.source_name, self.handle_SourceBase)
-        self.assertTrue(handle_SourceBase_bkpt.IsValid() and
+        self.assertTrue(handle_SourceBase_bkpt and
                         handle_SourceBase_bkpt.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
         main_before_setProperty_bkpt = target.BreakpointCreateByLocation(self.source_name, self.main_before_setProperty_line)
-        self.assertTrue(main_before_setProperty_bkpt.IsValid() and
+        self.assertTrue(main_before_setProperty_bkpt and
                         main_before_setProperty_bkpt.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
@@ -82,7 +82,7 @@ class ObjCDynamicValueTestCase(TestBase):
 
         frame = thread.GetFrameAtIndex(0)
         myObserver = frame.FindVariable('myObserver', lldb.eDynamicCanRunTarget)
-        self.assertTrue (myObserver.IsValid())
+        self.assertTrue (myObserver)
         myObserver_source = myObserver.GetChildMemberWithName ('_source', lldb.eDynamicCanRunTarget)
         self.examine_SourceDerived_ptr (myObserver_source)
 

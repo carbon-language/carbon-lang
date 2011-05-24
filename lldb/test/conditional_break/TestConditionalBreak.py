@@ -46,16 +46,16 @@ class ConditionalBreakTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByName("c", exe)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
         error = lldb.SBError()
         self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        self.assertTrue(error.Success() and self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(error.Success() and self.process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
         self.assertTrue(self.process.GetState() == lldb.eStateStopped,

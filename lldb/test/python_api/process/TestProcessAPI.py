@@ -69,10 +69,10 @@ class ProcessAPITestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Launch the process, and do not stop at the entry point.
         error = lldb.SBError()
@@ -111,10 +111,10 @@ class ProcessAPITestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Launch the process, and do not stop at the entry point.
         error = lldb.SBError()
@@ -162,10 +162,10 @@ class ProcessAPITestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Launch the process, and do not stop at the entry point.
         error = lldb.SBError()
@@ -251,7 +251,7 @@ class ProcessAPITestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Launch the process, and do not stop at the entry point.
         error = lldb.SBError()

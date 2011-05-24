@@ -100,7 +100,7 @@ class IterateFrameAndDisassembleTestCase(TestBase):
             if self.TraceOn():
                 print
                 print function
-            if function.IsValid():
+            if function:
                 # Get all instructions for this function and print them out.
                 insts = function.GetInstructions(target)
                 for inst in insts:

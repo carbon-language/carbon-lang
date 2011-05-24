@@ -67,7 +67,7 @@ class HelloWorldTestCase(TestBase):
         #self.runCmd("thread list")
 
         self.process = target.GetProcess()
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         thread = self.process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:

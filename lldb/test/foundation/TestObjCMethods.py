@@ -206,16 +206,16 @@ class FoundationTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         break1 = target.BreakpointCreateByLocation(self.main_source, self.line)
-        self.assertTrue(break1.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(break1, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
         error = lldb.SBError()
         self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
@@ -232,15 +232,15 @@ class FoundationTestCase(TestBase):
         self.assertTrue (line_number == self.line, "Hit the first breakpoint.")
 
         my_var = cur_frame.FindVariable("my")
-        self.assertTrue(my_var.IsValid(), "Made a variable object for my")
+        self.assertTrue(my_var, "Made a variable object for my")
 
         str_var = cur_frame.FindVariable("str")
-        self.assertTrue(str_var.IsValid(), "Made a variable object for str")
+        self.assertTrue(str_var, "Made a variable object for str")
 
         # Now make sure that the my->str == str:
 
         my_str_var = my_var.GetChildMemberWithName("str")
-        self.assertTrue(my_str_var.IsValid(), "Found a str ivar in my")
+        self.assertTrue(my_str_var, "Found a str ivar in my")
 
         str_value = int(str_var.GetValue(cur_frame), 0)
 

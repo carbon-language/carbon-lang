@@ -50,12 +50,12 @@ class EventAPITestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
         #print "breakpoint:", breakpoint
-        self.assertTrue(breakpoint.IsValid() and
+        self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
@@ -67,15 +67,15 @@ class EventAPITestCase(TestBase):
         self.process = target.Launch (listener, None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
         self.process = target.GetProcess()
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # Get a handle on the process's broadcaster.
         broadcaster = self.process.GetBroadcaster()
-        self.assertTrue(broadcaster.IsValid(), "Process with valid broadcaster")
+        self.assertTrue(broadcaster, "Process with valid broadcaster")
 
         # Create an empty event object.
         event = lldb.SBEvent()
-        self.assertFalse(event.IsValid(), "Event should not be valid initially")
+        self.assertFalse(event, "Event should not be valid initially")
 
         # Create MyListeningThread to wait for any kind of event.
         import threading
@@ -103,7 +103,7 @@ class EventAPITestCase(TestBase):
         # Wait until the 'MyListeningThread' terminates.
         my_thread.join()
 
-        self.assertTrue(event.IsValid(),
+        self.assertTrue(event,
                         "My listening thread successfully received an event")
 
     def do_add_listener_to_broadcaster(self):
@@ -112,12 +112,12 @@ class EventAPITestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
         #print "breakpoint:", breakpoint
-        self.assertTrue(breakpoint.IsValid() and
+        self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
@@ -130,11 +130,11 @@ class EventAPITestCase(TestBase):
 
         # Get a handle on the process's broadcaster.
         broadcaster = self.process.GetBroadcaster()
-        self.assertTrue(broadcaster.IsValid(), "Process with valid broadcaster")
+        self.assertTrue(broadcaster, "Process with valid broadcaster")
 
         # Create an empty event object.
         event = lldb.SBEvent()
-        self.assertFalse(event.IsValid(), "Event should not be valid initially")
+        self.assertFalse(event, "Event should not be valid initially")
 
         # Create a listener object and register with the broadcaster.
         listener = lldb.SBListener("TestEvents.listener")

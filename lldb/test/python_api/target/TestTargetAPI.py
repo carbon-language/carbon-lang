@@ -64,7 +64,7 @@ class TargetAPITestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         from lldbutil import get_description
 
@@ -91,7 +91,7 @@ class TargetAPITestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Add an extra twist of stopping the inferior in a breakpoint, and then continue till it's done.
         # We should still see the entire stdout redirected once the process is finished.
@@ -131,17 +131,17 @@ class TargetAPITestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Now create the two breakpoints inside function 'a'.
         breakpoint1 = target.BreakpointCreateByLocation('main.c', self.line1)
         breakpoint2 = target.BreakpointCreateByLocation('main.c', self.line2)
         #print "breakpoint1:", breakpoint1
         #print "breakpoint2:", breakpoint2
-        self.assertTrue(breakpoint1.IsValid() and
+        self.assertTrue(breakpoint1 and
                         breakpoint1.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
-        self.assertTrue(breakpoint2.IsValid() and
+        self.assertTrue(breakpoint2 and
                         breakpoint2.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
@@ -149,7 +149,7 @@ class TargetAPITestCase(TestBase):
         self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.process = target.GetProcess()
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1.
         self.assertTrue(self.process.GetState() == lldb.eStateStopped)
@@ -181,14 +181,14 @@ class TargetAPITestCase(TestBase):
         context1 = target.ResolveSymbolContextForAddress(address1, lldb.eSymbolContextEverything)
         context2 = target.ResolveSymbolContextForAddress(address2, lldb.eSymbolContextEverything)
 
-        self.assertTrue(context1.IsValid() and context2.IsValid())
+        self.assertTrue(context1 and context2)
         #print "context1:", context1
         #print "context2:", context2
 
         # Verify that the context point to the same function 'a'.
         symbol1 = context1.GetSymbol()
         symbol2 = context2.GetSymbol()
-        self.assertTrue(symbol1.IsValid() and symbol2.IsValid())
+        self.assertTrue(symbol1 and symbol2)
         #print "symbol1:", symbol1
         #print "symbol2:", symbol2
 

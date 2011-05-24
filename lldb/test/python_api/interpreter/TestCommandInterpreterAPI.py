@@ -35,11 +35,11 @@ class CommandInterpreterAPICase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Retrieve the associated command interpreter from our debugger.
         ci = self.dbg.GetCommandInterpreter()
-        self.assertTrue(ci.IsValid(), VALID_COMMAND_INTERPRETER)
+        self.assertTrue(ci, VALID_COMMAND_INTERPRETER)
 
         # Exercise some APIs....
 
@@ -61,7 +61,7 @@ class CommandInterpreterAPICase(TestBase):
 
         # Assigning to self.process so it gets cleaned up during test tear down.
         self.process = ci.GetProcess()
-        self.assertTrue(self.process.IsValid())
+        self.assertTrue(self.process)
 
         import lldbutil
         if self.process.GetState() != lldb.eStateStopped:

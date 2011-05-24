@@ -37,12 +37,12 @@ class SymbolContextAPITestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
         #print "breakpoint:", breakpoint
-        self.assertTrue(breakpoint.IsValid() and
+        self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
@@ -50,7 +50,7 @@ class SymbolContextAPITestCase(TestBase):
         self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.process = target.GetProcess()
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line.
         from lldbutil import get_stopped_thread
@@ -61,7 +61,7 @@ class SymbolContextAPITestCase(TestBase):
 
         # Now get the SBSymbolContext from this frame.  We want everything. :-)
         context = frame0.GetSymbolContext(lldb.eSymbolContextEverything)
-        self.assertTrue(context.IsValid())
+        self.assertTrue(context)
 
         # Get the description of this module.
         module = context.GetModule()
@@ -74,11 +74,11 @@ class SymbolContextAPITestCase(TestBase):
             substrs = [os.path.join(self.mydir, 'main.c')])
 
         function = context.GetFunction()
-        self.assertTrue(function.IsValid())
+        self.assertTrue(function)
         #print "function:", function
 
         block = context.GetBlock()
-        self.assertTrue(block.IsValid())
+        self.assertTrue(block)
         #print "block:", block
 
         lineEntry = context.GetLineEntry()

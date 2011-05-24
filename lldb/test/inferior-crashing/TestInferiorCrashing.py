@@ -54,7 +54,7 @@ class CrashingInferiorTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Now launch the process, and do not stop at entry point.
         # Both argv and envp are null.

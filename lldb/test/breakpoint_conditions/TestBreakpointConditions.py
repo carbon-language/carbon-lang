@@ -104,12 +104,12 @@ class BreakpointConditionsTestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
         #print "breakpoint:", breakpoint
-        self.assertTrue(breakpoint.IsValid() and
+        self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
@@ -129,7 +129,7 @@ class BreakpointConditionsTestCase(TestBase):
         # Get the breakpoint location from breakpoint after we verified that,
         # indeed, it has one location.
         location = breakpoint.GetLocationAtIndex(0)
-        self.assertTrue(location.IsValid() and
+        self.assertTrue(location and
                         location.IsEnabled(),
                         VALID_BREAKPOINT_LOCATION)
 
@@ -142,7 +142,7 @@ class BreakpointConditionsTestCase(TestBase):
         self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.process = target.GetProcess()
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1 and the break condition should hold.
         from lldbutil import get_stopped_thread

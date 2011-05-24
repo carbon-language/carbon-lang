@@ -95,10 +95,10 @@ class ArrayTypesTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation("main.c", self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Sanity check the print representation of breakpoint.
         bp = repr(breakpoint)
@@ -113,7 +113,7 @@ class ArrayTypesTestCase(TestBase):
         self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.process = target.GetProcess()
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # Sanity check the print representation of process.
         proc = repr(self.process)

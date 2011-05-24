@@ -31,12 +31,12 @@ class FrameAPITestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Now create a breakpoint on main.c by name 'c'.
         breakpoint = target.BreakpointCreateByName('c', 'a.out')
         #print "breakpoint:", breakpoint
-        self.assertTrue(breakpoint.IsValid() and
+        self.assertTrue(breakpoint and
                         breakpoint.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
@@ -87,10 +87,10 @@ class FrameAPITestCase(TestBase):
                 # but they should be valid.  Uses get_GPRs() from the lldbutil module.
                 gpr_reg_set = lldbutil.get_GPRs(frame)
                 pc_value = gpr_reg_set.GetChildMemberWithName("pc")
-                self.assertTrue (pc_value.IsValid(), "We should have a valid PC.")
+                self.assertTrue (pc_value, "We should have a valid PC.")
                 self.assertTrue (int(pc_value.GetValue(frame), 0) == frame.GetPC(), "PC gotten as a value should equal frame's GetPC")
                 sp_value = gpr_reg_set.GetChildMemberWithName("sp")
-                self.assertTrue (sp_value.IsValid(), "We should have a valid Stack Pointer.")
+                self.assertTrue (sp_value, "We should have a valid Stack Pointer.")
                 self.assertTrue (int(sp_value.GetValue(frame), 0) == frame.GetSP(), "SP gotten as a value should equal frame's GetSP")
 
             print >> session, "---"

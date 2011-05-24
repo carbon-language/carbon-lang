@@ -42,7 +42,7 @@ class FoundationSymtabTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Launch the process, and do not stop at the entry point.
         process = target.LaunchSimple(None, None, os.getcwd())
@@ -55,13 +55,13 @@ class FoundationSymtabTestCase(TestBase):
         filespec = lldb.SBFileSpec(exe, False)
 
         module = target.FindModule(filespec)
-        self.assertTrue(module.IsValid(), VALID_MODULE)
+        self.assertTrue(module, VALID_MODULE)
 
         # Create the set of known symbols.  As we iterate through the symbol
         # table, remove the symbol from the set if it is a known symbol.
         expected_symbols = set(self.symbols_list)
         for symbol in module:
-            self.assertTrue(symbol.IsValid(), VALID_SYMBOL)
+            self.assertTrue(symbol, VALID_SYMBOL)
             #print "symbol:", symbol
             name = symbol.GetName()
             if name in expected_symbols:

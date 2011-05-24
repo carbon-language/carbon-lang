@@ -89,13 +89,13 @@ class BitfieldsTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation("main.c", self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         self.process = target.LaunchSimple(None, None, os.getcwd())
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
         thread = target.GetProcess().GetThreadAtIndex(0)

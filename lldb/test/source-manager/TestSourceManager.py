@@ -40,7 +40,7 @@ class SourceManagerTestCase(TestBase):
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Launch the process, and do not stop at the entry point.
         error = lldb.SBError()

@@ -38,17 +38,17 @@ class DisasmAPITestCase(TestBase):
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Now create the two breakpoints inside function 'a'.
         breakpoint1 = target.BreakpointCreateByLocation('main.c', self.line1)
         breakpoint2 = target.BreakpointCreateByLocation('main.c', self.line2)
         #print "breakpoint1:", breakpoint1
         #print "breakpoint2:", breakpoint2
-        self.assertTrue(breakpoint1.IsValid() and
+        self.assertTrue(breakpoint1 and
                         breakpoint1.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
-        self.assertTrue(breakpoint2.IsValid() and
+        self.assertTrue(breakpoint2 and
                         breakpoint2.GetNumLocations() == 1,
                         VALID_BREAKPOINT)
 
@@ -56,7 +56,7 @@ class DisasmAPITestCase(TestBase):
         self.process = target.LaunchSimple(None, None, os.getcwd())
 
         self.process = target.GetProcess()
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1.
         self.assertTrue(self.process.GetState() == lldb.eStateStopped)
@@ -72,7 +72,7 @@ class DisasmAPITestCase(TestBase):
         # Now call SBTarget.ResolveSymbolContextForAddress() with address1.
         context1 = target.ResolveSymbolContextForAddress(address1, lldb.eSymbolContextEverything)
 
-        self.assertTrue(context1.IsValid())
+        self.assertTrue(context1)
         if self.TraceOn():
             print "context1:", context1
 
@@ -88,7 +88,7 @@ class DisasmAPITestCase(TestBase):
         # Verify that the symbol and the function has the same address range per function 'a'.
         symbol = context1.GetSymbol()
         function = frame0.GetFunction()
-        self.assertTrue(symbol.IsValid() and function.IsValid())
+        self.assertTrue(symbol and function)
 
         disasm_output = lldbutil.disassemble(target, symbol)
         if self.TraceOn():

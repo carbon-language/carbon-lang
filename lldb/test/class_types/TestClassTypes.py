@@ -97,10 +97,10 @@ class ClassTypesTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         filespec = target.GetExecutable()
-        self.assertTrue(filespec.IsValid(), VALID_FILESPEC)
+        self.assertTrue(filespec, VALID_FILESPEC)
 
         fsDir = filespec.GetDirectory()
         fsFile = filespec.GetFilename()
@@ -111,7 +111,7 @@ class ClassTypesTestCase(TestBase):
         bpfilespec = lldb.SBFileSpec("main.cpp", False)
 
         breakpoint = target.BreakpointCreateByLocation(bpfilespec, self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Verify the breakpoint just created.
         self.expect(repr(breakpoint), BREAKPOINT_CREATED, exe=False,
@@ -123,7 +123,7 @@ class ClassTypesTestCase(TestBase):
         self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
         #self.breakAfterLaunch(self.process, "C::C(int, int, int)")
 
-        if not error.Success() or not self.process.IsValid():
+        if not error.Success() or not self.process:
             self.fail("SBTarget.Launch() failed")
 
         if self.process.GetState() != lldb.eStateStopped:

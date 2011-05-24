@@ -41,12 +41,12 @@ class DynamicValueTestCase(TestBase):
 
         # Get "this" as its static value
         
-        self.assertTrue (this_static.IsValid())
+        self.assertTrue (this_static)
         this_static_loc = int (this_static.GetValue(), 16)
         
         # Get "this" as its dynamic value
         
-        self.assertTrue (this_dynamic.IsValid())
+        self.assertTrue (this_dynamic)
         this_dynamic_typename = this_dynamic.GetTypeName()
         self.assertTrue (this_dynamic_typename.find('B') != -1)
         this_dynamic_loc = int (this_dynamic.GetValue(), 16)
@@ -65,7 +65,7 @@ class DynamicValueTestCase(TestBase):
         no_dynamic  = lldb.eNoDynamicValues
 
         this_dynamic_m_b_value = this_dynamic.GetChildMemberWithName('m_b_value', use_dynamic)
-        self.assertTrue (this_dynamic_m_b_value.IsValid())
+        self.assertTrue (this_dynamic_m_b_value)
         
         m_b_value = int (this_dynamic_m_b_value.GetValue(), 0)
         self.assertTrue (m_b_value == 10)
@@ -73,17 +73,17 @@ class DynamicValueTestCase(TestBase):
         # Make sure it is not in the static version
 
         this_static_m_b_value = this_static.GetChildMemberWithName('m_b_value', no_dynamic)
-        self.assertTrue (this_static_m_b_value.IsValid() == False)
+        self.assertFalse (this_static_m_b_value)
 
         # Okay, now let's make sure that we can get the dynamic type of a child element:
 
         contained_auto_ptr = this_dynamic.GetChildMemberWithName ('m_client_A', use_dynamic)
-        self.assertTrue (contained_auto_ptr.IsValid())
+        self.assertTrue (contained_auto_ptr)
         contained_b = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', use_dynamic)
-        self.assertTrue (contained_b.IsValid())
+        self.assertTrue (contained_b)
         
         contained_b_static = contained_auto_ptr.GetChildMemberWithName ('_M_ptr', no_dynamic)
-        self.assertTrue (contained_b_static.IsValid())
+        self.assertTrue (contained_b_static)
         
         contained_b_addr = int (contained_b.GetValue(), 16)
         contained_b_static_addr = int (contained_b_static.GetValue(), 16)
@@ -97,20 +97,20 @@ class DynamicValueTestCase(TestBase):
         # Create a target from the debugger.
 
         target = self.dbg.CreateTarget (exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Set up our breakpoints:
 
         do_something_bpt = target.BreakpointCreateByLocation('pass-to-base.cpp', self.do_something_line)
-        self.assertTrue(do_something_bpt.IsValid(),
+        self.assertTrue(do_something_bpt,
                         VALID_BREAKPOINT)
 
         first_call_bpt = target.BreakpointCreateByLocation('pass-to-base.cpp', self.main_first_call_line)
-        self.assertTrue(first_call_bpt.IsValid(),
+        self.assertTrue(first_call_bpt,
                         VALID_BREAKPOINT)
 
         second_call_bpt = target.BreakpointCreateByLocation('pass-to-base.cpp', self.main_second_call_line)
-        self.assertTrue(second_call_bpt.IsValid(),
+        self.assertTrue(second_call_bpt,
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at the entry point.
@@ -132,11 +132,11 @@ class DynamicValueTestCase(TestBase):
         no_dynamic  = lldb.eNoDynamicValues
 
         myB = frame.FindVariable ('myB', no_dynamic);
-        self.assertTrue (myB.IsValid())
+        self.assertTrue (myB)
         myB_loc = int (myB.GetLocation(), 16)
 
         otherB = frame.FindVariable('otherB', no_dynamic)
-        self.assertTrue (otherB.IsValid())
+        self.assertTrue (otherB)
         otherB_loc = int (otherB.GetLocation(), 16)
 
         # Okay now run to doSomething:
@@ -173,11 +173,11 @@ class DynamicValueTestCase(TestBase):
         # Now make sure we also get it right for a reference as well:
 
         anotherA_static = frame.FindVariable ('anotherA', False)
-        self.assertTrue (anotherA_static.IsValid())
+        self.assertTrue (anotherA_static)
         anotherA_static_addr = int (anotherA_static.GetValue(), 16)
 
         anotherA_dynamic = frame.FindVariable ('anotherA', True)
-        self.assertTrue (anotherA_dynamic.IsValid())
+        self.assertTrue (anotherA_dynamic)
         anotherA_dynamic_addr = int (anotherA_dynamic.GetValue(), 16)
         anotherA_dynamic_typename = anotherA_dynamic.GetTypeName()
         self.assertTrue (anotherA_dynamic_typename.find('B') != -1)
@@ -185,12 +185,12 @@ class DynamicValueTestCase(TestBase):
         self.assertTrue(anotherA_dynamic_addr < anotherA_static_addr)
 
         anotherA_m_b_value_dynamic = anotherA_dynamic.GetChildMemberWithName('m_b_value', True)
-        self.assertTrue (anotherA_m_b_value_dynamic.IsValid())
+        self.assertTrue (anotherA_m_b_value_dynamic)
         anotherA_m_b_val = int (anotherA_m_b_value_dynamic.GetValue(), 10)
         self.assertTrue (anotherA_m_b_val == 300)
 
         anotherA_m_b_value_static = anotherA_static.GetChildMemberWithName('m_b_value', True)
-        self.assertTrue (anotherA_m_b_value_static.IsValid() == False)
+        self.assertFalse (anotherA_m_b_value_static)
 
         # Okay, now continue again, and when we hit the second breakpoint in main
 
@@ -200,7 +200,7 @@ class DynamicValueTestCase(TestBase):
 
         frame = thread.GetFrameAtIndex(0)
         reallyA_value = frame.FindVariable ('reallyA', False)
-        self.assertTrue(reallyA_value.IsValid())
+        self.assertTrue(reallyA_value)
         reallyA_loc = int (reallyA_value.GetLocation(), 16)
         
         # Finally continue to doSomething again, and make sure we get the right value for anotherA,
@@ -212,7 +212,7 @@ class DynamicValueTestCase(TestBase):
 
         frame = thread.GetFrameAtIndex(0)
         anotherA_value = frame.FindVariable ('anotherA', True)
-        self.assertTrue(anotherA_value.IsValid())
+        self.assertTrue(anotherA_value)
         anotherA_loc = int (anotherA_value.GetValue(), 16)
         self.assertTrue (anotherA_loc == reallyA_loc)
         self.assertTrue (anotherA_value.GetTypeName().find ('B') == -1)

@@ -86,12 +86,12 @@ class BasicExprCommandsTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         # Create the breakpoint.
         filespec = lldb.SBFileSpec("main.cpp", False)
         breakpoint = target.BreakpointCreateByLocation(filespec, self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Verify the breakpoint just created.
         self.expect(repr(breakpoint), BREAKPOINT_CREATED, exe=False,
@@ -103,7 +103,7 @@ class BasicExprCommandsTestCase(TestBase):
         error = lldb.SBError()
         self.process = target.Launch(self.dbg.GetListener(), ['X', 'Y', 'Z'], None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        if not error.Success() or not self.process.IsValid():
+        if not error.Success() or not self.process:
             self.fail("SBTarget.LaunchProcess() failed")
 
         if self.process.GetState() != lldb.eStateStopped:

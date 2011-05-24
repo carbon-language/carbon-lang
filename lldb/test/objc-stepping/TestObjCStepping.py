@@ -43,30 +43,30 @@ class TestObjCStepping(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         break1 = target.BreakpointCreateByLocation(self.main_source, self.line1)
-        self.assertTrue(break1.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(break1, VALID_BREAKPOINT)
 
         break2 = target.BreakpointCreateByLocation(self.main_source, self.line2)
-        self.assertTrue(break2.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(break2, VALID_BREAKPOINT)
 
         break3 = target.BreakpointCreateByLocation(self.main_source, self.line3)
-        self.assertTrue(break3.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(break3, VALID_BREAKPOINT)
 
         break4 = target.BreakpointCreateByLocation(self.main_source, self.line4)
-        self.assertTrue(break4.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(break4, VALID_BREAKPOINT)
 
         break5 = target.BreakpointCreateByLocation(self.main_source, self.line5)
-        self.assertTrue(break5.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(break5, VALID_BREAKPOINT)
 
         break_returnStruct_call_super = target.BreakpointCreateByLocation(self.main_source, self.source_returnsStruct_call_line)
-        self.assertTrue(break_returnStruct_call_super.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(break_returnStruct_call_super, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
         self.process = target.LaunchSimple (None, None, os.getcwd())
 
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
         thread = self.process.GetThreadAtIndex(0)
@@ -81,9 +81,9 @@ class TestObjCStepping(TestBase):
         self.assertTrue (line_number == self.line1, "Hit the first breakpoint.")
 
         mySource = thread.GetFrameAtIndex(0).FindVariable("mySource")
-        self.assertTrue(mySource.IsValid(), "Found mySource local variable.")
+        self.assertTrue(mySource, "Found mySource local variable.")
         mySource_isa = mySource.GetChildMemberWithName ("isa")
-        self.assertTrue(mySource_isa.IsValid(), "Found mySource->isa local variable.")
+        self.assertTrue(mySource_isa, "Found mySource->isa local variable.")
         mySource_isa.GetValue (thread.GetFrameAtIndex(0))
 
         # Lets delete mySource so we can check that after stepping a child variable

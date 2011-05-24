@@ -109,10 +109,10 @@ class ThreadAPITestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
@@ -131,10 +131,10 @@ class ThreadAPITestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
         #self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
@@ -156,10 +156,10 @@ class ThreadAPITestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByName('malloc')
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
@@ -189,16 +189,16 @@ class ThreadAPITestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation('main2.cpp', self.line2)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
         self.process = target.LaunchSimple(None, None, os.getcwd())
 
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line2.
         self.assertTrue(self.process.GetState() == lldb.eStateStopped)
@@ -230,16 +230,16 @@ class ThreadAPITestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         target = self.dbg.CreateTarget(exe)
-        self.assertTrue(target.IsValid(), VALID_TARGET)
+        self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation('main2.cpp', self.line2)
-        self.assertTrue(breakpoint.IsValid(), VALID_BREAKPOINT)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
         self.process = target.LaunchSimple(None, None, os.getcwd())
 
-        self.assertTrue(self.process.IsValid(), PROCESS_IS_VALID)
+        self.assertTrue(self.process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line2.
         self.assertTrue(self.process.GetState() == lldb.eStateStopped)
