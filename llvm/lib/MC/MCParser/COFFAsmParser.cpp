@@ -343,13 +343,16 @@ bool COFFAsmParser::ParseSEHDirectiveSaveXMM(StringRef, SMLoc L) {
 }
 
 bool COFFAsmParser::ParseSEHDirectivePushFrame(StringRef, SMLoc) {
-  bool Code;
+  bool Code = false;
   StringRef CodeID;
-  SMLoc startLoc = getLexer().getLoc();
-  if (!getParser().ParseIdentifier(CodeID)) {
-    if (CodeID != "@code")
-      return Error(startLoc, "expected @code");
-    Code = true;
+  if (getLexer().is(AsmToken::At)) {
+    SMLoc startLoc = getLexer().getLoc();
+    Lex();
+    if (!getParser().ParseIdentifier(CodeID)) {
+      if (CodeID != "code")
+        return Error(startLoc, "expected @code");
+      Code = true;
+    }
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
