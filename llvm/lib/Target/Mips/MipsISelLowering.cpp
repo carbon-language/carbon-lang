@@ -128,8 +128,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::SHL_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRA_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRL_PARTS,         MVT::i32,   Expand);
-  setOperationAction(ISD::FCOPYSIGN,         MVT::f32,   Expand);
-  setOperationAction(ISD::FCOPYSIGN,         MVT::f64,   Expand);
+  setOperationAction(ISD::FCOPYSIGN,         MVT::f32,   Custom);
+  setOperationAction(ISD::FCOPYSIGN,         MVT::f64,   Custom);
   setOperationAction(ISD::FSIN,              MVT::f32,   Expand);
   setOperationAction(ISD::FSIN,              MVT::f64,   Expand);
   setOperationAction(ISD::FCOS,              MVT::f32,   Expand);
@@ -515,6 +515,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
     case ISD::SELECT:             return LowerSELECT(Op, DAG);
     case ISD::VASTART:            return LowerVASTART(Op, DAG);
+    case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
   }
   return SDValue();
 }
@@ -941,6 +942,60 @@ SDValue MipsTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getStore(Op.getOperand(0), dl, FI, Op.getOperand(1),
                       MachinePointerInfo(SV),
                       false, false, 0);
+}
+
+static SDValue LowerFCOPYSIGN32(SDValue Op, SelectionDAG &DAG) {
+  // FIXME: Use ext/ins instructions if target architecture is Mips32r2.
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Op0 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op.getOperand(0));
+  SDValue Op1 = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Op.getOperand(1));
+  SDValue And0 = DAG.getNode(ISD::AND, dl, MVT::i32, Op0,
+                             DAG.getConstant(0x7fffffff, MVT::i32));
+  SDValue And1 = DAG.getNode(ISD::AND, dl, MVT::i32, Op1,
+                             DAG.getConstant(0x80000000, MVT::i32));
+  SDValue Result = DAG.getNode(ISD::OR, dl, MVT::i32, And0, And1);
+  return DAG.getNode(ISD::BITCAST, dl, MVT::f32, Result);
+}
+
+static SDValue LowerFCOPYSIGN64(SDValue Op, SelectionDAG &DAG, bool isLittle) {
+  // FIXME: 
+  //  Use ext/ins instructions if target architecture is Mips32r2.
+  //  Eliminate redundant mfc1 and mtc1 instructions.
+  unsigned LoIdx = 0, HiIdx = 1;
+  
+  if (!isLittle)
+    std::swap(LoIdx, HiIdx);
+
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue Word0 = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32,
+                              Op.getOperand(0),
+                              DAG.getConstant(LoIdx, MVT::i32));
+  SDValue Hi0 = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32,
+                            Op.getOperand(0), DAG.getConstant(HiIdx, MVT::i32));
+  SDValue Hi1 = DAG.getNode(MipsISD::ExtractElementF64, dl, MVT::i32,
+                            Op.getOperand(1), DAG.getConstant(HiIdx, MVT::i32));
+  SDValue And0 = DAG.getNode(ISD::AND, dl, MVT::i32, Hi0,
+                             DAG.getConstant(0x7fffffff, MVT::i32));
+  SDValue And1 = DAG.getNode(ISD::AND, dl, MVT::i32, Hi1,
+                             DAG.getConstant(0x80000000, MVT::i32));
+  SDValue Word1 = DAG.getNode(ISD::OR, dl, MVT::i32, And0, And1);
+
+  if (!isLittle)
+    std::swap(Word0, Word1);
+
+  return DAG.getNode(MipsISD::BuildPairF64, dl, MVT::f64, Word0, Word1);
+}
+
+SDValue MipsTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG)
+  const {
+  EVT Ty = Op.getValueType();
+
+  assert(Ty == MVT::f32 || Ty == MVT::f64);
+
+  if (Ty == MVT::f32)
+    return LowerFCOPYSIGN32(Op, DAG);
+  else
+    return LowerFCOPYSIGN64(Op, DAG, Subtarget->isLittle());
 }
 
 //===----------------------------------------------------------------------===//
