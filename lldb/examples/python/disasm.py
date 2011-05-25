@@ -29,7 +29,7 @@ print "Creating a target for '%s'" % sys.argv[1]
 
 target = debugger.CreateTargetWithFileAndArch (sys.argv[1], lldb.LLDB_ARCH_DEFAULT)
 
-if target.IsValid():
+if target:
     # If the target is valid set a breakpoint at main
     main_bp = target.BreakpointCreateByName ("main", target.GetExecutable().GetFilename());
 
@@ -41,24 +41,24 @@ if target.IsValid():
     process = target.Launch (debugger.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
     
     # Make sure the launch went ok
-    if process.IsValid():
+    if process:
         # Print some simple process info
         state = process.GetState ()
         print process
         if state == lldb.eStateStopped:
             # Get the first thread
             thread = process.GetThreadAtIndex (0)
-            if thread.IsValid():
+            if thread:
                 # Print some simple thread info
                 print thread
                 # Get the first frame
                 frame = thread.GetFrameAtIndex (0)
-                if frame.IsValid():
+                if frame:
                     # Print some simple frame info
                     print frame
                     function = frame.GetFunction()
                     # See if we have debug info (a function)
-                    if function.IsValid():
+                    if function:
                         # We do have a function, print some info for the function
                         print function
                         # Now get all instructions for this function and print them
@@ -67,7 +67,7 @@ if target.IsValid():
                     else:
                         # See if we have a symbol in the symbol table for where we stopped
                         symbol = frame.GetSymbol();
-                        if symbol.IsValid():
+                        if symbol:
                             # We do have a symbol, print some info for the symbol
                             print symbol
                             # Now get all instructions for this symbol and print them
