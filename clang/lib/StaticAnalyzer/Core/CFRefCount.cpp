@@ -1236,6 +1236,9 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
     if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
+    else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
+      Summ.setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
+    }
   }
 }
 
