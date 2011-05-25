@@ -449,7 +449,6 @@ namespace X86II {
     SSEDomainShift = SegOvrShift + 2,
 
     OpcodeShift   = SSEDomainShift + 2,
-    OpcodeMask    = 0xFFUL << OpcodeShift,
 
     //===------------------------------------------------------------------===//
     /// VEX - The opcode prefix used by AVX instructions
