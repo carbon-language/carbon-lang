@@ -184,20 +184,17 @@ bool COFFAsmParser::ParseDirectiveEndef(StringRef, SMLoc) {
 }
 
 bool COFFAsmParser::ParseSEHDirectiveStartProc(StringRef, SMLoc) {
-  const MCExpr *e;
-  const MCSymbolRefExpr *funcExpr;
-  SMLoc startLoc = getLexer().getLoc();
-  if (getParser().ParseExpression(e))
+  StringRef SymbolID;
+  if (getParser().ParseIdentifier(SymbolID))
     return true;
-
-  if (!(funcExpr = dyn_cast<MCSymbolRefExpr>(e)))
-    return Error(startLoc, "expected symbol");
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");
 
+  MCSymbol *Symbol = getContext().GetOrCreateSymbol(SymbolID);
+
   Lex();
-  getStreamer().EmitWin64EHStartProc(&funcExpr->getSymbol());
+  getStreamer().EmitWin64EHStartProc(Symbol);
   return false;
 }
 
@@ -220,29 +217,28 @@ bool COFFAsmParser::ParseSEHDirectiveEndChained(StringRef, SMLoc) {
 }
 
 bool COFFAsmParser::ParseSEHDirectiveHandler(StringRef, SMLoc) {
-  const MCExpr *e;
-  const MCSymbolRefExpr *funcExpr;
-  SMLoc startLoc = getLexer().getLoc();
-  if (getParser().ParseExpression(e))
+  StringRef SymbolID;
+  if (getParser().ParseIdentifier(SymbolID))
     return true;
 
-  if (!(funcExpr = dyn_cast<MCSymbolRefExpr>(e)))
-    return Error(startLoc, "expected symbol");
-
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("you must specify one or both of @unwind or @except");
+  Lex();
   bool unwind = false, except = false;
-  startLoc = getLexer().getLoc();
-  if (!ParseAtUnwindOrAtExcept(unwind, except))
-    return Error(startLoc,"you must specify one or both of @unwind or @except");
+  if (ParseAtUnwindOrAtExcept(unwind, except))
+    return true;
   if (getLexer().is(AsmToken::Comma)) {
     Lex();
-    if (!ParseAtUnwindOrAtExcept(unwind, except))
+    if (ParseAtUnwindOrAtExcept(unwind, except))
       return true;
   }
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in directive");
 
+  MCSymbol *handler = getContext().GetOrCreateSymbol(SymbolID);
+
   Lex();
-  getStreamer().EmitWin64EHHandler(&funcExpr->getSymbol(), unwind, except);
+  getStreamer().EmitWin64EHHandler(handler, unwind, except);
   return false;
 }
 
@@ -372,12 +368,15 @@ bool COFFAsmParser::ParseSEHDirectiveEndProlog(StringRef, SMLoc) {
 
 bool COFFAsmParser::ParseAtUnwindOrAtExcept(bool &unwind, bool &except) {
   StringRef identifier;
+  if (getLexer().isNot(AsmToken::At))
+    return TokError("a handler attribute must begin with '@'");
   SMLoc startLoc = getLexer().getLoc();
-  if (!getParser().ParseIdentifier(identifier))
+  Lex();
+  if (getParser().ParseIdentifier(identifier))
     return Error(startLoc, "expected @unwind or @except");
-  if (identifier == "@unwind")
+  if (identifier == "unwind")
     unwind = true;
-  else if (identifier == "@except")
+  else if (identifier == "except")
     except = true;
   else
     return Error(startLoc, "expected @unwind or @except");
