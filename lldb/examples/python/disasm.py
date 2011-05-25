@@ -37,8 +37,7 @@ if target:
 
     # Launch the process. Since we specified synchronous mode, we won't return
     # from this function until we hit the breakpoint at main
-    error = lldb.SBError()
-    process = target.Launch (debugger.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+    process = target.LaunchSimple (None, None, os.getcwd())
     
     # Make sure the launch went ok
     if process:
