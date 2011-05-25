@@ -103,7 +103,6 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::SELECT,             MVT::i32,   Custom);
   setOperationAction(ISD::BRCOND,             MVT::Other, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Custom);
-  setOperationAction(ISD::FP_TO_SINT,         MVT::i32,   Custom);
   setOperationAction(ISD::VASTART,            MVT::Other, Custom);
 
   setOperationAction(ISD::SDIV, MVT::i32, Expand);
@@ -508,7 +507,6 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
     case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
     case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
-    case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
     case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
     case ISD::BlockAddress:       return LowerBlockAddress(Op, DAG);
     case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
@@ -656,40 +654,6 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 //  Misc Lower Operation implementation
 //===----------------------------------------------------------------------===//
-
-SDValue MipsTargetLowering::
-LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const
-{
-  if (!Subtarget->isMips1())
-    return Op;
-
-  MachineFunction &MF = DAG.getMachineFunction();
-  unsigned CCReg = AddLiveIn(MF, Mips::FCR31, Mips::CCRRegisterClass);
-
-  SDValue Chain = DAG.getEntryNode();
-  DebugLoc dl = Op.getDebugLoc();
-  SDValue Src = Op.getOperand(0);
-
-  // Set the condition register
-  SDValue CondReg = DAG.getCopyFromReg(Chain, dl, CCReg, MVT::i32);
-  CondReg = DAG.getCopyToReg(Chain, dl, Mips::AT, CondReg);
-  CondReg = DAG.getCopyFromReg(CondReg, dl, Mips::AT, MVT::i32);
-
-  SDValue Cst = DAG.getConstant(3, MVT::i32);
-  SDValue Or = DAG.getNode(ISD::OR, dl, MVT::i32, CondReg, Cst);
-  Cst = DAG.getConstant(2, MVT::i32);
-  SDValue Xor = DAG.getNode(ISD::XOR, dl, MVT::i32, Or, Cst);
-
-  SDValue InFlag(0, 0);
-  CondReg = DAG.getCopyToReg(Chain, dl, Mips::FCR31, Xor, InFlag);
-
-  // Emit the round instruction and bit convert to integer
-  SDValue Trunc = DAG.getNode(MipsISD::FPRound, dl, MVT::f32,
-                              Src, CondReg.getValue(1));
-  SDValue BitCvt = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Trunc);
-  return BitCvt;
-}
-
 SDValue MipsTargetLowering::
 LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
 {
