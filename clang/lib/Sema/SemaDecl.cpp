@@ -7736,7 +7736,15 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   case CXXCopyConstructor:
     if (RD->hasUserDeclaredCopyConstructor()) {
       SourceLocation CtorLoc =
-        RD->getCopyConstructor(Context, 0)->getLocation();
+        RD->getCopyConstructor(0)->getLocation();
+      Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
+      return;
+    }
+    break;
+
+  case CXXMoveConstructor:
+    if (RD->hasUserDeclaredMoveConstructor()) {
+      SourceLocation CtorLoc = RD->getMoveConstructor()->getLocation();
       Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
       return;
     }
@@ -7748,6 +7756,14 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
       // assignment, not the type.
       SourceLocation TyLoc = RD->getSourceRange().getBegin();
       Diag(TyLoc, diag::note_nontrivial_user_defined) << QT << member;
+      return;
+    }
+    break;
+
+  case CXXMoveAssignment:
+    if (RD->hasUserDeclaredMoveAssignment()) {
+      SourceLocation AssignLoc = RD->getMoveAssignmentOperator()->getLocation();
+      Diag(AssignLoc, diag::note_nontrivial_user_defined) << QT << member;
       return;
     }
     break;

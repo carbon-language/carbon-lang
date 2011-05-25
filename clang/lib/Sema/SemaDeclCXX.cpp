@@ -7069,8 +7069,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     if (!BaseClassDecl->hasDeclaredCopyConstructor())
       DeclareImplicitCopyConstructor(BaseClassDecl);
   
-    HasConstCopyConstructor
-      = BaseClassDecl->hasConstCopyConstructor(Context);
+    HasConstCopyConstructor = BaseClassDecl->hasConstCopyConstructor();
   }
 
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
@@ -7082,8 +7081,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     if (!BaseClassDecl->hasDeclaredCopyConstructor())
       DeclareImplicitCopyConstructor(BaseClassDecl);
     
-    HasConstCopyConstructor
-      = BaseClassDecl->hasConstCopyConstructor(Context);
+    HasConstCopyConstructor= BaseClassDecl->hasConstCopyConstructor();
   }
   
   //     -- for all the nonstatic data members of X that are of a
@@ -7101,8 +7099,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
       if (!FieldClassDecl->hasDeclaredCopyConstructor())
         DeclareImplicitCopyConstructor(FieldClassDecl);
 
-      HasConstCopyConstructor
-        = FieldClassDecl->hasConstCopyConstructor(Context);
+      HasConstCopyConstructor = FieldClassDecl->hasConstCopyConstructor();
     }
   }
   //   Otherwise, the implicitly declared copy constructor will have
@@ -7129,7 +7126,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
       DeclareImplicitCopyConstructor(BaseClassDecl);
 
     if (CXXConstructorDecl *CopyConstructor
-                          = BaseClassDecl->getCopyConstructor(Context, Quals))
+                          = BaseClassDecl->getCopyConstructor(Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
   }
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
@@ -7142,7 +7139,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
       DeclareImplicitCopyConstructor(BaseClassDecl);
 
     if (CXXConstructorDecl *CopyConstructor
-                          = BaseClassDecl->getCopyConstructor(Context, Quals))
+                          = BaseClassDecl->getCopyConstructor(Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
   }
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -7157,7 +7154,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
         DeclareImplicitCopyConstructor(FieldClassDecl);
 
       if (CXXConstructorDecl *CopyConstructor
-                          = FieldClassDecl->getCopyConstructor(Context, Quals))
+                          = FieldClassDecl->getCopyConstructor(Quals))
         ExceptSpec.CalledDecl(CopyConstructor);
     }
   }

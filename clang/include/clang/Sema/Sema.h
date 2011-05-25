@@ -1118,7 +1118,9 @@ public:
     CXXDefaultConstructor = 0,
     CXXCopyConstructor = 1,
     CXXCopyAssignment = 2,
-    CXXDestructor = 3
+    CXXDestructor = 3,
+    CXXMoveConstructor = 4,
+    CXXMoveAssignment = 5
   };
   bool CheckNontrivialField(FieldDecl *FD);
   void DiagnoseNontrivial(const RecordType* Record, CXXSpecialMember mem);

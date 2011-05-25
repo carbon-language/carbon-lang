@@ -29,7 +29,8 @@ using namespace clang;
 
 CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
   : UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
-    UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
+    UserDeclaredMoveConstructor(false), UserDeclaredCopyAssignment(false),
+    UserDeclaredMoveAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
     Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
@@ -39,7 +40,8 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasTrivialMoveAssignment(true), HasTrivialDestructor(true),
     HasNonLiteralTypeFieldsOrBases(false), ComputedVisibleConversions(false),
     UserProvidedDefaultConstructor(false), DeclaredDefaultConstructor(false),
-    DeclaredCopyConstructor(false), DeclaredCopyAssignment(false),
+    DeclaredCopyConstructor(false), DeclaredMoveConstructor(false),
+    DeclaredCopyAssignment(false), DeclaredMoveAssignment(false),
     DeclaredDestructor(false), NumBases(0), NumVBases(0), Bases(), VBases(),
     Definition(D), FirstFriend(0) {
 }
@@ -268,8 +270,8 @@ bool CXXRecordDecl::hasAnyDependentBases() const {
   return !forallBases(SawBase, 0);
 }
 
-bool CXXRecordDecl::hasConstCopyConstructor(const ASTContext &Context) const {
-  return getCopyConstructor(Context, Qualifiers::Const) != 0;
+bool CXXRecordDecl::hasConstCopyConstructor() const {
+  return getCopyConstructor(Qualifiers::Const) != 0;
 }
 
 bool CXXRecordDecl::isTriviallyCopyable() const {
@@ -312,8 +314,8 @@ GetBestOverloadCandidateSimple(
   return Cands[Best].first;
 }
 
-CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(const ASTContext &Context,
-                                                      unsigned TypeQuals) const{
+CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(unsigned TypeQuals) const{
+  ASTContext &Context = getASTContext();
   QualType ClassType
     = Context.getTypeDeclType(const_cast<CXXRecordDecl*>(this));
   DeclarationName ConstructorName
@@ -341,6 +343,14 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(const ASTContext &Context,
   
   return cast_or_null<CXXConstructorDecl>(
                                         GetBestOverloadCandidateSimple(Found));
+}
+
+CXXConstructorDecl *CXXRecordDecl::getMoveConstructor() const {
+  for (ctor_iterator I = ctor_begin(), E = ctor_end(); I != E; ++I)
+    if (I->isMoveConstructor())
+      return *I;
+
+  return 0;
 }
 
 CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
@@ -391,6 +401,14 @@ CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
   
   // Use a simplistic form of overload resolution to find the candidate.
   return GetBestOverloadCandidateSimple(Found);
+}
+
+CXXMethodDecl *CXXRecordDecl::getMoveAssignmentOperator() const {
+  for (method_iterator I = method_begin(), E = method_end(); I != E; ++I)
+    if (I->isMoveAssignmentOperator())
+      return *I;
+
+  return 0;
 }
 
 void CXXRecordDecl::markedVirtualFunctionPure() {
@@ -459,33 +477,32 @@ void CXXRecordDecl::addedMember(Decl *D) {
       if (ASTMutationListener *L = getASTMutationListener())
         L->AddedCXXImplicitMember(data().Definition, D);
 
+    // If this is a special member function, note that it was added and then
+    // return early.
     if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
-      // If this is the implicit default constructor, note that we have now
-      // declared it.
-      if (Constructor->isDefaultConstructor()) {
+      if (Constructor->isDefaultConstructor())
         data().DeclaredDefaultConstructor = true;
-      }
-      // If this is the implicit copy constructor, note that we have now
-      // declared it.
       else if (Constructor->isCopyConstructor())
         data().DeclaredCopyConstructor = true;
+      else if (Constructor->isMoveConstructor())
+        data().DeclaredMoveConstructor = true;
+      else
+        goto NotASpecialMember;
       return;
-    } 
-
-    if (isa<CXXDestructorDecl>(D)) {
+    } else if (isa<CXXDestructorDecl>(D)) {
       data().DeclaredDestructor = true;
       return;
-    } 
-
-    if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
-      // If this is the implicit copy constructor, note that we have now
-      // declared it.
-      // FIXME: Move constructors
-      if (Method->getOverloadedOperator() == OO_Equal)
+    } else if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
+      if (Method->isCopyAssignmentOperator())
         data().DeclaredCopyAssignment = true;
+      else if (Method->isMoveAssignmentOperator())
+        data().DeclaredMoveAssignment = true;
+      else
+        goto NotASpecialMember;
       return;
     }
 
+NotASpecialMember:;
     // Any other implicit declarations are handled like normal declarations.
   }
   
@@ -524,6 +541,9 @@ void CXXRecordDecl::addedMember(Decl *D) {
           UserProvided = true;
         }
       } else if (Constructor->isMoveConstructor()) {
+        data().UserDeclaredMoveConstructor = true;
+        data().DeclaredMoveConstructor = true;
+
         // C++0x [class.copy]p13:
         //   A copy/move constructor for class X is trivial if it is not
         //   user-provided [...]
@@ -579,61 +599,42 @@ void CXXRecordDecl::addedMember(Decl *D) {
   
   // Handle (user-declared) member functions.
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D)) {
-    if (Method->getOverloadedOperator() == OO_Equal) {
-      // We're interested specifically in copy assignment operators.
-      const FunctionProtoType *FnType 
-        = Method->getType()->getAs<FunctionProtoType>();
-      assert(FnType && "Overloaded operator has no proto function type.");
-      assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
-      
-      // Copy assignment operators must be non-templates.
-      if (Method->getPrimaryTemplate() || FunTmpl)
-        return;
-      
-      ASTContext &Context = getASTContext();
-      QualType ClassType = Context.getCanonicalType(Context.getTypeDeclType(
-                                             const_cast<CXXRecordDecl*>(this)));
-
-      bool isRValueRefArg = false;
-      QualType ArgType = FnType->getArgType(0);
-      if (const LValueReferenceType *Ref =
-          ArgType->getAs<LValueReferenceType>()) {
-        ArgType = Ref->getPointeeType();
-      } else if (const RValueReferenceType *Ref =
-               ArgType->getAs<RValueReferenceType>()) {
-        ArgType = Ref->getPointeeType();
-        isRValueRefArg = true;
-      }
-      if (!Context.hasSameUnqualifiedType(ClassType, ArgType))
-        return;
-
+    if (Method->isCopyAssignmentOperator()) {
       // C++ [class]p4:
       //   A POD-struct is an aggregate class that [...] has no user-defined
       //   copy assignment operator [...].
       // This is the C++03 bit only.
       data().PlainOldData = false;
 
-      if (!isRValueRefArg) {
-        // This is a copy assignment operator.
+      // This is a copy assignment operator.
 
-        // Suppress the implicit declaration of a copy constructor.
-        data().UserDeclaredCopyAssignment = true;
-        data().DeclaredCopyAssignment = true;
+      // Suppress the implicit declaration of a copy constructor.
+      data().UserDeclaredCopyAssignment = true;
+      data().DeclaredCopyAssignment = true;
 
-        // C++0x [class.copy]p27:
-        //   A copy/move assignment operator for class X is trivial if it is
-        //   neither user-provided nor deleted [...]
-        if (Method->isUserProvided())
-          data().HasTrivialCopyAssignment = false;
-      } else {
-        // This is a move assignment operator.
+      // C++0x [class.copy]p27:
+      //   A copy/move assignment operator for class X is trivial if it is
+      //   neither user-provided nor deleted [...]
+      if (Method->isUserProvided())
+        data().HasTrivialCopyAssignment = false;
 
-        // C++0x [class.copy]p27:
-        //   A copy/move assignment operator for class X is trivial if it is
-        //   neither user-provided nor deleted [...]
-        if (Method->isUserProvided())
-          data().HasTrivialMoveAssignment = false;
-      }
+      return;
+    }
+    
+    if (Method->isMoveAssignmentOperator()) {
+      // This is an extension in C++03 mode, but we'll keep consistency by
+      // taking a move assignment operator to induce non-POD-ness
+      data().PlainOldData = false;
+
+      // This is a move assignment operator.
+      data().UserDeclaredMoveAssignment = true;
+      data().DeclaredMoveAssignment = true;
+
+      // C++0x [class.copy]p27:
+      //   A copy/move assignment operator for class X is trivial if it is
+      //   neither user-provided nor deleted [...]
+      if (Method->isUserProvided())
+        data().HasTrivialMoveAssignment = false;
     }
 
     // Keep the list of conversion functions up-to-date.
@@ -1170,20 +1171,39 @@ bool CXXMethodDecl::isUsualDeallocationFunction() const {
 }
 
 bool CXXMethodDecl::isCopyAssignmentOperator() const {
-  // C++0x [class.copy]p19:
+  // C++0x [class.copy]p17:
   //  A user-declared copy assignment operator X::operator= is a non-static 
   //  non-template member function of class X with exactly one parameter of 
   //  type X, X&, const X&, volatile X& or const volatile X&.
   if (/*operator=*/getOverloadedOperator() != OO_Equal ||
       /*non-static*/ isStatic() || 
-      /*non-template*/getPrimaryTemplate() || getDescribedFunctionTemplate() ||
-      /*exactly one parameter*/getNumParams() != 1)
+      /*non-template*/getPrimaryTemplate() || getDescribedFunctionTemplate())
     return false;
       
   QualType ParamType = getParamDecl(0)->getType();
   if (const LValueReferenceType *Ref = ParamType->getAs<LValueReferenceType>())
     ParamType = Ref->getPointeeType();
   
+  ASTContext &Context = getASTContext();
+  QualType ClassType
+    = Context.getCanonicalType(Context.getTypeDeclType(getParent()));
+  return Context.hasSameUnqualifiedType(ClassType, ParamType);
+}
+
+bool CXXMethodDecl::isMoveAssignmentOperator() const {
+  // C++0x [class.copy]p19:
+  //  A user-declared move assignment operator X::operator= is a non-static
+  //  non-template member function of class X with exactly one parameter of type
+  //  X&&, const X&&, volatile X&&, or const volatile X&&.
+  if (getOverloadedOperator() != OO_Equal || isStatic() ||
+      getPrimaryTemplate() || getDescribedFunctionTemplate())
+    return false;
+
+  QualType ParamType = getParamDecl(0)->getType();
+  if (!isa<RValueReferenceType>(ParamType))
+    return false;
+  ParamType = ParamType->getPointeeType();
+
   ASTContext &Context = getASTContext();
   QualType ClassType
     = Context.getCanonicalType(Context.getTypeDeclType(getParent()));
