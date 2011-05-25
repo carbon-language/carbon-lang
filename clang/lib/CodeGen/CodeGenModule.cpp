@@ -452,6 +452,9 @@ void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
 
 void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
                                                            llvm::Function *F) {
+  if (CodeGenOpts.UnwindTables)
+    F->setHasUWTable();
+
   if (!Features.Exceptions && !Features.ObjCNonFragileABI)
     F->addFnAttr(llvm::Attribute::NoUnwind);
 
