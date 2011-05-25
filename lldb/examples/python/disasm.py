@@ -11,7 +11,7 @@
 import lldb
 import os
 import sys
-import time
+import signal
 
 def disassemble_instructions (insts):
     for i in insts:
@@ -81,12 +81,17 @@ if target:
                         for child in value:
                             print "Name: ", child.GetName(), " Value: ", child.GetValue(frame)
 
-            print "Hit the breakpoint at main, continue and wait for program to exit..."
-            # Now continue to the program exit
-            process.Continue()
-            # When we return from the above function we will hopefully be at the
-            # program exit. Print out some process info
-            print process
+            print "Hit the breakpoint at main, enter to continue and wait for program to exit or 'Ctrl-D'/'quit' to terminate the program"
+            next = sys.stdin.readline()
+            if not next or next.rstrip('\n') == 'quit':
+                print "Terminating the inferior process..."
+                process.Kill()
+            else:
+                # Now continue to the program exit
+                process.Continue()
+                # When we return from the above function we will hopefully be at the
+                # program exit. Print out some process info
+                print process
         elif state == lldb.eStateExited:
             print "Didn't hit the breakpoint at main, program has exited..."
         else:
