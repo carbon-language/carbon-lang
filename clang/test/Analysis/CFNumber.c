@@ -22,7 +22,7 @@ CFNumberRef f1(unsigned char x) {
   return CFNumberCreate(0, kCFNumberSInt16Type, &x);  // expected-warning{{An 8 bit integer is used to initialize a CFNumber object that represents a 16 bit integer. 8 bits of the CFNumber value will be garbage.}}
 }
 
-CFNumberRef f2(unsigned short x) {
+__attribute__((cf_returns_retained)) CFNumberRef f2(unsigned short x) {
   return CFNumberCreate(0, kCFNumberSInt8Type, &x); // expected-warning{{A 16 bit integer is used to initialize a CFNumber object that represents an 8 bit integer. 8 bits of the input integer will be lost.}}
 }
 
