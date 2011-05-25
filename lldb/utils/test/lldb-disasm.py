@@ -81,7 +81,7 @@ def do_lldb_disassembly(lldb_commands, exe, disassemble_options, num_symbols, sy
 
     # Create the debugger instance now.
     dbg = lldb.SBDebugger.Create()
-    if not dbg.IsValid():
+    if not dbg:
             raise Exception('Invalid debugger instance')
 
     # Register an exit callback.
