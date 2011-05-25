@@ -1319,20 +1319,20 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   Chain  = DAG.getNode(MipsISD::JmpLink, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  if (IsPIC) {
-    // Function can have an arbitrary number of calls, so
-    // hold the LastArgStackLoc with the biggest offset.
-    unsigned MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
-    unsigned NextStackOffset = CCInfo.getNextStackOffset();
+  // Function can have an arbitrary number of calls, so
+  // hold the LastArgStackLoc with the biggest offset.
+  unsigned MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
+  unsigned NextStackOffset = CCInfo.getNextStackOffset();
 
-    // For O32, a minimum of four words (16 bytes) of argument space is
-    // allocated.
-    if (Subtarget->isABI_O32())
-      NextStackOffset = std::max(NextStackOffset, (unsigned)16);
+  // For O32, a minimum of four words (16 bytes) of argument space is
+  // allocated.
+  if (Subtarget->isABI_O32())
+    NextStackOffset = std::max(NextStackOffset, (unsigned)16);
 
-    if (MaxCallFrameSize < NextStackOffset) {
-      MipsFI->setMaxCallFrameSize(NextStackOffset);
+  if (MaxCallFrameSize < NextStackOffset) {
+    MipsFI->setMaxCallFrameSize(NextStackOffset);
 
+    if (IsPIC) {    
       // $gp restore slot must be aligned.
       unsigned StackAlignment = TFL->getStackAlignment();
       NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
