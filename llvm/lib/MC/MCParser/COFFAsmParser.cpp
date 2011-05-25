@@ -303,6 +303,10 @@ bool COFFAsmParser::ParseSEHDirectiveSaveReg(StringRef, SMLoc L) {
   int64_t Off;
   if (ParseSEHRegisterNumber(Reg))
     return true;
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("expected comma");
+
+  Lex();
   SMLoc startLoc = getLexer().getLoc();
   if (getParser().ParseAbsoluteExpression(Off))
     return true;
@@ -326,6 +330,10 @@ bool COFFAsmParser::ParseSEHDirectiveSaveXMM(StringRef, SMLoc L) {
   int64_t Off;
   if (ParseSEHRegisterNumber(Reg))
     return true;
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("expected comma");
+
+  Lex();
   SMLoc startLoc = getLexer().getLoc();
   if (getParser().ParseAbsoluteExpression(Off))
     return true;
@@ -387,14 +395,13 @@ bool COFFAsmParser::ParseAtUnwindOrAtExcept(bool &unwind, bool &except) {
 }
 
 bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
-  int64_t n;
   SMLoc startLoc = getLexer().getLoc();
-  if (getParser().ParseAbsoluteExpression(n)) {
+  if (getLexer().is(AsmToken::Percent)) {
     const TargetAsmInfo &asmInfo = getContext().getTargetAsmInfo();
     SMLoc endLoc;
     unsigned LLVMRegNo;
     if (getParser().getTargetParser().ParseRegister(LLVMRegNo,startLoc,endLoc))
-      return Error(startLoc, "expected register or number");
+      return true;
 
     // Check that this is a non-volatile register.
     const unsigned *NVRegs = asmInfo.getCalleeSavedRegs();
@@ -410,11 +417,15 @@ bool COFFAsmParser::ParseSEHRegisterNumber(unsigned &RegNo) {
       return Error(startLoc,"register can't be represented in SEH unwind info");
     RegNo = SEHRegNo;
   }
-  else
+  else {
+    int64_t n;
+    if (getParser().ParseAbsoluteExpression(n))
+      return true;
+    if (n > 15)
+      return Error(startLoc, "register number is too high");
     RegNo = n;
+  }
 
-  if (RegNo > 15)
-    return Error(startLoc, "register number is too high");
   return false;
 }
 
