@@ -96,6 +96,22 @@ define i1 @ashr_icmp2(i64 %X) nounwind {
  ret i1 %Z
 }
 
+; PR9998
+; Make sure we don't transform the ashr here into an sdiv
+; CHECK: @pr9998
+; CHECK: = and i32 %V, 1
+; CHECK: %Z = icmp ne
+; CHECK: ret i1 %Z
+define i1 @pr9998(i32 %V) nounwind {
+entry:
+  %W = shl i32 %V, 31
+  %X = ashr exact i32 %W, 31
+  %Y = sext i32 %X to i64
+  %Z = icmp ugt i64 %Y, 7297771788697658747
+  ret i1 %Z
+}
+
+
 ; CHECK: @udiv_icmp1
 ; CHECK: icmp ne i64 %X, 0
 define i1 @udiv_icmp1(i64 %X) nounwind {

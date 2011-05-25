@@ -919,11 +919,11 @@ Instruction *InstCombiner::FoldICmpShrCst(ICmpInst &ICI, BinaryOperator *Shr,
     if (ICI.isSigned() != (Shr->getOpcode() == Instruction::AShr))
       return 0;
     
-    // Otherwise, all lshr and all exact ashr's are equivalent to a udiv/sdiv by
-    // a power of 2.  Since we already have logic to simplify these, transform
-    // to div and then simplify the resultant comparison.
+    // Otherwise, all lshr and most exact ashr's are equivalent to a udiv/sdiv
+    // by a power of 2.  Since we already have logic to simplify these,
+    // transform to div and then simplify the resultant comparison.
     if (Shr->getOpcode() == Instruction::AShr &&
-        !Shr->isExact())
+        (!Shr->isExact() || ShAmtVal == TypeBits - 1))
       return 0;
     
     // Revisit the shift (to delete it).
