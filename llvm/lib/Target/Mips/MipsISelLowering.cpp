@@ -714,10 +714,13 @@ LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
   // must be placed in the stack pointer register.
   Chain = DAG.getCopyToReg(StackPointer.getValue(1), dl, Mips::SP, Sub,
                            SDValue());
+  // Retrieve updated $sp. There is a glue input to prevent instructions that
+  // clobber $sp from being inserted between copytoreg and copyfromreg.
   SDValue NewSP = DAG.getCopyFromReg(Chain, dl, Mips::SP, MVT::i32,
                                      Chain.getValue(1));
   
-  // Align the allocated space.
+  // The stack space reserved by alloca is located right above the argument
+  // area. It is aligned on a boundary that is a multiple of StackAlignment.
   MachineFunction &MF = DAG.getMachineFunction();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   unsigned SPOffset = (MipsFI->getMaxCallFrameSize() + StackAlignment - 1) /
@@ -1068,7 +1071,8 @@ WriteByValArg(SDValue& Chain, DebugLoc dl,
               SmallVector<std::pair<unsigned, SDValue>, 16>& RegsToPass,
               SmallVector<SDValue, 8>& MemOpChains, int& LastFI,
               MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
-              const CCValAssign &VA, const ISD::ArgFlagsTy& Flags, MVT PtrType) {
+              const CCValAssign &VA, const ISD::ArgFlagsTy& Flags,
+              MVT PtrType) {
   unsigned FirstWord = VA.getLocMemOffset() / 4;
   unsigned NumWords = (Flags.getByValSize() + 3) / 4;
   unsigned LastWord = FirstWord + NumWords;
@@ -1146,8 +1150,10 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   MipsFI->setHasCall();
 
-  // Create GP frame object if this is the first call. 
-  // SPOffset will be updated after call frame size is known.
+  // If this is the first call, create a stack frame object that points to
+  // a location to which .cprestore saves $gp. The offset of this frame object
+  // is set to 0, since we know nothing about the size of the argument area at
+  // this point.
   if (IsPIC && !MipsFI->getGPFI())
     MipsFI->setGPFI(MFI->CreateFixedObject(4, 0, true));
 
@@ -1212,9 +1218,6 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     }
 
     // Create the frame index object for this incoming parameter
-    // This guarantees that when allocating Local Area the firsts
-    // 16 bytes which are alwayes reserved won't be overwritten
-    // if O32 ABI is used. For EABI the first address is zero.
     LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8, 
                                     VA.getLocMemOffset(), true);
     SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
@@ -1316,9 +1319,6 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   Chain  = DAG.getNode(MipsISD::JmpLink, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  // Create a stack location to hold GP when PIC is used. This stack
-  // location is used on function prologue to save GP and also after all
-  // emitted CALL's to restore GP.
   if (IsPIC) {
     // Function can have an arbitrary number of calls, so
     // hold the LastArgStackLoc with the biggest offset.
@@ -1424,7 +1424,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
                                          DebugLoc dl, SelectionDAG &DAG,
                                          SmallVectorImpl<SDValue> &InVals)
                                           const {
-
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
@@ -1524,12 +1523,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
       }
 
       // The stack pointer offset is relative to the caller stack frame.
-      // Since the real stack size is unknown here, a negative SPOffset
-      // is used so there's a way to adjust these offsets when the stack
-      // size get known (on EliminateFrameIndex). A dummy SPOffset is
-      // used instead of a direct negative address (which is recorded to
-      // be used on emitPrologue) to avoid mis-calc of the first stack
-      // offset on PEI::calculateFrameObjectOffsets.
       LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
                                       VA.getLocMemOffset(), true);
 
@@ -1554,9 +1547,6 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Copy, Chain);
   }
 
-  // To meet ABI, when VARARGS are passed on registers, the registers
-  // must have their values written to the caller stack frame. If the last
-  // argument was placed in the stack, there's no need to save any register.
   if (isVarArg && Subtarget->isABI_O32()) {
     // Record the frame index of the first variable argument
     // which is a value necessary to VASTART.    
@@ -1565,8 +1555,10 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
            "NextStackOffset must be aligned to 4-byte boundaries.");
     LastFI = MFI->CreateFixedObject(4, NextStackOffset, true);
     MipsFI->setVarArgsFrameIndex(LastFI);
-    
-   // Copy variable arguments passed in registers to stack.
+
+    // If NextStackOffset is smaller than o32's 16-byte reserved argument area,
+    // copy the integer registers that have not been used for argument passing
+    // to the caller's stack frame.
     for (; NextStackOffset < 16; NextStackOffset += 4) {
       TargetRegisterClass *RC = Mips::CPURegsRegisterClass;
       unsigned Idx = NextStackOffset / 4;

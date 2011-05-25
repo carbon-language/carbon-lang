@@ -153,7 +153,8 @@ class ArithR<bits<6> op, bits<6> func, string instr_asm, SDNode OpNode,
   let isCommutable = isComm;
 }
 
-class ArithOverflowR<bits<6> op, bits<6> func, string instr_asm, bit isComm = 0>:
+class ArithOverflowR<bits<6> op, bits<6> func, string instr_asm,
+                     bit isComm = 0>:
   FR<op, func, (outs CPURegs:$dst), (ins CPURegs:$b, CPURegs:$c),
      !strconcat(instr_asm, "\t$dst, $b, $c"), [], IIAlu> {
   let isCommutable = isComm;
