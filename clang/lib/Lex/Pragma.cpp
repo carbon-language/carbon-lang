@@ -824,9 +824,17 @@ struct PragmaDebugHandler : public PragmaHandler {
     }
   }
 
+// Disable MSVC warning about runtime stack overflow.
+#ifdef _MSC_VER
+    #pragma warning(disable : 4717)
+#endif
   void DebugOverflowStack() {
     DebugOverflowStack();
   }
+#ifdef _MSC_VER
+    #pragma warning(default : 4717)
+#endif
+
 };
 
 /// PragmaDiagnosticHandler - e.g. '#pragma GCC diagnostic ignored "-Wformat"'
