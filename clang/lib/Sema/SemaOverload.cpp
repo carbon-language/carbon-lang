@@ -6436,7 +6436,9 @@ enum OverloadCandidateKind {
   oc_constructor_template,
   oc_implicit_default_constructor,
   oc_implicit_copy_constructor,
+  oc_implicit_move_constructor,
   oc_implicit_copy_assignment,
+  oc_implicit_move_assignment,
   oc_implicit_inherited_constructor
 };
 
@@ -6458,8 +6460,15 @@ OverloadCandidateKind ClassifyOverloadCandidate(Sema &S,
     if (Ctor->getInheritedConstructor())
       return oc_implicit_inherited_constructor;
 
-    return Ctor->isCopyConstructor() ? oc_implicit_copy_constructor
-                                     : oc_implicit_default_constructor;
+    if (Ctor->isDefaultConstructor())
+      return oc_implicit_default_constructor;
+
+    if (Ctor->isMoveConstructor())
+      return oc_implicit_move_constructor;
+
+    assert(Ctor->isCopyConstructor() &&
+           "unexpected sort of implicit constructor");
+    return oc_implicit_copy_constructor;
   }
 
   if (CXXMethodDecl *Meth = dyn_cast<CXXMethodDecl>(Fn)) {
@@ -6467,6 +6476,9 @@ OverloadCandidateKind ClassifyOverloadCandidate(Sema &S,
     // it doesn't hurt to split it out.
     if (!Meth->isImplicit())
       return isTemplate ? oc_method_template : oc_method;
+
+    if (Meth->isMoveAssignmentOperator())
+      return oc_implicit_move_assignment;
 
     assert(Meth->isCopyAssignmentOperator()
            && "implicit method is not copy assignment operator?");

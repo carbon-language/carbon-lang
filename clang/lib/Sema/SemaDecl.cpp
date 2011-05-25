@@ -1508,15 +1508,16 @@ Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
     if (Ctor->isCopyConstructor())
       return Sema::CXXCopyConstructor;
     
+    if (Ctor->isMoveConstructor())
+      return Sema::CXXMoveConstructor;
+    
     if (Ctor->isDefaultConstructor())
       return Sema::CXXDefaultConstructor;
-  } 
-  
-  if (isa<CXXDestructorDecl>(MD))
+  } else if (isa<CXXDestructorDecl>(MD)) {
     return Sema::CXXDestructor;
-  
-  if (MD->isCopyAssignmentOperator())
+  } else if (MD->isCopyAssignmentOperator()) {
     return Sema::CXXCopyAssignment;
+  }
 
   return Sema::CXXInvalid;
 }

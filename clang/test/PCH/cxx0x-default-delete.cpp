@@ -14,7 +14,7 @@ struct foo {
 
 #else
 
-foo::foo() { } // expected-error{{definition of explicitly defaulted}}
+foo::foo() { } // expected-error{{definition of explicitly defaulted default constructor}}
 foo f;
 void fn() {
   f.bar(); // expected-error{{deleted function}}
