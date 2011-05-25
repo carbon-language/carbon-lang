@@ -2318,11 +2318,12 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // Find the function body that we'll be substituting.
   const FunctionDecl *PatternDecl = Function->getTemplateInstantiationPattern();
   Stmt *Pattern = 0;
-  if (PatternDecl)
+  if (PatternDecl) {
     Pattern = PatternDecl->getBody(PatternDecl);
-  if (!Pattern)
-    // Try to find a defaulted definition
-    PatternDecl->isDefined(PatternDecl);
+    if (!Pattern)
+      // Try to find a defaulted definition
+      PatternDecl->isDefined(PatternDecl);
+  }
 
   // Postpone late parsed template instantiations.
   if (PatternDecl && PatternDecl->isLateTemplateParsed() &&
