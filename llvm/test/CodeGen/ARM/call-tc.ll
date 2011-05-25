@@ -16,6 +16,10 @@ define void @t1() {
 define void @t2() {
 ; CHECKV6: t2:
 ; CHECKV6: bx r0 @ TAILCALL
+; CHECKT2D: t2:
+; CHECKT2D: ldr
+; CHECKT2D-NEXT: ldr
+; CHECKT2D-NEXT: bx r0 @ TAILCALL
         %tmp = load i32 ()** @t         ; <i32 ()*> [#uses=1]
         %tmp.upgrd.2 = tail call i32 %tmp( )            ; <i32> [#uses=0]
         ret void

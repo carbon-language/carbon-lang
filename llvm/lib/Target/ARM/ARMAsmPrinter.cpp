@@ -1875,7 +1875,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::TAILJMPr:
   case ARM::tTAILJMPr: {
     unsigned newOpc = (Opc == ARM::TAILJMPr || Opc == ARM::TAILJMPrND)
-      ? ARM::BX : ARM::tBX_CALL;
+      ? ARM::BX : ARM::tBX;
     MCInst TmpInst;
     TmpInst.setOpcode(newOpc);
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
