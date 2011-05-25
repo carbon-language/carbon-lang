@@ -919,18 +919,11 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     BasicBlock *Switch = SI->getParent();
     BasicBlock *SISucc = SI->getSuccessor(DeadCase);
     BasicBlock *Latch = L->getLoopLatch();
-    // If the DeadCase successor dominates all of the predecessors of the
-    // loop latch, then the transformation isn't safe since it will delete
-    // the predecessor edges to the latch.
-    if (Latch) {
-      bool DominateAll = true;
-      for (pred_iterator PI = pred_begin(Latch), PE = pred_end(Latch);
-           DominateAll && PI != PE; ++PI)
-        if (!DT->dominates(SISucc, *PI))
-          DominateAll = false;
-      if (DominateAll)
-        continue;
-    }
+    // If the DeadCase successor dominates the loop latch, then the
+    // transformation isn't safe since it will delete the sole predecessor edge
+    // to the latch.
+    if (Latch && DT->dominates(SISucc, Latch))
+      continue;
 
     // FIXME: This is a hack.  We need to keep the successor around
     // and hooked up so as to preserve the loop structure, because
