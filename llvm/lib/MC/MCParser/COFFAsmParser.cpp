@@ -266,6 +266,10 @@ bool COFFAsmParser::ParseSEHDirectiveSetFrame(StringRef, SMLoc L) {
   int64_t Off;
   if (ParseSEHRegisterNumber(Reg))
     return true;
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("you must specify a stack pointer offset");
+
+  Lex();
   SMLoc startLoc = getLexer().getLoc();
   if (getParser().ParseAbsoluteExpression(Off))
     return true;
@@ -304,7 +308,7 @@ bool COFFAsmParser::ParseSEHDirectiveSaveReg(StringRef, SMLoc L) {
   if (ParseSEHRegisterNumber(Reg))
     return true;
   if (getLexer().isNot(AsmToken::Comma))
-    return TokError("expected comma");
+    return TokError("you must specify an offset on the stack");
 
   Lex();
   SMLoc startLoc = getLexer().getLoc();
@@ -331,7 +335,7 @@ bool COFFAsmParser::ParseSEHDirectiveSaveXMM(StringRef, SMLoc L) {
   if (ParseSEHRegisterNumber(Reg))
     return true;
   if (getLexer().isNot(AsmToken::Comma))
-    return TokError("expected comma");
+    return TokError("you must specify an offset on the stack");
 
   Lex();
   SMLoc startLoc = getLexer().getLoc();

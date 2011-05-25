@@ -5,8 +5,13 @@
 # CHECK: .seh_stackalloc 24
 # CHECK: .seh_savereg 6, 16
 # CHECK: .seh_savexmm 8, 0
+# CHECK: .seh_pushreg 3
+# CHECK: .seh_setframe 3, 0
 # CHECK: .seh_endprologue
 # CHECK: .seh_handler __C_specific_handler, @except
+# CHECK-NOT: .section{{.*}}.xdata
+# CHECK: .seh_handlerdata
+# CHECK: .text
 # CHECK: .seh_endproc
 
     .text
@@ -21,8 +26,17 @@ func:
     .seh_savereg %rsi, 16
     movups %xmm8, (%rsp)
     .seh_savexmm %xmm8, 0
+    pushq %rbx
+    .seh_pushreg 3
+    mov %rsp, %rbx
+    .seh_setframe 3, 0
     .seh_endprologue
     .seh_handler __C_specific_handler, @except
+    .seh_handlerdata
+    .long 0
+    .text
+    lea (%rbx), %rsp
+    pop %rbx
     addq $24, %rsp
     ret
     .seh_endproc
