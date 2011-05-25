@@ -296,6 +296,12 @@ Changes diagnostic output format to better match IDEs and command line tools.</d
 </dd>
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<dt id="opt_fdiagnostics-show-name"><b>-f[no-]diagnostics-show-name</b>:
+Enable the display of the diagnostic name.</dt>
+<dd>This option, which defaults to off, controls whether or not
+Clang prints the associated name.</dd>
+<br>
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <dt id="opt_fdiagnostics-show-option"><b>-f[no-]diagnostics-show-option</b>:
 Enable <tt>[-Woption]</tt> information in diagnostic line.</dt>
 <dd>This option, which defaults to on,
@@ -522,6 +528,8 @@ it:</p>
 <li>A categorization of the diagnostic as a note, warning, error, or fatal
     error.</li>
 <li>A text string that describes what the problem is.</li>
+<li>An option that indicates whether to print the diagnostic name [<a
+    href="#opt_fdiagnostics-show-name">-fdiagnostics-show-name</a>].</li>
 <li>An option that indicates how to control the diagnostic (for diagnostics that
     support it) [<a 
    href="#opt_fdiagnostics-show-option">-fdiagnostics-show-option</a>].</li>

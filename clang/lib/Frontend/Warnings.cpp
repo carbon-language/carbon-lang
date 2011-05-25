@@ -55,17 +55,14 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
     Diags.setExtensionHandlingBehavior(Diagnostic::Ext_Ignore);
 
   for (unsigned i = 0, e = Opts.Warnings.size(); i != e; ++i) {
-    const std::string &Opt = Opts.Warnings[i];
-    const char *OptStart = &Opt[0];
-    const char *OptEnd = OptStart+Opt.size();
-    assert(*OptEnd == 0 && "Expect null termination for lower-bound search");
+    llvm::StringRef Opt = Opts.Warnings[i];
 
     // Check to see if this warning starts with "no-", if so, this is a negative
     // form of the option.
     bool isPositive = true;
-    if (OptEnd-OptStart > 3 && memcmp(OptStart, "no-", 3) == 0) {
+    if (Opt.startswith("no-")) {
       isPositive = false;
-      OptStart += 3;
+      Opt = Opt.substr(3);
     }
 
     // Figure out how this option affects the warning.  If -Wfoo, map the
@@ -74,49 +71,47 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
 
     // -Wsystem-headers is a special case, not driven by the option table.  It
     // cannot be controlled with -Werror.
-    if (OptEnd-OptStart == 14 && memcmp(OptStart, "system-headers", 14) == 0) {
+    if (Opt == "system-headers") {
       Diags.setSuppressSystemWarnings(!isPositive);
       continue;
     }
 
     // -Werror/-Wno-error is a special case, not controlled by the option table.
     // It also has the "specifier" form of -Werror=foo and -Werror-foo.
-    if (OptEnd-OptStart >= 5 && memcmp(OptStart, "error", 5) == 0) {
-      const char *Specifier = 0;
-      if (OptEnd-OptStart != 5) {  // Specifier must be present.
-        if ((OptStart[5] != '=' && OptStart[5] != '-') ||
-            OptEnd-OptStart == 6) {
+    if (Opt.startswith("error")) {
+      llvm::StringRef Specifier;
+      if (Opt.size() > 5) {  // Specifier must be present.
+        if ((Opt[5] != '=' && Opt[5] != '-') || Opt.size() == 6) {
           Diags.Report(diag::warn_unknown_warning_specifier)
-            << "-Werror" << ("-W" + Opt);
+            << "-Werror" << ("-W" + Opt.str());
           continue;
         }
-        Specifier = OptStart+6;
+        Specifier = Opt.substr(6);
       }
 
-      if (Specifier == 0) {
+      if (Specifier.empty()) {
         Diags.setWarningsAsErrors(isPositive);
         continue;
       }
 
       // -Werror=foo maps foo to Error, -Wno-error=foo maps it to Warning.
       Mapping = isPositive ? diag::MAP_ERROR : diag::MAP_WARNING_NO_WERROR;
-      OptStart = Specifier;
+      Opt = Specifier;
     }
 
     // -Wfatal-errors is yet another special case.
-    if (OptEnd-OptStart >= 12 && memcmp(OptStart, "fatal-errors", 12) == 0) {
-      const char* Specifier = 0;
-      if (OptEnd-OptStart != 12) {
-        if ((OptStart[12] != '=' && OptStart[12] != '-') ||
-            OptEnd-OptStart == 13) {
+    if (Opt.startswith("fatal-errors")) {
+      llvm::StringRef Specifier;
+      if (Opt.size() != 12) {
+        if ((Opt[12] != '=' && Opt[12] != '-') || Opt.size() == 13) {
           Diags.Report(diag::warn_unknown_warning_specifier)
-            << "-Wfatal-errors" << ("-W" + Opt);
+            << "-Wfatal-errors" << ("-W" + Opt.str());
           continue;
         }
-        Specifier = OptStart + 13;
+        Specifier = Opt.substr(13);
       }
 
-      if (Specifier == 0) {
+      if (Specifier.empty()) {
         Diags.setErrorsAsFatal(isPositive);
         continue;
       }
@@ -124,10 +119,10 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
       // -Wfatal-errors=foo maps foo to Fatal, -Wno-fatal-errors=foo
       // maps it to Error.
       Mapping = isPositive ? diag::MAP_FATAL : diag::MAP_ERROR_NO_WFATAL;
-      OptStart = Specifier;
+      Opt = Specifier;
     }
 
-    if (Diags.setDiagnosticGroupMapping(OptStart, Mapping))
-      Diags.Report(diag::warn_unknown_warning_option) << ("-W" + Opt);
+    if (Diags.setDiagnosticGroupMapping(Opt, Mapping))
+      Diags.Report(diag::warn_unknown_warning_option) << ("-W" + Opt.str());
   }
 }

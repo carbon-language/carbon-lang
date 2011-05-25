@@ -425,7 +425,7 @@ public:
   ///
   /// 'Loc' is the source location that this change of diagnostic state should
   /// take affect. It can be null if we are setting the state from command-line.
-  bool setDiagnosticGroupMapping(const char *Group, diag::Mapping Map,
+  bool setDiagnosticGroupMapping(llvm::StringRef Group, diag::Mapping Map,
                                  SourceLocation Loc = SourceLocation()) {
     return Diags->setDiagnosticGroupMapping(Group, Map, Loc, *this);
   }

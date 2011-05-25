@@ -527,10 +527,10 @@ FormatDiagnostic(llvm::SmallVectorImpl<char> &OutStr) const {
     return;
   }
 
-  const char *DiagStr = getDiags()->getDiagnosticIDs()->getDescription(getID());
-  const char *DiagEnd = DiagStr+strlen(DiagStr);
+  llvm::StringRef Diag = 
+    getDiags()->getDiagnosticIDs()->getDescription(getID());
 
-  FormatDiagnostic(DiagStr, DiagEnd, OutStr);
+  FormatDiagnostic(Diag.begin(), Diag.end(), OutStr);
 }
 
 void DiagnosticInfo::

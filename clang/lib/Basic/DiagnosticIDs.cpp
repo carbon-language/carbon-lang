@@ -45,14 +45,37 @@ struct StaticDiagInfoRec {
   unsigned SFINAE : 1;
   unsigned AccessControl : 1;
   unsigned Category : 5;
-  
-  const char *Name;
-  
-  const char *Description;
-  const char *OptionGroup;
 
-  const char *BriefExplanation;
-  const char *FullExplanation;
+  uint8_t  NameLen;
+  uint8_t  OptionGroupLen;
+
+  uint16_t DescriptionLen;
+  uint16_t BriefExplanationLen;
+  uint16_t FullExplanationLen;
+
+  const char *NameStr;
+  const char *OptionGroupStr;
+
+  const char *DescriptionStr;
+  const char *BriefExplanationStr;
+  const char *FullExplanationStr;
+
+  llvm::StringRef getName() const {
+    return llvm::StringRef(NameStr, NameLen);
+  }
+  llvm::StringRef getOptionGroup() const {
+    return llvm::StringRef(OptionGroupStr, OptionGroupLen);
+  }
+
+  llvm::StringRef getDescription() const {
+    return llvm::StringRef(DescriptionStr, DescriptionLen);
+  }
+  llvm::StringRef getBriefExplanation() const {
+    return llvm::StringRef(BriefExplanationStr, BriefExplanationLen);
+  }
+  llvm::StringRef getFullExplanation() const {
+    return llvm::StringRef(FullExplanationStr, FullExplanationLen);
+  }
 
   bool operator<(const StaticDiagInfoRec &RHS) const {
     return DiagID < RHS.DiagID;
@@ -60,27 +83,42 @@ struct StaticDiagInfoRec {
 };
 
 struct StaticDiagNameIndexRec {
-  const char *Name;
+  const char *NameStr;
   unsigned short DiagID;
-  
+  uint8_t NameLen;
+
+  llvm::StringRef getName() const {
+    return llvm::StringRef(NameStr, NameLen);
+  }
+
   bool operator<(const StaticDiagNameIndexRec &RHS) const {
-    assert(Name && RHS.Name && "Null Diagnostic Name");
-    return strcmp(Name, RHS.Name) == -1;
+    return getName() < RHS.getName();
   }
   
   bool operator==(const StaticDiagNameIndexRec &RHS) const {
-    assert(Name && RHS.Name && "Null Diagnostic Name");
-    return strcmp(Name, RHS.Name) == 0;
+    return getName() == RHS.getName();
   }
 };
 
-}
+template <size_t SizeOfStr, typename FieldType>
+class StringSizerHelper {
+  char FIELD_TOO_SMALL[SizeOfStr <= FieldType(~0U) ? 1 : -1];
+public:
+  enum { Size = SizeOfStr };
+};
+
+} // namespace anonymous
+
+#define STR_SIZE(str, fieldTy) StringSizerHelper<sizeof(str)-1, fieldTy>::Size 
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
-#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,     \
-             SFINAE,ACCESS,CATEGORY,BRIEF,FULL)         \
-  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE,         \
-   ACCESS, CATEGORY, #ENUM, DESC, GROUP, BRIEF, FULL },
+#define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,               \
+             SFINAE,ACCESS,CATEGORY,BRIEF,FULL)                   \
+  { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS, CATEGORY, \
+    STR_SIZE(#ENUM, uint8_t), STR_SIZE(GROUP, uint8_t),           \
+    STR_SIZE(DESC, uint16_t), STR_SIZE(BRIEF, uint16_t),          \
+    STR_SIZE(FULL, uint16_t),                                     \
+    #ENUM, GROUP, DESC, BRIEF, FULL },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -90,7 +128,7 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
 #undef DIAG
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
 static const unsigned StaticDiagInfoSize =
@@ -98,10 +136,10 @@ static const unsigned StaticDiagInfoSize =
 
 /// To be sorted before first use (since it's splitted among multiple files)
 static StaticDiagNameIndexRec StaticDiagNameIndex[] = {
-#define DIAG_NAME_INDEX(ENUM) { #ENUM, diag::ENUM },
+#define DIAG_NAME_INDEX(ENUM) { #ENUM, diag::ENUM, STR_SIZE(#ENUM, uint8_t) },
 #include "clang/Basic/DiagnosticIndexName.inc"
 #undef DIAG_NAME_INDEX
-  { 0, 0 }
+  { 0, 0, 0 }
 };
 
 static const unsigned StaticDiagNameIndexSize =
@@ -127,7 +165,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 #endif
 
   // Search the diagnostic table with a binary search.
-  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  StaticDiagInfoRec Find = { DiagID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0,0,0 };
 
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + StaticDiagInfoSize, Find);
@@ -147,10 +185,10 @@ static unsigned GetDefaultDiagMapping(unsigned DiagID) {
 /// getWarningOptionForDiag - Return the lowest-level warning option that
 /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
 /// the diagnostic, this returns null.
-const char *DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
+llvm::StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->OptionGroup;
-  return 0;
+    return Info->getOptionGroup();
+  return llvm::StringRef();
 }
 
 /// getCategoryNumberForDiag - Return the category number that a specified
@@ -161,23 +199,36 @@ unsigned DiagnosticIDs::getCategoryNumberForDiag(unsigned DiagID) {
   return 0;
 }
 
+// The diagnostic category names.
+struct StaticDiagCategoryRec {
+  const char *NameStr;
+  uint8_t NameLen;
+
+  llvm::StringRef getName() const {
+    return llvm::StringRef(NameStr, NameLen);
+  }
+};
+
+static StaticDiagCategoryRec CategoryNameTable[] = {
+#define GET_CATEGORY_TABLE
+#define CATEGORY(X) { X, STR_SIZE(X, uint8_t) },
+#include "clang/Basic/DiagnosticGroups.inc"
+#undef GET_CATEGORY_TABLE
+  { 0, 0 }
+};
+
+/// getNumberOfCategories - Return the number of categories
+unsigned DiagnosticIDs::getNumberOfCategories() {
+  return sizeof(CategoryNameTable) / sizeof(CategoryNameTable[0])-1;
+}
+
 /// getCategoryNameFromID - Given a category ID, return the name of the
 /// category, an empty string if CategoryID is zero, or null if CategoryID is
 /// invalid.
-const char *DiagnosticIDs::getCategoryNameFromID(unsigned CategoryID) {
-  // Second the table of options, sorted by name for fast binary lookup.
-  static const char *CategoryNameTable[] = {
-#define GET_CATEGORY_TABLE
-#define CATEGORY(X) X,
-#include "clang/Basic/DiagnosticGroups.inc"
-#undef GET_CATEGORY_TABLE
-    "<<END>>"
-  };
-  static const size_t CategoryNameTableSize =
-    sizeof(CategoryNameTable) / sizeof(CategoryNameTable[0])-1;
-  
-  if (CategoryID >= CategoryNameTableSize) return 0;
-  return CategoryNameTable[CategoryID];
+llvm::StringRef DiagnosticIDs::getCategoryNameFromID(unsigned CategoryID) {
+  if (CategoryID >= getNumberOfCategories())
+   return llvm::StringRef();
+  return CategoryNameTable[CategoryID].getName();
 }
 
 
@@ -202,25 +253,25 @@ DiagnosticIDs::getDiagnosticSFINAEResponse(unsigned DiagID) {
 }
 
 /// getName - Given a diagnostic ID, return its name
-const char *DiagnosticIDs::getName(unsigned DiagID) {
+llvm::StringRef DiagnosticIDs::getName(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->Name;
-  return 0;
+    return Info->getName();
+  return llvm::StringRef();
 }
 
 /// getIdFromName - Given a diagnostic name, return its ID, or 0
-unsigned DiagnosticIDs::getIdFromName(char const *Name) {
+unsigned DiagnosticIDs::getIdFromName(llvm::StringRef Name) {
   StaticDiagNameIndexRec *StaticDiagNameIndexEnd =
     StaticDiagNameIndex + StaticDiagNameIndexSize;
   
-  if (Name == 0) { return diag::DIAG_UPPER_LIMIT; }
+  if (Name.empty()) { return diag::DIAG_UPPER_LIMIT; }
   
-  StaticDiagNameIndexRec Find = { Name, 0 };
+  StaticDiagNameIndexRec Find = { Name.data(), 0, Name.size() };
   
   const StaticDiagNameIndexRec *Found =
     std::lower_bound( StaticDiagNameIndex, StaticDiagNameIndexEnd, Find);
   if (Found == StaticDiagNameIndexEnd ||
-      strcmp(Found->Name, Name) != 0)
+      Found->getName() != Name)
     return diag::DIAG_UPPER_LIMIT;
   
   return Found->DiagID;
@@ -228,18 +279,18 @@ unsigned DiagnosticIDs::getIdFromName(char const *Name) {
 
 /// getBriefExplanation - Given a diagnostic ID, return a brief explanation
 /// of the issue
-const char *DiagnosticIDs::getBriefExplanation(unsigned DiagID) {
+llvm::StringRef DiagnosticIDs::getBriefExplanation(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->BriefExplanation;
-  return 0;
+    return Info->getBriefExplanation();
+  return llvm::StringRef();
 }
 
 /// getFullExplanation - Given a diagnostic ID, return a full explanation
 /// of the issue
-const char *DiagnosticIDs::getFullExplanation(unsigned DiagID) {
+llvm::StringRef DiagnosticIDs::getFullExplanation(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->FullExplanation;
-  return 0;
+    return Info->getFullExplanation();
+  return llvm::StringRef();
 }
 
 /// getBuiltinDiagClass - Return the class field of the diagnostic.
@@ -264,10 +315,10 @@ namespace clang {
 
       /// getDescription - Return the description of the specified custom
       /// diagnostic.
-      const char *getDescription(unsigned DiagID) const {
+      llvm::StringRef getDescription(unsigned DiagID) const {
         assert(this && DiagID-DIAG_UPPER_LIMIT < DiagInfo.size() &&
                "Invalid diagnosic ID");
-        return DiagInfo[DiagID-DIAG_UPPER_LIMIT].second.c_str();
+        return DiagInfo[DiagID-DIAG_UPPER_LIMIT].second;
       }
 
       /// getLevel - Return the level of the specified custom diagnostic.
@@ -352,9 +403,9 @@ bool DiagnosticIDs::isBuiltinExtensionDiag(unsigned DiagID,
 
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
-const char *DiagnosticIDs::getDescription(unsigned DiagID) const {
+llvm::StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->Description;
+    return Info->getDescription();
   return CustomDiagInfo->getDescription(DiagID);
 }
 
@@ -493,9 +544,15 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
 }
 
 struct WarningOption {
-  const char  *Name;
+  // Be safe with the size of 'NameLen' because we don't statically check if the
+  // size will fit in the field; the struct size won't decrease with a shorter
+  // type anyway.
+  size_t NameLen;
+  const char *NameStr;
   const short *Members;
   const short *SubGroups;
+
+  llvm::StringRef getName() const { return llvm::StringRef(NameStr, NameLen); }
 };
 
 #define GET_DIAG_ARRAYS
@@ -513,7 +570,7 @@ sizeof(OptionTable) / sizeof(OptionTable[0]);
 
 static bool WarningOptionCompare(const WarningOption &LHS,
                                  const WarningOption &RHS) {
-  return strcmp(LHS.Name, RHS.Name) < 0;
+  return LHS.getName() < RHS.getName();
 }
 
 static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
@@ -534,10 +591,10 @@ static void MapGroupMembers(const WarningOption *Group, diag::Mapping Mapping,
 /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
 /// "unknown-pragmas" to have the specified mapping.  This returns true and
 /// ignores the request if "Group" was unknown, false otherwise.
-bool DiagnosticIDs::setDiagnosticGroupMapping(const char *Group,
-                                           diag::Mapping Map,
-                                           SourceLocation Loc,
-                                           Diagnostic &Diag) const {
+bool DiagnosticIDs::setDiagnosticGroupMapping(llvm::StringRef Group,
+                                              diag::Mapping Map,
+                                              SourceLocation Loc,
+                                              Diagnostic &Diag) const {
   assert((Loc.isValid() ||
           Diag.DiagStatePoints.empty() ||
           Diag.DiagStatePoints.back().Loc.isInvalid()) &&
@@ -548,12 +605,12 @@ bool DiagnosticIDs::setDiagnosticGroupMapping(const char *Group,
                                             Diag.DiagStatePoints.back().Loc)) &&
          "Source location of new mapping is before the previous one!");
 
-  WarningOption Key = { Group, 0, 0 };
+  WarningOption Key = { Group.size(), Group.data(), 0, 0 };
   const WarningOption *Found =
   std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
                    WarningOptionCompare);
   if (Found == OptionTable + OptionTableSize ||
-      strcmp(Found->Name, Group) != 0)
+      Found->getName() != Group)
     return true;  // Option not found.
 
   MapGroupMembers(Found, Map, Loc, Diag);

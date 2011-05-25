@@ -101,7 +101,7 @@ public:
 
   /// getDescription - Given a diagnostic ID, return a description of the
   /// issue.
-  const char *getDescription(unsigned DiagID) const;
+  llvm::StringRef getDescription(unsigned DiagID) const;
 
   /// isBuiltinWarningOrExtension - Return true if the unmapped diagnostic
   /// level of the specified diagnostic ID is a Warning or Extension.
@@ -132,15 +132,18 @@ public:
   /// getWarningOptionForDiag - Return the lowest-level warning option that
   /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
   /// the diagnostic, this returns null.
-  static const char *getWarningOptionForDiag(unsigned DiagID);
-
+  static llvm::StringRef getWarningOptionForDiag(unsigned DiagID);
+  
   /// getCategoryNumberForDiag - Return the category number that a specified
   /// DiagID belongs to, or 0 if no category.
   static unsigned getCategoryNumberForDiag(unsigned DiagID);
 
+  /// getNumberOfCategories - Return the number of categories
+  static unsigned getNumberOfCategories();
+
   /// getCategoryNameFromID - Given a category ID, return the name of the
   /// category.
-  static const char *getCategoryNameFromID(unsigned CategoryID);
+  static llvm::StringRef getCategoryNameFromID(unsigned CategoryID);
   
   /// \brief Enumeration describing how the the emission of a diagnostic should
   /// be treated when it occurs during C++ template argument deduction.
@@ -179,24 +182,24 @@ public:
   static SFINAEResponse getDiagnosticSFINAEResponse(unsigned DiagID);
 
   /// getName - Given a diagnostic ID, return its name
-  static const char *getName(unsigned DiagID);
+  static llvm::StringRef getName(unsigned DiagID);
   
   /// getIdFromName - Given a diagnostic name, return its ID, or 0
-  static unsigned getIdFromName(char const *Name);
+  static unsigned getIdFromName(llvm::StringRef Name);
   
   /// getBriefExplanation - Given a diagnostic ID, return a brief explanation
   /// of the issue
-  static const char *getBriefExplanation(unsigned DiagID);
+  static llvm::StringRef getBriefExplanation(unsigned DiagID);
 
   /// getFullExplanation - Given a diagnostic ID, return a full explanation
   /// of the issue
-  static const char *getFullExplanation(unsigned DiagID);
+  static llvm::StringRef getFullExplanation(unsigned DiagID);
 
 private:
   /// setDiagnosticGroupMapping - Change an entire diagnostic group (e.g.
   /// "unknown-pragmas" to have the specified mapping.  This returns true and
   /// ignores the request if "Group" was unknown, false otherwise.
-  bool setDiagnosticGroupMapping(const char *Group, diag::Mapping Map,
+  bool setDiagnosticGroupMapping(llvm::StringRef Group, diag::Mapping Map,
                                  SourceLocation Loc, Diagnostic &Diag) const;
 
   /// \brief Based on the way the client configured the Diagnostic

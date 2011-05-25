@@ -939,8 +939,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
         OptionName += "-Werror";
     }
 
-    if (const char *
-          Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID())) {
+    llvm::StringRef Opt = DiagnosticIDs::getWarningOptionForDiag(Info.getID());
+    if (!Opt.empty()) {
       if (!OptionName.empty())
         OptionName += ',';
       OptionName += "-W";

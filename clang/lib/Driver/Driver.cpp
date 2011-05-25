@@ -398,9 +398,10 @@ void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
 /// PrintDiagnosticCategories - Implement the --print-diagnostic-categories
 /// option.
 static void PrintDiagnosticCategories(llvm::raw_ostream &OS) {
-  for (unsigned i = 1; // Skip the empty category.
-       const char *CategoryName = DiagnosticIDs::getCategoryNameFromID(i); ++i)
-    OS << i << ',' << CategoryName << '\n';
+  // Skip the empty category.
+  for (unsigned i = 1, max = DiagnosticIDs::getNumberOfCategories();
+       i != max; ++i)
+    OS << i << ',' << DiagnosticIDs::getCategoryNameFromID(i) << '\n';
 }
 
 bool Driver::HandleImmediateArgs(const Compilation &C) {
