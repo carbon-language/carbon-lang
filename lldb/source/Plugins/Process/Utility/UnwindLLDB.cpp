@@ -164,6 +164,8 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
                 return false; // Infinite loop where the current cursor is the same as the previous one...
             else if (abi->StackUsesFrames())
             {
+                // We might have a CFA that is not using the frame pointer and
+                // we want to validate that the frame pointer is valid.
                 if (reg_ctx_sp->GetFP() == 0)
                     return false;
             }
