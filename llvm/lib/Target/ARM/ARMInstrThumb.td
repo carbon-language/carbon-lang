@@ -466,7 +466,7 @@ let isCall = 1,
   // ARMv4T
   // FIXME: Should be a pseudo.
   let isCodeGenOnly = 1 in
-  def tBX : TIx2<{?,?,?,?,?}, {?,?}, ?,
+  def tBX_CALL : TIx2<{?,?,?,?,?}, {?,?}, ?,
                   (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                   "mov\tlr, pc\n\tbx\t$func",
                   [(ARMcall_nolink tGPR:$func)]>,
@@ -521,7 +521,7 @@ let isCall = 1,
   // ARMv4T
   let isCodeGenOnly = 1 in
   // FIXME: Should be a pseudo.
-  def tBXr9 : TIx2<{?,?,?,?,?}, {?,?}, ?,
+  def tBXr9_CALL : TIx2<{?,?,?,?,?}, {?,?}, ?,
                    (outs), (ins tGPR:$func, variable_ops), IIC_Br,
                    "mov\tlr, pc\n\tbx\t$func",
                    [(ARMcall_nolink tGPR:$func)]>,
