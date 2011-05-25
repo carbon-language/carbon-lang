@@ -478,6 +478,7 @@ static bool DisassembleThumb1DP(MCInst &MI, unsigned Opcode, uint32_t insn,
 // tMOVr, tMOVgpr2gpr, tMOVgpr2tgpr, tMOVtgpr2gpr: Rd|tRd Rm|tRn
 // tBX: Rm
 // tBX_RET: 0 operand
+// tBX_RET_vararg: Rm
 // tBLXr_r9: Rm
 // tBRIND: Rm
 static bool DisassembleThumb1Special(MCInst &MI, unsigned Opcode, uint32_t insn,
