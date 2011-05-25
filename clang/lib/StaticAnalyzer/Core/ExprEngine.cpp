@@ -156,6 +156,27 @@ const GRState* ExprEngine::getInitialState(const LocationContext *InitLoc) {
   return state;
 }
 
+bool
+ExprEngine::doesInvalidateGlobals(const CallOrObjCMessage &callOrMessage) const
+{
+  if (callOrMessage.isFunctionCall() && !callOrMessage.isCXXCall()) {
+    SVal calleeV = callOrMessage.getFunctionCallee();
+    if (const FunctionTextRegion *codeR =
+          llvm::dyn_cast_or_null<FunctionTextRegion>(calleeV.getAsRegion())) {
+      
+      const FunctionDecl *fd = codeR->getDecl();
+      if (const IdentifierInfo *ii = fd->getIdentifier()) {
+        llvm::StringRef fname = ii->getName();
+        if (fname == "strlen")
+          return false;
+      }
+    }
+  }
+  
+  // The conservative answer: invalidates globals.
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 // Top-level transfer function logic (Dispatcher).
 //===----------------------------------------------------------------------===//

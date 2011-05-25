@@ -2664,11 +2664,13 @@ void CFRefCount::evalSummary(ExplodedNodeSet& Dst,
   // NOTE: Even if RegionsToInvalidate is empty, we must still invalidate
   //  global variables.
   // NOTE: RetainReleaseChecker handles the actual invalidation of symbols.
-  state = state->invalidateRegions(RegionsToInvalidate.data(),
-                                   RegionsToInvalidate.data() +
-                                   RegionsToInvalidate.size(),
-                                   Ex, Count, &IS,
-                                   /* invalidateGlobals = */ true);
+  state =
+    state->invalidateRegions(RegionsToInvalidate.data(),
+                             RegionsToInvalidate.data() +
+                             RegionsToInvalidate.size(),
+                             Ex, Count, &IS,
+                             /* invalidateGlobals = */
+                             Eng.doesInvalidateGlobals(callOrMsg));
 
   // Evaluate the effect on the message receiver.
   if (!ErrorRange.isValid() && Receiver) {

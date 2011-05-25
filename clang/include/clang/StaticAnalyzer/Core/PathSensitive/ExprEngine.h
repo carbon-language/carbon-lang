@@ -21,6 +21,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/GRState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/TransferFuncs.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
@@ -460,6 +461,13 @@ private:
                     const void *tag, bool isLoad);
 
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);
+  
+  
+public:
+  /// Returns true if calling the specific function or method would possibly
+  /// cause global variables to be invalidated.
+  bool doesInvalidateGlobals(const CallOrObjCMessage &callOrMessage) const;
+  
 };
 
 } // end ento namespace

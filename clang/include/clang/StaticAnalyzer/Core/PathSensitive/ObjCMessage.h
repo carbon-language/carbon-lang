@@ -187,6 +187,7 @@ public:
     return CallE && isa<CXXMemberCallExpr>(CallE);
   }
   
+  SVal getFunctionCallee() const;
   SVal getCXXCallee() const;
 
   unsigned getNumArgs() const {
