@@ -100,6 +100,8 @@ class RAGreedy : public MachineFunctionPass,
     RS_Spill     ///< Produced by spilling.
   };
 
+  static const char *const StageName[];
+
   IndexedMap<unsigned char, VirtReg2IndexFunctor> LRStage;
 
   LiveRangeStage getStage(const LiveInterval &VirtReg) const {
@@ -115,6 +117,15 @@ class RAGreedy : public MachineFunctionPass,
         LRStage[Reg] = NewStage;
     }
   }
+
+  // Eviction. Sometimes an assigned live range can be evicted without
+  // conditions, but other times it must be split after being evicted to avoid
+  // infinite loops.
+  enum CanEvict {
+    CE_Never,    ///< Can never evict.
+    CE_Always,   ///< Can always evict.
+    CE_WithSplit ///< Can evict only if range is also split or spilled.
+  };
 
   // splitting state.
   std::auto_ptr<SplitAnalysis> SA;
@@ -187,6 +198,7 @@ private:
   SlotIndex getPrevMappedIndex(const MachineInstr*);
   void calcPrevSlots();
   unsigned nextSplitPoint(unsigned);
+  CanEvict canEvict(LiveInterval &A, LiveInterval &B);
   bool canEvictInterference(LiveInterval&, unsigned, float&);
 
   unsigned tryAssign(LiveInterval&, AllocationOrder&,
@@ -203,6 +215,17 @@ private:
 } // end anonymous namespace
 
 char RAGreedy::ID = 0;
+
+#ifndef NDEBUG
+const char *const RAGreedy::StageName[] = {
+  "RS_New",
+  "RS_First",
+  "RS_Second",
+  "RS_Global",
+  "RS_Local",
+  "RS_Spill"
+};
+#endif
 
 // Hysteresis to use when comparing floats.
 // This helps stabilize decisions based on float comparisons.
@@ -378,6 +401,20 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
 //                         Interference eviction
 //===----------------------------------------------------------------------===//
 
+/// canEvict - determine if A can evict the assigned live range B. The eviction
+/// policy defined by this function together with the allocation order defined
+/// by enqueue() decides which registers ultimately end up being split and
+/// spilled.
+///
+/// This function must define a non-circular relation when it returns CE_Always,
+/// otherwise infinite eviction loops are possible. When evicting a <= RS_Second
+/// range, it is possible to return CE_WithSplit which forces the evicted
+/// register to be split or spilled before it can evict anything again. That
+/// guarantees progress.
+RAGreedy::CanEvict RAGreedy::canEvict(LiveInterval &A, LiveInterval &B) {
+  return A.weight > B.weight ? CE_Always : CE_Never;
+}
+
 /// canEvict - Return true if all interferences between VirtReg and PhysReg can
 /// be evicted.
 /// Return false if any interference is heavier than MaxWeight.
@@ -398,6 +435,16 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
         return false;
       if (Intf->weight >= MaxWeight)
         return false;
+      switch (canEvict(VirtReg, *Intf)) {
+      case CE_Always:
+        break;
+      case CE_Never:
+        return false;
+      case CE_WithSplit:
+        if (getStage(*Intf) > RS_Second)
+          return false;
+        break;
+      }
       Weight = std::max(Weight, Intf->weight);
     }
   }
@@ -416,7 +463,7 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
   NamedRegionTimer T("Evict", TimerGroupName, TimePassesIsEnabled);
 
   // Keep track of the lightest single interference seen so far.
-  float BestWeight = VirtReg.weight;
+  float BestWeight = HUGE_VALF;
   unsigned BestPhys = 0;
 
   Order.rewind();
@@ -457,6 +504,11 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
       unassign(*Intf, VRM->getPhys(Intf->reg));
       ++NumEvicted;
       NewVRegs.push_back(Intf);
+      // Prevent looping by forcing the evicted ranges to be split before they
+      // can evict anything else.
+      if (getStage(*Intf) < RS_Second &&
+          canEvict(VirtReg, *Intf) == CE_WithSplit)
+        LRStage[Intf->reg] = RS_Second;
     }
   }
   return BestPhys;
@@ -1362,15 +1414,21 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs))
     return PhysReg;
 
-  if (unsigned PhysReg = tryEvict(VirtReg, Order, NewVRegs))
-    return PhysReg;
+  LiveRangeStage Stage = getStage(VirtReg);
+  DEBUG(dbgs() << StageName[Stage] << '\n');
+
+  // Try to evict a less worthy live range, but only for ranges from the primary
+  // queue. The RS_Second ranges already failed to do this, and they should not
+  // get a second chance until they have been split.
+  if (Stage != RS_Second)
+    if (unsigned PhysReg = tryEvict(VirtReg, Order, NewVRegs))
+      return PhysReg;
 
   assert(NewVRegs.empty() && "Cannot append to existing NewVRegs");
 
   // The first time we see a live range, don't try to split or spill.
   // Wait until the second time, when all smaller ranges have been allocated.
   // This gives a better picture of the interference to split around.
-  LiveRangeStage Stage = getStage(VirtReg);
   if (Stage == RS_First) {
     LRStage[VirtReg.reg] = RS_Second;
     DEBUG(dbgs() << "wait for second round\n");
