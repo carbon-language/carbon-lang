@@ -270,6 +270,9 @@
 @ CHECK: msr  cpsr_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
         msr  cpsr_fc, r0
 
+@ CHECK: msr  cpsr_fc, r0 @ encoding: [0x00,0xf0,0x29,0xe1]
+        msr  cpsr_all, r0
+
 @ CHECK: msr  cpsr_fsx, r0 @ encoding: [0x00,0xf0,0x2e,0xe1]
         msr  cpsr_fsx, r0
 
