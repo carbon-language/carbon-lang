@@ -947,8 +947,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   return true;
 }
 
-/// isMemoryOp - Returns true if instruction is a memory operations (that this
-/// pass is capable of operating on).
+/// isMemoryOp - Returns true if instruction is a memory operation that this
+/// pass is capable of operating on.
 static bool isMemoryOp(const MachineInstr *MI) {
   // When no memory operands are present, conservatively assume unaligned,
   // volatile, unfoldable.
