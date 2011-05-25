@@ -692,6 +692,13 @@ LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG) const
 SDValue MipsTargetLowering::
 LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
 {
+  unsigned StackAlignment =
+    getTargetMachine().getFrameLowering()->getStackAlignment();
+  assert(StackAlignment >=
+         cast<ConstantSDNode>(Op.getOperand(2).getNode())->getZExtValue() &&
+         "Cannot lower if the alignment of the allocated space is larger than \
+          that of the stack.");
+
   SDValue Chain = Op.getOperand(0);
   SDValue Size = Op.getOperand(1);
   DebugLoc dl = Op.getDebugLoc();
@@ -705,11 +712,22 @@ LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
 
   // The Sub result contains the new stack start address, so it
   // must be placed in the stack pointer register.
-  Chain = DAG.getCopyToReg(StackPointer.getValue(1), dl, Mips::SP, Sub);
+  Chain = DAG.getCopyToReg(StackPointer.getValue(1), dl, Mips::SP, Sub,
+                           SDValue());
+  SDValue NewSP = DAG.getCopyFromReg(Chain, dl, Mips::SP, MVT::i32,
+                                     Chain.getValue(1));
+  
+  // Align the allocated space.
+  MachineFunction &MF = DAG.getMachineFunction();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+  unsigned SPOffset = (MipsFI->getMaxCallFrameSize() + StackAlignment - 1) /
+                      StackAlignment * StackAlignment;
+  SDValue AllocPtr = DAG.getNode(ISD::ADD, dl, MVT::i32, NewSP,
+                                 DAG.getConstant(SPOffset, MVT::i32));
 
   // This node always has two return values: a new stack pointer
   // value and a chain
-  SDValue Ops[2] = { Sub, Chain };
+  SDValue Ops[2] = { AllocPtr, NewSP.getValue(1) };
   return DAG.getMergeValues(Ops, 2, dl);
 }
 
