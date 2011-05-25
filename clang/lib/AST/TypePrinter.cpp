@@ -978,7 +978,7 @@ TemplateSpecializationType::PrintTemplateArgumentList(
     SpecString += '<';
   
   for (unsigned Arg = 0; Arg < NumArgs; ++Arg) {
-    if (SpecString.size() > !SkipBrackets)
+    if (SpecString.size() > unsigned(!SkipBrackets))
       SpecString += ", ";
     
     // Print the argument into a string.
