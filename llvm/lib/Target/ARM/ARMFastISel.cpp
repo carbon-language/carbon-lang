@@ -1296,6 +1296,10 @@ bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   if (!isTypeLegal(Ty, DstVT))
     return false;
 
+  // FIXME: Handle sign-extension where necessary.
+  if (!I->getOperand(0)->getType()->isIntegerTy(32))
+    return false;
+
   unsigned Op = getRegForValue(I->getOperand(0));
   if (Op == 0) return false;
 
