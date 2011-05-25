@@ -111,8 +111,8 @@ unsigned FastISel::getRegForValue(const Value *V) {
   // of whether FastISel can handle them.
   MVT VT = RealVT.getSimpleVT();
   if (!TLI.isTypeLegal(VT)) {
-    // Promote MVT::i1 to a legal type though, because it's common and easy.
-    if (VT == MVT::i1)
+    // Handle integer promotions, though, because they're common and easy.
+    if (VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)
       VT = TLI.getTypeToTransformTo(V->getContext(), VT).getSimpleVT();
     else
       return 0;
@@ -653,21 +653,13 @@ bool FastISel::SelectCast(const User *I, unsigned Opcode) {
     // Unhandled type. Halt "fast" selection and bail.
     return false;
 
-  // Check if the destination type is legal. Or as a special case,
-  // it may be i1 if we're doing a truncate because that's
-  // easy and somewhat common.
+  // Check if the destination type is legal.
   if (!TLI.isTypeLegal(DstVT))
-    if (DstVT != MVT::i1 || Opcode != ISD::TRUNCATE)
-      // Unhandled type. Halt "fast" selection and bail.
-      return false;
+    return false;
 
-  // Check if the source operand is legal. Or as a special case,
-  // it may be i1 if we're doing zero-extension because that's
-  // easy and somewhat common.
+  // Check if the source operand is legal.
   if (!TLI.isTypeLegal(SrcVT))
-    if (SrcVT != MVT::i1 || Opcode != ISD::ZERO_EXTEND)
-      // Unhandled type. Halt "fast" selection and bail.
-      return false;
+    return false;
 
   unsigned InputReg = getRegForValue(I->getOperand(0));
   if (!InputReg)
@@ -675,18 +667,6 @@ bool FastISel::SelectCast(const User *I, unsigned Opcode) {
     return false;
 
   bool InputRegIsKill = hasTrivialKill(I->getOperand(0));
-
-  // If the operand is i1, arrange for the high bits in the register to be zero.
-  if (SrcVT == MVT::i1) {
-   SrcVT = TLI.getTypeToTransformTo(I->getContext(), SrcVT);
-   InputReg = FastEmitZExtFromI1(SrcVT.getSimpleVT(), InputReg, InputRegIsKill);
-   if (!InputReg)
-     return false;
-   InputRegIsKill = true;
-  }
-  // If the result is i1, truncate to the target's type for i1 first.
-  if (DstVT == MVT::i1)
-    DstVT = TLI.getTypeToTransformTo(I->getContext(), DstVT);
 
   unsigned ResultReg = FastEmit_r(SrcVT.getSimpleVT(),
                                   DstVT.getSimpleVT(),

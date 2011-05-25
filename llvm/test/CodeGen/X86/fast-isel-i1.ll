@@ -1,14 +1,15 @@
-; RUN: llc < %s -march=x86 -fast-isel | FileCheck %s
+; RUN: llc < %s -march=x86 -fast-isel -fast-isel-abort | FileCheck %s
+; RUN: llc < %s -march=x86-64 -fast-isel -fast-isel-abort | FileCheck %s
 
-declare i64 @test1a(i64)
+declare i32 @test1a(i32)
 
-define i32 @test1(i64 %x) nounwind {
+define i32 @test1(i32 %x) nounwind {
 ; CHECK: test1:
 ; CHECK: andb $1, %
-	%y = add i64 %x, -3
-	%t = call i64 @test1a(i64 %y)
-	%s = mul i64 %t, 77
-	%z = trunc i64 %s to i1
+	%y = add i32 %x, -3
+	%t = call i32 @test1a(i32 %y)
+	%s = mul i32 %t, 77
+	%z = trunc i32 %s to i1
 	br label %next
 
 next:		; preds = %0

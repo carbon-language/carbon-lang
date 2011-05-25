@@ -167,6 +167,7 @@ class ARMFastISel : public FastISel {
     bool SelectCall(const Instruction *I);
     bool SelectSelect(const Instruction *I);
     bool SelectRet(const Instruction *I);
+    bool SelectIntCast(const Instruction *I);
 
     // Utility routines.
   private:
@@ -1129,7 +1130,7 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   } else if (TruncInst *TI = dyn_cast<TruncInst>(BI->getCondition())) {
     MVT SourceVT;
     if (TI->hasOneUse() && TI->getParent() == I->getParent() &&
-        (isTypeLegal(TI->getOperand(0)->getType(), SourceVT))) {
+        (isLoadTypeLegal(TI->getOperand(0)->getType(), SourceVT))) {
       unsigned TstOpc = isThumb ? ARM::t2TSTri : ARM::TSTri;
       unsigned OpReg = getRegForValue(TI->getOperand(0));
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -1948,6 +1949,77 @@ bool ARMFastISel::SelectCall(const Instruction *I) {
 
 }
 
+bool ARMFastISel::SelectIntCast(const Instruction *I) {
+  // On ARM, in general, integer casts don't involve legal types; this code
+  // handles promotable integers.  The high bits for a type smaller than
+  // the register size are assumed to be undefined.
+  const Type *DestTy = I->getType();
+  Value *Op = I->getOperand(0);
+  const Type *SrcTy = Op->getType();
+
+  EVT SrcVT, DestVT;
+  SrcVT = TLI.getValueType(SrcTy, true);
+  DestVT = TLI.getValueType(DestTy, true);
+
+  if (isa<TruncInst>(I)) {
+    if (SrcVT != MVT::i32 && SrcVT != MVT::i16 && SrcVT != MVT::i8)
+      return false;
+    if (DestVT != MVT::i16 && DestVT != MVT::i8 && DestVT != MVT::i1)
+      return false;
+
+    unsigned SrcReg = getRegForValue(Op);
+    if (!SrcReg) return false;
+
+    // Because the high bits are undefined, a truncate doesn't generate
+    // any code.
+    UpdateValueMap(I, SrcReg);
+    return true;
+  } 
+  if (DestVT != MVT::i32 && DestVT != MVT::i16 && DestVT != MVT::i8)
+    return false;
+
+  unsigned Opc;
+  bool isZext = isa<ZExtInst>(I);
+  bool isBoolZext = false;
+  switch (SrcVT.getSimpleVT().SimpleTy) {
+  default: return false;
+  case MVT::i16:
+    if (isZext)
+      Opc = isThumb ? ARM::t2UXTHr : ARM::UXTHr;
+    else
+      Opc = isThumb ? ARM::t2SXTHr : ARM::SXTHr;
+    break;
+  case MVT::i8:
+    if (isZext)
+      Opc = isThumb ? ARM::t2UXTBr : ARM::UXTBr;
+    else
+      Opc = isThumb ? ARM::t2SXTBr : ARM::SXTBr;
+    break;
+  case MVT::i1:
+    if (isZext) {
+      Opc = isThumb ? ARM::t2ANDri : ARM::ANDri;
+      isBoolZext = true;
+      break;
+    }
+    return false;
+  }
+
+  // FIXME: We could save an instruction in many cases by special-casing
+  // load instructions.
+  unsigned SrcReg = getRegForValue(Op);
+  if (!SrcReg) return false;
+
+  unsigned DestReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+  MachineInstrBuilder MIB;
+  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc), DestReg)
+        .addReg(SrcReg);
+  if (isBoolZext)
+    MIB.addImm(1);
+  AddOptionalDefs(MIB);
+  UpdateValueMap(I, DestReg);
+  return true;
+}
+
 // TODO: SoftFP support.
 bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
 
@@ -1985,6 +2057,10 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectSelect(I);
     case Instruction::Ret:
       return SelectRet(I);
+    case Instruction::Trunc:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+      return SelectIntCast(I);
     default: break;
   }
   return false;

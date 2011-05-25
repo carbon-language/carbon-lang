@@ -936,18 +936,31 @@ bool X86FastISel::X86SelectCmp(const Instruction *I) {
 
 bool X86FastISel::X86SelectZExt(const Instruction *I) {
   // Handle zero-extension from i1 to i8, which is common.
-  if (I->getType()->isIntegerTy(8) &&
-      I->getOperand(0)->getType()->isIntegerTy(1)) {
-    unsigned ResultReg = getRegForValue(I->getOperand(0));
-    if (ResultReg == 0) return false;
-    // Set the high bits to zero.
-    ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
-    if (ResultReg == 0) return false;
-    UpdateValueMap(I, ResultReg);
-    return true;
+  if (!I->getOperand(0)->getType()->isIntegerTy(1)) 
+    return false;
+
+  EVT DstVT = TLI.getValueType(I->getType());
+  if (!TLI.isTypeLegal(DstVT))
+    return false;
+
+  unsigned ResultReg = getRegForValue(I->getOperand(0));
+  if (ResultReg == 0)
+    return false;
+
+  // Set the high bits to zero.
+  ResultReg = FastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
+  if (ResultReg == 0)
+    return false;
+
+  if (DstVT != MVT::i8) {
+    ResultReg = FastEmit_r(MVT::i8, DstVT.getSimpleVT(), ISD::ZERO_EXTEND,
+                           ResultReg, /*Kill=*/true);
+    if (ResultReg == 0)
+      return false;
   }
 
-  return false;
+  UpdateValueMap(I, ResultReg);
+  return true;
 }
 
 
@@ -1229,18 +1242,13 @@ bool X86FastISel::X86SelectFPTrunc(const Instruction *I) {
 }
 
 bool X86FastISel::X86SelectTrunc(const Instruction *I) {
-  if (Subtarget->is64Bit())
-    // All other cases should be handled by the tblgen generated code.
-    return false;
   EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
   EVT DstVT = TLI.getValueType(I->getType());
 
-  // This code only handles truncation to byte right now.
+  // This code only handles truncation to byte.
   if (DstVT != MVT::i8 && DstVT != MVT::i1)
-    // All other cases should be handled by the tblgen generated code.
     return false;
-  if (SrcVT != MVT::i16 && SrcVT != MVT::i32)
-    // All other cases should be handled by the tblgen generated code.
+  if (!TLI.isTypeLegal(SrcVT))
     return false;
 
   unsigned InputReg = getRegForValue(I->getOperand(0));
@@ -1248,16 +1256,26 @@ bool X86FastISel::X86SelectTrunc(const Instruction *I) {
     // Unhandled operand.  Halt "fast" selection and bail.
     return false;
 
-  // First issue a copy to GR16_ABCD or GR32_ABCD.
-  const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
-    ? X86::GR16_ABCDRegisterClass : X86::GR32_ABCDRegisterClass;
-  unsigned CopyReg = createResultReg(CopyRC);
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
-          CopyReg).addReg(InputReg);
+  if (SrcVT == MVT::i8) {
+    // Truncate from i8 to i1; no code needed.
+    UpdateValueMap(I, InputReg);
+    return true;
+  }
 
-  // Then issue an extract_subreg.
+  if (!Subtarget->is64Bit()) {
+    // If we're on x86-32; we can't extract an i8 from a general register.
+    // First issue a copy to GR16_ABCD or GR32_ABCD.
+    const TargetRegisterClass *CopyRC = (SrcVT == MVT::i16)
+      ? X86::GR16_ABCDRegisterClass : X86::GR32_ABCDRegisterClass;
+    unsigned CopyReg = createResultReg(CopyRC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),
+            CopyReg).addReg(InputReg);
+    InputReg = CopyReg;
+  }
+
+  // Issue an extract_subreg.
   unsigned ResultReg = FastEmitInst_extractsubreg(MVT::i8,
-                                                  CopyReg, /*Kill=*/true,
+                                                  InputReg, /*Kill=*/true,
                                                   X86::sub_8bit);
   if (!ResultReg)
     return false;
