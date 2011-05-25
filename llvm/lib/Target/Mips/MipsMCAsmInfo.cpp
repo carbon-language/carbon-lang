@@ -24,4 +24,5 @@ MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, StringRef TT) {
   ZeroDirective               = "\t.space\t";
   GPRel32Directive            = "\t.gpword\t";
   HasSetDirective             = false;
+  WeakRefDirective            = "\t.weak\t";
 }
