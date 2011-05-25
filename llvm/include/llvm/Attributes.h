@@ -78,9 +78,9 @@ const Attributes UWTable     = 1<<30;     ///< Function must be in a unwind
 /// uses tables for both, the semantics are:
 /// nil                = Needs an entry because an exception might pass by.
 /// nounwind           = No need for an entry
-/// ehframe            = Needs an entry because the ABI says so and because
+/// uwtable            = Needs an entry because the ABI says so and because
 ///                      an exception might pass by.
-/// ehframe + nounwind = Needs an entry because the ABI says so.
+/// uwtable + nounwind = Needs an entry because the ABI says so.
 
 /// @brief Attributes that only apply to function parameters.
 const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;

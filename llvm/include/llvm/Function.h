@@ -253,7 +253,8 @@ public:
     else removeFnAttr(Attribute::NoUnwind);
   }
 
-  /// @brief True if the ABI mandates this function be in a unwind table.
+  /// @brief True if the ABI mandates (or the user requested) that this
+  /// function be in a unwind table.
   bool hasUWTable() const {
     return hasFnAttr(Attribute::UWTable);
   }
@@ -264,7 +265,7 @@ public:
       removeFnAttr(Attribute::UWTable);
   }
 
-  /// @brief True if this function needs in a unwind table.
+  /// @brief True if this function needs an unwind table.
   bool needsUnwindTableEntry() const {
     return hasUWTable() || !doesNotThrow();
   }
