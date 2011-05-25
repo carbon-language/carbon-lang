@@ -168,7 +168,7 @@ __interface MicrosoftInterface {
 __int64 x7 = __int64(0);
 
 
-
+namespace If_exists_test {
 
 class IF_EXISTS {
 private:
@@ -209,6 +209,31 @@ __if_not_exists(IF_EXISTS::Type) {
 __if_not_exists(IF_EXISTS::Type_not) {
   int var244;
 }
+
+class IF_EXISTS_CLASS_TEST {
+  __if_exists(IF_EXISTS::Type) {
+    // __if_exists, __if_not_exists can nest
+    __if_not_exists(IF_EXISTS::Type_not) {
+      int var123;
+    }
+    int var23;
+  }
+
+  __if_exists(IF_EXISTS::Type_not) {
+   this wont compile.
+  }
+
+  __if_not_exists(IF_EXISTS::Type) {
+   this wont compile.
+  }
+
+  __if_not_exists(IF_EXISTS::Type_not) {
+    int var244;
+  }
+};
+
+}
+
 
 int __identifier(generic) = 3;
 

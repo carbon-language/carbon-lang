@@ -1929,6 +1929,12 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
     while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
       // Each iteration of this loop reads one member-declaration.
 
+      if (getLang().Microsoft && (Tok.is(tok::kw___if_exists) ||
+          Tok.is(tok::kw___if_not_exists))) {
+        ParseMicrosoftIfExistsClassDeclaration((DeclSpec::TST)TagType, CurAS);
+        continue;
+      }
+
       // Check for extraneous top-level semicolon.
       if (Tok.is(tok::semi)) {
         Diag(Tok, diag::ext_extra_struct_semi)
@@ -2527,4 +2533,65 @@ void Parser::ParseMicrosoftAttributes(ParsedAttributes &attrs,
     if (endLoc) *endLoc = Tok.getLocation();
     ExpectAndConsume(tok::r_square, diag::err_expected_rsquare);
   }
+}
+
+void Parser::ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
+                                                    AccessSpecifier& CurAS) {
+  bool Result;
+  if (ParseMicrosoftIfExistsCondition(Result))
+    return;
+  
+  if (Tok.isNot(tok::l_brace)) {
+    Diag(Tok, diag::err_expected_lbrace);
+    return;
+  }
+  ConsumeBrace();
+
+  // Condition is false skip all inside the {}.
+  if (!Result) {
+    SkipUntil(tok::r_brace, false);
+    return;
+  }
+
+  // Condition is true, parse the declaration.
+  while (Tok.isNot(tok::r_brace)) {
+
+    // __if_exists, __if_not_exists can nest.
+    if ((Tok.is(tok::kw___if_exists) || Tok.is(tok::kw___if_not_exists))) {
+      ParseMicrosoftIfExistsClassDeclaration((DeclSpec::TST)TagType, CurAS);
+      continue;
+    }
+
+    // Check for extraneous top-level semicolon.
+    if (Tok.is(tok::semi)) {
+      Diag(Tok, diag::ext_extra_struct_semi)
+        << DeclSpec::getSpecifierName((DeclSpec::TST)TagType)
+        << FixItHint::CreateRemoval(Tok.getLocation());
+      ConsumeToken();
+      continue;
+    }
+
+    AccessSpecifier AS = getAccessSpecifierIfPresent();
+    if (AS != AS_none) {
+      // Current token is a C++ access specifier.
+      CurAS = AS;
+      SourceLocation ASLoc = Tok.getLocation();
+      ConsumeToken();
+      if (Tok.is(tok::colon))
+        Actions.ActOnAccessSpecifier(AS, ASLoc, Tok.getLocation());
+      else
+        Diag(Tok, diag::err_expected_colon);
+      ConsumeToken();
+      continue;
+    }
+
+    // Parse all the comma separated declarators.
+    ParseCXXClassMemberDeclaration(CurAS);
+  }
+
+  if (Tok.isNot(tok::r_brace)) {
+    Diag(Tok, diag::err_expected_rbrace);
+    return;
+  }
+  ConsumeBrace();
 }

@@ -656,7 +656,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
 
   case tok::kw___if_exists:
   case tok::kw___if_not_exists:
-    ParseMicrosoftIfExistsDeclaration();
+    ParseMicrosoftIfExistsExternalDeclaration();
     return DeclGroupPtrTy();
 
   default:
@@ -1474,7 +1474,7 @@ bool Parser::ParseMicrosoftIfExistsCondition(bool& Result) {
   return false;
 }
 
-void Parser::ParseMicrosoftIfExistsDeclaration() {
+void Parser::ParseMicrosoftIfExistsExternalDeclaration() {
   bool Result;
   if (ParseMicrosoftIfExistsCondition(Result))
     return;
