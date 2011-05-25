@@ -22,7 +22,7 @@ static unsigned NumElements;
 /* EdgeProfAtExitHandler - When the program exits, just write out the profiling
  * data.
  */
-static void EdgeProfAtExitHandler() {
+static void EdgeProfAtExitHandler(void) {
   /* Note that if this were doing something more intelligent with the
    * instrumentation, we could do some computation here to expand what we
    * collected into simple edge profiles.  Since we directly count each edge, we

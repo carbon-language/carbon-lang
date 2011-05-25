@@ -22,7 +22,7 @@ static unsigned NumElements;
 /* OptEdgeProfAtExitHandler - When the program exits, just write out the
  * profiling data.
  */
-static void OptEdgeProfAtExitHandler() {
+static void OptEdgeProfAtExitHandler(void) {
   /* Note that, although the array has a counter for each edge, not all
    * counters are updated, the ones that are not used are initialised with -1.
    * When loading this information the counters with value -1 have to be

@@ -30,7 +30,7 @@ static void WriteAndFlushBBTraceData () {
 /* BBTraceAtExitHandler - When the program exits, just write out any remaining 
  * data and free the trace buffer.
  */
-static void BBTraceAtExitHandler() {
+static void BBTraceAtExitHandler(void) {
   WriteAndFlushBBTraceData ();
   free (ArrayStart);
 }
