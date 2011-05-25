@@ -154,7 +154,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned StackAlign = getStackAlignment();
   unsigned LocalVarAreaOffset = MipsFI->needGPSaveRestore() ? 
     (MFI->getObjectOffset(MipsFI->getGPFI()) + RegSize) :
-    MFI->getMaxCallFrameSize();
+    MipsFI->getMaxCallFrameSize();
   unsigned StackSize = AlignOffset(LocalVarAreaOffset, StackAlign) +
     AlignOffset(MFI->getStackSize(), StackAlign);
 

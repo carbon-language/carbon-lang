@@ -48,13 +48,13 @@ private:
   std::pair<int, int> InArgFIRange, OutArgFIRange;
   int GPFI; // Index of the frame object for restoring $gp 
   bool HasCall; // True if function has a function call.
-  int MaxCallFrameSize;
+  unsigned MaxCallFrameSize;
 public:
   MipsFunctionInfo(MachineFunction& MF)
   : SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
     OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), HasCall(false),
-    MaxCallFrameSize(-1)
+    MaxCallFrameSize(0)
   {}
 
   bool isInArgFI(int FI) const {
@@ -89,8 +89,8 @@ public:
   bool hasCall() const { return HasCall; }
   void setHasCall() { HasCall = true; }
 
-  int getMaxCallFrameSize() const { return MaxCallFrameSize; }
-  void setMaxCallFrameSize(int S) { MaxCallFrameSize = S; }
+  unsigned getMaxCallFrameSize() const { return MaxCallFrameSize; }
+  void setMaxCallFrameSize(unsigned S) { MaxCallFrameSize = S; }
 };
 
 } // end of namespace llvm

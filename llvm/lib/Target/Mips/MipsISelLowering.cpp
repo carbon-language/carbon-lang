@@ -1322,7 +1322,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (IsPIC) {
     // Function can have an arbitrary number of calls, so
     // hold the LastArgStackLoc with the biggest offset.
-    int MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
+    unsigned MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
     unsigned NextStackOffset = CCInfo.getNextStackOffset();
 
     // For O32, a minimum of four words (16 bytes) of argument space is
@@ -1330,7 +1330,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     if (Subtarget->isABI_O32())
       NextStackOffset = std::max(NextStackOffset, (unsigned)16);
 
-    if (MaxCallFrameSize < (int)NextStackOffset) {
+    if (MaxCallFrameSize < NextStackOffset) {
       MipsFI->setMaxCallFrameSize(NextStackOffset);
 
       // $gp restore slot must be aligned.
