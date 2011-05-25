@@ -355,7 +355,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo &MMI = MF.getMMI();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   bool needsFrameMoves = MMI.hasDebugInfo() ||
-                          !Fn->doesNotThrow() || UnwindTablesMandatory;
+    Fn->needsUnwindTableEntry();
   uint64_t MaxAlign  = MFI->getMaxAlignment(); // Desired stack alignment.
   uint64_t StackSize = MFI->getStackSize();    // Number of bytes to allocate.
   bool HasFP = hasFP(MF);

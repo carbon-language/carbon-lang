@@ -40,7 +40,6 @@ namespace llvm {
   bool JITExceptionHandling;
   bool JITEmitDebugInfo;
   bool JITEmitDebugInfoToDisk;
-  bool UnwindTablesMandatory;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
   bool GuaranteedTailCallOpt;
@@ -142,11 +141,6 @@ EmitJitDebugInfoToDisk("jit-emit-debug-to-disk",
   cl::Hidden,
   cl::desc("Emit debug info objfiles to disk"),
   cl::location(JITEmitDebugInfoToDisk),
-  cl::init(false));
-static cl::opt<bool, true>
-EnableUnwindTables("unwind-tables",
-  cl::desc("Generate unwinding tables for all functions"),
-  cl::location(UnwindTablesMandatory),
   cl::init(false));
 
 static cl::opt<llvm::Reloc::Model, true>

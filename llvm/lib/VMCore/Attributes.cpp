@@ -36,6 +36,8 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "noreturn ";
   if (Attrs & Attribute::NoUnwind)
     Result += "nounwind ";
+  if (Attrs & Attribute::UWTable)
+    Result += "uwtable ";
   if (Attrs & Attribute::InReg)
     Result += "inreg ";
   if (Attrs & Attribute::NoAlias)

@@ -253,6 +253,22 @@ public:
     else removeFnAttr(Attribute::NoUnwind);
   }
 
+  /// @brief True if the ABI mandates this function be in a unwind table.
+  bool hasUWTable() const {
+    return hasFnAttr(Attribute::UWTable);
+  }
+  void setHasUWTable(bool HasUWTable = true) {
+    if (HasUWTable)
+      addFnAttr(Attribute::UWTable);
+    else
+      removeFnAttr(Attribute::UWTable);
+  }
+
+  /// @brief True if this function needs in a unwind table.
+  bool needsUnwindTableEntry() const {
+    return hasUWTable() || !doesNotThrow();
+  }
+
   /// @brief Determine if the function returns a structure through first 
   /// pointer argument.
   bool hasStructRetAttr() const {

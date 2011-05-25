@@ -52,7 +52,7 @@ void ARMException::EndModule() {
 /// being emitted immediately after the function entry point.
 void ARMException::BeginFunction(const MachineFunction *MF) {
   Asm->OutStreamer.EmitFnStart();
-  if (!Asm->MF->getFunction()->doesNotThrow() || UnwindTablesMandatory)
+  if (Asm->MF->getFunction()->needsUnwindTableEntry())
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
                                                   Asm->getFunctionNumber()));
 }
@@ -60,7 +60,7 @@ void ARMException::BeginFunction(const MachineFunction *MF) {
 /// EndFunction - Gather and emit post-function exception information.
 ///
 void ARMException::EndFunction() {
-  if (Asm->MF->getFunction()->doesNotThrow() && !UnwindTablesMandatory)
+  if (!Asm->MF->getFunction()->needsUnwindTableEntry())
     Asm->OutStreamer.EmitCantUnwind();
   else {
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",

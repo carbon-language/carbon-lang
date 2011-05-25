@@ -87,6 +87,7 @@ namespace lltok {
     kw_nest,
     kw_readnone,
     kw_readonly,
+    kw_uwtable,
 
     kw_inlinehint,
     kw_noinline,

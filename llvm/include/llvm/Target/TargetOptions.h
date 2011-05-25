@@ -125,10 +125,6 @@ namespace llvm {
   /// flag is hidden and is only for debugging the debug info.
   extern bool JITEmitDebugInfoToDisk;
 
-  /// UnwindTablesMandatory - This flag indicates that unwind tables should
-  /// be emitted for all functions.
-  extern bool UnwindTablesMandatory;
-
   /// GuaranteedTailCallOpt - This flag is enabled when -tailcallopt is
   /// specified on the commandline. When the flag is on, participating targets
   /// will perform tail call optimization on all calls which use the fastcc

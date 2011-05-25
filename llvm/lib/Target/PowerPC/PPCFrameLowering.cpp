@@ -259,8 +259,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo &MMI = MF.getMMI();
   DebugLoc dl;
   bool needsFrameMoves = MMI.hasDebugInfo() ||
-       !MF.getFunction()->doesNotThrow() ||
-       UnwindTablesMandatory;
+    MF.getFunction()->needsUnwindTableEntry();
 
   // Prepare for frame info.
   MCSymbol *FrameLabel = 0;

@@ -68,8 +68,8 @@ unsigned XCoreRegisterInfo::getNumArgRegs(const MachineFunction *MF)
 }
 
 bool XCoreRegisterInfo::needsFrameMoves(const MachineFunction &MF) {
-  return MF.getMMI().hasDebugInfo() || !MF.getFunction()->doesNotThrow() ||
-          UnwindTablesMandatory;
+  return MF.getMMI().hasDebugInfo() ||
+    MF.getFunction()->needsUnwindTableEntry();
 }
 
 const unsigned* XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)

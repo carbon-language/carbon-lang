@@ -1,4 +1,4 @@
-; RUN: llc < %s -disable-cfi -mtriple=i386-apple-darwin9 -relocation-model=pic -disable-fp-elim -unwind-tables | FileCheck %s
+; RUN: llc < %s -disable-cfi -mtriple=i386-apple-darwin9 -relocation-model=pic -disable-fp-elim | FileCheck %s
 
 
 
@@ -26,7 +26,7 @@ entry:
 
 @.str = private constant [12 x i8] c"hello world\00", align 1 ; <[12 x i8]*> [#uses=1]
 
-define hidden void @func() nounwind ssp {
+define hidden void @func() nounwind ssp uwtable {
 entry:
   %0 = call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @.str, i64 0, i64 0)) nounwind ; <i32> [#uses=0]
   br label %return
@@ -37,7 +37,7 @@ return:                                           ; preds = %entry
 
 declare i32 @puts(i8*)
 
-define hidden i32 @main() nounwind ssp {
+define hidden i32 @main() nounwind ssp uwtable {
 entry:
   %retval = alloca i32                            ; <i32*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
