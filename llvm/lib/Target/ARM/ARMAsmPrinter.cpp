@@ -426,7 +426,6 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       O << (MI->getOperand(OpNum).getImm() & 0xffff);
       return false;
-    case 'm': // The base register of a memory operand.
     case 'M': // A register range suitable for LDM/STM.
     case 'p': // The high single-precision register of a VFP double-precision
               // register.
@@ -450,9 +449,20 @@ bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                           unsigned OpNum, unsigned AsmVariant,
                                           const char *ExtraCode,
                                           raw_ostream &O) {
-  if (ExtraCode && ExtraCode[0])
-    return true; // Unknown modifier.
-
+  // Does this asm operand have a single letter operand modifier?
+  if (ExtraCode && ExtraCode[0]) {
+    if (ExtraCode[1] != 0) return true; // Unknown modifier.
+    
+    switch (ExtraCode[0]) {
+      default: return true;  // Unknown modifier.
+      case 'm': // The base register of a memory operand.
+        if (!MI->getOperand(OpNum).isReg())
+          return true;
+        O << ARMInstPrinter::getRegisterName(MI->getOperand(OpNum).getReg());
+        return false;
+    }
+  }
+  
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isReg() && "unexpected inline asm memory operand");
   O << "[" << ARMInstPrinter::getRegisterName(MO.getReg()) << "]";

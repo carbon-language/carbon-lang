@@ -29,3 +29,14 @@ entry:
 call void asm sideeffect ".word ${0:L} \0A\09", "i"(i32 -1) nounwind, !srcloc !0
 ret void
 }
+
+@f2_ptr = internal global i32* @f2_var, align 4
+@f2_var = external global i32
+
+define void @f2() nounwind ssp {
+entry:
+; CHECK: f2
+; CHECK: ldr r0, [r{{[0-9]+}}]
+call void asm sideeffect "ldr r0, [${0:m}]\0A\09", "*m,~{r0}"(i32** @f2_ptr) nounwind, !srcloc !0
+ret void
+}
