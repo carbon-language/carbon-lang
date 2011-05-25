@@ -522,7 +522,7 @@ class TestBase(unittest2.TestCase):
         except AttributeError:
             self.dbg = lldb.SBDebugger.Create()
 
-        if not self.dbg.IsValid():
+        if not self.dbg:
             raise Exception('Invalid debugger instance')
 
         # We want our debugger to be synchronous.
@@ -715,7 +715,7 @@ class TestBase(unittest2.TestCase):
         # Terminate the current process being debugged, if any.
         if self.runStarted:
             self.runCmd("process kill", PROCESS_KILLED, check=False)
-        elif self.process and self.process.IsValid():
+        elif self.process:
             rc = self.invoke(self.process, "Kill")
             self.assertTrue(rc.Success(), PROCESS_KILLED)
             del self.process

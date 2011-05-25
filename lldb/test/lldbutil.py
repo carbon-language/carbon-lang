@@ -382,7 +382,7 @@ def print_stacktrace(thread, string_buffer = False):
         function = frame.GetFunction()
 
         load_addr = addrs[i].GetLoadAddress(target)
-        if not function.IsValid():
+        if not function:
             file_addr = addrs[i].GetFileAddress()
             print >> output, "  frame #{num}: {addr:#016x} {mod}`{symbol} + ????".format(
                 num=i, addr=load_addr, mod=mods[i], symbol=symbols[i])
@@ -440,9 +440,9 @@ def get_args_as_string(frame):
         args.append("(%s)%s=%s" % (var.GetTypeName(),
                                    var.GetName(),
                                    var.GetValue(frame)))
-    if frame.GetFunction().IsValid():
+    if frame.GetFunction():
         name = frame.GetFunction().GetName()
-    elif frame.GetSymbol().IsValid():
+    elif frame.GetSymbol():
         name = frame.GetSymbol().GetName()
     else:
         name = ""
