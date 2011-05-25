@@ -463,11 +463,8 @@ let isCall = 1,
   }
 
   // ARMv4T
-  // FIXME: Should be a pseudo.
-  let isCodeGenOnly = 1 in
-  def tBX_CALL : TIx2<{?,?,?,?,?}, {?,?}, ?,
-                  (outs), (ins tGPR:$func, variable_ops), IIC_Br,
-                  "mov\tlr, pc\n\tbx\t$func",
+  def tBX_CALL : tPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+                  Size4Bytes, IIC_Br,
                   [(ARMcall_nolink tGPR:$func)]>,
             Requires<[IsThumb, IsThumb1Only, IsNotDarwin]>;
 }
@@ -518,11 +515,8 @@ let isCall = 1,
   }
 
   // ARMv4T
-  let isCodeGenOnly = 1 in
-  // FIXME: Should be a pseudo.
-  def tBXr9_CALL : TIx2<{?,?,?,?,?}, {?,?}, ?,
-                   (outs), (ins tGPR:$func, variable_ops), IIC_Br,
-                   "mov\tlr, pc\n\tbx\t$func",
+  def tBXr9_CALL : tPseudoInst<(outs), (ins tGPR:$func, variable_ops),
+                   Size4Bytes, IIC_Br,
                    [(ARMcall_nolink tGPR:$func)]>,
               Requires<[IsThumb, IsThumb1Only, IsDarwin]>;
 }

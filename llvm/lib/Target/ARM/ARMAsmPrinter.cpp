@@ -1222,6 +1222,26 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
+  case ARM::tBXr9_CALL:
+  case ARM::tBX_CALL: {
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tMOVr);
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
+      TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    {
+      MCInst TmpInst;
+      TmpInst.setOpcode(ARM::tBX);
+      TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
+      // Add predicate operands.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
+      OutStreamer.EmitInstruction(TmpInst);
+    }
+    return;
+  }
   case ARM::BMOVPCRXr9_CALL:
   case ARM::BMOVPCRX_CALL: {
     {
