@@ -17,6 +17,23 @@ def disassemble_instructions (insts):
     for i in insts:
         print i
 
+def usage():
+    print "Usage: disasm.py [-n name] executable-image"
+    print "       By default, it breaks at and disassembles the 'main' function."
+    sys.exit(0)
+
+if len(sys.argv) == 2:
+    fname = 'main'
+    exe = sys.argv[1]
+elif len(sys.argv) == 4:
+    if sys.argv[1] != '-n':
+        usage()
+    else:
+        fname = sys.argv[2]
+        exe = sys.argv[3]
+else:
+    usage()
+
 # Create a new debugger instance
 debugger = lldb.SBDebugger.Create()
 
@@ -25,13 +42,13 @@ debugger = lldb.SBDebugger.Create()
 debugger.SetAsync (False)
 
 # Create a target from a file and arch
-print "Creating a target for '%s'" % sys.argv[1]
+print "Creating a target for '%s'" % exe
 
-target = debugger.CreateTargetWithFileAndArch (sys.argv[1], lldb.LLDB_ARCH_DEFAULT)
+target = debugger.CreateTargetWithFileAndArch (exe, lldb.LLDB_ARCH_DEFAULT)
 
 if target:
     # If the target is valid set a breakpoint at main
-    main_bp = target.BreakpointCreateByName ("main", target.GetExecutable().GetFilename());
+    main_bp = target.BreakpointCreateByName (fname, target.GetExecutable().GetFilename());
 
     print main_bp
 
