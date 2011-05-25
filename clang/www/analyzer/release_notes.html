@@ -15,9 +15,22 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_257">checker-257</h4>
+
+<p><b>built:</b>May 25, 2011<br>
+<b>download:</b> <a href="/checker/checker-257.tar.bz2">checker-257.tar.bz2</a></p>
+<p><b>highlights:</b></p>
+
+<ul>
+  <li>The analyzer is now far more aggressive with checking conformance with Core Foundation conventions.  Any function that returns a CF type must now obey the Core Foundation naming conventions, or use the <a href="/annotations.html#attr_cf_returns_retained">cf_returns_retained</a> or <a href="/annotations.html#attr_cf_returns_not_retained">cf_returns_not_retained</a> annotations.</li>
+  <li>Fixed a serious regression where the analyzer would not analyze Objective-C methods in class extensions.</li>
+  <li>Misc. bug fixes to improve analyzer precision.
+  </li>
+</ul>
+
 <h4 id="checker_256">checker-256</h4>
 
-<p><b>built:</b> April 13, 2011<br>
+<p><b>built:</b>April 13, 2011<br>
 <b>download:</b> <a href="/checker/checker-256.tar.bz2">checker-256.tar.bz2</a></p>
 <p><b>highlights:</b></p>
 
