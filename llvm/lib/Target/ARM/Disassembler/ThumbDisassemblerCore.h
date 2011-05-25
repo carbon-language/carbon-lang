@@ -476,8 +476,8 @@ static bool DisassembleThumb1DP(MCInst &MI, unsigned Opcode, uint32_t insn,
 // tADDhirr: Rd Rd(TIED_TO) Rm
 // tCMPhir:  Rd Rm
 // tMOVr, tMOVgpr2gpr, tMOVgpr2tgpr, tMOVtgpr2gpr: Rd|tRd Rm|tRn
+// tBX: Rm
 // tBX_RET: 0 operand
-// tBX_RET_vararg: Rm
 // tBLXr_r9: Rm
 // tBRIND: Rm
 static bool DisassembleThumb1Special(MCInst &MI, unsigned Opcode, uint32_t insn,
@@ -488,7 +488,7 @@ static bool DisassembleThumb1Special(MCInst &MI, unsigned Opcode, uint32_t insn,
     return true;
 
   // BX/BLX/tBRIND (indirect branch, i.e, mov pc, Rm) has 1 reg operand: Rm.
-  if (Opcode==ARM::tBLXr_r9 || Opcode==ARM::tBX_Rm || Opcode==ARM::tBRIND) {
+  if (Opcode==ARM::tBLXr_r9 || Opcode==ARM::tBX || Opcode==ARM::tBRIND) {
     if (Opcode != ARM::tBRIND) {
       // Handling the two predicate operands before the reg operand.
       if (!B->DoPredicateOperands(MI, Opcode, insn, NumOps))

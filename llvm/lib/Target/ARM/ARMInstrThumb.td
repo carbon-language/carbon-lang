@@ -369,9 +369,8 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
     let Inst{2-0} = 0b000;
   }
 
-  def tBX_Rm : TI<(outs), (ins pred:$p, GPR:$Rm), IIC_Br, "bx${p}\t$Rm",
-                  [/* for disassembly only */]>,
-               T1Special<{1,1,0,?}> {
+  def tBX : TI<(outs), (ins pred:$p, GPR:$Rm), IIC_Br, "bx${p}\t$Rm", []>,
+            T1Special<{1,1,0,?}> {
     // A6.2.3 & A8.6.25
     bits<4> Rm;
     let Inst{6-3} = Rm;
