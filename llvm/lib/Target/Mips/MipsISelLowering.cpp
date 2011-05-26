@@ -141,8 +141,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::FLOG10,            MVT::f32,   Expand);
   setOperationAction(ISD::FEXP,              MVT::f32,   Expand);
 
-  setOperationAction(ISD::EH_LABEL,          MVT::Other, Expand);
-
+  setOperationAction(ISD::EXCEPTIONADDR,     MVT::i32, Expand);
+  setOperationAction(ISD::EHSELECTION,       MVT::i32, Expand);
+  
   setOperationAction(ISD::VAARG,             MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,            MVT::Other, Expand);
   setOperationAction(ISD::VAEND,             MVT::Other, Expand);
@@ -176,6 +177,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   setStackPointerRegisterToSaveRestore(Mips::SP);
   computeRegisterProperties();
+
+  setExceptionPointerRegister(Mips::A0);
+  setExceptionSelectorRegister(Mips::A1);
 }
 
 MVT::SimpleValueType MipsTargetLowering::getSetCCResultType(EVT VT) const {

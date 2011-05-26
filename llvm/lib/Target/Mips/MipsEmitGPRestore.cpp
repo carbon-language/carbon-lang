@@ -55,6 +55,20 @@ bool Inserter::runOnMachineFunction(MachineFunction &F) {
     MachineBasicBlock& MBB = *MFI;
     MachineBasicBlock::iterator I = MFI->begin();
 
+    // If MBB is a landing pad, insert instruction that restores $gp after
+    // EH_LABEL.
+    if (MBB.isLandingPad()) {
+      // Find EH_LABEL first.
+      for (; I->getOpcode() != TargetOpcode::EH_LABEL; ++I) ;
+      
+      // Insert lw.
+      ++I;
+      DebugLoc dl = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
+      BuildMI(MBB, I, dl, TII->get(Mips::LW), Mips::GP).addImm(0)
+                                                       .addFrameIndex(FI);
+      Changed = true;
+    }
+
     while (I != MFI->end()) {
       if (I->getOpcode() != Mips::JALR) {
         ++I;

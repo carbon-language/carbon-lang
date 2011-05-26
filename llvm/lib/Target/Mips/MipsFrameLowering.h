@@ -39,6 +39,8 @@ public:
 
   bool hasFP(const MachineFunction &MF) const;
 
+  void getInitialFrameState(std::vector<MachineMove> &Moves) const;
+  
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS) const;
 };

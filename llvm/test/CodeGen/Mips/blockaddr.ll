@@ -8,14 +8,14 @@ entry:
   ret i8* %x
 }
 
-; CHECK-PIC: lw  $[[R0:[0-9]+]], %got($tmp1)($gp)
-; CHECK-PIC: addiu ${{[0-9]+}}, $[[R0]], %lo($tmp1)
-; CHECK-PIC: lw  $[[R1:[0-9]+]], %got($tmp2)($gp)
-; CHECK-PIC: addiu ${{[0-9]+}}, $[[R1]], %lo($tmp2)
-; CHECK-STATIC: lui  $[[R2:[0-9]+]], %hi($tmp1)
-; CHECK-STATIC: addiu ${{[0-9]+}}, $[[R2]], %lo($tmp1)
-; CHECK-STATIC: lui   $[[R3:[0-9]+]], %hi($tmp2)
-; CHECK-STATIC: addiu ${{[0-9]+}}, $[[R3]], %lo($tmp2)
+; CHECK-PIC: lw  $[[R0:[0-9]+]], %got($tmp[[T0:[0-9]+]])($gp)
+; CHECK-PIC: addiu ${{[0-9]+}}, $[[R0]], %lo($tmp[[T0]])
+; CHECK-PIC: lw  $[[R1:[0-9]+]], %got($tmp[[T1:[0-9]+]])($gp)
+; CHECK-PIC: addiu ${{[0-9]+}}, $[[R1]], %lo($tmp[[T1]])
+; CHECK-STATIC: lui  $[[R2:[0-9]+]], %hi($tmp[[T0:[0-9]+]])
+; CHECK-STATIC: addiu ${{[0-9]+}}, $[[R2]], %lo($tmp[[T0]])
+; CHECK-STATIC: lui   $[[R3:[0-9]+]], %hi($tmp[[T1:[0-9]+]])
+; CHECK-STATIC: addiu ${{[0-9]+}}, $[[R3]], %lo($tmp[[T1]])
 define void @f() nounwind {
 entry:
   %call = tail call i8* @dummy(i8* blockaddress(@f, %baz))

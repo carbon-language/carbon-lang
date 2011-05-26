@@ -182,24 +182,49 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (ATUsed)
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
 
-  // if framepointer enabled, set it to point to the stack pointer.
-  if (hasFP(MF)) {
-    // Find the instruction past the last instruction that saves a callee-saved
-    // register to the stack.
-    const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+  // Find the instruction past the last instruction that saves a callee-saved
+  // register to the stack.
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   
-    for (unsigned i = 0; i < CSI.size(); ++i)
-      ++MBBI;
+  for (unsigned i = 0; i < CSI.size(); ++i)
+    ++MBBI;
  
+  // if framepointer enabled, set it to point to the stack pointer.
+  if (hasFP(MF))
     // Insert instruction "move $fp, $sp" at this location.    
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::FP)
       .addReg(Mips::SP).addReg(Mips::ZERO);
-  }
 
   // Restore GP from the saved stack location
   if (MipsFI->needGPSaveRestore())
     BuildMI(MBB, MBBI, dl, TII.get(Mips::CPRESTORE))
       .addImm(MFI->getObjectOffset(MipsFI->getGPFI()));
+
+  // EH Frame infomation.
+  MachineModuleInfo &MMI = MF.getMMI();
+  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
+  MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
+  BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL)).addSym(FrameLabel);
+
+  if (hasFP(MF)) {
+    MachineLocation SPDst(Mips::FP);
+    MachineLocation SPSrc(Mips::SP);
+    Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc)); 
+  }
+    
+  if (StackSize) {
+    MachineLocation SPDst(MachineLocation::VirtualFP);
+    MachineLocation SPSrc(MachineLocation::VirtualFP, -StackSize);
+    Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc)); 
+  }
+
+  for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
+       E = CSI.end(); I != E; ++I) {
+    int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
+    MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
+    MachineLocation CSSrc(I->getReg());
+    Moves.push_back(MachineMove(FrameLabel, CSDst, CSSrc));
+  }        
 }
 
 void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
@@ -241,6 +266,13 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
     if (ATUsed)
       BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
   }
+}
+
+void
+MipsFrameLowering::getInitialFrameState(std::vector<MachineMove> &Moves) const {
+  MachineLocation Dst(MachineLocation::VirtualFP);
+  MachineLocation Src(Mips::SP, 0);
+  Moves.push_back(MachineMove(0, Dst, Src));
 }
 
 void MipsFrameLowering::

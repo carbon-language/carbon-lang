@@ -283,8 +283,7 @@ getEHHandlerRegister() const {
 
 int MipsRegisterInfo::
 getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  llvm_unreachable("What is the dwarf register number");
-  return -1;
+  return MipsGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
 #include "MipsGenRegisterInfo.inc"
