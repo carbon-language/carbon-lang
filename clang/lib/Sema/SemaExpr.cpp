@@ -3126,8 +3126,7 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType exprType,
     return false;
   }
 
-  // Allow sizeof(void)/alignof(void) as an extension.  vec_step(void) is not
-  // an extension, as void is a built-in scalar type (OpenCL 1.1 6.1.1).
+  // Allow sizeof(void)/alignof(void) as an extension.
   if (exprType->isVoidType()) {
     Diag(OpLoc, diag::ext_sizeof_void_type) << ExprKind << ExprRange;
     return false;
