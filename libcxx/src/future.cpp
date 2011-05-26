@@ -16,12 +16,12 @@ class _LIBCPP_HIDDEN __future_error_category
     : public __do_message
 {
 public:
-    virtual const char* name() const;
+    virtual const char* name() const _NOEXCEPT;
     virtual string message(int ev) const;
 };
 
 const char*
-__future_error_category::name() const
+__future_error_category::name() const _NOEXCEPT
 {
     return "future";
 }

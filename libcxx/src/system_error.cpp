@@ -15,28 +15,28 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 // class error_category
 
-error_category::error_category()
+error_category::error_category() _NOEXCEPT
 {
 }
 
-error_category::~error_category()
+error_category::~error_category() _NOEXCEPT
 {
 }
 
 error_condition
-error_category::default_error_condition(int ev) const
+error_category::default_error_condition(int ev) const _NOEXCEPT
 {
     return error_condition(ev, *this);
 }
 
 bool
-error_category::equivalent(int code, const error_condition& condition) const
+error_category::equivalent(int code, const error_condition& condition) const _NOEXCEPT
 {
     return default_error_condition(code) == condition;
 }
 
 bool
-error_category::equivalent(const error_code& code, int condition) const
+error_category::equivalent(const error_code& code, int condition) const _NOEXCEPT
 {
     return *this == code.category() && code.value() == condition;
 }
@@ -51,12 +51,12 @@ class _LIBCPP_HIDDEN __generic_error_category
     : public __do_message
 {
 public:
-    virtual const char* name() const;
+    virtual const char* name() const _NOEXCEPT;
     virtual string message(int ev) const;
 };
 
 const char*
-__generic_error_category::name() const
+__generic_error_category::name() const _NOEXCEPT
 {
     return "generic";
 }
@@ -72,7 +72,7 @@ __generic_error_category::message(int ev) const
 }
 
 const error_category&
-generic_category()
+generic_category() _NOEXCEPT
 {
     static __generic_error_category s;
     return s;
@@ -82,13 +82,13 @@ class _LIBCPP_HIDDEN __system_error_category
     : public __do_message
 {
 public:
-    virtual const char* name() const;
+    virtual const char* name() const _NOEXCEPT;
     virtual string message(int ev) const;
-    virtual error_condition default_error_condition(int ev) const;
+    virtual error_condition default_error_condition(int ev) const _NOEXCEPT;
 };
 
 const char*
-__system_error_category::name() const
+__system_error_category::name() const _NOEXCEPT
 {
     return "system";
 }
@@ -104,7 +104,7 @@ __system_error_category::message(int ev) const
 }
 
 error_condition
-__system_error_category::default_error_condition(int ev) const
+__system_error_category::default_error_condition(int ev) const _NOEXCEPT
 {
 #ifdef ELAST
     if (ev > ELAST)
@@ -114,7 +114,7 @@ __system_error_category::default_error_condition(int ev) const
 }
 
 const error_category&
-system_category()
+system_category() _NOEXCEPT
 {
     static __system_error_category s;
     return s;
@@ -186,7 +186,7 @@ system_error::system_error(int ev, const error_category& ecat)
 {
 }
 
-system_error::~system_error() throw()
+system_error::~system_error() _NOEXCEPT
 {
 }
 

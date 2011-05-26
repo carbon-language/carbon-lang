@@ -38,12 +38,12 @@ class _LIBCPP_HIDDEN __iostream_category
     : public __do_message
 {
 public:
-    virtual const char* name() const;
+    virtual const char* name() const _NOEXCEPT;
     virtual string message(int ev) const;
 };
 
 const char*
-__iostream_category::name() const
+__iostream_category::name() const _NOEXCEPT
 {
     return "iostream";
 }
