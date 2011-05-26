@@ -98,7 +98,7 @@ class ThreadAPITestCase(TestBase):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
-        # Find the line number to break inside main().
+        # Find the line number within main.cpp to break inside main().
         self.line = line_number("main.cpp", "// Set break point at this line and check variable 'my_char'.")
         # Find the line numbers within main2.cpp for step_over_3_times() and step_out_of_malloc_into_function_b().
         self.line2 = line_number("main2.cpp", "// thread step-out of malloc into function b.")
