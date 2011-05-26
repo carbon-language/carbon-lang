@@ -30,7 +30,7 @@ enum UnwindOpcodes {
   UOP_SetFPReg,
   UOP_SaveNonVol,
   UOP_SaveNonVolBig,
-  UOP_SaveXMM128,
+  UOP_SaveXMM128 = 8,
   UOP_SaveXMM128Big,
   UOP_PushMachFrame
 };
