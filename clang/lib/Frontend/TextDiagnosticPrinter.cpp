@@ -343,7 +343,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(Diagnostic::Level Level,
       // "included from" lines.
       if (LastWarningLoc != PLoc.getIncludeLoc()) {
         LastWarningLoc = PLoc.getIncludeLoc();
-        PrintIncludeStack(Level, LastWarningLoc, SM);
+        PrintIncludeStack(Diagnostic::Note, LastWarningLoc, SM);
       }
 
       if (DiagOpts->ShowLocation) {
