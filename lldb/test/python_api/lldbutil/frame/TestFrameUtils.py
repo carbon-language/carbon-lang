@@ -20,7 +20,7 @@ class FrameUtilsTestCase(TestBase):
 
     def test_frame_utils(self):
         """Test utility functions for the frame object."""
-        self.buildDefault(dictionary={'C_SOURCES': 'main.c'})
+        self.buildDefault()
         self.frame_utils()
 
     def frame_utils(self):
