@@ -864,9 +864,9 @@ void rdar8331641(int x) {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Call to function &apos;CFNumberCreate&apos; returns a Core Foundation object with a +1 retain count (owning reference)</string>
+// CHECK:      <string>Call to function &apos;CFNumberCreate&apos; returns a Core Foundation object with a +1 retain count</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Call to function &apos;CFNumberCreate&apos; returns a Core Foundation object with a +1 retain count (owning reference)</string>
+// CHECK: <string>Call to function &apos;CFNumberCreate&apos; returns a Core Foundation object with a +1 retain count</string>
 // CHECK:     </dict>
 // CHECK:     <dict>
 // CHECK:      <key>kind</key><string>control</string>
@@ -994,9 +994,9 @@ void rdar8331641(int x) {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Object allocated on line 53 and stored into &apos;value&apos; is not referenced later in this execution path and has a retain count of +1 (object leaked)</string>
+// CHECK:      <string>Object leaked: object allocated and stored into &apos;value&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Object allocated on line 53 and stored into &apos;value&apos; is not referenced later in this execution path and has a retain count of +1 (object leaked)</string>
+// CHECK: <string>Object leaked: object allocated and stored into &apos;value&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK:     </dict>
 // CHECK:    </array>
 // CHECK:    <key>description</key><string>Potential leak of an object allocated on line 53 and stored into &apos;value&apos;</string>
@@ -1012,3 +1012,4 @@ void rdar8331641(int x) {
 // CHECK:  </array>
 // CHECK: </dict>
 // CHECK: </plist>
+

@@ -2090,7 +2090,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
     }
 
     if (CurrV.isOwned()) {
-      os << "+1 retain count (owning reference).";
+      os << "+1 retain count";
 
       if (static_cast<CFRefBug&>(getBugType()).getTF().isGCEnabled()) {
         assert(CurrV.getObjKind() == RetEffect::CF);
@@ -2100,7 +2100,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
     }
     else {
       assert (CurrV.isNotOwned());
-      os << "+0 retain count (non-owning reference).";
+      os << "+0 retain count";
     }
 
     PathDiagnosticLocation Pos(S, BRC.getSourceManager());
@@ -2232,11 +2232,11 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode* N,
 
         case RefVal::ReturnedOwned:
           os << "Object returned to caller as an owning reference (single retain "
-          "count transferred to caller).";
+          "count transferred to caller)";
           break;
 
         case RefVal::ReturnedNotOwned:
-          os << "Object returned to caller with a +0 (non-owning) retain count.";
+          os << "Object returned to caller with a +0 retain count";
           break;
 
         default:
@@ -2369,12 +2369,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   llvm::tie(AllocNode, FirstBinding) =
     GetAllocationSite(BRC.getStateManager(), EndN, Sym);
 
-  // Get the allocate site.
-  assert(AllocNode);
-  const Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
-
   SourceManager& SMgr = BRC.getSourceManager();
-  unsigned AllocLine =SMgr.getInstantiationLineNumber(FirstStmt->getLocStart());
 
   // Compute an actual location for the leak.  Sometimes a leak doesn't
   // occur at an actual statement (e.g., transition between blocks; end
@@ -2407,10 +2402,14 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   std::string sbuf;
   llvm::raw_string_ostream os(sbuf);
 
-  os << "Object allocated on line " << AllocLine;
+  os << "Object leaked: ";
 
-  if (FirstBinding)
-    os << " and stored into '" << FirstBinding->getString() << '\'';
+  if (FirstBinding) {
+    os << "object allocated and stored into '"
+       << FirstBinding->getString() << '\'';
+  }
+  else
+    os << "allocated object";
 
   // Get the retain count.
   const RefVal* RV = EndN->getState()->get<RefBindings>(Sym);
@@ -2425,7 +2424,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
          << MD->getSelector().getAsString()
          << "') does not start with 'copy', 'mutableCopy', 'alloc' or 'new'."
             "  This violates the naming convention rules "
-            " given in the Memory Management Guide for Cocoa (object leaked)";
+            " given in the Memory Management Guide for Cocoa";
     }
     else {
       const FunctionDecl *FD = cast<FunctionDecl>(D);
@@ -2433,7 +2432,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
          << FD->getNameAsString()
          << "') does not contain 'Copy' or 'Create'.  This violates the naming"
             " convention rules given the Memory Management Guide for Core "
-            " Foundation (object leaked)";
+            " Foundation";
     }    
   }
   else if (RV->getKind() == RefVal::ErrorGCLeakReturned) {
@@ -2446,7 +2445,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   }
   else
     os << " is not referenced later in this execution path and has a retain "
-          "count of +" << RV->getCount() << " (object leaked)";
+          "count of +" << RV->getCount();
 
   return new PathDiagnosticEventPiece(L, os.str());
 }
