@@ -994,6 +994,7 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
   PDataSection =
     getContext().getCOFFSection(".pdata",
                                 COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_ALIGN_4BYTES |
                                 COFF::IMAGE_SCN_MEM_READ |
                                 COFF::IMAGE_SCN_MEM_WRITE,
                                 SectionKind::getDataRel());
@@ -1001,6 +1002,7 @@ void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
   XDataSection =
     getContext().getCOFFSection(".xdata",
                                 COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                COFF::IMAGE_SCN_ALIGN_4BYTES |
                                 COFF::IMAGE_SCN_MEM_READ |
                                 COFF::IMAGE_SCN_MEM_WRITE,
                                 SectionKind::getDataRel());
