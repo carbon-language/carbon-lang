@@ -128,17 +128,17 @@ Decl *Parser::ParseNamespace(unsigned Context,
       Diag(ExtraNamespaceLoc[0], diag::err_nested_namespaces_with_double_colon)
           << SourceRange(ExtraNamespaceLoc.front(), ExtraIdentLoc.back());
     } else {
-
-      std::string NamespaceFix = "";
+      std::string NamespaceFix;
       for (std::vector<IdentifierInfo*>::iterator I = ExtraIdent.begin(),
            E = ExtraIdent.end(); I != E; ++I) {
         NamespaceFix += " { namespace ";
         NamespaceFix += (*I)->getName();
       }
+
       std::string RBraces;
-      for (int i = 0; i < ExtraIdent.size(); ++i) {
+      for (unsigned i = 0, e = ExtraIdent.size(); i != e; ++i)
         RBraces +=  "} ";
-      }
+
       Diag(ExtraNamespaceLoc[0], diag::err_nested_namespaces_with_double_colon)
           << FixItHint::CreateReplacement(SourceRange(ExtraNamespaceLoc.front(),
                                                       ExtraIdentLoc.back()),
