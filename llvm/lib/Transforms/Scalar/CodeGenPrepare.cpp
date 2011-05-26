@@ -554,7 +554,8 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
   // find a node corresponding to the value.
   if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(CI))
     if (Instruction *VI = dyn_cast_or_null<Instruction>(DVI->getValue()))
-      if (DVI->getParent() != VI->getParent() || DT->dominates(DVI, VI)) {
+      if (!VI->isTerminator() && 
+          DVI->getParent() != VI->getParent() || DT->dominates(DVI, VI)) {
         DEBUG(dbgs() << "Moving Debug Value before :\n" << *DVI << ' ' << *VI);
         DVI->removeFromParent();
         if (isa<PHINode>(VI))
