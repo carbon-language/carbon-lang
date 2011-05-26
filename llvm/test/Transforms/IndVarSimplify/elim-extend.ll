@@ -2,7 +2,72 @@
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
-; Tests sign extend elimination in the inner and outer loop.
+; Test reusing the same IV with constant start for preinc and postinc values
+; with and without NSW.
+; IV rewrite only removes one sext. WidenIVs should remove all three.
+define void @postincConstIV(i8* %base, i32 %limit) nounwind {
+entry:
+  br label %loop
+; CHECK: loop:
+; CHECK-NOT: sext
+; CHECK: exit:
+loop:
+  %iv = phi i32 [ %postiv, %loop ], [ 0, %entry ]
+  %ivnsw = phi i32 [ %postivnsw, %loop ], [ 0, %entry ]
+  %preofs = sext i32 %iv to i64
+  %preadr = getelementptr i8* %base, i64 %preofs
+  store i8 0, i8* %preadr
+  %postiv = add i32 %iv, 1
+  %postofs = sext i32 %postiv to i64
+  %postadr = getelementptr i8* %base, i64 %postofs
+  store i8 0, i8* %postadr
+  %postivnsw = add nsw i32 %ivnsw, 1
+  %postofsnsw = sext i32 %postivnsw to i64
+  %postadrnsw = getelementptr i8* %base, i64 %postofsnsw
+  store i8 0, i8* %postadrnsw
+  %cond = icmp sgt i32 %limit, %iv
+  br i1 %cond, label %loop, label %exit
+exit:
+  br label %return
+return:
+  ret void
+}
+
+; Test reusing the same IV with nonconstant start for preinc and postinc values
+; with and without NSW.
+; As with constant IV start, WidenIVs should remove all three.
+;
+; FIXME: WidenIVs should remove %postofs just like %postofsnsw
+define void @postincVarIV(i8* %base, i32 %init, i32 %limit) nounwind {
+entry:
+  br label %loop
+; CHECK: loop:
+; CHECK: sext
+; CHECK-NOT: sext
+; CHECK: exit:
+loop:
+  %iv = phi i32 [ %postiv, %loop ], [ %init, %entry ]
+  %ivnsw = phi i32 [ %postivnsw, %loop ], [ 0, %entry ]
+  %preofs = sext i32 %iv to i64
+  %preadr = getelementptr i8* %base, i64 %preofs
+  store i8 0, i8* %preadr
+  %postiv = add i32 %iv, 1
+  %postofs = sext i32 %postiv to i64
+  %postadr = getelementptr i8* %base, i64 %postofs
+  store i8 0, i8* %postadr
+  %postivnsw = add nsw i32 %ivnsw, 1
+  %postofsnsw = sext i32 %postivnsw to i64
+  %postadrnsw = getelementptr i8* %base, i64 %postofsnsw
+  store i8 0, i8* %postadrnsw
+  %cond = icmp sgt i32 %limit, %iv
+  br i1 %cond, label %loop, label %exit
+exit:
+  br label %return
+return:
+  ret void
+}
+
+; Test sign extend elimination in the inner and outer loop.
 ; %outercount is straightforward to widen, besides being in an outer loop.
 ; %innercount is currently blocked by lcssa, so is not widened.
 ; %inneriv can be widened only after proving it has no signed-overflow

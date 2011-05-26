@@ -537,6 +537,7 @@ class WidenIV {
   LoopInfo *LI;
   Loop *L;
   ScalarEvolution *SE;
+  DominatorTree *DT;
   SmallVectorImpl<WeakVH> &DeadInsts;
 
   PHINode *WidePhi;
@@ -547,7 +548,8 @@ class WidenIV {
 
 public:
   WidenIV(PHINode *PN, const WideIVInfo &IVInfo, IVUsers *IUsers,
-          LoopInfo *LInfo, ScalarEvolution *SEv, SmallVectorImpl<WeakVH> &DI) :
+          LoopInfo *LInfo, ScalarEvolution *SEv, DominatorTree *DTree,
+          SmallVectorImpl<WeakVH> &DI) :
     OrigPhi(PN),
     WideType(IVInfo.WidestNativeType),
     IsSigned(IVInfo.IsSigned),
@@ -555,6 +557,7 @@ public:
     LI(LInfo),
     L(LI->getLoopFor(OrigPhi->getParent())),
     SE(SEv),
+    DT(DTree),
     DeadInsts(DI),
     WidePhi(0),
     WideInc(0),
@@ -616,7 +619,7 @@ void IndVarSimplify::SimplifyIVUsers(SCEVExpander &Rewriter) {
     }
     for (WideIVMap::const_iterator I = IVMap.begin(), E = IVMap.end();
          I != E; ++I) {
-      WidenIV Widener(I->first, I->second, IU, LI, SE, DeadInsts);
+      WidenIV Widener(I->first, I->second, IU, LI, SE, DT, DeadInsts);
       if (Widener.CreateWideIV(Rewriter))
         Changed = true;
     }
@@ -696,6 +699,40 @@ const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
   return AddRec;
 }
 
+/// HoistStep - Attempt to hoist an IV increment above a potential use.
+///
+/// To successfully hoist, two criteria must be met:
+/// - IncV operands dominate InsertPos and
+/// - InsertPos dominates IncV
+///
+/// Meeting the second condition means that we don't need to check all of IncV's
+/// existing uses (it's moving up in the domtree).
+///
+/// This does not yet recursively hoist the operands, although that would
+/// not be difficult.
+static bool HoistStep(Instruction *IncV, Instruction *InsertPos,
+                      const DominatorTree *DT)
+{
+  if (DT->dominates(IncV, InsertPos))
+    return true;
+
+  if (!DT->dominates(InsertPos->getParent(), IncV->getParent()))
+    return false;
+
+  if (IncV->mayHaveSideEffects())
+    return false;
+
+  // Attempt to hoist IncV
+  for (User::op_iterator OI = IncV->op_begin(), OE = IncV->op_end();
+       OI != OE; ++OI) {
+    Instruction *OInst = dyn_cast<Instruction>(OI);
+    if (OInst && !DT->dominates(OInst, InsertPos))
+      return false;
+  }
+  IncV->moveBefore(InsertPos);
+  return true;
+}
+
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
 Instruction *WidenIV::WidenIVUse(Instruction *NarrowUse,
@@ -755,9 +792,10 @@ Instruction *WidenIV::WidenIVUse(Instruction *NarrowUse,
     NarrowUse->replaceUsesOfWith(NarrowDef, Trunc);
     return 0;
   }
+  // Reuse the IV increment that SCEVExpander created as long as it dominates
+  // NarrowUse.
   Instruction *WideUse = 0;
-  if (WideAddRec == WideIncExpr) {
-    // Reuse the IV increment that SCEVExpander created.
+  if (WideAddRec == WideIncExpr && HoistStep(WideInc, NarrowUse, DT)) {
     WideUse = WideInc;
   }
   else {
@@ -828,32 +866,45 @@ bool WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
   // WidenIVUse to reuse it when widening the narrow IV's increment. We don't
   // employ a general reuse mechanism because the call above is the only call to
   // SCEVExpander. Henceforth, we produce 1-to-1 narrow to wide uses.
-  assert(WidePhi->hasOneUse() && "New IV has multiple users");
-  WideInc = WidePhi->use_back();
-  WideIncExpr = SE->getSCEV(WideInc);
+  if (BasicBlock *LatchBlock = L->getLoopLatch()) {
+    WideInc =
+      cast<Instruction>(WidePhi->getIncomingValueForBlock(LatchBlock));
+    WideIncExpr = SE->getSCEV(WideInc);
+  }
 
   DEBUG(dbgs() << "Wide IV: " << *WidePhi << "\n");
   ++NumWidened;
 
   // Traverse the def-use chain using a worklist starting at the original IV.
   assert(Processed.empty() && "expect initial state" );
-  SmallVector<std::pair<Instruction *, Instruction *>, 8> NarrowIVUsers;
 
-  NarrowIVUsers.push_back(std::make_pair(OrigPhi, WidePhi));
+  // Each worklist entry has a Narrow def-use link and Wide def.
+  SmallVector<std::pair<Use *, Instruction *>, 8> NarrowIVUsers;
+  for (Value::use_iterator UI = OrigPhi->use_begin(),
+         UE = OrigPhi->use_end(); UI != UE; ++UI) {
+    NarrowIVUsers.push_back(std::make_pair(&UI.getUse(), WidePhi));
+  }
   while (!NarrowIVUsers.empty()) {
-    Instruction *NarrowInst, *WideInst;
-    tie(NarrowInst, WideInst) = NarrowIVUsers.pop_back_val();
+    Use *NarrowDefUse;
+    Instruction *WideDef;
+    tie(NarrowDefUse, WideDef) = NarrowIVUsers.pop_back_val();
 
-    for (Value::use_iterator UI = NarrowInst->use_begin(),
-           UE = NarrowInst->use_end(); UI != UE; ++UI) {
-      Instruction *NarrowUse = cast<Instruction>(*UI);
-      Instruction *WideUse = WidenIVUse(NarrowUse, NarrowInst, WideInst);
-      if (WideUse)
-        NarrowIVUsers.push_back(std::make_pair(NarrowUse, WideUse));
+    // Process a def-use edge. This may replace the use, so don't hold a
+    // use_iterator across it.
+    Instruction *NarrowDef = cast<Instruction>(NarrowDefUse->get());
+    Instruction *NarrowUse = cast<Instruction>(NarrowDefUse->getUser());
+    Instruction *WideUse = WidenIVUse(NarrowUse, NarrowDef, WideDef);
 
-      if (NarrowInst->use_empty())
-        DeadInsts.push_back(NarrowInst);
+    // Follow all def-use edges from the previous narrow use.
+    if (WideUse) {
+      for (Value::use_iterator UI = NarrowUse->use_begin(),
+             UE = NarrowUse->use_end(); UI != UE; ++UI) {
+        NarrowIVUsers.push_back(std::make_pair(&UI.getUse(), WideUse));
+      }
     }
+    // WidenIVUse may have removed the def-use edge.
+    if (NarrowDef->use_empty())
+      DeadInsts.push_back(NarrowDef);
   }
   return true;
 }
