@@ -47,14 +47,12 @@ private:
   //                LowerCall except for the frame object for restoring $gp. 
   std::pair<int, int> InArgFIRange, OutArgFIRange;
   int GPFI; // Index of the frame object for restoring $gp 
-  bool HasCall; // True if function has a function call.
   unsigned MaxCallFrameSize;
 public:
   MipsFunctionInfo(MachineFunction& MF)
   : SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
-    OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), HasCall(false),
-    MaxCallFrameSize(0)
+    OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), MaxCallFrameSize(0)
   {}
 
   bool isInArgFI(int FI) const {
@@ -85,9 +83,6 @@ public:
 
   int getVarArgsFrameIndex() const { return VarArgsFrameIndex; }
   void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
-
-  bool hasCall() const { return HasCall; }
-  void setHasCall() { HasCall = true; }
 
   unsigned getMaxCallFrameSize() const { return MaxCallFrameSize; }
   void setMaxCallFrameSize(unsigned S) { MaxCallFrameSize = S; }

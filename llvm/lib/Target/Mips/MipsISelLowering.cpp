@@ -1171,8 +1171,6 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
 
-  MipsFI->setHasCall();
-
   // If this is the first call, create a stack frame object that points to
   // a location to which .cprestore saves $gp. The offset of this frame object
   // is set to 0, since we know nothing about the size of the argument area at
