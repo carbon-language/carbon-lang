@@ -55,7 +55,7 @@ let Namespace = "Mips" in {
   def AT   : MipsGPRReg< 1, "AT">,   DwarfRegNum<[1]>;
   def V0   : MipsGPRReg< 2, "2">,    DwarfRegNum<[2]>;
   def V1   : MipsGPRReg< 3, "3">,    DwarfRegNum<[3]>;
-  def A0   : MipsGPRReg< 4, "4">,    DwarfRegNum<[5]>;
+  def A0   : MipsGPRReg< 4, "4">,    DwarfRegNum<[4]>;
   def A1   : MipsGPRReg< 5, "5">,    DwarfRegNum<[5]>;
   def A2   : MipsGPRReg< 6, "6">,    DwarfRegNum<[6]>;
   def A3   : MipsGPRReg< 7, "7">,    DwarfRegNum<[7]>;

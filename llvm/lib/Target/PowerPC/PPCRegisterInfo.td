@@ -256,7 +256,7 @@ def CTR  : SPR<9, "ctr">, DwarfRegNum<[66]>;
 def CTR8 : SPR<9, "ctr">, DwarfRegNum<[66]>;
 
 // VRsave register
-def VRSAVE: SPR<256, "VRsave">, DwarfRegNum<[107]>;
+def VRSAVE: SPR<256, "VRsave">, DwarfRegNum<[109]>;
 
 // Carry bit.  In the architecture this is really bit 0 of the XER register
 // (which really is SPR register 1);  this is the only bit interesting to a
