@@ -26,6 +26,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifdef _MSC_VER
+#include <direct.h>
+#endif
 
 /* #define DEBUG_GCDAPROFILING */
 
@@ -86,7 +89,11 @@ static void recursive_mkdir(const char *filename) {
       pathname = malloc(i + 1);
       strncpy(pathname, filename, i);
       pathname[i] = '\0';
+#ifdef _MSC_VER
+      _mkdir(pathname);
+#else
       mkdir(pathname, 0750);  /* some of these will fail, ignore it. */
+#endif
       free(pathname);
     }
   }
