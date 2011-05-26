@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=x86 -fast-isel -fast-isel-abort | FileCheck %s
-; RUN: llc < %s -march=x86-64 -fast-isel -fast-isel-abort | FileCheck %s
+; RUN: llc < %s -mtriple=i686-apple-darwin10 -fast-isel -fast-isel-abort | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -fast-isel -fast-isel-abort | FileCheck %s
 
 declare i32 @test1a(i32)
 
