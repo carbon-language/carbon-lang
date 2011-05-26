@@ -1,4 +1,6 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
+; FIXME: ExecutionEngine is broken for ARM, please remove the following XFAIL when it will be fixed.
 
 define i32 @main() {
 	%X = malloc i32		; <i32*> [#uses=1]

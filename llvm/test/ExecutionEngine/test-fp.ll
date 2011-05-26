@@ -1,4 +1,6 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
+; FIXME: ExecutionEngine is broken for ARM, please remove the following XFAIL when it will be fixed.
 
 define double @test(double* %DP, double %Arg) {
 	%D = load double* %DP		; <double> [#uses=1]

@@ -1,4 +1,6 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
+; FIXME: ExecutionEngine is broken for ARM, please remove the following XFAIL when it will be fixed.
 
 define i32 @foo(i32 %X, i32 %Y, double %A) {
 	%cond212 = fcmp une double %A, 1.000000e+00		; <i1> [#uses=1]

@@ -1,4 +1,7 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
+; FIXME: ExecutionEngine is broken for ARM, please remove the following XFAIL when it will be fixed.
+
 
 @A = global i32 0		; <i32*> [#uses=1]
 

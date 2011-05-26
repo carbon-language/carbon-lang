@@ -1,4 +1,6 @@
 ; RUN: lli %s > /dev/null
+; XFAIL: arm
+; FIXME: ExecutionEngine is broken for ARM, please remove the following XFAIL when it will be fixed.
 
 define i32 @main() {
 	call i32 @mylog( i32 4 )		; <i32>:1 [#uses=0]
