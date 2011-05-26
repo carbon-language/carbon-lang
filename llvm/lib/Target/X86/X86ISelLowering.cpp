@@ -2091,54 +2091,28 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     }
 
     if (VA.isRegLoc()) {
-      if (isByVal) {
-        if (CCInfo.isFirstByValRegValid()) {
-          EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
-          unsigned reg = CCInfo.getFirstByValReg();
-          SDValue Load = DAG.getLoad(PtrVT, dl, Chain, Arg,
-                                     MachinePointerInfo(),
-                                     false, false, 0);
-          MemOpChains.push_back(Load.getValue(1));
-          RegsToPass.push_back(std::make_pair(reg, Load));
-          if (Flags.getByValSize() > 8) {
-            SDValue Const8 = DAG.getConstant(8, MVT::i32);
-            SDValue AddArg = DAG.getNode(ISD::ADD, dl, PtrVT, Arg, Const8);
-            SDValue Load2 = DAG.getLoad(PtrVT, dl, Chain, AddArg,
-                                       MachinePointerInfo(),
-                                       false, false, 0);
-            MemOpChains.push_back(Load.getValue(1));
-            RegsToPass.push_back(std::make_pair(reg+1, Load));
-          }
-          CCInfo.clearFirstByValReg();
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+      if (isVarArg && IsWin64) {
+        // Win64 ABI requires argument XMM reg to be copied to the corresponding
+        // shadow reg if callee is a varargs function.
+        unsigned ShadowReg = 0;
+        switch (VA.getLocReg()) {
+        case X86::XMM0: ShadowReg = X86::RCX; break;
+        case X86::XMM1: ShadowReg = X86::RDX; break;
+        case X86::XMM2: ShadowReg = X86::R8; break;
+        case X86::XMM3: ShadowReg = X86::R9; break;
         }
-      } else {
-        // Usual case:
-        RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
-        if (isVarArg && IsWin64) {
-          // Win64 ABI requires argument XMM reg to be copied to the corresponding
-          // shadow reg if callee is a varargs function.
-          unsigned ShadowReg = 0;
-          switch (VA.getLocReg()) {
-          case X86::XMM0: ShadowReg = X86::RCX; break;
-          case X86::XMM1: ShadowReg = X86::RDX; break;
-          case X86::XMM2: ShadowReg = X86::R8; break;
-          case X86::XMM3: ShadowReg = X86::R9; break;
-          }
-          if (ShadowReg)
-            RegsToPass.push_back(std::make_pair(ShadowReg, Arg));
-        }
+        if (ShadowReg)
+          RegsToPass.push_back(std::make_pair(ShadowReg, Arg));
       }
     } else if (!IsSibcall && (!isTailCall || isByVal)) {
-      if (isByVal) {    // In memory.
-        // ??
-      }
       assert(VA.isMemLoc());
       if (StackPtr.getNode() == 0)
         StackPtr = DAG.getCopyFromReg(Chain, dl, X86StackPtr, getPointerTy());
       MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
                                              dl, DAG, VA, Flags));
     }
-  }     // end for (all register/memloc assignments)
+  }
 
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
@@ -2462,39 +2436,6 @@ X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
       (StackAlignment-SlotSize);
   }
   return Offset;
-}
-
-/// HandleByVal - Every parameter *after* a byval parameter is passed
-/// on the stack.  Remember the next parameter register to allocate,
-/// and then confiscate the rest of the parameter registers to insure
-/// this.
-void
-llvm::X86TargetLowering::HandleByVal(CCState *State, unsigned &size) const {
-  if (!Subtarget->is64Bit())
-    return;
-
-  if (size == 0 || size > 16)
-    return;
-
-  int RegsRequired = (size > 8) ? 2 : 1;
-
-  static const unsigned GPR64ArgRegs64Bit[] = {
-    X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8, X86::R9
-  };
-  unsigned NextRegToAlloc = State->getFirstUnallocated(GPR64ArgRegs64Bit, 6);
-
-  // If insufficient registers available
-  if (NextRegToAlloc + RegsRequired > 6)
-    return;
-
-  size = 0;     // Tell caller not to allocate stack.
-
-  unsigned reg = State->AllocateReg(GPR64ArgRegs64Bit, 6);
-  State->setFirstByValReg(reg);
-  
-  if (RegsRequired == 2) {
-    State->AllocateReg(GPR64ArgRegs64Bit, 6);
-  }
 }
 
 /// MatchingStackOffset - Return true if the given stack call argument is

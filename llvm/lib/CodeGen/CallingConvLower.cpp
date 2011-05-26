@@ -48,13 +48,8 @@ void CCState::HandleByVal(unsigned ValNo, MVT ValVT,
   if (MinAlign > (int)Align)
     Align = MinAlign;
   TM.getTargetLowering()->HandleByVal(const_cast<CCState*>(this), Size);
-  if (Size) {
-    unsigned Offset = AllocateStack(Size, Align);
-    addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
-  } else {
-    addLoc(CCValAssign::getReg(ValNo, ValVT, getFirstByValReg(), LocVT,
-                               LocInfo));
-  }
+  unsigned Offset = AllocateStack(Size, Align);
+  addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
 }
 
 /// MarkAllocated - Mark a register and all of its aliases as allocated.
