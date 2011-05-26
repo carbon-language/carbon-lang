@@ -210,7 +210,10 @@ def value_type_to_str(enum):
 # ==================================================
 
 def get_stopped_threads(process, reason):
-    """Returns the thread(s) with the specified stop reason in a list."""
+    """Returns the thread(s) with the specified stop reason in a list.
+
+    The list can be empty if no such thread exists.
+    """
     threads = []
     for t in process:
         if t.GetStopReason() == reason:
