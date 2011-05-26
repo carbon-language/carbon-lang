@@ -3054,8 +3054,34 @@ ExprResult Sema::ActOnParenExpr(SourceLocation L,
   return Owned(new (Context) ParenExpr(L, R, E));
 }
 
+/// \brief Check the constrains on expression operands to unary type expression
+/// and type traits.
+///
+/// This is just a convenience wrapper around
+/// Sema::CheckUnaryExprOrTypeTraitOperand.
+bool Sema::CheckUnaryExprOrTypeTraitOperand(Expr *Op,
+                                            UnaryExprOrTypeTrait ExprKind) {
+  return CheckUnaryExprOrTypeTraitOperand(Op->getType(),
+                                          Op->getExprLoc(),
+                                          Op->getSourceRange(),
+                                          ExprKind);
+}
+
+/// \brief Check the constraints on operands to unary expression and type
+/// traits.
+///
+/// This will complete any types necessary, and validate the various constraints
+/// on those operands.
+///
 /// The UsualUnaryConversions() function is *not* called by this routine.
-/// See C99 6.3.2.1p[2-4] for more details.
+/// C99 6.3.2.1p[2-4] all state:
+///   Except when it is the operand of the sizeof operator ...
+///
+/// C++ [expr.sizeof]p4
+///   The lvalue-to-rvalue, array-to-pointer, and function-to-pointer
+///   standard conversions are not applied to the operand of sizeof.
+///
+/// This policy is followed for all of the unary trait expressions.
 bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType exprType,
                                             SourceLocation OpLoc,
                                             SourceRange ExprRange,
@@ -3117,8 +3143,7 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType exprType,
   return false;
 }
 
-static bool CheckAlignOfExpr(Sema &S, Expr *E, SourceLocation OpLoc,
-                             SourceRange ExprRange) {
+static bool CheckAlignOfExpr(Sema &S, Expr *E) {
   E = E->IgnoreParens();
 
   // alignof decl is always ok.
@@ -3130,7 +3155,8 @@ static bool CheckAlignOfExpr(Sema &S, Expr *E, SourceLocation OpLoc,
     return false;
 
   if (E->getBitField()) {
-   S. Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 1 << ExprRange;
+    S.Diag(E->getExprLoc(), diag::err_sizeof_alignof_bitfield)
+       << 1 << E->getSourceRange();
     return true;
   }
 
@@ -3140,20 +3166,17 @@ static bool CheckAlignOfExpr(Sema &S, Expr *E, SourceLocation OpLoc,
     if (isa<FieldDecl>(ME->getMemberDecl()))
       return false;
 
-  return S.CheckUnaryExprOrTypeTraitOperand(E->getType(), OpLoc, ExprRange,
-                                            UETT_AlignOf);
+  return S.CheckUnaryExprOrTypeTraitOperand(E, UETT_AlignOf);
 }
 
-bool Sema::CheckVecStepExpr(Expr *E, SourceLocation OpLoc,
-                            SourceRange ExprRange) {
+bool Sema::CheckVecStepExpr(Expr *E) {
   E = E->IgnoreParens();
 
   // Cannot know anything else if the expression is dependent.
   if (E->isTypeDependent())
     return false;
 
-  return CheckUnaryExprOrTypeTraitOperand(E->getType(), OpLoc, ExprRange,
-                                          UETT_VecStep);
+  return CheckUnaryExprOrTypeTraitOperand(E, UETT_VecStep);
 }
 
 /// \brief Build a sizeof or alignof expression given a type operand.
@@ -3180,36 +3203,33 @@ Sema::CreateUnaryExprOrTypeTraitExpr(TypeSourceInfo *TInfo,
 /// \brief Build a sizeof or alignof expression given an expression
 /// operand.
 ExprResult
-Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
-                                     UnaryExprOrTypeTrait ExprKind,
-                                     SourceRange R) {
+Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, UnaryExprOrTypeTrait ExprKind) {
   // Verify that the operand is valid.
   bool isInvalid = false;
   if (E->isTypeDependent()) {
     // Delay type-checking for type-dependent expressions.
   } else if (ExprKind == UETT_AlignOf) {
-    isInvalid = CheckAlignOfExpr(*this, E, OpLoc, R);
+    isInvalid = CheckAlignOfExpr(*this, E);
   } else if (ExprKind == UETT_VecStep) {
-    isInvalid = CheckVecStepExpr(E, OpLoc, R);
+    isInvalid = CheckVecStepExpr(E);
   } else if (E->getBitField()) {  // C99 6.5.3.4p1.
-    Diag(OpLoc, diag::err_sizeof_alignof_bitfield) << 0;
+    Diag(E->getExprLoc(), diag::err_sizeof_alignof_bitfield) << 0;
     isInvalid = true;
   } else if (E->getType()->isPlaceholderType()) {
     ExprResult PE = CheckPlaceholderExpr(E);
     if (PE.isInvalid()) return ExprError();
-    return CreateUnaryExprOrTypeTraitExpr(PE.take(), OpLoc, ExprKind, R);
+    return CreateUnaryExprOrTypeTraitExpr(PE.take(), ExprKind);
   } else {
-    isInvalid = CheckUnaryExprOrTypeTraitOperand(E->getType(), OpLoc, R,
-                                                 UETT_SizeOf);
+    isInvalid = CheckUnaryExprOrTypeTraitOperand(E, UETT_SizeOf);
   }
 
   if (isInvalid)
     return ExprError();
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
-  return Owned(new (Context) UnaryExprOrTypeTraitExpr(ExprKind, E,
-                                                      Context.getSizeType(),
-                                                      OpLoc, R.getEnd()));
+  return Owned(new (Context) UnaryExprOrTypeTraitExpr(
+      ExprKind, E, Context.getSizeType(), E->getExprLoc(),
+      E->getSourceRange().getEnd()));
 }
 
 /// ActOnUnaryExprOrTypeTraitExpr - Handle @c sizeof(type) and @c sizeof @c
@@ -3229,9 +3249,12 @@ Sema::ActOnUnaryExprOrTypeTraitExpr(SourceLocation OpLoc,
   }
 
   Expr *ArgEx = (Expr *)TyOrEx;
-  ExprResult Result
-    = CreateUnaryExprOrTypeTraitExpr(ArgEx, OpLoc, ExprKind,
-                                     ArgEx->getSourceRange());
+
+  // Make sure the location is accurately represented in the Expr node.
+  // FIXME: Is this really needed?
+  assert(ArgEx->getExprLoc() != OpLoc && "Mismatched locations");
+
+  ExprResult Result = CreateUnaryExprOrTypeTraitExpr(ArgEx, ExprKind);
 
   return move(Result);
 }
