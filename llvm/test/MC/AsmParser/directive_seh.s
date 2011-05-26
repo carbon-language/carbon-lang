@@ -12,6 +12,9 @@
 # CHECK-NOT: .section{{.*}}.xdata
 # CHECK: .seh_handlerdata
 # CHECK: .text
+# CHECK: .seh_startchained
+# CHECK: .seh_endprologue
+# CHECK: .seh_endchained
 # CHECK: .seh_endproc
 
     .text
