@@ -548,7 +548,19 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
 
   // From here on out we're working with named functions.
   if (CI->getCalledFunction() == 0) return false;
-  
+
+  // llvm.dbg.value is far away from the value then iSel may not be able
+  // handle it properly. iSel will drop llvm.dbg.value if it can not 
+  // find a node corresponding to the value.
+  if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(CI))
+    if (Instruction *VI = dyn_cast_or_null<Instruction>(DVI->getValue()))
+      if (DVI->getParent() != VI->getParent() || DT->dominates(DVI, VI)) {
+        DEBUG(dbgs() << "Moving Debug Value before :\n" << *DVI << ' ' << *VI);
+        DVI->removeFromParent();
+        DVI->insertAfter(VI);
+        return true;
+      }
+
   // We'll need TargetData from here on out.
   const TargetData *TD = TLI ? TLI->getTargetData() : 0;
   if (!TD) return false;
