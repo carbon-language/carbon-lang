@@ -94,8 +94,8 @@ private:
   /// not a real instruction.  Such uses should be ignored during codegen.
   bool IsDebug : 1;
 
-  /// SmallContents - Thisreally should be part of the Contents union, but lives
-  /// out here so we can get a better packed struct.
+  /// SmallContents - This really should be part of the Contents union, but
+  /// lives out here so we can get a better packed struct.
   /// MO_Register: Register number.
   /// OffsetedInfo: Low bits of offset.
   union {
