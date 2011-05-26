@@ -3054,6 +3054,24 @@ ExprResult Sema::ActOnParenExpr(SourceLocation L,
   return Owned(new (Context) ParenExpr(L, R, E));
 }
 
+static bool CheckVecStepTraitOperandType(Sema &S, QualType T,
+                                         SourceLocation Loc,
+                                         SourceRange ArgRange) {
+  // [OpenCL 1.1 6.11.12] "The vec_step built-in function takes a built-in
+  // scalar or vector data type argument..."
+  // Every built-in scalar type (OpenCL 1.1 6.1.1) is either an arithmetic
+  // type (C99 6.2.5p18) or void.
+  if (!(T->isArithmeticType() || T->isVoidType() || T->isVectorType())) {
+    S.Diag(Loc, diag::err_vecstep_non_scalar_vector_type)
+      << T << ArgRange;
+    return true;
+  }
+
+  assert((T->isVoidType() || !T->isIncompleteType()) &&
+         "Scalar types should always be complete");
+  return false;
+}
+
 /// \brief Check the constrains on expression operands to unary type expression
 /// and type traits.
 ///
@@ -3096,18 +3114,8 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType exprType,
   if (const ReferenceType *Ref = exprType->getAs<ReferenceType>())
     exprType = Ref->getPointeeType();
 
-  // [OpenCL 1.1 6.11.12] "The vec_step built-in function takes a built-in
-  // scalar or vector data type argument..."
-  // Every built-in scalar type (OpenCL 1.1 6.1.1) is either an arithmetic
-  // type (C99 6.2.5p18) or void.
-  if (ExprKind == UETT_VecStep) {
-    if (!(exprType->isArithmeticType() || exprType->isVoidType() ||
-          exprType->isVectorType())) {
-      Diag(OpLoc, diag::err_vecstep_non_scalar_vector_type)
-        << exprType << ExprRange;
-      return true;
-    }
-  }
+  if (ExprKind == UETT_VecStep)
+    return CheckVecStepTraitOperandType(*this, exprType, OpLoc, ExprRange);
 
   // C99 6.5.3.4p1:
   if (exprType->isFunctionType()) {
@@ -3121,9 +3129,7 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(QualType exprType,
   // Allow sizeof(void)/alignof(void) as an extension.  vec_step(void) is not
   // an extension, as void is a built-in scalar type (OpenCL 1.1 6.1.1).
   if (exprType->isVoidType()) {
-    if (ExprKind != UETT_VecStep)
-      Diag(OpLoc, diag::ext_sizeof_void_type)
-        << ExprKind << ExprRange;
+    Diag(OpLoc, diag::ext_sizeof_void_type) << ExprKind << ExprRange;
     return false;
   }
 
