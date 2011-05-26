@@ -557,7 +557,10 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
       if (DVI->getParent() != VI->getParent() || DT->dominates(DVI, VI)) {
         DEBUG(dbgs() << "Moving Debug Value before :\n" << *DVI << ' ' << *VI);
         DVI->removeFromParent();
-        DVI->insertAfter(VI);
+        if (isa<PHINode>(VI))
+          DVI->insertBefore(VI->getParent()->getFirstNonPHI());
+        else
+          DVI->insertAfter(VI);
         return true;
       }
 
