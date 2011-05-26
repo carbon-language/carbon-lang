@@ -285,7 +285,33 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
 
     break;
-  case 'x': 
+  case 'x':
+    // This fixes the poorly named crc32 intrinsics
+    if (Name.compare(5, 13, "x86.sse42.crc", 13) == 0) {
+      const char* NewFnName = NULL;
+      if (Name.compare(18, 2, "32", 2) == 0) {
+        if (Name.compare(20, 2, ".8") == 0) {
+          NewFnName = "llvm.x86.sse42.crc32.32.8";
+        } else if (Name.compare(20, 2, ".16") == 0) {
+          NewFnName = "llvm.x86.sse42.crc32.32.16";
+        } else if (Name.compare(20, 2, ".32") == 0) {
+          NewFnName = "llvm.x86.sse42.crc32.32.32";
+        }
+      }
+      else if (Name.compare(18, 2, "64", 2) == 0) {
+        if (Name.compare(20, 2, ".8") == 0) {
+          NewFnName = "llvm.x86.sse42.crc32.64.8";
+        } else if (Name.compare(20, 2, ".64") == 0) {
+          NewFnName = "llvm.x86.sse42.crc32.64.64";
+        }
+      }
+      if (NewFnName) {
+        F->setName(NewFnName);
+        NewFn = F;
+        return true;
+      }
+    }
+
     // This fixes all MMX shift intrinsic instructions to take a
     // x86_mmx instead of a v1i64, v2i32, v4i16, or v8i8.
     if (Name.compare(5, 8, "x86.mmx.", 8) == 0) {
