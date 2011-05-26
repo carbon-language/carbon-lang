@@ -307,8 +307,8 @@ void MCStreamer::EmitCFISameValue(int64_t Register) {
 }
 
 void MCStreamer::setCurrentW64UnwindInfo(MCWin64EHUnwindInfo *Frame) {
-  W64UnwindInfos.push_back(*Frame);
-  CurrentW64UnwindInfo = &W64UnwindInfos.back();
+  W64UnwindInfos.push_back(Frame);
+  CurrentW64UnwindInfo = W64UnwindInfos.back();
 }
 
 void MCStreamer::EnsureValidW64UnwindInfo() {
@@ -321,11 +321,11 @@ void MCStreamer::EmitWin64EHStartProc(const MCSymbol *Symbol) {
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a function before ending the previous one!");
-  MCWin64EHUnwindInfo Frame;
-  Frame.Begin = getContext().CreateTempSymbol();
-  Frame.Function = Symbol;
-  EmitLabel(Frame.Begin);
-  setCurrentW64UnwindInfo(&Frame);
+  MCWin64EHUnwindInfo *Frame = new (getContext()) MCWin64EHUnwindInfo;
+  Frame->Begin = getContext().CreateTempSymbol();
+  Frame->Function = Symbol;
+  EmitLabel(Frame->Begin);
+  setCurrentW64UnwindInfo(Frame);
 }
 
 void MCStreamer::EmitWin64EHEndProc() {
@@ -339,13 +339,13 @@ void MCStreamer::EmitWin64EHEndProc() {
 
 void MCStreamer::EmitWin64EHStartChained() {
   EnsureValidW64UnwindInfo();
-  MCWin64EHUnwindInfo Frame;
+  MCWin64EHUnwindInfo *Frame = new (getContext()) MCWin64EHUnwindInfo;
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
-  Frame.Begin = getContext().CreateTempSymbol();
-  Frame.Function = CurFrame->Function;
-  Frame.ChainedParent = CurFrame;
-  EmitLabel(Frame.Begin);
-  setCurrentW64UnwindInfo(&Frame);
+  Frame->Begin = getContext().CreateTempSymbol();
+  Frame->Function = CurFrame->Function;
+  Frame->ChainedParent = CurFrame;
+  EmitLabel(Frame->Begin);
+  setCurrentW64UnwindInfo(Frame);
 }
 
 void MCStreamer::EmitWin64EHEndChained() {

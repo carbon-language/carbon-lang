@@ -58,7 +58,7 @@ namespace llvm {
     MCDwarfFrameInfo *getCurrentFrameInfo();
     void EnsureValidFrame();
 
-    std::vector<MCWin64EHUnwindInfo> W64UnwindInfos;
+    std::vector<MCWin64EHUnwindInfo *> W64UnwindInfos;
     MCWin64EHUnwindInfo *CurrentW64UnwindInfo;
     void setCurrentW64UnwindInfo(MCWin64EHUnwindInfo *Frame);
     void EnsureValidW64UnwindInfo();
@@ -101,7 +101,7 @@ namespace llvm {
     }
 
     MCWin64EHUnwindInfo &getW64UnwindInfo(unsigned i) {
-      return W64UnwindInfos[i];
+      return *W64UnwindInfos[i];
     }
 
     /// @name Assembly File Formatting.
