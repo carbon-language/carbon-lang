@@ -35,6 +35,7 @@ std::get_unexpected() throw()
     return __sync_fetch_and_add(&__unexpected_handler, (std::unexpected_handler)0);
 }
 
+_ATTRIBUTE(noreturn)
 void
 std::unexpected()
 {
@@ -56,7 +57,7 @@ std::get_terminate() throw()
 }
 
 void
-std::terminate()
+std::terminate() _NOEXCEPT
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
@@ -156,8 +157,9 @@ nested_exception::~nested_exception()
 {
 }
 
+_ATTRIBUTE(noreturn)
 void
-nested_exception::rethrow_nested /*[[noreturn]]*/ () const
+nested_exception::rethrow_nested() const
 {
     if (__ptr_ == nullptr)
         terminate();

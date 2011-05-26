@@ -105,19 +105,19 @@ public:
 typedef void (*unexpected_handler)();
 _LIBCPP_VISIBLE unexpected_handler set_unexpected(unexpected_handler) throw();
 _LIBCPP_VISIBLE unexpected_handler get_unexpected() throw();
-_LIBCPP_VISIBLE void unexpected();
+_ATTRIBUTE(noreturn) _LIBCPP_VISIBLE void unexpected();
 
 typedef void (*terminate_handler)();
 _LIBCPP_VISIBLE terminate_handler set_terminate(terminate_handler) throw();
 _LIBCPP_VISIBLE terminate_handler get_terminate() throw();
-_LIBCPP_VISIBLE void terminate() __attribute__((__noreturn__));
+_ATTRIBUTE(noreturn) _LIBCPP_VISIBLE void terminate() _NOEXCEPT;
 
 _LIBCPP_VISIBLE bool uncaught_exception() throw();
 
 class exception_ptr;
 
 exception_ptr current_exception();
-void rethrow_exception(exception_ptr);  // noreturn
+_ATTRIBUTE(noreturn) void rethrow_exception(exception_ptr);
 
 class _LIBCPP_VISIBLE exception_ptr
 {
@@ -141,7 +141,7 @@ public:
         {return !(__x == __y);}
 
     friend exception_ptr current_exception();
-    friend void rethrow_exception(exception_ptr);  // noreturn
+    _ATTRIBUTE(noreturn) friend void rethrow_exception(exception_ptr);
 };
 
 template<class _E>
@@ -172,7 +172,7 @@ public:
     virtual ~nested_exception();
 
     // access functions
-    void rethrow_nested /*[[noreturn]]*/ () const;
+    _ATTRIBUTE(noreturn) void rethrow_nested() const;
     _LIBCPP_INLINE_VISIBILITY exception_ptr nested_ptr() const {return __ptr_;}
 };
 
@@ -185,9 +185,10 @@ struct __nested
 };
 
 template <class _Tp>
+_ATTRIBUTE(noreturn)
 void
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-throw_with_nested /*[[noreturn]]*/ (_Tp&& __t, typename enable_if<
+throw_with_nested(_Tp&& __t, typename enable_if<
                   is_class<typename remove_reference<_Tp>::type>::value &&
                   !is_base_of<nested_exception, typename remove_reference<_Tp>::type>::value
                                     >::type* = 0)
@@ -203,9 +204,10 @@ throw_with_nested (_Tp& __t, typename enable_if<
 }
 
 template <class _Tp>
+_ATTRIBUTE(noreturn)
 void
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-throw_with_nested /*[[noreturn]]*/ (_Tp&& __t, typename enable_if<
+throw_with_nested(_Tp&& __t, typename enable_if<
                   !is_class<typename remove_reference<_Tp>::type>::value ||
                   is_base_of<nested_exception, typename remove_reference<_Tp>::type>::value
                                     >::type* = 0)

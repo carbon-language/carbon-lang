@@ -116,8 +116,10 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_NO_DECLTYPE
 #endif
 
-#if !(__has_feature(cxx_attributes))
-#define _LIBCPP_HAS_NO_ATTRIBUTES
+#if __has_feature(cxx_attributes)
+#  define _ATTRIBUTE(x) [[x]]
+#else
+#  define _ATTRIBUTE(x) __attribute__ ((x))
 #endif
 
 #define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
