@@ -1,5 +1,5 @@
 """
-Test lldb process launch flags..
+Test lldb process launch flags.
 """
 
 import os, time
