@@ -21,35 +21,34 @@ class bad_alloc
     : public exception
 {
 public:
-    bad_alloc() throw();
-    bad_alloc(const bad_alloc&) throw();
-    bad_alloc& operator=(const bad_alloc&) throw();
-    virtual ~bad_alloc() throw();
-    virtual const char* what() const throw();
+    bad_alloc() noexcept;
+    bad_alloc(const bad_alloc&) noexcept;
+    bad_alloc& operator=(const bad_alloc&) noexcept;
+    virtual const char* what() const noexcept;
 };
 
 struct nothrow_t {};
 extern const nothrow_t nothrow;
 typedef void (*new_handler)();
-new_handler set_new_handler(new_handler new_p) throw();
-new_handler get_new_handler() throw();
+new_handler set_new_handler(new_handler new_p) noexcept;
+new_handler get_new_handler() noexcept;
 
 }  // std
 
-void* operator new(std::size_t size) throw(std::bad_alloc);            // replaceable
-void* operator new(std::size_t size, const std::nothrow_t&) throw();   // replaceable
-void  operator delete(void* ptr) throw();                              // replaceable
-void  operator delete(void* ptr, const std::nothrow_t&) throw();       // replaceable
+void* operator new(std::size_t size);                                   // replaceable
+void* operator new(std::size_t size, const std::nothrow_t&) noexcept;   // replaceable
+void  operator delete(void* ptr) noexcept;                              // replaceable
+void  operator delete(void* ptr, const std::nothrow_t&) noexcept;       // replaceable
 
-void* operator new[](std::size_t size) throw(std::bad_alloc);          // replaceable
-void* operator new[](std::size_t size, const std::nothrow_t&) throw(); // replaceable
-void  operator delete[](void* ptr) throw();                            // replaceable
-void  operator delete[](void* ptr, const std::nothrow_t&) throw();     // replaceable
+void* operator new[](std::size_t size);                                 // replaceable
+void* operator new[](std::size_t size, const std::nothrow_t&) noexcept; // replaceable
+void  operator delete[](void* ptr) noexcept;                            // replaceable
+void  operator delete[](void* ptr, const std::nothrow_t&) noexcept;     // replaceable
 
-void* operator new  (std::size_t size, void* ptr) throw();
-void* operator new[](std::size_t size, void* ptr) throw();
-void  operator delete  (void* ptr, void*) throw();
-void  operator delete[](void* ptr, void*) throw();
+void* operator new  (std::size_t size, void* ptr) noexcept;
+void* operator new[](std::size_t size, void* ptr) noexcept;
+void  operator delete  (void* ptr, void*) noexcept;
+void  operator delete[](void* ptr, void*) noexcept;
 
 */
 
@@ -66,18 +65,18 @@ class _LIBCPP_EXCEPTION_ABI bad_alloc
     : public exception
 {
 public:
-    bad_alloc() throw();
-    virtual ~bad_alloc() throw();
-    virtual const char* what() const throw();
+    bad_alloc() _NOEXCEPT;
+    virtual ~bad_alloc() _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
 };
 
 class _LIBCPP_EXCEPTION_ABI bad_array_new_length
     : public bad_alloc
 {
 public:
-    bad_array_new_length() throw();
-    virtual ~bad_array_new_length() throw();
-    virtual const char* what() const throw();
+    bad_array_new_length() _NOEXCEPT;
+    virtual ~bad_array_new_length() _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
 };
 
 void __throw_bad_alloc();  // not in C++ spec
@@ -85,24 +84,32 @@ void __throw_bad_alloc();  // not in C++ spec
 struct _LIBCPP_VISIBLE nothrow_t {};
 extern _LIBCPP_VISIBLE const nothrow_t nothrow;
 typedef void (*new_handler)();
-_LIBCPP_VISIBLE new_handler set_new_handler(new_handler) throw();
-_LIBCPP_VISIBLE new_handler get_new_handler() throw();
+_LIBCPP_VISIBLE new_handler set_new_handler(new_handler) _NOEXCEPT;
+_LIBCPP_VISIBLE new_handler get_new_handler() _NOEXCEPT;
 
 }  // std
 
-_LIBCPP_VISIBLE void* operator new(std::size_t) throw(std::bad_alloc);
-_LIBCPP_VISIBLE void* operator new(std::size_t, const std::nothrow_t&) throw();
-_LIBCPP_VISIBLE void  operator delete(void*) throw();
-_LIBCPP_VISIBLE void  operator delete(void*, const std::nothrow_t&) throw();
+_LIBCPP_VISIBLE void* operator new(std::size_t)
+#if !__has_feature(cxx_noexcept)
+    throw(std::bad_alloc)
+#endif
+;
+_LIBCPP_VISIBLE void* operator new(std::size_t, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_VISIBLE void  operator delete(void*) _NOEXCEPT;
+_LIBCPP_VISIBLE void  operator delete(void*, const std::nothrow_t&) _NOEXCEPT;
 
-_LIBCPP_VISIBLE void* operator new[](std::size_t) throw(std::bad_alloc);
-_LIBCPP_VISIBLE void* operator new[](std::size_t, const std::nothrow_t&) throw();
-_LIBCPP_VISIBLE void  operator delete[](void*) throw();
-_LIBCPP_VISIBLE void  operator delete[](void*, const std::nothrow_t&) throw();
+_LIBCPP_VISIBLE void* operator new[](std::size_t)
+#if !__has_feature(cxx_noexcept)
+    throw(std::bad_alloc)
+#endif
+;
+_LIBCPP_VISIBLE void* operator new[](std::size_t, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_VISIBLE void  operator delete[](void*) _NOEXCEPT;
+_LIBCPP_VISIBLE void  operator delete[](void*, const std::nothrow_t&) _NOEXCEPT;
 
-_LIBCPP_INLINE_VISIBILITY inline void* operator new  (std::size_t, void* __p) throw() {return __p;}
-_LIBCPP_INLINE_VISIBILITY inline void* operator new[](std::size_t, void* __p) throw() {return __p;}
-_LIBCPP_INLINE_VISIBILITY inline void  operator delete  (void*, void*) throw() {}
-_LIBCPP_INLINE_VISIBILITY inline void  operator delete[](void*, void*) throw() {}
+_LIBCPP_INLINE_VISIBILITY inline void* operator new  (std::size_t, void* __p) _NOEXCEPT {return __p;}
+_LIBCPP_INLINE_VISIBILITY inline void* operator new[](std::size_t, void* __p) _NOEXCEPT {return __p;}
+_LIBCPP_INLINE_VISIBILITY inline void  operator delete  (void*, void*) _NOEXCEPT {}
+_LIBCPP_INLINE_VISIBILITY inline void  operator delete[](void*, void*) _NOEXCEPT {}
 
 #endif  // _LIBCPP_NEW

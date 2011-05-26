@@ -13,30 +13,30 @@
 
 #include "typeinfo"
 
-std::bad_cast::bad_cast() throw()
+std::bad_cast::bad_cast() _NOEXCEPT
 {
 }
 
-std::bad_cast::~bad_cast() throw()
+std::bad_cast::~bad_cast() _NOEXCEPT
 {
 }
 
 const char*
-std::bad_cast::what() const throw()
+std::bad_cast::what() const _NOEXCEPT
 {
   return "std::bad_cast";
 }
 
-std::bad_typeid::bad_typeid() throw()
+std::bad_typeid::bad_typeid() _NOEXCEPT
 {
 }
 
-std::bad_typeid::~bad_typeid() throw()
+std::bad_typeid::~bad_typeid() _NOEXCEPT
 {
 }
 
 const char*
-std::bad_typeid::what() const throw()
+std::bad_typeid::what() const _NOEXCEPT
 {
   return "std::bad_typeid";
 }

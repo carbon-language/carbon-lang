@@ -22,12 +22,12 @@ class type_info
 public:
     virtual ~type_info();
 
-    bool operator==(const type_info& rhs) const;
-    bool operator!=(const type_info& rhs) const;
+    bool operator==(const type_info& rhs) const noexcept;
+    bool operator!=(const type_info& rhs) const noexcept;
 
-    bool before(const type_info& rhs) const;
-    size_t hash_code() const throw();
-    const char* name() const;
+    bool before(const type_info& rhs) const noexcept;
+    size_t hash_code() const noexcept;
+    const char* name() const noexcept;
 
     type_info(const type_info& rhs) = delete;
     type_info& operator=(const type_info& rhs) = delete;
@@ -37,20 +37,20 @@ class bad_cast
     : public exception
 {
 public:
-    bad_cast() throw();
-    bad_cast(const bad_cast&) throw();
-    bad_cast& operator=(const bad_cast&) throw();
-    virtual const char* what() const throw();
+    bad_cast() noexcept;
+    bad_cast(const bad_cast&) noexcept;
+    bad_cast& operator=(const bad_cast&) noexcept;
+    virtual const char* what() const noexcept;
 };
 
 class bad_typeid
     : public exception
 {
 public:
-    bad_typeid() throw();
-    bad_typeid(const bad_typeid&) throw();
-    bad_typeid& operator=(const bad_typeid&) throw();
-    virtual const char* what() const throw();
+    bad_typeid() noexcept;
+    bad_typeid(const bad_typeid&) noexcept;
+    bad_typeid& operator=(const bad_typeid&) noexcept;
+    virtual const char* what() const noexcept;
 };
 
 }  // std
@@ -81,20 +81,20 @@ public:
     virtual ~type_info();
 
     _LIBCPP_INLINE_VISIBILITY
-    const char* name() const {return __type_name;}
+    const char* name() const _NOEXCEPT {return __type_name;}
 
     _LIBCPP_INLINE_VISIBILITY
-    bool before(const type_info& __arg) const
+    bool before(const type_info& __arg) const _NOEXCEPT
         {return __type_name < __arg.__type_name;}
     _LIBCPP_INLINE_VISIBILITY
-    size_t hash_code() const throw()
+    size_t hash_code() const _NOEXCEPT
         {return *reinterpret_cast<const size_t*>(&__type_name);}
 
     _LIBCPP_INLINE_VISIBILITY
-    bool operator==(const type_info& __arg) const
+    bool operator==(const type_info& __arg) const _NOEXCEPT
         {return __type_name == __arg.__type_name;}
     _LIBCPP_INLINE_VISIBILITY
-    bool operator!=(const type_info& __arg) const
+    bool operator!=(const type_info& __arg) const _NOEXCEPT
         {return !operator==(__arg);}
 
 };
@@ -103,18 +103,18 @@ class _LIBCPP_EXCEPTION_ABI bad_cast
     : public exception
 {
 public:
-    bad_cast() throw();
-    virtual ~bad_cast() throw();
-    virtual const char* what() const throw();
+    bad_cast() _NOEXCEPT;
+    virtual ~bad_cast() _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
 };
 
 class _LIBCPP_EXCEPTION_ABI bad_typeid
     : public exception
 {
 public:
-    bad_typeid() throw();
-    virtual ~bad_typeid() throw();
-    virtual const char* what() const throw();
+    bad_typeid() _NOEXCEPT;
+    virtual ~bad_typeid() _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
 };
 
 }  // std

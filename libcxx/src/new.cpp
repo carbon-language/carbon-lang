@@ -27,7 +27,7 @@
 
 __attribute__((__weak__, __visibility__("default")))
 void *
-operator new(std::size_t size) throw (std::bad_alloc)
+operator new(std::size_t size)
 {
     if (size == 0)
         size = 1;
@@ -51,7 +51,7 @@ operator new(std::size_t size) throw (std::bad_alloc)
 
 __attribute__((__weak__, __visibility__("default")))
 void*
-operator new(size_t size, const std::nothrow_t&) throw()
+operator new(size_t size, const std::nothrow_t&) _NOEXCEPT
 {
     void* p = 0;
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -70,14 +70,14 @@ operator new(size_t size, const std::nothrow_t&) throw()
 
 __attribute__((__weak__, __visibility__("default")))
 void*
-operator new[](size_t size) throw (std::bad_alloc)
+operator new[](size_t size)
 {
     return ::operator new(size);
 }
 
 __attribute__((__weak__, __visibility__("default")))
 void*
-operator new[](size_t size, const std::nothrow_t& nothrow) throw()
+operator new[](size_t size, const std::nothrow_t& nothrow) _NOEXCEPT
 {
     void* p = 0;
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -96,7 +96,7 @@ operator new[](size_t size, const std::nothrow_t& nothrow) throw()
 
 __attribute__((__weak__, __visibility__("default")))
 void
-operator delete(void* ptr) throw ()
+operator delete(void* ptr) _NOEXCEPT
 {
     if (ptr)
         ::free(ptr);
@@ -104,21 +104,21 @@ operator delete(void* ptr) throw ()
 
 __attribute__((__weak__, __visibility__("default")))
 void
-operator delete(void* ptr, const std::nothrow_t&) throw ()
+operator delete(void* ptr, const std::nothrow_t&) _NOEXCEPT
 {
     ::operator delete(ptr);
 }
 
 __attribute__((__weak__, __visibility__("default")))
 void
-operator delete[] (void* ptr) throw ()
+operator delete[] (void* ptr) _NOEXCEPT
 {
     ::operator delete (ptr);
 }
 
 __attribute__((__weak__, __visibility__("default")))
 void
-operator delete[] (void* ptr, const std::nothrow_t&) throw ()
+operator delete[] (void* ptr, const std::nothrow_t&) _NOEXCEPT
 {
     ::operator delete[](ptr);
 }
@@ -129,41 +129,41 @@ namespace std
 const nothrow_t nothrow = {};
 
 new_handler
-set_new_handler(new_handler handler) throw()
+set_new_handler(new_handler handler) _NOEXCEPT
 {
     return __sync_lock_test_and_set(&__new_handler, handler);
 }
 
 new_handler
-get_new_handler() throw()
+get_new_handler() _NOEXCEPT
 {
     return __sync_fetch_and_add(&__new_handler, (new_handler)0);
 }
 
-bad_alloc::bad_alloc() throw()
+bad_alloc::bad_alloc() _NOEXCEPT
 {
 }
 
-bad_alloc::~bad_alloc() throw()
+bad_alloc::~bad_alloc() _NOEXCEPT
 {
 }
 
 const char*
-bad_alloc::what() const throw()
+bad_alloc::what() const _NOEXCEPT
 {
     return "std::bad_alloc";
 }
 
-bad_array_new_length::bad_array_new_length() throw()
+bad_array_new_length::bad_array_new_length() _NOEXCEPT
 {
 }
 
-bad_array_new_length::~bad_array_new_length() throw()
+bad_array_new_length::~bad_array_new_length() _NOEXCEPT
 {
 }
 
 const char*
-bad_array_new_length::what() const throw()
+bad_array_new_length::what() const _NOEXCEPT
 {
     return "bad_array_new_length";
 }

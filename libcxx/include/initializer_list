@@ -29,15 +29,15 @@ public:
     typedef const E* iterator;
     typedef const E* const_iterator;
 
-    initializer_list();
+    initializer_list() noexcept;
 
-    size_t   size()  const;
-    const E* begin() const;
-    const E* end()   const;
+    size_t   size()  const noexcept;
+    const E* begin() const noexcept;
+    const E* end()   const noexcept;
 };
 
-template<class E> const E* begin(initializer_list<E> il);
-template<class E> const E* end(initializer_list<E> il);
+template<class E> const E* begin(initializer_list<E> il) noexcept;
+template<class E> const E* end(initializer_list<E> il) noexcept;
 
 }  // std
 
@@ -58,7 +58,7 @@ class _LIBCPP_VISIBLE initializer_list
     size_t    __size_;
 
     _LIBCPP_ALWAYS_INLINE
-    initializer_list(const _E* __b, size_t __s)
+    initializer_list(const _E* __b, size_t __s) _NOEXCEPT
         : __begin_(__b),
           __size_(__s)
         {}
@@ -71,17 +71,17 @@ public:
     typedef const _E* iterator;
     typedef const _E* const_iterator;
 
-    _LIBCPP_ALWAYS_INLINE initializer_list() : __begin_(nullptr), __size_(0) {}
+    _LIBCPP_ALWAYS_INLINE initializer_list() _NOEXCEPT : __begin_(nullptr), __size_(0) {}
 
-    _LIBCPP_ALWAYS_INLINE size_t    size()  const {return __size_;}
-    _LIBCPP_ALWAYS_INLINE const _E* begin() const {return __begin_;}
-    _LIBCPP_ALWAYS_INLINE const _E* end()   const {return __begin_ + __size_;}
+    _LIBCPP_ALWAYS_INLINE size_t    size()  const _NOEXCEPT {return __size_;}
+    _LIBCPP_ALWAYS_INLINE const _E* begin() const _NOEXCEPT {return __begin_;}
+    _LIBCPP_ALWAYS_INLINE const _E* end()   const _NOEXCEPT {return __begin_ + __size_;}
 };
 
 template<class _E>
 inline _LIBCPP_INLINE_VISIBILITY
 const _E*
-begin(initializer_list<_E> __il)
+begin(initializer_list<_E> __il) _NOEXCEPT
 {
     return __il.begin();
 }
@@ -89,7 +89,7 @@ begin(initializer_list<_E> __il)
 template<class _E>
 inline _LIBCPP_INLINE_VISIBILITY
 const _E*
-end(initializer_list<_E> __il)
+end(initializer_list<_E> __il) _NOEXCEPT
 {
     return __il.end();
 }

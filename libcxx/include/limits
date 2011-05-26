@@ -22,9 +22,9 @@ class numeric_limits
 {
 public:
     static const bool is_specialized = false;
-    static T min() throw();
-    static T max() throw();
-    static T lowest() throw();
+    static T min() noexcept;
+    static T max() noexcept;
+    static T lowest() noexcept;
 
     static const int  digits = 0;
     static const int  digits10 = 0;
@@ -33,8 +33,8 @@ public:
     static const bool is_integer = false;
     static const bool is_exact = false;
     static const int  radix = 0;
-    static T epsilon() throw();
-    static T round_error() throw();
+    static T epsilon() noexcept;
+    static T round_error() noexcept;
 
     static const int  min_exponent = 0;
     static const int  min_exponent10 = 0;
@@ -46,10 +46,10 @@ public:
     static const bool has_signaling_NaN = false;
     static const float_denorm_style has_denorm = denorm_absent;
     static const bool has_denorm_loss = false;
-    static T infinity() throw();
-    static T quiet_NaN() throw();
-    static T signaling_NaN() throw();
-    static T denorm_min() throw();
+    static T infinity() noexcept;
+    static T quiet_NaN() noexcept;
+    static T signaling_NaN() noexcept;
+    static T denorm_min() noexcept;
 
     static const bool is_iec559 = false;
     static const bool is_bounded = false;
@@ -132,9 +132,9 @@ protected:
     typedef _Tp type;
 
     static const bool is_specialized = false;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return type();}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return type();}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return type();}
 
     static const int  digits = 0;
     static const int  digits10 = 0;
@@ -143,8 +143,8 @@ protected:
     static const bool is_integer = false;
     static const bool is_exact = false;
     static const int  radix = 0;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return type();}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return type();}
 
     static const int  min_exponent = 0;
     static const int  min_exponent10 = 0;
@@ -156,10 +156,10 @@ protected:
     static const bool has_signaling_NaN = false;
     static const float_denorm_style has_denorm = denorm_absent;
     static const bool has_denorm_loss = false;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return type();}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return type();}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return type();}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return type();}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return type();}
 
     static const bool is_iec559 = false;
     static const bool is_bounded = false;
@@ -196,15 +196,15 @@ protected:
     static const int  max_digits10 = 0;
     static const type __min = __libcpp_compute_min<type, digits, is_signed>::value;
     static const type __max = is_signed ? type(type(~0) ^ __min) : type(~0);
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __min;}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __max;}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return min();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __min;}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __max;}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return min();}
 
     static const bool is_integer = true;
     static const bool is_exact = true;
     static const int  radix = 2;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return type(0);}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return type(0);}
 
     static const int  min_exponent = 0;
     static const int  min_exponent10 = 0;
@@ -216,10 +216,10 @@ protected:
     static const bool has_signaling_NaN = false;
     static const float_denorm_style has_denorm = denorm_absent;
     static const bool has_denorm_loss = false;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return type(0);}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return type(0);}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return type(0);}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return type(0);}
 
     static const bool is_iec559 = false;
     static const bool is_bounded = true;
@@ -248,15 +248,15 @@ protected:
     static const int  max_digits10 = 0;
     static const type __min = false;
     static const type __max = true;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __min;}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __max;}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return min();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __min;}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __max;}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return min();}
 
     static const bool is_integer = true;
     static const bool is_exact = true;
     static const int  radix = 2;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return type(0);}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return type(0);}
 
     static const int  min_exponent = 0;
     static const int  min_exponent10 = 0;
@@ -268,10 +268,10 @@ protected:
     static const bool has_signaling_NaN = false;
     static const float_denorm_style has_denorm = denorm_absent;
     static const bool has_denorm_loss = false;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return type(0);}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return type(0);}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return type(0);}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return type(0);}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return type(0);}
 
     static const bool is_iec559 = false;
     static const bool is_bounded = true;
@@ -294,15 +294,15 @@ protected:
     static const int  digits = __FLT_MANT_DIG__;
     static const int  digits10 = __FLT_DIG__;
     static const int  max_digits10 = 2+(digits * 30103)/100000;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __FLT_MIN__;}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __FLT_MAX__;}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return -max();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __FLT_MIN__;}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __FLT_MAX__;}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return -max();}
 
     static const bool is_integer = false;
     static const bool is_exact = false;
     static const int  radix = __FLT_RADIX__;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return __FLT_EPSILON__;}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return 0.5F;}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return __FLT_EPSILON__;}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return 0.5F;}
 
     static const int  min_exponent = __FLT_MIN_EXP__;
     static const int  min_exponent10 = __FLT_MIN_10_EXP__;
@@ -314,10 +314,10 @@ protected:
     static const bool has_signaling_NaN = true;
     static const float_denorm_style has_denorm = denorm_present;
     static const bool has_denorm_loss = false;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return __builtin_huge_valf();}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return __builtin_nanf("");}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return __builtin_nansf("");}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return __FLT_DENORM_MIN__;}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return __builtin_huge_valf();}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return __builtin_nanf("");}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return __builtin_nansf("");}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return __FLT_DENORM_MIN__;}
 
     static const bool is_iec559 = true;
     static const bool is_bounded = true;
@@ -340,15 +340,15 @@ protected:
     static const int  digits = __DBL_MANT_DIG__;
     static const int  digits10 = __DBL_DIG__;
     static const int  max_digits10 = 2+(digits * 30103)/100000;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __DBL_MIN__;}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __DBL_MAX__;}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return -max();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __DBL_MIN__;}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __DBL_MAX__;}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return -max();}
 
     static const bool is_integer = false;
     static const bool is_exact = false;
     static const int  radix = __FLT_RADIX__;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return __DBL_EPSILON__;}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return 0.5;}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return __DBL_EPSILON__;}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return 0.5;}
 
     static const int  min_exponent = __DBL_MIN_EXP__;
     static const int  min_exponent10 = __DBL_MIN_10_EXP__;
@@ -360,10 +360,10 @@ protected:
     static const bool has_signaling_NaN = true;
     static const float_denorm_style has_denorm = denorm_present;
     static const bool has_denorm_loss = false;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return __builtin_huge_val();}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return __builtin_nan("");}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return __builtin_nans("");}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return __DBL_DENORM_MIN__;}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return __builtin_huge_val();}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return __builtin_nan("");}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return __builtin_nans("");}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return __DBL_DENORM_MIN__;}
 
     static const bool is_iec559 = true;
     static const bool is_bounded = true;
@@ -386,15 +386,15 @@ protected:
     static const int  digits = __LDBL_MANT_DIG__;
     static const int  digits10 = __LDBL_DIG__;
     static const int  max_digits10 = 2+(digits * 30103)/100000;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __LDBL_MIN__;}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __LDBL_MAX__;}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return -max();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __LDBL_MIN__;}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __LDBL_MAX__;}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return -max();}
 
     static const bool is_integer = false;
     static const bool is_exact = false;
     static const int  radix = __FLT_RADIX__;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return __LDBL_EPSILON__;}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return 0.5;}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return __LDBL_EPSILON__;}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return 0.5;}
 
     static const int  min_exponent = __LDBL_MIN_EXP__;
     static const int  min_exponent10 = __LDBL_MIN_10_EXP__;
@@ -406,10 +406,10 @@ protected:
     static const bool has_signaling_NaN = true;
     static const float_denorm_style has_denorm = denorm_present;
     static const bool has_denorm_loss = false;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return __builtin_huge_vall();}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return __builtin_nanl("");}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return __builtin_nansl("");}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return __LDBL_DENORM_MIN__;}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return __builtin_huge_vall();}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return __builtin_nanl("");}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return __builtin_nansl("");}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return __LDBL_DENORM_MIN__;}
 
 #if (defined(__ppc__) || defined(__ppc64__))
     static const bool is_iec559 = false;
@@ -432,9 +432,9 @@ class _LIBCPP_VISIBLE numeric_limits
     typedef typename __base::type type;
 public:
     static const bool is_specialized = __base::is_specialized;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __base::min();}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __base::max();}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return __base::lowest();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __base::min();}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __base::max();}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return __base::lowest();}
 
     static const int  digits = __base::digits;
     static const int  digits10 = __base::digits10;
@@ -443,8 +443,8 @@ public:
     static const bool is_integer = __base::is_integer;
     static const bool is_exact = __base::is_exact;
     static const int  radix = __base::radix;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return __base::epsilon();}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return __base::round_error();}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return __base::epsilon();}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return __base::round_error();}
 
     static const int  min_exponent = __base::min_exponent;
     static const int  min_exponent10 = __base::min_exponent10;
@@ -456,10 +456,10 @@ public:
     static const bool has_signaling_NaN = __base::has_signaling_NaN;
     static const float_denorm_style has_denorm = __base::has_denorm;
     static const bool has_denorm_loss = __base::has_denorm_loss;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return __base::infinity();}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return __base::quiet_NaN();}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return __base::signaling_NaN();}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return __base::denorm_min();}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return __base::infinity();}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return __base::quiet_NaN();}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return __base::signaling_NaN();}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return __base::denorm_min();}
 
     static const bool is_iec559 = __base::is_iec559;
     static const bool is_bounded = __base::is_bounded;
@@ -478,9 +478,9 @@ class _LIBCPP_VISIBLE numeric_limits<const _Tp>
     typedef _Tp type;
 public:
     static const bool is_specialized = __base::is_specialized;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __base::min();}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __base::max();}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return __base::lowest();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __base::min();}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __base::max();}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return __base::lowest();}
 
     static const int  digits = __base::digits;
     static const int  digits10 = __base::digits10;
@@ -489,8 +489,8 @@ public:
     static const bool is_integer = __base::is_integer;
     static const bool is_exact = __base::is_exact;
     static const int  radix = __base::radix;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return __base::epsilon();}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return __base::round_error();}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return __base::epsilon();}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return __base::round_error();}
 
     static const int  min_exponent = __base::min_exponent;
     static const int  min_exponent10 = __base::min_exponent10;
@@ -502,10 +502,10 @@ public:
     static const bool has_signaling_NaN = __base::has_signaling_NaN;
     static const float_denorm_style has_denorm = __base::has_denorm;
     static const bool has_denorm_loss = __base::has_denorm_loss;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return __base::infinity();}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return __base::quiet_NaN();}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return __base::signaling_NaN();}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return __base::denorm_min();}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return __base::infinity();}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return __base::quiet_NaN();}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return __base::signaling_NaN();}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return __base::denorm_min();}
 
     static const bool is_iec559 = __base::is_iec559;
     static const bool is_bounded = __base::is_bounded;
@@ -524,9 +524,9 @@ class _LIBCPP_VISIBLE numeric_limits<volatile _Tp>
     typedef _Tp type;
 public:
     static const bool is_specialized = __base::is_specialized;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __base::min();}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __base::max();}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return __base::lowest();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __base::min();}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __base::max();}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return __base::lowest();}
 
     static const int  digits = __base::digits;
     static const int  digits10 = __base::digits10;
@@ -535,8 +535,8 @@ public:
     static const bool is_integer = __base::is_integer;
     static const bool is_exact = __base::is_exact;
     static const int  radix = __base::radix;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return __base::epsilon();}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return __base::round_error();}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return __base::epsilon();}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return __base::round_error();}
 
     static const int  min_exponent = __base::min_exponent;
     static const int  min_exponent10 = __base::min_exponent10;
@@ -548,10 +548,10 @@ public:
     static const bool has_signaling_NaN = __base::has_signaling_NaN;
     static const float_denorm_style has_denorm = __base::has_denorm;
     static const bool has_denorm_loss = __base::has_denorm_loss;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return __base::infinity();}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return __base::quiet_NaN();}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return __base::signaling_NaN();}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return __base::denorm_min();}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return __base::infinity();}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return __base::quiet_NaN();}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return __base::signaling_NaN();}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return __base::denorm_min();}
 
     static const bool is_iec559 = __base::is_iec559;
     static const bool is_bounded = __base::is_bounded;
@@ -570,9 +570,9 @@ class _LIBCPP_VISIBLE numeric_limits<const volatile _Tp>
     typedef _Tp type;
 public:
     static const bool is_specialized = __base::is_specialized;
-    _LIBCPP_INLINE_VISIBILITY static type min() throw() {return __base::min();}
-    _LIBCPP_INLINE_VISIBILITY static type max() throw() {return __base::max();}
-    _LIBCPP_INLINE_VISIBILITY static type lowest() throw() {return __base::lowest();}
+    _LIBCPP_INLINE_VISIBILITY static type min() _NOEXCEPT {return __base::min();}
+    _LIBCPP_INLINE_VISIBILITY static type max() _NOEXCEPT {return __base::max();}
+    _LIBCPP_INLINE_VISIBILITY static type lowest() _NOEXCEPT {return __base::lowest();}
 
     static const int  digits = __base::digits;
     static const int  digits10 = __base::digits10;
@@ -581,8 +581,8 @@ public:
     static const bool is_integer = __base::is_integer;
     static const bool is_exact = __base::is_exact;
     static const int  radix = __base::radix;
-    _LIBCPP_INLINE_VISIBILITY static type epsilon() throw() {return __base::epsilon();}
-    _LIBCPP_INLINE_VISIBILITY static type round_error() throw() {return __base::round_error();}
+    _LIBCPP_INLINE_VISIBILITY static type epsilon() _NOEXCEPT {return __base::epsilon();}
+    _LIBCPP_INLINE_VISIBILITY static type round_error() _NOEXCEPT {return __base::round_error();}
 
     static const int  min_exponent = __base::min_exponent;
     static const int  min_exponent10 = __base::min_exponent10;
@@ -594,10 +594,10 @@ public:
     static const bool has_signaling_NaN = __base::has_signaling_NaN;
     static const float_denorm_style has_denorm = __base::has_denorm;
     static const bool has_denorm_loss = __base::has_denorm_loss;
-    _LIBCPP_INLINE_VISIBILITY static type infinity() throw() {return __base::infinity();}
-    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() throw() {return __base::quiet_NaN();}
-    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() throw() {return __base::signaling_NaN();}
-    _LIBCPP_INLINE_VISIBILITY static type denorm_min() throw() {return __base::denorm_min();}
+    _LIBCPP_INLINE_VISIBILITY static type infinity() _NOEXCEPT {return __base::infinity();}
+    _LIBCPP_INLINE_VISIBILITY static type quiet_NaN() _NOEXCEPT {return __base::quiet_NaN();}
+    _LIBCPP_INLINE_VISIBILITY static type signaling_NaN() _NOEXCEPT {return __base::signaling_NaN();}
+    _LIBCPP_INLINE_VISIBILITY static type denorm_min() _NOEXCEPT {return __base::denorm_min();}
 
     static const bool is_iec559 = __base::is_iec559;
     static const bool is_bounded = __base::is_bounded;

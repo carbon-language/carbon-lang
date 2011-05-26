@@ -20,56 +20,56 @@ namespace std
 class exception
 {
 public:
-    exception() throw();
-    exception(const exception&) throw();
-    exception& operator=(const exception&) throw();
-    virtual ~exception() throw();
-    virtual const char* what() const throw();
+    exception() noexcept;
+    exception(const exception&) noexcept;
+    exception& operator=(const exception&) noexcept;
+    virtual ~exception() noexcept;
+    virtual const char* what() const noexcept;
 };
 
 class bad_exception
     : public exception
 {
 public:
-    bad_exception() throw();
-    bad_exception(const bad_exception&) throw();
-    bad_exception& operator=(const bad_exception&) throw();
-    virtual ~bad_exception() throw();
-    virtual const char* what() const throw();
+    bad_exception() noexcept;
+    bad_exception(const bad_exception&) noexcept;
+    bad_exception& operator=(const bad_exception&) noexcept;
+    virtual ~bad_exception() noexcept;
+    virtual const char* what() const noexcept;
 };
 
 typedef void (*unexpected_handler)();
-unexpected_handler set_unexpected(unexpected_handler  f ) throw();
-unexpected_handler get_unexpected() throw();
-void unexpected [[noreturn]] ();
+unexpected_handler set_unexpected(unexpected_handler  f ) noexcept;
+unexpected_handler get_unexpected() noexcept;
+[[noreturn]] void unexpected();
 
 typedef void (*terminate_handler)();
-terminate_handler set_terminate(terminate_handler  f ) throw();
-terminate_handler get_terminate() throw();
-void terminate [[noreturn]] ();
+terminate_handler set_terminate(terminate_handler  f ) noexcept;
+terminate_handler get_terminate() noexcept;
+[[noreturn]] void terminate() noexcept;
 
-bool uncaught_exception() throw();
+bool uncaught_exception() noexcept;
 
 typedef unspecified exception_ptr;
 
-exception_ptr current_exception();
+exception_ptr current_exception() noexcept;
 void rethrow_exception [[noreturn]] (exception_ptr p);
-template<class E> exception_ptr make_exception_ptr(E e);
+template<class E> exception_ptr make_exception_ptr(E e) noexcept;
 
 class nested_exception
 {
 public:
-    nested_exception() throw();
-    nested_exception(const nested_exception&) throw() = default;
-    nested_exception& operator=(const nested_exception&) throw() = default;
+    nested_exception() noexcept;
+    nested_exception(const nested_exception&) noexcept = default;
+    nested_exception& operator=(const nested_exception&) noexcept = default;
     virtual ~nested_exception() = default;
 
     // access functions
-    void rethrow_nested [[noreturn]] () const;
-    exception_ptr nested_ptr() const;
+    [[noreturn]] void rethrow_nested() const;
+    exception_ptr nested_ptr() const noexcept;
 };
 
-template <class T> void throw_with_nested [[noreturn]] (T&& t);
+template <class T> [[noreturn]] void throw_with_nested(T&& t);
 template <class E> void rethrow_if_nested(const E& e);
 
 }  // std
@@ -88,65 +88,65 @@ namespace std  // purposefully not using versioning namespace
 class _LIBCPP_EXCEPTION_ABI exception
 {
 public:
-    _LIBCPP_INLINE_VISIBILITY exception() throw() {}
-    virtual ~exception() throw();
-    virtual const char* what() const throw();
+    _LIBCPP_INLINE_VISIBILITY exception() _NOEXCEPT {}
+    virtual ~exception() _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
 };
 
 class _LIBCPP_EXCEPTION_ABI bad_exception
     : public exception
 {
 public:
-    _LIBCPP_INLINE_VISIBILITY bad_exception() throw() {}
-    virtual ~bad_exception() throw();
-    virtual const char* what() const throw();
+    _LIBCPP_INLINE_VISIBILITY bad_exception() _NOEXCEPT {}
+    virtual ~bad_exception() _NOEXCEPT;
+    virtual const char* what() const _NOEXCEPT;
 };
 
 typedef void (*unexpected_handler)();
-_LIBCPP_VISIBLE unexpected_handler set_unexpected(unexpected_handler) throw();
-_LIBCPP_VISIBLE unexpected_handler get_unexpected() throw();
+_LIBCPP_VISIBLE unexpected_handler set_unexpected(unexpected_handler) _NOEXCEPT;
+_LIBCPP_VISIBLE unexpected_handler get_unexpected() _NOEXCEPT;
 _ATTRIBUTE(noreturn) _LIBCPP_VISIBLE void unexpected();
 
 typedef void (*terminate_handler)();
-_LIBCPP_VISIBLE terminate_handler set_terminate(terminate_handler) throw();
-_LIBCPP_VISIBLE terminate_handler get_terminate() throw();
+_LIBCPP_VISIBLE terminate_handler set_terminate(terminate_handler) _NOEXCEPT;
+_LIBCPP_VISIBLE terminate_handler get_terminate() _NOEXCEPT;
 _ATTRIBUTE(noreturn) _LIBCPP_VISIBLE void terminate() _NOEXCEPT;
 
-_LIBCPP_VISIBLE bool uncaught_exception() throw();
+_LIBCPP_VISIBLE bool uncaught_exception() _NOEXCEPT;
 
 class exception_ptr;
 
-exception_ptr current_exception();
+exception_ptr current_exception() _NOEXCEPT;
 _ATTRIBUTE(noreturn) void rethrow_exception(exception_ptr);
 
 class _LIBCPP_VISIBLE exception_ptr
 {
     void* __ptr_;
 public:
-    _LIBCPP_INLINE_VISIBILITY exception_ptr()  : __ptr_() {}
-    _LIBCPP_INLINE_VISIBILITY exception_ptr(nullptr_t) : __ptr_() {}
-    exception_ptr(const exception_ptr&);
-    exception_ptr& operator=(const exception_ptr&);
-    ~exception_ptr();
+    _LIBCPP_INLINE_VISIBILITY exception_ptr() _NOEXCEPT : __ptr_() {}
+    _LIBCPP_INLINE_VISIBILITY exception_ptr(nullptr_t) _NOEXCEPT : __ptr_() {}
+    exception_ptr(const exception_ptr&) _NOEXCEPT;
+    exception_ptr& operator=(const exception_ptr&) _NOEXCEPT;
+    ~exception_ptr() _NOEXCEPT;
 
     _LIBCPP_INLINE_VISIBILITY
     // explicit
-        operator bool() const {return __ptr_ != nullptr;}
+        operator bool() const _NOEXCEPT {return __ptr_ != nullptr;}
 
     friend _LIBCPP_INLINE_VISIBILITY
-    bool operator==(const exception_ptr& __x, const exception_ptr& __y)
+    bool operator==(const exception_ptr& __x, const exception_ptr& __y) _NOEXCEPT
         {return __x.__ptr_ == __y.__ptr_;}
     friend _LIBCPP_INLINE_VISIBILITY
-    bool operator!=(const exception_ptr& __x, const exception_ptr& __y)
+    bool operator!=(const exception_ptr& __x, const exception_ptr& __y) _NOEXCEPT
         {return !(__x == __y);}
 
-    friend exception_ptr current_exception();
+    friend exception_ptr current_exception() _NOEXCEPT;
     _ATTRIBUTE(noreturn) friend void rethrow_exception(exception_ptr);
 };
 
 template<class _E>
 exception_ptr
-make_exception_ptr(_E __e)
+make_exception_ptr(_E __e) _NOEXCEPT
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
     try
@@ -166,14 +166,14 @@ class _LIBCPP_EXCEPTION_ABI nested_exception
 {
     exception_ptr __ptr_;
 public:
-    nested_exception();
-//     nested_exception(const nested_exception&) throw() = default;
-//     nested_exception& operator=(const nested_exception&) throw() = default;
-    virtual ~nested_exception();
+    nested_exception() _NOEXCEPT;
+//     nested_exception(const nested_exception&) noexcept = default;
+//     nested_exception& operator=(const nested_exception&) noexcept = default;
+    virtual ~nested_exception() _NOEXCEPT;
 
     // access functions
     _ATTRIBUTE(noreturn) void rethrow_nested() const;
-    _LIBCPP_INLINE_VISIBILITY exception_ptr nested_ptr() const {return __ptr_;}
+    _LIBCPP_INLINE_VISIBILITY exception_ptr nested_ptr() const _NOEXCEPT {return __ptr_;}
 };
 
 template <class _Tp>
