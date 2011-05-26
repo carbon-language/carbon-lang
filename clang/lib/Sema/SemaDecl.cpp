@@ -1505,14 +1505,14 @@ struct GNUCompatibleParamWarning {
 /// getSpecialMember - get the special member enum for a method.
 Sema::CXXSpecialMember Sema::getSpecialMember(const CXXMethodDecl *MD) {
   if (const CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(MD)) {
-    if (Ctor->isCopyConstructor())
-      return Sema::CXXCopyConstructor;
-    
-    if (Ctor->isMoveConstructor())
-      return Sema::CXXMoveConstructor;
-    
     if (Ctor->isDefaultConstructor())
       return Sema::CXXDefaultConstructor;
+
+    if (Ctor->isCopyConstructor())
+      return Sema::CXXCopyConstructor;
+
+    if (Ctor->isMoveConstructor())
+      return Sema::CXXMoveConstructor;
   } else if (isa<CXXDestructorDecl>(MD)) {
     return Sema::CXXDestructor;
   } else if (MD->isCopyAssignmentOperator()) {

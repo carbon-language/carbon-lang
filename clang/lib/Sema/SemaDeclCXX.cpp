@@ -457,6 +457,15 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
              diag::err_param_default_argument_member_template_redecl)
           << WhichKind
           << NewParam->getDefaultArgRange();
+      } else if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(New)) {
+        CXXSpecialMember NewSM = getSpecialMember(Ctor),
+                         OldSM = getSpecialMember(cast<CXXConstructorDecl>(Old));
+        if (NewSM != OldSM) {
+          Diag(NewParam->getLocation(),diag::warn_default_arg_makes_ctor_special)
+            << NewParam->getDefaultArgRange() << NewSM;
+          Diag(Old->getLocation(), diag::note_previous_declaration_special)
+            << OldSM;
+        }
       }
     }
   }

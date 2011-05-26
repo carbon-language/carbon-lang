@@ -13,10 +13,10 @@ void g() {
 namespace PR6064 {
   struct A {
     A() { }
-    inline A(A&, int);
+    inline A(A&, int); // expected-note {{was not a special member function}}
   };
 
-  A::A(A&, int = 0) { }
+  A::A(A&, int = 0) { } // expected-warning {{makes this constructor a copy constructor}}
 
   void f() {
     A const a;
