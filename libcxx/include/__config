@@ -91,9 +91,9 @@
 
 #if defined(__clang__)
 
-//#if !__has_feature(cxx_alias_templates)
+#if !__has_feature(cxx_alias_templates)
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-//#endif
+#endif
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 #ifdef __linux__
