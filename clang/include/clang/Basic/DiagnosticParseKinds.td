@@ -161,6 +161,8 @@ def err_unexpected_namespace_attributes_alias : Error<
 def err_inline_namespace_alias : Error<"namespace alias cannot be inline">;
 def err_namespace_nonnamespace_scope : Error<
   "namespaces can only be defined in global or namespace scope">;
+def err_nested_namespaces_with_double_colon : Error<
+  "nested namespace definition must define each namespace separately">;
 def err_expected_semi_after_attribute_list : Error<
   "expected ';' after attribute list">;
 def err_expected_semi_after_static_assert : Error<

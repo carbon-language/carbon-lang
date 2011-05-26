@@ -1720,6 +1720,12 @@ bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
   
   Decl *ParseNamespace(unsigned Context, SourceLocation &DeclEnd,
                        SourceLocation InlineLoc = SourceLocation());
+  void ParseInnerNamespace(std::vector<SourceLocation>& IdentLoc,
+                           std::vector<IdentifierInfo*>& Ident,
+                           std::vector<SourceLocation>& NamespaceLoc,
+                           unsigned int index, SourceLocation& InlineLoc,
+                           SourceLocation& LBrace, ParsedAttributes& attrs,
+                           SourceLocation& RBraceLoc);
   Decl *ParseLinkage(ParsingDeclSpec &DS, unsigned Context);
   Decl *ParseUsingDirectiveOrDeclaration(unsigned Context,
                                          const ParsedTemplateInfo &TemplateInfo,
