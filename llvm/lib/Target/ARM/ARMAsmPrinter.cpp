@@ -426,13 +426,12 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       O << (MI->getOperand(OpNum).getImm() & 0xffff);
       return false;
-    case 'M': // A register range suitable for LDM/STM.
     case 'p': // The high single-precision register of a VFP double-precision
               // register.
     case 'e': // The low doubleword register of a NEON quad register.
     case 'f': // The high doubleword register of a NEON quad register.
     case 'h': // A range of VFP/NEON registers suitable for VLD1/VST1.
-    case 'A': // A memory operand for a VLD1/VST1 instruction.
+    case 'M': // A register range suitable for LDM/STM.
     case 'Q': // The least significant register of a pair.
     case 'R': // The most significant register of a pair.
     case 'H': // The highest-numbered register of a pair.
@@ -454,6 +453,7 @@ bool ARMAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
     
     switch (ExtraCode[0]) {
+      case 'A': // A memory operand for a VLD1/VST1 instruction.
       default: return true;  // Unknown modifier.
       case 'm': // The base register of a memory operand.
         if (!MI->getOperand(OpNum).isReg())
