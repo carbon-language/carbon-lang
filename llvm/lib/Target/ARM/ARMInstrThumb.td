@@ -551,7 +551,7 @@ let isBranch = 1, isTerminator = 1 in
   def tBcc : T1I<(outs), (ins t_bcctarget:$target, pred:$p), IIC_Br,
                  "b${p}\t$target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>,
-             T1Encoding<{1,1,0,1,?,?}> {
+             T1BranchCond<{1,1,0,1}> {
   bits<4> p;
   bits<8> target;
   let Inst{11-8} = p;

@@ -1023,6 +1023,10 @@ class T1LoadStore<bits<4> opA, bits<3> opB> : Encoding16 {
 }
 class T1LdStSP<bits<3> opB>   : T1LoadStore<0b1001, opB>; // SP relative
 
+class T1BranchCond<bits<4> opcode> : Encoding16 {
+  let Inst{15-12} = opcode;
+}
+
 // Helper classes to encode Thumb1 loads and stores. For immediates, the
 // following bits are used for "opA" (see A6.2.4):
 //
