@@ -696,6 +696,12 @@ it run faster:</p>
 <li>The MC assembler supports 3dNow! and 3DNowA instructions.</li>
   
 <li>Several bugs have been fixed for Windows x64 code generator.</li>
+
+<li>The CRC32 intrinsics have been renamed.  The intrinsics were previously
+  @llvm.x86.sse42.crc32.[8|16|32] and @llvm.x86.sse42.crc64.[8|64].  They have
+  been renamed to @llvm.x86.sse42.crc32.32.[8|16|32] and 
+  @llvm.x86.sse42.crc32.64.[8|64].</li>
+
 </ul>
 
 </div>
