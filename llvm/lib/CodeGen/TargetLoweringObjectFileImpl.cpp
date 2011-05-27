@@ -1014,6 +1014,28 @@ const MCSection *TargetLoweringObjectFileCOFF::getEHFrameSection() const {
                                      SectionKind::getDataRel());
 }
 
+const MCSection *TargetLoweringObjectFileCOFF::getWin64EHFuncTableSection(
+                                                       StringRef suffix) const {
+  if (suffix == "")
+    return PDataSection;
+  return getContext().getCOFFSection((".pdata"+suffix).str(),
+                                     COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                     COFF::IMAGE_SCN_MEM_READ |
+                                     COFF::IMAGE_SCN_MEM_WRITE,
+                                     SectionKind::getDataRel());
+}
+
+const MCSection *TargetLoweringObjectFileCOFF::getWin64EHTableSection(
+                                                       StringRef suffix) const {
+  if (suffix == "")
+    return XDataSection;
+  return getContext().getCOFFSection((".xdata"+suffix).str(),
+                                     COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                     COFF::IMAGE_SCN_MEM_READ |
+                                     COFF::IMAGE_SCN_MEM_WRITE,
+                                     SectionKind::getDataRel());
+}
+
 
 static unsigned
 getCOFFSectionFlags(SectionKind K) {

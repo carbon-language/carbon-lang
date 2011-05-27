@@ -213,12 +213,8 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
   virtual const MCSection *getEHFrameSection() const;
-  virtual const MCSection *getWin64EHFuncTableSection(StringRef) const {
-    return PDataSection;
-  }
-  virtual const MCSection *getWin64EHTableSection(StringRef) const {
-    return XDataSection;
-  }
+  virtual const MCSection *getWin64EHFuncTableSection(StringRef) const;
+  virtual const MCSection *getWin64EHTableSection(StringRef) const;
 
   virtual const MCSection *getDrectveSection() const { return DrectveSection; }
 
