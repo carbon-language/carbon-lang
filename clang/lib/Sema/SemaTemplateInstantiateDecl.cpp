@@ -2341,7 +2341,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     Pattern = PatternDecl->getBody(PatternDecl);
   }
 
-  if (!Pattern && !PatternDecl->isDefaulted()) {
+  if (!Pattern && PatternDecl && !PatternDecl->isDefaulted()) {
     if (DefinitionRequired) {
       if (Function->getPrimaryTemplate())
         Diag(PointOfInstantiation, 
