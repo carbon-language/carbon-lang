@@ -372,7 +372,11 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
     return !pointerInvalidatedByLoop(LI->getOperand(0), Size,
                                      LI->getMetadata(LLVMContext::MD_tbaa));
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
-    // Handle obvious cases efficiently.
+    // Don't sink or hoist dbg info; it's legal, but not useful.
+    if (isa<DbgInfoIntrinsic>(I))
+      return false;
+
+    // Handle simple cases by querying alias analysis.
     AliasAnalysis::ModRefBehavior Behavior = AA->getModRefBehavior(CI);
     if (Behavior == AliasAnalysis::DoesNotAccessMemory)
       return true;
@@ -445,8 +449,7 @@ void LICM::sink(Instruction &I) {
   // enough that we handle it as a special (more efficient) case.  It is more
   // efficient to handle because there are no PHI nodes that need to be placed.
   if (ExitBlocks.size() == 1) {
-    if (!isa<DbgInfoIntrinsic>(I) && 
-        !DT->dominates(I.getParent(), ExitBlocks[0])) {
+    if (!DT->dominates(I.getParent(), ExitBlocks[0])) {
       // Instruction is not used, just delete it.
       CurAST->deleteValue(&I);
       // If I has users in unreachable blocks, eliminate.
