@@ -4,7 +4,7 @@
 ; register pressure and therefore spilling. There is more room for improvement
 ; here.
 
-; CHECK: sub sp, #32
+; CHECK: sub sp, #{{32|24}}
 
 ; CHECK:      ldr r{{.*}}, [sp, #4]
 ; CHECK-NEXT: ldr r{{.*}}, [sp, #16]
