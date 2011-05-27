@@ -190,7 +190,7 @@ namespace test9 {
 
   // landing pad from first call to invoke
   // CHECK:      call i8* @llvm.eh.exception
-  // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null)
+  // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
 }
 
 // __cxa_end_catch can throw for some kinds of caught exceptions.

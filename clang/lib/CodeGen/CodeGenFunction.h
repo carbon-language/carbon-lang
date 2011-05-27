@@ -1705,6 +1705,7 @@ public:
   void EmitObjCAtThrowStmt(const ObjCAtThrowStmt &S);
   void EmitObjCAtSynchronizedStmt(const ObjCAtSynchronizedStmt &S);
 
+  llvm::Constant *getUnwindResumeFn();
   llvm::Constant *getUnwindResumeOrRethrowFn();
   void EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock = false);
   void ExitCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock = false);

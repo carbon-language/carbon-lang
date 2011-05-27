@@ -24,6 +24,6 @@ void f() {
   // CHECK: call i8* @llvm.eh.exception()
   // CHECK: call i32 (i8*, i8*, ...)* @llvm.eh.selector
   // CHECK: call void @__cxa_guard_abort(i64* @_ZGVZ1fvE1x)
-  // CHECK: call void @_Unwind_Resume_or_Rethrow
+  // CHECK: call void @_Unwind_Resume(
   // CHECK: unreachable
 }

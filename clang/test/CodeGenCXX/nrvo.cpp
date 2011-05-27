@@ -95,7 +95,7 @@ X test2(bool B) {
 
   // %invoke.cont17: rethrow block for %eh.cleanup.
   // This really should be elsewhere in the function.
-  // CHECK-EH:      call void @_Unwind_Resume_or_Rethrow
+  // CHECK-EH:      call void @_Unwind_Resume(
   // CHECK-EH-NEXT: unreachable
 
   // %terminate.lpad: terminate landing pad.

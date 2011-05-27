@@ -334,7 +334,7 @@ namespace test7 {
   // CHECK: ret void
   // CHECK: call i8* @llvm.eh.exception(
   // CHECK: call void @_ZdlPv({{.*}}) nounwind
-  // CHECK: call void @_Unwind_Resume_or_Rethrow
+  // CHECK: call void @_Unwind_Resume(
 
   // Checked at top of file:
   // @_ZN5test312_GLOBAL__N_11DD1Ev = alias internal {{.*}} @_ZN5test312_GLOBAL__N_11DD2Ev
@@ -364,7 +364,7 @@ namespace test7 {
   // CHECK: ret void
   // CHECK: call i8* @llvm.eh.exception()
   // CHECK: call void @_ZdlPv({{.*}}) nounwind
-  // CHECK: call void @_Unwind_Resume_or_Rethrow(
+  // CHECK: call void @_Unwind_Resume(
 
   // CHECK: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
   // CHECK: getelementptr inbounds i8* {{.*}}, i64 -8
