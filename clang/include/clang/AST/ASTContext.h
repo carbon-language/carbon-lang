@@ -914,12 +914,18 @@ public:
                                        std::string &S) const;
 
   /// getObjCEncodingForFunctionDecl - Returns the encoded type for this
-  //function.  This is in the same format as Objective-C method encodings.  
-  void getObjCEncodingForFunctionDecl(const FunctionDecl *Decl, std::string& S);
+  /// function.  This is in the same format as Objective-C method encodings.  
+  ///
+  /// \returns true if an error occurred (e.g., because one of the parameter
+  /// types is incomplete), false otherwise.
+  bool getObjCEncodingForFunctionDecl(const FunctionDecl *Decl, std::string& S);
 
   /// getObjCEncodingForMethodDecl - Return the encoded type for this method
   /// declaration.
-  void getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, std::string &S)
+  ///
+  /// \returns true if an error occurred (e.g., because one of the parameter
+  /// types is incomplete), false otherwise.
+  bool getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl, std::string &S)
     const;
 
   /// getObjCEncodingForBlock - Return the encoded type for this block

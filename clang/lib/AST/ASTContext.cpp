@@ -3815,6 +3815,9 @@ static bool isTypeTypedefedAsBOOL(QualType T) {
 /// getObjCEncodingTypeSize returns size of type for objective-c encoding
 /// purpose.
 CharUnits ASTContext::getObjCEncodingTypeSize(QualType type) const {
+  if (!type->isIncompleteArrayType() && type->isIncompleteType())
+    return CharUnits::Zero();
+  
   CharUnits sz = getTypeSizeInChars(type);
 
   // Make all integer and enum types at least as large as an int
@@ -3882,7 +3885,7 @@ std::string ASTContext::getObjCEncodingForBlock(const BlockExpr *Expr) const {
   return S;
 }
 
-void ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,
+bool ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,
                                                 std::string& S) {
   // Encode result type.
   getObjCEncodingForType(Decl->getResultType(), S);
@@ -3892,8 +3895,11 @@ void ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,
        E = Decl->param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
     CharUnits sz = getObjCEncodingTypeSize(PType);
+    if (sz.isZero())
+      return true;
+    
     assert (sz.isPositive() && 
-        "getObjCEncodingForMethodDecl - Incomplete param type");
+        "getObjCEncodingForFunctionDecl - Incomplete param type");
     ParmOffset += sz;
   }
   S += charUnitsToString(ParmOffset);
@@ -3916,11 +3922,13 @@ void ASTContext::getObjCEncodingForFunctionDecl(const FunctionDecl *Decl,
     S += charUnitsToString(ParmOffset);
     ParmOffset += getObjCEncodingTypeSize(PType);
   }
+  
+  return false;
 }
 
 /// getObjCEncodingForMethodDecl - Return the encoded type for this method
 /// declaration.
-void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
+bool ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
                                               std::string& S) const {
   // FIXME: This is not very efficient.
   // Encode type qualifer, 'in', 'inout', etc. for the return type.
@@ -3939,6 +3947,9 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
        E = Decl->sel_param_end(); PI != E; ++PI) {
     QualType PType = (*PI)->getType();
     CharUnits sz = getObjCEncodingTypeSize(PType);
+    if (sz.isZero())
+      return true;
+    
     assert (sz.isPositive() && 
         "getObjCEncodingForMethodDecl - Incomplete param type");
     ParmOffset += sz;
@@ -3968,6 +3979,8 @@ void ASTContext::getObjCEncodingForMethodDecl(const ObjCMethodDecl *Decl,
     S += charUnitsToString(ParmOffset);
     ParmOffset += getObjCEncodingTypeSize(PType);
   }
+  
+  return false;
 }
 
 /// getObjCEncodingForPropertyDecl - Return the encoded type for this
