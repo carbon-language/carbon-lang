@@ -28,6 +28,8 @@ MCStreamer::MCStreamer(MCContext &Ctx) : Context(Ctx), EmitEHFrame(true),
 }
 
 MCStreamer::~MCStreamer() {
+  for (unsigned i = 0; i < getNumW64UnwindInfos(); ++i)
+    delete W64UnwindInfos[i];
 }
 
 const MCExpr *MCStreamer::BuildSymbolDiff(MCContext &Context,
@@ -321,7 +323,7 @@ void MCStreamer::EmitWin64EHStartProc(const MCSymbol *Symbol) {
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   if (CurFrame && !CurFrame->End)
     report_fatal_error("Starting a function before ending the previous one!");
-  MCWin64EHUnwindInfo *Frame = new (getContext()) MCWin64EHUnwindInfo;
+  MCWin64EHUnwindInfo *Frame = new MCWin64EHUnwindInfo;
   Frame->Begin = getContext().CreateTempSymbol();
   Frame->Function = Symbol;
   EmitLabel(Frame->Begin);
@@ -339,7 +341,7 @@ void MCStreamer::EmitWin64EHEndProc() {
 
 void MCStreamer::EmitWin64EHStartChained() {
   EnsureValidW64UnwindInfo();
-  MCWin64EHUnwindInfo *Frame = new (getContext()) MCWin64EHUnwindInfo;
+  MCWin64EHUnwindInfo *Frame = new MCWin64EHUnwindInfo;
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   Frame->Begin = getContext().CreateTempSymbol();
   Frame->Function = CurFrame->Function;
