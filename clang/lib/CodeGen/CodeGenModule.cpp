@@ -1899,6 +1899,7 @@ static llvm::Constant *GenerateStringLiteral(llvm::StringRef str,
     new llvm::GlobalVariable(CGM.getModule(), C->getType(), constant,
                              llvm::GlobalValue::PrivateLinkage,
                              C, GlobalName);
+  GV->setAlignment(1);
   GV->setUnnamedAddr(true);
   return GV;
 }
