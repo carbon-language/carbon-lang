@@ -372,11 +372,7 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
     return !pointerInvalidatedByLoop(LI->getOperand(0), Size,
                                      LI->getMetadata(LLVMContext::MD_tbaa));
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
-    // Don't sink or hoist dbg info; it's legal, but not useful.
-    if (isa<DbgInfoIntrinsic>(I))
-      return false;
-
-    // Handle simple cases by querying alias analysis.
+    // Handle obvious cases efficiently.
     AliasAnalysis::ModRefBehavior Behavior = AA->getModRefBehavior(CI);
     if (Behavior == AliasAnalysis::DoesNotAccessMemory)
       return true;
@@ -526,7 +522,14 @@ void LICM::sink(Instruction &I) {
       SSA.AddAvailableValue(ExitBlock, New);
   }
   
-  assert(NumInserted && "We shouldn't see dead instructions here!");
+  // If the instruction doesn't dominate any exit blocks, it must be dead.
+  if (NumInserted == 0) {
+    CurAST->deleteValue(&I);
+    if (!I.use_empty())
+      I.replaceAllUsesWith(UndefValue::get(I.getType()));
+    I.eraseFromParent();
+    return;
+  }
   
   // Next, rewrite uses of the instruction, inserting PHI nodes as needed.
   for (Value::use_iterator UI = I.use_begin(), UE = I.use_end(); UI != UE; ) {
