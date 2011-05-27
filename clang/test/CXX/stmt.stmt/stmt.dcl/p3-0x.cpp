@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
 
 // PR10034
 struct X {};
@@ -28,10 +28,18 @@ struct Y {
   ~Y();
 };
 
+void f();
 void test_Y() {
-  goto end; // expected-error{{goto into protected scope}}
-  Y y; // expected-note{{jump bypasses variable initialization}}
+  goto end;
+  Y y;
  end:
+  f();
+  goto inner;
+  {
+    Y y2;
+  inner:
+    f();    
+  }
   return;
 }
 
@@ -40,8 +48,8 @@ struct Z {
 };
 
 void test_Z() {
-  goto end; // expected-error{{goto into protected scope}}
-  Z z; // expected-note{{jump bypasses variable initialization}}
+  goto end;
+  Z z;
  end:
   return;
 }

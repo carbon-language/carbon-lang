@@ -140,35 +140,33 @@ static std::pair<unsigned,unsigned>
         //   a trivial default constructor and a trivial destructor, a 
         //   cv-qualified version of one of these types, or an array of one of
         //   the preceding types and is declared without an initializer (8.5).
-        if (VD->hasLocalStorage() && Context.getLangOptions().CPlusPlus) {
-          // Check whether this is a C++ class.
-          CXXRecordDecl *Record = T->getAsCXXRecordDecl();
-          
-          if (const Expr *Init = VD->getInit()) {
-            bool CallsTrivialConstructor = false;
-            if (Record) {
-              // FIXME: With generalized initializer lists, this may
-              // classify "X x{};" as having no initializer.
-              if (const CXXConstructExpr *Construct 
-                                          = dyn_cast<CXXConstructExpr>(Init))
-                if (const CXXConstructorDecl *Constructor
-                                                  = Construct->getConstructor())
-                  if (Constructor->isDefaultConstructor() &&
-                      ((Context.getLangOptions().CPlusPlus0x &&
-                        Record->hasTrivialDefaultConstructor()) ||
-                       (!Context.getLangOptions().CPlusPlus0x &&
-                        Record->isPOD())))
-                    CallsTrivialConstructor = true;
-            }
-            
-            if (!CallsTrivialConstructor)
-              InDiag = diag::note_protected_by_variable_init;
+        // Check whether this is a C++ class.
+        CXXRecordDecl *Record = T->getAsCXXRecordDecl();
+        
+        if (const Expr *Init = VD->getInit()) {
+          bool CallsTrivialConstructor = false;
+          if (Record) {
+            // FIXME: With generalized initializer lists, this may
+            // classify "X x{};" as having no initializer.
+            if (const CXXConstructExpr *Construct 
+                                        = dyn_cast<CXXConstructExpr>(Init))
+              if (const CXXConstructorDecl *Constructor
+                                                = Construct->getConstructor())
+                if (Constructor->isDefaultConstructor() &&
+                    ((Context.getLangOptions().CPlusPlus0x &&
+                      Record->hasTrivialDefaultConstructor()) ||
+                     (!Context.getLangOptions().CPlusPlus0x &&
+                      Record->isPOD())))
+                  CallsTrivialConstructor = true;
           }
           
-          // Note whether we have a class with a non-trivial destructor.
-          if (Record && !Record->hasTrivialDestructor())
-            OutDiag = diag::note_exits_dtor;
+          if (!CallsTrivialConstructor)
+            InDiag = diag::note_protected_by_variable_init;
         }
+        
+        // Note whether we have a class with a non-trivial destructor.
+        if (Record && !Record->hasTrivialDestructor())
+          OutDiag = diag::note_exits_dtor;
       }
     }
     

@@ -5646,7 +5646,7 @@ void Sema::ActOnUninitializedDecl(Decl *RealDecl,
         if ((!getLangOptions().CPlusPlus0x && !CXXRecord->isPOD()) ||
             (getLangOptions().CPlusPlus0x &&
              (!CXXRecord->hasTrivialDefaultConstructor() ||
-              (!CXXRecord->hasTrivialDestructor()))))
+              !CXXRecord->hasTrivialDestructor())))
           getCurFunction()->setHasBranchProtectedScope();
       }
     }
