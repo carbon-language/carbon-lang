@@ -4,7 +4,7 @@
 // CHECK:      Name                 = .xdata
 // CHECK-NEXT: VirtualSize
 // CHECK-NEXT: VirtualAddress
-// CHECK-NEXT: SizeOfRawData        = 44
+// CHECK-NEXT: SizeOfRawData        = 52
 // CHECK-NEXT: PointerToRawData
 // CHECK-NEXT: PointerToRelocations
 // CHECK-NEXT: PointerToLineNumbers
@@ -16,9 +16,10 @@
 // CHECK-NEXT:   IMAGE_SCN_MEM_READ
 // CHECK-NEXT:   IMAGE_SCN_MEM_WRITE
 // CHECK-NEXT: SectionData
-// CHECK-NEXT:   21 12 08 30 00 30 0F 03 - 0E 88 00 00 09 46 02 00
-// CHECK-NEXT:   04 22 00 A1 00 00 00 00 - 00 00 00 00 24 00 00 00
-// CHECK-NEXT:   00 00 00 00 1B 00 00 00 - 00 00 00 00
+// CHECK-NEXT:   09 12 08 03 00 03 0F 30 - 0E 88 00 00 09 64 02 00
+// CHECK-NEXT:   04 22 00 1A 00 00 00 00 - 00 00 00 00 21 00 00 00
+// CHECK-NEXT:   00 00 00 00 1B 00 00 00 - 00 00 00 00 01 00 00 00
+// CHECK-NEXT:   00 00 00 00
 
     .text
     .globl func
@@ -47,5 +48,13 @@ func:
     lea (%rbx), %rsp
     pop %rbx
     addq $24, %rsp
+    ret
+    .seh_endproc
+
+// Test emission of small functions.
+    .globl smallFunc
+    .def smallFunc; .scl 2; .type 32; .endef
+    .seh_proc smallFunc
+smallFunc:
     ret
     .seh_endproc

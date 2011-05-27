@@ -63,17 +63,17 @@ static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
                            MCWin64EHInstruction &inst) {
   uint8_t b1, b2;
   uint16_t w;
-  b2 = (inst.getOperation() & 0x0F) << 4;
+  b2 = (inst.getOperation() & 0x0F);
   switch (inst.getOperation()) {
   case Win64EH::UOP_PushNonVol:
     EmitAbsDifference(streamer, inst.getLabel(), begin);
-    b2 |= inst.getRegister() & 0x0F;
+    b2 |= (inst.getRegister() & 0x0F) << 4;
     streamer.EmitIntValue(b2, 1);
     break;
   case Win64EH::UOP_AllocLarge:
     EmitAbsDifference(streamer, inst.getLabel(), begin);
     if (inst.getSize() > 512*1024-8) {
-      b2 |= 1;
+      b2 |= 0x10;
       streamer.EmitIntValue(b2, 1);
       w = inst.getSize() & 0xFFF8;
       streamer.EmitIntValue(w, 2);
@@ -85,7 +85,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
     streamer.EmitIntValue(w, 2);
     break;
   case Win64EH::UOP_AllocSmall:
-    b2 |= ((inst.getSize()-8) >> 3) & 0x0F;
+    b2 |= (((inst.getSize()-8) >> 3) & 0x0F) << 4;
     EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     break;
@@ -96,7 +96,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
     break;
   case Win64EH::UOP_SaveNonVol:
   case Win64EH::UOP_SaveXMM128:
-    b2 |= inst.getRegister() & 0x0F;
+    b2 |= (inst.getRegister() & 0x0F) << 4;
     EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     w = inst.getOffset() >> 3;
@@ -106,7 +106,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
     break;
   case Win64EH::UOP_SaveNonVolBig:
   case Win64EH::UOP_SaveXMM128Big:
-    b2 |= inst.getRegister() & 0x0F;
+    b2 |= (inst.getRegister() & 0x0F) << 4;
     EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     if (inst.getOperation() == Win64EH::UOP_SaveXMM128Big)
@@ -119,7 +119,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
     break;
   case Win64EH::UOP_PushMachFrame:
     if (inst.isPushCodeFrame())
-      b2 |= 1;
+      b2 |= 0x10;
     EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     break;
@@ -143,21 +143,24 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
   MCContext &context = streamer.getContext();
   streamer.EmitValueToAlignment(4);
   // Upper 3 bits are the version number (currently 1).
-  uint8_t flags = 0x20;
+  uint8_t flags = 0x01;
   info->Symbol = context.CreateTempSymbol();
   streamer.EmitLabel(info->Symbol);
 
   if (info->ChainedParent)
-    flags |= Win64EH::UNW_ChainInfo;
+    flags |= Win64EH::UNW_ChainInfo << 3;
   else {
     if (info->HandlesUnwind)
-      flags |= Win64EH::UNW_TerminateHandler;
+      flags |= Win64EH::UNW_TerminateHandler << 3;
     if (info->HandlesExceptions)
-      flags |= Win64EH::UNW_ExceptionHandler;
+      flags |= Win64EH::UNW_ExceptionHandler << 3;
   }
   streamer.EmitIntValue(flags, 1);
 
-  EmitAbsDifference(streamer, info->PrologEnd, info->Begin);
+  if (info->PrologEnd)
+    EmitAbsDifference(streamer, info->PrologEnd, info->Begin);
+  else
+    streamer.EmitIntValue(0, 1);
 
   uint8_t numCodes = CountOfUnwindCodes(info->Instructions);
   streamer.EmitIntValue(numCodes, 1);
@@ -166,8 +169,8 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
   if (info->LastFrameInst >= 0) {
     MCWin64EHInstruction &frameInst = info->Instructions[info->LastFrameInst];
     assert(frameInst.getOperation() == Win64EH::UOP_SetFPReg);
-    frame = ((frameInst.getRegister() & 0x0F) << 4) |
-            ((frameInst.getOffset() >> 4) & 0x0F);
+    frame = (frameInst.getRegister() & 0x0F) |
+            (frameInst.getOffset() & 0xF0);
   }
   streamer.EmitIntValue(frame, 1);
 
@@ -179,11 +182,21 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
     EmitUnwindCode(streamer, info->Begin, inst);
   }
 
-  if (flags & Win64EH::UNW_ChainInfo)
+  if (flags & (Win64EH::UNW_ChainInfo << 3))
     EmitRuntimeFunction(streamer, info->ChainedParent);
-  else if (flags &(Win64EH::UNW_TerminateHandler|Win64EH::UNW_ExceptionHandler))
+  else if (flags &
+           ((Win64EH::UNW_TerminateHandler|Win64EH::UNW_ExceptionHandler) << 3))
     streamer.EmitValue(MCSymbolRefExpr::Create(info->ExceptionHandler, context),
                        4);
+  else if (numCodes < 2) {
+    // The minimum size of an UNWIND_INFO struct is 8 bytes. If we're not
+    // a chained unwind info, if there is no handler, and if there are fewer
+    // than 2 slots used in the unwind code array, we have to pad to 8 bytes.
+    if (numCodes == 1)
+      streamer.EmitIntValue(0, 2);
+    else
+      streamer.EmitIntValue(0, 4);
+  }
 }
 
 void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
