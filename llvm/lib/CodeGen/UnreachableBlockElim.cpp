@@ -196,8 +196,11 @@ bool UnreachableMachineBlockElim::runOnMachineFunction(MachineFunction &F) {
         temp->eraseFromParent();
         ModifiedPHI = true;
 
-        if (Input != Output)
-          F.getRegInfo().replaceRegWith(Output, Input);
+        if (Input != Output) {
+          MachineRegisterInfo &MRI = F.getRegInfo();
+          MRI.constrainRegClass(Input, MRI.getRegClass(Output));
+          MRI.replaceRegWith(Output, Input);
+        }
 
         continue;
       }
