@@ -68,9 +68,15 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ; CHECK: Ldebug_loc0:
 ; CHECK-NEXT: .quad   Lfunc_begin0
 ; CHECK-NEXT: .quad   [[LABEL]]
-; CHECK-NEXT: .short  1
+; CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}               ## Loc expr size
+; CHECK-NEXT: .short  Lset{{.*}}
+; CHECK-NEXT: Ltmp{{.*}}:
 ; CHECK-NEXT: .byte   85
+; CHECK-NEXT: Ltmp{{.*}}:
 ; CHECK-NEXT: .quad   [[LABEL]]
 ; CHECK-NEXT: .quad   [[CLOBBER]]
-; CHECK-NEXT: .short  1
+; CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}               ## Loc expr size
+; CHECK-NEXT: .short  Lset{{.*}}
+; CHECK-NEXT: Ltmp{{.*}}:
 ; CHECK-NEXT: .byte   83
+; CHECK-NEXT: Ltmp{{.*}}:

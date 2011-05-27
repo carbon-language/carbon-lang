@@ -386,10 +386,6 @@ namespace llvm {
     /// operands.
     virtual MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
 
-    /// getDwarfRegOpSize - get size required to emit given machine location
-    /// using dwarf encoding.
-    virtual unsigned getDwarfRegOpSize(const MachineLocation &MLoc) const;
-
     /// getISAEncoding - Get the value for DW_AT_APPLE_isa. Zero if no isa
     /// encoding specified.
     virtual unsigned getISAEncoding() { return 0; }

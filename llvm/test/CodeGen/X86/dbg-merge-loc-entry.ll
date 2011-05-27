@@ -6,8 +6,11 @@ target triple = "x86_64-apple-darwin8"
 ;CHECK: Ldebug_loc0:
 ;CHECK-NEXT:	.quad	Lfunc_begin0
 ;CHECK-NEXT:	.quad	L
-;CHECK-NEXT:	.short	1                       ## Loc expr size
+;CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}          ## Loc expr size
+;CHECK-NEXT:    .short  Lset
+;CHECK-NEXT: Ltmp
 ;CHECK-NEXT:	.byte	85                      ## DW_OP_reg5
+;CHECK-NEXT: Ltmp7
 ;CHECK-NEXT:	.quad	0
 ;CHECK-NEXT:	.quad	0
 

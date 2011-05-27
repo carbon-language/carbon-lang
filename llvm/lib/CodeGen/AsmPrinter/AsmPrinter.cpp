@@ -760,26 +760,6 @@ getDebugValueLocation(const MachineInstr *MI) const {
   return MachineLocation();
 }
 
-/// getDwarfRegOpSize - get size required to emit given machine location using
-/// dwarf encoding.
-unsigned AsmPrinter::getDwarfRegOpSize(const MachineLocation &MLoc) const {
-  const TargetRegisterInfo *RI = TM.getRegisterInfo();
-  unsigned DWReg = RI->getDwarfRegNum(MLoc.getReg(), false);
-  if (int Offset = MLoc.getOffset()) {
-    // If the value is at a certain offset from frame register then
-    // use DW_OP_breg.
-    if (DWReg < 32)
-      return 1 + MCAsmInfo::getSLEB128Size(Offset);
-    else
-      return 1 + MCAsmInfo::getULEB128Size(MLoc.getReg()) 
-        + MCAsmInfo::getSLEB128Size(Offset);
-  }
-  if (DWReg < 32)
-    return 1;
-
-  return 1 + MCAsmInfo::getULEB128Size(DWReg);
-}
-
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
