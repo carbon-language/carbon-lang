@@ -18,11 +18,11 @@ import lldbtest
 #print "Hello, darwin plugin!"
 
 def getArchitecture():
-    """Returns the architecture in effect the test suite is now running with."""
+    """Returns the architecture in effect the test suite is running with."""
     return os.environ["ARCH"] if "ARCH" in os.environ else ""
 
 def getCompiler():
-    """Returns the compiler in effect the test suite is now running with."""
+    """Returns the compiler in effect the test suite is running with."""
     return os.environ["CC"] if "CC" in os.environ else ""
 
 def getArchSpec(architecture):

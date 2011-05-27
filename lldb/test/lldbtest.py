@@ -925,18 +925,18 @@ class TestBase(unittest2.TestCase):
     # ====================================================
 
     def getArchitecture(self):
-        """Returns the architecture in effect the test suite is now running with."""
+        """Returns the architecture in effect the test suite is running with."""
         module = __import__(sys.platform)
         return module.getArchitecture()
 
     def getCompiler(self):
-        """Returns the compiler in effect the test suite is now running with."""
+        """Returns the compiler in effect the test suite is running with."""
         module = __import__(sys.platform)
         return module.getCompiler()
 
     def getRunOptions(self):
         """Command line option for -A and -C to run this test again, called from
-        within dumpSessionInfo()."""
+        self.dumpSessionInfo()."""
         arch = self.getArchitecture()
         comp = self.getCompiler()
         if not arch and not comp:
