@@ -1830,10 +1830,11 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "rrx" || Mnemonic == "ror" || Mnemonic == "sub" ||
       Mnemonic == "smull" || Mnemonic == "add" || Mnemonic == "adc" ||
       Mnemonic == "mul" || Mnemonic == "bic" || Mnemonic == "asr" ||
-      Mnemonic == "umlal" || Mnemonic == "orr" || Mnemonic == "mov" ||
+      Mnemonic == "umlal" || Mnemonic == "orr" || Mnemonic == "mvn" ||
       Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
       Mnemonic == "sbc" || Mnemonic == "mla" || Mnemonic == "umull" ||
-      Mnemonic == "eor" || Mnemonic == "smlal" || Mnemonic == "mvn") {
+      Mnemonic == "eor" || Mnemonic == "smlal" ||
+      (Mnemonic == "mov" && !isThumb)) {
     CanAcceptCarrySet = true;
   } else {
     CanAcceptCarrySet = false;
@@ -1852,7 +1853,8 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
 
   if (isThumb)
     if (Mnemonic == "bkpt" || Mnemonic == "mcr" || Mnemonic == "mcrr" ||
-        Mnemonic == "mrc" || Mnemonic == "mrrc" || Mnemonic == "cdp")
+        Mnemonic == "mrc" || Mnemonic == "mrrc" || Mnemonic == "cdp" ||
+        Mnemonic == "mov")
       CanAcceptPredicationCode = false;
 }
 

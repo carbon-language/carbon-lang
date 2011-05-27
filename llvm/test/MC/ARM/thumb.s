@@ -70,3 +70,6 @@
 
 @ CHECK: cpsie aif @ encoding: [0x67,0xb6]
         cpsie aif
+
+@ CHECK: mov  r0, pc @ encoding: [0x78,0x46]
+        mov  r0, pc
