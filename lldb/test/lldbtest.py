@@ -919,6 +919,10 @@ class TestBase(unittest2.TestCase):
 
             # End of while loop.
 
+    # ====================================================
+    # Config. methods supported through a plugin interface
+    # (enables reading of the current test configuration)
+    # ====================================================
 
     def getArchitecture(self):
         """Returns the architecture in effect the test suite is now running with."""
@@ -933,7 +937,6 @@ class TestBase(unittest2.TestCase):
     def getRunOptions(self):
         """Command line option for -A and -C to run this test again, called from
         within dumpSessionInfo()."""
-        module = __import__(sys.platform)
         arch = self.getArchitecture()
         comp = self.getCompiler()
         if not arch and not comp:
@@ -941,6 +944,10 @@ class TestBase(unittest2.TestCase):
         else:
             return "%s %s" % ("-A "+arch if arch else "",
                               "-C "+comp if comp else "")
+
+    # ==================================================
+    # Build methods supported through a plugin interface
+    # ==================================================
 
     def buildDefault(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build the default binaries."""
@@ -959,6 +966,10 @@ class TestBase(unittest2.TestCase):
         module = __import__(sys.platform)
         if not module.buildDwarf(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dwarf")
+
+    # =================================================
+    # Misc. helper methods for debugging test execution
+    # =================================================
 
     def DebugSBValue(self, frame, val):
         """Debug print a SBValue object, if traceAlways is True."""
