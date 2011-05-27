@@ -445,25 +445,20 @@ bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
   assert (MO.isImm() && "Invalid machine operand!");
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   unsigned form = dwarf::DW_FORM_udata;
+  switch (Ty.getSizeInBits()) {
+    case 8: form = dwarf::DW_FORM_data1; break;
+    case 16: form = dwarf::DW_FORM_data2; break;
+    case 32: form = dwarf::DW_FORM_data4; break;
+    case 64: form = dwarf::DW_FORM_data8; break;
+    default: break;
+  }
+
   DIBasicType BTy(Ty);
-  if (BTy.Verify()) {
-    unsigned Encoding = BTy.getEncoding();
-    if (Encoding == dwarf::DW_ATE_signed ||
-        Encoding == dwarf::DW_ATE_signed_char) {
-      form = dwarf::DW_FORM_sdata; 
-      addSInt(Block, 0, dwarf::DW_FORM_sdata, MO.getImm());
-    } else {
-      switch (Ty.getSizeInBits()) {
-        case 8: form = dwarf::DW_FORM_data1; break;
-        case 16: form = dwarf::DW_FORM_data2; break;
-        case 32: form = dwarf::DW_FORM_data4; break;
-        case 64: form = dwarf::DW_FORM_data8; break;
-        default: break;
-      }
-      addUInt(Block, 0, form, MO.getImm());
-    }
-  } else
-    //if this is not basic type then just use _udata.
+  if (BTy.Verify() &&
+      (BTy.getEncoding()  == dwarf::DW_ATE_signed 
+       || BTy.getEncoding() == dwarf::DW_ATE_signed_char))
+    addSInt(Block, 0, form, MO.getImm());
+  else
     addUInt(Block, 0, form, MO.getImm());
 
   addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
