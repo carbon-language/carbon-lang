@@ -16,8 +16,8 @@ entry:
 ; IOS-PIC:      movw    r0, :lower16:(L_foo$non_lazy_ptr-(LPC0_0+8))
 ; IOS-PIC-NEXT: movt    r0, :upper16:(L_foo$non_lazy_ptr-(LPC0_0+8))
 
-; IOS-STATIC:      movw    r0, :lower16:_foo
-; IOS-STATIC-NEXT: movt    r0, :upper16:_foo
+; IOS-STATIC-NOT:      movw    r0, :lower16:_foo
+; IOS-STATIC-NOT:       movt    r0, :upper16:_foo
   ret i32* @foo
 }
 
@@ -32,8 +32,8 @@ entry:
 ; IOS-PIC:      movw    r1, :lower16:(L_foo$non_lazy_ptr-(LPC1_0+8))
 ; IOS-PIC-NEXT: movt    r1, :upper16:(L_foo$non_lazy_ptr-(LPC1_0+8))
 
-; IOS-STATIC:      movw    r1, :lower16:_foo
-; IOS-STATIC-NEXT: movt    r1, :upper16:_foo
+; IOS-STATIC-NOT:      movw    r1, :lower16:_foo
+; IOS-STATIC-NOT:      movt    r1, :upper16:_foo
   store i32 %baz, i32* @foo, align 4
   ret void
 }

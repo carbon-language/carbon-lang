@@ -2082,7 +2082,8 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   MachineFunction &MF = DAG.getMachineFunction();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
-  if (Subtarget->useMovt()) {
+  // FIXME: Enable this for static codegen when tool issues are fixed.
+  if (Subtarget->useMovt() && RelocM != Reloc::Static) {
     ++NumMovwMovt;
     // FIXME: Once remat is capable of dealing with instructions with register
     // operands, expand this into two nodes.
