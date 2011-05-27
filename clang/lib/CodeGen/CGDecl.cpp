@@ -742,6 +742,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
                                llvm::GlobalValue::InternalLinkage,
                                constant, Name, 0, false, 0);
     GV->setAlignment(alignment.getQuantity());
+    GV->setUnnamedAddr(true);
         
     llvm::Value *SrcPtr = GV;
     if (SrcPtr->getType() != BP)

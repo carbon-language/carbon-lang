@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -w -emit-llvm < %s | FileCheck %s
 
 // CHECK: @test1.x = internal constant [12 x i32] [i32 1
-// CHECK: @test2.x = internal constant [13 x i32] [i32 1,
+// CHECK: @test2.x = internal unnamed_addr constant [13 x i32] [i32 1,
 // CHECK: @test5w = global %0 { i32 2, [4 x i8] undef }
 // CHECK: @test5y = global %union.test5u { double 7.300000e+0{{[0]*}}1 }
 
-// CHECK: @test6.x = internal constant %struct.SelectDest { i8 1, i8 2, i32 3, i32 0 }
+// CHECK: @test6.x = internal unnamed_addr constant %struct.SelectDest { i8 1, i8 2, i32 3, i32 0 }
 
 // CHECK: @test7 = global [2 x %struct.test7s] [%struct.test7s { i32 1, i32 2 }, %struct.test7s { i32 4, i32 0 }]
 
