@@ -605,13 +605,15 @@ namespace {
     SmallPtrSet<Value*, 4> &PointerMustAliases;
     SmallVectorImpl<BasicBlock*> &LoopExitBlocks;
     AliasSetTracker &AST;
+    DebugLoc DL;
   public:
     LoopPromoter(Value *SP,
                  const SmallVectorImpl<Instruction*> &Insts, SSAUpdater &S,
                  SmallPtrSet<Value*, 4> &PMA,
-                 SmallVectorImpl<BasicBlock*> &LEB, AliasSetTracker &ast)
+                 SmallVectorImpl<BasicBlock*> &LEB, AliasSetTracker &ast,
+                 DebugLoc dl)
       : LoadAndStorePromoter(Insts, S, 0, 0), SomePtr(SP),
-        PointerMustAliases(PMA), LoopExitBlocks(LEB), AST(ast) {}
+        PointerMustAliases(PMA), LoopExitBlocks(LEB), AST(ast), DL(dl) {}
     
     virtual bool isInstInList(Instruction *I,
                               const SmallVectorImpl<Instruction*> &) const {
@@ -632,7 +634,8 @@ namespace {
         BasicBlock *ExitBlock = LoopExitBlocks[i];
         Value *LiveInValue = SSA.GetValueInMiddleOfBlock(ExitBlock);
         Instruction *InsertPos = ExitBlock->getFirstNonPHI();
-        new StoreInst(LiveInValue, SomePtr, InsertPos);
+        StoreInst *NewSI = new StoreInst(LiveInValue, SomePtr, InsertPos);
+        NewSI->setDebugLoc(DL);
       }
     }
 
@@ -730,6 +733,12 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
   Changed = true;
   ++NumPromoted;
 
+  // Grab a debug location for the inserted loads/stores; given that the
+  // inserted loads/stores have little relation to the original loads/stores,
+  // this code just arbitrarily picks a location from one, since any debug
+  // location is better than none.
+  DebugLoc DL = LoopUses[0]->getDebugLoc();
+
   SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getUniqueExitBlocks(ExitBlocks);
   
@@ -737,13 +746,14 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
   SmallVector<PHINode*, 16> NewPHIs;
   SSAUpdater SSA(&NewPHIs);
   LoopPromoter Promoter(SomePtr, LoopUses, SSA, PointerMustAliases, ExitBlocks,
-                        *CurAST);
+                        *CurAST, DL);
   
   // Set up the preheader to have a definition of the value.  It is the live-out
   // value from the preheader that uses in the loop will use.
   LoadInst *PreheaderLoad =
     new LoadInst(SomePtr, SomePtr->getName()+".promoted",
                  Preheader->getTerminator());
+  PreheaderLoad->setDebugLoc(DL);
   SSA.AddAvailableValue(Preheader, PreheaderLoad);
 
   // Rewrite all the loads in the loop and remember all the definitions from
