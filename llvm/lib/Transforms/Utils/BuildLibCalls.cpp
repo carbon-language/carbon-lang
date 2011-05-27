@@ -362,12 +362,8 @@ bool SimplifyFortifiedLibCalls::fold(CallInst *CI, const TargetData *TD) {
   Function *Callee = CI->getCalledFunction();
   StringRef Name = Callee->getName();
   const FunctionType *FT = Callee->getFunctionType();
-  BasicBlock *BB = CI->getParent();
   LLVMContext &Context = CI->getParent()->getContext();
-  IRBuilder<> B(Context);
-
-  // Set the builder to the instruction after the call.
-  B.SetInsertPoint(BB, CI);
+  IRBuilder<> B(CI);
 
   if (Name == "__memcpy_chk") {
     // Check if this has the right signature.
