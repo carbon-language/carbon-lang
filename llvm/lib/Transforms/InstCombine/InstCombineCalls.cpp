@@ -1130,6 +1130,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       Instruction::CastOps opcode =
         CastInst::getCastOpcode(NC, false, OldRetTy, false);
       NV = NC = CastInst::Create(opcode, NC, OldRetTy, "tmp");
+      NC->setDebugLoc(Caller->getDebugLoc());
 
       // If this is an invoke instruction, we should insert it after the first
       // non-phi, instruction in the normal successor block.

@@ -211,7 +211,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   }
   
   Res->takeName(I);
-  return InsertNewInstBefore(Res, *I);
+  return InsertNewInstWith(Res, *I);
 }
 
 

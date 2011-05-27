@@ -241,7 +241,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
 
         Constant *Folded = ConstantExpr::get(Opcode, C1, C2);
         Instruction *New = BinaryOperator::Create(Opcode, A, B);
-        InsertNewInstBefore(New, I);
+        InsertNewInstWith(New, I);
         New->takeName(Op1);
         I.setOperand(0, New);
         I.setOperand(1, Folded);
@@ -1591,7 +1591,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         DEBUG(errs() << "IC: Old = " << *I << '\n'
                      << "    New = " << *Result << '\n');
 
-        Result->setDebugLoc(I->getDebugLoc());
+        if (!I->getDebugLoc().isUnknown())
+          Result->setDebugLoc(I->getDebugLoc());
         // Everything uses the new instruction now.
         I->replaceAllUsesWith(Result);
 

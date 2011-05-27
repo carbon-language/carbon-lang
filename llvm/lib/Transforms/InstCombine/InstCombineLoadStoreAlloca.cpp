@@ -602,10 +602,12 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   // Advance to a place where it is safe to insert the new store and
   // insert it.
   BBI = DestBB->getFirstNonPHI();
-  InsertNewInstBefore(new StoreInst(MergedVal, SI.getOperand(1),
-                                    OtherStore->isVolatile(),
-                                    SI.getAlignment()), *BBI);
-  
+  StoreInst *NewSI = new StoreInst(MergedVal, SI.getOperand(1),
+                                   OtherStore->isVolatile(),
+                                   SI.getAlignment());
+  InsertNewInstBefore(NewSI, *BBI);
+  NewSI->setDebugLoc(OtherStore->getDebugLoc()); 
+
   // Nuke the old stores.
   EraseInstFromFunction(SI);
   EraseInstFromFunction(*OtherStore);

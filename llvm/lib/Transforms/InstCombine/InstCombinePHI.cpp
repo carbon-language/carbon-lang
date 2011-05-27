@@ -110,16 +110,20 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
     }
   }
     
-  if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst))
-    return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
-                           LHSVal, RHSVal);
-  
+  if (CmpInst *CIOp = dyn_cast<CmpInst>(FirstInst)) {
+    CmpInst *NewCI = CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
+                                     LHSVal, RHSVal);
+    NewCI->setDebugLoc(FirstInst->getDebugLoc());
+    return NewCI;
+  }
+
   BinaryOperator *BinOp = cast<BinaryOperator>(FirstInst);
   BinaryOperator *NewBinOp =
     BinaryOperator::Create(BinOp->getOpcode(), LHSVal, RHSVal);
   if (isNUW) NewBinOp->setHasNoUnsignedWrap();
   if (isNSW) NewBinOp->setHasNoSignedWrap();
   if (isExact) NewBinOp->setIsExact();
+  NewBinOp->setDebugLoc(FirstInst->getDebugLoc());
   return NewBinOp;
 }
 
@@ -228,6 +232,7 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
     GetElementPtrInst::Create(Base, FixedOperands.begin()+1,
                               FixedOperands.end());
   if (AllInBounds) NewGEP->setIsInBounds();
+  NewGEP->setDebugLoc(FirstInst->getDebugLoc());
   return NewGEP;
 }
 
@@ -369,7 +374,9 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
     for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
       cast<LoadInst>(PN.getIncomingValue(i))->setVolatile(false);
   
-  return new LoadInst(PhiVal, "", isVolatile, LoadAlignment);
+  LoadInst *NewLI = new LoadInst(PhiVal, "", isVolatile, LoadAlignment);
+  NewLI->setDebugLoc(FirstLI->getDebugLoc());
+  return NewLI;
 }
 
 
@@ -469,20 +476,27 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   }
 
   // Insert and return the new operation.
-  if (CastInst *FirstCI = dyn_cast<CastInst>(FirstInst))
-    return CastInst::Create(FirstCI->getOpcode(), PhiVal, PN.getType());
+  if (CastInst *FirstCI = dyn_cast<CastInst>(FirstInst)) {
+    CastInst *NewCI = CastInst::Create(FirstCI->getOpcode(), PhiVal,
+                                       PN.getType());
+    NewCI->setDebugLoc(FirstInst->getDebugLoc());
+    return NewCI;
+  }
   
   if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(FirstInst)) {
     BinOp = BinaryOperator::Create(BinOp->getOpcode(), PhiVal, ConstantOp);
     if (isNUW) BinOp->setHasNoUnsignedWrap();
     if (isNSW) BinOp->setHasNoSignedWrap();
     if (isExact) BinOp->setIsExact();
+    BinOp->setDebugLoc(FirstInst->getDebugLoc());
     return BinOp;
   }
   
   CmpInst *CIOp = cast<CmpInst>(FirstInst);
-  return CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
-                         PhiVal, ConstantOp);
+  CmpInst *NewCI = CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
+                                   PhiVal, ConstantOp);
+  NewCI->setDebugLoc(FirstInst->getDebugLoc());
+  return NewCI;
 }
 
 /// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle
