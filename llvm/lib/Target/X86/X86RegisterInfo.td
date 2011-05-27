@@ -435,25 +435,6 @@ def GR64 : RegisterClass<"X86", [i64], 64,
   let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi),
                        (GR16 sub_16bit),
                        (GR32 sub_32bit)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GR64Class::iterator
-    GR64Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-      const X86MachineFunctionInfo *MFI = MF.getInfo<X86MachineFunctionInfo>();
-      if (!Subtarget.is64Bit())
-        return begin();  // None of these are allocatable in 32-bit.
-      // Does the function dedicate RBP to being a frame ptr?
-      if (TFI->hasFP(MF) || MFI->getReserveFP())
-        return end()-3;  // If so, don't allocate RIP, RSP or RBP
-      else
-        return end()-2;  // If not, just don't allocate RIP or RSP
-    }
-  }];
 }
 
 // Segment registers for use by MOV instructions (and others) that have a
@@ -543,48 +524,12 @@ def GR8_NOREX : RegisterClass<"X86", [i8], 8,
 def GR16_NOREX : RegisterClass<"X86", [i16], 16,
                                [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let SubRegClasses = [(GR8_NOREX sub_8bit, sub_8bit_hi)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GR16_NOREXClass::iterator
-    GR16_NOREXClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      const X86MachineFunctionInfo *MFI = MF.getInfo<X86MachineFunctionInfo>();
-      // Does the function dedicate RBP / EBP to being a frame ptr?
-      if (TFI->hasFP(MF) || MFI->getReserveFP())
-        // If so, don't allocate SP or BP.
-        return end() - 2;
-      else
-        // If not, just don't allocate SP.
-        return end() - 1;
-    }
-  }];
 }
 // GR32_NOREX - GR32 registers which do not require a REX prefix.
 def GR32_NOREX : RegisterClass<"X86", [i32], 32,
                                [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   let SubRegClasses = [(GR8_NOREX sub_8bit, sub_8bit_hi),
                        (GR16_NOREX sub_16bit)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GR32_NOREXClass::iterator
-    GR32_NOREXClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      const X86MachineFunctionInfo *MFI = MF.getInfo<X86MachineFunctionInfo>();
-      // Does the function dedicate RBP / EBP to being a frame ptr?
-      if (TFI->hasFP(MF) || MFI->getReserveFP())
-        // If so, don't allocate ESP or EBP.
-        return end() - 2;
-      else
-        // If not, just don't allocate ESP.
-        return end() - 1;
-    }
-  }];
 }
 // GR64_NOREX - GR64 registers which do not require a REX prefix.
 def GR64_NOREX : RegisterClass<"X86", [i64], 64,
@@ -592,24 +537,6 @@ def GR64_NOREX : RegisterClass<"X86", [i64], 64,
   let SubRegClasses = [(GR8_NOREX sub_8bit, sub_8bit_hi),
                        (GR16_NOREX sub_16bit),
                        (GR32_NOREX sub_32bit)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GR64_NOREXClass::iterator
-    GR64_NOREXClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      const X86MachineFunctionInfo *MFI = MF.getInfo<X86MachineFunctionInfo>();
-      // Does the function dedicate RBP to being a frame ptr?
-      if (TFI->hasFP(MF) || MFI->getReserveFP())
-        // If so, don't allocate RIP, RSP or RBP.
-        return end() - 3;
-      else
-        // If not, just don't allocate RIP or RSP.
-        return end() - 2;
-    }
-  }];
 }
 
 // GR32_NOSP - GR32 registers except ESP.
@@ -672,25 +599,6 @@ def GR64_NOSP : RegisterClass<"X86", [i64], 64,
   let SubRegClasses = [(GR8 sub_8bit, sub_8bit_hi),
                        (GR16 sub_16bit),
                        (GR32_NOSP sub_32bit)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GR64_NOSPClass::iterator
-    GR64_NOSPClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-      const X86MachineFunctionInfo *MFI = MF.getInfo<X86MachineFunctionInfo>();
-      if (!Subtarget.is64Bit())
-        return begin();  // None of these are allocatable in 32-bit.
-      // Does the function dedicate RBP to being a frame ptr?
-      if (TFI->hasFP(MF) || MFI->getReserveFP())
-        return end()-1;  // If so, don't allocate RBP
-      else
-        return end();  // If not, any reg in this class is ok.
-    }
-  }];
 }
 
 // GR64_NOREX_NOSP - GR64_NOREX registers except RSP.
@@ -699,25 +607,6 @@ def GR64_NOREX_NOSP : RegisterClass<"X86", [i64], 64,
   let SubRegClasses = [(GR8_NOREX sub_8bit, sub_8bit_hi),
                        (GR16_NOREX sub_16bit),
                        (GR32_NOREX sub_32bit)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GR64_NOREX_NOSPClass::iterator
-    GR64_NOREX_NOSPClass::allocation_order_end(const MachineFunction &MF) const
-  {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      const X86MachineFunctionInfo *MFI = MF.getInfo<X86MachineFunctionInfo>();
-      // Does the function dedicate RBP to being a frame ptr?
-      if (TFI->hasFP(MF) || MFI->getReserveFP())
-        // If so, don't allocate RBP.
-        return end() - 1;
-      else
-        // If not, any reg in this class is ok.
-        return end();
-    }
-  }];
 }
 
 // A class to support the 'A' assembler constraint: EAX then EDX.
