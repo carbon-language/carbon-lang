@@ -15,6 +15,7 @@
 #include "clang/Sema/SemaInternal.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
 #include "llvm/ADT/BitVector.h"
@@ -126,18 +127,48 @@ static std::pair<unsigned,unsigned>
       InDiag = diag::note_protected_by_cleanup;
       OutDiag = diag::note_exits_cleanup;
     } else if (isCPlusPlus) {
-      // FIXME: In C++0x, we have to check more conditions than "did we
-      // just give it an initializer?". See 6.7p3.
-      if (VD->hasLocalStorage() && VD->hasInit())
-        InDiag = diag::note_protected_by_variable_init;
-
-      CanQualType T = VD->getType()->getCanonicalTypeUnqualified();
+      if (!VD->hasLocalStorage())
+        return std::make_pair(InDiag, OutDiag);
+      
+      ASTContext &Context = D->getASTContext();
+      QualType T = Context.getBaseElementType(VD->getType());
       if (!T->isDependentType()) {
-        while (CanQual<ArrayType> AT = T->getAs<ArrayType>())
-          T = AT->getElementType();
-        if (CanQual<RecordType> RT = T->getAs<RecordType>())
-          if (!cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor())
+        // C++0x [stmt.dcl]p3:
+        //   A program that jumps from a point where a variable with automatic
+        //   storage duration is not in scope to a point where it is in scope
+        //   is ill-formed unless the variable has scalar type, class type with
+        //   a trivial default constructor and a trivial destructor, a 
+        //   cv-qualified version of one of these types, or an array of one of
+        //   the preceding types and is declared without an initializer (8.5).
+        if (VD->hasLocalStorage() && Context.getLangOptions().CPlusPlus) {
+          // Check whether this is a C++ class.
+          CXXRecordDecl *Record = T->getAsCXXRecordDecl();
+          
+          if (const Expr *Init = VD->getInit()) {
+            bool CallsTrivialConstructor = false;
+            if (Record) {
+              // FIXME: With generalized initializer lists, this may
+              // classify "X x{};" as having no initializer.
+              if (const CXXConstructExpr *Construct 
+                                          = dyn_cast<CXXConstructExpr>(Init))
+                if (const CXXConstructorDecl *Constructor
+                                                  = Construct->getConstructor())
+                  if (Constructor->isDefaultConstructor() &&
+                      ((Context.getLangOptions().CPlusPlus0x &&
+                        Record->hasTrivialDefaultConstructor()) ||
+                       (!Context.getLangOptions().CPlusPlus0x &&
+                        Record->isPOD())))
+                    CallsTrivialConstructor = true;
+            }
+            
+            if (!CallsTrivialConstructor)
+              InDiag = diag::note_protected_by_variable_init;
+          }
+          
+          // Note whether we have a class with a non-trivial destructor.
+          if (Record && !Record->hasTrivialDestructor())
             OutDiag = diag::note_exits_dtor;
+        }
       }
     }
     
