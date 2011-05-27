@@ -3111,14 +3111,46 @@ static bool CheckObjCTraitOperandConstraints(Sema &S, QualType T,
 /// \brief Check the constrains on expression operands to unary type expression
 /// and type traits.
 ///
-/// This is just a convenience wrapper around
-/// Sema::CheckUnaryExprOrTypeTraitOperand.
+/// Completes any types necessary and validates the constraints on the operand
+/// expression. The logic mostly mirrors the type-based overload, but may modify
+/// the expression as it completes the type for that expression through template
+/// instantiation, etc.
 bool Sema::CheckUnaryExprOrTypeTraitOperand(Expr *Op,
                                             UnaryExprOrTypeTrait ExprKind) {
-  return CheckUnaryExprOrTypeTraitOperand(Op->getType(),
-                                          Op->getExprLoc(),
-                                          Op->getSourceRange(),
-                                          ExprKind);
+  QualType ExprTy = Op->getType();
+
+  // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
+  //   the result is the size of the referenced type."
+  // C++ [expr.alignof]p3: "When alignof is applied to a reference type, the
+  //   result shall be the alignment of the referenced type."
+  if (const ReferenceType *Ref = ExprTy->getAs<ReferenceType>())
+    ExprTy = Ref->getPointeeType();
+
+  if (ExprKind == UETT_VecStep)
+    return CheckVecStepTraitOperandType(*this, ExprTy, Op->getExprLoc(),
+                                        Op->getSourceRange());
+
+  // Whitelist some types as extensions
+  if (!CheckExtensionTraitOperandType(*this, ExprTy, Op->getExprLoc(),
+                                      Op->getSourceRange(), ExprKind))
+    return false;
+
+  if (RequireCompleteExprType(Op,
+                              PDiag(diag::err_sizeof_alignof_incomplete_type)
+                              << ExprKind << Op->getSourceRange(),
+                              std::make_pair(SourceLocation(), PDiag(0))))
+    return true;
+
+  // Completeing the expression's type may have changed it.
+  ExprTy = Op->getType();
+  if (const ReferenceType *Ref = ExprTy->getAs<ReferenceType>())
+    ExprTy = Ref->getPointeeType();
+
+  if (CheckObjCTraitOperandConstraints(*this, ExprTy, Op->getExprLoc(),
+                                       Op->getSourceRange(), ExprKind))
+    return true;
+
+  return false;
 }
 
 /// \brief Check the constraints on operands to unary expression and type

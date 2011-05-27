@@ -55,3 +55,21 @@ namespace PR6657 {
     f0<int>();
   }
 }
+
+// Instantiate out-of-line definitions of static data members which complete
+// types through an initializer even when the only use of the member that would
+// cause instantiation is in an unevaluated context, but one requiring its
+// complete type.
+namespace PR10001 {
+  template <typename T> struct S {
+    static const int arr[];
+    static const int x;
+    static int f();
+  };
+
+  template <typename T> const int S<T>::arr[] = { 1, 2, 3 };
+  template <typename T> const int S<T>::x = sizeof(arr) / sizeof(arr[0]);
+  template <typename T> int S<T>::f() { return x; }
+
+  int x = S<int>::f();
+}

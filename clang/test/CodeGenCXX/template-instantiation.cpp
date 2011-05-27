@@ -1,8 +1,14 @@
 // RUN: %clang_cc1 %s -O1 -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
 
+// CHECK: @_ZN7PR100011xE = global
+// CHECK-NOT: @_ZN7PR100014kBarE = external global i32
+//
 // CHECK-NOT: @_ZTVN5test118stdio_sync_filebufIwEE = constant
 // CHECK-NOT: _ZTVN5test315basic_fstreamXXIcEE
 // CHECK: @_ZTVN5test018stdio_sync_filebufIwEE = unnamed_addr constant
+
+// CHECK: @_ZN7PR100011SIiE3arrE = weak_odr global [3 x i32]
+// CHECK-NOT: @_ZN7PR100011SIiE3arr2E = weak_odr global [3 x i32]A
 
 // CHECK-NOT: _ZTVN5test31SIiEE
 // CHECK-NOT: _ZTSN5test31SIiEE
@@ -121,4 +127,28 @@ class B {
 // Should not instantiate class B since it is introduced in namespace scope.
 // CHECK-NOT: _ZN6PR85051AILi0EE1B1fEv
 template class A<0>;
+}
+
+// Ensure that when instantiating initializers for static data members to
+// complete their type in an unevaluated context, we *do* emit initializers with
+// side-effects, but *don't* emit initializers and variables which are otherwise
+// unused in the program.
+namespace PR10001 {
+  template <typename T> struct S {
+    static const int arr[];
+    static const int arr2[];
+    static const int x, y;
+    static int f();
+  };
+
+  extern int foo();
+  extern int kBar;
+
+  template <typename T> const int S<T>::arr[] = { 1, 2, foo() }; // possible side effects
+  template <typename T> const int S<T>::arr2[] = { 1, 2, kBar }; // no side effects
+  template <typename T> const int S<T>::x = sizeof(arr) / sizeof(arr[0]);
+  template <typename T> const int S<T>::y = sizeof(arr2) / sizeof(arr2[0]);
+  template <typename T> int S<T>::f() { return x + y; }
+
+  int x = S<int>::f();
 }

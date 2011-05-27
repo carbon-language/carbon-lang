@@ -3246,6 +3246,61 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
   } while ((attrs = next));
 }
 
+/// \brief Ensure that the type of the given expression is complete.
+///
+/// This routine checks whether the expression \p E has a complete type. If the
+/// expression refers to an instantiable construct, that instantiation is
+/// performed as needed to complete its type. Furthermore
+/// Sema::RequireCompleteType is called for the expression's type (or in the
+/// case of a reference type, the referred-to type).
+///
+/// \param E The expression whose type is required to be complete.
+/// \param PD The partial diagnostic that will be printed out if the type cannot
+/// be completed.
+///
+/// \returns \c true if the type of \p E is incomplete and diagnosed, \c false
+/// otherwise.
+bool Sema::RequireCompleteExprType(Expr *E, const PartialDiagnostic &PD,
+                                   std::pair<SourceLocation,
+                                             PartialDiagnostic> Note) {
+  QualType T = E->getType();
+
+  // Fast path the case where the type is already complete.
+  if (!T->isIncompleteType())
+    return false;
+
+  // Incomplete array types may be completed by the initializer attached to
+  // their definitions. For static data members of class templates we need to
+  // instantiate the definition to get this initializer and complete the type.
+  if (T->isIncompleteArrayType()) {
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->IgnoreParens())) {
+      if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
+        if (Var->isStaticDataMember() &&
+            Var->getInstantiatedFromStaticDataMember()) {
+          InstantiateStaticDataMemberDefinition(E->getExprLoc(), Var);
+          // Update the type to the newly instantiated definition's type both
+          // here and within the expression.
+          T = Var->getDefinition()->getType();
+          E->setType(T);
+
+          // We still go on to try to complete the type independently, as it
+          // may also require instantiations or diagnostics if it remains
+          // incomplete.
+        }
+      }
+    }
+  }
+
+  // FIXME: Are there other cases which require instantiating something other
+  // than the type to complete the type of an expression?
+
+  // Look through reference types and complete the referred type.
+  if (const ReferenceType *Ref = T->getAs<ReferenceType>())
+    T = Ref->getPointeeType();
+
+  return RequireCompleteType(E->getExprLoc(), T, PD, Note);
+}
+
 /// @brief Ensure that the type T is a complete type.
 ///
 /// This routine checks whether the type @p T is complete in any
