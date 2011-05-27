@@ -1296,7 +1296,7 @@ struct is_destructible
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename remove_reference<_Tp>::type&&
-move(_Tp&& __t)
+move(_Tp&& __t) _NOEXCEPT
 {
     typedef typename remove_reference<_Tp>::type _Up;
     return static_cast<_Up&&>(__t);
@@ -1305,7 +1305,7 @@ move(_Tp&& __t)
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 _Tp&&
-forward(typename std::remove_reference<_Tp>::type& __t)
+forward(typename std::remove_reference<_Tp>::type& __t) _NOEXCEPT
 {
     return static_cast<_Tp&&>(__t);
 }
@@ -1313,7 +1313,7 @@ forward(typename std::remove_reference<_Tp>::type& __t)
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 _Tp&&
-forward(typename std::remove_reference<_Tp>::type&& __t)
+forward(typename std::remove_reference<_Tp>::type&& __t) _NOEXCEPT
 {
  	static_assert(!std::is_lvalue_reference<_Tp>::value,
  	              "Can not forward an rvalue as an lvalue.");
@@ -3000,11 +3000,23 @@ struct __invoke_of
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(_Tp& __x, _Tp& __y)
+swap(_Tp& __x, _Tp& __y) _NOEXCEPT_(is_nothrow_move_constructible<_Tp>::value &&
+                                    is_nothrow_move_assignable<_Tp>::value)
 {
     _Tp __t(_STD::move(__x));
     __x = _STD::move(__y);
     __y = _STD::move(__t);
+}
+
+template <class _ForwardIterator1, class _ForwardIterator2>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
+    //                                  _NOEXCEPT_(_NOEXCEPT_(swap(*__a, *__b)))
+               _NOEXCEPT_(_NOEXCEPT_(swap(*_STD::declval<_ForwardIterator1>(),
+                                          *_STD::declval<_ForwardIterator2>())))
+{
+    swap(*__a, *__b);
 }
 
 _LIBCPP_END_NAMESPACE_STD

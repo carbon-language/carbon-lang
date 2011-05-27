@@ -1659,13 +1659,7 @@ move_backward(_BidirectionalIterator1 __first, _BidirectionalIterator1 __last,
 
 // iter_swap
 
-template <class _ForwardIterator1, class _ForwardIterator2>
-inline _LIBCPP_INLINE_VISIBILITY
-void
-iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
-{
-    swap(*__a, *__b);
-}
+// moved to <type_traits> for better swap / noexcept support
 
 // transform
 
