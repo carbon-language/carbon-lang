@@ -199,6 +199,9 @@ bool AsmPrinter::doInitialization(Module &M) {
   case ExceptionHandling::ARM:
     DE = new ARMException(this);
     return false;
+  case ExceptionHandling::Win64:
+    DE = new Win64Exception(this);
+    return false;
   }
 
   llvm_unreachable("Unknown exception type.");

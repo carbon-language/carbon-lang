@@ -329,6 +329,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     // FALLTHROUGH
   case ExceptionHandling::DwarfCFI:
   case ExceptionHandling::ARM:
+  case ExceptionHandling::Win64:
     PM.add(createDwarfEHPass(this));
     break;
   case ExceptionHandling::None:

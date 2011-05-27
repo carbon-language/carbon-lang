@@ -1,0 +1,62 @@
+//===-- CodeGen/AsmPrinter/Win64Exception.cpp - Dwarf Exception Impl ------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains support for writing Win64 exception info into asm files.
+//
+//===----------------------------------------------------------------------===//
+
+#include "DwarfException.h"
+#include "llvm/Module.h"
+#include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Twine.h"
+using namespace llvm;
+
+Win64Exception::Win64Exception(AsmPrinter *A)
+  : DwarfException(A),
+    shouldEmitPersonality(false), shouldEmitLSDA(false), shouldEmitMoves(false)
+    {}
+
+Win64Exception::~Win64Exception() {}
+
+/// EndModule - Emit all exception information that should come after the
+/// content.
+void Win64Exception::EndModule() {
+}
+
+/// BeginFunction - Gather pre-function exception information. Assumes it's
+/// being emitted immediately after the function entry point.
+void Win64Exception::BeginFunction(const MachineFunction *MF) {
+}
+
+/// EndFunction - Gather and emit post-function exception information.
+///
+void Win64Exception::EndFunction() {
+}

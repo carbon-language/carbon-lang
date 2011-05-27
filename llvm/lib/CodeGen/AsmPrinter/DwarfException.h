@@ -205,6 +205,38 @@ public:
   virtual void EndFunction();
 };
 
+class Win64Exception : public DwarfException {
+  /// shouldEmitPersonality - Per-function flag to indicate if personality
+  /// info should be emitted.
+  bool shouldEmitPersonality;
+
+  /// shouldEmitLSDA - Per-function flag to indicate if the LSDA
+  /// should be emitted.
+  bool shouldEmitLSDA;
+
+  /// shouldEmitMoves - Per-function flag to indicate if frame moves info
+  /// should be emitted.
+  bool shouldEmitMoves;
+
+public:
+  //===--------------------------------------------------------------------===//
+  // Main entry points.
+  //
+  Win64Exception(AsmPrinter *A);
+  virtual ~Win64Exception();
+
+  /// EndModule - Emit all exception information that should come after the
+  /// content.
+  virtual void EndModule();
+
+  /// BeginFunction - Gather pre-function exception information.  Assumes being
+  /// emitted immediately after the function entry point.
+  virtual void BeginFunction(const MachineFunction *MF);
+
+  /// EndFunction - Gather and emit post-function exception information.
+  virtual void EndFunction();
+};
+
 } // End of namespace llvm
 
 #endif
