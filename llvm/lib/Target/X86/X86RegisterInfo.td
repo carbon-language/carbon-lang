@@ -41,59 +41,59 @@ let Namespace = "X86" in {
 
   // 8-bit registers
   // Low registers
-  def AL : Register<"al">;
-  def DL : Register<"dl">;
-  def CL : Register<"cl">;
-  def BL : Register<"bl">;
+  def AL : Register<"al">, DwarfRegNum<[0, 0, 0]>;
+  def DL : Register<"dl">, DwarfRegNum<[1, 2, 2]>;
+  def CL : Register<"cl">, DwarfRegNum<[2, 1, 1]>;
+  def BL : Register<"bl">, DwarfRegNum<[3, 3, 3]>;
 
   // X86-64 only, requires REX.
   let CostPerUse = 1 in {
-  def SIL : Register<"sil">;
-  def DIL : Register<"dil">;
-  def BPL : Register<"bpl">;
-  def SPL : Register<"spl">;
-  def R8B  : Register<"r8b">;
-  def R9B  : Register<"r9b">;
-  def R10B : Register<"r10b">;
-  def R11B : Register<"r11b">;
-  def R12B : Register<"r12b">;
-  def R13B : Register<"r13b">;
-  def R14B : Register<"r14b">;
-  def R15B : Register<"r15b">;
+  def SIL : Register<"sil">, DwarfRegNum<[4, 6, 6]>;
+  def DIL : Register<"dil">, DwarfRegNum<[5, 7, 7]>;
+  def BPL : Register<"bpl">, DwarfRegNum<[6, 4, 5]>;
+  def SPL : Register<"spl">, DwarfRegNum<[7, 5, 4]>;
+  def R8B  : Register<"r8b">,  DwarfRegNum<[8, -2, -2]>;
+  def R9B  : Register<"r9b">,  DwarfRegNum<[9, -2, -2]>;
+  def R10B : Register<"r10b">, DwarfRegNum<[10, -2, -2]>;
+  def R11B : Register<"r11b">, DwarfRegNum<[11, -2, -2]>;
+  def R12B : Register<"r12b">, DwarfRegNum<[12, -2, -2]>;
+  def R13B : Register<"r13b">, DwarfRegNum<[13, -2, -2]>;
+  def R14B : Register<"r14b">, DwarfRegNum<[14, -2, -2]>;
+  def R15B : Register<"r15b">, DwarfRegNum<[15, -2, -2]>;
   }
 
   // High registers. On x86-64, these cannot be used in any instruction
   // with a REX prefix.
-  def AH : Register<"ah">;
-  def DH : Register<"dh">;
-  def CH : Register<"ch">;
-  def BH : Register<"bh">;
+  def AH : Register<"ah">, DwarfRegNum<[0, 0, 0]>;
+  def DH : Register<"dh">, DwarfRegNum<[1, 2, 2]>;
+  def CH : Register<"ch">, DwarfRegNum<[2, 1, 1]>;
+  def BH : Register<"bh">, DwarfRegNum<[3, 3, 3]>;
 
   // 16-bit registers
   let SubRegIndices = [sub_8bit, sub_8bit_hi] in {
-  def AX : RegisterWithSubRegs<"ax", [AL,AH]>;
-  def DX : RegisterWithSubRegs<"dx", [DL,DH]>;
-  def CX : RegisterWithSubRegs<"cx", [CL,CH]>;
-  def BX : RegisterWithSubRegs<"bx", [BL,BH]>;
+  def AX : RegisterWithSubRegs<"ax", [AL,AH]>, DwarfRegNum<[0, 0, 0]>;
+  def DX : RegisterWithSubRegs<"dx", [DL,DH]>, DwarfRegNum<[1, 2, 2]>;
+  def CX : RegisterWithSubRegs<"cx", [CL,CH]>, DwarfRegNum<[2, 1, 1]>;
+  def BX : RegisterWithSubRegs<"bx", [BL,BH]>, DwarfRegNum<[3, 3, 3]>;
   }
   let SubRegIndices = [sub_8bit] in {
-  def SI : RegisterWithSubRegs<"si", [SIL]>;
-  def DI : RegisterWithSubRegs<"di", [DIL]>;
-  def BP : RegisterWithSubRegs<"bp", [BPL]>;
-  def SP : RegisterWithSubRegs<"sp", [SPL]>;
+  def SI : RegisterWithSubRegs<"si", [SIL]>, DwarfRegNum<[4, 6, 6]>;
+  def DI : RegisterWithSubRegs<"di", [DIL]>, DwarfRegNum<[5, 7, 7]>;
+  def BP : RegisterWithSubRegs<"bp", [BPL]>, DwarfRegNum<[6, 4, 5]>;
+  def SP : RegisterWithSubRegs<"sp", [SPL]>, DwarfRegNum<[7, 5, 4]>;
   }
-  def IP : Register<"ip">;
+  def IP : Register<"ip">, DwarfRegNum<[16]>;
 
   // X86-64 only, requires REX.
   let SubRegIndices = [sub_8bit], CostPerUse = 1 in {
-  def R8W  : RegisterWithSubRegs<"r8w", [R8B]>;
-  def R9W  : RegisterWithSubRegs<"r9w", [R9B]>;
-  def R10W : RegisterWithSubRegs<"r10w", [R10B]>;
-  def R11W : RegisterWithSubRegs<"r11w", [R11B]>;
-  def R12W : RegisterWithSubRegs<"r12w", [R12B]>;
-  def R13W : RegisterWithSubRegs<"r13w", [R13B]>;
-  def R14W : RegisterWithSubRegs<"r14w", [R14B]>;
-  def R15W : RegisterWithSubRegs<"r15w", [R15B]>;
+  def R8W  : RegisterWithSubRegs<"r8w", [R8B]>, DwarfRegNum<[8, -2, -2]>;
+  def R9W  : RegisterWithSubRegs<"r9w", [R9B]>, DwarfRegNum<[9, -2, -2]>;
+  def R10W : RegisterWithSubRegs<"r10w", [R10B]>, DwarfRegNum<[10, -2, -2]>;
+  def R11W : RegisterWithSubRegs<"r11w", [R11B]>, DwarfRegNum<[11, -2, -2]>;
+  def R12W : RegisterWithSubRegs<"r12w", [R12B]>, DwarfRegNum<[12, -2, -2]>;
+  def R13W : RegisterWithSubRegs<"r13w", [R13B]>, DwarfRegNum<[13, -2, -2]>;
+  def R14W : RegisterWithSubRegs<"r14w", [R14B]>, DwarfRegNum<[14, -2, -2]>;
+  def R15W : RegisterWithSubRegs<"r15w", [R15B]>, DwarfRegNum<[15, -2, -2]>;
   }
   // 32-bit registers
   let SubRegIndices = [sub_16bit] in {
@@ -109,14 +109,14 @@ let Namespace = "X86" in {
 
   // X86-64 only, requires REX
   let CostPerUse = 1 in {
-  def R8D  : RegisterWithSubRegs<"r8d", [R8W]>;
-  def R9D  : RegisterWithSubRegs<"r9d", [R9W]>;
-  def R10D : RegisterWithSubRegs<"r10d", [R10W]>;
-  def R11D : RegisterWithSubRegs<"r11d", [R11W]>;
-  def R12D : RegisterWithSubRegs<"r12d", [R12W]>;
-  def R13D : RegisterWithSubRegs<"r13d", [R13W]>;
-  def R14D : RegisterWithSubRegs<"r14d", [R14W]>;
-  def R15D : RegisterWithSubRegs<"r15d", [R15W]>;
+  def R8D  : RegisterWithSubRegs<"r8d", [R8W]>, DwarfRegNum<[8, -2, -2]>;
+  def R9D  : RegisterWithSubRegs<"r9d", [R9W]>, DwarfRegNum<[9, -2, -2]>;
+  def R10D : RegisterWithSubRegs<"r10d", [R10W]>, DwarfRegNum<[10, -2, -2]>;
+  def R11D : RegisterWithSubRegs<"r11d", [R11W]>, DwarfRegNum<[11, -2, -2]>;
+  def R12D : RegisterWithSubRegs<"r12d", [R12W]>, DwarfRegNum<[12, -2, -2]>;
+  def R13D : RegisterWithSubRegs<"r13d", [R13W]>, DwarfRegNum<[13, -2, -2]>;
+  def R14D : RegisterWithSubRegs<"r14d", [R14W]>, DwarfRegNum<[14, -2, -2]>;
+  def R15D : RegisterWithSubRegs<"r15d", [R15W]>, DwarfRegNum<[15, -2, -2]>;
   }}
 
   // 64-bit registers, X86-64 only
