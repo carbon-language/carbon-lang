@@ -155,8 +155,8 @@ public:
   const MCSection *getTLSExtraDataSection() const {
     return TLSExtraDataSection;
   }
-  virtual const MCSection *getWin64EHFuncTableSection() const = 0;
-  virtual const MCSection *getWin64EHTableSection() const = 0;
+  virtual const MCSection *getWin64EHFuncTableSection(StringRef suffix)const=0;
+  virtual const MCSection *getWin64EHTableSection(StringRef suffix) const = 0;
   
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
   /// decide not to emit the UsedDirective for some symbols in llvm.used.

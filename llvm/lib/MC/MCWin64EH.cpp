@@ -10,6 +10,8 @@
 #include "llvm/MC/MCWin64EH.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Target/TargetAsmInfo.h"
 
@@ -199,13 +201,33 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
   }
 }
 
+StringRef MCWin64EHUnwindEmitter::GetSectionSuffix(const MCSymbol *func) {
+  if (!func || !func->isInSection()) return "";
+  const MCSection *section = &func->getSection();
+  const MCSectionCOFF *COFFSection;
+  if ((COFFSection = dyn_cast<MCSectionCOFF>(section))) {
+    StringRef name = COFFSection->getSectionName();
+    size_t dollar = name.find('$');
+    size_t dot = name.find('.', 1);
+    if (dollar == StringRef::npos && dot == StringRef::npos)
+      return "";
+    if (dot == StringRef::npos)
+      return name.substr(dollar);
+    if (dollar == StringRef::npos || dot < dollar)
+      return name.substr(dot);
+    return name.substr(dollar);
+  }
+  return "";
+}
+
 void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
                                             MCWin64EHUnwindInfo *info) {
   // Switch sections (the static function above is meant to be called from
   // here and from Emit().
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  const MCSection *xdataSect = asmInfo.getWin64EHTableSection();
+  const MCSection *xdataSect =
+    asmInfo.getWin64EHTableSection(GetSectionSuffix(info->Function));
   streamer.SwitchSection(xdataSect);
 
   llvm::EmitUnwindInfo(streamer, info);
@@ -215,15 +237,21 @@ void MCWin64EHUnwindEmitter::Emit(MCStreamer &streamer) {
   MCContext &context = streamer.getContext();
   // Emit the unwind info structs first.
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  const MCSection *xdataSect = asmInfo.getWin64EHTableSection();
-  streamer.SwitchSection(xdataSect);
-  for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i)
-    llvm::EmitUnwindInfo(streamer, &streamer.getW64UnwindInfo(i));
+  for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i) {
+    MCWin64EHUnwindInfo &info = streamer.getW64UnwindInfo(i);
+    const MCSection *xdataSect =
+      asmInfo.getWin64EHTableSection(GetSectionSuffix(info.Function));
+    streamer.SwitchSection(xdataSect);
+    llvm::EmitUnwindInfo(streamer, &info);
+  }
   // Now emit RUNTIME_FUNCTION entries.
-  const MCSection *pdataSect = asmInfo.getWin64EHFuncTableSection();
-  streamer.SwitchSection(pdataSect);
-  for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i)
-    EmitRuntimeFunction(streamer, &streamer.getW64UnwindInfo(i));
+  for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i) {
+    MCWin64EHUnwindInfo &info = streamer.getW64UnwindInfo(i);
+    const MCSection *pdataSect =
+      asmInfo.getWin64EHFuncTableSection(GetSectionSuffix(info.Function));
+    streamer.SwitchSection(pdataSect);
+    EmitRuntimeFunction(streamer, &info);
+  }
 }
 
 } // End of namespace llvm

@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace llvm {
+  class StringRef;
   class MCStreamer;
   class MCSymbol;
 
@@ -80,6 +81,7 @@ namespace llvm {
 
   class MCWin64EHUnwindEmitter {
   public:
+    static StringRef GetSectionSuffix(const MCSymbol *func);
     //
     // This emits the unwind info sections (.pdata and .xdata in PE/COFF).
     //

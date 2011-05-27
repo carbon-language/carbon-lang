@@ -58,8 +58,10 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
   virtual const MCSection *getEHFrameSection() const;
-  virtual const MCSection *getWin64EHFuncTableSection() const { return NULL; }
-  virtual const MCSection *getWin64EHTableSection() const { return NULL; }
+  virtual const MCSection *getWin64EHFuncTableSection(StringRef) const {
+    return NULL;
+  }
+  virtual const MCSection *getWin64EHTableSection(StringRef) const{return NULL;}
 
   virtual void emitPersonalityValue(MCStreamer &Streamer,
                                     const TargetMachine &TM,
@@ -135,8 +137,10 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
   virtual const MCSection *getEHFrameSection() const;
-  virtual const MCSection *getWin64EHFuncTableSection() const { return NULL; }
-  virtual const MCSection *getWin64EHTableSection() const { return NULL; }
+  virtual const MCSection *getWin64EHFuncTableSection(StringRef) const {
+    return NULL;
+  }
+  virtual const MCSection *getWin64EHTableSection(StringRef) const{return NULL;}
 
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
@@ -209,10 +213,12 @@ public:
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
   virtual const MCSection *getEHFrameSection() const;
-  virtual const MCSection *getWin64EHFuncTableSection() const {
+  virtual const MCSection *getWin64EHFuncTableSection(StringRef) const {
     return PDataSection;
   }
-  virtual const MCSection *getWin64EHTableSection() const {return XDataSection;}
+  virtual const MCSection *getWin64EHTableSection(StringRef) const {
+    return XDataSection;
+  }
 
   virtual const MCSection *getDrectveSection() const { return DrectveSection; }
 
