@@ -91,7 +91,7 @@ public:
   /// it is already legal or we need to expand it into multiple registers of
   /// smaller integer type, or we need to promote it to a larger type.
   LegalizeAction getTypeAction(EVT VT) const {
-    return (LegalizeAction)ValueTypeActions.getTypeAction(VT);
+    return (LegalizeAction)TLI.getTypeAction(*DAG.getContext(), VT);
   }
 
   /// isTypeLegal - Return true if this type is legal on this target.

@@ -204,60 +204,9 @@ public:
     /// that indicates how instruction selection should deal with the type.
     uint8_t ValueTypeActions[MVT::LAST_VALUETYPE];
 
-    LegalizeAction getExtendedTypeAction(EVT VT) const {
-      // Handle non-vector integers.
-      if (!VT.isVector()) {
-        assert(VT.isInteger() && "Unsupported extended type!");
-        unsigned BitSize = VT.getSizeInBits();
-        // First promote to a power-of-two size, then expand if necessary.
-        if (BitSize < 8 || !isPowerOf2_32(BitSize))
-          return Promote;
-        return Expand;
-      }
-
-      // Vectors with only one element are always scalarized.
-      if (VT.getVectorNumElements() == 1)
-        return Expand;
-
-      // Vectors with a number of elements that is not a power of two are always
-      // widened, for example <3 x float> -> <4 x float>.
-      if (!VT.isPow2VectorType())
-        return Promote;
-
-      // Vectors with a crazy element type are always expanded, for example
-      // <4 x i2> is expanded into two vectors of type <2 x i2>.
-      if (!VT.getVectorElementType().isSimple())
-        return Expand;
-
-      // If this type is smaller than a legal vector type then widen it,
-      // otherwise expand it.  E.g. <2 x float> -> <4 x float>.
-      MVT EltType = VT.getVectorElementType().getSimpleVT();
-      unsigned NumElts = VT.getVectorNumElements();
-      while (1) {
-        // Round up to the next power of 2.
-        NumElts = (unsigned)NextPowerOf2(NumElts);
-
-        // If there is no simple vector type with this many elements then there
-        // cannot be a larger legal vector type.  Note that this assumes that
-        // there are no skipped intermediate vector types in the simple types.
-        MVT LargerVector = MVT::getVectorVT(EltType, NumElts);
-        if (LargerVector == MVT())
-          return Expand;
-
-        // If this type is legal then widen the vector.
-        if (getTypeAction(LargerVector) == Legal)
-          return Promote;
-      }
-    }
   public:
     ValueTypeActionImpl() {
       std::fill(ValueTypeActions, array_endof(ValueTypeActions), 0);
-    }
-
-    LegalizeAction getTypeAction(EVT VT) const {
-      if (!VT.isExtended())
-        return getTypeAction(VT.getSimpleVT());
-      return getExtendedTypeAction(VT);
     }
 
     LegalizeAction getTypeAction(MVT VT) const {
@@ -278,8 +227,8 @@ public:
   /// it is already legal (return 'Legal') or we need to promote it to a larger
   /// type (return 'Promote'), or we need to expand it into multiple registers
   /// of smaller integer type (return 'Expand').  'Custom' is not an option.
-  LegalizeAction getTypeAction(EVT VT) const {
-    return ValueTypeActions.getTypeAction(VT);
+  LegalizeAction getTypeAction(LLVMContext &Context, EVT VT) const {
+    return getTypeConversion(Context, VT).first;
   }
   LegalizeAction getTypeAction(MVT VT) const {
     return ValueTypeActions.getTypeAction(VT);
@@ -292,38 +241,7 @@ public:
   /// to get to the smaller register. For illegal floating point types, this
   /// returns the integer type to transform to.
   EVT getTypeToTransformTo(LLVMContext &Context, EVT VT) const {
-    if (VT.isSimple()) {
-      assert((unsigned)VT.getSimpleVT().SimpleTy <
-             array_lengthof(TransformToType));
-      EVT NVT = TransformToType[VT.getSimpleVT().SimpleTy];
-      assert(getTypeAction(NVT) != Promote &&
-             "Promote may not follow Expand or Promote");
-      return NVT;
-    }
-
-    if (VT.isVector()) {
-      EVT NVT = VT.getPow2VectorType(Context);
-      if (NVT == VT) {
-        // Vector length is a power of 2 - split to half the size.
-        unsigned NumElts = VT.getVectorNumElements();
-        EVT EltVT = VT.getVectorElementType();
-        return (NumElts == 1) ?
-          EltVT : EVT::getVectorVT(Context, EltVT, NumElts / 2);
-      }
-      // Promote to a power of two size, avoiding multi-step promotion.
-      return getTypeAction(NVT) == Promote ?
-        getTypeToTransformTo(Context, NVT) : NVT;
-    } else if (VT.isInteger()) {
-      EVT NVT = VT.getRoundIntegerType(Context);
-      if (NVT == VT)      // Size is a power of two - expand to half the size.
-        return EVT::getIntegerVT(Context, VT.getSizeInBits() / 2);
-
-      // Promote to a power of two size, avoiding multi-step promotion.
-      return getTypeAction(NVT) == Promote ?
-        getTypeToTransformTo(Context, NVT) : NVT;
-    }
-    assert(0 && "Unsupported extended type!");
-    return MVT(MVT::Other); // Not reached
+    return getTypeConversion(Context, VT).second; 
   }
 
   /// getTypeToExpandTo - For types supported by the target, this is an
@@ -333,7 +251,7 @@ public:
   EVT getTypeToExpandTo(LLVMContext &Context, EVT VT) const {
     assert(!VT.isVector());
     while (true) {
-      switch (getTypeAction(VT)) {
+      switch (getTypeAction(Context, VT)) {
       case Legal:
         return VT;
       case Expand:
@@ -1813,6 +1731,80 @@ private:
   uint64_t CondCodeActions[ISD::SETCC_INVALID];
 
   ValueTypeActionImpl ValueTypeActions;
+
+  typedef std::pair<LegalizeAction, EVT> LegalizeKind;
+
+  LegalizeKind
+  getTypeConversion(LLVMContext &Context, EVT VT) const {
+    // If this is a simple type, use the ComputeRegisterProp mechanism.
+    if (VT.isSimple()) {
+      assert((unsigned)VT.getSimpleVT().SimpleTy <
+             array_lengthof(TransformToType));
+      EVT NVT = TransformToType[VT.getSimpleVT().SimpleTy];
+      LegalizeAction LA = ValueTypeActions.getTypeAction(VT.getSimpleVT());
+      if (NVT.isSimple() && LA != Legal)
+        assert(ValueTypeActions.getTypeAction(NVT.getSimpleVT()) != Promote &&
+               "Promote may not follow Expand or Promote");
+      return LegalizeKind(LA, NVT);
+    }
+
+    // Handle Extended Scalar Types.
+    if (!VT.isVector()) {
+      assert(VT.isInteger() && "Float types must be simple");
+      unsigned BitSize = VT.getSizeInBits();
+      // First promote to a power-of-two size, then expand if necessary.
+      if (BitSize < 8 || !isPowerOf2_32(BitSize)) {
+        EVT NVT = VT.getRoundIntegerType(Context);
+        assert(NVT != VT && "Unable to round integer VT");
+        LegalizeKind NextStep = getTypeConversion(Context, NVT);
+        // Avoid multi-step promotion.
+        if (NextStep.first == Promote) return NextStep;
+        // Return rounded integer type.
+        return LegalizeKind(Promote, NVT);
+      }
+
+      return LegalizeKind(Expand,
+                          EVT::getIntegerVT(Context, VT.getSizeInBits()/2));
+    }
+
+    // Handle vector types.
+    unsigned NumElts = VT.getVectorNumElements();
+    EVT EltVT = VT.getVectorElementType();
+
+    // Vectors with only one element are always scalarized.
+    if (NumElts == 1)
+      return LegalizeKind(Expand, EltVT);
+
+    // Try to widen the vector until a legal type is found.
+    // If there is no wider legal type, split the vector.
+    while (1) {
+      // Round up to the next power of 2.
+      NumElts = (unsigned)NextPowerOf2(NumElts);
+
+      // If there is no simple vector type with this many elements then there
+      // cannot be a larger legal vector type.  Note that this assumes that
+      // there are no skipped intermediate vector types in the simple types.
+      MVT LargerVector = MVT::getVectorVT(EltVT.getSimpleVT(), NumElts);
+      if (LargerVector == MVT()) break;
+
+      // If this type is legal then widen the vector.
+      if (ValueTypeActions.getTypeAction(LargerVector) == Legal)
+        return LegalizeKind(Promote, LargerVector);
+    }
+
+    // Widen odd vectors to next power of two.
+    if (!VT.isPow2VectorType()) {
+      EVT NVT = VT.getPow2VectorType(Context);
+      return LegalizeKind(Promote, NVT);
+    }
+
+    // Vectors with illegal element types are expanded.
+    EVT NVT = EVT::getVectorVT(Context, EltVT, VT.getVectorNumElements() / 2);
+    return LegalizeKind(Expand, NVT);
+
+    assert(false && "Unable to handle this kind of vector type");
+    return LegalizeKind(Legal, VT);
+  }
 
   std::vector<std::pair<EVT, TargetRegisterClass*> > AvailableRegClasses;
 
