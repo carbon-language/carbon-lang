@@ -389,9 +389,11 @@ void MCStreamer::EmitWin64EHPushReg(unsigned Register) {
 
 void MCStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
   EnsureValidW64UnwindInfo();
+  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  if (CurFrame->LastFrameInst >= 0)
+    report_fatal_error("Frame register and offset already specified!");
   if (Offset & 0x0F)
     report_fatal_error("Misaligned frame pointer offset!");
-  MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, Register, Offset);
   CurFrame->LastFrameInst = CurFrame->Instructions.size();
   CurFrame->Instructions.push_back(Inst);
@@ -412,7 +414,7 @@ void MCStreamer::EmitWin64EHSaveReg(unsigned Register, unsigned Offset) {
     report_fatal_error("Misaligned saved register offset!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   MCWin64EHInstruction Inst(
-     Offset > 512*1024-8 ? Win64EH::UOP_SaveNonVol : Win64EH::UOP_SaveNonVolBig,
+     Offset > 512*1024-8 ? Win64EH::UOP_SaveNonVolBig : Win64EH::UOP_SaveNonVol,
                             Register, Offset);
   CurFrame->Instructions.push_back(Inst);
 }
@@ -423,7 +425,7 @@ void MCStreamer::EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) {
     report_fatal_error("Misaligned saved vector register offset!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   MCWin64EHInstruction Inst(
-    Offset > 512*1024-16 ? Win64EH::UOP_SaveXMM128 : Win64EH::UOP_SaveXMM128Big,
+    Offset > 512*1024-16 ? Win64EH::UOP_SaveXMM128Big : Win64EH::UOP_SaveXMM128,
                             Register, Offset);
   CurFrame->Instructions.push_back(Inst);
 }
@@ -431,6 +433,8 @@ void MCStreamer::EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) {
 void MCStreamer::EmitWin64EHPushFrame(bool Code) {
   EnsureValidW64UnwindInfo();
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  if (CurFrame->Instructions.size() > 0)
+    report_fatal_error("If present, PushMachFrame must be the first UOP");
   MCWin64EHInstruction Inst(Win64EH::UOP_PushMachFrame, Code);
   CurFrame->Instructions.push_back(Inst);
 }
