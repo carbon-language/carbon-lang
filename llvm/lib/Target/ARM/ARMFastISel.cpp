@@ -1981,6 +1981,8 @@ bool ARMFastISel::SelectIntCast(const Instruction *I) {
   unsigned Opc;
   bool isZext = isa<ZExtInst>(I);
   bool isBoolZext = false;
+  if (!SrcVT.isSimple())
+    return false;
   switch (SrcVT.getSimpleVT().SimpleTy) {
   default: return false;
   case MVT::i16:
