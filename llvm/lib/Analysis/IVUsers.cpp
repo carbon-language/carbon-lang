@@ -152,7 +152,9 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I, PHINode *Phi) {
       // Okay, we found a user that we cannot reduce.
       IVUses.push_back(new IVStrideUse(this, User, I, Phi));
       IVStrideUse &NewUse = IVUses.back();
-      // Transform the expression into a normalized form.
+      // Autodetect the post-inc loop set, populating NewUse.PostIncLoops.
+      // The regular return value here is discarded; instead of recording
+      // it, we just recompute it when we need it.
       ISE = TransformForPostIncUse(NormalizeAutodetect,
                                    ISE, User, I,
                                    NewUse.PostIncLoops,
