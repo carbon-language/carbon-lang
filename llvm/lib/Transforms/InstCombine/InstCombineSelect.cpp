@@ -278,6 +278,49 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
   return 0;
 }
 
+/// SimplifyWithOpReplaced - See if V simplifies when its operand Op is
+/// replaced with RepOp.
+static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
+                                     const TargetData *TD) {
+  // Trivial replacement.
+  if (V == Op)
+    return RepOp;
+
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I)
+    return 0;
+
+  // If this is a binary operator, try to simplify it with the replaced op.
+  if (BinaryOperator *B = dyn_cast<BinaryOperator>(I)) {
+    if (B->getOperand(0) == Op)
+      return SimplifyBinOp(B->getOpcode(), RepOp, B->getOperand(1), TD);
+    if (B->getOperand(1) == Op)
+      return SimplifyBinOp(B->getOpcode(), B->getOperand(0), RepOp, TD);
+  }
+
+  // If all operands are constant after substituting Op for RepOp then we can
+  // constant fold the instruction.
+  if (Constant *CRepOp = dyn_cast<Constant>(RepOp)) {
+    // Build a list of all constant operands.
+    SmallVector<Constant*, 8> ConstOps;
+    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+      if (I->getOperand(i) == Op)
+        ConstOps.push_back(CRepOp);
+      else if (Constant *COp = dyn_cast<Constant>(I->getOperand(i)))
+        ConstOps.push_back(COp);
+      else
+        break;
+    }
+
+    // All operands were constants, fold it.
+    if (ConstOps.size() == I->getNumOperands())
+      return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
+                                      ConstOps.data(), ConstOps.size(), TD);
+  }
+
+  return 0;
+}
+
 /// visitSelectInstWithICmp - Visit a SelectInst that has an
 /// ICmpInst as its first operand.
 ///
@@ -416,24 +459,20 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
     }
   }
 
-  if (CmpLHS == TrueVal && CmpRHS == FalseVal) {
-    // Transform (X == Y) ? X : Y  -> Y
-    if (Pred == ICmpInst::ICMP_EQ)
+  // If we have an equality comparison then we know the value in one of the
+  // arms of the select. See if substituting this value into the arm and
+  // simplifying the result yields the same value as the other arm.
+  if (Pred == ICmpInst::ICMP_EQ) {
+    if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, TD) == TrueVal ||
+        SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, TD) == TrueVal)
       return ReplaceInstUsesWith(SI, FalseVal);
-    // Transform (X != Y) ? X : Y  -> X
-    if (Pred == ICmpInst::ICMP_NE)
+  } else if (Pred == ICmpInst::ICMP_NE) {
+    if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, TD) == FalseVal ||
+        SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, TD) == FalseVal)
       return ReplaceInstUsesWith(SI, TrueVal);
-    /// NOTE: if we wanted to, this is where to detect integer MIN/MAX
-
-  } else if (CmpLHS == FalseVal && CmpRHS == TrueVal) {
-    // Transform (X == Y) ? Y : X  -> X
-    if (Pred == ICmpInst::ICMP_EQ)
-      return ReplaceInstUsesWith(SI, FalseVal);
-    // Transform (X != Y) ? Y : X  -> Y
-    if (Pred == ICmpInst::ICMP_NE)
-      return ReplaceInstUsesWith(SI, TrueVal);
-    /// NOTE: if we wanted to, this is where to detect integer MIN/MAX
   }
+
+  // NOTE: if we wanted to, this is where to detect integer MIN/MAX
 
   if (isa<Constant>(CmpRHS)) {
     if (CmpLHS == TrueVal && Pred == ICmpInst::ICMP_EQ) {

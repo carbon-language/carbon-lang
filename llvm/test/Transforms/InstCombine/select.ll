@@ -749,3 +749,43 @@ define i1 @test55(i1 %X, i32 %Y, i32 %Z) {
 ; CHECK: icmp eq
 ; CHECK: ret i1
 }
+
+define i32 @test56(i16 %x) nounwind {
+  %tobool = icmp eq i16 %x, 0
+  %conv = zext i16 %x to i32
+  %cond = select i1 %tobool, i32 0, i32 %conv
+  ret i32 %cond
+; CHECK: @test56
+; CHECK-NEXT: zext
+; CHECK-NEXT: ret
+}
+
+define i32 @test57(i32 %x, i32 %y) nounwind {
+  %and = and i32 %x, %y
+  %tobool = icmp eq i32 %x, 0
+  %.and = select i1 %tobool, i32 0, i32 %and
+  ret i32 %.and
+; CHECK: @test57
+; CHECK-NEXT: and i32 %x, %y
+; CHECK-NEXT: ret
+}
+
+define i32 @test58(i16 %x) nounwind {
+  %tobool = icmp ne i16 %x, 1
+  %conv = zext i16 %x to i32
+  %cond = select i1 %tobool, i32 %conv, i32 1
+  ret i32 %cond
+; CHECK: @test58
+; CHECK-NEXT: zext
+; CHECK-NEXT: ret
+}
+
+define i32 @test59(i32 %x, i32 %y) nounwind {
+  %and = and i32 %x, %y
+  %tobool = icmp ne i32 %x, %y
+  %.and = select i1 %tobool, i32 %and, i32 %y
+  ret i32 %.and
+; CHECK: @test59
+; CHECK-NEXT: and i32 %x, %y
+; CHECK-NEXT: ret
+}
