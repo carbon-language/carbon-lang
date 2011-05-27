@@ -601,12 +601,20 @@ def GR64_NOSP : RegisterClass<"X86", [i64], 64,
                        (GR32_NOSP sub_32bit)];
 }
 
+// GR32_NOREX_NOSP - GR32 registers which do not require a REX prefix except
+// ESP.
+def GR32_NOREX_NOSP : RegisterClass<"X86", [i32], 32,
+                               [EAX, ECX, EDX, ESI, EDI, EBX, EBP]> {
+  let SubRegClasses = [(GR8_NOREX sub_8bit, sub_8bit_hi),
+                       (GR16_NOREX sub_16bit)];
+}
+
 // GR64_NOREX_NOSP - GR64_NOREX registers except RSP.
 def GR64_NOREX_NOSP : RegisterClass<"X86", [i64], 64,
                                     [RAX, RCX, RDX, RSI, RDI, RBX, RBP]> {
   let SubRegClasses = [(GR8_NOREX sub_8bit, sub_8bit_hi),
                        (GR16_NOREX sub_16bit),
-                       (GR32_NOREX sub_32bit)];
+                       (GR32_NOREX_NOSP sub_32bit)];
 }
 
 // A class to support the 'A' assembler constraint: EAX then EDX.

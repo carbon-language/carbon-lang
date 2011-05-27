@@ -301,9 +301,16 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
           A == &X86::GR64_NOREX_NOSPRegClass)
         return &X86::GR64_ABCDRegClass;
     } else if (B == &X86::GR32_NOREXRegClass) {
+      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass)
+        return &X86::GR64_NOREXRegClass;
+      else if (A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
+        return &X86::GR64_NOREX_NOSPRegClass;
+      else if (A == &X86::GR64_ABCDRegClass)
+        return &X86::GR64_ABCDRegClass;
+    } else if (B == &X86::GR32_NOREX_NOSPRegClass) {
       if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass ||
           A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
-        return &X86::GR64_NOREXRegClass;
+        return &X86::GR64_NOREX_NOSPRegClass;
       else if (A == &X86::GR64_ABCDRegClass)
         return &X86::GR64_ABCDRegClass;
     }
