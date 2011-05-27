@@ -152,11 +152,10 @@ static std::pair<unsigned,unsigned>
                                         = dyn_cast<CXXConstructExpr>(Init))
               if (const CXXConstructorDecl *Constructor
                                                 = Construct->getConstructor())
-                if (Constructor->isDefaultConstructor() &&
-                    ((Context.getLangOptions().CPlusPlus0x &&
-                      Record->hasTrivialDefaultConstructor()) ||
-                     (!Context.getLangOptions().CPlusPlus0x &&
-                      Record->isPOD())))
+                if ((Context.getLangOptions().CPlusPlus0x
+                       ? Record->hasTrivialDefaultConstructor()
+                       : Record->isPOD()) &&
+                    Constructor->isDefaultConstructor())
                   CallsTrivialConstructor = true;
           }
           
