@@ -290,18 +290,18 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     if (Name.compare(5, 13, "x86.sse42.crc", 13) == 0) {
       const char* NewFnName = NULL;
       if (Name.compare(18, 2, "32", 2) == 0) {
-        if (Name.compare(20, 2, ".8") == 0) {
+        if (Name.compare(20, 2, ".8") == 0 && Name.length() == 22) {
           NewFnName = "llvm.x86.sse42.crc32.32.8";
-        } else if (Name.compare(20, 2, ".16") == 0) {
+        } else if (Name.compare(20, 3, ".16") == 0 && Name.length() == 23) {
           NewFnName = "llvm.x86.sse42.crc32.32.16";
-        } else if (Name.compare(20, 2, ".32") == 0) {
+        } else if (Name.compare(20, 3, ".32") == 0 && Name.length() == 23) {
           NewFnName = "llvm.x86.sse42.crc32.32.32";
         }
       }
       else if (Name.compare(18, 2, "64", 2) == 0) {
-        if (Name.compare(20, 2, ".8") == 0) {
+        if (Name.compare(20, 2, ".8") == 0 && Name.length() == 22) {
           NewFnName = "llvm.x86.sse42.crc32.64.8";
-        } else if (Name.compare(20, 2, ".64") == 0) {
+        } else if (Name.compare(20, 3, ".64") == 0 && Name.length() == 23) {
           NewFnName = "llvm.x86.sse42.crc32.64.64";
         }
       }
