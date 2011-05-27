@@ -440,11 +440,20 @@ void CompileUnit::addBlockByrefAddress(DbgVariable *&DV, DIE *Die,
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
-bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO) {
+bool CompileUnit::addConstantValue(DIE *Die, const MachineOperand &MO,
+                                   DIType Ty) {
   assert (MO.isImm() && "Invalid machine operand!");
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
   unsigned Imm = MO.getImm();
-  addUInt(Block, 0, dwarf::DW_FORM_udata, Imm);
+  unsigned form = dwarf::DW_FORM_udata;
+  switch (Ty.getSizeInBits()) {
+    case 8: form = dwarf::DW_FORM_data1; break;
+    case 16: form = dwarf::DW_FORM_data2; break;
+    case 32: form = dwarf::DW_FORM_data4; break;
+    case 64: form = dwarf::DW_FORM_data8; break;
+    default: break;
+  }
+  addUInt(Block, 0, form, Imm);
   addBlock(Die, dwarf::DW_AT_const_value, 0, Block);
   return true;
 }

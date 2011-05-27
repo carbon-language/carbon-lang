@@ -712,8 +712,9 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
         updated = true;
       }
       else if (DVInsn->getOperand(0).isImm())
-        updated = VariableCU->addConstantValue(VariableDie, 
-                                               DVInsn->getOperand(0));
+        updated = 
+          VariableCU->addConstantValue(VariableDie, DVInsn->getOperand(0),
+                                       DV->getType());
       else if (DVInsn->getOperand(0).isFPImm())
         updated =
           VariableCU->addConstantFPValue(VariableDie, DVInsn->getOperand(0));
