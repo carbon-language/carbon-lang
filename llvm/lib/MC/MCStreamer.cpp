@@ -385,7 +385,9 @@ void MCStreamer::EmitWin64EHHandlerData() {
 void MCStreamer::EmitWin64EHPushReg(unsigned Register) {
   EnsureValidW64UnwindInfo();
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
-  MCWin64EHInstruction Inst(Win64EH::UOP_PushNonVol, Register);
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  MCWin64EHInstruction Inst(Win64EH::UOP_PushNonVol, Label, Register);
+  EmitLabel(Label);
   CurFrame->Instructions.push_back(Inst);
 }
 
@@ -396,7 +398,7 @@ void MCStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
     report_fatal_error("Frame register and offset already specified!");
   if (Offset & 0x0F)
     report_fatal_error("Misaligned frame pointer offset!");
-  MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, Register, Offset);
+  MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, NULL, Register, Offset);
   CurFrame->LastFrameInst = CurFrame->Instructions.size();
   CurFrame->Instructions.push_back(Inst);
 }
@@ -406,7 +408,9 @@ void MCStreamer::EmitWin64EHAllocStack(unsigned Size) {
   if (Size & 7)
     report_fatal_error("Misaligned stack allocation!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
-  MCWin64EHInstruction Inst(Size);
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  MCWin64EHInstruction Inst(Label, Size);
+  EmitLabel(Label);
   CurFrame->Instructions.push_back(Inst);
 }
 
@@ -415,9 +419,11 @@ void MCStreamer::EmitWin64EHSaveReg(unsigned Register, unsigned Offset) {
   if (Offset & 7)
     report_fatal_error("Misaligned saved register offset!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(
      Offset > 512*1024-8 ? Win64EH::UOP_SaveNonVolBig : Win64EH::UOP_SaveNonVol,
-                            Register, Offset);
+                            Label, Register, Offset);
+  EmitLabel(Label);
   CurFrame->Instructions.push_back(Inst);
 }
 
@@ -426,9 +432,11 @@ void MCStreamer::EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) {
   if (Offset & 0x0F)
     report_fatal_error("Misaligned saved vector register offset!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
+  MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(
     Offset > 512*1024-16 ? Win64EH::UOP_SaveXMM128Big : Win64EH::UOP_SaveXMM128,
-                            Register, Offset);
+                            Label, Register, Offset);
+  EmitLabel(Label);
   CurFrame->Instructions.push_back(Inst);
 }
 
@@ -437,7 +445,9 @@ void MCStreamer::EmitWin64EHPushFrame(bool Code) {
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;
   if (CurFrame->Instructions.size() > 0)
     report_fatal_error("If present, PushMachFrame must be the first UOP");
-  MCWin64EHInstruction Inst(Win64EH::UOP_PushMachFrame, Code);
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  MCWin64EHInstruction Inst(Win64EH::UOP_PushMachFrame, Label, Code);
+  EmitLabel(Label);
   CurFrame->Instructions.push_back(Inst);
 }
 

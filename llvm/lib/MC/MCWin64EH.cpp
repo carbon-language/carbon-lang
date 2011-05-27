@@ -47,18 +47,31 @@ static uint8_t CountOfUnwindCodes(std::vector<MCWin64EHInstruction> &instArray){
   return count;
 }
 
-static void EmitUnwindCode(MCStreamer &streamer, MCWin64EHInstruction &inst) {
+static void EmitAbsDifference(MCStreamer &streamer, MCSymbol *lhs,
+                              MCSymbol *rhs) {
+  MCContext &context = streamer.getContext();
+  const MCExpr *diff = MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(
+                                                                  lhs, context),
+                                               MCSymbolRefExpr::Create(
+                                                                  rhs, context),
+                                               context);
+  streamer.EmitAbsValue(diff, 1);
+
+}
+
+static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
+                           MCWin64EHInstruction &inst) {
   uint8_t b1, b2;
   uint16_t w;
   b2 = (inst.getOperation() & 0x0F) << 4;
   switch (inst.getOperation()) {
   case Win64EH::UOP_PushNonVol:
-    streamer.EmitIntValue(0, 1);
+    EmitAbsDifference(streamer, inst.getLabel(), begin);
     b2 |= inst.getRegister() & 0x0F;
     streamer.EmitIntValue(b2, 1);
     break;
   case Win64EH::UOP_AllocLarge:
-    streamer.EmitIntValue(0, 1);
+    EmitAbsDifference(streamer, inst.getLabel(), begin);
     if (inst.getSize() > 512*1024-8) {
       b2 |= 1;
       streamer.EmitIntValue(b2, 1);
@@ -72,8 +85,8 @@ static void EmitUnwindCode(MCStreamer &streamer, MCWin64EHInstruction &inst) {
     streamer.EmitIntValue(w, 2);
     break;
   case Win64EH::UOP_AllocSmall:
-    b2 |= (inst.getSize() >> 3) & 0x0F;
-    streamer.EmitIntValue(0, 1);
+    b2 |= ((inst.getSize()-8) >> 3) & 0x0F;
+    EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     break;
   case Win64EH::UOP_SetFPReg:
@@ -84,7 +97,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCWin64EHInstruction &inst) {
   case Win64EH::UOP_SaveNonVol:
   case Win64EH::UOP_SaveXMM128:
     b2 |= inst.getRegister() & 0x0F;
-    streamer.EmitIntValue(0, 1);
+    EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     w = inst.getOffset() >> 3;
     if (inst.getOperation() == Win64EH::UOP_SaveXMM128)
@@ -94,7 +107,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCWin64EHInstruction &inst) {
   case Win64EH::UOP_SaveNonVolBig:
   case Win64EH::UOP_SaveXMM128Big:
     b2 |= inst.getRegister() & 0x0F;
-    streamer.EmitIntValue(0, 1);
+    EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     if (inst.getOperation() == Win64EH::UOP_SaveXMM128Big)
       w = inst.getOffset() & 0xFFF0;
@@ -107,7 +120,7 @@ static void EmitUnwindCode(MCStreamer &streamer, MCWin64EHInstruction &inst) {
   case Win64EH::UOP_PushMachFrame:
     if (inst.isPushCodeFrame())
       b2 |= 1;
-    streamer.EmitIntValue(0, 1);
+    EmitAbsDifference(streamer, inst.getLabel(), begin);
     streamer.EmitIntValue(b2, 1);
     break;
   }
@@ -144,13 +157,7 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
   }
   streamer.EmitIntValue(flags, 1);
 
-  // Build up the prolog size expression.
-  const MCExpr *prologSize = MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(
-                                                      info->PrologEnd, context),
-                                                     MCSymbolRefExpr::Create(
-                                                          info->Begin, context),
-                                                     context);
-  streamer.EmitAbsValue(prologSize, 1);
+  EmitAbsDifference(streamer, info->PrologEnd, info->Begin);
 
   uint8_t numCodes = CountOfUnwindCodes(info->Instructions);
   streamer.EmitIntValue(numCodes, 1);
@@ -169,7 +176,7 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
   for (uint8_t c = 0; c < numInst; ++c) {
     MCWin64EHInstruction inst = info->Instructions.back();
     info->Instructions.pop_back();
-    EmitUnwindCode(streamer, inst);
+    EmitUnwindCode(streamer, info->Begin, inst);
   }
 
   if (flags & Win64EH::UNW_ChainInfo)

@@ -28,30 +28,31 @@ namespace llvm {
     typedef Win64EH::UnwindOpcodes OpType;
   private:
     OpType Operation;
+    MCSymbol *Label;
     unsigned Offset;
     unsigned Register;
   public:
-    MCWin64EHInstruction(OpType Op, unsigned Reg)
-      : Operation(Op), Offset(0), Register(Reg) {
-      assert(Op == Win64EH::UOP_PushNonVol);
+    MCWin64EHInstruction(OpType Op, MCSymbol *L, unsigned Reg)
+      : Operation(Op), Label(L), Offset(0), Register(Reg) {
+     assert(Op == Win64EH::UOP_PushNonVol);
     }
-    MCWin64EHInstruction(unsigned Size)
+    MCWin64EHInstruction(MCSymbol *L, unsigned Size)
       : Operation(Size>128 ? Win64EH::UOP_AllocLarge : Win64EH::UOP_AllocSmall),
-        Offset(Size) { }
-    MCWin64EHInstruction(OpType Op, unsigned Reg,
-                         unsigned Off)
-      : Operation(Op), Offset(Off), Register(Reg) {
+        Label(L), Offset(Size) { }
+    MCWin64EHInstruction(OpType Op, MCSymbol *L, unsigned Reg, unsigned Off)
+      : Operation(Op), Label(L), Offset(Off), Register(Reg) {
       assert(Op == Win64EH::UOP_SetFPReg ||
              Op == Win64EH::UOP_SaveNonVol ||
              Op == Win64EH::UOP_SaveNonVolBig ||
              Op == Win64EH::UOP_SaveXMM128 ||
              Op == Win64EH::UOP_SaveXMM128Big);
     }
-    MCWin64EHInstruction(OpType Op, bool Code)
-      : Operation(Op), Offset(Code ? 1 : 0) {
+    MCWin64EHInstruction(OpType Op, MCSymbol *L, bool Code)
+      : Operation(Op), Label(L), Offset(Code ? 1 : 0) {
       assert(Op == Win64EH::UOP_PushMachFrame);
     }
     OpType getOperation() const { return Operation; }
+    MCSymbol *getLabel() const { return Label; }
     unsigned getOffset() const { return Offset; }
     unsigned getSize() const { return Offset; }
     unsigned getRegister() const { return Register; }
