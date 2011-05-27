@@ -27,17 +27,21 @@ static uint8_t CountOfUnwindCodes(std::vector<MCWin64EHInstruction> &instArray){
     case Win64EH::UOP_SetFPReg:
     case Win64EH::UOP_PushMachFrame:
       count += 1;
+      break;
     case Win64EH::UOP_SaveNonVol:
     case Win64EH::UOP_SaveXMM128:
       count += 2;
+      break;
     case Win64EH::UOP_SaveNonVolBig:
     case Win64EH::UOP_SaveXMM128Big:
       count += 3;
+      break;
     case Win64EH::UOP_AllocLarge:
       if (I->getSize() > 512*1024-8)
         count += 3;
       else
         count += 2;
+      break;
     }
   }
   return count;
@@ -113,6 +117,7 @@ static void EmitRuntimeFunction(MCStreamer &streamer,
                                 const MCWin64EHUnwindInfo *info) {
   MCContext &context = streamer.getContext();
 
+  streamer.EmitValueToAlignment(4);
   streamer.EmitValue(MCSymbolRefExpr::Create(info->Begin, context), 4);
   streamer.EmitValue(MCSymbolRefExpr::Create(info->End, context), 4);
   streamer.EmitValue(MCSymbolRefExpr::Create(info->Symbol, context), 4);
@@ -123,6 +128,7 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
   if (info->Symbol) return;
 
   MCContext &context = streamer.getContext();
+  streamer.EmitValueToAlignment(4);
   // Upper 3 bits are the version number (currently 1).
   uint8_t flags = 0x20;
   info->Symbol = context.CreateTempSymbol();
