@@ -181,8 +181,7 @@ swap_ranges(_ForwardIterator1 __first1, _ForwardIterator1 __last1, _ForwardItera
 template<class _Tp, size_t _N>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(_Tp (&__a)[_N], _Tp (&__b)[_N])
-      _NOEXCEPT_(_NOEXCEPT_(swap(_STD::declval<_Tp&>(), _STD::declval<_Tp&>())))
+swap(_Tp (&__a)[_N], _Tp (&__b)[_N]) _NOEXCEPT_(__is_nothrow_swappable<_Tp>::value)
 {
     _STD::swap_ranges(__a, __a + _N, __b);
 }
@@ -311,13 +310,8 @@ struct _LIBCPP_VISIBLE pair
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     void
-    swap(pair& __p) _NOEXCEPT_(
-//                    _NOEXCEPT_(_STD::iter_swap(&first, &__p.first)) &&
-//                    _NOEXCEPT_(_STD::iter_swap(&second, &__p.second)))
-                      _NOEXCEPT_(_STD::iter_swap(&_STD::declval<first_type&>(),
-                                                 &_STD::declval<first_type&>())) &&
-                      _NOEXCEPT_(_STD::iter_swap(&_STD::declval<second_type&>(),
-                                                 &_STD::declval<second_type&>())))
+    swap(pair& __p) _NOEXCEPT_(__is_nothrow_swappable<first_type>::value &&
+                               __is_nothrow_swappable<second_type>::value)
     {
         _STD::iter_swap(&first, &__p.first);
         _STD::iter_swap(&second, &__p.second);
@@ -385,8 +379,8 @@ template <class _T1, class _T2>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(pair<_T1, _T2>& __x, pair<_T1, _T2>& __y)
-//                                        _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
-    _NOEXCEPT_(_NOEXCEPT_((_STD::declval<pair<_T1, _T2>&>().swap(_STD::declval<pair<_T1, _T2>&>()))))
+                     _NOEXCEPT_((__is_nothrow_swappable<_T1>::value &&
+                                 __is_nothrow_swappable<_T2>::value))
 {
     __x.swap(__y);
 }
@@ -481,13 +475,13 @@ struct __get_pair<0>
     static
     _LIBCPP_INLINE_VISIBILITY
     _T1&
-    get(pair<_T1, _T2>& __p) {return __p.first;}
+    get(pair<_T1, _T2>& __p) _NOEXCEPT {return __p.first;}
 
     template <class _T1, class _T2>
     static
     _LIBCPP_INLINE_VISIBILITY
     const _T1&
-    get(const pair<_T1, _T2>& __p) {return __p.first;}
+    get(const pair<_T1, _T2>& __p) _NOEXCEPT {return __p.first;}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -495,7 +489,7 @@ struct __get_pair<0>
     static
     _LIBCPP_INLINE_VISIBILITY
     _T1&&
-    get(pair<_T1, _T2>&& __p) {return _STD::forward<_T1>(__p.first);}
+    get(pair<_T1, _T2>&& __p) _NOEXCEPT {return _STD::forward<_T1>(__p.first);}
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 };
@@ -507,13 +501,13 @@ struct __get_pair<1>
     static
     _LIBCPP_INLINE_VISIBILITY
     _T2&
-    get(pair<_T1, _T2>& __p) {return __p.second;}
+    get(pair<_T1, _T2>& __p) _NOEXCEPT {return __p.second;}
 
     template <class _T1, class _T2>
     static
     _LIBCPP_INLINE_VISIBILITY
     const _T2&
-    get(const pair<_T1, _T2>& __p) {return __p.second;}
+    get(const pair<_T1, _T2>& __p) _NOEXCEPT {return __p.second;}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -521,7 +515,7 @@ struct __get_pair<1>
     static
     _LIBCPP_INLINE_VISIBILITY
     _T2&&
-    get(pair<_T1, _T2>&& __p) {return _STD::forward<_T2>(__p.second);}
+    get(pair<_T1, _T2>&& __p) _NOEXCEPT {return _STD::forward<_T2>(__p.second);}
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 };
@@ -529,7 +523,7 @@ struct __get_pair<1>
 template <size_t _Ip, class _T1, class _T2>
 _LIBCPP_INLINE_VISIBILITY inline
 typename tuple_element<_Ip, pair<_T1, _T2> >::type&
-get(pair<_T1, _T2>& __p)
+get(pair<_T1, _T2>& __p) _NOEXCEPT
 {
     return __get_pair<_Ip>::get(__p);
 }
@@ -537,7 +531,7 @@ get(pair<_T1, _T2>& __p)
 template <size_t _Ip, class _T1, class _T2>
 _LIBCPP_INLINE_VISIBILITY inline
 const typename tuple_element<_Ip, pair<_T1, _T2> >::type&
-get(const pair<_T1, _T2>& __p)
+get(const pair<_T1, _T2>& __p) _NOEXCEPT
 {
     return __get_pair<_Ip>::get(__p);
 }
@@ -547,7 +541,7 @@ get(const pair<_T1, _T2>& __p)
 template <size_t _Ip, class _T1, class _T2>
 _LIBCPP_INLINE_VISIBILITY inline
 typename tuple_element<_Ip, pair<_T1, _T2> >::type&&
-get(pair<_T1, _T2>&& __p)
+get(pair<_T1, _T2>&& __p) _NOEXCEPT
 {
     return __get_pair<_Ip>::get(_STD::move(__p));
 }

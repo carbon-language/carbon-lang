@@ -25,7 +25,7 @@ public:
     template <class... U>
         explicit tuple(U&&...);
     tuple(const tuple&) = default;
-    tuple(tuple&&);
+    tuple(tuple&&) = default;
     template <class... U>
         tuple(const tuple<U...>&);
     template <class... U>
@@ -56,7 +56,8 @@ public:
         tuple(allocator_arg_t, const Alloc& a, pair<U1, U2>&&);
 
     tuple& operator=(const tuple&);
-    tuple& operator=(tuple&&);
+    tuple&
+        operator=(tuple&&) noexcept(AND(is_nothrow_move_assignable<T>::value ...));
     template <class... U>
         tuple& operator=(const tuple<U...>&);
     template <class... U>
@@ -66,14 +67,14 @@ public:
     template <class U1, class U2>
         tuple& operator=(pair<U1, U2>&&); //iffsizeof...(T) == 2
 
-    void swap(tuple&);
+    void swap(tuple&) noexcept(AND(swap(declval<T&>(), declval<T&>())...));
 };
 
 const unspecified ignore;
 
 template <class... T> tuple<V...>  make_tuple(T&&...);
-template <class... T> tuple<ATypes...> forward_as_tuple(T&&...);
-template <class... T> tuple<T&...> tie(T&...);
+template <class... T> tuple<ATypes...> forward_as_tuple(T&&...) noexcept;
+template <class... T> tuple<T&...> tie(T&...) noexcept;
 template <class... Tuples> tuple<CTypes...> tuple_cat(Tuples&&... tpls);
   
 // 20.4.1.4, tuple helper classes:
@@ -83,9 +84,15 @@ template <intsize_t I, class T> class tuple_element; // undefined
 template <intsize_t I, class... T> class tuple_element<I, tuple<T...>>;
 
 // 20.4.1.5, element access:
-template <intsize_t I, class... T> typename tuple_element<I, tuple<T...>>::type& get(tuple<T...>&);
-template <intsize_t I, class... T> typename tuple_element<I, tuple<T...>>::type const& get(const tuple<T...>&);
-template <intsize_t I, class... T> typename tuple_element<I, tuple<T...>>::type&& get(tuple<T...>&&);
+template <intsize_t I, class... T>
+    typename tuple_element<I, tuple<T...>>::type&
+    get(tuple<T...>&) noexcept;
+template <intsize_t I, class... T>
+    typename tuple_element<I, tuple<T...>>::type const&
+    get(const tuple<T...>&) noexcept;
+template <intsize_t I, class... T>
+    typename tuple_element<I, tuple<T...>>::type&&
+    get(tuple<T...>&&) noexcept;
 
 // 20.4.1.6, relational operators:
 template<class... T, class... U> bool operator==(const tuple<T...>&, const tuple<U...>&);
@@ -99,7 +106,8 @@ template <class... Types, class Alloc>
   struct uses_allocator<tuple<Types...>, Alloc>;
 
 template <class... Types>
-  void swap(tuple<Types...>& x, tuple<Types...>& y);
+  void
+  swap(tuple<Types...>& x, tuple<Types...>& y) noexcept(noexcept(x.swap(y)));
 
 }  // std
 
@@ -142,6 +150,7 @@ class __tuple_leaf;
 template <size_t _Ip, class _Hp, bool _Ep>
 inline _LIBCPP_INLINE_VISIBILITY
 void swap(__tuple_leaf<_Ip, _Hp, _Ep>& __x, __tuple_leaf<_Ip, _Hp, _Ep>& __y)
+    _NOEXCEPT_(__is_nothrow_swappable<_Hp>::value)
 {
     swap(__x.get(), __y.get());
 }
@@ -256,7 +265,7 @@ public:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    int swap(__tuple_leaf& __t)
+    int swap(__tuple_leaf& __t) _NOEXCEPT_(__is_nothrow_swappable<__tuple_leaf>::value)
     {
         _STD::swap(*this, __t);
         return 0;
@@ -324,7 +333,9 @@ public:
             return *this;
         }
 
-    _LIBCPP_INLINE_VISIBILITY int swap(__tuple_leaf& __t)
+    _LIBCPP_INLINE_VISIBILITY
+    int
+    swap(__tuple_leaf& __t) _NOEXCEPT_(__is_nothrow_swappable<__tuple_leaf>::value)
     {
         _STD::swap(*this, __t);
         return 0;
@@ -337,6 +348,20 @@ public:
 template <class ..._Tp>
 _LIBCPP_INLINE_VISIBILITY
 void __swallow(_Tp&&...) {}
+
+template <bool ...> struct __all;
+
+template <>
+struct __all<>
+{
+    static const bool value = true;
+};
+
+template <bool _B0, bool ... _B>
+struct __all<_B0, _B...>
+{
+    static const bool value = _B0 && __all<_B...>::value;
+};
 
 // __tuple_impl
 
@@ -412,6 +437,7 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(__tuple_impl& __t)
+        _NOEXCEPT_(__all<__is_nothrow_swappable<_Tp>::value...>::value)
     {
         __swallow(__tuple_leaf<_Indx, _Tp>::swap(static_cast<__tuple_leaf<_Indx, _Tp>&>(__t))...);
     }
@@ -533,7 +559,8 @@ public:
         }
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(tuple& __t) {base_.swap(__t.base_);}
+    void swap(tuple& __t) _NOEXCEPT_(__all<__is_nothrow_swappable<_Tp>::value...>::value)
+        {base_.swap(__t.base_);}
 };
 
 template <>
@@ -555,13 +582,15 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         tuple(allocator_arg_t, const _Alloc&, array<_U, 0>) {}
     _LIBCPP_INLINE_VISIBILITY
-    void swap(tuple&) {}
+    void swap(tuple&) _NOEXCEPT {}
 };
 
 template <class ..._Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(tuple<_Tp...>& __t, tuple<_Tp...>& __u) {__t.swap(__u);}
+swap(tuple<_Tp...>& __t, tuple<_Tp...>& __u)
+                 _NOEXCEPT_(__all<__is_nothrow_swappable<_Tp>::value...>::value)
+    {__t.swap(__u);}
 
 // get
 

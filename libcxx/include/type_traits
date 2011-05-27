@@ -3019,6 +3019,54 @@ iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
     swap(*__a, *__b);
 }
 
+// __swappable
+
+__nat swap(__any, __any);
+
+template <class _Tp>
+struct __swappable
+{
+    typedef decltype(swap(_STD::declval<_Tp&>(), _STD::declval<_Tp&>())) type;
+    static const bool value = !is_same<type, __nat>::value;
+};
+
+template <class _Tp>
+struct __is_swappable
+    : public integral_constant<bool, __swappable<_Tp>::value>
+{
+};
+
+#if __has_feature(cxx_noexcept)
+
+template <bool, class _Tp>
+struct __is_nothrow_swappable_imp
+    : public integral_constant<bool, noexcept(swap(_STD::declval<_Tp&>(),
+                                                   _STD::declval<_Tp&>()))>
+{
+};
+
+template <class _Tp>
+struct __is_nothrow_swappable_imp<false, _Tp>
+    : public false_type
+{
+};
+
+template <class _Tp>
+struct __is_nothrow_swappable
+    : public __is_nothrow_swappable_imp<__is_swappable<_Tp>::value, _Tp>
+{
+};
+
+#else  // __has_feature(cxx_noexcept)
+
+template <class _Tp>
+struct __is_nothrow_swappable
+    : public false_type
+{
+};
+
+#endif  // __has_feature(cxx_noexcept)
+
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_TYPE_TRAITS
