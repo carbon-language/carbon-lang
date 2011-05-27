@@ -1,20 +1,39 @@
-; RUN: llc < %s | FileCheck %s
-target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64"
-target triple = "armv7-eabi"
+; RUN: llc < %s -mtriple=armv7-eabi      | FileCheck %s -check-prefix=EABI
+; RUN: llc < %s -mtriple=armv7-apple-ios -relocation-model=dynamic-no-pic | FileCheck %s -check-prefix=IOS
+; RUN: llc < %s -mtriple=armv7-apple-ios -relocation-model=pic            | FileCheck %s -check-prefix=IOS-PIC
+; RUN: llc < %s -mtriple=armv7-apple-ios -relocation-model=static         | FileCheck %s -check-prefix=IOS-STATIC
 
-@foo = common global i32 0                        ; <i32*> [#uses=1]
+@foo = common global i32 0
 
-define arm_aapcs_vfpcc i32* @bar1() nounwind readnone {
+define i32* @bar1() nounwind readnone {
 entry:
-; CHECK:      movw    r0, :lower16:foo
-; CHECK-NEXT: movt    r0, :upper16:foo
+; EABI:      movw    r0, :lower16:foo
+; EABI-NEXT: movt    r0, :upper16:foo
+
+; IOS:      movw    r0, :lower16:L_foo$non_lazy_ptr
+; IOS-NEXT: movt    r0, :upper16:L_foo$non_lazy_ptr
+
+; IOS-PIC:      movw    r0, :lower16:(L_foo$non_lazy_ptr-(LPC0_0+8))
+; IOS-PIC-NEXT: movt    r0, :upper16:(L_foo$non_lazy_ptr-(LPC0_0+8))
+
+; IOS-STATIC:      movw    r0, :lower16:_foo
+; IOS-STATIC-NEXT: movt    r0, :upper16:_foo
   ret i32* @foo
 }
 
-define arm_aapcs_vfpcc void @bar2(i32 %baz) nounwind {
+define void @bar2(i32 %baz) nounwind {
 entry:
-; CHECK:      movw    r1, :lower16:foo
-; CHECK-NEXT: movt    r1, :upper16:foo
+; EABI:      movw    r1, :lower16:foo
+; EABI-NEXT: movt    r1, :upper16:foo
+
+; IOS:      movw    r1, :lower16:L_foo$non_lazy_ptr
+; IOS-NEXT: movt    r1, :upper16:L_foo$non_lazy_ptr
+
+; IOS-PIC:      movw    r1, :lower16:(L_foo$non_lazy_ptr-(LPC1_0+8))
+; IOS-PIC-NEXT: movt    r1, :upper16:(L_foo$non_lazy_ptr-(LPC1_0+8))
+
+; IOS-STATIC:      movw    r1, :lower16:_foo
+; IOS-STATIC-NEXT: movt    r1, :upper16:_foo
   store i32 %baz, i32* @foo, align 4
   ret void
 }
