@@ -493,13 +493,21 @@ bool CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
 /// addConstantValue - Add constant value entry in variable DIE.
 bool CompileUnit::addConstantValue(DIE *Die, ConstantInt *CI,
                                    bool Unsigned) {
-  if (CI->getBitWidth() <= 64) {
+  unsigned CIBitWidth = CI->getBitWidth();
+  if (CIBitWidth <= 64) {
+    unsigned form = 0;
+    switch (CIBitWidth) {
+    case 8: form = dwarf::DW_FORM_data1; break;
+    case 16: form = dwarf::DW_FORM_data2; break;
+    case 32: form = dwarf::DW_FORM_data4; break;
+    case 64: form = dwarf::DW_FORM_data8; break;
+    default: 
+      form = Unsigned ? dwarf::DW_FORM_udata : dwarf::DW_FORM_sdata;
+    }
     if (Unsigned)
-      addUInt(Die, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata,
-              CI->getZExtValue());
+      addUInt(Die, dwarf::DW_AT_const_value, form, CI->getZExtValue());
     else
-      addSInt(Die, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
-              CI->getSExtValue());
+      addSInt(Die, dwarf::DW_AT_const_value, form, CI->getSExtValue());
     return true;
   }
 
