@@ -30,7 +30,8 @@ void test2() {
 }
 
 // CHECK:     define void @_Z5test2v()
-// CHECK:       [[EXNSLOTVAR:%.*]] = alloca i8*
+// CHECK:       [[EXNVAR:%.*]] = alloca i8*
+// CHECK-NEXT:  [[SELECTORVAR:%.*]] = alloca i32
 // CHECK-NEXT:  [[CLEANUPDESTVAR:%.*]] = alloca i32
 // CHECK-NEXT:  [[EXNOBJ:%.*]] = call i8* @__cxa_allocate_exception(i64 16)
 // CHECK-NEXT:  [[EXN:%.*]] = bitcast i8* [[EXNOBJ]] to [[DSTAR:%[^*]*\*]]
@@ -104,6 +105,7 @@ namespace test7 {
 // CHECK:      define i32 @_ZN5test73fooEv() 
   int foo() {
 // CHECK:      [[CAUGHTEXNVAR:%.*]] = alloca i8*
+// CHECK-NEXT: [[SELECTORVAR:%.*]] = alloca i32
 // CHECK-NEXT: [[INTCATCHVAR:%.*]] = alloca i32
 // CHECK-NEXT: [[EHCLEANUPDESTVAR:%.*]] = alloca i32
     try {
@@ -117,7 +119,8 @@ namespace test7 {
 
 // CHECK:      [[CAUGHTEXN:%.*]] = call i8* @llvm.eh.exception()
 // CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
-// CHECK-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[CAUGHTEXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null)
+// CHECK-NEXT: [[SELECTOR:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[CAUGHTEXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null)
+// CHECK-NEXT: store i32 [[SELECTOR]], i32* [[SELECTORVAR]]
 // CHECK-NEXT: call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*))
 // CHECK-NEXT: icmp eq
 // CHECK-NEXT: br i1
@@ -130,7 +133,8 @@ namespace test7 {
     }
 // CHECK:      [[CAUGHTEXN:%.*]] = call i8* @llvm.eh.exception()
 // CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
-// CHECK-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[CAUGHTEXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* null)
+// CHECK-NEXT: [[SELECTOR:%.*]] = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* [[CAUGHTEXN]], i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* null)
+// CHECK-NEXT: store i32 [[SELECTOR]], i32* [[SELECTORVAR]]
 // CHECK-NEXT: store i32 1, i32* [[EHCLEANUPDESTVAR]]
 // CHECK-NEXT: call void @__cxa_end_catch()
 // CHECK-NEXT: br label
@@ -190,7 +194,7 @@ namespace test9 {
 
   // landing pad from first call to invoke
   // CHECK:      call i8* @llvm.eh.exception
-  // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*), i8* null)
+  // CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
 }
 
 // __cxa_end_catch can throw for some kinds of caught exceptions.
@@ -255,6 +259,7 @@ namespace test11 {
   void bar() {
     try {
       // CHECK:      [[EXNSLOT:%.*]] = alloca i8*
+      // CHECK-NEXT: [[SELECTORSLOT:%.*]] = alloca i32
       // CHECK-NEXT: [[P:%.*]] = alloca [[A:%.*]]**,
       // CHECK-NEXT: [[TMP:%.*]] = alloca [[A]]*
       // CHECK-NEXT: invoke void @_ZN6test116opaqueEv()
@@ -403,6 +408,7 @@ namespace test16 {
     // CHECK-NEXT: [[EXN_ACTIVE:%.*]] = alloca i1
     // CHECK-NEXT: [[TEMP:%.*]] = alloca [[A:%.*]],
     // CHECK-NEXT: [[EXNSLOT:%.*]] = alloca i8*
+    // CHECK-NEXT: [[SELECTORSLOT:%.*]] = alloca i32
     // CHECK-NEXT: [[EHDEST:%.*]] = alloca i32
     // CHECK-NEXT: [[TEMP_ACTIVE:%.*]] = alloca i1
 

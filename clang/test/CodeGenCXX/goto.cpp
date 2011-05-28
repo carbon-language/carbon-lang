@@ -12,6 +12,7 @@ namespace test0 {
     // CHECK-NEXT: [[Y:%.*]] = alloca [[A:%.*]],
     // CHECK-NEXT: [[Z:%.*]] = alloca [[A]]
     // CHECK-NEXT: [[EXN:%.*]] = alloca i8*
+    // CHECK-NEXT: [[SEL:%.*]] = alloca i32
     // CHECK-NEXT: alloca i32
     // CHECK-NEXT: [[V:%.*]] = alloca [[V:%.*]]*,
     // CHECK-NEXT: [[TMP:%.*]] = alloca [[A]]

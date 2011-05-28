@@ -33,5 +33,5 @@ void test1() {
   // CHECK:      call i8* @llvm.eh.exception()
   // CHECK:      [[T1:%.*]] = bitcast [[N_T]]* [[N]] to i8*
   // CHECK-NEXT: call void @_Block_object_dispose(i8* [[T1]], i32 8)
-  // CHECK:      call void @_Unwind_Resume_or_Rethrow(
+  // CHECK:      call void @llvm.eh.resume(
 }

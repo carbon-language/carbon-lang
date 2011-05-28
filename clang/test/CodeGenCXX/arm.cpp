@@ -310,7 +310,7 @@ namespace test7 {
 
     // CHECK:      call i8* @llvm.eh.exception()
     // CHECK:      call void @__cxa_guard_abort(i32* @_ZGVZN5test74testEvE1x)
-    // CHECK:      call void @_Unwind_Resume_or_Rethrow
+    // CHECK:      call void @llvm.eh.resume(
   }
 }
 
@@ -349,7 +349,7 @@ namespace test8 {
 
     // CHECK:      call i8* @llvm.eh.exception()
     // CHECK:      call void @__cxa_guard_abort(i32* @_ZGVZN5test84testEvE1x)
-    // CHECK:      call void @_Unwind_Resume_or_Rethrow
+    // CHECK:      call void @llvm.eh.resume(
   }
 }
 

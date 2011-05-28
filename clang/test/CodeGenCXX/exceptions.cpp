@@ -273,6 +273,7 @@ namespace test5 {
 
   // CHECK:    define void @_ZN5test54testEv()
   // CHECK:      [[EXNSLOT:%.*]] = alloca i8*
+  // CHECK-NEXT: [[SELECTORSLOT:%.*]] = alloca i32
   // CHECK-NEXT: [[A:%.*]] = alloca [[A_T:%.*]], align 1
   // CHECK-NEXT: [[T:%.*]] = alloca [[T_T:%.*]], align 1
   // CHECK-NEXT: alloca i32
@@ -323,6 +324,7 @@ namespace test7 {
     // CHECK:      [[OUTER_NEW:%.*]] = alloca i1
     // CHECK-NEXT: alloca [[A:%.*]],
     // CHECK-NEXT: alloca i8*
+    // CHECK-NEXT: alloca i32
     // CHECK-NEXT: alloca i32
     // CHECK-NEXT: [[OUTER_A:%.*]] = alloca i1
     // CHECK-NEXT: alloca i8*
