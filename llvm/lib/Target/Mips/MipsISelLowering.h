@@ -67,7 +67,9 @@ namespace llvm {
       DivRemU,
 
       BuildPairF64,
-      ExtractElementF64
+      ExtractElementF64,
+
+      WrapperPIC
     };
   }
 

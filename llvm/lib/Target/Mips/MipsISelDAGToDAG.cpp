@@ -119,13 +119,9 @@ SelectAddr(SDValue Addr, SDValue &Offset, SDValue &Base) {
 
   // on PIC code Load GA
   if (TM.getRelocationModel() == Reloc::PIC_) {
-    if ((Addr.getOpcode() == ISD::TargetGlobalAddress) ||
-        (Addr.getOpcode() == ISD::TargetConstantPool) ||
-        (Addr.getOpcode() == ISD::TargetJumpTable) ||
-        (Addr.getOpcode() == ISD::TargetBlockAddress) ||
-        (Addr.getOpcode() == ISD::TargetExternalSymbol)) {
+    if (Addr.getOpcode() == MipsISD::WrapperPIC) {
       Base   = CurDAG->getRegister(Mips::GP, MVT::i32);
-      Offset = Addr;
+      Offset = Addr.getOperand(0);
       return true;
     }
   } else {

@@ -75,6 +75,9 @@ def MipsDivRem    : SDNode<"MipsISD::DivRem", SDT_MipsDivRem,
 def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
                            [SDNPOutGlue]>;
 
+// wrapper node
+def MipsWrapperPIC    : SDNode<"MipsISD::WrapperPIC",  SDTIntUnaryOp>;
+
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
@@ -589,6 +592,17 @@ def : Pat<(add CPURegs:$gp, (MipsGPRel tglobaladdr:$in)),
 def : Pat<(add CPURegs:$gp, (MipsGPRel tconstpool:$in)),
           (ADDiu CPURegs:$gp, tconstpool:$in)>;
 
+// wrapper_pic
+class WrapperPICPat<SDNode node>:
+      Pat<(MipsWrapperPIC node:$in),
+          (ADDiu GP, node:$in)>;
+
+def : WrapperPICPat<tglobaladdr>;
+def : WrapperPICPat<tconstpool>;
+def : WrapperPICPat<texternalsym>;
+def : WrapperPICPat<tblockaddress>;
+def : WrapperPICPat<tjumptable>;
+
 // Mips does not have "not", so we expand our way
 def : Pat<(not CPURegs:$in),
           (NOR CPURegs:$in, ZERO)>;
@@ -655,13 +669,6 @@ multiclass MovnPats<RegisterClass RC, Instruction MOVNInst> {
 
 defm : MovzPats<CPURegs, MOVZ_I>;
 defm : MovnPats<CPURegs, MOVN_I>;
-
-// select patterns with got access
-let AddedComplexity = 10 in
-  def : Pat<(select (setne CPURegs:$lhs, CPURegs:$rhs),
-                    (i32 tglobaladdr:$T), CPURegs:$F),
-            (MOVN_I CPURegs:$F, (ADDiu GP, tglobaladdr:$T),
-                    (XOR CPURegs:$lhs, CPURegs:$rhs))>;
 
 // setcc patterns
 def : Pat<(seteq CPURegs:$lhs, CPURegs:$rhs),
