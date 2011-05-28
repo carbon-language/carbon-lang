@@ -298,6 +298,16 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
       return SimplifyBinOp(B->getOpcode(), B->getOperand(0), RepOp, TD);
   }
 
+  // Same for CmpInsts.
+  if (CmpInst *C = dyn_cast<CmpInst>(I)) {
+    if (C->getOperand(0) == Op)
+      return SimplifyCmpInst(C->getPredicate(), RepOp, C->getOperand(1), TD);
+    if (C->getOperand(1) == Op)
+      return SimplifyCmpInst(C->getPredicate(), C->getOperand(0), RepOp, TD);
+  }
+
+  // TODO: We could hand off more cases to instsimplify here.
+
   // If all operands are constant after substituting Op for RepOp then we can
   // constant fold the instruction.
   if (Constant *CRepOp = dyn_cast<Constant>(RepOp)) {

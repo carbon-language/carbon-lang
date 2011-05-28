@@ -789,3 +789,13 @@ define i32 @test59(i32 %x, i32 %y) nounwind {
 ; CHECK-NEXT: and i32 %x, %y
 ; CHECK-NEXT: ret
 }
+
+define i1 @test60(i32 %x, i1* %y) nounwind {
+  %cmp = icmp eq i32 %x, 0
+  %load = load i1* %y, align 1
+  %cmp1 = icmp slt i32 %x, 1
+  %sel = select i1 %cmp, i1 %load, i1 %cmp1
+  ret i1 %sel
+; CHECK: @test60
+; CHECK: select
+}
