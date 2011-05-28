@@ -16,14 +16,14 @@ namespace
 
 template <class T>
 inline T
-increment(T& t)
+increment(T& t) _NOEXCEPT
 {
     return __sync_add_and_fetch(&t, 1);
 }
 
 template <class T>
 inline T
-decrement(T& t)
+decrement(T& t) _NOEXCEPT
 {
     return __sync_add_and_fetch(&t, -1);
 }
@@ -32,10 +32,10 @@ decrement(T& t)
 
 const allocator_arg_t allocator_arg = allocator_arg_t();
 
-bad_weak_ptr::~bad_weak_ptr() throw() {}
+bad_weak_ptr::~bad_weak_ptr() _NOEXCEPT {}
 
 const char*
-bad_weak_ptr::what() const throw()
+bad_weak_ptr::what() const _NOEXCEPT
 {
     return "bad_weak_ptr";
 }
@@ -45,13 +45,13 @@ __shared_count::~__shared_count()
 }
 
 void
-__shared_count::__add_shared()
+__shared_count::__add_shared() _NOEXCEPT
 {
     increment(__shared_owners_);
 }
 
 bool
-__shared_count::__release_shared()
+__shared_count::__release_shared() _NOEXCEPT
 {
     if (decrement(__shared_owners_) == -1)
     {
@@ -66,33 +66,33 @@ __shared_weak_count::~__shared_weak_count()
 }
 
 void
-__shared_weak_count::__add_shared()
+__shared_weak_count::__add_shared() _NOEXCEPT
 {
     __shared_count::__add_shared();
 }
 
 void
-__shared_weak_count::__add_weak()
+__shared_weak_count::__add_weak() _NOEXCEPT
 {
     increment(__shared_weak_owners_);
 }
 
 void
-__shared_weak_count::__release_shared()
+__shared_weak_count::__release_shared() _NOEXCEPT
 {
     if (__shared_count::__release_shared())
         __release_weak();
 }
 
 void
-__shared_weak_count::__release_weak()
+__shared_weak_count::__release_weak() _NOEXCEPT
 {
     if (decrement(__shared_weak_owners_) == -1)
         __on_zero_shared_weak();
 }
 
 __shared_weak_count*
-__shared_weak_count::lock()
+__shared_weak_count::lock() _NOEXCEPT
 {
     long object_owners = __shared_owners_;
     while (object_owners != -1)
@@ -112,7 +112,7 @@ __shared_weak_count::lock()
 #ifndef _LIBCPP_NO_RTTI
 
 const void*
-__shared_weak_count::__get_deleter(const type_info&) const
+__shared_weak_count::__get_deleter(const type_info&) const _NOEXCEPT
 {
     return 0;
 }
@@ -135,7 +135,7 @@ undeclare_no_pointers(char*, size_t)
 }
 
 pointer_safety
-get_pointer_safety()
+get_pointer_safety() _NOEXCEPT
 {
     return pointer_safety::relaxed;
 }

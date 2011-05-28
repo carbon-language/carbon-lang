@@ -103,7 +103,7 @@ protected:
 //    facet(const facet&) = delete;     // effectively done in __shared_count
 //    void operator=(const facet&) = delete;
 private:
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
 };
 
 class _LIBCPP_VISIBLE locale::id

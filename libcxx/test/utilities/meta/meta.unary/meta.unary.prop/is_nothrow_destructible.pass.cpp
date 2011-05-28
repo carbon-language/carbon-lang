@@ -60,10 +60,10 @@ struct A
 int main()
 {
     test_has_not_nothrow_destructor<void>();
-    test_has_not_nothrow_destructor<A>();
     test_has_not_nothrow_destructor<Abstract>();
     test_has_not_nothrow_destructor<NotEmpty>();
 
+    test_is_nothrow_destructible<A>();
     test_is_nothrow_destructible<int&>();
     test_is_nothrow_destructible<Union>();
     test_is_nothrow_destructible<Empty>();

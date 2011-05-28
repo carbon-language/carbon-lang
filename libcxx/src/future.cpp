@@ -60,7 +60,7 @@ future_error::future_error(error_code __ec)
 }
 
 void
-__assoc_sub_state::__on_zero_shared()
+__assoc_sub_state::__on_zero_shared() _NOEXCEPT
 {
     delete this;
 }

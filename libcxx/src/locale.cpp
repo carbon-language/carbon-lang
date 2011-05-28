@@ -518,7 +518,7 @@ locale::facet::~facet()
 }
 
 void
-locale::facet::__on_zero_shared()
+locale::facet::__on_zero_shared() _NOEXCEPT
 {
     delete this;
 }

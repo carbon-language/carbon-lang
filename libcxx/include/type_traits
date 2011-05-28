@@ -2999,7 +2999,11 @@ struct __invoke_of
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-void
+typename enable_if
+<
+    is_move_constructible<_Tp>::value &&
+    is_move_assignable<_Tp>::value
+>::type
 swap(_Tp& __x, _Tp& __y) _NOEXCEPT_(is_nothrow_move_constructible<_Tp>::value &&
                                     is_nothrow_move_assignable<_Tp>::value)
 {
@@ -3021,6 +3025,10 @@ iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
 
 // __swappable
 
+namespace __detail
+{
+
+using _STD::swap;
 __nat swap(__any, __any);
 
 template <class _Tp>
@@ -3030,9 +3038,11 @@ struct __swappable
     static const bool value = !is_same<type, __nat>::value;
 };
 
+}  // __detail
+
 template <class _Tp>
 struct __is_swappable
-    : public integral_constant<bool, __swappable<_Tp>::value>
+    : public integral_constant<bool, __detail::__swappable<_Tp>::value>
 {
 };
 

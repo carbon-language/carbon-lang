@@ -463,7 +463,7 @@ protected:
     mutable condition_variable __cv_;
     unsigned __state_;
 
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
     void __sub_wait(unique_lock<mutex>& __lk);
 public:
     enum
@@ -543,7 +543,7 @@ class __assoc_state
 protected:
     _U __value_;
 
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
 public:
 
     template <class _Arg>
@@ -566,7 +566,7 @@ public:
 
 template <class _R>
 void
-__assoc_state<_R>::__on_zero_shared()
+__assoc_state<_R>::__on_zero_shared() _NOEXCEPT
 {
     if (this->__state_ & base::__constructed)
         reinterpret_cast<_R*>(&__value_)->~_R();
@@ -640,7 +640,7 @@ class __assoc_state<_R&>
 protected:
     _U __value_;
 
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
 public:
 
     void set_value(_R& __arg);
@@ -651,7 +651,7 @@ public:
 
 template <class _R>
 void
-__assoc_state<_R&>::__on_zero_shared()
+__assoc_state<_R&>::__on_zero_shared() _NOEXCEPT
 {
     delete this;
 }
@@ -700,7 +700,7 @@ class __assoc_state_alloc
     typedef __assoc_state<_R> base;
     _Alloc __alloc_;
 
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
 public:
     _LIBCPP_INLINE_VISIBILITY
     explicit __assoc_state_alloc(const _Alloc& __a)
@@ -709,7 +709,7 @@ public:
 
 template <class _R, class _Alloc>
 void
-__assoc_state_alloc<_R, _Alloc>::__on_zero_shared()
+__assoc_state_alloc<_R, _Alloc>::__on_zero_shared() _NOEXCEPT
 {
     if (this->__state_ & base::__constructed)
         reinterpret_cast<_R*>(&this->__value_)->~_R();
@@ -725,7 +725,7 @@ class __assoc_state_alloc<_R&, _Alloc>
     typedef __assoc_state<_R&> base;
     _Alloc __alloc_;
 
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
 public:
     _LIBCPP_INLINE_VISIBILITY
     explicit __assoc_state_alloc(const _Alloc& __a)
@@ -734,7 +734,7 @@ public:
 
 template <class _R, class _Alloc>
 void
-__assoc_state_alloc<_R&, _Alloc>::__on_zero_shared()
+__assoc_state_alloc<_R&, _Alloc>::__on_zero_shared() _NOEXCEPT
 {
     typename _Alloc::template rebind<__assoc_state_alloc>::other __a(__alloc_);
     this->~__assoc_state_alloc();
@@ -748,7 +748,7 @@ class __assoc_sub_state_alloc
     typedef __assoc_sub_state base;
     _Alloc __alloc_;
 
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
 public:
     _LIBCPP_INLINE_VISIBILITY
     explicit __assoc_sub_state_alloc(const _Alloc& __a)
@@ -757,7 +757,7 @@ public:
 
 template <class _Alloc>
 void
-__assoc_sub_state_alloc<_Alloc>::__on_zero_shared()
+__assoc_sub_state_alloc<_Alloc>::__on_zero_shared() _NOEXCEPT
 {
     this->~base();
     typename _Alloc::template rebind<__assoc_sub_state_alloc>::other __a(__alloc_);
@@ -866,7 +866,7 @@ class __async_assoc_state
 
     _F __func_;
 
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     explicit __async_assoc_state(_F&& __f);
@@ -906,7 +906,7 @@ __async_assoc_state<_R, _F>::__execute()
 
 template <class _R, class _F>
 void
-__async_assoc_state<_R, _F>::__on_zero_shared()
+__async_assoc_state<_R, _F>::__on_zero_shared() _NOEXCEPT
 {
     this->wait();
     base::__on_zero_shared();
@@ -920,7 +920,7 @@ class __async_assoc_state<void, _F>
 
     _F __func_;
 
-    virtual void __on_zero_shared();
+    virtual void __on_zero_shared() _NOEXCEPT;
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     explicit __async_assoc_state(_F&& __f);
@@ -961,7 +961,7 @@ __async_assoc_state<void, _F>::__execute()
 
 template <class _F>
 void
-__async_assoc_state<void, _F>::__on_zero_shared()
+__async_assoc_state<void, _F>::__on_zero_shared() _NOEXCEPT
 {
     this->wait();
     base::__on_zero_shared();
