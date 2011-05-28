@@ -35,6 +35,7 @@
   <ol>
   	<li><a href="#llvm_eh_exception"><tt>llvm.eh.exception</tt></a></li>
   	<li><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a></li>
+  	<li><a href="#llvm_eh_resume"><tt>llvm.eh.resume</tt></a></li>
   	<li><a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_setjmp"><tt>llvm.eh.sjlj.setjmp</tt></a></li>
   	<li><a href="#llvm_eh_sjlj_longjmp"><tt>llvm.eh.sjlj.longjmp</tt></a></li>
@@ -317,15 +318,28 @@
 
 <div>
 
-<p>To handle destructors and cleanups in <tt>try</tt> code, control may not run
-   directly from a landing pad to the first catch.  Control may actually flow
-   from the landing pad to clean up code and then to the first catch.  Since the
-   required clean up for each <tt>invoke</tt> in a <tt>try</tt> may be different
-   (e.g. intervening constructor), there may be several landing pads for a given
-   try.  If cleanups need to be run, an <tt>i32 0</tt> should be passed as the
-   last <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> argument.
-   However, when using DWARF exception handling with C++, a <tt>i8* null</tt>
-   <a href="#restrictions">must</a> be passed instead.</p>
+<p>A cleanup is extra code which needs to be run as part of unwinding
+   a scope.  C++ destructors are a prominent example, but other
+   languages and language extensions provide a variety of different
+   kinds of cleanup.  In general, a landing pad may need to run
+   arbitrary amounts of cleanup code before actually entering a catch
+   block.  To indicate the presence of cleanups, a landing pad's call
+   to <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> should
+   end with the argument <tt>i32 0</tt>; otherwise, the unwinder will
+   not stop at the landing pad if there are no catches or filters that
+   require it to.</p>
+
+<p>Do not allow a new exception to propagate out of the execution of a
+   cleanup.  This can corrupt the internal state of the unwinder.
+   Different languages describe different high-level semantics for
+   these situations: for example, C++ requires that the process be
+   terminated, whereas Ada cancels both exceptions and throws a third.</p>
+
+<p>When all cleanups have completed, if the exception is not handled
+   by the current function, resume unwinding by calling the
+   <a href="#llvm_eh_resume"><tt>llvm.eh.resume</tt></a> intrinsic,
+   passing in the results of <tt>llvm.eh.exception</tt> and
+   <tt>llvm.eh.selector</tt> for the original landing pad.</p>
 
 </div>
 
@@ -363,22 +377,29 @@
 
 <div>
 
-<p>The semantics of the invoke instruction require that any exception that
-   unwinds through an invoke call should result in a branch to the invoke's
-   unwind label.  However such a branch will only happen if the
-   <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> matches. Thus in
-   order to ensure correct operation, the front-end must only generate
-   <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> calls that are
-   guaranteed to always match whatever exception unwinds through the invoke.
-   For most languages it is enough to pass zero, indicating the presence of
-   a <a href="#cleanups">cleanup</a>, as the
-   last <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> argument.
-   However for C++ this is not sufficient, because the C++ personality function
-   will terminate the program if it detects that unwinding the exception only
-   results in matches with cleanups.  For C++ a <tt>null i8*</tt> should be
-   passed as the last <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>
-   argument instead.  This is interpreted as a catch-all by the C++ personality
-   function, and will always match.</p>
+<p>The unwinder delegates the decision of whether to stop in a call
+   frame to that call frame's language-specific personality function.
+   Not all personalities functions guarantee that they will stop to
+   perform cleanups: for example, the GNU C++ personality doesn't do
+   so unless the exception is actually caught somewhere further up the
+   stack.  When using this personality to implement EH for a language
+   that guarantees that cleanups will always be run, be sure to
+   indicate a catch-all in the
+   <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> call
+   rather than just cleanups.</p>
+
+<p>In order for inlining to behave correctly, landing pads must be
+   prepared to handle selector results that they did not originally
+   advertise.  Suppose that a function catches exceptions of
+   type <tt>A</tt>, and it's inlined into a function that catches
+   exceptions of type <tt>B</tt>.  The inliner will update the
+   selector for the inlined landing pad to include the fact
+   that <tt>B</tt> is caught.  If that landing pad assumes that it
+   will only be entered to catch an <tt>A</tt>, it's in for a rude
+   surprise.  Consequently, landing pads must test for the selector
+   results they understand and then resume exception propagation
+   with the <a href="#llvm_eh_resume"><tt>llvm.eh.resume</tt></a>
+   intrinsic if none of the conditions match.</p>
 
 </div>
 
@@ -424,21 +445,31 @@
 <p>This intrinsic is used to compare the exception with the given type infos,
    filters and cleanups.</p>
 
-<p><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a minimum of
-   three arguments.  The first argument is the reference to the exception
-   structure. The second argument is a reference to the personality function to
-   be used for this try catch sequence. Each of the remaining arguments is
-   either a reference to the type info for a catch statement,
-   a <a href="#throw_filters">filter</a> expression, or the number zero
-   representing a <a href="#cleanups">cleanup</a>.  The exception is tested
-   against the arguments sequentially from first to last.  The result of
-   the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a positive
-   number if the exception matched a type info, a negative number if it matched
-   a filter, and zero if it matched a cleanup.  If nothing is matched, the
-   behaviour of the program is <a href="#restrictions">undefined</a>.  If a type
-   info matched then the selector value is the index of the type info in the
-   exception table, which can be obtained using the
+<p><a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> takes a
+   minimum of three arguments.  The first argument is the reference to
+   the exception structure. The second argument is a reference to the
+   personality function to be used for this try catch sequence. Each
+   of the remaining arguments is either a reference to the type info
+   for a catch statement, a <a href="#throw_filters">filter</a>
+   expression, or the number zero representing
+   a <a href="#cleanups">cleanup</a>.  The exception is tested against
+   the arguments sequentially from first to last.  The result of
+   the <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a> is a
+   positive number if the exception matched a type info, a negative
+   number if it matched a filter, and zero if it matched a cleanup.
+   If nothing is matched, or if only a cleanup is matched, different
+   personality functions may or may not cause control to stop at the
+   landing pad; see <a href="#restrictions">the restrictions</a> for
+   more information.  If a type info matched then the selector value
+   is the index of the type info in the exception table, which can be
+   obtained using the
    <a href="#llvm_eh_typeid_for"><tt>llvm.eh.typeid.for</tt></a> intrinsic.</p>
+
+<p>If a landing pad containing a call to <tt>llvm.eh.selector</tt> is
+   inlined into an <tt>invoke</tt> instruction, the selector arguments
+   for the outer landing pad are appended to those of the inlined
+   landing pad.  Consequently, landing pads must be written to ignore
+   selector values that they did not originally advertise.</p>
 
 </div>
 
@@ -457,6 +488,33 @@
    current function.  This value can be used to compare against the result
    of <a href="#llvm_eh_selector"><tt>llvm.eh.selector</tt></a>.  The single
    argument is a reference to a type info.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<h4>
+  <a name="llvm_eh_resume">llvm.eh.resume</a>
+</h4>
+
+<div>
+
+<pre>
+  void %<a href="#llvm_eh_resume">llvm.eh.resume</a>(i8*, i32) noreturn
+</pre>
+
+<p>This intrinsic is used to resume propagation of an exception after
+   landing at a landing pad.  The first argument should be the result
+   of <a href="#llvm_eh_exception">llvm.eh.exception</a> for that
+   landing pad, and the second argument should be the result of
+   <a href="#llvm_eh_selector">llvm.eh.selector</a>.  When a call to
+   this intrinsic is inlined into an invoke, the call is transformed
+   into a branch to the invoke's unwind destination, using its
+   arguments in place of the calls
+   to <a href="#llvm_eh_exception">llvm.eh.exception</a> and
+   <a href="#llvm_eh_selector">llvm.eh.selector</a> there.</p>
+
+<p>This intrinsic is not implicitly <tt>nounwind</tt>; calls to it
+   will always throw.  It may not be invoked.</p>
 
 </div>
 

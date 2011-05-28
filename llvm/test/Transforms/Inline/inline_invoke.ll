@@ -18,7 +18,7 @@ declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
 
 declare i32 @llvm.eh.typeid.for(i8*) nounwind
 
-declare void @_Unwind_Resume(i8*)
+declare void @llvm.eh.resume(i8*, i32)
 
 declare i32 @__gxx_personality_v0(...)
 
@@ -51,7 +51,7 @@ lpad:
           to label %invoke.cont2 unwind label %terminate.lpad
 
 invoke.cont2:
-  call void @_Unwind_Resume(i8* %exn) noreturn
+  call void @llvm.eh.resume(i8* %exn, i32 %eh.selector) noreturn
   unreachable
 
 terminate.lpad:
@@ -82,22 +82,27 @@ catch:
   br label %ret
 
 eh.resume:
-  call void @_Unwind_Resume(i8* %exn) noreturn
+  call void @llvm.eh.resume(i8* %exn, i32 %eh.selector) noreturn
   unreachable
 }
 
-; CHECK: define void @test0_out()
-; CHECK: [[A:%.*]] = alloca %struct.A,
-; CHECK: [[B:%.*]] = alloca %struct.A,
-; CHECK: invoke void @_ZN1AC1Ev(%struct.A* [[A]])
-; CHECK: invoke void @_ZN1AC1Ev(%struct.A* [[B]])
-; CHECK: invoke void @_ZN1AD1Ev(%struct.A* [[B]])
-; CHECK: invoke void @_ZN1AD1Ev(%struct.A* [[A]])
-; CHECK: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK:    define void @test0_out()
+; CHECK:      [[A:%.*]] = alloca %struct.A,
+; CHECK:      [[B:%.*]] = alloca %struct.A,
+; CHECK:      invoke void @_ZN1AC1Ev(%struct.A* [[A]])
+; CHECK:      invoke void @_ZN1AC1Ev(%struct.A* [[B]])
+; CHECK:      invoke void @_ZN1AD1Ev(%struct.A* [[B]])
+; CHECK:      invoke void @_ZN1AD1Ev(%struct.A* [[A]])
+; CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
 ; CHECK-NEXT: invoke void @_ZN1AD1Ev(%struct.A* [[A]])
 ; CHECK-NEXT:   to label %[[LBL:[^\s]+]] unwind
 ; CHECK: [[LBL]]:
 ; CHECK-NEXT: br label %[[LPAD:[^\s]+]]
-; CHECK: [[LPAD]]:
-; CHECK-NEXT: call i8* @llvm.eh.exception()
+; CHECK:      ret void
+; CHECK:      call i8* @llvm.eh.exception()
 ; CHECK-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: br label %[[LPAD]]
+; CHECK: [[LPAD]]:
+; CHECK-NEXT: phi i8* [
+; CHECK-NEXT: phi i32 [
+; CHECK-NEXT: call i32 @llvm.eh.typeid.for(

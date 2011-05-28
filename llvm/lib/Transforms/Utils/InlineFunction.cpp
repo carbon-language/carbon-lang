@@ -45,66 +45,192 @@ bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI) {
   return InlineFunction(CallSite(II), IFI);
 }
 
+/// [LIBUNWIND] Find the (possibly absent) call to @llvm.eh.selector in
+/// the given landing pad.
+static EHSelectorInst *findSelectorForLandingPad(BasicBlock *lpad) {
+  // The llvm.eh.exception call is required to be in the landing pad.
+  for (BasicBlock::iterator i = lpad->begin(), e = lpad->end(); i != e; i++) {
+    EHExceptionInst *exn = dyn_cast<EHExceptionInst>(i);
+    if (!exn) continue;
+
+    EHSelectorInst *selector = 0;
+    for (Instruction::use_iterator
+           ui = exn->use_begin(), ue = exn->use_end(); ui != ue; ++ui) {
+      EHSelectorInst *sel = dyn_cast<EHSelectorInst>(*ui);
+      if (!sel) continue;
+
+      // Immediately accept an eh.selector in the landing pad.
+      if (sel->getParent() == lpad) return sel;
+
+      // Otherwise, use the first selector we see.
+      if (!selector) selector = sel;
+    }
+
+    return selector;
+  }
+
+  return 0;
+}
+
 namespace {
   /// A class for recording information about inlining through an invoke.
   class InvokeInliningInfo {
-    BasicBlock *UnwindDest;
+    BasicBlock *OuterUnwindDest;
+    EHSelectorInst *OuterSelector;
+    BasicBlock *InnerUnwindDest;
+    PHINode *InnerExceptionPHI;
+    PHINode *InnerSelectorPHI;
     SmallVector<Value*, 8> UnwindDestPHIValues;
 
   public:
-    InvokeInliningInfo(InvokeInst *II) : UnwindDest(II->getUnwindDest()) {
+    InvokeInliningInfo(InvokeInst *II) :
+      OuterUnwindDest(II->getUnwindDest()), OuterSelector(0),
+      InnerUnwindDest(0), InnerExceptionPHI(0), InnerSelectorPHI(0) {
+
       // If there are PHI nodes in the unwind destination block, we
       // need to keep track of which values came into them from the
       // invoke before removing the edge from this block.
-      llvm::BasicBlock *InvokeBlock = II->getParent();
-      for (BasicBlock::iterator I = UnwindDest->begin(); isa<PHINode>(I); ++I) {
-        PHINode *PN = cast<PHINode>(I);
+      llvm::BasicBlock *invokeBB = II->getParent();
+      for (BasicBlock::iterator I = OuterUnwindDest->begin();
+             isa<PHINode>(I); ++I) {
         // Save the value to use for this edge.
-        llvm::Value *Incoming = PN->getIncomingValueForBlock(InvokeBlock);
-        UnwindDestPHIValues.push_back(Incoming);
+        PHINode *phi = cast<PHINode>(I);
+        UnwindDestPHIValues.push_back(phi->getIncomingValueForBlock(invokeBB));
       }
     }
 
-    BasicBlock *getUnwindDest() const {
-      return UnwindDest;
+    /// The outer unwind destination is the target of unwind edges
+    /// introduced for calls within the inlined function.
+    BasicBlock *getOuterUnwindDest() const {
+      return OuterUnwindDest;
     }
+
+    EHSelectorInst *getOuterSelector() {
+      if (!OuterSelector)
+        OuterSelector = findSelectorForLandingPad(OuterUnwindDest);
+      return OuterSelector;
+    }
+
+    BasicBlock *getInnerUnwindDest();
+
+    bool forwardEHResume(CallInst *call, BasicBlock *src);
 
     /// Add incoming-PHI values to the unwind destination block for
     /// the given basic block, using the values for the original
     /// invoke's source block.
     void addIncomingPHIValuesFor(BasicBlock *BB) const {
-      BasicBlock::iterator I = UnwindDest->begin();
+      addIncomingPHIValuesForInto(BB, OuterUnwindDest);
+    }
+
+    void addIncomingPHIValuesForInto(BasicBlock *src, BasicBlock *dest) const {
+      BasicBlock::iterator I = dest->begin();
       for (unsigned i = 0, e = UnwindDestPHIValues.size(); i != e; ++i, ++I) {
-        PHINode *PN = cast<PHINode>(I);
-        PN->addIncoming(UnwindDestPHIValues[i], BB);
+        PHINode *phi = cast<PHINode>(I);
+        phi->addIncoming(UnwindDestPHIValues[i], src);
       }
     }
   };
 }
 
-/// [LIBUNWIND] Check whether the given value is the _Unwind_Resume
-/// function specified by the Itanium EH ABI.
-static bool isUnwindResume(Value *value) {
-  Function *fn = dyn_cast<Function>(value);
-  if (!fn) return false;
-
-  // declare void @_Unwind_Resume(i8*)
-  if (fn->getName() != "_Unwind_Resume") return false;
-  const FunctionType *fnType = fn->getFunctionType();
-  if (!fnType->getReturnType()->isVoidTy()) return false;
-  if (fnType->isVarArg()) return false;
-  if (fnType->getNumParams() != 1) return false;
-  const PointerType *paramType = dyn_cast<PointerType>(fnType->getParamType(0));
-  return (paramType && paramType->getElementType()->isIntegerTy(8));
+/// Replace all the instruction uses of a value with a different value.
+/// This has the advantage of not screwing up the CallGraph.
+static void replaceAllInsnUsesWith(Instruction *insn, Value *replacement) {
+  for (Value::use_iterator i = insn->use_begin(), e = insn->use_end();
+       i != e; ) {
+    Use &use = i.getUse();
+    ++i;
+    if (isa<Instruction>(use.getUser()))
+      use.set(replacement);
+  }
 }
 
-/// [LIBUNWIND] Find the (possibly absent) call to @llvm.eh.selector in
-/// the given landing pad.
-static EHSelectorInst *findSelectorForLandingPad(BasicBlock *lpad) {
-  for (BasicBlock::iterator i = lpad->begin(), e = lpad->end(); i != e; i++)
-    if (EHSelectorInst *selector = dyn_cast<EHSelectorInst>(i))
-      return selector;
-  return 0;
+/// Get or create a target for the branch out of rewritten calls to
+/// llvm.eh.resume.
+BasicBlock *InvokeInliningInfo::getInnerUnwindDest() {
+  if (InnerUnwindDest) return InnerUnwindDest;
+
+  // Find and hoist the llvm.eh.exception and llvm.eh.selector calls
+  // in the outer landing pad to immediately following the phis.
+  EHSelectorInst *selector = getOuterSelector();
+  if (!selector) return 0;
+
+  // The call to llvm.eh.exception *must* be in the landing pad.
+  Instruction *exn = cast<Instruction>(selector->getArgOperand(0));
+  assert(exn->getParent() == OuterUnwindDest);
+
+  // TODO: recognize when we've already done this, so that we don't
+  // get a linear number of these when inlining calls into lots of
+  // invokes with the same landing pad.
+
+  // Do the hoisting.
+  Instruction *splitPoint = exn->getParent()->getFirstNonPHI();
+  assert(splitPoint != selector && "selector-on-exception dominance broken!");
+  if (splitPoint == exn) {
+    selector->removeFromParent();
+    selector->insertAfter(exn);
+    splitPoint = selector->getNextNode();
+  } else {
+    exn->moveBefore(splitPoint);
+    selector->moveBefore(splitPoint);
+  }
+
+  // Split the landing pad.
+  InnerUnwindDest = OuterUnwindDest->splitBasicBlock(splitPoint,
+                                        OuterUnwindDest->getName() + ".body");
+
+  // The number of incoming edges we expect to the inner landing pad.
+  const unsigned phiCapacity = 2;
+
+  // Create corresponding new phis for all the phis in the outer landing pad.
+  BasicBlock::iterator insertPoint = InnerUnwindDest->begin();
+  BasicBlock::iterator I = OuterUnwindDest->begin();
+  for (unsigned i = 0, e = UnwindDestPHIValues.size(); i != e; ++i, ++I) {
+    PHINode *outerPhi = cast<PHINode>(I);
+    PHINode *innerPhi = PHINode::Create(outerPhi->getType(), phiCapacity,
+                                        outerPhi->getName() + ".lpad-body",
+                                        insertPoint);
+    innerPhi->addIncoming(outerPhi, OuterUnwindDest);
+  }
+
+  // Create a phi for the exception value...
+  InnerExceptionPHI = PHINode::Create(exn->getType(), phiCapacity,
+                                      "exn.lpad-body", insertPoint);
+  replaceAllInsnUsesWith(exn, InnerExceptionPHI);
+  selector->setArgOperand(0, exn); // restore this use
+  InnerExceptionPHI->addIncoming(exn, OuterUnwindDest);
+
+  // ...and the selector.
+  InnerSelectorPHI = PHINode::Create(selector->getType(), phiCapacity,
+                                     "selector.lpad-body", insertPoint);
+  replaceAllInsnUsesWith(selector, InnerSelectorPHI);
+  InnerSelectorPHI->addIncoming(selector, OuterUnwindDest);
+
+  // All done.
+  return InnerUnwindDest;
+}
+
+/// [LIBUNWIND] Try to forward the given call, which logically occurs
+/// at the end of the given block, as a branch to the inner unwind
+/// block.  Returns true if the call was forwarded.
+bool InvokeInliningInfo::forwardEHResume(CallInst *call, BasicBlock *src) {
+  Function *fn = dyn_cast<Function>(call->getCalledValue());
+  if (!fn || fn->getName() != "llvm.eh.resume")
+    return false;
+
+  // If this fails, maybe it should be a fatal error.
+  BasicBlock *dest = getInnerUnwindDest();
+  if (!dest) return false;
+
+  // Make a branch.
+  BranchInst::Create(dest, src);
+
+  // Update the phis in the destination.  They were inserted in an
+  // order which makes this work.
+  addIncomingPHIValuesForInto(src, dest);
+  InnerExceptionPHI->addIncoming(call->getArgOperand(0), src);
+  InnerSelectorPHI->addIncoming(call->getArgOperand(1), src);
+
+  return true;
 }
 
 /// [LIBUNWIND] Check whether this selector is "only cleanups":
@@ -134,7 +260,7 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
 
     // LIBUNWIND: merge selector instructions.
     if (EHSelectorInst *Inner = dyn_cast<EHSelectorInst>(CI)) {
-      EHSelectorInst *Outer = findSelectorForLandingPad(Invoke.getUnwindDest());
+      EHSelectorInst *Outer = Invoke.getOuterSelector();
       if (!Outer) continue;
 
       bool innerIsOnlyCleanup = isCleanupOnlySelector(Inner);
@@ -172,48 +298,41 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     // First, split the basic block.
     BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
 
-    bool skipNextBlock = false;
+    // Delete the unconditional branch inserted by splitBasicBlock
+    BB->getInstList().pop_back();
 
-    // LIBUNWIND: If this is a call to @_Unwind_Resume, just branch
+    // LIBUNWIND: If this is a call to @llvm.eh.resume, just branch
     // directly to the new landing pad.
-    if (isUnwindResume(CI->getCalledValue())) {
-      BranchInst::Create(Invoke.getUnwindDest(), BB->getTerminator());
-
+    if (Invoke.forwardEHResume(CI, BB)) {
       // TODO: 'Split' is now unreachable; clean it up.
 
       // We want to leave the original call intact so that the call
       // graph and other structures won't get misled.  We also have to
       // avoid processing the next block, or we'll iterate here forever.
-      skipNextBlock = true;
+      return true;
+    }
 
     // Otherwise, create the new invoke instruction.
-    } else {
-      ImmutableCallSite CS(CI);
-      SmallVector<Value*, 8> InvokeArgs(CS.arg_begin(), CS.arg_end());
-      InvokeInst *II =
-        InvokeInst::Create(CI->getCalledValue(), Split, Invoke.getUnwindDest(),
-                           InvokeArgs.begin(), InvokeArgs.end(),
-                           CI->getName(), BB->getTerminator());
-      II->setCallingConv(CI->getCallingConv());
-      II->setAttributes(CI->getAttributes());
+    ImmutableCallSite CS(CI);
+    SmallVector<Value*, 8> InvokeArgs(CS.arg_begin(), CS.arg_end());
+    InvokeInst *II =
+      InvokeInst::Create(CI->getCalledValue(), Split,
+                         Invoke.getOuterUnwindDest(),
+                         InvokeArgs.begin(), InvokeArgs.end(),
+                         CI->getName(), BB);
+    II->setCallingConv(CI->getCallingConv());
+    II->setAttributes(CI->getAttributes());
     
-      // Make sure that anything using the call now uses the invoke!  This also
-      // updates the CallGraph if present, because it uses a WeakVH.
-      CI->replaceAllUsesWith(II);
+    // Make sure that anything using the call now uses the invoke!  This also
+    // updates the CallGraph if present, because it uses a WeakVH.
+    CI->replaceAllUsesWith(II);
 
-      Split->getInstList().pop_front();  // Delete the original call
-    }
-    
-    // Delete the unconditional branch inserted by splitBasicBlock
-    BB->getInstList().pop_back();
-    
+    Split->getInstList().pop_front();  // Delete the original call
+
     // Update any PHI nodes in the exceptional block to indicate that
     // there is now a new entry in them.
     Invoke.addIncomingPHIValuesFor(BB);
-    
-    // This basic block is now complete, the caller will continue scanning the
-    // next one.
-    return skipNextBlock;
+    return false;
   }
 
   return false;

@@ -30,6 +30,7 @@ using namespace llvm;
 
 STATISTIC(NumLandingPadsSplit,     "Number of landing pads split");
 STATISTIC(NumUnwindsLowered,       "Number of unwind instructions lowered");
+STATISTIC(NumResumesLowered,       "Number of eh.resume calls lowered");
 STATISTIC(NumExceptionValuesMoved, "Number of eh.exception calls moved");
 
 namespace {
@@ -63,7 +64,7 @@ namespace {
     BBSet LandingPads;
 
     bool NormalizeLandingPads();
-    bool LowerUnwinds();
+    bool LowerUnwindsAndResumes();
     bool MoveExceptionValueCalls();
 
     Instruction *CreateExceptionValueCall(BasicBlock *BB);
@@ -480,20 +481,25 @@ bool DwarfEHPrepare::NormalizeLandingPads() {
 /// rethrowing any previously caught exception.  This will crash horribly
 /// at runtime if there is no such exception: using unwind to throw a new
 /// exception is currently not supported.
-bool DwarfEHPrepare::LowerUnwinds() {
-  SmallVector<TerminatorInst*, 16> UnwindInsts;
+bool DwarfEHPrepare::LowerUnwindsAndResumes() {
+  SmallVector<Instruction*, 16> ResumeInsts;
 
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    TerminatorInst *TI = I->getTerminator();
-    if (isa<UnwindInst>(TI))
-      UnwindInsts.push_back(TI);
+  for (Function::iterator fi = F->begin(), fe = F->end(); fi != fe; ++fi) {
+    for (BasicBlock::iterator bi = fi->begin(), be = fi->end(); bi != be; ++bi){
+      if (isa<UnwindInst>(bi))
+        ResumeInsts.push_back(bi);
+      else if (CallInst *call = dyn_cast<CallInst>(bi))
+        if (Function *fn = dyn_cast<Function>(call->getCalledValue()))
+          if (fn->getName() == "llvm.eh.resume")
+            ResumeInsts.push_back(bi);
+    }
   }
 
-  if (UnwindInsts.empty()) return false;
+  if (ResumeInsts.empty()) return false;
 
   // Find the rewind function if we didn't already.
   if (!RewindFunction) {
-    LLVMContext &Ctx = UnwindInsts[0]->getContext();
+    LLVMContext &Ctx = ResumeInsts[0]->getContext();
     std::vector<const Type*>
       Params(1, Type::getInt8PtrTy(Ctx));
     FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
@@ -504,24 +510,35 @@ bool DwarfEHPrepare::LowerUnwinds() {
 
   bool Changed = false;
 
-  for (SmallVectorImpl<TerminatorInst*>::iterator
-         I = UnwindInsts.begin(), E = UnwindInsts.end(); I != E; ++I) {
-    TerminatorInst *TI = *I;
+  for (SmallVectorImpl<Instruction*>::iterator
+         I = ResumeInsts.begin(), E = ResumeInsts.end(); I != E; ++I) {
+    Instruction *RI = *I;
 
-    // Replace the unwind instruction with a call to _Unwind_Resume (or the
-    // appropriate target equivalent) followed by an UnreachableInst.
+    // Replace the resuming instruction with a call to _Unwind_Resume (or the
+    // appropriate target equivalent).
+
+    llvm::Value *ExnValue;
+    if (isa<UnwindInst>(RI))
+      ExnValue = CreateExceptionValueCall(RI->getParent());
+    else
+      ExnValue = cast<CallInst>(RI)->getArgOperand(0);
 
     // Create the call...
-    CallInst *CI = CallInst::Create(RewindFunction,
-                                    CreateExceptionValueCall(TI->getParent()),
-                                    "", TI);
+    CallInst *CI = CallInst::Create(RewindFunction, ExnValue, "", RI);
     CI->setCallingConv(TLI->getLibcallCallingConv(RTLIB::UNWIND_RESUME));
-    // ...followed by an UnreachableInst.
-    new UnreachableInst(TI->getContext(), TI);
 
-    // Nuke the unwind instruction.
-    TI->eraseFromParent();
-    ++NumUnwindsLowered;
+    // ...followed by an UnreachableInst, if it was an unwind.
+    // Calls to llvm.eh.resume are typically already followed by this.
+    if (isa<UnwindInst>(RI))
+      new UnreachableInst(RI->getContext(), RI);
+
+    // Nuke the resume instruction.
+    RI->eraseFromParent();
+
+    if (isa<UnwindInst>(RI))
+      ++NumUnwindsLowered;
+    else
+      ++NumResumesLowered;
     Changed = true;
   }
 
@@ -657,8 +674,8 @@ bool DwarfEHPrepare::runOnFunction(Function &Fn) {
   // basic block where an invoke unwind edge ends).
   Changed |= NormalizeLandingPads();
 
-  // Turn unwind instructions into libcalls.
-  Changed |= LowerUnwinds();
+  // Turn unwind instructions and eh.resume calls into libcalls.
+  Changed |= LowerUnwindsAndResumes();
 
   // TODO: Move eh.selector calls to landing pads and combine them.
 
