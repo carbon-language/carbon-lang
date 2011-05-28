@@ -831,6 +831,14 @@ public:
     return getFileCharacteristic(Loc) == SrcMgr::C_ExternCSystem;
   }
 
+  /// \brief Returns true if the given MacroID location points at the first
+  /// token of the macro instantiation.
+  bool isAtStartOfMacroInstantiation(SourceLocation Loc) const;
+
+  /// \brief Returns true if the given MacroID location points at the last
+  /// token of the macro instantiation.
+  bool isAtEndOfMacroInstantiation(SourceLocation Loc) const;
+
   //===--------------------------------------------------------------------===//
   // Line Table Manipulation Routines
   //===--------------------------------------------------------------------===//

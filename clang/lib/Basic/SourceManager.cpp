@@ -1213,6 +1213,73 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
   return PresumedLoc(Filename, LineNo, ColNo, IncludeLoc);
 }
 
+/// \brief Returns true if the given MacroID location points at the first
+/// token of the macro instantiation.
+bool SourceManager::isAtStartOfMacroInstantiation(SourceLocation loc) const {
+  assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
+
+  unsigned FID = getFileID(loc).ID;
+  assert(FID > 1);
+  std::pair<SourceLocation, SourceLocation>
+    instRange = getImmediateInstantiationRange(loc);
+
+  bool invalid = false;
+  const SrcMgr::SLocEntry &Entry = getSLocEntry(FID-1, &invalid);
+  if (invalid)
+    return false;
+
+  // If the FileID immediately before it is a file then this is the first token
+  // in the macro.
+  if (Entry.isFile())
+    return true;
+
+  // If the FileID immediately before it (which is a macro token) is the
+  // immediate instantiated macro, check this macro token's location.
+  if (getFileID(instRange.second).ID == FID-1)
+    return isAtStartOfMacroInstantiation(instRange.first);
+
+  // If the FileID immediately before it (which is a macro token) came from a
+  // different instantiation, then this is the first token in the macro.
+  if (getInstantiationLoc(Entry.getInstantiation().getInstantiationLocStart())
+        != getInstantiationLoc(loc))
+    return true;
+
+  // It is inside the macro or the last token in the macro.
+  return false;
+}
+
+/// \brief Returns true if the given MacroID location points at the last
+/// token of the macro instantiation.
+bool SourceManager::isAtEndOfMacroInstantiation(SourceLocation loc) const {
+  assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
+
+  unsigned FID = getFileID(loc).ID;
+  assert(FID > 1);
+  std::pair<SourceLocation, SourceLocation>
+    instRange = getInstantiationRange(loc);
+
+  // If there's no FileID after it, it is the last token in the macro.
+  if (FID+1 == sloc_entry_size())
+    return true;
+
+  bool invalid = false;
+  const SrcMgr::SLocEntry &Entry = getSLocEntry(FID+1, &invalid);
+  if (invalid)
+    return false;
+
+  // If the FileID immediately after it is a file or a macro token which
+  // came from a different instantiation, then this is the last token in the
+  // macro.
+  if (Entry.isFile())
+    return true;
+  if (getInstantiationLoc(Entry.getInstantiation().getInstantiationLocStart())
+        != instRange.first)
+    return true;
+
+  // It is inside the macro or the first token in the macro.
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Other miscellaneous methods.
 //===----------------------------------------------------------------------===//
