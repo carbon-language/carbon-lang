@@ -387,16 +387,41 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         return true;
       O << (MI->getOperand(OpNum).getImm() & 0xffff);
       return false;
+    case 'M': { // A register range suitable for LDM/STM.
+      if (!MI->getOperand(OpNum).isReg())
+        return true;
+      const MachineOperand &MO = MI->getOperand(OpNum);
+      unsigned RegBegin = MO.getReg();
+      // This takes advantage of the 2 operand-ness of ldm/stm and that we've
+      // already got the operands in registers that are operands to the
+      // inline asm statement.
+      
+      O << "{" << ARMInstPrinter::getRegisterName(RegBegin);
+      
+      // FIXME: The register allocator not only may not have given us the
+      // registers in sequence, but may not be in ascending registers. This
+      // will require changes in the register allocator that'll need to be
+      // propagated down here if the operands change.
+      unsigned RegOps = OpNum + 1;
+      while (MI->getOperand(RegOps).isReg()) {
+        O << ", " 
+          << ARMInstPrinter::getRegisterName(MI->getOperand(RegOps).getReg());
+        RegOps++;
+      }
+
+      O << "}";
+
+      return false;
+    }
+    // These modifiers are not yet supported.
     case 'p': // The high single-precision register of a VFP double-precision
               // register.
     case 'e': // The low doubleword register of a NEON quad register.
     case 'f': // The high doubleword register of a NEON quad register.
     case 'h': // A range of VFP/NEON registers suitable for VLD1/VST1.
-    case 'M': // A register range suitable for LDM/STM.
     case 'Q': // The least significant register of a pair.
     case 'R': // The most significant register of a pair.
     case 'H': // The highest-numbered register of a pair.
-      // These modifiers are not yet supported.
       return true;
     }
   }
