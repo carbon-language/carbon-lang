@@ -63,17 +63,22 @@ public:
   ///  1. |   o---x   | Internal to block. Variable is only live in this block.
   ///  2. |---x       | Live-in, kill.
   ///  3. |       o---| Def, live-out.
-  ///  4. |---x   o---| Live-in, kill, def, live-out.
+  ///  4. |---x   o---| Live-in, kill, def, live-out. Counted by NumGapBlocks.
   ///  5. |---o---o---| Live-through with uses or defs.
-  ///  6. |-----------| Live-through without uses. Transparent.
+  ///  6. |-----------| Live-through without uses. Counted by NumThroughBlocks.
+  ///
+  /// Two BlockInfo entries are created for template 4. One for the live-in
+  /// segment, and one for the live-out segment. These entries look as if the
+  /// block were split in the middle where the live range isn't live.
+  ///
+  /// Live-through blocks without any uses don't get BlockInfo entries. They
+  /// are simply listed in ThroughBlocks instead.
   ///
   struct BlockInfo {
     MachineBasicBlock *MBB;
     SlotIndex FirstUse;   ///< First instr using current reg.
     SlotIndex LastUse;    ///< Last instr using current reg.
-    SlotIndex Kill;       ///< Interval end point inside block.
-    SlotIndex Def;        ///< Interval start point inside block.
-    bool LiveThrough;     ///< Live in whole block (Templ 5. or 6. above).
+    bool LiveThrough;     ///< Live in whole block (Templ 5. above).
     bool LiveIn;          ///< Current reg is live in.
     bool LiveOut;         ///< Current reg is live out.
   };
@@ -90,6 +95,10 @@ private:
 
   /// UseBlocks - Blocks where CurLI has uses.
   SmallVector<BlockInfo, 8> UseBlocks;
+
+  /// NumGapBlocks - Number of duplicate entries in UseBlocks for blocks where
+  /// the live range has a gap.
+  unsigned NumGapBlocks;
 
   /// ThroughBlocks - Block numbers where CurLI is live through without uses.
   BitVector ThroughBlocks;
@@ -160,7 +169,7 @@ public:
 
   /// getNumLiveBlocks - Return the number of blocks where CurLI is live.
   unsigned getNumLiveBlocks() const {
-    return getUseBlocks().size() + getNumThroughBlocks();
+    return getUseBlocks().size() - NumGapBlocks + getNumThroughBlocks();
   }
 
   /// countLiveBlocks - Return the number of blocks where li is live. This is
