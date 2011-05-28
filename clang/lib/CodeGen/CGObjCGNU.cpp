@@ -2344,8 +2344,8 @@ void CGObjCGNU::EmitGCMemmoveCollectable(CodeGenFunction &CGF,
                                          llvm::Value *SrcPtr,
                                          llvm::Value *Size) {
   CGBuilderTy B = CGF.Builder;
-  DestPtr = EnforceType(B, DestPtr, IdTy);
-  SrcPtr = EnforceType(B, SrcPtr, PtrToIdTy);
+  DestPtr = EnforceType(B, DestPtr, PtrTy);
+  SrcPtr = EnforceType(B, SrcPtr, PtrTy);
 
   B.CreateCall3(MemMoveFn, DestPtr, SrcPtr, Size);
 }
