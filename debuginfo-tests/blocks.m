@@ -1,7 +1,10 @@
 // RUN: %clang -O0 -g %s -c -o %t.o
 // RUN: %clang %t.o -o %t.out -framework Foundation
 // RUN: %test_debuginfo %s %t.out 
+// XFAIL: *
+// XTARGET: darwin
 // Radar 9279956
+
 // DEBUGGER: break 28
 // DEBUGGER: r
 // DEBUGGER: p m2

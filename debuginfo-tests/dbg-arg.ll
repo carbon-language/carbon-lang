@@ -2,6 +2,8 @@
 ; RUN: %clang -arch x86_64 -mllvm -fast-isel=false  %s -c -o %t.o
 ; RUN: %clang -arch x86_64 %t.o -o %t.out
 ; RUN: %test_debuginfo %s %t.out
+; XFAIL: *
+; XTARGET: darwin
 ; Radar 8412415
 
 target triple = "x86_64-apple-darwin10.0.0"

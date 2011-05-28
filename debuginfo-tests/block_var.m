@@ -1,6 +1,8 @@
 // RUN: %clang -O0 -g %s -c -o %t.o
 // RUN: %clang %t.o -o %t.out -framework Foundation
 // RUN: %test_debuginfo %s %t.out 
+// XFAIL: *
+// XTARGET: darwin
 
 // DEBUGGER: break 22
 // DEBUGGER: r
