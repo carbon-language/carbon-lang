@@ -749,7 +749,7 @@ void TargetLowering::computeRegisterProperties() {
     NumRegistersForVT[ExpandedReg] = 2*NumRegistersForVT[ExpandedReg-1];
     RegisterTypeForVT[ExpandedReg] = (MVT::SimpleValueType)LargestIntReg;
     TransformToType[ExpandedReg] = (MVT::SimpleValueType)(ExpandedReg - 1);
-    ValueTypeActions.setTypeAction(ExpandedVT, Expand);
+    ValueTypeActions.setTypeAction(ExpandedVT, TypeExpandInteger);
   }
 
   // Inspect all of the ValueType's smaller than the largest integer
@@ -763,7 +763,7 @@ void TargetLowering::computeRegisterProperties() {
     } else {
       RegisterTypeForVT[IntReg] = TransformToType[IntReg] =
         (MVT::SimpleValueType)LegalIntReg;
-      ValueTypeActions.setTypeAction(IVT, Promote);
+      ValueTypeActions.setTypeAction(IVT, TypePromoteInteger);
     }
   }
 
@@ -772,7 +772,7 @@ void TargetLowering::computeRegisterProperties() {
     NumRegistersForVT[MVT::ppcf128] = 2*NumRegistersForVT[MVT::f64];
     RegisterTypeForVT[MVT::ppcf128] = MVT::f64;
     TransformToType[MVT::ppcf128] = MVT::f64;
-    ValueTypeActions.setTypeAction(MVT::ppcf128, Expand);
+    ValueTypeActions.setTypeAction(MVT::ppcf128, TypeExpandFloat);
   }
 
   // Decide how to handle f64. If the target does not have native f64 support,
@@ -781,7 +781,7 @@ void TargetLowering::computeRegisterProperties() {
     NumRegistersForVT[MVT::f64] = NumRegistersForVT[MVT::i64];
     RegisterTypeForVT[MVT::f64] = RegisterTypeForVT[MVT::i64];
     TransformToType[MVT::f64] = MVT::i64;
-    ValueTypeActions.setTypeAction(MVT::f64, Expand);
+    ValueTypeActions.setTypeAction(MVT::f64, TypeSoftenFloat);
   }
 
   // Decide how to handle f32. If the target does not have native support for
@@ -791,12 +791,12 @@ void TargetLowering::computeRegisterProperties() {
       NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::f64];
       RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::f64];
       TransformToType[MVT::f32] = MVT::f64;
-      ValueTypeActions.setTypeAction(MVT::f32, Promote);
+      ValueTypeActions.setTypeAction(MVT::f32, TypePromoteInteger);
     } else {
       NumRegistersForVT[MVT::f32] = NumRegistersForVT[MVT::i32];
       RegisterTypeForVT[MVT::f32] = RegisterTypeForVT[MVT::i32];
       TransformToType[MVT::f32] = MVT::i32;
-      ValueTypeActions.setTypeAction(MVT::f32, Expand);
+      ValueTypeActions.setTypeAction(MVT::f32, TypeSoftenFloat);
     }
   }
 
@@ -820,7 +820,7 @@ void TargetLowering::computeRegisterProperties() {
           TransformToType[i] = SVT;
           RegisterTypeForVT[i] = SVT;
           NumRegistersForVT[i] = 1;
-          ValueTypeActions.setTypeAction(VT, Promote);
+          ValueTypeActions.setTypeAction(VT, TypeWidenVector);
           IsLegalWiderType = true;
           break;
         }
@@ -840,10 +840,12 @@ void TargetLowering::computeRegisterProperties() {
     if (NVT == VT) {
       // Type is already a power of 2.  The default action is to split.
       TransformToType[i] = MVT::Other;
-      ValueTypeActions.setTypeAction(VT, Expand);
+      unsigned NumElts = VT.getVectorNumElements();
+      ValueTypeActions.setTypeAction(VT,
+            NumElts > 1 ? TypeSplitVector : TypeScalarizeVector);
     } else {
       TransformToType[i] = NVT;
-      ValueTypeActions.setTypeAction(VT, Promote);
+      ValueTypeActions.setTypeAction(VT, TypeWidenVector);
     }
   }
 
@@ -892,7 +894,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
   // If there is a wider vector type with the same element type as this one,
   // we should widen to that legal vector type.  This handles things like
   // <2 x float> -> <4 x float>.
-  if (NumElts != 1 && getTypeAction(Context, VT) == Promote) {
+  if (NumElts != 1 && getTypeAction(Context, VT) == TypeWidenVector) {
     RegisterVT = getTypeToTransformTo(Context, VT);
     if (isTypeLegal(RegisterVT)) {
       IntermediateVT = RegisterVT;

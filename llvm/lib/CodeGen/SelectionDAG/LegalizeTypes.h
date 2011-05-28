@@ -80,35 +80,26 @@ private:
       assert(false && "Unknown legalize action!");
     case TargetLowering::Legal:
       return Legal;
-    case TargetLowering::Promote:
-      // Promote can mean
-      //   1) For integers, use a larger integer type (e.g. i8 -> i32).
-      //   2) For vectors, use a wider vector type (e.g. v3i32 -> v4i32).
-      if (!VT.isVector())
-        return PromoteInteger;
+    case TargetLowering::TypePromoteInteger:
+      return PromoteInteger;
+    case TargetLowering::TypeExpandInteger:
+      return ExpandInteger;
+    case TargetLowering::TypeExpandFloat:
+      return ExpandFloat;
+    case TargetLowering::TypeSoftenFloat:
+        return SoftenFloat;
+    case TargetLowering::TypeWidenVector:
       return WidenVector;
-    case TargetLowering::Expand:
-      // Expand can mean
-      // 1) split scalar in half, 2) convert a float to an integer,
-      // 3) scalarize a single-element vector, 4) split a vector in two.
-      if (!VT.isVector()) {
-        if (VT.isInteger())
-          return ExpandInteger;
-        if (VT.getSizeInBits() ==
-                TLI.getTypeToTransformTo(*DAG.getContext(), VT).getSizeInBits())
-          return SoftenFloat;
-        return ExpandFloat;
-      }
-
-      if (VT.getVectorNumElements() == 1)
-        return ScalarizeVector;
-      return SplitVector;
+    case TargetLowering::TypeScalarizeVector:
+      return ScalarizeVector;
+    case TargetLowering::TypeSplitVector:
+       return SplitVector;
     }
   }
 
   /// isTypeLegal - Return true if this type is legal on this target.
   bool isTypeLegal(EVT VT) const {
-    return TLI.getTypeAction(*DAG.getContext(), VT) == TargetLowering::Legal;
+    return TLI.getTypeAction(*DAG.getContext(), VT) == TargetLowering::TypeLegal;
   }
 
   /// IgnoreNodeResults - Pretend all of this node's results are legal.

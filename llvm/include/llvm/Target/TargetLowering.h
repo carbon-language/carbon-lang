@@ -94,6 +94,19 @@ public:
     Custom      // Use the LowerOperation hook to implement custom lowering.
   };
 
+  /// LegalizeAction - This enum indicates whether a types are legal for a
+  /// target, and if not, what action should be used to make them valid.
+  enum LegalizeTypeAction {
+    TypeLegal,           // The target natively supports this type.
+    TypePromoteInteger,  // Replace this integer with a larger one.
+    TypeExpandInteger,   // Split this integer into two of half the size.
+    TypeSoftenFloat,     // Convert this float to a same size integer type.
+    TypeExpandFloat,     // Split this float into two of half the size.
+    TypeScalarizeVector, // Replace this one-element vector with its element.
+    TypeSplitVector,     // Split this vector into two of half the size.
+    TypeWidenVector      // This vector should be widened into a larger vector.
+  };
+
   enum BooleanContent { // How the target represents true/false values.
     UndefinedBooleanContent,    // Only bit 0 counts, the rest can hold garbage.
     ZeroOrOneBooleanContent,        // All bits zero except for bit 0.
@@ -200,7 +213,7 @@ public:
   }
 
   class ValueTypeActionImpl {
-    /// ValueTypeActions - For each value type, keep a LegalizeAction enum
+    /// ValueTypeActions - For each value type, keep a LegalizeTypeAction enum
     /// that indicates how instruction selection should deal with the type.
     uint8_t ValueTypeActions[MVT::LAST_VALUETYPE];
 
@@ -209,11 +222,11 @@ public:
       std::fill(ValueTypeActions, array_endof(ValueTypeActions), 0);
     }
 
-    LegalizeAction getTypeAction(MVT VT) const {
-      return (LegalizeAction)ValueTypeActions[VT.SimpleTy];
+    LegalizeTypeAction getTypeAction(MVT VT) const {
+      return (LegalizeTypeAction)ValueTypeActions[VT.SimpleTy];
     }
 
-    void setTypeAction(EVT VT, LegalizeAction Action) {
+    void setTypeAction(EVT VT, LegalizeTypeAction Action) {
       unsigned I = VT.getSimpleVT().SimpleTy;
       ValueTypeActions[I] = Action;
     }
@@ -227,10 +240,10 @@ public:
   /// it is already legal (return 'Legal') or we need to promote it to a larger
   /// type (return 'Promote'), or we need to expand it into multiple registers
   /// of smaller integer type (return 'Expand').  'Custom' is not an option.
-  LegalizeAction getTypeAction(LLVMContext &Context, EVT VT) const {
+  LegalizeTypeAction getTypeAction(LLVMContext &Context, EVT VT) const {
     return getTypeConversion(Context, VT).first;
   }
-  LegalizeAction getTypeAction(MVT VT) const {
+  LegalizeTypeAction getTypeAction(MVT VT) const {
     return ValueTypeActions.getTypeAction(VT);
   }
 
@@ -1732,7 +1745,7 @@ private:
 
   ValueTypeActionImpl ValueTypeActions;
 
-  typedef std::pair<LegalizeAction, EVT> LegalizeKind;
+  typedef std::pair<LegalizeTypeAction, EVT> LegalizeKind;
 
   LegalizeKind
   getTypeConversion(LLVMContext &Context, EVT VT) const {
@@ -1741,10 +1754,13 @@ private:
       assert((unsigned)VT.getSimpleVT().SimpleTy <
              array_lengthof(TransformToType));
       EVT NVT = TransformToType[VT.getSimpleVT().SimpleTy];
-      LegalizeAction LA = ValueTypeActions.getTypeAction(VT.getSimpleVT());
-      if (NVT.isSimple() && LA != Legal)
-        assert(ValueTypeActions.getTypeAction(NVT.getSimpleVT()) != Promote &&
-               "Promote may not follow Expand or Promote");
+      LegalizeTypeAction LA = ValueTypeActions.getTypeAction(VT.getSimpleVT());
+
+      assert((NVT.isSimple() && LA != TypeLegal )? 
+             ValueTypeActions.getTypeAction(
+               NVT.getSimpleVT()) != TypePromoteInteger
+              : 1 && "Promote may not follow Expand or Promote");
+
       return LegalizeKind(LA, NVT);
     }
 
@@ -1758,12 +1774,12 @@ private:
         assert(NVT != VT && "Unable to round integer VT");
         LegalizeKind NextStep = getTypeConversion(Context, NVT);
         // Avoid multi-step promotion.
-        if (NextStep.first == Promote) return NextStep;
+        if (NextStep.first == TypePromoteInteger) return NextStep;
         // Return rounded integer type.
-        return LegalizeKind(Promote, NVT);
+        return LegalizeKind(TypePromoteInteger, NVT);
       }
 
-      return LegalizeKind(Expand,
+      return LegalizeKind(TypeExpandInteger,
                           EVT::getIntegerVT(Context, VT.getSizeInBits()/2));
     }
 
@@ -1773,7 +1789,7 @@ private:
 
     // Vectors with only one element are always scalarized.
     if (NumElts == 1)
-      return LegalizeKind(Expand, EltVT);
+      return LegalizeKind(TypeScalarizeVector, EltVT);
 
     // Try to widen the vector until a legal type is found.
     // If there is no wider legal type, split the vector.
@@ -1788,22 +1804,22 @@ private:
       if (LargerVector == MVT()) break;
 
       // If this type is legal then widen the vector.
-      if (ValueTypeActions.getTypeAction(LargerVector) == Legal)
-        return LegalizeKind(Promote, LargerVector);
+      if (ValueTypeActions.getTypeAction(LargerVector) == TypeLegal)
+        return LegalizeKind(TypeWidenVector, LargerVector);
     }
 
     // Widen odd vectors to next power of two.
     if (!VT.isPow2VectorType()) {
       EVT NVT = VT.getPow2VectorType(Context);
-      return LegalizeKind(Promote, NVT);
+      return LegalizeKind(TypeWidenVector, NVT);
     }
 
     // Vectors with illegal element types are expanded.
     EVT NVT = EVT::getVectorVT(Context, EltVT, VT.getVectorNumElements() / 2);
-    return LegalizeKind(Expand, NVT);
+    return LegalizeKind(TypeSplitVector, NVT);
 
     assert(false && "Unable to handle this kind of vector type");
-    return LegalizeKind(Legal, VT);
+    return LegalizeKind(TypeLegal, VT);
   }
 
   std::vector<std::pair<EVT, TargetRegisterClass*> > AvailableRegClasses;
