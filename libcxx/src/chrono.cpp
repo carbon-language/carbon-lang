@@ -25,7 +25,7 @@ namespace chrono
 // system_clock
 
 system_clock::time_point
-system_clock::now()
+system_clock::now() _NOEXCEPT
 {
     timeval tv;
     gettimeofday(&tv, 0);
@@ -33,13 +33,13 @@ system_clock::now()
 }
 
 time_t
-system_clock::to_time_t(const time_point& t)
+system_clock::to_time_t(const time_point& t) _NOEXCEPT
 {
     return time_t(duration_cast<seconds>(t.time_since_epoch()).count());
 }
 
 system_clock::time_point
-system_clock::from_time_t(time_t t)
+system_clock::from_time_t(time_t t) _NOEXCEPT
 {
     return system_clock::time_point(seconds(t));
 }
@@ -97,7 +97,7 @@ init_steady_clock()
 #pragma GCC visibility pop
 
 steady_clock::time_point
-steady_clock::now()
+steady_clock::now() _NOEXCEPT
 {
     static FP fp = init_steady_clock();
     return time_point(duration(fp()));
@@ -114,7 +114,7 @@ steady_clock::now()
 //  instead.
 
 steady_clock::time_point
-steady_clock::now()
+steady_clock::now() _NOEXCEPT
 {
     struct timespec tp;
     if (0 != clock_gettime(CLOCK_MONOTONIC, &tp))

@@ -225,9 +225,9 @@ public:
     typedef chrono::time_point<system_clock> time_point;
     static const bool is_steady =            false;
 
-    static time_point now();
-    static time_t     to_time_t  (const time_point& __t);
-    static time_point from_time_t(time_t __t);
+    static time_point now() noexcept;
+    static time_t     to_time_t  (const time_point& __t) noexcept;
+    static time_point from_time_t(time_t __t) noexcept;
 };
 
 class steady_clock
@@ -239,7 +239,7 @@ public:
     typedef chrono::time_point<steady_clock, duration>    time_point;
     static const bool is_steady =                         true;
 
-    static time_point now();
+    static time_point now() noexcept;
 };
 
 typedef steady_clock high_resolution_clock;
@@ -845,9 +845,9 @@ public:
     typedef chrono::time_point<system_clock> time_point;
     static const bool is_steady =            false;
 
-    static time_point now();
-    static time_t     to_time_t  (const time_point& __t);
-    static time_point from_time_t(time_t __t);
+    static time_point now() _NOEXCEPT;
+    static time_t     to_time_t  (const time_point& __t) _NOEXCEPT;
+    static time_point from_time_t(time_t __t) _NOEXCEPT;
 };
 
 class _LIBCPP_VISIBLE steady_clock
@@ -859,7 +859,7 @@ public:
     typedef chrono::time_point<steady_clock, duration>    time_point;
     static const bool is_steady =                         true;
 
-    static time_point now();
+    static time_point now() _NOEXCEPT;
 };
 
 typedef steady_clock high_resolution_clock;
