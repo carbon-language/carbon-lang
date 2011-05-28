@@ -224,6 +224,8 @@ bool SplitAnalysis::calcLiveBlockInfo() {
     else
       MFI = LIS.getMBBFromIndex(LVI->start);
   }
+
+  assert(getNumLiveBlocks() == countLiveBlocks(CurLI) && "Bad block count");
   return true;
 }
 

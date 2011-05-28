@@ -976,7 +976,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
   DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
 
   LRStage.resize(MRI->getNumVirtRegs());
-  unsigned OrigBlocks = SA->getNumThroughBlocks() + SA->getUseBlocks().size();
+  unsigned OrigBlocks = SA->getNumLiveBlocks();
 
   // Sort out the new intervals created by splitting. We get four kinds:
   // - Remainder intervals should not be split again.

@@ -147,7 +147,7 @@ public:
 
   /// getUseBlocks - Return an array of BlockInfo objects for the basic blocks
   /// where CurLI has uses.
-  ArrayRef<BlockInfo> getUseBlocks() { return UseBlocks; }
+  ArrayRef<BlockInfo> getUseBlocks() const { return UseBlocks; }
 
   /// getNumThroughBlocks - Return the number of through blocks.
   unsigned getNumThroughBlocks() const { return NumThroughBlocks; }
@@ -158,9 +158,14 @@ public:
   /// getThroughBlocks - Return the set of through blocks.
   const BitVector &getThroughBlocks() const { return ThroughBlocks; }
 
-  /// countLiveBlocks - Return the number of blocks where li is live.
-  /// This is guaranteed to return the same number as getNumThroughBlocks() +
-  /// getUseBlocks().size() after calling analyze(li).
+  /// getNumLiveBlocks - Return the number of blocks where CurLI is live.
+  unsigned getNumLiveBlocks() const {
+    return getUseBlocks().size() + getNumThroughBlocks();
+  }
+
+  /// countLiveBlocks - Return the number of blocks where li is live. This is
+  /// guaranteed to return the same number as getNumLiveBlocks() after calling
+  /// analyze(li).
   unsigned countLiveBlocks(const LiveInterval *li) const;
 
   typedef SmallPtrSet<const MachineBasicBlock*, 16> BlockPtrSet;
