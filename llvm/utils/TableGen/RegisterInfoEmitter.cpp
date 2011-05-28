@@ -1010,13 +1010,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     for (DwarfRegNumsMapTy::iterator
            I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
       int RegNo = I->second[i];
-      if (RegNo != -2)
-        OS << "    case " << getQualifiedName(I->first) << ":\n"
-           << "      return " << RegNo << ";\n";
-      else
-        OS << "    case " << getQualifiedName(I->first) << ":\n"
-           << "      assert(0 && \"Invalid register for this mode\");\n"
-           << "      return -1;\n";
+      OS << "    case " << getQualifiedName(I->first) << ":\n"
+         << "      return " << RegNo << ";\n";
     }
     OS << "    };\n";
   }
