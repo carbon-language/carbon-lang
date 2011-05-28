@@ -43,16 +43,16 @@ public:
     typedef see below result_type; // Not always defined
 
     // construct/copy/destroy
-    reference_wrapper(T&);
+    reference_wrapper(T&) noexcept;
     reference_wrapper(T&&) = delete; // do not bind to temps
-    reference_wrapper(const reference_wrapper<T>& x);
+    reference_wrapper(const reference_wrapper<T>& x) noexcept;
 
     // assignment
-    reference_wrapper& operator=(const reference_wrapper<T>& x);
+    reference_wrapper& operator=(const reference_wrapper<T>& x) noexcept;
 
     // access
-    operator T& () const;
-    T& get() const;
+    operator T& () const noexcept;
+    T& get() const noexcept;
 
     // invoke
     template <class... ArgTypes>
@@ -60,13 +60,13 @@ public:
           operator() (ArgTypes&&...) const;
 };
 
-template <class T> reference_wrapper<T> ref(T& t);
+template <class T> reference_wrapper<T> ref(T& t) noexcept;
 template <class T> void ref(const T&& t) = delete;
-template <class T> reference_wrapper<T> ref(reference_wrapper<T>t);
+template <class T> reference_wrapper<T> ref(reference_wrapper<T>t) noexcept;
 
-template <class T> reference_wrapper<const T> cref(const T& t);
+template <class T> reference_wrapper<const T> cref(const T& t) noexcept;
 template <class T> void cref(const T&& t) = delete;
-template <class T> reference_wrapper<const T> cref(reference_wrapper<T> t);
+template <class T> reference_wrapper<const T> cref(reference_wrapper<T> t) noexcept;
 
 template <class T>
 struct plus : binary_function<T, T, T>
@@ -365,16 +365,16 @@ public:
     typedef R result_type;
 
     // construct/copy/destroy:
-    function();
-    function(nullptr_t);
+    function() noexcept;
+    function(nullptr_t) noexcept;
     function(const function&);
-    function(function&&);
+    function(function&&) noexcept;
     template<class F>
       function(F);
     template<Allocator Alloc>
-      function(allocator_arg_t, const Alloc&);
+      function(allocator_arg_t, const Alloc&) noexcept;
     template<Allocator Alloc>
-      function(allocator_arg_t, const Alloc&, nullptr_t);
+      function(allocator_arg_t, const Alloc&, nullptr_t) noexcept;
     template<Allocator Alloc>
       function(allocator_arg_t, const Alloc&, const function&);
     template<Allocator Alloc>
@@ -383,54 +383,48 @@ public:
       function(allocator_arg_t, const Alloc&, F);
 
     function& operator=(const function&);
-    function& operator=(function&&);
+    function& operator=(function&&) noexcept;
     function& operator=(nullptr_t);
     template<class F>
       function& operator=(F&&);
     template<class F>
-      function& operator=(reference_wrapper<F>);
+      function& operator=(reference_wrapper<F>) noexcept;
 
     ~function();
 
     // function modifiers:
-    void swap(function&);
+    void swap(function&) noexcept;
     template<class F, class Alloc>
       void assign(F&&, const Alloc&);
 
     // function capacity:
-    explicit operator bool() const;
-
-    // deleted overloads close possible hole in the type system
-    template<class R2, class... ArgTypes2>
-      bool operator==(const function<R2(ArgTypes2...)>&) = delete;
-    template<class R2, class... ArgTypes2>
-      bool operator!=(const function<R2(ArgTypes2...)>&) = delete;
+    explicit operator bool() const noexcept;
 
     // function invocation:
     R operator()(ArgTypes...) const;
 
     // function target access:
-    const std::type_info& target_type() const;
-    template <typename T>       T* target();
-    template <typename T> const T* target() const;
+    const std::type_info& target_type() const noexcept;
+    template <typename T>       T* target() noexcept;
+    template <typename T> const T* target() const noexcept;
 };
 
 // Null pointer comparisons:
 template <class R, class ... ArgTypes>
-  bool operator==(const function<R(ArgTypes...)>&, nullptr_t);
+  bool operator==(const function<R(ArgTypes...)>&, nullptr_t) noexcept;
 
 template <class R, class ... ArgTypes>
-  bool operator==(nullptr_t, const function<R(ArgTypes...)>&);
+  bool operator==(nullptr_t, const function<R(ArgTypes...)>&) noexcept;
 
 template <class R, class ... ArgTypes>
-  bool operator!=(const function<R(ArgTypes...)>&, nullptr_t);
+  bool operator!=(const function<R(ArgTypes...)>&, nullptr_t) noexcept;
 
 template <class  R, class ... ArgTypes>
-  bool operator!=(nullptr_t, const function<R(ArgTypes...)>&);
+  bool operator!=(nullptr_t, const function<R(ArgTypes...)>&) noexcept;
 
 // specialized algorithms:
 template <class  R, class ... ArgTypes>
-  void swap(function<R(ArgTypes...)>&, function<R(ArgTypes...)>&);
+  void swap(function<R(ArgTypes...)>&, function<R(ArgTypes...)>&) noexcept;
 
 template <class T> struct hash;
 
@@ -980,12 +974,12 @@ public:
     _LIBCPP_INLINE_VISIBILITY virtual ~__base() {}
     virtual __base* __clone() const = 0;
     virtual void __clone(__base*) const = 0;
-    virtual void destroy() = 0;
-    virtual void destroy_deallocate() = 0;
+    virtual void destroy() _NOEXCEPT = 0;
+    virtual void destroy_deallocate() _NOEXCEPT = 0;
     virtual _R operator()(_ArgTypes&& ...) = 0;
 #ifndef _LIBCPP_NO_RTTI
-    virtual const void* target(const type_info&) const = 0;
-    virtual const std::type_info& target_type() const = 0;
+    virtual const void* target(const type_info&) const _NOEXCEPT = 0;
+    virtual const std::type_info& target_type() const _NOEXCEPT = 0;
 #endif  // _LIBCPP_NO_RTTI
 };
 
@@ -1003,12 +997,12 @@ public:
     explicit __func(_F __f, _Alloc __a) : __f_(_STD::move(__f), _STD::move(__a)) {}
     virtual __base<_R(_ArgTypes...)>* __clone() const;
     virtual void __clone(__base<_R(_ArgTypes...)>*) const;
-    virtual void destroy();
-    virtual void destroy_deallocate();
+    virtual void destroy() _NOEXCEPT;
+    virtual void destroy_deallocate() _NOEXCEPT;
     virtual _R operator()(_ArgTypes&& ... __arg);
 #ifndef _LIBCPP_NO_RTTI
-    virtual const void* target(const type_info&) const;
-    virtual const std::type_info& target_type() const;
+    virtual const void* target(const type_info&) const _NOEXCEPT;
+    virtual const std::type_info& target_type() const _NOEXCEPT;
 #endif  // _LIBCPP_NO_RTTI
 };
 
@@ -1033,14 +1027,14 @@ __func<_F, _Alloc, _R(_ArgTypes...)>::__clone(__base<_R(_ArgTypes...)>* __p) con
 
 template<class _F, class _Alloc, class _R, class ..._ArgTypes>
 void
-__func<_F, _Alloc, _R(_ArgTypes...)>::destroy()
+__func<_F, _Alloc, _R(_ArgTypes...)>::destroy() _NOEXCEPT
 {
     __f_.~__compressed_pair<_F, _Alloc>();
 }
 
 template<class _F, class _Alloc, class _R, class ..._ArgTypes>
 void
-__func<_F, _Alloc, _R(_ArgTypes...)>::destroy_deallocate()
+__func<_F, _Alloc, _R(_ArgTypes...)>::destroy_deallocate() _NOEXCEPT
 {
     typedef typename _Alloc::template rebind<__func>::other _A;
     _A __a(__f_.second());
@@ -1059,7 +1053,7 @@ __func<_F, _Alloc, _R(_ArgTypes...)>::operator()(_ArgTypes&& ... __arg)
 
 template<class _F, class _Alloc, class _R, class ..._ArgTypes>
 const void*
-__func<_F, _Alloc, _R(_ArgTypes...)>::target(const type_info& __ti) const
+__func<_F, _Alloc, _R(_ArgTypes...)>::target(const type_info& __ti) const _NOEXCEPT
 {
     if (__ti == typeid(_F))
         return &__f_.first();
@@ -1068,7 +1062,7 @@ __func<_F, _Alloc, _R(_ArgTypes...)>::target(const type_info& __ti) const
 
 template<class _F, class _Alloc, class _R, class ..._ArgTypes>
 const std::type_info&
-__func<_F, _Alloc, _R(_ArgTypes...)>::target_type() const
+__func<_F, _Alloc, _R(_ArgTypes...)>::target_type() const _NOEXCEPT
 {
     return typeid(_F);
 }
@@ -1112,21 +1106,21 @@ public:
 
     // construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY
-    function() : __f_(0) {}
+    function() _NOEXCEPT : __f_(0) {}
     _LIBCPP_INLINE_VISIBILITY
-    function(nullptr_t) : __f_(0) {}
+    function(nullptr_t) _NOEXCEPT : __f_(0) {}
     function(const function&);
-    function(function&&);
+    function(function&&) _NOEXCEPT;
     template<class _F>
       function(_F,
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     template<class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
-      function(allocator_arg_t, const _Alloc&) : __f_(0) {}
+      function(allocator_arg_t, const _Alloc&) _NOEXCEPT : __f_(0) {}
     template<class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
-      function(allocator_arg_t, const _Alloc&, nullptr_t) : __f_(0) {}
+      function(allocator_arg_t, const _Alloc&, nullptr_t) _NOEXCEPT : __f_(0) {}
     template<class _Alloc>
       function(allocator_arg_t, const _Alloc&, const function&);
     template<class _Alloc>
@@ -1136,8 +1130,8 @@ public:
                typename enable_if<!is_integral<_F>::value>::type* = 0);
 
     function& operator=(const function&);
-    function& operator=(function&&);
-    function& operator=(nullptr_t);
+    function& operator=(function&&) _NOEXCEPT;
+    function& operator=(nullptr_t) _NOEXCEPT;
     template<class _F>
       typename enable_if
       <
@@ -1149,7 +1143,7 @@ public:
     ~function();
 
     // function modifiers:
-    void swap(function&);
+    void swap(function&) _NOEXCEPT;
     template<class _F, class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
       void assign(_F&& __f, const _Alloc& __a)
@@ -1157,7 +1151,7 @@ public:
 
     // function capacity:
     _LIBCPP_INLINE_VISIBILITY
-    /*explicit*/ operator bool() const {return __f_;}
+    /*explicit*/ operator bool() const _NOEXCEPT {return __f_;}
 
     // deleted overloads close possible hole in the type system
     template<class _R2, class... _ArgTypes2>
@@ -1170,9 +1164,9 @@ public:
 
 #ifndef _LIBCPP_NO_RTTI
     // function target access:
-    const std::type_info& target_type() const;
-    template <typename _T> _T* target();
-    template <typename _T> const _T* target() const;
+    const std::type_info& target_type() const _NOEXCEPT;
+    template <typename _T> _T* target() _NOEXCEPT;
+    template <typename _T> const _T* target() const _NOEXCEPT;
 #endif  // _LIBCPP_NO_RTTI
 };
 
@@ -1207,7 +1201,7 @@ function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc&,
 }
 
 template<class _R, class ..._ArgTypes>
-function<_R(_ArgTypes...)>::function(function&& __f)
+function<_R(_ArgTypes...)>::function(function&& __f) _NOEXCEPT
 {
     if (__f.__f_ == 0)
         __f_ = 0;
@@ -1251,7 +1245,7 @@ function<_R(_ArgTypes...)>::function(_F __f,
     if (__not_null(__f))
     {
         typedef __function::__func<_F, allocator<_F>, _R(_ArgTypes...)> _FF;
-        if (sizeof(_FF) <= sizeof(__buf_))
+        if (sizeof(_FF) <= sizeof(__buf_) && is_nothrow_copy_constructible<_F>::value)
         {
             __f_ = (__base*)&__buf_;
             ::new (__f_) _FF(_STD::move(__f));
@@ -1278,7 +1272,7 @@ function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc& __a0, _F __f
     if (__not_null(__f))
     {
         typedef __function::__func<_F, _Alloc, _R(_ArgTypes...)> _FF;
-        if (sizeof(_FF) <= sizeof(__buf_))
+        if (sizeof(_FF) <= sizeof(__buf_) && is_nothrow_copy_constructible<_F>::value)
         {
             __f_ = (__base*)&__buf_;
             ::new (__f_) _FF(_STD::move(__f));
@@ -1311,7 +1305,7 @@ function<_R(_ArgTypes...)>::operator=(const function& __f)
 
 template<class _R, class ..._ArgTypes>
 function<_R(_ArgTypes...)>&
-function<_R(_ArgTypes...)>::operator=(function&& __f)
+function<_R(_ArgTypes...)>::operator=(function&& __f) _NOEXCEPT
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1334,7 +1328,7 @@ function<_R(_ArgTypes...)>::operator=(function&& __f)
 
 template<class _R, class ..._ArgTypes>
 function<_R(_ArgTypes...)>&
-function<_R(_ArgTypes...)>::operator=(nullptr_t)
+function<_R(_ArgTypes...)>::operator=(nullptr_t) _NOEXCEPT
 {
     if (__f_ == (__base*)&__buf_)
         __f_->destroy();
@@ -1367,7 +1361,7 @@ function<_R(_ArgTypes...)>::~function()
 
 template<class _R, class ..._ArgTypes>
 void
-function<_R(_ArgTypes...)>::swap(function& __f)
+function<_R(_ArgTypes...)>::swap(function& __f) _NOEXCEPT
 {
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
@@ -1417,7 +1411,7 @@ function<_R(_ArgTypes...)>::operator()(_ArgTypes... __arg) const
 
 template<class _R, class ..._ArgTypes>
 const std::type_info&
-function<_R(_ArgTypes...)>::target_type() const
+function<_R(_ArgTypes...)>::target_type() const _NOEXCEPT
 {
     if (__f_ == 0)
         return typeid(void);
@@ -1427,7 +1421,7 @@ function<_R(_ArgTypes...)>::target_type() const
 template<class _R, class ..._ArgTypes>
 template <typename _T>
 _T*
-function<_R(_ArgTypes...)>::target()
+function<_R(_ArgTypes...)>::target() _NOEXCEPT
 {
     if (__f_ == 0)
         return (_T*)0;
@@ -1437,7 +1431,7 @@ function<_R(_ArgTypes...)>::target()
 template<class _R, class ..._ArgTypes>
 template <typename _T>
 const _T*
-function<_R(_ArgTypes...)>::target() const
+function<_R(_ArgTypes...)>::target() const _NOEXCEPT
 {
     if (__f_ == 0)
         return (const _T*)0;
@@ -1449,27 +1443,27 @@ function<_R(_ArgTypes...)>::target() const
 template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator==(const function<_R(_ArgTypes...)>& __f, nullptr_t) {return !__f;}
+operator==(const function<_R(_ArgTypes...)>& __f, nullptr_t) _NOEXCEPT {return !__f;}
 
 template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator==(nullptr_t, const function<_R(_ArgTypes...)>& __f) {return !__f;}
+operator==(nullptr_t, const function<_R(_ArgTypes...)>& __f) _NOEXCEPT {return !__f;}
 
 template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator!=(const function<_R(_ArgTypes...)>& __f, nullptr_t) {return (bool)__f;}
+operator!=(const function<_R(_ArgTypes...)>& __f, nullptr_t) _NOEXCEPT {return (bool)__f;}
 
 template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-operator!=(nullptr_t, const function<_R(_ArgTypes...)>& __f) {return (bool)__f;}
+operator!=(nullptr_t, const function<_R(_ArgTypes...)>& __f) _NOEXCEPT {return (bool)__f;}
 
 template <class _R, class... _ArgTypes>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-swap(function<_R(_ArgTypes...)>& __x, function<_R(_ArgTypes...)>& __y)
+swap(function<_R(_ArgTypes...)>& __x, function<_R(_ArgTypes...)>& __y) _NOEXCEPT
 {return __x.swap(__y);}
 
 template<class _Tp> struct __is_bind_expression : public false_type {};
@@ -1753,7 +1747,7 @@ struct _LIBCPP_VISIBLE hash<bool>
     : public unary_function<bool, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(bool __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(bool __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1761,7 +1755,7 @@ struct _LIBCPP_VISIBLE hash<char>
     : public unary_function<char, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(char __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(char __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1769,7 +1763,7 @@ struct _LIBCPP_VISIBLE hash<signed char>
     : public unary_function<signed char, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(signed char __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(signed char __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1777,7 +1771,7 @@ struct _LIBCPP_VISIBLE hash<unsigned char>
     : public unary_function<unsigned char, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(unsigned char __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(unsigned char __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
@@ -1787,7 +1781,7 @@ struct _LIBCPP_VISIBLE hash<char16_t>
     : public unary_function<char16_t, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(char16_t __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(char16_t __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1795,7 +1789,7 @@ struct _LIBCPP_VISIBLE hash<char32_t>
     : public unary_function<char32_t, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(char32_t __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(char32_t __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
@@ -1805,7 +1799,7 @@ struct _LIBCPP_VISIBLE hash<wchar_t>
     : public unary_function<wchar_t, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(wchar_t __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(wchar_t __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1813,7 +1807,7 @@ struct _LIBCPP_VISIBLE hash<short>
     : public unary_function<short, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(short __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(short __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1821,7 +1815,7 @@ struct _LIBCPP_VISIBLE hash<unsigned short>
     : public unary_function<unsigned short, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(unsigned short __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(unsigned short __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1829,7 +1823,7 @@ struct _LIBCPP_VISIBLE hash<int>
     : public unary_function<int, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(int __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(int __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1837,7 +1831,7 @@ struct _LIBCPP_VISIBLE hash<unsigned int>
     : public unary_function<unsigned int, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(unsigned int __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(unsigned int __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1845,7 +1839,7 @@ struct _LIBCPP_VISIBLE hash<long>
     : public unary_function<long, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(long __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(long __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1853,7 +1847,7 @@ struct _LIBCPP_VISIBLE hash<unsigned long>
     : public unary_function<unsigned long, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(unsigned long __v) const {return static_cast<size_t>(__v);}
+    size_t operator()(unsigned long __v) const _NOEXCEPT {return static_cast<size_t>(__v);}
 };
 
 template <>
@@ -1861,7 +1855,7 @@ struct _LIBCPP_VISIBLE hash<long long>
     : public unary_function<long long, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(long long __v) const
+    size_t operator()(long long __v) const _NOEXCEPT
     {
         size_t __r = 0;
         const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
@@ -1876,7 +1870,7 @@ struct _LIBCPP_VISIBLE hash<unsigned long long>
     : public unary_function<unsigned long long, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(unsigned long long __v) const
+    size_t operator()(unsigned long long __v) const _NOEXCEPT
     {
         size_t __r = 0;
         const size_t* const __p = reinterpret_cast<const size_t*>(&__v);
@@ -1891,7 +1885,7 @@ struct _LIBCPP_VISIBLE hash<float>
     : public unary_function<float, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(float __v) const
+    size_t operator()(float __v) const _NOEXCEPT
     {
         if (__v == 0)
             return 0;
@@ -1905,7 +1899,7 @@ struct _LIBCPP_VISIBLE hash<double>
     : public unary_function<double, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(double __v) const
+    size_t operator()(double __v) const _NOEXCEPT
     {
         if (__v == 0)
             return 0;
@@ -1922,7 +1916,7 @@ struct _LIBCPP_VISIBLE hash<long double>
     : public unary_function<long double, size_t>
 {
     _LIBCPP_INLINE_VISIBILITY
-    size_t operator()(long double __v) const
+    size_t operator()(long double __v) const _NOEXCEPT
     {
         if (__v == 0)
             return 0;

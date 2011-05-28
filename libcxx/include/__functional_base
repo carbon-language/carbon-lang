@@ -350,14 +350,14 @@ private:
 
 public:
     // construct/copy/destroy
-    _LIBCPP_INLINE_VISIBILITY reference_wrapper(type& __f) : __f_(&__f) {}
+    _LIBCPP_INLINE_VISIBILITY reference_wrapper(type& __f) _NOEXCEPT : __f_(&__f) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     private: reference_wrapper(type&&); public: // = delete; // do not bind to temps
 #endif
 
     // access
-    _LIBCPP_INLINE_VISIBILITY operator type&    () const {return *__f_;}
-    _LIBCPP_INLINE_VISIBILITY          type& get() const {return *__f_;}
+    _LIBCPP_INLINE_VISIBILITY operator type&    () const _NOEXCEPT {return *__f_;}
+    _LIBCPP_INLINE_VISIBILITY          type& get() const _NOEXCEPT {return *__f_;}
 
     // invoke
     template <class... _ArgTypes>
@@ -377,7 +377,7 @@ template <class _Tp> struct __is_reference_wrapper
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 reference_wrapper<_Tp>
-ref(_Tp& __t)
+ref(_Tp& __t) _NOEXCEPT
 {
     return reference_wrapper<_Tp>(__t);
 }
@@ -385,7 +385,7 @@ ref(_Tp& __t)
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 reference_wrapper<_Tp>
-ref(reference_wrapper<_Tp> __t)
+ref(reference_wrapper<_Tp> __t) _NOEXCEPT
 {
     return ref(__t.get());
 }
@@ -393,7 +393,7 @@ ref(reference_wrapper<_Tp> __t)
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 reference_wrapper<const _Tp>
-cref(const _Tp& __t)
+cref(const _Tp& __t) _NOEXCEPT
 {
     return reference_wrapper<const _Tp>(__t);
 }
@@ -401,7 +401,7 @@ cref(const _Tp& __t)
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 reference_wrapper<const _Tp>
-cref(reference_wrapper<_Tp> __t)
+cref(reference_wrapper<_Tp> __t) _NOEXCEPT
 {
     return cref(__t.get());
 }
