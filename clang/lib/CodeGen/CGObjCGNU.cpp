@@ -956,16 +956,17 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
                                     bool IsClassMessage,
                                     const CallArgList &CallArgs,
                                     const ObjCMethodDecl *Method) {
+  CGBuilderTy &Builder = CGF.Builder;
   if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly) {
     if (Sel == RetainSel || Sel == AutoreleaseSel) {
-      return RValue::get(Receiver);
+      return RValue::get(EnforceType(Builder, Receiver,
+                  CGM.getTypes().ConvertType(ResultType)));
     }
     if (Sel == ReleaseSel) {
       return RValue::get(0);
     }
   }
 
-  CGBuilderTy &Builder = CGF.Builder;
   llvm::Value *cmd = GetSelector(Builder, Sel);
 
 
@@ -1063,17 +1064,18 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
                                const CallArgList &CallArgs,
                                const ObjCInterfaceDecl *Class,
                                const ObjCMethodDecl *Method) {
+  CGBuilderTy &Builder = CGF.Builder;
+
   // Strip out message sends to retain / release in GC mode
   if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly) {
     if (Sel == RetainSel || Sel == AutoreleaseSel) {
-      return RValue::get(Receiver);
+      return RValue::get(EnforceType(Builder, Receiver,
+                  CGM.getTypes().ConvertType(ResultType)));
     }
     if (Sel == ReleaseSel) {
       return RValue::get(0);
     }
   }
-
-  CGBuilderTy &Builder = CGF.Builder;
 
   // If the return type is something that goes in an integer register, the
   // runtime will handle 0 returns.  For other cases, we fill in the 0 value
