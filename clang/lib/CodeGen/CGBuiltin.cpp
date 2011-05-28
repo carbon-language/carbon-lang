@@ -164,9 +164,8 @@ static Value *EmitFAbs(CodeGenFunction &CGF, Value *V, QualType ValTy) {
   }
   
   // The prototype is something that takes and returns whatever V's type is.
-  std::vector<const llvm::Type*> Args;
-  Args.push_back(V->getType());
-  llvm::FunctionType *FT = llvm::FunctionType::get(V->getType(), Args, false);
+  llvm::FunctionType *FT = llvm::FunctionType::get(V->getType(), V->getType(),
+                                                   false);
   llvm::Value *Fn = CGF.CGM.CreateRuntimeFunction(FT, FnName);
 
   return CGF.Builder.CreateCall(Fn, V, "abs");

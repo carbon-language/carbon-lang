@@ -205,16 +205,12 @@ bool CodeGenFunction::ShouldInstrumentFunction() {
 /// instrumentation function with the current function and the call site, if
 /// function instrumentation is enabled.
 void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
-  const llvm::PointerType *PointerTy;
-  const llvm::FunctionType *FunctionTy;
-  std::vector<const llvm::Type*> ProfileFuncArgs;
-
   // void __cyg_profile_func_{enter,exit} (void *this_fn, void *call_site);
-  PointerTy = Int8PtrTy;
-  ProfileFuncArgs.push_back(PointerTy);
-  ProfileFuncArgs.push_back(PointerTy);
-  FunctionTy = llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
-                                       ProfileFuncArgs, false);
+  const llvm::PointerType *PointerTy = Int8PtrTy;
+  const llvm::Type *ProfileFuncArgs[] = { PointerTy, PointerTy };
+  const llvm::FunctionType *FunctionTy =
+    llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
+                            ProfileFuncArgs, false);
 
   llvm::Constant *F = CGM.CreateRuntimeFunction(FunctionTy, Fn);
   llvm::CallInst *CallSite = Builder.CreateCall(

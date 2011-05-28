@@ -1788,9 +1788,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
   // Get the overflow handler.
   const llvm::Type *Int8Ty = llvm::Type::getInt8Ty(VMContext);
-  std::vector<const llvm::Type*> argTypes;
-  argTypes.push_back(CGF.Int64Ty); argTypes.push_back(CGF.Int64Ty);
-  argTypes.push_back(Int8Ty); argTypes.push_back(Int8Ty);
+  const llvm::Type *argTypes[] = { CGF.Int64Ty, CGF.Int64Ty, Int8Ty, Int8Ty };
   llvm::FunctionType *handlerTy =
       llvm::FunctionType::get(CGF.Int64Ty, argTypes, true);
   llvm::Value *handler = CGF.CGM.CreateRuntimeFunction(handlerTy, *handlerName);

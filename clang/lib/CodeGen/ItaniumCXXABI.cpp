@@ -1007,11 +1007,9 @@ void ARMCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
 static llvm::Constant *getGuardAcquireFn(CodeGenModule &CGM,
                                          const llvm::PointerType *GuardPtrTy) {
   // int __cxa_guard_acquire(__guard *guard_object);
-  
-  std::vector<const llvm::Type*> Args(1, GuardPtrTy);  
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGM.getTypes().ConvertType(CGM.getContext().IntTy),
-                            Args, /*isVarArg=*/false);
+                            GuardPtrTy, /*isVarArg=*/false);
   
   return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_acquire");
 }
@@ -1019,12 +1017,9 @@ static llvm::Constant *getGuardAcquireFn(CodeGenModule &CGM,
 static llvm::Constant *getGuardReleaseFn(CodeGenModule &CGM,
                                          const llvm::PointerType *GuardPtrTy) {
   // void __cxa_guard_release(__guard *guard_object);
-  
-  std::vector<const llvm::Type*> Args(1, GuardPtrTy);
-  
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
-                            Args, /*isVarArg=*/false);
+                            GuardPtrTy, /*isVarArg=*/false);
   
   return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_release");
 }
@@ -1032,12 +1027,9 @@ static llvm::Constant *getGuardReleaseFn(CodeGenModule &CGM,
 static llvm::Constant *getGuardAbortFn(CodeGenModule &CGM,
                                        const llvm::PointerType *GuardPtrTy) {
   // void __cxa_guard_abort(__guard *guard_object);
-  
-  std::vector<const llvm::Type*> Args(1, GuardPtrTy);
-  
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
-                            Args, /*isVarArg=*/false);
+                            GuardPtrTy, /*isVarArg=*/false);
   
   return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_abort");
 }
