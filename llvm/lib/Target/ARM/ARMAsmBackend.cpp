@@ -76,7 +76,7 @@ public:
 { "fixup_arm_thumb_blx",     7,            21,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_cb",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_cp",      1,             8,  MCFixupKindInfo::FKF_IsPCRel },
-{ "fixup_arm_thumb_bcc",     1,             8,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_thumb_bcc",     0,             8,  MCFixupKindInfo::FKF_IsPCRel },
 // movw / movt: 16-bits immediate but scattered into two chunks 0 - 12, 16 - 19.
 { "fixup_arm_movt_hi16",     0,            20,  0 },
 { "fixup_arm_movw_lo16",     0,            20,  0 },
