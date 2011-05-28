@@ -604,6 +604,11 @@ AsmPrinter::CFIMoveType AsmPrinter::needsCFIMoves() {
   return CFI_M_None;
 }
 
+bool AsmPrinter::needsSEHMoves() {
+  return MAI->getExceptionHandlingType() == ExceptionHandling::Win64 &&
+    MF->getFunction()->needsUnwindTableEntry();
+}
+
 void AsmPrinter::emitPrologLabel(const MachineInstr &MI) {
   MCSymbol *Label = MI.getOperand(0).getMCSymbol();
 

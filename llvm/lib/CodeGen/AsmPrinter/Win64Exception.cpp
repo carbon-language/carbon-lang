@@ -54,9 +54,35 @@ void Win64Exception::EndModule() {
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void Win64Exception::BeginFunction(const MachineFunction *MF) {
+  shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
+
+  // If any landing pads survive, we need an EH table.
+  bool hasLandingPads = !MMI->getLandingPads().empty();
+
+  shouldEmitMoves = Asm->needsSEHMoves();
+
+  const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+  unsigned PerEncoding = TLOF.getPersonalityEncoding();
+  const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
+
+  shouldEmitPersonality = hasLandingPads &&
+    PerEncoding != dwarf::DW_EH_PE_omit && Per;
+
+  unsigned LSDAEncoding = TLOF.getLSDAEncoding();
+  shouldEmitLSDA = shouldEmitPersonality &&
+    LSDAEncoding != dwarf::DW_EH_PE_omit;
+
+  if (!shouldEmitPersonality && !shouldEmitMoves)
+    return;
+
+  Asm->OutStreamer.EmitWin64EHStartProc(Asm->CurrentFnSym);
 }
 
 /// EndFunction - Gather and emit post-function exception information.
 ///
 void Win64Exception::EndFunction() {
+  if (!shouldEmitPersonality && !shouldEmitMoves)
+    return;
+
+  Asm->OutStreamer.EmitWin64EHEndProc();
 }
