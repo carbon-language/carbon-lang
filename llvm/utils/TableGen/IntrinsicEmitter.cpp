@@ -465,6 +465,46 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
+namespace {
+  enum ModRefKind {
+    MRK_none,
+    MRK_readonly,
+    MRK_readnone
+  };
+
+  ModRefKind getModRefKind(const CodeGenIntrinsic &intrinsic) {
+    switch (intrinsic.ModRef) {
+    case CodeGenIntrinsic::NoMem:
+      return MRK_readnone;
+    case CodeGenIntrinsic::ReadArgMem:
+    case CodeGenIntrinsic::ReadMem:
+      return MRK_readonly;
+    case CodeGenIntrinsic::ReadWriteArgMem:
+    case CodeGenIntrinsic::ReadWriteMem:
+      return MRK_none;
+    }
+    assert(0 && "bad mod-ref kind");
+    return MRK_none;
+  }
+
+  struct AttributeComparator {
+    bool operator()(const CodeGenIntrinsic *L, const CodeGenIntrinsic *R) const {
+      // Sort throwing intrinsics after non-throwing intrinsics.
+      if (L->canThrow != R->canThrow)
+        return R->canThrow;
+
+      // Try to order by readonly/readnone attribute.
+      ModRefKind LK = getModRefKind(*L);
+      ModRefKind RK = getModRefKind(*R);
+      if (LK != RK) return (LK > RK);
+
+      // Order by argument attributes.
+      // This is reliable because each side is already sorted internally.
+      return (L->ArgumentAttributes < R->ArgumentAttributes);
+    }
+  };
+}
+
 /// EmitAttributes - This emits the Intrinsic::getAttributes method.
 void IntrinsicEmitter::
 EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
@@ -472,84 +512,96 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   OS << "#ifdef GET_INTRINSIC_ATTRIBUTES\n";
   if (TargetOnly)
     OS << "static AttrListPtr getAttributes(" << TargetPrefix 
-       << "Intrinsic::ID id) {";
+       << "Intrinsic::ID id) {\n";
   else
-    OS << "AttrListPtr Intrinsic::getAttributes(ID id) {";
-  OS << "  // No intrinsic can throw exceptions.\n";
-  OS << "  Attributes Attr = Attribute::NoUnwind;\n";
-  OS << "  switch (id) {\n";
-  OS << "  default: break;\n";
-  unsigned MaxArgAttrs = 0;
+    OS << "AttrListPtr Intrinsic::getAttributes(ID id) {\n";
+
+  // Compute the maximum number of attribute arguments.
+  std::vector<const CodeGenIntrinsic*> sortedIntrinsics(Ints.size());
+  unsigned maxArgAttrs = 0;
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    MaxArgAttrs =
-      std::max(MaxArgAttrs, unsigned(Ints[i].ArgumentAttributes.size()));
-    switch (Ints[i].ModRef) {
-    default: break;
-    case CodeGenIntrinsic::NoMem:
-      OS << "  case " << TargetPrefix << "Intrinsic::" << Ints[i].EnumName 
-         << ":\n";
-      break;
-    }
+    const CodeGenIntrinsic &intrinsic = Ints[i];
+    sortedIntrinsics[i] = &intrinsic;
+    maxArgAttrs =
+      std::max(maxArgAttrs, unsigned(intrinsic.ArgumentAttributes.size()));
   }
-  OS << "    Attr |= Attribute::ReadNone; // These do not access memory.\n";
-  OS << "    break;\n";
-  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    switch (Ints[i].ModRef) {
-    default: break;
-    case CodeGenIntrinsic::ReadArgMem:
-    case CodeGenIntrinsic::ReadMem:
-      OS << "  case " << TargetPrefix << "Intrinsic::" << Ints[i].EnumName 
-         << ":\n";
-      break;
-    }
-  }
-  OS << "    Attr |= Attribute::ReadOnly; // These do not write memory.\n";
-  OS << "    break;\n";
-  OS << "  }\n";
-  OS << "  AttributeWithIndex AWI[" << MaxArgAttrs+1 << "];\n";
+
+  // Emit an array of AttributeWithIndex.  Most intrinsics will have
+  // at least one entry, for the function itself (index ~1), which is
+  // usually nounwind.
+  OS << "  AttributeWithIndex AWI[" << maxArgAttrs+1 << "];\n";
   OS << "  unsigned NumAttrs = 0;\n";
   OS << "  switch (id) {\n";
-  OS << "  default: break;\n";
-  
-  // Add argument attributes for any intrinsics that have them.
-  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    if (Ints[i].ArgumentAttributes.empty()) continue;
-    
-    OS << "  case " << TargetPrefix << "Intrinsic::" << Ints[i].EnumName 
-       << ":\n";
+  OS << "    default: break;\n";
 
-    std::vector<std::pair<unsigned, CodeGenIntrinsic::ArgAttribute> > ArgAttrs =
-      Ints[i].ArgumentAttributes;
-    // Sort by argument index.
-    std::sort(ArgAttrs.begin(), ArgAttrs.end());
+  AttributeComparator precedes;
 
-    unsigned NumArgsWithAttrs = 0;
+  std::stable_sort(sortedIntrinsics.begin(), sortedIntrinsics.end(), precedes);
 
-    while (!ArgAttrs.empty()) {
-      unsigned ArgNo = ArgAttrs[0].first;
+  for (unsigned i = 0, e = sortedIntrinsics.size(); i != e; ++i) {
+    const CodeGenIntrinsic &intrinsic = *sortedIntrinsics[i];
+    OS << "  case " << TargetPrefix << "Intrinsic::"
+       << intrinsic.EnumName << ":\n";
+
+    // Fill out the case if this is the last case for this range of
+    // intrinsics.
+    if (i + 1 != e && !precedes(&intrinsic, sortedIntrinsics[i + 1]))
+      continue;
+
+    // Keep track of the number of attributes we're writing out.
+    unsigned numAttrs = 0;
+
+    // The argument attributes are alreadys sorted by argument index.
+    for (unsigned ai = 0, ae = intrinsic.ArgumentAttributes.size(); ai != ae;) {
+      unsigned argNo = intrinsic.ArgumentAttributes[ai].first;
       
-      OS << "    AWI[" << NumArgsWithAttrs++ << "] = AttributeWithIndex::get("
-         << ArgNo+1 << ", 0";
+      OS << "    AWI[" << numAttrs++ << "] = AttributeWithIndex::get("
+         << argNo+1 << ", ";
 
-      while (!ArgAttrs.empty() && ArgAttrs[0].first == ArgNo) {
-        switch (ArgAttrs[0].second) {
-        default: assert(0 && "Unknown arg attribute");
+      bool moreThanOne = false;
+
+      do {
+        if (moreThanOne) OS << '|';
+
+        switch (intrinsic.ArgumentAttributes[ai].second) {
         case CodeGenIntrinsic::NoCapture:
-          OS << "|Attribute::NoCapture";
+          OS << "Attribute::NoCapture";
           break;
         }
-        ArgAttrs.erase(ArgAttrs.begin());
+
+        ++ai;
+        moreThanOne = true;
+      } while (ai != ae && intrinsic.ArgumentAttributes[ai].first == argNo);
+
+      OS << ");\n";
+    }
+
+    ModRefKind modRef = getModRefKind(intrinsic);
+
+    if (!intrinsic.canThrow || modRef) {
+      OS << "    AWI[" << numAttrs++ << "] = AttributeWithIndex::get(~0, ";
+      if (!intrinsic.canThrow) {
+        OS << "Attribute::NoUnwind";
+        if (modRef) OS << '|';
+      }
+      switch (modRef) {
+      case MRK_none: break;
+      case MRK_readonly: OS << "Attribute::ReadOnly"; break;
+      case MRK_readnone: OS << "Attribute::ReadNone"; break;
       }
       OS << ");\n";
     }
-    
-    OS << "    NumAttrs = " << NumArgsWithAttrs << ";\n";
-    OS << "    break;\n";
+
+    if (numAttrs) {
+      OS << "    NumAttrs = " << numAttrs << ";\n";
+      OS << "    break;\n";
+    } else {
+      OS << "    return AttrListPtr();\n";
+    }
   }
   
   OS << "  }\n";
-  OS << "  AWI[NumAttrs] = AttributeWithIndex::get(~0, Attr);\n";
-  OS << "  return AttrListPtr::get(AWI, NumAttrs+1);\n";
+  OS << "  return AttrListPtr::get(AWI, NumAttrs);\n";
   OS << "}\n";
   OS << "#endif // GET_INTRINSIC_ATTRIBUTES\n\n";
 }

@@ -47,6 +47,9 @@ def IntrReadWriteArgMem : IntrinsicProperty;
 // Commutative - This intrinsic is commutative: X op Y == Y op X.
 def Commutative : IntrinsicProperty;
 
+// Throws - This intrinsic can throw.
+def Throws : IntrinsicProperty;
+
 // NoCapture - The specified argument pointer is not captured by the intrinsic.
 class NoCapture<int argNo> : IntrinsicProperty {
   int ArgNo = argNo;
@@ -292,6 +295,7 @@ let Properties = [IntrNoMem] in {
 def int_eh_exception : Intrinsic<[llvm_ptr_ty], [], [IntrReadMem]>;
 def int_eh_selector  : Intrinsic<[llvm_i32_ty],
                                  [llvm_ptr_ty, llvm_ptr_ty, llvm_vararg_ty]>;
+def int_eh_resume    : Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty], [Throws]>;
 
 def int_eh_typeid_for : Intrinsic<[llvm_i32_ty], [llvm_ptr_ty]>;
 
