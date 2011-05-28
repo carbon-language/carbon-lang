@@ -532,13 +532,14 @@ bool DwarfEHPrepare::LowerUnwindsAndResumes() {
     if (isa<UnwindInst>(RI))
       new UnreachableInst(RI->getContext(), RI);
 
-    // Nuke the resume instruction.
-    RI->eraseFromParent();
-
     if (isa<UnwindInst>(RI))
       ++NumUnwindsLowered;
     else
       ++NumResumesLowered;
+
+    // Nuke the resume instruction.
+    RI->eraseFromParent();
+
     Changed = true;
   }
 
