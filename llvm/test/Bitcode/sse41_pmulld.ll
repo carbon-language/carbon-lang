@@ -1,2 +1,3 @@
-; RUN: llvm-dis < %s.bc | not grep {i32 @llvm\\.pmulld}
-; RUN: llvm-dis < %s.bc | grep mul
+; RUN: llvm-dis < %s.bc | FileCheck %s
+; CHECK-NOT: {i32 @llvm\\.pmulld}
+; CHECK: mul

@@ -1,1 +1,2 @@
-; RUN: llvm-dis < %s.bc | not grep {@llvm\\.palign}
+; RUN: llvm-dis < %s.bc | FileCheck %s 
+; CHECK-NOT: {@llvm\\.palign}
