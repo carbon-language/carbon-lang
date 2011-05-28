@@ -36,6 +36,16 @@ let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
 }
 
 //===----------------------------------------------------------------------===//
+// Load and Store exclusive doubleword
+
+let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".
+  def int_arm_strexd : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty,
+                                  llvm_ptr_ty], [IntrReadWriteArgMem]>;
+  def int_arm_ldrexd : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [llvm_ptr_ty],
+                                 [IntrReadArgMem]>;
+}
+
+//===----------------------------------------------------------------------===//
 // VFP
 
 let TargetPrefix = "arm" in {  // All intrinsics start with "llvm.arm.".

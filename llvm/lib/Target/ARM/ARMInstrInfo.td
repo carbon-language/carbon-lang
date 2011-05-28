@@ -3366,8 +3366,9 @@ def LDREXH : AIldrex<0b11, (outs GPR:$Rt), (ins addrmode7:$addr), NoItinerary,
                     "ldrexh", "\t$Rt, $addr", []>;
 def LDREX  : AIldrex<0b00, (outs GPR:$Rt), (ins addrmode7:$addr), NoItinerary,
                     "ldrex", "\t$Rt, $addr", []>;
-def LDREXD : AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2), (ins addrmode7:$addr),
-                    NoItinerary, "ldrexd", "\t$Rt, $Rt2, $addr", []>;
+let hasExtraDefRegAllocReq = 1 in
+  def LDREXD : AIldrex<0b01, (outs GPR:$Rt, GPR:$Rt2), (ins addrmode7:$addr),
+                      NoItinerary, "ldrexd", "\t$Rt, $Rt2, $addr", []>;
 }
 
 let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
@@ -3377,10 +3378,12 @@ def STREXH : AIstrex<0b11, (outs GPR:$Rd), (ins GPR:$Rt, addrmode7:$addr),
                     NoItinerary, "strexh", "\t$Rd, $Rt, $addr", []>;
 def STREX  : AIstrex<0b00, (outs GPR:$Rd), (ins GPR:$Rt, addrmode7:$addr),
                     NoItinerary, "strex", "\t$Rd, $Rt, $addr", []>;
+}
+
+let hasExtraSrcRegAllocReq = 1, Constraints = "@earlyclobber $Rd" in
 def STREXD : AIstrex<0b01, (outs GPR:$Rd),
                     (ins GPR:$Rt, GPR:$Rt2, addrmode7:$addr),
                     NoItinerary, "strexd", "\t$Rd, $Rt, $Rt2, $addr", []>;
-}
 
 // Clear-Exclusive is for disassembly only.
 def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex",
