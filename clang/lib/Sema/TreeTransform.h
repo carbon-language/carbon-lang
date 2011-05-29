@@ -1378,7 +1378,7 @@ public:
                                          UnaryExprOrTypeTrait ExprKind,
                                          SourceRange R) {
     ExprResult Result
-      = getSema().CreateUnaryExprOrTypeTraitExpr(SubExpr, ExprKind);
+      = getSema().CreateUnaryExprOrTypeTraitExpr(SubExpr, OpLoc, ExprKind);
     if (Result.isInvalid())
       return ExprError();
 

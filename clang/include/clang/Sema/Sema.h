@@ -2215,7 +2215,7 @@ public:
                                             SourceLocation OpLoc,
                                             UnaryExprOrTypeTrait ExprKind,
                                             SourceRange R);
-  ExprResult CreateUnaryExprOrTypeTraitExpr(Expr *E,
+  ExprResult CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
                                             UnaryExprOrTypeTrait ExprKind);
   ExprResult
     ActOnUnaryExprOrTypeTraitExpr(SourceLocation OpLoc,

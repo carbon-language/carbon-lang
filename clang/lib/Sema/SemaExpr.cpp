@@ -3262,7 +3262,8 @@ Sema::CreateUnaryExprOrTypeTraitExpr(TypeSourceInfo *TInfo,
 /// \brief Build a sizeof or alignof expression given an expression
 /// operand.
 ExprResult
-Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, UnaryExprOrTypeTrait ExprKind) {
+Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, SourceLocation OpLoc,
+                                     UnaryExprOrTypeTrait ExprKind) {
   // Verify that the operand is valid.
   bool isInvalid = false;
   if (E->isTypeDependent()) {
@@ -3277,7 +3278,7 @@ Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, UnaryExprOrTypeTrait ExprKind) {
   } else if (E->getType()->isPlaceholderType()) {
     ExprResult PE = CheckPlaceholderExpr(E);
     if (PE.isInvalid()) return ExprError();
-    return CreateUnaryExprOrTypeTraitExpr(PE.take(), ExprKind);
+    return CreateUnaryExprOrTypeTraitExpr(PE.take(), OpLoc, ExprKind);
   } else {
     isInvalid = CheckUnaryExprOrTypeTraitOperand(E, UETT_SizeOf);
   }
@@ -3287,7 +3288,7 @@ Sema::CreateUnaryExprOrTypeTraitExpr(Expr *E, UnaryExprOrTypeTrait ExprKind) {
 
   // C99 6.5.3.4p4: the type (an unsigned integer type) is size_t.
   return Owned(new (Context) UnaryExprOrTypeTraitExpr(
-      ExprKind, E, Context.getSizeType(), E->getExprLoc(),
+      ExprKind, E, Context.getSizeType(), OpLoc,
       E->getSourceRange().getEnd()));
 }
 
@@ -3308,13 +3309,7 @@ Sema::ActOnUnaryExprOrTypeTraitExpr(SourceLocation OpLoc,
   }
 
   Expr *ArgEx = (Expr *)TyOrEx;
-
-  // Make sure the location is accurately represented in the Expr node.
-  // FIXME: Is this really needed?
-  assert(ArgEx->getExprLoc() != OpLoc && "Mismatched locations");
-
-  ExprResult Result = CreateUnaryExprOrTypeTraitExpr(ArgEx, ExprKind);
-
+  ExprResult Result = CreateUnaryExprOrTypeTraitExpr(ArgEx, OpLoc, ExprKind);
   return move(Result);
 }
 
