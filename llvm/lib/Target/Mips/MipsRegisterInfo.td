@@ -120,22 +120,22 @@ let Namespace = "Mips" in {
 
   /// Mips Double point precision FPU Registers (aliased
   /// with the single precision to hold 64 bit values)
-  def D0  : AFPR< 0,  "F0", [F0,   F1]>, DwarfRegNum<[32]>;
-  def D1  : AFPR< 2,  "F2", [F2,   F3]>, DwarfRegNum<[34]>;
-  def D2  : AFPR< 4,  "F4", [F4,   F5]>, DwarfRegNum<[36]>;
-  def D3  : AFPR< 6,  "F6", [F6,   F7]>, DwarfRegNum<[38]>;
-  def D4  : AFPR< 8,  "F8", [F8,   F9]>, DwarfRegNum<[40]>;
-  def D5  : AFPR<10, "F10", [F10, F11]>, DwarfRegNum<[42]>;
-  def D6  : AFPR<12, "F12", [F12, F13]>, DwarfRegNum<[44]>;
-  def D7  : AFPR<14, "F14", [F14, F15]>, DwarfRegNum<[46]>;
-  def D8  : AFPR<16, "F16", [F16, F17]>, DwarfRegNum<[48]>;
-  def D9  : AFPR<18, "F18", [F18, F19]>, DwarfRegNum<[50]>;
-  def D10 : AFPR<20, "F20", [F20, F21]>, DwarfRegNum<[52]>;
-  def D11 : AFPR<22, "F22", [F22, F23]>, DwarfRegNum<[54]>;
-  def D12 : AFPR<24, "F24", [F24, F25]>, DwarfRegNum<[56]>;
-  def D13 : AFPR<26, "F26", [F26, F27]>, DwarfRegNum<[58]>;
-  def D14 : AFPR<28, "F28", [F28, F29]>, DwarfRegNum<[60]>;
-  def D15 : AFPR<30, "F30", [F30, F31]>, DwarfRegNum<[62]>;
+  def D0  : AFPR< 0,  "F0", [F0,   F1]>;
+  def D1  : AFPR< 2,  "F2", [F2,   F3]>;
+  def D2  : AFPR< 4,  "F4", [F4,   F5]>;
+  def D3  : AFPR< 6,  "F6", [F6,   F7]>;
+  def D4  : AFPR< 8,  "F8", [F8,   F9]>;
+  def D5  : AFPR<10, "F10", [F10, F11]>;
+  def D6  : AFPR<12, "F12", [F12, F13]>;
+  def D7  : AFPR<14, "F14", [F14, F15]>;
+  def D8  : AFPR<16, "F16", [F16, F17]>;
+  def D9  : AFPR<18, "F18", [F18, F19]>;
+  def D10 : AFPR<20, "F20", [F20, F21]>;
+  def D11 : AFPR<22, "F22", [F22, F23]>;
+  def D12 : AFPR<24, "F24", [F24, F25]>;
+  def D13 : AFPR<26, "F26", [F26, F27]>;
+  def D14 : AFPR<28, "F28", [F28, F29]>;
+  def D15 : AFPR<30, "F30", [F30, F31]>;
 
   // Hi/Lo registers
   def HI  : Register<"hi">, DwarfRegNum<[64]>;
