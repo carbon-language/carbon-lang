@@ -451,6 +451,7 @@ protected:
     SourceManager m_source_manager;
     std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;
 
+    Mutex m_input_readers_mutex;
     std::stack<lldb::InputReaderSP> m_input_readers;
     std::string m_input_reader_data;
 

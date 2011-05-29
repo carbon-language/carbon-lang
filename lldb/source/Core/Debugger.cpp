@@ -230,6 +230,7 @@ Debugger::Debugger () :
     m_listener ("lldb.Debugger"),
     m_source_manager (),
     m_command_interpreter_ap (new CommandInterpreter (*this, eScriptLanguageDefault, false)),
+    m_input_readers_mutex (Mutex::eMutexTypeRecursive),
     m_input_readers (),
     m_input_reader_data ()
 {
@@ -356,6 +357,7 @@ Debugger::GetCurrentInputReader ()
 {
     InputReaderSP reader_sp;
     
+    Mutex::Locker locker (m_input_readers_mutex);
     if (!m_input_readers.empty())
     {
         // Clear any finished readers from the stack
@@ -422,6 +424,7 @@ Debugger::CleanUpInputReaders ()
 {
     m_input_reader_data.clear();
     
+    Mutex::Locker locker (m_input_readers_mutex);
     // The bottom input reader should be the main debugger input reader.  We do not want to close that one here.
     while (m_input_readers.size() > 1)
     {
@@ -476,6 +479,7 @@ Debugger::WriteToDefaultReader (const char *bytes, size_t bytes_len)
     if (m_input_reader_data.empty())
         return;
 
+    Mutex::Locker locker (m_input_readers_mutex);
     while (!m_input_readers.empty() && !m_input_reader_data.empty())
     {
         // Get the input reader from the top of the stack
@@ -515,6 +519,7 @@ Debugger::PushInputReader (const InputReaderSP& reader_sp)
     if (top_reader_sp)
         top_reader_sp->Notify (eInputReaderDeactivate);
 
+    Mutex::Locker locker (m_input_readers_mutex);
     m_input_readers.push (reader_sp);
     reader_sp->Notify (eInputReaderActivate);
     ActivateInputReader (reader_sp);
@@ -527,6 +532,7 @@ Debugger::PopInputReader (const lldb::InputReaderSP& pop_reader_sp)
 
     // The reader on the stop of the stack is done, so let the next
     // read on the stack referesh its prompt and if there is one...
+    Mutex::Locker locker (m_input_readers_mutex);
     if (!m_input_readers.empty())
     {
         // Cannot call GetCurrentInputReader here, as that would cause an infinite loop.
@@ -557,6 +563,7 @@ bool
 Debugger::CheckIfTopInputReaderIsDone ()
 {
     bool result = false;
+    Mutex::Locker locker (m_input_readers_mutex);
     if (!m_input_readers.empty())
     {
         // Cannot call GetCurrentInputReader here, as that would cause an infinite loop.
