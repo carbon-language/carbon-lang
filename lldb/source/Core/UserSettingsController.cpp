@@ -727,21 +727,23 @@ void
 UserSettingsController::CreateDefaultInstanceSettings ()
 {
     Error err;
-    const ConstString &default_name = InstanceSettings::GetDefaultName();
+    const ConstString &default_instance_name = InstanceSettings::GetDefaultName();
     for (int i = 0; i < m_settings.instance_settings.size(); ++i)
     {
         SettingEntry &entry = m_settings.instance_settings[i];
         ConstString var_name (entry.var_name);
-        const char *value = entry.default_value;
+        const char *default_value = entry.default_value;
 
-        if (entry.var_type == eSetVarTypeEnum)
-            value = entry.enum_values[0].string_value;
+        // If there is no default value, then use the first enumeration value
+        // as the default value
+        if (default_value == NULL && entry.var_type == eSetVarTypeEnum)
+            default_value = entry.enum_values[0].string_value;
   
-        if (value != NULL)
+        if (default_value != NULL)
             m_default_settings->UpdateInstanceSettingsVariable (var_name, 
                                                                 NULL, 
-                                                                value, 
-                                                                default_name, 
+                                                                default_value, 
+                                                                default_instance_name, 
                                                                 entry, 
                                                                 eVarSetOperationAssign, 
                                                                 err, 
