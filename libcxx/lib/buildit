@@ -35,6 +35,8 @@ then
   RC_ProjectSourceVersion=1
 fi
 
+EXTRA_FLAGS="-std=c++0x "
+
 case $TRIPLE in
   *-apple-*)
     if [ -z $RC_XBS ]
@@ -53,7 +55,6 @@ case $TRIPLE in
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
 			/usr/lib/libSystem.B.dylib"
 	else
-		EXTRA_FLAGS="-std=c++0x "
 		RE_EXPORT_FILE="libc++abi.exp"
 		if [ -n "$SDKROOT" ]
 		then
@@ -81,7 +82,7 @@ case $TRIPLE in
     SOEXT=so
     LDSHARED_FLAGS="-o libc++.so.1.0 \
         -shared -nodefaultlibs -Wl,-soname,libc++.so.1 \
-        -lpthread -lrt -lc"
+        -lpthread -lrt -lc -lstdc++"
     ;;
 esac
 
