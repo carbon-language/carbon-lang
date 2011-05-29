@@ -2968,6 +2968,13 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
   if (!Source->isIntegerType() || !Target->isIntegerType())
     return;
 
+  if ((E->isNullPointerConstant(S.Context, Expr::NPC_ValueDependentIsNotNull)
+           == Expr::NPCK_GNUNull) && Target->isIntegerType()) {
+    S.Diag(E->getExprLoc(), diag::warn_impcast_null_pointer_to_integer)
+        << E->getSourceRange() << clang::SourceRange(CC);
+    return;
+  }
+
   IntRange SourceRange = GetExprRange(S.Context, E);
   IntRange TargetRange = IntRange::forTargetOfCanonicalType(S.Context, Target);
 

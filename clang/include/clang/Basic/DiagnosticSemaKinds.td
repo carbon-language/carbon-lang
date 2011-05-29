@@ -1284,7 +1284,9 @@ def warn_impcast_different_enum_types : Warning<
 def warn_impcast_bool_to_null_pointer : Warning<
     "initialization of pointer of type %0 to NULL from a constant boolean "
     "expression">, InGroup<BoolConversions>;
-
+def warn_impcast_null_pointer_to_integer : Warning<
+    "implicit conversion of NULL constant to integer">,
+    InGroup<DiagGroup<"conversion">>, DefaultIgnore;
 
 def warn_cast_align : Warning<
   "cast from %0 to %1 increases required alignment from %2 to %3">,

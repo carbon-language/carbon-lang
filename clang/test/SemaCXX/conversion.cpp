@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -fsyntax-only -Wconversion -verify %s
 
+#include <stddef.h>
+
 typedef   signed char  int8_t;
 typedef   signed short int16_t;
 typedef   signed int   int32_t;
@@ -49,4 +51,13 @@ namespace test2 {
     unsigned int x : 2;
     A() : x(10) {} // expected-warning {{implicit truncation from 'int' to bitfield changes value from 10 to 2}}
   };
+}
+
+void test3() {
+  int a = NULL; // expected-warning {{implicit conversion of NULL constant to integer}}
+  int b;
+  b = NULL; // expected-warning {{implicit conversion of NULL constant to integer}}
+  int c = ((((NULL)))); // expected-warning {{implicit conversion of NULL constant to integer}}
+  int d;
+  d = ((((NULL)))); // expected-warning {{implicit conversion of NULL constant to integer}}
 }
