@@ -605,7 +605,7 @@ if test "$enableval" = host-only ; then
   enableval=host
 fi
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU XCore MSP430 SystemZ Blackfin CBackend CppBackend MBlaze PTX" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Glulx Mips CellSPU XCore MSP430 SystemZ Blackfin CBackend CppBackend MBlaze PTX" ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
         x86)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -614,6 +614,7 @@ case "$enableval" in
         powerpc)  TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
         alpha)    TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
         arm)      TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
+        glulx)    TARGETS_TO_BUILD="Glulx $TARGETS_TO_BUILD" ;;
         mips)     TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         spu)      TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
         xcore)    TARGETS_TO_BUILD="XCore $TARGETS_TO_BUILD" ;;
