@@ -145,7 +145,7 @@ void SplitAnalysis::analyzeUses() {
 /// where CurLI is live.
 bool SplitAnalysis::calcLiveBlockInfo() {
   ThroughBlocks.resize(MF.getNumBlockIDs());
-  NumThroughBlocks = NumGapBlocks = 0;
+  NumThroughBlocks = 0;
   if (CurLI->empty())
     return true;
 
@@ -164,62 +164,55 @@ bool SplitAnalysis::calcLiveBlockInfo() {
     SlotIndex Start, Stop;
     tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
-    // If the block contains no uses, the range must be live through. At one
-    // point, SimpleRegisterCoalescing could create dangling ranges that ended
-    // mid-block.
-    if (UseI == UseE || *UseI >= Stop) {
-      ++NumThroughBlocks;
-      ThroughBlocks.set(BI.MBB->getNumber());
-      // The range shouldn't end mid-block if there are no uses. This shouldn't
-      // happen.
-      if (LVI->end < Stop)
-        return false;
-    } else {
-      // This block has uses. Find the first and last uses in the block.
+    // LVI is the first live segment overlapping MBB.
+    BI.LiveIn = LVI->start <= Start;
+    if (!BI.LiveIn)
+      BI.Def = LVI->start;
+
+    // Find the first and last uses in the block.
+    bool Uses = UseI != UseE && *UseI < Stop;
+    if (Uses) {
       BI.FirstUse = *UseI;
       assert(BI.FirstUse >= Start);
       do ++UseI;
       while (UseI != UseE && *UseI < Stop);
       BI.LastUse = UseI[-1];
       assert(BI.LastUse < Stop);
-
-      // LVI is the first live segment overlapping MBB.
-      BI.LiveIn = LVI->start <= Start;
-
-      // Look for gaps in the live range.
-      BI.LiveOut = true;
-      while (LVI->end < Stop) {
-        SlotIndex LastStop = LVI->end;
-        if (++LVI == LVE || LVI->start >= Stop) {
-          BI.LiveOut = false;
-          break;
-        }
-        if (LastStop < LVI->start) {
-          // There is a gap in the live range. Create duplicate entries for the
-          // live-in snippet and the live-out snippet.
-          ++NumGapBlocks;
-
-          // Push the Live-in part.
-          BI.LiveThrough = false;
-          BI.LiveOut = false;
-          UseBlocks.push_back(BI);
-          UseBlocks.back().LastUse = LastStop;
-
-          // Set up BI for the live-out part.
-          BI.LiveIn = false;
-          BI.LiveOut = true;
-          BI.FirstUse = LVI->start;
-        }
-      }
-
-      // Don't set LiveThrough when the block has a gap.
-      BI.LiveThrough = BI.LiveIn && BI.LiveOut;
-      UseBlocks.push_back(BI);
-
-      // LVI is now at LVE or LVI->end >= Stop.
-      if (LVI == LVE)
-        break;
     }
+
+    // Look for gaps in the live range.
+    bool hasGap = false;
+    BI.LiveOut = true;
+    while (LVI->end < Stop) {
+      SlotIndex LastStop = LVI->end;
+      if (++LVI == LVE || LVI->start >= Stop) {
+        BI.Kill = LastStop;
+        BI.LiveOut = false;
+        break;
+      }
+      if (LastStop < LVI->start) {
+        hasGap = true;
+        BI.Kill = LastStop;
+        BI.Def = LVI->start;
+      }
+    }
+
+    // Don't set LiveThrough when the block has a gap.
+    BI.LiveThrough = !hasGap && BI.LiveIn && BI.LiveOut;
+    if (Uses)
+      UseBlocks.push_back(BI);
+    else {
+      ++NumThroughBlocks;
+      ThroughBlocks.set(BI.MBB->getNumber());
+    }
+    // FIXME: This should never happen. The live range stops or starts without a
+    // corresponding use. An earlier pass did something wrong.
+    if (!BI.LiveThrough && !Uses)
+      return false;
+
+    // LVI is now at LVE or LVI->end >= Stop.
+    if (LVI == LVE)
+      break;
 
     // Live segment ends exactly at Stop. Move to the next segment.
     if (LVI->end == Stop && ++LVI == LVE)
