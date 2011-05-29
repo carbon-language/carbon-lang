@@ -189,6 +189,7 @@ BasicBlock *InvokeInliningInfo::getInnerUnwindDest() {
     PHINode *innerPhi = PHINode::Create(outerPhi->getType(), phiCapacity,
                                         outerPhi->getName() + ".lpad-body",
                                         insertPoint);
+    outerPhi->replaceAllUsesWith(innerPhi);
     innerPhi->addIncoming(outerPhi, OuterUnwindDest);
   }
 
