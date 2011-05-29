@@ -241,15 +241,15 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
         GS.HasPHIUser = true;
       } else if (isa<CmpInst>(I)) {
         GS.isCompared = true;
-      } else if (isa<MemTransferInst>(I)) {
-        const MemTransferInst *MTI = cast<MemTransferInst>(I);
+      } else if (const MemTransferInst *MTI = dyn_cast<MemTransferInst>(I)) {
+        if (MTI->isVolatile()) return true;
         if (MTI->getArgOperand(0) == V)
           GS.StoredType = GlobalStatus::isStored;
         if (MTI->getArgOperand(1) == V)
           GS.isLoaded = true;
-      } else if (isa<MemSetInst>(I)) {
-        assert(cast<MemSetInst>(I)->getArgOperand(0) == V &&
-               "Memset only takes one pointer!");
+      } else if (const MemSetInst *MSI = dyn_cast<MemSetInst>(I)) {
+        assert(MSI->getArgOperand(0) == V && "Memset only takes one pointer!");
+        if (MSI->isVolatile()) return true;
         GS.StoredType = GlobalStatus::isStored;
       } else {
         return true;  // Any other non-load instruction might take address!
@@ -2437,6 +2437,20 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
       // Cannot handle inline asm.
       if (isa<InlineAsm>(CI->getCalledValue())) return false;
+
+      if (MemSetInst *MSI = dyn_cast<MemSetInst>(CI)) {
+        if (MSI->isVolatile()) return false;
+        Constant *Ptr = getVal(Values, MSI->getDest());
+        Constant *Val = getVal(Values, MSI->getValue());
+        Constant *DestVal = ComputeLoadResult(getVal(Values, Ptr),
+                                              MutatedMemory);
+        if (Val->isNullValue() && DestVal->isNullValue()) {
+          // This memset is a no-op.
+          ++CurInst;
+          continue;
+        }
+        return false;
+      }
 
       // Resolve function pointers.
       Function *Callee = dyn_cast<Function>(getVal(Values,
