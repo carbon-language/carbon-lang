@@ -127,6 +127,8 @@ int main()
                      make_ti(0x0000000000000000LL, 0x00B504F333F9DE5BLL),
                      make_ti(0x7FFFFFFFFFFFF328LL, 0xDF915DA296E8A000LL)))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

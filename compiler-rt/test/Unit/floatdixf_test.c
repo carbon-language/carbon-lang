@@ -137,6 +137,8 @@ int main()
     if (test__floatdixf(0x023479FD0E092DE0LL, 0x1.1A3CFE870496Fp+57))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

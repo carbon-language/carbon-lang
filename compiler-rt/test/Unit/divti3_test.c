@@ -71,6 +71,8 @@ int main()
     if (test__divti3(make_ti(0x8000000000000000LL, 0), 2, make_ti(0xC000000000000000LL, 0)))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

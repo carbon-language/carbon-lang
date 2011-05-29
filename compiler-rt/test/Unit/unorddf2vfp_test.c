@@ -42,6 +42,8 @@ int main()
         return 1;
     if (test__unorddf2vfp(1.0, 1.0))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

@@ -167,6 +167,8 @@ int main()
         return 1;
     if (test__floatuntidf(make_ti(0x023479FD0E092DE0LL, 14), 0x1.1A3CFE870496Fp+121))
         return 1;
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

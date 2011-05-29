@@ -41,6 +41,8 @@ int main()
         return 1;
     if (test__extendsfdf2vfp(3.1415926535))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

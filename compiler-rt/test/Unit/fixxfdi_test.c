@@ -108,6 +108,8 @@ int main()
     if (test__fixxfdi(-0x1.FFFFFFFFFFFFFFF8p+62L, 0x8000000000000002LL))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

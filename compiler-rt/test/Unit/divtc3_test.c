@@ -375,6 +375,8 @@ int main()
 	
 //	printf("No errors found.\n");
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

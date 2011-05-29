@@ -43,6 +43,8 @@ int main()
         return 1;
     if (test__truncdfsf2vfp(123.456))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

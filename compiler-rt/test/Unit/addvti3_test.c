@@ -87,6 +87,8 @@ int main()
                       make_ti(0x7FFFFFFFFFFFFFFFLL, 0xFFFFFFFFFFFFFFFFLL)))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

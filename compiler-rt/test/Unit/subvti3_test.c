@@ -73,6 +73,8 @@ int main()
     if (test__subvti3(-1, make_ti(0x7FFFFFFFFFFFFFFFLL, 0xFFFFFFFFFFFFFFFFLL)))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

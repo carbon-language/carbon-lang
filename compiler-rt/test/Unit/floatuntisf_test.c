@@ -158,6 +158,8 @@ int main()
                           0x1.FEDCBEp+76F))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

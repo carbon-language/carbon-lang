@@ -139,6 +139,8 @@ int main()
     if (test__fixxfti(-0x1.FFFFFFFFFFFFFFFCp+126L, make_ti(0x8000000000000001LL,
                                                            0x0000000000000000LL)))
         return 1;
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

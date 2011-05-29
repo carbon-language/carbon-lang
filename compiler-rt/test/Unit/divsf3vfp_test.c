@@ -41,6 +41,8 @@ int main()
         return 1;
     if (test__divsf3vfp(10.0, -2.0))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

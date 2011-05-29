@@ -88,6 +88,8 @@ int main()
     if (test__modti3(make_ti(0x8000000000000000LL, 0), -3, -2))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

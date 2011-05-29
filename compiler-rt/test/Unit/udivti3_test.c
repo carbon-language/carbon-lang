@@ -60,6 +60,8 @@ int main()
                       make_tu(0x7FFFFFFFFFFFFFFFuLL, 0xFFFFFFFFFFFFFFFFuLL)))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

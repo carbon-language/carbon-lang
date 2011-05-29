@@ -134,6 +134,8 @@ int main()
     if (test__fixunsxfti(0x1.FFFFFFFFFFFFFFF8p+126L, make_ti(0x7FFFFFFFFFFFFFFELL, 0)))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

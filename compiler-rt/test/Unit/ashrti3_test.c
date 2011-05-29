@@ -166,6 +166,8 @@ int main()
     if (test__ashrti3(make_ti(0xFEDCBA9876543215LL, 0xFEDCBA9876543215LL), 127,
                       make_ti(0xFFFFFFFFFFFFFFFFLL, 0xFFFFFFFFFFFFFFFFLL)))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

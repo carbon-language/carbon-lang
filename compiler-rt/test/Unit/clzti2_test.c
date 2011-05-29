@@ -83,6 +83,8 @@ int main()
         return 1;
     if (test__clzti2(make_ti(0x8000000100000000LL, 0x8000000800000000LL), 0))
         return 1;
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

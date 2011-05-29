@@ -368,6 +368,8 @@ int main()
         }
     }
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

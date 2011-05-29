@@ -37,6 +37,8 @@ int main()
         return 1;
     if (test__bswapsi2(0x00000001, 0x01000000))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

@@ -114,6 +114,8 @@ int main()
     if (test__fixunstfdi(-0x1.FFFFFFFFFFFFFFF8p+62L, 0))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

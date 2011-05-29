@@ -37,6 +37,8 @@ int main()
         return 1;
     if (test__bswapdi2(0x0000000100000002LL, 0x0200000001000000LL))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

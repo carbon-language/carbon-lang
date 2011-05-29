@@ -57,7 +57,8 @@ int main() {
 #else
 
 int main() {
-  return 0;
+    printf("skipped\n");
+    return 0;
 }
 
 #endif

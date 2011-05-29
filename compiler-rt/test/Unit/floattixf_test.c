@@ -205,6 +205,8 @@ int main()
     if (test__floattixf(make_ti(0x0000123456789012LL, 0x34566FFFFFFFFFFFLL),
                         0x1.2345678901234566p+108L))
         return 1;
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

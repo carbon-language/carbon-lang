@@ -76,6 +76,8 @@ int main()
     if (test__ffsti2(make_ti(0x8000000000000000uLL, 0), 128))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

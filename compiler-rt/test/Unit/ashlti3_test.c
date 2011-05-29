@@ -168,6 +168,8 @@ int main()
     if (test__ashlti3(make_ti(0xFEDCBA9876543215LL, 0xFEDCBA9876543215LL), 127,
                       make_ti(0x8000000000000000LL, 0x0000000000000000LL)))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

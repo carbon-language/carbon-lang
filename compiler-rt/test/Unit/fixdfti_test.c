@@ -116,6 +116,8 @@ int main()
     if (test__fixdfti(-0x1.FFFFFFFFFFFFEp+126, make_ti(0x8000000000000800LL, 0)))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

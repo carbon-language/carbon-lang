@@ -367,7 +367,8 @@ int main()
                 return 1;
         }
     }
-
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

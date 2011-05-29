@@ -109,6 +109,8 @@ int main()
     if (test__ucmpti2(make_tu(0xFFFFFFFFFFFFFFFFuLL, 0xFFFFFFFFFFFFFFFFuLL),
                       make_tu(0xFFFFFFFFFFFFFFFFuLL, 0xFFFFFFFFFFFFFFFFuLL), 1))
         return 1;
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

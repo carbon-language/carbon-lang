@@ -41,6 +41,8 @@ int main()
         return 1;
     if (test__adddf3vfp(0.0, -0.0))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

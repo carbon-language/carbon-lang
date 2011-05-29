@@ -57,6 +57,8 @@ int main()
                             ((ti_int)rand() << 32) + rand()))
             return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

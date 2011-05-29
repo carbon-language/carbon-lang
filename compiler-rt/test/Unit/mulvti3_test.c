@@ -253,6 +253,8 @@ int main()
 //                       make_ti(0x8000000000000000LL, 0x0000000000000000LL)))  // abort
 //         return 1;
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

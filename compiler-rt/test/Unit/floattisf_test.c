@@ -129,6 +129,8 @@ int main()
     if (test__floattisf(make_ti(0x0007FB72E4000000LL, 0), 0x1.FEDCB8p+114F))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

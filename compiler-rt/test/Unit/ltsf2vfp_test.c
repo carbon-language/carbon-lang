@@ -46,6 +46,8 @@ int main()
         return 1;
     if (test__ltsf2vfp(1.0, HUGE_VALF))
         return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

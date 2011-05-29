@@ -105,6 +105,8 @@ int main()
     if (test__cmpti2(make_ti(2, 2), make_ti(2, 3), 0))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
    return 0;
 }

@@ -77,6 +77,8 @@ int main()
         if (test__absvti2(make_ti(((ti_int)rand() << 32) | rand(),
                                   ((ti_int)rand() << 32) | rand())))
             return 1;
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

@@ -225,6 +225,8 @@ int main()
     if (test__powitf2(-2, -31, -1/2147483648.))
         return 1;
 
+#else
+    printf("skipped\n");
 #endif
     return 0;
 }

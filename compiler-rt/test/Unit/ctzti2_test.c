@@ -76,6 +76,8 @@ int main()
         return 1;
     if (test__ctzti2(make_ti(0x8000000000000000LL, 0x0000000000000000LL), 127))
         return 1;
+#else
+    printf("skipped\n");
 #endif
 
    return 0;
