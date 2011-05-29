@@ -76,6 +76,13 @@ void Win64Exception::BeginFunction(const MachineFunction *MF) {
     return;
 
   Asm->OutStreamer.EmitWin64EHStartProc(Asm->CurrentFnSym);
+
+  if (!shouldEmitPersonality)
+    return;
+
+  MCSymbol *GCCHandlerSym =
+    Asm->GetExternalSymbolSymbol("_GCC_specific_handler");
+  Asm->OutStreamer.EmitWin64EHHandler(GCCHandlerSym, true, true);
 }
 
 /// EndFunction - Gather and emit post-function exception information.
