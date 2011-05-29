@@ -245,6 +245,7 @@ ConnectionFileDescriptor::Read (void *dst, size_t dst_len, ConnectionStatus &sta
             status = eConnectionStatusError;
             break;  // Break to close....
 
+        case ENOENT:    // no such file or directory
         case EBADF:     // fildes is not a valid file or socket descriptor open for reading.
         case ENXIO:     // An action is requested of a device that does not exist..
                         // A requested action cannot be performed by the device.
