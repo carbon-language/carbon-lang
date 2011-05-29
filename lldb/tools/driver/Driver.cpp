@@ -91,6 +91,9 @@ Driver::Driver () :
     m_option_data (),
     m_waiting_for_command (false)
 {
+    // We want to be able to handle CTRL+D in the terminal to have it terminate
+    // certain input
+    m_debugger.SetCloseInputOnEOF (false);
     g_debugger_name = (char *) m_debugger.GetInstanceName();
     if (g_debugger_name == NULL)
         g_debugger_name = (char *) "";

@@ -3509,7 +3509,7 @@
 		2689FFD613353D7A00698AC0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
+				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 57;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_CURRENT_VERSION = 57;
@@ -3549,7 +3549,7 @@
 		2689FFD713353D7A00698AC0 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
+				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 57;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_CURRENT_VERSION = 57;

@@ -415,6 +415,12 @@ public:
     static int
     TestDebuggerRefCount ();
 
+    bool
+    GetCloseInputOnEOF () const;
+    
+    void
+    SetCloseInputOnEOF (bool b);
+
 protected:
 
     static void

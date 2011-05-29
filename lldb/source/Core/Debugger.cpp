@@ -233,7 +233,6 @@ Debugger::Debugger () :
     m_input_readers (),
     m_input_reader_data ()
 {
-    m_input_comm.SetCloseOnEOF(false);
     m_command_interpreter_ap->Initialize ();
     // Always add our default platform to the platform list
     PlatformSP default_platform_sp (Platform::GetDefaultPlatform());
@@ -254,6 +253,18 @@ Debugger::~Debugger ()
     DisconnectInput();
 }
 
+
+bool
+Debugger::GetCloseInputOnEOF () const
+{
+    return m_input_comm.GetCloseOnEOF();
+}
+
+void
+Debugger::SetCloseInputOnEOF (bool b)
+{
+    m_input_comm.SetCloseOnEOF(b);
+}
 
 bool
 Debugger::GetAsyncExecution ()

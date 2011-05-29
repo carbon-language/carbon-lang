@@ -205,6 +205,12 @@ public:
     void
     SetScriptLanguage (lldb::ScriptLanguage script_lang);
 
+    bool
+    GetCloseInputOnEOF () const;
+    
+    void
+    SetCloseInputOnEOF (bool b);
+
 private:
 
 #ifndef SWIG

@@ -861,3 +861,17 @@ SBDebugger::SetCurrentPlatform (const char *platform_name)
     return sb_error;
 }
 
+bool
+SBDebugger::GetCloseInputOnEOF () const
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetCloseInputOnEOF ();
+    return false;
+}
+
+void
+SBDebugger::SetCloseInputOnEOF (bool b)
+{
+    if (m_opaque_sp)
+        m_opaque_sp->SetCloseInputOnEOF (b);
+}
