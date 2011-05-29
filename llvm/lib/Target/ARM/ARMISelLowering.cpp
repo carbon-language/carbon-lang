@@ -656,7 +656,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::EH_SJLJ_SETJMP, MVT::i32, Custom);
     setOperationAction(ISD::EH_SJLJ_LONGJMP, MVT::Other, Custom);
     setOperationAction(ISD::EH_SJLJ_DISPATCHSETUP, MVT::Other, Custom);
-    setLibcallName(RTLIB::UNWIND_RESUME, "_Unwind_SjLj_Resume");
   }
 
   setOperationAction(ISD::SETCC,     MVT::i32, Expand);
