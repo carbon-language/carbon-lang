@@ -485,6 +485,30 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
         << " -- BB#" << NMBB->getNumber()
         << " -- BB#" << Succ->getNumber() << '\n');
 
+  // On some targets like Mips, branches may kill virtual registers. Make sure
+  // that LiveVariables is properly updated after updateTerminator replaces the
+  // terminators.
+  LiveVariables *LV = P->getAnalysisIfAvailable<LiveVariables>();
+
+  // Collect a list of virtual registers killed by the terminators.
+  SmallVector<unsigned, 4> KilledRegs;
+  if (LV)
+    for (iterator I = getFirstTerminator(), E = end(); I != E; ++I) {
+      MachineInstr *MI = I;
+      for (MachineInstr::mop_iterator OI = MI->operands_begin(),
+           OE = MI->operands_end(); OI != OE; ++OI) {
+        if (!OI->isReg() || !OI->isUse() || !OI->isKill() || OI->isUndef())
+          continue;
+        unsigned Reg = OI->getReg();
+        if (TargetRegisterInfo::isVirtualRegister(Reg) &&
+            LV->getVarInfo(Reg).removeKill(MI)) {
+          KilledRegs.push_back(Reg);
+          DEBUG(dbgs() << "Removing terminator kill: " << *MI);
+          OI->setIsKill(false);
+        }
+      }
+    }
+
   ReplaceUsesOfBlockWith(Succ, NMBB);
   updateTerminator();
 
@@ -502,9 +526,22 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
       if (i->getOperand(ni+1).getMBB() == this)
         i->getOperand(ni+1).setMBB(NMBB);
 
-  if (LiveVariables *LV =
-        P->getAnalysisIfAvailable<LiveVariables>())
+  // Update LiveVariables.
+  if (LV) {
+    // Restore kills of virtual registers that were killed by the terminators.
+    while (!KilledRegs.empty()) {
+      unsigned Reg = KilledRegs.pop_back_val();
+      for (iterator I = end(), E = begin(); I != E;) {
+        if (!(--I)->addRegisterKilled(Reg, NULL, /* addIfNotFound= */ false))
+          continue;
+        LV->getVarInfo(Reg).Kills.push_back(I);
+        DEBUG(dbgs() << "Restored terminator kill: " << *I);
+        break;
+      }
+    }
+    // Update relevant live-through information.
     LV->addNewBlock(NMBB, this, Succ);
+  }
 
   if (MachineDominatorTree *MDT =
       P->getAnalysisIfAvailable<MachineDominatorTree>()) {
