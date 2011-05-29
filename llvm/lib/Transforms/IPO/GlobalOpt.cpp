@@ -2444,7 +2444,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         Constant *Val = getVal(Values, MSI->getValue());
         Constant *DestVal = ComputeLoadResult(getVal(Values, Ptr),
                                               MutatedMemory);
-        if (Val->isNullValue() && DestVal->isNullValue()) {
+        if (Val->isNullValue() && DestVal && DestVal->isNullValue()) {
           // This memset is a no-op.
           ++CurInst;
           continue;
