@@ -4,7 +4,7 @@
 // XFAIL: *
 // XTARGET: darwin
 
-// DEBUGGER: break 22
+// DEBUGGER: break 24
 // DEBUGGER: r
 // DEBUGGER: p result
 // CHECK: $1 = 42
