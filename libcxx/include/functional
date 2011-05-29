@@ -384,7 +384,7 @@ public:
 
     function& operator=(const function&);
     function& operator=(function&&) noexcept;
-    function& operator=(nullptr_t);
+    function& operator=(nullptr_t) noexcept;
     template<class F>
       function& operator=(F&&);
     template<class F>
