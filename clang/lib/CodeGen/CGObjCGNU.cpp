@@ -2290,7 +2290,7 @@ void CGObjCGNU::EmitThrowStmt(CodeGenFunction &CGF,
 llvm::Value * CGObjCGNU::EmitObjCWeakRead(CodeGenFunction &CGF,
                                           llvm::Value *AddrWeakObj) {
   CGBuilderTy B = CGF.Builder;
-  AddrWeakObj = EnforceType(B, AddrWeakObj, IdTy);
+  AddrWeakObj = EnforceType(B, AddrWeakObj, PtrToIdTy);
   return B.CreateCall(WeakReadFn, AddrWeakObj);
 }
 
