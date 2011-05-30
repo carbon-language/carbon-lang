@@ -188,22 +188,22 @@ let Namespace = "X86" in {
 
   // YMM Registers, used by AVX instructions
   let SubRegIndices = [sub_xmm] in {
-  def YMM0: RegisterWithSubRegs<"ymm0", [XMM0]>, DwarfRegNum<[17, 21, 21]>;
-  def YMM1: RegisterWithSubRegs<"ymm1", [XMM1]>, DwarfRegNum<[18, 22, 22]>;
-  def YMM2: RegisterWithSubRegs<"ymm2", [XMM2]>, DwarfRegNum<[19, 23, 23]>;
-  def YMM3: RegisterWithSubRegs<"ymm3", [XMM3]>, DwarfRegNum<[20, 24, 24]>;
-  def YMM4: RegisterWithSubRegs<"ymm4", [XMM4]>, DwarfRegNum<[21, 25, 25]>;
-  def YMM5: RegisterWithSubRegs<"ymm5", [XMM5]>, DwarfRegNum<[22, 26, 26]>;
-  def YMM6: RegisterWithSubRegs<"ymm6", [XMM6]>, DwarfRegNum<[23, 27, 27]>;
-  def YMM7: RegisterWithSubRegs<"ymm7", [XMM7]>, DwarfRegNum<[24, 28, 28]>;
-  def YMM8:  RegisterWithSubRegs<"ymm8", [XMM8]>,  DwarfRegNum<[25, -2, -2]>;
-  def YMM9:  RegisterWithSubRegs<"ymm9", [XMM9]>,  DwarfRegNum<[26, -2, -2]>;
-  def YMM10: RegisterWithSubRegs<"ymm10", [XMM10]>, DwarfRegNum<[27, -2, -2]>;
-  def YMM11: RegisterWithSubRegs<"ymm11", [XMM11]>, DwarfRegNum<[28, -2, -2]>;
-  def YMM12: RegisterWithSubRegs<"ymm12", [XMM12]>, DwarfRegNum<[29, -2, -2]>;
-  def YMM13: RegisterWithSubRegs<"ymm13", [XMM13]>, DwarfRegNum<[30, -2, -2]>;
-  def YMM14: RegisterWithSubRegs<"ymm14", [XMM14]>, DwarfRegNum<[31, -2, -2]>;
-  def YMM15: RegisterWithSubRegs<"ymm15", [XMM15]>, DwarfRegNum<[32, -2, -2]>;
+  def YMM0: RegisterWithSubRegs<"ymm0", [XMM0]>, DwarfRegAlias<XMM0>;
+  def YMM1: RegisterWithSubRegs<"ymm1", [XMM1]>, DwarfRegAlias<XMM1>;
+  def YMM2: RegisterWithSubRegs<"ymm2", [XMM2]>, DwarfRegAlias<XMM2>;
+  def YMM3: RegisterWithSubRegs<"ymm3", [XMM3]>, DwarfRegAlias<XMM3>;
+  def YMM4: RegisterWithSubRegs<"ymm4", [XMM4]>, DwarfRegAlias<XMM4>;
+  def YMM5: RegisterWithSubRegs<"ymm5", [XMM5]>, DwarfRegAlias<XMM5>;
+  def YMM6: RegisterWithSubRegs<"ymm6", [XMM6]>, DwarfRegAlias<XMM6>;
+  def YMM7: RegisterWithSubRegs<"ymm7", [XMM7]>, DwarfRegAlias<XMM7>;
+  def YMM8:  RegisterWithSubRegs<"ymm8", [XMM8]>, DwarfRegAlias<XMM8>;
+  def YMM9:  RegisterWithSubRegs<"ymm9", [XMM9]>, DwarfRegAlias<XMM9>;
+  def YMM10: RegisterWithSubRegs<"ymm10", [XMM10]>, DwarfRegAlias<XMM10>;
+  def YMM11: RegisterWithSubRegs<"ymm11", [XMM11]>, DwarfRegAlias<XMM11>;
+  def YMM12: RegisterWithSubRegs<"ymm12", [XMM12]>, DwarfRegAlias<XMM12>;
+  def YMM13: RegisterWithSubRegs<"ymm13", [XMM13]>, DwarfRegAlias<XMM13>;
+  def YMM14: RegisterWithSubRegs<"ymm14", [XMM14]>, DwarfRegAlias<XMM14>;
+  def YMM15: RegisterWithSubRegs<"ymm15", [XMM15]>, DwarfRegAlias<XMM15>;
   }
 
   // Floating point stack registers

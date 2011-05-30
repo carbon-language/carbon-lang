@@ -151,6 +151,14 @@ class DwarfRegNum<list<int> Numbers> {
   list<int> DwarfNumbers = Numbers;
 }
 
+// DwarfRegAlias - This class declares that a given register uses the same dwarf
+// numbers as another one. This is useful for making it clear that the two
+// registers do have the same number. It also lets us build a mapping
+// from dwarf register number to llvm register.
+class DwarfRegAlias<Register reg> {
+      Register DwarfAlias = reg;
+}
+
 //===----------------------------------------------------------------------===//
 // Pull in the common support for scheduling
 //

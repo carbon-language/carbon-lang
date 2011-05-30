@@ -989,6 +989,17 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     for (unsigned i = I->second.size(), e = maxLength; i != e; ++i)
       I->second.push_back(-1);
 
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    Record *Reg = Regs[i].TheDef;
+    const RecordVal *V = Reg->getValue("DwarfAlias");
+    if (!V || !V->getValue())
+      continue;
+
+    DefInit *DI = dynamic_cast<DefInit*>(V->getValue());
+    Record *Alias = DI->getDef();
+    DwarfRegNums[Reg] = DwarfRegNums[Alias];
+  }
+
   // Emit information about the dwarf register numbers.
   OS << "int " << ClassName << "::getDwarfRegNumFull(unsigned RegNum, "
      << "unsigned Flavour) const {\n"
