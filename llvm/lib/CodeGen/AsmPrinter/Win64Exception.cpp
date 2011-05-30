@@ -83,6 +83,9 @@ void Win64Exception::BeginFunction(const MachineFunction *MF) {
   MCSymbol *GCCHandlerSym =
     Asm->GetExternalSymbolSymbol("_GCC_specific_handler");
   Asm->OutStreamer.EmitWin64EHHandler(GCCHandlerSym, true, true);
+
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
+                                                Asm->getFunctionNumber()));
 }
 
 /// EndFunction - Gather and emit post-function exception information.
@@ -91,5 +94,23 @@ void Win64Exception::EndFunction() {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
+                                                Asm->getFunctionNumber()));
+
+  // Map all labels and get rid of any dead landing pads.
+  MMI->TidyLandingPads();
+
+  if (shouldEmitPersonality) {
+    const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
+    const Function *Per = MMI->getPersonalities()[MMI->getPersonalityIndex()];
+    const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, Asm->Mang, MMI);
+
+    Asm->OutStreamer.PushSection();
+    Asm->OutStreamer.EmitWin64EHHandlerData();
+    Asm->OutStreamer.EmitValue(MCSymbolRefExpr::Create(Sym, Asm->OutContext),
+                               4);
+    EmitExceptionTable();
+    Asm->OutStreamer.PopSection();
+  }
   Asm->OutStreamer.EmitWin64EHEndProc();
 }
