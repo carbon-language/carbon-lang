@@ -97,15 +97,15 @@ let Namespace = "X86" in {
   }
   // 32-bit registers
   let SubRegIndices = [sub_16bit] in {
-  def EAX : RegisterWithSubRegs<"eax", [AX]>, DwarfRegNum<[0, 0, 0]>;
-  def EDX : RegisterWithSubRegs<"edx", [DX]>, DwarfRegNum<[1, 2, 2]>;
-  def ECX : RegisterWithSubRegs<"ecx", [CX]>, DwarfRegNum<[2, 1, 1]>;
-  def EBX : RegisterWithSubRegs<"ebx", [BX]>, DwarfRegNum<[3, 3, 3]>;
-  def ESI : RegisterWithSubRegs<"esi", [SI]>, DwarfRegNum<[4, 6, 6]>;
-  def EDI : RegisterWithSubRegs<"edi", [DI]>, DwarfRegNum<[5, 7, 7]>;
-  def EBP : RegisterWithSubRegs<"ebp", [BP]>, DwarfRegNum<[6, 4, 5]>;
-  def ESP : RegisterWithSubRegs<"esp", [SP]>, DwarfRegNum<[7, 5, 4]>;
-  def EIP : RegisterWithSubRegs<"eip", [IP]>, DwarfRegNum<[16, 8, 8]>;
+  def EAX : RegisterWithSubRegs<"eax", [AX]>, DwarfRegNum<[-2, 0, 0]>;
+  def EDX : RegisterWithSubRegs<"edx", [DX]>, DwarfRegNum<[-2, 2, 2]>;
+  def ECX : RegisterWithSubRegs<"ecx", [CX]>, DwarfRegNum<[-2, 1, 1]>;
+  def EBX : RegisterWithSubRegs<"ebx", [BX]>, DwarfRegNum<[-2, 3, 3]>;
+  def ESI : RegisterWithSubRegs<"esi", [SI]>, DwarfRegNum<[-2, 6, 6]>;
+  def EDI : RegisterWithSubRegs<"edi", [DI]>, DwarfRegNum<[-2, 7, 7]>;
+  def EBP : RegisterWithSubRegs<"ebp", [BP]>, DwarfRegNum<[-2, 4, 5]>;
+  def ESP : RegisterWithSubRegs<"esp", [SP]>, DwarfRegNum<[-2, 5, 4]>;
+  def EIP : RegisterWithSubRegs<"eip", [IP]>, DwarfRegNum<[-2, 8, 8]>;
 
   // X86-64 only, requires REX
   let CostPerUse = 1 in {
