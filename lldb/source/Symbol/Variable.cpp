@@ -156,40 +156,53 @@ Variable::CalculateSymbolContext (SymbolContext *sc)
         sc->Clear();
 }
 
+bool
+Variable::LocationIsValidForFrame (StackFrame *frame)
+{
+    // Is the variable is described by a single location?
+    if (!m_location.IsLocationList())
+    {
+        // Yes it is, the location is valid. 
+        return true;
+    }
+
+    if (frame)
+    {
+        Target *target = &frame->GetThread().GetProcess().GetTarget();
+        
+        Function *function = frame->GetSymbolContext(eSymbolContextFunction).function;
+        if (function)
+        {
+            addr_t loclist_base_load_addr = function->GetAddressRange().GetBaseAddress().GetLoadAddress (target);
+            if (loclist_base_load_addr == LLDB_INVALID_ADDRESS)
+                return false;
+            // It is a location list. We just need to tell if the location
+            // list contains the current address when converted to a load
+            // address
+            return m_location.LocationListContainsAddress (loclist_base_load_addr, 
+                                                           frame->GetFrameCodeAddress().GetLoadAddress (target));
+        }
+    }
+    return false;
+}
 
 bool
 Variable::IsInScope (StackFrame *frame)
 {
     switch (m_scope)
     {
-    case eValueTypeVariableGlobal:
-    case eValueTypeVariableStatic:
-        // Globals and statics are always in scope.
+    case eValueTypeRegister:
+    case eValueTypeRegisterSet:
+        return frame != NULL;
+
+    case eValueTypeConstResult:
         return true;
 
+    case eValueTypeVariableGlobal:
+    case eValueTypeVariableStatic:
     case eValueTypeVariableArgument:
     case eValueTypeVariableLocal:
-        // Check if the location has a location list that describes the value
-        // of the variable with address ranges and different locations for each
-        // address range?
-        if (m_location.IsLocationList())
-        {
-            SymbolContext sc;
-            CalculateSymbolContext(&sc);
-            
-            // Currently we only support functions that have things with 
-            // locations lists. If this expands, we will need to add support
-            assert (sc.function);
-            Target *target = &frame->GetThread().GetProcess().GetTarget();
-            addr_t loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (target);
-            if (loclist_base_load_addr == LLDB_INVALID_ADDRESS)
-                return false;
-            // It is a location list. We just need to tell if the location
-            // list contains the current address when converted to a load
-            // address
-            return m_location.LocationListContainsAddress (loclist_base_load_addr, frame->GetFrameCodeAddress().GetLoadAddress (target));
-        }
-        else
+        if (frame)
         {
             // We don't have a location list, we just need to see if the block
             // that this variable was defined in is currently
@@ -198,16 +211,19 @@ Variable::IsInScope (StackFrame *frame)
             {
                 SymbolContext variable_sc;
                 CalculateSymbolContext (&variable_sc);
+                // Check for static or global variable defined at the compile unit 
+                // level that wasn't defined in a block
+                if (variable_sc.block == NULL)
+                    return true;    
+
                 if (variable_sc.block == deepest_frame_block)
                     return true;
-
                 return variable_sc.block->Contains (deepest_frame_block);
             }
         }
         break;
 
     default:
-        assert (!"Unhandled case");
         break;
     }
     return false;

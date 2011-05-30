@@ -32,7 +32,7 @@ public:
     {
     }
 
-    //virtual
+    virtual
     ~A()
     {
     }
@@ -62,7 +62,7 @@ public:
     {
     }
 
-    //virtual
+    virtual
     ~B()
     {
     }
@@ -93,7 +93,7 @@ public:
         printf("Within C::ctor() m_c_int=%d\n", m_c_int); // Set break point at this line.
     }
 
-    //virtual
+    virtual
     ~C()
     {
     }
@@ -119,6 +119,14 @@ main (int argc, char const *argv[])
     A a(12);
     B b(22,33);
     C c(44,55,66);
+    A *c_as_a = &c;
+    B *c_as_b = &c;
+    void *a_as_void_ptr = &a;
+    void *b_as_void_ptr = &b;
+    void *c_as_void_ptr = &c;
+    const void *a_as_const_void_ptr = &a;
+    const void *b_as_const_void_ptr = &b;
+    const void *c_as_const_void_ptr = &c;
     Conversion conv(1);
     if (conv)
         return b.GetIntegerB() - a.GetInteger() + c.GetInteger();

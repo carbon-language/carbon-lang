@@ -87,7 +87,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (uint32_t option_idx, co
             else
             {
                 if (result)
-                    use_dynamic  = eLazyBoolYes;  
+                    use_dynamic = eLazyBoolYes;  
                 else
                     use_dynamic = eLazyBoolNo;
             }

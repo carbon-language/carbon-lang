@@ -37,7 +37,7 @@ static const char *vtable_demangled_prefix = "vtable for ";
 bool
 ItaniumABILanguageRuntime::CouldHaveDynamicValue (ValueObject &in_value)
 {
-    return in_value.IsPointerOrReferenceType();
+    return in_value.IsPossibleCPlusPlusDynamicType();
 }
 
 bool

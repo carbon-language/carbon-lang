@@ -87,11 +87,14 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
 
                     if (tag_decl->hasExternalLexicalStorage())
                     {
-                        ExternalASTSource *external_ast_source = ast->getExternalSource();
-                        if (external_ast_source)
+                        if (ast)
                         {
-                            external_ast_source->CompleteType(tag_decl);
-                            return !tag_type->isIncompleteType();
+                            ExternalASTSource *external_ast_source = ast->getExternalSource();
+                            if (external_ast_source)
+                            {
+                                external_ast_source->CompleteType(tag_decl);
+                                return !tag_type->isIncompleteType();
+                            }
                         }
                     }
                     return false;
@@ -113,11 +116,14 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
                 bool is_forward_decl = class_interface_decl->isForwardDecl();
                 if (is_forward_decl && class_interface_decl->hasExternalLexicalStorage())
                 {
-                    ExternalASTSource *external_ast_source = ast->getExternalSource();
-                    if (external_ast_source)
+                    if (ast)
                     {
-                        external_ast_source->CompleteType (class_interface_decl);
-                        is_forward_decl = class_interface_decl->isForwardDecl();
+                        ExternalASTSource *external_ast_source = ast->getExternalSource();
+                        if (external_ast_source)
+                        {
+                            external_ast_source->CompleteType (class_interface_decl);
+                            is_forward_decl = class_interface_decl->isForwardDecl();
+                        }
                     }
                     return is_forward_decl == false;
                 }
@@ -3978,6 +3984,121 @@ ClangASTContext::GetPointerBitSize ()
     ASTContext *ast = getASTContext();
     return ast->getTypeSize(ast->VoidPtrTy);
 }
+
+bool
+ClangASTContext::IsPossibleCPlusPlusDynamicType (clang::ASTContext *ast, clang_type_t clang_type, clang_type_t *dynamic_pointee_type)
+{
+    QualType pointee_qual_type;
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        bool success = false;
+        switch (type_class)
+        {
+            case clang::Type::Pointer:
+                pointee_qual_type = cast<PointerType>(qual_type)->getPointeeType();
+                success = true;
+                break;
+
+            case clang::Type::LValueReference:
+            case clang::Type::RValueReference:
+                pointee_qual_type = cast<ReferenceType>(qual_type)->getPointeeType();
+                success = true;
+                break;
+
+            case clang::Type::Typedef:
+                return ClangASTContext::IsPossibleCPlusPlusDynamicType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), dynamic_pointee_type);
+
+            default:
+                break;
+        }
+        
+        if (success)
+        {
+            // Check to make sure what we are pointing too is a possible dynamic C++ type
+            // We currently accept any "void *" (in case we have a class that has been
+            // watered down to an opaque pointer) and virtual C++ classes.
+            const clang::Type::TypeClass pointee_type_class = pointee_qual_type->getTypeClass();
+            switch (pointee_type_class)
+            {
+            case clang::Type::Builtin:
+                switch (cast<clang::BuiltinType>(pointee_qual_type)->getKind())
+                {
+                    case clang::BuiltinType::UnknownAny:
+                    case clang::BuiltinType::Void:
+                        if (dynamic_pointee_type)
+                            *dynamic_pointee_type = pointee_qual_type.getAsOpaquePtr();
+                        return true;
+
+                    case clang::BuiltinType::NullPtr:  
+                    case clang::BuiltinType::Bool:
+                    case clang::BuiltinType::Char_U:
+                    case clang::BuiltinType::UChar:
+                    case clang::BuiltinType::WChar_U:
+                    case clang::BuiltinType::Char16:
+                    case clang::BuiltinType::Char32:
+                    case clang::BuiltinType::UShort:
+                    case clang::BuiltinType::UInt:
+                    case clang::BuiltinType::ULong:
+                    case clang::BuiltinType::ULongLong:
+                    case clang::BuiltinType::UInt128:
+                    case clang::BuiltinType::Char_S:
+                    case clang::BuiltinType::SChar:
+                    case clang::BuiltinType::WChar_S:
+                    case clang::BuiltinType::Short:
+                    case clang::BuiltinType::Int:
+                    case clang::BuiltinType::Long:
+                    case clang::BuiltinType::LongLong:
+                    case clang::BuiltinType::Int128:
+                    case clang::BuiltinType::Float:
+                    case clang::BuiltinType::Double:
+                    case clang::BuiltinType::LongDouble:
+                    case clang::BuiltinType::Dependent:
+                    case clang::BuiltinType::Overload:
+                    case clang::BuiltinType::ObjCId:
+                    case clang::BuiltinType::ObjCClass:
+                    case clang::BuiltinType::ObjCSel:
+                    case clang::BuiltinType::BoundMember:
+                        break;
+                }
+                break;
+            case clang::Type::Record:
+                {
+                    CXXRecordDecl *cxx_record_decl = pointee_qual_type->getAsCXXRecordDecl();
+                    if (cxx_record_decl)
+                    {
+                        if (GetCompleteQualType (ast, pointee_qual_type))
+                        {
+                            success = cxx_record_decl->isPolymorphic() || cxx_record_decl->isAbstract();
+                        }
+                        else
+                        {
+                            // We failed to get the complete type, so we have to 
+                            // treat this as a void * which we might possibly be
+                            // able to complete
+                            success = true;
+                        }
+                        if (success)
+                        {
+                            if (dynamic_pointee_type)
+                                *dynamic_pointee_type = pointee_qual_type.getAsOpaquePtr();
+                            return true;
+                        }
+                    }
+                }
+                break;
+
+            default:
+                break;
+            }
+        }
+    }
+    if (dynamic_pointee_type)
+        *dynamic_pointee_type = NULL;
+    return false;
+}
+
 
 bool
 ClangASTContext::IsPointerOrReferenceType (clang_type_t clang_type, clang_type_t*target_type)

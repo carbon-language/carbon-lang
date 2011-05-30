@@ -88,7 +88,10 @@ ValueObjectVariable::GetClangAST ()
 size_t
 ValueObjectVariable::GetByteSize()
 {
-    return m_variable_sp->GetType()->GetByteSize();
+    Type *type = m_variable_sp->GetType();
+    if (type)
+        return type->GetByteSize();
+    return 0;
 }
 
 lldb::ValueType
@@ -107,96 +110,109 @@ ValueObjectVariable::UpdateValue ()
 
     Variable *variable = m_variable_sp.get();
     DWARFExpression &expr = variable->LocationExpression();
-    lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
-    ExecutionContext exe_ctx (GetExecutionContextScope());
     
-    if (exe_ctx.target)
+    if (variable->GetLocationIsConstantValueData())
     {
-        m_data.SetByteOrder(exe_ctx.target->GetArchitecture().GetByteOrder());
-        m_data.SetAddressByteSize(exe_ctx.target->GetArchitecture().GetAddressByteSize());
+        // expr doesn't contain DWARF bytes, it contains the constant variable
+        // value bytes themselves...
+        if (expr.GetExpressionData(m_data))
+            m_value.SetContext(Value::eContextTypeVariable, variable);
+        else
+            m_error.SetErrorString ("empty constant data");
     }
-
-    if (expr.IsLocationList())
+    else
     {
-        SymbolContext sc;
-        variable->CalculateSymbolContext (&sc);
-        if (sc.function)
-            loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.target);
-    }
-    Value old_value(m_value);
-    if (expr.Evaluate (&exe_ctx, GetClangAST(), NULL, NULL, NULL, loclist_base_load_addr, NULL, m_value, &m_error))
-    {
-        m_value.SetContext(Value::eContextTypeVariable, variable);
-
-        Value::ValueType value_type = m_value.GetValueType();
-
-        switch (value_type)
+        lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
+        ExecutionContext exe_ctx (GetExecutionContextScope());
+        
+        if (exe_ctx.target)
         {
-        default:
-            assert(!"Unhandled expression result value kind...");
-            break;
+            m_data.SetByteOrder(exe_ctx.target->GetArchitecture().GetByteOrder());
+            m_data.SetAddressByteSize(exe_ctx.target->GetArchitecture().GetAddressByteSize());
+        }
 
-        case Value::eValueTypeScalar:
-            // The variable value is in the Scalar value inside the m_value.
-            // We can point our m_data right to it.
-            m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0);
-            break;
+        if (expr.IsLocationList())
+        {
+            SymbolContext sc;
+            variable->CalculateSymbolContext (&sc);
+            if (sc.function)
+                loclist_base_load_addr = sc.function->GetAddressRange().GetBaseAddress().GetLoadAddress (exe_ctx.target);
+        }
+        Value old_value(m_value);
+        if (expr.Evaluate (&exe_ctx, GetClangAST(), NULL, NULL, NULL, loclist_base_load_addr, NULL, m_value, &m_error))
+        {
+            m_value.SetContext(Value::eContextTypeVariable, variable);
 
-        case Value::eValueTypeFileAddress:
-        case Value::eValueTypeLoadAddress:
-        case Value::eValueTypeHostAddress:
-            // The DWARF expression result was an address in the inferior
-            // process. If this variable is an aggregate type, we just need
-            // the address as the main value as all child variable objects
-            // will rely upon this location and add an offset and then read
-            // their own values as needed. If this variable is a simple
-            // type, we read all data for it into m_data.
-            // Make sure this type has a value before we try and read it
+            Value::ValueType value_type = m_value.GetValueType();
 
-            // If we have a file address, convert it to a load address if we can.
-            if (value_type == Value::eValueTypeFileAddress && exe_ctx.process)
+            switch (value_type)
             {
-                lldb::addr_t file_addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-                if (file_addr != LLDB_INVALID_ADDRESS)
+            default:
+                assert(!"Unhandled expression result value kind...");
+                break;
+
+            case Value::eValueTypeScalar:
+                // The variable value is in the Scalar value inside the m_value.
+                // We can point our m_data right to it.
+                m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0);
+                break;
+
+            case Value::eValueTypeFileAddress:
+            case Value::eValueTypeLoadAddress:
+            case Value::eValueTypeHostAddress:
+                // The DWARF expression result was an address in the inferior
+                // process. If this variable is an aggregate type, we just need
+                // the address as the main value as all child variable objects
+                // will rely upon this location and add an offset and then read
+                // their own values as needed. If this variable is a simple
+                // type, we read all data for it into m_data.
+                // Make sure this type has a value before we try and read it
+
+                // If we have a file address, convert it to a load address if we can.
+                if (value_type == Value::eValueTypeFileAddress && exe_ctx.process)
                 {
-                    SymbolContext var_sc;
-                    variable->CalculateSymbolContext(&var_sc);
-                    if (var_sc.module_sp)
+                    lldb::addr_t file_addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+                    if (file_addr != LLDB_INVALID_ADDRESS)
                     {
-                        ObjectFile *objfile = var_sc.module_sp->GetObjectFile();
-                        if (objfile)
+                        SymbolContext var_sc;
+                        variable->CalculateSymbolContext(&var_sc);
+                        if (var_sc.module_sp)
                         {
-                            Address so_addr(file_addr, objfile->GetSectionList());
-                            lldb::addr_t load_addr = so_addr.GetLoadAddress (exe_ctx.target);
-                            if (load_addr != LLDB_INVALID_ADDRESS)
+                            ObjectFile *objfile = var_sc.module_sp->GetObjectFile();
+                            if (objfile)
                             {
-                                m_value.SetValueType(Value::eValueTypeLoadAddress);
-                                m_value.GetScalar() = load_addr;
+                                Address so_addr(file_addr, objfile->GetSectionList());
+                                lldb::addr_t load_addr = so_addr.GetLoadAddress (exe_ctx.target);
+                                if (load_addr != LLDB_INVALID_ADDRESS)
+                                {
+                                    m_value.SetValueType(Value::eValueTypeLoadAddress);
+                                    m_value.GetScalar() = load_addr;
+                                }
                             }
                         }
                     }
                 }
+
+                if (ClangASTContext::IsAggregateType (GetClangType()))
+                {
+                    // this value object represents an aggregate type whose
+                    // children have values, but this object does not. So we
+                    // say we are changed if our location has changed.
+                    SetValueDidChange (value_type != old_value.GetValueType() || m_value.GetScalar() != old_value.GetScalar());
+                }
+                else
+                {
+                    // Copy the Value and set the context to use our Variable
+                    // so it can extract read its value into m_data appropriately
+                    Value value(m_value);
+                    value.SetContext(Value::eContextTypeVariable, variable);
+                    m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0);
+                }
+                break;
             }
 
-            if (ClangASTContext::IsAggregateType (GetClangType()))
-            {
-                // this value object represents an aggregate type whose
-                // children have values, but this object does not. So we
-                // say we are changed if our location has changed.
-                SetValueDidChange (value_type != old_value.GetValueType() || m_value.GetScalar() != old_value.GetScalar());
-            }
-            else
-            {
-                // Copy the Value and set the context to use our Variable
-                // so it can extract read its value into m_data appropriately
-                Value value(m_value);
-                value.SetContext(Value::eContextTypeVariable, variable);
-                m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0);
-            }
-            break;
+            SetValueIsValid (m_error.Success());
         }
-
-        SetValueIsValid (m_error.Success());
     }
     return m_error.Success();
 }

@@ -304,6 +304,13 @@ public:
     void
     SetExpressionDeclMap (ClangExpressionDeclMap *decl_map);
 
+    bool
+    GetExpressionData (DataExtractor &data) const
+    {
+        data = m_data;
+        return data.GetByteSize() > 0;
+    }
+
 protected:
     //------------------------------------------------------------------
     /// Pretty-prints the location expression to a stream

@@ -120,6 +120,21 @@ public:
     bool
     IsInScope (StackFrame *frame);
 
+    bool
+    LocationIsValidForFrame (StackFrame *frame);
+
+    bool
+    GetLocationIsConstantValueData () const
+    {
+        return m_loc_is_const_data;
+    }
+    
+    void
+    SetLocationIsConstantValueData (bool b)
+    {
+        m_loc_is_const_data = b;
+    }
+
 protected:
     ConstString m_name;                 // The basename of the variable (no namespaces)
     Mangled m_mangled;                  // The mangled name of hte variable
@@ -129,7 +144,8 @@ protected:
     Declaration m_declaration;          // Declaration location for this item.
     DWARFExpression m_location;         // The location of this variable that can be fed to DWARFExpression::Evaluate()
     uint8_t m_external:1,               // Visible outside the containing compile unit?
-            m_artificial:1;             // Non-zero if the variable is not explicitly declared in source
+            m_artificial:1,             // Non-zero if the variable is not explicitly declared in source
+            m_loc_is_const_data:1;      // The m_location expression contains the constant variable value data, not a DWARF location
 private:
     Variable(const Variable& rhs);
     Variable& operator=(const Variable& rhs);

@@ -124,8 +124,9 @@ public:
     /// @param[in] length
     ///     The length in bytes of the subset of data.
     //------------------------------------------------------------------
-    DataExtractor (const DataExtractor& data, uint32_t offset = 0, uint32_t length = UINT32_MAX);
+    DataExtractor (const DataExtractor& data, uint32_t offset, uint32_t length);
 
+    DataExtractor (const DataExtractor& rhs);
     //------------------------------------------------------------------
     /// Assignment operator.
     ///
@@ -1086,7 +1087,7 @@ public:
     ///     The number of bytes that this object now contains.
     //------------------------------------------------------------------
     uint32_t
-    SetData (const DataExtractor& data, uint32_t offset = 0, uint32_t length = UINT32_MAX);
+    SetData (const DataExtractor& data, uint32_t offset, uint32_t length);
 
     //------------------------------------------------------------------
     /// Adopt a subset of shared data in \a data_sp.

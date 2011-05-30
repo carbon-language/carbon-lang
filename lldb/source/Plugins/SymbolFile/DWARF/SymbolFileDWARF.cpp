@@ -4040,6 +4040,7 @@ SymbolFileDWARF::ParseVariableDIE
         DWARFExpression location;
         bool is_external = false;
         bool is_artificial = false;
+        bool location_is_const_value_data = false;
         AccessType accessibility = eAccessNone;
 
         for (i=0; i<num_attributes; ++i)
@@ -4057,6 +4058,9 @@ SymbolFileDWARF::ParseVariableDIE
                 case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(&get_debug_str_data()); break;
                 case DW_AT_type:        var_type = ResolveTypeUID(form_value.Reference(dwarf_cu)); break;
                 case DW_AT_external:    is_external = form_value.Unsigned() != 0; break;
+                case DW_AT_const_value:
+                    location_is_const_value_data = true;
+                    // Fall through...
                 case DW_AT_location:
                     {
                         if (form_value.BlockData())
@@ -4085,7 +4089,6 @@ SymbolFileDWARF::ParseVariableDIE
 
                 case DW_AT_artificial:      is_artificial = form_value.Unsigned() != 0; break;
                 case DW_AT_accessibility:   accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
-                case DW_AT_const_value:
                 case DW_AT_declaration:
                 case DW_AT_description:
                 case DW_AT_endianity:
@@ -4141,6 +4144,7 @@ SymbolFileDWARF::ParseVariableDIE
                                        is_external, 
                                        is_artificial));
             
+            var_sp->SetLocationIsConstantValueData (location_is_const_value_data);
         }
     }
     // Cache var_sp even if NULL (the variable was just a specification or

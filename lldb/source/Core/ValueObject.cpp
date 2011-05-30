@@ -690,7 +690,12 @@ ValueObject::GetValueAsCString ()
                                                              GetBitfieldBitOffset()))  // Bitfield bit offset
                                 m_value_str.swap(sstr.GetString());
                             else
+                            {
+                                m_error.SetErrorStringWithFormat ("unsufficient data for value (only %u of %u bytes available)", 
+                                                                  m_data.GetByteSize(),
+                                                                  GetByteSize());
                                 m_value_str.clear();
+                            }
                         }
                     }
                     break;
@@ -953,7 +958,13 @@ ValueObject::IsIntegerType (bool &is_signed)
 bool
 ValueObject::IsPointerOrReferenceType ()
 {
-    return ClangASTContext::IsPointerOrReferenceType(GetClangType());
+    return ClangASTContext::IsPointerOrReferenceType (GetClangType());
+}
+
+bool
+ValueObject::IsPossibleCPlusPlusDynamicType ()
+{
+    return ClangASTContext::IsPossibleCPlusPlusDynamicType (GetClangAST (), GetClangType());
 }
 
 ValueObjectSP
@@ -1149,9 +1160,11 @@ ValueObject::DumpValueObject
     bool flat_output
 )
 {
-    if (valobj  && valobj->UpdateValueIfNeeded ())
+    if (valobj)
     {
-        if (use_dynamic != lldb::eNoDynamicValues)
+        bool update_success = valobj->UpdateValueIfNeeded ();
+
+        if (update_success && use_dynamic != lldb::eNoDynamicValues)
         {
             ValueObject *dynamic_value = valobj->GetDynamicValue(use_dynamic).get();
             if (dynamic_value)
@@ -1196,7 +1209,7 @@ ValueObject::DumpValueObject
 
             if (!scope_already_checked && !valobj->IsInScope())
             {
-                err_cstr = "error: out of scope";
+                err_cstr = "out of scope";
             }
         }
         
@@ -1210,7 +1223,7 @@ ValueObject::DumpValueObject
 
         if (err_cstr)
         {
-            s.Printf (" error: %s\n", err_cstr);
+            s.Printf (" <%s>\n", err_cstr);
         }
         else
         {

@@ -236,6 +236,9 @@ public:
 
     virtual bool
     IsPointerOrReferenceType ();
+    
+    virtual bool
+    IsPossibleCPlusPlusDynamicType ();
 
     virtual bool
     IsBaseClass ()

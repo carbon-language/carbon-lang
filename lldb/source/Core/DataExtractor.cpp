@@ -127,6 +127,15 @@ DataExtractor::DataExtractor (const DataExtractor& data, uint32_t offset, uint32
     }
 }
 
+DataExtractor::DataExtractor (const DataExtractor& rhs) :
+    m_start (rhs.m_start),
+    m_end (rhs.m_end),
+    m_byte_order (rhs.m_byte_order),
+    m_addr_size (rhs.m_addr_size),
+    m_data_sp (rhs.m_data_sp)
+{
+}
+
 //----------------------------------------------------------------------
 // Assignment operator
 //----------------------------------------------------------------------
@@ -135,11 +144,11 @@ DataExtractor::operator= (const DataExtractor& rhs)
 {
     if (this != &rhs)
     {
-        m_start     = rhs.m_start;
-        m_end       = rhs.m_end;
-        m_byte_order= rhs.m_byte_order;
+        m_start = rhs.m_start;
+        m_end = rhs.m_end;
+        m_byte_order = rhs.m_byte_order;
         m_addr_size = rhs.m_addr_size;
-        m_data_sp   = rhs.m_data_sp;
+        m_data_sp = rhs.m_data_sp;
     }
     return *this;
 }

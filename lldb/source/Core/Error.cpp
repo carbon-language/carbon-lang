@@ -302,7 +302,6 @@ Error::SetErrorString (const char *err_str)
         if (Success())
             SetErrorToGenericError();
         m_string = err_str;
-        m_string.append("\n");
     }
     else
         m_string.clear();

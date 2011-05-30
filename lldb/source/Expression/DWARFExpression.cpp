@@ -642,21 +642,25 @@ ReadRegisterValueAsScalar
                 if (reg_value.GetScalarValue(value.GetScalar()))
                 {
                     value.SetValueType (Value::eValueTypeScalar);
-                    value.SetContext (Value::eContextTypeRegisterInfo, const_cast<RegisterInfo *>(reg_info));
+                    value.SetContext (Value::eContextTypeRegisterInfo, 
+                                      const_cast<RegisterInfo *>(reg_info));
                     if (error_ptr)
                         error_ptr->Clear();
                     return true;
                 }
                 else
                 {
+                    // If we get this error, then we need to implement a value
+                    // buffer in the dwarf expression evaluation function...
                     if (error_ptr)
-                        error_ptr->SetErrorStringWithFormat("Failed to read register %u.\n", native_reg);
+                        error_ptr->SetErrorStringWithFormat ("register %s can't be converted to a scalar value", 
+                                                             reg_info->name);
                 }
             }
             else
             {
                 if (error_ptr)
-                    error_ptr->SetErrorStringWithFormat("Failed to read register %u.\n", native_reg);
+                    error_ptr->SetErrorStringWithFormat("register %s is not available", reg_info->name);
             }
         }
     }
@@ -817,7 +821,7 @@ DWARFExpression::Evaluate
             }
         }
         if (error_ptr)
-            error_ptr->SetErrorStringWithFormat("Out of scope.");
+            error_ptr->SetErrorString ("variable not available");
         return false;
     }
 
