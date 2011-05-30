@@ -61,22 +61,22 @@ def subreg_odd    : SubRegIndex;
 }
 
 // General-purpose registers
-def R0W  : GPR32< 0,  "r0">, DwarfRegNum<[0]>;
-def R1W  : GPR32< 1,  "r1">, DwarfRegNum<[1]>;
-def R2W  : GPR32< 2,  "r2">, DwarfRegNum<[2]>;
-def R3W  : GPR32< 3,  "r3">, DwarfRegNum<[3]>;
-def R4W  : GPR32< 4,  "r4">, DwarfRegNum<[4]>;
-def R5W  : GPR32< 5,  "r5">, DwarfRegNum<[5]>;
-def R6W  : GPR32< 6,  "r6">, DwarfRegNum<[6]>;
-def R7W  : GPR32< 7,  "r7">, DwarfRegNum<[7]>;
-def R8W  : GPR32< 8,  "r8">, DwarfRegNum<[8]>;
-def R9W  : GPR32< 9,  "r9">, DwarfRegNum<[9]>;
-def R10W : GPR32<10, "r10">, DwarfRegNum<[10]>;
-def R11W : GPR32<11, "r11">, DwarfRegNum<[11]>;
-def R12W : GPR32<12, "r12">, DwarfRegNum<[12]>;
-def R13W : GPR32<13, "r13">, DwarfRegNum<[13]>;
-def R14W : GPR32<14, "r14">, DwarfRegNum<[14]>;
-def R15W : GPR32<15, "r15">, DwarfRegNum<[15]>;
+def R0W  : GPR32< 0,  "r0">;
+def R1W  : GPR32< 1,  "r1">;
+def R2W  : GPR32< 2,  "r2">;
+def R3W  : GPR32< 3,  "r3">;
+def R4W  : GPR32< 4,  "r4">;
+def R5W  : GPR32< 5,  "r5">;
+def R6W  : GPR32< 6,  "r6">;
+def R7W  : GPR32< 7,  "r7">;
+def R8W  : GPR32< 8,  "r8">;
+def R9W  : GPR32< 9,  "r9">;
+def R10W : GPR32<10, "r10">;
+def R11W : GPR32<11, "r11">;
+def R12W : GPR32<12, "r12">;
+def R13W : GPR32<13, "r13">;
+def R14W : GPR32<14, "r14">;
+def R15W : GPR32<15, "r15">;
 
 let SubRegIndices = [subreg_32bit] in {
 def R0D  : GPR64< 0,  "r0", [R0W]>,  DwarfRegNum<[0]>;
@@ -99,26 +99,26 @@ def R15D : GPR64<15, "r15", [R15W]>, DwarfRegNum<[15]>;
 
 // Register pairs
 let SubRegIndices = [subreg_32bit, subreg_odd32] in {
-def R0P  : GPR64< 0,  "r0", [R0W,  R1W],  [R0D,  R1D]>,  DwarfRegNum<[0]>;
-def R2P  : GPR64< 2,  "r2", [R2W,  R3W],  [R2D,  R3D]>,  DwarfRegNum<[2]>;
-def R4P  : GPR64< 4,  "r4", [R4W,  R5W],  [R4D,  R5D]>,  DwarfRegNum<[4]>;
-def R6P  : GPR64< 6,  "r6", [R6W,  R7W],  [R6D,  R7D]>,  DwarfRegNum<[6]>;
-def R8P  : GPR64< 8,  "r8", [R8W,  R9W],  [R8D,  R9D]>,  DwarfRegNum<[8]>;
-def R10P : GPR64<10, "r10", [R10W, R11W], [R10D, R11D]>, DwarfRegNum<[10]>;
-def R12P : GPR64<12, "r12", [R12W, R13W], [R12D, R13D]>, DwarfRegNum<[12]>;
-def R14P : GPR64<14, "r14", [R14W, R15W], [R14D, R15D]>, DwarfRegNum<[14]>;
+def R0P  : GPR64< 0,  "r0", [R0W,  R1W],  [R0D,  R1D]>;
+def R2P  : GPR64< 2,  "r2", [R2W,  R3W],  [R2D,  R3D]>;
+def R4P  : GPR64< 4,  "r4", [R4W,  R5W],  [R4D,  R5D]>;
+def R6P  : GPR64< 6,  "r6", [R6W,  R7W],  [R6D,  R7D]>;
+def R8P  : GPR64< 8,  "r8", [R8W,  R9W],  [R8D,  R9D]>;
+def R10P : GPR64<10, "r10", [R10W, R11W], [R10D, R11D]>;
+def R12P : GPR64<12, "r12", [R12W, R13W], [R12D, R13D]>;
+def R14P : GPR64<14, "r14", [R14W, R15W], [R14D, R15D]>;
 }
 
 let SubRegIndices = [subreg_even, subreg_odd],
  CompositeIndices = [(subreg_odd32  subreg_odd,  subreg_32bit)] in {
-def R0Q  : GPR128< 0,  "r0", [R0D,  R1D],  [R0P]>,  DwarfRegNum<[0]>;
-def R2Q  : GPR128< 2,  "r2", [R2D,  R3D],  [R2P]>,  DwarfRegNum<[2]>;
-def R4Q  : GPR128< 4,  "r4", [R4D,  R5D],  [R4P]>,  DwarfRegNum<[4]>;
-def R6Q  : GPR128< 6,  "r6", [R6D,  R7D],  [R6P]>,  DwarfRegNum<[6]>;
-def R8Q  : GPR128< 8,  "r8", [R8D,  R9D],  [R8P]>,  DwarfRegNum<[8]>;
-def R10Q : GPR128<10, "r10", [R10D, R11D], [R10P]>, DwarfRegNum<[10]>;
-def R12Q : GPR128<12, "r12", [R12D, R13D], [R12P]>, DwarfRegNum<[12]>;
-def R14Q : GPR128<14, "r14", [R14D, R15D], [R14P]>, DwarfRegNum<[14]>;
+def R0Q  : GPR128< 0,  "r0", [R0D,  R1D],  [R0P]>;
+def R2Q  : GPR128< 2,  "r2", [R2D,  R3D],  [R2P]>;
+def R4Q  : GPR128< 4,  "r4", [R4D,  R5D],  [R4P]>;
+def R6Q  : GPR128< 6,  "r6", [R6D,  R7D],  [R6P]>;
+def R8Q  : GPR128< 8,  "r8", [R8D,  R9D],  [R8P]>;
+def R10Q : GPR128<10, "r10", [R10D, R11D], [R10P]>;
+def R12Q : GPR128<12, "r12", [R12D, R13D], [R12P]>;
+def R14Q : GPR128<14, "r14", [R14D, R15D], [R14P]>;
 }
 
 // Floating-point registers
@@ -140,22 +140,22 @@ def F14S : FPRS<14, "f14">, DwarfRegNum<[30]>;
 def F15S : FPRS<15, "f15">, DwarfRegNum<[31]>;
 
 let SubRegIndices = [subreg_32bit] in {
-def F0L  : FPRL< 0,  "f0", [F0S]>,  DwarfRegNum<[16]>;
-def F1L  : FPRL< 1,  "f1", [F1S]>,  DwarfRegNum<[17]>;
-def F2L  : FPRL< 2,  "f2", [F2S]>,  DwarfRegNum<[18]>;
-def F3L  : FPRL< 3,  "f3", [F3S]>,  DwarfRegNum<[19]>;
-def F4L  : FPRL< 4,  "f4", [F4S]>,  DwarfRegNum<[20]>;
-def F5L  : FPRL< 5,  "f5", [F5S]>,  DwarfRegNum<[21]>;
-def F6L  : FPRL< 6,  "f6", [F6S]>,  DwarfRegNum<[22]>;
-def F7L  : FPRL< 7,  "f7", [F7S]>,  DwarfRegNum<[23]>;
-def F8L  : FPRL< 8,  "f8", [F8S]>,  DwarfRegNum<[24]>;
-def F9L  : FPRL< 9,  "f9", [F9S]>,  DwarfRegNum<[25]>;
-def F10L : FPRL<10, "f10", [F10S]>, DwarfRegNum<[26]>;
-def F11L : FPRL<11, "f11", [F11S]>, DwarfRegNum<[27]>;
-def F12L : FPRL<12, "f12", [F12S]>, DwarfRegNum<[28]>;
-def F13L : FPRL<13, "f13", [F13S]>, DwarfRegNum<[29]>;
-def F14L : FPRL<14, "f14", [F14S]>, DwarfRegNum<[30]>;
-def F15L : FPRL<15, "f15", [F15S]>, DwarfRegNum<[31]>;
+def F0L  : FPRL< 0,  "f0", [F0S]>;
+def F1L  : FPRL< 1,  "f1", [F1S]>;
+def F2L  : FPRL< 2,  "f2", [F2S]>;
+def F3L  : FPRL< 3,  "f3", [F3S]>;
+def F4L  : FPRL< 4,  "f4", [F4S]>;
+def F5L  : FPRL< 5,  "f5", [F5S]>;
+def F6L  : FPRL< 6,  "f6", [F6S]>;
+def F7L  : FPRL< 7,  "f7", [F7S]>;
+def F8L  : FPRL< 8,  "f8", [F8S]>;
+def F9L  : FPRL< 9,  "f9", [F9S]>;
+def F10L : FPRL<10, "f10", [F10S]>;
+def F11L : FPRL<11, "f11", [F11S]>;
+def F12L : FPRL<12, "f12", [F12S]>;
+def F13L : FPRL<13, "f13", [F13S]>;
+def F14L : FPRL<14, "f14", [F14S]>;
+def F15L : FPRL<15, "f15", [F15S]>;
 }
 
 // Status register
