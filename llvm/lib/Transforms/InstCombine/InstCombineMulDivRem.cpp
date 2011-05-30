@@ -135,6 +135,23 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         return BinaryOperator::CreateAdd(Add, Builder->CreateMul(C1, CI));
       }
     }
+
+    // (1 - X) * (-2) -> (x - 1) * 2, for all positive nonzero powers of 2
+    // The "* 2" thus becomes a potential shifting opportunity.
+    {
+      const APInt &   Val = CI->getValue();
+      const APInt &PosVal = Val.abs();
+      if (Val.isNegative() && PosVal.isPowerOf2()) {
+        Value *X = 0;
+        if (match(Op0, m_Sub(m_One(), m_Value(X)))) {
+          // ConstantInt::get(Op0->getType(), 2);
+          Value *Sub = Builder->CreateSub(X, ConstantInt::get(X->getType(), 1),
+                                          "dec1");
+          return BinaryOperator::CreateMul(Sub, ConstantInt::get(X->getType(),
+                                                                 PosVal));
+        }
+      }
+    }
   }
   
   // Simplify mul instructions with a constant RHS.
