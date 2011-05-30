@@ -684,6 +684,10 @@ int ARMBaseRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return ARMGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
+int ARMBaseRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
+  return ARMGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
+}
+
 unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
                                               const MachineFunction &MF) const {
   switch (Reg) {

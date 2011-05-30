@@ -130,5 +130,9 @@ int SparcRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return SparcGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
+int SparcRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
+  return SparcGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
+}
+
 #include "SparcGenRegisterInfo.inc"
 

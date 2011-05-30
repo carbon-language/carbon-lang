@@ -328,6 +328,10 @@ SPURegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return SPUGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
+int SPURegisterInfo::getLLVMRegNum(unsigned RegNum, bool isEH) const {
+  return SPUGenRegisterInfo::getLLVMRegNumFull(RegNum, 0);
+}
+
 int
 SPURegisterInfo::convertDFormToXForm(int dFormOpcode) const
 {

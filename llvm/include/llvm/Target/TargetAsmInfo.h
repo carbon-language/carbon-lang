@@ -95,6 +95,10 @@ public:
     return TRI->getDwarfRegNum(RegNum, isEH);
   }
 
+  int getLLVMRegNum(unsigned DwarfRegNum, bool isEH) const {
+    return TRI->getLLVMRegNum(DwarfRegNum, isEH);
+  }
+
   int getSEHRegNum(unsigned RegNum) const {
     return TRI->getSEHRegNum(RegNum);
   }

@@ -172,6 +172,7 @@ public:
   unsigned getEHHandlerRegister() const;
 
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
+  int getLLVMRegNum(unsigned RegNum, bool isEH) const;
 
   bool isLowRegister(unsigned Reg) const;
 

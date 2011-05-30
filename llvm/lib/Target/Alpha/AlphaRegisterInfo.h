@@ -48,6 +48,7 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   unsigned getEHHandlerRegister() const;
 
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
+  int getLLVMRegNum(unsigned RegNum, bool isEH) const;
 
   static std::string getPrettyName(unsigned reg);
 };

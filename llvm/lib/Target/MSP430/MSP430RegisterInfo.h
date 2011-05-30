@@ -61,6 +61,7 @@ public:
 
   //! Get DWARF debugging register number
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
+  int getLLVMRegNum(unsigned RegNum, bool isEH) const;
 };
 
 } // end namespace llvm

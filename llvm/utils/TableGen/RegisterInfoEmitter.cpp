@@ -80,6 +80,8 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
      << "unsigned Flavour) const;\n"
+     << "  virtual int getLLVMRegNumFull(unsigned DwarfRegNum, "
+     << "unsigned Flavour) const;\n"
      << "  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;\n"
      << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
      << "     { return false; }\n"
@@ -988,6 +990,33 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
        I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I)
     for (unsigned i = I->second.size(), e = maxLength; i != e; ++i)
       I->second.push_back(-1);
+
+  // Emit reverse information about the dwarf register numbers.
+  OS << "int " << ClassName << "::getLLVMRegNumFull(unsigned DwarfRegNum, "
+     << "unsigned Flavour) const {\n"
+     << "  switch (Flavour) {\n"
+     << "  default:\n"
+     << "    assert(0 && \"Unknown DWARF flavour\");\n"
+     << "    return -1;\n";
+
+  for (unsigned i = 0, e = maxLength; i != e; ++i) {
+    OS << "  case " << i << ":\n"
+       << "    switch (DwarfRegNum) {\n"
+       << "    default:\n"
+       << "      assert(0 && \"Invalid DwarfRegNum\");\n"
+       << "      return -1;\n";
+
+    for (DwarfRegNumsMapTy::iterator
+           I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
+      int DwarfRegNo = I->second[i];
+      if (DwarfRegNo >= 0)
+        OS << "    case " <<  DwarfRegNo << ":\n"
+           << "      return " << getQualifiedName(I->first) << ";\n";
+    }
+    OS << "    };\n";
+  }
+
+  OS << "  };\n}\n\n";
 
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     Record *Reg = Regs[i].TheDef;

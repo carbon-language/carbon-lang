@@ -802,6 +802,8 @@ public:
   /// debugging info.
   virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;
 
+  virtual int getLLVMRegNum(unsigned RegNum, bool isEH) const = 0;
+
   /// getFrameRegister - This method should return the register used as a base
   /// for values allocated in the current stack frame.
   virtual unsigned getFrameRegister(const MachineFunction &MF) const = 0;

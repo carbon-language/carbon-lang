@@ -20,10 +20,10 @@ entry:
 ; CHECK-FP-NEXT: :
 ; CHECK-FP-NEXT: .cfi_def_cfa_offset 16
 ; CHECK-FP-NEXT: :
-; CHECK-FP-NEXT: .cfi_offset 6, -16
+; CHECK-FP-NEXT: .cfi_offset %rbp, -16
 ; CHECK-FP-NEXT: movq %rsp, %rbp
 ; CHECK-FP-NEXT: :
-; CHECK-FP-NEXT: .cfi_def_cfa_register 6
+; CHECK-FP-NEXT: .cfi_def_cfa_register %rbp
 ; CHECK-FP-NEXT: nop
 ; CHECK-FP-NEXT: :
 ; CHECK-FP-NEXT: .cfi_endproc

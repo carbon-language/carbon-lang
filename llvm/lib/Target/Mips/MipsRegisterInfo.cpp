@@ -278,4 +278,8 @@ getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return MipsGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
+int MipsRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
+  return MipsGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
+}
+
 #include "MipsGenRegisterInfo.inc"

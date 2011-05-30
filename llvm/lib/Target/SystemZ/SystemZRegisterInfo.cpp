@@ -139,4 +139,10 @@ int SystemZRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return -1;
 }
 
+int SystemZRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
+  assert(0 && "What is the dwarf register number");
+  return -1;
+}
+
+
 #include "SystemZGenRegisterInfo.inc"

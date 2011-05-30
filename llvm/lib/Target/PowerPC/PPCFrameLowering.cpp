@@ -487,6 +487,14 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
       unsigned Reg = CSI[I].getReg();
       if (Reg == PPC::LR || Reg == PPC::LR8 || Reg == PPC::RM) continue;
+
+      // This is a bit of a hack: CR2LT, CR2GT, CR2EQ and CR2UN are just
+      // subregisters of CR2. We just need to emit a move of CR2.
+      if (Reg == PPC::CR2LT || Reg == PPC::CR2GT || Reg == PPC::CR2EQ)
+        continue;
+      if (Reg == PPC::CR2UN)
+        Reg = PPC::CR2;
+
       MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
       MachineLocation CSSrc(Reg);
       Moves.push_back(MachineMove(Label, CSDst, CSSrc));

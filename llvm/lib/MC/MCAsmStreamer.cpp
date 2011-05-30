@@ -54,6 +54,8 @@ class MCAsmStreamer : public MCStreamer {
 
   bool needsSet(const MCExpr *Value);
 
+  void EmitRegisterName(int64_t Register);
+
 public:
   MCAsmStreamer(MCContext &Context, formatted_raw_ostream &os,
                 bool isVerboseAsm, bool useLoc, bool useCFI,
@@ -819,13 +821,25 @@ void MCAsmStreamer::EmitCFIEndProc() {
   EmitEOL();
 }
 
+void MCAsmStreamer::EmitRegisterName(int64_t Register) {
+  if (InstPrinter) {
+    const TargetAsmInfo &asmInfo = getContext().getTargetAsmInfo();
+    unsigned LLVMRegister = asmInfo.getLLVMRegNum(Register, true);
+    OS << '%' << InstPrinter->getRegName(LLVMRegister);
+  } else {
+    OS << Register;
+  }
+}
+
 void MCAsmStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
   MCStreamer::EmitCFIDefCfa(Register, Offset);
 
   if (!UseCFI)
     return;
 
-  OS << "\t.cfi_def_cfa " << Register << ", " << Offset;
+  OS << "\t.cfi_def_cfa ";
+  EmitRegisterName(Register);
+  OS << ", " << Offset;
   EmitEOL();
 }
 
@@ -845,7 +859,8 @@ void MCAsmStreamer::EmitCFIDefCfaRegister(int64_t Register) {
   if (!UseCFI)
     return;
 
-  OS << "\t.cfi_def_cfa_register " << Register;
+  OS << "\t.cfi_def_cfa_register ";
+  EmitRegisterName(Register);
   EmitEOL();
 }
 
@@ -855,7 +870,9 @@ void MCAsmStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
   if (!UseCFI)
     return;
 
-  OS << "\t.cfi_offset " << Register << ", " << Offset;
+  OS << "\t.cfi_offset ";
+  EmitRegisterName(Register);
+  OS << ", " << Offset;
   EmitEOL();
 }
 
@@ -906,7 +923,8 @@ void MCAsmStreamer::EmitCFISameValue(int64_t Register) {
   if (!UseCFI)
     return;
 
-  OS << "\t.cfi_same_value " << Register;
+  OS << "\t.cfi_same_value ";
+  EmitRegisterName(Register);
   EmitEOL();
 }
 
@@ -916,7 +934,9 @@ void MCAsmStreamer::EmitCFIRelOffset(int64_t Register, int64_t Offset) {
   if (!UseCFI)
     return;
 
-  OS << "\t.cfi_rel_offset " << Register << ", " << Offset;
+  OS << "\t.cfi_rel_offset ";
+  EmitRegisterName(Register);
+  OS << ", " << Offset;
   EmitEOL();
 }
 

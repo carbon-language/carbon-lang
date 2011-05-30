@@ -702,4 +702,12 @@ int PPCRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return PPCGenRegisterInfo::getDwarfRegNumFull(RegNum, Flavour);
 }
 
+int PPCRegisterInfo::getLLVMRegNum(unsigned RegNum, bool isEH) const {
+  // FIXME: Most probably dwarf numbers differs for Linux and Darwin
+  unsigned Flavour = Subtarget.isPPC64() ?
+    DWARFFlavour::PPC64 : DWARFFlavour::PPC32;
+
+  return PPCGenRegisterInfo::getLLVMRegNumFull(RegNum, Flavour);
+}
+
 #include "PPCGenRegisterInfo.inc"

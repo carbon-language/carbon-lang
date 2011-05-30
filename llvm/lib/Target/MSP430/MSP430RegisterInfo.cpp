@@ -242,4 +242,9 @@ int MSP430RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return 0;
 }
 
+int MSP430RegisterInfo::getLLVMRegNum(unsigned RegNum, bool isEH) const {
+  llvm_unreachable("Not implemented yet!");
+  return 0;
+}
+
 #include "MSP430GenRegisterInfo.inc"

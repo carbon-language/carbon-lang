@@ -356,5 +356,9 @@ int MBlazeRegisterInfo::getDwarfRegNum(unsigned RegNo, bool isEH) const {
   return MBlazeGenRegisterInfo::getDwarfRegNumFull(RegNo,0);
 }
 
+int MBlazeRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
+  return MBlazeGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
+}
+
 #include "MBlazeGenRegisterInfo.inc"
 

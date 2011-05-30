@@ -29,6 +29,10 @@ using namespace llvm;
 #define GET_INSTRUCTION_NAME
 #include "X86GenAsmWriter1.inc"
 
+StringRef X86IntelInstPrinter::getRegName(unsigned RegNo) const {
+  return getRegisterName(RegNo);
+}
+
 void X86IntelInstPrinter::printInst(const MCInst *MI, raw_ostream &OS) {
   printInstruction(MI, OS);
   

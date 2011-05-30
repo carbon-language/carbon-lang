@@ -199,6 +199,11 @@ int AlphaRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return -1;
 }
 
+int AlphaRegisterInfo::getLLVMRegNum(unsigned DwarfRegNum, bool isEH) const {
+  llvm_unreachable("What is the dwarf register number");
+  return -1;
+}
+
 #include "AlphaGenRegisterInfo.inc"
 
 std::string AlphaRegisterInfo::getPrettyName(unsigned reg)

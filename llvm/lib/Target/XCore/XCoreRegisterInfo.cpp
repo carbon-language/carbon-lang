@@ -315,6 +315,10 @@ int XCoreRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   return XCoreGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
+int XCoreRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
+  return XCoreGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
+}
+
 unsigned XCoreRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 

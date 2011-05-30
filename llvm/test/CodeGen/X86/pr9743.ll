@@ -9,9 +9,9 @@ define void @f() {
 ; CHECK-NEXT: :
 ; CHECK-NEXT:  .cfi_def_cfa_offset 16
 ; CHECK-NEXT: :
-; CHECK-NEXT:  .cfi_offset 6, -16
+; CHECK-NEXT:  .cfi_offset %rbp, -16
 ; CHECK-NEXT:  movq    %rsp, %rbp
 ; CHECK-NEXT: :
-; CHECK-NEXT:  .cfi_def_cfa_register 6
+; CHECK-NEXT:  .cfi_def_cfa_register %rbp
 ; CHECK-NEXT:  popq    %rbp
 ; CHECK-NEXT:  ret

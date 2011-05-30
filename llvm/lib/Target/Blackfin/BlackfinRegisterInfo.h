@@ -60,6 +60,7 @@ namespace llvm {
     unsigned getEHHandlerRegister() const;
 
     int getDwarfRegNum(unsigned RegNum, bool isEH) const;
+    int getLLVMRegNum(unsigned RegNum, bool isEH) const;
 
     // Utility functions
     void adjustRegister(MachineBasicBlock &MBB,
