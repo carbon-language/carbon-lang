@@ -1717,9 +1717,9 @@ TargetInstanceSettings::CreateInstanceName ()
 OptionEnumValueElement
 TargetInstanceSettings::g_dynamic_value_types[] =
 {
-{ eNoDynamicValues,     "no-dynamic-values",  "Don't calculate the dynamic type of values"},
-{ eDynamicCanRunTarget,        "run-target",        "Calculate the dynamic type of values even if you have to run the target."},
-{ eDynamicDontRunTarget,       "no-run-target",    "Calculate the dynamic type of values, but don't run the target."},
+{ eNoDynamicValues,      "no-dynamic-values", "Don't calculate the dynamic type of values"},
+{ eDynamicCanRunTarget,  "run-target",        "Calculate the dynamic type of values even if you have to run the target."},
+{ eDynamicDontRunTarget, "no-run-target",     "Calculate the dynamic type of values, but don't run the target."},
 { 0, NULL, NULL }
 };
 
@@ -1738,8 +1738,8 @@ Target::SettingsController::instance_settings_table[] =
     // var-name           var-type           default         enum                    init'd hidden help-text
     // =================  ================== =============== ======================= ====== ====== =========================================================================
     { TSC_EXPR_PREFIX   , eSetVarTypeString , NULL          , NULL,                  false, false, "Path to a file containing expressions to be prepended to all expressions." },
-    { TSC_PREFER_DYNAMIC, eSetVarTypeEnum ,  "no-run-target", g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
-    { TSC_SKIP_PROLOGUE , eSetVarTypeBoolean ,"true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
-    { TSC_SOURCE_MAP    , eSetVarTypeArray   ,NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
+    { TSC_PREFER_DYNAMIC, eSetVarTypeEnum   , NULL          , g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
+    { TSC_SKIP_PROLOGUE , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
+    { TSC_SOURCE_MAP    , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
     { NULL              , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
 };
