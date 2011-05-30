@@ -686,9 +686,20 @@ unsigned PPCRegisterInfo::getEHHandlerRegister() const {
   return !Subtarget.isPPC64() ? PPC::R4 : PPC::X4;
 }
 
+/// DWARFFlavour - Flavour of dwarf regnumbers
+///
+namespace DWARFFlavour {
+  enum {
+    PPC64 = 0, PPC32 = 1
+  };
+}
+
 int PPCRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   // FIXME: Most probably dwarf numbers differs for Linux and Darwin
-  return PPCGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
+  unsigned Flavour = Subtarget.isPPC64() ?
+    DWARFFlavour::PPC64 : DWARFFlavour::PPC32;
+
+  return PPCGenRegisterInfo::getDwarfRegNumFull(RegNum, Flavour);
 }
 
 #include "PPCGenRegisterInfo.inc"
