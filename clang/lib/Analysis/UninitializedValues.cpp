@@ -14,7 +14,7 @@
 #include <utility>
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/PackedVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "clang/AST/Decl.h"
 #include "clang/Analysis/CFG.h"
@@ -93,39 +93,8 @@ static bool isAlwaysUninit(const Value v) {
 }
 
 namespace {
-class ValueVector {
-  llvm::BitVector vec;
-public:
-  ValueVector() {}
-  ValueVector(unsigned size) : vec(size << 1) {}
-  void resize(unsigned n) { vec.resize(n << 1); }
-  void merge(const ValueVector &rhs) { vec |= rhs.vec; }
-  bool operator!=(const ValueVector &rhs) const { return vec != rhs.vec; }
-  void reset() { vec.reset(); }
-  
-  class reference {
-    ValueVector &vv;
-    const unsigned idx;
 
-    reference();  // Undefined    
-  public:
-    reference(ValueVector &vv, unsigned idx) : vv(vv), idx(idx) {}    
-    ~reference() {}
-    
-    reference &operator=(Value v) {
-      vv.vec[idx << 1] = (((unsigned) v) & 0x1) ? true : false;
-      vv.vec[(idx << 1) | 1] = (((unsigned) v) & 0x2) ? true : false;
-      return *this;
-    }
-    operator Value() {
-      unsigned x = (vv.vec[idx << 1] ? 1 : 0) | (vv.vec[(idx << 1) | 1] ? 2 :0);
-      return (Value) x;      
-    }
-  };
-    
-  reference operator[](unsigned idx) { return reference(*this, idx); }
-};
-
+typedef llvm::PackedVector<Value, 2> ValueVector;
 typedef std::pair<ValueVector *, ValueVector *> BVPair;
 
 class CFGBlockValues {
@@ -259,7 +228,7 @@ void CFGBlockValues::mergeIntoScratch(ValueVector const &source,
   if (isFirst)
     scratch = source;
   else
-    scratch.merge(source);
+    scratch |= source;
 }
 #if 0
 static void printVector(const CFGBlock *block, ValueVector &bv,
