@@ -37,6 +37,8 @@ def SDT_MipsDivRem       : SDTypeProfile<0, 2,
                                          [SDTCisVT<0, i32>,
                                           SDTCisSameAs<0, 1>]>;
 
+def SDT_MipsThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
+
 // Call
 def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
                          [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
@@ -48,6 +50,16 @@ def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
 def MipsHi    : SDNode<"MipsISD::Hi", SDTIntUnaryOp>;
 def MipsLo    : SDNode<"MipsISD::Lo", SDTIntUnaryOp>;
 def MipsGPRel : SDNode<"MipsISD::GPRel", SDTIntUnaryOp>;
+
+// TlsGd node is used to handle General Dynamic TLS
+def MipsTlsGd : SDNode<"MipsISD::TlsGd", SDTIntUnaryOp>;
+
+// TprelHi and TprelLo nodes are used to handle Local Exec TLS
+def MipsTprelHi    : SDNode<"MipsISD::TprelHi", SDTIntUnaryOp>;
+def MipsTprelLo    : SDNode<"MipsISD::TprelLo", SDTIntUnaryOp>;
+
+// Thread pointer
+def MipsThreadPointer: SDNode<"MipsISD::ThreadPointer", SDT_MipsThreadPointer>;
 
 // Return
 def MipsRet : SDNode<"MipsISD::Ret", SDT_MipsRet, [SDNPHasChain,
@@ -353,6 +365,13 @@ class CondMov<bits<6> func, string instr_asm, PatLeaf MovCode>:
      CPURegs:$cond), !strconcat(instr_asm, "\t$dst, $T, $cond"),
      [], NoItinerary>;
 
+// Read Hardware
+class ReadHardware: FR<0x1f, 0x3b, (outs CPURegs:$dst), (ins HWRegs:$src),
+    "rdhwr\t$dst, $src", [], IIAlu> {
+  let rs = 0;
+  let shamt = 0;
+}
+
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
 //===----------------------------------------------------------------------===//
@@ -540,6 +559,8 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 // it is a real instruction.
 def MUL   : ArithR<0x1c, 0x02, "mul", mul, IIImul, 1>, Requires<[IsMips32]>;
 
+def RDHWR : ReadHardware;
+
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
@@ -591,6 +612,15 @@ def : Pat<(add CPURegs:$gp, (MipsGPRel tglobaladdr:$in)),
           (ADDiu CPURegs:$gp, tglobaladdr:$in)>;
 def : Pat<(add CPURegs:$gp, (MipsGPRel tconstpool:$in)),
           (ADDiu CPURegs:$gp, tconstpool:$in)>;
+
+// tlsgd
+def : Pat<(add CPURegs:$gp, (MipsTlsGd tglobaltlsaddr:$in)),
+          (ADDiu CPURegs:$gp, tglobaltlsaddr:$in)>;
+
+// tprel hi/lo
+def : Pat<(MipsTprelHi tglobaltlsaddr:$in), (LUi tglobaltlsaddr:$in)>;
+def : Pat<(add CPURegs:$hi, (MipsTprelLo tglobaltlsaddr:$lo)),
+          (ADDiu CPURegs:$hi, tglobaltlsaddr:$lo)>;
 
 // wrapper_pic
 class WrapperPICPat<SDNode node>:

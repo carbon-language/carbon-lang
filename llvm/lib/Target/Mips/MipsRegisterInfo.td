@@ -44,6 +44,11 @@ class AFPR<bits<5> num, string n, list<Register> subregs>
   let SubRegIndices = [sub_fpeven, sub_fpodd];
 }
 
+// Mips Hardware Registers
+class HWR<bits<5> num, string n> : MipsReg<n> {
+  let Num = num;
+}
+
 //===----------------------------------------------------------------------===//
 //  Registers
 //===----------------------------------------------------------------------===//
@@ -143,6 +148,9 @@ let Namespace = "Mips" in {
 
   // Status flags register
   def FCR31 : Register<"31">;
+
+  // Hardware register $29
+  def HWR29 : Register<"29">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -262,3 +270,5 @@ def CCR  : RegisterClass<"Mips", [i32], 32, [FCR31]>;
 // Hi/Lo Registers
 def HILO : RegisterClass<"Mips", [i32], 32, [HI, LO]>;
 
+// Hardware registers
+def HWRegs : RegisterClass<"Mips", [i32], 32, [HWR29]>;

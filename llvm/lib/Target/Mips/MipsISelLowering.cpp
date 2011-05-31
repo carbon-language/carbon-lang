@@ -41,6 +41,10 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::Hi:                return "MipsISD::Hi";
   case MipsISD::Lo:                return "MipsISD::Lo";
   case MipsISD::GPRel:             return "MipsISD::GPRel";
+  case MipsISD::TlsGd:             return "MipsISD::TlsGd";
+  case MipsISD::TprelHi:           return "MipsISD::TprelHi";
+  case MipsISD::TprelLo:           return "MipsISD::TprelLo";
+  case MipsISD::ThreadPointer:     return "MipsISD::ThreadPointer";
   case MipsISD::Ret:               return "MipsISD::Ret";
   case MipsISD::FPBrcond:          return "MipsISD::FPBrcond";
   case MipsISD::FPCmp:             return "MipsISD::FPCmp";
@@ -822,8 +826,60 @@ SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
 SDValue MipsTargetLowering::
 LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
 {
-  llvm_unreachable("TLS not implemented for MIPS.");
-  return SDValue(); // Not reached
+  // If the relocation model is PIC, use the General Dynamic TLS Model,
+  // otherwise use the Initial Exec or Local Exec TLS Model.
+  // TODO: implement Local Dynamic TLS model
+
+  GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
+  DebugLoc dl = GA->getDebugLoc();
+  const GlobalValue *GV = GA->getGlobal();
+  EVT PtrVT = getPointerTy();
+
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    // General Dynamic TLS Model
+    SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32,
+                                                 0, MipsII::MO_TLSGD);
+    SDValue Tlsgd = DAG.getNode(MipsISD::TlsGd, dl, MVT::i32, TGA);
+    SDValue GP = DAG.getRegister(Mips::GP, MVT::i32);
+    SDValue Argument = DAG.getNode(ISD::ADD, dl, MVT::i32, GP, Tlsgd);
+
+    ArgListTy Args;
+    ArgListEntry Entry;
+    Entry.Node = Argument;
+    Entry.Ty = (const Type *) Type::getInt32Ty(*DAG.getContext());
+    Args.push_back(Entry);
+    std::pair<SDValue, SDValue> CallResult =
+        LowerCallTo(DAG.getEntryNode(),
+                 (const Type *) Type::getInt32Ty(*DAG.getContext()),
+                 false, false, false, false,
+                 0, CallingConv::C, false, true,
+                 DAG.getExternalSymbol("__tls_get_addr", PtrVT), Args, DAG, dl);
+
+    return CallResult.first;
+  } else {
+    SDValue Offset;
+    if (GV->isDeclaration()) {
+      // Initial Exec TLS Model
+      SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
+                                              MipsII::MO_GOTTPREL);
+      Offset = DAG.getLoad(MVT::i32, dl,
+                                  DAG.getEntryNode(), TGA, MachinePointerInfo(),
+                                  false, false, 0);
+    } else {
+      // Local Exec TLS Model
+      SDVTList VTs = DAG.getVTList(MVT::i32);
+      SDValue TGAHi = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
+                                              MipsII::MO_TPREL_HI);
+      SDValue TGALo = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
+                                              MipsII::MO_TPREL_LO);
+      SDValue Hi = DAG.getNode(MipsISD::TprelHi, dl, VTs, &TGAHi, 1);
+      SDValue Lo = DAG.getNode(MipsISD::TprelLo, dl, MVT::i32, TGALo);
+      Offset = DAG.getNode(ISD::ADD, dl, MVT::i32, Hi, Lo);
+    }
+
+    SDValue ThreadPointer = DAG.getNode(MipsISD::ThreadPointer, dl, PtrVT);
+    return DAG.getNode(ISD::ADD, dl, PtrVT, ThreadPointer, Offset);
+  }
 }
 
 SDValue MipsTargetLowering::

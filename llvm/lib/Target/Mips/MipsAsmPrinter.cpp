@@ -318,6 +318,10 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   case MipsII::MO_GOT:      O << "%got(";    break;
   case MipsII::MO_ABS_HI:   O << "%hi(";     break;
   case MipsII::MO_ABS_LO:   O << "%lo(";     break;
+  case MipsII::MO_TLSGD:    O << "%tlsgd(";  break;
+  case MipsII::MO_GOTTPREL: O << "%gottprel("; break;
+  case MipsII::MO_TPREL_HI: O << "%tprel_hi("; break;
+  case MipsII::MO_TPREL_LO: O << "%tprel_lo("; break;
   }
 
   switch (MO.getType()) {
