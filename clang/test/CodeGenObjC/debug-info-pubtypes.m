@@ -2,7 +2,7 @@
 // RUN: FileCheck %s < %t
 
 //CHECK:        .long   Lset6
-//CHECK-NEXT:   .long   256
+//CHECK-NEXT:   .long
 //CHECK-NEXT:   .asciz   "H"
 //CHECK-NEXT:   .long   0
 //CHECK-NEXT:   Lpubtypes_end1:
