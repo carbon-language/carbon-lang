@@ -7,6 +7,12 @@ config.llvm_libs_dir = "@LLVM_LIBS_DIR@"
 config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
 config.clang_obj_root = "@CLANG_BINARY_DIR@"
 config.target_triple = "@TARGET_TRIPLE@"
+config.targets_to_build = "@TARGETS_TO_BUILD@"
+
+# Exclude not supported target-specific tests.
+config.excludes = []
+if not 'X86' in config.targets_to_build:
+    config.excludes.append('X86')
 
 # Support substitution of the tools and libs dirs with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
