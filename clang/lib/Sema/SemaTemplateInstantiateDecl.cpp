@@ -2481,9 +2481,13 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     PerformPendingInstantiations();
 
     // Restore the set of pending vtables.
+    assert(VTableUses.empty() &&
+           "VTableUses should be empty before it is discarded.");
     VTableUses.swap(SavedVTableUses);
 
     // Restore the set of pending implicit instantiations.
+    assert(PendingInstantiations.empty() &&
+           "PendingInstantiations should be empty before it is discarded.");
     PendingInstantiations.swap(SavedPendingInstantiations);
   }
 }
@@ -2557,9 +2561,12 @@ void Sema::InstantiateStaticDataMemberDefinition(
   // If we're performing recursive template instantiation, create our own
   // queue of pending implicit instantiations that we will instantiate later,
   // while we're still within our own instantiation context.
+  llvm::SmallVector<VTableUse, 16> SavedVTableUses;
   std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
-  if (Recursive)
+  if (Recursive) {
+    VTableUses.swap(SavedVTableUses);
     PendingInstantiations.swap(SavedPendingInstantiations);
+  }
 
   // Enter the scope of this instantiation. We don't use
   // PushDeclContext because we don't have a scope.
@@ -2581,11 +2588,23 @@ void Sema::InstantiateStaticDataMemberDefinition(
   }
 
   if (Recursive) {
+    // Define any newly required vtables.
+    DefineUsedVTables();
+
     // Instantiate any pending implicit instantiations found during the
     // instantiation of this template.
     PerformPendingInstantiations();
 
+    // Restore the set of pending vtables.
+    assert(VTableUses.empty() &&
+           "VTableUses should be empty before it is discarded, "
+           "while instantiating static data member.");
+    VTableUses.swap(SavedVTableUses);
+
     // Restore the set of pending implicit instantiations.
+    assert(PendingInstantiations.empty() &&
+           "PendingInstantiations should be empty before it is discarded, "
+           "while instantiating static data member.");
     PendingInstantiations.swap(SavedPendingInstantiations);
   }
 }
@@ -3181,10 +3200,7 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
 
 /// \brief Performs template instantiation for all implicit template
 /// instantiations we have seen until this point.
-///
-/// \returns true if anything was instantiated.
-bool Sema::PerformPendingInstantiations(bool LocalOnly) {
-  bool InstantiatedAnything = false;
+void Sema::PerformPendingInstantiations(bool LocalOnly) {
   while (!PendingLocalImplicitInstantiations.empty() ||
          (!LocalOnly && !PendingInstantiations.empty())) {
     PendingImplicitInstantiation Inst;
@@ -3205,7 +3221,6 @@ bool Sema::PerformPendingInstantiations(bool LocalOnly) {
                                 TSK_ExplicitInstantiationDefinition;
       InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true,
                                     DefinitionRequired);
-      InstantiatedAnything = true;
       continue;
     }
 
@@ -3242,10 +3257,7 @@ bool Sema::PerformPendingInstantiations(bool LocalOnly) {
                               TSK_ExplicitInstantiationDefinition;
     InstantiateStaticDataMemberDefinition(/*FIXME:*/Inst.second, Var, true,
                                           DefinitionRequired);
-    InstantiatedAnything = true;
   }
-  
-  return InstantiatedAnything;
 }
 
 void Sema::PerformDependentDiagnostics(const DeclContext *Pattern,
