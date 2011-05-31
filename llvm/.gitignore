@@ -15,6 +15,8 @@
 *.orig
 # Byte compiled python modules.
 *.pyc
+# vim swap files
+.*.swp
 
 #==============================================================================#
 # Explicit files to ignore (only matches one).
