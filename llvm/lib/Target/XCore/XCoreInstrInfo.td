@@ -472,7 +472,13 @@ def REMU_l3r : FL3R<"remu", urem>;
 }
 def XOR_l3r : FL3R<"xor", xor>;
 defm ASHR : FL3R_L2RBITP<"ashr", sra>;
-// TODO crc32, crc8, inpw, outpw
+
+let Constraints = "$src1 = $dst" in
+def CRC_l3r : _FL3R<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
+                     "crc32 $dst, $src2, $src3",
+                     [(set GRRegs:$dst, (int_xcore_crc32 GRRegs:$src1, GRRegs:$src2, GRRegs:$src3))]>;
+
+// TODO inpw, outpw
 let mayStore=1 in {
 def ST16_l3r : _FL3R<(outs), (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
                 "st16 $val, $addr[$offset]",
