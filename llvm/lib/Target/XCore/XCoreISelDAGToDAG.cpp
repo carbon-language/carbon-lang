@@ -205,6 +205,16 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->getMachineNode(XCore::LMUL_l6r, dl, MVT::i32, MVT::i32,
                                   Ops, 4);
   }
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
+    switch (IntNo) {
+    case Intrinsic::xcore_crc8:
+      SDValue Ops[] = { N->getOperand(1), N->getOperand(2), N->getOperand(3) };
+      return CurDAG->getMachineNode(XCore::CRC8_l4r, dl, MVT::i32, MVT::i32,
+                                    Ops, 3);
+    }
+    break;
+  }
   case ISD::BRIND:
     if (SDNode *ResNode = SelectBRIND(N))
       return ResNode;
