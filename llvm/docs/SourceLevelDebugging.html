@@ -174,22 +174,15 @@ height="369">
       as setting program variables, or calling functions that have been
       deleted.</li>
 
-  <li>LLVM optimizations gracefully interact with debugging information.  If
-      they are not aware of debug information, they are automatically disabled
-      as necessary in the cases that would invalidate the debug info.  This
-      retains the LLVM features, making it easy to write new
-      transformations.</li>
-
   <li>As desired, LLVM optimizations can be upgraded to be aware of the LLVM
       debugging information, allowing them to update the debugging information
       as they perform aggressive optimizations.  This means that, with effort,
       the LLVM optimizers could optimize debug code just as well as non-debug
       code.</li>
 
-  <li>LLVM debug information does not prevent many important optimizations from
+  <li>LLVM debug information does not prevent optimizations from
       happening (for example inlining, basic block reordering/merging/cleanup,
-      tail duplication, etc), further reducing the amount of the compiler that
-      eventually is "aware" of debugging information.</li>
+      tail duplication, etc).<li>
 
   <li>LLVM debug information is automatically optimized along with the rest of
       the program, using existing facilities.  For example, duplicate
