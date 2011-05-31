@@ -1,4 +1,4 @@
-//===--- Tooling.cpp - Running clang standalone tools --------------------===//
+//===--- Tooling.cpp - Running clang standalone tools ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -44,7 +44,7 @@ namespace {
 //   - it must contain at least a program path,
 //   - argv[0], ..., and argv[argc - 1] mustn't be NULL, and
 //   - argv[argc] must be NULL.
-void ValidateArgv(int argc, char* argv[]) {
+void ValidateArgv(int argc, char *argv[]) {
   if (argc < 1) {
     fprintf(stderr, "ERROR: argc is %d.  It must be >= 1.\n", argc);
     abort();
@@ -69,7 +69,7 @@ void ValidateArgv(int argc, char* argv[]) {
 // code that sets up a compiler to run tools on it, and we should refactor
 // it to be based on the same framework.
 
-static clang::Diagnostic* NewTextDiagnostics() {
+static clang::Diagnostic *NewTextDiagnostics() {
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagIDs(
       new clang::DiagnosticIDs());
   clang::TextDiagnosticPrinter *DiagClient = new clang::TextDiagnosticPrinter(
@@ -81,15 +81,15 @@ static clang::Diagnostic* NewTextDiagnostics() {
 static int StaticSymbol;
 
 /// \brief Builds a clang driver initialized for running clang tools.
-static clang::driver::Driver* NewDriver(clang::Diagnostic* Diagnostics,
-                                        const char* BinaryName) {
+static clang::driver::Driver *NewDriver(clang::Diagnostic *Diagnostics,
+                                        const char *BinaryName) {
   // This just needs to be some symbol in the binary.
-  void* const SymbolAddr = &StaticSymbol;
+  void *const SymbolAddr = &StaticSymbol;
   const llvm::sys::Path ExePath =
       llvm::sys::Path::GetMainExecutable(BinaryName, SymbolAddr);
 
   const std::string DefaultOutputName = "a.out";
-  clang::driver::Driver* CompilerDriver = new clang::driver::Driver(
+  clang::driver::Driver *CompilerDriver = new clang::driver::Driver(
       ExePath.str(), llvm::sys::getHostTriple(),
       DefaultOutputName, false, false, *Diagnostics);
   CompilerDriver->setTitle("clang_based_tool");
@@ -98,8 +98,8 @@ static clang::driver::Driver* NewDriver(clang::Diagnostic* Diagnostics,
 
 /// \brief Retrieves the clang CC1 specific flags out of the compilation's jobs.
 /// Returns NULL on error.
-static const clang::driver::ArgStringList* GetCC1Arguments(
-    clang::Diagnostic* Diagnostics, clang::driver::Compilation* Compilation) {
+static const clang::driver::ArgStringList *GetCC1Arguments(
+    clang::Diagnostic *Diagnostics, clang::driver::Compilation *Compilation) {
   // We expect to get back exactly one Command job, if we didn't something
   // failed. Extract that job from the Compilation.
   const clang::driver::JobList &Jobs = Compilation->getJobs();
@@ -124,10 +124,10 @@ static const clang::driver::ArgStringList* GetCC1Arguments(
 }
 
 /// \brief Returns a clang build invocation initialized from the CC1 flags.
-static clang::CompilerInvocation* NewInvocation(
-    clang::Diagnostic* Diagnostics,
-    const clang::driver::ArgStringList& CC1Args) {
-  clang::CompilerInvocation* Invocation = new clang::CompilerInvocation;
+static clang::CompilerInvocation *NewInvocation(
+    clang::Diagnostic *Diagnostics,
+    const clang::driver::ArgStringList &CC1Args) {
+  clang::CompilerInvocation *Invocation = new clang::CompilerInvocation;
   clang::CompilerInvocation::CreateFromArgs(
       *Invocation, CC1Args.data(), CC1Args.data() + CC1Args.size(),
       *Diagnostics);
@@ -137,11 +137,11 @@ static clang::CompilerInvocation* NewInvocation(
 
 /// \brief Runs the specified clang tool action and returns whether it executed
 /// successfully.
-static bool RunInvocation(const char* BinaryName,
-                          clang::driver::Compilation* Compilation,
-                          clang::CompilerInvocation* Invocation,
-                          const clang::driver::ArgStringList& CC1Args,
-                          clang::FrontendAction* ToolAction) {
+static bool RunInvocation(const char *BinaryName,
+                          clang::driver::Compilation *Compilation,
+                          clang::CompilerInvocation *Invocation,
+                          const clang::driver::ArgStringList &CC1Args,
+                          clang::FrontendAction *ToolAction) {
   llvm::OwningPtr<clang::FrontendAction> ScopedToolAction(ToolAction);
   // Show the invocation, with -v.
   if (Invocation->getHeaderSearchOpts().Verbose) {
@@ -164,7 +164,7 @@ static bool RunInvocation(const char* BinaryName,
   if (Compiler.getHeaderSearchOpts().UseBuiltinIncludes &&
       Compiler.getHeaderSearchOpts().ResourceDir.empty()) {
     // This just needs to be some symbol in the binary.
-    void* const SymbolAddr = &StaticSymbol;
+    void *const SymbolAddr = &StaticSymbol;
     Compiler.getHeaderSearchOpts().ResourceDir =
         clang::CompilerInvocation::GetResourcesPath(BinaryName, SymbolAddr);
   }
@@ -175,7 +175,7 @@ static bool RunInvocation(const char* BinaryName,
 
 /// \brief Converts a string vector representing a Command line into a C
 /// string vector representing the Argv (including the trailing NULL).
-std::vector<char*> CommandLineToArgv(const std::vector<std::string>* Command) {
+std::vector<char*> CommandLineToArgv(const std::vector<std::string> *Command) {
   std::vector<char*> Result(Command->size() + 1);
   for (std::vector<char*>::size_type I = 0; I < Command->size(); ++I) {
     Result[I] = const_cast<char*>((*Command)[I].c_str());
@@ -185,14 +185,14 @@ std::vector<char*> CommandLineToArgv(const std::vector<std::string>* Command) {
 }
 
 bool RunToolWithFlags(
-    clang::FrontendAction* ToolAction, int Args, char* Argv[]) {
+    clang::FrontendAction *ToolAction, int Args, char *Argv[]) {
   ValidateArgv(Args, Argv);
   const llvm::OwningPtr<clang::Diagnostic> Diagnostics(NewTextDiagnostics());
   const llvm::OwningPtr<clang::driver::Driver> Driver(
       NewDriver(Diagnostics.get(), Argv[0]));
   const llvm::OwningPtr<clang::driver::Compilation> Compilation(
       Driver->BuildCompilation(llvm::ArrayRef<const char*>(Argv, Args)));
-  const clang::driver::ArgStringList* const CC1Args = GetCC1Arguments(
+  const clang::driver::ArgStringList *const CC1Args = GetCC1Arguments(
       Diagnostics.get(), Compilation.get());
   if (CC1Args == NULL) {
     return false;
@@ -208,11 +208,11 @@ bool RunToolWithFlags(
 /// \param FileContents A mapping from file name to source code. For each
 /// entry a virtual file mapping will be created when running the tool.
 bool RunToolWithFlagsOnCode(
-    const std::vector<std::string>& CommandLine,
-    const std::map<std::string, std::string>& FileContents,
-    clang::FrontendAction* ToolAction) {
+    const std::vector<std::string> &CommandLine,
+    const std::map<std::string, std::string> &FileContents,
+    clang::FrontendAction *ToolAction) {
   const std::vector<char*> Argv = CommandLineToArgv(&CommandLine);
-  const char* const BinaryName = Argv[0];
+  const char *const BinaryName = Argv[0];
 
   const llvm::OwningPtr<clang::Diagnostic> Diagnostics(NewTextDiagnostics());
   const llvm::OwningPtr<clang::driver::Driver> Driver(
@@ -224,7 +224,7 @@ bool RunToolWithFlagsOnCode(
   const llvm::OwningPtr<clang::driver::Compilation> Compilation(
       Driver->BuildCompilation(llvm::ArrayRef<const char*>(&Argv[0],
                                                            Argv.size() - 1)));
-  const clang::driver::ArgStringList* const CC1Args = GetCC1Arguments(
+  const clang::driver::ArgStringList *const CC1Args = GetCC1Arguments(
       Diagnostics.get(), Compilation.get());
   if (CC1Args == NULL) {
     return false;
@@ -236,7 +236,7 @@ bool RunToolWithFlagsOnCode(
            It = FileContents.begin(), End = FileContents.end();
        It != End; ++It) {
     // Inject the code as the given file name into the preprocessor options.
-    const llvm::MemoryBuffer* Input =
+    const llvm::MemoryBuffer *Input =
         llvm::MemoryBuffer::getMemBuffer(It->second.c_str());
     Invocation->getPreprocessorOpts().addRemappedFile(It->first.c_str(), Input);
   }
@@ -247,8 +247,8 @@ bool RunToolWithFlagsOnCode(
 
 bool RunSyntaxOnlyToolOnCode(
     clang::FrontendAction *ToolAction, llvm::StringRef Code) {
-  const char* const FileName = "input.cc";
-  const char* const CommandLine[] = {
+  const char *const FileName = "input.cc";
+  const char *const CommandLine[] = {
       "clang-tool", "-fsyntax-only", FileName
   };
   std::map<std::string, std::string> FileContents;

@@ -4,3 +4,4 @@ add_clang_executable(clang-check
   ClangCheck.cpp
   )
 
+add_subdirectory(RemoveCStrCalls)

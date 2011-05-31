@@ -69,3 +69,8 @@ add_clang_unittest(JsonCompileCommandLineDatabase
   Tooling/JsonCompileCommandLineDatabaseTest.cpp
   USED_LIBS gtest gtest_main clangTooling
  )
+
+add_clang_unittest(ASTMatchersTest
+  Tooling/ASTMatchersTest.cpp
+  USED_LIBS gtest gtest_main clangTooling
+  )

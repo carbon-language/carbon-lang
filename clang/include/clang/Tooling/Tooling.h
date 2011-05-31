@@ -43,11 +43,11 @@ bool RunSyntaxOnlyToolOnCode(
 /// \param Argv The command line arguments, including the path the binary
 /// was started with (Argv[0]).
 bool RunToolWithFlags(
-    clang::FrontendAction* ToolAction, int Argc, char *Argv[]);
+    clang::FrontendAction *ToolAction, int Argc, char *Argv[]);
 
 /// \brief Converts a vector<string> into a vector<char*> suitable to pass
 /// to main-style functions taking (int Argc, char *Argv[]).
-std::vector<char*> CommandLineToArgv(const std::vector<std::string>* Command);
+std::vector<char*> CommandLineToArgv(const std::vector<std::string> *Command);
 
 /// \brief Specifies the working directory and command of a compilation.
 struct CompileCommand {
