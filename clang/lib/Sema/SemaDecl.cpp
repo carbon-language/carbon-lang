@@ -6657,6 +6657,8 @@ void Sema::InjectMicrosoftFriendForwardDeclaration(unsigned TagSpec,
     TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
     TagDecl *New = CXXRecordDecl::Create(Context, Kind, ContextToAdd, KWLoc,
                                          NameLoc, Name, 0);
+    // Recreate the DeclContext.
+    ContextRAII SavedContext(*this, ContextToAdd);
     if (getCurScope()->getFnParent())
       PushOnScopeChains(New, getScopeForContext(ContextToAdd), true);
     else
