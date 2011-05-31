@@ -195,29 +195,21 @@ VALID_TARGET = "Got a valid target"
 VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
 
 
-#
-# And a generic "Command '%s' returns successfully" message generator.
-#
 def CMD_MSG(str):
+    '''A generic "Command '%s' returns successfully" message generator.'''
     return "Command '%s' returns successfully" % str
 
-#
-# And a generic "'%s' returns expected result" message generator if exe.
-# Otherwise, it's "'%s' matches expected result"
-#
 def EXP_MSG(str, exe):
+    '''A generic "'%s' returns expected result" message generator if exe.
+    Otherwise, it generates "'%s' matches expected result" message.'''
     return "'%s' %s expected result" % (str, 'returns' if exe else 'matches')
 
-#
-# And a generic "Value of setting '%s' is correct" message generator.
-#
 def SETTING_MSG(setting):
+    '''A generic "Value of setting '%s' is correct" message generator.'''
     return "Value of setting '%s' is correct" % setting
 
-#
-# Returns an env variable array from the os.environ map object.
-#
 def EnvArray():
+    """Returns an env variable array from the os.environ map object."""
     return map(lambda k,v: k+"="+v, os.environ.keys(), os.environ.values())
 
 def line_number(filename, string_to_match):
