@@ -13,7 +13,7 @@ entire test suite.  Users who want to run a test case on its own can specify the
 LLDB_TEST and PYTHONPATH environment variables, for example:
 
 $ export LLDB_TEST=$PWD
-$ export PYTHONPATH=/Volumes/data/lldb/svn/trunk/build/Debug/LLDB.framework/Resources/Python:$LLDB_TEST:$LLDB_TEST/plugins
+$ export PYTHONPATH=/Volumes/data/lldb/svn/trunk/build/Debug/LLDB.framework/Resources/Python:$LLDB_TEST:$LLDB_TEST/plugins:$LLDB_TEST/pexpect-2.4
 $ echo $LLDB_TEST
 /Volumes/data/lldb/svn/trunk/test
 $ echo $PYTHONPATH
@@ -234,8 +234,11 @@ def python_api_test(func):
         raise Exception("@python_api_test can only be used to decorate a test method")
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        if lldb.dont_do_python_api_test:
-            self.skipTest("Skip Python API tests")
+        try:
+            if lldb.dont_do_python_api_test:
+                self.skipTest("Skip Python API tests")
+        except AttributeError:
+            pass
         return func(self, *args, **kwargs)
 
     # Mark this function as such to separate them from lldb command line tests.
@@ -477,23 +480,29 @@ class TestBase(unittest2.TestCase):
         if "LLDB_EXEC" in os.environ:
             self.lldbExec = os.environ["LLDB_EXEC"]
 
-        if lldb.blacklist:
-            className = self.__class__.__name__
-            classAndMethodName = "%s.%s" % (className, self._testMethodName)
-            if className in lldb.blacklist:
-                self.skipTest(lldb.blacklist.get(className))
-            elif classAndMethodName in lldb.blacklist:
-                self.skipTest(lldb.blacklist.get(classAndMethodName))
+        try:
+            if lldb.blacklist:
+                className = self.__class__.__name__
+                classAndMethodName = "%s.%s" % (className, self._testMethodName)
+                if className in lldb.blacklist:
+                    self.skipTest(lldb.blacklist.get(className))
+                elif classAndMethodName in lldb.blacklist:
+                    self.skipTest(lldb.blacklist.get(classAndMethodName))
+        except AttributeError:
+            pass
 
         # Python API only test is decorated with @python_api_test,
         # which also sets the "__python_api_test__" attribute of the
         # function object to True.
-        if lldb.just_do_python_api_test:
-            testMethod = getattr(self, self._testMethodName)
-            if getattr(testMethod, "__python_api_test__", False):
-                pass
-            else:
-                self.skipTest("Skip lldb command line test")
+        try:
+            if lldb.just_do_python_api_test:
+                testMethod = getattr(self, self._testMethodName)
+                if getattr(testMethod, "__python_api_test__", False):
+                    pass
+                else:
+                    self.skipTest("Skip lldb command line test")
+        except AttributeError:
+            pass
 
         if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
             os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
