@@ -985,12 +985,7 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
                      getRealLinkageName(LinkageName));
   // Add type.
   TheCU->addType(VariableDIE, GTy);
-  if (GTy.isCompositeType() && !GTy.getName().empty()
-      && !GTy.isForwardDecl()) {
-    DIEEntry *Entry = TheCU->getDIEEntry(GTy);
-    assert(Entry && "Missing global type!");
-    TheCU->addGlobalType(GTy.getName(), Entry->getEntry());
-  }
+
   // Add scoping info.
   if (!GV.isLocalToUnit()) {
     TheCU->addUInt(VariableDIE, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);

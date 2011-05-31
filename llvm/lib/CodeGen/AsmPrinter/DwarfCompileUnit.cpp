@@ -605,8 +605,14 @@ void CompileUnit::addType(DIE *Entity, DIType Ty) {
   // Set up proxy.
   Entry = createDIEEntry(Buffer);
   insertDIEEntry(Ty, Entry);
-
   Entity->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, Entry);
+
+  // If this is a complete composite type then include it in the
+  // list of global types.
+  DIDescriptor Context = Ty.getContext();
+  if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl() 
+      && (Context.isCompileUnit() || Context.isFile() || Context.isNameSpace()))
+    addGlobalType(Ty.getName(), Entry->getEntry());
 }
 
 /// addPubTypes - Add type for pubtypes section.
