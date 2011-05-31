@@ -36,8 +36,8 @@ public:
         all = collate | ctype | monetary | numeric | time | messages;
 
     // construct/copy/destroy:
-    locale() throw();
-    locale(const locale& other) throw();
+    locale() noexcept;
+    locale(const locale& other) noexcept;
     explicit locale(const char* std_name);
     explicit locale(const string& std_name);
     locale(const locale& other, const char* std_name, category);
@@ -45,9 +45,9 @@ public:
     template <class Facet> locale(const locale& other, Facet* f);
     locale(const locale& other, const locale& one, category);
 
-    ~locale() throw(); // not virtual
+    ~locale(); // not virtual
 
-    const locale& operator=(const locale& other) throw();
+    const locale& operator=(const locale& other) noexcept;
 
     template <class Facet> locale combine(const locale& other) const;
 
@@ -65,7 +65,7 @@ public:
 };
 
 template <class Facet> const Facet& use_facet(const locale&);
-template <class Facet> bool has_facet(const locale&) throw();
+template <class Facet> bool has_facet(const locale&) noexcept;
 
 // 22.3.3, convenience interfaces:
 template <class charT> bool isspace (charT c, const locale& loc);
