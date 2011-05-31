@@ -87,9 +87,7 @@ public:
 
   /// addGlobalType - Add a new global type to the compile unit.
   ///
-  void addGlobalType(StringRef Name, DIE *Die) {
-    GlobalTypes[Name] = Die;
-  }
+  void addGlobalType(DIType Ty, DIE *Die);
 
   /// getDIE - Returns the debug information entry map slot for the
   /// specified debug variable.
