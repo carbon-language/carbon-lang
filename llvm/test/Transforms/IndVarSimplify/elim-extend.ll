@@ -2,9 +2,8 @@
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 
-; Test reusing the same IV with constant start for preinc and postinc values
-; with and without NSW.
-; IV rewrite only removes one sext. WidenIVs should remove all three.
+; IV with constant start, preinc and postinc sign extends, with and without NSW.
+; IV rewrite only removes one sext. WidenIVs removes all three.
 define void @postincConstIV(i8* %base, i32 %limit) nounwind {
 entry:
   br label %loop
@@ -33,21 +32,19 @@ return:
   ret void
 }
 
-; Test reusing the same IV with nonconstant start for preinc and postinc values
+; IV with nonconstant start, preinc and postinc sign extends,
 ; with and without NSW.
-; As with constant IV start, WidenIVs should remove all three.
-;
-; FIXME: WidenIVs should remove %postofs just like %postofsnsw
+; As with postincConstIV, WidenIVs removes all three sexts.
 define void @postincVarIV(i8* %base, i32 %init, i32 %limit) nounwind {
 entry:
-  br label %loop
+  %precond = icmp sgt i32 %limit, %init
+  br i1 %precond, label %loop, label %return
 ; CHECK: loop:
-; CHECK: sext
 ; CHECK-NOT: sext
 ; CHECK: exit:
 loop:
   %iv = phi i32 [ %postiv, %loop ], [ %init, %entry ]
-  %ivnsw = phi i32 [ %postivnsw, %loop ], [ 0, %entry ]
+  %ivnsw = phi i32 [ %postivnsw, %loop ], [ %init, %entry ]
   %preofs = sext i32 %iv to i64
   %preadr = getelementptr i8* %base, i64 %preofs
   store i8 0, i8* %preadr
@@ -59,7 +56,7 @@ loop:
   %postofsnsw = sext i32 %postivnsw to i64
   %postadrnsw = getelementptr i8* %base, i64 %postofsnsw
   store i8 0, i8* %postadrnsw
-  %cond = icmp sgt i32 %limit, %iv
+  %cond = icmp sgt i32 %limit, %postiv
   br i1 %cond, label %loop, label %exit
 exit:
   br label %return
@@ -103,15 +100,13 @@ innerpreheader:
 ; CHECK: innerloop:
 ;
 ; Eliminate %ofs2 after widening inneriv.
+; Eliminate %ofs3 after normalizing sext(innerpostiv)
 ; CHECK-NOT: sext
 ; CHECK: getelementptr
 ;
-; FIXME: We should not increase the number of IVs in this loop.
-; sext elimination plus LFTR results in 3 final IVs.
-;
-; FIXME: eliminate %ofs3 based the loop pre/post conditions
-; even though innerpostiv is not NSW, thus sign extending innerpostiv
-; does not yield the same expression as incrementing the widened inneriv.
+; FIXME: We should check that indvars does not increase the number of
+; IVs in this loop. sext elimination plus LFTR currently results in 2 final
+; IVs. Waiting to remove LFTR.
 innerloop:
   %inneriv = phi i32 [ %innerpostiv, %innerloop ], [ %innercount, %innerpreheader ]
   %innerpostiv = add i32 %inneriv, 1
