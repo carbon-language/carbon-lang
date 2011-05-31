@@ -1628,25 +1628,20 @@ llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D, QualType FnTyp
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
     return getOrCreateMethodType(Method, F);
   else if (const ObjCMethodDecl *OMethod = dyn_cast<ObjCMethodDecl>(D)) {
-
-    llvm::DIType MTy = getOrCreateType(FnType, F);
-    llvm::DIArray Args = llvm::DICompositeType(MTy).getTypeArray();
-    assert (Args.getNumElements() && "Invalid number of arguments!");
-
     // Add "self" and "_cmd"
     llvm::SmallVector<llvm::Value *, 16> Elts;
 
     // First element is always return type. For 'void' functions it is NULL.
-    Elts.push_back(Args.getElement(0));
-
+    Elts.push_back(getOrCreateType(OMethod->getResultType(), F));
     // "self" pointer is always first argument.
     Elts.push_back(getOrCreateType(OMethod->getSelfDecl()->getType(), F));
     // "cmd" pointer is always second argument.
     Elts.push_back(getOrCreateType(OMethod->getCmdDecl()->getType(), F));
-    
-    // Copy rest of the arguments.
-    for (unsigned i = 1, e = Args.getNumElements(); i != e; ++i)
-      Elts.push_back(Args.getElement(i));
+    // Get rest of the arguments.
+    for (ObjCMethodDecl::param_iterator PI = OMethod->param_begin(), 
+           PE = OMethod->param_end(); PI != PE; ++PI)
+      Elts.push_back(getOrCreateType((*PI)->getType(), F));
+
     llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(Elts);
     return DBuilder.createSubroutineType(F, EltTypeArray);
   }
