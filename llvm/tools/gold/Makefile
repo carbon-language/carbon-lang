@@ -25,7 +25,7 @@ LINK_COMPONENTS := support
 
 # Because off_t is used in the public API, the largefile parts are required for
 # ABI compatibility.
-CXXFLAGS+=-I$(BINUTILS_INCDIR) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -lLTO
+CXXFLAGS+=-I$(BINUTILS_INCDIR) -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CXXFLAGS+=$(SharedLibDir)/$(SharedPrefix)LTO$(SHLIBEXT)
 
 include $(LEVEL)/Makefile.common
