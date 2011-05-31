@@ -1,6 +1,4 @@
 ; RUN: lli %s test
-; XFAIL: arm
-; FIXME: ExecutionEngine is broken for ARM, please remove the following XFAIL when it will be fixed.
 
 declare i32 @puts(i8*)
 

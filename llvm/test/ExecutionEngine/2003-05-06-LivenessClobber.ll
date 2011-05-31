@@ -1,8 +1,6 @@
 ; This testcase should return with an exit code of 1.
 ;
 ; RUN: not lli %s
-; XFAIL: arm
-; FIXME: ExecutionEngine is broken for ARM, please remove the following XFAIL when it will be fixed.
 
 @test = global i64 0		; <i64*> [#uses=1]
 

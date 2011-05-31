@@ -1,6 +1,4 @@
 ; RUN: lli -disable-lazy-compilation=false %s
-; XFAIL: arm
-; FIXME: ExecutionEngine is broken for ARM, please remove the following XFAIL when it will be fixed.
 
 define i32 @main() nounwind {
 entry:
