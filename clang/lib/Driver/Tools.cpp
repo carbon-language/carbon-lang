@@ -763,35 +763,34 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   if (!CPUName) {
     // FIXME: Need target hooks.
     if (getToolChain().getOS().startswith("darwin")) {
-      if (getToolChain().getArchName() == "x86_64")
+      if (getToolChain().getArch() == llvm::Triple::x86_64)
         CPUName = "core2";
-      else if (getToolChain().getArchName() == "i386")
+      else if (getToolChain().getArch() == llvm::Triple::x86)
         CPUName = "yonah";
     } else if (getToolChain().getOS().startswith("haiku"))  {
-      if (getToolChain().getArchName() == "x86_64")
+      if (getToolChain().getArch() == llvm::Triple::x86_64)
         CPUName = "x86-64";
-      else if (getToolChain().getArchName() == "i386")
+      else if (getToolChain().getArch() == llvm::Triple::x86)
         CPUName = "i586";
     } else if (getToolChain().getOS().startswith("openbsd"))  {
-      if (getToolChain().getArchName() == "x86_64")
+      if (getToolChain().getArch() == llvm::Triple::x86_64)
         CPUName = "x86-64";
-      else if (getToolChain().getArchName() == "i386")
+      else if (getToolChain().getArch() == llvm::Triple::x86)
         CPUName = "i486";
     } else if (getToolChain().getOS().startswith("freebsd"))  {
-      if (getToolChain().getArchName() == "x86_64" ||
-          getToolChain().getArchName() == "amd64")
+      if (getToolChain().getArch() == llvm::Triple::x86_64)
         CPUName = "x86-64";
-      else if (getToolChain().getArchName() == "i386")
+      else if (getToolChain().getArch() == llvm::Triple::x86)
         CPUName = "i486";
     } else if (getToolChain().getOS().startswith("netbsd"))  {
-      if (getToolChain().getArchName() == "x86_64")
+      if (getToolChain().getArch() == llvm::Triple::x86_64)
         CPUName = "x86-64";
-      else if (getToolChain().getArchName() == "i386")
+      else if (getToolChain().getArch() == llvm::Triple::x86)
         CPUName = "i486";
     } else {
-      if (getToolChain().getArchName() == "x86_64")
+      if (getToolChain().getArch() == llvm::Triple::x86_64)
         CPUName = "x86-64";
-      else if (getToolChain().getArchName() == "i386")
+      else if (getToolChain().getArch() == llvm::Triple::x86)
         CPUName = "pentium4";
     }
   }
