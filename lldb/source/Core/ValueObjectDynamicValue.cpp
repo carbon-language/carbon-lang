@@ -60,11 +60,8 @@ ValueObjectDynamicValue::GetClangType ()
 ConstString
 ValueObjectDynamicValue::GetTypeName()
 {
-    // FIXME: Maybe cache the name, but have to clear it out if the type changes...
-    if (!UpdateValueIfNeeded())
-        return ConstString("<unknown type>");
-        
-    if (m_type_sp)
+    const bool success = UpdateValueIfNeeded();
+    if (success && m_type_sp)
         return ClangASTType::GetClangTypeName (GetClangType());
     else
         return m_parent->GetTypeName();
@@ -73,10 +70,8 @@ ValueObjectDynamicValue::GetTypeName()
 uint32_t
 ValueObjectDynamicValue::CalculateNumChildren()
 {
-    if (!UpdateValueIfNeeded())
-        return 0;
-        
-    if (m_type_sp)
+    const bool success = UpdateValueIfNeeded();
+    if (success && m_type_sp)
         return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
     else
         return m_parent->GetNumChildren();
@@ -85,10 +80,8 @@ ValueObjectDynamicValue::CalculateNumChildren()
 clang::ASTContext *
 ValueObjectDynamicValue::GetClangAST ()
 {
-    if (!UpdateValueIfNeeded())
-        return NULL;
-        
-    if (m_type_sp)
+    const bool success = UpdateValueIfNeeded();
+    if (success && m_type_sp)
         return m_type_sp->GetClangAST();
     else
         return m_parent->GetClangAST ();
@@ -97,10 +90,8 @@ ValueObjectDynamicValue::GetClangAST ()
 size_t
 ValueObjectDynamicValue::GetByteSize()
 {
-    if (!UpdateValueIfNeeded())
-        return 0;
-        
-    if (m_type_sp)
+    const bool success = UpdateValueIfNeeded();
+    if (success && m_type_sp)
         return m_value.GetValueByteSize(GetClangAST(), NULL);
     else
         return m_parent->GetByteSize();
