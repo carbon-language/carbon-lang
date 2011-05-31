@@ -139,7 +139,7 @@ namespace llvm {
       return !getVolatileCst()->isZero();
     }
 
-    unsigned getAddressSpace() const {
+    unsigned getDestAddressSpace() const {
       return cast<PointerType>(getRawDest()->getType())->getAddressSpace();
     }
 
@@ -226,6 +226,10 @@ namespace llvm {
     /// instructions that feed it, giving the original input.  The returned
     /// value is guaranteed to be a pointer.
     Value *getSource() const { return getRawSource()->stripPointerCasts(); }
+
+    unsigned getSourceAddressSpace() const {
+      return cast<PointerType>(getRawSource()->getType())->getAddressSpace();
+    }
 
     void setSource(Value *Ptr) {
       assert(getRawSource()->getType() == Ptr->getType() &&
