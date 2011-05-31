@@ -405,6 +405,115 @@ def ATMACRO   : MipsPseudo<(outs), (ins), ".set\tat", []>;
 def CPLOAD : MipsPseudo<(outs), (ins CPURegs:$picreg), ".cpload\t$picreg", []>;
 def CPRESTORE : MipsPseudo<(outs), (ins i32imm:$loc), ".cprestore\t$loc\n", []>;
 
+let usesCustomInserter = 1 in {
+  def ATOMIC_LOAD_ADD_I8 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_add_8\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_add_8 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_ADD_I16 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_add_16\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_add_16 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_ADD_I32 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_add_32\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_add_32 CPURegs:$ptr, CPURegs:$incr))]>;
+
+  def ATOMIC_LOAD_SUB_I8 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_sub_8\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_sub_8 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_SUB_I16 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_sub_16\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_sub_16 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_SUB_I32 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_sub_32\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_sub_32 CPURegs:$ptr, CPURegs:$incr))]>;
+
+  def ATOMIC_LOAD_AND_I8 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_and_8\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_and_8 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_AND_I16 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_and_16\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_and_16 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_AND_I32 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_and_32\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_and_32 CPURegs:$ptr, CPURegs:$incr))]>;
+
+  def ATOMIC_LOAD_OR_I8 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_or_8\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_or_8 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_OR_I16 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_or_16\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_or_16 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_OR_I32 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_or_32\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_or_32 CPURegs:$ptr, CPURegs:$incr))]>;
+
+  def ATOMIC_LOAD_XOR_I8 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_xor_8\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_xor_8 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_XOR_I16 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_xor_16\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_xor_16 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_XOR_I32 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_xor_32\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_xor_32 CPURegs:$ptr, CPURegs:$incr))]>;
+
+  def ATOMIC_LOAD_NAND_I8 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_nand_8\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_nand_8 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_NAND_I16 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_nand_16\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_nand_16 CPURegs:$ptr, CPURegs:$incr))]>;
+  def ATOMIC_LOAD_NAND_I32 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$incr),
+    "atomic_load_nand_32\t$dst, $ptr, $incr",
+    [(set CPURegs:$dst, (atomic_load_nand_32 CPURegs:$ptr, CPURegs:$incr))]>;
+
+  def ATOMIC_SWAP_I8 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$val),
+    "atomic_swap_8\t$dst, $ptr, $val",
+    [(set CPURegs:$dst, (atomic_swap_8 CPURegs:$ptr, CPURegs:$val))]>;
+  def ATOMIC_SWAP_I16 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$val),
+    "atomic_swap_16\t$dst, $ptr, $val",
+    [(set CPURegs:$dst, (atomic_swap_16 CPURegs:$ptr, CPURegs:$val))]>;
+  def ATOMIC_SWAP_I32 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$val),
+    "atomic_swap_32\t$dst, $ptr, $val",
+    [(set CPURegs:$dst, (atomic_swap_32 CPURegs:$ptr, CPURegs:$val))]>;
+
+  def ATOMIC_CMP_SWAP_I8 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval),
+    "atomic_cmp_swap_8\t$dst, $ptr, $oldval, $newval",
+    [(set CPURegs:$dst,
+         (atomic_cmp_swap_8 CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval))]>;
+  def ATOMIC_CMP_SWAP_I16 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval),
+    "atomic_cmp_swap_16\t$dst, $ptr, $oldval, $newval",
+    [(set CPURegs:$dst,
+         (atomic_cmp_swap_16 CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval))]>;
+  def ATOMIC_CMP_SWAP_I32 : MipsPseudo<
+    (outs CPURegs:$dst), (ins CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval),
+    "atomic_cmp_swap_32\t$dst, $ptr, $oldval, $newval",
+    [(set CPURegs:$dst,
+         (atomic_cmp_swap_32 CPURegs:$ptr, CPURegs:$oldval, CPURegs:$newval))]>;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//
@@ -458,6 +567,14 @@ def LW      : LoadM<0x23, "lw",  load>;
 def SB      : StoreM<0x28, "sb", truncstorei8>;
 def SH      : StoreM<0x29, "sh", truncstorei16>;
 def SW      : StoreM<0x2b, "sw", store>;
+
+/// Load-linked, Store-conditional
+let hasDelaySlot = 1 in
+  def LL    : FI<0x30, (outs CPURegs:$dst), (ins mem:$addr),
+              "ll\t$dst, $addr", [], IILoad>;
+let Constraints = "$src = $dst" in
+  def SC    : FI<0x38, (outs CPURegs:$dst), (ins CPURegs:$src, mem:$addr),
+              "sc\t$src, $addr", [], IIStore>;
 
 /// Jump and Branch Instructions
 def J       : JumpFJ<0x02, "j">;

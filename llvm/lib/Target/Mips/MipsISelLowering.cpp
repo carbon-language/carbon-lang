@@ -557,11 +557,6 @@ static Mips::FPBranchCode GetFPBranchCodeFromCond(Mips::CondCode CC) {
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
-  // There is no need to expand CMov instructions if target has
-  // conditional moves.
-  if (Subtarget->hasCondMov())
-    return BB;
-
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   bool isFPCmp = false;
   DebugLoc dl = MI->getDebugLoc();
@@ -569,6 +564,63 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
   switch (MI->getOpcode()) {
   default: assert(false && "Unexpected instr type to insert");
+
+  case Mips::ATOMIC_LOAD_ADD_I8:
+    return EmitAtomicBinaryPartword(MI, BB, 1, Mips::ADDu);
+  case Mips::ATOMIC_LOAD_ADD_I16:
+    return EmitAtomicBinaryPartword(MI, BB, 2, Mips::ADDu);
+  case Mips::ATOMIC_LOAD_ADD_I32:
+    return EmitAtomicBinary(MI, BB, 4, Mips::ADDu);
+
+  case Mips::ATOMIC_LOAD_AND_I8:
+    return EmitAtomicBinaryPartword(MI, BB, 1, Mips::AND);
+  case Mips::ATOMIC_LOAD_AND_I16:
+    return EmitAtomicBinaryPartword(MI, BB, 2, Mips::AND);
+  case Mips::ATOMIC_LOAD_AND_I32:
+    return EmitAtomicBinary(MI, BB, 4, Mips::AND);
+
+  case Mips::ATOMIC_LOAD_OR_I8:
+    return EmitAtomicBinaryPartword(MI, BB, 1, Mips::OR);
+  case Mips::ATOMIC_LOAD_OR_I16:
+    return EmitAtomicBinaryPartword(MI, BB, 2, Mips::OR);
+  case Mips::ATOMIC_LOAD_OR_I32:
+    return EmitAtomicBinary(MI, BB, 4, Mips::OR);
+
+  case Mips::ATOMIC_LOAD_XOR_I8:
+    return EmitAtomicBinaryPartword(MI, BB, 1, Mips::XOR);
+  case Mips::ATOMIC_LOAD_XOR_I16:
+    return EmitAtomicBinaryPartword(MI, BB, 2, Mips::XOR);
+  case Mips::ATOMIC_LOAD_XOR_I32:
+    return EmitAtomicBinary(MI, BB, 4, Mips::XOR);
+
+  case Mips::ATOMIC_LOAD_NAND_I8:
+    return EmitAtomicBinaryPartword(MI, BB, 1, 0, true);
+  case Mips::ATOMIC_LOAD_NAND_I16:
+    return EmitAtomicBinaryPartword(MI, BB, 2, 0, true);
+  case Mips::ATOMIC_LOAD_NAND_I32:
+    return EmitAtomicBinary(MI, BB, 4, 0, true);
+
+  case Mips::ATOMIC_LOAD_SUB_I8:
+    return EmitAtomicBinaryPartword(MI, BB, 1, Mips::SUBu);
+  case Mips::ATOMIC_LOAD_SUB_I16:
+    return EmitAtomicBinaryPartword(MI, BB, 2, Mips::SUBu);
+  case Mips::ATOMIC_LOAD_SUB_I32:
+    return EmitAtomicBinary(MI, BB, 4, Mips::SUBu);
+
+  case Mips::ATOMIC_SWAP_I8:
+    return EmitAtomicBinaryPartword(MI, BB, 1, 0);
+  case Mips::ATOMIC_SWAP_I16:
+    return EmitAtomicBinaryPartword(MI, BB, 2, 0);
+  case Mips::ATOMIC_SWAP_I32:
+    return EmitAtomicBinary(MI, BB, 4, 0);
+
+  case Mips::ATOMIC_CMP_SWAP_I8:
+    return EmitAtomicCmpSwapPartword(MI, BB, 1);
+  case Mips::ATOMIC_CMP_SWAP_I16:
+    return EmitAtomicCmpSwapPartword(MI, BB, 2);
+  case Mips::ATOMIC_CMP_SWAP_I32:
+    return EmitAtomicCmpSwap(MI, BB, 4);
+
   case Mips::MOVT:
   case Mips::MOVT_S:
   case Mips::MOVT_D:
@@ -592,6 +644,11 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     Opc = Mips::BEQ;
     break;
   }
+
+  // There is no need to expand CMov instructions if target has
+  // conditional moves.
+  if (Subtarget->hasCondMov())
+    return BB;
 
   // To "insert" a SELECT_CC instruction, we actually have to insert the
   // diamond control-flow pattern.  The incoming instruction knows the
@@ -657,6 +714,471 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
       .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB);
 
   MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+}
+
+// This function also handles Mips::ATOMIC_SWAP_I32 (when BinOpcode == 0), and
+// Mips::ATOMIC_LOAD_NAND_I32 (when Nand == true)
+MachineBasicBlock *
+MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
+                   unsigned Size, unsigned BinOpcode, bool Nand) const {
+  assert(Size == 4 && "Unsupported size for EmitAtomicBinary.");
+
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  const TargetRegisterClass *RC = getRegClassFor(MVT::i32);
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+
+  unsigned Dest = MI->getOperand(0).getReg();
+  unsigned Ptr = MI->getOperand(1).getReg();
+  unsigned Incr = MI->getOperand(2).getReg();
+
+  unsigned Oldval = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
+
+  // insert new blocks after the current block
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineFunction::iterator It = BB;
+  ++It;
+  MF->insert(It, loopMBB);
+  MF->insert(It, exitMBB);
+
+  // Transfer the remainder of BB and its successor edges to exitMBB.
+  exitMBB->splice(exitMBB->begin(), BB,
+                  llvm::next(MachineBasicBlock::iterator(MI)),
+                  BB->end());
+  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+  //  thisMBB:
+  //    ...
+  //    sw incr, fi(sp)           // store incr to stack (when BinOpcode == 0)
+  //    fallthrough --> loopMBB
+
+  // Note: for atomic.swap (when BinOpcode == 0), storing incr to stack before
+  // the loop and then loading it from stack in block loopMBB is necessary to
+  // prevent MachineLICM pass to hoist "or" instruction out of the block
+  // loopMBB.
+
+  int fi;
+  if (BinOpcode == 0 && !Nand) {
+    // Get or create a temporary stack location.
+    MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
+    fi = MipsFI->getAtomicFrameIndex();
+    if (fi == -1) {
+      fi = MF->getFrameInfo()->CreateStackObject(Size, Size, false);
+      MipsFI->setAtomicFrameIndex(fi);
+    }
+
+    BuildMI(BB, dl, TII->get(Mips::SW))
+        .addReg(Incr).addImm(0).addFrameIndex(fi);
+  }
+  BB->addSuccessor(loopMBB);
+
+  //  loopMBB:
+  //    ll oldval, 0(ptr)
+  //    or dest, $0, oldval
+  //    <binop> tmp1, oldval, incr
+  //    sc tmp1, 0(ptr)
+  //    beq tmp1, $0, loopMBB
+  BB = loopMBB;
+  BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addImm(0).addReg(Ptr);
+  BuildMI(BB, dl, TII->get(Mips::OR), Dest).addReg(Mips::ZERO).addReg(Oldval);
+  if (Nand) {
+    //  and tmp2, oldval, incr
+    //  nor tmp1, $0, tmp2
+    BuildMI(BB, dl, TII->get(Mips::AND), Tmp2).addReg(Oldval).addReg(Incr);
+    BuildMI(BB, dl, TII->get(Mips::NOR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
+  } else if (BinOpcode) {
+    //  <binop> tmp1, oldval, incr
+    BuildMI(BB, dl, TII->get(BinOpcode), Tmp1).addReg(Oldval).addReg(Incr);
+  } else {
+    //  lw tmp2, fi(sp)              // load incr from stack
+    //  or tmp1, $zero, tmp2
+    BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addImm(0).addFrameIndex(fi);;
+    BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
+  }
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp1).addReg(Tmp1).addImm(0).addReg(Ptr);
+  BuildMI(BB, dl, TII->get(Mips::BEQ))
+    .addReg(Tmp1).addReg(Mips::ZERO).addMBB(loopMBB);
+  BB->addSuccessor(loopMBB);
+  BB->addSuccessor(exitMBB);
+
+  MI->eraseFromParent();   // The instruction is gone now.
+
+  return BB;
+}
+
+MachineBasicBlock *
+MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
+            MachineBasicBlock *BB, unsigned Size, unsigned BinOpcode,
+            bool Nand) const {
+  assert((Size == 1 || Size == 2) &&
+      "Unsupported size for EmitAtomicBinaryPartial.");
+
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  const TargetRegisterClass *RC = getRegClassFor(MVT::i32);
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+
+  unsigned Dest = MI->getOperand(0).getReg();
+  unsigned Ptr = MI->getOperand(1).getReg();
+  unsigned Incr = MI->getOperand(2).getReg();
+
+  unsigned Addr = RegInfo.createVirtualRegister(RC);
+  unsigned Shift = RegInfo.createVirtualRegister(RC);
+  unsigned Mask = RegInfo.createVirtualRegister(RC);
+  unsigned Mask2 = RegInfo.createVirtualRegister(RC);
+  unsigned Newval = RegInfo.createVirtualRegister(RC);
+  unsigned Oldval = RegInfo.createVirtualRegister(RC);
+  unsigned Incr2 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp4 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp5 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp6 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp7 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp8 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp9 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp10 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp11 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp12 = RegInfo.createVirtualRegister(RC);
+
+  // insert new blocks after the current block
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineFunction::iterator It = BB;
+  ++It;
+  MF->insert(It, loopMBB);
+  MF->insert(It, exitMBB);
+
+  // Transfer the remainder of BB and its successor edges to exitMBB.
+  exitMBB->splice(exitMBB->begin(), BB,
+                  llvm::next(MachineBasicBlock::iterator(MI)),
+                  BB->end());
+  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+  //  thisMBB:
+  //    addiu   tmp1,$0,-4                # 0xfffffffc
+  //    and     addr,ptr,tmp1
+  //    andi    tmp2,ptr,3
+  //    sll     shift,tmp2,3
+  //    ori     tmp3,$0,255               # 0xff
+  //    sll     mask,tmp3,shift
+  //    nor     mask2,$0,mask
+  //    andi    tmp4,incr,255
+  //    sll     incr2,tmp4,shift
+  //    sw      incr2, fi(sp)      // store incr2 to stack (when BinOpcode == 0)
+
+  // Note: for atomic.swap (when BinOpcode == 0), storing incr2 to stack before
+  // the loop and then loading it from stack in block loopMBB is necessary to
+  // prevent MachineLICM pass to hoist "or" instruction out of the block
+  // loopMBB.
+
+  int64_t MaskImm = (Size == 1) ? 255 : 65535;
+  BuildMI(BB, dl, TII->get(Mips::ADDiu), Tmp1).addReg(Mips::ZERO).addImm(-4);
+  BuildMI(BB, dl, TII->get(Mips::AND), Addr).addReg(Ptr).addReg(Tmp1);
+  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp2).addReg(Ptr).addImm(3);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Shift).addReg(Tmp2).addImm(3);
+  BuildMI(BB, dl, TII->get(Mips::ORi), Tmp3).addReg(Mips::ZERO).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Mask).addReg(Tmp3).addReg(Shift);
+  BuildMI(BB, dl, TII->get(Mips::NOR), Mask2).addReg(Mips::ZERO).addReg(Mask);
+  if (BinOpcode != Mips::SUBu) {
+    BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp4).addReg(Incr).addImm(MaskImm);
+    BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp4).addReg(Shift);
+  } else {
+    BuildMI(BB, dl, TII->get(Mips::SUBu), Tmp4).addReg(Mips::ZERO).addReg(Incr);
+    BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp5).addReg(Tmp4).addImm(MaskImm);
+    BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp5).addReg(Shift);
+  }
+  int fi;
+  if (BinOpcode == 0 && !Nand) {
+    // Get or create a temporary stack location.
+    MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
+    fi = MipsFI->getAtomicFrameIndex();
+    if (fi == -1) {
+      fi = MF->getFrameInfo()->CreateStackObject(Size, Size, false);
+      MipsFI->setAtomicFrameIndex(fi);
+    }
+
+    BuildMI(BB, dl, TII->get(Mips::SW))
+        .addReg(Incr2).addImm(0).addFrameIndex(fi);
+  }
+  BB->addSuccessor(loopMBB);
+
+  // loopMBB:
+  //   ll      oldval,0(addr)
+  //   binop   tmp7,oldval,incr2
+  //   and     newval,tmp7,mask
+  //   and     tmp8,oldval,mask2
+  //   or      tmp9,tmp8,newval
+  //   sc      tmp9,0(addr)
+  //   beq     tmp9,$0,loopMBB
+  BB = loopMBB;
+  BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addImm(0).addReg(Addr);
+  if (Nand) {
+    //  and tmp6, oldval, incr2
+    //  nor tmp7, $0, tmp6
+    BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval).addReg(Incr2);
+    BuildMI(BB, dl, TII->get(Mips::NOR), Tmp7).addReg(Mips::ZERO).addReg(Tmp6);
+  } else if (BinOpcode == Mips::SUBu) {
+    //  addu tmp7, oldval, incr2
+    BuildMI(BB, dl, TII->get(Mips::ADDu), Tmp7).addReg(Oldval).addReg(Incr2);
+  } else if (BinOpcode) {
+    //  <binop> tmp7, oldval, incr2
+    BuildMI(BB, dl, TII->get(BinOpcode), Tmp7).addReg(Oldval).addReg(Incr2);
+  } else {
+    //  lw tmp6, fi(sp)              // load incr2 from stack
+    //  or tmp7, $zero, tmp6
+    BuildMI(BB, dl, TII->get(Mips::LW), Tmp6).addImm(0).addFrameIndex(fi);;
+    BuildMI(BB, dl, TII->get(Mips::OR), Tmp7).addReg(Mips::ZERO).addReg(Tmp6);
+  }
+  BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
+  BuildMI(BB, dl, TII->get(Mips::AND), Tmp8).addReg(Oldval).addReg(Mask2);
+  BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Newval);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp9).addReg(Tmp9).addImm(0).addReg(Addr);
+  BuildMI(BB, dl, TII->get(Mips::BEQ))
+      .addReg(Tmp9).addReg(Mips::ZERO).addMBB(loopMBB);
+  BB->addSuccessor(loopMBB);
+  BB->addSuccessor(exitMBB);
+
+  //  exitMBB:
+  //    and     tmp10,oldval,mask
+  //    srl     tmp11,tmp10,shift
+  //    sll     tmp12,tmp11,24
+  //    sra     dest,tmp12,24
+  BB = exitMBB;
+  int64_t ShiftImm = (Size == 1) ? 24 : 16;
+  // reverse order
+  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SRA), Dest)
+      .addReg(Tmp12).addImm(ShiftImm);
+  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SLL), Tmp12)
+      .addReg(Tmp11).addImm(ShiftImm);
+  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SRL), Tmp11)
+      .addReg(Tmp10).addReg(Shift);
+  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::AND), Tmp10)
+    .addReg(Oldval).addReg(Mask);
+
+  MI->eraseFromParent();   // The instruction is gone now.
+
+  return BB;
+}
+
+MachineBasicBlock *
+MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
+                                     MachineBasicBlock *BB,
+                                     unsigned Size) const {
+  assert(Size == 4 && "Unsupported size for EmitAtomicCmpSwap.");
+
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  const TargetRegisterClass *RC = getRegClassFor(MVT::i32);
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+
+  unsigned Dest    = MI->getOperand(0).getReg();
+  unsigned Ptr     = MI->getOperand(1).getReg();
+  unsigned Oldval  = MI->getOperand(2).getReg();
+  unsigned Newval  = MI->getOperand(3).getReg();
+
+  unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
+
+  // insert new blocks after the current block
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineBasicBlock *loop1MBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *loop2MBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineFunction::iterator It = BB;
+  ++It;
+  MF->insert(It, loop1MBB);
+  MF->insert(It, loop2MBB);
+  MF->insert(It, exitMBB);
+
+  // Transfer the remainder of BB and its successor edges to exitMBB.
+  exitMBB->splice(exitMBB->begin(), BB,
+                  llvm::next(MachineBasicBlock::iterator(MI)),
+                  BB->end());
+  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+  // Get or create a temporary stack location.
+  MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
+  int fi = MipsFI->getAtomicFrameIndex();
+  if (fi == -1) {
+    fi = MF->getFrameInfo()->CreateStackObject(Size, Size, false);
+    MipsFI->setAtomicFrameIndex(fi);
+  }
+
+  //  thisMBB:
+  //    ...
+  //    sw newval, fi(sp)           // store newval to stack
+  //    fallthrough --> loop1MBB
+
+  // Note: storing newval to stack before the loop and then loading it from
+  // stack in block loop2MBB is necessary to prevent MachineLICM pass to
+  // hoist "or" instruction out of the block loop2MBB.
+
+  BuildMI(BB, dl, TII->get(Mips::SW))
+      .addReg(Newval).addImm(0).addFrameIndex(fi);
+  BB->addSuccessor(loop1MBB);
+
+  // loop1MBB:
+  //   ll dest, 0(ptr)
+  //   bne dest, oldval, exitMBB
+  BB = loop1MBB;
+  BuildMI(BB, dl, TII->get(Mips::LL), Dest).addImm(0).addReg(Ptr);
+  BuildMI(BB, dl, TII->get(Mips::BNE))
+    .addReg(Dest).addReg(Oldval).addMBB(exitMBB);
+  BB->addSuccessor(exitMBB);
+  BB->addSuccessor(loop2MBB);
+
+  // loop2MBB:
+  //   lw tmp2, fi(sp)              // load newval from stack
+  //   or tmp1, $0, tmp2
+  //   sc tmp1, 0(ptr)
+  //   beq tmp1, $0, loop1MBB
+  BB = loop2MBB;
+  BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addImm(0).addFrameIndex(fi);;
+  BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp1).addReg(Tmp1).addImm(0).addReg(Ptr);
+  BuildMI(BB, dl, TII->get(Mips::BEQ))
+    .addReg(Tmp1).addReg(Mips::ZERO).addMBB(loop1MBB);
+  BB->addSuccessor(loop1MBB);
+  BB->addSuccessor(exitMBB);
+
+  MI->eraseFromParent();   // The instruction is gone now.
+
+  return BB;
+}
+
+MachineBasicBlock *
+MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
+                                     MachineBasicBlock *BB,
+                                     unsigned Size) const {
+  assert((Size == 1 || Size == 2) &&
+      "Unsupported size for EmitAtomicCmpSwapPartial.");
+
+  MachineFunction *MF = BB->getParent();
+  MachineRegisterInfo &RegInfo = MF->getRegInfo();
+  const TargetRegisterClass *RC = getRegClassFor(MVT::i32);
+  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+
+  unsigned Dest    = MI->getOperand(0).getReg();
+  unsigned Ptr     = MI->getOperand(1).getReg();
+  unsigned Oldval  = MI->getOperand(2).getReg();
+  unsigned Newval  = MI->getOperand(3).getReg();
+
+  unsigned Addr = RegInfo.createVirtualRegister(RC);
+  unsigned Shift = RegInfo.createVirtualRegister(RC);
+  unsigned Mask = RegInfo.createVirtualRegister(RC);
+  unsigned Mask2 = RegInfo.createVirtualRegister(RC);
+  unsigned Oldval2 = RegInfo.createVirtualRegister(RC);
+  unsigned Oldval3 = RegInfo.createVirtualRegister(RC);
+  unsigned Oldval4 = RegInfo.createVirtualRegister(RC);
+  unsigned Newval2 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp1 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp2 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp3 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp4 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp5 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp6 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp7 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp8 = RegInfo.createVirtualRegister(RC);
+  unsigned Tmp9 = RegInfo.createVirtualRegister(RC);
+
+  // insert new blocks after the current block
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineBasicBlock *loop1MBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *loop2MBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
+  MachineFunction::iterator It = BB;
+  ++It;
+  MF->insert(It, loop1MBB);
+  MF->insert(It, loop2MBB);
+  MF->insert(It, exitMBB);
+
+  // Transfer the remainder of BB and its successor edges to exitMBB.
+  exitMBB->splice(exitMBB->begin(), BB,
+                  llvm::next(MachineBasicBlock::iterator(MI)),
+                  BB->end());
+  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+  //  thisMBB:
+  //    addiu   tmp1,$0,-4                # 0xfffffffc
+  //    and     addr,ptr,tmp1
+  //    andi    tmp2,ptr,3
+  //    sll     shift,tmp2,3
+  //    ori     tmp3,$0,255               # 0xff
+  //    sll     mask,tmp3,shift
+  //    nor     mask2,$0,mask
+  //    andi    tmp4,oldval,255
+  //    sll     oldval2,tmp4,shift
+  //    andi    tmp5,newval,255
+  //    sll     newval2,tmp5,shift
+  int64_t MaskImm = (Size == 1) ? 255 : 65535;
+  BuildMI(BB, dl, TII->get(Mips::ADDiu), Tmp1).addReg(Mips::ZERO).addImm(-4);
+  BuildMI(BB, dl, TII->get(Mips::AND), Addr).addReg(Ptr).addReg(Tmp1);
+  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp2).addReg(Ptr).addImm(3);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Shift).addReg(Tmp2).addImm(3);
+  BuildMI(BB, dl, TII->get(Mips::ORi), Tmp3).addReg(Mips::ZERO).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Mask).addReg(Tmp3).addReg(Shift);
+  BuildMI(BB, dl, TII->get(Mips::NOR), Mask2).addReg(Mips::ZERO).addReg(Mask);
+  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp4).addReg(Oldval).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Oldval2).addReg(Tmp4).addReg(Shift);
+  BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp5).addReg(Newval).addImm(MaskImm);
+  BuildMI(BB, dl, TII->get(Mips::SLL), Newval2).addReg(Tmp5).addReg(Shift);
+  BB->addSuccessor(loop1MBB);
+
+  //  loop1MBB:
+  //    ll      oldval3,0(addr)
+  //    and     oldval4,oldval3,mask
+  //    bne     oldval4,oldval2,exitMBB
+  BB = loop1MBB;
+  BuildMI(BB, dl, TII->get(Mips::LL), Oldval3).addImm(0).addReg(Addr);
+  BuildMI(BB, dl, TII->get(Mips::AND), Oldval4).addReg(Oldval3).addReg(Mask);
+  BuildMI(BB, dl, TII->get(Mips::BNE))
+      .addReg(Oldval4).addReg(Oldval2).addMBB(exitMBB);
+  BB->addSuccessor(exitMBB);
+  BB->addSuccessor(loop2MBB);
+
+  //  loop2MBB:
+  //    and     tmp6,oldval3,mask2
+  //    or      tmp7,tmp6,newval2
+  //    sc      tmp7,0(addr)
+  //    beq     tmp7,$0,loop1MBB
+  BB = loop2MBB;
+  BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval3).addReg(Mask2);
+  BuildMI(BB, dl, TII->get(Mips::OR), Tmp7).addReg(Tmp6).addReg(Newval2);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp7)
+      .addReg(Tmp7).addImm(0).addReg(Addr);
+  BuildMI(BB, dl, TII->get(Mips::BEQ))
+      .addReg(Tmp7).addReg(Mips::ZERO).addMBB(loop1MBB);
+  BB->addSuccessor(loop1MBB);
+  BB->addSuccessor(exitMBB);
+
+  //  exitMBB:
+  //    srl     tmp8,oldval4,shift
+  //    sll     tmp9,tmp8,24
+  //    sra     dest,tmp9,24
+  BB = exitMBB;
+  int64_t ShiftImm = (Size == 1) ? 24 : 16;
+  // reverse order
+  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SRA), Dest)
+      .addReg(Tmp9).addImm(ShiftImm);
+  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SLL), Tmp9)
+      .addReg(Tmp8).addImm(ShiftImm);
+  BuildMI(*BB, BB->begin(), dl, TII->get(Mips::SRL), Tmp8)
+      .addReg(Oldval4).addReg(Shift);
+
+  MI->eraseFromParent();   // The instruction is gone now.
+
   return BB;
 }
 

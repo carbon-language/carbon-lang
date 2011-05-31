@@ -48,11 +48,17 @@ private:
   std::pair<int, int> InArgFIRange, OutArgFIRange;
   int GPFI; // Index of the frame object for restoring $gp 
   unsigned MaxCallFrameSize;
+
+  /// AtomicFrameIndex - To implement atomic.swap and atomic.cmp.swap
+  /// intrinsics, it is necessary to use a temporary stack location.
+  /// This field holds the frame index of this location.
+  int AtomicFrameIndex;
 public:
   MipsFunctionInfo(MachineFunction& MF)
   : SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
-    OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), MaxCallFrameSize(0)
+    OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), MaxCallFrameSize(0),
+    AtomicFrameIndex(-1)
   {}
 
   bool isInArgFI(int FI) const {
@@ -86,6 +92,9 @@ public:
 
   unsigned getMaxCallFrameSize() const { return MaxCallFrameSize; }
   void setMaxCallFrameSize(unsigned S) { MaxCallFrameSize = S; }
+
+  int getAtomicFrameIndex() const { return AtomicFrameIndex; }
+  void setAtomicFrameIndex(int Index) { AtomicFrameIndex = Index; }
 };
 
 } // end of namespace llvm

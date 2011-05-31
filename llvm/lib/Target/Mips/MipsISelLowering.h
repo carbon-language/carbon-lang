@@ -176,6 +176,16 @@ namespace llvm {
     /// specified FP immediate natively. If false, the legalizer will
     /// materialize the FP immediate as a load from a constant pool.
     virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
+
+    MachineBasicBlock *EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
+                    unsigned Size, unsigned BinOpcode, bool Nand = false) const;
+    MachineBasicBlock *EmitAtomicBinaryPartword(MachineInstr *MI,
+                    MachineBasicBlock *BB, unsigned Size, unsigned BinOpcode,
+                    bool Nand = false) const;
+    MachineBasicBlock *EmitAtomicCmpSwap(MachineInstr *MI,
+                                  MachineBasicBlock *BB, unsigned Size) const;
+    MachineBasicBlock *EmitAtomicCmpSwapPartword(MachineInstr *MI,
+                                  MachineBasicBlock *BB, unsigned Size) const;
   };
 }
 
