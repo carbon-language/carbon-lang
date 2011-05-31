@@ -39,6 +39,7 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -51,6 +52,10 @@ using namespace llvm;
 STATISTIC(NumGlobalSplits, "Number of split global live ranges");
 STATISTIC(NumLocalSplits,  "Number of split local live ranges");
 STATISTIC(NumEvicted,      "Number of interferences evicted");
+
+static cl::opt<bool>
+ComplexEviction("complex-eviction", cl::Hidden,
+                cl::desc("Use complex eviction heuristics"));
 
 static RegisterRegAlloc greedyRegAlloc("greedy", "greedy register allocator",
                                        createGreedyRegisterAllocator);
@@ -94,7 +99,8 @@ class RAGreedy : public MachineFunctionPass,
   enum LiveRangeStage {
     RS_New,      ///< Never seen before.
     RS_First,    ///< First time in the queue.
-    RS_Second,   ///< Second time in the queue.
+    RS_Evicted,  ///< Requeued after being evicted.
+    RS_Second,   ///< Second time in the queue, ready for splitting.
     RS_Global,   ///< Produced by global splitting.
     RS_Local,    ///< Produced by local splitting.
     RS_Spill     ///< Produced by spilling.
@@ -117,15 +123,6 @@ class RAGreedy : public MachineFunctionPass,
         LRStage[Reg] = NewStage;
     }
   }
-
-  // Eviction. Sometimes an assigned live range can be evicted without
-  // conditions, but other times it must be split after being evicted to avoid
-  // infinite loops.
-  enum CanEvict {
-    CE_Never,    ///< Can never evict.
-    CE_Always,   ///< Can always evict.
-    CE_WithSplit ///< Can evict only if range is also split or spilled.
-  };
 
   // splitting state.
   std::auto_ptr<SplitAnalysis> SA;
@@ -198,8 +195,10 @@ private:
   SlotIndex getPrevMappedIndex(const MachineInstr*);
   void calcPrevSlots();
   unsigned nextSplitPoint(unsigned);
-  CanEvict canEvict(LiveInterval &A, LiveInterval &B);
-  bool canEvictInterference(LiveInterval&, unsigned, float&);
+  bool hasDefInRange(const LiveInterval&, const LiveInterval&);
+  bool hasUseInRange(const LiveInterval&, const LiveInterval&);
+  bool canEvict(LiveInterval &A, LiveInterval &B);
+  bool canEvictInterference(LiveInterval&, unsigned, float&, bool);
 
   unsigned tryAssign(LiveInterval&, AllocationOrder&,
                      SmallVectorImpl<LiveInterval*>&);
@@ -220,6 +219,7 @@ char RAGreedy::ID = 0;
 const char *const RAGreedy::StageName[] = {
   "RS_New",
   "RS_First",
+  "RS_Evicted",
   "RS_Second",
   "RS_Global",
   "RS_Local",
@@ -401,18 +401,60 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
 //                         Interference eviction
 //===----------------------------------------------------------------------===//
 
+/// hasDefInRange - Returns true when any def of A happens where B is live.
+///
+/// The SSA form of live intervals guarantees:
+///
+///   A.overlaps(B) == hasDefInRange(A, B) || hasDefInRange(B, A)
+///
+bool RAGreedy::hasDefInRange(const LiveInterval &A, const LiveInterval &B) {
+  for (LiveInterval::const_vni_iterator I = A.vni_begin(), E = A.vni_end();
+       I != E; ++I) {
+    const VNInfo *VNI = *I;
+    if (VNI->isUnused())
+      continue;
+    if (B.liveAt(VNI->def))
+      return true;
+  }
+  return false;
+}
+
+/// hasUseInRange - Returns true when any def or use of A happens where B is
+/// live. The following is always true:
+///
+///   A.overlaps(B) == hasUseInRange(A, B) || hasUseInRange(B, A)
+///
+bool RAGreedy::hasUseInRange(const LiveInterval &A, const LiveInterval &B) {
+  if (hasDefInRange(A, B))
+    return true;
+  for (MachineRegisterInfo::use_nodbg_iterator I = MRI->use_nodbg_begin(A.reg),
+       E = MRI->use_nodbg_end(); I != E; ++I) {
+    if (I.getOperand().isUndef())
+      continue;
+    SlotIndex Idx = Indexes->getInstructionIndex(&*I).getDefIndex();
+    if (B.liveAt(Idx))
+      return true;
+  }
+  return false;
+}
+
 /// canEvict - determine if A can evict the assigned live range B. The eviction
 /// policy defined by this function together with the allocation order defined
 /// by enqueue() decides which registers ultimately end up being split and
 /// spilled.
 ///
-/// This function must define a non-circular relation when it returns CE_Always,
-/// otherwise infinite eviction loops are possible. When evicting a <= RS_Second
-/// range, it is possible to return CE_WithSplit which forces the evicted
-/// register to be split or spilled before it can evict anything again. That
-/// guarantees progress.
-RAGreedy::CanEvict RAGreedy::canEvict(LiveInterval &A, LiveInterval &B) {
-  return A.weight > B.weight ? CE_Always : CE_Never;
+/// Safeguards ensure that canEvict can never cause an infinite loop.
+///
+bool RAGreedy::canEvict(LiveInterval &A, LiveInterval &B) {
+  if (!ComplexEviction)
+    return A.weight > B.weight;
+
+  // Evict B if it has no uses in A's live range.
+  if (!hasUseInRange(B, A)) {
+    DEBUG(dbgs() << "Bypass: " << B << '\n');
+    return true;
+  }
+  return A.weight > B.weight;
 }
 
 /// canEvict - Return true if all interferences between VirtReg and PhysReg can
@@ -420,7 +462,7 @@ RAGreedy::CanEvict RAGreedy::canEvict(LiveInterval &A, LiveInterval &B) {
 /// Return false if any interference is heavier than MaxWeight.
 /// On return, set MaxWeight to the maximal spill weight of an interference.
 bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
-                                    float &MaxWeight) {
+                                    float &MaxWeight, bool OnlyCheap) {
   float Weight = 0;
   for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
@@ -433,18 +475,22 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
       LiveInterval *Intf = Q.interferingVRegs()[i - 1];
       if (TargetRegisterInfo::isPhysicalRegister(Intf->reg))
         return false;
+      if (getStage(*Intf) == RS_Spill)
+        return false;
       if (Intf->weight >= MaxWeight)
         return false;
-      switch (canEvict(VirtReg, *Intf)) {
-      case CE_Always:
-        break;
-      case CE_Never:
-        return false;
-      case CE_WithSplit:
-        if (getStage(*Intf) > RS_Second)
+      // When we are simply looking for a cheaper alternative, don't try too
+      // hard. The evicted range shouldn't end up getting split.
+      if (OnlyCheap) {
+        // Don't evict something that won't be able to reevict something else.
+        if (getStage(*Intf) != RS_First)
           return false;
-        break;
+        // Don't break a satisfied hint.
+        if (VRM->getRegAllocPref(Intf->reg) == *AliasI)
+          return false;
       }
+      if (VirtReg.isSpillable() && !canEvict(VirtReg, *Intf))
+        return false;
       Weight = std::max(Weight, Intf->weight);
     }
   }
@@ -453,17 +499,28 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
 }
 
 /// tryEvict - Try to evict all interferences for a physreg.
-/// @param  VirtReg Currently unassigned virtual register.
-/// @param  Order   Physregs to try.
-/// @return         Physreg to assign VirtReg, or 0.
+/// @param  VirtReg         Currently unassigned virtual register.
+/// @param  Order           Physregs to try.
+/// @param  CostPerUseLimit Only look at physregs below this cost per use.
+/// @return                 Physreg to assign VirtReg, or 0.
 unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
                             AllocationOrder &Order,
                             SmallVectorImpl<LiveInterval*> &NewVRegs,
                             unsigned CostPerUseLimit) {
+  // Ranges that may have been evicted or requeued for splitting may never evict
+  // other ranges. That could cause looping.
+  // Spill ranges can always evict.
+  LiveRangeStage Stage = getStage(VirtReg);
+  if (Stage >= RS_Evicted && VirtReg.isSpillable())
+    return 0;
   NamedRegionTimer T("Evict", TimerGroupName, TimePassesIsEnabled);
 
+  bool OnlyCheap = CostPerUseLimit != ~0u;
+
   // Keep track of the lightest single interference seen so far.
-  float BestWeight = HUGE_VALF;
+  // When scavenging for a cheap register, never consider evicting heavier
+  // ranges.
+  float BestWeight = OnlyCheap ? VirtReg.weight : HUGE_VALF;
   unsigned BestPhys = 0;
 
   Order.rewind();
@@ -475,7 +532,7 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
       continue;
 
     float Weight = BestWeight;
-    if (!canEvictInterference(VirtReg, PhysReg, Weight))
+    if (!canEvictInterference(VirtReg, PhysReg, Weight, OnlyCheap))
       continue;
 
     // This is an eviction candidate.
@@ -504,11 +561,11 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
       unassign(*Intf, VRM->getPhys(Intf->reg));
       ++NumEvicted;
       NewVRegs.push_back(Intf);
-      // Prevent looping by forcing the evicted ranges to be split before they
-      // can evict anything else.
-      if (getStage(*Intf) < RS_Second &&
-          canEvict(VirtReg, *Intf) == CE_WithSplit)
-        LRStage[Intf->reg] = RS_Second;
+      // Prevent looping by marking the evicted ranges as RS_Evicted.
+      // When OnlyCheap is set, Intf is guaranteed to have a smaller spill
+      // weight which also prevents looping.
+      if (!OnlyCheap && getStage(*Intf) < RS_Evicted)
+        LRStage[Intf->reg] = RS_Evicted;
     }
   }
   return BestPhys;
@@ -1417,12 +1474,8 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   LiveRangeStage Stage = getStage(VirtReg);
   DEBUG(dbgs() << StageName[Stage] << '\n');
 
-  // Try to evict a less worthy live range, but only for ranges from the primary
-  // queue. The RS_Second ranges already failed to do this, and they should not
-  // get a second chance until they have been split.
-  if (Stage != RS_Second)
-    if (unsigned PhysReg = tryEvict(VirtReg, Order, NewVRegs))
-      return PhysReg;
+  if (unsigned PhysReg = tryEvict(VirtReg, Order, NewVRegs))
+    return PhysReg;
 
   assert(NewVRegs.empty() && "Cannot append to existing NewVRegs");
 
