@@ -189,6 +189,24 @@ int test20(int x) {
   
   // no warning, this is an idiom for "true" in old C style.
   return x && (signed char)1;
+
+  return x || 0;
+  return x || 1;
+  return x || -1; // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x || 5; // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x && 0;
+  return x && 1;
+  return x && -1; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x && 5; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x || (0);
+  return x || (1);
+  return x || (-1); // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x || (5); // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x && (0);
+  return x && (1);
+  return x && (-1); // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x && (5); // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+
 }
 
 struct Test21; // expected-note 2 {{forward declaration}}

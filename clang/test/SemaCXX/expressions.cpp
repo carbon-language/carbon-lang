@@ -32,3 +32,34 @@ namespace test1 {
     bar(x += E_zero); // expected-error {{incompatible type}}
   }
 }
+
+int test2(int x) {
+  return x && 4; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+
+  return x && sizeof(int) == 4;  // no warning, RHS is logical op.
+  return x && true;
+  return x && false;
+  return x || true;
+  return x || false;
+
+  return x && (unsigned)0; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+
+  return x || (unsigned)1; // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+
+  return x || 0; // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x || 1; // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x || -1; // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x || 5; // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x && 0; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x && 1; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x && -1; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x && 5; // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x || (0); // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x || (1); // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x || (-1); // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x || (5); // expected-warning {{use of logical || with constant operand; switch to bitwise | or remove constant}}
+  return x && (0); // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x && (1); // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x && (-1); // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+  return x && (5); // expected-warning {{use of logical && with constant operand; switch to bitwise & or remove constant}}
+}

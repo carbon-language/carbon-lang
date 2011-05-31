@@ -8,7 +8,7 @@ void test() {
   }
 
   int n = 3;
-  switch (n && 1) { // expected-warning {{bool}}
+  switch (n && true) { // expected-warning {{bool}}
     case 1:
       break;
   }
