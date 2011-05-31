@@ -183,6 +183,8 @@ namespace std {
 
 #elif defined(__GNUC__)
 
+#define _ATTRIBUTE(x) __attribute__((x))
+
 #if !__EXCEPTIONS
 #define _LIBCPP_NO_EXCEPTIONS
 #endif
