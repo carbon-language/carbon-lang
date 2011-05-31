@@ -1101,6 +1101,21 @@ class _LIBCPP_VISIBLE function<_R(_ArgTypes...)>
     template <class _R2, class ..._A>
         _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const function<_R(_A...)>& __p) {return __p;}
+
+    template <class _F, bool = __invokable<_F&, _ArgTypes...>::value>
+        struct __callable;
+    template <class _F>
+        struct __callable<_F, true>
+        {
+            static const bool value =
+                is_convertible<typename __invoke_of<_F&, _ArgTypes...>::type,
+                               _R>::value;
+        };
+    template <class _F>
+        struct __callable<_F, false>
+        {
+            static const bool value = false;
+        };
 public:
     typedef _R result_type;
 
@@ -1113,7 +1128,7 @@ public:
     function(function&&) _NOEXCEPT;
     template<class _F>
       function(_F,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+               typename enable_if<__callable<_F>::value>::type* = 0);
 
     template<class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
@@ -1127,7 +1142,7 @@ public:
       function(allocator_arg_t, const _Alloc&, function&&);
     template<class _F, class _Alloc>
       function(allocator_arg_t, const _Alloc& __a, _F __f,
-               typename enable_if<!is_integral<_F>::value>::type* = 0);
+               typename enable_if<__callable<_F>::value>::type* = 0);
 
     function& operator=(const function&);
     function& operator=(function&&) _NOEXCEPT;
@@ -1135,7 +1150,7 @@ public:
     template<class _F>
       typename enable_if
       <
-        !is_integral<typename decay<_F>::type>::value,
+        __callable<typename decay<_F>::type>::value,
         function&
       >::type
       operator=(_F&&);
@@ -1239,7 +1254,7 @@ function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc&,
 template<class _R, class ..._ArgTypes>
 template <class _F>
 function<_R(_ArgTypes...)>::function(_F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+                                     typename enable_if<__callable<_F>::value>::type*)
     : __f_(0)
 {
     if (__not_null(__f))
@@ -1265,7 +1280,7 @@ function<_R(_ArgTypes...)>::function(_F __f,
 template<class _R, class ..._ArgTypes>
 template <class _F, class _Alloc>
 function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc& __a0, _F __f,
-                                     typename enable_if<!is_integral<_F>::value>::type*)
+                                     typename enable_if<__callable<_F>::value>::type*)
     : __f_(0)
 {
     typedef allocator_traits<_Alloc> __alloc_traits;
@@ -1341,7 +1356,7 @@ template<class _R, class ..._ArgTypes>
 template <class _F>
 typename enable_if
 <
-    !is_integral<typename decay<_F>::type>::value,
+    function<_R(_ArgTypes...)>::template __callable<typename decay<_F>::type>::value,
     function<_R(_ArgTypes...)>&
 >::type
 function<_R(_ArgTypes...)>::operator=(_F&& __f)
