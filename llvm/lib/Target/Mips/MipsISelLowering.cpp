@@ -763,7 +763,7 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   // prevent MachineLICM pass to hoist "or" instruction out of the block
   // loopMBB.
 
-  int fi;
+  int fi = 0;
   if (BinOpcode == 0 && !Nand) {
     // Get or create a temporary stack location.
     MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
@@ -897,7 +897,8 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
     BuildMI(BB, dl, TII->get(Mips::ANDi), Tmp5).addReg(Tmp4).addImm(MaskImm);
     BuildMI(BB, dl, TII->get(Mips::SLL), Incr2).addReg(Tmp5).addReg(Shift);
   }
-  int fi;
+
+  int fi = 0;
   if (BinOpcode == 0 && !Nand) {
     // Get or create a temporary stack location.
     MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
