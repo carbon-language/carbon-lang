@@ -1621,6 +1621,16 @@ llvm::DISubprogram CGDebugInfo::getFunctionDeclaration(const Decl *D) {
   return llvm::DISubprogram();
 }
 
+// getOrCreateFunctionType - Construct DIType. If it is a c++ method, include
+// implicit parameter "this".
+llvm::DIType CGDebugInfo::getOrCreateFunctionType(const Decl * D, QualType FnType,
+                                                  llvm::DIFile F) {
+  if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
+    return getOrCreateMethodType(Method, F);
+
+  return getOrCreateType(FnType, F);
+}
+
 /// EmitFunctionStart - Constructs the debug code for entering a function -
 /// "llvm.dbg.func.start.".
 void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
@@ -1685,11 +1695,10 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   unsigned LineNo = getLineNumber(CurLoc);
   if (D->isImplicit())
     Flags |= llvm::DIDescriptor::FlagArtificial;
-  llvm::DIType SPTy = getOrCreateType(FnType, Unit);
   llvm::DISubprogram SPDecl = getFunctionDeclaration(D);
   llvm::DISubprogram SP =
     DBuilder.createFunction(FDContext, Name, LinkageName, Unit,
-                            LineNo, SPTy,
+                            LineNo, getOrCreateFunctionType(D, FnType, Unit),
                             Fn->hasInternalLinkage(), true/*definition*/,
                             Flags, CGM.getLangOptions().Optimize, Fn,
                             TParamsArray, SPDecl);
