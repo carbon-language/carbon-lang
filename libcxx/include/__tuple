@@ -102,15 +102,15 @@ get(pair<_T1, _T2>&&) _NOEXCEPT;
 
 template <size_t _Ip, class _Tp, size_t _Size>
 _Tp&
-get(array<_Tp, _Size>&);
+get(array<_Tp, _Size>&) _NOEXCEPT;
 
 template <size_t _Ip, class _Tp, size_t _Size>
 const _Tp&
-get(const array<_Tp, _Size>&);
+get(const array<_Tp, _Size>&) _NOEXCEPT;
 
 template <size_t _Ip, class _Tp, size_t _Size>
 _Tp&&
-get(array<_Tp, _Size>&&);
+get(array<_Tp, _Size>&&) _NOEXCEPT;
 
 // __make_tuple_indices
 
