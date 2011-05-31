@@ -1645,6 +1645,9 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert1(isa<ConstantInt>(CI.getArgOperand(3)),
             "alignment argument of memory intrinsics must be a constant int",
             &CI);
+    Assert1(isa<ConstantInt>(CI.getArgOperand(4)),
+            "isvolatile argument of memory intrinsics must be a constant int",
+            &CI);
     break;
   case Intrinsic::gcroot:
   case Intrinsic::gcwrite:
