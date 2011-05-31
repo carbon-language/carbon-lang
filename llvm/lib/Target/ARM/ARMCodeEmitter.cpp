@@ -232,6 +232,8 @@ namespace {
                                             unsigned Op) const { return 0; }
     unsigned getMsbOpValue(const MachineInstr &MI,
                            unsigned Op) const { return 0; }
+    unsigned getSsatBitPosValue(const MachineInstr &MI,
+                                unsigned Op) const { return 0; }
     uint32_t getLdStmModeOpValue(const MachineInstr &MI, unsigned OpIdx)
       const {return 0; }
     uint32_t getLdStSORegOpValue(const MachineInstr &MI, unsigned OpIdx)

@@ -269,6 +269,9 @@ public:
   unsigned getMsbOpValue(const MCInst &MI, unsigned Op,
                          SmallVectorImpl<MCFixup> &Fixups) const;
 
+  unsigned getSsatBitPosValue(const MCInst &MI, unsigned Op,
+                              SmallVectorImpl<MCFixup> &Fixups) const;
+
   unsigned getRegisterListOpValue(const MCInst &MI, unsigned Op,
                                   SmallVectorImpl<MCFixup> &Fixups) const;
   unsigned getAddrMode6AddressOpValue(const MCInst &MI, unsigned Op,
@@ -1121,6 +1124,13 @@ getMsbOpValue(const MCInst &MI, unsigned Op,
   uint32_t msb = lsb+width-1;
   assert (width != 0 && msb < 32 && "Illegal bit width!");
   return msb;
+}
+
+unsigned ARMMCCodeEmitter::
+getSsatBitPosValue(const MCInst &MI, unsigned Op,
+                   SmallVectorImpl<MCFixup> &Fixups) const {
+  // For ssat instructions, the bit position should be encoded decremented by 1
+  return MI.getOperand(Op).getImm()-1;
 }
 
 unsigned ARMMCCodeEmitter::

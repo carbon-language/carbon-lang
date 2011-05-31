@@ -312,3 +312,6 @@
 @ CHECK: ldrexd  r0, r1, [r0] @ encoding: [0x9f,0x0f,0xb0,0xe1]
         ldrexd  r0, r1, [r0]
 
+@ CHECK: ssat16  r0, #7, r0 @ encoding: [0x30,0x0f,0xa6,0xe6]
+        ssat16  r0, #7, r0
+

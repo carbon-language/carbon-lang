@@ -300,3 +300,5 @@
   ldrex  r0, [r0]
 @ CHECK: ldrexd  r0, r1, [r0] @ encoding: [0xd0,0xe8,0x7f,0x01]
   ldrexd  r0, r1, [r0]
+@ CHECK: ssat16  r0, #7, r0 @ encoding: [0x20,0xf3,0x06,0x00]
+  ssat16  r0, #7, r0
