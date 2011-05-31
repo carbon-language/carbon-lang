@@ -6631,6 +6631,40 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
   return false;
 }
 
+/// InjectMicrosoftFriendForwardDeclaration - For compatibility with MSVC,
+/// a friend declaration also act as a forward declaration if the tag name
+/// is not already declared. The tag name is declared in the next outermost
+/// non record scope.
+/// Example:
+///
+/// class A {
+///   friend class B;
+///   B* b;
+///  };
+///  B* global_b;
+ 
+void Sema::InjectMicrosoftFriendForwardDeclaration(unsigned TagSpec,
+                                                   SourceLocation KWLoc,
+                                                   IdentifierInfo *Name,
+                                                   SourceLocation NameLoc) {
+  NamedDecl *N = LookupSingleName(getCurScope(), Name, NameLoc,
+                                  Sema::LookupTagName);
+  if (!N) {
+    DeclContext *ContextToAdd = CurContext;
+    while (ContextToAdd->isRecord())
+      ContextToAdd = ContextToAdd->getParent();
+
+    TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
+    TagDecl *New = CXXRecordDecl::Create(Context, Kind, ContextToAdd, KWLoc,
+                                         NameLoc, Name, 0);
+    if (getCurScope()->getFnParent())
+      PushOnScopeChains(New, getScopeForContext(ContextToAdd), true);
+    else
+      ContextToAdd->addDecl(New);
+  } 
+}
+
+
 /// ActOnTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagSpec indicates what kind of tag this is. TUK indicates whether this is a
@@ -6647,6 +6681,9 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   assert((Name != 0 || TUK == TUK_Definition) &&
          "Nameless record must be a definition!");
   assert(TemplateParameterLists.size() == 0 || TUK != TUK_Reference);
+
+  if (getLangOptions().Microsoft && TUK == Sema::TUK_Friend)
+    InjectMicrosoftFriendForwardDeclaration(TagSpec, KWLoc, Name, NameLoc);
 
   OwnedDecl = false;
   TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForTypeSpec(TagSpec);
