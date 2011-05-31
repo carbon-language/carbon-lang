@@ -1084,11 +1084,6 @@ public:
                  bool &OwnedDecl, bool &IsDependent, bool ScopedEnum,
                  bool ScopedEnumUsesClassTag, TypeResult UnderlyingType);
 
-  void InjectMicrosoftFriendForwardDeclaration(unsigned TagSpec,
-                                               SourceLocation KWLoc,
-                                               IdentifierInfo *Name,
-                                               SourceLocation NameLoc);
-
   Decl *ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
                                 unsigned TagSpec, SourceLocation TagLoc,
                                 CXXScopeSpec &SS,
