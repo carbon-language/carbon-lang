@@ -34,7 +34,7 @@ template<typename ValueSubClass, typename ItemParentClass>
 //===----------------------------------------------------------------------===//
 /// MDString - a single uniqued string.
 /// These are used to efficiently contain a byte sequence for metadata.
-/// MDString is always unnamd.
+/// MDString is always unnamed.
 class MDString : public Value {
   MDString(const MDString &);            // DO NOT IMPLEMENT
 

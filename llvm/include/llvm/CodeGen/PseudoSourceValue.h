@@ -21,7 +21,7 @@ namespace llvm {
   class raw_ostream;
 
   /// PseudoSourceValue - Special value supplied for machine level alias
-  /// analysis. It indicates that the a memory access references the functions
+  /// analysis. It indicates that a memory access references the functions
   /// stack frame (e.g., a spill slot), below the stack frame (e.g., argument
   /// space), or constant pool.
   class PseudoSourceValue : public Value {
