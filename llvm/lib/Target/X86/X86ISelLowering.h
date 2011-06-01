@@ -94,11 +94,6 @@ namespace llvm {
       // one's or all zero's.
       SETCC_CARRY,  // R = carry_bit ? ~0 : 0
 
-      /// X86 FP SETCC, implemented with CMP{cc}SS/CMP{cc}SD.
-      /// Operands are two FP values to compare; result is a mask of
-      /// 0s or 1s.  Generally DTRT for C/C++ with NaNs.
-      FSETCCss, FSETCCsd,
-
       /// X86 MOVMSK{pd|ps}, extracts sign bits of two or four FP values,
       /// result in an integer GPR.  Needs masking for scalar result.
       FGETSIGNx86,
