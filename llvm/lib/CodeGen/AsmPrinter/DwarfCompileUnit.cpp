@@ -609,16 +609,17 @@ void CompileUnit::addType(DIE *Entity, DIType Ty) {
 
   // If this is a complete composite type then include it in the
   // list of global types.
-  addGlobalType(Ty, Entry->getEntry());
+  addGlobalType(Ty);
 }
 
 /// addGlobalType - Add a new global type to the compile unit.
 ///
-void CompileUnit::addGlobalType(DIType Ty, DIE *Die) {
+void CompileUnit::addGlobalType(DIType Ty) {
   DIDescriptor Context = Ty.getContext();
   if (Ty.isCompositeType() && !Ty.getName().empty() && !Ty.isForwardDecl() 
       && (Context.isCompileUnit() || Context.isFile() || Context.isNameSpace()))
-    GlobalTypes[Ty.getName()] = Die;
+    if (DIEEntry *Entry = getDIEEntry(Ty))
+      GlobalTypes[Ty.getName()] = Entry->getEntry();
 }
 
 /// addPubTypes - Add type for pubtypes section.
@@ -633,7 +634,7 @@ void CompileUnit::addPubTypes(DISubprogram SP) {
     DIType ATy(Args.getElement(i));
     if (!ATy.Verify())
       continue;
-    addGlobalType(ATy, getDIEEntry(ATy)->getEntry());
+    addGlobalType(ATy);
   }
 }
 
