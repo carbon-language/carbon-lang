@@ -20,7 +20,7 @@ else:
 # print "output_name is '" + output_name + "'"
 
 #
-# lldb_iter() should appear before the our first SB* class definition.
+# lldb_iter() should appear before our first SB* class definition.
 #
 lldb_iter_def = '''
 # ===================================
