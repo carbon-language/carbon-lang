@@ -224,38 +224,38 @@ bool DAGTypeLegalizer::run() {
       switch (getTypeAction(ResultVT)) {
       default:
         assert(false && "Unknown action!");
-      case Legal:
+      case TargetLowering::TypeLegal:
         break;
       // The following calls must take care of *all* of the node's results,
       // not just the illegal result they were passed (this includes results
       // with a legal type).  Results can be remapped using ReplaceValueWith,
       // or their promoted/expanded/etc values registered in PromotedIntegers,
       // ExpandedIntegers etc.
-      case PromoteInteger:
+      case TargetLowering::TypePromoteInteger:
         PromoteIntegerResult(N, i);
         Changed = true;
         goto NodeDone;
-      case ExpandInteger:
+      case TargetLowering::TypeExpandInteger:
         ExpandIntegerResult(N, i);
         Changed = true;
         goto NodeDone;
-      case SoftenFloat:
+      case TargetLowering::TypeSoftenFloat:
         SoftenFloatResult(N, i);
         Changed = true;
         goto NodeDone;
-      case ExpandFloat:
+      case TargetLowering::TypeExpandFloat:
         ExpandFloatResult(N, i);
         Changed = true;
         goto NodeDone;
-      case ScalarizeVector:
+      case TargetLowering::TypeScalarizeVector:
         ScalarizeVectorResult(N, i);
         Changed = true;
         goto NodeDone;
-      case SplitVector:
+      case TargetLowering::TypeSplitVector:
         SplitVectorResult(N, i);
         Changed = true;
         goto NodeDone;
-      case WidenVector:
+      case TargetLowering::TypeWidenVector:
         WidenVectorResult(N, i);
         Changed = true;
         goto NodeDone;
@@ -277,36 +277,36 @@ ScanOperands:
       switch (getTypeAction(OpVT)) {
       default:
         assert(false && "Unknown action!");
-      case Legal:
+      case TargetLowering::TypeLegal:
         continue;
       // The following calls must either replace all of the node's results
       // using ReplaceValueWith, and return "false"; or update the node's
       // operands in place, and return "true".
-      case PromoteInteger:
+      case TargetLowering::TypePromoteInteger:
         NeedsReanalyzing = PromoteIntegerOperand(N, i);
         Changed = true;
         break;
-      case ExpandInteger:
+      case TargetLowering::TypeExpandInteger:
         NeedsReanalyzing = ExpandIntegerOperand(N, i);
         Changed = true;
         break;
-      case SoftenFloat:
+      case TargetLowering::TypeSoftenFloat:
         NeedsReanalyzing = SoftenFloatOperand(N, i);
         Changed = true;
         break;
-      case ExpandFloat:
+      case TargetLowering::TypeExpandFloat:
         NeedsReanalyzing = ExpandFloatOperand(N, i);
         Changed = true;
         break;
-      case ScalarizeVector:
+      case TargetLowering::TypeScalarizeVector:
         NeedsReanalyzing = ScalarizeVectorOperand(N, i);
         Changed = true;
         break;
-      case SplitVector:
+      case TargetLowering::TypeSplitVector:
         NeedsReanalyzing = SplitVectorOperand(N, i);
         Changed = true;
         break;
-      case WidenVector:
+      case TargetLowering::TypeWidenVector:
         NeedsReanalyzing = WidenVectorOperand(N, i);
         Changed = true;
         break;

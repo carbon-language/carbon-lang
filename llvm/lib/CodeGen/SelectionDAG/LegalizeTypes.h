@@ -57,16 +57,6 @@ public:
     // 1+ - This is a node which has this many unprocessed operands.
   };
 private:
-  enum LegalizeAction {
-    Legal,           // The target natively supports this type.
-    PromoteInteger,  // Replace this integer type with a larger one.
-    ExpandInteger,   // Split this integer type into two of half the size.
-    SoftenFloat,     // Convert this float type to a same size integer type.
-    ExpandFloat,     // Split this float type into two of half the size.
-    ScalarizeVector, // Replace this one-element vector with its element type.
-    SplitVector,     // Split this vector type into two of half the size.
-    WidenVector      // This vector type should be widened into a larger vector.
-  };
 
   /// ValueTypeActions - This is a bitvector that contains two bits for each
   /// simple value type, where the two bits correspond to the LegalizeAction
@@ -74,27 +64,8 @@ private:
   TargetLowering::ValueTypeActionImpl ValueTypeActions;
 
   /// getTypeAction - Return how we should legalize values of this type.
-  LegalizeAction getTypeAction(EVT VT) const {
-    switch (TLI.getTypeAction(*DAG.getContext(), VT)) {
-    default:
-      assert(false && "Unknown legalize action!");
-    case TargetLowering::Legal:
-      return Legal;
-    case TargetLowering::TypePromoteInteger:
-      return PromoteInteger;
-    case TargetLowering::TypeExpandInteger:
-      return ExpandInteger;
-    case TargetLowering::TypeExpandFloat:
-      return ExpandFloat;
-    case TargetLowering::TypeSoftenFloat:
-        return SoftenFloat;
-    case TargetLowering::TypeWidenVector:
-      return WidenVector;
-    case TargetLowering::TypeScalarizeVector:
-      return ScalarizeVector;
-    case TargetLowering::TypeSplitVector:
-       return SplitVector;
-    }
+  TargetLowering::LegalizeTypeAction getTypeAction(EVT VT) const {
+    return TLI.getTypeAction(*DAG.getContext(), VT);
   }
 
   /// isTypeLegal - Return true if this type is legal on this target.

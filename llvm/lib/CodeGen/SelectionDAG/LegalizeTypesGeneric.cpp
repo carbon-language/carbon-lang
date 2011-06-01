@@ -43,36 +43,36 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
   switch (getTypeAction(InVT)) {
     default:
       assert(false && "Unknown type action!");
-    case Legal:
-    case PromoteInteger:
+    case TargetLowering::TypeLegal:
+    case TargetLowering::TypePromoteInteger:
       break;
-    case SoftenFloat:
+    case TargetLowering::TypeSoftenFloat:
       // Convert the integer operand instead.
       SplitInteger(GetSoftenedFloat(InOp), Lo, Hi);
       Lo = DAG.getNode(ISD::BITCAST, dl, NOutVT, Lo);
       Hi = DAG.getNode(ISD::BITCAST, dl, NOutVT, Hi);
       return;
-    case ExpandInteger:
-    case ExpandFloat:
+    case TargetLowering::TypeExpandInteger:
+    case TargetLowering::TypeExpandFloat:
       // Convert the expanded pieces of the input.
       GetExpandedOp(InOp, Lo, Hi);
       Lo = DAG.getNode(ISD::BITCAST, dl, NOutVT, Lo);
       Hi = DAG.getNode(ISD::BITCAST, dl, NOutVT, Hi);
       return;
-    case SplitVector:
+    case TargetLowering::TypeSplitVector:
       GetSplitVector(InOp, Lo, Hi);
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);
       Lo = DAG.getNode(ISD::BITCAST, dl, NOutVT, Lo);
       Hi = DAG.getNode(ISD::BITCAST, dl, NOutVT, Hi);
       return;
-    case ScalarizeVector:
+    case TargetLowering::TypeScalarizeVector:
       // Convert the element instead.
       SplitInteger(BitConvertToInteger(GetScalarizedVector(InOp)), Lo, Hi);
       Lo = DAG.getNode(ISD::BITCAST, dl, NOutVT, Lo);
       Hi = DAG.getNode(ISD::BITCAST, dl, NOutVT, Hi);
       return;
-    case WidenVector: {
+    case TargetLowering::TypeWidenVector: {
       assert(!(InVT.getVectorNumElements() & 1) && "Unsupported BITCAST");
       InOp = GetWidenedVector(InOp);
       EVT InNVT = EVT::getVectorVT(*DAG.getContext(), InVT.getVectorElementType(),

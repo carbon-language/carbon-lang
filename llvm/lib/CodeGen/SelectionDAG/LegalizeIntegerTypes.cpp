@@ -174,24 +174,24 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
   default:
     assert(false && "Unknown type action!");
     break;
-  case Legal:
+  case TargetLowering::TypeLegal:
     break;
-  case PromoteInteger:
+  case TargetLowering::TypePromoteInteger:
     if (NOutVT.bitsEq(NInVT))
       // The input promotes to the same size.  Convert the promoted value.
       return DAG.getNode(ISD::BITCAST, dl, NOutVT, GetPromotedInteger(InOp));
     break;
-  case SoftenFloat:
+  case TargetLowering::TypeSoftenFloat:
     // Promote the integer operand by hand.
     return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT, GetSoftenedFloat(InOp));
-  case ExpandInteger:
-  case ExpandFloat:
+  case TargetLowering::TypeExpandInteger:
+  case TargetLowering::TypeExpandFloat:
     break;
-  case ScalarizeVector:
+  case TargetLowering::TypeScalarizeVector:
     // Convert the element to an integer and promote it by hand.
     return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
                        BitConvertToInteger(GetScalarizedVector(InOp)));
-  case SplitVector: {
+  case TargetLowering::TypeSplitVector: {
     // For example, i32 = BITCAST v2i16 on alpha.  Convert the split
     // pieces of the input into integers and reassemble in the final type.
     SDValue Lo, Hi;
@@ -208,7 +208,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
                        JoinIntegers(Lo, Hi));
     return DAG.getNode(ISD::BITCAST, dl, NOutVT, InOp);
   }
-  case WidenVector:
+  case TargetLowering::TypeWidenVector:
     if (OutVT.bitsEq(NInVT))
       // The input is widened to the same size.  Convert to the widened value.
       return DAG.getNode(ISD::BITCAST, dl, OutVT, GetWidenedVector(InOp));
@@ -342,7 +342,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_INT_EXTEND(SDNode *N) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   DebugLoc dl = N->getDebugLoc();
 
-  if (getTypeAction(N->getOperand(0).getValueType()) == PromoteInteger) {
+  if (getTypeAction(N->getOperand(0).getValueType())
+      == TargetLowering::TypePromoteInteger) {
     SDValue Res = GetPromotedInteger(N->getOperand(0));
     assert(Res.getValueType().bitsLE(NVT) && "Extension doesn't make sense!");
 
@@ -507,11 +508,11 @@ SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
 
   switch (getTypeAction(N->getOperand(0).getValueType())) {
   default: llvm_unreachable("Unknown type action!");
-  case Legal:
-  case ExpandInteger:
+  case TargetLowering::TypeLegal:
+  case TargetLowering::TypeExpandInteger:
     Res = N->getOperand(0);
     break;
-  case PromoteInteger:
+  case TargetLowering::TypePromoteInteger:
     Res = GetPromotedInteger(N->getOperand(0));
     break;
   }
@@ -1513,7 +1514,8 @@ void DAGTypeLegalizer::ExpandIntRes_ANY_EXTEND(SDNode *N,
   } else {
     // For example, extension of an i48 to an i64.  The operand type necessarily
     // promotes to the result type, so will end up being expanded too.
-    assert(getTypeAction(Op.getValueType()) == PromoteInteger &&
+    assert(getTypeAction(Op.getValueType()) ==
+           TargetLowering::TypePromoteInteger &&
            "Only know how to promote this result!");
     SDValue Res = GetPromotedInteger(Op);
     assert(Res.getValueType() == N->getValueType(0) &&
@@ -2030,7 +2032,8 @@ void DAGTypeLegalizer::ExpandIntRes_SIGN_EXTEND(SDNode *N,
   } else {
     // For example, extension of an i48 to an i64.  The operand type necessarily
     // promotes to the result type, so will end up being expanded too.
-    assert(getTypeAction(Op.getValueType()) == PromoteInteger &&
+    assert(getTypeAction(Op.getValueType()) ==
+           TargetLowering::TypePromoteInteger &&
            "Only know how to promote this result!");
     SDValue Res = GetPromotedInteger(Op);
     assert(Res.getValueType() == N->getValueType(0) &&
@@ -2178,7 +2181,8 @@ void DAGTypeLegalizer::ExpandIntRes_ZERO_EXTEND(SDNode *N,
   } else {
     // For example, extension of an i48 to an i64.  The operand type necessarily
     // promotes to the result type, so will end up being expanded too.
-    assert(getTypeAction(Op.getValueType()) == PromoteInteger &&
+    assert(getTypeAction(Op.getValueType()) ==
+           TargetLowering::TypePromoteInteger &&
            "Only know how to promote this result!");
     SDValue Res = GetPromotedInteger(Op);
     assert(Res.getValueType() == N->getValueType(0) &&
