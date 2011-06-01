@@ -34,9 +34,16 @@ LLDB_SWIG_INCLUDE_DIRS += -I"/usr/include"
 
 LLDBWrapPython.cpp:
 	$(Echo) Generating LLDBWrapPython.cpp
-	$(Verb) swig -c++ -classic -shadow -python $(LLDB_SWIG_INCLUDE_DIRS) \
+	$(Verb) swig -c++ -shadow -python $(LLDB_SWIG_INCLUDE_DIRS) \
           -D__STDC_LIMIT_MACROS -outdir "$(LLDB_BIN_DIR)"   \
           -o LLDBWrapPython.cpp "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/lldb.swig"
+	$(Verb) python "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py" \
+		  "$(LLDB_BIN_DIR)"
+	$(Verb) python "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py" \
+		  "$(PROJ_OBJ_DIR)"
+	$(Verb) if test -f "$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.edited"; then \
+		  mv "$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.edited" \
+			 "$(PROJ_OBJ_DIR)/LLDBWrapPython.cpp"; fi
 	$(Verb) cp "$(PROJ_SRC_DIR)/embedded_interpreter.py" "$(PYTHON_DIR)"
 
 install-local:: $(PYTHON_DIR)/lldb.py $(PYTHON_DIR)/embedded_interpreter.py $(LIBLLDB)

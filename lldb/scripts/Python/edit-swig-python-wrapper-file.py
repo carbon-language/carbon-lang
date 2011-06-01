@@ -20,7 +20,7 @@
 # That's what this python script does.
 #
 
-import os
+import os, sys
 
 include_python = '#include <Python.h>'
 include_python_ifdef = '''#if defined (__APPLE__)
@@ -30,8 +30,12 @@ include_python_ifdef = '''#if defined (__APPLE__)
 #endif
 '''
 
-input_dir_name = os.environ["SRCROOT"]
-full_input_name = input_dir_name + "/source/LLDBWrapPython.cpp"
+if len (sys.argv) > 1:
+    input_dir_name = sys.argv[1]
+    full_input_name = input_dir_name + "/LLDBWrapPython.cpp"
+else:
+    input_dir_name = os.environ["SRCROOT"]
+    full_input_name = input_dir_name + "/source/LLDBWrapPython.cpp"
 full_output_name = full_input_name + ".edited"
 
 with open(full_input_name, 'r') as f_in:
