@@ -937,6 +937,9 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
   SmallVector<BasicBlock*, 32> Worklist;
   Worklist.push_back(StartBB);
   
+  // PredList used inside loop.
+  SmallVector<std::pair<BasicBlock*, PHITransAddr>, 16> PredList;
+
   // Keep track of the entries that we know are sorted.  Previously cached
   // entries will all be sorted.  The entries we add we only sort on demand (we
   // don't insert every element into its sorted position).  We know that we
@@ -973,22 +976,29 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     // the same Pointer.
     if (!Pointer.NeedsPHITranslationFromBlock(BB)) {
       SkipFirstBlock = false;
+      SmallVector<BasicBlock*, 16> NewBlocks;
       for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
         // Verify that we haven't looked at this block yet.
         std::pair<DenseMap<BasicBlock*,Value*>::iterator, bool>
           InsertRes = Visited.insert(std::make_pair(*PI, Pointer.getAddr()));
         if (InsertRes.second) {
           // First time we've looked at *PI.
-          Worklist.push_back(*PI);
+          NewBlocks.push_back(*PI);
           continue;
         }
         
         // If we have seen this block before, but it was with a different
         // pointer then we have a phi translation failure and we have to treat
         // this as a clobber.
-        if (InsertRes.first->second != Pointer.getAddr())
+        if (InsertRes.first->second != Pointer.getAddr()) {
+          // Make sure to clean up the Visited map before continuing on to
+          // PredTranslationFailure.
+          for (unsigned i = 0; i < NewBlocks.size(); i++)
+            Visited.erase(NewBlocks[i]);
           goto PredTranslationFailure;
+        }
       }
+      Worklist.append(NewBlocks.begin(), NewBlocks.end());
       continue;
     }
     
@@ -1007,13 +1017,15 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       NumSortedEntries = Cache->size();
     }
     Cache = 0;
-    
+
+    PredList.clear();
     for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
       BasicBlock *Pred = *PI;
-      
+      PredList.push_back(std::make_pair(Pred, Pointer));
+
       // Get the PHI translated pointer in this predecessor.  This can fail if
       // not translatable, in which case the getAddr() returns null.
-      PHITransAddr PredPointer(Pointer);
+      PHITransAddr &PredPointer = PredList.back().second;
       PredPointer.PHITranslateValue(BB, Pred, 0);
 
       Value *PredPtrVal = PredPointer.getAddr();
@@ -1027,6 +1039,9 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         InsertRes = Visited.insert(std::make_pair(Pred, PredPtrVal));
 
       if (!InsertRes.second) {
+        // We found the pred; take it off the list of preds to visit.
+        PredList.pop_back();
+
         // If the predecessor was visited with PredPtr, then we already did
         // the analysis and can ignore it.
         if (InsertRes.first->second == PredPtrVal)
@@ -1035,14 +1050,47 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         // Otherwise, the block was previously analyzed with a different
         // pointer.  We can't represent the result of this case, so we just
         // treat this as a phi translation failure.
+
+        // Make sure to clean up the Visited map before continuing on to
+        // PredTranslationFailure.
+        for (unsigned i = 0; i < PredList.size(); i++)
+          Visited.erase(PredList[i].first);
+
         goto PredTranslationFailure;
       }
-      
+    }
+
+    // Actually process results here; this need to be a separate loop to avoid
+    // calling getNonLocalPointerDepFromBB for blocks we don't want to return
+    // any results for.  (getNonLocalPointerDepFromBB will modify our 
+    // datastructures in ways the code after the PredTranslationFailure label
+    // doesn't expect.)
+    for (unsigned i = 0; i < PredList.size(); i++) {
+      BasicBlock *Pred = PredList[i].first;
+      PHITransAddr &PredPointer = PredList[i].second;
+      Value *PredPtrVal = PredPointer.getAddr();
+
+      bool CanTranslate = true;
       // If PHI translation was unable to find an available pointer in this
       // predecessor, then we have to assume that the pointer is clobbered in
       // that predecessor.  We can still do PRE of the load, which would insert
       // a computation of the pointer in this predecessor.
-      if (PredPtrVal == 0) {
+      if (PredPtrVal == 0)
+        CanTranslate = false;
+
+      // FIXME: it is entirely possible that PHI translating will end up with
+      // the same value.  Consider PHI translating something like:
+      // X = phi [x, bb1], [y, bb2].  PHI translating for bb1 doesn't *need*
+      // to recurse here, pedantically speaking.
+
+      // If getNonLocalPointerDepFromBB fails here, that means the cached
+      // result conflicted with the Visited list; we have to conservatively
+      // assume a clobber, but this also does not block PRE of the load.
+      if (!CanTranslate ||
+          getNonLocalPointerDepFromBB(PredPointer,
+                                      Loc.getWithNewPtr(PredPtrVal),
+                                      isLoad, Pred,
+                                      Result, Visited)) {
         // Add the entry to the Result list.
         NonLocalDepResult Entry(Pred,
                                 MemDepResult::getClobber(Pred->getTerminator()),
@@ -1058,19 +1106,6 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
         NLPI.Pair = BBSkipFirstBlockPair();
         continue;
       }
-
-      // FIXME: it is entirely possible that PHI translating will end up with
-      // the same value.  Consider PHI translating something like:
-      // X = phi [x, bb1], [y, bb2].  PHI translating for bb1 doesn't *need*
-      // to recurse here, pedantically speaking.
-      
-      // If we have a problem phi translating, fall through to the code below
-      // to handle the failure condition.
-      if (getNonLocalPointerDepFromBB(PredPointer,
-                                      Loc.getWithNewPtr(PredPointer.getAddr()),
-                                      isLoad, Pred,
-                                      Result, Visited))
-        goto PredTranslationFailure;
     }
     
     // Refresh the CacheInfo/Cache pointer so that it isn't invalidated.
@@ -1087,6 +1122,9 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
     continue;
 
   PredTranslationFailure:
+    // The following code is "failure"; we can't produce a sane translation
+    // for the given block.  It assumes that we haven't modified any of
+    // our datastructures while processing the current block.
     
     if (Cache == 0) {
       // Refresh the CacheInfo/Cache pointer if it got invalidated.
