@@ -574,6 +574,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
 
+    // Lower this to FGETSIGNx86 plus an AND.
+    setOperationAction(ISD::FGETSIGN, MVT::i64, Custom);
+    setOperationAction(ISD::FGETSIGN, MVT::i32, Custom);
+
     // We don't support sin/cos/fmod
     setOperationAction(ISD::FSIN , MVT::f64, Expand);
     setOperationAction(ISD::FCOS , MVT::f64, Expand);
@@ -7215,6 +7219,17 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::FOR, dl, VT, Val, SignBit);
 }
 
+SDValue X86TargetLowering::LowerFGETSIGN(SDValue Op, SelectionDAG &DAG) const {
+  SDValue N0 = Op.getOperand(0);
+  DebugLoc dl = Op.getDebugLoc();
+  EVT VT = Op.getValueType();
+
+  // Lower ISD::FGETSIGN to (AND (X86ISD::FGETSIGNx86 ...) 1).
+  SDValue xFGETSIGN = DAG.getNode(X86ISD::FGETSIGNx86, dl, VT, N0,
+                                  DAG.getConstant(1, VT));
+  return DAG.getNode(ISD::AND, dl, VT, xFGETSIGN, DAG.getConstant(1, VT));
+}
+
 /// Emit nodes that will be selected as "test Op0,Op0", or something
 /// equivalent.
 SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
@@ -9186,6 +9201,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FABS:               return LowerFABS(Op, DAG);
   case ISD::FNEG:               return LowerFNEG(Op, DAG);
   case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
+  case ISD::FGETSIGN:           return LowerFGETSIGN(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::VSETCC:             return LowerVSETCC(Op, DAG);
   case ISD::SELECT:             return LowerSELECT(Op, DAG);

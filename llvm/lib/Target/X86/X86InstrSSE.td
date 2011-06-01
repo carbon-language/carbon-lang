@@ -1327,11 +1327,6 @@ multiclass sse12_extr_sign_mask<RegisterClass RC, Intrinsic Int, string asm,
 }
 
 // Mask creation
-defm MOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps, "movmskps",
-                                     SSEPackedSingle>, TB;
-defm MOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd, "movmskpd",
-                                     SSEPackedDouble>, TB, OpSize;
-
 defm VMOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps,
                                       "movmskps", SSEPackedSingle>, VEX;
 defm VMOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd,
@@ -1342,6 +1337,24 @@ defm VMOVMSKPSY : sse12_extr_sign_mask<VR256, int_x86_avx_movmsk_ps_256,
 defm VMOVMSKPDY : sse12_extr_sign_mask<VR256, int_x86_avx_movmsk_pd_256,
                                       "movmskpd", SSEPackedDouble>, OpSize,
                                       VEX;
+defm MOVMSKPS : sse12_extr_sign_mask<VR128, int_x86_sse_movmsk_ps, "movmskps",
+                                     SSEPackedSingle>, TB;
+defm MOVMSKPD : sse12_extr_sign_mask<VR128, int_x86_sse2_movmsk_pd, "movmskpd",
+                                     SSEPackedDouble>, TB, OpSize;
+
+// X86fgetsign
+def MOVMSKPDrr32_alt : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins FR64:$src),
+                    "movmskpd\t{$src, $dst|$dst, $src}",
+                    [(set GR32:$dst, (X86fgetsign FR64:$src))], SSEPackedDouble>, TB, OpSize;
+def MOVMSKPDrr64_alt : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins FR64:$src),
+                    "movmskpd\t{$src, $dst|$dst, $src}",
+                    [(set GR64:$dst, (X86fgetsign FR64:$src))], SSEPackedDouble>, TB, OpSize;
+def MOVMSKPSrr32_alt : PI<0x50, MRMSrcReg, (outs GR32:$dst), (ins FR32:$src),
+                    "movmskps\t{$src, $dst|$dst, $src}",
+                    [(set GR32:$dst, (X86fgetsign FR32:$src))], SSEPackedSingle>, TB;
+def MOVMSKPSrr64_alt : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins FR32:$src),
+                    "movmskps\t{$src, $dst|$dst, $src}",
+                    [(set GR64:$dst, (X86fgetsign FR32:$src))], SSEPackedSingle>, TB;
 
 // Assembler Only
 def VMOVMSKPSr64r : PI<0x50, MRMSrcReg, (outs GR64:$dst), (ins VR128:$src),
