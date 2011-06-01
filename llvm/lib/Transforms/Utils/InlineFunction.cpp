@@ -214,13 +214,24 @@ BasicBlock *InvokeInliningInfo::getInnerUnwindDest() {
 /// at the end of the given block, as a branch to the inner unwind
 /// block.  Returns true if the call was forwarded.
 bool InvokeInliningInfo::forwardEHResume(CallInst *call, BasicBlock *src) {
+  // First, check whether this is a call to the intrinsic.
   Function *fn = dyn_cast<Function>(call->getCalledValue());
   if (!fn || fn->getName() != "llvm.eh.resume")
     return false;
+  
+  // At this point, we need to return true on all paths, because
+  // otherwise we'll construct an invoke of the intrinsic, which is
+  // not well-formed.
 
-  // If this fails, maybe it should be a fatal error.
+  // Try to find or make an inner unwind dest, which will fail if we
+  // can't find a selector call for the outer unwind dest.
   BasicBlock *dest = getInnerUnwindDest();
-  if (!dest) return false;
+  bool hasSelector = (dest != 0);
+
+  // If we failed, just use the outer unwind dest, dropping the
+  // exception and selector on the floor.
+  if (!hasSelector)
+    dest = OuterUnwindDest;
 
   // Make a branch.
   BranchInst::Create(dest, src);
@@ -228,8 +239,11 @@ bool InvokeInliningInfo::forwardEHResume(CallInst *call, BasicBlock *src) {
   // Update the phis in the destination.  They were inserted in an
   // order which makes this work.
   addIncomingPHIValuesForInto(src, dest);
-  InnerExceptionPHI->addIncoming(call->getArgOperand(0), src);
-  InnerSelectorPHI->addIncoming(call->getArgOperand(1), src);
+
+  if (hasSelector) {
+    InnerExceptionPHI->addIncoming(call->getArgOperand(0), src);
+    InnerSelectorPHI->addIncoming(call->getArgOperand(1), src);
+  }
 
   return true;
 }

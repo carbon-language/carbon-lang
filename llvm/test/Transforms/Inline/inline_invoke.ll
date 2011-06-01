@@ -4,7 +4,7 @@
 ; by appending selectors and forwarding _Unwind_Resume directly to the
 ; enclosing landing pad.
 
-;; Test 1 - basic functionality.
+;; Test 0 - basic functionality.
 
 %struct.A = type { i8 }
 
@@ -112,7 +112,7 @@ eh.resume:
 ; CHECK-NEXT: call i32 @llvm.eh.typeid.for(
 
 
-;; Test 2 - Correctly handle phis in outer landing pads.
+;; Test 1 - Correctly handle phis in outer landing pads.
 
 define void @test1_out() uwtable ssp {
 entry:
@@ -216,3 +216,30 @@ eh.resume:
 ; CHECK:      call void @use(i32 [[YJ1]])
 
 ; CHECK:      call void @llvm.eh.resume(i8* [[EXNJ1]], i32 [[SELJ1]])
+
+;; Test 2 - Don't make invalid IR for inlines into landing pads without eh.exception calls
+
+define void @test2_out() uwtable ssp {
+entry:
+  invoke void @test0_in()
+          to label %ret unwind label %lpad
+
+ret:
+  ret void
+
+lpad:
+  call void @_ZSt9terminatev()
+  unreachable
+}
+
+; CHECK: define void @test2_out()
+; CHECK:      [[A:%.*]] = alloca %struct.A,
+; CHECK:      [[B:%.*]] = alloca %struct.A,
+; CHECK:      invoke void @_ZN1AC1Ev(%struct.A* [[A]])
+; CHECK-NEXT:   unwind label %[[LPAD:[^\s]+]]
+; CHECK:      invoke void @_ZN1AC1Ev(%struct.A* [[B]])
+; CHECK-NEXT:   unwind label %[[LPAD2:[^\s]+]]
+; CHECK:      invoke void @_ZN1AD1Ev(%struct.A* [[B]])
+; CHECK-NEXT:   unwind label %[[LPAD2]]
+; CHECK:      invoke void @_ZN1AD1Ev(%struct.A* [[A]])
+; CHECK-NEXT:   unwind label %[[LPAD]]
