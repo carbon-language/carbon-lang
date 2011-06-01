@@ -182,6 +182,12 @@ public:
     return false;
   }
 
+  /// hasSubClassEq - Returns true if RC is a subclass of or equal to this
+  /// class.
+  bool hasSubClassEq(const TargetRegisterClass *RC) const {
+    return RC == this || hasSubClass(RC);
+  }
+
   /// subclasses_begin / subclasses_end - Loop over all of the classes
   /// that are proper subsets of this register class.
   sc_iterator subclasses_begin() const {
@@ -201,6 +207,12 @@ public:
       if (SuperClasses[i] == cs)
         return true;
     return false;
+  }
+
+  /// hasSuperClassEq - Returns true if RC is a superclass of or equal to this
+  /// class.
+  bool hasSuperClassEq(const TargetRegisterClass *RC) const {
+    return RC == this || hasSuperClass(RC);
   }
 
   /// superclasses_begin / superclasses_end - Loop over all of the classes
