@@ -53,3 +53,14 @@ namespace PR9328 {
 class foo  {
   operator int * const ();
 };
+
+namespace PR10057 {
+  struct S {
+    ~S();
+  };
+
+  template <class VarType>
+  void Test(const VarType& value) {
+    return S() = value;
+  }
+}

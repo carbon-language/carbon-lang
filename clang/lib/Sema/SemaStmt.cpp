@@ -1687,27 +1687,30 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   ReturnStmt *Result = 0;
   if (FnRetType->isVoidType()) {
-    if (RetValExp && !RetValExp->isTypeDependent()) {
-      // C99 6.8.6.4p1 (ext_ since GCC warns)
-      unsigned D = diag::ext_return_has_expr;
-      if (RetValExp->getType()->isVoidType())
-        D = diag::ext_return_has_void_expr;
-      else {
-        ExprResult Result = Owned(RetValExp);
-        Result = IgnoredValueConversions(Result.take());
-        if (Result.isInvalid())
-          return StmtError();
-        RetValExp = Result.take();
-        RetValExp = ImpCastExprToType(RetValExp, Context.VoidTy, CK_ToVoid).take();
-      }
+    if (RetValExp) {
+      if (!RetValExp->isTypeDependent()) {
+        // C99 6.8.6.4p1 (ext_ since GCC warns)
+        unsigned D = diag::ext_return_has_expr;
+        if (RetValExp->getType()->isVoidType())
+          D = diag::ext_return_has_void_expr;
+        else {
+          ExprResult Result = Owned(RetValExp);
+          Result = IgnoredValueConversions(Result.take());
+          if (Result.isInvalid())
+            return StmtError();
+          RetValExp = Result.take();
+          RetValExp = ImpCastExprToType(RetValExp,
+                                        Context.VoidTy, CK_ToVoid).take();
+        }
 
-      // return (some void expression); is legal in C++.
-      if (D != diag::ext_return_has_void_expr ||
-          !getLangOptions().CPlusPlus) {
-        NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
-        Diag(ReturnLoc, D)
-          << CurDecl->getDeclName() << isa<ObjCMethodDecl>(CurDecl)
-          << RetValExp->getSourceRange();
+        // return (some void expression); is legal in C++.
+        if (D != diag::ext_return_has_void_expr ||
+            !getLangOptions().CPlusPlus) {
+          NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
+          Diag(ReturnLoc, D)
+            << CurDecl->getDeclName() << isa<ObjCMethodDecl>(CurDecl)
+            << RetValExp->getSourceRange();
+        }
       }
 
       CheckImplicitConversions(RetValExp, ReturnLoc);
