@@ -661,6 +661,12 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       ScheduleNodeTopDown(FoundSUnit, CurCycle);
       HazardRec->EmitInstruction(FoundSUnit);
       CycleHasInsts = true;
+      if (HazardRec->atIssueLimit()) {
+        DEBUG(dbgs() << "*** Max instructions per cycle " << CurCycle << '\n');
+        HazardRec->AdvanceCycle();
+        ++CurCycle;
+        CycleHasInsts = false;
+      }
     } else {
       if (CycleHasInsts) {
         DEBUG(dbgs() << "*** Finished cycle " << CurCycle << '\n');
