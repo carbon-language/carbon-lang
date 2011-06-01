@@ -48,8 +48,8 @@
 #include "clang/Tooling/VariadicFunction.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/type_traits.h"
-#include <assert.h>
-#include <stdint.h>
+#include "llvm/Support/DataTypes.h"
+#include <cassert>
 #include <map>
 #include <string>
 #include <utility>
