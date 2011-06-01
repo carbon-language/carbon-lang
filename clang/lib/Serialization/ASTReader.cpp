@@ -1842,6 +1842,22 @@ MacroDefinition *ASTReader::getMacroDefinition(MacroID ID) {
   return MacroDefinitionsLoaded[ID - 1];
 }
 
+const FileEntry *ASTReader::getFileEntry(llvm::StringRef filenameStrRef) {
+  std::string Filename = filenameStrRef;
+  MaybeAddSystemRootToFilename(Filename);
+  const FileEntry *File = FileMgr.getFile(Filename);
+  if (File == 0 && !OriginalDir.empty() && !CurrentDir.empty() &&
+      OriginalDir != CurrentDir) {
+    std::string resolved = resolveFileRelativeToOriginalDir(Filename,
+                                                            OriginalDir,
+                                                            CurrentDir);
+    if (!resolved.empty())
+      File = FileMgr.getFile(resolved);
+  }
+
+  return File;
+}
+
 /// \brief If we are loading a relocatable PCH file, and the filename is
 /// not an absolute path, add the system root to the beginning of the file
 /// name.
@@ -2351,6 +2367,79 @@ ASTReader::ReadASTBlock(PerFileData &F) {
   return Failure;
 }
 
+ASTReader::ASTReadResult ASTReader::validateFileEntries() {
+  for (unsigned CI = 0, CN = Chain.size(); CI != CN; ++CI) {
+    PerFileData *F = Chain[CI];
+    llvm::BitstreamCursor &SLocEntryCursor = F->SLocEntryCursor;
+
+    for (unsigned i = 0, e = F->LocalNumSLocEntries; i != e; ++i) {
+      SLocEntryCursor.JumpToBit(F->SLocOffsets[i]);
+      unsigned Code = SLocEntryCursor.ReadCode();
+      if (Code == llvm::bitc::END_BLOCK ||
+          Code == llvm::bitc::ENTER_SUBBLOCK ||
+          Code == llvm::bitc::DEFINE_ABBREV) {
+        Error("incorrectly-formatted source location entry in AST file");
+        return Failure;
+      }
+  
+      RecordData Record;
+      const char *BlobStart;
+      unsigned BlobLen;
+      switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+      default:
+        Error("incorrectly-formatted source location entry in AST file");
+        return Failure;
+  
+      case SM_SLOC_FILE_ENTRY: {
+        llvm::StringRef Filename(BlobStart, BlobLen);
+        const FileEntry *File = getFileEntry(Filename);
+
+        if (File == 0) {
+          std::string ErrorStr = "could not find file '";
+          ErrorStr += Filename;
+          ErrorStr += "' referenced by AST file";
+          Error(ErrorStr.c_str());
+          return IgnorePCH;
+        }
+  
+        if (Record.size() < 6) {
+          Error("source location entry is incorrect");
+          return Failure;
+        }
+
+        // The stat info from the FileEntry came from the cached stat
+        // info of the PCH, so we cannot trust it.
+        struct stat StatBuf;
+        if (::stat(File->getName(), &StatBuf) != 0) {
+          StatBuf.st_size = File->getSize();
+          StatBuf.st_mtime = File->getModificationTime();
+        }
+
+        if (((off_t)Record[4] != StatBuf.st_size
+#if !defined(LLVM_ON_WIN32)
+            // In our regression testing, the Windows file system seems to
+            // have inconsistent modification times that sometimes
+            // erroneously trigger this error-handling path.
+             || (time_t)Record[5] != StatBuf.st_mtime
+#endif
+            )) {
+          Error(diag::err_fe_pch_file_modified, Filename);
+          return IgnorePCH;
+        }
+
+        break;
+      }
+
+      case SM_SLOC_BUFFER_ENTRY:
+      case SM_SLOC_INSTANTIATION_ENTRY:
+        break;
+      }
+    }
+  }
+
+  return Success;
+}
+
 ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ASTFileType Type) {
   switch(ReadASTCore(FileName, Type)) {
@@ -2360,6 +2449,14 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   }
 
   // Here comes stuff that we only do once the entire chain is loaded.
+
+  if (!DisableValidation) {
+    switch(validateFileEntries()) {
+    case Failure: return Failure;
+    case IgnorePCH: return IgnorePCH;
+    case Success: break;
+    }
+  }
 
   // Allocate space for loaded slocentries, identifiers, decls and types.
   unsigned TotalNumIdentifiers = 0, TotalNumTypes = 0, TotalNumDecls = 0,
