@@ -328,6 +328,11 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_class
 
 #endif
 
+// is_same
+
+template <class _Tp, class _Up> struct _LIBCPP_VISIBLE is_same           : public false_type {};
+template <class _Tp>            struct _LIBCPP_VISIBLE is_same<_Tp, _Tp> : public true_type {};
+
 // is_function
 
 namespace __is_function_imp
@@ -340,7 +345,8 @@ template <class _Tp> _Tp&  __source();
 template <class _Tp, bool = is_class<_Tp>::value ||
                             is_union<_Tp>::value ||
                             is_void<_Tp>::value  ||
-                            is_reference<_Tp>::value>
+                            is_reference<_Tp>::value ||
+                            is_same<_Tp, nullptr_t>::value >
 struct __is_function
     : public integral_constant<bool, sizeof(__is_function_imp::__test<_Tp>(__is_function_imp::__source<_Tp>())) == 1>
     {};
@@ -590,11 +596,6 @@ template <class _Tp> struct _LIBCPP_VISIBLE remove_all_extents<_Tp[]>
     {typedef typename remove_all_extents<_Tp>::type type;};
 template <class _Tp, size_t _Np> struct _LIBCPP_VISIBLE remove_all_extents<_Tp[_Np]>
     {typedef typename remove_all_extents<_Tp>::type type;};
-
-// is_same
-
-template <class _Tp, class _Up> struct _LIBCPP_VISIBLE is_same           : public false_type {};
-template <class _Tp>            struct _LIBCPP_VISIBLE is_same<_Tp, _Tp> : public true_type {};
 
 // is_abstract
 
