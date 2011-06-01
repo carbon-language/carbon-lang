@@ -377,7 +377,12 @@ operator<=(const pair<_T1,_T2>& __x, const pair<_T1,_T2>& __y)
 
 template <class _T1, class _T2>
 inline _LIBCPP_INLINE_VISIBILITY
-void
+typename enable_if
+<
+    __is_swappable<_T1>::value &&
+    __is_swappable<_T2>::value,
+    void
+>::type
 swap(pair<_T1, _T2>& __x, pair<_T1, _T2>& __y)
                      _NOEXCEPT_((__is_nothrow_swappable<_T1>::value &&
                                  __is_nothrow_swappable<_T2>::value))

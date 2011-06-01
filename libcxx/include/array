@@ -270,7 +270,11 @@ operator>=(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 
 template <class _Tp, size_t _Size>
 _LIBCPP_INLINE_VISIBILITY inline
-void
+typename enable_if
+<
+    __is_swappable<_Tp>::value,
+    void
+>::type
 swap(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
                                   _NOEXCEPT_(__is_nothrow_swappable<_Tp>::value)
 {

@@ -587,7 +587,11 @@ public:
 
 template <class ..._Tp>
 inline _LIBCPP_INLINE_VISIBILITY
-void
+typename enable_if
+<
+    __all<__is_swappable<_Tp>::value...>::value,
+    void
+>::type
 swap(tuple<_Tp...>& __t, tuple<_Tp...>& __u)
                  _NOEXCEPT_(__all<__is_nothrow_swappable<_Tp>::value...>::value)
     {__t.swap(__u);}
