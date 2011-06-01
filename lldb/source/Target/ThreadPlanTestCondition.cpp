@@ -15,6 +15,7 @@
 // Project includes
 
 #include "lldb/lldb-private-log.h"
+#include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
@@ -109,22 +110,31 @@ ThreadPlanTestCondition::ShouldStop (Event *event_ptr)
         m_did_stop = true; 
     }
     
-    // Now we have to change the event to a breakpoint event and mark it up appropriately:
-    Process::ProcessEventData *new_data = new Process::ProcessEventData (m_thread.GetProcess().GetSP(), eStateStopped);
-    event_ptr->SetData(new_data);
-    event_ptr->SetType(Process::eBroadcastBitStateChanged);
-    SetStopInfo(StopInfo::CreateStopReasonWithBreakpointSiteID (m_thread, 
-                                                                m_break_loc_sp->GetBreakpointSite()->GetID(),
-                                                                m_did_stop));
-    if (m_did_stop)
+    // One tricky bit, somebody might have disabled/deleted the breakpoint while we were running this condition, if so we
+    // should just continue.  If the breakpoint gets disabled, then its "site" will be null'ed out, so we can't report
+    // this as a breakpoint event any more, since we can't reconstruct it's site.  So just pass the event on.
+    if (!m_break_loc_sp->IsEnabled())
     {
-        Process::ProcessEventData::SetRestartedInEvent (event_ptr, false);
+        m_did_stop = false;
     }
     else
     {
-        Process::ProcessEventData::SetRestartedInEvent (event_ptr, true);
+        // Now we have to change the event to a breakpoint event and mark it up appropriately:
+        Process::ProcessEventData *new_data = new Process::ProcessEventData (m_thread.GetProcess().GetSP(), eStateStopped);
+        event_ptr->SetData(new_data);
+        event_ptr->SetType(Process::eBroadcastBitStateChanged);
+        SetStopInfo(StopInfo::CreateStopReasonWithBreakpointSiteID (m_thread, 
+                                                                    m_break_loc_sp->GetBreakpointSite()->GetID(),
+                                                                    m_did_stop));
+        if (m_did_stop)
+        {
+            Process::ProcessEventData::SetRestartedInEvent (event_ptr, false);
+        }
+        else
+        {
+            Process::ProcessEventData::SetRestartedInEvent (event_ptr, true);
+        }
     }
-    
     SetPlanComplete();
     return m_did_stop;
 }
