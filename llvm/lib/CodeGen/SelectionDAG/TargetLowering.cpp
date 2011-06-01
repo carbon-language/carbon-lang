@@ -1759,11 +1759,14 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if (NewMask == APInt::getSignBit(Op.getValueType().getSizeInBits()) &&
         Op.getOperand(0).getValueType().isFloatingPoint() &&
         !Op.getOperand(0).getValueType().isVector()) {
-      if (isOperationLegalOrCustom(ISD::FGETSIGN, Op.getValueType())) {
+      if (isOperationLegalOrCustom(ISD::FGETSIGN, MVT::i32)) {
+        EVT Ty = (isOperationLegalOrCustom(ISD::FGETSIGN, Op.getValueType())) ?
+          Op.getValueType() : MVT::i32;
         // Make a FGETSIGN + SHL to move the sign bit into the appropriate
         // place.  We expect the SHL to be eliminated by other optimizations.
-        SDValue Sign = TLO.DAG.getNode(ISD::FGETSIGN, dl, Op.getValueType(),
-                                         Op.getOperand(0));
+        SDValue Sign = TLO.DAG.getNode(ISD::FGETSIGN, dl, Ty, Op.getOperand(0));
+        if (Ty != Op.getValueType())
+          Sign = TLO.DAG.getNode(ISD::ZERO_EXTEND, dl, Op.getValueType(), Sign);
         unsigned ShVal = Op.getValueType().getSizeInBits()-1;
         SDValue ShAmt = TLO.DAG.getConstant(ShVal, Op.getValueType());
         return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl,
