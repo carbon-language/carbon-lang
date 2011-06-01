@@ -114,6 +114,11 @@ static void AddLinkerInputs(const ToolChain &TC,
   // (constructed via -Xarch_).
   Args.AddAllArgValues(CmdArgs, options::OPT_Zlinker_input);
 
+  // Add our corresponding lib directory. This is necessary for finding libprofile_rt.a
+  // for example. This matches gcc's behaviour that adds
+  // -L<inst>/gcc/lib/gcc/<triple>/<ver> to the link line.
+  CmdArgs.push_back(Args.MakeArgString("-L" + TC.getDriver().Dir + "/../lib"));
+
   for (InputInfoList::const_iterator
          it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
     const InputInfo &II = *it;
