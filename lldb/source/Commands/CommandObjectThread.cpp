@@ -186,10 +186,10 @@ public:
             for (uint32_t i = 0; i < num_threads; i++)
             {
                 ThreadSP thread_sp = process->GetThreadList().GetThreadAtIndex(i);
-                if (thread_sp->GetStatus (strm,
-                                          m_options.m_start,
-                                          m_options.m_count,
-                                          num_frames_with_source))
+                if (!thread_sp->GetStatus (strm,
+                                           m_options.m_start,
+                                           m_options.m_count,
+                                           num_frames_with_source))
                 {
                     result.AppendErrorWithFormat ("error displaying backtrace for thread: \"0x%4.4x\"\n", i);
                     result.SetStatus (eReturnStatusFailed);
