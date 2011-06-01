@@ -2,6 +2,7 @@
 // RUN: mkdir %t
 // RUN: echo '[{"directory":".","command":"clang++ '$(llvm-config --cppflags all)' -c %s","file":"%s"}]' > %t/compile_commands.json
 // RUN: remove-cstr-calls %t %s | FileCheck %s
+// XFAIL: *
 
 #include <string>
 
