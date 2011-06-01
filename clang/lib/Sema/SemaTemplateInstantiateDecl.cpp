@@ -2239,6 +2239,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
     }
     Expr *NoexceptExpr = 0;
     if (Expr *OldNoexceptExpr = Proto->getNoexceptExpr()) {
+      EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
       ExprResult E = SemaRef.SubstExpr(OldNoexceptExpr, TemplateArgs);
       if (E.isUsable())
         NoexceptExpr = E.take();

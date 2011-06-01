@@ -58,3 +58,16 @@ namespace noex {
   void g2(bool b) noexcept(b); // expected-error {{argument to noexcept specifier must be a constant expression}}
 
 }
+
+namespace noexcept_unevaluated {
+  template<typename T> void f(T) {
+    T* x = 1;
+  }
+
+  template<typename T>
+  void g(T x) noexcept((f(x), sizeof(T) == 4)) { }
+
+  void h() {
+    g(1);
+  }
+}
