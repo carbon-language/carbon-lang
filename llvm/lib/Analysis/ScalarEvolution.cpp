@@ -1081,9 +1081,8 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
   const SCEVAddRecExpr *PreAR = dyn_cast<SCEVAddRecExpr>(
     SE->getAddRecExpr(PreStart, Step, L, SCEV::FlagAnyWrap));
 
-  if (PreAR && PreAR->getNoWrapFlags(SCEV::FlagNSW)) {
+  if (PreAR && PreAR->getNoWrapFlags(SCEV::FlagNSW))
     return PreStart;
-  }
 
   // 2. Direct overflow check on the step operation's expression.
   unsigned BitWidth = SE->getTypeSizeInBits(AR->getType());
@@ -1104,7 +1103,8 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
   ICmpInst::Predicate Pred;
   const SCEV *OverflowLimit = getOverflowLimitForStep(Step, &Pred, SE);
 
-  if (SE->isLoopEntryGuardedByCond(L, Pred, PreStart, OverflowLimit)) {
+  if (OverflowLimit &&
+      SE->isLoopEntryGuardedByCond(L, Pred, PreStart, OverflowLimit)) {
     return PreStart;
   }
   return 0;
