@@ -1435,7 +1435,6 @@ AST_POLYMORPHIC_MATCHER_P(HasAnyArgument, Matcher<clang::Expr>, InnerMatcher) {
 ///   matching int x
 AST_MATCHER_P2(clang::FunctionDecl, HasParameter,
                unsigned, N, Matcher<clang::ParmVarDecl>, InnerMatcher) {
-  assert(N >= 0);
   return (N < Node.getNumParams() &&
           InnerMatcher.Matches(
               *Node.getParamDecl(N), Finder, Builder));
