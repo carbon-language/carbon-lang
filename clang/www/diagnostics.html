@@ -2,7 +2,7 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
   <title>Clang - Expressive Diagnostics</title>
   <link type="text/css" rel="stylesheet" href="menu.css" />
   <link type="text/css" rel="stylesheet" href="content.css" />
@@ -34,10 +34,18 @@ that embed Clang and extract equivalent information through internal APIs.-->
 <h2>Column Numbers and Caret Diagnostics</h2>
 
 <p>First, all diagnostics produced by clang include full column number
-information, and use this to print "caret diagnostics".  This is a feature
-provided by many commercial compilers, but is generally missing from open source
+information. The clang command-line compiler driver uses this information
+to print "caret diagnostics".
+(IDEs can use the information to display in-line error markup.)
+Precise error location in the source is a feature provided by many commercial
+compilers, but is generally missing from open source
 compilers.  This is nice because it makes it very easy to understand exactly
-what is wrong in a particular piece of code, an example is:</p>
+what is wrong in a particular piece of code</p>
+
+<p>The caret (the blue "^" character) exactly shows where the problem is, even
+inside of a string.  This makes it really easy to jump to the problem and
+helps when multiple instances of the same character occur on a line. (We'll 
+revisit this more in following examples.)</p>
 
 <pre>
   $ <b>gcc-4.2 -fsyntax-only -Wformat format-strings.c</b>
@@ -48,17 +56,18 @@ what is wrong in a particular piece of code, an example is:</p>
   <font color="blue">            ^</font>
 </pre>
 
-<p>The caret (the blue "^" character) exactly shows where the problem is, even
-inside of the string.  This makes it really easy to jump to the problem and
-helps when multiple instances of the same character occur on a line.  We'll
-revisit this more in following examples.</p>
-
 <h2>Range Highlighting for Related Text</h2>
 
 <p>Clang captures and accurately tracks range information for expressions,
 statements, and other constructs in your program and uses this to make
-diagnostics highlight related information.  For example, here's a somewhat
-nonsensical example to illustrate this:</p>
+diagnostics highlight related information.  In the following somewhat
+nonsensical example you can see that you don't even need to see the original source code to
+understand what is wrong based on the Clang error. Because clang prints a
+caret, you know exactly <em>which</em> plus it is complaining about.  The range
+information highlights the left and right side of the plus which makes it
+immediately obvious what the compiler is talking about.
+Range information is very useful for
+cases involving precedence issues and many other cases.</p>
 
 <pre>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
@@ -69,21 +78,19 @@ nonsensical example to illustrate this:</p>
   <font color="blue">                       ~~~~~~~~~~~~~~ ^ ~~~~~</font>
 </pre>
 
-<p>Here you can see that you don't even need to see the original source code to
-understand what is wrong based on the Clang error: Because clang prints a
-caret, you know exactly <em>which</em> plus it is complaining about.  The range
-information highlights the left and right side of the plus which makes it
-immediately obvious what the compiler is talking about, which is very useful for
-cases involving precedence issues and many other cases.</p>
-
 <h2>Precision in Wording</h2>
 
 <p>A detail is that we have tried really hard to make the diagnostics that come
 out of clang contain exactly the pertinent information about what is wrong and
 why.  In the example above, we tell you what the inferred types are for
 the left and right hand sides, and we don't repeat what is obvious from the
-caret (that this is a "binary +").  Many other examples abound, here is a simple
-one:</p>
+caret (e.g., that this is a "binary +").</p>
+
+<p>Many other examples abound. In the following example, not only do we tell you that there is a problem with the *
+and point to it, we say exactly why and tell you what the type is (in case it is
+a complicated subexpression, such as a call to an overloaded function).  This
+sort of attention to detail makes it much easier to understand and fix problems
+quickly.</p>
 
 <pre>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
@@ -93,12 +100,6 @@ one:</p>
   <font color="darkgreen">  int y = *SomeA.X;</font>
   <font color="blue">          ^~~~~~~~</font>
 </pre>
-
-<p>In this example, not only do we tell you that there is a problem with the *
-and point to it, we say exactly why and tell you what the type is (in case it is
-a complicated subexpression, such as a call to an overloaded function).  This
-sort of attention to detail makes it much easier to understand and fix problems
-quickly.</p>
 
 <h2>No Pretty Printing of Expressions in Diagnostics</h2>
 
@@ -127,8 +128,10 @@ typename in diagnostics.  However, sometimes very simple typedefs can wrap
 trivial types and it is important to strip off the typedef to understand what
 is going on.  Clang aims to handle both cases well.<p>
 
-<p>For example, here is an example that shows where it is important to preserve
-a typedef in C:</p>
+<p>The following example shows where it is important to preserve
+a typedef in C. Here the type printed by GCC isn't even valid, but if the error
+were about a very long and complicated type (as often happens in C++) the error
+message would be ugly just because it was long and hard to read.</p>
 
 <pre>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
@@ -139,10 +142,9 @@ a typedef in C:</p>
   <font color="blue">  ~~~~~~~~^~</font>
 </pre>
 
-<p>Here the type printed by GCC isn't even valid, but if the error were about a
-very long and complicated type (as often happens in C++) the error message would
-be ugly just because it was long and hard to read.  Here's an example where it
-is useful for the compiler to expose underlying details of a typedef:</p>
+<p>The following example shows where it is useful for the compiler to expose
+underlying details of a typedef. If the user was somehow confused about how the
+system "pid_t" typedef is defined, Clang helpfully displays it with "aka".</p>
 
 <pre>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
@@ -152,9 +154,6 @@ is useful for the compiler to expose underlying details of a typedef:</p>
   <font color="darkgreen">  myvar = myvar.x;</font>
   <font color="blue">          ~~~~~ ^</font>
 </pre>
-
-<p>If the user was somehow confused about how the system "pid_t" typedef is
-defined, Clang helpfully displays it with "aka".</p>
 
 <p>In C++, type preservation includes retaining any qualification written into type names. For example, if we take a small snippet of code such as:
 
@@ -205,8 +204,10 @@ in source code. When Clang produces a diagnostic about a particular
 problem that it can work around (e.g., non-standard or redundant
 syntax, missing keywords, common mistakes, etc.), it may also provide
 specific guidance in the form of a code transformation to correct the
-problem. For example, here Clang warns about the use of a GCC
-extension that has been considered obsolete since 1993:</p>
+problem. In the following example, Clang warns about the use of a GCC
+extension that has been considered obsolete since 1993. The underlined
+code should be removed, then replaced with the code below the
+caret line (".x =" or ".y =", respectively).</p>
 
 <pre>
   $ <b>clang t.c</b>
@@ -220,11 +221,12 @@ extension that has been considered obsolete since 1993:</p>
                                   <font color="darkgreen">.y = </font>
 </pre>
 
-<p>The underlined code should be removed, then replaced with the code below the
-caret line (".x =" or ".y =", respectively). "Fix-it" hints are most useful for
+<p>"Fix-it" hints are most useful for
 working around common user errors and misconceptions. For example, C++ users
 commonly forget the syntax for explicit specialization of class templates,
-as in the following error:</p>
+as in the error in the following example. Again, after describing the problem,
+Clang provides the fix--add <code>template&lt;&gt;</code>--as part of the
+diagnostic.<p>
 
 <pre>
   $ <b>clang t.cpp</b>
@@ -234,14 +236,14 @@ as in the following error:</p>
     <font color="darkgreen">template&lt;&gt; </font>
 </pre>
 
-<p>Again, after describing the problem, Clang provides the fix--add <code>template&lt;&gt;</code>--as part of the diagnostic.<p>
-
 <h2>Automatic Macro Expansion</h2>
 
 <p>Many errors happen in macros that are sometimes deeply nested.  With
 traditional compilers, you need to dig deep into the definition of the macro to
-understand how you got into trouble.  Here's a simple example that shows how
-Clang helps you out:</p>
+understand how you got into trouble.  The following simple example shows how
+Clang helps you out by automatically printing instantiation information and
+nested range information for diagnostics as they are instantiated through macros
+and also shows how some of the other pieces work in a bigger example.</p>
 
 <pre>
   $ <b>gcc-4.2 -fsyntax-only t.c</b>
@@ -256,10 +258,7 @@ Clang helps you out:</p>
   <font color="blue">                                                                                         ~~~ ^ ~~~</font>
 </pre>
 
-<p>This shows how clang automatically prints instantiation information and
-nested range information for diagnostics as they are instantiated through macros
-and also shows how some of the other pieces work in a bigger example.  Here's
-another real world warning that occurs in the "window" Unix package (which
+<p>Here's another real world warning that occurs in the "window" Unix package (which
 implements the "wwopen" class of APIs):</p>
 
 <pre>
@@ -275,14 +274,19 @@ implements the "wwopen" class of APIs):</p>
   <font color="blue">        ^</font>
 </pre>
 
-<p>In practice, we've found that this is actually more useful in multiply nested
+<p>In practice, we've found that Clang's treatment of macros is actually more useful in multiply nested
 macros that in simple ones.</p>
 
 <h2>Quality of Implementation and Attention to Detail</h2>
 
 <p>Finally, we have put a lot of work polishing the little things, because
-little things add up over time and contribute to a great user experience.  Three
-examples are:</p>
+little things add up over time and contribute to a great user experience.</p>
+
+<p>The following example shows a trivial little tweak, where we tell you to put the semicolon at
+the end of the line that is missing it (line 4) instead of at the beginning of
+the following line (line 5).  This is particularly important with fixit hints
+and caret diagnostics, because otherwise you don't get the important context.
+</p>
 
 <pre>
   $ <b>gcc-4.2 t.c</b>
@@ -295,12 +299,9 @@ examples are:</p>
   <font color="blue">       ;</font>
 </pre>
 
-<p>This shows a trivial little tweak, where we tell you to put the semicolon at
-the end of the line that is missing it (line 4) instead of at the beginning of
-the following line (line 5).  This is particularly important with fixit hints
-and caret diagnostics, because otherwise you don't get the important context.
-A second example is:
-</p>
+<p>The following example shows much better error recovery than GCC. The message coming out
+of GCC is completely useless for diagnosing the problem. Clang tries much harder
+and produces a much more useful diagnosis of the problem.</p>
 
 <pre>
   $ <b>gcc-4.2 t.c</b>
@@ -311,9 +312,8 @@ A second example is:
   <font color="blue">^</font>
 </pre>
 
-<p>This shows an example of much better error recovery.  The message coming out
-of GCC is completely useless for diagnosing the problem, Clang tries much harder
-and produces a much more useful diagnosis of the problem.</p>
+<p>The following example shows that we recover from the simple case of
+forgetting a ; after a struct definition much better than GCC.</p>
 
 <pre>
   $ <b>cat t.cc</b>
@@ -338,9 +338,6 @@ and produces a much more useful diagnosis of the problem.</p>
   <font color="blue"> ^</font>
   <font color="blue"> ;</font>
 </pre>
-
-<p>This shows that we recover from the simple case of forgetting a ; after
-a struct definition much better than GCC.</p>
 
 <p>While each of these details is minor, we feel that they all add up to provide
 a much more polished experience.</p>
