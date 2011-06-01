@@ -66,6 +66,9 @@ public:
   bool TokError(const Twine &Msg) const {
     return Error(Lex.getLoc(), Msg);
   }
+  const std::vector<std::string> &getDependencies() const {
+    return Lex.getDependencies();
+  }
 private:  // Semantic analysis methods.
   bool AddValue(Record *TheRec, SMLoc Loc, const RecordVal &RV);
   bool SetValue(Record *TheRec, SMLoc Loc, const std::string &ValName, 

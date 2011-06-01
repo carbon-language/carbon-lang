@@ -173,6 +173,10 @@ namespace {
                  cl::init("-"));
 
   cl::opt<std::string>
+  DependFilename("d", cl::desc("Dependency filename"), cl::value_desc("filename"),
+                 cl::init(""));
+
+  cl::opt<std::string>
   InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
 
   cl::list<std::string>
@@ -192,34 +196,6 @@ void llvm::PrintError(SMLoc ErrorLoc, const Twine &Msg) {
   SrcMgr.PrintMessage(ErrorLoc, Msg, "error");
 }
 
-
-
-/// ParseFile - this function begins the parsing of the specified tablegen
-/// file.
-static bool ParseFile(const std::string &Filename,
-                      const std::vector<std::string> &IncludeDirs,
-                      SourceMgr &SrcMgr,
-                      RecordKeeper &Records) {
-  OwningPtr<MemoryBuffer> File;
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), File)) {
-    errs() << "Could not open input file '" << Filename << "': "
-           << ec.message() <<"\n";
-    return true;
-  }
-  MemoryBuffer *F = File.take();
-
-  // Tell SrcMgr about this buffer, which is what TGParser will pick up.
-  SrcMgr.AddNewSourceBuffer(F, SMLoc());
-
-  // Record the location of the include directory so that the lexer can find
-  // it later.
-  SrcMgr.setIncludeDirs(IncludeDirs);
-
-  TGParser Parser(SrcMgr, Records);
-
-  return Parser.ParseFile();
-}
-
 int main(int argc, char **argv) {
   RecordKeeper Records;
 
@@ -230,7 +206,24 @@ int main(int argc, char **argv) {
 
   try {
     // Parse the input file.
-    if (ParseFile(InputFilename, IncludeDirs, SrcMgr, Records))
+    OwningPtr<MemoryBuffer> File;
+    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), File)) {
+      errs() << "Could not open input file '" << InputFilename << "': "
+             << ec.message() <<"\n";
+      return 1;
+    }
+    MemoryBuffer *F = File.take();
+
+    // Tell SrcMgr about this buffer, which is what TGParser will pick up.
+    SrcMgr.AddNewSourceBuffer(F, SMLoc());
+
+    // Record the location of the include directory so that the lexer can find
+    // it later.
+    SrcMgr.setIncludeDirs(IncludeDirs);
+
+    TGParser Parser(SrcMgr, Records);
+
+    if (Parser.ParseFile())
       return 1;
 
     std::string Error;
@@ -239,6 +232,27 @@ int main(int argc, char **argv) {
       errs() << argv[0] << ": error opening " << OutputFilename
         << ":" << Error << "\n";
       return 1;
+    }
+    if (!DependFilename.empty()) {
+      if (OutputFilename == "-") {
+        errs() << argv[0] << ": the option -d must be used together with -o\n";
+        return 1;
+      }
+      tool_output_file DepOut(DependFilename.c_str(), Error);
+      if (!Error.empty()) {
+        errs() << argv[0] << ": error opening " << DependFilename
+          << ":" << Error << "\n";
+        return 1;
+      }
+      DepOut.os() << DependFilename << ":";
+      const std::vector<std::string> &Dependencies = Parser.getDependencies();
+      for (std::vector<std::string>::const_iterator I = Dependencies.begin(),
+                                                          E = Dependencies.end();
+           I != E; ++I) {
+        DepOut.os() << " " << (*I);
+      }
+      DepOut.os() << "\n";
+      DepOut.keep();
     }
 
     switch (Action) {

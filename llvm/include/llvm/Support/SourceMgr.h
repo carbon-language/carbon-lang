@@ -106,7 +106,9 @@ public:
   /// AddIncludeFile - Search for a file with the specified name in the current
   /// directory or in one of the IncludeDirs.  If no file is found, this returns
   /// ~0, otherwise it returns the buffer ID of the stacked file.
-  unsigned AddIncludeFile(const std::string &Filename, SMLoc IncludeLoc);
+  /// The full path to the included file can be found in IncludedFile.
+  unsigned AddIncludeFile(const std::string &Filename, SMLoc IncludeLoc,
+                          std::string &IncludedFile);
 
   /// FindBufferContainingLoc - Return the ID of the buffer containing the
   /// specified location, returning -1 if not found.

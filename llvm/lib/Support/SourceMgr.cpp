@@ -49,14 +49,16 @@ SourceMgr::~SourceMgr() {
 /// directory or in one of the IncludeDirs.  If no file is found, this returns
 /// ~0, otherwise it returns the buffer ID of the stacked file.
 unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
-                                   SMLoc IncludeLoc) {
+                                   SMLoc IncludeLoc,
+                                   std::string &IncludedFile) {
   OwningPtr<MemoryBuffer> NewBuf;
-  MemoryBuffer::getFile(Filename.c_str(), NewBuf);
+  IncludedFile = Filename;
+  MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
 
   // If the file didn't exist directly, see if it's in an include path.
   for (unsigned i = 0, e = IncludeDirectories.size(); i != e && !NewBuf; ++i) {
-    std::string IncFile = IncludeDirectories[i] + "/" + Filename;
-    MemoryBuffer::getFile(IncFile.c_str(), NewBuf);
+    IncludedFile = IncludeDirectories[i] + "/" + Filename;
+    MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
   }
 
   if (NewBuf == 0) return ~0U;

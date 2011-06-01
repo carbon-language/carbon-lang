@@ -267,14 +267,17 @@ bool TGLexer::LexInclude() {
 
   // Get the string.
   std::string Filename = CurStrVal;
+  std::string IncludedFile;
 
   
-  CurBuffer = SrcMgr.AddIncludeFile(Filename, SMLoc::getFromPointer(CurPtr));
+  CurBuffer = SrcMgr.AddIncludeFile(Filename, SMLoc::getFromPointer(CurPtr),
+                                    IncludedFile);
   if (CurBuffer == -1) {
     PrintError(getLoc(), "Could not find include file '" + Filename + "'");
     return true;
   }
   
+  Dependencies.push_back(IncludedFile);
   // Save the line number and lex buffer of the includer.
   CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
   CurPtr = CurBuf->getBufferStart();
