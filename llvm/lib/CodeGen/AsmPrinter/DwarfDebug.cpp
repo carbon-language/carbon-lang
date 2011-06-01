@@ -1411,6 +1411,11 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       const MachineInstr *Begin = *HI;
       assert(Begin->isDebugValue() && "Invalid History entry");
 
+      // Check if DBG_VALUE is truncating a range.
+      if (Begin->getNumOperands() > 1 && Begin->getOperand(0).isReg()
+          && !Begin->getOperand(0).getReg())
+        continue;
+
       // Compute the range for a register location.
       const MCSymbol *FLabel = getLabelBeforeInsn(Begin);
       const MCSymbol *SLabel = 0;
