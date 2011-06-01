@@ -33,6 +33,14 @@ def lldb_iter(obj, getsize, getelem):
     for i in range(size()):
         yield elem(i)
 
+# ==============================================================================
+# The modify-python-lldb.py script is responsible for post-processing this SWIG-
+# generated lldb.py module.  It is responsible for adding the above lldb_iter()
+# function definition as well as the supports, in the following, for iteration
+# protocol: __iter__, rich comparison methods: __eq__ and __ne__, truth value
+# testing (and built-in operation bool()): __nonzero__, and built-in function
+# len(): __len__.
+# ==============================================================================
 '''
 
 # This supports the iteration protocol.
