@@ -11,9 +11,7 @@ entry:
   %__x.addr.i = alloca double, align 8
   %__u.i = alloca %0, align 8
   %0 = bitcast double* %__x.addr.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %0)
   %1 = bitcast %0* %__u.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %1)
   store double %d1, double* %__x.addr.i, align 8
   %__f.i = getelementptr inbounds %0* %__u.i, i64 0, i32 0
   store double %d1, double* %__f.i, align 8
@@ -23,8 +21,6 @@ entry:
 ; CHECK-NEXT: and
   %tmp1 = lshr i64 %tmp, 63
   %shr.i = trunc i64 %tmp1 to i32
-  call void @llvm.lifetime.end(i64 -1, i8* %0)
-  call void @llvm.lifetime.end(i64 -1, i8* %1)
   ret i32 %shr.i
 }
 
@@ -34,9 +30,7 @@ entry:
   %__u.i = alloca %0, align 8
   %add = fadd double %d1, %d2
   %0 = bitcast double* %__x.addr.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %0)
   %1 = bitcast %0* %__u.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %1)
   store double %add, double* %__x.addr.i, align 8
   %__f.i = getelementptr inbounds %0* %__u.i, i64 0, i32 0
   store double %add, double* %__f.i, align 8
@@ -46,8 +40,6 @@ entry:
 ; CHECK-NEXT: and
   %tmp1 = lshr i64 %tmp, 63
   %shr.i = trunc i64 %tmp1 to i32
-  call void @llvm.lifetime.end(i64 -1, i8* %0)
-  call void @llvm.lifetime.end(i64 -1, i8* %1)
   ret i32 %shr.i
 }
 
@@ -56,9 +48,7 @@ entry:
   %__x.addr.i = alloca float, align 4
   %__u.i = alloca %union.anon, align 4
   %0 = bitcast float* %__x.addr.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %0)
   %1 = bitcast %union.anon* %__u.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %1)
   store float %f1, float* %__x.addr.i, align 4
   %__f.i = getelementptr inbounds %union.anon* %__u.i, i64 0, i32 0
   store float %f1, float* %__f.i, align 4
@@ -67,8 +57,6 @@ entry:
 ; CHECK: movmskps
 ; CHECK-NEXT: and
   %shr.i = lshr i32 %2, 31
-  call void @llvm.lifetime.end(i64 -1, i8* %0)
-  call void @llvm.lifetime.end(i64 -1, i8* %1)
   ret i32 %shr.i
 }
 
@@ -78,9 +66,7 @@ entry:
   %__u.i = alloca %union.anon, align 4
   %add = fadd float %f1, %f2
   %0 = bitcast float* %__x.addr.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %0)
   %1 = bitcast %union.anon* %__u.i to i8*
-  call void @llvm.lifetime.start(i64 -1, i8* %1)
   store float %add, float* %__x.addr.i, align 4
   %__f.i = getelementptr inbounds %union.anon* %__u.i, i64 0, i32 0
   store float %add, float* %__f.i, align 4
@@ -89,11 +75,5 @@ entry:
 ; CHECK: movmskps
 ; CHECK-NEXT: and
   %shr.i = lshr i32 %2, 31
-  call void @llvm.lifetime.end(i64 -1, i8* %0)
-  call void @llvm.lifetime.end(i64 -1, i8* %1)
   ret i32 %shr.i
 }
-
-declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
-
-declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
