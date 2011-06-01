@@ -176,3 +176,34 @@ namespace PR9913 {
   template<class B>
   class S<A>::F{};
 }
+
+namespace template_class_spec_perClassDecl_nested
+{
+  template <typename T1> struct A {
+    template <typename T2> struct B {
+      template <typename T3> struct C {
+        static void foo();
+      };
+    };
+  };
+
+  template <> struct A<int> {
+    template <typename T2> struct B {
+      template <typename T3> struct C {
+        static void foo();
+      };
+    };
+  };
+
+  template <> template <typename T3> struct A<int>::B<int>::C {
+    static void foo();
+  };
+
+  template <> template <> struct A<int>::B<int>::C<int> {
+    static void foo();
+  };
+
+  template <> template<> template <typename T2> struct A<bool>::B<bool>::C {
+    static void foo();
+  };
+}

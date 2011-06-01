@@ -1650,7 +1650,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
         if (Spec->getSpecializationKind() != TSK_ExplicitSpecialization)
           NeedEmptyTemplateHeader = true;
         else
-          break;
+          continue;
       } else if (Record->getTemplateSpecializationKind()) {
         if (Record->getTemplateSpecializationKind() 
                                                 != TSK_ExplicitSpecialization &&
