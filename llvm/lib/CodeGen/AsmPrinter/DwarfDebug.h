@@ -68,10 +68,19 @@ typedef struct DotDebugLocEntry {
   MachineLocation Loc;
   const MDNode *Variable;
   bool Merged;
-  DotDebugLocEntry() : Begin(0), End(0), Variable(0), Merged(false) {}
+  bool Constant;
+  int64_t iConstant;
+  DotDebugLocEntry() 
+    : Begin(0), End(0), Variable(0), Merged(false), 
+      Constant(false), iConstant(0) {}
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
                    const MDNode *V) 
-    : Begin(B), End(E), Loc(L), Variable(V), Merged(false) {}
+    : Begin(B), End(E), Loc(L), Variable(V), Merged(false), 
+      Constant(false), iConstant(0) {}
+  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i)
+    : Begin(B), End(E), Variable(0), Merged(false), 
+      Constant(true), iConstant(i) {}
+
   /// Empty entries are also used as a trigger to emit temp label. Such
   /// labels are referenced is used to find debug_loc offset for a given DIE.
   bool isEmpty() { return Begin == 0 && End == 0; }
@@ -82,6 +91,8 @@ typedef struct DotDebugLocEntry {
     Next->Begin = Begin;
     Merged = true;
   }
+  bool isConstant() { return Constant; }
+  int64_t getConstant() { return iConstant; }
 } DotDebugLocEntry;
 
 //===----------------------------------------------------------------------===//
