@@ -1597,6 +1597,13 @@ private:
   const TargetData *TD;
   const TargetLoweringObjectFile &TLOF;
 
+  /// We are in the process of implementing a new TypeLegalization action
+  /// which is the promotion of vector elements. This feature is under
+  /// development. Until this feature is complete, it is only enabled using a
+  /// flag. We pass this flag using a member because of circular dep issues.
+  /// This member will be removed with the flag once we complete the transition.
+  bool mayPromoteElements;
+
   /// PointerTy - The type to use for pointers, usually i32 or i64.
   ///
   MVT PointerTy;
@@ -1756,10 +1763,10 @@ private:
       EVT NVT = TransformToType[VT.getSimpleVT().SimpleTy];
       LegalizeTypeAction LA = ValueTypeActions.getTypeAction(VT.getSimpleVT());
 
-      assert((NVT.isSimple() && LA != TypeLegal )? 
-             ValueTypeActions.getTypeAction(
-               NVT.getSimpleVT()) != TypePromoteInteger
-              : 1 && "Promote may not follow Expand or Promote");
+      assert(
+        (!(NVT.isSimple() && LA != TypeLegal) ||
+         ValueTypeActions.getTypeAction(NVT.getSimpleVT()) != TypePromoteInteger)
+         && "Promote may not follow Expand or Promote");
 
       return LegalizeKind(LA, NVT);
     }
@@ -1790,6 +1797,51 @@ private:
     // Vectors with only one element are always scalarized.
     if (NumElts == 1)
       return LegalizeKind(TypeScalarizeVector, EltVT);
+
+    // If we allow the promotion of vector elements using a flag,
+    // then try to widen vector elements until a legal type is found.
+    if (mayPromoteElements && EltVT.isInteger()) {
+      // Vectors with a number of elements that is not a power of two are always
+      // widened, for example <3 x float> -> <4 x float>.
+      if (!VT.isPow2VectorType()) {
+        NumElts = (unsigned)NextPowerOf2(NumElts);
+        EVT NVT = EVT::getVectorVT(Context, EltVT, NumElts);
+        return LegalizeKind(TypeWidenVector, NVT);
+      }
+
+      // Examine the element type.
+      LegalizeKind LK = getTypeConversion(Context, EltVT);
+
+      // If type is to be expanded, split the vector.
+      //  <4 x i140> -> <2 x i140>
+      if (LK.first == TypeExpandInteger)
+        return LegalizeKind(TypeSplitVector,
+                            EVT::getVectorVT(Context, EltVT, NumElts / 2));
+
+      // Promote the integer element types until a legal vector type is found
+      // or until the element integer type is too big. If a legal type was not
+      // found, fallback to the usual mechanism of widening/splitting the
+      // vector.
+      while (1) {
+        // Increase the bitwidth of the element to the next pow-of-two
+        // (which is greater than 8 bits).
+        EltVT = EVT::getIntegerVT(Context, 1 + EltVT.getSizeInBits()
+                                 ).getRoundIntegerType(Context);
+
+        // Stop trying when getting a non-simple element type.
+        // Note that vector elements may be greater than legal vector element
+        // types. Example: X86 XMM registers hold 64bit element on 32bit systems.
+        if (!EltVT.isSimple()) break;
+
+        // Build a new vector type and check if it is legal.
+        MVT NVT = MVT::getVectorVT(EltVT.getSimpleVT(), NumElts);
+
+        // Found a legal promoted vector type.
+        if (ValueTypeActions.getTypeAction(NVT) == TypeLegal)
+          return LegalizeKind(TypePromoteInteger,
+                              EVT::getVectorVT(Context, EltVT, NumElts));
+      }
+    }
 
     // Try to widen the vector until a legal type is found.
     // If there is no wider legal type, split the vector.

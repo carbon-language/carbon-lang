@@ -26,10 +26,18 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <cctype>
 using namespace llvm;
+
+/// We are in the process of implementing a new TypeLegalization action
+/// - the promotion of vector elements. This feature is disabled by default
+/// and only enabled using this flag.
+static cl::opt<bool>
+AllowPromoteIntElem("promote-elements", cl::Hidden,
+  cl::desc("Allow promotion of integer vector element types"));
 
 namespace llvm {
 TLSModel::Model getTLSModel(const GlobalValue *GV, Reloc::Model reloc) {
@@ -528,7 +536,8 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
 /// NOTE: The constructor takes ownership of TLOF.
 TargetLowering::TargetLowering(const TargetMachine &tm,
                                const TargetLoweringObjectFile *tlof)
-  : TM(tm), TD(TM.getTargetData()), TLOF(*tlof) {
+  : TM(tm), TD(TM.getTargetData()), TLOF(*tlof),
+  mayPromoteElements(AllowPromoteIntElem) {
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));
   memset(LoadExtActions, 0, sizeof(LoadExtActions));
@@ -814,6 +823,24 @@ void TargetLowering::computeRegisterProperties() {
       bool IsLegalWiderType = false;
       for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
         EVT SVT = (MVT::SimpleValueType)nVT;
+
+        // If we allow the promotion of vector elements using a flag,
+        // then return TypePromoteInteger on vector elements.
+        if (mayPromoteElements) {
+          // Promote vectors of integers to vectors with the same number
+          // of elements, with a wider element type.
+          if (SVT.getVectorElementType().getSizeInBits() > EltVT.getSizeInBits()
+              && SVT.getVectorNumElements() == NElts &&
+              isTypeLegal(SVT) && SVT.getScalarType().isInteger()) {
+            TransformToType[i] = SVT;
+            RegisterTypeForVT[i] = SVT;
+            NumRegistersForVT[i] = 1;
+            ValueTypeActions.setTypeAction(VT, TypePromoteInteger);
+            IsLegalWiderType = true;
+            break;
+          }
+        }
+
         if (SVT.getVectorElementType() == EltVT &&
             SVT.getVectorNumElements() > NElts &&
             isTypeLegal(SVT)) {
