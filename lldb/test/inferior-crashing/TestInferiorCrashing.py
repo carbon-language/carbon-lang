@@ -45,7 +45,7 @@ class CrashingInferiorTestCase(TestBase):
                        'stop reason = EXC_BAD_ACCESS'])
 
         # And it should report the correct line number.
-        self.expect("thread backtrace",
+        self.expect("thread backtrace all",
             substrs = ['stop reason = EXC_BAD_ACCESS',
                        'main.c:%d' % self.line])
 
