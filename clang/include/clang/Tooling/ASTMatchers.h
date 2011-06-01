@@ -1597,10 +1597,10 @@ AST_MATCHER_P(clang::ConditionalOperator, HasTrueExpression,
 /// Example matches b
 ///   condition ? a : b
 AST_MATCHER_P(clang::ConditionalOperator, HasFalseExpression,
-              Matcher<clang::Expr>, Matcher) {
+              Matcher<clang::Expr>, InnerMatcher) {
   clang::Expr *Expression = Node.getFalseExpr();
   return (Expression != NULL &&
-          Matcher.Matches(*Expression, Finder, Builder));
+          InnerMatcher.Matches(*Expression, Finder, Builder));
 }
 
 /// Matches if a declaration has a body attached.
