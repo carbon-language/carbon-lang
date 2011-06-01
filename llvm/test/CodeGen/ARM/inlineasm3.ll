@@ -23,3 +23,13 @@ entry:
   %asmtmp2 = tail call i32 asm sideeffect "vmov d30, $1\0Avmov.32 $0, d30[0]\0A", "=r,w,~{d30}"(<2 x i32> undef) nounwind
   ret void
 }
+
+; Radar 9306086
+
+%0 = type { <8 x i8>, <16 x i8>* }
+
+define hidden void @conv4_8_E() nounwind {
+entry:
+%asmtmp31 = call %0 asm "vld1.u8  {$0}, [$1, :128]!\0A", "=w,=r,1"(<16 x i8>* undef) nounwind
+unreachable
+}

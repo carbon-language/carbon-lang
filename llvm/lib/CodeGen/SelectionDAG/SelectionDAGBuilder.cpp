@@ -282,6 +282,12 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
     // Vector/Vector bitcast.
     return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
   }
+  
+  // Trivial bitcast if the types are the same size and the destination
+  // vector type is legal.
+  if (PartVT.getSizeInBits() == ValueVT.getSizeInBits() &&
+      TLI.isTypeLegal(ValueVT))
+    return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
 
   assert(ValueVT.getVectorElementType() == PartVT &&
          ValueVT.getVectorNumElements() == 1 &&
