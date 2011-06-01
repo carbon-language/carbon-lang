@@ -9,6 +9,6 @@
 
 CLANG_LEVEL := ..
 
-PARALLEL_DIRS := clang-interpreter PrintFunctionNames
+PARALLEL_DIRS := clang-interpreter PrintFunctionNames Tooling
 
 include $(CLANG_LEVEL)/Makefile

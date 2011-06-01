@@ -1,4 +1,4 @@
-##===- examples/Tooling/Makefile ---------------------------*- Makefile -*-===##
+##===- examples/Tooling/RemoveCStrCalls/Makefile -----------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,20 +7,17 @@
 #
 ##===----------------------------------------------------------------------===##
 
-CLANG_LEVEL := ../..
+CLANG_LEVEL := ../../..
 
-TOOLNAME = clang-check
+TOOLNAME = remove-cstr-calls
 NO_INSTALL = 1
 
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
 
 LINK_COMPONENTS := support mc
-USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a \
-           clangTooling.a clangParse.a clangSema.a clangAnalysis.a \
+USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
+           clangParse.a clangSema.a clangAnalysis.a \
            clangAST.a clangLex.a clangBasic.a
 
-PARALLEL_DIRS := RemoveCStrCalls
-
 include $(CLANG_LEVEL)/Makefile
-
