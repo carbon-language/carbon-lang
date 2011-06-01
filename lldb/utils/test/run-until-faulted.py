@@ -33,31 +33,25 @@ def do_lldb_launch_loop(lldb_command, exe, exe_options):
     prompt = "\(lldb\) "
     lldb = pexpect.spawn(lldb_command)
     # Turn on logging for what lldb sends back.
-    #lldb.logfile_read = sys.stdout
+    lldb.logfile_read = sys.stdout
     lldb.expect(prompt)
 
     # Now issue the file command.
-    print "sending file command...."
+    print "sending 'file %s' command..." % exe
     lldb.sendline('file %s' % exe)
     lldb.expect(prompt)
-    #print "lldb.buffer:--->", lldb.buffer, "<---"
-    #print "lldb.before:--->", lldb.before, "<---"
-    #print "lldb.after:--->", lldb.buffer, "<----"
 
     # Loop until it faults....
     count = 0
     #while True:
     #    count = count + 1
-    for i in range(10):
+    for i in range(100):
         count = i
-        print "sending process launch -- %s (iteration: %d)" % (exe_options, count)
+        print "sending 'process launch -- %s' command... (iteration: %d)" % (exe_options, count)
         lldb.sendline('process launch -- %s' % exe_options)
         index = lldb.expect(['Process .* exited with status',
                              'Process .* stopped',
                              pexpect.TIMEOUT])
-        #print "lldb.buffer:--->", lldb.buffer, "<---"
-        #print "lldb.before:--->", lldb.before, "<----"
-        #print "lldb.after:--->", lldb.buffer, "<----"
         if index == 0:
             # We'll try again later.
             time.sleep(3)
@@ -78,10 +72,9 @@ def main():
     sys.path.append(os.path.join(scriptPath, os.pardir, os.pardir, 'test', 'pexpect-2.4'))
 
     parser = OptionParser(usage="""\
+%prog [options]
 Run a program via lldb until it fails.
-The lldb executable is located via your PATH env variable, if not specified.
-
-Usage: %prog [options]
+The lldb executable is located via your PATH env variable, if not specified.\
 """)
     parser.add_option('-l', '--lldb-command',
                       type='string', action='store', metavar='LLDB_COMMAND',
