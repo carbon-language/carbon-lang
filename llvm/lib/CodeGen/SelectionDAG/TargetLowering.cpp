@@ -1754,27 +1754,23 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     break;
   }
   case ISD::BITCAST:
-#if 0
     // If this is an FP->Int bitcast and if the sign bit is the only thing that
     // is demanded, turn this into a FGETSIGN.
     if (NewMask == APInt::getSignBit(Op.getValueType().getSizeInBits()) &&
         Op.getOperand(0).getValueType().isFloatingPoint() &&
         !Op.getOperand(0).getValueType().isVector()) {
-      // Only do this xform if FGETSIGN is valid or if before legalize.
-      if (TLO.isBeforeLegalize() ||
-          isOperationLegal(ISD::FGETSIGN, Op.getValueType())) {
+      if (isOperationLegalOrCustom(ISD::FGETSIGN, Op.getValueType())) {
         // Make a FGETSIGN + SHL to move the sign bit into the appropriate
         // place.  We expect the SHL to be eliminated by other optimizations.
         SDValue Sign = TLO.DAG.getNode(ISD::FGETSIGN, dl, Op.getValueType(),
                                          Op.getOperand(0));
         unsigned ShVal = Op.getValueType().getSizeInBits()-1;
-        SDValue ShAmt = TLO.DAG.getConstant(ShVal, getShiftAmountTy());
+        SDValue ShAmt = TLO.DAG.getConstant(ShVal, Op.getValueType());
         return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl,
                                                  Op.getValueType(),
                                                  Sign, ShAmt));
       }
     }
-#endif
     break;
   case ISD::ADD:
   case ISD::MUL:
