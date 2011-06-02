@@ -3198,7 +3198,10 @@ EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding
 bool
 EmulateInstructionARM::EmulateShiftReg (const uint32_t opcode, const ARMEncoding encoding, ARM_ShifterType shift_type)
 {
-    assert(shift_type == SRType_ASR || shift_type == SRType_LSL || shift_type == SRType_LSR);
+    assert(shift_type == SRType_ASR
+           || shift_type == SRType_LSL
+           || shift_type == SRType_LSR
+           || shift_type == SRType_ROR);
 
     bool success = false;
 
