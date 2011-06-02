@@ -1173,6 +1173,7 @@ enum LinuxDistro {
   ArchLinux,
   DebianLenny,
   DebianSqueeze,
+  DebianWheezy,
   Exherbo,
   RHEL4,
   RHEL5,
@@ -1205,7 +1206,8 @@ static bool IsOpenSuse(enum LinuxDistro Distro) {
 }
 
 static bool IsDebian(enum LinuxDistro Distro) {
-  return Distro == DebianLenny || Distro == DebianSqueeze;
+  return Distro == DebianLenny || Distro == DebianSqueeze ||
+         Distro == DebianWheezy;
 }
 
 static bool IsUbuntu(enum LinuxDistro Distro) {
@@ -1289,6 +1291,8 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
       return DebianLenny;
     else if (Data.startswith("squeeze/sid"))
       return DebianSqueeze;
+    else if (Data.startswith("wheezy/sid"))
+      return DebianWheezy;
     return UnknownDistro;
   }
 
@@ -1462,9 +1466,10 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   if (IsRedhat(Distro))
     ExtraOpts.push_back("--no-add-needed");
 
-  if (Distro == DebianSqueeze || IsOpenSuse(Distro) ||
-      IsRedhat(Distro) || Distro == UbuntuLucid || Distro == UbuntuMaverick ||
-      Distro == UbuntuKarmic || Distro == UbuntuNatty)
+  if (Distro == DebianSqueeze || Distro == DebianWheezy ||
+      IsOpenSuse(Distro) || IsRedhat(Distro) || Distro == UbuntuLucid ||
+      Distro == UbuntuMaverick || Distro == UbuntuKarmic ||
+      Distro == UbuntuNatty)
     ExtraOpts.push_back("--build-id");
 
   if (IsOpenSuse(Distro))
