@@ -70,22 +70,7 @@ def GRRegs : RegisterClass<"XCore", [i32], 32,
   }];
 }
 
-def RRegs : RegisterClass<"XCore", [i32], 32,
-  // Reserved
-  [CP, DP, SP, LR]> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    RRegsClass::iterator
-    RRegsClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    RRegsClass::iterator
-    RRegsClass::allocation_order_end(const MachineFunction &MF) const {
-      // No allocatable registers
-      return begin();
-    }
-  }];
+// Reserved
+def RRegs : RegisterClass<"XCore", [i32], 32, [CP, DP, SP, LR]> {
+  let isAllocatable = 0;
 }

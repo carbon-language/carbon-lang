@@ -540,4 +540,6 @@ def QQQQPR : RegisterClass<"ARM", [v8i64],
 }
 
 // Condition code registers.
-def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
+def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]> {
+  let isAllocatable = 0;
+}

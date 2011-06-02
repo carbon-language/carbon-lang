@@ -681,15 +681,7 @@ def RFP80 : RegisterClass<"X86",[f80], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 // for transforming FPn allocations to STn registers)
 def RST : RegisterClass<"X86", [f80, f64, f32], 32,
                         [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
-    let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    RSTClass::iterator
-    RSTClass::allocation_order_end(const MachineFunction &MF) const {
-      return begin();
-    }
-  }];
+  let isAllocatable = 0;
 }
 
 // Generic vector registers: VR64 and VR128.
@@ -742,15 +734,5 @@ def VR256 : RegisterClass<"X86", [v32i8, v8i32, v4i64, v8f32, v4f64], 256,
 // Status flags registers.
 def CCR : RegisterClass<"X86", [i32], 32, [EFLAGS]> {
   let CopyCost = -1;  // Don't allow copying of status registers.
-
-  // EFLAGS is not allocatable.
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    CCRClass::iterator
-    CCRClass::allocation_order_end(const MachineFunction &MF) const {
-      return allocation_order_begin(MF);
-    }
-  }];
+  let isAllocatable = 0;
 }
