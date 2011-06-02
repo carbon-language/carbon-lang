@@ -9,6 +9,10 @@
 
 #include "ToolChains.h"
 
+#ifdef HAVE_CLANG_CONFIG_H
+# include "clang/Config/config.h"
+#endif
+
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
@@ -1317,6 +1321,54 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
   return UnknownDistro;
 }
 
+static std::string findGCCBaseLibDir(const std::string &GccTriple) {
+  // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
+  // avoids adding yet another option to configure/cmake.
+  // It would probably be cleaner to break it in two variables
+  // CXX_GCC_ROOT with just /foo/bar
+  // CXX_GCC_VER with 4.5.2
+  // Then we would have
+  // CXX_INCLUDE_ROOT = CXX_GCC_ROOT/include/c++/CXX_GCC_VER
+  // and this function would return
+  // CXX_GCC_ROOT/lib/gcc/CXX_INCLUDE_ARCH/CXX_GCC_VER
+  llvm::SmallString<128> CxxIncludeRoot(CXX_INCLUDE_ROOT);
+  if (CxxIncludeRoot != "") {
+    // This is of the form /foo/bar/include/c++/4.5.2/
+    if (CxxIncludeRoot.back() == '/')
+      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the /
+    llvm::StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include
+    std::string ret(CxxIncludeRoot.c_str());
+    ret.append("/lib/gcc/");
+    ret.append(CXX_INCLUDE_ARCH);
+    ret.append("/");
+    ret.append(Version);
+    return ret;
+  }
+  static const char* GccVersions[] = {"4.6.0", "4.6",
+				      "4.5.2", "4.5.1", "4.5",
+				      "4.4.5", "4.4.4", "4.4.3", "4.4",
+				      "4.3.4", "4.3.3", "4.3.2", "4.3",
+				      "4.2.4", "4.2.3", "4.2.2", "4.2.1",
+				      "4.2", "4.1.1"};
+  bool Exists;
+  for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
+    std::string Suffix = GccTriple + "/" + GccVersions[i];
+    std::string t1 = "/usr/lib/gcc/" + Suffix;
+    if (!llvm::sys::fs::exists(t1 + "/crtbegin.o", Exists) && Exists)
+      return t1;
+    std::string t2 = "/usr/lib64/gcc/" + Suffix;
+    if (!llvm::sys::fs::exists(t2 + "/crtbegin.o", Exists) && Exists)
+      return t2;
+    std::string t3 = "/usr/lib/" + GccTriple + "/gcc/" + Suffix;
+    if (!llvm::sys::fs::exists(t3 + "/crtbegin.o", Exists) && Exists)
+      return t3;
+  }
+  return "";
+}
+
 Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   : Generic_ELF(Host, Triple) {
   llvm::Triple::ArchType Arch =
@@ -1399,32 +1451,7 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
       GccTriple = "powerpc64-unknown-linux-gnu";
   }
 
-  const char* GccVersions[] = {"4.6.0", "4.6",
-                               "4.5.2", "4.5.1", "4.5",
-                               "4.4.5", "4.4.4", "4.4.3", "4.4",
-                               "4.3.4", "4.3.3", "4.3.2", "4.3",
-                               "4.2.4", "4.2.3", "4.2.2", "4.2.1", "4.2",
-                               "4.1.1"};
-  std::string Base = "";
-  for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
-    std::string Suffix = GccTriple + "/" + GccVersions[i];
-    std::string t1 = "/usr/lib/gcc/" + Suffix;
-    if (!llvm::sys::fs::exists(t1 + "/crtbegin.o", Exists) && Exists) {
-      Base = t1;
-      break;
-    }
-    std::string t2 = "/usr/lib64/gcc/" + Suffix;
-    if (!llvm::sys::fs::exists(t2 + "/crtbegin.o", Exists) && Exists) {
-      Base = t2;
-      break;
-    }
-    std::string t3 = "/usr/lib/" + GccTriple + "/gcc/" + Suffix;
-    if (!llvm::sys::fs::exists(t3 + "/crtbegin.o", Exists) && Exists) {
-      Base = t3;
-      break;
-    }
-  }
-
+  std::string Base = findGCCBaseLibDir(GccTriple);
   path_list &Paths = getFilePaths();
   bool Is32Bits = (getArch() == llvm::Triple::x86 || getArch() == llvm::Triple::ppc);
 
