@@ -3150,7 +3150,8 @@ EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding
         switch (use_encoding) {
         case eEncodingT1:
             // Due to the above special case handling!
-            //assert(shift_type != SRType_ROR);
+            if (shift_type == SRType_ROR)
+                return false;
 
             Rd = Bits32(opcode, 2, 0);
             Rm = Bits32(opcode, 5, 3);
@@ -3159,7 +3160,9 @@ EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding
             break;
         case eEncodingT2:
             // A8.6.141 RRX
-            //assert(shift_type != SRType_RRX);
+            // There's no imm form of RRX instructions.
+            if (shift_type == SRType_RRX)
+                return false;
 
             Rd = Bits32(opcode, 11, 8);
             Rm = Bits32(opcode, 3, 0);
