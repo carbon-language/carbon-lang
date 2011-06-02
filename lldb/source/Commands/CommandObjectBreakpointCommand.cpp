@@ -803,10 +803,8 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
             // Rig up the results secondary output stream to the debugger's, so the output will come out synchronously
             // if the debugger is set up that way.
                 
-            StreamSP output_stream (new StreamAsynchronousIO (debugger.GetCommandInterpreter(),
-                                                              CommandInterpreter::eBroadcastBitAsynchronousOutputData));
-            StreamSP error_stream (new StreamAsynchronousIO (debugger.GetCommandInterpreter(),
-                                                             CommandInterpreter::eBroadcastBitAsynchronousErrorData));
+            StreamSP output_stream (debugger.GetAsyncOutputStream());
+            StreamSP error_stream (debugger.GetAsyncErrorStream());
             result.SetImmediateOutputStream (output_stream);
             result.SetImmediateErrorStream (error_stream);
     

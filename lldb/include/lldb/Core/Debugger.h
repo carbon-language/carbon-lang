@@ -321,6 +321,12 @@ public:
         return m_error_file;
     }
 
+    lldb::StreamSP
+    GetAsyncOutputStream ();
+    
+    lldb::StreamSP
+    GetAsyncErrorStream ();
+    
     CommandInterpreter &
     GetCommandInterpreter ()
     {

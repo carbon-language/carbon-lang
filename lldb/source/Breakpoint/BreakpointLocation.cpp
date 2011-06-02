@@ -16,6 +16,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/BreakpointID.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/ThreadPlan.h"
@@ -219,9 +220,6 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     if (m_hit_count <= GetIgnoreCount())
         return false;
 
-    // Next in order of importance is the condition.  See if it is true:
-    StreamString errors;
-
     // We only run synchronous callbacks in ShouldStop:
     context->is_synchronous = true;
     should_stop = InvokeCallback (context);
@@ -230,29 +228,40 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     
     if (should_stop)
     {
+        // We need to make sure the user sees any parse errors in their condition, so we'll hook the
+        // constructor errors up to the debugger's Async I/O.
+        
+        StreamString errors;
         ThreadPlanSP condition_plan_sp(GetThreadPlanToTestCondition(context->exe_ctx, errors));
-        log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
-        if (log && errors.GetSize() > 0)
+        
+        if (condition_plan_sp == NULL)
         {
-            log->Printf("Error evaluating condition: \"%s\".\n", errors.GetData());
+            if (log)
+                log->Printf("Error evaluating condition: \"%s\"\n", errors.GetData());
+                
+            Debugger &debugger = context->exe_ctx.target->GetDebugger();
+            StreamSP error_sp = debugger.GetAsyncErrorStream ();
+            error_sp->PutCString ("Error parsing breakpoint condition:\n");
+            error_sp->PutCString (errors.GetData());
+            error_sp->EOL();                       
+            error_sp->Flush();
+
         }
-        else if (condition_plan_sp != NULL)
+        else
         {
+            // Queue our condition, then continue so that we can run it.
             context->exe_ctx.thread->QueueThreadPlan(condition_plan_sp, false);
-            return false;
+            should_stop = false;
         }
     }
     
-    if (should_stop)
+    if (log)
     {
-        log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
-        if (log)
-        {
-            StreamString s;
-            GetDescription (&s, lldb::eDescriptionLevelVerbose);
-            log->Printf ("Hit breakpoint location: %s\n", s.GetData());
-        }
+        StreamString s;
+        GetDescription (&s, lldb::eDescriptionLevelVerbose);
+        log->Printf ("Hit breakpoint location: %s, %s.\n", s.GetData(), should_stop ? "stopping" : "continuing");
     }
+    
     return should_stop;
 }
 

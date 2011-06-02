@@ -1199,12 +1199,8 @@ Target::RunStopHooks ()
     if (num_exe_ctx == 0)
         return;
     
-    StreamSP output_stream (new StreamAsynchronousIO (m_debugger.GetCommandInterpreter(),
-                                                      CommandInterpreter::eBroadcastBitAsynchronousOutputData));
-    StreamSP error_stream (new StreamAsynchronousIO (m_debugger.GetCommandInterpreter(),
-                                                     CommandInterpreter::eBroadcastBitAsynchronousErrorData));
-    result.SetImmediateOutputStream (output_stream);
-    result.SetImmediateErrorStream (error_stream);
+    result.SetImmediateOutputStream (m_debugger.GetAsyncOutputStream());
+    result.SetImmediateErrorStream (m_debugger.GetAsyncErrorStream());
     
     bool keep_going = true;
     bool hooks_ran = false;

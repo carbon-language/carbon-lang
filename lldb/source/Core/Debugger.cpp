@@ -13,6 +13,7 @@
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/State.h"
+#include "lldb/Core/StreamAsynchronousIO.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Terminal.h"
@@ -599,6 +600,20 @@ Debugger::ActivateInputReader (const InputReaderSP &reader_sp)
         }
     }
 }
+
+StreamSP
+Debugger::GetAsyncOutputStream ()
+{
+    return StreamSP (new StreamAsynchronousIO (GetCommandInterpreter(),
+                                               CommandInterpreter::eBroadcastBitAsynchronousOutputData));
+}
+
+StreamSP
+Debugger::GetAsyncErrorStream ()
+{
+    return StreamSP (new StreamAsynchronousIO (GetCommandInterpreter(),
+                                               CommandInterpreter::eBroadcastBitAsynchronousErrorData));
+}    
 
 DebuggerSP
 Debugger::FindDebuggerWithID (lldb::user_id_t id)
