@@ -724,7 +724,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
     // If switch has default case, then ignore it.
     if (!CaseListIsErroneous  && !HasConstantCond && ET) {
       const EnumDecl *ED = ET->getDecl();
-      typedef llvm::SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64> EnumValsTy;
+      typedef llvm::SmallVector<std::pair<llvm::APSInt, EnumConstantDecl*>, 64>
+        EnumValsTy;
       EnumValsTy EnumVals;
 
       // Gather all enum values, set their type and sort them,
@@ -1742,7 +1743,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
       InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,
                                                                      FnRetType,
-                                                                     NRVOCandidate != 0);
+                                                            NRVOCandidate != 0);
       ExprResult Res = PerformMoveOrCopyInitialization(Entity, NRVOCandidate,
                                                        FnRetType, RetValExp);
       if (Res.isInvalid()) {
@@ -2265,7 +2266,9 @@ Sema::ActOnSEHExceptBlock(SourceLocation Loc,
   assert(FilterExpr && Block);
 
   if(!FilterExpr->getType()->isIntegerType()) {
-    return StmtError(Diag(FilterExpr->getExprLoc(), diag::err_filter_expression_integral) << FilterExpr->getType());
+    return StmtError(Diag(FilterExpr->getExprLoc(),
+                     diag::err_filter_expression_integral)
+                     << FilterExpr->getType());
   }
 
   return Owned(SEHExceptStmt::Create(Context,Loc,FilterExpr,Block));
