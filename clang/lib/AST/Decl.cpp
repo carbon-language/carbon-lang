@@ -1743,7 +1743,7 @@ bool FunctionDecl::isInlineDefinitionExternallyVisible() const {
   assert(isInlined() && "Function must be inline");
   ASTContext &Context = getASTContext();
   
-  if (!Context.getLangOptions().C99 || hasAttr<GNUInlineAttr>()) {
+  if (Context.getLangOptions().GNUInline || hasAttr<GNUInlineAttr>()) {
     // If it's not the case that both 'inline' and 'extern' are
     // specified on the definition, then this inline definition is
     // externally visible.

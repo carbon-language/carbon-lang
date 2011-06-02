@@ -1477,6 +1477,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_fno_operator_names))
     Opts.CXXOperatorNames = 0;
 
+  if (Args.hasArg(OPT_fgnu89_inline))
+    Opts.GNUInline = 1;
+
   if (Args.hasArg(OPT_fobjc_gc_only))
     Opts.setGCMode(LangOptions::GCOnly);
   else if (Args.hasArg(OPT_fobjc_gc))
