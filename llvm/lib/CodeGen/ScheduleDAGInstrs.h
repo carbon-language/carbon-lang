@@ -110,10 +110,6 @@ namespace llvm {
     std::vector<std::vector<SUnit *> > Defs;
     std::vector<std::vector<SUnit *> > Uses;
  
-    /// DbgValues - Remember instruction that preceeds DBG_VALUE.
-    std::vector<std::pair<MachineInstr *, MachineInstr *> >DbgValues;
-    MachineInstr *FirstDbgValue;
-
     /// PendingLoads - Remember where unknown loads are after the most recent
     /// unknown store, as we iterate. As with Defs and Uses, this is here
     /// to minimize construction/destruction.
@@ -127,6 +123,14 @@ namespace llvm {
     /// back-edge-aware scheduling.
     ///
     SmallSet<unsigned, 8> LoopLiveInRegs;
+
+  protected:
+
+    /// DbgValues - Remember instruction that preceeds DBG_VALUE.
+    typedef std::vector<std::pair<MachineInstr *, MachineInstr *> > 
+      DbgValueVector;
+    DbgValueVector DbgValues;
+    MachineInstr *FirstDbgValue;
 
   public:
     MachineBasicBlock::iterator Begin;    // The beginning of the range to

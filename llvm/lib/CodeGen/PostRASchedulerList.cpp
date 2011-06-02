@@ -304,7 +304,7 @@ void SchedulePostRATDList::Schedule() {
   if (AntiDepBreak != NULL) {
     unsigned Broken =
       AntiDepBreak->BreakAntiDependencies(SUnits, Begin, InsertPos,
-                                          InsertPosIndex);
+                                          InsertPosIndex, DbgValues);
 
     if (Broken != 0) {
       // We made changes. Update the dependency graph.

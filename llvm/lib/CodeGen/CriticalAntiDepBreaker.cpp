@@ -421,7 +421,8 @@ unsigned CriticalAntiDepBreaker::
 BreakAntiDependencies(const std::vector<SUnit>& SUnits,
                       MachineBasicBlock::iterator Begin,
                       MachineBasicBlock::iterator End,
-                      unsigned InsertPosIndex) {
+                      unsigned InsertPosIndex,
+                      DbgValueVector &DbgValues) {
   // The code below assumes that there is at least one instruction,
   // so just duck out immediately if the block is empty.
   if (SUnits.empty()) return 0;
@@ -628,14 +629,10 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
           // as well.
           const SUnit *SU = MISUnitMap[Q->second->getParent()];
           if (!SU) continue;
-          for (unsigned i = 0, e = SU->DbgInstrList.size() ; i < e ; ++i) {
-            MachineInstr *DI = SU->DbgInstrList[i];
-            assert (DI->getNumOperands()==3 && DI->getOperand(0).isReg() &&
-                    DI->getOperand(0).getReg()
-                    && "Non register dbg_value attached to SUnit!");
-            if (DI->getOperand(0).getReg() == AntiDepReg)
-              DI->getOperand(0).setReg(NewReg);
-          }
+          for (DbgValueVector::iterator DVI = DbgValues.begin(),
+                 DVE = DbgValues.end(); DVI != DVE; ++DVI)
+            if (DVI->second == Q->second->getParent())
+              UpdateDbgValue(DVI->first, AntiDepReg, NewReg);
         }
 
         // We just went back in time and modified history; the

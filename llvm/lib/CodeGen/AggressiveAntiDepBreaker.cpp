@@ -719,7 +719,9 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
                               const std::vector<SUnit>& SUnits,
                               MachineBasicBlock::iterator Begin,
                               MachineBasicBlock::iterator End,
-                              unsigned InsertPosIndex) {
+                              unsigned InsertPosIndex,
+                              DbgValueVector &DbgValues) {
+
   std::vector<unsigned> &KillIndices = State->GetKillIndices();
   std::vector<unsigned> &DefIndices = State->GetDefIndices();
   std::multimap<unsigned, AggressiveAntiDepState::RegisterReference>&
@@ -923,14 +925,10 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
               // sure to update that as well.
               const SUnit *SU = MISUnitMap[Q->second.Operand->getParent()];
               if (!SU) continue;
-              for (unsigned i = 0, e = SU->DbgInstrList.size() ; i < e ; ++i) {
-                MachineInstr *DI = SU->DbgInstrList[i];
-                assert (DI->getNumOperands()==3 && DI->getOperand(0).isReg() &&
-                        DI->getOperand(0).getReg()
-                        && "Non register dbg_value attached to SUnit!");
-                if (DI->getOperand(0).getReg() == AntiDepReg)
-                  DI->getOperand(0).setReg(NewReg);
-              }
+              for (DbgValueVector::iterator DVI = DbgValues.begin(),
+                     DVE = DbgValues.end(); DVI != DVE; ++DVI)
+                if (DVI->second == Q->second.Operand->getParent())
+                  UpdateDbgValue(DVI->first, AntiDepReg, NewReg);
             }
 
             // We just went back in time and modified history; the

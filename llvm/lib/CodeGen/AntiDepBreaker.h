@@ -30,6 +30,9 @@ namespace llvm {
 /// anti-dependencies.
 class AntiDepBreaker {
 public:
+  typedef std::vector<std::pair<MachineInstr *, MachineInstr *> > 
+    DbgValueVector;
+
   virtual ~AntiDepBreaker();
 
   /// Start - Initialize anti-dep breaking for a new basic block.
@@ -40,9 +43,10 @@ public:
   /// the number of anti-dependencies broken.
   ///
   virtual unsigned BreakAntiDependencies(const std::vector<SUnit>& SUnits,
-                                MachineBasicBlock::iterator Begin,
-                                MachineBasicBlock::iterator End,
-                                unsigned InsertPosIndex) =0;
+                                         MachineBasicBlock::iterator Begin,
+                                         MachineBasicBlock::iterator End,
+                                         unsigned InsertPosIndex,
+                                         DbgValueVector &DbgValues) = 0;
   
   /// Observe - Update liveness information to account for the current
   /// instruction, which will not be scheduled.
@@ -52,6 +56,14 @@ public:
   
   /// Finish - Finish anti-dep breaking for a basic block.
   virtual void FinishBlock() =0;
+
+  /// UpdateDbgValue - Update DBG_VALUE if dependency breaker is updating
+  /// other machine instruction to use NewReg.
+  void UpdateDbgValue(MachineInstr *MI, unsigned OldReg, unsigned NewReg) {
+    assert (MI->isDebugValue() && "MI is not DBG_VALUE!");
+    if (MI && MI->getOperand(0).isReg() && MI->getOperand(0).getReg() == OldReg)
+      MI->getOperand(0).setReg(NewReg);
+  }
 };
 
 }

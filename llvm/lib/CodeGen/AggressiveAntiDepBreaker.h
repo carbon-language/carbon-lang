@@ -146,7 +146,8 @@ namespace llvm {
     unsigned BreakAntiDependencies(const std::vector<SUnit>& SUnits,
                                    MachineBasicBlock::iterator Begin,
                                    MachineBasicBlock::iterator End,
-                                   unsigned InsertPosIndex);
+                                   unsigned InsertPosIndex,
+                                   DbgValueVector &DbgValues);
 
     /// Observe - Update liveness information to account for the current
     /// instruction, which will not be scheduled.
