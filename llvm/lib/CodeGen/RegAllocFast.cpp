@@ -115,9 +115,6 @@ namespace {
     // instruction, and so cannot be allocated.
     BitVector UsedInInstr;
 
-    // Allocatable - vector of allocatable physical registers.
-    BitVector Allocatable;
-
     // SkippedInstrs - Descriptors of instructions whose clobber list was
     // ignored because all registers were spilled. It is still necessary to
     // mark all the clobbered registers as used by the function.
@@ -485,7 +482,7 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
 
   // Ignore invalid hints.
   if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
-               !RC->contains(Hint) || !Allocatable.test(Hint)))
+               !RC->contains(Hint) || !RegClassInfo.isAllocatable(Hint)))
     Hint = 0;
 
   // Take hint when possible.
@@ -768,7 +765,7 @@ void RAFast::AllocateBasicBlock() {
   // Add live-in registers as live.
   for (MachineBasicBlock::livein_iterator I = MBB->livein_begin(),
          E = MBB->livein_end(); I != E; ++I)
-    if (Allocatable.test(*I))
+    if (RegClassInfo.isAllocatable(*I))
       definePhysReg(MII, *I, regReserved);
 
   SmallVector<unsigned, 8> VirtDead;
@@ -899,7 +896,7 @@ void RAFast::AllocateBasicBlock() {
         }
         continue;
       }
-      if (!Allocatable.test(Reg)) continue;
+      if (!RegClassInfo.isAllocatable(Reg)) continue;
       if (MO.isUse()) {
         usePhysReg(MO);
       } else if (MO.isEarlyClobber()) {
@@ -988,7 +985,7 @@ void RAFast::AllocateBasicBlock() {
       unsigned Reg = MO.getReg();
 
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-        if (!Allocatable.test(Reg)) continue;
+        if (!RegClassInfo.isAllocatable(Reg)) continue;
         definePhysReg(MI, Reg, (MO.isImplicit() || MO.isDead()) ?
                                regFree : regReserved);
         continue;
@@ -1045,9 +1042,7 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   TRI = TM->getRegisterInfo();
   TII = TM->getInstrInfo();
   RegClassInfo.runOnMachineFunction(Fn);
-
   UsedInInstr.resize(TRI->getNumRegs());
-  Allocatable = TRI->getAllocatableSet(*MF);
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
