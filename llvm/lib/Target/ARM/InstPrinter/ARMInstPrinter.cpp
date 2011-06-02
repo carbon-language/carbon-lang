@@ -29,8 +29,8 @@ StringRef ARMInstPrinter::getOpcodeName(unsigned Opcode) const {
   return getInstructionName(Opcode);
 }
 
-StringRef ARMInstPrinter::getRegName(unsigned RegNo) const {
-  return getRegisterName(RegNo);
+void ARMInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
+  OS << getRegisterName(RegNo);
 }
 
 void ARMInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {

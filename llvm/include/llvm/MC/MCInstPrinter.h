@@ -45,8 +45,8 @@ public:
   /// "MOV32ri") or empty if we can't resolve it.
   virtual StringRef getOpcodeName(unsigned Opcode) const;
 
-  /// getRegName - Return the assembler register name.
-  virtual StringRef getRegName(unsigned RegNo) const;
+  /// printRegName - Print the assembler register name.
+  virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
 
   unsigned getAvailableFeatures() const { return AvailableFeatures; }
   void setAvailableFeatures(unsigned Value) { AvailableFeatures = Value; }

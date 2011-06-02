@@ -33,7 +33,7 @@ public:
     return SyntaxVariant == 1;
   }
   
-  StringRef getRegName(unsigned RegNo) const;
+  virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
   virtual void printInst(const MCInst *MI, raw_ostream &O);
   virtual StringRef getOpcodeName(unsigned Opcode) const;
   

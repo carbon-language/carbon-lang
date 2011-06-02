@@ -41,8 +41,9 @@ X86ATTInstPrinter::X86ATTInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
             &TM.getSubtarget<X86Subtarget>()));
 }
 
-StringRef X86ATTInstPrinter::getRegName(unsigned RegNo) const {
-  return getRegisterName(RegNo);
+void X86ATTInstPrinter::printRegName(raw_ostream &OS,
+                                     unsigned RegNo) const {
+  OS << '%' << getRegisterName(RegNo);
 }
 
 void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS) {

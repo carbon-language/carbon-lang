@@ -26,8 +26,8 @@ StringRef PPCInstPrinter::getOpcodeName(unsigned Opcode) const {
   return getInstructionName(Opcode);
 }
 
-StringRef PPCInstPrinter::getRegName(unsigned RegNo) const {
-  return getRegisterName(RegNo);
+void PPCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
+  OS << getRegisterName(RegNo);
 }
 
 void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O) {

@@ -27,7 +27,7 @@ public:
   X86IntelInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
     : MCInstPrinter(MAI) {}
 
-  StringRef getRegName(unsigned RegNo) const;
+  virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
   virtual void printInst(const MCInst *MI, raw_ostream &OS);
   virtual StringRef getOpcodeName(unsigned Opcode) const;
   

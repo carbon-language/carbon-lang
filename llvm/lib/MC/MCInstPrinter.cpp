@@ -20,7 +20,6 @@ StringRef MCInstPrinter::getOpcodeName(unsigned Opcode) const {
   return "";
 }
 
-StringRef MCInstPrinter::getRegName(unsigned RegNo) const {
+void MCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
   assert(0 && "Target should implement this");
-  return "";
 }

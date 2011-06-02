@@ -825,7 +825,7 @@ void MCAsmStreamer::EmitRegisterName(int64_t Register) {
   if (InstPrinter) {
     const TargetAsmInfo &asmInfo = getContext().getTargetAsmInfo();
     unsigned LLVMRegister = asmInfo.getLLVMRegNum(Register, true);
-    OS << '%' << InstPrinter->getRegName(LLVMRegister);
+    InstPrinter->printRegName(OS, LLVMRegister);
   } else {
     OS << Register;
   }
@@ -1169,8 +1169,10 @@ void MCAsmStreamer::EmitPersonality(const MCSymbol *Personality) {
 }
 
 void MCAsmStreamer::EmitSetFP(unsigned FpReg, unsigned SpReg, int64_t Offset) {
-  OS << "\t.setfp\t" << InstPrinter->getRegName(FpReg)
-     << ", "        << InstPrinter->getRegName(SpReg);
+  OS << "\t.setfp\t";
+  InstPrinter->printRegName(OS, FpReg);
+  OS << ", ";
+  InstPrinter->printRegName(OS, SpReg);
   if (Offset)
     OS << ", #" << Offset;
   EmitEOL();
@@ -1189,10 +1191,12 @@ void MCAsmStreamer::EmitRegSave(const SmallVectorImpl<unsigned> &RegList,
   else
     OS << "\t.save\t{";
 
-  OS << InstPrinter->getRegName(RegList[0]);
+  InstPrinter->printRegName(OS, RegList[0]);
 
-  for (unsigned i = 1, e = RegList.size(); i != e; ++i)
-    OS << ", " << InstPrinter->getRegName(RegList[i]);
+  for (unsigned i = 1, e = RegList.size(); i != e; ++i) {
+    OS << ", ";
+    InstPrinter->printRegName(OS, RegList[i]);
+  }
 
   OS << "}";
   EmitEOL();
