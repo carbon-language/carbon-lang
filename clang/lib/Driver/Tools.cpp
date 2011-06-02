@@ -1712,7 +1712,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                options::OPT_fno_gnu_keywords))
     A->render(Args, CmdArgs);
 
-  if (Arg *A = Args.getLastArg(options::OPT_fgnu89_inline))
+  if (Args.hasFlag(options::OPT_fgnu89_inline,
+                   options::OPT_fno_gnu89_inline,
+                   false))
     CmdArgs.push_back("-fgnu89-inline");
 
   // -fnext-runtime defaults to on Darwin and when rewriting Objective-C, and is

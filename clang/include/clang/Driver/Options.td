@@ -300,6 +300,7 @@ def fno_for_scope : Flag<"-fno-for-scope">, Group<f_Group>;
 def ffreestanding : Flag<"-ffreestanding">, Group<f_Group>;
 def fgnu_keywords : Flag<"-fgnu-keywords">, Group<f_Group>;
 def fgnu89_inline : Flag<"-fgnu89-inline">, Group<f_Group>;
+def fno_gnu89_inline : Flag<"-fno-gnu89-inline">, Group<f_Group>;
 def fgnu_runtime : Flag<"-fgnu-runtime">, Group<f_Group>;
 def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;
 def filelist : Separate<"-filelist">, Flags<[LinkerInput]>;
