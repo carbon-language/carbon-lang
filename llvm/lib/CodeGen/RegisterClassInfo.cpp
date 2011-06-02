@@ -39,7 +39,8 @@ void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
   if (Update || CSR != CalleeSaved) {
     // Build a CSRNum map. Every CSR alias gets an entry pointing to the last
     // overlapping CSR.
-    CSRNum.reset(new uint8_t[TRI->getNumRegs()]());
+    CSRNum.clear();
+    CSRNum.resize(TRI->getNumRegs(), 0);
     for (unsigned N = 0; unsigned Reg = CSR[N]; ++N)
       for (const unsigned *AS = TRI->getOverlaps(Reg);
            unsigned Alias = *AS; ++AS)

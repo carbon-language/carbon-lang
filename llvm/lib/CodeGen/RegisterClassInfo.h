@@ -51,7 +51,7 @@ class RegisterClassInfo {
   const unsigned *CalleeSaved;
 
   // Map register number to CalleeSaved index + 1;
-  OwningArrayPtr<uint8_t> CSRNum;
+  SmallVector<uint8_t, 4> CSRNum;
 
   // Reserved registers in the current MF.
   BitVector Reserved;
