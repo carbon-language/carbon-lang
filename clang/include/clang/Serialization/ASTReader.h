@@ -257,6 +257,13 @@ private:
     /// AST file.
     const uint32_t *SLocOffsets;
 
+    /// \brief The number of source location file entries in this AST file.
+    unsigned LocalNumSLocFileEntries;
+
+    /// \brief Offsets for all of the source location file entries in the
+    /// AST file.
+    const uint32_t *SLocFileOffsets;
+
     /// \brief The entire size of this module's source location offset range.
     unsigned LocalSLocSize;
 

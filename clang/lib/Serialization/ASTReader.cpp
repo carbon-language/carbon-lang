@@ -2193,6 +2193,11 @@ ASTReader::ReadASTBlock(PerFileData &F) {
       F.LocalSLocSize = Record[1];
       break;
 
+    case FILE_SOURCE_LOCATION_OFFSETS:
+      F.SLocFileOffsets = (const uint32_t *)BlobStart;
+      F.LocalNumSLocFileEntries = Record[0];
+      break;
+
     case SOURCE_LOCATION_PRELOADS:
       if (PreloadSLocEntries.empty())
         PreloadSLocEntries.swap(Record);
@@ -2372,8 +2377,8 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries() {
     PerFileData *F = Chain[CI];
     llvm::BitstreamCursor &SLocEntryCursor = F->SLocEntryCursor;
 
-    for (unsigned i = 0, e = F->LocalNumSLocEntries; i != e; ++i) {
-      SLocEntryCursor.JumpToBit(F->SLocOffsets[i]);
+    for (unsigned i = 0, e = F->LocalNumSLocFileEntries; i != e; ++i) {
+      SLocEntryCursor.JumpToBit(F->SLocFileOffsets[i]);
       unsigned Code = SLocEntryCursor.ReadCode();
       if (Code == llvm::bitc::END_BLOCK ||
           Code == llvm::bitc::ENTER_SUBBLOCK ||
@@ -2429,10 +2434,6 @@ ASTReader::ASTReadResult ASTReader::validateFileEntries() {
 
         break;
       }
-
-      case SM_SLOC_BUFFER_ENTRY:
-      case SM_SLOC_INSTANTIATION_ENTRY:
-        break;
       }
     }
   }
@@ -5197,7 +5198,8 @@ ASTReader::~ASTReader() {
 }
 
 ASTReader::PerFileData::PerFileData(ASTFileType Ty)
-  : Type(Ty), SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0), LocalSLocSize(0),
+  : Type(Ty), SizeInBits(0), LocalNumSLocEntries(0), SLocOffsets(0),
+    SLocFileOffsets(0), LocalSLocSize(0),
     LocalNumIdentifiers(0), IdentifierOffsets(0), IdentifierTableData(0),
     IdentifierLookupTable(0), LocalNumMacroDefinitions(0),
     MacroDefinitionOffsets(0), 

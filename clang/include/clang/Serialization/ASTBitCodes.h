@@ -367,7 +367,12 @@ namespace clang {
       OPENCL_EXTENSIONS = 43,
 
       /// \brief The list of delegating constructor declarations.
-      DELEGATING_CTORS = 44
+      DELEGATING_CTORS = 44,
+
+      /// \brief Record code for the table of offsets into the block
+      /// of file source-location information.
+      FILE_SOURCE_LOCATION_OFFSETS = 45
+
     };
 
     /// \brief Record types used within a source manager block.
