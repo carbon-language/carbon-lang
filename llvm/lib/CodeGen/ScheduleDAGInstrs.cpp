@@ -35,8 +35,9 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      const MachineDominatorTree &mdt)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()),
     InstrItins(mf.getTarget().getInstrItineraryData()),
-    Defs(TRI->getNumRegs()), Uses(TRI->getNumRegs()), LoopRegs(MLI, MDT) {
-  DbgValueVec.clear();
+    Defs(TRI->getNumRegs()), Uses(TRI->getNumRegs()), 
+    FirstDbgValue(0), LoopRegs(MLI, MDT) {
+  DbgValues.clear();
 }
 
 /// Run - perform scheduling.
@@ -200,11 +201,6 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   std::map<const Value *, SUnit *> AliasMemDefs, NonAliasMemDefs;
   std::map<const Value *, std::vector<SUnit *> > AliasMemUses, NonAliasMemUses;
 
-  // Keep track of dangling debug references to registers.
-  std::vector<std::pair<MachineInstr*, unsigned> >
-    DanglingDebugValue(TRI->getNumRegs(),
-    std::make_pair(static_cast<MachineInstr*>(0), 0));
-
   // Check to see if the scheduler cares about latencies.
   bool UnitLatencies = ForceUnitLatencies();
 
@@ -214,7 +210,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
 
   // Remove any stale debug info; sometimes BuildSchedGraph is called again
   // without emitting the info from the previous call.
-  DbgValueVec.clear();
+  DbgValues.clear();
+  FirstDbgValue = NULL;
 
   // Model data dependencies between instructions being scheduled and the
   // ExitSU.
@@ -225,19 +222,20 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   }
 
   // Walk the list of instructions, from bottom moving up.
+  MachineInstr *PrevMI = NULL;
   for (MachineBasicBlock::iterator MII = InsertPos, MIE = Begin;
        MII != MIE; --MII) {
     MachineInstr *MI = prior(MII);
-    // DBG_VALUE does not have SUnit's built, so just remember these for later
-    // reinsertion.
+    if (MI && PrevMI) {
+      DbgValues.push_back(std::make_pair(PrevMI, MI));
+      PrevMI = NULL;
+    }
+
     if (MI->isDebugValue()) {
-      if (MI->getNumOperands()==3 && MI->getOperand(0).isReg() &&
-          MI->getOperand(0).getReg())
-        DanglingDebugValue[MI->getOperand(0).getReg()] =
-             std::make_pair(MI, DbgValueVec.size());
-      DbgValueVec.push_back(MI);
+      PrevMI = MI;
       continue;
     }
+
     const TargetInstrDesc &TID = MI->getDesc();
     assert(!TID.isTerminator() && !MI->isLabel() &&
            "Cannot schedule terminators or labels!");
@@ -260,12 +258,6 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
       if (Reg == 0) continue;
 
       assert(TRI->isPhysicalRegister(Reg) && "Virtual register encountered!");
-
-      if (MO.isDef() && DanglingDebugValue[Reg].first!=0) {
-        SU->DbgInstrList.push_back(DanglingDebugValue[Reg].first);
-        DbgValueVec[DanglingDebugValue[Reg].second] = 0;
-        DanglingDebugValue[Reg] = std::make_pair((MachineInstr*)0, 0);
-      }
 
       std::vector<SUnit *> &UseList = Uses[Reg];
       // Defs are push in the order they are visited and never reordered.
@@ -561,6 +553,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
       }
     }
   }
+  if (PrevMI)
+    FirstDbgValue = PrevMI;
 
   for (int i = 0, e = TRI->getNumRegs(); i != e; ++i) {
     Defs[i].clear();
@@ -670,13 +664,9 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
     BB->remove(I);
   }
 
-  // First reinsert any remaining debug_values; these are either constants,
-  // or refer to live-in registers.  The beginning of the block is the right
-  // place for the latter.  The former might reasonably be placed elsewhere
-  // using some kind of ordering algorithm, but right now it doesn't matter.
-  for (int i = DbgValueVec.size()-1; i>=0; --i)
-    if (DbgValueVec[i])
-      BB->insert(InsertPos, DbgValueVec[i]);
+  // If first instruction was a DBG_VALUE then put it back.
+  if (FirstDbgValue)
+    BB->insert(InsertPos, FirstDbgValue);
 
   // Then re-insert them according to the given schedule.
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
@@ -694,15 +684,18 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
 
   // Update the Begin iterator, as the first instruction in the block
   // may have been scheduled later.
-  if (!DbgValueVec.empty()) {
-    for (int i = DbgValueVec.size()-1; i>=0; --i)
-      if (DbgValueVec[i]!=0) {
-        Begin = DbgValueVec[DbgValueVec.size()-1];
-        break;
-      }
-  } else if (!Sequence.empty())
+  if (!Sequence.empty())
     Begin = Sequence[0]->getInstr();
 
-  DbgValueVec.clear();
+  // Reinsert any remaining debug_values.
+  for (std::vector<std::pair<MachineInstr *, MachineInstr *> >::iterator
+         DI = DbgValues.end(), DE = DbgValues.begin(); DI != DE; --DI) {
+    std::pair<MachineInstr *, MachineInstr *> P = *prior(DI);
+    MachineInstr *DbgValue = P.first;
+    MachineInstr *OrigPrivMI = P.second;
+    BB->insertAfter(OrigPrivMI, DbgValue);
+  }
+  DbgValues.clear();
+  FirstDbgValue = NULL;
   return BB;
 }

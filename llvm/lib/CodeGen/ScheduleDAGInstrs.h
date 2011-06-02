@@ -110,9 +110,9 @@ namespace llvm {
     std::vector<std::vector<SUnit *> > Defs;
     std::vector<std::vector<SUnit *> > Uses;
  
-    /// DbgValueVec - Remember DBG_VALUEs that refer to a particular
-    /// register.
-    std::vector<MachineInstr *>DbgValueVec;
+    /// DbgValues - Remember instruction that preceeds DBG_VALUE.
+    std::vector<std::pair<MachineInstr *, MachineInstr *> >DbgValues;
+    MachineInstr *FirstDbgValue;
 
     /// PendingLoads - Remember where unknown loads are after the most recent
     /// unknown store, as we iterate. As with Defs and Uses, this is here
