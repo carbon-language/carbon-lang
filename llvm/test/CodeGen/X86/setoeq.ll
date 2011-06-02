@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86  | FileCheck %s
+; RUN: llc < %s -march=x86 -mattr=+sse2 | FileCheck %s
 
 define zeroext i8 @t(double %x) nounwind readnone {
 entry:
