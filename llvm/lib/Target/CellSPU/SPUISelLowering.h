@@ -141,7 +141,7 @@ namespace llvm {
       getRegForInlineAsmConstraint(const std::string &Constraint,
                                    EVT VT) const;
 
-    void LowerAsmOperandForConstraint(SDValue Op, char ConstraintLetter,
+    void LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
                                       std::vector<SDValue> &Ops,
                                       SelectionDAG &DAG) const;
 

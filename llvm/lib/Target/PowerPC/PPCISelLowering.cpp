@@ -5439,10 +5439,16 @@ PPCTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
 /// vector.  If it is invalid, don't add anything to Ops.
-void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op, char Letter,
+void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op, 
+                                                     std::string &Constraint,
                                                      std::vector<SDValue>&Ops,
                                                      SelectionDAG &DAG) const {
   SDValue Result(0,0);
+  
+  // Only support length 1 constraints.
+  if (Constraint.length() > 1) return;
+  
+  char Letter = Constraint[0];
   switch (Letter) {
   default: break;
   case 'I':
@@ -5498,7 +5504,7 @@ void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op, char Letter,
   }
 
   // Handle standard constraint letters.
-  TargetLowering::LowerAsmOperandForConstraint(Op, Letter, Ops, DAG);
+  TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
 // isLegalAddressingMode - Return true if the addressing mode represented

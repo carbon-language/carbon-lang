@@ -2650,9 +2650,13 @@ const char *TargetLowering::LowerXConstraint(EVT ConstraintVT) const{
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
 /// vector.  If it is invalid, don't add anything to Ops.
 void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
-                                                  char ConstraintLetter,
+                                                  std::string &Constraint,
                                                   std::vector<SDValue> &Ops,
                                                   SelectionDAG &DAG) const {
+  
+  if (Constraint.length() > 1) return;
+  
+  char ConstraintLetter = Constraint[0];
   switch (ConstraintLetter) {
   default: break;
   case 'X':     // Allows any operand; labels (basic block) use this.
@@ -3091,7 +3095,7 @@ static void ChooseConstraint(TargetLowering::AsmOperandInfo &OpInfo,
       assert(OpInfo.Codes[i].size() == 1 &&
              "Unhandled multi-letter 'other' constraint");
       std::vector<SDValue> ResultOps;
-      TLI.LowerAsmOperandForConstraint(Op, OpInfo.Codes[i][0],
+      TLI.LowerAsmOperandForConstraint(Op, OpInfo.Codes[i],
                                        ResultOps, *DAG);
       if (!ResultOps.empty()) {
         BestType = CType;

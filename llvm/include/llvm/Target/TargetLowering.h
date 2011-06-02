@@ -1449,7 +1449,7 @@ public:
 
   /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
   /// vector.  If it is invalid, don't add anything to Ops.
-  virtual void LowerAsmOperandForConstraint(SDValue Op, char ConstraintLetter,
+  virtual void LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
                                             std::vector<SDValue> &Ops,
                                             SelectionDAG &DAG) const;
 

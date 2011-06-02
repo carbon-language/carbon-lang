@@ -328,7 +328,7 @@ namespace llvm {
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops.
     virtual void LowerAsmOperandForConstraint(SDValue Op,
-                                              char ConstraintLetter,
+                                              std::string &Constraint,
                                               std::vector<SDValue> &Ops,
                                               SelectionDAG &DAG) const;
 

@@ -3204,11 +3204,11 @@ SPUTargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,
 // LowerAsmOperandForConstraint
 void
 SPUTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
-                                                char ConstraintLetter,
+                                                std::string &Constraint,
                                                 std::vector<SDValue> &Ops,
                                                 SelectionDAG &DAG) const {
   // Default, for the time being, to the base class handler
-  TargetLowering::LowerAsmOperandForConstraint(Op, ConstraintLetter, Ops, DAG);
+  TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
 /// isLegalAddressImmediate - Return true if the integer value can be used
