@@ -10,7 +10,7 @@ CLANG_LEVEL := ..
 
 PARALLEL_DIRS = Headers Basic Lex Parse AST Sema CodeGen Analysis \
                 StaticAnalyzer Rewrite Serialization Frontend FrontendTool \
-                Index Driver Tooling
+                Index Driver
 
 include $(CLANG_LEVEL)/Makefile
 
