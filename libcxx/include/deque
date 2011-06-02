@@ -63,32 +63,32 @@ public:
     void assign(size_type n, const value_type& v);
     void assign(initializer_list<value_type> il);
 
-    allocator_type get_allocator() const;
+    allocator_type get_allocator() const noexcept;
 
     // iterators:
 
-    iterator       begin();
-    const_iterator begin() const;
-    iterator       end();
-    const_iterator end() const;
+    iterator       begin() noexcept;
+    const_iterator begin() const noexcept;
+    iterator       end() noexcept;
+    const_iterator end() const noexcept;
 
-    reverse_iterator       rbegin();
-    const_reverse_iterator rbegin() const;
-    reverse_iterator       rend();
-    const_reverse_iterator rend() const;
+    reverse_iterator       rbegin() noexcept;
+    const_reverse_iterator rbegin() const noexcept;
+    reverse_iterator       rend() noexcept;
+    const_reverse_iterator rend() const noexcept;
 
-    const_iterator         cbegin() const;
-    const_iterator         cend() const;
-    const_reverse_iterator crbegin() const;
-    const_reverse_iterator crend() const;
+    const_iterator         cbegin() const noexcept;
+    const_iterator         cend() const noexcept;
+    const_reverse_iterator crbegin() const noexcept;
+    const_reverse_iterator crend() const noexcept;
 
     // capacity:
-    size_type size() const;
-    size_type max_size() const;
+    size_type size() const noexcept;
+    size_type max_size() const noexcept;
     void resize(size_type n);
     void resize(size_type n, const value_type& v);
     void shrink_to_fit();
-    bool empty() const;
+    bool empty() const noexcept;
 
     // element access:
     reference operator[](size_type i);
@@ -119,7 +119,7 @@ public:
     iterator erase(const_iterator p);
     iterator erase(const_iterator f, const_iterator l);
     void swap(deque& c);
-    void clear();
+    void clear() noexcept;
 };
 
 template <class T, class Allocator>
@@ -267,12 +267,12 @@ public:
     typedef random_access_iterator_tag  iterator_category;
     typedef _Reference                  reference;
 
-    _LIBCPP_INLINE_VISIBILITY __deque_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __deque_iterator() _NOEXCEPT {}
 
     template <class _P, class _R, class _MP>
     _LIBCPP_INLINE_VISIBILITY
     __deque_iterator(const __deque_iterator<value_type, _P, _R, _MP, difference_type, __block_size>& __it,
-                typename enable_if<is_convertible<_P, pointer>::value>::type* = 0)
+                typename enable_if<is_convertible<_P, pointer>::value>::type* = 0) _NOEXCEPT
         : __m_iter_(__it.__m_iter_), __ptr_(__it.__ptr_) {}
 
     _LIBCPP_INLINE_VISIBILITY reference operator*() const {return *__ptr_;}
@@ -395,7 +395,7 @@ public:
         {return !(__x < __y);}
 
 private:
-    _LIBCPP_INLINE_VISIBILITY __deque_iterator(__map_iterator __m, pointer __p)
+    _LIBCPP_INLINE_VISIBILITY __deque_iterator(__map_iterator __m, pointer __p) _NOEXCEPT
         : __m_iter_(__m), __ptr_(__p) {}
 
     template <class _Tp, class _A> friend class __deque_base;
@@ -916,15 +916,17 @@ protected:
     size_type __start_;
     __compressed_pair<size_type, allocator_type> __size_;
 
-    iterator       begin();
-    const_iterator begin() const;
-    iterator       end();
-    const_iterator end() const;
+    iterator       begin() _NOEXCEPT;
+    const_iterator begin() const _NOEXCEPT;
+    iterator       end() _NOEXCEPT;
+    const_iterator end() const _NOEXCEPT;
 
     _LIBCPP_INLINE_VISIBILITY size_type&            size()          {return __size_.first();}
-    _LIBCPP_INLINE_VISIBILITY const size_type&      size() const    {return __size_.first();}
+    _LIBCPP_INLINE_VISIBILITY
+    const size_type& size() const _NOEXCEPT {return __size_.first();}
     _LIBCPP_INLINE_VISIBILITY allocator_type&       __alloc()       {return __size_.second();}
-    _LIBCPP_INLINE_VISIBILITY const allocator_type& __alloc() const {return __size_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    const allocator_type& __alloc() const _NOEXCEPT {return __size_.second();}
 
     __deque_base();
     explicit __deque_base(const allocator_type& __a);
@@ -937,7 +939,7 @@ protected:
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void swap(__deque_base& __c);
-    void clear();
+    void clear() _NOEXCEPT;
 
     bool __invariants() const;
 
@@ -1015,7 +1017,7 @@ __deque_base<_Tp, _Allocator>::__invariants() const
 
 template <class _Tp, class _Allocator>
 typename __deque_base<_Tp, _Allocator>::iterator
-__deque_base<_Tp, _Allocator>::begin()
+__deque_base<_Tp, _Allocator>::begin() _NOEXCEPT
 {
     __map_pointer __mp = __map_.begin() + __start_ / __block_size;
     return iterator(__mp, __map_.empty() ? 0 : *__mp + __start_ % __block_size);
@@ -1023,7 +1025,7 @@ __deque_base<_Tp, _Allocator>::begin()
 
 template <class _Tp, class _Allocator>
 typename __deque_base<_Tp, _Allocator>::const_iterator
-__deque_base<_Tp, _Allocator>::begin() const
+__deque_base<_Tp, _Allocator>::begin() const _NOEXCEPT
 {
     __map_const_pointer __mp = __map_.begin() + __start_ / __block_size;
     return const_iterator(__mp, __map_.empty() ? 0 : *__mp + __start_ % __block_size);
@@ -1031,7 +1033,7 @@ __deque_base<_Tp, _Allocator>::begin() const
 
 template <class _Tp, class _Allocator>
 typename __deque_base<_Tp, _Allocator>::iterator
-__deque_base<_Tp, _Allocator>::end()
+__deque_base<_Tp, _Allocator>::end() _NOEXCEPT
 {
     size_type __p = size() + __start_;
     __map_pointer __mp = __map_.begin() + __p / __block_size;
@@ -1040,7 +1042,7 @@ __deque_base<_Tp, _Allocator>::end()
 
 template <class _Tp, class _Allocator>
 typename __deque_base<_Tp, _Allocator>::const_iterator
-__deque_base<_Tp, _Allocator>::end() const
+__deque_base<_Tp, _Allocator>::end() const _NOEXCEPT
 {
     size_type __p = size() + __start_;
     __map_const_pointer __mp = __map_.begin() + __p / __block_size;
@@ -1112,7 +1114,7 @@ __deque_base<_Tp, _Allocator>::swap(__deque_base& __c)
 
 template <class _Tp, class _Allocator>
 void
-__deque_base<_Tp, _Allocator>::clear()
+__deque_base<_Tp, _Allocator>::clear() _NOEXCEPT
 {
     allocator_type& __a = __alloc();
     for (iterator __i = begin(), __e = end(); __i != __e; ++__i)
@@ -1197,45 +1199,56 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     void assign(initializer_list<value_type> __il) {assign(__il.begin(), __il.end());}
 
-    allocator_type get_allocator() const;
+    allocator_type get_allocator() const _NOEXCEPT;
 
     // iterators:
 
     _LIBCPP_INLINE_VISIBILITY
-    iterator       begin()       {return __base::begin();}
+    iterator       begin() _NOEXCEPT       {return __base::begin();}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator begin() const {return __base::begin();}
+    const_iterator begin() const _NOEXCEPT {return __base::begin();}
     _LIBCPP_INLINE_VISIBILITY
-    iterator       end()         {return __base::end();}
+    iterator       end() _NOEXCEPT         {return __base::end();}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator end()   const {return __base::end();}
+    const_iterator end()   const _NOEXCEPT {return __base::end();}
 
     _LIBCPP_INLINE_VISIBILITY
-    reverse_iterator       rbegin()       {return       reverse_iterator(__base::end());}
+    reverse_iterator       rbegin() _NOEXCEPT
+        {return       reverse_iterator(__base::end());}
     _LIBCPP_INLINE_VISIBILITY
-    const_reverse_iterator rbegin() const {return const_reverse_iterator(__base::end());}
+    const_reverse_iterator rbegin() const _NOEXCEPT
+        {return const_reverse_iterator(__base::end());}
     _LIBCPP_INLINE_VISIBILITY
-    reverse_iterator       rend()         {return       reverse_iterator(__base::begin());}
+    reverse_iterator       rend() _NOEXCEPT
+        {return       reverse_iterator(__base::begin());}
     _LIBCPP_INLINE_VISIBILITY
-    const_reverse_iterator rend()   const {return const_reverse_iterator(__base::begin());}
+    const_reverse_iterator rend()   const _NOEXCEPT
+        {return const_reverse_iterator(__base::begin());}
 
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator         cbegin()  const {return __base::begin();}
+    const_iterator         cbegin()  const _NOEXCEPT
+        {return __base::begin();}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator         cend()    const {return __base::end();}
+    const_iterator         cend()    const _NOEXCEPT
+        {return __base::end();}
     _LIBCPP_INLINE_VISIBILITY
-    const_reverse_iterator crbegin() const {return const_reverse_iterator(__base::end());}
+    const_reverse_iterator crbegin() const _NOEXCEPT
+        {return const_reverse_iterator(__base::end());}
     _LIBCPP_INLINE_VISIBILITY
-    const_reverse_iterator crend()   const {return const_reverse_iterator(__base::begin());}
+    const_reverse_iterator crend()   const _NOEXCEPT
+        {return const_reverse_iterator(__base::begin());}
 
     // capacity:
-    _LIBCPP_INLINE_VISIBILITY size_type size() const {return __base::size();}
     _LIBCPP_INLINE_VISIBILITY
-    size_type max_size() const {return __alloc_traits::max_size(__base::__alloc());}
+    size_type size() const _NOEXCEPT {return __base::size();}
+    _LIBCPP_INLINE_VISIBILITY
+    size_type max_size() const _NOEXCEPT
+        {return __alloc_traits::max_size(__base::__alloc());}
     void resize(size_type __n);
     void resize(size_type __n, const value_type& __v);
     void shrink_to_fit();
-    _LIBCPP_INLINE_VISIBILITY bool empty() const {return __base::size() == 0;}
+    _LIBCPP_INLINE_VISIBILITY
+    bool empty() const _NOEXCEPT {return __base::size() == 0;}
 
     // element access:
     reference operator[](size_type __i);
@@ -1278,7 +1291,7 @@ public:
     iterator erase(const_iterator __f, const_iterator __l);
 
     void swap(deque& __c);
-    void clear();
+    void clear() _NOEXCEPT;
 
     _LIBCPP_INLINE_VISIBILITY
     bool __invariants() const {return __base::__invariants();}
@@ -1535,7 +1548,7 @@ deque<_Tp, _Allocator>::assign(size_type __n, const value_type& __v)
 template <class _Tp, class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 _Allocator
-deque<_Tp, _Allocator>::get_allocator() const
+deque<_Tp, _Allocator>::get_allocator() const _NOEXCEPT
 {
     return __base::__alloc();
 }
@@ -2707,7 +2720,7 @@ deque<_Tp, _Allocator>::swap(deque& __c)
 template <class _Tp, class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 void
-deque<_Tp, _Allocator>::clear()
+deque<_Tp, _Allocator>::clear() _NOEXCEPT
 {
     __base::clear();
 }
