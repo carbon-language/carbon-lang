@@ -4070,7 +4070,7 @@ ClangASTContext::IsPossibleCPlusPlusDynamicType (clang::ASTContext *ast, clang_t
                     {
                         if (GetCompleteQualType (ast, pointee_qual_type))
                         {
-                            success = cxx_record_decl->isPolymorphic() || cxx_record_decl->isAbstract();
+                            success = cxx_record_decl->isDynamicClass();
                         }
                         else
                         {
