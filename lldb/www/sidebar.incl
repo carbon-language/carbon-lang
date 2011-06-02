@@ -8,8 +8,6 @@
       <li><a href="goals.html">Goals</a></li>
       <li><a href="features.html">Features</a></li>
       <li><a href="status.html">Status</a></li>
-      <li><a href="tutorial.html">Tutorial</a></li>
-      <li><a href="lldb-gdb.html">LLDB and GDB</a></li>
     </ul>
   </div>
   <div class="menu">
@@ -20,6 +18,9 @@
         <li><a href="docs.html">Documentation</a></li>
         <li><a href="faq.html">FAQ</a></li>
         <li><a href="formats.html">Frame and Thread Formatting</a></li>
+        <li><a href="lldb-gdb.html">LLDB and GDB</a></li>
+        <li><a href="scripting.html">Python Scripting</a></li>
+        <li><a href="tutorial.html">Tutorial</a></li>
       </ul>
     </div>
   </div>
