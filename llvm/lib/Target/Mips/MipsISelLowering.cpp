@@ -523,6 +523,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
     case ISD::SELECT:             return LowerSELECT(Op, DAG);
     case ISD::VASTART:            return LowerVASTART(Op, DAG);
     case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
+    case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   }
   return SDValue();
 }
@@ -1549,6 +1550,19 @@ SDValue MipsTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG)
     return LowerFCOPYSIGN32(Op, DAG);
   else
     return LowerFCOPYSIGN64(Op, DAG, Subtarget->isLittle());
+}
+
+SDValue MipsTargetLowering::
+LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
+  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+  assert((Depth == 0) && "Frame address can only be determined for current frame.");
+
+  MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
+  MFI->setFrameAddressIsTaken(true);
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
+  SDValue FrameAddr = DAG.getCopyFromReg(DAG.getEntryNode(), dl, Mips::FP, VT);
+  return FrameAddr;
 }
 
 //===----------------------------------------------------------------------===//
