@@ -1,4 +1,3 @@
-// XFAIL: win32
 // RUN: mkdir -p %t.dir
 // RUN: echo '#include "header2.h"' > %t.dir/header1.h
 // RUN: echo > %t.dir/header2.h
