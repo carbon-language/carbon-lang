@@ -2531,7 +2531,9 @@ class MipsTargetInfo : public TargetInfo {
 public:
   MipsTargetInfo(const std::string& triple) : TargetInfo(triple), ABI("o32") {
     DescriptionString = "E-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
-                        "i64:32:64-f32:32:32-f64:64:64-v64:64:64-n32";
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
   }
   virtual const char *getABI() const { return ABI.c_str(); }
   virtual bool setABI(const std::string &Name) {
@@ -2663,7 +2665,7 @@ class MipselTargetInfo : public MipsTargetInfo {
 public:
   MipselTargetInfo(const std::string& triple) : MipsTargetInfo(triple) {
     DescriptionString = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-"
-                        "i64:32:64-f32:32:32-f64:64:64-v64:64:64-n32";
+                        "i64:64:64-f32:32:32-f64:64:64-v64:64:64-n32";
   }
 
   virtual void getTargetDefines(const LangOptions &Opts,
