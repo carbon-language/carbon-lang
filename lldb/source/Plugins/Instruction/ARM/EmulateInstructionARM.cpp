@@ -1121,7 +1121,9 @@ EmulateInstructionARM::EmulateMVNReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift_C(value, shift_t, shift_n, APSR_C, carry);
+        uint32_t shifted = Shift_C(value, shift_t, shift_n, APSR_C, carry, &success);
+        if (!success)
+            return false;
         uint32_t result = ~shifted;
         
         // The context specifies that an immediate is to be moved into Rd.
@@ -2628,7 +2630,9 @@ EmulateInstructionARM::EmulateADDReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+        uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
         AddWithCarryResult res = AddWithCarry(val1, shifted, 0);
 
         EmulateInstruction::Context context;
@@ -2751,7 +2755,9 @@ EmulateInstructionARM::EmulateCMNReg (const uint32_t opcode, const ARMEncoding e
     if (!success)
         return false;
                   
-    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C, &success);
+    if (!success)
+        return false;
     AddWithCarryResult res = AddWithCarry(val1, shifted, 0);
 
     EmulateInstruction::Context context;
@@ -2875,7 +2881,9 @@ EmulateInstructionARM::EmulateCMPReg (const uint32_t opcode, const ARMEncoding e
     if (!success)
         return false;
                   
-    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C, &success);
+    if (!success)
+        return false;
     AddWithCarryResult res = AddWithCarry(val1, ~shifted, 1);
 
     EmulateInstruction::Context context;
@@ -3182,7 +3190,9 @@ EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding
         // Decode the shift amount if not RRX.
         uint32_t amt = (shift_type == SRType_RRX ? 1 : DecodeImmShift(shift_type, imm5));
 
-        uint32_t result = Shift_C(value, shift_type, amt, APSR_C, carry);
+        uint32_t result = Shift_C(value, shift_type, amt, APSR_C, carry, &success);
+        if (!success)
+            return false;
 
         // The context specifies that an immediate is to be moved into Rd.
         EmulateInstruction::Context context;
@@ -3251,7 +3261,9 @@ EmulateInstructionARM::EmulateShiftReg (const uint32_t opcode, const ARMEncoding
         // Get the shift amount.
         uint32_t amt = Bits32(val, 7, 0);
 
-        uint32_t result = Shift_C(value, shift_type, amt, APSR_C, carry);
+        uint32_t result = Shift_C(value, shift_type, amt, APSR_C, carry, &success);
+        if (!success)
+            return false;
 
         // The context specifies that an immediate is to be moved into Rd.
         EmulateInstruction::Context context;
@@ -4771,7 +4783,9 @@ EmulateInstructionARM::EmulateSTRRegister (const uint32_t opcode, const ARMEncod
             return false;
                            
         // offset = Shift(R[m], shift_t, shift_n, APSR.C); 
-        offset = Shift (Rm_data, shift_t, shift_n, APSR_C);
+        offset = Shift (Rm_data, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
                          
         // offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
         if (add)
@@ -5085,7 +5099,9 @@ EmulateInstructionARM::EmulateSTRHRegister (const uint32_t opcode, const ARMEnco
             return false;
             
         // offset = Shift(R[m], shift_t, shift_n, APSR.C); 
-        uint32_t offset = Shift (Rm, shift_t, shift_n, APSR_C);
+        uint32_t offset = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
         
         // offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
         addr_t offset_addr;
@@ -5289,7 +5305,9 @@ EmulateInstructionARM::EmulateADCReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+        uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
         AddWithCarryResult res = AddWithCarry(val1, shifted, APSR_C);
 
         EmulateInstruction::Context context;
@@ -5515,7 +5533,9 @@ EmulateInstructionARM::EmulateANDReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry);
+        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry, &success);
+        if (!success)
+            return false;
         uint32_t result = val1 & shifted;
 
         EmulateInstruction::Context context;
@@ -5674,7 +5694,9 @@ EmulateInstructionARM::EmulateBICReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry);
+        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry, &success);
+        if (!success)
+            return false;
         uint32_t result = val1 & ~shifted;
 
         EmulateInstruction::Context context;
@@ -5813,7 +5835,9 @@ EmulateInstructionARM::EmulateLDRImmediateARM (const uint32_t opcode, const ARME
         else
         {
             // R[t] = ROR(data, 8*UInt(address<1:0>));
-            data = ROR (data, Bits32 (address, 1, 0));
+            data = ROR (data, Bits32 (address, 1, 0), &success);
+            if (!success)
+                return false;
             context.type = eContextRegisterLoad;
             context.SetImmediate (data);
             if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, data))
@@ -5954,7 +5978,9 @@ EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncod
         addr_t address;
                   
         // offset = Shift(R[m], shift_t, shift_n, APSR.C);   -- Note "The APSR is an application level alias for the CPSR".
-        addr_t offset = Shift (Rm, shift_t, shift_n, Bit32 (m_opcode_cpsr, APSR_C));
+        addr_t offset = Shift (Rm, shift_t, shift_n, Bit32 (m_opcode_cpsr, APSR_C), &success);
+        if (!success)
+            return false;
                   
         // offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
         if (add)
@@ -6017,7 +6043,9 @@ EmulateInstructionARM::EmulateLDRRegister (const uint32_t opcode, const ARMEncod
             if (CurrentInstrSet () == eModeARM)
             {
                 // R[t] = ROR(data, 8*UInt(address<1:0>));
-                data = ROR (data, Bits32 (address, 1, 0));
+                data = ROR (data, Bits32 (address, 1, 0), &success);
+                if (!success)
+                    return false;
                 context.type = eContextRegisterLoad;
                 context.SetImmediate (data);
                 if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + t, data))
@@ -6357,7 +6385,9 @@ EmulateInstructionARM::EmulateLDRBRegister (const uint32_t opcode, const ARMEnco
         if (!success)
             return false;
                   
-        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C);
+        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
                   
         // offset_addr = if add then (R[n] + offset) else (R[n] - offset); 
         uint32_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
@@ -6771,7 +6801,9 @@ EmulateInstructionARM::EmulateLDRHRegister (const uint32_t opcode, const ARMEnco
         if (!success)
             return false;
                   
-        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C);
+        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
                   
         addr_t offset_addr;
         addr_t address;
@@ -7176,7 +7208,9 @@ EmulateInstructionARM::EmulateLDRSBRegister (const uint32_t opcode, const ARMEnc
             return false;
                   
         // offset = Shift(R[m], shift_t, shift_n, APSR.C); 
-        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C);
+        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
             
         addr_t offset_addr;
         addr_t address;
@@ -7607,7 +7641,9 @@ EmulateInstructionARM::EmulateLDRSHRegister (const uint32_t opcode, const ARMEnc
             return false;
                   
         // offset = Shift(R[m], shift_t, shift_n, APSR.C); 
-        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C);
+        addr_t offset = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
                   
         addr_t offset_addr;
         addr_t address;
@@ -7732,7 +7768,9 @@ EmulateInstructionARM::EmulateSXTB (const uint32_t opcode, const ARMEncoding enc
             return false;
                   
         // rotated = ROR(R[m], rotation); 
-        uint64_t rotated = ROR (Rm, rotation);
+        uint64_t rotated = ROR (Rm, rotation, &success);
+        if (!success)
+            return false;
                   
         // R[d] = SignExtend(rotated<7:0>, 32);
         int64_t data = llvm::SignExtend64<8>(rotated);
@@ -7814,7 +7852,9 @@ EmulateInstructionARM::EmulateSXTH (const uint32_t opcode, const ARMEncoding enc
             return false;
                   
         // rotated = ROR(R[m], rotation); 
-        uint64_t rotated = ROR (Rm, rotation);
+        uint64_t rotated = ROR (Rm, rotation, &success);
+        if (!success)
+            return false;
                   
         // R[d] = SignExtend(rotated<15:0>, 32);
         RegisterInfo source_reg;
@@ -7896,7 +7936,9 @@ EmulateInstructionARM::EmulateUXTB (const uint32_t opcode, const ARMEncoding enc
             return false;
                   
         // rotated = ROR(R[m], rotation); 
-        uint64_t rotated = ROR (Rm, rotation);
+        uint64_t rotated = ROR (Rm, rotation, &success);
+        if (!success)
+            return false;
                   
         // R[d] = ZeroExtend(rotated<7:0>, 32);
         RegisterInfo source_reg;
@@ -7975,7 +8017,9 @@ EmulateInstructionARM::EmulateUXTH (const uint32_t opcode, const ARMEncoding enc
             return false;
                   
         // rotated = ROR(R[m], rotation); 
-        uint64_t rotated = ROR (Rm, rotation);
+        uint64_t rotated = ROR (Rm, rotation, &success);
+        if (!success)
+            return false;
                   
         // R[d] = ZeroExtend(rotated<15:0>, 32);
         RegisterInfo source_reg;
@@ -8290,7 +8334,9 @@ EmulateInstructionARM::EmulateEORReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry);
+        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry, &success);
+        if (!success)
+            return false;
         uint32_t result = val1 ^ shifted;
 
         EmulateInstruction::Context context;
@@ -8453,7 +8499,9 @@ EmulateInstructionARM::EmulateORRReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry);
+        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry, &success);
+        if (!success)
+            return false;
         uint32_t result = val1 | shifted;
 
         EmulateInstruction::Context context;
@@ -8603,7 +8651,9 @@ EmulateInstructionARM::EmulateRSBReg (const uint32_t opcode, const ARMEncoding e
     if (!success)
         return false;
                   
-    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C, &success);
+    if (!success)
+        return false;
     AddWithCarryResult res = AddWithCarry(~val1, shifted, 1);
 
     EmulateInstruction::Context context;
@@ -8730,7 +8780,9 @@ EmulateInstructionARM::EmulateRSCReg (const uint32_t opcode, const ARMEncoding e
     if (!success)
         return false;
                   
-    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C, &success);
+    if (!success)
+        return false;
     AddWithCarryResult res = AddWithCarry(~val1, shifted, APSR_C);
 
     EmulateInstruction::Context context;
@@ -8881,7 +8933,9 @@ EmulateInstructionARM::EmulateSBCReg (const uint32_t opcode, const ARMEncoding e
     if (!success)
         return false;
                   
-    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C);
+    uint32_t shifted = Shift(val2, shift_t, shift_n, APSR_C, &success);
+    if (!success)
+        return false;
     AddWithCarryResult res = AddWithCarry(val1, ~shifted, APSR_C);
 
     EmulateInstruction::Context context;
@@ -9160,7 +9214,9 @@ EmulateInstructionARM::EmulateTEQReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry);
+        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry, &success);
+        if (!success)
+            return false;
         uint32_t result = val1 ^ shifted;
 
         EmulateInstruction::Context context;
@@ -9288,7 +9344,9 @@ EmulateInstructionARM::EmulateTSTReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
 
-        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry);
+        uint32_t shifted = Shift_C(val2, shift_t, shift_n, APSR_C, carry, &success);
+        if (!success)
+            return false;
         uint32_t result = val1 & shifted;
 
         EmulateInstruction::Context context;
@@ -9374,7 +9432,9 @@ EmulateInstructionARM::EmulateSUBSPReg (const uint32_t opcode, const ARMEncoding
         if (!success)
             return false;
 
-        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C);
+        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
 
         // (result, carry, overflow) = AddWithCarry(SP, NOT(shifted), Ô1Õ);
         uint32_t sp_val = ReadCoreReg (SP_REG, &success);
@@ -9461,8 +9521,10 @@ EmulateInstructionARM::EmulateADDRegShift (const uint32_t opcode, const ARMEncod
         if (!success)
             return false;
                   
-        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C);          
-                
+        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
+
         // (result, carry, overflow) = AddWithCarry(R[n], shifted, Ô0Õ);
         uint32_t Rn = ReadCoreReg (n, &success);
         if (!success)
@@ -9584,7 +9646,9 @@ EmulateInstructionARM::EmulateSUBReg (const uint32_t opcode, const ARMEncoding e
         if (!success)
             return false;
                   
-        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C);
+        uint32_t shifted = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+        if (!success)
+            return false;
                   
         // (result, carry, overflow) = AddWithCarry(R[n], NOT(shifted), Ô1Õ);
         uint32_t Rn = ReadCoreReg (n, &success);
@@ -12019,8 +12083,9 @@ EmulateInstructionARM::EmulateSUBSPcLrEtc (const uint32_t opcode, const ARMEncod
             if (!success)
                 return false;
                 
-            operand2 = Shift (Rm, shift_t, shift_n, APSR_C);
-                
+            operand2 = Shift (Rm, shift_t, shift_n, APSR_C, &success);
+            if (!success)
+                return false;
         }
         else
         {

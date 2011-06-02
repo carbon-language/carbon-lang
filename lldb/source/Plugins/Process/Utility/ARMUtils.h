@@ -89,41 +89,61 @@ static inline ARM_ShifterType DecodeRegShift(const uint32_t type)
     }
 }
 
-static inline uint32_t LSL_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
+static inline uint32_t LSL_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out, bool *success)
 {
-    //assert(amount > 0);
+    if (amount == 0) {
+        *success = false;
+        return 0;
+    }
+    *success = true;
     carry_out = amount <= 32 ? Bit32(value, 32 - amount) : 0;
     return value << amount;
 }
 
-static inline uint32_t LSL(const uint32_t value, const uint32_t amount)
+static inline uint32_t LSL(const uint32_t value, const uint32_t amount, bool *success)
 {
-    //assert(amount >= 0);
+    *success = true;
     if (amount == 0)
         return value;
     uint32_t dont_care;
-    return LSL_C(value, amount, dont_care);
+    uint32_t result = LSL_C(value, amount, dont_care, success);
+    if (*success)
+        return result;
+    else
+        return 0;
 }
 
-static inline uint32_t LSR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
+static inline uint32_t LSR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out, bool *success)
 {
-    //assert(amount > 0);
+    if (amount == 0) {
+        *success = false;
+        return 0;
+    }
+    *success = true;
     carry_out = amount <= 32 ? Bit32(value, amount - 1) : 0;
     return value >> amount;
 }
 
-static inline uint32_t LSR(const uint32_t value, const uint32_t amount)
+static inline uint32_t LSR(const uint32_t value, const uint32_t amount, bool *success)
 {
-    //assert(amount >= 0);
+    *success = true;
     if (amount == 0)
         return value;
     uint32_t dont_care;
-    return LSR_C(value, amount, dont_care);
+    uint32_t result = LSR_C(value, amount, dont_care, success);
+    if (*success)
+        return result;
+    else
+        return 0;
 }
 
-static inline uint32_t ASR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
+static inline uint32_t ASR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out, bool *success)
 {
-    //assert(amount > 0 && amount <= 32);
+    if (amount == 0 || amount > 32) {
+        *success = false;
+        return 0;
+    }
+    *success = true;
     bool negative = BitIsSet(value, 31);
     if (amount <= 32)
     {
@@ -138,81 +158,113 @@ static inline uint32_t ASR_C(const uint32_t value, const uint32_t amount, uint32
     }
 }
 
-static inline uint32_t ASR(const uint32_t value, const uint32_t amount)
+static inline uint32_t ASR(const uint32_t value, const uint32_t amount, bool *success)
 {
-    //assert(amount >= 0);
+    *success = true;
     if (amount == 0)
         return value;
     uint32_t dont_care;
-    return ASR_C(value, amount, dont_care);
+    uint32_t result = ASR_C(value, amount, dont_care, success);
+    if (*success)
+        return result;
+    else
+        return 0;
 }
 
-static inline uint32_t ROR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
+static inline uint32_t ROR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out, bool *success)
 {
-    //assert(amount > 0);
+    if (amount == 0) {
+        *success = false;
+        return 0;
+    }
+    *success = true;
     uint32_t amt = amount % 32;
     uint32_t result = Rotr32(value, amt);
     carry_out = Bit32(value, 31);
     return result;
 }
 
-static inline uint32_t ROR(const uint32_t value, const uint32_t amount)
+static inline uint32_t ROR(const uint32_t value, const uint32_t amount, bool *success)
 {
-    //assert(amount >= 0);
+    *success = true;
     if (amount == 0)
         return value;
     uint32_t dont_care;
-    return ROR_C(value, amount, dont_care);
+    uint32_t result = ROR_C(value, amount, dont_care, success);
+    if (*success)
+        return result;
+    else
+        return 0;
 }
 
-static inline uint32_t RRX_C(const uint32_t value, const uint32_t carry_in, uint32_t &carry_out)
+static inline uint32_t RRX_C(const uint32_t value, const uint32_t carry_in, uint32_t &carry_out, bool *success)
 {
+    *success = true;
     carry_out = Bit32(value, 0);
     return Bit32(carry_in, 0) << 31 | Bits32(value, 31, 1);
 }
 
-static inline uint32_t RRX(const uint32_t value, const uint32_t carry_in)
+static inline uint32_t RRX(const uint32_t value, const uint32_t carry_in, bool *success)
 {
+    *success = true;
     uint32_t dont_care;
-    return RRX_C(value, carry_in, dont_care);
+    uint32_t result = RRX_C(value, carry_in, dont_care, success);
+    if (*success)
+        return result;
+    else
+        return 0;
 }
 
 static inline uint32_t Shift_C(const uint32_t value, ARM_ShifterType type, const uint32_t amount,
-                               const uint32_t carry_in, uint32_t &carry_out)
+                               const uint32_t carry_in, uint32_t &carry_out, bool *success)
 {
-    //assert(type != SRType_RRX || amount == 1);
-    if (amount == 0)
-    {
+    if (type == SRType_RRX && amount != 1) {
+        *success = false;
+        return 0;
+    }
+    *success = true;
+
+    if (amount == 0) {
         carry_out = carry_in;
         return value;
     }
     uint32_t result;
     switch (type) {
     case SRType_LSL:
-        result = LSL_C(value, amount, carry_out);
+        result = LSL_C(value, amount, carry_out, success);
         break;
     case SRType_LSR:
-        result = LSR_C(value, amount, carry_out);
+        result = LSR_C(value, amount, carry_out, success);
         break;
     case SRType_ASR:
-        result = ASR_C(value, amount, carry_out);
+        result = ASR_C(value, amount, carry_out, success);
         break;
     case SRType_ROR:
-        result = ROR_C(value, amount, carry_out);
+        result = ROR_C(value, amount, carry_out, success);
         break;
     case SRType_RRX:
-        result = RRX_C(value, carry_in, carry_out);
+        result = RRX_C(value, carry_in, carry_out, success);
+        break;
+    default:
+        *success = false;
         break;
     }
-    return result;
+    if (*success)
+        return result;
+    else
+        return 0;
 }
 
 static inline uint32_t Shift(const uint32_t value, ARM_ShifterType type, const uint32_t amount,
-                             const uint32_t carry_in)
+                             const uint32_t carry_in, bool *success)
 {
     // Don't care about carry out in this case.
     uint32_t dont_care;
-    return Shift_C(value, type, amount, carry_in, dont_care);
+    uint32_t result = Shift_C(value, type, amount, carry_in, dont_care, success);
+    if (*success)
+        return result;
+    else
+        return 0;
 }
 
 static inline uint32_t bits(const uint32_t val, const uint32_t msbit, const uint32_t lsbit)
