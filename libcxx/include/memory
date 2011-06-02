@@ -1591,6 +1591,8 @@ public:
     typedef const _Tp&        const_reference;
     typedef _Tp               value_type;
 
+    typedef true_type propagate_on_container_move_assignment;
+
     template <class _Up> struct rebind {typedef allocator<_Up> other;};
 
     _LIBCPP_INLINE_VISIBILITY allocator() _NOEXCEPT {}
