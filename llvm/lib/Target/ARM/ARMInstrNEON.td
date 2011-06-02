@@ -4703,8 +4703,9 @@ def VEXTd32 : VEXTd<"vext", "32", v2i32> {
   let Inst{9-8}    = 0b00;
 }
 def VEXTdf  : VEXTd<"vext", "32", v2f32> {
-  let Inst{11}    = index{0};
-  let Inst{10-8}  = 0b000;
+  let Inst{11-10}    = index{1-0};
+  let Inst{9-8}  = 0b00;
+
 }
 
 def VEXTq8  : VEXTq<"vext", "8",  v16i8> {
