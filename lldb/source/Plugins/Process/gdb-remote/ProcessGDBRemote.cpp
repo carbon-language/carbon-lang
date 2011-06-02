@@ -391,10 +391,9 @@ ProcessGDBRemote::DoConnectRemote (const char *remote_url)
         // We have a valid process
         SetID (pid);
         UpdateThreadListIfNeeded ();
-        StringExtractorGDBRemote response;
-        if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, false))
+        if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false))
         {
-            const StateType state = SetThreadStopInfo (response);
+            const StateType state = SetThreadStopInfo (m_last_stop_packet);
             if (state == eStateStopped)
             {
                 SetPrivateState (state);
@@ -550,10 +549,9 @@ ProcessGDBRemote::DoLaunch
                 return error;
             }
 
-            StringExtractorGDBRemote response;
-            if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, response, false))
+            if (m_gdb_comm.SendPacketAndWaitForResponse("?", 1, m_last_stop_packet, false))
             {
-                SetPrivateState (SetThreadStopInfo (response));
+                SetPrivateState (SetThreadStopInfo (m_last_stop_packet));
                 
                 if (!disable_stdio)
                 {
@@ -1097,6 +1095,7 @@ ProcessGDBRemote::UpdateThreadListIfNeeded ()
 StateType
 ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 {
+    stop_packet.SetFilePos (0);
     const char stop_type = stop_packet.GetChar();
     switch (stop_type)
     {
@@ -1245,22 +1244,10 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
 void
 ProcessGDBRemote::RefreshStateAfterStop ()
 {
-    // FIXME - add a variable to tell that we're in the middle of attaching if we
-    // need to know that.
-    // We must be attaching if we don't already have a valid architecture
-//    if (!GetTarget().GetArchitecture().IsValid())
-//    {
-//        Module *exe_module = GetTarget().GetExecutableModule().get();
-//        if (exe_module)
-//            m_arch_spec = exe_module->GetArchitecture();
-//    }
-    
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).
     m_thread_list.RefreshStateAfterStop();
-
-    // Discover new threads:
-    UpdateThreadListIfNeeded ();
+    SetThreadStopInfo (m_last_stop_packet);
 }
 
 Error
@@ -2342,13 +2329,11 @@ ProcessGDBRemote::AsyncThread (void *arg)
                                     case eStateCrashed:
                                     case eStateSuspended:
                                         process->m_last_stop_packet = response;
-                                        process->m_last_stop_packet.SetFilePos (0);
                                         process->SetPrivateState (stop_state);
                                         break;
 
                                     case eStateExited:
                                         process->m_last_stop_packet = response;
-                                        process->m_last_stop_packet.SetFilePos (0);
                                         response.SetFilePos(1);
                                         process->SetExitStatus(response.GetHexU8(), NULL);
                                         done = true;
