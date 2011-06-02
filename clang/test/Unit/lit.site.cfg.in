@@ -10,12 +10,6 @@ config.enable_shared = @ENABLE_SHARED@
 config.shlibdir = "@SHLIBDIR@"
 config.shlibpath_var = "@SHLIBPATH_VAR@"
 config.target_triple = "@TARGET_TRIPLE@"
-config.targets_to_build = "@TARGETS_TO_BUILD@"
-
-# Exclude not supported target-specific tests.
-config.excludes = []
-if not 'X86' in config.targets_to_build:
-    config.excludes.append('X86')
 
 # Support substitution of the tools_dir, libs_dirs, and build_mode with user
 # parameters. This is used when we can't determine the tool dir at
