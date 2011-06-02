@@ -488,11 +488,28 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   // a memcpy.
   if (LoadInst *LI = dyn_cast<LoadInst>(SI->getOperand(0))) {
     if (!LI->isVolatile() && LI->hasOneUse()) {
-      MemDepResult dep = MD->getDependency(LI);
+      MemDepResult ldep = MD->getDependency(LI);
       CallInst *C = 0;
-      if (dep.isClobber() && !isa<MemCpyInst>(dep.getInst()))
-        C = dyn_cast<CallInst>(dep.getInst());
-      
+      if (ldep.isClobber() && !isa<MemCpyInst>(ldep.getInst()))
+        C = dyn_cast<CallInst>(ldep.getInst());
+
+      if (C) {
+        // Check that nothing touches the dest of the "copy" between
+        // the call and the store.
+        MemDepResult sdep = MD->getDependency(SI);
+        if (!sdep.isNonLocal()) {
+          bool FoundCall = false;
+          for (BasicBlock::iterator I = SI, E = sdep.getInst(); I != E; --I) {
+            if (&*I == C) {
+              FoundCall = true;
+              break;
+            }
+          }
+          if (!FoundCall)
+            C = 0;
+        }
+      }
+
       if (C) {
         bool changed = performCallSlotOptzn(LI,
                         SI->getPointerOperand()->stripPointerCasts(), 
