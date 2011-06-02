@@ -6700,6 +6700,11 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
   DebugLoc dl = Op.getDebugLoc();
   unsigned Size = SrcVT.getSizeInBits()/8;
   MachineFunction &MF = DAG.getMachineFunction();
+
+  SDValue Addr = Op.getOperand(0);
+  if (Addr.getOpcode() == ISD::LOAD)
+    return BuildFILD(Op, SrcVT, DAG.getEntryNode(), Addr, DAG);
+
   int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
@@ -6723,12 +6728,18 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
 
   unsigned ByteSize = SrcVT.getSizeInBits()/8;
 
-  int SSFI = cast<FrameIndexSDNode>(StackSlot)->getIndex();
-  MachineMemOperand *MMO =
-    DAG.getMachineFunction()
-    .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
-                          MachineMemOperand::MOLoad, ByteSize, ByteSize);
-
+  FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(StackSlot);
+  MachineMemOperand *MMO;
+  if (FI) {
+    int SSFI = FI->getIndex();
+    MMO =
+      DAG.getMachineFunction()
+      .getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
+                            MachineMemOperand::MOLoad, ByteSize, ByteSize);
+  } else {
+    MMO = cast<LoadSDNode>(StackSlot)->getMemOperand();
+    StackSlot = StackSlot.getOperand(1);
+  }
   SDValue Ops[] = { Chain, StackSlot, DAG.getValueType(SrcVT) };
   SDValue Result = DAG.getMemIntrinsicNode(useSSE ? X86ISD::FILD_FLAG :
                                            X86ISD::FILD, DL,
