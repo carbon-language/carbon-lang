@@ -8,7 +8,7 @@ define void @f() nounwind {
 entry:
 ; CHECK:  lui $at, 65534
 ; CHECK:  addu  $at, $sp, $at
-; CHECK:  addiu $sp, $at, -24
+; CHECK:  addiu $sp, $at, -16
 ; CHECK:  .cprestore  65536
 
   %agg.tmp = alloca %struct.S1, align 1

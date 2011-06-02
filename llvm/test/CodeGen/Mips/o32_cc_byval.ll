@@ -10,18 +10,16 @@
 
 define void @f1() nounwind {
 entry:
-; CHECK: lw  $[[R0:[0-9]+]], %got(f1.s1)($gp)
-; CHECK: addiu $[[R1:[0-9]+]], $sp, 16
-; CHECK: addiu $[[R0:[0-9]+]], $[[R0]], %lo(f1.s1)
+; CHECK: lw  $[[R1:[0-9]+]], %got(f1.s1)($gp)
+; CHECK: addiu $[[R0:[0-9]+]], $[[R1]], %lo(f1.s1)
 ; CHECK: lw  $[[R2:[0-9]+]], 8($[[R0]])
+; CHECK: lw  $[[R7:[0-9]+]], 12($[[R0]])
 ; CHECK: lw  $[[R3:[0-9]+]], 16($[[R0]])
 ; CHECK: lw  $[[R4:[0-9]+]], 20($[[R0]])
 ; CHECK: lw  $[[R5:[0-9]+]], 24($[[R0]])
 ; CHECK: lw  $[[R6:[0-9]+]], 28($[[R0]])
-; CHECK: lw  $[[R7:[0-9]+]], 12($[[R0]])
-; CHECK: ori $[[R8:[0-9]+]], $[[R1]], 4
 ; CHECK: sw  $[[R2]], 16($sp)
-; CHECK: sw  $[[R7]], 0($[[R8]])
+; CHECK: sw  $[[R7]], 20($sp)
 ; CHECK: sw  $[[R3]], 24($sp)
 ; CHECK: sw  $[[R4]], 28($sp)
 ; CHECK: sw  $[[R5]], 32($sp)
@@ -46,14 +44,11 @@ declare void @callee3(float, %struct.S3* byval, %struct.S1* byval)
 define void @f2(float %f, %struct.S1* nocapture byval %s1) nounwind {
 entry:
 ; CHECK: addiu $sp, $sp, -56
-; CHECK: addiu $[[R0:[0-9]+]], $sp, 64
-; CHECK: ori $[[R1:[0-9]+]], $[[R0]], 4
-; CHECK: ori $[[R0:[0-9]+]], $[[R0]], 2
 ; CHECK: sw  $6, 64($sp)
-; CHECK: sw  $7, 0($[[R1]])
+; CHECK: sw  $7, 68($sp)
 ; CHECK: ldc1 $f[[F0:[0-9]+]], 80($sp)
-; CHECK: lw  $[[R2:[0-9]+]], 0($[[R1]])
-; CHECK: lh  $[[R1:[0-9]+]], 0($[[R0]])
+; CHECK: lw  $[[R2:[0-9]+]], 68($sp)
+; CHECK: lh  $[[R1:[0-9]+]], 66($sp)
 ; CHECK: lb  $[[R0:[0-9]+]], 64($sp)
 ; CHECK: lw  $[[R3:[0-9]+]], 72($sp)
 ; CHECK: lw  $[[R4:[0-9]+]], 76($sp)
@@ -86,10 +81,8 @@ declare void @callee4(i32, double, i64, i32, i16 signext, i8 signext, float)
 define void @f3(%struct.S2* nocapture byval %s2) nounwind {
 entry:
 ; CHECK: addiu $sp, $sp, -56
-; CHECK: addiu $[[R0:[0-9]+]], $sp, 56
-; CHECK: ori $[[R0:[0-9]+]], $[[R0]], 4
 ; CHECK: sw  $4, 56($sp)
-; CHECK: sw  $5, 0($[[R0]])
+; CHECK: sw  $5, 60($sp)
 ; CHECK: sw  $6, 64($sp)
 ; CHECK: sw  $7, 68($sp)
 ; CHECK: lw  $[[R0:[0-9]+]], 68($sp)
@@ -107,14 +100,12 @@ entry:
 define void @f4(float %f, %struct.S3* nocapture byval %s3, %struct.S1* nocapture byval %s1) nounwind {
 entry:
 ; CHECK: addiu $sp, $sp, -56
-; CHECK: addiu $[[R0:[0-9]+]], $sp, 64
-; CHECK: ori $[[R2:[0-9]+]], $[[R0]], 4
 ; CHECK: sw  $5, 60($sp)
 ; CHECK: sw  $6, 64($sp)
-; CHECK: sw  $7, 0($[[R2]])
+; CHECK: sw  $7, 68($sp)
 ; CHECK: lw  $[[R1:[0-9]+]], 88($sp)
 ; CHECK: lb  $[[R0:[0-9]+]], 60($sp)
-; CHECK: lw  $4, 0($[[R2]])
+; CHECK: lw  $4, 68($sp)
 ; CHECK: sw  $[[R1]], 24($sp)
 ; CHECK: sw  $[[R0]], 32($sp)
 
