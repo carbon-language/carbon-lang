@@ -12943,9 +12943,8 @@ EmulateInstructionARM::CurrentCond (const uint32_t opcode)
                 if (Bits32(opcode, 15, 12) == 0x0d && Bits32(opcode, 11, 7) != 0x0f)
                     return Bits32(opcode, 11, 7);
             }
-            else
+            else if (byte_size == 4)
             {
-                //assert (byte_size == 4);
                 if (Bits32(opcode, 31, 27) == 0x1e &&
                     Bits32(opcode, 15, 14) == 0x02 &&
                     Bits32(opcode, 12, 12) == 0x00 &&
@@ -12954,6 +12953,9 @@ EmulateInstructionARM::CurrentCond (const uint32_t opcode)
                     return Bits32(opcode, 25, 22);
                 }
             }
+            else
+                // We have an invalid thumb instruction, let's bail out.
+                break;
             
             return m_it_session.GetCond();
         }
