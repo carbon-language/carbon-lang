@@ -20,7 +20,8 @@
 
 using namespace llvm;
 
-RegisterClassInfo::RegisterClassInfo() : Tag(0), TRI(0) {}
+RegisterClassInfo::RegisterClassInfo() : Tag(0), MF(0), TRI(0), CalleeSaved(0)
+{}
 
 void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
   bool Update = false;
@@ -35,7 +36,7 @@ void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
 
   // Does this MF have different CSRs?
   const unsigned *CSR = TRI->getCalleeSavedRegs(MF);
-  if (CSR != CalleeSaved) {
+  if (Update || CSR != CalleeSaved) {
     // Build a CSRNum map. Every CSR alias gets an entry pointing to the last
     // overlapping CSR.
     CSRNum.reset(new uint8_t[TRI->getNumRegs()]);
