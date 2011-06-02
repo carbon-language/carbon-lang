@@ -21,7 +21,8 @@ typedef enum
     SRType_LSR,
     SRType_ASR,
     SRType_ROR,
-    SRType_RRX
+    SRType_RRX,
+    SRType_Invalid
 } ARM_ShifterType;
 
 // ARM conditions          // Meaning (integer)         Meaning (floating-point)      Condition flags

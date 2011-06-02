@@ -27,7 +27,8 @@ static inline uint32_t DecodeImmShift(const uint32_t type, const uint32_t imm5, 
 {
     switch (type) {
     default:
-        assert(0 && "Invalid shift type");
+        //assert(0 && "Invalid shift type");
+        return UINT32_MAX;
     case 0:
         shift_t = SRType_LSL;
         return imm5;
@@ -75,7 +76,8 @@ static inline ARM_ShifterType DecodeRegShift(const uint32_t type)
 {
     switch (type) {
     default:
-        assert(0 && "Invalid shift type");
+        //assert(0 && "Invalid shift type");
+        return SRType_Invalid;
     case 0:
         return SRType_LSL;
     case 1:
@@ -89,14 +91,14 @@ static inline ARM_ShifterType DecodeRegShift(const uint32_t type)
 
 static inline uint32_t LSL_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
 {
-    assert(amount > 0);
+    //assert(amount > 0);
     carry_out = amount <= 32 ? Bit32(value, 32 - amount) : 0;
     return value << amount;
 }
 
 static inline uint32_t LSL(const uint32_t value, const uint32_t amount)
 {
-    assert(amount >= 0);
+    //assert(amount >= 0);
     if (amount == 0)
         return value;
     uint32_t dont_care;
@@ -105,14 +107,14 @@ static inline uint32_t LSL(const uint32_t value, const uint32_t amount)
 
 static inline uint32_t LSR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
 {
-    assert(amount > 0);
+    //assert(amount > 0);
     carry_out = amount <= 32 ? Bit32(value, amount - 1) : 0;
     return value >> amount;
 }
 
 static inline uint32_t LSR(const uint32_t value, const uint32_t amount)
 {
-    assert(amount >= 0);
+    //assert(amount >= 0);
     if (amount == 0)
         return value;
     uint32_t dont_care;
@@ -121,7 +123,7 @@ static inline uint32_t LSR(const uint32_t value, const uint32_t amount)
 
 static inline uint32_t ASR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
 {
-    assert(amount > 0 && amount <= 32);
+    //assert(amount > 0 && amount <= 32);
     bool negative = BitIsSet(value, 31);
     if (amount <= 32)
     {
@@ -138,7 +140,7 @@ static inline uint32_t ASR_C(const uint32_t value, const uint32_t amount, uint32
 
 static inline uint32_t ASR(const uint32_t value, const uint32_t amount)
 {
-    assert(amount >= 0);
+    //assert(amount >= 0);
     if (amount == 0)
         return value;
     uint32_t dont_care;
@@ -147,7 +149,7 @@ static inline uint32_t ASR(const uint32_t value, const uint32_t amount)
 
 static inline uint32_t ROR_C(const uint32_t value, const uint32_t amount, uint32_t &carry_out)
 {
-    assert(amount > 0);
+    //assert(amount > 0);
     uint32_t amt = amount % 32;
     uint32_t result = Rotr32(value, amt);
     carry_out = Bit32(value, 31);
@@ -156,7 +158,7 @@ static inline uint32_t ROR_C(const uint32_t value, const uint32_t amount, uint32
 
 static inline uint32_t ROR(const uint32_t value, const uint32_t amount)
 {
-    assert(amount >= 0);
+    //assert(amount >= 0);
     if (amount == 0)
         return value;
     uint32_t dont_care;
@@ -178,7 +180,7 @@ static inline uint32_t RRX(const uint32_t value, const uint32_t carry_in)
 static inline uint32_t Shift_C(const uint32_t value, ARM_ShifterType type, const uint32_t amount,
                                const uint32_t carry_in, uint32_t &carry_out)
 {
-    assert(type != SRType_RRX || amount == 1);
+    //assert(type != SRType_RRX || amount == 1);
     if (amount == 0)
     {
         carry_out = carry_in;

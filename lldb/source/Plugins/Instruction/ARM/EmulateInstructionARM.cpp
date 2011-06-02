@@ -81,7 +81,7 @@ bool ITSession::InitIT(uint32_t bits7_0)
 // Update ITState if necessary.
 void ITSession::ITAdvance()
 {
-    assert(ITCounter);
+    //assert(ITCounter);
     --ITCounter;
     if (ITCounter == 0)
         ITState = 0;
@@ -3113,11 +3113,11 @@ EmulateInstructionARM::EmulateRRX (const uint32_t opcode, const ARMEncoding enco
 bool
 EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding encoding, ARM_ShifterType shift_type)
 {
-    assert(shift_type == SRType_ASR 
-           || shift_type == SRType_LSL 
-           || shift_type == SRType_LSR 
-           || shift_type == SRType_ROR
-           || shift_type == SRType_RRX);
+//    assert(shift_type == SRType_ASR 
+//           || shift_type == SRType_LSL 
+//           || shift_type == SRType_LSR 
+//           || shift_type == SRType_ROR
+//           || shift_type == SRType_RRX);
 
     bool success = false;
 
@@ -3142,7 +3142,7 @@ EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding
         switch (use_encoding) {
         case eEncodingT1:
             // Due to the above special case handling!
-            assert(shift_type != SRType_ROR);
+            //assert(shift_type != SRType_ROR);
 
             Rd = Bits32(opcode, 2, 0);
             Rm = Bits32(opcode, 5, 3);
@@ -3151,7 +3151,7 @@ EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding
             break;
         case eEncodingT2:
             // A8.6.141 RRX
-            assert(shift_type != SRType_RRX);
+            //assert(shift_type != SRType_RRX);
 
             Rd = Bits32(opcode, 11, 8);
             Rm = Bits32(opcode, 3, 0);
@@ -3198,10 +3198,10 @@ EmulateInstructionARM::EmulateShiftImm (const uint32_t opcode, const ARMEncoding
 bool
 EmulateInstructionARM::EmulateShiftReg (const uint32_t opcode, const ARMEncoding encoding, ARM_ShifterType shift_type)
 {
-    assert(shift_type == SRType_ASR
-           || shift_type == SRType_LSL
-           || shift_type == SRType_LSR
-           || shift_type == SRType_ROR);
+    // assert(shift_type == SRType_ASR
+    //        || shift_type == SRType_LSL
+    //        || shift_type == SRType_LSR
+    //        || shift_type == SRType_ROR);
 
     bool success = false;
 
@@ -12877,7 +12877,7 @@ EmulateInstructionARM::CurrentCond (const uint32_t opcode)
             }
             else
             {
-                assert (byte_size == 4);
+                //assert (byte_size == 4);
                 if (Bits32(opcode, 31, 27) == 0x1e &&
                     Bits32(opcode, 15, 14) == 0x02 &&
                     Bits32(opcode, 12, 12) == 0x00 &&
@@ -13153,7 +13153,7 @@ EmulateInstructionARM::ReadCoreReg(uint32_t num, bool *success)
         }
         else
         {
-            assert(0 && "Invalid register number");
+            //assert(0 && "Invalid register number");
             *success = false;
             return UINT32_MAX;
         }
