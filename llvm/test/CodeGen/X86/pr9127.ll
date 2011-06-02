@@ -10,4 +10,4 @@ entry:
 }
 
 ; test that the load is folded.
-; CHECK: cmpeqsd	(%{{rdi|rdx}}), %xmm0
+; CHECK: ucomisd	(%{{rdi|rdx}}), %xmm0

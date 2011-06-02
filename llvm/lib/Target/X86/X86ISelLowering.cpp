@@ -9402,8 +9402,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UCOMI:              return "X86ISD::UCOMI";
   case X86ISD::SETCC:              return "X86ISD::SETCC";
   case X86ISD::SETCC_CARRY:        return "X86ISD::SETCC_CARRY";
-  case X86ISD::FSETCCsd:           return "X86ISD::FSETCCsd";
-  case X86ISD::FSETCCss:           return "X86ISD::FSETCCss";
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
@@ -11681,87 +11679,11 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
 }
 
 
-// CMPEQCombine - Recognize the distinctive  (AND (setcc ...) (setcc ..))
-// where both setccs reference the same FP CMP, and rewrite for CMPEQSS
-// and friends.  Likewise for OR -> CMPNEQSS.
-static SDValue CMPEQCombine(SDNode *N, SelectionDAG &DAG,
-                            TargetLowering::DAGCombinerInfo &DCI,
-                            const X86Subtarget *Subtarget) {
-  unsigned opcode;
-
-  // SSE1 supports CMP{eq|ne}SS, and SSE2 added CMP{eq|ne}SD, but
-  // we're requiring SSE2 for both.
-  if (Subtarget->hasSSE2() && isAndOrOfSetCCs(SDValue(N, 0U), opcode)) {
-    SDValue N0 = N->getOperand(0);
-    SDValue N1 = N->getOperand(1);
-    SDValue CMP    = N0->getOperand(1);
-    SDValue CMP0   = CMP->getOperand(0);
-    SDValue CMP1   = CMP->getOperand(1);
-    EVT     VT     = CMP0.getValueType();
-    DebugLoc DL    = N->getDebugLoc();
-
-    if (VT == MVT::f32 || VT == MVT::f64) {
-      bool ExpectingFlags = false;
-      // Check for any users that want flags:
-      for (SDNode::use_iterator UI = N->use_begin(),
-             UE = N->use_end();
-           !ExpectingFlags && UI != UE; ++UI)
-        switch (UI->getOpcode()) {
-        default:
-        case ISD::BR_CC:
-        case ISD::BRCOND:
-        case ISD::SELECT:
-          ExpectingFlags = true;
-          break;
-        case ISD::CopyToReg:
-        case ISD::SIGN_EXTEND:
-        case ISD::ZERO_EXTEND:
-        case ISD::ANY_EXTEND:
-          break;
-        }
-
-      if (!ExpectingFlags) {
-        enum X86::CondCode cc0 = (enum X86::CondCode)N0.getConstantOperandVal(0);
-        enum X86::CondCode cc1 = (enum X86::CondCode)N1.getConstantOperandVal(0);
-
-        if (cc1 == X86::COND_E || cc1 == X86::COND_NE) {
-          X86::CondCode tmp = cc0;
-          cc0 = cc1;
-          cc1 = tmp;
-        }
-
-        if ((cc0 == X86::COND_E  && cc1 == X86::COND_NP) ||
-            (cc0 == X86::COND_NE && cc1 == X86::COND_P)) {
-          bool is64BitFP = (CMP0.getValueType() == MVT::f64);
-          X86ISD::NodeType NTOperator = is64BitFP ?
-            X86ISD::FSETCCsd : X86ISD::FSETCCss;
-          // FIXME: need symbolic constants for these magic numbers.
-          // See X86ATTInstPrinter.cpp:printSSECC().
-          unsigned x86cc = (cc0 == X86::COND_E) ? 0 : 4;
-          SDValue OnesOrZeroesF = DAG.getNode(NTOperator, DL, MVT::f32, CMP0, CMP1,
-                                              DAG.getConstant(x86cc, MVT::i8));
-          SDValue OnesOrZeroesI = DAG.getNode(ISD::BITCAST, DL, MVT::i32,
-                                              OnesOrZeroesF);
-          SDValue ANDed = DAG.getNode(ISD::AND, DL, MVT::i32, OnesOrZeroesI,
-                                      DAG.getConstant(1, MVT::i32));
-          SDValue OneBitOfTruth = DAG.getNode(ISD::TRUNCATE, DL, MVT::i8, ANDed);
-          return OneBitOfTruth;
-        }
-      }
-    }
-  }
-  return SDValue();
-}
-
 static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const X86Subtarget *Subtarget) {
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
-
-  SDValue R = CMPEQCombine(N, DAG, DCI, Subtarget);
-  if (R.getNode())
-    return R;
 
   // Want to form PANDN nodes, in the hopes of then easily combining them with
   // OR and AND nodes to form PBLEND/PSIGN.
@@ -11791,10 +11713,6 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
                                 const X86Subtarget *Subtarget) {
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
-
-  SDValue R = CMPEQCombine(N, DAG, DCI, Subtarget);
-  if (R.getNode())
-    return R;
 
   EVT VT = N->getValueType(0);
   if (VT != MVT::i16 && VT != MVT::i32 && VT != MVT::i64 && VT != MVT::v2i64)
