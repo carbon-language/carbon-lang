@@ -17,7 +17,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
-#include "llvm/ADT/BitVector.h"
+#include "RegisterClassInfo.h"
 
 namespace llvm {
   class SimpleRegisterCoalescing;
@@ -47,8 +47,7 @@ namespace llvm {
     LiveDebugVariables *ldv_;
     const MachineLoopInfo* loopInfo;
     AliasAnalysis *AA;
-    
-    DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;
+    RegisterClassInfo RegClassInfo;
 
     /// JoinedCopies - Keep track of copies eliminated due to coalescing.
     ///
