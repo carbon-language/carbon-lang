@@ -43,6 +43,7 @@ namespace llvm {
     unsigned SpillSize;
     unsigned SpillAlignment;
     int CopyCost;
+    bool Allocatable;
     // Map SubRegIndex -> RegisterClass
     DenseMap<Record*,Record*> SubRegClasses;
     std::string MethodProtos, MethodBodies;

@@ -128,6 +128,11 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // dags: (RegClass SubRegIndex, SubRegindex, ...)
   list<dag> SubRegClasses = [];
 
+  // isAllocatable - Specify that the register class can be used for virtual
+  // registers and register allocation.  Some register classes are only used to
+  // model instruction operand constraints, and should have isAllocatable = 0.
+  bit isAllocatable = 1;
+
   // MethodProtos/MethodBodies - These members can be used to insert arbitrary
   // code into a generated register class.   The normal usage of this is to
   // overload virtual methods.

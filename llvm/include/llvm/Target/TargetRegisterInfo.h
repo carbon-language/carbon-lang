@@ -47,6 +47,7 @@ struct TargetRegisterDesc {
   const unsigned *SubRegs;      // Sub-register set, described above
   const unsigned *SuperRegs;    // Super-register set, described above
   unsigned CostPerUse;          // Extra cost of instructions using register.
+  bool inAllocatableClass;      // Register belongs to an allocatable regclass.
 };
 
 class TargetRegisterClass {
@@ -66,6 +67,7 @@ private:
   const sc_iterator SuperRegClasses;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const int CopyCost;
+  const bool Allocatable;
   const iterator RegsBegin, RegsEnd;
   DenseSet<unsigned> RegSet;
 public:
@@ -76,11 +78,12 @@ public:
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *subregcs,
                       const TargetRegisterClass * const *superregcs,
-                      unsigned RS, unsigned Al, int CC,
+                      unsigned RS, unsigned Al, int CC, bool Allocable,
                       iterator RB, iterator RE)
     : ID(id), Name(name), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
     SubRegClasses(subregcs), SuperRegClasses(superregcs),
-    RegSize(RS), Alignment(Al), CopyCost(CC), RegsBegin(RB), RegsEnd(RE) {
+    RegSize(RS), Alignment(Al), CopyCost(CC), Allocatable(Allocable),
+    RegsBegin(RB), RegsEnd(RE) {
       for (iterator I = RegsBegin, E = RegsEnd; I != E; ++I)
         RegSet.insert(*I);
     }
@@ -268,6 +271,10 @@ public:
   /// this class. A negative number means the register class is very expensive
   /// to copy e.g. status flag register classes.
   int getCopyCost() const { return CopyCost; }
+
+  /// isAllocatable - Return true if this register class may be used to create
+  /// virtual registers.
+  bool isAllocatable() const { return Allocatable; }
 };
 
 

@@ -289,6 +289,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   SpillSize = Size ? Size : EVT(VTs[0]).getSizeInBits();
   SpillAlignment = R->getValueAsInt("Alignment");
   CopyCost = R->getValueAsInt("CopyCost");
+  Allocatable = R->getValueAsBit("isAllocatable");
   MethodBodies = R->getValueAsCode("MethodBodies");
   MethodProtos = R->getValueAsCode("MethodProtos");
 }

@@ -342,23 +342,23 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
 
   OS << "namespace llvm {\n\n";
 
-  // Start out by emitting each of the register classes... to do this, we build
-  // a set of registers which belong to a register class, this is to ensure that
-  // each register is only in a single register class.
-  //
+  // Start out by emitting each of the register classes.
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
     Target.getRegisterClasses();
+
+  // Collect all registers belonging to any allocatable class.
+  std::set<Record*> AllocatableRegs;
 
   // Loop over all of the register classes... emitting each one.
   OS << "namespace {     // Register classes...\n";
 
-  // RegClassesBelongedTo - Keep track of which register classes each reg
-  // belongs to.
-  std::multimap<Record*, const CodeGenRegisterClass*> RegClassesBelongedTo;
-
   // Emit the register enum value arrays for each RegisterClass
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
+
+    // Collect allocatable registers.
+    if (RC.Allocatable)
+      AllocatableRegs.insert(RC.Elements.begin(), RC.Elements.end());
 
     // Give the register class a legal C name if it's anonymous.
     std::string Name = RC.TheDef->getName();
@@ -370,9 +370,6 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
       Record *Reg = RC.Elements[i];
       OS << getQualifiedName(Reg) << ", ";
-
-      // Keep track of which regclasses this register is in.
-      RegClassesBelongedTo.insert(std::make_pair(Reg, &RC));
     }
     OS << "\n  };\n\n";
   }
@@ -568,6 +565,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
          << RC.SpillSize/8 << ", "
          << RC.SpillAlignment/8 << ", "
          << RC.CopyCost << ", "
+         << RC.Allocatable << ", "
          << RC.getName() << ", " << RC.getName() << " + " << RC.Elements.size()
          << ") {}\n";
     }
@@ -842,7 +840,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   }
 
   OS<<"\n  const TargetRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t0,\t0,\t0,\t0 },\n";
+  OS << "    { \"NOREG\",\t0,\t0,\t0,\t0,\t0 },\n";
 
   // Now that register alias and sub-registers sets have been emitted, emit the
   // register descriptors now.
@@ -858,7 +856,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       OS << Reg.getName() << "_SuperRegsSet,\t";
     else
       OS << "Empty_SuperRegsSet,\t";
-    OS << Reg.CostPerUse << " },\n";
+    OS << Reg.CostPerUse << ",\t"
+       << int(AllocatableRegs.count(Reg.TheDef)) << " },\n";
   }
   OS << "  };\n";      // End of register descriptors...
 

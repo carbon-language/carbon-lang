@@ -79,6 +79,8 @@ MachineRegisterInfo::constrainRegClass(unsigned Reg,
 unsigned
 MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
   assert(RegClass && "Cannot create register without RegClass!");
+  assert(RegClass->isAllocatable() &&
+         "Virtual register RegClass must be allocatable.");
 
   // New virtual register number.
   unsigned Reg = TargetRegisterInfo::index2VirtReg(getNumVirtRegs());
