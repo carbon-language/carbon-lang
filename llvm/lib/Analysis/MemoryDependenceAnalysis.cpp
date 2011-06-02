@@ -1155,8 +1155,8 @@ getNonLocalPointerDepFromBB(const PHITransAddr &Pointer,
       
       assert(I->getResult().isNonLocal() &&
              "Should only be here with transparent block");
-      I->setResult(MemDepResult::getClobber(BB->begin()));
-      ReverseNonLocalPtrDeps[BB->begin()].insert(CacheKey);
+      I->setResult(MemDepResult::getClobber(BB->getTerminator()));
+      ReverseNonLocalPtrDeps[BB->getTerminator()].insert(CacheKey);
       Result.push_back(NonLocalDepResult(I->getBB(), I->getResult(),
                                          Pointer.getAddr()));
       break;
