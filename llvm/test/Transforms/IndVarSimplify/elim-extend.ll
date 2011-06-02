@@ -138,11 +138,11 @@ outermerge:
 
   %ofs4 = sext i32 %outercount to i64
   %adr4 = getelementptr i8* %address, i64 %ofs4
-  store i8 0, i8* %adr3
+  store i8 0, i8* %adr4
 
   %ofs5 = sext i32 %innercount.merge to i64
   %adr5 = getelementptr i8* %address, i64 %ofs5
-  store i8 0, i8* %adr4
+  store i8 0, i8* %adr5
 
   %outerpostcount = add i32 %outercount, 1
   %tmp47 = icmp slt i32 %outerpostcount, %limit
