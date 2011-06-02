@@ -5,7 +5,7 @@ use strict;
 #----------------------------------------------------------------------
 # Globals
 #----------------------------------------------------------------------
-our $unsupported_str = "UNSUPPORTED";
+our $unimplemented_str = "UNIMPLEMENTED";
 our $success_str = "OK";
 our $swap = 1;
 our $addr_size = 4;
@@ -429,7 +429,14 @@ our $registers_aref = undef;
 
 if (length($opt_r))
 {
-    $registers_aref = $reg_map{$opt_r};
+	if (exists $reg_map{$opt_r})
+	{
+	    $registers_aref = $reg_map{$opt_r};		
+	}
+	else
+	{
+		die "Can't get registers group for '$opt_r'\n";
+	}
 }
 
 sub extract_key_value_pairs 
@@ -656,6 +663,7 @@ sub dump_set_thread_rsp
 # 'q' command
 #----------------------------------------------------------------------
 our $gen_query_cmd;
+our $qRegisterInfo_reg_num = -1;
 sub dump_general_query_cmd
 {
 	$gen_query_cmd = join('',@_);
@@ -711,10 +719,9 @@ sub dump_general_query_cmd
 	elsif (index($gen_query_cmd, 'qRegisterInfo') == 0)
 	{
 		@_ = splice(@_, length('qRegisterInfo'));
-		my $reg = get_hex(\@_);
-		$reg == 0 and $registers_aref = [];
-
-		printf "get_dynamic_register_info ($reg)";
+		$qRegisterInfo_reg_num = get_hex(\@_);
+		
+		printf "get_dynamic_register_info ($qRegisterInfo_reg_num)";
 	}
 	else
 	{
@@ -729,40 +736,49 @@ sub dump_general_query_cmd
 sub dump_general_query_rsp
 {
 	my $gen_query_rsp = join('',@_);
-	
+	my $gen_query_rsp_len = length ($gen_query_rsp);
 	if ($gen_query_cmd eq 'qC' and index($gen_query_rsp, 'QC') == 0)
 	{
 		shift @_; shift @_;
 		my $pid = get_hex(\@_);
-		printf("get_current_pid () => $pid_format\n", $pid);
+		printf("pid = $pid_format\n", $pid);
 		return;
 	}
 	elsif (index($gen_query_cmd, 'qRegisterInfo') == 0)
 	{
-		if (index($gen_query_rsp, 'name') == 0)
+		if ($gen_query_rsp_len == 0)
 		{
-			my @name_and_values = split (/;/, $gen_query_rsp);
-			
-			my $reg_name = undef;
-			my $byte_size = 0;
-			foreach (@name_and_values)
-			{
-				my ($name, $value) = split /:/;				
-				if    ($name eq "name") { $reg_name = $value; }
-				elsif ($name eq "bitsize") { $byte_size = $value / 8; last; }
-			}
-			if (defined $reg_name and $byte_size > 0)
-			{
-				if    ($byte_size == 4)  {push @$registers_aref, { name => $reg_name, info => $reg32_href };}
-				elsif ($byte_size == 8)  {push @$registers_aref, { name => $reg_name, info => $reg64_href };}
-				elsif ($byte_size == 10) {push @$registers_aref, { name => $reg_name, info => $reg80_href };}
-				elsif ($byte_size == 12) {push @$registers_aref, { name => $reg_name, info => $float96_href };}
-				elsif ($byte_size == 16) {push @$registers_aref, { name => $reg_name, info => $reg128_href };}
-			}
+			print "$unimplemented_str\n";			
 		}
 		else
 		{
-			calculate_max_register_name_length();
+			if (index($gen_query_rsp, 'name') == 0)
+			{
+				$qRegisterInfo_reg_num == 0 and $registers_aref = [];
+
+				my @name_and_values = split (/;/, $gen_query_rsp);
+			
+				my $reg_name = undef;
+				my $byte_size = 0;
+				foreach (@name_and_values)
+				{
+					my ($name, $value) = split /:/;				
+					if    ($name eq "name") { $reg_name = $value; }
+					elsif ($name eq "bitsize") { $byte_size = $value / 8; last; }
+				}
+				if (defined $reg_name and $byte_size > 0)
+				{
+					if    ($byte_size == 4)  {push @$registers_aref, { name => $reg_name, info => $reg32_href };}
+					elsif ($byte_size == 8)  {push @$registers_aref, { name => $reg_name, info => $reg64_href };}
+					elsif ($byte_size == 10) {push @$registers_aref, { name => $reg_name, info => $reg80_href };}
+					elsif ($byte_size == 12) {push @$registers_aref, { name => $reg_name, info => $float96_href };}
+					elsif ($byte_size == 16) {push @$registers_aref, { name => $reg_name, info => $reg128_href };}
+				}
+			}
+			elsif ($gen_query_rsp_len == 3 and index($gen_query_rsp, 'E') == 0)
+			{
+				calculate_max_register_name_length();
+			}
 		}
 	}
 	elsif ($gen_query_cmd =~ 'qThreadStopInfo')
@@ -802,6 +818,21 @@ sub dump_general_set_cmd
 		# QSetMaxPayloadSize:XXXX  where XXXX is a hex length of the max
 		# packet payload size supported by gdb
 		printf("SetMaxPayloadSize ( 0x%x (%u))", $max_payload_size, $max_payload_size);
+	}
+	elsif (index ($gen_query_cmd, 'QSetSTDIN:') == 0)
+	{
+		@_ = splice(@_, length('QSetSTDIN:'));
+		printf ("SetSTDIN (path ='%s')\n", get_hex_string (\@_));
+	}
+	elsif (index ($gen_query_cmd, 'QSetSTDOUT:') == 0)
+	{
+		@_ = splice(@_, length('QSetSTDOUT:'));
+		printf ("SetSTDOUT (path ='%s')\n", get_hex_string (\@_));
+	}
+	elsif (index ($gen_query_cmd, 'QSetSTDERR:') == 0)
+	{
+		@_ = splice(@_, length('QSetSTDERR:'));
+		printf ("SetSTDERR (path ='%s')\n", get_hex_string (\@_));
 	}
 	else
 	{
@@ -909,7 +940,6 @@ sub dump_allocate_memory_rsp
     }
 }
 
-
 #----------------------------------------------------------------------
 # '_m' - deallocate memory command (LLDB extension)
 #
@@ -934,15 +964,17 @@ sub dump_deallocate_memory_cmd
 sub dump_read_single_register_cmd
 {
 	my $cmd = shift;
-	$reg_cmd_reg = get_hex(\@_);
+	my $reg_num = get_hex(\@_);
 	my $thread = get_thread_from_thread_suffix (\@_);
+	my $reg_href = $$registers_aref[$reg_num];
+  
 	if (defined $thread)
 	{
-    	print "read_register ( reg = \"$$registers_aref[$reg_cmd_reg]->{name}\", thread = $thread )\n";
+    	print "read_register ( reg = \"$reg_href->{name}\", thread = $thread )\n";
 	}
 	else
 	{
-    	print "read_register ( reg = \"$$registers_aref[$reg_cmd_reg]->{name}\" )\n";
+    	print "read_register ( reg = \"$reg_href->{name}\" )\n";
 	}
 }
 
@@ -1207,9 +1239,6 @@ sub dump_extended_rsp
 #----------------------------------------------------------------------
 sub dump_attach_wait_command
 {
-#	print "dump_extended_continue_cmd ( ";
-#	dump_chars(@_);
-#	print " )\n";
 	print "attach_wait ( ";
 	while (@_)
 	{
@@ -1224,9 +1253,6 @@ sub dump_attach_wait_command
 #----------------------------------------------------------------------
 sub dump_extended_continue_cmd
 {
-#	print "dump_extended_continue_cmd ( ";
-#	dump_chars(@_);
-#	print " )\n";
 	print "extended_continue ( ";
 	my $cmd = shift;
 	if ($cmd eq '?')
@@ -1293,7 +1319,14 @@ sub dump_extended_continue_cmd
 #----------------------------------------------------------------------
 sub dump_extended_continue_rsp
 {
-	print "extended_continue ( " . join('',@_) . " )\n";
+	if (scalar(@_) == 0)
+	{
+		print "$unimplemented_str\n";
+	}
+	else
+	{
+		print "extended_continue supports " . join('',@_) . "\n";
+	}
 }
 
 #----------------------------------------------------------------------
@@ -1618,6 +1651,20 @@ sub get_addr
 	get_hex(shift);
 }
 
+sub get_hex_string
+{
+	my $arrayref = shift;
+	my $str = '';
+	while ($$arrayref[0] =~ /[0-9a-fA-F]/ and $$arrayref[1] =~ /[0-9a-fA-F]/)
+	{
+		my $hi_nibble = hex(shift(@$arrayref));
+		my $lo_nibble = hex(shift(@$arrayref));
+		my $byte = ($hi_nibble << 4) | $lo_nibble;
+		$str .= chr($byte);
+	}
+	return $str;
+}
+
 sub dump_stop_reply_data
 {
     while ($#_ >= 0)
@@ -1731,9 +1778,10 @@ sub dump_standard_response
 {
 	my $cmd_aref = shift;
 	
-	if (@$cmd_aref == 0)
+	my $cmd_len = scalar(@$cmd_aref);
+	if ($cmd_len == 0)
 	{
-		print "$unsupported_str\n";
+		print "$unimplemented_str\n";
 		return 1;
 	}	
 
@@ -1744,7 +1792,7 @@ sub dump_standard_response
 		return 1;
 	}
 	
-	if (index($response, 'E') == 0)
+	if ($cmd_len == 3 and index($response, 'E') == 0)
 	{
 		print "ERROR: " . substr($response, 1) . "\n";
 		return 1;		
@@ -1800,7 +1848,7 @@ sub dump_command
 	{
 		if (rsp_is_unsupported(@cmd_chars))
 		{
-			print "$unsupported_str\n";
+			print "$unimplemented_str\n";
 			return;
 		}
 		elsif (rsp_is_OK(@cmd_chars))
@@ -1928,7 +1976,7 @@ sub process_log_line
 	}
 	elsif ($line =~ /read packet: (.*)/)
 	{
-		if ($1 =~ /\$([^#]+)#[0-9a-fA-F]{2}/)
+		if ($1 =~ /\$([^#]*)#[0-9a-fA-F]{2}/)
 		{
 			$opt_g and print "response: $1\n";
 			my @raw_rsp_bytes = split(/ */, $1);
