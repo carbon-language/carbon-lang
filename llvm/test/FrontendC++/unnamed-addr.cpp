@@ -1,5 +1,6 @@
-// RUN: %llvmgcc -S %s -o - | FileCheck %s
+// RUN: %llvmgxx -S %s -o - | FileCheck %s
 // <rdar://problem/9402870>
+extern "C" {
 typedef struct __TestResult TestResult;
 typedef struct __TestResult* TestResultRef;
 
@@ -57,6 +58,7 @@ struct __TestCaller {
 };
 
 extern const TestImplement TestCallerImplement;
+}
 
 void PassToFunction(const TestImplement*);
 
@@ -81,7 +83,7 @@ int TestCaller_countTestCases(TestCaller* self) {
   return self->numberOfFixtuers;
 }
 
-// CHECK: @C.0.1526 = internal unnamed_addr constant
+// CHECK: @_ZZ14TestCaller_runP12__TestCallerP12__TestResultE3C.0 = internal unnamed_addr constant
 // CHECK-NOT: @TestCaseImplement = external unnamed_addr constant %struct.TestImplement
 // CHECK: @TestCaseImplement = external constant %struct.TestImplement
 const TestImplement TestCallerImplement = {
