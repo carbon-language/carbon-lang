@@ -1540,7 +1540,7 @@ ScriptInterpreterPython::InitializePrivate ()
     }
 
     PyEval_InitThreads ();
-    Py_Initialize ();
+    Py_InitializeEx (0);
 
     PyObject *compiled_module = Py_CompileString (embedded_interpreter_string, 
                                                   "embedded_interpreter.py",
