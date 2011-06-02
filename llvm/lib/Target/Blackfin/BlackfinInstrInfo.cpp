@@ -160,7 +160,7 @@ static bool inClass(const TargetRegisterClass &Test,
   if (TargetRegisterInfo::isPhysicalRegister(Reg))
     return Test.contains(Reg);
   else
-    return &Test==RC || Test.hasSubClass(RC);
+    return Test.hasSubClassEq(RC);
 }
 
 void

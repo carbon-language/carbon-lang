@@ -261,8 +261,7 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
     }
     break;
   case X86::sub_8bit_hi:
-    if (B == &X86::GR8_ABCD_HRegClass ||
-        B->hasSubClass(&X86::GR8_ABCD_HRegClass))
+    if (B->hasSubClassEq(&X86::GR8_ABCD_HRegClass))
       switch (A->getSize()) {
         case 2: return getCommonSubClass(A, &X86::GR16_ABCDRegClass);
         case 4: return getCommonSubClass(A, &X86::GR32_ABCDRegClass);

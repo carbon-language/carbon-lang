@@ -283,7 +283,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
       DstRC = II->OpInfo[IIOpNum].getRegClass(TRI);
     assert((DstRC || (TID.isVariadic() && IIOpNum >= TID.getNumOperands())) &&
            "Don't have operand info for this instruction!");
-    if (DstRC && SrcRC != DstRC && !SrcRC->hasSuperClass(DstRC)) {
+    if (DstRC && !SrcRC->hasSuperClassEq(DstRC)) {
       unsigned NewVReg = MRI->createVirtualRegister(DstRC);
       BuildMI(*MBB, InsertPos, Op.getNode()->getDebugLoc(),
               TII->get(TargetOpcode::COPY), NewVReg).addReg(VReg);

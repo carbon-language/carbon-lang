@@ -744,7 +744,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           RC = SRC;
         }
         if (const TargetRegisterClass *DRC = TOI.getRegClass(TRI)) {
-          if (RC != DRC && !RC->hasSuperClass(DRC)) {
+          if (!RC->hasSuperClassEq(DRC)) {
             report("Illegal virtual register for instruction", MO, MONum);
             *OS << "Expected a " << DRC->getName() << " register, but got a "
                 << RC->getName() << " register\n";

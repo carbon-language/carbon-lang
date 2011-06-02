@@ -49,7 +49,7 @@ Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMBaseInstrInfo &tii,
 const TargetRegisterClass*
 Thumb1RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC)
                                                                          const {
-  if (RC == ARM::tGPRRegisterClass || RC->hasSuperClass(ARM::tGPRRegisterClass))
+  if (ARM::tGPRRegClass.hasSubClassEq(RC))
     return ARM::tGPRRegisterClass;
   return ARMBaseRegisterInfo::getLargestLegalSuperClass(RC);
 }

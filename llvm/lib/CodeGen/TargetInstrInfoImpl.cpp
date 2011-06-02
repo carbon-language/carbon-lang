@@ -212,8 +212,7 @@ static const TargetRegisterClass *canFoldCopy(const MachineInstr *MI,
   if (TargetRegisterInfo::isPhysicalRegister(LiveOp.getReg()))
     return RC->contains(LiveOp.getReg()) ? RC : 0;
 
-  const TargetRegisterClass *LiveRC = MRI.getRegClass(LiveReg);
-  if (RC == LiveRC || RC->hasSubClass(LiveRC))
+  if (RC->hasSubClassEq(MRI.getRegClass(LiveReg)))
     return RC;
 
   // FIXME: Allow folding when register classes are memory compatible.

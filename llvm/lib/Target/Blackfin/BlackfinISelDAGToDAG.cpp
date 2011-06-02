@@ -117,11 +117,11 @@ bool BlackfinDAGToDAGISel::SelectADDRspii(SDValue Addr,
 }
 
 static inline bool isCC(const TargetRegisterClass *RC) {
-  return RC == &BF::AnyCCRegClass || BF::AnyCCRegClass.hasSubClass(RC);
+  return BF::AnyCCRegClass.hasSubClassEq(RC);
 }
 
 static inline bool isDCC(const TargetRegisterClass *RC) {
-  return RC == &BF::DRegClass || BF::DRegClass.hasSubClass(RC) || isCC(RC);
+  return BF::DRegClass.hasSubClassEq(RC) || isCC(RC);
 }
 
 static void UpdateNodeOperand(SelectionDAG &DAG,
