@@ -165,6 +165,7 @@ public:
             ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
             if (exe_ctx.thread)
             {
+                // Thread::GetStatus() returns the number of frames shown.
                 if (exe_ctx.thread->GetStatus (strm,
                                                m_options.m_start,
                                                m_options.m_count,
