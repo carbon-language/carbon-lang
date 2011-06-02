@@ -181,6 +181,15 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
       multipleAlternativeIndex++;
       pCodes = &multipleAlternatives[multipleAlternativeIndex].Codes;
       ++I;
+    } else if (*I == '^') {
+      // Multi-letter constraint
+      // These will only occur with the existing multiple alternative
+      // constraints and so we can use the isalpha loop below.
+      StringRef::iterator ConStart = I;
+      while (I != E && isalpha(*I))
+        ++I;
+      pCodes->push_back(std::string(ConStart, I));
+      ++I;
     } else {
       // Single letter constraint.
       pCodes->push_back(std::string(I, I+1));
