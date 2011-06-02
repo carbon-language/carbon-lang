@@ -670,16 +670,11 @@ MachineBasicBlock *ScheduleDAGInstrs::EmitSchedule() {
 
   // Then re-insert them according to the given schedule.
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
-    SUnit *SU = Sequence[i];
-    if (!SU) {
+    if (SUnit *SU = Sequence[i])
+      BB->insert(InsertPos, SU->getInstr());
+    else
       // Null SUnit* is a noop.
       EmitNoop();
-      continue;
-    }
-
-    BB->insert(InsertPos, SU->getInstr());
-    for (unsigned i = 0, e = SU->DbgInstrList.size() ; i < e ; ++i)
-      BB->insert(InsertPos, SU->DbgInstrList[i]);
   }
 
   // Update the Begin iterator, as the first instruction in the block

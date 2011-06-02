@@ -265,7 +265,6 @@ namespace llvm {
     bool isCloned         : 1;          // True if this node has been cloned.
     Sched::Preference SchedulingPref;   // Scheduling preference.
 
-    SmallVector<MachineInstr*, 4> DbgInstrList; // dbg_values referencing this.
   private:
     bool isDepthCurrent   : 1;          // True if Depth is current.
     bool isHeightCurrent  : 1;          // True if Height is current.
