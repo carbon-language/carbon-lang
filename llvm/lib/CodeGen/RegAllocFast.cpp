@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "RegisterClassInfo.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -58,6 +59,7 @@ namespace {
     MachineRegisterInfo *MRI;
     const TargetRegisterInfo *TRI;
     const TargetInstrInfo *TII;
+    RegisterClassInfo RegClassInfo;
 
     // Basic block currently being allocated.
     MachineBasicBlock *MBB;
@@ -499,14 +501,12 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
     }
   }
 
-  TargetRegisterClass::iterator AOB = RC->allocation_order_begin(*MF);
-  TargetRegisterClass::iterator AOE = RC->allocation_order_end(*MF);
+  ArrayRef<unsigned> AO = RegClassInfo.getOrder(RC);
 
   // First try to find a completely free register.
-  for (TargetRegisterClass::iterator I = AOB; I != AOE; ++I) {
+  for (ArrayRef<unsigned>::iterator I = AO.begin(), E = AO.end(); I != E; ++I) {
     unsigned PhysReg = *I;
-    if (PhysRegState[PhysReg] == regFree && !UsedInInstr.test(PhysReg) &&
-        Allocatable.test(PhysReg))
+    if (PhysRegState[PhysReg] == regFree && !UsedInInstr.test(PhysReg))
       return assignVirtToPhysReg(LRE, PhysReg);
   }
 
@@ -514,11 +514,7 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
                << RC->getName() << "\n");
 
   unsigned BestReg = 0, BestCost = spillImpossible;
-  for (TargetRegisterClass::iterator I = AOB; I != AOE; ++I) {
-    if (!Allocatable.test(*I)) {
-      DEBUG(dbgs() << "\tRegister " << *I << " is not allocatable.\n");
-      continue;
-    }
+  for (ArrayRef<unsigned>::iterator I = AO.begin(), E = AO.end(); I != E; ++I) {
     unsigned Cost = calcSpillCost(*I);
     DEBUG(dbgs() << "\tRegister: " << *I << "\n");
     DEBUG(dbgs() << "\tCost: " << Cost << "\n");
@@ -1048,6 +1044,7 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   TM = &Fn.getTarget();
   TRI = TM->getRegisterInfo();
   TII = TM->getInstrInfo();
+  RegClassInfo.runOnMachineFunction(Fn);
 
   UsedInInstr.resize(TRI->getNumRegs());
   Allocatable = TRI->getAllocatableSet(*MF);
