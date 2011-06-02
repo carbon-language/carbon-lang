@@ -18,6 +18,7 @@
 #include <stack>
 
 #include "lldb/Core/Communication.h"
+#include "lldb/Core/InputReaderStack.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
@@ -451,8 +452,7 @@ protected:
     SourceManager m_source_manager;
     std::auto_ptr<CommandInterpreter> m_command_interpreter_ap;
 
-    Mutex m_input_readers_mutex;
-    std::stack<lldb::InputReaderSP> m_input_readers;
+    InputReaderStack m_input_reader_stack;
     std::string m_input_reader_data;
 
 private:

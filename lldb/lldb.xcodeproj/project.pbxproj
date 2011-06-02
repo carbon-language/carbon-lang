@@ -409,6 +409,8 @@
 		9A3576A8116E9AB700E8ED2F /* SBHostOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A3576A7116E9AB700E8ED2F /* SBHostOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A3576AA116E9AC700E8ED2F /* SBHostOS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A3576A9116E9AC700E8ED2F /* SBHostOS.cpp */; };
 		9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A4F350F1368A51A00823F52 /* StreamAsynchronousIO.cpp */; };
+		9A9E1EFF1398086D005AC039 /* InputReaderStack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A9E1EFE1398086D005AC039 /* InputReaderStack.cpp */; };
+		9A9E1F0113980943005AC039 /* InputReaderStack.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A9E1F0013980943005AC039 /* InputReaderStack.h */; };
 		9AA69DA61188F52100D753A0 /* PseudoTerminal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */; };
 		9AA69DAF118A023300D753A0 /* SBInputReader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AA69DAE118A023300D753A0 /* SBInputReader.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9AA69DB1118A024600D753A0 /* SBInputReader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AA69DB0118A024600D753A0 /* SBInputReader.cpp */; };
@@ -1200,6 +1202,8 @@
 		9A9831081125FC5800A56CB0 /* SBTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBTarget.h; path = include/lldb/API/SBTarget.h; sourceTree = "<group>"; };
 		9A9831091125FC5800A56CB0 /* SBThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBThread.cpp; path = source/API/SBThread.cpp; sourceTree = "<group>"; };
 		9A98310A1125FC5800A56CB0 /* SBThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBThread.h; path = include/lldb/API/SBThread.h; sourceTree = "<group>"; };
+		9A9E1EFE1398086D005AC039 /* InputReaderStack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InputReaderStack.cpp; path = source/Core/InputReaderStack.cpp; sourceTree = "<group>"; };
+		9A9E1F0013980943005AC039 /* InputReaderStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InputReaderStack.h; path = include/lldb/Core/InputReaderStack.h; sourceTree = "<group>"; };
 		9AA69DAE118A023300D753A0 /* SBInputReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBInputReader.h; path = include/lldb/API/SBInputReader.h; sourceTree = "<group>"; };
 		9AA69DB0118A024600D753A0 /* SBInputReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBInputReader.cpp; path = source/API/SBInputReader.cpp; sourceTree = "<group>"; };
 		9AA69DB5118A027A00D753A0 /* InputReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InputReader.cpp; path = source/Core/InputReader.cpp; sourceTree = "<group>"; };
@@ -1889,6 +1893,8 @@
 				26BC7D6410F1B77400F91463 /* Flags.h */,
 				9AA69DBB118A029E00D753A0 /* InputReader.h */,
 				9AA69DB5118A027A00D753A0 /* InputReader.cpp */,
+				9A9E1F0013980943005AC039 /* InputReaderStack.h */,
+				9A9E1EFE1398086D005AC039 /* InputReaderStack.cpp */,
 				26BC7D6510F1B77400F91463 /* IOStreamMacros.h */,
 				26BC7D6610F1B77400F91463 /* Language.h */,
 				26BC7E7D10F1B85900F91463 /* Language.cpp */,
@@ -2619,6 +2625,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A9E1F0113980943005AC039 /* InputReaderStack.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3201,6 +3208,7 @@
 				26DB3E1F1379E7AD0080DC73 /* ABISysV_x86_64.cpp in Sources */,
 				26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */,
 				2690B3711381D5C300ECFBAE /* Memory.cpp in Sources */,
+				9A9E1EFF1398086D005AC039 /* InputReaderStack.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
