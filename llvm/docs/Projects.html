@@ -339,14 +339,39 @@ do:</p>
 
   <dt>USEDLIBS
   <dd>
-  This variable holds a space separated list of libraries that
-  should be linked into the program.  These libraries must either
-  be LLVM libraries or libraries that come from your <b>lib</b>
-  directory.  The libraries must be specified by their base name.
-  For example, to link libsample.a, you would set USEDLIBS to
-  <tt>sample</tt>.
+  This variable holds a space separated list of libraries that should
+  be linked into the program.  These libraries must be libraries that
+  come from your <b>lib</b> directory.  The libraries must be
+  specified without their "lib" prefix.  For example, to link
+  libsample.a, you would set USEDLIBS to
+  <tt>sample.a</tt>.
   <p>
   Note that this works only for statically linked libraries.
+  <p>
+
+  <dt>LLVMLIBS
+  <dd>
+  This variable holds a space separated list of libraries that should
+  be linked into the program.  These libraries must be LLVM libraries.
+  The libraries must be specified without their "lib" prefix.  For
+  example, to link with a driver that performs an IR transformation
+  you might set LLVMLIBS to this minimal set of libraries
+  <tt>LLVMSupport.a LLVMCore.a LLVMBitReader.a LLVMAsmParser.a LLVMAnalysis.a LLVMTransformUtils.a LLVMScalarOpts.a LLVMTarget.a</tt>.
+  <p>
+  Note that this works only for statically linked libraries. LLVM is
+  split into a large number of static libraries, and the list of libraries you
+  require may be much longer than the list above. To see a full list
+  of libraries use:
+  <tt>llvm-config --libs all</tt>.
+  Using LINK_COMPONENTS as described below, obviates the need to set LLVMLIBS.
+  <p>
+
+  <dt>LINK_COMPONENTS
+  <dd>This variable holds a space separated list of components that
+  the LLVM Makefiles pass to the <tt>llvm-config</tt> tool to generate
+  a link line for the program. For example, to link with all LLVM
+  libraries use
+  <tt>LINK_COMPONENTS = all</tt>.
   <p>
 
   <dt>LIBS
@@ -361,6 +386,9 @@ do:</p>
   <tt>
   LIBS += -lsample
   </tt>
+  <p>
+  Note that LIBS must occur in the Makefile after the inclusion of Makefile.common.
+  <p>
 </dl>
 
 </div>
