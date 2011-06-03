@@ -1,3 +1,4 @@
+// REQUIRES: x86-64-registered-target
 // RUN: %clang -cc1 -triple x86_64-apple-darwin10  -g -S %s -o %t
 // RUN: FileCheck %s < %t
 

@@ -1,3 +1,5 @@
+// REQUIRES: x86-registered-target
+
 // RUN: %clang -ccc-host-triple i386-apple-darwin -S -o - %s | \
 // RUN:   FileCheck --check-prefix=DARWIN %s
 // DARWIN: f0:

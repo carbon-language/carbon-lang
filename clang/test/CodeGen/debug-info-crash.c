@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: %clang_cc1 -triple i386-apple-darwin10 -fblocks -g -S %s -o -
 
 // rdar://7590323

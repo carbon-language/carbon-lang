@@ -1,3 +1,4 @@
+// REQUIRES: x86-64-registered-target
 // RUN: %clang_cc1 -masm-verbose -S -fblocks -g  -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fobjc-dispatch-method=mixed  %s -o - | FileCheck %s
 
 //Radar 9279956

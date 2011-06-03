@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target,x86-64-registered-target
 // RUN: %clang_cc1 %s -fobjc-exceptions -S -o - -triple=i686-apple-darwin9
 // RUN: %clang_cc1 %s -fobjc-exceptions -S -o - -triple=x86_64-apple-darwin9
 
