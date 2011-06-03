@@ -42,6 +42,7 @@ MacroInfo::MacroInfo(const MacroInfo &MI, llvm::BumpPtrAllocator &PPAllocator) {
   IsDisabled = MI.IsDisabled;
   IsUsed = MI.IsUsed;
   IsAllowRedefinitionsWithoutWarning = MI.IsAllowRedefinitionsWithoutWarning;
+  IsWarnIfUnused = MI.IsWarnIfUnused;
   ArgumentList = 0;
   NumArguments = 0;
   setArgumentList(MI.ArgumentList, MI.NumArguments, PPAllocator);
