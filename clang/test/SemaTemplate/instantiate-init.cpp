@@ -73,3 +73,26 @@ namespace PR10001 {
 
   int x = S<int>::f();
 }
+
+namespace PR7985 {
+  template<int N> struct integral_c { };
+
+  template <typename T, int N>
+  integral_c<N> array_lengthof(T (&x)[N]) { return integral_c<N>(); }
+
+  struct Data {
+    int x;
+  };
+
+  template<typename T>
+  struct Description {
+    static const Data data[];
+  };
+
+  template<typename T>
+  const Data Description<T>::data[] = {{ 0 }};
+
+  void test() {
+    integral_c<1> ic1 = array_lengthof(Description<int>::data);
+  }
+}

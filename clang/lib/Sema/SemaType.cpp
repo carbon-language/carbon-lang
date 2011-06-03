@@ -3280,9 +3280,13 @@ bool Sema::RequireCompleteExprType(Expr *E, const PartialDiagnostic &PD,
           InstantiateStaticDataMemberDefinition(E->getExprLoc(), Var);
           // Update the type to the newly instantiated definition's type both
           // here and within the expression.
-          T = Var->getDefinition()->getType();
-          E->setType(T);
-
+          if (VarDecl *Def = Var->getDefinition()) {
+            DRE->setDecl(Def);
+            T = Def->getType();
+            DRE->setType(T);
+            E->setType(T);
+          }
+          
           // We still go on to try to complete the type independently, as it
           // may also require instantiations or diagnostics if it remains
           // incomplete.

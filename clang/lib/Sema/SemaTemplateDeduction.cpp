@@ -2500,6 +2500,12 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
   if (ParamRefType) {
     QualType PointeeType = ParamRefType->getPointeeType();
 
+    // If the argument has incomplete array type, try to complete it's type.
+    if (ArgType->isIncompleteArrayType() &&
+        !S.RequireCompleteExprType(Arg, S.PDiag(), 
+                                   std::make_pair(SourceLocation(), S.PDiag())))
+      ArgType = Arg->getType();
+
     //   [C++0x] If P is an rvalue reference to a cv-unqualified
     //   template parameter and the argument is an lvalue, the type
     //   "lvalue reference to A" is used in place of A for type

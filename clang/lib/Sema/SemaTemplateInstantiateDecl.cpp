@@ -2555,6 +2555,10 @@ void Sema::InstantiateStaticDataMemberDefinition(
         == TSK_ExplicitInstantiationDeclaration)
     return;
 
+  // If we already have a definition, we're done.
+  if (Var->getDefinition())
+    return;
+
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Var);
   if (Inst)
     return;
