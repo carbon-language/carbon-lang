@@ -264,12 +264,8 @@ def warn_builtin_unknown : Warning<"use of unknown builtin %0">, DefaultError;
 def warn_dyn_class_memaccess : Warning<
   "%select{destination for|source of}0 this %1 call is a pointer to dynamic "
   "class %2; vtable pointer will be overwritten">, 
-  InGroup<DiagGroup<"non-pod-memaccess">>;
-def warn_non_pod_memaccess : Warning<
-  "%select{destination for|source of}0 this %1 call is a pointer to non-POD "
-  "type %2">,
-  InGroup<DiagGroup<"non-pod-memaccess">>, DefaultIgnore;
-def note_non_pod_memaccess_silence : Note<
+  InGroup<DiagGroup<"dynamic-class-memaccess">>;
+def note_bad_memaccess_silence : Note<
   "explicitly cast the pointer to silence this warning">;
 
 /// main()

@@ -1814,7 +1814,7 @@ static bool isDynamicClassType(QualType T) {
 
 /// \brief Check for dangerous or invalid arguments to memset().
 ///
-/// This issues warnings on known problematic or dangerous or unspecified
+/// This issues warnings on known problematic, dangerous or unspecified
 /// arguments to the standard 'memset', 'memcpy', and 'memmove' function calls.
 ///
 /// \param Call The call expression to diagnose.
@@ -1836,27 +1836,21 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
       if (PointeeTy->isVoidType())
         continue;
 
-      unsigned DiagID = 0;
       // Always complain about dynamic classes.
-      if (isDynamicClassType(PointeeTy))
-        DiagID = diag::warn_dyn_class_memaccess;
-      // Check the C++11 POD definition regardless of language mode; it is more
-      // relaxed than earlier definitions and we don't want spurious warnings.
-      else if (!PointeeTy->isCXX11PODType())
-        DiagID = diag::warn_non_pod_memaccess;
-      else
+      if (isDynamicClassType(PointeeTy)) {
+        DiagRuntimeBehavior(
+          Dest->getExprLoc(), Dest,
+          PDiag(diag::warn_dyn_class_memaccess)
+            << ArgIdx << FnName << PointeeTy 
+            << Call->getCallee()->getSourceRange());
+      } else {
         continue;
-
-      DiagRuntimeBehavior(
-        Dest->getExprLoc(), Dest,
-        PDiag(DiagID)
-          << ArgIdx << FnName << PointeeTy 
-          << Call->getCallee()->getSourceRange());
+      }
 
       SourceRange ArgRange = Call->getArg(0)->getSourceRange();
       DiagRuntimeBehavior(
         Dest->getExprLoc(), Dest,
-        PDiag(diag::note_non_pod_memaccess_silence)
+        PDiag(diag::note_bad_memaccess_silence)
           << FixItHint::CreateInsertion(ArgRange.getBegin(), "(void*)"));
       break;
     }

@@ -1,57 +1,42 @@
-// RUN: %clang_cc1 -fsyntax-only -Wnon-pod-memaccess -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wdynamic-class-memaccess -verify %s
 
 extern "C" void *memset(void *, int, unsigned);
 extern "C" void *memmove(void *s1, const void *s2, unsigned n);
 extern "C" void *memcpy(void *s1, const void *s2, unsigned n);
 
-// Several POD types that should not warn.
+// Several types that should not warn.
 struct S1 {} s1;
 struct S2 { int x; } s2;
 struct S3 { float x, y; S1 s[4]; void (*f)(S1**); } s3;
 
-// We use the C++11 concept of POD for this warning, so ensure a non-aggregate
-// still warns.
 class C1 {
   int x, y, z;
 public:
   void foo() {}
 } c1;
 
-// Non-POD types that should warn.
-struct X1 { X1(); } x1;
-struct X2 { ~X2(); } x2;
-struct X3 { virtual void f(); } x3;
-struct X4 : X2 {} x4;
-struct X5 : virtual S1 {} x5;
+struct X1 { virtual void f(); } x1;
+struct X2 : virtual S1 {} x2;
 
 void test_warn() {
   memset(&x1, 0, sizeof x1); // \
-      // expected-warning {{destination for this 'memset' call is a pointer to non-POD type}} \
-      // expected-note {{explicitly cast the pointer to silence this warning}}
-  memset(&x2, 0, sizeof x2); // \
-      // expected-warning {{destination for this 'memset' call is a pointer to non-POD type}} \
-      // expected-note {{explicitly cast the pointer to silence this warning}}
-  memset(&x3, 0, sizeof x3); // \
       // expected-warning {{destination for this 'memset' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
-  memset(&x4, 0, sizeof x4); // \
-      // expected-warning {{destination for this 'memset' call is a pointer to non-POD type}} \
-      // expected-note {{explicitly cast the pointer to silence this warning}}
-  memset(&x5, 0, sizeof x5); // \
+  memset(&x2, 0, sizeof x2); // \
       // expected-warning {{destination for this 'memset' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
 
   memmove(&x1, 0, sizeof x1); // \
-      // expected-warning{{destination for this 'memmove' call is a pointer to non-POD type 'struct X1'}} \
+      // expected-warning{{destination for this 'memmove' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memmove(0, &x1, sizeof x1); // \
-      // expected-warning{{source of this 'memmove' call is a pointer to non-POD type 'struct X1'}} \
+      // expected-warning{{source of this 'memmove' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memcpy(&x1, 0, sizeof x1); // \
-      // expected-warning{{destination for this 'memcpy' call is a pointer to non-POD type 'struct X1'}} \
+      // expected-warning{{destination for this 'memcpy' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
   memcpy(0, &x1, sizeof x1); // \
-      // expected-warning{{source of this 'memcpy' call is a pointer to non-POD type 'struct X1'}} \
+      // expected-warning{{source of this 'memcpy' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
 }
 
