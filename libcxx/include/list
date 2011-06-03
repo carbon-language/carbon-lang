@@ -36,7 +36,8 @@ public:
     typedef reverse_iterator<iterator> reverse_iterator;
     typedef reverse_iterator<const_iterator> const_reverse_iterator;
 
-    list();
+    list()
+        noexcept(is_nothrow_default_constructible<allocator_type>::value);
     explicit list(const allocator_type& a);
     explicit list(size_type n);
     list(size_type n, const value_type& value);
@@ -47,7 +48,8 @@ public:
         list(Iter first, Iter last, const allocator_type& a);
     list(const list& x);
     list(const list&, const allocator_type& a);
-    list(list&& x);
+    list(list&& x)
+        noexcept(is_nothrow_move_constructible<allocator_type>::value);
     list(list&&, const allocator_type& a);
     list(initializer_list<value_type>);
     list(initializer_list<value_type>, const allocator_type& a);
@@ -55,36 +57,39 @@ public:
     ~list();
 
     list& operator=(const list& x);
-    list& operator=(list&& x);
+    list& operator=(list&& x)
+        noexcept(
+             allocator_type::propagate_on_container_move_assignment::value &&
+             is_nothrow_move_assignable<allocator_type>::value);
     list& operator=(initializer_list<value_type>);
     template <class Iter>
         void assign(Iter first, Iter last);
     void assign(size_type n, const value_type& t);
     void assign(initializer_list<value_type>);
 
-    allocator_type get_allocator() const;
+    allocator_type get_allocator() const noexcept;
 
-    iterator begin();
-    const_iterator begin() const;
-    iterator end();
-    const_iterator end() const;
-    reverse_iterator rbegin();
-    const_reverse_iterator rbegin() const;
-    reverse_iterator rend();
-    const_reverse_iterator rend() const;
-    const_iterator cbegin() const;
-    const_iterator cend() const;
-    const_reverse_iterator crbegin() const;
-    const_reverse_iterator crend() const;
+    iterator begin() noexcept;
+    const_iterator begin() const noexcept;
+    iterator end() noexcept;
+    const_iterator end() const noexcept;
+    reverse_iterator rbegin() noexcept;
+    const_reverse_iterator rbegin() const noexcept;
+    reverse_iterator rend() noexcept;
+    const_reverse_iterator rend() const noexcept;
+    const_iterator cbegin() const noexcept;
+    const_iterator cend() const noexcept;
+    const_reverse_iterator crbegin() const noexcept;
+    const_reverse_iterator crend() const noexcept;
 
     reference front();
     const_reference front() const;
     reference back();
     const_reference back() const;
 
-    bool empty() const;
-    size_type size() const;
-    size_type max_size() const;
+    bool empty() const noexcept;
+    size_type size() const noexcept;
+    size_type max_size() const noexcept;
 
     template <class... Args>
         void emplace_front(Args&&... args);
@@ -111,8 +116,10 @@ public:
     void resize(size_type sz);
     void resize(size_type sz, const value_type& c);
 
-    void swap(list<value_type,allocator_type>&);
-    void clear();
+    void swap(list&)
+        noexcept(!allocator_type::propagate_on_container_swap::value ||
+                 __is_nothrow_swappable<allocator_type>::value);
+    void clear() noexcept;
 
     void splice(const_iterator position, list& x);
     void splice(const_iterator position, list&& x);
@@ -137,7 +144,7 @@ public:
     void sort();
     template <class Compare>
         void sort(Compare comp);
-    void reverse();
+    void reverse() noexcept;
 };
 
 template <class T, class Alloc>
@@ -154,7 +161,8 @@ template <class T, class Alloc>
     bool operator<=(const list<T,Alloc>& x, const list<T,Alloc>& y);
 
 template <class T, class Alloc>
-    void swap(list<T,Alloc>& x, list<T,Alloc>& y);
+    void swap(list<T,Alloc>& x, list<T,Alloc>& y)
+         noexcept(noexcept(x.swap(y)));
 
 }  // std
 
@@ -218,7 +226,7 @@ class _LIBCPP_VISIBLE __list_iterator
     __node_pointer __ptr_;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit __list_iterator(__node_pointer __p) : __ptr_(__p) {}
+    explicit __list_iterator(__node_pointer __p) _NOEXCEPT : __ptr_(__p) {}
 
     template<class, class> friend class list;
     template<class, class> friend class __list_imp;
@@ -237,7 +245,7 @@ public:
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
     _LIBCPP_INLINE_VISIBILITY
-    __list_iterator() {}
+    __list_iterator() _NOEXCEPT {}
     _LIBCPP_INLINE_VISIBILITY
     reference operator*() const {return __ptr_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
@@ -274,7 +282,7 @@ class _LIBCPP_VISIBLE __list_const_iterator
     __node_pointer __ptr_;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit __list_const_iterator(__node_pointer __p) : __ptr_(__p) {}
+    explicit __list_const_iterator(__node_pointer __p) _NOEXCEPT : __ptr_(__p) {}
 
     template<class, class> friend class list;
     template<class, class> friend class __list_imp;
@@ -292,9 +300,10 @@ public:
     typedef typename pointer_traits<pointer>::difference_type difference_type;
 
     _LIBCPP_INLINE_VISIBILITY
-    __list_const_iterator() {}
+    __list_const_iterator() _NOEXCEPT {}
     _LIBCPP_INLINE_VISIBILITY
-    __list_const_iterator(__list_iterator<_Tp, _VoidPtr> __p) : __ptr_(__p.__ptr_) {}
+    __list_const_iterator(__list_iterator<_Tp, _VoidPtr> __p) _NOEXCEPT
+        : __ptr_(__p.__ptr_) {}
 
     _LIBCPP_INLINE_VISIBILITY
     reference operator*() const {return __ptr_->__value_;}
@@ -352,33 +361,43 @@ protected:
     __compressed_pair<size_type, __node_allocator> __size_alloc_;
 
     _LIBCPP_INLINE_VISIBILITY
-          size_type& __sz()       {return __size_alloc_.first();}
+          size_type& __sz() _NOEXCEPT {return __size_alloc_.first();}
     _LIBCPP_INLINE_VISIBILITY
-    const size_type& __sz() const {return __size_alloc_.first();}
+    const size_type& __sz() const _NOEXCEPT
+        {return __size_alloc_.first();}
     _LIBCPP_INLINE_VISIBILITY
-          __node_allocator& __node_alloc()       {return __size_alloc_.second();}
+          __node_allocator& __node_alloc() _NOEXCEPT
+          {return __size_alloc_.second();}
     _LIBCPP_INLINE_VISIBILITY
-    const __node_allocator& __node_alloc() const {return __size_alloc_.second();}
+    const __node_allocator& __node_alloc() const _NOEXCEPT
+        {return __size_alloc_.second();}
 
-    static void __unlink_nodes(__node_base& __f, __node_base& __l);
+    static void __unlink_nodes(__node_base& __f, __node_base& __l) _NOEXCEPT;
 
-    __list_imp();
+    __list_imp()
+        _NOEXCEPT_(is_nothrow_default_constructible<__node_allocator>::value);
     __list_imp(const allocator_type& __a);
     ~__list_imp();
-    void clear();
+    void clear() _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY
-    bool empty() const {return __sz() == 0;}
+    bool empty() const _NOEXCEPT {return __sz() == 0;}
 
     _LIBCPP_INLINE_VISIBILITY
-          iterator begin()       {return       iterator(__end_.__next_);}
+          iterator begin() _NOEXCEPT
+            {return       iterator(__end_.__next_);}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator begin() const {return const_iterator(__end_.__next_);}
+    const_iterator begin() const  _NOEXCEPT
+        {return const_iterator(__end_.__next_);}
     _LIBCPP_INLINE_VISIBILITY
-          iterator end()       {return       iterator(static_cast<__node_pointer>      (&__end_));}
+          iterator end() _NOEXCEPT
+            {return       iterator(static_cast<__node_pointer>      (&__end_));}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator end() const {return const_iterator(static_cast<__node_const_pointer>(&__end_));}
+    const_iterator end() const _NOEXCEPT
+        {return const_iterator(static_cast<__node_const_pointer>(&__end_));}
 
-    void swap(__list_imp& __c);
+    void swap(__list_imp& __c)
+        _NOEXCEPT_(!__node_alloc_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<__node_allocator>::value);
 
     _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __list_imp& __c)
@@ -387,22 +406,29 @@ protected:
 
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__list_imp& __c)
+        _NOEXCEPT_(
+            !__node_alloc_traits::propagate_on_container_move_assignment::value ||
+            is_nothrow_move_assignable<__node_allocator>::value)
         {__move_assign_alloc(__c, integral_constant<bool,
                       __node_alloc_traits::propagate_on_container_move_assignment::value>());}
 
 private:
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y)
+        _NOEXCEPT_(!__node_alloc_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<__node_allocator>::value)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __node_alloc_traits::propagate_on_container_swap::value>());}
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, true_type)
+        _NOEXCEPT_(__is_nothrow_swappable<__node_allocator>::value)
         {
             using _STD::swap;
             swap(__x, __y);
         }
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, false_type)
+        _NOEXCEPT
         {}
 
     _LIBCPP_INLINE_VISIBILITY
@@ -419,12 +445,14 @@ private:
 
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __list_imp& __c, true_type)
+        _NOEXCEPT_(is_nothrow_move_assignable<__node_allocator>::value)
         {
             __node_alloc() = _STD::move(__c.__node_alloc());
         }
 
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(const __list_imp& __c, false_type)
+        _NOEXCEPT
         {}
 };
 
@@ -433,6 +461,7 @@ template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 __list_imp<_Tp, _Alloc>::__unlink_nodes(__node_base& __f, __node_base& __l)
+    _NOEXCEPT
 {
     __f.__prev_->__next_ = __l.__next_;
     __l.__next_->__prev_ = __f.__prev_;
@@ -441,6 +470,7 @@ __list_imp<_Tp, _Alloc>::__unlink_nodes(__node_base& __f, __node_base& __l)
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 __list_imp<_Tp, _Alloc>::__list_imp()
+        _NOEXCEPT_(is_nothrow_default_constructible<__node_allocator>::value)
     : __size_alloc_(0)
 {
 }
@@ -460,7 +490,7 @@ __list_imp<_Tp, _Alloc>::~__list_imp()
 
 template <class _Tp, class _Alloc>
 void
-__list_imp<_Tp, _Alloc>::clear()
+__list_imp<_Tp, _Alloc>::clear() _NOEXCEPT
 {
     if (!empty())
     {
@@ -482,6 +512,8 @@ __list_imp<_Tp, _Alloc>::clear()
 template <class _Tp, class _Alloc>
 void
 __list_imp<_Tp, _Alloc>::swap(__list_imp& __c)
+        _NOEXCEPT_(!__node_alloc_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<__node_allocator>::value)
 {
     using _STD::swap;
     __swap_alloc(__node_alloc(), __c.__node_alloc());
@@ -527,7 +559,9 @@ public:
     typedef _STD::reverse_iterator<const_iterator>   const_reverse_iterator;
 
     _LIBCPP_INLINE_VISIBILITY
-    list() {}
+    list()
+        _NOEXCEPT_(is_nothrow_default_constructible<__node_allocator>::value)
+        {}
     _LIBCPP_INLINE_VISIBILITY
     list(const allocator_type& __a) : base(__a) {}
     list(size_type __n);
@@ -546,9 +580,13 @@ public:
     list(initializer_list<value_type> __il);
     list(initializer_list<value_type> __il, const allocator_type& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    list(list&& __c);
+    list(list&& __c)
+        _NOEXCEPT_(is_nothrow_move_constructible<__node_allocator>::value);
     list(list&& __c, const allocator_type& __a);
-    list& operator=(list&& __c);
+    list& operator=(list&& __c)
+        _NOEXCEPT_(
+            __node_alloc_traits::propagate_on_container_move_assignment::value &&
+            is_nothrow_move_assignable<__node_allocator>::value);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     list& operator=(initializer_list<value_type> __il)
@@ -562,40 +600,47 @@ public:
     void assign(initializer_list<value_type> __il)
         {assign(__il.begin(), __il.end());}
 
-    allocator_type get_allocator() const;
+    allocator_type get_allocator() const _NOEXCEPT;
 
     _LIBCPP_INLINE_VISIBILITY
-    size_type size() const     {return base::__sz();}
+    size_type size() const _NOEXCEPT     {return base::__sz();}
     _LIBCPP_INLINE_VISIBILITY
-    bool empty() const         {return base::empty();}
+    bool empty() const _NOEXCEPT         {return base::empty();}
     _LIBCPP_INLINE_VISIBILITY
-    size_type max_size() const {return numeric_limits<difference_type>::max();}
+    size_type max_size() const _NOEXCEPT
+        {return numeric_limits<difference_type>::max();}
 
     _LIBCPP_INLINE_VISIBILITY
-          iterator begin()        {return base::begin();}
+          iterator begin() _NOEXCEPT        {return base::begin();}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator begin()  const {return base::begin();}
+    const_iterator begin()  const _NOEXCEPT {return base::begin();}
     _LIBCPP_INLINE_VISIBILITY
-          iterator end()          {return base::end();}
+          iterator end() _NOEXCEPT          {return base::end();}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator end()    const {return base::end();}
+    const_iterator end()    const _NOEXCEPT {return base::end();}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator cbegin() const {return base::begin();}
+    const_iterator cbegin() const _NOEXCEPT {return base::begin();}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator cend()   const {return base::end();}
+    const_iterator cend()   const _NOEXCEPT {return base::end();}
 
     _LIBCPP_INLINE_VISIBILITY
-          reverse_iterator rbegin()        {return       reverse_iterator(end());}
+          reverse_iterator rbegin() _NOEXCEPT
+            {return       reverse_iterator(end());}
     _LIBCPP_INLINE_VISIBILITY
-    const_reverse_iterator rbegin()  const {return const_reverse_iterator(end());}
+    const_reverse_iterator rbegin()  const _NOEXCEPT
+        {return const_reverse_iterator(end());}
     _LIBCPP_INLINE_VISIBILITY
-          reverse_iterator rend()          {return       reverse_iterator(begin());}
+          reverse_iterator rend() _NOEXCEPT
+            {return       reverse_iterator(begin());}
     _LIBCPP_INLINE_VISIBILITY
-    const_reverse_iterator rend()    const {return const_reverse_iterator(begin());}
+    const_reverse_iterator rend()    const _NOEXCEPT
+        {return const_reverse_iterator(begin());}
     _LIBCPP_INLINE_VISIBILITY
-    const_reverse_iterator crbegin() const {return const_reverse_iterator(end());}
+    const_reverse_iterator crbegin() const _NOEXCEPT
+        {return const_reverse_iterator(end());}
     _LIBCPP_INLINE_VISIBILITY
-    const_reverse_iterator crend()   const {return const_reverse_iterator(begin());}
+    const_reverse_iterator crend()   const _NOEXCEPT
+        {return const_reverse_iterator(begin());}
 
     _LIBCPP_INLINE_VISIBILITY
           reference front()        {return base::__end_.__next_->__value_;}
@@ -633,9 +678,12 @@ public:
         {return insert(__p, __il.begin(), __il.end());}
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(list& __c) {base::swap(__c);}
+    void swap(list& __c)
+        _NOEXCEPT_(!__node_alloc_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<__node_allocator>::value)
+        {base::swap(__c);}
     _LIBCPP_INLINE_VISIBILITY
-    void clear() {base::clear();}
+    void clear() _NOEXCEPT {base::clear();}
 
     void pop_front();
     void pop_back();
@@ -685,7 +733,7 @@ public:
     template <class _Comp>
         void sort(_Comp __comp);
 
-    void reverse();
+    void reverse() _NOEXCEPT;
 
 private:
     static void __link_nodes(__node& __p, __node& __f, __node& __l);
@@ -693,7 +741,8 @@ private:
     template <class _Comp>
         static iterator __sort(iterator __f1, iterator __e2, size_type __n, _Comp& __comp);
 
-    void __move_assign(list& __c, true_type);
+    void __move_assign(list& __c, true_type)
+        _NOEXCEPT_(is_nothrow_move_assignable<__node_allocator>::value);
     void __move_assign(list& __c, false_type);
 };
 
@@ -816,6 +865,7 @@ list<_Tp, _Alloc>::operator=(const list& __c)
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 list<_Tp, _Alloc>::list(list&& __c)
+    _NOEXCEPT_(is_nothrow_move_constructible<__node_allocator>::value)
     : base(allocator_type(_STD::move(__c.__node_alloc())))
 {
     splice(end(), __c);
@@ -839,6 +889,9 @@ template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 list<_Tp, _Alloc>&
 list<_Tp, _Alloc>::operator=(list&& __c)
+        _NOEXCEPT_(
+            __node_alloc_traits::propagate_on_container_move_assignment::value &&
+            is_nothrow_move_assignable<__node_allocator>::value)
 {
     __move_assign(__c, integral_constant<bool,
           __node_alloc_traits::propagate_on_container_move_assignment::value>());
@@ -861,6 +914,7 @@ list<_Tp, _Alloc>::__move_assign(list& __c, false_type)
 template <class _Tp, class _Alloc>
 void
 list<_Tp, _Alloc>::__move_assign(list& __c, true_type)
+        _NOEXCEPT_(is_nothrow_move_assignable<__node_allocator>::value)
 {
     clear();
     base::__move_assign_alloc(__c);
@@ -902,7 +956,7 @@ list<_Tp, _Alloc>::assign(size_type __n, const value_type& __x)
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 _Alloc
-list<_Tp, _Alloc>::get_allocator() const
+list<_Tp, _Alloc>::get_allocator() const _NOEXCEPT
 {
     return allocator_type(base::__node_alloc());
 }
@@ -1537,7 +1591,7 @@ list<_Tp, _Alloc>::__sort(iterator __f1, iterator __e2, size_type __n, _Comp& __
 
 template <class _Tp, class _Alloc>
 void
-list<_Tp, _Alloc>::reverse()
+list<_Tp, _Alloc>::reverse() _NOEXCEPT
 {
     if (base::__sz() > 1)
     {
@@ -1600,6 +1654,7 @@ template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(list<_Tp, _Alloc>& __x, list<_Tp, _Alloc>& __y)
+    _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
 {
     __x.swap(__y);
 }

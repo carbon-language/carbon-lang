@@ -143,7 +143,8 @@ template <class T, class Allocator>
 
 // specialized algorithms:
 template <class T, class Allocator>
-    void swap(deque<T,Allocator>& x, deque<T,Allocator>& y) noexcept(x.swap(y));
+    void swap(deque<T,Allocator>& x, deque<T,Allocator>& y)
+         noexcept(noexcept(x.swap(y)));
 
 }  // std
 

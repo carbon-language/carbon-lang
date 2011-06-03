@@ -160,7 +160,7 @@ template <class T, class Allocator>
 
 template <class T, class Allocator>
     void swap(forward_list<T, Allocator>& x, forward_list<T, Allocator>& y)
-         noexcept(x.swap(y));
+         noexcept(noexcept(x.swap(y)));
 
 }  // std
 
