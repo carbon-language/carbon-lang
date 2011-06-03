@@ -555,8 +555,9 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty,
   // We don't set size information, but do specify where the typedef was
   // declared.
   unsigned Line = getLineNumber(Ty->getDecl()->getLocation());
-  llvm::DIType DbgTy = DBuilder.createTypedef(Src, Ty->getDecl()->getName(),
-                                              Unit, Line);
+  llvm::DIType DbgTy = 
+    DBuilder.createTypedef(Src, Ty->getDecl()->getName(), Unit, Line,
+              getContextDescriptor(cast<Decl>(Ty->getDecl()->getDeclContext())));
   return DbgTy;
 }
 
