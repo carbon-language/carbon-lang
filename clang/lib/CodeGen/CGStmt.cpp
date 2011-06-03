@@ -1422,8 +1422,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
     const Expr *OutExpr = S.getOutputExpr(i);
     OutExpr = OutExpr->IgnoreParenNoopCasts(getContext());
 
-    OutputConstraint = AddVariableConstraints(OutputConstraint, *OutExpr, Target,
-                                             CGM, S);
+    OutputConstraint = AddVariableConstraints(OutputConstraint, *OutExpr,
+                                              Target, CGM, S);
 
     LValue Dest = EmitLValue(OutExpr);
     if (!Constraints.empty())
