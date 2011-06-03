@@ -52,7 +52,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 
-//#define USE_STANDARD_JIT
+#if !defined(__APPLE__)
+#define USE_STANDARD_JIT
+#endif
+
 #if defined (USE_STANDARD_JIT)
 #include "llvm/ExecutionEngine/JIT.h"
 #else
