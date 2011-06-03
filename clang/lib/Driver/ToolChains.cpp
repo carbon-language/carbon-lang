@@ -1236,7 +1236,8 @@ static bool HasMultilib(llvm::Triple::ArchType Arch, enum LinuxDistro Distro) {
   }
   if (Arch == llvm::Triple::ppc64)
     return true;
-  if ((Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc) && IsDebianBased(Distro))
+  if ((Arch == llvm::Triple::x86 || Arch == llvm::Triple::ppc) && 
+      IsDebianBased(Distro))
     return true;
   return false;
 }
@@ -1442,18 +1443,23 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   } else if (Arch == llvm::Triple::ppc) {
     if (!llvm::sys::fs::exists("/usr/lib/powerpc-linux-gnu", Exists) && Exists)
       GccTriple = "powerpc-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib/gcc/powerpc-unknown-linux-gnu", Exists) && Exists)
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/powerpc-unknown-linux-gnu",
+                                    Exists) && Exists)
       GccTriple = "powerpc-unknown-linux-gnu";
   } else if (Arch == llvm::Triple::ppc64) {
-    if (!llvm::sys::fs::exists("/usr/lib/gcc/powerpc64-unknown-linux-gnu", Exists) && Exists)
+    if (!llvm::sys::fs::exists("/usr/lib/gcc/powerpc64-unknown-linux-gnu",
+                               Exists) && Exists)
       GccTriple = "powerpc64-unknown-linux-gnu";
-    else if (!llvm::sys::fs::exists("/usr/lib64/gcc/powerpc64-unknown-linux-gnu", Exists) && Exists)
+    else if (!llvm::sys::fs::exists("/usr/lib64/gcc/"
+                                    "powerpc64-unknown-linux-gnu", Exists) && 
+             Exists)
       GccTriple = "powerpc64-unknown-linux-gnu";
   }
 
   std::string Base = findGCCBaseLibDir(GccTriple);
   path_list &Paths = getFilePaths();
-  bool Is32Bits = (getArch() == llvm::Triple::x86 || getArch() == llvm::Triple::ppc);
+  bool Is32Bits = (getArch() == llvm::Triple::x86 || 
+                   getArch() == llvm::Triple::ppc);
 
   std::string Suffix;
   std::string Lib;
