@@ -5735,7 +5735,11 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       // Memory operands really want the address of the value.  If we don't have
       // an indirect input, put it in the constpool if we can, otherwise spill
       // it to a stack slot.
-
+      // TODO: This isn't quite right. We need to handle these according to
+      // the addressing mode that the constraint wants. Also, this may take
+      // an additional register for the computation and we don't want that
+      // either.
+      
       // If the operand is a float, integer, or vector constant, spill to a
       // constant pool entry to get its address.
       const Value *OpVal = OpInfo.CallOperandVal;
