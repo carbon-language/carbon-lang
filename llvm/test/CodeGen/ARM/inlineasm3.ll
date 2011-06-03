@@ -41,3 +41,12 @@ entry:
 tail call void asm sideeffect "flds s15, $0 \0A", "^Uv|m,~{s15}"(float 1.000000e+00) nounwind
 ret i32 0
 }
+
+; Radar 9037836 & 9119939
+
+@k.2126 = internal unnamed_addr global float 1.000000e+00
+define i32 @t4() nounwind {
+entry:
+call void asm sideeffect "flds s15, $0 \0A", "*^Uv,~{s15}"(float* @k.2126) nounwind
+ret i32 0
+}

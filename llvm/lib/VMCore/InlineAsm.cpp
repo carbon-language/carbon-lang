@@ -185,11 +185,10 @@ bool InlineAsm::ConstraintInfo::Parse(StringRef Str,
       // Multi-letter constraint
       // These will only occur with the existing multiple alternative
       // constraints and so we can use the isalpha loop below.
-      StringRef::iterator ConStart = I;
+      StringRef::iterator ConStart = ++I;
       while (I != E && isalpha(*I))
         ++I;
       pCodes->push_back(std::string(ConStart, I));
-      ++I;
     } else {
       // Single letter constraint.
       pCodes->push_back(std::string(I, I+1));
