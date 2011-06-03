@@ -198,52 +198,6 @@ public:
 typedef std::pair<llvm::PointerUnion<const TemplateTypeParmType*, NamedDecl*>,
                   SourceLocation> UnexpandedParameterPack;
 
-// Holds some information about special member function overloads
-// Defined outside Sema so it can be used as a key in a DenseMap.
-struct SpecialMemberID {
-  CXXRecordDecl *D;
-  unsigned SM : 3; //CXXSpecialMember
-  bool ConstArg : 1;
-  bool VolatileArg : 1;
-  bool RValueThis : 1;
-  bool ConstThis : 1;
-  bool VolatileThis : 1;
-};
-
-} // namespace clang
-
-namespace llvm {
-template <> struct DenseMapInfo<clang::SpecialMemberID> {
-  static inline clang::SpecialMemberID getEmptyKey() {
-    clang::SpecialMemberID SMI =
-      {DenseMapInfo<clang::CXXRecordDecl*>::getEmptyKey(), 0,0,0,0,0,0};
-    return SMI;
-  }
-  static inline clang::SpecialMemberID getTombstoneKey() {
-    clang::SpecialMemberID SMI =
-      {DenseMapInfo<clang::CXXRecordDecl*>::getTombstoneKey(), 0,0,0,0,0,0};
-    return SMI;
-  }
-  static unsigned getHashValue (const clang::SpecialMemberID SMI) {
-    // Vary higher bits of the pointer for hashing. Attempt to match the
-    // bit-field representation to reduce masking if the optimizer is awake.
-    // Note that the LLVM optimizer sleeps through this one.
-    return (uintptr_t)SMI.D ^
-      ((SMI.SM << 24) + (SMI.ConstArg << 27) + (SMI.VolatileArg << 28) +
-       (SMI.RValueThis << 29) + (SMI.ConstThis << 30) +
-       (SMI.VolatileThis << 31));
-  }
-  static bool isEqual(const clang::SpecialMemberID LHS,
-                      const clang::SpecialMemberID RHS) {
-    return LHS.D == RHS.D && LHS.SM == RHS.SM && LHS.ConstArg == RHS.ConstArg &&
-           LHS.VolatileArg == RHS.VolatileArg &&
-           LHS.RValueThis == RHS.RValueThis && LHS.ConstThis == RHS.ConstThis &&
-           LHS.VolatileThis == RHS.VolatileThis;
-  }
-};
-} // namespace llvm
-
-namespace clang {
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema {
   Sema(const Sema&);           // DO NOT IMPLEMENT
@@ -645,47 +599,6 @@ public:
 
   /// A stack of expression evaluation contexts.
   llvm::SmallVector<ExpressionEvaluationContextRecord, 8> ExprEvalContexts;
-
-  /// SpecialMemberOverloadResult - The overloading result for a special member
-  /// function.
-  ///
-  /// This is basically a wrapper around PointerIntPair. The lowest bit of the
-  /// integer is used to determine whether we have a parameter qualification
-  /// match, the second-lowest is whether we had success in resolving the
-  /// overload to a unique non-deleted function.
-  ///
-  /// The ConstParamMatch bit represents whether, when looking up a copy
-  /// constructor or assignment operator, we found a potential copy
-  /// constructor/assignment operator whose first parameter is const-qualified.
-  /// This is used for determining parameter types of other objects and is
-  /// utterly meaningless on other types of special members.
-  class SpecialMemberOverloadResult {
-    llvm::PointerIntPair<CXXMethodDecl*, 2> Pair;
-  public:
-    SpecialMemberOverloadResult(CXXMethodDecl *MD, bool Success,
-                                bool ConstParamMatch)
-      : Pair(MD, Success | ConstParamMatch << 1)
-    {}
-    SpecialMemberOverloadResult() {}
-
-    CXXMethodDecl *getMethod() const { return Pair.getPointer(); }
-    void setMethod(CXXMethodDecl *MD) { Pair.setPointer(MD); }
-
-    bool hasSuccess() const { return Pair.getInt() & 0x1; }
-    void setSuccess(bool B) { Pair.setInt(B | hasConstParamMatch() << 1); }
-
-    bool hasConstParamMatch() const { return Pair.getInt() & 0x2; }
-    void setConstParamMatch(bool B) { Pair.setInt(B << 1 | hasSuccess()); }
-  };
-
-  /// \brief A cache of special member function overload resolution results
-  /// for C++ records.
-  ///
-  /// In C++, special member functions of records (such as the copy constructor)
-  /// are used a lot. As a result, we cache the lookups here so as to make the
-  /// lookups far easier to perform.
-  llvm::DenseMap<SpecialMemberID, SpecialMemberOverloadResult>
-    SpecialMemberCache;
 
   /// \brief Whether the code handled by Sema should be considered a
   /// complete translation unit or not.
@@ -1680,14 +1593,6 @@ public:
 
 private:
   bool CppLookupName(LookupResult &R, Scope *S);
-
-  SpecialMemberOverloadResult LookupSpecialMember(CXXRecordDecl *D,
-                                                  CXXSpecialMember SM,
-                                                  bool ConstArg,
-                                                  bool VolatileArg,
-                                                  bool RValueThis,
-                                                  bool ConstThis,
-                                                  bool VolatileThis);
 
 public:
   /// \brief Look up a name, looking for a single declaration.  Return

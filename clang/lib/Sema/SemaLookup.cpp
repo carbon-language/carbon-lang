@@ -14,7 +14,6 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
-#include "clang/Sema/Overload.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
@@ -2137,51 +2136,6 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   }
 }
 
-Sema::SpecialMemberOverloadResult Sema::LookupSpecialMember(CXXRecordDecl *D,
-                                                            CXXSpecialMember SM,
-                                                            bool ConstArg,
-                                                            bool VolatileArg,
-                                                            bool RValueThis,
-                                                            bool ConstThis,
-                                                            bool VolatileThis) {
-  D = D->getDefinition();
-  assert((D && !D->isBeingDefined()) &&
-         "doing special member lookup into record that isn't fully complete");
-  if (RValueThis || ConstThis || VolatileThis)
-    assert((SM == CXXCopyAssignment || SM == CXXMoveAssignment) &&
-           "constructors and destructors always have unqualified lvalue this");
-  if (ConstArg || VolatileArg)
-    assert((SM != CXXDefaultConstructor && SM != CXXDestructor) &&
-           "parameter-less special members can't have qualified arguments");
-
-  // Check the cache for this member
-  SpecialMemberID ID = {D, SM, ConstArg, VolatileArg, RValueThis, ConstThis,
-                        VolatileThis};
-  SpecialMemberOverloadResult Blank;
-  llvm::DenseMap<SpecialMemberID, SpecialMemberOverloadResult>::iterator It;
-  bool New;
-
-  llvm::tie(It, New) = SpecialMemberCache.insert(std::make_pair(ID, Blank));
-  SpecialMemberOverloadResult &Result = It->second;
-
-  // This was already cached
-  if (!New)
-    return Result;
-
-  if (SM == CXXDestructor) {
-    if (!D->hasDeclaredDestructor())
-      DeclareImplicitDestructor(D);
-    CXXDestructorDecl *DD = D->getDestructor();
-    assert(DD && "record without a destructor");
-    Result.setMethod(DD);
-    Result.setSuccess(DD->isDeleted());
-    Result.setConstParamMatch(false);
-    return Result;
-  }
-
-  llvm_unreachable("haven't implemented this for non-destructors yet");
-}
-
 /// \brief Look up the constructors for the given class.
 DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
   // If the copy constructor has not yet been declared, do so now.
@@ -2199,13 +2153,17 @@ DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
 
 /// \brief Look for the destructor of the given class.
 ///
-/// The destructor will be declared if necessary.
+/// During semantic analysis, this routine should be used in lieu of
+/// CXXRecordDecl::getDestructor().
 ///
 /// \returns The destructor for this class.
 CXXDestructorDecl *Sema::LookupDestructor(CXXRecordDecl *Class) {
-  return cast<CXXDestructorDecl>(LookupSpecialMember(Class, CXXDestructor,
-                                                     false, false, false,
-                                                     false, false).getMethod());
+  // If the destructor has not yet been declared, do so now.
+  if (CanDeclareSpecialMemberFunction(Context, Class) &&
+      !Class->hasDeclaredDestructor())
+    DeclareImplicitDestructor(Class);
+
+  return Class->getDestructor();
 }
 
 void ADLResult::insert(NamedDecl *New) {
