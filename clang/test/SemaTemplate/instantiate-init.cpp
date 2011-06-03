@@ -78,21 +78,32 @@ namespace PR7985 {
   template<int N> struct integral_c { };
 
   template <typename T, int N>
-  integral_c<N> array_lengthof(T (&x)[N]) { return integral_c<N>(); }
+  integral_c<N> array_lengthof(T (&x)[N]) { return integral_c<N>(); } // expected-note 2{{candidate template ignored: failed template argument deduction}}
 
+  template<typename T>
   struct Data {
-    int x;
+    T x;
   };
 
   template<typename T>
   struct Description {
-    static const Data data[];
+    static const Data<T> data[];
   };
 
   template<typename T>
-  const Data Description<T>::data[] = {{ 0 }};
+  const Data<T> Description<T>::data[] = {{ 1 }}; // expected-error{{cannot initialize a member subobject of type 'int *' with an rvalue of type 'int'}}
+
+  template<>
+  Data<float*> Description<float*>::data[];
 
   void test() {
     integral_c<1> ic1 = array_lengthof(Description<int>::data);
+    (void)sizeof(array_lengthof(Description<float>::data));
+
+    sizeof(array_lengthof( // expected-error{{no matching function for call to 'array_lengthof'}}
+                          Description<int*>::data // expected-note{{in instantiation of static data member 'PR7985::Description<int *>::data' requested here}}
+                          ));
+
+    array_lengthof(Description<float*>::data); // expected-error{{no matching function for call to 'array_lengthof'}}
   }
 }

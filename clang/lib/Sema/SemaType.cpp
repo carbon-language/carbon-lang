@@ -15,6 +15,7 @@
 #include "clang/Sema/Template.h"
 #include "clang/Basic/OpenCL.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -3277,14 +3278,31 @@ bool Sema::RequireCompleteExprType(Expr *E, const PartialDiagnostic &PD,
       if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
         if (Var->isStaticDataMember() &&
             Var->getInstantiatedFromStaticDataMember()) {
-          InstantiateStaticDataMemberDefinition(E->getExprLoc(), Var);
-          // Update the type to the newly instantiated definition's type both
-          // here and within the expression.
-          if (VarDecl *Def = Var->getDefinition()) {
-            DRE->setDecl(Def);
-            T = Def->getType();
-            DRE->setType(T);
-            E->setType(T);
+          
+          MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
+          assert(MSInfo && "Missing member specialization information?");
+          if (MSInfo->getTemplateSpecializationKind()
+                != TSK_ExplicitSpecialization) {
+            // If we don't already have a point of instantiation, this is it.
+            if (MSInfo->getPointOfInstantiation().isInvalid()) {
+              MSInfo->setPointOfInstantiation(E->getLocStart());
+              
+              // This is a modification of an existing AST node. Notify 
+              // listeners.
+              if (ASTMutationListener *L = getASTMutationListener())
+                L->StaticDataMemberInstantiated(Var);
+            }
+            
+            InstantiateStaticDataMemberDefinition(E->getExprLoc(), Var);
+            
+            // Update the type to the newly instantiated definition's type both
+            // here and within the expression.
+            if (VarDecl *Def = Var->getDefinition()) {
+              DRE->setDecl(Def);
+              T = Def->getType();
+              DRE->setType(T);
+              E->setType(T);
+            }
           }
           
           // We still go on to try to complete the type independently, as it
