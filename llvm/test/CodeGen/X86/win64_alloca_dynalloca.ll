@@ -43,9 +43,9 @@ entry:
 ; W64: subq  %rax, %rsp
 ; W64: movq  %rsp, %rax
 
-; EFI: leaq  15(%rcx), [[R1:%r..]]
+; EFI: leaq  15(%rcx), [[R1:%r.*]]
 ; EFI: andq  $-16, [[R1]]
-; EFI: movq  %rsp, [[R64:%r..]]
+; EFI: movq  %rsp, [[R64:%r.*]]
 ; EFI: subq  [[R1]], [[R64]]
 ; EFI: movq  [[R64]], %rsp
 

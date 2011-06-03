@@ -2,7 +2,7 @@
 ; RUN: llc < %s -tailcallopt -mtriple=x86_64-win32 -post-RA-scheduler=true | FileCheck %s
 
 ; FIXME: Redundant unused stack allocation could be eliminated.
-; CHECK: subq  ${{24|72}}, %rsp
+; CHECK: subq  ${{24|72|80}}, %rsp
 
 ; Check that lowered arguments on the stack do not overwrite each other.
 ; Add %in1 %p1 to a different temporary register (%eax).

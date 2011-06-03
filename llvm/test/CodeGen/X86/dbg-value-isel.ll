@@ -3,7 +3,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-darwin10.0.0"
 ; PR 9879
 
-; CHECK: ##DEBUG_VALUE: tid <- R14D+0
+; CHECK: ##DEBUG_VALUE: tid <-
 %0 = type { i8*, i8*, i8*, i8*, i32 }
 
 @sgv = internal addrspace(2) constant [1 x i8] zeroinitializer

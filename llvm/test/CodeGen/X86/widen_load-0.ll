@@ -4,15 +4,15 @@
 
 ; Both loads should happen before either store.
 
-; CHECK: movl  (%rdi), %eax
-; CHECK: movl  (%rsi), %ecx
-; CHECK: movl  %ecx, (%rdi)
-; CHECK: movl  %eax, (%rsi)
+; CHECK: movl  (%rdi), %[[R1:...]]
+; CHECK: movl  (%rsi), %[[R2:...]]
+; CHECK: movl  %[[R2]], (%rdi)
+; CHECK: movl  %[[R1]], (%rsi)
 
-; WIN64: movl  (%rcx), %eax
-; WIN64: movl  (%rdx), %esi
-; WIN64: movl  %esi, (%rcx)
-; WIN64: movl  %eax, (%rdx)
+; WIN64: movl  (%rcx), %[[R1:...]]
+; WIN64: movl  (%rdx), %[[R2:...]]
+; WIN64: movl  %[[R2]], (%rcx)
+; WIN64: movl  %[[R1]], (%rdx)
 
 define void @short2_int_swap(<2 x i16>* nocapture %b, i32* nocapture %c) nounwind {
 entry:
