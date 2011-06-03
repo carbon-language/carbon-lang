@@ -632,6 +632,7 @@ void PMTopLevelManager::schedulePass(Pass *P) {
       Pass *AnalysisPass = findAnalysisPass(*I);
       if (!AnalysisPass) {
         const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(*I);
+        assert(PI && "Expected required passes to be initialized");
         AnalysisPass = PI->createPass();
         if (P->getPotentialPassManagerType () ==
             AnalysisPass->getPotentialPassManagerType())
@@ -686,6 +687,7 @@ Pass *PMTopLevelManager::findAnalysisPass(AnalysisID AID) {
     // If Pass not found then check the interfaces implemented by Immutable Pass
     const PassInfo *PassInf =
       PassRegistry::getPassRegistry()->getPassInfo(PI);
+    assert(PassInf && "Expected all immutable passes to be initialized");
     const std::vector<const PassInfo*> &ImmPI =
       PassInf->getInterfacesImplemented();
     for (std::vector<const PassInfo*>::const_iterator II = ImmPI.begin(),
@@ -727,9 +729,11 @@ void PMTopLevelManager::dumpArguments() const {
   for (SmallVector<ImmutablePass *, 8>::const_iterator I =
        ImmutablePasses.begin(), E = ImmutablePasses.end(); I != E; ++I)
     if (const PassInfo *PI =
-          PassRegistry::getPassRegistry()->getPassInfo((*I)->getPassID()))
+        PassRegistry::getPassRegistry()->getPassInfo((*I)->getPassID())) {
+      assert(PI && "Expected all immutable passes to be initialized");
       if (!PI->isAnalysisGroup())
         dbgs() << " -" << PI->getPassArgument();
+    }
   for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
     (*I)->dumpPassArguments();
@@ -1183,6 +1187,12 @@ void PMDataManager::dumpAnalysisUsage(StringRef Msg, const Pass *P,
   for (unsigned i = 0; i != Set.size(); ++i) {
     if (i) dbgs() << ',';
     const PassInfo *PInf = PassRegistry::getPassRegistry()->getPassInfo(Set[i]);
+    if (!PInf) {
+      // Some preserved passes, such as AliasAnalysis, may not be initialized by
+      // all drivers.
+      dbgs() << " Uninitialized Pass";
+      continue;
+    }
     dbgs() << ' ' << PInf->getPassName();
   }
   dbgs() << '\n';
