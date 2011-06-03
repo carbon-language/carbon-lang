@@ -1085,7 +1085,7 @@ ObjectFileELF::GetSymtab()
     for (SectionHeaderCollIter I = m_section_headers.begin();
          I != m_section_headers.end(); ++I)
     {
-        if (I->sh_type == SHT_SYMTAB)
+        if (I->sh_type == SHT_SYMTAB || I->sh_type == SHT_DYNSYM)
         {
             const ELFSectionHeader &symtab_header = *I;
             user_id_t section_id = SectionIndex(I);
