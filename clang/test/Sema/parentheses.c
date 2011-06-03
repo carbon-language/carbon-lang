@@ -39,6 +39,28 @@ void bitwise_rel(unsigned i) {
   (void)(0 || i && i); // no warning.
 }
 
+_Bool someConditionFunc();
+
+void conditional_op(int x, int y, _Bool b) {
+  (void)(x + someConditionFunc() ? 1 : 2); // expected-warning {{?: has lower precedence than +}} \
+                                           // expected-note {{place parentheses around the ?: expression to evaluate it first}} \
+                                           // expected-note {{place parentheses around the + expression to silence this warning}}
+
+  (void)(x - b ? 1 : 2); // expected-warning {{?: has lower precedence than -}} \
+                         // expected-note {{place parentheses around the ?: expression to evaluate it first}} \
+                         // expected-note {{place parentheses around the - expression to silence this warning}}
+
+  (void)(x * (x == y) ? 1 : 2); // expected-warning {{?: has lower precedence than *}} \
+                                // expected-note {{place parentheses around the ?: expression to evaluate it first}} \
+                                // expected-note {{place parentheses around the * expression to silence this warning}}
+
+  (void)(x / !x ? 1 : 2); // expected-warning {{?: has lower precedence than /}} \
+                          // expected-note {{place parentheses around the ?: expression to evaluate it first}} \
+                          // expected-note {{place parentheses around the / expression to silence this warning}}
+
+
+  (void)(x % 2 ? 1 : 2); // no warning
+}
+
 // RUN: %clang_cc1 -fsyntax-only -Wparentheses -Werror -fdiagnostics-show-option %s 2>&1 | FileCheck %s
 // CHECK: error: using the result of an assignment as a condition without parentheses [-Werror,-Wparentheses]
-

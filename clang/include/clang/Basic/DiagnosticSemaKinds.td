@@ -2562,6 +2562,14 @@ def note_precedence_bitwise_first : Note<
 def note_precedence_bitwise_silence : Note<
   "place parentheses around the %0 expression to silence this warning">;
 
+def warn_precedence_conditional : Warning<
+  "?: has lower precedence than %0; %0 will be evaluated first">,
+  InGroup<Parentheses>;
+def note_precedence_conditional_first : Note<
+  "place parentheses around the ?: expression to evaluate it first">;
+def note_precedence_conditional_silence : Note<
+  "place parentheses around the %0 expression to silence this warning">;
+
 def warn_logical_instead_of_bitwise : Warning<
   "use of logical %0 with constant operand; switch to bitwise %1 or "
   "remove constant">, InGroup<DiagGroup<"constant-logical-operand">>;
