@@ -39,6 +39,7 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "LiveIntervalUnion.h"
+#include "RegisterClassInfo.h"
 
 namespace llvm {
 
@@ -91,6 +92,7 @@ protected:
   MachineRegisterInfo *MRI;
   VirtRegMap *VRM;
   LiveIntervals *LIS;
+  RegisterClassInfo RegClassInfo;
   LiveUnionArray PhysReg2LiveUnion;
 
   // Current queries, one per physreg. They must be reinitialized each time we

@@ -62,7 +62,6 @@ class RAGreedy : public MachineFunctionPass,
 
   // context
   MachineFunction *MF;
-  BitVector ReservedRegs;
 
   // analyses
   SlotIndexes *Indexes;
@@ -1410,7 +1409,7 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &NewVRegs) {
   // First try assigning a free register.
-  AllocationOrder Order(VirtReg.reg, *VRM, ReservedRegs);
+  AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
   if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs))
     return PhysReg;
 
@@ -1472,7 +1471,6 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
   Indexes = &getAnalysis<SlotIndexes>();
   DomTree = &getAnalysis<MachineDominatorTree>();
-  ReservedRegs = TRI->getReservedRegs(*MF);
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
   Loops = &getAnalysis<MachineLoopInfo>();
   LoopRanges = &getAnalysis<MachineLoopRanges>();

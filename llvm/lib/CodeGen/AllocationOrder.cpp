@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AllocationOrder.h"
+#include "RegisterClassInfo.h"
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
@@ -23,8 +24,8 @@ using namespace llvm;
 // Compare VirtRegMap::getRegAllocPref().
 AllocationOrder::AllocationOrder(unsigned VirtReg,
                                  const VirtRegMap &VRM,
-                                 const BitVector &ReservedRegs)
-  : Pos(0), Reserved(ReservedRegs) {
+                                 const RegisterClassInfo &RegClassInfo)
+  : Pos(0), RCI(RegClassInfo) {
   const TargetRegisterClass *RC = VRM.getRegInfo().getRegClass(VirtReg);
   std::pair<unsigned, unsigned> HintPair =
     VRM.getRegInfo().getRegAllocationHint(VirtReg);
@@ -47,7 +48,7 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
 
   // The hint must be a valid physreg for allocation.
   if (Hint && (!TargetRegisterInfo::isPhysicalRegister(Hint) ||
-               !RC->contains(Hint) || ReservedRegs.test(Hint)))
+               !RC->contains(Hint) || RCI.isReserved(Hint)))
     Hint = 0;
 }
 
@@ -61,7 +62,7 @@ unsigned AllocationOrder::next() {
   // Then look at the order from TRI.
   while(Pos != End) {
     unsigned Reg = *Pos++;
-    if (Reg != Hint && !Reserved.test(Reg))
+    if (Reg != Hint && !RCI.isReserved(Reg))
       return Reg;
   }
   return 0;

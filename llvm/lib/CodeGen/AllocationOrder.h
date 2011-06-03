@@ -19,14 +19,14 @@
 
 namespace llvm {
 
-class BitVector;
+class RegisterClassInfo;
 class VirtRegMap;
 
 class AllocationOrder {
   const unsigned *Begin;
   const unsigned *End;
   const unsigned *Pos;
-  const BitVector &Reserved;
+  const RegisterClassInfo &RCI;
   unsigned Hint;
 public:
 
@@ -37,7 +37,7 @@ public:
   ///        TargetRegisterInfo::getReservedRegs().
   AllocationOrder(unsigned VirtReg,
                   const VirtRegMap &VRM,
-                  const BitVector &ReservedRegs);
+                  const RegisterClassInfo &RegClassInfo);
 
   /// next - Return the next physical register in the allocation order, or 0.
   /// It is safe to call next again after it returned 0.

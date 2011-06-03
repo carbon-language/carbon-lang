@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "RegAllocBase.h"
 #include "LiveDebugVariables.h"
 #include "LiveIntervalUnion.h"
 #include "LiveRangeEdit.h"
-#include "RegAllocBase.h"
 #include "RenderMachineFunction.h"
 #include "Spiller.h"
 #include "VirtRegMap.h"
@@ -85,7 +85,6 @@ class RABasic : public MachineFunctionPass, public RegAllocBase
 {
   // context
   MachineFunction *MF;
-  BitVector ReservedRegs;
 
   // analyses
   LiveStacks *LS;
@@ -235,6 +234,8 @@ void RegAllocBase::init(VirtRegMap &vrm, LiveIntervals &lis) {
   MRI = &vrm.getRegInfo();
   VRM = &vrm;
   LIS = &lis;
+  RegClassInfo.runOnMachineFunction(vrm.getMachineFunction());
+
   const unsigned NumRegs = TRI->getNumRegs();
   if (NumRegs != PhysReg2LiveUnion.numRegs()) {
     PhysReg2LiveUnion.init(UnionAllocator, NumRegs);
@@ -479,14 +480,11 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
   SmallVector<unsigned, 8> PhysRegSpillCands;
 
   // Check for an available register in this class.
-  const TargetRegisterClass *TRC = MRI->getRegClass(VirtReg.reg);
-
-  for (TargetRegisterClass::iterator I = TRC->allocation_order_begin(*MF),
-         E = TRC->allocation_order_end(*MF);
-       I != E; ++I) {
-
+  ArrayRef<unsigned> Order =
+    RegClassInfo.getOrder(MRI->getRegClass(VirtReg.reg));
+  for (ArrayRef<unsigned>::iterator I = Order.begin(), E = Order.end(); I != E;
+       ++I) {
     unsigned PhysReg = *I;
-    if (ReservedRegs.test(PhysReg)) continue;
 
     // Check interference and as a side effect, intialize queries for this
     // VirtReg and its aliases.
@@ -537,9 +535,6 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   DEBUG(RMF = &getAnalysis<RenderMachineFunction>());
 
   RegAllocBase::init(getAnalysis<VirtRegMap>(), getAnalysis<LiveIntervals>());
-
-  ReservedRegs = TRI->getReservedRegs(*MF);
-
   SpillerInstance.reset(createInlineSpiller(*this, *MF, *VRM));
 
   allocatePhysRegs();
