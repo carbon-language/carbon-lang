@@ -1416,11 +1416,12 @@ def err_uninitialized_member_in_ctor : Error<
   "the %select{reference|const}2 member %3">;
 def warn_default_arg_makes_ctor_special : Warning<
   "addition of default argument on redeclaration makes this constructor a "
-  "%select{default|copy|move}0 constructor">;
+  "%select{default|copy|move}0 constructor">, InGroup<DefaultArgSpecialMember>;
 def note_previous_declaration_special : Note<
   // The ERRORs are in hopes that if they occur, they'll get reported.
   "previous declaration was %select{*ERROR*|a copy constructor|a move "
-  "constructor|*ERROR*|*ERROR*|*ERROR*|not a special member function}0">;
+  "constructor|*ERROR*|*ERROR*|*ERROR*|not a special member function}0">,
+  InGroup<DefaultArgSpecialMember>;
 
 def err_use_of_default_argument_to_function_declared_later : Error<
   "use of default argument to function %0 that is declared later in class %1">;

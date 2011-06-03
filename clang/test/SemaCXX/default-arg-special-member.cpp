@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUM: %clang_cc1 -Wno-default-arg-special-member -Werror -fsyntax-only %s
 
 class foo {
   foo(foo&, int); // expected-note {{was not a special member function}}
