@@ -123,6 +123,8 @@ void clang::ProcessWarningOptions(Diagnostic &Diags,
     }
 
     if (Diags.setDiagnosticGroupMapping(Opt, Mapping))
-      Diags.Report(diag::warn_unknown_warning_option) << ("-W" + Opt.str());
+      Diags.Report(isPositive ? diag::warn_unknown_warning_option :
+                   diag::warn_unknown_negative_warning_option)
+          << ("-W" + Opt.str());
   }
 }
