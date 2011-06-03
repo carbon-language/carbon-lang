@@ -4587,7 +4587,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         NewFD->setInvalidDecl();
     } else if (isFunctionTemplateSpecialization) {
       if (CurContext->isDependentContext() && CurContext->isRecord() 
-          && !isFriend && !getLangOptions().Microsoft) {
+          && !isFriend) {
         Diag(NewFD->getLocation(), diag::err_function_specialization_in_class)
           << NewFD->getDeclName();
         NewFD->setInvalidDecl();
