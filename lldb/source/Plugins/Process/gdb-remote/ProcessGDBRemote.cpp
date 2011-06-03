@@ -45,6 +45,7 @@
 
 // Project includes
 #include "lldb/Host/Host.h"
+#include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 #include "Utility/StringExtractorGDBRemote.h"
 #include "GDBRemoteRegisterContext.h"
 #include "ProcessGDBRemote.h"
@@ -1561,97 +1562,20 @@ ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &er
                 return allocated_addr;
 
         case eLazyBoolNo:
-            // Call mmap() to create executable memory in the inferior..
-            {
-                Thread *thread = GetThreadList().GetSelectedThread().get();
-                if (thread == NULL)
-                    thread = GetThreadList().GetThreadAtIndex(0).get();
+            // Call mmap() to create memory in the inferior..
+            unsigned prot = 0;
+            if (permissions & lldb::ePermissionsReadable)
+                prot |= eMmapProtRead;
+            if (permissions & lldb::ePermissionsWritable)
+                prot |= eMmapProtWrite;
+            if (permissions & lldb::ePermissionsExecutable)
+                prot |= eMmapProtExec;
 
-                const bool append = true;
-                const bool include_symbols = true;
-                SymbolContextList sc_list;
-                const uint32_t count = m_target.GetImages().FindFunctions (ConstString ("mmap"), 
-                                                                           eFunctionNameTypeFull,
-                                                                           include_symbols, 
-                                                                           append, 
-                                                                           sc_list);
-                if (count > 0)
-                {
-                    SymbolContext sc;
-                    if (sc_list.GetContextAtIndex(0, sc))
-                    {
-                        const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
-                        const bool use_inline_block_range = false;
-                        const bool stop_other_threads = true;
-                        const bool discard_on_error = true;
-                        const bool try_all_threads = true;
-                        const uint32_t single_thread_timeout_usec = 500000;
-                        addr_t arg1_addr = 0;
-                        addr_t arg2_len = size;
-                        addr_t arg3_prot = PROT_NONE;
-                        addr_t arg4_flags = MAP_ANON | MAP_PRIVATE;
-                        addr_t arg5_fd = -1;
-                        addr_t arg6_offset = 0;
-                        if (permissions & lldb::ePermissionsReadable)
-                            arg3_prot |= PROT_READ;
-                        if (permissions & lldb::ePermissionsWritable)
-                            arg3_prot |= PROT_WRITE;
-                        if (permissions & lldb::ePermissionsExecutable)
-                            arg3_prot |= PROT_EXEC;
-
-                        AddressRange mmap_range;
-                        if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, mmap_range))
-                        {
-                            ThreadPlanCallFunction *call_function_thread_plan = new ThreadPlanCallFunction (*thread,
-                                                                                                            mmap_range.GetBaseAddress(),
-                                                                                                            stop_other_threads,
-                                                                                                            discard_on_error,
-                                                                                                            &arg1_addr,
-                                                                                                            &arg2_len,
-                                                                                                            &arg3_prot,
-                                                                                                            &arg4_flags,
-                                                                                                            &arg5_fd,
-                                                                                                            &arg6_offset);
-                            lldb::ThreadPlanSP call_plan_sp (call_function_thread_plan);
-                            if (call_plan_sp)
-                            {
-                                ValueSP return_value_sp (new Value);
-                                ClangASTContext *clang_ast_context = m_target.GetScratchClangASTContext();
-                                lldb::clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
-                                return_value_sp->SetValueType (Value::eValueTypeScalar);
-                                return_value_sp->SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
-                                call_function_thread_plan->RequestReturnValue (return_value_sp);
-    
-                                StreamFile error_strm;
-                                StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
-                                if (frame)
-                                {
-                                    ExecutionContext exe_ctx;
-                                    frame->CalculateExecutionContext (exe_ctx);
-                                    ExecutionResults result = RunThreadPlan (exe_ctx,
-                                                                             call_plan_sp,        
-                                                                             stop_other_threads,
-                                                                             try_all_threads,
-                                                                             discard_on_error,
-                                                                             single_thread_timeout_usec,
-                                                                             error_strm);
-                                    if (result == eExecutionCompleted)
-                                    {
-                                        allocated_addr = return_value_sp->GetScalar().ULongLong();
-                                        if (GetAddressByteSize() == 4)
-                                        {
-                                            if (allocated_addr == UINT32_MAX)
-                                                allocated_addr = LLDB_INVALID_ADDRESS;
-                                        }
-                                        if (allocated_addr != LLDB_INVALID_ADDRESS)
-                                            m_addr_to_mmap_size[allocated_addr] = size;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            if (InferiorCallMmap(this, allocated_addr, 0, size, prot,
+                                 eMmapFlagsAnon | eMmapFlagsPrivate, -1, 0))
+                m_addr_to_mmap_size[allocated_addr] = size;
+            else
+                allocated_addr = LLDB_INVALID_ADDRESS;
             break;
     }
     
@@ -1682,71 +1606,14 @@ ProcessGDBRemote::DoDeallocateMemory (lldb::addr_t addr)
             break;
             
         case eLazyBoolNo:
-            // Call munmap() to create executable memory in the inferior..
+            // Call munmap() to deallocate memory in the inferior..
             {
                 MMapMap::iterator pos = m_addr_to_mmap_size.find(addr);
-                if (pos != m_addr_to_mmap_size.end())
-                {
-                    Thread *thread = GetThreadList().GetSelectedThread().get();
-                    if (thread == NULL)
-                        thread = GetThreadList().GetThreadAtIndex(0).get();
-                    
-                    const bool append = true;
-                    const bool include_symbols = true;
-                    SymbolContextList sc_list;
-                    const uint32_t count = m_target.GetImages().FindFunctions (ConstString ("munmap"), 
-                                                                               eFunctionNameTypeFull,
-                                                                               include_symbols, 
-                                                                               append, 
-                                                                               sc_list);
-                    if (count > 0)
-                    {
-                        SymbolContext sc;
-                        if (sc_list.GetContextAtIndex(0, sc))
-                        {
-                            const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
-                            const bool use_inline_block_range = false;
-                            const bool stop_other_threads = true;
-                            const bool discard_on_error = true;
-                            const bool try_all_threads = true;
-                            const uint32_t single_thread_timeout_usec = 500000;
-                            addr_t arg1_addr = addr;
-                            addr_t arg2_len = pos->second;
-                            
-                            AddressRange munmap_range;
-                            if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, munmap_range))
-                            {
-                                lldb::ThreadPlanSP call_plan_sp (new ThreadPlanCallFunction (*thread,
-                                                                                             munmap_range.GetBaseAddress(),
-                                                                                             stop_other_threads,
-                                                                                             discard_on_error,
-                                                                                             &arg1_addr,
-                                                                                             &arg2_len));
-                                if (call_plan_sp)
-                                {
-                                    StreamFile error_strm;
-                                    StackFrame *frame = thread->GetStackFrameAtIndex (0).get();
-                                    if (frame)
-                                    {
-                                        ExecutionContext exe_ctx;
-                                        frame->CalculateExecutionContext (exe_ctx);
-                                        ExecutionResults result = RunThreadPlan (exe_ctx,
-                                                                                 call_plan_sp,        
-                                                                                 stop_other_threads,
-                                                                                 try_all_threads,
-                                                                                 discard_on_error,
-                                                                                 single_thread_timeout_usec,
-                                                                                 error_strm);
-                                        if (result == eExecutionCompleted)
-                                        {
-                                            m_addr_to_mmap_size.erase (pos);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                if (pos != m_addr_to_mmap_size.end() &&
+                    InferiorCallMunmap(this, addr, pos->second))
+                    m_addr_to_mmap_size.erase (pos);
+                else
+                    error.SetErrorStringWithFormat("unable to deallocate memory at 0x%llx", addr);
             }
             break;
     }
