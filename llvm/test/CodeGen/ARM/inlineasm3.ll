@@ -33,3 +33,11 @@ entry:
 %asmtmp31 = call %0 asm "vld1.u8  {$0}, [$1, :128]!\0A", "=w,=r,1"(<16 x i8>* undef) nounwind
 unreachable
 }
+
+; Radar 9037836 & 9119939
+
+define i32 @t3() nounwind {
+entry:
+tail call void asm sideeffect "flds s15, $0 \0A", "^Uv|m,~{s15}"(float 1.000000e+00) nounwind
+ret i32 0
+}

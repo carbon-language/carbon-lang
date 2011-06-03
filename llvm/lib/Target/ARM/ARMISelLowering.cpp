@@ -7265,6 +7265,9 @@ ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
     case 'l': return C_RegisterClass;
     case 'w': return C_RegisterClass;
     }
+  } else {
+    if (Constraint == "Uv")
+      return C_Memory;
   }
   return TargetLowering::getConstraintType(Constraint);
 }
