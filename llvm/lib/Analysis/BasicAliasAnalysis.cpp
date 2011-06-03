@@ -949,6 +949,19 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   return MayAlias;
 }
 
+static AliasAnalysis::AliasResult
+MergeAliasResults(AliasAnalysis::AliasResult A, AliasAnalysis::AliasResult B) {
+  // If the results agree, take it.
+  if (A == B)
+    return A;
+  // A mix of PartialAlias and MustAlias is PartialAlias.
+  if ((A == AliasAnalysis::PartialAlias && B == AliasAnalysis::MustAlias) ||
+      (B == AliasAnalysis::PartialAlias && A == AliasAnalysis::MustAlias))
+    return AliasAnalysis::PartialAlias;
+  // Otherwise, we don't know anything.
+  return AliasAnalysis::MayAlias;
+}
+
 /// aliasSelect - Provide a bunch of ad-hoc rules to disambiguate a Select
 /// instruction against another.
 AliasAnalysis::AliasResult
@@ -975,9 +988,7 @@ BasicAliasAnalysis::aliasSelect(const SelectInst *SI, uint64_t SISize,
       AliasResult ThisAlias =
         aliasCheck(SI->getFalseValue(), SISize, SITBAAInfo,
                    SI2->getFalseValue(), V2Size, V2TBAAInfo);
-      if (ThisAlias != Alias)
-        return MayAlias;
-      return Alias;
+      return MergeAliasResults(ThisAlias, Alias);
     }
 
   // If both arms of the Select node NoAlias or MustAlias V2, then returns
@@ -994,9 +1005,7 @@ BasicAliasAnalysis::aliasSelect(const SelectInst *SI, uint64_t SISize,
 
   AliasResult ThisAlias =
     aliasCheck(V2, V2Size, V2TBAAInfo, SI->getFalseValue(), SISize, SITBAAInfo);
-  if (ThisAlias != Alias)
-    return MayAlias;
-  return Alias;
+  return MergeAliasResults(ThisAlias, Alias);
 }
 
 // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI instruction
@@ -1026,8 +1035,9 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
           aliasCheck(PN->getIncomingValue(i), PNSize, PNTBAAInfo,
                      PN2->getIncomingValueForBlock(PN->getIncomingBlock(i)),
                      V2Size, V2TBAAInfo);
-        if (ThisAlias != Alias)
-          return MayAlias;
+        Alias = MergeAliasResults(ThisAlias, Alias);
+        if (Alias == MayAlias)
+          break;
       }
       return Alias;
     }
@@ -1065,8 +1075,9 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
 
     AliasResult ThisAlias = aliasCheck(V2, V2Size, V2TBAAInfo,
                                        V, PNSize, PNTBAAInfo);
-    if (ThisAlias != Alias || ThisAlias == MayAlias)
-      return MayAlias;
+    Alias = MergeAliasResults(ThisAlias, Alias);
+    if (Alias == MayAlias)
+      break;
   }
 
   return Alias;
