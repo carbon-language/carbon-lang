@@ -449,9 +449,9 @@ namespace {
 static DebugInfoProbeInfo *TheDebugProbe;
 static void createDebugInfoProbe() {
   if (TheDebugProbe) return;
-      
-  // Constructed the first time this is called. This guarantees that the 
-  // object will be constructed, if -enable-debug-info-probe is set, 
+
+  // Constructed the first time this is called. This guarantees that the
+  // object will be constructed, if -enable-debug-info-probe is set,
   // before static globals, thus it will be destroyed before them.
   static ManagedStatic<DebugInfoProbeInfo> DIP;
   TheDebugProbe = &*DIP;
