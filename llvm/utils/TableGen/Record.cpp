@@ -68,14 +68,9 @@ Init *BitsRecTy::convertValue(BitInit *UI) {
 /// canFitInBitfield - Return true if the number of bits is large enough to hold
 /// the integer value.
 static bool canFitInBitfield(int64_t Value, unsigned NumBits) {
-  if (Value >= 0) {
-    if (Value & ~((1LL << NumBits) - 1))
-      return false;
-  } else if ((Value >> NumBits) != -1 || (Value & (1LL << (NumBits-1))) == 0) {
-    return false;
-  }
-
-  return true;
+  // For example, with NumBits == 4, we permit Values from [-7 .. 15].
+  return (NumBits >= sizeof(Value) * 8) ||
+         (Value >> NumBits == 0) || (Value >> (NumBits-1) == -1);
 }
 
 /// convertValue from Int initializer to bits type: Split the integer up into the
