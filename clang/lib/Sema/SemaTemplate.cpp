@@ -5313,6 +5313,8 @@ bool
 Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                                  TemplateArgumentListInfo *ExplicitTemplateArgs,
                                           LookupResult &Previous) {
+
+  return false;
   // The set of function template specializations that could match this
   // explicit function template specialization.
   UnresolvedSet<8> Candidates;
