@@ -633,35 +633,6 @@ ThreadMacOSX::SetHardwareWatchpoint (const WatchpointLocation *wp)
 
 
 bool
-ThreadMacOSX::SaveFrameZeroState (RegisterCheckpoint &checkpoint)
-{
-    lldb::StackFrameSP frame_sp(GetStackFrameAtIndex (0));
-    if (frame_sp)
-    {
-        checkpoint.SetStackID(frame_sp->GetStackID());
-        return frame_sp->GetRegisterContext()->ReadAllRegisterValues (checkpoint.GetData());
-    }
-    return false;
-}
-
-bool
-ThreadMacOSX::RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint)
-{
-    lldb::StackFrameSP frame_sp(GetStackFrameAtIndex (0));
-    if (frame_sp)
-    {
-        bool ret = frame_sp->GetRegisterContext()->WriteAllRegisterValues (checkpoint.GetData());
-
-        // Clear out all stack frames as our world just changed.
-        ClearStackFrames();
-        frame_sp->GetRegisterContext()->InvalidateIfNeeded(true);
-
-        return ret;
-    }
-    return false;
-}
-
-bool
 ThreadMacOSX::ClearHardwareBreakpoint (const BreakpointSite *bp)
 {
     if (bp != NULL && bp->IsHardware())

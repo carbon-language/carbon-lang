@@ -54,13 +54,6 @@ public:
 
     void Notify(const ProcessMessage &message);
 
-protected:
-    virtual bool
-    SaveFrameZeroState(RegisterCheckpoint &checkpoint);
-
-    virtual bool
-    RestoreSaveFrameZero(const RegisterCheckpoint &checkpoint);
-
 private:
     RegisterContextLinux *
     GetRegisterContextLinux ()

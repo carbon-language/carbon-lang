@@ -85,18 +85,6 @@ LinuxThread::GetRegisterContext()
     return m_reg_context_sp;
 }
 
-bool
-LinuxThread::SaveFrameZeroState(RegisterCheckpoint &checkpoint)
-{
-    return false;
-}
-
-bool
-LinuxThread::RestoreSaveFrameZero(const RegisterCheckpoint &checkpoint)
-{
-    return false;
-}
-
 lldb::RegisterContextSP
 LinuxThread::CreateRegisterContextForFrame(lldb_private::StackFrame *frame)
 {

@@ -751,10 +751,10 @@ protected:
     SetStopInfo (const lldb::StopInfoSP &stop_info_sp);
 
     virtual bool
-    SaveFrameZeroState (RegisterCheckpoint &checkpoint) = 0;
+    SaveFrameZeroState (RegisterCheckpoint &checkpoint);
 
     virtual bool
-    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint) = 0;
+    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
 
     virtual lldb_private::Unwind *
     GetUnwinder () = 0;

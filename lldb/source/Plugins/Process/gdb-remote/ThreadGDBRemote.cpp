@@ -221,32 +221,6 @@ ThreadGDBRemote::PrivateSetRegisterValue (uint32_t reg, StringExtractor &respons
     return gdb_reg_ctx->PrivateSetRegisterValue (reg, response);
 }
 
-bool
-ThreadGDBRemote::SaveFrameZeroState (RegisterCheckpoint &checkpoint)
-{
-    lldb::StackFrameSP frame_sp(GetStackFrameAtIndex (0));
-    if (frame_sp)
-    {
-        checkpoint.SetStackID(frame_sp->GetStackID());
-        return frame_sp->GetRegisterContext()->ReadAllRegisterValues (checkpoint.GetData());
-    }
-    return false;
-}
-
-bool
-ThreadGDBRemote::RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint)
-{
-    lldb::StackFrameSP frame_sp(GetStackFrameAtIndex (0));
-    if (frame_sp)
-    {
-        bool ret = frame_sp->GetRegisterContext()->WriteAllRegisterValues (checkpoint.GetData());
-        frame_sp->GetRegisterContext()->InvalidateIfNeeded(true);
-        ClearStackFrames();
-        return ret;
-    }
-    return false;
-}
-
 lldb::StopInfoSP
 ThreadGDBRemote::GetPrivateStopReason ()
 {

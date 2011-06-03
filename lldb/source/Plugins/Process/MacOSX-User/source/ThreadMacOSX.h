@@ -118,12 +118,6 @@ public:
     GetPrivateStopReason ();
 
 protected:
-    virtual bool
-    SaveFrameZeroState (RegisterCheckpoint &checkpoint);
-
-    virtual bool
-    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
-
     bool
     GetIdentifierInfo ();
 

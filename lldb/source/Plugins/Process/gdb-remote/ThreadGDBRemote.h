@@ -99,12 +99,6 @@ protected:
     
     friend class ProcessGDBRemote;
 
-    virtual bool
-    SaveFrameZeroState (RegisterCheckpoint &checkpoint);
-
-    virtual bool
-    RestoreSaveFrameZero (const RegisterCheckpoint &checkpoint);
-
     bool
     PrivateSetRegisterValue (uint32_t reg, 
                              StringExtractor &response);
