@@ -31,6 +31,12 @@ bool BlackfinFrameLowering::hasFP(const MachineFunction &MF) const {
     MFI->adjustsStack() || MFI->hasVarSizedObjects();
 }
 
+// Always reserve a call frame. We dont have enough registers to adjust SP.
+bool BlackfinFrameLowering::
+hasReservedCallFrame(const MachineFunction &MF) const {
+  return true;
+}
+
 // Emit a prologue that sets up a stack frame.
 // On function entry, R0-R2 and P0 may hold arguments.
 // R3, P1, and P2 may be used as scratch registers
