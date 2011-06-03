@@ -114,10 +114,6 @@ public:
     DoAllocateMemory(size_t size, uint32_t permissions,
                      lldb_private::Error &error);
 
-    lldb::addr_t
-    AllocateMemory(size_t size, uint32_t permissions,
-                   lldb_private::Error &error);
-
     virtual lldb_private::Error
     DoDeallocateMemory(lldb::addr_t ptr);
 
@@ -220,6 +216,9 @@ private:
 
     /// Returns true if the process is stopped.
     bool IsStopped();
+
+    typedef std::map<lldb::addr_t, lldb::addr_t> MMapMap;
+    MMapMap m_addr_to_mmap_size;
 };
 
 #endif  // liblldb_MacOSXProcess_H_

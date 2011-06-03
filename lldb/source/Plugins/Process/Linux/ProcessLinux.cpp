@@ -13,12 +13,14 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/Target.h"
 
 #include "ProcessLinux.h"
+#include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 #include "ProcessMonitor.h"
 #include "LinuxThread.h"
 
@@ -345,19 +347,40 @@ addr_t
 ProcessLinux::DoAllocateMemory(size_t size, uint32_t permissions,
                                Error &error)
 {
-    return 0;
-}
+    addr_t allocated_addr = LLDB_INVALID_ADDRESS;
 
-addr_t
-ProcessLinux::AllocateMemory(size_t size, uint32_t permissions, Error &error)
-{
-    return 0;
+    unsigned prot = 0;
+    if (permissions & lldb::ePermissionsReadable)
+        prot |= eMmapProtRead;
+    if (permissions & lldb::ePermissionsWritable)
+        prot |= eMmapProtWrite;
+    if (permissions & lldb::ePermissionsExecutable)
+        prot |= eMmapProtExec;
+
+    if (InferiorCallMmap(this, allocated_addr, 0, size, prot,
+                         eMmapFlagsAnon | eMmapFlagsPrivate, -1, 0)) {
+        m_addr_to_mmap_size[allocated_addr] = size;
+        error.Clear();
+    } else {
+        allocated_addr = LLDB_INVALID_ADDRESS;
+        error.SetErrorStringWithFormat("unable to allocate %zu bytes of memory with permissions %s", size, GetPermissionsAsCString (permissions));
+    }
+
+    return allocated_addr;
 }
 
 Error
-ProcessLinux::DoDeallocateMemory(lldb::addr_t ptr)
+ProcessLinux::DoDeallocateMemory(lldb::addr_t addr)
 {
-    return Error(1, eErrorTypeGeneric);
+    Error error;
+    MMapMap::iterator pos = m_addr_to_mmap_size.find(addr);
+    if (pos != m_addr_to_mmap_size.end() &&
+        InferiorCallMunmap(this, addr, pos->second))
+        m_addr_to_mmap_size.erase (pos);
+    else
+        error.SetErrorStringWithFormat("unable to deallocate memory at 0x%llx", addr);
+
+    return error;
 }
 
 size_t
