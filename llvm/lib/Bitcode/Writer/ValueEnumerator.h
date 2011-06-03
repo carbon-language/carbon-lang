@@ -127,11 +127,11 @@ public:
   /// should only be used by rare constructs such as address-of-label.
   unsigned getGlobalBasicBlockID(const BasicBlock *BB) const;
 
-  /// IncorporateFunction/PurgeFunction - If you'd like to deal with a function,
+  /// incorporateFunction/purgeFunction - If you'd like to deal with a function,
   /// use these two methods to get its data into the ValueEnumerator!
   ///
-  void IncorporateFunction(const Function &F);
-  void PurgeFunction();
+  void incorporateFunction(const Function &F);
+  void purgeFunction();
 
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);

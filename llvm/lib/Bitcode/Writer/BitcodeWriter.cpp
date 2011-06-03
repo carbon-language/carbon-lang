@@ -1205,7 +1205,7 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
 static void WriteFunction(const Function &F, ValueEnumerator &VE,
                           BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::FUNCTION_BLOCK_ID, 4);
-  VE.IncorporateFunction(F);
+  VE.incorporateFunction(F);
 
   SmallVector<unsigned, 64> Vals;
 
@@ -1269,7 +1269,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
 
   if (NeedsMetadataAttachment)
     WriteMetadataAttachment(F, VE, Stream);
-  VE.PurgeFunction();
+  VE.purgeFunction();
   Stream.ExitBlock();
 }
 

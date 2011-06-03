@@ -452,7 +452,7 @@ void ValueEnumerator::EnumerateAttributes(const AttrListPtr &PAL) {
   }
 }
 
-void ValueEnumerator::IncorporateFunction(const Function &F) {
+void ValueEnumerator::incorporateFunction(const Function &F) {
   InstructionCount = 0;
   NumModuleValues = Values.size();
   NumModuleMDValues = MDValues.size();
@@ -516,7 +516,7 @@ void ValueEnumerator::IncorporateFunction(const Function &F) {
     EnumerateFunctionLocalMetadata(FnLocalMDVector[i]);
 }
 
-void ValueEnumerator::PurgeFunction() {
+void ValueEnumerator::purgeFunction() {
   /// Remove purged values from the ValueMap.
   for (unsigned i = NumModuleValues, e = Values.size(); i != e; ++i)
     ValueMap.erase(Values[i].first);
