@@ -117,6 +117,14 @@ public:
     bool
     ReadFPR(void *buf);
 
+    /// Writes all general purpose registers into the specified buffer.
+    bool
+    WriteGPR(void *buf);
+
+    /// Writes all floating point registers into the specified buffer.
+    bool
+    WriteFPR(void *buf);
+
     /// Writes a siginfo_t structure corresponding to the given thread ID to the
     /// memory region pointed to by @p siginfo.
     bool

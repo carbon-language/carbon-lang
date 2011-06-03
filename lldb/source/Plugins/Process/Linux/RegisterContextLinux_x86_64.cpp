@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <stdint.h>
 
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Target/Thread.h"
@@ -324,6 +325,8 @@ g_reg_sets[k_num_register_sets] =
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
         LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i } }
 
+#define REG_CONTEXT_SIZE (sizeof(RegisterContextLinux_x86_64::GPR) + sizeof(RegisterContextLinux_x86_64::FPU))
+
 static RegisterInfo
 g_register_infos[k_num_registers] =
 {
@@ -487,6 +490,16 @@ RegisterContextLinux_x86_64::ReadRegister(const RegisterInfo *reg_info,
 bool
 RegisterContextLinux_x86_64::ReadAllRegisterValues(DataBufferSP &data_sp)
 {
+    data_sp.reset (new DataBufferHeap (REG_CONTEXT_SIZE, 0));
+    if (data_sp && ReadGPR () && ReadFPR ())
+    {
+        uint8_t *dst = data_sp->GetBytes();
+        ::memcpy (dst, &user.regs, sizeof(user.regs));
+        dst += sizeof(user.regs);
+
+        ::memcpy (dst, &user.i387, sizeof(user.i387));
+        return true;
+    }
     return false;
 }
 
@@ -500,8 +513,17 @@ RegisterContextLinux_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg
 }
 
 bool
-RegisterContextLinux_x86_64::WriteAllRegisterValues(const DataBufferSP &data)
+RegisterContextLinux_x86_64::WriteAllRegisterValues(const DataBufferSP &data_sp)
 {
+    if (data_sp && data_sp->GetByteSize() == REG_CONTEXT_SIZE)
+    {
+        const uint8_t *src = data_sp->GetBytes();
+        ::memcpy (&user.regs, src, sizeof(user.regs));
+        src += sizeof(user.regs);
+
+        ::memcpy (&user.i387, src, sizeof(user.i387));
+        return WriteGPR() & WriteFPR();
+    }
     return false;
 }
 
@@ -698,4 +720,18 @@ RegisterContextLinux_x86_64::ReadFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
     return monitor.ReadFPR(&user.i387);
+}
+
+bool
+RegisterContextLinux_x86_64::WriteGPR()
+{
+     ProcessMonitor &monitor = GetMonitor();
+     return monitor.WriteGPR(&user.regs);
+}
+
+bool
+RegisterContextLinux_x86_64::WriteFPR()
+{
+    ProcessMonitor &monitor = GetMonitor();
+    return monitor.WriteFPR(&user.i387);
 }

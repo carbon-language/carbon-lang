@@ -151,6 +151,9 @@ private:
 
     bool ReadGPR();
     bool ReadFPR();
+
+    bool WriteGPR();
+    bool WriteFPR();
 };
 
 #endif // #ifndef liblldb_RegisterContextLinux_x86_64_H_

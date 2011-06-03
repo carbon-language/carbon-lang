@@ -334,6 +334,58 @@ ReadFPROperation::Execute(ProcessMonitor *monitor)
 }
 
 //------------------------------------------------------------------------------
+/// @class WriteGPROperation
+/// @brief Implements ProcessMonitor::WriteGPR.
+class WriteGPROperation : public Operation
+{
+public:
+    WriteGPROperation(void *buf, bool &result)
+        : m_buf(buf), m_result(result)
+        { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    void *m_buf;
+    bool &m_result;
+};
+
+void
+WriteGPROperation::Execute(ProcessMonitor *monitor)
+{
+    if (ptrace(PTRACE_SETREGS, monitor->GetPID(), NULL, m_buf) < 0)
+        m_result = false;
+    else
+        m_result = true;
+}
+
+//------------------------------------------------------------------------------
+/// @class WriteFPROperation
+/// @brief Implements ProcessMonitor::WriteFPR.
+class WriteFPROperation : public Operation
+{
+public:
+    WriteFPROperation(void *buf, bool &result)
+        : m_buf(buf), m_result(result)
+        { }
+
+    void Execute(ProcessMonitor *monitor);
+
+private:
+    void *m_buf;
+    bool &m_result;
+};
+
+void
+WriteFPROperation::Execute(ProcessMonitor *monitor)
+{
+    if (ptrace(PTRACE_SETFPREGS, monitor->GetPID(), NULL, m_buf) < 0)
+        m_result = false;
+    else
+        m_result = true;
+}
+
+//------------------------------------------------------------------------------
 /// @class ResumeOperation
 /// @brief Implements ProcessMonitor::Resume.
 class ResumeOperation : public Operation
@@ -1129,6 +1181,24 @@ ProcessMonitor::ReadFPR(void *buf)
 {
     bool result;
     ReadFPROperation op(buf, result);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::WriteGPR(void *buf)
+{
+    bool result;
+    WriteGPROperation op(buf, result);
+    DoOperation(&op);
+    return result;
+}
+
+bool
+ProcessMonitor::WriteFPR(void *buf)
+{
+    bool result;
+    WriteFPROperation op(buf, result);
     DoOperation(&op);
     return result;
 }
