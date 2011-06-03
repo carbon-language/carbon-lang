@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define	LIBCXXABI_NORETURN
+
 namespace std {
 	class type_info; // forward declaration
 }
@@ -47,16 +49,16 @@ extern void __cxa_rethrow();
 
 
 // 2.6 Auxiliary Runtime APIs
-extern void __cxa_bad_cast();
-extern void __cxa_bad_typeid();
+extern LIBCXXABI_NORETURN void __cxa_bad_cast(void);
+extern LIBCXXABI_NORETURN void __cxa_bad_typeid(void);
 
 
 
 // 3.2.6 Pure Virtual Function API
-extern void __cxa_pure_virtual(void);
+extern LIBCXXABI_NORETURN void __cxa_pure_virtual(void);
 
 // 3.2.7 Deleted Virtual Function API
-extern void __cxa_deleted_virtual(void);
+extern LIBCXXABI_NORETURN void __cxa_deleted_virtual(void);
 
 // 3.3.2 One-time Construction API
 extern int  __cxa_guard_acquire(uint64_t*);
