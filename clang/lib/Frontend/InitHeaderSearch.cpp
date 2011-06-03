@@ -565,12 +565,13 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
       AddPath("/usr/include/x86_64-linux-gnu", System, false, false, false);
       AddPath("/usr/include/i686-linux-gnu/64", System, false, false, false);
       AddPath("/usr/include/i486-linux-gnu/64", System, false, false, false);
-    } else {
+    } else if (triple.getArch() == llvm::Triple::x86) {
       AddPath("/usr/include/x86_64-linux-gnu/32", System, false, false, false);
       AddPath("/usr/include/i686-linux-gnu", System, false, false, false);
       AddPath("/usr/include/i486-linux-gnu", System, false, false, false);
+    } else if (triple.getArch() == llvm::Triple::arm) {
+      AddPath("/usr/include/arm-linux-gnueabi", System, false, false, false);
     }
-    AddPath("/usr/include/arm-linux-gnueabi", System, false, false, false);
   default:
     break;
   }
