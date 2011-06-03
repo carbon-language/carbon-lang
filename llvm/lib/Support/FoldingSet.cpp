@@ -92,7 +92,7 @@ void FoldingSetNodeID::AddInteger(long long I) {
 }
 void FoldingSetNodeID::AddInteger(unsigned long long I) {
   AddInteger(unsigned(I));
-  if ((uint64_t)(int)I != I)
+  if ((uint64_t)(unsigned)I != I)
     Bits.push_back(unsigned(I >> 32));
 }
 
