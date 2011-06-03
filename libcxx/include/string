@@ -92,9 +92,12 @@ public:
 
     static const size_type npos = -1;
 
-    explicit basic_string(const allocator_type& a = allocator_type());
+    basic_string()
+        noexcept(is_nothrow_default_constructible<allocator_type>::value);
+    explicit basic_string(const allocator_type& a);
     basic_string(const basic_string& str);
-    basic_string(basic_string&& str) noexcept;
+    basic_string(basic_string&& str)
+        noexcept(is_nothrow_move_constructible<allocator_type>::value);
     basic_string(const basic_string& str, size_type pos, size_type n = npos,
                  const allocator_type& a = allocator_type());
     basic_string(const_pointer s, const allocator_type& a = allocator_type());
@@ -110,7 +113,10 @@ public:
     ~basic_string();
 
     basic_string& operator=(const basic_string& str);
-    basic_string& operator=(basic_string&& str);
+    basic_string& operator=(basic_string&& str)
+        noexcept(
+             allocator_type::propagate_on_container_move_assignment::value &&
+             is_nothrow_move_assignable<allocator_type>::value);
     basic_string& operator=(const_pointer s);
     basic_string& operator=(value_type c);
     basic_string& operator=(initializer_list<value_type>);
@@ -213,7 +219,9 @@ public:
     size_type copy(pointer s, size_type n, size_type pos = 0) const;
     basic_string substr(size_type pos = 0, size_type n = npos) const;
 
-    void swap(basic_string& str) noexcept;
+    void swap(basic_string& str)
+        noexcept(!allocator_type::propagate_on_container_swap::value ||
+                 __is_nothrow_swappable<allocator_type>::value)
 
     const_pointer c_str() const noexcept;
     const_pointer data() const noexcept;
@@ -344,7 +352,8 @@ bool operator>=(const charT* lhs, const basic_string<charT, traits, Allocator>& 
 
 template<class charT, class traits, class Allocator>
 void swap(basic_string<charT, traits, Allocator>& lhs,
-          basic_string<charT, traits, Allocator>& rhs) noexcept;
+          basic_string<charT, traits, Allocator>& rhs)
+            noexcept(noexcept(lhs.swap(rhs)));
 
 template<class charT, class traits, class Allocator>
 basic_istream<charT, traits>&
@@ -1025,8 +1034,8 @@ public:
     typedef allocator_traits<allocator_type>             __alloc_traits;
     typedef typename __alloc_traits::size_type           size_type;
     typedef typename __alloc_traits::difference_type     difference_type;
-    typedef typename allocator_type::reference           reference;
-    typedef typename allocator_type::const_reference     const_reference;
+    typedef value_type&                                  reference;
+    typedef const value_type&                            const_reference;
     typedef typename __alloc_traits::pointer             pointer;
     typedef typename __alloc_traits::const_pointer       const_pointer;
 #ifdef _LIBCPP_DEBUG
@@ -1109,13 +1118,15 @@ private:
 public:
     static const size_type npos = -1;
 
-    _LIBCPP_INLINE_VISIBILITY basic_string() _NOEXCEPT;
+    _LIBCPP_INLINE_VISIBILITY basic_string()
+        _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value);
     _LIBCPP_INLINE_VISIBILITY explicit basic_string(const allocator_type& __a);
     basic_string(const basic_string& __str);
     basic_string(const basic_string& __str, const allocator_type& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    basic_string(basic_string&& __str) _NOEXCEPT;
+    basic_string(basic_string&& __str)
+        _NOEXCEPT_(is_nothrow_move_constructible<allocator_type>::value);
     _LIBCPP_INLINE_VISIBILITY
     basic_string(basic_string&& __str, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1148,7 +1159,9 @@ public:
     basic_string& operator=(const basic_string& __str);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    basic_string& operator=(basic_string&& __str);
+    basic_string& operator=(basic_string&& __str)
+        _NOEXCEPT_(__alloc_traits::propagate_on_container_move_assignment::value &&
+                   is_nothrow_move_assignable<allocator_type>::value);
 #endif
     _LIBCPP_INLINE_VISIBILITY basic_string& operator=(const_pointer __s) {return assign(__s);}
     basic_string& operator=(value_type __c);
@@ -1212,7 +1225,7 @@ public:
 
     void reserve(size_type res_arg = 0);
     _LIBCPP_INLINE_VISIBILITY
-    void shrink_to_fit() {reserve();}
+    void shrink_to_fit() _NOEXCEPT {reserve();}
     _LIBCPP_INLINE_VISIBILITY
     void clear() _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY bool empty() const _NOEXCEPT {return size() == 0;}
@@ -1353,7 +1366,9 @@ public:
     basic_string substr(size_type __pos = 0, size_type __n = npos) const;
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(basic_string& __str) _NOEXCEPT;
+    void swap(basic_string& __str)
+        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<allocator_type>::value);
 
     _LIBCPP_INLINE_VISIBILITY
     const_pointer c_str() const _NOEXCEPT {return data();}
@@ -1557,16 +1572,20 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign(basic_string& __str, false_type);
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign(basic_string& __str, true_type);
+    void __move_assign(basic_string& __str, true_type)
+        _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value);
 #endif
 
     _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(allocator_type& __x, allocator_type& __y) _NOEXCEPT
+    static void __swap_alloc(allocator_type& __x, allocator_type& __y)
+        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<allocator_type>::value)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __alloc_traits::propagate_on_container_swap::value>());}
 
     _LIBCPP_INLINE_VISIBILITY
-    static void __swap_alloc(allocator_type& __x, allocator_type& __y, true_type) _NOEXCEPT
+    static void __swap_alloc(allocator_type& __x, allocator_type& __y, true_type)
+        _NOEXCEPT_(__is_nothrow_swappable<allocator_type>::value)
         {
             using _STD::swap;
             swap(__x, __y);
@@ -1640,7 +1659,8 @@ basic_string<_CharT, _Traits, _Allocator>::__invalidate_iterators_past(size_type
 
 template <class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
-basic_string<_CharT, _Traits, _Allocator>::basic_string() _NOEXCEPT
+basic_string<_CharT, _Traits, _Allocator>::basic_string()
+    _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value)
 {
     __zero();
 }
@@ -1767,7 +1787,8 @@ basic_string<_CharT, _Traits, _Allocator>::basic_string(const basic_string& __st
 
 template <class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
-basic_string<_CharT, _Traits, _Allocator>::basic_string(basic_string&& __str) _NOEXCEPT
+basic_string<_CharT, _Traits, _Allocator>::basic_string(basic_string&& __str)
+        _NOEXCEPT_(is_nothrow_move_constructible<allocator_type>::value)
     : __r_(_STD::move(__str.__r_))
 {
     __str.__zero();
@@ -2094,6 +2115,7 @@ template <class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 void
 basic_string<_CharT, _Traits, _Allocator>::__move_assign(basic_string& __str, true_type)
+    _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
 {
     clear();
     shrink_to_fit();
@@ -2105,6 +2127,8 @@ template <class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 basic_string<_CharT, _Traits, _Allocator>&
 basic_string<_CharT, _Traits, _Allocator>::operator=(basic_string&& __str)
+    _NOEXCEPT_(__alloc_traits::propagate_on_container_move_assignment::value &&
+               is_nothrow_move_assignable<allocator_type>::value)
 {
     __move_assign(__str, integral_constant<bool,
           __alloc_traits::propagate_on_container_move_assignment::value>());
@@ -2977,6 +3001,8 @@ template <class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 void
 basic_string<_CharT, _Traits, _Allocator>::swap(basic_string& __str)
+        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<allocator_type>::value)
 {
     _STD::swap(__r_.first(), __str.__r_.first());
     __swap_alloc(__alloc(), __str.__alloc());
@@ -3853,7 +3879,8 @@ template<class _CharT, class _Traits, class _Allocator>
 _LIBCPP_INLINE_VISIBILITY inline
 void
 swap(basic_string<_CharT, _Traits, _Allocator>& __lhs,
-     basic_string<_CharT, _Traits, _Allocator>& __rhs) _NOEXCEPT
+     basic_string<_CharT, _Traits, _Allocator>& __rhs)
+     _NOEXCEPT_(_NOEXCEPT_(__lhs.swap(__rhs)))
 {
     __lhs.swap(__rhs);
 }
