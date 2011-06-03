@@ -174,6 +174,18 @@ uint64_t ASTDeclReader::GetCurrentCursorOffset() {
 void ASTDeclReader::Visit(Decl *D) {
   DeclVisitor<ASTDeclReader, void>::Visit(D);
 
+  if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
+    if (DD->DeclInfo) {
+      DeclaratorDecl::ExtInfo *Info =
+          DD->DeclInfo.get<DeclaratorDecl::ExtInfo *>();
+      Info->TInfo =
+          GetTypeSourceInfo(Record, Idx);
+    }
+    else {
+      DD->DeclInfo = GetTypeSourceInfo(Record, Idx);
+    }
+  }
+
   if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
     // if we have a fully initialized TypeDecl, we can safely read its type now.
     TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull());
@@ -308,10 +320,8 @@ void ASTDeclReader::VisitDeclaratorDecl(DeclaratorDecl *DD) {
     DeclaratorDecl::ExtInfo *Info
         = new (*Reader.getContext()) DeclaratorDecl::ExtInfo();
     ReadQualifierInfo(*Info, Record, Idx);
-    Info->TInfo = GetTypeSourceInfo(Record, Idx);
     DD->DeclInfo = Info;
-  } else
-    DD->DeclInfo = GetTypeSourceInfo(Record, Idx);
+  }
 }
 
 void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {

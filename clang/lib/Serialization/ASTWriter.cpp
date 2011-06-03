@@ -2703,11 +2703,13 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
     NumVisibleDeclContexts(0),
     FirstCXXBaseSpecifiersID(1), NextCXXBaseSpecifiersID(1),
-    ParmVarDeclAbbrev(0), DeclContextLexicalAbbrev(0),
+    DeclParmVarAbbrev(0), DeclContextLexicalAbbrev(0),
     DeclContextVisibleLookupAbbrev(0), UpdateVisibleAbbrev(0),
     DeclRefExprAbbrev(0), CharacterLiteralAbbrev(0),
     DeclRecordAbbrev(0), IntegerLiteralAbbrev(0),
-    EnumConstantDeclAbbrev(0)
+    DeclTypedefAbbrev(0),
+    DeclVarAbbrev(0), DeclFieldAbbrev(0),
+    DeclEnumAbbrev(0), DeclObjCIvarAbbrev(0)
 {
 }
 

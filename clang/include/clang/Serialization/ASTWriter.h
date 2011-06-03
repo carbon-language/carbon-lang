@@ -338,7 +338,7 @@ private:
   void WriteFPPragmaOptions(const FPOptions &Opts);
   void WriteOpenCLExtensions(Sema &SemaRef);
 
-  unsigned ParmVarDeclAbbrev;
+  unsigned DeclParmVarAbbrev;
   unsigned DeclContextLexicalAbbrev;
   unsigned DeclContextVisibleLookupAbbrev;
   unsigned UpdateVisibleAbbrev;
@@ -346,7 +346,11 @@ private:
   unsigned CharacterLiteralAbbrev;
   unsigned DeclRecordAbbrev;
   unsigned IntegerLiteralAbbrev;
-  unsigned EnumConstantDeclAbbrev;
+  unsigned DeclTypedefAbbrev;
+  unsigned DeclVarAbbrev;
+  unsigned DeclFieldAbbrev;
+  unsigned DeclEnumAbbrev;
+  unsigned DeclObjCIvarAbbrev;
 
   void WriteDeclsBlockAbbrevs();
   void WriteDecl(ASTContext &Context, Decl *D);
@@ -574,13 +578,17 @@ public:
   /// \brief Retrieve the ID for the given opaque value expression.
   unsigned getOpaqueValueID(OpaqueValueExpr *e);
 
-  unsigned getParmVarDeclAbbrev() const { return ParmVarDeclAbbrev; }
+  unsigned getDeclParmVarAbbrev() const { return DeclParmVarAbbrev; }
   unsigned getDeclRefExprAbbrev() const { return DeclRefExprAbbrev; }
   unsigned getCharacterLiteralAbbrev() const { return CharacterLiteralAbbrev; }
   unsigned getDeclRecordAbbrev() const { return DeclRecordAbbrev; }
   unsigned getIntegerLiteralAbbrev() const { return IntegerLiteralAbbrev; }
-  unsigned getEnumConstantDeclAbbrev() const { return EnumConstantDeclAbbrev; }
-  
+  unsigned getDeclTypedefAbbrev() const { return DeclTypedefAbbrev; }
+  unsigned getDeclVarAbbrev() const { return DeclVarAbbrev; }
+  unsigned getDeclFieldAbbrev() const { return DeclFieldAbbrev; }
+  unsigned getDeclEnumAbbrev() const { return DeclEnumAbbrev; }
+  unsigned getDeclObjCIvarAbbrev() const { return DeclObjCIvarAbbrev; }
+
   bool hasChain() const { return Chain; }
 
   // ASTDeserializationListener implementation
