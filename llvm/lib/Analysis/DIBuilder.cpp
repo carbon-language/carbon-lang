@@ -160,12 +160,12 @@ DIType DIBuilder::createReferenceType(DIType RTy) {
 
 /// createTypedef - Create debugging information entry for a typedef.
 DIType DIBuilder::createTypedef(DIType Ty, StringRef Name, DIFile File,
-                                unsigned LineNo) {
+                                unsigned LineNo, DIDescriptor Context) {
   // typedefs are encoded in DIDerivedType format.
   assert(Ty.Verify() && "Invalid typedef type!");
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_typedef),
-    Ty.getContext(),
+    Context,
     MDString::get(VMContext, Name),
     File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNo),
