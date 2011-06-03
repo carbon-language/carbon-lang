@@ -258,6 +258,7 @@ bool LoopUnswitch::processCurrentLoop() {
       if (LoopCond && SI->getNumCases() > 1) {
         // Find a value to unswitch on:
         // FIXME: this should chose the most expensive case!
+        // FIXME: scan for a case with a non-critical edge?
         Constant *UnswitchVal = SI->getCaseValue(1);
         // Do not process same value again and again.
         if (!UnswitchedVals.insert(UnswitchVal))
@@ -560,6 +561,8 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
     BasicBlock *ExitBlock = ExitBlocks[i];
     SmallVector<BasicBlock *, 4> Preds(pred_begin(ExitBlock),
                                        pred_end(ExitBlock));
+    // Although SplitBlockPredecessors doesn't preserve loop-simplify in
+    // general, if we call it on all predecessors of all exits then it does.
     SplitBlockPredecessors(ExitBlock, Preds.data(), Preds.size(),
                            ".us-lcssa", this);
   }
@@ -915,10 +918,11 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     // Found a dead case value.  Don't remove PHI nodes in the 
     // successor if they become single-entry, those PHI nodes may
     // be in the Users list.
-        
+
     BasicBlock *Switch = SI->getParent();
     BasicBlock *SISucc = SI->getSuccessor(DeadCase);
     BasicBlock *Latch = L->getLoopLatch();
+    if (!SI->findCaseDest(SISucc)) continue;  // Edge is critical.
     // If the DeadCase successor dominates the loop latch, then the
     // transformation isn't safe since it will delete the sole predecessor edge
     // to the latch.
