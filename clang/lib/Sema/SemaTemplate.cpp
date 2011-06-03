@@ -2819,9 +2819,6 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   unsigned ArgIdx = 0;
   LocalInstantiationScope InstScope(*this, true);
   while (Param != ParamEnd) {
-    if (ArgIdx > NumArgs && PartialTemplateArgs)
-      break;
-
     if (ArgIdx < NumArgs) {
       // If we have an expanded parameter pack, make sure we don't have too
       // many arguments.
@@ -2862,6 +2859,16 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
       continue;
     }
 
+    // If we're checking a partial template argument list, we're done.
+    if (PartialTemplateArgs) {
+      if ((*Param)->isTemplateParameterPack() && !ArgumentPack.empty())
+        Converted.push_back(TemplateArgument::CreatePackCopy(Context,
+                                                         ArgumentPack.data(),
+                                                         ArgumentPack.size()));
+        
+      return Invalid;
+    }
+
     // If we have a template parameter pack with no more corresponding
     // arguments, just break out now and we'll fill in the argument pack below.
     if ((*Param)->isTemplateParameterPack())
@@ -2887,7 +2894,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     // the default argument.
     if (TemplateTypeParmDecl *TTP = dyn_cast<TemplateTypeParmDecl>(*Param)) {
       if (!TTP->hasDefaultArgument()) {
-        assert((Invalid || PartialTemplateArgs) && "Missing default argument");
+        assert(Invalid && "Missing default argument");
         break;
       }
 
@@ -2905,7 +2912,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     } else if (NonTypeTemplateParmDecl *NTTP
                  = dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
       if (!NTTP->hasDefaultArgument()) {
-        assert((Invalid || PartialTemplateArgs) && "Missing default argument");
+        assert(Invalid && "Missing default argument");
         break;
       }
 
@@ -2924,7 +2931,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
         = cast<TemplateTemplateParmDecl>(*Param);
 
       if (!TempParm->hasDefaultArgument()) {
-        assert((Invalid || PartialTemplateArgs) && "Missing default argument");
+        assert(Invalid && "Missing default argument");
         break;
       }
 
@@ -2970,9 +2977,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     // in arguments for non-template parameter packs.
 
     if ((*Param)->isTemplateParameterPack()) {
-      if (PartialTemplateArgs && ArgumentPack.empty()) {
-        Converted.push_back(TemplateArgument());
-      } else if (ArgumentPack.empty())
+      if (ArgumentPack.empty())
         Converted.push_back(TemplateArgument(0, 0));
       else {
         Converted.push_back(TemplateArgument::CreatePackCopy(Context,

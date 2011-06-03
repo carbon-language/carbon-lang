@@ -2314,7 +2314,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                               FunctionTemplate->getLocation(),
                               FunctionTemplate->getSourceRange().getEnd(),
                               0, Builder,
-                              CTAK_Deduced)) {
+                              CTAK_Specified)) {
       Info.Param = makeTemplateParameter(
                          const_cast<NamedDecl *>(TemplateParams->getParam(I)));
       // FIXME: These template arguments are temporary. Free them!
