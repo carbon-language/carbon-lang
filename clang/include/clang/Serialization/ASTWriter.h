@@ -342,6 +342,12 @@ private:
   unsigned DeclContextLexicalAbbrev;
   unsigned DeclContextVisibleLookupAbbrev;
   unsigned UpdateVisibleAbbrev;
+  unsigned DeclRefExprAbbrev;
+  unsigned CharacterLiteralAbbrev;
+  unsigned DeclRecordAbbrev;
+  unsigned IntegerLiteralAbbrev;
+  unsigned EnumConstantDeclAbbrev;
+
   void WriteDeclsBlockAbbrevs();
   void WriteDecl(ASTContext &Context, Decl *D);
 
@@ -569,7 +575,12 @@ public:
   unsigned getOpaqueValueID(OpaqueValueExpr *e);
 
   unsigned getParmVarDeclAbbrev() const { return ParmVarDeclAbbrev; }
-
+  unsigned getDeclRefExprAbbrev() const { return DeclRefExprAbbrev; }
+  unsigned getCharacterLiteralAbbrev() const { return CharacterLiteralAbbrev; }
+  unsigned getDeclRecordAbbrev() const { return DeclRecordAbbrev; }
+  unsigned getIntegerLiteralAbbrev() const { return IntegerLiteralAbbrev; }
+  unsigned getEnumConstantDeclAbbrev() const { return EnumConstantDeclAbbrev; }
+  
   bool hasChain() const { return Chain; }
 
   // ASTDeserializationListener implementation

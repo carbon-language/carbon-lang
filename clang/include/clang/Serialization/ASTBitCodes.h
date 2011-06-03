@@ -514,6 +514,9 @@ namespace clang {
     /// NUM_PREDEF_TYPE_IDs.
     const unsigned NUM_PREDEF_TYPE_IDS = 100;
 
+    /// \brief The number of allowed abbreviations in bits
+    const unsigned NUM_ALLOWED_ABBREVS_SIZE = 4;
+
     /// \brief Record codes for each kind of type.
     ///
     /// These constants describe the type records that can occur within a

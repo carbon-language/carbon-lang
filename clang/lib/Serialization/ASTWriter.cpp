@@ -889,13 +889,14 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(DECL_INDIRECTFIELD);
   RECORD(DECL_EXPANDED_NON_TYPE_TEMPLATE_PARM_PACK);
   
+  // Statements and Exprs can occur in the Decls and Types block.
+  AddStmtsExprs(Stream, Record);
+
   BLOCK(PREPROCESSOR_DETAIL_BLOCK);
   RECORD(PPD_MACRO_INSTANTIATION);
   RECORD(PPD_MACRO_DEFINITION);
   RECORD(PPD_INCLUSION_DIRECTIVE);
   
-  // Statements and Exprs can occur in the Decls and Types block.
-  AddStmtsExprs(Stream, Record);
 #undef RECORD
 #undef BLOCK
   Stream.ExitBlock();
@@ -2700,8 +2701,13 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
     NextSelectorID(FirstSelectorID), FirstMacroID(1), NextMacroID(FirstMacroID),
     CollectedStmts(&StmtsToEmit),
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
-    NumVisibleDeclContexts(0), FirstCXXBaseSpecifiersID(1),
-    NextCXXBaseSpecifiersID(1)
+    NumVisibleDeclContexts(0),
+    FirstCXXBaseSpecifiersID(1), NextCXXBaseSpecifiersID(1),
+    ParmVarDeclAbbrev(0), DeclContextLexicalAbbrev(0),
+    DeclContextVisibleLookupAbbrev(0), UpdateVisibleAbbrev(0),
+    DeclRefExprAbbrev(0), CharacterLiteralAbbrev(0),
+    DeclRecordAbbrev(0), IntegerLiteralAbbrev(0),
+    EnumConstantDeclAbbrev(0)
 {
 }
 
@@ -2867,7 +2873,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
 
   // Keep writing types and declarations until all types and
   // declarations have been written.
-  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, 3);
+  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
   WriteDeclsBlockAbbrevs();
   while (!DeclTypesToEmit.empty()) {
     DeclOrType DOT = DeclTypesToEmit.front();
@@ -3097,7 +3103,7 @@ void ASTWriter::WriteASTChain(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(SemaRef.getStdBadAlloc(), SemaDeclRefs);
   }
 
-  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, 3);
+  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
   WriteDeclsBlockAbbrevs();
   for (DeclsToRewriteTy::iterator
          I = DeclsToRewrite.begin(), E = DeclsToRewrite.end(); I != E; ++I)
@@ -3209,7 +3215,7 @@ void ASTWriter::WriteDeclUpdatesBlocks() {
     return;
 
   RecordData OffsetsRecord;
-  Stream.EnterSubblock(DECL_UPDATES_BLOCK_ID, 3);
+  Stream.EnterSubblock(DECL_UPDATES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
   for (DeclUpdateMap::iterator
          I = DeclUpdates.begin(), E = DeclUpdates.end(); I != E; ++I) {
     const Decl *D = I->first;
