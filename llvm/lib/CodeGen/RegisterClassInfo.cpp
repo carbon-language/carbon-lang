@@ -14,9 +14,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "regalloc"
 #include "RegisterClassInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
+
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -86,8 +90,9 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
     if (Reserved.test(PhysReg))
       continue;
     if (unsigned CSR = CSRNum[PhysReg])
-      // PhysReg aliases a CSR, save it for later.
-      CSRAlias.push_back(std::make_pair(CSR, PhysReg));
+      // PhysReg aliases a CSR, save it for later.  Provide a (CSR, N) sort key
+      // to preserve the original ordering of multiple aliases of the same CSR.
+      CSRAlias.push_back(std::make_pair((CSR << 16) + (I - AOB), PhysReg));
     else
       RCI.Order[N++] = PhysReg;
   }
@@ -100,6 +105,13 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
 
   for (unsigned i = 0, e = CSRAlias.size(); i != e; ++i)
       RCI.Order[N++] = CSRAlias[i].second;
+
+  DEBUG({
+    dbgs() << "AllocationOrder(" << RC->getName() << ") = [";
+    for (unsigned I = 0; I != N; ++I)
+      dbgs() << ' ' << PrintReg(RCI.Order[I], TRI);
+    dbgs() << " ]\n";
+  });
 
   // RCI is now up-to-date.
   RCI.Tag = Tag;
