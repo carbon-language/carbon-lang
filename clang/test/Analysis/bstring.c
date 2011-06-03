@@ -140,8 +140,21 @@ void memcpy13() {
 // mempcpy()
 //===----------------------------------------------------------------------===
 
+#ifdef VARIANT
+
+#define __mempcpy_chk BUILTIN(__mempcpy_chk)
+void *__mempcpy_chk(void *restrict s1, const void *restrict s2, size_t n,
+                   size_t destlen);
+
+#define mempcpy(a,b,c) __mempcpy_chk(a,b,c,(size_t)-1)
+
+#else /* VARIANT */
+
 #define mempcpy BUILTIN(mempcpy)
 void *mempcpy(void *restrict s1, const void *restrict s2, size_t n);
+
+#endif /* VARIANT */
+
 
 void mempcpy0 () {
   char src[] = {1, 2, 3, 4};

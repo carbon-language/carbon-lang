@@ -1237,7 +1237,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
 
   FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
     .Cases("memcpy", "__memcpy_chk", &CStringChecker::evalMemcpy)
-    .Case("mempcpy", &CStringChecker::evalMempcpy)
+    .Cases("mempcpy", "__mempcpy_chk", &CStringChecker::evalMempcpy)
     .Cases("memcmp", "bcmp", &CStringChecker::evalMemcmp)
     .Cases("memmove", "__memmove_chk", &CStringChecker::evalMemmove)
     .Cases("strcpy", "__strcpy_chk", &CStringChecker::evalStrcpy)
