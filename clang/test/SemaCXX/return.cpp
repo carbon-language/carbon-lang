@@ -39,6 +39,11 @@ g();
 char* const h(); // expected-warning{{'const' type qualifier on return type has no effect}}
 char* volatile i(); // expected-warning{{'volatile' type qualifier on return type has no effect}}
 
+char*
+volatile // expected-warning{{'const volatile' type qualifiers on return type have no effect}}
+const
+j();
+
 const volatile int scalar_cv(); // expected-warning{{'const volatile' type qualifiers on return type have no effect}}
 }
 

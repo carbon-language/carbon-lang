@@ -1480,41 +1480,37 @@ static void DiagnoseIgnoredQualifiers(unsigned Quals,
   FixItHint VolatileFixIt;
   FixItHint RestrictFixIt;
 
+  const SourceManager &SM = S.getSourceManager();
+
   // FIXME: The locations here are set kind of arbitrarily. It'd be nicer to
   // find a range and grow it to encompass all the qualifiers, regardless of
   // the order in which they textually appear.
   if (Quals & Qualifiers::Const) {
     ConstFixIt = FixItHint::CreateRemoval(ConstQualLoc);
-    Loc = ConstQualLoc;
-    ++NumQuals;
     QualStr = "const";
+    ++NumQuals;
+    if (!Loc.isValid() || SM.isBeforeInTranslationUnit(ConstQualLoc, Loc))
+      Loc = ConstQualLoc;
   }
   if (Quals & Qualifiers::Volatile) {
     VolatileFixIt = FixItHint::CreateRemoval(VolatileQualLoc);
-    if (NumQuals == 0) {
-      Loc = VolatileQualLoc;
-      QualStr = "volatile";
-    } else {
-      QualStr += " volatile";
-    }
+    QualStr += (NumQuals == 0 ? "volatile" : " volatile");
     ++NumQuals;
+    if (!Loc.isValid() || SM.isBeforeInTranslationUnit(VolatileQualLoc, Loc))
+      Loc = VolatileQualLoc;
   }
   if (Quals & Qualifiers::Restrict) {
     RestrictFixIt = FixItHint::CreateRemoval(RestrictQualLoc);
-    if (NumQuals == 0) {
-      Loc = RestrictQualLoc;
-      QualStr = "restrict";
-    } else {
-      QualStr += " restrict";
-    }
+    QualStr += (NumQuals == 0 ? "restrict" : " restrict");
     ++NumQuals;
+    if (!Loc.isValid() || SM.isBeforeInTranslationUnit(RestrictQualLoc, Loc))
+      Loc = RestrictQualLoc;
   }
 
   assert(NumQuals > 0 && "No known qualifiers?");
 
   S.Diag(Loc, diag::warn_qual_return_type)
-    << QualStr << NumQuals
-    << ConstFixIt << VolatileFixIt << RestrictFixIt;
+    << QualStr << NumQuals << ConstFixIt << VolatileFixIt << RestrictFixIt;
 }
 
 /// GetTypeForDeclarator - Convert the type for the specified
