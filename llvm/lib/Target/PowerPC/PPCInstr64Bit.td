@@ -190,10 +190,15 @@ def TCRETURNri8 : Pseudo<(outs), (ins CTRRC8:$dst, i32imm:$offset, variable_ops)
 
 
 let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7, isBranch = 1,
-    isIndirectBranch = 1, isCall = 1, isReturn = 1, Uses = [CTR, RM] in
-def TAILBCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
-    Requires<[In64BitMode]>;
+    isIndirectBranch = 1, isCall = 1, Uses = [CTR8, RM] in {
+  let isReturn = 1 in {
+    def TAILBCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
+        Requires<[In64BitMode]>;
+  }
 
+  def BCTR8 : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>,
+      Requires<[In64BitMode]>;
+}
 
 
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7,

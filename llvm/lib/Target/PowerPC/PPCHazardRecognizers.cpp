@@ -233,7 +233,7 @@ void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
   unsigned Opcode = Node->getMachineOpcode();
 
   // Update structural hazard information.
-  if (Opcode == PPC::MTCTR) HasCTRSet = true;
+  if (Opcode == PPC::MTCTR || Opcode == PPC::MTCTR8) HasCTRSet = true;
 
   // Track the address stored to.
   if (isStore) {

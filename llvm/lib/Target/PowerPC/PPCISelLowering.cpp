@@ -2562,7 +2562,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     Callee.setNode(0);
     // Add CTR register as callee so a bctr can be emitted later.
     if (isTailCall)
-      Ops.push_back(DAG.getRegister(PPC::CTR, PtrVT));
+      Ops.push_back(DAG.getRegister(isPPC64 ? PPC::CTR8 : PPC::CTR, PtrVT));
   }
 
   // If this is a direct call, pass the chain and the callee.
