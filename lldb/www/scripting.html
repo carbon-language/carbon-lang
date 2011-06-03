@@ -210,15 +210,15 @@
                    you would do something like this:</p>
 
                    <code>
-                     % lldb<br>
-                     (lldb) process attach -n "dictionary"<br>
+                     % <strong>lldb</strong><br>
+                     (lldb) <strong>process attach -n "dictionary"</strong><br>
                      Architecture set to: x86_64.<br>
                      Process 521 stopped<br>
                      * thread #1: tid = 0x2c03, 0x00007fff86c8bea0 libSystem.B.dylib`read$NOCANCEL + 8, stop reason = signal SIGSTOP<br>
                      frame #0: 0x00007fff86c8bea0 libSystem.B.dylib`read$NOCANCEL + 8<br>
-                     (lldb) br s -n find_word<br>
+                     (lldb) <strong>breakpoint set -n find_word</strong><br>
                      Breakpoint created: 1: name = 'find_word', locations = 1, resolved = 1<br>
-                     (lldb) c<br>
+                     (lldb) <strong>continue</strong><br>
                      Process 521 resuming<br>
                      Process 521 stopped<br>
                      * thread #1: tid = 0x2c03, 0x0000000100001830 dictionary`find_word + 16 <br>
@@ -231,15 +231,15 @@
                      106     return 0;<br>
                      107 <br>
                      108   int compare_value = strcmp (word, dictionary->word);<br>
-                     (lldb) script<br>
+                     (lldb) <strong>script</strong><br>
                      Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.<br>
-                     >>> import tree_utils<br>
-                     >>> root = lldb.frame.FindVariable ("dictionary")<br>
-                     >>> current_path = ""<br>
-                     >>> path = tree_utils.DFS (root, "Romeo", current_path)<br>
-                     >>> print path<br>
+                     >>> <strong>import tree_utils</strong><br>
+                     >>> <strong>root = lldb.frame.FindVariable ("dictionary")</strong><br>
+                     >>> <strong>current_path = ""</strong><br>
+                     >>> <strong>path = tree_utils.DFS (root, "Romeo", current_path)</strong><br>
+                     >>> <strong>print path</strong><br>
                      LLRRL<br>
-                     >>> ^D<br>
+                     >>> <strong>^D</strong><br>
                      (lldb) <br>
                    </code>
 
@@ -253,7 +253,7 @@
                      import tree_utils
                    </code>
 
-                   <p>imports the file where we our DFS function, tree_utils.py, into Python. 
+                   <p>imports the file where we wrote our DFS function, tree_utils.py, into Python. 
                    Notice that to import the file we leave off the ".py" extension.  We can now 
                    call any function in that file, giving it the prefix "tree_utils.", so that 
                    Python knows where to look for the function. The line</p>
