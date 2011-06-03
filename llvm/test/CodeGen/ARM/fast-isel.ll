@@ -132,3 +132,29 @@ bb3:
 ; ARM: add
 ; ARM: sub
 }
+
+; Check loads/stores with globals
+@test4g = external global i32
+
+define void @test4() {
+  %a = load i32* @test4g
+  %b = add i32 %a, 1
+  store i32 %b, i32* @test4g
+  ret void
+
+; THUMB: ldr.n r0, LCPI4_1
+; THUMB: ldr r0, [r0]
+; THUMB: ldr r0, [r0]
+; THUMB: adds r0, #1
+; THUMB: ldr.n r1, LCPI4_0
+; THUMB: ldr r1, [r1]
+; THUMB: str r0, [r1]
+
+; ARM: ldr r0, LCPI4_1
+; ARM: ldr r0, [r0]
+; ARM: ldr r0, [r0]
+; ARM: add r0, r0, #1
+; ARM: ldr r1, LCPI4_0
+; ARM: ldr r1, [r1]
+; ARM: str r0, [r1]
+}
