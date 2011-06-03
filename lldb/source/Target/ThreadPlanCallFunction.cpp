@@ -45,10 +45,10 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_valid (false),
     m_stop_other_threads (stop_other_threads),
+    m_function_sp (NULL),
     m_process (thread.GetProcess()),
     m_thread (thread),
-    m_takedown_done (false),
-    m_function_sp (NULL)
+    m_takedown_done (false)
 {
     SetOkayToDiscard (discard_on_error);
 
@@ -158,10 +158,10 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
     m_valid (false),
     m_stop_other_threads (stop_other_threads),
+    m_function_sp(NULL),
     m_process (thread.GetProcess()),
     m_thread (thread),
-    m_takedown_done (false),
-    m_function_sp(NULL)
+    m_takedown_done (false)
 {
     SetOkayToDiscard (discard_on_error);
     

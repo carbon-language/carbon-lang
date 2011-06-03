@@ -21,7 +21,7 @@ namespace imp
     class shared_ptr_refcount : public lldb_private::imp::shared_count
     {
     public:
-        template<class Y> shared_ptr_refcount (Y *in) : manager(in), shared_count (0) {}
+        template<class Y> shared_ptr_refcount (Y *in) : shared_count (0), manager(in) {}
         
         shared_ptr_refcount() : shared_count (0) {}
         
@@ -44,8 +44,8 @@ class ClusterManager
 {
 public:
     ClusterManager () : 
-        m_external_ref(0),
         m_objects(),
+        m_external_ref(0),
         m_mutex(Mutex::eMutexTypeNormal) {}
     
     ~ClusterManager ()
