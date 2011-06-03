@@ -1201,7 +1201,8 @@ enum LinuxDistro {
 
 static bool IsRedhat(enum LinuxDistro Distro) {
   return Distro == Fedora13 || Distro == Fedora14 ||
-         Distro == Fedora15 || Distro == FedoraRawhide;
+         Distro == Fedora15 || Distro == FedoraRawhide ||
+         Distro == RHEL4 || Distro == RHEL5 || Distro == RHEL6;
 }
 
 static bool IsOpenSuse(enum LinuxDistro Distro) {
@@ -1281,10 +1282,12 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     else if (Data.startswith("Red Hat Enterprise Linux") &&
              Data.find("release 6") != llvm::StringRef::npos)
       return RHEL6;
-    else if (Data.startswith("Red Hat Enterprise Linux") &&
+    else if ((Data.startswith("Red Hat Enterprise Linux") ||
+	      Data.startswith("CentOS")) &&
              Data.find("release 5") != llvm::StringRef::npos)
       return RHEL5;
-    else if (Data.startswith("Red Hat Enterprise Linux") &&
+    else if ((Data.startswith("Red Hat Enterprise Linux") ||
+	      Data.startswith("CentOS")) &&
              Data.find("release 4") != llvm::StringRef::npos)
       return RHEL4;
     return UnknownDistro;
@@ -1500,7 +1503,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     ExtraOpts.push_back("--no-add-needed");
 
   if (Distro == DebianSqueeze || Distro == DebianWheezy ||
-      IsOpenSuse(Distro) || IsRedhat(Distro) || Distro == UbuntuLucid ||
+      IsOpenSuse(Distro) ||
+      (IsRedhat(Distro) && Distro != RHEL4 && Distro != RHEL5) ||
+      Distro == UbuntuLucid ||
       Distro == UbuntuMaverick || Distro == UbuntuKarmic ||
       Distro == UbuntuNatty)
     ExtraOpts.push_back("--build-id");
