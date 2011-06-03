@@ -559,6 +559,18 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     AddPath("/mingw/include", System, true, false, false);
     AddPath("c:/mingw/include", System, true, false, false);
     break;
+  case llvm::Triple::Linux:
+    // Generic Debian multiarch support:
+    if (triple.getArch() == llvm::Triple::x86_64) {
+      AddPath("/usr/include/x86_64-linux-gnu", System, false, false, false);
+      AddPath("/usr/include/i686-linux-gnu/64", System, false, false, false);
+      AddPath("/usr/include/i486-linux-gnu/64", System, false, false, false);
+    } else {
+      AddPath("/usr/include/x86_64-linux-gnu/32", System, false, false, false);
+      AddPath("/usr/include/i686-linux-gnu", System, false, false, false);
+      AddPath("/usr/include/i486-linux-gnu", System, false, false, false);
+    }
+    AddPath("/usr/include/arm-linux-gnueabi", System, false, false, false);
   default:
     break;
   }
@@ -651,6 +663,17 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     // Debian based distros.
     // Note: these distros symlink /usr/include/c++/X.Y.Z -> X.Y
     //===------------------------------------------------------------------===//
+
+    // Ubuntu 11.11 "Oneiric Ocelot" -- gcc-4.6.0
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6",
+                                "x86_64-linux-gnu", "32", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6",
+                                "i686-linux-gnu", "", "64", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6",
+                                "i486-linux-gnu", "", "64", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6",
+                                "arm-linux-gnueabi", "", "", triple);
+
     // Ubuntu 11.04 "Natty Narwhal" -- gcc-4.5.2
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.5",
                                 "x86_64-linux-gnu", "32", "", triple);
