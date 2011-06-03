@@ -49,7 +49,7 @@ these facilities, a Makefile from a project must do the following things:</p>
     <li><tt>PROJ_SRC_ROOT</tt> - The root of the project's source tree.</li>
     <li><tt>PROJ_OBJ_ROOT</tt> - The root of the project's object tree.</li>
     <li><tt>PROJ_INSTALL_ROOT</tt> - The root installation directory.</li>
-    <li><tt>LEVEL</tt> - The relative path from the current directory to the 
+    <li><tt>LEVEL</tt> - The relative path from the current directory to the
     project's root ($PROJ_OBJ_ROOT).</li>
   </ul></li>
   <li>Include <tt>Makefile.config</tt> from <tt>$(LLVM_OBJ_ROOT)</tt>.</li>
@@ -59,9 +59,9 @@ these facilities, a Makefile from a project must do the following things:</p>
 <p>There are two ways that you can set all of these variables:</p>
 <ol>
   <li>You can write your own Makefiles which hard-code these values.</li>
-  <li>You can use the pre-made LLVM sample project. This sample project 
-  includes Makefiles, a configure script that can be used to configure the 
-  location of LLVM, and the ability to support multiple object directories 
+  <li>You can use the pre-made LLVM sample project. This sample project
+  includes Makefiles, a configure script that can be used to configure the
+  location of LLVM, and the ability to support multiple object directories
   from a single source directory.</li>
 </ol>
 
@@ -88,9 +88,9 @@ choosing.  You can place it anywhere you like.  Rename the directory to match
 the name of your project.</li>
 
 <li>
-If you downloaded LLVM using Subversion, remove all the directories named .svn 
-(and all the files therein) from your project's new source tree.  This will 
-keep Subversion from thinking that your project is inside 
+If you downloaded LLVM using Subversion, remove all the directories named .svn
+(and all the files therein) from your project's new source tree.  This will
+keep Subversion from thinking that your project is inside
 <tt>llvm/trunk/projects/sample</tt>.</li>
 
 <li>Add your source code and Makefiles to your source tree.</li>
@@ -139,7 +139,7 @@ can find LLVM:
 </ol>
 
 <p>That's it!  Now all you have to do is type <tt>gmake</tt> (or <tt>make</tt>
-if your on a GNU/Linux system) in the root of your object directory, and your 
+if your on a GNU/Linux system) in the root of your object directory, and your
 project should build.</p>
 
 </div>
@@ -209,7 +209,7 @@ directories:</p>
     test procedure uses RUN lines in the actual test case to determine
     how to run the test.  See the <a
     href="TestingGuide.html">TestingGuide</a> for more details. You
-    can easily write Makefile support similar to the Makefiles in 
+    can easily write Makefile support similar to the Makefiles in
     <tt>llvm/test</tt> to use Dejagnu to run your project's tests.<br></li>
     <li>
     LLVM contains an optional package called <tt>llvm-test</tt>
@@ -441,7 +441,7 @@ href="http://mail.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVM Developers
 Mailing List</a>.</p>
 
 </div>
-  
+
 <!-- *********************************************************************** -->
 <hr>
 <address>
