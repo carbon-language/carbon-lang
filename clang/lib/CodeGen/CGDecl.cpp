@@ -629,15 +629,16 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   emission.Address = DeclPtr;
 
   // Emit debug info for local var declaration.
-  if (CGDebugInfo *DI = getDebugInfo()) {
-    assert(HaveInsertPoint() && "Unexpected unreachable point!");
-
-    DI->setLocation(D.getLocation());
-    if (Target.useGlobalsForAutomaticVariables()) {
-      DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr), &D);
-    } else
-      DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
-  }
+  if (HaveInsertPoint())
+    if (CGDebugInfo *DI = getDebugInfo()) {
+      DI->setLocation(D.getLocation());
+      DI->UpdateLineDirectiveRegion(Builder);
+      DI->EmitStopPoint(Builder);
+      if (Target.useGlobalsForAutomaticVariables()) {
+        DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr), &D);
+      } else
+        DI->EmitDeclareOfAutoVariable(&D, DeclPtr, Builder);
+    }
 
   return emission;
 }
