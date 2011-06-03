@@ -50,3 +50,11 @@ entry:
 call void asm sideeffect "flds s15, $0 \0A", "*^Uv,~{s15}"(float* @k.2126) nounwind
 ret i32 0
 }
+
+; Radar 9037836 & 9119939
+
+define i32 @t5() nounwind {
+entry:
+call void asm sideeffect "flds s15, $0 \0A", "*^Uvm,~{s15}"(float* @k.2126) nounwind
+ret i32 0
+}
