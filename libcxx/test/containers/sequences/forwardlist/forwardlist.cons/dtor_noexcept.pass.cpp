@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <deque>
+// <forward_list>
 
-// ~deque() // implied noexcept;
+// ~forward_list() // implied noexcept;
 
-#include <deque>
+#include <forward_list>
 #include <cassert>
 
 #include "../../../MoveOnly.h"
@@ -33,19 +33,19 @@ int main()
 {
 #if __has_feature(cxx_noexcept)
     {
-        typedef std::deque<MoveOnly> C;
+        typedef std::forward_list<MoveOnly> C;
         static_assert(std::is_nothrow_destructible<C>::value, "");
     }
     {
-        typedef std::deque<MoveOnly, test_allocator<MoveOnly>> C;
+        typedef std::forward_list<MoveOnly, test_allocator<MoveOnly>> C;
         static_assert(std::is_nothrow_destructible<C>::value, "");
     }
     {
-        typedef std::deque<MoveOnly, other_allocator<MoveOnly>> C;
+        typedef std::forward_list<MoveOnly, other_allocator<MoveOnly>> C;
         static_assert(std::is_nothrow_destructible<C>::value, "");
     }
     {
-        typedef std::deque<MoveOnly, some_alloc<MoveOnly>> C;
+        typedef std::forward_list<MoveOnly, some_alloc<MoveOnly>> C;
         static_assert(!std::is_nothrow_destructible<C>::value, "");
     }
 #endif

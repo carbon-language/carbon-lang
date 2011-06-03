@@ -34,7 +34,8 @@ public:
     typedef <details> iterator;
     typedef <details> const_iterator;
 
-    forward_list();
+    forward_list()
+        noexcept(is_nothrow_default_constructible<allocator_type>::value);
     explicit forward_list(const allocator_type& a);
     explicit forward_list(size_type n);
     forward_list(size_type n, const value_type& v);
@@ -45,7 +46,8 @@ public:
         forward_list(InputIterator first, InputIterator last, const allocator_type& a);
     forward_list(const forward_list& x);
     forward_list(const forward_list& x, const allocator_type& a);
-    forward_list(forward_list&& x);
+    forward_list(forward_list&& x)
+        noexcept(is_nothrow_move_constructible<allocator_type>::value);
     forward_list(forward_list&& x, const allocator_type& a);
     forward_list(initializer_list<value_type> il);
     forward_list(initializer_list<value_type> il, const allocator_type& a);
@@ -53,7 +55,10 @@ public:
     ~forward_list();
 
     forward_list& operator=(const forward_list& x);
-    forward_list& operator=(forward_list&& x);
+    forward_list& operator=(forward_list&& x)
+        noexcept(
+             allocator_type::propagate_on_container_move_assignment::value &&
+             is_nothrow_move_assignable<allocator_type>::value);
     forward_list& operator=(initializer_list<value_type> il);
 
     template <class InputIterator>
@@ -100,7 +105,9 @@ public:
     iterator erase_after(const_iterator p);
     iterator erase_after(const_iterator first, const_iterator last);
 
-    void swap(forward_list& x);
+    void swap(forward_list& x)
+        noexcept(!allocator_type::propagate_on_container_swap::value ||
+                 __is_nothrow_swappable<allocator_type>::value);
 
     void resize(size_type n);
     void resize(size_type n, const value_type& v);
@@ -152,7 +159,8 @@ template <class T, class Allocator>
                     const forward_list<T, Allocator>& y);
 
 template <class T, class Allocator>
-    void swap(forward_list<T, Allocator>& x, forward_list<T, Allocator>& y);
+    void swap(forward_list<T, Allocator>& x, forward_list<T, Allocator>& y)
+         noexcept(x.swap(y));
 
 }  // std
 
@@ -370,7 +378,8 @@ protected:
                           static_cast<const __node&>(__before_begin_.first()));}
 
     _LIBCPP_INLINE_VISIBILITY
-          __node_allocator& __alloc()       {return __before_begin_.second();}
+          __node_allocator& __alloc() _NOEXCEPT
+            {return __before_begin_.second();}
     _LIBCPP_INLINE_VISIBILITY
     const __node_allocator& __alloc() const _NOEXCEPT
         {return __before_begin_.second();}
@@ -380,23 +389,27 @@ protected:
 
     _LIBCPP_INLINE_VISIBILITY
     __forward_list_base()
+        _NOEXCEPT_(is_nothrow_default_constructible<__node_allocator>::value)
         : __before_begin_(__begin_node()) {}
     _LIBCPP_INLINE_VISIBILITY
     __forward_list_base(const allocator_type& __a)
         : __before_begin_(__begin_node(), __node_allocator(__a)) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    __forward_list_base(__forward_list_base&& __x);
+public:
+    __forward_list_base(__forward_list_base&& __x)
+        _NOEXCEPT_(is_nothrow_move_constructible<__node_allocator>::value);
     __forward_list_base(__forward_list_base&& __x, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 private:
     __forward_list_base(const __forward_list_base&);
     __forward_list_base& operator=(const __forward_list_base&);
-protected:
 
+public:
     ~__forward_list_base();
 
+protected:
     _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __forward_list_base& __x)
         {__copy_assign_alloc(__x, integral_constant<bool,
@@ -404,10 +417,16 @@ protected:
 
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__forward_list_base& __x)
+        _NOEXCEPT_(!__node_traits::propagate_on_container_move_assignment::value ||
+                   is_nothrow_move_assignable<__node_allocator>::value)
         {__move_assign_alloc(__x, integral_constant<bool,
               __node_traits::propagate_on_container_move_assignment::value>());}
 
-    void swap(__forward_list_base& __x);
+public:
+    void swap(__forward_list_base& __x)
+        _NOEXCEPT_(!__node_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<__node_allocator>::value);
+protected:
     void clear() _NOEXCEPT;
 
 private:
@@ -422,22 +441,28 @@ private:
     }
 
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(__forward_list_base& __x, false_type) {}
+    void __move_assign_alloc(__forward_list_base& __x, false_type) _NOEXCEPT
+        {}
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__forward_list_base& __x, true_type)
+        _NOEXCEPT_(is_nothrow_move_assignable<__node_allocator>::value)
         {__alloc() = _STD::move(__x.__alloc());}
 
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y)
+        _NOEXCEPT_(!__node_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<__node_allocator>::value)
         {__swap_alloc(__x, __y, integral_constant<bool,
                          __node_traits::propagate_on_container_swap::value>());}
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y,
                                                                      false_type)
+        _NOEXCEPT
         {}
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y,
                                                                       true_type)
+        _NOEXCEPT_(__is_nothrow_swappable<__node_allocator>::value)
         {
             using _STD::swap;
             swap(__x, __y);
@@ -449,6 +474,7 @@ private:
 template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 __forward_list_base<_Tp, _Alloc>::__forward_list_base(__forward_list_base&& __x)
+        _NOEXCEPT_(is_nothrow_move_constructible<__node_allocator>::value)
     : __before_begin_(_STD::move(__x.__before_begin_))
 {
     __x.__before_begin()->__next_ = nullptr;
@@ -479,6 +505,8 @@ template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 __forward_list_base<_Tp, _Alloc>::swap(__forward_list_base& __x)
+        _NOEXCEPT_(!__node_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<__node_allocator>::value)
 {
     __swap_alloc(__alloc(), __x.__alloc());
     using _STD::swap;
@@ -505,6 +533,11 @@ class _LIBCPP_VISIBLE forward_list
     : private __forward_list_base<_Tp, _Alloc>
 {
     typedef __forward_list_base<_Tp, _Alloc> base;
+    typedef typename base::__node_allocator  __node_allocator;
+    typedef typename base::__node            __node;
+    typedef typename base::__node_traits     __node_traits;
+    typedef typename base::__node_pointer    __node_pointer;
+
 public:
     typedef _Tp    value_type;
     typedef _Alloc allocator_type;
@@ -519,7 +552,10 @@ public:
     typedef typename base::iterator       iterator;
     typedef typename base::const_iterator const_iterator;
 
-    _LIBCPP_INLINE_VISIBILITY forward_list() {} // = default;
+    _LIBCPP_INLINE_VISIBILITY
+    forward_list()
+        _NOEXCEPT_(is_nothrow_default_constructible<__node_allocator>::value)
+        {} // = default;
     explicit forward_list(const allocator_type& __a);
     explicit forward_list(size_type __n);
     forward_list(size_type __n, const value_type& __v);
@@ -539,7 +575,9 @@ public:
     forward_list(const forward_list& __x, const allocator_type& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    forward_list(forward_list&& __x) : base(_STD::move(__x)) {}
+    forward_list(forward_list&& __x)
+        _NOEXCEPT_(is_nothrow_move_constructible<base>::value)
+        : base(_STD::move(__x)) {}
     forward_list(forward_list&& __x, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     forward_list(initializer_list<value_type> __il);
@@ -549,7 +587,10 @@ public:
 
     forward_list& operator=(const forward_list& __x);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    forward_list& operator=(forward_list&& __x);
+    forward_list& operator=(forward_list&& __x)
+        _NOEXCEPT_(
+             __node_traits::propagate_on_container_move_assignment::value &&
+             is_nothrow_move_assignable<allocator_type>::value);
 #endif
     forward_list& operator=(initializer_list<value_type> __il);
 
@@ -643,7 +684,10 @@ public:
     iterator erase_after(const_iterator __f, const_iterator __l);
 
     _LIBCPP_INLINE_VISIBILITY
-    void swap(forward_list& __x) {base::swap(__x);}
+    void swap(forward_list& __x)
+        _NOEXCEPT_(!__node_traits::propagate_on_container_swap::value ||
+                   __is_nothrow_swappable<__node_allocator>::value)
+        {base::swap(__x);}
 
     void resize(size_type __n);
     void resize(size_type __n, const value_type& __v);
@@ -685,13 +729,10 @@ public:
     void reverse() _NOEXCEPT;
 
 private:
-    typedef typename base::__node_allocator  __node_allocator;
-    typedef typename base::__node            __node;
-    typedef typename base::__node_traits     __node_traits;
-    typedef typename base::__node_pointer    __node_pointer;
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    void __move_assign(forward_list& __x, true_type);
+    void __move_assign(forward_list& __x, true_type)
+        _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value);
     void __move_assign(forward_list& __x, false_type);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
@@ -833,6 +874,7 @@ forward_list<_Tp, _Alloc>::operator=(const forward_list& __x)
 template <class _Tp, class _Alloc>
 void
 forward_list<_Tp, _Alloc>::__move_assign(forward_list& __x, true_type)
+    _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
 {
     clear();
     base::__move_assign_alloc(__x);
@@ -857,6 +899,9 @@ template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 forward_list<_Tp, _Alloc>&
 forward_list<_Tp, _Alloc>::operator=(forward_list&& __x)
+    _NOEXCEPT_(
+             __node_traits::propagate_on_container_move_assignment::value &&
+             is_nothrow_move_assignable<allocator_type>::value)
 {
     __move_assign(__x, integral_constant<bool,
           __node_traits::propagate_on_container_move_assignment::value>());
@@ -1557,6 +1602,7 @@ template <class _Tp, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(forward_list<_Tp, _Alloc>& __x, forward_list<_Tp, _Alloc>& __y)
+    _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
 {
     __x.swap(__y);
 }

@@ -948,7 +948,7 @@ public:
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     void swap(__deque_base& __c)
-        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value||
+        _NOEXCEPT_(!__alloc_traits::propagate_on_container_swap::value ||
                    __is_nothrow_swappable<allocator_type>::value);
 protected:
     void clear() _NOEXCEPT;
