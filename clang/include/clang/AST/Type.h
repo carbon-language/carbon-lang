@@ -538,6 +538,14 @@ public:
     return withFastQualifiers(Qualifiers::Const);
   }
 
+  /// addVolatile - add the specified type qualifier to this QualType.  
+  void addVolatile() {
+    addFastQualifiers(Qualifiers::Volatile);
+  }
+  QualType withVolatile() const {
+    return withFastQualifiers(Qualifiers::Volatile);
+  }
+
   void addFastQualifiers(unsigned TQs) {
     assert(!(TQs & ~Qualifiers::FastMask)
            && "non-fast qualifier bits set in mask!");
