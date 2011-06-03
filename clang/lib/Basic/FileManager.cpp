@@ -264,10 +264,6 @@ void FileManager::addAncestorsAsVirtualDirs(llvm::StringRef Path) {
 /// exist.
 ///
 const DirectoryEntry *FileManager::getDirectory(llvm::StringRef DirName) {
-  // stat doesn't like trailing separators (at least on Windows).
-  if (DirName.size() > 1 && llvm::sys::path::is_separator(DirName.back()))
-    DirName = DirName.substr(0, DirName.size()-1);
-
   ++NumDirLookups;
   llvm::StringMapEntry<DirectoryEntry *> &NamedDirEnt =
     SeenDirEntries.GetOrCreateValue(DirName);
