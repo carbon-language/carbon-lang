@@ -195,7 +195,7 @@ int test_multi_declaration(void) {
 // CHECK-source: usrs.m:42:10: UnexposedExpr= Extent=[42:10 - 42:11]
 // CHECK-source: usrs.m:42:10: UnexposedExpr= Extent=[42:10 - 42:11]
 // CHECK-source: usrs.m:44:13: ObjCIvarDecl=d1:44:13 (Definition) Extent=[44:13 - 44:15]
-// CHECK-source: usrs.m:44:13: UnexposedDecl=d1:31:15 (Definition) Extent=[44:1 - 44:15]
+// CHECK-source: usrs.m:44:13: ObjCSynthesizeDecl=d1:31:15 (Definition) Extent=[44:1 - 44:15]
 // CHECK-source: usrs.m:47:5: VarDecl=z:47:5 Extent=[47:1 - 47:6]
 // CHECK-source: usrs.m:49:12: FunctionDecl=local_func:49:12 (Definition) Extent=[49:1 - 49:43]
 // CHECK-source: usrs.m:49:27: ParmDecl=x:49:27 (Definition) Extent=[49:23 - 49:28]

@@ -95,5 +95,5 @@
 // CHECK: properties-class-extensions.m:38:34: ObjCInstanceMethodDecl=qux:38:34 Extent=[38:34 - 38:37]
 // CHECK: properties-class-extensions.m:38:34: ObjCInstanceMethodDecl=setQux::38:34 Extent=[38:34 - 38:37]
 // CHECK: properties-class-extensions.m:38:34: ParmDecl=qux:38:34 (Definition) Extent=[38:34 - 38:37]
-// CHECK: properties-class-extensions.m:42:10: UnexposedDecl=qux:38:34 (Definition) Extent=[42:1 - 42:13]
+// CHECK: properties-class-extensions.m:42:10: ObjCDynamicDecl=qux:38:34 (Definition) Extent=[42:1 - 42:13]
 

@@ -3381,7 +3381,11 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   case CXCursor_UsingDeclaration:
     return createCXString("UsingDeclaration");
   case CXCursor_TypeAliasDecl:
-      return createCXString("TypeAliasDecl");
+    return createCXString("TypeAliasDecl");
+  case CXCursor_ObjCSynthesizeDecl:
+    return createCXString("ObjCSynthesizeDecl");
+  case CXCursor_ObjCDynamicDecl:
+    return createCXString("ObjCDynamicDecl");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

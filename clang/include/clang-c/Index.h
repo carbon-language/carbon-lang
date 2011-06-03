@@ -1187,8 +1187,12 @@ enum CXCursorKind {
   CXCursor_UsingDeclaration              = 35,
   /** \brief A C++ alias declaration */
   CXCursor_TypeAliasDecl                 = 36,
+  /** \brief An Objective-C @synthesize definition. */
+  CXCursor_ObjCSynthesizeDecl            = 37,
+  /** \brief An Objective-C @dynamic definition. */
+  CXCursor_ObjCDynamicDecl               = 38,
   CXCursor_FirstDecl                     = CXCursor_UnexposedDecl,
-  CXCursor_LastDecl                      = CXCursor_TypeAliasDecl,
+  CXCursor_LastDecl                      = CXCursor_ObjCDynamicDecl,
 
   /* References */
   CXCursor_FirstRef                      = 40, /* Decl references */
