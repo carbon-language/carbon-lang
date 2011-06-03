@@ -38,7 +38,7 @@ public:
     typedef std::reverse_iterator<const_iterator>    const_reverse_iterator;
 
     // construct/copy/destroy:
-    deque();
+    deque() noexcept(is_nothrow_default_constructible<allocator_type>::value);
     explicit deque(const allocator_type& a);
     explicit deque(size_type n);
     deque(size_type n, const value_type& v);
@@ -934,7 +934,8 @@ protected:
     _LIBCPP_INLINE_VISIBILITY
     const allocator_type& __alloc() const _NOEXCEPT {return __size_.second();}
 
-    __deque_base();
+    __deque_base()
+        _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value);
     explicit __deque_base(const allocator_type& __a);
 public:
     ~__deque_base();
@@ -1072,6 +1073,7 @@ __deque_base<_Tp, _Allocator>::end() const _NOEXCEPT
 template <class _Tp, class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 __deque_base<_Tp, _Allocator>::__deque_base()
+    _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value)
     : __start_(0), __size_(0) {}
 
 template <class _Tp, class _Allocator>
@@ -1185,7 +1187,10 @@ public:
     typedef _STD::reverse_iterator<const_iterator> const_reverse_iterator;
 
     // construct/copy/destroy:
-    _LIBCPP_INLINE_VISIBILITY deque() {}
+    _LIBCPP_INLINE_VISIBILITY
+    deque()
+        _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value)
+        {}
     _LIBCPP_INLINE_VISIBILITY deque(const allocator_type& __a) : __base(__a) {}
     explicit deque(size_type __n);
     deque(size_type __n, const value_type& __v);
