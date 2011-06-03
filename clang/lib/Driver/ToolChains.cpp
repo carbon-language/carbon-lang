@@ -119,7 +119,7 @@ llvm::StringRef Darwin::getDarwinArchName(const ArgList &Args) const {
   switch (getTriple().getArch()) {
   default:
     return getArchName();
-  
+
   case llvm::Triple::thumb:
   case llvm::Triple::arm: {
     if (const Arg *A = Args.getLastArg(options::OPT_march_EQ))
@@ -149,10 +149,10 @@ std::string Darwin::ComputeEffectiveClangTriple(const ArgList &Args) const {
   // the default triple).
   if (!isTargetInitialized())
     return Triple.getTriple();
-    
+
   unsigned Version[3];
   getTargetVersion(Version);
-  
+
   llvm::SmallString<16> Str;
   llvm::raw_svector_ostream(Str)
     << (isTargetIPhoneOS() ? "ios" : "macosx")
@@ -562,7 +562,7 @@ void DarwinClang::AddCCKextLibArgs(const ArgList &Args,
   P.appendComponent("lib");
   P.appendComponent("darwin");
   P.appendComponent("libclang_rt.cc_kext.a");
-  
+
   // For now, allow missing resource libraries to support developers who may
   // not have compiler-rt checked out or integrated into their build.
   bool Exists;
@@ -628,7 +628,7 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
           DAL->AddSeparateArg(OriginalArg,
                               Opts.getOption(options::OPT_Zlinker_input),
                               A->getValue(Args, i));
-          
+
         }
         continue;
       }
@@ -919,8 +919,8 @@ TCEToolChain::~TCEToolChain() {
       delete it->second;
 }
 
-bool TCEToolChain::IsMathErrnoDefault() const { 
-  return true; 
+bool TCEToolChain::IsMathErrnoDefault() const {
+  return true;
 }
 
 bool TCEToolChain::IsUnwindTablesDefault() const {
@@ -935,7 +935,7 @@ const char *TCEToolChain::GetForcedPicModel() const {
   return 0;
 }
 
-Tool &TCEToolChain::SelectTool(const Compilation &C, 
+Tool &TCEToolChain::SelectTool(const Compilation &C,
                             const JobAction &JA,
                                const ActionList &Inputs) const {
   Action::ActionClass Key;
@@ -1006,7 +1006,7 @@ FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
       llvm::Triple(getDriver().DefaultHostTriple).getArch() ==
         llvm::Triple::x86_64)
     Lib32 = true;
-    
+
   if (Lib32) {
     getFilePaths().push_back("/usr/lib32");
   } else {
@@ -1216,7 +1216,7 @@ static bool IsDebian(enum LinuxDistro Distro) {
 
 static bool IsUbuntu(enum LinuxDistro Distro) {
   return Distro == UbuntuHardy  || Distro == UbuntuIntrepid ||
-         Distro == UbuntuLucid  || Distro == UbuntuMaverick || 
+         Distro == UbuntuLucid  || Distro == UbuntuMaverick ||
          Distro == UbuntuJaunty || Distro == UbuntuKarmic ||
          Distro == UbuntuNatty;
 }
@@ -1348,11 +1348,11 @@ static std::string findGCCBaseLibDir(const std::string &GccTriple) {
     return ret;
   }
   static const char* GccVersions[] = {"4.6.0", "4.6",
-				      "4.5.2", "4.5.1", "4.5",
-				      "4.4.5", "4.4.4", "4.4.3", "4.4",
-				      "4.3.4", "4.3.3", "4.3.2", "4.3",
-				      "4.2.4", "4.2.3", "4.2.2", "4.2.1",
-				      "4.2", "4.1.1"};
+                                      "4.5.2", "4.5.1", "4.5",
+                                      "4.4.5", "4.4.4", "4.4.3", "4.4",
+                                      "4.3.4", "4.3.3", "4.3.2", "4.3",
+                                      "4.2.4", "4.2.3", "4.2.2", "4.2.1",
+                                      "4.2", "4.1.1"};
   bool Exists;
   for (unsigned i = 0; i < sizeof(GccVersions)/sizeof(char*); ++i) {
     std::string Suffix = GccTriple + "/" + GccVersions[i];
@@ -1482,11 +1482,11 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
   if (Arch == llvm::Triple::arm || Arch == llvm::Triple::thumb)
     ExtraOpts.push_back("-X");
 
-  if (IsRedhat(Distro) || IsOpenSuse(Distro) || Distro == UbuntuMaverick || 
+  if (IsRedhat(Distro) || IsOpenSuse(Distro) || Distro == UbuntuMaverick ||
       Distro == UbuntuNatty)
     ExtraOpts.push_back("--hash-style=gnu");
 
-  if (IsDebian(Distro) || IsOpenSuse(Distro) || Distro == UbuntuLucid || 
+  if (IsDebian(Distro) || IsOpenSuse(Distro) || Distro == UbuntuLucid ||
       Distro == UbuntuJaunty || Distro == UbuntuKarmic)
     ExtraOpts.push_back("--hash-style=both");
 
