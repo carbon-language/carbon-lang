@@ -460,7 +460,8 @@ namespace llvm {
     bool isExceptionHandlingDwarf() const {
       return
         (ExceptionsType == ExceptionHandling::DwarfCFI ||
-         ExceptionsType == ExceptionHandling::ARM);
+         ExceptionsType == ExceptionHandling::ARM ||
+         ExceptionsType == ExceptionHandling::Win64);
     }
     bool doesDwarfUsesInlineInfoSection() const {
       return DwarfUsesInlineInfoSection;
