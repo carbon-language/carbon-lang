@@ -280,7 +280,28 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
     }
 
     // Vector/Vector bitcast.
-    return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
+    if (ValueVT.getSizeInBits() == PartVT.getSizeInBits())
+      return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
+
+    assert(PartVT.getVectorNumElements() == ValueVT.getVectorNumElements() &&
+      "Cannot handle this kind of promotion");
+    // Promoted vector extract
+    unsigned NumElts = ValueVT.getVectorNumElements();
+    SmallVector<SDValue, 8> NewOps;
+    for (unsigned i = 0; i < NumElts; ++i) {
+      SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
+        PartVT.getScalarType(), Val ,DAG.getIntPtrConstant(i));
+      SDValue Cast;
+
+      bool Smaller = ValueVT.bitsLE(PartVT);
+
+      Cast = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
+                         DL, ValueVT.getScalarType(), Ext);
+
+      NewOps.push_back(Cast);
+    }
+    return DAG.getNode(ISD::BUILD_VECTOR, DL, ValueVT,
+      &NewOps[0], NewOps.size());
   }
   
   // Trivial bitcast if the types are the same size and the destination
@@ -452,7 +473,24 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
 
       //SDValue UndefElts = DAG.getUNDEF(VectorTy);
       //Val = DAG.getNode(ISD::CONCAT_VECTORS, DL, PartVT, Val, UndefElts);
-    } else {
+    } else if (PartVT.isVector() &&
+               PartVT.getVectorElementType().bitsGE(
+                 ValueVT.getVectorElementType())&&
+               PartVT.getVectorNumElements() == ValueVT.getVectorNumElements()) {
+
+      // Promoted vector extract
+      unsigned NumElts = ValueVT.getVectorNumElements();
+      SmallVector<SDValue, 8> NewOps;
+      for (unsigned i = 0; i < NumElts; ++i) {
+        SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
+                       ValueVT.getScalarType(), Val ,DAG.getIntPtrConstant(i));
+        SDValue Cast = DAG.getNode(ISD::ANY_EXTEND,
+                       DL, PartVT.getScalarType(), Ext);
+        NewOps.push_back(Cast);
+      }
+      Val = DAG.getNode(ISD::BUILD_VECTOR, DL, PartVT,
+                        &NewOps[0], NewOps.size());
+    } else{
       // Vector -> scalar conversion.
       assert(ValueVT.getVectorElementType() == PartVT &&
              ValueVT.getVectorNumElements() == 1 &&
