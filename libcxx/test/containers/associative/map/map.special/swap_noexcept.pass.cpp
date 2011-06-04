@@ -47,7 +47,7 @@ int main()
         static_assert(noexcept(swap(c1, c2)), "");
     }
     {
-        typedef std::map<MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
+        typedef std::map<MoveOnly, MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
         C c1, c2;
         static_assert(noexcept(swap(c1, c2)), "");
     }

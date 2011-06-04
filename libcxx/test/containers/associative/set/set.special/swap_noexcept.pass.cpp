@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <map>
+// <set>
 
-// void swap(multimap& c)
+// void swap(set& c)
 //     noexcept(!allocator_type::propagate_on_container_swap::value ||
 //              __is_nothrow_swappable<allocator_type>::value);
 
 // This tests a conforming extension
 
-#include <map>
+#include <set>
 #include <cassert>
 
 #include "../../../MoveOnly.h"
@@ -37,22 +37,22 @@ int main()
 {
 #if __has_feature(cxx_noexcept)
     {
-        typedef std::multimap<MoveOnly, MoveOnly> C;
+        typedef std::set<MoveOnly> C;
         C c1, c2;
         static_assert(noexcept(swap(c1, c2)), "");
     }
     {
-        typedef std::multimap<MoveOnly, MoveOnly, std::less<MoveOnly>, test_allocator<MoveOnly>> C;
+        typedef std::set<MoveOnly, std::less<MoveOnly>, test_allocator<MoveOnly>> C;
         C c1, c2;
         static_assert(noexcept(swap(c1, c2)), "");
     }
     {
-        typedef std::multimap<MoveOnly, MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
+        typedef std::set<MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
         C c1, c2;
         static_assert(noexcept(swap(c1, c2)), "");
     }
     {
-        typedef std::multimap<MoveOnly, MoveOnly, some_comp<MoveOnly>> C;
+        typedef std::set<MoveOnly, some_comp<MoveOnly>> C;
         C c1, c2;
         static_assert(!noexcept(swap(c1, c2)), "");
     }

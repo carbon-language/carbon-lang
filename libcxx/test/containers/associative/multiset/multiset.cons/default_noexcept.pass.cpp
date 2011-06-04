@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <map>
+// <set>
 
-// multimap()
+// multiset()
 //    noexcept(
 //        is_nothrow_default_constructible<allocator_type>::value &&
 //        is_nothrow_default_constructible<key_compare>::value &&
@@ -17,7 +17,7 @@
 
 // This tests a conforming extension
 
-#include <map>
+#include <set>
 #include <cassert>
 
 #include "../../../MoveOnly.h"
@@ -34,19 +34,19 @@ int main()
 {
 #if __has_feature(cxx_noexcept)
     {
-        typedef std::multimap<MoveOnly, MoveOnly> C;
+        typedef std::multiset<MoveOnly> C;
         static_assert(std::is_nothrow_default_constructible<C>::value, "");
     }
     {
-        typedef std::multimap<MoveOnly, MoveOnly, std::less<MoveOnly>, test_allocator<MoveOnly>> C;
+        typedef std::multiset<MoveOnly, std::less<MoveOnly>, test_allocator<MoveOnly>> C;
         static_assert(std::is_nothrow_default_constructible<C>::value, "");
     }
     {
-        typedef std::multimap<MoveOnly, MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
+        typedef std::multiset<MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
         static_assert(!std::is_nothrow_default_constructible<C>::value, "");
     }
     {
-        typedef std::multimap<MoveOnly, MoveOnly, some_comp<MoveOnly>> C;
+        typedef std::multiset<MoveOnly, some_comp<MoveOnly>> C;
         static_assert(!std::is_nothrow_default_constructible<C>::value, "");
     }
 #endif

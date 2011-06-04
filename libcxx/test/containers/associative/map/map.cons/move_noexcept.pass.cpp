@@ -40,7 +40,7 @@ int main()
         static_assert(std::is_nothrow_move_constructible<C>::value, "");
     }
     {
-        typedef std::map<MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
+        typedef std::map<MoveOnly, MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
         static_assert(std::is_nothrow_move_constructible<C>::value, "");
     }
     {

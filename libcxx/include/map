@@ -84,29 +84,29 @@ public:
         noexcept(
             allocator_type::propagate_on_container_move_assignment::value &&
             is_nothrow_move_assignable<allocator_type>::value &&
-            is_nothrow_move_assignable<keycompare>::value);
+            is_nothrow_move_assignable<key_compare>::value);
     map& operator=(initializer_list<value_type> il);
 
     // iterators:
-          iterator begin();
-    const_iterator begin() const;
-          iterator end();
-    const_iterator end()   const;
+          iterator begin() noexcept;
+    const_iterator begin() const noexcept;
+          iterator end() noexcept;
+    const_iterator end()   const noexcept;
 
-          reverse_iterator rbegin();
-    const_reverse_iterator rbegin() const;
-          reverse_iterator rend();
-    const_reverse_iterator rend()   const;
+          reverse_iterator rbegin() noexcept;
+    const_reverse_iterator rbegin() const noexcept;
+          reverse_iterator rend() noexcept;
+    const_reverse_iterator rend()   const noexcept;
 
-    const_iterator         cbegin()  const;
-    const_iterator         cend()    const;
-    const_reverse_iterator crbegin() const;
-    const_reverse_iterator crend()   const;
+    const_iterator         cbegin()  const noexcept;
+    const_iterator         cend()    const noexcept;
+    const_reverse_iterator crbegin() const noexcept;
+    const_reverse_iterator crend()   const noexcept;
 
     // capacity:
-    bool      empty()    const;
-    size_type size()     const;
-    size_type max_size() const;
+    bool      empty()    const noexcept;
+    size_type size()     const noexcept;
+    size_type max_size() const noexcept;
 
     // element access:
     mapped_type& operator[](const key_type& k);
@@ -133,7 +133,7 @@ public:
     iterator  erase(const_iterator position);
     size_type erase(const key_type& k);
     iterator  erase(const_iterator first, const_iterator last);
-    void clear();
+    void clear() noexcept;
 
     void swap(map& m)
         noexcept(
@@ -142,7 +142,7 @@ public:
              __is_nothrow_swappable<allocator_type>::value));
 
     // observers:
-    allocator_type get_allocator() const;
+    allocator_type get_allocator() const noexcept;
     key_compare    key_comp()      const;
     value_compare  value_comp()    const;
 
@@ -259,29 +259,29 @@ public:
         noexcept(
             allocator_type::propagate_on_container_move_assignment::value &&
             is_nothrow_move_assignable<allocator_type>::value &&
-            is_nothrow_move_assignable<keycompare>::value);
+            is_nothrow_move_assignable<key_compare>::value);
     multimap& operator=(initializer_list<value_type> il);
 
     // iterators:
-          iterator begin();
-    const_iterator begin() const;
-          iterator end();
-    const_iterator end()   const;
+          iterator begin() noexcept;
+    const_iterator begin() const noexcept;
+          iterator end() noexcept;
+    const_iterator end()   const noexcept;
 
-          reverse_iterator rbegin();
-    const_reverse_iterator rbegin() const;
-          reverse_iterator rend();
-    const_reverse_iterator rend()   const;
+          reverse_iterator rbegin() noexcept;
+    const_reverse_iterator rbegin() const noexcept;
+          reverse_iterator rend() noexcept;
+    const_reverse_iterator rend()   const noexcept;
 
-    const_iterator         cbegin()  const;
-    const_iterator         cend()    const;
-    const_reverse_iterator crbegin() const;
-    const_reverse_iterator crend()   const;
+    const_iterator         cbegin()  const noexcept;
+    const_iterator         cend()    const noexcept;
+    const_reverse_iterator crbegin() const noexcept;
+    const_reverse_iterator crend()   const noexcept;
 
     // capacity:
-    bool      empty()    const;
-    size_type size()     const;
-    size_type max_size() const;
+    bool      empty()    const noexcept;
+    size_type size()     const noexcept;
+    size_type max_size() const noexcept;
 
     // modifiers:
     template <class... Args>
@@ -301,7 +301,7 @@ public:
     iterator  erase(const_iterator position);
     size_type erase(const key_type& k);
     iterator  erase(const_iterator first, const_iterator last);
-    void clear();
+    void clear() noexcept;
 
     void swap(multimap& m)
         noexcept(
@@ -310,7 +310,7 @@ public:
              __is_nothrow_swappable<allocator_type>::value));
 
     // observers:
-    allocator_type get_allocator() const;
+    allocator_type get_allocator() const noexcept;
     key_compare    key_comp()      const;
     value_compare  value_comp()    const;
 

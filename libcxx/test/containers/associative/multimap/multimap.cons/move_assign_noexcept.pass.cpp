@@ -42,7 +42,7 @@ int main()
         static_assert(!std::is_nothrow_move_assignable<C>::value, "");
     }
     {
-        typedef std::multimap<MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
+        typedef std::multimap<MoveOnly, MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
         static_assert(std::is_nothrow_move_assignable<C>::value, "");
     }
     {

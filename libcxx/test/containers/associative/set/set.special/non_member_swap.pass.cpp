@@ -109,7 +109,7 @@ int main()
     {
         typedef test_allocator<V> A;
         typedef test_compare<std::less<int> > C;
-        typedef std::multiset<int, C, A> M;
+        typedef std::set<int, C, A> M;
         V ar1[] =
         {
             1,
@@ -143,7 +143,7 @@ int main()
     {
         typedef other_allocator<V> A;
         typedef test_compare<std::less<int> > C;
-        typedef std::multiset<int, C, A> M;
+        typedef std::set<int, C, A> M;
         V ar1[] =
         {
             1,

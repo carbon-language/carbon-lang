@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <map>
+// <set>
 
-// map& operator=(map&& c)
+// set& operator=(set&& c)
 //     noexcept(
 //          allocator_type::propagate_on_container_move_assignment::value &&
 //          is_nothrow_move_assignable<allocator_type>::value &&
@@ -17,7 +17,7 @@
 
 // This tests a conforming extension
 
-#include <map>
+#include <set>
 #include <cassert>
 
 #include "../../../MoveOnly.h"
@@ -34,19 +34,19 @@ int main()
 {
 #if __has_feature(cxx_noexcept)
     {
-        typedef std::map<MoveOnly, MoveOnly> C;
+        typedef std::set<MoveOnly> C;
         static_assert(std::is_nothrow_move_assignable<C>::value, "");
     }
     {
-        typedef std::map<MoveOnly, MoveOnly, std::less<MoveOnly>, test_allocator<MoveOnly>> C;
+        typedef std::set<MoveOnly, std::less<MoveOnly>, test_allocator<MoveOnly>> C;
         static_assert(!std::is_nothrow_move_assignable<C>::value, "");
     }
     {
-        typedef std::map<MoveOnly, MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
+        typedef std::set<MoveOnly, std::less<MoveOnly>, other_allocator<MoveOnly>> C;
         static_assert(std::is_nothrow_move_assignable<C>::value, "");
     }
     {
-        typedef std::map<MoveOnly, MoveOnly, some_comp<MoveOnly>> C;
+        typedef std::set<MoveOnly, some_comp<MoveOnly>> C;
         static_assert(!std::is_nothrow_move_assignable<C>::value, "");
     }
 #endif
