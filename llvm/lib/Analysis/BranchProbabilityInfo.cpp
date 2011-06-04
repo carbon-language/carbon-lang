@@ -171,12 +171,11 @@ void BranchProbabilityAnalysis::calcPointerHeuristics(BasicBlock *BB) {
     return;
 
   Value *LHS = CI->getOperand(0);
-  Value *RHS = CI->getOperand(1);
 
   if (!LHS->getType()->isPointerTy())
     return;
 
-  assert(RHS->getType()->isPointerTy());
+  assert(CI->getOperand(1)->getType()->isPointerTy());
 
   BasicBlock *Taken = BI->getSuccessor(0);
   BasicBlock *NonTaken = BI->getSuccessor(1);
