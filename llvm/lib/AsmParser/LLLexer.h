@@ -71,6 +71,9 @@ namespace llvm {
 
     int getNextChar();
     void SkipLineComment();
+    lltok::Kind ReadString(lltok::Kind kind);
+    bool ReadVarName();
+
     lltok::Kind LexIdentifier();
     lltok::Kind LexDigitOrNegative();
     lltok::Kind LexPositive();

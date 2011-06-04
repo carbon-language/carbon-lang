@@ -308,16 +308,8 @@ lltok::Kind LLLexer::LexAt() {
   }
 
   // Handle GlobalVarName: @[-a-zA-Z$._][-a-zA-Z$._0-9]*
-  if (isalpha(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
-      CurPtr[0] == '.' || CurPtr[0] == '_') {
-    ++CurPtr;
-    while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
-           CurPtr[0] == '.' || CurPtr[0] == '_')
-      ++CurPtr;
-
-    StrVal.assign(TokStart+1, CurPtr);   // Skip @
+  if (ReadVarName())
     return lltok::GlobalVar;
-  }
 
   // Handle GlobalVarID: @[0-9]+
   if (isdigit(CurPtr[0])) {
@@ -334,6 +326,39 @@ lltok::Kind LLLexer::LexAt() {
   return lltok::Error;
 }
 
+/// ReadString - Read a string until the closing quote.
+lltok::Kind LLLexer::ReadString(lltok::Kind kind) {
+  const char *Start = CurPtr;
+  while (1) {
+    int CurChar = getNextChar();
+
+    if (CurChar == EOF) {
+      Error("end of file in string constant");
+      return lltok::Error;
+    }
+    if (CurChar == '"') {
+      StrVal.assign(Start, CurPtr-1);
+      UnEscapeLexed(StrVal);
+      return kind;
+    }
+  }
+}
+
+/// ReadVarName - Read the rest of a token containing a variable name.
+bool LLLexer::ReadVarName() {
+  const char *NameStart = CurPtr;
+  if (isalpha(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
+      CurPtr[0] == '.' || CurPtr[0] == '_') {
+    ++CurPtr;
+    while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
+           CurPtr[0] == '.' || CurPtr[0] == '_')
+      ++CurPtr;
+
+    StrVal.assign(NameStart, CurPtr);
+    return true;
+  }
+  return false;
+}
 
 /// LexPercent - Lex all tokens that start with a % character:
 ///   LocalVar   ::= %\"[^\"]*\"
@@ -343,33 +368,12 @@ lltok::Kind LLLexer::LexPercent() {
   // Handle LocalVarName: %\"[^\"]*\"
   if (CurPtr[0] == '"') {
     ++CurPtr;
-
-    while (1) {
-      int CurChar = getNextChar();
-
-      if (CurChar == EOF) {
-        Error("end of file in string constant");
-        return lltok::Error;
-      }
-      if (CurChar == '"') {
-        StrVal.assign(TokStart+2, CurPtr-1);
-        UnEscapeLexed(StrVal);
-        return lltok::LocalVar;
-      }
-    }
+    return ReadString(lltok::LocalVar);
   }
 
   // Handle LocalVarName: %[-a-zA-Z$._][-a-zA-Z$._0-9]*
-  if (isalpha(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
-      CurPtr[0] == '.' || CurPtr[0] == '_') {
-    ++CurPtr;
-    while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
-           CurPtr[0] == '.' || CurPtr[0] == '_')
-      ++CurPtr;
-
-    StrVal.assign(TokStart+1, CurPtr);   // Skip %
+  if (ReadVarName())
     return lltok::LocalVar;
-  }
 
   // Handle LocalVarID: %[0-9]+
   if (isdigit(CurPtr[0])) {
@@ -390,27 +394,16 @@ lltok::Kind LLLexer::LexPercent() {
 ///   QuoteLabel        "[^"]+":
 ///   StringConstant    "[^"]*"
 lltok::Kind LLLexer::LexQuote() {
-  while (1) {
-    int CurChar = getNextChar();
+  lltok::Kind kind = ReadString(lltok::StringConstant);
+  if (kind == lltok::Error || kind == lltok::Eof)
+    return kind;
 
-    if (CurChar == EOF) {
-      Error("end of file in quoted string");
-      return lltok::Error;
-    }
-
-    if (CurChar != '"') continue;
-
-    if (CurPtr[0] != ':') {
-      StrVal.assign(TokStart+1, CurPtr-1);
-      UnEscapeLexed(StrVal);
-      return lltok::StringConstant;
-    }
-
+  if (CurPtr[0] == ':') {
     ++CurPtr;
-    StrVal.assign(TokStart+1, CurPtr-2);
-    UnEscapeLexed(StrVal);
-    return lltok::LabelStr;
+    kind = lltok::LabelStr;
   }
+
+  return kind;
 }
 
 static bool JustWhitespaceNewLine(const char *&Ptr) {
