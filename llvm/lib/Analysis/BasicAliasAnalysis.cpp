@@ -944,7 +944,17 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
       return NoAlias;
   }
   
-  return MayAlias;
+  // Statically, we can see that the base objects are the same, but the
+  // pointers have dynamic offsets which we can't resolve. And none of our
+  // little tricks above worked.
+  //
+  // TODO: Returning PartialAlias instead of MayAlias is a mild hack; the
+  // practical effect of this is protecting TBAA in the case of dynamic
+  // indices into arrays of unions. An alternative way to solve this would
+  // be to have clang emit extra metadata for unions and/or union accesses.
+  // A union-specific solution wouldn't handle the problem for malloc'd
+  // memory however.
+  return PartialAlias;
 }
 
 static AliasAnalysis::AliasResult
