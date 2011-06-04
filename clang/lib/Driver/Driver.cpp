@@ -46,14 +46,14 @@
 using namespace clang::driver;
 using namespace clang;
 
-Driver::Driver(llvm::StringRef _ClangExecutable,
-               llvm::StringRef _DefaultHostTriple,
-               llvm::StringRef _DefaultImageName,
+Driver::Driver(llvm::StringRef ClangExecutable,
+               llvm::StringRef DefaultHostTriple,
+               llvm::StringRef DefaultImageName,
                bool IsProduction, bool CXXIsProduction,
-               Diagnostic &_Diags)
-  : Opts(createDriverOptTable()), Diags(_Diags),
-    ClangExecutable(_ClangExecutable), UseStdLib(true),
-    DefaultHostTriple(_DefaultHostTriple), DefaultImageName(_DefaultImageName),
+               Diagnostic &Diags)
+  : Opts(createDriverOptTable()), Diags(Diags),
+    ClangExecutable(ClangExecutable), UseStdLib(true),
+    DefaultHostTriple(DefaultHostTriple), DefaultImageName(DefaultImageName),
     DriverTitle("clang \"gcc-compatible\" driver"),
     Host(0),
     CCPrintOptionsFilename(0), CCPrintHeadersFilename(0),
