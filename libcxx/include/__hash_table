@@ -33,7 +33,7 @@ struct __hash_node_base
 
     _NodePtr    __next_;
 
-    _LIBCPP_INLINE_VISIBILITY __hash_node_base() : __next_(nullptr) {}
+    _LIBCPP_INLINE_VISIBILITY __hash_node_base() _NOEXCEPT : __next_(nullptr) {}
 };
 
 template <class _Tp, class _VoidPtr>
@@ -80,7 +80,7 @@ public:
 #endif
                                                          pointer;
 
-    _LIBCPP_INLINE_VISIBILITY __hash_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __hash_iterator() _NOEXCEPT {}
 
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
@@ -111,7 +111,7 @@ public:
 
 private:
     _LIBCPP_INLINE_VISIBILITY
-    __hash_iterator(__node_pointer __node)
+    __hash_iterator(__node_pointer __node) _NOEXCEPT
         : __node_(__node)
         {}
 
@@ -154,9 +154,9 @@ public:
                                                       __non_const_node_pointer;
     typedef __hash_iterator<__non_const_node_pointer> __non_const_iterator;
 
-    _LIBCPP_INLINE_VISIBILITY __hash_const_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __hash_const_iterator() _NOEXCEPT {}
     _LIBCPP_INLINE_VISIBILITY 
-    __hash_const_iterator(const __non_const_iterator& __x)
+    __hash_const_iterator(const __non_const_iterator& __x) _NOEXCEPT
         : __node_(__x.__node_)
         {}
 
@@ -189,7 +189,7 @@ public:
 
 private:
     _LIBCPP_INLINE_VISIBILITY
-    __hash_const_iterator(__node_pointer __node)
+    __hash_const_iterator(__node_pointer __node) _NOEXCEPT
         : __node_(__node)
         {}
 
@@ -224,7 +224,7 @@ public:
 #endif
                                                                 pointer;
 
-    _LIBCPP_INLINE_VISIBILITY __hash_local_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __hash_local_iterator() _NOEXCEPT {}
 
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
@@ -258,7 +258,7 @@ public:
 private:
     _LIBCPP_INLINE_VISIBILITY
     __hash_local_iterator(__node_pointer __node, size_t __bucket,
-                          size_t __bucket_count)
+                          size_t __bucket_count) _NOEXCEPT
         : __node_(__node),
           __bucket_(__bucket),
           __bucket_count_(__bucket_count)
@@ -308,9 +308,9 @@ public:
 #endif
                                                        pointer;
 
-    _LIBCPP_INLINE_VISIBILITY __hash_const_local_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __hash_const_local_iterator() _NOEXCEPT {}
     _LIBCPP_INLINE_VISIBILITY
-    __hash_const_local_iterator(const __non_const_iterator& __x)
+    __hash_const_local_iterator(const __non_const_iterator& __x) _NOEXCEPT
         : __node_(__x.__node_),
           __bucket_(__x.__bucket_),
           __bucket_count_(__x.__bucket_count_)
@@ -348,7 +348,7 @@ public:
 private:
     _LIBCPP_INLINE_VISIBILITY
     __hash_const_local_iterator(__node_pointer __node, size_t __bucket,
-                                size_t __bucket_count)
+                                size_t __bucket_count) _NOEXCEPT
         : __node_(__node),
           __bucket_(__bucket),
           __bucket_count_(__bucket_count)
@@ -374,16 +374,19 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     __bucket_list_deallocator()
+        _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value)
         : __data_(0) {}
 
     _LIBCPP_INLINE_VISIBILITY
     __bucket_list_deallocator(const allocator_type& __a, size_type __size)
+        _NOEXCEPT_(is_nothrow_copy_constructible<allocator_type>::value)
         : __data_(__size, __a) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY
     __bucket_list_deallocator(__bucket_list_deallocator&& __x)
+        _NOEXCEPT_(is_nothrow_move_constructible<allocator_type>::value)
         : __data_(_STD::move(__x.__data_))
     {
         __x.size() = 0;
@@ -391,14 +394,18 @@ public:
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-    _LIBCPP_INLINE_VISIBILITY size_type& size()       {return __data_.first();}
-    _LIBCPP_INLINE_VISIBILITY size_type  size() const {return __data_.first();}
-
-    _LIBCPP_INLINE_VISIBILITY allocator_type&       __alloc()       {return __data_.second();}
-    _LIBCPP_INLINE_VISIBILITY const allocator_type& __alloc() const {return __data_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    size_type& size() _NOEXCEPT {return __data_.first();}
+    _LIBCPP_INLINE_VISIBILITY
+    size_type  size() const _NOEXCEPT {return __data_.first();}
 
     _LIBCPP_INLINE_VISIBILITY
-    void operator()(pointer __p)
+    allocator_type& __alloc() _NOEXCEPT {return __data_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    const allocator_type& __alloc() const _NOEXCEPT {return __data_.second();}
+
+    _LIBCPP_INLINE_VISIBILITY
+    void operator()(pointer __p) _NOEXCEPT
     {
         __alloc_traits::deallocate(__alloc(), __p, size());
     }
@@ -424,13 +431,13 @@ public:
     bool __value_constructed;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit __hash_node_destructor(allocator_type& __na)
+    explicit __hash_node_destructor(allocator_type& __na) _NOEXCEPT
         : __na_(__na),
           __value_constructed(false)
         {}
 
     _LIBCPP_INLINE_VISIBILITY
-    void operator()(pointer __p)
+    void operator()(pointer __p) _NOEXCEPT
     {
         if (__value_constructed)
             __alloc_traits::destroy(__na_, _STD::addressof(__p->__value_));
@@ -495,21 +502,32 @@ private:
     __compressed_pair<float, key_equal>               __p3_;
     // --- Member data end ---
 
-    _LIBCPP_INLINE_VISIBILITY size_type& size()       {return __p2_.first();}
+    _LIBCPP_INLINE_VISIBILITY
+    size_type& size() _NOEXCEPT {return __p2_.first();}
 public:
-    _LIBCPP_INLINE_VISIBILITY size_type  size() const {return __p2_.first();}
+    _LIBCPP_INLINE_VISIBILITY
+    size_type  size() const _NOEXCEPT {return __p2_.first();}
 
-    _LIBCPP_INLINE_VISIBILITY       hasher& hash_function()       {return __p2_.second();}
-    _LIBCPP_INLINE_VISIBILITY const hasher& hash_function() const {return __p2_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    hasher& hash_function() _NOEXCEPT {return __p2_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    const hasher& hash_function() const _NOEXCEPT {return __p2_.second();}
 
-    _LIBCPP_INLINE_VISIBILITY float& max_load_factor()       {return __p3_.first();}
-    _LIBCPP_INLINE_VISIBILITY float  max_load_factor() const {return __p3_.first();}
+    _LIBCPP_INLINE_VISIBILITY
+    float& max_load_factor() _NOEXCEPT {return __p3_.first();}
+    _LIBCPP_INLINE_VISIBILITY
+    float  max_load_factor() const _NOEXCEPT {return __p3_.first();}
 
-    _LIBCPP_INLINE_VISIBILITY       key_equal& key_eq()       {return __p3_.second();}
-    _LIBCPP_INLINE_VISIBILITY const key_equal& key_eq() const {return __p3_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    key_equal& key_eq() _NOEXCEPT {return __p3_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    const key_equal& key_eq() const _NOEXCEPT {return __p3_.second();}
 
-    _LIBCPP_INLINE_VISIBILITY __node_allocator&       __node_alloc()       {return __p1_.second();}
-    _LIBCPP_INLINE_VISIBILITY const __node_allocator& __node_alloc() const {return __p1_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    __node_allocator& __node_alloc() _NOEXCEPT {return __p1_.second();}
+    _LIBCPP_INLINE_VISIBILITY
+    const __node_allocator& __node_alloc() const _NOEXCEPT
+        {return __p1_.second();}
 
 public:
     typedef __hash_iterator<__node_pointer>                   iterator;
@@ -517,7 +535,13 @@ public:
     typedef __hash_local_iterator<__node_pointer>             local_iterator;
     typedef __hash_const_local_iterator<__node_const_pointer> const_local_iterator;
 
-    __hash_table();
+    __hash_table()
+        _NOEXCEPT_(
+            is_nothrow_default_constructible<__bucket_list>::value &&
+            is_nothrow_default_constructible<__first_node>::value &&
+            is_nothrow_default_constructible<__node_allocator>::value &&
+            is_nothrow_default_constructible<hasher>::value &&
+            is_nothrow_default_constructible<key_equal>::value);
     __hash_table(const hasher& __hf, const key_equal& __eql);
     __hash_table(const hasher& __hf, const key_equal& __eql,
                  const allocator_type& __a);
@@ -525,14 +549,25 @@ public:
     __hash_table(const __hash_table& __u);
     __hash_table(const __hash_table& __u, const allocator_type& __a);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    __hash_table(__hash_table&& __u);
+    __hash_table(__hash_table&& __u)
+        _NOEXCEPT_(
+            is_nothrow_move_constructible<__bucket_list>::value &&
+            is_nothrow_move_constructible<__first_node>::value &&
+            is_nothrow_move_constructible<__node_allocator>::value &&
+            is_nothrow_move_constructible<hasher>::value &&
+            is_nothrow_move_constructible<key_equal>::value);
     __hash_table(__hash_table&& __u, const allocator_type& __a);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     ~__hash_table();
 
     __hash_table& operator=(const __hash_table& __u);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    __hash_table& operator=(__hash_table&& __u);
+    __hash_table& operator=(__hash_table&& __u)
+        _NOEXCEPT_(
+            __node_traits::propagate_on_container_move_assignment::value &&
+            is_nothrow_move_assignable<__node_allocator>::value &&
+            is_nothrow_move_assignable<hasher>::value &&
+            is_nothrow_move_assignable<key_equal>::value);
 #endif
     template <class _InputIterator>
         void __assign_unique(_InputIterator __first, _InputIterator __last);
@@ -540,7 +575,7 @@ public:
         void __assign_multi(_InputIterator __first, _InputIterator __last);
 
     _LIBCPP_INLINE_VISIBILITY
-    size_type max_size() const
+    size_type max_size() const _NOEXCEPT
     {
         return allocator_traits<__pointer_allocator>::max_size(
             __bucket_list_.get_deleter().__alloc());
@@ -577,21 +612,21 @@ public:
     iterator __insert_multi(const_iterator __p, const value_type& __x);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
-    void clear();
+    void clear() _NOEXCEPT;
     void rehash(size_type __n);
     _LIBCPP_INLINE_VISIBILITY void reserve(size_type __n)
         {rehash(static_cast<size_type>(ceil(__n / max_load_factor())));}
 
     _LIBCPP_INLINE_VISIBILITY
-    size_type bucket_count() const
+    size_type bucket_count() const _NOEXCEPT
     {
         return __bucket_list_.get_deleter().size();
     }
 
-    iterator       begin();
-    iterator       end();
-    const_iterator begin() const;
-    const_iterator end() const;
+    iterator       begin() _NOEXCEPT;
+    iterator       end() _NOEXCEPT;
+    const_iterator begin() const _NOEXCEPT;
+    const_iterator end() const _NOEXCEPT;
 
     template <class _Key>
         _LIBCPP_INLINE_VISIBILITY
@@ -612,7 +647,7 @@ public:
         size_type __erase_unique(const _Key& __k);
     template <class _Key>
         size_type __erase_multi(const _Key& __k);
-    __node_holder remove(const_iterator __p);
+    __node_holder remove(const_iterator __p) _NOEXCEPT;
 
     template <class _Key>
         size_type __count_unique(const _Key& __k) const;
@@ -633,18 +668,25 @@ public:
         pair<const_iterator, const_iterator>
         __equal_range_multi(const _Key& __k) const;
 
-    void swap(__hash_table& __u);
+    void swap(__hash_table& __u)
+        _NOEXCEPT_(
+            (!allocator_traits<__pointer_allocator>::propagate_on_container_swap::value ||
+             __is_nothrow_swappable<__pointer_allocator>::value) &&
+            (!__node_traits::propagate_on_container_swap::value ||
+             __is_nothrow_swappable<__node_allocator>::value) &&
+            __is_nothrow_swappable<hasher>::value &&
+            __is_nothrow_swappable<key_equal>::value);
 
     _LIBCPP_INLINE_VISIBILITY
-    size_type max_bucket_count() const
+    size_type max_bucket_count() const _NOEXCEPT
         {return __bucket_list_.get_deleter().__alloc().max_size();}
     size_type bucket_size(size_type __n) const;
-    _LIBCPP_INLINE_VISIBILITY float load_factor() const
+    _LIBCPP_INLINE_VISIBILITY float load_factor() const _NOEXCEPT
     {
         size_type __bc = bucket_count();
         return __bc != 0 ? (float)size() / __bc : 0.f;
     }
-    _LIBCPP_INLINE_VISIBILITY void max_load_factor(float __mlf)
+    _LIBCPP_INLINE_VISIBILITY void max_load_factor(float __mlf) _NOEXCEPT
         {max_load_factor() = _STD::max(__mlf, load_factor());}
 
     _LIBCPP_INLINE_VISIBILITY local_iterator       begin(size_type __n)
@@ -678,25 +720,40 @@ private:
         void __copy_assign_alloc(const __hash_table& __u, false_type) {}
 
     void __move_assign(__hash_table& __u, false_type);
-    void __move_assign(__hash_table& __u, true_type);
-    _LIBCPP_INLINE_VISIBILITY void __move_assign_alloc(__hash_table& __u)
+    void __move_assign(__hash_table& __u, true_type)
+        _NOEXCEPT_(
+            is_nothrow_move_assignable<__node_allocator>::value &&
+            is_nothrow_move_assignable<hasher>::value &&
+            is_nothrow_move_assignable<key_equal>::value);
+    _LIBCPP_INLINE_VISIBILITY
+    void __move_assign_alloc(__hash_table& __u)
+        _NOEXCEPT_(
+            !__node_traits::propagate_on_container_move_assignment::value ||
+            (is_nothrow_move_assignable<__pointer_allocator>::value &&
+             is_nothrow_move_assignable<__node_allocator>::value))
         {__move_assign_alloc(__u, integral_constant<bool,
              __node_traits::propagate_on_container_move_assignment::value>());}
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__hash_table& __u, true_type)
+        _NOEXCEPT_(
+            is_nothrow_move_assignable<__pointer_allocator>::value &&
+            is_nothrow_move_assignable<__node_allocator>::value)
     {
         __bucket_list_.get_deleter().__alloc() =
                 _STD::move(__u.__bucket_list_.get_deleter().__alloc());
         __node_alloc() = _STD::move(__u.__node_alloc());
     }
     _LIBCPP_INLINE_VISIBILITY
-        void __move_assign_alloc(__hash_table&, false_type) {}
+        void __move_assign_alloc(__hash_table&, false_type) _NOEXCEPT {}
 
     template <class _A>
     _LIBCPP_INLINE_VISIBILITY
     static
     void
     __swap_alloc(_A& __x, _A& __y)
+        _NOEXCEPT_(
+            !allocator_traits<_A>::propagate_on_container_swap::value ||
+            __is_nothrow_swappable<_A>::value)
     {
         __swap_alloc(__x, __y,
                      integral_constant<bool,
@@ -709,6 +766,7 @@ private:
     static
     void
     __swap_alloc(_A& __x, _A& __y, true_type)
+        _NOEXCEPT_(__is_nothrow_swappable<_A>::value)
     {
         using _STD::swap;
         swap(__x, __y);
@@ -718,15 +776,20 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     static
     void
-    __swap_alloc(_A& __x, _A& __y, false_type) {}
+    __swap_alloc(_A& __x, _A& __y, false_type) _NOEXCEPT {}
 
-    void __deallocate(__node_pointer __np);
-    __node_pointer __detach();
+    void __deallocate(__node_pointer __np) _NOEXCEPT;
+    __node_pointer __detach() _NOEXCEPT;
 };
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table()
+    _NOEXCEPT_(
+        is_nothrow_default_constructible<__bucket_list>::value &&
+        is_nothrow_default_constructible<__first_node>::value &&
+        is_nothrow_default_constructible<hasher>::value &&
+        is_nothrow_default_constructible<key_equal>::value)
     : __p2_(0),
       __p3_(1.0f)
 {
@@ -790,6 +853,11 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(const __hash_table& __u,
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u)
+        _NOEXCEPT_(
+            is_nothrow_move_constructible<__bucket_list>::value &&
+            is_nothrow_move_constructible<__first_node>::value &&
+            is_nothrow_move_constructible<hasher>::value &&
+            is_nothrow_move_constructible<key_equal>::value)
     : __bucket_list_(_STD::move(__u.__bucket_list_)),
       __p1_(_STD::move(__u.__p1_)),
       __p2_(_STD::move(__u.__p2_)),
@@ -870,6 +938,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::operator=(const __hash_table& __u)
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 void
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__deallocate(__node_pointer __np)
+    _NOEXCEPT
 {
     __node_allocator& __na = __node_alloc();
     while (__np != nullptr)
@@ -883,7 +952,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__deallocate(__node_pointer __np)
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_pointer
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::__detach()
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__detach() _NOEXCEPT
 {
     size_type __bc = bucket_count();
     for (size_type __i = 0; __i < __bc; ++__i)
@@ -900,6 +969,10 @@ template <class _Tp, class _Hash, class _Equal, class _Alloc>
 void
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
         __hash_table& __u, true_type)
+    _NOEXCEPT_(
+        is_nothrow_move_assignable<__node_allocator>::value &&
+        is_nothrow_move_assignable<hasher>::value &&
+        is_nothrow_move_assignable<key_equal>::value)
 {
     clear();
     __bucket_list_.reset(__u.__bucket_list_.release());
@@ -972,6 +1045,11 @@ template <class _Tp, class _Hash, class _Equal, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 __hash_table<_Tp, _Hash, _Equal, _Alloc>&
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::operator=(__hash_table&& __u)
+    _NOEXCEPT_(
+        __node_traits::propagate_on_container_move_assignment::value &&
+        is_nothrow_move_assignable<__node_allocator>::value &&
+        is_nothrow_move_assignable<hasher>::value &&
+        is_nothrow_move_assignable<key_equal>::value)
 {
     __move_assign(__u, integral_constant<bool,
                   __node_traits::propagate_on_container_move_assignment::value>());
@@ -1051,7 +1129,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__assign_multi(_InputIterator __first,
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::begin()
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() _NOEXCEPT
 {
     return iterator(__p1_.first().__next_);
 }
@@ -1059,7 +1137,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin()
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::end()
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::end() _NOEXCEPT
 {
     return iterator(nullptr);
 }
@@ -1067,7 +1145,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::end()
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::const_iterator
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() const
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() const _NOEXCEPT
 {
     return const_iterator(__p1_.first().__next_);
 }
@@ -1075,14 +1153,14 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::begin() const
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 inline _LIBCPP_INLINE_VISIBILITY
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::const_iterator
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::end() const
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::end() const _NOEXCEPT
 {
     return const_iterator(nullptr);
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 void
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::clear()
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::clear() _NOEXCEPT
 {
     if (size() > 0)
     {
@@ -1645,7 +1723,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__erase_multi(const _Key& __k)
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_holder
-__hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p)
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
 {
     // current node
     __node_pointer __cn = const_cast<__node_pointer>(__p.__node_);
@@ -1776,6 +1854,13 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__equal_range_multi(
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 void
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::swap(__hash_table& __u)
+    _NOEXCEPT_(
+        (!allocator_traits<__pointer_allocator>::propagate_on_container_swap::value ||
+         __is_nothrow_swappable<__pointer_allocator>::value) &&
+        (!__node_traits::propagate_on_container_swap::value ||
+         __is_nothrow_swappable<__node_allocator>::value) &&
+        __is_nothrow_swappable<hasher>::value &&
+        __is_nothrow_swappable<key_equal>::value)
 {
     {
     __node_pointer_pointer __npp = __bucket_list_.release();
@@ -1812,6 +1897,16 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::bucket_size(size_type __n) const
             ;
     }
     return __r;
+}
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(__hash_table<_Tp, _Hash, _Equal, _Alloc>& __x,
+     __hash_table<_Tp, _Hash, _Equal, _Alloc>& __y)
+    _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
+{
+    __x.swap(__y);
 }
 
 _LIBCPP_END_NAMESPACE_STD
