@@ -632,8 +632,6 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   if (HaveInsertPoint())
     if (CGDebugInfo *DI = getDebugInfo()) {
       DI->setLocation(D.getLocation());
-      DI->UpdateLineDirectiveRegion(Builder);
-      DI->EmitStopPoint(Builder);
       if (Target.useGlobalsForAutomaticVariables()) {
         DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr), &D);
       } else
