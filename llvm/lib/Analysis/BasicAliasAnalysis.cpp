@@ -465,12 +465,12 @@ namespace {
 
     virtual AliasResult alias(const Location &LocA,
                               const Location &LocB) {
-      assert(Visited.empty() && "Visited must be cleared after use!");
+      assert(AliasCache.empty() && "AliasCache must be cleared after use!");
       assert(notDifferentParent(LocA.Ptr, LocB.Ptr) &&
              "BasicAliasAnalysis doesn't support interprocedural queries.");
       AliasResult Alias = aliasCheck(LocA.Ptr, LocA.Size, LocA.TBAATag,
                                      LocB.Ptr, LocB.Size, LocB.TBAATag);
-      Visited.clear();
+      AliasCache.clear();
       return Alias;
     }
 
@@ -506,7 +506,12 @@ namespace {
     }
     
   private:
-    // Visited - Track instructions visited by a aliasPHI, aliasSelect(), and aliasGEP().
+    // AliasCache - Track alias queries to guard against recursion.
+    typedef std::pair<Location, Location> LocPair;
+    typedef DenseMap<LocPair, AliasResult> AliasCacheTy;
+    AliasCacheTy AliasCache;
+
+    // Visited - Track instructions visited by pointsToConstantMemory.
     SmallPtrSet<const Value*, 16> Visited;
 
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP
@@ -822,13 +827,6 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
                              const MDNode *V2TBAAInfo,
                              const Value *UnderlyingV1,
                              const Value *UnderlyingV2) {
-  // If this GEP has been visited before, we're on a use-def cycle.
-  // Such cycles are only valid when PHI nodes are involved or in unreachable
-  // code. The visitPHI function catches cycles containing PHIs, but there
-  // could still be a cycle without PHIs in unreachable code.
-  if (!Visited.insert(GEP1))
-    return MayAlias;
-
   int64_t GEP1BaseOffset;
   SmallVector<VariableGEPIndex, 4> GEP1VariableIndices;
 
@@ -969,13 +967,6 @@ BasicAliasAnalysis::aliasSelect(const SelectInst *SI, uint64_t SISize,
                                 const MDNode *SITBAAInfo,
                                 const Value *V2, uint64_t V2Size,
                                 const MDNode *V2TBAAInfo) {
-  // If this select has been visited before, we're on a use-def cycle.
-  // Such cycles are only valid when PHI nodes are involved or in unreachable
-  // code. The visitPHI function catches cycles containing PHIs, but there
-  // could still be a cycle without PHIs in unreachable code.
-  if (!Visited.insert(SI))
-    return MayAlias;
-
   // If the values are Selects with the same condition, we can do a more precise
   // check: just check for aliases between the values on corresponding arms.
   if (const SelectInst *SI2 = dyn_cast<SelectInst>(V2))
@@ -998,11 +989,6 @@ BasicAliasAnalysis::aliasSelect(const SelectInst *SI, uint64_t SISize,
   if (Alias == MayAlias)
     return MayAlias;
 
-  // If V2 is visited, the recursive case will have been caught in the
-  // above aliasCheck call, so these subsequent calls to aliasCheck
-  // don't need to assume that V2 is being visited recursively.
-  Visited.erase(V2);
-
   AliasResult ThisAlias =
     aliasCheck(V2, V2Size, V2TBAAInfo, SI->getFalseValue(), SISize, SITBAAInfo);
   return MergeAliasResults(ThisAlias, Alias);
@@ -1015,10 +1001,6 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
                              const MDNode *PNTBAAInfo,
                              const Value *V2, uint64_t V2Size,
                              const MDNode *V2TBAAInfo) {
-  // The PHI node has already been visited, avoid recursion any further.
-  if (!Visited.insert(PN))
-    return MayAlias;
-
   // If the values are PHIs in the same block, we can do a more precise
   // as well as efficient check: just check for aliases between the values
   // on corresponding edges.
@@ -1067,11 +1049,6 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
   // NoAlias / MustAlias. Otherwise, returns MayAlias.
   for (unsigned i = 1, e = V1Srcs.size(); i != e; ++i) {
     Value *V = V1Srcs[i];
-
-    // If V2 is visited, the recursive case will have been caught in the
-    // above aliasCheck call, so these subsequent calls to aliasCheck
-    // don't need to assume that V2 is being visited recursively.
-    Visited.erase(V2);
 
     AliasResult ThisAlias = aliasCheck(V2, V2Size, V2TBAAInfo,
                                        V, PNSize, PNTBAAInfo);
@@ -1162,6 +1139,17 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
         (V2Size != UnknownSize && isObjectSmallerThan(O1, V2Size, *TD)))
       return NoAlias;
   
+  // Check the cache before climbing up use-def chains. This also terminates
+  // otherwise infinitely recursive queries.
+  LocPair Locs(Location(V1, V1Size, V1TBAAInfo),
+               Location(V2, V2Size, V2TBAAInfo));
+  if (V1 > V2)
+    std::swap(Locs.first, Locs.second);
+  std::pair<AliasCacheTy::iterator, bool> Pair =
+    AliasCache.insert(std::make_pair(Locs, MayAlias));
+  if (!Pair.second)
+    return Pair.first->second;
+
   // FIXME: This isn't aggressively handling alias(GEP, PHI) for example: if the
   // GEP can't simplify, we don't even look at the PHI cases.
   if (!isa<GEPOperator>(V1) && isa<GEPOperator>(V2)) {
@@ -1171,7 +1159,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   }
   if (const GEPOperator *GV1 = dyn_cast<GEPOperator>(V1)) {
     AliasResult Result = aliasGEP(GV1, V1Size, V2, V2Size, V2TBAAInfo, O1, O2);
-    if (Result != MayAlias) return Result;
+    if (Result != MayAlias) return AliasCache[Locs] = Result;
   }
 
   if (isa<PHINode>(V2) && !isa<PHINode>(V1)) {
@@ -1181,7 +1169,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   if (const PHINode *PN = dyn_cast<PHINode>(V1)) {
     AliasResult Result = aliasPHI(PN, V1Size, V1TBAAInfo,
                                   V2, V2Size, V2TBAAInfo);
-    if (Result != MayAlias) return Result;
+    if (Result != MayAlias) return AliasCache[Locs] = Result;
   }
 
   if (isa<SelectInst>(V2) && !isa<SelectInst>(V1)) {
@@ -1191,7 +1179,7 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   if (const SelectInst *S1 = dyn_cast<SelectInst>(V1)) {
     AliasResult Result = aliasSelect(S1, V1Size, V1TBAAInfo,
                                      V2, V2Size, V2TBAAInfo);
-    if (Result != MayAlias) return Result;
+    if (Result != MayAlias) return AliasCache[Locs] = Result;
   }
 
   // If both pointers are pointing into the same object and one of them
@@ -1200,8 +1188,10 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   if (TD && O1 == O2)
     if ((V1Size != UnknownSize && isObjectSize(O1, V1Size, *TD)) ||
         (V2Size != UnknownSize && isObjectSize(O2, V2Size, *TD)))
-      return PartialAlias;
+      return AliasCache[Locs] = PartialAlias;
 
-  return AliasAnalysis::alias(Location(V1, V1Size, V1TBAAInfo),
-                              Location(V2, V2Size, V2TBAAInfo));
+  AliasResult Result =
+    AliasAnalysis::alias(Location(V1, V1Size, V1TBAAInfo),
+                         Location(V2, V2Size, V2TBAAInfo));
+  return AliasCache[Locs] = Result;
 }

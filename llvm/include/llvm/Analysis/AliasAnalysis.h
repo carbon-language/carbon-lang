@@ -38,6 +38,7 @@
 #define LLVM_ANALYSIS_ALIAS_ANALYSIS_H
 
 #include "llvm/Support/CallSite.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
@@ -485,6 +486,32 @@ public:
   void replaceWithNewValue(Value *Old, Value *New) {
     copyValue(Old, New);
     deleteValue(Old);
+  }
+};
+
+// Specialize DenseMapInfo for Location.
+template<>
+struct DenseMapInfo<AliasAnalysis::Location> {
+  static inline AliasAnalysis::Location getEmptyKey() {
+    return
+      AliasAnalysis::Location(DenseMapInfo<const Value *>::getEmptyKey(),
+                              0, 0);
+  }
+  static inline AliasAnalysis::Location getTombstoneKey() {
+    return
+      AliasAnalysis::Location(DenseMapInfo<const Value *>::getTombstoneKey(),
+                              0, 0);
+  }
+  static unsigned getHashValue(const AliasAnalysis::Location &Val) {
+    return DenseMapInfo<const Value *>::getHashValue(Val.Ptr) ^
+           DenseMapInfo<uint64_t>::getHashValue(Val.Size) ^
+           DenseMapInfo<const MDNode *>::getHashValue(Val.TBAATag);
+  }
+  static bool isEqual(const AliasAnalysis::Location &LHS,
+                      const AliasAnalysis::Location &RHS) {
+    return LHS.Ptr == RHS.Ptr &&
+           LHS.Size == RHS.Size &&
+           LHS.TBAATag == RHS.TBAATag;
   }
 };
 
