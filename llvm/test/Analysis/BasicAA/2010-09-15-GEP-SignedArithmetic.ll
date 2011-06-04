@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {1 partial alias}
+; RUN: opt < %s -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {1 may alias}
 ; PR7959
 
 target datalayout = "e-p:32:32:32"
