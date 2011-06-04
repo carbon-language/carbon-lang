@@ -4046,13 +4046,11 @@ public:
   /// \brief Build an empty __builtin_astype
   explicit AsTypeExpr(EmptyShell Empty) : Expr(AsTypeExprClass, Empty) {}
   
-  ~AsTypeExpr() { }
-  
   /// getSrcExpr - Return the Expr to be converted.
   Expr *getSrcExpr() const { return SrcExpr; }
   QualType getDstType() const { return DstType; }
   
-  virtual SourceRange getSourceRange() const {
+  SourceRange getSourceRange() const {
     return SourceRange(BuiltinLoc, RParenLoc);
   }
   
