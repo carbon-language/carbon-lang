@@ -632,7 +632,7 @@ public:
 #endif
                                        pointer;
 
-    _LIBCPP_INLINE_VISIBILITY __tree_iterator() {}
+    _LIBCPP_INLINE_VISIBILITY __tree_iterator() _NOEXCEPT {}
 
     _LIBCPP_INLINE_VISIBILITY reference operator*() const {return __ptr_->__value_;}
     _LIBCPP_INLINE_VISIBILITY pointer operator->() const {return &__ptr_->__value_;}
@@ -662,7 +662,7 @@ public:
 
 private:
     _LIBCPP_INLINE_VISIBILITY
-    explicit __tree_iterator(__node_pointer __p) : __ptr_(__p) {}
+    explicit __tree_iterator(__node_pointer __p) _NOEXCEPT : __ptr_(__p) {}
     template <class, class, class> friend class __tree;
     template <class, class, class> friend class _LIBCPP_VISIBLE __tree_const_iterator;
     template <class> friend class _LIBCPP_VISIBLE __map_iterator;
@@ -716,7 +716,8 @@ private:
                                                  __non_const_iterator;
 public:
     _LIBCPP_INLINE_VISIBILITY
-    __tree_const_iterator(__non_const_iterator __p) : __ptr_(__p.__ptr_) {}
+    __tree_const_iterator(__non_const_iterator __p) _NOEXCEPT
+        : __ptr_(__p.__ptr_) {}
 
     _LIBCPP_INLINE_VISIBILITY reference operator*() const {return __ptr_->__value_;}
     _LIBCPP_INLINE_VISIBILITY pointer operator->() const {return &__ptr_->__value_;}
@@ -746,7 +747,8 @@ public:
 
 private:
     _LIBCPP_INLINE_VISIBILITY
-    explicit __tree_const_iterator(__node_pointer __p) : __ptr_(__p) {}
+    explicit __tree_const_iterator(__node_pointer __p) _NOEXCEPT
+        : __ptr_(__p) {}
     template <class, class, class> friend class __tree;
     template <class, class, class, class> friend class _LIBCPP_VISIBLE map;
     template <class, class, class, class> friend class _LIBCPP_VISIBLE multimap;
@@ -805,7 +807,7 @@ private:
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    __node_pointer __end_node()
+    __node_pointer __end_node() _NOEXCEPT
     {
         return static_cast<__node_pointer>
                (
@@ -813,7 +815,7 @@ public:
                );
     }
     _LIBCPP_INLINE_VISIBILITY
-    __node_const_pointer __end_node() const
+    __node_const_pointer __end_node() const _NOEXCEPT
     {
         return static_cast<__node_const_pointer>
                (
@@ -821,39 +823,45 @@ public:
                );
     }
     _LIBCPP_INLINE_VISIBILITY
-          __node_allocator& __node_alloc()       {return __pair1_.second();}
+          __node_allocator& __node_alloc() _NOEXCEPT {return __pair1_.second();}
 private:
     _LIBCPP_INLINE_VISIBILITY
-    const __node_allocator& __node_alloc() const {return __pair1_.second();}
+    const __node_allocator& __node_alloc() const _NOEXCEPT
+        {return __pair1_.second();}
     _LIBCPP_INLINE_VISIBILITY
-          __node_pointer& __begin_node()         {return __begin_node_;}
+          __node_pointer& __begin_node() _NOEXCEPT {return __begin_node_;}
     _LIBCPP_INLINE_VISIBILITY
-    const __node_pointer& __begin_node()   const {return __begin_node_;}
+    const __node_pointer& __begin_node() const _NOEXCEPT {return __begin_node_;}
 public:
     _LIBCPP_INLINE_VISIBILITY
-    allocator_type __alloc() const {return allocator_type(__node_alloc());}
+    allocator_type __alloc() const _NOEXCEPT
+        {return allocator_type(__node_alloc());}
 private:
     _LIBCPP_INLINE_VISIBILITY
-          size_type& size()                      {return __pair3_.first();}
+          size_type& size() _NOEXCEPT {return __pair3_.first();}
 public:
     _LIBCPP_INLINE_VISIBILITY
-    const size_type& size()                const {return __pair3_.first();}
+    const size_type& size() const _NOEXCEPT {return __pair3_.first();}
     _LIBCPP_INLINE_VISIBILITY
-          value_compare& value_comp()            {return __pair3_.second();}
+          value_compare& value_comp() _NOEXCEPT {return __pair3_.second();}
     _LIBCPP_INLINE_VISIBILITY
-    const value_compare& value_comp()      const {return __pair3_.second();}
+    const value_compare& value_comp() const _NOEXCEPT
+        {return __pair3_.second();}
 public:
     _LIBCPP_INLINE_VISIBILITY
-    __node_pointer       __root()
+    __node_pointer __root() _NOEXCEPT
         {return static_cast<__node_pointer>      (__end_node()->__left_);}
     _LIBCPP_INLINE_VISIBILITY
-    __node_const_pointer __root() const
+    __node_const_pointer __root() const _NOEXCEPT
         {return static_cast<__node_const_pointer>(__end_node()->__left_);}
 
     typedef __tree_iterator<value_type, __node_pointer, difference_type>             iterator;
     typedef __tree_const_iterator<value_type, __node_const_pointer, difference_type> const_iterator;
 
-    explicit __tree(const value_compare& __comp);
+    explicit __tree(const value_compare& __comp)
+        _NOEXCEPT_(
+            is_nothrow_default_constructible<__node_allocator>::value &&
+            is_nothrow_copy_constructible<value_compare>::value);
     explicit __tree(const allocator_type& __a);
     __tree(const value_compare& __comp, const allocator_type& __a);
     __tree(const __tree& __t);
@@ -863,28 +871,40 @@ public:
     template <class _InputIterator>
         void __assign_multi(_InputIterator __first, _InputIterator __last);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    __tree(__tree&& __t);
+    __tree(__tree&& __t)
+        _NOEXCEPT_(
+            is_nothrow_move_constructible<__node_allocator>::value &&
+            is_nothrow_move_constructible<value_compare>::value);
     __tree(__tree&& __t, const allocator_type& __a);
-    __tree& operator=(__tree&& __t);
+    __tree& operator=(__tree&& __t)
+        _NOEXCEPT_(
+            __node_traits::propagate_on_container_move_assignment::value &&
+            is_nothrow_move_assignable<value_compare>::value &&
+            is_nothrow_move_assignable<__node_allocator>::value);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     ~__tree();
 
     _LIBCPP_INLINE_VISIBILITY
-          iterator begin()       {return       iterator(__begin_node());}
+          iterator begin()  _NOEXCEPT {return       iterator(__begin_node());}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator begin() const {return const_iterator(__begin_node());}
+    const_iterator begin() const _NOEXCEPT {return const_iterator(__begin_node());}
     _LIBCPP_INLINE_VISIBILITY
-          iterator end()         {return       iterator(__end_node());}
+          iterator end() _NOEXCEPT {return       iterator(__end_node());}
     _LIBCPP_INLINE_VISIBILITY
-    const_iterator end()   const {return const_iterator(__end_node());}
+    const_iterator end() const _NOEXCEPT {return const_iterator(__end_node());}
 
     _LIBCPP_INLINE_VISIBILITY
-    size_type max_size() const {return __node_traits::max_size(__node_alloc());}
+    size_type max_size() const _NOEXCEPT
+        {return __node_traits::max_size(__node_alloc());}
 
-    void clear();
+    void clear() _NOEXCEPT;
 
-    void swap(__tree& __t);
+    void swap(__tree& __t)
+        _NOEXCEPT_(
+            __is_nothrow_swappable<value_compare>::value &&
+            (!__node_traits::propagate_on_container_swap::value ||
+             __is_nothrow_swappable<__node_allocator>::value));
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_VARIADICS
@@ -1019,7 +1039,7 @@ private:
         __node_holder __construct_node(const value_type& __v);
 #endif
 
-    void destroy(__node_pointer __nd);
+    void destroy(__node_pointer __nd) _NOEXCEPT;
 
     _LIBCPP_INLINE_VISIBILITY
     void __copy_assign_alloc(const __tree& __t)
@@ -1033,31 +1053,42 @@ private:
     void __copy_assign_alloc(const __tree& __t, false_type) {}
 
     void __move_assign(__tree& __t, false_type);
-    void __move_assign(__tree& __t, true_type);
+    void __move_assign(__tree& __t, true_type)
+        _NOEXCEPT_(is_nothrow_move_assignable<value_compare>::value &&
+                   is_nothrow_move_assignable<__node_allocator>::value);
 
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__tree& __t)
+        _NOEXCEPT_(
+            !__node_traits::propagate_on_container_move_assignment::value ||
+            is_nothrow_move_assignable<__node_allocator>::value)
         {__move_assign_alloc(__t, integral_constant<bool,
              __node_traits::propagate_on_container_move_assignment::value>());}
 
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__tree& __t, true_type)
+        _NOEXCEPT_(is_nothrow_move_assignable<__node_allocator>::value)
         {__node_alloc() = _STD::move(__t.__node_alloc());}
     _LIBCPP_INLINE_VISIBILITY
-    void __move_assign_alloc(__tree& __t, false_type) {}
+    void __move_assign_alloc(__tree& __t, false_type) _NOEXCEPT {}
 
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y)
+        _NOEXCEPT_(
+            !__node_traits::propagate_on_container_swap::value ||
+            __is_nothrow_swappable<__node_allocator>::value)
         {__swap_alloc(__x, __y, integral_constant<bool,
                       __node_traits::propagate_on_container_swap::value>());}
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, true_type)
+        _NOEXCEPT_(__is_nothrow_swappable<__node_allocator>::value)
         {
             using _STD::swap;
             swap(__x, __y);
         }
     _LIBCPP_INLINE_VISIBILITY
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, false_type)
+        _NOEXCEPT
         {}
 
     __node_pointer __detach();
@@ -1066,6 +1097,9 @@ private:
 
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(const value_compare& __comp)
+        _NOEXCEPT_(
+            is_nothrow_default_constructible<__node_allocator>::value &&
+            is_nothrow_copy_constructible<value_compare>::value)
     : __pair3_(0, __comp)
 {
     __begin_node() = __end_node();
@@ -1240,6 +1274,9 @@ __tree<_Tp, _Compare, _Allocator>::__tree(const __tree& __t)
 
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t)
+    _NOEXCEPT_(
+        is_nothrow_move_constructible<__node_allocator>::value &&
+        is_nothrow_move_constructible<value_compare>::value)
     : __begin_node_(_STD::move(__t.__begin_node_)),
       __pair1_(_STD::move(__t.__pair1_)),
       __pair3_(_STD::move(__t.__pair3_))
@@ -1284,6 +1321,8 @@ __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t, const allocator_type& __
 template <class _Tp, class _Compare, class _Allocator>
 void
 __tree<_Tp, _Compare, _Allocator>::__move_assign(__tree& __t, true_type)
+    _NOEXCEPT_(is_nothrow_move_assignable<value_compare>::value &&
+               is_nothrow_move_assignable<__node_allocator>::value)
 {
     destroy(static_cast<__node_pointer>(__end_node()->__left_));
     __begin_node_ = __t.__begin_node_;
@@ -1350,6 +1389,11 @@ __tree<_Tp, _Compare, _Allocator>::__move_assign(__tree& __t, false_type)
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>&
 __tree<_Tp, _Compare, _Allocator>::operator=(__tree&& __t)
+    _NOEXCEPT_(
+        __node_traits::propagate_on_container_move_assignment::value &&
+        is_nothrow_move_assignable<value_compare>::value &&
+        is_nothrow_move_assignable<__node_allocator>::value)
+        
 {
     __move_assign(__t, integral_constant<bool,
                   __node_traits::propagate_on_container_move_assignment::value>());
@@ -1366,7 +1410,7 @@ __tree<_Tp, _Compare, _Allocator>::~__tree()
 
 template <class _Tp, class _Compare, class _Allocator>
 void
-__tree<_Tp, _Compare, _Allocator>::destroy(__node_pointer __nd)
+__tree<_Tp, _Compare, _Allocator>::destroy(__node_pointer __nd) _NOEXCEPT
 {
     if (__nd != nullptr)
     {
@@ -1381,6 +1425,10 @@ __tree<_Tp, _Compare, _Allocator>::destroy(__node_pointer __nd)
 template <class _Tp, class _Compare, class _Allocator>
 void
 __tree<_Tp, _Compare, _Allocator>::swap(__tree& __t)
+    _NOEXCEPT_(
+        __is_nothrow_swappable<value_compare>::value &&
+        (!__node_traits::propagate_on_container_swap::value ||
+         __is_nothrow_swappable<__node_allocator>::value))
 {
     using _STD::swap;
     swap(__begin_node_, __t.__begin_node_);
@@ -1399,7 +1447,7 @@ __tree<_Tp, _Compare, _Allocator>::swap(__tree& __t)
 
 template <class _Tp, class _Compare, class _Allocator>
 void
-__tree<_Tp, _Compare, _Allocator>::clear()
+__tree<_Tp, _Compare, _Allocator>::clear() _NOEXCEPT
 {
     destroy(__root());
     size() = 0;
@@ -2219,6 +2267,16 @@ __tree<_Tp, _Compare, _Allocator>::remove(const_iterator __p)
     __tree_remove(__end_node()->__left_,
                   static_cast<__node_base_pointer>(__np));
     return __node_holder(__np, _D(__node_alloc()));
+}
+
+template <class _Tp, class _Compare, class _Allocator>
+inline _LIBCPP_INLINE_VISIBILITY
+void
+swap(__tree<_Tp, _Compare, _Allocator>& __x,
+     __tree<_Tp, _Compare, _Allocator>& __y)
+    _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
+{
+    __x.swap(__y);
 }
 
 _LIBCPP_END_NAMESPACE_STD
