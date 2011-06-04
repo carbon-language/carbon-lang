@@ -713,16 +713,13 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
   // If the size is zero, there won't be any actual memory access, so
   // just bind the return value to the destination buffer and return.
   if (stateZeroSize) {
+    stateZeroSize = stateZeroSize->BindExpr(CE, destVal);
     C.addTransition(stateZeroSize);
-    if (IsMempcpy)
-      state->BindExpr(CE, destVal);
-    else
-      state->BindExpr(CE, sizeVal);
-    return;
   }
 
   // If the size can be nonzero, we have to check the other arguments.
   if (stateNonZeroSize) {
+    state = stateNonZeroSize;
 
     // Ensure the destination is not null. If it is NULL there will be a
     // NULL pointer dereference.

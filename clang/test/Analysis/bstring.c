@@ -136,6 +136,18 @@ void memcpy13() {
   memcpy(a, 0, 0); // no-warning
 }
 
+void memcpy_unknown_size (size_t n) {
+  char a[4], b[4] = {1};
+  if (memcpy(a, b, n) != a)
+    (void)*(char*)0; // no-warning
+}
+
+void memcpy_unknown_size_warn (size_t n) {
+  char a[4];
+  if (memcpy(a, 0, n) != a) // expected-warning{{Null pointer argument in call to byte string function}}
+    (void)*(char*)0; // no-warning
+}
+
 //===----------------------------------------------------------------------===
 // mempcpy()
 //===----------------------------------------------------------------------===
@@ -244,6 +256,12 @@ void mempcpy12() {
 void mempcpy13() {
   char a[4] = {0};
   mempcpy(a, 0, 0); // no-warning
+}
+
+void mempcpy_unknown_size_warn (size_t n) {
+  char a[4];
+  if (mempcpy(a, 0, n) != a) // expected-warning{{Null pointer argument in call to byte string function}}
+    (void)*(char*)0; // no-warning
 }
 
 //===----------------------------------------------------------------------===
