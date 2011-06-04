@@ -55,7 +55,7 @@ __root, have a non-null __parent_ field.
 template <class _NodePtr>
 inline _LIBCPP_INLINE_VISIBILITY
 bool
-__tree_is_left_child(_NodePtr __x)
+__tree_is_left_child(_NodePtr __x) _NOEXCEPT
 {
     return __x == __x->__parent_->__left_;
 }
@@ -121,7 +121,7 @@ __tree_invariant(_NodePtr __root)
 template <class _NodePtr>
 inline _LIBCPP_INLINE_VISIBILITY
 _NodePtr
-__tree_min(_NodePtr __x)
+__tree_min(_NodePtr __x) _NOEXCEPT
 {
     while (__x->__left_ != nullptr)
         __x = __x->__left_;
@@ -133,7 +133,7 @@ __tree_min(_NodePtr __x)
 template <class _NodePtr>
 inline _LIBCPP_INLINE_VISIBILITY
 _NodePtr
-__tree_max(_NodePtr __x)
+__tree_max(_NodePtr __x) _NOEXCEPT
 {
     while (__x->__right_ != nullptr)
         __x = __x->__right_;
@@ -144,7 +144,7 @@ __tree_max(_NodePtr __x)
 // Precondition:  __x != nullptr.
 template <class _NodePtr>
 _NodePtr
-__tree_next(_NodePtr __x)
+__tree_next(_NodePtr __x) _NOEXCEPT
 {
     if (__x->__right_ != nullptr)
         return __tree_min(__x->__right_);
@@ -157,7 +157,7 @@ __tree_next(_NodePtr __x)
 // Precondition:  __x != nullptr.
 template <class _NodePtr>
 _NodePtr
-__tree_prev(_NodePtr __x)
+__tree_prev(_NodePtr __x) _NOEXCEPT
 {
     if (__x->__left_ != nullptr)
         return __tree_max(__x->__left_);
@@ -170,7 +170,7 @@ __tree_prev(_NodePtr __x)
 // Precondition:  __x != nullptr.
 template <class _NodePtr>
 _NodePtr
-__tree_leaf(_NodePtr __x)
+__tree_leaf(_NodePtr __x) _NOEXCEPT
 {
     while (true)
     {
@@ -194,7 +194,7 @@ __tree_leaf(_NodePtr __x)
 // Precondition:  __x->__right_ != nullptr
 template <class _NodePtr>
 void
-__tree_left_rotate(_NodePtr __x)
+__tree_left_rotate(_NodePtr __x) _NOEXCEPT
 {
     _NodePtr __y = __x->__right_;
     __x->__right_ = __y->__left_;
@@ -214,7 +214,7 @@ __tree_left_rotate(_NodePtr __x)
 // Precondition:  __x->__left_ != nullptr
 template <class _NodePtr>
 void
-__tree_right_rotate(_NodePtr __x)
+__tree_right_rotate(_NodePtr __x) _NOEXCEPT
 {
     _NodePtr __y = __x->__left_;
     __x->__left_ = __y->__right_;
@@ -239,7 +239,7 @@ __tree_right_rotate(_NodePtr __x)
 //                may be different than the value passed in as __root.
 template <class _NodePtr>
 void
-__tree_balance_after_insert(_NodePtr __root, _NodePtr __x)
+__tree_balance_after_insert(_NodePtr __root, _NodePtr __x) _NOEXCEPT
 {
     __x->__is_black_ = __x == __root;
     while (__x != __root && !__x->__parent_->__is_black_)
@@ -309,7 +309,7 @@ __tree_balance_after_insert(_NodePtr __root, _NodePtr __x)
 //                may be different than the value passed in as __root.
 template <class _NodePtr>
 void
-__tree_remove(_NodePtr __root, _NodePtr __z)
+__tree_remove(_NodePtr __root, _NodePtr __z) _NOEXCEPT
 {
     // __z will be removed from the tree.  Client still needs to destruct/deallocate it
     // __y is either __z, or if __z has two children, __tree_next(__z).
@@ -514,13 +514,13 @@ public:
     bool __value_constructed;
 
     _LIBCPP_INLINE_VISIBILITY
-    explicit __tree_node_destructor(allocator_type& __na)
+    explicit __tree_node_destructor(allocator_type& __na) _NOEXCEPT
         : __na_(__na),
           __value_constructed(false)
         {}
 
     _LIBCPP_INLINE_VISIBILITY
-    void operator()(pointer __p)
+    void operator()(pointer __p) _NOEXCEPT
     {
         if (__value_constructed)
             __alloc_traits::destroy(__na_, _STD::addressof(__p->__value_));
@@ -541,7 +541,7 @@ public:
     pointer __left_;
 
     _LIBCPP_INLINE_VISIBILITY
-    __tree_end_node() : __left_() {}
+    __tree_end_node() _NOEXCEPT : __left_() {}
 };
 
 template <class _VoidPtr>
@@ -580,7 +580,8 @@ public:
     bool __is_black_;
 
     _LIBCPP_INLINE_VISIBILITY
-    __tree_node_base() : __right_(), __parent_(), __is_black_(false) {}
+    __tree_node_base() _NOEXCEPT
+        : __right_(), __parent_(), __is_black_(false) {}
 };
 
 template <class _Tp, class _VoidPtr>
@@ -1015,7 +1016,7 @@ public:
     typedef __tree_node_destructor<__node_allocator> _D;
     typedef unique_ptr<__node, _D> __node_holder;
 
-    __node_holder remove(const_iterator __p);
+    __node_holder remove(const_iterator __p) _NOEXCEPT;
 private:
     typename __node_base::pointer&
         __find_leaf_low(typename __node_base::pointer& __parent, const value_type& __v);
@@ -2253,7 +2254,7 @@ __tree<_Tp, _Compare, _Allocator>::__equal_range_multi(const _Key& __k) const
 
 template <class _Tp, class _Compare, class _Allocator>
 typename __tree<_Tp, _Compare, _Allocator>::__node_holder
-__tree<_Tp, _Compare, _Allocator>::remove(const_iterator __p)
+__tree<_Tp, _Compare, _Allocator>::remove(const_iterator __p) _NOEXCEPT
 {
     __node_pointer __np = const_cast<__node_pointer>(__p.__ptr_);
     if (__begin_node() == __np)
