@@ -1720,6 +1720,9 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         case MCSymbolRefExpr::VK_DTPOFF:
           Type = ELF::R_386_TLS_LDO_32;
           break;
+        case MCSymbolRefExpr::VK_GOTTPOFF:
+          Type = ELF::R_386_TLS_IE_32;
+          break;
         }
         break;
       case FK_Data_2: Type = ELF::R_386_16; break;

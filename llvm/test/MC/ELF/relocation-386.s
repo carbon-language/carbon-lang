@@ -153,6 +153,13 @@
 // CHECK-NEXT:  ('r_sym',
 // CHECK-NEXT:  ('r_type', 0x00000001)
 // CHECK-NEXT: ),
+// Relocation 24 (foo@GOTTPOFF(%edx)) is of type R_386_TLS_IE_32 and uses the
+// symbol
+// CHECK-NEXT: Relocation 0x00000018
+// CHECK-NEXT: (('r_offset', 0x0000008e)
+// CHECK-NEXT:  ('r_sym', 0x0000000d)
+// CHECK-NEXT:  ('r_type', 0x00000021)
+// CHECK-NEXT: ),
 
 // Section 4 is bss
 // CHECK:      # Section 0x00000004
@@ -217,6 +224,7 @@ bar2:
         movl zed@TPOFF(%eax), %eax
         movl zed@DTPOFF(%eax), %eax
         pushl $bar
+        addl foo@GOTTPOFF(%edx), %eax
 
         .section        zedsec,"awT",@progbits
 zed:
