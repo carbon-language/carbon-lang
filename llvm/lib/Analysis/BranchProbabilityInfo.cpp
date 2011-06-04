@@ -13,6 +13,7 @@
 
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
+#include <climits>
 
 using namespace llvm;
 
