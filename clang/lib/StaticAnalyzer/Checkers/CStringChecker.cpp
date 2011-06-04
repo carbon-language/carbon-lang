@@ -736,55 +736,55 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
     if (!state)
       return;
 
-    // Ensure the buffers do not overlap.
+    // Ensure the accesses are valid and that the buffers do not overlap.
     state = CheckBufferAccess(C, state, Size, Dest, Source,
                               /* FirstIsDst = */ true);
     if (Restricted)
       state = CheckOverlap(C, state, Size, Dest, Source);
 
-    if (state) {
+    if (!state)
+      return;
 
-      // If this is mempcpy, get the byte after the last byte copied and 
-      // bind the expr.
-      if (IsMempcpy) {
-        loc::MemRegionVal *destRegVal = dyn_cast<loc::MemRegionVal>(&destVal);
-        assert(destRegVal && "Destination should be a known MemRegionVal here");
-        
-        // Get the length to copy.
-        NonLoc *lenValNonLoc = dyn_cast<NonLoc>(&sizeVal);
-        
-        if (lenValNonLoc) {
-          // Get the byte after the last byte copied.
-          SVal lastElement = C.getSValBuilder().evalBinOpLN(state, BO_Add, 
-                                                            *destRegVal,
-                                                            *lenValNonLoc, 
-                                                            Dest->getType());
-        
-          // The byte after the last byte copied is the return value.
-          state = state->BindExpr(CE, lastElement);
-        } else {
-          // If we don't know how much we copied, we can at least
-          // conjure a return value for later.
-          unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
-          SVal result =
-            C.getSValBuilder().getConjuredSymbolVal(NULL, CE, Count);
-          state = state->BindExpr(CE, result);
-        }
-
+    // If this is mempcpy, get the byte after the last byte copied and 
+    // bind the expr.
+    if (IsMempcpy) {
+      loc::MemRegionVal *destRegVal = dyn_cast<loc::MemRegionVal>(&destVal);
+      assert(destRegVal && "Destination should be a known MemRegionVal here");
+      
+      // Get the length to copy.
+      NonLoc *lenValNonLoc = dyn_cast<NonLoc>(&sizeVal);
+      
+      if (lenValNonLoc) {
+        // Get the byte after the last byte copied.
+        SVal lastElement = C.getSValBuilder().evalBinOpLN(state, BO_Add, 
+                                                          *destRegVal,
+                                                          *lenValNonLoc, 
+                                                          Dest->getType());
+      
+        // The byte after the last byte copied is the return value.
+        state = state->BindExpr(CE, lastElement);
       } else {
-        // All other copies return the destination buffer.
-        // (Well, bcopy() has a void return type, but this won't hurt.)
-        state = state->BindExpr(CE, destVal);
+        // If we don't know how much we copied, we can at least
+        // conjure a return value for later.
+        unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+        SVal result =
+          C.getSValBuilder().getConjuredSymbolVal(NULL, CE, Count);
+        state = state->BindExpr(CE, result);
       }
 
-      // Invalidate the destination.
-      // FIXME: Even if we can't perfectly model the copy, we should see if we
-      // can use LazyCompoundVals to copy the source values into the destination.
-      // This would probably remove any existing bindings past the end of the
-      // copied region, but that's still an improvement over blank invalidation.
-      state = InvalidateBuffer(C, state, Dest, state->getSVal(Dest));
-      C.addTransition(state);
+    } else {
+      // All other copies return the destination buffer.
+      // (Well, bcopy() has a void return type, but this won't hurt.)
+      state = state->BindExpr(CE, destVal);
     }
+
+    // Invalidate the destination.
+    // FIXME: Even if we can't perfectly model the copy, we should see if we
+    // can use LazyCompoundVals to copy the source values into the destination.
+    // This would probably remove any existing bindings past the end of the
+    // copied region, but that's still an improvement over blank invalidation.
+    state = InvalidateBuffer(C, state, Dest, state->getSVal(Dest));
+    C.addTransition(state);
   }
 }
 
