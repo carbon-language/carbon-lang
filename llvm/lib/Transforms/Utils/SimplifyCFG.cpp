@@ -1171,6 +1171,8 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const TargetData *TD) {
     BasicBlock *RealDest = BI->getSuccessor(!CB->getZExtValue());
     
     if (RealDest == BB) continue;  // Skip self loops.
+    // Skip if the predecessor's terminator is an indirect branch.
+    if (isa<IndirectBrInst>(PredBB->getTerminator())) continue;
     
     // The dest block might have PHI nodes, other predecessors and other
     // difficult cases.  Instead of being smart about this, just insert a new
@@ -1226,7 +1228,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, const TargetData *TD) {
         BB->removePredecessor(PredBB);
         PredBBTI->setSuccessor(i, EdgeBB);
       }
-    
+
     // Recurse, simplifying any other constants.
     return FoldCondBranchOnPHI(BI, TD) | true;
   }

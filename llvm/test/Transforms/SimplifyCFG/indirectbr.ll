@@ -180,3 +180,72 @@ L3:
 ; before SimplifyCFG even looks at the indirectbr.
   indirectbr i8* %anchor, [label %L1, label %L2]
 }
+
+; PR10072
+
+@xblkx.bbs = internal unnamed_addr constant [9 x i8*] [i8* blockaddress(@indbrtest7, %xblkx.begin), i8* blockaddress(@indbrtest7, %xblkx.begin3), i8* blockaddress(@indbrtest7, %xblkx.begin4), i8* blockaddress(@indbrtest7, %xblkx.begin5), i8* blockaddress(@indbrtest7, %xblkx.begin6), i8* blockaddress(@indbrtest7, %xblkx.begin7), i8* blockaddress(@indbrtest7, %xblkx.begin8), i8* blockaddress(@indbrtest7, %xblkx.begin9), i8* blockaddress(@indbrtest7, %xblkx.end)]
+
+define void @indbrtest7() {
+escape-string.top:
+  %xval202x = call i32 @xfunc5x()
+  br label %xlab5x
+
+xlab8x:                                           ; preds = %xlab5x
+  %xvaluex = call i32 @xselectorx()
+  %xblkx.x = getelementptr [9 x i8*]* @xblkx.bbs, i32 0, i32 %xvaluex
+  %xblkx.load = load i8** %xblkx.x
+  indirectbr i8* %xblkx.load, [label %xblkx.begin, label %xblkx.begin3, label %xblkx.begin4, label %xblkx.begin5, label %xblkx.begin6, label %xblkx.begin7, label %xblkx.begin8, label %xblkx.begin9, label %xblkx.end]
+
+xblkx.begin:
+  br label %xblkx.end
+
+xblkx.begin3:
+  br label %xblkx.end
+
+xblkx.begin4:
+  br label %xblkx.end
+
+xblkx.begin5:
+  br label %xblkx.end
+
+xblkx.begin6:
+  br label %xblkx.end
+
+xblkx.begin7:
+  br label %xblkx.end
+
+xblkx.begin8:
+  br label %xblkx.end
+
+xblkx.begin9:
+  br label %xblkx.end
+
+xblkx.end:
+  %yes.0 = phi i1 [ false, %xblkx.begin ], [ true, %xlab8x ], [ false, %xblkx.begin9 ], [ false, %xblkx.begin8 ], [ false, %xblkx.begin7 ], [ false, %xblkx.begin6 ], [ false, %xblkx.begin5 ], [ true, %xblkx.begin4 ], [ false, %xblkx.begin3 ]
+  br i1 %yes.0, label %v2j, label %xlab17x
+
+v2j:
+; CHECK: %xunusedx = call i32 @xactionx()
+  %xunusedx = call i32 @xactionx()
+  br label %xlab4x
+
+xlab17x:
+  br label %xlab4x
+
+xlab4x:
+  %incr19 = add i32 %xval704x.0, 1
+  br label %xlab5x
+
+xlab5x:
+  %xval704x.0 = phi i32 [ 0, %escape-string.top ], [ %incr19, %xlab4x ]
+  %xval10x = icmp ult i32 %xval704x.0, %xval202x
+  br i1 %xval10x, label %xlab8x, label %xlab9x
+
+xlab9x:
+  ret void
+}
+
+declare i32 @xfunc5x()
+declare i8 @xfunc7x()
+declare i32 @xselectorx()
+declare i32 @xactionx()
