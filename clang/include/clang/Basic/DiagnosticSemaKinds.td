@@ -4097,6 +4097,10 @@ def err_unknown_any_var_function_type : Error<
 def err_filter_expression_integral : Error<
   "filter expression type should be an integral value not %0">;
 
+// OpenCL warnings and errors.
+def err_invalid_astype_of_different_size : Error<
+  "invalid reinterpretation: sizes of %0 and %1 must match">;
+
 } // end of sema category
 
 } // end of sema component.

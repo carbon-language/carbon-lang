@@ -785,6 +785,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___builtin_va_arg:
   case tok::kw___builtin_offsetof:
   case tok::kw___builtin_choose_expr:
+  case tok::kw___builtin_astype: // primary-expression: [OCL] as_type()
     return ParseBuiltinPrimaryExpression();
   case tok::kw___null:
     return Actions.ActOnGNUNullExpr(ConsumeToken());
@@ -1533,6 +1534,7 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
 /// [GNU]   '__builtin_choose_expr' '(' assign-expr ',' assign-expr ','
 ///                                     assign-expr ')'
 /// [GNU]   '__builtin_types_compatible_p' '(' type-name ',' type-name ')'
+/// [OCL]   '__builtin_astype' '(' type-name expr ')'
 ///
 /// [GNU] offsetof-member-designator:
 /// [GNU]   identifier
@@ -1677,7 +1679,35 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
                                   Expr2.take(), ConsumeParen());
     break;
   }
+  case tok::kw___builtin_astype: {
+    // The first argument is an expression to be converted, followed by a comma.
+    ExprResult Expr(ParseAssignmentExpression());
+    if (Expr.isInvalid()) {
+      SkipUntil(tok::r_paren);
+      return ExprError();
+    }
+    
+    if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", 
+                         tok::r_paren))
+      return ExprError();
+    
+    // Second argument is the type to bitcast to.
+    TypeResult DestTy = ParseTypeName();
+    if (DestTy.isInvalid())
+      return ExprError();
+    
+    // Attempt to consume the r-paren.
+    if (Tok.isNot(tok::r_paren)) {
+      Diag(Tok, diag::err_expected_rparen);
+      SkipUntil(tok::r_paren);
+      return ExprError();
+    }
+    
+    Res = Actions.ActOnAsTypeExpr(Expr.take(), DestTy.get(), StartLoc, 
+                                  ConsumeParen());
+    break;
   }
+}
 
   if (Res.isInvalid())
     return ExprError();

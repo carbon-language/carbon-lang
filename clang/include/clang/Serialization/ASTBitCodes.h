@@ -1003,7 +1003,10 @@ namespace clang {
 
       // CUDA
 
-      EXPR_CUDA_KERNEL_CALL       // CUDAKernelCallExpr
+      EXPR_CUDA_KERNEL_CALL,       // CUDAKernelCallExpr
+      
+      // OpenCL
+      EXPR_ASTYPE // An AsTypeExpr record.
     };
 
     /// \brief The kinds of designators that can occur in a

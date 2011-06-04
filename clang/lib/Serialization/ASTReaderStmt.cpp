@@ -189,7 +189,7 @@ namespace clang {
     void VisitOpaqueValueExpr(OpaqueValueExpr *E);
     
     // CUDA Expressions
-    void VisitCUDAKernelCallExpr(CUDAKernelCallExpr *E);
+    void VisitCUDAKernelCallExpr(CUDAKernelCallExpr *E);    
   };
 }
 
@@ -1999,6 +1999,10 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
 
     case EXPR_CUDA_KERNEL_CALL:
       S = new (Context) CUDAKernelCallExpr(*Context, Empty);
+      break;
+        
+    case EXPR_ASTYPE:
+      S = new (Context) AsTypeExpr(Empty);
       break;
     }
     

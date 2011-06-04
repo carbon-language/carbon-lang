@@ -161,6 +161,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::InitListExprClass:
   case Expr::SizeOfPackExprClass:
   case Expr::SubstNonTypeTemplateParmPackExprClass:
+  case Expr::AsTypeExprClass:
     return Cl::CL_PRValue;
 
     // Next come the complicated cases.

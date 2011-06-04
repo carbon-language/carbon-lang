@@ -165,6 +165,8 @@ namespace clang {
 
     // CUDA Expressions
     void VisitCUDAKernelCallExpr(CUDAKernelCallExpr *E);
+    
+    void VisitAsTypeExpr(AsTypeExpr *E);
   };
 }
 
@@ -1430,6 +1432,15 @@ void ASTStmtWriter::VisitCUDAKernelCallExpr(CUDAKernelCallExpr *E) {
   VisitCallExpr(E);
   Writer.AddStmt(E->getConfig());
   Code = serialization::EXPR_CUDA_KERNEL_CALL;
+}
+
+//===----------------------------------------------------------------------===//
+// OpenCL Expressions and Statements.
+//===----------------------------------------------------------------------===//
+void ASTStmtWriter::VisitAsTypeExpr(AsTypeExpr *E) {
+  VisitExpr(E);
+  Writer.AddStmt(E->getSrcExpr());
+  Code = serialization::EXPR_ASTYPE;
 }
 
 //===----------------------------------------------------------------------===//

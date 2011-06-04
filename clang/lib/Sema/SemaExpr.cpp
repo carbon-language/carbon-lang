@@ -4995,6 +4995,26 @@ Sema::ActOnCUDAExecConfigExpr(Scope *S, SourceLocation LLLLoc,
   return ActOnCallExpr(S, ConfigDR, LLLLoc, execConfig, GGGLoc, 0);
 }
 
+/// ActOnAsTypeExpr - create a new asType (bitcast) from the arguments.
+///
+/// __builtin_astype( value, dst type )
+///
+ExprResult Sema::ActOnAsTypeExpr(Expr *expr, ParsedType destty,
+                                 SourceLocation BuiltinLoc,
+                                 SourceLocation RParenLoc) {
+  ExprValueKind VK = VK_RValue;
+  ExprObjectKind OK = OK_Ordinary;
+  QualType DstTy = GetTypeFromParser(destty);
+  QualType SrcTy = expr->getType();
+  if (Context.getTypeSize(DstTy) != Context.getTypeSize(SrcTy))
+    return ExprError(Diag(BuiltinLoc,
+                          diag::err_invalid_astype_of_different_size)
+                     << DstTy.getAsString().c_str() 
+                     << SrcTy.getAsString().c_str()
+                     << expr->getSourceRange());
+  return Owned(new (Context) AsTypeExpr(expr, DstTy, VK, OK, BuiltinLoc, RParenLoc));
+}
+
 /// BuildResolvedCallExpr - Build a call to a resolved expression,
 /// i.e. an expression not of \p OverloadTy.  The expression should
 /// unary-convert to an expression of function-pointer or

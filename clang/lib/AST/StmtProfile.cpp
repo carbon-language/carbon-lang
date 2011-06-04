@@ -679,6 +679,10 @@ void StmtProfiler::VisitCUDAKernelCallExpr(CUDAKernelCallExpr *S) {
   VisitCallExpr(S);
 }
 
+void StmtProfiler::VisitAsTypeExpr(AsTypeExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitCXXNamedCastExpr(CXXNamedCastExpr *S) {
   VisitExplicitCastExpr(S);
 }

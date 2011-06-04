@@ -173,6 +173,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::OpaqueValueExprClass:
   case Stmt::PackExpansionExprClass:
   case Stmt::SizeOfPackExprClass:
+  case Stmt::AsTypeExprClass:
     K = CXCursor_UnexposedExpr;
     break;
       

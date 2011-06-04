@@ -2424,6 +2424,13 @@ public:
   ExprResult ActOnBlockStmtExpr(SourceLocation CaretLoc,
                                         Stmt *Body, Scope *CurScope);
 
+  //===---------------------------- OpenCL Features -----------------------===//
+    
+  /// __builtin_astype(...)
+  ExprResult ActOnAsTypeExpr(Expr *expr, ParsedType DestTy,
+                             SourceLocation BuiltinLoc, 
+                             SourceLocation RParenLoc);
+  
   //===---------------------------- C++ Features --------------------------===//
 
   // Act on C++ namespaces

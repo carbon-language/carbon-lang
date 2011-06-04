@@ -7877,6 +7877,13 @@ TreeTransform<Derived>::TransformBlockDeclRefExpr(BlockDeclRefExpr *E) {
                                          ND, NameInfo, 0);
 }
 
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformAsTypeExpr(AsTypeExpr *E) {
+  assert(false && "Cannot transform asType expressions yet");
+  return SemaRef.Owned(E);
+}
+  
 //===----------------------------------------------------------------------===//
 // Type reconstruction
 //===----------------------------------------------------------------------===//

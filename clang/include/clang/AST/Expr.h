@@ -4026,6 +4026,44 @@ public:
   child_range children() { return child_range(); }
 };
 
+/// AsTypeExpr - Clang builtin function __builtin_astype [OpenCL 6.2.4.2]
+/// This AST node provides support for reinterpreting a type to another
+/// type of the same size.
+class AsTypeExpr : public Expr {
+private:
+  Expr* SrcExpr;
+  QualType DstType;
+  SourceLocation BuiltinLoc, RParenLoc;
+  
+public:
+  AsTypeExpr(Expr* SrcExpr, QualType DstType,
+             ExprValueKind VK, ExprObjectKind OK,
+             SourceLocation BuiltinLoc, SourceLocation RParenLoc)
+  : Expr(AsTypeExprClass, DstType, VK, OK, false, false, false), 
+  SrcExpr(SrcExpr), DstType(DstType),
+  BuiltinLoc(BuiltinLoc), RParenLoc(RParenLoc) {}
+  
+  /// \brief Build an empty __builtin_astype
+  explicit AsTypeExpr(EmptyShell Empty) : Expr(AsTypeExprClass, Empty) {}
+  
+  ~AsTypeExpr() { }
+  
+  /// getSrcExpr - Return the Expr to be converted.
+  Expr *getSrcExpr() const { return SrcExpr; }
+  QualType getDstType() const { return DstType; }
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(BuiltinLoc, RParenLoc);
+  }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == AsTypeExprClass; 
+  }
+  static bool classof(const AsTypeExpr *) { return true; }
+  
+  // Iterators
+  child_range children() { return child_range(); }
+};
 }  // end namespace clang
 
 #endif

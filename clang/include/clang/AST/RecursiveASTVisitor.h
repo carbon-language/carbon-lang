@@ -1981,6 +1981,9 @@ DEF_TRAVERSE_STMT(FloatingLiteral, { })
 DEF_TRAVERSE_STMT(ImaginaryLiteral, { })
 DEF_TRAVERSE_STMT(StringLiteral, { })
 DEF_TRAVERSE_STMT(ObjCStringLiteral, { })
+  
+// Traverse OpenCL: AsType, Convert.
+DEF_TRAVERSE_STMT(AsTypeExpr, { })
 
 // FIXME: look at the following tricky-seeming exprs to see if we
 // need to recurse on anything.  These are ones that have methods

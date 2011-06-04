@@ -2093,7 +2093,9 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::VAArgExprClass:
   case Expr::CXXUuidofExprClass:
   case Expr::CXXNoexceptExprClass:
-  case Expr::CUDAKernelCallExprClass: {
+  case Expr::CUDAKernelCallExprClass:
+  case Expr::AsTypeExprClass:
+  {
     // As bad as this diagnostic is, it's better than crashing.
     Diagnostic &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,

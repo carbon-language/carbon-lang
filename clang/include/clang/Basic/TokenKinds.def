@@ -413,6 +413,7 @@ KEYWORD(__read_write                , KEYOPENCL)
 ALIAS("read_only", __read_only      , KEYOPENCL)
 ALIAS("write_only", __write_only    , KEYOPENCL)
 ALIAS("read_write", __read_write    , KEYOPENCL)
+KEYWORD(__builtin_astype            , KEYOPENCL)
 
 // Borland Extensions.
 KEYWORD(__pascal                    , KEYALL)

@@ -1499,6 +1499,13 @@ void StmtPrinter::VisitBlockDeclRefExpr(BlockDeclRefExpr *Node) {
 
 void StmtPrinter::VisitOpaqueValueExpr(OpaqueValueExpr *Node) {}
 
+void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
+  OS << "__builtin_astype(";
+  PrintExpr(Node->getSrcExpr());
+  OS << ", " << Node->getType().getAsString();
+  OS << ")";
+}
+
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
