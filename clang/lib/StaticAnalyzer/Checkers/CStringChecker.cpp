@@ -737,7 +737,6 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
       return;
 
     // Ensure the buffers do not overlap.
-    state = stateNonZeroSize;
     state = CheckBufferAccess(C, state, Size, Dest, Source,
                               /* FirstIsDst = */ true);
     if (Restricted)
