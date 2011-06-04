@@ -96,8 +96,7 @@ private:
 
 public:
   /// Create a SetTheory instance with only the standard operators.
-  /// A 'sequence' operator will only be added if a RecordKeeper is given.
-  SetTheory(RecordKeeper *Records = 0);
+  SetTheory();
 
   /// addExpander - Add an expander for Records with the named super class.
   void addExpander(StringRef ClassName, Expander*);

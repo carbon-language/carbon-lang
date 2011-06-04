@@ -380,7 +380,7 @@ int main(int argc, char **argv) {
     }
     case PrintSets:
     {
-      SetTheory Sets(&Records);
+      SetTheory Sets;
       Sets.addFieldExpander("Set", "Elements");
       std::vector<Record*> Recs = Records.getAllDerivedDefinitions("Set");
       for (unsigned i = 0, e = Recs.size(); i != e; ++i) {

@@ -140,10 +140,6 @@ struct DecimateOp : public SetIntBinOp {
 
 // (sequence "Format", From, To) Generate a sequence of records by name.
 struct SequenceOp : public SetTheory::Operator {
-  RecordKeeper &Records;
-
-  SequenceOp(RecordKeeper&R) : Records(R) {}
-
   void apply(SetTheory &ST, DagInit *Expr, RecSet &Elts) {
     if (Expr->arg_size() != 3)
       throw "Bad args to (sequence \"Format\", From, To): " +
@@ -163,6 +159,9 @@ struct SequenceOp : public SetTheory::Operator {
       To = II->getValue();
     else
       throw "From must be an integer: " + Expr->getAsString();
+
+    RecordKeeper &Records =
+      dynamic_cast<DefInit&>(*Expr->getOperator()).getDef()->getRecords();
 
     int Step = From <= To ? 1 : -1;
     for (To += Step; From != To; From += Step) {
@@ -193,7 +192,7 @@ struct FieldExpander : public SetTheory::Expander {
 };
 } // end anonymous namespace
 
-SetTheory::SetTheory(RecordKeeper *Records) {
+SetTheory::SetTheory() {
   addOperator("add", new AddOp);
   addOperator("sub", new SubOp);
   addOperator("and", new AndOp);
@@ -202,8 +201,7 @@ SetTheory::SetTheory(RecordKeeper *Records) {
   addOperator("rotl", new RotOp(false));
   addOperator("rotr", new RotOp(true));
   addOperator("decimate", new DecimateOp);
-  if (Records)
-    addOperator("sequence", new SequenceOp(*Records));
+  addOperator("sequence", new SequenceOp);
 }
 
 void SetTheory::addOperator(StringRef Name, Operator *Op) {
