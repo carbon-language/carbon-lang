@@ -821,26 +821,32 @@ void TargetLowering::computeRegisterProperties() {
     unsigned NElts = VT.getVectorNumElements();
     if (NElts != 1) {
       bool IsLegalWiderType = false;
+      // If we allow the promotion of vector elements using a flag,
+      // then return TypePromoteInteger on vector elements.
+      // First try to promote the elements of integer vectors. If no legal
+      // promotion was found, fallback to the widen-vector method.
+      if (mayPromoteElements)
       for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
         EVT SVT = (MVT::SimpleValueType)nVT;
-
-        // If we allow the promotion of vector elements using a flag,
-        // then return TypePromoteInteger on vector elements.
-        if (mayPromoteElements) {
-          // Promote vectors of integers to vectors with the same number
-          // of elements, with a wider element type.
-          if (SVT.getVectorElementType().getSizeInBits() > EltVT.getSizeInBits()
-              && SVT.getVectorNumElements() == NElts &&
-              isTypeLegal(SVT) && SVT.getScalarType().isInteger()) {
-            TransformToType[i] = SVT;
-            RegisterTypeForVT[i] = SVT;
-            NumRegistersForVT[i] = 1;
-            ValueTypeActions.setTypeAction(VT, TypePromoteInteger);
-            IsLegalWiderType = true;
-            break;
-          }
+        // Promote vectors of integers to vectors with the same number
+        // of elements, with a wider element type.
+        if (SVT.getVectorElementType().getSizeInBits() > EltVT.getSizeInBits()
+            && SVT.getVectorNumElements() == NElts &&
+            isTypeLegal(SVT) && SVT.getScalarType().isInteger()) {
+          TransformToType[i] = SVT;
+          RegisterTypeForVT[i] = SVT;
+          NumRegistersForVT[i] = 1;
+          ValueTypeActions.setTypeAction(VT, TypePromoteInteger);
+          IsLegalWiderType = true;
+          break;
         }
+      }
 
+      if (IsLegalWiderType) continue;
+
+      // Try to widen the vector.
+      for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
+        EVT SVT = (MVT::SimpleValueType)nVT;
         if (SVT.getVectorElementType() == EltVT &&
             SVT.getVectorNumElements() > NElts &&
             isTypeLegal(SVT)) {
