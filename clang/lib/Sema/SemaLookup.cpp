@@ -14,6 +14,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
@@ -2136,6 +2137,57 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   }
 }
 
+Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
+                                                            CXXSpecialMember SM,
+                                                            bool ConstArg,
+                                                            bool VolatileArg,
+                                                            bool RValueThis,
+                                                            bool ConstThis,
+                                                            bool VolatileThis) {
+  D = D->getDefinition();
+  assert((D && !D->isBeingDefined()) &&
+         "doing special member lookup into record that isn't fully complete");
+  if (RValueThis || ConstThis || VolatileThis)
+    assert((SM == CXXCopyAssignment || SM == CXXMoveAssignment) &&
+           "constructors and destructors always have unqualified lvalue this");
+  if (ConstArg || VolatileArg)
+    assert((SM != CXXDefaultConstructor && SM != CXXDestructor) &&
+           "parameter-less special members can't have qualified arguments");
+
+  llvm::FoldingSetNodeID ID;
+  ID.AddPointer(D);
+  ID.AddInteger(SM);
+  ID.AddInteger(ConstArg);
+  ID.AddInteger(VolatileArg);
+  ID.AddInteger(RValueThis);
+  ID.AddInteger(ConstThis);
+  ID.AddInteger(VolatileThis);
+
+  void *InsertPoint;
+  SpecialMemberOverloadResult *Result =
+    SpecialMemberCache.FindNodeOrInsertPos(ID, InsertPoint);
+
+  // This was already cached
+  if (Result)
+    return Result;
+
+  Result = new SpecialMemberOverloadResult(ID);
+  SpecialMemberCache.InsertNode(Result, InsertPoint);
+
+  if (SM == CXXDestructor) {
+    if (!D->hasDeclaredDestructor())
+      DeclareImplicitDestructor(D);
+    CXXDestructorDecl *DD = D->getDestructor();
+    assert(DD && "record without a destructor");
+    Result->setMethod(DD);
+    Result->setSuccess(DD->isDeleted());
+    Result->setConstParamMatch(false);
+    return Result;
+  }
+
+  llvm_unreachable("haven't implemented this for non-destructors yet");
+}
+
 /// \brief Look up the constructors for the given class.
 DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
   // If the copy constructor has not yet been declared, do so now.
@@ -2158,12 +2210,9 @@ DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
 ///
 /// \returns The destructor for this class.
 CXXDestructorDecl *Sema::LookupDestructor(CXXRecordDecl *Class) {
-  // If the destructor has not yet been declared, do so now.
-  if (CanDeclareSpecialMemberFunction(Context, Class) &&
-      !Class->hasDeclaredDestructor())
-    DeclareImplicitDestructor(Class);
-
-  return Class->getDestructor();
+  return cast<CXXDestructorDecl>(LookupSpecialMember(Class, CXXDestructor,
+                                                     false, false, false,
+                                                     false, false)->getMethod());
 }
 
 void ADLResult::insert(NamedDecl *New) {

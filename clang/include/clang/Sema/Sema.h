@@ -600,6 +600,40 @@ public:
   /// A stack of expression evaluation contexts.
   llvm::SmallVector<ExpressionEvaluationContextRecord, 8> ExprEvalContexts;
 
+  /// SpecialMemberOverloadResult - The overloading result for a special member
+  /// function.
+  ///
+  /// This is basically a wrapper around PointerIntPair. The lowest bit of the
+  /// integer is used to determine whether we have a parameter qualification
+  /// match, the second-lowest is whether we had success in resolving the
+  /// overload to a unique non-deleted function.
+  ///
+  /// The ConstParamMatch bit represents whether, when looking up a copy
+  /// constructor or assignment operator, we found a potential copy
+  /// constructor/assignment operator whose first parameter is const-qualified.
+  /// This is used for determining parameter types of other objects and is
+  /// utterly meaningless on other types of special members.
+  class SpecialMemberOverloadResult : public llvm::FastFoldingSetNode {
+    llvm::PointerIntPair<CXXMethodDecl*, 2> Pair;
+  public:
+    SpecialMemberOverloadResult(const llvm::FoldingSetNodeID &ID)
+      : FastFoldingSetNode(ID)
+    {}
+
+    CXXMethodDecl *getMethod() const { return Pair.getPointer(); }
+    void setMethod(CXXMethodDecl *MD) { Pair.setPointer(MD); }
+
+    bool hasSuccess() const { return Pair.getInt() & 0x1; }
+    void setSuccess(bool B) { Pair.setInt(B | hasConstParamMatch() << 1); }
+
+    bool hasConstParamMatch() const { return Pair.getInt() & 0x2; }
+    void setConstParamMatch(bool B) { Pair.setInt(B << 1 | hasSuccess()); }
+  };
+
+  /// \brief A cache of special member function overload resolution results
+  /// for C++ records.
+  llvm::FoldingSet<SpecialMemberOverloadResult> SpecialMemberCache;
+
   /// \brief Whether the code handled by Sema should be considered a
   /// complete translation unit or not.
   ///
@@ -1593,6 +1627,14 @@ public:
 
 private:
   bool CppLookupName(LookupResult &R, Scope *S);
+
+  SpecialMemberOverloadResult *LookupSpecialMember(CXXRecordDecl *D,
+                                                   CXXSpecialMember SM,
+                                                   bool ConstArg,
+                                                   bool VolatileArg,
+                                                   bool RValueThis,
+                                                   bool ConstThis,
+                                                   bool VolatileThis);
 
 public:
   /// \brief Look up a name, looking for a single declaration.  Return
