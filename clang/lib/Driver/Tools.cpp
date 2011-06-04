@@ -3460,6 +3460,8 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getArchName() == "i386")
     CmdArgs.push_back("--32");
 
+  if (getToolChain().getArchName() == "powerpc")
+    CmdArgs.push_back("-a32");
 
   // Set byte order explicitly
   if (getToolChain().getArchName() == "mips")

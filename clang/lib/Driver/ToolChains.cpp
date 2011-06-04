@@ -1007,6 +1007,11 @@ FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
         llvm::Triple::x86_64)
     Lib32 = true;
 
+  if (Triple.getArch() == llvm::Triple::ppc &&
+      llvm::Triple(getDriver().DefaultHostTriple).getArch() ==
+        llvm::Triple::ppc64)
+    Lib32 = true;
+
   if (Lib32) {
     getFilePaths().push_back("/usr/lib32");
   } else {
