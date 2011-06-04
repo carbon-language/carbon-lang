@@ -264,6 +264,12 @@ void mempcpy_unknown_size_warn (size_t n) {
     (void)*(char*)0; // no-warning
 }
 
+void mempcpy_unknownable_size (char *src, float n) {
+  char a[4];
+  // This used to crash because we don't model floats.
+  mempcpy(a, src, (size_t)n);
+}
+
 //===----------------------------------------------------------------------===
 // memmove()
 //===----------------------------------------------------------------------===

@@ -748,19 +748,33 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
       // bind the expr.
       if (IsMempcpy) {
         loc::MemRegionVal *destRegVal = dyn_cast<loc::MemRegionVal>(&destVal);
+        assert(destRegVal && "Destination should be a known MemRegionVal here");
         
         // Get the length to copy.
-        SVal lenVal = state->getSVal(Size);
-        NonLoc *lenValNonLoc = dyn_cast<NonLoc>(&lenVal);
+        NonLoc *lenValNonLoc = dyn_cast<NonLoc>(&sizeVal);
         
-        // Get the byte after the last byte copied.
-        SVal lastElement = C.getSValBuilder().evalBinOpLN(state, BO_Add, 
-                                                          *destRegVal,
-                                                          *lenValNonLoc, 
-                                                          Dest->getType());
+        if (lenValNonLoc) {
+          // Get the byte after the last byte copied.
+          SVal lastElement = C.getSValBuilder().evalBinOpLN(state, BO_Add, 
+                                                            *destRegVal,
+                                                            *lenValNonLoc, 
+                                                            Dest->getType());
         
-        // The byte after the last byte copied is the return value.
-        state = state->BindExpr(CE, lastElement);
+          // The byte after the last byte copied is the return value.
+          state = state->BindExpr(CE, lastElement);
+        } else {
+          // If we don't know how much we copied, we can at least
+          // conjure a return value for later.
+          unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+          SVal result =
+            C.getSValBuilder().getConjuredSymbolVal(NULL, CE, Count);
+          state = state->BindExpr(CE, result);
+        }
+
+      } else {
+        // All other copies return the destination buffer.
+        // (Well, bcopy() has a void return type, but this won't hurt.)
+        state = state->BindExpr(CE, destVal);
       }
 
       // Invalidate the destination.
@@ -780,7 +794,7 @@ void CStringChecker::evalMemcpy(CheckerContext &C, const CallExpr *CE) const {
   // The return value is the address of the destination buffer.
   const Expr *Dest = CE->getArg(0);
   const GRState *state = C.getState();
-  state = state->BindExpr(CE, state->getSVal(Dest));
+
   evalCopyCommon(C, CE, state, CE->getArg(2), Dest, CE->getArg(1), true);
 }
 
@@ -798,7 +812,7 @@ void CStringChecker::evalMemmove(CheckerContext &C, const CallExpr *CE) const {
   // The return value is the address of the destination buffer.
   const Expr *Dest = CE->getArg(0);
   const GRState *state = C.getState();
-  state = state->BindExpr(CE, state->getSVal(Dest));
+
   evalCopyCommon(C, CE, state, CE->getArg(2), Dest, CE->getArg(1));
 }
 
