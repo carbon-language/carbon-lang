@@ -1166,6 +1166,7 @@ namespace llvm {
     for (LLVMValueRef *I = Vals, *E = Vals + Length; I != E; ++I)
       cast<T>(*I);
     #endif
+    (void)Length;
     return reinterpret_cast<T**>(Vals);
   }
   
