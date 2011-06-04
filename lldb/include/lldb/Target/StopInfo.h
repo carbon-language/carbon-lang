@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <string>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-public.h"
@@ -92,8 +94,19 @@ public:
     }
     
     virtual const char *
-    GetDescription () = 0;
+    GetDescription ()
+    {
+        return m_description.c_str();
+    }
 
+    virtual void
+    SetDescription (const char *desc_cstr)
+    {
+        if (desc_cstr && desc_cstr[0])
+            m_description.assign (desc_cstr);
+        else
+            m_description.clear();
+    }
 
     static lldb::StopInfoSP
     CreateStopReasonWithBreakpointSiteID (Thread &thread, lldb::break_id_t break_id);
@@ -114,6 +127,9 @@ public:
     static lldb::StopInfoSP
     CreateStopReasonWithPlan (lldb::ThreadPlanSP &plan);
 
+    static lldb::StopInfoSP
+    CreateStopReasonWithException (Thread &thread, const char *description);
+
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from StackID can see and modify these
@@ -121,6 +137,7 @@ protected:
     Thread &        m_thread;   // The thread corresponding to the stop reason.
     uint32_t        m_stop_id;  // The process stop ID for which this stop info is valid
     uint64_t        m_value;    // A generic value that can be used for things pertaining to this stop info
+    std::string     m_description; // A textual description describing this stop.
 private:
     friend class Thread;
     

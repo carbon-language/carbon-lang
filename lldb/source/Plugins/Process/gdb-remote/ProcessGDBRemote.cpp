@@ -1120,6 +1120,8 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
             std::string name;
             std::string value;
             std::string thread_name;
+            std::string reason;
+            std::string description;
             uint32_t exc_type = 0;
             std::vector<addr_t> exc_data;
             uint32_t tid = LLDB_INVALID_THREAD_ID;
@@ -1174,6 +1176,18 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     thread_dispatch_qaddr = Args::StringToUInt64 (value.c_str(), 0, 16);
                 }
+                else if (name.compare("reason") == 0)
+                {
+                    reason.swap(value);
+                }
+                else if (name.compare("description") == 0)
+                {
+                    StringExtractor desc_extractor;
+                    // Swap "value" over into "name_extractor"
+                    desc_extractor.GetStringRef().swap(value);
+                    // Now convert the HEX bytes into a string value
+                    desc_extractor.GetHexByteString (thread_name);
+                }
                 else if (name.size() == 2 && ::isxdigit(name[0]) && ::isxdigit(name[1]))
                 {
                     // We have a register number that contains an expedited
@@ -1218,14 +1232,103 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                                                                                                        exc_data_size >= 1 ? exc_data[0] : 0,
                                                                                                        exc_data_size >= 2 ? exc_data[1] : 0));
                 }
-                else if (signo)
+                else
                 {
+                    bool handled = false;
+                    if (!reason.empty())
+                    {
+                        if (reason.compare("trace") == 0)
+                        {
+                            gdb_thread->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                            handled = true;
+                        }
+                        else if (reason.compare("breakpoint") == 0)
+                        {
+                            addr_t pc = gdb_thread->GetRegisterContext()->GetPC();
+                            lldb::BreakpointSiteSP bp_site_sp = gdb_thread->GetProcess().GetBreakpointSiteList().FindByAddress(pc);
+                            if (bp_site_sp)
+                            {
+                                // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
+                                // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
+                                // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+                                if (bp_site_sp->ValidForThisThread (gdb_thread))
+                                {
+                                    gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
+                                    handled = true;
+                                }
+                            }
+                            
+                            if (!handled)
+                            {
+                                gdb_thread->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                            }
+                        }
+                        else if (reason.compare("trap") == 0)
+                        {
+                            // Let the trap just use the standard signal stop reason below...
+                        }
+                        else if (reason.compare("watchpoint") == 0)
+                        {
+                            break_id_t watch_id = LLDB_INVALID_WATCH_ID;
+                            // TODO: locate the watchpoint somehow...
+                            gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID (*thread_sp, watch_id));
+                            handled = true;
+                        }
+                        else if (reason.compare("exception") == 0)
+                        {
+                            gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithException(*thread_sp, description.c_str()));
+                            handled = true;
+                        }
+                    }
+                    
+                    if (signo)
+                    {
+                        if (signo == SIGTRAP)
+                        {
+                            // Currently we are going to assume SIGTRAP means we are either
+                            // hitting a breakpoint or hardware single stepping. 
+                            addr_t pc = gdb_thread->GetRegisterContext()->GetPC();
+                            lldb::BreakpointSiteSP bp_site_sp = gdb_thread->GetProcess().GetBreakpointSiteList().FindByAddress(pc);
+                            if (bp_site_sp)
+                            {
+                                // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
+                                // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
+                                // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+                                if (bp_site_sp->ValidForThisThread (gdb_thread))
+                                {
+                                    gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
+                                    handled = true;
+                                }
+                            }
+                            if (!handled)
+                            {
+                                // TODO: check for breakpoint or trap opcode in case there is a hard 
+                                // coded software trap
+                                gdb_thread->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                                handled = true;
+                            }
+                        }
+                        if (!handled)
                     gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo));
                 }
                 else
                 {
                     StopInfoSP invalid_stop_info_sp;
                     gdb_thread->SetStopInfo (invalid_stop_info_sp);
+                }
+                    
+                    if (!description.empty())
+                    {
+                        lldb::StopInfoSP stop_info_sp (gdb_thread->GetStopInfo ());
+                        if (stop_info_sp)
+                        {
+                            stop_info_sp->SetDescription (description.c_str());
+            }
+                        else
+                        {
+                            gdb_thread->SetStopInfo (StopInfo::CreateStopReasonWithException (*thread_sp, description.c_str()));
+                        }
+                    }
                 }
             }
             return eStateStopped;

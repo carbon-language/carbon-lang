@@ -454,6 +454,10 @@ EmulateInstruction::Context::Dump (Stream &strm,
             strm.PutCString ("adjust sp");
             break;
             
+        case eContextSetFramePointer:
+            strm.PutCString ("set frame pointer");
+            break;
+            
         case eContextAdjustBaseRegister:
             strm.PutCString ("adjusting (writing value back to) a base register");
             break;

@@ -391,9 +391,6 @@ ABIMacOSX_arm::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
         pc_reg_num == LLDB_INVALID_REGNUM)
         return false;
 
-    unwind_plan.Clear();
-    unwind_plan.SetRegisterKind (eRegisterKindDWARF);
-    
     UnwindPlan::Row row;
     
     // Our previous Call Frame Address is the stack pointer
@@ -439,7 +436,7 @@ ABIMacOSX_arm::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
         return false;
     
     UnwindPlan::Row row;    
-    const int32_t ptr_size = 8;
+    const int32_t ptr_size = 4;
     
     unwind_plan.SetRegisterKind (eRegisterKindGeneric);
     row.SetCFARegister (fp_reg_num);

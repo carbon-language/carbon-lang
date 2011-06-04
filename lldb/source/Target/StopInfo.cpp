@@ -253,8 +253,7 @@ class StopInfoUnixSignal : public StopInfo
 public:
 
     StopInfoUnixSignal (Thread &thread, int signo) :
-        StopInfo (thread, signo),
-        m_description()
+        StopInfo (thread, signo)
     {
     }
     
@@ -306,9 +305,6 @@ public:
         }
         return m_description.c_str();
     }
-
-private:
-    std::string m_description;
 };
 
 //----------------------------------------------------------------------
@@ -337,7 +333,47 @@ public:
     virtual const char *
     GetDescription ()
     {
+        if (m_description.empty())
         return "trace";
+        else
+            return m_description.c_str();
+    }
+};
+
+
+//----------------------------------------------------------------------
+// StopInfoException
+//----------------------------------------------------------------------
+
+class StopInfoException : public StopInfo
+{
+public:
+    
+    StopInfoException (Thread &thread, const char *description) :
+        StopInfo (thread, LLDB_INVALID_UID)
+    {
+        if (description)
+            SetDescription (description);
+    }
+    
+    virtual 
+    ~StopInfoException ()
+    {
+    }
+    
+    virtual StopReason
+    GetStopReason () const
+    {
+        return eStopReasonException;
+    }
+    
+    virtual const char *
+    GetDescription ()
+    {
+        if (m_description.empty())
+            return "exception";
+        else
+            return m_description.c_str();
     }
 };
 
@@ -380,7 +416,6 @@ public:
 
 private:
     ThreadPlanSP m_plan_sp;
-    std::string m_description;
 };
 
 StopInfoSP
@@ -417,4 +452,10 @@ StopInfoSP
 StopInfo::CreateStopReasonWithPlan (ThreadPlanSP &plan_sp)
 {
     return StopInfoSP (new StopInfoThreadPlan (plan_sp));
+}
+
+StopInfoSP
+StopInfo::CreateStopReasonWithException (Thread &thread, const char *description)
+{
+    return StopInfoSP (new StopInfoException (thread, description));
 }
