@@ -71,9 +71,6 @@ void ProcessWarningOptions(Diagnostic &Diags, const DiagnosticOptions &Opts);
 void DoPrintPreprocessedInput(Preprocessor &PP, llvm::raw_ostream* OS,
                               const PreprocessorOutputOptions &Opts);
 
-/// CheckDiagnostics - Gather the expected diagnostics and check them.
-bool CheckDiagnostics(Preprocessor &PP);
-
 /// AttachDependencyFileGen - Create a dependency file generator, and attach
 /// it to the given preprocessor.  This takes ownership of the output stream.
 void AttachDependencyFileGen(Preprocessor &PP,
