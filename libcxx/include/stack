@@ -31,14 +31,21 @@ protected:
     container_type c;
 
 public:
-    explicit stack();
+    stack() = default;
+    ~stack() = default;
+
+    stack(const stack& q) = default;
+    stack(stack&& q) = default;
+
+    stack& operator=(const stack& q) = default;
+    stack& operator=(stack&& q) = default;
+
     explicit stack(const container_type& c);
     explicit stack(container_type&& c);
-    stack(stack&& s);
-    stack& operator=(stack&& s);
     template <class Alloc> explicit stack(const Alloc& a);
     template <class Alloc> stack(const container_type& c, const Alloc& a);
     template <class Alloc> stack(container_type&& c, const Alloc& a);
+    template <class Alloc> stack(const stack& c, const Alloc& a);
     template <class Alloc> stack(stack&& c, const Alloc& a);
 
     bool empty() const;
@@ -51,7 +58,7 @@ public:
     template <class... Args> void emplace(Args&&... args);
     void pop();
 
-    void swap(stack& c);
+    void swap(stack& c) noexcept(noexcept(swap(c, q.c)));
 };
 
 template <class T, class Container>
@@ -68,7 +75,8 @@ template <class T, class Container>
   bool operator<=(const stack<T, Container>& x, const stack<T, Container>& y);
 
 template <class T, class Container>
-  void swap(stack<T, Container>& x, stack<T, Container>& y);
+  void swap(stack<T, Container>& x, stack<T, Container>& y)
+  noexcept(noexcept(x.swap(y)));
 
 }  // std
 
@@ -106,16 +114,35 @@ protected:
 
 public:
     _LIBCPP_INLINE_VISIBILITY
-    stack() : c() {}
+    stack()
+        _NOEXCEPT_(is_nothrow_default_constructible<container_type>::value)
+        : c() {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    stack(const stack& __q) : c(__q.c) {}
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
+    stack(stack&& __q)
+        _NOEXCEPT_(is_nothrow_move_constructible<container_type>::value)
+        : c(_STD::move(__q.c)) {}
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+    _LIBCPP_INLINE_VISIBILITY
+    stack& operator=(const stack& __q) {c = __q.c; return *this;}
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
+    stack& operator=(stack&& __q)
+        _NOEXCEPT_(is_nothrow_move_assignable<container_type>::value)
+        {c = _STD::move(__q.c); return *this;}
+#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
     _LIBCPP_INLINE_VISIBILITY
     explicit stack(const container_type& __c) : c(__c) {}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     explicit stack(container_type&& __c) : c(_STD::move(__c)) {}
-    _LIBCPP_INLINE_VISIBILITY
-    stack(stack&& __s) : c(_STD::move(__s.c)) {}
-    _LIBCPP_INLINE_VISIBILITY
-    stack& operator=(stack&& __s) {c = _STD::move(__s.c); return *this;}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _Alloc>
         _LIBCPP_INLINE_VISIBILITY
@@ -176,6 +203,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(stack& __s)
+        _NOEXCEPT_(__is_nothrow_swappable<container_type>::value)
     {
         using _STD::swap;
         swap(c, __s.c);
@@ -244,6 +272,7 @@ template <class _Tp, class _Container>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(stack<_Tp, _Container>& __x, stack<_Tp, _Container>& __y)
+    _NOEXCEPT_(_NOEXCEPT_(__x.swap(__y)))
 {
     __x.swap(__y);
 }
