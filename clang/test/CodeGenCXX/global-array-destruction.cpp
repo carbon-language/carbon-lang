@@ -1,3 +1,4 @@
+// REQUIRES: x86-64-registered-target
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -std=c++0x -S %s -o %t-64.s
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
 
