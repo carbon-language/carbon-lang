@@ -37,6 +37,7 @@
 #include "RegisterInfoEmitter.h"
 #include "ARMDecoderEmitter.h"
 #include "SubtargetEmitter.h"
+#include "SetTheory.h"
 #include "TGParser.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
@@ -80,7 +81,8 @@ enum ActionType {
   GenArmNeon,
   GenArmNeonSema,
   GenArmNeonTest,
-  PrintEnums
+  PrintEnums,
+  PrintSets
 };
 
 namespace {
@@ -162,6 +164,8 @@ namespace {
                                "Generate ARM NEON tests for clang"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
+                    clEnumValN(PrintSets, "print-sets",
+                               "Print expanded sets for testing DAG exprs"),
                     clEnumValEnd));
 
   cl::opt<std::string>
@@ -372,6 +376,21 @@ int main(int argc, char **argv) {
       for (unsigned i = 0, e = Recs.size(); i != e; ++i)
         Out.os() << Recs[i]->getName() << ", ";
       Out.os() << "\n";
+      break;
+    }
+    case PrintSets:
+    {
+      SetTheory Sets(&Records);
+      Sets.addFieldExpander("Set", "Elements");
+      std::vector<Record*> Recs = Records.getAllDerivedDefinitions("Set");
+      for (unsigned i = 0, e = Recs.size(); i != e; ++i) {
+        Out.os() << Recs[i]->getName() << " = [";
+        const std::vector<Record*> *Elts = Sets.expand(Recs[i]);
+        assert(Elts && "Couldn't expand Set instance");
+        for (unsigned ei = 0, ee = Elts->size(); ei != ee; ++ei)
+          Out.os() << ' ' << (*Elts)[ei]->getName();
+        Out.os() << " ]\n";
+      }
       break;
     }
     default:

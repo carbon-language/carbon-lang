@@ -34,6 +34,7 @@ add_llvm_utility(tblgen
   OptParserEmitter.cpp
   Record.cpp
   RegisterInfoEmitter.cpp
+  SetTheory.cpp
   StringMatcher.cpp
   SubtargetEmitter.cpp
   TGLexer.cpp
