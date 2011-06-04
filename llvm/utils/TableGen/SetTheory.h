@@ -66,6 +66,8 @@ public:
 
   /// Operator - A callback representing a DAG operator.
   struct Operator {
+    virtual ~Operator() {}
+
     /// apply - Apply this operator to Expr's arguments and insert the result
     /// in Elts.
     virtual void apply(SetTheory&, DagInit *Expr, RecSet &Elts) =0;
@@ -75,6 +77,8 @@ public:
   /// set into a fully expanded list of elements. Expanders provide a way for
   /// users to define named sets that can be used in DAG expressions.
   struct Expander {
+    virtual ~Expander() {}
+
     virtual void expand(SetTheory&, Record*, RecSet &Elts) =0;
   };
 

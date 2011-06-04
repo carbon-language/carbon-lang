@@ -62,7 +62,7 @@ struct AndOp : public SetTheory::Operator {
 
 // SetIntBinOp - Abstract base class for (Op S, N) operators.
 struct SetIntBinOp : public SetTheory::Operator {
-  virtual void apply(SetTheory &ST, DagInit *Expr,
+  virtual void apply2(SetTheory &ST, DagInit *Expr,
                      RecSet &Set, int64_t N,
                      RecSet &Elts) =0;
 
@@ -74,13 +74,13 @@ struct SetIntBinOp : public SetTheory::Operator {
     IntInit *II = dynamic_cast<IntInit*>(Expr->arg_begin()[1]);
     if (!II)
       throw "Second argument must be an integer: " + Expr->getAsString();
-    apply(ST, Expr, Set, II->getValue(), Elts);
+    apply2(ST, Expr, Set, II->getValue(), Elts);
   }
 };
 
 // (shl S, N) Shift left, remove the first N elements.
 struct ShlOp : public SetIntBinOp {
-  void apply(SetTheory &ST, DagInit *Expr,
+  void apply2(SetTheory &ST, DagInit *Expr,
              RecSet &Set, int64_t N,
              RecSet &Elts) {
     if (N < 0)
@@ -92,7 +92,7 @@ struct ShlOp : public SetIntBinOp {
 
 // (trunc S, N) Truncate after the first N elements.
 struct TruncOp : public SetIntBinOp {
-  void apply(SetTheory &ST, DagInit *Expr,
+  void apply2(SetTheory &ST, DagInit *Expr,
              RecSet &Set, int64_t N,
              RecSet &Elts) {
     if (N < 0)
@@ -109,7 +109,7 @@ struct RotOp : public SetIntBinOp {
 
   RotOp(bool Rev) : Reverse(Rev) {}
 
-  void apply(SetTheory &ST, DagInit *Expr,
+  void apply2(SetTheory &ST, DagInit *Expr,
              RecSet &Set, int64_t N,
              RecSet &Elts) {
     if (Reverse)
@@ -128,7 +128,7 @@ struct RotOp : public SetIntBinOp {
 
 // (decimate S, N) Pick every N'th element of S.
 struct DecimateOp : public SetIntBinOp {
-  void apply(SetTheory &ST, DagInit *Expr,
+  void apply2(SetTheory &ST, DagInit *Expr,
              RecSet &Set, int64_t N,
              RecSet &Elts) {
     if (N <= 0)
