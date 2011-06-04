@@ -679,6 +679,7 @@ def x : JoinedOrSeparate<"-x">, Flags<[DriverOption]>,
   HelpText<"Treat subsequent input files as having type <language>">,
   MetaVarName<"<language>">;
 def y : Joined<"-y">;
+def z : JoinedOrSeparate<"-z">, Flags<[LinkerInput, RenderSeparate]>;
 
 def working_directory : Separate<"-working-directory">,
   HelpText<"Resolve file paths relative to the specified directory">;
