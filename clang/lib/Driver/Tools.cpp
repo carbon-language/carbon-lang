@@ -3518,6 +3518,11 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("elf_i386_fbsd");
   }
 
+  if (getToolChain().getArchName() == "powerpc") {
+    CmdArgs.push_back("-m");
+    CmdArgs.push_back("elf32ppc");
+  }
+
   if (Output.isFilename()) {
     CmdArgs.push_back("-o");
     CmdArgs.push_back(Output.getFilename());
