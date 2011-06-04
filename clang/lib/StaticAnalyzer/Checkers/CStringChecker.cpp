@@ -952,7 +952,7 @@ void CStringChecker::evalStrcpy(CheckerContext &C, const CallExpr *CE) const {
 }
 
 void CStringChecker::evalStrncpy(CheckerContext &C, const CallExpr *CE) const {
-  // char *strcpy(char *restrict dst, const char *restrict src);
+  // char *strncpy(char *restrict dst, const char *restrict src, size_t n);
   evalStrcpyCommon(C, CE, 
                    /* returnEnd = */ false, 
                    /* isBounded = */ true,
