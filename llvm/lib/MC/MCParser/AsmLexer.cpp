@@ -388,6 +388,7 @@ AsmToken AsmLexer::LexToken() {
   case ',': return AsmToken(AsmToken::Comma, StringRef(TokStart, 1));
   case '$': return AsmToken(AsmToken::Dollar, StringRef(TokStart, 1));
   case '@': return AsmToken(AsmToken::At, StringRef(TokStart, 1));
+  case '\\': return AsmToken(AsmToken::BackSlash, StringRef(TokStart, 1));
   case '=':
     if (*CurPtr == '=')
       return ++CurPtr, AsmToken(AsmToken::EqualEqual, StringRef(TokStart, 2));

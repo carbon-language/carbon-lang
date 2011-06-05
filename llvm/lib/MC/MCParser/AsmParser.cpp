@@ -47,9 +47,11 @@ namespace {
 struct Macro {
   StringRef Name;
   StringRef Body;
+  std::vector<StringRef> Parameters;
 
 public:
-  Macro(StringRef N, StringRef B) : Name(N), Body(B) {}
+  Macro(StringRef N, StringRef B, const std::vector<StringRef> &P) :
+    Name(N), Body(B), Parameters(P) {}
 };
 
 /// \brief Helper class for storing information about an active macro
@@ -69,7 +71,7 @@ struct MacroInstantiation {
 
 public:
   MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
-                     const std::vector<std::vector<AsmToken> > &A);
+                     MemoryBuffer *I);
 };
 
 /// \brief The concrete assembly parser instance.
@@ -151,6 +153,10 @@ private:
   bool ParseStatement();
 
   bool HandleMacroEntry(StringRef Name, SMLoc NameLoc, const Macro *M);
+  bool expandMacro(SmallString<256> &Buf, StringRef Body,
+                   const std::vector<StringRef> &Parameters,
+                   const std::vector<std::vector<AsmToken> > &A,
+                   const SMLoc &L);
   void HandleMacroExit();
 
   void PrintMacroInstantiations();
@@ -1183,27 +1189,33 @@ bool AsmParser::ParseStatement() {
   return false;
 }
 
-MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
-                                   const std::vector<std::vector<AsmToken> > &A)
-  : TheMacro(M), InstantiationLoc(IL), ExitLoc(EL)
-{
-  // Macro instantiation is lexical, unfortunately. We construct a new buffer
-  // to hold the macro body with substitutions.
-  SmallString<256> Buf;
+bool AsmParser::expandMacro(SmallString<256> &Buf, StringRef Body,
+                            const std::vector<StringRef> &Parameters,
+                            const std::vector<std::vector<AsmToken> > &A,
+                            const SMLoc &L) {
   raw_svector_ostream OS(Buf);
+  unsigned NParameters = Parameters.size();
+  if (NParameters != 0 && NParameters != A.size())
+    return Error(L, "Wrong number of arguments");
 
-  StringRef Body = M->Body;
   while (!Body.empty()) {
     // Scan for the next substitution.
     std::size_t End = Body.size(), Pos = 0;
     for (; Pos != End; ++Pos) {
       // Check for a substitution or escape.
-      if (Body[Pos] != '$' || Pos + 1 == End)
-        continue;
+      if (!NParameters) {
+        // This macro has no parameters, look for $0, $1, etc.
+        if (Body[Pos] != '$' || Pos + 1 == End)
+          continue;
 
-      char Next = Body[Pos + 1];
-      if (Next == '$' || Next == 'n' || isdigit(Next))
-        break;
+        char Next = Body[Pos + 1];
+        if (Next == '$' || Next == 'n' || isdigit(Next))
+          break;
+      } else {
+        // This macro has parameters, look for \foo, \bar, etc.
+        if (Body[Pos] == '\\' && Pos + 1 != End)
+          break;
+      }
     }
 
     // Add the prefix.
@@ -1213,41 +1225,69 @@ MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
     if (Pos == End)
       break;
 
-    switch (Body[Pos+1]) {
-       // $$ => $
-    case '$':
-      OS << '$';
-      break;
-
-      // $n => number of arguments
-    case 'n':
-      OS << A.size();
-      break;
-
-       // $[0-9] => argument
-    default: {
-      // Missing arguments are ignored.
-      unsigned Index = Body[Pos+1] - '0';
-      if (Index >= A.size())
+    if (!NParameters) {
+      switch (Body[Pos+1]) {
+        // $$ => $
+      case '$':
+        OS << '$';
         break;
 
-      // Otherwise substitute with the token values, with spaces eliminated.
+        // $n => number of arguments
+      case 'n':
+        OS << A.size();
+        break;
+
+        // $[0-9] => argument
+      default: {
+        // Missing arguments are ignored.
+        unsigned Index = Body[Pos+1] - '0';
+        if (Index >= A.size())
+          break;
+
+        // Otherwise substitute with the token values, with spaces eliminated.
+        for (std::vector<AsmToken>::const_iterator it = A[Index].begin(),
+               ie = A[Index].end(); it != ie; ++it)
+          OS << it->getString();
+        break;
+      }
+      }
+      Pos += 2;
+    } else {
+      unsigned I = Pos + 1;
+      while (isalnum(Body[I]) && I + 1 != End)
+        ++I;
+
+      const char *Begin = Body.data() + Pos +1;
+      StringRef Argument(Begin, I - (Pos +1));
+      unsigned Index = 0;
+      for (; Index < NParameters; ++Index)
+        if (Parameters[Index] == Argument)
+          break;
+
+      // FIXME: We should error at the macro definition.
+      if (Index == NParameters)
+        return Error(L, "Parameter not found");
+
       for (std::vector<AsmToken>::const_iterator it = A[Index].begin(),
              ie = A[Index].end(); it != ie; ++it)
         OS << it->getString();
-      break;
-    }
-    }
 
+      Pos += 1 + Argument.size();
+    }
     // Update the scan point.
-    Body = Body.substr(Pos + 2);
+    Body = Body.substr(Pos);
   }
 
   // We include the .endmacro in the buffer as our queue to exit the macro
   // instantiation.
   OS << ".endmacro\n";
+  return false;
+}
 
-  Instantiation = MemoryBuffer::getMemBufferCopy(OS.str(), "<instantiation>");
+MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL, SMLoc EL,
+                                       MemoryBuffer *I)
+  : TheMacro(M), Instantiation(I), InstantiationLoc(IL), ExitLoc(EL)
+{
 }
 
 bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
@@ -1284,11 +1324,22 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
     Lex();
   }
 
+  // Macro instantiation is lexical, unfortunately. We construct a new buffer
+  // to hold the macro body with substitutions.
+  SmallString<256> Buf;
+  StringRef Body = M->Body;
+
+  if (expandMacro(Buf, Body, M->Parameters, MacroArguments, getTok().getLoc()))
+    return true;
+
+  MemoryBuffer *Instantiation =
+    MemoryBuffer::getMemBufferCopy(Buf.str(), "<instantiation>");
+
   // Create the macro instantiation object and add to the current macro
   // instantiation stack.
   MacroInstantiation *MI = new MacroInstantiation(M, NameLoc,
                                                   getTok().getLoc(),
-                                                  MacroArguments);
+                                                  Instantiation);
   ActiveMacros.push_back(MI);
 
   // Jump to the macro instantiation and prime the lexer.
@@ -2538,12 +2589,26 @@ bool GenericAsmParser::ParseDirectiveMacrosOnOff(StringRef Directive,
 }
 
 /// ParseDirectiveMacro
-/// ::= .macro name
+/// ::= .macro name [parameters]
 bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
                                            SMLoc DirectiveLoc) {
   StringRef Name;
   if (getParser().ParseIdentifier(Name))
     return TokError("expected identifier in directive");
+
+  std::vector<StringRef> Parameters;
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    for(;;) {
+      StringRef Parameter;
+      if (getParser().ParseIdentifier(Parameter))
+        return TokError("expected identifier in directive");
+      Parameters.push_back(Parameter);
+
+      if (getLexer().isNot(AsmToken::Comma))
+        break;
+      Lex();
+    }
+  }
 
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.macro' directive");
@@ -2582,7 +2647,7 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
   const char *BodyStart = StartToken.getLoc().getPointer();
   const char *BodyEnd = EndToken.getLoc().getPointer();
   StringRef Body = StringRef(BodyStart, BodyEnd - BodyStart);
-  getParser().MacroMap[Name] = new Macro(Name, Body);
+  getParser().MacroMap[Name] = new Macro(Name, Body, Parameters);
   return false;
 }
 

@@ -44,6 +44,7 @@ public:
     Colon,
     Plus, Minus, Tilde,
     Slash,    // '/'
+    BackSlash, // '\'
     LParen, RParen, LBrac, RBrac, LCurly, RCurly,
     Star, Dot, Comma, Dollar, Equal, EqualEqual,
 
