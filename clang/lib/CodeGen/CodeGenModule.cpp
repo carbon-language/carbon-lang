@@ -2082,6 +2082,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::FunctionTemplate:
   case Decl::TypeAliasTemplate:
   case Decl::NamespaceAlias:
+  case Decl::Block:
     break;
   case Decl::CXXConstructor:
     // Skip function templates

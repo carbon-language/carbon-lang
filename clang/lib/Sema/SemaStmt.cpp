@@ -1589,14 +1589,18 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       if (Result.isInvalid())
         return StmtError();
       RetValExp = Result.take();
-      CurBlock->ReturnType = RetValExp->getType();
-      if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(RetValExp)) {
-        // We have to remove a 'const' added to copied-in variable which was
-        // part of the implementation spec. and not the actual qualifier for
-        // the variable.
-        if (CDRE->isConstQualAdded())
-          CurBlock->ReturnType.removeLocalConst(); // FIXME: local???
-      }
+
+      if (!RetValExp->isTypeDependent()) {
+        CurBlock->ReturnType = RetValExp->getType();
+        if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(RetValExp)) {
+          // We have to remove a 'const' added to copied-in variable which was
+          // part of the implementation spec. and not the actual qualifier for
+          // the variable.
+          if (CDRE->isConstQualAdded())
+            CurBlock->ReturnType.removeLocalConst(); // FIXME: local???
+        }
+      } else
+        CurBlock->ReturnType = Context.DependentTy;
     } else
       CurBlock->ReturnType = Context.VoidTy;
   }
@@ -1658,7 +1662,7 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   // If we need to check for the named return value optimization, save the
   // return statement in our scope for later processing.
-  if (getLangOptions().CPlusPlus && FnRetType->isRecordType() &&
+  if (getLangOptions().CPlusPlus && FnRetType->isRecordType() && 
       !CurContext->isDependentContext())
     FunctionScopes.back()->Returns.push_back(Result);
 
