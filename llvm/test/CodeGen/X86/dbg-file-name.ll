@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple x86_64-apple-darwin10.0.0  < %s | FileCheck %s
 
 ; Radar 8884898
-; CHECK: file	1 "/Users/manav/one/two/simple.c"
+; CHECK: file	1 "/Users/manav/one/two{{/|\\\\}}simple.c"
 
 declare i32 @printf(i8*, ...) nounwind
 
