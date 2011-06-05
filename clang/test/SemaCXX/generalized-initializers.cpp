@@ -67,8 +67,11 @@ namespace integral {
   }
 
   void initializer_list() {
+    std::initializer_list<int> il = { 1, 2, 3 };
+    std::initializer_list<double> dl = { 1.0, 2.0, 3 };
     auto l = {1, 2, 3, 4};
     static_assert(same_type<decltype(l), std::initializer_list<int>>::value, "");
+    auto bl = {1, 2.0}; // expected-error {{cannot deduce}}
 
     for (int i : {1, 2, 3, 4}) {}
   }
@@ -91,7 +94,6 @@ namespace objects {
   };
 
   void initialization() {
-    // FIXME: how to ensure correct overloads are called?
     { A<0> a{}; }
     { A<0> a = {}; }
     { A<1> a{1, 1.0}; }
