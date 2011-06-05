@@ -45,8 +45,9 @@ namespace integral {
     { const int a = {}; static_assert(a == 0, ""); }
     { const int a{1}; static_assert(a == 1, ""); }
     { const int a = {1}; static_assert(a == 1, ""); }
-    { const int a{1, 2}; } // expected-error {{ too many initializers}}
-    { const int a = {1, 2}; } // expected-error {{ too many initializers}}
+    { const int a{1, 2}; } // expected-error {{excess elements}}
+    { const int a = {1, 2}; } // expected-error {{excess elements}}
+    { const short a{100000}; } // expected-error {{narrowing conversion}}
     { const short a = {100000}; } // expected-error {{narrowing conversion}}
   }
 
@@ -158,7 +159,7 @@ namespace litb {
 
   struct B { 
     template<typename ...T>
-    B(initializer_list<int>, T ...); 
+    B(std::initializer_list<int>, T ...); 
   };
 
   // invalid (the first phase only considers init-list ctors)

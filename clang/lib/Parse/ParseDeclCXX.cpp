@@ -2157,6 +2157,7 @@ void Parser::ParseConstructorInitializer(Decl *ConstructorDecl) {
 ///
 /// [C++] mem-initializer:
 ///         mem-initializer-id '(' expression-list[opt] ')'
+/// [C++0x] mem-initializer-id braced-init-list
 ///
 /// [C++] mem-initializer-id:
 ///         '::'[opt] nested-name-specifier[opt] class-name
@@ -2187,31 +2188,37 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
   SourceLocation IdLoc = ConsumeToken();
 
   // Parse the '('.
-  if (Tok.isNot(tok::l_paren)) {
-    Diag(Tok, diag::err_expected_lparen);
+  if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
+    // FIXME: Do something with the braced-init-list.
+    ParseBraceInitializer();
     return true;
+  } else if(Tok.is(tok::l_paren)) {
+    SourceLocation LParenLoc = ConsumeParen();
+
+    // Parse the optional expression-list.
+    ExprVector ArgExprs(Actions);
+    CommaLocsTy CommaLocs;
+    if (Tok.isNot(tok::r_paren) && ParseExpressionList(ArgExprs, CommaLocs)) {
+      SkipUntil(tok::r_paren);
+      return true;
+    }
+
+    SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+    SourceLocation EllipsisLoc;
+    if (Tok.is(tok::ellipsis))
+      EllipsisLoc = ConsumeToken();
+
+    return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
+                                       TemplateTypeTy, IdLoc,
+                                       LParenLoc, ArgExprs.take(),
+                                       ArgExprs.size(), RParenLoc,
+                                       EllipsisLoc);
   }
-  SourceLocation LParenLoc = ConsumeParen();
 
-  // Parse the optional expression-list.
-  ExprVector ArgExprs(Actions);
-  CommaLocsTy CommaLocs;
-  if (Tok.isNot(tok::r_paren) && ParseExpressionList(ArgExprs, CommaLocs)) {
-    SkipUntil(tok::r_paren);
-    return true;
-  }
-
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-
-  SourceLocation EllipsisLoc;
-  if (Tok.is(tok::ellipsis))
-    EllipsisLoc = ConsumeToken();
-  
-  return Actions.ActOnMemInitializer(ConstructorDecl, getCurScope(), SS, II,
-                                     TemplateTypeTy, IdLoc,
-                                     LParenLoc, ArgExprs.take(),
-                                     ArgExprs.size(), RParenLoc,
-                                     EllipsisLoc);
+  Diag(Tok, getLang().CPlusPlus0x ? diag::err_expected_lparen_or_lbrace
+                                  : diag::err_expected_lparen);
+  return true;
 }
 
 /// \brief Parse a C++ exception-specification if present (C++0x [except.spec]).

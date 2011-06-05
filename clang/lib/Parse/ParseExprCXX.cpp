@@ -809,42 +809,55 @@ ExprResult Parser::ParseCXXThis() {
 /// Can be interpreted either as function-style casting ("int(x)")
 /// or class type construction ("ClassType(x,y,z)")
 /// or creation of a value-initialized type ("int()").
+/// See [C++ 5.2.3].
 ///
 ///       postfix-expression: [C++ 5.2p1]
-///         simple-type-specifier '(' expression-list[opt] ')'      [C++ 5.2.3]
-///         typename-specifier '(' expression-list[opt] ')'         [TODO]
+///         simple-type-specifier '(' expression-list[opt] ')'
+/// [C++0x] simple-type-specifier braced-init-list
+///         typename-specifier '(' expression-list[opt] ')'
+/// [C++0x] typename-specifier braced-init-list
 ///
 ExprResult
 Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
   ParsedType TypeRep = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo).get();
 
-  assert(Tok.is(tok::l_paren) && "Expected '('!");
-  GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
+  assert((Tok.is(tok::l_paren) ||
+          (getLang().CPlusPlus0x && Tok.is(tok::l_brace)))
+         && "Expected '(' or '{'!");
 
-  SourceLocation LParenLoc = ConsumeParen();
+  if (Tok.is(tok::l_brace)) {
 
-  ExprVector Exprs(Actions);
-  CommaLocsTy CommaLocs;
+    // FIXME: Convert to a proper type construct expression.
+    return ParseBraceInitializer();
 
-  if (Tok.isNot(tok::r_paren)) {
-    if (ParseExpressionList(Exprs, CommaLocs)) {
-      SkipUntil(tok::r_paren);
-      return ExprError();
+  } else {
+    GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
+
+    SourceLocation LParenLoc = ConsumeParen();
+
+    ExprVector Exprs(Actions);
+    CommaLocsTy CommaLocs;
+
+    if (Tok.isNot(tok::r_paren)) {
+      if (ParseExpressionList(Exprs, CommaLocs)) {
+        SkipUntil(tok::r_paren);
+        return ExprError();
+      }
     }
+
+    // Match the ')'.
+    SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+    // TypeRep could be null, if it references an invalid typedef.
+    if (!TypeRep)
+      return ExprError();
+
+    assert((Exprs.size() == 0 || Exprs.size()-1 == CommaLocs.size())&&
+           "Unexpected number of commas!");
+    return Actions.ActOnCXXTypeConstructExpr(TypeRep, LParenLoc, move_arg(Exprs),
+                                             RParenLoc);
   }
-
-  // Match the ')'.
-  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-
-  // TypeRep could be null, if it references an invalid typedef.
-  if (!TypeRep)
-    return ExprError();
-
-  assert((Exprs.size() == 0 || Exprs.size()-1 == CommaLocs.size())&&
-         "Unexpected number of commas!");
-  return Actions.ActOnCXXTypeConstructExpr(TypeRep, LParenLoc, move_arg(Exprs),
-                                           RParenLoc);
 }
 
 /// ParseCXXCondition - if/switch/while condition expression.
@@ -1727,7 +1740,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
 ///
 ///        new-initializer:
 ///                   '(' expression-list[opt] ')'
-/// [C++0x]           braced-init-list                                   [TODO]
+/// [C++0x]           braced-init-list
 ///
 ExprResult
 Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
@@ -1816,6 +1829,9 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
       SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
       return ExprError();
     }
+  } else if (Tok.is(tok::l_brace)) {
+    // FIXME: Have to communicate the init-list to ActOnCXXNew.
+    ParseBraceInitializer();
   }
 
   return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,

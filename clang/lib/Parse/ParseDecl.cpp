@@ -814,8 +814,10 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   // analyzed.
   if (FRI && Tok.is(tok::colon)) {
     FRI->ColonLoc = ConsumeToken();
-    // FIXME: handle braced-init-list here.
-    FRI->RangeExpr = ParseExpression();
+    if (Tok.is(tok::l_brace))
+      FRI->RangeExpr = ParseBraceInitializer();
+    else
+      FRI->RangeExpr = ParseExpression();
     Decl *ThisDecl = Actions.ActOnDeclarator(getCurScope(), D);
     Actions.ActOnCXXForRangeDecl(ThisDecl);
     Actions.FinalizeDeclaration(ThisDecl);
@@ -914,6 +916,7 @@ bool Parser::ParseAttributesAfterDeclarator(Declarator &D) {
 /// [C++]   '(' expression-list ')'
 /// [C++0x] '=' 'default'                                                [TODO]
 /// [C++0x] '=' 'delete'
+/// [C++0x] braced-init-list
 ///
 /// According to the standard grammar, =default and =delete are function
 /// definitions, but that definitely doesn't fit with the parser here.
@@ -1041,6 +1044,26 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
                                             RParenLoc,
                                             TypeContainsAuto);
     }
+  } else if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
+    // Parse C++0x braced-init-list.
+    if (D.getCXXScopeSpec().isSet()) {
+      EnterScope(0);
+      Actions.ActOnCXXEnterDeclInitializer(getCurScope(), ThisDecl);
+    }
+
+    ExprResult Init(ParseBraceInitializer());
+
+    if (D.getCXXScopeSpec().isSet()) {
+      Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
+      ExitScope();
+    }
+
+    if (Init.isInvalid()) {
+      Actions.ActOnInitializerError(ThisDecl);
+    } else
+      Actions.AddInitializerToDecl(ThisDecl, Init.take(),
+                                   /*DirectInit=*/true, TypeContainsAuto);
+
   } else {
     Actions.ActOnUninitializedDecl(ThisDecl, TypeContainsAuto);
   }
