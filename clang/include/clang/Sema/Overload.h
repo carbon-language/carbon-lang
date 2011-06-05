@@ -202,8 +202,7 @@ namespace clang {
     void setAsIdentityConversion();
     
     bool isIdentityConversion() const {
-      return First == ICK_Identity && Second == ICK_Identity && 
-             Third == ICK_Identity;
+      return Second == ICK_Identity && Third == ICK_Identity;
     }
     
     ImplicitConversionRank getRank() const;

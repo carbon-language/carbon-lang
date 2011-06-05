@@ -503,3 +503,25 @@ namespace rdar8499524 {
     g(W());
   }
 }
+
+namespace rdar9173984 {
+  template <typename T, unsigned long N> int &f(const T (&)[N]);
+  template <typename T> float &f(const T *);
+
+  void test() {
+    int arr[2] = {0, 0};
+    int *arrp = arr;
+    int &ir = f(arr);
+    float &fr = f(arrp);
+  }
+}
+
+namespace PR9507 {
+  void f(int * const&); // expected-note{{candidate function}}
+  void f(int const(&)[1]); // expected-note{{candidate function}}
+ 
+  int main() {
+    int n[1];
+    f(n); // expected-error{{call to 'f' is ambiguous}}
+  }
+}

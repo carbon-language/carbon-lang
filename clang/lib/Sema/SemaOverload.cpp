@@ -2523,12 +2523,10 @@ compareStandardConversionSubsets(ASTContext &Context,
 
   // the identity conversion sequence is considered to be a subsequence of
   // any non-identity conversion sequence
-  if (SCS1.ReferenceBinding == SCS2.ReferenceBinding) {
-    if (SCS1.isIdentityConversion() && !SCS2.isIdentityConversion())
-      return ImplicitConversionSequence::Better;
-    else if (!SCS1.isIdentityConversion() && SCS2.isIdentityConversion())
-      return ImplicitConversionSequence::Worse;
-  }
+  if (SCS1.isIdentityConversion() && !SCS2.isIdentityConversion())
+    return ImplicitConversionSequence::Better;
+  else if (!SCS1.isIdentityConversion() && SCS2.isIdentityConversion())
+    return ImplicitConversionSequence::Worse;
 
   if (SCS1.Second != SCS2.Second) {
     if (SCS1.Second == ICK_Identity)
