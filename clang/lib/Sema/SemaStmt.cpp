@@ -1617,13 +1617,17 @@ Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // compatibility to worry about here.
   ReturnStmt *Result = 0;
   if (CurBlock->ReturnType->isVoidType()) {
-    if (RetValExp) {
+    if (RetValExp && !RetValExp->isTypeDependent() &&
+        (!getLangOptions().CPlusPlus || !RetValExp->getType()->isVoidType())) {
       Diag(ReturnLoc, diag::err_return_block_has_expr);
       RetValExp = 0;
     }
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, 0);
   } else if (!RetValExp) {
-    return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
+    if (!CurBlock->ReturnType->isDependentType())
+      return StmtError(Diag(ReturnLoc, diag::err_block_return_missing_expr));
+
+    Result = new (Context) ReturnStmt(ReturnLoc, 0, 0);
   } else {
     const VarDecl *NRVOCandidate = 0;
 

@@ -118,3 +118,29 @@ void f(int (^bl)(A* a)); // expected-note {{candidate function not viable: no kn
 void g() {
   f(^(B* b) { return 0; }); // expected-error {{no matching function for call to 'f'}}
 }
+
+namespace DependentReturn {
+  template<typename T>
+  void f(T t) {
+    (void)^(T u) {
+      if (t != u)
+        return t + u;
+      else
+        return;
+    };
+
+    (void)^(T u) {
+      if (t == u)
+        return;
+      else
+        return t + u;
+    };
+  }
+
+  struct X { };
+  void operator+(X, X);
+  bool operator==(X, X);
+  bool operator!=(X, X);
+
+  template void f<X>(X);
+}
