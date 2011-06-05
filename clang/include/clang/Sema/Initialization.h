@@ -825,7 +825,7 @@ public:
 
   /// \brief Determine why initialization failed.
   FailureKind getFailureKind() const {
-    assert(getKind() == FailedSequence && "Not an initialization failure!");
+    assert(Failed() && "Not an initialization failure!");
     return Failure;
   }
 

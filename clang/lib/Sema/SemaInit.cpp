@@ -2137,7 +2137,7 @@ bool InitializationSequence::isDirectReferenceBinding() const {
 }
 
 bool InitializationSequence::isAmbiguous() const {
-  if (getKind() != FailedSequence)
+  if (!Failed())
     return false;
 
   switch (getFailureKind()) {
@@ -3650,7 +3650,7 @@ InitializationSequence::Perform(Sema &S,
                                 const InitializationKind &Kind,
                                 MultiExprArg Args,
                                 QualType *ResultType) {
-  if (SequenceKind == FailedSequence) {
+  if (Failed()) {
     unsigned NumArgs = Args.size();
     Diagnose(S, Entity, Kind, (Expr **)Args.release(), NumArgs);
     return ExprError();
@@ -4216,7 +4216,7 @@ bool InitializationSequence::Diagnose(Sema &S,
                                       const InitializedEntity &Entity,
                                       const InitializationKind &Kind,
                                       Expr **Args, unsigned NumArgs) {
-  if (SequenceKind != FailedSequence)
+  if (!Failed())
     return false;
 
   QualType DestType = Entity.getType();
