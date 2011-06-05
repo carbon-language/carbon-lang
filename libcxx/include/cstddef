@@ -84,12 +84,17 @@ inline _LIBCPP_ALWAYS_INLINE nullptr_t __get_nullptr_t() {return nullptr_t(0);}
 
 #define nullptr _STD::__get_nullptr_t()
 
-#else  // _LIBCPP_HAS_NO_NULLPTR
-
-typedef decltype(nullptr) nullptr_t;
-
 #endif  // _LIBCPP_HAS_NO_NULLPTR
 
 _LIBCPP_END_NAMESPACE_STD
+
+#ifndef _LIBCPP_HAS_NO_NULLPTR
+
+namespace std
+{
+    typedef decltype(nullptr) nullptr_t;
+}
+
+#endif  // _LIBCPP_HAS_NO_NULLPTR
 
 #endif  // _LIBCPP_CSTDDEF
