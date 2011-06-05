@@ -81,47 +81,91 @@ namespace integral {
 
 namespace objects {
 
+  template <int N>
   struct A {
-    A();
-    A(int, double);
-    A(int, int);
-    A(std::initializer_list<int>);
-
-    int operator[](A);
+    A() { static_assert(N == 0, ""); }
+    A(int, double) { static_assert(N == 1, ""); }
+    A(int, int) { static_assert(N == 2, ""); }
+    A(std::initializer_list<int>) { static_assert(N == 3, ""); }
   };
 
   void initialization() {
     // FIXME: how to ensure correct overloads are called?
-    { A a{}; }
-    { A a = {}; }
-    { A a{1, 1.0}; }
-    { A a = {1, 1.0}; }
-    { A a{1, 2, 3, 4, 5, 6, 7, 8}; }
-    { A a = {1, 2, 3, 4, 5, 6, 7, 8}; }
-    { A a{1, 2, 3, 4, 5, 6, 7, 8}; }
-    { A a{1, 2}; }
+    { A<0> a{}; }
+    { A<0> a = {}; }
+    { A<1> a{1, 1.0}; }
+    { A<1> a = {1, 1.0}; }
+    { A<3> a{1, 2, 3, 4, 5, 6, 7, 8}; }
+    { A<3> a = {1, 2, 3, 4, 5, 6, 7, 8}; }
+    { A<3> a{1, 2, 3, 4, 5, 6, 7, 8}; }
+    { A<3> a{1, 2}; }
   }
 
-  A function_call() {
-    void takes_A(A);
-    takes_a({1, 1.0});
+  struct C {
+    C();
+    C(int, double);
+    C(int, int);
+    C(std::initializer_list<int>);
 
-    A a;
-    a[{1, 1.0}];
+    int operator[](C);
+  };
+
+  C function_call() {
+    void takes_C(C);
+    takes_C({1, 1.0});
+
+    C c;
+    c[{1, 1.0}];
 
     return {1, 1.0};
   }
 
   void inline_init() {
-    (void) A{1, 1.0};
-    (void) new A{1, 1.0};
+    (void) A<1>{1, 1.0};
+    (void) new A<1>{1, 1.0};
   }
 
   struct B {
-    B(A, int, A);
+    B(C, int, C);
   };
 
   void nested_init() {
     B b{{1, 1.0}, 2, {3, 4, 5, 6, 7}};
   }
+}
+
+namespace litb {
+
+  // invalid
+  struct A { int a[2]; A():a({1, 2}) { } }; // expected-error {{}}
+
+  // invalid
+  int a({0}); // expected-error {{}}
+
+  // invalid
+  int const &b({0}); // expected-error {{}}
+
+  struct C { explicit C(int, int); C(int, long); };
+
+  // invalid
+  C c({1, 2}); // expected-error {{}}
+
+  // valid (by copy constructor).
+  C d({1, 2L}); // expected-error {{}}
+
+  // valid
+  C e{1, 2};
+
+  struct B { 
+    template<typename ...T>
+    B(initializer_list<int>, T ...); 
+  };
+
+  // invalid (the first phase only considers init-list ctors)
+  // (for the second phase, no constructor is viable)
+  B f{1, 2, 3};
+
+  // valid (T deduced to <>).
+  B g({1, 2, 3});
+
 }
