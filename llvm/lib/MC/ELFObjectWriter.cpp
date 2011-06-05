@@ -62,6 +62,7 @@ bool ELFObjectWriter::RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant) {
   case MCSymbolRefExpr::VK_GOT:
   case MCSymbolRefExpr::VK_PLT:
   case MCSymbolRefExpr::VK_GOTPCREL:
+  case MCSymbolRefExpr::VK_GOTOFF:
   case MCSymbolRefExpr::VK_TPOFF:
   case MCSymbolRefExpr::VK_TLSGD:
   case MCSymbolRefExpr::VK_GOTTPOFF:
@@ -556,6 +557,7 @@ void ELFObjectWriter::ComputeSymbolTable(MCAssembler &Asm,
                                          RevGroupMapTy RevGroupMap,
                                          unsigned NumRegularSections) {
   // FIXME: Is this the correct place to do this?
+  // FIXME: Why is an undefined reference to _GLOBAL_OFFSET_TABLE_ needed?
   if (NeedsGOT) {
     llvm::StringRef Name = "_GLOBAL_OFFSET_TABLE_";
     MCSymbol *Sym = Asm.getContext().GetOrCreateSymbol(Name);
