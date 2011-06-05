@@ -7873,29 +7873,26 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
                                                  AssociatedNamespaces,
                                                  AssociatedClasses);
       // Never suggest declaring a function within namespace 'std'. 
+      Sema::AssociatedNamespaceSet SuggestedNamespaces;
       if (DeclContext *Std = SemaRef.getStdNamespace()) {
-        // Use two passes: SmallPtrSet::erase invalidates too many iterators
-        // to be used in the loop.
-        llvm::SmallVector<DeclContext*, 4> StdNamespaces;
         for (Sema::AssociatedNamespaceSet::iterator
                it = AssociatedNamespaces.begin(),
-               end = AssociatedNamespaces.end(); it != end; ++it)
-          if (Std->Encloses(*it))
-            StdNamespaces.push_back(*it);
-        for (unsigned I = 0; I != StdNamespaces.size(); ++I)
-          AssociatedNamespaces.erase(StdNamespaces[I]);
+               end = AssociatedNamespaces.end(); it != end; ++it) {
+          if (!Std->Encloses(*it))
+            SuggestedNamespaces.insert(*it);
+        }
       }
 
       SemaRef.Diag(R.getNameLoc(), diag::err_not_found_by_two_phase_lookup)
         << R.getLookupName();
-      if (AssociatedNamespaces.empty()) {
+      if (SuggestedNamespaces.empty()) {
         SemaRef.Diag(Best->Function->getLocation(),
                      diag::note_not_found_by_two_phase_lookup)
           << R.getLookupName() << 0;
-      } else if (AssociatedNamespaces.size() == 1) {
+      } else if (SuggestedNamespaces.size() == 1) {
         SemaRef.Diag(Best->Function->getLocation(),
                      diag::note_not_found_by_two_phase_lookup)
-          << R.getLookupName() << 1 << *AssociatedNamespaces.begin();
+          << R.getLookupName() << 1 << *SuggestedNamespaces.begin();
       } else {
         // FIXME: It would be useful to list the associated namespaces here,
         // but the diagnostics infrastructure doesn't provide a way to produce
