@@ -109,3 +109,19 @@ namespace test2 {
 
   // CHECK: store float {{.*}}, float* @_ZZN5test21gIPFfvEEEvT_DTclfL0p_EEE8variable,
 }
+
+namespace test3 {
+  template <class T, class U> void a(T x, U y, decltype(x.*y) z) {}  
+
+  struct X {
+    int *member;
+  };
+
+  // CHECK: define void @_ZN5test311instantiateEv
+  void instantiate() {
+    X x;
+    int *ip;
+    // CHECK: call void @_ZN5test31aINS_1XEMS1_PiEEvT_T0_DTdsfL0p_fL0p0_E
+    a(x, &X::member, ip);
+  }
+}

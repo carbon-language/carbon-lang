@@ -2039,6 +2039,7 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   //              ::= <function-param>
   //              ::= sr <type> <unqualified-name>                   # dependent name
   //              ::= sr <type> <unqualified-name> <template-args>   # dependent template-id
+  //              ::= ds <expression> <expression>                   # expr.*expr
   //              ::= sZ <template-param>                            # size of a parameter pack
   //              ::= sZ <function-param>    # size of a function parameter pack
   //              ::= <expr-primary>
@@ -2317,8 +2318,11 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   case Expr::CompoundAssignOperatorClass: // fallthrough
   case Expr::BinaryOperatorClass: {
     const BinaryOperator *BO = cast<BinaryOperator>(E);
-    mangleOperatorName(BinaryOperator::getOverloadedOperator(BO->getOpcode()),
-                       /*Arity=*/2);
+    if (BO->getOpcode() == BO_PtrMemD)
+      Out << "ds";
+    else
+      mangleOperatorName(BinaryOperator::getOverloadedOperator(BO->getOpcode()),
+                         /*Arity=*/2);
     mangleExpression(BO->getLHS());
     mangleExpression(BO->getRHS());
     break;
