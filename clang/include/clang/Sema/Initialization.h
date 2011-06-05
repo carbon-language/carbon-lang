@@ -437,48 +437,21 @@ public:
 class InitializationSequence {
 public:
   /// \brief Describes the kind of initialization sequence computed.
-  ///
-  /// FIXME: Much of this information is in the initialization steps... why is
-  /// it duplicated here?
   enum SequenceKind {
     /// \brief A failed initialization sequence. The failure kind tells what
     /// happened.
     FailedSequence = 0,
-    
+
     /// \brief A dependent initialization, which could not be
     /// type-checked due to the presence of dependent types or
-    /// dependently-type expressions.
+    /// dependently-typed expressions.
     DependentSequence,
 
-    /// \brief A user-defined conversion sequence.
-    UserDefinedConversion,
-    
-    /// \brief A constructor call.
-    ConstructorInitialization,
-    
+    /// \brief A normal sequence.
+    NormalSequence,
+
     /// \brief A reference binding.
-    ReferenceBinding,
-
-    /// \brief List initialization
-    ListInitialization,
-    
-    /// \brief Zero-initialization.
-    ZeroInitialization,
-    
-    /// \brief No initialization required.
-    NoInitialization,
-    
-    /// \brief Standard conversion sequence.
-    StandardConversion,
-
-    /// \brief C conversion sequence.
-    CAssignment,
-
-    /// \brief String initialization
-    StringInit,
-
-    /// \brief Array initialization from another array (GNU C extension).
-    ArrayInit
+    ReferenceBinding // FIXME: Still looks redundant, but complicated.
   };
   
   /// \brief Describes the kind of a particular step in an initialization
@@ -698,7 +671,7 @@ public:
   void setSequenceKind(enum SequenceKind SK) { SequenceKind = SK; }
   
   /// \brief Determine whether the initialization sequence is valid.
-  operator bool() const { return SequenceKind != FailedSequence; }
+  operator bool() const { return !Failed(); }
 
   /// \brief Determine whether the initialization sequence is invalid.
   bool Failed() const { return SequenceKind == FailedSequence; }
