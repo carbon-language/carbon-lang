@@ -819,11 +819,9 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
     return GetOrCreateSourceID("<stdin>", StringRef());
 
   // MCStream expects full path name as filename.
-  if (!DirName.empty() && !FileName.startswith("/")) {
-    std::string FullPathName(DirName.data());
-    if (!DirName.endswith("/"))
-      FullPathName += "/";
-    FullPathName += FileName.data();
+  if (!DirName.empty() && !sys::path::is_absolute(FileName)) {
+    SmallString<128> FullPathName = DirName;
+    sys::path::append(FullPathName, FileName);
     // Here FullPathName will be copied into StringMap by GetOrCreateSourceID.
     return GetOrCreateSourceID(StringRef(FullPathName), StringRef());
   }
