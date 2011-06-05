@@ -1531,12 +1531,11 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
     //   parameter of the selected constructor is not an rvalue reference
     //   to the object's type (possibly cv-qualified), overload resolution
     //   is performed again, considering the object as an lvalue.
-    if (Seq.getKind() != InitializationSequence::FailedSequence) {
+    if (Seq) {
       for (InitializationSequence::step_iterator Step = Seq.step_begin(),
            StepEnd = Seq.step_end();
            Step != StepEnd; ++Step) {
-        if (Step->Kind
-            != InitializationSequence::SK_ConstructorInitialization)
+        if (Step->Kind != InitializationSequence::SK_ConstructorInitialization)
           continue;
 
         CXXConstructorDecl *Constructor

@@ -3350,7 +3350,7 @@ bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
 
     InitializationSequence InitSeq(*this, BaseEntity, Kind, 0, 0);
 
-    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+    if (InitSeq.Failed())
       return true;
   }
 
@@ -3380,7 +3380,7 @@ bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
 
     InitializationSequence InitSeq(*this, BaseEntity, Kind, 0, 0);
 
-    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+    if (InitSeq.Failed())
       return true;
   }
 
@@ -3462,7 +3462,7 @@ bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
     
     InitializationSequence InitSeq(*this, MemberEntity, Kind, 0, 0);
 
-    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+    if (InitSeq.Failed())
       return true;
   }
 
@@ -3537,7 +3537,7 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
 
     InitializationSequence InitSeq(*this, BaseEntity, Kind, &Arg, 1);
 
-    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+    if (InitSeq.Failed())
       return true;
   }
 
@@ -3574,7 +3574,7 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
 
     InitializationSequence InitSeq(*this, BaseEntity, Kind, &Arg, 1);
 
-    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+    if (InitSeq.Failed())
       return true;
   }
 
@@ -3651,7 +3651,7 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
    
     InitializationSequence InitSeq(*this, Entities.back(), Kind, &Arg, 1);
 
-    if (InitSeq.getKind() == InitializationSequence::FailedSequence)
+    if (InitSeq.Failed())
       return true;
   }
 

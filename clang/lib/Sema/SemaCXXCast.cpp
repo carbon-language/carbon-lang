@@ -252,8 +252,7 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
                                      (CT == CT_CStyle || CT == CT_Functional));
   InitializationSequence sequence(S, entity, initKind, &src, 1);
 
-  assert(sequence.getKind() == InitializationSequence::FailedSequence &&
-         "initialization succeeded on second try?");
+  assert(sequence.Failed() && "initialization succeeded on second try?");
   switch (sequence.getFailureKind()) {
   default: return false;
 
@@ -1195,8 +1194,7 @@ TryStaticImplicitCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
   // On the other hand, if we're checking a C-style cast, we've still got
   // the reinterpret_cast way.
   
-  if (InitSeq.getKind() == InitializationSequence::FailedSequence && 
-    (CStyle || !DestType->isReferenceType()))
+  if (InitSeq.Failed() && (CStyle || !DestType->isReferenceType()))
     return TC_NotApplicable;
     
   ExprResult Result

@@ -699,6 +699,9 @@ public:
   
   /// \brief Determine whether the initialization sequence is valid.
   operator bool() const { return SequenceKind != FailedSequence; }
+
+  /// \brief Determine whether the initialization sequence is invalid.
+  bool Failed() const { return SequenceKind == FailedSequence; }
   
   typedef llvm::SmallVector<Step, 4>::const_iterator step_iterator;
   step_iterator step_begin() const { return Steps.begin(); }

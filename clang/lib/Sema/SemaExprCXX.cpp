@@ -2889,7 +2889,7 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
     Sema::SFINAETrap SFINAE(Self, /*AccessCheckingSFINAE=*/true);
     Sema::ContextRAII TUContext(Self, Self.Context.getTranslationUnitDecl());
     InitializationSequence Init(Self, To, Kind, &FromPtr, 1);
-    if (Init.getKind() == InitializationSequence::FailedSequence)
+    if (Init.Failed())
       return false;
 
     ExprResult Result = Init.Perform(Self, To, Kind, MultiExprArg(&FromPtr, 1));
@@ -3250,7 +3250,7 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
       if (TTy.isAtLeastAsQualifiedAs(FTy)) {
         InitializedEntity Entity = InitializedEntity::InitializeTemporary(TTy);
         InitializationSequence InitSeq(Self, Entity, Kind, &From, 1);
-        if (InitSeq.getKind() != InitializationSequence::FailedSequence) {
+        if (InitSeq) {
           HaveConversion = true;
           return false;
         }
@@ -3275,7 +3275,7 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
 
   InitializedEntity Entity = InitializedEntity::InitializeTemporary(TTy);
   InitializationSequence InitSeq(Self, Entity, Kind, &From, 1);
-  HaveConversion = InitSeq.getKind() != InitializationSequence::FailedSequence;
+  HaveConversion = !InitSeq.Failed();
   ToType = TTy;
   if (InitSeq.isAmbiguous())
     return InitSeq.Diagnose(Self, Entity, Kind, &From, 1);

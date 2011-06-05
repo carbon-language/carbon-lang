@@ -4735,7 +4735,7 @@ Sema::CanPerformCopyInitialization(const InitializedEntity &Entity,
   InitializationKind Kind = InitializationKind::CreateCopy(SourceLocation(),
                                                            SourceLocation());
   InitializationSequence Seq(*this, Entity, Kind, &InitE, 1);
-  return Seq.getKind() != InitializationSequence::FailedSequence;
+  return !Seq.Failed();
 }
 
 ExprResult
