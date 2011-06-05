@@ -459,13 +459,15 @@ int main() {
 
 <p>Clang complains:
 
-<pre>  <b>my_file.cpp:2:10: <span class="error">error:</span> use of undeclared identifier 'Multiply'</b>
+<pre>  <b>my_file.cpp:2:10: <span class="error">error:</span> call to function 'Multiply' that is neither visible in the template definition nor found by argument dependent lookup</b>
     return Multiply(x, x);
   <span class="caret">         ^</span>
-
   <b>my_file.cpp:10:3: <span class="note">note:</span> in instantiation of function template specialization 'Squared&lt;int&gt;' requested here</b>
     Squared(5);
   <span class="caret">  ^</span>
+  <b>my_file.cpp:5:5: <span class="note">note:</span> 'Multiply' should be declared prior to the call site</b>
+  int Multiply(int x, int y) {
+  <span class="caret">    ^</span>
 </pre>
 
 <p>The C++ standard says that unqualified names like <q>Multiply</q>
@@ -516,15 +518,17 @@ void Use() {
   Dump(ns::Data());
 }</pre>
 
-<p>Again, Clang complains about not finding a matching function:</p>
+<p>Again, Clang complains:</p>
 
-<pre>
-<b>my_file.cpp:5:13: <span class="error">error:</span> invalid operands to binary expression ('ostream' (aka 'basic_ostream&lt;char&gt;') and 'ns::Data const')</b>
-  std::cout &lt;&lt; value &lt;&lt; "\n";
-  <span class="caret">~~~~~~~~~ ^  ~~~~~</span>
-<b>my_file.cpp:17:3: <span class="note">note:</span> in instantiation of function template specialization 'Dump&lt;ns::Data&gt;' requested here</b>
-  Dump(ns::Data());
-  <span class="caret">^</span>
+<pre>  <b>my_file2.cpp:5:13: <span class="error">error:</span> call to function 'operator&lt;&lt;' that is neither visible in the template definition nor found by argument dependent lookup</b>
+    std::cout &lt;&lt; value &lt;&lt; "\n";
+  <span class="caret">            ^</span>
+  <b>my_file2.cpp:17:3: <span class="error">note:</span> in instantiation of function template specialization 'Dump&lt;ns::Data&gt;' requested here</b>
+    Dump(ns::Data());
+  <span class="caret">  ^</span>
+  <b>my_file2.cpp:12:15: <span class="error">note:</span> 'operator&lt;&lt;' should be declared prior to the call site or in namespace 'ns'</b>
+  std::ostream&amp; operator&lt;&lt;(std::ostream&amp; out, ns::Data data) {
+  <span class="caret">              ^</span>
 </pre>
 
 <p>Just like before, unqualified lookup didn't find any declarations

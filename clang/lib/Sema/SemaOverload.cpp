@@ -7826,6 +7826,111 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
                                          ULE->isStdAssociatedNamespace());
 }
 
+/// Attempt to recover from an ill-formed use of a non-dependent name in a
+/// template, where the non-dependent name was declared after the template
+/// was defined. This is common in code written for a compilers which do not
+/// correctly implement two-stage name lookup.
+///
+/// Returns true if a viable candidate was found and a diagnostic was issued.
+static bool
+DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
+                       const CXXScopeSpec &SS, LookupResult &R,
+                       TemplateArgumentListInfo *ExplicitTemplateArgs,
+                       Expr **Args, unsigned NumArgs) {
+  if (SemaRef.ActiveTemplateInstantiations.empty() || !SS.isEmpty())
+    return false;
+
+  for (DeclContext *DC = SemaRef.CurContext; DC; DC = DC->getParent()) {
+    SemaRef.LookupQualifiedName(R, DC);
+
+    if (!R.empty()) {
+      R.suppressDiagnostics();
+
+      if (isa<CXXRecordDecl>(DC)) {
+        // Don't diagnose names we find in classes; we get much better
+        // diagnostics for these from DiagnoseEmptyLookup.
+        R.clear();
+        return false;
+      }
+
+      OverloadCandidateSet Candidates(FnLoc);
+      for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
+        AddOverloadedCallCandidate(SemaRef, I.getPair(),
+                                   ExplicitTemplateArgs, Args, NumArgs,
+                                   Candidates, false);
+
+      OverloadCandidateSet::iterator Best;
+      if (Candidates.BestViableFunction(SemaRef, FnLoc, Best) != OR_Success)
+        // No viable functions. Don't bother the user with notes for functions
+        // which don't work and shouldn't be found anyway.
+        return false;
+
+      // Find the namespaces where ADL would have looked, and suggest
+      // declaring the function there instead.
+      Sema::AssociatedNamespaceSet AssociatedNamespaces;
+      Sema::AssociatedClassSet AssociatedClasses;
+      SemaRef.FindAssociatedClassesAndNamespaces(Args, NumArgs,
+                                                 AssociatedNamespaces,
+                                                 AssociatedClasses);
+      // Never suggest declaring a function within namespace 'std'. 
+      if (DeclContext *Std = SemaRef.getStdNamespace()) {
+        // Use two passes: SmallPtrSet::erase invalidates too many iterators
+        // to be used in the loop.
+        llvm::SmallVector<DeclContext*, 4> StdNamespaces;
+        for (Sema::AssociatedNamespaceSet::iterator
+               it = AssociatedNamespaces.begin(),
+               end = AssociatedNamespaces.end(); it != end; ++it)
+          if (Std->Encloses(*it))
+            StdNamespaces.push_back(*it);
+        for (unsigned I = 0; I != StdNamespaces.size(); ++I)
+          AssociatedNamespaces.erase(StdNamespaces[I]);
+      }
+
+      SemaRef.Diag(R.getNameLoc(), diag::err_not_found_by_two_phase_lookup)
+        << R.getLookupName();
+      if (AssociatedNamespaces.empty()) {
+        SemaRef.Diag(Best->Function->getLocation(),
+                     diag::note_not_found_by_two_phase_lookup)
+          << R.getLookupName() << 0;
+      } else if (AssociatedNamespaces.size() == 1) {
+        SemaRef.Diag(Best->Function->getLocation(),
+                     diag::note_not_found_by_two_phase_lookup)
+          << R.getLookupName() << 1 << *AssociatedNamespaces.begin();
+      } else {
+        // FIXME: It would be useful to list the associated namespaces here,
+        // but the diagnostics infrastructure doesn't provide a way to produce
+        // a localized representation of a list of items.
+        SemaRef.Diag(Best->Function->getLocation(),
+                     diag::note_not_found_by_two_phase_lookup)
+          << R.getLookupName() << 2;
+      }
+
+      // Try to recover by calling this function.
+      return true;
+    }
+
+    R.clear();
+  }
+
+  return false;
+}
+
+/// Attempt to recover from ill-formed use of a non-dependent operator in a
+/// template, where the non-dependent operator was declared after the template
+/// was defined.
+///
+/// Returns true if a viable candidate was found and a diagnostic was issued.
+static bool
+DiagnoseTwoPhaseOperatorLookup(Sema &SemaRef, OverloadedOperatorKind Op,
+                               SourceLocation OpLoc,
+                               Expr **Args, unsigned NumArgs) {
+  DeclarationName OpName =
+    SemaRef.Context.DeclarationNames.getCXXOperatorName(Op);
+  LookupResult R(SemaRef, OpName, OpLoc, Sema::LookupOperatorName);
+  return DiagnoseTwoPhaseLookup(SemaRef, OpLoc, CXXScopeSpec(), R,
+                                /*ExplicitTemplateArgs=*/0, Args, NumArgs);
+}
+
 /// Attempts to recover from a call where no functions were found.
 ///
 /// Returns true if new candidates were found.
@@ -7834,13 +7939,14 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                       UnresolvedLookupExpr *ULE,
                       SourceLocation LParenLoc,
                       Expr **Args, unsigned NumArgs,
-                      SourceLocation RParenLoc) {
+                      SourceLocation RParenLoc,
+                      bool EmptyLookup) {
 
   CXXScopeSpec SS;
   SS.Adopt(ULE->getQualifierLoc());
 
   TemplateArgumentListInfo TABuffer;
-  const TemplateArgumentListInfo *ExplicitTemplateArgs = 0;
+  TemplateArgumentListInfo *ExplicitTemplateArgs = 0;
   if (ULE->hasExplicitTemplateArgs()) {
     ULE->copyTemplateArgumentsInto(TABuffer);
     ExplicitTemplateArgs = &TABuffer;
@@ -7848,7 +7954,10 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
-  if (SemaRef.DiagnoseEmptyLookup(S, SS, R, Sema::CTC_Expression))
+  if (!DiagnoseTwoPhaseLookup(SemaRef, Fn->getExprLoc(), SS, R,
+                              ExplicitTemplateArgs, Args, NumArgs) &&
+      (!EmptyLookup ||
+       SemaRef.DiagnoseEmptyLookup(S, SS, R, Sema::CTC_Expression)))
     return ExprError();
 
   assert(!R.empty() && "lookup results empty despite recovery");
@@ -7868,7 +7977,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
     return ExprError();
 
   // This shouldn't cause an infinite loop because we're giving it
-  // an expression with non-empty lookup results, which should never
+  // an expression with viable lookup results, which should never
   // end up here.
   return SemaRef.ActOnCallExpr(/*Scope*/ 0, NewFn.take(), LParenLoc,
                                MultiExprArg(Args, NumArgs), RParenLoc);
@@ -7914,11 +8023,11 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
   AddOverloadedCallCandidates(ULE, Args, NumArgs, CandidateSet);
 
   // If we found nothing, try to recover.
-  // AddRecoveryCallCandidates diagnoses the error itself, so we just
-  // bailout out if it fails.
+  // BuildRecoveryCallExpr diagnoses the error itself, so we just bail
+  // out if it fails.
   if (CandidateSet.empty())
     return BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc, Args, NumArgs,
-                                 RParenLoc);
+                                 RParenLoc, /*EmptyLookup=*/true);
 
   OverloadCandidateSet::iterator Best;
   switch (CandidateSet.BestViableFunction(*this, Fn->getLocStart(), Best)) {
@@ -7933,12 +8042,21 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
                                  ExecConfig);
   }
 
-  case OR_No_Viable_Function:
+  case OR_No_Viable_Function: {
+    // Try to recover by looking for viable functions which the user might
+    // have meant to call.
+    ExprResult Recovery = BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc,
+                                                Args, NumArgs, RParenLoc,
+                                                /*EmptyLookup=*/false);
+    if (!Recovery.isInvalid())
+      return Recovery;
+
     Diag(Fn->getSourceRange().getBegin(),
          diag::err_ovl_no_viable_function_in_call)
       << ULE->getName() << Fn->getSourceRange();
     CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
     break;
+  }
 
   case OR_Ambiguous:
     Diag(Fn->getSourceRange().getBegin(), diag::err_ovl_ambiguous_call)
@@ -8127,6 +8245,13 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   }
 
   case OR_No_Viable_Function:
+    // This is an erroneous use of an operator which can be overloaded by
+    // a non-member function. Check for non-member operators which were
+    // defined too late to be candidates.
+    if (DiagnoseTwoPhaseOperatorLookup(*this, Op, OpLoc, Args, NumArgs))
+      // FIXME: Recover by calling the found function.
+      return ExprError();
+
     // No viable function; fall through to handling this as a
     // built-in operator, which will produce an error message for us.
     break;
@@ -8408,6 +8533,13 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
              << BinaryOperator::getOpcodeStr(Opc)
              << Args[0]->getSourceRange() << Args[1]->getSourceRange();
       } else {
+        // This is an erroneous use of an operator which can be overloaded by
+        // a non-member function. Check for non-member operators which were
+        // defined too late to be candidates.
+        if (DiagnoseTwoPhaseOperatorLookup(*this, Op, OpLoc, Args, 2))
+          // FIXME: Recover by calling the found function.
+          return ExprError();
+
         // No viable function; try to create a built-in operation, which will
         // produce an error. Then, show the non-viable candidates.
         Result = CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);

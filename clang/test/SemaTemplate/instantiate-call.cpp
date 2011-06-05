@@ -24,7 +24,8 @@ namespace N3 {
   template<typename T, typename Result>
   struct call_f0 {
     void test_f0(T t) {
-      Result &result = f0(t); // expected-error 2{{undeclared identifier}}
+      Result &result = f0(t); // expected-error {{undeclared identifier}} \
+                                 expected-error {{neither visible in the template definition nor found by argument dependent lookup}}
     }
   };
 }
@@ -32,7 +33,7 @@ namespace N3 {
 template struct N3::call_f0<int, char&>; // expected-note{{instantiation}}
 template struct N3::call_f0<N1::X0, int&>;
 
-short& f0(char);
+short& f0(char); // expected-note {{should be declared prior to the call site}}
 namespace N4 {
   template<typename T, typename Result>
   struct call_f0 {

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++0x %s 
 
 typedef double A;
 template<typename T> class B {
@@ -128,4 +128,137 @@ namespace PR8966 {
   // static member definition
   template <class T>
   const char* MyClass<T>::array [MyClass<T>::N] = { "A", "B", "C" };
+}
+
+namespace std {
+  inline namespace v1 {
+    template<typename T> struct basic_ostream;
+  }
+  namespace inner {
+    template<typename T> struct vector {};
+  }
+  using inner::vector;
+  template<typename T, typename U> struct pair {};
+  typedef basic_ostream<char> ostream;
+  extern ostream cout;
+  std::ostream &operator<<(std::ostream &out, const char *);
+}
+
+namespace PR10053 {
+  template<typename T> struct A {
+    T t;
+    A() {
+      f(t); // expected-error {{call to function 'f' that is neither visible in the template definition nor found by argument dependent lookup}}
+    }
+  };
+
+  void f(int&); // expected-note {{'f' should be declared prior to the call site}}
+
+  A<int> a; // expected-note {{in instantiation of member function}}
+
+
+  namespace N {
+    namespace M {
+      template<typename T> int g(T t) {
+        f(t); // expected-error {{call to function 'f' that is neither visible in the template definition nor found by argument dependent lookup}}
+      };
+    }
+
+    void f(char&); // expected-note {{'f' should be declared prior to the call site}}
+  }
+
+  void f(char&);
+
+  int k = N::M::g<char>(0);; // expected-note {{in instantiation of function}}
+
+
+  namespace O {
+    void f(char&); // expected-note {{candidate function not viable}}
+
+    template<typename T> struct C {
+      static const int n = f(T()); // expected-error {{no matching function}}
+    };
+  }
+
+  int f(double); // no note, shadowed by O::f
+  O::C<double> c; // expected-note {{requested here}}
+
+
+  // Example from www/compatibility.html
+  namespace my_file {
+    template <typename T> T Squared(T x) {
+      return Multiply(x, x); // expected-error {{neither visible in the template definition nor found by argument dependent lookup}}
+    }
+
+    int Multiply(int x, int y) { // expected-note {{should be declared prior to the call site}}
+      return x * y;
+    }
+
+    int main() {
+      Squared(5); // expected-note {{here}}
+    }
+  }
+
+  // Example from www/compatibility.html
+  namespace my_file2 {
+    template<typename T>
+    void Dump(const T& value) {
+      std::cout << value << "\n"; // expected-error {{neither visible in the template definition nor found by argument dependent lookup}}
+    }
+
+    namespace ns {
+      struct Data {};
+    }
+
+    std::ostream& operator<<(std::ostream& out, ns::Data data) { // expected-note {{should be declared prior to the call site or in namespace 'PR10053::my_file2::ns'}}
+      return out << "Some data";
+    }
+
+    void Use() {
+      Dump(ns::Data()); // expected-note {{here}}
+    }
+  }
+
+  namespace my_file2_a {
+    template<typename T>
+    void Dump(const T &value) {
+      print(std::cout, value); // expected-error 4{{neither visible in the template definition nor found by argument dependent lookup}}
+    }
+
+    namespace ns {
+      struct Data {};
+    }
+    namespace ns2 {
+      struct Data {};
+    }
+
+    std::ostream &print(std::ostream &out, int); // expected-note-re {{should be declared prior to the call site$}}
+    std::ostream &print(std::ostream &out, ns::Data); // expected-note {{should be declared prior to the call site or in namespace 'PR10053::my_file2_a::ns'}}
+    std::ostream &print(std::ostream &out, std::vector<ns2::Data>); // expected-note {{should be declared prior to the call site or in namespace 'PR10053::my_file2_a::ns2'}}
+    std::ostream &print(std::ostream &out, std::pair<ns::Data, ns2::Data>); // expected-note {{should be declared prior to the call site or in an associated namespace of one of its arguments}}
+
+    void Use() {
+      Dump(0); // expected-note {{requested here}}
+      Dump(ns::Data()); // expected-note {{requested here}}
+      Dump(std::vector<ns2::Data>()); // expected-note {{requested here}}
+      Dump(std::pair<ns::Data, ns2::Data>()); // expected-note {{requested here}}
+    }
+  }
+
+  namespace unary {
+    template<typename T>
+    T Negate(const T& value) {
+      return !value; // expected-error {{call to function 'operator!' that is neither visible in the template definition nor found by argument dependent lookup}}
+    }
+
+    namespace ns {
+      struct Data {};
+    }
+
+    ns::Data operator!(ns::Data); // expected-note {{should be declared prior to the call site or in namespace 'PR10053::unary::ns'}}
+
+    void Use() {
+      Negate(ns::Data()); // expected-note {{requested here}}
+    }
+  }
 }
