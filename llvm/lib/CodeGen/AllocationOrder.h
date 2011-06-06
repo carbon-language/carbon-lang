@@ -28,6 +28,7 @@ class AllocationOrder {
   const unsigned *Pos;
   const RegisterClassInfo &RCI;
   unsigned Hint;
+  bool OwnedBegin;
 public:
 
   /// AllocationOrder - Create a new AllocationOrder for VirtReg.
@@ -39,10 +40,26 @@ public:
                   const VirtRegMap &VRM,
                   const RegisterClassInfo &RegClassInfo);
 
+  ~AllocationOrder();
+
   /// next - Return the next physical register in the allocation order, or 0.
   /// It is safe to call next again after it returned 0.
   /// It will keep returning 0 until rewind() is called.
-  unsigned next();
+  unsigned next() {
+    // First take the hint.
+    if (!Pos) {
+      Pos = Begin;
+      if (Hint)
+        return Hint;
+    }
+    // Then look at the order from TRI.
+    while (Pos != End) {
+      unsigned Reg = *Pos++;
+      if (Reg != Hint)
+        return Reg;
+    }
+    return 0;
+  }
 
   /// rewind - Start over from the beginning.
   void rewind() { Pos = 0; }
