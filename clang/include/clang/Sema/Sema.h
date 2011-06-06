@@ -624,10 +624,14 @@ public:
     void setMethod(CXXMethodDecl *MD) { Pair.setPointer(MD); }
 
     bool hasSuccess() const { return Pair.getInt() & 0x1; }
-    void setSuccess(bool B) { Pair.setInt(B | hasConstParamMatch() << 1); }
+    void setSuccess(bool B) {
+      Pair.setInt(unsigned(B) | hasConstParamMatch() << 1);
+    }
 
     bool hasConstParamMatch() const { return Pair.getInt() & 0x2; }
-    void setConstParamMatch(bool B) { Pair.setInt(B << 1 | hasSuccess()); }
+    void setConstParamMatch(bool B) {
+      Pair.setInt(unsigned(B) << 1 | hasSuccess());
+    }
   };
 
   /// \brief A cache of special member function overload resolution results
