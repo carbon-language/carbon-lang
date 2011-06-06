@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-pc-linux-gnu %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple i686-apple-darwin10 %s
 
 // PR7025
 struct X0 {

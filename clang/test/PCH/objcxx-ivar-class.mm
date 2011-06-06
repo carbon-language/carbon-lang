@@ -6,7 +6,7 @@
 // RUN: %clang_cc1 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
 
 // CHECK: [C position]
-// CHECK: call void @_ZN1SC1ERKS_
+// CHECK: call {{.*}} @_ZN1SC1ERKS_
 
 // CHECK: [C setPosition:]
 // CHECK: call %struct.S* @_ZN1SaSERKS_

@@ -26,9 +26,9 @@ void foo() {
   A a;
   C c;
   E e;
-  // CHECK: invoke void @_ZN1ED1Ev
-  // CHECK: invoke void @_ZN1CD1Ev
-  // CHECK: call void @_ZN1AD1Ev
+  // CHECK: invoke {{.*}} @_ZN1ED1Ev
+  // CHECK: invoke {{.*}} @_ZN1CD1Ev
+  // CHECK: call {{.*}} @_ZN1AD1Ev
 }
 
 struct F {
@@ -88,9 +88,9 @@ void tfoo() {
   TA<int> a;
   TC<int> c;
   TE<int> e;
-  // CHECK: invoke void @_ZN2TEIiED1Ev
-  // CHECK: invoke void @_ZN2TCIiED1Ev
-  // CHECK: call void @_ZN2TAIiED1Ev
+  // CHECK: invoke {{.*}} @_ZN2TEIiED1Ev
+  // CHECK: invoke {{.*}} @_ZN2TCIiED1Ev
+  // CHECK: call {{.*}} @_ZN2TAIiED1Ev
 }
 
 template <typename T>
@@ -122,7 +122,7 @@ void tinst() {
   TG<int> g;
   TH<int> h;
 }
-// CHECK: define linkonce_odr void @_ZN2THIiED1Ev
+// CHECK: define linkonce_odr {{.*}} @_ZN2THIiED1Ev
 // CHECK: _ZTIi
 // CHECK: __cxa_call_unexpected
 
@@ -164,11 +164,11 @@ void tsw() {
   Sw<int> swi;
   Sw<B> swb;
 }
-// CHECK-NOT: define linkonce_odr void @_ZN2SwI1BED1Ev({{.*}} nounwind
-// CHECK: define linkonce_odr void @_ZN2SwI1BED1Ev({{.*}}
+// CHECK-NOT: define linkonce_odr {{.*}} @_ZN2SwI1BED1Ev({{.*}} nounwind
+// CHECK: define linkonce_odr {{.*}} @_ZN2SwI1BED1Ev({{.*}}
 // CHECK: _ZTIi
 // CHECK: __cxa_call_unexpected
-// CHECK: define linkonce_odr void @_ZN2SwIiED1Ev({{.*}} nounwind
+// CHECK: define linkonce_odr {{.*}} @_ZN2SwIiED1Ev({{.*}} nounwind
 
 template <typename T>
 struct TVC : VX
