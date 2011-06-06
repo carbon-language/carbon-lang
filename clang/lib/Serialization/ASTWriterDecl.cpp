@@ -1438,7 +1438,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // TypeLoc
   DeclParmVarAbbrev = Stream.EmitAbbrev(Abv);
 
-  // Abbreviation for EXPR_DECL_REF
+  // Abbreviation for DECL_TYPEDEF
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_TYPEDEF));
   // Decl
@@ -1463,6 +1463,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // TypeLoc
   DeclTypedefAbbrev = Stream.EmitAbbrev(Abv);
 
+  // Abbreviation for DECL_VAR
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_VAR));
   // Decl
@@ -1476,7 +1477,6 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                       // isReferenced
   Abv->Add(BitCodeAbbrevOp(AS_none));                 // C++ AccessSpecifier
   Abv->Add(BitCodeAbbrevOp(0));                       // PCH level
-
   // NamedDecl
   Abv->Add(BitCodeAbbrevOp(0));                       // NameKind = Identifier
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Name
@@ -1502,6 +1502,7 @@ void ASTWriter::WriteDeclsBlockAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // TypeLoc
   DeclVarAbbrev = Stream.EmitAbbrev(Abv);
 
+  // Abbreviation for EXPR_DECL_REF
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::EXPR_DECL_REF));
   //Stmt
