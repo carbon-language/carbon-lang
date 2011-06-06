@@ -77,7 +77,7 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
     RCI.Order.reset(new unsigned[NumRegs]);
 
   unsigned N = 0;
-  SmallVector<std::pair<unsigned, unsigned>, 8> CSRAlias;
+  SmallVector<unsigned, 16> CSRAlias;
 
   // FIXME: Once targets reserve registers instead of removing them from the
   // allocation order, we can simply use begin/end here.
@@ -89,22 +89,17 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
     // Remove reserved registers from the allocation order.
     if (Reserved.test(PhysReg))
       continue;
-    if (unsigned CSR = CSRNum[PhysReg])
-      // PhysReg aliases a CSR, save it for later.  Provide a (CSR, N) sort key
-      // to preserve the original ordering of multiple aliases of the same CSR.
-      CSRAlias.push_back(std::make_pair((CSR << 16) + (I - AOB), PhysReg));
+    if (CSRNum[PhysReg])
+      // PhysReg aliases a CSR, save it for later.
+      CSRAlias.push_back(PhysReg);
     else
       RCI.Order[N++] = PhysReg;
   }
   RCI.NumRegs = N + CSRAlias.size();
   assert (RCI.NumRegs <= NumRegs && "Allocation order larger than regclass");
 
-  // Sort CSR aliases acording to the CSR ordering.
-  if (CSRAlias.size() >= 2)
-    array_pod_sort(CSRAlias.begin(), CSRAlias.end());
-
-  for (unsigned i = 0, e = CSRAlias.size(); i != e; ++i)
-      RCI.Order[N++] = CSRAlias[i].second;
+  // CSR aliases go after the volatile registers, preserve the target's order.
+  std::copy(CSRAlias.begin(), CSRAlias.end(), &RCI.Order[N]);
 
   DEBUG({
     dbgs() << "AllocationOrder(" << RC->getName() << ") = [";
