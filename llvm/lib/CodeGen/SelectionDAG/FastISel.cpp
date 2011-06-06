@@ -841,8 +841,10 @@ FastISel::SelectExtractValue(const User *U) {
   DenseMap<const Value *, unsigned>::iterator I = FuncInfo.ValueMap.find(Op0);
   if (I != FuncInfo.ValueMap.end())
     ResultReg = I->second;
-  else
+  else if (isa<Instruction>(Op0))
     ResultReg = FuncInfo.InitializeRegForValue(Op0);
+  else
+    return false; // fast-isel can't handle aggregate constants at the moment
 
   // Get the actual result register, which is an offset from the base register.
   unsigned VTIndex = ComputeLinearIndex(AggTy, EVI->idx_begin(), EVI->idx_end());
