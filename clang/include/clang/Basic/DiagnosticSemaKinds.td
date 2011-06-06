@@ -1420,8 +1420,7 @@ def warn_default_arg_makes_ctor_special : Warning<
 def note_previous_declaration_special : Note<
   // The ERRORs are in hopes that if they occur, they'll get reported.
   "previous declaration was %select{*ERROR*|a copy constructor|a move "
-  "constructor|*ERROR*|*ERROR*|*ERROR*|not a special member function}0">,
-  InGroup<DefaultArgSpecialMember>;
+  "constructor|*ERROR*|*ERROR*|*ERROR*|not a special member function}0">;
 
 def err_use_of_default_argument_to_function_declared_later : Error<
   "use of default argument to function %0 that is declared later in class %1">;
