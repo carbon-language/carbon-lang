@@ -391,7 +391,6 @@ class TestBase(unittest2.TestCase):
           build the binaries used during a particular test scenario.  A plugin
           should be provided for the sys.platform running the test suite.  The
           Mac OS X implementation is located in plugins/darwin.py.
-
     """
 
     @classmethod
