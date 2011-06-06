@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux -mattr=+64bit,+sse3 -print-failed-fuse-candidates |& FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -mattr=+64bit,+sse3 -print-failed-fuse-candidates -regalloc=basic |& FileCheck %s
 ; CHECK: fail
 ; CHECK-NOT: fail
 
@@ -117,7 +117,16 @@ define <2 x double> @d8(<2 x double> %f) {
   ret <2 x double> %t
 }
 
-; This one should fail to fuse.
+; This one should fail to fuse, but -regalloc=greedy isn't even trying. Instead
+; it produces:
+;   callq	test_vd
+;   movapd	(%rsp), %xmm1           # 16-byte Reload
+;   hsubpd	%xmm0, %xmm1
+;   movapd	%xmm1, %xmm0
+;   addq	$24, %rsp
+;   ret
+; RABasic still tries to fold this one.
+
 define <2 x double> @z0(<2 x double> %f) {
   %y = call <2 x double> @test_vd(<2 x double> %f)
   %t = call <2 x double> @llvm.x86.sse3.hsub.pd(<2 x double> %f, <2 x double> %y)

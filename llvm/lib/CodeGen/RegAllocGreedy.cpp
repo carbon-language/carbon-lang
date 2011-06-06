@@ -154,10 +154,6 @@ class RAGreedy : public MachineFunctionPass,
   /// class.
   SmallVector<GlobalSplitCandidate, 32> GlobalCand;
 
-  /// For every instruction in SA->UseSlots, store the previous non-copy
-  /// instruction.
-  SmallVector<SlotIndex, 8> PrevSlot;
-
 public:
   RAGreedy();
 
@@ -194,9 +190,6 @@ private:
   void splitAroundRegion(LiveInterval&, GlobalSplitCandidate&,
                          SmallVectorImpl<LiveInterval*>&);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
-  SlotIndex getPrevMappedIndex(const MachineInstr*);
-  void calcPrevSlots();
-  unsigned nextSplitPoint(unsigned);
   CanEvict canEvict(LiveInterval &A, LiveInterval &B);
   bool canEvictInterference(LiveInterval&, unsigned, float&);
 
@@ -1137,47 +1130,6 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
   }
 }
 
-/// getPrevMappedIndex - Return the slot index of the last non-copy instruction
-/// before MI that has a slot index. If MI is the first mapped instruction in
-/// its block, return the block start index instead.
-///
-SlotIndex RAGreedy::getPrevMappedIndex(const MachineInstr *MI) {
-  assert(MI && "Missing MachineInstr");
-  const MachineBasicBlock *MBB = MI->getParent();
-  MachineBasicBlock::const_iterator B = MBB->begin(), I = MI;
-  while (I != B)
-    if (!(--I)->isDebugValue() && !I->isCopy())
-      return Indexes->getInstructionIndex(I);
-  return Indexes->getMBBStartIdx(MBB);
-}
-
-/// calcPrevSlots - Fill in the PrevSlot array with the index of the previous
-/// real non-copy instruction for each instruction in SA->UseSlots.
-///
-void RAGreedy::calcPrevSlots() {
-  const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
-  PrevSlot.clear();
-  PrevSlot.reserve(Uses.size());
-  for (unsigned i = 0, e = Uses.size(); i != e; ++i) {
-    const MachineInstr *MI = Indexes->getInstructionFromIndex(Uses[i]);
-    PrevSlot.push_back(getPrevMappedIndex(MI).getDefIndex());
-  }
-}
-
-/// nextSplitPoint - Find the next index into SA->UseSlots > i such that it may
-/// be beneficial to split before UseSlots[i].
-///
-/// 0 is always a valid split point
-unsigned RAGreedy::nextSplitPoint(unsigned i) {
-  const SmallVectorImpl<SlotIndex> &Uses = SA->UseSlots;
-  const unsigned Size = Uses.size();
-  assert(i != Size && "No split points after the end");
-  // Allow split before i when Uses[i] is not adjacent to the previous use.
-  while (++i != Size && PrevSlot[i].getBaseIndex() <= Uses[i-1].getBaseIndex())
-    ;
-  return i;
-}
-
 /// tryLocalSplit - Try to split VirtReg into smaller intervals inside its only
 /// basic block.
 ///
@@ -1205,11 +1157,27 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     dbgs() << '\n';
   });
 
-  // For every use, find the previous mapped non-copy instruction.
-  // We use this to detect valid split points, and to estimate new interval
-  // sizes.
-  calcPrevSlots();
+  // Since we allow local split results to be split again, there is a risk of
+  // creating infinite loops. It is tempting to require that the new live
+  // ranges have less instructions than the original. That would guarantee
+  // convergence, but it is too strict. A live range with 3 instructions can be
+  // split 2+3 (including the COPY), and we want to allow that.
+  //
+  // Instead we use these rules:
+  //
+  // 1. Allow any split for ranges with getStage() < RS_Local. (Except for the
+  //    noop split, of course).
+  // 2. Require progress be made for ranges with getStage() >= RS_Local. All
+  //    the new ranges must have fewer instructions than before the split.
+  // 3. New ranges with the same number of instructions are marked RS_Local,
+  //    smaller ranges are marked RS_New.
+  //
+  // These rules allow a 3 -> 2+3 split once, which we need. They also prevent
+  // excessive splitting and infinite loops.
+  //
+  bool ProgressRequired = getStage(VirtReg) >= RS_Local;
 
+  // Best split candidate.
   unsigned BestBefore = NumGaps;
   unsigned BestAfter = 0;
   float BestDiff = 0;
@@ -1227,13 +1195,11 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     // The new spill weight must be larger than any gap interference.
 
     // We will split before Uses[SplitBefore] and after Uses[SplitAfter].
-    unsigned SplitBefore = 0, SplitAfter = nextSplitPoint(1) - 1;
+    unsigned SplitBefore = 0, SplitAfter = 1;
 
     // MaxGap should always be max(GapWeight[SplitBefore..SplitAfter-1]).
     // It is the spill weight that needs to be evicted.
     float MaxGap = GapWeight[0];
-    for (unsigned i = 1; i != SplitAfter; ++i)
-      MaxGap = std::max(MaxGap, GapWeight[i]);
 
     for (;;) {
       // Live before/after split?
@@ -1251,32 +1217,22 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       }
       // Should the interval be extended or shrunk?
       bool Shrink = true;
-      if (MaxGap < HUGE_VALF) {
-        // Estimate the new spill weight.
-        //
-        // Each instruction reads and writes the register, except the first
-        // instr doesn't read when !FirstLive, and the last instr doesn't write
-        // when !LastLive.
-        //
-        // We will be inserting copies before and after, so the total number of
-        // reads and writes is 2 * EstUses.
-        //
-        const unsigned EstUses = 2*(SplitAfter - SplitBefore) +
-                                 2*(LiveBefore + LiveAfter);
 
-        // Try to guess the size of the new interval. This should be trivial,
-        // but the slot index of an inserted copy can be a lot smaller than the
-        // instruction it is inserted before if there are many dead indexes
-        // between them.
+      // How many gaps would the new range have?
+      unsigned NewGaps = LiveBefore + SplitAfter - SplitBefore + LiveAfter;
+
+      // Legally, without causing looping?
+      bool Legal = !ProgressRequired || NewGaps < NumGaps;
+
+      if (Legal && MaxGap < HUGE_VALF) {
+        // Estimate the new spill weight. Each instruction reads or writes the
+        // register. Conservatively assume there are no read-modify-write
+        // instructions.
         //
-        // We measure the distance from the instruction before SplitBefore to
-        // get a conservative estimate.
-        //
-        // The final distance can still be different if inserting copies
-        // triggers a slot index renumbering.
-        //
-        const float EstWeight = normalizeSpillWeight(blockFreq * EstUses,
-                              PrevSlot[SplitBefore].distance(Uses[SplitAfter]));
+        // Try to guess the size of the new interval.
+        const float EstWeight = normalizeSpillWeight(blockFreq * (NewGaps + 1),
+                                 Uses[SplitBefore].distance(Uses[SplitAfter]) +
+                                 (LiveBefore + LiveAfter)*SlotIndex::InstrDist);
         // Would this split be possible to allocate?
         // Never allocate all gaps, we wouldn't be making progress.
         DEBUG(dbgs() << " w=" << EstWeight);
@@ -1294,8 +1250,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
       // Try to shrink.
       if (Shrink) {
-        SplitBefore = nextSplitPoint(SplitBefore);
-        if (SplitBefore < SplitAfter) {
+        if (++SplitBefore < SplitAfter) {
           DEBUG(dbgs() << " shrink\n");
           // Recompute the max when necessary.
           if (GapWeight[SplitBefore - 1] >= MaxGap) {
@@ -1315,10 +1270,7 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
       }
 
       DEBUG(dbgs() << " extend\n");
-      for (unsigned e = nextSplitPoint(SplitAfter + 1) - 1;
-           SplitAfter != e; ++SplitAfter)
-        MaxGap = std::max(MaxGap, GapWeight[SplitAfter]);
-          continue;
+      MaxGap = std::max(MaxGap, GapWeight[SplitAfter++]);
     }
   }
 
@@ -1337,9 +1289,27 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   SlotIndex SegStart = SE->enterIntvBefore(Uses[BestBefore]);
   SlotIndex SegStop  = SE->leaveIntvAfter(Uses[BestAfter]);
   SE->useIntv(SegStart, SegStop);
-  SE->finish();
+  SmallVector<unsigned, 8> IntvMap;
+  SE->finish(&IntvMap);
   DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
-  setStage(NewVRegs.begin(), NewVRegs.end(), RS_Local);
+
+  // If the new range has the same number of instructions as before, mark it as
+  // RS_Local so the next split will be forced to make progress. Otherwise,
+  // leave the new intervals as RS_New so they can compete.
+  bool LiveBefore = BestBefore != 0 || BI.LiveIn;
+  bool LiveAfter = BestAfter != NumGaps || BI.LiveOut;
+  unsigned NewGaps = LiveBefore + BestAfter - BestBefore + LiveAfter;
+  if (NewGaps >= NumGaps) {
+    DEBUG(dbgs() << "Tagging non-progress ranges: ");
+    assert(!ProgressRequired && "Didn't make progress when it was required.");
+    LRStage.resize(MRI->getNumVirtRegs());
+    for (unsigned i = 0, e = IntvMap.size(); i != e; ++i)
+      if (IntvMap[i] == 1) {
+        LRStage[LREdit.get(i)->reg] = RS_Local;
+        DEBUG(dbgs() << PrintReg(LREdit.get(i)->reg));
+      }
+    DEBUG(dbgs() << '\n');
+  }
   ++NumLocalSplits;
 
   return 0;
