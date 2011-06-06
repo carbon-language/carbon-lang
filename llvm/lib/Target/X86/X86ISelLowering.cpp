@@ -1097,6 +1097,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::SUB);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
+  setTargetDAGCombine(ISD::SINT_TO_FP);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
 
@@ -6700,11 +6701,6 @@ SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
   DebugLoc dl = Op.getDebugLoc();
   unsigned Size = SrcVT.getSizeInBits()/8;
   MachineFunction &MF = DAG.getMachineFunction();
-
-  SDValue Addr = Op.getOperand(0);
-  if (Addr.getOpcode() == ISD::LOAD)
-    return BuildFILD(Op, SrcVT, DAG.getEntryNode(), Addr, DAG);
-
   int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl, Op.getOperand(0),
@@ -12169,6 +12165,26 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG, const X86TargetLowering *XTLI) {
+  DebugLoc dl = N->getDebugLoc();
+  SDValue Op0 = N->getOperand(0);
+  // Transform (SINT_TO_FP (i64 ...)) into an x87 operation if we have
+  // a 32-bit target where SSE doesn't support i64->FP operations.
+  if (Op0.getOpcode() == ISD::LOAD) {
+    LoadSDNode *Ld = cast<LoadSDNode>(Op0.getNode());
+    EVT VT = Ld->getValueType(0);
+    if (!Ld->isVolatile() && !N->getValueType(0).isVector() &&
+        ISD::isNON_EXTLoad(Op0.getNode()) && Op0.hasOneUse() &&
+        !XTLI->getSubtarget()->is64Bit() &&
+        !DAG.getTargetLoweringInfo().isTypeLegal(VT)) {
+      SDValue FILDChain = XTLI->BuildFILD(SDValue(N, 0), Ld->getValueType(0), Ld->getChain(), Op0, DAG);
+      DAG.ReplaceAllUsesOfValueWith(Op0.getValue(1), FILDChain.getValue(1));
+      return FILDChain;
+    }
+  }
+  return SDValue();
+}
+
 // Optimize RES, EFLAGS = X86ISD::ADC LHS, RHS, EFLAGS
 static SDValue PerformADCCombine(SDNode *N, SelectionDAG &DAG,
                                  X86TargetLowering::DAGCombinerInfo &DCI) {
@@ -12253,6 +12269,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::AND:            return PerformAndCombine(N, DAG, DCI, Subtarget);
   case ISD::OR:             return PerformOrCombine(N, DAG, DCI, Subtarget);
   case ISD::STORE:          return PerformSTORECombine(N, DAG, Subtarget);
+  case ISD::SINT_TO_FP:     return PerformSINT_TO_FPCombine(N, DAG, this);
   case X86ISD::FXOR:
   case X86ISD::FOR:         return PerformFORCombine(N, DAG);
   case X86ISD::FAND:        return PerformFANDCombine(N, DAG);
