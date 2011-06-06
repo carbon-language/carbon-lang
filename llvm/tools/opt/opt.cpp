@@ -412,7 +412,7 @@ static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
 
   if (DisableInline) {
     // No inlining pass
-  } else if (OptLevel) {
+  } else if (OptLevel > 1) {
     unsigned Threshold = 225;
     if (OptLevel > 2)
       Threshold = 275;
