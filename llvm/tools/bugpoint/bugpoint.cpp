@@ -69,6 +69,18 @@ static cl::opt<bool>
 StandardLinkOpts("std-link-opts", 
                  cl::desc("Include the standard link time optimizations"));
 
+static cl::opt<bool>
+OptLevelO1("O1",
+           cl::desc("Optimization level 1. Similar to llvm-gcc -O1"));
+
+static cl::opt<bool>
+OptLevelO2("O2",
+           cl::desc("Optimization level 2. Similar to llvm-gcc -O2"));
+
+static cl::opt<bool>
+OptLevelO3("O3",
+           cl::desc("Optimization level 3. Similar to llvm-gcc -O3"));
+
 static cl::opt<std::string>
 OverrideTriple("mtriple", cl::desc("Override target triple for module"));
 
@@ -83,10 +95,10 @@ static void BugpointInterruptFunction() {
 
 // Hack to capture a pass list.
 namespace {
-  class AddToDriver : public PassManager {
+  class AddToDriver : public FunctionPassManager {
     BugDriver &D;
   public:
-    AddToDriver(BugDriver &_D) : D(_D) {}
+    AddToDriver(BugDriver &_D) : FunctionPassManager(0), D(_D) {}
     
     virtual void add(Pass *P) {
       const void *ID = P->getPassID();
@@ -158,6 +170,20 @@ int main(int argc, char **argv) {
                                    /*RunInliner=*/true);
   }
 
+  if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+    PassManagerBuilder Builder;
+    if (OptLevelO1)
+      Builder.Inliner = createAlwaysInlinerPass();
+    else if (OptLevelO2)
+      Builder.Inliner = createFunctionInliningPass(225);
+    else
+      Builder.Inliner = createFunctionInliningPass(275);
+
+    // Note that although clang/llvm-gcc use two separate passmanagers
+    // here, it shouldn't normally make a difference.
+    Builder.populateFunctionPassManager(PM);
+    Builder.populateModulePassManager(PM);
+  }
 
   for (std::vector<const PassInfo*>::iterator I = PassList.begin(),
          E = PassList.end();
