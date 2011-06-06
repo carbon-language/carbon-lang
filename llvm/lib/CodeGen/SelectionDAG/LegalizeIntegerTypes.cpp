@@ -73,6 +73,17 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::UNDEF:       Res = PromoteIntRes_UNDEF(N); break;
   case ISD::VAARG:       Res = PromoteIntRes_VAARG(N); break;
 
+  case ISD::EXTRACT_SUBVECTOR:
+                         Res = PromoteIntRes_EXTRACT_SUBVECTOR(N); break;
+  case ISD::VECTOR_SHUFFLE:
+                         Res = PromoteIntRes_VECTOR_SHUFFLE(N); break;
+  case ISD::INSERT_VECTOR_ELT:
+                         Res = PromoteIntRes_INSERT_VECTOR_ELT(N); break;
+  case ISD::BUILD_VECTOR:
+                         Res = PromoteIntRes_BUILD_VECTOR(N); break;
+  case ISD::SCALAR_TO_VECTOR:
+                         Res = PromoteIntRes_SCALAR_TO_VECTOR(N); break;
+
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:  Res = PromoteIntRes_INT_EXTEND(N); break;
@@ -180,6 +191,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
     if (NOutVT.bitsEq(NInVT))
       // The input promotes to the same size.  Convert the promoted value.
       return DAG.getNode(ISD::BITCAST, dl, NOutVT, GetPromotedInteger(InOp));
+    if (NInVT.isVector())
+      // Promote vector element via memory load/store.
+      return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
+                         CreateStackStoreLoad(InOp, OutVT));
     break;
   case TargetLowering::TypeSoftenFloat:
     // Promote the integer operand by hand.
@@ -673,6 +688,8 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   case ISD::BRCOND:       Res = PromoteIntOp_BRCOND(N, OpNo); break;
   case ISD::BUILD_PAIR:   Res = PromoteIntOp_BUILD_PAIR(N); break;
   case ISD::BUILD_VECTOR: Res = PromoteIntOp_BUILD_VECTOR(N); break;
+  case ISD::CONCAT_VECTORS: Res = PromoteIntOp_CONCAT_VECTORS(N); break;
+  case ISD::EXTRACT_VECTOR_ELT: Res = PromoteIntOp_EXTRACT_VECTOR_ELT(N); break;
   case ISD::CONVERT_RNDSAT:
                           Res = PromoteIntOp_CONVERT_RNDSAT(N); break;
   case ISD::INSERT_VECTOR_ELT:
@@ -2617,3 +2634,159 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
          "Don't know how to expand this UINT_TO_FP!");
   return MakeLibCall(LC, DstVT, &Op, 1, true, dl);
 }
+
+SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_SUBVECTOR(SDNode *N) {
+  SDValue InOp0 = N->getOperand(0);
+  EVT InVT = InOp0.getValueType();
+  EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
+
+  EVT OutVT = N->getValueType(0);
+  EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
+  assert(NOutVT.isVector() && "This type must be promoted to a vector type");
+  unsigned OutNumElems = N->getValueType(0).getVectorNumElements();
+  EVT NOutVTElem = NOutVT.getVectorElementType();
+
+  DebugLoc dl = N->getDebugLoc();
+  SDValue BaseIdx = N->getOperand(1);
+
+  SmallVector<SDValue, 8> Ops;
+  for (unsigned i = 0; i != OutNumElems; ++i) {
+
+    // Extract the element from the original vector.
+    SDValue Index = DAG.getNode(ISD::ADD, dl, BaseIdx.getValueType(),
+      BaseIdx, DAG.getIntPtrConstant(i));
+    SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+      InVT.getVectorElementType(), N->getOperand(0), Index);
+
+    SDValue Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, Ext);
+    // Insert the converted element to the new vector.
+    Ops.push_back(Op);
+  }
+
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, &Ops[0], Ops.size());
+}
+
+
+SDValue DAGTypeLegalizer::PromoteIntRes_VECTOR_SHUFFLE(SDNode *N) {
+
+  ShuffleVectorSDNode *SV = cast<ShuffleVectorSDNode>(N);
+  EVT VT = N->getValueType(0);
+  DebugLoc dl = N->getDebugLoc();
+
+  unsigned NumElts = VT.getVectorNumElements();
+  SmallVector<int, 8> NewMask;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    NewMask.push_back(SV->getMaskElt(i));
+  }
+
+  SDValue V0 = GetPromotedInteger(N->getOperand(0));
+  SDValue V1 = GetPromotedInteger(N->getOperand(1));
+  EVT OutVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
+
+  return DAG.getVectorShuffle(OutVT, dl, V0,V1, &NewMask[0]);
+}
+
+
+SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_VECTOR(SDNode *N) {
+
+  SDValue InOp0 = N->getOperand(0);
+  EVT InVT = InOp0.getValueType();
+  EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
+
+  EVT OutVT = N->getValueType(0);
+  EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
+  assert(NOutVT.isVector() && "This type must be promoted to a vector type");
+  unsigned NumElems = N->getNumOperands();
+  EVT NOutVTElem = NOutVT.getVectorElementType();
+
+  DebugLoc dl = N->getDebugLoc();
+
+  SmallVector<SDValue, 8> Ops;
+  for (unsigned i = 0; i != NumElems; ++i) {
+    SDValue Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, N->getOperand(i));
+    Ops.push_back(Op);
+  }
+
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, &Ops[0], Ops.size());
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_SCALAR_TO_VECTOR(SDNode *N) {
+
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue InOp0 = N->getOperand(0);
+  EVT InVT = InOp0.getValueType();
+  EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
+  assert(!InVT.isVector() && "Input must not be a scalar");
+
+  EVT OutVT = N->getValueType(0);
+  EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
+  assert(NOutVT.isVector() && "This type must be promoted to a vector type");
+  EVT NOutVTElem = NOutVT.getVectorElementType();
+
+  SDValue Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, N->getOperand(0));
+
+  return DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, NOutVT, Op);
+}
+
+SDValue DAGTypeLegalizer::PromoteIntRes_INSERT_VECTOR_ELT(SDNode *N) {
+
+  SDValue InOp0 = N->getOperand(0);
+  EVT InVT = InOp0.getValueType();
+  EVT InElVT = InVT.getVectorElementType();
+  EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
+
+  EVT OutVT = N->getValueType(0);
+  EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
+  assert(NOutVT.isVector() && "This type must be promoted to a vector type");
+
+  EVT NOutVTElem = NOutVT.getVectorElementType();
+
+  DebugLoc dl = N->getDebugLoc();
+
+  SDValue ConvertedVector = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT, InOp0);
+
+  SDValue ConvElem = DAG.getNode(ISD::ANY_EXTEND, dl,
+    NOutVTElem, N->getOperand(1));
+  return DAG.getNode(ISD::INSERT_VECTOR_ELT, dl,NOutVT,
+    ConvertedVector, ConvElem, N->getOperand(2));
+}
+
+SDValue DAGTypeLegalizer::PromoteIntOp_EXTRACT_VECTOR_ELT(SDNode *N) {
+  DebugLoc dl = N->getDebugLoc();
+  SDValue V0 = GetPromotedInteger(N->getOperand(0));
+  SDValue V1 = N->getOperand(1);
+  SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
+    V0->getValueType(0).getScalarType(), V0, V1);
+
+  return DAG.getNode(ISD::TRUNCATE, dl, N->getValueType(0), Ext);
+
+}
+
+SDValue DAGTypeLegalizer::PromoteIntOp_CONCAT_VECTORS(SDNode *N) {
+
+  DebugLoc dl = N->getDebugLoc();
+
+  EVT RetSclrTy = N->getValueType(0).getVectorElementType();
+
+  SmallVector<SDValue, 8> NewOps;
+
+  // For each incoming vector
+  for (unsigned VecIdx = 0, E = N->getNumOperands(); VecIdx!= E; ++VecIdx) {
+    SDValue Incoming = GetPromotedInteger(N->getOperand(VecIdx));
+    EVT SclrTy = Incoming->getValueType(0).getVectorElementType();
+    unsigned NumElem = Incoming->getValueType(0).getVectorNumElements();
+
+    for (unsigned i=0; i<NumElem; ++i) {
+      // Extract element from incoming vector
+      SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SclrTy,
+      Incoming, DAG.getIntPtrConstant(i));
+      SDValue Tr = DAG.getNode(ISD::TRUNCATE, dl, RetSclrTy, Ex);
+      NewOps.push_back(Tr);
+    }
+  }
+
+  return DAG.getNode(ISD::BUILD_VECTOR, dl,  N->getValueType(0),
+    &NewOps[0], NewOps.size());
+  }
+

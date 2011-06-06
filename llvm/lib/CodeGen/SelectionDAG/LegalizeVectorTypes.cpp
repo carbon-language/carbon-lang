@@ -783,6 +783,17 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
                      DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
     break;
   }
+  case TargetLowering::TypePromoteInteger: {
+    SDValue InOp = GetPromotedInteger(N->getOperand(0));
+    EVT InNVT = EVT::getVectorVT(*DAG.getContext(),
+                                 InOp.getValueType().getVectorElementType(),
+                                 LoVT.getVectorNumElements());
+    Lo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
+                     DAG.getIntPtrConstant(0));
+    Hi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, InNVT, InOp,
+                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+    break;
+  }
   case TargetLowering::TypeSplitVector:
     GetSplitVector(N->getOperand(0), Lo, Hi);
     break;
