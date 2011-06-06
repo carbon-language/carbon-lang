@@ -630,7 +630,7 @@ public:
 
     bool hasConstParamMatch() const { return Pair.getInt() & 0x2; }
     void setConstParamMatch(bool B) {
-      Pair.setInt(unsigned(B) << 1 | hasSuccess());
+      Pair.setInt(B << 1 | unsigned(hasSuccess()));
     }
   };
 
