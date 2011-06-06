@@ -1893,6 +1893,9 @@ def note_explicit_template_spec_does_not_need_header : Note<
 def err_template_qualified_declarator_no_match : Error<
   "nested name specifier '%0' for declaration does not refer into a class, "
   "class template or class template partial specialization">;
+def err_specialize_member_of_template : Error<
+  "cannot specialize (with 'template<>') a member of an unspecialized "
+  "template">;
 
 // C++ Class Template Partial Specialization
 def err_default_arg_in_partial_spec : Error<

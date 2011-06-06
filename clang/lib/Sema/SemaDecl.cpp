@@ -4516,8 +4516,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   if (!getLangOptions().CPlusPlus) {
     // Perform semantic checking on the function declaration.
-    bool isExplctSpecialization=false;
-    CheckFunctionDeclaration(S, NewFD, Previous, isExplctSpecialization,
+    bool isExplicitSpecialization=false;
+    CheckFunctionDeclaration(S, NewFD, Previous, isExplicitSpecialization,
                              Redeclaration);
     assert((NewFD->isInvalidDecl() || !Redeclaration ||
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
@@ -4540,7 +4540,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     
       HasExplicitTemplateArgs = true;
     
-      if (FunctionTemplate) {
+      if (NewFD->isInvalidDecl()) {
+        HasExplicitTemplateArgs = false;
+      } else if (FunctionTemplate) {
         // Function template with explicit template arguments.
         Diag(D.getIdentifierLoc(), diag::err_function_template_partial_spec)
           << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc);

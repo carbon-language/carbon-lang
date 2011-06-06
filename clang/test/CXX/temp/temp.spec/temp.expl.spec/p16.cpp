@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s
 template<class T> struct A { 
   void f(T);
   template<class X1> void g1(T, X1); 
@@ -24,3 +24,15 @@ template<> template<>
                                     // member specialization even if defined in class definition
 
 template<> void A<int>::h(int) { }
+
+namespace PR10024 {
+  template <typename T> 
+  struct Test{ 
+    template <typename U> 
+    void get(U i) {}
+  }; 
+
+  template <typename T>
+  template <>
+  void Test<T>::get<double>(double i) {}  // expected-error{{cannot specialize (with 'template<>') a member of an unspecialized template}}
+}

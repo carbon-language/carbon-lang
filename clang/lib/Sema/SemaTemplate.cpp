@@ -1610,6 +1610,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
   //   such a member, the member declaration shall be preceded by a
   //   template<> for each enclosing class template that is
   //   explicitly specialized.
+  bool SawNonEmptyTemplateParameterList = false;
   unsigned ParamIdx = 0;
   for (unsigned TypeIdx = 0, NumTypes = NestedTypes.size(); TypeIdx != NumTypes;
        ++TypeIdx) {
@@ -1670,6 +1671,26 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
       // against the corresponding template parameter list.
       NeedNonemptyTemplateHeader = false;
     } 
+    
+    // C++ [temp.expl.spec]p16:
+    //   In an explicit specialization declaration for a member of a class 
+    //   template or a member template that ap- pears in namespace scope, the 
+    //   member template and some of its enclosing class templates may remain 
+    //   unspecialized, except that the declaration shall not explicitly 
+    //   specialize a class member template if its en- closing class templates 
+    //   are not explicitly specialized as well.
+    if (ParamIdx < NumParamLists) {
+      if (ParamLists[ParamIdx]->size() == 0) {
+        if (SawNonEmptyTemplateParameterList) {
+          Diag(DeclLoc, diag::err_specialize_member_of_template)
+            << ParamLists[ParamIdx]->getSourceRange();
+          Invalid = true;
+          IsExplicitSpecialization = false;
+          return 0;
+        }
+      } else
+        SawNonEmptyTemplateParameterList = true;
+    }
     
     if (NeedEmptyTemplateHeader) {
       // If we're on the last of the types, and we need a 'template<>' header
@@ -1787,6 +1808,22 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
       Invalid = true;
   }
 
+  // C++ [temp.expl.spec]p16:
+  //   In an explicit specialization declaration for a member of a class 
+  //   template or a member template that ap- pears in namespace scope, the 
+  //   member template and some of its enclosing class templates may remain 
+  //   unspecialized, except that the declaration shall not explicitly 
+  //   specialize a class member template if its en- closing class templates 
+  //   are not explicitly specialized as well.
+  if (ParamLists[NumParamLists - 1]->size() == 0 && 
+      SawNonEmptyTemplateParameterList) {
+    Diag(DeclLoc, diag::err_specialize_member_of_template)
+      << ParamLists[ParamIdx]->getSourceRange();
+    Invalid = true;
+    IsExplicitSpecialization = false;
+    return 0;
+  }
+  
   // Return the last template parameter list, which corresponds to the
   // entity being declared.
   return ParamLists[NumParamLists - 1];
