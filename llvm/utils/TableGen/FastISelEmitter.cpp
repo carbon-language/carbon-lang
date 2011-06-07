@@ -19,9 +19,10 @@
 
 #include "FastISelEmitter.h"
 #include "Record.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 namespace {
@@ -278,8 +279,7 @@ struct OperandsSignature {
       } else if (Operands[i].isFP()) {
         OS << "ConstantFP *f" << i;
       } else {
-        assert("Unknown operand kind!");
-        abort();
+        llvm_unreachable("Unknown operand kind!");
       }
       if (i + 1 != e)
         OS << ", ";
@@ -307,8 +307,7 @@ struct OperandsSignature {
         OS << "f" << i;
         PrintedArg = true;
       } else {
-        assert("Unknown operand kind!");
-        abort();
+        llvm_unreachable("Unknown operand kind!");
       }
     }
   }
@@ -322,8 +321,7 @@ struct OperandsSignature {
       } else if (Operands[i].isFP()) {
         OS << "f" << i;
       } else {
-        assert("Unknown operand kind!");
-        abort();
+        llvm_unreachable("Unknown operand kind!");
       }
       if (i + 1 != e)
         OS << ", ";
