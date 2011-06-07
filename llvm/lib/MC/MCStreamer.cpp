@@ -15,6 +15,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include <cstdlib>
@@ -80,9 +81,11 @@ void MCStreamer::EmitIntValue(uint64_t Value, unsigned Size,
   assert((isUIntN(8 * Size, Value) || isIntN(8 * Size, Value)) &&
          "Invalid size");
   char buf[8];
-  // FIXME: Endianness assumption.
-  for (unsigned i = 0; i != Size; ++i)
-    buf[i] = uint8_t(Value >> (i * 8));
+  const bool isLittleEndian = Context.getTargetAsmInfo().isLittleEndian();
+  for (unsigned i = 0; i != Size; ++i) {
+    unsigned index = isLittleEndian ? i : (Size - i - 1);
+    buf[i] = uint8_t(Value >> (index * 8));
+  }
   EmitBytes(StringRef(buf, Size), AddrSpace);
 }
 
