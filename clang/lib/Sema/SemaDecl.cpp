@@ -3850,8 +3850,12 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD,
   }
 
   if (NewVD->hasLocalStorage() && T.isObjCGCWeak()
-      && !NewVD->hasAttr<BlocksAttr>())
-    Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
+      && !NewVD->hasAttr<BlocksAttr>()) {
+    if (getLangOptions().getGCMode() != LangOptions::NonGC)
+      Diag(NewVD->getLocation(), diag::warn_gc_attribute_weak_on_local);
+    else
+      Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
+  }
   
   bool isVM = T->isVariablyModifiedType();
   if (isVM || NewVD->hasAttr<CleanupAttr>() ||

@@ -6,6 +6,6 @@ struct S {
 
 int main ()
 {
-  __weak id  local;  // expected-warning {{__weak attribute cannot be specified on an automatic variable}}
+  __weak id  local;  // expected-warning {{Objective-C GC does not allow weak variables on the stack}}
 }
 

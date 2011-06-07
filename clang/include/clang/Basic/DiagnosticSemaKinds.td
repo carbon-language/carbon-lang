@@ -1178,6 +1178,8 @@ def warn_attribute_void_function_method : Warning<
   "%select{functions|Objective-C method}1 without return value">;
 def warn_attribute_weak_on_field : Warning<
   "__weak attribute cannot be specified on a field declaration">;
+def warn_gc_attribute_weak_on_local : Warning<
+  "Objective-C GC does not allow weak variables on the stack">;
 def warn_attribute_weak_on_local : Warning<
   "__weak attribute cannot be specified on an automatic variable">;
 def warn_weak_identifier_undeclared : Warning<
