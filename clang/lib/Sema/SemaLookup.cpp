@@ -2171,7 +2171,8 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
   if (Result)
     return Result;
 
-  Result = new SpecialMemberOverloadResult(ID);
+  Result = BumpAlloc.Allocate<SpecialMemberOverloadResult>();
+  Result = new (Result) SpecialMemberOverloadResult(ID);
   SpecialMemberCache.InsertNode(Result, InsertPoint);
 
   if (SM == CXXDestructor) {
