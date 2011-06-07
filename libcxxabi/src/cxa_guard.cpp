@@ -20,6 +20,38 @@ namespace __cxxabiv1
 namespace
 {
 
+#if LIBCXXABI_ARMEABI
+
+// A 32-bit, 4-byte-aligned static data value. The least significant 2 bits must
+// be statically initialized to 0.
+typedef uint32_t guard_type;
+
+// Test the lowest bit.
+inline bool is_initialized(guard_type* guard_object) {
+    return (*guard_object) & 1;
+}
+
+inline void set_initialized(guard_type* guard_object) {
+    *guard_object |= 1;
+}
+
+#else
+
+typedef uint64_t guard_type;
+
+bool is_initialized(guard_type* guard_object) {
+    char* initialized = (char*)guard_object;
+    return *initialized;
+}
+
+void set_initialized(guard_type* guard_object) {
+    char* initialized = (char*)guard_object;
+    *initialized = 1;
+}
+
+#endif
+
+
 void abort_message(const char* s)
 {
     fputs(s, stderr);
@@ -96,6 +128,31 @@ set_lock(uint64_t& x, lock_type y)
     x = f.guard;
 }
 
+inline
+lock_type
+get_lock(uint32_t x)
+{
+    union
+    {
+        uint32_t guard;
+        uint8_t lock[2];
+    } f = {x};
+    return f.lock[1] != 0;
+}
+
+inline
+void
+set_lock(uint32_t& x, lock_type y)
+{
+    union
+    {
+        uint32_t guard;
+        uint8_t lock[2];
+    } f = {0};
+    f.lock[1] = y;
+    x = f.guard;
+}
+
 #endif  // __APPLE__
 
 }  // unnamed namespace
@@ -103,7 +160,7 @@ set_lock(uint64_t& x, lock_type y)
 extern "C"
 {
 
-int __cxa_guard_acquire(uint64_t* guard_object)
+int __cxa_guard_acquire(guard_type* guard_object)
 {
     char* initialized = (char*)guard_object;
     if (pthread_mutex_lock(&guard_mut))
@@ -125,7 +182,7 @@ int __cxa_guard_acquire(uint64_t* guard_object)
                     abort_message("__cxa_guard_acquire condition variable wait failed");
                 lock = get_lock(*guard_object);
             } while (lock);
-            result = *initialized == 0;
+            result = !is_initialized(guard_object);
             if (result)
                 set_lock(*guard_object, id);
         }
@@ -145,20 +202,19 @@ int __cxa_guard_acquire(uint64_t* guard_object)
     return result;
 }
 
-void __cxa_guard_release(uint64_t* guard_object)
+void __cxa_guard_release(guard_type* guard_object)
 {
-    char* initialized = (char*)guard_object;
     if (pthread_mutex_lock(&guard_mut))
         abort_message("__cxa_guard_release failed to acquire mutex");
     *guard_object = 0;
-    *initialized = 1;
+    set_initialized(guard_object);
     if (pthread_mutex_unlock(&guard_mut))
         abort_message("__cxa_guard_release failed to release mutex");
     if (pthread_cond_broadcast(&guard_cv))
         abort_message("__cxa_guard_release failed to broadcast condition variable");
 }
 
-void __cxa_guard_abort(uint64_t* guard_object)
+void __cxa_guard_abort(guard_type* guard_object)
 {
     if (pthread_mutex_lock(&guard_mut))
         abort_message("__cxa_guard_abort failed to acquire mutex");

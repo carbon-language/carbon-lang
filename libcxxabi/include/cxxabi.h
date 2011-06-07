@@ -61,9 +61,15 @@ extern LIBCXXABI_NORETURN void __cxa_pure_virtual(void);
 extern LIBCXXABI_NORETURN void __cxa_deleted_virtual(void);
 
 // 3.3.2 One-time Construction API
+#ifdef LIBCXXABI_ARMEABI
+extern int  __cxa_guard_acquire(uint32_t*);
+extern void __cxa_guard_release(uint32_t*);
+extern void __cxa_guard_abort(uint32_t*);
+#else
 extern int  __cxa_guard_acquire(uint64_t*);
 extern void __cxa_guard_release(uint64_t*);
 extern void __cxa_guard_abort(uint64_t*);
+#endif
 
 // 3.3.3 Array Construction and Destruction API
 extern void* __cxa_vec_new(size_t element_count, 
