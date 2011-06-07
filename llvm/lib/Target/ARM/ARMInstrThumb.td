@@ -1460,7 +1460,7 @@ def tTPsoft : TIx2<0b11110, 0b11, 1, (outs), (ins), IIC_Br,
 // Defs. By doing so, we also cause the prologue/epilogue code to actively
 // preserve all of the callee-saved resgisters, which is exactly what we want.
 // $val is a scratch register for our use.
-let Defs = [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12 ],
+let Defs = [ R0,  R1,  R2,  R3,  R4,  R5,  R6,  R7, R12, CPSR ],
     hasSideEffects = 1, isBarrier = 1, isCodeGenOnly = 1 in
 def tInt_eh_sjlj_setjmp : ThumbXI<(outs),(ins tGPR:$src, tGPR:$val),
                                   AddrModeNone, SizeSpecial, NoItinerary, "","",
