@@ -87,7 +87,16 @@ def MipsDivRem    : SDNode<"MipsISD::DivRem", SDT_MipsDivRem,
 def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
                            [SDNPOutGlue]>;
 
-// wrapper node
+// Target constant nodes that are not part of any isel patterns and remain
+// unchanged can cause instructions with illegal operands to be emitted.
+// Wrapper node patterns give the instruction selector a chance to replace
+// target constant nodes that would otherwise remain unchanged with ADDiu
+// nodes. Without these wrapper node patterns, the following conditional move
+// instrucion is emitted when function cmov2 in test/CodeGen/Mips/cmov.ll is
+// compiled: 
+//  movn  %got(d)($gp), %got(c)($gp), $4
+// This instruction is illegal since movn can take only register operands.
+
 def MipsWrapperPIC    : SDNode<"MipsISD::WrapperPIC",  SDTIntUnaryOp>;
 
 //===----------------------------------------------------------------------===//
