@@ -356,6 +356,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
                                   LHS, SDValue(AddCarry,0));
     }
 
+    /// Mul with two results
     case ISD::SMUL_LOHI:
     case ISD::UMUL_LOHI: {
       SDValue Op1 = Node->getOperand(0);
