@@ -173,6 +173,10 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->adjustsStack()) return;
 
+  MachineModuleInfo &MMI = MF.getMMI();
+  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
+  MachineLocation DstML, SrcML;
+
   // Adjust stack : addi sp, sp, (-imm)
   ATUsed = expandRegLargeImmPair(Mips::SP, -StackSize, NewReg, NewImm, MBB,
                                  MBBI);
@@ -183,49 +187,75 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   if (ATUsed)
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ATMACRO));
 
+  // emit ".cfi_def_cfa_offset StackSize"
+  MCSymbol *AdjustSPLabel = MMI.getContext().CreateTempSymbol();
+  BuildMI(MBB, MBBI, dl,
+          TII.get(TargetOpcode::PROLOG_LABEL)).addSym(AdjustSPLabel);
+  DstML = MachineLocation(MachineLocation::VirtualFP);
+  SrcML = MachineLocation(MachineLocation::VirtualFP, -StackSize);
+  Moves.push_back(MachineMove(AdjustSPLabel, DstML, SrcML));
+
   // Find the instruction past the last instruction that saves a callee-saved
   // register to the stack.
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  
-  for (unsigned i = 0; i < CSI.size(); ++i)
-    ++MBBI;
+
+  if (CSI.size()) {
+    for (unsigned i = 0; i < CSI.size(); ++i)
+      ++MBBI;
  
+    // Iterate over list of callee-saved registers and emit .cfi_offset directives.
+    MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
+    BuildMI(MBB, MBBI, dl,
+            TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
+ 
+    for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
+           E = CSI.end(); I != E; ++I) {
+      int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
+      unsigned Reg = I->getReg();
+
+      // If Reg is a double precision register, emit two cfa_offsets,
+      // one for each of the paired single precision registers.
+      if (Mips::AFGR64RegisterClass->contains(Reg)) {
+        const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+        MachineLocation DstML0(MachineLocation::VirtualFP, Offset);
+        MachineLocation DstML1(MachineLocation::VirtualFP, Offset + 4);
+        MachineLocation SrcML0(*SubRegs);
+        MachineLocation SrcML1(*(SubRegs + 1));
+
+        if (!STI.isLittle())
+          std::swap(SrcML0, SrcML1);
+
+        Moves.push_back(MachineMove(CSLabel, DstML0, SrcML0));
+        Moves.push_back(MachineMove(CSLabel, DstML1, SrcML1));
+      }
+      else {
+        // Reg is either in CPURegs or FGR32.
+        DstML = MachineLocation(MachineLocation::VirtualFP, Offset);
+        SrcML = MachineLocation(Reg);
+        Moves.push_back(MachineMove(CSLabel, DstML, SrcML));
+      }
+    }
+  }    
+
   // if framepointer enabled, set it to point to the stack pointer.
-  if (hasFP(MF))
+  if (hasFP(MF)) {
     // Insert instruction "move $fp, $sp" at this location.    
     BuildMI(MBB, MBBI, dl, TII.get(Mips::ADDu), Mips::FP)
       .addReg(Mips::SP).addReg(Mips::ZERO);
+
+    // emit ".cfi_def_cfa_register $fp" 
+    MCSymbol *SetFPLabel = MMI.getContext().CreateTempSymbol();
+    BuildMI(MBB, MBBI, dl,
+            TII.get(TargetOpcode::PROLOG_LABEL)).addSym(SetFPLabel);
+    DstML = MachineLocation(Mips::FP);
+    SrcML = MachineLocation(MachineLocation::VirtualFP);
+    Moves.push_back(MachineMove(SetFPLabel, DstML, SrcML));
+  }
 
   // Restore GP from the saved stack location
   if (MipsFI->needGPSaveRestore())
     BuildMI(MBB, MBBI, dl, TII.get(Mips::CPRESTORE))
       .addImm(MFI->getObjectOffset(MipsFI->getGPFI()));
-
-  // EH Frame infomation.
-  MachineModuleInfo &MMI = MF.getMMI();
-  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
-  MCSymbol *FrameLabel = MMI.getContext().CreateTempSymbol();
-  BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::PROLOG_LABEL)).addSym(FrameLabel);
-
-  if (hasFP(MF)) {
-    MachineLocation SPDst(Mips::FP);
-    MachineLocation SPSrc(Mips::SP);
-    Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc)); 
-  }
-    
-  if (StackSize) {
-    MachineLocation SPDst(MachineLocation::VirtualFP);
-    MachineLocation SPSrc(MachineLocation::VirtualFP, -StackSize);
-    Moves.push_back(MachineMove(FrameLabel, SPDst, SPSrc)); 
-  }
-
-  for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
-       E = CSI.end(); I != E; ++I) {
-    int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
-    MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
-    MachineLocation CSSrc(I->getReg());
-    Moves.push_back(MachineMove(FrameLabel, CSDst, CSSrc));
-  }        
 }
 
 void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
