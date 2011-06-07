@@ -1008,14 +1008,16 @@ static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
   for (const unsigned *AliasI = TRI->getOverlaps(Reg); *AliasI; ++AliasI) {
 
     // Check if Ref is live.
-    if (!LiveRegDefs[Reg]) continue;
+    if (!LiveRegDefs[*AliasI]) continue;
 
     // Allow multiple uses of the same def.
-    if (LiveRegDefs[Reg] == SU) continue;
+    if (LiveRegDefs[*AliasI] == SU) continue;
 
     // Add Reg to the set of interfering live regs.
-    if (RegAdded.insert(Reg))
-      LRegs.push_back(Reg);
+    if (RegAdded.insert(*AliasI)) {
+      assert(*AliasI == Reg && "alias clobber"); //!!!
+      LRegs.push_back(*AliasI);
+    }
   }
 }
 
