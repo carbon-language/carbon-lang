@@ -56,3 +56,10 @@ TEST6:
 # CHECK:        .byte   35
 # CHECK:        .byte   9
 # CHECK:        .byte   10
+
+TEST7:
+        .byte 1, 2, 3, 4
+# CHECK:        .byte   1
+# CHECK-NEXT:   .byte   2
+# CHECK-NEXT:   .byte   3
+# CHECK-NEXT:   .byte   4
