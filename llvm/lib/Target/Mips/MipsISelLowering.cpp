@@ -554,16 +554,108 @@ static Mips::FPBranchCode GetFPBranchCodeFromCond(Mips::CondCode CC) {
   return Mips::BRANCH_INVALID;
 }
 
+static MachineBasicBlock* ExpandCondMov(MachineInstr *MI, MachineBasicBlock *BB,
+                                        DebugLoc dl,
+                                        const MipsSubtarget* Subtarget,
+                                        const TargetInstrInfo *TII,
+                                        bool isFPCmp, unsigned Opc) {
+  // There is no need to expand CMov instructions if target has
+  // conditional moves.
+  if (Subtarget->hasCondMov())
+    return BB;
+
+  // To "insert" a SELECT_CC instruction, we actually have to insert the
+  // diamond control-flow pattern.  The incoming instruction knows the
+  // destination vreg to set, the condition code register to branch on, the
+  // true/false values to select between, and a branch opcode to use.
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator It = BB;
+  ++It;
+
+  //  thisMBB:
+  //  ...
+  //   TrueVal = ...
+  //   setcc r1, r2, r3
+  //   bNE   r1, r0, copy1MBB
+  //   fallthrough --> copy0MBB
+  MachineBasicBlock *thisMBB  = BB;
+  MachineFunction *F = BB->getParent();
+  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
+  F->insert(It, copy0MBB);
+  F->insert(It, sinkMBB);
+
+  // Transfer the remainder of BB and its successor edges to sinkMBB.
+  sinkMBB->splice(sinkMBB->begin(), BB,
+                  llvm::next(MachineBasicBlock::iterator(MI)),
+                  BB->end());
+  sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
+
+  // Next, add the true and fallthrough blocks as its successors.
+  BB->addSuccessor(copy0MBB);
+  BB->addSuccessor(sinkMBB);
+
+  // Emit the right instruction according to the type of the operands compared
+  if (isFPCmp)
+    BuildMI(BB, dl, TII->get(Opc)).addMBB(sinkMBB);
+  else
+    BuildMI(BB, dl, TII->get(Opc)).addReg(MI->getOperand(2).getReg())
+      .addReg(Mips::ZERO).addMBB(sinkMBB);
+
+  //  copy0MBB:
+  //   %FalseValue = ...
+  //   # fallthrough to sinkMBB
+  BB = copy0MBB;
+
+  // Update machine-CFG edges
+  BB->addSuccessor(sinkMBB);
+
+  //  sinkMBB:
+  //   %Result = phi [ %TrueValue, thisMBB ], [ %FalseValue, copy0MBB ]
+  //  ...
+  BB = sinkMBB;
+
+  if (isFPCmp)
+    BuildMI(*BB, BB->begin(), dl,
+            TII->get(Mips::PHI), MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB)
+      .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB);
+  else
+    BuildMI(*BB, BB->begin(), dl,
+            TII->get(Mips::PHI), MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(3).getReg()).addMBB(thisMBB)
+      .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB);
+
+  MI->eraseFromParent();   // The pseudo instruction is gone now.
+  return BB;
+}
+
 MachineBasicBlock *
 MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                 MachineBasicBlock *BB) const {
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  bool isFPCmp = false;
   DebugLoc dl = MI->getDebugLoc();
-  unsigned Opc;
 
   switch (MI->getOpcode()) {
-  default: assert(false && "Unexpected instr type to insert");
+  default:
+    assert(false && "Unexpected instr type to insert");
+    return NULL;
+  case Mips::MOVT:
+  case Mips::MOVT_S:
+  case Mips::MOVT_D:
+    return ExpandCondMov(MI, BB, dl, Subtarget, TII, true, Mips::BC1F);
+  case Mips::MOVF:
+  case Mips::MOVF_S:
+  case Mips::MOVF_D:
+    return ExpandCondMov(MI, BB, dl, Subtarget, TII, true, Mips::BC1T);
+  case Mips::MOVZ_I:
+  case Mips::MOVZ_S:
+  case Mips::MOVZ_D:
+    return ExpandCondMov(MI, BB, dl, Subtarget, TII, false, Mips::BNE);
+  case Mips::MOVN_I:
+  case Mips::MOVN_S:
+  case Mips::MOVN_D:
+    return ExpandCondMov(MI, BB, dl, Subtarget, TII, false, Mips::BEQ);
 
   case Mips::ATOMIC_LOAD_ADD_I8:
     return EmitAtomicBinaryPartword(MI, BB, 1, Mips::ADDu);
@@ -620,101 +712,7 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     return EmitAtomicCmpSwapPartword(MI, BB, 2);
   case Mips::ATOMIC_CMP_SWAP_I32:
     return EmitAtomicCmpSwap(MI, BB, 4);
-
-  case Mips::MOVT:
-  case Mips::MOVT_S:
-  case Mips::MOVT_D:
-    isFPCmp = true;
-    Opc = Mips::BC1F;
-    break;
-  case Mips::MOVF:
-  case Mips::MOVF_S:
-  case Mips::MOVF_D:
-    isFPCmp = true;
-    Opc = Mips::BC1T;
-    break;
-  case Mips::MOVZ_I:
-  case Mips::MOVZ_S:
-  case Mips::MOVZ_D:
-    Opc = Mips::BNE;
-    break;
-  case Mips::MOVN_I:
-  case Mips::MOVN_S:
-  case Mips::MOVN_D:
-    Opc = Mips::BEQ;
-    break;
   }
-
-  // There is no need to expand CMov instructions if target has
-  // conditional moves.
-  if (Subtarget->hasCondMov())
-    return BB;
-
-  // To "insert" a SELECT_CC instruction, we actually have to insert the
-  // diamond control-flow pattern.  The incoming instruction knows the
-  // destination vreg to set, the condition code register to branch on, the
-  // true/false values to select between, and a branch opcode to use.
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It;
-
-  //  thisMBB:
-  //  ...
-  //   TrueVal = ...
-  //   setcc r1, r2, r3
-  //   bNE   r1, r0, copy1MBB
-  //   fallthrough --> copy0MBB
-  MachineBasicBlock *thisMBB  = BB;
-  MachineFunction *F = BB->getParent();
-  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *sinkMBB  = F->CreateMachineBasicBlock(LLVM_BB);
-  F->insert(It, copy0MBB);
-  F->insert(It, sinkMBB);
-
-  // Transfer the remainder of BB and its successor edges to sinkMBB.
-  sinkMBB->splice(sinkMBB->begin(), BB,
-                  llvm::next(MachineBasicBlock::iterator(MI)),
-                  BB->end());
-  sinkMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  // Next, add the true and fallthrough blocks as its successors.
-  BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(sinkMBB);
-
-  // Emit the right instruction according to the type of the operands compared
-  if (isFPCmp)
-    BuildMI(BB, dl, TII->get(Opc)).addMBB(sinkMBB);
-  else
-    BuildMI(BB, dl, TII->get(Opc)).addReg(MI->getOperand(2).getReg())
-      .addReg(Mips::ZERO).addMBB(sinkMBB);
-
-
-  //  copy0MBB:
-  //   %FalseValue = ...
-  //   # fallthrough to sinkMBB
-  BB = copy0MBB;
-
-  // Update machine-CFG edges
-  BB->addSuccessor(sinkMBB);
-
-  //  sinkMBB:
-  //   %Result = phi [ %TrueValue, thisMBB ], [ %FalseValue, copy0MBB ]
-  //  ...
-  BB = sinkMBB;
-
-  if (isFPCmp)
-    BuildMI(*BB, BB->begin(), dl,
-            TII->get(Mips::PHI), MI->getOperand(0).getReg())
-      .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB)
-      .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB);
-  else
-    BuildMI(*BB, BB->begin(), dl,
-            TII->get(Mips::PHI), MI->getOperand(0).getReg())
-      .addReg(MI->getOperand(3).getReg()).addMBB(thisMBB)
-      .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB);
-
-  MI->eraseFromParent();   // The pseudo instruction is gone now.
-  return BB;
 }
 
 // This function also handles Mips::ATOMIC_SWAP_I32 (when BinOpcode == 0), and
