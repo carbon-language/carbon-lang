@@ -1125,6 +1125,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             break; // The tied operands have been eliminated.
         }
 
+        bool IsEarlyClobber = false;
         bool RemovedKillFlag = false;
         bool AllUsesCopied = true;
         unsigned LastCopiedReg = 0;
@@ -1132,7 +1133,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         for (unsigned tpi = 0, tpe = TiedPairs.size(); tpi != tpe; ++tpi) {
           unsigned SrcIdx = TiedPairs[tpi].first;
           unsigned DstIdx = TiedPairs[tpi].second;
-          unsigned regA = mi->getOperand(DstIdx).getReg();
+
+          const MachineOperand &DstMO = mi->getOperand(DstIdx);
+          unsigned regA = DstMO.getReg();
+          IsEarlyClobber |= DstMO.isEarlyClobber();
+
           // Grab regB from the instruction because it may have changed if the
           // instruction was commuted.
           regB = mi->getOperand(SrcIdx).getReg();
@@ -1196,15 +1201,17 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
         }
 
         if (AllUsesCopied) {
-          // Replace other (un-tied) uses of regB with LastCopiedReg.
-          for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
-            MachineOperand &MO = mi->getOperand(i);
-            if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
-              if (MO.isKill()) {
-                MO.setIsKill(false);
-                RemovedKillFlag = true;
+          if (!IsEarlyClobber) {
+            // Replace other (un-tied) uses of regB with LastCopiedReg.
+            for (unsigned i = 0, e = mi->getNumOperands(); i != e; ++i) {
+              MachineOperand &MO = mi->getOperand(i);
+              if (MO.isReg() && MO.getReg() == regB && MO.isUse()) {
+                if (MO.isKill()) {
+                  MO.setIsKill(false);
+                  RemovedKillFlag = true;
+                }
+                MO.setReg(LastCopiedReg);
               }
-              MO.setReg(LastCopiedReg);
             }
           }
 
