@@ -255,9 +255,6 @@ getELFKindForNamedSection(StringRef Name, SectionKind K) {
       Name.startswith(".llvm.linkonce.tb."))
     return SectionKind::getThreadBSS();
 
-  if (Name == ".eh_frame")
-    return SectionKind::getReadOnlyWithRel();
-
   return K;
 }
 
@@ -290,7 +287,7 @@ getELFSectionFlags(SectionKind K) {
   if (K.isText())
     Flags |= ELF::SHF_EXECINSTR;
 
-  if (K.isWriteable() && !K.isReadOnlyWithRel())
+  if (K.isWriteable())
     Flags |= ELF::SHF_WRITE;
 
   if (K.isThreadLocal())
