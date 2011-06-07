@@ -221,6 +221,37 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
                         ConstSuffix);
 }
 
+static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
+                                               const LangOptions &LangOpts,
+                                               const FrontendOptions &FEOpts,
+                                               MacroBuilder &Builder) {
+  if (!LangOpts.Microsoft && !LangOpts.TraditionalCPP)
+    Builder.defineMacro("__STDC__");
+  if (LangOpts.Freestanding)
+    Builder.defineMacro("__STDC_HOSTED__", "0");
+  else
+    Builder.defineMacro("__STDC_HOSTED__");
+
+  if (!LangOpts.CPlusPlus) {
+    if (LangOpts.C99)
+      Builder.defineMacro("__STDC_VERSION__", "199901L");
+    else if (!LangOpts.GNUMode && LangOpts.Digraphs)
+      Builder.defineMacro("__STDC_VERSION__", "199409L");
+  } else {
+    if (LangOpts.GNUMode)
+      Builder.defineMacro("__cplusplus");
+    else
+      // C++ [cpp.predefined]p1:
+      //   The name_ _cplusplus is defined to the value 199711L when compiling a
+      //   C++ translation unit.
+      Builder.defineMacro("__cplusplus", "199711L");
+  }
+
+  // Not "standard" per se, but available even with the -undef flag.
+  if (LangOpts.AsmPreprocessor)
+    Builder.defineMacro("__ASSEMBLER__");
+}
+
 static void InitializePredefinedMacros(const TargetInfo &TI,
                                        const LangOptions &LangOpts,
                                        const FrontendOptions &FEOpts,
@@ -256,31 +287,12 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   // Initialize language-specific preprocessor defines.
 
-  // These should all be defined in the preprocessor according to the
-  // current language configuration.
-  if (!LangOpts.Microsoft && !LangOpts.TraditionalCPP)
-    Builder.defineMacro("__STDC__");
-  if (LangOpts.AsmPreprocessor)
-    Builder.defineMacro("__ASSEMBLER__");
-
-  if (!LangOpts.CPlusPlus) {
-    if (LangOpts.C99)
-      Builder.defineMacro("__STDC_VERSION__", "199901L");
-    else if (!LangOpts.GNUMode && LangOpts.Digraphs)
-      Builder.defineMacro("__STDC_VERSION__", "199409L");
-  }
-
   // Standard conforming mode?
   if (!LangOpts.GNUMode)
     Builder.defineMacro("__STRICT_ANSI__");
 
   if (LangOpts.CPlusPlus0x)
     Builder.defineMacro("__GXX_EXPERIMENTAL_CXX0X__");
-
-  if (LangOpts.Freestanding)
-    Builder.defineMacro("__STDC_HOSTED__", "0");
-  else
-    Builder.defineMacro("__STDC_HOSTED__");
 
   if (LangOpts.ObjC1) {
     Builder.defineMacro("__OBJC__");
@@ -324,13 +336,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (LangOpts.CPlusPlus) {
     Builder.defineMacro("__GNUG__", "4");
     Builder.defineMacro("__GXX_WEAK__");
-    if (LangOpts.GNUMode)
-      Builder.defineMacro("__cplusplus");
-    else
-      // C++ [cpp.predefined]p1:
-      //   The name_ _cplusplusis defined to the value 199711L when compiling a
-      //   C++ translation unit.
-      Builder.defineMacro("__cplusplus", "199711L");
     Builder.defineMacro("__private_extern__", "extern");
   }
 
@@ -571,6 +576,12 @@ void clang::InitializePreprocessor(Preprocessor &PP,
   if (InitOpts.UsePredefines)
     InitializePredefinedMacros(PP.getTargetInfo(), PP.getLangOptions(),
                                FEOpts, Builder);
+
+  // Even with predefines off, some macros are still predefined.
+  // These should all be defined in the preprocessor according to the
+  // current language configuration.
+  InitializeStandardPredefinedMacros(PP.getTargetInfo(), PP.getLangOptions(),
+                                     FEOpts, Builder);
 
   // Add on the predefines from the driver.  Wrap in a #line directive to report
   // that they come from the command line.
