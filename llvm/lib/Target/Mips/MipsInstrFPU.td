@@ -77,39 +77,39 @@ def IsNotMipsI       : Predicate<"!Subtarget.isMips1()">;
 multiclass FFR1_1<bits<6> funct, string asmstr>
 {
   def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
-      !strconcat(asmstr, ".s $fd, $fs"), []>;
+      !strconcat(asmstr, ".s\t$fd, $fs"), []>;
 
   def _D32  : FFR<0x11, funct, 0x1, (outs FGR32:$fd), (ins AFGR64:$fs),
-      !strconcat(asmstr, ".d $fd, $fs"), []>, Requires<[In32BitMode]>;
+      !strconcat(asmstr, ".d\t$fd, $fs"), []>, Requires<[In32BitMode]>;
 }
 
 multiclass FFR1_2<bits<6> funct, string asmstr, SDNode FOp>
 {
   def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
-                 !strconcat(asmstr, ".s $fd, $fs"),
+                 !strconcat(asmstr, ".s\t$fd, $fs"),
                  [(set FGR32:$fd, (FOp FGR32:$fs))]>;
 
   def _D32  : FFR<0x11, funct, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
-                 !strconcat(asmstr, ".d $fd, $fs"),
+                 !strconcat(asmstr, ".d\t$fd, $fs"),
                  [(set AFGR64:$fd, (FOp AFGR64:$fs))]>, Requires<[In32BitMode]>;
 }
 
 class FFR1_3<bits<6> funct, bits<5> fmt, RegisterClass RcSrc,
               RegisterClass RcDst, string asmstr>:
   FFR<0x11, funct, fmt, (outs RcSrc:$fd), (ins RcDst:$fs),
-      !strconcat(asmstr, " $fd, $fs"), []>;
+      !strconcat(asmstr, "\t$fd, $fs"), []>;
 
 
 multiclass FFR1_4<bits<6> funct, string asmstr, SDNode FOp, bit isComm = 0> {
   let isCommutable = isComm in {
   def _S32 : FFR<0x11, funct, 0x0, (outs FGR32:$fd),
                  (ins FGR32:$fs, FGR32:$ft),
-                 !strconcat(asmstr, ".s $fd, $fs, $ft"),
+                 !strconcat(asmstr, ".s\t$fd, $fs, $ft"),
                  [(set FGR32:$fd, (FOp FGR32:$fs, FGR32:$ft))]>;
 
   def _D32 : FFR<0x11, funct, 0x1, (outs AFGR64:$fd),
                  (ins AFGR64:$fs, AFGR64:$ft),
-                 !strconcat(asmstr, ".d $fd, $fs, $ft"),
+                 !strconcat(asmstr, ".d\t$fd, $fs, $ft"),
                  [(set AFGR64:$fd, (FOp AFGR64:$fs, AFGR64:$ft))]>,
                  Requires<[In32BitMode]>;
   }
@@ -172,37 +172,37 @@ let ft = 0 in {
 let fd = 0 in {
   /// Move Control Registers From/To CPU Registers
   def CFC1  : FFR<0x11, 0x0, 0x2, (outs CPURegs:$rt), (ins CCR:$fs),
-                  "cfc1 $rt, $fs", []>;
+                  "cfc1\t$rt, $fs", []>;
 
   def CTC1  : FFR<0x11, 0x0, 0x6, (outs CCR:$rt), (ins CPURegs:$fs),
-                  "ctc1 $fs, $rt", []>;
+                  "ctc1\t$fs, $rt", []>;
 
   def MFC1  : FFR<0x11, 0x00, 0x00, (outs CPURegs:$rt), (ins FGR32:$fs),
-                  "mfc1 $rt, $fs", []>;
+                  "mfc1\t$rt, $fs", []>;
 
   def MTC1  : FFR<0x11, 0x00, 0x04, (outs FGR32:$fs), (ins CPURegs:$rt),
-                  "mtc1 $rt, $fs", []>;
+                  "mtc1\t$rt, $fs", []>;
 }
 
 def FMOV_S32 : FFR<0x11, 0b000110, 0x0, (outs FGR32:$fd), (ins FGR32:$fs),
-                   "mov.s $fd, $fs", []>;
+                   "mov.s\t$fd, $fs", []>;
 def FMOV_D32 : FFR<0x11, 0b000110, 0x1, (outs AFGR64:$fd), (ins AFGR64:$fs),
-                   "mov.d $fd, $fs", []>;
+                   "mov.d\t$fd, $fs", []>;
 
 /// Floating Point Memory Instructions
 let Predicates = [IsNotSingleFloat, IsNotMipsI] in {
   def LDC1 : FFI<0b110101, (outs AFGR64:$ft), (ins mem:$addr),
-                 "ldc1 $ft, $addr", [(set AFGR64:$ft, (load addr:$addr))]>;
+                 "ldc1\t$ft, $addr", [(set AFGR64:$ft, (load addr:$addr))]>;
 
   def SDC1 : FFI<0b111101, (outs), (ins AFGR64:$ft, mem:$addr),
-                 "sdc1 $ft, $addr", [(store AFGR64:$ft, addr:$addr)]>;
+                 "sdc1\t$ft, $addr", [(store AFGR64:$ft, addr:$addr)]>;
 }
 
 // LWC1 and SWC1 can always be emitted with odd registers.
-def LWC1  : FFI<0b110001, (outs FGR32:$ft), (ins mem:$addr), "lwc1 $ft, $addr",
+def LWC1  : FFI<0b110001, (outs FGR32:$ft), (ins mem:$addr), "lwc1\t$ft, $addr",
                [(set FGR32:$ft, (load addr:$addr))]>;
-def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr), "swc1 $ft, $addr",
-               [(store FGR32:$ft, addr:$addr)]>;
+def SWC1  : FFI<0b111001, (outs), (ins FGR32:$ft, mem:$addr),
+               "swc1\t$ft, $addr", [(store FGR32:$ft, addr:$addr)]>;
 
 /// Floating-point Aritmetic
 defm FADD : FFR1_4<0x10, "add", fadd, 1>;
@@ -223,7 +223,7 @@ def MIPS_BRANCH_TL : PatLeaf<(i32 3)>;
 /// Floating Point Branch of False/True (Likely)
 let isBranch=1, isTerminator=1, hasDelaySlot=1, base=0x8, Uses=[FCR31] in
   class FBRANCH<PatLeaf op, string asmstr> : FFI<0x11, (outs),
-        (ins brtarget:$dst), !strconcat(asmstr, " $dst"),
+        (ins brtarget:$dst), !strconcat(asmstr, "\t$dst"),
         [(MipsFPBrcond op, bb:$dst)]>;
 
 def BC1F  : FBRANCH<MIPS_BRANCH_F,  "bc1f">;
@@ -256,11 +256,11 @@ def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
 /// Floating Point Compare
 let hasDelaySlot = 1, Defs=[FCR31] in {
   def FCMP_S32 : FCC<0x0, (outs), (ins FGR32:$fs, FGR32:$ft, condcode:$cc),
-                     "c.$cc.s $fs, $ft",
+                     "c.$cc.s\t$fs, $ft",
                      [(MipsFPCmp FGR32:$fs, FGR32:$ft, imm:$cc)]>;
 
   def FCMP_D32 : FCC<0x1, (outs), (ins AFGR64:$fs, AFGR64:$ft, condcode:$cc),
-                     "c.$cc.d $fs, $ft",
+                     "c.$cc.d\t$fs, $ft",
                      [(MipsFPCmp AFGR64:$fs, AFGR64:$ft, imm:$cc)]>,
                      Requires<[In32BitMode]>;
 }
