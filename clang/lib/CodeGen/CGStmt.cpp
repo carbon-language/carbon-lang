@@ -1222,7 +1222,7 @@ SimplifyConstraint(const char *Constraint, const TargetInfo &Target,
   while (*Constraint) {
     switch (*Constraint) {
     default:
-      Result += Target.convertConstraint(*Constraint);
+      Result += Target.convertConstraint(Constraint);
       break;
     // Ignore these
     case '*':

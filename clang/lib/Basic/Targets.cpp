@@ -1121,7 +1121,7 @@ public:
   }
   virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const;
-  virtual std::string convertConstraint(const char Constraint) const;
+  virtual std::string convertConstraint(const char *&Constraint) const;
   virtual const char *getClobbers() const {
     return "~{dirflag},~{fpsr},~{flags}";
   }
@@ -1449,8 +1449,8 @@ X86TargetInfo::validateAsmConstraint(const char *&Name,
 
 
 std::string
-X86TargetInfo::convertConstraint(const char Constraint) const {
-  switch (Constraint) {
+X86TargetInfo::convertConstraint(const char *&Constraint) const {
+  switch (*Constraint) {
   case 'a': return std::string("{ax}");
   case 'b': return std::string("{bx}");
   case 'c': return std::string("{cx}");
@@ -1464,7 +1464,7 @@ X86TargetInfo::convertConstraint(const char Constraint) const {
   case 'u': // second from top of floating point stack.
     return std::string("{st(1)}"); // second from top of floating point stack.
   default:
-    return std::string(1, Constraint);
+    return std::string(1, *Constraint);
   }
 }
 } // end anonymous namespace
@@ -2037,8 +2037,30 @@ public:
     case 'P': // VFP Floating point register double precision
       Info.setAllowsRegister();
       return true;
+    case 'U': // a memory reference...
+      switch (Name[1]) {
+      case 'q': // ...ARMV4 ldrsb
+      case 'v': // ...VFP load/store (reg+constant offset)
+      case 'y': // ...iWMMXt load/store
+        Info.setAllowsMemory();
+        Name++;
+        return true;
+      }
     }
     return false;
+  }
+  std::string
+  virtual convertConstraint(const char *&Constraint) const {
+    std::string R;
+    switch (*Constraint) {
+    case 'U':   // Two-character constraint; add "^" hint for later parsing.
+      R = std::string("^") + Constraint;
+      Constraint++;
+      break;
+    default:
+      return std::string(1, *Constraint);
+    }
+    return R;
   }
   virtual const char *getClobbers() const {
     // FIXME: Is this really right?
