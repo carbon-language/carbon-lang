@@ -82,8 +82,15 @@ define <4 x i64> @test_arith_9(<4 x i64> %A, <2 x i32> %B, <4 x i16> %C)  {
    ret <4 x i64> %Y1
 }
 
-
 define <4 x i16> @test_arith_10(<4 x i64> %A, <2 x i32> %B, <4 x i32> %C)  {
+   %F = bitcast <2 x i32> %B to <4 x i16>
+   %T = add <4 x i16> %F , <i16 0, i16 1, i16 2, i16 3>
+   ret <4 x i16> %T
+}
+
+
+; Simple tests to check saving/loading from memory
+define <4 x i16> @test_mem_0(<4 x i64> %A, <2 x i32> %B, <4 x i32> %C)  {
    %F = bitcast <2 x i32> %B to <4 x i16>
    %T = add <4 x i16> %F , <i16 0, i16 1, i16 2, i16 3>
    ret <4 x i16> %T
