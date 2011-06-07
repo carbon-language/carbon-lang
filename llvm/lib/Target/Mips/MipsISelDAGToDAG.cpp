@@ -323,7 +323,6 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
   // tablegen selection should be handled here.
   ///
   switch(Opcode) {
-
     default: break;
 
     case ISD::SUBE:
@@ -357,10 +356,6 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
                                   LHS, SDValue(AddCarry,0));
     }
 
-    /// Mul/Div with two results
-    case ISD::SDIVREM:
-    case ISD::UDIVREM:
-      break;
     case ISD::SMUL_LOHI:
     case ISD::UMUL_LOHI: {
       SDValue Op1 = Node->getOperand(0);
@@ -406,13 +401,6 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
       else
         return CurDAG->getMachineNode(Mips::MFHI, dl, MVT::i32, InFlag);
     }
-
-    /// Div/Rem operations
-    case ISD::SREM:
-    case ISD::UREM:
-    case ISD::SDIV:
-    case ISD::UDIV:
-      break;
 
     // Get target GOT address.
     case ISD::GLOBAL_OFFSET_TABLE:

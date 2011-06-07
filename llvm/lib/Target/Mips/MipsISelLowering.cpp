@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-lower"
-//#include <algorithm>
 #include "MipsISelLowering.h"
 #include "MipsMachineFunction.h"
 #include "MipsTargetMachine.h"
@@ -60,7 +59,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::BuildPairF64:      return "MipsISD::BuildPairF64";
   case MipsISD::ExtractElementF64: return "MipsISD::ExtractElementF64";
   case MipsISD::WrapperPIC:        return "MipsISD::WrapperPIC";
-  default: return NULL;
+  default:                         return NULL;
   }
 }
 
@@ -722,7 +721,8 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 // Mips::ATOMIC_LOAD_NAND_I32 (when Nand == true)
 MachineBasicBlock *
 MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
-                   unsigned Size, unsigned BinOpcode, bool Nand) const {
+                                     unsigned Size, unsigned BinOpcode, 
+                                     bool Nand) const {
   assert(Size == 4 && "Unsupported size for EmitAtomicBinary.");
 
   MachineFunction *MF = BB->getParent();
@@ -815,8 +815,9 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
 
 MachineBasicBlock *
 MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
-            MachineBasicBlock *BB, unsigned Size, unsigned BinOpcode,
-            bool Nand) const {
+                                             MachineBasicBlock *BB,
+                                             unsigned Size, unsigned BinOpcode,
+                                             bool Nand) const {
   assert((Size == 1 || Size == 2) &&
       "Unsupported size for EmitAtomicBinaryPartial.");
 
@@ -974,8 +975,8 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
 
 MachineBasicBlock *
 MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
-                                     MachineBasicBlock *BB,
-                                     unsigned Size) const {
+                                      MachineBasicBlock *BB,
+                                      unsigned Size) const {
   assert(Size == 4 && "Unsupported size for EmitAtomicCmpSwap.");
 
   MachineFunction *MF = BB->getParent();
@@ -1061,8 +1062,8 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
 
 MachineBasicBlock *
 MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
-                                     MachineBasicBlock *BB,
-                                     unsigned Size) const {
+                                              MachineBasicBlock *BB,
+                                              unsigned Size) const {
   assert((Size == 1 || Size == 2) &&
       "Unsupported size for EmitAtomicCmpSwapPartial.");
 
@@ -1296,26 +1297,23 @@ SDValue MipsTargetLowering::LowerGlobalAddress(SDValue Op,
     SDValue HiPart = DAG.getNode(MipsISD::Hi, dl, VTs, &GAHi, 1);
     SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GALo);
     return DAG.getNode(ISD::ADD, dl, MVT::i32, HiPart, Lo);
-  } else {
-    SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
-                                            MipsII::MO_GOT);
-    GA = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, GA);
-    SDValue ResNode = DAG.getLoad(MVT::i32, dl,
-                                  DAG.getEntryNode(), GA, MachinePointerInfo(),
-                                  false, false, 0);
-    // On functions and global targets not internal linked only
-    // a load from got/GP is necessary for PIC to work.
-    if (!GV->hasInternalLinkage() &&
-        (!GV->hasLocalLinkage() || isa<Function>(GV)))
-      return ResNode;
-    SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
-                                              MipsII::MO_ABS_LO);
-    SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GALo);
-    return DAG.getNode(ISD::ADD, dl, MVT::i32, ResNode, Lo);
   }
 
-  llvm_unreachable("Dont know how to handle GlobalAddress");
-  return SDValue(0,0);
+  SDValue GA = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
+                                          MipsII::MO_GOT);
+  GA = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, GA);
+  SDValue ResNode = DAG.getLoad(MVT::i32, dl,
+                                DAG.getEntryNode(), GA, MachinePointerInfo(),
+                                false, false, 0);
+  // On functions and global targets not internal linked only
+  // a load from got/GP is necessary for PIC to work.
+  if (!GV->hasInternalLinkage() &&
+      (!GV->hasLocalLinkage() || isa<Function>(GV)))
+    return ResNode;
+  SDValue GALo = DAG.getTargetGlobalAddress(GV, dl, MVT::i32, 0,
+                                            MipsII::MO_ABS_LO);
+  SDValue Lo = DAG.getNode(MipsISD::Lo, dl, MVT::i32, GALo);
+  return DAG.getNode(ISD::ADD, dl, MVT::i32, ResNode, Lo);
 }
 
 SDValue MipsTargetLowering::LowerBlockAddress(SDValue Op,
@@ -1555,7 +1553,8 @@ SDValue MipsTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG)
 SDValue MipsTargetLowering::
 LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-  assert((Depth == 0) && "Frame address can only be determined for current frame.");
+  assert((Depth == 0) &&
+         "Frame address can only be determined for current frame.");
 
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MFI->setFrameAddressIsTaken(true);
@@ -1988,7 +1987,6 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                     const SmallVectorImpl<ISD::InputArg> &Ins,
                                     DebugLoc dl, SelectionDAG &DAG,
                                     SmallVectorImpl<SDValue> &InVals) const {
-
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg, getTargetMachine(),

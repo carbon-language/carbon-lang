@@ -195,15 +195,16 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   SrcML = MachineLocation(MachineLocation::VirtualFP, -StackSize);
   Moves.push_back(MachineMove(AdjustSPLabel, DstML, SrcML));
 
-  // Find the instruction past the last instruction that saves a callee-saved
-  // register to the stack.
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
 
   if (CSI.size()) {
+    // Find the instruction past the last instruction that saves a callee-saved
+    // register to the stack.
     for (unsigned i = 0; i < CSI.size(); ++i)
       ++MBBI;
  
-    // Iterate over list of callee-saved registers and emit .cfi_offset directives.
+    // Iterate over list of callee-saved registers and emit .cfi_offset
+    // directives.
     MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, dl,
             TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
