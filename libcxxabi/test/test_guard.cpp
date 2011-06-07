@@ -78,7 +78,7 @@ namespace test4 {
     static int run_count = 0;
     int increment() {
         ++run_count;
-	return 0;
+        return 0;
     }
 
     void helper() {
@@ -89,7 +89,7 @@ namespace test4 {
         std::thread t1(helper), t2(helper);
         t1.join();
         t2.join();
-	assert(run_count == 1);
+        assert(run_count == 1);
     }
 }
 
@@ -104,7 +104,7 @@ namespace test5 {
 
     int one() {
         static int b = zero();
-	return 0;
+        return 0;
     }
 
     void another_helper() {
@@ -113,14 +113,14 @@ namespace test5 {
 
     void helper() {
         static int a = one();
-	std::thread t(another_helper);
-	t.join();
+        std::thread t(another_helper);
+        t.join();
     }
 
     void test() {
         std::thread t(helper);
         t.join();
-	assert(run_count == 1);
+        assert(run_count == 1);
     }
 }
 

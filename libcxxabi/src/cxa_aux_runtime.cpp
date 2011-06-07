@@ -5,9 +5,9 @@
 // This file is dual licensed under the MIT and the University of Illinois Open
 // Source Licenses. See LICENSE.TXT for details.
 //
-//	
-//	This file implements the "Auxiliary Runtime APIs"
-//	http://www.codesourcery.com/public/cxx-abi/abi-eh.html#cxx-aux
+//
+// This file implements the "Auxiliary Runtime APIs"
+// http://www.codesourcery.com/public/cxx-abi/abi-eh.html#cxx-aux
 //===----------------------------------------------------------------------===//
 
 #include "cxxabi.h"
@@ -21,12 +21,12 @@ extern "C"
 
 LIBCXXABI_NORETURN
 void __cxa_bad_cast (void) {
-	throw std::bad_cast();
+    throw std::bad_cast();
 }
 
 LIBCXXABI_NORETURN
 void __cxa_bad_typeid(void) {
-	throw std::bad_typeid();
+    throw std::bad_typeid();
 }
 
 }  // extern "C"

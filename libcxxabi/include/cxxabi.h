@@ -18,10 +18,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define	LIBCXXABI_NORETURN
+#define LIBCXXABI_NORETURN
 
 namespace std {
-	class type_info; // forward declaration
+    class type_info; // forward declaration
 }
 
 
@@ -73,72 +73,72 @@ extern void __cxa_guard_abort(uint64_t*);
 
 // 3.3.3 Array Construction and Destruction API
 extern void* __cxa_vec_new(size_t element_count, 
-						   size_t element_size, 
+                           size_t element_size, 
                            size_t padding_size, 
-						   void (*constructor)(void*),
-						   void (*destructor)(void*) );
+                           void (*constructor)(void*),
+                           void (*destructor)(void*) );
 
 extern void* __cxa_vec_new2(size_t element_count,
- 						    size_t element_size, 
+                            size_t element_size, 
                             size_t padding_size,
-						    void  (*constructor)(void*),
-						    void  (*destructor)(void*),
+                            void  (*constructor)(void*),
+                            void  (*destructor)(void*),
                             void* (*alloc)(size_t), 
                             void  (*dealloc)(void*) );
 
 extern void* __cxa_vec_new3(size_t element_count,
- 						    size_t element_size, 
+                            size_t element_size, 
                             size_t padding_size,
-						    void  (*constructor)(void*),
-						    void  (*destructor)(void*),
+                            void  (*constructor)(void*),
+                            void  (*destructor)(void*),
                             void* (*alloc)(size_t), 
                             void  (*dealloc)(void*, size_t) );
   
 extern void __cxa_vec_ctor(void*  array_address, 
                            size_t element_count,
                            size_t element_size, 
-						   void (*constructor)(void*),
-						   void (*destructor)(void*) );
+                           void (*constructor)(void*),
+                           void (*destructor)(void*) );
 
 
 extern void __cxa_vec_dtor(void*  array_address, 
                            size_t element_count,
-						   size_t element_size, 
-						   void (*destructor)(void*) );
+                           size_t element_size, 
+                           void (*destructor)(void*) );
 
 
 extern void __cxa_vec_cleanup(void* array_address, 
                              size_t element_count,
                              size_t element_size, 
-						     void  (*destructor)(void*) );
+                             void  (*destructor)(void*) );
 
 
 extern void __cxa_vec_delete(void*  array_address, 
                              size_t element_size, 
                              size_t padding_size, 
-						     void  (*destructor)(void*) );
+                             void  (*destructor)(void*) );
 
 
 extern void __cxa_vec_delete2(void* array_address, 
                              size_t element_size, 
                              size_t padding_size, 
-						     void  (*destructor)(void*),
+                             void  (*destructor)(void*),
                              void  (*dealloc)(void*) );
   
 
 extern void __cxa_vec_delete3(void* __array_address, 
                              size_t element_size, 
                              size_t padding_size, 
-						     void  (*destructor)(void*),
-							 void  (*dealloc) (void*, size_t));
+                             void  (*destructor)(void*),
+                             void  (*dealloc) (void*, size_t));
 
 
 extern void __cxa_vec_cctor(void*  dest_array, 
-							void*  src_array, 
-							size_t element_count, 
-							size_t element_size, 
-							void  (*constructor) (void*, void*), 
-							void  (*destructor)(void*) );
+                            void*  src_array, 
+                            size_t element_count, 
+                            size_t element_size, 
+                            void  (*constructor) (void*, void*), 
+                            void  (*destructor)(void*) );
 
 
 // 3.3.5.3 Runtime API
@@ -148,9 +148,9 @@ extern int __cxa_finalize(void*);
 
 // 3.4 Demangler API
 extern char* __cxa_demangle(const char* mangled_name, 
-							char*       output_buffer,
-							size_t*     length, 
-							int*        status);
+                            char*       output_buffer,
+                            size_t*     length, 
+                            int*        status);
 
   } // extern "C"
 } // namespace __cxxabiv1
