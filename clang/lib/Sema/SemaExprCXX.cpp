@@ -1396,27 +1396,30 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   }
 
   case OR_No_Viable_Function:
-    if (Diagnose)
+    if (Diagnose) {
       Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
         << Name << Range;
-    Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+      Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+    }
     return true;
 
   case OR_Ambiguous:
-    if (Diagnose)
+    if (Diagnose) {
       Diag(StartLoc, diag::err_ovl_ambiguous_call)
         << Name << Range;
-    Candidates.NoteCandidates(*this, OCD_ViableCandidates, Args, NumArgs);
+      Candidates.NoteCandidates(*this, OCD_ViableCandidates, Args, NumArgs);
+    }
     return true;
 
   case OR_Deleted: {
-    if (Diagnose)
+    if (Diagnose) {
       Diag(StartLoc, diag::err_ovl_deleted_call)
         << Best->Function->isDeleted()
         << Name 
         << getDeletedOrUnavailableSuffix(Best->Function)
         << Range;
-    Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+      Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+    }
     return true;
   }
   }
