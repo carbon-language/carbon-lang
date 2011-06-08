@@ -1760,19 +1760,40 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     CCInfo.AnalyzeCallOperands(Outs, CC_Mips);
 
   // Get a count of how many bytes are to be pushed on the stack.
-  unsigned NumBytes = CCInfo.getNextStackOffset();
-  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
+  unsigned NextStackOffset = CCInfo.getNextStackOffset();
+
+  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NextStackOffset,
+                                                            true));
+
+  // If this is the first call, create a stack frame object that points to
+  // a location to which .cprestore saves $gp.
+  if (IsPIC && !MipsFI->getGPFI())
+    MipsFI->setGPFI(MFI->CreateFixedObject(4, 0, true));
+
+  // Update size of the maximum argument space.
+  // For O32, a minimum of four words (16 bytes) of argument space is
+  // allocated.
+  if (Subtarget->isABI_O32())
+    NextStackOffset = std::max(NextStackOffset, (unsigned)16);
+
+  unsigned MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
+
+  if (MaxCallFrameSize < NextStackOffset) {
+    MipsFI->setMaxCallFrameSize(NextStackOffset);
+
+    if (IsPIC) {    
+      // $gp restore slot must be aligned.
+      unsigned StackAlignment = TFL->getStackAlignment();
+      NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
+                        StackAlignment * StackAlignment;
+      int GPFI = MipsFI->getGPFI();
+      MFI->setObjectOffset(GPFI, NextStackOffset);
+    }
+  }
 
   // With EABI is it possible to have 16 args on registers.
   SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
-
-  // If this is the first call, create a stack frame object that points to
-  // a location to which .cprestore saves $gp. The offset of this frame object
-  // is set to 0, since we know nothing about the size of the argument area at
-  // this point.
-  if (IsPIC && !MipsFI->getGPFI())
-    MipsFI->setGPFI(MFI->CreateFixedObject(4, 0, true));
 
   int FirstFI = -MFI->getNumFixedObjects() - 1, LastFI = 0; 
 
@@ -1845,6 +1866,12 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                                        MachinePointerInfo(),
                                        false, false, 0));
   }
+
+  // Extend range of indices of frame objects for outgoing arguments that were
+  // created during this function call. Skip this step if no such objects were
+  // created.
+  if (LastFI)
+    MipsFI->extendOutArgFIRange(FirstFI, LastFI);
 
   // Transform all store nodes into one single node because all store
   // nodes are independent of each other.
@@ -1937,37 +1964,8 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   Chain  = DAG.getNode(MipsISD::JmpLink, dl, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  // Function can have an arbitrary number of calls, so
-  // hold the LastArgStackLoc with the biggest offset.
-  unsigned MaxCallFrameSize = MipsFI->getMaxCallFrameSize();
-  unsigned NextStackOffset = CCInfo.getNextStackOffset();
-
-  // For O32, a minimum of four words (16 bytes) of argument space is
-  // allocated.
-  if (Subtarget->isABI_O32())
-    NextStackOffset = std::max(NextStackOffset, (unsigned)16);
-
-  if (MaxCallFrameSize < NextStackOffset) {
-    MipsFI->setMaxCallFrameSize(NextStackOffset);
-
-    if (IsPIC) {    
-      // $gp restore slot must be aligned.
-      unsigned StackAlignment = TFL->getStackAlignment();
-      NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
-                        StackAlignment * StackAlignment;
-      int GPFI = MipsFI->getGPFI();
-      MFI->setObjectOffset(GPFI, NextStackOffset);
-    }
-  }
-
-  // Extend range of indices of frame objects for outgoing arguments that were
-  // created during this function call. Skip this step if no such objects were
-  // created.
-  if (LastFI)
-    MipsFI->extendOutArgFIRange(FirstFI, LastFI);
-
   // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
+  Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NextStackOffset, true),
                              DAG.getIntPtrConstant(0, true), InFlag);
   InFlag = Chain.getValue(1);
 
