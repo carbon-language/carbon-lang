@@ -59,6 +59,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::BuildPairF64:      return "MipsISD::BuildPairF64";
   case MipsISD::ExtractElementF64: return "MipsISD::ExtractElementF64";
   case MipsISD::WrapperPIC:        return "MipsISD::WrapperPIC";
+  case MipsISD::DynAlloc:          return "MipsISD::DynAlloc";
   default:                         return NULL;
   }
 }
@@ -1189,6 +1190,9 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
 SDValue MipsTargetLowering::
 LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
 {
+  MachineFunction &MF = DAG.getMachineFunction();
+  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+
   unsigned StackAlignment =
     getTargetMachine().getFrameLowering()->getStackAlignment();
   assert(StackAlignment >=
@@ -1211,24 +1215,14 @@ LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const
   // must be placed in the stack pointer register.
   Chain = DAG.getCopyToReg(StackPointer.getValue(1), dl, Mips::SP, Sub,
                            SDValue());
-  // Retrieve updated $sp. There is a glue input to prevent instructions that
-  // clobber $sp from being inserted between copytoreg and copyfromreg.
-  SDValue NewSP = DAG.getCopyFromReg(Chain, dl, Mips::SP, MVT::i32,
-                                     Chain.getValue(1));
-  
-  // The stack space reserved by alloca is located right above the argument
-  // area. It is aligned on a boundary that is a multiple of StackAlignment.
-  MachineFunction &MF = DAG.getMachineFunction();
-  MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-  unsigned SPOffset = (MipsFI->getMaxCallFrameSize() + StackAlignment - 1) /
-                      StackAlignment * StackAlignment;
-  SDValue AllocPtr = DAG.getNode(ISD::ADD, dl, MVT::i32, NewSP,
-                                 DAG.getConstant(SPOffset, MVT::i32));
 
   // This node always has two return values: a new stack pointer
   // value and a chain
-  SDValue Ops[2] = { AllocPtr, NewSP.getValue(1) };
-  return DAG.getMergeValues(Ops, 2, dl);
+  SDVTList VTLs = DAG.getVTList(MVT::i32, MVT::Other);
+  SDValue Ptr = DAG.getFrameIndex(MipsFI->getDynAllocFI(), getPointerTy());
+  SDValue Ops[] = { Chain, Ptr, Chain.getValue(1) };
+
+  return DAG.getNode(MipsISD::DynAlloc, dl, VTLs, Ops, 3);
 }
 
 SDValue MipsTargetLowering::
@@ -1770,6 +1764,10 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (IsPIC && !MipsFI->getGPFI())
     MipsFI->setGPFI(MFI->CreateFixedObject(4, 0, true));
 
+  // Get the frame index of the stack frame object that points to the location
+  // of dynamically allocated area on the stack.
+  int DynAllocFI = MipsFI->getDynAllocFI();
+    
   // Update size of the maximum argument space.
   // For O32, a minimum of four words (16 bytes) of argument space is
   // allocated.
@@ -1781,14 +1779,17 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (MaxCallFrameSize < NextStackOffset) {
     MipsFI->setMaxCallFrameSize(NextStackOffset);
 
-    if (IsPIC) {    
-      // $gp restore slot must be aligned.
-      unsigned StackAlignment = TFL->getStackAlignment();
-      NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
-                        StackAlignment * StackAlignment;
-      int GPFI = MipsFI->getGPFI();
-      MFI->setObjectOffset(GPFI, NextStackOffset);
-    }
+    // Set the offsets relative to $sp of the $gp restore slot and dynamically
+    // allocated stack space. These offsets must be aligned to a boundary
+    // determined by the stack alignment of the ABI. 
+    unsigned StackAlignment = TFL->getStackAlignment();
+    NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
+                      StackAlignment * StackAlignment;
+
+    if (IsPIC)
+      MFI->setObjectOffset(MipsFI->getGPFI(), NextStackOffset);
+    
+    MFI->setObjectOffset(DynAllocFI, NextStackOffset);
   }
 
   // With EABI is it possible to have 16 args on registers.

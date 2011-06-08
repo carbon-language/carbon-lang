@@ -39,6 +39,9 @@ def SDT_MipsDivRem       : SDTypeProfile<0, 2,
 
 def SDT_MipsThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 
+def SDT_MipsDynAlloc    : SDTypeProfile<1, 1, [SDTCisVT<0, i32>,
+                                               SDTCisVT<1, iPTR>]>;
+
 // Call
 def MipsJmpLink : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink,
                          [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
@@ -98,6 +101,10 @@ def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
 // This instruction is illegal since movn can take only register operands.
 
 def MipsWrapperPIC    : SDNode<"MipsISD::WrapperPIC",  SDTIntUnaryOp>;
+
+// Pointer to dynamically allocated stack area.
+def MipsDynAlloc  : SDNode<"MipsISD::DynAlloc", SDT_MipsDynAlloc,
+                           [SDNPHasChain, SDNPInGlue]>;
 
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
@@ -675,6 +682,12 @@ let addr=0 in
 // can be matched. It's similar to Sparc LEA_ADDRi
 def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
 
+// DynAlloc node points to dynamically allocated stack space.
+// $sp is added to the list of implicitly used registers to prevent dead code
+// elimination from removing instructions that modify $sp.
+let Uses = [SP] in
+def DynAlloc : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
+
 // MADD*/MSUB*
 def MADD  : MArithR<0, "madd", MipsMAdd, 1>;
 def MADDU : MArithR<1, "maddu", MipsMAddu, 1>;
@@ -851,6 +864,9 @@ def : Pat<(setge CPURegs:$lhs, immSExt16:$rhs),
           (XORi (SLTi CPURegs:$lhs, immSExt16:$rhs), 1)>;
 def : Pat<(setuge CPURegs:$lhs, immSExt16:$rhs),
           (XORi (SLTiu CPURegs:$lhs, immSExt16:$rhs), 1)>;
+
+// select MipsDynAlloc
+def : Pat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Support
