@@ -247,7 +247,6 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
           }
         }
 
-        NumAddedPHIs += NewPHIs.size();
         SSAUpdateVRs.clear();
         SSAUpdateVals.clear();
       }
@@ -273,6 +272,7 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
       MadeChange = true;
     }
   }
+  NumAddedPHIs += NewPHIs.size();
 
   return MadeChange;
 }
