@@ -11,3 +11,9 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 N: Howard Hinnant
 E: hhinnant@apple.com
 D: Architect and primary author of libc++abi
+
+N: Marshall Clow
+E: marshall@idio.com
+E: mclow.lists@gmail.com
+E: mclow@qualcomm.com
+D: Aux Runtime and vector functionality
