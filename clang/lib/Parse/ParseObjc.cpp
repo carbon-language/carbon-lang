@@ -512,8 +512,6 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl) {
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
     else if (II->isStr("nonatomic"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
-    else if (II->isStr("atomic"))
-      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_atomic);
     else if (II->isStr("getter") || II->isStr("setter")) {
       bool IsSetter = II->getNameStart()[0] == 's';
 
