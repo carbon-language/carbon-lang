@@ -2054,7 +2054,7 @@ public:
     std::string R;
     switch (*Constraint) {
     case 'U':   // Two-character constraint; add "^" hint for later parsing.
-      R = std::string("^") + Constraint;
+      R = std::string("^") + std::string(Constraint, 2);
       Constraint++;
       break;
     default:
