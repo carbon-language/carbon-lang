@@ -67,7 +67,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
   SmallVector<ISD::OutputArg, 4> Outs;
   GetReturnInfo(Fn->getReturnType(),
                 Fn->getAttributes().getRetAttributes(), Outs, TLI);
-  CanLowerReturn = TLI.CanLowerReturn(Fn->getCallingConv(), Fn->isVarArg(),
+  CanLowerReturn = TLI.CanLowerReturn(Fn->getCallingConv(), *MF,
+				      Fn->isVarArg(),
                                       Outs, Fn->getContext());
 
   // Initialize the mapping of values to registers.  This is only set up for
@@ -321,7 +322,7 @@ void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
       APInt Zero(BitWidth, 0);
       DestLOI.KnownZero = Zero;
       DestLOI.KnownOne = Zero;
-      return;      
+      return;
     }
 
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
@@ -353,18 +354,18 @@ void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
 /// setByValArgumentFrameIndex - Record frame index for the byval
 /// argument. This overrides previous frame index entry for this argument,
 /// if any.
-void FunctionLoweringInfo::setByValArgumentFrameIndex(const Argument *A, 
+void FunctionLoweringInfo::setByValArgumentFrameIndex(const Argument *A,
                                                       int FI) {
   assert (A->hasByValAttr() && "Argument does not have byval attribute!");
   ByValArgFrameIndexMap[A] = FI;
 }
-  
+
 /// getByValArgumentFrameIndex - Get frame index for the byval argument.
 /// If the argument does not have any assigned frame index then 0 is
 /// returned.
 int FunctionLoweringInfo::getByValArgumentFrameIndex(const Argument *A) {
   assert (A->hasByValAttr() && "Argument does not have byval attribute!");
-  DenseMap<const Argument *, int>::iterator I = 
+  DenseMap<const Argument *, int>::iterator I =
     ByValArgFrameIndexMap.find(A);
   if (I != ByValArgFrameIndexMap.end())
     return I->second;

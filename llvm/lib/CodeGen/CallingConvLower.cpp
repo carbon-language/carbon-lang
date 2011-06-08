@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -22,21 +23,22 @@
 #include "llvm/Target/TargetLowering.h"
 using namespace llvm;
 
-CCState::CCState(CallingConv::ID CC, bool isVarArg, const TargetMachine &tm,
+CCState::CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &mf,
+		 const TargetMachine &tm,
                  SmallVector<CCValAssign, 16> &locs, LLVMContext &C)
-  : CallingConv(CC), IsVarArg(isVarArg), TM(tm),
+  : CallingConv(CC), IsVarArg(isVarArg), MF(mf), TM(tm),
     TRI(*TM.getRegisterInfo()), Locs(locs), Context(C),
     CallOrPrologue(Invalid) {
   // No stack is used.
   StackOffset = 0;
-  
+
   clearFirstByValReg();
   UsedRegs.resize((TRI.getNumRegs()+31)/32);
 }
 
-// HandleByVal - Allocate a stack slot large enough to pass an argument by
-// value. The size and alignment information of the argument is encoded in its
-// parameter attribute.
+// HandleByVal - Allocate space on the stack large enough to pass an argument
+// by value. The size and alignment information of the argument is encoded in
+// its parameter attribute.
 void CCState::HandleByVal(unsigned ValNo, MVT ValVT,
                           MVT LocVT, CCValAssign::LocInfo LocInfo,
                           int MinSize, int MinAlign,

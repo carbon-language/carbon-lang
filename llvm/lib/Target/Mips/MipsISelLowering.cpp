@@ -148,7 +148,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   setOperationAction(ISD::EXCEPTIONADDR,     MVT::i32, Expand);
   setOperationAction(ISD::EHSELECTION,       MVT::i32, Expand);
-  
+
   setOperationAction(ISD::VAARG,             MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,            MVT::Other, Expand);
   setOperationAction(ISD::VAEND,             MVT::Other, Expand);
@@ -720,7 +720,7 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 // Mips::ATOMIC_LOAD_NAND_I32 (when Nand == true)
 MachineBasicBlock *
 MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
-                                     unsigned Size, unsigned BinOpcode, 
+                                     unsigned Size, unsigned BinOpcode,
                                      bool Nand) const {
   assert(Size == 4 && "Unsupported size for EmitAtomicBinary.");
 
@@ -1502,11 +1502,11 @@ static SDValue LowerFCOPYSIGN32(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerFCOPYSIGN64(SDValue Op, SelectionDAG &DAG, bool isLittle) {
-  // FIXME: 
+  // FIXME:
   //  Use ext/ins instructions if target architecture is Mips32r2.
   //  Eliminate redundant mfc1 and mtc1 instructions.
   unsigned LoIdx = 0, HiIdx = 1;
-  
+
   if (!isLittle)
     std::swap(LoIdx, HiIdx);
 
@@ -1707,7 +1707,7 @@ WriteByValArg(SDValue& Chain, DebugLoc dl,
 
   // copy remaining part of byval arg to stack.
   if (CurWord < LastWord) {
-    unsigned SizeInBytes = (LastWord - CurWord) * 4; 
+    unsigned SizeInBytes = (LastWord - CurWord) * 4;
     SDValue Src = DAG.getNode(ISD::ADD, dl, MVT::i32, Arg,
                               DAG.getConstant((CurWord - FirstWord) * 4,
                                               MVT::i32));
@@ -1745,8 +1745,8 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
-                 *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), ArgLocs, *DAG.getContext());
 
   if (Subtarget->isABI_O32())
     CCInfo.AnalyzeCallOperands(Outs, CC_MipsO32);
@@ -1767,7 +1767,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Get the frame index of the stack frame object that points to the location
   // of dynamically allocated area on the stack.
   int DynAllocFI = MipsFI->getDynAllocFI();
-    
+
   // Update size of the maximum argument space.
   // For O32, a minimum of four words (16 bytes) of argument space is
   // allocated.
@@ -1781,14 +1781,14 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
     // Set the offsets relative to $sp of the $gp restore slot and dynamically
     // allocated stack space. These offsets must be aligned to a boundary
-    // determined by the stack alignment of the ABI. 
+    // determined by the stack alignment of the ABI.
     unsigned StackAlignment = TFL->getStackAlignment();
-    NextStackOffset = (NextStackOffset + StackAlignment - 1) / 
+    NextStackOffset = (NextStackOffset + StackAlignment - 1) /
                       StackAlignment * StackAlignment;
 
     if (IsPIC)
       MFI->setObjectOffset(MipsFI->getGPFI(), NextStackOffset);
-    
+
     MFI->setObjectOffset(DynAllocFI, NextStackOffset);
   }
 
@@ -1796,7 +1796,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
 
-  int FirstFI = -MFI->getNumFixedObjects() - 1, LastFI = 0; 
+  int FirstFI = -MFI->getNumFixedObjects() - 1, LastFI = 0;
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -1844,7 +1844,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // Register can't get to this point...
     assert(VA.isMemLoc());
 
-    // ByVal Arg. 
+    // ByVal Arg.
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
     if (Flags.isByVal()) {
       assert(Subtarget->isABI_O32() &&
@@ -1857,7 +1857,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     }
 
     // Create the frame index object for this incoming parameter
-    LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8, 
+    LastFI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
                                     VA.getLocMemOffset(), true);
     SDValue PtrOff = DAG.getFrameIndex(LastFI, getPointerTy());
 
@@ -1924,7 +1924,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
       } else
         Callee = LoadValue;
 
-      // Use chain output from LoadValue 
+      // Use chain output from LoadValue
       Chain = LoadValue.getValue(1);
     }
 
@@ -1986,8 +1986,8 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                     SmallVectorImpl<SDValue> &InVals) const {
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), RVLocs, *DAG.getContext());
 
   CCInfo.AnalyzeCallResult(Ins, RetCC_Mips);
 
@@ -2051,8 +2051,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), ArgLocs, *DAG.getContext());
 
   if (Subtarget->isABI_O32())
     CCInfo.AnalyzeFormalArguments(Ins, CC_MipsO32);
@@ -2165,7 +2165,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
   if (isVarArg && Subtarget->isABI_O32()) {
     // Record the frame index of the first variable argument
-    // which is a value necessary to VASTART.    
+    // which is a value necessary to VASTART.
     unsigned NextStackOffset = CCInfo.getNextStackOffset();
     assert(NextStackOffset % 4 == 0 &&
            "NextStackOffset must be aligned to 4-byte boundaries.");
@@ -2217,8 +2217,8 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
   SmallVector<CCValAssign, 16> RVLocs;
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), RVLocs, *DAG.getContext());
 
   // Analize return values.
   CCInfo.AnalyzeReturn(Outs, RetCC_Mips);

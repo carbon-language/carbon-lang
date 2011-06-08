@@ -303,7 +303,7 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
     return DAG.getNode(ISD::BUILD_VECTOR, DL, ValueVT,
       &NewOps[0], NewOps.size());
   }
-  
+
   // Trivial bitcast if the types are the same size and the destination
   // vector type is legal.
   if (PartVT.getSizeInBits() == ValueVT.getSizeInBits() &&
@@ -4884,7 +4884,9 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
                 Outs, TLI, &Offsets);
 
   bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(),
-                        FTy->isVarArg(), Outs, FTy->getContext());
+					   DAG.getMachineFunction(),
+					   FTy->isVarArg(), Outs,
+					   FTy->getContext());
 
   SDValue DemoteStackSlot;
   int DemoteStackIdx = -100;
@@ -5777,7 +5779,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       // the addressing mode that the constraint wants. Also, this may take
       // an additional register for the computation and we don't want that
       // either.
-      
+
       // If the operand is a float, integer, or vector constant, spill to a
       // constant pool entry to get its address.
       const Value *OpVal = OpInfo.CallOperandVal;

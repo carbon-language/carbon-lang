@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_CALLINGCONVLOWER_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetCallingConv.h"
 #include "llvm/CallingConv.h"
@@ -149,6 +150,7 @@ typedef enum { Invalid, Prologue, Call } ParmContext;
 class CCState {
   CallingConv::ID CallingConv;
   bool IsVarArg;
+  MachineFunction &MF;
   const TargetMachine &TM;
   const TargetRegisterInfo &TRI;
   SmallVector<CCValAssign, 16> &Locs;
@@ -160,7 +162,8 @@ class CCState {
   bool FirstByValRegValid;
   ParmContext CallOrPrologue;
 public:
-  CCState(CallingConv::ID CC, bool isVarArg, const TargetMachine &TM,
+  CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,
+	  const TargetMachine &TM,
           SmallVector<CCValAssign, 16> &locs, LLVMContext &C);
 
   void addLoc(const CCValAssign &V) {
@@ -169,6 +172,7 @@ public:
 
   LLVMContext &getContext() const { return Context; }
   const TargetMachine &getTarget() const { return TM; }
+  MachineFunction &getMachineFunction() const { return MF; }
   CallingConv::ID getCallingConv() const { return CallingConv; }
   bool isVarArg() const { return IsVarArg; }
 

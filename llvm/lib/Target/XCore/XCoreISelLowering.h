@@ -191,7 +191,8 @@ namespace llvm {
                   DebugLoc dl, SelectionDAG &DAG) const;
 
     virtual bool
-      CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
+      CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
+		     bool isVarArg,
                      const SmallVectorImpl<ISD::OutputArg> &ArgsFlags,
                      LLVMContext &Context) const;
   };

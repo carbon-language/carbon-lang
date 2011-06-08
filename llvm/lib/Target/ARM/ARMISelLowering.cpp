@@ -1071,8 +1071,8 @@ ARMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), RVLocs, *DAG.getContext());
   CCInfo.AnalyzeCallResult(Ins,
                            CCAssignFnForNode(CallConv, /* Return*/ true,
                                              isVarArg));
@@ -1206,8 +1206,8 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
-                 *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), ArgLocs, *DAG.getContext());
   CCInfo.setCallOrPrologue(Call);
   CCInfo.AnalyzeCallOperands(Outs,
                              CCAssignFnForNode(CallConv, /* Return*/ false,
@@ -1638,13 +1638,13 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // results are returned in the same way as what the caller expects.
   if (!CCMatch) {
     SmallVector<CCValAssign, 16> RVLocs1;
-    CCState CCInfo1(CalleeCC, false, getTargetMachine(),
-                    RVLocs1, *DAG.getContext());
+    CCState CCInfo1(CalleeCC, false, DAG.getMachineFunction(),
+		    getTargetMachine(), RVLocs1, *DAG.getContext());
     CCInfo1.AnalyzeCallResult(Ins, CCAssignFnForNode(CalleeCC, true, isVarArg));
 
     SmallVector<CCValAssign, 16> RVLocs2;
-    CCState CCInfo2(CallerCC, false, getTargetMachine(),
-                    RVLocs2, *DAG.getContext());
+    CCState CCInfo2(CallerCC, false, DAG.getMachineFunction(),
+		    getTargetMachine(), RVLocs2, *DAG.getContext());
     CCInfo2.AnalyzeCallResult(Ins, CCAssignFnForNode(CallerCC, true, isVarArg));
 
     if (RVLocs1.size() != RVLocs2.size())
@@ -1670,8 +1670,8 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     // Check if stack adjustment is needed. For now, do not do this if any
     // argument is passed on the stack.
     SmallVector<CCValAssign, 16> ArgLocs;
-    CCState CCInfo(CalleeCC, isVarArg, getTargetMachine(),
-                   ArgLocs, *DAG.getContext());
+    CCState CCInfo(CalleeCC, isVarArg, DAG.getMachineFunction(),
+		   getTargetMachine(), ArgLocs, *DAG.getContext());
     CCInfo.AnalyzeCallOperands(Outs,
                                CCAssignFnForNode(CalleeCC, false, isVarArg));
     if (CCInfo.getNextStackOffset()) {
@@ -1730,8 +1730,8 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
   SmallVector<CCValAssign, 16> RVLocs;
 
   // CCState - Info about the registers and stack slots.
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(), RVLocs,
-                 *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), RVLocs, *DAG.getContext());
 
   // Analyze outgoing return values.
   CCInfo.AnalyzeReturn(Outs, CCAssignFnForNode(CallConv, /* Return */ true,
@@ -2424,8 +2424,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
-                 *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), ArgLocs, *DAG.getContext());
   CCInfo.setCallOrPrologue(Prologue);
   CCInfo.AnalyzeFormalArguments(Ins,
                                 CCAssignFnForNode(CallConv, /* Return*/ false,
@@ -2524,7 +2524,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       if (index != lastInsIndex)
         {
           ISD::ArgFlagsTy Flags = Ins[index].Flags;
-          // FIXME: For now, all byval parameter objects are marked mutable. 
+          // FIXME: For now, all byval parameter objects are marked mutable.
           // This can be changed with more analysis.
           // In case of tail call optimization mark all arguments mutable.
           // Since they could be overwritten by lowering of arguments in case of
@@ -7386,7 +7386,7 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 
   // Currently only support length 1 constraints.
   if (Constraint.length() != 1) return;
-  
+
   char ConstraintLetter = Constraint[0];
   switch (ConstraintLetter) {
   default: break;

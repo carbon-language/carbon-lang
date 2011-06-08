@@ -171,8 +171,8 @@ BlackfinTargetLowering::LowerFormalArguments(SDValue Chain,
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), ArgLocs, *DAG.getContext());
   CCInfo.AllocateStack(12, 4);  // ABI requires 12 bytes stack space
   CCInfo.AnalyzeFormalArguments(Ins, CC_Blackfin);
 
@@ -229,8 +229,8 @@ BlackfinTargetLowering::LowerReturn(SDValue Chain,
   SmallVector<CCValAssign, 16> RVLocs;
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CallConv, isVarArg, DAG.getTarget(),
-                 RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 DAG.getTarget(), RVLocs, *DAG.getContext());
 
   // Analize return values.
   CCInfo.AnalyzeReturn(Outs, RetCC_Blackfin);
@@ -290,8 +290,8 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getTarget(), ArgLocs,
-                 *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 DAG.getTarget(), ArgLocs, *DAG.getContext());
   CCInfo.AllocateStack(12, 4);  // ABI requires 12 bytes stack space
   CCInfo.AnalyzeCallOperands(Outs, CC_Blackfin);
 
@@ -378,8 +378,8 @@ BlackfinTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState RVInfo(CallConv, isVarArg, DAG.getTarget(), RVLocs,
-                 *DAG.getContext());
+  CCState RVInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 DAG.getTarget(), RVLocs, *DAG.getContext());
 
   RVInfo.AnalyzeCallResult(Ins, RetCC_Blackfin);
 

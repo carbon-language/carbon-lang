@@ -254,7 +254,7 @@ public:
   /// to get to the smaller register. For illegal floating point types, this
   /// returns the integer type to transform to.
   EVT getTypeToTransformTo(LLVMContext &Context, EVT VT) const {
-    return getTypeConversion(Context, VT).second; 
+    return getTypeConversion(Context, VT).second;
   }
 
   /// getTypeToExpandTo - For types supported by the target, this is an
@@ -1211,7 +1211,8 @@ public:
   /// return values described by the Outs array can fit into the return
   /// registers.  If false is returned, an sret-demotion is performed.
   ///
-  virtual bool CanLowerReturn(CallingConv::ID CallConv, bool isVarArg,
+  virtual bool CanLowerReturn(CallingConv::ID CallConv,
+			      MachineFunction &MF, bool isVarArg,
                const SmallVectorImpl<ISD::OutputArg> &Outs,
                LLVMContext &Context) const
   {

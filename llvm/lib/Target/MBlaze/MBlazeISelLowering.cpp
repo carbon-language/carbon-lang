@@ -417,7 +417,7 @@ MBlazeTargetLowering::EmitCustomAtomic(MachineInstr *MI,
   // All atomic instructions on the Microblaze are implemented using the
   // load-linked / store-conditional style atomic instruction sequences.
   // Thus, all operations will look something like the following:
-  // 
+  //
   //  start:
   //    lwx     RV, RP, 0
   //    <do stuff>
@@ -698,8 +698,8 @@ LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(), ArgLocs,
-                 *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeCallOperands(Outs, CC_MBlaze);
 
   // Get a count of how many bytes are to be pushed on the stack.
@@ -837,8 +837,8 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallingConv::ID CallConv,
                 SmallVectorImpl<SDValue> &InVals) const {
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), RVLocs, *DAG.getContext());
 
   CCInfo.AnalyzeCallResult(Ins, RetCC_MBlaze);
 
@@ -880,8 +880,8 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), ArgLocs, *DAG.getContext());
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_MBlaze);
   SDValue StackPtr;
@@ -1012,8 +1012,8 @@ LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
   SmallVector<CCValAssign, 16> RVLocs;
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CallConv, isVarArg, getTargetMachine(),
-                 RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+		 getTargetMachine(), RVLocs, *DAG.getContext());
 
   // Analize return values.
   CCInfo.AnalyzeReturn(Outs, RetCC_MBlaze);
@@ -1043,9 +1043,9 @@ LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
 
   // If this function is using the interrupt_handler calling convention
   // then use "rtid r14, 0" otherwise use "rtsd r15, 8"
-  unsigned Ret = (CallConv == llvm::CallingConv::MBLAZE_INTR) ? MBlazeISD::IRet 
+  unsigned Ret = (CallConv == llvm::CallingConv::MBLAZE_INTR) ? MBlazeISD::IRet
                                                               : MBlazeISD::Ret;
-  unsigned Reg = (CallConv == llvm::CallingConv::MBLAZE_INTR) ? MBlaze::R14 
+  unsigned Reg = (CallConv == llvm::CallingConv::MBLAZE_INTR) ? MBlaze::R14
                                                               : MBlaze::R15;
   SDValue DReg = DAG.getRegister(Reg, MVT::i32);
 
