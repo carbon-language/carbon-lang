@@ -1334,27 +1334,31 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
 }
 
 static std::string findGCCBaseLibDir(const std::string &GccTriple) {
-  // Check for an explicit configure-time version of GCC.
-  llvm::SmallString<32> GCCVersion(CLANG_GCC_VERSION);
-  if (GCCVersion != "") {
-    // Read the other variables if we have a specific GCC version requested at
-    // configuration time. We provide defaults for them if missing though.
-    llvm::SmallString<128> InstallRoot(CLANG_GCC_INSTALL_ROOT);
-    if (InstallRoot == "") InstallRoot = "/usr";
-    llvm::SmallString<32> GCCLibDir(CLANG_GCC_LIB_DIR);
-    if (GCCLibDir == "") GCCLibDir = "/lib/gcc";
-    llvm::SmallString<32> GCCArch(CLANG_GCC_ARCH);
-    if (GCCArch == "") GCCArch = GccTriple;
-
-    InstallRoot += GCCLibDir;
-    InstallRoot += "/";
-    InstallRoot += GCCArch;
-    InstallRoot += "/";
-    InstallRoot += GCCVersion;
-    return InstallRoot.str();
+  // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
+  // avoids adding yet another option to configure/cmake.
+  // It would probably be cleaner to break it in two variables
+  // CXX_GCC_ROOT with just /foo/bar
+  // CXX_GCC_VER with 4.5.2
+  // Then we would have
+  // CXX_INCLUDE_ROOT = CXX_GCC_ROOT/include/c++/CXX_GCC_VER
+  // and this function would return
+  // CXX_GCC_ROOT/lib/gcc/CXX_INCLUDE_ARCH/CXX_GCC_VER
+  llvm::SmallString<128> CxxIncludeRoot(CXX_INCLUDE_ROOT);
+  if (CxxIncludeRoot != "") {
+    // This is of the form /foo/bar/include/c++/4.5.2/
+    if (CxxIncludeRoot.back() == '/')
+      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the /
+    llvm::StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
+    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include
+    std::string ret(CxxIncludeRoot.c_str());
+    ret.append("/lib/gcc/");
+    ret.append(CXX_INCLUDE_ARCH);
+    ret.append("/");
+    ret.append(Version);
+    return ret;
   }
-
-  // Otherwise, attempt to detect a system GCC installation.
   static const char* GccVersions[] = {"4.6.0", "4.6",
                                       "4.5.2", "4.5.1", "4.5",
                                       "4.4.5", "4.4.4", "4.4.3", "4.4",

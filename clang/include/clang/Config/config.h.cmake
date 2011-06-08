@@ -1,18 +1,6 @@
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
 
-/* GCC install root */
-#define CLANG_GCC_INSTALL_ROOT "${CLANG_GCC_INSTALL_ROOT}"
-
-/* GCC library directory, relative to the installation root */
-#define CLANG_GCC_LIB_DIR "${CLANG_GCC_LIB_DIR}"
-
-/* GCC architecture */
-#define CLANG_GCC_ARCH "${CLANG_GCC_ARCH}"
-
-/* GCC version */
-#define CLANG_GCC_VERSION "${CLANG_GCC_VERSION}"
-
 /* 32 bit multilib directory. */
 #define CXX_INCLUDE_32BIT_DIR "${CXX_INCLUDE_32BIT_DIR}"
 
