@@ -39,6 +39,9 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder,
   }
 
   for (;;) {
+    if (const Expr *Ex = dyn_cast<Expr>(E))
+      E = Ex->IgnoreParens();
+
     switch (E->getStmtClass()) {
       case Stmt::AddrLabelExprClass:
         return svalBuilder.makeLoc(cast<AddrLabelExpr>(E));
@@ -48,13 +51,10 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder,
         continue;        
       }        
       case Stmt::ParenExprClass:
-        // ParenExprs are no-ops.
-        E = cast<ParenExpr>(E)->getSubExpr();
-        continue;
       case Stmt::GenericSelectionExprClass:
-        // GenericSelectionExprs are no-ops.
-        E = cast<GenericSelectionExpr>(E)->getResultExpr();
-        continue;
+        llvm_unreachable("ParenExprs and GenericSelectionExprs should "
+                         "have been handled by IgnoreParens()");
+        return UnknownVal();
       case Stmt::CharacterLiteralClass: {
         const CharacterLiteral* C = cast<CharacterLiteral>(E);
         return svalBuilder.makeIntVal(C->getValue(), C->getType());

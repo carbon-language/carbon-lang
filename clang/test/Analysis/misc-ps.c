@@ -36,3 +36,17 @@ int rdar93730392() {
   return j;
 }
 
+
+int PR8962 (int *t) {
+  // This should look through the __extension__ no-op.
+  if (__extension__ (t)) return 0;
+  return *t; // expected-warning {{null pointer}}
+}
+
+int PR8962_b (int *t) {
+  // This should still ignore the nested casts
+  // which aren't handled by a single IgnoreParens()
+  if (((int)((int)t))) return 0;
+  return *t; // expected-warning {{null pointer}}
+}
+
