@@ -742,8 +742,9 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // If the result alloca is a vector type, this is either an element
   // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(FromType)) {
+    unsigned FromTypeSize = TD.getTypeAllocSize(FromType);
     unsigned ToTypeSize = TD.getTypeAllocSize(ToType);
-    if (ToTypeSize == AllocaSize) {
+    if (FromTypeSize == ToTypeSize) {
       // If the two types have the same primitive size, use a bit cast.
       // Otherwise, it is two vectors with the same element type that has
       // the same allocation size but different number of elements so use
@@ -755,13 +756,13 @@ ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
         return CreateShuffleVectorCast(FromVal, ToType, Builder);
     }
 
-    if (isPowerOf2_64(AllocaSize / ToTypeSize)) {
+    if (isPowerOf2_64(FromTypeSize / ToTypeSize)) {
       assert(!(ToType->isVectorTy() && Offset != 0) && "Can't extract a value "
              "of a smaller vector type at a nonzero offset.");
 
       const Type *CastElementTy = getScaledElementType(FromType, ToType,
                                                        ToTypeSize * 8);
-      unsigned NumCastVectorElements = AllocaSize / ToTypeSize;
+      unsigned NumCastVectorElements = FromTypeSize / ToTypeSize;
 
       LLVMContext &Context = FromVal->getContext();
       const Type *CastTy = VectorType::get(CastElementTy,
