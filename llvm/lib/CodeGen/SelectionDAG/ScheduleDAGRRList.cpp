@@ -1015,7 +1015,6 @@ static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
 
     // Add Reg to the set of interfering live regs.
     if (RegAdded.insert(*AliasI)) {
-      assert(*AliasI == Reg && "alias clobber"); //!!!
       LRegs.push_back(*AliasI);
     }
   }
