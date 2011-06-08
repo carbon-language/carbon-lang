@@ -7881,6 +7881,9 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
           if (!Std->Encloses(*it))
             SuggestedNamespaces.insert(*it);
         }
+      } else {
+        // Lacking the 'std::' namespace, use all of the associated namespaces.
+        SuggestedNamespaces = AssociatedNamespaces;
       }
 
       SemaRef.Diag(R.getNameLoc(), diag::err_not_found_by_two_phase_lookup)
