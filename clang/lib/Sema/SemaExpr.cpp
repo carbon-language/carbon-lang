@@ -5009,8 +5009,8 @@ ExprResult Sema::ActOnAsTypeExpr(Expr *expr, ParsedType destty,
   if (Context.getTypeSize(DstTy) != Context.getTypeSize(SrcTy))
     return ExprError(Diag(BuiltinLoc,
                           diag::err_invalid_astype_of_different_size)
-                     << DstTy.getAsString().c_str() 
-                     << SrcTy.getAsString().c_str()
+                     << DstTy
+                     << SrcTy
                      << expr->getSourceRange());
   return Owned(new (Context) AsTypeExpr(expr, DstTy, VK, OK, BuiltinLoc, RParenLoc));
 }
