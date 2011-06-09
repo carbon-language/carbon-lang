@@ -541,12 +541,12 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
 
     MachineBasicBlock *PredTBB, *PredFBB;
     SmallVector<MachineOperand, 4> PredCond;
+    // EH edges are ignored by AnalyzeBranch.
+    if (PredBB->succ_size() != 1)
+      continue;
     if (TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond, true))
       continue;
     if (!PredCond.empty())
-      continue;
-    // EH edges are ignored by AnalyzeBranch.
-    if (PredBB->succ_size() != 1)
       continue;
     // Don't duplicate into a fall-through predecessor (at least for now).
     if (PredBB->isLayoutSuccessor(TailBB) && PredBB->canFallThrough())
@@ -603,12 +603,11 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   MachineBasicBlock *PrevBB = prior(MachineFunction::iterator(TailBB));
   MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
   SmallVector<MachineOperand, 4> PriorCond;
-  bool PriorUnAnalyzable =
-    TII->AnalyzeBranch(*PrevBB, PriorTBB, PriorFBB, PriorCond, true);
   // This has to check PrevBB->succ_size() because EH edges are ignored by
   // AnalyzeBranch.
-  if (!PriorUnAnalyzable && PriorCond.empty() && !PriorTBB &&
-      TailBB->pred_size() == 1 && PrevBB->succ_size() == 1 &&
+  if (PrevBB->succ_size() == 1 && 
+      !TII->AnalyzeBranch(*PrevBB, PriorTBB, PriorFBB, PriorCond, true) &&
+      PriorCond.empty() && !PriorTBB && TailBB->pred_size() == 1 &&
       !TailBB->hasAddressTaken()) {
     DEBUG(dbgs() << "\nMerging into block: " << *PrevBB
           << "From MBB: " << *TailBB);
