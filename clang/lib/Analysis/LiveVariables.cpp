@@ -142,8 +142,12 @@ void TransferFuncs::Visit(Stmt *S) {
     if (AD.Observer)
       AD.Observer->ObserveStmt(S, currentBlock, AD, LiveState);
 
-    if (getCFG().isBlkExpr(S))
-      LiveState(S, AD) = Dead;
+    if (getCFG().isBlkExpr(S)) {
+      if (Expr *E = dyn_cast<Expr>(S)) 
+        LiveState(E->IgnoreParens(), AD) = Dead;
+      else
+        LiveState(S, AD) = Dead;
+    }
 
     StmtVisitor<TransferFuncs,void>::Visit(S);
   }
@@ -157,7 +161,10 @@ void TransferFuncs::Visit(Stmt *S) {
   }
   else {
     // For block-level expressions, mark that they are live.
-    LiveState(S,AD) = Alive;
+    if (Expr *E = dyn_cast<Expr>(S)) 
+      LiveState(E->IgnoreParens(), AD) = Alive;
+    else
+      LiveState(S, AD) = Alive;
   }
 }
   
@@ -174,6 +181,9 @@ void TransferFuncs::VisitTerminator(CFGBlock* B) {
     return;
 
   assert (getCFG().isBlkExpr(E));
+
+  if (const Expr *Ex = dyn_cast<Expr>(E))
+    E = Ex->IgnoreParens();
   LiveState(E, AD) = Alive;
 }
 

@@ -50,3 +50,15 @@ int PR8962_b (int *t) {
   return *t; // expected-warning {{null pointer}}
 }
 
+int PR8962_c (int *t) {
+  // If the last element in a StmtExpr was a ParenExpr, it's still live
+  if (({ (t ? (_Bool)0 : (_Bool)1); })) return 0;
+  return *t; // no-warning
+}
+
+int PR8962_d (int *t) {
+  // If the last element in a StmtExpr is an __extension__, it's still live
+  if (({ __extension__(t ? (_Bool)0 : (_Bool)1); })) return 0;
+  return *t; // no-warning
+}
+
