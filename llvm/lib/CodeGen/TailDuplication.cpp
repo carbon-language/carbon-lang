@@ -239,7 +239,7 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
             MachineOperand &UseMO = UI.getOperand();
             MachineInstr *UseMI = &*UI;
             ++UI;
-            if (UseMI->getParent() == DefBB)
+            if (UseMI->getParent() == DefBB && !UseMI->isPHI())
               continue;
             SSAUpdate.RewriteUse(UseMO);
           }
