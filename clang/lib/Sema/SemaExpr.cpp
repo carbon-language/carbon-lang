@@ -6230,8 +6230,64 @@ static bool IsArithmeticOp(BinaryOperatorKind Opc) {
   return Opc >= BO_Mul && Opc <= BO_Shr;
 }
 
+/// IsArithmeticBinaryExpr - Returns true if E is an arithmetic binary
+/// expression, either using a built-in or overloaded operator,
+/// and sets *OpCode to the opcode and *RHS to the right-hand side expression.
+static bool IsArithmeticBinaryExpr(Expr *E, BinaryOperatorKind *Opcode,
+                                   Expr **RHS) {
+  E = E->IgnoreParenImpCasts();
+  E = E->IgnoreConversionOperator();
+  E = E->IgnoreParenImpCasts();
+
+  // Built-in binary operator.
+  if (BinaryOperator *OP = dyn_cast<BinaryOperator>(E)) {
+    if (IsArithmeticOp(OP->getOpcode())) {
+      *Opcode = OP->getOpcode();
+      *RHS = OP->getRHS();
+      return true;
+    }
+  }
+
+  // Overloaded operator.
+  if (CXXOperatorCallExpr *Call = dyn_cast<CXXOperatorCallExpr>(E)) {
+    if (Call->getNumArgs() != 2)
+      return false;
+
+    // Make sure this is really a binary operator that is safe to pass into
+    // BinaryOperator::getOverloadedOpcode(), e.g. it's not a subscript op.
+    OverloadedOperatorKind OO = Call->getOperator();
+    if (OO < OO_Plus || OO > OO_Arrow)
+      return false;
+
+    BinaryOperatorKind OpKind = BinaryOperator::getOverloadedOpcode(OO);
+    if (IsArithmeticOp(OpKind)) {
+      *Opcode = OpKind;
+      *RHS = Call->getArg(1);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 static bool IsLogicOp(BinaryOperatorKind Opc) {
   return (Opc >= BO_LT && Opc <= BO_NE) || (Opc >= BO_LAnd && Opc <= BO_LOr);
+}
+
+/// ExprLooksBoolean - Returns true if E looks boolean, i.e. it has boolean type
+/// or is a logical expression such as (x==y) which has int type, but is
+/// commonly interpreted as boolean.
+static bool ExprLooksBoolean(Expr *E) {
+  E = E->IgnoreParenImpCasts();
+
+  if (E->getType()->isBooleanType())
+    return true;
+  if (BinaryOperator *OP = dyn_cast<BinaryOperator>(E))
+    return IsLogicOp(OP->getOpcode());
+  if (UnaryOperator *OP = dyn_cast<UnaryOperator>(E))
+    return OP->getOpcode() == UO_LNot;
+
+  return false;
 }
 
 /// DiagnoseConditionalPrecedence - Emit a warning when a conditional operator
@@ -6243,52 +6299,36 @@ static void DiagnoseConditionalPrecedence(Sema &Self,
                                           Expr *cond,
                                           Expr *lhs,
                                           Expr *rhs) {
-  while (ImplicitCastExpr *C = dyn_cast<ImplicitCastExpr>(cond))
-    cond = C->getSubExpr();
+  BinaryOperatorKind CondOpcode;
+  Expr *CondRHS;
 
-  if (BinaryOperator *OP = dyn_cast<BinaryOperator>(cond)) {
-    if (!IsArithmeticOp(OP->getOpcode()))
-      return;
+  if (!IsArithmeticBinaryExpr(cond, &CondOpcode, &CondRHS))
+    return;
+  if (!ExprLooksBoolean(CondRHS))
+    return;
 
-    // Drill down on the RHS of the condition.
-    Expr *CondRHS = OP->getRHS();
-    while (ImplicitCastExpr *C = dyn_cast<ImplicitCastExpr>(CondRHS))
-      CondRHS = C->getSubExpr();
-    while (ParenExpr *P = dyn_cast<ParenExpr>(CondRHS))
-      CondRHS = P->getSubExpr();
+  // The condition is an arithmetic binary expression, with a right-
+  // hand side that looks boolean, so warn.
 
-    bool CondRHSLooksBoolean = false;
-    if (CondRHS->getType()->isBooleanType())
-      CondRHSLooksBoolean = true;
-    else if (BinaryOperator *CondRHSOP = dyn_cast<BinaryOperator>(CondRHS))
-      CondRHSLooksBoolean = IsLogicOp(CondRHSOP->getOpcode());
-    else if (UnaryOperator *CondRHSOP = dyn_cast<UnaryOperator>(CondRHS))
-      CondRHSLooksBoolean = CondRHSOP->getOpcode() == UO_LNot;
+  PartialDiagnostic Warn = Self.PDiag(diag::warn_precedence_conditional)
+      << cond->getSourceRange()
+      << BinaryOperator::getOpcodeStr(CondOpcode);
 
-    if (CondRHSLooksBoolean) {
-      // The condition is an arithmetic binary expression, with a right-
-      // hand side that looks boolean, so warn.
+  PartialDiagnostic FirstNote =
+      Self.PDiag(diag::note_precedence_conditional_silence)
+      << BinaryOperator::getOpcodeStr(CondOpcode);
 
-      PartialDiagnostic Warn = Self.PDiag(diag::warn_precedence_conditional)
-          << OP->getSourceRange()
-          << BinaryOperator::getOpcodeStr(OP->getOpcode());
+  SourceRange FirstParenRange(cond->getLocStart(),
+                              cond->getLocEnd());
 
-      PartialDiagnostic FirstNote =
-          Self.PDiag(diag::note_precedence_conditional_silence)
-          << BinaryOperator::getOpcodeStr(OP->getOpcode());
+  PartialDiagnostic SecondNote =
+      Self.PDiag(diag::note_precedence_conditional_first);
 
-      SourceRange FirstParenRange(OP->getLHS()->getLocStart(),
-                                  OP->getRHS()->getLocEnd());
+  SourceRange SecondParenRange(CondRHS->getLocStart(),
+                               rhs->getLocEnd());
 
-      PartialDiagnostic SecondNote =
-          Self.PDiag(diag::note_precedence_conditional_first);
-      SourceRange SecondParenRange(OP->getRHS()->getLocStart(),
-                                   rhs->getLocEnd());
-
-      SuggestParentheses(Self, OpLoc, Warn, FirstNote, FirstParenRange,
-                         SecondNote, SecondParenRange);
-    }
-  }
+  SuggestParentheses(Self, OpLoc, Warn, FirstNote, FirstParenRange,
+                     SecondNote, SecondParenRange);
 }
 
 /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null

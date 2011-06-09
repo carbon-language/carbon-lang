@@ -515,6 +515,14 @@ public:
   /// ParenExpr or ImplicitCastExprs, returning their operand.
   Expr *IgnoreParenImpCasts();
 
+  /// IgnoreConversionOperator - Ignore conversion operator. If this Expr is a
+  /// call to a conversion operator, return the argument.
+  Expr *IgnoreConversionOperator();
+
+  const Expr *IgnoreConversionOperator() const {
+    return const_cast<Expr*>(this)->IgnoreConversionOperator();
+  }
+
   const Expr *IgnoreParenImpCasts() const {
     return const_cast<Expr*>(this)->IgnoreParenImpCasts();
   }

@@ -1988,6 +1988,14 @@ Expr *Expr::IgnoreParenImpCasts() {
   }
 }
 
+Expr *Expr::IgnoreConversionOperator() {
+  if (CXXMemberCallExpr *MCE = dyn_cast<CXXMemberCallExpr>(this)) {
+    if (isa<CXXConversionDecl>(MCE->getMethodDecl()))
+      return MCE->getImplicitObjectArgument();
+  }
+  return this;
+}
+
 /// IgnoreParenNoopCasts - Ignore parentheses and casts that do not change the
 /// value (including ptr->int casts of the same size).  Strip off any
 /// ParenExpr or CastExprs, returning their operand.
@@ -3023,4 +3031,3 @@ BlockDeclRefExpr::BlockDeclRefExpr(VarDecl *d, QualType t, ExprValueKind VK,
   ExprBits.TypeDependent = TypeDependent;
   ExprBits.ValueDependent = ValueDependent;
 }
-
