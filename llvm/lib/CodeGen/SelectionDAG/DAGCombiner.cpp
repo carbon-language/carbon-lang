@@ -3092,26 +3092,27 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     }
   }
 
-  // fold (shl (srl x, c1), c2) -> (shl (and x, (shl -1, c1)), (sub c2, c1)) or
-  //                               (srl (and x, (shl -1, c1)), (sub c1, c2))
+  // fold (shl (srl x, c1), c2) -> (and (shl x, (sub c2, c1), MASK) or
+  //                               (and (srl x, (sub c1, c2), MASK)
   if (N1C && N0.getOpcode() == ISD::SRL &&
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
     if (c1 < VT.getSizeInBits()) {
       uint64_t c2 = N1C->getZExtValue();
-      SDValue HiBitsMask =
-        DAG.getConstant(APInt::getHighBitsSet(VT.getSizeInBits(),
-                                              VT.getSizeInBits() - c1),
-                        VT);
-      SDValue Mask = DAG.getNode(ISD::AND, N0.getDebugLoc(), VT,
-                                 N0.getOperand(0),
-                                 HiBitsMask);
-      if (c2 > c1)
-        return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, Mask,
-                           DAG.getConstant(c2-c1, N1.getValueType()));
-      else
-        return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, Mask,
-                           DAG.getConstant(c1-c2, N1.getValueType()));
+      APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
+                                         VT.getSizeInBits() - c1);
+      SDValue Shift;
+      if (c2 > c1) {
+        Mask = Mask.shl(c2-c1);
+        Shift = DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, N0.getOperand(0),
+                            DAG.getConstant(c2-c1, N1.getValueType()));
+      } else {
+        Mask = Mask.lshr(c1-c2);
+        Shift = DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, N0.getOperand(0),
+                            DAG.getConstant(c1-c2, N1.getValueType()));
+      }
+      return DAG.getNode(ISD::AND, N0.getDebugLoc(), VT, Shift,
+                         DAG.getConstant(Mask, VT));
     }
   }
   // fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
