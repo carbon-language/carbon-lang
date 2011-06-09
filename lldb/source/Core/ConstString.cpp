@@ -32,6 +32,10 @@ using namespace lldb_private;
 class Pool
 {
 public:
+    typedef const char * StringPoolValueType;
+    typedef llvm::StringMap<StringPoolValueType, llvm::BumpPtrAllocator> StringPool;
+    typedef llvm::StringMapEntry<StringPoolValueType> StringPoolEntryType;
+    
     //------------------------------------------------------------------
     // Default constructor
     //
@@ -51,22 +55,42 @@ public:
     }
 
 
-    static llvm::StringMapEntry<uint32_t> &
+    static StringPoolEntryType &
     GetStringMapEntryFromKeyData (const char *keyData)
     {
-        char *ptr = const_cast<char*>(keyData) - sizeof (llvm::StringMapEntry<uint32_t>);
-        return *reinterpret_cast<llvm::StringMapEntry<uint32_t>*>(ptr);
+        char *ptr = const_cast<char*>(keyData) - sizeof (StringPoolEntryType);
+        return *reinterpret_cast<StringPoolEntryType*>(ptr);
     }
 
     size_t
-    GetConstCStringLength (const char *ccstr)
+    GetConstCStringLength (const char *ccstr) const
     {
         if (ccstr)
         {
-            llvm::StringMapEntry<uint32_t>&entry = GetStringMapEntryFromKeyData (ccstr);
+            const StringPoolEntryType&entry = GetStringMapEntryFromKeyData (ccstr);
             return entry.getKey().size();
         }
         return 0;
+    }
+
+    StringPoolValueType
+    GetMangledCounterpart (const char *ccstr) const
+    {
+        if (ccstr)
+            return GetStringMapEntryFromKeyData (ccstr).getValue();
+        return 0;
+    }
+
+    bool
+    SetMangledCounterparts (const char *key_ccstr, const char *value_ccstr)
+    {
+        if (key_ccstr && value_ccstr)
+        {
+            GetStringMapEntryFromKeyData (key_ccstr).setValue(value_ccstr);
+            GetStringMapEntryFromKeyData (value_ccstr).setValue(key_ccstr);
+            return true;
+        }
+        return false;
     }
 
     const char *
@@ -84,8 +108,28 @@ public:
         {
             Mutex::Locker locker (m_mutex);
             llvm::StringRef string_ref (cstr, cstr_len);
-            llvm::StringMapEntry<uint32_t>& entry = m_string_map.GetOrCreateValue (string_ref);
+            StringPoolEntryType& entry = m_string_map.GetOrCreateValue (string_ref);
             return entry.getKeyData();
+        }
+        return NULL;
+    }
+
+    const char *
+    GetConstCStringAndSetMangledCounterPart (const char *demangled_cstr, const char *mangled_ccstr)
+    {
+        if (demangled_cstr)
+        {
+            Mutex::Locker locker (m_mutex);
+            // Make string pool entry with the mangled counterpart already set
+            StringPoolEntryType& entry = m_string_map.GetOrCreateValue (llvm::StringRef (demangled_cstr), mangled_ccstr);
+
+            // Extract the const version of the demangled_cstr
+            const char *demangled_ccstr = entry.getKeyData();
+            // Now assign the demangled const string as the counterpart of the
+            // mangled const string...
+            GetStringMapEntryFromKeyData (mangled_ccstr).setValue(demangled_ccstr);
+            // Return the constant demangled C string
+            return demangled_ccstr;
         }
         return NULL;
     }
@@ -114,7 +158,7 @@ public:
         const_iterator end = m_string_map.end();
         for (const_iterator pos = m_string_map.begin(); pos != end; ++pos)
         {
-            mem_size += sizeof(llvm::StringMapEntry<uint32_t>) + pos->getKey().size();
+            mem_size += sizeof(StringPoolEntryType) + pos->getKey().size();
         }
         return mem_size;
     }
@@ -123,7 +167,6 @@ protected:
     //------------------------------------------------------------------
     // Typedefs
     //------------------------------------------------------------------
-    typedef llvm::StringMap<uint32_t, llvm::BumpPtrAllocator> StringPool;
     typedef StringPool::iterator iterator;
     typedef StringPool::const_iterator const_iterator;
 
@@ -318,6 +361,19 @@ void
 ConstString::SetCString (const char *cstr)
 {
     m_string = StringPool().GetConstCString (cstr);
+}
+
+void
+ConstString::SetCStringWithMangledCounterpart (const char *demangled, const ConstString &mangled)
+{
+    m_string = StringPool().GetConstCStringAndSetMangledCounterPart (demangled, mangled.m_string);
+}
+
+bool
+ConstString::GetMangledCounterpart (ConstString &counterpart) const
+{
+    counterpart.m_string = StringPool().GetMangledCounterpart(m_string);
+    return counterpart;
 }
 
 //----------------------------------------------------------------------

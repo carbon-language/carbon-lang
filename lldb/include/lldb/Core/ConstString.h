@@ -338,6 +338,12 @@ public:
     void
     SetCString (const char *cstr);
 
+    void
+    SetCStringWithMangledCounterpart (const char *demangled, const ConstString &mangled);
+
+    bool
+    GetMangledCounterpart (ConstString &counterpart) const;
+
     //------------------------------------------------------------------
     /// Set the C string value with length.
     ///
