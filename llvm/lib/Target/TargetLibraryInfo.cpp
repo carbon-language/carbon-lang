@@ -38,8 +38,8 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T) {
     TLI.setUnavailable(LibFunc::memset_pattern16);
   }
 
-  // iprintf and friends are only available on XCore.
-  if (T.getArch() != Triple::xcore) {
+  // iprintf and friends are only available on XCore and TCE.
+  if (T.getArch() != Triple::xcore && T.getArch() != Triple::tce) {
     TLI.setUnavailable(LibFunc::iprintf);
     TLI.setUnavailable(LibFunc::siprintf);
     TLI.setUnavailable(LibFunc::fiprintf);
