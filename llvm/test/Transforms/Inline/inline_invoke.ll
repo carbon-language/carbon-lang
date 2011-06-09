@@ -16,6 +16,8 @@ declare void @_ZN1AD1Ev(%struct.A*)
 
 declare void @use(i32) nounwind
 
+declare void @opaque()
+
 declare i8* @llvm.eh.exception() nounwind readonly
 
 declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
@@ -217,8 +219,8 @@ eh.resume:
 
 ; CHECK:      call void @llvm.eh.resume(i8* [[EXNJ1]], i32 [[SELJ1]])
 
-;; Test 2 - Don't make invalid IR for inlines into landing pads without eh.exception calls
 
+;; Test 2 - Don't make invalid IR for inlines into landing pads without eh.exception calls
 define void @test2_out() uwtable ssp {
 entry:
   invoke void @test0_in()
@@ -243,3 +245,92 @@ lpad:
 ; CHECK-NEXT:   unwind label %[[LPAD2]]
 ; CHECK:      invoke void @_ZN1AD1Ev(%struct.A* [[A]])
 ; CHECK-NEXT:   unwind label %[[LPAD]]
+
+
+;; Test 3 - Deal correctly with split unwind edges.
+define void @test3_out() uwtable ssp {
+entry:
+  invoke void @test0_in()
+          to label %ret unwind label %lpad
+
+ret:
+  ret void
+
+lpad:
+  br label %lpad.cont
+
+lpad.cont:
+  %exn = call i8* @llvm.eh.exception() nounwind
+  %eh.selector = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*)) nounwind
+  call void @_ZSt9terminatev()
+  unreachable
+}
+
+; CHECK: define void @test3_out()
+; CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: invoke void @_ZN1AD1Ev(
+; CHECK-NEXT:   to label %[[L:[^\s]+]] unwind
+; CHECK:    [[L]]:
+; CHECK-NEXT: br label %[[JOIN:[^\s]+]]
+; CHECK:    [[JOIN]]:
+; CHECK-NEXT: phi
+; CHECK-NEXT: phi
+; CHECK-NEXT: br label %lpad.cont
+; CHECK:    lpad.cont:
+; CHECK-NEXT: call void @_ZSt9terminatev()
+
+
+;; Test 4 - Split unwind edges with a dominance problem
+define void @test4_out() uwtable ssp {
+entry:
+  invoke void @test0_in()
+          to label %cont unwind label %lpad.crit
+
+cont:
+  invoke void @opaque()
+          to label %ret unwind label %lpad
+
+ret:
+  ret void
+
+lpad.crit:
+  call void @opaque() nounwind
+  br label %lpad
+
+lpad:
+  %phi = phi i32 [ 0, %lpad.crit ], [ 1, %cont ]
+  %exn = call i8* @llvm.eh.exception() nounwind
+  %eh.selector = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*)) nounwind
+  call void @use(i32 %phi)
+  call void @_ZSt9terminatev()
+  unreachable
+}
+
+; CHECK: define void @test4_out()
+; CHECK:      call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* {{%.*}}, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i32 0, i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: invoke void @_ZN1AD1Ev(
+; CHECK-NEXT:   to label %[[L:[^\s]+]] unwind
+; CHECK:    [[L]]:
+; CHECK-NEXT: br label %[[JOIN:[^\s]+]]
+; CHECK:      invoke void @opaque()
+; CHECK-NEXT:                  unwind label %lpad
+; CHECK:    lpad.crit:
+; CHECK-NEXT: call i8* @llvm.eh.exception()
+; CHECK-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %4, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: br label %[[JOIN]]
+; CHECK:    [[JOIN]]:
+; CHECK-NEXT: phi i8*
+; CHECK-NEXT: phi i32
+; CHECK-NEXT: call void @opaque() nounwind
+; CHECK-NEXT: br label %[[FIX:[^\s]+]]
+; CHECK:    lpad:
+; CHECK-NEXT: [[T0:%.*]] = phi i32 [ 1, %cont ]
+; CHECK-NEXT: call i8* @llvm.eh.exception() nounwind
+; CHECK-NEXT: call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %exn, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* bitcast (i8** @_ZTIi to i8*))
+; CHECK-NEXT: br label %[[FIX]]
+; CHECK:    [[FIX]]:
+; CHECK-NEXT: [[T1:%.*]] = phi i32 [ [[T0]], %lpad ], [ 0, %[[JOIN]] ]
+; CHECK-NEXT: phi i8*
+; CHECK-NEXT: phi i32
+; CHECK-NEXT: call void @use(i32 [[T1]])
+; CHECK-NEXT: call void @_ZSt9terminatev()
