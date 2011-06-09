@@ -55,13 +55,15 @@ case $TRIPLE in
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
 			/usr/lib/libSystem.B.dylib"
 	else
-		RE_EXPORT_FILE="libc++abi.exp"
+		RE_EXPORT_LINE="/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,libc++abi.exp"
 		if [ -n "$SDKROOT" ]
 		then
 			EXTRA_FLAGS+="-isysroot ${SDKROOT}"
-			if [ "${RC_armv7}" = "YES" ]
+			if echo "${RC_ARCHS}" | grep -q "armv7"  
 			then
-				RE_EXPORT_FILE="libc++sjlj-abi.exp"
+				RE_EXPORT_LINE="${SDKROOT}/usr/lib/libc++abi.dylib -Wl,-reexported_symbols_list,libc++sjlj-abi.exp"
+			else
+				RE_EXPORT_LINE="-Wl,-reexport_library,${SDKROOT}/usr/lib/libc++abi.dylib"
 			fi
 			CXX=`xcrun -sdk "${SDKROOT}"  -find clang++`
 			CC=`xcrun -sdk "${SDKROOT}"  -find clang`
@@ -70,10 +72,9 @@ case $TRIPLE in
 			-dynamiclib -nodefaultlibs  \
 			-current_version ${RC_ProjectSourceVersion} -compatibility_version 1 \
 			-install_name /usr/lib/libc++.1.dylib \
-			${SDKROOT}/usr/lib/libc++abi.dylib \
 			-lSystem  \
 			-Wl,-unexported_symbols_list,libc++unexp.exp  \
-                        -Wl,-reexported_symbols_list,${RE_EXPORT_FILE}  \
+			${RE_EXPORT_LINE}  \
 			-Wl,-force_symbols_not_weak_list,notweak.exp "
 	fi
     ;;
