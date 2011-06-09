@@ -70,25 +70,7 @@ def GR8 : RegisterClass<"MSP430", [i8], 8,
    // Frame pointer, sometimes allocable
    FPB,
    // Volatile, but not allocable
-   PCB, SPB, SRB, CGB]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GR8Class::iterator
-    GR8Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      // Depending on whether the function uses frame pointer or not, last 5 or 4
-      // registers on the list above are reserved
-      if (TFI->hasFP(MF))
-        return end()-5;
-      else
-        return end()-4;
-    }
-  }];
-}
+   PCB, SPB, SRB, CGB]>;
 
 def GR16 : RegisterClass<"MSP430", [i16], 16,
    // Volatile registers
@@ -99,21 +81,5 @@ def GR16 : RegisterClass<"MSP430", [i16], 16,
    PCW, SPW, SRW, CGW]>
 {
   let SubRegClasses = [(GR8 subreg_8bit)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GR16Class::iterator
-    GR16Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      // Depending on whether the function uses frame pointer or not, last 5 or 4
-      // registers on the list above are reserved
-      if (TFI->hasFP(MF))
-        return end()-5;
-      else
-        return end()-4;
-    }
-  }];
 }
 

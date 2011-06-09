@@ -76,7 +76,11 @@ BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
-  // Mark 4 special registers as reserved.
+  // Mark 4 special registers with subregisters as reserved.
+  Reserved.set(MSP430::PCB);
+  Reserved.set(MSP430::SPB);
+  Reserved.set(MSP430::SRB);
+  Reserved.set(MSP430::CGB);
   Reserved.set(MSP430::PCW);
   Reserved.set(MSP430::SPW);
   Reserved.set(MSP430::SRW);

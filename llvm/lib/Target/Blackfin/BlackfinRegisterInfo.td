@@ -245,18 +245,6 @@ def D : RegisterClass<"BF", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
 
 def P : RegisterClass<"BF", [i32], 32, [P0, P1, P2, P3, P4, P5, FP, SP]> {
   let SubRegClasses = [(P16L lo16), (P16H hi16)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    PClass::iterator
-    PClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      return allocation_order_begin(MF)
-             + (TFI->hasFP(MF) ? 7 : 6);
-    }
-  }];
 }
 
 def I : RegisterClass<"BF", [i32], 32, [I0, I1, I2, I3]>;
@@ -268,18 +256,6 @@ def DP : RegisterClass<"BF", [i32], 32,
     [R0, R1, R2, R3, R4, R5, R6, R7,
      P0, P1, P2, P3, P4, P5, FP, SP]> {
   let SubRegClasses = [(DP16L lo16), (DP16H hi16)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    DPClass::iterator
-    DPClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      return allocation_order_begin(MF)
-             + (TFI->hasFP(MF) ? 15 : 14);
-    }
-  }];
 }
 
 def GR : RegisterClass<"BF", [i32], 32,
@@ -287,20 +263,7 @@ def GR : RegisterClass<"BF", [i32], 32,
      P0, P1, P2, P3, P4, P5,
      I0, I1, I2, I3, M0, M1, M2, M3,
      B0, B1, B2, B3, L0, L1, L2, L3,
-     FP, SP]> {
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GRClass::iterator
-    GRClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      return allocation_order_begin(MF)
-             + (TFI->hasFP(MF) ? 31 : 30);
-    }
-  }];
-}
+     FP, SP]>;
 
 def ALL : RegisterClass<"BF", [i32], 32,
     [R0, R1, R2, R3, R4, R5, R6, R7,
@@ -310,36 +273,10 @@ def ALL : RegisterClass<"BF", [i32], 32,
      FP, SP,
      A0X, A0W, A1X, A1W, ASTAT, RETS,
      LC0, LT0, LB0, LC1, LT1, LB1, CYCLES, CYCLES2,
-     USP, SEQSTAT, SYSCFG, RETI, RETX, RETN, RETE, EMUDAT]> {
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    ALLClass::iterator
-    ALLClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      return allocation_order_begin(MF)
-             + (TFI->hasFP(MF) ? 31 : 30);
-    }
-  }];
-}
+     USP, SEQSTAT, SYSCFG, RETI, RETX, RETN, RETE, EMUDAT]>;
 
 def PI : RegisterClass<"BF", [i32], 32,
-    [P0, P1, P2, P3, P4, P5, I0, I1, I2, I3, FP, SP]> {
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    PIClass::iterator
-    PIClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      return allocation_order_begin(MF)
-             + (TFI->hasFP(MF) ? 11 : 10);
-    }
-  }];
-}
+    [P0, P1, P2, P3, P4, P5, I0, I1, I2, I3, FP, SP]>;
 
 // We are going to pretend that CC and !CC are 32-bit registers, even though
 // they only can hold 1 bit.

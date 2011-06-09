@@ -121,51 +121,18 @@ def GPRC : RegisterClass<"Alpha", [i64], 64,
      // Non-volatile
      R9, R10, R11, R12, R13, R14,
 // Don't allocate 15, 30, 31
-     R15, R30, R31 ]> //zero
-{
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GPRCClass::iterator
-    GPRCClass::allocation_order_end(const MachineFunction &MF) const {
-        return end()-3;
-    }
-  }];
-}
+     R15, R30, R31 ]>; //zero
 
 def F4RC : RegisterClass<"Alpha", [f32], 64, [F0, F1, 
         F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
         F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
         // Saved:
         F2, F3, F4, F5, F6, F7, F8, F9,
-        F31 ]> //zero
-{
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    F4RCClass::iterator
-    F4RCClass::allocation_order_end(const MachineFunction &MF) const {
-        return end()-1;
-    }
-  }];
-}
+        F31 ]>; //zero
 
 def F8RC : RegisterClass<"Alpha", [f64], 64, [F0, F1, 
         F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
         F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
         // Saved:
         F2, F3, F4, F5, F6, F7, F8, F9,
-        F31 ]> //zero
-{
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    F8RCClass::iterator
-    F8RCClass::allocation_order_end(const MachineFunction &MF) const {
-        return end()-1;
-    }
-  }];
-}
+        F31 ]>; //zero

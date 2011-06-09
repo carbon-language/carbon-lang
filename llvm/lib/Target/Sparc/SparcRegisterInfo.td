@@ -142,8 +142,6 @@ def D15 : Rd<30, "F30", [F30, F31]>, DwarfRegNum<[87]>;
 def IntRegs : RegisterClass<"SP", [i32], 32, [L0, L1, L2, L3, L4, L5, L6, L7,
                                      I0, I1, I2, I3, I4, I5,
                                      O0, O1, O2, O3, O4, O5, O7,
-
-   // FIXME: G1 reserved for now for large imm generation by frame code.
                                      G1,
                                      // Non-allocatable regs:
                                      G2, G3, G4, // FIXME: OK for use only in
@@ -153,19 +151,7 @@ def IntRegs : RegisterClass<"SP", [i32], 32, [L0, L1, L2, L3, L4, L5, L6, L7,
                                      I7, // return address
                                      G0, // constant zero
                                      G5, G6, G7 // reserved for kernel
-                                     ]> {
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    IntRegsClass::iterator
-    IntRegsClass::allocation_order_end(const MachineFunction &MF) const {
-      // FIXME: These special regs should be taken out of the regclass!
-      return end()-10  // Don't allocate special registers
-         -1;  // FIXME: G1 reserved for large imm generation by frame code.
-    }
-  }];
-}
+                                     ]>;
 
 def FPRegs : RegisterClass<"SP", [f32], 32, [F0, F1, F2, F3, F4, F5, F6, F7, F8,
   F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22,

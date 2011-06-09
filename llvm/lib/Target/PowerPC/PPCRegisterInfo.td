@@ -279,68 +279,12 @@ def RM: SPR<512, "**ROUNDING MODE**">;
 def GPRC : RegisterClass<"PPC", [i32], 32,
      [R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12,
       R30, R29, R28, R27, R26, R25, R24, R23, R22, R21, R20, R19, R18, R17,
-      R16, R15, R14, R13, R31, R0, R1, LR]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GPRCClass::iterator
-    GPRCClass::allocation_order_begin(const MachineFunction &MF) const {
-      // 32-bit SVR4 ABI: r2 is reserved for the OS.
-      // 64-bit SVR4 ABI: r2 is reserved for the TOC pointer.
-      // Darwin: R2 is reserved for CR save/restore sequence.
-      return begin()+1;
-    }
-    GPRCClass::iterator
-    GPRCClass::allocation_order_end(const MachineFunction &MF) const {
-      // On PPC64, r13 is the thread pointer.  Never allocate this register.
-      // Note that this is overconservative, as it also prevents allocation of
-      // R31 when the FP is not needed.
-      // When using the 32-bit SVR4 ABI, r13 is reserved for the Small Data Area
-      // pointer.
-      const PPCSubtarget &Subtarget = MF.getTarget().getSubtarget<PPCSubtarget>();
-      const PPCFrameLowering *PPCFI =
-        static_cast<const PPCFrameLowering*>(MF.getTarget().getFrameLowering());
-   
-      if (Subtarget.isPPC64() || Subtarget.isSVR4ABI())
-        return end()-5;  // don't allocate R13, R31, R0, R1, LR
-        
-      if (PPCFI->needsFP(MF))
-        return end()-4;  // don't allocate R31, R0, R1, LR
-      else
-        return end()-3;  // don't allocate R0, R1, LR
-    }
-  }];
-}
+      R16, R15, R14, R13, R31, R0, R1, LR]>;
+
 def G8RC : RegisterClass<"PPC", [i64], 64,
      [X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12,
       X30, X29, X28, X27, X26, X25, X24, X23, X22, X21, X20, X19, X18, X17,
-      X16, X15, X14, X31, X13, X0, X1, LR8]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    G8RCClass::iterator
-    G8RCClass::allocation_order_begin(const MachineFunction &MF) const {
-      // 64-bit SVR4 ABI: r2 is reserved for the TOC pointer.
-      // Darwin: r2 is reserved for CR save/restore sequence.
-      return begin()+1;
-    }
-    G8RCClass::iterator
-    G8RCClass::allocation_order_end(const MachineFunction &MF) const {
-      const PPCFrameLowering *PPCFI =
-        static_cast<const PPCFrameLowering*>(MF.getTarget().getFrameLowering());
-      if (PPCFI->needsFP(MF))
-        return end()-5;
-      else
-        return end()-4;
-    }
-  }];
-}
+      X16, X15, X14, X31, X13, X0, X1, LR8]>;
 
 // Allocate volatiles first, then non-volatiles in reverse order. With the SVR4
 // ABI the size of the Floating-point register save area is determined by the

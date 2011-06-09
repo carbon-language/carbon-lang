@@ -127,6 +127,8 @@ getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(Mips::SP);
   Reserved.set(Mips::FP);
   Reserved.set(Mips::RA);
+  Reserved.set(Mips::F31);
+  Reserved.set(Mips::D15);
 
   // SRV4 requires that odd register can't be used.
   if (!Subtarget.isSingleFloat() && !Subtarget.isMips32())

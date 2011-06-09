@@ -165,19 +165,7 @@ def CPURegs : RegisterClass<"Mips", [i32], 32,
   // Callee save
   S0, S1, S2, S3, S4, S5, S6, S7,
   // Reserved
-  ZERO, AT, K0, K1, GP, SP, FP, RA]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    CPURegsClass::iterator
-    CPURegsClass::allocation_order_end(const MachineFunction &MF) const {
-      // The last 8 registers on the list above are reserved
-      return end()-8;
-    }
-  }];
-}
+  ZERO, AT, K0, K1, GP, SP, FP, RA]>;
 
 // 64bit fp:
 // * FGR64  - 32 64-bit registers
@@ -194,52 +182,7 @@ def FGR32 : RegisterClass<"Mips", [f32], 32,
   // Callee save
   F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
   // Reserved
-  F31]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-
-    static const unsigned MIPS_FGR32[] = {
-      Mips::F0,  Mips::F1,  Mips::F2,  Mips::F3,  Mips::F12,  Mips::F13,
-      Mips::F14, Mips::F15, Mips::F4,  Mips::F5,  Mips::F6,   Mips::F7,
-      Mips::F8,  Mips::F9,  Mips::F10, Mips::F11, Mips::F16,  Mips::F17,
-      Mips::F18, Mips::F19, Mips::F20, Mips::F21, Mips::F22,  Mips::F23,
-      Mips::F24, Mips::F25, Mips::F26, Mips::F27, Mips::F28,  Mips::F29,
-      Mips::F30
-    };
-
-    static const unsigned MIPS_SVR4_FGR32[] = {
-      Mips::F0,  Mips::F2,  Mips::F12, Mips::F14, Mips::F4,
-      Mips::F6,  Mips::F8,  Mips::F10, Mips::F16, Mips::F18,
-      Mips::F20, Mips::F22, Mips::F24, Mips::F26, Mips::F28, Mips::F30,
-    };
-
-    FGR32Class::iterator
-    FGR32Class::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
-
-      if (Subtarget.isMips32() || Subtarget.isSingleFloat())
-        return MIPS_FGR32;
-      else
-        return MIPS_SVR4_FGR32;
-    }
-
-    FGR32Class::iterator
-    FGR32Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
-
-      if (Subtarget.isMips32() || Subtarget.isSingleFloat())
-        return MIPS_FGR32 + (sizeof(MIPS_FGR32) / sizeof(unsigned));
-      else
-        return MIPS_SVR4_FGR32 + (sizeof(MIPS_SVR4_FGR32) / sizeof(unsigned));
-    }
-  }];
-}
+  F31]>;
 
 def AFGR64 : RegisterClass<"Mips", [f64], 64,
   // Return Values and Arguments
@@ -249,19 +192,8 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64,
   // Callee save
   D10, D11, D12, D13, D14,
   // Reserved
-  D15]>
-{
+  D15]> {
   let SubRegClasses = [(FGR32 sub_fpeven, sub_fpodd)];
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    AFGR64Class::iterator
-    AFGR64Class::allocation_order_end(const MachineFunction &MF) const {
-      // The last register on the list above is reserved
-      return end()-1;
-    }
-  }];
 }
 
 // Condition Register for floating point operations

@@ -131,19 +131,7 @@ def GPR : RegisterClass<"MBlaze", [i32,f32], 32,
   R17, // Return address for exceptions
   R18, // Reserved for assembler
   R19  // The frame-pointer
-  ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GPRClass::iterator
-    GPRClass::allocation_order_end(const MachineFunction &MF) const {
-      // The last 10 registers on the list above are reserved
-      return end()-10;
-    }
-  }];
-}
+  ]>;
 
 def SPR : RegisterClass<"MBlaze", [i32], 32,
   [
@@ -174,16 +162,8 @@ def SPR : RegisterClass<"MBlaze", [i32], 32,
   RPVR11
   ]>
 {
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    SPRClass::iterator
-    SPRClass::allocation_order_end(const MachineFunction &MF) const {
-      // None of the special purpose registers are allocatable.
-      return end()-24;
-    }
-  }];
+  // None of the special purpose registers are allocatable.
+  let isAllocatable = 0;
 }
 
 def CRC : RegisterClass<"MBlaze", [i32], 32, [CARRY]> {

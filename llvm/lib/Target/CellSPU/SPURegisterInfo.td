@@ -170,23 +170,7 @@ def GPRC : RegisterClass<"SPU", [i128], 128,
    R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
    R86, R85, R84, R83, R82, R81, R80, 
    /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    GPRCClass::iterator
-    GPRCClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    GPRCClass::iterator
-    GPRCClass::allocation_order_end(const MachineFunction &MF) const {
-      return end()-3;  // don't allocate R2, R1, or R0 (envp, sp, lr)
-    }
-  }];
-}
+   R2, R1, R0 ]>;
 
 // The SPU's registers as 64-bit wide (double word integer) "preferred slot":
 def R64C : RegisterClass<"SPU", [i64], 128,
@@ -204,23 +188,7 @@ def R64C : RegisterClass<"SPU", [i64], 128,
    R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
    R86, R85, R84, R83, R82, R81, R80, 
    /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    R64CClass::iterator
-    R64CClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    R64CClass::iterator
-    R64CClass::allocation_order_end(const MachineFunction &MF) const {
-      return end()-3;  // don't allocate R2, R1, or R0 (envp, sp, lr)
-    }
-  }];
-}
+   R2, R1, R0 ]>;
 
 // The SPU's registers as 64-bit wide (double word) FP "preferred slot":
 def R64FP : RegisterClass<"SPU", [f64], 128,
@@ -238,23 +206,7 @@ def R64FP : RegisterClass<"SPU", [f64], 128,
    R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
    R86, R85, R84, R83, R82, R81, R80, 
    /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    R64FPClass::iterator
-    R64FPClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    R64FPClass::iterator
-    R64FPClass::allocation_order_end(const MachineFunction &MF) const {
-      return end()-3;  // don't allocate R2, R1, or R0 (envp, sp, lr)
-    }
-  }];
-}
+   R2, R1, R0 ]>;
 
 // The SPU's registers as 32-bit wide (word) "preferred slot":
 def R32C : RegisterClass<"SPU", [i32], 128,
@@ -272,23 +224,7 @@ def R32C : RegisterClass<"SPU", [i32], 128,
    R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
    R86, R85, R84, R83, R82, R81, R80, 
    /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    R32CClass::iterator
-    R32CClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    R32CClass::iterator
-    R32CClass::allocation_order_end(const MachineFunction &MF) const {
-      return end()-3;  // don't allocate R2, R1, or R0 (envp, sp, lr)
-    }
-  }];
-}
+   R2, R1, R0 ]>;
 
 // The SPU's registers as single precision floating point "preferred slot":
 def R32FP : RegisterClass<"SPU", [f32], 128,
@@ -306,23 +242,7 @@ def R32FP : RegisterClass<"SPU", [f32], 128,
    R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
    R86, R85, R84, R83, R82, R81, R80, 
    /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    R32FPClass::iterator
-    R32FPClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    R32FPClass::iterator
-    R32FPClass::allocation_order_end(const MachineFunction &MF) const {
-      return end()-3;  // don't allocate R2, R1, or R0 (envp, sp, lr)
-    }
-  }];
-}
+   R2, R1, R0 ]>;
 
 // The SPU's registers as 16-bit wide (halfword) "preferred slot":
 def R16C : RegisterClass<"SPU", [i16], 128,
@@ -340,23 +260,7 @@ def R16C : RegisterClass<"SPU", [i16], 128,
    R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
    R86, R85, R84, R83, R82, R81, R80, 
    /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    R16CClass::iterator
-    R16CClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    R16CClass::iterator
-    R16CClass::allocation_order_end(const MachineFunction &MF) const {
-      return end()-3;  // don't allocate R2, R1, or R0 (envp, sp, lr)
-    }
-  }];
-}
+   R2, R1, R0 ]>;
 
 // The SPU's registers as 8-bit wide (byte) "preferred slot":
 def R8C : RegisterClass<"SPU", [i8], 128,
@@ -374,23 +278,7 @@ def R8C : RegisterClass<"SPU", [i8], 128,
    R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
    R86, R85, R84, R83, R82, R81, R80, 
    /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    R8CClass::iterator
-    R8CClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    R8CClass::iterator
-    R8CClass::allocation_order_end(const MachineFunction &MF) const {
-      return end()-3;  // don't allocate R2, R1, or R0 (envp, sp, lr)
-    }
-  }];
-}
+   R2, R1, R0 ]>;
 
 // The SPU's registers as vector registers:
 def VECREG : RegisterClass<"SPU",
@@ -410,20 +298,4 @@ def VECREG : RegisterClass<"SPU",
    R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
    R86, R85, R84, R83, R82, R81, R80, 
    /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    VECREGClass::iterator
-    VECREGClass::allocation_order_begin(const MachineFunction &MF) const {
-      return begin();
-    }
-    VECREGClass::iterator
-    VECREGClass::allocation_order_end(const MachineFunction &MF) const {
-      return end()-3;  // don't allocate R2, R1, or R0 (envp, sp, lr)
-    }
-  }];
-}
+   R2, R1, R0 ]>;
