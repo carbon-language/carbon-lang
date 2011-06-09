@@ -45,6 +45,8 @@
 #include "llvm/Target/TargetSelect.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/IRBuilder.h"
+
 using namespace llvm;
 
 int main() {
@@ -68,8 +70,12 @@ int main() {
   // because of the last argument.
   BasicBlock *BB = BasicBlock::Create(Context, "EntryBlock", Add1F);
 
+  // Create a basic block builder with default parameters.  The builder will
+  // automatically append instructions to the basic block `BB'.
+  IRBuilder<> builder(BB);
+
   // Get pointers to the constant `1'.
-  Value *One = ConstantInt::get(Type::getInt32Ty(Context), 1);
+  Value *One = builder.getInt32(1);
 
   // Get pointers to the integer argument of the add1 function...
   assert(Add1F->arg_begin() != Add1F->arg_end()); // Make sure there's an arg
@@ -77,10 +83,10 @@ int main() {
   ArgX->setName("AnArg");            // Give it a nice symbolic name for fun.
 
   // Create the add instruction, inserting it into the end of BB.
-  Instruction *Add = BinaryOperator::CreateAdd(One, ArgX, "addresult", BB);
+  Value *Add = builder.CreateAdd(One, ArgX);
 
   // Create the return instruction and add it to the basic block
-  ReturnInst::Create(Context, Add, BB);
+  builder.CreateRet(Add);
 
   // Now, function add1 is ready.
 
@@ -94,15 +100,18 @@ int main() {
   // Add a basic block to the FooF function.
   BB = BasicBlock::Create(Context, "EntryBlock", FooF);
 
-  // Get pointers to the constant `10'.
-  Value *Ten = ConstantInt::get(Type::getInt32Ty(Context), 10);
+  // Tell the basic block builder to attach itself to the new basic block
+  builder.SetInsertPoint(BB);
 
-  // Pass Ten to the call call:
-  CallInst *Add1CallRes = CallInst::Create(Add1F, Ten, "add1", BB);
+  // Get pointer to the constant `10'.
+  Value *Ten = builder.getInt32(10);
+
+  // Pass Ten to the call to Add1F
+  CallInst *Add1CallRes = builder.CreateCall(Add1F, Ten);
   Add1CallRes->setTailCall(true);
 
   // Create the return instruction and add it to the basic block.
-  ReturnInst::Create(Context, Add1CallRes, BB);
+  builder.CreateRet(Add1CallRes);
 
   // Now we create the JIT.
   ExecutionEngine* EE = EngineBuilder(M).create();
