@@ -1122,6 +1122,12 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
   //              := Z <function encoding> E s [<discriminator>]
   // <discriminator> := _ <non-negative number>
   const DeclContext *DC = ND->getDeclContext();
+  if (isa<ObjCMethodDecl>(DC) && isa<FunctionDecl>(ND)) {
+    // Don't add objc method name mangling to locally declared function
+    mangleUnqualifiedName(ND);
+    return;
+  }
+
   Out << 'Z';
 
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(DC)) {

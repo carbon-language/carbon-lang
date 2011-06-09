@@ -42,3 +42,15 @@
 }
 @end
 
+// rdar://9566314
+@interface NX
+- (void)Meth;
+@end
+
+@implementation NX
+- (void)Meth {
+  void uiIsVisible();
+// CHECK: call void @_Z11uiIsVisiblev
+  uiIsVisible();
+}
+@end
