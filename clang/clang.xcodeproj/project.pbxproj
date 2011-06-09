@@ -6,6 +6,12 @@
 	objectVersion = 42;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		BD6B0EDF13A1824C00B8E3FE /* Mangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BD6B0EDE13A1824C00B8E3FE /* Mangle.cpp */; };
+		BD6B0EE213A182A600B8E3FE /* ItaniumMangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BD6B0EE113A182A600B8E3FE /* ItaniumMangle.cpp */; };
+		BD6B0EE413A182DA00B8E3FE /* MicrosoftMangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BD6B0EE313A182DA00B8E3FE /* MicrosoftMangle.cpp */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		8DD76F690486A84900D96B5E /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -472,6 +478,9 @@
 		BD59A952121496B9003A5A02 /* SemaConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaConsumer.h; path = clang/Sema/SemaConsumer.h; sourceTree = "<group>"; };
 		BD59A953121496B9003A5A02 /* SemaDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaDiagnostic.h; path = clang/Sema/SemaDiagnostic.h; sourceTree = "<group>"; };
 		BD59A954121496B9003A5A02 /* Template.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Template.h; path = clang/Sema/Template.h; sourceTree = "<group>"; };
+		BD6B0EDE13A1824C00B8E3FE /* Mangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Mangle.cpp; sourceTree = "<group>"; };
+		BD6B0EE113A182A600B8E3FE /* ItaniumMangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ItaniumMangle.cpp; sourceTree = "<group>"; };
+		BD6B0EE313A182DA00B8E3FE /* MicrosoftMangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MicrosoftMangle.cpp; sourceTree = "<group>"; };
 		BDF87CF60FD746F300BBF872 /* SemaTemplateDeduction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateDeduction.cpp; path = lib/Sema/SemaTemplateDeduction.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		BF89C3E111595818001C2D68 /* AnalysisBasedWarnings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnalysisBasedWarnings.cpp; path = lib/Sema/AnalysisBasedWarnings.cpp; sourceTree = "<group>"; };
 		BF89C3E5115958A1001C2D68 /* TargetAttributesSema.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TargetAttributesSema.h; path = lib/Sema/TargetAttributesSema.h; sourceTree = "<group>"; };
@@ -1514,6 +1523,9 @@
 		DEC8D9920A9433F400353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				BD6B0EDE13A1824C00B8E3FE /* Mangle.cpp */,
+				BD6B0EE313A182DA00B8E3FE /* MicrosoftMangle.cpp */,
+				BD6B0EE113A182A600B8E3FE /* ItaniumMangle.cpp */,
 				BF9FEE051225E770003A8B71 /* MicrosoftCXXABI.cpp */,
 				BF9FEE031225E759003A8B71 /* ItaniumCXXABI.cpp */,
 				BF9FEE011225E73F003A8B71 /* ExprClassification.cpp */,
@@ -1900,6 +1912,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BD6B0EDF13A1824C00B8E3FE /* Mangle.cpp in Sources */,
+				BD6B0EE213A182A600B8E3FE /* ItaniumMangle.cpp in Sources */,
+				BD6B0EE413A182DA00B8E3FE /* MicrosoftMangle.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
