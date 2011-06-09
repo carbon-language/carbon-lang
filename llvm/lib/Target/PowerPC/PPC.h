@@ -43,7 +43,7 @@ namespace llvm {
   TargetAsmBackend *createPPCAsmBackend(const Target &, const std::string &);
   
   void LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
-                                    AsmPrinter &AP);
+                                    AsmPrinter &AP, bool isDarwin);
   
   extern Target ThePPC32Target;
   extern Target ThePPC64Target;

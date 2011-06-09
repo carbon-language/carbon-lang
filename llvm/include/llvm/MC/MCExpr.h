@@ -171,8 +171,10 @@ public:
     VK_ARM_GOTTPOFF,
 
     VK_PPC_TOC,
-    VK_PPC_HA16,  // ha16(symbol)
-    VK_PPC_LO16   // lo16(symbol)
+    VK_PPC_DARWIN_HA16,  // ha16(symbol)
+    VK_PPC_DARWIN_LO16,  // lo16(symbol)
+    VK_PPC_GAS_HA16,     // symbol@ha
+    VK_PPC_GAS_LO16      // symbol@l
   };
 
 private:
