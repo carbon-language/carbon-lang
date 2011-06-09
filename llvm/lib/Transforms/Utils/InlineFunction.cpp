@@ -132,18 +132,6 @@ namespace {
   };
 }
 
-/// Replace all the instruction uses of a value with a different value.
-/// This has the advantage of not screwing up the CallGraph.
-static void replaceAllInsnUsesWith(Instruction *insn, Value *replacement) {
-  for (Value::use_iterator i = insn->use_begin(), e = insn->use_end();
-       i != e; ) {
-    Use &use = i.getUse();
-    ++i;
-    if (isa<Instruction>(use.getUser()))
-      use.set(replacement);
-  }
-}
-
 /// Get or create a target for the branch out of rewritten calls to
 /// llvm.eh.resume.
 BasicBlock *InvokeInliningInfo::getInnerUnwindDest() {
@@ -196,14 +184,14 @@ BasicBlock *InvokeInliningInfo::getInnerUnwindDest() {
   // Create a phi for the exception value...
   InnerExceptionPHI = PHINode::Create(exn->getType(), phiCapacity,
                                       "exn.lpad-body", insertPoint);
-  replaceAllInsnUsesWith(exn, InnerExceptionPHI);
+  exn->replaceAllUsesWith(InnerExceptionPHI);
   selector->setArgOperand(0, exn); // restore this use
   InnerExceptionPHI->addIncoming(exn, OuterUnwindDest);
 
   // ...and the selector.
   InnerSelectorPHI = PHINode::Create(selector->getType(), phiCapacity,
                                      "selector.lpad-body", insertPoint);
-  replaceAllInsnUsesWith(selector, InnerSelectorPHI);
+  selector->replaceAllUsesWith(InnerSelectorPHI);
   InnerSelectorPHI->addIncoming(selector, OuterUnwindDest);
 
   // All done.
@@ -547,15 +535,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
     ConstantInt::get(Type::getInt32Ty(Context), 1),
     ConstantInt::getFalse(Context) // isVolatile
   };
-  CallInst *TheMemCpy =
-    CallInst::Create(MemCpyFn, CallArgs, CallArgs+5, "", TheCall);
-  
-  // If we have a call graph, update it.
-  if (CallGraph *CG = IFI.CG) {
-    CallGraphNode *MemCpyCGN = CG->getOrInsertFunction(MemCpyFn);
-    CallGraphNode *CallerNode = (*CG)[Caller];
-    CallerNode->addCalledFunction(TheMemCpy, MemCpyCGN);
-  }
+  CallInst::Create(MemCpyFn, CallArgs, CallArgs+5, "", TheCall);
   
   // Uses of the argument in the function should use our new alloca
   // instead.
@@ -767,12 +747,10 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
       if (hasLifetimeMarkers(AI))
         continue;
 
-      CallInst *StartCall = builder.CreateLifetimeStart(AI);
-      if (IFI.CG) CallerNode->addCalledFunction(StartCall, StartCGN);
+      builder.CreateLifetimeStart(AI);
       for (unsigned ri = 0, re = Returns.size(); ri != re; ++ri) {
         IRBuilder<> builder(Returns[ri]);
-        CallInst *EndCall = builder.CreateLifetimeEnd(AI);
-        if (IFI.CG) CallerNode->addCalledFunction(EndCall, EndCGN);
+        builder.CreateLifetimeEnd(AI);
       }
     }
   }
@@ -785,25 +763,14 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
     Function *StackSave = Intrinsic::getDeclaration(M, Intrinsic::stacksave);
     Function *StackRestore=Intrinsic::getDeclaration(M,Intrinsic::stackrestore);
 
-    // If we are preserving the callgraph, add edges to the stacksave/restore
-    // functions for the calls we insert.
-    CallGraphNode *StackSaveCGN = 0, *StackRestoreCGN = 0, *CallerNode = 0;
-    if (CallGraph *CG = IFI.CG) {
-      StackSaveCGN    = CG->getOrInsertFunction(StackSave);
-      StackRestoreCGN = CG->getOrInsertFunction(StackRestore);
-      CallerNode = (*CG)[Caller];
-    }
-
     // Insert the llvm.stacksave.
     CallInst *SavedPtr = CallInst::Create(StackSave, "savedstack",
                                           FirstNewBlock->begin());
-    if (IFI.CG) CallerNode->addCalledFunction(SavedPtr, StackSaveCGN);
 
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
-      CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", Returns[i]);
-      if (IFI.CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
+      CallInst::Create(StackRestore, SavedPtr, "", Returns[i]);
     }
 
     // Count the number of StackRestore calls we insert.
@@ -815,8 +782,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
       for (Function::iterator BB = FirstNewBlock, E = Caller->end();
            BB != E; ++BB)
         if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-          CallInst *CI = CallInst::Create(StackRestore, SavedPtr, "", UI);
-          if (IFI.CG) CallerNode->addCalledFunction(CI, StackRestoreCGN);
+          CallInst::Create(StackRestore, SavedPtr, "", UI);
           ++NumStackRestores;
         }
     }
