@@ -215,6 +215,7 @@ std::string sys::getHostCPUName() {
       case 37: // Intel Core i7, laptop version.
         return "corei7";
       case 42: // SandyBridge
+      case 45:
         return "corei7-avx";
 
       case 28: // Intel Atom processor. All processors are manufactured using
