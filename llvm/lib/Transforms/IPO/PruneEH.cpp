@@ -239,7 +239,7 @@ void PruneEH::DeleteBasicBlock(BasicBlock *BB) {
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; ) {
     --I;
     if (CallInst *CI = dyn_cast<CallInst>(I)) {
-      if (!isa<DbgInfoIntrinsic>(I))
+      if (!isa<IntrinsicInst>(I))
         CGN->removeCallEdgeFor(CI);
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
       CGN->removeCallEdgeFor(II);
