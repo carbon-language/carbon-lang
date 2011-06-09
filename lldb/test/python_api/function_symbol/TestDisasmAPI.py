@@ -102,18 +102,23 @@ class DisasmAPITestCase(TestBase):
 
         sa1 = symbol.GetStartAddress()
         #print "sa1:", sa1
+        print "sa1.GetFileAddress():", sa1.GetFileAddress()
         #ea1 = symbol.GetEndAddress()
         #print "ea1:", ea1
+        print "ea1.GetFileAddress():", sa1.GetFileAddress()
         sa2 = function.GetStartAddress()
         #print "sa2:", sa2
+        print "sa2.GetFileAddress():", sa2.GetFileAddress()
         #ea2 = function.GetEndAddress()
         #print "ea2:", ea2
+        self.assertTrue(sa1 and sa2 and sa1 == sa2,
+                        "The two starting addresses should be the same")
 
         from lldbutil import get_description
         desc1 = get_description(sa1)
         desc2 = get_description(sa2)
         self.assertTrue(desc1 and desc2 and desc1 == desc2,
-                        "The two starting addresses should be the same")
+                        "SBAddress.GetDescription() API of sa1 and sa2 should return the same string")
 
         
 if __name__ == '__main__':

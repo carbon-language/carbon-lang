@@ -88,7 +88,8 @@ d = { 'SBBreakpoint':  ('GetNumLocations',   'GetLocationAtIndex'),
 #
 # This dictionary defines a mapping from classname to equality method name(s).
 #
-e = { 'SBBreakpoint': ['GetID'],
+e = { 'SBAddress':    ['GetFileAddress', 'GetModule'],
+      'SBBreakpoint': ['GetID'],
       'SBFileSpec':   ['GetFilename', 'GetDirectory'],
       'SBModule':     ['GetFileSpec', 'GetUUIDString']
       }
