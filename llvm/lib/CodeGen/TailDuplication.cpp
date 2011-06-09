@@ -152,11 +152,11 @@ static void VerifyPHIs(MachineFunction &MF, bool CheckExtra) {
       for (unsigned i = 1, e = MI->getNumOperands(); i != e; i += 2) {
         MachineBasicBlock *PHIBB = MI->getOperand(i+1).getMBB();
         if (CheckExtra && !Preds.count(PHIBB)) {
-          // This is not a hard error.
           dbgs() << "Warning: malformed PHI in BB#" << MBB->getNumber()
                  << ": " << *MI;
           dbgs() << "  extra input from predecessor BB#"
                  << PHIBB->getNumber() << '\n';
+          llvm_unreachable(0);
         }
         if (PHIBB->getNumber() < 0) {
           dbgs() << "Malformed PHI in BB#" << MBB->getNumber() << ": " << *MI;
@@ -443,6 +443,13 @@ TailDuplicatePass::UpdateSuccessorsPHIs(MachineBasicBlock *FromBB, bool isDead,
         // This register is defined in the tail block.
         for (unsigned j = 0, ee = LI->second.size(); j != ee; ++j) {
           MachineBasicBlock *SrcBB = LI->second[j].first;
+          // If we didn't duplicate a bb into a particular predecessor, we
+          // might still have added an entry to SSAUpdateVals to correcly
+          // recompute SSA. If that case, avoid adding a dummy extra argument
+          // this PHI.
+          if (!SrcBB->isSuccessor(SuccBB))
+            continue;
+
           unsigned SrcReg = LI->second[j].second;
           if (Idx != 0) {
             II->getOperand(Idx).setReg(SrcReg);
