@@ -81,12 +81,14 @@ namespace {
     void ProcessPHI(MachineInstr *MI, MachineBasicBlock *TailBB,
                     MachineBasicBlock *PredBB,
                     DenseMap<unsigned, unsigned> &LocalVRMap,
-                    SmallVector<std::pair<unsigned,unsigned>, 4> &Copies);
+                    SmallVector<std::pair<unsigned,unsigned>, 4> &Copies,
+                    const DenseSet<unsigned> &UsedByPhi);
     void DuplicateInstruction(MachineInstr *MI,
                               MachineBasicBlock *TailBB,
                               MachineBasicBlock *PredBB,
                               MachineFunction &MF,
-                              DenseMap<unsigned, unsigned> &LocalVRMap);
+                              DenseMap<unsigned, unsigned> &LocalVRMap,
+                              const DenseSet<unsigned> &UsedByPhi);
     void UpdateSuccessorsPHIs(MachineBasicBlock *FromBB, bool isDead,
                               SmallVector<MachineBasicBlock*, 8> &TDBBs,
                               SmallSetVector<MachineBasicBlock*, 8> &Succs);
@@ -293,6 +295,24 @@ static unsigned getPHISrcRegOpIdx(MachineInstr *MI, MachineBasicBlock *SrcBB) {
   return 0;
 }
 
+
+// Remember which registers are used by phis in this block. This is
+// used to determine which registers are liveout while modifying the
+// block (which is why we need to copy the information).
+static void getRegsUsedByPHIs(const MachineBasicBlock &BB,
+			      DenseSet<unsigned> *UsedByPhi) {
+  for(MachineBasicBlock::const_iterator I = BB.begin(), E = BB.end();
+      I != E; ++I) {
+    const MachineInstr &MI = *I;
+    if (!MI.isPHI())
+      break;
+    for (unsigned i = 1, e = MI.getNumOperands(); i != e; i += 2) {
+      unsigned SrcReg = MI.getOperand(i).getReg();
+      UsedByPhi->insert(SrcReg);
+    }
+  }
+}
+
 /// AddSSAUpdateEntry - Add a definition and source virtual registers pair for
 /// SSA update.
 void TailDuplicatePass::AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg,
@@ -315,7 +335,8 @@ void TailDuplicatePass::ProcessPHI(MachineInstr *MI,
                                    MachineBasicBlock *TailBB,
                                    MachineBasicBlock *PredBB,
                                    DenseMap<unsigned, unsigned> &LocalVRMap,
-                         SmallVector<std::pair<unsigned,unsigned>, 4> &Copies) {
+                           SmallVector<std::pair<unsigned,unsigned>, 4> &Copies,
+				   const DenseSet<unsigned> &RegsUsedByPhi) {
   unsigned DefReg = MI->getOperand(0).getReg();
   unsigned SrcOpIdx = getPHISrcRegOpIdx(MI, PredBB);
   assert(SrcOpIdx && "Unable to find matching PHI source?");
@@ -327,7 +348,7 @@ void TailDuplicatePass::ProcessPHI(MachineInstr *MI,
   // available value liveout of the block.
   unsigned NewDef = MRI->createVirtualRegister(RC);
   Copies.push_back(std::make_pair(NewDef, SrcReg));
-  if (isDefLiveOut(DefReg, TailBB, MRI))
+  if (isDefLiveOut(DefReg, TailBB, MRI) || RegsUsedByPhi.count(DefReg))
     AddSSAUpdateEntry(DefReg, NewDef, PredBB);
 
   // Remove PredBB from the PHI node.
@@ -343,7 +364,8 @@ void TailDuplicatePass::DuplicateInstruction(MachineInstr *MI,
                                      MachineBasicBlock *TailBB,
                                      MachineBasicBlock *PredBB,
                                      MachineFunction &MF,
-                                     DenseMap<unsigned, unsigned> &LocalVRMap) {
+                                     DenseMap<unsigned, unsigned> &LocalVRMap,
+                                     const DenseSet<unsigned> &UsedByPhi) {
   MachineInstr *NewMI = TII->duplicate(MI, MF);
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);
@@ -357,7 +379,7 @@ void TailDuplicatePass::DuplicateInstruction(MachineInstr *MI,
       unsigned NewReg = MRI->createVirtualRegister(RC);
       MO.setReg(NewReg);
       LocalVRMap.insert(std::make_pair(Reg, NewReg));
-      if (isDefLiveOut(Reg, TailBB, MRI))
+      if (isDefLiveOut(Reg, TailBB, MRI) || UsedByPhi.count(Reg))
         AddSSAUpdateEntry(Reg, NewReg, PredBB);
     } else {
       DenseMap<unsigned, unsigned>::iterator VI = LocalVRMap.find(Reg);
@@ -531,6 +553,8 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   bool Changed = false;
   SmallSetVector<MachineBasicBlock*, 8> Preds(TailBB->pred_begin(),
                                               TailBB->pred_end());
+  DenseSet<unsigned> UsedByPhi;
+  getRegsUsedByPHIs(*TailBB, &UsedByPhi);
   for (SmallSetVector<MachineBasicBlock *, 8>::iterator PI = Preds.begin(),
        PE = Preds.end(); PI != PE; ++PI) {
     MachineBasicBlock *PredBB = *PI;
@@ -570,11 +594,11 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
       if (MI->isPHI()) {
         // Replace the uses of the def of the PHI with the register coming
         // from PredBB.
-        ProcessPHI(MI, TailBB, PredBB, LocalVRMap, CopyInfos);
+        ProcessPHI(MI, TailBB, PredBB, LocalVRMap, CopyInfos, UsedByPhi);
       } else {
         // Replace def of virtual registers with new registers, and update
         // uses with PHI source register or the new registers.
-        DuplicateInstruction(MI, TailBB, PredBB, MF, LocalVRMap);
+        DuplicateInstruction(MI, TailBB, PredBB, MF, LocalVRMap, UsedByPhi);
       }
     }
     MachineBasicBlock::iterator Loc = PredBB->getFirstTerminator();
@@ -620,7 +644,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
         // Replace the uses of the def of the PHI with the register coming
         // from PredBB.
         MachineInstr *MI = &*I++;
-        ProcessPHI(MI, TailBB, PrevBB, LocalVRMap, CopyInfos);
+        ProcessPHI(MI, TailBB, PrevBB, LocalVRMap, CopyInfos, UsedByPhi);
         if (MI->getParent())
           MI->eraseFromParent();
       }
@@ -630,7 +654,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
         // Replace def of virtual registers with new registers, and update
         // uses with PHI source register or the new registers.
         MachineInstr *MI = &*I++;
-        DuplicateInstruction(MI, TailBB, PrevBB, MF, LocalVRMap);
+        DuplicateInstruction(MI, TailBB, PrevBB, MF, LocalVRMap, UsedByPhi);
         MI->eraseFromParent();
       }
       MachineBasicBlock::iterator Loc = PrevBB->getFirstTerminator();
