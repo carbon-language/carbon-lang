@@ -37,17 +37,6 @@ using namespace llvm;
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "reloc-info"
 
-// FIXME: This switch must be removed. Since GNU as does not
-// need a command line switch for doing its wierd thing with PIC,
-// LLVM should not need it either.
-// --
-// Emulate the wierd behavior of GNU-as for relocation types
-namespace llvm {
-cl::opt<bool>
-ForceARMElfPIC("arm-elf-force-pic", cl::Hidden, cl::init(false),
-               cl::desc("Force ELF emitter to emit PIC style relocations"));
-}
-
 bool ELFObjectWriter::isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind) {
   const MCFixupKindInfo &FKI =
     Asm.getBackend().getFixupKindInfo((MCFixupKind) Kind);
@@ -1321,7 +1310,7 @@ const MCSymbol *ARMELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
         << Symbol.isVariable() << "/" << Symbol.isTemporary()
         << " Counts:" << PCRelCount << "/" << NonPCRelCount << "\n");
 
-  if (IsPCRel || ForceARMElfPIC) { ++PCRelCount;
+  if (IsPCRel) { ++PCRelCount;
     switch (RelocType) {
     default:
       // Most relocation types are emitted as explicit symbols
