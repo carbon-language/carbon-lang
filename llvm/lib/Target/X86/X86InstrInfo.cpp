@@ -2392,6 +2392,10 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       return 0;
     }
 
+  // Conservatively fail out for loads without a memoperand.
+  if (LoadMI->memoperands_empty())
+    return 0;
+
   // Determine the alignment of the load.
   unsigned Alignment = 0;
   if (LoadMI->hasOneMemOperand())
