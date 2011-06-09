@@ -102,13 +102,12 @@ class DisasmAPITestCase(TestBase):
 
         sa1 = symbol.GetStartAddress()
         #print "sa1:", sa1
-        print "sa1.GetFileAddress():", sa1.GetFileAddress()
+        #print "sa1.GetFileAddress():", hex(sa1.GetFileAddress())
         #ea1 = symbol.GetEndAddress()
         #print "ea1:", ea1
-        print "ea1.GetFileAddress():", sa1.GetFileAddress()
         sa2 = function.GetStartAddress()
         #print "sa2:", sa2
-        print "sa2.GetFileAddress():", sa2.GetFileAddress()
+        #print "sa2.GetFileAddress():", hex(sa2.GetFileAddress())
         #ea2 = function.GetEndAddress()
         #print "ea2:", ea2
         self.assertTrue(sa1 and sa2 and sa1 == sa2,
