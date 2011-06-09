@@ -1398,9 +1398,14 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
     for (unsigned ti = 0, te = TypeVec.size(); ti != te; ++ti) {
       std::string namestr, shiftstr, rangestr;
 
-      // Builtins which are overloaded by type will need to have their upper
-      // bound computed at Sema time based on the type constant.
-      if (Proto.find('s') == std::string::npos) {
+      if (R->getValueAsBit("isVCVT_N")) {
+        // VCVT between floating- and fixed-point values takes an immediate
+        // in the range 1 to 32.
+        ck = ClassB;
+        rangestr = "l = 1; u = 31"; // upper bound = l + u
+      } else if (Proto.find('s') == std::string::npos) {
+        // Builtins which are overloaded by type will need to have their upper
+        // bound computed at Sema time based on the type constant.
         ck = ClassB;
         if (R->getValueAsBit("isShift")) {
           shiftstr = ", true";
