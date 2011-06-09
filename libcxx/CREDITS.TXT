@@ -16,3 +16,7 @@ N: Marshall Clow
 E: marshall@idio.com
 E: mclow@qualcomm.com
 D: Minor patches and bug fixes.
+
+N: Bjorn Reese
+E: breese@users.sourceforge.net
+D: Initial regex prototype
