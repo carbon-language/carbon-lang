@@ -91,7 +91,7 @@ int main() {
   // Now, function add1 is ready.
 
 
-  // Now we going to create function `foo', which returns an int and takes no
+  // Now we're going to create function `foo', which returns an int and takes no
   // arguments.
   Function *FooF =
     cast<Function>(M->getOrInsertFunction("foo", Type::getInt32Ty(Context),
