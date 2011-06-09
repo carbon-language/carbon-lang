@@ -41,9 +41,11 @@ entry:
 
 ; CHECK: test2
 ; CHECK-NOT: alloca
-; CHECK: insertelement <2 x float> zeroinitializer
-; CHECK: extractelement <2 x float> %tmp2
-; CHECK: extractelement <2 x float> %tmp2
+; CHECK: and i128
+; CHECK: or i128
+; CHECK: trunc i128
+; CHECK-NOT: insertelement
+; CHECK-NOT: extractelement
 
 define float @test2() uwtable ssp {
 entry:

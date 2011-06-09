@@ -342,7 +342,10 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset,
     // If we're accessing something that could be an element of a vector, see
     // if the implied vector agrees with what we already have and if Offset is
     // compatible with it.
-    if (Offset % EltSize == 0 && AllocaSize % EltSize == 0) {
+    if (Offset % EltSize == 0 && AllocaSize % EltSize == 0 &&
+        Offset * 8 <
+          (VectorTy ? VectorTy->getPrimitiveSizeInBits()
+                    : (AllocaSize / EltSize) * In->getPrimitiveSizeInBits())) {
       if (!VectorTy) {
         VectorTy = VectorType::get(In, AllocaSize/EltSize);
         return;
