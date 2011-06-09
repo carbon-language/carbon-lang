@@ -91,6 +91,8 @@ namespace {
                               SmallVector<MachineBasicBlock*, 8> &TDBBs,
                               SmallSetVector<MachineBasicBlock*, 8> &Succs);
     bool TailDuplicateBlocks(MachineFunction &MF);
+    bool shouldTailDuplicate(const MachineFunction &MF,
+                             MachineBasicBlock &TailBB);
     bool TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
                        SmallVector<MachineBasicBlock*, 8> &TDBBs,
                        SmallVector<MachineInstr*, 16> &Copies);
@@ -183,10 +185,6 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
 
     if (NumTails == TailDupLimit)
       break;
-
-    // Only duplicate blocks that end with unconditional branches.
-    if (MBB->canFallThrough())
-      continue;
 
     // Save the successors list.
     SmallSetVector<MachineBasicBlock*, 8> Succs(MBB->succ_begin(),
@@ -450,14 +448,15 @@ TailDuplicatePass::UpdateSuccessorsPHIs(MachineBasicBlock *FromBB, bool isDead,
   }
 }
 
-/// TailDuplicate - If it is profitable, duplicate TailBB's contents in each
-/// of its predecessors.
+/// shouldTailDuplicate - Determine if it is profitable to duplicate this block.
 bool
-TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
-                                 SmallVector<MachineBasicBlock*, 8> &TDBBs,
-                                 SmallVector<MachineInstr*, 16> &Copies) {
-  // Set the limit on the number of instructions to duplicate, with a default
-  // of one less than the tail-merge threshold. When optimizing for size,
+TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
+                                       MachineBasicBlock &TailBB) {
+  // Only duplicate blocks that end with unconditional branches.
+  if (TailBB.canFallThrough())
+    return false;
+
+  // Set the limit on the cost to duplicate. When optimizing for size,
   // duplicate only one, because one branch instruction can be eliminated to
   // compensate for the duplication.
   unsigned MaxDuplicateCount;
@@ -468,12 +467,12 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
     MaxDuplicateCount = TailDuplicateSize;
 
   if (PreRegAlloc) {
-    if (TailBB->empty())
+    if (TailBB.empty())
       return false;
-    const TargetInstrDesc &TID = TailBB->back().getDesc();
+    const TargetInstrDesc &TID = TailBB.back().getDesc();
     // Pre-regalloc tail duplication hurts compile time and doesn't help
-    // much except for indirect branches and returns.
-    if (!TID.isIndirectBranch() && !TID.isReturn())
+    // much except for indirect branches.
+    if (!TID.isIndirectBranch())
       return false;
     // If the target has hardware branch prediction that can handle indirect
     // branches, duplicating them can often make them predictable when there
@@ -484,15 +483,15 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   }
 
   // Don't try to tail-duplicate single-block loops.
-  if (TailBB->isSuccessor(TailBB))
+  if (TailBB.isSuccessor(&TailBB))
     return false;
 
   // Check the instructions in the block to determine whether tail-duplication
   // is invalid or unlikely to be profitable.
   unsigned InstrCount = 0;
   bool HasCall = false;
-  for (MachineBasicBlock::iterator I = TailBB->begin();
-       I != TailBB->end(); ++I) {
+  for (MachineBasicBlock::const_iterator I = TailBB.begin(); I != TailBB.end();
+       ++I) {
     // Non-duplicable things shouldn't be tail-duplicated.
     if (I->getDesc().isNotDuplicable()) return false;
     // Do not duplicate 'return' instructions if this is a pre-regalloc run.
@@ -510,6 +509,18 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   // barrier to register allocation so duplicating them may end up increasing
   // spills.
   if (InstrCount > 1 && (PreRegAlloc && HasCall))
+    return false;
+
+  return true;
+}
+
+/// TailDuplicate - If it is profitable, duplicate TailBB's contents in each
+/// of its predecessors.
+bool
+TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
+                                 SmallVector<MachineBasicBlock*, 8> &TDBBs,
+                                 SmallVector<MachineInstr*, 16> &Copies) {
+  if (!shouldTailDuplicate(MF, *TailBB))
     return false;
 
   DEBUG(dbgs() << "\n*** Tail-duplicating BB#" << TailBB->getNumber() << '\n');
