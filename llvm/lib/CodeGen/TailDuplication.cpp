@@ -691,13 +691,13 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
 
   // Handle the nasty case in that we duplicated a block that is part of a loop
   // into some but not all of its predecessors. For example:
-  //    1 -> 2 <-> 3
-  //          \
-  //           \---> rest
+  //    1 -> 2 <-> 3                 |
+  //          \                      |
+  //           \---> rest            |
   // if we duplicate 2 into 1 but not into 3, we end up with
-  // 12 -> 3 <-> 2 -> rest
-  //   \             /
-  //    \----->-----/
+  // 12 -> 3 <-> 2 -> rest           |
+  //   \             /               |
+  //    \----->-----/                |
   // If there was a "var = phi(1, 3)" in 2, it has to be ultimately replaced
   // with a phi in 3 (which now dominates 2).
   // What we do here is introduce a copy in 3 of the register defined by the
