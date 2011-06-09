@@ -27,7 +27,6 @@ namespace llvm {
 class MipsFunctionInfo : public MachineFunctionInfo {
 
 private:
-  MachineFunction& MF;
   /// SRetReturnReg - Some subtargets require that sret lowering includes
   /// returning the value of the returned struct in a register. This field
   /// holds the virtual register into which the sret argument is passed.
@@ -48,7 +47,6 @@ private:
   //                LowerCall except for the frame object for restoring $gp. 
   std::pair<int, int> InArgFIRange, OutArgFIRange;
   int GPFI; // Index of the frame object for restoring $gp 
-  mutable int DynAllocFI; // Frame index of dynamically allocated stack area.   
   unsigned MaxCallFrameSize;
 
   /// AtomicFrameIndex - To implement atomic.swap and atomic.cmp.swap
@@ -57,10 +55,10 @@ private:
   int AtomicFrameIndex;
 public:
   MipsFunctionInfo(MachineFunction& MF)
-  : MF(MF), SRetReturnReg(0), GlobalBaseReg(0),
+  : SRetReturnReg(0), GlobalBaseReg(0),
     VarArgsFrameIndex(0), InArgFIRange(std::make_pair(-1, 0)),
-    OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), DynAllocFI(0),
-    MaxCallFrameSize(0), AtomicFrameIndex(-1)
+    OutArgFIRange(std::make_pair(-1, 0)), GPFI(0), MaxCallFrameSize(0),
+    AtomicFrameIndex(-1)
   {}
 
   bool isInArgFI(int FI) const {
@@ -82,16 +80,6 @@ public:
   void setGPFI(int FI) { GPFI = FI; }
   bool needGPSaveRestore() const { return getGPFI(); }
   bool isGPFI(int FI) const { return GPFI && GPFI == FI; }
-
-  // The first call to this function creates a frame object for dynamically
-  // allocated stack area.
-  int getDynAllocFI() const {
-    if (!DynAllocFI)
-      DynAllocFI = MF.getFrameInfo()->CreateFixedObject(4, 0, true);
-
-    return DynAllocFI;
-  }
-  bool isDynAllocFI(int FI) const { return DynAllocFI && DynAllocFI == FI; }
 
   unsigned getSRetReturnReg() const { return SRetReturnReg; }
   void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }

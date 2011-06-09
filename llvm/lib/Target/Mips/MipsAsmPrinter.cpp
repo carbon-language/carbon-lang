@@ -56,9 +56,6 @@ namespace {
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode,
                          raw_ostream &O);
-    bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
-                               unsigned AsmVariant, const char *ExtraCode,
-                               raw_ostream &O);
     void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
     void printUnsignedImm(const MachineInstr *MI, int opNum, raw_ostream &O);
     void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
@@ -304,19 +301,6 @@ bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     return true; // Unknown modifier.
 
   printOperand(MI, OpNo, O);
-  return false;
-}
-
-bool MipsAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
-                                           unsigned OpNum, unsigned AsmVariant,
-                                           const char *ExtraCode,
-                                           raw_ostream &O) {
-  if (ExtraCode && ExtraCode[0])
-     return true; // Unknown modifier.
-   
-  const MachineOperand &MO = MI->getOperand(OpNum);
-  assert(MO.isReg() && "unexpected inline asm memory operand");
-  O << "0($" << MipsAsmPrinter::getRegisterName(MO.getReg()) << ")";
   return false;
 }
 

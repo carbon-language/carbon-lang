@@ -177,14 +177,12 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   int Offset;
 
   // Calculate final offset.
-  // - There is no need to change the offset if the frame object is one of the
-  //   following: an outgoing argument, pointer to a dynamically allocated
-  //   stack space or a $gp restore location,
+  // - There is no need to change the offset if the frame object is an outgoing
+  //   argument or a $gp restore location,
   // - If the frame object is any of the following, its offset must be adjusted
   //   by adding the size of the stack:
   //   incoming argument, callee-saved register location or local variable.  
-  if (MipsFI->isOutArgFI(FrameIndex) || MipsFI->isGPFI(FrameIndex) ||
-      MipsFI->isDynAllocFI(FrameIndex))
+  if (MipsFI->isOutArgFI(FrameIndex) || MipsFI->isGPFI(FrameIndex))
     Offset = spOffset;
   else
     Offset = spOffset + stackSize;
@@ -213,7 +211,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   //  3. Locations for callee-saved registers.
   // Everything else is referenced relative to whatever register 
   // getFrameRegister() returns.
-  if (MipsFI->isOutArgFI(FrameIndex) || MipsFI->isDynAllocFI(FrameIndex) ||
+  if (MipsFI->isOutArgFI(FrameIndex) ||
       (FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI))
     FrameReg = Mips::SP;
   else
