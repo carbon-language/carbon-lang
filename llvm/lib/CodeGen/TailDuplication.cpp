@@ -301,7 +301,7 @@ static unsigned getPHISrcRegOpIdx(MachineInstr *MI, MachineBasicBlock *SrcBB) {
 // used to determine which registers are liveout while modifying the
 // block (which is why we need to copy the information).
 static void getRegsUsedByPHIs(const MachineBasicBlock &BB,
-			      DenseSet<unsigned> *UsedByPhi) {
+                              DenseSet<unsigned> *UsedByPhi) {
   for(MachineBasicBlock::const_iterator I = BB.begin(), E = BB.end();
       I != E; ++I) {
     const MachineInstr &MI = *I;
@@ -337,7 +337,7 @@ void TailDuplicatePass::ProcessPHI(MachineInstr *MI,
                                    MachineBasicBlock *PredBB,
                                    DenseMap<unsigned, unsigned> &LocalVRMap,
                            SmallVector<std::pair<unsigned,unsigned>, 4> &Copies,
-				   const DenseSet<unsigned> &RegsUsedByPhi,
+                                   const DenseSet<unsigned> &RegsUsedByPhi,
                                    bool Remove) {
   unsigned DefReg = MI->getOperand(0).getReg();
   unsigned SrcOpIdx = getPHISrcRegOpIdx(MI, PredBB);
@@ -753,4 +753,3 @@ void TailDuplicatePass::RemoveDeadBlock(MachineBasicBlock *MBB) {
   // Remove the block.
   MBB->eraseFromParent();
 }
-
