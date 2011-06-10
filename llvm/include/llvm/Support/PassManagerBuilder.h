@@ -32,8 +32,8 @@ namespace llvm {
 /// sequence for languages like C and C++, allowing some APIs to customize the
 /// pass sequence in various ways. A simple example of using it would be:
 ///
-///  OptimizerBuilder Builder;
-///  Builder.setOptimizationLevel(2);
+///  PassManagerBuilder Builder;
+///  Builder.OptLevel = 2;
 ///  Builder.populateFunctionPassManager(FPM);
 ///  Builder.populateModulePassManager(MPM);
 ///
