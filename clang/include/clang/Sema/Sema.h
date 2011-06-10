@@ -1669,9 +1669,12 @@ public:
 
   DeclContextLookupResult LookupConstructors(CXXRecordDecl *Class);
   CXXConstructorDecl *LookupDefaultConstructor(CXXRecordDecl *Class);
-  CXXConstructorDecl *LookupCopyConstructor(CXXRecordDecl *Class,
-                                            unsigned Quals,
-                                            bool *ConstParam = 0);
+  CXXConstructorDecl *LookupCopyingConstructor(CXXRecordDecl *Class,
+                                               unsigned Quals,
+                                               bool *ConstParam = 0);
+  CXXMethodDecl *LookupCopyingAssignment(CXXRecordDecl *Class, unsigned Quals,
+                                         bool RValueThis, unsigned ThisQuals,
+                                         bool *ConstParam = 0);
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,

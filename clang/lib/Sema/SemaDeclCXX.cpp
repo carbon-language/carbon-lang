@@ -3523,7 +3523,7 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
     //    resolution, as applied to B's [copy] constructor, results in an
     //    ambiguity or a function that is deleted or inaccessible from the
     //    defaulted constructor
-    CXXConstructorDecl *BaseCtor = LookupCopyConstructor(BaseDecl, ArgQuals);
+    CXXConstructorDecl *BaseCtor = LookupCopyingConstructor(BaseDecl, ArgQuals);
     if (!BaseCtor || BaseCtor->isDeleted())
       return true;
     if (CheckConstructorAccess(Loc, BaseCtor, BaseCtor->getAccess(), PDiag()) !=
@@ -3551,7 +3551,7 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
     //    resolution, as applied to B's [copy] constructor, results in an
     //    ambiguity or a function that is deleted or inaccessible from the
     //    defaulted constructor
-    CXXConstructorDecl *BaseCtor = LookupCopyConstructor(BaseDecl, ArgQuals);
+    CXXConstructorDecl *BaseCtor = LookupCopyingConstructor(BaseDecl, ArgQuals);
     if (!BaseCtor || BaseCtor->isDeleted())
       return true;
     if (CheckConstructorAccess(Loc, BaseCtor, BaseCtor->getAccess(), PDiag()) !=
@@ -3613,8 +3613,8 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
     //    cannot be [copied] because overload resolution, as applied to B's
     //    [copy] constructor, results in an ambiguity or a function that is
     //    deleted or inaccessible from the defaulted constructor
-      CXXConstructorDecl *FieldCtor = LookupCopyConstructor(FieldRecord,
-                                                            ArgQuals);
+      CXXConstructorDecl *FieldCtor = LookupCopyingConstructor(FieldRecord,
+                                                               ArgQuals);
       if (!FieldCtor || FieldCtor->isDeleted())
         return true;
       if (CheckConstructorAccess(Loc, FieldCtor, FieldCtor->getAccess(),
@@ -3639,18 +3639,14 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
 
   bool Union = RD->isUnion();
 
-  bool ConstArg =
-    MD->getParamDecl(0)->getType()->getPointeeType().isConstQualified();
+  unsigned ArgQuals =
+    MD->getParamDecl(0)->getType()->getPointeeType().isConstQualified() ?
+      Qualifiers::Const : 0;
 
   // We do this because we should never actually use an anonymous
   // union's constructor.
   if (Union && RD->isAnonymousStructOrUnion())
     return false;
-
-  DeclarationName OperatorName =
-    Context.DeclarationNames.getCXXOperatorName(OO_Equal);
-  LookupResult R(*this, OperatorName, Loc, LookupOrdinaryName);
-  R.suppressDiagnostics();
 
   // FIXME: We should put some diagnostic logic right into this function.
 
@@ -3673,37 +3669,11 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
     //    resolution, as applied to B's [copy] assignment operator, results in
     //    an ambiguity or a function that is deleted or inaccessible from the
     //    assignment operator
-
-    LookupQualifiedName(R, BaseDecl, false);
-
-    // Filter out any result that isn't a copy-assignment operator.
-    LookupResult::Filter F = R.makeFilter();
-    while (F.hasNext()) {
-      NamedDecl *D = F.next();
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
-        if (Method->isCopyAssignmentOperator())
-          continue;
-      
-      F.erase();
-    }
-    F.done();
- 
-    // Build a fake argument expression
-    QualType ArgType = BaseType;
-    QualType ThisType = BaseType;
-    if (ConstArg)
-      ArgType.addConst();
-    Expr *Args[] = { new (Context) OpaqueValueExpr(Loc, ThisType, VK_LValue)
-                   , new (Context) OpaqueValueExpr(Loc, ArgType, VK_LValue)
-                   };
-
-    OverloadCandidateSet OCS((Loc));
-    OverloadCandidateSet::iterator Best;
-
-    AddFunctionCandidates(R.asUnresolvedSet(), Args, 2, OCS);
-
-    if (OCS.BestViableFunction(*this, Loc, Best, false) !=
-        OR_Success)
+    CXXMethodDecl *CopyOper = LookupCopyingAssignment(BaseDecl, ArgQuals, false,
+                                                      0);
+    if (!CopyOper || CopyOper->isDeleted())
+      return true;
+    if (CheckDirectMemberAccess(Loc, CopyOper, PDiag()) != AR_accessible)
       return true;
   }
 
@@ -3718,37 +3688,11 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
     //    resolution, as applied to B's [copy] assignment operator, results in
     //    an ambiguity or a function that is deleted or inaccessible from the
     //    assignment operator
-
-    LookupQualifiedName(R, BaseDecl, false);
-
-    // Filter out any result that isn't a copy-assignment operator.
-    LookupResult::Filter F = R.makeFilter();
-    while (F.hasNext()) {
-      NamedDecl *D = F.next();
-      if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
-        if (Method->isCopyAssignmentOperator())
-          continue;
-      
-      F.erase();
-    }
-    F.done();
- 
-    // Build a fake argument expression
-    QualType ArgType = BaseType;
-    QualType ThisType = BaseType;
-    if (ConstArg)
-      ArgType.addConst();
-    Expr *Args[] = { new (Context) OpaqueValueExpr(Loc, ThisType, VK_LValue)
-                   , new (Context) OpaqueValueExpr(Loc, ArgType, VK_LValue)
-                   };
-
-    OverloadCandidateSet OCS((Loc));
-    OverloadCandidateSet::iterator Best;
-
-    AddFunctionCandidates(R.asUnresolvedSet(), Args, 2, OCS);
-
-    if (OCS.BestViableFunction(*this, Loc, Best, false) !=
-        OR_Success)
+    CXXMethodDecl *CopyOper = LookupCopyingAssignment(BaseDecl, ArgQuals, false,
+                                                      0);
+    if (!CopyOper || CopyOper->isDeleted())
+      return true;
+    if (CheckDirectMemberAccess(Loc, CopyOper, PDiag()) != AR_accessible)
       return true;
   }
 
@@ -3795,37 +3739,12 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
           return true;
       }
 
-      LookupQualifiedName(R, FieldRecord, false);
-
-      // Filter out any result that isn't a copy-assignment operator.
-      LookupResult::Filter F = R.makeFilter();
-      while (F.hasNext()) {
-        NamedDecl *D = F.next();
-        if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
-          if (Method->isCopyAssignmentOperator())
-            continue;
-        
-        F.erase();
-      }
-      F.done();
-   
-      // Build a fake argument expression
-      QualType ArgType = FieldType;
-      QualType ThisType = FieldType;
-      if (ConstArg)
-        ArgType.addConst();
-      Expr *Args[] = { new (Context) OpaqueValueExpr(Loc, ThisType, VK_LValue)
-                     , new (Context) OpaqueValueExpr(Loc, ArgType, VK_LValue)
-                     };
-
-      OverloadCandidateSet OCS((Loc));
-      OverloadCandidateSet::iterator Best;
-
-      AddFunctionCandidates(R.asUnresolvedSet(), Args, 2, OCS);
-
-      if (OCS.BestViableFunction(*this, Loc, Best, false) !=
-          OR_Success)
-        return true;
+      CXXMethodDecl *CopyOper = LookupCopyingAssignment(FieldRecord, ArgQuals,
+                                                        false, 0);
+      if (!CopyOper || CopyOper->isDeleted())
+        return false;
+      if (CheckDirectMemberAccess(Loc, CopyOper, PDiag()) != AR_accessible)
+        return false;
     }
   }
 
@@ -6514,58 +6433,6 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
                         Loc, Copy.take());
 }
 
-/// \brief Determine whether the given class has a copy assignment operator 
-/// that accepts a const-qualified argument.
-static bool hasConstCopyAssignment(Sema &S, const CXXRecordDecl *CClass) {
-  CXXRecordDecl *Class = const_cast<CXXRecordDecl *>(CClass);
-  
-  if (!Class->hasDeclaredCopyAssignment())
-    S.DeclareImplicitCopyAssignment(Class);
-  
-  QualType ClassType = S.Context.getCanonicalType(S.Context.getTypeDeclType(Class));
-  DeclarationName OpName 
-    = S.Context.DeclarationNames.getCXXOperatorName(OO_Equal);
-    
-  DeclContext::lookup_const_iterator Op, OpEnd;
-  for (llvm::tie(Op, OpEnd) = Class->lookup(OpName); Op != OpEnd; ++Op) {
-    // C++ [class.copy]p9:
-    //   A user-declared copy assignment operator is a non-static non-template
-    //   member function of class X with exactly one parameter of type X, X&,
-    //   const X&, volatile X& or const volatile X&.
-    const CXXMethodDecl* Method = dyn_cast<CXXMethodDecl>(*Op);
-    if (!Method)
-      continue;
-    
-    if (Method->isStatic())
-      continue;
-    if (Method->getPrimaryTemplate())
-      continue;
-    const FunctionProtoType *FnType =
-    Method->getType()->getAs<FunctionProtoType>();
-    assert(FnType && "Overloaded operator has no prototype.");
-    // Don't assert on this; an invalid decl might have been left in the AST.
-    if (FnType->getNumArgs() != 1 || FnType->isVariadic())
-      continue;
-    bool AcceptsConst = true;
-    QualType ArgType = FnType->getArgType(0);
-    if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>()){
-      ArgType = Ref->getPointeeType();
-      // Is it a non-const lvalue reference?
-      if (!ArgType.isConstQualified())
-        AcceptsConst = false;
-    }
-    if (!S.Context.hasSameUnqualifiedType(ArgType, ClassType))
-      continue;
-    
-    // We have a single argument of type cv X or cv X&, i.e. we've found the
-    // copy assignment operator. Return whether it accepts const arguments.
-    return AcceptsConst;
-  }
-  assert(Class->isInvalidDecl() &&
-         "No copy assignment operator declared in valid code.");
-  return false;  
-}
-
 std::pair<Sema::ImplicitExceptionSpecification, bool>
 Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
                                                    CXXRecordDecl *ClassDecl) {
@@ -6586,11 +6453,28 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
                                        BaseEnd = ClassDecl->bases_end();
        HasConstCopyAssignment && Base != BaseEnd; ++Base) {
+    // We'll handle this below
+    if (LangOpts.CPlusPlus0x && Base->isVirtual())
+      continue;
+
     assert(!Base->getType()->isDependentType() &&
            "Cannot generate implicit members for class with dependent bases.");
-    const CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    HasConstCopyAssignment = hasConstCopyAssignment(*this, BaseClassDecl);
+    CXXRecordDecl *BaseClassDecl = Base->getType()->getAsCXXRecordDecl();
+    LookupCopyingAssignment(BaseClassDecl, Qualifiers::Const, false, 0,
+                            &HasConstCopyAssignment);
+  }
+
+  // In C++0x, the above citation has "or virtual added"
+  if (LangOpts.CPlusPlus0x) {
+    for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
+                                         BaseEnd = ClassDecl->vbases_end();
+         HasConstCopyAssignment && Base != BaseEnd; ++Base) {
+      assert(!Base->getType()->isDependentType() &&
+             "Cannot generate implicit members for class with dependent bases.");
+      CXXRecordDecl *BaseClassDecl = Base->getType()->getAsCXXRecordDecl();
+      LookupCopyingAssignment(BaseClassDecl, Qualifiers::Const, false, 0,
+                              &HasConstCopyAssignment);
+    }
   }
   
   //       -- for all the nonstatic data members of X that are of a class
@@ -6602,10 +6486,9 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
        HasConstCopyAssignment && Field != FieldEnd;
        ++Field) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      const CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      HasConstCopyAssignment = hasConstCopyAssignment(*this, FieldClassDecl);
+    if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
+      LookupCopyingAssignment(FieldClassDecl, Qualifiers::Const, false, 0,
+                              &HasConstCopyAssignment);
     }
   }
   
@@ -6617,35 +6500,47 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
   // C++ [except.spec]p14:
   //   An implicitly declared special member function (Clause 12) shall have an 
   //   exception-specification. [...]
+
+  // It is unspecified whether or not an implicit copy assignment operator
+  // attempts to deduplicate calls to assignment operators of virtual bases are
+  // made. As such, this exception specification is effectively unspecified.
+  // Based on a similar decision made for constness in C++0x, we're erring on
+  // the side of assuming such calls to be made regardless of whether they
+  // actually happen.
   ImplicitExceptionSpecification ExceptSpec(Context);
+  unsigned ArgQuals = HasConstCopyAssignment ? Qualifiers::Const : 0;
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
                                        BaseEnd = ClassDecl->bases_end();
        Base != BaseEnd; ++Base) {
+    if (Base->isVirtual())
+      continue;
+
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    
-    if (!BaseClassDecl->hasDeclaredCopyAssignment())
-      DeclareImplicitCopyAssignment(BaseClassDecl);
-
-    if (CXXMethodDecl *CopyAssign
-           = BaseClassDecl->getCopyAssignmentOperator(HasConstCopyAssignment))
+    if (CXXMethodDecl *CopyAssign = LookupCopyingAssignment(BaseClassDecl,
+                                                            ArgQuals, false, 0))
       ExceptSpec.CalledDecl(CopyAssign);
   }
+
+  for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
+                                       BaseEnd = ClassDecl->vbases_end();
+       Base != BaseEnd; ++Base) {
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
+    if (CXXMethodDecl *CopyAssign = LookupCopyingAssignment(BaseClassDecl,
+                                                            ArgQuals, false, 0))
+      ExceptSpec.CalledDecl(CopyAssign);
+  }
+
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
                                   FieldEnd = ClassDecl->field_end();
        Field != FieldEnd;
        ++Field) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      
-      if (!FieldClassDecl->hasDeclaredCopyAssignment())
-        DeclareImplicitCopyAssignment(FieldClassDecl);
-
-      if (CXXMethodDecl *CopyAssign
-            = FieldClassDecl->getCopyAssignmentOperator(HasConstCopyAssignment))
-        ExceptSpec.CalledDecl(CopyAssign);      
+    if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
+      if (CXXMethodDecl *CopyAssign =
+          LookupCopyingAssignment(FieldClassDecl, ArgQuals, false, 0))
+        ExceptSpec.CalledDecl(CopyAssign);
     }      
   }
 
@@ -7029,8 +6924,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    LookupCopyConstructor(BaseClassDecl, Qualifiers::Const,
-                          &HasConstCopyConstructor);
+    LookupCopyingConstructor(BaseClassDecl, Qualifiers::Const,
+                             &HasConstCopyConstructor);
   }
 
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
@@ -7039,8 +6934,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
        ++Base) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    LookupCopyConstructor(BaseClassDecl, Qualifiers::Const,
-                          &HasConstCopyConstructor);
+    LookupCopyingConstructor(BaseClassDecl, Qualifiers::Const,
+                             &HasConstCopyConstructor);
   }
   
   //     -- for all the nonstatic data members of X that are of a
@@ -7053,8 +6948,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
        ++Field) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
-      LookupCopyConstructor(FieldClassDecl, Qualifiers::Const,
-                            &HasConstCopyConstructor);
+      LookupCopyingConstructor(FieldClassDecl, Qualifiers::Const,
+                               &HasConstCopyConstructor);
     }
   }
   //   Otherwise, the implicitly declared copy constructor will have
@@ -7078,7 +6973,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXConstructorDecl *CopyConstructor =
-          LookupCopyConstructor(BaseClassDecl, Quals))
+          LookupCopyingConstructor(BaseClassDecl, Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
   }
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
@@ -7088,7 +6983,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXConstructorDecl *CopyConstructor =
-          LookupCopyConstructor(BaseClassDecl, Quals))
+          LookupCopyingConstructor(BaseClassDecl, Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
   }
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -7098,7 +6993,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
     if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
       if (CXXConstructorDecl *CopyConstructor =
-        LookupCopyConstructor(FieldClassDecl, Quals))
+        LookupCopyingConstructor(FieldClassDecl, Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
     }
   }
