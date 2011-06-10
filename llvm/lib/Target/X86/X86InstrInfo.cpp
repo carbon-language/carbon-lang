@@ -2420,7 +2420,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       Alignment = 4;
       break;
     default:
-      llvm_unreachable("Don't know how to fold this instruction!");
+      return 0;
     }
   if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
     unsigned NewOpc = 0;
