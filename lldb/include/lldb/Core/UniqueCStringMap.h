@@ -175,7 +175,7 @@ public:
     // Get the total number of entries in this map.
     //------------------------------------------------------------------
     size_t
-    GetSize ()
+    GetSize () const
     {
         return m_map.size();
     }
