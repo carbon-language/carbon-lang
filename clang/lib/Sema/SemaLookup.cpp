@@ -2303,9 +2303,25 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
 
 /// \brief Look up the default constructor for the given class.
 CXXConstructorDecl *Sema::LookupDefaultConstructor(CXXRecordDecl *Class) {
-  SpecialMemberOverloadResult *Result = 
+  SpecialMemberOverloadResult *Result =
     LookupSpecialMember(Class, CXXDefaultConstructor, false, false, false,
                         false, false);
+
+  return cast_or_null<CXXConstructorDecl>(Result->getMethod());
+}
+
+/// \brief Look up the copy constructor for the given class.
+CXXConstructorDecl *Sema::LookupCopyConstructor(CXXRecordDecl *Class,
+                                                unsigned Quals,
+                                                bool *ConstParamMatch) {
+  assert(!(Quals & ~(Qualifiers::Const | Qualifiers::Volatile)) &&
+         "non-const, non-volatile qualifiers for copy ctor arg");
+  SpecialMemberOverloadResult *Result =
+    LookupSpecialMember(Class, CXXCopyConstructor, Quals & Qualifiers::Const,
+                        Quals & Qualifiers::Volatile, false, false, false);
+
+  if (ConstParamMatch)
+    *ConstParamMatch = Result->hasConstParamMatch();
 
   return cast_or_null<CXXConstructorDecl>(Result->getMethod());
 }

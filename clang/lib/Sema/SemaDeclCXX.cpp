@@ -3481,12 +3481,13 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
   // Do access control from the constructor
   ContextRAII CtorContext(*this, CD);
 
-    bool Union = RD->isUnion();
+  bool Union = RD->isUnion();
 
   assert(!CD->getParamDecl(0)->getType()->getPointeeType().isNull() &&
          "copy assignment arg has no pointee type");
-  bool ConstArg =
-    CD->getParamDecl(0)->getType()->getPointeeType().isConstQualified();
+  unsigned ArgQuals =
+    CD->getParamDecl(0)->getType()->getPointeeType().isConstQualified() ?
+      Qualifiers::Const : 0;
 
   // We do this because we should never actually use an anonymous
   // union's constructor.
@@ -3522,20 +3523,11 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
     //    resolution, as applied to B's [copy] constructor, results in an
     //    ambiguity or a function that is deleted or inaccessible from the
     //    defaulted constructor
-    InitializedEntity BaseEntity =
-      InitializedEntity::InitializeBase(Context, BI, 0);
-    InitializationKind Kind =
-      InitializationKind::CreateDirect(Loc, Loc, Loc);
-
-    // Construct a fake expression to perform the copy overloading.
-    QualType ArgType = BaseType.getUnqualifiedType();
-    if (ConstArg)
-      ArgType.addConst();
-    Expr *Arg = new (Context) OpaqueValueExpr(Loc, ArgType, VK_LValue);
-
-    InitializationSequence InitSeq(*this, BaseEntity, Kind, &Arg, 1);
-
-    if (InitSeq.Failed())
+    CXXConstructorDecl *BaseCtor = LookupCopyConstructor(BaseDecl, ArgQuals);
+    if (!BaseCtor || BaseCtor->isDeleted())
+      return true;
+    if (CheckConstructorAccess(Loc, BaseCtor, BaseCtor->getAccess(), PDiag()) !=
+        AR_accessible)
       return true;
   }
 
@@ -3559,20 +3551,11 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
     //    resolution, as applied to B's [copy] constructor, results in an
     //    ambiguity or a function that is deleted or inaccessible from the
     //    defaulted constructor
-    InitializedEntity BaseEntity =
-      InitializedEntity::InitializeBase(Context, BI, BI);
-    InitializationKind Kind =
-      InitializationKind::CreateDirect(Loc, Loc, Loc);
-
-    // Construct a fake expression to perform the copy overloading.
-    QualType ArgType = BaseType.getUnqualifiedType();
-    if (ConstArg)
-      ArgType.addConst();
-    Expr *Arg = new (Context) OpaqueValueExpr(Loc, ArgType, VK_LValue);
-
-    InitializationSequence InitSeq(*this, BaseEntity, Kind, &Arg, 1);
-
-    if (InitSeq.Failed())
+    CXXConstructorDecl *BaseCtor = LookupCopyConstructor(BaseDecl, ArgQuals);
+    if (!BaseCtor || BaseCtor->isDeleted())
+      return true;
+    if (CheckConstructorAccess(Loc, BaseCtor, BaseCtor->getAccess(), PDiag()) !=
+        AR_accessible)
       return true;
   }
 
@@ -3625,32 +3608,19 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
             AR_accessible)
           return true;
       }
+
+    // -- a [non-static data member of class type (or array thereof)] B that
+    //    cannot be [copied] because overload resolution, as applied to B's
+    //    [copy] constructor, results in an ambiguity or a function that is
+    //    deleted or inaccessible from the defaulted constructor
+      CXXConstructorDecl *FieldCtor = LookupCopyConstructor(FieldRecord,
+                                                            ArgQuals);
+      if (!FieldCtor || FieldCtor->isDeleted())
+        return true;
+      if (CheckConstructorAccess(Loc, FieldCtor, FieldCtor->getAccess(),
+                                 PDiag()) != AR_accessible)
+        return true;
     }
-
-    llvm::SmallVector<InitializedEntity, 4> Entities;
-    QualType CurType = FI->getType();
-    Entities.push_back(InitializedEntity::InitializeMember(*FI, 0));
-    while (CurType->isArrayType()) {
-      Entities.push_back(InitializedEntity::InitializeElement(Context, 0, 
-                                                              Entities.back()));
-      CurType = Context.getAsArrayType(CurType)->getElementType();
-    }
-
-    InitializationKind Kind = 
-      InitializationKind::CreateDirect(Loc, Loc, Loc);
- 
-    // Construct a fake expression to perform the copy overloading.
-    QualType ArgType = FieldType;
-    if (ArgType->isReferenceType())
-      ArgType = ArgType->getPointeeType();
-    else if (ConstArg)
-      ArgType.addConst();
-    Expr *Arg = new (Context) OpaqueValueExpr(Loc, ArgType, VK_LValue);
-   
-    InitializationSequence InitSeq(*this, Entities.back(), Kind, &Arg, 1);
-
-    if (InitSeq.Failed())
-      return true;
   }
 
   return false;
@@ -7043,6 +7013,7 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
   //       X::X(const X&)
   //
   //   if
+  // FIXME: It ought to be possible to store this on the record.
   bool HasConstCopyConstructor = true;
   
   //     -- each direct or virtual base class B of X has a copy
@@ -7058,10 +7029,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (!BaseClassDecl->hasDeclaredCopyConstructor())
-      DeclareImplicitCopyConstructor(BaseClassDecl);
-  
-    HasConstCopyConstructor = BaseClassDecl->hasConstCopyConstructor();
+    LookupCopyConstructor(BaseClassDecl, Qualifiers::Const,
+                          &HasConstCopyConstructor);
   }
 
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
@@ -7070,10 +7039,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
        ++Base) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (!BaseClassDecl->hasDeclaredCopyConstructor())
-      DeclareImplicitCopyConstructor(BaseClassDecl);
-    
-    HasConstCopyConstructor= BaseClassDecl->hasConstCopyConstructor();
+    LookupCopyConstructor(BaseClassDecl, Qualifiers::Const,
+                          &HasConstCopyConstructor);
   }
   
   //     -- for all the nonstatic data members of X that are of a
@@ -7085,13 +7052,9 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
        HasConstCopyConstructor && Field != FieldEnd;
        ++Field) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      if (!FieldClassDecl->hasDeclaredCopyConstructor())
-        DeclareImplicitCopyConstructor(FieldClassDecl);
-
-      HasConstCopyConstructor = FieldClassDecl->hasConstCopyConstructor();
+    if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
+      LookupCopyConstructor(FieldClassDecl, Qualifiers::Const,
+                            &HasConstCopyConstructor);
     }
   }
   //   Otherwise, the implicitly declared copy constructor will have
@@ -7114,11 +7077,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
     
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (!BaseClassDecl->hasDeclaredCopyConstructor())
-      DeclareImplicitCopyConstructor(BaseClassDecl);
-
-    if (CXXConstructorDecl *CopyConstructor
-                          = BaseClassDecl->getCopyConstructor(Quals))
+    if (CXXConstructorDecl *CopyConstructor =
+          LookupCopyConstructor(BaseClassDecl, Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
   }
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->vbases_begin(),
@@ -7127,11 +7087,8 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
        ++Base) {
     CXXRecordDecl *BaseClassDecl
       = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
-    if (!BaseClassDecl->hasDeclaredCopyConstructor())
-      DeclareImplicitCopyConstructor(BaseClassDecl);
-
-    if (CXXConstructorDecl *CopyConstructor
-                          = BaseClassDecl->getCopyConstructor(Quals))
+    if (CXXConstructorDecl *CopyConstructor =
+          LookupCopyConstructor(BaseClassDecl, Quals))
       ExceptSpec.CalledDecl(CopyConstructor);
   }
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -7139,15 +7096,10 @@ Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
        Field != FieldEnd;
        ++Field) {
     QualType FieldType = Context.getBaseElementType((*Field)->getType());
-    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
-      CXXRecordDecl *FieldClassDecl
-        = cast<CXXRecordDecl>(FieldClassType->getDecl());
-      if (!FieldClassDecl->hasDeclaredCopyConstructor())
-        DeclareImplicitCopyConstructor(FieldClassDecl);
-
-      if (CXXConstructorDecl *CopyConstructor
-                          = FieldClassDecl->getCopyConstructor(Quals))
-        ExceptSpec.CalledDecl(CopyConstructor);
+    if (CXXRecordDecl *FieldClassDecl = FieldType->getAsCXXRecordDecl()) {
+      if (CXXConstructorDecl *CopyConstructor =
+        LookupCopyConstructor(FieldClassDecl, Quals))
+      ExceptSpec.CalledDecl(CopyConstructor);
     }
   }
 
