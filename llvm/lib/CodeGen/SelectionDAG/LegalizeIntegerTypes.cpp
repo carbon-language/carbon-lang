@@ -573,9 +573,9 @@ SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
   DebugLoc DL = N->getDebugLoc();
   EVT SmallVT = LHS.getValueType();
 
-  // To determine if the result overflowed in a larger type, we extend the input
-  // to the larger type, do the multiply, then check the high bits of the result
-  // to see if the overflow happened.
+  // To determine if the result overflowed in a larger type, we extend the
+  // input to the larger type, do the multiply, then check the high bits of
+  // the result to see if the overflow happened.
   if (N->getOpcode() == ISD::SMULO) {
     LHS = SExtPromotedInteger(LHS);
     RHS = SExtPromotedInteger(RHS);
@@ -585,8 +585,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
   }
   SDValue Mul = DAG.getNode(ISD::MUL, DL, LHS.getValueType(), LHS, RHS);
 
-  // Overflow occurred iff the high part of the result does not zero/sign-extend
-  // the low part.
+  // Overflow occurred iff the high part of the result does not
+  // zero/sign-extend the low part.
   SDValue Overflow;
   if (N->getOpcode() == ISD::UMULO) {
     // Unsigned overflow occurred iff the high part is non-zero.
@@ -2789,4 +2789,3 @@ SDValue DAGTypeLegalizer::PromoteIntOp_CONCAT_VECTORS(SDNode *N) {
   return DAG.getNode(ISD::BUILD_VECTOR, dl,  N->getValueType(0),
     &NewOps[0], NewOps.size());
   }
-
