@@ -108,7 +108,7 @@ public:
         {
             Mutex::Locker locker (m_mutex);
             llvm::StringRef string_ref (cstr, cstr_len);
-            StringPoolEntryType& entry = m_string_map.GetOrCreateValue (string_ref);
+            StringPoolEntryType& entry = m_string_map.GetOrCreateValue (string_ref, (StringPoolValueType)NULL);
             return entry.getKeyData();
         }
         return NULL;
