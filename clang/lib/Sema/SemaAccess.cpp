@@ -1460,29 +1460,47 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
   AccessTarget AccessEntity(Context, AccessTarget::Member, NamingClass,
                             DeclAccessPair::make(Constructor, Access),
                             QualType());
+  PartialDiagnostic PD(PDiag());
   switch (Entity.getKind()) {
   default:
-    AccessEntity.setDiag(IsCopyBindingRefToTemp
-                         ? diag::ext_rvalue_to_reference_access_ctor
-                         : diag::err_access_ctor);
+    PD = PDiag(IsCopyBindingRefToTemp
+                 ? diag::ext_rvalue_to_reference_access_ctor
+                 : diag::err_access_ctor);
+
     break;
 
   case InitializedEntity::EK_Base:
-    AccessEntity.setDiag(PDiag(diag::err_access_base_ctor)
-                          << Entity.isInheritedVirtualBase()
-                          << Entity.getBaseSpecifier()->getType()
-                          << getSpecialMember(Constructor));
+    PD = PDiag(diag::err_access_base_ctor);
+    PD << Entity.isInheritedVirtualBase()
+       << Entity.getBaseSpecifier()->getType() << getSpecialMember(Constructor);
     break;
 
   case InitializedEntity::EK_Member: {
     const FieldDecl *Field = cast<FieldDecl>(Entity.getDecl());
-    AccessEntity.setDiag(PDiag(diag::err_access_field_ctor)
-                          << Field->getType()
-                          << getSpecialMember(Constructor));
+    PD = PDiag(diag::err_access_field_ctor);
+    PD << Field->getType() << getSpecialMember(Constructor);
     break;
   }
 
   }
+
+  return CheckConstructorAccess(UseLoc, Constructor, Access, PD);
+}
+
+/// Checks access to a constructor.
+Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
+                                                CXXConstructorDecl *Constructor,
+                                                AccessSpecifier Access,
+                                                PartialDiagnostic PD) {
+  if (!getLangOptions().AccessControl ||
+      Access == AS_public)
+    return AR_accessible;
+
+  CXXRecordDecl *NamingClass = Constructor->getParent();
+  AccessTarget AccessEntity(Context, AccessTarget::Member, NamingClass,
+                            DeclAccessPair::make(Constructor, Access),
+                            QualType());
+  AccessEntity.setDiag(PD);
 
   return CheckAccess(*this, UseLoc, AccessEntity);
 }

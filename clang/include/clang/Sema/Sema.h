@@ -1668,6 +1668,7 @@ public:
                                  SourceLocation GnuLabelLoc = SourceLocation());
 
   DeclContextLookupResult LookupConstructors(CXXRecordDecl *Class);
+  CXXConstructorDecl *LookupDefaultConstructor(CXXRecordDecl *Class);
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
@@ -3465,6 +3466,10 @@ public:
                                       const InitializedEntity &Entity,
                                       AccessSpecifier Access,
                                       bool IsCopyBindingRefToTemp = false);
+  AccessResult CheckConstructorAccess(SourceLocation Loc,
+                                      CXXConstructorDecl *D,
+                                      AccessSpecifier Access,
+                                      PartialDiagnostic PD);
   AccessResult CheckDestructorAccess(SourceLocation Loc,
                                      CXXDestructorDecl *Dtor,
                                      const PartialDiagnostic &PDiag);
