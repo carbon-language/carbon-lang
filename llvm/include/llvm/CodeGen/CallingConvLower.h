@@ -151,6 +151,7 @@ typedef enum { Unknown, Prologue, Call } ParmContext;
 /// return values.  It captures which registers are already assigned and which
 /// stack slots are used.  It provides accessors to allocate these values.
 class CCState {
+private:
   CallingConv::ID CallingConv;
   bool IsVarArg;
   MachineFunction &MF;
@@ -163,7 +164,10 @@ class CCState {
   SmallVector<uint32_t, 16> UsedRegs;
   unsigned FirstByValReg;
   bool FirstByValRegValid;
+
+protected:
   ParmContext CallOrPrologue;
+
 public:
   CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,
           const TargetMachine &TM, SmallVector<CCValAssign, 16> &locs,
@@ -308,7 +312,6 @@ public:
   bool isFirstByValRegValid() { return FirstByValRegValid; }
 
   ParmContext getCallOrPrologue() { return CallOrPrologue; }
-  void setCallOrPrologue(ParmContext pc) { CallOrPrologue = pc; }
 
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.

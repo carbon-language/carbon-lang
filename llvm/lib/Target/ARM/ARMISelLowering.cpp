@@ -72,6 +72,21 @@ ARMInterworking("arm-interworking", cl::Hidden,
   cl::desc("Enable / disable ARM interworking (for debugging only)"),
   cl::init(true));
 
+namespace llvm {
+  class ARMCCState : public CCState {
+  public:
+    ARMCCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,
+               const TargetMachine &TM, SmallVector<CCValAssign, 16> &locs,
+               LLVMContext &C, ParmContext PC)
+        : CCState(CC, isVarArg, MF, TM, locs, C) {
+      assert(((PC == Call) || (PC == Prologue)) &&
+             "ARMCCState users must specify whether their context is call"
+             "or prologue generation.");
+      CallOrPrologue = PC;
+    }
+  };
+}
+
 // The APCS parameter registers.
 static const unsigned GPRArgRegs[] = {
   ARM::R0, ARM::R1, ARM::R2, ARM::R3
@@ -1071,8 +1086,8 @@ ARMTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 getTargetMachine(), RVLocs, *DAG.getContext());
+  ARMCCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+                    getTargetMachine(), RVLocs, *DAG.getContext(), Call);
   CCInfo.AnalyzeCallResult(Ins,
                            CCAssignFnForNode(CallConv, /* Return*/ true,
                                              isVarArg));
@@ -1206,9 +1221,8 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 getTargetMachine(), ArgLocs, *DAG.getContext());
-  CCInfo.setCallOrPrologue(Call);
+  ARMCCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+                 getTargetMachine(), ArgLocs, *DAG.getContext(), Call);
   CCInfo.AnalyzeCallOperands(Outs,
                              CCAssignFnForNode(CallConv, /* Return*/ false,
                                                isVarArg));
@@ -1638,13 +1652,13 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // results are returned in the same way as what the caller expects.
   if (!CCMatch) {
     SmallVector<CCValAssign, 16> RVLocs1;
-    CCState CCInfo1(CalleeCC, false, DAG.getMachineFunction(),
-		    getTargetMachine(), RVLocs1, *DAG.getContext());
+    ARMCCState CCInfo1(CalleeCC, false, DAG.getMachineFunction(),
+                       getTargetMachine(), RVLocs1, *DAG.getContext(), Call);
     CCInfo1.AnalyzeCallResult(Ins, CCAssignFnForNode(CalleeCC, true, isVarArg));
 
     SmallVector<CCValAssign, 16> RVLocs2;
-    CCState CCInfo2(CallerCC, false, DAG.getMachineFunction(),
-		    getTargetMachine(), RVLocs2, *DAG.getContext());
+    ARMCCState CCInfo2(CallerCC, false, DAG.getMachineFunction(),
+                       getTargetMachine(), RVLocs2, *DAG.getContext(), Call);
     CCInfo2.AnalyzeCallResult(Ins, CCAssignFnForNode(CallerCC, true, isVarArg));
 
     if (RVLocs1.size() != RVLocs2.size())
@@ -1670,9 +1684,8 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     // Check if stack adjustment is needed. For now, do not do this if any
     // argument is passed on the stack.
     SmallVector<CCValAssign, 16> ArgLocs;
-    CCState CCInfo(CalleeCC, isVarArg, DAG.getMachineFunction(),
-		   getTargetMachine(), ArgLocs, *DAG.getContext());
-    CCInfo.setCallOrPrologue(Call);
+    ARMCCState CCInfo(CalleeCC, isVarArg, DAG.getMachineFunction(),
+                      getTargetMachine(), ArgLocs, *DAG.getContext(), Call);
     CCInfo.AnalyzeCallOperands(Outs,
                                CCAssignFnForNode(CalleeCC, false, isVarArg));
     if (CCInfo.getNextStackOffset()) {
@@ -1731,8 +1744,8 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
   SmallVector<CCValAssign, 16> RVLocs;
 
   // CCState - Info about the registers and stack slots.
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 getTargetMachine(), RVLocs, *DAG.getContext());
+  ARMCCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+                    getTargetMachine(), RVLocs, *DAG.getContext(), Call);
 
   // Analyze outgoing return values.
   CCInfo.AnalyzeReturn(Outs, CCAssignFnForNode(CallConv, /* Return */ true,
@@ -2425,9 +2438,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-		 getTargetMachine(), ArgLocs, *DAG.getContext());
-  CCInfo.setCallOrPrologue(Prologue);
+  ARMCCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+                    getTargetMachine(), ArgLocs, *DAG.getContext(), Prologue);
   CCInfo.AnalyzeFormalArguments(Ins,
                                 CCAssignFnForNode(CallConv, /* Return*/ false,
                                                   isVarArg));
