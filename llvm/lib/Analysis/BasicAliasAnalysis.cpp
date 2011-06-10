@@ -451,7 +451,13 @@ namespace {
   /// BasicAliasAnalysis - This is the primary alias analysis implementation.
   struct BasicAliasAnalysis : public ImmutablePass, public AliasAnalysis {
     static char ID; // Class identification, replacement for typeinfo
-    BasicAliasAnalysis() : ImmutablePass(ID) {
+    BasicAliasAnalysis() : ImmutablePass(ID),
+                           // AliasCache rarely has more than 1 or 2 elements,
+                           // so start it off fairly small so that clear()
+                           // doesn't have to tromp through 64 (the default)
+                           // elements on each alias query. This really wants
+                           // something like a SmallDenseMap.
+                           AliasCache(8) {
       initializeBasicAliasAnalysisPass(*PassRegistry::getPassRegistry());
     }
 
