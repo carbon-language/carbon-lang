@@ -1103,7 +1103,7 @@ public:
                                        RecordDecl *Record);
 
   bool isAcceptableTagRedeclaration(const TagDecl *Previous,
-                                    TagTypeKind NewTag,
+                                    TagTypeKind NewTag, bool isDefinition,
                                     SourceLocation NewTagLoc,
                                     const IdentifierInfo &Name);
 

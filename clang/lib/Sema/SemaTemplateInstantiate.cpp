@@ -927,7 +927,8 @@ TemplateInstantiator::RebuildElaboratedType(SourceLocation KeywordLoc,
     // like it's likely to produce a lot of spurious errors.
     if (Keyword != ETK_None && Keyword != ETK_Typename) {
       TagTypeKind Kind = TypeWithKeyword::getTagTypeKindForKeyword(Keyword);
-      if (!SemaRef.isAcceptableTagRedeclaration(TD, Kind, TagLocation, *Id)) {
+      if (!SemaRef.isAcceptableTagRedeclaration(TD, Kind, /*isDefinition*/false,
+                                                TagLocation, *Id)) {
         SemaRef.Diag(TagLocation, diag::err_use_with_wrong_tag)
           << Id
           << FixItHint::CreateReplacement(SourceRange(TagLocation),
