@@ -14,6 +14,8 @@
 #include <assert.h>
 
 #include "lldb/lldb-private.h"
+#include "llvm/ADT/StringRef.h"
+
 
 namespace lldb_private {
 
@@ -232,6 +234,12 @@ public:
         return m_string;
     }
 
+    llvm::StringRef
+    GetStringRef () const
+    {
+        return llvm::StringRef (m_string, GetLength());
+    }
+    
     const char *
     GetCString () const
     {
