@@ -142,7 +142,10 @@ typedef bool CCCustomFn(unsigned &ValNo, MVT &ValVT,
                         MVT &LocVT, CCValAssign::LocInfo &LocInfo,
                         ISD::ArgFlagsTy &ArgFlags, CCState &State);
 
-typedef enum { Invalid, Prologue, Call } ParmContext;
+/// ParmContext - This enum tracks whether calling convention lowering is in
+/// the context of prologue or call generation. Not all backends make use of
+/// this information.
+typedef enum { Unknown, Prologue, Call } ParmContext;
 
 /// CCState - This class holds information needed while lowering arguments and
 /// return values.  It captures which registers are already assigned and which

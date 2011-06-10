@@ -28,7 +28,7 @@ CCState::CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &mf,
                  LLVMContext &C)
   : CallingConv(CC), IsVarArg(isVarArg), MF(mf), TM(tm),
     TRI(*TM.getRegisterInfo()), Locs(locs), Context(C),
-    CallOrPrologue(Invalid) {
+    CallOrPrologue(Unknown) {
   // No stack is used.
   StackOffset = 0;
 
