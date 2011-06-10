@@ -573,13 +573,12 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
 
     assert(TailBB != PredBB &&
            "Single-block loop should have been rejected earlier!");
-    if (PredBB->succ_size() > 1) continue;
+    // EH edges are ignored by AnalyzeBranch.
+    if (PredBB->succ_size() > 1)
+      continue;
 
     MachineBasicBlock *PredTBB, *PredFBB;
     SmallVector<MachineOperand, 4> PredCond;
-    // EH edges are ignored by AnalyzeBranch.
-    if (PredBB->succ_size() != 1)
-      continue;
     if (TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond, true))
       continue;
     if (!PredCond.empty())
