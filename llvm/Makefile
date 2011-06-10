@@ -69,7 +69,7 @@ endif
 ifeq ($(MAKECMDGOALS),install-clang)
   DIRS := tools/clang/tools/driver tools/clang/lib/Headers \
           tools/clang/runtime tools/clang/docs \
-          tools/lto
+          tools/lto runtime
   OPTIONAL_DIRS :=
   NO_INSTALL = 1
 endif
@@ -83,7 +83,7 @@ ifeq ($(MAKECMDGOALS),install-clang-c)
 endif
 
 ifeq ($(MAKECMDGOALS),clang-only)
-  DIRS := $(filter-out tools runtime docs unittests, $(DIRS)) \
+  DIRS := $(filter-out tools docs unittests, $(DIRS)) \
           tools/clang tools/lto
   OPTIONAL_DIRS :=
 endif
