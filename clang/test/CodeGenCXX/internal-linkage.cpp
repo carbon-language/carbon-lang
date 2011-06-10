@@ -54,3 +54,11 @@ char const * *test4()
     // CHECK: @extern_nonconst_xyzzy = global
     return &extern_nonconst_xyzzy;
 }
+
+// PR10120
+template <typename T> class klass {
+    virtual void f();
+};
+namespace { struct S; }
+void foo () { klass<S> x; }
+// CHECK: @_ZTV5klassIN12_GLOBAL__N_11SEE = internal unnamed_addr constant

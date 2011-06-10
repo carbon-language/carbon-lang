@@ -1125,7 +1125,7 @@ void CodeGenModule::EmitVTable(CXXRecordDecl *Class, bool DefinitionRequired) {
 
 llvm::GlobalVariable::LinkageTypes 
 CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
-  if (RD->isInAnonymousNamespace() || !RD->hasLinkage())
+  if (RD->getLinkage() != ExternalLinkage)
     return llvm::GlobalVariable::InternalLinkage;
 
   if (const CXXMethodDecl *KeyFunction
