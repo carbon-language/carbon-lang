@@ -24,6 +24,7 @@
 
 namespace llvm {
   class Record;
+  class RecordKeeper;
 
   /// CodeGenRegister - Represents a register definition.
   struct CodeGenRegister {
@@ -97,6 +98,32 @@ namespace llvm {
     }
 
     CodeGenRegisterClass(Record *R);
+  };
+
+  // CodeGenRegBank - Represent a target's registers and the relations between
+  // them.
+  class CodeGenRegBank {
+    RecordKeeper &Records;
+
+    // Sub-register indices. The first NumNamedIndices are defined by the user
+    // in the .td files. The rest are synthesized such that all sub-registers
+    // have a unique name.
+    std::vector<Record*> SubRegIndices;
+
+    unsigned NumNamedIndices;
+
+  public:
+    CodeGenRegBank(RecordKeeper&);
+
+    const std::vector<Record*> &getSubRegIndices() { return SubRegIndices; }
+
+    unsigned getNumNamedIndices() { return NumNamedIndices; }
+
+    // Map a SubRegIndex Record to its enum value.
+    unsigned getSubRegIndexNo(Record *idx);
+
+    // Create a new sub-register index representing the A+B composition.
+    Record *getCompositeSubRegIndex(Record *A, Record *B);
   };
 }
 

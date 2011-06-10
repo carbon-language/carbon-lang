@@ -26,6 +26,7 @@ using namespace llvm;
 // runEnums - Print out enum values for all of the registers.
 void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
   CodeGenTarget Target(Records);
+  CodeGenRegBank &Bank = Target.getRegBank();
   const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
 
   std::string Namespace = Registers[0].TheDef->getValueAsString("Namespace");
@@ -47,14 +48,14 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
   if (!Namespace.empty())
     OS << "}\n";
 
-  const std::vector<Record*> SubRegIndices = Target.getSubRegIndices();
+  const std::vector<Record*> &SubRegIndices = Bank.getSubRegIndices();
   if (!SubRegIndices.empty()) {
     OS << "\n// Subregister indices\n";
     Namespace = SubRegIndices[0]->getValueAsString("Namespace");
     if (!Namespace.empty())
       OS << "namespace " << Namespace << " {\n";
     OS << "enum {\n  NoSubRegister,\n";
-    for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
+    for (unsigned i = 0, e = Bank.getNumNamedIndices(); i != e; ++i)
       OS << "  " << SubRegIndices[i]->getName() << ",\t// " << i+1 << "\n";
     OS << "  NUM_TARGET_NAMED_SUBREGS = " << SubRegIndices.size()+1 << "\n";
     OS << "};\n";
@@ -257,8 +258,8 @@ RegisterMaps::SubRegMap &RegisterMaps::inferSubRegIndices(Record *Reg,
        ++I) {
     Record *&Comp = Composite[I->second];
     if (!Comp)
-      Comp = Target.createSubRegIndex(I->second.first->getName() + "_then_" +
-                                      I->second.second->getName());
+      Comp = Target.getRegBank().getCompositeSubRegIndex(I->second.first,
+                                                         I->second.second);
     SRM[Comp] = I->first;
   }
 
@@ -338,6 +339,7 @@ public:
 //
 void RegisterInfoEmitter::run(raw_ostream &OS) {
   CodeGenTarget Target(Records);
+  CodeGenRegBank &RegBank = Target.getRegBank();
   EmitSourceFileHeader("Register Information Source Fragment", OS);
 
   OS << "namespace llvm {\n\n";
@@ -404,7 +406,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     std::map<unsigned, std::set<unsigned> > SuperRegClassMap;
     OS << "\n";
 
-    unsigned NumSubRegIndices = Target.getSubRegIndices().size();
+    unsigned NumSubRegIndices = RegBank.getSubRegIndices().size();
 
     if (NumSubRegIndices) {
       // Emit the sub-register classes for each RegisterClass
@@ -415,7 +417,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
              i = RC.SubRegClasses.begin(),
              e = RC.SubRegClasses.end(); i != e; ++i) {
           // Build SRC array.
-          unsigned idx = Target.getSubRegIndexNo(i->first);
+          unsigned idx = RegBank.getSubRegIndexNo(i->first);
           SRC.at(idx-1) = i->second;
 
           // Find the register class number of i->second for SuperRegClassMap.
@@ -863,13 +865,13 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
 
   // Calculate the mapping of subregister+index pairs to physical registers.
   // This will also create further anonymous indexes.
-  unsigned NamedIndices = Target.getSubRegIndices().size();
+  unsigned NamedIndices = RegBank.getNumNamedIndices();
   RegisterMaps RegMaps;
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
     RegMaps.inferSubRegIndices(Regs[i].TheDef, Target);
 
   // Emit SubRegIndex names, skipping 0
-  const std::vector<Record*> SubRegIndices = Target.getSubRegIndices();
+  const std::vector<Record*> &SubRegIndices = RegBank.getSubRegIndices();
   OS << "\n  const char *const SubRegIndexTable[] = { \"";
   for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
     OS << SubRegIndices[i]->getName();

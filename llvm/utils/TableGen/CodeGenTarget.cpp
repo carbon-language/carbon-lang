@@ -108,7 +108,8 @@ std::string llvm::getQualifiedName(const Record *R) {
 
 /// getTarget - Return the current instance of the Target class.
 ///
-CodeGenTarget::CodeGenTarget(RecordKeeper &records) : Records(records) {
+CodeGenTarget::CodeGenTarget(RecordKeeper &records)
+  : Records(records), RegBank(0) {
   std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
   if (Targets.size() == 0)
     throw std::string("ERROR: No 'Target' subclasses defined!");
@@ -156,6 +157,12 @@ Record *CodeGenTarget::getAsmWriter() const {
   return LI[AsmWriterNum];
 }
 
+CodeGenRegBank &CodeGenTarget::getRegBank() const {
+  if (!RegBank)
+    RegBank = new CodeGenRegBank(Records);
+  return *RegBank;
+}
+
 void CodeGenTarget::ReadRegisters() const {
   std::vector<Record*> Regs = Records.getAllDerivedDefinitions("Register");
   if (Regs.empty())
@@ -167,18 +174,6 @@ void CodeGenTarget::ReadRegisters() const {
   // Assign the enumeration values.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
     Registers[i].EnumValue = i + 1;
-}
-
-void CodeGenTarget::ReadSubRegIndices() const {
-  SubRegIndices = Records.getAllDerivedDefinitions("SubRegIndex");
-  std::sort(SubRegIndices.begin(), SubRegIndices.end(), LessRecord());
-}
-
-Record *CodeGenTarget::createSubRegIndex(const std::string &Name) {
-  Record *R = new Record(Name, SMLoc(), Records);
-  Records.addDef(R);
-  SubRegIndices.push_back(R);
-  return R;
 }
 
 void CodeGenTarget::ReadRegisterClasses() const {

@@ -99,3 +99,30 @@ const std::string &CodeGenRegisterClass::getName() const {
   return TheDef->getName();
 }
 
+//===----------------------------------------------------------------------===//
+//                               CodeGenRegBank
+//===----------------------------------------------------------------------===//
+
+CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
+  // Read in the user-defined (named) sub-register indices. More indices will
+  // be synthesized.
+  SubRegIndices = Records.getAllDerivedDefinitions("SubRegIndex");
+  std::sort(SubRegIndices.begin(), SubRegIndices.end(), LessRecord());
+  NumNamedIndices = SubRegIndices.size();
+}
+
+Record *CodeGenRegBank::getCompositeSubRegIndex(Record *A, Record *B) {
+  std::string Name = A->getName() + "_then_" + B->getName();
+  Record *R = new Record(Name, SMLoc(), Records);
+  Records.addDef(R);
+  SubRegIndices.push_back(R);
+  return R;
+}
+
+unsigned CodeGenRegBank::getSubRegIndexNo(Record *idx) {
+  std::vector<Record*>::const_iterator i =
+    std::find(SubRegIndices.begin(), SubRegIndices.end(), idx);
+  assert(i != SubRegIndices.end() && "Not a SubRegIndex");
+  return (i - SubRegIndices.begin()) + 1;
+}
+
