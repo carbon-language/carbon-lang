@@ -397,6 +397,8 @@ private:
     if (alwaysAdd(S))
       cachedEntry->second = B;
 
+    // All block-level expressions should have already been IgnoreParens()ed.
+    assert(!isa<Expr>(S) || cast<Expr>(S)->IgnoreParens() == S);
     B->appendStmt(const_cast<Stmt*>(S), cfg->getBumpVectorContext());
   }
   void appendInitializer(CFGBlock *B, CXXCtorInitializer *I) {
@@ -841,11 +843,14 @@ void CFGBuilder::prependAutomaticObjDtorsWithTerminator(CFGBlock* Blk,
 ///   blocks for ternary operators, &&, and ||.  We also process "," and
 ///   DeclStmts (which may contain nested control-flow).
 CFGBlock* CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
-tryAgain:
   if (!S) {
     badCFG = true;
     return 0;
   }
+
+  if (Expr *E = dyn_cast<Expr>(S))
+    S = E->IgnoreParens();
+
   switch (S->getStmtClass()) {
     default:
       return VisitStmt(S, asc);
@@ -956,10 +961,6 @@ tryAgain:
 
     case Stmt::ObjCForCollectionStmtClass:
       return VisitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(S));
-
-    case Stmt::ParenExprClass:
-      S = cast<ParenExpr>(S)->getSubExpr();
-      goto tryAgain;
 
     case Stmt::NullStmtClass:
       return Block;
@@ -3049,6 +3050,7 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
       if (!CS)
         continue;
       if (Expr* Exp = dyn_cast<Expr>(CS->getStmt())) {
+        assert((Exp->IgnoreParens() == Exp) && "No parens on block-level exps");
 
         if (BinaryOperator* B = dyn_cast<BinaryOperator>(Exp)) {
           // Assignment expressions that are not nested within another
@@ -3056,13 +3058,16 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
           // another expression.
           if (B->isAssignmentOp() && !SubExprAssignments.count(Exp))
             continue;
-        } else if (const StmtExpr* Terminator = dyn_cast<StmtExpr>(Exp)) {
+        } else if (const StmtExpr* SE = dyn_cast<StmtExpr>(Exp)) {
           // Special handling for statement expressions.  The last statement in
           // the statement expression is also a block-level expr.
-          const CompoundStmt* C = Terminator->getSubStmt();
+          const CompoundStmt* C = SE->getSubStmt();
           if (!C->body_empty()) {
+            const Stmt *Last = C->body_back();
+            if (const Expr *LastEx = dyn_cast<Expr>(Last))
+              Last = LastEx->IgnoreParens();
             unsigned x = M->size();
-            (*M)[C->body_back()] = x;
+            (*M)[Last] = x;
           }
         }
 
@@ -3076,8 +3081,8 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
     Stmt* S = (*I)->getTerminatorCondition();
 
     if (S && M->find(S) == M->end()) {
-        unsigned x = M->size();
-        (*M)[S] = x;
+      unsigned x = M->size();
+      (*M)[S] = x;
     }
   }
 

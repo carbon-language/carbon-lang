@@ -77,21 +77,6 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder,
       // For special C0xx nullptr case, make a null pointer SVal.
       case Stmt::CXXNullPtrLiteralExprClass:
         return svalBuilder.makeNull();
-      case Stmt::ImplicitCastExprClass:
-      case Stmt::CXXFunctionalCastExprClass:
-      case Stmt::CStyleCastExprClass: {
-        // We blast through no-op casts to get the descendant
-        // subexpression that has a value.
-        const CastExpr* C = cast<CastExpr>(E);
-        QualType CT = C->getType();
-        if (CT->isVoidType())
-          return UnknownVal();
-        if (C->getCastKind() == CK_NoOp) {
-          E = C->getSubExpr();
-          continue;
-        }
-        break;
-      }
       case Stmt::ExprWithCleanupsClass:
         E = cast<ExprWithCleanups>(E)->getSubExpr();
         continue;

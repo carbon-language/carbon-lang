@@ -62,3 +62,22 @@ int PR8962_d (int *t) {
   return *t; // no-warning
 }
 
+int PR8962_e (int *t) {
+  // Redundant casts can mess things up!
+  // Environment used to skip through NoOp casts, but LiveVariables didn't!
+  if (({ (t ? (int)(int)0L : (int)(int)1L); })) return 0;
+  return *t; // no-warning
+}
+
+int PR8962_f (int *t) {
+  // The StmtExpr isn't a block-level expression here,
+  // the __extension__ is. But the value should be attached to the StmtExpr
+  // anyway. Make sure the block-level check is /before/ IgnoreParens.
+  if ( __extension__({
+    _Bool r;
+    if (t) r = 0;
+    else r = 1;
+    r;
+  }) ) return 0;
+  return *t; // no-warning
+}

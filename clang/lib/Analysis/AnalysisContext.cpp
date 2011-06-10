@@ -78,16 +78,16 @@ void AnalysisContext::registerForcedBlockExpression(const Stmt *stmt) {
   if (!forcedBlkExprs)
     forcedBlkExprs = new CFG::BuildOptions::ForcedBlkExprs();
   // Default construct an entry for 'stmt'.
-  if (const ParenExpr *pe = dyn_cast<ParenExpr>(stmt))
-    stmt = pe->IgnoreParens();
+  if (const Expr *e = dyn_cast<Expr>(stmt))
+    stmt = e->IgnoreParens();
   (void) (*forcedBlkExprs)[stmt];
 }
 
 const CFGBlock *
 AnalysisContext::getBlockForRegisteredExpression(const Stmt *stmt) {
   assert(forcedBlkExprs);
-  if (const ParenExpr *pe = dyn_cast<ParenExpr>(stmt))
-    stmt = pe->IgnoreParens();
+  if (const Expr *e = dyn_cast<Expr>(stmt))
+    stmt = e->IgnoreParens();
   CFG::BuildOptions::ForcedBlkExprs::const_iterator itr = 
     forcedBlkExprs->find(stmt);
   assert(itr != forcedBlkExprs->end());
