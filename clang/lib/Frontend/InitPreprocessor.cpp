@@ -247,6 +247,9 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
       Builder.defineMacro("__cplusplus", "199711L");
   }
 
+  if (LangOpts.ObjC1)
+    Builder.defineMacro("__OBJC__");
+
   // Not "standard" per se, but available even with the -undef flag.
   if (LangOpts.AsmPreprocessor)
     Builder.defineMacro("__ASSEMBLER__");
@@ -295,7 +298,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__GXX_EXPERIMENTAL_CXX0X__");
 
   if (LangOpts.ObjC1) {
-    Builder.defineMacro("__OBJC__");
     if (LangOpts.ObjCNonFragileABI) {
       Builder.defineMacro("__OBJC2__");
       Builder.defineMacro("OBJC_ZEROCOST_EXCEPTIONS");
