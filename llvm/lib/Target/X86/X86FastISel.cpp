@@ -111,6 +111,8 @@ private:
   bool X86VisitIntrinsicCall(const IntrinsicInst &I);
   bool X86SelectCall(const Instruction *I);
 
+  bool DoSelectCall(const Instruction *I, const char *MemIntName);
+
   const X86InstrInfo *getInstrInfo() const {
     return getTargetMachine()->getInstrInfo();
   }
@@ -1333,20 +1335,44 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
   case Intrinsic::memcpy: {
     const MemCpyInst &MCI = cast<MemCpyInst>(I);
     // Don't handle volatile or variable length memcpys.
-    if (MCI.isVolatile() || !isa<ConstantInt>(MCI.getLength()))
+    if (MCI.isVolatile())
       return false;
 
-    uint64_t Len = cast<ConstantInt>(MCI.getLength())->getZExtValue();
+    if (isa<ConstantInt>(MCI.getLength())) {
+      // Small memcpy's are common enough that we want to do them
+      // without a call if possible.
+      uint64_t Len = cast<ConstantInt>(MCI.getLength())->getZExtValue();
+      if (IsMemcpySmall(Len)) {
+        X86AddressMode DestAM, SrcAM;
+        if (!X86SelectAddress(MCI.getRawDest(), DestAM) ||
+            !X86SelectAddress(MCI.getRawSource(), SrcAM))
+          return false;
+        TryEmitSmallMemcpy(DestAM, SrcAM, Len);
+        return true;
+      }
+    }
 
-    // Get the address of the dest and source addresses.
-    X86AddressMode DestAM, SrcAM;
-    if (!X86SelectAddress(MCI.getRawDest(), DestAM) ||
-        !X86SelectAddress(MCI.getRawSource(), SrcAM))
+    unsigned SizeWidth = Subtarget->is64Bit() ? 64 : 32;
+    if (!MCI.getLength()->getType()->isIntegerTy(SizeWidth))
       return false;
 
-    return TryEmitSmallMemcpy(DestAM, SrcAM, Len);
+    if (MCI.getSourceAddressSpace() > 255 || MCI.getDestAddressSpace() > 255)
+      return false;
+
+    return DoSelectCall(&I, "memcpy");
   }
+  case Intrinsic::memset: {
+    const MemSetInst &MSI = cast<MemSetInst>(I);
 
+    unsigned SizeWidth = Subtarget->is64Bit() ? 64 : 32;
+    if (!MSI.getLength()->getType()->isIntegerTy(SizeWidth))
+      return false;
+
+    if (MSI.getDestAddressSpace() > 255)
+      return false;
+
+    return DoSelectCall(&I, "memset");
+  }
   case Intrinsic::stackprotector: {
     // Emit code inline code to store the stack guard onto the stack.
     EVT PtrTy = TLI.getPointerTy();
@@ -1437,6 +1463,14 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI))
     return X86VisitIntrinsicCall(*II);
 
+  return DoSelectCall(I, 0);
+}
+
+// Select either a call, or an llvm.memcpy/memmove/memset intrinsic
+bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
+  const CallInst *CI = cast<CallInst>(I);
+  const Value *Callee = CI->getCalledValue();
+
   // Handle only C and fastcc calling conventions for now.
   ImmutableCallSite CS(CI);
   CallingConv::ID CC = CS.getCallingConv();
@@ -1498,6 +1532,10 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   ArgFlags.reserve(CS.arg_size());
   for (ImmutableCallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
        i != e; ++i) {
+    // If we're lowering a mem intrinsic instead of a regular call, skip the
+    // last two arguments, which should not passed to the underlying functions.
+    if (MemIntName && e-i <= 2)
+      break;
     Value *ArgVal = *i;
     ISD::ArgFlagsTy Flags;
     unsigned AttrInd = i - CS.arg_begin() + 1;
@@ -1744,8 +1782,11 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
     }
 
 
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CallOpc))
-      .addGlobalAddress(GV, 0, OpFlags);
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CallOpc));
+    if (MemIntName)
+      MIB.addExternalSymbol(MemIntName);
+    else
+      MIB.addGlobalAddress(GV, 0, OpFlags);
   }
 
   // Add an implicit use GOT pointer in EBX.
