@@ -2269,8 +2269,7 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
           (SM == CXXCopyConstructor &&
             cast<CXXConstructorDecl>(M)->isCopyConstructor())) {
         QualType ArgType = M->getType()->getAs<FunctionProtoType>()->getArgType(0);
-        if (!ArgType->isReferenceType() ||
-            ArgType->getPointeeType().isConstQualified())
+        if (ArgType->getPointeeType().isConstQualified())
           Result->setConstParamMatch(true);
       }
     } else {
@@ -2311,10 +2310,10 @@ CXXConstructorDecl *Sema::LookupDefaultConstructor(CXXRecordDecl *Class) {
   return cast_or_null<CXXConstructorDecl>(Result->getMethod());
 }
 
-/// \brief Look up the copying constructor for the given class.
-CXXConstructorDecl *Sema::LookupCopyingConstructor(CXXRecordDecl *Class,
-                                                   unsigned Quals,
-                                                   bool *ConstParamMatch) {
+/// \brief Look up the copy constructor for the given class.
+CXXConstructorDecl *Sema::LookupCopyConstructor(CXXRecordDecl *Class,
+                                                unsigned Quals,
+                                                bool *ConstParamMatch) {
   assert(!(Quals & ~(Qualifiers::Const | Qualifiers::Volatile)) &&
          "non-const, non-volatile qualifiers for copy ctor arg");
   SpecialMemberOverloadResult *Result =
@@ -2340,27 +2339,6 @@ DeclContext::lookup_result Sema::LookupConstructors(CXXRecordDecl *Class) {
   CanQualType T = Context.getCanonicalType(Context.getTypeDeclType(Class));
   DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(T);
   return Class->lookup(Name);
-}
-
-/// \brief Look up the copying assignment operator for the given class.
-CXXMethodDecl *Sema::LookupCopyingAssignment(CXXRecordDecl *Class,
-                                             unsigned Quals, bool RValueThis,
-                                             unsigned ThisQuals,
-                                             bool *ConstParamMatch) {
-  assert(!(Quals & ~(Qualifiers::Const | Qualifiers::Volatile)) &&
-         "non-const, non-volatile qualifiers for copy assignment arg");
-  assert(!(ThisQuals & ~(Qualifiers::Const | Qualifiers::Volatile)) &&
-         "non-const, non-volatile qualifiers for copy assignment this");
-  SpecialMemberOverloadResult *Result =
-    LookupSpecialMember(Class, CXXCopyAssignment, Quals & Qualifiers::Const,
-                        Quals & Qualifiers::Volatile, RValueThis,
-                        ThisQuals & Qualifiers::Const,
-                        ThisQuals & Qualifiers::Volatile);
-
-  if (ConstParamMatch)
-    *ConstParamMatch = Result->hasConstParamMatch();
-
-  return Result->getMethod();
 }
 
 /// \brief Look for the destructor of the given class.
