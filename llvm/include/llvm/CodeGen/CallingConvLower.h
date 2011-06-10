@@ -163,8 +163,8 @@ class CCState {
   ParmContext CallOrPrologue;
 public:
   CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,
-	  const TargetMachine &TM,
-          SmallVector<CCValAssign, 16> &locs, LLVMContext &C);
+          const TargetMachine &TM, SmallVector<CCValAssign, 16> &locs,
+          LLVMContext &C);
 
   void addLoc(const CCValAssign &V) {
     Locs.push_back(V);
