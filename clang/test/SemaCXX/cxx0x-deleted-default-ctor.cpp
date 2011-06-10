@@ -90,16 +90,13 @@ struct has_amb_field { // expected-note {{marked deleted here}}
 };
 has_amb_field haf; // expected-error {{call to deleted constructor}}
 
-// FIXME: This should fail due to deletion
-#if 0
 class inaccessible_default {
   inaccessible_default();
 };
-struct has_inacc_field {
+struct has_inacc_field { // expected-note {{marked deleted here}}
   inaccessible_default id;
 };
-has_inacc_field hif;
-#endif
+has_inacc_field hif; // expected-error {{call to deleted constructor}}
 
 class friend_default {
   friend struct has_friend;
