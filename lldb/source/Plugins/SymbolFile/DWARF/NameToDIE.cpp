@@ -8,7 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "NameToDIE.h"
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/Stream.h"
+#include "lldb/Core/RegularExpression.h"
+
+void
+NameToDIE::Insert (const lldb_private::ConstString& name, const Info &info)
+{
+    m_collection.insert (std::make_pair(name.AsCString(), info));
+}
 
 size_t
 NameToDIE::Find (const lldb_private::ConstString &name, std::vector<Info> &info_array) const

@@ -11,8 +11,8 @@
 #define SymbolFileDWARF_NameToDIE_h_
 
 #include <map>
-#include "lldb/Core/ConstString.h"
-#include "lldb/Core/RegularExpression.h"
+#include <vector>
+#include "lldb/lldb-defines.h"
 
 class NameToDIE
 {
@@ -37,10 +37,7 @@ public:
     Dump (lldb_private::Stream *s);
 
     void
-    Insert (const lldb_private::ConstString& name, const Info &info)
-    {
-        m_collection.insert (std::make_pair(name.AsCString(), info));
-    }
+    Insert (const lldb_private::ConstString& name, const Info &info);
     
     size_t
     Find (const lldb_private::ConstString &name, 
