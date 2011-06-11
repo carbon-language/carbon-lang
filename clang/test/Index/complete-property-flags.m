@@ -8,6 +8,7 @@
 @property(retain, nonatomic) id xx;
 // RUN: c-index-test -code-completion-at=%s:7:11 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText assign}
+// CHECK-CC1-NEXT: {TypedText atomic}
 // CHECK-CC1-NEXT: {TypedText copy}
 // CHECK-CC1-NEXT: {TypedText getter}{Text  = }{Placeholder method}
 // CHECK-CC1-NEXT: {TypedText nonatomic}
