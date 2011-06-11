@@ -52,26 +52,12 @@ namespace llvm {
 class Constant;
 class GlobalVariable;
 class MDNode;
+class MMIAddrLabelMap;
 class MachineBasicBlock;
 class MachineFunction;
 class Module;
 class PointerType;
 class StructType;
-
-/// MachineModuleInfoImpl - This class can be derived from and used by targets
-/// to hold private target-specific information for each Module.  Objects of
-/// type are accessed/created with MMI::getInfo and destroyed when the
-/// MachineModuleInfo is destroyed.
-class MachineModuleInfoImpl {
-public:
-  typedef PointerIntPair<MCSymbol*, 1, bool> StubValueTy;
-  virtual ~MachineModuleInfoImpl();
-  typedef std::vector<std::pair<MCSymbol*, StubValueTy> > SymbolListTy;
-protected:
-  static SymbolListTy GetSortedStubs(const DenseMap<MCSymbol*, StubValueTy>&);
-};
-
-
 
 //===----------------------------------------------------------------------===//
 /// LandingPadInfo - This structure is used to retain landing pad info for
@@ -89,7 +75,20 @@ struct LandingPadInfo {
     : LandingPadBlock(MBB), LandingPadLabel(0), Personality(0) {}
 };
 
-class MMIAddrLabelMap;
+//===----------------------------------------------------------------------===//
+/// MachineModuleInfoImpl - This class can be derived from and used by targets
+/// to hold private target-specific information for each Module.  Objects of
+/// type are accessed/created with MMI::getInfo and destroyed when the
+/// MachineModuleInfo is destroyed.
+/// 
+class MachineModuleInfoImpl {
+public:
+  typedef PointerIntPair<MCSymbol*, 1, bool> StubValueTy;
+  virtual ~MachineModuleInfoImpl();
+  typedef std::vector<std::pair<MCSymbol*, StubValueTy> > SymbolListTy;
+protected:
+  static SymbolListTy GetSortedStubs(const DenseMap<MCSymbol*, StubValueTy>&);
+};
 
 //===----------------------------------------------------------------------===//
 /// MachineModuleInfo - This class contains meta information specific to a
