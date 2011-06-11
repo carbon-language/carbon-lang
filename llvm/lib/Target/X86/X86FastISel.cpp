@@ -1784,7 +1784,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
     MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(CallOpc));
     if (MemIntName)
-      MIB.addExternalSymbol(MemIntName);
+      MIB.addExternalSymbol(MemIntName, OpFlags);
     else
       MIB.addGlobalAddress(GV, 0, OpFlags);
   }
