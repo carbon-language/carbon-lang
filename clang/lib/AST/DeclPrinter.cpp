@@ -943,6 +943,11 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     Out << (first ? ' ' : ',') << "nonatomic";
     first = false;
   }
+  if (PDecl->getPropertyAttributes() &
+      ObjCPropertyDecl::OBJC_PR_atomic) {
+    Out << (first ? ' ' : ',') << "atomic";
+    first = false;
+  }
   Out << " )";
   }
   Out << ' ' << PDecl->getType().getAsString(Policy) << ' ' << PDecl;
