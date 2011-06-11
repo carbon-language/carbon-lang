@@ -688,7 +688,8 @@ public:
     DQ_PR_retain = 0x10,
     DQ_PR_copy = 0x20,
     DQ_PR_nonatomic = 0x40,
-    DQ_PR_setter = 0x80
+    DQ_PR_setter = 0x80,
+    DQ_PR_atomic = 0x100
   };
 
 

@@ -295,6 +295,8 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
 
   if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
+  else if (Attributes & ObjCDeclSpec::DQ_PR_atomic)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_atomic);
 
   PDecl->setPropertyAttributesAsWritten(PDecl->getPropertyAttributes());
   
@@ -346,7 +348,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       return 0;
     }
     unsigned PIkind = property->getPropertyAttributesAsWritten();
-    if ((PIkind & ObjCPropertyDecl::OBJC_PR_nonatomic) == 0) {
+    if ((PIkind & (ObjCPropertyDecl::OBJC_PR_atomic |
+                   ObjCPropertyDecl::OBJC_PR_nonatomic) ) == 0) {
       if (AtLoc.isValid())
         Diag(AtLoc, diag::warn_implicit_atomic_property);
       else
@@ -1088,7 +1091,8 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
     unsigned Attributes = Property->getPropertyAttributes();
     unsigned AttributesAsWrittern = Property->getPropertyAttributesAsWritten();
 
-    if (!(AttributesAsWrittern & ObjCPropertyDecl::OBJC_PR_nonatomic)) {
+    if (!(AttributesAsWrittern & ObjCPropertyDecl::OBJC_PR_atomic) &&
+        !(AttributesAsWrittern & ObjCPropertyDecl::OBJC_PR_nonatomic)) {
       GetterMethod = IMPDecl->getInstanceMethod(Property->getGetterName());
       SetterMethod = IMPDecl->getInstanceMethod(Property->getSetterName());
       LookedUpGetterSetter = true;
