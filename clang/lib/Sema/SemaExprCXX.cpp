@@ -17,6 +17,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/ScopeInfo.h"
+#include "clang/Sema/Scope.h"
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CXXInheritance.h"
@@ -575,42 +576,54 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E) {
   return Owned(E);
 }
 
-CXXMethodDecl *Sema::tryCaptureCXXThis() {
+QualType Sema::getAndCaptureCurrentThisType() {
   // Ignore block scopes: we can capture through them.
   // Ignore nested enum scopes: we'll diagnose non-constant expressions
   // where they're invalid, and other uses are legitimate.
   // Don't ignore nested class scopes: you can't use 'this' in a local class.
   DeclContext *DC = CurContext;
+  unsigned NumBlocks = 0;
   while (true) {
-    if (isa<BlockDecl>(DC)) DC = cast<BlockDecl>(DC)->getDeclContext();
-    else if (isa<EnumDecl>(DC)) DC = cast<EnumDecl>(DC)->getDeclContext();
+    if (isa<BlockDecl>(DC)) {
+      DC = cast<BlockDecl>(DC)->getDeclContext();
+      ++NumBlocks;
+    } else if (isa<EnumDecl>(DC))
+      DC = cast<EnumDecl>(DC)->getDeclContext();
     else break;
   }
 
-  // If we're not in an instance method, error out.
-  CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(DC);
-  if (!method || !method->isInstance())
-    return 0;
+  QualType ThisTy;
+  if (CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(DC)) {
+    if (method && method->isInstance())
+      ThisTy = method->getThisType(Context);
+  } else if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC)) {
+    // C++0x [expr.prim]p4:
+    //   Otherwise, if a member-declarator declares a non-static data member
+    // of a class X, the expression this is a prvalue of type "pointer to X"
+    // within the optional brace-or-equal-initializer.
+    Scope *S = getScopeForContext(DC);
+    if (!S || S->getFlags() & Scope::ThisScope)
+      ThisTy = Context.getPointerType(Context.getRecordType(RD));
+  }
 
-  // Mark that we're closing on 'this' in all the block scopes, if applicable.
-  for (unsigned idx = FunctionScopes.size() - 1;
-       isa<BlockScopeInfo>(FunctionScopes[idx]);
-       --idx)
-    cast<BlockScopeInfo>(FunctionScopes[idx])->CapturesCXXThis = true;
+  // Mark that we're closing on 'this' in all the block scopes we ignored.
+  if (!ThisTy.isNull())
+    for (unsigned idx = FunctionScopes.size() - 1;
+         NumBlocks; --idx, --NumBlocks)
+      cast<BlockScopeInfo>(FunctionScopes[idx])->CapturesCXXThis = true;
 
-  return method;
+  return ThisTy;
 }
 
-ExprResult Sema::ActOnCXXThis(SourceLocation loc) {
+ExprResult Sema::ActOnCXXThis(SourceLocation Loc) {
   /// C++ 9.3.2: In the body of a non-static member function, the keyword this
   /// is a non-lvalue expression whose value is the address of the object for
   /// which the function is called.
 
-  CXXMethodDecl *method = tryCaptureCXXThis();
-  if (!method) return Diag(loc, diag::err_invalid_this_use);
+  QualType ThisTy = getAndCaptureCurrentThisType();
+  if (ThisTy.isNull()) return Diag(Loc, diag::err_invalid_this_use);
 
-  return Owned(new (Context) CXXThisExpr(loc, method->getThisType(Context),
-                                         /*isImplicit=*/false));
+  return Owned(new (Context) CXXThisExpr(Loc, ThisTy, /*isImplicit=*/false));
 }
 
 ExprResult
@@ -2663,7 +2676,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
         return true;
 
       bool FoundAssign = false;
-      bool AllNoThrow = true;
       DeclarationName Name = C.DeclarationNames.getCXXOperatorName(OO_Equal);
       LookupResult Res(Self, DeclarationNameInfo(Name, KeyLoc),
                        Sema::LookupOrdinaryName);
@@ -2675,15 +2687,15 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
             FoundAssign = true;
             const FunctionProtoType *CPT
                 = Operator->getType()->getAs<FunctionProtoType>();
-            if (!CPT->isNothrow(Self.Context)) {
-              AllNoThrow = false;
-              break;
-            }
+            if (CPT->getExceptionSpecType() == EST_Delayed)
+              return false;
+            if (!CPT->isNothrow(Self.Context))
+              return false;
           }
         }
       }
 
-      return FoundAssign && AllNoThrow;
+      return FoundAssign;
     }
     return false;
   case UTT_HasNothrowCopy:
@@ -2700,7 +2712,6 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
         return true;
 
       bool FoundConstructor = false;
-      bool AllNoThrow = true;
       unsigned FoundTQs;
       DeclContext::lookup_const_iterator Con, ConEnd;
       for (llvm::tie(Con, ConEnd) = Self.LookupConstructors(RD);
@@ -2715,16 +2726,16 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
           FoundConstructor = true;
           const FunctionProtoType *CPT
               = Constructor->getType()->getAs<FunctionProtoType>();
+          if (CPT->getExceptionSpecType() == EST_Delayed)
+            return false;
           // FIXME: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
-          if (!CPT->isNothrow(Self.Context) || CPT->getNumArgs() > 1) {
-            AllNoThrow = false;
-            break;
-          }
+          if (!CPT->isNothrow(Self.Context) || CPT->getNumArgs() > 1)
+            return false;
         }
       }
 
-      return FoundConstructor && AllNoThrow;
+      return FoundConstructor;
     }
     return false;
   case UTT_HasNothrowConstructor:
@@ -2750,6 +2761,8 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
         if (Constructor->isDefaultConstructor()) {
           const FunctionProtoType *CPT
               = Constructor->getType()->getAs<FunctionProtoType>();
+          if (CPT->getExceptionSpecType() == EST_Delayed)
+            return false;
           // TODO: check whether evaluating default arguments can throw.
           // For now, we'll be conservative and assume that they can throw.
           return CPT->isNothrow(Self.Context) && CPT->getNumArgs() == 0;

@@ -1,13 +1,13 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 class Base {
-  virtual ~Base();
+  virtual ~Base(); // expected-note {{implicitly declared private here}}
 };
-struct Foo : public Base {
-  const int kBlah = 3; // expected-error{{fields can only be initialized in constructors}}
+struct Foo : public Base { // expected-error {{base class 'Base' has private destructor}}
+  const int kBlah = 3; // expected-warning {{accepted as a C++0x extension}}
   Foo();
 };
 struct Bar : public Foo {
-  Bar() { }
+  Bar() { } // expected-note {{implicit default destructor for 'Foo' first required here}}
 };
 struct Baz {
   Foo f;

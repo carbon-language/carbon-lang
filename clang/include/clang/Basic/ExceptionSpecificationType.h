@@ -18,12 +18,13 @@ namespace clang {
 
 /// \brief The various types of exception specifications that exist in C++0x.
 enum ExceptionSpecificationType {
-  EST_None,            ///< no exception specification
-  EST_DynamicNone,     ///< throw()
-  EST_Dynamic,         ///< throw(T1, T2)
-  EST_MSAny,           ///< Microsoft throw(...) extension
-  EST_BasicNoexcept,   ///< noexcept
-  EST_ComputedNoexcept ///< noexcept(expression)
+  EST_None,             ///< no exception specification
+  EST_DynamicNone,      ///< throw()
+  EST_Dynamic,          ///< throw(T1, T2)
+  EST_MSAny,            ///< Microsoft throw(...) extension
+  EST_BasicNoexcept,    ///< noexcept
+  EST_ComputedNoexcept, ///< noexcept(expression)
+  EST_Delayed           ///< not known yet
 };
 
 inline bool isDynamicExceptionSpec(ExceptionSpecificationType ESpecType) {

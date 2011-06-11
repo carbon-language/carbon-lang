@@ -304,7 +304,11 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
     const DeclContext *DC = block->getDeclContext();
     for (; isa<BlockDecl>(DC); DC = cast<BlockDecl>(DC)->getDeclContext())
       ;
-    QualType thisType = cast<CXXMethodDecl>(DC)->getThisType(C);
+    QualType thisType;
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC))
+      thisType = C.getPointerType(C.getRecordType(RD));
+    else
+      thisType = cast<CXXMethodDecl>(DC)->getThisType(C);
 
     const llvm::Type *llvmType = CGM.getTypes().ConvertType(thisType);
     std::pair<CharUnits,CharUnits> tinfo

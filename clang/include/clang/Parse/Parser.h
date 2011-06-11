@@ -580,6 +580,18 @@ private:
   /// ExitScope - Pop a scope off the scope stack.
   void ExitScope();
 
+  /// \brief RAII object used to modify the scope flags for the current scope.
+  class ParseScopeFlags {
+    Scope *CurScope;
+    unsigned OldFlags;
+    ParseScopeFlags(const ParseScopeFlags &); // do not implement
+    void operator=(const ParseScopeFlags &); // do not implement
+
+  public:
+    ParseScopeFlags(Parser *Self, unsigned ScopeFlags, bool ManageFlags = true);
+    ~ParseScopeFlags();
+  };
+
   //===--------------------------------------------------------------------===//
   // Diagnostic Emission and Error recovery.
 
@@ -621,8 +633,8 @@ private:
   /// - function bodies
   /// - default arguments
   /// - exception-specifications (TODO: C++0x)
-  /// - and brace-or-equal-initializers (TODO: C++0x)
-  /// for non-static data members (including such things in nested classes)."
+  /// - and brace-or-equal-initializers for non-static data members
+  /// (including such things in nested classes)."
   /// LateParsedDeclarations build the tree of those elements so they can
   /// be parsed after parsing the top-level class.
   class LateParsedDeclaration {
@@ -630,6 +642,7 @@ private:
     virtual ~LateParsedDeclaration();
 
     virtual void ParseLexedMethodDeclarations();
+    virtual void ParseLexedMemberInitializers();
     virtual void ParseLexedMethodDefs();
   };
 
@@ -641,6 +654,7 @@ private:
     virtual ~LateParsedClass();
 
     virtual void ParseLexedMethodDeclarations();
+    virtual void ParseLexedMemberInitializers();
     virtual void ParseLexedMethodDefs();
 
   private:
@@ -712,6 +726,25 @@ private:
     /// method will be stored so that they can be reintroduced into
     /// scope at the appropriate times.
     llvm::SmallVector<LateParsedDefaultArgument, 8> DefaultArgs;
+  };
+
+  /// LateParsedMemberInitializer - An initializer for a non-static class data
+  /// member whose parsing must to be delayed until the class is completely
+  /// defined (C++11 [class.mem]p2).
+  struct LateParsedMemberInitializer : public LateParsedDeclaration {
+    LateParsedMemberInitializer(Parser *P, Decl *FD)
+      : Self(P), Field(FD) { }
+
+    virtual void ParseLexedMemberInitializers();
+
+    Parser *Self;
+
+    /// Field - The field declaration.
+    Decl *Field;
+
+    /// CachedTokens - The sequence of tokens that comprises the initializer,
+    /// including any leading '='.
+    CachedTokens Toks;
   };
 
   /// LateParsedDeclarationsContainer - During parsing of a top (non-nested)
@@ -974,10 +1007,13 @@ private:
   Decl *ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
                                 const ParsedTemplateInfo &TemplateInfo,
                                 const VirtSpecifiers& VS, ExprResult& Init);
+  void ParseCXXNonStaticMemberInitializer(Decl *VarD);
   void ParseLexedMethodDeclarations(ParsingClass &Class);
   void ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM);
   void ParseLexedMethodDefs(ParsingClass &Class);
   void ParseLexedMethodDef(LexedMethod &LM);
+  void ParseLexedMemberInitializers(ParsingClass &Class);
+  void ParseLexedMemberInitializer(LateParsedMemberInitializer &MI);
   bool ConsumeAndStoreUntil(tok::TokenKind T1,
                             CachedTokens &Toks,
                             bool StopAtSemi = true,
@@ -1755,6 +1791,8 @@ bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
                            bool SuppressDeclarations = false);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    Decl *TagDecl);
+  ExprResult ParseCXXMemberInitializer(bool IsFunction,
+                                       SourceLocation &EqualLoc);
   void ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                  ParsingDeclRAIIObject *DiagsFromTParams = 0);

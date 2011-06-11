@@ -520,6 +520,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   FunctionArgList &Args) {
   assert(MemberInit->isAnyMemberInitializer() &&
          "Must have member initializer!");
+  assert(MemberInit->getInit() && "Must have initializer!");
   
   // non-static data member initializers.
   FieldDecl *Field = MemberInit->getAnyMember();

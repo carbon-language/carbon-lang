@@ -589,6 +589,8 @@ def warn_missing_exception_specification : Warning<
   "%0 is missing exception specification '%1'">;
 def err_noexcept_needs_constant_expression : Error<
   "argument to noexcept specifier must be a constant expression">;
+def err_exception_spec_unknown : Error<
+  "exception specification is not available until end of class definition">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
@@ -973,8 +975,8 @@ def err_illegal_decl_array_of_auto : Error<
 def err_new_array_of_auto : Error<
   "cannot allocate array of 'auto'">;
 def err_auto_not_allowed : Error<
-  "'auto' not allowed %select{in function prototype|in struct member"
-  "|in union member|in class member|in exception declaration"
+  "'auto' not allowed %select{in function prototype|in non-static struct member"
+  "|in non-static union member|in non-static class member|in exception declaration"
   "|in template parameter|in block literal|in template argument"
   "|in typedef|in type alias|in function return type|here}0">;
 def err_auto_var_requires_init : Error<

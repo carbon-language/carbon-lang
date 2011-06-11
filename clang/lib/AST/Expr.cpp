@@ -22,6 +22,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Lex/Lexer.h"
+#include "clang/Sema/SemaDiagnostic.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -1653,7 +1654,8 @@ static Expr::CanThrowResult CanSubExprsThrow(ASTContext &C, const Expr *CE) {
   return R;
 }
 
-static Expr::CanThrowResult CanCalleeThrow(ASTContext &Ctx, const Decl *D,
+static Expr::CanThrowResult CanCalleeThrow(ASTContext &Ctx, const Expr *E,
+                                           const Decl *D,
                                            bool NullThrows = true) {
   if (!D)
     return NullThrows ? Expr::CT_Can : Expr::CT_Cannot;
@@ -1682,6 +1684,15 @@ static Expr::CanThrowResult CanCalleeThrow(ASTContext &Ctx, const Decl *D,
 
   if (!FT)
     return Expr::CT_Can;
+
+  if (FT->getExceptionSpecType() == EST_Delayed) {
+    assert(isa<CXXConstructorDecl>(D) &&
+           "only constructor exception specs can be unknown");
+    Ctx.getDiagnostics().Report(E->getLocStart(),
+                                diag::err_exception_spec_unknown)
+      << E->getSourceRange();
+    return Expr::CT_Can;
+  }
 
   return FT->isNothrow(Ctx) ? Expr::CT_Cannot : Expr::CT_Can;
 }
@@ -1757,7 +1768,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     else if (isa<CXXPseudoDestructorExpr>(CE->getCallee()->IgnoreParens()))
       CT = CT_Cannot;
     else
-      CT = CanCalleeThrow(C, CE->getCalleeDecl());
+      CT = CanCalleeThrow(C, this, CE->getCalleeDecl());
     if (CT == CT_Can)
       return CT;
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));
@@ -1765,7 +1776,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
 
   case CXXConstructExprClass:
   case CXXTemporaryObjectExprClass: {
-    CanThrowResult CT = CanCalleeThrow(C,
+    CanThrowResult CT = CanCalleeThrow(C, this,
         cast<CXXConstructExpr>(this)->getConstructor());
     if (CT == CT_Can)
       return CT;
@@ -1778,8 +1789,8 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
       CT = CT_Dependent;
     else
       CT = MergeCanThrow(
-        CanCalleeThrow(C, cast<CXXNewExpr>(this)->getOperatorNew()),
-        CanCalleeThrow(C, cast<CXXNewExpr>(this)->getConstructor(),
+        CanCalleeThrow(C, this, cast<CXXNewExpr>(this)->getOperatorNew()),
+        CanCalleeThrow(C, this, cast<CXXNewExpr>(this)->getConstructor(),
                        /*NullThrows*/false));
     if (CT == CT_Can)
       return CT;
@@ -1792,10 +1803,11 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     if (DTy.isNull() || DTy->isDependentType()) {
       CT = CT_Dependent;
     } else {
-      CT = CanCalleeThrow(C, cast<CXXDeleteExpr>(this)->getOperatorDelete());
+      CT = CanCalleeThrow(C, this,
+                          cast<CXXDeleteExpr>(this)->getOperatorDelete());
       if (const RecordType *RT = DTy->getAs<RecordType>()) {
         const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-        CT = MergeCanThrow(CT, CanCalleeThrow(C, RD->getDestructor()));
+        CT = MergeCanThrow(CT, CanCalleeThrow(C, this, RD->getDestructor()));
       }
       if (CT == CT_Can)
         return CT;
@@ -1805,7 +1817,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
 
   case CXXBindTemporaryExprClass: {
     // The bound temporary has to be destroyed again, which might throw.
-    CanThrowResult CT = CanCalleeThrow(C,
+    CanThrowResult CT = CanCalleeThrow(C, this,
       cast<CXXBindTemporaryExpr>(this)->getTemporary()->getDestructor());
     if (CT == CT_Can)
       return CT;

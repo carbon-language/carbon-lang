@@ -724,7 +724,7 @@ private:
                QualType T, TypeSourceInfo *TInfo, AccessControl ac, Expr *BW,
                bool synthesized)
     : FieldDecl(ObjCIvar, DC, StartLoc, IdLoc, Id, T, TInfo, BW,
-                /*Mutable=*/false),
+                /*Mutable=*/false, /*HasInit=*/false),
       NextIvar(0), DeclAccess(ac), Synthesized(synthesized) {}
 
 public:
@@ -779,7 +779,7 @@ private:
                       QualType T, Expr *BW)
     : FieldDecl(ObjCAtDefsField, DC, StartLoc, IdLoc, Id, T,
                 /*TInfo=*/0, // FIXME: Do ObjCAtDefs have declarators ?
-                BW, /*Mutable=*/false) {}
+                BW, /*Mutable=*/false, /*HasInit=*/false) {}
 
 public:
   static ObjCAtDefsFieldDecl *Create(ASTContext &C, DeclContext *DC,

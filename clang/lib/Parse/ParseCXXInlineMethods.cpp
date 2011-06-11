@@ -42,6 +42,7 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
     FnD = Actions.ActOnCXXMemberDeclarator(getCurScope(), AS, D,
                                            move(TemplateParams), 0, 
                                            VS, Init.release(),
+                                           /*HasInit=*/false,
                                            /*IsDefinition*/true);
   }
 
@@ -166,8 +167,50 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, ParsingDeclarator &D,
   return FnD;
 }
 
+/// ParseCXXNonStaticMemberInitializer - We parsed and verified that the
+/// specified Declarator is a well formed C++ non-static data member
+/// declaration. Now lex its initializer and store its tokens for parsing
+/// after the class is complete.
+void Parser::ParseCXXNonStaticMemberInitializer(Decl *VarD) {
+  assert((Tok.is(tok::l_brace) || Tok.is(tok::equal)) &&
+         "Current token not a '{' or '='!");
+
+  LateParsedMemberInitializer *MI =
+    new LateParsedMemberInitializer(this, VarD);
+  getCurrentClass().LateParsedDeclarations.push_back(MI);
+  CachedTokens &Toks = MI->Toks;
+
+  tok::TokenKind kind = Tok.getKind();
+  if (kind == tok::equal) {
+    Toks.push_back(Tok);
+    ConsumeAnyToken();
+  }
+
+  if (kind == tok::l_brace) {
+    // Begin by storing the '{' token.
+    Toks.push_back(Tok);
+    ConsumeBrace();
+
+    // Consume everything up to (and including) the matching right brace.
+    ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/true);
+  } else {
+    // Consume everything up to (but excluding) the comma or semicolon.
+    ConsumeAndStoreUntil(tok::comma, Toks, /*StopAtSemi=*/true,
+                         /*ConsumeFinalToken=*/false);
+  }
+
+  // Store an artificial EOF token to ensure that we don't run off the end of
+  // the initializer when we come to parse it.
+  Token Eof;
+  Eof.startToken();
+  Eof.setKind(tok::eof);
+  Eof.setLocation(Tok.getLocation());
+  Toks.push_back(Eof);
+}
+
 Parser::LateParsedDeclaration::~LateParsedDeclaration() {}
 void Parser::LateParsedDeclaration::ParseLexedMethodDeclarations() {}
+void Parser::LateParsedDeclaration::ParseLexedMemberInitializers() {}
 void Parser::LateParsedDeclaration::ParseLexedMethodDefs() {}
 
 Parser::LateParsedClass::LateParsedClass(Parser *P, ParsingClass *C)
@@ -181,6 +224,10 @@ void Parser::LateParsedClass::ParseLexedMethodDeclarations() {
   Self->ParseLexedMethodDeclarations(*Class);
 }
 
+void Parser::LateParsedClass::ParseLexedMemberInitializers() {
+  Self->ParseLexedMemberInitializers(*Class);
+}
+
 void Parser::LateParsedClass::ParseLexedMethodDefs() {
   Self->ParseLexedMethodDefs(*Class);
 }
@@ -191,6 +238,10 @@ void Parser::LateParsedMethodDeclaration::ParseLexedMethodDeclarations() {
 
 void Parser::LexedMethod::ParseLexedMethodDefs() {
   Self->ParseLexedMethodDef(*this);
+}
+
+void Parser::LateParsedMemberInitializer::ParseLexedMemberInitializers() {
+  Self->ParseLexedMemberInitializer(*this);
 }
 
 /// ParseLexedMethodDeclarations - We finished parsing the member
@@ -364,8 +415,70 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
                                                         origLoc))
       while (Tok.getLocation() != origLoc && Tok.isNot(tok::eof))
         ConsumeAnyToken();
-
   }
+}
+
+/// ParseLexedMemberInitializers - We finished parsing the member specification
+/// of a top (non-nested) C++ class. Now go over the stack of lexed data member
+/// initializers that were collected during its parsing and parse them all.
+void Parser::ParseLexedMemberInitializers(ParsingClass &Class) {
+  bool HasTemplateScope = !Class.TopLevelClass && Class.TemplateScope;
+  ParseScope ClassTemplateScope(this, Scope::TemplateParamScope,
+                                HasTemplateScope);
+  if (HasTemplateScope)
+    Actions.ActOnReenterTemplateScope(getCurScope(), Class.TagOrTemplate);
+
+  // Set or update the scope flags to include Scope::ThisScope.
+  bool AlreadyHasClassScope = Class.TopLevelClass;
+  unsigned ScopeFlags = Scope::ClassScope|Scope::DeclScope|Scope::ThisScope;
+  ParseScope ClassScope(this, ScopeFlags, !AlreadyHasClassScope);
+  ParseScopeFlags ClassScopeFlags(this, ScopeFlags, AlreadyHasClassScope);
+
+  if (!AlreadyHasClassScope)
+    Actions.ActOnStartDelayedMemberDeclarations(getCurScope(),
+                                                Class.TagOrTemplate);
+
+  for (size_t i = 0; i < Class.LateParsedDeclarations.size(); ++i) {
+    Class.LateParsedDeclarations[i]->ParseLexedMemberInitializers();
+  }
+
+  if (!AlreadyHasClassScope)
+    Actions.ActOnFinishDelayedMemberDeclarations(getCurScope(),
+                                                 Class.TagOrTemplate);
+
+  Actions.ActOnFinishDelayedMemberInitializers(Class.TagOrTemplate);
+}
+
+void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
+  if (MI.Field->isInvalidDecl())
+    return;
+
+  // Append the current token at the end of the new token stream so that it
+  // doesn't get lost.
+  MI.Toks.push_back(Tok);
+  PP.EnterTokenStream(MI.Toks.data(), MI.Toks.size(), true, false);
+
+  // Consume the previously pushed token.
+  ConsumeAnyToken();
+
+  SourceLocation EqualLoc;
+  ExprResult Init = ParseCXXMemberInitializer(/*IsFunction=*/false, EqualLoc);
+
+  Actions.ActOnCXXInClassMemberInitializer(MI.Field, EqualLoc, Init.release());
+
+  // The next token should be our artificial terminating EOF token.
+  if (Tok.isNot(tok::eof)) {
+    SourceLocation EndLoc = PP.getLocForEndOfToken(PrevTokLocation);
+    if (!EndLoc.isValid())
+      EndLoc = Tok.getLocation();
+    // No fixit; we can't recover as if there were a semicolon here.
+    Diag(EndLoc, diag::err_expected_semi_decl_list);
+
+    // Consume tokens until we hit the artificial EOF.
+    while (Tok.isNot(tok::eof))
+      ConsumeAnyToken();
+  }
+  ConsumeAnyToken();
 }
 
 /// ConsumeAndStoreUntil - Consume and store the token at the passed token

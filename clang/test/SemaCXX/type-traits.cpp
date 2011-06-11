@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only -verify -std=gnu++0x %s 
 #define T(b) (b) ? 1 : -1
 #define F(b) (b) ? -1 : 1
 
@@ -38,8 +38,7 @@ typedef Derives DerivesArNB[];
 struct DerivesEmpty : Empty {};
 struct HasCons { HasCons(int); };
 struct HasCopyAssign { HasCopyAssign operator =(const HasCopyAssign&); };
-struct HasMoveAssign { HasMoveAssign operator =(const HasMoveAssign&&); }; // \
-    // expected-warning {{rvalue references}}
+struct HasMoveAssign { HasMoveAssign operator =(const HasMoveAssign&&); };
 struct HasDest { ~HasDest(); };
 class  HasPriv { int priv; };
 class  HasProt { protected: int prot; };
@@ -1069,7 +1068,7 @@ struct HasCopy {
 };
 
 struct HasMove {
-  HasMove(HasMove&& cp); // expected-warning {{rvalue references}}
+  HasMove(HasMove&& cp);
 };
 
 struct HasTemplateCons {
@@ -1253,6 +1252,9 @@ void has_nothrow_copy() {
   { int arr[F(__has_nothrow_copy(cvoid))]; }
 }
 
+template<bool b> struct assert_expr;
+template<> struct assert_expr<true> {};
+
 void has_nothrow_constructor() {
   { int arr[T(__has_nothrow_constructor(Int))]; }
   { int arr[T(__has_nothrow_constructor(IntAr))]; }
@@ -1280,6 +1282,11 @@ void has_nothrow_constructor() {
   { int arr[F(__has_nothrow_constructor(void))]; }
   { int arr[F(__has_nothrow_constructor(cvoid))]; }
   { int arr[F(__has_nothrow_constructor(HasTemplateCons))]; }
+
+  // While parsing an in-class initializer, the constructor is not known to be
+  // non-throwing yet.
+  struct HasInClassInit { int n = (assert_expr<!__has_nothrow_constructor(HasInClassInit)>(), 0); };
+  { int arr[T(__has_nothrow_constructor(HasInClassInit))]; }
 }
 
 void has_virtual_destructor() {

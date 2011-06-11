@@ -1553,6 +1553,7 @@ bool Parser::isCXX0XFinalKeyword() const {
 ///       member-declarator:
 ///         declarator virt-specifier-seq[opt] pure-specifier[opt]
 ///         declarator constant-initializer[opt]
+/// [C++11] declarator brace-or-equal-initializer[opt]
 ///         identifier[opt] ':' constant-expression
 ///
 ///       virt-specifier-seq:
@@ -1731,10 +1732,14 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
     bool IsDefinition = false;
     // function-definition:
-    if (Tok.is(tok::l_brace)) {
+    //
+    // In C++11, a non-function declarator followed by an open brace is a
+    // braced-init-list for an in-class member initialization, not an
+    // erroneous function definition.
+    if (Tok.is(tok::l_brace) && !getLang().CPlusPlus0x) {
       IsDefinition = true;
     } else if (DeclaratorInfo.isFunctionDeclarator()) {
-      if (Tok.is(tok::colon) || Tok.is(tok::kw_try)) {
+      if (Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) {
         IsDefinition = true;
       } else if (Tok.is(tok::equal)) {
         const Token &KW = NextToken();
@@ -1790,45 +1795,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   while (1) {
     // member-declarator:
     //   declarator pure-specifier[opt]
-    //   declarator constant-initializer[opt]
+    //   declarator brace-or-equal-initializer[opt]
     //   identifier[opt] ':' constant-expression
     if (Tok.is(tok::colon)) {
       ConsumeToken();
       BitfieldSize = ParseConstantExpression();
       if (BitfieldSize.isInvalid())
         SkipUntil(tok::comma, true, true);
-    }
-
-    ParseOptionalCXX0XVirtSpecifierSeq(VS);
-
-    // pure-specifier:
-    //   '= 0'
-    //
-    // constant-initializer:
-    //   '=' constant-expression
-    //
-    // defaulted/deleted function-definition:
-    //   '=' 'default'                          [TODO]
-    //   '=' 'delete'
-    if (Tok.is(tok::equal)) {
-      ConsumeToken();
-      if (Tok.is(tok::kw_delete)) {
-        if (DeclaratorInfo.isFunctionDeclarator())
-          Diag(ConsumeToken(), diag::err_default_delete_in_multiple_declaration)
-            << 1 /* delete */;
-        else
-          Diag(ConsumeToken(), diag::err_deleted_non_function);
-      } else if (Tok.is(tok::kw_default)) {
-        if (DeclaratorInfo.isFunctionDeclarator())
-          Diag(Tok, diag::err_default_delete_in_multiple_declaration)
-            << 1 /* delete */;
-        else
-          Diag(ConsumeToken(), diag::err_default_special_members);
-      } else {
-        Init = ParseInitializer();
-        if (Init.isInvalid())
-          SkipUntil(tok::comma, true, true);
-      }
     }
 
     // If a simple-asm-expr is present, parse it.
@@ -1845,6 +1818,30 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // If attributes exist after the declarator, parse them.
     MaybeParseGNUAttributes(DeclaratorInfo);
 
+    // FIXME: When g++ adds support for this, we'll need to check whether it
+    // goes before or after the GNU attributes and __asm__.
+    ParseOptionalCXX0XVirtSpecifierSeq(VS);
+
+    bool HasDeferredInitializer = false;
+    if (Tok.is(tok::equal) || Tok.is(tok::l_brace)) {
+      if (BitfieldSize.get()) {
+        Diag(Tok, diag::err_bitfield_member_init);
+        SkipUntil(tok::comma, true, true);
+      } else {
+        HasDeferredInitializer = !DeclaratorInfo.isFunctionDeclarator() &&
+          DeclaratorInfo.getDeclSpec().getStorageClassSpec()
+            != DeclSpec::SCS_static;
+
+        if (!HasDeferredInitializer) {
+          SourceLocation EqualLoc;
+          Init = ParseCXXMemberInitializer(
+            DeclaratorInfo.isFunctionDeclarator(), EqualLoc);
+          if (Init.isInvalid())
+            SkipUntil(tok::comma, true, true);
+        }
+      }
+    }
+
     // NOTE: If Sema is the Action module and declarator is an instance field,
     // this call will *not* return the created decl; It will return null.
     // See Sema::ActOnCXXMemberDeclarator for details.
@@ -1860,7 +1857,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                                   DeclaratorInfo,
                                                   move(TemplateParams),
                                                   BitfieldSize.release(),
-                                                  VS, Init.release(), false);
+                                                  VS, Init.release(),
+                                                  HasDeferredInitializer,
+                                                  /*IsDefinition*/ false);
     }
     if (ThisDecl)
       DeclsInGroup.push_back(ThisDecl);
@@ -1872,6 +1871,24 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     }
 
     DeclaratorInfo.complete(ThisDecl);
+
+    if (HasDeferredInitializer) {
+      if (!getLang().CPlusPlus0x)
+        Diag(Tok, diag::warn_nonstatic_member_init_accepted_as_extension);
+
+      if (DeclaratorInfo.isArrayOfUnknownBound()) {
+        // C++0x [dcl.array]p3: An array bound may also be omitted when the
+        // declarator is followed by an initializer. 
+        //
+        // A brace-or-equal-initializer for a member-declarator is not an
+        // initializer in the gramamr, so this is ill-formed.
+        Diag(Tok, diag::err_incomplete_array_member_init);
+        SkipUntil(tok::comma, true, true);
+        // Avoid later warnings about a class member of incomplete type.
+        ThisDecl->setInvalidDecl();
+      } else
+        ParseCXXNonStaticMemberInitializer(ThisDecl);
+    }
 
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
@@ -1904,6 +1921,66 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   Actions.FinalizeDeclaratorGroup(getCurScope(), DS, DeclsInGroup.data(),
                                   DeclsInGroup.size());
+}
+
+/// ParseCXXMemberInitializer - Parse the brace-or-equal-initializer or
+/// pure-specifier. Also detect and reject any attempted defaulted/deleted
+/// function definition. The location of the '=', if any, will be placed in
+/// EqualLoc.
+///
+///   pure-specifier:
+///     '= 0'
+///  
+///   brace-or-equal-initializer:
+///     '=' initializer-expression
+///     braced-init-list                       [TODO]
+///  
+///   initializer-clause:
+///     assignment-expression
+///     braced-init-list                       [TODO]
+///  
+///   defaulted/deleted function-definition:                                                                                                                                                                                               
+///     '=' 'default'
+///     '=' 'delete'
+///
+/// Prior to C++0x, the assignment-expression in an initializer-clause must
+/// be a constant-expression.
+ExprResult Parser::ParseCXXMemberInitializer(bool IsFunction,
+                                             SourceLocation &EqualLoc) {
+  assert((Tok.is(tok::equal) || Tok.is(tok::l_brace))
+         && "Data member initializer not starting with '=' or '{'");
+
+  if (Tok.is(tok::equal)) {
+    EqualLoc = ConsumeToken();
+    if (Tok.is(tok::kw_delete)) {
+      // In principle, an initializer of '= delete p;' is legal, but it will
+      // never type-check. It's better to diagnose it as an ill-formed expression
+      // than as an ill-formed deleted non-function member.
+      // An initializer of '= delete p, foo' will never be parsed, because
+      // a top-level comma always ends the initializer expression.
+      const Token &Next = NextToken();
+      if (IsFunction || Next.is(tok::semi) || Next.is(tok::comma) ||
+           Next.is(tok::eof)) {
+        if (IsFunction)
+          Diag(ConsumeToken(), diag::err_default_delete_in_multiple_declaration)
+            << 1 /* delete */;
+        else
+          Diag(ConsumeToken(), diag::err_deleted_non_function);
+        return ExprResult();
+      }
+    } else if (Tok.is(tok::kw_default)) {
+      Diag(ConsumeToken(), diag::err_default_special_members);
+      if (IsFunction)
+        Diag(Tok, diag::err_default_delete_in_multiple_declaration)
+          << 0 /* default */;
+      else
+        Diag(ConsumeToken(), diag::err_default_special_members);
+      return ExprResult();
+    }
+
+    return ParseInitializer();
+  } else
+    return ExprError(Diag(Tok, diag::err_generalized_initializer_lists));
 }
 
 /// ParseCXXMemberSpecification - Parse the class definition.
@@ -2057,19 +2134,20 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
                                               LBraceLoc, RBraceLoc,
                                               attrs.getList());
 
-  // C++ 9.2p2: Within the class member-specification, the class is regarded as
-  // complete within function bodies, default arguments,
-  // exception-specifications, and constructor ctor-initializers (including
-  // such things in nested classes).
+  // C++0x [class.mem]p2: Within the class member-specification, the class is
+  // regarded as complete within function bodies, default arguments, exception-
+  // specifications, and brace-or-equal-initializers for non-static data
+  // members (including such things in nested classes).
   //
-  // FIXME: Only function bodies and constructor ctor-initializers are
-  // parsed correctly, fix the rest.
+  // FIXME: Only function bodies and brace-or-equal-initializers are currently
+  // handled. Fix the others!
   if (TagDecl && NonNestedClass) {
     // We are not inside a nested class. This class and its nested classes
     // are complete and we can parse the delayed portions of method
     // declarations and the lexed inline method definitions.
     SourceLocation SavedPrevTokLocation = PrevTokLocation;
     ParseLexedMethodDeclarations(getCurrentClass());
+    ParseLexedMemberInitializers(getCurrentClass());
     ParseLexedMethodDefs(getCurrentClass());
     PrevTokLocation = SavedPrevTokLocation;
   }

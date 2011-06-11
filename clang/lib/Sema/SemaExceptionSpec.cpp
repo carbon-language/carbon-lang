@@ -298,16 +298,12 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   //   - both are non-throwing, regardless of their form,
   //   - both have the form noexcept(constant-expression) and the constant-
   //     expressions are equivalent,
-  //   - one exception-specification is a noexcept-specification allowing all
-  //     exceptions and the other is of the form throw(type-id-list), or
   //   - both are dynamic-exception-specifications that have the same set of
   //     adjusted types.
   //
   // C++0x [except.spec]p12: An exception-specifcation is non-throwing if it is
   //   of the form throw(), noexcept, or noexcept(constant-expression) where the
   //   constant-expression yields true.
-  //
-  // CWG 1073 Proposed resolution: Strike the third bullet above.
   //
   // C++0x [except.spec]p4: If any declaration of a function has an exception-
   //   specifier that is not a noexcept-specification allowing all exceptions,
@@ -319,6 +315,9 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
 
   ExceptionSpecificationType OldEST = Old->getExceptionSpecType();
   ExceptionSpecificationType NewEST = New->getExceptionSpecType();
+
+  assert(OldEST != EST_Delayed && NewEST != EST_Delayed &&
+         "Shouldn't see unknown exception specifications here");
 
   // Shortcut the case where both have no spec.
   if (OldEST == EST_None && NewEST == EST_None)
@@ -505,6 +504,9 @@ bool Sema::CheckExceptionSpecSubset(
     return CheckParamExceptionSpec(NoteID, Superset, SuperLoc, Subset, SubLoc);
 
   ExceptionSpecificationType SubEST = Subset->getExceptionSpecType();
+
+  assert(SuperEST != EST_Delayed && SubEST != EST_Delayed &&
+         "Shouldn't see unknown exception specifications here");
 
   // It does not. If the subset contains everything, we've failed.
   if (SubEST == EST_None || SubEST == EST_MSAny) {

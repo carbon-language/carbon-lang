@@ -1953,20 +1953,33 @@ class FieldDecl : public DeclaratorDecl {
   bool Mutable : 1;
   mutable unsigned CachedFieldIndex : 31;
 
-  Expr *BitWidth;
+  /// \brief A pointer to either the in-class initializer for this field (if
+  /// the boolean value is false), or the bit width expression for this bit
+  /// field (if the boolean value is true).
+  ///
+  /// We can safely combine these two because in-class initializers are not
+  /// permitted for bit-fields.
+  ///
+  /// If the boolean is false and the initializer is null, then this field has
+  /// an in-class initializer which has not yet been parsed and attached.
+  llvm::PointerIntPair<Expr *, 1, bool> InitializerOrBitWidth;
 protected:
   FieldDecl(Kind DK, DeclContext *DC, SourceLocation StartLoc,
             SourceLocation IdLoc, IdentifierInfo *Id,
-            QualType T, TypeSourceInfo *TInfo, Expr *BW, bool Mutable)
+            QualType T, TypeSourceInfo *TInfo, Expr *BW, bool Mutable,
+            bool HasInit)
     : DeclaratorDecl(DK, DC, IdLoc, Id, T, TInfo, StartLoc),
-      Mutable(Mutable), CachedFieldIndex(0), BitWidth(BW) {
+      Mutable(Mutable), CachedFieldIndex(0),
+      InitializerOrBitWidth(BW, !HasInit) {
+    assert(!(BW && HasInit) && "got initializer for bitfield");
   }
 
 public:
   static FieldDecl *Create(const ASTContext &C, DeclContext *DC,
                            SourceLocation StartLoc, SourceLocation IdLoc,
                            IdentifierInfo *Id, QualType T,
-                           TypeSourceInfo *TInfo, Expr *BW, bool Mutable);
+                           TypeSourceInfo *TInfo, Expr *BW, bool Mutable,
+                           bool HasInit);
 
   /// getFieldIndex - Returns the index of this field within its record,
   /// as appropriate for passing to ASTRecordLayout::getFieldOffset.
@@ -1979,10 +1992,12 @@ public:
   void setMutable(bool M) { Mutable = M; }
 
   /// isBitfield - Determines whether this field is a bitfield.
-  bool isBitField() const { return BitWidth != NULL; }
+  bool isBitField() const {
+    return InitializerOrBitWidth.getInt() && InitializerOrBitWidth.getPointer();
+  }
 
   /// @brief Determines whether this is an unnamed bitfield.
-  bool isUnnamedBitfield() const { return BitWidth != NULL && !getDeclName(); }
+  bool isUnnamedBitfield() const { return isBitField() && !getDeclName(); }
 
   /// isAnonymousStructOrUnion - Determines whether this field is a
   /// representative for an anonymous struct or union. Such fields are
@@ -1990,8 +2005,37 @@ public:
   /// store the data for the anonymous union or struct.
   bool isAnonymousStructOrUnion() const;
 
-  Expr *getBitWidth() const { return BitWidth; }
-  void setBitWidth(Expr *BW) { BitWidth = BW; }
+  Expr *getBitWidth() const {
+    return isBitField() ? InitializerOrBitWidth.getPointer() : 0;
+  }
+  void setBitWidth(Expr *BW) {
+    assert(!InitializerOrBitWidth.getPointer() &&
+           "bit width or initializer already set");
+    InitializerOrBitWidth.setPointer(BW);
+    InitializerOrBitWidth.setInt(1);
+  }
+
+  /// hasInClassInitializer - Determine whether this member has a C++0x in-class
+  /// initializer.
+  bool hasInClassInitializer() const {
+    return !InitializerOrBitWidth.getInt();
+  }
+  /// getInClassInitializer - Get the C++0x in-class initializer for this
+  /// member, or null if one has not been set. If a valid declaration has an
+  /// in-class initializer, but this returns null, then we have not parsed and
+  /// attached it yet.
+  Expr *getInClassInitializer() const {
+    return hasInClassInitializer() ? InitializerOrBitWidth.getPointer() : 0;
+  }
+  /// setInClassInitializer - Set the C++0x in-class initializer for this member.
+  void setInClassInitializer(Expr *Init);
+  /// removeInClassInitializer - Remove the C++0x in-class initializer from this
+  /// member.
+  void removeInClassInitializer() {
+    assert(!InitializerOrBitWidth.getInt() && "no initializer to remove");
+    InitializerOrBitWidth.setPointer(0);
+    InitializerOrBitWidth.setInt(1);
+  }
 
   /// getParent - Returns the parent of this field declaration, which
   /// is the struct in which this method is defined.

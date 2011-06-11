@@ -34,7 +34,7 @@ public:
 
   enum E1 { en1, en2 };
 
-  int i = 0; // expected-error {{fields can only be initialized in constructors}}
+  int i = 0; // expected-warning {{in-class initialization of non-static data member accepted as a C++0x extension}}
   static int si = 0; // expected-error {{non-const static data member must be initialized out of line}}
   static const NestedC ci = 0; // expected-error {{static data member of type 'const C::NestedC' must be initialized out of line}}
   static const int nci = vs; // expected-error {{in-class initializer is not a constant expression}}

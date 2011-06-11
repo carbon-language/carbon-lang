@@ -2610,7 +2610,8 @@ Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                              /*IdentifierInfo=*/0,
                              Context.getTypeDeclType(Record),
                              TInfo,
-                             /*BitWidth=*/0, /*Mutable=*/false);
+                             /*BitWidth=*/0, /*Mutable=*/false,
+                             /*HasInit=*/false);
     Anon->setAccess(AS);
     if (getLangOptions().CPlusPlus)
       FieldCollector->Add(cast<FieldDecl>(Anon));
@@ -2700,7 +2701,8 @@ Decl *Sema::BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
                              /*IdentifierInfo=*/0,
                              Context.getTypeDeclType(Record),
                              TInfo,
-                             /*BitWidth=*/0, /*Mutable=*/false);
+                             /*BitWidth=*/0, /*Mutable=*/false,
+                             /*HasInit=*/false);
   Anon->setImplicit();
 
   // Add the anonymous struct object to the current context.
@@ -7512,14 +7514,13 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
   return false;
 }
 
-/// ActOnField - Each field of a struct/union/class is passed into this in order
+/// ActOnField - Each field of a C struct/union is passed into this in order
 /// to create a FieldDecl object for it.
-Decl *Sema::ActOnField(Scope *S, Decl *TagD,
-                                 SourceLocation DeclStart,
-                                 Declarator &D, ExprTy *BitfieldWidth) {
+Decl *Sema::ActOnField(Scope *S, Decl *TagD, SourceLocation DeclStart,
+                       Declarator &D, ExprTy *BitfieldWidth) {
   FieldDecl *Res = HandleField(S, cast_or_null<RecordDecl>(TagD),
                                DeclStart, D, static_cast<Expr*>(BitfieldWidth),
-                               AS_public);
+                               /*HasInit=*/false, AS_public);
   return Res;
 }
 
@@ -7527,7 +7528,7 @@ Decl *Sema::ActOnField(Scope *S, Decl *TagD,
 ///
 FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
                              SourceLocation DeclStart,
-                             Declarator &D, Expr *BitWidth,
+                             Declarator &D, Expr *BitWidth, bool HasInit,
                              AccessSpecifier AS) {
   IdentifierInfo *II = D.getIdentifier();
   SourceLocation Loc = DeclStart;
@@ -7576,8 +7577,8 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
     = (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_mutable);
   SourceLocation TSSL = D.getSourceRange().getBegin();
   FieldDecl *NewFD
-    = CheckFieldDecl(II, T, TInfo, Record, Loc, Mutable, BitWidth, TSSL,
-                     AS, PrevDecl, &D);
+    = CheckFieldDecl(II, T, TInfo, Record, Loc, Mutable, BitWidth, HasInit,
+                     TSSL, AS, PrevDecl, &D);
 
   if (NewFD->isInvalidDecl())
     Record->setInvalidDecl();
@@ -7606,7 +7607,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
                                 TypeSourceInfo *TInfo,
                                 RecordDecl *Record, SourceLocation Loc,
-                                bool Mutable, Expr *BitWidth,
+                                bool Mutable, Expr *BitWidth, bool HasInit,
                                 SourceLocation TSSL,
                                 AccessSpecifier AS, NamedDecl *PrevDecl,
                                 Declarator *D) {
@@ -7686,7 +7687,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   FieldDecl *NewFD = FieldDecl::Create(Context, Record, TSSL, Loc, II, T, TInfo,
-                                       BitWidth, Mutable);
+                                       BitWidth, Mutable, HasInit);
   if (InvalidDecl)
     NewFD->setInvalidDecl();
 
@@ -8289,16 +8290,17 @@ void Sema::ActOnFields(Scope* S,
 
     // Now that the record is complete, do any delayed exception spec checks
     // we were missing.
-    if (!DelayedDestructorExceptionSpecChecks.empty()) {
+    while (!DelayedDestructorExceptionSpecChecks.empty()) {
       const CXXDestructorDecl *Dtor =
               DelayedDestructorExceptionSpecChecks.back().first;
-      if (Dtor->getParent() == Record) {
-        assert(!Dtor->getParent()->isDependentType() &&
-            "Should not ever add destructors of templates into the list.");
-        CheckOverridingFunctionExceptionSpec(Dtor,
-            DelayedDestructorExceptionSpecChecks.back().second);
-        DelayedDestructorExceptionSpecChecks.pop_back();
-      }
+      if (Dtor->getParent() != Record)
+        break;
+
+      assert(!Dtor->getParent()->isDependentType() &&
+          "Should not ever add destructors of templates into the list.");
+      CheckOverridingFunctionExceptionSpec(Dtor,
+          DelayedDestructorExceptionSpecChecks.back().second);
+      DelayedDestructorExceptionSpecChecks.pop_back();
     }
 
   } else {

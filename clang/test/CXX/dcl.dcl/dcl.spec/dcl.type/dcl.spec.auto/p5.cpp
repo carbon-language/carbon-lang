@@ -3,13 +3,13 @@
 struct S {
   virtual ~S();
 
-  auto a; // expected-error{{'auto' not allowed in struct member}}
-  auto *b; // expected-error{{'auto' not allowed in struct member}}
-  const auto c; // expected-error{{'auto' not allowed in struct member}}
+  auto a; // expected-error{{'auto' not allowed in non-static struct member}}
+  auto *b; // expected-error{{'auto' not allowed in non-static struct member}}
+  const auto c; // expected-error{{'auto' not allowed in non-static struct member}}
 
   void f() throw (auto); // expected-error{{'auto' not allowed here}}
 
-  friend auto; // expected-error{{'auto' not allowed in struct member}}
+  friend auto; // expected-error{{'auto' not allowed in non-static struct member}}
 
   operator auto(); // expected-error{{'auto' not allowed here}}
 };

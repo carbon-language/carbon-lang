@@ -193,6 +193,8 @@ def ext_ref_qualifier : ExtWarn<
   "reference qualifiers on functions are a C++0x extension">, InGroup<CXX0x>;
 def ext_inline_namespace : ExtWarn<
   "inline namespaces are a C++0x feature">, InGroup<CXX0x>;
+def err_generalized_initializer_lists : Error<
+  "generalized initializer lists are a C++0x extension unsupported in Clang">;
 def ext_generalized_initializer_lists : ExtWarn<
   "generalized initializer lists are a C++0x extension unsupported in Clang">,
   InGroup<CXX0x>;
@@ -443,6 +445,15 @@ def warn_deleted_function_accepted_as_extension: ExtWarn<
 def warn_defaulted_function_accepted_as_extension: ExtWarn<
   "defaulted function definition accepted as a C++0x extension">,
   InGroup<CXX0x>;
+
+// C++0x in-class member initialization
+def warn_nonstatic_member_init_accepted_as_extension: ExtWarn<
+  "in-class initialization of non-static data member accepted as a C++0x extension">,
+  InGroup<CXX0x>;
+def err_bitfield_member_init: Error<
+  "bitfield member cannot have an in-class initializer">;
+def err_incomplete_array_member_init: Error<
+  "array bound cannot be deduced from an in-class initializer">;
 
 // C++0x alias-declaration
 def ext_alias_declaration : ExtWarn<

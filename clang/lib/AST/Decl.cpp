@@ -2077,9 +2077,10 @@ SourceRange FunctionDecl::getSourceRange() const {
 FieldDecl *FieldDecl::Create(const ASTContext &C, DeclContext *DC,
                              SourceLocation StartLoc, SourceLocation IdLoc,
                              IdentifierInfo *Id, QualType T,
-                             TypeSourceInfo *TInfo, Expr *BW, bool Mutable) {
+                             TypeSourceInfo *TInfo, Expr *BW, bool Mutable,
+                             bool HasInit) {
   return new (C) FieldDecl(Decl::Field, DC, StartLoc, IdLoc, Id, T, TInfo,
-                           BW, Mutable);
+                           BW, Mutable, HasInit);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {
@@ -2124,8 +2125,15 @@ unsigned FieldDecl::getFieldIndex() const {
 
 SourceRange FieldDecl::getSourceRange() const {
   if (isBitField())
-    return SourceRange(getInnerLocStart(), BitWidth->getLocEnd());
+    return SourceRange(getInnerLocStart(), getBitWidth()->getLocEnd());
   return DeclaratorDecl::getSourceRange();
+}
+
+void FieldDecl::setInClassInitializer(Expr *Init) {
+  assert(!InitializerOrBitWidth.getPointer() &&
+         "bit width or initializer already set");
+  InitializerOrBitWidth.setPointer(Init);
+  InitializerOrBitWidth.setInt(0);
 }
 
 //===----------------------------------------------------------------------===//

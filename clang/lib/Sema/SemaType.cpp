@@ -1593,6 +1593,8 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       Error = 0; // Function prototype
       break;
     case Declarator::MemberContext:
+      if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static)
+        break;
       switch (cast<TagDecl>(CurContext)->getTagKind()) {
       case TTK_Enum: assert(0 && "unhandled tag kind"); break;
       case TTK_Struct: Error = 1; /* Struct member */ break;

@@ -6697,8 +6697,12 @@ template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCXXThisExpr(CXXThisExpr *E) {
   DeclContext *DC = getSema().getFunctionLevelDeclContext();
-  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC);
-  QualType T = MD->getThisType(getSema().Context);
+  QualType T;
+  if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(DC))
+    T = MD->getThisType(getSema().Context);
+  else
+    T = getSema().Context.getPointerType(
+      getSema().Context.getRecordType(cast<CXXRecordDecl>(DC)));
 
   if (!getDerived().AlwaysRebuild() && T == E->getType())
     return SemaRef.Owned(E);

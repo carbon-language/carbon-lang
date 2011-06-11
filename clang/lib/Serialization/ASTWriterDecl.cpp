@@ -599,9 +599,11 @@ void ASTDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 void ASTDeclWriter::VisitFieldDecl(FieldDecl *D) {
   VisitDeclaratorDecl(D);
   Record.push_back(D->isMutable());
-  Record.push_back(D->getBitWidth()? 1 : 0);
+  Record.push_back(D->getBitWidth()? 1 : D->hasInClassInitializer() ? 2 : 0);
   if (D->getBitWidth())
     Writer.AddStmt(D->getBitWidth());
+  else if (D->hasInClassInitializer())
+    Writer.AddStmt(D->getInClassInitializer());
   if (!D->getDeclName())
     Writer.AddDeclRef(Context.getInstantiatedFromUnnamedFieldDecl(D), Record);
 
@@ -612,6 +614,7 @@ void ASTDeclWriter::VisitFieldDecl(FieldDecl *D) {
       !D->isReferenced() &&
       D->getPCHLevel() == 0 &&
       !D->getBitWidth() &&
+      !D->hasInClassInitializer() &&
       !D->hasExtInfo() &&
       !ObjCIvarDecl::classofKind(D->getKind()) &&
       !ObjCAtDefsFieldDecl::classofKind(D->getKind()) &&

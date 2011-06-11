@@ -677,8 +677,11 @@ void ASTDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 void ASTDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitDeclaratorDecl(FD);
   FD->setMutable(Record[Idx++]);
-  if (Record[Idx++])
+  int BitWidthOrInitializer = Record[Idx++];
+  if (BitWidthOrInitializer == 1)
     FD->setBitWidth(Reader.ReadExpr(F));
+  else if (BitWidthOrInitializer == 2)
+    FD->setInClassInitializer(Reader.ReadExpr(F));
   if (!FD->getDeclName()) {
     FieldDecl *Tmpl = cast_or_null<FieldDecl>(Reader.GetDecl(Record[Idx++]));
     if (Tmpl)
@@ -1649,7 +1652,7 @@ Decl *ASTReader::ReadDeclRecord(unsigned Index, DeclID ID) {
     break;
   case DECL_FIELD:
     D = FieldDecl::Create(*Context, 0, SourceLocation(), SourceLocation(), 0,
-                          QualType(), 0, 0, false);
+                          QualType(), 0, 0, false, false);
     break;
   case DECL_INDIRECTFIELD:
     D = IndirectFieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),

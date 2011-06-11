@@ -2604,6 +2604,7 @@ public:
   }
   bool isNothrow(ASTContext &Ctx) const {
     ExceptionSpecificationType EST = getExceptionSpecType();
+    assert(EST != EST_Delayed);
     if (EST == EST_DynamicNone || EST == EST_BasicNoexcept)
       return true;
     if (EST != EST_ComputedNoexcept)

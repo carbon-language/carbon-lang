@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x objective-c++ -fblocks -triple x86_64-apple-darwin %s
+// RUN: %clang_cc1 -x objective-c++ -fblocks -triple x86_64-apple-darwin %s -verify -emit-llvm -o %t
 // rdar://8979379
 
 @interface A
@@ -28,3 +28,19 @@ void foo(id <NSObject>(^objectCreationBlock)(void)) {
     return bar(objectCreationBlock);
 }
 
+// Test4
+struct S {
+  S *(^a)() = ^{ // expected-warning {{C++0x}}
+    return this;
+  };
+};
+S s;
+
+// Test5
+struct X {
+  void f() {
+    ^ {
+      struct Nested { Nested *ptr = this; }; // expected-warning {{C++0x}}
+    } ();
+  };
+};

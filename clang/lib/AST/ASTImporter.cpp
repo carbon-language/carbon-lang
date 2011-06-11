@@ -2512,9 +2512,12 @@ Decl *ASTNodeImporter::VisitFieldDecl(FieldDecl *D) {
   FieldDecl *ToField = FieldDecl::Create(Importer.getToContext(), DC,
                                          Importer.Import(D->getInnerLocStart()),
                                          Loc, Name.getAsIdentifierInfo(),
-                                         T, TInfo, BitWidth, D->isMutable());
+                                         T, TInfo, BitWidth, D->isMutable(),
+                                         D->hasInClassInitializer());
   ToField->setAccess(D->getAccess());
   ToField->setLexicalDeclContext(LexicalDC);
+  if (ToField->hasInClassInitializer())
+    ToField->setInClassInitializer(D->getInClassInitializer());
   Importer.Imported(D, ToField);
   LexicalDC->addDecl(ToField);
   return ToField;

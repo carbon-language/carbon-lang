@@ -715,6 +715,22 @@ NotASpecialMember:;
     if (!hasNonLiteralTypeFieldsOrBases() && !T->isLiteralType())
       data().HasNonLiteralTypeFieldsOrBases = true;
 
+    if (Field->hasInClassInitializer()) {
+      // C++0x [class]p5:
+      //   A default constructor is trivial if [...] no non-static data member
+      //   of its class has a brace-or-equal-initializer.
+      data().HasTrivialDefaultConstructor = false;
+
+      // C++0x [dcl.init.aggr]p1:
+      //   An aggregate is a [...] class with [...] no
+      //   brace-or-equal-initializers for non-static data members.
+      data().Aggregate = false;
+
+      // C++0x [class]p10:
+      //   A POD struct is [...] a trivial class.
+      data().PlainOldData = false;
+    }
+
     if (const RecordType *RecordTy = T->getAs<RecordType>()) {
       CXXRecordDecl* FieldRec = cast<CXXRecordDecl>(RecordTy->getDecl());
       if (FieldRec->getDefinition()) {
@@ -1345,11 +1361,21 @@ const Type *CXXCtorInitializer::getBaseClass() const {
 SourceLocation CXXCtorInitializer::getSourceLocation() const {
   if (isAnyMemberInitializer() || isDelegatingInitializer())
     return getMemberLocation();
+
+  if (isInClassMemberInitializer())
+    return getAnyMember()->getLocation();
   
   return getBaseClassLoc().getLocalSourceRange().getBegin();
 }
 
 SourceRange CXXCtorInitializer::getSourceRange() const {
+  if (isInClassMemberInitializer()) {
+    FieldDecl *D = getAnyMember();
+    if (Expr *I = D->getInClassInitializer())
+      return I->getSourceRange();
+    return SourceRange();
+  }
+
   return SourceRange(getSourceLocation(), getRParenLoc());
 }
 

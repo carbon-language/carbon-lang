@@ -7,8 +7,8 @@ template<typename T> using Y = struct { // expected-error {{can not be defined i
 
 class K {
   virtual ~K();
-  // FIXME: the diagnostic here isn't very good
-  operator struct S {} (); // expected-error 2{{}}
+  // FIXME: the diagnostic here is really bad
+  operator struct S {} (); // expected-error 2{{}} expected-note {{}}
 };
 
 void f() {

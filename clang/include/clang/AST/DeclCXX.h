@@ -1378,6 +1378,8 @@ class CXXCtorInitializer {
   
   /// \brief The argument used to initialize the base or member, which may
   /// end up constructing an object (when multiple arguments are involved).
+  /// If 0, this is a field initializer, and the in-class member initializer 
+  /// will be used.
   Stmt *Init;
   
   /// LParenLoc - Location of the left paren of the ctor-initializer.
@@ -1450,6 +1452,13 @@ public:
 
   bool isIndirectMemberInitializer() const {
     return Initializee.is<IndirectFieldDecl*>();
+  }
+
+  /// isInClassMemberInitializer - Returns true when this initializer is an
+  /// implicit ctor initializer generated for a field with an initializer
+  /// defined on the member declaration.
+  bool isInClassMemberInitializer() const {
+    return !Init;
   }
 
   /// isDelegatingInitializer - Returns true when this initializer is creating
@@ -1580,7 +1589,14 @@ public:
     reinterpret_cast<VarDecl **>(this + 1)[I] = Index;
   }
   
-  Expr *getInit() const { return static_cast<Expr *>(Init); }
+  /// \brief Get the initializer. This is 0 if this is an in-class initializer
+  /// for a non-static data member which has not yet been parsed.
+  Expr *getInit() const {
+    if (!Init)
+      return getAnyMember()->getInClassInitializer();
+
+    return static_cast<Expr*>(Init);
+  }
 };
 
 /// CXXConstructorDecl - Represents a C++ constructor within a

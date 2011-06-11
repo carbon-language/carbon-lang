@@ -13,6 +13,7 @@
 #include "clang/Sema/SemaInternal.h"
 #include "TreeTransform.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Template.h"
 #include "clang/Sema/TemplateDeduction.h"
@@ -1744,6 +1745,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
   TemplateDeclInstantiator Instantiator(*this, Instantiation, TemplateArgs);
   llvm::SmallVector<Decl*, 4> Fields;
+  llvm::SmallVector<std::pair<FieldDecl*, FieldDecl*>, 4>
+    FieldsWithMemberInitializers;
   for (RecordDecl::decl_iterator Member = Pattern->decls_begin(),
          MemberEnd = Pattern->decls_end();
        Member != MemberEnd; ++Member) {
@@ -1766,9 +1769,13 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
 
     Decl *NewMember = Instantiator.Visit(*Member);
     if (NewMember) {
-      if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember))
+      if (FieldDecl *Field = dyn_cast<FieldDecl>(NewMember)) {
         Fields.push_back(Field);
-      else if (NewMember->isInvalidDecl())
+        FieldDecl *OldField = cast<FieldDecl>(*Member);
+        if (OldField->getInClassInitializer())
+          FieldsWithMemberInitializers.push_back(std::make_pair(OldField,
+                                                                Field));
+      } else if (NewMember->isInvalidDecl())
         Invalid = true;
     } else {
       // FIXME: Eventually, a NULL return will mean that one of the
@@ -1782,6 +1789,43 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
               Fields.data(), Fields.size(), SourceLocation(), SourceLocation(),
               0);
   CheckCompletedCXXClass(Instantiation);
+
+  // Attach any in-class member initializers now the class is complete.
+  for (unsigned I = 0, N = FieldsWithMemberInitializers.size(); I != N; ++I) {
+    FieldDecl *OldField = FieldsWithMemberInitializers[I].first;
+    FieldDecl *NewField = FieldsWithMemberInitializers[I].second;
+    Expr *OldInit = OldField->getInClassInitializer();
+    ExprResult NewInit = SubstExpr(OldInit, TemplateArgs);
+
+    // If the initialization is no longer dependent, check it now.
+    if ((OldField->getType()->isDependentType() || OldInit->isTypeDependent())
+        && !NewField->getType()->isDependentType()
+        && !NewInit.get()->isTypeDependent()) {
+      // FIXME: handle list-initialization
+      SourceLocation EqualLoc = NewField->getLocation();
+      NewInit = PerformCopyInitialization(
+        InitializedEntity::InitializeMember(NewField), EqualLoc,
+        NewInit.release());
+
+      if (!NewInit.isInvalid()) {
+        CheckImplicitConversions(NewInit.get(), EqualLoc);
+
+        // C++0x [class.base.init]p7:
+        //   The initialization of each base and member constitutes a
+        //   full-expression.
+        NewInit = MaybeCreateExprWithCleanups(NewInit);
+      }
+    }
+
+    if (NewInit.isInvalid())
+      NewField->setInvalidDecl();
+    else
+      NewField->setInClassInitializer(NewInit.release());
+  }
+
+  if (!FieldsWithMemberInitializers.empty())
+    ActOnFinishDelayedMemberInitializers(Instantiation);
+
   if (Instantiation->isInvalidDecl())
     Invalid = true;
   else {

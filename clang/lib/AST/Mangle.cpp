@@ -48,6 +48,11 @@ static void checkMangleDC(const DeclContext *DC, const BlockDecl *BD) {
   const DeclContext *ExpectedDC = BD->getDeclContext();
   while (isa<BlockDecl>(ExpectedDC) || isa<EnumDecl>(ExpectedDC))
     ExpectedDC = ExpectedDC->getParent();
+  // In-class initializers for non-static data members are lexically defined
+  // within the class, but are mangled as if they were specified as constructor
+  // member initializers.
+  if (isa<CXXRecordDecl>(ExpectedDC) && DC != ExpectedDC)
+    DC = DC->getParent();
   assert(DC == ExpectedDC && "Given decl context did not match expected!");
 #endif
 }

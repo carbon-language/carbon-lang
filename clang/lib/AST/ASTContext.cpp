@@ -3536,7 +3536,8 @@ QualType ASTContext::getCFConstantStringType() const {
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
-                                           /*Mutable=*/false);
+                                           /*Mutable=*/false,
+                                           /*HasInit=*/false);
       Field->setAccess(AS_public);
       CFConstantStringTypeDecl->addDecl(Field);
     }
@@ -3577,7 +3578,8 @@ QualType ASTContext::getNSConstantStringType() const {
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
-                                           /*Mutable=*/false);
+                                           /*Mutable=*/false,
+                                           /*HasInit=*/false);
       Field->setAccess(AS_public);
       NSConstantStringTypeDecl->addDecl(Field);
     }
@@ -3616,7 +3618,8 @@ QualType ASTContext::getObjCFastEnumerationStateType() const {
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*TInfo=*/0,
                                            /*BitWidth=*/0,
-                                           /*Mutable=*/false);
+                                           /*Mutable=*/false,
+                                           /*HasInit=*/false);
       Field->setAccess(AS_public);
       ObjCFastEnumerationStateTypeDecl->addDecl(Field);
     }
@@ -3653,7 +3656,8 @@ QualType ASTContext::getBlockDescriptorType() const {
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0,
-                                         /*Mutable=*/false);
+                                         /*Mutable=*/false,
+                                         /*HasInit=*/false);
     Field->setAccess(AS_public);
     T->addDecl(Field);
   }
@@ -3701,7 +3705,8 @@ QualType ASTContext::getBlockDescriptorExtendedType() const {
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*TInfo=*/0,
                                          /*BitWidth=*/0,
-                                         /*Mutable=*/false);
+                                         /*Mutable=*/false,
+                                         /*HasInit=*/false);
     Field->setAccess(AS_public);
     T->addDecl(Field);
   }
@@ -3786,7 +3791,8 @@ ASTContext::BuildByRefType(llvm::StringRef DeclName, QualType Ty) const {
                                          SourceLocation(),
                                          &Idents.get(FieldNames[i]),
                                          FieldTypes[i], /*TInfo=*/0,
-                                         /*BitWidth=*/0, /*Mutable=*/false);
+                                         /*BitWidth=*/0, /*Mutable=*/false,
+                                         /*HasInit=*/false);
     Field->setAccess(AS_public);
     T->addDecl(Field);
   }

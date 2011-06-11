@@ -351,7 +351,23 @@ void Parser::ExitScope() {
     ScopeCache[NumCachedScopes++] = OldScope;
 }
 
+/// Set the flags for the current scope to ScopeFlags. If ManageFlags is false,
+/// this object does nothing.
+Parser::ParseScopeFlags::ParseScopeFlags(Parser *Self, unsigned ScopeFlags,
+                                 bool ManageFlags)
+  : CurScope(ManageFlags ? Self->getCurScope() : 0) {
+  if (CurScope) {
+    OldFlags = CurScope->getFlags();
+    CurScope->setFlags(ScopeFlags);
+  }
+}
 
+/// Restore the flags for the current scope to what they were before this
+/// object overrode them.
+Parser::ParseScopeFlags::~ParseScopeFlags() {
+  if (CurScope)
+    CurScope->setFlags(OldFlags);
+}
 
 
 //===----------------------------------------------------------------------===//

@@ -79,7 +79,12 @@ public:
     ObjCMethodScope = 0x400,
 
     /// SwitchScope - This is a scope that corresponds to a switch statement.
-    SwitchScope = 0x800
+    SwitchScope = 0x800,
+
+    /// ThisScope - This is the scope of a struct/union/class definition,
+    /// outside of any member function definition, where 'this' is nonetheless
+    /// usable.
+    ThisScope = 0x1000
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit

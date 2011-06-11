@@ -1078,8 +1078,8 @@ struct DeclaratorChunk {
     /// If this is an invalid location, there is no ref-qualifier.
     unsigned RefQualifierLoc;
 
-    /// \brief When ExceptionSpecType isn't EST_None, the location of the
-    /// keyword introducing the spec.
+    /// \brief When ExceptionSpecType isn't EST_None or EST_Delayed, the
+    /// location of the keyword introducing the spec.
     unsigned ExceptionSpecLoc;
 
     /// ArgInfo - This is a pointer to a new[]'d array of ParamInfo objects that
@@ -1614,6 +1614,29 @@ public:
     assert(!DeclTypeInfo.empty() && "No type chunks to drop.");
     DeclTypeInfo.front().destroy();
     DeclTypeInfo.erase(DeclTypeInfo.begin());
+  }
+
+  /// isArrayOfUnknownBound - This method returns true if the declarator
+  /// is a declarator for an array of unknown bound (looking through
+  /// parentheses).
+  bool isArrayOfUnknownBound() const {
+    for (unsigned i = 0, i_end = DeclTypeInfo.size(); i < i_end; ++i) {
+      switch (DeclTypeInfo[i].Kind) {
+      case DeclaratorChunk::Paren:
+        continue;
+      case DeclaratorChunk::Function:
+      case DeclaratorChunk::Pointer:
+      case DeclaratorChunk::Reference:
+      case DeclaratorChunk::BlockPointer:
+      case DeclaratorChunk::MemberPointer:
+        return false;
+      case DeclaratorChunk::Array:
+        return !DeclTypeInfo[i].Arr.NumElts;
+      }
+      llvm_unreachable("Invalid type chunk");
+      return false;
+    }
+    return false;
   }
 
   /// isFunctionDeclarator - This method returns true if the declarator

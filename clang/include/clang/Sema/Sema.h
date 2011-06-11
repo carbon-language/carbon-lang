@@ -1144,13 +1144,13 @@ public:
                    Declarator &D, Expr *BitfieldWidth);
 
   FieldDecl *HandleField(Scope *S, RecordDecl *TagD, SourceLocation DeclStart,
-                         Declarator &D, Expr *BitfieldWidth,
+                         Declarator &D, Expr *BitfieldWidth, bool HasInit,
                          AccessSpecifier AS);
 
   FieldDecl *CheckFieldDecl(DeclarationName Name, QualType T,
                             TypeSourceInfo *TInfo,
                             RecordDecl *Record, SourceLocation Loc,
-                            bool Mutable, Expr *BitfieldWidth,
+                            bool Mutable, Expr *BitfieldWidth, bool HasInit,
                             SourceLocation TSSL,
                             AccessSpecifier AS, NamedDecl *PrevDecl,
                             Declarator *D = 0);
@@ -2612,6 +2612,13 @@ public:
     // Then a throw(collected exceptions)
     // Finally no specification.
     // throw(...) is used instead if any called function uses it.
+    //
+    // If this exception specification cannot be known yet (for instance,
+    // because this is the exception specification for a defaulted default
+    // constructor and we haven't finished parsing the deferred parts of the
+    // class yet), the C++0x standard does not specify how to behave. We
+    // record this as an 'unknown' exception specification, which overrules
+    // any other specification (even 'none', to keep this rule simple).
     ExceptionSpecificationType ComputedEST;
     llvm::SmallPtrSet<CanQualType, 4> ExceptionsSeen;
     llvm::SmallVector<QualType, 4> Exceptions;
@@ -2643,6 +2650,15 @@ public:
 
     /// \brief Integrate another called method into the collected data.
     void CalledDecl(CXXMethodDecl *Method);
+
+    /// \brief Integrate an invoked expression into the collected data.
+    void CalledExpr(Expr *E);
+
+    /// \brief Specify that the exception specification can't be detemined yet.
+    void SetDelayed() {
+      ClearExceptions();
+      ComputedEST = EST_Delayed;
+    }
 
     FunctionProtoType::ExtProtoInfo getEPI() const {
       FunctionProtoType::ExtProtoInfo EPI;
@@ -2836,10 +2852,9 @@ public:
   //// ActOnCXXThis -  Parse 'this' pointer.
   ExprResult ActOnCXXThis(SourceLocation loc);
 
-  /// tryCaptureCXXThis - Try to capture a 'this' pointer.  Returns a
-  /// pointer to an instance method whose 'this' pointer is
-  /// capturable, or null if this is not possible.
-  CXXMethodDecl *tryCaptureCXXThis();
+  /// getAndCaptureCurrentThisType - Try to capture a 'this' pointer.  Returns
+  /// the type of the 'this' pointer, or a null type if this is not possible.
+  QualType getAndCaptureCurrentThisType();
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
   ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind);
@@ -3238,7 +3253,10 @@ public:
                                  Declarator &D,
                                  MultiTemplateParamsArg TemplateParameterLists,
                                  Expr *BitfieldWidth, const VirtSpecifiers &VS,
-                                 Expr *Init, bool IsDefinition);
+                                 Expr *Init, bool HasDeferredInit,
+                                 bool IsDefinition);
+  void ActOnCXXInClassMemberInitializer(Decl *VarDecl, SourceLocation EqualLoc,
+                                        Expr *Init);
 
   MemInitResult ActOnMemInitializer(Decl *ConstructorD,
                                     Scope *S,
@@ -3342,8 +3360,9 @@ public:
   void ActOnStartDelayedMemberDeclarations(Scope *S, Decl *Record);
   void ActOnStartDelayedCXXMethodDeclaration(Scope *S, Decl *Method);
   void ActOnDelayedCXXMethodParameter(Scope *S, Decl *Param);
-  void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, Decl *Method);
   void ActOnFinishDelayedMemberDeclarations(Scope *S, Decl *Record);
+  void ActOnFinishDelayedCXXMethodDeclaration(Scope *S, Decl *Method);
+  void ActOnFinishDelayedMemberInitializers(Decl *Record);
   void MarkAsLateParsedTemplate(FunctionDecl *FD, bool Flag = true);
   bool IsInsideALocalClassWithinATemplateFunction();
 
