@@ -66,5 +66,5 @@ void test_inference() {
 
   NSArray *arr = [[NSMutableArray alloc] init];
   NSMutableArray *marr = [arr retain]; // expected-warning{{incompatible pointer types initializing 'NSMutableArray *' with an expression of type 'NSArray *'}}
-  marr = [arr retain]; // expected-warning{{incompatible pointer types assigning to 'NSArray *' from 'NSMutableArray *'}}
+  marr = [arr retain]; // expected-warning{{incompatible pointer types assigning to 'NSMutableArray *' from 'NSArray *'}}
 }

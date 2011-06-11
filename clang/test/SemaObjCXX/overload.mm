@@ -52,12 +52,12 @@ void test0(A* a, B* b, id val) {
 
 void test1(A* a) {
   B* b = a; // expected-warning{{incompatible pointer types initializing 'B *' with an expression of type 'A *'}}
-  B *c; c = a; // expected-warning{{incompatible pointer types assigning to 'A *' from 'B *'}}
+  B *c; c = a; // expected-warning{{incompatible pointer types assigning to 'B *' from 'A *'}}
 }
 
 void test2(A** ap) {
   B** bp = ap; // expected-warning{{incompatible pointer types initializing 'B **' with an expression of type 'A **'}}
-  bp = ap; // expected-warning{{incompatible pointer types assigning to 'A **' from 'B **'}}
+  bp = ap; // expected-warning{{incompatible pointer types assigning to 'B **' from 'A **'}}
 }
 
 // FIXME: we should either allow overloading here or give a better diagnostic

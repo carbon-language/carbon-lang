@@ -2211,7 +2211,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
   case ICK_Pointer_Conversion: {
     if (SCS.IncompatibleObjC && Action != AA_Casting) {
       // Diagnose incompatible Objective-C conversions
-      if (Action == AA_Initializing)
+      if (Action == AA_Initializing || Action == AA_Assigning)
         Diag(From->getSourceRange().getBegin(),
              diag::ext_typecheck_convert_incompatible_pointer)
           << ToType << From->getType() << Action
