@@ -9,6 +9,7 @@ add_llvm_library(LLVMSupport
   APInt.cpp
   APSInt.cpp
   Allocator.cpp
+  BranchProbability.cpp
   circular_raw_ostream.cpp
   CommandLine.cpp
   ConstantRange.cpp

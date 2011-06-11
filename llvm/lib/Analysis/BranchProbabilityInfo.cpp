@@ -13,7 +13,7 @@
 
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
-#include <climits>
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
@@ -34,7 +34,7 @@ class BranchProbabilityAnalysis {
 
   typedef std::pair<BasicBlock *, BasicBlock *> Edge;
 
-  DenseMap<Edge, unsigned> *Weights;
+  DenseMap<Edge, uint32_t> *Weights;
 
   BranchProbabilityInfo *BP;
 
@@ -62,15 +62,15 @@ class BranchProbabilityAnalysis {
   // Probability of the edge BB2->BB1 = 128 / (128 + 4) = 0.9696..
   // Probability of the edge BB2->BB3 = 4 / (128 + 4) = 0.0303..
 
-  static const unsigned int LBH_TAKEN_WEIGHT = 128;
-  static const unsigned int LBH_NONTAKEN_WEIGHT = 4;
+  static const uint32_t LBH_TAKEN_WEIGHT = 128;
+  static const uint32_t LBH_NONTAKEN_WEIGHT = 4;
 
   // Standard weight value. Used when none of the heuristics set weight for
   // the edge.
-  static const unsigned int NORMAL_WEIGHT = 16;
+  static const uint32_t NORMAL_WEIGHT = 16;
 
   // Minimum weight of an edge. Please note, that weight is NEVER 0.
-  static const unsigned int MIN_WEIGHT = 1;
+  static const uint32_t MIN_WEIGHT = 1;
 
   // Return TRUE if BB leads directly to a Return Instruction.
   static bool isReturningBlock(BasicBlock *BB) {
@@ -101,8 +101,8 @@ class BranchProbabilityAnalysis {
 
   // Multiply Edge Weight by two.
   void incEdgeWeight(BasicBlock *Src, BasicBlock *Dst) {
-    unsigned Weight = BP->getEdgeWeight(Src, Dst);
-    unsigned MaxWeight = getMaxWeightFor(Src);
+    uint32_t Weight = BP->getEdgeWeight(Src, Dst);
+    uint32_t MaxWeight = getMaxWeightFor(Src);
 
     if (Weight * 2 > MaxWeight)
       BP->setEdgeWeight(Src, Dst, MaxWeight);
@@ -112,7 +112,7 @@ class BranchProbabilityAnalysis {
 
   // Divide Edge Weight by two.
   void decEdgeWeight(BasicBlock *Src, BasicBlock *Dst) {
-    unsigned Weight = BP->getEdgeWeight(Src, Dst);
+    uint32_t Weight = BP->getEdgeWeight(Src, Dst);
 
     assert(Weight > 0);
     if (Weight / 2 < MIN_WEIGHT)
@@ -122,12 +122,12 @@ class BranchProbabilityAnalysis {
   }
 
 
-  unsigned getMaxWeightFor(BasicBlock *BB) const {
-    return UINT_MAX / BB->getTerminator()->getNumSuccessors();
+  uint32_t getMaxWeightFor(BasicBlock *BB) const {
+    return UINT32_MAX / BB->getTerminator()->getNumSuccessors();
   }
 
 public:
-  BranchProbabilityAnalysis(DenseMap<Edge, unsigned> *W,
+  BranchProbabilityAnalysis(DenseMap<Edge, uint32_t> *W,
                             BranchProbabilityInfo *BP, LoopInfo *LI)
     : Weights(W), BP(BP), LI(LI) {
   }
@@ -195,7 +195,7 @@ void BranchProbabilityAnalysis::calcPointerHeuristics(BasicBlock *BB) {
 // Calculate Edge Weights using "Loop Branch Heuristics". Predict backedges
 // as taken, exiting edges as not-taken.
 void BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
-  unsigned numSuccs = BB->getTerminator()->getNumSuccessors();
+  uint32_t numSuccs = BB->getTerminator()->getNumSuccessors();
 
   Loop *L = LI->getLoopFor(BB);
   if (!L)
@@ -213,8 +213,8 @@ void BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
       BackEdges.push_back(Succ);
   }
 
-  if (unsigned numBackEdges = BackEdges.size()) {
-    unsigned backWeight = LBH_TAKEN_WEIGHT / numBackEdges;
+  if (uint32_t numBackEdges = BackEdges.size()) {
+    uint32_t backWeight = LBH_TAKEN_WEIGHT / numBackEdges;
     if (backWeight < NORMAL_WEIGHT)
       backWeight = NORMAL_WEIGHT;
 
@@ -225,9 +225,9 @@ void BranchProbabilityAnalysis::calcLoopBranchHeuristics(BasicBlock *BB) {
     }
   }
 
-  unsigned numExitingEdges = ExitingEdges.size();
-  if (unsigned numNonExitingEdges = numSuccs - numExitingEdges) {
-    unsigned exitWeight = LBH_NONTAKEN_WEIGHT / numNonExitingEdges;
+  uint32_t numExitingEdges = ExitingEdges.size();
+  if (uint32_t numNonExitingEdges = numSuccs - numExitingEdges) {
+    uint32_t exitWeight = LBH_NONTAKEN_WEIGHT / numNonExitingEdges;
     if (exitWeight < MIN_WEIGHT)
       exitWeight = MIN_WEIGHT;
 
@@ -260,36 +260,43 @@ bool BranchProbabilityAnalysis::runOnFunction(Function &F) {
 bool BranchProbabilityInfo::runOnFunction(Function &F) {
   LoopInfo &LI = getAnalysis<LoopInfo>();
   BranchProbabilityAnalysis BPA(&Weights, this, &LI);
-  bool ret = BPA.runOnFunction(F);
-  return ret;
+  return BPA.runOnFunction(F);
 }
 
-// TODO: This currently hardcodes 80% as a fraction 4/5. We will soon add a
-// BranchProbability class to encapsulate the fractional probability and
-// define a few static instances of the class for use as predefined thresholds.
-bool BranchProbabilityInfo::isEdgeHot(BasicBlock *Src, BasicBlock *Dst) const {
-  unsigned Sum = 0;
-  for (succ_iterator I = succ_begin(Src), E = succ_end(Src); I != E; ++I) {
+uint32_t BranchProbabilityInfo::getSumForBlock(BasicBlock *BB) const {
+  uint32_t Sum = 0;
+
+  for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
     BasicBlock *Succ = *I;
-    unsigned Weight = getEdgeWeight(Src, Succ);
-    unsigned PrevSum = Sum;
+    uint32_t Weight = getEdgeWeight(BB, Succ);
+    uint32_t PrevSum = Sum;
 
     Sum += Weight;
     assert(Sum > PrevSum); (void) PrevSum;
   }
 
-  return getEdgeWeight(Src, Dst) * 5 > Sum * 4;
+  return Sum;
+}
+
+bool BranchProbabilityInfo::isEdgeHot(BasicBlock *Src, BasicBlock *Dst) const {
+  // Hot probability is at least 4/5 = 80%
+  uint32_t Weight = getEdgeWeight(Src, Dst);
+  uint32_t Sum = getSumForBlock(Src);
+
+  // FIXME: Implement BranchProbability::compare then change this code to
+  // compare this BranchProbability against a static "hot" BranchProbability.
+  return (uint64_t)Weight * 5 > (uint64_t)Sum * 4;
 }
 
 BasicBlock *BranchProbabilityInfo::getHotSucc(BasicBlock *BB) const {
-  unsigned Sum = 0;
-  unsigned MaxWeight = 0;
+  uint32_t Sum = 0;
+  uint32_t MaxWeight = 0;
   BasicBlock *MaxSucc = 0;
 
   for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
     BasicBlock *Succ = *I;
-    unsigned Weight = getEdgeWeight(BB, Succ);
-    unsigned PrevSum = Sum;
+    uint32_t Weight = getEdgeWeight(BB, Succ);
+    uint32_t PrevSum = Sum;
 
     Sum += Weight;
     assert(Sum > PrevSum); (void) PrevSum;
@@ -300,17 +307,18 @@ BasicBlock *BranchProbabilityInfo::getHotSucc(BasicBlock *BB) const {
     }
   }
 
-  if (MaxWeight * 5 > Sum * 4)
+  // FIXME: Use BranchProbability::compare.
+  if ((uint64_t)MaxWeight * 5 > (uint64_t)Sum * 4)
     return MaxSucc;
 
   return 0;
 }
 
 // Return edge's weight. If can't find it, return DEFAULT_WEIGHT value.
-unsigned
+uint32_t
 BranchProbabilityInfo::getEdgeWeight(BasicBlock *Src, BasicBlock *Dst) const {
   Edge E(Src, Dst);
-  DenseMap<Edge, unsigned>::const_iterator I = Weights.find(E);
+  DenseMap<Edge, uint32_t>::const_iterator I = Weights.find(E);
 
   if (I != Weights.end())
     return I->second;
@@ -319,30 +327,31 @@ BranchProbabilityInfo::getEdgeWeight(BasicBlock *Src, BasicBlock *Dst) const {
 }
 
 void BranchProbabilityInfo::setEdgeWeight(BasicBlock *Src, BasicBlock *Dst,
-                                     unsigned Weight) {
+                                     uint32_t Weight) {
   Weights[std::make_pair(Src, Dst)] = Weight;
-  DEBUG(dbgs() << "setEdgeWeight: " << Src->getNameStr() << " -> "
-        << Dst->getNameStr() << " to " << Weight
-        << (isEdgeHot(Src, Dst) ? " [is HOT now]\n" : "\n"));
+  DEBUG(dbgs() << "set edge " << Src->getNameStr() << " -> "
+               << Dst->getNameStr() << " weight to " << Weight
+               << (isEdgeHot(Src, Dst) ? " [is HOT now]\n" : "\n"));
+}
+
+
+BranchProbability BranchProbabilityInfo::
+getEdgeProbability(BasicBlock *Src, BasicBlock *Dst) const {
+
+  uint32_t N = getEdgeWeight(Src, Dst);
+  uint32_t D = getSumForBlock(Src);
+
+  return BranchProbability(N, D);
 }
 
 raw_ostream &
 BranchProbabilityInfo::printEdgeProbability(raw_ostream &OS, BasicBlock *Src,
-                                        BasicBlock *Dst) const {
+                                            BasicBlock *Dst) const {
+  BranchProbability Prob = getEdgeProbability(Src, Dst);
 
-  unsigned Sum = 0;
-  for (succ_iterator I = succ_begin(Src), E = succ_end(Src); I != E; ++I) {
-    BasicBlock *Succ = *I;
-    unsigned Weight = getEdgeWeight(Src, Succ);
-    unsigned PrevSum = Sum;
-
-    Sum += Weight;
-    assert(Sum > PrevSum); (void) PrevSum;
-  }
-
-  double Prob = (double)getEdgeWeight(Src, Dst) / Sum;
-  OS << "probability (" << Src->getNameStr() << " --> " << Dst->getNameStr()
-     << ") = " << Prob << "\n";
+  OS << "edge " << Src->getNameStr() << " -> " << Dst->getNameStr()
+     << " probability is " << Prob
+     << (isEdgeHot(Src, Dst) ? " [HOT edge]\n" : "\n");
 
   return OS;
 }
