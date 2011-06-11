@@ -404,6 +404,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Record.push_back(D->getImplementationControl());
   // FIXME: stable encoding for in/out/inout/bycopy/byref/oneway
   Record.push_back(D->getObjCDeclQualifier());
+  Record.push_back(D->hasRelatedResultType());
   Record.push_back(D->getNumSelectorArgs());
   Writer.AddTypeRef(D->getResultType(), Record);
   Writer.AddTypeSourceInfo(D->getResultTypeSourceInfo(), Record);

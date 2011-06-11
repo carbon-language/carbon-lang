@@ -62,6 +62,11 @@ td {
   </ul>
 <li><a href="#checking_type_traits">Checks for Type Traits</a></li>
 <li><a href="#blocks">Blocks</a></li>
+<li><a href="#objc_features">Objective-C Features</a>
+  <ul>
+    <li><a href="#objc_instancetype">Related result types</a></li>
+  </ul>
+</li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
 <li><a href="#builtins">Builtin Functions</a>
   <ul>
@@ -596,6 +601,73 @@ href="Block-ABI-Apple.txt">Block-ABI-Apple.txt</a>.</p>
 
 
 <p>Query for this feature with __has_extension(blocks).</p>
+
+<!-- ======================================================================= -->
+<h2 id="objc_features">Objective-C Features</h2>
+<!-- ======================================================================= -->
+
+<h3 id="objc_instancetype">Related result types</h3>
+
+<p>According to Cocoa conventions, Objective-C methods with certain names ("init", "alloc", etc.) always return objects that are an instance of the receiving class's type. Such methods are said to have a "related result type", meaning that a message send to one of these methods will have the same static type as an instance of the receiver class. For example, given the following classes:</p>
+
+<blockquote>
+<pre>
+@interface NSObject
++ (id)alloc;
+- (id)init;
+@end
+
+@interface NSArray : NSObject
+@end
+</pre>
+</blockquote>
+
+<p>and this common initialization pattern</p>
+
+<blockquote>
+<pre>
+NSArray *array = [[NSArray alloc] init];
+</pre>
+</blockquote>
+
+<p>the type of the expression <code>[NSArray alloc]</code> is
+<code>NSArray*</code> because <code>alloc</code> implicitly has a
+related result type. Similarly, the type of the expression
+<code>[[NSArray alloc] init]</code> is <code>NSArray*</code>, since
+<code>init</code> has a related result type and its receiver is known
+to have the type <code>NSArray *</code>. If neither <code>alloc</code> nor <code>init</code> had a related result type, the expressions would have had type <code>id</code>, as declared in the method signature.</p>
+
+<p>To determine whether a method has a related result type, the first
+word in the camel-case selector (e.g., "init" in "initWithObjects") is
+considered, and the method will a related result type if its return
+type is compatible with the type of its class and if
+
+<ul>
+  
+  <li>the first word is "alloc" or "new", and the method is a class
+  method, or</li>
+  
+  <li>the first word is "autorelease", "init", "retain", or "self",
+  and the method is an instance method.</li>
+  
+</ul></p>
+
+<p>If a method with a related result type is overridden by a subclass
+method, the subclass method must also return a type that is compatible
+with the subclass type. For example:</p>
+
+<blockquote>
+<pre>
+@interface NSString : NSObject
+- (NSUnrelated *)init; // incorrect usage: NSUnrelated is not NSString or a superclass of NSString
+@end
+</pre>
+</blockquote>
+
+<p>Related result types only affect the type of a message send or
+property access via the given method. In all other respects, a method
+with a related result type is treated the same way as method without a
+related result type.</p>
 
 <!-- ======================================================================= -->
 <h2 id="overloading-in-c">Function Overloading in C</h2>

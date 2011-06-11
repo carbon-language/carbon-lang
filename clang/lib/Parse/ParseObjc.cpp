@@ -874,8 +874,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     Decl *Result
          = Actions.ActOnMethodDeclaration(getCurScope(), mLoc, Tok.getLocation(),
-                                          mType, IDecl, DSRet, ReturnType, Sel,
-                                          0, 
+                                          mType, IDecl, DSRet, ReturnType, 
+                                          selLoc, Sel, 0, 
                                           CParamInfo.data(), CParamInfo.size(),
                                           methodAttrs.getList(), MethodImplKind,
                                           false, MethodDefinition);
@@ -1000,8 +1000,8 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                                    &KeyIdents[0]);
   Decl *Result
        = Actions.ActOnMethodDeclaration(getCurScope(), mLoc, Tok.getLocation(),
-                                        mType, IDecl, DSRet, ReturnType, Sel,
-                                        &ArgInfos[0], 
+                                        mType, IDecl, DSRet, ReturnType, 
+                                        selLoc, Sel, &ArgInfos[0], 
                                         CParamInfo.data(), CParamInfo.size(),
                                         methodAttrs.getList(),
                                         MethodImplKind, isVariadic, MethodDefinition);

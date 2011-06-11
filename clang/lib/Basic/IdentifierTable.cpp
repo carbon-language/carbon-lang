@@ -392,6 +392,7 @@ ObjCMethodFamily Selector::getMethodFamilyImpl(Selector sel) {
     if (name == "release") return OMF_release;
     if (name == "retain") return OMF_retain;
     if (name == "retainCount") return OMF_retainCount;
+    if (name == "self") return OMF_self;
   }
 
   // The other method families may begin with a prefix of underscores.

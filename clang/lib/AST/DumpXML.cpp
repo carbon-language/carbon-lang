@@ -848,6 +848,7 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     setFlag("variadic", D->isVariadic());
     setFlag("synthesized", D->isSynthesized());
     setFlag("defined", D->isDefined());
+    setFlag("related_result_type", D->hasRelatedResultType());
   }
   void visitObjCMethodDeclChildren(ObjCMethodDecl *D) {
     dispatch(D->getResultType());

@@ -468,6 +468,7 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setDefined(Record[Idx++]);
   MD->setDeclImplementation((ObjCMethodDecl::ImplementationControl)Record[Idx++]);
   MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
+  MD->SetRelatedResultType(Record[Idx++]);
   MD->setNumSelectorArgs(unsigned(Record[Idx++]));
   MD->setResultType(Reader.GetType(Record[Idx++]));
   MD->setResultTypeSourceInfo(GetTypeSourceInfo(Record, Idx));

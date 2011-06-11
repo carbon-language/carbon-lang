@@ -4981,7 +4981,7 @@ public:
     SourceLocation EndLoc,   // location of the ; or {.
     tok::TokenKind MethodType,
     Decl *ClassDecl, ObjCDeclSpec &ReturnQT, ParsedType ReturnType,
-    Selector Sel,
+    SourceLocation SelectorStartLoc, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     ObjCArgInfo *ArgInfo,
@@ -5079,7 +5079,18 @@ public:
                                   SourceLocation RBracLoc,
                                   MultiExprArg Args);
 
-
+  /// \brief Check whether the given new method is a valid override of the
+  /// given overridden method, and set any properties that should be inherited.
+  ///
+  /// \returns True if an error occurred.
+  bool CheckObjCMethodOverride(ObjCMethodDecl *NewMethod, 
+                               const ObjCMethodDecl *Overridden,
+                               bool IsImplementation);
+    
+  /// \brief Check whether the given method overrides any methods in its class,
+  /// calling \c CheckObjCMethodOverride for each overridden method.
+  bool CheckObjCMethodOverrides(ObjCMethodDecl *NewMethod, DeclContext *DC);
+  
   enum PragmaOptionsAlignKind {
     POAK_Native,  // #pragma options align=native
     POAK_Natural, // #pragma options align=natural
@@ -5501,11 +5512,24 @@ public:
   /// \param Method - May be null.
   /// \param [out] ReturnType - The return type of the send.
   /// \return true iff there were any incompatible types.
-  bool CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs, Selector Sel,
+  bool CheckMessageArgumentTypes(QualType ReceiverType,
+                                 Expr **Args, unsigned NumArgs, Selector Sel,
                                  ObjCMethodDecl *Method, bool isClassMessage,
+                                 bool isSuperMessage,
                                  SourceLocation lbrac, SourceLocation rbrac,
                                  QualType &ReturnType, ExprValueKind &VK);
 
+  /// \brief Determine the result of a message send expression based on
+  /// the type of the receiver, the method expected to receive the message,
+  /// and the form of the message send.
+  QualType getMessageSendResultType(QualType ReceiverType,
+                                    ObjCMethodDecl *Method,
+                                    bool isClassMessage, bool isSuperMessage);
+    
+  /// \brief If the given expression involves a message send to a method
+  /// with a related result type, emit a note describing what happened.
+  void EmitRelatedResultTypeNote(const Expr *E);
+  
   /// CheckBooleanCondition - Diagnose problems involving the use of
   /// the given expression as a boolean condition (e.g. in an if
   /// statement).  Also performs the standard function and array

@@ -339,12 +339,14 @@ ObjCMethodDecl *ObjCMethodDecl::Create(ASTContext &C,
                                        bool isSynthesized,
                                        bool isDefined,
                                        ImplementationControl impControl,
+                                       bool HasRelatedResultType,
                                        unsigned numSelectorArgs) {
   return new (C) ObjCMethodDecl(beginLoc, endLoc,
                                 SelInfo, T, ResultTInfo, contextDecl,
                                 isInstance,
                                 isVariadic, isSynthesized, isDefined,
                                 impControl,
+                                HasRelatedResultType,
                                 numSelectorArgs);
 }
 
@@ -446,6 +448,7 @@ ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
   case OMF_release:
   case OMF_autorelease:
   case OMF_retainCount:
+  case OMF_self:
     if (!isInstanceMethod())
       family = OMF_None;
     break;

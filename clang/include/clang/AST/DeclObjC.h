@@ -135,6 +135,9 @@ private:
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
 
+  /// \brief Indicates whether this method has a related result type.
+  unsigned RelatedResultType : 1;
+  
   // Number of args separated by ':' in a method declaration.
   unsigned NumSelectorArgs;
 
@@ -171,6 +174,7 @@ private:
                  bool isSynthesized = false,
                  bool isDefined = false,
                  ImplementationControl impControl = None,
+                 bool HasRelatedResultType = false,
                  unsigned numSelectorArgs = 0)
   : NamedDecl(ObjCMethod, contextDecl, beginLoc, SelInfo),
     DeclContext(ObjCMethod), Family(InvalidObjCMethodFamily),
@@ -178,8 +182,8 @@ private:
     IsSynthesized(isSynthesized),
     IsDefined(isDefined),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
-    NumSelectorArgs(numSelectorArgs), MethodDeclType(T), 
-    ResultTInfo(ResultTInfo),
+    RelatedResultType(HasRelatedResultType), NumSelectorArgs(numSelectorArgs), 
+    MethodDeclType(T), ResultTInfo(ResultTInfo),
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
   /// \brief A definition will return its interface declaration.
@@ -199,6 +203,7 @@ public:
                                 bool isSynthesized = false,
                                 bool isDefined = false,
                                 ImplementationControl impControl = None,
+                                bool HasRelatedResultType = false,
                                 unsigned numSelectorArgs = 0);
 
   virtual ObjCMethodDecl *getCanonicalDecl();
@@ -211,6 +216,13 @@ public:
   }
   void setObjCDeclQualifier(ObjCDeclQualifier QV) { objcDeclQualifier = QV; }
 
+  /// \brief Determine whether this method has a result type that is related
+  /// to the message receiver's type.
+  bool hasRelatedResultType() const { return RelatedResultType; }
+  
+  /// \brief Note whether this method has a related result type.
+  void SetRelatedResultType(bool RRT = true) { RelatedResultType = RRT; }
+  
   unsigned getNumSelectorArgs() const { return NumSelectorArgs; }
   void setNumSelectorArgs(unsigned numSelectorArgs) { 
     NumSelectorArgs = numSelectorArgs; 

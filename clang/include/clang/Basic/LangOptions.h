@@ -46,6 +46,8 @@ public:
   unsigned ObjCNonFragileABI : 1;  // Objective-C modern abi enabled
   unsigned ObjCNonFragileABI2 : 1;  // Objective-C enhanced modern abi enabled
   unsigned ObjCDefaultSynthProperties : 1; // Objective-C auto-synthesized properties.
+  unsigned ObjCInferRelatedResultType : 1; // Infer Objective-C related return
+                                           // types
   unsigned AppleKext         : 1;  // Allow apple kext features.
 
   unsigned PascalStrings     : 1;  // Allow Pascal strings
@@ -173,6 +175,7 @@ public:
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
     AppleKext = 0;
     ObjCDefaultSynthProperties = 0;
+    ObjCInferRelatedResultType = 0;
     NoConstantCFStrings = 0; InlineVisibilityHidden = 0;
     C99 = C1X = Microsoft = Borland = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = ConstStrings = 0;

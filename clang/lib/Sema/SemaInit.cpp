@@ -4322,6 +4322,9 @@ bool InitializationSequence::Diagnose(Sema &S,
       << Args[0]->isLValue()
       << Args[0]->getType()
       << Args[0]->getSourceRange();
+    if (DestType.getNonReferenceType()->isObjCObjectPointerType() &&
+        Args[0]->getType()->isObjCObjectPointerType())
+      S.EmitRelatedResultTypeNote(Args[0]);
     break;
 
   case FK_ConversionFailed: {
@@ -4332,6 +4335,9 @@ bool InitializationSequence::Diagnose(Sema &S,
       << Args[0]->isLValue()
       << FromType
       << Args[0]->getSourceRange();
+    if (DestType.getNonReferenceType()->isObjCObjectPointerType() &&
+        Args[0]->getType()->isObjCObjectPointerType())
+      S.EmitRelatedResultTypeNote(Args[0]);
     break;
   }
 

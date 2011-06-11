@@ -2,7 +2,7 @@
 
 @interface TestPCH
 + alloc;
-- (void)instMethod;
+- (id)init;
 @end
 
 @class TestForwardClassDecl;

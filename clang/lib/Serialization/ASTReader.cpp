@@ -92,6 +92,7 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(AppleKext, diag::warn_pch_apple_kext);
   PARSE_LANGOPT_IMPORTANT(ObjCDefaultSynthProperties,
                           diag::warn_pch_objc_auto_properties);
+  PARSE_LANGOPT_BENIGN(ObjCInferRelatedResultType)
   PARSE_LANGOPT_IMPORTANT(NoConstantCFStrings,
                           diag::warn_pch_no_constant_cfstrings);
   PARSE_LANGOPT_BENIGN(PascalStrings);
@@ -2934,6 +2935,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(ObjCNonFragileABI2);
     PARSE_LANGOPT(AppleKext);
     PARSE_LANGOPT(ObjCDefaultSynthProperties);
+    PARSE_LANGOPT(ObjCInferRelatedResultType);
     PARSE_LANGOPT(NoConstantCFStrings);
     PARSE_LANGOPT(PascalStrings);
     PARSE_LANGOPT(WritableStrings);

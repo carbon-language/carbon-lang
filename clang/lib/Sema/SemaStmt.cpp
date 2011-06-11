@@ -1682,15 +1682,26 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
 
   QualType FnRetType;
+  QualType DeclaredRetType;
   if (const FunctionDecl *FD = getCurFunctionDecl()) {
     FnRetType = FD->getResultType();
+    DeclaredRetType = FnRetType;
     if (FD->hasAttr<NoReturnAttr>() ||
         FD->getType()->getAs<FunctionType>()->getNoReturnAttr())
       Diag(ReturnLoc, diag::warn_noreturn_function_has_return_expr)
         << getCurFunctionOrMethodDecl()->getDeclName();
-  } else if (ObjCMethodDecl *MD = getCurMethodDecl())
-    FnRetType = MD->getResultType();
-  else // If we don't have a function/method context, bail.
+  } else if (ObjCMethodDecl *MD = getCurMethodDecl()) {
+    DeclaredRetType = MD->getResultType();
+    if (MD->hasRelatedResultType() && MD->getClassInterface()) {
+      // In the implementation of a method with a related return type, the
+      // type used to type-check the validity of return statements within the 
+      // method body is a pointer to the type of the class being implemented.
+      FnRetType = Context.getObjCInterfaceType(MD->getClassInterface());
+      FnRetType = Context.getObjCObjectPointerType(FnRetType);
+    } else {
+      FnRetType = DeclaredRetType;
+    }
+  } else // If we don't have a function/method context, bail.
     return StmtError();
 
   ReturnStmt *Result = 0;
@@ -1764,6 +1775,17 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     }
 
     if (RetValExp) {
+      // If we type-checked an Objective-C method's return type based
+      // on a related return type, we may need to adjust the return
+      // type again. Do so now.
+      if (DeclaredRetType != FnRetType) {
+        ExprResult result = PerformImplicitConversion(RetValExp,
+                                                      DeclaredRetType,
+                                                      AA_Returning);
+        if (result.isInvalid()) return StmtError();
+        RetValExp = result.take();
+      }
+
       CheckImplicitConversions(RetValExp, ReturnLoc);
       RetValExp = MaybeCreateExprWithCleanups(RetValExp);
     }

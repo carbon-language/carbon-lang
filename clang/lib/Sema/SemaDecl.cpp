@@ -1936,7 +1936,9 @@ void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
   for (ObjCMethodDecl::param_iterator oi = oldMethod->param_begin(),
          ni = newMethod->param_begin(), ne = newMethod->param_end();
        ni != ne; ++ni, ++oi)
-    mergeParamDeclAttributes(*ni, *oi, Context);    
+    mergeParamDeclAttributes(*ni, *oi, Context);
+  
+  CheckObjCMethodOverride(newMethod, oldMethod, true);
 }
 
 /// MergeVarDeclTypes - We parsed a variable 'New' which has the same name and

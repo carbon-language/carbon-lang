@@ -12,5 +12,5 @@ void func() {
 // AliasForTestPCH *zz;
  
  xx = [TestPCH alloc];
- [xx instMethod];
+ [xx init];
 }

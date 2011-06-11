@@ -2870,7 +2870,8 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
                              D->isVariadic(),
                              D->isSynthesized(),
                              D->isDefined(),
-                             D->getImplementationControl());
+                             D->getImplementationControl(),
+                             D->hasRelatedResultType());
 
   // FIXME: When we decide to merge method definitions, we'll need to
   // deal with implicit parameters.

@@ -2221,6 +2221,10 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
              diag::ext_typecheck_convert_incompatible_pointer)
           << From->getType() << ToType << Action
           << From->getSourceRange();
+      
+      if (From->getType()->isObjCObjectPointerType() &&
+          ToType->isObjCObjectPointerType())
+        EmitRelatedResultTypeNote(From);
     }
 
     CastKind Kind = CK_Invalid;
