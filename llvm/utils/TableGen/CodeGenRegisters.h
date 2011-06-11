@@ -15,24 +15,43 @@
 #ifndef CODEGEN_REGISTERS_H
 #define CODEGEN_REGISTERS_H
 
+#include "Record.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/DenseMap.h"
-#include <string>
-#include <vector>
-#include <set>
 #include <cstdlib>
+#include <map>
+#include <string>
+#include <set>
+#include <vector>
 
 namespace llvm {
-  class Record;
-  class RecordKeeper;
+  class CodeGenRegBank;
 
   /// CodeGenRegister - Represents a register definition.
   struct CodeGenRegister {
     Record *TheDef;
-    const std::string &getName() const;
     unsigned EnumValue;
     unsigned CostPerUse;
-    CodeGenRegister(Record *R);
+
+    // Map SubRegIndex -> Register.
+    typedef std::map<Record*, CodeGenRegister*, LessRecord> SubRegMap;
+
+    CodeGenRegister(Record *R, unsigned Enum);
+
+    const std::string &getName() const;
+
+    // Get a map of sub-registers computed lazily.
+    // This includes unique entries for all sub-sub-registers.
+    const SubRegMap &getSubRegs(CodeGenRegBank&);
+
+    const SubRegMap &getSubRegs() const {
+      assert(SubRegsComplete && "Must precompute sub-registers");
+      return SubRegs;
+    }
+
+  private:
+    bool SubRegsComplete;
+    SubRegMap SubRegs;
   };
 
 
@@ -104,26 +123,41 @@ namespace llvm {
   // them.
   class CodeGenRegBank {
     RecordKeeper &Records;
-
-    // Sub-register indices. The first NumNamedIndices are defined by the user
-    // in the .td files. The rest are synthesized such that all sub-registers
-    // have a unique name.
     std::vector<Record*> SubRegIndices;
-
     unsigned NumNamedIndices;
+    std::vector<CodeGenRegister> Registers;
+    DenseMap<Record*, CodeGenRegister*> Def2Reg;
+
+    // Composite SubRegIndex instances.
+    // Map (SubRegIndex, SubRegIndex) -> SubRegIndex.
+    typedef DenseMap<std::pair<Record*, Record*>, Record*> CompositeMap;
+    CompositeMap Composite;
+
+    // Populate the Composite map from sub-register relationships.
+    void computeComposites();
 
   public:
     CodeGenRegBank(RecordKeeper&);
 
+    // Sub-register indices. The first NumNamedIndices are defined by the user
+    // in the .td files. The rest are synthesized such that all sub-registers
+    // have a unique name.
     const std::vector<Record*> &getSubRegIndices() { return SubRegIndices; }
-
     unsigned getNumNamedIndices() { return NumNamedIndices; }
 
     // Map a SubRegIndex Record to its enum value.
     unsigned getSubRegIndexNo(Record *idx);
 
-    // Create a new sub-register index representing the A+B composition.
-    Record *getCompositeSubRegIndex(Record *A, Record *B);
+    // Find or create a sub-register index representing the A+B composition.
+    Record *getCompositeSubRegIndex(Record *A, Record *B, bool create = false);
+
+    const std::vector<CodeGenRegister> &getRegisters() { return Registers; }
+
+    // Find a register from its Record def.
+    CodeGenRegister *getReg(Record*);
+
+    // Computed derived records such as missing sub-register indices.
+    void computeDerivedInfo();
   };
 }
 

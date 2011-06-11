@@ -163,19 +163,6 @@ CodeGenRegBank &CodeGenTarget::getRegBank() const {
   return *RegBank;
 }
 
-void CodeGenTarget::ReadRegisters() const {
-  std::vector<Record*> Regs = Records.getAllDerivedDefinitions("Register");
-  if (Regs.empty())
-    throw std::string("No 'Register' subclasses defined!");
-  std::sort(Regs.begin(), Regs.end(), LessRecord());
-
-  Registers.reserve(Regs.size());
-  Registers.assign(Regs.begin(), Regs.end());
-  // Assign the enumeration values.
-  for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    Registers[i].EnumValue = i + 1;
-}
-
 void CodeGenTarget::ReadRegisterClasses() const {
   std::vector<Record*> RegClasses =
     Records.getAllDerivedDefinitions("RegisterClass");
@@ -189,7 +176,7 @@ void CodeGenTarget::ReadRegisterClasses() const {
 /// getRegisterByName - If there is a register with the specific AsmName,
 /// return it.
 const CodeGenRegister *CodeGenTarget::getRegisterByName(StringRef Name) const {
-  const std::vector<CodeGenRegister> &Regs = getRegisters();
+  const std::vector<CodeGenRegister> &Regs = getRegBank().getRegisters();
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     const CodeGenRegister &Reg = Regs[i];
     if (Reg.TheDef->getValueAsString("AsmName") == Name)

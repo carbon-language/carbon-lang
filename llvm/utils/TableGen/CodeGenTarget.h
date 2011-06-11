@@ -66,10 +66,8 @@ class CodeGenTarget {
 
   mutable DenseMap<const Record*, CodeGenInstruction*> Instructions;
   mutable CodeGenRegBank *RegBank;
-  mutable std::vector<CodeGenRegister> Registers;
   mutable std::vector<CodeGenRegisterClass> RegisterClasses;
   mutable std::vector<MVT::SimpleValueType> LegalValueTypes;
-  void ReadRegisters() const;
   void ReadRegisterClasses() const;
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
@@ -101,8 +99,7 @@ public:
   CodeGenRegBank &getRegBank() const;
 
   const std::vector<CodeGenRegister> &getRegisters() const {
-    if (Registers.empty()) ReadRegisters();
-    return Registers;
+    return getRegBank().getRegisters();
   }
 
   /// getRegisterByName - If there is a register with the specific AsmName,

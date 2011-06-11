@@ -168,159 +168,6 @@ static void addSubSuperReg(Record *R, Record *S,
       addSubSuperReg(R, *I, SubRegs, SuperRegs, Aliases);
 }
 
-struct RegisterMaps {
-  // Map SubRegIndex -> Register
-  typedef std::map<Record*, Record*, LessRecord> SubRegMap;
-  // Map Register -> SubRegMap
-  typedef std::map<Record*, SubRegMap> SubRegMaps;
-
-  SubRegMaps SubReg;
-  SubRegMap &inferSubRegIndices(Record *Reg, CodeGenTarget &);
-
-  // Composite SubRegIndex instances.
-  // Map (SubRegIndex,SubRegIndex) -> SubRegIndex
-  typedef DenseMap<std::pair<Record*,Record*>,Record*> CompositeMap;
-  CompositeMap Composite;
-
-  // Compute SubRegIndex compositions after inferSubRegIndices has run on all
-  // registers.
-  void computeComposites();
-};
-
-// Calculate all subregindices for Reg. Loopy subregs cause infinite recursion.
-RegisterMaps::SubRegMap &RegisterMaps::inferSubRegIndices(Record *Reg,
-                                                        CodeGenTarget &Target) {
-  SubRegMap &SRM = SubReg[Reg];
-  if (!SRM.empty())
-    return SRM;
-  std::vector<Record*> SubRegs = Reg->getValueAsListOfDefs("SubRegs");
-  std::vector<Record*> Indices = Reg->getValueAsListOfDefs("SubRegIndices");
-  if (SubRegs.size() != Indices.size())
-    throw "Register " + Reg->getName() + " SubRegIndices doesn't match SubRegs";
-
-  // First insert the direct subregs and make sure they are fully indexed.
-  for (unsigned i = 0, e = SubRegs.size(); i != e; ++i) {
-    if (!SRM.insert(std::make_pair(Indices[i], SubRegs[i])).second)
-      throw "SubRegIndex " + Indices[i]->getName()
-        + " appears twice in Register " + Reg->getName();
-    inferSubRegIndices(SubRegs[i], Target);
-  }
-
-  // Keep track of inherited subregs and how they can be reached.
-  // Register -> (SubRegIndex, SubRegIndex)
-  typedef std::map<Record*, std::pair<Record*,Record*>, LessRecord> OrphanMap;
-  OrphanMap Orphans;
-
-  // Clone inherited subregs. Here the order is important - earlier subregs take
-  // precedence.
-  for (unsigned i = 0, e = SubRegs.size(); i != e; ++i) {
-    SubRegMap &M = SubReg[SubRegs[i]];
-    for (SubRegMap::iterator si = M.begin(), se = M.end(); si != se; ++si)
-      if (!SRM.insert(*si).second)
-        Orphans[si->second] = std::make_pair(Indices[i], si->first);
-  }
-
-  // Finally process the composites.
-  ListInit *Comps = Reg->getValueAsListInit("CompositeIndices");
-  for (unsigned i = 0, e = Comps->size(); i != e; ++i) {
-    DagInit *Pat = dynamic_cast<DagInit*>(Comps->getElement(i));
-    if (!Pat)
-      throw "Invalid dag '" + Comps->getElement(i)->getAsString()
-        + "' in CompositeIndices";
-    DefInit *BaseIdxInit = dynamic_cast<DefInit*>(Pat->getOperator());
-    if (!BaseIdxInit || !BaseIdxInit->getDef()->isSubClassOf("SubRegIndex"))
-      throw "Invalid SubClassIndex in " + Pat->getAsString();
-
-    // Resolve list of subreg indices into R2.
-    Record *R2 = Reg;
-    for (DagInit::const_arg_iterator di = Pat->arg_begin(),
-         de = Pat->arg_end(); di != de; ++di) {
-      DefInit *IdxInit = dynamic_cast<DefInit*>(*di);
-      if (!IdxInit || !IdxInit->getDef()->isSubClassOf("SubRegIndex"))
-        throw "Invalid SubClassIndex in " + Pat->getAsString();
-      SubRegMap::const_iterator ni = SubReg[R2].find(IdxInit->getDef());
-      if (ni == SubReg[R2].end())
-        throw "Composite " + Pat->getAsString() + " refers to bad index in "
-          + R2->getName();
-      R2 = ni->second;
-    }
-
-    // Insert composite index. Allow overriding inherited indices etc.
-    SRM[BaseIdxInit->getDef()] = R2;
-
-    // R2 is now directly addressable, no longer an orphan.
-    Orphans.erase(R2);
-  }
-
-  // Now Orphans contains the inherited subregisters without a direct index.
-  // Create inferred indexes for all missing entries.
-  for (OrphanMap::iterator I = Orphans.begin(), E = Orphans.end(); I != E;
-       ++I) {
-    Record *&Comp = Composite[I->second];
-    if (!Comp)
-      Comp = Target.getRegBank().getCompositeSubRegIndex(I->second.first,
-                                                         I->second.second);
-    SRM[Comp] = I->first;
-  }
-
-  return SRM;
-}
-
-void RegisterMaps::computeComposites() {
-  for (SubRegMaps::const_iterator sri = SubReg.begin(), sre = SubReg.end();
-       sri != sre; ++sri) {
-    Record *Reg1 = sri->first;
-    const SubRegMap &SRM1 = sri->second;
-    for (SubRegMap::const_iterator i1 = SRM1.begin(), e1 = SRM1.end();
-         i1 != e1; ++i1) {
-      Record *Idx1 = i1->first;
-      Record *Reg2 = i1->second;
-      // Ignore identity compositions.
-      if (Reg1 == Reg2)
-        continue;
-      // If Reg2 has no subregs, Idx1 doesn't compose.
-      if (!SubReg.count(Reg2))
-        continue;
-      const SubRegMap &SRM2 = SubReg[Reg2];
-      // Try composing Idx1 with another SubRegIndex.
-      for (SubRegMap::const_iterator i2 = SRM2.begin(), e2 = SRM2.end();
-           i2 != e2; ++i2) {
-        std::pair<Record*,Record*> IdxPair(Idx1, i2->first);
-        Record *Reg3 = i2->second;
-        // OK Reg1:IdxPair == Reg3. Find the index with Reg:Idx == Reg3.
-        for (SubRegMap::const_iterator i1d = SRM1.begin(), e1d = SRM1.end();
-             i1d != e1d; ++i1d) {
-          // Ignore identity compositions.
-          if (Reg2 == Reg3)
-            continue;
-          if (i1d->second == Reg3) {
-            std::pair<CompositeMap::iterator,bool> Ins =
-              Composite.insert(std::make_pair(IdxPair, i1d->first));
-            // Conflicting composition? Emit a warning but allow it.
-            if (!Ins.second && Ins.first->second != i1d->first) {
-              errs() << "Warning: SubRegIndex " << getQualifiedName(Idx1)
-                     << " and " << getQualifiedName(IdxPair.second)
-                     << " compose ambiguously as "
-                     << getQualifiedName(Ins.first->second) << " or "
-                     << getQualifiedName(i1d->first) << "\n";
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // We don't care about the difference between (Idx1, Idx2) -> Idx2 and invalid
-  // compositions, so remove any mappings of that form.
-  for (CompositeMap::iterator i = Composite.begin(), e = Composite.end();
-       i != e;) {
-    CompositeMap::iterator j = i;
-    ++i;
-    if (j->first.second == j->second)
-      Composite.erase(j);
-  }
-}
-
 class RegisterSorter {
 private:
   std::map<Record*, std::set<Record*>, LessRecord> &RegisterSubRegs;
@@ -340,6 +187,7 @@ public:
 void RegisterInfoEmitter::run(raw_ostream &OS) {
   CodeGenTarget Target(Records);
   CodeGenRegBank &RegBank = Target.getRegBank();
+  RegBank.computeDerivedInfo();
   EmitSourceFileHeader("Register Information Source Fragment", OS);
 
   OS << "namespace llvm {\n\n";
@@ -866,9 +714,6 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // Calculate the mapping of subregister+index pairs to physical registers.
   // This will also create further anonymous indexes.
   unsigned NamedIndices = RegBank.getNumNamedIndices();
-  RegisterMaps RegMaps;
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
-    RegMaps.inferSubRegIndices(Regs[i].TheDef, Target);
 
   // Emit SubRegIndex names, skipping 0
   const std::vector<Record*> &SubRegIndices = RegBank.getSubRegIndices();
@@ -901,16 +746,16 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
      << "  switch (RegNo) {\n"
      << "  default:\n    return 0;\n";
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    RegisterMaps::SubRegMap &SRM = RegMaps.SubReg[Regs[i].TheDef];
+    const CodeGenRegister::SubRegMap &SRM = Regs[i].getSubRegs();
     if (SRM.empty())
       continue;
     OS << "  case " << getQualifiedName(Regs[i].TheDef) << ":\n";
     OS << "    switch (Index) {\n";
     OS << "    default: return 0;\n";
-    for (RegisterMaps::SubRegMap::const_iterator ii = SRM.begin(),
+    for (CodeGenRegister::SubRegMap::const_iterator ii = SRM.begin(),
          ie = SRM.end(); ii != ie; ++ii)
       OS << "    case " << getQualifiedName(ii->first)
-         << ": return " << getQualifiedName(ii->second) << ";\n";
+         << ": return " << getQualifiedName(ii->second->TheDef) << ";\n";
     OS << "    };\n" << "    break;\n";
   }
   OS << "  };\n";
@@ -922,13 +767,13 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
      << "  switch (RegNo) {\n"
      << "  default:\n    return 0;\n";
    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-     RegisterMaps::SubRegMap &SRM = RegMaps.SubReg[Regs[i].TheDef];
+     const CodeGenRegister::SubRegMap &SRM = Regs[i].getSubRegs();
      if (SRM.empty())
        continue;
     OS << "  case " << getQualifiedName(Regs[i].TheDef) << ":\n";
-    for (RegisterMaps::SubRegMap::const_iterator ii = SRM.begin(),
+    for (CodeGenRegister::SubRegMap::const_iterator ii = SRM.begin(),
          ie = SRM.end(); ii != ie; ++ii)
-      OS << "    if (SubRegNo == " << getQualifiedName(ii->second)
+      OS << "    if (SubRegNo == " << getQualifiedName(ii->second->TheDef)
          << ")  return " << getQualifiedName(ii->first) << ";\n";
     OS << "    return 0;\n";
   }
@@ -937,7 +782,6 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   OS << "}\n\n";
 
   // Emit composeSubRegIndices
-  RegMaps.computeComposites();
   OS << "unsigned " << ClassName
      << "::composeSubRegIndices(unsigned IdxA, unsigned IdxB) const {\n"
      << "  switch (IdxA) {\n"
@@ -945,8 +789,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
     bool Open = false;
     for (unsigned j = 0; j != e; ++j) {
-      if (Record *Comp = RegMaps.Composite.lookup(
-                          std::make_pair(SubRegIndices[i], SubRegIndices[j]))) {
+      if (Record *Comp = RegBank.getCompositeSubRegIndex(SubRegIndices[i],
+                                                         SubRegIndices[j])) {
         if (!Open) {
           OS << "  case " << getQualifiedName(SubRegIndices[i])
              << ": switch(IdxB) {\n    default: return IdxB;\n";
