@@ -1175,7 +1175,7 @@ TargetLowering::TargetLoweringOpt::ShrinkDemandedOp(SDValue Op,
 }
 
 /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
-/// DemandedMask bits of the result of Op are ever used downstream.  If we can
+/// DemandedMask bits of the result of Op are never used downstream.  If we can
 /// use this information to simplify Op, create a new simplified DAG node and
 /// return true, returning the original and new nodes in Old and New. Otherwise,
 /// analyze the expression and return a mask of KnownOne and KnownZero bits for
