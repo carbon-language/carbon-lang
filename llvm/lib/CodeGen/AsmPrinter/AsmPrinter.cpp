@@ -1941,9 +1941,9 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   if (TII->AnalyzeBranch(*Pred, PredTBB, PredFBB, PredCond))
     return false;
 
-  if (PredCond.empty())
-    return true;
-  return !PredFBB || PredFBB == MBB;
+  // This is a fall through if there is no conditions in the bb
+  // or if there is no explicit false branch.
+  return PredCond.empty() || !PredFBB;
 }
 
 
