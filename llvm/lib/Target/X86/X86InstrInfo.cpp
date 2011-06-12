@@ -1789,7 +1789,6 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
           .addMBB(UnCondBrIter->getOperand(0).getMBB());
         BuildMI(MBB, UnCondBrIter, MBB.findDebugLoc(I), get(X86::JMP_4))
           .addMBB(TargetBB);
-        MBB.addSuccessor(TargetBB);
 
         OldInst->eraseFromParent();
         UnCondBrIter->eraseFromParent();

@@ -13,7 +13,7 @@ entry:
   br i1 %0, label %return, label %bb.nph
 
 bb.nph:                                           ; preds = %entry
-; CHECK: BB#1
+; CHECK: LBB0_1:
 ; CHECK: movw r[[R2:[0-9]+]], :lower16:L_GV$non_lazy_ptr
 ; CHECK: movt r[[R2]], :upper16:L_GV$non_lazy_ptr
 ; CHECK: ldr{{(.w)?}} r[[R2b:[0-9]+]], [r[[R2]]
@@ -21,7 +21,7 @@ bb.nph:                                           ; preds = %entry
 ; CHECK: LBB0_2
 ; CHECK-NOT: LCPI0_0:
 
-; PIC: BB#1
+; PIC: LBB0_1:
 ; PIC: movw r[[R2:[0-9]+]], :lower16:(L_GV$non_lazy_ptr-(LPC0_0+4))
 ; PIC: movt r[[R2]], :upper16:(L_GV$non_lazy_ptr-(LPC0_0+4))
 ; PIC: add r[[R2]], pc

@@ -1925,7 +1925,7 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
     return false;
 
   // The predecessor has to be immediately before this block.
-  const MachineBasicBlock *Pred = *PI;
+  MachineBasicBlock *Pred = *PI;
 
   if (!Pred->isLayoutSuccessor(MBB))
     return false;
@@ -1934,9 +1934,16 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   if (Pred->empty())
     return true;
 
-  // Otherwise, check the last instruction.
-  const MachineInstr &LastInst = Pred->back();
-  return !LastInst.getDesc().isBarrier();
+  // Otherwise, ask the backend.
+  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+  MachineBasicBlock *PredTBB = NULL, *PredFBB = NULL;
+  SmallVector<MachineOperand, 4> PredCond;
+  if (TII->AnalyzeBranch(*Pred, PredTBB, PredFBB, PredCond))
+    return false;
+
+  if (PredCond.empty())
+    return true;
+  return !PredFBB || PredFBB == MBB;
 }
 
 
