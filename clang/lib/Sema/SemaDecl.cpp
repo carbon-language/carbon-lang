@@ -5208,12 +5208,8 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
 
   VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
   if (!VDecl) {
-    if (getLangOptions().CPlusPlus &&
-        RealDecl->getLexicalDeclContext()->isRecord() &&
-        isa<NamedDecl>(RealDecl))
-      Diag(RealDecl->getLocation(), diag::err_member_initialization);
-    else
-      Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
+    assert(!isa<FieldDecl>(RealDecl) && "field init shouldn't get here");
+    Diag(RealDecl->getLocation(), diag::err_illegal_initializer);
     RealDecl->setInvalidDecl();
     return;
   }

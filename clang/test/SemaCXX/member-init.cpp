@@ -48,3 +48,7 @@ struct CheckExcSpecFail {
   CheckExcSpecFail() noexcept(true) = default; // expected-error {{exception specification of explicitly defaulted default constructor does not match the calculated one}}
   ThrowCtor tc = 123;
 };
+
+struct TypedefInit {
+  typedef int A = 0; // expected-error {{illegal initializer}}
+};

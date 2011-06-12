@@ -1830,7 +1830,9 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       } else {
         HasDeferredInitializer = !DeclaratorInfo.isFunctionDeclarator() &&
           DeclaratorInfo.getDeclSpec().getStorageClassSpec()
-            != DeclSpec::SCS_static;
+            != DeclSpec::SCS_static &&
+          DeclaratorInfo.getDeclSpec().getStorageClassSpec()
+            != DeclSpec::SCS_typedef;
 
         if (!HasDeferredInitializer) {
           SourceLocation EqualLoc;
