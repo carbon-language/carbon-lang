@@ -673,10 +673,16 @@ static unsigned getVectorTypeBreakdownMVT(MVT VT, MVT &IntermediateVT,
     NewVT = EltTy;
   IntermediateVT = NewVT;
 
+  unsigned NewVTSize = NewVT.getSizeInBits();
+
+  // Convert sizes such as i33 to i64.
+  if (!isPowerOf2_32(NewVTSize))
+    NewVTSize = NextPowerOf2(NewVTSize);
+
   EVT DestVT = TLI->getRegisterType(NewVT);
   RegisterVT = DestVT;
   if (EVT(DestVT).bitsLT(NewVT))    // Value is expanded, e.g. i64 -> i16.
-    return NumVectorRegs*(NewVT.getSizeInBits()/DestVT.getSizeInBits());
+    return NumVectorRegs*(NewVTSize/DestVT.getSizeInBits());
 
   // Otherwise, promotion or legal types use the same number of registers as
   // the vector decimated to the appropriate level.
@@ -965,8 +971,14 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
 
   EVT DestVT = getRegisterType(Context, NewVT);
   RegisterVT = DestVT;
+  unsigned NewVTSize = NewVT.getSizeInBits();
+
+  // Convert sizes such as i33 to i64.
+  if (!isPowerOf2_32(NewVTSize))
+    NewVTSize = NextPowerOf2(NewVTSize);
+
   if (DestVT.bitsLT(NewVT))   // Value is expanded, e.g. i64 -> i16.
-    return NumVectorRegs*(NewVT.getSizeInBits()/DestVT.getSizeInBits());
+    return NumVectorRegs*(NewVTSize/DestVT.getSizeInBits());
 
   // Otherwise, promotion or legal types use the same number of registers as
   // the vector decimated to the appropriate level.
@@ -1762,9 +1774,9 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
   case ISD::BITCAST:
     // If this is an FP->Int bitcast and if the sign bit is the only
     // thing demanded, turn this into a FGETSIGN.
-    if (NewMask == APInt::getSignBit(Op.getValueType().getSizeInBits()) &&
-        Op.getOperand(0).getValueType().isFloatingPoint() &&
-        !Op.getOperand(0).getValueType().isVector()) {
+    if (!Op.getOperand(0).getValueType().isVector() &&
+        NewMask == APInt::getSignBit(Op.getValueType().getSizeInBits()) &&
+        Op.getOperand(0).getValueType().isFloatingPoint()) {
       bool OpVTLegal = isOperationLegalOrCustom(ISD::FGETSIGN, Op.getValueType());
       bool i32Legal  = isOperationLegalOrCustom(ISD::FGETSIGN, MVT::i32);
       if ((OpVTLegal || i32Legal) && Op.getValueType().isSimple()) {
