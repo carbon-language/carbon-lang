@@ -160,8 +160,10 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
         Opc = isSub
           ? (Is64Bit ? X86::PUSH64r : X86::PUSH32r)
           : (Is64Bit ? X86::POP64r  : X86::POP32r);
-        BuildMI(MBB, MBBI, DL, TII.get(Opc))
+        MachineInstr *MI = BuildMI(MBB, MBBI, DL, TII.get(Opc))
           .addReg(Reg, getDefRegState(!isSub) | getUndefRegState(isSub));
+        if (isSub)
+          MI->setFlag(MachineInstr::FrameSetup);
         Offset -= ThisVal;
         continue;
       }
@@ -171,6 +173,8 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
       BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
       .addReg(StackPtr)
       .addImm(ThisVal);
+    if (isSub)
+      MI->setFlag(MachineInstr::FrameSetup);
     MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
     Offset -= ThisVal;
   }
@@ -409,7 +413,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
               TII.get(getSUBriOpcode(Is64Bit, -TailCallReturnAddrDelta)),
               StackPtr)
         .addReg(StackPtr)
-        .addImm(-TailCallReturnAddrDelta);
+        .addImm(-TailCallReturnAddrDelta)
+        .setMIFlag(MachineInstr::FrameSetup);
     MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
   }
 
@@ -447,7 +452,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 
     // Save EBP/RBP into the appropriate stack slot.
     BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
-      .addReg(FramePtr, RegState::Kill);
+      .addReg(FramePtr, RegState::Kill)
+      .setMIFlag(MachineInstr::FrameSetup);
 
     if (needsFrameMoves) {
       // Mark the place where EBP/RBP was saved.
@@ -474,7 +480,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     // Update EBP with the new base value...
     BuildMI(MBB, MBBI, DL,
             TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
-        .addReg(StackPtr);
+        .addReg(StackPtr)
+        .setMIFlag(MachineInstr::FrameSetup);
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
@@ -919,7 +926,8 @@ bool X86FrameLowering::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
       // X86RegisterInfo::emitPrologue will handle spilling of frame register.
       continue;
     CalleeFrameSize += SlotSize;
-    BuildMI(MBB, MI, DL, TII.get(Opc)).addReg(Reg, RegState::Kill);
+    BuildMI(MBB, MI, DL, TII.get(Opc)).addReg(Reg, RegState::Kill)
+      .setMIFlag(MachineInstr::FrameSetup);
   }
 
   X86FI->setCalleeSavedFrameSize(CalleeFrameSize);
