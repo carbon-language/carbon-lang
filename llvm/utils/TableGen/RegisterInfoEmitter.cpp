@@ -126,49 +126,6 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
   OS << "} // End llvm namespace \n";
 }
 
-static void addSuperReg(Record *R, Record *S,
-                  std::map<Record*, std::set<Record*>, LessRecord> &SubRegs,
-                  std::map<Record*, std::set<Record*>, LessRecord> &SuperRegs,
-                  std::map<Record*, std::set<Record*>, LessRecord> &Aliases) {
-  if (R == S) {
-    errs() << "Error: recursive sub-register relationship between"
-           << " register " << getQualifiedName(R)
-           << " and its sub-registers?\n";
-    abort();
-  }
-  if (!SuperRegs[R].insert(S).second)
-    return;
-  SubRegs[S].insert(R);
-  Aliases[R].insert(S);
-  Aliases[S].insert(R);
-  if (SuperRegs.count(S))
-    for (std::set<Record*>::iterator I = SuperRegs[S].begin(),
-           E = SuperRegs[S].end(); I != E; ++I)
-      addSuperReg(R, *I, SubRegs, SuperRegs, Aliases);
-}
-
-static void addSubSuperReg(Record *R, Record *S,
-                   std::map<Record*, std::set<Record*>, LessRecord> &SubRegs,
-                   std::map<Record*, std::set<Record*>, LessRecord> &SuperRegs,
-                   std::map<Record*, std::set<Record*>, LessRecord> &Aliases) {
-  if (R == S) {
-    errs() << "Error: recursive sub-register relationship between"
-           << " register " << getQualifiedName(R)
-           << " and its sub-registers?\n";
-    abort();
-  }
-
-  if (!SubRegs[R].insert(S).second)
-    return;
-  addSuperReg(S, R, SubRegs, SuperRegs, Aliases);
-  Aliases[R].insert(S);
-  Aliases[S].insert(R);
-  if (SubRegs.count(S))
-    for (std::set<Record*>::iterator I = SubRegs[S].begin(),
-           E = SubRegs[S].end(); I != E; ++I)
-      addSubSuperReg(R, *I, SubRegs, SuperRegs, Aliases);
-}
-
 typedef std::pair<unsigned, unsigned> UUPair;
 typedef std::vector<UUPair> UUVector;
 
@@ -465,51 +422,9 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
        << "RegClass,\n";
   OS << "  };\n";
 
-  // Emit register sub-registers / super-registers, aliases...
-  std::map<Record*, std::set<Record*>, LessRecord> RegisterSubRegs;
-  std::map<Record*, std::set<Record*>, LessRecord> RegisterSuperRegs;
-  std::map<Record*, std::set<Record*>, LessRecord> RegisterAliases;
   typedef std::map<Record*, std::vector<int64_t>, LessRecord> DwarfRegNumsMapTy;
   DwarfRegNumsMapTy DwarfRegNums;
-
   const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
-
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    Record *R = Regs[i].TheDef;
-    std::vector<Record*> LI = Regs[i].TheDef->getValueAsListOfDefs("Aliases");
-    // Add information that R aliases all of the elements in the list... and
-    // that everything in the list aliases R.
-    for (unsigned j = 0, e = LI.size(); j != e; ++j) {
-      Record *Reg = LI[j];
-      if (RegisterAliases[R].count(Reg))
-        errs() << "Warning: register alias between " << getQualifiedName(R)
-               << " and " << getQualifiedName(Reg)
-               << " specified multiple times!\n";
-      RegisterAliases[R].insert(Reg);
-
-      if (RegisterAliases[Reg].count(R))
-        errs() << "Warning: register alias between " << getQualifiedName(R)
-               << " and " << getQualifiedName(Reg)
-               << " specified multiple times!\n";
-      RegisterAliases[Reg].insert(R);
-    }
-  }
-
-  // Process sub-register sets.
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    Record *R = Regs[i].TheDef;
-    std::vector<Record*> LI = Regs[i].TheDef->getValueAsListOfDefs("SubRegs");
-    // Process sub-register set and add aliases information.
-    for (unsigned j = 0, e = LI.size(); j != e; ++j) {
-      Record *SubReg = LI[j];
-      if (RegisterSubRegs[R].count(SubReg))
-        errs() << "Warning: register " << getQualifiedName(SubReg)
-               << " specified as a sub-register of " << getQualifiedName(R)
-               << " multiple times!\n";
-      addSubSuperReg(R, SubReg, RegisterSubRegs, RegisterSuperRegs,
-                     RegisterAliases);
-    }
-  }
 
   // Print the SubregHashTable, a simple quadratically probed
   // hash table for determining if a register is a subregister
