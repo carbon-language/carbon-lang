@@ -19,6 +19,7 @@
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Format.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;
@@ -168,6 +169,51 @@ static void addSubSuperReg(Record *R, Record *S,
       addSubSuperReg(R, *I, SubRegs, SuperRegs, Aliases);
 }
 
+typedef std::pair<unsigned, unsigned> UUPair;
+typedef std::vector<UUPair> UUVector;
+
+// Generate and print a quadratically probed hash table of unsigned pairs.
+// The pair (0,0) is used as a sentinel, so it cannot be a data point.
+static void generateHashTable(raw_ostream &OS, const char *Name,
+                              const UUVector &Data) {
+  const UUPair Sentinel(0, 0);
+  unsigned HSize = Data.size();
+  UUVector HT;
+
+  // Hashtable size must be a power of two.
+  HSize = 2 * NextPowerOf2(2 * HSize);
+  HT.assign(HSize, Sentinel);
+
+  // Insert all entries.
+  unsigned MaxProbes = 0;
+  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
+    UUPair D = Data[i];
+    unsigned Idx = (D.first + D.second * 37) & (HSize - 1);
+    unsigned ProbeAmt = 2;
+    while (HT[Idx] != Sentinel) {
+      Idx = (Idx + ProbeAmt) & (HSize - 1);
+      ProbeAmt += 2;
+    }
+    HT[Idx] = D;
+    MaxProbes = std::max(MaxProbes, ProbeAmt/2);
+  }
+
+  // Print the hash table.
+  OS << "\n\n  // Max number of probes: " << MaxProbes
+     << "\n  // Used entries: " << Data.size()
+     << "\n  const unsigned " << Name << "Size = " << HSize << ';'
+     << "\n  const unsigned " << Name << "[] = {\n";
+
+  for (unsigned i = 0, e = HSize; i != e; ++i) {
+    UUPair D = HT[i];
+    OS << format("    %3u,%3u,", D.first, D.second);
+    if (i % 8 == 7 && i + 1 != e)
+      OS << '\n';
+  }
+  OS << "\n  };\n";
+}
+
+//
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(raw_ostream &OS) {
@@ -468,157 +514,28 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // Print the SubregHashTable, a simple quadratically probed
   // hash table for determining if a register is a subregister
   // of another register.
-  unsigned NumSubRegs = 0;
-  std::map<Record*, unsigned> RegNo;
+  UUVector HTData;
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    RegNo[Regs[i].TheDef] = i;
-    NumSubRegs += RegisterSubRegs[Regs[i].TheDef].size();
+    unsigned RegNo = Regs[i].EnumValue;
+    const CodeGenRegister::SuperRegList &SR = Regs[i].getSuperRegs();
+    for (CodeGenRegister::SuperRegList::const_iterator I = SR.begin(),
+         E = SR.end(); I != E; ++I)
+      HTData.push_back(UUPair((*I)->EnumValue, RegNo));
   }
-
-  unsigned SubregHashTableSize = 2 * NextPowerOf2(2 * NumSubRegs);
-  unsigned* SubregHashTable = new unsigned[2 * SubregHashTableSize];
-  std::fill(SubregHashTable, SubregHashTable + 2 * SubregHashTableSize, ~0U);
-
-  unsigned hashMisses = 0;
-
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    Record* R = Regs[i].TheDef;
-    for (std::set<Record*>::iterator I = RegisterSubRegs[R].begin(),
-         E = RegisterSubRegs[R].end(); I != E; ++I) {
-      Record* RJ = *I;
-      // We have to increase the indices of both registers by one when
-      // computing the hash because, in the generated code, there
-      // will be an extra empty slot at register 0.
-      size_t index = ((i+1) + (RegNo[RJ]+1) * 37) & (SubregHashTableSize-1);
-      unsigned ProbeAmt = 2;
-      while (SubregHashTable[index*2] != ~0U &&
-             SubregHashTable[index*2+1] != ~0U) {
-        index = (index + ProbeAmt) & (SubregHashTableSize-1);
-        ProbeAmt += 2;
-
-        hashMisses++;
-      }
-
-      SubregHashTable[index*2] = i;
-      SubregHashTable[index*2+1] = RegNo[RJ];
-    }
-  }
-
-  OS << "\n\n  // Number of hash collisions: " << hashMisses << "\n";
-
-  if (SubregHashTableSize) {
-    std::string Namespace = Regs[0].TheDef->getValueAsString("Namespace");
-
-    OS << "  const unsigned SubregHashTable[] = { ";
-    for (unsigned i = 0; i < SubregHashTableSize - 1; ++i) {
-      if (i != 0)
-        // Insert spaces for nice formatting.
-        OS << "                                       ";
-
-      if (SubregHashTable[2*i] != ~0U) {
-        OS << getQualifiedName(Regs[SubregHashTable[2*i]].TheDef) << ", "
-           << getQualifiedName(Regs[SubregHashTable[2*i+1]].TheDef) << ", \n";
-      } else {
-        OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister, \n";
-      }
-    }
-
-    unsigned Idx = SubregHashTableSize*2-2;
-    if (SubregHashTable[Idx] != ~0U) {
-      OS << "                                       "
-         << getQualifiedName(Regs[SubregHashTable[Idx]].TheDef) << ", "
-         << getQualifiedName(Regs[SubregHashTable[Idx+1]].TheDef) << " };\n";
-    } else {
-      OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister };\n";
-    }
-
-    OS << "  const unsigned SubregHashTableSize = "
-       << SubregHashTableSize << ";\n";
-  } else {
-    OS << "  const unsigned SubregHashTable[] = { ~0U, ~0U };\n"
-       << "  const unsigned SubregHashTableSize = 1;\n";
-  }
-
-  delete [] SubregHashTable;
-
+  generateHashTable(OS, "SubregHashTable", HTData);
 
   // Print the AliasHashTable, a simple quadratically probed
   // hash table for determining if a register aliases another register.
-  unsigned NumAliases = 0;
-  RegNo.clear();
+  HTData.clear();
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    RegNo[Regs[i].TheDef] = i;
-    NumAliases += RegisterAliases[Regs[i].TheDef].size();
+    unsigned RegNo = Regs[i].EnumValue;
+    const CodeGenRegister::Set &O = Overlaps[&Regs[i]];
+    for (CodeGenRegister::Set::const_iterator I = O.begin(), E = O.end();
+         I != E; ++I)
+      if (*I != &Regs[i])
+        HTData.push_back(UUPair(RegNo, (*I)->EnumValue));
   }
-
-  unsigned AliasesHashTableSize = 2 * NextPowerOf2(2 * NumAliases);
-  unsigned* AliasesHashTable = new unsigned[2 * AliasesHashTableSize];
-  std::fill(AliasesHashTable, AliasesHashTable + 2 * AliasesHashTableSize, ~0U);
-
-  hashMisses = 0;
-
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    Record* R = Regs[i].TheDef;
-    for (std::set<Record*>::iterator I = RegisterAliases[R].begin(),
-         E = RegisterAliases[R].end(); I != E; ++I) {
-      Record* RJ = *I;
-      // We have to increase the indices of both registers by one when
-      // computing the hash because, in the generated code, there
-      // will be an extra empty slot at register 0.
-      size_t index = ((i+1) + (RegNo[RJ]+1) * 37) & (AliasesHashTableSize-1);
-      unsigned ProbeAmt = 2;
-      while (AliasesHashTable[index*2] != ~0U &&
-             AliasesHashTable[index*2+1] != ~0U) {
-        index = (index + ProbeAmt) & (AliasesHashTableSize-1);
-        ProbeAmt += 2;
-
-        hashMisses++;
-      }
-
-      AliasesHashTable[index*2] = i;
-      AliasesHashTable[index*2+1] = RegNo[RJ];
-    }
-  }
-
-  OS << "\n\n  // Number of hash collisions: " << hashMisses << "\n";
-
-  if (AliasesHashTableSize) {
-    std::string Namespace = Regs[0].TheDef->getValueAsString("Namespace");
-
-    OS << "  const unsigned AliasesHashTable[] = { ";
-    for (unsigned i = 0; i < AliasesHashTableSize - 1; ++i) {
-      if (i != 0)
-        // Insert spaces for nice formatting.
-        OS << "                                       ";
-
-      if (AliasesHashTable[2*i] != ~0U) {
-        OS << getQualifiedName(Regs[AliasesHashTable[2*i]].TheDef) << ", "
-           << getQualifiedName(Regs[AliasesHashTable[2*i+1]].TheDef) << ", \n";
-      } else {
-        OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister, \n";
-      }
-    }
-
-    unsigned Idx = AliasesHashTableSize*2-2;
-    if (AliasesHashTable[Idx] != ~0U) {
-      OS << "                                       "
-         << getQualifiedName(Regs[AliasesHashTable[Idx]].TheDef) << ", "
-         << getQualifiedName(Regs[AliasesHashTable[Idx+1]].TheDef) << " };\n";
-    } else {
-      OS << Namespace << "::NoRegister, " << Namespace << "::NoRegister };\n";
-    }
-
-    OS << "  const unsigned AliasesHashTableSize = "
-       << AliasesHashTableSize << ";\n";
-  } else {
-    OS << "  const unsigned AliasesHashTable[] = { ~0U, ~0U };\n"
-       << "  const unsigned AliasesHashTableSize = 1;\n";
-  }
-
-  delete [] AliasesHashTable;
-
-  if (!RegisterAliases.empty())
-    OS << "\n\n  // Register Overlap Lists...\n";
+  generateHashTable(OS, "AliasesHashTable", HTData);
 
   // Emit an overlap list for all registers.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
