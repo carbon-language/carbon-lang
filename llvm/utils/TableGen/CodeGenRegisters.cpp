@@ -72,10 +72,21 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   for (unsigned i = 0, e = SubList.size(); i != e; ++i) {
     CodeGenRegister *SR = RegBank.getReg(SubList[i]);
     const SubRegMap &Map = SR->getSubRegs(RegBank);
+
+    // Add this as a super-register of SR now all sub-registers are in the list.
+    // This creates a topological ordering, the exact order depends on the
+    // order getSubRegs is called on all registers.
+    SR->SuperRegs.push_back(this);
+
     for (SubRegMap::const_iterator SI = Map.begin(), SE = Map.end(); SI != SE;
-         ++SI)
+         ++SI) {
       if (!SubRegs.insert(*SI).second)
         Orphans.push_back(Orphan(SI->second, Indices[i], SI->first));
+
+      // Noop sub-register indexes are possible, so avoid duplicates.
+      if (SI->second != SR)
+        SI->second->SuperRegs.push_back(this);
+    }
   }
 
   // Process the composites.
@@ -126,6 +137,17 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
       O.SubReg;
   }
   return SubRegs;
+}
+
+void
+CodeGenRegister::addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet) const {
+  assert(SubRegsComplete && "Must precompute sub-registers");
+  std::vector<Record*> Indices = TheDef->getValueAsListOfDefs("SubRegIndices");
+  for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
+    CodeGenRegister *SR = SubRegs.find(Indices[i])->second;
+    if (OSet.insert(SR))
+      SR->addSubRegsPreOrder(OSet);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -258,7 +280,7 @@ void CodeGenRegBank::computeComposites() {
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     CodeGenRegister *Reg1 = &Registers[i];
-    const CodeGenRegister::SubRegMap &SRM1 = Reg1->getSubRegs(*this);
+    const CodeGenRegister::SubRegMap &SRM1 = Reg1->getSubRegs();
     for (CodeGenRegister::SubRegMap::const_iterator i1 = SRM1.begin(),
          e1 = SRM1.end(); i1 != e1; ++i1) {
       Record *Idx1 = i1->first;
@@ -266,7 +288,7 @@ void CodeGenRegBank::computeComposites() {
       // Ignore identity compositions.
       if (Reg1 == Reg2)
         continue;
-      const CodeGenRegister::SubRegMap &SRM2 = Reg2->getSubRegs(*this);
+      const CodeGenRegister::SubRegMap &SRM2 = Reg2->getSubRegs();
       // Try composing Idx1 with another SubRegIndex.
       for (CodeGenRegister::SubRegMap::const_iterator i2 = SRM2.begin(),
            e2 = SRM2.end(); i2 != e2; ++i2) {
@@ -303,6 +325,80 @@ void CodeGenRegBank::computeComposites() {
     ++i;
     if (j->first.second == j->second)
       Composite.erase(j);
+  }
+}
+
+// Compute sets of overlapping registers.
+//
+// The standard set is all super-registers and all sub-registers, but the
+// target description can add arbitrary overlapping registers via the 'Aliases'
+// field. This complicates things, but we can compute overlapping sets using
+// the following rules:
+//
+// 1. The relation overlap(A, B) is reflexive and symmetric but not transitive.
+//
+// 2. overlap(A, B) implies overlap(A, S) for all S in supers(B).
+//
+// Alternatively:
+//
+//    overlap(A, B) iff there exists:
+//    A' in { A, subregs(A) } and B' in { B, subregs(B) } such that:
+//    A' = B' or A' in aliases(B') or B' in aliases(A').
+//
+// Here subregs(A) is the full flattened sub-register set returned by
+// A.getSubRegs() while aliases(A) is simply the special 'Aliases' field in the
+// description of register A.
+//
+// This also implies that registers with a common sub-register are considered
+// overlapping. This can happen when forming register pairs:
+//
+//    P0 = (R0, R1)
+//    P1 = (R1, R2)
+//    P2 = (R2, R3)
+//
+// In this case, we will infer an overlap between P0 and P1 because of the
+// shared sub-register R1. There is no overlap between P0 and P2.
+//
+void CodeGenRegBank::
+computeOverlaps(std::map<const CodeGenRegister*, CodeGenRegister::Set> &Map) {
+  assert(Map.empty());
+
+  // Collect overlaps that don't follow from rule 2.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
+    CodeGenRegister *Reg = &Registers[i];
+    CodeGenRegister::Set &Overlaps = Map[Reg];
+
+    // Reg overlaps itself.
+    Overlaps.insert(Reg);
+
+    // All super-registers overlap.
+    const CodeGenRegister::SuperRegList &Supers = Reg->getSuperRegs();
+    Overlaps.insert(Supers.begin(), Supers.end());
+
+    // Form symmetrical relations from the special Aliases[] lists.
+    std::vector<Record*> RegList = Reg->TheDef->getValueAsListOfDefs("Aliases");
+    for (unsigned i2 = 0, e2 = RegList.size(); i2 != e2; ++i2) {
+      CodeGenRegister *Reg2 = getReg(RegList[i2]);
+      CodeGenRegister::Set &Overlaps2 = Map[Reg2];
+      const CodeGenRegister::SuperRegList &Supers2 = Reg2->getSuperRegs();
+      // Reg overlaps Reg2 which implies it overlaps supers(Reg2).
+      Overlaps.insert(Reg2);
+      Overlaps.insert(Supers2.begin(), Supers2.end());
+      Overlaps2.insert(Reg);
+      Overlaps2.insert(Supers.begin(), Supers.end());
+    }
+  }
+
+  // Apply rule 2. and inherit all sub-register overlaps.
+  for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
+    CodeGenRegister *Reg = &Registers[i];
+    CodeGenRegister::Set &Overlaps = Map[Reg];
+    const CodeGenRegister::SubRegMap &SRM = Reg->getSubRegs();
+    for (CodeGenRegister::SubRegMap::const_iterator i2 = SRM.begin(),
+         e2 = SRM.end(); i2 != e2; ++i2) {
+      CodeGenRegister::Set &Overlaps2 = Map[i2->second];
+      Overlaps.insert(Overlaps2.begin(), Overlaps2.end());
+    }
   }
 }
 

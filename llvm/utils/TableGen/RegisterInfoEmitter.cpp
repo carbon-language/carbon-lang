@@ -168,26 +168,15 @@ static void addSubSuperReg(Record *R, Record *S,
       addSubSuperReg(R, *I, SubRegs, SuperRegs, Aliases);
 }
 
-class RegisterSorter {
-private:
-  std::map<Record*, std::set<Record*>, LessRecord> &RegisterSubRegs;
-
-public:
-  RegisterSorter(std::map<Record*, std::set<Record*>, LessRecord> &RS)
-    : RegisterSubRegs(RS) {}
-
-  bool operator()(Record *RegA, Record *RegB) {
-    // B is sub-register of A.
-    return RegisterSubRegs.count(RegA) && RegisterSubRegs[RegA].count(RegB);
-  }
-};
-
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
 void RegisterInfoEmitter::run(raw_ostream &OS) {
   CodeGenTarget Target(Records);
   CodeGenRegBank &RegBank = Target.getRegBank();
   RegBank.computeDerivedInfo();
+  std::map<const CodeGenRegister*, CodeGenRegister::Set> Overlaps;
+  RegBank.computeOverlaps(Overlaps);
+
   EmitSourceFileHeader("Register Information Source Fragment", OS);
 
   OS << "namespace llvm {\n\n";
@@ -632,60 +621,48 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     OS << "\n\n  // Register Overlap Lists...\n";
 
   // Emit an overlap list for all registers.
-  for (std::map<Record*, std::set<Record*>, LessRecord >::iterator
-         I = RegisterAliases.begin(), E = RegisterAliases.end(); I != E; ++I) {
-    OS << "  const unsigned " << I->first->getName() << "_Overlaps[] = { "
-       << getQualifiedName(I->first) << ", ";
-    for (std::set<Record*>::iterator ASI = I->second.begin(),
-           E = I->second.end(); ASI != E; ++ASI)
-      OS << getQualifiedName(*ASI) << ", ";
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister *Reg = &Regs[i];
+    const CodeGenRegister::Set &O = Overlaps[Reg];
+    // Move Reg to the front so TRI::getAliasSet can share the list.
+    OS << "  const unsigned " << Reg->getName() << "_Overlaps[] = { "
+       << getQualifiedName(Reg->TheDef) << ", ";
+    for (CodeGenRegister::Set::const_iterator I = O.begin(), E = O.end();
+         I != E; ++I)
+      if (*I != Reg)
+        OS << getQualifiedName((*I)->TheDef) << ", ";
     OS << "0 };\n";
   }
-
-  if (!RegisterSubRegs.empty())
-    OS << "\n\n  // Register Sub-registers Sets...\n";
 
   // Emit the empty sub-registers list
   OS << "  const unsigned Empty_SubRegsSet[] = { 0 };\n";
   // Loop over all of the registers which have sub-registers, emitting the
   // sub-registers list to memory.
-  for (std::map<Record*, std::set<Record*>, LessRecord>::iterator
-         I = RegisterSubRegs.begin(), E = RegisterSubRegs.end(); I != E; ++I) {
-   if (I->second.empty())
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister &Reg = Regs[i];
+    if (Reg.getSubRegs().empty())
      continue;
-    OS << "  const unsigned " << I->first->getName() << "_SubRegsSet[] = { ";
-    std::vector<Record*> SubRegsVector;
-    for (std::set<Record*>::iterator ASI = I->second.begin(),
-           E = I->second.end(); ASI != E; ++ASI)
-      SubRegsVector.push_back(*ASI);
-    RegisterSorter RS(RegisterSubRegs);
-    std::stable_sort(SubRegsVector.begin(), SubRegsVector.end(), RS);
-    for (unsigned i = 0, e = SubRegsVector.size(); i != e; ++i)
-      OS << getQualifiedName(SubRegsVector[i]) << ", ";
+    // getSubRegs() orders by SubRegIndex. We want a topological order.
+    SetVector<CodeGenRegister*> SR;
+    Reg.addSubRegsPreOrder(SR);
+    OS << "  const unsigned " << Reg.getName() << "_SubRegsSet[] = { ";
+    for (unsigned j = 0, je = SR.size(); j != je; ++j)
+      OS << getQualifiedName(SR[j]->TheDef) << ", ";
     OS << "0 };\n";
   }
-
-  if (!RegisterSuperRegs.empty())
-    OS << "\n\n  // Register Super-registers Sets...\n";
 
   // Emit the empty super-registers list
   OS << "  const unsigned Empty_SuperRegsSet[] = { 0 };\n";
   // Loop over all of the registers which have super-registers, emitting the
   // super-registers list to memory.
-  for (std::map<Record*, std::set<Record*>, LessRecord >::iterator
-         I = RegisterSuperRegs.begin(), E = RegisterSuperRegs.end(); I != E; ++I) {
-    if (I->second.empty())
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister &Reg = Regs[i];
+    const CodeGenRegister::SuperRegList &SR = Reg.getSuperRegs();
+    if (SR.empty())
       continue;
-    OS << "  const unsigned " << I->first->getName() << "_SuperRegsSet[] = { ";
-
-    std::vector<Record*> SuperRegsVector;
-    for (std::set<Record*>::iterator ASI = I->second.begin(),
-           E = I->second.end(); ASI != E; ++ASI)
-      SuperRegsVector.push_back(*ASI);
-    RegisterSorter RS(RegisterSubRegs);
-    std::stable_sort(SuperRegsVector.begin(), SuperRegsVector.end(), RS);
-    for (unsigned i = 0, e = SuperRegsVector.size(); i != e; ++i)
-      OS << getQualifiedName(SuperRegsVector[i]) << ", ";
+    OS << "  const unsigned " << Reg.getName() << "_SuperRegsSet[] = { ";
+    for (unsigned j = 0, je = SR.size(); j != je; ++j)
+      OS << getQualifiedName(SR[j]->TheDef) << ", ";
     OS << "0 };\n";
   }
 
@@ -698,11 +675,11 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     const CodeGenRegister &Reg = Regs[i];
     OS << "    { \"";
     OS << Reg.getName() << "\",\t" << Reg.getName() << "_Overlaps,\t";
-    if (!RegisterSubRegs[Reg.TheDef].empty())
+    if (!Reg.getSubRegs().empty())
       OS << Reg.getName() << "_SubRegsSet,\t";
     else
       OS << "Empty_SubRegsSet,\t";
-    if (!RegisterSuperRegs[Reg.TheDef].empty())
+    if (!Reg.getSuperRegs().empty())
       OS << Reg.getName() << "_SuperRegsSet,\t";
     else
       OS << "Empty_SuperRegsSet,\t";

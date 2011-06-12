@@ -434,7 +434,7 @@ public:
   /// getSuperRegisters - Return the list of registers that are super-registers
   /// of the specified register, or a null list of there are none. The list
   /// returned is zero terminated and sorted according to super-sub register
-  /// relations. e.g. X86::AL's super-register list is RAX, EAX, AX.
+  /// relations. e.g. X86::AL's super-register list is AX, EAX, RAX.
   ///
   const unsigned *getSuperRegisters(unsigned RegNo) const {
     return get(RegNo).SuperRegs;

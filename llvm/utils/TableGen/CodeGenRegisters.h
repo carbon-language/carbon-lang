@@ -18,6 +18,7 @@
 #include "Record.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SetVector.h"
 #include <cstdlib>
 #include <map>
 #include <string>
@@ -49,9 +50,33 @@ namespace llvm {
       return SubRegs;
     }
 
+    // Add sub-registers to OSet following a pre-order defined by the .td file.
+    void addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet) const;
+
+    // List of super-registers in topological order, small to large.
+    typedef std::vector<CodeGenRegister*> SuperRegList;
+
+    // Get the list of super-registers.
+    // This is only valid after computeDerivedInfo has visited all registers.
+    const SuperRegList &getSuperRegs() const {
+      assert(SubRegsComplete && "Must precompute sub-registers");
+      return SuperRegs;
+    }
+
+    // Order CodeGenRegister pointers by EnumValue.
+    struct Less {
+      bool operator()(const CodeGenRegister *A, const CodeGenRegister *B) {
+        return A->EnumValue < B->EnumValue;
+      }
+    };
+
+    // Canonically ordered set.
+    typedef std::set<CodeGenRegister*, Less> Set;
+
   private:
     bool SubRegsComplete;
     SubRegMap SubRegs;
+    SuperRegList SuperRegs;
   };
 
 
@@ -158,6 +183,15 @@ namespace llvm {
 
     // Computed derived records such as missing sub-register indices.
     void computeDerivedInfo();
+
+    // Compute full overlap sets for every register. These sets include the
+    // rarely used aliases that are neither sub nor super-registers.
+    //
+    // Map[R1].count(R2) is reflexive and symmetric, but not transitive.
+    //
+    // If R1 is a sub-register of R2, Map[R1] is a subset of Map[R2].
+    void computeOverlaps(std::map<const CodeGenRegister*,
+                                  CodeGenRegister::Set> &Map);
   };
 }
 
