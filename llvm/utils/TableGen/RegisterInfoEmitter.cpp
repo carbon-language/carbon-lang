@@ -137,27 +137,31 @@ static void generateHashTable(raw_ostream &OS, const char *Name,
   unsigned HSize = Data.size();
   UUVector HT;
 
-  // Hashtable size must be a power of two.
-  HSize = 2 * NextPowerOf2(2 * HSize);
-  HT.assign(HSize, Sentinel);
+  // Grow the hash table until all entries can be found in less than 8 probes.
+  unsigned MaxProbes;
+  do {
+    // Hashtable size must be a power of two.
+    HSize = NextPowerOf2(HSize);
+    HT.assign(HSize, Sentinel);
 
-  // Insert all entries.
-  unsigned MaxProbes = 0;
-  for (unsigned i = 0, e = Data.size(); i != e; ++i) {
-    UUPair D = Data[i];
-    unsigned Idx = (D.first + D.second * 37) & (HSize - 1);
-    unsigned ProbeAmt = 2;
-    while (HT[Idx] != Sentinel) {
-      Idx = (Idx + ProbeAmt) & (HSize - 1);
-      ProbeAmt += 2;
+    // Insert all entries.
+    MaxProbes = 0;
+    for (unsigned i = 0, e = Data.size(); i != e; ++i) {
+      UUPair D = Data[i];
+      unsigned Idx = (D.first * 11 + D.second * 97) & (HSize - 1);
+      unsigned ProbeAmt = 1;
+      while (HT[Idx] != Sentinel) {
+        Idx = (Idx + ProbeAmt) & (HSize - 1);
+        ProbeAmt += 1;
+      }
+      HT[Idx] = D;
+      MaxProbes = std::max(MaxProbes, ProbeAmt);
     }
-    HT[Idx] = D;
-    MaxProbes = std::max(MaxProbes, ProbeAmt/2);
-  }
+    OS << "\n  // Max number of probes: " << MaxProbes;
+  } while (MaxProbes >= 8);
 
   // Print the hash table.
-  OS << "\n\n  // Max number of probes: " << MaxProbes
-     << "\n  // Used entries: " << Data.size()
+  OS << "\n  // Used entries: " << Data.size()
      << "\n  const unsigned " << Name << "Size = " << HSize << ';'
      << "\n  const unsigned " << Name << "[] = {\n";
 
@@ -441,13 +445,14 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
 
   // Print the AliasHashTable, a simple quadratically probed
   // hash table for determining if a register aliases another register.
+  // Since the overlaps() relation is symmetric, only store a < b pairs.
   HTData.clear();
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     unsigned RegNo = Regs[i].EnumValue;
     const CodeGenRegister::Set &O = Overlaps[&Regs[i]];
     for (CodeGenRegister::Set::const_iterator I = O.begin(), E = O.end();
          I != E; ++I)
-      if (*I != &Regs[i])
+      if (RegNo < (*I)->EnumValue)
         HTData.push_back(UUPair(RegNo, (*I)->EnumValue));
   }
   generateHashTable(OS, "AliasesHashTable", HTData);

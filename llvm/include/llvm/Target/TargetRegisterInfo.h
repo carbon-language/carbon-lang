@@ -471,19 +471,21 @@ public:
     if (regA == regB)
       return true;
 
+    if (regA > regB)
+      std::swap(regA, regB);
+
     if (isVirtualRegister(regA) || isVirtualRegister(regB))
       return false;
 
     // regA and regB are distinct physical registers. Do they alias?
-    size_t index = (regA + regB * 37) & (AliasesHashSize-1);
-    unsigned ProbeAmt = 0;
-    while (AliasesHash[index*2] != 0 &&
-           AliasesHash[index*2+1] != 0) {
+    size_t index = (regA * 11 + regB * 97) & (AliasesHashSize-1);
+    unsigned ProbeAmt = 1;
+    while (AliasesHash[index*2] != 0 && AliasesHash[index*2+1] != 0) {
       if (AliasesHash[index*2] == regA && AliasesHash[index*2+1] == regB)
         return true;
 
       index = (index + ProbeAmt) & (AliasesHashSize-1);
-      ProbeAmt += 2;
+      ProbeAmt += 1;
     }
 
     return false;
@@ -493,15 +495,14 @@ public:
   ///
   bool isSubRegister(unsigned regA, unsigned regB) const {
     // SubregHash is a simple quadratically probed hash table.
-    size_t index = (regA + regB * 37) & (SubregHashSize-1);
-    unsigned ProbeAmt = 2;
-    while (SubregHash[index*2] != 0 &&
-           SubregHash[index*2+1] != 0) {
+    size_t index = (regA * 11 + regB * 97) & (SubregHashSize-1);
+    unsigned ProbeAmt = 1;
+    while (SubregHash[index*2] != 0 && SubregHash[index*2+1] != 0) {
       if (SubregHash[index*2] == regA && SubregHash[index*2+1] == regB)
         return true;
 
       index = (index + ProbeAmt) & (SubregHashSize-1);
-      ProbeAmt += 2;
+      ProbeAmt += 1;
     }
 
     return false;
