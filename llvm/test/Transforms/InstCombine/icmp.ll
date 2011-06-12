@@ -521,3 +521,13 @@ define i1 @test53(i32 %a, i32 %b) nounwind {
  %z = icmp eq i32 %x, %y
  ret i1 %z
 }
+
+; CHECK: @test54
+; CHECK-NEXT: %and = and i8 %a, -64
+; CHECK-NEXT icmp eq i8 %and, -128
+define i1 @test54(i8 %a) nounwind {
+  %ext = zext i8 %a to i32
+  %and = and i32 %ext, 192
+  %ret = icmp eq i32 %and, 128
+  ret i1 %ret
+}

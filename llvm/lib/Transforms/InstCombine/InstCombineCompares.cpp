@@ -1097,7 +1097,23 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                               ConstantExpr::getZExt(RHS, Cast->getSrcTy()));
         }
       }
-      
+
+      // If the LHS is an AND of a zext, and we have an equality compare, we can
+      // shrink the and/compare to the smaller type, eliminating the cast.
+      if (ZExtInst *Cast = dyn_cast<ZExtInst>(LHSI->getOperand(0))) {
+        const IntegerType *Ty = cast<IntegerType>(Cast->getSrcTy());
+        // Make sure we don't compare the upper bits, SimplifyDemandedBits
+        // should fold the icmp to true/false in that case.
+        if (ICI.isEquality() && RHSV.getActiveBits() <= Ty->getBitWidth()) {
+          Value *NewAnd =
+            Builder->CreateAnd(Cast->getOperand(0),
+                               ConstantExpr::getTrunc(AndCST, Ty));
+          NewAnd->takeName(LHSI);
+          return new ICmpInst(ICI.getPredicate(), NewAnd,
+                              ConstantExpr::getTrunc(RHS, Ty));
+        }
+      }
+
       // If this is: (X >> C1) & C2 != C3 (where any shift and any compare
       // could exist), turn it into (X & (C2 << C1)) != (C3 << C1).  This
       // happens a LOT in code produced by the C front-end, for bitfield
