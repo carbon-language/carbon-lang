@@ -1,4 +1,4 @@
-; RUN: llc -O0 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-darwin10 -O0 < %s | FileCheck %s
 
 ; test that we print a label that we use. We had a bug where
 ; we would print the jump, but not the label because it was considered
