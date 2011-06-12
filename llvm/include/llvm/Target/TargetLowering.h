@@ -1853,6 +1853,7 @@ private:
       // If there is no simple vector type with this many elements then there
       // cannot be a larger legal vector type.  Note that this assumes that
       // there are no skipped intermediate vector types in the simple types.
+      if (!EltVT.isSimple()) break;
       MVT LargerVector = MVT::getVectorVT(EltVT.getSimpleVT(), NumElts);
       if (LargerVector == MVT()) break;
 
