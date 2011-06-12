@@ -286,22 +286,10 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
     assert(PartVT.getVectorNumElements() == ValueVT.getVectorNumElements() &&
       "Cannot handle this kind of promotion");
     // Promoted vector extract
-    unsigned NumElts = ValueVT.getVectorNumElements();
-    SmallVector<SDValue, 8> NewOps;
-    for (unsigned i = 0; i < NumElts; ++i) {
-      SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
-        PartVT.getScalarType(), Val ,DAG.getIntPtrConstant(i));
-      SDValue Cast;
+    bool Smaller = ValueVT.bitsLE(PartVT);
+    return DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
+                       DL, ValueVT, Val);
 
-      bool Smaller = ValueVT.bitsLE(PartVT);
-
-      Cast = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
-                         DL, ValueVT.getScalarType(), Ext);
-
-      NewOps.push_back(Cast);
-    }
-    return DAG.getNode(ISD::BUILD_VECTOR, DL, ValueVT,
-      &NewOps[0], NewOps.size());
   }
 
   // Trivial bitcast if the types are the same size and the destination
@@ -310,9 +298,17 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
       TLI.isTypeLegal(ValueVT))
     return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
 
-  assert(ValueVT.getVectorElementType() == PartVT &&
-         ValueVT.getVectorNumElements() == 1 &&
+  // Handle cases such as i8 -> <1 x i1>
+  assert(ValueVT.getVectorNumElements() == 1 &&
          "Only trivial scalar-to-vector conversions should get here!");
+
+  if (ValueVT.getVectorNumElements() == 1 &&
+      ValueVT.getVectorElementType() != PartVT) {
+    bool Smaller = ValueVT.bitsLE(PartVT);
+    Val = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
+                       DL, ValueVT.getScalarType(), Val);
+  }
+
   return DAG.getNode(ISD::BUILD_VECTOR, DL, ValueVT, Val);
 }
 
@@ -453,7 +449,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
       // Bitconvert vector->vector case.
       Val = DAG.getNode(ISD::BITCAST, DL, PartVT, Val);
     } else if (PartVT.isVector() &&
-               PartVT.getVectorElementType() == ValueVT.getVectorElementType()&&
+               PartVT.getVectorElementType() == ValueVT.getVectorElementType() &&
                PartVT.getVectorNumElements() > ValueVT.getVectorNumElements()) {
       EVT ElementVT = PartVT.getVectorElementType();
       // Vector widening case, e.g. <2 x float> -> <4 x float>.  Shuffle in
@@ -475,7 +471,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
       //Val = DAG.getNode(ISD::CONCAT_VECTORS, DL, PartVT, Val, UndefElts);
     } else if (PartVT.isVector() &&
                PartVT.getVectorElementType().bitsGE(
-                 ValueVT.getVectorElementType())&&
+                 ValueVT.getVectorElementType()) &&
                PartVT.getVectorNumElements() == ValueVT.getVectorNumElements()) {
 
       // Promoted vector extract
@@ -492,11 +488,14 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
                         &NewOps[0], NewOps.size());
     } else{
       // Vector -> scalar conversion.
-      assert(ValueVT.getVectorElementType() == PartVT &&
-             ValueVT.getVectorNumElements() == 1 &&
+      assert(ValueVT.getVectorNumElements() == 1 &&
              "Only trivial vector-to-scalar conversions should get here!");
       Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
                         PartVT, Val, DAG.getIntPtrConstant(0));
+
+      bool Smaller = ValueVT.bitsLE(PartVT);
+      Val = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
+                         DL, PartVT, Val);
     }
 
     Parts[0] = Val;
