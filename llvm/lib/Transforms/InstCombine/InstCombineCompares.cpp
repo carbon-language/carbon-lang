@@ -1087,19 +1087,14 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // have its sign bit set or if it is an equality comparison. 
         // Extending a relational comparison when we're checking the sign
         // bit would not work.
-        if (Cast->hasOneUse() &&
-            (ICI.isEquality() ||
-             (AndCST->getValue().isNonNegative() && RHSV.isNonNegative()))) {
-          uint32_t BitWidth = 
-            cast<IntegerType>(Cast->getOperand(0)->getType())->getBitWidth();
-          APInt NewCST = AndCST->getValue().zext(BitWidth);
-          APInt NewCI = RHSV.zext(BitWidth);
-          Value *NewAnd = 
+        if (ICI.isEquality() ||
+            (AndCST->getValue().isNonNegative() && RHSV.isNonNegative())) {
+          Value *NewAnd =
             Builder->CreateAnd(Cast->getOperand(0),
-                           ConstantInt::get(ICI.getContext(), NewCST),
-                               LHSI->getName());
+                               ConstantExpr::getZExt(AndCST, Cast->getSrcTy()));
+          NewAnd->takeName(LHSI);
           return new ICmpInst(ICI.getPredicate(), NewAnd,
-                              ConstantInt::get(ICI.getContext(), NewCI));
+                              ConstantExpr::getZExt(RHS, Cast->getSrcTy()));
         }
       }
       

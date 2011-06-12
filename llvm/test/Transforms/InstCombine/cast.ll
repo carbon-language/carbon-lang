@@ -265,8 +265,8 @@ define i1 @test31(i64 %A) {
         %C = and i32 %B, 42             ; <i32> [#uses=1]
         %D = icmp eq i32 %C, 10         ; <i1> [#uses=1]
         ret i1 %D
-; CHECK: %C1 = and i64 %A, 42
-; CHECK: %D = icmp eq i64 %C1, 10
+; CHECK: %C = and i64 %A, 42
+; CHECK: %D = icmp eq i64 %C, 10
 ; CHECK: ret i1 %D
 }
 
