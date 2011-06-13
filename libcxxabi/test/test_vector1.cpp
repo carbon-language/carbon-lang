@@ -196,12 +196,61 @@ int test_exception_in_constructor ( ) {
     return retVal;
     }
 
-void my_terminate () { exit ( 0 ); }
+//  Make sure the constructors and destructors are matched
+int test_exception_in_destructor ( ) {
+    int retVal = 0;
+    void *one, *two, *three;
+
+//  Throw from within a destructor
+    gConstructorCounter = gDestructorCounter = 0;
+    gConstructorThrowTarget = -1;
+    gDestructorThrowTarget  = 15;
+    try {
+        one = two = three = NULL;
+        one     = __cxxabiv1::__cxa_vec_new ( 10, 40, 8, throw_construct, throw_destruct );
+        two     = __cxxabiv1::__cxa_vec_new2( 10, 40, 8, throw_construct, throw_destruct, my_alloc2, my_dealloc2 );
+        three   = __cxxabiv1::__cxa_vec_new3( 10, 40, 8, throw_construct, throw_destruct, my_alloc2, my_dealloc3 );
+        }
+    catch ( int i ) {}
+    
+    try {
+        __cxxabiv1::__cxa_vec_delete ( one,       40, 8, throw_destruct );
+        __cxxabiv1::__cxa_vec_delete2( two,       40, 8, throw_destruct, my_dealloc2 );
+        __cxxabiv1::__cxa_vec_delete3( three,     40, 8, throw_destruct, my_dealloc3 );
+        }
+    catch ( int i ) {}
+    
+//  We should have thrown in the middle of cleaning up "two", which means that
+//  there should be 20 calls to the destructor, and "three" was not cleaned up.
+    if ( gConstructorCounter != 30 || gDestructorCounter != 20 ) {
+        std::cerr << "Unexpected Constructor/Destructor calls (1D)" << std::endl;
+        std::cerr << "Expected (30, 20), but got (" << gConstructorCounter << ", " << 
+                gDestructorCounter << ")" << std::endl;
+        retVal = 1;
+        }
+
+//  Try throwing from a destructor - should be fine.
+    gConstructorCounter = gDestructorCounter = 0;
+    gConstructorThrowTarget = -1;
+    gDestructorThrowTarget  = 5;
+    try { vec_on_stack v; }
+    catch ( int i ) {}
+    
+    if ( gConstructorCounter != gDestructorCounter ) {
+        std::cerr << "Mismatched Constructor/Destructor calls (2D)" << std::endl;
+        std::cerr << gConstructorCounter << " constructors, but " << 
+                gDestructorCounter << " destructors" << std::endl;
+        retVal = 1;
+        }
+
+    return retVal;
+    }
 
 int main ( int argc, char *argv [] ) {
     int retVal = 0;
     retVal += test_empty ();
     retVal += test_counted ();
     retVal += test_exception_in_constructor ();
+    retVal += test_exception_in_destructor ();
     return retVal;
     }
