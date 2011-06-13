@@ -5,6 +5,6 @@ struct B { A<int> x; };
 void a() {   
   B b;
 }
-// CHECK: call void @_ZN1BC1Ev
-// CHECK: define linkonce_odr void @_ZN1BC1Ev(%struct.B* %this) unnamed_addr
-// CHECK: call void @_ZN1AIiEC1Ev
+// CHECK: call {{.*}} @_ZN1BC1Ev
+// CHECK: define linkonce_odr {{.*}} @_ZN1BC1Ev(%struct.B* %this) unnamed_addr
+// CHECK: call {{.*}} @_ZN1AIiEC1Ev

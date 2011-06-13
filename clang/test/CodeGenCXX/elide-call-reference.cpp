@@ -7,5 +7,5 @@ void b() {
   A x = a();
 }
 
-// CHECK: call void @_ZN1AC1ERKS_
-// CHECK: call void @_ZN1AD1Ev
+// CHECK: call {{.*}} @_ZN1AC1ERKS_
+// CHECK: call {{.*}} @_ZN1AD1Ev
