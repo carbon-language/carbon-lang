@@ -739,9 +739,9 @@ defm tSTRB : thumb_st_rr_ri_enc<0b010, 0b0111, t_addrmode_rrs1,
 
 // A8.6.207 & A8.6.205
 defm tSTRH : thumb_st_rr_ri_enc<0b001, 0b1000, t_addrmode_rrs2,
-                                t_addrmode_is2, AddrModeT1_2,
-                                IIC_iStore_bh_r, IIC_iStore_bh_i, "strh",
-                                BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
+                               t_addrmode_is2, AddrModeT1_2,
+                               IIC_iStore_bh_r, IIC_iStore_bh_i, "strh",
+                               BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 
 def tSTRspi : T1pIs<(outs), (ins tGPR:$Rt, t_addrmode_sp:$addr), IIC_iStore_i,
@@ -911,7 +911,8 @@ def tADC :                      // A8.6.2
 
 // Add immediate
 def tADDi3 :                    // A8.6.4 T1
-  T1sIGenEncodeImm<0b01110, (outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm3), IIC_iALUi,
+  T1sIGenEncodeImm<0b01110, (outs tGPR:$Rd), (ins tGPR:$Rm, i32imm:$imm3),
+                   IIC_iALUi,
                    "add", "\t$Rd, $Rm, $imm3",
                    [(set tGPR:$Rd, (add tGPR:$Rm, imm0_7:$imm3))]> {
   bits<3> imm3;

@@ -175,7 +175,7 @@ class VLDQQWBPseudo<InstrItinClass itin>
                 (ins addrmode6:$addr, am6offset:$offset), itin,
                 "$addr.addr = $wb">;
 class VLDQQQQPseudo<InstrItinClass itin>
-  : PseudoNLdSt<(outs QQQQPR:$dst), (ins addrmode6:$addr, QQQQPR:$src), itin,"">;
+  : PseudoNLdSt<(outs QQQQPR:$dst), (ins addrmode6:$addr, QQQQPR:$src),itin,"">;
 class VLDQQQQWBPseudo<InstrItinClass itin>
   : PseudoNLdSt<(outs QQQQPR:$dst, GPR:$wb),
                 (ins addrmode6:$addr, am6offset:$offset, QQQQPR:$src), itin,
@@ -1387,7 +1387,7 @@ class VST1LN32<bits<4> op11_8, bits<4> op7_4, string Dt, ValueType Ty,
   : NLdStLn<1, 0b00, op11_8, op7_4, (outs),
           (ins addrmode6oneL32:$Rn, DPR:$Vd, nohash_imm:$lane),
           IIC_VST1ln, "vst1", Dt, "\\{$Vd[$lane]\\}, $Rn", "",
-          [(StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane), addrmode6oneL32:$Rn)]> {
+          [(StoreOp (ExtractOp (Ty DPR:$Vd), imm:$lane), addrmode6oneL32:$Rn)]>{
   let Rm = 0b1111;
 }
 class VST1QLNPseudo<ValueType Ty, PatFrag StoreOp, SDNode ExtractOp>
@@ -3793,7 +3793,8 @@ def  VBSLd    : N3VX<1, 0, 0b01, 0b0001, 0, 1, (outs DPR:$Vd),
                      (ins DPR:$src1, DPR:$Vn, DPR:$Vm),
                      N3RegFrm, IIC_VCNTiD,
                      "vbsl", "$Vd, $Vn, $Vm", "$src1 = $Vd",
-                     [(set DPR:$Vd, (v2i32 (NEONvbsl DPR:$src1, DPR:$Vn, DPR:$Vm)))]>;
+                     [(set DPR:$Vd,
+                           (v2i32 (NEONvbsl DPR:$src1, DPR:$Vn, DPR:$Vm)))]>;
 
 def : Pat<(v2i32 (or (and DPR:$Vn, DPR:$Vd),
                      (and DPR:$Vm, (vnotd DPR:$Vd)))),
@@ -3803,7 +3804,8 @@ def  VBSLq    : N3VX<1, 0, 0b01, 0b0001, 1, 1, (outs QPR:$Vd),
                      (ins QPR:$src1, QPR:$Vn, QPR:$Vm),
                      N3RegFrm, IIC_VCNTiQ,
                      "vbsl", "$Vd, $Vn, $Vm", "$src1 = $Vd",
-                     [(set QPR:$Vd, (v4i32 (NEONvbsl QPR:$src1, QPR:$Vn, QPR:$Vm)))]>;
+                     [(set QPR:$Vd,
+                           (v4i32 (NEONvbsl QPR:$src1, QPR:$Vn, QPR:$Vm)))]>;
 
 def : Pat<(v4i32 (or (and QPR:$Vn, QPR:$Vd),
                      (and QPR:$Vm, (vnotq QPR:$Vd)))),

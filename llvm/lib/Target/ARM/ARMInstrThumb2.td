@@ -1084,7 +1084,7 @@ multiclass T2I_exta_rrot_DO<bits<3> opcod, string opc> {
      let Inst{7} = 1;
      let Inst{5-4} = 0b00; // rotate
    }
-  def rr_rot : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$rot),
+  def rr_rot :T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, i32imm:$rot),
                   IIC_iEXTAsr, opc, "\t$Rd, $Rn, $Rm, ror $rot", []> {
      let Inst{31-27} = 0b11111;
      let Inst{26-23} = 0b0100;
@@ -1788,8 +1788,10 @@ defm t2ADC  : T2I_adde_sube_irs<0b1010, "adc",
                           BinOpFrag<(adde_dead_carry node:$LHS, node:$RHS)>, 1>;
 defm t2SBC  : T2I_adde_sube_irs<0b1011, "sbc",
                           BinOpFrag<(sube_dead_carry node:$LHS, node:$RHS)>>;
-defm t2ADCS : T2I_adde_sube_s_irs<BinOpFrag<(adde_live_carry node:$LHS, node:$RHS)>, 1>;
-defm t2SBCS : T2I_adde_sube_s_irs<BinOpFrag<(sube_live_carry node:$LHS, node:$RHS)>>;
+defm t2ADCS : T2I_adde_sube_s_irs<BinOpFrag<(adde_live_carry node:$LHS,
+                                                             node:$RHS)>, 1>;
+defm t2SBCS : T2I_adde_sube_s_irs<BinOpFrag<(sube_live_carry node:$LHS,
+                                                             node:$RHS)>>;
 
 // RSB
 defm t2RSB  : T2I_rbin_irs  <0b1110, "rsb",
@@ -2005,10 +2007,10 @@ def t2USAT: T2SatI<
   let Inst{15} = 0;
 }
 
-def t2USAT16: T2SatI<
-                    (outs rGPR:$dst), (ins i32imm:$sat_imm, rGPR:$Rn), NoItinerary,
-                   "usat16", "\t$dst, $sat_imm, $Rn",
-                   [/* For disassembly only; pattern left blank */]> {
+def t2USAT16: T2SatI<(outs rGPR:$dst), (ins i32imm:$sat_imm, rGPR:$Rn),
+                     NoItinerary,
+                     "usat16", "\t$dst, $sat_imm, $Rn",
+                     [/* For disassembly only; pattern left blank */]> {
   let Inst{31-27} = 0b11110;
   let Inst{25-22} = 0b1110;
   let Inst{20} = 0;
@@ -2861,16 +2863,15 @@ class T2I_strex<bits<2> opcod, dag oops, dag iops, AddrMode am, SizeFlagVal sz,
 }
 
 let mayLoad = 1 in {
-def t2LDREXB : T2I_ldrex<0b00, (outs rGPR:$Rt), (ins t2addrmode_reg:$addr), AddrModeNone,
-                         Size4Bytes, NoItinerary, "ldrexb", "\t$Rt, $addr",
-                         "", []>;
-def t2LDREXH : T2I_ldrex<0b01, (outs rGPR:$Rt), (ins t2addrmode_reg:$addr), AddrModeNone,
-                         Size4Bytes, NoItinerary, "ldrexh", "\t$Rt, $addr",
-                         "", []>;
-def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins t2addrmode_reg:$addr), AddrModeNone,
-                       Size4Bytes, NoItinerary,
-                       "ldrex", "\t$Rt, $addr", "",
-                      []> {
+def t2LDREXB : T2I_ldrex<0b00, (outs rGPR:$Rt), (ins t2addrmode_reg:$addr),
+                         AddrModeNone, Size4Bytes, NoItinerary,
+                         "ldrexb", "\t$Rt, $addr", "", []>;
+def t2LDREXH : T2I_ldrex<0b01, (outs rGPR:$Rt), (ins t2addrmode_reg:$addr),
+                         AddrModeNone, Size4Bytes, NoItinerary,
+                         "ldrexh", "\t$Rt, $addr", "", []>;
+def t2LDREX  : Thumb2I<(outs rGPR:$Rt), (ins t2addrmode_reg:$addr),
+                       AddrModeNone, Size4Bytes, NoItinerary,
+                       "ldrex", "\t$Rt, $addr", "", []> {
   let Inst{31-27} = 0b11101;
   let Inst{26-20} = 0b0000101;
   let Inst{11-8} = 0b1111;
@@ -2893,12 +2894,14 @@ def t2LDREXD : T2I_ldrex<0b11, (outs rGPR:$Rt, rGPR:$Rt2),
 }
 
 let mayStore = 1, Constraints = "@earlyclobber $Rd" in {
-def t2STREXB : T2I_strex<0b00, (outs rGPR:$Rd), (ins rGPR:$Rt, t2addrmode_reg:$addr),
-                  AddrModeNone, Size4Bytes, NoItinerary,
-                  "strexb", "\t$Rd, $Rt, $addr", "", []>;
-def t2STREXH : T2I_strex<0b01, (outs rGPR:$Rd), (ins rGPR:$Rt, t2addrmode_reg:$addr),
-                  AddrModeNone, Size4Bytes, NoItinerary,
-                  "strexh", "\t$Rd, $Rt, $addr", "", []>;
+def t2STREXB : T2I_strex<0b00, (outs rGPR:$Rd),
+                         (ins rGPR:$Rt, t2addrmode_reg:$addr),
+                         AddrModeNone, Size4Bytes, NoItinerary,
+                         "strexb", "\t$Rd, $Rt, $addr", "", []>;
+def t2STREXH : T2I_strex<0b01, (outs rGPR:$Rd),
+                         (ins rGPR:$Rt, t2addrmode_reg:$addr),
+                         AddrModeNone, Size4Bytes, NoItinerary,
+                         "strexh", "\t$Rd, $Rt, $addr", "", []>;
 def t2STREX  : Thumb2I<(outs rGPR:$Rd), (ins rGPR:$Rt, t2addrmode_reg:$addr),
                   AddrModeNone, Size4Bytes, NoItinerary,
                   "strex", "\t$Rd, $Rt, $addr", "",
