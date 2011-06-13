@@ -304,7 +304,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         ColonLoc = ConsumeToken();
       } else {
         // Otherwise, we're missing a ':'.  Assume that this was a typo that the
-        // user forgot.  If we're not in a macro instantion, we can suggest a
+        // user forgot.  If we're not in a macro instantiation, we can suggest a
         // fixit hint.  If there were two spaces before the current token,
         // suggest inserting the colon in between them, otherwise insert ": ".
         SourceLocation FILoc = Tok.getLocation();
