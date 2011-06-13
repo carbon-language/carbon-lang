@@ -267,7 +267,7 @@ public:
 
 private:
   bool CanConvertToScalar(Value *V, uint64_t Offset);
-  void MergeInType(const Type *In, uint64_t Offset);
+  void MergeInTypeForLoadOrStore(const Type *In, uint64_t Offset);
   bool MergeInVectorType(const VectorType *VInTy, uint64_t Offset);
   void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
 
@@ -319,8 +319,9 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
   return NewAI;
 }
 
-/// MergeInType - Add the 'In' type to the accumulated vector type (VectorTy)
-/// so far at the offset specified by Offset (which is specified in bytes).
+/// MergeInTypeForLoadOrStore - Add the 'In' type to the accumulated vector type
+/// (VectorTy) so far at the offset specified by Offset (which is specified in
+/// bytes).
 ///
 /// There are three cases we handle here:
 ///   1) A union of vector types of the same size and potentially its elements.
@@ -335,7 +336,8 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
 ///      large) integer type with extract and insert operations where the loads
 ///      and stores would mutate the memory.  We mark this by setting VectorTy
 ///      to VoidTy.
-void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
+void ConvertToScalarInfo::MergeInTypeForLoadOrStore(const Type *In,
+                                                    uint64_t Offset) {
   // If we already decided to turn this into a blob of integer memory, there is
   // nothing to be done.
   if (ScalarKind == Integer)
@@ -384,8 +386,8 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   VectorTy = 0;
 }
 
-/// MergeInVectorType - Handles the vector case of MergeInType, returning true
-/// if the type was successfully merged and false otherwise.
+/// MergeInVectorType - Handles the vector case of MergeInTypeForLoadOrStore,
+/// returning true if the type was successfully merged and false otherwise.
 bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
                                             uint64_t Offset) {
   // TODO: Support nonzero offsets?
@@ -477,7 +479,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       if (LI->getType()->isX86_MMXTy())
         return false;
       HadNonMemTransferAccess = true;
-      MergeInType(LI->getType(), Offset);
+      MergeInTypeForLoadOrStore(LI->getType(), Offset);
       continue;
     }
 
@@ -488,7 +490,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       if (SI->getOperand(0)->getType()->isX86_MMXTy())
         return false;
       HadNonMemTransferAccess = true;
-      MergeInType(SI->getOperand(0)->getType(), Offset);
+      MergeInTypeForLoadOrStore(SI->getOperand(0)->getType(), Offset);
       continue;
     }
 
