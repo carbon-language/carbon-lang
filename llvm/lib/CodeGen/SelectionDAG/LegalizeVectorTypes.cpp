@@ -2164,6 +2164,7 @@ static EVT FindMemType(SelectionDAG& DAG, const TargetLowering &TLI,
     if (MemVT.getSizeInBits() <= WidenEltWidth)
       break;
     if (TLI.isTypeLegal(MemVT) && (WidenWidth % MemVTWidth) == 0 &&
+        isPowerOf2_32(WidenWidth / MemVTWidth) &&
         (MemVTWidth <= Width ||
          (Align!=0 && MemVTWidth<=AlignInBits && MemVTWidth<=Width+WidenEx))) {
       RetVT = MemVT;
@@ -2179,6 +2180,7 @@ static EVT FindMemType(SelectionDAG& DAG, const TargetLowering &TLI,
     unsigned MemVTWidth = MemVT.getSizeInBits();
     if (TLI.isTypeLegal(MemVT) && WidenEltVT == MemVT.getVectorElementType() &&
         (WidenWidth % MemVTWidth) == 0 &&
+        isPowerOf2_32(WidenWidth / MemVTWidth) &&
         (MemVTWidth <= Width ||
          (Align!=0 && MemVTWidth<=AlignInBits && MemVTWidth<=Width+WidenEx))) {
       if (RetVT.getSizeInBits() < MemVTWidth || MemVT == WidenVT)
