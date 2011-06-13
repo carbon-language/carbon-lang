@@ -32,8 +32,8 @@ typedef MachOObject::LoadCommandInfo LoadCommandInfo;
 
 class MachOObjectFile : public ObjectFile {
 public:
-  MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO, error_code &ec)
-    : ObjectFile(Binary::isMachO, Object, ec),
+  MachOObjectFile(MemoryBuffer *Object, MachOObject *MOO)
+    : ObjectFile(Object),
       MachOObj(MOO),
       RegisteredStringTable(std::numeric_limits<uint32_t>::max()) {}
 
@@ -73,12 +73,11 @@ private:
 };
 
 ObjectFile *ObjectFile::createMachOObjectFile(MemoryBuffer *Buffer) {
-  error_code ec;
   std::string Err;
   MachOObject *MachOObj = MachOObject::LoadFromBuffer(Buffer, &Err);
   if (!MachOObj)
     return NULL;
-  return new MachOObjectFile(Buffer, MachOObj, ec);
+  return new MachOObjectFile(Buffer, MachOObj);
 }
 
 /*===-- Symbols -----------------------------------------------------------===*/

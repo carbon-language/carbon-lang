@@ -16,10 +16,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 
-// Include headers for createBinary.
-#include "llvm/Object/ObjectFile.h"
-#include "llvm/Object/COFF.h"
-
 using namespace llvm;
 using namespace object;
 
@@ -41,51 +37,9 @@ StringRef Binary::getFileName() const {
 
 error_code object::createBinary(MemoryBuffer *Source,
                                 OwningPtr<Binary> &Result) {
-  OwningPtr<MemoryBuffer> scopedSource(Source);
-  if (!Source)
-    return make_error_code(errc::invalid_argument);
-  if (Source->getBufferSize() < 64)
-    return object_error::invalid_file_type;
-  sys::LLVMFileType type = sys::IdentifyFileType(Source->getBufferStart(),
-                                static_cast<unsigned>(Source->getBufferSize()));
-  error_code ec;
-  switch (type) {
-    case sys::ELF_Relocatable_FileType:
-    case sys::ELF_Executable_FileType:
-    case sys::ELF_SharedObject_FileType:
-    case sys::ELF_Core_FileType: {
-      OwningPtr<Binary> ret(
-        ObjectFile::createELFObjectFile(scopedSource.take()));
-      if (!ret)
-        return object_error::invalid_file_type;
-      Result.swap(ret);
-      return object_error::success;
-    }
-    case sys::Mach_O_Object_FileType:
-    case sys::Mach_O_Executable_FileType:
-    case sys::Mach_O_FixedVirtualMemorySharedLib_FileType:
-    case sys::Mach_O_Core_FileType:
-    case sys::Mach_O_PreloadExecutable_FileType:
-    case sys::Mach_O_DynamicallyLinkedSharedLib_FileType:
-    case sys::Mach_O_DynamicLinker_FileType:
-    case sys::Mach_O_Bundle_FileType:
-    case sys::Mach_O_DynamicallyLinkedSharedLibStub_FileType: {
-      OwningPtr<Binary> ret(
-        ObjectFile::createMachOObjectFile(scopedSource.take()));
-      if (!ret)
-        return object_error::invalid_file_type;
-      Result.swap(ret);
-      return object_error::success;
-    }
-    case sys::COFF_FileType: {
-      OwningPtr<Binary> ret(new COFFObjectFile(scopedSource.take(), ec));
-      if (ec) return ec;
-      Result.swap(ret);
-      return object_error::success;
-    }
-    default: // Unrecognized object file format.
-      return object_error::invalid_file_type;
-  }
+  // We don't support any at the moment.
+  delete Source;
+  return object_error::invalid_file_type;
 }
 
 error_code object::createBinary(StringRef Path, OwningPtr<Binary> &Result) {

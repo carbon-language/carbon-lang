@@ -38,13 +38,10 @@ protected:
 
   enum {
     isArchive,
-
-    // Object and children.
-    isObject,
     isCOFF,
     isELF,
     isMachO,
-    lastObject
+    isObject
   };
 
 public:
@@ -55,7 +52,7 @@ public:
 
   // Cast methods.
   unsigned int getType() const { return TypeID; }
-  static inline bool classof(const Binary *v) { return true; }
+  static inline bool classof(Binary const *v) { return true; }
 };
 
 error_code createBinary(MemoryBuffer *Source, OwningPtr<Binary> &Result);

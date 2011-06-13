@@ -21,8 +21,18 @@
 using namespace llvm;
 using namespace object;
 
-ObjectFile::ObjectFile(unsigned int Type, MemoryBuffer *source, error_code &ec)
-  : Binary(Type, source) {
+ObjectFile::ObjectFile(MemoryBuffer *Object)
+  : MapFile(Object) {
+  assert(MapFile && "Must be a valid MemoryBuffer!");
+  base = reinterpret_cast<const uint8_t *>(MapFile->getBufferStart());
+}
+
+ObjectFile::~ObjectFile() {
+  delete MapFile;
+}
+
+StringRef ObjectFile::getFilename() const {
+  return MapFile->getBufferIdentifier();
 }
 
 ObjectFile *ObjectFile::createObjectFile(MemoryBuffer *Object) {
