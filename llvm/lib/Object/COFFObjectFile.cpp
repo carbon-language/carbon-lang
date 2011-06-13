@@ -11,11 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Object/COFF.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/COFF.h"
-#include "llvm/Support/Endian.h"
 
 using namespace llvm;
 using namespace object;
@@ -26,107 +24,6 @@ using support::ulittle16_t;
 using support::ulittle32_t;
 using support::little16_t;
 }
-
-namespace {
-struct coff_file_header {
-  ulittle16_t Machine;
-  ulittle16_t NumberOfSections;
-  ulittle32_t TimeDateStamp;
-  ulittle32_t PointerToSymbolTable;
-  ulittle32_t NumberOfSymbols;
-  ulittle16_t SizeOfOptionalHeader;
-  ulittle16_t Characteristics;
-};
-}
-
-extern char coff_file_header_layout_static_assert
-            [sizeof(coff_file_header) == 20 ? 1 : -1];
-
-namespace {
-struct coff_symbol {
-  struct StringTableOffset {
-    ulittle32_t Zeroes;
-    ulittle32_t Offset;
-  };
-
-  union {
-    char ShortName[8];
-    StringTableOffset Offset;
-  } Name;
-
-  ulittle32_t Value;
-  little16_t SectionNumber;
-
-  struct {
-    ulittle8_t BaseType;
-    ulittle8_t ComplexType;
-  } Type;
-
-  ulittle8_t  StorageClass;
-  ulittle8_t  NumberOfAuxSymbols;
-};
-}
-
-extern char coff_coff_symbol_layout_static_assert
-            [sizeof(coff_symbol) == 18 ? 1 : -1];
-
-namespace {
-struct coff_section {
-  char Name[8];
-  ulittle32_t VirtualSize;
-  ulittle32_t VirtualAddress;
-  ulittle32_t SizeOfRawData;
-  ulittle32_t PointerToRawData;
-  ulittle32_t PointerToRelocations;
-  ulittle32_t PointerToLinenumbers;
-  ulittle16_t NumberOfRelocations;
-  ulittle16_t NumberOfLinenumbers;
-  ulittle32_t Characteristics;
-};
-}
-
-extern char coff_coff_section_layout_static_assert
-            [sizeof(coff_section) == 40 ? 1 : -1];
-
-namespace {
-class COFFObjectFile : public ObjectFile {
-private:
-        uint64_t         HeaderOff;
-  const coff_file_header *Header;
-  const coff_section     *SectionTable;
-  const coff_symbol      *SymbolTable;
-  const char             *StringTable;
-
-  const coff_section     *getSection(std::size_t index) const;
-  const char             *getString(std::size_t offset) const;
-
-protected:
-  virtual SymbolRef getSymbolNext(DataRefImpl Symb) const;
-  virtual StringRef getSymbolName(DataRefImpl Symb) const;
-  virtual uint64_t  getSymbolAddress(DataRefImpl Symb) const;
-  virtual uint64_t  getSymbolSize(DataRefImpl Symb) const;
-  virtual char      getSymbolNMTypeChar(DataRefImpl Symb) const;
-  virtual bool      isSymbolInternal(DataRefImpl Symb) const;
-
-  virtual SectionRef getSectionNext(DataRefImpl Sec) const;
-  virtual StringRef  getSectionName(DataRefImpl Sec) const;
-  virtual uint64_t   getSectionAddress(DataRefImpl Sec) const;
-  virtual uint64_t   getSectionSize(DataRefImpl Sec) const;
-  virtual StringRef  getSectionContents(DataRefImpl Sec) const;
-  virtual bool       isSectionText(DataRefImpl Sec) const;
-
-public:
-  COFFObjectFile(MemoryBuffer *Object);
-  virtual symbol_iterator begin_symbols() const;
-  virtual symbol_iterator end_symbols() const;
-  virtual section_iterator begin_sections() const;
-  virtual section_iterator end_sections() const;
-
-  virtual uint8_t getBytesInAddress() const;
-  virtual StringRef getFileFormatName() const;
-  virtual unsigned getArch() const;
-};
-} // end namespace
 
 SymbolRef COFFObjectFile::getSymbolNext(DataRefImpl Symb) const {
   const coff_symbol *symb = reinterpret_cast<const coff_symbol*>(Symb.p);
@@ -274,7 +171,8 @@ uint64_t COFFObjectFile::getSectionSize(DataRefImpl Sec) const {
 
 StringRef COFFObjectFile::getSectionContents(DataRefImpl Sec) const {
   const coff_section *sec = reinterpret_cast<const coff_section*>(Sec.p);
-  return StringRef(reinterpret_cast<const char *>(base + sec->PointerToRawData),
+  return StringRef(reinterpret_cast<const char *>(base()
+                   + sec->PointerToRawData),
                    sec->SizeOfRawData);
 }
 
@@ -283,29 +181,30 @@ bool COFFObjectFile::isSectionText(DataRefImpl Sec) const {
   return sec->Characteristics & COFF::IMAGE_SCN_CNT_CODE;
 }
 
-COFFObjectFile::COFFObjectFile(MemoryBuffer *Object)
-  : ObjectFile(Object) {
+COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
+  : ObjectFile(Binary::isCOFF, Object, ec) {
 
   HeaderOff = 0;
 
-  if (base[0] == 0x4d && base[1] == 0x5a) {
+  if (base()[0] == 0x4d && base()[1] == 0x5a) {
     // PE/COFF, seek through MS-DOS compatibility stub and 4-byte
     // PE signature to find 'normal' COFF header.
-    HeaderOff += *reinterpret_cast<const ulittle32_t *>(base + 0x3c);
+    HeaderOff += *reinterpret_cast<const ulittle32_t *>(base() + 0x3c);
     HeaderOff += 4;
   }
 
-  Header = reinterpret_cast<const coff_file_header *>(base + HeaderOff);
+  Header = reinterpret_cast<const coff_file_header *>(base() + HeaderOff);
   SectionTable =
-    reinterpret_cast<const coff_section *>( base
+    reinterpret_cast<const coff_section *>( base()
                                           + HeaderOff
                                           + sizeof(coff_file_header)
                                           + Header->SizeOfOptionalHeader);
   SymbolTable =
-    reinterpret_cast<const coff_symbol *>(base + Header->PointerToSymbolTable);
+    reinterpret_cast<const coff_symbol *>(base()
+    + Header->PointerToSymbolTable);
 
   // Find string table.
-  StringTable = reinterpret_cast<const char *>(base)
+  StringTable = reinterpret_cast<const char *>(base())
               + Header->PointerToSymbolTable
               + Header->NumberOfSymbols * 18;
 }
@@ -382,7 +281,8 @@ const char *COFFObjectFile::getString(std::size_t offset) const {
 namespace llvm {
 
   ObjectFile *ObjectFile::createCOFFObjectFile(MemoryBuffer *Object) {
-    return new COFFObjectFile(Object);
+    error_code ec;
+    return new COFFObjectFile(Object, ec);
   }
 
 } // end namespace llvm
