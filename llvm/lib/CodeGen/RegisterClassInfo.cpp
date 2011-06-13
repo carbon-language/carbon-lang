@@ -103,7 +103,7 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
 
   DEBUG({
     dbgs() << "AllocationOrder(" << RC->getName() << ") = [";
-    for (unsigned I = 0; I != N; ++I)
+    for (unsigned I = 0; I != RCI.NumRegs; ++I)
       dbgs() << ' ' << PrintReg(RCI.Order[I], TRI);
     dbgs() << " ]\n";
   });
