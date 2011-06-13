@@ -199,17 +199,19 @@ unsigned DiagnosticIDs::getCategoryNumberForDiag(unsigned DiagID) {
   return 0;
 }
 
-// The diagnostic category names.
-struct StaticDiagCategoryRec {
-  const char *NameStr;
-  uint8_t NameLen;
+namespace {
+  // The diagnostic category names.
+  struct StaticDiagCategoryRec {
+    const char *NameStr;
+    uint8_t NameLen;
 
-  llvm::StringRef getName() const {
-    return llvm::StringRef(NameStr, NameLen);
-  }
-};
+    llvm::StringRef getName() const {
+      return llvm::StringRef(NameStr, NameLen);
+    }
+  };
+}
 
-static StaticDiagCategoryRec CategoryNameTable[] = {
+static const StaticDiagCategoryRec CategoryNameTable[] = {
 #define GET_CATEGORY_TABLE
 #define CATEGORY(X) { X, STR_SIZE(X, uint8_t) },
 #include "clang/Basic/DiagnosticGroups.inc"
@@ -543,17 +545,21 @@ DiagnosticIDs::getDiagnosticLevel(unsigned DiagID, unsigned DiagClass,
   return Result;
 }
 
-struct WarningOption {
-  // Be safe with the size of 'NameLen' because we don't statically check if the
-  // size will fit in the field; the struct size won't decrease with a shorter
-  // type anyway.
-  size_t NameLen;
-  const char *NameStr;
-  const short *Members;
-  const short *SubGroups;
+namespace {
+  struct WarningOption {
+    // Be safe with the size of 'NameLen' because we don't statically check if
+    // the size will fit in the field; the struct size won't decrease with a
+    // shorter type anyway.
+    size_t NameLen;
+    const char *NameStr;
+    const short *Members;
+    const short *SubGroups;
 
-  llvm::StringRef getName() const { return llvm::StringRef(NameStr, NameLen); }
-};
+    llvm::StringRef getName() const {
+      return llvm::StringRef(NameStr, NameLen);
+    }
+  };
+}
 
 #define GET_DIAG_ARRAYS
 #include "clang/Basic/DiagnosticGroups.inc"
