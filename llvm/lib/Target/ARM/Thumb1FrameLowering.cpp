@@ -136,8 +136,8 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, dl, TII.get(ARM::tADDrSPi), FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0)
       .setMIFlags(MachineInstr::FrameSetup);
-    if (NumBytes > 7)
-      // If offset is > 7 then sp cannot be adjusted in a single instruction,
+    if (NumBytes > 508)
+      // If offset is > 508 then sp cannot be adjusted in a single instruction,
       // try restoring from fp instead.
       AFI->setShouldRestoreSPFromFP(true);
   }
