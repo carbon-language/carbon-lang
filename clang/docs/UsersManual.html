@@ -882,11 +882,6 @@ extensions are not implemented yet:</p>
 the uses described in the bug, this is likely to be implemented at some
 point, at least partially.</li>
 
-<li>clang does not support code generation for local variables pinned to
-registers (<a href="http://llvm.org/bugs/show_bug.cgi?id=3933">bug 3933</a>).
-This is a relatively small feature, so it is likely to be implemented
-relatively soon.</li>
-
 <li>clang does not support decimal floating point types (_Decimal32 and
 friends) or fixed-point types (_Fract and friends); nobody has expressed
 interest in these features yet, so it's hard to say when they will be
@@ -937,16 +932,9 @@ extension appears to be rarely used.  Note that clang <em>does</em> support
 flexible array members (arrays with a zero or unspecified size at the end of
 a structure).</li>
 
-<li>clang does not support duplicate definitions of a function where one is
-inline. This complicates clients of the AST which normally can expect there is
-at most one definition for each function. Source code using this feature should
-be changed to define the inline and out-of-line definitions in separate
-translation units.</li>
-
 <li>clang does not have an equivalent to gcc's "fold"; this means that
 clang doesn't accept some constructs gcc might accept in contexts where a
-constant expression is required, like "x-x" where x is a variable, or calls
-to C library functions like strlen.</li>
+constant expression is required, like "x-x" where x is a variable.</li>
 
 <li>clang does not support multiple alternative constraints in inline asm; this
 is an extremely obscure feature which would be complicated to implement
