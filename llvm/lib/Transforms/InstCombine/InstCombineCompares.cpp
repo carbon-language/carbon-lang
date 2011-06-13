@@ -1407,18 +1407,27 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       case Instruction::Xor:
         // For the xor case, we can xor two constants together, eliminating
         // the explicit xor.
-        if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1)))
-          return new ICmpInst(ICI.getPredicate(), BO->getOperand(0), 
+        if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1))) {
+          return new ICmpInst(ICI.getPredicate(), BO->getOperand(0),
                               ConstantExpr::getXor(RHS, BOC));
-        
-        // FALLTHROUGH
-      case Instruction::Sub:
-        // Replace (([sub|xor] A, B) != 0) with (A != B)
-        if (RHSV == 0)
+        } else if (RHSV == 0) {
+          // Replace ((xor A, B) != 0) with (A != B)
           return new ICmpInst(ICI.getPredicate(), BO->getOperand(0),
                               BO->getOperand(1));
+        }
         break;
-        
+      case Instruction::Sub:
+        // Replace ((sub A, B) != C) with (B != A-C) if A & C are constants.
+        if (ConstantInt *BOp0C = dyn_cast<ConstantInt>(BO->getOperand(0))) {
+          if (BO->hasOneUse())
+            return new ICmpInst(ICI.getPredicate(), BO->getOperand(1),
+                                ConstantExpr::getSub(BOp0C, RHS));
+        } else if (RHSV == 0) {
+          // Replace ((sub A, B) != 0) with (A != B)
+          return new ICmpInst(ICI.getPredicate(), BO->getOperand(0),
+                              BO->getOperand(1));
+        }
+        break;
       case Instruction::Or:
         // If bits are being or'd in that are not present in the constant we
         // are comparing against, then the comparison could never succeed!

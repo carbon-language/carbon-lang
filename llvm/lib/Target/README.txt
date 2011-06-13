@@ -870,11 +870,6 @@ rshift_gt (unsigned int a)
    bar ();
 }
 
-void neg_eq_cst(unsigned int a) {
-if (-a == 123)
-bar();
-}
-
 All should simplify to a single comparison.  All of these are
 currently not optimized with "clang -emit-llvm-bc | opt
 -std-compile-opts".
