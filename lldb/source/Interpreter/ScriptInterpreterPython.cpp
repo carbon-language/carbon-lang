@@ -35,109 +35,6 @@ using namespace lldb_private;
 static ScriptInterpreter::SWIGInitCallback g_swig_init_callback = NULL;
 static ScriptInterpreter::SWIGBreakpointCallbackFunction g_swig_breakpoint_callback = NULL;
 
-const char embedded_interpreter_string[] =
-"import readline\n\
-import code\n\
-import sys\n\
-import traceback\n\
-\n\
-class SimpleREPL(code.InteractiveConsole):\n\
-   def __init__(self, prompt, dict):\n\
-       code.InteractiveConsole.__init__(self,dict)\n\
-       self.prompt = prompt\n\
-       self.loop_exit = False\n\
-       self.dict = dict\n\
-\n\
-   def interact(self):\n\
-       try:\n\
-           sys.ps1\n\
-       except AttributeError:\n\
-           sys.ps1 = \">>> \"\n\
-       try:\n\
-           sys.ps2\n\
-       except AttributeError:\n\
-           sys.ps2 = \"... \"\n\
-\n\
-       while not self.loop_exit:\n\
-           try:\n\
-               self.read_py_command()\n\
-           except (SystemExit, EOFError):\n\
-               # EOF while in Python just breaks out to top level.\n\
-               self.write('\\n')\n\
-               self.loop_exit = True\n\
-               break\n\
-           except KeyboardInterrupt:\n\
-               self.write(\"\\nKeyboardInterrupt\\n\")\n\
-               self.resetbuffer()\n\
-               more = 0\n\
-           except:\n\
-               traceback.print_exc()\n\
-\n\
-   def process_input (self, in_str):\n\
-      # Canonicalize the format of the input string\n\
-      temp_str = in_str\n\
-      temp_str.strip(' \t')\n\
-      words = temp_str.split()\n\
-      temp_str = ('').join(words)\n\
-\n\
-      # Check the input string to see if it was the quit\n\
-      # command.  If so, intercept it, so that it doesn't\n\
-      # close stdin on us!\n\
-      if (temp_str.lower() == \"quit()\" or temp_str.lower() == \"exit()\"):\n\
-         self.loop_exit = True\n\
-         in_str = \"raise SystemExit \"\n\
-      return in_str\n\
-\n\
-   def my_raw_input (self, prompt):\n\
-      stream = sys.stdout\n\
-      stream.write (prompt)\n\
-      stream.flush ()\n\
-      try:\n\
-         line = sys.stdin.readline()\n\
-      except KeyboardInterrupt:\n\
-         line = \" \\n\"\n\
-      except (SystemExit, EOFError):\n\
-         line = \"quit()\\n\"\n\
-      if not line:\n\
-         raise EOFError\n\
-      if line[-1] == '\\n':\n\
-         line = line[:-1]\n\
-      return line\n\
-\n\
-   def read_py_command(self):\n\
-       # Read off a complete Python command.\n\
-       more = 0\n\
-       while 1:\n\
-           if more:\n\
-               prompt = sys.ps2\n\
-           else:\n\
-               prompt = sys.ps1\n\
-           line = self.my_raw_input(prompt)\n\
-           # Can be None if sys.stdin was redefined\n\
-           encoding = getattr(sys.stdin, \"encoding\", None)\n\
-           if encoding and not isinstance(line, unicode):\n\
-               line = line.decode(encoding)\n\
-           line = self.process_input (line)\n\
-           more = self.push(line)\n\
-           if not more:\n\
-               break\n\
-\n\
-   def one_line (self, input):\n\
-      line = self.process_input (input)\n\
-      more = self.push(line)\n\
-      if more:\n\
-         self.write (\"Input not a complete line.\")\n\
-         self.resetbuffer()\n\
-         more = 0\n\
-\n\
-def run_python_interpreter (dict):\n\
-   # Pass in the dictionary, for continuity from one session to the next.\n\
-   repl = SimpleREPL('>>> ', dict)\n\
-   repl.interact()\n\
-\n\
-def run_one_line (dict, input_string):\n\
-   repl = SimpleREPL ('', dict)\n\
-   repl.one_line (input_string)\n";
 
 static int
 _check_and_flush (FILE *stream)
@@ -1542,44 +1439,21 @@ ScriptInterpreterPython::InitializePrivate ()
     PyEval_InitThreads ();
     Py_InitializeEx (0);
 
-    PyObject *compiled_module = Py_CompileString (embedded_interpreter_string, 
-                                                  "embedded_interpreter.py",
-                                                  Py_file_input);
-                                                  
-    PyObject *py_error = PyErr_Occurred ();
-    if (py_error != NULL)
-    {
-        PyErr_Print();
-        PyErr_Clear();
-    }
-    
-
     // Initialize SWIG after setting up python
     assert (g_swig_init_callback != NULL);
     g_swig_init_callback ();
 
     // Update the path python uses to search for modules to include the current directory.
 
-    int success = PyRun_SimpleString ("import sys");
-    success = PyRun_SimpleString ("sys.path.append ('.')");
+    PyRun_SimpleString ("import sys");
+    PyRun_SimpleString ("sys.path.append ('.')");
 
-    PyObject *pmod = NULL;
+    PyRun_SimpleString ("import embedded_interpreter");
     
-     if (compiled_module)
-     {
-        pmod = PyImport_ExecCodeModule (const_cast<char*> ("embedded_interpreter"),
-                                        compiled_module);
-        Py_DECREF (compiled_module);
-    }
-
-    if (pmod != NULL)
-    {
-        PyRun_SimpleString ("from embedded_interpreter import run_python_interpreter");
-        PyRun_SimpleString ("from embedded_interpreter import run_one_line");
-        PyRun_SimpleString ("import sys");
-        PyRun_SimpleString ("from termios import *");
-        Py_DECREF (pmod);
-    }
+    PyRun_SimpleString ("from embedded_interpreter import run_python_interpreter");
+    PyRun_SimpleString ("from embedded_interpreter import run_one_line");
+    PyRun_SimpleString ("import sys");
+    PyRun_SimpleString ("from termios import *");
 
     stdin_tty_state.Restore();
 }
