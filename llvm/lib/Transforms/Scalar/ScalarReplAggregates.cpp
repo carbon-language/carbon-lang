@@ -253,7 +253,7 @@ public:
 
 private:
   bool CanConvertToScalar(Value *V, uint64_t Offset);
-  void MergeInType(const Type *In, uint64_t Offset, bool IsLoadOrStore);
+  void MergeInType(const Type *In, uint64_t Offset);
   bool MergeInVectorType(const VectorType *VInTy, uint64_t Offset);
   void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset);
 
@@ -316,8 +316,7 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
 ///      large) integer type with extract and insert operations where the loads
 ///      and stores would mutate the memory.  We mark this by setting VectorTy
 ///      to VoidTy.
-void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset,
-                                      bool IsLoadOrStore) {
+void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   // If we already decided to turn this into a blob of integer memory, there is
   // nothing to be done.
   if (VectorTy && VectorTy->isVoidTy())
@@ -336,7 +335,7 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset,
     // Full width accesses can be ignored, because they can always be turned
     // into bitcasts.
     unsigned EltSize = In->getPrimitiveSizeInBits()/8;
-    if (IsLoadOrStore && EltSize == AllocaSize)
+    if (EltSize == AllocaSize)
       return;
 
     // If we're accessing something that could be an element of a vector, see
@@ -456,7 +455,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       if (LI->getType()->isX86_MMXTy())
         return false;
       HadNonMemTransferAccess = true;
-      MergeInType(LI->getType(), Offset, true);
+      MergeInType(LI->getType(), Offset);
       continue;
     }
 
@@ -467,7 +466,7 @@ bool ConvertToScalarInfo::CanConvertToScalar(Value *V, uint64_t Offset) {
       if (SI->getOperand(0)->getType()->isX86_MMXTy())
         return false;
       HadNonMemTransferAccess = true;
-      MergeInType(SI->getOperand(0)->getType(), Offset, true);
+      MergeInType(SI->getOperand(0)->getType(), Offset);
       continue;
     }
 
