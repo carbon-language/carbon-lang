@@ -189,8 +189,8 @@ TargetLoweringObjectFileELF::getCFIPersonalitySymbol(const GlobalValue *GV,
     return  Mang->getSymbol(GV);
     break;
   case dwarf::DW_EH_PE_pcrel: {
-    Twine FullName = StringRef("DW.ref.") + Mang->getSymbol(GV)->getName();
-    return getContext().GetOrCreateSymbol(FullName);
+    return getContext().GetOrCreateSymbol(StringRef("DW.ref.") +
+                                          Mang->getSymbol(GV)->getName());
     break;
   }
   }
@@ -199,13 +199,13 @@ TargetLoweringObjectFileELF::getCFIPersonalitySymbol(const GlobalValue *GV,
 void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
                                                        const TargetMachine &TM,
                                                        const MCSymbol *Sym) const {
-  Twine FullName = StringRef("DW.ref.") + Sym->getName();
-  MCSymbol *Label = getContext().GetOrCreateSymbol(FullName);
+  SmallString<64> NameData("DW.ref.");
+  NameData += Sym->getName();
+  MCSymbol *Label = getContext().GetOrCreateSymbol(NameData);
   Streamer.EmitSymbolAttribute(Label, MCSA_Hidden);
   Streamer.EmitSymbolAttribute(Label, MCSA_Weak);
-  Twine SectionName = StringRef(".data.") + Label->getName();
-  SmallString<64> NameData;
-  SectionName.toVector(NameData);
+  StringRef Prefix = ".data.";
+  NameData.insert(NameData.begin(), Prefix.begin(), Prefix.end());
   unsigned Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE | ELF::SHF_GROUP;
   const MCSection *Sec = getContext().getELFSection(NameData,
                                                     ELF::SHT_PROGBITS,
