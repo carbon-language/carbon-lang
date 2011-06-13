@@ -73,7 +73,15 @@ bool Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
   return false;
 }
 
-
+/// \brief Check for consistency between a given method declaration and the
+/// methods it overrides within the class hierarchy.
+///
+/// This method walks the inheritance hierarchy starting at the given 
+/// declaration context (\p DC), invoking Sema::CheckObjCMethodOverride() with
+/// the given new method (\p NewMethod) and any method it directly overrides
+/// in the hierarchy. Sema::CheckObjCMethodOverride() is responsible for
+/// checking consistency, e.g., among return types for methods that return a 
+/// related result type.
 static bool CheckObjCMethodOverrides(Sema &S, ObjCMethodDecl *NewMethod,
                                      DeclContext *DC, 
                                      bool SkipCurrent = true) {
