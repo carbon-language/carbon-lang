@@ -232,7 +232,19 @@ class ConvertToScalarInfo {
   /// computed based on the uses of the alloca rather than the LLVM type system.
   enum {
     Unknown,
+
+    // An access via GEPs that is consistent with element access of a vector
+    // type. This will not be converted into a vector unless there is a later
+    // access using an actual vector type.
+    ImplicitVector,
+
+    // An access via vector operations and possibly GEPs that are consistent
+    // with the layout of the vector type.
     Vector,
+
+    // An integer bag-of-bits with bitwise operations for insertion and
+    // extraction. Any combination of types can be converted into this kind
+    // of scalar.
     Integer
   } ScalarKind;
 
@@ -240,12 +252,6 @@ class ConvertToScalarInfo {
   /// it is possible to turn it into a vector.  This starts out null, and if it
   /// isn't possible to turn into a vector type, it gets set to VoidTy.
   const VectorType *VectorTy;
-
-  /// HadAVector - True if there is at least one vector access to the alloca.
-  /// We don't want to turn random arrays into vectors and use vector element
-  /// insert/extract, but if there are element accesses to something that is
-  /// also declared as a vector, we do want to promote to a vector.
-  bool HadAVector;
 
   /// HadNonMemTransferAccess - True if there is at least one access to the 
   /// alloca that is not a MemTransferInst.  We don't want to turn structs into
@@ -255,7 +261,7 @@ class ConvertToScalarInfo {
 public:
   explicit ConvertToScalarInfo(unsigned Size, const TargetData &td)
     : AllocaSize(Size), TD(td), IsNotTrivial(false), ScalarKind(Unknown),
-      VectorTy(0), HadAVector(false), HadNonMemTransferAccess(false) { }
+      VectorTy(0), HadNonMemTransferAccess(false) { }
 
   AllocaInst *TryConvert(AllocaInst *AI);
 
@@ -282,6 +288,11 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
   if (!CanConvertToScalar(AI, 0) || !IsNotTrivial)
     return 0;
 
+  // If an alloca has only memset / memcpy uses, it may still have an Unknown
+  // ScalarKind. Treat it as an Integer below.
+  if (ScalarKind == Unknown)
+    ScalarKind = Integer;
+
   // If we were able to find a vector type that can handle this with
   // insert/extract elements, and if there was at least one use that had
   // a vector type, promote this to a vector.  We don't want to promote
@@ -289,14 +300,14 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
   // we just get a lot of insert/extracts.  If at least one vector is
   // involved, then we probably really do have a union of vector/array.
   const Type *NewTy;
-  if (VectorTy && HadAVector) {
+  if (VectorTy && ScalarKind != ImplicitVector) {
     DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
           << *VectorTy << '\n');
     NewTy = VectorTy;  // Use the vector type.
   } else {
     unsigned BitWidth = AllocaSize * 8;
-    if (!HadAVector && !HadNonMemTransferAccess &&
-        !TD.fitsInLegalInteger(BitWidth))
+    if ((ScalarKind == ImplicitVector || ScalarKind == Integer) &&
+        !HadNonMemTransferAccess && !TD.fitsInLegalInteger(BitWidth))
       return 0;
 
     DEBUG(dbgs() << "CONVERT TO SCALAR INTEGER: " << *AI << "\n");
@@ -352,7 +363,7 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
     if (Offset % EltSize == 0 && AllocaSize % EltSize == 0 &&
         (!VectorTy || Offset * 8 < VectorTy->getPrimitiveSizeInBits())) {
       if (!VectorTy) {
-        ScalarKind = Vector;
+        ScalarKind = ImplicitVector;
         VectorTy = VectorType::get(In, AllocaSize/EltSize);
         return;
       }
@@ -377,9 +388,6 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
 /// if the type was successfully merged and false otherwise.
 bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
                                             uint64_t Offset) {
-  // Remember if we saw a vector type.
-  HadAVector = true;
-
   // TODO: Support nonzero offsets?
   if (Offset != 0)
     return false;
@@ -400,8 +408,10 @@ bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
   unsigned InBitWidth = VInTy->getBitWidth();
 
   // Vectors of the same size can be converted using a simple bitcast.
-  if (InBitWidth == BitWidth && AllocaSize == (InBitWidth / 8))
+  if (InBitWidth == BitWidth && AllocaSize == (InBitWidth / 8)) {
+    ScalarKind = Vector;
     return true;
+  }
 
   const Type *ElementTy = VectorTy->getElementType();
   const Type *InElementTy = VInTy->getElementType();
@@ -439,6 +449,7 @@ bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
   }
 
   // Pick the largest of the two vector types.
+  ScalarKind = Vector;
   if (InBitWidth > BitWidth)
     VectorTy = VInTy;
 
