@@ -808,16 +808,16 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     return;
   }
 
-  // The local variable comes into scope immediately.
-  AutoVarEmission variable = AutoVarEmission::invalid();
-  if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement()))
-    variable = EmitAutoVarAlloca(*cast<VarDecl>(SD->getSingleDecl()));
-
   CGDebugInfo *DI = getDebugInfo();
   if (DI) {
     DI->setLocation(S.getSourceRange().getBegin());
     DI->EmitRegionStart(Builder);
   }
+
+  // The local variable comes into scope immediately.
+  AutoVarEmission variable = AutoVarEmission::invalid();
+  if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement()))
+    variable = EmitAutoVarAlloca(*cast<VarDecl>(SD->getSingleDecl()));
 
   JumpDest LoopEnd = getJumpDestInCurrentScope("forcoll.end");
   JumpDest AfterBody = getJumpDestInCurrentScope("forcoll.next");
