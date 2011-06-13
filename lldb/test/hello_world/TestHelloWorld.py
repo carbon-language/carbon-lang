@@ -62,10 +62,6 @@ class HelloWorldTestCase(TestBase):
             # On the other hand, the following line of code are more reliable.
             self.runCmd("run", setCookie=False)
 
-        #self.runCmd("thread backtrace")
-        #self.runCmd("breakpoint list")
-        #self.runCmd("thread list")
-
         self.process = target.GetProcess()
         self.assertTrue(self.process, PROCESS_IS_VALID)
 

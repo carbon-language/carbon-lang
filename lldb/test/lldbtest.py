@@ -879,46 +879,6 @@ class TestBase(unittest2.TestCase):
             print >> sbuf, str(method) + ":",  result
         return result
 
-    def breakAfterLaunch(self, process, func, trace=False):
-        """
-        Perform some dances after Launch() to break at func name.
-
-        Return True if we can successfully break at the func name in due time.
-        """
-        trace = (True if traceAlways else trace)
-
-        count = 0
-        while True:
-            # The stop reason of the thread should be breakpoint.
-            thread = process.GetThreadAtIndex(0)
-            SR = thread.GetStopReason()
-            with recording(self, trace) as sbuf:
-                print >> sbuf, "StopReason =", stop_reason_to_str(SR)
-
-            if SR == lldb.eStopReasonBreakpoint:
-                frame = thread.GetFrameAtIndex(0)
-                name = frame.GetFunction().GetName()
-                with recording(self, trace) as sbuf:
-                    print >> sbuf, "function =", name
-                if (name == func):
-                    # We got what we want; now break out of the loop.
-                    return True
-
-            # The inferior is in a transient state; continue the process.
-            time.sleep(1.0)
-            with recording(self, trace) as sbuf:
-                print >> sbuf, "Continuing the process:", process
-            process.Continue()
-
-            count = count + 1
-            if count == 15:
-                with recording(self, trace) as sbuf:
-                    print >> sbuf, "Reached 15 iterations, giving up..."
-                # Enough iterations already, break out of the loop.
-                return False
-
-            # End of while loop.
-
     # ====================================================
     # Config. methods supported through a plugin interface
     # (enables reading of the current test configuration)
