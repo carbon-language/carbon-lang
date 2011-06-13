@@ -911,8 +911,8 @@ size_t alias::getOptionWidth() const {
 // Print out the option for the alias.
 void alias::printOptionInfo(size_t GlobalWidth) const {
   size_t L = std::strlen(ArgStr);
-  errs() << "  -" << ArgStr;
-  errs().indent(GlobalWidth-L-6) << " - " << HelpStr << "\n";
+  outs() << "  -" << ArgStr;
+  outs().indent(GlobalWidth-L-6) << " - " << HelpStr << "\n";
 }
 
 //===----------------------------------------------------------------------===//
