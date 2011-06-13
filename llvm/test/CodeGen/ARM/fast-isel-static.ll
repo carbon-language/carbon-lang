@@ -23,7 +23,7 @@ entry:
   %z = alloca float, align 4
   store float 0.000000e+00, float* %ztot, align 4
   store float 1.000000e+00, float* %z, align 4
-; CHECK-LONG: blx     r2
+; CHECK-LONG: blx     r
 ; CHECK-NORM: bl      _myadd
   call void @myadd(float* %ztot, float* %z)
   ret i32 0

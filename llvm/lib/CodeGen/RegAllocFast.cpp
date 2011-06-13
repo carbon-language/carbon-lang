@@ -487,14 +487,12 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
 
   // Take hint when possible.
   if (Hint) {
-    switch(calcSpillCost(Hint)) {
-    default:
-      definePhysReg(MI, Hint, regFree);
-      // Fall through.
-    case 0:
+    // Ignore the hint if we would have to spill a dirty register.
+    unsigned Cost = calcSpillCost(Hint);
+    if (Cost < spillDirty) {
+      if (Cost)
+        definePhysReg(MI, Hint, regFree);
       return assignVirtToPhysReg(LRE, Hint);
-    case spillImpossible:
-      break;
     }
   }
 
