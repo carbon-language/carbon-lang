@@ -233,13 +233,13 @@ class ConvertToScalarInfo {
   enum {
     Unknown,
 
-    // An access via GEPs that is consistent with element access of a vector
+    // Accesses via GEPs that are consistent with element access of a vector
     // type. This will not be converted into a vector unless there is a later
     // access using an actual vector type.
     ImplicitVector,
 
-    // An access via vector operations and possibly GEPs that are consistent
-    // with the layout of the vector type.
+    // Accesses via vector operations and GEPs that are consistent with the
+    // layout of a vector type.
     Vector,
 
     // An integer bag-of-bits with bitwise operations for insertion and
