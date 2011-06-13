@@ -228,10 +228,18 @@ class ConvertToScalarInfo {
   /// which means that mem2reg can't promote it.
   bool IsNotTrivial;
 
+  /// ScalarKind - Tracks the kind of alloca being considered for promotion,
+  /// computed based on the uses of the alloca rather than the LLVM type system.
+  enum {
+    Unknown,
+    Vector,
+    Integer
+  } ScalarKind;
+
   /// VectorTy - This tracks the type that we should promote the vector to if
   /// it is possible to turn it into a vector.  This starts out null, and if it
   /// isn't possible to turn into a vector type, it gets set to VoidTy.
-  const Type *VectorTy;
+  const VectorType *VectorTy;
 
   /// HadAVector - True if there is at least one vector access to the alloca.
   /// We don't want to turn random arrays into vectors and use vector element
@@ -246,8 +254,8 @@ class ConvertToScalarInfo {
 
 public:
   explicit ConvertToScalarInfo(unsigned Size, const TargetData &td)
-    : AllocaSize(Size), TD(td), IsNotTrivial(false), VectorTy(0),
-      HadAVector(false), HadNonMemTransferAccess(false) { }
+    : AllocaSize(Size), TD(td), IsNotTrivial(false), ScalarKind(Unknown),
+      VectorTy(0), HadAVector(false), HadNonMemTransferAccess(false) { }
 
   AllocaInst *TryConvert(AllocaInst *AI);
 
@@ -281,7 +289,7 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
   // we just get a lot of insert/extracts.  If at least one vector is
   // involved, then we probably really do have a union of vector/array.
   const Type *NewTy;
-  if (VectorTy && VectorTy->isVectorTy() && HadAVector) {
+  if (ScalarKind != Integer && VectorTy && HadAVector) {
     DEBUG(dbgs() << "CONVERT TO VECTOR: " << *AI << "\n  TYPE = "
           << *VectorTy << '\n');
     NewTy = VectorTy;  // Use the vector type.
@@ -319,7 +327,7 @@ AllocaInst *ConvertToScalarInfo::TryConvert(AllocaInst *AI) {
 void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
   // If we already decided to turn this into a blob of integer memory, there is
   // nothing to be done.
-  if (VectorTy && VectorTy->isVoidTy())
+  if (ScalarKind == Integer)
     return;
 
   // If this could be contributing to a vector, analyze it.
@@ -344,11 +352,12 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
     if (Offset % EltSize == 0 && AllocaSize % EltSize == 0 &&
         (!VectorTy || Offset * 8 < VectorTy->getPrimitiveSizeInBits())) {
       if (!VectorTy) {
+        ScalarKind = Vector;
         VectorTy = VectorType::get(In, AllocaSize/EltSize);
         return;
       }
 
-      unsigned CurrentEltSize = cast<VectorType>(VectorTy)->getElementType()
+      unsigned CurrentEltSize = VectorTy->getElementType()
                                 ->getPrimitiveSizeInBits()/8;
       if (EltSize == CurrentEltSize)
         return;
@@ -360,7 +369,8 @@ void ConvertToScalarInfo::MergeInType(const Type *In, uint64_t Offset) {
 
   // Otherwise, we have a case that we can't handle with an optimized vector
   // form.  We can still turn this into a large integer.
-  VectorTy = Type::getVoidTy(In->getContext());
+  ScalarKind = Integer;
+  VectorTy = 0;
 }
 
 /// MergeInVectorType - Handles the vector case of MergeInType, returning true
@@ -381,19 +391,20 @@ bool ConvertToScalarInfo::MergeInVectorType(const VectorType *VInTy,
   // If this the first vector we see, remember the type so that we know the
   // element size.
   if (!VectorTy) {
+    ScalarKind = Vector;
     VectorTy = VInTy;
     return true;
   }
 
-  unsigned BitWidth = cast<VectorType>(VectorTy)->getBitWidth();
+  unsigned BitWidth = VectorTy->getBitWidth();
   unsigned InBitWidth = VInTy->getBitWidth();
 
   // Vectors of the same size can be converted using a simple bitcast.
   if (InBitWidth == BitWidth && AllocaSize == (InBitWidth / 8))
     return true;
 
-  const Type *ElementTy = cast<VectorType>(VectorTy)->getElementType();
-  const Type *InElementTy = cast<VectorType>(VInTy)->getElementType();
+  const Type *ElementTy = VectorTy->getElementType();
+  const Type *InElementTy = VInTy->getElementType();
 
   // Do not allow mixed integer and floating-point accesses from vectors of
   // different sizes.
