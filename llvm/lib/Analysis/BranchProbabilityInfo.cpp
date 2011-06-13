@@ -25,7 +25,7 @@ INITIALIZE_PASS_END(BranchProbabilityInfo, "branch-prob",
 
 char BranchProbabilityInfo::ID = 0;
 
-
+namespace {
 // Please note that BranchProbabilityAnalysis is not a FunctionPass.
 // It is created by BranchProbabilityInfo (which is a FunctionPass), which
 // provides a clear interface. Thanks to that, all heuristics and other
@@ -143,6 +143,7 @@ public:
 
   bool runOnFunction(Function &F);
 };
+} // end anonymous namespace
 
 // Calculate Edge Weights using "Return Heuristics". Predict a successor which
 // leads directly to Return Instruction will not be taken.
