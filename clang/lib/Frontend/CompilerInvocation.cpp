@@ -670,9 +670,6 @@ static void LangOptsToArgs(const LangOptions &Opts,
       Res.push_back("-fobjc-gc-only");
     }
   }
-  if (Opts.ObjCInferRelatedResultType)
-    Res.push_back("-fobjc-infer-related-result-type");
-  
   if (Opts.AppleKext)
     Res.push_back("-fapple-kext");
   
@@ -1487,9 +1484,6 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     Opts.setGCMode(LangOptions::GCOnly);
   else if (Args.hasArg(OPT_fobjc_gc))
     Opts.setGCMode(LangOptions::HybridGC);
-  
-  if (Args.hasArg(OPT_fobjc_infer_related_result_type))
-    Opts.ObjCInferRelatedResultType = 1;
   
   if (Args.hasArg(OPT_fapple_kext)) {
     if (!Opts.CPlusPlus)

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-infer-related-result-type -verify %s
+// RUN: %clang_cc1 -verify %s
 
 @interface Unrelated
 @end

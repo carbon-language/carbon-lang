@@ -116,6 +116,7 @@ typedef struct _NSZone NSZone;
 - (id)retain;
 - (oneway void)release;
 - (id)autorelease;
+- (id)init;
 @end  @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone;
 @end  @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
@@ -1445,7 +1446,7 @@ static void rdar_8724287(CFErrorRef error)
     while (error_to_dump != ((void*)0)) {
         CFDictionaryRef info;
 
-        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line 1448 and stored into 'info'}}
+        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line 1449 and stored into 'info'}}
 
         if (info != ((void*)0)) {
         }

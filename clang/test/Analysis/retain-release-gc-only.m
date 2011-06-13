@@ -113,6 +113,7 @@ NSFastEnumerationState;
 @end       @interface NSAutoreleasePool : NSObject {
 }
 - (void)drain;
+- (id)init;
 @end extern NSString * const NSBundleDidLoadNotification;
 typedef double NSTimeInterval;
 @interface NSDate : NSObject <NSCopying, NSCoding>  - (NSTimeInterval)timeIntervalSinceReferenceDate;

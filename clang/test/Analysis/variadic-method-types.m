@@ -73,13 +73,13 @@ void f(id a, id<P> b, C* c, C<P> *d, FooType fooType, BarType barType) {
   [NSDictionary dictionaryWithObjectsAndKeys:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSDictionary' method 'dictionaryWithObjectsAndKeys:' should be an Objective-C pointer type, not 'char *'}}
   [NSSet setWithObjects:@"Foo", "Bar", nil]; // expected-warning {{Argument to 'NSSet' method 'setWithObjects:' should be an Objective-C pointer type, not 'char *'}}
 
-  [[[NSArray alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
-  [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to method 'initWithObjectsAndKeys:' should be an Objective-C pointer type, not 'char *'}}
+  [[[NSArray alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to 'NSArray' method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
+  [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to 'NSDictionary' method 'initWithObjectsAndKeys:' should be an Objective-C pointer type, not 'char *'}}
   [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", (void*) 0, nil] autorelease]; // no-warning
   [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", kCGImageSourceShouldCache, nil] autorelease]; // no-warning
   [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", fooType, nil] autorelease]; // no-warning
-  [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", barType, nil] autorelease]; // expected-warning {{Argument to method 'initWithObjectsAndKeys:' should be an Objective-C pointer type, not 'BarType'}}
-  [[[NSSet alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
+  [[[NSDictionary alloc] initWithObjectsAndKeys:@"Foo", barType, nil] autorelease]; // expected-warning {{Argument to 'NSDictionary' method 'initWithObjectsAndKeys:' should be an Objective-C pointer type, not 'BarType'}}
+  [[[NSSet alloc] initWithObjects:@"Foo", "Bar", nil] autorelease]; // expected-warning {{Argument to 'NSSet' method 'initWithObjects:' should be an Objective-C pointer type, not 'char *'}}
 }
 
 // This previously crashed the variadic argument checker.

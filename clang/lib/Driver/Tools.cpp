@@ -1542,12 +1542,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_lax_vector_conversions))
     CmdArgs.push_back("-fno-lax-vector-conversions");
 
-  // -fobjc-infer-related-result-type is the default.
-  if (Args.hasFlag(options::OPT_fobjc_infer_related_result_type, 
-                   options::OPT_fno_objc_infer_related_result_type, 
-                   /*Default=*/true))
-    CmdArgs.push_back("-fobjc-infer-related-result-type");
-  
   // Handle -fobjc-gc and -fobjc-gc-only. They are exclusive, and -fobjc-gc-only
   // takes precedence.
   const Arg *GCArg = Args.getLastArg(options::OPT_fobjc_gc_only);

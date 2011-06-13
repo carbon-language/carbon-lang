@@ -5,7 +5,7 @@ typedef struct _NSZone NSZone;
 
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 
-@protocol NSObject - (BOOL) isEqual:(id) object; @end
+@protocol NSObject - (BOOL) isEqual:(id) object; - (id)init; @end
 @protocol NSCopying - (id) copyWithZone:(NSZone *) zone; @end
 @protocol NSCoding - (void) encodeWithCoder:(NSCoder *) aCoder; @end
 

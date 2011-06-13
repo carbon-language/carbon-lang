@@ -121,6 +121,7 @@ typedef struct _NSZone NSZone;
 + (id)allocWithZone:(NSZone *)zone;
 + (id)alloc;
 - (void)dealloc;
+- (id)init;
 @end
 @interface NSObject (NSCoderMethods)
 - (id)awakeAfterUsingCoder:(NSCoder *)aDecoder;

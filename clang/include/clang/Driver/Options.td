@@ -392,10 +392,6 @@ def fobjc_gc_only : Flag<"-fobjc-gc-only">, Group<f_Group>;
 def fobjc_gc : Flag<"-fobjc-gc">, Group<f_Group>;
 def fobjc_legacy_dispatch : Flag<"-fobjc-legacy-dispatch">, Group<f_Group>;
 def fobjc_new_property : Flag<"-fobjc-new-property">, Group<clang_ignored_f_Group>;
-def fobjc_infer_related_result_type : Flag<"-fobjc-infer-related-result-type">, 
-                                      Group<f_Group>;
-def fno_objc_infer_related_result_type : Flag<
-  "-fno-objc-infer-related-result-type">, Group<f_Group>;
 
 // Objective-C ABI options.
 def fobjc_abi_version_EQ : Joined<"-fobjc-abi-version=">, Group<f_Group>;

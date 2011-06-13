@@ -12,6 +12,7 @@ typedef struct _NSZone NSZone;
 @end  @protocol NSCoding  - (void)encodeWithCoder:(NSCoder *)aCoder;
 @end    @interface NSObject <NSObject> {}
 + (id)alloc;
+- (id)init;
 @end  typedef struct {}
 NSFastEnumerationState;
 @protocol NSFastEnumeration  - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
