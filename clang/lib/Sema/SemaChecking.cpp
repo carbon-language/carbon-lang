@@ -1847,7 +1847,7 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
         continue;
       }
 
-      SourceRange ArgRange = Call->getArg(0)->getSourceRange();
+      SourceRange ArgRange = Call->getArg(ArgIdx)->getSourceRange();
       DiagRuntimeBehavior(
         Dest->getExprLoc(), Dest,
         PDiag(diag::note_bad_memaccess_silence)
