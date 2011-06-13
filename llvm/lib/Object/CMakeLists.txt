@@ -1,6 +1,7 @@
 add_llvm_library(LLVMObject
   COFFObjectFile.cpp
   ELFObjectFile.cpp
+  Error.cpp
   MachOObject.cpp
   MachOObjectFile.cpp
   Object.cpp
