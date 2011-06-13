@@ -9819,7 +9819,11 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
   }
 
   // FIXME: Check that type is complete/non-abstract
-  // FIXME: Warn if a non-POD type is passed in.
+
+  if (!TInfo->getType()->isDependentType() && !TInfo->getType()->isPODType())
+    return ExprError(Diag(TInfo->getTypeLoc().getBeginLoc(),
+                         diag::warn_second_parameter_to_va_arg_not_pod)
+      << TInfo->getType() << TInfo->getTypeLoc().getSourceRange());
 
   QualType T = TInfo->getType().getNonLValueExprType(Context);
   return Owned(new (Context) VAArgExpr(BuiltinLoc, E, TInfo, RPLoc, T));

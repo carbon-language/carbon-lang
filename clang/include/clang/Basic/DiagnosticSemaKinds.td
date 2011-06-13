@@ -3933,6 +3933,9 @@ def warn_second_parameter_of_va_start_not_last_named_argument : Warning<
   "second parameter of 'va_start' not last named argument">;
 def err_first_argument_to_va_arg_not_of_type_va_list : Error<
   "first argument to 'va_arg' is of type %0 and not 'va_list'">;
+def warn_second_parameter_to_va_arg_not_pod : Warning<
+  "second argument to 'va_arg' is of non-POD type %0">,
+  InGroup<DiagGroup<"non-pod-varargs">>, DefaultError;
 
 def warn_return_missing_expr : Warning<
   "non-void %select{function|method}1 %0 should return a value">, DefaultError,
