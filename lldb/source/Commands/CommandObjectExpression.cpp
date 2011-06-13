@@ -234,9 +234,13 @@ CommandObjectExpression::MultiLineExpressionCallback
     case eInputReaderDone:
 		if (cmd_object_expr->m_expr_lines.size() > 0)
         {
+            StreamSP output_stream = reader.GetDebugger().GetAsyncOutputStream();
+            StreamSP error_stream = reader.GetDebugger().GetAsyncErrorStream();
             cmd_object_expr->EvaluateExpression (cmd_object_expr->m_expr_lines.c_str(), 
-                                                 reader.GetDebugger().GetOutputStream(), 
-                                                 reader.GetDebugger().GetErrorStream());
+                                                 output_stream.get(), 
+                                                 error_stream.get());
+            output_stream->Flush();
+            error_stream->Flush();
         }
         break;
     }
@@ -248,8 +252,8 @@ bool
 CommandObjectExpression::EvaluateExpression 
 (
     const char *expr, 
-    Stream &output_stream, 
-    Stream &error_stream,
+    Stream *output_stream, 
+    Stream *error_stream,
     CommandReturnObject *result
 )
 {
@@ -307,7 +311,7 @@ CommandObjectExpression::EvaluateExpression
                 if (m_options.format != eFormatDefault)
                     result_valobj_sp->SetFormat (m_options.format);
 
-                ValueObject::DumpValueObject (output_stream,
+                ValueObject::DumpValueObject (*(output_stream),
                                               result_valobj_sp.get(),   // Variable object to dump
                                               result_valobj_sp->GetName().GetCString(),// Root object name
                                               0,                        // Pointer depth to traverse (zero means stop at pointers)
@@ -324,7 +328,7 @@ CommandObjectExpression::EvaluateExpression
             }
             else
             {
-                error_stream.PutCString(result_valobj_sp->GetError().AsCString());
+                error_stream->PutCString(result_valobj_sp->GetError().AsCString());
                 if (result)
                     result->SetStatus (eReturnStatusFailed);
             }
@@ -332,7 +336,7 @@ CommandObjectExpression::EvaluateExpression
     }
     else
     {
-        error_stream.Printf ("error: invalid execution context for expression\n");
+        error_stream->Printf ("error: invalid execution context for expression\n");
         return false;
     }
         
@@ -426,7 +430,7 @@ CommandObjectExpression::ExecuteRawCommandString
     if (expr == NULL)
         expr = command;
     
-    if (EvaluateExpression (expr, result.GetOutputStream(), result.GetErrorStream(), &result))
+    if (EvaluateExpression (expr, &(result.GetOutputStream()), &(result.GetErrorStream()), &result))
         return true;
 
     result.SetStatus (eReturnStatusFailed);

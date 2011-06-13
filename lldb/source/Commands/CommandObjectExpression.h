@@ -89,8 +89,8 @@ protected:
 
     bool
     EvaluateExpression (const char *expr,
-                        Stream &output_stream,
-                        Stream &error_stream,
+                        Stream *output_stream,
+                        Stream *error_stream,
                         CommandReturnObject *result = NULL);
 
     CommandOptions m_options;
