@@ -2112,7 +2112,8 @@ Decl *Sema::ActOnMethodDeclaration(
     mergeObjCMethodDecls(ObjCMethod, InterfaceMD);
   }
   
-  if (!ObjCMethod->hasRelatedResultType()) {
+  if (!ObjCMethod->hasRelatedResultType() && 
+      getLangOptions().ObjCInferRelatedResultType) {
     bool InferRelatedResultType = false;
     switch (ObjCMethod->getMethodFamily()) {
     case OMF_None:

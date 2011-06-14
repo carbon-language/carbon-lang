@@ -493,6 +493,10 @@ def print_ivar_layout : Flag<"-print-ivar-layout">,
   HelpText<"Enable Objective-C Ivar layout bitmap print trace">;
 def fobjc_nonfragile_abi : Flag<"-fobjc-nonfragile-abi">,
   HelpText<"enable objective-c's nonfragile abi">;
+def fno_objc_infer_related_result_type : Flag<
+    "-fno-objc-infer-related-result-type">,
+  HelpText<
+    "do not infer Objective-C related result type based on method family">;
 def ftrapv : Flag<"-ftrapv">,
   HelpText<"Trap on integer overflow">;
 def ftrapv_handler : Separate<"-ftrapv-handler">,
