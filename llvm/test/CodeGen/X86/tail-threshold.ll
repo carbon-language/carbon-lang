@@ -1,9 +1,12 @@
-; RUN: llc -march=x86-64 %s -stats -tail-merge-threshold 2 -o /dev/null |& FileCheck %s
+; RUN: llc -march=x86-64 -tail-merge-threshold 2 < %s | FileCheck %s
 
 ; Test that we still do some merging if a block has more than
 ; tail-merge-threshold predecessors.
 
-; CHECK: 2 branchfolding   - Number of block tails merged
+; CHECK: 	callq	bar
+; CHECK:	callq	bar
+; CHECK:	callq	bar
+; CHECK-NOT:    callq
 
 declare void @bar()
 
