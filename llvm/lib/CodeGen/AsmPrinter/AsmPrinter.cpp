@@ -1925,7 +1925,7 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
     return false;
 
   // The predecessor has to be immediately before this block.
-  MachineBasicBlock *Pred = *PI;
+  const MachineBasicBlock *Pred = *PI;
 
   if (!Pred->isLayoutSuccessor(MBB))
     return false;
@@ -1934,26 +1934,9 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   if (Pred->empty())
     return true;
 
-  // Check the terminators in the previous blocks
-  for (MachineBasicBlock::iterator II = Pred->getFirstTerminator(),
-         IE = Pred->end(); II != IE; ++II) {
-    MachineInstr &MI = *II;
-
-    // If it is not a simple branch, we are in a table somewhere.
-    if (!MI.getDesc().isBranch() || MI.getDesc().isIndirectBranch())
-      return false;
-
-    // If we are the operands of one of the branches, this is not
-    // a fall through.
-    for (MachineInstr::mop_iterator OI = MI.operands_begin(),
-           OE = MI.operands_end(); OI != OE; ++OI) {
-      const MachineOperand& OP = *OI;
-      if (OP.isMBB() && OP.getMBB() == MBB)
-        return false;
-    }
-  }
-
-  return true;
+  // Otherwise, check the last instruction.
+  const MachineInstr &LastInst = Pred->back();
+  return !LastInst.getDesc().isBarrier();
 }
 
 
