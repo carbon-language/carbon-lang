@@ -300,7 +300,8 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
         argTy->isNullPtrType();
 
     case ObjCPointerTy:
-      return argTy->getAs<ObjCObjectPointerType>() != NULL;
+      return argTy->getAs<ObjCObjectPointerType>() != NULL ||
+             argTy->getAs<BlockPointerType>() != NULL;
   }
 
   // FIXME: Should be unreachable, but Clang is currently emitting
