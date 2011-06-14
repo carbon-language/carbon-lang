@@ -589,9 +589,8 @@ StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs, bool MissingCase,
   } else {
     // Nicely diagnose the common error "switch (X) { case 4: }", which is
     // not valid.
-    SourceLocation ExpectedLoc = PP.getLocForEndOfToken(ColonLoc);
-    Diag(ExpectedLoc, diag::err_label_end_of_compound_statement)
-      << FixItHint::CreateInsertion(ExpectedLoc, ";");
+    SourceLocation AfterColonLoc = PP.getLocForEndOfToken(ColonLoc);
+    Diag(AfterColonLoc, diag::err_label_end_of_compound_statement);
     SubStmt = true;
   }
 
@@ -635,9 +634,8 @@ StmtResult Parser::ParseDefaultStatement(ParsedAttributes &attrs) {
   
   // Diagnose the common error "switch (X) {... default: }", which is not valid.
   if (Tok.is(tok::r_brace)) {
-    SourceLocation ExpectedLoc = PP.getLocForEndOfToken(ColonLoc);
-    Diag(ExpectedLoc, diag::err_label_end_of_compound_statement)
-      << FixItHint::CreateInsertion(ExpectedLoc, ";");
+    SourceLocation AfterColonLoc = PP.getLocForEndOfToken(ColonLoc);
+    Diag(AfterColonLoc, diag::err_label_end_of_compound_statement);
     return StmtError();
   }
 
