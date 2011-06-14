@@ -48,6 +48,8 @@ def err_vla_decl_has_static_storage : Error<
   "variable length array declaration can not have 'static' storage duration">;
 def err_vla_decl_has_extern_linkage : Error<
   "variable length array declaration can not have 'extern' linkage">;
+def ext_vla_folded_to_constant : Extension<
+  "variable length array folded to constant array as an extension">;
 
 // C99 variably modified types
 def err_variably_modified_template_arg : Error<

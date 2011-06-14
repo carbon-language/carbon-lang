@@ -36,7 +36,7 @@ int g17[(3?:1) - 2];
 EVAL_EXPR(18, ((int)((void*)10 + 10)) == 20 ? 1 : -1);
 
 struct s {
-  int a[(int)-1.0f]; // expected-error {{array size is negative}}
+  int a[(int)-1.0f]; // expected-error {{'a' declared as an array with a negative size}}
 };
 
 EVAL_EXPR(19, ((int)&*(char*)10 == 10 ? 1 : -1));

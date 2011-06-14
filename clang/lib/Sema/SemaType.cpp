@@ -1100,6 +1100,28 @@ QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
   return Context.getRValueReferenceType(T);
 }
 
+/// Check whether the specified array size makes the array type a VLA.  If so,
+/// return true, if not, return the size of the array in SizeVal.
+static bool isArraySizeVLA(Expr *ArraySize, llvm::APSInt &SizeVal, Sema &S) {
+  // If the size is an ICE, it certainly isn't a VLA.
+  if (ArraySize->isIntegerConstantExpr(SizeVal, S.Context))
+    return false;
+    
+  // If we're in a GNU mode (like gnu99, but not c99) accept any evaluatable
+  // value as an extension.
+  Expr::EvalResult Result;
+  if (S.LangOpts.GNUMode && ArraySize->Evaluate(Result, S.Context)) {
+    if (!Result.hasSideEffects() && Result.Val.isInt()) {
+      SizeVal = Result.Val.getInt();
+      S.Diag(ArraySize->getLocStart(), diag::ext_vla_folded_to_constant);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
 /// \brief Build an array type.
 ///
 /// \param T The type of each element in the array.
@@ -1200,11 +1222,13 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       T = Context.getIncompleteArrayType(T, ASM, Quals);
   } else if (ArraySize->isTypeDependent() || ArraySize->isValueDependent()) {
     T = Context.getDependentSizedArrayType(T, ArraySize, ASM, Quals, Brackets);
-  } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
-             (!T->isDependentType() && !T->isIncompleteType() &&
-              !T->isConstantSizeType())) {
-    // Per C99, a variable array is an array with either a non-constant
-    // size or an element type that has a non-constant-size
+  } else if (!T->isDependentType() && !T->isIncompleteType() &&
+             !T->isConstantSizeType()) {
+    // C99: an array with an element type that has a non-constant-size is a VLA.
+    T = Context.getVariableArrayType(T, ArraySize, ASM, Quals, Brackets);
+  } else if (isArraySizeVLA(ArraySize, ConstVal, *this)) {
+    // C99: an array with a non-ICE size is a VLA.  We accept any expression
+    // that we can fold to a non-zero positive value as an extension.
     T = Context.getVariableArrayType(T, ArraySize, ASM, Quals, Brackets);
   } else {
     // C99 6.7.5.2p1: If the expression is a constant expression, it shall

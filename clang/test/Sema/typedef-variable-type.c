@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -verify -fsyntax-only -pedantic -Wno-typedef-redefinition
+// RUN: %clang_cc1 %s -verify -fsyntax-only -pedantic -Wno-typedef-redefinition -std=c99
 
 // Make sure we accept a single typedef
 typedef int (*a)[!.0]; // expected-warning{{size of static array must be an integer constant expression}}

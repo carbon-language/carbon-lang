@@ -42,7 +42,7 @@ void f3()
 }
 
 // PR3663
-static const unsigned array[((2 * (int)((((4) / 2) + 1.0/3.0) * (4) - 1e-8)) + 1)]; // expected-warning {{size of static array must be an integer constant expression}}
+static const unsigned array[((2 * (int)((((4) / 2) + 1.0/3.0) * (4) - 1e-8)) + 1)]; // expected-warning {{variable length array folded to constant array as an extension}}
 
 int a[*]; // expected-error {{star modifier used outside of function prototype}}
 int f4(int a[*][*]);
@@ -53,7 +53,7 @@ int pr2044b;
 int (*pr2044c(void))[pr2044b]; // expected-error {{variably modified type}}
 
 const int f5_ci = 1;
-void f5() { char a[][f5_ci] = {""}; } // expected-error {{variable-sized object may not be initialized}}
+void f5() { char a[][f5_ci] = {""}; } // expected-warning {{variable length array folded to constant array as an extension}}
 
 // PR5185
 void pr5185(int a[*]);

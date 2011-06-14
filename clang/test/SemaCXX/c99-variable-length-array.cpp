@@ -121,3 +121,12 @@ namespace PR8209 {
     (void)new vla_type; // expected-error{{variably}}
   }
 }
+
+namespace rdar8733881 { // rdar://8733881
+
+static const int k_cVal3 = (int)(1000*0.2f);
+  int f() {
+    // Ok, fold to a constant size array as an extension.
+    char rgch[k_cVal3] = {0};
+  }
+}
