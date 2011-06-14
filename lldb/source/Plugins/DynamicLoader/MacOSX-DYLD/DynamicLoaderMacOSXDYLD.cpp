@@ -366,14 +366,25 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
                 for (uint32_t i=0; i<num_segments; ++i)
                 {
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
-                    assert (section_sp.get() != NULL);
                     const addr_t new_section_load_addr = info.segments[i].vmaddr + info.slide;
-                    const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
-                    if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
-                        old_section_load_addr != new_section_load_addr)
+                    if (section_sp)
                     {
-                        if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
-                            changed = true;
+                        const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
+                        if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
+                            old_section_load_addr != new_section_load_addr)
+                        {
+                            if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
+                                changed = true;
+                        }
+                    }
+                    else
+                    {
+                        fprintf (stderr, 
+                                 "warning: unable to find and load segment named '%s' at 0x%llx in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                 info.segments[i].name.AsCString("<invalid>"),
+                                 (uint64_t)new_section_load_addr,
+                                 image_object_file->GetFileSpec().GetDirectory().AsCString(),
+                                 image_object_file->GetFileSpec().GetFilename().AsCString());
                     }
                 }
             }
@@ -402,10 +413,20 @@ DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, DYLDImageInfo& 
                 for (uint32_t i=0; i<num_segments; ++i)
                 {
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
-                    assert (section_sp.get() != NULL);
-                    const addr_t old_section_load_addr = info.segments[i].vmaddr + info.slide;
-                    if (m_process->GetTarget().GetSectionLoadList().SetSectionUnloaded (section_sp.get(), old_section_load_addr))
-                        changed = true;
+                    if (section_sp)
+                    {
+                        const addr_t old_section_load_addr = info.segments[i].vmaddr + info.slide;
+                        if (m_process->GetTarget().GetSectionLoadList().SetSectionUnloaded (section_sp.get(), old_section_load_addr))
+                            changed = true;
+                    }
+                    else
+                    {
+                        fprintf (stderr, 
+                                 "warning: unable to find and unload segment named '%s' in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                 info.segments[i].name.AsCString("<invalid>"),
+                                 image_object_file->GetFileSpec().GetDirectory().AsCString(),
+                                 image_object_file->GetFileSpec().GetFilename().AsCString());
+                    }
                 }
             }
         }
@@ -472,7 +493,7 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
                                  addr_size +         // errorClientOfDylibPath
                                  addr_size +         // errorTargetDylibPath
                                  addr_size;          // errorSymbol
-        assert (sizeof (buf) > count_v11);
+        assert (sizeof (buf) >= count_v11);
 
         int count;
         Error error;
@@ -598,9 +619,8 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                 {
                     uint32_t info_data_offset = 0;
                     DataExtractor info_data_ref(info_data.GetBytes(), info_data.GetByteSize(), endian, addr_size);
-                    for (i = 0; info_data_ref.ValidOffset(info_data_offset); i++)
+                    for (i = 0; i < m_dyld_image_infos.size() && info_data_ref.ValidOffset(info_data_offset); i++)
                     {
-                        assert (i < m_dyld_image_infos.size());
                         m_dyld_image_infos[i].address = info_data_ref.GetPointer(&info_data_offset);
                         lldb::addr_t path_addr = info_data_ref.GetPointer(&info_data_offset);
                         m_dyld_image_infos[i].mod_date = info_data_ref.GetPointer(&info_data_offset);
@@ -611,7 +631,6 @@ DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
                         const bool resolve_path = false;
                         m_dyld_image_infos[i].file_spec.SetFile(raw_path, resolve_path);
                     }
-                    assert(i == m_dyld_all_image_infos.dylib_info_count);
 
                     UpdateAllImageInfosHeaderAndLoadCommands();
                 }
