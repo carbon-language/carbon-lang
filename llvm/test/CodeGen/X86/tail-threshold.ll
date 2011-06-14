@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 -tail-merge-threshold 2 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu -tail-merge-threshold 2 < %s | FileCheck %s
 
 ; Test that we still do some merging if a block has more than
 ; tail-merge-threshold predecessors.
