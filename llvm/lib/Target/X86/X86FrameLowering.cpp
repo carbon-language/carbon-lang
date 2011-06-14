@@ -1,4 +1,4 @@
-//=======- X86FrameLowering.cpp - X86 Frame Information ------------*- C++ -*-====//
+//=======- X86FrameLowering.cpp - X86 Frame Information --------*- C++ -*-====//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -649,7 +649,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
 }
 
 void X86FrameLowering::emitEpilogue(MachineFunction &MF,
-                                MachineBasicBlock &MBB) const {
+                                    MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   const X86RegisterInfo *RegInfo = TM.getRegisterInfo();
