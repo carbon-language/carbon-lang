@@ -39,9 +39,6 @@ namespace llvm {
   class MCContext {
     MCContext(const MCContext&); // DO NOT IMPLEMENT
     MCContext &operator=(const MCContext&); // DO NOT IMPLEMENT
-  public:
-    typedef StringMap<MCSymbol*, BumpPtrAllocator&> SymbolTable;
-  private:
 
     /// The MCAsmInfo for this target.
     const MCAsmInfo &MAI;
@@ -55,7 +52,7 @@ namespace llvm {
     BumpPtrAllocator Allocator;
 
     /// Symbols - Bindings of names to symbols.
-    SymbolTable Symbols;
+    StringMap<MCSymbol*, BumpPtrAllocator&> Symbols;
 
     /// UsedNames - Keeps tracks of names that were used both for used declared
     /// and artificial symbols.
@@ -144,14 +141,6 @@ namespace llvm {
 
     /// LookupSymbol - Get the symbol for \p Name, or null.
     MCSymbol *LookupSymbol(StringRef Name) const;
-
-    /// getSymbols - Get a reference for the symbol table for clients that
-    /// want to, for example, iterate over all symbols. 'const' because we
-    /// still want any modifications to the table itself to use the MCContext
-    /// APIs.
-    const SymbolTable &getSymbols() const {
-      return Symbols;
-    }
 
     /// @}
 

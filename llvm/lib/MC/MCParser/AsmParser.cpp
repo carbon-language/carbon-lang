@@ -84,7 +84,6 @@ private:
   AsmLexer Lexer;
   MCContext &Ctx;
   MCStreamer &Out;
-  const MCAsmInfo &MAI;
   SourceMgr &SrcMgr;
   MCAsmParserExtension *GenericParser;
   MCAsmParserExtension *PlatformParser;
@@ -136,7 +135,7 @@ public:
   virtual MCContext &getContext() { return Ctx; }
   virtual MCStreamer &getStreamer() { return Out; }
 
-  virtual bool Warning(SMLoc L, const Twine &Msg);
+  virtual bool Warning(SMLoc L, const Twine &Meg);
   virtual bool Error(SMLoc L, const Twine &Msg);
 
   const AsmToken &Lex();
@@ -161,9 +160,8 @@ private:
   void HandleMacroExit();
 
   void PrintMacroInstantiations();
-  void PrintMessage(SMLoc Loc, const Twine &Msg, const char *Type,
-                    bool ShowLine = true) const {
-    SrcMgr.PrintMessage(Loc, Msg, Type, ShowLine);
+  void PrintMessage(SMLoc Loc, const Twine &Msg, const char *Type) const {
+    SrcMgr.PrintMessage(Loc, Msg, Type);
   }
 
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
@@ -339,7 +337,7 @@ enum { DEFAULT_ADDRSPACE = 0 };
 
 AsmParser::AsmParser(const Target &T, SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
-  : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
+  : Lexer(_MAI), Ctx(_Ctx), Out(_Out), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
     CurBuffer(0), MacrosEnabled(true) {
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
@@ -467,25 +465,6 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     if (!MCDwarfFiles[i])
       TokError("unassigned file number: " + Twine(i) + " for .file directives");
   }
-
-  // Check to see that all assembler local symbols were actually defined.
-  // Targets that don't do subsections via symbols may not want this, though,
-  // so conservatively exclude them.
-  if (MAI.hasSubsectionsViaSymbols()) {
-    const MCContext::SymbolTable &Symbols = getContext().getSymbols();
-    for (MCContext::SymbolTable::const_iterator i = Symbols.begin(),
-         e = Symbols.end();
-         i != e; ++i) {
-      MCSymbol *Sym = i->getValue();
-      if (Sym->isTemporary() && !Sym->isDefined())
-        // FIXME: We would really like to refer back to where the symbol was
-        // first referenced for a source location. We need to add something
-        // to track that. Currently, we just point to the end of the file.
-        PrintMessage(getLexer().getLoc(), "assembler local symbol '" +
-                     Sym->getName() + "' not defined", "error", false);
-    }
-  }
-
 
   // Finalize the output stream if there are no errors and if the client wants
   // us to.
