@@ -459,7 +459,7 @@ int main() {
 
 <p>Clang complains:
 
-<pre>  <b>my_file.cpp:2:10: <span class="error">error:</span> call to function 'Multiply' that is neither visible in the template definition nor found by argument dependent lookup</b>
+<pre>  <b>my_file.cpp:2:10: <span class="error">error:</span> call to function 'Multiply' that is neither visible in the template definition nor found by argument-dependent lookup</b>
     return Multiply(x, x);
   <span class="caret">         ^</span>
   <b>my_file.cpp:10:3: <span class="note">note:</span> in instantiation of function template specialization 'Squared&lt;int&gt;' requested here</b>
@@ -520,7 +520,7 @@ void Use() {
 
 <p>Again, Clang complains:</p>
 
-<pre>  <b>my_file2.cpp:5:13: <span class="error">error:</span> call to function 'operator&lt;&lt;' that is neither visible in the template definition nor found by argument dependent lookup</b>
+<pre>  <b>my_file2.cpp:5:13: <span class="error">error:</span> call to function 'operator&lt;&lt;' that is neither visible in the template definition nor found by argument-dependent lookup</b>
     std::cout &lt;&lt; value &lt;&lt; "\n";
   <span class="caret">            ^</span>
   <b>my_file2.cpp:17:3: <span class="error">note:</span> in instantiation of function template specialization 'Dump&lt;ns::Data&gt;' requested here</b>

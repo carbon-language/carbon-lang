@@ -25,7 +25,7 @@ namespace N3 {
   struct call_f0 {
     void test_f0(T t) {
       Result &result = f0(t); // expected-error {{undeclared identifier}} \
-                                 expected-error {{neither visible in the template definition nor found by argument dependent lookup}}
+                                 expected-error {{neither visible in the template definition nor found by argument-dependent lookup}}
     }
   };
 }

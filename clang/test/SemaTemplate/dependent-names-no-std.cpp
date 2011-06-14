@@ -11,7 +11,7 @@ namespace PR10053 {
   template<typename T> struct A {
     T t;
     A() {
-      f(t); // expected-error {{call to function 'f' that is neither visible in the template definition nor found by argument dependent lookup}}
+      f(t); // expected-error {{call to function 'f' that is neither visible in the template definition nor found by argument-dependent lookup}}
     }
   };
 
