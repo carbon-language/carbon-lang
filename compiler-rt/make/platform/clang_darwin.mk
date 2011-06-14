@@ -12,7 +12,8 @@ CheckArches = \
   $(shell \
     result=""; \
     for arch in $(1); do \
-      if $(CC) -arch $$arch -c -x c /dev/null -o /dev/null; then \
+      if $(CC) -arch $$arch -c -x c /dev/null \
+	  -o /dev/null > /dev/null 2> /dev/null; then \
         result="$$result$$arch "; \
       fi; \
     done; \
