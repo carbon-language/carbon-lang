@@ -505,7 +505,13 @@ TargetAsmBackend *llvm::createARMAsmBackend(const Target &T,
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin()) {
-    if (TheTriple.getArchName() == "armv6" ||
+    if (TheTriple.getArchName() == "armv4t" ||
+        TheTriple.getArchName() == "thumbv4t")
+      return new DarwinARMAsmBackend(T, object::mach::CSARM_V4T);
+    else if (TheTriple.getArchName() == "armv5e" ||
+        TheTriple.getArchName() == "thumbv5e")
+      return new DarwinARMAsmBackend(T, object::mach::CSARM_V5TEJ);
+    else if (TheTriple.getArchName() == "armv6" ||
         TheTriple.getArchName() == "thumbv6")
       return new DarwinARMAsmBackend(T, object::mach::CSARM_V6);
     return new DarwinARMAsmBackend(T, object::mach::CSARM_V7);
