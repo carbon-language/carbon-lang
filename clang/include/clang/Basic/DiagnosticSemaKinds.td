@@ -3542,6 +3542,9 @@ def ext_in_class_initializer_float_type : ExtWarn<
 def err_in_class_initializer_non_constant : Error<
   "in-class initializer is not a constant expression">;
 
+def ext_in_class_initializer_non_constant : Extension<
+ "in-class initializer is not a constant expression, accepted as an extension">;
+
 // C++ anonymous unions and GNU anonymous structs/unions
 def ext_anonymous_union : Extension<
   "anonymous unions are a GNU extension in C">, InGroup<GNU>;

@@ -5369,15 +5369,23 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
 
     // We allow integer constant expressions in all cases.
     } else if (T->isIntegralOrEnumerationType()) {
-      if (!Init->isValueDependent()) {
-        // Check whether the expression is a constant expression.
-        llvm::APSInt Value;
-        SourceLocation Loc;
-        if (!Init->isIntegerConstantExpr(Value, Context, &Loc)) {
-          Diag(Loc, diag::err_in_class_initializer_non_constant)
-            << Init->getSourceRange();
-          VDecl->setInvalidDecl();
-        }
+      // Check whether the expression is a constant expression.
+      SourceLocation Loc;
+      if (Init->isValueDependent())
+        ; // Nothing to check.
+      else if (Init->isIntegerConstantExpr(Context, &Loc))
+        ; // Ok, it's an ICE!
+      else if (Init->isEvaluatable(Context)) {
+        // If we can constant fold the initializer through heroics, accept it,
+        // but report this as a use of an extension for -pedantic.
+        Diag(Loc, diag::ext_in_class_initializer_non_constant)
+          << Init->getSourceRange();
+      } else {
+        // Otherwise, this is some crazy unknown case.  Report the issue at the
+        // location provided by the isIntegerConstantExpr failed check.
+        Diag(Loc, diag::err_in_class_initializer_non_constant)
+          << Init->getSourceRange();
+        VDecl->setInvalidDecl();
       }
 
     // We allow floating-point constants as an extension in C++03, and
