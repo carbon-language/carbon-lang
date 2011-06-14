@@ -105,7 +105,16 @@ ProcessLinux::CanDebug(Target &target)
 Error
 ProcessLinux::DoAttachToProcessWithID(lldb::pid_t pid)
 {
-    return Error(1, eErrorTypeGeneric);
+    Error error;
+    assert(m_monitor == NULL);
+
+    m_monitor = new ProcessMonitor(this, pid, error);
+
+    if (!error.Success())
+        return error;
+
+    SetID(pid);
+    return error;
 }
 
 Error

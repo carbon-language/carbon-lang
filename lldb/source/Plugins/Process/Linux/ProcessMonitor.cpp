@@ -524,6 +524,17 @@ KillOperation::Execute(ProcessMonitor *monitor)
         m_result = true;
 }
 
+ProcessMonitor::OperationArgs::OperationArgs(ProcessMonitor *monitor)
+    : m_monitor(monitor)
+{
+    sem_init(&m_semaphore, 0, 0);
+}
+
+ProcessMonitor::OperationArgs::~OperationArgs()
+{
+    sem_destroy(&m_semaphore);
+}
+
 ProcessMonitor::LaunchArgs::LaunchArgs(ProcessMonitor *monitor,
                                        lldb_private::Module *module,
                                        char const **argv,
@@ -531,21 +542,23 @@ ProcessMonitor::LaunchArgs::LaunchArgs(ProcessMonitor *monitor,
                                        const char *stdin_path,
                                        const char *stdout_path,
                                        const char *stderr_path)
-    : m_monitor(monitor),
+    : OperationArgs(monitor),
       m_module(module),
       m_argv(argv),
       m_envp(envp),
       m_stdin_path(stdin_path),
       m_stdout_path(stdout_path),
-      m_stderr_path(stderr_path)
-{
-    sem_init(&m_semaphore, 0, 0);
-}
+      m_stderr_path(stderr_path) { }
 
 ProcessMonitor::LaunchArgs::~LaunchArgs()
-{
-    sem_destroy(&m_semaphore);
-}
+{ }
+
+ProcessMonitor::AttachArgs::AttachArgs(ProcessMonitor *monitor,
+                                       lldb::pid_t pid)
+    : OperationArgs(monitor), m_pid(pid) { }
+
+ProcessMonitor::AttachArgs::~AttachArgs()
+{ }
 
 //------------------------------------------------------------------------------
 /// The basic design of the ProcessMonitor is built around two threads.
@@ -587,7 +600,7 @@ ProcessMonitor::ProcessMonitor(ProcessLinux *process,
         error.SetErrorString("Monitor failed to initialize.");
     }
 
-    StartOperationThread(args.get(), error);
+    StartLaunchOpThread(args.get(), error);
     if (!error.Success())
         return;
 
@@ -607,7 +620,7 @@ WAIT_AGAIN:
     // Check that the launch was a success.
     if (!args->m_error.Success())
     {
-        StopOperationThread();
+        StopLaunchOpThread();
         error = args->m_error;
         return;
     }
@@ -623,6 +636,64 @@ WAIT_AGAIN:
     }
 }
 
+ProcessMonitor::ProcessMonitor(ProcessLinux *process,
+                               lldb::pid_t pid,
+                               lldb_private::Error &error)
+    : m_process(process),
+      m_operation_thread(LLDB_INVALID_HOST_THREAD),
+      m_pid(LLDB_INVALID_PROCESS_ID),
+      m_terminal_fd(-1),
+      m_monitor_thread(LLDB_INVALID_HOST_THREAD),
+      m_client_fd(-1),
+      m_server_fd(-1)
+{
+    std::auto_ptr<AttachArgs> args;
+
+    args.reset(new AttachArgs(this, pid));
+
+    // Server/client descriptors.
+    if (!EnableIPC())
+    {
+        error.SetErrorToGenericError();
+        error.SetErrorString("Monitor failed to initialize.");
+    }
+
+    StartAttachOpThread(args.get(), error);
+    if (!error.Success())
+        return;
+
+WAIT_AGAIN:
+    // Wait for the operation thread to initialize.
+    if (sem_wait(&args->m_semaphore))
+    {
+        if (errno == EINTR)
+            goto WAIT_AGAIN;
+        else
+        {
+            error.SetErrorToErrno();
+            return;
+        }
+    }
+
+    // Check that the launch was a success.
+    if (!args->m_error.Success())
+    {
+        StopAttachOpThread();
+        error = args->m_error;
+        return;
+    }
+
+    // Finally, start monitoring the child process for change in state.
+    m_monitor_thread = Host::StartMonitoringChildProcess(
+        ProcessMonitor::MonitorCallback, this, GetPID(), true);
+    if (!IS_VALID_LLDB_HOST_THREAD(m_monitor_thread))
+    {
+        error.SetErrorToGenericError();
+        error.SetErrorString("Process attach failed.");
+        return;
+    }
+}
+
 ProcessMonitor::~ProcessMonitor()
 {
     StopMonitor();
@@ -631,7 +702,7 @@ ProcessMonitor::~ProcessMonitor()
 //------------------------------------------------------------------------------
 // Thread setup and tear down.
 void
-ProcessMonitor::StartOperationThread(LaunchArgs *args, Error &error)
+ProcessMonitor::StartLaunchOpThread(LaunchArgs *args, Error &error)
 {
     static const char *g_thread_name = "lldb.process.linux.operation";
 
@@ -639,11 +710,11 @@ ProcessMonitor::StartOperationThread(LaunchArgs *args, Error &error)
         return;
 
     m_operation_thread =
-        Host::ThreadCreate(g_thread_name, OperationThread, args, &error);
+        Host::ThreadCreate(g_thread_name, LaunchOpThread, args, &error);
 }
 
 void
-ProcessMonitor::StopOperationThread()
+ProcessMonitor::StopLaunchOpThread()
 {
     lldb::thread_result_t result;
 
@@ -655,7 +726,7 @@ ProcessMonitor::StopOperationThread()
 }
 
 void *
-ProcessMonitor::OperationThread(void *arg)
+ProcessMonitor::LaunchOpThread(void *arg)
 {
     LaunchArgs *args = static_cast<LaunchArgs*>(arg);
 
@@ -831,6 +902,80 @@ ProcessMonitor::EnableIPC()
     m_client_fd = fd[0];
     m_server_fd = fd[1];
     return true;
+}
+
+void
+ProcessMonitor::StartAttachOpThread(AttachArgs *args, lldb_private::Error &error)
+{
+    static const char *g_thread_name = "lldb.process.linux.operation";
+
+    if (IS_VALID_LLDB_HOST_THREAD(m_operation_thread))
+        return;
+
+    m_operation_thread =
+        Host::ThreadCreate(g_thread_name, AttachOpThread, args, &error);
+}
+
+void
+ProcessMonitor::StopAttachOpThread()
+{
+    assert(!"Not implemented yet!!!");
+}
+
+void *
+ProcessMonitor::AttachOpThread(void *arg)
+{
+    AttachArgs *args = static_cast<AttachArgs*>(arg);
+
+    if (!Attach(args))
+        return NULL;
+
+    ServeOperation(args);
+    return NULL;
+}
+
+bool
+ProcessMonitor::Attach(AttachArgs *args)
+{
+    lldb::pid_t pid = args->m_pid;
+
+    ProcessMonitor *monitor = args->m_monitor;
+    ProcessLinux &process = monitor->GetProcess();
+
+    lldb::ThreadSP inferior;
+
+    if (pid <= 1)
+    {
+        args->m_error.SetErrorToGenericError();
+        args->m_error.SetErrorString("Attaching to process 1 is not allowed.");
+        goto FINISH;
+    }
+
+    // Attach to the requested process.
+    if (ptrace(PTRACE_ATTACH, pid, NULL, NULL) < 0)
+    {
+        args->m_error.SetErrorToErrno();
+        goto FINISH;
+    }
+
+    int status;
+    if ((status = waitpid(pid, NULL, 0)) < 0)
+    {
+        args->m_error.SetErrorToErrno();
+        goto FINISH;
+    }
+
+    // Update the process thread list with the attached thread and
+    // mark it as current.
+    inferior.reset(new LinuxThread(process, pid));
+    process.GetThreadList().AddThread(inferior);
+    process.GetThreadList().SetSelectedThreadByID(pid);
+
+    // Let our process instance know the thread has stopped.
+    process.SendMessage(ProcessMessage::Trace(pid));
+
+ FINISH:
+    return args->m_error.Success();
 }
 
 bool
@@ -1094,10 +1239,11 @@ ProcessMonitor::GetCrashReasonForSIGBUS(const struct siginfo *info)
 }
 
 void
-ProcessMonitor::ServeOperation(LaunchArgs *args)
+ProcessMonitor::ServeOperation(OperationArgs *args)
 {
     int status;
     pollfd fdset;
+
     ProcessMonitor *monitor = args->m_monitor;
 
     fdset.fd = monitor->m_server_fd;
@@ -1326,7 +1472,7 @@ void
 ProcessMonitor::StopMonitor()
 {
     StopMonitoringChildProcess();
-    StopOperationThread();
+    StopLaunchOpThread();
     CloseFD(m_terminal_fd);
     CloseFD(m_client_fd);
     CloseFD(m_server_fd);

@@ -56,6 +56,10 @@ public:
                    const char *stderr_path,
                    lldb_private::Error &error);
 
+    ProcessMonitor(ProcessLinux *process,
+                   lldb::pid_t pid,
+                   lldb_private::Error &error);
+
     ~ProcessMonitor();
 
     /// Provides the process number of debugee.
@@ -169,11 +173,22 @@ private:
     int m_client_fd;
     int m_server_fd;
 
+    struct OperationArgs
+    {
+        OperationArgs(ProcessMonitor *monitor);
+
+        ~OperationArgs();
+
+        ProcessMonitor *m_monitor;      // The monitor performing the attach.
+        sem_t m_semaphore;              // Posted to once operation complete.
+        lldb_private::Error m_error;    // Set if process operation failed.
+    };
+
     /// @class LauchArgs
     ///
     /// @brief Simple structure to pass data to the thread responsible for
     /// launching a child process.
-    struct LaunchArgs
+    struct LaunchArgs : OperationArgs
     {
         LaunchArgs(ProcessMonitor *monitor,
                    lldb_private::Module *module,
@@ -192,18 +207,16 @@ private:
         const char *m_stdin_path;       // Redirect stdin or NULL.
         const char *m_stdout_path;      // Redirect stdout or NULL.
         const char *m_stderr_path;      // Redirect stderr or NULL.
-        sem_t m_semaphore;              // Posted to once launch complete.
-        lldb_private::Error m_error;    // Set if process launch failed.
     };
 
     void
-    StartOperationThread(LaunchArgs *args, lldb_private::Error &error);
+    StartLaunchOpThread(LaunchArgs *args, lldb_private::Error &error);
 
     void
-    StopOperationThread();
+    StopLaunchOpThread();
 
     static void *
-    OperationThread(void *arg);
+    LaunchOpThread(void *arg);
 
     static bool
     Launch(LaunchArgs *args);
@@ -211,8 +224,30 @@ private:
     bool
     EnableIPC();
 
+    struct AttachArgs : OperationArgs
+    {
+        AttachArgs(ProcessMonitor *monitor,
+                   lldb::pid_t pid);
+
+        ~AttachArgs();
+
+        lldb::pid_t m_pid;              // pid of the process to be attached.
+    };
+
+    void
+    StartAttachOpThread(AttachArgs *args, lldb_private::Error &error);
+
+    void
+    StopAttachOpThread();
+
+    static void *
+    AttachOpThread(void *args);
+
+    static bool
+    Attach(AttachArgs *args);
+
     static void
-    ServeOperation(LaunchArgs *args);
+    ServeOperation(OperationArgs *args);
 
     static bool
     DupDescriptor(const char *path, int fd, int flags);
