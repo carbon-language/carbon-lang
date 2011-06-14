@@ -108,6 +108,9 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   while (!MBB->succ_empty())
     MBB->removeSuccessor(MBB->succ_end()-1);
 
+  // Avoid matching if this pointer gets reused.
+  TriedMerging.erase(MBB);
+
   // Remove the block.
   MF->erase(MBB);
 }
@@ -170,6 +173,8 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
                                     const TargetRegisterInfo *tri,
                                     MachineModuleInfo *mmi) {
   if (!tii) return false;
+
+  TriedMerging.clear();
 
   TII = tii;
   TRI = tri;
@@ -799,14 +804,21 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 
   // First find blocks with no successors.
   MergePotentials.clear();
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
+  for (MachineFunction::iterator I = MF.begin(), E = MF.end();
+       I != E && MergePotentials.size() < TailMergeThreshold; ++I) {
+    if (TriedMerging.count(I))
+      continue;
     if (I->succ_empty())
       MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(I), I));
   }
 
+  // If this is a large problem, avoid visiting the same basic blocks
+  // multiple times.
+  if (MergePotentials.size() == TailMergeThreshold)
+    for (unsigned i = 0, e = MergePotentials.size(); i != e; ++i)
+      TriedMerging.insert(MergePotentials[i].getBlock());
   // See if we can do any tail merging on those.
-  if (MergePotentials.size() < TailMergeThreshold &&
-      MergePotentials.size() >= 2)
+  if (MergePotentials.size() >= 2)
     MadeChange |= TryTailMergeBlocks(NULL, NULL);
 
   // Look at blocks (IBB) with multiple predecessors (PBB).
@@ -830,15 +842,17 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
 
   for (MachineFunction::iterator I = llvm::next(MF.begin()), E = MF.end();
        I != E; ++I) {
-    if (I->pred_size() >= 2 && I->pred_size() < TailMergeThreshold) {
+    if (I->pred_size() >= 2) {
       SmallPtrSet<MachineBasicBlock *, 8> UniquePreds;
       MachineBasicBlock *IBB = I;
       MachineBasicBlock *PredBB = prior(I);
       MergePotentials.clear();
       for (MachineBasicBlock::pred_iterator P = I->pred_begin(),
                                             E2 = I->pred_end();
-           P != E2; ++P) {
+           P != E2 && MergePotentials.size() < TailMergeThreshold; ++P) {
         MachineBasicBlock *PBB = *P;
+        if (TriedMerging.count(PBB))
+          continue;
         // Skip blocks that loop to themselves, can't tail merge these.
         if (PBB == IBB)
           continue;
@@ -891,6 +905,11 @@ bool BranchFolder::TailMergeBlocks(MachineFunction &MF) {
           MergePotentials.push_back(MergePotentialsElt(HashEndOfMBB(PBB), *P));
         }
       }
+      // If this is a large problem, avoid visiting the same basic blocks
+      // multiple times.
+      if (MergePotentials.size() == TailMergeThreshold)
+        for (unsigned i = 0, e = MergePotentials.size(); i != e; ++i)
+          TriedMerging.insert(MergePotentials[i].getBlock());
       if (MergePotentials.size() >= 2)
         MadeChange |= TryTailMergeBlocks(IBB, PredBB);
       // Reinsert an unconditional branch if needed.
