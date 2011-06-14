@@ -2895,6 +2895,11 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
         return;
       return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_vector_scalar);
     }
+    
+    // If the vector cast is cast between two vectors of the same size, it is
+    // a bitcast, not a conversion.
+    if (S.Context.getTypeSize(Source) == S.Context.getTypeSize(Target))
+      return;
 
     Source = cast<VectorType>(Source)->getElementType().getTypePtr();
     Target = cast<VectorType>(Target)->getElementType().getTypePtr();
@@ -2989,9 +2994,7 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
       return;
     }
 
-    // People want to build with -Wshorten-64-to-32 and not -Wconversion
-    // and by god we'll let them.
-    
+    // People want to build with -Wshorten-64-to-32 and not -Wconversion.
     if (isFromSystemMacro(S, CC))
       return;
     
