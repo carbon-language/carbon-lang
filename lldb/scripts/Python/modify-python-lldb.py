@@ -123,7 +123,7 @@ class_pattern = re.compile("^class (SB.*)\(_object\):$")
 init_pattern = re.compile("^    def __init__\(self, \*args\):")
 
 # The pattern for recognizing the beginning of the IsValid method definition.
-isvalid_pattern = re.compile("^    def IsValid\(\*args\):")
+isvalid_pattern = re.compile("^    def IsValid\(")
 
 # These define the states of our finite state machine.
 NORMAL = 0
