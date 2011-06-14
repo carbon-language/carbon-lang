@@ -6064,7 +6064,7 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  declare void @llvm.prefetch(i8* &lt;address&gt;, i32 &lt;rw&gt;, i32 &lt;locality&gt;)
+  declare void @llvm.prefetch(i8* &lt;address&gt;, i32 &lt;rw&gt;, i32 &lt;locality&gt;, i32 &lt;cache type&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -6077,8 +6077,10 @@ LLVM</a>.</p>
 <p><tt>address</tt> is the address to be prefetched, <tt>rw</tt> is the
    specifier determining if the fetch should be for a read (0) or write (1),
    and <tt>locality</tt> is a temporal locality specifier ranging from (0) - no
-   locality, to (3) - extremely local keep in cache.  The <tt>rw</tt>
-   and <tt>locality</tt> arguments must be constant integers.</p>
+   locality, to (3) - extremely local keep in cache. The <tt>cache type</tt>
+   specifies whether the prefetch is performed on the data (1) or instruction (0)
+   cache. The <tt>rw</tt>, <tt>locality</tt> and <tt>cache type</tt> arguments
+   must be constant integers.</p>
 
 <h5>Semantics:</h5>
 <p>This intrinsic does not modify the behavior of the program.  In particular,

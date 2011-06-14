@@ -2006,13 +2006,13 @@ def MOVNTI_64mr : RI<0xC3, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src),
 
 // Prefetch intrinsic.
 def PREFETCHT0   : PSI<0x18, MRM1m, (outs), (ins i8mem:$src),
-    "prefetcht0\t$src", [(prefetch addr:$src, imm, (i32 3))]>;
+    "prefetcht0\t$src", [(prefetch addr:$src, imm, (i32 3), (i32 1))]>;
 def PREFETCHT1   : PSI<0x18, MRM2m, (outs), (ins i8mem:$src),
-    "prefetcht1\t$src", [(prefetch addr:$src, imm, (i32 2))]>;
+    "prefetcht1\t$src", [(prefetch addr:$src, imm, (i32 2), (i32 1))]>;
 def PREFETCHT2   : PSI<0x18, MRM3m, (outs), (ins i8mem:$src),
-    "prefetcht2\t$src", [(prefetch addr:$src, imm, (i32 1))]>;
+    "prefetcht2\t$src", [(prefetch addr:$src, imm, (i32 1), (i32 1))]>;
 def PREFETCHNTA  : PSI<0x18, MRM0m, (outs), (ins i8mem:$src),
-    "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0))]>;
+    "prefetchnta\t$src", [(prefetch addr:$src, imm, (i32 0), (i32 1))]>;
 
 // Load, store, and memory fence
 def SFENCE : I<0xAE, MRM_F8, (outs), (ins), "sfence", [(int_x86_sse_sfence)]>,

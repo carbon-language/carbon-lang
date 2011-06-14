@@ -211,7 +211,8 @@ def int_stackrestore  : Intrinsic<[], [llvm_ptr_ty]>,
 // however it does conveniently prevent the prefetch from being reordered
 // with respect to nearby accesses to the same memory.
 def int_prefetch      : Intrinsic<[],
-                                  [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty],
+                                  [llvm_ptr_ty, llvm_i32_ty, llvm_i32_ty,
+                                   llvm_i32_ty],
                                   [IntrReadWriteArgMem, NoCapture<0>]>;
 def int_pcmarker      : Intrinsic<[], [llvm_i32_ty]>;
 

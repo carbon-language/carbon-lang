@@ -2281,12 +2281,13 @@ static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG,
     // ARMv7 with MP extension has PLDW.
     return Op.getOperand(0);
 
-  if (Subtarget->isThumb())
+  unsigned isData = cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue();
+  if (Subtarget->isThumb()) {
     // Invert the bits.
     isRead = ~isRead & 1;
-  unsigned isData = Subtarget->isThumb() ? 0 : 1;
+    isData = ~isData & 1;
+  }
 
-  // Currently there is no intrinsic that matches pli.
   return DAG.getNode(ARMISD::PRELOAD, dl, MVT::Other, Op.getOperand(0),
                      Op.getOperand(1), DAG.getConstant(isRead, MVT::i32),
                      DAG.getConstant(isData, MVT::i32));

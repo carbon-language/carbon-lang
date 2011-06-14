@@ -109,3 +109,11 @@ define void @f(<4 x float> %A, i8* %B, <2 x double> %C, i32 %D) {
   call void @llvm.x86.sse2.movnt.i(i8* %B, i32 %D)
   ret void
 }
+
+declare void @llvm.prefetch(i8*, i32, i32) nounwind
+
+define void @p(i8* %ptr) {
+; CHECK: llvm.prefetch(i8* %ptr, i32 0, i32 1, i32 1)
+  tail call void @llvm.prefetch(i8* %ptr, i32 0, i32 1)
+  ret void
+}
