@@ -12,16 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_GLOBALDECL_H
-#define CLANG_CODEGEN_GLOBALDECL_H
+#ifndef LLVM_CLANG_AST_GLOBALDECL_H
+#define LLVM_CLANG_AST_GLOBALDECL_H
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/ABI.h"
 
 namespace clang {
-
-namespace CodeGen {
 
 /// GlobalDecl - represents a global declaration. This can either be a
 /// CXXConstructorDecl and the constructor type (Base, Complete).
@@ -89,28 +87,27 @@ public:
   }
 };
 
-} // end namespace CodeGen
 } // end namespace clang
 
 namespace llvm {
   template<class> struct DenseMapInfo;
 
-  template<> struct DenseMapInfo<clang::CodeGen::GlobalDecl> {
-    static inline clang::CodeGen::GlobalDecl getEmptyKey() {
-      return clang::CodeGen::GlobalDecl();
+  template<> struct DenseMapInfo<clang::GlobalDecl> {
+    static inline clang::GlobalDecl getEmptyKey() {
+      return clang::GlobalDecl();
     }
   
-    static inline clang::CodeGen::GlobalDecl getTombstoneKey() {
-      return clang::CodeGen::GlobalDecl::
+    static inline clang::GlobalDecl getTombstoneKey() {
+      return clang::GlobalDecl::
         getFromOpaquePtr(reinterpret_cast<void*>(-1));
     }
 
-    static unsigned getHashValue(clang::CodeGen::GlobalDecl GD) {
+    static unsigned getHashValue(clang::GlobalDecl GD) {
       return DenseMapInfo<void*>::getHashValue(GD.getAsOpaquePtr());
     }
     
-    static bool isEqual(clang::CodeGen::GlobalDecl LHS, 
-                        clang::CodeGen::GlobalDecl RHS) {
+    static bool isEqual(clang::GlobalDecl LHS, 
+                        clang::GlobalDecl RHS) {
       return LHS == RHS;
     }
       
@@ -119,7 +116,7 @@ namespace llvm {
   // GlobalDecl isn't *technically* a POD type. However, its copy constructor,
   // copy assignment operator, and destructor are all trivial.
   template <>
-  struct isPodLike<clang::CodeGen::GlobalDecl> {
+  struct isPodLike<clang::GlobalDecl> {
     static const bool value = true;
   };
 } // end namespace llvm

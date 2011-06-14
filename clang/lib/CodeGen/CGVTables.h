@@ -18,7 +18,7 @@
 #include "llvm/GlobalVariable.h"
 #include "clang/Basic/ABI.h"
 #include "clang/AST/CharUnits.h"
-#include "GlobalDecl.h"
+#include "clang/AST/GlobalDecl.h"
 
 namespace clang {
   class CXXRecordDecl;

@@ -15,7 +15,7 @@
 #define CLANG_CODEGEN_CODEGENTYPES_H
 
 #include "CGCall.h"
-#include "GlobalDecl.h"
+#include "clang/AST/GlobalDecl.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
 #include <vector>

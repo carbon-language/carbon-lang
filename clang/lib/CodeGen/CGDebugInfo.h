@@ -33,11 +33,11 @@ namespace clang {
   class VarDecl;
   class ObjCInterfaceDecl;
   class ClassTemplateSpecializationDecl;
+  class GlobalDecl;
 
 namespace CodeGen {
   class CodeGenModule;
   class CodeGenFunction;
-  class GlobalDecl;
   class CGBlockInfo;
 
 /// CGDebugInfo - This class gathers all debug information during compilation
