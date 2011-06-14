@@ -32,10 +32,3 @@ XX     // expected-error {{attempt to use a poisoned identifier}}
 #define VA __VA_ ## ARGS__
 int VA;   // expected-warning {{__VA_ARGS__ can only appear in the expansion of a C99 variadic macro}}
 
-
-// PR9981
-#define M1(A) A
-#define M2(X) 
-M1(M2(##))   // expected-error {{pasting formed '()', an invalid preprocessing token}}
-
-

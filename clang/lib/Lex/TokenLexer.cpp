@@ -327,7 +327,8 @@ void TokenLexer::Lex(Token &Tok) {
   bool TokenIsFromPaste = false;
 
   // If this token is followed by a token paste (##) operator, paste the tokens!
-  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash)) {
+  // Note that ## is a normal token when not expanding a macro.
+  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash) && Macro) {
     // When handling the microsoft /##/ extension, the final token is
     // returned by PasteTokens, not the pasted token.
     if (PasteTokens(Tok))
@@ -487,10 +488,9 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           // Explicitly convert the token location to have proper instantiation
           // information so that the user knows where it came from.
           SourceManager &SM = PP.getSourceManager();
-          SourceLocation Loc = PasteOpLoc;
-          if (InstantiateLocStart.isValid())
-            Loc = SM.createInstantiationLoc(Loc, InstantiateLocStart,
-                                            InstantiateLocEnd, 2);
+          SourceLocation Loc =
+            SM.createInstantiationLoc(PasteOpLoc, InstantiateLocStart,
+                                      InstantiateLocEnd, 2);
           // If we're in microsoft extensions mode, downgrade this from a hard
           // error to a warning that defaults to an error.  This allows
           // disabling it.
