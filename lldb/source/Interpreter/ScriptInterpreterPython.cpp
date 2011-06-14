@@ -1038,7 +1038,7 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
                 }
                 else
                 {
-                    // FIXME:  Error processing.
+                    out_file.Printf ("Warning:  Unable to find script intepreter; no command attached to breakpoint.\n");
                 }
             }
         }

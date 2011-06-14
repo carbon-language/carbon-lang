@@ -41,7 +41,7 @@ SBHostOS::ThreadCreate
         log->Printf ("SBHostOS::ThreadCreate (name=\"%s\", thread_function=%p, thread_arg=%p, error_ptr=%p)", name, 
                      thread_function, thread_arg, error_ptr);
 
-    // CAROLINE: FIXME: You need to log a return value?
+    // FIXME: You should log the return value?
 
     return Host::ThreadCreate (name, thread_function, thread_arg, error_ptr ? error_ptr->get() : NULL);
 }
