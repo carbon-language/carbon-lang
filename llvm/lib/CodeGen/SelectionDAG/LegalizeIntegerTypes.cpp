@@ -204,8 +204,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
     break;
   case TargetLowering::TypeScalarizeVector:
     // Convert the element to an integer and promote it by hand.
-    return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
-                       BitConvertToInteger(GetScalarizedVector(InOp)));
+    if (!NOutVT.isVector())
+      return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
+                         BitConvertToInteger(GetScalarizedVector(InOp)));
+    break;
   case TargetLowering::TypeSplitVector: {
     // For example, i32 = BITCAST v2i16 on alpha.  Convert the split
     // pieces of the input into integers and reassemble in the final type.
