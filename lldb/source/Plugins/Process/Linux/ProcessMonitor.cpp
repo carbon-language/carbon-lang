@@ -705,11 +705,21 @@ ProcessMonitor::Launch(LaunchArgs *args)
         goto FINISH;
     }
 
+    // Recognized child exit status codes.
+    enum {
+        ePtraceFailed = 1,
+        eDupStdinFailed,
+        eDupStdoutFailed,
+        eDupStderrFailed,
+        eExecFailed
+    };
+
     // Child process.
     if (pid == 0)
     {
         // Trace this process.
-        ptrace(PTRACE_TRACEME, 0, NULL, NULL);
+        if (ptrace(PTRACE_TRACEME, 0, NULL, NULL) < 0)
+            exit(ePtraceFailed);
 
         // Do not inherit setgid powers.
         setgid(getgid());
@@ -723,32 +733,60 @@ ProcessMonitor::Launch(LaunchArgs *args)
         // the same file multiple times.
         if (stdin_path != NULL && stdin_path[0])
             if (!DupDescriptor(stdin_path, STDIN_FILENO, O_RDONLY))
-                exit(1);
+                exit(eDupStdinFailed);
 
         if (stdout_path != NULL && stdout_path[0])
             if (!DupDescriptor(stdout_path, STDOUT_FILENO, O_WRONLY | O_CREAT))
-                exit(1);
+                exit(eDupStdoutFailed);
 
         if (stderr_path != NULL && stderr_path[0])
             if (!DupDescriptor(stderr_path, STDERR_FILENO, O_WRONLY | O_CREAT))
-                exit(1);
+                exit(eDupStderrFailed);
 
         // Execute.  We should never return.
         execve(argv[0],
                const_cast<char *const *>(argv),
                const_cast<char *const *>(envp));
-        exit(-1);
+        exit(eExecFailed);
     }
 
     // Wait for the child process to to trap on its call to execve.
+    pid_t wpid;
     int status;
-    if ((status = waitpid(pid, NULL, 0)) < 0)
+    if ((wpid = waitpid(pid, &status, 0)) < 0)
     {
-        // execve likely failed for some reason.
         args->m_error.SetErrorToErrno();
         goto FINISH;
     }
-    assert(status == pid && "Could not sync with inferior process.");
+    else if (WIFEXITED(status))
+    {
+        // open, dup or execve likely failed for some reason.
+        args->m_error.SetErrorToGenericError();
+        switch (WEXITSTATUS(status))
+        {
+            case ePtraceFailed: 
+                args->m_error.SetErrorString("Child ptrace failed.");
+                break;
+            case eDupStdinFailed: 
+                args->m_error.SetErrorString("Child open stdin failed.");
+                break;
+            case eDupStdoutFailed: 
+                args->m_error.SetErrorString("Child open stdout failed.");
+                break;
+            case eDupStderrFailed: 
+                args->m_error.SetErrorString("Child open stderr failed.");
+                break;
+            case eExecFailed: 
+                args->m_error.SetErrorString("Child exec failed.");
+                break;
+            default: 
+                args->m_error.SetErrorString("Child returned unknown exit status.");
+                break;
+        }
+        goto FINISH;
+    }
+    assert(WIFSTOPPED(status) && wpid == pid &&
+           "Could not sync with inferior process.");
 
     // Have the child raise an event on exit.  This is used to keep the child in
     // limbo until it is destroyed.
