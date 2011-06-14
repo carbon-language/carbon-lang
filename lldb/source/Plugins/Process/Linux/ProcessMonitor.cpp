@@ -659,8 +659,10 @@ ProcessMonitor::OperationThread(void *arg)
 {
     LaunchArgs *args = static_cast<LaunchArgs*>(arg);
 
-    if (!Launch(args))
+    if (!Launch(args)) {
+        sem_post(&args->m_semaphore);
         return NULL;
+    }
 
     ServeOperation(args);
     return NULL;
