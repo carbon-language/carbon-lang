@@ -199,76 +199,59 @@ label:
   return strnlen((char*)&&label, 3); // expected-warning{{Argument to byte string function is the address of the label 'label', which is not a null-terminated string}}
 }
 
-void strnlen_subregion() {
-  struct two_stringsn { char a[2], b[2]; };
-  extern void use_two_stringsn(struct two_stringsn *);
-
-  struct two_stringsn z;
-  use_two_stringsn(&z);
-
-  size_t a = strnlen(z.a, 10);
-  z.b[0] = 5;
-  size_t b = strnlen(z.a, 10);
-  if (a == 0 && b != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
-
-  use_two_stringsn(&z);
-
-  size_t c = strnlen(z.a, 10);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}
-}
-
-extern void use_stringn(char *);
-void strnlen_argument(char *x) {
-  size_t a = strnlen(x, 10);
-  size_t b = strnlen(x, 10);
-  if (a == 0 && b != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
-
-  use_stringn(x);
-
-  size_t c = strnlen(x, 10);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}  
-}
-
-extern char global_strn[];
-void strnlen_global() {
-  size_t a = strnlen(global_strn, 10);
-  size_t b = strnlen(global_strn, 10);
-  if (a == 0 && b != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
-
-  // Call a function with unknown effects, which should invalidate globals.
-  use_stringn(0);
-
-  size_t c = strnlen(global_str, 10);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}  
-}
-
-void strnlen_indirect(char *x) {
-  size_t a = strnlen(x, 10);
-  char *p = x;
-  char **p2 = &p;
-  size_t b = strnlen(x, 10);
-  if (a == 0 && b != 0)
-    (void)*(char*)0; // expected-warning{{never executed}}
-
-  extern void use_stringn_ptr(char*const*);
-  use_stringn_ptr(p2);
-
-  size_t c = strnlen(x, 10);
-  if (a == 0 && c != 0)
-    (void)*(char*)0; // expected-warning{{null}}
-}
-
-void strnlen_liveness(const char *x) {
-  if (strnlen(x, 10) < 5)
-    return;
-  if (strnlen(x, 10) < 5)
+void strnlen_zero() {
+  if (strnlen("abc", 0) != 0)
     (void)*(char*)0; // no-warning
+  if (strnlen(NULL, 0) != 0) // no-warning
+    (void)*(char*)0; // no-warning
+}
+
+size_t strnlen_compound_literal() {
+  // This used to crash because we don't model the string lengths of
+  // compound literals.
+  return strnlen((char[]) { 'a', 'b', 0 }, 1);
+}
+
+size_t strnlen_unknown_limit(float f) {
+  // This used to crash because we don't model the integer values of floats.
+  return strnlen("abc", (int)f);
+}
+
+void strnlen_is_not_strlen(char *x) {
+  if (strnlen(x, 10) != strlen(x))
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void strnlen_at_limit(char *x) {
+  size_t len = strnlen(x, 10);
+  if (len > 10)
+    (void)*(char*)0; // expected-warning{{never executed}}
+  if (len == 10)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void strnlen_less_than_limit(char *x) {
+  size_t len = strnlen(x, 10);
+  if (len > 10)
+    (void)*(char*)0; // expected-warning{{never executed}}
+  if (len < 10)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void strnlen_at_actual(size_t limit) {
+  size_t len = strnlen("abc", limit);
+  if (len > 3)
+    (void)*(char*)0; // expected-warning{{never executed}}
+  if (len == 3)
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void strnlen_less_than_actual(size_t limit) {
+  size_t len = strnlen("abc", limit);
+  if (len > 3)
+    (void)*(char*)0; // expected-warning{{never executed}}
+  if (len < 3)
+    (void)*(char*)0; // expected-warning{{null}}
 }
 
 //===----------------------------------------------------------------------===
