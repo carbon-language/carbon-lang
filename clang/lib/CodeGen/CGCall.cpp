@@ -1263,12 +1263,51 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                             Alignment, I->Ty);
         else
           StoreComplexToAddr(RV.getComplexVal(), Args.back(), false);
-      } else if (I->NeedsCopy && !ArgInfo.getIndirectByVal()) {
-        Args.push_back(CreateMemTemp(I->Ty));
-        EmitAggregateCopy(Args.back(), RV.getAggregateAddr(), I->Ty,
-                          RV.isVolatileQualified());
       } else {
-        Args.push_back(RV.getAggregateAddr());
+        // We want to avoid creating an unnecessary temporary+copy here;
+        // however, we need one in two cases:
+        // 1. If the argument is not byval, and we are required to copy the
+        //    source.  (This case doesn't occur on any common architecture.)
+        // 2. If the argument is byval, RV is not sufficiently aligned, and
+        //    we cannot force it to be sufficiently aligned.
+        // FIXME: This code is ugly because we don't know the required
+        // alignment when RV is generated.
+        llvm::AllocaInst *AI =
+            dyn_cast<llvm::AllocaInst>(RV.getAggregateAddr());
+        bool NeedsAggCopy = false;
+        if (I->NeedsCopy && !ArgInfo.getIndirectByVal())
+          NeedsAggCopy = true;
+        if (ArgInfo.getIndirectByVal()) {
+          if (AI) {
+            // The source is an alloca; we can force appropriate alignment.
+            if (ArgInfo.getIndirectAlign() > AI->getAlignment())
+              AI->setAlignment(ArgInfo.getIndirectAlign());
+          } else if (llvm::Argument *A =
+                         dyn_cast<llvm::Argument>(RV.getAggregateAddr())) {
+            // Check if the source is an appropriately aligned byval argument.
+            if (!A->hasByValAttr() ||
+                A->getParamAlignment() < ArgInfo.getIndirectAlign())
+              NeedsAggCopy = true;
+          } else {
+            // We don't know what the input is; force a temporary+copy if
+            // the type alignment is not sufficient.
+            assert(I->NeedsCopy && "Temporary must be AllocaInst");
+            if (ArgInfo.getIndirectAlign() > Alignment)
+              NeedsAggCopy = true;
+          }
+        }
+        if (NeedsAggCopy) {
+          // Create an aligned temporary, and copy to it.
+          AI = CreateMemTemp(I->Ty);
+          if (ArgInfo.getIndirectAlign() > AI->getAlignment())
+            AI->setAlignment(ArgInfo.getIndirectAlign());
+          Args.push_back(AI);
+          EmitAggregateCopy(AI, RV.getAggregateAddr(), I->Ty,
+                            RV.isVolatileQualified());
+        } else {
+          // Skip the extra memcpy call.
+          Args.push_back(RV.getAggregateAddr());
+        }
       }
       break;
     }
