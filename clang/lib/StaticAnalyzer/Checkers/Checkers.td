@@ -168,10 +168,6 @@ def ReturnUndefChecker : Checker<"UndefReturn">,
 
 let ParentPackage = CplusplusExperimental in {
 
-def CStringChecker : Checker<"CString">,
-  HelpText<"Check calls to functions in <string.h>">,
-  DescFile<"CStringChecker.cpp">;
-
 def IteratorsChecker : Checker<"Iterators">,
   HelpText<"Check improper uses of STL vector iterators">,
   DescFile<"IteratorsChecker.cpp">;
@@ -243,6 +239,10 @@ let ParentPackage = UnixExperimental in {
 def ChrootChecker : Checker<"Chroot">,
   HelpText<"Check improper use of chroot">,
   DescFile<"ChrootChecker.cpp">;
+
+def CStringChecker : Checker<"CString">,
+  HelpText<"Check calls to functions in <string.h>">,
+  DescFile<"CStringChecker.cpp">;
 
 def MallocChecker : Checker<"Malloc">,
   HelpText<"Check for potential memory leaks, double free, and use-after-free problems">,
