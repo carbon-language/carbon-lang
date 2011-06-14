@@ -138,6 +138,20 @@ define <2 x i64> @vpaddlQu32(<4 x i32>* %A) nounwind {
 	ret <2 x i64> %tmp2
 }
 
+; Test AddCombine optimization that generates a vpaddl.s
+define void @addCombineToVPADDL() nounwind ssp {
+; CHECK: vpaddl.s8
+  %cbcr = alloca <16 x i8>, align 16
+  %X = alloca <8 x i8>, align 8
+  %tmp = load <16 x i8>* %cbcr
+  %tmp1 = shufflevector <16 x i8> %tmp, <16 x i8> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  %tmp2 = load <16 x i8>* %cbcr
+  %tmp3 = shufflevector <16 x i8> %tmp2, <16 x i8> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  %add = add <8 x i8> %tmp3, %tmp1
+  store <8 x i8> %add, <8 x i8>* %X, align 8
+  ret void
+}
+
 declare <4 x i16> @llvm.arm.neon.vpaddls.v4i16.v8i8(<8 x i8>) nounwind readnone
 declare <2 x i32> @llvm.arm.neon.vpaddls.v2i32.v4i16(<4 x i16>) nounwind readnone
 declare <1 x i64> @llvm.arm.neon.vpaddls.v1i64.v2i32(<2 x i32>) nounwind readnone

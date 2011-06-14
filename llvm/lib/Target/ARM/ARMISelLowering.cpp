@@ -5523,12 +5523,112 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
   return SDValue();
 }
 
+// AddCombineToVPADDL- For pair-wise add on neon, use the vpaddl instruction 
+// (only after legalization).
+static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const ARMSubtarget *Subtarget) {
+
+  // Only perform optimization if after legalize, and if NEON is available. We
+  // also expected both operands to be BUILD_VECTORs.
+  if (DCI.isBeforeLegalize() || !Subtarget->hasNEON()
+      || N0.getOpcode() != ISD::BUILD_VECTOR
+      || N1.getOpcode() != ISD::BUILD_VECTOR)
+    return SDValue();
+
+  // Check output type since VPADDL operand elements can only be 8, 16, or 32.
+  EVT VT = N->getValueType(0);
+  if (!VT.isInteger() || VT.getVectorElementType() == MVT::i64)
+    return SDValue();
+
+  // Check that the vector operands are of the right form.
+  // N0 and N1 are BUILD_VECTOR nodes with N number of EXTRACT_VECTOR
+  // operands, where N is the size of the formed vector.
+  // Each EXTRACT_VECTOR should have the same input vector and odd or even
+  // index such that we have a pair wise add pattern.
+  SDNode *V = 0;
+  SDValue Vec;
+  unsigned nextIndex = 0;
+
+  // Grab the vector that all EXTRACT_VECTOR nodes should be referencing.
+  if (N0->getOperand(0)->getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+    Vec = N0->getOperand(0)->getOperand(0);
+    V = Vec.getNode();
+  } else
+    return SDValue();
+
+  // For each operands to the ADD which are BUILD_VECTORs, 
+  // check to see if each of their operands are an EXTRACT_VECTOR with
+  // the same vector and appropriate index.
+  for (unsigned i = 0, e = N0->getNumOperands(); i != e; ++i) {
+    if (N0->getOperand(i)->getOpcode() == ISD::EXTRACT_VECTOR_ELT
+        && N1->getOperand(i)->getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+      
+      SDValue ExtVec0 = N0->getOperand(i);
+      SDValue ExtVec1 = N1->getOperand(i);
+      
+      // First operand is the vector, verify its the same.
+      if (V != ExtVec0->getOperand(0).getNode() ||
+          V != ExtVec1->getOperand(0).getNode())
+        return SDValue();
+      
+      // Second is the constant, verify its correct.
+      ConstantSDNode *C0 = dyn_cast<ConstantSDNode>(ExtVec0->getOperand(1));
+      ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(ExtVec1->getOperand(1));
+      
+      // For the constant, we want to see all the even or all the odd.
+      if (!C0 || !C1 || C0->getZExtValue() != nextIndex
+          || C1->getZExtValue() != nextIndex+1)
+        return SDValue();
+
+      // Increment index.
+      nextIndex+=2;
+    } else 
+      return SDValue();
+  }
+
+  // Create VPADDL node.
+  SelectionDAG &DAG = DCI.DAG;
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  DebugLoc DL = N->getDebugLoc();
+
+  // Build operand list.
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(DAG.getConstant(Intrinsic::arm_neon_vpaddls,
+                                TLI.getPointerTy()));
+
+  // Input is the vector.
+  Ops.push_back(Vec);
+  
+  // Get widened type and narrowed type.
+  MVT widenType;
+  unsigned numElem = VT.getVectorNumElements();
+  switch (VT.getVectorElementType().getSimpleVT().SimpleTy) {
+    case MVT::i8: widenType = MVT::getVectorVT(MVT::i16, numElem); break;
+    case MVT::i16: widenType = MVT::getVectorVT(MVT::i32, numElem); break;
+    case MVT::i32: widenType = MVT::getVectorVT(MVT::i64, numElem); break;
+    default:
+      assert(0 && "Invalid vector element type for padd optimization.");
+  }
+
+  SDValue tmp = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, N->getDebugLoc(),
+                            widenType, &Ops[0], Ops.size());
+  return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), VT, tmp);
+}
+
 /// PerformADDCombineWithOperands - Try DAG combinations for an ADD with
 /// operands N0 and N1.  This is a helper for PerformADDCombine that is
 /// called with the default operands, and if that fails, with commuted
 /// operands.
 static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
-                                         TargetLowering::DAGCombinerInfo &DCI) {
+                                          TargetLowering::DAGCombinerInfo &DCI,
+                                          const ARMSubtarget *Subtarget){
+
+  // Attempt to create vpaddl for this add.
+  SDValue Result = AddCombineToVPADDL(N, N0, N1, DCI, Subtarget);
+  if (Result.getNode())
+    return Result;
+  
   // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
   if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N0, N1, DCI);
@@ -5540,17 +5640,18 @@ static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
 /// PerformADDCombine - Target-specific dag combine xforms for ISD::ADD.
 ///
 static SDValue PerformADDCombine(SDNode *N,
-                                 TargetLowering::DAGCombinerInfo &DCI) {
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const ARMSubtarget *Subtarget) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
 
   // First try with the default operand order.
-  SDValue Result = PerformADDCombineWithOperands(N, N0, N1, DCI);
+  SDValue Result = PerformADDCombineWithOperands(N, N0, N1, DCI, Subtarget);
   if (Result.getNode())
     return Result;
 
   // If that didn't work, try again with the operands commuted.
-  return PerformADDCombineWithOperands(N, N1, N0, DCI);
+  return PerformADDCombineWithOperands(N, N1, N0, DCI, Subtarget);
 }
 
 /// PerformSUBCombine - Target-specific dag combine xforms for ISD::SUB.
@@ -6755,7 +6856,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
                                              DAGCombinerInfo &DCI) const {
   switch (N->getOpcode()) {
   default: break;
-  case ISD::ADD:        return PerformADDCombine(N, DCI);
+  case ISD::ADD:        return PerformADDCombine(N, DCI, Subtarget);
   case ISD::SUB:        return PerformSUBCombine(N, DCI);
   case ISD::MUL:        return PerformMULCombine(N, DCI, Subtarget);
   case ISD::OR:         return PerformORCombine(N, DCI, Subtarget);
