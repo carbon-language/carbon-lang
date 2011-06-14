@@ -1244,7 +1244,7 @@ CommandObjectMultiwordThread::CommandObjectMultiwordThread (CommandInterpreter &
     LoadSubCommand ("step-out",   CommandObjectSP (new CommandObjectThreadStepWithTypeAndScope (
                                                     interpreter,
                                                     "thread step-out",
-                                                    "Finish executing the current fucntion and return to its call site in specified thread (current thread, if none specified).",
+                                                    "Finish executing the current function and return to its call site in specified thread (current thread, if none specified).",
                                                     NULL,
                                                     eFlagProcessMustBeLaunched | eFlagProcessMustBePaused,
                                                     eStepTypeOut,
