@@ -23,6 +23,7 @@
 #include "llvm/Operator.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1543,40 +1544,7 @@ enum {
   DarwinBCHeaderSize = 5*4
 };
 
-/// isARMTriplet - Return true if the triplet looks like:
-/// arm-*, thumb-*, armv[0-9]-*, thumbv[0-9]-*, armv5te-*, or armv6t2-*.
-static bool isARMTriplet(const std::string &TT) {
-  size_t Pos = 0;
-  size_t Size = TT.size();
-  if (Size >= 6 &&
-      TT[0] == 't' && TT[1] == 'h' && TT[2] == 'u' &&
-      TT[3] == 'm' && TT[4] == 'b')
-    Pos = 5;
-  else if (Size >= 4 && TT[0] == 'a' && TT[1] == 'r' && TT[2] == 'm')
-    Pos = 3;
-  else
-    return false;
-
-  if (TT[Pos] == '-')
-    return true;
-  else if (TT[Pos] == 'v') {
-    if (Size >= Pos+4 &&
-        TT[Pos+1] == '6' && TT[Pos+2] == 't' && TT[Pos+3] == '2')
-      return true;
-    else if (Size >= Pos+4 &&
-             TT[Pos+1] == '5' && TT[Pos+2] == 't' && TT[Pos+3] == 'e')
-      return true;
-  } else
-    return false;
-  while (++Pos < Size && TT[Pos] != '-') {
-    if (!isdigit(TT[Pos]))
-      return false;
-  }
-  return true;
-}
-
-static void EmitDarwinBCHeader(BitstreamWriter &Stream,
-                               const std::string &TT) {
+static void EmitDarwinBCHeader(BitstreamWriter &Stream, const Triple &TT) {
   unsigned CPUType = ~0U;
 
   // Match x86_64-*, i[3-9]86-*, powerpc-*, powerpc64-*, arm-*, thumb-*,
@@ -1590,16 +1558,16 @@ static void EmitDarwinBCHeader(BitstreamWriter &Stream,
     DARWIN_CPU_TYPE_POWERPC    = 18
   };
 
-  if (TT.find("x86_64-") == 0)
+  Triple::ArchType Arch = TT.getArch();
+  if (Arch == Triple::x86_64)
     CPUType = DARWIN_CPU_TYPE_X86 | DARWIN_CPU_ARCH_ABI64;
-  else if (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
-           TT[4] == '-' && TT[1] - '3' < 6)
+  else if (Arch == Triple::x86)
     CPUType = DARWIN_CPU_TYPE_X86;
-  else if (TT.find("powerpc-") == 0)
+  else if (Arch == Triple::ppc)
     CPUType = DARWIN_CPU_TYPE_POWERPC;
-  else if (TT.find("powerpc64-") == 0)
+  else if (Arch == Triple::ppc64)
     CPUType = DARWIN_CPU_TYPE_POWERPC | DARWIN_CPU_ARCH_ABI64;
-  else if (isARMTriplet(TT))
+  else if (Arch == Triple::arm || Arch == Triple::thumb)
     CPUType = DARWIN_CPU_TYPE_ARM;
 
   // Traditional Bitcode starts after header.
@@ -1645,11 +1613,9 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
 void llvm::WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream) {
   // If this is darwin or another generic macho target, emit a file header and
   // trailer if needed.
-  bool isMacho =
-    M->getTargetTriple().find("-darwin") != std::string::npos ||
-    M->getTargetTriple().find("-macho") != std::string::npos;
-  if (isMacho)
-    EmitDarwinBCHeader(Stream, M->getTargetTriple());
+  Triple TT(M->getTargetTriple());
+  if (TT.isOSDarwin())
+    EmitDarwinBCHeader(Stream, TT);
 
   // Emit the file header.
   Stream.Emit((unsigned)'B', 8);
@@ -1662,6 +1628,6 @@ void llvm::WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream) {
   // Emit the module.
   WriteModule(M, Stream);
 
-  if (isMacho)
+  if (TT.isOSDarwin())
     EmitDarwinBCTrailer(Stream, Stream.getBuffer().size());
 }
