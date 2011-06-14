@@ -351,8 +351,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       llvm::ConstantInt::get(Int32Ty, 0);
     Locality = (E->getNumArgs() > 2) ? EmitScalarExpr(E->getArg(2)) :
       llvm::ConstantInt::get(Int32Ty, 3);
+    Value *Data = llvm::ConstantInt::get(Int32Ty, 1);
     Value *F = CGM.getIntrinsic(Intrinsic::prefetch, 0, 0);
-    return RValue::get(Builder.CreateCall3(F, Address, RW, Locality));
+    return RValue::get(Builder.CreateCall4(F, Address, RW, Locality, Data));
   }
   case Builtin::BI__builtin_trap: {
     Value *F = CGM.getIntrinsic(Intrinsic::trap, 0, 0);
