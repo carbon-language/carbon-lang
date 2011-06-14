@@ -193,7 +193,7 @@ where options:
 and:
 args : specify a list of directory names to search for test modules named after
        Test*.py (test discovery)
-       if empty, search from the curret working directory, instead
+       if empty, search from the current working directory, instead
 """
 
     if verbose > 0:
