@@ -5,6 +5,10 @@ struct A {
 };
 
 void f(A *a) {
-  // CHECK: call void %
+  // CHECK: define {{.*}} @_Z1fP1A
+  // CHECK: load
+  // CHECK: load
+  // CHECK: [[CALLEE:%[a-zA-Z0-9.]*]] = load
+  // CHECK: call {{.*}} [[CALLEE]](
   a->~A();
 }

@@ -48,7 +48,7 @@ struct B {
 
 void f() {
   // Verify that we don't mark the copy constructor in this expression as elidable.
-  // CHECK: call void @_ZN6PR86831AC1ERKS0_
+  // CHECK: call {{.*}} @_ZN6PR86831AC1ERKS0_
   A a = (B().a);
 }
 

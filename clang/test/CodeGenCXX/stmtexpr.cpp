@@ -46,11 +46,11 @@ void foo3()
 
 void foo4()
 {
-// CHECK: call void @_ZN1AC1Ei
-// CHECK: call void @_ZN1AC1ERKS_
-// CHECK: call void @_ZN1AD1Ev
-// CHECK: call void @_ZN1BC1ERK1A
-// CHECK: call void @_ZN1AD1Ev
+// CHECK: call {{.*}} @_ZN1AC1Ei
+// CHECK: call {{.*}} @_ZN1AC1ERKS_
+// CHECK: call {{.*}} @_ZN1AD1Ev
+// CHECK: call {{.*}} @_ZN1BC1ERK1A
+// CHECK: call {{.*}} @_ZN1AD1Ev
   const B &b = ({ A a(1); a; });
   if (b.i != 1)
     abort();

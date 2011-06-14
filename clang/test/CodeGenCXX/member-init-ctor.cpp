@@ -7,7 +7,7 @@ struct S {
 
 S s;
 
-// CHECK: define{{.*}} void @_ZN1SC2Ev(
+// CHECK: define {{.*}} @_ZN1SC2Ev(
 // CHECK-NOT }
 // CHECK: call {{.*}} @_Z1bv()
 // CHECK-NOT }

@@ -7,6 +7,6 @@ struct X
 
 X<int> x;
 // CHECK: define internal void @__cxx_global_var_init()
-// CHECK: call void @_ZN1XIiEC1Ev
-// CHECK: define linkonce_odr void @_ZN1XIiEC1Ev
-// CHECK: define linkonce_odr void @_ZN1XIiEC2Ev
+// CHECK: call {{.*}} @_ZN1XIiEC1Ev
+// CHECK: define linkonce_odr {{.*}} @_ZN1XIiEC1Ev
+// CHECK: define linkonce_odr {{.*}} @_ZN1XIiEC2Ev
