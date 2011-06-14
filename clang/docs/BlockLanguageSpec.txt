@@ -151,7 +151,7 @@ For example, given class Foo with member function fighter(void):
 ...a Block that used foo would import the variables as const variations:
        const Foo block_foo = foo;	// const copy constructor
        const Foo &block_fooRef = fooRef;
-       const Foo *block_fooPtr = fooPtr;
+       Foo *const block_fooPtr = fooPtr;
 
 Stack-local objects are copied into a Block via a copy const constructor.  If no such constructor exists, it is considered an error to reference such objects from within the Block compound statements. A destructor is run as control leaves the compound statement that contains the Block literal expression.
 
