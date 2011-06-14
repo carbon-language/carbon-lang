@@ -180,7 +180,7 @@ template <class T, class Alloc>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class, class> struct __list_node;
+template <class _Tp, class _VoidPtr> struct __list_node;
 
 template <class _Tp, class _VoidPtr>
 struct __list_node_base
@@ -209,9 +209,9 @@ struct __list_node
     _Tp __value_;
 };
 
-template <class, class> class list;
-template <class, class> class __list_imp;
-template <class, class> class __list_const_iterator;
+template <class _Tp, class _Alloc> class list;
+template <class _Tp, class _Alloc> class __list_imp;
+template <class _Tp, class _VoidPtr> class __list_const_iterator;
 
 template <class _Tp, class _VoidPtr>
 class _LIBCPP_VISIBLE __list_iterator

@@ -2507,7 +2507,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 operator>=(const unique_ptr<_T1, _D1>& __x, const unique_ptr<_T2, _D2>& __y) {return !(__x < __y);}
 
-template <class> struct hash;
+template <class _Tp> struct hash;
 
 template<class _Tp>
 struct _LIBCPP_VISIBLE hash<_Tp*>
@@ -3965,7 +3965,7 @@ void declare_reachable(void* __p);
 void declare_no_pointers(char* __p, size_t __n);
 void undeclare_no_pointers(char* __p, size_t __n);
 pointer_safety get_pointer_safety() _NOEXCEPT;
-void* __undeclare_reachable(void*);
+void* __undeclare_reachable(void* __p);
 
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -3975,7 +3975,7 @@ undeclare_reachable(_Tp* __p)
     return static_cast<_Tp*>(__undeclare_reachable(__p));
 }
 
-void* align(size_t, size_t, void*&, size_t&);
+void* align(size_t __align, size_t __sz, void*& __ptr, size_t& __space);
 
 _LIBCPP_END_NAMESPACE_STD
 

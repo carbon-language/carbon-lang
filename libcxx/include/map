@@ -524,9 +524,11 @@ public:
     }
 };
 
-template <class, class, class, class> class map;
-template <class, class, class, class> class multimap;
-template <class> class __map_const_iterator;
+template <class _Key, class _Tp, class _Compare, class _Allocator>
+    class map;
+template <class _Key, class _Tp, class _Compare, class _Allocator>
+    class multimap;
+template <class _TreeIterator> class __map_const_iterator;
 
 template <class _TreeIterator>
 class _LIBCPP_VISIBLE __map_iterator

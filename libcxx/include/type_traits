@@ -1666,7 +1666,7 @@ struct __member_pointer_traits
 
 // result_of
 
-template <class> class result_of;
+template <class _Callable> class result_of;
 
 template <class _Fn, bool, bool>
 class __result_of

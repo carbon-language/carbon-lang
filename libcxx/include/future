@@ -967,9 +967,8 @@ __async_assoc_state<void, _F>::__on_zero_shared() _NOEXCEPT
     base::__on_zero_shared();
 }
 
-template <class> class promise;
-template <class> class shared_future;
-template <class> class atomic_future;
+template <class _R> class promise;
+template <class _R> class shared_future;
 
 // future
 
@@ -1000,7 +999,6 @@ class _LIBCPP_VISIBLE future
 
     template <class> friend class promise;
     template <class> friend class shared_future;
-    template <class> friend class atomic_future;
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _R1, class _F>
@@ -1103,7 +1101,6 @@ class _LIBCPP_VISIBLE future<_R&>
 
     template <class> friend class promise;
     template <class> friend class shared_future;
-    template <class> friend class atomic_future;
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _R1, class _F>
@@ -1201,7 +1198,6 @@ class _LIBCPP_VISIBLE future<void>
 
     template <class> friend class promise;
     template <class> friend class shared_future;
-    template <class> friend class atomic_future;
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _R1, class _F>
@@ -1273,7 +1269,7 @@ swap(future<_R>& __x, future<_R>& __y)
 
 // promise<R>
 
-template <class> class packaged_task;
+template <class _Callable> class packaged_task;
 
 template <class _R>
 class _LIBCPP_VISIBLE promise
@@ -1728,7 +1724,7 @@ __packaged_task_func<_F, _Alloc, _R(_ArgTypes...)>::operator()(_ArgTypes&& ... _
     return __invoke(__f_.first(), _STD::forward<_ArgTypes>(__arg)...);
 }
 
-template <class> class __packaged_task_function;
+template <class _Callable> class __packaged_task_function;
 
 template<class _R, class ..._ArgTypes>
 class __packaged_task_function<_R(_ArgTypes...)>

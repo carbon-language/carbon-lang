@@ -178,7 +178,7 @@ template <class T, class Allocator>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class, class> struct __forward_list_node;
+template <class _Tp, class _VoidPtr> struct __forward_list_node;
 
 template <class _NodePtr>
 struct __forward_begin_node
@@ -208,8 +208,8 @@ struct __forward_list_node
     value_type __value_;
 };
 
-template<class, class> class forward_list;
-template<class> class __forward_list_const_iterator;
+template<class _Tp, class _Alloc> class forward_list;
+template<class _NodeConstPtr> class __forward_list_const_iterator;
 
 template <class _NodePtr>
 class _LIBCPP_VISIBLE __forward_list_iterator

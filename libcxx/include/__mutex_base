@@ -21,8 +21,8 @@
 #ifdef _LIBCPP_SHARED_LOCK
 
 namespace ting {
-template <class> class shared_lock;
-template <class> class upgrade_lock;
+template <class _Mutex> class shared_lock;
+template <class _Mutex> class upgrade_lock;
 }
 
 #endif  // _LIBCPP_SHARED_LOCK

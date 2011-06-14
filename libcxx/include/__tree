@@ -21,13 +21,19 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class, class, class> class __tree;
-template <class, class, class> class _LIBCPP_VISIBLE __tree_iterator;
-template <class, class, class> class _LIBCPP_VISIBLE __tree_const_iterator;
-template <class, class, class, class> class _LIBCPP_VISIBLE map;
-template <class, class, class, class> class _LIBCPP_VISIBLE multimap;
-template <class, class, class> class _LIBCPP_VISIBLE set;
-template <class, class, class> class _LIBCPP_VISIBLE multiset;
+template <class _Tp, class _Compare, class _Allocator> class __tree;
+template <class _Tp, class _NodePtr, class _DiffType>
+    class _LIBCPP_VISIBLE __tree_iterator;
+template <class _Tp, class _ConstNodePtr, class _DiffType>
+    class _LIBCPP_VISIBLE __tree_const_iterator;
+template <class _Key, class _Tp, class _Compare, class _Allocator>
+    class _LIBCPP_VISIBLE map;
+template <class _Key, class _Tp, class _Compare, class _Allocator>
+    class _LIBCPP_VISIBLE multimap;
+template <class _Key, class _Compare, class _Allocator>
+    class _LIBCPP_VISIBLE set;
+template <class _Key, class _Compare, class _Allocator>
+    class _LIBCPP_VISIBLE multiset;
 
 /*
 
@@ -494,7 +500,7 @@ __tree_remove(_NodePtr __root, _NodePtr __z) _NOEXCEPT
     }
 }
 
-template <class> class __map_node_destructor;
+template <class _Allocator> class __map_node_destructor;
 
 template <class _Allocator>
 class __tree_node_destructor
@@ -606,8 +612,8 @@ public:
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 };
 
-template <class> class __map_iterator;
-template <class> class __map_const_iterator;
+template <class _TreeIterator> class __map_iterator;
+template <class _TreeIterator> class __map_const_iterator;
 
 template <class _Tp, class _NodePtr, class _DiffType>
 class _LIBCPP_VISIBLE __tree_iterator

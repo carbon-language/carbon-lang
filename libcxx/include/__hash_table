@@ -23,7 +23,7 @@
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 _LIBCPP_VISIBLE
-size_t __next_prime(size_t);
+size_t __next_prime(size_t __n);
 
 template <class _NodePtr>
 struct __hash_node_base
@@ -54,11 +54,12 @@ struct __hash_node
     value_type __value_;
 };
 
-template <class, class, class, class> class __hash_table;
-template <class> class __hash_const_iterator;
-template <class> class __hash_map_iterator;
-template <class> class __hash_map_const_iterator;
-template <class, class, class, class, class> class _LIBCPP_VISIBLE unordered_map;
+template <class _Tp, class _Hash, class _Equal, class _Alloc> class __hash_table;
+template <class _ConstNodePtr> class __hash_const_iterator;
+template <class _HashIterator> class __hash_map_iterator;
+template <class _HashIterator> class __hash_map_const_iterator;
+template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
+    class _LIBCPP_VISIBLE unordered_map;
 
 template <class _NodePtr>
 class _LIBCPP_VISIBLE __hash_iterator
@@ -199,7 +200,7 @@ private:
     template <class, class, class, class, class> friend class _LIBCPP_VISIBLE unordered_multimap;
 };
 
-template <class> class _LIBCPP_VISIBLE __hash_const_local_iterator;
+template <class _ConstNodePtr> class _LIBCPP_VISIBLE __hash_const_local_iterator;
 
 template <class _NodePtr>
 class _LIBCPP_VISIBLE __hash_local_iterator
@@ -411,7 +412,7 @@ public:
     }
 };
 
-template <class> class __hash_map_node_destructor;
+template <class _Alloc> class __hash_map_node_destructor;
 
 template <class _Alloc>
 class __hash_node_destructor

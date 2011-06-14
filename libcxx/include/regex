@@ -2410,7 +2410,7 @@ __exit:
     }
 }
 
-template <class, class> class __lookahead;
+template <class _CharT, class _Traits> class __lookahead;
 
 template <class _CharT, class _Traits = regex_traits<_CharT> >
 class _LIBCPP_VISIBLE basic_regex

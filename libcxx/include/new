@@ -89,23 +89,23 @@ _LIBCPP_VISIBLE new_handler get_new_handler() _NOEXCEPT;
 
 }  // std
 
-_LIBCPP_VISIBLE void* operator new(std::size_t)
+_LIBCPP_VISIBLE void* operator new(std::size_t __sz)
 #if !__has_feature(cxx_noexcept)
     throw(std::bad_alloc)
 #endif
 ;
-_LIBCPP_VISIBLE void* operator new(std::size_t, const std::nothrow_t&) _NOEXCEPT;
-_LIBCPP_VISIBLE void  operator delete(void*) _NOEXCEPT;
-_LIBCPP_VISIBLE void  operator delete(void*, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_VISIBLE void* operator new(std::size_t __sz, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_VISIBLE void  operator delete(void* __p) _NOEXCEPT;
+_LIBCPP_VISIBLE void  operator delete(void* __p, const std::nothrow_t&) _NOEXCEPT;
 
-_LIBCPP_VISIBLE void* operator new[](std::size_t)
+_LIBCPP_VISIBLE void* operator new[](std::size_t __sz)
 #if !__has_feature(cxx_noexcept)
     throw(std::bad_alloc)
 #endif
 ;
-_LIBCPP_VISIBLE void* operator new[](std::size_t, const std::nothrow_t&) _NOEXCEPT;
-_LIBCPP_VISIBLE void  operator delete[](void*) _NOEXCEPT;
-_LIBCPP_VISIBLE void  operator delete[](void*, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_VISIBLE void* operator new[](std::size_t __sz, const std::nothrow_t&) _NOEXCEPT;
+_LIBCPP_VISIBLE void  operator delete[](void* __p) _NOEXCEPT;
+_LIBCPP_VISIBLE void  operator delete[](void* __p, const std::nothrow_t&) _NOEXCEPT;
 
 _LIBCPP_INLINE_VISIBILITY inline void* operator new  (std::size_t, void* __p) _NOEXCEPT {return __p;}
 _LIBCPP_INLINE_VISIBILITY inline void* operator new[](std::size_t, void* __p) _NOEXCEPT {return __p;}
