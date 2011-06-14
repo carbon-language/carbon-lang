@@ -734,15 +734,11 @@ static bool hasLifetimeMarkers(AllocaInst *AI) {
   if (AI->getType() == Int8PtrTy)
     return isUsedByLifetimeMarker(AI);
 
-  // Do a scan to find all the bitcasts or GEPs to i8*.
+  // Do a scan to find all the casts to i8*.
   for (Value::use_iterator I = AI->use_begin(), E = AI->use_end(); I != E;
        ++I) {
     if (I->getType() != Int8PtrTy) continue;
-    if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*I)) {
-      if (!GEPI->hasAllZeroIndices()) continue;
-    } else if (!isa<BitCastInst>(*I)) {
-      continue;
-    }
+    if (I->stripPointerCasts() != AI) continue;
     if (isUsedByLifetimeMarker(*I))
       return true;
   }
