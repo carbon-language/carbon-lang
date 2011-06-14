@@ -70,10 +70,10 @@ public:
     // Return 0 when lhs == rhs, 1 if lhs > rhs, or -1 if lhs < rhs.
     virtual int
     CompareHistoryEvents (const HistoryEvent lhs, 
-                          const HistoryEvent rhs);
+                          const HistoryEvent rhs) = 0;
     
     virtual bool
-    IsCurrentHistoryEvent (const HistoryEvent event);
+    IsCurrentHistoryEvent (const HistoryEvent event) = 0;
 
 private:
     typedef std::stack<HistoryEvent> collection;
