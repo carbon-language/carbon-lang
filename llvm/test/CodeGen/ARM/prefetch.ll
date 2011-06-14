@@ -64,3 +64,14 @@ entry:
 }
 
 declare void @llvm.prefetch(i8*, i32, i32, i32) nounwind
+
+define void @t5(i8* %ptr) nounwind  {
+entry:
+; ARM: t5:
+; ARM: pli [r0]
+
+; THUMB2: t5:
+; THUMB2: pli [r0]
+  tail call void @llvm.prefetch( i8* %ptr, i32 0, i32 3, i32 0 )
+  ret void
+}
