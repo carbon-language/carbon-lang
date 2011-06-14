@@ -69,17 +69,6 @@ next:
 }
 
 
-define <1 x i512> @test_1xi512(<1 x i512> %x, <1 x i512>* %b) {
-  %bb = load <1 x i512>* %b
-  %tt = xor <1 x i512> %x, %bb
-  store <1 x i512> %tt, <1 x i512>* %b
-  br label %next
-
-next:
-  ret <1 x i512> %tt
-}
-
-
 define <2 x i8> @test_2xi8(<2 x i8> %x, <2 x i8>* %b) {
   %bb = load <2 x i8>* %b
   %tt = xor <2 x i8> %x, %bb
@@ -143,17 +132,6 @@ define <2 x i256> @test_2xi256(<2 x i256> %x, <2 x i256>* %b) {
 
 next:
   ret <2 x i256> %tt
-}
-
-
-define <2 x i512> @test_2xi512(<2 x i512> %x, <2 x i512>* %b) {
-  %bb = load <2 x i512>* %b
-  %tt = xor <2 x i512> %x, %bb
-  store <2 x i512> %tt, <2 x i512>* %b
-  br label %next
-
-next:
-  ret <2 x i512> %tt
 }
 
 
@@ -223,17 +201,6 @@ next:
 }
 
 
-define <3 x i512> @test_3xi512(<3 x i512> %x, <3 x i512>* %b) {
-  %bb = load <3 x i512>* %b
-  %tt = xor <3 x i512> %x, %bb
-  store <3 x i512> %tt, <3 x i512>* %b
-  br label %next
-
-next:
-  ret <3 x i512> %tt
-}
-
-
 define <4 x i8> @test_4xi8(<4 x i8> %x, <4 x i8>* %b) {
   %bb = load <4 x i8>* %b
   %tt = xor <4 x i8> %x, %bb
@@ -297,17 +264,6 @@ define <4 x i256> @test_4xi256(<4 x i256> %x, <4 x i256>* %b) {
 
 next:
   ret <4 x i256> %tt
-}
-
-
-define <4 x i512> @test_4xi512(<4 x i512> %x, <4 x i512>* %b) {
-  %bb = load <4 x i512>* %b
-  %tt = xor <4 x i512> %x, %bb
-  store <4 x i512> %tt, <4 x i512>* %b
-  br label %next
-
-next:
-  ret <4 x i512> %tt
 }
 
 
@@ -377,17 +333,6 @@ next:
 }
 
 
-define <5 x i512> @test_5xi512(<5 x i512> %x, <5 x i512>* %b) {
-  %bb = load <5 x i512>* %b
-  %tt = xor <5 x i512> %x, %bb
-  store <5 x i512> %tt, <5 x i512>* %b
-  br label %next
-
-next:
-  ret <5 x i512> %tt
-}
-
-
 define <6 x i8> @test_6xi8(<6 x i8> %x, <6 x i8>* %b) {
   %bb = load <6 x i8>* %b
   %tt = xor <6 x i8> %x, %bb
@@ -451,17 +396,6 @@ define <6 x i256> @test_6xi256(<6 x i256> %x, <6 x i256>* %b) {
 
 next:
   ret <6 x i256> %tt
-}
-
-
-define <6 x i512> @test_6xi512(<6 x i512> %x, <6 x i512>* %b) {
-  %bb = load <6 x i512>* %b
-  %tt = xor <6 x i512> %x, %bb
-  store <6 x i512> %tt, <6 x i512>* %b
-  br label %next
-
-next:
-  ret <6 x i512> %tt
 }
 
 
@@ -531,17 +465,6 @@ next:
 }
 
 
-define <7 x i512> @test_7xi512(<7 x i512> %x, <7 x i512>* %b) {
-  %bb = load <7 x i512>* %b
-  %tt = xor <7 x i512> %x, %bb
-  store <7 x i512> %tt, <7 x i512>* %b
-  br label %next
-
-next:
-  ret <7 x i512> %tt
-}
-
-
 define <8 x i8> @test_8xi8(<8 x i8> %x, <8 x i8>* %b) {
   %bb = load <8 x i8>* %b
   %tt = xor <8 x i8> %x, %bb
@@ -605,17 +528,6 @@ define <8 x i256> @test_8xi256(<8 x i256> %x, <8 x i256>* %b) {
 
 next:
   ret <8 x i256> %tt
-}
-
-
-define <8 x i512> @test_8xi512(<8 x i512> %x, <8 x i512>* %b) {
-  %bb = load <8 x i512>* %b
-  %tt = xor <8 x i512> %x, %bb
-  store <8 x i512> %tt, <8 x i512>* %b
-  br label %next
-
-next:
-  ret <8 x i512> %tt
 }
 
 
@@ -685,17 +597,6 @@ next:
 }
 
 
-define <9 x i512> @test_9xi512(<9 x i512> %x, <9 x i512>* %b) {
-  %bb = load <9 x i512>* %b
-  %tt = xor <9 x i512> %x, %bb
-  store <9 x i512> %tt, <9 x i512>* %b
-  br label %next
-
-next:
-  ret <9 x i512> %tt
-}
-
-
 define <10 x i8> @test_10xi8(<10 x i8> %x, <10 x i8>* %b) {
   %bb = load <10 x i8>* %b
   %tt = xor <10 x i8> %x, %bb
@@ -759,17 +660,6 @@ define <10 x i256> @test_10xi256(<10 x i256> %x, <10 x i256>* %b) {
 
 next:
   ret <10 x i256> %tt
-}
-
-
-define <10 x i512> @test_10xi512(<10 x i512> %x, <10 x i512>* %b) {
-  %bb = load <10 x i512>* %b
-  %tt = xor <10 x i512> %x, %bb
-  store <10 x i512> %tt, <10 x i512>* %b
-  br label %next
-
-next:
-  ret <10 x i512> %tt
 }
 
 
@@ -839,17 +729,6 @@ next:
 }
 
 
-define <11 x i512> @test_11xi512(<11 x i512> %x, <11 x i512>* %b) {
-  %bb = load <11 x i512>* %b
-  %tt = xor <11 x i512> %x, %bb
-  store <11 x i512> %tt, <11 x i512>* %b
-  br label %next
-
-next:
-  ret <11 x i512> %tt
-}
-
-
 define <12 x i8> @test_12xi8(<12 x i8> %x, <12 x i8>* %b) {
   %bb = load <12 x i8>* %b
   %tt = xor <12 x i8> %x, %bb
@@ -913,17 +792,6 @@ define <12 x i256> @test_12xi256(<12 x i256> %x, <12 x i256>* %b) {
 
 next:
   ret <12 x i256> %tt
-}
-
-
-define <12 x i512> @test_12xi512(<12 x i512> %x, <12 x i512>* %b) {
-  %bb = load <12 x i512>* %b
-  %tt = xor <12 x i512> %x, %bb
-  store <12 x i512> %tt, <12 x i512>* %b
-  br label %next
-
-next:
-  ret <12 x i512> %tt
 }
 
 
@@ -993,17 +861,6 @@ next:
 }
 
 
-define <13 x i512> @test_13xi512(<13 x i512> %x, <13 x i512>* %b) {
-  %bb = load <13 x i512>* %b
-  %tt = xor <13 x i512> %x, %bb
-  store <13 x i512> %tt, <13 x i512>* %b
-  br label %next
-
-next:
-  ret <13 x i512> %tt
-}
-
-
 define <14 x i8> @test_14xi8(<14 x i8> %x, <14 x i8>* %b) {
   %bb = load <14 x i8>* %b
   %tt = xor <14 x i8> %x, %bb
@@ -1067,17 +924,6 @@ define <14 x i256> @test_14xi256(<14 x i256> %x, <14 x i256>* %b) {
 
 next:
   ret <14 x i256> %tt
-}
-
-
-define <14 x i512> @test_14xi512(<14 x i512> %x, <14 x i512>* %b) {
-  %bb = load <14 x i512>* %b
-  %tt = xor <14 x i512> %x, %bb
-  store <14 x i512> %tt, <14 x i512>* %b
-  br label %next
-
-next:
-  ret <14 x i512> %tt
 }
 
 
@@ -1147,17 +993,6 @@ next:
 }
 
 
-define <15 x i512> @test_15xi512(<15 x i512> %x, <15 x i512>* %b) {
-  %bb = load <15 x i512>* %b
-  %tt = xor <15 x i512> %x, %bb
-  store <15 x i512> %tt, <15 x i512>* %b
-  br label %next
-
-next:
-  ret <15 x i512> %tt
-}
-
-
 define <16 x i8> @test_16xi8(<16 x i8> %x, <16 x i8>* %b) {
   %bb = load <16 x i8>* %b
   %tt = xor <16 x i8> %x, %bb
@@ -1221,17 +1056,6 @@ define <16 x i256> @test_16xi256(<16 x i256> %x, <16 x i256>* %b) {
 
 next:
   ret <16 x i256> %tt
-}
-
-
-define <16 x i512> @test_16xi512(<16 x i512> %x, <16 x i512>* %b) {
-  %bb = load <16 x i512>* %b
-  %tt = xor <16 x i512> %x, %bb
-  store <16 x i512> %tt, <16 x i512>* %b
-  br label %next
-
-next:
-  ret <16 x i512> %tt
 }
 
 
@@ -1301,17 +1125,6 @@ next:
 }
 
 
-define <17 x i512> @test_17xi512(<17 x i512> %x, <17 x i512>* %b) {
-  %bb = load <17 x i512>* %b
-  %tt = xor <17 x i512> %x, %bb
-  store <17 x i512> %tt, <17 x i512>* %b
-  br label %next
-
-next:
-  ret <17 x i512> %tt
-}
-
-
 define <18 x i8> @test_18xi8(<18 x i8> %x, <18 x i8>* %b) {
   %bb = load <18 x i8>* %b
   %tt = xor <18 x i8> %x, %bb
@@ -1375,17 +1188,6 @@ define <18 x i256> @test_18xi256(<18 x i256> %x, <18 x i256>* %b) {
 
 next:
   ret <18 x i256> %tt
-}
-
-
-define <18 x i512> @test_18xi512(<18 x i512> %x, <18 x i512>* %b) {
-  %bb = load <18 x i512>* %b
-  %tt = xor <18 x i512> %x, %bb
-  store <18 x i512> %tt, <18 x i512>* %b
-  br label %next
-
-next:
-  ret <18 x i512> %tt
 }
 
 
@@ -1454,14 +1256,4 @@ next:
   ret <19 x i256> %tt
 }
 
-
-define <19 x i512> @test_19xi512(<19 x i512> %x, <19 x i512>* %b) {
-  %bb = load <19 x i512>* %b
-  %tt = xor <19 x i512> %x, %bb
-  store <19 x i512> %tt, <19 x i512>* %b
-  br label %next
-
-next:
-  ret <19 x i512> %tt
-}
 
