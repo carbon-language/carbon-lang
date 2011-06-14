@@ -9818,12 +9818,24 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
       << OrigExpr->getType() << E->getSourceRange());
   }
 
-  // FIXME: Check that type is complete/non-abstract
+  if (!TInfo->getType()->isDependentType()) {
+    if (RequireCompleteType(TInfo->getTypeLoc().getBeginLoc(), TInfo->getType(),
+          PDiag(diag::err_second_parameter_to_va_arg_incomplete)
+          << TInfo->getTypeLoc().getSourceRange()))
+      return ExprError();
 
-  if (!TInfo->getType()->isDependentType() && !TInfo->getType()->isPODType())
-    return ExprError(Diag(TInfo->getTypeLoc().getBeginLoc(),
-                         diag::warn_second_parameter_to_va_arg_not_pod)
-      << TInfo->getType() << TInfo->getTypeLoc().getSourceRange());
+    if (RequireNonAbstractType(TInfo->getTypeLoc().getBeginLoc(),
+          TInfo->getType(),
+          PDiag(diag::err_second_parameter_to_va_arg_abstract)
+          << TInfo->getTypeLoc().getSourceRange()))
+      return ExprError();
+
+    if (!TInfo->getType()->isPODType())
+      Diag(TInfo->getTypeLoc().getBeginLoc(),
+          diag::warn_second_parameter_to_va_arg_not_pod)
+        << TInfo->getType()
+        << TInfo->getTypeLoc().getSourceRange();
+  }
 
   QualType T = TInfo->getType().getNonLValueExprType(Context);
   return Owned(new (Context) VAArgExpr(BuiltinLoc, E, TInfo, RPLoc, T));

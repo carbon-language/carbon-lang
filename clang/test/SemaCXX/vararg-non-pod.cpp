@@ -101,3 +101,21 @@ void t6(Foo somearg, ... ) {
   __builtin_va_start(list, somearg);
 }
 
+void t7(int n, ...) {
+  __builtin_va_list list;
+  __builtin_va_start(list, n);
+  (void)__builtin_va_arg(list, C); // expected-warning{{second argument to 'va_arg' is of non-POD type 'C'}}
+  __builtin_va_end(list);
+}
+
+struct Abstract {
+  virtual void doit() = 0; // expected-note{{unimplemented pure virtual method}}
+};
+
+void t8(int n, ...) {
+  __builtin_va_list list;
+  __builtin_va_start(list, n);
+  (void)__builtin_va_arg(list, Abstract); // expected-error{{second argument to 'va_arg' is of abstract type 'Abstract'}}
+  __builtin_va_end(list);
+}
+

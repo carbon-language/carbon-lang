@@ -61,3 +61,9 @@ void f7(int a, ...) {
   __builtin_va_end(ap);
 }
 
+void f8(int a, ...) {
+  __builtin_va_list ap;
+  __builtin_va_start(ap, a);
+  (void)__builtin_va_arg(ap, void); // expected-error {{second argument to 'va_arg' is of incomplete type 'void'}}
+  __builtin_va_end(ap);
+}

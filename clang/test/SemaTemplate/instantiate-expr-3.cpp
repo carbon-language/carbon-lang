@@ -117,12 +117,3 @@ struct VaArg1 {
 
 template struct VaArg1<__builtin_va_list, int>;
 template struct VaArg1<int, int>; // expected-note{{instantiation}}
-
-struct VaArg2 {
-  virtual void f(int n, ...) {
-    __builtin_va_list va;
-    __builtin_va_start(va, n);
-    (void)__builtin_va_arg(va, VaArg2); // expected-error {{second argument to 'va_arg' is of non-POD type 'VaArg2'}}
-    __builtin_va_end(va);
-  }
-};
