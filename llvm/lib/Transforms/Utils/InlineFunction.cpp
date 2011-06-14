@@ -449,11 +449,10 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
       for (unsigned i = 2, e = Outer->getNumArgOperands(); i != e; ++i)
         NewSelector.push_back(Outer->getArgOperand(i));
 
-      CallInst *NewInner = CallInst::Create(Inner->getCalledValue(),
-                                            NewSelector.begin(),
-                                            NewSelector.end(),
-                                            "",
-                                            Inner);
+      CallInst *NewInner =
+        IRBuilder<>(Inner).CreateCall(Inner->getCalledValue(),
+                                      NewSelector.begin(),
+                                      NewSelector.end());
       // No need to copy attributes, calling convention, etc.
       NewInner->takeName(Inner);
       Inner->replaceAllUsesWith(NewInner);
@@ -703,7 +702,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
     ConstantInt::get(Type::getInt32Ty(Context), 1),
     ConstantInt::getFalse(Context) // isVolatile
   };
-  CallInst::Create(MemCpyFn, CallArgs, CallArgs+5, "", TheCall);
+  IRBuilder<>(TheCall).CreateCall(MemCpyFn, CallArgs, CallArgs+5);
   
   // Uses of the argument in the function should use our new alloca
   // instead.
@@ -920,13 +919,13 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
     Function *StackRestore=Intrinsic::getDeclaration(M,Intrinsic::stackrestore);
 
     // Insert the llvm.stacksave.
-    CallInst *SavedPtr = CallInst::Create(StackSave, "savedstack",
-                                          FirstNewBlock->begin());
+    CallInst *SavedPtr = IRBuilder<>(FirstNewBlock, FirstNewBlock->begin())
+      .CreateCall(StackSave, "savedstack");
 
     // Insert a call to llvm.stackrestore before any return instructions in the
     // inlined function.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
-      CallInst::Create(StackRestore, SavedPtr, "", Returns[i]);
+      IRBuilder<>(Returns[i]).CreateCall(StackRestore, SavedPtr);
     }
 
     // Count the number of StackRestore calls we insert.
@@ -938,7 +937,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
       for (Function::iterator BB = FirstNewBlock, E = Caller->end();
            BB != E; ++BB)
         if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-          CallInst::Create(StackRestore, SavedPtr, "", UI);
+          IRBuilder<>(UI).CreateCall(StackRestore, SavedPtr);
           ++NumStackRestores;
         }
     }
