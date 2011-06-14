@@ -722,7 +722,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
         // FIXME: If two or more of the paths are the same we needlessly open
         // the same file multiple times.
         if (stdin_path != NULL && stdin_path[0])
-            if (!DupDescriptor(stdin_path, STDIN_FILENO, O_RDONLY | O_CREAT))
+            if (!DupDescriptor(stdin_path, STDIN_FILENO, O_RDONLY))
                 exit(1);
 
         if (stdout_path != NULL && stdout_path[0])
@@ -730,7 +730,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
                 exit(1);
 
         if (stderr_path != NULL && stderr_path[0])
-            if (!DupDescriptor(stderr_path, STDOUT_FILENO, O_WRONLY | O_CREAT))
+            if (!DupDescriptor(stderr_path, STDERR_FILENO, O_WRONLY | O_CREAT))
                 exit(1);
 
         // Execute.  We should never return.
@@ -1263,12 +1263,12 @@ ProcessMonitor::Detach()
 bool
 ProcessMonitor::DupDescriptor(const char *path, int fd, int flags)
 {
-    int target_fd = open(path, flags);
+    int target_fd = open(path, flags, 0666);
 
     if (target_fd == -1)
         return false;
 
-    return (dup2(fd, target_fd) == -1) ? false : true;
+    return (dup2(target_fd, fd) == -1) ? false : true;
 }
 
 void
