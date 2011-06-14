@@ -660,7 +660,7 @@ void CWriter::printConstantArray(ConstantArray *CPA, bool Static) {
 
   if (isString) {
     Out << '\"';
-    // Keep track of whether the last number was a hexadecimal escape
+    // Keep track of whether the last number was a hexadecimal escape.
     bool LastWasHex = false;
 
     // Do not include the last character, which we know is null
