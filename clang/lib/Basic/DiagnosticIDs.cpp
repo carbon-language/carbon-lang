@@ -135,7 +135,7 @@ static const unsigned StaticDiagInfoSize =
   sizeof(StaticDiagInfo)/sizeof(StaticDiagInfo[0])-1;
 
 /// To be sorted before first use (since it's splitted among multiple files)
-static StaticDiagNameIndexRec StaticDiagNameIndex[] = {
+static const StaticDiagNameIndexRec StaticDiagNameIndex[] = {
 #define DIAG_NAME_INDEX(ENUM) { #ENUM, diag::ENUM, STR_SIZE(#ENUM, uint8_t) },
 #include "clang/Basic/DiagnosticIndexName.inc"
 #undef DIAG_NAME_INDEX
@@ -263,7 +263,7 @@ llvm::StringRef DiagnosticIDs::getName(unsigned DiagID) {
 
 /// getIdFromName - Given a diagnostic name, return its ID, or 0
 unsigned DiagnosticIDs::getIdFromName(llvm::StringRef Name) {
-  StaticDiagNameIndexRec *StaticDiagNameIndexEnd =
+  const StaticDiagNameIndexRec *StaticDiagNameIndexEnd =
     StaticDiagNameIndex + StaticDiagNameIndexSize;
   
   if (Name.empty()) { return diag::DIAG_UPPER_LIMIT; }
