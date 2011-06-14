@@ -830,9 +830,25 @@ void AsmWriterEmitter::EmitRegIsInRegClass(raw_ostream &O) {
   O << "}\n\n";
 }
 
+static unsigned CountNumOperands(StringRef AsmString) {
+  unsigned NumOps = 0;
+  std::pair<StringRef, StringRef> ASM = AsmString.split(' ');
+
+  while (!ASM.second.empty()) {
+    ++NumOps;
+    ASM = ASM.second.split(' ');
+  }
+
+  return NumOps;
+}
+
+
 void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   CodeGenTarget Target(Records);
   Record *AsmWriter = Target.getAsmWriter();
+
+  if (!AsmWriter->getValueAsBit("isMCAsmWriter"))
+    return;
 
   O << "\n#ifdef PRINT_ALIAS_INSTR\n";
   O << "#undef PRINT_ALIAS_INSTR\n\n";
@@ -841,9 +857,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   // Emit the method that prints the alias instruction.
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
-
-  bool isMC = AsmWriter->getValueAsBit("isMCAsmWriter");
-  const char *MachineInstrClassName = isMC ? "MCInst" : "MachineInstr";
 
   std::vector<Record*> AllInstAliases =
     Records.getAllDerivedDefinitions("InstAlias");
@@ -873,12 +886,15 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     for (std::vector<CodeGenInstAlias*>::iterator
            II = Aliases.begin(), IE = Aliases.end(); II != IE; ++II) {
       const CodeGenInstAlias *CGA = *II;
+      unsigned LastOpNo = CGA->ResultInstOperandIndex.size();
+
+      // Don't emit the alias if it has more operands than what it's aliasing.
+      if (LastOpNo < CountNumOperands(CGA->AsmString))
+        continue;
+
       IAPrinter *IAP = new IAPrinter(AWI, CGA->Result->getAsString(),
                                      CGA->AsmString);
-
       IAP->addReqFeatures(CGA->TheDef->getValueAsListOfDefs("Predicates"));
-
-      unsigned LastOpNo = CGA->ResultInstOperandIndex.size();
 
       std::string Cond;
       Cond = std::string("MI->getNumOperands() == ") + llvm::utostr(LastOpNo);
@@ -914,7 +930,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
             }
           } else {
             assert(Rec->isSubClassOf("Operand") && "Unexpected operand!");
-            // FIXME: We need to handle these situations.
+            // FIXME: We may need to handle these situations.
             delete IAP;
             IAP = 0;
             CantHandle = true;
@@ -952,7 +968,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   raw_string_ostream HeaderO(Header);
 
   HeaderO << "bool " << Target.getName() << ClassName
-          << "::printAliasInstr(const " << MachineInstrClassName
+          << "::printAliasInstr(const MCInst"
           << " *MI, raw_ostream &OS) {\n";
 
   std::string Cases;
@@ -995,7 +1011,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     CasesO.indent(4) << "return false;\n";
   }
 
-  if (CasesO.str().empty() || !isMC) {
+  if (CasesO.str().empty()) {
     O << HeaderO.str();
     O << "  return false;\n";
     O << "}\n\n";

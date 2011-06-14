@@ -232,10 +232,10 @@ cmovnzq %rbx, %rax
 
 // rdar://8407928
 // CHECK: inb	$127, %al
-// CHECK: inw	%dx
+// CHECK: inw	%dx, %ax
 // CHECK: outb	%al, $127
-// CHECK: outw	%dx
-// CHECK: inl	%dx
+// CHECK: outw	%ax, %dx
+// CHECK: inl	%dx, %eax
 inb	$0x7f
 inw	%dx
 outb	$0x7f
@@ -244,12 +244,12 @@ inl	%dx
 
 
 // PR8114
-// CHECK: outb	%dx
-// CHECK: outb	%dx
-// CHECK: outw	%dx
-// CHECK: outw	%dx
-// CHECK: outl	%dx
-// CHECK: outl	%dx
+// CHECK: outb	%al, %dx
+// CHECK: outb	%al, %dx
+// CHECK: outw	%ax, %dx
+// CHECK: outw	%ax, %dx
+// CHECK: outl	%eax, %dx
+// CHECK: outl	%eax, %dx
 
 out	%al, (%dx)
 outb	%al, (%dx)
@@ -258,12 +258,12 @@ outw	%ax, (%dx)
 out	%eax, (%dx)
 outl	%eax, (%dx)
 
-// CHECK: inb	%dx
-// CHECK: inb	%dx
-// CHECK: inw	%dx
-// CHECK: inw	%dx
-// CHECK: inl	%dx
-// CHECK: inl	%dx
+// CHECK: inb	%dx, %al
+// CHECK: inb	%dx, %al
+// CHECK: inw	%dx, %ax
+// CHECK: inw	%dx, %ax
+// CHECK: inl	%dx, %eax
+// CHECK: inl	%dx, %eax
 
 in	(%dx), %al
 inb	(%dx), %al
@@ -308,10 +308,10 @@ fucomi
 fucomi	%st(2)
 fucomi	%st(2), %st
 
-// CHECK: fnstsw %ax
-// CHECK: fnstsw %ax
-// CHECK: fnstsw %ax
-// CHECK: fnstsw %ax
+// CHECK: fnstsw
+// CHECK: fnstsw
+// CHECK: fnstsw
+// CHECK: fnstsw
 
 fnstsw
 fnstsw %ax
@@ -457,7 +457,7 @@ cdq   // CHECK: cltd
 // rdar://8456378 and PR7557 - fstsw
 fstsw %ax
 // CHECK: wait
-// CHECK: fnstsw %ax
+// CHECK: fnstsw
 fstsw (%rax)
 // CHECK: wait
 // CHECK: fnstsw (%rax)

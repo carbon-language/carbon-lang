@@ -22,7 +22,7 @@ entry:
 ; CHECK: bar:
 ; CHECK: fldt 4(%esp)
 ; CHECK-NEXT: fld	%st(0)
-; CHECK-NEXT: fmul	%st(1), %st(0)
+; CHECK-NEXT: fmul	%st(1)
 ; CHECK-NEXT: fmulp
 ; CHECK-NEXT: ret
 }
