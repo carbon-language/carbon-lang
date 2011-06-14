@@ -3030,6 +3030,9 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   // fold (shl x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
+  // fold (shl undef, x) -> 0
+  if (N0.getOpcode() == ISD::UNDEF)
+    return DAG.getConstant(0, VT);
   // if (shl x, c) is known to be zero, return 0
   if (DAG.MaskedValueIsZero(SDValue(N, 0),
                             APInt::getAllOnesValue(OpSizeInBits)))
