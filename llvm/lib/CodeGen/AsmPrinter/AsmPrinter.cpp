@@ -1934,19 +1934,26 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
   if (Pred->empty())
     return true;
 
-  // Otherwise, ask the backend.
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
-  MachineBasicBlock *PredTBB = NULL, *PredFBB = NULL;
-  SmallVector<MachineOperand, 4> PredCond;
-  if (TII->AnalyzeBranch(*Pred, PredTBB, PredFBB, PredCond))
-    return false;
+  // Check the terminators in the previous blocks
+  for (MachineBasicBlock::iterator II = Pred->getFirstTerminator(),
+         IE = Pred->end(); II != IE; ++II) {
+    MachineInstr &MI = *II;
 
-  if (PredTBB == MBB || PredFBB == MBB)
-    return false;
+    // If it is not a simple branch, we are in a table somewhere.
+    if (!MI.getDesc().isBranch() || MI.getDesc().isIndirectBranch())
+      return false;
 
-  // This is a fall through if there is no conditions in the bb
-  // or if there is no explicit false branch.
-  return PredCond.empty() || !PredFBB;
+    // If we are the operands of one of the branches, this is not
+    // a fall through.
+    for (MachineInstr::mop_iterator OI = MI.operands_begin(),
+           OE = MI.operands_end(); OI != OE; ++OI) {
+      const MachineOperand& OP = *OI;
+      if (OP.isMBB() && OP.getMBB() == MBB)
+        return false;
+    }
+  }
+
+  return true;
 }
 
 
