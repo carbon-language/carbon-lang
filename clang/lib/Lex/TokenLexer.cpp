@@ -487,9 +487,10 @@ bool TokenLexer::PasteTokens(Token &Tok) {
           // Explicitly convert the token location to have proper instantiation
           // information so that the user knows where it came from.
           SourceManager &SM = PP.getSourceManager();
-          SourceLocation Loc =
-            SM.createInstantiationLoc(PasteOpLoc, InstantiateLocStart,
-                                      InstantiateLocEnd, 2);
+          SourceLocation Loc = PasteOpLoc;
+          if (InstantiateLocStart.isValid())
+            Loc = SM.createInstantiationLoc(Loc, InstantiateLocStart,
+                                            InstantiateLocEnd, 2);
           // If we're in microsoft extensions mode, downgrade this from a hard
           // error to a warning that defaults to an error.  This allows
           // disabling it.
