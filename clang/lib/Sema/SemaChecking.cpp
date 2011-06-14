@@ -1812,6 +1812,20 @@ static bool isDynamicClassType(QualType T) {
   return false;
 }
 
+/// \brief If E is a sizeof expression, returns the expression's type in
+/// OutType.
+static bool sizeofExprType(const Expr* E, QualType *OutType) {
+  if (const UnaryExprOrTypeTraitExpr *SizeOf =
+      dyn_cast<UnaryExprOrTypeTraitExpr>(E)) {
+    if (SizeOf->getKind() != clang::UETT_SizeOf)
+      return false;
+
+    *OutType = SizeOf->getTypeOfArgument();
+    return true;
+  }
+  return false;
+}
+
 /// \brief Check for dangerous or invalid arguments to memset().
 ///
 /// This issues warnings on known problematic, dangerous or unspecified
@@ -1827,14 +1841,27 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
     return;
 
   unsigned LastArg = FnName->isStr("memset")? 1 : 2;
+  const Expr *LenExpr = Call->getArg(2)->IgnoreParenImpCasts();
   for (unsigned ArgIdx = 0; ArgIdx != LastArg; ++ArgIdx) {
     const Expr *Dest = Call->getArg(ArgIdx)->IgnoreParenImpCasts();
+    SourceRange ArgRange = Call->getArg(ArgIdx)->getSourceRange();
 
     QualType DestTy = Dest->getType();
     if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
       QualType PointeeTy = DestPtrTy->getPointeeType();
       if (PointeeTy->isVoidType())
         continue;
+
+      // Catch "memset(p, 0, sizeof(p))" -- needs to be sizeof(*p).
+      QualType SizeofTy;
+      if (sizeofExprType(LenExpr, &SizeofTy) &&
+          Context.typesAreCompatible(SizeofTy, DestTy)) {
+        // Note: This complains about sizeof(typeof(p)) as well.
+        SourceLocation loc = LenExpr->getSourceRange().getBegin();
+        Diag(loc, diag::warn_sizeof_pointer)
+            << SizeofTy <<  PointeeTy << ArgIdx << FnName;
+        break;
+      }
 
       // Always complain about dynamic classes.
       if (isDynamicClassType(PointeeTy)) {
@@ -1847,7 +1874,6 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
         continue;
       }
 
-      SourceRange ArgRange = Call->getArg(ArgIdx)->getSourceRange();
       DiagRuntimeBehavior(
         Dest->getExprLoc(), Dest,
         PDiag(diag::note_bad_memaccess_silence)

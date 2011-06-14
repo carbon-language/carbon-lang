@@ -269,6 +269,9 @@ def warn_dyn_class_memaccess : Warning<
   InGroup<DiagGroup<"dynamic-class-memaccess">>;
 def note_bad_memaccess_silence : Note<
   "explicitly cast the pointer to silence this warning">;
+def warn_sizeof_pointer : Warning<
+  "the argument to sizeof is pointer type %0, expected %1 to match "
+  "%select{first|second}2 argument to %3">;
 
 /// main()
 // static/inline main() are not errors in C, just in C++.
