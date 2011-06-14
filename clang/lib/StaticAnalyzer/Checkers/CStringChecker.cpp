@@ -934,92 +934,93 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
 
   state = checkNonNull(C, state, Arg, ArgVal);
 
-  if (state) {
-    SVal strLength = getCStringLength(C, state, Arg, ArgVal);
+  if (!state)
+    return;
 
-    // If the argument isn't a valid C string, there's no valid state to
-    // transition to.
-    if (strLength.isUndef())
-      return;
+  SVal strLength = getCStringLength(C, state, Arg, ArgVal);
 
-    DefinedOrUnknownSVal result = UnknownVal();
+  // If the argument isn't a valid C string, there's no valid state to
+  // transition to.
+  if (strLength.isUndef())
+    return;
 
-    // If the check is for strnlen() then bind the return value to no more than
-    // the maxlen value.
-    if (IsStrnlen) {
-      QualType cmpTy = C.getSValBuilder().getContext().IntTy;
+  DefinedOrUnknownSVal result = UnknownVal();
 
-      // It's a little unfortunate to be getting this again,
-      // but it's not that expensive...
-      const Expr *maxlenExpr = CE->getArg(1);
-      SVal maxlenVal = state->getSVal(maxlenExpr);
+  // If the check is for strnlen() then bind the return value to no more than
+  // the maxlen value.
+  if (IsStrnlen) {
+    QualType cmpTy = C.getSValBuilder().getContext().IntTy;
 
-      NonLoc *strLengthNL = dyn_cast<NonLoc>(&strLength);
-      NonLoc *maxlenValNL = dyn_cast<NonLoc>(&maxlenVal);
+    // It's a little unfortunate to be getting this again,
+    // but it's not that expensive...
+    const Expr *maxlenExpr = CE->getArg(1);
+    SVal maxlenVal = state->getSVal(maxlenExpr);
 
-      if (strLengthNL && maxlenValNL) {
-        const GRState *stateStringTooLong, *stateStringNotTooLong;
+    NonLoc *strLengthNL = dyn_cast<NonLoc>(&strLength);
+    NonLoc *maxlenValNL = dyn_cast<NonLoc>(&maxlenVal);
 
-        // Check if the strLength is greater than the maxlen.
-        llvm::tie(stateStringTooLong, stateStringNotTooLong) =
-          state->assume(cast<DefinedOrUnknownSVal>
-                        (C.getSValBuilder().evalBinOpNN(state, BO_GT, 
-                                                        *strLengthNL,
-                                                        *maxlenValNL,
-                                                        cmpTy)));
+    if (strLengthNL && maxlenValNL) {
+      const GRState *stateStringTooLong, *stateStringNotTooLong;
 
-        if (stateStringTooLong && !stateStringNotTooLong) {
-          // If the string is longer than maxlen, return maxlen.
-          result = *maxlenValNL;
-        } else if (stateStringNotTooLong && !stateStringTooLong) {
-          // If the string is shorter than maxlen, return its length.
-          result = *strLengthNL;
-        }
-      }
+      // Check if the strLength is greater than the maxlen.
+      llvm::tie(stateStringTooLong, stateStringNotTooLong) =
+        state->assume(cast<DefinedOrUnknownSVal>
+                      (C.getSValBuilder().evalBinOpNN(state, BO_GT, 
+                                                      *strLengthNL,
+                                                      *maxlenValNL,
+                                                      cmpTy)));
 
-      if (result.isUnknown()) {
-        // If we don't have enough information for a comparison, there's
-        // no guarantee the full string length will actually be returned.
-        // All we know is the return value is the min of the string length
-        // and the limit. This is better than nothing.
-        unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
-        result = C.getSValBuilder().getConjuredSymbolVal(NULL, CE, Count);
-        NonLoc *resultNL = cast<NonLoc>(&result);
-
-        if (strLengthNL) {
-          state = state->assume(cast<DefinedOrUnknownSVal>
-                                (C.getSValBuilder().evalBinOpNN(state, BO_LE, 
-                                                                *resultNL,
-                                                                *strLengthNL,
-                                                                cmpTy)), true);
-        }
-        
-        if (maxlenValNL) {
-          state = state->assume(cast<DefinedOrUnknownSVal>
-                                (C.getSValBuilder().evalBinOpNN(state, BO_LE, 
-                                                                *resultNL,
-                                                                *maxlenValNL,
-                                                                cmpTy)), true);
-        }
-      }
-
-    } else {
-      // This is a plain strlen(), not strnlen().
-      result = cast<DefinedOrUnknownSVal>(strLength);
-
-      // If we don't know the length of the string, conjure a return
-      // value, so it can be used in constraints, at least.
-      if (result.isUnknown()) {
-        unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
-        result = C.getSValBuilder().getConjuredSymbolVal(NULL, CE, Count);
+      if (stateStringTooLong && !stateStringNotTooLong) {
+        // If the string is longer than maxlen, return maxlen.
+        result = *maxlenValNL;
+      } else if (stateStringNotTooLong && !stateStringTooLong) {
+        // If the string is shorter than maxlen, return its length.
+        result = *strLengthNL;
       }
     }
 
-    // Bind the return value.
-    assert(!result.isUnknown() && "Should have conjured a value by now");
-    state = state->BindExpr(CE, result);
-    C.addTransition(state);
+    if (result.isUnknown()) {
+      // If we don't have enough information for a comparison, there's
+      // no guarantee the full string length will actually be returned.
+      // All we know is the return value is the min of the string length
+      // and the limit. This is better than nothing.
+      unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+      result = C.getSValBuilder().getConjuredSymbolVal(NULL, CE, Count);
+      NonLoc *resultNL = cast<NonLoc>(&result);
+
+      if (strLengthNL) {
+        state = state->assume(cast<DefinedOrUnknownSVal>
+                              (C.getSValBuilder().evalBinOpNN(state, BO_LE, 
+                                                              *resultNL,
+                                                              *strLengthNL,
+                                                              cmpTy)), true);
+      }
+      
+      if (maxlenValNL) {
+        state = state->assume(cast<DefinedOrUnknownSVal>
+                              (C.getSValBuilder().evalBinOpNN(state, BO_LE, 
+                                                              *resultNL,
+                                                              *maxlenValNL,
+                                                              cmpTy)), true);
+      }
+    }
+
+  } else {
+    // This is a plain strlen(), not strnlen().
+    result = cast<DefinedOrUnknownSVal>(strLength);
+
+    // If we don't know the length of the string, conjure a return
+    // value, so it can be used in constraints, at least.
+    if (result.isUnknown()) {
+      unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+      result = C.getSValBuilder().getConjuredSymbolVal(NULL, CE, Count);
+    }
   }
+
+  // Bind the return value.
+  assert(!result.isUnknown() && "Should have conjured a value by now");
+  state = state->BindExpr(CE, result);
+  C.addTransition(state);
 }
 
 void CStringChecker::evalStrcpy(CheckerContext &C, const CallExpr *CE) const {
