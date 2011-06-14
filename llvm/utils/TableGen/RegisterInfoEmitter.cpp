@@ -145,7 +145,6 @@ static void generateHashTable(raw_ostream &OS, const char *Name,
     HT.assign(HSize, Sentinel);
 
     // Insert all entries.
-    MaxProbes = 0;
     for (unsigned i = 0, e = Data.size(); i != e; ++i) {
       UUPair D = Data[i];
       unsigned Idx = (D.first * 11 + D.second * 97) & (HSize - 1);
@@ -155,10 +154,24 @@ static void generateHashTable(raw_ostream &OS, const char *Name,
         ProbeAmt += 1;
       }
       HT[Idx] = D;
+    }
+
+    // Now measure the max number of probes for any worst case miss.
+    MaxProbes = 0;
+    unsigned TotalProbes = 0;
+    for (unsigned i = 0, e = HSize; i != e; ++i) {
+      unsigned Idx = i;
+      unsigned ProbeAmt = 1;
+      while (HT[Idx] != Sentinel) {
+        Idx = (Idx + ProbeAmt) & (HSize - 1);
+        ProbeAmt += 1;
+      }
+      TotalProbes += ProbeAmt;
       MaxProbes = std::max(MaxProbes, ProbeAmt);
     }
-    OS << "\n  // Max number of probes: " << MaxProbes;
-  } while (MaxProbes >= 8);
+    OS << "\n  // Max number of probes: " << MaxProbes
+       << format(", avg %.1f", float(TotalProbes)/HSize);
+  } while (MaxProbes >= 6);
 
   // Print the hash table.
   OS << "\n  // Used entries: " << Data.size()
