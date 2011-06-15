@@ -2912,16 +2912,6 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     // arguments, just break out now and we'll fill in the argument pack below.
     if ((*Param)->isTemplateParameterPack())
       break;
-
-    // If our template is a template template parameter that hasn't acquired
-    // its proper context yet (e.g., because we're using the template template
-    // parameter in the signature of a function template, before we've built
-    // the function template itself), don't attempt substitution of default
-    // template arguments at this point: we don't have enough context to
-    // do it properly.
-    if (isTemplateTemplateParameter && 
-        Template->getDeclContext()->isTranslationUnit())
-      break;
     
     // We have a default template argument that we will use.
     TemplateArgumentLoc Arg;

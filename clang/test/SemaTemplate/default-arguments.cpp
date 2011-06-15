@@ -121,3 +121,18 @@ X6<long, X5b> x6c;
 
 
 template<template<class> class X = B<int> > struct X7; // expected-error{{must be a class template}}
+
+namespace PR9643 {
+  template<typename T> class allocator {};
+  template<typename T, typename U = allocator<T> > class vector {};
+
+  template<template<typename U, typename = allocator<U> > class container,
+           typename DT>
+  container<DT> initializer(const DT& d) {
+    return container<DT>();
+  }
+
+  void f() {
+    vector<int, allocator<int> > v = initializer<vector>(5);
+  }
+}
