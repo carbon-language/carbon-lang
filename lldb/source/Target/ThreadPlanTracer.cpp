@@ -55,7 +55,7 @@ ThreadPlanTracer::GetLogStream ()
     if (m_stream_sp.get())
         return m_stream_sp.get();
     else
-        return &(m_thread.GetProcess().GetTarget().GetDebugger().GetOutputStream());
+        return m_thread.GetProcess().GetTarget().GetDebugger().GetAsyncOutputStream().get();
 }
 
 void 
@@ -65,8 +65,11 @@ ThreadPlanTracer::Log()
     bool show_frame_index = false;
     bool show_fullpaths = false;
     
-    m_thread.GetStackFrameAtIndex(0)->Dump (GetLogStream(), show_frame_index, show_fullpaths);
-    GetLogStream()->Printf("\n");
+    Stream *stream = GetLogStream();
+    m_thread.GetStackFrameAtIndex(0)->Dump (stream, show_frame_index, show_fullpaths);
+    stream->Printf("\n");
+    stream->Flush();
+    
 }
 
 bool
@@ -259,4 +262,5 @@ ThreadPlanAssemblyTracer::Log ()
         }
     }
     stream->EOL();
+    stream->Flush();
 }

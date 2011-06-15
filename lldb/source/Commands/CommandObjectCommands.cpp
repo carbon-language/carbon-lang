@@ -929,7 +929,11 @@ CommandObjectCommandsAddRegex::InputReaderCallback (void *baton,
     switch (notification)
     {
         case eInputReaderActivate:
-            reader.GetDebugger().GetOutputStream().Printf("%s\n", "Enter regular expressions in the form 's/<regex>/<subst>/' and terminate with an empty line:");
+            {
+                StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream ();
+                out_stream->Printf("%s\n", "Enter regular expressions in the form 's/<regex>/<subst>/' and terminate with an empty line:");
+                out_stream->Flush();
+            }
             break;
         case eInputReaderReactivate:
             break;
@@ -951,7 +955,9 @@ CommandObjectCommandsAddRegex::InputReaderCallback (void *baton,
                 Error error (add_regex_cmd->AppendRegexSubstitution (bytes_strref));
                 if (error.Fail())
                 {
-                    reader.GetDebugger().GetOutputStream().Printf("error: %s\n", error.AsCString());
+                    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+                    out_stream->Printf("error: %s\n", error.AsCString());
+                    out_stream->Flush();
                     add_regex_cmd->InputReaderDidCancel ();
                     reader.SetIsDone (true);
                 }
@@ -959,9 +965,13 @@ CommandObjectCommandsAddRegex::InputReaderCallback (void *baton,
             break;
             
         case eInputReaderInterrupt:
-            reader.SetIsDone (true);
-            reader.GetDebugger().GetOutputStream().PutCString("Regular expression command creations was cancelled.\n");
-            add_regex_cmd->InputReaderDidCancel ();
+            {
+                reader.SetIsDone (true);
+                StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+                out_stream->PutCString("Regular expression command creations was cancelled.\n");
+                out_stream->Flush();
+                add_regex_cmd->InputReaderDidCancel ();
+            }
             break;
             
         case eInputReaderEndOfFile:

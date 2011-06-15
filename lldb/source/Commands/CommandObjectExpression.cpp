@@ -195,11 +195,13 @@ CommandObjectExpression::MultiLineExpressionCallback
     switch (notification)
     {
     case eInputReaderActivate:
-        reader.GetDebugger().GetOutputStream().Printf("%s\n", "Enter expressions, then terminate with an empty line to evaluate:");
+        {
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            out_stream->Printf("%s\n", "Enter expressions, then terminate with an empty line to evaluate:");
+            out_stream->Flush();
+        }
         // Fall through
     case eInputReaderReactivate:
-        //if (out_fh)
-        //    reader.GetDebugger().GetOutputStream().Printf ("%3u: ", cmd_object_expr->m_expr_line_count);
         break;
 
     case eInputReaderDeactivate:
@@ -217,14 +219,16 @@ CommandObjectExpression::MultiLineExpressionCallback
 
         if (bytes_len == 0)
             reader.SetIsDone(true);
-        //else if (out_fh && !reader->IsDone())
-        //    ::fprintf (out_fh, "%3u: ", cmd_object_expr->m_expr_line_count);
         break;
         
     case eInputReaderInterrupt:
         cmd_object_expr->m_expr_lines.clear();
         reader.SetIsDone (true);
-        reader.GetDebugger().GetOutputStream().Printf("%s\n", "Expression evaluation cancelled.");
+        {
+            StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+            out_stream->Printf("%s\n", "Expression evaluation cancelled.");
+            out_stream->Flush();
+        }
         break;
         
     case eInputReaderEndOfFile:
