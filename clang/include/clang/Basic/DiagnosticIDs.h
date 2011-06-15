@@ -227,6 +227,10 @@ private:
   /// suppressed.
   bool ProcessDiag(Diagnostic &Diag) const;
 
+  /// \brief Whether the diagnostic may leave the AST in a state where some
+  /// invariants can break.
+  bool isUnrecoverable(unsigned DiagID) const;
+
   friend class Diagnostic;
 };
 
