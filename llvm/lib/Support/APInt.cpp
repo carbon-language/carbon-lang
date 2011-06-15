@@ -2164,12 +2164,33 @@ void APInt::fromString(unsigned numbits, StringRef str, uint8_t radix) {
 }
 
 void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
-                     bool Signed) const {
+                     bool Signed, bool formatAsCLiteral) const {
   assert((Radix == 10 || Radix == 8 || Radix == 16 || Radix == 2) &&
          "Radix should be 2, 8, 10, or 16!");
 
+  const char *Prefix = "";
+  if (formatAsCLiteral) {
+    switch (Radix) {
+      case 2:
+        // Binary literals are a non-standard extension added in gcc 4.3:
+        // http://gcc.gnu.org/onlinedocs/gcc-4.3.0/gcc/Binary-constants.html
+        Prefix = "0b";
+        break;
+      case 8:
+        Prefix = "0";
+        break;
+      case 16:
+        Prefix = "0x";
+        break;
+    }
+  }
+
   // First, check for a zero value and just short circuit the logic below.
   if (*this == 0) {
+    while (*Prefix) {
+      Str.push_back(*Prefix);
+      ++Prefix;
+    };
     Str.push_back('0');
     return;
   }
@@ -2193,6 +2214,11 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
       }
     }
 
+    while (*Prefix) {
+      Str.push_back(*Prefix);
+      ++Prefix;
+    };
+
     while (N) {
       *--BufPtr = Digits[N % Radix];
       N /= Radix;
@@ -2211,6 +2237,11 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
     Tmp++;
     Str.push_back('-');
   }
+
+  while (*Prefix) {
+    Str.push_back(*Prefix);
+    ++Prefix;
+  };
 
   // We insert the digits backward, then reverse them to get the right order.
   unsigned StartDig = Str.size();
@@ -2251,7 +2282,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
 /// to the methods above.
 std::string APInt::toString(unsigned Radix = 10, bool Signed = true) const {
   SmallString<40> S;
-  toString(S, Radix, Signed);
+  toString(S, Radix, Signed, /* formatAsCLiteral = */false);
   return S.str();
 }
 
@@ -2266,7 +2297,7 @@ void APInt::dump() const {
 
 void APInt::print(raw_ostream &OS, bool isSigned) const {
   SmallString<40> S;
-  this->toString(S, 10, isSigned);
+  this->toString(S, 10, isSigned, /* formatAsCLiteral = */false);
   OS << S.str();
 }
 
