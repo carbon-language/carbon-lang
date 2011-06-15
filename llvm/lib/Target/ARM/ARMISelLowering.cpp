@@ -5546,16 +5546,13 @@ static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
   // operands, where N is the size of the formed vector.
   // Each EXTRACT_VECTOR should have the same input vector and odd or even
   // index such that we have a pair wise add pattern.
-  SDNode *V = 0;
-  SDValue Vec;
-  unsigned nextIndex = 0;
 
   // Grab the vector that all EXTRACT_VECTOR nodes should be referencing.
-  if (N0->getOperand(0)->getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
-    Vec = N0->getOperand(0)->getOperand(0);
-    V = Vec.getNode();
-  } else
+  if (N0->getOperand(0)->getOpcode() != ISD::EXTRACT_VECTOR_ELT)
     return SDValue();
+  SDValue Vec = N0->getOperand(0)->getOperand(0);
+  SDNode *V = Vec.getNode();
+  unsigned nextIndex = 0;
 
   // For each operands to the ADD which are BUILD_VECTORs, 
   // check to see if each of their operands are an EXTRACT_VECTOR with
