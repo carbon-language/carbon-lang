@@ -77,7 +77,7 @@ namespace test1 {
     a.foo();
   }
 // CHECK: declare void @_ZN5test11A3fooEv
-// CHECK: declare void @_ZN5test11AD1Ev
+// CHECK: declare {{.*}} @_ZN5test11AD1Ev
 }
 
 // PR8713

@@ -14,4 +14,4 @@ Foo::Foo(unsigned arg) : file_id(arg = 42)
 // CHECK: [[ARG:%.*]] = alloca i32
 // CHECK: store i32 42, i32* [[ARG]]
 // CHECK: store i32 42, i32* %{{.*}}
-// CHECK: ret void
+// CHECK: ret {{void|%struct.Foo}}
