@@ -14,6 +14,7 @@
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/Analysis/AnalysisDiagnostic.h"
 #include "clang/Basic/DiagnosticIDs.h"
+#include "clang/Basic/DiagnosticCategories.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -213,7 +214,7 @@ namespace {
 
 static const StaticDiagCategoryRec CategoryNameTable[] = {
 #define GET_CATEGORY_TABLE
-#define CATEGORY(X) { X, STR_SIZE(X, uint8_t) },
+#define CATEGORY(X, ENUM) { X, STR_SIZE(X, uint8_t) },
 #include "clang/Basic/DiagnosticGroups.inc"
 #undef GET_CATEGORY_TABLE
   { 0, 0 }
@@ -684,6 +685,10 @@ bool DiagnosticIDs::ProcessDiag(Diagnostic &Diag) const {
     return false;
 
   if (DiagLevel >= DiagnosticIDs::Error) {
+    Diag.TrapErrorOccurred = true;
+    if (isUnrecoverable(DiagID))
+      Diag.TrapUnrecoverableErrorOccurred = true;
+
     if (Diag.Client->IncludeInDiagnosticCounts()) {
       Diag.ErrorOccurred = true;
       ++Diag.NumErrors;
@@ -717,6 +722,23 @@ bool DiagnosticIDs::ProcessDiag(Diagnostic &Diag) const {
   }
 
   Diag.CurDiagID = ~0U;
+
+  return true;
+}
+
+bool DiagnosticIDs::isUnrecoverable(unsigned DiagID) const {
+  if (DiagID >= diag::DIAG_UPPER_LIMIT) {
+    // Custom diagnostics.
+    return CustomDiagInfo->getLevel(DiagID) >= DiagnosticIDs::Error;
+  }
+
+  // Only errors may be unrecoverable.
+  if (getBuiltinDiagClass(DiagID) < DiagnosticIDs::Error)
+    return false;
+
+  if (DiagID == diag::err_unavailable ||
+      DiagID == diag::err_unavailable_message)
+    return false;
 
   return true;
 }
