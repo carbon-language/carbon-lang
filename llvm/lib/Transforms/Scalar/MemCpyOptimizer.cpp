@@ -487,7 +487,8 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
   // happen to be using a load-store pair to implement it, rather than
   // a memcpy.
   if (LoadInst *LI = dyn_cast<LoadInst>(SI->getOperand(0))) {
-    if (!LI->isVolatile() && LI->hasOneUse()) {
+    if (!LI->isVolatile() && LI->hasOneUse() &&
+        LI->getParent() == SI->getParent()) {
       MemDepResult ldep = MD->getDependency(LI);
       CallInst *C = 0;
       if (ldep.isClobber() && !isa<MemCpyInst>(ldep.getInst()))
@@ -496,17 +497,14 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
       if (C) {
         // Check that nothing touches the dest of the "copy" between
         // the call and the store.
-        MemDepResult sdep = MD->getDependency(SI);
-        if (!sdep.isNonLocal() && !sdep.isUnknown()) {
-          bool FoundCall = false;
-          for (BasicBlock::iterator I = SI, E = sdep.getInst(); I != E; --I) {
-            if (&*I == C) {
-              FoundCall = true;
-              break;
-            }
-          }
-          if (!FoundCall)
+        AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+        AliasAnalysis::Location StoreLoc = AA.getLocation(SI);
+        for (BasicBlock::iterator I = --BasicBlock::iterator(SI),
+                                  E = C; I != E; --I) {
+          if (AA.getModRefInfo(&*I, StoreLoc) != AliasAnalysis::NoModRef) {
             C = 0;
+            break;
+          }
         }
       }
 
