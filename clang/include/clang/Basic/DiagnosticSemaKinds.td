@@ -2602,6 +2602,10 @@ def warn_self_assignment : Warning<
   "explicitly assigning a variable of type %0 to itself">,
   InGroup<SelfAssignment>, DefaultIgnore;
 
+def warn_sizeof_array_param : Warning<
+  "sizeof on array function parameter will return size of %0 instead of %1">,
+  InGroup<SizeofArrayArgument>;
+
 def err_sizeof_nonfragile_interface : Error<
   "invalid application of '%select{alignof|sizeof}1' to interface %0 in "
   "non-fragile ABI">;

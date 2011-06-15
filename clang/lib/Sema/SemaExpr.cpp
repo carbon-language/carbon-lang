@@ -3160,6 +3160,20 @@ bool Sema::CheckUnaryExprOrTypeTraitOperand(Expr *Op,
                                        Op->getSourceRange(), ExprKind))
     return true;
 
+  if (ExprKind == UETT_SizeOf) {
+    if (DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(Op->IgnoreParens())) {
+      if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DeclRef->getFoundDecl())) {
+        QualType OType = PVD->getOriginalType();
+        QualType Type = PVD->getType();
+        if (Type->isPointerType() && OType->isArrayType()) {
+          Diag(Op->getExprLoc(), diag::warn_sizeof_array_param)
+            << Type << OType;
+          Diag(PVD->getLocation(), diag::note_declared_at);
+        }
+      }
+    }
+  }
+
   return false;
 }
 

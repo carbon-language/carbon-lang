@@ -115,6 +115,7 @@ def SignCompare : DiagGroup<"sign-compare">;
 def : DiagGroup<"stack-protector">;
 def : DiagGroup<"switch-default">;
 def : DiagGroup<"synth">;
+def SizeofArrayArgument : DiagGroup<"sizeof-array-argument">;
 def TautologicalCompare : DiagGroup<"tautological-compare">;
 def HeaderHygiene : DiagGroup<"header-hygiene">;
 
@@ -248,6 +249,7 @@ def Most : DiagGroup<"most", [
     ReturnType,
     SelfAssignment,
     Switch,
+    SizeofArrayArgument,
     Trigraphs,
     Uninitialized,
     UnknownPragmas,
