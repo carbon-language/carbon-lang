@@ -49,6 +49,10 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeLoopIdiomRecognizePass(Registry);
   initializeLowerAtomicPass(Registry);
   initializeMemCpyOptPass(Registry);
+  initializeObjCARCAliasAnalysisPass(Registry);
+  initializeObjCARCExpandPass(Registry);
+  initializeObjCARCContractPass(Registry);
+  initializeObjCARCOptPass(Registry);
   initializeReassociatePass(Registry);
   initializeRegToMemPass(Registry);
   initializeSCCPPass(Registry);

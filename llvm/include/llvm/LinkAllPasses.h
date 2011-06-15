@@ -97,6 +97,10 @@ namespace {
       (void) llvm::createLowerSwitchPass();
       (void) llvm::createNoAAPass();
       (void) llvm::createNoProfileInfoPass();
+      (void) llvm::createObjCARCAliasAnalysisPass();
+      (void) llvm::createObjCARCExpandPass();
+      (void) llvm::createObjCARCContractPass();
+      (void) llvm::createObjCARCOptPass();
       (void) llvm::createProfileEstimatorPass();
       (void) llvm::createProfileVerifierPass();
       (void) llvm::createPathProfileVerifierPass();

@@ -303,6 +303,10 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   if (!DisableVerify)
     PM.add(createVerifierPass());
 
+  // Simplify ObjC ARC code. This is done late because it makes re-optimization
+  // difficult.
+  PM.add(createObjCARCContractPass());
+
   // Run loop strength reduction before anything else.
   if (OptLevel != CodeGenOpt::None && !DisableLSR) {
     PM.add(createLoopStrengthReducePass(getTargetLowering()));

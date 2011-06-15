@@ -188,6 +188,7 @@ public:
       MPM.add(createArgumentPromotionPass());   // Scalarize uninlined fn args
     
     // Start of function pass.
+    MPM.add(createObjCARCExpandPass());         // Canonicalize ObjC ARC code.
     // Break up aggregate allocas, using SSAUpdater.
     MPM.add(createScalarReplAggregatesPass(-1, false));
     MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
@@ -223,6 +224,7 @@ public:
     MPM.add(createJumpThreadingPass());         // Thread jumps
     MPM.add(createCorrelatedValuePropagationPass());
     MPM.add(createDeadStoreEliminationPass());  // Delete dead stores
+    MPM.add(createObjCARCOptPass());            // Objective-C ARC optimizations.
     MPM.add(createAggressiveDCEPass());         // Delete dead instructions
     MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
     MPM.add(createInstructionCombiningPass());  // Clean up after everything.

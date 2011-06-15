@@ -338,6 +338,24 @@ Pass *createCorrelatedValuePropagationPass();
 
 //===----------------------------------------------------------------------===//
 //
+// ObjCARCExpand - ObjC ARC preliminary simplifications.
+//
+Pass *createObjCARCExpandPass();
+
+//===----------------------------------------------------------------------===//
+//
+// ObjCARCContract - Late ObjC ARC cleanups.
+//
+Pass *createObjCARCContractPass();
+
+//===----------------------------------------------------------------------===//
+//
+// ObjCARCOpt - ObjC ARC optimization.
+//
+Pass *createObjCARCOptPass();
+
+//===----------------------------------------------------------------------===//
+//
 // InstructionSimplifier - Remove redundant instructions.
 //
 FunctionPass *createInstructionSimplifierPass();

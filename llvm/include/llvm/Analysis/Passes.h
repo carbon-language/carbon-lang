@@ -88,6 +88,13 @@ namespace llvm {
 
   //===--------------------------------------------------------------------===//
   //
+  // createObjCARCAliasAnalysisPass - This pass implements ObjC-ARC-based
+  // alias analysis.
+  //
+  ImmutablePass *createObjCARCAliasAnalysisPass();
+
+  //===--------------------------------------------------------------------===//
+  //
   // createProfileLoaderPass - This pass loads information from a profile dump
   // file.
   //
