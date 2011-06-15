@@ -337,9 +337,15 @@
 
                     <tr><td class="header" colspan="2">Read 512 bytes of memory from address 0xbffff3c0 and save results to a local file as <b>text</b>.</td></tr>
                     <tr>
-                        <td class="content" colspan=2>
+                        <td class="content">
                             <b>(lldb)</b> memory read --outfile /tmp/mem.txt --count 512 0xbffff3c0<br>
                             <b>(lldb)</b> memory read -o/tmp/mem.txt -c512 0xbffff3c0<br>
+                        </td>
+                        <td class="content">
+                          <b>(gdb)</b> set logging on<br>
+                          <b>(gdb)</b> set logging file /tmp/mem.txt<br>
+                          <b>(gdb)</b> x/512bx 0xbffff3c0<br>
+                          <b>(gdb)</b> set logging off<br>
                         </td>
                     </tr>
 
@@ -381,6 +387,17 @@
                         </td>
                         <td class="content">
                             <b>(gdb)</b> disassemble 0x1eb8 0x1ec3
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Disassemble 20 instructions from a given address.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> disassemble --start-address  0x1eb8 --count 20<br>
+                            <b>(lldb)</b> disassemble -s 0x1eb8 -c 20<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> x/20i 0x1eb8
                         </td>
                     </tr>
 
