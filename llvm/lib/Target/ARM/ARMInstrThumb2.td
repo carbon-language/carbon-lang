@@ -2604,6 +2604,10 @@ def : T2Pat<(sext_inreg (or (srl (and rGPR:$Rm, 0xFF00), (i32 8)),
                             (shl rGPR:$Rm, (i32 8))), i16),
             (t2REVSH rGPR:$Rm)>;
 
+def : T2Pat<(or (sra (shl rGPR:$Rm, (i32 24)), (i32 16)),
+                   (and (srl rGPR:$Rm, (i32 8)), 0xFF)),
+            (t2REVSH rGPR:$Rm)>;
+
 def : T2Pat<(sra (bswap rGPR:$Rm), (i32 16)), (t2REVSH rGPR:$Rm)>;
 
 def t2PKHBT : T2ThreeReg<

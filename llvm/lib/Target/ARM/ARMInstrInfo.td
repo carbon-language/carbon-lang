@@ -3029,6 +3029,10 @@ def : ARMV6Pat<(sext_inreg (or (srl (and GPR:$Rm, 0xFF00), (i32 8)),
                                (shl GPR:$Rm, (i32 8))), i16),
                (REVSH GPR:$Rm)>;
 
+def : ARMV6Pat<(or (sra (shl GPR:$Rm, (i32 24)), (i32 16)),
+                   (and (srl GPR:$Rm, (i32 8)), 0xFF)),
+               (REVSH GPR:$Rm)>;
+
 // Need the AddedComplexity or else MOVs + REV would be chosen.
 let AddedComplexity = 5 in
 def : ARMV6Pat<(sra (bswap GPR:$Rm), (i32 16)), (REVSH GPR:$Rm)>;
