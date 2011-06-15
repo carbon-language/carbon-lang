@@ -168,45 +168,7 @@ def GR32 : RegisterClass<"SystemZ", [i32], 32,
    // Frame pointer, sometimes allocable
    R11W,
    // Volatile, but not allocable
-   R14W, R15W]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned SystemZ_REG32[] = {
-      SystemZ::R1W,  SystemZ::R2W,  SystemZ::R3W,  SystemZ::R4W,
-      SystemZ::R5W,  SystemZ::R0W,  SystemZ::R12W, SystemZ::R11W,
-      SystemZ::R10W, SystemZ::R9W,  SystemZ::R8W,  SystemZ::R7W,
-      SystemZ::R6W,  SystemZ::R14W, SystemZ::R13W
-    };
-    static const unsigned SystemZ_REG32_nofp[] = {
-      SystemZ::R1W,  SystemZ::R2W,  SystemZ::R3W,  SystemZ::R4W,
-      SystemZ::R5W,  SystemZ::R0W,  SystemZ::R12W, /* No R11W */
-      SystemZ::R10W, SystemZ::R9W,  SystemZ::R8W,  SystemZ::R7W,
-      SystemZ::R6W,  SystemZ::R14W, SystemZ::R13W
-    };
-    GR32Class::iterator
-    GR32Class::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_REG32_nofp;
-      else
-        return SystemZ_REG32;
-    }
-    GR32Class::iterator
-    GR32Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_REG32_nofp + (sizeof(SystemZ_REG32_nofp) / sizeof(unsigned));
-      else
-        return SystemZ_REG32 + (sizeof(SystemZ_REG32) / sizeof(unsigned));
-    }
-  }];
-}
+   R14W, R15W]>;
 
 /// Registers used to generate address. Everything except R0.
 def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
@@ -215,45 +177,7 @@ def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
    // Frame pointer, sometimes allocable
    R11W,
    // Volatile, but not allocable
-   R14W, R15W]>
-{
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned SystemZ_ADDR32[] = {
-      SystemZ::R1W,  SystemZ::R2W,  SystemZ::R3W,  SystemZ::R4W,
-      SystemZ::R5W,  /* No R0W */   SystemZ::R12W, SystemZ::R11W,
-      SystemZ::R10W, SystemZ::R9W,  SystemZ::R8W,  SystemZ::R7W,
-      SystemZ::R6W,  SystemZ::R14W, SystemZ::R13W
-    };
-    static const unsigned SystemZ_ADDR32_nofp[] = {
-      SystemZ::R1W,  SystemZ::R2W,  SystemZ::R3W,  SystemZ::R4W,
-      SystemZ::R5W,  /* No R0W */   SystemZ::R12W, /* No R11W */
-      SystemZ::R10W, SystemZ::R9W,  SystemZ::R8W,  SystemZ::R7W,
-      SystemZ::R6W,  SystemZ::R14W, SystemZ::R13W
-    };
-    ADDR32Class::iterator
-    ADDR32Class::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_ADDR32_nofp;
-      else
-        return SystemZ_ADDR32;
-    }
-    ADDR32Class::iterator
-    ADDR32Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_ADDR32_nofp + (sizeof(SystemZ_ADDR32_nofp) / sizeof(unsigned));
-      else
-        return SystemZ_ADDR32 + (sizeof(SystemZ_ADDR32) / sizeof(unsigned));
-    }
-  }];
-}
+   R14W, R15W]>;
 
 def GR64 : RegisterClass<"SystemZ", [i64], 64,
    // Volatile registers
@@ -261,45 +185,8 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
    // Frame pointer, sometimes allocable
    R11D,
    // Volatile, but not allocable
-   R14D, R15D]>
-{
+   R14D, R15D]> {
   let SubRegClasses = [(GR32 subreg_32bit)];
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned SystemZ_REG64[] = {
-      SystemZ::R1D,  SystemZ::R2D,  SystemZ::R3D,  SystemZ::R4D,
-      SystemZ::R5D,  SystemZ::R0D,  SystemZ::R12D, SystemZ::R11D,
-      SystemZ::R10D, SystemZ::R9D,  SystemZ::R8D,  SystemZ::R7D,
-      SystemZ::R6D,  SystemZ::R14D, SystemZ::R13D
-    };
-    static const unsigned SystemZ_REG64_nofp[] = {
-      SystemZ::R1D,  SystemZ::R2D,  SystemZ::R3D,  SystemZ::R4D,
-      SystemZ::R5D,  SystemZ::R0D,  SystemZ::R12D, /* No R11D */
-      SystemZ::R10D, SystemZ::R9D,  SystemZ::R8D,  SystemZ::R7D,
-      SystemZ::R6D,  SystemZ::R14D, SystemZ::R13D
-    };
-    GR64Class::iterator
-    GR64Class::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_REG64_nofp;
-      else
-        return SystemZ_REG64;
-    }
-    GR64Class::iterator
-    GR64Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_REG64_nofp + (sizeof(SystemZ_REG64_nofp) / sizeof(unsigned));
-      else
-        return SystemZ_REG64 + (sizeof(SystemZ_REG64) / sizeof(unsigned));
-    }
-  }];
 }
 
 def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
@@ -308,168 +195,30 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
    // Frame pointer, sometimes allocable
    R11D,
    // Volatile, but not allocable
-   R14D, R15D]>
-{
+   R14D, R15D]> {
   let SubRegClasses = [(ADDR32 subreg_32bit)];
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned SystemZ_ADDR64[] = {
-      SystemZ::R1D,  SystemZ::R2D,  SystemZ::R3D,  SystemZ::R4D,
-      SystemZ::R5D,  /* No R0D */   SystemZ::R12D, SystemZ::R11D,
-      SystemZ::R10D, SystemZ::R9D,  SystemZ::R8D,  SystemZ::R7D,
-      SystemZ::R6D,  SystemZ::R14D, SystemZ::R13D
-    };
-    static const unsigned SystemZ_ADDR64_nofp[] = {
-      SystemZ::R1D,  SystemZ::R2D,  SystemZ::R3D,  SystemZ::R4D,
-      SystemZ::R5D,  /* No R0D */   SystemZ::R12D, /* No R11D */
-      SystemZ::R10D, SystemZ::R9D,  SystemZ::R8D,  SystemZ::R7D,
-      SystemZ::R6D,  SystemZ::R14D, SystemZ::R13D
-    };
-    ADDR64Class::iterator
-    ADDR64Class::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_ADDR64_nofp;
-      else
-        return SystemZ_ADDR64;
-    }
-    ADDR64Class::iterator
-    ADDR64Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_ADDR64_nofp + (sizeof(SystemZ_ADDR64_nofp) / sizeof(unsigned));
-      else
-        return SystemZ_ADDR64 + (sizeof(SystemZ_ADDR64) / sizeof(unsigned));
-    }
-  }];
 }
 
 // Even-odd register pairs
 def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
-  [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P]>
-{
+  [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P]> {
   let SubRegClasses = [(GR32 subreg_32bit, subreg_odd32)];
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned SystemZ_REG64P[] = {
-      SystemZ::R0P,  SystemZ::R2P,  SystemZ::R4P, SystemZ::R10P,
-      SystemZ::R8P,  SystemZ::R6P };
-    static const unsigned SystemZ_REG64P_nofp[] = {
-      SystemZ::R0P,  SystemZ::R2P,  SystemZ::R4P, /* NO R10P */
-      SystemZ::R8P,  SystemZ::R6P };
-    GR64PClass::iterator
-    GR64PClass::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_REG64P_nofp;
-      else
-        return SystemZ_REG64P;
-    }
-    GR64PClass::iterator
-    GR64PClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_REG64P_nofp + (sizeof(SystemZ_REG64P_nofp) / sizeof(unsigned));
-      else
-        return SystemZ_REG64P + (sizeof(SystemZ_REG64P) / sizeof(unsigned));
-    }
-  }];
 }
 
 def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
-  [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]>
-{
+  [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]> {
   let SubRegClasses = [(GR32 subreg_32bit, subreg_odd32),
                          (GR64 subreg_even, subreg_odd)];
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned SystemZ_REG128[] = {
-      SystemZ::R0Q,  SystemZ::R2Q,  SystemZ::R4Q,  SystemZ::R10Q,
-      SystemZ::R8Q,  SystemZ::R6Q };
-    static const unsigned SystemZ_REG128_nofp[] = {
-      SystemZ::R0Q,  SystemZ::R2Q,  SystemZ::R4Q, /* NO R10Q */
-      SystemZ::R8Q,  SystemZ::R6Q };
-    GR128Class::iterator
-    GR128Class::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_REG128_nofp;
-      else
-        return SystemZ_REG128;
-    }
-    GR128Class::iterator
-    GR128Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      if (TFI->hasFP(MF))
-        return SystemZ_REG128_nofp + (sizeof(SystemZ_REG128_nofp) / sizeof(unsigned));
-      else
-        return SystemZ_REG128 + (sizeof(SystemZ_REG128) / sizeof(unsigned));
-    }
-  }];
 }
 
 def FP32 : RegisterClass<"SystemZ", [f32], 32,
  [F0S, F1S,  F2S,  F3S,  F4S,  F5S,  F6S,  F7S,
-  F8S, F9S, F10S, F11S, F12S, F13S, F14S, F15S]> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned SystemZ_REGFP32[] = {
-      SystemZ::F0S,  SystemZ::F2S,  SystemZ::F4S,  SystemZ::F6S,
-      SystemZ::F1S,  SystemZ::F3S,  SystemZ::F5S,  SystemZ::F7S,
-      SystemZ::F8S,  SystemZ::F9S,  SystemZ::F10S, SystemZ::F11S,
-      SystemZ::F12S, SystemZ::F13S, SystemZ::F14S, SystemZ::F15S };
-    FP32Class::iterator
-    FP32Class::allocation_order_begin(const MachineFunction &MF) const {
-      return SystemZ_REGFP32;
-    }
-    FP32Class::iterator
-    FP32Class::allocation_order_end(const MachineFunction &MF) const {
-      return SystemZ_REGFP32 + (sizeof(SystemZ_REGFP32) / sizeof(unsigned));
-    }
-  }];
-}
+  F8S, F9S, F10S, F11S, F12S, F13S, F14S, F15S]>;
 
 def FP64 : RegisterClass<"SystemZ", [f64], 64,
- [F0L, F1L,  F2L,  F3L,  F4L,  F5L,  F6L,  F7L, 
+ [F0L, F1L,  F2L,  F3L,  F4L,  F5L,  F6L,  F7L,
   F8L, F9L, F10L, F11L, F12L, F13L, F14L, F15L]> {
   let SubRegClasses = [(FP32 subreg_32bit)];
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned SystemZ_REGFP64[] = {
-      SystemZ::F0L,  SystemZ::F2L,  SystemZ::F4L,  SystemZ::F6L,
-      SystemZ::F1L,  SystemZ::F3L,  SystemZ::F5L,  SystemZ::F7L,
-      SystemZ::F8L,  SystemZ::F9L,  SystemZ::F10L, SystemZ::F11L,
-      SystemZ::F12L, SystemZ::F13L, SystemZ::F14L, SystemZ::F15L };
-    FP64Class::iterator
-    FP64Class::allocation_order_begin(const MachineFunction &MF) const {
-      return SystemZ_REGFP64;
-    }
-    FP64Class::iterator
-    FP64Class::allocation_order_end(const MachineFunction &MF) const {
-      return SystemZ_REGFP64 + (sizeof(SystemZ_REGFP64) / sizeof(unsigned));
-    }
-  }];
 }
 
 // Status flags registers.

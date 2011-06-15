@@ -51,10 +51,20 @@ BitVector SystemZRegisterInfo::getReservedRegs(const MachineFunction &MF) const 
   BitVector Reserved(getNumRegs());
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
-  if (TFI->hasFP(MF))
+  if (TFI->hasFP(MF)) {
+    // R11D is the frame pointer. Reserve all aliases.
     Reserved.set(SystemZ::R11D);
+    Reserved.set(SystemZ::R11W);
+    Reserved.set(SystemZ::R10P);
+    Reserved.set(SystemZ::R10Q);
+  }
+
   Reserved.set(SystemZ::R14D);
   Reserved.set(SystemZ::R15D);
+  Reserved.set(SystemZ::R14W);
+  Reserved.set(SystemZ::R15W);
+  Reserved.set(SystemZ::R14P);
+  Reserved.set(SystemZ::R14Q);
   return Reserved;
 }
 

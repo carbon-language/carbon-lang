@@ -12,7 +12,7 @@ define i16 @foo(i16 zeroext %a) zeroext {
 
 define i32 @foo2(i32 zeroext %a) zeroext {
 ; CHECK: foo2:
-; CHECK:  lrvr %r1, %r2
+; CHECK:  lrvr [[R1:%r.]], %r2
         %res = tail call i32 @llvm.bswap.i32(i32 %a)
         ret i32 %res
 }
@@ -32,7 +32,7 @@ define i16 @foo4(i16* %b) zeroext {
 
 define i32 @foo5(i32* %b) zeroext {
 ; CHECK: foo5:
-; CHECK:  lrv %r1, 0(%r2)
+; CHECK:  lrv [[R1:%r.]], 0(%r2)
 	%a = load i32* %b
         %res = tail call i32 @llvm.bswap.i32(i32 %a)
         ret i32 %res
