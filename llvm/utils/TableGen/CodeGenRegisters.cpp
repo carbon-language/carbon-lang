@@ -172,9 +172,9 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   }
   assert(!VTs.empty() && "RegisterClass must contain at least one ValueType!");
 
-  Elements = R->getValueAsListOfDefs("MemberList");
-  for (unsigned i = 0, e = Elements.size(); i != e; ++i)
-    Members.insert(RegBank.getReg(Elements[i]));
+  Elements = RegBank.getSets().expand(R);
+  for (unsigned i = 0, e = Elements->size(); i != e; ++i)
+    Members.insert(RegBank.getReg((*Elements)[i]));
 
   // SubRegClasses is a list<dag> containing (RC, subregindex, ...) dags.
   ListInit *SRC = R->getValueAsListInit("SubRegClasses");
@@ -240,6 +240,9 @@ const std::string &CodeGenRegisterClass::getName() const {
 //===----------------------------------------------------------------------===//
 
 CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
+  // Configure register Sets to understand register classes.
+  Sets.addFieldExpander("RegisterClass", "MemberList");
+
   // Read in the user-defined (named) sub-register indices.
   // More indices will be synthesized later.
   SubRegIndices = Records.getAllDerivedDefinitions("SubRegIndex");

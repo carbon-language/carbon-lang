@@ -16,6 +16,7 @@
 #define CODEGEN_REGISTERS_H
 
 #include "Record.h"
+#include "SetTheory.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -84,7 +85,7 @@ namespace llvm {
 
   class CodeGenRegisterClass {
     CodeGenRegister::Set Members;
-    std::vector<Record*> Elements;
+    const std::vector<Record*> *Elements;
   public:
     Record *TheDef;
     std::string Namespace;
@@ -125,7 +126,7 @@ namespace llvm {
     // Returns an ordered list of class members.
     // The order of registers is the same as in the .td file.
     ArrayRef<Record*> getOrder() const {
-      return Elements;
+      return *Elements;
     }
 
     CodeGenRegisterClass(CodeGenRegBank&, Record *R);
@@ -135,6 +136,8 @@ namespace llvm {
   // them.
   class CodeGenRegBank {
     RecordKeeper &Records;
+    SetTheory Sets;
+
     std::vector<Record*> SubRegIndices;
     unsigned NumNamedIndices;
     std::vector<CodeGenRegister> Registers;
@@ -153,6 +156,8 @@ namespace llvm {
 
   public:
     CodeGenRegBank(RecordKeeper&);
+
+    SetTheory &getSets() { return Sets; }
 
     // Sub-register indices. The first NumNamedIndices are defined by the user
     // in the .td files. The rest are synthesized such that all sub-registers
