@@ -201,7 +201,7 @@ private:
     EVT OldVT = Op.getValueType();
     DebugLoc dl = Op.getDebugLoc();
     Op = GetPromotedInteger(Op);
-    return DAG.getZeroExtendInReg(Op, dl, OldVT);
+    return DAG.getZeroExtendInReg(Op, dl, OldVT.getScalarType());
   }
 
   // Integer Result Promotion.
