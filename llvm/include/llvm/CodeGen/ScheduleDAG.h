@@ -497,6 +497,12 @@ namespace llvm {
     SUnit EntrySU;                        // Special node for the region entry.
     SUnit ExitSU;                         // Special node for the region exit.
 
+#ifdef NDEBUG
+    static const bool StressSched = false;
+#else
+    bool StressSched;
+#endif
+
     explicit ScheduleDAG(MachineFunction &mf);
 
     virtual ~ScheduleDAG();

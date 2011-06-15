@@ -1369,6 +1369,21 @@ struct queue_sort : public std::binary_function<SUnit*, SUnit*, bool> {
   bool isReady(SUnit* SU, unsigned CurCycle) const { return true; }
 };
 
+#ifndef NDEBUG
+template<class SF>
+struct reverse_sort : public queue_sort {
+  SF &SortFunc;
+  reverse_sort(SF &sf) : SortFunc(sf) {}
+  reverse_sort(const reverse_sort &RHS) : SortFunc(RHS.SortFunc) {}
+
+  bool operator()(SUnit* left, SUnit* right) const {
+    // reverse left/right rather than simply !SortFunc(left, right)
+    // to expose different paths in the comparison logic.
+    return SortFunc(right, left);
+  }
+};
+#endif // NDEBUG
+
 /// bu_ls_rr_sort - Priority function for bottom up register pressure
 // reduction scheduler.
 struct bu_ls_rr_sort : public queue_sort {
@@ -1569,20 +1584,33 @@ protected:
 };
 
 template<class SF>
-class RegReductionPriorityQueue : public RegReductionPQBase {
-  static SUnit *popFromQueue(std::vector<SUnit*> &Q, SF &Picker) {
-    std::vector<SUnit *>::iterator Best = Q.begin();
-    for (std::vector<SUnit *>::iterator I = llvm::next(Q.begin()),
-           E = Q.end(); I != E; ++I)
-      if (Picker(*Best, *I))
-        Best = I;
-    SUnit *V = *Best;
-    if (Best != prior(Q.end()))
-      std::swap(*Best, Q.back());
-    Q.pop_back();
-    return V;
-  }
+static SUnit *popFromQueueImpl(std::vector<SUnit*> &Q, SF &Picker) {
+  std::vector<SUnit *>::iterator Best = Q.begin();
+  for (std::vector<SUnit *>::iterator I = llvm::next(Q.begin()),
+         E = Q.end(); I != E; ++I)
+    if (Picker(*Best, *I))
+      Best = I;
+  SUnit *V = *Best;
+  if (Best != prior(Q.end()))
+    std::swap(*Best, Q.back());
+  Q.pop_back();
+  return V;
+}
 
+template<class SF>
+SUnit *popFromQueue(std::vector<SUnit*> &Q, SF &Picker, ScheduleDAG *DAG) {
+#ifndef NDEBUG
+  if (DAG->StressSched) {
+    reverse_sort<SF> RPicker(Picker);
+    return popFromQueueImpl(Q, RPicker);
+  }
+#endif
+  (void)DAG;
+  return popFromQueueImpl(Q, Picker);
+}
+
+template<class SF>
+class RegReductionPriorityQueue : public RegReductionPQBase {
   SF Picker;
 
 public:
@@ -1603,7 +1631,7 @@ public:
   SUnit *pop() {
     if (Queue.empty()) return NULL;
 
-    SUnit *V = popFromQueue(Queue, Picker);
+    SUnit *V = popFromQueue(Queue, Picker, scheduleDAG);
     V->NodeQueueId = 0;
     return V;
   }
@@ -1613,7 +1641,7 @@ public:
     std::vector<SUnit*> DumpQueue = Queue;
     SF DumpPicker = Picker;
     while (!DumpQueue.empty()) {
-      SUnit *SU = popFromQueue(DumpQueue, DumpPicker);
+      SUnit *SU = popFromQueue(DumpQueue, DumpPicker, scheduleDAG);
       if (isBottomUp())
         dbgs() << "Height " << SU->getHeight() << ": ";
       else

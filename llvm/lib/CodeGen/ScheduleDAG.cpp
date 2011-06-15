@@ -19,10 +19,17 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include <climits>
 using namespace llvm;
+
+#ifndef NDEBUG
+cl::opt<bool> StressSchedOpt(
+  "stress-sched", cl::Hidden, cl::init(false),
+  cl::desc("Stress test instruction scheduling"));
+#endif
 
 ScheduleDAG::ScheduleDAG(MachineFunction &mf)
   : TM(mf.getTarget()),
@@ -30,6 +37,9 @@ ScheduleDAG::ScheduleDAG(MachineFunction &mf)
     TRI(TM.getRegisterInfo()),
     MF(mf), MRI(mf.getRegInfo()),
     EntrySU(), ExitSU() {
+#ifndef NDEBUG
+  StressSched = StressSchedOpt;
+#endif
 }
 
 ScheduleDAG::~ScheduleDAG() {}
@@ -307,6 +317,8 @@ void SUnit::dumpAll(const ScheduleDAG *G) const {
       if (I->isArtificial())
         dbgs() << " *";
       dbgs() << ": Latency=" << I->getLatency();
+      if (I->isAssignedRegDep())
+        dbgs() << " Reg=" << G->TRI->getName(I->getReg());
       dbgs() << "\n";
     }
   }
