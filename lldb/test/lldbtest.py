@@ -403,12 +403,6 @@ class TestBase(unittest2.TestCase):
     # The concrete subclass should override this attribute.
     mydir = None
 
-    # State pertaining to the inferior process, if any.
-    # This reflects inferior process started through the command interface with
-    # either the lldb "run" or "process launch" command.
-    # See also self.runCmd().
-    runStarted = False
-
     # Maximum allowed attempts when launching the inferior process.
     # Can be overridden by the LLDB_MAX_LAUNCH_COUNT environment variable.
     maxLaunchCount = 3;
@@ -738,7 +732,7 @@ class TestBase(unittest2.TestCase):
         # Decide whether to dump the session info.
         self.dumpSessionInfo()
 
-    def runCmd(self, cmd, msg=None, check=True, trace=False, setCookie=True):
+    def runCmd(self, cmd, msg=None, check=True, trace=False):
         """
         Ask the command interpreter to handle the command and then check its
         return status.
@@ -771,10 +765,6 @@ class TestBase(unittest2.TestCase):
                 time.sleep(self.timeWaitNextLaunch)
                 with recording(self, True) as sbuf:
                     print >> sbuf, "Command '" + cmd + "' failed!"
-
-        # Modify runStarted only if "run" or "process launch" was encountered.
-        if running:
-            self.runStarted = running and setCookie
 
         if check:
             self.assertTrue(self.res.Succeeded(),
