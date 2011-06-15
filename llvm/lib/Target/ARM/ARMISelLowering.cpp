@@ -5976,8 +5976,8 @@ static SDValue PerformORCombine(SDNode *N,
   return SDValue();
 }
 
-/// PerformBFICombine - (bfi A, (and B, C1), C2) -> (bfi A, B, C2) iff
-/// C1 & C2 == C1.
+/// PerformBFICombine - (bfi A, (and B, Mask1), Mask2) -> (bfi A, B, Mask2) iff
+/// the bits being cleared by the AND are not demanded by the BFI.
 static SDValue PerformBFICombine(SDNode *N,
                                  TargetLowering::DAGCombinerInfo &DCI) {
   SDValue N1 = N->getOperand(1);
@@ -5985,9 +5985,12 @@ static SDValue PerformBFICombine(SDNode *N,
     ConstantSDNode *N11C = dyn_cast<ConstantSDNode>(N1.getOperand(1));
     if (!N11C)
       return SDValue();
-    unsigned Mask = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
+    unsigned InvMask = cast<ConstantSDNode>(N->getOperand(2))->getZExtValue();
+    unsigned LSB = CountTrailingZeros_32(~InvMask);
+    unsigned Width = (32 - CountLeadingZeros_32(~InvMask)) - LSB;
+    unsigned Mask = (1 << Width)-1;
     unsigned Mask2 = N11C->getZExtValue();
-    if ((Mask & Mask2) == Mask2)
+    if ((Mask & (~Mask2)) == 0)
       return DCI.DAG.getNode(ARMISD::BFI, N->getDebugLoc(), N->getValueType(0),
                              N->getOperand(0), N1.getOperand(0),
                              N->getOperand(2));

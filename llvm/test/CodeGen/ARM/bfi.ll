@@ -61,3 +61,16 @@ entry:
   %3 = or i32 %2, %0
   ret i32 %3
 }
+
+; rdar://9609030
+define i32 @f6(i32 %a, i32 %b) nounwind readnone {
+entry:
+; CHECK: f6:
+; CHECK-NOT: bic
+; CHECK: bfi r0, r1, #8, #9
+  %and = and i32 %a, -130817
+  %and2 = shl i32 %b, 8
+  %shl = and i32 %and2, 130816
+  %or = or i32 %shl, %and
+  ret i32 %or
+}
