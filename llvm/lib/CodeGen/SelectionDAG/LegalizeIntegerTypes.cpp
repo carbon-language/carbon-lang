@@ -972,7 +972,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_ZERO_EXTEND(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
   SDValue Op = GetPromotedInteger(N->getOperand(0));
   Op = DAG.getNode(ISD::ANY_EXTEND, dl, N->getValueType(0), Op);
-  return DAG.getZeroExtendInReg(Op, dl, N->getOperand(0).getValueType());
+  return DAG.getZeroExtendInReg(Op, dl,
+                                N->getOperand(0).getValueType().getScalarType());
 }
 
 
