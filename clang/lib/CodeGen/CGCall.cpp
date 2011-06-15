@@ -1189,7 +1189,8 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
     return args.add(EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0),
                     type);
 
-  if (hasAggregateLLVMType(type) && isa<ImplicitCastExpr>(E) &&
+  if (hasAggregateLLVMType(type) && !E->getType()->isAnyComplexType() &&
+      isa<ImplicitCastExpr>(E) &&
       cast<CastExpr>(E)->getCastKind() == CK_LValueToRValue) {
     LValue L = EmitLValue(cast<CastExpr>(E)->getSubExpr());
     assert(L.isSimple());
@@ -1257,7 +1258,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     case ABIArgInfo::Indirect: {
       if (RV.isScalar() || RV.isComplex()) {
         // Make a temporary alloca to pass the argument.
-        Args.push_back(CreateMemTemp(I->Ty));
+        llvm::AllocaInst *AI = CreateMemTemp(I->Ty);
+        if (ArgInfo.getIndirectAlign() > AI->getAlignment())
+          AI->setAlignment(ArgInfo.getIndirectAlign());
+        Args.push_back(AI);
         if (RV.isScalar())
           EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false,
                             Alignment, I->Ty);
