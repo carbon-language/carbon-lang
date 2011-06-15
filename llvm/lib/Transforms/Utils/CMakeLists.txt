@@ -5,7 +5,6 @@ add_llvm_library(LLVMTransformUtils
   BreakCriticalEdges.cpp
   BuildLibCalls.cpp
   CloneFunction.cpp
-  CloneLoop.cpp
   CloneModule.cpp
   CodeExtractor.cpp
   DemoteRegToStack.cpp
