@@ -20,3 +20,5 @@ define i32 @main(i32 inreg %argc, i8 ** inreg %argv) nounwind {
     %retVal = sext i16 %two to i32
     ret i32 %retVal
 }
+
+declare void @function_to_resolve_eagerly() nonlazybind

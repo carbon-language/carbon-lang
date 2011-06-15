@@ -99,6 +99,7 @@ namespace lltok {
     kw_noimplicitfloat,
     kw_naked,
     kw_hotpatch,
+    kw_nonlazybind,
 
     kw_type,
     kw_opaque,

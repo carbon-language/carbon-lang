@@ -69,6 +69,9 @@ const Attributes Hotpatch    = 1<<29;     ///< Function should have special
                                           ///'hotpatch' sequence in prologue
 const Attributes UWTable     = 1<<30;     ///< Function must be in a unwind
                                           ///table
+const Attributes NonLazyBind = 1U<<31;    ///< Function is called early and/or
+                                          ///  often, so lazy binding isn't
+                                          ///  worthwhile.
 
 /// Note that uwtable is about the ABI or the user mandating an entry in the
 /// unwind table. The nounwind attribute is about an exception passing by the
@@ -90,7 +93,7 @@ const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
 const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly |
   NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq |
   NoRedZone | NoImplicitFloat | Naked | InlineHint | StackAlignment |
-  Hotpatch | UWTable;
+  Hotpatch | UWTable | NonLazyBind;
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
 const Attributes VarArgsIncompatible = StructRet;

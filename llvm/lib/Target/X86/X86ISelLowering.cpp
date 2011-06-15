@@ -2271,6 +2271,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     const GlobalValue *GV = G->getGlobal();
     if (!GV->hasDLLImportLinkage()) {
       unsigned char OpFlags = 0;
+      bool ExtraLoad = false;
+      unsigned WrapperKind = ISD::DELETED_NODE;
 
       // On ELF targets, in both X86-64 and X86-32 mode, direct calls to
       // external symbols most go through the PLT in PIC mode.  If the symbol
@@ -2288,10 +2290,28 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         // unless we're building with the leopard linker or later, which
         // automatically synthesizes these stubs.
         OpFlags = X86II::MO_DARWIN_STUB;
+      } else if (Subtarget->isPICStyleRIPRel() &&
+                 isa<Function>(GV) &&
+                 cast<Function>(GV)->hasFnAttr(Attribute::NonLazyBind)) {
+        // If the function is marked as non-lazy, generate an indirect call
+        // which loads from the GOT directly. This avoids runtime overhead
+        // at the cost of eager binding (and one extra byte of encoding).
+        OpFlags = X86II::MO_GOTPCREL;
+        WrapperKind = X86ISD::WrapperRIP;
+        ExtraLoad = true;
       }
 
       Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy(),
                                           G->getOffset(), OpFlags);
+
+      // Add a wrapper if needed.
+      if (WrapperKind != ISD::DELETED_NODE)
+        Callee = DAG.getNode(X86ISD::WrapperRIP, dl, getPointerTy(), Callee);
+      // Add extra indirection if needed.
+      if (ExtraLoad)
+        Callee = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), Callee,
+                             MachinePointerInfo::getGOT(),
+                             false, false, 0);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     unsigned char OpFlags = 0;
