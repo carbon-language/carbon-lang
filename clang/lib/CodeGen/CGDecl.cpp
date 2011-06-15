@@ -894,8 +894,6 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
   DMEntry = DeclPtr;
 
   // Emit debug info for param declaration.
-  if (CGDebugInfo *DI = getDebugInfo()) {
-    DI->setLocation(D.getLocation());
+  if (CGDebugInfo *DI = getDebugInfo())
     DI->EmitDeclareOfArgVariable(&D, DeclPtr, ArgNo, Builder);
-  }
 }
