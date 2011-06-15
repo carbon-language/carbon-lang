@@ -706,8 +706,7 @@ classes using the following class:
 <div class="doc_code">
 <pre>
 class RegisterClass&lt;string namespace,
-list&lt;ValueType&gt; regTypes, int alignment,
-                    list&lt;Register&gt; regList&gt; {
+list&lt;ValueType&gt; regTypes, int alignment, dag regList&gt; {
   string Namespace = namespace;
   list&lt;ValueType&gt; RegTypes = regTypes;
   int Size = 0;  // spill size, in bits; zero lets tblgen pick the size
@@ -717,7 +716,7 @@ list&lt;ValueType&gt; regTypes, int alignment,
   // default value 1 means a single instruction
   // A negative value means copying is extremely expensive or impossible
   int CopyCost = 1;  
-  list&lt;Register&gt; MemberList = regList;
+  dag MemberList = regList;
   
   // for register classes that are subregisters of this class
   list&lt;RegisterClass&gt; SubRegClassList = [];  
@@ -749,9 +748,11 @@ list&lt;ValueType&gt; regTypes, int alignment,
     memory.</li>
 
 <li>The final argument, <tt>regList</tt>, specifies which registers are in this
-    class.  If an <tt>allocation_order_*</tt> method is not specified,
-    then <tt>regList</tt> also defines the order of allocation used by the
-    register allocator.</li>
+    class. If an alternative allocation order method is not specified, then
+    <tt>regList</tt> also defines the order of allocation used by the register
+    allocator. Besides simply listing registers with <tt>(add R0, R1, ...)</tt>,
+    more advanced set operators are available. See
+    <tt>include/llvm/Target/Target.td</tt> for more information.</li>
 </ul>
 
 <p>
@@ -761,44 +762,31 @@ classes, the first argument defines the namespace with the string
 '<tt>SP</tt>'. <tt>FPRegs</tt> defines a group of 32 single-precision
 floating-point registers (<tt>F0</tt> to <tt>F31</tt>); <tt>DFPRegs</tt> defines
 a group of 16 double-precision registers
-(<tt>D0-D15</tt>). For <tt>IntRegs</tt>, the <tt>MethodProtos</tt>
-and <tt>MethodBodies</tt> methods are used by TableGen to insert the specified
-code into generated output.
+(<tt>D0-D15</tt>).
 </p>
 
 <div class="doc_code">
 <pre>
-def FPRegs : RegisterClass&lt;"SP", [f32], 32,
-  [F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
-   F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]&gt;;
+// F0, F1, F2, ..., F31
+def FPRegs : RegisterClass&lt;"SP", [f32], 32, (sequence "F%u", 0, 31)&gt;;
 
 def DFPRegs : RegisterClass&lt;"SP", [f64], 64,
-  [D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15]&gt;;
+                            (add D0, D1, D2, D3, D4, D5, D6, D7, D8,
+                                 D9, D10, D11, D12, D13, D14, D15)&gt;;
 &nbsp;
 def IntRegs : RegisterClass&lt;"SP", [i32], 32,
-    [L0, L1, L2, L3, L4, L5, L6, L7,
-     I0, I1, I2, I3, I4, I5,
-     O0, O1, O2, O3, O4, O5, O7,
-     G1,
-     // Non-allocatable regs:
-     G2, G3, G4, 
-     O6,        // stack ptr
-    I6,        // frame ptr
-     I7,        // return address
-     G0,        // constant zero
-     G5, G6, G7 // reserved for kernel
-    ]&gt; {
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &amp;MF) const;
-  }];
-  let MethodBodies = [{
-    IntRegsClass::iterator
-    IntRegsClass::allocation_order_end(const MachineFunction &amp;MF) const {
-      return end() - 10  // Don't allocate special registers
-         -1;
-    }
-  }];
-}
+    (add L0, L1, L2, L3, L4, L5, L6, L7,
+         I0, I1, I2, I3, I4, I5,
+         O0, O1, O2, O3, O4, O5, O7,
+         G1,
+         // Non-allocatable regs:
+         G2, G3, G4,
+         O6,        // stack ptr
+         I6,        // frame ptr
+         I7,        // return address
+         G0,        // constant zero
+         G5, G6, G7 // reserved for kernel
+    )&gt;;
 </pre>
 </div>
 
@@ -820,10 +808,7 @@ which is included at the bottom of <tt>SparcRegisterInfo.cpp</tt>, the SPARC
 register implementation. The code below shows only the generated integer
 registers and associated register classes. The order of registers
 in <tt>IntRegs</tt> reflects the order in the definition of <tt>IntRegs</tt> in
-the target description file. Take special note of the use
-of <tt>MethodBodies</tt> in <tt>SparcRegisterInfo.td</tt> to create code in
-<tt>SparcGenRegisterInfo.inc</tt>. <tt>MethodProtos</tt> generates similar code
-in <tt>SparcGenRegisterInfo.h.inc</tt>.
+the target description file.
 </p>
 
 <div class="doc_code">
@@ -866,19 +851,20 @@ namespace SP {   // Register class instances
   static const TargetRegisterClass* const IntRegsSuperclasses [] = {
     NULL
   };
-...
-  IntRegsClass::iterator
-  IntRegsClass::allocation_order_end(const MachineFunction &amp;MF) const {
-     return end()-10  // Don't allocate special registers
-         -1;
-  }
-  
+
   IntRegsClass::IntRegsClass() : TargetRegisterClass(IntRegsRegClassID, 
     IntRegsVTs, IntRegsSubclasses, IntRegsSuperclasses, IntRegsSubRegClasses, 
     IntRegsSuperRegClasses, 4, 4, 1, IntRegs, IntRegs + 32) {}
 }
 </pre>
 </div>
+
+<p>
+The register allocators will avoid using reserved registers, and callee saved
+registers are not used until all the volatile registers have been used.  That
+is usually good enough, but in some cases it may be necessary to provide custom
+allocation orders.
+</p>
 
 </div>
 

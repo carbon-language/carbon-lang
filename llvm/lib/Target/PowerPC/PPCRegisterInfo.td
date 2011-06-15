@@ -276,15 +276,13 @@ def RM: SPR<512, "**ROUNDING MODE**">;
 /// Register classes
 // Allocate volatiles first
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
-def GPRC : RegisterClass<"PPC", [i32], 32,
-     [R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12,
-      R30, R29, R28, R27, R26, R25, R24, R23, R22, R21, R20, R19, R18, R17,
-      R16, R15, R14, R13, R31, R0, R1, LR]>;
+def GPRC : RegisterClass<"PPC", [i32], 32, (add (sequence "R%u", 2, 12),
+                                                (sequence "R%u", 30, 13),
+                                                R31, R0, R1, LR)>;
 
-def G8RC : RegisterClass<"PPC", [i64], 64,
-     [X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12,
-      X30, X29, X28, X27, X26, X25, X24, X23, X22, X21, X20, X19, X18, X17,
-      X16, X15, X14, X31, X13, X0, X1, LR8]>;
+def G8RC : RegisterClass<"PPC", [i64], 64, (add (sequence "X%u", 2, 12),
+                                                (sequence "X%u", 30, 14),
+                                                X31, X13, X0, X1, LR8)>;
 
 // Allocate volatiles first, then non-volatiles in reverse order. With the SVR4
 // ABI the size of the Floating-point register save area is determined by the
@@ -293,41 +291,36 @@ def G8RC : RegisterClass<"PPC", [i64], 64,
 // previous stack frame. By allocating non-volatiles in reverse order we make
 // sure that the Floating-point register save area is always as small as
 // possible because there aren't any unused spill slots.
-def F8RC : RegisterClass<"PPC", [f64], 64, [F0, F1, F2, F3, F4, F5, F6, F7,
-  F8, F9, F10, F11, F12, F13, F31, F30, F29, F28, F27, F26, F25, F24, F23,
-  F22, F21, F20, F19, F18, F17, F16, F15, F14]>;
-def F4RC : RegisterClass<"PPC", [f32], 32, [F0, F1, F2, F3, F4, F5, F6, F7,
-  F8, F9, F10, F11, F12, F13, F31, F30, F29, F28, F27, F26, F25, F24, F23,
-  F22, F21, F20, F19, F18, F17, F16, F15, F14]>;
+def F8RC : RegisterClass<"PPC", [f64], 64, (add (sequence "F%u", 0, 13),
+                                                (sequence "F%u", 31, 14))>;
+def F4RC : RegisterClass<"PPC", [f32], 32, (add F8RC)>;
 
 def VRRC : RegisterClass<"PPC", [v16i8,v8i16,v4i32,v4f32], 128,
- [V2, V3, V4, V5, V0, V1, 
-  V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V31, V30,
-  V29, V28, V27, V26, V25, V24, V23, V22, V21, V20]>;
+                         (add V2, V3, V4, V5, V0, V1, V6, V7, V8, V9, V10, V11,
+                             V12, V13, V14, V15, V16, V17, V18, V19, V31, V30,
+                             V29, V28, V27, V26, V25, V24, V23, V22, V21, V20)>;
 
 def CRBITRC : RegisterClass<"PPC", [i32], 32,
-  [CR0LT, CR0GT, CR0EQ, CR0UN,
-   CR1LT, CR1GT, CR1EQ, CR1UN,
-   CR2LT, CR2GT, CR2EQ, CR2UN,
-   CR3LT, CR3GT, CR3EQ, CR3UN,
-   CR4LT, CR4GT, CR4EQ, CR4UN,
-   CR5LT, CR5GT, CR5EQ, CR5UN,
-   CR6LT, CR6GT, CR6EQ, CR6UN,
-   CR7LT, CR7GT, CR7EQ, CR7UN
-  ]>
+  (add CR0LT, CR0GT, CR0EQ, CR0UN,
+       CR1LT, CR1GT, CR1EQ, CR1UN,
+       CR2LT, CR2GT, CR2EQ, CR2UN,
+       CR3LT, CR3GT, CR3EQ, CR3UN,
+       CR4LT, CR4GT, CR4EQ, CR4UN,
+       CR5LT, CR5GT, CR5EQ, CR5UN,
+       CR6LT, CR6GT, CR6EQ, CR6UN,
+       CR7LT, CR7GT, CR7EQ, CR7UN)>
 {
   let CopyCost = -1;
 }
 
-def CRRC : RegisterClass<"PPC", [i32], 32, [CR0, CR1, CR5, CR6, CR7, CR2, 
-  CR3, CR4]>
-{
+def CRRC : RegisterClass<"PPC", [i32], 32, (add CR0, CR1, CR5, CR6,
+                                                CR7, CR2, CR3, CR4)> {
   let SubRegClasses = [(CRBITRC sub_lt, sub_gt, sub_eq, sub_un)];
 }
 
-def CTRRC : RegisterClass<"PPC", [i32], 32, [CTR]>;
-def CTRRC8 : RegisterClass<"PPC", [i64], 64, [CTR8]>;
-def VRSAVERC : RegisterClass<"PPC", [i32], 32, [VRSAVE]>;
-def CARRYRC : RegisterClass<"PPC", [i32], 32, [CARRY]> {
+def CTRRC : RegisterClass<"PPC", [i32], 32, (add CTR)>;
+def CTRRC8 : RegisterClass<"PPC", [i64], 64, (add CTR8)>;
+def VRSAVERC : RegisterClass<"PPC", [i32], 32, (add VRSAVE)>;
+def CARRYRC : RegisterClass<"PPC", [i32], 32, (add CARRY)> {
   let CopyCost = -1;
 }

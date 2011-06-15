@@ -92,7 +92,7 @@ class RegisterWithSubRegs<string n, list<Register> subregs> : Register<n> {
 // registers by register allocators.
 //
 class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
-                    list<Register> regList> {
+                    dag regList> {
   string Namespace = namespace;
 
   // RegType - Specify the list ValueType of the registers in this register
@@ -122,7 +122,7 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // allocation_order_* method are not specified, this also defines the order of
   // allocation used by the register allocator.
   //
-  list<Register> MemberList = regList;
+  dag MemberList = regList;
 
   // SubRegClasses - Specify the register class of subregisters as a list of
   // dags: (RegClass SubRegIndex, SubRegindex, ...)
@@ -140,6 +140,39 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   code MethodBodies = [{}];
 }
 
+// The memberList in a RegisterClass is a dag of set operations. TableGen
+// evaluates these set operations and expand them into register lists. These
+// are the most common operation, see test/TableGen/SetTheory.td for more
+// examples of what is possible:
+//
+// (add R0, R1, R2) - Set Union. Each argument can be an individual register, a
+// register class, or a sub-expression. This is also the way to simply list
+// registers.
+//
+// (sub GPR, SP) - Set difference. Subtract the last arguments from the first.
+//
+// (and GPR, CSR) - Set intersection. All registers from the first set that are
+// also in the second set.
+//
+// (sequence "R%u", 0, 15) -> [R0, R1, ..., R15]. Generate a sequence of
+// numbered registers.
+//
+// (shl GPR, 4) - Remove the first N elements.
+//
+// (trunc GPR, 4) - Truncate after the first N elements.
+//
+// (rotl GPR, 1) - Rotate N places to the left.
+//
+// (rotr GPR, 1) - Rotate N places to the right.
+//
+// (decimate GPR, 2) - Pick every N'th element, starting with the first.
+//
+// All of these operators work on ordered sets, not lists. That means
+// duplicates are removed from sub-expressions.
+
+// Set operators. The rest is defined in TargetSelectionDAG.td.
+def sequence;
+def decimate;
 
 //===----------------------------------------------------------------------===//
 // DwarfRegNum - This class provides a mapping of the llvm register enumeration

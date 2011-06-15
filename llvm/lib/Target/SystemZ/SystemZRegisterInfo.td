@@ -162,66 +162,38 @@ def F15L : FPRL<15, "f15", [F15S]>;
 def PSW : SystemZReg<"psw">;
 
 /// Register classes
-def GR32 : RegisterClass<"SystemZ", [i32], 32,
-   // Volatile registers
-  [R0W, R1W, R2W, R3W, R4W, R5W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
-   // Frame pointer, sometimes allocable
-   R11W,
-   // Volatile, but not allocable
-   R14W, R15W]>;
+def GR32 : RegisterClass<"SystemZ", [i32], 32, (sequence "R%uW", 0, 15)>;
 
 /// Registers used to generate address. Everything except R0.
-def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
-   // Volatile registers
-  [R1W, R2W, R3W, R4W, R5W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
-   // Frame pointer, sometimes allocable
-   R11W,
-   // Volatile, but not allocable
-   R14W, R15W]>;
+def ADDR32 : RegisterClass<"SystemZ", [i32], 32, (sub GR32, R0W)>;
 
-def GR64 : RegisterClass<"SystemZ", [i64], 64,
-   // Volatile registers
-  [R0D, R1D, R2D, R3D, R4D, R5D, R6D, R7D, R8D, R9D, R10D, R12D, R13D,
-   // Frame pointer, sometimes allocable
-   R11D,
-   // Volatile, but not allocable
-   R14D, R15D]> {
+def GR64 : RegisterClass<"SystemZ", [i64], 64, (sequence "R%uD", 0, 15)> {
   let SubRegClasses = [(GR32 subreg_32bit)];
 }
 
-def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
-   // Volatile registers
-  [R1D, R2D, R3D, R4D, R5D, R6D, R7D, R8D, R9D, R10D, R12D, R13D,
-   // Frame pointer, sometimes allocable
-   R11D,
-   // Volatile, but not allocable
-   R14D, R15D]> {
+def ADDR64 : RegisterClass<"SystemZ", [i64], 64, (sub GR64, R0D)> {
   let SubRegClasses = [(ADDR32 subreg_32bit)];
 }
 
 // Even-odd register pairs
-def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
-  [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P]> {
+def GR64P : RegisterClass<"SystemZ", [v2i32], 64, (add R0P, R2P, R4P, R6P, R8P,
+                                                       R10P, R12P, R14P)> {
   let SubRegClasses = [(GR32 subreg_32bit, subreg_odd32)];
 }
 
-def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
-  [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]> {
+def GR128 : RegisterClass<"SystemZ", [v2i64], 128, (add R0Q, R2Q, R4Q, R6Q, R8Q,
+                                                        R10Q, R12Q, R14Q)> {
   let SubRegClasses = [(GR32 subreg_32bit, subreg_odd32),
-                         (GR64 subreg_even, subreg_odd)];
+                       (GR64 subreg_even, subreg_odd)];
 }
 
-def FP32 : RegisterClass<"SystemZ", [f32], 32,
- [F0S, F1S,  F2S,  F3S,  F4S,  F5S,  F6S,  F7S,
-  F8S, F9S, F10S, F11S, F12S, F13S, F14S, F15S]>;
+def FP32 : RegisterClass<"SystemZ", [f32], 32, (sequence "F%uS", 0, 15)>;
 
-def FP64 : RegisterClass<"SystemZ", [f64], 64,
- [F0L, F1L,  F2L,  F3L,  F4L,  F5L,  F6L,  F7L,
-  F8L, F9L, F10L, F11L, F12L, F13L, F14L, F15L]> {
+def FP64 : RegisterClass<"SystemZ", [f64], 64, (sequence "F%uL", 0, 15)> {
   let SubRegClasses = [(FP32 subreg_32bit)];
 }
 
 // Status flags registers.
-def CCR : RegisterClass<"SystemZ", [i64], 64, [PSW]> {
+def CCR : RegisterClass<"SystemZ", [i64], 64, (add PSW)> {
   let CopyCost = -1;  // Don't allow copying of status registers.
 }

@@ -155,147 +155,29 @@ def R127 : SPUVecReg<127, "$127">, DwarfRegNum<[127]>;
 
 // The SPU's registers as 128-bit wide entities, and can function as general
 // purpose registers, where the operands are in the "preferred slot":
+// The non-volatile registers are allocated in reverse order, like PPC does it.
 def GPRC : RegisterClass<"SPU", [i128], 128,
- [
-   /* volatile register */
-   R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 
-   R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31,
-   R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46,
-   R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61,
-   R62, R63, R64, R65, R66, R67, R68, R69, R70, R71, R72, R73, R74, R75, R76,
-   R77, R78, R79,
-   /* non-volatile register: take hint from PPC and allocate in reverse order */
-   R127, R126, R125, R124, R123, R122, R121, R120, R119, R118, R117, R116, R115,
-   R114, R113, R112, R111, R110, R109, R108, R107, R106, R105, R104, R103, R102,
-   R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
-   R86, R85, R84, R83, R82, R81, R80, 
-   /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>;
+                         (add (sequence "R%u", 0, 79),
+                              (sequence "R%u", 127, 80))>;
 
 // The SPU's registers as 64-bit wide (double word integer) "preferred slot":
-def R64C : RegisterClass<"SPU", [i64], 128,
- [
-   /* volatile register */
-   R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 
-   R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31,
-   R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46,
-   R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61,
-   R62, R63, R64, R65, R66, R67, R68, R69, R70, R71, R72, R73, R74, R75, R76,
-   R77, R78, R79,
-   /* non-volatile register: take hint from PPC and allocate in reverse order */
-   R127, R126, R125, R124, R123, R122, R121, R120, R119, R118, R117, R116, R115,
-   R114, R113, R112, R111, R110, R109, R108, R107, R106, R105, R104, R103, R102,
-   R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
-   R86, R85, R84, R83, R82, R81, R80, 
-   /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>;
+def R64C : RegisterClass<"SPU", [i64], 128, (add GPRC)>;
 
 // The SPU's registers as 64-bit wide (double word) FP "preferred slot":
-def R64FP : RegisterClass<"SPU", [f64], 128,
- [
-   /* volatile register */
-   R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 
-   R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31,
-   R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46,
-   R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61,
-   R62, R63, R64, R65, R66, R67, R68, R69, R70, R71, R72, R73, R74, R75, R76,
-   R77, R78, R79,
-   /* non-volatile register: take hint from PPC and allocate in reverse order */
-   R127, R126, R125, R124, R123, R122, R121, R120, R119, R118, R117, R116, R115,
-   R114, R113, R112, R111, R110, R109, R108, R107, R106, R105, R104, R103, R102,
-   R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
-   R86, R85, R84, R83, R82, R81, R80, 
-   /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>;
+def R64FP : RegisterClass<"SPU", [f64], 128, (add GPRC)>;
 
 // The SPU's registers as 32-bit wide (word) "preferred slot":
-def R32C : RegisterClass<"SPU", [i32], 128,
- [
-   /* volatile register */
-   R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 
-   R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31,
-   R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46,
-   R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61,
-   R62, R63, R64, R65, R66, R67, R68, R69, R70, R71, R72, R73, R74, R75, R76,
-   R77, R78, R79,
-   /* non-volatile register: take hint from PPC and allocate in reverse order */
-   R127, R126, R125, R124, R123, R122, R121, R120, R119, R118, R117, R116, R115,
-   R114, R113, R112, R111, R110, R109, R108, R107, R106, R105, R104, R103, R102,
-   R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
-   R86, R85, R84, R83, R82, R81, R80, 
-   /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>;
+def R32C : RegisterClass<"SPU", [i32], 128, (add GPRC)>;
 
 // The SPU's registers as single precision floating point "preferred slot":
-def R32FP : RegisterClass<"SPU", [f32], 128,
- [
-   /* volatile register */
-   R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 
-   R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31,
-   R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46,
-   R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61,
-   R62, R63, R64, R65, R66, R67, R68, R69, R70, R71, R72, R73, R74, R75, R76,
-   R77, R78, R79,
-   /* non-volatile register: take hint from PPC and allocate in reverse order */
-   R127, R126, R125, R124, R123, R122, R121, R120, R119, R118, R117, R116, R115,
-   R114, R113, R112, R111, R110, R109, R108, R107, R106, R105, R104, R103, R102,
-   R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
-   R86, R85, R84, R83, R82, R81, R80, 
-   /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>;
+def R32FP : RegisterClass<"SPU", [f32], 128, (add GPRC)>;
 
 // The SPU's registers as 16-bit wide (halfword) "preferred slot":
-def R16C : RegisterClass<"SPU", [i16], 128,
- [
-   /* volatile register */
-   R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 
-   R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31,
-   R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46,
-   R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61,
-   R62, R63, R64, R65, R66, R67, R68, R69, R70, R71, R72, R73, R74, R75, R76,
-   R77, R78, R79,
-   /* non-volatile register: take hint from PPC and allocate in reverse order */
-   R127, R126, R125, R124, R123, R122, R121, R120, R119, R118, R117, R116, R115,
-   R114, R113, R112, R111, R110, R109, R108, R107, R106, R105, R104, R103, R102,
-   R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
-   R86, R85, R84, R83, R82, R81, R80, 
-   /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>;
+def R16C : RegisterClass<"SPU", [i16], 128, (add GPRC)>;
 
 // The SPU's registers as 8-bit wide (byte) "preferred slot":
-def R8C : RegisterClass<"SPU", [i8], 128,
- [
-   /* volatile register */
-   R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 
-   R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31,
-   R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46,
-   R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61,
-   R62, R63, R64, R65, R66, R67, R68, R69, R70, R71, R72, R73, R74, R75, R76,
-   R77, R78, R79,
-   /* non-volatile register: take hint from PPC and allocate in reverse order */
-   R127, R126, R125, R124, R123, R122, R121, R120, R119, R118, R117, R116, R115,
-   R114, R113, R112, R111, R110, R109, R108, R107, R106, R105, R104, R103, R102,
-   R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
-   R86, R85, R84, R83, R82, R81, R80, 
-   /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>;
+def R8C : RegisterClass<"SPU", [i8], 128, (add GPRC)>;
 
 // The SPU's registers as vector registers:
-def VECREG : RegisterClass<"SPU",
-                           [v16i8,v8i16,v4i32,v4f32,v2i64,v2f64],
-                           128,
- [
-   /* volatile register */
-   R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, 
-   R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, R31,
-   R32, R33, R34, R35, R36, R37, R38, R39, R40, R41, R42, R43, R44, R45, R46,
-   R47, R48, R49, R50, R51, R52, R53, R54, R55, R56, R57, R58, R59, R60, R61,
-   R62, R63, R64, R65, R66, R67, R68, R69, R70, R71, R72, R73, R74, R75, R76,
-   R77, R78, R79,
-   /* non-volatile register: take hint from PPC and allocate in reverse order */
-   R127, R126, R125, R124, R123, R122, R121, R120, R119, R118, R117, R116, R115,
-   R114, R113, R112, R111, R110, R109, R108, R107, R106, R105, R104, R103, R102,
-   R101, R100, R99, R98, R97, R96, R95, R94, R93, R92, R91, R90, R89, R88, R87,
-   R86, R85, R84, R83, R82, R81, R80, 
-   /* environment ptr, SP, LR */ 
-   R2, R1, R0 ]>;
+def VECREG : RegisterClass<"SPU", [v16i8,v8i16,v4i32,v4f32,v2i64,v2f64], 128,
+                           (add GPRC)>;

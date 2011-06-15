@@ -195,95 +195,66 @@ def LB0 : Ri<6, 2, "lb0">, DwarfRegNum<[48]>;
 def LB1 : Ri<6, 5, "lb1">, DwarfRegNum<[49]>;
 
 // Register classes.
-def D16 : RegisterClass<"BF", [i16], 16,
-    [R0H, R0L, R1H, R1L, R2H, R2L, R3H, R3L,
-     R4H, R4L, R5H, R5L, R6H, R6L, R7H, R7L]>;
+def D16L : RegisterClass<"BF", [i16], 16, (sequence "R%uL", 0, 7)>;
 
-def D16L : RegisterClass<"BF", [i16], 16,
-    [R0L, R1L, R2L, R3L, R4L, R5L, R6L, R7L]>;
+def D16H : RegisterClass<"BF", [i16], 16, (sequence "R%uH", 0, 7)>;
 
-def D16H : RegisterClass<"BF", [i16], 16,
-    [R0H, R1H, R2H, R3H, R4H, R5H, R6H, R7H]>;
-
-def P16 : RegisterClass<"BF", [i16], 16,
-    [P0H, P0L, P1H, P1L, P2H, P2L, P3H, P3L,
-     P4H, P4L, P5H, P5L, SPH, SPL, FPH, FPL]>;
+def D16 : RegisterClass<"BF", [i16], 16, (add D16L, D16H)>;
 
 def P16L : RegisterClass<"BF", [i16], 16,
-    [P0L, P1L, P2L, P3L, P4L, P5L, SPL, FPL]>;
+                         (add (sequence "P%uL", 0, 5), SPL, FPL)>;
 
 def P16H : RegisterClass<"BF", [i16], 16,
-    [P0H, P1H, P2H, P3H, P4H, P5H, SPH, FPH]>;
+                         (add (sequence "P%uH", 0, 5), SPH, FPH)>;
 
-def DP16 : RegisterClass<"BF", [i16], 16,
-    [R0H, R0L, R1H, R1L, R2H, R2L, R3H, R3L,
-     R4H, R4L, R5H, R5L, R6H, R6L, R7H, R7L,
-     P0H, P0L, P1H, P1L, P2H, P2L, P3H, P3L,
-     P4H, P4L, P5H, P5L, SPH, SPL, FPH, FPL]>;
+def P16 : RegisterClass<"BF", [i16], 16, (add P16L, P16H)>;
 
-def DP16L : RegisterClass<"BF", [i16], 16,
-    [R0L, R1L, R2L, R3L, R4L, R5L, R6L, R7L,
-     P0L, P1L, P2L, P3L, P4L, P5L, SPL, FPL]>;
+def DP16 : RegisterClass<"BF", [i16], 16, (add D16, P16)>;
 
-def DP16H : RegisterClass<"BF", [i16], 16,
-    [R0H, R1H, R2H, R3H, R4H, R5H, R6H, R7H,
-     P0H, P1H, P2H, P3H, P4H, P5H, SPH, FPH]>;
+def DP16L : RegisterClass<"BF", [i16], 16, (add D16L, P16L)>;
+
+def DP16H : RegisterClass<"BF", [i16], 16, (add D16H, P16H)>;
 
 def GR16 : RegisterClass<"BF", [i16], 16,
-    [R0H, R0L, R1H, R1L, R2H, R2L, R3H, R3L,
-     R4H, R4L, R5H, R5L, R6H, R6L, R7H, R7L,
-     P0H, P0L, P1H, P1L, P2H, P2L, P3H, P3L,
-     P4H, P4L, P5H, P5L, SPH, SPL, FPH, FPL,
+    (add DP16,
      I0H, I0L, I1H, I1L, I2H, I2L, I3H, I3L,
      M0H, M0L, M1H, M1L, M2H, M2L, M3H, M3L,
      B0H, B0L, B1H, B1L, B2H, B2L, B3H, B3L,
-     L0H, L0L, L1H, L1L, L2H, L2L, L3H, L3L]>;
+     L0H, L0L, L1H, L1L, L2H, L2L, L3H, L3L)>;
 
-def D : RegisterClass<"BF", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {
+def D : RegisterClass<"BF", [i32], 32, (sequence "R%u", 0, 7)> {
   let SubRegClasses = [(D16L lo16), (D16H hi16)];
 }
 
-def P : RegisterClass<"BF", [i32], 32, [P0, P1, P2, P3, P4, P5, FP, SP]> {
+def P : RegisterClass<"BF", [i32], 32, (add (sequence "P%u", 0, 5), FP, SP)> {
   let SubRegClasses = [(P16L lo16), (P16H hi16)];
 }
 
-def I : RegisterClass<"BF", [i32], 32, [I0, I1, I2, I3]>;
-def M : RegisterClass<"BF", [i32], 32, [M0, M1, M2, M3]>;
-def B : RegisterClass<"BF", [i32], 32, [B0, B1, B2, B3]>;
-def L : RegisterClass<"BF", [i32], 32, [L0, L1, L2, L3]>;
-
-def DP : RegisterClass<"BF", [i32], 32,
-    [R0, R1, R2, R3, R4, R5, R6, R7,
-     P0, P1, P2, P3, P4, P5, FP, SP]> {
+def DP : RegisterClass<"BF", [i32], 32, (add D, P)> {
   let SubRegClasses = [(DP16L lo16), (DP16H hi16)];
 }
 
-def GR : RegisterClass<"BF", [i32], 32,
-    [R0, R1, R2, R3, R4, R5, R6, R7,
-     P0, P1, P2, P3, P4, P5,
-     I0, I1, I2, I3, M0, M1, M2, M3,
-     B0, B1, B2, B3, L0, L1, L2, L3,
-     FP, SP]>;
+def I : RegisterClass<"BF", [i32], 32, (add I0, I1, I2, I3)>;
+def M : RegisterClass<"BF", [i32], 32, (add M0, M1, M2, M3)>;
+def B : RegisterClass<"BF", [i32], 32, (add B0, B1, B2, B3)>;
+def L : RegisterClass<"BF", [i32], 32, (add L0, L1, L2, L3)>;
+
+def GR : RegisterClass<"BF", [i32], 32, (add DP, I, M, B, L)>;
 
 def ALL : RegisterClass<"BF", [i32], 32,
-    [R0, R1, R2, R3, R4, R5, R6, R7,
-     P0, P1, P2, P3, P4, P5,
-     I0, I1, I2, I3, M0, M1, M2, M3,
-     B0, B1, B2, B3, L0, L1, L2, L3,
-     FP, SP,
+    (add GR,
      A0X, A0W, A1X, A1W, ASTAT, RETS,
      LC0, LT0, LB0, LC1, LT1, LB1, CYCLES, CYCLES2,
-     USP, SEQSTAT, SYSCFG, RETI, RETX, RETN, RETE, EMUDAT]>;
+     USP, SEQSTAT, SYSCFG, RETI, RETX, RETN, RETE, EMUDAT)>;
 
-def PI : RegisterClass<"BF", [i32], 32,
-    [P0, P1, P2, P3, P4, P5, I0, I1, I2, I3, FP, SP]>;
+def PI : RegisterClass<"BF", [i32], 32, (add P, I)>;
 
 // We are going to pretend that CC and !CC are 32-bit registers, even though
 // they only can hold 1 bit.
 let CopyCost = -1, Size = 8 in {
-def JustCC  : RegisterClass<"BF", [i32], 8, [CC]>;
-def NotCC   : RegisterClass<"BF", [i32], 8, [NCC]>;
-def AnyCC   : RegisterClass<"BF", [i32], 8, [CC, NCC]> {
+def JustCC  : RegisterClass<"BF", [i32], 8, (add CC)>;
+def NotCC   : RegisterClass<"BF", [i32], 8, (add NCC)>;
+def AnyCC   : RegisterClass<"BF", [i32], 8, (add CC, NCC)> {
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
@@ -295,8 +266,8 @@ def AnyCC   : RegisterClass<"BF", [i32], 8, [CC, NCC]> {
   }];
 }
 def StatBit : RegisterClass<"BF", [i1], 8,
-    [AZ, AN, CC, AQ, AC0, AC1, AV0, AV0S, AV1, AV1S, V, VS]>;
+    (add AZ, AN, CC, AQ, AC0, AC1, AV0, AV0S, AV1, AV1S, V, VS)>;
 }
 
 // Should be i40, but that isn't defined. It is not a legal type yet anyway.
-def Accu : RegisterClass<"BF", [i64], 64, [A0, A1]>;
+def Accu : RegisterClass<"BF", [i64], 64, (add A0, A1)>;

@@ -157,15 +157,15 @@ let Namespace = "Mips" in {
 // Register Classes
 //===----------------------------------------------------------------------===//
 
-def CPURegs : RegisterClass<"Mips", [i32], 32,
+def CPURegs : RegisterClass<"Mips", [i32], 32, (add
   // Return Values and Arguments
-  [V0, V1, A0, A1, A2, A3,
+  V0, V1, A0, A1, A2, A3,
   // Not preserved across procedure calls
   T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,
   // Callee save
   S0, S1, S2, S3, S4, S5, S6, S7,
   // Reserved
-  ZERO, AT, K0, K1, GP, SP, FP, RA]>;
+  ZERO, AT, K0, K1, GP, SP, FP, RA)>;
 
 // 64bit fp:
 // * FGR64  - 32 64-bit registers
@@ -174,33 +174,25 @@ def CPURegs : RegisterClass<"Mips", [i32], 32,
 // 32bit fp:
 // * FGR32 - 16 32-bit even registers
 // * FGR32 - 32 32-bit registers (single float only mode)
-def FGR32 : RegisterClass<"Mips", [f32], 32,
-  // Return Values and Arguments
-  [F0, F1, F2, F3, F12, F13, F14, F15,
-  // Not preserved across procedure calls
-  F4, F5, F6, F7, F8, F9, F10, F11, F16, F17, F18, F19,
-  // Callee save
-  F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
-  // Reserved
-  F31]>;
+def FGR32 : RegisterClass<"Mips", [f32], 32, (sequence "F%u", 0, 31)>;
 
-def AFGR64 : RegisterClass<"Mips", [f64], 64,
+def AFGR64 : RegisterClass<"Mips", [f64], 64, (add
   // Return Values and Arguments
-  [D0, D1, D6, D7,
+  D0, D1, D6, D7,
   // Not preserved across procedure calls
   D2, D3, D4, D5, D8, D9,
   // Callee save
   D10, D11, D12, D13, D14,
   // Reserved
-  D15]> {
+  D15)> {
   let SubRegClasses = [(FGR32 sub_fpeven, sub_fpodd)];
 }
 
 // Condition Register for floating point operations
-def CCR  : RegisterClass<"Mips", [i32], 32, [FCR31]>;
+def CCR  : RegisterClass<"Mips", [i32], 32, (add FCR31)>;
 
 // Hi/Lo Registers
-def HILO : RegisterClass<"Mips", [i32], 32, [HI, LO]>;
+def HILO : RegisterClass<"Mips", [i32], 32, (add HI, LO)>;
 
 // Hardware registers
-def HWRegs : RegisterClass<"Mips", [i32], 32, [HWR29]>;
+def HWRegs : RegisterClass<"Mips", [i32], 32, (add HWR29)>;

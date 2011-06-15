@@ -200,9 +200,8 @@ def FPEXC   : ARMReg<8, "fpexc">;
 // r11 == Frame Pointer (arm-style backtraces)
 // r10 == Stack Limit
 //
-def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
-                                           R7, R8, R9, R10, R11, R12,
-                                           SP, LR, PC]> {
+def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
+                                               SP, LR, PC)> {
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -246,8 +245,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
 // register range for operands, but have undefined behaviours when PC
 // or SP (R13 or R15) are used. The ARM ISA refers to these operands
 // via the BadReg() pseudo-code description.
-def rGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
-                                            R7, R8, R9, R10, R11, R12, LR]> {
+def rGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, SP, PC)> {
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -291,13 +289,13 @@ def rGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6,
 
 // Thumb registers are R0-R7 normally. Some instructions can still use
 // the general GPR register class above (MOV, e.g.)
-def tGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R4, R5, R6, R7]> {}
+def tGPR : RegisterClass<"ARM", [i32], 32, (trunc GPR, 8)>;
 
 // For tail calls, we can't use callee-saved registers, as they are restored
 // to the saved value before the tail call, which would clobber a call address.
 // Note, getMinimalPhysRegClass(R0) returns tGPR because of the names of
 // this class and the preceding one(!)  This is what we want.
-def tcGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R9, R12]> {
+def tcGPR : RegisterClass<"ARM", [i32], 32, (add R0, R1, R2, R3, R9, R12)> {
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -345,25 +343,18 @@ def tcGPR : RegisterClass<"ARM", [i32], 32, [R0, R1, R2, R3, R9, R12]> {
 
 
 // Scalar single precision floating point register class..
-def SPR : RegisterClass<"ARM", [f32], 32, [S0, S1, S2, S3, S4, S5, S6, S7, S8,
-  S9, S10, S11, S12, S13, S14, S15, S16, S17, S18, S19, S20, S21, S22,
-  S23, S24, S25, S26, S27, S28, S29, S30, S31]>;
+def SPR : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 31)>;
 
 // Subset of SPR which can be used as a source of NEON scalars for 16-bit
 // operations
-def SPR_8 : RegisterClass<"ARM", [f32], 32,
-                          [S0, S1,  S2,  S3,  S4,  S5,  S6,  S7,
-                           S8, S9, S10, S11, S12, S13, S14, S15]>;
+def SPR_8 : RegisterClass<"ARM", [f32], 32, (trunc SPR, 16)>;
 
 // Scalar double precision floating point / generic 64-bit vector register
 // class.
 // ARM requires only word alignment for double. It's more performant if it
 // is double-word alignment though.
 def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
-                        [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
-                         D8,  D9,  D10, D11, D12, D13, D14, D15,
-                         D16, D17, D18, D19, D20, D21, D22, D23,
-                         D24, D25, D26, D27, D28, D29, D30, D31]> {
+                        (sequence "D%u", 0, 31)> {
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
@@ -411,22 +402,20 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
 // Subset of DPR that are accessible with VFP2 (and so that also have
 // 32-bit SPR subregs).
 def DPR_VFP2 : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
-                             [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
-                              D8,  D9,  D10, D11, D12, D13, D14, D15]> {
+                             (trunc DPR, 16)> {
   let SubRegClasses = [(SPR ssub_0, ssub_1)];
 }
 
 // Subset of DPR which can be used as a source of NEON scalars for 16-bit
 // operations
 def DPR_8 : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
-                          [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7]> {
+                          (trunc DPR, 8)> {
   let SubRegClasses = [(SPR_8 ssub_0, ssub_1)];
 }
 
 // Generic 128-bit vector register class.
 def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
-                        [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7,
-                         Q8,  Q9,  Q10, Q11, Q12, Q13, Q14, Q15]> {
+                        (sequence "Q%u", 0, 15)> {
   let SubRegClasses = [(DPR dsub_0, dsub_1)];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
@@ -455,25 +444,21 @@ def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
 
 // Subset of QPR that have 32-bit SPR subregs.
 def QPR_VFP2 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-                             128,
-                             [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7]> {
+                             128, (trunc QPR, 8)> {
   let SubRegClasses = [(SPR      ssub_0, ssub_1, ssub_2, ssub_3),
                        (DPR_VFP2 dsub_0, dsub_1)];
 }
 
 // Subset of QPR that have DPR_8 and SPR_8 subregs.
 def QPR_8 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-                           128,
-                           [Q0,  Q1,  Q2,  Q3]> {
+                           128, (trunc QPR, 4)> {
   let SubRegClasses = [(SPR_8 ssub_0, ssub_1, ssub_2, ssub_3),
                        (DPR_8 dsub_0, dsub_1)];
 }
 
 // Pseudo 256-bit vector register class to model pairs of Q registers
 // (4 consecutive D registers).
-def QQPR : RegisterClass<"ARM", [v4i64],
-                         256,
-                         [QQ0, QQ1, QQ2, QQ3, QQ4, QQ5, QQ6, QQ7]> {
+def QQPR : RegisterClass<"ARM", [v4i64], 256, (sequence "QQ%u", 0, 7)> {
   let SubRegClasses = [(DPR dsub_0, dsub_1, dsub_2, dsub_3),
                        (QPR qsub_0, qsub_1)];
   let MethodProtos = [{
@@ -500,9 +485,7 @@ def QQPR : RegisterClass<"ARM", [v4i64],
 }
 
 // Subset of QQPR that have 32-bit SPR subregs.
-def QQPR_VFP2 : RegisterClass<"ARM", [v4i64],
-                              256,
-                              [QQ0, QQ1, QQ2, QQ3]> {
+def QQPR_VFP2 : RegisterClass<"ARM", [v4i64], 256, (trunc QQPR, 4)> {
   let SubRegClasses = [(SPR      ssub_0, ssub_1, ssub_2, ssub_3),
                        (DPR_VFP2 dsub_0, dsub_1, dsub_2, dsub_3),
                        (QPR_VFP2 qsub_0, qsub_1)];
@@ -511,9 +494,7 @@ def QQPR_VFP2 : RegisterClass<"ARM", [v4i64],
 
 // Pseudo 512-bit vector register class to model 4 consecutive Q registers
 // (8 consecutive D registers).
-def QQQQPR : RegisterClass<"ARM", [v8i64],
-                         256,
-                         [QQQQ0, QQQQ1, QQQQ2, QQQQ3]> {
+def QQQQPR : RegisterClass<"ARM", [v8i64], 256, (sequence "QQQQ%u", 0, 3)> {
   let SubRegClasses = [(DPR dsub_0, dsub_1, dsub_2, dsub_3,
                             dsub_4, dsub_5, dsub_6, dsub_7),
                        (QPR qsub_0, qsub_1, qsub_2, qsub_3)];
@@ -540,6 +521,6 @@ def QQQQPR : RegisterClass<"ARM", [v8i64],
 }
 
 // Condition code registers.
-def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]> {
+def CCR : RegisterClass<"ARM", [i32], 32, (add CPSR)> {
   let isAllocatable = 0;
 }

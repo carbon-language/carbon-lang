@@ -430,62 +430,9 @@ def FD63 : PTXReg<"fd63">;
 //  Register classes
 //===----------------------------------------------------------------------===//
 
-def Preds : RegisterClass<"PTX", [i1], 8,
-                          [P0, P1, P2, P3, P4, P5, P6, P7,
-                           P8, P9, P10, P11, P12, P13, P14, P15,
-                           P16, P17, P18, P19, P20, P21, P22, P23,
-                           P24, P25, P26, P27, P28, P29, P30, P31,
-                           P32, P33, P34, P35, P36, P37, P38, P39,
-                           P40, P41, P42, P43, P44, P45, P46, P47,
-                           P48, P49, P50, P51, P52, P53, P54, P55,
-                           P56, P57, P58, P59, P60, P61, P62, P63]>;
-
-def RRegu16 : RegisterClass<"PTX", [i16], 16,
-                            [RH0, RH1, RH2, RH3, RH4, RH5, RH6, RH7,
-                             RH8, RH9, RH10, RH11, RH12, RH13, RH14, RH15,
-                             RH16, RH17, RH18, RH19, RH20, RH21, RH22, RH23,
-                             RH24, RH25, RH26, RH27, RH28, RH29, RH30, RH31,
-                             RH32, RH33, RH34, RH35, RH36, RH37, RH38, RH39,
-                             RH40, RH41, RH42, RH43, RH44, RH45, RH46, RH47,
-                             RH48, RH49, RH50, RH51, RH52, RH53, RH54, RH55,
-                             RH56, RH57, RH58, RH59, RH60, RH61, RH62, RH63]>;
-
-def RRegu32 : RegisterClass<"PTX", [i32], 32,
-                            [R0, R1, R2, R3, R4, R5, R6, R7,
-                             R8, R9, R10, R11, R12, R13, R14, R15,
-                             R16, R17, R18, R19, R20, R21, R22, R23,
-                             R24, R25, R26, R27, R28, R29, R30, R31,
-                             R32, R33, R34, R35, R36, R37, R38, R39,
-                             R40, R41, R42, R43, R44, R45, R46, R47,
-                             R48, R49, R50, R51, R52, R53, R54, R55,
-                             R56, R57, R58, R59, R60, R61, R62, R63]>;
-
-def RRegu64 : RegisterClass<"PTX", [i64], 64,
-                            [RD0, RD1, RD2, RD3, RD4, RD5, RD6, RD7,
-                             RD8, RD9, RD10, RD11, RD12, RD13, RD14, RD15,
-                             RD16, RD17, RD18, RD19, RD20, RD21, RD22, RD23,
-                             RD24, RD25, RD26, RD27, RD28, RD29, RD30, RD31,
-                             RD32, RD33, RD34, RD35, RD36, RD37, RD38, RD39,
-                             RD40, RD41, RD42, RD43, RD44, RD45, RD46, RD47,
-                             RD48, RD49, RD50, RD51, RD52, RD53, RD54, RD55,
-                             RD56, RD57, RD58, RD59, RD60, RD61, RD62, RD63]>;
-
-def RRegf32 : RegisterClass<"PTX", [f32], 32,
-                            [F0, F1, F2, F3, F4, F5, F6, F7,
-                             F8, F9, F10, F11, F12, F13, F14, F15,
-                             F16, F17, F18, F19, F20, F21, F22, F23,
-                             F24, F25, F26, F27, F28, F29, F30, F31,
-                             F32, F33, F34, F35, F36, F37, F38, F39,
-                             F40, F41, F42, F43, F44, F45, F46, F47,
-                             F48, F49, F50, F51, F52, F53, F54, F55,
-                             F56, F57, F58, F59, F60, F61, F62, F63]>;
-
-def RRegf64 : RegisterClass<"PTX", [f64], 64,
-                            [FD0, FD1, FD2, FD3, FD4, FD5, FD6, FD7,
-                             FD8, FD9, FD10, FD11, FD12, FD13, FD14, FD15,
-                             FD16, FD17, FD18, FD19, FD20, FD21, FD22, FD23,
-                             FD24, FD25, FD26, FD27, FD28, FD29, FD30, FD31,
-                             FD32, FD33, FD34, FD35, FD36, FD37, FD38, FD39,
-                             FD40, FD41, FD42, FD43, FD44, FD45, FD46, FD47,
-                             FD48, FD49, FD50, FD51, FD52, FD53, FD54, FD55,
-                             FD56, FD57, FD58, FD59, FD60, FD61, FD62, FD63]>;
+def Preds : RegisterClass<"PTX", [i1], 8, (sequence "P%u", 0, 63)>;
+def RRegu16 : RegisterClass<"PTX", [i16], 16, (sequence "RH%u", 0, 63)>;
+def RRegu32 : RegisterClass<"PTX", [i32], 32, (sequence "R%u",  0, 63)>;
+def RRegu64 : RegisterClass<"PTX", [i64], 64, (sequence "RD%u", 0, 63)>;
+def RRegf32 : RegisterClass<"PTX", [f32], 32, (sequence "F%u",  0, 63)>;
+def RRegf64 : RegisterClass<"PTX", [f64], 64, (sequence "FD%u", 0, 63)>;

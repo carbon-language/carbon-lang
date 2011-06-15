@@ -139,23 +139,21 @@ def D15 : Rd<30, "F30", [F30, F31]>, DwarfRegNum<[87]>;
 // FIXME: the register order should be defined in terms of the preferred
 // allocation order...
 //
-def IntRegs : RegisterClass<"SP", [i32], 32, [L0, L1, L2, L3, L4, L5, L6, L7,
-                                     I0, I1, I2, I3, I4, I5,
-                                     O0, O1, O2, O3, O4, O5, O7,
-                                     G1,
-                                     // Non-allocatable regs:
-                                     G2, G3, G4, // FIXME: OK for use only in
-                                                 // applications, not libraries.
-                                     O6, // stack ptr
-                                     I6, // frame ptr
-                                     I7, // return address
-                                     G0, // constant zero
-                                     G5, G6, G7 // reserved for kernel
-                                     ]>;
+def IntRegs : RegisterClass<"SP", [i32], 32,
+                            (add L0, L1, L2, L3, L4, L5, L6,
+                                 L7, I0, I1, I2, I3, I4, I5,
+                                 O0, O1, O2, O3, O4, O5, O7,
+                                 G1,
+                                 // Non-allocatable regs:
+                                 G2, G3, G4, // FIXME: OK for use only in
+                                             // applications, not libraries.
+                                 O6, // stack ptr
+                                 I6, // frame ptr
+                                 I7, // return address
+                                 G0, // constant zero
+                                 G5, G6, G7 // reserved for kernel
+                                 )>;
 
-def FPRegs : RegisterClass<"SP", [f32], 32, [F0, F1, F2, F3, F4, F5, F6, F7, F8,
-  F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21, F22,
-  F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
+def FPRegs : RegisterClass<"SP", [f32], 32, (sequence "F%u", 0, 31)>;
 
-def DFPRegs : RegisterClass<"SP", [f64], 64, [D0, D1, D2, D3, D4, D5, D6, D7,
-  D8, D9, D10, D11, D12, D13, D14, D15]>;
+def DFPRegs : RegisterClass<"SP", [f64], 64, (sequence "D%u", 0, 15)>;

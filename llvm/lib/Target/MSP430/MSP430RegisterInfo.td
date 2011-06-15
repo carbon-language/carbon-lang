@@ -66,19 +66,19 @@ def R15W : MSP430RegWithSubregs<15, "r15", [R15B]>;
 
 def GR8 : RegisterClass<"MSP430", [i8], 8,
    // Volatile registers
-  [R12B, R13B, R14B, R15B, R11B, R10B, R9B, R8B, R7B, R6B, R5B,
+  (add R12B, R13B, R14B, R15B, R11B, R10B, R9B, R8B, R7B, R6B, R5B,
    // Frame pointer, sometimes allocable
    FPB,
    // Volatile, but not allocable
-   PCB, SPB, SRB, CGB]>;
+   PCB, SPB, SRB, CGB)>;
 
 def GR16 : RegisterClass<"MSP430", [i16], 16,
    // Volatile registers
-  [R12W, R13W, R14W, R15W, R11W, R10W, R9W, R8W, R7W, R6W, R5W,
+  (add R12W, R13W, R14W, R15W, R11W, R10W, R9W, R8W, R7W, R6W, R5W,
    // Frame pointer, sometimes allocable
    FPW,
    // Volatile, but not allocable
-   PCW, SPW, SRW, CGW]>
+   PCW, SPW, SRW, CGW)>
 {
   let SubRegClasses = [(GR8 subreg_8bit)];
 }
