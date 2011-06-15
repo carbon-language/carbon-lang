@@ -1082,6 +1082,7 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
         const ObjCMethodDecl *method = cast<ObjCMethodDecl>(CurCodeDecl);
         assert(&D == method->getSelfDecl());
         assert(method->getMethodFamily() != OMF_init);
+        (void) method;
         lt = Qualifiers::OCL_ExplicitNone;
       }
 
