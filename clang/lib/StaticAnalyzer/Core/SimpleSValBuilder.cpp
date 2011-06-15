@@ -415,6 +415,24 @@ SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
     case nonloc::ConcreteIntKind: {
       const nonloc::ConcreteInt& lhsInt = cast<nonloc::ConcreteInt>(lhs);
 
+      // Is the RHS a symbol we can simplify?
+      // FIXME: This was mostly copy/pasted from the LHS-is-a-symbol case.
+      if (const nonloc::SymbolVal *srhs = dyn_cast<nonloc::SymbolVal>(&rhs)) {
+        SymbolRef RSym = srhs->getSymbol();
+        if (RSym->getType(Context)->isIntegerType()) {
+          if (const llvm::APSInt *Constant = state->getSymVal(RSym)) {
+            // The symbol evaluates to a constant.
+            const llvm::APSInt *rhs_I;
+            if (BinaryOperator::isRelationalOp(op))
+              rhs_I = &BasicVals.Convert(lhsInt.getValue(), *Constant);
+            else
+              rhs_I = &BasicVals.Convert(resultTy, *Constant);
+
+            rhs = nonloc::ConcreteInt(*rhs_I);
+          }
+        }
+      }
+
       if (isa<nonloc::ConcreteInt>(rhs)) {
         return lhsInt.evalBinOp(*this, op, cast<nonloc::ConcreteInt>(rhs));
       } else {
@@ -461,13 +479,22 @@ SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
     case nonloc::SymbolValKind: {
       nonloc::SymbolVal *slhs = cast<nonloc::SymbolVal>(&lhs);
       SymbolRef Sym = slhs->getSymbol();
+      QualType lhsType = Sym->getType(Context);
+
+      // The conversion type is usually the result type, but not in the case
+      // of relational expressions.
+      QualType conversionType = resultTy;
+      if (BinaryOperator::isRelationalOp(op))
+        conversionType = lhsType;
+
       // Does the symbol simplify to a constant?  If so, "fold" the constant
       // by setting 'lhs' to a ConcreteInt and try again.
-      if (Sym->getType(Context)->isIntegerType())
+      if (lhsType->isIntegerType())
         if (const llvm::APSInt *Constant = state->getSymVal(Sym)) {
           // The symbol evaluates to a constant. If necessary, promote the
           // folded constant (LHS) to the result type.
-          const llvm::APSInt &lhs_I = BasicVals.Convert(resultTy, *Constant);
+          const llvm::APSInt &lhs_I = BasicVals.Convert(conversionType,
+                                                        *Constant);
           lhs = nonloc::ConcreteInt(lhs_I);
           
           // Also promote the RHS (if necessary).
@@ -479,7 +506,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
           // Other operators: do an implicit conversion.  This shouldn't be
           // necessary once we support truncation/extension of symbolic values.
           if (nonloc::ConcreteInt *rhs_I = dyn_cast<nonloc::ConcreteInt>(&rhs)){
-            rhs = nonloc::ConcreteInt(BasicVals.Convert(resultTy,
+            rhs = nonloc::ConcreteInt(BasicVals.Convert(conversionType,
                                                         rhs_I->getValue()));
           }
           
@@ -492,7 +519,8 @@ SVal SimpleSValBuilder::evalBinOpNN(const GRState *state,
         if (RSym->getType(Context)->isIntegerType()) {
           if (const llvm::APSInt *Constant = state->getSymVal(RSym)) {
             // The symbol evaluates to a constant.
-            const llvm::APSInt &rhs_I = BasicVals.Convert(resultTy, *Constant);
+            const llvm::APSInt &rhs_I = BasicVals.Convert(conversionType,
+                                                          *Constant);
             rhs = nonloc::ConcreteInt(rhs_I);
           }
         }
