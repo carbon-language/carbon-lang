@@ -25,6 +25,7 @@
 #include "llvm/Attributes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Utils/Local.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -1252,7 +1253,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     const ABIArgInfo &ArgInfo = info_it->info;
     RValue RV = I->RV;
 
-    unsigned Alignment =
+    unsigned TypeAlign =
       getContext().getTypeAlignInChars(I->Ty).getQuantity();
     switch (ArgInfo.getKind()) {
     case ABIArgInfo::Indirect: {
@@ -1264,7 +1265,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         Args.push_back(AI);
         if (RV.isScalar())
           EmitStoreOfScalar(RV.getScalarVal(), Args.back(), false,
-                            Alignment, I->Ty);
+                            TypeAlign, I->Ty);
         else
           StoreComplexToAddr(RV.getComplexVal(), Args.back(), false);
       } else {
@@ -1274,43 +1275,21 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         //    source.  (This case doesn't occur on any common architecture.)
         // 2. If the argument is byval, RV is not sufficiently aligned, and
         //    we cannot force it to be sufficiently aligned.
-        // FIXME: This code is ugly because we don't know the required
-        // alignment when RV is generated.
-        llvm::AllocaInst *AI =
-            dyn_cast<llvm::AllocaInst>(RV.getAggregateAddr());
-        bool NeedsAggCopy = false;
-        if (I->NeedsCopy && !ArgInfo.getIndirectByVal())
-          NeedsAggCopy = true;
-        if (ArgInfo.getIndirectByVal()) {
-          if (AI) {
-            // The source is an alloca; we can force appropriate alignment.
-            if (ArgInfo.getIndirectAlign() > AI->getAlignment())
-              AI->setAlignment(ArgInfo.getIndirectAlign());
-          } else if (llvm::Argument *A =
-                         dyn_cast<llvm::Argument>(RV.getAggregateAddr())) {
-            // Check if the source is an appropriately aligned byval argument.
-            if (!A->hasByValAttr() ||
-                A->getParamAlignment() < ArgInfo.getIndirectAlign())
-              NeedsAggCopy = true;
-          } else {
-            // We don't know what the input is; force a temporary+copy if
-            // the type alignment is not sufficient.
-            assert(I->NeedsCopy && "Temporary must be AllocaInst");
-            if (ArgInfo.getIndirectAlign() > Alignment)
-              NeedsAggCopy = true;
-          }
-        }
-        if (NeedsAggCopy) {
+        llvm::Value *Addr = RV.getAggregateAddr();
+        unsigned Align = ArgInfo.getIndirectAlign();
+        const llvm::TargetData *TD = &CGM.getTargetData();
+        if ((!ArgInfo.getIndirectByVal() && I->NeedsCopy) ||
+            (ArgInfo.getIndirectByVal() && TypeAlign < Align &&
+             llvm::getOrEnforceKnownAlignment(Addr, Align, TD) < Align)) {
           // Create an aligned temporary, and copy to it.
-          AI = CreateMemTemp(I->Ty);
-          if (ArgInfo.getIndirectAlign() > AI->getAlignment())
-            AI->setAlignment(ArgInfo.getIndirectAlign());
+          llvm::AllocaInst *AI = CreateMemTemp(I->Ty);
+          if (Align > AI->getAlignment())
+            AI->setAlignment(Align);
           Args.push_back(AI);
-          EmitAggregateCopy(AI, RV.getAggregateAddr(), I->Ty,
-                            RV.isVolatileQualified());
+          EmitAggregateCopy(AI, Addr, I->Ty, RV.isVolatileQualified());
         } else {
           // Skip the extra memcpy call.
-          Args.push_back(RV.getAggregateAddr());
+          Args.push_back(Addr);
         }
       }
       break;
@@ -1335,7 +1314,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       llvm::Value *SrcPtr;
       if (RV.isScalar()) {
         SrcPtr = CreateMemTemp(I->Ty, "coerce");
-        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false, Alignment, I->Ty);
+        EmitStoreOfScalar(RV.getScalarVal(), SrcPtr, false, TypeAlign, I->Ty);
       } else if (RV.isComplex()) {
         SrcPtr = CreateMemTemp(I->Ty, "coerce");
         StoreComplexToAddr(RV.getComplexVal(), SrcPtr, false);
