@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wno-sizeof-array-argument %s
 //
 extern "C" void *memset(void *, int, unsigned);
 extern "C" void *memmove(void *s1, const void *s2, unsigned n);
