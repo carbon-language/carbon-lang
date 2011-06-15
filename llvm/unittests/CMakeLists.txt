@@ -64,6 +64,7 @@ add_llvm_unittest(ADT
   ADT/ImmutableSetTest.cpp
   ADT/IntEqClassesTest.cpp
   ADT/IntervalMapTest.cpp
+  ADT/PackedVectorTest.cpp
   ADT/SmallBitVectorTest.cpp
   ADT/SmallStringTest.cpp
   ADT/SmallVectorTest.cpp
