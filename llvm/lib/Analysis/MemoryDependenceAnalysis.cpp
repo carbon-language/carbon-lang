@@ -47,6 +47,11 @@ STATISTIC(NumUncacheNonLocalPtr,
 STATISTIC(NumCacheCompleteNonLocalPtr,
           "Number of block queries that were completely cached");
 
+// Limit for the number of instructions to scan in a block.
+// FIXME: Figure out what a sane value is for this.
+//        (500 is relatively insane.)
+static const int BlockScanLimit = 500;
+
 char MemoryDependenceAnalysis::ID = 0;
   
 // Register this pass...
@@ -180,8 +185,16 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
 MemDepResult MemoryDependenceAnalysis::
 getCallSiteDependencyFrom(CallSite CS, bool isReadOnlyCall,
                           BasicBlock::iterator ScanIt, BasicBlock *BB) {
+  unsigned Limit = BlockScanLimit;
+
   // Walk backwards through the block, looking for dependencies
   while (ScanIt != BB->begin()) {
+    // Limit the amount of scanning we do so we don't end up with quadratic
+    // running time on extreme testcases. 
+    --Limit;
+    if (!Limit)
+      return MemDepResult::getUnknown();
+
     Instruction *Inst = --ScanIt;
     
     // If this inst is a memory op, get the pointer it accessed
@@ -322,9 +335,17 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
 
   const Value *MemLocBase = 0;
   int64_t MemLocOffset = 0;
-  
+
+  unsigned Limit = BlockScanLimit;
+
   // Walk backwards through the basic block, looking for dependencies.
   while (ScanIt != BB->begin()) {
+    // Limit the amount of scanning we do so we don't end up with quadratic
+    // running time on extreme testcases.
+    --Limit;
+    if (!Limit)
+      return MemDepResult::getUnknown();
+
     Instruction *Inst = --ScanIt;
 
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
