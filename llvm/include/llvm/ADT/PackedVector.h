@@ -90,7 +90,7 @@ public:
       Vec.setValue(Vec.Bits, Idx, val);
       return *this;
     }
-    operator T() {
+    operator T() const {
       return Vec.getValue(Vec.Bits, Idx);
     }
   };
