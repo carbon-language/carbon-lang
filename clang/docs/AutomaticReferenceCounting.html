@@ -1,0 +1,1350 @@
+<html>
+<head>
+<title>Objective-C Automatic Reference Counting (ARC)</title>
+<link type="text/css" rel="stylesheet" href="../menu.css" />
+<link type="text/css" rel="stylesheet" href="../content.css" />
+<style type="text/css">
+/* Collapse the items in the ToC to the left. */
+div#toc ul {
+  padding-left: 0
+}
+
+/* Rationales appear in italic. */
+div.rationale {
+  font-style: italic
+}
+
+div h1 { font-size: 2em; margin: .67em 0 }
+div div h1 { font-size: 1.5em; margin: .75em 0 }
+div div div h1 { font-size: 1.17em; margin: .83em 0 }
+div div div div h1 { margin: 1.12em 0 }
+
+span.term { font-style: italic; font-weight: bold  }
+</style>
+
+<script lang="javascript">
+/// A little script to recursively build a table of contents.
+function buildTOC(div, toc, ancestry) {
+  var children = div.childNodes;
+  var len = children.length;
+
+  var childNumber = 0;
+
+  var list = null;
+  for (var i = 0; i < len; ++i) {
+    var child = children[i];
+    if (child.nodeName != "DIV") continue;
+    if (child.getAttribute("class") == "rationale") continue;
+    if (child.id == "toc") continue;
+
+    // Okay, we're actually going to build a list node.
+    if (list === null) list = document.createElement("ul");
+
+    var childAncestry = ancestry + ++childNumber + ".";
+
+    var headerNode = child.childNodes[1];
+    var title = headerNode.innerHTML;
+    headerNode.insertBefore(document.createTextNode(childAncestry + " "),
+                            headerNode.firstChild);
+
+    var item = document.createElement("li");
+    item.appendChild(document.createTextNode(childAncestry + " "));
+
+    var anchor = document.createElement("a");
+    anchor.href = "#" + child.id;
+    anchor.innerHTML = title;
+    item.appendChild(anchor);
+
+    buildTOC(child, item, childAncestry);
+
+    list.appendChild(item);
+  }
+  if (list) toc.appendChild(list);
+}
+
+function onLoad() {
+  var toc = document.getElementById("toc");
+  var content = document.getElementById("content");
+  buildTOC(content, toc, "");
+}
+window.onload = onLoad;
+
+</script>
+</head>
+<body>
+
+<!--#include virtual="../menu.html.incl"-->
+
+<div id="content">
+<h1>Automatic Reference Counting</h1>
+
+<div id="toc">
+</div>
+
+<div id="meta">
+<h1>About this document</h1>
+
+<div id="meta.purpose">
+<h1>Purpose</h1>
+
+<p>The first and primary purpose of this document is to serve as a
+complete technical specification of Automatic Reference Counting.
+Given a core Objective-C compiler and runtime, it should be possible
+to write a compiler and runtime which implements these new
+semantics.</p>
+
+<p>The secondary purpose is to act as a rationale for why ARC was
+designed in this way.  This should remain tightly focused on the
+technical design and should not stray into marketing speculation.</p>
+
+</div> <!-- meta.purpose -->
+
+<div id="meta.background">
+<h1>Background</h1>
+
+<p>This document assumes a basic familiarity with C.</p>
+
+<p><span class="term">Blocks</span> are a C language extension for
+creating anonymous functions.  Users interact with and transfer block
+objects using <span class="term">block pointers</span>, which are
+represented like a normal pointer.  A block may capture values from
+local variables; when this occurs, memory must be dynamically
+allocated.  The initial allocation is done on the stack, but the
+runtime provides a <tt>Block_copy</tt> function which, given a block
+pointer, either copies the underlying block object to the heap,
+setting its reference count to 1 and returning the new block pointer,
+or (if the block object is already on the heap) increases its
+reference count by 1.  The paired function is <tt>Block_release</tt>,
+which decreases the reference count by 1 and destroys the object if
+the count reaches zero and is on the heap.</p>
+
+<p>Objective-C is a set of language extensions, significant enough to
+be considered a different language.  It is a strict superset of C.
+The extensions can also be imposed on C++, producing a language called
+Objective-C++.  The primary feature is a single-inheritance object
+system; we briefly describe the modern dialect.</p>
+
+<p>Objective-C defines a new type kind, collectively called
+the <span class="term">object pointer types</span>.  This kind has two
+notable builtin members, <tt>id</tt> and <tt>Class</tt>; <tt>id</tt>
+is the final supertype of all object pointers.  The validity of
+conversions between object pointer types is not checked at runtime.
+Users may define <span class="term">classes</span>; each class is a
+type, and the pointer to that type is an object pointer type.  A class
+may have a superclass; its pointer type is a subtype of its
+superclass's pointer type.  A class has a set
+of <span class="term">ivars</span>, fields which appear on all
+instances of that class.  For every class <i>T</i> there's an
+associated metaclass; it has no fields, its superclass is the
+metaclass of <i>T</i>'s superclass, and its metaclass is a global
+class.  Every class has a global object whose class is the
+class's metaclass; metaclasses have no associated type, so pointers to
+this object have type <tt>Class</tt>.</p>
+
+<p>A class declaration (<tt>@interface</tt>) declares a set
+of <span class="term">methods</span>.  A method has a return type, a
+list of argument types, and a <span class="term">selector</span>: a
+name like <tt>foo:bar:baz:</tt>, where the number of colons
+corresponds to the number of formal arguments.  A method may be an
+instance method, in which case it can be invoked on objects of the
+class, or a class method, in which case it can be invoked on objects
+of the metaclass.  A method may be invoked by providing an object
+(called the <span class="term">receiver</span>) and a list of formal
+arguments interspersed with the selector, like so:</p>
+
+<pre>[receiver foo: fooArg bar: barArg baz: bazArg]</pre>
+
+<p>This looks in the dynamic class of the receiver for a method with
+this name, then in that class's superclass, etc., until it finds
+something it can execute.  The receiver <q>expression</q> may also be
+the name of a class, in which case the actual receiver is the class
+object for that class, or (within method definitions) it may
+be <tt>super</tt>, in which case the lookup algorithm starts with the
+static superclass instead of the dynamic class.  The actual methods
+dynamically found in a class are not those declared in the
+<tt>@interface</tt>, but those defined in a separate
+<tt>@implementation</tt> declaration; however, when compiling a
+call, typechecking is done based on the methods declared in the
+<tt>@interface</tt>.</p>
+
+<p>Method declarations may also be grouped into
+<span class="term">protocols</span>, which are not inherently
+associated with any class, but which classes may claim to follow.
+Object pointer types may be qualified with additional protocols that
+the object is known to support.</p>
+
+<p><span class="term">Class extensions</span> are collections of ivars
+and methods, designed to allow a class's <tt>@interface</tt> to be
+split across multiple files; however, there is still a primary
+implementation file which must see the <tt>@interface</tt>s of all
+class extensions.
+<span class="term">Categories</span> allow methods (but not ivars) to
+be declared <i>post hoc</i> on an arbitrary class; the methods in the
+category's <tt>@implementation</tt> will be dynamically added to that
+class's method tables which the category is loaded at runtime,
+replacing those methods in case of a collision.</p>
+
+<p>In the standard environment, objects are allocated on the heap, and
+their lifetime is manually managed using a reference count.  This is
+done using two instance methods which all classes are expected to
+implement: <tt>retain</tt> increases the object's reference count by
+1, whereas <tt>release</tt> decreases it by 1 and calls the instance
+method <tt>dealloc</tt> if the count reaches 0.  To simplify certain
+operations, there is also an <span class="term">autorelease
+pool</span>, a thread-local list of objects to call <tt>release</tt>
+on later; an object can be added to this pool by
+calling <tt>autorelease</tt> on it.</p>
+
+<p>Block pointers may be converted to type <tt>id</tt>; block objects
+are laid out in a way that makes them compatible with Objective-C
+objects.  There is a builtin class that all block objects are
+considered to be objects of; this class implements <tt>retain</tt> by
+adjusting the reference count, not by calling <tt>Block_copy</tt>.</p>
+
+</div> <!-- meta.background -->
+
+</div> <!-- meta -->
+
+<div id="general">
+<h1>General</h1>
+
+<p>Automatic Reference Counting implements automatic memory management
+for Objective-C objects and blocks, freeing the programmer from the
+need explicitly insert retains and releases.  It does not provide a
+cycle collector; users must explicitly manage lifetime instead.</p>
+
+<p>ARC may be explicitly enabled with the compiler
+flag <tt>-fobjc-arc</tt>.  It may also be explicitly disabled with the
+compiler flag <tt>-fno-objc-arc</tt>.  The last of these two flags
+appearing on the compile line <q>wins</q>.</p>
+
+<p>If ARC is enabled, <tt>__has_feature(objc_arc)</tt> will expand to
+1 in the preprocessor.  For more information about <tt>__has_feature</tt>,
+see the <a href="LanguageExtensions.html#__has_feature_extension">language
+extensions</a> document.</p>
+
+</div>
+
+<div id="objects">
+<h1>Retainable object pointers</h1>
+
+<p>This section describes retainable object pointers, their basic
+operations, and the restrictions imposed on their use under ARC.  Note
+in particular that it covers the rules for pointer <em>values</em>
+(patterns of bits indicating the location of a pointed-to object), not
+pointer
+<em>objects</em> (locations in memory which store pointer values).
+The rules for objects are covered in the next section.</p>
+
+<p>A <span class="term">retainable object pointer</span>
+(or <q>retainable pointer</q>) is a value of
+a <span class="term">retainable object pointer type</span>
+(<q>retainable type</q>).  There are three kinds of retainable object
+pointer types:</p>
+<ul>
+<li>block pointers (formed by applying the caret (<tt>^</tt>)
+declarator sigil to a function type)</li>
+<li>Objective-C object pointers (<tt>id</tt>, <tt>Class</tt>, <tt>NSFoo*</tt>, etc.)</li>
+<li>typedefs marked with <tt>__attribute__((NSObject))</tt></li>
+</ul>
+
+<p>Other pointer types, such as <tt>int*</tt> and <tt>CFStringRef</tt>,
+are not subject to ARC's semantics and restrictions.</p>
+
+<div class="rationale">
+
+<p>Rationale: We are not at liberty to require
+all code to be recompiled with ARC; therefore, ARC must interoperate
+with Objective-C code which manages retains and releases manually.  In
+general, there are three requirements in order for a
+compiler-supported reference-count system to provide reliable
+interoperation:</p>
+
+<ul>
+<li>The type system must reliably identify which objects are to be
+managed.  An <tt>int*</tt> might be a pointer to a <tt>malloc</tt>'ed
+array, or it might be a interior pointer to such an array, or it might
+point to some field or local variable.  In contrast, values of the
+retainable object pointer types are never interior.</li>
+<li>The type system must reliably indicate how to
+manage objects of a type.  This usually means that the type must imply
+a procedure for incrementing and decrementing retain counts.
+Supporting single-ownership objects requires a lot more explicit
+mediation in the language.</li>
+<li>There must be reliable conventions for whether and
+when <q>ownership</q> is passed between caller and callee, for both
+arguments and return values.  Objective-C methods follow such a
+convention very reliably, at least for system libraries on Mac OS X,
+and functions always pass objects at +0.  The C-based APIs for Core
+Foundation objects, on the other hand, have much more varied transfer
+semantics.</li>
+</ul>
+</div> <!-- rationale -->
+
+<p>The use of <tt>__attribute__((NSObject))</tt> typedefs is not
+recommended.  If it's absolutely necessary to use this attribute, be
+very explicit about using the typedef, and do not assume that it will
+be preserved by language features like <tt>__typeof</tt> and C++
+template argument substitution.</p>
+
+<div class="rationale"><p>Rationale: any compiler operation which
+incidentally strips type <q>sugar</q> from a type will yield a type
+without the attribute, which may result in unexpected
+behavior.</p></div>
+
+<div id="objects.retains">
+<h1>Retain count semantics</h1>
+
+<p>A retainable object pointer is either a <span class="term">null
+pointer</span> or a pointer to a valid object.  Furthermore, if it has
+block pointer type and is not <tt>null</tt> then it must actually be a
+pointer to a block object, and if it has <tt>Class</tt> type (possibly
+protocol-qualified) then it must actually be a pointer to a class
+object.  Otherwise ARC does not enforce the Objective-C type system as
+long as the implementing methods follow the signature of the static
+type.  It is undefined behavior if ARC is exposed to an invalid
+pointer.</p>
+
+<p>For ARC's purposes, a valid object is one with <q>well-behaved</q>
+retaining operations.  Specifically, the object must be laid out such
+that the Objective-C message send machinery can successfully send it
+the following messages:</p>
+
+<ul>
+<li><tt>retain</tt>, taking no arguments and returning a pointer to
+the object.</li>
+<li><tt>release</tt>, taking no arguments and returning <tt>void</tt>.</li>
+<li><tt>autorelease</tt>, taking no arguments and returning a pointer
+to the object.</li>
+</ul>
+
+<p>The behavior of these methods is constrained in the following ways.
+The term <span class="term">high-level semantics</span> is an
+intentionally vague term; the intent is that programmers must
+implement these methods in a way such that the compiler, modifying
+code in ways it deems safe according to these constraints, will not
+violate their requirements.  For example, if the user puts logging
+statements in <tt>retain</tt>, they should not be surprised if those
+statements are executed more or less often depending on optimization
+settings.  These constraints are not exhaustive of the optimization
+opportunities: values held in local variables are subject to
+additional restrictions, described later in this document.</p>
+
+<p>It is undefined behavior if a computation history featuring a send
+of <tt>retain</tt> followed by a send of <tt>release</tt> to the same
+object, with no intervening <tt>release</tt> on that object, is not
+equivalent under the high-level semantics to a computation
+history in which these sends are removed.  Note that this implies that
+these methods may not raise exceptions.</p>
+
+<p>It is undefined behavior if a computation history features any use
+whatsoever of an object following the completion of a send
+of <tt>release</tt> that is not preceded by a send of <tt>retain</tt>
+to the same object.</p>
+
+<p>The behavior of <tt>autorelease</tt> must be equivalent to sending
+<tt>release</tt> when one of the autorelease pools currently in scope
+is popped.  It may not throw an exception.</p>
+
+<p>When the semantics call for performing one of these operations on a
+retainable object pointer, if that pointer is <tt>null</tt> then the
+effect is a no-op.</p>
+
+<p>All of the semantics described in this document are subject to
+additional <a href="#optimization">optimization rules</a> which permit
+the removal or optimization of operations based on local knowledge of
+data flow.  The semantics describe the high-level behaviors that the
+compiler implements, not an exact sequence of operations that a
+program will be compiled into.</p>
+
+</div> <!-- objects.retains -->
+
+<div id="objects.operands">
+<h1>Retainable object pointers as operands and arguments</h1>
+
+<p>In general, ARC does not perform retain or release operations when
+simply using a retainable object pointer as an operand within an
+expression.  This includes:</p>
+<ul>
+<li>loading a retainable pointer from an object with non-weak
+<a href="#ownership">ownership</a>,</li>
+<li>passing a retainable pointer as an argument to a function or
+method, and</li>
+<li>receiving a retainable pointer as the result of a function or
+method call.</li>
+</ul>
+
+<div class="rationale"><p>Rationale: while this might seem
+uncontroversial, it is actually unsafe when multiple expressions are
+evaluated in <q>parallel</q>, as with binary operators and calls,
+because (for example) one expression might load from an object while
+another writes to it.  However, C and C++ already call this undefined
+behavior because the evaluations are unsequenced, and ARC simply
+exploits that here to avoid needing to retain arguments across a large
+number of calls.</p></div>
+
+<p>The remainder of this section describes exceptions to these rules,
+how those exceptions are detected, and what those exceptions imply
+semantically.</p>
+
+<div id="objects.operands.consumed">
+<h1>Consumed parameters</h1>
+
+<p>A function or method parameter of retainable object pointer type
+may be marked as <span class="term">consumed</span>, signifying that
+the callee expects to take ownership of a +1 retain count.  This is
+done by adding the <tt>ns_consumed</tt> attribute to the parameter
+declaration, like so:</p>
+
+<pre>void foo(__attribute((ns_consumed)) id x);
+- (void) foo: (id) __attribute((ns_consumed)) x;</pre>
+
+<p>This attribute is part of the type of the function or method, not
+the type of the parameter.  It controls only how the argument is
+passed and received.</p>
+
+<p>When passing such an argument, ARC retains the argument prior to
+making the call.</p>
+
+<p>When receiving such an argument, ARC releases the argument at the
+end of the function, subject to the usual optimizations for local
+values.</p>
+
+<div class="rationale"><p>Rationale: this formalizes direct transfers
+of ownership from a caller to a callee.  The most common scenario here
+is passing the <tt>self</tt> parameter to <tt>init</tt>, but it is
+useful to generalize.  Typically, local optimization will remove any
+extra retains and releases: on the caller side the retain will be
+merged with a +1 source, and on the callee side the release will be
+rolled into the initialization of the parameter.</p></div>
+
+<p>The implicit <tt>self</tt> parameter of a method may be marked as
+consumed by adding <tt>__attribute__((ns_consumes_self))</tt> to the
+method declaration.  Methods in
+the <tt>init</tt> <a href="#family">family</a> are implicitly
+marked <tt>__attribute__((ns_consumes_self))</tt>.</p>
+
+<p>It is undefined behavior if an Objective-C message send of a method
+with <tt>ns_consumed</tt> parameters (other than self) is made to a
+null pointer.</p>
+
+<div class="rationale"><p>Rationale: in fact, it's probably a
+guaranteed leak.</p></div>
+
+</div>
+
+<div id="objects.operands.retained-returns">
+<h1>Retained return values</h1>
+
+<p>A function or method which returns a retainable object pointer type
+may be marked as returning a retained value, signifying that the
+caller expects to take ownership of a +1 retain count.  This is done
+by adding the <tt>ns_returns_retained</tt> attribute to the function or
+method declaration, like so:</p>
+
+<pre>id foo(void) __attribute((ns_returns_retained));
+- (id) foo __attribute((ns_returns_retained));</pre>
+
+<p>This attribute is part of the type of the function or method.</p>
+
+<p>When returning from such a function or method, ARC retains the
+value at the point of evaluation of the return statement, before
+leaving all local scopes.</p>
+
+<p>When receiving a return result from such a function or method, ARC
+releases the value at the end of the full-expression it is contained
+within, subject to the usual optimizations for local values.</p>
+
+<div class="rationale"><p>Rationale: this formalizes direct transfers of
+ownership from a callee to a caller.  The most common scenario this
+models is the retained return from <tt>init</tt>, <tt>alloc</tt>,
+<tt>new</tt>, and <tt>copy</tt> methods, but there are other cases in
+the frameworks.  After optimization there are typically no extra
+retains and releases required.</p></div>
+
+<p>Methods in
+the <tt>alloc</tt>, <tt>copy</tt>, <tt>init</tt>, <tt>mutableCopy</tt>,
+and <tt>new</tt> <a href="#family">families</a> are implicitly marked
+<tt>__attribute__((ns_returns_retained))</tt>.  This may be suppressed
+by explicitly marking the
+method <tt>__attribute__((ns_returns_not_retained))</tt>.</p>
+</div>
+
+<div id="objects.operands.other-returns">
+<h1>Unretained return values</h1>
+
+<p>A method or function which returns a retainable object type but
+does not return a retained value must ensure that the object is
+still valid across the return boundary.</p>
+
+<p>When returning from such a function or method, ARC retains the
+value at the point of evaluation of the return statement, then leaves
+all local scopes, and then balances out the retain while ensuring that
+the value lives across the call boundary.  In the worst case, this may
+involve an <tt>autorelease</tt>, but callers must not assume that the
+value is actually in the autorelease pool.</p>
+
+<p>ARC performs no extra mandatory work on the caller side, although
+it may elect to do something to shorten the lifetime of the returned
+value.</p>
+
+<div class="rationale"><p>Rationale: it is common in non-ARC code to not
+return an autoreleased value; therefore the convention does not force
+either path.  It is convenient to not be required to do unnecessary
+retains and autoreleases; this permits optimizations such as eliding
+retain/autoreleases when it can be shown that the original pointer
+will still be valid at the point of return.</p></div>
+
+<p>A method or function may be marked
+with <tt>__attribute__((ns_returns_autoreleased))</tt> to indicate
+that it returns a pointer which is guaranteed to be valid at least as
+long as the innermost autorelease pool.  There are no additional
+semantics enforced in the definition of such a method; it merely
+enables optimizations in callers.</p>
+</div>
+
+<div id="objects.operands.casts">
+<h1>Bridged casts</h1>
+
+<p>A <span class="term">bridged cast</span> is a C-style cast
+annotated with one of three keywords:</p>
+
+<ul>
+<li><tt>(__bridge T) op</tt> casts the operand to the destination
+type <tt>T</tt>.  If <tt>T</tt> is a retainable object pointer type,
+then <tt>op</tt> must have a non-retainable pointer type.
+If <tt>T</tt> is a non-retainable pointer type, then <tt>op</tt> must
+have a retainable object pointer type.  Otherwise the cast is
+ill-formed.  There is no transfer of ownership, and ARC inserts
+no retain operations.</li>
+
+<li><tt>(__bridge_retained T) op</tt> casts the operand, which must
+have retainable object pointer type, to the destination type, which
+must be a non-retainable pointer type.  ARC retains the value, subject
+to the usual optimizations on local values, and the recipient is
+responsible for balancing that +1.</li>
+
+<li><tt>(__bridge_transfer T) op</tt> casts the operand, which must
+have non-retainable pointer type, to the destination type, which must
+be a retainable object pointer type.  ARC will release the value at
+the end of the enclosing full-expression, subject to the usual
+optimizations on local values.</li>
+</ul>
+
+<p>These casts are required in order to transfer objects in and out of
+ARC control; see the rationale in the section
+on <a href="#objects.restrictions.conversion">conversion of retainable
+object pointers</a>.</p>
+
+<p>Using a <tt>__bridge_retained</tt> or <tt>__bridge_transfer</tt>
+cast purely to convince ARC to emit an unbalanced retain or release,
+respectively, is poor form.</p>
+
+</div>
+
+</div>
+
+<div id="objects.restrictions">
+<h1>Restrictions</h1>
+
+<div id="objects.restrictions.conversion">
+<h1>Conversion of retainable object pointers</h1>
+
+<p>In general, a program which attempts to implicitly or explicitly
+convert a value of retainable object pointer type to any
+non-retainable type, or vice-versa, is ill-formed.  For example, an
+Objective-C object pointer shall not be converted to <tt>intptr_t</tt>
+or <tt>void*</tt>.  The <a href="#objects.operands.casts">bridged
+casts</a> may be used to perform these conversions where
+necessary.</p>
+
+<div class="rationale"><p>Rationale: we cannot ensure the correct
+management of the lifetime of objects if they may be freely passed
+around as unmanaged types.  The bridged casts are provided so that the
+programmer may explicitly describe whether the cast transfers control
+into or out of ARC.</p></div>
+</div>
+
+<p>An unbridged cast to a retainable object pointer type of the return
+value of a Objective-C message send which yields a non-retainable
+pointer is treated as a <tt>__bridge_transfer</tt> cast
+if:</p>
+
+<ul>
+<li>the method has the <tt>cf_returns_retained</tt> attribute, or if
+not that,</li>
+<li>the method does not have the <tt>cf_returns_not_retained</tt>
+attribute and</li>
+<li>the method's <a href="#family">selector family</a> would imply
+the <tt>ns_returns_retained</tt> attribute on a method which returned
+a retainable object pointer type.</li>
+</ul>
+
+<p>Otherwise the cast is treated as a <tt>__bridge</tt> cast.</p>
+
+</div>
+
+</div>
+
+<div id="ownership">
+<h1>Ownership qualification</h1>
+
+<p>This section describes the behavior of <em>objects</em> of
+retainable object pointer type; that is, locations in memory which
+store retainable object pointers.</p>
+
+<p>A type is a <span class="term">retainable object owner type</span>
+if it is a retainable object pointer type or an array type whose
+element type is a retainable object owner type.</p>
+
+<p>An <span class="term">ownership qualifier</span> is a type
+qualifier which applies only to retainable object owner types.  A
+program is ill-formed if it attempts to apply an ownership qualifier
+to a type which is already ownership-qualified, even if it is the same
+qualifier.  An array type is ownership-qualified according to its
+element type, and adding an ownership qualifier to an array type so
+qualifies its element type.</p>
+
+<p>Except as described under
+the <a href="#ownership.inference">inference rules</a>, a program is
+ill-formed if it attempts to form a pointer or reference type to a
+retainable object owner type which lacks an ownership qualifier.</p>
+
+<div class="rationale"><p>Rationale: these rules, together with the
+inference rules, ensure that all objects and lvalues of retainable
+object pointer type have an ownership qualifier.</p></div>
+
+<p>There are four ownership qualifiers:</p>
+
+<ul>
+<li><tt>__autoreleasing</tt></li>
+<li><tt>__strong</tt></li>
+<li><tt>__unsafe_unretained</tt></li>
+<li><tt>__weak</tt></li>
+</ul>
+
+<p>A type is <span class="term">nontrivially ownership-qualified</span>
+if it is qualified with <tt>__autoreleasing</tt>, <tt>__strong</tt>, or
+<tt>__weak</tt>.</p>
+
+<div id="ownership.spelling">
+<h1>Spelling</h1>
+
+<p>The names of the ownership qualifiers are reserved for the
+implementation.  A program may not assume that they are or are not
+implemented with macros, or what those macros expand to.</p>
+
+<p>An ownership qualifier may be written anywhere that any other type
+qualifier may be written.</p>
+
+<p>If an ownership qualifier appears in
+the <i>declaration-specifiers</i>, the following rules apply:</p>
+
+<ul>
+<li>if the type specifier is a retainable object owner type, the
+qualifier applies to that type;</li>
+<li>if the outermost non-array part of the declarator is a pointer or
+block pointer, the qualifier applies to that type;</li>
+<li>otherwise the program is ill-formed.</li>
+</ul>
+
+<p>If an ownership qualifier appears on the declarator name, or on the
+declared object, it is applied to outermost pointer or block-pointer
+type.</p>
+
+<p>If an ownership qualifier appears anywhere else in a declarator, it
+applies to the type there.</p>
+
+</div> <!-- ownership.spelling -->
+
+<div id="ownership.semantics">
+<h1>Semantics</h1>
+
+<p>There are five <span class="term">managed operations</span> which
+may be performed on an object of retainable object pointer type.  Each
+qualifier specifies different semantics for each of these operations.
+It is still undefined behavior to access an object outside of its
+lifetime.</p>
+
+<p>A load or store with <q>primitive semantics</q> has the same
+semantics as the respective operation would have on an <tt>void*</tt>
+lvalue with the same alignment and non-ownership qualification.</p>
+
+<p><span class="term">Reading</span> occurs when performing a
+lvalue-to-rvalue conversion on an object lvalue.
+
+<ul>
+<li>For <tt>__weak</tt> objects, the current pointee is retained and
+then released at the end of the current full-expression.  This must
+execute atomically with respect to assignments and to the final
+release of the pointee.</li>
+<li>For all other objects, the lvalue is loaded with primitive
+semantics.</li>
+</ul>
+</p>
+
+<p><span class="term">Assignment</span> occurs when evaluating
+an assignment operator.  The semantics vary based on the qualification:
+<ul>
+<li>For <tt>__strong</tt> objects, the new pointee is first retained;
+second, the lvalue is loaded with primitive semantics; third, the new
+pointee is stored into the lvalue with primitive semantics; and
+finally, the old pointee is released.  This is not performed
+atomically; external synchronization must be used to make this safe in
+the face of concurrent loads and stores.</li>
+<li>For <tt>__weak</tt> objects, the lvalue is updated to point to the
+new pointee, unless that object is currently undergoing deallocation,
+in which case it the lvalue is updated to a null pointer.  This must
+execute atomically with respect to other assignments to the object, to
+reads from the object, and to the final release of the new pointed-to
+value.</li>
+<li>For <tt>__unsafe_unretained</tt> objects, the new pointee is
+stored into the lvalue using primitive semantics.</li>
+<li>For <tt>__autoreleasing</tt> objects, the new pointee is retained,
+autoreleased, and stored into the lvalue using primitive semantics.</li>
+</ul>
+</p>
+
+<p><span class="term">Initialization</span> occurs when an object's
+lifetime begins, which depends on its storage duration.
+Initialization proceeds in two stages:
+<ol>
+<li>First, a null pointer is stored into the lvalue using primitive
+semantics.  This step is skipped if the object
+is <tt>__unsafe_unretained</tt>.</li>
+<li>Second, if the object has an initializer, that expression is
+evaluated and then assigned into the object using the usual assignment
+semantics.</li>
+</ol>
+</p>
+
+<p><span class="term">Destruction</span> occurs when an object's
+lifetime ends.  In all cases it is semantically equivalent to
+assigning a null pointer to the object, with the proviso that of
+course the object cannot be legally read after the object's lifetime
+ends.</p>
+
+<p><span class="term">Moving</span> occurs in specific situations
+where an lvalue is <q>moved from</q>, meaning that its current pointee
+will be used but the object may be left in a different (but still
+valid) state.  This arises with <tt>__block</tt> variables and rvalue
+references in C++. For <tt>__strong</tt> lvalues, moving is equivalent
+to loading the lvalue with primitive semantics, writing a null pointer
+to it with primitive semantics, and then releasing the result of the
+load at the end of the current full-expression.  For all other
+lvalues, moving is equivalent to reading the object.</p>
+
+</div> <!-- ownership.semantics -->
+
+<div id="ownership.restrictions">
+<h1>Restrictions</h1>
+
+<div id="ownership.restrictions.autoreleasing">
+<h1>Storage duration of<tt> __autoreleasing</tt> objects</h1>
+
+<p>A program is ill-formed if it declares an <tt>__autoreleasing</tt>
+object of non-automatic storage duration.</p>
+
+<div class="rationale"><p>Rationale: autorelease pools are tied to the
+current thread and scope by their nature.  While it is possible to
+have temporary objects whose instance variables are filled with
+autoreleased objects, there is no way that ARC can provide any sort of
+safety guarantee there.</p></div>
+
+<p>It is undefined behavior if a non-null pointer is assigned to
+an <tt>__autoreleasing</tt> object while an autorelease pool is in
+scope and then that object is read after the autorelease pool's scope
+is left.</p>
+
+</div>
+
+<div id="ownership.restrictions.conversion.indirect">
+<h1>Conversion of pointers to ownership-qualified types</h1>
+
+<p>A program is ill-formed if an expression of type <tt>T*</tt> is
+converted, explicitly or implicitly, to the type <tt>U*</tt>,
+where <tt>T</tt> and <tt>U</tt> have different ownership
+qualification, unless:
+<ul>
+<li><tt>T</tt> is qualified with <tt>__strong</tt>,
+ <tt>__autoreleasing</tt>, or <tt>__unsafe_unretained</tt>, and
+ <tt>U</tt> is qualified with both <tt>const</tt> and
+ <tt>__unsafe_unretained</tt>; or</li>
+<li>either <tt>T</tt> or <tt>U</tt> is <tt>cv void</tt>, where
+<tt>cv</tt> is an optional sequence of non-ownership qualifiers; or</li>
+<li>the conversion is requested with a <tt>reinterpret_cast</tt> in
+ Objective-C++; or</li>
+<li>the conversion is a
+well-formed <a href="#ownership.restrictions.pass_by_writeback">pass-by-writeback</a>.</li>
+</ul>
+</p>
+
+<p>The analogous rule applies to <tt>T&</tt> and <tt>U&</tt> in
+Objective-C++.</p>
+
+<div class="rationale"><p>Rationale: these rules provide a reasonable
+level of type-safety for indirect pointers, as long as the underlying
+memory is not deallocated.  The conversion to <tt>const
+__unsafe_unretained</tt> is permitted because the semantics of reads
+are equivalent across all these ownership semantics, and that's a very
+useful and common pattern.  The interconversion with <tt>void*</tt> is
+useful for allocating memory or otherwise escaping the type system,
+but use it carefully.  <tt>reinterpret_cast</tt> is considered to be
+an obvious enough sign of taking responsibility for any
+problems.</p></div>
+
+<p>It is undefined behavior to access an ownership-qualified object
+through an lvalue of a differently-qualified type, except that any
+non-<tt>__weak</tt> object may be read through
+an <tt>__unsafe_unretained</tt> lvalue.</p>
+
+<p>It is undefined behavior if a managed operation is performed on
+a <tt>__strong</tt> or <tt>__weak</tt> object without a guarantee that
+it contains a primitive zero bit-pattern, or if the storage for such
+an object is freed or reused without the object being first assigned a
+null pointer.</p>
+
+<div class="rationale"><p>Rationale: ARC cannot differentiate between
+an assignment operator which is intended to <q>initialize</q> dynamic
+memory and one which is intended to potentially replace a value.
+Therefore the object's pointer must be valid before letting ARC at it.
+Similarly, C and Objective-C do not provide any language hooks for
+destroying objects held in dynamic memory, so it is the programmer's
+responsibility to avoid leaks (<tt>__strong</tt> objects) and
+consistency errors (<tt>__weak</tt> objects).</p>
+
+<p>These requirements are followed automatically in Objective-C++ when
+creating objects of retainable object owner type with <tt>new</tt>
+or <tt>new[]</tt> and destroying them with <tt>delete</tt>,
+<tt>delete[]</tt>, or a pseudo-destructor expression.  Note that
+arrays of nontrivially-ownership-qualified type are not ABI compatible
+with non-ARC code because the element type is non-POD: such arrays
+that are <tt>new[]</tt>'d in ARC translation units cannot
+be <tt>delete[]</tt>'d in non-ARC translation units and
+vice-versa.</p></div>
+
+</div>
+
+<div id="ownership.restrictions.pass_by_writeback">
+<h1>Passing to an out parameter by writeback</h1>
+
+<p>If the argument passed to a parameter of type
+<tt>T __autoreleasing *</tt> has type <tt>U oq *</tt>,
+where <tt>oq</tt> is an ownership qualifier, then the argument is a
+candidate for <span class="term">pass-by-writeback</span> if:</p>
+
+<ul>
+<li><tt>oq</tt> is <tt>__strong</tt> or <tt>__weak</tt>, and
+<li>it would be legal to initialize a <tt>T __strong *</tt> with
+a <tt>U __strong *</tt>.</li>
+</ul>
+
+<p>For purposes of overload resolution, an implicit conversion
+sequence requiring a pass-by-writeback is always worse than an
+implicit conversion sequence not requiring a pass-by-writeback.</p>
+
+<p>The pass-by-writeback is ill-formed if the argument expression does
+not have a legal form:</p>
+
+<ul>
+<li><tt>&var</tt>, where <tt>var</tt> is a scalar variable of
+automatic storage duration with retainable object pointer type</li>
+<li>a conditional expression where the second and third operands are
+both legal forms</li>
+<li>a cast whose operand is a legal form</li>
+<li>a null pointer constant</li>
+</ul>
+
+<div class="rationale"><p>Rationale: the restriction in the form of
+the argument serves two purposes.  First, it makes it impossible to
+pass the address of an array to the argument, which serves to protect
+against an otherwise serious risk of mis-inferring an <q>array</q>
+argument as an out-parameter.  Second, it makes it much less likely
+that the user will see confusing aliasing problems due to the
+implementation, below, where their store to the writeback temporary is
+not immediately seen in the original argument variable.</p></div>
+
+<p>A pass-by-writeback is evaluated as follows:
+<ol>
+<li>The argument is evaluated to yield a pointer <tt>p</tt> of
+ type <tt>U oq *</tt>.</li>
+<li>If <tt>p</tt> is a null pointer, then a null pointer is passed as
+ the argument, and no further work is required for the pass-by-writeback.</li>
+<li>Otherwise, a temporary of type <tt>T __autoreleasing</tt> is
+ created and initialized to a null pointer.</li>
+<li>If the argument is not an Objective-C method parameter marked
+ <tt>out</tt>, then <tt>*p</tt> is read, and the result is written
+ into the temporary with primitive semantics.</li>
+<li>The address of the temporary is passed as the argument to the
+ actual call.</li>
+<li>After the call completes, the temporary is loaded with primitive
+ semantics, and that value is assigned into <tt>*p</tt>.</li>
+</ol></p>
+
+<div class="rationale"><p>Rationale: this is all admittedly
+convoluted.  In an ideal world, we would see that a local variable is
+being passed to an out-parameter and retroactively modify its type to
+be <tt>__autoreleasing</tt> rather than <tt>__strong</tt>.  This would
+be remarkably difficult and not always well-founded under the C type
+system.  However, it was judged unacceptably invasive to require
+programmers to write <tt>__autoreleasing</tt> on all the variables
+they intend to use for out-parameters.  This was the least bad
+solution.</p></div>
+
+</div>
+
+<div id="ownership.restrictions.records">
+<h1>Ownership-qualified fields of structs and unions</h1>
+
+<p>A program is ill-formed if it declares a member of a C struct or
+union to have a nontrivially ownership-qualified type.</p>
+
+<div class="rationale"><p>Rationale: the resulting type would be
+non-POD in the C++ sense, but C does not give us very good language
+tools for managing the lifetime of aggregates, so it is more
+convenient to simply forbid them.  It is still possible to manage this
+with a <tt>void*</tt> or an <tt>__unsafe_unretained</tt>
+object.</p></div>
+
+<p>This restriction does not apply in Objective-C++.  However,
+nontrivally ownership-qualified types are considered non-POD: in C++0x
+terms, they are not trivially default constructible, copy
+constructible, move constructible, copy assignable, move assignable,
+or destructible.  It is a violation of C++ One Definition Rule to use
+a class outside of ARC that, under ARC, would have an
+ownership-qualified member.</p>
+
+<div class="rationale"><p>Rationale: unlike in C, we can express all
+the necessary ARC semantics for ownership-qualified subobjects as
+suboperations of the (default) special member functions for the class.
+These functions then become non-trivial.  This has the non-obvious
+repercussion that the class will have a non-trivial copy constructor
+and non-trivial destructor; if it wouldn't outside of ARC, this means
+that objects of the type will be passed and returned in an
+ABI-incompatible manner.</p></div>
+
+</div>
+
+</div>
+
+<div id="ownership.inference">
+<h1>Ownership inference</h1>
+
+<div id="ownership.inference.variables">
+<h1>Objects</h1>
+
+<p>If an object is declared with retainable object owner type, but
+without an explicit ownership qualifier, its type is implicitly
+adjusted to have <tt>__strong</tt> qualification.</p>
+
+<p>As a special case, if the object's base type is <tt>Class</tt>
+(possibly protocol-qualified), the type is adjusted to
+have <tt>__unsafe_unretained</tt> qualification instead.</p>
+
+</div>
+
+<div id="ownership.inference.indirect_parameters">
+<h1>Indirect parameters</h1>
+
+<p>If a function or method parameter has type <tt>T*</tt>, where
+<tt>T</tt> is an ownership-unqualified retainable object pointer type,
+then:</p>
+
+<ul>
+<li>if <tt>T</tt> is <tt>const</tt>-qualified or <tt>Class</tt>, then
+it is implicitly qualified with <tt>__unsafe_unretained</tt>;</li>
+<li>otherwise, it is implicitly qualified
+with <tt>__autoreleasing</tt>.</li>
+</ul>
+</p>
+
+<div class="rationale"><p>Rationale: <tt>__autoreleasing</tt> exists
+mostly for this case, the Cocoa convention for out-parameters.  Since
+a pointer to <tt>const</tt> is obviously not an out-parameter, we
+instead use a type more useful for passing arrays.  If the user
+instead intends to pass in a <em>mutable</em> array, inferring
+<tt>__autoreleasing</tt> is the wrong thing to do; this directs some
+of the caution in the following rules about writeback.</p></div>
+
+<p>Such a type written anywhere else would be ill-formed by the
+general rule requiring ownership qualifiers.</p>
+
+<p>This rule does not apply in Objective-C++ if a parameter's type is
+dependent in a template pattern and is only <em>instantiated</em> to
+a type which would be a pointer to an unqualified retainable object
+pointer type.  Such code is still ill-formed.</p>
+
+<div class="rationale"><p>Rationale: the convention is very unlikely
+to be intentional in template code.</p></div>
+
+</div> <!-- ownership.inference.indirect_parameters -->
+</div> <!-- ownership.inference -->
+</div> <!-- ownership -->
+
+<div id="family">
+<h1>Method families</h1>
+
+<p>An Objective-C method may fall into a <span class="term">method
+family</span>, which is a conventional set of behaviors ascribed to it
+by the Cocoa conventions.</p>
+
+<p>A method is in a certain method family if:
+<ul>
+<li>it has a <tt>objc_method_family</tt> attribute placing it in that
+ family; or if not that,</li>
+<li>it does not have an <tt>objc_method_family</tt> attribute placing
+ it in a different or no family, and</li>
+<li>its selector falls into the corresponding selector family, and</li>
+<li>its signature obeys the added restrictions of the method family.</li>
+</ul></p>
+
+<p>A selector is in a certain selector family if, ignoring any leading
+underscores, the first component of the selector either consists
+entirely of the name of the method family or it begins with that name
+followed by a character other than a lowercase letter.  For
+example, <tt>_perform:with:</tt> and <tt>performWith:</tt> would fall
+into the <tt>perform</tt> family (if we recognized one),
+but <tt>performing:with</tt> would not.</p>
+
+<p>The families and their added restrictions are:</p>
+
+<ul>
+<li><tt>alloc</tt> methods must return a retainable object pointer type.</li>
+<li><tt>copy</tt> methods must return a retainable object pointer type.</li>
+<li><tt>mutableCopy</tt> methods must return a retainable object pointer type.</li>
+<li><tt>new</tt> methods must return a retainable object pointer type.</li>
+<li><tt>init</tt> methods must be instance methods and must return an
+Objective-C pointer type.  Additionally, a program is ill-formed if it
+declares or contains a call to an <tt>init</tt> method whose return
+type is neither <tt>id</tt> nor a pointer to a super-class or
+sub-class of either the declaring class, if the method was declared on
+a class, or the static receiver type of the call, if it was declared
+on a protocol.</p>
+
+<div class="rationale"><p>Rationale: there are a fair number of existing
+methods with <tt>init</tt>-like selectors which nonetheless don't
+follow the <tt>init</tt> conventions.  Typically these are either
+accidental naming collisions or helper methods called during
+initialization.  Because of the peculiar retain/release behavior
+of <tt>init</tt> methods, it's very important not to treat these
+methods as <tt>init</tt> methods if they aren't meant to be.  It was
+felt that implicitly defining these methods out of the family based on
+the exact relationship between the return type and the declaring class
+would much too subtle and fragile.  Therefore we identify a small
+number of legitimate-seeming return types and call everything else an
+error.  This serves the secondary purpose of encouraging programmers
+not to accidentally give methods names in the <tt>init</tt> family.</p></div>
+</li>
+</ul>
+
+<p>A program is ill-formed if a method's declarations,
+implementations, and overrides do not all have the same method
+family.</p>
+
+<div id="family.attribute">
+<h1>Explicit method family control</h1>
+
+<p>A method may be annotated with the <tt>objc_method_family</tt>
+attribute to precisely control which method family it belongs to.  If
+a method in an <tt>@implementation</tt> does not have this attribute,
+but there is a method declared in the corresponding <tt>@interface</tt>
+that does, then the attribute is copied to the declaration in the
+<tt>@implementation</tt>.  The attribute is available outside of ARC,
+and may be tested for with the preprocessor query
+<tt>__has_attribute(objc_method_family)</tt>.</p>
+
+<p>The attribute is spelled
+<tt>__attribute__((objc_method_family(<i>family</i>)))</tt>.
+If <i>family</i> is <tt>none</tt>, the method has no family, even if
+it would otherwise be considered to have one based on its selector and
+type.  Otherwise, <i>family</i> must be one
+of <tt>alloc</tt>, <tt>copy</tt>, <tt>init</tt>,
+<tt>mutableCopy</tt>, or <tt>new</tt>, in which case the method is
+considered to belong to the corresponding family regardless of its
+selector.  It is an error if a method that is explicitly added to a
+family in this way does not meet the requirements of the family other
+than the selector naming convention.</p>
+
+<div class="rationale"><p>Rationale: the rules codified in this document
+describe the standard conventions of Objective-C.  However, as these
+conventions have not heretofore been enforced by an unforgiving
+mechanical system, they are only imperfectly kept, especially as they
+haven't always even been precisely defined.  While it is possible to
+define low-level ownership semantics with attributes like
+<tt>ns_returns_retained</tt>, this attribute allows the user to
+communicate semantic intent, which of use both to ARC (which, e.g.,
+treats calls to <tt>init</tt> specially) and the static analyzer.</p></div>
+</div>
+
+<div id="family.semantics">
+<h1>Semantics of method families</h1>
+
+<p>A method's membership in a method family may imply non-standard
+semantics for its parameters and return type.</p>
+
+<p>Methods in the <tt>alloc</tt>, <tt>copy</tt>, <tt>mutableCopy</tt>,
+and <tt>new</tt> families &mdash; that is, methods in all the
+currently-defined families except <tt>init</tt> &mdash; transfer
+ownership of a +1 retain count on their return value to the calling
+function, as if they were implicitly annotated with
+the <tt>ns_returns_retained</tt> attribute.  However, this is not true
+if the method has either of the <tt>ns_returns_autoreleased</tt> or
+<tt>ns_returns_not_retained</tt> attributes.</p>
+
+<div id="family.semantics.init">
+<h1>Semantics of <tt>init</tt></h1>
+
+<p>Methods in the <tt>init</tt> family must be transferred ownership
+of a +1 retain count on their <tt>self</tt> parameter, exactly as if
+the method had the <tt>ns_consumes_self</tt> attribute, and must
+transfer ownership of a +1 retain count on their return value, exactly
+as if they method had the <tt>ns_returns_retained</tt> attribute.
+Neither of these may be altered through attributes.</p>
+
+<p>A call to an <tt>init</tt> method with a receiver that is either
+<tt>self</tt> (possibly parenthesized or casted) or <tt>super</tt> is
+called a <span class="term">delegate init call</span>.  It is an error
+for a delegate init call to be made except from an <tt>init</tt>
+method, and excluding blocks within such methods.</p>
+
+<p>The variable <tt>self</tt> is mutable in an <tt>init</tt> method
+and is implicitly qualified as <tt>__strong</tt>.  However, a program
+is ill-formed, no diagnostic required, if it alters <tt>self</tt>
+except to assign it the immediate result of a delegate init call.  It
+is an error to use the previous value of <tt>self</tt> after the
+completion of a delegate init call.</p>
+
+<p>A program is ill-formed, no diagnostic required, if it causes two
+or more calls to <tt>init</tt> methods on the same object, except that
+each <tt>init</tt> method invocation may perform at most one
+delegate init call.</p>
+
+</div> <!-- family.semantics.delegate-init -->
+
+<div id="family.semantics.result_type">
+<h1>Related result types</h1>
+
+<p>Certain methods are candidates to have <span class="term">related
+result types</span>:</p>
+<ul>
+<li>class methods in the <tt>alloc</tt> and <tt>new</tt> method families</li>
+<li>instance methods in the <tt>init</tt> family</li>
+<li>the instance method <tt>self</tt></li>
+<li>outside of ARC, the instance methods <tt>retain</tt> and <tt>autorelease</tt></li>
+</ul>
+
+<p>If the formal result type of such a method is <tt>id</tt> or
+protocol-qualified <tt>id</tt>, or a type equal to the declaring class
+or a superclass, then it is said to have a related result type.  In
+this case, when invoked in an explicit message send, it is assumed to
+return a type related to the type of the receiver:</p>
+
+<ul>
+<li>if it is a class method, and the receiver is a class
+name <tt>T</tt>, the message send expression has type <tt>T*</tt>;
+otherwise</li>
+<li>if it is an instance method, and the receiver has type <tt>T</tt>,
+the message send expression has type <tt>T</tt>; otherwise</li>
+<li>the message send expression has the normal result type of the
+method.</li>
+</ul>
+
+<p>This is a new rule of the Objective-C language and applies outside
+of ARC.</p>
+
+<div class="rationale"><p>Rationale: ARC's automatic code emission is
+more prone than most code to signature errors, i.e. errors where a
+call was emitted against one method signature, but the implementing
+method has an incompatible signature.  Having more precise type
+information helps drastically lower this risks, as well as catching
+a number of latent bugs.</p></div>
+
+</div> <!-- family.semantics.result_type -->
+</div> <!-- family.semantics -->
+</div> <!-- family -->
+
+<div id="optimization">
+<h1>Optimization</h1>
+
+<p>ARC applies aggressive rules for the optimization of local
+behavior.  These rules are based around a core assumption of
+<span class="term">local balancing</span>: that other code will
+perform retains and releases as necessary (and only as necessary) for
+its own safety, and so the optimizer does not need to consider global
+properties of the retain and release sequence.  For example, if a
+retain and release immediately bracket a call, the optimizer can
+delete the retain and release on the assumption that the called
+function will not do a constant number of unmotivated releases
+followed by a constant number of <q>balancing</q> retains, such that
+the local retain/release pair is the only thing preventing the called
+function from ending up with a dangling reference.</p>
+
+<p>The optimizer assumes that when a new value enters local control,
+e.g. from a load of a non-local object or as the result of a function
+call, it is instaneously valid.  Subsequently, a retain and release of
+a value are necessary on a computation path only if there is a use of
+that value before the release and after any operation which might
+cause a release of the value (including indirectly or non-locally),
+and only if the value is not demonstrably already retained.</p>
+
+<p>The complete optimization rules are quite complicated, but it would
+still be useful to document them here.</p>
+
+</div>
+
+<div id="misc">
+<h1>Miscellaneous</h1>
+
+<div id="autoreleasepool">
+<h1><tt>@autoreleasepool</tt></h1>
+
+<p>To simplify the use of autorelease pools, and to bring them under
+the control of the compiler, a new kind of statement is available in
+Objective-C.  It is written <tt>@autoreleasepool</tt> followed by
+a <i>compound-statement</i>, i.e. by a new scope delimited by curly
+braces.  Upon entry to this block, the current state of the
+autorelease pool is captured.  When the block is exited normally,
+whether by fallthrough or directed control flow (such
+as <tt>return</tt> or <tt>break</tt>), the autorelease pool is
+restored to the saved state, releasing all the objects in it.  When
+the block is exited with an exception, the pool is not drained.</p>
+
+<p>A program is ill-formed if it refers to the
+<tt>NSAutoreleasePool</tt> class.</p>
+
+<div class="rationale"><p>Rationale: autorelease pools are clearly
+important for the compiler to reason about, but it is far too much to
+expect the compiler to accurately reason about control dependencies
+between two calls.  It is also very easy to accidentally forget to
+drain an autorelease pool when using the manual API, and this can
+significantly inflate the process's high-water-mark.  The introduction
+of a new scope is unfortunate but basically required for sane
+interaction with the rest of the language.  Not draining the pool
+during an unwind is apparently required by the Objective-C exceptions
+implementation.</p></div>
+
+</div> <!-- autoreleasepool -->
+
+<div id="misc.self">
+<h1><tt>self</tt></h1>
+
+<p>The <tt>self</tt> parameter variable of an Objective-C method is
+never actually retained by the implementation.  It is undefined
+behavior, or at least dangerous, to cause an object to be deallocated
+during a message send to that object.  To make this
+safe, <tt>self</tt> is implicitly <tt>const</tt> unless the method is
+in the <a href="#family.semantics.init"><tt>init</tt> family</a>.</p>
+
+<div class="rationale"><p>Rationale: the cost of
+retaining <tt>self</tt> in all methods was found to be prohibitive, as
+it tends to be live across calls, preventing the optimizer from
+proving that the retain and release are unnecessary &mdash; for good
+reason, as it's quite possible in theory to cause an object to be
+deallocated during its execution without this retain and release.
+Since it's extremely uncommon to actually do so, even unintentionally,
+and since there's no natural way for the programmer to remove this
+retain/release pair otherwise (as there is for other parameters by,
+say, making the variable <tt>__unsafe_unretained</tt>), we chose to
+make this optimizing assumption and shift some amount of risk to the
+user.</p></div>
+
+</div> <!-- misc.self -->
+
+<div id="misc.enumeration">
+<h1>Fast enumeration iteration variables</h1>
+
+<p>If a variable is declared in the condition of an Objective-C fast
+enumeration loop, and the variable has no explicit ownership
+qualifier, then it is qualified with <tt>const __strong</tt> and
+objects encountered during the enumeration are not actually
+retained.</p>
+
+<div class="rationale"><p>Rationale: this is an optimization made
+possible because fast enumeration loops promise to keep the objects
+retained during enumeration, and the collection itself cannot be
+synchronously modified.  It can be overridden by explicitly qualifying
+the variable with <tt>__strong</tt>, which will make the variable
+mutable again and cause the loop to retain the objects it
+encounters.</div>
+
+</div>
+
+<div id="misc.blocks">
+<h1>Blocks</h1>
+
+<p>The implicit <tt>const</tt> capture variables created when
+evaluating a block literal expression have the same ownership
+semantics as the local variables they capture.  The capture is
+performed by reading from the captured variable and initializing the
+capture variable with that value; the capture variable is destroyed
+when the block literal is, i.e. at the end of the enclosing scope.</p>
+
+<p>The <a href="#ownership.inference">inference</a> rules apply
+equally to <tt>__block</tt> variables, which is a shift in semantics
+from non-ARC, where <tt>__block</tt> variables did not implicitly
+retain during capture.</p>
+
+<p><tt>__block</tt> variables of retainable object owner type are
+moved off the stack by initializing the heap copy with the result of
+moving from the stack copy.</tt></p>
+
+<p>With the exception of retains done as part of initializing
+a <tt>__strong</tt> parameter variable or reading a <tt>__weak</tt>
+variable, whenever these semantics call for retaining a value of
+block-pointer type, it has the effect of a <tt>Block_copy</tt>.  The
+optimizer may remove such copies when it sees that the result is
+used only as an argument to a call.</p>
+
+</div> <!-- misc.blocks -->
+
+<div id="misc.exceptions">
+<h1>Exceptions</h1>
+
+<p>By default in Objective C, ARC is not exception-safe for normal
+releases:
+<ul>
+<li>It does not end the lifetime of <tt>__strong</tt> variables when
+their scopes are abnormally terminated by an exception.</li>
+<li>It does not perform releases which would occur at the end of
+a full-expression if that full-expression throws an exception.</li>
+</ul>
+
+<p>A program may be compiled with the option
+<tt>-fobjc-arc-exceptions</tt> in order to enable these, or with the
+option <tt>-fno-objc-arc-exceptions</tt> to explicitly disable them,
+with the last such argument <q>winning</q>.</p>
+
+<div class="rationale"><p>Rationale: the standard Cocoa convention is
+that exceptions signal programmer error and are not intended to be
+recovered from.  Making code exceptions-safe by default would impose
+severe runtime and code size penalties on code that typically does not
+actually care about exceptions safety.  Therefore, ARC-generated code
+leaks by default on exceptions, which is just fine if the process is
+going to be immediately terminated anyway.  Programs which do care
+about recovering from exceptions should enable the option.</p></div>
+
+<p>In Objective-C++, <tt>-fobjc-arc-exceptions</tt> is enabled by
+default.</p>
+
+<div class="rationale"><p>Rationale: C++ already introduces pervasive
+exceptions-cleanup code of the sort that ARC introduces.  C++
+programmers who have not already disabled exceptions are much more
+likely to actual require exception-safety.</p></div>
+
+<p>ARC does end the lifetimes of <tt>__weak</tt> objects when an
+exception terminates their scope unless exceptions are disabled in the
+compiler.</p>
+
+<div class="rationale"><p>Rationale: the consequence of a
+local <tt>__weak</tt> object not being destroyed is very likely to be
+corruption of the Objective-C runtime, so we want to be safer here.
+Of course, potentially massive leaks are about as likely to take down
+the process as this corruption is if the program does try to recover
+from exceptions.</p></div>
+
+</div> <!-- misc.exceptions -->
+
+</div> <!-- misc -->
+</div> <!-- root -->
+</body>
+</html>
