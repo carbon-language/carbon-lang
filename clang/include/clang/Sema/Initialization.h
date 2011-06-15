@@ -164,7 +164,8 @@ public:
     Entity.Type = Context.getVariableArrayDecayedType(
                                        Parm->getType().getUnqualifiedType());
     Entity.Parent = 0;
-    Entity.Parameter = (Consumed | reinterpret_cast<uintptr_t>(Parm));
+    Entity.Parameter
+      = (static_cast<uintptr_t>(Consumed) | reinterpret_cast<uintptr_t>(Parm));
     return Entity;
   }
 
