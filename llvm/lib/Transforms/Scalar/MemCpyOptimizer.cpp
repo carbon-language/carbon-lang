@@ -497,7 +497,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
         // Check that nothing touches the dest of the "copy" between
         // the call and the store.
         MemDepResult sdep = MD->getDependency(SI);
-        if (!sdep.isNonLocal()) {
+        if (!sdep.isNonLocal() && !sdep.isUnknown()) {
           bool FoundCall = false;
           for (BasicBlock::iterator I = SI, E = sdep.getInst(); I != E; --I) {
             if (&*I == C) {

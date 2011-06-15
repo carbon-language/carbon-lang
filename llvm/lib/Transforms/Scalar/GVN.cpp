@@ -227,21 +227,19 @@ uint32_t ValueTable::lookup_or_add_call(CallInst* C) {
     // Non-local case.
     const MemoryDependenceAnalysis::NonLocalDepInfo &deps =
       MD->getNonLocalCallDependency(CallSite(C));
-    // FIXME: call/call dependencies for readonly calls should return def, not
-    // clobber!  Move the checking logic to MemDep!
+    // FIXME: Move the checking logic to MemDep!
     CallInst* cdep = 0;
 
     // Check to see if we have a single dominating call instruction that is
     // identical to C.
     for (unsigned i = 0, e = deps.size(); i != e; ++i) {
       const NonLocalDepEntry *I = &deps[i];
-      // Ignore non-local dependencies.
       if (I->getResult().isNonLocal())
         continue;
 
-      // We don't handle non-depedencies.  If we already have a call, reject
+      // We don't handle non-definitions.  If we already have a call, reject
       // instruction dependencies.
-      if (I->getResult().isClobber() || cdep != 0) {
+      if (!I->getResult().isDef() || cdep != 0) {
         cdep = 0;
         break;
       }
@@ -1224,12 +1222,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
 
   // If we had a phi translation failure, we'll have a single entry which is a
   // clobber in the current block.  Reject this early.
-  if (Deps.size() == 1 && Deps[0].getResult().isClobber() &&
-      Deps[0].getResult().getInst()->getParent() == LI->getParent()) {
+  if (Deps.size() == 1 && Deps[0].getResult().isUnknown()) {
     DEBUG(
       dbgs() << "GVN: non-local load ";
       WriteAsOperand(dbgs(), LI);
-      dbgs() << " is clobbered by " << *Deps[0].getResult().getInst() << '\n';
+      dbgs() << " has unknown dependencies\n";
     );
     return false;
   }
@@ -1244,6 +1241,11 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   for (unsigned i = 0, e = Deps.size(); i != e; ++i) {
     BasicBlock *DepBB = Deps[i].getBB();
     MemDepResult DepInfo = Deps[i].getResult();
+
+    if (DepInfo.isUnknown()) {
+      UnavailableBlocks.push_back(DepBB);
+      continue;
+    }
 
     if (DepInfo.isClobber()) {
       // The address being loaded in this non-local block may not be the same as
@@ -1304,6 +1306,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
       UnavailableBlocks.push_back(DepBB);
       continue;
     }
+
+    assert(DepInfo.isDef() && "Expecting def here");
 
     Instruction *DepInst = DepInfo.getInst();
 
@@ -1691,9 +1695,21 @@ bool GVN::processLoad(LoadInst *L) {
     return false;
   }
 
+  if (Dep.isUnknown()) {
+    DEBUG(
+      // fast print dep, using operator<< on instruction is too slow.
+      dbgs() << "GVN: load ";
+      WriteAsOperand(dbgs(), L);
+      dbgs() << " has unknown dependence\n";
+    );
+    return false;
+  }
+
   // If it is defined in another block, try harder.
   if (Dep.isNonLocal())
     return processNonLocalLoad(L);
+
+  assert(Dep.isDef() && "Expecting def here");
 
   Instruction *DepInst = Dep.getInst();
   if (StoreInst *DepSI = dyn_cast<StoreInst>(DepInst)) {

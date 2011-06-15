@@ -79,8 +79,8 @@ bool MemDepPrinter::runOnFunction(Function &F) {
 
     MemDepResult Res = MDA.getDependency(Inst);
     if (!Res.isNonLocal()) {
-      assert(Res.isClobber() != Res.isDef() &&
-             "Local dep should be def or clobber!");
+      assert((Res.isUnknown() || Res.isClobber() || Res.isDef()) &&
+              "Local dep should be unknown, def or clobber!");
       Deps[Inst].insert(std::make_pair(InstAndClobberFlag(Res.getInst(),
                                                           Res.isClobber()),
                                        static_cast<BasicBlock *>(0)));
@@ -92,8 +92,9 @@ bool MemDepPrinter::runOnFunction(Function &F) {
       for (MemoryDependenceAnalysis::NonLocalDepInfo::const_iterator
            I = NLDI.begin(), E = NLDI.end(); I != E; ++I) {
         const MemDepResult &Res = I->getResult();
-        assert(Res.isClobber() != Res.isDef() &&
-               "Resolved non-local call dep should be def or clobber!");
+        assert((Res.isUnknown() || Res.isClobber() || Res.isDef()) &&
+                "Resolved non-local call dep should be unknown, def or "
+                "clobber!");
         InstDeps.insert(std::make_pair(InstAndClobberFlag(Res.getInst(),
                                                           Res.isClobber()),
                                        I->getBB()));
@@ -148,16 +149,24 @@ void MemDepPrinter::print(raw_ostream &OS, const Module *M) const {
       bool isClobber = I->first.getInt();
       const BasicBlock *DepBB = I->second;
 
-      OS << "    " << (isClobber ? "Clobber" : "    Def");
+      OS << "    ";
+      if (!DepInst)
+        OS << "Unknown";
+      else if (isClobber)
+        OS << "Clobber";
+      else
+        OS << "    Def";
       if (DepBB) {
         OS << " in block ";
         WriteAsOperand(OS, DepBB, /*PrintType=*/false, M);
       }
-      OS << " from: ";
-      if (DepInst == Inst)
-        OS << "<unspecified>";
-      else
-        DepInst->print(OS);
+      if (DepInst) {
+        OS << " from: ";
+        if (DepInst == Inst)
+          OS << "<unspecified>";
+        else
+          DepInst->print(OS);
+      }
       OS << "\n";
     }
 

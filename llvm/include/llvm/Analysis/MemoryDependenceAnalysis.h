@@ -90,18 +90,27 @@ namespace llvm {
     /// get methods: These are static ctor methods for creating various
     /// MemDepResult kinds.
     static MemDepResult getDef(Instruction *Inst) {
+      assert(Inst && "Def requires inst");
       return MemDepResult(PairTy(Inst, Def));
     }
     static MemDepResult getClobber(Instruction *Inst) {
+      assert(Inst && "Clobber requires inst");
       return MemDepResult(PairTy(Inst, Clobber));
     }
     static MemDepResult getNonLocal() {
       return MemDepResult(PairTy(0, NonLocal));
     }
+    static MemDepResult getUnknown() {
+      return MemDepResult(PairTy(0, Clobber));
+    }
 
     /// isClobber - Return true if this MemDepResult represents a query that is
     /// a instruction clobber dependency.
-    bool isClobber() const { return Value.getInt() == Clobber; }
+    bool isClobber() const { return Value.getInt() == Clobber && getInst(); }
+
+    /// isUnknown - Return true if this MemDepResult represents a query which
+    /// cannot and/or will not be computed.
+    bool isUnknown() const { return Value.getInt() == Clobber && !getInst(); }
 
     /// isDef - Return true if this MemDepResult represents a query that is
     /// a instruction definition dependency.
