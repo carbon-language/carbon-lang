@@ -64,6 +64,7 @@ option</a></li>
       <li><a href="#dss_deque">&lt;deque&gt;</a></li>
       <li><a href="#dss_list">&lt;list&gt;</a></li>
       <li><a href="#dss_ilist">llvm/ADT/ilist.h</a></li>
+      <li><a href="#dss_packedvector">llvm/ADT/PackedVector.h</a></li>
       <li><a href="#dss_other">Other Sequential Container Options</a></li>
     </ul></li>
     <li><a href="#ds_set">Set-Like Containers (std::set, SmallSet, SetVector, etc)</a>
@@ -1065,6 +1066,44 @@ Related classes of interest are explained in the following subsections:
       <li><a href="#dss_ilist_node">llvm/ADT/ilist_node.h</a></li>
       <li><a href="#dss_ilist_sentinel">Sentinels</a></li>
     </ul>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_packedvector">llvm/ADT/PackedVector.h</a>
+</h4>
+
+<div>
+<p>
+Useful for storing a vector of values using only a few number of bits for each
+value. Apart from the standard operations of a vector-like container, it can
+also perform an 'or' set operation. 
+</p>
+
+<p>For example:</p>
+
+<div class="doc_code">
+<pre>
+enum State {
+    None = 0x0,
+    FirstCondition = 0x1,
+    SecondCondition = 0x2,
+    Both = 0x3
+};
+
+State get() {
+    PackedVector&lt;State, 2&gt; Vec1;
+    Vec1.push_back(FirstCondition);
+
+    PackedVector&lt;State, 2&gt; Vec2;
+    Vec2.push_back(SecondCondition);
+
+    Vec1 |= Vec2;
+    return Vec1[0]; // returns 'Both'.
+}
+</pre>
+</div>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
