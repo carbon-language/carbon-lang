@@ -18,6 +18,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/VectorExtras.h"
 #include <map>
 #include <algorithm>
@@ -195,6 +196,15 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
 // Warning Group Tables generation
 //===----------------------------------------------------------------------===//
 
+static std::string getDiagCategoryEnum(llvm::StringRef name) {
+  if (name.empty())
+    return "DiagCat_None";
+  llvm::SmallString<256> enumName = llvm::StringRef("DiagCat_");
+  for (llvm::StringRef::iterator I = name.begin(), E = name.end(); I != E; ++I)
+    enumName += isalnum(*I) ? *I : '_';
+  return enumName.str();
+}
+
 namespace {
 struct GroupInfo {
   std::vector<const Record*> DiagsInGroup;
@@ -301,7 +311,7 @@ void ClangDiagGroupsEmitter::run(raw_ostream &OS) {
   OS << "\n#ifdef GET_CATEGORY_TABLE\n";
   for (DiagCategoryIDMap::iterator I = CategoriesByID.begin(),
        E = CategoriesByID.end(); I != E; ++I)
-    OS << "CATEGORY(\"" << *I << "\")\n";
+    OS << "CATEGORY(\"" << *I << "\", " << getDiagCategoryEnum(*I) << ")\n";
   OS << "#endif // GET_CATEGORY_TABLE\n\n";
 }
 
