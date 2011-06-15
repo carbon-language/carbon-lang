@@ -12,7 +12,6 @@
 
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/DeclSpec.h"
-#include "clang/Sema/SemaDiagnostic.h" // FIXME: temporary!
 #include "clang/Sema/Template.h"
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/AST/ASTContext.h"
