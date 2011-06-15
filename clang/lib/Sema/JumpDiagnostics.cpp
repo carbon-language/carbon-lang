@@ -157,6 +157,9 @@ static std::pair<unsigned,unsigned>
                        : Record->isPOD()) &&
                     Constructor->isDefaultConstructor())
                   CallsTrivialConstructor = true;
+            
+            if (CallsTrivialConstructor && !Record->hasTrivialDestructor())
+              InDiag = diag::note_protected_by_variable_nontriv_destructor;
           }
           
           if (!CallsTrivialConstructor)

@@ -30,13 +30,13 @@ struct Y {
 
 void f();
 void test_Y() {
-  goto end;
-  Y y;
+  goto end; // expected-error{{goto into protected scope}}
+  Y y; // expected-note{{jump bypasses variable with a non-trivial destructor}}
  end:
   f();
-  goto inner;
+  goto inner; // expected-error{{goto into protected scope}}
   {
-    Y y2;
+    Y y2; // expected-note{{jump bypasses variable with a non-trivial destructor}}
   inner:
     f();    
   }

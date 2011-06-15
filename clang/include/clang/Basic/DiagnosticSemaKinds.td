@@ -2421,6 +2421,8 @@ def err_indirect_goto_in_protected_scope : Error<
 def note_indirect_goto_target : Note<"possible target of indirect goto">;
 def note_protected_by_variable_init : Note<
   "jump bypasses variable initialization">;
+def note_protected_by_variable_nontriv_destructor : Note<
+  "jump bypasses variable with a non-trivial destructor">;
 def note_protected_by_cleanup : Note<
   "jump bypasses initialization of variable with __attribute__((cleanup))">;
 def note_protected_by_vla_typedef : Note<
