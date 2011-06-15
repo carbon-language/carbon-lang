@@ -842,6 +842,26 @@ static unsigned CountNumOperands(StringRef AsmString) {
   return NumOps;
 }
 
+static unsigned CountResultNumOperands(StringRef AsmString) {
+  unsigned NumOps = 0;
+  std::pair<StringRef, StringRef> ASM = AsmString.split('\t');
+
+  if (!ASM.second.empty()) {
+    size_t I = ASM.second.find('{');
+    StringRef Str = ASM.second;
+    if (I != StringRef::npos)
+      Str = ASM.second.substr(I, ASM.second.find('|', I));
+
+    ASM = Str.split(' ');
+
+    do {
+      ++NumOps;
+      ASM = ASM.second.split(' ');
+    } while (!ASM.second.empty());
+  }
+
+  return NumOps;
+}
 
 void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   CodeGenTarget Target(Records);
@@ -887,9 +907,11 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
            II = Aliases.begin(), IE = Aliases.end(); II != IE; ++II) {
       const CodeGenInstAlias *CGA = *II;
       unsigned LastOpNo = CGA->ResultInstOperandIndex.size();
+      unsigned NumResultOps =
+        CountResultNumOperands(CGA->ResultInst->AsmString);
 
       // Don't emit the alias if it has more operands than what it's aliasing.
-      if (LastOpNo < CountNumOperands(CGA->AsmString))
+      if (NumResultOps < CountNumOperands(CGA->AsmString))
         continue;
 
       IAPrinter *IAP = new IAPrinter(AWI, CGA->Result->getAsString(),
