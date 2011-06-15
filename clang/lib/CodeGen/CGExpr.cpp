@@ -133,7 +133,7 @@ void CodeGenFunction::EmitAnyExprToMem(const Expr *E,
                                        llvm::Value *Location,
                                        bool IsLocationVolatile,
                                        bool IsInit) {
-  if (E->getType()->isComplexType())
+  if (E->getType()->isAnyComplexType())
     EmitComplexExprIntoAddr(E, Location, IsLocationVolatile);
   else if (hasAggregateLLVMType(E->getType()))
     EmitAggExpr(E, AggValueSlot::forAddr(Location, IsLocationVolatile, IsInit));
