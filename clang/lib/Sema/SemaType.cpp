@@ -1320,8 +1320,7 @@ QualType Sema::BuildExtVectorType(QualType T, Expr *ArraySize,
       return QualType();
     }
 
-    if (!T->isDependentType())
-      return Context.getExtVectorType(T, vectorSize);
+    return Context.getExtVectorType(T, vectorSize);
   }
 
   return Context.getDependentSizedExtVectorType(T, ArraySize, AttrLoc);
@@ -3151,6 +3150,40 @@ static void HandleVectorSizeAttr(QualType& CurType, const AttributeList &Attr,
                                     VectorType::GenericVector);
 }
 
+/// \brief Process the OpenCL-like ext_vector_type attribute when it occurs on
+/// a type.
+static void HandleExtVectorTypeAttr(QualType &CurType, 
+                                    const AttributeList &Attr, 
+                                    Sema &S) {
+  Expr *sizeExpr;
+  
+  // Special case where the argument is a template id.
+  if (Attr.getParameterName()) {
+    CXXScopeSpec SS;
+    UnqualifiedId id;
+    id.setIdentifier(Attr.getParameterName(), Attr.getLoc());
+    
+    ExprResult Size = S.ActOnIdExpression(S.getCurScope(), SS, id, false, 
+                                          false);
+    if (Size.isInvalid())
+      return;
+    
+    sizeExpr = Size.get();
+  } else {
+    // check the attribute arguments.
+    if (Attr.getNumArgs() != 1) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+      return;
+    }
+    sizeExpr = Attr.getArg(0);
+  }
+  
+  // Create the vector type.
+  QualType T = S.BuildExtVectorType(CurType, sizeExpr, Attr.getLoc());
+  if (!T.isNull())
+    CurType = T;
+}
+
 /// HandleNeonVectorTypeAttr - The "neon_vector_type" and
 /// "neon_polyvector_type" attributes are used to create vector types that
 /// are mangled according to ARM's ABI.  Otherwise, these types are identical
@@ -3240,6 +3273,11 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       break;
     case AttributeList::AT_vector_size:
       HandleVectorSizeAttr(type, attr, state.getSema());
+      break;
+    case AttributeList::AT_ext_vector_type:
+      if (state.getDeclarator().getDeclSpec().getStorageClassSpec()
+            != DeclSpec::SCS_typedef)
+        HandleExtVectorTypeAttr(type, attr, state.getSema());
       break;
     case AttributeList::AT_neon_vector_type:
       HandleNeonVectorTypeAttr(type, attr, state.getSema(),

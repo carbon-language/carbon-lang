@@ -58,3 +58,37 @@ int test_make6() {
   y.x = -1;
   y.w = -1; // expected-error{{vector component access exceeds type}}
 }
+
+namespace Deduction {
+  template<typename T> struct X0;
+
+  template<typename T, unsigned N>
+  struct X0<T __attribute__((ext_vector_type(N)))> {
+    static const unsigned value = 0;
+  };
+
+  template<typename T>
+  struct X0<T __attribute__((ext_vector_type(4)))> {
+    static const unsigned value = 1;
+  };
+
+  template<unsigned N>
+  struct X0<float __attribute__((ext_vector_type(N)))> {
+    static const unsigned value = 2;
+  };
+
+  template<>
+  struct X0<float __attribute__((ext_vector_type(4)))> {
+    static const unsigned value = 3;
+  };
+
+  typedef int __attribute__((ext_vector_type(2))) int2;
+  typedef int __attribute__((ext_vector_type(4))) int4;
+  typedef float __attribute__((ext_vector_type(2))) float2;
+  typedef float __attribute__((ext_vector_type(4))) float4;
+
+  int array0[X0<int2>::value == 0? 1 : -1];
+  int array1[X0<int4>::value == 1? 1 : -1];
+  int array2[X0<float2>::value == 2? 1 : -1];
+  int array3[X0<float4>::value == 3? 1 : -1];
+}

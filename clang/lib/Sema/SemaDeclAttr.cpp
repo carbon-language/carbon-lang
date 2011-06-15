@@ -217,7 +217,12 @@ static void HandleExtVectorTypeAttr(Scope *scope, Decl *d,
     CXXScopeSpec SS;
     UnqualifiedId id;
     id.setIdentifier(Attr.getParameterName(), Attr.getLoc());
-    sizeExpr = S.ActOnIdExpression(scope, SS, id, false, false).takeAs<Expr>();
+    
+    ExprResult Size = S.ActOnIdExpression(scope, SS, id, false, false);
+    if (Size.isInvalid())
+      return;
+    
+    sizeExpr = Size.get();
   } else {
     // check the attribute arguments.
     if (Attr.getNumArgs() != 1) {

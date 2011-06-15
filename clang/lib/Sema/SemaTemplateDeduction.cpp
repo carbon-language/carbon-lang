@@ -1053,10 +1053,39 @@ DeduceTemplateArguments(Sema &S,
   }
 
   switch (Param->getTypeClass()) {
-    // No deduction possible for these types
+    // Non-canonical types cannot appear here.
+#define NON_CANONICAL_TYPE(Class, Base) \
+  case Type::Class: llvm_unreachable("deducing non-canonical type: " #Class);
+#define TYPE(Class, Base)
+#include "clang/AST/TypeNodes.def"
+      
+    case Type::TemplateTypeParm:
+    case Type::SubstTemplateTypeParmPack:
+      llvm_unreachable("Type nodes handled above");
+      
+    // These types cannot be used in templates or cannot be dependent, so
+    // deduction always fails.
     case Type::Builtin:
+    case Type::VariableArray:
+    case Type::Vector:
+    case Type::FunctionNoProto:
+    case Type::Record:
+    case Type::Enum:
+    case Type::ObjCObject:
+    case Type::ObjCInterface:
+    case Type::ObjCObjectPointer:
       return Sema::TDK_NonDeducedMismatch;
 
+    //     _Complex T   [placeholder extension]  
+    case Type::Complex:
+      if (const ComplexType *ComplexArg = Arg->getAs<ComplexType>())
+        return DeduceTemplateArguments(S, TemplateParams, 
+                                    cast<ComplexType>(Param)->getElementType(), 
+                                       ComplexArg->getElementType(),
+                                       Info, Deduced, TDF);
+
+      return Sema::TDK_NonDeducedMismatch;
+      
     //     T *
     case Type::Pointer: {
       QualType PointeeType;
@@ -1360,14 +1389,105 @@ DeduceTemplateArguments(Sema &S,
                                      Deduced, 0);
     }
 
+    //     (clang extension)
+    //
+    //     T __attribute__(((ext_vector_type(<integral constant>))))
+    case Type::ExtVector: {
+      const ExtVectorType *VectorParam = cast<ExtVectorType>(Param);
+      if (const ExtVectorType *VectorArg = dyn_cast<ExtVectorType>(Arg)) {
+        // Make sure that the vectors have the same number of elements.
+        if (VectorParam->getNumElements() != VectorArg->getNumElements())
+          return Sema::TDK_NonDeducedMismatch;
+        
+        // Perform deduction on the element types.
+        return DeduceTemplateArguments(S, TemplateParams,
+                                       VectorParam->getElementType(),
+                                       VectorArg->getElementType(),
+                                       Info, Deduced,
+                                       TDF);
+      }
+      
+      if (const DependentSizedExtVectorType *VectorArg 
+                                = dyn_cast<DependentSizedExtVectorType>(Arg)) {
+        // We can't check the number of elements, since the argument has a
+        // dependent number of elements. This can only occur during partial
+        // ordering.
+
+        // Perform deduction on the element types.
+        return DeduceTemplateArguments(S, TemplateParams,
+                                       VectorParam->getElementType(),
+                                       VectorArg->getElementType(),
+                                       Info, Deduced,
+                                       TDF);
+      }
+      
+      return Sema::TDK_NonDeducedMismatch;
+    }
+      
+    //     (clang extension)
+    //
+    //     T __attribute__(((ext_vector_type(N))))
+    case Type::DependentSizedExtVector: {
+      const DependentSizedExtVectorType *VectorParam
+        = cast<DependentSizedExtVectorType>(Param);
+
+      if (const ExtVectorType *VectorArg = dyn_cast<ExtVectorType>(Arg)) {
+        // Perform deduction on the element types.
+        if (Sema::TemplateDeductionResult Result
+              = DeduceTemplateArguments(S, TemplateParams,
+                                        VectorParam->getElementType(),
+                                        VectorArg->getElementType(),
+                                        Info, Deduced,
+                                        TDF))
+          return Result;
+        
+        // Perform deduction on the vector size, if we can.
+        NonTypeTemplateParmDecl *NTTP
+          = getDeducedParameterFromExpr(VectorParam->getSizeExpr());
+        if (!NTTP)
+          return Sema::TDK_Success;
+
+        llvm::APSInt ArgSize(S.Context.getTypeSize(S.Context.IntTy), false);
+        ArgSize = VectorArg->getNumElements();
+        return DeduceNonTypeTemplateArgument(S, NTTP, ArgSize, S.Context.IntTy,
+                                             false, Info, Deduced);
+      }
+      
+      if (const DependentSizedExtVectorType *VectorArg 
+                                = dyn_cast<DependentSizedExtVectorType>(Arg)) {
+        // Perform deduction on the element types.
+        if (Sema::TemplateDeductionResult Result
+            = DeduceTemplateArguments(S, TemplateParams,
+                                      VectorParam->getElementType(),
+                                      VectorArg->getElementType(),
+                                      Info, Deduced,
+                                      TDF))
+          return Result;
+        
+        // Perform deduction on the vector size, if we can.
+        NonTypeTemplateParmDecl *NTTP
+          = getDeducedParameterFromExpr(VectorParam->getSizeExpr());
+        if (!NTTP)
+          return Sema::TDK_Success;
+        
+        return DeduceNonTypeTemplateArgument(S, NTTP, VectorArg->getSizeExpr(),
+                                             Info, Deduced);
+      }
+      
+      return Sema::TDK_NonDeducedMismatch;
+    }
+      
     case Type::TypeOfExpr:
     case Type::TypeOf:
     case Type::DependentName:
+    case Type::UnresolvedUsing:
+    case Type::Decltype:
+    case Type::UnaryTransform:
+    case Type::Auto:
+    case Type::DependentTemplateSpecialization:
+    case Type::PackExpansion:
       // No template argument deduction for these types
       return Sema::TDK_Success;
-
-    default:
-      break;
   }
 
   // FIXME: Many more cases to go (to go).

@@ -5820,10 +5820,18 @@ private:
   
 protected:
   friend class Parser;
-  friend class InitializationSequence;
+  friend class InitializationSequence;  
   
+public:
   /// \brief Retrieve the parser's current scope.
-  Scope *getCurScope() const { return CurScope; }  
+  ///
+  /// This routine must only be used when it is certain that semantic analysis
+  /// and the parser are in precisely the same context, which is not the case
+  /// when, e.g., we are performing any kind of template instantiation.
+  /// Therefore, the only safe places to use this scope are in the parser
+  /// itself and in routines directly invoked from the parser and *never* from
+  /// template substitution or instantiation.
+  Scope *getCurScope() const { return CurScope; }
 };
 
 /// \brief RAII object that enters a new expression evaluation context.

@@ -1881,7 +1881,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
 /// the specified element type and size. VectorType must be a built-in type.
 QualType
 ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) const {
-  assert(vecType->isBuiltinType());
+  assert(vecType->isBuiltinType() || vecType->isDependentType());
 
   // Check if we've already instantiated a vector of this type.
   llvm::FoldingSetNodeID ID;
