@@ -398,9 +398,6 @@ void strcat_effects(char *y) {
 
   if ((int)strlen(x) != (orig_len + strlen(y)))
     (void)*(char*)0; // no-warning
-
-  if (a != x[0])
-    (void)*(char*)0; // expected-warning{{null}}
 }
 
 void strcat_overflow_0(char *y) {
@@ -425,6 +422,37 @@ void strcat_no_overflow(char *y) {
   char x[5] = "12";
   if (strlen(y) == 2)
     strcat(x, y); // no-warning
+}
+
+void strcat_symbolic_dst_length(char *dst) {
+	strcat(dst, "1234");
+	if (strlen(dst) < 4)
+		(void)*(char*)0; // no-warning
+}
+
+void strcat_symbolic_src_length(char *src) {
+	char dst[8] = "1234";
+	strcat(dst, src);
+	if (strlen(dst) < 4)
+		(void)*(char*)0; // no-warning
+}
+
+void strcat_unknown_src_length(char *src, int offset) {
+	char dst[8] = "1234";
+	strcat(dst, &src[offset]);
+	if (strlen(dst) < 4)
+		(void)*(char*)0; // no-warning
+}
+
+// There is no strcat_unknown_dst_length because if we can't get a symbolic
+// length for the "before" strlen, we won't be able to set one for "after".
+
+void strcat_too_big(char *dst, char *src) {
+	if (strlen(dst) != (((size_t)0) - 2))
+		return;
+	if (strlen(src) != 2)
+		return;
+	strcat(dst, src); // expected-warning{{This expression will create a string whose length is too big to be represented as a size_t}}
 }
 
 
@@ -472,9 +500,6 @@ void strncat_effects(char *y) {
 
   if (strlen(x) != orig_len + strlen(y))
     (void)*(char*)0; // no-warning
-
-  if (a != x[0])
-    (void)*(char*)0; // expected-warning{{null}}
 }
 
 void strncat_overflow_0(char *y) {
