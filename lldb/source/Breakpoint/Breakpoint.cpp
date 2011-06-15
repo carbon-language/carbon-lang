@@ -201,7 +201,7 @@ Breakpoint::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, lldb::Break
 }
 
 const char *
-Breakpoint::GetConditionText ()
+Breakpoint::GetConditionText () const
 {
     return m_options.GetConditionText();
 }

@@ -157,9 +157,9 @@ BreakpointLocation::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, Str
 }
 
 const char *
-BreakpointLocation::GetConditionText ()
+BreakpointLocation::GetConditionText () const
 {
-    return GetLocationOptions()->GetConditionText();
+    return GetOptionsNoCreate()->GetConditionText();
 }
 
 uint32_t
@@ -226,7 +226,7 @@ BreakpointLocation::ShouldStop (StoppointCallbackContext *context)
     
     // The SYNCHRONOUS callback says we should stop, next try the condition.
     
-    if (should_stop)
+    if (should_stop && GetConditionText() != NULL)
     {
         // We need to make sure the user sees any parse errors in their condition, so we'll hook the
         // constructor errors up to the debugger's Async I/O.

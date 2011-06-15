@@ -217,12 +217,12 @@ BreakpointOptions::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx,
 }
 
 const char *
-BreakpointOptions::GetConditionText ()
+BreakpointOptions::GetConditionText () const
 {
     if (m_condition_ap.get())
         return m_condition_ap->GetUserText();
     else
-        return "<No Condition>";
+        return NULL;
 }
 
 //------------------------------------------------------------------

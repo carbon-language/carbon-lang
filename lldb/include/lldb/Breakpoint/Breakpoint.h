@@ -404,7 +404,7 @@ public:
     ///    A pointer to the condition expression text, or NULL if no
     //     condition has been set.
     //------------------------------------------------------------------
-    const char *GetConditionText ();
+    const char *GetConditionText () const;
 
     //------------------------------------------------------------------
     // The next section are various utility functions.
