@@ -1948,6 +1948,8 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
     for (MachineInstr::mop_iterator OI = MI.operands_begin(),
            OE = MI.operands_end(); OI != OE; ++OI) {
       const MachineOperand& OP = *OI;
+      if (OP.isJTI())
+        return false;
       if (OP.isMBB() && OP.getMBB() == MBB)
         return false;
     }
