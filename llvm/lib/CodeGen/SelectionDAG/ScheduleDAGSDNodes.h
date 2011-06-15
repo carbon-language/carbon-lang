@@ -135,6 +135,14 @@ namespace llvm {
         return ValueType;
       }
 
+      const SDNode *GetNode() const {
+        return Node;
+      }
+
+      unsigned GetIdx() const {
+        return DefIdx;
+      }
+
       void Advance();
     private:
       void InitNodeNumDefs();

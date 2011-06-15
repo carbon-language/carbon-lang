@@ -83,7 +83,11 @@ namespace llvm {
 
       isVoid         =  35,   // This has no value
 
-      LAST_VALUETYPE =  36,   // This always remains at the end of the list.
+      untyped        = 36,    // This value takes a register, but has
+                              // unspecified type.  The register class
+                              // will be determined by the opcode.
+
+      LAST_VALUETYPE =  37,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
       // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors

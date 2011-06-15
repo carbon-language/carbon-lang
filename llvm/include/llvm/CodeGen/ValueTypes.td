@@ -58,6 +58,7 @@ def v4f64  : ValueType<256, 32>;   //  4 x f64 vector value
 def x86mmx : ValueType<64 , 33>;   // X86 MMX value
 def FlagVT : ValueType<0  , 34>;   // Pre-RA sched glue
 def isVoid : ValueType<0  , 35>;   // Produces no value
+def untyped : ValueType<8,36>;   // Produces an untyped value
 
 def MetadataVT: ValueType<0, 250>; // Metadata
 
