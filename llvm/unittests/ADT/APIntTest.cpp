@@ -320,6 +320,52 @@ TEST(APIntTest, StringBitsNeeded16) {
   EXPECT_EQ(9U, APInt::getBitsNeeded("-20", 16));
 }
 
+TEST(APIntTest, toString) {
+  SmallString<16> S;
+  bool isSigned;
+
+  APInt(8, 0).toString(S, 2, true, true);
+  EXPECT_EQ(S.str().str(), "0b0");
+  S.clear();
+  APInt(8, 0).toString(S, 8, true, true);
+  EXPECT_EQ(S.str().str(), "00");
+  S.clear();
+  APInt(8, 0).toString(S, 10, true, true);
+  EXPECT_EQ(S.str().str(), "0");
+  S.clear();
+  APInt(8, 0).toString(S, 16, true, true);
+  EXPECT_EQ(S.str().str(), "0x0");
+  S.clear();
+
+  isSigned = false;
+  APInt(8, 255, isSigned).toString(S, 2, isSigned, true);
+  EXPECT_EQ(S.str().str(), "0b11111111");
+  S.clear();
+  APInt(8, 255, isSigned).toString(S, 8, isSigned, true);
+  EXPECT_EQ(S.str().str(), "0377");
+  S.clear();
+  APInt(8, 255, isSigned).toString(S, 10, isSigned, true);
+  EXPECT_EQ(S.str().str(), "255");
+  S.clear();
+  APInt(8, 255, isSigned).toString(S, 16, isSigned, true);
+  EXPECT_EQ(S.str().str(), "0xFF");
+  S.clear();
+
+  isSigned = true;
+  APInt(8, 255, isSigned).toString(S, 2, isSigned, true);
+  EXPECT_EQ(S.str().str(), "-0b1");
+  S.clear();
+  APInt(8, 255, isSigned).toString(S, 8, isSigned, true);
+  EXPECT_EQ(S.str().str(), "-01");
+  S.clear();
+  APInt(8, 255, isSigned).toString(S, 10, isSigned, true);
+  EXPECT_EQ(S.str().str(), "-1");
+  S.clear();
+  APInt(8, 255, isSigned).toString(S, 16, isSigned, true);
+  EXPECT_EQ(S.str().str(), "-0x1");
+  S.clear();
+}
+
 TEST(APIntTest, Log2) {
   EXPECT_EQ(APInt(15, 7).logBase2(), 2U);
   EXPECT_EQ(APInt(15, 7).ceilLogBase2(), 3U);
