@@ -153,6 +153,9 @@ namespace llvm {
     std::vector<CodeGenRegister> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
 
+    std::vector<CodeGenRegisterClass> RegClasses;
+    DenseMap<Record*, CodeGenRegisterClass*> Def2RC;
+
     // Composite SubRegIndex instances.
     // Map (SubRegIndex, SubRegIndex) -> SubRegIndex.
     typedef DenseMap<std::pair<Record*, Record*>, Record*> CompositeMap;
@@ -180,6 +183,20 @@ namespace llvm {
 
     // Find a register from its Record def.
     CodeGenRegister *getReg(Record*);
+
+    const std::vector<CodeGenRegisterClass> &getRegClasses() {
+      return RegClasses;
+    }
+
+    // Find a register class from its def.
+    CodeGenRegisterClass *getRegClass(Record*);
+
+    /// getRegisterClassForRegister - Find the register class that contains the
+    /// specified physical register.  If the register is not in a register
+    /// class, return null. If the register is in multiple classes, and the
+    /// classes have a superset-subset relationship and the same set of types,
+    /// return the superclass.  Otherwise return null.
+    const CodeGenRegisterClass* getRegClassForRegister(Record *R);
 
     // Computed derived records such as missing sub-register indices.
     void computeDerivedInfo();

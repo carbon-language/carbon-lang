@@ -250,7 +250,7 @@ struct OperandsSignature {
       if (OpLeafRec->isSubClassOf("RegisterClass"))
         RC = &Target.getRegisterClass(OpLeafRec);
       else if (OpLeafRec->isSubClassOf("Register"))
-        RC = Target.getRegisterClassForRegister(OpLeafRec);
+        RC = Target.getRegBank().getRegClassForRegister(OpLeafRec);
       else
         return false;
 

@@ -237,6 +237,14 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   // Assign the enumeration values.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
     Registers.push_back(CodeGenRegister(Regs[i], i + 1));
+
+  // Read in register class definitions.
+  std::vector<Record*> RCs = Records.getAllDerivedDefinitions("RegisterClass");
+  if (RCs.empty())
+    throw std::string("No 'RegisterClass' subclasses defined!");
+
+  RegClasses.reserve(RCs.size());
+  RegClasses.assign(RCs.begin(), RCs.end());
 }
 
 CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
@@ -248,6 +256,17 @@ CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
     return Reg;
 
   throw TGError(Def->getLoc(), "Not a known Register!");
+}
+
+CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
+  if (Def2RC.empty())
+    for (unsigned i = 0, e = RegClasses.size(); i != e; ++i)
+      Def2RC[RegClasses[i].TheDef] = &RegClasses[i];
+
+  if (CodeGenRegisterClass *RC = Def2RC[Def])
+    return RC;
+
+  throw TGError(Def->getLoc(), "Not a known RegisterClass!");
 }
 
 Record *CodeGenRegBank::getCompositeSubRegIndex(Record *A, Record *B,
@@ -406,3 +425,55 @@ void CodeGenRegBank::computeDerivedInfo() {
   computeComposites();
 }
 
+/// getRegisterClassForRegister - Find the register class that contains the
+/// specified physical register.  If the register is not in a register class,
+/// return null. If the register is in multiple classes, and the classes have a
+/// superset-subset relationship and the same set of types, return the
+/// superclass.  Otherwise return null.
+const CodeGenRegisterClass*
+CodeGenRegBank::getRegClassForRegister(Record *R) {
+  const std::vector<CodeGenRegisterClass> &RCs = getRegClasses();
+  const CodeGenRegisterClass *FoundRC = 0;
+  for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
+    const CodeGenRegisterClass &RC = RCs[i];
+    if (!RC.containsRegister(R))
+      continue;
+
+    // If this is the first class that contains the register,
+    // make a note of it and go on to the next class.
+    if (!FoundRC) {
+      FoundRC = &RC;
+      continue;
+    }
+
+    // If a register's classes have different types, return null.
+    if (RC.getValueTypes() != FoundRC->getValueTypes())
+      return 0;
+
+    std::vector<Record *> Elements(RC.Elements);
+    std::vector<Record *> FoundElements(FoundRC->Elements);
+    std::sort(Elements.begin(), Elements.end());
+    std::sort(FoundElements.begin(), FoundElements.end());
+
+    // Check to see if the previously found class that contains
+    // the register is a subclass of the current class. If so,
+    // prefer the superclass.
+    if (std::includes(Elements.begin(), Elements.end(),
+                      FoundElements.begin(), FoundElements.end())) {
+      FoundRC = &RC;
+      continue;
+    }
+
+    // Check to see if the previously found class that contains
+    // the register is a superclass of the current class. If so,
+    // prefer the superclass.
+    if (std::includes(FoundElements.begin(), FoundElements.end(),
+                      Elements.begin(), Elements.end()))
+      continue;
+
+    // Multiple classes, and neither is a superclass of the other.
+    // Return null.
+    return 0;
+  }
+  return FoundRC;
+}

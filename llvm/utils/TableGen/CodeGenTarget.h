@@ -66,9 +66,7 @@ class CodeGenTarget {
 
   mutable DenseMap<const Record*, CodeGenInstruction*> Instructions;
   mutable CodeGenRegBank *RegBank;
-  mutable std::vector<CodeGenRegisterClass> RegisterClasses;
   mutable std::vector<MVT::SimpleValueType> LegalValueTypes;
-  void ReadRegisterClasses() const;
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
 
@@ -107,71 +105,11 @@ public:
   const CodeGenRegister *getRegisterByName(StringRef Name) const;
 
   const std::vector<CodeGenRegisterClass> &getRegisterClasses() const {
-    if (RegisterClasses.empty()) ReadRegisterClasses();
-    return RegisterClasses;
+    return getRegBank().getRegClasses();
   }
 
   const CodeGenRegisterClass &getRegisterClass(Record *R) const {
-    const std::vector<CodeGenRegisterClass> &RC = getRegisterClasses();
-    for (unsigned i = 0, e = RC.size(); i != e; ++i)
-      if (RC[i].TheDef == R)
-        return RC[i];
-    assert(0 && "Didn't find the register class");
-    abort();
-  }
-
-  /// getRegisterClassForRegister - Find the register class that contains the
-  /// specified physical register.  If the register is not in a register
-  /// class, return null. If the register is in multiple classes, and the
-  /// classes have a superset-subset relationship and the same set of
-  /// types, return the superclass.  Otherwise return null.
-  const CodeGenRegisterClass *getRegisterClassForRegister(Record *R) const {
-    const std::vector<CodeGenRegisterClass> &RCs = getRegisterClasses();
-    const CodeGenRegisterClass *FoundRC = 0;
-    for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
-      const CodeGenRegisterClass &RC = RegisterClasses[i];
-      for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
-        if (R != RC.Elements[ei])
-          continue;
-
-        // If a register's classes have different types, return null.
-        if (FoundRC && RC.getValueTypes() != FoundRC->getValueTypes())
-          return 0;
-
-        // If this is the first class that contains the register,
-        // make a note of it and go on to the next class.
-        if (!FoundRC) {
-          FoundRC = &RC;
-          break;
-        }
-
-        std::vector<Record *> Elements(RC.Elements);
-        std::vector<Record *> FoundElements(FoundRC->Elements);
-        std::sort(Elements.begin(), Elements.end());
-        std::sort(FoundElements.begin(), FoundElements.end());
-
-        // Check to see if the previously found class that contains
-        // the register is a subclass of the current class. If so,
-        // prefer the superclass.
-        if (std::includes(Elements.begin(), Elements.end(),
-                          FoundElements.begin(), FoundElements.end())) {
-          FoundRC = &RC;
-          break;
-        }
-
-        // Check to see if the previously found class that contains
-        // the register is a superclass of the current class. If so,
-        // prefer the superclass.
-        if (std::includes(FoundElements.begin(), FoundElements.end(),
-                          Elements.begin(), Elements.end()))
-          break;
-
-        // Multiple classes, and neither is a superclass of the other.
-        // Return null.
-        return 0;
-      }
-    }
-    return FoundRC;
+    return *getRegBank().getRegClass(R);
   }
 
   /// getRegisterVTs - Find the union of all possible SimpleValueTypes for the
