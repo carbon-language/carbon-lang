@@ -22,6 +22,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
@@ -382,18 +383,32 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   // casts here.
   // FIXME: We don't allow floating point scalars as input.
   Expr *FirstArg = TheCall->getArg(0);
-  if (!FirstArg->getType()->isPointerType()) {
+  const PointerType *pointerType = FirstArg->getType()->getAs<PointerType>();
+  if (!pointerType) {
     Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)
       << FirstArg->getType() << FirstArg->getSourceRange();
     return ExprError();
   }
 
-  QualType ValType =
-    FirstArg->getType()->getAs<PointerType>()->getPointeeType();
+  QualType ValType = pointerType->getPointeeType();
   if (!ValType->isIntegerType() && !ValType->isAnyPointerType() &&
       !ValType->isBlockPointerType()) {
     Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer_intptr)
       << FirstArg->getType() << FirstArg->getSourceRange();
+    return ExprError();
+  }
+
+  switch (ValType.getObjCLifetime()) {
+  case Qualifiers::OCL_None:
+  case Qualifiers::OCL_ExplicitNone:
+    // okay
+    break;
+
+  case Qualifiers::OCL_Weak:
+  case Qualifiers::OCL_Strong:
+  case Qualifiers::OCL_Autoreleasing:
+    Diag(DRE->getLocStart(), diag::err_arc_atomic_lifetime)
+      << ValType << FirstArg->getSourceRange();
     return ExprError();
   }
 
@@ -518,7 +533,8 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     CastKind Kind = CK_Invalid;
     ExprValueKind VK = VK_RValue;
     CXXCastPath BasePath;
-    Arg = CheckCastTypes(Arg.get()->getSourceRange(), ValType, Arg.take(), Kind, VK, BasePath);
+    Arg = CheckCastTypes(Arg.get()->getLocStart(), Arg.get()->getSourceRange(), 
+                         ValType, Arg.take(), Kind, VK, BasePath);
     if (Arg.isInvalid())
       return ExprError();
 
@@ -1849,6 +1865,7 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
     QualType DestTy = Dest->getType();
     if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
       QualType PointeeTy = DestPtrTy->getPointeeType();
+
       if (PointeeTy->isVoidType())
         continue;
 
@@ -1863,16 +1880,22 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
         break;
       }
 
+      unsigned DiagID;
+
       // Always complain about dynamic classes.
-      if (isDynamicClassType(PointeeTy)) {
-        DiagRuntimeBehavior(
-          Dest->getExprLoc(), Dest,
-          PDiag(diag::warn_dyn_class_memaccess)
-            << ArgIdx << FnName << PointeeTy 
-            << Call->getCallee()->getSourceRange());
-      } else {
+      if (isDynamicClassType(PointeeTy))
+        DiagID = diag::warn_dyn_class_memaccess;
+      else if (PointeeTy.hasNonTrivialObjCLifetime() && 
+               !FnName->isStr("memset"))
+        DiagID = diag::warn_arc_object_memaccess;
+      else
         continue;
-      }
+
+      DiagRuntimeBehavior(
+        Dest->getExprLoc(), Dest,
+        PDiag(DiagID)
+          << ArgIdx << FnName << PointeeTy 
+          << Call->getCallee()->getSourceRange());
 
       DiagRuntimeBehavior(
         Dest->getExprLoc(), Dest,
@@ -1899,7 +1922,8 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 
   // Perform checking for returned stack addresses, local blocks,
   // label addresses or references to temporaries.
-  if (lhsType->isPointerType() || lhsType->isBlockPointerType()) {
+  if (lhsType->isPointerType() ||
+      (!getLangOptions().ObjCAutoRefCount && lhsType->isBlockPointerType())) {
     stackE = EvalAddr(RetValExp, refVars);
   } else if (lhsType->isReferenceType()) {
     stackE = EvalVal(RetValExp, refVars);
@@ -2070,7 +2094,8 @@ static Expr *EvalAddr(Expr *E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars) {
   // pointer values, and pointer-to-pointer conversions.
   case Stmt::ImplicitCastExprClass:
   case Stmt::CStyleCastExprClass:
-  case Stmt::CXXFunctionalCastExprClass: {
+  case Stmt::CXXFunctionalCastExprClass:
+  case Stmt::ObjCBridgedCastExprClass: {
     Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
     QualType T = SubExpr->getType();
 
@@ -3385,3 +3410,232 @@ void Sema::CheckArrayAccess(const Expr *expr) {
     }
   }
 }
+
+//===--- CHECK: Objective-C retain cycles ----------------------------------//
+
+namespace {
+  struct RetainCycleOwner {
+    RetainCycleOwner() : Variable(0), Indirect(false) {}
+    VarDecl *Variable;
+    SourceRange Range;
+    SourceLocation Loc;
+    bool Indirect;
+
+    void setLocsFrom(Expr *e) {
+      Loc = e->getExprLoc();
+      Range = e->getSourceRange();
+    }
+  };
+}
+
+/// Consider whether capturing the given variable can possibly lead to
+/// a retain cycle.
+static bool considerVariable(VarDecl *var, Expr *ref, RetainCycleOwner &owner) {
+  // In ARC, it's captured strongly iff the variable has __strong
+  // lifetime.  In MRR, it's captured strongly if the variable is
+  // __block and has an appropriate type.
+  if (var->getType().getObjCLifetime() != Qualifiers::OCL_Strong)
+    return false;
+
+  owner.Variable = var;
+  owner.setLocsFrom(ref);
+  return true;
+}
+
+static bool findRetainCycleOwner(Expr *e, RetainCycleOwner &owner) {
+  while (true) {
+    e = e->IgnoreParens();
+    if (CastExpr *cast = dyn_cast<CastExpr>(e)) {
+      switch (cast->getCastKind()) {
+      case CK_BitCast:
+      case CK_LValueBitCast:
+      case CK_LValueToRValue:
+        e = cast->getSubExpr();
+        continue;
+
+      case CK_GetObjCProperty: {
+        // Bail out if this isn't a strong explicit property.
+        const ObjCPropertyRefExpr *pre = cast->getSubExpr()->getObjCProperty();
+        if (pre->isImplicitProperty()) return false;
+        ObjCPropertyDecl *property = pre->getExplicitProperty();
+        if (!(property->getPropertyAttributes() &
+              (ObjCPropertyDecl::OBJC_PR_retain |
+               ObjCPropertyDecl::OBJC_PR_copy |
+               ObjCPropertyDecl::OBJC_PR_strong)) &&
+            !(property->getPropertyIvarDecl() &&
+              property->getPropertyIvarDecl()->getType()
+                .getObjCLifetime() == Qualifiers::OCL_Strong))
+          return false;
+
+        owner.Indirect = true;
+        e = const_cast<Expr*>(pre->getBase());
+        continue;
+      }
+        
+      default:
+        return false;
+      }
+    }
+
+    if (ObjCIvarRefExpr *ref = dyn_cast<ObjCIvarRefExpr>(e)) {
+      ObjCIvarDecl *ivar = ref->getDecl();
+      if (ivar->getType().getObjCLifetime() != Qualifiers::OCL_Strong)
+        return false;
+
+      // Try to find a retain cycle in the base.
+      if (!findRetainCycleOwner(ref->getBase(), owner))
+        return false;
+
+      if (ref->isFreeIvar()) owner.setLocsFrom(ref);
+      owner.Indirect = true;
+      return true;
+    }
+
+    if (DeclRefExpr *ref = dyn_cast<DeclRefExpr>(e)) {
+      VarDecl *var = dyn_cast<VarDecl>(ref->getDecl());
+      if (!var) return false;
+      return considerVariable(var, ref, owner);
+    }
+
+    if (BlockDeclRefExpr *ref = dyn_cast<BlockDeclRefExpr>(e)) {
+      owner.Variable = ref->getDecl();
+      owner.setLocsFrom(ref);
+      return true;
+    }
+
+    if (MemberExpr *member = dyn_cast<MemberExpr>(e)) {
+      if (member->isArrow()) return false;
+
+      // Don't count this as an indirect ownership.
+      e = member->getBase();
+      continue;
+    }
+
+    // Array ivars?
+
+    return false;
+  }
+}
+
+namespace {
+  struct FindCaptureVisitor : EvaluatedExprVisitor<FindCaptureVisitor> {
+    FindCaptureVisitor(ASTContext &Context, VarDecl *variable)
+      : EvaluatedExprVisitor<FindCaptureVisitor>(Context),
+        Variable(variable), Capturer(0) {}
+
+    VarDecl *Variable;
+    Expr *Capturer;
+
+    void VisitDeclRefExpr(DeclRefExpr *ref) {
+      if (ref->getDecl() == Variable && !Capturer)
+        Capturer = ref;
+    }
+
+    void VisitBlockDeclRefExpr(BlockDeclRefExpr *ref) {
+      if (ref->getDecl() == Variable && !Capturer)
+        Capturer = ref;
+    }
+
+    void VisitObjCIvarRefExpr(ObjCIvarRefExpr *ref) {
+      if (Capturer) return;
+      Visit(ref->getBase());
+      if (Capturer && ref->isFreeIvar())
+        Capturer = ref;
+    }
+
+    void VisitBlockExpr(BlockExpr *block) {
+      // Look inside nested blocks 
+      if (block->getBlockDecl()->capturesVariable(Variable))
+        Visit(block->getBlockDecl()->getBody());
+    }
+  };
+}
+
+/// Check whether the given argument is a block which captures a
+/// variable.
+static Expr *findCapturingExpr(Sema &S, Expr *e, RetainCycleOwner &owner) {
+  assert(owner.Variable && owner.Loc.isValid());
+
+  e = e->IgnoreParenCasts();
+  BlockExpr *block = dyn_cast<BlockExpr>(e);
+  if (!block || !block->getBlockDecl()->capturesVariable(owner.Variable))
+    return 0;
+
+  FindCaptureVisitor visitor(S.Context, owner.Variable);
+  visitor.Visit(block->getBlockDecl()->getBody());
+  return visitor.Capturer;
+}
+
+static void diagnoseRetainCycle(Sema &S, Expr *capturer,
+                                RetainCycleOwner &owner) {
+  assert(capturer);
+  assert(owner.Variable && owner.Loc.isValid());
+
+  S.Diag(capturer->getExprLoc(), diag::warn_arc_retain_cycle)
+    << owner.Variable << capturer->getSourceRange();
+  S.Diag(owner.Loc, diag::note_arc_retain_cycle_owner)
+    << owner.Indirect << owner.Range;
+}
+
+/// Check for a keyword selector that starts with the word 'add' or
+/// 'set'.
+static bool isSetterLikeSelector(Selector sel) {
+  if (sel.isUnarySelector()) return false;
+
+  llvm::StringRef str = sel.getNameForSlot(0);
+  while (!str.empty() && str.front() == '_') str = str.substr(1);
+  if (str.startswith("set") || str.startswith("add"))
+    str = str.substr(3);
+  else
+    return false;
+
+  if (str.empty()) return true;
+  return !islower(str.front());
+}
+
+/// Check a message send to see if it's likely to cause a retain cycle.
+void Sema::checkRetainCycles(ObjCMessageExpr *msg) {
+  // Only check instance methods whose selector looks like a setter.
+  if (!msg->isInstanceMessage() || !isSetterLikeSelector(msg->getSelector()))
+    return;
+
+  // Try to find a variable that the receiver is strongly owned by.
+  RetainCycleOwner owner;
+  if (msg->getReceiverKind() == ObjCMessageExpr::Instance) {
+    if (!findRetainCycleOwner(msg->getInstanceReceiver(), owner))
+      return;
+  } else {
+    assert(msg->getReceiverKind() == ObjCMessageExpr::SuperInstance);
+    owner.Variable = getCurMethodDecl()->getSelfDecl();
+    owner.Loc = msg->getSuperLoc();
+    owner.Range = msg->getSuperLoc();
+  }
+
+  // Check whether the receiver is captured by any of the arguments.
+  for (unsigned i = 0, e = msg->getNumArgs(); i != e; ++i)
+    if (Expr *capturer = findCapturingExpr(*this, msg->getArg(i), owner))
+      return diagnoseRetainCycle(*this, capturer, owner);
+}
+
+/// Check a property assign to see if it's likely to cause a retain cycle.
+void Sema::checkRetainCycles(Expr *receiver, Expr *argument) {
+  RetainCycleOwner owner;
+  if (!findRetainCycleOwner(receiver, owner))
+    return;
+
+  if (Expr *capturer = findCapturingExpr(*this, argument, owner))
+    diagnoseRetainCycle(*this, capturer, owner);
+}
+
+void Sema::checkUnsafeAssigns(SourceLocation Loc,
+                              QualType LHS, Expr *RHS) {
+  Qualifiers::ObjCLifetime LT = LHS.getObjCLifetime();
+  if (LT != Qualifiers::OCL_Weak && LT != Qualifiers::OCL_ExplicitNone)
+    return;
+  if (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS))
+    if (cast->getCastKind() == CK_ObjCConsumeObject)
+      Diag(Loc, diag::warn_arc_retained_assign)
+        << (LT == Qualifiers::OCL_ExplicitNone) 
+        << RHS->getSourceRange();
+}
+

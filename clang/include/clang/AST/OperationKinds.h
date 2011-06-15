@@ -245,7 +245,17 @@ enum CastKind {
 
   /// \brief Converts from an integral complex to a floating complex.
   ///   _Complex unsigned -> _Complex float
-  CK_IntegralComplexToFloatingComplex
+  CK_IntegralComplexToFloatingComplex,
+
+  /// \brief Produces an Objective-C object so that it may be
+  /// consumed, e.g. by being passed to a consuming parameter.  Calls
+  /// objc_retain.
+  CK_ObjCProduceObject,
+
+  /// \brief Consumes an Objective-C object that has just been
+  /// produced, e.g. as the return value of a retaining call.  Enters
+  /// a cleanup to call objc_release at some indefinite time.
+  CK_ObjCConsumeObject
 };
 
 #define CK_Invalid ((CastKind) -1)
@@ -282,6 +292,19 @@ enum UnaryOperatorKind {
   UO_Not, UO_LNot,        // [C99 6.5.3.3] Unary arithmetic
   UO_Real, UO_Imag,       // "__real expr"/"__imag expr" Extension.
   UO_Extension            // __extension__ marker.
+};
+
+/// \brief The kind of bridging performed by the Objective-C bridge cast.
+enum ObjCBridgeCastKind {
+  /// \brief Bridging via __bridge, which does nothing but reinterpret
+  /// the bits.
+  OBC_Bridge,
+  /// \brief Bridging via __bridge_transfer, which transfers ownership of an
+  /// Objective-C pointer into ARC.
+  OBC_BridgeTransfer,
+  /// \brief Bridging via __bridge_retain, which makes an ARC object available
+  /// as a +1 C pointer.
+  OBC_BridgeRetained
 };
 
 }

@@ -201,7 +201,8 @@ ToolChain::CXXStdlibType ToolChain::GetCXXStdlibType(const ArgList &Args) const{
 }
 
 void ToolChain::AddClangCXXStdlibIncludeArgs(const ArgList &Args,
-                                             ArgStringList &CmdArgs) const {
+                                             ArgStringList &CmdArgs,
+                                             bool ObjCXXAutoRefCount) const {
   CXXStdlibType Type = GetCXXStdlibType(Args);
 
   switch (Type) {
@@ -209,10 +210,16 @@ void ToolChain::AddClangCXXStdlibIncludeArgs(const ArgList &Args,
     CmdArgs.push_back("-nostdinc++");
     CmdArgs.push_back("-cxx-isystem");
     CmdArgs.push_back("/usr/include/c++/v1");
+      
+    if (ObjCXXAutoRefCount)
+      CmdArgs.push_back("-fobjc-arc-cxxlib=libc++");
     break;
 
   case ToolChain::CST_Libstdcxx:
     // Currently handled by the mass of goop in InitHeaderSearch.
+
+    if (ObjCXXAutoRefCount)
+      CmdArgs.push_back("-fobjc-arc-cxxlib=libstdc++");
     break;
   }
 }

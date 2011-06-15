@@ -24,6 +24,23 @@
 using namespace clang;
 
 namespace {
+  /// \brief RAII object that enables printing of the ARC __strong lifetime
+  /// qualifier.
+  class IncludeStrongLifetimeRAII {
+    PrintingPolicy &Policy;
+    bool Old;
+    
+  public:
+    explicit IncludeStrongLifetimeRAII(PrintingPolicy &Policy) 
+      : Policy(Policy), Old(Policy.SuppressStrongLifetime) {
+      Policy.SuppressStrongLifetime = false;
+    }
+    
+    ~IncludeStrongLifetimeRAII() {
+      Policy.SuppressStrongLifetime = Old;
+    }
+  };
+  
   class TypePrinter {
     PrintingPolicy Policy;
 
@@ -78,7 +95,7 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
   // "int * const", printing "const int *" is different.  Only do this when the
   // type expands to a simple string.
   bool CanPrefixQualifiers = false;
-  
+  bool NeedARCStrongQualifier = false;
   Type::TypeClass TC = T->getTypeClass();
   if (const AutoType *AT = dyn_cast<AutoType>(T))
     TC = AT->desugar()->getTypeClass();
@@ -114,15 +131,18 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
         T->isObjCQualifiedIdType() || T->isObjCQualifiedClassType();
       break;
       
+    case Type::ConstantArray:
+    case Type::IncompleteArray:
+    case Type::VariableArray:
+    case Type::DependentSizedArray:
+      NeedARCStrongQualifier = true;
+      // Fall through
+      
     case Type::Pointer:
     case Type::BlockPointer:
     case Type::LValueReference:
     case Type::RValueReference:
     case Type::MemberPointer:
-    case Type::ConstantArray:
-    case Type::IncompleteArray:
-    case Type::VariableArray:
-    case Type::DependentSizedArray:
     case Type::DependentSizedExtVector:
     case Type::Vector:
     case Type::ExtVector:
@@ -139,13 +159,20 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
   
   if (!CanPrefixQualifiers && !Quals.empty()) {
     std::string qualsBuffer;
-    Quals.getAsStringInternal(qualsBuffer, Policy);
-    
-    if (!buffer.empty()) {
-      qualsBuffer += ' ';
-      qualsBuffer += buffer;
+    if (NeedARCStrongQualifier) {
+      IncludeStrongLifetimeRAII Strong(Policy);
+      Quals.getAsStringInternal(qualsBuffer, Policy);
+    } else {
+      Quals.getAsStringInternal(qualsBuffer, Policy);
     }
-    std::swap(buffer, qualsBuffer);
+    
+    if (!qualsBuffer.empty()) {
+      if (!buffer.empty()) {
+        qualsBuffer += ' ';
+        qualsBuffer += buffer;
+      }
+      std::swap(buffer, qualsBuffer);
+    }
   }
   
   switch (T->getTypeClass()) {
@@ -159,13 +186,20 @@ void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {
   // If we're adding the qualifiers as a prefix, do it now.
   if (CanPrefixQualifiers && !Quals.empty()) {
     std::string qualsBuffer;
-    Quals.getAsStringInternal(qualsBuffer, Policy);
-    
-    if (!buffer.empty()) {
-      qualsBuffer += ' ';
-      qualsBuffer += buffer;
+    if (NeedARCStrongQualifier) {
+      IncludeStrongLifetimeRAII Strong(Policy);
+      Quals.getAsStringInternal(qualsBuffer, Policy);
+    } else {
+      Quals.getAsStringInternal(qualsBuffer, Policy);
     }
-    std::swap(buffer, qualsBuffer);
+
+    if (!qualsBuffer.empty()) {
+      if (!buffer.empty()) {
+        qualsBuffer += ' ';
+        qualsBuffer += buffer;
+      }
+      std::swap(buffer, qualsBuffer);
+    }
   }
 }
 
@@ -192,6 +226,7 @@ void TypePrinter::printPointer(const PointerType *T, std::string &S) {
   if (isa<ArrayType>(T->getPointeeType()))
     S = '(' + S + ')';
   
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getPointeeType(), S);
 }
 
@@ -209,6 +244,7 @@ void TypePrinter::printLValueReference(const LValueReferenceType *T,
   if (isa<ArrayType>(T->getPointeeTypeAsWritten()))
     S = '(' + S + ')';
   
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getPointeeTypeAsWritten(), S);
 }
 
@@ -221,6 +257,7 @@ void TypePrinter::printRValueReference(const RValueReferenceType *T,
   if (isa<ArrayType>(T->getPointeeTypeAsWritten()))
     S = '(' + S + ')';
   
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getPointeeTypeAsWritten(), S);
 }
 
@@ -236,6 +273,7 @@ void TypePrinter::printMemberPointer(const MemberPointerType *T,
   if (isa<ArrayType>(T->getPointeeType()))
     S = '(' + S + ')';
   
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getPointeeType(), S);
 }
 
@@ -245,12 +283,14 @@ void TypePrinter::printConstantArray(const ConstantArrayType *T,
   S += llvm::utostr(T->getSize().getZExtValue());
   S += ']';
   
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getElementType(), S);
 }
 
 void TypePrinter::printIncompleteArray(const IncompleteArrayType *T, 
                                        std::string &S) {
   S += "[]";
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getElementType(), S);
 }
 
@@ -276,6 +316,7 @@ void TypePrinter::printVariableArray(const VariableArrayType *T,
   }
   S += ']';
   
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getElementType(), S);
 }
 
@@ -291,6 +332,7 @@ void TypePrinter::printDependentSizedArray(const DependentSizedArrayType *T,
   }
   S += ']';
   
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getElementType(), S);
 }
 
@@ -518,6 +560,7 @@ void TypePrinter::printUnaryTransform(const UnaryTransformType *T,
   if (!S.empty())
     S = ' ' + S;
   std::string Str;
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getBaseType(), Str);
 
   switch (T->getUTTKind()) {
@@ -552,6 +595,7 @@ void TypePrinter::AppendScope(DeclContext *DC, std::string &Buffer) {
       Buffer += "<anonymous>";
   } else if (ClassTemplateSpecializationDecl *Spec
                = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
+    IncludeStrongLifetimeRAII Strong(Policy);
     const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
     std::string TemplateArgsStr
       = TemplateSpecializationType::PrintTemplateArgumentList(
@@ -642,6 +686,7 @@ void TypePrinter::printTag(TagDecl *D, std::string &InnerString) {
       Args = TemplateArgs.data();
       NumArgs = TemplateArgs.size();
     }
+    IncludeStrongLifetimeRAII Strong(Policy);
     Buffer += TemplateSpecializationType::PrintTemplateArgumentList(Args,
                                                                     NumArgs,
                                                                     Policy);
@@ -677,18 +722,21 @@ void TypePrinter::printTemplateTypeParm(const TemplateTypeParmType *T,
 
 void TypePrinter::printSubstTemplateTypeParm(const SubstTemplateTypeParmType *T, 
                                              std::string &S) { 
+  IncludeStrongLifetimeRAII Strong(Policy);
   print(T->getReplacementType(), S);
 }
 
 void TypePrinter::printSubstTemplateTypeParmPack(
                                         const SubstTemplateTypeParmPackType *T, 
                                              std::string &S) { 
+  IncludeStrongLifetimeRAII Strong(Policy);
   printTemplateTypeParm(T->getReplacedParameter(), S);
 }
 
 void TypePrinter::printTemplateSpecialization(
                                             const TemplateSpecializationType *T, 
                                               std::string &S) { 
+  IncludeStrongLifetimeRAII Strong(Policy);
   std::string SpecString;
   
   {
@@ -765,6 +813,7 @@ void TypePrinter::printDependentName(const DependentNameType *T, std::string &S)
 
 void TypePrinter::printDependentTemplateSpecialization(
         const DependentTemplateSpecializationType *T, std::string &S) { 
+  IncludeStrongLifetimeRAII Strong(Policy);
   std::string MyString;
   {
     llvm::raw_string_ostream OS(MyString);
@@ -796,8 +845,9 @@ void TypePrinter::printPackExpansion(const PackExpansionType *T,
 
 void TypePrinter::printAttributed(const AttributedType *T,
                                   std::string &S) {
-  // Prefer the macro forms of the GC qualifiers.
-  if (T->getAttrKind() == AttributedType::attr_objc_gc)
+  // Prefer the macro forms of the GC and lifetime qualifiers.
+  if (T->getAttrKind() == AttributedType::attr_objc_gc ||
+      T->getAttrKind() == AttributedType::attr_objc_lifetime)
     return print(T->getEquivalentType(), S);
 
   print(T->getModifiedType(), S);
@@ -865,6 +915,18 @@ void TypePrinter::printAttributed(const AttributedType *T,
     S += ")";
     break;
   }
+
+  case AttributedType::attr_objc_lifetime:
+    S += "objc_lifetime(";
+    switch (T->getEquivalentType().getObjCLifetime()) {
+    case Qualifiers::OCL_None: llvm_unreachable("no lifetime!"); break;
+    case Qualifiers::OCL_ExplicitNone: S += "none"; break;
+    case Qualifiers::OCL_Strong: S += "strong"; break;
+    case Qualifiers::OCL_Weak: S += "weak"; break;
+    case Qualifiers::OCL_Autoreleasing: S += "autoreleasing"; break;
+    }
+    S += ")";
+    break;
 
   case AttributedType::attr_noreturn: S += "noreturn"; break;
   case AttributedType::attr_cdecl: S += "cdecl"; break;
@@ -1080,7 +1142,7 @@ std::string Qualifiers::getAsString() const {
 // prefix a space if the string is non-empty.  Will not append a final
 // space.
 void Qualifiers::getAsStringInternal(std::string &S,
-                                     const PrintingPolicy&) const {
+                                     const PrintingPolicy& Policy) const {
   AppendTypeQualList(S, getCVRQualifiers());
   if (unsigned addrspace = getAddressSpace()) {
     if (!S.empty()) S += ' ';
@@ -1094,6 +1156,23 @@ void Qualifiers::getAsStringInternal(std::string &S,
       S += "__weak";
     else
       S += "__strong";
+  }
+  if (Qualifiers::ObjCLifetime lifetime = getObjCLifetime()) {
+    if (!S.empty() && 
+        !(lifetime == Qualifiers::OCL_Strong && Policy.SuppressStrongLifetime))
+      S += ' ';
+    
+    switch (lifetime) {
+    case Qualifiers::OCL_None: llvm_unreachable("none but true");
+    case Qualifiers::OCL_ExplicitNone: S += "__unsafe_unretained"; break;
+    case Qualifiers::OCL_Strong: 
+      if (!Policy.SuppressStrongLifetime)
+        S += "__strong"; 
+      break;
+        
+    case Qualifiers::OCL_Weak: S += "__weak"; break;
+    case Qualifiers::OCL_Autoreleasing: S += "__autoreleasing"; break;
+    }
   }
 }
 

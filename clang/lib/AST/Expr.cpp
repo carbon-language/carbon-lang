@@ -1045,6 +1045,10 @@ const char *CastExpr::getCastKindName() const {
     return "IntegralComplexCast";
   case CK_IntegralComplexToFloatingComplex:
     return "IntegralComplexToFloatingComplex";
+  case CK_ObjCConsumeObject:
+    return "ObjCConsumeObject";
+  case CK_ObjCProduceObject:
+    return "ObjCProduceObject";
   }
 
   llvm_unreachable("Unhandled cast kind!");
@@ -1490,6 +1494,17 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
 
   case ObjCMessageExprClass: {
     const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(this);
+    if (Ctx.getLangOptions().ObjCAutoRefCount &&
+        ME->isInstanceMessage() &&
+        !ME->getType()->isVoidType() &&
+        ME->getSelector().getIdentifierInfoForSlot(0) &&
+        ME->getSelector().getIdentifierInfoForSlot(0)
+                                               ->getName().startswith("init")) {
+      Loc = getExprLoc();
+      R1 = ME->getSourceRange();
+      return true;
+    }
+
     const ObjCMethodDecl *MD = ME->getMethodDecl();
     if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
       Loc = getExprLoc();
@@ -2519,7 +2534,7 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
          /*TypeDependent=*/false, /*ValueDependent=*/false,
          /*ContainsUnexpandedParameterPack=*/false),
     NumArgs(NumArgs), Kind(IsInstanceSuper? SuperInstance : SuperClass),
-    HasMethod(Method != 0), SuperLoc(SuperLoc),
+    HasMethod(Method != 0), IsDelegateInitCall(false), SuperLoc(SuperLoc),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
@@ -2540,7 +2555,8 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
                                  SourceLocation RBracLoc)
   : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary, T->isDependentType(),
          T->isDependentType(), T->containsUnexpandedParameterPack()),
-    NumArgs(NumArgs), Kind(Class), HasMethod(Method != 0),
+    NumArgs(NumArgs), Kind(Class),
+    HasMethod(Method != 0), IsDelegateInitCall(false),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
@@ -2571,7 +2587,8 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
   : Expr(ObjCMessageExprClass, T, VK, OK_Ordinary, Receiver->isTypeDependent(),
          Receiver->isTypeDependent(),
          Receiver->containsUnexpandedParameterPack()),
-    NumArgs(NumArgs), Kind(Instance), HasMethod(Method != 0),
+    NumArgs(NumArgs), Kind(Instance),
+    HasMethod(Method != 0), IsDelegateInitCall(false),
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     SelectorLoc(SelLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
@@ -2700,6 +2717,19 @@ ObjCInterfaceDecl *ObjCMessageExpr::getReceiverInterface() const {
   }
 
   return 0;
+}
+
+llvm::StringRef ObjCBridgedCastExpr::getBridgeKindName() const {
+  switch (getBridgeKind()) {
+  case OBC_Bridge:
+    return "__bridge";
+  case OBC_BridgeTransfer:
+    return "__bridge_transfer";
+  case OBC_BridgeRetained:
+    return "__bridge_retained";
+  }
+  
+  return "__bridge";
 }
 
 bool ChooseExpr::isConditionTrue(const ASTContext &C) const {

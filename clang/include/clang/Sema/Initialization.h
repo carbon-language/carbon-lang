@@ -86,9 +86,13 @@ private:
   QualType Type;
   
   union {
-    /// \brief When Kind == EK_Variable, EK_Parameter, or EK_Member, 
-    /// the VarDecl, ParmVarDecl, or FieldDecl, respectively.
+    /// \brief When Kind == EK_Variable or EK_Member, the VarDecl or
+    /// FieldDecl, respectively.
     DeclaratorDecl *VariableOrMember;
+
+    /// \brief When Kind == EK_Parameter, the ParmVarDecl, with the
+    /// low bit indicating whether the parameter is "consumed".
+    uintptr_t Parameter;
     
     /// \brief When Kind == EK_Temporary, the type source information for
     /// the temporary.
@@ -123,11 +127,6 @@ private:
     : Kind(EK_Variable), Parent(0), Type(Var->getType()),
       VariableOrMember(Var) { }
   
-  /// \brief Create the initialization entity for a parameter.
-  InitializedEntity(ParmVarDecl *Parm)
-    : Kind(EK_Parameter), Parent(0), Type(Parm->getType().getUnqualifiedType()),
-      VariableOrMember(Parm) { }
-  
   /// \brief Create the initialization entity for the result of a
   /// function, throwing an object, performing an explicit cast, or
   /// initializing a parameter for which there is no declaration.
@@ -157,20 +156,28 @@ public:
   /// \brief Create the initialization entity for a parameter.
   static InitializedEntity InitializeParameter(ASTContext &Context,
                                                ParmVarDecl *Parm) {
-    InitializedEntity Res(Parm);
-    Res.Type = Context.getVariableArrayDecayedType(Res.Type);
-    return Res;
+    bool Consumed = (Context.getLangOptions().ObjCAutoRefCount &&
+                     Parm->hasAttr<NSConsumedAttr>());
+
+    InitializedEntity Entity;
+    Entity.Kind = EK_Parameter;
+    Entity.Type = Context.getVariableArrayDecayedType(
+                                       Parm->getType().getUnqualifiedType());
+    Entity.Parent = 0;
+    Entity.Parameter = (Consumed | reinterpret_cast<uintptr_t>(Parm));
+    return Entity;
   }
 
   /// \brief Create the initialization entity for a parameter that is
   /// only known by its type.
   static InitializedEntity InitializeParameter(ASTContext &Context,
-                                               QualType Type) {
+                                               QualType Type,
+                                               bool Consumed) {
     InitializedEntity Entity;
     Entity.Kind = EK_Parameter;
     Entity.Type = Context.getVariableArrayDecayedType(Type);
     Entity.Parent = 0;
-    Entity.VariableOrMember = 0;
+    Entity.Parameter = (Consumed);
     return Entity;
   }
 
@@ -268,6 +275,13 @@ public:
   /// \brief Determine whether this initialization allows the named return 
   /// value optimization, which also applies to thrown objects.
   bool allowsNRVO() const;
+
+  /// \brief Determine whether this initialization consumes the
+  /// parameter.
+  bool isParameterConsumed() const {
+    assert(getKind() == EK_Parameter && "Not a parameter");
+    return (Parameter & 1);
+  }
                                   
   /// \brief Retrieve the base specifier.
   CXXBaseSpecifier *getBaseSpecifier() const {
@@ -287,7 +301,7 @@ public:
     assert(getKind() == EK_Result && "No 'return' location!");
     return SourceLocation::getFromRawEncoding(LocAndNRVO.Location);
   }
-  
+
   /// \brief Determine the location of the 'throw' keyword when initializing
   /// an exception object.
   SourceLocation getThrowLoc() const {
@@ -325,8 +339,10 @@ private:
     SIK_Value = IK_Value,     ///< Value initialization
     SIK_ImplicitValue,        ///< Implicit value initialization
     SIK_DirectCast,  ///< Direct initialization due to a cast
-    /// \brief Direct initialization due to a C-style or functional cast.
-    SIK_DirectCStyleOrFunctionalCast
+    /// \brief Direct initialization due to a C-style cast.
+    SIK_DirectCStyleCast,
+    /// \brief Direct initialization due to a functional-style cast.
+    SIK_DirectFunctionalCast
   };
   
   /// \brief The kind of initialization being performed.
@@ -352,15 +368,29 @@ public:
     return InitializationKind(SIK_Direct, InitLoc, LParenLoc, RParenLoc);
   }
 
-  /// \brief Create a direct initialization due to a cast.
-  static InitializationKind CreateCast(SourceRange TypeRange,
-                                       bool IsCStyleCast) {
-    return InitializationKind(IsCStyleCast? SIK_DirectCStyleOrFunctionalCast
-                                          : SIK_DirectCast,
+  /// \brief Create a direct initialization due to a cast that isn't a C-style 
+  /// or functional cast.
+  static InitializationKind CreateCast(SourceRange TypeRange) {
+    return InitializationKind(SIK_DirectCast,
                               TypeRange.getBegin(), TypeRange.getBegin(), 
                               TypeRange.getEnd());
   }
   
+  /// \brief Create a direct initialization for a C-style cast.
+  static InitializationKind CreateCStyleCast(SourceLocation StartLoc,
+                                             SourceRange TypeRange) {
+    return InitializationKind(SIK_DirectCStyleCast,
+                              StartLoc, TypeRange.getBegin(), 
+                              TypeRange.getEnd());
+  }
+
+  /// \brief Create a direct initialization for a functional cast.
+  static InitializationKind CreateFunctionalCast(SourceRange TypeRange) {
+    return InitializationKind(SIK_DirectFunctionalCast,
+                              TypeRange.getBegin(), TypeRange.getBegin(), 
+                              TypeRange.getEnd());
+  }
+
   /// \brief Create a copy initialization.
   static InitializationKind CreateCopy(SourceLocation InitLoc,
                                        SourceLocation EqualLoc) {
@@ -393,12 +423,24 @@ public:
   
   /// \brief Determine whether this initialization is an explicit cast.
   bool isExplicitCast() const {
-    return Kind == SIK_DirectCast || Kind == SIK_DirectCStyleOrFunctionalCast;
+    return Kind == SIK_DirectCast || 
+           Kind == SIK_DirectCStyleCast ||
+           Kind == SIK_DirectFunctionalCast;
   }
   
   /// \brief Determine whether this initialization is a C-style cast.
   bool isCStyleOrFunctionalCast() const { 
-    return Kind == SIK_DirectCStyleOrFunctionalCast; 
+    return Kind == SIK_DirectCStyleCast || Kind == SIK_DirectFunctionalCast; 
+  }
+
+  /// brief Determine whether this is a C-style cast.
+  bool isCStyleCast() const {
+    return Kind == SIK_DirectCStyleCast;
+  }
+
+  /// brief Determine whether this is a functional-style cast.
+  bool isFunctionalCast() const {
+    return Kind == SIK_DirectFunctionalCast;
   }
 
   /// \brief Determine whether this initialization is an implicit
@@ -500,7 +542,13 @@ public:
     SK_ObjCObjectConversion,
     /// \brief Array initialization (from an array rvalue).
     /// This is a GNU C extension.
-    SK_ArrayInit
+    SK_ArrayInit,
+    /// \brief Pass an object by indirect copy-and-restore.
+    SK_PassByIndirectCopyRestore,
+    /// \brief Pass an object by indirect restore.
+    SK_PassByIndirectRestore,
+    /// \brief Produce an Objective-C object pointer.
+    SK_ProduceObjCObject
   };
   
   /// \brief A single step in the initialization sequence.
@@ -773,6 +821,13 @@ public:
 
   /// \brief Add an array initialization step.
   void AddArrayInitStep(QualType T);
+
+  /// \brief Add a step to pass an object by indirect copy-restore.
+  void AddPassByIndirectCopyRestoreStep(QualType T, bool shouldCopy);
+
+  /// \brief Add a step to "produce" an Objective-C object (by
+  /// retaining it).
+  void AddProduceObjCObjectStep(QualType T);
 
   /// \brief Note that this initialization sequence failed.
   void SetFailed(FailureKind Failure) {

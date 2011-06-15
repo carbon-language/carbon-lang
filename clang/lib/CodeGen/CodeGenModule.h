@@ -131,6 +131,71 @@ namespace CodeGen {
     /// The alignment of a pointer into the generic address space.
     unsigned char PointerAlignInBytes;
   };
+
+struct RREntrypoints {
+  RREntrypoints() { memset(this, 0, sizeof(*this)); }
+  /// void objc_autoreleasePoolPop(void*);
+  llvm::Constant *objc_autoreleasePoolPop;
+
+  /// void *objc_autoreleasePoolPush(void);
+  llvm::Constant *objc_autoreleasePoolPush;
+};
+
+struct ARCEntrypoints {
+  ARCEntrypoints() { memset(this, 0, sizeof(*this)); }
+
+  /// id objc_autorelease(id);
+  llvm::Constant *objc_autorelease;
+
+  /// id objc_autoreleaseReturnValue(id);
+  llvm::Constant *objc_autoreleaseReturnValue;
+
+  /// void objc_copyWeak(id *dest, id *src);
+  llvm::Constant *objc_copyWeak;
+
+  /// void objc_destroyWeak(id*);
+  llvm::Constant *objc_destroyWeak;
+
+  /// id objc_initWeak(id*, id);
+  llvm::Constant *objc_initWeak;
+
+  /// id objc_loadWeak(id*);
+  llvm::Constant *objc_loadWeak;
+
+  /// id objc_loadWeakRetained(id*);
+  llvm::Constant *objc_loadWeakRetained;
+
+  /// void objc_moveWeak(id *dest, id *src);
+  llvm::Constant *objc_moveWeak;
+
+  /// id objc_retain(id);
+  llvm::Constant *objc_retain;
+
+  /// id objc_retainAutorelease(id);
+  llvm::Constant *objc_retainAutorelease;
+
+  /// id objc_retainAutoreleaseReturnValue(id);
+  llvm::Constant *objc_retainAutoreleaseReturnValue;
+
+  /// id objc_retainAutoreleasedReturnValue(id);
+  llvm::Constant *objc_retainAutoreleasedReturnValue;
+
+  /// id objc_retainBlock(id);
+  llvm::Constant *objc_retainBlock;
+
+  /// void objc_release(id);
+  llvm::Constant *objc_release;
+
+  /// id objc_storeStrong(id*, id);
+  llvm::Constant *objc_storeStrong;
+
+  /// id objc_storeWeak(id*, id);
+  llvm::Constant *objc_storeWeak;
+
+  /// A void(void) inline asm to use to mark that the return value of
+  /// a call will be immediately retain.
+  llvm::InlineAsm *retainAutoreleasedReturnValueMarker;
+};
   
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
@@ -157,6 +222,8 @@ class CodeGenModule : public CodeGenTypeCache {
 
   CGObjCRuntime* Runtime;
   CGDebugInfo* DebugInfo;
+  ARCEntrypoints *ARCData;
+  RREntrypoints *RRData;
 
   // WeakRefReferences - A set of references that have only been seen via
   // a weakref so far. This is used to remove the weak of the reference if we ever
@@ -274,6 +341,16 @@ public:
 
   /// getCXXABI() - Return a reference to the configured C++ ABI.
   CGCXXABI &getCXXABI() { return ABI; }
+
+  ARCEntrypoints &getARCEntrypoints() const {
+    assert(getLangOptions().ObjCAutoRefCount && ARCData != 0);
+    return *ARCData;
+  }
+
+  RREntrypoints &getRREntrypoints() const {
+    assert(RRData != 0);
+    return *RRData;
+  }
 
   llvm::Value *getStaticLocalDeclAddress(const VarDecl *VD) {
     return StaticLocalDeclMap[VD];
@@ -474,7 +551,7 @@ public:
   /// created).
   llvm::Constant *GetAddrOfConstantCString(const std::string &str,
                                            const char *GlobalName=0);
-
+  
   /// GetAddrOfCXXConstructor - Return the address of the constructor of the
   /// given type.
   llvm::GlobalValue *GetAddrOfCXXConstructor(const CXXConstructorDecl *ctor,
@@ -514,7 +591,9 @@ public:
   /// CreateRuntimeFunction - Create a new runtime function with the specified
   /// type and name.
   llvm::Constant *CreateRuntimeFunction(const llvm::FunctionType *Ty,
-                                        llvm::StringRef Name);
+                                        llvm::StringRef Name,
+                                        llvm::Attributes ExtraAttrs =
+                                          llvm::Attribute::None);
   /// CreateRuntimeVariable - Create a new runtime global variable with the
   /// specified type and name.
   llvm::Constant *CreateRuntimeVariable(const llvm::Type *Ty,
@@ -642,7 +721,9 @@ private:
   llvm::Constant *GetOrCreateLLVMFunction(llvm::StringRef MangledName,
                                           const llvm::Type *Ty,
                                           GlobalDecl D,
-                                          bool ForVTable);
+                                          bool ForVTable,
+                                          llvm::Attributes ExtraAttrs =
+                                            llvm::Attribute::None);
   llvm::Constant *GetOrCreateLLVMGlobal(llvm::StringRef MangledName,
                                         const llvm::PointerType *PTy,
                                         const VarDecl *D,

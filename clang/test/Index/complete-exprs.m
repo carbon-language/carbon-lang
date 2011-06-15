@@ -7,10 +7,10 @@ typedef signed char BOOL;
 
 @property int prop1;
 @end
-
+__strong id global;
 @implementation A
 - (int)method:(id)param1 {
-  
+  void foo(id (^block)(id x, A* y));
   for(BOOL B = YES; ; ) { }
 }
 @end
@@ -27,3 +27,8 @@ typedef signed char BOOL;
 // CHECK-CC2: TypedefDecl:{TypedText BOOL} (50)
 // CHECK-CC2: NotImplemented:{TypedText char} (50)
 // CHECK-CC2: NotImplemented:{TypedText sizeof}{LeftParen (}{Placeholder expression-or-type}{RightParen )} (40)
+// RUN: c-index-test -code-completion-at=%s:15:1 -fobjc-arc -fobjc-nonfragile-abi  %s | FileCheck -check-prefix=CHECK-CC3 %s
+// RUN: env CINDEXTEST_EDITING=1 CINDEXTEST_COMPLETION_CACHING=1 c-index-test -code-completion-at=%s:15:1 -fobjc-arc -fobjc-nonfragile-abi %s | FileCheck -check-prefix=CHECK-CC3 %s
+// CHECK-CC3: FunctionDecl:{ResultType void}{TypedText foo}{LeftParen (}{Placeholder ^id(id x, A *y)block}{RightParen )} (34)
+// CHECK-CC3: VarDecl:{ResultType id}{TypedText global} (50)
+// CHECK-CC3: ParmDecl:{ResultType id}{TypedText param1} (34)

@@ -969,7 +969,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
 
   ActualArgs.add(RValue::get(EnforceType(Builder, Receiver, IdTy)), ASTIdTy);
   ActualArgs.add(RValue::get(cmd), CGF.getContext().getObjCSelType());
-  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
+  ActualArgs.addFrom(CallArgs);
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
@@ -1121,7 +1121,7 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   CallArgList ActualArgs;
   ActualArgs.add(RValue::get(Receiver), ASTIdTy);
   ActualArgs.add(RValue::get(cmd), CGF.getContext().getObjCSelType());
-  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
+  ActualArgs.addFrom(CallArgs);
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,

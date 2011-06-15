@@ -220,6 +220,10 @@ void StmtProfiler::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
   VisitStmt(S);
 }
 
+void StmtProfiler::VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *S) {
+  VisitStmt(S);
+}
+
 void StmtProfiler::VisitExpr(Expr *S) {
   VisitStmt(S);
 }
@@ -950,6 +954,17 @@ void StmtProfiler::VisitObjCMessageExpr(ObjCMessageExpr *S) {
 void StmtProfiler::VisitObjCIsaExpr(ObjCIsaExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->isArrow());
+}
+
+void
+StmtProfiler::VisitObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *S) {
+  VisitExpr(S);
+  ID.AddBoolean(S->shouldCopy());
+}
+
+void StmtProfiler::VisitObjCBridgedCastExpr(ObjCBridgedCastExpr *S) {
+  VisitExplicitCastExpr(S);
+  ID.AddBoolean(S->getBridgeKind());
 }
 
 void StmtProfiler::VisitDecl(Decl *D) {

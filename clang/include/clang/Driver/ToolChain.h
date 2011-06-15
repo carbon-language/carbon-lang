@@ -166,6 +166,9 @@ public:
   /// UseSjLjExceptions - Does this tool chain use SjLj exceptions.
   virtual bool UseSjLjExceptions() const { return false; }
 
+  /// HasARCRuntime - Does this tool chain provide a specialized ARC runtime.
+  virtual bool HasARCRuntime() const { return false; }
+
   /// ComputeLLVMTriple - Return the LLVM target triple to use, after taking
   /// command line arguments into account.
   virtual std::string ComputeLLVMTriple(const ArgList &Args) const;
@@ -184,7 +187,8 @@ public:
   /// AddClangCXXStdlibIncludeArgs - Add the clang -cc1 level arguments to set
   /// the include paths to use for the given C++ standard library type.
   virtual void AddClangCXXStdlibIncludeArgs(const ArgList &Args,
-                                            ArgStringList &CmdArgs) const;
+                                            ArgStringList &CmdArgs,
+                                            bool ObjCXXAutoRefCount) const;
 
   /// AddCXXStdlibLibArgs - Add the system specific linker arguments to use
   /// for the given C++ standard library type.

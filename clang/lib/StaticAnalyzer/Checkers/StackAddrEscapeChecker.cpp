@@ -121,6 +121,11 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
     return;  
   
   if (R->hasStackStorage()) {
+    // Automatic reference counting automatically copies blocks.
+    if (C.getASTContext().getLangOptions().ObjCAutoRefCount &&
+        isa<BlockDataRegion>(R))
+      return;
+
     EmitStackError(C, R, RetE);
     return;
   }
@@ -135,12 +140,13 @@ void StackAddrEscapeChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
   // a memory region in the stack space.
   class CallBack : public StoreManager::BindingsHandler {
   private:
+    ExprEngine &Eng;
     const StackFrameContext *CurSFC;
   public:
     llvm::SmallVector<std::pair<const MemRegion*, const MemRegion*>, 10> V;
 
-    CallBack(const LocationContext *LCtx)
-      : CurSFC(LCtx->getCurrentStackFrame()) {}
+    CallBack(ExprEngine &Eng, const LocationContext *LCtx)
+      : Eng(Eng), CurSFC(LCtx->getCurrentStackFrame()) {}
     
     bool HandleBinding(StoreManager &SMgr, Store store,
                        const MemRegion *region, SVal val) {
@@ -151,7 +157,13 @@ void StackAddrEscapeChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
       const MemRegion *vR = val.getAsRegion();
       if (!vR)
         return true;
-      
+        
+      // Under automated retain release, it is okay to assign a block
+      // directly to a global variable.
+      if (Eng.getContext().getLangOptions().ObjCAutoRefCount &&
+          isa<BlockDataRegion>(vR))
+        return true;
+
       if (const StackSpaceRegion *SSR = 
           dyn_cast<StackSpaceRegion>(vR->getMemorySpace())) {
         // If the global variable holds a location in the current stack frame,
@@ -164,7 +176,7 @@ void StackAddrEscapeChecker::checkEndPath(EndOfFunctionNodeBuilder &B,
     }
   };
     
-  CallBack cb(B.getPredecessor()->getLocationContext());
+  CallBack cb(Eng, B.getPredecessor()->getLocationContext());
   state->getStateManager().getStoreManager().iterBindings(state->getStore(),cb);
 
   if (cb.V.empty())

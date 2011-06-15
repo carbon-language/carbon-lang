@@ -2374,7 +2374,8 @@ CXTranslationUnit clang_createTranslationUnit(CXIndex CIdx,
 unsigned clang_defaultEditingTranslationUnitOptions() {
   return CXTranslationUnit_PrecompiledPreamble | 
          CXTranslationUnit_CacheCompletionResults |
-         CXTranslationUnit_CXXPrecompiledPreamble;
+         CXTranslationUnit_CXXPrecompiledPreamble |
+         CXTranslationUnit_CXXChainedPCH;
 }
   
 CXTranslationUnit
@@ -4797,6 +4798,7 @@ static void clang_annotateTokensImpl(void *UserData) {
               llvm::StringSwitch<bool>(II->getName())
               .Case("readonly", true)
               .Case("assign", true)
+              .Case("unsafe_unretained", true)
               .Case("readwrite", true)
               .Case("retain", true)
               .Case("copy", true)
@@ -4804,6 +4806,8 @@ static void clang_annotateTokensImpl(void *UserData) {
               .Case("atomic", true)
               .Case("getter", true)
               .Case("setter", true)
+              .Case("strong", true)
+              .Case("weak", true)
               .Default(false))
             Tokens[I].int_data[0] = CXToken_Keyword;
         }

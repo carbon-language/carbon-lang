@@ -819,6 +819,11 @@ static bool hasInconsistentOrSupersetQualifiersOf(QualType ParamType,
       ParamQs.hasAddressSpace())
     return true;
 
+  // Mismatched (but not missing) Objective-C lifetime qualifiers.
+  if (ParamQs.getObjCLifetime() != ArgQs.getObjCLifetime() &&
+      ParamQs.hasObjCLifetime())
+    return true;
+  
   // CVR qualifier superset.
   return (ParamQs.getCVRQualifiers() != ArgQs.getCVRQualifiers()) &&
       ((ParamQs.getCVRQualifiers() | ArgQs.getCVRQualifiers())
@@ -1009,6 +1014,8 @@ DeduceTemplateArguments(Sema &S,
       DeducedQs.removeObjCGCAttr();
     if (ParamQs.hasAddressSpace())
       DeducedQs.removeAddressSpace();
+    if (ParamQs.hasObjCLifetime())
+      DeducedQs.removeObjCLifetime();
     DeducedType = S.Context.getQualifiedType(DeducedType.getUnqualifiedType(),
                                              DeducedQs);
     

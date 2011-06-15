@@ -36,7 +36,10 @@ bool Qualifiers::isStrictSupersetOf(Qualifiers Other) const {
      (hasObjCGCAttr() && !Other.hasObjCGCAttr())) &&
     // Address space superset.
     ((getAddressSpace() == Other.getAddressSpace()) ||
-     (hasAddressSpace()&& !Other.hasAddressSpace()));
+     (hasAddressSpace()&& !Other.hasAddressSpace())) &&
+    // Lifetime qualifier superset.
+    ((getObjCLifetime() == Other.getObjCLifetime()) ||
+     (hasObjCLifetime() && !Other.hasObjCLifetime()));
 }
 
 bool QualType::isConstant(QualType T, ASTContext &Ctx) {
@@ -866,39 +869,59 @@ bool Type::isIncompleteType() const {
   }
 }
 
-/// isPODType - Return true if this is a plain-old-data type (C++ 3.9p10)
-bool Type::isPODType() const {
+bool QualType::isPODType(ASTContext &Context) const {
   // The compiler shouldn't query this for incomplete types, but the user might.
   // We return false for that case. Except for incomplete arrays of PODs, which
   // are PODs according to the standard.
-  if (isIncompleteArrayType() &&
-      cast<ArrayType>(CanonicalType)->getElementType()->isPODType())
-    return true;
-  if (isIncompleteType())
+  if (isNull())
+    return 0;
+  
+  if ((*this)->isIncompleteArrayType())
+    return Context.getBaseElementType(*this).isPODType(Context);
+    
+  if ((*this)->isIncompleteType())
     return false;
 
+  if (Context.getLangOptions().ObjCAutoRefCount) {
+    switch (getObjCLifetime()) {
+    case Qualifiers::OCL_ExplicitNone:
+      return true;
+      
+    case Qualifiers::OCL_Strong:
+    case Qualifiers::OCL_Weak:
+    case Qualifiers::OCL_Autoreleasing:
+      return false;
+
+    case Qualifiers::OCL_None:
+      if ((*this)->isObjCLifetimeType())
+        return false;
+      break;
+    }        
+  }
+  
+  QualType CanonicalType = getTypePtr()->CanonicalType;
   switch (CanonicalType->getTypeClass()) {
     // Everything not explicitly mentioned is not POD.
   default: return false;
-  case VariableArray:
-  case ConstantArray:
+  case Type::VariableArray:
+  case Type::ConstantArray:
     // IncompleteArray is handled above.
-    return cast<ArrayType>(CanonicalType)->getElementType()->isPODType();
-
-  case Builtin:
-  case Complex:
-  case Pointer:
-  case MemberPointer:
-  case Vector:
-  case ExtVector:
-  case ObjCObjectPointer:
-  case BlockPointer:
+    return Context.getBaseElementType(*this).isPODType(Context);
+        
+  case Type::ObjCObjectPointer:
+  case Type::BlockPointer:
+  case Type::Builtin:
+  case Type::Complex:
+  case Type::Pointer:
+  case Type::MemberPointer:
+  case Type::Vector:
+  case Type::ExtVector:
     return true;
 
-  case Enum:
+  case Type::Enum:
     return true;
 
-  case Record:
+  case Type::Record:
     if (CXXRecordDecl *ClassDecl
           = dyn_cast<CXXRecordDecl>(cast<RecordType>(CanonicalType)->getDecl()))
       return ClassDecl->isPOD();
@@ -907,6 +930,121 @@ bool Type::isPODType() const {
     return true;
   }
 }
+
+bool QualType::isTrivialType(ASTContext &Context) const {
+  // The compiler shouldn't query this for incomplete types, but the user might.
+  // We return false for that case. Except for incomplete arrays of PODs, which
+  // are PODs according to the standard.
+  if (isNull())
+    return 0;
+  
+  if ((*this)->isArrayType())
+    return Context.getBaseElementType(*this).isTrivialType(Context);
+  
+  // Return false for incomplete types after skipping any incomplete array
+  // types which are expressly allowed by the standard and thus our API.
+  if ((*this)->isIncompleteType())
+    return false;
+  
+  if (Context.getLangOptions().ObjCAutoRefCount) {
+    switch (getObjCLifetime()) {
+    case Qualifiers::OCL_ExplicitNone:
+      return true;
+      
+    case Qualifiers::OCL_Strong:
+    case Qualifiers::OCL_Weak:
+    case Qualifiers::OCL_Autoreleasing:
+      return false;
+      
+    case Qualifiers::OCL_None:
+      if ((*this)->isObjCLifetimeType())
+        return false;
+      break;
+    }        
+  }
+  
+  QualType CanonicalType = getTypePtr()->CanonicalType;
+  if (CanonicalType->isDependentType())
+    return false;
+  
+  // C++0x [basic.types]p9:
+  //   Scalar types, trivial class types, arrays of such types, and
+  //   cv-qualified versions of these types are collectively called trivial
+  //   types.
+  
+  // As an extension, Clang treats vector types as Scalar types.
+  if (CanonicalType->isScalarType() || CanonicalType->isVectorType())
+    return true;
+  if (const RecordType *RT = CanonicalType->getAs<RecordType>()) {
+    if (const CXXRecordDecl *ClassDecl =
+        dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      // C++0x [class]p5:
+      //   A trivial class is a class that has a trivial default constructor
+      if (!ClassDecl->hasTrivialDefaultConstructor()) return false;
+      //   and is trivially copyable.
+      if (!ClassDecl->isTriviallyCopyable()) return false;
+    }
+    
+    return true;
+  }
+  
+  // No other types can match.
+  return false;
+}
+
+bool QualType::isTriviallyCopyableType(ASTContext &Context) const {
+  if ((*this)->isArrayType())
+    return Context.getBaseElementType(*this).isTrivialType(Context);
+
+  if (Context.getLangOptions().ObjCAutoRefCount) {
+    switch (getObjCLifetime()) {
+    case Qualifiers::OCL_ExplicitNone:
+      return true;
+      
+    case Qualifiers::OCL_Strong:
+    case Qualifiers::OCL_Weak:
+    case Qualifiers::OCL_Autoreleasing:
+      return false;
+      
+    case Qualifiers::OCL_None:
+      if ((*this)->isObjCLifetimeType())
+        return false;
+      break;
+    }        
+  }
+
+  // C++0x [basic.types]p9
+  //   Scalar types, trivially copyable class types, arrays of such types, and
+  //   cv-qualified versions of these types are collectively called trivial
+  //   types.
+
+  QualType CanonicalType = getCanonicalType();
+  if (CanonicalType->isDependentType())
+    return false;
+
+  // Return false for incomplete types after skipping any incomplete array types
+  // which are expressly allowed by the standard and thus our API.
+  if (CanonicalType->isIncompleteType())
+    return false;
+ 
+  // As an extension, Clang treats vector types as Scalar types.
+  if (CanonicalType->isScalarType() || CanonicalType->isVectorType())
+    return true;
+
+  if (const RecordType *RT = CanonicalType->getAs<RecordType>()) {
+    if (const CXXRecordDecl *ClassDecl =
+          dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      if (!ClassDecl->isTriviallyCopyable()) return false;
+    }
+
+    return true;
+  }
+
+  // No other types can match.
+  return false;
+}
+
+
 
 bool Type::isLiteralType() const {
   if (isDependentType())
@@ -928,6 +1066,10 @@ bool Type::isLiteralType() const {
   if (BaseTy->isIncompleteType())
     return false;
 
+  // Objective-C lifetime types are not literal types.
+  if (BaseTy->isObjCRetainableType())
+    return false;
+  
   // C++0x [basic.types]p10:
   //   A type is a literal type if it is:
   //    -- a scalar type; or
@@ -958,68 +1100,6 @@ bool Type::isLiteralType() const {
 
     return true;
   }
-  return false;
-}
-
-bool Type::isTrivialType() const {
-  if (isDependentType())
-    return false;
-
-  // C++0x [basic.types]p9:
-  //   Scalar types, trivial class types, arrays of such types, and
-  //   cv-qualified versions of these types are collectively called trivial
-  //   types.
-  const Type *BaseTy = getBaseElementTypeUnsafe();
-  assert(BaseTy && "NULL element type");
-
-  // Return false for incomplete types after skipping any incomplete array
-  // types which are expressly allowed by the standard and thus our API.
-  if (BaseTy->isIncompleteType())
-    return false;
-
-  // As an extension, Clang treats vector types as Scalar types.
-  if (BaseTy->isScalarType() || BaseTy->isVectorType()) return true;
-  if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
-    if (const CXXRecordDecl *ClassDecl =
-        dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      if (!ClassDecl->isTrivial()) return false;
-    }
-
-    return true;
-  }
-
-  // No other types can match.
-  return false;
-}
-
-bool Type::isTriviallyCopyableType() const {
-  if (isDependentType())
-    return false;
-
-  // C++0x [basic.types]p9
-  //   Scalar types, trivially copyable class types, arrays of such types, and
-  //   cv-qualified versions of these types are collectively called trivial
-  //   types.
-  const Type *BaseTy = getBaseElementTypeUnsafe();
-  assert(BaseTy && "NULL element type");
-
-  // Return false for incomplete types after skipping any incomplete array types
-  // which are expressly allowed by the standard and thus our API.
-  if (BaseTy->isIncompleteType())
-    return false;
- 
-  // As an extension, Clang treats vector types as Scalar types.
-  if (BaseTy->isScalarType() || BaseTy->isVectorType()) return true;
-  if (const RecordType *RT = BaseTy->getAs<RecordType>()) {
-    if (const CXXRecordDecl *ClassDecl =
-        dyn_cast<CXXRecordDecl>(RT->getDecl())) {
-      if (!ClassDecl->isTriviallyCopyable()) return false;
-    }
-
-    return true;
-  }
-
-  // No other types can match.
   return false;
 }
 
@@ -1060,14 +1140,32 @@ bool Type::isStandardLayoutType() const {
 // This is effectively the intersection of isTrivialType and
 // isStandardLayoutType. We implement it dircetly to avoid redundant
 // conversions from a type to a CXXRecordDecl.
-bool Type::isCXX11PODType() const {
-  if (isDependentType())
+bool QualType::isCXX11PODType(ASTContext &Context) const {
+  const Type *ty = getTypePtr();
+  if (ty->isDependentType())
     return false;
+
+  if (Context.getLangOptions().ObjCAutoRefCount) {
+    switch (getObjCLifetime()) {
+    case Qualifiers::OCL_ExplicitNone:
+      return true;
+      
+    case Qualifiers::OCL_Strong:
+    case Qualifiers::OCL_Weak:
+    case Qualifiers::OCL_Autoreleasing:
+      return false;
+
+    case Qualifiers::OCL_None:
+      if (ty->isObjCLifetimeType())
+        return false;
+      break;
+    }        
+  }
 
   // C++11 [basic.types]p9:
   //   Scalar types, POD classes, arrays of such types, and cv-qualified
   //   versions of these types are collectively called trivial types.
-  const Type *BaseTy = getBaseElementTypeUnsafe();
+  const Type *BaseTy = ty->getBaseElementTypeUnsafe();
   assert(BaseTy && "NULL element type");
 
   // Return false for incomplete types after skipping any incomplete array
@@ -1392,7 +1490,8 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
                  result->containsUnexpandedParameterPack(),
                  epi.ExtInfo),
     NumArgs(numArgs), NumExceptions(epi.NumExceptions),
-    ExceptionSpecType(epi.ExceptionSpecType)
+    ExceptionSpecType(epi.ExceptionSpecType),
+    HasAnyConsumedArgs(epi.ConsumedArguments != 0)
 {
   // Fill in the trailing argument array.
   QualType *argSlot = reinterpret_cast<QualType*>(this+1);
@@ -1422,6 +1521,12 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
     // Store the noexcept expression and context.
     Expr **noexSlot = reinterpret_cast<Expr**>(argSlot + numArgs);
     *noexSlot = epi.NoexceptExpr;
+  }
+
+  if (epi.ConsumedArguments) {
+    bool *consumedArgs = const_cast<bool*>(getConsumedArgsBuffer());
+    for (unsigned i = 0; i != numArgs; ++i)
+      consumedArgs[i] = epi.ConsumedArguments[i];
   }
 }
 
@@ -1461,6 +1566,24 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 const QualType *ArgTys, unsigned NumArgs,
                                 const ExtProtoInfo &epi,
                                 const ASTContext &Context) {
+
+  // We have to be careful not to get ambiguous profile encodings.
+  // Note that valid type pointers are never ambiguous with anything else.
+  //
+  // The encoding grammar begins:
+  //      type type* bool int bool 
+  // If that final bool is true, then there is a section for the EH spec:
+  //      bool type*
+  // This is followed by an optional "consumed argument" section of the
+  // same length as the first type sequence:
+  //      bool*
+  // Finally, we have the ext info:
+  //      int
+  // 
+  // There is no ambiguity between the consumed arguments and an empty EH
+  // spec because of the leading 'bool' which unambiguously indicates
+  // whether the following bool is the EH spec or part of the arguments.
+
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
@@ -1473,6 +1596,10 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
       ID.AddPointer(epi.Exceptions[i].getAsOpaquePtr());
   } else if (epi.ExceptionSpecType == EST_ComputedNoexcept && epi.NoexceptExpr){
     epi.NoexceptExpr->Profile(ID, Context, false);
+  }
+  if (epi.ConsumedArguments) {
+    for (unsigned i = 0; i != NumArgs; ++i)
+      ID.AddBoolean(epi.ConsumedArguments[i]);
   }
   epi.ExtInfo.Profile(ID);
 }
@@ -1900,6 +2027,79 @@ void Type::ClearLinkageCache() {
     CanonicalType->TypeBits.CacheValidAndVisibility = 0;
 }
 
+Qualifiers::ObjCLifetime Type::getObjCARCImplicitLifetime() const {
+  if (isObjCARCImplicitlyUnretainedType())
+    return Qualifiers::OCL_ExplicitNone;
+  return Qualifiers::OCL_Strong;
+}
+
+bool Type::isObjCARCImplicitlyUnretainedType() const {
+  assert(isObjCLifetimeType() &&
+         "cannot query implicit lifetime for non-inferrable type");
+
+  const Type *canon = getCanonicalTypeInternal().getTypePtr();
+
+  // Walk down to the base type.  We don't care about qualifiers for this.
+  while (const ArrayType *array = dyn_cast<ArrayType>(canon))
+    canon = array->getElementType().getTypePtr();
+
+  if (const ObjCObjectPointerType *opt
+        = dyn_cast<ObjCObjectPointerType>(canon)) {
+    // Class and Class<Protocol> don't require retension.
+    if (opt->getObjectType()->isObjCClass())
+      return true;
+  }
+
+  return false;
+}
+
+bool Type::isObjCNSObjectType() const {
+  if (const TypedefType *typedefType = dyn_cast<TypedefType>(this))
+    return typedefType->getDecl()->hasAttr<ObjCNSObjectAttr>();
+  return false;
+}
+bool Type::isObjCRetainableType() const {
+  return isObjCObjectPointerType() ||
+         isBlockPointerType() ||
+         isObjCNSObjectType();
+}
+bool Type::isObjCIndirectLifetimeType() const {
+  if (isObjCLifetimeType())
+    return true;
+  if (const PointerType *OPT = getAs<PointerType>())
+    return OPT->getPointeeType()->isObjCIndirectLifetimeType();
+  if (const ReferenceType *Ref = getAs<ReferenceType>())
+    return Ref->getPointeeType()->isObjCIndirectLifetimeType();
+  if (const MemberPointerType *MemPtr = getAs<MemberPointerType>())
+    return MemPtr->getPointeeType()->isObjCIndirectLifetimeType();
+  return false;
+}
+
+/// Returns true if objects of this type have lifetime semantics under
+/// ARC.
+bool Type::isObjCLifetimeType() const {
+  const Type *type = this;
+  while (const ArrayType *array = type->getAsArrayTypeUnsafe())
+    type = array->getElementType().getTypePtr();
+  return type->isObjCRetainableType();
+}
+
+/// \brief Determine whether the given type T is a "bridgable" Objective-C type,
+/// which is either an Objective-C object pointer type or an 
+bool Type::isObjCARCBridgableType() const {
+  return isObjCObjectPointerType() || isBlockPointerType();
+}
+
+/// \brief Determine whether the given type T is a "bridgeable" C type.
+bool Type::isCARCBridgableType() const {
+  const PointerType *Pointer = getAs<PointerType>();
+  if (!Pointer)
+    return false;
+  
+  QualType Pointee = Pointer->getPointeeType();
+  return Pointee->isVoidType() || Pointee->isRecordType();
+}
+
 bool Type::hasSizedVLAType() const {
   if (!isVariablyModifiedType()) return false;
 
@@ -1919,6 +2119,18 @@ bool Type::hasSizedVLAType() const {
 }
 
 QualType::DestructionKind QualType::isDestructedTypeImpl(QualType type) {
+  switch (type.getObjCLifetime()) {
+  case Qualifiers::OCL_None:
+  case Qualifiers::OCL_ExplicitNone:
+  case Qualifiers::OCL_Autoreleasing:
+    break;
+
+  case Qualifiers::OCL_Strong:
+    return DK_objc_strong_lifetime;
+  case Qualifiers::OCL_Weak:
+    return DK_objc_weak_lifetime;
+  }
+
   /// Currently, the only destruction kind we recognize is C++ objects
   /// with non-trivial destructors.
   const CXXRecordDecl *record =
@@ -1927,4 +2139,25 @@ QualType::DestructionKind QualType::isDestructedTypeImpl(QualType type) {
     return DK_cxx_destructor;
 
   return DK_none;
+}
+
+bool QualType::hasTrivialCopyAssignment(ASTContext &Context) const {
+  switch (getObjCLifetime()) {
+  case Qualifiers::OCL_None:
+    break;
+      
+  case Qualifiers::OCL_ExplicitNone:
+    return true;
+      
+  case Qualifiers::OCL_Autoreleasing:
+  case Qualifiers::OCL_Strong:
+  case Qualifiers::OCL_Weak:
+    return !Context.getLangOptions().ObjCAutoRefCount;
+  }
+  
+  if (const CXXRecordDecl *Record 
+            = getTypePtr()->getBaseElementTypeUnsafe()->getAsCXXRecordDecl())
+    return Record->hasTrivialCopyAssignment();
+  
+  return true;
 }

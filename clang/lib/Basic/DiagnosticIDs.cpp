@@ -740,5 +740,10 @@ bool DiagnosticIDs::isUnrecoverable(unsigned DiagID) const {
       DiagID == diag::err_unavailable_message)
     return false;
 
+  // Currently we consider all ARC errors as recoverable.
+  if (getCategoryNumberForDiag(DiagID) ==
+        diag::DiagCat_Automatic_Reference_Counting_Issue)
+    return false;
+
   return true;
 }

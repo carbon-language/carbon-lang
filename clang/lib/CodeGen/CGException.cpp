@@ -354,7 +354,8 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *e,
   // evaluated but before the exception is caught.  But the best way
   // to handle that is to teach EmitAggExpr to do the final copy
   // differently if it can't be elided.
-  CGF.EmitAnyExprToMem(e, typedAddr, /*Volatile*/ false, /*IsInit*/ true);
+  CGF.EmitAnyExprToMem(e, typedAddr, e->getType().getQualifiers(), 
+                       /*IsInit*/ true);
 
   // Deactivate the cleanup block.
   CGF.DeactivateCleanupBlock(cleanup);
@@ -1084,7 +1085,8 @@ static void InitCatchParam(CodeGenFunction &CGF,
   CGF.EHStack.pushTerminate();
 
   // Perform the copy construction.
-  CGF.EmitAggExpr(copyExpr, AggValueSlot::forAddr(ParamAddr, false, false));
+  CGF.EmitAggExpr(copyExpr, AggValueSlot::forAddr(ParamAddr, Qualifiers(), 
+                                                  false));
 
   // Leave the terminate scope.
   CGF.EHStack.popTerminate();

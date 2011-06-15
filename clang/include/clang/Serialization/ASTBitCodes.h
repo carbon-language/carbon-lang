@@ -922,6 +922,8 @@ namespace clang {
       EXPR_OBJC_MESSAGE_EXPR,
       /// \brief An ObjCIsa Expr record.
       EXPR_OBJC_ISA,
+      /// \breif An ObjCIndirectCopyRestoreExpr record.
+      EXPR_OBJC_INDIRECT_COPY_RESTORE,
 
       /// \brief An ObjCForCollectionStmt record.
       STMT_OBJC_FOR_COLLECTION,
@@ -935,6 +937,8 @@ namespace clang {
       STMT_OBJC_AT_SYNCHRONIZED,
       /// \brief An ObjCAtThrowStmt record.
       STMT_OBJC_AT_THROW,
+      /// \brief An ObjCAutoreleasePoolStmt record.
+      STMT_OBJC_AUTORELEASE_POOL,
 
       // C++
       
@@ -1002,11 +1006,13 @@ namespace clang {
       EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK,// SubstNonTypeTemplateParmPackExpr
 
       // CUDA
+      EXPR_CUDA_KERNEL_CALL,       // CUDAKernelCallExpr      
 
-      EXPR_CUDA_KERNEL_CALL,       // CUDAKernelCallExpr
-      
       // OpenCL
-      EXPR_ASTYPE // An AsTypeExpr record.
+      EXPR_ASTYPE,                 // AsTypeExpr
+      
+      // ARC
+      EXPR_OBJC_BRIDGED_CAST       // ObjCBridgedCastExpr
     };
 
     /// \brief The kinds of designators that can occur in a

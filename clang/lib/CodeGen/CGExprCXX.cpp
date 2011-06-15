@@ -708,15 +708,14 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
   unsigned Alignment =
     CGF.getContext().getTypeAlignInChars(AllocType).getQuantity();
   if (!CGF.hasAggregateLLVMType(AllocType)) 
-    CGF.EmitStoreOfScalar(CGF.EmitScalarExpr(Init), NewPtr,
-                          AllocType.isVolatileQualified(), Alignment,
-                          AllocType);
+    CGF.EmitScalarInit(Init, 0, NewPtr, false, AllocType.isVolatileQualified(),
+                       Alignment, AllocType);
   else if (AllocType->isAnyComplexType())
     CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
                                 AllocType.isVolatileQualified());
   else {
     AggValueSlot Slot
-      = AggValueSlot::forAddr(NewPtr, AllocType.isVolatileQualified(), true);
+      = AggValueSlot::forAddr(NewPtr, AllocType.getQualifiers(), true);
     CGF.EmitAggExpr(Init, Slot);
   }
 }
@@ -1075,7 +1074,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // CXXNewExpr::shouldNullCheckAllocation()) and we have an
   // interesting initializer.
   bool nullCheck = allocatorType->isNothrow(getContext()) &&
-    !(allocType->isPODType() && !E->hasInitializer());
+    !(allocType.isPODType(getContext()) && !E->hasInitializer());
 
   llvm::BasicBlock *nullCheckBB = 0;
   llvm::BasicBlock *contBB = 0;
@@ -1247,7 +1246,29 @@ static void EmitObjectDelete(CodeGenFunction &CGF,
   if (Dtor)
     CGF.EmitCXXDestructorCall(Dtor, Dtor_Complete,
                               /*ForVirtualBase=*/false, Ptr);
+  else if (CGF.getLangOptions().ObjCAutoRefCount &&
+           ElementType->isObjCLifetimeType()) {
+    switch (ElementType.getObjCLifetime()) {
+    case Qualifiers::OCL_None:
+    case Qualifiers::OCL_ExplicitNone:
+    case Qualifiers::OCL_Autoreleasing:
+      break;
 
+    case Qualifiers::OCL_Strong: {
+      // Load the pointer value.
+      llvm::Value *PtrValue = CGF.Builder.CreateLoad(Ptr, 
+                                             ElementType.isVolatileQualified());
+        
+      CGF.EmitARCRelease(PtrValue, /*precise*/ true);
+      break;
+    }
+        
+    case Qualifiers::OCL_Weak:
+      CGF.EmitARCDestroyWeak(Ptr);
+      break;
+    }
+  }
+           
   CGF.PopCleanupBlock();
 }
 
@@ -1339,6 +1360,65 @@ static void EmitArrayDelete(CodeGenFunction &CGF,
                             " for a class with destructor");
       CGF.EmitCXXAggrDestructorCall(RD->getDestructor(), NumElements, Ptr);
     }
+  } else if (CGF.getLangOptions().ObjCAutoRefCount &&
+             ElementType->isObjCLifetimeType() &&
+             (ElementType.getObjCLifetime() == Qualifiers::OCL_Strong ||
+              ElementType.getObjCLifetime() == Qualifiers::OCL_Weak)) {
+    bool IsStrong = ElementType.getObjCLifetime() == Qualifiers::OCL_Strong;
+    const llvm::Type *SizeLTy = CGF.ConvertType(CGF.getContext().getSizeType());
+    llvm::Value *One = llvm::ConstantInt::get(SizeLTy, 1);
+    
+    // Create a temporary for the loop index and initialize it with count of
+    // array elements.
+    llvm::Value *IndexPtr = CGF.CreateTempAlloca(SizeLTy, "loop.index");
+    
+    // Store the number of elements in the index pointer.
+    CGF.Builder.CreateStore(NumElements, IndexPtr);
+    
+    // Start the loop with a block that tests the condition.
+    llvm::BasicBlock *CondBlock = CGF.createBasicBlock("for.cond");
+    llvm::BasicBlock *AfterFor = CGF.createBasicBlock("for.end");
+    
+    CGF.EmitBlock(CondBlock);
+    
+    llvm::BasicBlock *ForBody = CGF.createBasicBlock("for.body");
+    
+    // Generate: if (loop-index != 0 fall to the loop body,
+    // otherwise, go to the block after the for-loop.
+    llvm::Value* zeroConstant = llvm::Constant::getNullValue(SizeLTy);
+    llvm::Value *Counter = CGF.Builder.CreateLoad(IndexPtr);
+    llvm::Value *IsNE = CGF.Builder.CreateICmpNE(Counter, zeroConstant,
+                                                 "isne");
+    // If the condition is true, execute the body.
+    CGF.Builder.CreateCondBr(IsNE, ForBody, AfterFor);
+    
+    CGF.EmitBlock(ForBody);
+    
+    llvm::BasicBlock *ContinueBlock = CGF.createBasicBlock("for.inc");
+    // Inside the loop body, emit the constructor call on the array element.
+    Counter = CGF.Builder.CreateLoad(IndexPtr);
+    Counter = CGF.Builder.CreateSub(Counter, One);
+    llvm::Value *Address = CGF.Builder.CreateInBoundsGEP(Ptr, Counter, 
+                                                         "arrayidx");
+    if (IsStrong)
+      CGF.EmitARCRelease(CGF.Builder.CreateLoad(Address, 
+                                          ElementType.isVolatileQualified()),
+                         /*precise*/ true);
+    else
+      CGF.EmitARCDestroyWeak(Address);
+    
+    CGF.EmitBlock(ContinueBlock);
+    
+    // Emit the decrement of the loop counter.
+    Counter = CGF.Builder.CreateLoad(IndexPtr);
+    Counter = CGF.Builder.CreateSub(Counter, One, "dec");
+    CGF.Builder.CreateStore(Counter, IndexPtr);
+    
+    // Finally, branch back up to the condition for the next iteration.
+    CGF.EmitBranch(CondBlock);
+    
+    // Emit the fall-through block.
+    CGF.EmitBlock(AfterFor, true);    
   }
 
   CGF.PopCleanupBlock();

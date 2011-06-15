@@ -32,6 +32,7 @@ def note_type_being_defined : Note<
 def note_matching : Note<"to match this '%0'">;
 
 def note_using : Note<"using">;
+def note_possibility : Note<"one possibility">;
 def note_also_found : Note<"also found">;
 
 // Parse && Lex

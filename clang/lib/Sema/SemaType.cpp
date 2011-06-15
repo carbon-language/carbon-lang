@@ -26,6 +26,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/DelayedDiagnostic.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
@@ -110,7 +111,8 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
 // objc_gc applies to Objective-C pointers or, otherwise, to the
 // smallest available pointer type (i.e. 'void*' in 'void**').
 #define OBJC_POINTER_TYPE_ATTRS_CASELIST \
-    case AttributeList::AT_objc_gc
+    case AttributeList::AT_objc_gc: \
+    case AttributeList::AT_objc_lifetime
 
 // Function type attributes.
 #define FUNCTION_TYPE_ATTRS_CASELIST \
@@ -295,11 +297,15 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
 static bool handleObjCGCTypeAttr(TypeProcessingState &state,
                                  AttributeList &attr, QualType &type);
 
+static bool handleObjCLifetimeTypeAttr(TypeProcessingState &state,
+                                       AttributeList &attr, QualType &type);
+
 static bool handleObjCPointerTypeAttr(TypeProcessingState &state,
                                       AttributeList &attr, QualType &type) {
-  // Right now, we have exactly one of these attributes: objc_gc.
-  assert(attr.getKind() == AttributeList::AT_objc_gc);
-  return handleObjCGCTypeAttr(state, attr, type);
+  if (attr.getKind() == AttributeList::AT_objc_gc)
+    return handleObjCGCTypeAttr(state, attr, type);
+  assert(attr.getKind() == AttributeList::AT_objc_lifetime);
+  return handleObjCLifetimeTypeAttr(state, attr, type);
 }
 
 /// Given that an objc_gc attribute was written somewhere on a
@@ -447,7 +453,12 @@ distributeFunctionTypeAttrToInnermost(TypeProcessingState &state,
     return true;
   }
 
-  return handleFunctionTypeAttr(state, attr, declSpecType);
+  if (handleFunctionTypeAttr(state, attr, declSpecType)) {
+    spliceAttrOutOfList(attr, attrList);
+    return true;
+  }
+
+  return false;
 }
 
 /// A function type attribute was written in the decl spec.  Try to
@@ -511,6 +522,11 @@ static void distributeTypeAttrsFromDeclarator(TypeProcessingState &state,
     OBJC_POINTER_TYPE_ATTRS_CASELIST:
       distributeObjCPointerTypeAttrFromDeclarator(state, *attr, declSpecType);
       break;
+
+    case AttributeList::AT_ns_returns_retained:
+      if (!state.getSema().getLangOptions().ObjCAutoRefCount)
+        break;
+      // fallthrough
 
     FUNCTION_TYPE_ATTRS_CASELIST:
       distributeFunctionTypeAttrFromDeclarator(state, *attr, declSpecType);
@@ -1017,6 +1033,51 @@ QualType Sema::BuildParenType(QualType T) {
   return Context.getParenType(T);
 }
 
+/// Given that we're building a pointer or reference to the given
+static QualType inferARCLifetimeForPointee(Sema &S, QualType type,
+                                           SourceLocation loc,
+                                           bool isReference) {
+  // Bail out if retention is unrequired or already specified.
+  if (!type->isObjCLifetimeType() ||
+      type.getObjCLifetime() != Qualifiers::OCL_None)
+    return type;
+
+  Qualifiers::ObjCLifetime implicitLifetime = Qualifiers::OCL_None;
+
+  // If the object type is const-qualified, we can safely use
+  // __unsafe_unretained.  This is safe (because there are no read
+  // barriers), and it'll be safe to coerce anything but __weak* to
+  // the resulting type.
+  if (type.isConstQualified()) {
+    implicitLifetime = Qualifiers::OCL_ExplicitNone;
+
+  // Otherwise, check whether the static type does not require
+  // retaining.  This currently only triggers for Class (possibly
+  // protocol-qualifed, and arrays thereof).
+  } else if (type->isObjCARCImplicitlyUnretainedType()) {
+    implicitLifetime = Qualifiers::OCL_ExplicitNone;
+
+  // If that failed, give an error and recover using __autoreleasing.
+  } else {
+    // These types can show up in private ivars in system headers, so
+    // we need this to not be an error in those cases.  Instead we
+    // want to delay.
+    if (S.DelayedDiagnostics.shouldDelayDiagnostics()) {
+      S.DelayedDiagnostics.add(
+          sema::DelayedDiagnostic::makeForbiddenType(loc,
+              diag::err_arc_indirect_no_lifetime, type, isReference));
+    } else {
+      S.Diag(loc, diag::err_arc_indirect_no_lifetime) << type << isReference;
+    }
+    implicitLifetime = Qualifiers::OCL_Autoreleasing;
+  }
+  assert(implicitLifetime && "didn't infer any lifetime!");
+
+  Qualifiers qs;
+  qs.addObjCLifetime(implicitLifetime);
+  return S.Context.getQualifiedType(type, qs);
+}
+
 /// \brief Build a pointer type.
 ///
 /// \param T The type to which we'll be building a pointer.
@@ -1040,6 +1101,10 @@ QualType Sema::BuildPointerType(QualType T,
   }
 
   assert(!T->isObjCObjectType() && "Should build ObjCObjectPointerType");
+
+  // In ARC, it is forbidden to build pointers to unqualified pointers.
+  if (getLangOptions().ObjCAutoRefCount)
+    T = inferARCLifetimeForPointee(*this, T, Loc, /*reference*/ false);
 
   // Build the pointer type.
   return Context.getPointerType(T);
@@ -1093,6 +1158,10 @@ QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
     Diag(Loc, diag::err_reference_to_void);
     return QualType();
   }
+
+  // In ARC, it is forbidden to build references to unqualified pointers.
+  if (getLangOptions().ObjCAutoRefCount)
+    T = inferARCLifetimeForPointee(*this, T, Loc, /*reference*/ true);
 
   // Handle restrict on references.
   if (LValueRef)
@@ -1266,10 +1335,12 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   if (!getLangOptions().C99) {
     if (T->isVariableArrayType()) {
       // Prohibit the use of non-POD types in VLAs.
+      QualType BaseT = Context.getBaseElementType(T);
       if (!T->isDependentType() && 
-          !Context.getBaseElementType(T)->isPODType()) {
+          !BaseT.isPODType(Context) &&
+          !BaseT->isObjCLifetimeType()) {
         Diag(Loc, diag::err_vla_non_pod)
-          << Context.getBaseElementType(T);
+          << BaseT;
         return QualType();
       } 
       // Prohibit the use of VLAs during template argument deduction.
@@ -1490,6 +1561,111 @@ QualType Sema::GetTypeFromParser(ParsedType Ty, TypeSourceInfo **TInfo) {
   return QT;
 }
 
+/// Given that this is the declaration of a parameter under ARC,
+/// attempt to infer attributes and such for pointer-to-whatever
+/// types.
+static void inferARCWriteback(TypeProcessingState &state,
+                              QualType &declSpecType) {
+  Sema &S = state.getSema();
+  Declarator &declarator = state.getDeclarator();
+
+  // TODO: should we care about decl qualifiers?
+
+  // Check whether the declarator has the expected form.  We walk
+  // from the inside out in order to make the block logic work.
+  unsigned outermostPointerIndex = 0;
+  bool isBlockPointer = false;
+  unsigned numPointers = 0;
+  for (unsigned i = 0, e = declarator.getNumTypeObjects(); i != e; ++i) {
+    unsigned chunkIndex = i;
+    DeclaratorChunk &chunk = declarator.getTypeObject(chunkIndex);
+    switch (chunk.Kind) {
+    case DeclaratorChunk::Paren:
+      // Ignore parens.
+      break;
+
+    case DeclaratorChunk::Reference:
+    case DeclaratorChunk::Pointer:
+      // Count the number of pointers.  Treat references
+      // interchangeably as pointers; if they're mis-ordered, normal
+      // type building will discover that.
+      outermostPointerIndex = chunkIndex;
+      numPointers++;
+      break;
+
+    case DeclaratorChunk::BlockPointer:
+      // If we have a pointer to block pointer, that's an acceptable
+      // indirect reference; anything else is not an application of
+      // the rules.
+      if (numPointers != 1) return;
+      numPointers++;
+      outermostPointerIndex = chunkIndex;
+      isBlockPointer = true;
+
+      // We don't care about pointer structure in return values here.
+      goto done;
+
+    case DeclaratorChunk::Array: // suppress if written (id[])?
+    case DeclaratorChunk::Function:
+    case DeclaratorChunk::MemberPointer:
+      return;
+    }
+  }
+ done:
+
+  // If we have *one* pointer, then we want to throw the qualifier on
+  // the declaration-specifiers, which means that it needs to be a
+  // retainable object type.
+  if (numPointers == 1) {
+    // If it's not a retainable object type, the rule doesn't apply.
+    if (!declSpecType->isObjCRetainableType()) return;
+
+    // If it already has lifetime, don't do anything.
+    if (declSpecType.getObjCLifetime()) return;
+
+    // Otherwise, modify the type in-place.
+    Qualifiers qs;
+    
+    if (declSpecType->isObjCARCImplicitlyUnretainedType())
+      qs.addObjCLifetime(Qualifiers::OCL_ExplicitNone);
+    else
+      qs.addObjCLifetime(Qualifiers::OCL_Autoreleasing);
+    declSpecType = S.Context.getQualifiedType(declSpecType, qs);
+
+  // If we have *two* pointers, then we want to throw the qualifier on
+  // the outermost pointer.
+  } else if (numPointers == 2) {
+    // If we don't have a block pointer, we need to check whether the
+    // declaration-specifiers gave us something that will turn into a
+    // retainable object pointer after we slap the first pointer on it.
+    if (!isBlockPointer && !declSpecType->isObjCObjectType())
+      return;
+
+    // Look for an explicit lifetime attribute there.
+    DeclaratorChunk &chunk = declarator.getTypeObject(outermostPointerIndex);
+    assert(chunk.Kind == DeclaratorChunk::Pointer ||
+           chunk.Kind == DeclaratorChunk::BlockPointer);
+    for (const AttributeList *attr = chunk.getAttrs(); attr;
+           attr = attr->getNext())
+      if (attr->getKind() == AttributeList::AT_objc_lifetime)
+        return;
+
+    // If there wasn't one, add one (with an invalid source location
+    // so that we don't make an AttributedType for it).
+    AttributeList *attr = declarator.getAttributePool()
+      .create(&S.Context.Idents.get("objc_lifetime"), SourceLocation(),
+              /*scope*/ 0, SourceLocation(),
+              &S.Context.Idents.get("autoreleasing"), SourceLocation(),
+              /*args*/ 0, 0,
+              /*declspec*/ false, /*C++0x*/ false);
+    spliceAttrIntoList(*attr, chunk.getAttrListRef());
+
+  // Any other number of pointers/references does not trigger the rule.
+  } else return;
+
+  // TODO: mark whether we did this inference?
+}
+
 static void DiagnoseIgnoredQualifiers(unsigned Quals,
                                       SourceLocation ConstQualLoc,
                                       SourceLocation VolatileQualLoc,
@@ -1598,6 +1774,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
 
   if (D.getAttributes())
     distributeTypeAttrsFromDeclarator(state, T);
+
+  if (D.isPrototypeContext() && getLangOptions().ObjCAutoRefCount)
+    inferARCWriteback(state, T);
 
   // C++0x [dcl.spec.auto]p5: reject 'auto' if it is not in an allowed context.
   // In C++0x, a function declarator using 'auto' must have a trailing return
@@ -1922,6 +2101,10 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
         llvm::SmallVector<QualType, 16> ArgTys;
         ArgTys.reserve(FTI.NumArgs);
 
+        llvm::SmallVector<bool, 16> ConsumedArguments;
+        ConsumedArguments.reserve(FTI.NumArgs);
+        bool HasAnyConsumedArguments = false;
+
         for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
           ParmVarDecl *Param = cast<ParmVarDecl>(FTI.ArgInfo[i].Param);
           QualType ArgTy = Param->getType();
@@ -1967,8 +2150,17 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
             }
           }
 
+          if (getLangOptions().ObjCAutoRefCount) {
+            bool Consumed = Param->hasAttr<NSConsumedAttr>();
+            ConsumedArguments.push_back(Consumed);
+            HasAnyConsumedArguments |= Consumed;
+          }
+
           ArgTys.push_back(ArgTy);
         }
+
+        if (HasAnyConsumedArguments)
+          EPI.ConsumedArguments = ConsumedArguments.data();
 
         llvm::SmallVector<QualType, 4> Exceptions;
         EPI.ExceptionSpecType = FTI.getExceptionSpecType();
@@ -2282,6 +2474,8 @@ static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
     return AttributeList::AT_neon_polyvector_type;
   case AttributedType::attr_objc_gc:
     return AttributeList::AT_objc_gc;
+  case AttributedType::attr_objc_lifetime:
+    return AttributeList::AT_objc_lifetime;
   case AttributedType::attr_noreturn:
     return AttributeList::AT_noreturn;
   case AttributedType::attr_cdecl:
@@ -2512,6 +2706,9 @@ namespace {
       llvm_unreachable("qualified type locs not expected here!");
     }
 
+    void VisitAttributedTypeLoc(AttributedTypeLoc TL) {
+      fillAttributedTypeLoc(TL, Chunk.getAttrs());
+    }
     void VisitBlockPointerTypeLoc(BlockPointerTypeLoc TL) {
       assert(Chunk.Kind == DeclaratorChunk::BlockPointer);
       TL.setCaretLoc(Chunk.Loc);
@@ -2707,8 +2904,6 @@ TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   return CreateParsedType(T, TInfo);
 }
 
-
-
 //===----------------------------------------------------------------------===//
 // Type Attribute Processing
 //===----------------------------------------------------------------------===//
@@ -2765,6 +2960,83 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
 
   unsigned ASIdx = static_cast<unsigned>(addrSpace.getZExtValue());
   Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
+}
+
+/// handleObjCLifetimeTypeAttr - Process an objc_lifetime
+/// attribute on the specified type.
+///
+/// Returns 'true' if the attribute was handled.
+static bool handleObjCLifetimeTypeAttr(TypeProcessingState &state,
+                                       AttributeList &attr,
+                                       QualType &type) {
+  if (!type->isObjCRetainableType() && !type->isDependentType())
+    return false;
+
+  Sema &S = state.getSema();
+
+  if (type.getQualifiers().getObjCLifetime()) {
+    S.Diag(attr.getLoc(), diag::err_attr_objc_lifetime_redundant)
+      << type;
+    return true;
+  }
+
+  if (!attr.getParameterName()) {
+    S.Diag(attr.getLoc(), diag::err_attribute_argument_n_not_string)
+      << "objc_lifetime" << 1;
+    attr.setInvalid();
+    return true;
+  }
+
+  Qualifiers::ObjCLifetime lifetime;
+  if (attr.getParameterName()->isStr("none"))
+    lifetime = Qualifiers::OCL_ExplicitNone;
+  else if (attr.getParameterName()->isStr("strong"))
+    lifetime = Qualifiers::OCL_Strong;
+  else if (attr.getParameterName()->isStr("weak"))
+    lifetime = Qualifiers::OCL_Weak;
+  else if (attr.getParameterName()->isStr("autoreleasing"))
+    lifetime = Qualifiers::OCL_Autoreleasing;
+  else {
+    S.Diag(attr.getLoc(), diag::warn_attribute_type_not_supported)
+      << "objc_lifetime" << attr.getParameterName();
+    attr.setInvalid();
+    return true;
+  }
+
+  // Consume lifetime attributes without further comment outside of
+  // ARC mode.
+  if (!S.getLangOptions().ObjCAutoRefCount)
+    return true;
+
+  Qualifiers qs;
+  qs.setObjCLifetime(lifetime);
+  QualType origType = type;
+  type = S.Context.getQualifiedType(type, qs);
+
+  // If we have a valid source location for the attribute, use an
+  // AttributedType instead.
+  if (attr.getLoc().isValid())
+    type = S.Context.getAttributedType(AttributedType::attr_objc_lifetime,
+                                       origType, type);
+
+  // Forbid __weak if we don't have a runtime.
+  if (lifetime == Qualifiers::OCL_Weak &&
+      S.getLangOptions().ObjCNoAutoRefCountRuntime) {
+
+    // Actually, delay this until we know what we're parsing.
+    if (S.DelayedDiagnostics.shouldDelayDiagnostics()) {
+      S.DelayedDiagnostics.add(
+          sema::DelayedDiagnostic::makeForbiddenType(attr.getLoc(),
+              diag::err_arc_weak_no_runtime, type, /*ignored*/ 0));
+    } else {
+      S.Diag(attr.getLoc(), diag::err_arc_weak_no_runtime);
+    }
+
+    attr.setInvalid();
+    return true;
+  }
+
+  return true;
 }
 
 /// handleObjCGCTypeAttr - Process the __attribute__((objc_gc)) type
@@ -2973,6 +3245,23 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
 
     // Otherwise we can process right away.
     FunctionType::ExtInfo EI = unwrapped.get()->getExtInfo().withNoReturn(true);
+    type = unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
+    return true;
+  }
+
+  // ns_returns_retained is not always a type attribute, but if we got
+  // here, we're treating it as one right now.
+  if (attr.getKind() == AttributeList::AT_ns_returns_retained) {
+    assert(S.getLangOptions().ObjCAutoRefCount &&
+           "ns_returns_retained treated as type attribute in non-ARC");
+    if (attr.getNumArgs()) return true;
+
+    // Delay if this is not a function type.
+    if (!unwrapped.isFunctionType())
+      return false;
+
+    FunctionType::ExtInfo EI
+      = unwrapped.get()->getExtInfo().withProducesResult(true);
     type = unwrapped.wrap(S, S.Context.adjustFunctionType(unwrapped.get(), EI));
     return true;
   }
@@ -3288,10 +3577,14 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
                                VectorType::NeonPolyVector,
                                "neon_polyvector_type");
       break;
-
     case AttributeList::AT_opencl_image_access:
       HandleOpenCLImageAccessAttribute(type, attr, state.getSema());
       break;
+
+    case AttributeList::AT_ns_returns_retained:
+      if (!state.getSema().getLangOptions().ObjCAutoRefCount)
+	break;
+      // fallthrough into the function attrs
 
     FUNCTION_TYPE_ATTRS_CASELIST:
       // Never process function type attributes as part of the

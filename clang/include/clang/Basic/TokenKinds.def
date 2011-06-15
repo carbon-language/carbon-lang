@@ -422,6 +422,11 @@ KEYWORD(__pascal                    , KEYALL)
 KEYWORD(__vector                    , KEYALTIVEC)
 KEYWORD(__pixel                     , KEYALTIVEC)
 
+// Objective-C ARC keywords.
+KEYWORD(__bridge                     , KEYARC)
+KEYWORD(__bridge_transfer            , KEYARC)
+KEYWORD(__bridge_retained            , KEYARC)
+
 // Alternate spelling for various tokens.  There are GCC extensions in all
 // languages, but should not be disabled in strict conformance mode.
 ALIAS("__alignof__"  , __alignof  , KEYALL)
@@ -507,6 +512,7 @@ OBJC1_AT_KEYWORD(try)
 OBJC1_AT_KEYWORD(catch)
 OBJC1_AT_KEYWORD(finally)
 OBJC1_AT_KEYWORD(synchronized)
+OBJC1_AT_KEYWORD(autoreleasepool)
 
 OBJC2_AT_KEYWORD(property)
 OBJC2_AT_KEYWORD(package)

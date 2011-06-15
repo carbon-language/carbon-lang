@@ -57,6 +57,16 @@ private:
   // the argument translation business.
   mutable bool TargetInitialized;
 
+  // FIXME: Remove this once there is a proper way to detect an ARC runtime
+  // for the simulator.
+ public:
+  mutable enum {
+    ARCSimulator_None,
+    ARCSimulator_HasARCRuntime,
+    ARCSimulator_NoARCRuntime
+  } ARCRuntimeForSimulator;
+
+private:
   /// Whether we are targeting iPhoneOS target.
   mutable bool TargetIsIPhoneOS;
 
@@ -157,6 +167,10 @@ public:
   virtual void AddLinkSearchPathArgs(const ArgList &Args,
                                      ArgStringList &CmdArgs) const = 0;
 
+  /// AddLinkARCArgs - Add the linker arguments to link the ARC runtime library.
+  virtual void AddLinkARCArgs(const ArgList &Args,
+                              ArgStringList &CmdArgs) const = 0;
+  
   /// AddLinkRuntimeLibArgs - Add the linker arguments to link the compiler
   /// runtime library.
   virtual void AddLinkRuntimeLibArgs(const ArgList &Args,
@@ -169,6 +183,8 @@ public:
   virtual types::ID LookupTypeForExtension(const char *Ext) const;
 
   virtual bool HasNativeLLVMSupport() const;
+
+  virtual bool HasARCRuntime() const;
 
   virtual DerivedArgList *TranslateArgs(const DerivedArgList &Args,
                                         const char *BoundArch) const;
@@ -257,6 +273,8 @@ public:
   virtual void AddCCKextLibArgs(const ArgList &Args,
                                 ArgStringList &CmdArgs) const;
 
+  virtual void AddLinkARCArgs(const ArgList &Args,
+                              ArgStringList &CmdArgs) const;
   /// }
 };
 

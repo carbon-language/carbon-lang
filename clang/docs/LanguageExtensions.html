@@ -65,6 +65,7 @@ td {
 <li><a href="#objc_features">Objective-C Features</a>
   <ul>
     <li><a href="#objc_instancetype">Related result types</a></li>
+    <li><a href="#objc_arc">Automatic reference counting</a></li>
   </ul>
 </li>
 <li><a href="#overloading-in-c">Function Overloading in C</a></li>
@@ -668,6 +669,12 @@ with the subclass type. For example:</p>
 property access via the given method. In all other respects, a method
 with a related result type is treated the same way as method without a
 related result type.</p>
+
+<!-- ======================================================================= -->
+<h2 id="objc_arc">Automatic reference counting </h2>
+<!-- ======================================================================= -->
+
+<p>Clang provides support for <a href="AutomaticReferenceCounting.html">automated reference counting</a> in Objective-C, which eliminates the need for manual retain/release/autorelease message sends. There are two feature macros associated with automatic reference counting: <code>__has_feature(objc_arc)</code> indicates the availability of automated reference counting in general, while <code>__has_feature(objc_arc_weak)</code> indicates that automated reference counting also includes support for <code>__weak</code> pointers to Objective-C objects.</p>
 
 <!-- ======================================================================= -->
 <h2 id="overloading-in-c">Function Overloading in C</h2>

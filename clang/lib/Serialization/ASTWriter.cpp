@@ -170,6 +170,7 @@ void ASTTypeWriter::VisitFunctionType(const FunctionType *T) {
   Record.push_back(C.getRegParm());
   // FIXME: need to stabilize encoding of calling convention...
   Record.push_back(C.getCC());
+  Record.push_back(C.getProducesResult());
 }
 
 void ASTTypeWriter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
@@ -1109,6 +1110,8 @@ void ASTWriter::WriteLanguageOptions(const LangOptions &LangOpts) {
   Record.push_back(LangOpts.ElideConstructors);
   Record.push_back(LangOpts.SpellChecking);
   Record.push_back(LangOpts.MRTD);
+  Record.push_back(LangOpts.ObjCAutoRefCount);
+  Record.push_back(LangOpts.ObjCInferRelatedReturnType);
   Stream.EmitRecord(LANGUAGE_OPTIONS, Record);
 }
 

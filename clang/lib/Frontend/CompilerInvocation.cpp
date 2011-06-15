@@ -169,6 +169,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-fno-use-cxa-atexit");
   if (Opts.CXXCtorDtorAliases)
     Res.push_back("-mconstructor-aliases");
+  if (Opts.ObjCAutoRefCountExceptions)
+    Res.push_back("-fobjc-arc-eh");
   if (!Opts.DebugPass.empty()) {
     Res.push_back("-mdebug-pass");
     Res.push_back(Opts.DebugPass);
@@ -670,6 +672,10 @@ static void LangOptsToArgs(const LangOptions &Opts,
       Res.push_back("-fobjc-gc-only");
     }
   }
+  if (Opts.ObjCAutoRefCount)
+    Res.push_back("-fobjc-arc");
+  if (Opts.ObjCNoAutoRefCountRuntime)
+    Res.push_back("-fobjc-no-arc-runtime");
   if (!Opts.ObjCInferRelatedResultType)
     Res.push_back("-fno-objc-infer-related-result-type");
   
@@ -951,6 +957,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                      (Opts.OptimizationLevel > 1 && !Opts.OptimizeSize);
 
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
+  Opts.ObjCAutoRefCountExceptions = Args.hasArg(OPT_fobjc_arc_exceptions);
   Opts.CXAAtExit = !Args.hasArg(OPT_fno_use_cxa_atexit);
   Opts.CXXCtorDtorAliases = Args.hasArg(OPT_mconstructor_aliases);
   Opts.CodeModel = Args.getLastArgValue(OPT_mcode_model);
@@ -1480,17 +1487,26 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   if (Args.hasArg(OPT_fno_operator_names))
     Opts.CXXOperatorNames = 0;
 
+  if (Opts.ObjC1) {
+    if (Args.hasArg(OPT_fobjc_gc_only))
+      Opts.setGCMode(LangOptions::GCOnly);
+    else if (Args.hasArg(OPT_fobjc_gc))
+      Opts.setGCMode(LangOptions::HybridGC);
+    else if (Args.hasArg(OPT_fobjc_arc)) {
+      Opts.ObjCAutoRefCount = 1;
+      if (!Args.hasArg(OPT_fobjc_nonfragile_abi))
+        Diags.Report(diag::err_arc_nonfragile_abi);
+      if (Args.hasArg(OPT_fobjc_no_arc_runtime))
+        Opts.ObjCNoAutoRefCountRuntime = 1;
+    }
+
+    if (Args.hasArg(OPT_fno_objc_infer_related_result_type))
+      Opts.ObjCInferRelatedResultType = 0;
+  }
+    
   if (Args.hasArg(OPT_fgnu89_inline))
     Opts.GNUInline = 1;
 
-  if (Args.hasArg(OPT_fobjc_gc_only))
-    Opts.setGCMode(LangOptions::GCOnly);
-  else if (Args.hasArg(OPT_fobjc_gc))
-    Opts.setGCMode(LangOptions::HybridGC);
-  
-  if (Args.hasArg(OPT_fno_objc_infer_related_result_type))
-    Opts.ObjCInferRelatedResultType = 0;
-  
   if (Args.hasArg(OPT_fapple_kext)) {
     if (!Opts.CPlusPlus)
       Diags.Report(diag::warn_c_kext);
@@ -1714,6 +1730,19 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
     }
 
     Opts.addRemappedFile(Split.first, Split.second);
+  }
+  
+  if (Arg *A = Args.getLastArg(OPT_fobjc_arc_cxxlib_EQ)) {
+    llvm::StringRef Name = A->getValue(Args);
+    unsigned Library = llvm::StringSwitch<unsigned>(Name)
+      .Case("libc++", ARCXX_libcxx)
+      .Case("libstdc++", ARCXX_libstdcxx)
+      .Case("none", ARCXX_nolib)
+      .Default(~0U);
+    if (Library == ~0U)
+      Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Name;
+    else
+      Opts.ObjCXXARCStandardLibrary = (ObjCXXARCStandardLibraryKind)Library;
   }
 }
 

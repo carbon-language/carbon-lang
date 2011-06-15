@@ -101,8 +101,6 @@ public:
 /// bitfields, this is not a simple LLVM pointer, it may be a pointer plus a
 /// bitrange.
 class LValue {
-  // FIXME: alignment?
-
   enum {
     Simple,       // This is a normal l-value, use getAddress().
     VectorElt,    // This is a vector element l-value (V[i]), use getVector*
@@ -318,9 +316,11 @@ public:
 class AggValueSlot {
   /// The address.
   llvm::Value *Addr;
+
+  // Qualifiers
+  Qualifiers Quals;
   
   // Associated flags.
-  bool VolatileFlag : 1;
   bool LifetimeFlag : 1;
   bool RequiresGCollection : 1;
   
@@ -335,25 +335,31 @@ public:
   static AggValueSlot ignored() {
     AggValueSlot AV;
     AV.Addr = 0;
-    AV.VolatileFlag = AV.LifetimeFlag = AV.RequiresGCollection = AV.IsZeroed =0;
+    AV.Quals = Qualifiers();
+    AV.LifetimeFlag = AV.RequiresGCollection = AV.IsZeroed =0;
     return AV;
   }
 
   /// forAddr - Make a slot for an aggregate value.
   ///
   /// \param Volatile - true if the slot should be volatile-initialized
+  ///
+  /// \param Qualifiers - The qualifiers that dictate how the slot
+  /// should be initialied. Only 'volatile' and the Objective-C
+  /// lifetime qualifiers matter.
+  ///
   /// \param LifetimeExternallyManaged - true if the slot's lifetime
   ///   is being externally managed; false if a destructor should be
   ///   registered for any temporaries evaluated into the slot
   /// \param RequiresGCollection - true if the slot is located
   ///   somewhere that ObjC GC calls should be emitted for
-  static AggValueSlot forAddr(llvm::Value *Addr, bool Volatile,
+  static AggValueSlot forAddr(llvm::Value *Addr, Qualifiers Quals,
                               bool LifetimeExternallyManaged,
                               bool RequiresGCollection = false,
                               bool IsZeroed = false) {
     AggValueSlot AV;
     AV.Addr = Addr;
-    AV.VolatileFlag = Volatile;
+    AV.Quals = Quals;
     AV.LifetimeFlag = LifetimeExternallyManaged;
     AV.RequiresGCollection = RequiresGCollection;
     AV.IsZeroed = IsZeroed;
@@ -362,7 +368,7 @@ public:
 
   static AggValueSlot forLValue(LValue LV, bool LifetimeExternallyManaged,
                                 bool RequiresGCollection = false) {
-    return forAddr(LV.getAddress(), LV.isVolatileQualified(),
+    return forAddr(LV.getAddress(), LV.getQuals(),
                    LifetimeExternallyManaged, RequiresGCollection);
   }
 
@@ -373,8 +379,14 @@ public:
     LifetimeFlag = Managed;
   }
 
+  Qualifiers getQualifiers() const { return Quals; }
+
   bool isVolatile() const {
-    return VolatileFlag;
+    return Quals.hasVolatile();
+  }
+
+  Qualifiers::ObjCLifetime getObjCLifetime() const {
+    return Quals.getObjCLifetime();
   }
 
   bool requiresGCollection() const {

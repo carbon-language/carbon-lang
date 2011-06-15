@@ -16,6 +16,8 @@
 // CHECK-CC1-NEXT: {TypedText readwrite}
 // CHECK-CC1-NEXT: {TypedText retain}
 // CHECK-CC1-NEXT: {TypedText setter}{Text  = }{Placeholder method}
+// CHECK-CC1-NEXT: {TypedText strong}
+// CHECK-CC1-NEXT: {TypedText unsafe_unretained}
 // RUN: c-index-test -code-completion-at=%s:8:18 %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: {TypedText getter}{Text  = }{Placeholder method}
 // CHECK-CC2-NEXT: {TypedText nonatomic}

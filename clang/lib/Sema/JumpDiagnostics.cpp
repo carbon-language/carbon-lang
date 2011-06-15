@@ -111,90 +111,110 @@ unsigned JumpScopeChecker::GetDeepestCommonScope(unsigned A, unsigned B) {
   return A;
 }
 
+typedef std::pair<unsigned,unsigned> ScopePair;
+
 /// GetDiagForGotoScopeDecl - If this decl induces a new goto scope, return a
 /// diagnostic that should be emitted if control goes over it. If not, return 0.
-static std::pair<unsigned,unsigned>
-    GetDiagForGotoScopeDecl(const Decl *D, bool isCPlusPlus) {
+static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     unsigned InDiag = 0, OutDiag = 0;
     if (VD->getType()->isVariablyModifiedType())
       InDiag = diag::note_protected_by_vla;
 
-    if (VD->hasAttr<BlocksAttr>()) {
-      InDiag = diag::note_protected_by___block;
-      OutDiag = diag::note_exits___block;
-    } else if (VD->hasAttr<CleanupAttr>()) {
-      InDiag = diag::note_protected_by_cleanup;
-      OutDiag = diag::note_exits_cleanup;
-    } else if (isCPlusPlus) {
-      if (!VD->hasLocalStorage())
-        return std::make_pair(InDiag, OutDiag);
-      
-      ASTContext &Context = D->getASTContext();
-      QualType T = Context.getBaseElementType(VD->getType());
-      if (!T->isDependentType()) {
-        // C++0x [stmt.dcl]p3:
-        //   A program that jumps from a point where a variable with automatic
-        //   storage duration is not in scope to a point where it is in scope
-        //   is ill-formed unless the variable has scalar type, class type with
-        //   a trivial default constructor and a trivial destructor, a 
-        //   cv-qualified version of one of these types, or an array of one of
-        //   the preceding types and is declared without an initializer (8.5).
-        // Check whether this is a C++ class.
-        CXXRecordDecl *Record = T->getAsCXXRecordDecl();
-        
-        if (const Expr *Init = VD->getInit()) {
-          bool CallsTrivialConstructor = false;
-          if (Record) {
-            // FIXME: With generalized initializer lists, this may
-            // classify "X x{};" as having no initializer.
-            if (const CXXConstructExpr *Construct 
-                                        = dyn_cast<CXXConstructExpr>(Init))
-              if (const CXXConstructorDecl *Constructor
-                                                = Construct->getConstructor())
-                if ((Context.getLangOptions().CPlusPlus0x
-                       ? Record->hasTrivialDefaultConstructor()
-                       : Record->isPOD()) &&
-                    Constructor->isDefaultConstructor())
-                  CallsTrivialConstructor = true;
-            
-            if (CallsTrivialConstructor && !Record->hasTrivialDestructor())
-              InDiag = diag::note_protected_by_variable_nontriv_destructor;
+    if (VD->hasAttr<BlocksAttr>())
+      return ScopePair(diag::note_protected_by___block,
+                       diag::note_exits___block);
+
+    if (VD->hasAttr<CleanupAttr>())
+      return ScopePair(diag::note_protected_by_cleanup,
+                       diag::note_exits_cleanup);
+
+    if (Context.getLangOptions().ObjCAutoRefCount && VD->hasLocalStorage()) {
+      switch (VD->getType().getObjCLifetime()) {
+      case Qualifiers::OCL_None:
+      case Qualifiers::OCL_ExplicitNone:
+      case Qualifiers::OCL_Autoreleasing:
+        break;
+
+      case Qualifiers::OCL_Strong:
+      case Qualifiers::OCL_Weak:
+        return ScopePair(diag::note_protected_by_objc_lifetime,
+                         diag::note_exits_objc_lifetime);
+      }
+    }
+
+    if (Context.getLangOptions().CPlusPlus && VD->hasLocalStorage()) {
+      // C++0x [stmt.dcl]p3:
+      //   A program that jumps from a point where a variable with automatic
+      //   storage duration is not in scope to a point where it is in scope
+      //   is ill-formed unless the variable has scalar type, class type with
+      //   a trivial default constructor and a trivial destructor, a 
+      //   cv-qualified version of one of these types, or an array of one of
+      //   the preceding types and is declared without an initializer.
+
+      // C++03 [stmt.dcl.p3:
+      //   A program that jumps from a point where a local variable
+      //   with automatic storage duration is not in scope to a point
+      //   where it is in scope is ill-formed unless the variable has
+      //   POD type and is declared without an initializer.
+
+      if (const Expr *init = VD->getInit()) {
+        // We actually give variables of record type (or array thereof)
+        // an initializer even if that initializer only calls a trivial
+        // ctor.  Detect that case.
+        // FIXME: With generalized initializer lists, this may
+        // classify "X x{};" as having no initializer.
+        unsigned inDiagToUse = diag::note_protected_by_variable_init;
+
+        const CXXRecordDecl *record = 0;
+
+        if (const CXXConstructExpr *cce = dyn_cast<CXXConstructExpr>(init)) {
+          const CXXConstructorDecl *ctor = cce->getConstructor();
+          record = ctor->getParent();
+
+          if (ctor->isTrivial() && ctor->isDefaultConstructor()) {
+            if (Context.getLangOptions().CPlusPlus0x) {
+              inDiagToUse = (record->hasTrivialDestructor() ? 0 :
+                        diag::note_protected_by_variable_nontriv_destructor);
+            } else {
+              if (record->isPOD())
+                inDiagToUse = 0;
+            }
           }
-          
-          if (!CallsTrivialConstructor)
-            InDiag = diag::note_protected_by_variable_init;
+        } else if (VD->getType()->isArrayType()) {
+          record = VD->getType()->getBaseElementTypeUnsafe()
+                                ->getAsCXXRecordDecl();
         }
-        
-        // Note whether we have a class with a non-trivial destructor.
-        if (Record && !Record->hasTrivialDestructor())
+
+        if (inDiagToUse)
+          InDiag = inDiagToUse;
+
+        // Also object to indirect jumps which leave scopes with dtors.
+        if (record && !record->hasTrivialDestructor())
           OutDiag = diag::note_exits_dtor;
       }
     }
     
-    return std::make_pair(InDiag, OutDiag);    
+    return ScopePair(InDiag, OutDiag);    
   }
 
   if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     if (TD->getUnderlyingType()->isVariablyModifiedType())
-      return std::make_pair((unsigned) diag::note_protected_by_vla_typedef, 0);
+      return ScopePair(diag::note_protected_by_vla_typedef, 0);
   }
 
   if (const TypeAliasDecl *TD = dyn_cast<TypeAliasDecl>(D)) {
     if (TD->getUnderlyingType()->isVariablyModifiedType())
-      return std::make_pair((unsigned) diag::note_protected_by_vla_type_alias, 0);
+      return ScopePair(diag::note_protected_by_vla_type_alias, 0);
   }
 
-  return std::make_pair(0U, 0U);
+  return ScopePair(0U, 0U);
 }
 
 /// \brief Build scope information for a declaration that is part of a DeclStmt.
 void JumpScopeChecker::BuildScopeInformation(Decl *D, unsigned &ParentScope) {
-  bool isCPlusPlus = this->S.getLangOptions().CPlusPlus;
-  
   // If this decl causes a new scope, push and switch to it.
-  std::pair<unsigned,unsigned> Diags
-    = GetDiagForGotoScopeDecl(D, isCPlusPlus);
+  std::pair<unsigned,unsigned> Diags = GetDiagForGotoScopeDecl(S.Context, D);
   if (Diags.first || Diags.second) {
     Scopes.push_back(GotoScope(ParentScope, Diags.first, Diags.second,
                                D->getLocation()));
@@ -366,6 +386,18 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned ParentScope) {
         BuildScopeInformation(CS->getHandlerBlock(), Scopes.size()-1);
       }
 
+      continue;
+    }
+
+    // Disallow jumps into the protected statement of an @autoreleasepool.
+    if (ObjCAutoreleasePoolStmt *AS = dyn_cast<ObjCAutoreleasePoolStmt>(SubStmt)){
+      // Recursively walk the AST for the @autoreleasepool part, protected by a new
+      // scope.
+      Scopes.push_back(GotoScope(ParentScope,
+                                 diag::note_protected_by_objc_autoreleasepool,
+                                 diag::note_exits_objc_autoreleasepool,
+                                 AS->getAtLoc()));
+      BuildScopeInformation(AS->getSubStmt(), Scopes.size()-1);
       continue;
     }
 

@@ -342,6 +342,39 @@ public:
   child_range children() { return child_range(&Throw, &Throw+1); }
 };
 
+/// ObjCAutoreleasePoolStmt - This represent objective-c's 
+/// @autoreleasepool Statement
+class ObjCAutoreleasePoolStmt : public Stmt {
+  Stmt *SubStmt;
+  SourceLocation AtLoc;
+public:
+  ObjCAutoreleasePoolStmt(SourceLocation atLoc, 
+                            Stmt *subStmt)
+  : Stmt(ObjCAutoreleasePoolStmtClass),
+    SubStmt(subStmt), AtLoc(atLoc) {}
+
+  explicit ObjCAutoreleasePoolStmt(EmptyShell Empty) :
+    Stmt(ObjCAutoreleasePoolStmtClass, Empty) { }
+
+  const Stmt *getSubStmt() const { return SubStmt; }
+  Stmt *getSubStmt() { return SubStmt; }
+  void setSubStmt(Stmt *S) { SubStmt = S; }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(AtLoc, SubStmt->getLocEnd());
+  }
+
+  SourceLocation getAtLoc() const { return AtLoc; }
+  void setAtLoc(SourceLocation Loc) { AtLoc = Loc; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCAutoreleasePoolStmtClass;
+  }
+  static bool classof(const ObjCAutoreleasePoolStmt *) { return true; }
+
+  child_range children() { return child_range(&SubStmt, &SubStmt + 1); }
+};
+
 }  // end namespace clang
 
 #endif

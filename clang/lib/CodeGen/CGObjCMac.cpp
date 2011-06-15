@@ -63,10 +63,13 @@ private:
   /// The default messenger, used for sends whose ABI is unchanged from
   /// the all-integer/pointer case.
   llvm::Constant *getMessageSendFn() const {
+    // Add the non-lazy-bind attribute, since objc_msgSend is likely to
+    // be called a lot.
     const llvm::Type *params[] = { ObjectPtrTy, SelectorPtrTy };
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
                                                              params, true),
-                                     "objc_msgSend");
+                                     "objc_msgSend",
+                                     llvm::Attribute::NonLazyBind);
   }
 
   /// void objc_msgSend_stret (id, SEL, ...)
@@ -887,6 +890,11 @@ private:
   llvm::Value *EmitClassRef(CGBuilderTy &Builder,
                             const ObjCInterfaceDecl *ID);
   
+  llvm::Value *EmitClassRefFromId(CGBuilderTy &Builder,
+                                  IdentifierInfo *II);
+  
+  llvm::Value *EmitNSAutoreleasePoolClassRef(CGBuilderTy &Builder);
+  
   /// EmitSuperClassRef - Emits reference to class's main metadata class.
   llvm::Value *EmitSuperClassRef(const ObjCInterfaceDecl *ID);
 
@@ -1158,6 +1166,11 @@ private:
   /// for the given class reference.
   llvm::Value *EmitClassRef(CGBuilderTy &Builder,
                             const ObjCInterfaceDecl *ID);
+  
+  llvm::Value *EmitClassRefFromId(CGBuilderTy &Builder,
+                                  IdentifierInfo *II);
+  
+  llvm::Value *EmitNSAutoreleasePoolClassRef(CGBuilderTy &Builder);
 
   /// EmitSuperClassRef - Return a Value*, of type ObjCTypes.ClassPtrTy,
   /// for the given super class reference.
@@ -1526,7 +1539,7 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
     Arg0 = CGF.Builder.CreateBitCast(Arg0, ObjCTypes.ObjectPtrTy, "tmp");
   ActualArgs.add(RValue::get(Arg0), Arg0Ty);
   ActualArgs.add(RValue::get(Sel), CGF.getContext().getObjCSelType());
-  ActualArgs.insert(ActualArgs.end(), CallArgs.begin(), CallArgs.end());
+  ActualArgs.addFrom(CallArgs);
 
   CodeGenTypes &Types = CGM.getTypes();
   const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
@@ -1562,7 +1575,7 @@ static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
   if (FQT.isObjCGCStrong())
     return Qualifiers::Strong;
   
-  if (FQT.isObjCGCWeak())
+  if (FQT.isObjCGCWeak() || FQT.getObjCLifetime() == Qualifiers::OCL_Weak)
     return Qualifiers::Weak;
   
   if (FQT->isObjCObjectPointerType() || FQT->isBlockPointerType())
@@ -1579,7 +1592,8 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
   llvm::Constant *nullPtr = 
     llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
 
-  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
+  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC &&
+      !CGM.getLangOptions().ObjCAutoRefCount)
     return nullPtr;
 
   bool hasUnion = false;
@@ -2129,7 +2143,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
                      Interface->all_referenced_protocol_begin(),
                      Interface->all_referenced_protocol_end());
   unsigned Flags = eClassFlags_Factory;
-  if (ID->getNumIvarInitializers())
+  if (ID->hasCXXStructors())
     Flags |= eClassFlags_HasCXXStructors;
   unsigned Size =
     CGM.getContext().getASTObjCImplementationLayout(ID).getSize().getQuantity();
@@ -3461,23 +3475,33 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
   return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.SymtabPtrTy);
 }
 
-llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
-                                     const ObjCInterfaceDecl *ID) {
-  LazySymbols.insert(ID->getIdentifier());
-
-  llvm::GlobalVariable *&Entry = ClassReferences[ID->getIdentifier()];
-
+llvm::Value *CGObjCMac::EmitClassRefFromId(CGBuilderTy &Builder,
+                                     IdentifierInfo *II) {
+  LazySymbols.insert(II);
+  
+  llvm::GlobalVariable *&Entry = ClassReferences[II];
+  
   if (!Entry) {
     llvm::Constant *Casted =
-      llvm::ConstantExpr::getBitCast(GetClassName(ID->getIdentifier()),
-                                     ObjCTypes.ClassPtrTy);
+    llvm::ConstantExpr::getBitCast(GetClassName(II),
+                                   ObjCTypes.ClassPtrTy);
     Entry =
-      CreateMetadataVar("\01L_OBJC_CLASS_REFERENCES_", Casted,
-                        "__OBJC,__cls_refs,literal_pointers,no_dead_strip",
-                        4, true);
+    CreateMetadataVar("\01L_OBJC_CLASS_REFERENCES_", Casted,
+                      "__OBJC,__cls_refs,literal_pointers,no_dead_strip",
+                      4, true);
   }
-
+  
   return Builder.CreateLoad(Entry, "tmp");
+}
+
+llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
+                                     const ObjCInterfaceDecl *ID) {
+  return EmitClassRefFromId(Builder, ID->getIdentifier());
+}
+
+llvm::Value *CGObjCMac::EmitNSAutoreleasePoolClassRef(CGBuilderTy &Builder) {
+  IdentifierInfo *II = &CGM.getContext().Idents.get("NSAutoreleasePool");
+  return EmitClassRefFromId(Builder, II);
 }
 
 llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel,
@@ -3567,12 +3591,18 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
   uint64_t MaxFieldOffset = 0;
   uint64_t MaxSkippedFieldOffset = 0;
   uint64_t LastBitfieldOrUnnamedOffset = 0;
+  uint64_t FirstFieldDelta = 0;
 
   if (RecFields.empty())
     return;
   unsigned WordSizeInBits = CGM.getContext().Target.getPointerWidth(0);
   unsigned ByteSizeInBits = CGM.getContext().Target.getCharWidth();
-
+  if (!RD && CGM.getLangOptions().ObjCAutoRefCount) {
+    FieldDecl *FirstField = RecFields[0];
+    FirstFieldDelta = 
+      ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(FirstField));
+  }
+  
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     FieldDecl *Field = RecFields[i];
     uint64_t FieldOffset;
@@ -3580,9 +3610,10 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
       // Note that 'i' here is actually the field index inside RD of Field,
       // although this dependency is hidden.
       const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
-      FieldOffset = RL.getFieldOffset(i) / ByteSizeInBits;
+      FieldOffset = (RL.getFieldOffset(i) / ByteSizeInBits) - FirstFieldDelta;
     } else
-      FieldOffset = ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field));
+      FieldOffset = 
+        ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field)) - FirstFieldDelta;
 
     // Skip over unnamed or bitfields
     if (!Field->getIdentifier() || Field->isBitField()) {
@@ -3861,12 +3892,16 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   bool hasUnion = false;
 
   const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
+  if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC &&
+      !CGM.getLangOptions().ObjCAutoRefCount)
     return llvm::Constant::getNullValue(PtrTy);
 
   llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
   const ObjCInterfaceDecl *OI = OMD->getClassInterface();
-  CGM.getContext().DeepCollectObjCIvars(OI, true, Ivars);
+  if (CGM.getLangOptions().ObjCAutoRefCount)
+    CGM.getContext().ShallowCollectObjCIvars(OI, Ivars);
+  else
+    CGM.getContext().DeepCollectObjCIvars(OI, true, Ivars);
 
   llvm::SmallVector<FieldDecl*, 32> RecFields;
   for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
@@ -4743,7 +4778,12 @@ enum MetaDataDlags {
   CLS_META = 0x1,
   CLS_ROOT = 0x2,
   OBJC2_CLS_HIDDEN = 0x10,
-  CLS_EXCEPTION = 0x20
+  CLS_EXCEPTION = 0x20,
+
+  /// (Obsolete) ARC-specific: this class has a .release_ivars method
+  CLS_HAS_IVAR_RELEASER = 0x40,
+  /// class was compiled with -fobjc-arr
+  CLS_COMPILED_BY_ARC = 0x80  // (1<<7)
 };
 /// BuildClassRoTInitializer - generate meta-data for:
 /// struct _class_ro_t {
@@ -4767,6 +4807,10 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   const ObjCImplementationDecl *ID) {
   std::string ClassName = ID->getNameAsString();
   std::vector<llvm::Constant*> Values(10); // 11 for 64bit targets!
+
+  if (CGM.getLangOptions().ObjCAutoRefCount)
+    flags |= CLS_COMPILED_BY_ARC;
+
   Values[ 0] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
   Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceStart);
   Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
@@ -4936,7 +4980,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
     ID->getClassInterface()->getVisibility() == HiddenVisibility;
   if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
-  if (ID->getNumIvarInitializers())
+  if (ID->hasCXXStructors())
     flags |= eClassFlags_ABI2_HasCXXStructors;
   if (!ID->getClassInterface()->getSuperClass()) {
     // class is root
@@ -4972,7 +5016,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   flags = CLS;
   if (classIsHidden)
     flags |= OBJC2_CLS_HIDDEN;
-  if (ID->getNumIvarInitializers())
+  if (ID->hasCXXStructors())
     flags |= eClassFlags_ABI2_HasCXXStructors;
 
   if (hasObjCExceptionAttribute(CGM.getContext(), ID->getClassInterface()))
@@ -5719,26 +5763,37 @@ CGObjCNonFragileABIMac::GetClassGlobal(const std::string &Name) {
   return GV;
 }
 
-llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
-                                                  const ObjCInterfaceDecl *ID) {
-  llvm::GlobalVariable *&Entry = ClassReferences[ID->getIdentifier()];
-
+llvm::Value *CGObjCNonFragileABIMac::EmitClassRefFromId(CGBuilderTy &Builder,
+                                                        IdentifierInfo *II) {
+  llvm::GlobalVariable *&Entry = ClassReferences[II];
+  
   if (!Entry) {
-    std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
+    std::string ClassName(getClassSymbolPrefix() + II->getName().str());
     llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName);
     Entry =
-      new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassnfABIPtrTy,
-                               false, llvm::GlobalValue::InternalLinkage,
-                               ClassGV,
-                               "\01L_OBJC_CLASSLIST_REFERENCES_$_");
+    new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassnfABIPtrTy,
+                             false, llvm::GlobalValue::InternalLinkage,
+                             ClassGV,
+                             "\01L_OBJC_CLASSLIST_REFERENCES_$_");
     Entry->setAlignment(
-      CGM.getTargetData().getABITypeAlignment(
-        ObjCTypes.ClassnfABIPtrTy));
+                        CGM.getTargetData().getABITypeAlignment(
+                                                                ObjCTypes.ClassnfABIPtrTy));
     Entry->setSection("__DATA, __objc_classrefs, regular, no_dead_strip");
     CGM.AddUsedGlobal(Entry);
   }
-
+  
   return Builder.CreateLoad(Entry, "tmp");
+}
+
+llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
+                                                  const ObjCInterfaceDecl *ID) {
+  return EmitClassRefFromId(Builder, ID->getIdentifier());
+}
+
+llvm::Value *CGObjCNonFragileABIMac::EmitNSAutoreleasePoolClassRef(
+                                                    CGBuilderTy &Builder) {
+  IdentifierInfo *II = &CGM.getContext().Idents.get("NSAutoreleasePool");
+  return EmitClassRefFromId(Builder, II);
 }
 
 llvm::Value *

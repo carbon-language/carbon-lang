@@ -87,6 +87,15 @@ class TypeLocBuilder {
     Index = Capacity;
   }  
 
+  /// \brief Tell the TypeLocBuilder that the type it is storing has been
+  /// modified in some safe way that doesn't affect type-location information.
+  void TypeWasModifiedSafely(QualType T) {
+#ifndef NDEBUG
+    assert(T.getLocalUnqualifiedType() == LastTy.getLocalUnqualifiedType());
+    LastTy = T;
+#endif
+  }
+  
   /// Pushes space for a new TypeLoc of the given type.  Invalidates
   /// any TypeLocs previously retrieved from this builder.
   template <class TyLocType> TyLocType push(QualType T) {

@@ -30,6 +30,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include "InputInfo.h"
 #include "ToolChains.h"
@@ -145,6 +146,12 @@ static void AddLinkerInputs(const ToolChain &TC,
     } else
       A.renderAsInput(Args, CmdArgs);
   }
+}
+
+/// \brief Determine whether Objective-C automated reference counting is
+/// enabled.
+static bool isObjCAutoRefCount(const ArgList &Args) {
+  return Args.hasFlag(options::OPT_fobjc_arc, options::OPT_fno_objc_arc, false);
 }
 
 static void addProfileRT(const ToolChain &TC, const ArgList &Args,
@@ -318,8 +325,12 @@ void Clang::AddPreprocessingOptions(const Driver &D,
 
   // Add C++ include arguments, if needed.
   types::ID InputType = Inputs[0].getType();
-  if (types::isCXX(InputType))
-    getToolChain().AddClangCXXStdlibIncludeArgs(Args, CmdArgs);
+  if (types::isCXX(InputType)) {
+    bool ObjCXXAutoRefCount
+      = types::isObjC(InputType) && isObjCAutoRefCount(Args);
+    getToolChain().AddClangCXXStdlibIncludeArgs(Args, CmdArgs, 
+                                                ObjCXXAutoRefCount);
+  }
 
   // Add -Wp, and -Xassembler if using the preprocessor.
 
@@ -1542,6 +1553,24 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_lax_vector_conversions))
     CmdArgs.push_back("-fno-lax-vector-conversions");
 
+  // Allow -fno-objc-arr to trump -fobjc-arr/-fobjc-arc.
+  // NOTE: This logic is duplicated in ToolChains.cpp.
+  bool ARC = isObjCAutoRefCount(Args);
+  if (ARC) {
+    CmdArgs.push_back("-fobjc-arc");
+
+    // Certain deployment targets don't have runtime support.
+    if (!getToolChain().HasARCRuntime())
+      CmdArgs.push_back("-fobjc-no-arc-runtime");
+
+    // Allow the user to enable full exceptions code emission.
+    // We define off for Objective-CC, on for Objective-C++.
+    if (Args.hasFlag(options::OPT_fobjc_arc_exceptions,
+                     options::OPT_fno_objc_arc_exceptions,
+                     /*default*/ types::isCXX(InputType)))
+      CmdArgs.push_back("-fobjc-arc-exceptions");
+  }
+
   // -fobjc-infer-related-result-type is the default, except in the Objective-C
   // rewriter.
   if (IsRewriter)
@@ -1553,7 +1582,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!GCArg)
     GCArg = Args.getLastArg(options::OPT_fobjc_gc);
   if (GCArg) {
-    if (getToolChain().SupportsObjCGC()) {
+    if (ARC) {
+      D.Diag(clang::diag::err_drv_objc_gc_arr)
+        << GCArg->getAsString(Args);
+    } else if (getToolChain().SupportsObjCGC()) {
       GCArg->render(Args, CmdArgs);
     } else {
       // FIXME: We should move this to a hard error.
@@ -3140,6 +3172,12 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-lgomp");
 
   getDarwinToolChain().AddLinkSearchPathArgs(Args, CmdArgs);
+
+  // In ARC, if we don't have runtime support, link in the runtime
+  // stubs.  We have to do this *before* adding any of the normal
+  // linker inputs so that its initializer gets run first.
+  if (!getDarwinToolChain().HasARCRuntime() && isObjCAutoRefCount(Args))
+    getDarwinToolChain().AddLinkARCArgs(Args, CmdArgs);
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 

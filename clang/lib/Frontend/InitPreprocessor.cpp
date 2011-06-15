@@ -221,6 +221,125 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
                         ConstSuffix);
 }
 
+/// \brief Add definitions required for a smooth interaction between
+/// Objective-C++ automatic reference counting and libc++.
+static void AddObjCXXARCLibcxxDefines(const LangOptions &LangOpts, 
+                                      MacroBuilder &Builder) {
+  Builder.defineMacro("_LIBCPP_PREDEFINED_OBJC_ARC_ADDRESSOF");
+  
+  std::string Result;
+  {
+    // Provide overloads of the function std::__1::addressof() that accept
+    // references to lifetime-qualified objects. libc++'s (more general)
+    // std::__1::addressof() template fails to instantiate with such types,
+    // because it attempts to convert the object to a char& before 
+    // dereferencing.
+    llvm::raw_string_ostream Out(Result);
+    
+    Out << "#pragma clang diagnostic push\n"
+        << "#pragma clang diagnostic ignored \"-Wc++0x-extensions\"\n"
+        << "namespace std { inline namespace __1 {\n"
+        << "\n";
+    
+    Out << "template <class _Tp>\n"
+        << "inline __attribute__ ((__visibility__(\"hidden\"), "
+        << "__always_inline__))\n"
+        << "__attribute__((objc_lifetime(strong))) _Tp*\n"
+        << "addressof(__attribute__((objc_lifetime(strong))) _Tp& __x) {\n"
+        << "  return &__x;\n"
+        << "}\n"
+        << "\n";
+      
+    if (!LangOpts.ObjCNoAutoRefCountRuntime) {
+      Out << "template <class _Tp>\n"
+          << "inline __attribute__ ((__visibility__(\"hidden\"),"
+          << "__always_inline__))\n"
+          << "__attribute__((objc_lifetime(weak))) _Tp*\n"
+          << "addressof(__attribute__((objc_lifetime(weak))) _Tp& __x) {\n"
+          << "  return &__x;\n"
+          << "};\n"
+          << "\n";
+    }
+      
+    Out << "template <class _Tp>\n"
+        << "inline __attribute__ ((__visibility__(\"hidden\"),"
+        << "__always_inline__))\n"
+        << "__attribute__((objc_lifetime(autoreleasing))) _Tp*\n"
+        << "addressof(__attribute__((objc_lifetime(autoreleasing))) _Tp& __x) "
+        << "{\n"
+        << " return &__x;\n"
+        << "}\n"
+        << "\n";
+    
+    Out << "template <class _Tp>\n"
+        << "inline __attribute__ ((__visibility__(\"hidden\"), "
+        << "__always_inline__))\n"
+        << "__unsafe_unretained _Tp* addressof(__unsafe_unretained _Tp& __x)"
+        << " {\n"
+        << "  return &__x;\n"
+        << "}\n";
+      
+    Out << "\n"
+        << "} }\n"
+        << "#pragma clang diagnostic pop\n"
+        << "\n";    
+  }
+  Builder.append(Result);
+}
+
+/// \brief Add definitions required for a smooth interaction between
+/// Objective-C++ automated reference counting and libstdc++ (4.2).
+static void AddObjCXXARCLibstdcxxDefines(const LangOptions &LangOpts, 
+                                         MacroBuilder &Builder) {
+  Builder.defineMacro("_GLIBCXX_PREDEFINED_OBJC_ARC_IS_SCALAR");
+  
+  std::string Result;
+  {
+    // Provide specializations for the __is_scalar type trait so that 
+    // lifetime-qualified objects are not considered "scalar" types, which
+    // libstdc++ uses as an indicator of the presence of trivial copy, assign,
+    // default-construct, and destruct semantics (none of which hold for
+    // lifetime-qualified objects in ARC).
+    llvm::raw_string_ostream Out(Result);
+    
+    Out << "namespace std {\n"
+        << "\n"
+        << "struct __true_type;\n"
+        << "struct __false_type;\n"
+        << "\n";
+    
+    Out << "template<typename _Tp> struct __is_scalar;\n"
+        << "\n";
+      
+    Out << "template<typename _Tp>\n"
+        << "struct __is_scalar<__attribute__((objc_lifetime(strong))) _Tp> {\n"
+        << "  enum { __value = 0 };\n"
+        << "  typedef __false_type __type;\n"
+        << "};\n"
+        << "\n";
+      
+    if (!LangOpts.ObjCNoAutoRefCountRuntime) {
+      Out << "template<typename _Tp>\n"
+          << "struct __is_scalar<__attribute__((objc_lifetime(weak))) _Tp> {\n"
+          << "  enum { __value = 0 };\n"
+          << "  typedef __false_type __type;\n"
+          << "};\n"
+          << "\n";
+    }
+    
+    Out << "template<typename _Tp>\n"
+        << "struct __is_scalar<__attribute__((objc_lifetime(autoreleasing)))"
+        << " _Tp> {\n"
+        << "  enum { __value = 0 };\n"
+        << "  typedef __false_type __type;\n"
+        << "};\n"
+        << "\n";
+      
+    Out << "}\n";
+  }
+  Builder.append(Result);
+}
+
 static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
                                                const LangOptions &LangOpts,
                                                const FrontendOptions &FEOpts,
@@ -560,6 +679,7 @@ void clang::InitializePreprocessor(Preprocessor &PP,
                                    const PreprocessorOptions &InitOpts,
                                    const HeaderSearchOptions &HSOpts,
                                    const FrontendOptions &FEOpts) {
+  const LangOptions &LangOpts = PP.getLangOptions();
   std::string PredefineBuffer;
   PredefineBuffer.reserve(4080);
   llvm::raw_string_ostream Predefines(PredefineBuffer);
@@ -575,10 +695,27 @@ void clang::InitializePreprocessor(Preprocessor &PP,
     Builder.append("# 1 \"<built-in>\" 3");
 
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
-  if (InitOpts.UsePredefines)
-    InitializePredefinedMacros(PP.getTargetInfo(), PP.getLangOptions(),
-                               FEOpts, Builder);
+  if (InitOpts.UsePredefines) {
+    InitializePredefinedMacros(PP.getTargetInfo(), LangOpts, FEOpts, Builder);
 
+    // Install definitions to make Objective-C++ ARC work well with various
+    // C++ Standard Library implementations.
+    if (LangOpts.ObjC1 && LangOpts.CPlusPlus && LangOpts.ObjCAutoRefCount) {
+      switch (InitOpts.ObjCXXARCStandardLibrary) {
+      case ARCXX_nolib:
+        break;
+
+      case ARCXX_libcxx:
+        AddObjCXXARCLibcxxDefines(LangOpts, Builder);
+        break;
+
+      case ARCXX_libstdcxx:
+        AddObjCXXARCLibstdcxxDefines(LangOpts, Builder);
+        break;
+      }
+    }
+  }
+  
   // Even with predefines off, some macros are still predefined.
   // These should all be defined in the preprocessor according to the
   // current language configuration.

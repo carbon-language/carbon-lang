@@ -802,10 +802,27 @@ bool ItaniumCXXABI::NeedsArrayCookie(const CXXNewExpr *expr) {
   if (expr->doesUsualArrayDeleteWantSize())
     return true;
 
+  // Automatic Reference Counting:
+  //   We need an array cookie for pointers with strong or weak lifetime.
+  QualType AllocatedType = expr->getAllocatedType();
+  if (getContext().getLangOptions().ObjCAutoRefCount &&
+      AllocatedType->isObjCLifetimeType()) {
+    switch (AllocatedType.getObjCLifetime()) {
+    case Qualifiers::OCL_None:
+    case Qualifiers::OCL_ExplicitNone:
+    case Qualifiers::OCL_Autoreleasing:
+      return false;
+      
+    case Qualifiers::OCL_Strong:
+    case Qualifiers::OCL_Weak:
+      return true;
+    }
+  }
+
   // Otherwise, if the class has a non-trivial destructor, it always
   // needs a cookie.
   const CXXRecordDecl *record =
-    expr->getAllocatedType()->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
+    AllocatedType->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
   return (record && !record->hasTrivialDestructor());
 }
 
@@ -816,6 +833,22 @@ bool ItaniumCXXABI::NeedsArrayCookie(const CXXDeleteExpr *expr,
   if (expr->doesUsualArrayDeleteWantSize())
     return true;
 
+  // Automatic Reference Counting:
+  //   We need an array cookie for pointers with strong or weak lifetime.
+  if (getContext().getLangOptions().ObjCAutoRefCount &&
+      elementType->isObjCLifetimeType()) {
+    switch (elementType.getObjCLifetime()) {
+    case Qualifiers::OCL_None:
+    case Qualifiers::OCL_ExplicitNone:
+    case Qualifiers::OCL_Autoreleasing:
+      return false;
+
+    case Qualifiers::OCL_Strong:
+    case Qualifiers::OCL_Weak:
+      return true;
+    }
+  }
+  
   // Otherwise, if the class has a non-trivial destructor, it always
   // needs a cookie.
   const CXXRecordDecl *record =

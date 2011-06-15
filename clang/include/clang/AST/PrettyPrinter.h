@@ -41,7 +41,7 @@ struct PrintingPolicy {
       SuppressTagKeyword(false), SuppressTag(false), SuppressScope(false),
       SuppressInitializers(false),
       Dump(false), ConstantArraySizeAsWritten(false),
-      AnonymousTagLocations(true) { }
+      AnonymousTagLocations(true), SuppressStrongLifetime(false) { }
 
   /// \brief The number of spaces to use to indent each line.
   unsigned Indentation : 8;
@@ -129,6 +129,10 @@ struct PrintingPolicy {
   /// that entity (e.g., "enum <anonymous at t.h:10:5>"). Otherwise, just 
   /// prints "<anonymous>" for the name.
   bool AnonymousTagLocations : 1;
+  
+  /// \brief When true, suppress printing of the __strong lifetime qualifier in
+  /// ARC.
+  unsigned SuppressStrongLifetime : 1;
 };
 
 } // end namespace clang

@@ -221,9 +221,9 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   DependentTemplateSpecializationTypes(this_()),
   GlobalNestedNameSpecifier(0), IsInt128Installed(false),
   CFConstantStringTypeDecl(0), NSConstantStringTypeDecl(0),
-  ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), jmp_bufDecl(0),
-  sigjmp_bufDecl(0), BlockDescriptorType(0), BlockDescriptorExtendedType(0),
-  cudaConfigureCallDecl(0),
+  ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), 
+  jmp_bufDecl(0), sigjmp_bufDecl(0), BlockDescriptorType(0), 
+  BlockDescriptorExtendedType(0), cudaConfigureCallDecl(0),
   NullTypeSourceInfo(QualType()),
   SourceMgr(SM), LangOpts(LOpts), ABI(createCXXABI(t)),
   AddrSpaceMap(getAddressSpaceMap(t, LOpts)), Target(t),
@@ -2040,10 +2040,13 @@ ASTContext::getFunctionType(QualType ResultTy,
     assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
   }
 
-  // FunctionProtoType objects are allocated with extra bytes after them
-  // for two variable size arrays (for parameter and exception types) at the
-  // end of them. Instead of the exception types, there could be a noexcept
-  // expression and a context pointer.
+  // FunctionProtoType objects are allocated with extra bytes after
+  // them for three variable size arrays at the end:
+  //  - parameter types
+  //  - exception types
+  //  - consumed-arguments flags
+  // Instead of the exception types, there could be a noexcept
+  // expression.
   size_t Size = sizeof(FunctionProtoType) +
                 NumArgs * sizeof(QualType);
   if (EPI.ExceptionSpecType == EST_Dynamic)
@@ -2051,6 +2054,9 @@ ASTContext::getFunctionType(QualType ResultTy,
   else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
     Size += sizeof(Expr*);
   }
+  if (EPI.ConsumedArguments)
+    Size += NumArgs * sizeof(bool);
+
   FunctionProtoType *FTP = (FunctionProtoType*) Allocate(Size, TypeAlignment);
   FunctionProtoType::ExtProtoInfo newEPI = EPI;
   newEPI.ExtInfo = EPI.ExtInfo.withCallingConv(CallConv);
@@ -2925,7 +2931,6 @@ CanQualType ASTContext::getCanonicalParamType(QualType T) const {
   return CanQualType::CreateUnsafe(Result);
 }
 
-
 QualType ASTContext::getUnqualifiedArrayType(QualType type,
                                              Qualifiers &quals) {
   SplitQualType splitType = type.getSplitUnqualifiedType();
@@ -3725,11 +3730,7 @@ void ASTContext::setBlockDescriptorExtendedType(QualType T) {
 }
 
 bool ASTContext::BlockRequiresCopying(QualType Ty) const {
-  if (Ty->isBlockPointerType())
-    return true;
-  if (isObjCNSObjectType(Ty))
-    return true;
-  if (Ty->isObjCObjectPointerType())
+  if (Ty->isObjCRetainableType())
     return true;
   if (getLangOptions().CPlusPlus) {
     if (const RecordType *RT = Ty->getAs<RecordType>()) {
@@ -4826,20 +4827,6 @@ CanQualType ASTContext::getFromTargetType(unsigned Type) const {
 //                        Type Predicates.
 //===----------------------------------------------------------------------===//
 
-/// isObjCNSObjectType - Return true if this is an NSObject object using
-/// NSObject attribute on a c-style pointer type.
-/// FIXME - Make it work directly on types.
-/// FIXME: Move to Type.
-///
-bool ASTContext::isObjCNSObjectType(QualType Ty) const {
-  if (const TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
-    if (TypedefNameDecl *TD = TDT->getDecl())
-      if (TD->getAttr<ObjCNSObjectAttr>())
-        return true;
-  }
-  return false;
-}
-
 /// getObjCGCAttr - Returns one of GCNone, Weak or Strong objc's
 /// garbage collection attribute.
 ///
@@ -5452,6 +5439,9 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   if (lbaseInfo.getRegParm() != rbaseInfo.getRegParm())
     return QualType();
 
+  if (lbaseInfo.getProducesResult() != rbaseInfo.getProducesResult())
+    return QualType();
+
   // It's noreturn if either type is.
   // FIXME: some uses, e.g. conditional exprs, really want this to be 'both'.
   bool NoReturn = lbaseInfo.getNoReturn() || rbaseInfo.getNoReturn();
@@ -5460,10 +5450,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs,
   if (NoReturn != rbaseInfo.getNoReturn())
     allRTypes = false;
 
-  FunctionType::ExtInfo einfo(NoReturn,
-                              lbaseInfo.getHasRegParm(),
-                              lbaseInfo.getRegParm(),
-                              lbaseInfo.getCC());
+  FunctionType::ExtInfo einfo = lbaseInfo.withNoReturn(NoReturn);
 
   if (lproto && rproto) { // two C99 style function prototypes
     assert(!lproto->hasExceptionSpec() && !rproto->hasExceptionSpec() &&
@@ -5584,7 +5571,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
     // If any of these qualifiers are different, we have a type
     // mismatch.
     if (LQuals.getCVRQualifiers() != RQuals.getCVRQualifiers() ||
-        LQuals.getAddressSpace() != RQuals.getAddressSpace())
+        LQuals.getAddressSpace() != RQuals.getAddressSpace() ||
+        LQuals.getObjCLifetime() != RQuals.getObjCLifetime())
       return QualType();
 
     // Exactly one GC qualifier difference is allowed: __strong is

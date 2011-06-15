@@ -47,5 +47,8 @@ void DelayedDiagnostic::Destroy() {
   case Deprecation: 
     delete [] DeprecationData.Message;
     break;
+
+  case ForbiddenType:
+    break;
   }
 }

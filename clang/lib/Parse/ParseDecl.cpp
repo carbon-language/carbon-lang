@@ -31,9 +31,11 @@ using namespace clang;
 ///
 /// Called type-id in C++.
 TypeResult Parser::ParseTypeName(SourceRange *Range,
-                                 Declarator::TheContext Context) {
+                                 Declarator::TheContext Context,
+                                 ObjCDeclSpec *objcQuals) {
   // Parse the common declaration-specifiers piece.
   DeclSpec DS(AttrFactory);
+  DS.setObjCQualifiers(objcQuals);
   ParseSpecifierQualifierList(DS);
 
   // Parse the abstract-declarator, if present.

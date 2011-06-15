@@ -254,12 +254,12 @@ public:
             return;
             
           if (Expr* E = V->getInit()) {
+            while (ExprWithCleanups *exprClean = dyn_cast<ExprWithCleanups>(E))
+              E = exprClean->getSubExpr();
+            
             // Don't warn on C++ objects (yet) until we can show that their
             // constructors/destructors don't have side effects.
             if (isa<CXXConstructExpr>(E))
-              return;
-
-            if (isa<ExprWithCleanups>(E))
               return;
             
             // A dead initialization is a variable that is dead after it

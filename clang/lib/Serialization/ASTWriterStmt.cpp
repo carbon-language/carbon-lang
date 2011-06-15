@@ -105,6 +105,8 @@ namespace clang {
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
     void VisitObjCIsaExpr(ObjCIsaExpr *E);
+    void VisitObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *E);
+    void VisitObjCBridgedCastExpr(ObjCBridgedCastExpr *E);
 
     // Objective-C Statements
     void VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
@@ -113,6 +115,7 @@ namespace clang {
     void VisitObjCAtTryStmt(ObjCAtTryStmt *);
     void VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
     void VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
+    void VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *);
 
     // C++ Statements
     void VisitCXXCatchStmt(CXXCatchStmt *S);
@@ -606,6 +609,22 @@ void ASTStmtWriter::VisitObjCIsaExpr(ObjCIsaExpr *E) {
   Code = serialization::EXPR_OBJC_ISA;
 }
 
+void ASTStmtWriter::
+VisitObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *E) {
+  VisitExpr(E);
+  Writer.AddStmt(E->getSubExpr());
+  Record.push_back(E->shouldCopy());
+  Code = serialization::EXPR_OBJC_INDIRECT_COPY_RESTORE;
+}
+
+void ASTStmtWriter::VisitObjCBridgedCastExpr(ObjCBridgedCastExpr *E) {
+  VisitExplicitCastExpr(E);
+  Writer.AddSourceLocation(E->getLParenLoc(), Record);
+  Writer.AddSourceLocation(E->getBridgeKeywordLoc(), Record);
+  Record.push_back(E->getBridgeKind()); // FIXME: Stable encoding
+  Code = serialization::EXPR_OBJC_BRIDGED_CAST;
+}
+
 void ASTStmtWriter::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
   Record.push_back(E->path_size());
@@ -914,6 +933,7 @@ void ASTStmtWriter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
 void ASTStmtWriter::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
   Record.push_back(E->getNumArgs());
+  Record.push_back(E->isDelegateInitCall());
   Record.push_back((unsigned)E->getReceiverKind()); // FIXME: stable encoding
   switch (E->getReceiverKind()) {
   case ObjCMessageExpr::Instance:
@@ -971,6 +991,12 @@ void ASTStmtWriter::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
   Writer.AddStmt(S->getFinallyBody());
   Writer.AddSourceLocation(S->getAtFinallyLoc(), Record);
   Code = serialization::STMT_OBJC_FINALLY;
+}
+
+void ASTStmtWriter::VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *S) {
+  Writer.AddStmt(S->getSubStmt());
+  Writer.AddSourceLocation(S->getAtLoc(), Record);
+  Code = serialization::STMT_OBJC_AUTORELEASE_POOL;
 }
 
 void ASTStmtWriter::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {

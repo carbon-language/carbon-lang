@@ -2,7 +2,7 @@
 // rdar://9092208
 
 __attribute__((unavailable("not available")))
-@interface MyClass { // expected-note 5 {{function has been explicitly marked unavailable here}}
+@interface MyClass { // expected-note 5 {{declaration has been explicitly marked unavailable here}}
 @public
     void *_test;
 }

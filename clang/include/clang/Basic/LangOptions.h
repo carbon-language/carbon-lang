@@ -130,6 +130,10 @@ public:
   unsigned DefaultFPContract : 1; // Default setting for FP_CONTRACT
   // FIXME: This is just a temporary option, for testing purposes.
   unsigned NoBitFieldTypeAlign : 1;
+  unsigned ObjCAutoRefCount : 1; // Objective C automated reference counting
+  unsigned ObjCNoAutoRefCountRuntime : 1; // ARC w/o extra runtime support
+  unsigned ObjCInferRelatedReturnType : 1; // Infer Objective-C related return
+                                           // types
   unsigned FakeAddressSpaceMap : 1; // Use a fake address space map, for
                                     // testing languages such as OpenCL.
 
@@ -172,6 +176,8 @@ public:
     Trigraphs = BCPLComment = Bool = DollarIdents = AsmPreprocessor = 0;
     GNUMode = GNUKeywords = ImplicitInt = Digraphs = 0;
     HexFloats = 0;
+    ObjCAutoRefCount = ObjCNoAutoRefCountRuntime = 0;
+    ObjCInferRelatedReturnType = 0;
     GC = ObjC1 = ObjC2 = ObjCNonFragileABI = ObjCNonFragileABI2 = 0;
     AppleKext = 0;
     ObjCDefaultSynthProperties = 0;

@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/Analysis/Analyses/ReachableCode.h"
 #include "clang/Analysis/CFG.h"
@@ -107,6 +108,11 @@ static SourceLocation GetUnreachableLoc(const CFGBlock &b, SourceRange &R1,
     }
     case Stmt::CXXTryStmtClass: {
       return cast<CXXTryStmt>(S)->getHandler(0)->getCatchLoc();
+    }
+    case Expr::ObjCBridgedCastExprClass: {
+      const ObjCBridgedCastExpr *CSC = cast<ObjCBridgedCastExpr>(S);
+      R1 = CSC->getSubExpr()->getSourceRange();
+      return CSC->getLParenLoc();
     }
     default: ;
   }

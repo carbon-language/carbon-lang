@@ -82,6 +82,10 @@ def err_drv_conflicting_deployment_targets : Error<
   "conflicting deployment targets, both '%0' and '%1' are present in environment">;
 def err_drv_invalid_arch_for_deployment_target : Error<
   "invalid architecture '%0' for deployment target '%1'">;
+def err_drv_objc_gc_arr : Error<
+  "cannot specify both '-fobjc-arc' and '%0'">;
+def err_arc_nonfragile_abi : Error<
+  "-fobjc-arc is not supported with fragile abi">;
 
 def warn_c_kext : Warning<
   "ignoring -fapple-kext which is valid for c++ and objective-c++ only">;

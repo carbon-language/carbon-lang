@@ -20,9 +20,9 @@
 
 @implementation INTF
 @synthesize pweak=IVAR;  // expected-error {{existing ivar 'IVAR' for __weak property 'pweak' must be __weak}}
-@synthesize NOT=II; // expected-error {{property 'NOT' must be declared __weak to match existing ivar 'II' with __weak attribute}}
+@synthesize NOT=II; // expected-error {{existing ivar 'II' for strong property 'NOT' may not be __weak}}
 @synthesize WID;
 @synthesize ID;
-@synthesize AWEAK; // expected-error {{property 'AWEAK' must be declared __weak to match existing ivar 'AWEAK' with __weak attribute}}
+@synthesize AWEAK; // expected-error {{existing ivar 'AWEAK' for strong property 'AWEAK' may not be __weak}}
 @synthesize WI;
 @end

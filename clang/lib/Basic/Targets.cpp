@@ -84,15 +84,35 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
   Builder.defineMacro("__MACH__");
   Builder.defineMacro("OBJC_NEW_PROPERTIES");
 
-  // __weak is always defined, for use in blocks and with objc pointers.
-  Builder.defineMacro("__weak", "__attribute__((objc_gc(weak)))");
+  if (Opts.ObjCAutoRefCount) {
+    Builder.defineMacro("__weak", "__attribute__((objc_lifetime(weak)))");
+    Builder.defineMacro("__strong", "__attribute__((objc_lifetime(strong)))");
+    Builder.defineMacro("__autoreleasing",
+                        "__attribute__((objc_lifetime(autoreleasing)))");
+    Builder.defineMacro("__unsafe_unretained",
+                        "__attribute__((objc_lifetime(none)))");
+  } else {
+    // __weak is always defined, for use in blocks and with objc pointers.
+    Builder.defineMacro("__weak", "__attribute__((objc_gc(weak)))");
 
-  // Darwin defines __strong even in C mode (just to nothing).
-  if (!Opts.ObjC1 || Opts.getGCMode() == LangOptions::NonGC)
-    Builder.defineMacro("__strong", "");
-  else
-    Builder.defineMacro("__strong", "__attribute__((objc_gc(strong)))");
-
+    // Darwin defines __strong even in C mode (just to nothing).
+    if (Opts.getGCMode() != LangOptions::NonGC)
+      Builder.defineMacro("__strong", "__attribute__((objc_gc(strong)))");
+    else
+      Builder.defineMacro("__strong", "");
+    
+    // __unsafe_unretained is defined to nothing in non-ARC mode. We even
+    // allow this in C, since one might have block pointers in structs that
+    // are used in pure C code and in Objective-C ARC.
+    Builder.defineMacro("__unsafe_unretained", "");
+    
+    // The Objective-C bridged cast keywords are defined to nothing in non-ARC
+    // mode; then they become normal, C-style casts.
+    Builder.defineMacro("__bridge", "");
+    Builder.defineMacro("__bridge_transfer", "");
+    Builder.defineMacro("__bridge_retained", "");
+  }
+  
   if (Opts.Static)
     Builder.defineMacro("__STATIC__");
   else

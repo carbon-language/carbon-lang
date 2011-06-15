@@ -762,13 +762,6 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
     QualType NewBaseType
       = Context.getCanonicalType(Bases[idx]->getType());
     NewBaseType = NewBaseType.getLocalUnqualifiedType();
-    if (!Class->hasObjectMember()) {
-      if (const RecordType *FDTTy = 
-            NewBaseType.getTypePtr()->getAs<RecordType>())
-        if (FDTTy->getDecl()->hasObjectMember())
-          Class->setHasObjectMember(true);
-    }
-    
     if (KnownBaseTypes[NewBaseType]) {
       // C++ [class.mi]p3:
       //   A class shall not be specified as a direct base class of a
@@ -1619,12 +1612,7 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr **Args,
     Init = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
                                        RParenLoc);
 
-    // Erase any temporaries within this evaluation context; we're not
-    // going to track them in the AST, since we'll be rebuilding the
-    // ASTs during template instantiation.
-    ExprTemporaries.erase(
-              ExprTemporaries.begin() + ExprEvalContexts.back().NumTemporaries,
-                          ExprTemporaries.end());
+    DiscardCleanupsInEvaluationContext();
   } else {
     // Initialize the member.
     InitializedEntity MemberEntity =
@@ -1817,12 +1805,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
       = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
                                           RParenLoc));
 
-    // Erase any temporaries within this evaluation context; we're not
-    // going to track them in the AST, since we'll be rebuilding the
-    // ASTs during template instantiation.
-    ExprTemporaries.erase(
-              ExprTemporaries.begin() + ExprEvalContexts.back().NumTemporaries,
-                          ExprTemporaries.end());
+    DiscardCleanupsInEvaluationContext();
 
     return new (Context) CXXCtorInitializer(Context, BaseTInfo, 
                                                     /*IsVirtual=*/false,
@@ -2134,6 +2117,20 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     }
   }
   
+  if (SemaRef.getLangOptions().ObjCAutoRefCount &&
+      FieldBaseElementType->isObjCRetainableType() &&
+      FieldBaseElementType.getObjCLifetime() != Qualifiers::OCL_None &&
+      FieldBaseElementType.getObjCLifetime() != Qualifiers::OCL_ExplicitNone) {
+    // Instant objects:
+    //   Default-initialize Objective-C pointers to NULL.
+    CXXMemberInit
+      = new (SemaRef.Context) CXXCtorInitializer(SemaRef.Context, Field, 
+                                                 Loc, Loc, 
+                 new (SemaRef.Context) ImplicitValueInitExpr(Field->getType()), 
+                                                 Loc);
+    return false;
+  }
+      
   // Nothing to initialize.
   CXXMemberInit = 0;
   return false;
@@ -7041,10 +7038,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     // explicit assignments, do so. This optimization only applies for arrays 
     // of scalars and arrays of class type with trivial copy-assignment 
     // operators.
-    if (FieldType->isArrayType() &&
-        (!BaseType->isRecordType() || 
-         cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl())
-           ->hasTrivialCopyAssignment())) {
+    if (FieldType->isArrayType() && 
+        BaseType.hasTrivialCopyAssignment(Context)) {
       // Compute the size of the memory buffer to be copied.
       QualType SizeType = Context.getSizeType();
       llvm::APInt Size(Context.getTypeSize(SizeType), 
@@ -7522,6 +7517,10 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     }
     VDecl->setTypeSourceInfo(DeducedType);
     VDecl->setType(DeducedType->getType());
+
+    // In ARC, infer lifetime.
+    if (getLangOptions().ObjCAutoRefCount && inferObjCARCLifetime(VDecl))
+      VDecl->setInvalidDecl();
 
     // If this is a redeclaration, check that the type we just deduced matches
     // the previously declared type.

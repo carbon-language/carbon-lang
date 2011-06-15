@@ -449,6 +449,12 @@ void StmtPrinter::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *Node) {
   OS << "\n";
 }
 
+void StmtPrinter::VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *Node) {
+  Indent() << "@autoreleasepool";
+  PrintRawCompoundStmt(dyn_cast<CompoundStmt>(Node->getSubStmt()));
+  OS << "\n";
+}
+
 void StmtPrinter::PrintRawCXXCatchStmt(CXXCatchStmt *Node) {
   OS << "catch (";
   if (Decl *ExDecl = Node->getExceptionDecl())
@@ -1464,6 +1470,17 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   OS << "]";
 }
 
+void
+StmtPrinter::VisitObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *E) {
+  PrintExpr(E->getSubExpr());
+}
+
+void
+StmtPrinter::VisitObjCBridgedCastExpr(ObjCBridgedCastExpr *E) {
+  OS << "(" << E->getBridgeKindName() << E->getType().getAsString(Policy) 
+     << ")";
+  PrintExpr(E->getSubExpr());
+}
 
 void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
   BlockDecl *BD = Node->getBlockDecl();

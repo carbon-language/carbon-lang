@@ -2277,6 +2277,10 @@ public:
     return 13;
   }
 
+  llvm::StringRef getARCRetainAutoreleasedReturnValueMarker() const {
+    return "mov\tr7, r7\t\t@ marker for objc_retainAutoreleaseReturnValue";
+  }
+
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const {
     CodeGen::CGBuilderTy &Builder = CGF.Builder;
@@ -2290,8 +2294,6 @@ public:
 
     return false;
   }
-
-
 };
 
 }

@@ -1106,7 +1106,12 @@ Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
     // function pointers on Itanium and ARM).
     return CGF.CGM.getCXXABI().EmitMemberPointerConversion(CGF, CE, Src);
   }
-  
+
+  case CK_ObjCProduceObject:
+    return CGF.EmitARCRetainScalarExpr(E);
+  case CK_ObjCConsumeObject:
+    return CGF.EmitObjCConsumeObject(E->getType(), Visit(E));
+
   case CK_FloatingRealToComplex:
   case CK_FloatingComplexCast:
   case CK_IntegralRealToComplex:
@@ -2228,20 +2233,42 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
 Value *ScalarExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   bool Ignore = TestAndClearIgnoreResultAssign();
 
-  // __block variables need to have the rhs evaluated first, plus this should
-  // improve codegen just a little.
-  Value *RHS = Visit(E->getRHS());
-  LValue LHS = EmitCheckedLValue(E->getLHS());
+  Value *RHS;
+  LValue LHS;
 
-  // Store the value into the LHS.  Bit-fields are handled specially
-  // because the result is altered by the store, i.e., [C99 6.5.16p1]
-  // 'An assignment expression has the value of the left operand after
-  // the assignment...'.
-  if (LHS.isBitField())
-    CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType(),
-                                       &RHS);
-  else
-    CGF.EmitStoreThroughLValue(RValue::get(RHS), LHS, E->getType());
+  switch (E->getLHS()->getType().getObjCLifetime()) {
+  case Qualifiers::OCL_Strong:
+    llvm::tie(LHS, RHS) = CGF.EmitARCStoreStrong(E, Ignore);
+    break;
+
+  case Qualifiers::OCL_Autoreleasing:
+    llvm::tie(LHS,RHS) = CGF.EmitARCStoreAutoreleasing(E);
+    break;
+
+  case Qualifiers::OCL_Weak:
+    RHS = Visit(E->getRHS());
+    LHS = EmitCheckedLValue(E->getLHS());    
+    RHS = CGF.EmitARCStoreWeak(LHS.getAddress(), RHS, Ignore);
+    break;
+
+  // No reason to do any of these differently.
+  case Qualifiers::OCL_None:
+  case Qualifiers::OCL_ExplicitNone:
+    // __block variables need to have the rhs evaluated first, plus
+    // this should improve codegen just a little.
+    RHS = Visit(E->getRHS());
+    LHS = EmitCheckedLValue(E->getLHS());
+
+    // Store the value into the LHS.  Bit-fields are handled specially
+    // because the result is altered by the store, i.e., [C99 6.5.16p1]
+    // 'An assignment expression has the value of the left operand after
+    // the assignment...'.
+    if (LHS.isBitField())
+      CGF.EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, E->getType(),
+                                         &RHS);
+    else
+      CGF.EmitStoreThroughLValue(RValue::get(RHS), LHS, E->getType());
+  }
 
   // If the result is clearly ignored, return now.
   if (Ignore)

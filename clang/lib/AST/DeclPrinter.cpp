@@ -933,6 +933,11 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     first = false;
   }
 
+  if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_strong) {
+    Out << (first ? ' ' : ',') << "strong";
+    first = false;
+  }
+
   if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy) {
     Out << (first ? ' ' : ',') << "copy";
     first = false;

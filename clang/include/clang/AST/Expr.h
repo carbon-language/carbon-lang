@@ -2276,6 +2276,8 @@ private:
     case CK_IntegralComplexToReal:
     case CK_IntegralComplexCast:
     case CK_IntegralComplexToFloatingComplex:
+    case CK_ObjCProduceObject:
+    case CK_ObjCConsumeObject:
       assert(!getType()->isBooleanType() && "unheralded conversion to bool");
       // fallthrough to check for null base path
 

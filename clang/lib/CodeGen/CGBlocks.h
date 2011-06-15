@@ -89,7 +89,7 @@ enum BlockFieldFlag_t {
                                     variable */
   BLOCK_FIELD_IS_WEAK     = 0x10,  /* declared __weak, only used in byref copy
                                     helpers */
-
+  BLOCK_FIELD_IS_ARC      = 0x40,  /* field has ARC-specific semantics */
   BLOCK_BYREF_CALLER      = 128,   /* called from __block (byref) copy/dispose
                                       support routines */
   BLOCK_BYREF_CURRENT_MAX = 256

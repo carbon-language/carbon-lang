@@ -151,6 +151,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::ObjCForCollectionStmtClass:
     EmitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(*S));
     break;
+  case Stmt::ObjCAutoreleasePoolStmtClass:
+    EmitObjCAutoreleasePoolStmt(cast<ObjCAutoreleasePoolStmt>(*S));
+    break;
       
   case Stmt::CXXTryStmtClass:
     EmitCXXTryStmt(cast<CXXTryStmt>(*S));
@@ -764,7 +767,7 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else if (RV->getType()->isAnyComplexType()) {
     EmitComplexExprIntoAddr(RV, ReturnValue, false);
   } else {
-    EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, false, true));
+    EmitAggExpr(RV, AggValueSlot::forAddr(ReturnValue, Qualifiers(), true));
   }
 
   EmitBranchThroughCleanup(ReturnBlock);

@@ -480,6 +480,10 @@ void Parser::ParseObjCInterfaceDeclList(Decl *interfaceDecl,
 ///     retain
 ///     copy
 ///     nonatomic
+///     atomic
+///     strong
+///     weak
+///     unsafe_unretained
 ///
 void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl) {
   assert(Tok.getKind() == tok::l_paren);
@@ -504,16 +508,22 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS, Decl *ClassDecl) {
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
     else if (II->isStr("assign"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
+    else if (II->isStr("unsafe_unretained"))
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_unsafe_unretained);
     else if (II->isStr("readwrite"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
     else if (II->isStr("retain"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_retain);
+    else if (II->isStr("strong"))
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_strong);
     else if (II->isStr("copy"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
     else if (II->isStr("nonatomic"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
     else if (II->isStr("atomic"))
       DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_atomic);
+    else if (II->isStr("weak"))
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_weak);
     else if (II->isStr("getter") || II->isStr("setter")) {
       bool IsSetter = II->getNameStart()[0] == 's';
 
@@ -775,11 +785,12 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
 
   ParsedType Ty;
   if (isTypeSpecifierQualifier()) {
-    TypeResult TypeSpec = ParseTypeName(0, Declarator::ObjCPrototypeContext);
+    TypeResult TypeSpec =
+      ParseTypeName(0, Declarator::ObjCPrototypeContext, &DS);
     if (!TypeSpec.isInvalid())
       Ty = TypeSpec.get();
   }
-
+  
   if (Tok.is(tok::r_paren))
     ConsumeParen();
   else if (Tok.getLocation() == TypeStartLoc) {
@@ -853,6 +864,7 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   }
 
   // Now parse the selector.
+  SourceLocation SelectorStartLoc = Tok.getLocation();
   SourceLocation selLoc;
   IdentifierInfo *SelIdent = ParseObjCSelectorPiece(selLoc);
 
@@ -1690,6 +1702,29 @@ StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
                                     FinallyStmt.take());
 }
 
+/// objc-autoreleasepool-statement:
+///   @autoreleasepool compound-statement
+///
+StmtResult
+Parser::ParseObjCAutoreleasePoolStmt(SourceLocation atLoc) {
+  ConsumeToken(); // consume autoreleasepool
+  if (Tok.isNot(tok::l_brace)) {
+    Diag(Tok, diag::err_expected_lbrace);
+    return StmtError();
+  }
+  // Enter a scope to hold everything within the compound stmt.  Compound
+  // statements can always hold declarations.
+  ParseScope BodyScope(this, Scope::DeclScope);
+
+  StmtResult AutoreleasePoolBody(ParseCompoundStatementBody());
+
+  BodyScope.Exit();
+  if (AutoreleasePoolBody.isInvalid())
+    AutoreleasePoolBody = Actions.ActOnNullStmt(Tok.getLocation());
+  return Actions.ActOnObjCAutoreleasePoolStmt(atLoc, 
+                                                AutoreleasePoolBody.take());
+}
+
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
 ///
 Decl *Parser::ParseObjCMethodDefinition() {
@@ -1765,6 +1800,9 @@ StmtResult Parser::ParseObjCAtStatement(SourceLocation AtLoc) {
   
   if (Tok.isObjCAtKeyword(tok::objc_synchronized))
     return ParseObjCSynchronizedStmt(AtLoc);
+
+  if (Tok.isObjCAtKeyword(tok::objc_autoreleasepool))
+    return ParseObjCAutoreleasePoolStmt(AtLoc);
   
   ExprResult Res(ParseExpressionWithLeadingAt(AtLoc));
   if (Res.isInvalid()) {

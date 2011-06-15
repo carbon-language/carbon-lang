@@ -231,10 +231,44 @@ RewriteBuffer &Rewriter::getEditBuffer(FileID FID) {
 /// InsertText - Insert the specified string at the specified location in the
 /// original buffer.
 bool Rewriter::InsertText(SourceLocation Loc, llvm::StringRef Str,
-                          bool InsertAfter) {
+                          bool InsertAfter, bool indentNewLines) {
+  using llvm::StringRef;
+
   if (!isRewritable(Loc)) return true;
   FileID FID;
   unsigned StartOffs = getLocationOffsetAndFileID(Loc, FID);
+
+  llvm::SmallString<128> indentedStr;
+  if (indentNewLines && Str.find('\n') != StringRef::npos) {
+    StringRef MB = SourceMgr->getBufferData(FID);
+
+    unsigned lineNo = SourceMgr->getLineNumber(FID, StartOffs) - 1;
+    const SrcMgr::ContentCache *
+        Content = SourceMgr->getSLocEntry(FID).getFile().getContentCache();
+    unsigned lineOffs = Content->SourceLineCache[lineNo];
+
+    // Find the whitespace at the start of the line.
+    StringRef indentSpace;
+    {
+      unsigned i = lineOffs;
+      while (isWhitespace(MB[i]))
+        ++i;
+      indentSpace = MB.substr(lineOffs, i-lineOffs);
+    }
+
+    llvm::SmallVector<StringRef, 4> lines;
+    Str.split(lines, "\n");
+
+    for (unsigned i = 0, e = lines.size(); i != e; ++i) {
+      indentedStr += lines[i];
+      if (i < e-1) {
+        indentedStr += '\n';
+        indentedStr += indentSpace;
+      }
+    }
+    Str = indentedStr.str();
+  }
+
   getEditBuffer(FID).InsertText(StartOffs, Str, InsertAfter);
   return false;
 }
@@ -317,6 +351,7 @@ bool Rewriter::IncreaseIndentation(CharSourceRange range,
                                    SourceLocation parentIndent) {
   using llvm::StringRef;
 
+  if (range.isInvalid()) return true;
   if (!isRewritable(range.getBegin())) return true;
   if (!isRewritable(range.getEnd())) return true;
   if (!isRewritable(parentIndent)) return true;
@@ -330,7 +365,7 @@ bool Rewriter::IncreaseIndentation(CharSourceRange range,
 
   if (StartFileID != EndFileID || StartFileID != parentFileID)
     return true;
-  if (StartOff >= EndOff || parentOff >= StartOff)
+  if (StartOff > EndOff)
     return true;
 
   FileID FID = StartFileID;
@@ -343,16 +378,12 @@ bool Rewriter::IncreaseIndentation(CharSourceRange range,
   const SrcMgr::ContentCache *
       Content = SourceMgr->getSLocEntry(FID).getFile().getContentCache();
   
-  // Find where the line starts for the three offsets.
+  // Find where the lines start.
   unsigned parentLineOffs = Content->SourceLineCache[parentLineNo];
   unsigned startLineOffs = Content->SourceLineCache[startLineNo];
-  unsigned endLineOffs = Content->SourceLineCache[endLineNo];
-
-  if (startLineOffs == endLineOffs || startLineOffs == parentLineOffs)
-    return true;
 
   // Find the whitespace at the start of each line.
-  StringRef parentSpace, startSpace, endSpace;
+  StringRef parentSpace, startSpace;
   {
     unsigned i = parentLineOffs;
     while (isWhitespace(MB[i]))
@@ -363,11 +394,6 @@ bool Rewriter::IncreaseIndentation(CharSourceRange range,
     while (isWhitespace(MB[i]))
       ++i;
     startSpace = MB.substr(startLineOffs, i-startLineOffs);
-
-    i = endLineOffs;
-    while (isWhitespace(MB[i]))
-      ++i;
-    endSpace = MB.substr(endLineOffs, i-endLineOffs);
   }
   if (parentSpace.size() >= startSpace.size())
     return true;
@@ -378,19 +404,14 @@ bool Rewriter::IncreaseIndentation(CharSourceRange range,
 
   // Indent the lines between start/end offsets.
   RewriteBuffer &RB = getEditBuffer(FID);
-  for (unsigned i = startLineOffs; i != endLineOffs; ++i) {
-    if (MB[i] == '\n') {
-      unsigned startOfLine = i+1;
-      if (startOfLine == endLineOffs)
-        break;
-      StringRef origIndent;
-      unsigned ws = startOfLine;
-      while (isWhitespace(MB[ws]))
-        ++ws;
-      origIndent = MB.substr(startOfLine, ws-startOfLine);
-      if (origIndent.startswith(startSpace))
-        RB.InsertText(startOfLine, indent, /*InsertAfter=*/false);
-    }
+  for (unsigned lineNo = startLineNo; lineNo <= endLineNo; ++lineNo) {
+    unsigned offs = Content->SourceLineCache[lineNo];
+    unsigned i = offs;
+    while (isWhitespace(MB[i]))
+      ++i;
+    StringRef origIndent = MB.substr(offs, i-offs);
+    if (origIndent.startswith(startSpace))
+      RB.InsertText(offs, indent, /*InsertAfter=*/false);
   }
 
   return false;

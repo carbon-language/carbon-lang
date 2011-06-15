@@ -383,6 +383,13 @@ def create_module : Flag<"-create-module">,
   HelpText<"Create a module definition file">;
 }
 
+def arcmt_check : Flag<"-arcmt-check">,
+  HelpText<"Check for ARC migration issues that need manual handling">;
+def arcmt_modify : Flag<"-arcmt-modify">,
+  HelpText<"Apply modifications to files to conform to ARC">;
+def arcmt_modify_in_memory : Flag<"-arcmt-modify-in-memory">,
+  HelpText<"Apply ARC conforming modifications & compile using memory buffers">;
+
 def import_module : Separate<"-import-module">,
   HelpText<"Import a module definition file">;
 
@@ -479,6 +486,14 @@ def fconstant_string_class : Separate<"-fconstant-string-class">,
   HelpText<"Specify the class to use for constant Objective-C string objects.">;
 def fno_constant_cfstrings : Flag<"-fno-constant-cfstrings">,
   HelpText<"Enable creation of CodeFoundation-type constant strings">;
+def fobjc_arc : Flag<"-fobjc-arc">,
+  HelpText<"Synthesize retain and release calls for Objective-C pointers">;
+def fobjc_arc_cxxlib_EQ : Joined<"-fobjc-arc-cxxlib=">,
+  HelpText<"Objective-C++ Automatic Reference Counting standard library kind">;
+def fobjc_no_arc_runtime : Flag<"-fobjc-no-arc-runtime">,
+  HelpText<"Implement -fobjc-arc without any extra runtime support">;
+def fobjc_arc_exceptions : Flag<"-fobjc-arc-exceptions">,
+  HelpText<"Use EH-safe code when synthesizing retains and releases in -fobjc-arc">;
 def fobjc_gc : Flag<"-fobjc-gc">,
   HelpText<"Enable Objective-C garbage collection">;
 def fobjc_gc_only : Flag<"-fobjc-gc-only">,

@@ -228,6 +228,11 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     if (!BaseClassDecl->hasTrivialDestructor())
       data().HasTrivialDestructor = false;
     
+    // A class has an Objective-C object member if... or any of its bases
+    // has an Objective-C object member.
+    if (BaseClassDecl->hasObjectMember())
+      setHasObjectMember(true);
+
     // Keep track of the presence of mutable fields.
     if (BaseClassDecl->hasMutableFields())
       data().HasMutableFields = true;
@@ -698,10 +703,23 @@ NotASpecialMember:;
     //   A POD struct is a class that is both a trivial class and a 
     //   standard-layout class, and has no non-static data members of type 
     //   non-POD struct, non-POD union (or array of such types).
+    //
+    // Automatic Reference Counting: the presence of a member of Objective-C pointer type
+    // that does not explicitly have no lifetime makes the class a non-POD.
+    // However, we delay setting PlainOldData to false in this case so that
+    // Sema has a chance to diagnostic causes where the same class will be
+    // non-POD with Automatic Reference Counting but a POD without Instant Objects.
+    // In this case, the class will become a non-POD class when we complete
+    // the definition.
     ASTContext &Context = getASTContext();
     QualType T = Context.getBaseElementType(Field->getType());
-    if (!T->isPODType())
+    if (T->isObjCRetainableType() || T.isObjCGCStrong()) {
+      if (!Context.getLangOptions().ObjCAutoRefCount ||
+          T.getObjCLifetime() != Qualifiers::OCL_ExplicitNone)
+        setHasObjectMember(true);
+    } else if (!T.isPODType(Context))
       data().PlainOldData = false;
+    
     if (T->isReferenceType()) {
       data().HasTrivialDefaultConstructor = false;
 
@@ -768,6 +786,8 @@ NotASpecialMember:;
 
         if (!FieldRec->hasTrivialDestructor())
           data().HasTrivialDestructor = false;
+        if (FieldRec->hasObjectMember())
+          setHasObjectMember(true);
 
         // C++0x [class]p7:
         //   A standard-layout class is a class that:
@@ -1077,6 +1097,20 @@ void CXXRecordDecl::completeDefinition() {
 
 void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
   RecordDecl::completeDefinition();
+  
+  if (hasObjectMember() && getASTContext().getLangOptions().ObjCAutoRefCount) {
+    // Objective-C Automatic Reference Counting:
+    //   If a class has a non-static data member of Objective-C pointer
+    //   type (or array thereof), it is a non-POD type and its
+    //   default constructor (if any), copy constructor, copy assignment
+    //   operator, and destructor are non-trivial.
+    struct DefinitionData &Data = data();
+    Data.PlainOldData = false;
+    Data.HasTrivialDefaultConstructor = false;
+    Data.HasTrivialCopyConstructor = false;
+    Data.HasTrivialCopyAssignment = false;
+    Data.HasTrivialDestructor = false;
+  }
   
   // If the class may be abstract (but hasn't been marked as such), check for
   // any pure final overriders.

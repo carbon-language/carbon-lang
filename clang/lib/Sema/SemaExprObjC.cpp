@@ -19,6 +19,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprObjC.h"
+#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeLoc.h"
 #include "llvm/ADT/SmallString.h"
 #include "clang/Lex/Preprocessor.h"
@@ -182,6 +183,29 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
   if (Pos == ReferencedSelectors.end())
     ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
 
+  // In ARC, forbid the user from using @selector for 
+  // retain/release/autorelease/dealloc/retainCount.
+  if (getLangOptions().ObjCAutoRefCount) {
+    switch (Sel.getMethodFamily()) {
+    case OMF_retain:
+    case OMF_release:
+    case OMF_autorelease:
+    case OMF_retainCount:
+    case OMF_dealloc:
+      Diag(AtLoc, diag::err_arc_illegal_selector) << 
+        Sel << SourceRange(LParenLoc, RParenLoc);
+      break;
+
+    case OMF_None:
+    case OMF_alloc:
+    case OMF_copy:
+    case OMF_init:
+    case OMF_mutableCopy:
+    case OMF_new:
+    case OMF_self:
+      break;
+    }
+  }
   QualType Ty = Context.getObjCSelType();
   return new (Context) ObjCSelectorExpr(Ty, Sel, AtLoc, RParenLoc);
 }
@@ -321,8 +345,12 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
       Args[i] = Result.take();
     }
 
-    unsigned DiagID = isClassMessage ? diag::warn_class_method_not_found :
-                                       diag::warn_inst_method_not_found;
+    unsigned DiagID;
+    if (getLangOptions().ObjCAutoRefCount)
+      DiagID = diag::err_arc_method_not_found;
+    else
+      DiagID = isClassMessage ? diag::warn_class_method_not_found
+                              : diag::warn_inst_method_not_found;
     Diag(lbrac, DiagID)
       << Sel << isClassMessage << SourceRange(lbrac, rbrac);
     ReturnType = Context.getObjCIdType();
@@ -404,17 +432,15 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
   return IsError;
 }
 
-bool Sema::isSelfExpr(Expr *RExpr) {
+bool Sema::isSelfExpr(Expr *receiver) {
   // 'self' is objc 'self' in an objc method only.
   DeclContext *DC = CurContext;
   while (isa<BlockDecl>(DC))
     DC = DC->getParent();
   if (DC && !isa<ObjCMethodDecl>(DC))
     return false;
-  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(RExpr))
-    if (ICE->getCastKind() == CK_LValueToRValue)
-      RExpr = ICE->getSubExpr();
-  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(RExpr))
+  receiver = receiver->IgnoreParenLValueCasts();
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(receiver))
     if (DRE->getDecl()->getIdentifier() == &Context.Idents.get("self"))
       return true;
   return false;
@@ -1013,11 +1039,16 @@ ExprResult Sema::BuildClassMessage(TypeSourceInfo *ReceiverTypeInfo,
   // Find the method we are messaging.
   if (!Method) {
     if (Class->isForwardDecl()) {
+      if (getLangOptions().ObjCAutoRefCount) {
+        Diag(Loc, diag::err_arc_receiver_forward_class) << ReceiverType;
+      } else {
+        Diag(Loc, diag::warn_receiver_forward_class) << Class->getDeclName();
+      }
+
       // A forward class used in messaging is treated as a 'Class'
-      Diag(Loc, diag::warn_receiver_forward_class) << Class->getDeclName();
       Method = LookupFactoryMethodInGlobalPool(Sel, 
                                                SourceRange(LBracLoc, RBracLoc));
-      if (Method)
+      if (Method && !getLangOptions().ObjCAutoRefCount)
         Diag(Method->getLocation(), diag::note_method_sent_forward_class)
           << Method->getDeclName();
     }
@@ -1236,6 +1267,14 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                    = ReceiverType->getAsObjCInterfacePointerType()) {
         // We allow sending a message to a pointer to an interface (an object).
         ClassDecl = OCIType->getInterfaceDecl();
+
+        if (ClassDecl->isForwardDecl() && getLangOptions().ObjCAutoRefCount) {
+          Diag(Loc, diag::err_arc_receiver_forward_instance)
+            << OCIType->getPointeeType()
+            << (Receiver ? Receiver->getSourceRange() : SourceRange(SuperLoc));
+          return ExprError();
+        }
+
         // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
         // faster than the following method (which can do *many* linear searches).
         // The idea is to add class info to MethodPool.
@@ -1249,6 +1288,12 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         if (!Method) {
           // If we have implementations in scope, check "private" methods.
           Method = LookupPrivateInstanceMethod(Sel, ClassDecl);
+
+          if (!Method && getLangOptions().ObjCAutoRefCount) {
+            Diag(Loc, diag::err_arc_may_not_respond)
+              << OCIType->getPointeeType() << Sel;
+            return ExprError();
+          }
 
           if (!Method && (!Receiver || !isSelfExpr(Receiver))) {
             // If we still haven't found a method, look in the global pool. This
@@ -1267,10 +1312,12 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         }
         if (Method && DiagnoseUseOfDecl(Method, Loc, forwardClass))
           return ExprError();
-      } else if (!Context.getObjCIdType().isNull() &&
+      } else if (!getLangOptions().ObjCAutoRefCount &&
+                 !Context.getObjCIdType().isNull() &&
                  (ReceiverType->isPointerType() || 
                   ReceiverType->isIntegerType())) {
         // Implicitly convert integers and pointers to 'id' but emit a warning.
+        // But not in ARC.
         Diag(Loc, diag::warn_bad_receiver_type)
           << ReceiverType 
           << Receiver->getSourceRange();
@@ -1332,8 +1379,37 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                           diag::err_illegal_message_expr_incomplete_type))
     return ExprError();
 
+  // In ARC, forbid the user from sending messages to 
+  // retain/release/autorelease/dealloc/retainCount explicitly.
+  if (getLangOptions().ObjCAutoRefCount) {
+    ObjCMethodFamily family =
+      (Method ? Method->getMethodFamily() : Sel.getMethodFamily());
+    switch (family) {
+    case OMF_init:
+      if (Method)
+        checkInitMethod(Method, ReceiverType);
+
+    case OMF_None:
+    case OMF_alloc:
+    case OMF_copy:
+    case OMF_mutableCopy:
+    case OMF_new:
+    case OMF_self:
+      break;
+
+    case OMF_dealloc:
+    case OMF_retain:
+    case OMF_release:
+    case OMF_autorelease:
+    case OMF_retainCount:
+      Diag(Loc, diag::err_arc_illegal_explicit_message)
+        << Sel << SelectorLoc;
+      break;
+    }
+  }
+
   // Construct the appropriate ObjCMessageExpr instance.
-  Expr *Result;
+  ObjCMessageExpr *Result;
   if (SuperLoc.isValid())
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
                                      SuperLoc,  /*IsInstanceSuper=*/true,
@@ -1343,6 +1419,27 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     Result = ObjCMessageExpr::Create(Context, ReturnType, VK, LBracLoc,
                                      Receiver, Sel, SelectorLoc, Method,
                                      Args, NumArgs, RBracLoc);
+
+  if (getLangOptions().ObjCAutoRefCount) {
+    // In ARC, annotate delegate init calls.
+    if (Result->getMethodFamily() == OMF_init &&
+        (SuperLoc.isValid() || isSelfExpr(Receiver))) {
+      // Only consider init calls *directly* in init implementations,
+      // not within blocks.
+      ObjCMethodDecl *method = dyn_cast<ObjCMethodDecl>(CurContext);
+      if (method && method->getMethodFamily() == OMF_init) {
+        // The implicit assignment to self means we also don't want to
+        // consume the result.
+        Result->setDelegateInitCall(true);
+        return Owned(Result);
+      }
+    }
+
+    // In ARC, check for message sends which are likely to introduce
+    // retain cycles.
+    checkRetainCycles(Result);
+  }
+      
   return MaybeBindToTemporary(Result);
 }
 
@@ -1364,3 +1461,293 @@ ExprResult Sema::ActOnInstanceMessage(Scope *S,
                               LBracLoc, SelectorLoc, RBracLoc, move(Args));
 }
 
+enum ARCConversionTypeClass {
+  ACTC_none,
+  ACTC_retainable,
+  ACTC_indirectRetainable
+};
+static ARCConversionTypeClass classifyTypeForARCConversion(QualType type) {
+  ARCConversionTypeClass ACTC = ACTC_retainable;
+  
+  // Ignore an outermost reference type.
+  if (const ReferenceType *ref = type->getAs<ReferenceType>())
+    type = ref->getPointeeType();
+  
+  // Drill through pointers and arrays recursively.
+  while (true) {
+    if (const PointerType *ptr = type->getAs<PointerType>()) {
+      type = ptr->getPointeeType();
+    } else if (const ArrayType *array = type->getAsArrayTypeUnsafe()) {
+      type = QualType(array->getElementType()->getBaseElementTypeUnsafe(), 0);
+    } else {
+      break;
+    }
+    ACTC = ACTC_indirectRetainable;
+  }
+  
+  if (!type->isObjCRetainableType()) return ACTC_none;
+  return ACTC;
+}
+
+namespace {
+  /// Return true if the given expression can be reasonably converted
+  /// between a retainable pointer type and a C pointer type.
+  struct ARCCastChecker : StmtVisitor<ARCCastChecker, bool> {
+    ASTContext &Context;
+    ARCCastChecker(ASTContext &Context) : Context(Context) {}
+    bool VisitStmt(Stmt *s) {
+      return false;
+    }
+    bool VisitExpr(Expr *e) {
+      return e->isNullPointerConstant(Context, Expr::NPC_ValueDependentIsNull);
+    }
+    
+    bool VisitParenExpr(ParenExpr *e) {
+      return Visit(e->getSubExpr());
+    }
+    bool VisitCastExpr(CastExpr *e) {
+      switch (e->getCastKind()) {
+        case CK_NullToPointer:
+          return true;
+        case CK_NoOp:
+        case CK_LValueToRValue:
+        case CK_BitCast:
+        case CK_AnyPointerToObjCPointerCast:
+        case CK_AnyPointerToBlockPointerCast:
+          return Visit(e->getSubExpr());
+        default:
+          return false;
+      }
+    }
+    bool VisitUnaryExtension(UnaryOperator *e) {
+      return Visit(e->getSubExpr());
+    }
+    bool VisitBinComma(BinaryOperator *e) {
+      return Visit(e->getRHS());
+    }
+    bool VisitConditionalOperator(ConditionalOperator *e) {
+      // Conditional operators are okay if both sides are okay.
+      return Visit(e->getTrueExpr()) && Visit(e->getFalseExpr());
+    }
+    bool VisitObjCStringLiteral(ObjCStringLiteral *e) {
+      // Always white-list Objective-C string literals.
+      return true;
+    }
+    bool VisitStmtExpr(StmtExpr *e) {
+      return Visit(e->getSubStmt()->body_back());
+    }
+    bool VisitDeclRefExpr(DeclRefExpr *e) {
+      // White-list references to global extern strings from system
+      // headers.
+      if (VarDecl *var = dyn_cast<VarDecl>(e->getDecl()))
+        if (var->getStorageClass() == SC_Extern &&
+            var->getType().isConstQualified() &&
+            Context.getSourceManager().isInSystemHeader(var->getLocation()))
+          return true;
+      return false;
+    }
+  };
+}
+
+void 
+Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
+                             Expr *castExpr, CheckedConversionKind CCK) {
+  QualType castExprType = castExpr->getType();
+  
+  ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExprType);
+  ARCConversionTypeClass castACTC = classifyTypeForARCConversion(castType);
+  if (exprACTC == castACTC) return;
+  if (exprACTC && castType->isBooleanType()) return;
+  
+  // Allow casts between pointers to lifetime types (e.g., __strong id*)
+  // and pointers to void (e.g., cv void *). Casting from void* to lifetime*
+  // must be explicit.
+  if (const PointerType *CastPtr = castType->getAs<PointerType>()) {
+    if (const PointerType *CastExprPtr = castExprType->getAs<PointerType>()) {
+      QualType CastPointee = CastPtr->getPointeeType();
+      QualType CastExprPointee = CastExprPtr->getPointeeType();
+      if ((CCK != CCK_ImplicitConversion && 
+           CastPointee->isObjCIndirectLifetimeType() && 
+           CastExprPointee->isVoidType()) ||
+          (CastPointee->isVoidType() && 
+           CastExprPointee->isObjCIndirectLifetimeType()))
+        return;
+    }
+  }
+  
+  if (ARCCastChecker(Context).Visit(castExpr))
+    return;
+  
+  SourceLocation loc =
+  (castRange.isValid() ? castRange.getBegin() : castExpr->getExprLoc());
+  
+  if (makeUnavailableInSystemHeader(loc,
+                                    "converts between Objective-C and C pointers in -fobjc-arc"))
+    return;
+  
+  unsigned srcKind;
+  switch (exprACTC) {
+    case ACTC_none:
+      srcKind = (castExprType->isPointerType() ? 1 : 0);
+      break;
+    case ACTC_retainable:
+      srcKind = (castExprType->isBlockPointerType() ? 2 : 3);
+      break;
+    case ACTC_indirectRetainable:
+      srcKind = 4;
+      break;
+  }
+  
+  if (CCK == CCK_CStyleCast) {
+    // Check whether this could be fixed with a bridge cast.
+    SourceLocation AfterLParen = PP.getLocForEndOfToken(castRange.getBegin());
+    SourceLocation NoteLoc = AfterLParen.isValid()? AfterLParen : loc;
+    
+    if (castType->isObjCARCBridgableType() && 
+        castExprType->isCARCBridgableType()) {
+      Diag(loc, diag::err_arc_cast_requires_bridge)
+        << 2
+        << castExprType
+        << (castType->isBlockPointerType()? 1 : 0)
+        << castType
+        << castRange
+        << castExpr->getSourceRange();
+      Diag(NoteLoc, diag::note_arc_bridge)
+        << FixItHint::CreateInsertion(AfterLParen, "__bridge ");
+      Diag(NoteLoc, diag::note_arc_bridge_transfer)
+        << castExprType
+        << FixItHint::CreateInsertion(AfterLParen, "__bridge_transfer ");
+      
+      return;
+    }
+    
+    if (castType->isCARCBridgableType() && 
+        castExprType->isObjCARCBridgableType()){
+      Diag(loc, diag::err_arc_cast_requires_bridge)
+        << (castExprType->isBlockPointerType()? 1 : 0)
+        << castExprType
+        << 2
+        << castType
+        << castRange
+        << castExpr->getSourceRange();
+
+      Diag(NoteLoc, diag::note_arc_bridge)
+        << FixItHint::CreateInsertion(AfterLParen, "__bridge ");
+      Diag(NoteLoc, diag::note_arc_bridge_retained)
+        << castType
+        << FixItHint::CreateInsertion(AfterLParen, "__bridge_retained ");
+      return;
+    }
+  }
+  
+  Diag(loc, diag::err_arc_mismatched_cast)
+    << (CCK != CCK_ImplicitConversion) << srcKind << castExprType << castType
+    << castRange << castExpr->getSourceRange();
+}
+
+ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
+                                      ObjCBridgeCastKind Kind,
+                                      SourceLocation BridgeKeywordLoc,
+                                      TypeSourceInfo *TSInfo,
+                                      Expr *SubExpr) {
+  QualType T = TSInfo->getType();
+  QualType FromType = SubExpr->getType();
+
+  bool MustConsume = false;
+  if (T->isDependentType() || SubExpr->isTypeDependent()) {
+    // Okay: we'll build a dependent expression type.
+  } else if (T->isObjCARCBridgableType() && FromType->isCARCBridgableType()) {
+    // Casting CF -> id
+    switch (Kind) {
+    case OBC_Bridge:
+      break;
+      
+    case OBC_BridgeRetained:
+      Diag(BridgeKeywordLoc, diag::err_arc_bridge_cast_wrong_kind)
+        << 2
+        << FromType
+        << (T->isBlockPointerType()? 1 : 0)
+        << T
+        << SubExpr->getSourceRange()
+        << Kind;
+      Diag(BridgeKeywordLoc, diag::note_arc_bridge)
+        << FixItHint::CreateReplacement(BridgeKeywordLoc, "__bridge");
+      Diag(BridgeKeywordLoc, diag::note_arc_bridge_transfer)
+        << FromType
+        << FixItHint::CreateReplacement(BridgeKeywordLoc, 
+                                        "__bridge_transfer ");
+
+      Kind = OBC_Bridge;
+      break;
+      
+    case OBC_BridgeTransfer:
+      // We must consume the Objective-C object produced by the cast.
+      MustConsume = true;
+      break;
+    }
+  } else if (T->isCARCBridgableType() && FromType->isObjCARCBridgableType()) {
+    // Okay: id -> CF
+    switch (Kind) {
+    case OBC_Bridge:
+      break;
+      
+    case OBC_BridgeRetained:        
+      // Produce the object before casting it.
+      SubExpr = ImplicitCastExpr::Create(Context, FromType,
+                                         CK_ObjCProduceObject,
+                                         SubExpr, 0, VK_RValue);
+      break;
+      
+    case OBC_BridgeTransfer:
+      Diag(BridgeKeywordLoc, diag::err_arc_bridge_cast_wrong_kind)
+        << (FromType->isBlockPointerType()? 1 : 0)
+        << FromType
+        << 2
+        << T
+        << SubExpr->getSourceRange()
+        << Kind;
+        
+      Diag(BridgeKeywordLoc, diag::note_arc_bridge)
+        << FixItHint::CreateReplacement(BridgeKeywordLoc, "__bridge ");
+      Diag(BridgeKeywordLoc, diag::note_arc_bridge_retained)
+        << T
+        << FixItHint::CreateReplacement(BridgeKeywordLoc, "__bridge_retained ");
+        
+      Kind = OBC_Bridge;
+      break;
+    }
+  } else {
+    Diag(LParenLoc, diag::err_arc_bridge_cast_incompatible)
+      << FromType << T << Kind
+      << SubExpr->getSourceRange()
+      << TSInfo->getTypeLoc().getSourceRange();
+    return ExprError();
+  }
+
+  Expr *Result = new (Context) ObjCBridgedCastExpr(LParenLoc, Kind, 
+                                                   BridgeKeywordLoc,
+                                                   TSInfo, SubExpr);
+  
+  if (MustConsume) {
+    ExprNeedsCleanups = true;
+    Result = ImplicitCastExpr::Create(Context, T, CK_ObjCConsumeObject, Result, 
+                                      0, VK_RValue);    
+  }
+  
+  return Result;
+}
+
+ExprResult Sema::ActOnObjCBridgedCast(Scope *S,
+                                      SourceLocation LParenLoc,
+                                      ObjCBridgeCastKind Kind,
+                                      SourceLocation BridgeKeywordLoc,
+                                      ParsedType Type,
+                                      SourceLocation RParenLoc,
+                                      Expr *SubExpr) {
+  TypeSourceInfo *TSInfo = 0;
+  QualType T = GetTypeFromParser(Type, &TSInfo);
+  if (!TSInfo)
+    TSInfo = Context.getTrivialTypeSourceInfo(T, LParenLoc);
+  return BuildObjCBridgedCast(LParenLoc, Kind, BridgeKeywordLoc, TSInfo, 
+                              SubExpr);
+}

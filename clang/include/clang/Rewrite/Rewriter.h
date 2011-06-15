@@ -183,8 +183,11 @@ public:
   /// InsertText - Insert the specified string at the specified location in the
   /// original buffer.  This method returns true (and does nothing) if the input
   /// location was not rewritable, false otherwise.
+  ///
+  /// \param indentNewLines if true new lines in the string are indented
+  /// using the indentation of the source line in position \arg Loc.
   bool InsertText(SourceLocation Loc, llvm::StringRef Str,
-                  bool InsertAfter = true);
+                  bool InsertAfter = true, bool indentNewLines = false);
 
   /// InsertTextAfter - Insert the specified string at the specified location in
   ///  the original buffer.  This method returns true (and does nothing) if

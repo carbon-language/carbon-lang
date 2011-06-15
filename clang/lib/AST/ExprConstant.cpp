@@ -282,6 +282,17 @@ public:
       return true;
     return false;
   }
+  bool VisitObjCIvarRefExpr(const ObjCIvarRefExpr *E) {
+    if (Info.Ctx.getCanonicalType(E->getType()).isVolatileQualified())
+      return true;
+    return false;
+  }
+  bool VisitBlockDeclRefExpr (const BlockDeclRefExpr *E) {
+    if (Info.Ctx.getCanonicalType(E->getType()).isVolatileQualified())
+      return true;
+    return false;
+  }
+
   // We don't want to evaluate BlockExprs multiple times, as they generate
   // a ton of code.
   bool VisitBlockExpr(const BlockExpr *E) { return true; }
@@ -1797,6 +1808,8 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_GetObjCProperty:
   case CK_LValueBitCast:
   case CK_UserDefinedConversion:
+  case CK_ObjCProduceObject:
+  case CK_ObjCConsumeObject:
     return false;
 
   case CK_LValueToRValue:
@@ -2301,6 +2314,8 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_FloatingComplexToBoolean:
   case CK_IntegralComplexToReal:
   case CK_IntegralComplexToBoolean:
+  case CK_ObjCProduceObject:
+  case CK_ObjCConsumeObject:
     llvm_unreachable("invalid cast kind for complex value");
 
   case CK_LValueToRValue:
@@ -2771,6 +2786,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::PackExpansionExprClass:
   case Expr::SubstNonTypeTemplateParmPackExprClass:
   case Expr::AsTypeExprClass:
+  case Expr::ObjCIndirectCopyRestoreExprClass:
     return ICEDiag(2, E->getLocStart());
 
   case Expr::SizeOfPackExprClass:
@@ -2995,7 +3011,8 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
   case Expr::CXXFunctionalCastExprClass:
   case Expr::CXXStaticCastExprClass:
   case Expr::CXXReinterpretCastExprClass:
-  case Expr::CXXConstCastExprClass: {
+  case Expr::CXXConstCastExprClass: 
+  case Expr::ObjCBridgedCastExprClass: {
     const Expr *SubExpr = cast<CastExpr>(E)->getSubExpr();
     if (SubExpr->getType()->isIntegralOrEnumerationType())
       return CheckICE(SubExpr, Ctx);

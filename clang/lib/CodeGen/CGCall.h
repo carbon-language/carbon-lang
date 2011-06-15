@@ -58,9 +58,44 @@ namespace CodeGen {
   class CallArgList :
     public llvm::SmallVector<CallArg, 16> {
   public:
+    struct Writeback {
+      /// The original argument.
+      llvm::Value *Address;
+
+      /// The pointee type of the original argument.
+      QualType AddressType;
+
+      /// The temporary alloca.
+      llvm::Value *Temporary;
+    };
+
     void add(RValue rvalue, QualType type, bool needscopy = false) {
       push_back(CallArg(rvalue, type, needscopy));
     }
+
+    void addFrom(const CallArgList &other) {
+      insert(end(), other.begin(), other.end());
+      Writebacks.insert(Writebacks.end(),
+                        other.Writebacks.begin(), other.Writebacks.end());
+    }
+
+    void addWriteback(llvm::Value *address, QualType addressType,
+                      llvm::Value *temporary) {
+      Writeback writeback;
+      writeback.Address = address;
+      writeback.AddressType = addressType;
+      writeback.Temporary = temporary;
+      Writebacks.push_back(writeback);
+    }
+
+    bool hasWritebacks() const { return !Writebacks.empty(); }
+
+    typedef llvm::SmallVectorImpl<Writeback>::const_iterator writeback_iterator;
+    writeback_iterator writeback_begin() const { return Writebacks.begin(); }
+    writeback_iterator writeback_end() const { return Writebacks.end(); }
+
+  private:
+    llvm::SmallVector<Writeback, 1> Writebacks;
   };
 
   /// FunctionArgList - Type for representing both the decl and type
@@ -88,6 +123,9 @@ namespace CodeGen {
     /// Whether this function is noreturn.
     bool NoReturn;
 
+    /// Whether this function is returns-retained.
+    bool ReturnsRetained;
+
     unsigned NumArgs;
     ArgInfo *Args;
 
@@ -100,7 +138,8 @@ namespace CodeGen {
     typedef ArgInfo *arg_iterator;
 
     CGFunctionInfo(unsigned CallingConvention, bool NoReturn,
-                   bool HasRegParm, unsigned RegParm, CanQualType ResTy,
+                   bool ReturnsRetained, bool HasRegParm, unsigned RegParm,
+                   CanQualType ResTy,
                    const CanQualType *ArgTys, unsigned NumArgTys);
     ~CGFunctionInfo() { delete[] Args; }
 
@@ -112,6 +151,10 @@ namespace CodeGen {
     unsigned  arg_size() const { return NumArgs; }
 
     bool isNoReturn() const { return NoReturn; }
+
+    /// In ARR, whether this function retains its return value.  This
+    /// is not always reliable for call sites.
+    bool isReturnsRetained() const { return ReturnsRetained; }
 
     /// getCallingConvention - Return the user specified calling
     /// convention.
@@ -137,6 +180,7 @@ namespace CodeGen {
     void Profile(llvm::FoldingSetNodeID &ID) {
       ID.AddInteger(getCallingConvention());
       ID.AddBoolean(NoReturn);
+      ID.AddBoolean(ReturnsRetained);
       ID.AddBoolean(HasRegParm);
       ID.AddInteger(RegParm);
       getReturnType().Profile(ID);
@@ -151,6 +195,7 @@ namespace CodeGen {
                         Iterator end) {
       ID.AddInteger(Info.getCC());
       ID.AddBoolean(Info.getNoReturn());
+      ID.AddBoolean(Info.getProducesResult());
       ID.AddBoolean(Info.getHasRegParm());
       ID.AddInteger(Info.getRegParm());
       ResTy.Profile(ID);

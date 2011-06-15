@@ -34,20 +34,22 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
 
   unsigned Alignment = Context.getDeclAlign(&D).getQuantity();
   if (!CGF.hasAggregateLLVMType(T)) {
-    llvm::Value *V = CGF.EmitScalarExpr(Init);
     CodeGenModule &CGM = CGF.CGM;
     Qualifiers::GC GCAttr = CGM.getContext().getObjCGCAttrKind(T);
     if (GCAttr == Qualifiers::Strong)
-      CGM.getObjCRuntime().EmitObjCGlobalAssign(CGF, V, DeclPtr,
-                                                D.isThreadSpecified());
+      CGM.getObjCRuntime().EmitObjCGlobalAssign(CGF, CGF.EmitScalarExpr(Init),
+                                                DeclPtr, D.isThreadSpecified());
     else if (GCAttr == Qualifiers::Weak)
-      CGM.getObjCRuntime().EmitObjCWeakAssign(CGF, V, DeclPtr);
+        CGM.getObjCRuntime().EmitObjCWeakAssign(CGF, CGF.EmitScalarExpr(Init),
+                                                DeclPtr);
     else
-      CGF.EmitStoreOfScalar(V, DeclPtr, isVolatile, Alignment, T);
+      CGF.EmitScalarInit(Init, &D, DeclPtr, false, isVolatile, Alignment,
+                         D.getType());
   } else if (T->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
   } else {
-    CGF.EmitAggExpr(Init, AggValueSlot::forAddr(DeclPtr, isVolatile, true));
+    CGF.EmitAggExpr(Init, AggValueSlot::forAddr(DeclPtr, T.getQualifiers(),
+                                                true));
   }
 }
 
@@ -291,10 +293,21 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                 getTypes().getNullaryFunctionInfo(),
                 FunctionArgList(), SourceLocation());
 
+  RunCleanupsScope Scope(*this);
+
+  // When building in Objective-C++ ARC mode, create an autorelease pool
+  // around the global initializers.
+  if (getLangOptions().ObjCAutoRefCount && getLangOptions().CPlusPlus) {    
+    llvm::Value *token = EmitObjCAutoreleasePoolPush();
+    EmitObjCAutoreleasePoolCleanup(token);
+  }
+  
   for (unsigned i = 0; i != NumDecls; ++i)
     if (Decls[i])
-      Builder.CreateCall(Decls[i]);
+      Builder.CreateCall(Decls[i]);    
 
+  Scope.ForceCleanup();
+  
   FinishFunction();
 }
 

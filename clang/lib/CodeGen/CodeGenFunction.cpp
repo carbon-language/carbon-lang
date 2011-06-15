@@ -31,7 +31,7 @@ using namespace CodeGen;
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   : CodeGenTypeCache(cgm), CGM(cgm),
     Target(CGM.getContext().Target), Builder(cgm.getModule().getContext()),
-    BlockInfo(0), BlockPointer(0),
+    AutoreleaseResult(false), BlockInfo(0), BlockPointer(0),
     NormalCleanupDest(0), EHCleanupDest(0), NextCleanupDestIndex(1),
     ExceptionSlot(0), EHSelectorSlot(0),
     DebugInfo(0), DisableDebugInfo(false), DidCallStackSave(false),
@@ -141,6 +141,13 @@ static void EmitIfUsed(CodeGenFunction &CGF, llvm::BasicBlock *BB) {
 void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
+
+  // Pop any cleanups that might have been associated with the
+  // parameters.  Do this in whatever block we're currently in; it's
+  // important to do this before we enter the return block or return
+  // edges will be *really* confused.
+  if (EHStack.stable_begin() != PrologueCleanupDepth)
+    PopCleanupBlocks(PrologueCleanupDepth);
 
   // Emit function epilog (to return).
   EmitReturnBlock();
@@ -311,9 +318,19 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
     ReturnValue = CurFn->arg_begin();
   } else {
     ReturnValue = CreateIRTemp(RetTy, "retval");
+
+    // Tell the epilog emitter to autorelease the result.  We do this
+    // now so that various specialized functions can suppress it
+    // during their IR-generation.
+    if (getLangOptions().ObjCAutoRefCount &&
+        !CurFnInfo->isReturnsRetained() &&
+        RetTy->isObjCRetainableType())
+      AutoreleaseResult = true;
   }
 
   EmitStartEHSpec(CurCodeDecl);
+
+  PrologueCleanupDepth = EHStack.stable_begin();
   EmitFunctionProlog(*CurFnInfo, CurFn, Args);
 
   if (D && isa<CXXMethodDecl>(D) && cast<CXXMethodDecl>(D)->isInstance())

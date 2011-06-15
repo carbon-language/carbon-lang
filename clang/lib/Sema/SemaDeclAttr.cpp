@@ -17,6 +17,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
@@ -101,8 +102,9 @@ static bool isFunctionOrMethodOrBlock(const Decl *d) {
 /// Return true if the given decl has a declarator that should have
 /// been processed by Sema::GetTypeForDeclarator.
 static bool hasDeclarator(const Decl *d) {
-  // In some sense, TypedefNameDecl really *ought* to be a DeclaratorDecl.
-  return isa<DeclaratorDecl>(d) || isa<BlockDecl>(d) || isa<TypedefNameDecl>(d);
+  // In some sense, TypedefDecl really *ought* to be a DeclaratorDecl.
+  return isa<DeclaratorDecl>(d) || isa<BlockDecl>(d) || isa<TypedefNameDecl>(d) ||
+         isa<ObjCPropertyDecl>(d);
 }
 
 /// hasFunctionProto - Return true if the given decl has a argument
@@ -1216,8 +1218,16 @@ static void HandleObjCMethodFamilyAttr(Decl *decl, const AttributeList &attr,
     return;
   }
 
-  decl->addAttr(new (S.Context) ObjCMethodFamilyAttr(attr.getLoc(),
-                                                     S.Context, family));
+  if (family == ObjCMethodFamilyAttr::OMF_init && 
+      !method->getResultType()->isObjCObjectPointerType()) {
+    S.Diag(method->getLocation(), diag::err_init_method_bad_return_type)
+      << method->getResultType();
+    // Ignore the attribute.
+    return;
+  }
+
+  method->addAttr(new (S.Context) ObjCMethodFamilyAttr(attr.getLoc(),
+                                                       S.Context, family));
 }
 
 static void HandleObjCExceptionAttr(Decl *D, const AttributeList &Attr,
@@ -2706,6 +2716,9 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &attr,
 
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(d))
     returnType = MD->getResultType();
+  else if (S.getLangOptions().ObjCAutoRefCount && hasDeclarator(d) &&
+           (attr.getKind() == AttributeList::AT_ns_returns_retained))
+    return; // ignore: was handled as a type attribute
   else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(d))
     returnType = FD->getResultType();
   else {
@@ -2765,6 +2778,62 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &attr,
                                                          S.Context));
       return;
   };
+}
+
+static void HandleObjCLifetimeAttr(Decl *d, const AttributeList &attr,
+                                   Sema &S) {
+  if (hasDeclarator(d)) return;
+
+  SourceLocation L = attr.getLoc();
+  S.Diag(d->getLocStart(), diag::err_attribute_wrong_decl_type)
+    << SourceRange(L, L) << attr.getName() << 12 /* variable */;
+}
+
+static void HandleObjCPreciseLifetimeAttr(Decl *d, const AttributeList &attr,
+                                          Sema &S) {
+  if (!isa<VarDecl>(d) && !isa<FieldDecl>(d)) {
+    SourceLocation L = attr.getLoc();
+    S.Diag(d->getLocStart(), diag::err_attribute_wrong_decl_type)
+      << SourceRange(L, L) << attr.getName() << 12 /* variable */;
+    return;
+  }
+
+  ValueDecl *vd = cast<ValueDecl>(d);
+  QualType type = vd->getType();
+
+  if (!type->isDependentType() &&
+      !type->isObjCLifetimeType()) {
+    S.Diag(attr.getLoc(), diag::err_objc_precise_lifetime_bad_type)
+      << type;
+    return;
+  }
+
+  Qualifiers::ObjCLifetime lifetime = type.getObjCLifetime();
+
+  // If we have no lifetime yet, check the lifetime we're presumably
+  // going to infer.
+  if (lifetime == Qualifiers::OCL_None && !type->isDependentType())
+    lifetime = type->getObjCARCImplicitLifetime();
+
+  switch (lifetime) {
+  case Qualifiers::OCL_None:
+    assert(type->isDependentType() &&
+           "didn't infer lifetime for non-dependent type?");
+    break;
+
+  case Qualifiers::OCL_Weak:   // meaningful
+  case Qualifiers::OCL_Strong: // meaningful
+    break;
+
+  case Qualifiers::OCL_ExplicitNone:
+  case Qualifiers::OCL_Autoreleasing:
+    S.Diag(attr.getLoc(), diag::warn_objc_precise_lifetime_meaningless)
+      << (lifetime == Qualifiers::OCL_Autoreleasing);
+    break;
+  }
+
+  d->addAttr(::new (S.Context)
+                 ObjCPreciseLifetimeAttr(attr.getLoc(), S.Context));
 }
 
 static bool isKnownDeclSpecAttr(const AttributeList &Attr) {
@@ -2908,6 +2977,11 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_nothrow:     HandleNothrowAttr     (D, Attr, S); break;
   case AttributeList::AT_shared:      HandleSharedAttr      (D, Attr, S); break;
   case AttributeList::AT_vecreturn:   HandleVecReturnAttr   (D, Attr, S); break;
+
+  case AttributeList::AT_objc_lifetime:
+    HandleObjCLifetimeAttr(D, Attr, S); break;
+  case AttributeList::AT_objc_precise_lifetime:
+    HandleObjCPreciseLifetimeAttr(D, Attr, S); break;
 
   // Checker-specific.
   case AttributeList::AT_cf_consumed:
@@ -3117,6 +3191,32 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
     ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
 }
 
+/// Is the given declaration allowed to use a forbidden type?
+static bool isForbiddenTypeAllowed(Sema &S, Decl *decl) {
+  // Private ivars are always okay.  Unfortunately, people don't
+  // always properly make their ivars private, even in system headers.
+  // Plus we need to make fields okay, too.
+  if (!isa<FieldDecl>(decl) && !isa<ObjCPropertyDecl>(decl))
+    return false;
+
+  // Require it to be declared in a system header.
+  return S.Context.getSourceManager().isInSystemHeader(decl->getLocation());
+}
+
+/// Handle a delayed forbidden-type diagnostic.
+static void handleDelayedForbiddenType(Sema &S, DelayedDiagnostic &diag,
+                                       Decl *decl) {
+  if (decl && isForbiddenTypeAllowed(S, decl)) {
+    decl->addAttr(new (S.Context) UnavailableAttr(diag.Loc, S.Context,
+                        "this system declaration uses an unsupported type"));
+    return;
+  }
+
+  S.Diag(diag.Loc, diag.getForbiddenTypeDiagnostic())
+    << diag.getForbiddenTypeOperand() << diag.getForbiddenTypeArgument();
+  diag.Triggered = true;
+}
+
 // This duplicates a vector push_back but hides the need to know the
 // size of the type.
 void Sema::DelayedDiagnostics::add(const DelayedDiagnostic &diag) {
@@ -3178,6 +3278,10 @@ void Sema::DelayedDiagnostics::popParsingDecl(Sema &S, ParsingDeclState state,
 
       case DelayedDiagnostic::Access:
         S.HandleDelayedAccessCheck(diag, decl);
+        break;
+
+      case DelayedDiagnostic::ForbiddenType:
+        handleDelayedForbiddenType(S, diag, decl);
         break;
       }
     }

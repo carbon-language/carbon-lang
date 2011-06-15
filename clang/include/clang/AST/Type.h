@@ -126,6 +126,28 @@ public:
     Strong
   };
 
+  enum ObjCLifetime {
+    /// There is no lifetime qualification on this type.
+    OCL_None,
+
+    /// This object can be modified without requiring retains or
+    /// releases.
+    OCL_ExplicitNone,
+
+    /// Assigning into this object requires the old value to be
+    /// released and the new value to be retained.  The timing of the
+    /// release of the old value is inexact: it may be moved to
+    /// immediately after the last known point where the value is
+    /// live.
+    OCL_Strong,
+
+    /// Reading or writing from this object requires a barrier call.
+    OCL_Weak,
+
+    /// Assigning into this object requires a lifetime extension.
+    OCL_Autoreleasing
+  };
+
   enum {
     /// The maximum supported address space number.
     /// 24 bits should be enough for anyone.
@@ -218,7 +240,37 @@ public:
     qs.removeObjCGCAttr();
     return qs;
   }
+  Qualifiers withoutObjCGLifetime() const {
+    Qualifiers qs = *this;
+    qs.removeObjCLifetime();
+    return qs;
+  }
 
+  bool hasObjCLifetime() const { return Mask & LifetimeMask; }
+  ObjCLifetime getObjCLifetime() const {
+    return ObjCLifetime((Mask & LifetimeMask) >> LifetimeShift);
+  }
+  void setObjCLifetime(ObjCLifetime type) {
+    Mask = (Mask & ~LifetimeMask) | (type << LifetimeShift);
+  }
+  void removeObjCLifetime() { setObjCLifetime(OCL_None); }
+  void addObjCLifetime(ObjCLifetime type) {
+    assert(type);
+    setObjCLifetime(type);
+  }
+
+  /// True if the lifetime is neither None or ExplicitNone.
+  bool hasNonTrivialObjCLifetime() const {
+    ObjCLifetime lifetime = getObjCLifetime();
+    return (lifetime > OCL_ExplicitNone);
+  }
+
+  /// True if the lifetime is either strong or weak.
+  bool hasStrongOrWeakObjCLifetime() const {
+    ObjCLifetime lifetime = getObjCLifetime();
+    return (lifetime == OCL_Strong || lifetime == OCL_Weak);
+  }
+  
   bool hasAddressSpace() const { return Mask & AddressSpaceMask; }
   unsigned getAddressSpace() const { return Mask >> AddressSpaceShift; }
   void setAddressSpace(unsigned space) {
@@ -277,6 +329,8 @@ public:
         addAddressSpace(Q.getAddressSpace());
       if (Q.hasObjCGCAttr())
         addObjCGCAttr(Q.getObjCGCAttr());
+      if (Q.hasObjCLifetime())
+        addObjCLifetime(Q.getObjCLifetime());
     }
   }
 
@@ -287,6 +341,8 @@ public:
            !hasAddressSpace() || !qs.hasAddressSpace());
     assert(getObjCGCAttr() == qs.getObjCGCAttr() ||
            !hasObjCGCAttr() || !qs.hasObjCGCAttr());
+    assert(getObjCLifetime() == qs.getObjCLifetime() ||
+           !hasObjCLifetime() || !qs.hasObjCLifetime());
     Mask |= qs.Mask;
   }
 
@@ -301,9 +357,29 @@ public:
       // changed.
       (getObjCGCAttr() == other.getObjCGCAttr() ||
        !hasObjCGCAttr() || !other.hasObjCGCAttr()) &&
+      // ObjC lifetime qualifiers must match exactly.
+      getObjCLifetime() == other.getObjCLifetime() &&
       // CVR qualifiers may subset.
       (((Mask & CVRMask) | (other.Mask & CVRMask)) == (Mask & CVRMask));
   }
+
+  /// \brief Determines if these qualifiers compatibly include another set of
+  /// qualifiers from the narrow perspective of Objective-C ARC lifetime.
+  ///
+  /// One set of Objective-C lifetime qualifiers compatibly includes the other
+  /// if the lifetime qualifiers match, or if both are non-__weak and the 
+  /// including set also contains the 'const' qualifier.
+  bool compatiblyIncludesObjCLifetime(Qualifiers other) const {
+    if (getObjCLifetime() == other.getObjCLifetime())
+      return true;
+    
+    if (getObjCLifetime() == OCL_Weak || other.getObjCLifetime() == OCL_Weak)
+      return false;
+    
+    return hasConst();
+  }
+  
+  bool isSupersetOf(Qualifiers Other) const;
 
   /// \brief Determine whether this set of qualifiers is a strict superset of
   /// another set of qualifiers, not considering qualifier compatibility.
@@ -351,14 +427,16 @@ public:
 
 private:
 
-  // bits:     |0 1 2|3 .. 4|5  ..  31|
-  //           |C R V|GCAttr|AddrSpace|
+  // bits:     |0 1 2|3 .. 4|5  ..  7|8   ...   31|
+  //           |C R V|GCAttr|Lifetime|AddressSpace|
   uint32_t Mask;
 
   static const uint32_t GCAttrMask = 0x18;
   static const uint32_t GCAttrShift = 3;
-  static const uint32_t AddressSpaceMask = ~(CVRMask | GCAttrMask);
-  static const uint32_t AddressSpaceShift = 5;
+  static const uint32_t LifetimeMask = 0xE0;
+  static const uint32_t LifetimeShift = 5;
+  static const uint32_t AddressSpaceMask = ~(CVRMask|GCAttrMask|LifetimeMask);
+  static const uint32_t AddressSpaceShift = 8;
 };
 
 /// CallingConv - Specifies the calling convention that a function uses.
@@ -526,6 +604,23 @@ public:
   bool isConstant(ASTContext& Ctx) const {
     return QualType::isConstant(*this, Ctx);
   }
+
+  /// \brief Determine whether this is a Plain Old Data (POD) type (C++ 3.9p10).
+  bool isPODType(ASTContext &Context) const;
+
+  /// isCXX11PODType() - Return true if this is a POD type according to the
+  /// more relaxed rules of the C++11 standard, regardless of the current
+  /// compilation's language.
+  /// (C++0x [basic.types]p9)
+  bool isCXX11PODType(ASTContext &Context) const;
+  
+  /// isTrivialType - Return true if this is a trivial type
+  /// (C++0x [basic.types]p9)
+  bool isTrivialType(ASTContext &Context) const;  
+
+  /// isTriviallyCopyableType - Return true if this is a trivially
+  /// copyable type (C++0x [basic.types]p9)
+  bool isTriviallyCopyableType(ASTContext &Context) const;
 
   // Don't promise in the API that anything besides 'const' can be
   // easily added.
@@ -709,7 +804,7 @@ public:
   /// getAddressSpace - Return the address space of this type.
   inline unsigned getAddressSpace() const;
 
-  /// GCAttrTypesAttr - Returns gc attribute of this type.
+  /// getObjCGCAttr - Returns gc attribute of this type.
   inline Qualifiers::GC getObjCGCAttr() const;
 
   /// isObjCGCWeak true when Type is objc's weak.
@@ -722,9 +817,24 @@ public:
     return getObjCGCAttr() == Qualifiers::Strong;
   }
 
+  /// getObjCLifetime - Returns lifetime attribute of this type.
+  Qualifiers::ObjCLifetime getObjCLifetime() const {
+    return getQualifiers().getObjCLifetime();
+  }
+
+  bool hasNonTrivialObjCLifetime() const {
+    return getQualifiers().hasNonTrivialObjCLifetime();
+  }
+
+  bool hasStrongOrWeakObjCLifetime() const {
+    return getQualifiers().hasStrongOrWeakObjCLifetime();
+  }
+
   enum DestructionKind {
     DK_none,
-    DK_cxx_destructor
+    DK_cxx_destructor,
+    DK_objc_strong_lifetime,
+    DK_objc_weak_lifetime
   };
 
   /// isDestructedType - nonzero if objects of this type require
@@ -735,6 +845,9 @@ public:
     return isDestructedTypeImpl(*this);
   }
 
+  /// \brief Determine whether this type has trivial copy-assignment semantics.
+  bool hasTrivialCopyAssignment(ASTContext &Context) const;
+  
 private:
   // These methods are implemented in a separate translation unit;
   // "static"-ize them to avoid creating temporary QualTypes in the
@@ -848,6 +961,11 @@ public:
 
   bool hasObjCGCAttr() const { return Quals.hasObjCGCAttr(); }
   Qualifiers::GC getObjCGCAttr() const { return Quals.getObjCGCAttr(); }
+
+  bool hasObjCLifetime() const { return Quals.hasObjCLifetime(); }
+  Qualifiers::ObjCLifetime getObjCLifetime() const {
+    return Quals.getObjCLifetime();
+  }
 
   bool hasAddressSpace() const { return Quals.hasAddressSpace(); }
   unsigned getAddressSpace() const { return Quals.getAddressSpace(); }
@@ -1005,7 +1123,7 @@ protected:
 
     /// Extra information which affects how the function is called, like
     /// regparm and the calling convention.
-    unsigned ExtInfo : 8;
+    unsigned ExtInfo : 9;
 
     /// Whether the function is variadic.  Only used by FunctionProtoType.
     unsigned Variadic : 1;
@@ -1186,30 +1304,13 @@ public:
     return !isReferenceType() && !isFunctionType() && !isVoidType();
   }
 
-  /// isPODType - Return true if this is a plain-old-data type (C++ 3.9p10).
-  bool isPODType() const;
-
   /// isLiteralType - Return true if this is a literal type
   /// (C++0x [basic.types]p10)
   bool isLiteralType() const;
 
-  /// isTrivialType - Return true if this is a trivial type
-  /// (C++0x [basic.types]p9)
-  bool isTrivialType() const;
-
-  /// isTriviallyCopyableType - Return true if this is a trivially copyable type
-  /// (C++0x [basic.types]p9
-  bool isTriviallyCopyableType() const;
-
   /// \brief Test if this type is a standard-layout type.
   /// (C++0x [basic.type]p9)
   bool isStandardLayoutType() const;
-
-  /// isCXX11PODType() - Return true if this is a POD type according to the
-  /// more relaxed rules of the C++11 standard, regardless of the current
-  /// compilation's language.
-  /// (C++0x [basic.types]p9)
-  bool isCXX11PODType() const;
 
   /// Helper methods to distinguish type categories. All type predicates
   /// operate on the canonical type, ignoring typedefs and qualifiers.
@@ -1290,7 +1391,11 @@ public:
   bool isComplexIntegerType() const;            // GCC _Complex integer type.
   bool isVectorType() const;                    // GCC vector type.
   bool isExtVectorType() const;                 // Extended vector type.
-  bool isObjCObjectPointerType() const;         // Pointer to *any* ObjC object.
+  bool isObjCObjectPointerType() const;         // pointer to ObjC object
+  bool isObjCRetainableType() const;            // ObjC object or block pointer
+  bool isObjCLifetimeType() const;              // (array of)* retainable type
+  bool isObjCIndirectLifetimeType() const;      // (pointer to)* lifetime type
+  bool isObjCNSObjectType() const;              // __attribute__((NSObject))
   // FIXME: change this to 'raw' interface type, so we can used 'interface' type
   // for the common case.
   bool isObjCObjectType() const;                // NSString or typeof(*(id)0)
@@ -1302,8 +1407,18 @@ public:
   bool isObjCClassType() const;                 // Class
   bool isObjCSelType() const;                 // Class
   bool isObjCBuiltinType() const;               // 'id' or 'Class'
+  bool isObjCARCBridgableType() const;
+  bool isCARCBridgableType() const;
   bool isTemplateTypeParmType() const;          // C++ template type parameter
   bool isNullPtrType() const;                   // C++0x nullptr_t
+
+  /// Determines if this type, which must satisfy
+  /// isObjCLifetimeType(), is implicitly __unsafe_unretained rather
+  /// than implicitly __strong.
+  bool isObjCARCImplicitlyUnretainedType() const;
+
+  /// Return the implicit lifetime for this type, which must not be dependent.
+  Qualifiers::ObjCLifetime getObjCARCImplicitLifetime() const;
 
   enum ScalarTypeKind {
     STK_Pointer,
@@ -1480,6 +1595,7 @@ public:
   }
   CanQualType getCanonicalTypeUnqualified() const; // in CanonicalType.h
   void dump() const;
+
   static bool classof(const Type *) { return true; }
 
   friend class ASTReader;
@@ -2340,30 +2456,33 @@ class FunctionType : public Type {
   // * AST read and write
   // * Codegen
   class ExtInfo {
-    // Feel free to rearrange or add bits, but if you go over 8,
+    // Feel free to rearrange or add bits, but if you go over 9,
     // you'll need to adjust both the Bits field below and
     // Type::FunctionTypeBitfields.
 
-    //   |  CC  |noreturn|hasregparm|regparm
-    //   |0 .. 2|   3    |    4     |5 ..  7
+    //   |  CC  |noreturn|produces|hasregparm|regparm
+    //   |0 .. 2|   3    |    4   |    5     |6 ..  8
     enum { CallConvMask = 0x7 };
     enum { NoReturnMask = 0x8 };
-    enum { HasRegParmMask = 0x10 };
-    enum { RegParmMask = ~(CallConvMask | NoReturnMask),
-           RegParmOffset = 5 };
+    enum { ProducesResultMask = 0x10 };
+    enum { HasRegParmMask = 0x20 };
+    enum { RegParmMask = ~(CallConvMask | NoReturnMask | ProducesResultMask),
+           RegParmOffset = 6 }; // Assumed to be the last field
 
-    unsigned char Bits;
+    uint16_t Bits;
 
-    ExtInfo(unsigned Bits) : Bits(static_cast<unsigned char>(Bits)) {}
+    ExtInfo(unsigned Bits) : Bits(static_cast<uint16_t>(Bits)) {}
 
     friend class FunctionType;
 
    public:
     // Constructor with no defaults. Use this when you know that you
     // have all the elements (when reading an AST file for example).
-    ExtInfo(bool noReturn, bool hasRegParm, unsigned regParm, CallingConv cc) {
+    ExtInfo(bool noReturn, bool hasRegParm, unsigned regParm, CallingConv cc,
+            bool producesResult) {
       Bits = ((unsigned) cc) |
              (noReturn ? NoReturnMask : 0) |
+             (producesResult ? ProducesResultMask : 0) |
              (hasRegParm ? HasRegParmMask : 0) |
              (regParm << RegParmOffset);
     }
@@ -2373,6 +2492,7 @@ class FunctionType : public Type {
     ExtInfo() : Bits(0) {}
 
     bool getNoReturn() const { return Bits & NoReturnMask; }
+    bool getProducesResult() const { return Bits & ProducesResultMask; }
     bool getHasRegParm() const { return Bits & HasRegParmMask; }
     unsigned getRegParm() const { return Bits >> RegParmOffset; }
     CallingConv getCC() const { return CallingConv(Bits & CallConvMask); }
@@ -2394,8 +2514,17 @@ class FunctionType : public Type {
         return ExtInfo(Bits & ~NoReturnMask);
     }
 
+    ExtInfo withProducesResult(bool producesResult) const {
+      if (producesResult)
+        return ExtInfo(Bits | ProducesResultMask);
+      else
+        return ExtInfo(Bits & ~ProducesResultMask);
+    }
+
     ExtInfo withRegParm(unsigned RegParm) const {
-      return ExtInfo(HasRegParmMask | (Bits & ~RegParmMask) | (RegParm << RegParmOffset));
+      return ExtInfo((Bits & ~RegParmMask) |
+                     (HasRegParmMask) |
+                     (RegParm << RegParmOffset));
     }
 
     ExtInfo withCallingConv(CallingConv cc) const {
@@ -2495,7 +2624,8 @@ public:
   struct ExtProtoInfo {
     ExtProtoInfo() :
       Variadic(false), ExceptionSpecType(EST_None), TypeQuals(0),
-      RefQualifier(RQ_None), NumExceptions(0), Exceptions(0), NoexceptExpr(0) {}
+      RefQualifier(RQ_None), NumExceptions(0), Exceptions(0), NoexceptExpr(0),
+      ConsumedArguments(0) {}
 
     FunctionType::ExtInfo ExtInfo;
     bool Variadic;
@@ -2505,6 +2635,7 @@ public:
     unsigned NumExceptions;
     const QualType *Exceptions;
     Expr *NoexceptExpr;
+    const bool *ConsumedArguments;
   };
 
 private:
@@ -2523,13 +2654,16 @@ private:
                     QualType canonical, const ExtProtoInfo &epi);
 
   /// NumArgs - The number of arguments this function has, not counting '...'.
-  unsigned NumArgs : 20;
+  unsigned NumArgs : 19;
 
   /// NumExceptions - The number of types in the exception spec, if any.
   unsigned NumExceptions : 9;
 
   /// ExceptionSpecType - The type of exception specification this function has.
   unsigned ExceptionSpecType : 3;
+
+  /// HasAnyConsumedArgs - Whether this function has any consumed arguments.
+  unsigned HasAnyConsumedArgs : 1;
 
   /// ArgInfo - There is an variable size array after the class in memory that
   /// holds the argument types.
@@ -2540,7 +2674,24 @@ private:
   /// NoexceptExpr - Instead of Exceptions, there may be a single Expr* pointing
   /// to the expression in the noexcept() specifier.
 
+  /// ConsumedArgs - A variable size array, following Exceptions
+  /// and of length NumArgs, holding flags indicating which arguments
+  /// are consumed.  This only appears if HasAnyConsumedArgs is true.
+
   friend class ASTContext;  // ASTContext creates these.
+
+  const bool *getConsumedArgsBuffer() const {
+    assert(hasAnyConsumedArgs());
+
+    // Find the end of the exceptions.
+    Expr * const *eh_end = reinterpret_cast<Expr * const *>(arg_type_end());
+    if (getExceptionSpecType() != EST_ComputedNoexcept)
+      eh_end += NumExceptions;
+    else
+      eh_end += 1; // NoexceptExpr
+
+    return reinterpret_cast<const bool*>(eh_end);
+  }
 
 public:
   unsigned getNumArgs() const { return NumArgs; }
@@ -2562,6 +2713,8 @@ public:
     } else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
       EPI.NoexceptExpr = getNoexceptExpr();
     }
+    if (hasAnyConsumedArgs())
+      EPI.ConsumedArguments = getConsumedArgsBuffer();
     return EPI;
   }
 
@@ -2645,6 +2798,16 @@ public:
     if (getExceptionSpecType() != EST_Dynamic)
       return exception_begin();
     return exception_begin() + NumExceptions;
+  }
+
+  bool hasAnyConsumedArgs() const {
+    return HasAnyConsumedArgs;
+  }
+  bool isArgConsumed(unsigned I) const {
+    assert(I < getNumArgs() && "argument index out of range!");
+    if (hasAnyConsumedArgs())
+      return getConsumedArgsBuffer()[I];
+    return false;
   }
 
   bool isSugared() const { return false; }
@@ -2971,6 +3134,7 @@ public:
 
     // Enumerated operand (string or keyword).
     attr_objc_gc,
+    attr_objc_lifetime,
     attr_pcs,
 
     FirstEnumOperandKind = attr_objc_gc,

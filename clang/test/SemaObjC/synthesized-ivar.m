@@ -51,3 +51,11 @@ int f0(I *a) { return a->IP; } // expected-error {{instance variable 'IP' is pri
 }
 @end
 
+@interface A
+@property (weak) id testObjectWeakProperty; // expected-note {{declared here}}
+@end
+
+@implementation A
+// rdar://9605088
+@synthesize testObjectWeakProperty; // expected-error {{@synthesize of 'weak' property is only allowed in ARC or GC mode}}
+@end

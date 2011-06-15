@@ -691,7 +691,8 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
     ExprValueKind VK = VK_RValue;
     CXXCastPath BasePath;
     ExprResult CastExpr =
-      CheckCastTypes(TInfo->getTypeLoc().getSourceRange(), Ty, Exprs[0],
+      CheckCastTypes(TInfo->getTypeLoc().getBeginLoc(),
+                     TInfo->getTypeLoc().getSourceRange(), Ty, Exprs[0],
                      Kind, VK, BasePath,
                      /*FunctionalStyle=*/true);
     if (CastExpr.isInvalid())
@@ -902,8 +903,16 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (CheckAllocatedType(AllocType, TypeRange.getBegin(), TypeRange))
     return ExprError();
 
-  QualType ResultType = Context.getPointerType(AllocType);
+  // In ARC, infer 'retaining' for the allocated 
+  if (getLangOptions().ObjCAutoRefCount &&
+      AllocType.getObjCLifetime() == Qualifiers::OCL_None &&
+      AllocType->isObjCLifetimeType()) {
+    AllocType = Context.getLifetimeQualifiedType(AllocType,
+                                    AllocType->getObjCARCImplicitLifetime());
+  }
 
+  QualType ResultType = Context.getPointerType(AllocType);
+    
   // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
   //   or enumeration type with a non-negative value."
   if (ArraySize && !ArraySize->isTypeDependent()) {
@@ -962,6 +971,14 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
         TypeIdParens = SourceRange();
       }
+    }
+
+    // ARC: warn about ABI issues.
+    if (getLangOptions().ObjCAutoRefCount) {
+      QualType BaseAllocType = Context.getBaseElementType(AllocType);
+      if (BaseAllocType.hasStrongOrWeakObjCLifetime())
+        Diag(StartLoc, diag::warn_err_new_delete_object_array)
+          << 0 << BaseAllocType;
     }
 
     // Note that we do *not* convert the argument in any way.  It can
@@ -1122,6 +1139,15 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
   else if (unsigned AddressSpace = AllocType.getAddressSpace())
     return Diag(Loc, diag::err_address_space_qualified_new)
       << AllocType.getUnqualifiedType() << AddressSpace;
+  else if (getLangOptions().ObjCAutoRefCount) {
+    if (const ArrayType *AT = Context.getAsArrayType(AllocType)) {
+      QualType BaseAllocType = Context.getBaseElementType(AT);
+      if (BaseAllocType.getObjCLifetime() == Qualifiers::OCL_None &&
+          BaseAllocType->isObjCLifetimeType())
+        return Diag(Loc, diag::err_arc_new_array_without_lifetime)
+          << BaseAllocType;
+    }
+  }
            
   return false;
 }
@@ -1774,8 +1800,9 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
     //   delete-expression; it is not necessary to cast away the constness
     //   (5.2.11) of the pointer expression before it is used as the operand
     //   of the delete-expression. ]
-    Ex = ImpCastExprToType(Ex.take(), Context.getPointerType(Context.VoidTy),
-                      CK_NoOp);
+    if (!Context.hasSameType(Ex.get()->getType(), Context.VoidPtrTy))
+      Ex = Owned(ImplicitCastExpr::Create(Context, Context.VoidPtrTy, CK_NoOp,
+                                          Ex.take(), 0, VK_RValue));
 
     if (Pointee->isArrayType() && !ArrayForm) {
       Diag(StartLoc, diag::warn_delete_array_type)
@@ -1830,6 +1857,14 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         if (!dtor || !dtor->isVirtual())
           Diag(StartLoc, diag::warn_delete_non_virtual_dtor) << PointeeElem;
       }
+
+    } else if (getLangOptions().ObjCAutoRefCount &&
+               PointeeElem->isObjCLifetimeType() &&
+               (PointeeElem.getObjCLifetime() == Qualifiers::OCL_Strong ||
+                PointeeElem.getObjCLifetime() == Qualifiers::OCL_Weak) &&
+               ArrayForm) {
+      Diag(StartLoc, diag::warn_err_new_delete_object_array)
+        << 1 << PointeeElem;
     }
 
     if (!OperatorDelete) {
@@ -1988,11 +2023,12 @@ static ExprResult BuildCXXCastArgument(Sema &S,
 ExprResult
 Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                 const ImplicitConversionSequence &ICS,
-                                AssignmentAction Action, bool CStyle) {
+                                AssignmentAction Action, 
+                                CheckedConversionKind CCK) {
   switch (ICS.getKind()) {
   case ImplicitConversionSequence::StandardConversion: {
     ExprResult Res = PerformImplicitConversion(From, ToType, ICS.Standard,
-                                               Action, CStyle);
+                                               Action, CCK);
     if (Res.isInvalid())
       return ExprError();
     From = Res.take();
@@ -2027,7 +2063,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
         ExprResult Res =
           PerformImplicitConversion(From, BeforeToType,
                                     ICS.UserDefined.Before, AA_Converting,
-                                    CStyle);
+                                    CCK);
         if (Res.isInvalid())
           return ExprError();
         From = Res.take();
@@ -2047,7 +2083,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       From = CastArg.take();
 
       return PerformImplicitConversion(From, ToType, ICS.UserDefined.After,
-                                       AA_Converting, CStyle);
+                                       AA_Converting, CCK);
   }
 
   case ImplicitConversionSequence::AmbiguousConversion:
@@ -2076,13 +2112,16 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 ExprResult
 Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                 const StandardConversionSequence& SCS,
-                                AssignmentAction Action, bool CStyle) {
+                                AssignmentAction Action, 
+                                CheckedConversionKind CCK) {
+  bool CStyle = (CCK == CCK_CStyleCast || CCK == CCK_FunctionalCast);
+  
   // Overall FIXME: we are recomputing too many types here and doing far too
   // much extra work. What this means is that we need to keep track of more
   // information that is computed when we try the implicit conversion initially,
   // so that we don't need to recompute anything here.
   QualType FromType = From->getType();
-
+  
   if (SCS.CopyConstructor) {
     // FIXME: When can ToType be a reference type?
     assert(!ToType->isReferenceType());
@@ -2149,12 +2188,14 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
   case ICK_Array_To_Pointer:
     FromType = Context.getArrayDecayedType(FromType);
-    From = ImpCastExprToType(From, FromType, CK_ArrayToPointerDecay).take();
+    From = ImpCastExprToType(From, FromType, CK_ArrayToPointerDecay, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Function_To_Pointer:
     FromType = Context.getPointerType(FromType);
-    From = ImpCastExprToType(From, FromType, CK_FunctionToPointerDecay).take();
+    From = ImpCastExprToType(From, FromType, CK_FunctionToPointerDecay, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   default:
@@ -2178,17 +2219,20 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     if (CheckExceptionSpecCompatibility(From, ToType))
       return ExprError();
 
-    From = ImpCastExprToType(From, ToType, CK_NoOp).take();
+    From = ImpCastExprToType(From, ToType, CK_NoOp, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Integral_Promotion:
   case ICK_Integral_Conversion:
-    From = ImpCastExprToType(From, ToType, CK_IntegralCast).take();
+    From = ImpCastExprToType(From, ToType, CK_IntegralCast, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Floating_Promotion:
   case ICK_Floating_Conversion:
-    From = ImpCastExprToType(From, ToType, CK_FloatingCast).take();
+    From = ImpCastExprToType(From, ToType, CK_FloatingCast, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Complex_Promotion:
@@ -2206,21 +2250,26 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     } else {
       CK = CK_IntegralComplexCast;
     }
-    From = ImpCastExprToType(From, ToType, CK).take();
+    From = ImpCastExprToType(From, ToType, CK, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
   }
 
   case ICK_Floating_Integral:
     if (ToType->isRealFloatingType())
-      From = ImpCastExprToType(From, ToType, CK_IntegralToFloating).take();
+      From = ImpCastExprToType(From, ToType, CK_IntegralToFloating, 
+                               VK_RValue, /*BasePath=*/0, CCK).take();
     else
-      From = ImpCastExprToType(From, ToType, CK_FloatingToIntegral).take();
+      From = ImpCastExprToType(From, ToType, CK_FloatingToIntegral, 
+                               VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Compatible_Conversion:
-    From = ImpCastExprToType(From, ToType, CK_NoOp).take();
+      From = ImpCastExprToType(From, ToType, CK_NoOp, 
+                               VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
+  case ICK_Writeback_Conversion:
   case ICK_Pointer_Conversion: {
     if (SCS.IncompatibleObjC && Action != AA_Casting) {
       // Diagnose incompatible Objective-C conversions
@@ -2234,7 +2283,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
              diag::ext_typecheck_convert_incompatible_pointer)
           << From->getType() << ToType << Action
           << From->getSourceRange();
-      
+
       if (From->getType()->isObjCObjectPointerType() &&
           ToType->isObjCObjectPointerType())
         EmitRelatedResultTypeNote(From);
@@ -2244,7 +2293,8 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     CXXCastPath BasePath;
     if (CheckPointerConversion(From, ToType, Kind, BasePath, CStyle))
       return ExprError();
-    From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath).take();
+    From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK)
+             .take();
     break;
   }
 
@@ -2255,13 +2305,15 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       return ExprError();
     if (CheckExceptionSpecCompatibility(From, ToType))
       return ExprError();
-    From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath).take();
+    From = ImpCastExprToType(From, ToType, Kind, VK_RValue, &BasePath, CCK)
+             .take();
     break;
   }
 
   case ICK_Boolean_Conversion:
     From = ImpCastExprToType(From, Context.BoolTy,
-                             ScalarTypeToBooleanCastKind(FromType)).take();
+                             ScalarTypeToBooleanCastKind(FromType), 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Derived_To_Base: {
@@ -2276,16 +2328,18 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
 
     From = ImpCastExprToType(From, ToType.getNonReferenceType(),
                       CK_DerivedToBase, CastCategory(From),
-                      &BasePath).take();
+                      &BasePath, CCK).take();
     break;
   }
 
   case ICK_Vector_Conversion:
-    From = ImpCastExprToType(From, ToType, CK_BitCast).take();
+    From = ImpCastExprToType(From, ToType, CK_BitCast, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Vector_Splat:
-    From = ImpCastExprToType(From, ToType, CK_VectorSplat).take();
+    From = ImpCastExprToType(From, ToType, CK_VectorSplat, 
+                             VK_RValue, /*BasePath=*/0, CCK).take();
     break;
 
   case ICK_Complex_Real:
@@ -2321,27 +2375,30 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       // _Complex x -> x
       From = ImpCastExprToType(From, ElType,
                    isFloatingComplex ? CK_FloatingComplexToReal
-                                     : CK_IntegralComplexToReal).take();
+                                     : CK_IntegralComplexToReal, 
+                               VK_RValue, /*BasePath=*/0, CCK).take();
 
       // x -> y
       if (Context.hasSameUnqualifiedType(ElType, ToType)) {
         // do nothing
       } else if (ToType->isRealFloatingType()) {
         From = ImpCastExprToType(From, ToType,
-                isFloatingComplex ? CK_FloatingCast : CK_IntegralToFloating).take();
+                   isFloatingComplex ? CK_FloatingCast : CK_IntegralToFloating, 
+                                 VK_RValue, /*BasePath=*/0, CCK).take();
       } else {
         assert(ToType->isIntegerType());
         From = ImpCastExprToType(From, ToType,
-                isFloatingComplex ? CK_FloatingToIntegral : CK_IntegralCast).take();
+                   isFloatingComplex ? CK_FloatingToIntegral : CK_IntegralCast, 
+                                 VK_RValue, /*BasePath=*/0, CCK).take();
       }
     }
     break;
   
   case ICK_Block_Pointer_Conversion: {
-      From = ImpCastExprToType(From, ToType.getUnqualifiedType(), CK_BitCast,
-                               VK_RValue).take();
-      break;
-    }
+    From = ImpCastExprToType(From, ToType.getUnqualifiedType(), CK_BitCast,
+                             VK_RValue, /*BasePath=*/0, CCK).take();
+    break;
+  }
       
   case ICK_TransparentUnionConversion: {
     ExprResult FromRes = Owned(From);
@@ -2376,7 +2433,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
     ExprValueKind VK = ToType->isReferenceType() ?
                                   CastCategory(From) : VK_RValue;
     From = ImpCastExprToType(From, ToType.getNonLValueExprType(Context),
-                             CK_NoOp, VK).take();
+                             CK_NoOp, VK, /*BasePath=*/0, CCK).take();
 
     if (SCS.DeprecatedStringLiteralToCharPtr &&
         !getLangOptions().WritableStrings)
@@ -2553,6 +2610,23 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsObject:
     return T->isObjectType();
   case UTT_IsScalar:
+    // Note: semantic analysis depends on Objective-C lifetime types to be
+    // considered scalar types. However, such types do not actually behave
+    // like scalar types at run time (since they may require retain/release
+    // operations), so we report them as non-scalar.
+    if (T->isObjCLifetimeType()) {
+      switch (T.getObjCLifetime()) {
+      case Qualifiers::OCL_None:
+      case Qualifiers::OCL_ExplicitNone:
+        return true;
+
+      case Qualifiers::OCL_Strong:
+      case Qualifiers::OCL_Weak:
+      case Qualifiers::OCL_Autoreleasing:
+        return false;
+      }
+    }
+      
     return T->isScalarType();
   case UTT_IsCompound:
     return T->isCompoundType();
@@ -2566,13 +2640,13 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
   case UTT_IsVolatile:
     return T.isVolatileQualified();
   case UTT_IsTrivial:
-    return T->isTrivialType();
+    return T.isTrivialType(Self.Context);
   case UTT_IsTriviallyCopyable:
-    return T->isTriviallyCopyableType();
+    return T.isTriviallyCopyableType(Self.Context);
   case UTT_IsStandardLayout:
     return T->isStandardLayoutType();
   case UTT_IsPOD:
-    return T->isPODType();
+    return T.isPODType(Self.Context);
   case UTT_IsLiteral:
     return T->isLiteralType();
   case UTT_IsEmpty:
@@ -2605,7 +2679,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   If __is_pod (type) is true then the trait is true, else if type is
     //   a cv class or union type (or array thereof) with a trivial default
     //   constructor ([class.ctor]) then the trait is true, else it is false.
-    if (T->isPODType())
+    if (T.isPODType(Self.Context))
       return true;
     if (const RecordType *RT =
           C.getBaseElementType(T)->getAs<RecordType>())
@@ -2617,7 +2691,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   the trait is true, else if type is a cv class or union type
     //   with a trivial copy constructor ([class.copy]) then the trait
     //   is true, else it is false.
-    if (T->isPODType() || T->isReferenceType())
+    if (T.isPODType(Self.Context) || T->isReferenceType())
       return true;
     if (const RecordType *RT = T->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyConstructor();
@@ -2637,7 +2711,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
 
     if (C.getBaseElementType(T).isConstQualified())
       return false;
-    if (T->isPODType())
+    if (T.isPODType(Self.Context))
       return true;
     if (const RecordType *RT = T->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyAssignment();
@@ -2649,8 +2723,14 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   type (or array thereof) with a trivial destructor
     //   ([class.dtor]) then the trait is true, else it is
     //   false.
-    if (T->isPODType() || T->isReferenceType())
+    if (T.isPODType(Self.Context) || T->isReferenceType())
       return true;
+      
+    // Objective-C++ ARC: autorelease types don't require destruction.
+    if (T->isObjCLifetimeType() && 
+        T.getObjCLifetime() == Qualifiers::OCL_Autoreleasing)
+      return true;
+      
     if (const RecordType *RT =
           C.getBaseElementType(T)->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor();
@@ -2668,8 +2748,8 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
       return false;
     if (T->isReferenceType())
       return false;
-    if (T->isPODType())
-      return true;
+    if (T.isPODType(Self.Context) || T->isObjCLifetimeType())
+      return true;     
     if (const RecordType *RT = T->getAs<RecordType>()) {
       CXXRecordDecl* RD = cast<CXXRecordDecl>(RT->getDecl());
       if (RD->hasTrivialCopyAssignment())
@@ -2704,7 +2784,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   if type is a cv class or union type with copy constructors that are
     //   known not to throw an exception then the trait is true, else it is
     //   false.
-    if (T->isPODType() || T->isReferenceType())
+    if (T.isPODType(C) || T->isReferenceType() || T->isObjCLifetimeType())
       return true;
     if (const RecordType *RT = T->getAs<RecordType>()) {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
@@ -2744,7 +2824,7 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   true, else if type is a cv class or union type (or array
     //   thereof) with a default constructor that is known not to
     //   throw an exception then the trait is true, else it is false.
-    if (T->isPODType())
+    if (T.isPODType(C) || T->isObjCLifetimeType())
       return true;
     if (const RecordType *RT = C.getBaseElementType(T)->getAs<RecordType>()) {
       CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
@@ -3828,17 +3908,84 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (!E)
     return ExprError();
 
-  if (!Context.getLangOptions().CPlusPlus)
+  assert(!isa<CXXBindTemporaryExpr>(E) && "Double-bound temporary?");
+
+  // If the result is a glvalue, we shouldn't bind it.
+  if (!E->isRValue())
     return Owned(E);
 
-  assert(!isa<CXXBindTemporaryExpr>(E) && "Double-bound temporary?");
+  // In ARC, calls that return a retainable type can return retained,
+  // in which case we have to insert a consuming cast.
+  if (getLangOptions().ObjCAutoRefCount &&
+      E->getType()->isObjCRetainableType()) {
+
+    bool ReturnsRetained;
+
+    // For actual calls, we compute this by examining the type of the
+    // called value.
+    if (CallExpr *Call = dyn_cast<CallExpr>(E)) {
+      Expr *Callee = Call->getCallee()->IgnoreParens();
+      QualType T = Callee->getType();
+
+      if (T == Context.BoundMemberTy) {
+        // Handle pointer-to-members.
+        if (BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Callee))
+          T = BinOp->getRHS()->getType();
+        else if (MemberExpr *Mem = dyn_cast<MemberExpr>(Callee))
+          T = Mem->getMemberDecl()->getType();
+      }
+      
+      if (const PointerType *Ptr = T->getAs<PointerType>())
+        T = Ptr->getPointeeType();
+      else if (const BlockPointerType *Ptr = T->getAs<BlockPointerType>())
+        T = Ptr->getPointeeType();
+      else if (const MemberPointerType *MemPtr = T->getAs<MemberPointerType>())
+        T = MemPtr->getPointeeType();
+      
+      const FunctionType *FTy = T->getAs<FunctionType>();
+      assert(FTy && "call to value not of function type?");
+      ReturnsRetained = FTy->getExtInfo().getProducesResult();
+
+    // ActOnStmtExpr arranges things so that StmtExprs of retainable
+    // type always produce a +1 object.
+    } else if (isa<StmtExpr>(E)) {
+      ReturnsRetained = true;
+
+    // For message sends and property references, we try to find an
+    // actual method.  FIXME: we should infer retention by selector in
+    // cases where we don't have an actual method.
+    } else {
+      Decl *D = 0;
+      if (ObjCMessageExpr *Send = dyn_cast<ObjCMessageExpr>(E)) {
+        D = Send->getMethodDecl();
+      } else {
+        CastExpr *CE = cast<CastExpr>(E);
+        // FIXME. What other cast kinds to check for?
+        if (CE->getCastKind() == CK_ObjCProduceObject ||
+            CE->getCastKind() == CK_LValueToRValue)
+          return MaybeBindToTemporary(CE->getSubExpr());
+        assert(CE->getCastKind() == CK_GetObjCProperty);
+        const ObjCPropertyRefExpr *PRE = CE->getSubExpr()->getObjCProperty();
+        D = (PRE->isImplicitProperty() ? PRE->getImplicitPropertyGetter() : 0);
+      }
+
+      ReturnsRetained = (D && D->hasAttr<NSReturnsRetainedAttr>());
+    }
+
+    if (ReturnsRetained) {
+      ExprNeedsCleanups = true;
+      E = ImplicitCastExpr::Create(Context, E->getType(),
+                                   CK_ObjCConsumeObject, E, 0,
+                                   VK_RValue);
+    }
+    return Owned(E);
+  }
+
+  if (!getLangOptions().CPlusPlus)
+    return Owned(E);
 
   const RecordType *RT = E->getType()->getAs<RecordType>();
   if (!RT)
-    return Owned(E);
-
-  // If the result is a glvalue, we shouldn't bind it.
-  if (E->Classify(Context).isGLValue())
     return Owned(E);
 
   // That should be enough to guarantee that this type is complete.
@@ -3847,15 +3994,18 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (RD->isInvalidDecl() || RD->hasTrivialDestructor())
     return Owned(E);
 
-  CXXTemporary *Temp = CXXTemporary::Create(Context, LookupDestructor(RD));
-  ExprTemporaries.push_back(Temp);
-  if (CXXDestructorDecl *Destructor = LookupDestructor(RD)) {
+  CXXDestructorDecl *Destructor = LookupDestructor(RD);
+
+  CXXTemporary *Temp = CXXTemporary::Create(Context, Destructor);
+  if (Destructor) {
     MarkDeclarationReferenced(E->getExprLoc(), Destructor);
     CheckDestructorAccess(E->getExprLoc(), Destructor,
                           PDiag(diag::err_access_dtor_temp)
                             << E->getType());
+
+    ExprTemporaries.push_back(Temp);
+    ExprNeedsCleanups = true;
   }
-  // FIXME: Add the temporary to the temporaries vector.
   return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
 }
 
@@ -3864,14 +4014,16 @@ Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
 
   unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
   assert(ExprTemporaries.size() >= FirstTemporary);
-  if (ExprTemporaries.size() == FirstTemporary)
+  assert(ExprNeedsCleanups || ExprTemporaries.size() == FirstTemporary);
+  if (!ExprNeedsCleanups)
     return SubExpr;
 
   Expr *E = ExprWithCleanups::Create(Context, SubExpr,
-                                     &ExprTemporaries[FirstTemporary],
+                                     ExprTemporaries.begin() + FirstTemporary,
                                      ExprTemporaries.size() - FirstTemporary);
   ExprTemporaries.erase(ExprTemporaries.begin() + FirstTemporary,
                         ExprTemporaries.end());
+  ExprNeedsCleanups = false;
 
   return E;
 }
@@ -3887,9 +4039,7 @@ Sema::MaybeCreateExprWithCleanups(ExprResult SubExpr) {
 Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {
   assert(SubStmt && "sub statement can't be null!");
 
-  unsigned FirstTemporary = ExprEvalContexts.back().NumTemporaries;
-  assert(ExprTemporaries.size() >= FirstTemporary);
-  if (ExprTemporaries.size() == FirstTemporary)
+  if (!ExprNeedsCleanups)
     return SubStmt;
 
   // FIXME: In order to attach the temporaries, wrap the statement into
@@ -4047,17 +4197,35 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
     QualType DestructedType = DestructedTypeInfo->getType();
     SourceLocation DestructedTypeStart
       = DestructedTypeInfo->getTypeLoc().getLocalSourceRange().getBegin();
-    if (!DestructedType->isDependentType() && !ObjectType->isDependentType() &&
-        !Context.hasSameUnqualifiedType(DestructedType, ObjectType)) {
-      Diag(DestructedTypeStart, diag::err_pseudo_dtor_type_mismatch)
-        << ObjectType << DestructedType << Base->getSourceRange()
-        << DestructedTypeInfo->getTypeLoc().getLocalSourceRange();
+    if (!DestructedType->isDependentType() && !ObjectType->isDependentType()) {
+      if (!Context.hasSameUnqualifiedType(DestructedType, ObjectType)) {
+        Diag(DestructedTypeStart, diag::err_pseudo_dtor_type_mismatch)
+          << ObjectType << DestructedType << Base->getSourceRange()
+          << DestructedTypeInfo->getTypeLoc().getLocalSourceRange();
 
-      // Recover by setting the destructed type to the object type.
-      DestructedType = ObjectType;
-      DestructedTypeInfo = Context.getTrivialTypeSourceInfo(ObjectType,
+        // Recover by setting the destructed type to the object type.
+        DestructedType = ObjectType;
+        DestructedTypeInfo = Context.getTrivialTypeSourceInfo(ObjectType,
                                                            DestructedTypeStart);
-      Destructed = PseudoDestructorTypeStorage(DestructedTypeInfo);
+        Destructed = PseudoDestructorTypeStorage(DestructedTypeInfo);
+      } else if (DestructedType.getObjCLifetime() != 
+                                                ObjectType.getObjCLifetime()) {
+        
+        if (DestructedType.getObjCLifetime() == Qualifiers::OCL_None) {
+          // Okay: just pretend that the user provided the correctly-qualified
+          // type.
+        } else {
+          Diag(DestructedTypeStart, diag::err_arc_pseudo_dtor_inconstant_quals)
+            << ObjectType << DestructedType << Base->getSourceRange()
+            << DestructedTypeInfo->getTypeLoc().getLocalSourceRange();
+        }
+        
+        // Recover by setting the destructed type to the object type.
+        DestructedType = ObjectType;
+        DestructedTypeInfo = Context.getTrivialTypeSourceInfo(ObjectType,
+                                                           DestructedTypeStart);
+        Destructed = PseudoDestructorTypeStorage(DestructedTypeInfo);
+      }
     }
   }
 

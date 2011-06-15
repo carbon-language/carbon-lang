@@ -3,24 +3,24 @@
 
 @interface B
 - (void) depInA;
-- (void) unavailMeth __attribute__((unavailable)); // expected-note {{function has been explicitly marked unavailable here}}
+- (void) unavailMeth __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
 - (void) depInA1 __attribute__((deprecated));
 - (void) unavailMeth1;
 - (void) depInA2 __attribute__((deprecated));
-- (void) unavailMeth2 __attribute__((unavailable)); // expected-note {{function has been explicitly marked unavailable here}}
+- (void) unavailMeth2 __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
 - (void) depunavailInA;
-- (void) depunavailInA1 __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{function has been explicitly marked unavailable here}}
+- (void) depunavailInA1 __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
 - (void)FuzzyMeth __attribute__((deprecated));
 - (void)FuzzyMeth1 __attribute__((unavailable));
 @end
 
 @interface A
-- (void) unavailMeth1 __attribute__((unavailable)); // expected-note {{function has been explicitly marked unavailable here}}
+- (void) unavailMeth1 __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
 - (void) depInA __attribute__((deprecated));
 - (void) depInA2 __attribute__((deprecated));
 - (void) depInA1;
 - (void) unavailMeth2 __attribute__((unavailable)); 
-- (void) depunavailInA __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{function has been explicitly marked unavailable here}}
+- (void) depunavailInA __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{has been explicitly marked unavailable here}}
 - (void) depunavailInA1;
 - (void)FuzzyMeth __attribute__((unavailable));
 - (void)FuzzyMeth1 __attribute__((deprecated));

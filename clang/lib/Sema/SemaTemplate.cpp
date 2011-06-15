@@ -3503,9 +3503,11 @@ CheckTemplateArgumentAddressOfObjectOrFunction(Sema &S,
     return true;
   }
 
+  bool ObjCLifetimeConversion;
   if (ParamType->isPointerType() &&
       !ParamType->getAs<PointerType>()->getPointeeType()->isFunctionType() &&
-      S.IsQualificationConversion(ArgType, ParamType, false)) {
+      S.IsQualificationConversion(ArgType, ParamType, false, 
+                                  ObjCLifetimeConversion)) {
     // For pointer-to-object types, qualification conversions are
     // permitted.
   } else {
@@ -3865,8 +3867,9 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       return Owned(Arg);
     }
 
+    bool ObjCLifetimeConversion;
     if (IsQualificationConversion(ArgType, ParamType.getNonReferenceType(),
-                                  false)) {
+                                  false, ObjCLifetimeConversion)) {
       Arg = ImpCastExprToType(Arg, ParamType, CK_NoOp, CastCategory(Arg)).take();
     } else if (!Context.hasSameUnqualifiedType(ArgType,
                                            ParamType.getNonReferenceType())) {
@@ -3933,9 +3936,11 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
   //        member, qualification conversions (4.4) are applied.
   assert(ParamType->isMemberPointerType() && "Only pointers to members remain");
 
+  bool ObjCLifetimeConversion;
   if (Context.hasSameUnqualifiedType(ParamType, ArgType)) {
     // Types match exactly: nothing more to do here.
-  } else if (IsQualificationConversion(ArgType, ParamType, false)) {
+  } else if (IsQualificationConversion(ArgType, ParamType, false, 
+                                       ObjCLifetimeConversion)) {
     Arg = ImpCastExprToType(Arg, ParamType, CK_NoOp, CastCategory(Arg)).take();
   } else {
     // We can't perform this conversion.
@@ -4043,8 +4048,10 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
       // We might need to perform a trailing qualification conversion, since
       // the element type on the parameter could be more qualified than the
       // element type in the expression we constructed.
+      bool ObjCLifetimeConversion;
       if (IsQualificationConversion(((Expr*) RefExpr.get())->getType(),
-                                    ParamType.getUnqualifiedType(), false))
+                                    ParamType.getUnqualifiedType(), false,
+                                    ObjCLifetimeConversion))
         RefExpr = ImpCastExprToType(RefExpr.take(), ParamType.getUnqualifiedType(), CK_NoOp);
 
       assert(!RefExpr.isInvalid() &&

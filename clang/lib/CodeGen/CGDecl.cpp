@@ -353,9 +353,7 @@ namespace {
       if (NRVO) CGF.EmitBlock(SkipDtorBB);
     }
   };
-}
 
-namespace {
   struct CallStackRestore : EHScopeStack::Cleanup {
     llvm::Value *Stack;
     CallStackRestore(llvm::Value *Stack) : Stack(Stack) {}
@@ -400,6 +398,164 @@ namespace {
   };
 }
 
+/// EmitAutoVarWithLifetime - Does the setup required for an automatic
+/// variable with lifetime.
+static void EmitAutoVarWithLifetime(CodeGenFunction &CGF, const VarDecl &var,
+                                    llvm::Value *addr,
+                                    Qualifiers::ObjCLifetime lifetime) {
+  switch (lifetime) {
+  case Qualifiers::OCL_None:
+    llvm_unreachable("present but none");
+
+  case Qualifiers::OCL_ExplicitNone:
+    // nothing to do
+    break;
+
+  case Qualifiers::OCL_Strong: {
+    CGF.PushARCReleaseCleanup(CGF.getARCCleanupKind(),
+                              var.getType(), addr,
+                              var.hasAttr<ObjCPreciseLifetimeAttr>());
+    break;
+  }
+  case Qualifiers::OCL_Autoreleasing:
+    // nothing to do
+    break;
+ 
+  case Qualifiers::OCL_Weak:
+    // __weak objects always get EH cleanups; otherwise, exceptions
+    // could cause really nasty crashes instead of mere leaks.
+    CGF.PushARCWeakReleaseCleanup(NormalAndEHCleanup, var.getType(), addr);
+    break;
+  }
+}
+
+static bool isAccessedBy(const VarDecl &var, const Stmt *s) {
+  if (const Expr *e = dyn_cast<Expr>(s)) {
+    // Skip the most common kinds of expressions that make
+    // hierarchy-walking expensive.
+    s = e = e->IgnoreParenCasts();
+
+    if (const DeclRefExpr *ref = dyn_cast<DeclRefExpr>(e))
+      return (ref->getDecl() == &var);
+  }
+
+  for (Stmt::const_child_range children = s->children(); children; ++children)
+    if (isAccessedBy(var, *children))
+      return true;
+
+  return false;
+}
+
+static bool isAccessedBy(const ValueDecl *decl, const Expr *e) {
+  if (!decl) return false;
+  if (!isa<VarDecl>(decl)) return false;
+  const VarDecl *var = cast<VarDecl>(decl);
+  return isAccessedBy(*var, e);
+}
+
+void CodeGenFunction::EmitScalarInit(const Expr *init,
+                                     const ValueDecl *D,
+                                     llvm::Value *addr, bool capturedByInit,
+                                     bool isVolatile, unsigned alignment, 
+                                     QualType type) {
+  Qualifiers::ObjCLifetime lifetime = type.getQualifiers().getObjCLifetime();
+  if (!lifetime) {
+    llvm::Value *value = EmitScalarExpr(init);
+    if (capturedByInit) addr = BuildBlockByrefAddress(addr, cast<VarDecl>(D));
+    EmitStoreOfScalar(value, addr, isVolatile, alignment, type);
+    return;
+  }
+
+  // If we're emitting a value with lifetime, we have to do the
+  // initialization *before* we leave the cleanup scopes.
+  CodeGenFunction::RunCleanupsScope Scope(*this);
+  if (const ExprWithCleanups *ewc = dyn_cast<ExprWithCleanups>(init))
+    init = ewc->getSubExpr();
+
+  // We have to maintain the illusion that the variable is
+  // zero-initialized.  If the variable might be accessed in its
+  // initializer, zero-initialize before running the initializer, then
+  // actually perform the initialization with an assign.
+  bool accessedByInit = false;
+  if (lifetime != Qualifiers::OCL_ExplicitNone)
+    accessedByInit = isAccessedBy(D, init);
+  if (accessedByInit) {
+    // Drill down to the __block object if necessary.
+    llvm::Value *tempAddr = addr;
+    if (capturedByInit) {
+      // We can use a simple GEP for this because it can't have been
+      // moved yet.
+      tempAddr = Builder.CreateStructGEP(tempAddr,
+                                   getByRefValueLLVMField(cast<VarDecl>(D)));
+    }
+
+    const llvm::PointerType *ty = cast<llvm::PointerType>(tempAddr->getType());
+    ty = cast<llvm::PointerType>(ty->getElementType());
+
+    llvm::Value *zero = llvm::ConstantPointerNull::get(ty);
+    
+    // If __weak, we want to use a barrier under certain conditions.
+    if (lifetime == Qualifiers::OCL_Weak)
+      EmitARCInitWeak(tempAddr, zero);
+
+    // Otherwise just do a simple store.
+    else
+      EmitStoreOfScalar(zero, tempAddr, isVolatile, alignment, type);
+  }
+
+  // Emit the initializer.
+  llvm::Value *value = 0;
+
+  switch (lifetime) {
+  case Qualifiers::OCL_None:
+    llvm_unreachable("present but none");
+
+  case Qualifiers::OCL_ExplicitNone:
+    // nothing to do
+    value = EmitScalarExpr(init);
+    break;
+
+  case Qualifiers::OCL_Strong: {
+    value = EmitARCRetainScalarExpr(init);
+    break;
+  }
+
+  case Qualifiers::OCL_Weak: {
+    // No way to optimize a producing initializer into this.  It's not
+    // worth optimizing for, because the value will immediately
+    // disappear in the common case.
+    value = EmitScalarExpr(init);
+
+    if (capturedByInit) addr = BuildBlockByrefAddress(addr, cast<VarDecl>(D));
+    if (accessedByInit)
+      EmitARCStoreWeak(addr, value, /*ignored*/ true);
+    else
+      EmitARCInitWeak(addr, value);
+    return;
+  }
+
+  case Qualifiers::OCL_Autoreleasing:
+    value = EmitARCRetainAutoreleaseScalarExpr(init);
+    break;
+  }
+
+  if (capturedByInit) addr = BuildBlockByrefAddress(addr, cast<VarDecl>(D));
+
+  llvm::MDNode *tbaa = CGM.getTBAAInfo(type);
+
+  // If the variable might have been accessed by its initializer, we
+  // might have to initialize with a barrier.  We have to do this for
+  // both __weak and __strong, but __weak got filtered out above.
+  if (accessedByInit && lifetime == Qualifiers::OCL_Strong) {
+    llvm::Value *oldValue
+      = EmitLoadOfScalar(addr, isVolatile, alignment, type, tbaa);
+    EmitStoreOfScalar(value, addr, isVolatile, alignment, type, tbaa);
+    EmitARCRelease(oldValue, /*precise*/ false);
+    return;
+  }
+
+  EmitStoreOfScalar(value, addr, isVolatile, alignment, type, tbaa);  
+}
 
 /// canEmitInitWithFewStoresAfterMemset - Decide whether we can emit the
 /// non-zero parts of the specified initializer with equal or fewer than
@@ -521,7 +677,9 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       // arrays as long as the initialization is trivial (e.g. if they
       // have a non-trivial destructor, but not a non-trivial constructor).
       if (D.getInit() &&
-          (Ty->isArrayType() || Ty->isRecordType()) && Ty->isPODType() &&
+          (Ty->isArrayType() || Ty->isRecordType()) && 
+          (Ty.isPODType(getContext()) ||
+           getContext().getBaseElementType(Ty)->isObjCObjectPointerType()) &&
           D.getInit()->isConstantInitializer(getContext(), false)) {
 
         // If the variable's a const type, and it's neither an NRVO
@@ -765,29 +923,30 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
 /// \param capturedByInit true if the variable is a __block variable
 ///   whose address is potentially changed by the initializer
 void CodeGenFunction::EmitExprAsInit(const Expr *init,
-                                     const VarDecl *var,
+                                     const ValueDecl *D,
                                      llvm::Value *loc,
                                      CharUnits alignment,
                                      bool capturedByInit) {
-  QualType type = var->getType();
+  QualType type = D->getType();
   bool isVolatile = type.isVolatileQualified();
 
   if (type->isReferenceType()) {
-    RValue RV = EmitReferenceBindingToExpr(init, var);
-    if (capturedByInit) loc = BuildBlockByrefAddress(loc, var);
+    RValue RV = EmitReferenceBindingToExpr(init, D);
+    if (capturedByInit) 
+      loc = BuildBlockByrefAddress(loc, cast<VarDecl>(D));
     EmitStoreOfScalar(RV.getScalarVal(), loc, false,
                       alignment.getQuantity(), type);
   } else if (!hasAggregateLLVMType(type)) {
-    llvm::Value *V = EmitScalarExpr(init);
-    if (capturedByInit) loc = BuildBlockByrefAddress(loc, var);
-    EmitStoreOfScalar(V, loc, isVolatile, alignment.getQuantity(), type);
+    EmitScalarInit(init, D, loc, capturedByInit, isVolatile,
+                   alignment.getQuantity(), type);
   } else if (type->isAnyComplexType()) {
     ComplexPairTy complex = EmitComplexExpr(init);
-    if (capturedByInit) loc = BuildBlockByrefAddress(loc, var);
+    if (capturedByInit) loc = BuildBlockByrefAddress(loc, cast<VarDecl>(D));
     StoreComplexToAddr(complex, loc, isVolatile);
   } else {
     // TODO: how can we delay here if D is captured by its initializer?
-    EmitAggExpr(init, AggValueSlot::forAddr(loc, isVolatile, true, false));
+    EmitAggExpr(init, AggValueSlot::forAddr(loc, type.getQualifiers(), true, 
+                                            false));
   }
 }
 
@@ -799,7 +958,7 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
 
   const VarDecl &D = *emission.Variable;
 
-  // Handle C++ destruction of variables.
+  // Handle C++ or ARC destruction of variables.
   if (getLangOptions().CPlusPlus) {
     QualType type = D.getType();
     QualType baseType = getContext().getBaseElementType(type);
@@ -830,6 +989,12 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
     }
   }
 
+  if (Qualifiers::ObjCLifetime lifetime
+        = D.getType().getQualifiers().getObjCLifetime()) {
+    llvm::Value *loc = emission.getObjectAddress(*this);
+    EmitAutoVarWithLifetime(*this, D, loc, lifetime);
+  }
+
   // Handle the cleanup attribute.
   if (const CleanupAttr *CA = D.getAttr<CleanupAttr>()) {
     const FunctionDecl *FD = CA->getFunctionDecl();
@@ -845,6 +1010,22 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
   // (on the unforwarded address).
   if (emission.IsByRef)
     enterByrefCleanup(emission);
+}
+
+namespace {
+  /// A cleanup to perform a release of an object at the end of a
+  /// function.  This is used to balance out the incoming +1 of a
+  /// ns_consumed argument when we can't reasonably do that just by
+  /// not doing the initial retain for a __block argument.
+  struct ConsumeARCParameter : EHScopeStack::Cleanup {
+    ConsumeARCParameter(llvm::Value *param) : Param(param) {}
+
+    llvm::Value *Param;
+
+    void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      CGF.EmitARCRelease(Param, /*precise*/ false);
+    }
+  };
 }
 
 /// Emit an alloca (or GlobalValue depending on target)
@@ -883,10 +1064,53 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     // Otherwise, create a temporary to hold the value.
     DeclPtr = CreateMemTemp(Ty, D.getName() + ".addr");
 
+    bool doStore = true;
+
+    Qualifiers qs = Ty.getQualifiers();
+
+    if (Qualifiers::ObjCLifetime lt = qs.getObjCLifetime()) {
+      // We honor __attribute__((ns_consumed)) for types with lifetime.
+      // For __strong, it's handled by just skipping the initial retain;
+      // otherwise we have to balance out the initial +1 with an extra
+      // cleanup to do the release at the end of the function.
+      bool isConsumed = D.hasAttr<NSConsumedAttr>();
+
+      // 'self' is always formally __strong, but if this is not an
+      // init method then we don't want to retain it.
+      if (lt == Qualifiers::OCL_Strong && qs.hasConst() &&
+          isa<ImplicitParamDecl>(D)) {
+        const ObjCMethodDecl *method = cast<ObjCMethodDecl>(CurCodeDecl);
+        assert(&D == method->getSelfDecl());
+        assert(method->getMethodFamily() != OMF_init);
+        lt = Qualifiers::OCL_ExplicitNone;
+      }
+
+      if (lt == Qualifiers::OCL_Strong) {
+        if (!isConsumed)
+          // Don't use objc_retainBlock for block pointers, because we
+          // don't want to Block_copy something just because we got it
+          // as a parameter.
+          Arg = EmitARCRetainNonBlock(Arg);
+      } else {
+        // Push the cleanup for a consumed parameter.
+        if (isConsumed)
+          EHStack.pushCleanup<ConsumeARCParameter>(getARCCleanupKind(), Arg);
+
+        if (lt == Qualifiers::OCL_Weak) {
+          EmitARCInitWeak(DeclPtr, Arg);
+          doStore = false; // The weak init is a store, no need to do two
+        }
+      }
+
+      // Enter the cleanup scope.
+      EmitAutoVarWithLifetime(*this, D, DeclPtr, lt);
+    }
+
     // Store the initial value into the alloca.
-    EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified(),
-                      getContext().getDeclAlign(&D).getQuantity(), Ty,
-                      CGM.getTBAAInfo(Ty));
+    if (doStore)
+      EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified(),
+                        getContext().getDeclAlign(&D).getQuantity(), Ty,
+                        CGM.getTBAAInfo(Ty));
   }
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];

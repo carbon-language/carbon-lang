@@ -389,6 +389,7 @@ llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DIFile Unit) {
   // Ignore these qualifiers for now.
   Qc.removeObjCGCAttr();
   Qc.removeAddressSpace();
+  Qc.removeObjCLifetime();
 
   // We will create one Derived type for one qualifier and recurse to handle any
   // additional ones.

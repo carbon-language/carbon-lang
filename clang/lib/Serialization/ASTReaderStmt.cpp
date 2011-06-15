@@ -131,6 +131,8 @@ namespace clang {
     void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
     void VisitObjCIsaExpr(ObjCIsaExpr *E);
+    void VisitObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *E);
+    void VisitObjCBridgedCastExpr(ObjCBridgedCastExpr *E);
 
     void VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
     void VisitObjCAtCatchStmt(ObjCAtCatchStmt *);
@@ -138,6 +140,7 @@ namespace clang {
     void VisitObjCAtTryStmt(ObjCAtTryStmt *);
     void VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
     void VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
+    void VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *);
 
     // C++ Statements
     void VisitCXXCatchStmt(CXXCatchStmt *S);
@@ -602,6 +605,20 @@ void ASTStmtReader::VisitObjCIsaExpr(ObjCIsaExpr *E) {
   E->setArrow(Record[Idx++]);
 }
 
+void ASTStmtReader::
+VisitObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *E) {
+  VisitExpr(E);
+  E->Operand = Reader.ReadSubExpr();
+  E->setShouldCopy(Record[Idx++]);
+}
+
+void ASTStmtReader::VisitObjCBridgedCastExpr(ObjCBridgedCastExpr *E) {
+  VisitExplicitCastExpr(E);
+  E->LParenLoc = ReadSourceLocation(Record, Idx);
+  E->BridgeKeywordLoc = ReadSourceLocation(Record, Idx);
+  E->Kind = Record[Idx++];
+}
+
 void ASTStmtReader::VisitCastExpr(CastExpr *E) {
   VisitExpr(E);
   unsigned NumBaseSpecs = Record[Idx++];
@@ -929,6 +946,7 @@ void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
   VisitExpr(E);
   assert(Record[Idx] == E->getNumArgs());
   ++Idx;
+  E->setDelegateInitCall(Record[Idx++]);
   ObjCMessageExpr::ReceiverKind Kind
     = static_cast<ObjCMessageExpr::ReceiverKind>(Record[Idx++]);
   switch (Kind) {
@@ -985,6 +1003,12 @@ void ASTStmtReader::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
   VisitStmt(S);
   S->setFinallyBody(Reader.ReadSubStmt());
   S->setAtFinallyLoc(ReadSourceLocation(Record, Idx));
+}
+
+void ASTStmtReader::VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *S) {
+  VisitStmt(S);
+  S->setSubStmt(Reader.ReadSubStmt());
+  S->setAtLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTStmtReader::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
@@ -1784,6 +1808,12 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
     case EXPR_OBJC_ISA:
       S = new (Context) ObjCIsaExpr(Empty);
       break;
+    case EXPR_OBJC_INDIRECT_COPY_RESTORE:
+      S = new (Context) ObjCIndirectCopyRestoreExpr(Empty);
+      break;
+    case EXPR_OBJC_BRIDGED_CAST:
+      S = new (Context) ObjCBridgedCastExpr(Empty);
+      break;
     case STMT_OBJC_FOR_COLLECTION:
       S = new (Context) ObjCForCollectionStmt(Empty);
       break;
@@ -1804,7 +1834,9 @@ Stmt *ASTReader::ReadStmtFromStream(PerFileData &F) {
     case STMT_OBJC_AT_THROW:
       S = new (Context) ObjCAtThrowStmt(Empty);
       break;
-
+    case STMT_OBJC_AUTORELEASE_POOL:
+      S = new (Context) ObjCAutoreleasePoolStmt(Empty);
+      break;
     case STMT_CXX_CATCH:
       S = new (Context) CXXCatchStmt(Empty);
       break;

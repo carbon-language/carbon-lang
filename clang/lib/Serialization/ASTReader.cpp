@@ -147,9 +147,11 @@ PCHValidator::ReadLanguageOptions(const LangOptions &LangOpts) {
   PARSE_LANGOPT_IMPORTANT(OpenCL, diag::warn_pch_opencl);
   PARSE_LANGOPT_IMPORTANT(CUDA, diag::warn_pch_cuda);
   PARSE_LANGOPT_BENIGN(CatchUndefined);
+  PARSE_LANGOPT_BENIGN(DefaultFPContract);
   PARSE_LANGOPT_IMPORTANT(ElideConstructors, diag::warn_pch_elide_constructors);
   PARSE_LANGOPT_BENIGN(SpellChecking);
-  PARSE_LANGOPT_BENIGN(DefaultFPContract);
+  PARSE_LANGOPT_IMPORTANT(ObjCAutoRefCount, diag::warn_pch_auto_ref_count);
+  PARSE_LANGOPT_BENIGN(ObjCInferRelatedReturnType);
 #undef PARSE_LANGOPT_IMPORTANT
 #undef PARSE_LANGOPT_BENIGN
 
@@ -2980,6 +2982,7 @@ bool ASTReader::ParseLanguageOptions(
     PARSE_LANGOPT(ElideConstructors);
     PARSE_LANGOPT(SpellChecking);
     PARSE_LANGOPT(MRTD);
+    PARSE_LANGOPT(ObjCAutoRefCount);
   #undef PARSE_LANGOPT
 
     return Listener->ReadLanguageOptions(LangOpts);
@@ -3225,12 +3228,13 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
   }
 
   case TYPE_FUNCTION_NO_PROTO: {
-    if (Record.size() != 5) {
+    if (Record.size() != 6) {
       Error("incorrect encoding of no-proto function type");
       return QualType();
     }
     QualType ResultType = GetType(Record[0]);
-    FunctionType::ExtInfo Info(Record[1], Record[2], Record[3], (CallingConv)Record[4]);
+    FunctionType::ExtInfo Info(Record[1], Record[2], Record[3],
+                               (CallingConv)Record[4], Record[5]);
     return Context->getFunctionNoProtoType(ResultType, Info);
   }
 
@@ -3241,9 +3245,10 @@ QualType ASTReader::ReadTypeRecord(unsigned Index) {
     EPI.ExtInfo = FunctionType::ExtInfo(/*noreturn*/ Record[1],
                                         /*hasregparm*/ Record[2],
                                         /*regparm*/ Record[3],
-                                        static_cast<CallingConv>(Record[4]));
+                                        static_cast<CallingConv>(Record[4]),
+                                        /*produces*/ Record[5]);
 
-    unsigned Idx = 5;
+    unsigned Idx = 6;
     unsigned NumParams = Record[Idx++];
     llvm::SmallVector<QualType, 16> ParamTypes;
     for (unsigned I = 0; I != NumParams; ++I)

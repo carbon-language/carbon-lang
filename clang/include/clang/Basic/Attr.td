@@ -400,6 +400,11 @@ def ObjCNSObject : InheritableAttr {
   let Spellings = ["NSObject"];
 }
 
+def ObjCPreciseLifetime : Attr {
+  let Spellings = ["objc_precise_lifetime"];
+  let Subjects = [Var];
+}
+
 def Overloadable : Attr {
   let Spellings = ["overloadable"];
 }

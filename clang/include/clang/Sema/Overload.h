@@ -77,6 +77,7 @@ namespace clang {
     ICK_Complex_Real,          ///< Complex-real conversions (C99 6.3.1.7)
     ICK_Block_Pointer_Conversion,    ///< Block Pointer conversions 
     ICK_TransparentUnionConversion, /// Transparent Union Conversions
+    ICK_Writeback_Conversion,  ///< Objective-C ARC writeback conversion
     ICK_Num_Conversion_Kinds   ///< The number of conversion kinds
   };
 
@@ -100,10 +101,11 @@ namespace clang {
   /// 13.3.3.1.1) and are listed such that better conversion ranks
   /// have smaller values.
   enum ImplicitConversionRank {
-    ICR_Exact_Match = 0,        ///< Exact Match
-    ICR_Promotion,              ///< Promotion
-    ICR_Conversion,             ///< Conversion
-    ICR_Complex_Real_Conversion ///< Complex <-> Real conversion
+    ICR_Exact_Match = 0,         ///< Exact Match
+    ICR_Promotion,               ///< Promotion
+    ICR_Conversion,              ///< Conversion
+    ICR_Complex_Real_Conversion, ///< Complex <-> Real conversion
+    ICR_Writeback_Conversion     ///< ObjC ARC writeback conversion
   };
 
   ImplicitConversionRank GetConversionRank(ImplicitConversionKind Kind);
@@ -137,6 +139,10 @@ namespace clang {
     /// (C++ 4.2p2).
     unsigned DeprecatedStringLiteralToCharPtr : 1;
 
+    /// \brief Whether the qualification conversion involves a change in the
+    /// Objective-C lifetime (for automatic reference counting).
+    unsigned QualificationIncludesObjCLifetime : 1;
+    
     /// IncompatibleObjC - Whether this is an Objective-C conversion
     /// that we should warn about (if we actually use it).
     unsigned IncompatibleObjC : 1;
@@ -162,6 +168,10 @@ namespace clang {
     /// \brief Whether this binds an implicit object argument to a 
     /// non-static member function without a ref-qualifier.
     unsigned BindsImplicitObjectArgumentWithoutRefQualifier : 1;
+    
+    /// \brief Whether this binds a reference to an object with a different
+    /// Objective-C lifetime qualifier.
+    unsigned ObjCLifetimeConversionBinding : 1;
     
     /// FromType - The type that this conversion is converting
     /// from. This is an opaque pointer that can be translated into a

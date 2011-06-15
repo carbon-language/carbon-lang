@@ -19,6 +19,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "clang/Basic/Diagnostic.h"
 
 namespace llvm {
 class Triple;

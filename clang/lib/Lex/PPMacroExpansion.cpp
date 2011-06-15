@@ -551,6 +551,11 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_exceptions", LangOpts.Exceptions)
            .Case("cxx_rtti", LangOpts.RTTI)
            .Case("enumerator_attributes", true)
+           // Objective-C features
+           .Case("objc_arr", LangOpts.ObjCAutoRefCount) // FIXME: REMOVE?
+           .Case("objc_arc", LangOpts.ObjCAutoRefCount)
+           .Case("objc_arc_weak", LangOpts.ObjCAutoRefCount && 
+                 !LangOpts.ObjCNoAutoRefCountRuntime)
            .Case("objc_nonfragile_abi", LangOpts.ObjCNonFragileABI)
            .Case("objc_weak_class", LangOpts.ObjCNonFragileABI)
            .Case("ownership_holds", true)

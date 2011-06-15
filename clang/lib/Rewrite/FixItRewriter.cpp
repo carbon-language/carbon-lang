@@ -121,8 +121,7 @@ void FixItRewriter::HandleDiagnostic(Diagnostic::Level DiagLevel,
 
     if (Hint.CodeToInsert.empty()) {
       // We're removing code.
-      if (Rewrite.RemoveText(Hint.RemoveRange.getBegin(),
-                             Rewrite.getRangeSize(Hint.RemoveRange)))
+      if (Rewrite.RemoveText(Hint.RemoveRange))
         Failed = true;
       continue;
     }

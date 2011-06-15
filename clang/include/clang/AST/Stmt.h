@@ -183,6 +183,13 @@ protected:
     unsigned NumPreArgs : 1;
   };
 
+  class ObjCIndirectCopyRestoreExprBitfields {
+    friend class ObjCIndirectCopyRestoreExpr;
+    unsigned : NumExprBits;
+
+    unsigned ShouldCopy : 1;
+  };
+
   union {
     // FIXME: this is wasteful on 64-bit platforms.
     void *Aligner;
@@ -193,6 +200,7 @@ protected:
     DeclRefExprBitfields DeclRefExprBits;
     CastExprBitfields CastExprBits;
     CallExprBitfields CallExprBits;
+    ObjCIndirectCopyRestoreExprBitfields ObjCIndirectCopyRestoreExprBits;
   };
 
   friend class ASTStmtReader;

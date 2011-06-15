@@ -1676,6 +1676,34 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
     // Fall through: conditions and statements can have expressions.
 
   case Sema::PCC_ParenthesizedExpression:
+    if (SemaRef.getLangOptions().ObjCAutoRefCount &&
+        CCC == Sema::PCC_ParenthesizedExpression) {
+      // (__bridge <type>)<expression>
+      Builder.AddTypedTextChunk("__bridge");
+      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Builder.AddPlaceholderChunk("type");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddPlaceholderChunk("expression");
+      Results.AddResult(Result(Builder.TakeString()));      
+
+      // (__bridge_transfer <Objective-C type>)<expression>
+      Builder.AddTypedTextChunk("__bridge_transfer");
+      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Builder.AddPlaceholderChunk("Objective-C type");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddPlaceholderChunk("expression");
+      Results.AddResult(Result(Builder.TakeString()));      
+
+      // (__bridge_retained <CF type>)<expression>
+      Builder.AddTypedTextChunk("__bridge_retained");
+      Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+      Builder.AddPlaceholderChunk("CF type");
+      Builder.AddChunk(CodeCompletionString::CK_RightParen);
+      Builder.AddPlaceholderChunk("expression");
+      Results.AddResult(Result(Builder.TakeString()));      
+    }
+    // Fall through
+
   case Sema::PCC_Expression: {
     if (SemaRef.getLangOptions().CPlusPlus) {
       // 'this', if we're in a non-static member function.
@@ -1828,7 +1856,8 @@ static const char *GetCompletionTypeString(QualType T,
                                            CodeCompletionAllocator &Allocator) {
   PrintingPolicy Policy(Context.PrintingPolicy);
   Policy.AnonymousTagLocations = false;
-
+  Policy.SuppressStrongLifetime = true;
+  
   if (!T.getLocalQualifiers()) {
     // Built-in type names are constant strings.
     if (const BuiltinType *BT = dyn_cast<BuiltinType>(T))
@@ -1878,9 +1907,9 @@ static void AddResultTypeChunk(ASTContext &Context,
     T = Context.getTypeDeclType(cast<TypeDecl>(Enumerator->getDeclContext()));
   else if (isa<UnresolvedUsingValueDecl>(ND)) {
     /* Do nothing: ignore unresolved using declarations*/
-  } else if (ValueDecl *Value = dyn_cast<ValueDecl>(ND))
+  } else if (ValueDecl *Value = dyn_cast<ValueDecl>(ND)) {
     T = Value->getType();
-  else if (ObjCPropertyDecl *Property = dyn_cast<ObjCPropertyDecl>(ND))
+  } else if (ObjCPropertyDecl *Property = dyn_cast<ObjCPropertyDecl>(ND))
     T = Property->getType();
   
   if (T.isNull() || Context.hasSameType(T, Context.DependentTy))
@@ -1907,6 +1936,10 @@ static void MaybeAddSentinel(ASTContext &Context, NamedDecl *FunctionOrMethod,
 static std::string FormatFunctionParameter(ASTContext &Context,
                                            ParmVarDecl *Param,
                                            bool SuppressName = false) {
+  PrintingPolicy Policy(Context.PrintingPolicy);
+  Policy.AnonymousTagLocations = false;
+  Policy.SuppressStrongLifetime = true;
+
   bool ObjCMethodParam = isa<ObjCMethodDecl>(Param->getDeclContext());
   if (Param->getType()->isDependentType() ||
       !Param->getType()->isBlockPointerType()) {
@@ -1917,8 +1950,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     if (Param->getIdentifier() && !ObjCMethodParam && !SuppressName)
       Result = Param->getIdentifier()->getName();
     
-    Param->getType().getAsStringInternal(Result, 
-                                         Context.PrintingPolicy);
+    Param->getType().getAsStringInternal(Result, Policy);
     
     if (ObjCMethodParam) {
       Result = "(" + Result;
@@ -1968,8 +2000,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
     // We were unable to find a FunctionProtoTypeLoc with parameter names
     // for the block; just use the parameter type as a placeholder.
     std::string Result;
-    Param->getType().getUnqualifiedType().
-                            getAsStringInternal(Result, Context.PrintingPolicy);
+    Param->getType().getUnqualifiedType().getAsStringInternal(Result, Policy);
     
     if (ObjCMethodParam) {
       Result = "(" + Result;
@@ -1986,7 +2017,7 @@ static std::string FormatFunctionParameter(ASTContext &Context,
   std::string Result;
   QualType ResultType = Block->getTypePtr()->getResultType();
   if (!ResultType->isVoidType())
-    ResultType.getAsStringInternal(Result, Context.PrintingPolicy);
+    ResultType.getAsStringInternal(Result, Policy);
   
   Result = '^' + Result;
   if (!BlockProto || Block->getNumArgs() == 0) {
@@ -2071,6 +2102,9 @@ static void AddTemplateParameterChunks(ASTContext &Context,
                                        unsigned MaxParameters = 0,
                                        unsigned Start = 0,
                                        bool InDefaultArg = false) {
+  PrintingPolicy Policy(Context.PrintingPolicy);
+  Policy.AnonymousTagLocations = false;
+
   typedef CodeCompletionString::Chunk Chunk;
   bool FirstParameter = true;
   
@@ -2098,8 +2132,7 @@ static void AddTemplateParameterChunks(ASTContext &Context,
                                     = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
       if (NTTP->getIdentifier())
         PlaceholderStr = NTTP->getIdentifier()->getName();
-      NTTP->getType().getAsStringInternal(PlaceholderStr, 
-                                          Context.PrintingPolicy);
+      NTTP->getType().getAsStringInternal(PlaceholderStr, Policy);
       HasDefaultArg = NTTP->hasDefaultArgument();
     } else {
       assert(isa<TemplateTemplateParmDecl>(*P));
@@ -2286,6 +2319,10 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
   typedef CodeCompletionString::Chunk Chunk;
   CodeCompletionBuilder Result(Allocator, Priority, Availability);
   
+  PrintingPolicy Policy(S.Context.PrintingPolicy);
+  Policy.AnonymousTagLocations = false;
+  Policy.SuppressStrongLifetime = true;
+
   if (Kind == RK_Pattern) {
     Pattern->Priority = Priority;
     Pattern->Availability = Availability;
@@ -2470,7 +2507,7 @@ CodeCompletionResult::CreateCodeCompletionString(Sema &S,
       if ((*P)->getType()->isBlockPointerType() && !DeclaringEntity)
         Arg = FormatFunctionParameter(S.Context, *P, true);
       else {
-        (*P)->getType().getAsStringInternal(Arg, S.Context.PrintingPolicy);
+        (*P)->getType().getAsStringInternal(Arg, Policy);
         Arg = "(" + Arg + ")";
         if (IdentifierInfo *II = (*P)->getIdentifier())
           if (DeclaringEntity || AllParametersAreInformative)
@@ -2519,7 +2556,10 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
                                                                Sema &S,
                                      CodeCompletionAllocator &Allocator) const {
   typedef CodeCompletionString::Chunk Chunk;
-  
+  PrintingPolicy Policy(S.Context.PrintingPolicy);
+  Policy.AnonymousTagLocations = false;
+  Policy.SuppressStrongLifetime = true;
+
   // FIXME: Set priority, availability appropriately.
   CodeCompletionBuilder Result(Allocator, 1, CXAvailability_Available);
   FunctionDecl *FDecl = getFunction();
@@ -2545,7 +2585,7 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
   else
     Result.AddTextChunk(
          Result.getAllocator().CopyString(
-                Proto->getResultType().getAsString(S.Context.PrintingPolicy)));
+                                  Proto->getResultType().getAsString(Policy)));
   
   Result.AddChunk(Chunk(CodeCompletionString::CK_LeftParen));
   unsigned NumParams = FDecl? FDecl->getNumParams() : Proto->getNumArgs();
@@ -2563,7 +2603,7 @@ CodeCompleteConsumer::OverloadCandidate::CreateSignatureString(
       ArgType = Proto->getArgType(I);
     }
     
-    ArgType.getAsStringInternal(ArgString, S.Context.PrintingPolicy);
+    ArgType.getAsStringInternal(ArgString, Policy);
     
     if (I == CurrentArg)
       Result.AddChunk(Chunk(CodeCompletionString::CK_CurrentParameter, 
@@ -3786,6 +3826,10 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
 void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
                                               CXXCtorInitializer** Initializers,
                                               unsigned NumInitializers) {
+  PrintingPolicy Policy(Context.PrintingPolicy);
+  Policy.AnonymousTagLocations = false;
+  Policy.SuppressStrongLifetime = true;
+
   CXXConstructorDecl *Constructor
     = static_cast<CXXConstructorDecl *>(ConstructorD);
   if (!Constructor)
@@ -3825,7 +3869,7 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
     
     Builder.AddTypedTextChunk(
                Results.getAllocator().CopyString(
-                          Base->getType().getAsString(Context.PrintingPolicy)));
+                          Base->getType().getAsString(Policy)));
     Builder.AddChunk(CodeCompletionString::CK_LeftParen);
     Builder.AddPlaceholderChunk("args");
     Builder.AddChunk(CodeCompletionString::CK_RightParen);
@@ -3850,7 +3894,7 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
     
     Builder.AddTypedTextChunk(
                Builder.getAllocator().CopyString(
-                          Base->getType().getAsString(Context.PrintingPolicy)));
+                          Base->getType().getAsString(Policy)));
     Builder.AddChunk(CodeCompletionString::CK_LeftParen);
     Builder.AddPlaceholderChunk("args");
     Builder.AddChunk(CodeCompletionString::CK_RightParen);
@@ -4126,18 +4170,24 @@ static bool ObjCPropertyFlagConflicts(unsigned Attributes, unsigned NewFlag) {
   if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
       (Attributes & (ObjCDeclSpec::DQ_PR_readwrite |
                      ObjCDeclSpec::DQ_PR_assign |
+                     ObjCDeclSpec::DQ_PR_unsafe_unretained |
                      ObjCDeclSpec::DQ_PR_copy |
-                     ObjCDeclSpec::DQ_PR_retain)))
+                     ObjCDeclSpec::DQ_PR_retain |
+                     ObjCDeclSpec::DQ_PR_strong)))
     return true;
   
-  // Check for more than one of { assign, copy, retain }.
+  // Check for more than one of { assign, copy, retain, strong }.
   unsigned AssignCopyRetMask = Attributes & (ObjCDeclSpec::DQ_PR_assign |
+                                         ObjCDeclSpec::DQ_PR_unsafe_unretained |
                                              ObjCDeclSpec::DQ_PR_copy |
-                                             ObjCDeclSpec::DQ_PR_retain);
+                                             ObjCDeclSpec::DQ_PR_retain|
+                                             ObjCDeclSpec::DQ_PR_strong);
   if (AssignCopyRetMask &&
       AssignCopyRetMask != ObjCDeclSpec::DQ_PR_assign &&
+      AssignCopyRetMask != ObjCDeclSpec::DQ_PR_unsafe_unretained &&
       AssignCopyRetMask != ObjCDeclSpec::DQ_PR_copy &&
-      AssignCopyRetMask != ObjCDeclSpec::DQ_PR_retain)
+      AssignCopyRetMask != ObjCDeclSpec::DQ_PR_retain &&
+      AssignCopyRetMask != ObjCDeclSpec::DQ_PR_strong)
     return true;
   
   return false;
@@ -4157,10 +4207,15 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
     Results.AddResult(CodeCompletionResult("readonly"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_assign))
     Results.AddResult(CodeCompletionResult("assign"));
+  if (!ObjCPropertyFlagConflicts(Attributes,
+                                 ObjCDeclSpec::DQ_PR_unsafe_unretained))
+    Results.AddResult(CodeCompletionResult("unsafe_unretained"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readwrite))
     Results.AddResult(CodeCompletionResult("readwrite"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_retain))
     Results.AddResult(CodeCompletionResult("retain"));
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_strong))
+    Results.AddResult(CodeCompletionResult("strong"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_copy))
     Results.AddResult(CodeCompletionResult("copy"));
   if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_nonatomic))
@@ -4522,6 +4577,7 @@ static ObjCInterfaceDecl *GetAssumedMessageSendExprType(Expr *E) {
   if (Method->isInstanceMethod())
     return llvm::StringSwitch<ObjCInterfaceDecl *>(Id->getName())
       .Case("retain", IFace)
+      .Case("strong", IFace)
       .Case("autorelease", IFace)
       .Case("copy", IFace)
       .Case("copyWithZone", IFace)
@@ -6273,6 +6329,7 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
   Results.EnterNewScope();
   PrintingPolicy Policy(Context.PrintingPolicy);
   Policy.AnonymousTagLocations = false;
+  Policy.SuppressStrongLifetime = true;
   for (KnownMethodsMap::iterator M = KnownMethods.begin(), 
                               MEnd = KnownMethods.end();
        M != MEnd; ++M) {

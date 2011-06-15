@@ -169,6 +169,8 @@ def ImplicitAtomic : DiagGroup<"implicit-atomic-properties">;
 def CustomAtomic : DiagGroup<"custom-atomic-properties">;
 def AtomicProperties : DiagGroup<"atomic-properties",
                                  [ImplicitAtomic, CustomAtomic]>;
+def AutomaticReferenceCountingABI : DiagGroup<"arc-abi">;
+def AutomaticReferenceCounting : DiagGroup<"arc", [AutomaticReferenceCountingABI]>;
 def Selector : DiagGroup<"selector">;
 def NonfragileAbi2 : DiagGroup<"nonfragile-abi2">;
 def Protocol : DiagGroup<"protocol">;

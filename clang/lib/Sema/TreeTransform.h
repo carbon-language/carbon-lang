@@ -1192,6 +1192,16 @@ public:
                                                  Body);
   }
 
+  /// \brief Build a new Objective-C @autoreleasepool statement.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  StmtResult RebuildObjCAutoreleasePoolStmt(SourceLocation AtLoc,
+                                            Stmt *Body) {
+    return getSema().ActOnObjCAutoreleasePoolStmt(AtLoc, Body);
+  }
+  
+
   /// \brief Build a new Objective-C fast enumeration statement.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -3162,6 +3172,13 @@ TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
   if (Result->isFunctionType() || Result->isReferenceType())
     return Result;
 
+  // Suppress Objective-C lifetime qualifiers if they don't make sense for the
+  // resulting type or if the resulting type already has one.
+  if (Quals.hasObjCLifetime() && 
+      (Result.getObjCLifetime() ||
+       (!Result->isObjCLifetimeType() && !Result->isDependentType())))
+    Quals.removeObjCLifetime();
+  
   if (!Quals.empty()) {
     Result = SemaRef.BuildQualifiedType(Result, T.getBeginLoc(), Quals);
     TLB.push<QualifiedTypeLoc>(Result);
@@ -3333,7 +3350,11 @@ QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
     if (Result.isNull())
       return QualType();
   }
-                                                            
+               
+  // Objective-C ARC can add lifetime qualifiers to the type that we're
+  // pointing to.
+  TLB.TypeWasModifiedSafely(Result->getPointeeType());
+  
   PointerTypeLoc NewT = TLB.push<PointerTypeLoc>(Result);
   NewT.setSigilLoc(TL.getSigilLoc());
   return Result;  
@@ -3386,6 +3407,11 @@ TreeTransform<Derived>::TransformReferenceType(TypeLocBuilder &TLB,
     if (Result.isNull())
       return QualType();
   }
+
+  // Objective-C ARC can add lifetime qualifiers to the type that we're
+  // referring to.
+  TLB.TypeWasModifiedSafely(
+                     Result->getAs<ReferenceType>()->getPointeeTypeAsWritten());
 
   // r-value references can be rebuilt as l-value references.
   ReferenceTypeLoc NewTL;
@@ -5431,6 +5457,25 @@ TreeTransform<Derived>::TransformObjCAtSynchronizedStmt(
   // Build a new statement.
   return getDerived().RebuildObjCAtSynchronizedStmt(S->getAtSynchronizedLoc(),
                                                     Object.get(), Body.get());
+}
+
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformObjCAutoreleasePoolStmt(
+                                              ObjCAutoreleasePoolStmt *S) {
+  // Transform the body.
+  StmtResult Body = getDerived().TransformStmt(S->getSubStmt());
+  if (Body.isInvalid())
+    return StmtError();
+  
+  // If nothing changed, just retain this statement.
+  if (!getDerived().AlwaysRebuild() &&
+      Body.get() == S->getSubStmt())
+    return SemaRef.Owned(S);
+
+  // Build a new statement.
+  return getDerived().RebuildObjCAutoreleasePoolStmt(
+                        S->getAtLoc(), Body.get());
 }
 
 template<typename Derived>
@@ -7606,6 +7651,43 @@ TreeTransform<Derived>::TransformObjCEncodeExpr(ObjCEncodeExpr *E) {
   return getDerived().RebuildObjCEncodeExpr(E->getAtLoc(),
                                             EncodedTypeInfo,
                                             E->getRParenLoc());
+}
+
+template<typename Derived>
+ExprResult TreeTransform<Derived>::
+TransformObjCIndirectCopyRestoreExpr(ObjCIndirectCopyRestoreExpr *E) {
+  ExprResult result = getDerived().TransformExpr(E->getSubExpr());
+  if (result.isInvalid()) return ExprError();
+  Expr *subExpr = result.take();
+
+  if (!getDerived().AlwaysRebuild() &&
+      subExpr == E->getSubExpr())
+    return SemaRef.Owned(E);
+
+  return SemaRef.Owned(new(SemaRef.Context)
+      ObjCIndirectCopyRestoreExpr(subExpr, E->getType(), E->shouldCopy()));
+}
+
+template<typename Derived>
+ExprResult TreeTransform<Derived>::
+TransformObjCBridgedCastExpr(ObjCBridgedCastExpr *E) {
+  TypeSourceInfo *TSInfo 
+    = getDerived().TransformType(E->getTypeInfoAsWritten());
+  if (!TSInfo)
+    return ExprError();
+  
+  ExprResult Result = getDerived().TransformExpr(E->getSubExpr());
+  if (Result.isInvalid()) 
+    return ExprError();
+  
+  if (!getDerived().AlwaysRebuild() &&
+      TSInfo == E->getTypeInfoAsWritten() &&
+      Result.get() == E->getSubExpr())
+    return SemaRef.Owned(E);
+  
+  return SemaRef.BuildObjCBridgedCast(E->getLParenLoc(), E->getBridgeKind(),
+                                      E->getBridgeKeywordLoc(), TSInfo, 
+                                      Result.get());
 }
 
 template<typename Derived>

@@ -66,8 +66,29 @@ void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
 
   // If we have an invalid decl, just return.
   if (DG.isNull() || !DG.isSingleDecl()) return;
+  VarDecl *var = cast<VarDecl>(DG.getSingleDecl());
+
   // suppress any potential 'unused variable' warning.
-  DG.getSingleDecl()->setUsed();
+  var->setUsed();
+
+  // In ARC, we don't want to lifetime for the iteration
+  // variable of a fast enumeration loop.  Rather than actually
+  // trying to catch that during declaration processing, we
+  // remove the consequences here.
+  if (getLangOptions().ObjCAutoRefCount) {
+    SplitQualType split = var->getType().split();
+
+    // Inferred lifetime will show up as a local qualifier because
+    // explicit lifetime would have shown up as an AttributedType
+    // instead.
+    if (split.second.hasObjCLifetime()) {
+      // Change the qualification to 'const __unsafe_unretained'.
+      split.second.setObjCLifetime(Qualifiers::OCL_ExplicitNone);
+      split.second.addConst();
+      var->setType(Context.getQualifiedType(split.first, split.second));
+      var->setInit(0);
+    }
+  }
 }
 
 void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
@@ -114,6 +135,10 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
       }
     }
   } else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(E)) {
+    if (getLangOptions().ObjCAutoRefCount && ME->isDelegateInitCall()) {
+      Diag(Loc, diag::err_arc_unused_init_message) << R1;
+      return;
+    }
     const ObjCMethodDecl *MD = ME->getMethodDecl();
     if (MD && MD->getAttr<WarnUnusedResultAttr>()) {
       Diag(Loc, diag::warn_unused_call) << R1 << R2 << "warn_unused_result";
@@ -951,14 +976,13 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
         return StmtError(Diag((*DS->decl_begin())->getLocation(),
                          diag::err_toomany_element_decls));
 
-      Decl *D = DS->getSingleDecl();
-      FirstType = cast<ValueDecl>(D)->getType();
+      VarDecl *D = cast<VarDecl>(DS->getSingleDecl());
+      FirstType = D->getType();
       // C99 6.8.5p3: The declaration part of a 'for' statement shall only
       // declare identifiers for objects having storage class 'auto' or
       // 'register'.
-      VarDecl *VD = cast<VarDecl>(D);
-      if (VD->isLocalVarDecl() && !VD->hasLocalStorage())
-        return StmtError(Diag(VD->getLocation(),
+      if (!D->hasLocalStorage())
+        return StmtError(Diag(D->getLocation(),
                               diag::err_non_variable_decl_in_for));
     } else {
       Expr *FirstE = cast<Expr>(First);
@@ -1046,6 +1070,13 @@ static bool FinishForRangeVarDecl(Sema &SemaRef, VarDecl *Decl, Expr *Init,
   }
   Decl->setTypeSourceInfo(InitTSI);
   Decl->setType(InitTSI->getType());
+
+  // In ARC, infer lifetime.
+  // FIXME: ARC may want to turn this into 'const __unsafe_unretained' if
+  // we're doing the equivalent of fast iteration.
+  if (SemaRef.getLangOptions().ObjCAutoRefCount && 
+      SemaRef.inferObjCARCLifetime(Decl))
+    Decl->setInvalidDecl();
 
   SemaRef.AddInitializerToDecl(Decl, Init, /*DirectInit=*/false,
                                /*TypeMayContainAuto=*/false);
@@ -1797,7 +1828,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   if (getLangOptions().CPlusPlus && FnRetType->isRecordType() &&
       !CurContext->isDependentContext())
     FunctionScopes.back()->Returns.push_back(Result);
-
+  
   return Owned(Result);
 }
 
@@ -2177,6 +2208,12 @@ Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, Decl *ExDecl,
   return Owned(new (Context) CXXCatchStmt(CatchLoc,
                                           cast_or_null<VarDecl>(ExDecl),
                                           HandlerBlock));
+}
+
+StmtResult
+Sema::ActOnObjCAutoreleasePoolStmt(SourceLocation AtLoc, Stmt *Body) {
+  getCurFunction()->setHasBranchProtectedScope();
+  return Owned(new (Context) ObjCAutoreleasePoolStmt(AtLoc, Body));
 }
 
 namespace {

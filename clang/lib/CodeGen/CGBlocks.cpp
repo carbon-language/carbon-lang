@@ -347,13 +347,23 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
       continue;
     }
 
-    // Block pointers require copy/dispose.
-    if (variable->getType()->isBlockPointerType()) {
-      info.NeedsCopyDispose = true;
+    // If we have a lifetime qualifier, honor it for capture purposes.
+    // That includes *not* copying it if it's __unsafe_unretained.
+    if (Qualifiers::ObjCLifetime lifetime 
+          = variable->getType().getObjCLifetime()) {
+      switch (lifetime) {
+      case Qualifiers::OCL_None: llvm_unreachable("impossible");
+      case Qualifiers::OCL_ExplicitNone:
+      case Qualifiers::OCL_Autoreleasing:
+        break;
 
-    // So do Objective-C pointers.
-    } else if (variable->getType()->isObjCObjectPointerType() ||
-               C.isObjCNSObjectType(variable->getType())) {
+      case Qualifiers::OCL_Strong:
+      case Qualifiers::OCL_Weak:
+        info.NeedsCopyDispose = true;
+      }
+
+    // Block pointers require copy/dispose.  So do Objective-C pointers.
+    } else if (variable->getType()->isObjCRetainableType()) {
       info.NeedsCopyDispose = true;
 
     // So do types that require non-trivial copy construction.
@@ -591,6 +601,11 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
 
     // Otherwise, fake up a POD copy into the block field.
     } else {
+      // Fake up a new variable so that EmitScalarInit doesn't think
+      // we're referring to the variable in its own initializer.
+      ImplicitParamDecl blockFieldPseudoVar(/*DC*/ 0, SourceLocation(),
+                                            /*name*/ 0, type);
+
       // We use one of these or the other depending on whether the
       // reference is nested.
       DeclRefExpr notNested(const_cast<VarDecl*>(variable), type, VK_LValue,
@@ -603,15 +618,29 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
 
       ImplicitCastExpr l2r(ImplicitCastExpr::OnStack, type, CK_LValueToRValue,
                            declRef, VK_RValue);
-      EmitExprAsInit(&l2r, variable, blockField,
+      EmitExprAsInit(&l2r, &blockFieldPseudoVar, blockField,
                      getContext().getDeclAlign(variable),
                      /*captured by init*/ false);
     }
 
     // Push a destructor if necessary.  The semantics for when this
     // actually gets run are really obscure.
-    if (!ci->isByRef() && CGM.getLangOptions().CPlusPlus)
-      PushDestructorCleanup(type, blockField);
+    if (!ci->isByRef()) {
+      switch (type.isDestructedType()) {
+      case QualType::DK_none:
+        break;
+      case QualType::DK_cxx_destructor:
+        PushDestructorCleanup(type, blockField);
+        break;
+      case QualType::DK_objc_strong_lifetime:
+        PushARCReleaseCleanup(getARCCleanupKind(), type, blockField, false);
+        break;
+      case QualType::DK_objc_weak_lifetime:
+        // __weak objects on the stack always get EH cleanups.
+        PushARCWeakReleaseCleanup(NormalAndEHCleanup, type, blockField);
+        break;
+      }
+    }
   }
 
   // Cast to the converted block-pointer type, which happens (somewhat
@@ -1023,8 +1052,6 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
 
 
-
-
 llvm::Constant *
 CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
   ASTContext &C = getContext();
@@ -1084,21 +1111,40 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
     if (capture.isConstant()) continue;
 
     const Expr *copyExpr = ci->getCopyExpr();
-    unsigned flags = 0;
+    BlockFieldFlags flags;
+
+    bool isARCWeakCapture = false;
 
     if (copyExpr) {
       assert(!ci->isByRef());
       // don't bother computing flags
+
     } else if (ci->isByRef()) {
       flags = BLOCK_FIELD_IS_BYREF;
-      if (type.isObjCGCWeak()) flags |= BLOCK_FIELD_IS_WEAK;
-    } else if (type->isBlockPointerType()) {
-      flags = BLOCK_FIELD_IS_BLOCK;
-    } else if (type->isObjCObjectPointerType() || C.isObjCNSObjectType(type)) {
-      flags = BLOCK_FIELD_IS_OBJECT;
-    }
+      if (type.isObjCGCWeak())
+        flags |= BLOCK_FIELD_IS_WEAK;
 
-    if (!copyExpr && !flags) continue;
+    } else if (type->isObjCRetainableType()) {
+      flags = BLOCK_FIELD_IS_OBJECT;
+      if (type->isBlockPointerType())
+        flags = BLOCK_FIELD_IS_BLOCK;
+
+      // Special rules for ARC captures:
+      if (getLangOptions().ObjCAutoRefCount) {
+        Qualifiers qs = type.getQualifiers();
+
+        // Don't generate special copy logic for a captured object
+        // unless it's __strong or __weak.
+        if (!qs.hasStrongOrWeakObjCLifetime())
+          continue;
+
+        // Support __weak direct captures.
+        if (qs.getObjCLifetime() == Qualifiers::OCL_Weak)
+          isARCWeakCapture = true;
+      }
+    } else {
+      continue;
+    }
 
     unsigned index = capture.getIndex();
     llvm::Value *srcField = Builder.CreateStructGEP(src, index);
@@ -1107,12 +1153,14 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
     // If there's an explicit copy expression, we do that.
     if (copyExpr) {
       EmitSynthesizedCXXCopyCtor(dstField, srcField, copyExpr);
+    } else if (isARCWeakCapture) {
+      EmitARCCopyWeak(dstField, srcField);
     } else {
       llvm::Value *srcValue = Builder.CreateLoad(srcField, "blockcopy.src");
       srcValue = Builder.CreateBitCast(srcValue, VoidPtrTy);
       llvm::Value *dstAddr = Builder.CreateBitCast(dstField, VoidPtrTy);
       Builder.CreateCall3(CGM.getBlockObjectAssign(), dstAddr, srcValue,
-                          llvm::ConstantInt::get(Int32Ty, flags));
+                          llvm::ConstantInt::get(Int32Ty, flags.getBitMask()));
     }
   }
 
@@ -1176,20 +1224,37 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
     BlockFieldFlags flags;
     const CXXDestructorDecl *dtor = 0;
 
+    bool isARCWeakCapture = false;
+
     if (ci->isByRef()) {
       flags = BLOCK_FIELD_IS_BYREF;
-      if (type.isObjCGCWeak()) flags |= BLOCK_FIELD_IS_WEAK;
-    } else if (type->isBlockPointerType()) {
-      flags = BLOCK_FIELD_IS_BLOCK;
-    } else if (type->isObjCObjectPointerType() || C.isObjCNSObjectType(type)) {
+      if (type.isObjCGCWeak())
+        flags |= BLOCK_FIELD_IS_WEAK;
+    } else if (const CXXRecordDecl *record = type->getAsCXXRecordDecl()) {
+      if (record->hasTrivialDestructor())
+        continue;
+      dtor = record->getDestructor();
+    } else if (type->isObjCRetainableType()) {
       flags = BLOCK_FIELD_IS_OBJECT;
-    } else if (C.getLangOptions().CPlusPlus) {
-      if (const CXXRecordDecl *record = type->getAsCXXRecordDecl())
-        if (!record->hasTrivialDestructor())
-          dtor = record->getDestructor();
-    }
+      if (type->isBlockPointerType())
+        flags = BLOCK_FIELD_IS_BLOCK;
 
-    if (!dtor && flags.empty()) continue;
+      // Special rules for ARC captures.
+      if (getLangOptions().ObjCAutoRefCount) {
+        Qualifiers qs = type.getQualifiers();
+
+        // Don't generate special dispose logic for a captured object
+        // unless it's __strong or __weak.
+        if (!qs.hasStrongOrWeakObjCLifetime())
+          continue;
+
+        // Support __weak direct captures.
+        if (qs.getObjCLifetime() == Qualifiers::OCL_Weak)
+          isARCWeakCapture = true;
+      }
+    } else {
+      continue;
+    }
 
     unsigned index = capture.getIndex();
     llvm::Value *srcField = Builder.CreateStructGEP(src, index);
@@ -1197,6 +1262,10 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
     // If there's an explicit copy expression, we do that.
     if (dtor) {
       PushDestructorCleanup(dtor, srcField);
+
+    // If this is a __weak capture, emit the release directly.
+    } else if (isARCWeakCapture) {
+      EmitARCDestroyWeak(srcField);
 
     // Otherwise we call _Block_object_dispose.  It wouldn't be too
     // hard to just emit this as a cleanup if we wanted to make sure
@@ -1248,6 +1317,55 @@ public:
 
   void profileImpl(llvm::FoldingSetNodeID &id) const {
     id.AddInteger(Flags.getBitMask());
+  }
+};
+
+/// Emits the copy/dispose helpers for an ARC __block __weak variable.
+class ARCWeakByrefHelpers : public CodeGenModule::ByrefHelpers {
+public:
+  ARCWeakByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
+
+  void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
+                llvm::Value *srcField) {
+    CGF.EmitARCMoveWeak(destField, srcField);
+  }
+
+  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
+    CGF.EmitARCDestroyWeak(field);
+  }
+
+  void profileImpl(llvm::FoldingSetNodeID &id) const {
+    // 0 is distinguishable from all pointers and byref flags
+    id.AddInteger(0);
+  }
+};
+
+/// Emits the copy/dispose helpers for an ARC __block __strong variable
+/// that's not of block-pointer type.
+class ARCStrongByrefHelpers : public CodeGenModule::ByrefHelpers {
+public:
+  ARCStrongByrefHelpers(CharUnits alignment) : ByrefHelpers(alignment) {}
+
+  void emitCopy(CodeGenFunction &CGF, llvm::Value *destField,
+                llvm::Value *srcField) {
+    // Do a "move" by copying the value and then zeroing out the old
+    // variable.
+
+    llvm::Value *value = CGF.Builder.CreateLoad(srcField);
+    llvm::Value *null =
+      llvm::ConstantPointerNull::get(cast<llvm::PointerType>(value->getType()));
+    CGF.Builder.CreateStore(value, destField);
+    CGF.Builder.CreateStore(null, srcField);
+  }
+
+  void emitDispose(CodeGenFunction &CGF, llvm::Value *field) {
+    llvm::Value *value = CGF.Builder.CreateLoad(field);
+    CGF.EmitARCRelease(value, /*precise*/ false);
+  }
+
+  void profileImpl(llvm::FoldingSetNodeID &id) const {
+    // 1 is distinguishable from all pointers and byref flags
+    id.AddInteger(1);
   }
 };
 
@@ -1318,6 +1436,7 @@ generateByrefCopyHelper(CodeGenFunction &CGF,
                                           SC_Static,
                                           SC_None,
                                           false, true);
+
   CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation());
 
   if (byrefInfo.needsCopy()) {
@@ -1447,6 +1566,52 @@ CodeGenFunction::buildByrefHelpers(const llvm::StructType &byrefType,
 
     CXXByrefHelpers byrefInfo(emission.Alignment, type, copyExpr);
     return ::buildByrefHelpers(CGM, byrefType, byrefInfo);
+  }
+
+  // Otherwise, if we don't have a retainable type, there's nothing to do.
+  // that the runtime does extra copies.
+  if (!type->isObjCRetainableType()) return 0;
+
+  Qualifiers qs = type.getQualifiers();
+
+  // If we have lifetime, that dominates.
+  if (Qualifiers::ObjCLifetime lifetime = qs.getObjCLifetime()) {
+    assert(getLangOptions().ObjCAutoRefCount);
+
+    switch (lifetime) {
+    case Qualifiers::OCL_None: llvm_unreachable("impossible");
+
+    // These are just bits as far as the runtime is concerned.
+    case Qualifiers::OCL_ExplicitNone:
+    case Qualifiers::OCL_Autoreleasing:
+      return 0;
+
+    // Tell the runtime that this is ARC __weak, called by the
+    // byref routines.
+    case Qualifiers::OCL_Weak: {
+      ARCWeakByrefHelpers byrefInfo(emission.Alignment);
+      return ::buildByrefHelpers(CGM, byrefType, byrefInfo);
+    }
+
+    // ARC __strong __block variables need to be retained.
+    case Qualifiers::OCL_Strong:
+      // Block-pointers need to be _Block_copy'ed, so we let the
+      // runtime be in charge.  But we can't use the code below
+      // because we don't want to set BYREF_CALLER, which will
+      // just make the runtime ignore us.
+      if (type->isBlockPointerType()) {
+        BlockFieldFlags flags = BLOCK_FIELD_IS_BLOCK;
+        ObjectByrefHelpers byrefInfo(emission.Alignment, flags);
+        return ::buildByrefHelpers(CGM, byrefType, byrefInfo);
+
+      // Otherwise, we transfer ownership of the retain from the stack
+      // to the heap.
+      } else {
+        ARCStrongByrefHelpers byrefInfo(emission.Alignment);
+        return ::buildByrefHelpers(CGM, byrefType, byrefInfo);
+      }
+    }
+    llvm_unreachable("fell out of lifetime switch!");
   }
 
   BlockFieldFlags flags;
@@ -1639,6 +1804,7 @@ namespace {
     CallBlockRelease(llvm::Value *Addr) : Addr(Addr) {}
 
     void Emit(CodeGenFunction &CGF, bool IsForEH) {
+      // Should we be passing FIELD_IS_WEAK here?
       CGF.BuildBlockRelease(Addr, BLOCK_FIELD_IS_BYREF);
     }
   };

@@ -205,7 +205,13 @@ public:
   /// interface decl.
   virtual llvm::Value *GetClass(CGBuilderTy &Builder,
                                 const ObjCInterfaceDecl *OID) = 0;
-
+  
+  
+  virtual llvm::Value *EmitNSAutoreleasePoolClassRef(CGBuilderTy &Builder) {
+    assert(false &&"autoreleasepool unsupported in this ABI");
+    return 0;
+  }
+  
   /// EnumerationMutationFunction - Return the function that's called by the
   /// compiler when a mutation is detected during foreach iteration.
   virtual llvm::Constant *EnumerationMutationFunction() = 0;

@@ -366,7 +366,11 @@ unsigned clang_isPODType(CXType X) {
   QualType T = GetQualType(X);
   if (!T.getTypePtrOrNull())
     return 0;
-  return T->isPODType() ? 1 : 0;
+  
+  CXTranslationUnit TU = GetTU(X);
+  ASTUnit *AU = static_cast<ASTUnit*>(TU->TUData);
+
+  return T.isPODType(AU->getASTContext()) ? 1 : 0;
 }
 
 CXString clang_getDeclObjCTypeEncoding(CXCursor C) {

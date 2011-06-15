@@ -1375,6 +1375,7 @@ bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
   StmtResult ParseObjCTryStmt(SourceLocation atLoc);
   StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
   StmtResult ParseObjCSynchronizedStmt(SourceLocation atLoc);
+  StmtResult ParseObjCAutoreleasePoolStmt(SourceLocation atLoc);
 
 
   //===--------------------------------------------------------------------===//
@@ -1616,7 +1617,8 @@ bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
 
   TypeResult ParseTypeName(SourceRange *Range = 0,
                            Declarator::TheContext Context
-                             = Declarator::TypeNameContext);
+                             = Declarator::TypeNameContext,
+                           ObjCDeclSpec *objcQuals = 0);
   void ParseBlockId();
 
   void ProhibitAttributes(ParsedAttributesWithRange &attrs) {
