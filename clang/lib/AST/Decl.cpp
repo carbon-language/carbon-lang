@@ -2376,6 +2376,16 @@ void BlockDecl::setCaptures(ASTContext &Context,
   Captures = static_cast<Capture*>(buffer);
 }
 
+bool BlockDecl::capturesVariable(const VarDecl *variable) const {
+  for (capture_const_iterator
+         i = capture_begin(), e = capture_end(); i != e; ++i)
+    // Only auto vars can be captured, so no redeclaration worries.
+    if (i->getVariable() == variable)
+      return true;
+
+  return false;
+}
+
 SourceRange BlockDecl::getSourceRange() const {
   return SourceRange(getLocation(), Body? Body->getLocEnd() : getLocation());
 }

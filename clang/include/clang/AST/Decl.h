@@ -2956,6 +2956,8 @@ public:
 
   bool capturesCXXThis() const { return CapturesCXXThis; }
 
+  bool capturesVariable(const VarDecl *var) const;
+
   void setCaptures(ASTContext &Context,
                    const Capture *begin,
                    const Capture *end,
