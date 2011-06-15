@@ -38,7 +38,7 @@ void test() {
   int i;
   i = 1 << (WORD_BIT - 2);
   i = 2 << (WORD_BIT - 1); // expected-warning {{bits to represent, but 'int' only has}}
-  i = 1 << (WORD_BIT - 1); // expected-warning {{overrides the sign bit of the shift expression}}
+  i = 1 << (WORD_BIT - 1); // expected-warning {{sets the sign bit of the shift expression}}
   i = -1 << (WORD_BIT - 1);
   i = 0 << (WORD_BIT - 1);
   i = (char)1 << (WORD_BIT - 2);

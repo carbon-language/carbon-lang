@@ -7394,19 +7394,24 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &lex, ExprResult &rex,
   llvm::APSInt Result = Left.extend(ResultBits.getLimitedValue());
   Result = Result.shl(Right);
 
+  // Print the bit representation of the signed integer as an unsigned
+  // hexadecimal number.
+  llvm::SmallString<40> HexResult;
+  Result.toString(HexResult, 16, /*Signed =*/false, /*Literal =*/true);
+
   // If we are only missing a sign bit, this is less likely to result in actual
   // bugs -- if the result is cast back to an unsigned type, it will have the
   // expected value. Thus we place this behind a different warning that can be
   // turned off separately if needed.
   if (LeftBits == ResultBits - 1) {
-    S.Diag(Loc, diag::warn_shift_result_overrides_sign_bit)
-        << Result.toString(10) << LHSTy
+    S.Diag(Loc, diag::warn_shift_result_sets_sign_bit)
+        << HexResult.str() << LHSTy
         << lex.get()->getSourceRange() << rex.get()->getSourceRange();
     return;
   }
 
   S.Diag(Loc, diag::warn_shift_result_gt_typewidth)
-    << Result.toString(10) << Result.getMinSignedBits() << LHSTy
+    << HexResult.str() << Result.getMinSignedBits() << LHSTy
     << Left.getBitWidth() << lex.get()->getSourceRange() << rex.get()->getSourceRange();
 }
 

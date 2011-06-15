@@ -2566,11 +2566,11 @@ def warn_remainder_by_zero : Warning<"remainder by zero is undefined">;
 def warn_shift_negative : Warning<"shift count is negative">;
 def warn_shift_gt_typewidth : Warning<"shift count >= width of type">;
 def warn_shift_result_gt_typewidth : Warning<
-  "shift result (%0) requires %1 bits to represent, but %2 only has %3 bits">,
-   InGroup<DiagGroup<"shift-overflow">>;
-def warn_shift_result_overrides_sign_bit : Warning<
-  "shift result (%0) overrides the sign bit of the shift expression's type "
-  "(%1) and becomes negative">,
+  "signed shift result (%0) requires %1 bits to represent, but %2 only has "
+  "%3 bits">, InGroup<DiagGroup<"shift-overflow">>;
+def warn_shift_result_sets_sign_bit : Warning<
+  "signed shift result (%0) sets the sign bit of the shift expression's "
+  "type (%1) and becomes negative">,
   InGroup<DiagGroup<"shift-sign-overflow">>, DefaultIgnore;
 
 def warn_precedence_bitwise_rel : Warning<
