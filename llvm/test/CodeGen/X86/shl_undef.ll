@@ -2,7 +2,7 @@
 ;
 ; Interesting test case where %tmp1220 = xor i32 %tmp862, %tmp592 and
 ; %tmp1676 = xor i32 %tmp1634, %tmp1530 have zero demanded bits after
-; TargetLoweringOpt pass.  These are changed to undef and in turn
+; DAGCombiner optimization pass.  These are changed to undef and in turn
 ; the successor shl(s) become shl undef, 1.  This pattern then matches
 ; shl x, 1 -> add x, x.  add undef, undef doesn't guarentee the low
 ; order bit is zero and is incorrect.
