@@ -16,6 +16,22 @@
          <!--#include virtual="sidebar.incl"-->
 		<div id="middle">
 			<div class="post">
+				<h1 class ="postheader">Introduction</h1>
+				<div class="postcontent">
+
+                    <p>LLDB has been structured from the beginning to be scriptable in two ways 
+                    -- a Unix Python session can initiate/run a debug session non-interactively 
+                    using LLDB; and within the LLDB debugger tool, Python scripts can be used to 
+                    help with many tasks, including inspecting program data, iterating over 
+                    containers and determining if a breakpoint should stop execution or continue.  
+                    This document will show how to do some of these things by going through an 
+                    example, explaining how to use Python scripting to find a bug in a program 
+                    that searches for text in a large binary tree.</p>
+
+				</div>
+				<div class="postfooter"></div>
+
+			<div class="post">
 				<h1 class ="postheader">The Test Program and Input</h1>
 				<div class="postcontent">
 
