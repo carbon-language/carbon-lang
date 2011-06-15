@@ -846,6 +846,10 @@ variants "__asm__" and "__typeof__" are recognized in all modes.</li>
 <li>The Apple "blocks" extension is recognized by default in gnu* modes
 on some platforms; it can be enabled in any mode with the "-fblocks"
 option.</li>
+<li>Arrays that are VLA's according to the standard, but which can be constant
+    folded by the frontend are treated as fixed size arrays.  This occurs for
+    things like "int X[(1, 2)];", which is technically a VLA.  c* modes are
+    strictly compliant and treat these as VLAs.</li>
 </ul>
 
 <p>Differences between *89 and *99 modes:</p>
