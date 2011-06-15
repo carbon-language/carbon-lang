@@ -25,12 +25,12 @@ static MVT::SimpleValueType getRegisterValueType(Record *R,
                                                  const CodeGenTarget &T) {
   bool FoundRC = false;
   MVT::SimpleValueType VT = MVT::Other;
+  const CodeGenRegister *Reg = T.getRegBank().getReg(R);
   const std::vector<CodeGenRegisterClass> &RCs = T.getRegisterClasses();
-  std::vector<Record*>::const_iterator Element;
 
   for (unsigned rc = 0, e = RCs.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RCs[rc];
-    if (!std::count(RC.Elements.begin(), RC.Elements.end(), R))
+    if (!RC.contains(Reg))
       continue;
 
     if (!FoundRC) {

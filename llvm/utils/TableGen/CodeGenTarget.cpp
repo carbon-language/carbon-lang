@@ -178,15 +178,14 @@ const CodeGenRegister *CodeGenTarget::getRegisterByName(StringRef Name) const {
 
 std::vector<MVT::SimpleValueType> CodeGenTarget::
 getRegisterVTs(Record *R) const {
+  const CodeGenRegister *Reg = getRegBank().getReg(R);
   std::vector<MVT::SimpleValueType> Result;
   const std::vector<CodeGenRegisterClass> &RCs = getRegisterClasses();
   for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
     const CodeGenRegisterClass &RC = RCs[i];
-    for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
-      if (R == RC.Elements[ei]) {
-        const std::vector<MVT::SimpleValueType> &InVTs = RC.getValueTypes();
-        Result.insert(Result.end(), InVTs.begin(), InVTs.end());
-      }
+    if (RC.contains(Reg)) {
+      const std::vector<MVT::SimpleValueType> &InVTs = RC.getValueTypes();
+      Result.insert(Result.end(), InVTs.begin(), InVTs.end());
     }
   }
 

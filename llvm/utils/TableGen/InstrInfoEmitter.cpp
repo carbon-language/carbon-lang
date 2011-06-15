@@ -166,13 +166,13 @@ void InstrInfoEmitter::DetectRegisterClassBarriers(std::vector<Record*> &Defs,
 
   for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
     const CodeGenRegisterClass &RC = RCs[i];
-    unsigned NumRegs = RC.Elements.size();
-    if (NumRegs > NumDefs)
+    ArrayRef<Record*> Order = RC.getOrder();
+    if (Order.size() > NumDefs)
       continue; // Can't possibly clobber this RC.
 
     bool Clobber = true;
-    for (unsigned j = 0; j < NumRegs; ++j) {
-      Record *Reg = RC.Elements[j];
+    for (unsigned j = 0; j < Order.size(); ++j) {
+      Record *Reg = Order[j];
       if (!DefSet.count(Reg)) {
         Clobber = false;
         break;

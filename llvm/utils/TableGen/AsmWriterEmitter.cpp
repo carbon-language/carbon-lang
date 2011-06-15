@@ -805,16 +805,16 @@ void AsmWriterEmitter::EmitRegIsInRegClass(raw_ostream &O) {
     O << "  case RC_" << Name << ":\n";
   
     // Emit the register list now.
-    unsigned IE = RC.Elements.size();
+    unsigned IE = RC.getOrder().size();
     if (IE == 1) {
-      O << "    if (Reg == " << getQualifiedName(RC.Elements[0]) << ")\n";
+      O << "    if (Reg == " << getQualifiedName(RC.getOrder()[0]) << ")\n";
       O << "      return true;\n";
     } else {
       O << "    switch (Reg) {\n";
       O << "    default: break;\n";
 
       for (unsigned II = 0; II != IE; ++II) {
-        Record *Reg = RC.Elements[II];
+        Record *Reg = RC.getOrder()[II];
         O << "    case " << getQualifiedName(Reg) << ":\n";
       }
 

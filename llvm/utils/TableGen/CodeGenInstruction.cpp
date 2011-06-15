@@ -417,7 +417,8 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
     if (!InstOpRec->isSubClassOf("RegisterClass"))
       return false;
 
-    if (!T.getRegisterClass(InstOpRec).containsRegister(ADI->getDef()))
+    if (!T.getRegisterClass(InstOpRec)
+        .contains(T.getRegBank().getReg(ADI->getDef())))
       throw TGError(Loc, "fixed register " +ADI->getDef()->getName()
                     + " is not a member of the " + InstOpRec->getName() +
                     " register class!");

@@ -154,7 +154,8 @@ CodeGenRegister::addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet) const {
 //                            CodeGenRegisterClass
 //===----------------------------------------------------------------------===//
 
-CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
+CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
+  : TheDef(R) {
   // Rename anonymous register classes.
   if (R->getName().size() > 9 && R->getName()[9] == '.') {
     static unsigned AnonCounter = 0;
@@ -171,14 +172,9 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   }
   assert(!VTs.empty() && "RegisterClass must contain at least one ValueType!");
 
-  std::vector<Record*> RegList = R->getValueAsListOfDefs("MemberList");
-  for (unsigned i = 0, e = RegList.size(); i != e; ++i) {
-    Record *Reg = RegList[i];
-    if (!Reg->isSubClassOf("Register"))
-      throw "Register Class member '" + Reg->getName() +
-            "' does not derive from the Register class!";
-    Elements.push_back(Reg);
-  }
+  Elements = R->getValueAsListOfDefs("MemberList");
+  for (unsigned i = 0, e = Elements.size(); i != e; ++i)
+    Members.insert(RegBank.getReg(Elements[i]));
 
   // SubRegClasses is a list<dag> containing (RC, subregindex, ...) dags.
   ListInit *SRC = R->getValueAsListInit("SubRegClasses");
@@ -215,6 +211,26 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   MethodProtos = R->getValueAsCode("MethodProtos");
 }
 
+bool CodeGenRegisterClass::contains(const CodeGenRegister *Reg) const {
+  return Members.count(Reg);
+}
+
+// Returns true if RC is a strict subclass.
+// RC is a sub-class of this class if it is a valid replacement for any
+// instruction operand where a register of this classis required. It must
+// satisfy these conditions:
+//
+// 1. All RC registers are also in this.
+// 2. The RC spill size must not be smaller than our spill size.
+// 3. RC spill alignment must be compatible with ours.
+//
+bool CodeGenRegisterClass::hasSubClass(const CodeGenRegisterClass *RC) const {
+  return SpillAlignment && RC->SpillAlignment % SpillAlignment == 0 &&
+    SpillSize <= RC->SpillSize &&
+    std::includes(Members.begin(), Members.end(),
+                  RC->Members.begin(), RC->Members.end());
+}
+
 const std::string &CodeGenRegisterClass::getName() const {
   return TheDef->getName();
 }
@@ -244,7 +260,8 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
     throw std::string("No 'RegisterClass' subclasses defined!");
 
   RegClasses.reserve(RCs.size());
-  RegClasses.assign(RCs.begin(), RCs.end());
+  for (unsigned i = 0, e = RCs.size(); i != e; ++i)
+    RegClasses.push_back(CodeGenRegisterClass(*this, RCs[i]));
 }
 
 CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
@@ -432,11 +449,12 @@ void CodeGenRegBank::computeDerivedInfo() {
 /// superclass.  Otherwise return null.
 const CodeGenRegisterClass*
 CodeGenRegBank::getRegClassForRegister(Record *R) {
+  const CodeGenRegister *Reg = getReg(R);
   const std::vector<CodeGenRegisterClass> &RCs = getRegClasses();
   const CodeGenRegisterClass *FoundRC = 0;
   for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
     const CodeGenRegisterClass &RC = RCs[i];
-    if (!RC.containsRegister(R))
+    if (!RC.contains(Reg))
       continue;
 
     // If this is the first class that contains the register,
@@ -450,16 +468,10 @@ CodeGenRegBank::getRegClassForRegister(Record *R) {
     if (RC.getValueTypes() != FoundRC->getValueTypes())
       return 0;
 
-    std::vector<Record *> Elements(RC.Elements);
-    std::vector<Record *> FoundElements(FoundRC->Elements);
-    std::sort(Elements.begin(), Elements.end());
-    std::sort(FoundElements.begin(), FoundElements.end());
-
     // Check to see if the previously found class that contains
     // the register is a subclass of the current class. If so,
     // prefer the superclass.
-    if (std::includes(Elements.begin(), Elements.end(),
-                      FoundElements.begin(), FoundElements.end())) {
+    if (RC.hasSubClass(FoundRC)) {
       FoundRC = &RC;
       continue;
     }
@@ -467,8 +479,7 @@ CodeGenRegBank::getRegClassForRegister(Record *R) {
     // Check to see if the previously found class that contains
     // the register is a superclass of the current class. If so,
     // prefer the superclass.
-    if (std::includes(FoundElements.begin(), FoundElements.end(),
-                      Elements.begin(), Elements.end()))
+    if (FoundRC->hasSubClass(&RC))
       continue;
 
     // Multiple classes, and neither is a superclass of the other.

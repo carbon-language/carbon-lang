@@ -17,6 +17,7 @@
 
 #include "Record.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
 #include <cstdlib>
@@ -65,13 +66,14 @@ namespace llvm {
 
     // Order CodeGenRegister pointers by EnumValue.
     struct Less {
-      bool operator()(const CodeGenRegister *A, const CodeGenRegister *B) {
+      bool operator()(const CodeGenRegister *A,
+                      const CodeGenRegister *B) const {
         return A->EnumValue < B->EnumValue;
       }
     };
 
     // Canonically ordered set.
-    typedef std::set<CodeGenRegister*, Less> Set;
+    typedef std::set<const CodeGenRegister*, Less> Set;
 
   private:
     bool SubRegsComplete;
@@ -80,10 +82,12 @@ namespace llvm {
   };
 
 
-  struct CodeGenRegisterClass {
+  class CodeGenRegisterClass {
+    CodeGenRegister::Set Members;
+    std::vector<Record*> Elements;
+  public:
     Record *TheDef;
     std::string Namespace;
-    std::vector<Record*> Elements;
     std::vector<MVT::SimpleValueType> VTs;
     unsigned SpillSize;
     unsigned SpillAlignment;
@@ -104,13 +108,10 @@ namespace llvm {
       abort();
     }
 
-    bool containsRegister(Record *R) const {
-      for (unsigned i = 0, e = Elements.size(); i != e; ++i)
-        if (Elements[i] == R) return true;
-      return false;
-    }
+    // Return true if this this class contains the register.
+    bool contains(const CodeGenRegister*) const;
 
-    // Returns true if RC is a strict subclass.
+    // Returns true if RC is a subclass.
     // RC is a sub-class of this class if it is a valid replacement for any
     // instruction operand where a register of this classis required. It must
     // satisfy these conditions:
@@ -119,29 +120,15 @@ namespace llvm {
     // 2. The RC spill size must not be smaller than our spill size.
     // 3. RC spill alignment must be compatible with ours.
     //
-    bool hasSubClass(const CodeGenRegisterClass *RC) const {
+    bool hasSubClass(const CodeGenRegisterClass *RC) const;
 
-      if (RC->Elements.size() > Elements.size() ||
-          (SpillAlignment && RC->SpillAlignment % SpillAlignment) ||
-          SpillSize > RC->SpillSize)
-        return false;
-
-      std::set<Record*> RegSet;
-      for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
-        Record *Reg = Elements[i];
-        RegSet.insert(Reg);
-      }
-
-      for (unsigned i = 0, e = RC->Elements.size(); i != e; ++i) {
-        Record *Reg = RC->Elements[i];
-        if (!RegSet.count(Reg))
-          return false;
-      }
-
-      return true;
+    // Returns an ordered list of class members.
+    // The order of registers is the same as in the .td file.
+    ArrayRef<Record*> getOrder() const {
+      return Elements;
     }
 
-    CodeGenRegisterClass(Record *R);
+    CodeGenRegisterClass(CodeGenRegBank&, Record *R);
   };
 
   // CodeGenRegBank - Represent a target's registers and the relations between

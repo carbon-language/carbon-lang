@@ -896,8 +896,8 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   // Gather the defined sets.
   for (std::vector<CodeGenRegisterClass>::const_iterator it =
        RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it)
-    RegisterSets.insert(std::set<Record*>(it->Elements.begin(),
-                                          it->Elements.end()));
+    RegisterSets.insert(std::set<Record*>(it->getOrder().begin(),
+                                          it->getOrder().end()));
 
   // Add any required singleton sets.
   for (SmallPtrSet<Record*, 16>::iterator it = SingletonRegisters.begin(),
@@ -971,8 +971,8 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   // Name the register classes which correspond to a user defined RegisterClass.
   for (std::vector<CodeGenRegisterClass>::const_iterator
        it = RegClassList.begin(), ie = RegClassList.end(); it != ie; ++it) {
-    ClassInfo *CI = RegisterSetClasses[std::set<Record*>(it->Elements.begin(),
-                                                         it->Elements.end())];
+    ClassInfo *CI = RegisterSetClasses[std::set<Record*>(it->getOrder().begin(),
+                                                         it->getOrder().end())];
     if (CI->ValueName.empty()) {
       CI->ClassName = it->getName();
       CI->Name = "MCK_" + it->getName();

@@ -214,20 +214,21 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // Emit the register enum value arrays for each RegisterClass
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
+    ArrayRef<Record*> Order = RC.getOrder();
 
     // Collect allocatable registers.
     if (RC.Allocatable)
-      AllocatableRegs.insert(RC.Elements.begin(), RC.Elements.end());
+      AllocatableRegs.insert(Order.begin(), Order.end());
 
     // Give the register class a legal C name if it's anonymous.
-    std::string Name = RC.TheDef->getName();
+    std::string Name = RC.getName();
 
     // Emit the register list now.
     OS << "  // " << Name << " Register Class...\n"
        << "  static const unsigned " << Name
        << "[] = {\n    ";
-    for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
-      Record *Reg = RC.Elements[i];
+    for (unsigned i = 0, e = Order.size(); i != e; ++i) {
+      Record *Reg = Order[i];
       OS << getQualifiedName(Reg) << ", ";
     }
     OS << "\n  };\n\n";
@@ -238,7 +239,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
 
     // Give the register class a legal C name if it's anonymous.
-    std::string Name = RC.TheDef->getName() + "VTs";
+    std::string Name = RC.getName() + "VTs";
 
     // Emit the register list now.
     OS << "  // " << Name
@@ -425,7 +426,8 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
          << RC.SpillAlignment/8 << ", "
          << RC.CopyCost << ", "
          << RC.Allocatable << ", "
-         << RC.getName() << ", " << RC.getName() << " + " << RC.Elements.size()
+         << RC.getName() << ", " << RC.getName() << " + "
+         << RC.getOrder().size()
          << ") {}\n";
     }
 
