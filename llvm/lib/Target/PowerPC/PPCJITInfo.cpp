@@ -87,7 +87,7 @@ asm(
     // FIXME: could shrink frame
     // Set up a proper stack frame
     // FIXME Layout
-    //   PowerPC64 ABI linkage    -  24 bytes
+    //   PowerPC32 ABI linkage    -  24 bytes
     //                 parameters -  32 bytes
     //   13 double registers      - 104 bytes
     //   8 int registers          -  32 bytes
@@ -205,11 +205,27 @@ void PPC32CompilationCallback() {
 
 #if (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
     defined(__ppc64__)
+#ifdef __ELF__
+asm(
+    ".text\n"
+    ".align 2\n"
+    ".globl PPC64CompilationCallback\n"
+    ".section \".opd\",\"aw\"\n"
+    ".align 3\n"
+"PPC64CompilationCallback:\n"
+    ".quad .L.PPC64CompilationCallback,.TOC.@tocbase,0\n"
+    ".size PPC64CompilationCallback,24\n"
+    ".previous\n"
+    ".align 4\n"
+    ".type PPC64CompilationCallback,@function\n"
+".L.PPC64CompilationCallback:\n"
+#else
 asm(
     ".text\n"
     ".align 2\n"
     ".globl _PPC64CompilationCallback\n"
 "_PPC64CompilationCallback:\n"
+#endif
     // Make space for 8 ints r[3-10] and 13 doubles f[1-13] and the 
     // FIXME: need to save v[0-19] for altivec?
     // Set up a proper stack frame
@@ -218,49 +234,55 @@ asm(
     //                 parameters -  64 bytes
     //   13 double registers      - 104 bytes
     //   8 int registers          -  64 bytes
-    "mflr r0\n"
-    "std r0,  16(r1)\n"
-    "stdu r1, -280(r1)\n"
+    "mflr 0\n"
+    "std  0,  16(1)\n"
+    "stdu 1, -280(1)\n"
     // Save all int arg registers
-    "std r10, 272(r1)\n"    "std r9,  264(r1)\n"
-    "std r8,  256(r1)\n"    "std r7,  248(r1)\n"
-    "std r6,  240(r1)\n"    "std r5,  232(r1)\n"
-    "std r4,  224(r1)\n"    "std r3,  216(r1)\n"
+    "std 10, 272(1)\n"    "std 9,  264(1)\n"
+    "std 8,  256(1)\n"    "std 7,  248(1)\n"
+    "std 6,  240(1)\n"    "std 5,  232(1)\n"
+    "std 4,  224(1)\n"    "std 3,  216(1)\n"
     // Save all call-clobbered FP regs.
-    "stfd f13, 208(r1)\n"    "stfd f12, 200(r1)\n"
-    "stfd f11, 192(r1)\n"    "stfd f10, 184(r1)\n"
-    "stfd f9,  176(r1)\n"    "stfd f8,  168(r1)\n"
-    "stfd f7,  160(r1)\n"    "stfd f6,  152(r1)\n"
-    "stfd f5,  144(r1)\n"    "stfd f4,  136(r1)\n"
-    "stfd f3,  128(r1)\n"    "stfd f2,  120(r1)\n"
-    "stfd f1,  112(r1)\n"
+    "stfd 13, 208(1)\n"    "stfd 12, 200(1)\n"
+    "stfd 11, 192(1)\n"    "stfd 10, 184(1)\n"
+    "stfd 9,  176(1)\n"    "stfd 8,  168(1)\n"
+    "stfd 7,  160(1)\n"    "stfd 6,  152(1)\n"
+    "stfd 5,  144(1)\n"    "stfd 4,  136(1)\n"
+    "stfd 3,  128(1)\n"    "stfd 2,  120(1)\n"
+    "stfd 1,  112(1)\n"
     // Arguments to Compilation Callback:
     // r3 - our lr (address of the call instruction in stub plus 4)
     // r4 - stub's lr (address of instruction that called the stub plus 4)
     // r5 - is64Bit - always 1.
-    "mr   r3, r0\n"
-    "ld   r2, 280(r1)\n" // stub's frame
-    "ld   r4, 16(r2)\n"  // stub's lr
-    "li   r5, 1\n"       // 1 == 64 bit
+    "mr   3, 0\n"      // return address (still in r0)
+    "ld   5, 280(1)\n" // stub's frame
+    "ld   4, 16(5)\n"  // stub's lr
+    "li   5, 1\n"      // 1 == 64 bit
+#ifdef __ELF__
+    "bl PPCCompilationCallbackC\n"
+    "nop\n"
+#else
     "bl _PPCCompilationCallbackC\n"
-    "mtctr r3\n"
+#endif
+    "mtctr 3\n"
     // Restore all int arg registers
-    "ld r10, 272(r1)\n"    "ld r9,  264(r1)\n"
-    "ld r8,  256(r1)\n"    "ld r7,  248(r1)\n"
-    "ld r6,  240(r1)\n"    "ld r5,  232(r1)\n"
-    "ld r4,  224(r1)\n"    "ld r3,  216(r1)\n"
+    "ld 10, 272(1)\n"    "ld 9,  264(1)\n"
+    "ld 8,  256(1)\n"    "ld 7,  248(1)\n"
+    "ld 6,  240(1)\n"    "ld 5,  232(1)\n"
+    "ld 4,  224(1)\n"    "ld 3,  216(1)\n"
     // Restore all FP arg registers
-    "lfd f13, 208(r1)\n"    "lfd f12, 200(r1)\n"
-    "lfd f11, 192(r1)\n"    "lfd f10, 184(r1)\n"
-    "lfd f9,  176(r1)\n"    "lfd f8,  168(r1)\n"
-    "lfd f7,  160(r1)\n"    "lfd f6,  152(r1)\n"
-    "lfd f5,  144(r1)\n"    "lfd f4,  136(r1)\n"
-    "lfd f3,  128(r1)\n"    "lfd f2,  120(r1)\n"
-    "lfd f1,  112(r1)\n"
+    "lfd 13, 208(1)\n"    "lfd 12, 200(1)\n"
+    "lfd 11, 192(1)\n"    "lfd 10, 184(1)\n"
+    "lfd 9,  176(1)\n"    "lfd 8,  168(1)\n"
+    "lfd 7,  160(1)\n"    "lfd 6,  152(1)\n"
+    "lfd 5,  144(1)\n"    "lfd 4,  136(1)\n"
+    "lfd 3,  128(1)\n"    "lfd 2,  120(1)\n"
+    "lfd 1,  112(1)\n"
     // Pop 3 frames off the stack and branch to target
-    "ld  r1, 280(r1)\n"
-    "ld  r2, 16(r1)\n"
-    "mtlr r2\n"
+    "ld  1, 280(1)\n"
+    "ld  0, 16(1)\n"
+    "mtlr 0\n"
+    // XXX: any special TOC handling in the ELF case for JIT?
     "bctr\n"
     );
 #else
