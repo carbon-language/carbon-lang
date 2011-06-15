@@ -397,16 +397,6 @@ SBTarget::GetExecutable ()
     return exe_file_spec;
 }
 
-
-bool
-SBTarget::DeleteTargetFromList (TargetList *list)
-{
-    if (m_opaque_sp)
-        return list->DeleteTarget (m_opaque_sp);
-    else
-        return false;
-}
-
 bool
 SBTarget::operator == (const SBTarget &rhs) const
 {

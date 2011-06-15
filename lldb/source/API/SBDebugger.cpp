@@ -508,6 +508,24 @@ SBDebugger::CreateTarget (const char *filename)
     return target;
 }
 
+bool
+SBDebugger::DeleteTarget (lldb::SBTarget &target)
+{
+    bool result = false;
+    if (m_opaque_sp)
+    {
+        // No need to lock, the target list is thread safe
+        result = m_opaque_sp->GetTargetList().DeleteTarget (target.m_opaque_sp);
+    }
+
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+    {
+        log->Printf ("SBDebugger(%p)::DeleteTarget (SBTarget(%p)) => %i", m_opaque_sp.get(), target.m_opaque_sp.get(), result);
+    }
+
+    return result;
+}
 SBTarget
 SBDebugger::GetTargetAtIndex (uint32_t idx)
 {

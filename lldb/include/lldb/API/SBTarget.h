@@ -187,9 +187,6 @@ public:
     Clear ();
 
     bool
-    DeleteTargetFromList (lldb_private::TargetList *list);
-    
-    bool
     ResolveLoadAddress (lldb::addr_t vm_addr, 
                         lldb::SBAddress& addr);
 

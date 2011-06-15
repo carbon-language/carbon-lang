@@ -98,6 +98,10 @@ public:
     lldb::SBTarget
     CreateTarget (const char *filename);
 
+    // Return true if target is deleted from the target list of the debugger.
+    bool
+    DeleteTarget (lldb::SBTarget &target);
+
     lldb::SBTarget
     GetTargetAtIndex (uint32_t idx);
 

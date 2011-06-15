@@ -365,12 +365,8 @@ class TestBase(unittest2.TestCase):
               - execute any tearDown hooks registered by the test method with
                 TestBase.addTearDownHook(); examples can be found in
                 settings/TestSettings.py
-              - kill the inferior process launched during the test method
-                    - if by 'run' or 'process launch' command, 'process kill'
-                      command is used
-                    - if the test method uses LLDB Python API to launch process,
-                      it should assign the process object to self.process; that
-                      way, tearDown will use self.process.Kill() on the object
+              - kill the inferior process associated with each target, if any,
+                and, then delete the target from the debugger's target list
               - perform build cleanup before running the next test method in the
                 same test class; examples of registering for this service can be
                 found in types/TestIntegerTypes.py with the call:
@@ -536,11 +532,6 @@ class TestBase(unittest2.TestCase):
         # embedded script interpreter and second to quit the lldb command
         # interpreter.
         self.child_in_script_interpreter = False
-
-        # There is no process associated with the debugger as yet.
-        # See also self.tearDown() where it checks whether self.process has a
-        # valid reference and calls self.process.Kill() to kill the process.
-        self.process = None
 
         # Retrieve the associated command interpreter instance.
         self.ci = self.dbg.GetCommandInterpreter()
@@ -712,13 +703,20 @@ class TestBase(unittest2.TestCase):
             except:
                 pass
 
-        # Terminate the current process being debugged, if any.
-        if self.runStarted:
-            self.runCmd("process kill", PROCESS_KILLED, check=False)
-        elif self.process:
-            rc = self.invoke(self.process, "Kill")
-            self.assertTrue(rc.Success(), PROCESS_KILLED)
-            del self.process
+        # Delete the target(s) from the debugger as a general cleanup step.
+        # This includes terminating the process for each target, if any.
+        # We'd like to reuse the debugger for our next test without incurring
+        # the initialization overhead.
+        targets = []
+        for target in self.dbg:
+            if target:
+                targets.append(target)
+                process = target.GetProcess()
+                if process:
+                    rc = self.invoke(process, "Kill")
+                    self.assertTrue(rc.Success(), PROCESS_KILLED)
+        for target in targets:
+            self.dbg.DeleteTarget(target)
 
         del self.dbg
         del self.hooks
