@@ -74,6 +74,8 @@ TEST(PackedVectorTest, Operation) {
   EXPECT_EQ(3U, Vec[1]);
 }
 
+#ifdef EXPECT_DEBUG_DEATH
+
 TEST(PackedVectorTest, UnsignedValues) {
   PackedVector<unsigned, 2> Vec(1);
   Vec[0] = 0;
@@ -105,6 +107,8 @@ TEST(PackedVectorTest, SignedValues) {
   EXPECT_DEBUG_DEATH(Vec[0] = -5, "value is too big");
   EXPECT_DEBUG_DEATH(Vec[0] = 4, "value is too big");
 }
+
+#endif
 
 }
 
