@@ -41,9 +41,6 @@ class FrameAPITestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at the entry point.
-        # Note that we don't assign the process to self.process as in other test
-        # cases.  We want the inferior to run till it exits and there's no need
-        # for the testing framework to kill the inferior upon tearDown().
         process = target.LaunchSimple(None, None, os.getcwd())
 
         process = target.GetProcess()

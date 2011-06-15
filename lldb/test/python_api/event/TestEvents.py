@@ -64,13 +64,11 @@ class EventAPITestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         error = lldb.SBError()
-        self.process = target.Launch (listener, None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
-
-        self.process = target.GetProcess()
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        process = target.Launch (listener, None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Get a handle on the process's broadcaster.
-        broadcaster = self.process.GetBroadcaster()
+        broadcaster = process.GetBroadcaster()
         self.assertTrue(broadcaster, "Process with valid broadcaster")
 
         # Create an empty event object.
@@ -94,7 +92,7 @@ class EventAPITestCase(TestBase):
 
         # Use Python API to kill the process.  The listening thread should be
         # able to receive a state changed event.
-        self.process.Kill()
+        process.Kill()
 
         # Let's start the listening thread to retrieve the event.
         my_thread = MyListeningThread()
@@ -122,14 +120,12 @@ class EventAPITestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at the entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
-
-        self.process = target.GetProcess()
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped,
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
 
         # Get a handle on the process's broadcaster.
-        broadcaster = self.process.GetBroadcaster()
+        broadcaster = process.GetBroadcaster()
         self.assertTrue(broadcaster, "Process with valid broadcaster")
 
         # Create an empty event object.
@@ -188,7 +184,7 @@ class EventAPITestCase(TestBase):
 
         # Use Python API to continue the process.  The listening thread should be
         # able to receive the state changed events.
-        self.process.Continue()
+        process.Continue()
 
         # Start the listening thread to receive the "running" followed by the
         # "stopped" events.

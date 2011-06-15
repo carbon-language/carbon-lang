@@ -53,12 +53,12 @@ class ConditionalBreakTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        self.assertTrue(error.Success() and self.process, PROCESS_IS_VALID)
+        self.assertTrue(error.Success() and process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped,
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
                         STOPPED_DUE_TO_BREAKPOINT)
 
         # Find the line number where a's parent frame function is c.
@@ -72,7 +72,7 @@ class ConditionalBreakTestCase(TestBase):
         # The 10 in range(10) is just an arbitrary number, which means we would
         # like to try for at most 10 times.
         for j in range(10):
-            thread = self.process.GetThreadAtIndex(0)
+            thread = process.GetThreadAtIndex(0)
             
             if thread.GetNumFrames() >= 2:
                 frame0 = thread.GetFrameAtIndex(0)
@@ -94,7 +94,7 @@ class ConditionalBreakTestCase(TestBase):
                     self.assertTrue(val.GetValue(frame1) == "3", "'val' has a value of 3")
                     break
 
-            self.process.Continue()
+            process.Continue()
 
     def simulate_conditional_break_by_user(self):
         """Simulate a user using lldb commands to break on c() if called from a()."""

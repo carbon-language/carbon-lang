@@ -59,18 +59,17 @@ class CommandInterpreterAPICase(TestBase):
         ci.HandleCommand("process launch", res)
         self.assertTrue(res.Succeeded())
 
-        # Assigning to self.process so it gets cleaned up during test tear down.
-        self.process = ci.GetProcess()
-        self.assertTrue(self.process)
+        process = ci.GetProcess()
+        self.assertTrue(process)
 
         import lldbutil
-        if self.process.GetState() != lldb.eStateStopped:
+        if process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
-                      lldbutil.state_type_to_str(self.process.GetState()))
+                      lldbutil.state_type_to_str(process.GetState()))
 
         if self.TraceOn():
-            lldbutil.print_stacktraces(self.process)        
+            lldbutil.print_stacktraces(process)        
                         
 
 if __name__ == '__main__':

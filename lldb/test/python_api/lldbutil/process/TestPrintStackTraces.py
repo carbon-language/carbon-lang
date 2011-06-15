@@ -35,19 +35,19 @@ class ThreadsStackTracesTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         rc = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
 
-        if not rc.Success() or not self.process:
+        if not rc.Success() or not process:
             self.fail("SBTarget.LaunchProcess() failed")
 
         import lldbutil
-        if self.process.GetState() != lldb.eStateStopped:
+        if process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
-                      lldbutil.state_type_to_str(self.process.GetState()))
+                      lldbutil.state_type_to_str(process.GetState()))
 
         if self.TraceOn():
-            lldbutil.print_stacktraces(self.process)
+            lldbutil.print_stacktraces(process)
 
 
 if __name__ == '__main__':

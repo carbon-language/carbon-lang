@@ -53,14 +53,12 @@ class DisasmAPITestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
-
-        self.process = target.GetProcess()
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1.
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped)
-        thread = lldbutil.get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()
@@ -77,9 +75,9 @@ class DisasmAPITestCase(TestBase):
             print "context1:", context1
 
         # Continue the inferior, the breakpoint 2 should be hit.
-        self.process.Continue()
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped)
-        thread = lldbutil.get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        process.Continue()
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()

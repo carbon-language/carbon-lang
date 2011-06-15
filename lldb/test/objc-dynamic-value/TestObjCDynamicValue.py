@@ -67,12 +67,12 @@ class ObjCDynamicValueTestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at the entry point.
-        self.process = target.LaunchSimple (None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, os.getcwd())
 
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped,
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
 
-        threads = lldbutil.get_threads_stopped_at_breakpoint (self.process, main_before_setProperty_bkpt)
+        threads = lldbutil.get_threads_stopped_at_breakpoint (process, main_before_setProperty_bkpt)
         self.assertTrue (len(threads) == 1)
         thread = threads[0]
 
@@ -99,7 +99,7 @@ class ObjCDynamicValueTestCase(TestBase):
 
         thread.StepInto()
 
-        threads = lldbutil.get_stopped_threads (self.process, lldb.eStopReasonPlanComplete)
+        threads = lldbutil.get_stopped_threads (process, lldb.eStopReasonPlanComplete)
         self.assertTrue (len(threads) == 1)
         line_entry = threads[0].GetFrameAtIndex(0).GetLineEntry()
         self.assertTrue (line_entry.GetLine() == self.set_property_line)
@@ -107,7 +107,7 @@ class ObjCDynamicValueTestCase(TestBase):
 
         # Okay, back to the main business.  Continue to the handle_SourceBase and make sure we get the correct dynamic value.
 
-        threads = lldbutil.continue_to_breakpoint (self.process, handle_SourceBase_bkpt)
+        threads = lldbutil.continue_to_breakpoint (process, handle_SourceBase_bkpt)
         self.assertTrue (len(threads) == 1)
         thread = threads[0]
 
@@ -142,7 +142,7 @@ class ObjCDynamicValueTestCase(TestBase):
         # This one looks exactly the same, but in fact this is an "un-KVO'ed" version of SourceBase, so
         # its isa pointer points to SourceBase not NSKVOSourceBase or whatever...
 
-        threads = lldbutil.continue_to_breakpoint (self.process, handle_SourceBase_bkpt)
+        threads = lldbutil.continue_to_breakpoint (process, handle_SourceBase_bkpt)
         self.assertTrue (len(threads) == 1)
         thread = threads[0]
 

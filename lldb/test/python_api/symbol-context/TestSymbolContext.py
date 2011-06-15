@@ -47,14 +47,12 @@ class SymbolContextAPITestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
-
-        self.process = target.GetProcess()
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line.
         from lldbutil import get_stopped_thread
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
         frame0 = thread.GetFrameAtIndex(0)
         self.assertTrue(frame0.GetLineEntry().GetLine() == self.line)

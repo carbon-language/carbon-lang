@@ -101,16 +101,14 @@ class BreakpointIgnoreCountTestCase(TestBase):
                         "SetIgnoreCount() works correctly")
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
-
-        self.process = target.GetProcess()
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame#0 should be on main.c:37, frame#1 should be on main.c:25, and
         # frame#2 should be on main.c:48.
-        #lldbutil.print_stacktraces(self.process)
+        #lldbutil.print_stacktraces(process)
         from lldbutil import get_stopped_thread
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
         frame0 = thread.GetFrameAtIndex(0)
         frame1 = thread.GetFrameAtIndex(1)
@@ -123,7 +121,7 @@ class BreakpointIgnoreCountTestCase(TestBase):
         # The hit count for the breakpoint should be 3.
         self.assertTrue(breakpoint.GetHitCount() == 3)
 
-        self.process.Continue()
+        process.Continue()
 
         
 if __name__ == '__main__':

@@ -116,15 +116,15 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple(None, None, os.getcwd())
 
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
         self.runCmd("process status")
 
         proc_of_thread = thread.GetProcess()
         #print "proc_of_thread:", proc_of_thread
-        self.assertTrue(proc_of_thread.GetProcessID() == self.process.GetProcessID())
+        self.assertTrue(proc_of_thread.GetProcessID() == process.GetProcessID())
 
     def get_stop_description(self):
         """Test Python SBThread.GetStopDescription() API."""
@@ -138,9 +138,9 @@ class ThreadAPITestCase(TestBase):
         #self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple(None, None, os.getcwd())
 
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
         #self.runCmd("process status")
 
@@ -163,10 +163,10 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple(None, None, os.getcwd())
 
         while True:
-            thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+            thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
             self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
             caller_symbol = get_caller_symbol(thread)
             #print "caller symbol of malloc:", caller_symbol
@@ -176,7 +176,7 @@ class ThreadAPITestCase(TestBase):
                 break
             #self.runCmd("thread backtrace")
             #self.runCmd("process status")           
-            self.process.Continue()
+            process.Continue()
 
         thread.StepOut()
         self.runCmd("thread backtrace")
@@ -196,13 +196,13 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple(None, None, os.getcwd())
 
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line2.
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped)
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         self.runCmd("thread backtrace")
         frame0 = thread.GetFrameAtIndex(0)
@@ -237,13 +237,13 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("breakpoint list")
 
         # Launch the process, and do not stop at the entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple(None, None, os.getcwd())
 
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line2.
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped)
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         self.runCmd("thread backtrace")
         frame0 = thread.GetFrameAtIndex(0)

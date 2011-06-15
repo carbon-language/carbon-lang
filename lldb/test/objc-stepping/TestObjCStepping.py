@@ -64,12 +64,12 @@ class TestObjCStepping(TestBase):
         self.assertTrue(break_returnStruct_call_super, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple (None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, os.getcwd())
 
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
-        thread = self.process.GetThreadAtIndex(0)
+        thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
             from lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
@@ -100,7 +100,7 @@ class TestObjCStepping(TestBase):
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.sourceBase_randomMethod_line, "Stepped through super into SourceBase randomMethod.")
 
-        self.process.Continue()
+        process.Continue()
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.line2, "Continued to second breakpoint in main.")
 
@@ -109,7 +109,7 @@ class TestObjCStepping(TestBase):
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.source_returnsStruct_start_line, "Stepped into Source returnsStruct.")
 
-        self.process.Continue()
+        process.Continue()
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.source_returnsStruct_call_line, "Stepped to the call super line in Source returnsStruct.")
 
@@ -120,7 +120,7 @@ class TestObjCStepping(TestBase):
         # Cool now continue to get past the call that intializes the Observer, and then do our steps in again to see that 
         # we can find our way when we're stepping through a KVO swizzled object.
 
-        self.process.Continue()
+        process.Continue()
         frame = thread.GetFrameAtIndex(0)
         line_number = frame.GetLineEntry().GetLine()
         self.assertTrue (line_number == self.line3, "Continued to third breakpoint in main, our object should now be swizzled.")
@@ -140,7 +140,7 @@ class TestObjCStepping(TestBase):
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.sourceBase_randomMethod_line, "Stepped through super into SourceBase randomMethod in swizzled object.")
 
-        self.process.Continue()
+        process.Continue()
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.line4, "Continued to fourth breakpoint in main.")
 
@@ -149,7 +149,7 @@ class TestObjCStepping(TestBase):
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.source_returnsStruct_start_line, "Stepped into Source returnsStruct in swizzled object.")
 
-        self.process.Continue()
+        process.Continue()
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.source_returnsStruct_call_line, "Stepped to the call super line in Source returnsStruct - second time.")
 

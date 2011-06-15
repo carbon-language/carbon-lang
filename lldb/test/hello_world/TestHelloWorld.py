@@ -62,10 +62,10 @@ class HelloWorldTestCase(TestBase):
             # On the other hand, the following line of code are more reliable.
             self.runCmd("run")
 
-        self.process = target.GetProcess()
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        process = target.GetProcess()
+        self.assertTrue(process, PROCESS_IS_VALID)
 
-        thread = self.process.GetThreadAtIndex(0)
+        thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
             from lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %

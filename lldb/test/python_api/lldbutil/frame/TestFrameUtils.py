@@ -33,15 +33,15 @@ class FrameUtilsTestCase(TestBase):
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple(None, None, os.getcwd())
 
-        if not self.process:
+        if not process:
             self.fail("SBTarget.LaunchProcess() failed")
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped,
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
 
         import lldbutil
-        thread = lldbutil.get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         frame0 = thread.GetFrameAtIndex(0)
         frame1 = thread.GetFrameAtIndex(1)
         parent = lldbutil.get_parent_frame(frame0)

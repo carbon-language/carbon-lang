@@ -114,12 +114,12 @@ class DynamicValueTestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at the entry point.
-        self.process = target.LaunchSimple (None, None, os.getcwd())
+        process = target.LaunchSimple (None, None, os.getcwd())
 
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped,
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
 
-        threads = lldbutil.get_threads_stopped_at_breakpoint (self.process, first_call_bpt)
+        threads = lldbutil.get_threads_stopped_at_breakpoint (process, first_call_bpt)
         self.assertTrue (len(threads) == 1)
         thread = threads[0]
 
@@ -141,7 +141,7 @@ class DynamicValueTestCase(TestBase):
 
         # Okay now run to doSomething:
 
-        threads = lldbutil.continue_to_breakpoint (self.process, do_something_bpt)
+        threads = lldbutil.continue_to_breakpoint (process, do_something_bpt)
         self.assertTrue (len(threads) == 1)
         thread = threads[0]
 
@@ -194,7 +194,7 @@ class DynamicValueTestCase(TestBase):
 
         # Okay, now continue again, and when we hit the second breakpoint in main
 
-        threads = lldbutil.continue_to_breakpoint (self.process, second_call_bpt)
+        threads = lldbutil.continue_to_breakpoint (process, second_call_bpt)
         self.assertTrue (len(threads) == 1)
         thread = threads[0]
 
@@ -206,7 +206,7 @@ class DynamicValueTestCase(TestBase):
         # Finally continue to doSomething again, and make sure we get the right value for anotherA,
         # which this time around is just an "A".
 
-        threads = lldbutil.continue_to_breakpoint (self.process, do_something_bpt)
+        threads = lldbutil.continue_to_breakpoint (process, do_something_bpt)
         self.assertTrue(len(threads) == 1)
         thread = threads[0]
 

@@ -58,15 +58,15 @@ class CrashingInferiorTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         # Both argv and envp are null.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
+        process = target.LaunchSimple(None, None, os.getcwd())
 
         import lldbutil
-        if self.process.GetState() != lldb.eStateStopped:
+        if process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
-                      lldbutil.state_type_to_str(self.process.GetState()))
+                      lldbutil.state_type_to_str(process.GetState()))
 
-        thread = lldbutil.get_stopped_thread(self.process, lldb.eStopReasonException)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonException)
         if not thread:
             self.fail("Fail to stop the thread upon bad access exception")
 

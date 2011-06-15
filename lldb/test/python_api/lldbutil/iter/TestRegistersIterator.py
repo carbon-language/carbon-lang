@@ -34,13 +34,13 @@ class RegistersIteratorTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         rc = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
 
-        if not rc.Success() or not self.process:
+        if not rc.Success() or not process:
             self.fail("SBTarget.LaunchProcess() failed")
 
         import lldbutil
-        for thread in self.process:
+        for thread in process:
             if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
                 for frame in thread:
                     # Dump the registers of this frame using lldbutil.get_GPRs() and friends.

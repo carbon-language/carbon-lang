@@ -120,18 +120,18 @@ class ClassTypesTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        if not error.Success() or not self.process:
+        if not error.Success() or not process:
             self.fail("SBTarget.Launch() failed")
 
-        if self.process.GetState() != lldb.eStateStopped:
+        if process.GetState() != lldb.eStateStopped:
             self.fail("Process should be in the 'stopped' state, "
                       "instead the actual state is: '%s'" %
-                      lldbutil.state_type_to_str(self.process.GetState()))
+                      lldbutil.state_type_to_str(process.GetState()))
 
         # The stop reason of the thread should be breakpoint.
-        thread = self.process.GetThreadAtIndex(0)
+        thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
             from lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %
@@ -149,7 +149,7 @@ class ClassTypesTestCase(TestBase):
         # We should be stopped on the breakpoint with a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
 
-        self.process.Continue()
+        process.Continue()
 
     def class_types_expr_parser(self):
         """Test 'frame variable this' and 'expr this' when stopped inside a constructor."""

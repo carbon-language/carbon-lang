@@ -110,19 +110,17 @@ class ArrayTypesTestCase(TestBase):
             substrs = ["resolved = 1"])
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
-
-        self.process = target.GetProcess()
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Sanity check the print representation of process.
-        proc = repr(self.process)
+        proc = repr(process)
         self.expect(proc, msg="Process looks good", exe=False,
             substrs = ["state = stopped",
                        "executable = a.out"])
 
         # The stop reason of the thread should be breakpoint.
-        thread = self.process.GetThreadAtIndex(0)
+        thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
             from lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %

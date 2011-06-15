@@ -99,8 +99,7 @@ class TargetAPITestCase(TestBase):
         breakpoint = target.BreakpointCreateByLocation('main.c', line)
 
         # Now launch the process, do not stop at entry point, and redirect stdout to "stdout.txt" file.
-        # The inferior should run to completion after "process.Continue()" call, so there's no need
-        # to assign to self.process to have the inferior kiiled during test teardown.
+        # The inferior should run to completion after "process.Continue()" call.
         error = lldb.SBError()
         process = target.Launch (self.dbg.GetListener(), None, None, None, "stdout.txt", None, None, 0, False, error)
         process.Continue()
@@ -146,14 +145,12 @@ class TargetAPITestCase(TestBase):
                         VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
-
-        self.process = target.GetProcess()
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1.
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped)
-        thread = lldbutil.get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         #self.runCmd("process status")
         frame0 = thread.GetFrameAtIndex(0)
@@ -163,9 +160,9 @@ class TargetAPITestCase(TestBase):
         address1 = lineEntry.GetStartAddress()
 
         # Continue the inferior, the breakpoint 2 should be hit.
-        self.process.Continue()
-        self.assertTrue(self.process.GetState() == lldb.eStateStopped)
-        thread = lldbutil.get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        process.Continue()
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         #self.runCmd("process status")
         frame0 = thread.GetFrameAtIndex(0)

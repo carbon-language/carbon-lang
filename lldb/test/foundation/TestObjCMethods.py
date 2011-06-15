@@ -213,12 +213,12 @@ class FoundationTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # The stop reason of the thread should be breakpoint.
-        thread = self.process.GetThreadAtIndex(0)
+        thread = process.GetThreadAtIndex(0)
         if thread.GetStopReason() != lldb.eStopReasonBreakpoint:
             from lldbutil import stop_reason_to_str
             self.fail(STOPPED_DUE_TO_BREAKPOINT_WITH_STOP_REASON_AS %

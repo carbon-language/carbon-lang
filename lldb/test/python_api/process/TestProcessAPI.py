@@ -76,9 +76,9 @@ class ProcessAPITestCase(TestBase):
 
         # Launch the process, and do not stop at the entry point.
         error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
         frame = thread.GetFrameAtIndex(0)
 
@@ -95,7 +95,7 @@ class ProcessAPITestCase(TestBase):
 
         # Due to the typemap magic (see lldb.swig), we pass in 1 to ReadMemory and
         # expect to get a Python string as the result object!
-        content = self.process.ReadMemory(location, 1, error)
+        content = process.ReadMemory(location, 1, error)
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
         if self.TraceOn():
@@ -118,9 +118,9 @@ class ProcessAPITestCase(TestBase):
 
         # Launch the process, and do not stop at the entry point.
         error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
         frame = thread.GetFrameAtIndex(0)
 
@@ -139,14 +139,14 @@ class ProcessAPITestCase(TestBase):
         # But we want to use the WriteMemory() API to assign 'a' to the variable.
 
         # Now use WriteMemory() API to write 'a' into the global variable.
-        result = self.process.WriteMemory(location, 'a', error)
+        result = process.WriteMemory(location, 'a', error)
         if not error.Success() or result != 1:
             self.fail("SBProcess.WriteMemory() failed")
 
         # Read from the memory location.  This time it should be 'a'.
         # Due to the typemap magic (see lldb.swig), we pass in 1 to ReadMemory and
         # expect to get a Python string as the result object!
-        content = self.process.ReadMemory(location, 1, error)
+        content = process.ReadMemory(location, 1, error)
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
         if self.TraceOn():
@@ -169,9 +169,9 @@ class ProcessAPITestCase(TestBase):
 
         # Launch the process, and do not stop at the entry point.
         error = lldb.SBError()
-        self.process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
 
-        thread = get_stopped_thread(self.process, lldb.eStopReasonBreakpoint)
+        thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
         frame = thread.GetFrameAtIndex(0)
 
@@ -192,7 +192,7 @@ class ProcessAPITestCase(TestBase):
         byteSize = val.GetByteSize()
         bytes = int_to_bytearray(256, byteSize)
 
-        byteOrder = self.process.GetByteOrder()
+        byteOrder = process.GetByteOrder()
         if byteOrder == lldb.eByteOrderBig:
             bytes.reverse()
         elif byteOrder == lldb.eByteOrderLittle:
@@ -207,7 +207,7 @@ class ProcessAPITestCase(TestBase):
 
         # Now use WriteMemory() API to write 256 into the global variable.
         new_value = str(bytes)
-        result = self.process.WriteMemory(location, new_value, error)
+        result = process.WriteMemory(location, new_value, error)
         if not error.Success() or result != byteSize:
             self.fail("SBProcess.WriteMemory() failed")
 
@@ -225,7 +225,7 @@ class ProcessAPITestCase(TestBase):
             startstr = '256')
 
         # Now read the memory content.  The bytearray should have (byte)1 as the second element.
-        content = self.process.ReadMemory(location, byteSize, error)
+        content = process.ReadMemory(location, byteSize, error)
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
 

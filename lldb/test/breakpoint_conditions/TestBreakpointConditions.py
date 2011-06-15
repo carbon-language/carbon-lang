@@ -139,14 +139,12 @@ class BreakpointConditionsTestCase(TestBase):
             startstr = 'val == 3')
 
         # Now launch the process, and do not stop at entry point.
-        self.process = target.LaunchSimple(None, None, os.getcwd())
-
-        self.process = target.GetProcess()
-        self.assertTrue(self.process, PROCESS_IS_VALID)
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process, PROCESS_IS_VALID)
 
         # Frame #0 should be on self.line1 and the break condition should hold.
         from lldbutil import get_stopped_thread
-        thread = get_stopped_thread(self.process, lldb.eStopReasonPlanComplete)
+        thread = get_stopped_thread(process, lldb.eStopReasonPlanComplete)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         frame0 = thread.GetFrameAtIndex(0)
         var = frame0.FindValue('val', lldb.eValueTypeVariableArgument)
@@ -156,7 +154,7 @@ class BreakpointConditionsTestCase(TestBase):
         # The hit count for the breakpoint should be 3.
         self.assertTrue(breakpoint.GetHitCount() == 3)
 
-        self.process.Continue()
+        process.Continue()
 
         
 if __name__ == '__main__':
