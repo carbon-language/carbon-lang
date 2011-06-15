@@ -1401,7 +1401,25 @@ void AssemblyWriter::printModule(const Module *M) {
 }
 
 void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
-  Out << "!" << NMD->getName() << " = !{";
+  Out << '!';
+  StringRef Name = NMD->getName();
+  if (Name.empty()) {
+    Out << "<empty name> ";
+  } else {
+    if (isalpha(Name[0]) || Name[0] == '-' || Name[0] == '$' ||
+        Name[0] == '.' || Name[0] == '_')
+      Out << Name[0];
+    else
+      Out << '\\' << hexdigit(Name[0] >> 4) << hexdigit(Name[0] & 0x0F);
+    for (unsigned i = 1, e = Name.size(); i != e; ++i) {
+      unsigned char C = Name[i];
+      if (isalnum(C) || C == '-' || C == '$' || C == '.' || C == '_')
+        Out << C;
+      else
+        Out << '\\' << hexdigit(C >> 4) << hexdigit(C & 0x0F);
+    }
+  }
+  Out << " = !{";
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
     if (i) Out << ", ";
     int Slot = Machine.getMetadataSlot(NMD->getOperand(i));

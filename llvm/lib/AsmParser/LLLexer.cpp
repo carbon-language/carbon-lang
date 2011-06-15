@@ -422,13 +422,15 @@ static bool JustWhitespaceNewLine(const char *&Ptr) {
 ///    !
 lltok::Kind LLLexer::LexExclaim() {
   // Lex a metadata name as a MetadataVar.
-  if (isalpha(CurPtr[0])) {
+  if (isalpha(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
+      CurPtr[0] == '.' || CurPtr[0] == '_' || CurPtr[0] == '\\') {
     ++CurPtr;
     while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
-           CurPtr[0] == '.' || CurPtr[0] == '_')
+           CurPtr[0] == '.' || CurPtr[0] == '_' || CurPtr[0] == '\\')
       ++CurPtr;
 
     StrVal.assign(TokStart+1, CurPtr);   // Skip !
+    UnEscapeLexed(StrVal);
     return lltok::MetadataVar;
   }
   return lltok::exclaim;
