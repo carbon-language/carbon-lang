@@ -1525,8 +1525,13 @@ static void HandleNothrowAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
     return;
   }
-
-  d->addAttr(::new (S.Context) NoThrowAttr(Attr.getLoc(), S.Context));
+  
+  if (NoThrowAttr *Existing = d->getAttr<NoThrowAttr>()) {
+    if (Existing->getLocation().isInvalid())
+      Existing->setLocation(Attr.getLoc());
+  } else {
+    d->addAttr(::new (S.Context) NoThrowAttr(Attr.getLoc(), S.Context));
+  }
 }
 
 static void HandleConstAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1536,7 +1541,12 @@ static void HandleConstAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  d->addAttr(::new (S.Context) ConstAttr(Attr.getLoc(), S.Context));
+  if (ConstAttr *Existing = d->getAttr<ConstAttr>()) {
+   if (Existing->getLocation().isInvalid())
+     Existing->setLocation(Attr.getLoc());
+  } else {
+    d->addAttr(::new (S.Context) ConstAttr(Attr.getLoc(), S.Context));
+  }
 }
 
 static void HandlePureAttr(Decl *d, const AttributeList &Attr, Sema &S) {
@@ -1904,6 +1914,23 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     return;
   }
 
+  // Check whether we already have an equivalent format attribute.
+  for (specific_attr_iterator<FormatAttr>
+         i = d->specific_attr_begin<FormatAttr>(),
+         e = d->specific_attr_end<FormatAttr>(); 
+       i != e ; ++i) {
+    FormatAttr *f = *i;
+    if (f->getType() == Format &&
+        f->getFormatIdx() == (int)Idx.getZExtValue() &&
+        f->getFirstArg() == (int)FirstArg.getZExtValue()) {
+      // If we don't have a valid location for this attribute, adopt the
+      // location.
+      if (f->getLocation().isInvalid())
+        f->setLocation(Attr.getLoc());
+      return;
+    }
+  }
+  
   d->addAttr(::new (S.Context) FormatAttr(Attr.getLoc(), S.Context, Format,
                                           Idx.getZExtValue(),
                                           FirstArg.getZExtValue()));

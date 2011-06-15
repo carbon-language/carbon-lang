@@ -6471,6 +6471,9 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
 /// These attributes can apply both to implicitly-declared builtins
 /// (like __builtin___printf_chk) or to library-declared functions
 /// like NSLog or printf.
+///
+/// We need to check for duplicate attributes both here and where user-written
+/// attributes are applied to declarations.
 void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
   if (FD->isInvalidDecl())
     return;
@@ -6504,9 +6507,9 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
         FD->addAttr(::new (Context) ConstAttr(FD->getLocation(), Context));
     }
 
-    if (Context.BuiltinInfo.isNoThrow(BuiltinID))
+    if (Context.BuiltinInfo.isNoThrow(BuiltinID) && !FD->getAttr<NoThrowAttr>())
       FD->addAttr(::new (Context) NoThrowAttr(FD->getLocation(), Context));
-    if (Context.BuiltinInfo.isConst(BuiltinID))
+    if (Context.BuiltinInfo.isConst(BuiltinID) && !FD->getAttr<ConstAttr>())
       FD->addAttr(::new (Context) ConstAttr(FD->getLocation(), Context));
   }
 

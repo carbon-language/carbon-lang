@@ -358,3 +358,8 @@ void pr9314() {
   printf(__func__); // no-warning
 }
 
+int printf(const char * restrict, ...) __attribute__((__format__ (__printf__, 1, 2)));
+
+void rdar9612060(void) {
+  printf("%s", 2); // expected-warning{{conversion specifies type 'char *' but the argument has type 'int'}}
+}
