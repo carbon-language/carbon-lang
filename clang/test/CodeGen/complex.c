@@ -93,3 +93,7 @@ void t6() {
 double t7(double _Complex c) {
   return __builtin_fabs(__real__(c));
 }
+
+void t8() {
+  __complex__ int *x = &(__complex__ int){1};
+}
