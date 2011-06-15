@@ -458,8 +458,6 @@ const GRState *CStringChecker::setCStringLength(const GRState *state,
                                                 const MemRegion *MR,
                                                 SVal strLength) {
   assert(!strLength.isUndef() && "Attempt to set an undefined string length");
-  if (strLength.isUnknown())
-    return state;
 
   MR = MR->StripCasts();
 
@@ -474,7 +472,8 @@ const GRState *CStringChecker::setCStringLength(const GRState *state,
   case MemRegion::VarRegionKind:
   case MemRegion::FieldRegionKind:
   case MemRegion::ObjCIvarRegionKind:
-    return state->set<CStringLength>(MR, strLength);
+    // These are the types we can currently track string lengths for.
+    break;
 
   case MemRegion::ElementRegionKind:
     // FIXME: Handle element regions by upper-bounding the parent region's
@@ -488,6 +487,11 @@ const GRState *CStringChecker::setCStringLength(const GRState *state,
     // warning for things like strcpy((char[]){'a', 0}, "b");
     return state;
   }
+
+  if (strLength.isUnknown())
+    return state->remove<CStringLength>(MR);
+
+  return state->set<CStringLength>(MR, strLength);
 }
 
 SVal CStringChecker::getCStringLengthForRegion(CheckerContext &C,
