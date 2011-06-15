@@ -415,6 +415,19 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-version");
   if (Opts.FixWhatYouCan)
     Res.push_back("-fix-what-you-can");
+  switch (Opts.ARCMTAction) {
+  case FrontendOptions::ARCMT_None:
+    break;
+  case FrontendOptions::ARCMT_Check:
+    Res.push_back("-arcmt-check");
+    break;
+  case FrontendOptions::ARCMT_Modify:
+    Res.push_back("-arcmt-modify");
+    break;
+  case FrontendOptions::ARCMT_ModifyInMemory:
+    Res.push_back("-arcmt-modify-in-memory");
+    break;
+  }
 
   bool NeedLang = false;
   for (unsigned i = 0, e = Opts.Inputs.size(); i != e; ++i)
@@ -1226,6 +1239,25 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.LLVMArgs = Args.getAllArgValues(OPT_mllvm);
   Opts.FixWhatYouCan = Args.hasArg(OPT_fix_what_you_can);
   Opts.Modules = Args.getAllArgValues(OPT_import_module);
+
+  Opts.ARCMTAction = FrontendOptions::ARCMT_None;
+  if (const Arg *A = Args.getLastArg(OPT_arcmt_check,
+                                     OPT_arcmt_modify,
+                                     OPT_arcmt_modify_in_memory)) {
+    switch (A->getOption().getID()) {
+    default:
+      llvm_unreachable("missed a case");
+    case OPT_arcmt_check:
+      Opts.ARCMTAction = FrontendOptions::ARCMT_Check;
+      break;
+    case OPT_arcmt_modify:
+      Opts.ARCMTAction = FrontendOptions::ARCMT_Modify;
+      break;
+    case OPT_arcmt_modify_in_memory:
+      Opts.ARCMTAction = FrontendOptions::ARCMT_ModifyInMemory;
+      break;
+    }
+  }
 
   InputKind DashX = IK_None;
   if (const Arg *A = Args.getLastArg(OPT_x)) {

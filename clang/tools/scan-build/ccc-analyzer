@@ -365,11 +365,9 @@ my %LangMap = (
   'cp'  => 'c++',
   'cpp' => 'c++',
   'cc'  => 'c++',
-  'ii'  => 'c++',
   'i'   => 'c-cpp-output',
   'm'   => 'objective-c',
-  'mi'  => 'objective-c-cpp-output',
-  'mm'  => 'objective-c++'
+  'mi'  => 'objective-c-cpp-output'
 );
 
 my %UniqueOptions = (
@@ -382,10 +380,13 @@ my %UniqueOptions = (
 
 my %LangsAccepted = (
   "objective-c" => 1,
-  "c" => 1,
-  "c++" => 1,
-  "objective-c++" => 1
+  "c" => 1
 );
+
+if (defined $ENV{'CCC_ANALYZER_CPLUSPLUS'}) {
+  $LangsAccepted{"c++"} = 1;
+  $LangsAccepted{"objective-c++"} = 1;
+}
 
 ##----------------------------------------------------------------------------##
 #  Main Logic.
@@ -620,9 +621,9 @@ if ($Action eq 'compile' or $Action eq 'link') {
       push @AnalyzeArgs, "-analyzer-constraints=$ConstraintsModel";
     }
     
-    if (defined $Analyses) {
-      push @AnalyzeArgs, split '\s+', $Analyses;
-    }
+#    if (defined $Analyses) {
+#      push @AnalyzeArgs, split '\s+', $Analyses;
+#    }
 
     if (defined $OutputFormat) {
       push @AnalyzeArgs, "-analyzer-output=" . $OutputFormat;

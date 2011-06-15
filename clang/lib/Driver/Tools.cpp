@@ -1389,6 +1389,26 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_working_directory);
 
+  if (!Args.hasArg(options::OPT_fno_objc_arc)) {
+    if (const Arg *A = Args.getLastArg(options::OPT_ccc_arrmt_check,
+                                       options::OPT_ccc_arrmt_modify,
+                                       options::OPT_ccc_arrmt_modify_in_memory)) {
+      switch (A->getOption().getID()) {
+      default:
+        llvm_unreachable("missed a case");
+      case options::OPT_ccc_arrmt_check:
+        CmdArgs.push_back("-arcmt-check");
+        break;
+      case options::OPT_ccc_arrmt_modify:
+        CmdArgs.push_back("-arcmt-modify");
+        break;
+      case options::OPT_ccc_arrmt_modify_in_memory:
+        CmdArgs.push_back("-arcmt-modify-in-memory");
+        break;
+      }
+    }
+  }
+    
   // Add preprocessing options like -I, -D, etc. if we are using the
   // preprocessor.
   //

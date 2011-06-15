@@ -1,0 +1,46 @@
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -x objective-c %s.result
+// RUN: arcmt-test --args -arch x86_64 %s > %t
+// RUN: diff %t %s.result
+
+#include "Common.h"
+
+void NSLog(id, ...);
+
+int main (int argc, const char * argv[]) {
+
+    @autoreleasepool {
+
+        if (argc) {
+            @autoreleasepool {
+                NSLog(@"%s", "YES");
+            }
+        }
+    }
+
+    @autoreleasepool {
+        NSLog(@"%s", "YES");
+    }
+
+    return 0;
+}
+
+void f(void) {
+
+  @autoreleasepool {
+    int x = 4;
+
+    @autoreleasepool {
+      ++x;
+    }
+
+  }
+}
+
+int UIApplicationMain(int argc, char *argv[]);
+
+int main2(int argc, char *argv[]) {
+    @autoreleasepool {
+        int result = UIApplicationMain(argc, argv);
+        return result;
+    }
+}

@@ -1,0 +1,31 @@
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -x objective-c %s.result
+// RUN: arcmt-test --args -arch x86_64 %s > %t
+// RUN: diff %t %s.result
+
+@interface NSAutoreleasePool
+- drain;
++new;
++alloc;
+-init;
+-autorelease;
+- release;
+@end
+
+void NSLog(id, ...);
+
+void test1(int x) {
+  // All this stuff get removed since nothing is happening inside.
+}
+
+void test2(int x) {
+  @autoreleasepool {
+    @autoreleasepool {
+      while (x) {
+        @autoreleasepool {
+          ++x;
+        }
+      }
+
+    }
+  }
+}

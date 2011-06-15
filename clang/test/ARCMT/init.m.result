@@ -1,0 +1,37 @@
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -x objective-c %s.result
+// RUN: arcmt-test --args -arch x86_64 %s > %t
+// RUN: diff %t %s.result
+
+@interface NSObject
+-init;
+@end
+
+@interface A : NSObject
+-init;
+-init2;
+-foo;
++alloc;
+@end
+
+@implementation A
+-(id) init {
+  self = [self init];
+  id a;
+  [a init];
+  a = [[A alloc] init];
+
+  return self;
+}
+
+-(id) init2 {
+  self = [super init];
+  return self;
+}
+
+-(id) foo {
+  [self init];
+  [super init];
+
+  return self;
+}
+@end

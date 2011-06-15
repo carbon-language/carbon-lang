@@ -1,4 +1,4 @@
-##===- lib/Makefile ----------------------------------------*- Makefile -*-===##
+##===- clang/lib/ARCMigrate/Makefile --------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,11 +6,13 @@
 # License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
-CLANG_LEVEL := ..
+#
+# This implements code transformation to ARC mode.
+#
+##===----------------------------------------------------------------------===##
 
-PARALLEL_DIRS = Headers Basic Lex Parse AST Sema CodeGen Analysis \
-                StaticAnalyzer Rewrite ARCMigrate Serialization Frontend \
-                FrontendTool Index Driver
+CLANG_LEVEL := ../..
+LIBRARYNAME := clangARCMigrate
 
 include $(CLANG_LEVEL)/Makefile
 

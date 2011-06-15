@@ -9,6 +9,7 @@ set( LLVM_USED_LIBS
   clangIndex
   clangLex
   clangParse
+  clangARCMigrate
   clangRewrite
   clangSema
   clangSerialization

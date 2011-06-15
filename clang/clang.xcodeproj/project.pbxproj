@@ -373,6 +373,12 @@
 		90FD6D90103C3D80005F5B73 /* TypeXML.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = TypeXML.def; path = clang/Frontend/TypeXML.def; sourceTree = "<group>"; };
 		90FD6D91103C3D80005F5B73 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = clang/Frontend/Utils.h; sourceTree = "<group>"; };
 		90FD6DB5103D977E005F5B73 /* index-test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "index-test.cpp"; path = "tools/index-test/index-test.cpp"; sourceTree = "<group>"; };
+		BB20603B131EDDBF003C3343 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		BB20603C131EDDBF003C3343 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		BB206041131EDDDA003C3343 /* ARRMT.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ARRMT.h; sourceTree = "<group>"; };
+		BB206043131EDE03003C3343 /* arrmt-test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "arrmt-test.cpp"; sourceTree = "<group>"; };
+		BB206044131EDE03003C3343 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		BB206045131EDE03003C3343 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		BB5C372812A5057500259F53 /* DumpXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DumpXML.cpp; path = /Volumes/Data/llvm/tools/clang/lib/AST/DumpXML.cpp; sourceTree = "<absolute>"; };
 		BBA5AB141309C2FA000B38F1 /* AdjustedReturnValueChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdjustedReturnValueChecker.cpp; sourceTree = "<group>"; };
 		BBA5AB151309C2FA000B38F1 /* AnalyzerStatsChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AnalyzerStatsChecker.cpp; sourceTree = "<group>"; };
@@ -777,6 +783,7 @@
 		08FB7795FE84155DC02AAC07 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				BB20603A131EDDBF003C3343 /* ARRMigrate */,
 				BBA5AB121309C2FA000B38F1 /* StaticAnalyzer */,
 				57EB5660121B034300ECA335 /* Serialization */,
 				BFE2F67911DA95590007EDC0 /* Rewrite */,
@@ -1103,6 +1110,38 @@
 				90FD6DB5103D977E005F5B73 /* index-test.cpp */,
 			);
 			name = "index-test";
+			sourceTree = "<group>";
+		};
+		BB20603A131EDDBF003C3343 /* ARRMigrate */ = {
+			isa = PBXGroup;
+			children = (
+				BB20603B131EDDBF003C3343 /* CMakeLists.txt */,
+				BB20603C131EDDBF003C3343 /* Makefile */,
+				BDDF60E91337BF40009F1764 /* Transforms.cpp */,
+			);
+			name = ARRMigrate;
+			path = lib/ARRMigrate;
+			sourceTree = "<group>";
+		};
+		BB206040131EDDDA003C3343 /* ARRMigrate */ = {
+			isa = PBXGroup;
+			children = (
+				BB206041131EDDDA003C3343 /* ARRMT.h */,
+			);
+			name = ARRMigrate;
+			path = clang/ARRMigrate;
+			sourceTree = "<group>";
+		};
+		BB206042131EDE03003C3343 /* arrmt-test */ = {
+			isa = PBXGroup;
+			children = (
+				BD8A47E7133D32660066FE40 /* ARRMT.cpp */,
+				BB206043131EDE03003C3343 /* arrmt-test.cpp */,
+				BB206044131EDE03003C3343 /* CMakeLists.txt */,
+				BB206045131EDE03003C3343 /* Makefile */,
+			);
+			name = "arrmt-test";
+			path = "tools/arrmt-test";
 			sourceTree = "<group>";
 		};
 		BBA5AB121309C2FA000B38F1 /* StaticAnalyzer */ = {
@@ -1575,6 +1614,7 @@
 		DED7D72E0A524295003AD0FB /* include */ = {
 			isa = PBXGroup;
 			children = (
+				BB206040131EDDDA003C3343 /* ARRMigrate */,
 				DED7D7300A524295003AD0FB /* Basic */,
 				DED7D7390A524295003AD0FB /* Lex */,
 				DE1F21F20A7D84E800FBF588 /* Parse */,
@@ -1724,6 +1764,7 @@
 		DEDFE61F0F7B3AE10035BD10 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				BB206042131EDE03003C3343 /* arrmt-test */,
 				90F9EFA8104ABDC400D09A15 /* c-index-test */,
 				9012911E104812DA0083456D /* CIndex */,
 				90FD6DB4103D9763005F5B73 /* index-test */,
