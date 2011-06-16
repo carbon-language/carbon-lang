@@ -1050,7 +1050,10 @@ void InitHeaderSearch::Realize(const LangOptions &Lang) {
       SearchList.push_back(it->second);
   }
 
-  RemoveDuplicates(SearchList, NumAngled, Verbose);
+  // Remove duplicates across both the Angled and System directories.  GCC does
+  // this and failing to remove duplicates across these two groups breaks
+  // #include_next.
+  RemoveDuplicates(SearchList, NumQuoted, Verbose);
 
   bool DontSearchCurDir = false;  // TODO: set to true if -I- is set?
   Headers.SetSearchPaths(SearchList, NumQuoted, NumAngled, DontSearchCurDir);
