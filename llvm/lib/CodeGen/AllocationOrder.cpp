@@ -41,21 +41,19 @@ AllocationOrder::AllocationOrder(unsigned VirtReg,
   if (HintPair.first) {
     const TargetRegisterInfo &TRI = VRM.getTargetRegInfo();
     // The remaining allocation order may depend on the hint.
-    const unsigned *B, *E;
-    tie(B, E) = TRI.getAllocationOrder(RC, HintPair.first, Hint,
-                                       VRM.getMachineFunction());
-
-    // Empty allocation order?
-    if (B == E)
+    ArrayRef<unsigned> Order =
+      TRI.getRawAllocationOrder(RC, HintPair.first, Hint,
+                                VRM.getMachineFunction());
+    if (Order.empty())
       return;
 
     // Copy the allocation order with reserved registers removed.
     OwnedBegin = true;
-    unsigned *P = new unsigned[E - B];
+    unsigned *P = new unsigned[Order.size()];
     Begin = P;
-    for (; B != E; ++B)
-      if (!RCI.isReserved(*B))
-        *P++ = *B;
+    for (unsigned i = 0; i != Order.size(); ++i)
+      if (!RCI.isReserved(Order[i]))
+        *P++ = Order[i];
     End = P;
 
     // Target-dependent hints require resolution.

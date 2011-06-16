@@ -634,14 +634,17 @@ public:
     return 0;
   }
 
-  /// getAllocationOrder - Returns the register allocation order for a specified
-  /// register class in the form of a pair of TargetRegisterClass iterators.
-  virtual std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
-  getAllocationOrder(const TargetRegisterClass *RC,
-                     unsigned HintType, unsigned HintReg,
-                     const MachineFunction &MF) const {
-    return std::make_pair(RC->allocation_order_begin(MF),
-                          RC->allocation_order_end(MF));
+  /// getRawAllocationOrder - Returns the register allocation order for a
+  /// specified register class with a target-dependent hint. The returned list
+  /// may contain reserved registers that cannot be allocated.
+  ///
+  /// Register allocators need only call this function to resolve
+  /// target-dependent hints, but it should work without hinting as well.
+  virtual ArrayRef<unsigned>
+  getRawAllocationOrder(const TargetRegisterClass *RC,
+                        unsigned HintType, unsigned HintReg,
+                        const MachineFunction &MF) const {
+    return RC->getRawAllocationOrder(MF);
   }
 
   /// ResolveRegAllocHint - Resolves the specified register allocation hint

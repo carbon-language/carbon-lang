@@ -1440,13 +1440,13 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
   if (TargetRegisterInfo::isVirtualRegister(physReg) && vrm_->hasPhys(physReg))
     physReg = vrm_->getPhys(physReg);
 
-  TargetRegisterClass::iterator I, E;
-  tie(I, E) = tri_->getAllocationOrder(RC, Hint.first, physReg, *mf_);
-  assert(I != E && "No allocatable register in this register class!");
+  ArrayRef<unsigned> Order = tri_->getRawAllocationOrder(RC, Hint.first,
+                                                         physReg, *mf_);
+  assert(!Order.empty() && "No allocatable register in this register class!");
 
   // Scan for the first available register.
-  for (; I != E; ++I) {
-    unsigned Reg = *I;
+  for (unsigned i = 0; i != Order.size(); ++i) {
+    unsigned Reg = Order[i];
     // Ignore "downgraded" registers.
     if (SkipDGRegs && DowngradedRegs.count(Reg))
       continue;
@@ -1476,8 +1476,8 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
   // inactive count.  Alkis found that this reduced register pressure very
   // slightly on X86 (in rev 1.94 of this file), though this should probably be
   // reevaluated now.
-  for (; I != E; ++I) {
-    unsigned Reg = *I;
+  for (unsigned i = 0; i != Order.size(); ++i) {
+    unsigned Reg = Order[i];
     // Ignore "downgraded" registers.
     if (SkipDGRegs && DowngradedRegs.count(Reg))
       continue;
