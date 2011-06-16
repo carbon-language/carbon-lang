@@ -21,8 +21,8 @@ define i32 @test2(i8 %x) nounwind readnone {
 }
 ; CHECK: test2
 ; CHECK: movzbl
-; CHECK-NEXT: orl {{.*}}63
-; CHECK-NEXT: andl {{.*}}224
+; CHECK: orl $63
+; CHECK: andl $224
 
 declare void @use(i32, i8)
 
@@ -34,3 +34,8 @@ define void @test3(i8 %x) nounwind readnone {
   ret void
 }
 ; CHECK: test3
+; CHECK: movzbl 16(%esp), %eax
+; CHECK-NEXT: movl %eax, 4(%esp)
+; CHECK-NEXT: andl $224, %eax
+; CHECK-NEXT: movl %eax, (%esp)
+; CHECK-NEXT: call{{.*}}use
