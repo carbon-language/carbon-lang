@@ -440,11 +440,10 @@ public:
 };
 
 
-/// PointerType - Class to represent pointers
+/// PointerType - Class to represent pointers.
 ///
 class PointerType : public SequentialType {
   friend class TypeMap<PointerValType, PointerType>;
-  unsigned AddressSpace;
 
   PointerType(const PointerType &);                   // Do not implement
   const PointerType &operator=(const PointerType &);  // Do not implement
@@ -465,7 +464,7 @@ public:
   static bool isValidElementType(const Type *ElemTy);
 
   /// @brief Return the address space of the Pointer type.
-  inline unsigned getAddressSpace() const { return AddressSpace; }
+  inline unsigned getAddressSpace() const { return getSubclassData(); }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
@@ -479,7 +478,7 @@ public:
 };
 
 
-/// OpaqueType - Class to represent abstract types
+/// OpaqueType - Class to represent opaque types.
 ///
 class OpaqueType : public DerivedType {
   friend class LLVMContextImpl;

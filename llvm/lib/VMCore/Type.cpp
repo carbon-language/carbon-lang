@@ -533,7 +533,7 @@ VectorType::VectorType(const Type *ElType, unsigned NumEl)
 
 PointerType::PointerType(const Type *E, unsigned AddrSpace)
   : SequentialType(PointerTyID, E) {
-  AddressSpace = AddrSpace;
+  setSubclassData(AddrSpace);
   // Calculate whether or not this type is abstract
   setAbstract(E->isAbstract());
 }
