@@ -19,7 +19,6 @@
 #define LLVM_DERIVED_TYPES_H
 
 #include "llvm/Type.h"
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -34,6 +33,7 @@ class VectorValType;
 class IntegerValType;
 class APInt;
 class LLVMContext;
+template<typename T> class ArrayRef;
 
 class DerivedType : public Type {
   friend class Type;
@@ -158,10 +158,8 @@ public:
 
   /// FunctionType::get - Create a FunctionType taking no parameters.
   ///
-  static FunctionType *get(const Type *Result, bool isVarArg) {
-    return get(Result, ArrayRef<const Type *>(), isVarArg);
-  }
-
+  static FunctionType *get(const Type *Result, bool isVarArg);
+  
   /// isValidReturnType - Return true if the specified type is valid as a return
   /// type.
   static bool isValidReturnType(const Type *RetTy);
@@ -239,10 +237,8 @@ public:
 
   /// StructType::get - Create an empty structure type.
   ///
-  static StructType *get(LLVMContext &Context, bool isPacked=false) {
-    return get(Context, llvm::ArrayRef<const Type*>(), isPacked);
-  }
-
+  static StructType *get(LLVMContext &Context, bool isPacked=false);
+  
   /// StructType::get - This static method is a convenience method for
   /// creating structure types by specifying the elements as arguments.
   /// Note that this method always returns a non-packed struct.  To get

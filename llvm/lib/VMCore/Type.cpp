@@ -832,6 +832,9 @@ FunctionValType FunctionValType::get(const FunctionType *FT) {
   return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg());
 }
 
+FunctionType *FunctionType::get(const Type *Result, bool isVarArg) {
+  return get(Result, ArrayRef<const Type *>(), isVarArg);
+}
 
 // FunctionType::get - The factory function for the FunctionType class...
 FunctionType *FunctionType::get(const Type *ReturnType,
@@ -908,8 +911,13 @@ bool VectorType::isValidElementType(const Type *ElemTy) {
 }
 
 //===----------------------------------------------------------------------===//
-// Struct Type Factory...
+// Struct Type Factory.
 //
+
+StructType *StructType::get(LLVMContext &Context, bool isPacked) {
+  return get(Context, llvm::ArrayRef<const Type*>(), isPacked);
+}
+
 
 StructType *StructType::get(LLVMContext &Context,
                             ArrayRef<const Type*> ETypes, 
