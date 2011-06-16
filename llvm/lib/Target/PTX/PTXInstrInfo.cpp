@@ -33,12 +33,12 @@ static const struct map_entry {
   const TargetRegisterClass *cls;
   const int opcode;
 } map[] = {
-  { &PTX::RRegu16RegClass, PTX::MOVU16rr },
-  { &PTX::RRegu32RegClass, PTX::MOVU32rr },
-  { &PTX::RRegu64RegClass, PTX::MOVU64rr },
-  { &PTX::RRegf32RegClass, PTX::MOVF32rr },
-  { &PTX::RRegf64RegClass, PTX::MOVF64rr },
-  { &PTX::PredsRegClass,   PTX::MOVPREDrr }
+  { &PTX::RegI16RegClass, PTX::MOVU16rr },
+  { &PTX::RegI32RegClass, PTX::MOVU32rr },
+  { &PTX::RegI64RegClass, PTX::MOVU64rr },
+  { &PTX::RegF32RegClass, PTX::MOVF32rr },
+  { &PTX::RegF64RegClass, PTX::MOVF64rr },
+  { &PTX::RegPredRegClass,   PTX::MOVPREDrr }
 };
 
 void PTXInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
@@ -155,7 +155,7 @@ DefinesPredicate(MachineInstr *MI,
 
   const MachineOperand &MO = MI->getOperand(0);
 
-  if (!MO.isReg() || RI.getRegClass(MO.getReg()) != &PTX::PredsRegClass)
+  if (!MO.isReg() || RI.getRegClass(MO.getReg()) != &PTX::RegPredRegClass)
     return false;
 
   Pred.push_back(MO);

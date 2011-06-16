@@ -79,12 +79,12 @@ static const char PARAM_PREFIX[] = "__param_";
 static const char *getRegisterTypeName(unsigned RegNo) {
 #define TEST_REGCLS(cls, clsstr)                \
   if (PTX::cls ## RegisterClass->contains(RegNo)) return # clsstr;
-  TEST_REGCLS(Preds, pred);
-  TEST_REGCLS(RRegu16, u16);
-  TEST_REGCLS(RRegu32, u32);
-  TEST_REGCLS(RRegu64, u64);
-  TEST_REGCLS(RRegf32, f32);
-  TEST_REGCLS(RRegf64, f64);
+  TEST_REGCLS(RegPred, pred);
+  TEST_REGCLS(RegI16, u16);
+  TEST_REGCLS(RegI32, u32);
+  TEST_REGCLS(RegI64, u64);
+  TEST_REGCLS(RegF32, f32);
+  TEST_REGCLS(RegF64, f64);
 #undef TEST_REGCLS
 
   llvm_unreachable("Not in any register class!");

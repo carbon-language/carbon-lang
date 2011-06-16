@@ -14,14 +14,14 @@
 // PTX Special Purpose Register Accessor Intrinsics
 
 class PTX_READ_SPECIAL_REGISTER_R64<string regname, Intrinsic intop>
-  : InstPTX<(outs RRegu64:$d), (ins),
+  : InstPTX<(outs RegI64:$d), (ins),
             !strconcat("mov.u64\t$d, %", regname),
-            [(set RRegu64:$d, (intop))]>;
+            [(set RegI64:$d, (intop))]>;
 
 class PTX_READ_SPECIAL_REGISTER_R32<string regname, Intrinsic intop>
-  : InstPTX<(outs RRegu32:$d), (ins),
+  : InstPTX<(outs RegI32:$d), (ins),
             !strconcat("mov.u32\t$d, %", regname),
-            [(set RRegu32:$d, (intop))]>;
+            [(set RegI32:$d, (intop))]>;
 
 // TODO Add read vector-version of special registers
 

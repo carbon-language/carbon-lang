@@ -9,7 +9,7 @@
 
 // PTX Predicate operand, default to (0, 0) = (zero-reg, always).
 // Leave PrintMethod empty; predicate printing is defined elsewhere.
-def pred : PredicateOperand<OtherVT, (ops Preds, i32imm),
+def pred : PredicateOperand<OtherVT, (ops RegPred, i32imm),
                                      (ops (i1 zero_reg), (i32 0))>;
 
 let Namespace = "PTX" in {

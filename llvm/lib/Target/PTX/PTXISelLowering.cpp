@@ -27,12 +27,12 @@ using namespace llvm;
 PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   // Set up the register classes.
-  addRegisterClass(MVT::i1,  PTX::PredsRegisterClass);
-  addRegisterClass(MVT::i16, PTX::RRegu16RegisterClass);
-  addRegisterClass(MVT::i32, PTX::RRegu32RegisterClass);
-  addRegisterClass(MVT::i64, PTX::RRegu64RegisterClass);
-  addRegisterClass(MVT::f32, PTX::RRegf32RegisterClass);
-  addRegisterClass(MVT::f64, PTX::RRegf64RegisterClass);
+  addRegisterClass(MVT::i1,  PTX::RegPredRegisterClass);
+  addRegisterClass(MVT::i16, PTX::RegI16RegisterClass);
+  addRegisterClass(MVT::i32, PTX::RegI32RegisterClass);
+  addRegisterClass(MVT::i64, PTX::RegI64RegisterClass);
+  addRegisterClass(MVT::f32, PTX::RegF32RegisterClass);
+  addRegisterClass(MVT::f64, PTX::RegF64RegisterClass);
 
   setBooleanContents(ZeroOrOneBooleanContent);
 
@@ -63,7 +63,7 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
 
-  // need to lower SETCC of Preds into bitwise logic
+  // need to lower SETCC of RegPred into bitwise logic
   setOperationAction(ISD::SETCC, MVT::i1, Custom);
 
   setMinFunctionAlignment(2);
@@ -161,12 +161,12 @@ struct argmap_entry {
   void reset() { loc = RC->begin(); }
   bool operator==(MVT::SimpleValueType _VT) const { return VT == _VT; }
 } argmap[] = {
-  argmap_entry(MVT::i1,  PTX::PredsRegisterClass),
-  argmap_entry(MVT::i16, PTX::RRegu16RegisterClass),
-  argmap_entry(MVT::i32, PTX::RRegu32RegisterClass),
-  argmap_entry(MVT::i64, PTX::RRegu64RegisterClass),
-  argmap_entry(MVT::f32, PTX::RRegf32RegisterClass),
-  argmap_entry(MVT::f64, PTX::RRegf64RegisterClass)
+  argmap_entry(MVT::i1,  PTX::RegPredRegisterClass),
+  argmap_entry(MVT::i16, PTX::RegI16RegisterClass),
+  argmap_entry(MVT::i32, PTX::RegI32RegisterClass),
+  argmap_entry(MVT::i64, PTX::RegI64RegisterClass),
+  argmap_entry(MVT::f32, PTX::RegF32RegisterClass),
+  argmap_entry(MVT::f64, PTX::RegF64RegisterClass)
 };
 }                               // end anonymous namespace
 
@@ -212,7 +212,7 @@ SDValue PTXTargetLowering::
     if (entry == argmap + array_lengthof(argmap))
       llvm_unreachable("Type of argument is not supported");
 
-    if (MFI->isKernel() && entry->RC == PTX::PredsRegisterClass)
+    if (MFI->isKernel() && entry->RC == PTX::RegPredRegisterClass)
       llvm_unreachable("cannot pass preds to kernel");
 
     MachineRegisterInfo &RegInfo = DAG.getMachineFunction().getRegInfo();
@@ -277,11 +277,11 @@ SDValue PTXTargetLowering::
     reg = PTX::RD0;
   }
   else if (Outs[0].VT == MVT::f32) {
-    reg = PTX::F0;
+    reg = PTX::R0;
   }
   else {
     assert(Outs[0].VT == MVT::f64 && "Can return only basic types");
-    reg = PTX::FD0;
+    reg = PTX::RD0;
   }
 
   MachineFunction &MF = DAG.getMachineFunction();

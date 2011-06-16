@@ -143,11 +143,11 @@ def ADDRii64 : ComplexPattern<i64, 2, "SelectADDRii", [], []>;
 // Address operands
 def MEMri32 : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops RRegu32, i32imm);
+  let MIOperandInfo = (ops RegI32, i32imm);
 }
 def MEMri64 : Operand<i64> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops RRegu64, i64imm);
+  let MIOperandInfo = (ops RegI64, i64imm);
 }
 def MEMii32 : Operand<i32> {
   let PrintMethod = "printMemOperand";
@@ -190,171 +190,171 @@ def PTXcopyaddress
 
 //===- Floating-Point Instructions - 2 Operand Form -----------------------===//
 multiclass PTX_FLOAT_2OP<string opcstr, SDNode opnode> {
-  def rr32 : InstPTX<(outs RRegf32:$d),
-                     (ins RRegf32:$a),
+  def rr32 : InstPTX<(outs RegF32:$d),
+                     (ins RegF32:$a),
                      !strconcat(opcstr, ".f32\t$d, $a"),
-                     [(set RRegf32:$d, (opnode RRegf32:$a))]>;
-  def ri32 : InstPTX<(outs RRegf32:$d),
+                     [(set RegF32:$d, (opnode RegF32:$a))]>;
+  def ri32 : InstPTX<(outs RegF32:$d),
                      (ins f32imm:$a),
                      !strconcat(opcstr, ".f32\t$d, $a"),
-                     [(set RRegf32:$d, (opnode fpimm:$a))]>;
-  def rr64 : InstPTX<(outs RRegf64:$d),
-                     (ins RRegf64:$a),
+                     [(set RegF32:$d, (opnode fpimm:$a))]>;
+  def rr64 : InstPTX<(outs RegF64:$d),
+                     (ins RegF64:$a),
                      !strconcat(opcstr, ".f64\t$d, $a"),
-                     [(set RRegf64:$d, (opnode RRegf64:$a))]>;
-  def ri64 : InstPTX<(outs RRegf64:$d),
+                     [(set RegF64:$d, (opnode RegF64:$a))]>;
+  def ri64 : InstPTX<(outs RegF64:$d),
                      (ins f64imm:$a),
                      !strconcat(opcstr, ".f64\t$d, $a"),
-                     [(set RRegf64:$d, (opnode fpimm:$a))]>;
+                     [(set RegF64:$d, (opnode fpimm:$a))]>;
 }
 
 //===- Floating-Point Instructions - 3 Operand Form -----------------------===//
 multiclass PTX_FLOAT_3OP<string opcstr, SDNode opnode> {
-  def rr32 : InstPTX<(outs RRegf32:$d),
-                     (ins RRegf32:$a, RRegf32:$b),
+  def rr32 : InstPTX<(outs RegF32:$d),
+                     (ins RegF32:$a, RegF32:$b),
                      !strconcat(opcstr, ".f32\t$d, $a, $b"),
-                     [(set RRegf32:$d, (opnode RRegf32:$a, RRegf32:$b))]>;
-  def ri32 : InstPTX<(outs RRegf32:$d),
-                     (ins RRegf32:$a, f32imm:$b),
+                     [(set RegF32:$d, (opnode RegF32:$a, RegF32:$b))]>;
+  def ri32 : InstPTX<(outs RegF32:$d),
+                     (ins RegF32:$a, f32imm:$b),
                      !strconcat(opcstr, ".f32\t$d, $a, $b"),
-                     [(set RRegf32:$d, (opnode RRegf32:$a, fpimm:$b))]>;
-  def rr64 : InstPTX<(outs RRegf64:$d),
-                     (ins RRegf64:$a, RRegf64:$b),
+                     [(set RegF32:$d, (opnode RegF32:$a, fpimm:$b))]>;
+  def rr64 : InstPTX<(outs RegF64:$d),
+                     (ins RegF64:$a, RegF64:$b),
                      !strconcat(opcstr, ".f64\t$d, $a, $b"),
-                     [(set RRegf64:$d, (opnode RRegf64:$a, RRegf64:$b))]>;
-  def ri64 : InstPTX<(outs RRegf64:$d),
-                     (ins RRegf64:$a, f64imm:$b),
+                     [(set RegF64:$d, (opnode RegF64:$a, RegF64:$b))]>;
+  def ri64 : InstPTX<(outs RegF64:$d),
+                     (ins RegF64:$a, f64imm:$b),
                      !strconcat(opcstr, ".f64\t$d, $a, $b"),
-                     [(set RRegf64:$d, (opnode RRegf64:$a, fpimm:$b))]>;
+                     [(set RegF64:$d, (opnode RegF64:$a, fpimm:$b))]>;
 }
 
 //===- Floating-Point Instructions - 4 Operand Form -----------------------===//
 multiclass PTX_FLOAT_4OP<string opcstr, SDNode opnode1, SDNode opnode2> {
-  def rrr32 : InstPTX<(outs RRegf32:$d),
-                      (ins RRegf32:$a, RRegf32:$b, RRegf32:$c),
+  def rrr32 : InstPTX<(outs RegF32:$d),
+                      (ins RegF32:$a, RegF32:$b, RegF32:$c),
                       !strconcat(opcstr, ".f32\t$d, $a, $b, $c"),
-                      [(set RRegf32:$d, (opnode2 (opnode1 RRegf32:$a,
-                                                          RRegf32:$b),
-                                                 RRegf32:$c))]>;
-  def rri32 : InstPTX<(outs RRegf32:$d),
-                      (ins RRegf32:$a, RRegf32:$b, f32imm:$c),
+                      [(set RegF32:$d, (opnode2 (opnode1 RegF32:$a,
+                                                          RegF32:$b),
+                                                 RegF32:$c))]>;
+  def rri32 : InstPTX<(outs RegF32:$d),
+                      (ins RegF32:$a, RegF32:$b, f32imm:$c),
                       !strconcat(opcstr, ".f32\t$d, $a, $b, $c"),
-                      [(set RRegf32:$d, (opnode2 (opnode1 RRegf32:$a,
-                                                          RRegf32:$b),
+                      [(set RegF32:$d, (opnode2 (opnode1 RegF32:$a,
+                                                          RegF32:$b),
                                                  fpimm:$c))]>;
-  def rrr64 : InstPTX<(outs RRegf64:$d),
-                      (ins RRegf64:$a, RRegf64:$b, RRegf64:$c),
+  def rrr64 : InstPTX<(outs RegF64:$d),
+                      (ins RegF64:$a, RegF64:$b, RegF64:$c),
                       !strconcat(opcstr, ".f64\t$d, $a, $b, $c"),
-                      [(set RRegf64:$d, (opnode2 (opnode1 RRegf64:$a,
-                                                          RRegf64:$b),
-                                                 RRegf64:$c))]>;
-  def rri64 : InstPTX<(outs RRegf64:$d),
-                      (ins RRegf64:$a, RRegf64:$b, f64imm:$c),
+                      [(set RegF64:$d, (opnode2 (opnode1 RegF64:$a,
+                                                          RegF64:$b),
+                                                 RegF64:$c))]>;
+  def rri64 : InstPTX<(outs RegF64:$d),
+                      (ins RegF64:$a, RegF64:$b, f64imm:$c),
                       !strconcat(opcstr, ".f64\t$d, $a, $b, $c"),
-                      [(set RRegf64:$d, (opnode2 (opnode1 RRegf64:$a,
-                                                          RRegf64:$b),
+                      [(set RegF64:$d, (opnode2 (opnode1 RegF64:$a,
+                                                          RegF64:$b),
                                                  fpimm:$c))]>;
 }
 
 multiclass INT3<string opcstr, SDNode opnode> {
-  def rr16 : InstPTX<(outs RRegu16:$d),
-                     (ins RRegu16:$a, RRegu16:$b),
+  def rr16 : InstPTX<(outs RegI16:$d),
+                     (ins RegI16:$a, RegI16:$b),
                      !strconcat(opcstr, ".u16\t$d, $a, $b"),
-                     [(set RRegu16:$d, (opnode RRegu16:$a, RRegu16:$b))]>;
-  def ri16 : InstPTX<(outs RRegu16:$d),
-                     (ins RRegu16:$a, i16imm:$b),
+                     [(set RegI16:$d, (opnode RegI16:$a, RegI16:$b))]>;
+  def ri16 : InstPTX<(outs RegI16:$d),
+                     (ins RegI16:$a, i16imm:$b),
                      !strconcat(opcstr, ".u16\t$d, $a, $b"),
-                     [(set RRegu16:$d, (opnode RRegu16:$a, imm:$b))]>;
-  def rr32 : InstPTX<(outs RRegu32:$d),
-                     (ins RRegu32:$a, RRegu32:$b),
+                     [(set RegI16:$d, (opnode RegI16:$a, imm:$b))]>;
+  def rr32 : InstPTX<(outs RegI32:$d),
+                     (ins RegI32:$a, RegI32:$b),
                      !strconcat(opcstr, ".u32\t$d, $a, $b"),
-                     [(set RRegu32:$d, (opnode RRegu32:$a, RRegu32:$b))]>;
-  def ri32 : InstPTX<(outs RRegu32:$d),
-                     (ins RRegu32:$a, i32imm:$b),
+                     [(set RegI32:$d, (opnode RegI32:$a, RegI32:$b))]>;
+  def ri32 : InstPTX<(outs RegI32:$d),
+                     (ins RegI32:$a, i32imm:$b),
                      !strconcat(opcstr, ".u32\t$d, $a, $b"),
-                     [(set RRegu32:$d, (opnode RRegu32:$a, imm:$b))]>;
-  def rr64 : InstPTX<(outs RRegu64:$d),
-                     (ins RRegu64:$a, RRegu64:$b),
+                     [(set RegI32:$d, (opnode RegI32:$a, imm:$b))]>;
+  def rr64 : InstPTX<(outs RegI64:$d),
+                     (ins RegI64:$a, RegI64:$b),
                      !strconcat(opcstr, ".u64\t$d, $a, $b"),
-                     [(set RRegu64:$d, (opnode RRegu64:$a, RRegu64:$b))]>;
-  def ri64 : InstPTX<(outs RRegu64:$d),
-                     (ins RRegu64:$a, i64imm:$b),
+                     [(set RegI64:$d, (opnode RegI64:$a, RegI64:$b))]>;
+  def ri64 : InstPTX<(outs RegI64:$d),
+                     (ins RegI64:$a, i64imm:$b),
                      !strconcat(opcstr, ".u64\t$d, $a, $b"),
-                     [(set RRegu64:$d, (opnode RRegu64:$a, imm:$b))]>;
+                     [(set RegI64:$d, (opnode RegI64:$a, imm:$b))]>;
 }
 
 multiclass PTX_LOGIC<string opcstr, SDNode opnode> {
-  def ripreds : InstPTX<(outs Preds:$d),
-                     (ins Preds:$a, i1imm:$b),
+  def ripreds : InstPTX<(outs RegPred:$d),
+                     (ins RegPred:$a, i1imm:$b),
                      !strconcat(opcstr, ".pred\t$d, $a, $b"),
-                     [(set Preds:$d, (opnode Preds:$a, imm:$b))]>;
-  def rrpreds : InstPTX<(outs Preds:$d),
-                     (ins Preds:$a, Preds:$b),
+                     [(set RegPred:$d, (opnode RegPred:$a, imm:$b))]>;
+  def rrpreds : InstPTX<(outs RegPred:$d),
+                     (ins RegPred:$a, RegPred:$b),
                      !strconcat(opcstr, ".pred\t$d, $a, $b"),
-                     [(set Preds:$d, (opnode Preds:$a, Preds:$b))]>;
-  def rr16 : InstPTX<(outs RRegu16:$d),
-                     (ins RRegu16:$a, RRegu16:$b),
+                     [(set RegPred:$d, (opnode RegPred:$a, RegPred:$b))]>;
+  def rr16 : InstPTX<(outs RegI16:$d),
+                     (ins RegI16:$a, RegI16:$b),
                      !strconcat(opcstr, ".b16\t$d, $a, $b"),
-                     [(set RRegu16:$d, (opnode RRegu16:$a, RRegu16:$b))]>;
-  def ri16 : InstPTX<(outs RRegu16:$d),
-                     (ins RRegu16:$a, i16imm:$b),
+                     [(set RegI16:$d, (opnode RegI16:$a, RegI16:$b))]>;
+  def ri16 : InstPTX<(outs RegI16:$d),
+                     (ins RegI16:$a, i16imm:$b),
                      !strconcat(opcstr, ".b16\t$d, $a, $b"),
-                     [(set RRegu16:$d, (opnode RRegu16:$a, imm:$b))]>;
-  def rr32 : InstPTX<(outs RRegu32:$d),
-                     (ins RRegu32:$a, RRegu32:$b),
+                     [(set RegI16:$d, (opnode RegI16:$a, imm:$b))]>;
+  def rr32 : InstPTX<(outs RegI32:$d),
+                     (ins RegI32:$a, RegI32:$b),
                      !strconcat(opcstr, ".b32\t$d, $a, $b"),
-                     [(set RRegu32:$d, (opnode RRegu32:$a, RRegu32:$b))]>;
-  def ri32 : InstPTX<(outs RRegu32:$d),
-                     (ins RRegu32:$a, i32imm:$b),
+                     [(set RegI32:$d, (opnode RegI32:$a, RegI32:$b))]>;
+  def ri32 : InstPTX<(outs RegI32:$d),
+                     (ins RegI32:$a, i32imm:$b),
                      !strconcat(opcstr, ".b32\t$d, $a, $b"),
-                     [(set RRegu32:$d, (opnode RRegu32:$a, imm:$b))]>;
-  def rr64 : InstPTX<(outs RRegu64:$d),
-                     (ins RRegu64:$a, RRegu64:$b),
+                     [(set RegI32:$d, (opnode RegI32:$a, imm:$b))]>;
+  def rr64 : InstPTX<(outs RegI64:$d),
+                     (ins RegI64:$a, RegI64:$b),
                      !strconcat(opcstr, ".b64\t$d, $a, $b"),
-                     [(set RRegu64:$d, (opnode RRegu64:$a, RRegu64:$b))]>;
-  def ri64 : InstPTX<(outs RRegu64:$d),
-                     (ins RRegu64:$a, i64imm:$b),
+                     [(set RegI64:$d, (opnode RegI64:$a, RegI64:$b))]>;
+  def ri64 : InstPTX<(outs RegI64:$d),
+                     (ins RegI64:$a, i64imm:$b),
                      !strconcat(opcstr, ".b64\t$d, $a, $b"),
-                     [(set RRegu64:$d, (opnode RRegu64:$a, imm:$b))]>;
+                     [(set RegI64:$d, (opnode RegI64:$a, imm:$b))]>;
 }
 
 multiclass INT3ntnc<string opcstr, SDNode opnode> {
-  def rr16 : InstPTX<(outs RRegu16:$d),
-                     (ins RRegu16:$a, RRegu16:$b),
+  def rr16 : InstPTX<(outs RegI16:$d),
+                     (ins RegI16:$a, RegI16:$b),
                      !strconcat(opcstr, "16\t$d, $a, $b"),
-                     [(set RRegu16:$d, (opnode RRegu16:$a, RRegu16:$b))]>;
-  def rr32 : InstPTX<(outs RRegu32:$d),
-                     (ins RRegu32:$a, RRegu32:$b),
+                     [(set RegI16:$d, (opnode RegI16:$a, RegI16:$b))]>;
+  def rr32 : InstPTX<(outs RegI32:$d),
+                     (ins RegI32:$a, RegI32:$b),
                      !strconcat(opcstr, "32\t$d, $a, $b"),
-                     [(set RRegu32:$d, (opnode RRegu32:$a, RRegu32:$b))]>;
-  def rr64 : InstPTX<(outs RRegu64:$d),
-                     (ins RRegu64:$a, RRegu64:$b),
+                     [(set RegI32:$d, (opnode RegI32:$a, RegI32:$b))]>;
+  def rr64 : InstPTX<(outs RegI64:$d),
+                     (ins RegI64:$a, RegI64:$b),
                      !strconcat(opcstr, "64\t$d, $a, $b"),
-                     [(set RRegu64:$d, (opnode RRegu64:$a, RRegu64:$b))]>;
-  def ri16 : InstPTX<(outs RRegu16:$d),
-                     (ins RRegu16:$a, i16imm:$b),
+                     [(set RegI64:$d, (opnode RegI64:$a, RegI64:$b))]>;
+  def ri16 : InstPTX<(outs RegI16:$d),
+                     (ins RegI16:$a, i16imm:$b),
                      !strconcat(opcstr, "16\t$d, $a, $b"),
-                     [(set RRegu16:$d, (opnode RRegu16:$a, imm:$b))]>;
-  def ri32 : InstPTX<(outs RRegu32:$d),
-                     (ins RRegu32:$a, i32imm:$b),
+                     [(set RegI16:$d, (opnode RegI16:$a, imm:$b))]>;
+  def ri32 : InstPTX<(outs RegI32:$d),
+                     (ins RegI32:$a, i32imm:$b),
                      !strconcat(opcstr, "32\t$d, $a, $b"),
-                     [(set RRegu32:$d, (opnode RRegu32:$a, imm:$b))]>;
-  def ri64 : InstPTX<(outs RRegu64:$d),
-                     (ins RRegu64:$a, i64imm:$b),
+                     [(set RegI32:$d, (opnode RegI32:$a, imm:$b))]>;
+  def ri64 : InstPTX<(outs RegI64:$d),
+                     (ins RegI64:$a, i64imm:$b),
                      !strconcat(opcstr, "64\t$d, $a, $b"),
-                     [(set RRegu64:$d, (opnode RRegu64:$a, imm:$b))]>;
-  def ir16 : InstPTX<(outs RRegu16:$d),
-                     (ins i16imm:$a, RRegu16:$b),
+                     [(set RegI64:$d, (opnode RegI64:$a, imm:$b))]>;
+  def ir16 : InstPTX<(outs RegI16:$d),
+                     (ins i16imm:$a, RegI16:$b),
                      !strconcat(opcstr, "16\t$d, $a, $b"),
-                     [(set RRegu16:$d, (opnode imm:$a, RRegu16:$b))]>;
-  def ir32 : InstPTX<(outs RRegu32:$d),
-                     (ins i32imm:$a, RRegu32:$b),
+                     [(set RegI16:$d, (opnode imm:$a, RegI16:$b))]>;
+  def ir32 : InstPTX<(outs RegI32:$d),
+                     (ins i32imm:$a, RegI32:$b),
                      !strconcat(opcstr, "32\t$d, $a, $b"),
-                     [(set RRegu32:$d, (opnode imm:$a, RRegu32:$b))]>;
-  def ir64 : InstPTX<(outs RRegu64:$d),
-                     (ins i64imm:$a, RRegu64:$b),
+                     [(set RegI32:$d, (opnode imm:$a, RegI32:$b))]>;
+  def ir64 : InstPTX<(outs RegI64:$d),
+                     (ins i64imm:$a, RegI64:$b),
                      !strconcat(opcstr, "64\t$d, $a, $b"),
-                     [(set RRegu64:$d, (opnode imm:$a, RRegu64:$b))]>;
+                     [(set RegI64:$d, (opnode imm:$a, RegI64:$b))]>;
 }
 
 multiclass PTX_SETP_I<RegisterClass RC, string regclsname, Operand immcls,
@@ -362,63 +362,63 @@ multiclass PTX_SETP_I<RegisterClass RC, string regclsname, Operand immcls,
   // TODO support 5-operand format: p|q, a, b, c
 
   def rr
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b),
               !strconcat("setp.", cmpstr, ".", regclsname, "\t$p, $a, $b"),
-              [(set Preds:$p, (setcc RC:$a, RC:$b, cmp))]>;
+              [(set RegPred:$p, (setcc RC:$a, RC:$b, cmp))]>;
   def ri
-    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b),
               !strconcat("setp.", cmpstr, ".", regclsname, "\t$p, $a, $b"),
-              [(set Preds:$p, (setcc RC:$a, imm:$b, cmp))]>;
+              [(set RegPred:$p, (setcc RC:$a, imm:$b, cmp))]>;
 
   def rr_and_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (and (setcc RC:$a, RC:$b, cmp), Preds:$c))]>;
+              [(set RegPred:$p, (and (setcc RC:$a, RC:$b, cmp), RegPred:$c))]>;
   def ri_and_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (and (setcc RC:$a, imm:$b, cmp), Preds:$c))]>;
+              [(set RegPred:$p, (and (setcc RC:$a, imm:$b, cmp), RegPred:$c))]>;
   def rr_or_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (or (setcc RC:$a, RC:$b, cmp), Preds:$c))]>;
+              [(set RegPred:$p, (or (setcc RC:$a, RC:$b, cmp), RegPred:$c))]>;
   def ri_or_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (or (setcc RC:$a, imm:$b, cmp), Preds:$c))]>;
+              [(set RegPred:$p, (or (setcc RC:$a, imm:$b, cmp), RegPred:$c))]>;
   def rr_xor_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (xor (setcc RC:$a, RC:$b, cmp), Preds:$c))]>;
+              [(set RegPred:$p, (xor (setcc RC:$a, RC:$b, cmp), RegPred:$c))]>;
   def ri_xor_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (xor (setcc RC:$a, imm:$b, cmp), Preds:$c))]>;
+              [(set RegPred:$p, (xor (setcc RC:$a, imm:$b, cmp), RegPred:$c))]>;
 
   def rr_and_not_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (and (setcc RC:$a, RC:$b, cmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (and (setcc RC:$a, RC:$b, cmp), (not RegPred:$c)))]>;
   def ri_and_not_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (and (setcc RC:$a, imm:$b, cmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (and (setcc RC:$a, imm:$b, cmp), (not RegPred:$c)))]>;
   def rr_or_not_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (or (setcc RC:$a, RC:$b, cmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (or (setcc RC:$a, RC:$b, cmp), (not RegPred:$c)))]>;
   def ri_or_not_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (or (setcc RC:$a, imm:$b, cmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (or (setcc RC:$a, imm:$b, cmp), (not RegPred:$c)))]>;
   def rr_xor_not_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (xor (setcc RC:$a, RC:$b, cmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (xor (setcc RC:$a, RC:$b, cmp), (not RegPred:$c)))]>;
   def ri_xor_not_r
-    : InstPTX<(outs Preds:$p), (ins RC:$a, immcls:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, immcls:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (xor (setcc RC:$a, imm:$b, cmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (xor (setcc RC:$a, imm:$b, cmp), (not RegPred:$c)))]>;
 }
 
 multiclass PTX_SETP_FP<RegisterClass RC, string regclsname,
@@ -426,74 +426,74 @@ multiclass PTX_SETP_FP<RegisterClass RC, string regclsname,
   // TODO support 5-operand format: p|q, a, b, c
 
   def rr_u
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b),
               !strconcat("setp.", cmpstr, "u.", regclsname, "\t$p, $a, $b"),
-              [(set Preds:$p, (setcc RC:$a, RC:$b, ucmp))]>;
+              [(set RegPred:$p, (setcc RC:$a, RC:$b, ucmp))]>;
   def rr_o
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b),
               !strconcat("setp.", cmpstr, ".", regclsname, "\t$p, $a, $b"),
-              [(set Preds:$p, (setcc RC:$a, RC:$b, ocmp))]>;
+              [(set RegPred:$p, (setcc RC:$a, RC:$b, ocmp))]>;
 
   def rr_and_r_u
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, "u.and.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (and (setcc RC:$a, RC:$b, ucmp), Preds:$c))]>;
+              [(set RegPred:$p, (and (setcc RC:$a, RC:$b, ucmp), RegPred:$c))]>;
   def rr_and_r_o
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (and (setcc RC:$a, RC:$b, ocmp), Preds:$c))]>;
+              [(set RegPred:$p, (and (setcc RC:$a, RC:$b, ocmp), RegPred:$c))]>;
 
   def rr_or_r_u
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, "u.or.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (or (setcc RC:$a, RC:$b, ucmp), Preds:$c))]>;
+              [(set RegPred:$p, (or (setcc RC:$a, RC:$b, ucmp), RegPred:$c))]>;
   def rr_or_r_o
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (or (setcc RC:$a, RC:$b, ocmp), Preds:$c))]>;
+              [(set RegPred:$p, (or (setcc RC:$a, RC:$b, ocmp), RegPred:$c))]>;
 
   def rr_xor_r_u
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, "u.xor.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (xor (setcc RC:$a, RC:$b, ucmp), Preds:$c))]>;
+              [(set RegPred:$p, (xor (setcc RC:$a, RC:$b, ucmp), RegPred:$c))]>;
   def rr_xor_r_o
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, $c"),
-              [(set Preds:$p, (xor (setcc RC:$a, RC:$b, ocmp), Preds:$c))]>;
+              [(set RegPred:$p, (xor (setcc RC:$a, RC:$b, ocmp), RegPred:$c))]>;
 
   def rr_and_not_r_u
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, "u.and.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (and (setcc RC:$a, RC:$b, ucmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (and (setcc RC:$a, RC:$b, ucmp), (not RegPred:$c)))]>;
   def rr_and_not_r_o
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".and.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (and (setcc RC:$a, RC:$b, ocmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (and (setcc RC:$a, RC:$b, ocmp), (not RegPred:$c)))]>;
 
   def rr_or_not_r_u
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, "u.or.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (or (setcc RC:$a, RC:$b, ucmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (or (setcc RC:$a, RC:$b, ucmp), (not RegPred:$c)))]>;
   def rr_or_not_r_o
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".or.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (or (setcc RC:$a, RC:$b, ocmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (or (setcc RC:$a, RC:$b, ocmp), (not RegPred:$c)))]>;
 
   def rr_xor_not_r_u
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, "u.xor.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (xor (setcc RC:$a, RC:$b, ucmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (xor (setcc RC:$a, RC:$b, ucmp), (not RegPred:$c)))]>;
   def rr_xor_not_r_o
-    : InstPTX<(outs Preds:$p), (ins RC:$a, RC:$b, Preds:$c),
+    : InstPTX<(outs RegPred:$p), (ins RC:$a, RC:$b, RegPred:$c),
               !strconcat("setp.", cmpstr, ".xor.", regclsname, "\t$p, $a, $b, !$c"),
-              [(set Preds:$p, (xor (setcc RC:$a, RC:$b, ocmp), (not Preds:$c)))]>;
+              [(set RegPred:$p, (xor (setcc RC:$a, RC:$b, ocmp), (not RegPred:$c)))]>;
 }
 
 multiclass PTX_SELP<RegisterClass RC, string regclsname> {
   def rr
-    : InstPTX<(outs RC:$r), (ins Preds:$a, RC:$b, RC:$c),
+    : InstPTX<(outs RC:$r), (ins RegPred:$a, RC:$b, RC:$c),
               !strconcat("selp.", regclsname, "\t$r, $b, $c, $a"),
-              [(set RC:$r, (select Preds:$a, RC:$b, RC:$c))]>;
+              [(set RC:$r, (select RegPred:$a, RC:$b, RC:$c))]>;
 }
 
 multiclass PTX_LD<string opstr, string typestr, RegisterClass RC, PatFrag pat_load> {
@@ -524,11 +524,11 @@ multiclass PTX_LD<string opstr, string typestr, RegisterClass RC, PatFrag pat_lo
 }
 
 multiclass PTX_LD_ALL<string opstr, PatFrag pat_load> {
-  defm u16 : PTX_LD<opstr, ".u16", RRegu16, pat_load>;
-  defm u32 : PTX_LD<opstr, ".u32", RRegu32, pat_load>;
-  defm u64 : PTX_LD<opstr, ".u64", RRegu64, pat_load>;
-  defm f32 : PTX_LD<opstr, ".f32", RRegf32, pat_load>;
-  defm f64 : PTX_LD<opstr, ".f64", RRegf64, pat_load>;
+  defm u16 : PTX_LD<opstr, ".u16", RegI16, pat_load>;
+  defm u32 : PTX_LD<opstr, ".u32", RegI32, pat_load>;
+  defm u64 : PTX_LD<opstr, ".u64", RegI64, pat_load>;
+  defm f32 : PTX_LD<opstr, ".f32", RegF32, pat_load>;
+  defm f64 : PTX_LD<opstr, ".f64", RegF64, pat_load>;
 }
 
 multiclass PTX_ST<string opstr, string typestr, RegisterClass RC, PatFrag pat_store> {
@@ -559,11 +559,11 @@ multiclass PTX_ST<string opstr, string typestr, RegisterClass RC, PatFrag pat_st
 }
 
 multiclass PTX_ST_ALL<string opstr, PatFrag pat_store> {
-  defm u16 : PTX_ST<opstr, ".u16", RRegu16, pat_store>;
-  defm u32 : PTX_ST<opstr, ".u32", RRegu32, pat_store>;
-  defm u64 : PTX_ST<opstr, ".u64", RRegu64, pat_store>;
-  defm f32 : PTX_ST<opstr, ".f32", RRegf32, pat_store>;
-  defm f64 : PTX_ST<opstr, ".f64", RRegf64, pat_store>;
+  defm u16 : PTX_ST<opstr, ".u16", RegI16, pat_store>;
+  defm u32 : PTX_ST<opstr, ".u32", RegI32, pat_store>;
+  defm u64 : PTX_ST<opstr, ".u64", RegI64, pat_store>;
+  defm f32 : PTX_ST<opstr, ".f32", RegF32, pat_store>;
+  defm f64 : PTX_ST<opstr, ".f64", RegF64, pat_store>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -592,35 +592,35 @@ defm FMUL : PTX_FLOAT_3OP<"mul", fmul>;
 // For division, we need to have f32 and f64 differently.
 // For f32, we just always use .approx since it is supported on all hardware
 // for PTX 1.4+, which is our minimum target.
-def FDIVrr32 : InstPTX<(outs RRegf32:$d),
-                       (ins RRegf32:$a, RRegf32:$b),
+def FDIVrr32 : InstPTX<(outs RegF32:$d),
+                       (ins RegF32:$a, RegF32:$b),
                        "div.approx.f32\t$d, $a, $b",
-                       [(set RRegf32:$d, (fdiv RRegf32:$a, RRegf32:$b))]>;
-def FDIVri32 : InstPTX<(outs RRegf32:$d),
-                       (ins RRegf32:$a, f32imm:$b),
+                       [(set RegF32:$d, (fdiv RegF32:$a, RegF32:$b))]>;
+def FDIVri32 : InstPTX<(outs RegF32:$d),
+                       (ins RegF32:$a, f32imm:$b),
                        "div.approx.f32\t$d, $a, $b",
-                       [(set RRegf32:$d, (fdiv RRegf32:$a, fpimm:$b))]>;
+                       [(set RegF32:$d, (fdiv RegF32:$a, fpimm:$b))]>;
 
 // For f64, we must specify a rounding for sm 1.3+ but *not* for sm 1.0.
-def FDIVrr64SM13 : InstPTX<(outs RRegf64:$d),
-                           (ins RRegf64:$a, RRegf64:$b),
+def FDIVrr64SM13 : InstPTX<(outs RegF64:$d),
+                           (ins RegF64:$a, RegF64:$b),
                            "div.rn.f64\t$d, $a, $b",
-                           [(set RRegf64:$d, (fdiv RRegf64:$a, RRegf64:$b))]>,
+                           [(set RegF64:$d, (fdiv RegF64:$a, RegF64:$b))]>,
                    Requires<[SupportsSM13]>;
-def FDIVri64SM13 : InstPTX<(outs RRegf64:$d),
-                           (ins RRegf64:$a, f64imm:$b),
+def FDIVri64SM13 : InstPTX<(outs RegF64:$d),
+                           (ins RegF64:$a, f64imm:$b),
                            "div.rn.f64\t$d, $a, $b",
-                           [(set RRegf64:$d, (fdiv RRegf64:$a, fpimm:$b))]>,
+                           [(set RegF64:$d, (fdiv RegF64:$a, fpimm:$b))]>,
                    Requires<[SupportsSM13]>;
-def FDIVrr64SM10 : InstPTX<(outs RRegf64:$d),
-                           (ins RRegf64:$a, RRegf64:$b),
+def FDIVrr64SM10 : InstPTX<(outs RegF64:$d),
+                           (ins RegF64:$a, RegF64:$b),
                            "div.f64\t$d, $a, $b",
-                           [(set RRegf64:$d, (fdiv RRegf64:$a, RRegf64:$b))]>,
+                           [(set RegF64:$d, (fdiv RegF64:$a, RegF64:$b))]>,
                    Requires<[DoesNotSupportSM13]>;
-def FDIVri64SM10 : InstPTX<(outs RRegf64:$d),
-                           (ins RRegf64:$a, f64imm:$b),
+def FDIVri64SM10 : InstPTX<(outs RegF64:$d),
+                           (ins RegF64:$a, f64imm:$b),
                            "div.f64\t$d, $a, $b",
-                           [(set RRegf64:$d, (fdiv RRegf64:$a, fpimm:$b))]>,
+                           [(set RegF64:$d, (fdiv RegF64:$a, fpimm:$b))]>,
                    Requires<[DoesNotSupportSM13]>;
 
 
@@ -638,35 +638,35 @@ defm FMAD : PTX_FLOAT_4OP<"mad", fmul, fadd>, Requires<[DoesNotSupportSM13, Supp
 
 ///===- Floating-Point Intrinsic Instructions -----------------------------===//
 
-def FSQRT32 : InstPTX<(outs RRegf32:$d),
-                      (ins RRegf32:$a),
+def FSQRT32 : InstPTX<(outs RegF32:$d),
+                      (ins RegF32:$a),
                       "sqrt.rn.f32\t$d, $a",
-                      [(set RRegf32:$d, (fsqrt RRegf32:$a))]>;
+                      [(set RegF32:$d, (fsqrt RegF32:$a))]>;
 
-def FSQRT64 : InstPTX<(outs RRegf64:$d),
-                      (ins RRegf64:$a),
+def FSQRT64 : InstPTX<(outs RegF64:$d),
+                      (ins RegF64:$a),
                       "sqrt.rn.f64\t$d, $a",
-                      [(set RRegf64:$d, (fsqrt RRegf64:$a))]>;
+                      [(set RegF64:$d, (fsqrt RegF64:$a))]>;
 
-def FSIN32 : InstPTX<(outs RRegf32:$d),
-                     (ins RRegf32:$a),
+def FSIN32 : InstPTX<(outs RegF32:$d),
+                     (ins RegF32:$a),
                      "sin.approx.f32\t$d, $a",
-                     [(set RRegf32:$d, (fsin RRegf32:$a))]>;
+                     [(set RegF32:$d, (fsin RegF32:$a))]>;
 
-def FSIN64 : InstPTX<(outs RRegf64:$d),
-                     (ins RRegf64:$a),
+def FSIN64 : InstPTX<(outs RegF64:$d),
+                     (ins RegF64:$a),
                      "sin.approx.f64\t$d, $a",
-                     [(set RRegf64:$d, (fsin RRegf64:$a))]>;
+                     [(set RegF64:$d, (fsin RegF64:$a))]>;
 
-def FCOS32 : InstPTX<(outs RRegf32:$d),
-                     (ins RRegf32:$a),
+def FCOS32 : InstPTX<(outs RegF32:$d),
+                     (ins RegF32:$a),
                      "cos.approx.f32\t$d, $a",
-                     [(set RRegf32:$d, (fcos RRegf32:$a))]>;
+                     [(set RegF32:$d, (fcos RegF32:$a))]>;
 
-def FCOS64 : InstPTX<(outs RRegf64:$d),
-                     (ins RRegf64:$a),
+def FCOS64 : InstPTX<(outs RegF64:$d),
+                     (ins RegF64:$a),
                      "cos.approx.f64\t$d, $a",
-                     [(set RRegf64:$d, (fcos RRegf64:$a))]>;
+                     [(set RegF64:$d, (fcos RegF64:$a))]>;
 
 
 ///===- Comparison and Selection Instructions -----------------------------===//
@@ -675,56 +675,56 @@ def FCOS64 : InstPTX<(outs RRegf64:$d),
 
 // Compare u16
 
-defm SETPEQu16 : PTX_SETP_I<RRegu16, "u16", i16imm, SETEQ,  "eq">;
-defm SETPNEu16 : PTX_SETP_I<RRegu16, "u16", i16imm, SETNE,  "ne">;
-defm SETPLTu16 : PTX_SETP_I<RRegu16, "u16", i16imm, SETULT, "lt">;
-defm SETPLEu16 : PTX_SETP_I<RRegu16, "u16", i16imm, SETULE, "le">;
-defm SETPGTu16 : PTX_SETP_I<RRegu16, "u16", i16imm, SETUGT, "gt">;
-defm SETPGEu16 : PTX_SETP_I<RRegu16, "u16", i16imm, SETUGE, "ge">;
+defm SETPEQu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETEQ,  "eq">;
+defm SETPNEu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETNE,  "ne">;
+defm SETPLTu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETULT, "lt">;
+defm SETPLEu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETULE, "le">;
+defm SETPGTu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETUGT, "gt">;
+defm SETPGEu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETUGE, "ge">;
 
 // Compare u32
 
-defm SETPEQu32 : PTX_SETP_I<RRegu32, "u32", i32imm, SETEQ,  "eq">;
-defm SETPNEu32 : PTX_SETP_I<RRegu32, "u32", i32imm, SETNE,  "ne">;
-defm SETPLTu32 : PTX_SETP_I<RRegu32, "u32", i32imm, SETULT, "lt">;
-defm SETPLEu32 : PTX_SETP_I<RRegu32, "u32", i32imm, SETULE, "le">;
-defm SETPGTu32 : PTX_SETP_I<RRegu32, "u32", i32imm, SETUGT, "gt">;
-defm SETPGEu32 : PTX_SETP_I<RRegu32, "u32", i32imm, SETUGE, "ge">;
+defm SETPEQu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETEQ,  "eq">;
+defm SETPNEu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETNE,  "ne">;
+defm SETPLTu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETULT, "lt">;
+defm SETPLEu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETULE, "le">;
+defm SETPGTu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETUGT, "gt">;
+defm SETPGEu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETUGE, "ge">;
 
 // Compare u64
 
-defm SETPEQu64 : PTX_SETP_I<RRegu64, "u64", i64imm, SETEQ,  "eq">;
-defm SETPNEu64 : PTX_SETP_I<RRegu64, "u64", i64imm, SETNE,  "ne">;
-defm SETPLTu64 : PTX_SETP_I<RRegu64, "u64", i64imm, SETULT, "lt">;
-defm SETPLEu64 : PTX_SETP_I<RRegu64, "u64", i64imm, SETULE, "le">;
-defm SETPGTu64 : PTX_SETP_I<RRegu64, "u64", i64imm, SETUGT, "gt">;
-defm SETPGEu64 : PTX_SETP_I<RRegu64, "u64", i64imm, SETUGE, "ge">;
+defm SETPEQu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETEQ,  "eq">;
+defm SETPNEu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETNE,  "ne">;
+defm SETPLTu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETULT, "lt">;
+defm SETPLEu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETULE, "le">;
+defm SETPGTu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETUGT, "gt">;
+defm SETPGEu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETUGE, "ge">;
 
 // Compare f32
 
-defm SETPEQf32 : PTX_SETP_FP<RRegf32, "f32", SETUEQ, SETOEQ, "eq">;
-defm SETPNEf32 : PTX_SETP_FP<RRegf32, "f32", SETUNE, SETONE, "ne">;
-defm SETPLTf32 : PTX_SETP_FP<RRegf32, "f32", SETULT, SETOLT, "lt">;
-defm SETPLEf32 : PTX_SETP_FP<RRegf32, "f32", SETULE, SETOLE, "le">;
-defm SETPGTf32 : PTX_SETP_FP<RRegf32, "f32", SETUGT, SETOGT, "gt">;
-defm SETPGEf32 : PTX_SETP_FP<RRegf32, "f32", SETUGE, SETOGE, "ge">;
+defm SETPEQf32 : PTX_SETP_FP<RegF32, "f32", SETUEQ, SETOEQ, "eq">;
+defm SETPNEf32 : PTX_SETP_FP<RegF32, "f32", SETUNE, SETONE, "ne">;
+defm SETPLTf32 : PTX_SETP_FP<RegF32, "f32", SETULT, SETOLT, "lt">;
+defm SETPLEf32 : PTX_SETP_FP<RegF32, "f32", SETULE, SETOLE, "le">;
+defm SETPGTf32 : PTX_SETP_FP<RegF32, "f32", SETUGT, SETOGT, "gt">;
+defm SETPGEf32 : PTX_SETP_FP<RegF32, "f32", SETUGE, SETOGE, "ge">;
 
 // Compare f64
 
-defm SETPEQf64 : PTX_SETP_FP<RRegf64, "f64", SETUEQ, SETOEQ, "eq">;
-defm SETPNEf64 : PTX_SETP_FP<RRegf64, "f64", SETUNE, SETONE, "ne">;
-defm SETPLTf64 : PTX_SETP_FP<RRegf64, "f64", SETULT, SETOLT, "lt">;
-defm SETPLEf64 : PTX_SETP_FP<RRegf64, "f64", SETULE, SETOLE, "le">;
-defm SETPGTf64 : PTX_SETP_FP<RRegf64, "f64", SETUGT, SETOGT, "gt">;
-defm SETPGEf64 : PTX_SETP_FP<RRegf64, "f64", SETUGE, SETOGE, "ge">;
+defm SETPEQf64 : PTX_SETP_FP<RegF64, "f64", SETUEQ, SETOEQ, "eq">;
+defm SETPNEf64 : PTX_SETP_FP<RegF64, "f64", SETUNE, SETONE, "ne">;
+defm SETPLTf64 : PTX_SETP_FP<RegF64, "f64", SETULT, SETOLT, "lt">;
+defm SETPLEf64 : PTX_SETP_FP<RegF64, "f64", SETULE, SETOLE, "le">;
+defm SETPGTf64 : PTX_SETP_FP<RegF64, "f64", SETUGT, SETOGT, "gt">;
+defm SETPGEf64 : PTX_SETP_FP<RegF64, "f64", SETUGE, SETOGE, "ge">;
 
 // .selp
 
-defm PTX_SELPu16 : PTX_SELP<RRegu16, "u16">;
-defm PTX_SELPu32 : PTX_SELP<RRegu32, "u32">;
-defm PTX_SELPu64 : PTX_SELP<RRegu64, "u64">;
-defm PTX_SELPf32 : PTX_SELP<RRegf32, "f32">;
-defm PTX_SELPf64 : PTX_SELP<RRegf64, "f64">;
+defm PTX_SELPu16 : PTX_SELP<RegI16, "u16">;
+defm PTX_SELPu32 : PTX_SELP<RegI32, "u32">;
+defm PTX_SELPu64 : PTX_SELP<RegI64, "u64">;
+defm PTX_SELPf32 : PTX_SELP<RegF32, "f32">;
+defm PTX_SELPf64 : PTX_SELP<RegF64, "f64">;
 
 ///===- Logic and Shift Instructions --------------------------------------===//
 
@@ -740,47 +740,47 @@ defm XOR : PTX_LOGIC<"xor", xor>;
 
 let neverHasSideEffects = 1 in {
   def MOVPREDrr
-    : InstPTX<(outs Preds:$d), (ins Preds:$a), "mov.pred\t$d, $a", []>;
+    : InstPTX<(outs RegPred:$d), (ins RegPred:$a), "mov.pred\t$d, $a", []>;
   def MOVU16rr
-    : InstPTX<(outs RRegu16:$d), (ins RRegu16:$a), "mov.u16\t$d, $a", []>;
+    : InstPTX<(outs RegI16:$d), (ins RegI16:$a), "mov.u16\t$d, $a", []>;
   def MOVU32rr
-    : InstPTX<(outs RRegu32:$d), (ins RRegu32:$a), "mov.u32\t$d, $a", []>;
+    : InstPTX<(outs RegI32:$d), (ins RegI32:$a), "mov.u32\t$d, $a", []>;
   def MOVU64rr
-    : InstPTX<(outs RRegu64:$d), (ins RRegu64:$a), "mov.u64\t$d, $a", []>;
+    : InstPTX<(outs RegI64:$d), (ins RegI64:$a), "mov.u64\t$d, $a", []>;
   def MOVF32rr
-    : InstPTX<(outs RRegf32:$d), (ins RRegf32:$a), "mov.f32\t$d, $a", []>;
+    : InstPTX<(outs RegF32:$d), (ins RegF32:$a), "mov.f32\t$d, $a", []>;
   def MOVF64rr
-    : InstPTX<(outs RRegf64:$d), (ins RRegf64:$a), "mov.f64\t$d, $a", []>;
+    : InstPTX<(outs RegF64:$d), (ins RegF64:$a), "mov.f64\t$d, $a", []>;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def MOVPREDri
-    : InstPTX<(outs Preds:$d), (ins i1imm:$a), "mov.pred\t$d, $a",
-              [(set Preds:$d, imm:$a)]>;
+    : InstPTX<(outs RegPred:$d), (ins i1imm:$a), "mov.pred\t$d, $a",
+              [(set RegPred:$d, imm:$a)]>;
   def MOVU16ri
-    : InstPTX<(outs RRegu16:$d), (ins i16imm:$a), "mov.u16\t$d, $a",
-              [(set RRegu16:$d, imm:$a)]>;
+    : InstPTX<(outs RegI16:$d), (ins i16imm:$a), "mov.u16\t$d, $a",
+              [(set RegI16:$d, imm:$a)]>;
   def MOVU32ri
-    : InstPTX<(outs RRegu32:$d), (ins i32imm:$a), "mov.u32\t$d, $a",
-              [(set RRegu32:$d, imm:$a)]>;
+    : InstPTX<(outs RegI32:$d), (ins i32imm:$a), "mov.u32\t$d, $a",
+              [(set RegI32:$d, imm:$a)]>;
   def MOVU64ri
-    : InstPTX<(outs RRegu64:$d), (ins i64imm:$a), "mov.u64\t$d, $a",
-              [(set RRegu64:$d, imm:$a)]>;
+    : InstPTX<(outs RegI64:$d), (ins i64imm:$a), "mov.u64\t$d, $a",
+              [(set RegI64:$d, imm:$a)]>;
   def MOVF32ri
-    : InstPTX<(outs RRegf32:$d), (ins f32imm:$a), "mov.f32\t$d, $a",
-              [(set RRegf32:$d, fpimm:$a)]>;
+    : InstPTX<(outs RegF32:$d), (ins f32imm:$a), "mov.f32\t$d, $a",
+              [(set RegF32:$d, fpimm:$a)]>;
   def MOVF64ri
-    : InstPTX<(outs RRegf64:$d), (ins f64imm:$a), "mov.f64\t$d, $a",
-              [(set RRegf64:$d, fpimm:$a)]>;
+    : InstPTX<(outs RegF64:$d), (ins f64imm:$a), "mov.f64\t$d, $a",
+              [(set RegF64:$d, fpimm:$a)]>;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def MOVaddr32
-    : InstPTX<(outs RRegu32:$d), (ins i32imm:$a), "mov.u32\t$d, $a",
-              [(set RRegu32:$d, (PTXcopyaddress tglobaladdr:$a))]>;
+    : InstPTX<(outs RegI32:$d), (ins i32imm:$a), "mov.u32\t$d, $a",
+              [(set RegI32:$d, (PTXcopyaddress tglobaladdr:$a))]>;
   def MOVaddr64
-    : InstPTX<(outs RRegu64:$d), (ins i64imm:$a), "mov.u64\t$d, $a",
-              [(set RRegu64:$d, (PTXcopyaddress tglobaladdr:$a))]>;
+    : InstPTX<(outs RegI64:$d), (ins i64imm:$a), "mov.u64\t$d, $a",
+              [(set RegI64:$d, (PTXcopyaddress tglobaladdr:$a))]>;
 }
 
 // Loads
@@ -790,15 +790,15 @@ defm LDl : PTX_LD_ALL<"ld.local",  load_local>;
 defm LDs : PTX_LD_ALL<"ld.shared", load_shared>;
 
 // This is a special instruction that is manually inserted for kernel parameters
-def LDpiU16 : InstPTX<(outs RRegu16:$d), (ins MEMpi:$a),
+def LDpiU16 : InstPTX<(outs RegI16:$d), (ins MEMpi:$a),
                       "ld.param.u16\t$d, [$a]", []>;
-def LDpiU32 : InstPTX<(outs RRegu32:$d), (ins MEMpi:$a),
+def LDpiU32 : InstPTX<(outs RegI32:$d), (ins MEMpi:$a),
                       "ld.param.u32\t$d, [$a]", []>;
-def LDpiU64 : InstPTX<(outs RRegu64:$d), (ins MEMpi:$a),
+def LDpiU64 : InstPTX<(outs RegI64:$d), (ins MEMpi:$a),
                       "ld.param.u64\t$d, [$a]", []>;
-def LDpiF32 : InstPTX<(outs RRegf32:$d), (ins MEMpi:$a),
+def LDpiF32 : InstPTX<(outs RegF32:$d), (ins MEMpi:$a),
                       "ld.param.f32\t$d, [$a]", []>;
-def LDpiF64 : InstPTX<(outs RRegf64:$d), (ins MEMpi:$a),
+def LDpiF64 : InstPTX<(outs RegF64:$d), (ins MEMpi:$a),
                       "ld.param.f64\t$d, [$a]", []>;
 
 // Stores
@@ -813,134 +813,134 @@ defm STs : PTX_ST_ALL<"st.shared", store_shared>;
 // Conversion to pred
 
 def CVT_pred_u16
-  : InstPTX<(outs Preds:$d), (ins RRegu16:$a), "cvt.pred.u16\t$d, $a",
-            [(set Preds:$d, (trunc RRegu16:$a))]>;
+  : InstPTX<(outs RegPred:$d), (ins RegI16:$a), "cvt.pred.u16\t$d, $a",
+            [(set RegPred:$d, (trunc RegI16:$a))]>;
 
 def CVT_pred_u32
-  : InstPTX<(outs Preds:$d), (ins RRegu32:$a), "cvt.pred.u32\t$d, $a",
-            [(set Preds:$d, (trunc RRegu32:$a))]>;
+  : InstPTX<(outs RegPred:$d), (ins RegI32:$a), "cvt.pred.u32\t$d, $a",
+            [(set RegPred:$d, (trunc RegI32:$a))]>;
 
 def CVT_pred_u64
-  : InstPTX<(outs Preds:$d), (ins RRegu64:$a), "cvt.pred.u64\t$d, $a",
-            [(set Preds:$d, (trunc RRegu64:$a))]>;
+  : InstPTX<(outs RegPred:$d), (ins RegI64:$a), "cvt.pred.u64\t$d, $a",
+            [(set RegPred:$d, (trunc RegI64:$a))]>;
 
 def CVT_pred_f32
-  : InstPTX<(outs Preds:$d), (ins RRegf32:$a), "cvt.rni.pred.f32\t$d, $a",
-            [(set Preds:$d, (fp_to_uint RRegf32:$a))]>;
+  : InstPTX<(outs RegPred:$d), (ins RegF32:$a), "cvt.rni.pred.f32\t$d, $a",
+            [(set RegPred:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_pred_f64
-  : InstPTX<(outs Preds:$d), (ins RRegf64:$a), "cvt.rni.pred.f64\t$d, $a",
-            [(set Preds:$d, (fp_to_uint RRegf64:$a))]>;
+  : InstPTX<(outs RegPred:$d), (ins RegF64:$a), "cvt.rni.pred.f64\t$d, $a",
+            [(set RegPred:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to u16
 
 def CVT_u16_pred
-  : InstPTX<(outs RRegu16:$d), (ins Preds:$a), "cvt.u16.pred\t$d, $a",
-            [(set RRegu16:$d, (zext Preds:$a))]>;
+  : InstPTX<(outs RegI16:$d), (ins RegPred:$a), "cvt.u16.pred\t$d, $a",
+            [(set RegI16:$d, (zext RegPred:$a))]>;
 
 def CVT_u16_u32
-  : InstPTX<(outs RRegu16:$d), (ins RRegu32:$a), "cvt.u16.u32\t$d, $a",
-            [(set RRegu16:$d, (trunc RRegu32:$a))]>;
+  : InstPTX<(outs RegI16:$d), (ins RegI32:$a), "cvt.u16.u32\t$d, $a",
+            [(set RegI16:$d, (trunc RegI32:$a))]>;
 
 def CVT_u16_u64
-  : InstPTX<(outs RRegu16:$d), (ins RRegu64:$a), "cvt.u16.u64\t$d, $a",
-            [(set RRegu16:$d, (trunc RRegu64:$a))]>;
+  : InstPTX<(outs RegI16:$d), (ins RegI64:$a), "cvt.u16.u64\t$d, $a",
+            [(set RegI16:$d, (trunc RegI64:$a))]>;
 
 def CVT_u16_f32
-  : InstPTX<(outs RRegu16:$d), (ins RRegf32:$a), "cvt.rni.u16.f32\t$d, $a",
-            [(set RRegu16:$d, (fp_to_uint RRegf32:$a))]>;
+  : InstPTX<(outs RegI16:$d), (ins RegF32:$a), "cvt.rni.u16.f32\t$d, $a",
+            [(set RegI16:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_u16_f64
-  : InstPTX<(outs RRegu16:$d), (ins RRegf64:$a), "cvt.rni.u16.f64\t$d, $a",
-            [(set RRegu16:$d, (fp_to_uint RRegf64:$a))]>;
+  : InstPTX<(outs RegI16:$d), (ins RegF64:$a), "cvt.rni.u16.f64\t$d, $a",
+            [(set RegI16:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to u32
 
 def CVT_u32_pred
-  : InstPTX<(outs RRegu32:$d), (ins Preds:$a), "cvt.u32.pred\t$d, $a",
-            [(set RRegu32:$d, (zext Preds:$a))]>;
+  : InstPTX<(outs RegI32:$d), (ins RegPred:$a), "cvt.u32.pred\t$d, $a",
+            [(set RegI32:$d, (zext RegPred:$a))]>;
 
 def CVT_u32_u16
-  : InstPTX<(outs RRegu32:$d), (ins RRegu16:$a), "cvt.u32.u16\t$d, $a",
-            [(set RRegu32:$d, (zext RRegu16:$a))]>;
+  : InstPTX<(outs RegI32:$d), (ins RegI16:$a), "cvt.u32.u16\t$d, $a",
+            [(set RegI32:$d, (zext RegI16:$a))]>;
 
 def CVT_u32_u64
-  : InstPTX<(outs RRegu32:$d), (ins RRegu64:$a), "cvt.u32.u64\t$d, $a",
-            [(set RRegu32:$d, (trunc RRegu64:$a))]>;
+  : InstPTX<(outs RegI32:$d), (ins RegI64:$a), "cvt.u32.u64\t$d, $a",
+            [(set RegI32:$d, (trunc RegI64:$a))]>;
 
 def CVT_u32_f32
-  : InstPTX<(outs RRegu32:$d), (ins RRegf32:$a), "cvt.rni.u32.f32\t$d, $a",
-            [(set RRegu32:$d, (fp_to_uint RRegf32:$a))]>;
+  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "cvt.rni.u32.f32\t$d, $a",
+            [(set RegI32:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_u32_f64
-  : InstPTX<(outs RRegu32:$d), (ins RRegf64:$a), "cvt.rni.u32.f64\t$d, $a",
-            [(set RRegu32:$d, (fp_to_uint RRegf64:$a))]>;
+  : InstPTX<(outs RegI32:$d), (ins RegF64:$a), "cvt.rni.u32.f64\t$d, $a",
+            [(set RegI32:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to u64
 
 def CVT_u64_pred
-  : InstPTX<(outs RRegu64:$d), (ins Preds:$a), "cvt.u64.pred\t$d, $a",
-            [(set RRegu64:$d, (zext Preds:$a))]>;
+  : InstPTX<(outs RegI64:$d), (ins RegPred:$a), "cvt.u64.pred\t$d, $a",
+            [(set RegI64:$d, (zext RegPred:$a))]>;
 
 def CVT_u64_u16
-  : InstPTX<(outs RRegu64:$d), (ins RRegu16:$a), "cvt.u64.u16\t$d, $a",
-            [(set RRegu64:$d, (zext RRegu16:$a))]>;
+  : InstPTX<(outs RegI64:$d), (ins RegI16:$a), "cvt.u64.u16\t$d, $a",
+            [(set RegI64:$d, (zext RegI16:$a))]>;
 
 def CVT_u64_u32
-  : InstPTX<(outs RRegu64:$d), (ins RRegu32:$a), "cvt.u64.u32\t$d, $a",
-            [(set RRegu64:$d, (zext RRegu32:$a))]>;
+  : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.u64.u32\t$d, $a",
+            [(set RegI64:$d, (zext RegI32:$a))]>;
 
 def CVT_u64_f32
-  : InstPTX<(outs RRegu64:$d), (ins RRegf32:$a), "cvt.rni.u64.f32\t$d, $a",
-            [(set RRegu64:$d, (fp_to_uint RRegf32:$a))]>;
+  : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rni.u64.f32\t$d, $a",
+            [(set RegI64:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_u64_f64
-  : InstPTX<(outs RRegu64:$d), (ins RRegf64:$a), "cvt.rni.u64.f64\t$d, $a",
-            [(set RRegu64:$d, (fp_to_uint RRegf64:$a))]>;
+  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "cvt.rni.u64.f64\t$d, $a",
+            [(set RegI64:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to f32
 
 def CVT_f32_pred
-  : InstPTX<(outs RRegf32:$d), (ins Preds:$a), "cvt.rn.f32.pred\t$d, $a",
-            [(set RRegf32:$d, (uint_to_fp Preds:$a))]>;
+  : InstPTX<(outs RegF32:$d), (ins RegPred:$a), "cvt.rn.f32.pred\t$d, $a",
+            [(set RegF32:$d, (uint_to_fp RegPred:$a))]>;
 
 def CVT_f32_u16
-  : InstPTX<(outs RRegf32:$d), (ins RRegu16:$a), "cvt.rn.f32.u16\t$d, $a",
-            [(set RRegf32:$d, (uint_to_fp RRegu16:$a))]>;
+  : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.u16\t$d, $a",
+            [(set RegF32:$d, (uint_to_fp RegI16:$a))]>;
 
 def CVT_f32_u32
-  : InstPTX<(outs RRegf32:$d), (ins RRegu32:$a), "cvt.rn.f32.u32\t$d, $a",
-            [(set RRegf32:$d, (uint_to_fp RRegu32:$a))]>;
+  : InstPTX<(outs RegF32:$d), (ins RegI32:$a), "cvt.rn.f32.u32\t$d, $a",
+            [(set RegF32:$d, (uint_to_fp RegI32:$a))]>;
 
 def CVT_f32_u64
-  : InstPTX<(outs RRegf32:$d), (ins RRegu64:$a), "cvt.rn.f32.u64\t$d, $a",
-            [(set RRegf32:$d, (uint_to_fp RRegu64:$a))]>;
+  : InstPTX<(outs RegF32:$d), (ins RegI64:$a), "cvt.rn.f32.u64\t$d, $a",
+            [(set RegF32:$d, (uint_to_fp RegI64:$a))]>;
 
 def CVT_f32_f64
-  : InstPTX<(outs RRegf32:$d), (ins RRegf64:$a), "cvt.rn.f32.f64\t$d, $a",
-            [(set RRegf32:$d, (fround RRegf64:$a))]>;
+  : InstPTX<(outs RegF32:$d), (ins RegF64:$a), "cvt.rn.f32.f64\t$d, $a",
+            [(set RegF32:$d, (fround RegF64:$a))]>;
 
 // Conversion to f64
 
 def CVT_f64_pred
-  : InstPTX<(outs RRegf64:$d), (ins Preds:$a), "cvt.rn.f64.pred\t$d, $a",
-            [(set RRegf64:$d, (uint_to_fp Preds:$a))]>;
+  : InstPTX<(outs RegF64:$d), (ins RegPred:$a), "cvt.rn.f64.pred\t$d, $a",
+            [(set RegF64:$d, (uint_to_fp RegPred:$a))]>;
 
 def CVT_f64_u16
-  : InstPTX<(outs RRegf64:$d), (ins RRegu16:$a), "cvt.rn.f64.u16\t$d, $a",
-            [(set RRegf64:$d, (uint_to_fp RRegu16:$a))]>;
+  : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.u16\t$d, $a",
+            [(set RegF64:$d, (uint_to_fp RegI16:$a))]>;
 
 def CVT_f64_u32
-  : InstPTX<(outs RRegf64:$d), (ins RRegu32:$a), "cvt.rn.f64.u32\t$d, $a",
-            [(set RRegf64:$d, (uint_to_fp RRegu32:$a))]>;
+  : InstPTX<(outs RegF64:$d), (ins RegI32:$a), "cvt.rn.f64.u32\t$d, $a",
+            [(set RegF64:$d, (uint_to_fp RegI32:$a))]>;
 
 def CVT_f64_u64
-  : InstPTX<(outs RRegf64:$d), (ins RRegu64:$a), "cvt.rn.f64.u64\t$d, $a",
-            [(set RRegf64:$d, (uint_to_fp RRegu64:$a))]>;
+  : InstPTX<(outs RegF64:$d), (ins RegI64:$a), "cvt.rn.f64.u64\t$d, $a",
+            [(set RegF64:$d, (uint_to_fp RegI64:$a))]>;
 
 def CVT_f64_f32
-  : InstPTX<(outs RRegf64:$d), (ins RRegf32:$a), "cvt.f64.f32\t$d, $a",
-            [(set RRegf64:$d, (fextend RRegf32:$a))]>;
+  : InstPTX<(outs RegF64:$d), (ins RegF32:$a), "cvt.f64.f32\t$d, $a",
+            [(set RegF64:$d, (fextend RegF32:$a))]>;
 
 ///===- Control Flow Instructions -----------------------------------------===//
 
@@ -951,7 +951,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 
 let isBranch = 1, isTerminator = 1 in {
   // FIXME: The pattern part is blank because I cannot (or do not yet know
-  // how to) use the first operand of PredicateOperand (a Preds register) here
+  // how to) use the first operand of PredicateOperand (a RegPred register) here
   def BRAdp
     : InstPTX<(outs), (ins brtarget:$d), "bra\t$d",
               [/*(brcond pred:$_p, bb:$d)*/]>;
