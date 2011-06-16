@@ -3544,6 +3544,8 @@ InitializationSequence::InitializationSequence(Sema &S,
       SetFailed(InitializationSequence::FK_ConversionFailed);
   } else {
     AddConversionSequenceStep(ICS, Entity.getType());
+
+    MaybeProduceObjCObject(S, *this, Entity);
   }
 }
 

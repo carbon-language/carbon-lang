@@ -1787,7 +1787,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       // overlap restriction of subclause 6.5.16.1 does not apply to the case of
       // function return.
 
-      // In C++ the return statement is handled via a copy initialization.
+      // In C++ the return statement is handled via a copy initialization,
       // the C version of which boils down to CheckSingleAssignmentConstraints.
       NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
       InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,

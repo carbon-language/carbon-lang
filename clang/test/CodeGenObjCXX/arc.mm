@@ -150,3 +150,13 @@ void test35b(Test35_Helper x0, Test35_Helper *x0p) {
   // CHECK: call void @objc_release
   // CHECK-NEXT: ret void
 }
+
+// rdar://problem/9603128
+// CHECK: define i8* @_Z6test36P11objc_object(
+id test36(id z) {
+  // CHECK: objc_retain
+  // CHECK: objc_retain
+  // CHECK: objc_release
+  // CHECK: objc_autoreleaseReturnValue
+  return z;
+}
