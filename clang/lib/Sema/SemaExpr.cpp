@@ -7772,7 +7772,8 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex, SourceLoca
     // comparisons of member pointers to null pointer constants.
     if (RHSIsNull &&
         ((lType->isAnyPointerType() || lType->isNullPtrType()) ||
-         (!isRelational && lType->isMemberPointerType()))) {
+         (!isRelational && 
+          (lType->isMemberPointerType() || lType->isBlockPointerType())))) {
       rex = ImpCastExprToType(rex.take(), lType, 
                         lType->isMemberPointerType()
                           ? CK_NullToMemberPointer
@@ -7781,7 +7782,8 @@ QualType Sema::CheckCompareOperands(ExprResult &lex, ExprResult &rex, SourceLoca
     }
     if (LHSIsNull &&
         ((rType->isAnyPointerType() || rType->isNullPtrType()) ||
-         (!isRelational && rType->isMemberPointerType()))) {
+         (!isRelational && 
+          (rType->isMemberPointerType() || rType->isBlockPointerType())))) {
       lex = ImpCastExprToType(lex.take(), rType, 
                         rType->isMemberPointerType()
                           ? CK_NullToMemberPointer
