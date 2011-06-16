@@ -89,7 +89,7 @@ namespace SrcMgr {
 
     /// getBuffer - Returns the memory buffer for the associated content.
     ///
-    /// \param Diag Object through which diagnostics will be emitted it the
+    /// \param Diag Object through which diagnostics will be emitted if the
     /// buffer cannot be retrieved.
     /// 
     /// \param Loc If specified, is the location that invalid file diagnostics
