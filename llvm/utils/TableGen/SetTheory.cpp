@@ -155,10 +155,15 @@ struct SequenceOp : public SetTheory::Operator {
       From = II->getValue();
     else
       throw "From must be an integer: " + Expr->getAsString();
+    if (From < 0 || From >= UINT_MAX)
+      throw "From out of range";
+
     if (IntInit *II = dynamic_cast<IntInit*>(Expr->arg_begin()[2]))
       To = II->getValue();
     else
       throw "From must be an integer: " + Expr->getAsString();
+    if (To < 0 || To >= UINT_MAX)
+      throw "To out of range";
 
     RecordKeeper &Records =
       dynamic_cast<DefInit&>(*Expr->getOperator()).getDef()->getRecords();
@@ -167,7 +172,7 @@ struct SequenceOp : public SetTheory::Operator {
     for (To += Step; From != To; From += Step) {
       std::string Name;
       raw_string_ostream OS(Name);
-      OS << format(Format.c_str(), From);
+      OS << format(Format.c_str(), unsigned(From));
       Record *Rec = Records.getDef(OS.str());
       if (!Rec)
         throw "No def named '" + Name + "': " + Expr->getAsString();
