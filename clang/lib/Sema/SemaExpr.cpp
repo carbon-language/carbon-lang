@@ -4333,6 +4333,16 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         Diag(MemberLoc, diag::error_protected_ivar_access)
           << IV->getDeclName();
     }
+    if (getLangOptions().ObjCAutoRefCount) {
+      Expr *BaseExp = BaseExpr.get()->IgnoreParenImpCasts();
+      if (UnaryOperator *UO = dyn_cast<UnaryOperator>(BaseExp))
+        if (UO->getOpcode() == UO_Deref)
+          BaseExp = UO->getSubExpr()->IgnoreParenCasts();
+      
+      if (DeclRefExpr *DE = dyn_cast<DeclRefExpr>(BaseExp))
+        if (DE->getType().getObjCLifetime() == Qualifiers::OCL_Weak)
+          Diag(DE->getLocation(), diag::error_arc_weak_ivar_access);
+    }
 
     return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
                                                MemberLoc, BaseExpr.take(),

@@ -2815,6 +2815,9 @@ def err_typecheck_member_reference_struct_union : Error<
   "member reference base type %0 is not a structure or union">;
 def err_typecheck_member_reference_ivar : Error<
   "%0 does not have a member named %1">;
+def error_arc_weak_ivar_access : Error<
+  "dereferencing a __weak pointer is not allowed due to possible "
+  "null value caused by race condition, assign it to strong variable first">;
 def err_typecheck_member_reference_arrow : Error<
   "member reference type %0 is not a pointer">;
 def err_typecheck_member_reference_suggestion : Error<
