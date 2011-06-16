@@ -4316,12 +4316,27 @@ public:
                                       QualType *FunctionType,
                                       sema::TemplateDeductionInfo &Info);
 
+  /// brief A function argument from which we performed template argument 
+  // deduction for a call.
+  struct OriginalCallArg {
+    OriginalCallArg(QualType OriginalParamType,
+                    unsigned ArgIdx,
+                    QualType OriginalArgType)
+      : OriginalParamType(OriginalParamType), ArgIdx(ArgIdx), 
+        OriginalArgType(OriginalArgType) { }
+    
+    QualType OriginalParamType;
+    unsigned ArgIdx;
+    QualType OriginalArgType;
+  };
+  
   TemplateDeductionResult
   FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                       llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                   unsigned NumExplicitlySpecified,
                                   FunctionDecl *&Specialization,
-                                  sema::TemplateDeductionInfo &Info);
+                                  sema::TemplateDeductionInfo &Info,
+           llvm::SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs = 0);
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,

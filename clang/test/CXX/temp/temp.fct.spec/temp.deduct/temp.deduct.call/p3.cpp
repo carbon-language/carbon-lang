@@ -123,3 +123,12 @@ namespace N {
     N::F<T1>(d); // OK
   }
 }
+
+namespace PR9233 {
+  template<typename T> void f(const T **q); // expected-note{{candidate template ignored: substitution failure [with T = int]}}
+
+  void g(int **p) {
+    f(p); // expected-error{{no matching function for call to 'f'}}
+  }
+
+}

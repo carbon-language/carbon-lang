@@ -1497,7 +1497,6 @@ DeduceTemplateArguments(Sema &S,
       return Sema::TDK_Success;
   }
 
-  // FIXME: Many more cases to go (to go).
   return Sema::TDK_Success;
 }
 
@@ -2318,12 +2317,16 @@ Sema::SubstituteExplicitTemplateArguments(
 /// \brief Finish template argument deduction for a function template,
 /// checking the deduced template arguments for completeness and forming
 /// the function template specialization.
+///
+/// \param OriginalCallArgs If non-NULL, the original call arguments against
+/// which the deduced argument types should be compared.
 Sema::TemplateDeductionResult
 Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
                        llvm::SmallVectorImpl<DeducedTemplateArgument> &Deduced,
                                       unsigned NumExplicitlySpecified,
                                       FunctionDecl *&Specialization,
-                                      TemplateDeductionInfo &Info) {
+                                      TemplateDeductionInfo &Info,
+        llvm::SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs) {
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();
 
@@ -2477,6 +2480,95 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
       !Trap.hasErrorOccurred())
     Info.take();
 
+  if (OriginalCallArgs) {
+    // C++ [temp.deduct.call]p4:
+    //   In general, the deduction process attempts to find template argument
+    //   values that will make the deduced A identical to A (after the type A 
+    //   is transformed as described above). [...]
+    for (unsigned I = 0, N = OriginalCallArgs->size(); I != N; ++I) {
+      OriginalCallArg OriginalArg = (*OriginalCallArgs)[I];
+      QualType A = OriginalArg.OriginalArgType;
+      unsigned ParamIdx = OriginalArg.ArgIdx;
+      
+      if (ParamIdx >= Specialization->getNumParams())
+        continue;
+      
+      QualType DeducedA = Specialization->getParamDecl(ParamIdx)->getType();
+      QualType OriginalParamType = OriginalArg.OriginalParamType;
+      
+      // Check for type equality (top-level cv-qualifiers are ignored).
+      if (Context.hasSameUnqualifiedType(A, DeducedA))
+        continue;
+      
+      // Strip off references on the argument types; they aren't needed for
+      // the following checks.
+      if (const ReferenceType *DeducedARef = DeducedA->getAs<ReferenceType>())
+        DeducedA = DeducedARef->getPointeeType();
+      if (const ReferenceType *ARef = A->getAs<ReferenceType>())
+        A = ARef->getPointeeType();
+          
+      // C++ [temp.deduct.call]p4:
+      //   [...] However, there are three cases that allow a difference:
+      //     - If the original P is a reference type, the deduced A (i.e., the 
+      //       type referred to by the reference) can be more cv-qualified than 
+      //       the transformed A.
+      if (const ReferenceType *OriginalParamRef
+                                  = OriginalParamType->getAs<ReferenceType>()) {
+        // We don't want to keep the reference around any more.
+        OriginalParamType = OriginalParamRef->getPointeeType();
+        
+        Qualifiers AQuals = A.getQualifiers();
+        Qualifiers DeducedAQuals = DeducedA.getQualifiers();
+        if (AQuals == DeducedAQuals) {
+          // Qualifiers match; there's nothing to do.
+        } else if (!DeducedAQuals.compatiblyIncludes(AQuals)) {
+          return Sema::TDK_SubstitutionFailure;
+        } else {        
+          // Qualifiers are compatible, so have the argument type adopt the
+          // deduced argument type's qualifiers as if we had performed the
+          // qualification conversion.
+          A = Context.getQualifiedType(A.getUnqualifiedType(), DeducedAQuals);
+        }
+      }
+      
+      //    - The transformed A can be another pointer or pointer to member 
+      //      type that can be converted to the deduced A via a qualification 
+      //      conversion.
+      bool ObjCLifetimeConversion = false;
+      if ((A->isAnyPointerType() || A->isMemberPointerType()) &&
+          IsQualificationConversion(A, DeducedA, false, ObjCLifetimeConversion))
+        continue;
+      
+      
+      //    - If P is a class and P has the form simple-template-id, then the 
+      //      transformed A can be a derived class of the deduced A. [...]
+      //     [...] Likewise, if P is a pointer to a class of the form 
+      //      simple-template-id, the transformed A can be a pointer to a 
+      //      derived class pointed to by the deduced A.
+      if (const PointerType *OriginalParamPtr
+                                    = OriginalParamType->getAs<PointerType>()) {
+        if (const PointerType *DeducedAPtr = DeducedA->getAs<PointerType>()) {
+          if (const PointerType *APtr = A->getAs<PointerType>()) {
+            if (A->getPointeeType()->isRecordType()) {
+              OriginalParamType = OriginalParamPtr->getPointeeType();
+              DeducedA = DeducedAPtr->getPointeeType();
+              A = APtr->getPointeeType();
+            }
+          }
+        }
+      }
+
+      if (Context.hasSameUnqualifiedType(A, DeducedA))
+        continue;
+
+      if (A->isRecordType() && isSimpleTemplateIdType(OriginalParamType) &&
+          IsDerivedFrom(A, DeducedA))
+        continue;
+
+      return Sema::TDK_SubstitutionFailure;
+    }
+  }
+  
   // There may have been an error that did not prevent us from constructing a
   // declaration. Mark the declaration invalid and return with a substitution
   // failure.
@@ -2720,6 +2812,10 @@ static bool AdjustFunctionParmAndArgTypesForDeduction(Sema &S,
   return false;
 }
 
+static bool hasDeducibleTemplateParameters(Sema &S,
+                                           FunctionTemplateDecl *FunctionTemplate,
+                                           QualType T);
+
 /// \brief Perform template argument deduction from a function call
 /// (C++ [temp.deduct.call]).
 ///
@@ -2801,10 +2897,12 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   // Deduce template arguments from the function parameters.
   Deduced.resize(TemplateParams->size());
   unsigned ArgIdx = 0;
+  llvm::SmallVector<OriginalCallArg, 4> OriginalCallArgs;
   for (unsigned ParamIdx = 0, NumParams = ParamTypes.size();
        ParamIdx != NumParams; ++ParamIdx) {
-    QualType ParamType = ParamTypes[ParamIdx];
-
+    QualType OrigParamType = ParamTypes[ParamIdx];
+    QualType ParamType = OrigParamType;
+    
     const PackExpansionType *ParamExpansion
       = dyn_cast<PackExpansionType>(ParamType);
     if (!ParamExpansion) {
@@ -2814,11 +2912,18 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 
       Expr *Arg = Args[ArgIdx++];
       QualType ArgType = Arg->getType();
+      
       unsigned TDF = 0;
       if (AdjustFunctionParmAndArgTypesForDeduction(*this, TemplateParams,
                                                     ParamType, ArgType, Arg,
                                                     TDF))
         continue;
+
+      // Keep track of the argument type and corresponding parameter index,
+      // so we can check for compatibility between the deduced A and A.
+      if (hasDeducibleTemplateParameters(*this, FunctionTemplate, ParamType))
+        OriginalCallArgs.push_back(OriginalCallArg(OrigParamType, ArgIdx-1, 
+                                                   ArgType));
 
       if (TemplateDeductionResult Result
           = ::DeduceTemplateArguments(*this, TemplateParams,
@@ -2826,8 +2931,6 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                                       TDF))
         return Result;
 
-      // FIXME: we need to check that the deduced A is the same as A,
-      // modulo the various allowed differences.
       continue;
     }
 
@@ -2873,9 +2976,11 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     for (; ArgIdx < NumArgs; ++ArgIdx) {
       HasAnyArguments = true;
 
-      ParamType = ParamPattern;
+      QualType OrigParamType = ParamPattern;
+      ParamType = OrigParamType;
       Expr *Arg = Args[ArgIdx];
       QualType ArgType = Arg->getType();
+      
       unsigned TDF = 0;
       if (AdjustFunctionParmAndArgTypesForDeduction(*this, TemplateParams,
                                                     ParamType, ArgType, Arg,
@@ -2885,6 +2990,12 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
         ++ArgIdx;
         break;
       }
+
+      // Keep track of the argument type and corresponding argument index,
+      // so we can check for compatibility between the deduced A and A.
+      if (hasDeducibleTemplateParameters(*this, FunctionTemplate, ParamType))
+        OriginalCallArgs.push_back(OriginalCallArg(OrigParamType, ArgIdx, 
+                                                   ArgType));
 
       if (TemplateDeductionResult Result
           = ::DeduceTemplateArguments(*this, TemplateParams,
@@ -2918,7 +3029,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
 
   return FinishTemplateArgumentDeduction(FunctionTemplate, Deduced,
                                          NumExplicitlySpecified,
-                                         Specialization, Info);
+                                         Specialization, Info, &OriginalCallArgs);
 }
 
 /// \brief Deduce template arguments when taking the address of a function
@@ -3094,9 +3205,6 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
         = ::DeduceTemplateArguments(*this, TemplateParams,
                                     P, A, Info, Deduced, TDF))
     return Result;
-
-  // FIXME: we need to check that the deduced A is the same as A,
-  // modulo the various allowed differences.
 
   // Finish template argument deduction.
   LocalInstantiationScope InstScope(*this);
@@ -3353,8 +3461,6 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   case TPOC_Other:
     //   - In other contexts (14.6.6.2) the function template's function type
     //     is used.
-    // FIXME: Don't we actually want to perform the adjustments on the parameter
-    // types?
     if (DeduceTemplateArguments(S, TemplateParams, FD2->getType(),
                                 FD1->getType(), Info, Deduced, TDF_None,
                                 /*PartialOrdering=*/true, RefParamComparisons))
@@ -4135,4 +4241,24 @@ Sema::MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
   for (unsigned I = 0, N = Function->getNumParams(); I != N; ++I)
     ::MarkUsedTemplateParameters(*this, Function->getParamDecl(I)->getType(),
                                  true, TemplateParams->getDepth(), Deduced);
+}
+
+bool hasDeducibleTemplateParameters(Sema &S,
+                                    FunctionTemplateDecl *FunctionTemplate,
+                                    QualType T) {
+  if (!T->isDependentType())
+    return false;
+
+  TemplateParameterList *TemplateParams
+    = FunctionTemplate->getTemplateParameters();
+  llvm::SmallVector<bool, 4> Deduced;
+  Deduced.resize(TemplateParams->size());
+  ::MarkUsedTemplateParameters(S, T, true, TemplateParams->getDepth(), 
+                               Deduced);
+
+  for (unsigned I = 0, N = Deduced.size(); I != N; ++I)
+    if (Deduced[I])
+      return true;
+
+  return false;
 }
