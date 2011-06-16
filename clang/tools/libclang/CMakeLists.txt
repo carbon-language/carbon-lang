@@ -5,6 +5,7 @@ set(LLVM_USED_LIBS
   clangIndex
   clangSema
   clangARCMigrate
+  clangAnalysis
   clangRewrite
   clangAST
   clangLex
