@@ -1386,24 +1386,24 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
 }
 
 void CStringChecker::evalStrcmp(CheckerContext &C, const CallExpr *CE) const {
-  //int strcmp(const char *restrict s1, const char *restrict s2);
+  //int strcmp(const char *s1, const char *s2);
   evalStrcmpCommon(C, CE, /* isBounded = */ false, /* ignoreCase = */ false);
 }
 
 void CStringChecker::evalStrncmp(CheckerContext &C, const CallExpr *CE) const {
-  //int strncmp(const char *restrict s1, const char *restrict s2, size_t n);
+  //int strncmp(const char *s1, const char *s2, size_t n);
   evalStrcmpCommon(C, CE, /* isBounded = */ true, /* ignoreCase = */ false);
 }
 
 void CStringChecker::evalStrcasecmp(CheckerContext &C, 
                                     const CallExpr *CE) const {
-  //int strcasecmp(const char *restrict s1, const char *restrict s2);
+  //int strcasecmp(const char *s1, const char *s2);
   evalStrcmpCommon(C, CE, /* isBounded = */ false, /* ignoreCase = */ true);
 }
 
 void CStringChecker::evalStrncasecmp(CheckerContext &C, 
                                      const CallExpr *CE) const {
-  //int strncasecmp(const char *restrict s1, const char *restrict s2, size_t n);
+  //int strncasecmp(const char *s1, const char *s2, size_t n);
   evalStrcmpCommon(C, CE, /* isBounded = */ true, /* ignoreCase = */ true);
 }
 
@@ -1435,52 +1435,96 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
   if (s2Length.isUndef())
     return;
 
-  // Get the string literal of the first string.
-  const StringLiteral *s1StrLiteral = getCStringLiteral(C, state, s1, s1Val);
-  if (!s1StrLiteral)
-    return;
-  llvm::StringRef s1StrRef = s1StrLiteral->getString();
+  // If we know the two buffers are the same, we know the result is 0.
+  // First, get the two buffers' addresses. Another checker will have already
+  // made sure they're not undefined.
+  DefinedOrUnknownSVal LV = cast<DefinedOrUnknownSVal>(s1Val);
+  DefinedOrUnknownSVal RV = cast<DefinedOrUnknownSVal>(s2Val);
 
-  // Get the string literal of the second string.
-  const StringLiteral *s2StrLiteral = getCStringLiteral(C, state, s2, s2Val);
-  if (!s2StrLiteral)
-    return;
-  llvm::StringRef s2StrRef = s2StrLiteral->getString();
-
-  int result;
-  if (isBounded) {
-    // Get the max number of characters to compare.
-    const Expr *lenExpr = CE->getArg(2);
-    SVal lenVal = state->getSVal(lenExpr);
-
-    // Dynamically cast the length to a ConcreteInt. If it is not a ConcreteInt
-    // then give up, otherwise get the value and use it as the bounds.
-    nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&lenVal);
-    if (!CI)
-      return;
-    llvm::APSInt lenInt(CI->getValue());
-
-    // Create substrings of each to compare the prefix.
-    s1StrRef = s1StrRef.substr(0, (size_t)lenInt.getLimitedValue());
-    s2StrRef = s2StrRef.substr(0, (size_t)lenInt.getLimitedValue());
-  }
-
-  if (ignoreCase) {
-    // Compare string 1 to string 2 the same way strcasecmp() does.
-    result = s1StrRef.compare_lower(s2StrRef);
-  } else {
-    // Compare string 1 to string 2 the same way strcmp() does.
-    result = s1StrRef.compare(s2StrRef);
-  }
-  
-  // Build the SVal of the comparison to bind the return value.
+  // See if they are the same.
   SValBuilder &svalBuilder = C.getSValBuilder();
-  QualType intTy = svalBuilder.getContext().IntTy;
-  SVal resultVal = svalBuilder.makeIntVal(result, intTy);
+  DefinedOrUnknownSVal SameBuf = svalBuilder.evalEQ(state, LV, RV);
+  const GRState *StSameBuf, *StNotSameBuf;
+  llvm::tie(StSameBuf, StNotSameBuf) = state->assume(SameBuf);
 
-  // Bind the return value of the expression.
-  // Set the return value.
-  state = state->BindExpr(CE, resultVal);
+  // If the two arguments might be the same buffer, we know the result is 0,
+  // and we only need to check one size.
+  if (StSameBuf) {
+    StSameBuf = StSameBuf->BindExpr(CE, svalBuilder.makeZeroVal(CE->getType()));
+    C.addTransition(StSameBuf);
+
+    // If the two arguments are GUARANTEED to be the same, we're done!
+    if (!StNotSameBuf)
+      return;
+  }
+
+  assert(StNotSameBuf);
+  state = StNotSameBuf;
+
+  // At this point we can go about comparing the two buffers.
+  // For now, we only do this if they're both known string literals.
+
+  // Attempt to extract string literals from both expressions.
+  const StringLiteral *s1StrLiteral = getCStringLiteral(C, state, s1, s1Val);
+  const StringLiteral *s2StrLiteral = getCStringLiteral(C, state, s2, s2Val);
+  bool canComputeResult = false;
+
+  if (s1StrLiteral && s2StrLiteral) {
+    llvm::StringRef s1StrRef = s1StrLiteral->getString();
+    llvm::StringRef s2StrRef = s2StrLiteral->getString();
+
+    if (isBounded) {
+      // Get the max number of characters to compare.
+      const Expr *lenExpr = CE->getArg(2);
+      SVal lenVal = state->getSVal(lenExpr);
+
+      // If the length is known, we can get the right substrings.
+      if (const llvm::APSInt *len = svalBuilder.getKnownValue(state, lenVal)) {
+        // Create substrings of each to compare the prefix.
+        s1StrRef = s1StrRef.substr(0, (size_t)len->getZExtValue());
+        s2StrRef = s2StrRef.substr(0, (size_t)len->getZExtValue());
+        canComputeResult = true;
+      }
+    } else {
+      // This is a normal, unbounded strcmp.
+      canComputeResult = true;
+    }
+
+    if (canComputeResult) {
+      // Real strcmp stops at null characters.
+      size_t s1Term = s1StrRef.find('\0');
+      if (s1Term != llvm::StringRef::npos)
+        s1StrRef = s1StrRef.substr(0, s1Term);
+
+      size_t s2Term = s2StrRef.find('\0');
+      if (s2Term != llvm::StringRef::npos)
+        s2StrRef = s2StrRef.substr(0, s2Term);
+
+      // Use StringRef's comparison methods to compute the actual result.
+      int result;
+
+      if (ignoreCase) {
+        // Compare string 1 to string 2 the same way strcasecmp() does.
+        result = s1StrRef.compare_lower(s2StrRef);
+      } else {
+        // Compare string 1 to string 2 the same way strcmp() does.
+        result = s1StrRef.compare(s2StrRef);
+      }
+
+      // Build the SVal of the comparison and bind the return value.
+      SVal resultVal = svalBuilder.makeIntVal(result, CE->getType());
+      state = state->BindExpr(CE, resultVal);
+    }
+  }
+
+  if (!canComputeResult) {
+    // Conjure a symbolic value. It's the best we can do.
+    unsigned Count = C.getNodeBuilder().getCurrentBlockCount();
+    SVal resultVal = svalBuilder.getConjuredSymbolVal(NULL, CE, Count);
+    state = state->BindExpr(CE, resultVal);
+  }
+
+  // Record this as a possible path.
   C.addTransition(state);
 }
 

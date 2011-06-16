@@ -542,7 +542,7 @@ void strncat_no_overflow_2(char *y) {
 //===----------------------------------------------------------------------===
 
 #define strcmp BUILTIN(strcmp)
-int strcmp(const char *restrict s1, const char *restrict s2);
+int strcmp(const char * s1, const char * s2);
 
 void strcmp_constant0() {
   if (strcmp("123", "123") != 0)
@@ -622,12 +622,22 @@ void strcmp_diff_length_3() {
     (void)*(char*)0; // no-warning
 }
 
+void strcmp_embedded_null () {
+	if (strcmp("\0z", "\0y") != 0)
+		(void)*(char*)0; // no-warning
+}
+
+void strcmp_unknown_arg (char *unknown) {
+	if (strcmp(unknown, unknown) != 0)
+		(void)*(char*)0; // no-warning
+}
+
 //===----------------------------------------------------------------------===
 // strncmp()
 //===----------------------------------------------------------------------===
 
 #define strncmp BUILTIN(strncmp)
-int strncmp(const char *restrict s1, const char *restrict s2, size_t n);
+int strncmp(const char *s1, const char *s2, size_t n);
 
 void strncmp_constant0() {
   if (strncmp("123", "123", 3) != 0)
@@ -728,12 +738,17 @@ void strncmp_diff_length_6() {
     (void)*(char*)0; // no-warning
 }
 
+void strncmp_embedded_null () {
+	if (strncmp("ab\0zz", "ab\0yy", 4) != 0)
+		(void)*(char*)0; // no-warning
+}
+
 //===----------------------------------------------------------------------===
 // strcasecmp()
 //===----------------------------------------------------------------------===
 
 #define strcasecmp BUILTIN(strcasecmp)
-int strcasecmp(const char *restrict s1, const char *restrict s2);
+int strcasecmp(const char *s1, const char *s2);
 
 void strcasecmp_constant0() {
   if (strcasecmp("abc", "Abc") != 0)
@@ -813,12 +828,17 @@ void strcasecmp_diff_length_3() {
     (void)*(char*)0; // no-warning
 }
 
+void strcasecmp_embedded_null () {
+	if (strcasecmp("ab\0zz", "ab\0yy") != 0)
+		(void)*(char*)0; // no-warning
+}
+
 //===----------------------------------------------------------------------===
 // strncasecmp()
 //===----------------------------------------------------------------------===
 
 #define strncasecmp BUILTIN(strncasecmp)
-int strncasecmp(const char *restrict s1, const char *restrict s2, size_t n);
+int strncasecmp(const char *s1, const char *s2, size_t n);
 
 void strncasecmp_constant0() {
   if (strncasecmp("abc", "Abc", 3) != 0)
@@ -917,4 +937,9 @@ void strncasecmp_diff_length_6() {
   char *y = "abc";
   if (strncasecmp(x, y, 3) != 1)
     (void)*(char*)0; // no-warning
+}
+
+void strncasecmp_embedded_null () {
+	if (strncasecmp("ab\0zz", "ab\0yy", 4) != 0)
+		(void)*(char*)0; // no-warning
 }
