@@ -16,6 +16,7 @@
 #include "LiveRangeEdit.h"
 #include "VirtRegMap.h"
 #include "VirtRegRewriter.h"
+#include "RegisterClassInfo.h"
 #include "Spiller.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Function.h"
@@ -148,6 +149,7 @@ namespace {
     BitVector reservedRegs_;
     LiveIntervals* li_;
     MachineLoopInfo *loopInfo;
+    RegisterClassInfo RegClassInfo;
 
     /// handled_ - Intervals are added to the handled_ set in the order of their
     /// start value.  This is uses for backtracking.
@@ -366,13 +368,10 @@ namespace {
     /// getFirstNonReservedPhysReg - return the first non-reserved physical
     /// register in the register class.
     unsigned getFirstNonReservedPhysReg(const TargetRegisterClass *RC) {
-        TargetRegisterClass::iterator aoe = RC->allocation_order_end(*mf_);
-        TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_);
-        while (i != aoe && reservedRegs_.test(*i))
-          ++i;
-        assert(i != aoe && "All registers reserved?!");
-        return *i;
-      }
+      ArrayRef<unsigned> O = RegClassInfo.getOrder(RC);
+      assert(!O.empty() && "All registers reserved?!");
+      return O.front();
+    }
 
     void ComputeRelatedRegClasses();
 
@@ -524,6 +523,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   reservedRegs_ = tri_->getReservedRegs(fn);
   li_ = &getAnalysis<LiveIntervals>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
+  RegClassInfo.runOnMachineFunction(fn);
 
   // We don't run the coalescer here because we have no reason to
   // interact with it.  If the coalescer requires interaction, it
@@ -1166,14 +1166,11 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
 
   bool Found = false;
   std::vector<std::pair<unsigned,float> > RegsWeights;
+  ArrayRef<unsigned> Order = RegClassInfo.getOrder(RC);
   if (!minReg || SpillWeights[minReg] == HUGE_VALF)
-    for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
-           e = RC->allocation_order_end(*mf_); i != e; ++i) {
-      unsigned reg = *i;
+    for (unsigned i = 0; i != Order.size(); ++i) {
+      unsigned reg = Order[i];
       float regWeight = SpillWeights[reg];
-      // Don't even consider reserved regs.
-      if (reservedRegs_.test(reg))
-        continue;
       // Skip recently allocated registers and reserved registers.
       if (minWeight > regWeight && !isRecentlyUsed(reg))
         Found = true;
@@ -1182,11 +1179,8 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur) {
 
   // If we didn't find a register that is spillable, try aliases?
   if (!Found) {
-    for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
-           e = RC->allocation_order_end(*mf_); i != e; ++i) {
-      unsigned reg = *i;
-      if (reservedRegs_.test(reg))
-        continue;
+    for (unsigned i = 0; i != Order.size(); ++i) {
+      unsigned reg = Order[i];
       // No need to worry about if the alias register size < regsize of RC.
       // We are going to spill all registers that alias it anyway.
       for (const unsigned* as = tri_->getAliasSet(reg); *as; ++as)
