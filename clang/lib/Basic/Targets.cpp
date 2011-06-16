@@ -84,14 +84,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
   Builder.defineMacro("__MACH__");
   Builder.defineMacro("OBJC_NEW_PROPERTIES");
 
-  if (Opts.ObjCAutoRefCount) {
-    Builder.defineMacro("__weak", "__attribute__((objc_lifetime(weak)))");
-    Builder.defineMacro("__strong", "__attribute__((objc_lifetime(strong)))");
-    Builder.defineMacro("__autoreleasing",
-                        "__attribute__((objc_lifetime(autoreleasing)))");
-    Builder.defineMacro("__unsafe_unretained",
-                        "__attribute__((objc_lifetime(none)))");
-  } else {
+  if (!Opts.ObjCAutoRefCount) {
     // __weak is always defined, for use in blocks and with objc pointers.
     Builder.defineMacro("__weak", "__attribute__((objc_gc(weak)))");
 

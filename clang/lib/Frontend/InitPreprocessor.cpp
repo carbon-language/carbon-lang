@@ -606,6 +606,15 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (LangOpts.FastRelaxedMath)
     Builder.defineMacro("__FAST_RELAXED_MATH__");
 
+  if (LangOpts.ObjCAutoRefCount) {
+    Builder.defineMacro("__weak", "__attribute__((objc_lifetime(weak)))");
+    Builder.defineMacro("__strong", "__attribute__((objc_lifetime(strong)))");
+    Builder.defineMacro("__autoreleasing",
+                        "__attribute__((objc_lifetime(autoreleasing)))");
+    Builder.defineMacro("__unsafe_unretained",
+                        "__attribute__((objc_lifetime(none)))");
+  }
+
   // Get other target #defines.
   TI.getTargetDefines(LangOpts, Builder);
 }
