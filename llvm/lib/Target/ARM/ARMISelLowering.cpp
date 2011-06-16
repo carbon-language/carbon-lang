@@ -5687,7 +5687,7 @@ static SDValue PerformVMULCombine(SDNode *N,
   unsigned Opcode = N0.getOpcode();
   if (Opcode != ISD::ADD && Opcode != ISD::SUB &&
       Opcode != ISD::FADD && Opcode != ISD::FSUB) {
-    Opcode = N0.getOpcode();
+    Opcode = N1.getOpcode();
     if (Opcode != ISD::ADD && Opcode != ISD::SUB &&
         Opcode != ISD::FADD && Opcode != ISD::FSUB)
       return SDValue();
