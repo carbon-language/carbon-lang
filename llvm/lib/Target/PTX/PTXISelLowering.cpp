@@ -35,22 +35,22 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f64, PTX::RRegf64RegisterClass);
 
   setBooleanContents(ZeroOrOneBooleanContent);
-  
+
   setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
 
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
   setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
-  
+
   // Turn i16 (z)extload into load + (z)extend
   setLoadExtAction(ISD::EXTLOAD, MVT::i16, Expand);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
 
   // Turn f32 extload into load + fextend
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
-  
+
   // Turn f64 truncstore into trunc + store.
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
-  
+
   // Customize translation of memory addresses
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
@@ -62,7 +62,7 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
-  
+
   // need to lower SETCC of Preds into bitwise logic
   setOperationAction(ISD::SETCC, MVT::i1, Custom);
 
@@ -113,18 +113,18 @@ SDValue PTXTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Op2 = Op.getOperand(2);
   DebugLoc dl = Op.getDebugLoc();
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
-  
+
   // Look for X == 0, X == 1, X != 0, or X != 1  
   // We can simplify these to bitwise logic
-  
+
   if (Op1.getOpcode() == ISD::Constant &&
       (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
        cast<ConstantSDNode>(Op1)->isNullValue()) &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
 
-	  return DAG.getNode(ISD::AND, dl, MVT::i1, Op0, Op1);
+    return DAG.getNode(ISD::AND, dl, MVT::i1, Op0, Op1);
   }
-  
+
   return DAG.getNode(ISD::SETCC, dl, MVT::i1, Op0, Op1, Op2);
 }
 

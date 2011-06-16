@@ -311,7 +311,7 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
     decl += ".b8 ";
     decl += gvsym->getName();
     decl += "[";
-    
+
     if (elementTy->isArrayTy())
     {
       assert(elementTy->isArrayTy() && "Only pointers to arrays are supported");
@@ -320,7 +320,7 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
       elementTy = arrayTy->getElementType();
 
       unsigned numElements = arrayTy->getNumElements();
-      
+
       while (elementTy->isArrayTy()) {
 
         arrayTy = dyn_cast<const ArrayType>(elementTy);
@@ -336,14 +336,14 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
       // Compute the size of the array, in bytes.
       uint64_t arraySize = (elementTy->getPrimitiveSizeInBits() >> 3)
                         * numElements;
-  
+
       decl += utostr(arraySize);
     }
-    
+
     decl += "]";
-    
+
     // handle string constants (assume ConstantArray means string)
-    
+
     if (gv->hasInitializer())
     {
       Constant *C = gv->getInitializer();  
@@ -354,10 +354,11 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
         for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         {
           if (i > 0)   decl += ",";
-      
-          decl += "0x" + utohexstr(cast<ConstantInt>(CA->getOperand(i))->getZExtValue());
+
+          decl += "0x" +
+                utohexstr(cast<ConstantInt>(CA->getOperand(i))->getZExtValue());
         }
-      
+
         decl += "}";
       }
     }
