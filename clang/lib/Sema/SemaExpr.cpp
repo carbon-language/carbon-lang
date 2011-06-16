@@ -6364,13 +6364,13 @@ static bool ExprLooksBoolean(Expr *E) {
 /// "int x = a + someBinaryCondition ? 1 : 2".
 static void DiagnoseConditionalPrecedence(Sema &Self,
                                           SourceLocation OpLoc,
-                                          Expr *cond,
-                                          Expr *lhs,
-                                          Expr *rhs) {
+                                          Expr *Condition,
+                                          Expr *LHS,
+                                          Expr *RHS) {
   BinaryOperatorKind CondOpcode;
   Expr *CondRHS;
 
-  if (!IsArithmeticBinaryExpr(cond, &CondOpcode, &CondRHS))
+  if (!IsArithmeticBinaryExpr(Condition, &CondOpcode, &CondRHS))
     return;
   if (!ExprLooksBoolean(CondRHS))
     return;
@@ -6379,21 +6379,21 @@ static void DiagnoseConditionalPrecedence(Sema &Self,
   // hand side that looks boolean, so warn.
 
   PartialDiagnostic Warn = Self.PDiag(diag::warn_precedence_conditional)
-      << cond->getSourceRange()
+      << Condition->getSourceRange()
       << BinaryOperator::getOpcodeStr(CondOpcode);
 
   PartialDiagnostic FirstNote =
       Self.PDiag(diag::note_precedence_conditional_silence)
       << BinaryOperator::getOpcodeStr(CondOpcode);
 
-  SourceRange FirstParenRange(cond->getLocStart(),
-                              cond->getLocEnd());
+  SourceRange FirstParenRange(Condition->getLocStart(),
+                              Condition->getLocEnd());
 
   PartialDiagnostic SecondNote =
       Self.PDiag(diag::note_precedence_conditional_first);
 
   SourceRange SecondParenRange(CondRHS->getLocStart(),
-                               rhs->getLocEnd());
+                               RHS->getLocEnd());
 
   SuggestParentheses(Self, OpLoc, Warn, FirstNote, FirstParenRange,
                      SecondNote, SecondParenRange);
