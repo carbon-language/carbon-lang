@@ -2550,16 +2550,33 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
   for (SmallPtrSet<Instruction *, 2>::const_iterator
        PI = RetainsToMove.ReverseInsertPts.begin(),
        PE = RetainsToMove.ReverseInsertPts.end(); PI != PE; ++PI) {
-    Instruction *InsertPt = llvm::next(BasicBlock::iterator(*PI));
-    Value *MyArg = ArgTy == ParamTy ? Arg :
-                   new BitCastInst(Arg, ParamTy, "", InsertPt);
-    CallInst *Call = CallInst::Create(ReleaseFunc, MyArg, "", InsertPt);
-    // Attach a clang.imprecise_release metadata tag, if appropriate.
-    if (MDNode *M = ReleasesToMove.ReleaseMetadata)
-      Call->setMetadata(ImpreciseReleaseMDKind, M);
-    Call->setDoesNotThrow();
-    if (ReleasesToMove.IsTailCallRelease)
-      Call->setTailCall();
+    Instruction *LastUse = *PI;
+    Instruction *InsertPts[] = { 0, 0, 0 };
+    if (InvokeInst *II = dyn_cast<InvokeInst>(LastUse)) {
+      // We can't insert code immediately after an invoke instruction, so
+      // insert code at the beginning of both successor blocks instead.
+      // The invoke's return value isn't available in the unwind block,
+      // but our releases will never depend on it, because they must be
+      // paired with retains from before the invoke.
+      InsertPts[0] = II->getNormalDest()->getFirstNonPHI();
+      InsertPts[1] = II->getUnwindDest()->getFirstNonPHI();
+    } else {
+      // Insert code immediately after the last use.
+      InsertPts[0] = llvm::next(BasicBlock::iterator(LastUse));
+    }
+
+    for (Instruction **I = InsertPts; *I; ++I) {
+      Instruction *InsertPt = *I;
+      Value *MyArg = ArgTy == ParamTy ? Arg :
+                     new BitCastInst(Arg, ParamTy, "", InsertPt);
+      CallInst *Call = CallInst::Create(ReleaseFunc, MyArg, "", InsertPt);
+      // Attach a clang.imprecise_release metadata tag, if appropriate.
+      if (MDNode *M = ReleasesToMove.ReleaseMetadata)
+        Call->setMetadata(ImpreciseReleaseMDKind, M);
+      Call->setDoesNotThrow();
+      if (ReleasesToMove.IsTailCallRelease)
+        Call->setTailCall();
+    }
   }
 
   // Delete the original retain and release calls.
