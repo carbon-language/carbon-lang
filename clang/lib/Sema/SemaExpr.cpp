@@ -6255,43 +6255,21 @@ QualType Sema::FindCompositeObjCPointerType(ExprResult &LHS, ExprResult &RHS,
   return QualType();
 }
 
-/// SuggestParentheses - Emit a diagnostic together with a fixit hint that wraps
+/// SuggestParentheses - Emit a note with a fixit hint that wraps
 /// ParenRange in parentheses.
 static void SuggestParentheses(Sema &Self, SourceLocation Loc,
-                               const PartialDiagnostic &PD,
-                               const PartialDiagnostic &FirstNote,
-                               SourceRange FirstParenRange,
-                               const PartialDiagnostic &SecondNote,
-                               SourceRange SecondParenRange) {
-  Self.Diag(Loc, PD);
-
-  if (!FirstNote.getDiagID())
-    return;
-
-  SourceLocation EndLoc = Self.PP.getLocForEndOfToken(FirstParenRange.getEnd());
-  if (!FirstParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
-    // We can't display the parentheses, so just return.
-    return;
+                               const PartialDiagnostic &Note,
+                               SourceRange ParenRange) {
+  SourceLocation EndLoc = Self.PP.getLocForEndOfToken(ParenRange.getEnd());
+  if (ParenRange.getBegin().isFileID() && ParenRange.getEnd().isFileID() &&
+      EndLoc.isValid()) {
+    Self.Diag(Loc, Note)
+      << FixItHint::CreateInsertion(ParenRange.getBegin(), "(")
+      << FixItHint::CreateInsertion(EndLoc, ")");
+  } else {
+    // We can't display the parentheses, so just show the bare note.
+    Self.Diag(Loc, Note) << ParenRange;
   }
-
-  Self.Diag(Loc, FirstNote)
-    << FixItHint::CreateInsertion(FirstParenRange.getBegin(), "(")
-    << FixItHint::CreateInsertion(EndLoc, ")");
-
-  if (!SecondNote.getDiagID())
-    return;
-
-  EndLoc = Self.PP.getLocForEndOfToken(SecondParenRange.getEnd());
-  if (!SecondParenRange.getEnd().isFileID() || EndLoc.isInvalid()) {
-    // We can't display the parentheses, so just dig the
-    // warning/error and return.
-    Self.Diag(Loc, SecondNote);
-    return;
-  }
-
-  Self.Diag(Loc, SecondNote)
-    << FixItHint::CreateInsertion(SecondParenRange.getBegin(), "(")
-    << FixItHint::CreateInsertion(EndLoc, ")");
 }
 
 static bool IsArithmeticOp(BinaryOperatorKind Opc) {
@@ -6378,25 +6356,18 @@ static void DiagnoseConditionalPrecedence(Sema &Self,
   // The condition is an arithmetic binary expression, with a right-
   // hand side that looks boolean, so warn.
 
-  PartialDiagnostic Warn = Self.PDiag(diag::warn_precedence_conditional)
+  Self.Diag(OpLoc, diag::warn_precedence_conditional)
       << Condition->getSourceRange()
       << BinaryOperator::getOpcodeStr(CondOpcode);
 
-  PartialDiagnostic FirstNote =
-      Self.PDiag(diag::note_precedence_conditional_silence)
-      << BinaryOperator::getOpcodeStr(CondOpcode);
+  SuggestParentheses(Self, OpLoc,
+    Self.PDiag(diag::note_precedence_conditional_silence)
+      << BinaryOperator::getOpcodeStr(CondOpcode),
+    SourceRange(Condition->getLocStart(), Condition->getLocEnd()));
 
-  SourceRange FirstParenRange(Condition->getLocStart(),
-                              Condition->getLocEnd());
-
-  PartialDiagnostic SecondNote =
-      Self.PDiag(diag::note_precedence_conditional_first);
-
-  SourceRange SecondParenRange(CondRHS->getLocStart(),
-                               RHS->getLocEnd());
-
-  SuggestParentheses(Self, OpLoc, Warn, FirstNote, FirstParenRange,
-                     SecondNote, SecondParenRange);
+  SuggestParentheses(Self, OpLoc,
+    Self.PDiag(diag::note_precedence_conditional_first),
+    SourceRange(CondRHS->getLocStart(), RHS->getLocEnd()));
 }
 
 /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
@@ -9080,28 +9051,31 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
       (BinOp::isComparisonOp(rhsopc) || BinOp::isBitwiseOp(rhsopc)))
     return;
 
-  if (BinOp::isComparisonOp(lhsopc))
+  if (BinOp::isComparisonOp(lhsopc)) {
+    Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
+        << SourceRange(lhs->getLocStart(), OpLoc)
+        << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(lhsopc);
     SuggestParentheses(Self, OpLoc,
-      Self.PDiag(diag::warn_precedence_bitwise_rel)
-          << SourceRange(lhs->getLocStart(), OpLoc)
-          << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(lhsopc),
       Self.PDiag(diag::note_precedence_bitwise_silence)
           << BinOp::getOpcodeStr(lhsopc),
-      lhs->getSourceRange(),
+      lhs->getSourceRange());
+    SuggestParentheses(Self, OpLoc,
       Self.PDiag(diag::note_precedence_bitwise_first)
           << BinOp::getOpcodeStr(Opc),
       SourceRange(cast<BinOp>(lhs)->getRHS()->getLocStart(), rhs->getLocEnd()));
-  else if (BinOp::isComparisonOp(rhsopc))
+  } else if (BinOp::isComparisonOp(rhsopc)) {
+    Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
+        << SourceRange(OpLoc, rhs->getLocEnd())
+        << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(rhsopc);
     SuggestParentheses(Self, OpLoc,
-      Self.PDiag(diag::warn_precedence_bitwise_rel)
-          << SourceRange(OpLoc, rhs->getLocEnd())
-          << BinOp::getOpcodeStr(Opc) << BinOp::getOpcodeStr(rhsopc),
       Self.PDiag(diag::note_precedence_bitwise_silence)
           << BinOp::getOpcodeStr(rhsopc),
-      rhs->getSourceRange(),
+      rhs->getSourceRange());
+    SuggestParentheses(Self, OpLoc,
       Self.PDiag(diag::note_precedence_bitwise_first)
         << BinOp::getOpcodeStr(Opc),
       SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()));
+  }
 }
 
 /// \brief It accepts a '&&' expr that is inside a '||' one.
@@ -9111,12 +9085,11 @@ static void
 EmitDiagnosticForLogicalAndInLogicalOr(Sema &Self, SourceLocation OpLoc,
                                        BinaryOperator *Bop) {
   assert(Bop->getOpcode() == BO_LAnd);
+  Self.Diag(Bop->getOperatorLoc(), diag::warn_logical_and_in_logical_or)
+      << Bop->getSourceRange() << OpLoc;
   SuggestParentheses(Self, Bop->getOperatorLoc(),
-    Self.PDiag(diag::warn_logical_and_in_logical_or)
-        << Bop->getSourceRange() << OpLoc,
     Self.PDiag(diag::note_logical_and_in_logical_or_silence),
-    Bop->getSourceRange(),
-    Self.PDiag(0), SourceRange());
+    Bop->getSourceRange());
 }
 
 /// \brief Returns true if the given expression can be evaluated as a constant
