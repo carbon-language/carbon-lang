@@ -69,7 +69,8 @@ CommandInterpreter::CommandInterpreter
     m_synchronous_execution (synchronous_execution),
     m_skip_lldbinit_files (false),
     m_script_interpreter_ap (),
-    m_comment_char ('#')
+    m_comment_char ('#'),
+    m_batch_command_mode (false)
 {
     const char *dbg_name = debugger.GetInstanceName().AsCString();
     std::string lang_name = ScriptInterpreter::LanguageToString (script_language);

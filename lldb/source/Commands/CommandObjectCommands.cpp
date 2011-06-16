@@ -925,10 +925,12 @@ CommandObjectCommandsAddRegex::InputReaderCallback (void *baton,
                                                     size_t bytes_len)
 {
     CommandObjectCommandsAddRegex *add_regex_cmd = (CommandObjectCommandsAddRegex *) baton;
+    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();    
     
     switch (notification)
     {
         case eInputReaderActivate:
+            if (!batch_mode)
             {
                 StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream ();
                 out_stream->Printf("%s\n", "Enter regular expressions in the form 's/<regex>/<subst>/' and terminate with an empty line:");
@@ -955,9 +957,12 @@ CommandObjectCommandsAddRegex::InputReaderCallback (void *baton,
                 Error error (add_regex_cmd->AppendRegexSubstitution (bytes_strref));
                 if (error.Fail())
                 {
-                    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-                    out_stream->Printf("error: %s\n", error.AsCString());
-                    out_stream->Flush();
+                    if (!batch_mode)
+                    {
+                        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+                        out_stream->Printf("error: %s\n", error.AsCString());
+                        out_stream->Flush();
+                    }
                     add_regex_cmd->InputReaderDidCancel ();
                     reader.SetIsDone (true);
                 }
@@ -967,9 +972,12 @@ CommandObjectCommandsAddRegex::InputReaderCallback (void *baton,
         case eInputReaderInterrupt:
             {
                 reader.SetIsDone (true);
-                StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
-                out_stream->PutCString("Regular expression command creations was cancelled.\n");
-                out_stream->Flush();
+                if (!batch_mode)
+                {
+                    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+                    out_stream->PutCString("Regular expression command creations was cancelled.\n");
+                    out_stream->Flush();
+                }
                 add_regex_cmd->InputReaderDidCancel ();
             }
             break;

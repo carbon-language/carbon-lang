@@ -445,25 +445,29 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
     size_t bytes_len
 )
 {
-    File &out_file = reader.GetDebugger().GetOutputFile();
-
+    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+    
     switch (notification)
     {
     case eInputReaderActivate:
-        out_file.Printf ("%s\n", g_reader_instructions);
-        if (reader.GetPrompt())
-            out_file.Printf ("%s", reader.GetPrompt());
-        out_file.Flush();
+        if (!batch_mode)
+        {
+            out_stream->Printf ("%s\n", g_reader_instructions);
+            if (reader.GetPrompt())
+                out_stream->Printf ("%s", reader.GetPrompt());
+            out_stream->Flush();
+        }
         break;
 
     case eInputReaderDeactivate:
         break;
 
     case eInputReaderReactivate:
-        if (reader.GetPrompt())
+        if (reader.GetPrompt() && !batch_mode)
         {
-            out_file.Printf ("%s", reader.GetPrompt());
-            out_file.Flush();
+            out_stream->Printf ("%s", reader.GetPrompt());
+            out_stream->Flush();
         }
         break;
 
@@ -481,10 +485,10 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
                     ((BreakpointOptions::CommandData *)bp_options_baton->m_data)->user_source.AppendString (bytes, bytes_len); 
             }
         }
-        if (!reader.IsDone() && reader.GetPrompt())
+        if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
         {
-            out_file.Printf ("%s", reader.GetPrompt());
-            out_file.Flush();
+            out_stream->Printf ("%s", reader.GetPrompt());
+            out_stream->Flush();
         }
         break;
         
@@ -502,8 +506,11 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
                     ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->script_source.Clear();
                 }
             }
-            out_file.Printf ("Warning: No command attached to breakpoint.\n");
-            out_file.Flush();
+            if (!batch_mode)
+            {
+                out_stream->Printf ("Warning: No command attached to breakpoint.\n");
+                out_stream->Flush();
+            }
         }
         break;
         

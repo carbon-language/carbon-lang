@@ -191,10 +191,12 @@ CommandObjectExpression::MultiLineExpressionCallback
 )
 {
     CommandObjectExpression *cmd_object_expr = (CommandObjectExpression *) baton;
-
+    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+    
     switch (notification)
     {
     case eInputReaderActivate:
+        if (!batch_mode)
         {
             StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
             out_stream->Printf("%s\n", "Enter expressions, then terminate with an empty line to evaluate:");
@@ -224,6 +226,7 @@ CommandObjectExpression::MultiLineExpressionCallback
     case eInputReaderInterrupt:
         cmd_object_expr->m_expr_lines.clear();
         reader.SetIsDone (true);
+        if (!batch_mode)
         {
             StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
             out_stream->Printf("%s\n", "Expression evaluation cancelled.");

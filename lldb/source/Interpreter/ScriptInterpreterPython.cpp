@@ -499,13 +499,18 @@ ScriptInterpreterPython::InputReaderCallback
     if (script_interpreter->m_script_lang != eScriptLanguagePython)
         return 0;
     
-    File &out_file = reader.GetDebugger().GetOutputFile();
-
+    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+    
     switch (notification)
     {
     case eInputReaderActivate:
         {
-            out_file.Printf ("Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.\n");
+            if (!batch_mode)
+            {
+                out_stream->Printf ("Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.\n");
+                out_stream->Flush();
+            }
 
             // Save terminal settings if we can
             int input_fd = reader.GetDebugger().GetInputFile().GetDescriptor();
@@ -518,7 +523,8 @@ ScriptInterpreterPython::InputReaderCallback
             {
                 while (!GetPythonLock(1)) 
                 {
-                    out_file.Printf ("Python interpreter locked on another thread; waiting to acquire lock...\n");
+                    out_stream->Printf ("Python interpreter locked on another thread; waiting to acquire lock...\n");
+                    out_stream->Flush();
                 }
                 script_interpreter->EnterSession ();
                 ReleasePythonLock();
@@ -958,21 +964,22 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
     size_t bytes_len
 )
 {
-  static StringList commands_in_progress;
-
-    File &out_file = reader.GetDebugger().GetOutputFile();
-
+    static StringList commands_in_progress;
+    
+    StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
+    bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
+    
     switch (notification)
     {
     case eInputReaderActivate:
         {
             commands_in_progress.Clear();
-            if (out_file.IsValid())
+            if (!batch_mode)
             {
-                out_file.Printf ("%s\n", g_reader_instructions);
+                out_stream->Printf ("%s\n", g_reader_instructions);
                 if (reader.GetPrompt())
-                    out_file.Printf ("%s", reader.GetPrompt());
-                out_file.Flush ();
+                    out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush ();
             }
         }
         break;
@@ -981,10 +988,10 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
         break;
 
     case eInputReaderReactivate:
-        if (reader.GetPrompt() && out_file.IsValid())
+        if (reader.GetPrompt() && !batch_mode)
         {
-            out_file.Printf ("%s", reader.GetPrompt());
-            out_file.Flush ();
+            out_stream->Printf ("%s", reader.GetPrompt());
+            out_stream->Flush ();
         }
         break;
 
@@ -995,10 +1002,10 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
         {
             std::string temp_string (bytes, bytes_len);
             commands_in_progress.AppendString (temp_string.c_str());
-            if (out_file.IsValid() && !reader.IsDone() && reader.GetPrompt())
+            if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
             {
-                out_file.Printf ("%s", reader.GetPrompt());
-                out_file.Flush ();
+                out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush ();
             }
         }
         break;
@@ -1033,12 +1040,19 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
                             bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
                         }
                     }
-                    else
-                        out_file.Printf ("Warning: No command attached to breakpoint.\n");
+                    else if (!batch_mode)
+                    {
+                        out_stream->Printf ("Warning: No command attached to breakpoint.\n");
+                        out_stream->Flush();
+                    }
                 }
                 else
                 {
-                    out_file.Printf ("Warning:  Unable to find script intepreter; no command attached to breakpoint.\n");
+		            if (!batch_mode)
+                    {
+                        out_stream->Printf ("Warning:  Unable to find script intepreter; no command attached to breakpoint.\n");
+                        out_stream->Flush();
+                    }
                 }
             }
         }

@@ -11,6 +11,7 @@
 
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -300,6 +301,9 @@ InputReader::GetPrompt () const
 void
 InputReader::RefreshPrompt ()
 {
+	if (m_debugger.GetCommandInterpreter().GetBatchCommandMode())
+        return;
+    
     if (!m_prompt.empty())
     {
         File &out_file = m_debugger.GetOutputFile();

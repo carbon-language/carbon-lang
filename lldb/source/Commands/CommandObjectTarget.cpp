@@ -3075,17 +3075,21 @@ public:
                                   const char *bytes, 
                                   size_t bytes_len)
     {
-        File &out_file = reader.GetDebugger().GetOutputFile();
+        StreamSP out_stream = reader.GetDebugger().GetAsyncOutputStream();
         Target::StopHook *new_stop_hook = ((Target::StopHook *) baton);
         static bool got_interrupted;
+        bool batch_mode = reader.GetDebugger().GetCommandInterpreter().GetBatchCommandMode();
 
         switch (notification)
         {
         case eInputReaderActivate:
-            out_file.Printf ("%s\n", "Enter your stop hook command(s).  Type 'DONE' to end.");
-            if (reader.GetPrompt())
-                out_file.Printf ("%s", reader.GetPrompt());
-            out_file.Flush();
+            if (!batch_mode)
+            {
+                out_stream->Printf ("%s\n", "Enter your stop hook command(s).  Type 'DONE' to end.");
+                if (reader.GetPrompt())
+                    out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush();
+            }
             got_interrupted = false;
             break;
 
@@ -3093,10 +3097,10 @@ public:
             break;
 
         case eInputReaderReactivate:
-            if (reader.GetPrompt())
+            if (reader.GetPrompt() && !batch_mode)
             {
-                out_file.Printf ("%s", reader.GetPrompt());
-                out_file.Flush();
+                out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush();
             }
             got_interrupted = false;
             break;
@@ -3113,10 +3117,10 @@ public:
                     commands->AppendString (bytes, bytes_len); 
                 }
             }
-            if (!reader.IsDone() && reader.GetPrompt())
+            if (!reader.IsDone() && reader.GetPrompt() && !batch_mode)
             {
-                out_file.Printf ("%s", reader.GetPrompt());
-                out_file.Flush();
+                out_stream->Printf ("%s", reader.GetPrompt());
+                out_stream->Flush();
             }
             break;
             
@@ -3124,8 +3128,12 @@ public:
             {
                 // Finish, and cancel the stop hook.
                 new_stop_hook->GetTarget()->RemoveStopHookByID(new_stop_hook->GetID());
-                out_file.Printf ("Stop hook cancelled.\n");
-
+                if (!batch_mode)
+                {
+                    out_stream->Printf ("Stop hook cancelled.\n");
+                    out_stream->Flush();
+                }
+                
                 reader.SetIsDone (true);
             }
             got_interrupted = true;
@@ -3136,8 +3144,11 @@ public:
             break;
             
         case eInputReaderDone:
-            if (!got_interrupted)
-                out_file.Printf ("Stop hook #%d added.\n", new_stop_hook->GetID());
+            if (!got_interrupted && !batch_mode)
+            {
+                out_stream->Printf ("Stop hook #%d added.\n", new_stop_hook->GetID());
+                out_stream->Flush();
+            }
             break;
         }
 

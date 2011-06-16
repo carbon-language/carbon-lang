@@ -354,6 +354,12 @@ public:
                            const char *search_word, 
                            StringList &commands_found, 
                            StringList &commands_help);
+                           
+    bool
+    GetBatchCommandMode () { return m_batch_command_mode; }
+    
+    void
+    SetBatchCommandMode (bool value) { m_batch_command_mode = value; }
 
 protected:
     friend class Debugger;
@@ -378,6 +384,7 @@ private:
     std::string m_repeat_command;               // Stores the command that will be executed for an empty command string.
     std::auto_ptr<ScriptInterpreter> m_script_interpreter_ap;
     char m_comment_char;
+    bool m_batch_command_mode;
 };
 
 
