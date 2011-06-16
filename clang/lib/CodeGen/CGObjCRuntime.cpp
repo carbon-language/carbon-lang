@@ -134,7 +134,7 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                              ContainingTypeSize, ContainingTypeAlign));
 
   return LValue::MakeBitfield(V, *Info,
-                              IvarTy.getCVRQualifiers() | CVRQualifiers);
+                              IvarTy.withCVRQualifiers(CVRQualifiers));
 }
 
 namespace {

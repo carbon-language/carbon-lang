@@ -1397,8 +1397,7 @@ public:
   /// EmitExprAsInit - Emits the code necessary to initialize a
   /// location in memory with the given initializer.
   void EmitExprAsInit(const Expr *init, const ValueDecl *D,
-                      llvm::Value *loc, CharUnits alignment,
-                      bool capturedByInit);
+                      LValue lvalue, bool capturedByInit);
 
   /// EmitAggregateCopy - Emit an aggrate copy.
   ///
@@ -1597,8 +1596,7 @@ public:
   void EmitVarDecl(const VarDecl &D);
 
   void EmitScalarInit(const Expr *init, const ValueDecl *D,
-                      llvm::Value *addr, bool capturedByInit,
-                      bool isVolatile, unsigned alignment, QualType type);
+                      LValue lvalue, bool capturedByInit);
 
   typedef void SpecialInitFn(CodeGenFunction &Init, const VarDecl &D,
                              llvm::Value *Address);
@@ -1791,6 +1789,7 @@ public:
   llvm::Value *EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                 unsigned Alignment, QualType Ty,
                                 llvm::MDNode *TBAAInfo = 0);
+  llvm::Value *EmitLoadOfScalar(LValue lvalue);
 
   /// EmitStoreOfScalar - Store a scalar value to an address, taking
   /// care to appropriately convert from the memory representation to
@@ -1798,6 +1797,7 @@ public:
   void EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                          bool Volatile, unsigned Alignment, QualType Ty,
                          llvm::MDNode *TBAAInfo = 0);
+  void EmitStoreOfScalar(llvm::Value *value, LValue lvalue);
 
   /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
   /// this method emits the address of the lvalue, then loads the result as an

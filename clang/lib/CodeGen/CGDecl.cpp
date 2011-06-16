@@ -453,16 +453,23 @@ static bool isAccessedBy(const ValueDecl *decl, const Expr *e) {
   return isAccessedBy(*var, e);
 }
 
+static void drillIntoBlockVariable(CodeGenFunction &CGF,
+                                   LValue &lvalue,
+                                   const VarDecl *var) {
+  lvalue.setAddress(CGF.BuildBlockByrefAddress(lvalue.getAddress(), var));
+}
+
 void CodeGenFunction::EmitScalarInit(const Expr *init,
                                      const ValueDecl *D,
-                                     llvm::Value *addr, bool capturedByInit,
-                                     bool isVolatile, unsigned alignment, 
-                                     QualType type) {
-  Qualifiers::ObjCLifetime lifetime = type.getQualifiers().getObjCLifetime();
+                                     LValue lvalue,
+                                     bool capturedByInit) {
+  QualType type = lvalue.getType();
+  Qualifiers::ObjCLifetime lifetime = lvalue.getObjCLifetime();
   if (!lifetime) {
     llvm::Value *value = EmitScalarExpr(init);
-    if (capturedByInit) addr = BuildBlockByrefAddress(addr, cast<VarDecl>(D));
-    EmitStoreOfScalar(value, addr, isVolatile, alignment, type);
+    if (capturedByInit)
+      drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
+    EmitStoreThroughLValue(RValue::get(value), lvalue, lvalue.getType());
     return;
   }
 
@@ -480,27 +487,28 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
   if (lifetime != Qualifiers::OCL_ExplicitNone)
     accessedByInit = isAccessedBy(D, init);
   if (accessedByInit) {
+    LValue tempLV = lvalue;
     // Drill down to the __block object if necessary.
-    llvm::Value *tempAddr = addr;
     if (capturedByInit) {
       // We can use a simple GEP for this because it can't have been
       // moved yet.
-      tempAddr = Builder.CreateStructGEP(tempAddr,
-                                   getByRefValueLLVMField(cast<VarDecl>(D)));
+      tempLV.setAddress(Builder.CreateStructGEP(tempLV.getAddress(),
+                                   getByRefValueLLVMField(cast<VarDecl>(D))));
     }
 
-    const llvm::PointerType *ty = cast<llvm::PointerType>(tempAddr->getType());
+    const llvm::PointerType *ty
+      = cast<llvm::PointerType>(tempLV.getAddress()->getType());
     ty = cast<llvm::PointerType>(ty->getElementType());
 
     llvm::Value *zero = llvm::ConstantPointerNull::get(ty);
     
     // If __weak, we want to use a barrier under certain conditions.
     if (lifetime == Qualifiers::OCL_Weak)
-      EmitARCInitWeak(tempAddr, zero);
+      EmitARCInitWeak(tempLV.getAddress(), zero);
 
     // Otherwise just do a simple store.
     else
-      EmitStoreOfScalar(zero, tempAddr, isVolatile, alignment, type);
+      EmitStoreOfScalar(zero, tempLV);
   }
 
   // Emit the initializer.
@@ -526,11 +534,11 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
     // disappear in the common case.
     value = EmitScalarExpr(init);
 
-    if (capturedByInit) addr = BuildBlockByrefAddress(addr, cast<VarDecl>(D));
+    if (capturedByInit) drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
     if (accessedByInit)
-      EmitARCStoreWeak(addr, value, /*ignored*/ true);
+      EmitARCStoreWeak(lvalue.getAddress(), value, /*ignored*/ true);
     else
-      EmitARCInitWeak(addr, value);
+      EmitARCInitWeak(lvalue.getAddress(), value);
     return;
   }
 
@@ -539,22 +547,19 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
     break;
   }
 
-  if (capturedByInit) addr = BuildBlockByrefAddress(addr, cast<VarDecl>(D));
-
-  llvm::MDNode *tbaa = CGM.getTBAAInfo(type);
+  if (capturedByInit) drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
 
   // If the variable might have been accessed by its initializer, we
   // might have to initialize with a barrier.  We have to do this for
   // both __weak and __strong, but __weak got filtered out above.
   if (accessedByInit && lifetime == Qualifiers::OCL_Strong) {
-    llvm::Value *oldValue
-      = EmitLoadOfScalar(addr, isVolatile, alignment, type, tbaa);
-    EmitStoreOfScalar(value, addr, isVolatile, alignment, type, tbaa);
+    llvm::Value *oldValue = EmitLoadOfScalar(lvalue);
+    EmitStoreOfScalar(value, lvalue);
     EmitARCRelease(oldValue, /*precise*/ false);
     return;
   }
 
-  EmitStoreOfScalar(value, addr, isVolatile, alignment, type, tbaa);  
+  EmitStoreOfScalar(value, lvalue);
 }
 
 /// canEmitInitWithFewStoresAfterMemset - Decide whether we can emit the
@@ -860,8 +865,11 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   llvm::Value *Loc =
     capturedByInit ? emission.Address : emission.getObjectAddress(*this);
 
-  if (!emission.IsConstantAggregate)
-    return EmitExprAsInit(Init, &D, Loc, alignment, capturedByInit);
+  if (!emission.IsConstantAggregate) {
+    LValue lv = MakeAddrLValue(Loc, type, alignment.getQuantity());
+    lv.setNonGC(true);
+    return EmitExprAsInit(Init, &D, lv, capturedByInit);
+  }
 
   // If this is a simple aggregate initialization, we can optimize it
   // in various ways.
@@ -924,29 +932,25 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
 ///   whose address is potentially changed by the initializer
 void CodeGenFunction::EmitExprAsInit(const Expr *init,
                                      const ValueDecl *D,
-                                     llvm::Value *loc,
-                                     CharUnits alignment,
+                                     LValue lvalue,
                                      bool capturedByInit) {
   QualType type = D->getType();
-  bool isVolatile = type.isVolatileQualified();
 
   if (type->isReferenceType()) {
-    RValue RV = EmitReferenceBindingToExpr(init, D);
+    RValue rvalue = EmitReferenceBindingToExpr(init, D);
     if (capturedByInit) 
-      loc = BuildBlockByrefAddress(loc, cast<VarDecl>(D));
-    EmitStoreOfScalar(RV.getScalarVal(), loc, false,
-                      alignment.getQuantity(), type);
+      drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
+    EmitStoreThroughLValue(rvalue, lvalue, type);
   } else if (!hasAggregateLLVMType(type)) {
-    EmitScalarInit(init, D, loc, capturedByInit, isVolatile,
-                   alignment.getQuantity(), type);
+    EmitScalarInit(init, D, lvalue, capturedByInit);
   } else if (type->isAnyComplexType()) {
     ComplexPairTy complex = EmitComplexExpr(init);
-    if (capturedByInit) loc = BuildBlockByrefAddress(loc, cast<VarDecl>(D));
-    StoreComplexToAddr(complex, loc, isVolatile);
+    if (capturedByInit)
+      drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
+    StoreComplexToAddr(complex, lvalue.getAddress(), lvalue.isVolatile());
   } else {
     // TODO: how can we delay here if D is captured by its initializer?
-    EmitAggExpr(init, AggValueSlot::forAddr(loc, type.getQualifiers(), true, 
-                                            false));
+    EmitAggExpr(init, AggValueSlot::forLValue(lvalue, true, false));
   }
 }
 

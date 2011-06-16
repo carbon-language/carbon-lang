@@ -126,6 +126,8 @@ class LValue {
     const ObjCPropertyRefExpr *PropertyRefExpr;
   };
 
+  QualType Type;
+
   // 'const' is unused here
   Qualifiers Quals;
 
@@ -154,8 +156,9 @@ class LValue {
   llvm::MDNode *TBAAInfo;
 
 private:
-  void Initialize(Qualifiers Quals, unsigned Alignment = 0,
+  void Initialize(QualType Type, Qualifiers Quals, unsigned Alignment = 0,
                   llvm::MDNode *TBAAInfo = 0) {
+    this->Type = Type;
     this->Quals = Quals;
     this->Alignment = Alignment;
     assert(this->Alignment == Alignment && "Alignment exceeds allowed max!");
@@ -180,6 +183,12 @@ public:
     return Quals.getCVRQualifiers() & ~Qualifiers::Const;
   }
 
+  QualType getType() const { return Type; }
+
+  Qualifiers::ObjCLifetime getObjCLifetime() const {
+    return Quals.getObjCLifetime();
+  }
+
   bool isObjCIvar() const { return Ivar; }
   void setObjCIvar(bool Value) { Ivar = Value; }
 
@@ -201,6 +210,10 @@ public:
   bool isObjCStrong() const {
     return Quals.getObjCGCAttr() == Qualifiers::Strong;
   }
+
+  bool isVolatile() const {
+    return Quals.hasVolatile();
+  }
   
   Expr *getBaseIvarExp() const { return BaseIvarExp; }
   void setBaseIvarExp(Expr *V) { BaseIvarExp = V; }
@@ -217,6 +230,10 @@ public:
 
   // simple lvalue
   llvm::Value *getAddress() const { assert(isSimple()); return V; }
+  void setAddress(llvm::Value *address) {
+    assert(isSimple());
+    V = address;
+  }
 
   // vector elt lvalue
   llvm::Value *getVectorAddr() const { assert(isVectorElt()); return V; }
@@ -249,36 +266,36 @@ public:
     return PropertyRefExpr;
   }
 
-  static LValue MakeAddr(llvm::Value *V, QualType T, unsigned Alignment,
-                         ASTContext &Context,
+  static LValue MakeAddr(llvm::Value *address, QualType type,
+                         unsigned alignment, ASTContext &Context,
                          llvm::MDNode *TBAAInfo = 0) {
-    Qualifiers Quals = T.getQualifiers();
-    Quals.setObjCGCAttr(Context.getObjCGCAttrKind(T));
+    Qualifiers qs = type.getQualifiers();
+    qs.setObjCGCAttr(Context.getObjCGCAttrKind(type));
 
     LValue R;
     R.LVType = Simple;
-    R.V = V;
-    R.Initialize(Quals, Alignment, TBAAInfo);
+    R.V = address;
+    R.Initialize(type, qs, alignment, TBAAInfo);
     return R;
   }
 
   static LValue MakeVectorElt(llvm::Value *Vec, llvm::Value *Idx,
-                              unsigned CVR) {
+                              QualType type) {
     LValue R;
     R.LVType = VectorElt;
     R.V = Vec;
     R.VectorIdx = Idx;
-    R.Initialize(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(type, type.getQualifiers());
     return R;
   }
 
   static LValue MakeExtVectorElt(llvm::Value *Vec, llvm::Constant *Elts,
-                                 unsigned CVR) {
+                                 QualType type) {
     LValue R;
     R.LVType = ExtVectorElt;
     R.V = Vec;
     R.VectorElts = Elts;
-    R.Initialize(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(type, type.getQualifiers());
     return R;
   }
 
@@ -288,13 +305,14 @@ public:
   /// bit-field.
   /// \param Info - The information describing how to perform the bit-field
   /// access.
-  static LValue MakeBitfield(llvm::Value *BaseValue, const CGBitFieldInfo &Info,
-                             unsigned CVR) {
+  static LValue MakeBitfield(llvm::Value *BaseValue,
+                             const CGBitFieldInfo &Info,
+                             QualType type) {
     LValue R;
     R.LVType = BitField;
     R.V = BaseValue;
     R.BitFieldInfo = &Info;
-    R.Initialize(Qualifiers::fromCVRMask(CVR));
+    R.Initialize(type, type.getQualifiers());
     return R;
   }
 
@@ -307,7 +325,7 @@ public:
     R.LVType = PropertyRef;
     R.V = Base;
     R.PropertyRefExpr = E;
-    R.Initialize(Qualifiers());
+    R.Initialize(QualType(), Qualifiers());
     return R;
   }
 };
@@ -367,9 +385,10 @@ public:
   }
 
   static AggValueSlot forLValue(LValue LV, bool LifetimeExternallyManaged,
-                                bool RequiresGCollection = false) {
+                                bool RequiresGCollection = false,
+                                bool IsZeroed = false) {
     return forAddr(LV.getAddress(), LV.getQuals(),
-                   LifetimeExternallyManaged, RequiresGCollection);
+                   LifetimeExternallyManaged, RequiresGCollection, IsZeroed);
   }
 
   bool isLifetimeExternallyManaged() const {

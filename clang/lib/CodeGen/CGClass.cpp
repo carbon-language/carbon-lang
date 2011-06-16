@@ -430,10 +430,8 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
     }
 
     if (!CGF.hasAggregateLLVMType(T)) {
-      CGF.EmitScalarInit(MemberInit->getInit(), 0, Dest, false, 
-                         LHS.isVolatileQualified(), 
-                         CGF.getContext().getTypeAlign(T),
-                         T);
+      LValue lvalue = CGF.MakeAddrLValue(Dest, T);
+      CGF.EmitScalarInit(MemberInit->getInit(), /*decl*/ 0, lvalue, false);
     } else if (T->isAnyComplexType()) {
       CGF.EmitComplexExprIntoAddr(MemberInit->getInit(), Dest, 
                                   LHS.isVolatileQualified());
@@ -555,8 +553,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
     CGF.EmitNullInitialization(LHS.getAddress(), Field->getType());
   } else if (!CGF.hasAggregateLLVMType(Field->getType())) {
     if (LHS.isSimple()) {
-      CGF.EmitExprAsInit(MemberInit->getInit(), Field, LHS.getAddress(),
-                         CGF.getContext().getDeclAlign(Field), false);
+      CGF.EmitExprAsInit(MemberInit->getInit(), Field, LHS, false);
     } else {
       RValue RHS = RValue::get(CGF.EmitScalarExpr(MemberInit->getInit()));
       CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);

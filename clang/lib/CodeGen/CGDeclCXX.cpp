@@ -27,29 +27,26 @@ static void EmitDeclInit(CodeGenFunction &CGF, const VarDecl &D,
          "Should not call EmitDeclInit on a reference!");
   
   ASTContext &Context = CGF.getContext();
-    
-  const Expr *Init = D.getInit();
-  QualType T = D.getType();
-  bool isVolatile = Context.getCanonicalType(T).isVolatileQualified();
 
-  unsigned Alignment = Context.getDeclAlign(&D).getQuantity();
-  if (!CGF.hasAggregateLLVMType(T)) {
+  unsigned alignment = Context.getDeclAlign(&D).getQuantity();
+  QualType type = D.getType();
+  LValue lv = CGF.MakeAddrLValue(DeclPtr, type, alignment);
+
+  const Expr *Init = D.getInit();
+  if (!CGF.hasAggregateLLVMType(type)) {
     CodeGenModule &CGM = CGF.CGM;
-    Qualifiers::GC GCAttr = CGM.getContext().getObjCGCAttrKind(T);
-    if (GCAttr == Qualifiers::Strong)
+    if (lv.isObjCStrong())
       CGM.getObjCRuntime().EmitObjCGlobalAssign(CGF, CGF.EmitScalarExpr(Init),
                                                 DeclPtr, D.isThreadSpecified());
-    else if (GCAttr == Qualifiers::Weak)
-        CGM.getObjCRuntime().EmitObjCWeakAssign(CGF, CGF.EmitScalarExpr(Init),
-                                                DeclPtr);
+    else if (lv.isObjCWeak())
+      CGM.getObjCRuntime().EmitObjCWeakAssign(CGF, CGF.EmitScalarExpr(Init),
+                                              DeclPtr);
     else
-      CGF.EmitScalarInit(Init, &D, DeclPtr, false, isVolatile, Alignment,
-                         D.getType());
-  } else if (T->isAnyComplexType()) {
-    CGF.EmitComplexExprIntoAddr(Init, DeclPtr, isVolatile);
+      CGF.EmitScalarInit(Init, &D, lv, false);
+  } else if (type->isAnyComplexType()) {
+    CGF.EmitComplexExprIntoAddr(Init, DeclPtr, lv.isVolatile());
   } else {
-    CGF.EmitAggExpr(Init, AggValueSlot::forAddr(DeclPtr, T.getQualifiers(),
-                                                true));
+    CGF.EmitAggExpr(Init, AggValueSlot::forLValue(lv, true));
   }
 }
 

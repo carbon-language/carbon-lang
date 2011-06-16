@@ -641,6 +641,10 @@ public:
     return withFastQualifiers(Qualifiers::Volatile);
   }
 
+  QualType withCVRQualifiers(unsigned CVR) const {
+    return withFastQualifiers(CVR);
+  }
+
   void addFastQualifiers(unsigned TQs) {
     assert(!(TQs & ~Qualifiers::FastMask)
            && "non-fast qualifier bits set in mask!");

@@ -313,9 +313,10 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
 
               unsigned Alignment =
                 CGF.getContext().getTypeAlignInChars(PointeeType).getQuantity();
-              CGF.EmitScalarInit(E, InitVD, ReferenceTemporary, false,
-                                 PointeeType.isVolatileQualified(), 
-                                 Alignment, PointeeType);
+              LValue lvalue =
+                CGF.MakeAddrLValue(ReferenceTemporary, PointeeType, Alignment);
+
+              CGF.EmitScalarInit(E, InitVD, lvalue, false);
               return ReferenceTemporary;
             }
           }
@@ -669,6 +670,12 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   }
 }
 
+llvm::Value *CodeGenFunction::EmitLoadOfScalar(LValue lvalue) {
+  return EmitLoadOfScalar(lvalue.getAddress(), lvalue.isVolatile(),
+                          lvalue.getAlignment(), lvalue.getType(),
+                          lvalue.getTBAAInfo());
+}
+
 llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                               unsigned Alignment, QualType Ty,
                                               llvm::MDNode *TBAAInfo) {
@@ -722,6 +729,12 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
     Store->setAlignment(Alignment);
   if (TBAAInfo)
     CGM.DecorateInstruction(Store, TBAAInfo);
+}
+
+void CodeGenFunction::EmitStoreOfScalar(llvm::Value *value, LValue lvalue) {
+  EmitStoreOfScalar(value, lvalue.getAddress(), lvalue.isVolatile(),
+                    lvalue.getAlignment(), lvalue.getType(),
+                    lvalue.getTBAAInfo());
 }
 
 /// EmitLoadOfLValue - Given an expression that represents a value lvalue, this
@@ -964,9 +977,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   }
 
   assert(Src.isScalar() && "Can't emit an agg store with this method");
-  EmitStoreOfScalar(Src.getScalarVal(), Dst.getAddress(),
-                    Dst.isVolatileQualified(), Dst.getAlignment(), Ty,
-                    Dst.getTBAAInfo());
+  EmitStoreOfScalar(Src.getScalarVal(), Dst);
 }
 
 void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
@@ -1498,7 +1509,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     assert(LHS.isSimple() && "Can only subscript lvalue vectors here!");
     Idx = Builder.CreateIntCast(Idx, Int32Ty, IdxSigned, "vidx");
     return LValue::MakeVectorElt(LHS.getAddress(), Idx,
-                                 E->getBase()->getType().getCVRQualifiers());
+                                 E->getBase()->getType());
   }
 
   // Extend or truncate the index type to 32 or 64-bits.
@@ -1637,7 +1648,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     Base = EmitLValue(E->getBase());
   } else {
     // Otherwise, the base is a normal rvalue (as in (V+V).x), emit it as such.
-    assert(E->getBase()->getType()->getAs<VectorType>() &&
+    assert(E->getBase()->getType()->isVectorType() &&
            "Result must be a vector");
     llvm::Value *Vec = EmitScalarExpr(E->getBase());
     
@@ -1646,6 +1657,9 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     Builder.CreateStore(Vec, VecMem);
     Base = MakeAddrLValue(VecMem, E->getBase()->getType());
   }
+
+  QualType type =
+    E->getType().withCVRQualifiers(Base.getQuals().getCVRQualifiers());
   
   // Encode the element access list into a vector of unsigned indices.
   llvm::SmallVector<unsigned, 4> Indices;
@@ -1653,8 +1667,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
 
   if (Base.isSimple()) {
     llvm::Constant *CV = GenerateConstantVector(getLLVMContext(), Indices);
-    return LValue::MakeExtVectorElt(Base.getAddress(), CV,
-                                    Base.getVRQualifiers());
+    return LValue::MakeExtVectorElt(Base.getAddress(), CV, type);
   }
   assert(Base.isExtVectorElt() && "Can only subscript lvalue vec elts here!");
 
@@ -1668,8 +1681,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
       CElts.push_back(cast<llvm::Constant>(BaseElts->getOperand(Indices[i])));
   }
   llvm::Constant *CV = llvm::ConstantVector::get(CElts);
-  return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV,
-                                  Base.getVRQualifiers());
+  return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV, type);
 }
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
@@ -1720,7 +1732,7 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value *BaseValue,
     CGM.getTypes().getCGRecordLayout(Field->getParent());
   const CGBitFieldInfo &Info = RL.getBitFieldInfo(Field);
   return LValue::MakeBitfield(BaseValue, Info,
-                             Field->getType().getCVRQualifiers()|CVRQualifiers);
+                          Field->getType().withCVRQualifiers(CVRQualifiers));
 }
 
 /// EmitLValueForAnonRecordField - Given that the field is a member of

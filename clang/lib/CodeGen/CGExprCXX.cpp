@@ -707,9 +707,9 @@ static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
 
   unsigned Alignment =
     CGF.getContext().getTypeAlignInChars(AllocType).getQuantity();
-  if (!CGF.hasAggregateLLVMType(AllocType)) 
-    CGF.EmitScalarInit(Init, 0, NewPtr, false, AllocType.isVolatileQualified(),
-                       Alignment, AllocType);
+  if (!CGF.hasAggregateLLVMType(AllocType))
+    CGF.EmitScalarInit(Init, 0, CGF.MakeAddrLValue(NewPtr, AllocType, Alignment),
+                       false);
   else if (AllocType->isAnyComplexType())
     CGF.EmitComplexExprIntoAddr(Init, NewPtr, 
                                 AllocType.isVolatileQualified());
