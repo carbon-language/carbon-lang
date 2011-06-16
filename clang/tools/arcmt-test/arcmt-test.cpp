@@ -100,22 +100,20 @@ static bool checkForMigration(llvm::StringRef resourcesPath,
     Diags->setClient(verifyDiag);
   }
 
-  llvm::OwningPtr<CompilerInvocation> CI;
-  CI.reset(clang::createInvocationFromCommandLine(Args, Diags));
-  if (!CI)
-    return true;
+  CompilerInvocation CI;
+  CompilerInvocation::CreateFromArgs(CI, Args.begin(), Args.end(), *Diags);
 
-  if (CI->getFrontendOpts().Inputs.empty()) {
+  if (CI.getFrontendOpts().Inputs.empty()) {
     llvm::errs() << "error: no input files\n";
     return true;
   }
 
-  if (!CI->getLangOpts().ObjC1)
+  if (!CI.getLangOpts().ObjC1)
     return false;
 
-  return arcmt::checkForManualIssues(*CI,
-                                     CI->getFrontendOpts().Inputs[0].second,
-                                     CI->getFrontendOpts().Inputs[0].first,
+  return arcmt::checkForManualIssues(CI,
+                                     CI.getFrontendOpts().Inputs[0].second,
+                                     CI.getFrontendOpts().Inputs[0].first,
                                      Diags->getClient());
 }
 
@@ -141,20 +139,19 @@ static bool performTransformations(llvm::StringRef resourcesPath,
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   llvm::IntrusiveRefCntPtr<Diagnostic> TopDiags(new Diagnostic(DiagID, DiagClient));
 
-  llvm::OwningPtr<CompilerInvocation> origCI;
-  origCI.reset(clang::createInvocationFromCommandLine(Args, TopDiags));
-  if (!origCI)
-    return true;
+  CompilerInvocation origCI;
+  CompilerInvocation::CreateFromArgs(origCI, Args.begin(), Args.end(),
+                                     *TopDiags);
 
-  if (origCI->getFrontendOpts().Inputs.empty()) {
+  if (origCI.getFrontendOpts().Inputs.empty()) {
     llvm::errs() << "error: no input files\n";
     return true;
   }
 
-  if (!origCI->getLangOpts().ObjC1)
+  if (!origCI.getLangOpts().ObjC1)
     return false;
 
-  MigrationProcess migration(*origCI, DiagClient);
+  MigrationProcess migration(origCI, DiagClient);
 
   std::vector<TransformFn> transforms = arcmt::getAllTransformations();
   assert(!transforms.empty());
