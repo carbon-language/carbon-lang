@@ -1550,8 +1550,8 @@ SDValue MipsTargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG)
 
 SDValue MipsTargetLowering::
 LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
-  unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
-  assert((Depth == 0) &&
+  // check the depth
+  assert((cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue() == 0) &&
          "Frame address can only be determined for current frame.");
 
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
