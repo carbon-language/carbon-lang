@@ -387,11 +387,14 @@ def print_stacktrace(thread, string_buffer = False):
         load_addr = addrs[i].GetLoadAddress(target)
         if not function:
             file_addr = addrs[i].GetFileAddress()
-            print >> output, "  frame #{num}: {addr:#016x} {mod}`{symbol} + ????".format(
-                num=i, addr=load_addr, mod=mods[i], symbol=symbols[i])
+            start_addr = frame.GetSymbol().GetStartAddress().GetFileAddress()
+            symbol_offset = file_addr - start_addr
+            print >> output, "  frame #{num}: {addr:#016x} {mod}`{symbol} + {offset}".format(
+                num=i, addr=load_addr, mod=mods[i], symbol=symbols[i], offset=symbol_offset)
         else:
-            print >> output, "  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line}".format(
-                num=i, addr=load_addr, mod=mods[i], func=funcs[i], file=files[i], line=lines[i])
+            print >> output, "  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}".format(
+                num=i, addr=load_addr, mod=mods[i], func=funcs[i], file=files[i], line=lines[i],
+                args=get_args_as_string(frame, showFuncName=False))
 
     if string_buffer:
         return output.getvalue()
@@ -429,7 +432,7 @@ def get_parent_frame(frame):
     # If we reach here, no parent has been found, return None.
     return None
 
-def get_args_as_string(frame):
+def get_args_as_string(frame, showFuncName=True):
     """
     Returns the args of the input frame object as a string.
     """
@@ -449,8 +452,11 @@ def get_args_as_string(frame):
         name = frame.GetSymbol().GetName()
     else:
         name = ""
-    return "%s(%s)" % (name, ", ".join(args))
-
+    if showFuncName:
+        return "%s(%s)" % (name, ", ".join(args))
+    else:
+        return "(%s)" % (", ".join(args))
+        
 def print_registers(frame, string_buffer = False):
     """Prints all the register sets of the frame."""
 

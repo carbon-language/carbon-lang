@@ -48,7 +48,7 @@ class FrameUtilsTestCase(TestBase):
         self.assertTrue(parent and parent.GetFrameID() == frame1.GetFrameID())
         frame0_args = lldbutil.get_args_as_string(frame0)
         parent_args = lldbutil.get_args_as_string(parent)
-        self.assertTrue(frame0_args and parent_args)
+        self.assertTrue(frame0_args and parent_args and "(int)val=1" in frame0_args)
         if self.TraceOn():
             lldbutil.print_stacktrace(thread)
             print "Current frame: %s" % frame0_args

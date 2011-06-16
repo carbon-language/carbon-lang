@@ -35,7 +35,7 @@ class ThreadsStackTracesTestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         rc = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
+        process = target.Launch (self.dbg.GetListener(), ["abc", "xyz"], None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
 
         if not rc.Success() or not process:
             self.fail("SBTarget.LaunchProcess() failed")
@@ -46,8 +46,9 @@ class ThreadsStackTracesTestCase(TestBase):
                       "instead the actual state is: '%s'" %
                       lldbutil.state_type_to_str(process.GetState()))
 
-        if self.TraceOn():
-            lldbutil.print_stacktraces(process)
+        stacktraces = lldbutil.print_stacktraces(process, string_buffer=True)
+        self.expect(stacktraces, exe=False,
+            substrs = ['(int)argc=3'])
 
 
 if __name__ == '__main__':
