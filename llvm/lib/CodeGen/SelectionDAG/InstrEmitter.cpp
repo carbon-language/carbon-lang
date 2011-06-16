@@ -76,6 +76,12 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
   // the CopyToReg'd destination register instead of creating a new vreg.
   bool MatchReg = true;
   const TargetRegisterClass *UseRC = NULL;
+  EVT VT = Node->getValueType(ResNo);
+
+  // Stick to the preferred register classes for legal types.
+  if (TLI->isTypeLegal(VT))
+    UseRC = TLI->getRegClassFor(VT);
+
   if (!IsClone && !IsCloned)
     for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
          UI != E; ++UI) {
@@ -121,10 +127,9 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
         break;
     }
 
-  EVT VT = Node->getValueType(ResNo);
   const TargetRegisterClass *SrcRC = 0, *DstRC = 0;
   SrcRC = TRI->getMinimalPhysRegClass(SrcReg, VT);
-  
+
   // Figure out the register class to create for the destreg.
   if (VRBase) {
     DstRC = MRI->getRegClass(VRBase);
