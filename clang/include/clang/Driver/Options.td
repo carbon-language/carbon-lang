@@ -420,6 +420,7 @@ def fomit_frame_pointer : Flag<"-fomit-frame-pointer">, Group<f_Group>;
 def fopenmp : Flag<"-fopenmp">, Group<f_Group>;
 def force__cpusubtype__ALL : Flag<"-force_cpusubtype_ALL">;
 def force__flat__namespace : Flag<"-force_flat_namespace">;
+def force__load : Separate<"-force_load">;
 def foutput_class_dir_EQ : Joined<"-foutput-class-dir=">, Group<f_Group>;
 def fpascal_strings : Flag<"-fpascal-strings">, Group<f_Group>;
 def fpch_preprocess : Flag<"-fpch-preprocess">, Group<f_Group>;
