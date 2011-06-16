@@ -707,6 +707,7 @@ CLANGXXPATH
 ENABLE_BUILT_CLANG
 OPTIMIZE_OPTION
 EXTRA_OPTIONS
+EXTRA_LD_OPTIONS
 BINUTILS_INCDIR
 CXX
 CXXFLAGS
@@ -1454,6 +1455,7 @@ Optional Packages:
   --with-optimize-option  Select the compiler options to use for optimized
                           builds
   --with-extra-options    Specify additional options to compile LLVM with
+  --with-extra-ld-options Specify additional options to link LLVM with
   --with-ocaml-libdir     Specify install location for ocaml bindings (default
                           is stdlib)
   --with-clang-resource-dir
@@ -5344,6 +5346,21 @@ case "$withval" in
   *) EXTRA_OPTIONS=$withval ;;
 esac
 EXTRA_OPTIONS=$EXTRA_OPTIONS
+
+
+
+# Check whether --with-extra-ld-options was given.
+if test "${with_extra_ld_options+set}" = set; then
+  withval=$with_extra_ld_options;
+else
+  withval=default
+fi
+
+case "$withval" in
+  default) EXTRA_LD_OPTIONS= ;;
+  *) EXTRA_LD_OPTIONS=$withval ;;
+esac
+EXTRA_LD_OPTIONS=$EXTRA_LD_OPTIONS
 
 
 # Check whether --enable-bindings was given.
@@ -11571,7 +11588,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 11574 "configure"
+#line 11591 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -23427,6 +23444,7 @@ CLANGXXPATH!$CLANGXXPATH$ac_delim
 ENABLE_BUILT_CLANG!$ENABLE_BUILT_CLANG$ac_delim
 OPTIMIZE_OPTION!$OPTIMIZE_OPTION$ac_delim
 EXTRA_OPTIONS!$EXTRA_OPTIONS$ac_delim
+EXTRA_LD_OPTIONS!$EXTRA_LD_OPTIONS$ac_delim
 BINUTILS_INCDIR!$BINUTILS_INCDIR$ac_delim
 CXX!$CXX$ac_delim
 CXXFLAGS!$CXXFLAGS$ac_delim
@@ -23515,7 +23533,6 @@ LLVM_MANDIR!$LLVM_MANDIR$ac_delim
 LLVM_CONFIGTIME!$LLVM_CONFIGTIME$ac_delim
 BINDINGS_TO_BUILD!$BINDINGS_TO_BUILD$ac_delim
 ALL_BINDINGS!$ALL_BINDINGS$ac_delim
-OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -23557,6 +23574,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+OCAML_LIBDIR!$OCAML_LIBDIR$ac_delim
 ENABLE_VISIBILITY_INLINES_HIDDEN!$ENABLE_VISIBILITY_INLINES_HIDDEN$ac_delim
 RPATH!$RPATH$ac_delim
 RDYNAMIC!$RDYNAMIC$ac_delim
@@ -23564,7 +23582,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 5; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 6; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
