@@ -374,7 +374,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
   state = stateFalse;
 
   // Which value comes first?
-  QualType cmpTy = svalBuilder.getComparisonType();
+  QualType cmpTy = svalBuilder.getConditionType();
   SVal reverse = svalBuilder.evalBinOpLL(state, BO_GT,
                                          *firstLoc, *secondLoc, cmpTy);
   DefinedOrUnknownSVal *reverseTest = dyn_cast<DefinedOrUnknownSVal>(&reverse);
@@ -407,6 +407,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
 
   // Convert the first buffer's start address to char*.
   // Bail out if the cast fails.
+  ASTContext &Ctx = svalBuilder.getContext();
   QualType CharPtrTy = Ctx.getPointerType(Ctx.CharTy);
   SVal FirstStart = svalBuilder.evalCast(*firstLoc, CharPtrTy, 
                                          First->getType());
@@ -1036,7 +1037,7 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
   // If the check is for strnlen() then bind the return value to no more than
   // the maxlen value.
   if (IsStrnlen) {
-    QualType cmpTy = C.getSValBuilder().getComparisonType();
+    QualType cmpTy = C.getSValBuilder().getConditionType();
 
     // It's a little unfortunate to be getting this again,
     // but it's not that expensive...
