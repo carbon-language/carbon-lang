@@ -2062,8 +2062,7 @@ public:
     }
     return false;
   }
-  std::string
-  virtual convertConstraint(const char *&Constraint) const {
+  virtual std::string convertConstraint(const char *&Constraint) const {
     std::string R;
     switch (*Constraint) {
     case 'U':   // Two-character constraint; add "^" hint for later parsing.
