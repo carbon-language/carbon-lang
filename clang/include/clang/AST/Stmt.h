@@ -335,7 +335,7 @@ public:
   /// declaration pointers) or the exact representation of the statement as
   /// written in the source.
   void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context,
-               bool Canonical);
+               bool Canonical) const;
 };
 
 /// DeclStmt - Adaptor class for mixing declarations with statements and

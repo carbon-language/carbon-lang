@@ -2815,7 +2815,7 @@ GenericSelectionExpr::GenericSelectionExpr(ASTContext &Context,
 //  DesignatedInitExpr
 //===----------------------------------------------------------------------===//
 
-IdentifierInfo *DesignatedInitExpr::Designator::getFieldName() {
+IdentifierInfo *DesignatedInitExpr::Designator::getFieldName() const {
   assert(Kind == FieldDesignator && "Only valid on a field designator");
   if (Field.NameOrField & 0x01)
     return reinterpret_cast<IdentifierInfo *>(Field.NameOrField&~0x01);

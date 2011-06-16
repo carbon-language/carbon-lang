@@ -3539,9 +3539,9 @@ public:
     bool isArrayDesignator() const { return Kind == ArrayDesignator; }
     bool isArrayRangeDesignator() const { return Kind == ArrayRangeDesignator; }
 
-    IdentifierInfo * getFieldName();
+    IdentifierInfo *getFieldName() const;
 
-    FieldDecl *getField() {
+    FieldDecl *getField() const {
       assert(Kind == FieldDesignator && "Only valid on a field designator");
       if (Field.NameOrField & 0x01)
         return 0;
@@ -3614,9 +3614,15 @@ public:
   unsigned size() const { return NumDesignators; }
 
   // Iterator access to the designators.
-  typedef Designator* designators_iterator;
+  typedef Designator *designators_iterator;
   designators_iterator designators_begin() { return Designators; }
   designators_iterator designators_end() {
+    return Designators + NumDesignators;
+  }
+
+  typedef const Designator *const_designators_iterator;
+  const_designators_iterator designators_begin() const { return Designators; }
+  const_designators_iterator designators_end() const {
     return Designators + NumDesignators;
   }
 
@@ -3627,6 +3633,15 @@ public:
   }
   reverse_designators_iterator designators_rend() {
     return reverse_designators_iterator(designators_begin());
+  }
+
+  typedef std::reverse_iterator<const_designators_iterator>
+          const_reverse_designators_iterator;
+  const_reverse_designators_iterator designators_rbegin() const {
+    return const_reverse_designators_iterator(designators_end());
+  }
+  const_reverse_designators_iterator designators_rend() const {
+    return const_reverse_designators_iterator(designators_begin());
   }
 
   Designator *getDesignator(unsigned Idx) { return &designators_begin()[Idx]; }
