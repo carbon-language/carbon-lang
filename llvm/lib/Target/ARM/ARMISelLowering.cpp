@@ -7787,7 +7787,7 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.ptrVal = I.getArgOperand(2);
     Info.offset = 0;
     Info.align = 8;
-    Info.vol = false;
+    Info.vol = true;
     Info.readMem = false;
     Info.writeMem = true;
     return true;
@@ -7798,7 +7798,7 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.ptrVal = I.getArgOperand(0);
     Info.offset = 0;
     Info.align = 8;
-    Info.vol = false;
+    Info.vol = true;
     Info.readMem = true;
     Info.writeMem = false;
     return true;
