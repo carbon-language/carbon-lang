@@ -71,7 +71,7 @@ if(PYTHONINTERP_FOUND)
   MAKE_DIRECTORY(${CMAKE_CURRENT_BINARY_DIR}/Unit)
 
   # Configuration-time: See Unit/lit.site.cfg.in
-  set(LLVM_BUILD_MODE "%(build_mode)s")
+  set(LLVM_BUILD_MODE "${LLVM_BUILD_MODE}")
 
   set(LLVM_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
   set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
