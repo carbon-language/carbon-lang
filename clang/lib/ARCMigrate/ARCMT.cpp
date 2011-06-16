@@ -125,6 +125,11 @@ CompilerInvocation *createInvocationForMigration(CompilerInvocation &origCI) {
   llvm::Triple triple(CInvok->getTargetOpts().Triple);
   if (triple.getOS() == llvm::Triple::IOS ||
       triple.getOS() == llvm::Triple::MacOSX) {
+    args.push_back("-ccc-host-triple");
+    std::string forcedTriple = triple.getArchName();
+    forcedTriple += "-apple-darwin10";
+    args.push_back(forcedTriple);
+
     unsigned Major, Minor, Micro;
     triple.getOSVersion(Major, Minor, Micro);
     llvm::SmallString<100> flag;
