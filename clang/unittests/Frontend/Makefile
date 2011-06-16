@@ -13,7 +13,7 @@ LINK_COMPONENTS := support mc
 USEDLIBS = clangFrontendTool.a clangFrontend.a clangDriver.a \
            clangSerialization.a clangCodeGen.a clangParse.a clangSema.a \
            clangStaticAnalyzerCheckers.a clangStaticAnalyzerCore.a \
-           clangAnalysis.a clangIndex.a clangARCMigrate.a clangRewrite.a \
-           clangAST.a clangLex.a clangBasic.a
+           clangIndex.a clangARCMigrate.a clangRewrite.a \
+           clangAnalysis.a clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/unittests/Makefile
