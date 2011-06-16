@@ -5429,6 +5429,8 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
     EVT ThisVT = MVT::Other;
 
     const TargetRegisterClass *RC = *RCI;
+    if (!RC->isAllocatable())
+      continue;
     // If none of the value types for this register class are valid, we
     // can't use it.  For example, 64-bit reg classes on 32-bit targets.
     for (TargetRegisterClass::vt_iterator I = RC->vt_begin(), E = RC->vt_end();
@@ -5450,15 +5452,14 @@ isAllocatableRegister(unsigned Reg, MachineFunction &MF,
     // frame pointer in functions that need it (due to them not being taken
     // out of allocation, because a variable sized allocation hasn't been seen
     // yet).  This is a slight code pessimization, but should still work.
-    for (TargetRegisterClass::iterator I = RC->allocation_order_begin(MF),
-         E = RC->allocation_order_end(MF); I != E; ++I)
-      if (*I == Reg) {
-        // We found a matching register class.  Keep looking at others in case
-        // we find one with larger registers that this physreg is also in.
-        FoundRC = RC;
-        FoundVT = ThisVT;
-        break;
-      }
+    ArrayRef<unsigned> RawOrder = RC->getRawAllocationOrder(MF);
+    if (std::find(RawOrder.begin(), RawOrder.end(), Reg) != RawOrder.end()) {
+      // We found a matching register class.  Keep looking at others in case
+      // we find one with larger registers that this physreg is also in.
+      FoundRC = RC;
+      FoundVT = ThisVT;
+      break;
+    }
   }
   return FoundRC;
 }
@@ -5605,9 +5606,15 @@ static void GetRegistersForValue(SelectionDAG &DAG,
                                             OpInfo.ConstraintVT);
 
   const TargetRegisterInfo *TRI = DAG.getTarget().getRegisterInfo();
+  BitVector Reserved = TRI->getReservedRegs(MF);
   unsigned NumAllocated = 0;
   for (unsigned i = 0, e = RegClassRegs.size(); i != e; ++i) {
     unsigned Reg = RegClassRegs[i];
+    // Filter out the reserved registers, but note that reserved registers are
+    // not fully determined at this point. We may still decide we need a frame
+    // pointer.
+    if (Reserved.test(Reg))
+      continue;
     // See if this register is available.
     if ((isOutReg && OutputRegs.count(Reg)) ||   // Already used.
         (isInReg  && InputRegs.count(Reg))) {    // Already used.

@@ -434,8 +434,7 @@ namespace llvm {
            rcEnd = tri->regclass_end();
          rcItr != rcEnd; ++rcItr) {
       const TargetRegisterClass *trc = *rcItr;
-      unsigned capacity = std::distance(trc->allocation_order_begin(*mf),
-                                        trc->allocation_order_end(*mf));
+      unsigned capacity = trc->getRawAllocationOrder(*mf).size();
 
       if (capacity != 0)
         capacityMap[trc] = capacity;
@@ -482,8 +481,7 @@ namespace llvm {
                rcItr != rcEnd; ++rcItr) {
             const TargetRegisterClass *trc = *rcItr;
 
-            if (trc->allocation_order_begin(*mf) ==
-                trc->allocation_order_end(*mf))
+            if (trc->getRawAllocationOrder(*mf).empty())
               continue;
 
             unsigned worstAtI = getWorst(li->reg, trc);
