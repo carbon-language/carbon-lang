@@ -9,6 +9,7 @@
 
 #include "llvm/Support/TypeBuilder.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/ArrayRef.h"
 
 #include "gtest/gtest.h"
 

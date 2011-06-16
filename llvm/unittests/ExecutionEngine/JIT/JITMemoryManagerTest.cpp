@@ -14,6 +14,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/ArrayRef.h"
 
 using namespace llvm;
 
