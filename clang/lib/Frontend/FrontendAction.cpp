@@ -381,3 +381,41 @@ PreprocessorFrontendAction::CreateASTConsumer(CompilerInstance &CI,
                                               llvm::StringRef InFile) {
   llvm_unreachable("Invalid CreateASTConsumer on preprocessor action!");
 }
+
+ASTConsumer *WrapperFrontendAction::CreateASTConsumer(CompilerInstance &CI,
+                                                      llvm::StringRef InFile) {
+  return WrappedAction->CreateASTConsumer(CI, InFile);
+}
+bool WrapperFrontendAction::BeginSourceFileAction(CompilerInstance &CI,
+                                                  llvm::StringRef Filename) {
+  return WrappedAction->BeginSourceFileAction(CI, Filename);
+}
+void WrapperFrontendAction::ExecuteAction() {
+  WrappedAction->ExecuteAction();
+}
+void WrapperFrontendAction::EndSourceFileAction() {
+  WrappedAction->EndSourceFileAction();
+}
+
+bool WrapperFrontendAction::usesPreprocessorOnly() const {
+  return WrappedAction->usesPreprocessorOnly();
+}
+bool WrapperFrontendAction::usesCompleteTranslationUnit() {
+  return WrappedAction->usesCompleteTranslationUnit();
+}
+bool WrapperFrontendAction::hasPCHSupport() const {
+  return WrappedAction->hasPCHSupport();
+}
+bool WrapperFrontendAction::hasASTFileSupport() const {
+  return WrappedAction->hasASTFileSupport();
+}
+bool WrapperFrontendAction::hasIRSupport() const {
+  return WrappedAction->hasIRSupport();
+}
+bool WrapperFrontendAction::hasCodeCompletionSupport() const {
+  return WrappedAction->hasCodeCompletionSupport();
+}
+
+WrapperFrontendAction::WrapperFrontendAction(FrontendAction *WrappedAction)
+  : WrappedAction(WrappedAction) {}
+

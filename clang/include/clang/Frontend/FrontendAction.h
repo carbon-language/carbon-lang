@@ -51,6 +51,7 @@ class FrontendAction {
   llvm::OwningPtr<ASTUnit> CurrentASTUnit;
   CompilerInstance *Instance;
   friend class ASTMergeAction;
+  friend class WrapperFrontendAction;
 
 private:
   ASTConsumer* CreateWrappedASTConsumer(CompilerInstance &CI,
@@ -251,6 +252,35 @@ protected:
 
 public:
   virtual bool usesPreprocessorOnly() const { return true; }
+};
+
+/// WrapperFrontendAction - A frontend action which simply wraps some other
+/// runtime specified frontend action. Deriving from this class allows an
+/// action to inject custom logic around some existing action's behavior. It
+/// implements every virtual method in the FrontendAction interface by
+/// forwarding to the wrapped action.
+class WrapperFrontendAction : public FrontendAction {
+  llvm::OwningPtr<FrontendAction> WrappedAction;
+
+protected:
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         llvm::StringRef InFile);
+  virtual bool BeginSourceFileAction(CompilerInstance &CI,
+                                     llvm::StringRef Filename);
+  virtual void ExecuteAction();
+  virtual void EndSourceFileAction();
+
+public:
+  /// Construct a WrapperFrontendAction from an existing action, taking
+  /// ownership of it.
+  WrapperFrontendAction(FrontendAction *WrappedAction);
+
+  virtual bool usesPreprocessorOnly() const;
+  virtual bool usesCompleteTranslationUnit();
+  virtual bool hasPCHSupport() const;
+  virtual bool hasASTFileSupport() const;
+  virtual bool hasIRSupport() const;
+  virtual bool hasCodeCompletionSupport() const;
 };
 
 }  // end namespace clang

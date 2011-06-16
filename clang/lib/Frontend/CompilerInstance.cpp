@@ -26,7 +26,6 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/VerifyDiagnosticsClient.h"
 #include "clang/Frontend/Utils.h"
-#include "clang/ARCMigrate/ARCMT.h"
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Sema/CodeCompleteConsumer.h"
 #include "llvm/Support/FileSystem.h"
@@ -596,34 +595,6 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
     // Reset the ID tables if we are reusing the SourceManager.
     if (hasSourceManager())
       getSourceManager().clearIDTables();
-
-    switch (getFrontendOpts().ARCMTAction) {
-    default:
-      break;
-
-    case FrontendOptions::ARCMT_Check:
-      if (arcmt::checkForManualIssues(getInvocation(), InFile,
-                                      getFrontendOpts().Inputs[i].first,
-                                      getDiagnostics().getClient()))
-        continue;
-      // We only want to see warnings reported from arcmt::checkForManualIssues.
-      getDiagnostics().setIgnoreAllWarnings(true);
-      break;
-
-    case FrontendOptions::ARCMT_Modify:
-      if (arcmt::applyTransformations(getInvocation(), InFile,
-                                      getFrontendOpts().Inputs[i].first,
-                                      getDiagnostics().getClient()))
-        continue;
-      break;
-
-    case FrontendOptions::ARCMT_ModifyInMemory:
-      if (arcmt::applyTransformationsInMemory(getInvocation(), InFile,
-                                              getFrontendOpts().Inputs[i].first,
-                                              getDiagnostics().getClient()))
-        continue;
-      break;
-    }
 
     if (Act.BeginSourceFile(*this, InFile, getFrontendOpts().Inputs[i].first)) {
       Act.Execute();

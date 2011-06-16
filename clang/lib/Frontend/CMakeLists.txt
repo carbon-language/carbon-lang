@@ -1,5 +1,4 @@
 set( LLVM_USED_LIBS
-  clangARCMigrate
   clangAST
   clangBasic
   clangDriver

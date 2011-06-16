@@ -14,6 +14,7 @@
 
 #include "clang/FrontendTool/Utils.h"
 #include "clang/StaticAnalyzer/Frontend/FrontendActions.h"
+#include "clang/ARCMigrate/ARCMTActions.h"
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Driver/CC1Options.h"
 #include "clang/Driver/OptTable.h"
@@ -88,6 +89,21 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   FrontendAction *Act = CreateFrontendBaseAction(CI);
   if (!Act)
     return 0;
+
+  // Potentially wrap the base FE action in an ARC Migrate Tool action.
+  switch (CI.getFrontendOpts().ARCMTAction) {
+  case FrontendOptions::ARCMT_None:
+    break;
+  case FrontendOptions::ARCMT_Check:
+    Act = new arcmt::CheckAction(Act);
+    break;
+  case FrontendOptions::ARCMT_Modify:
+    Act = new arcmt::TransformationAction(Act);
+    break;
+  case FrontendOptions::ARCMT_ModifyInMemory:
+    Act = new arcmt::InMemoryTransformationAction(Act);
+    break;
+  }
 
   // If there are any AST files to merge, create a frontend action
   // adaptor to perform the merge.
