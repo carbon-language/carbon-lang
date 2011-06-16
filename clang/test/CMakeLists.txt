@@ -111,6 +111,7 @@ if(PYTHONINTERP_FOUND)
   add_dependencies(clang-test clang-test.deps)
   add_dependencies(clang-test.deps
                  clang clang-headers c-index-test arcmt-test
+                 llc
                  )
 
 endif()
