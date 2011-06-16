@@ -16,6 +16,7 @@
 
 #define DEBUG_TYPE "post-RA-sched"
 #include "AggressiveAntiDepBreaker.h"
+#include "RegisterClassInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -114,12 +115,13 @@ bool AggressiveAntiDepState::IsLive(unsigned Reg)
 
 AggressiveAntiDepBreaker::
 AggressiveAntiDepBreaker(MachineFunction& MFi,
+                         const RegisterClassInfo &RCI,
                          TargetSubtarget::RegClassVector& CriticalPathRCs) :
   AntiDepBreaker(), MF(MFi),
   MRI(MF.getRegInfo()),
   TII(MF.getTarget().getInstrInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
-  AllocatableSet(TRI->getAllocatableSet(MF)),
+  RegClassInfo(RCI),
   State(NULL) {
   /* Collect a bitset of all registers that are only broken if they
      are on the critical path. */
@@ -618,9 +620,8 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
   const TargetRegisterClass *SuperRC =
     TRI->getMinimalPhysRegClass(SuperReg, MVT::Other);
 
-  const TargetRegisterClass::iterator RB = SuperRC->allocation_order_begin(MF);
-  const TargetRegisterClass::iterator RE = SuperRC->allocation_order_end(MF);
-  if (RB == RE) {
+  ArrayRef<unsigned> Order = RegClassInfo.getOrder(SuperRC);
+  if (Order.empty()) {
     DEBUG(dbgs() << "\tEmpty Super Regclass!!\n");
     return false;
   }
@@ -628,17 +629,17 @@ bool AggressiveAntiDepBreaker::FindSuitableFreeRegisters(
   DEBUG(dbgs() << "\tFind Registers:");
 
   if (RenameOrder.count(SuperRC) == 0)
-    RenameOrder.insert(RenameOrderType::value_type(SuperRC, RE));
+    RenameOrder.insert(RenameOrderType::value_type(SuperRC, Order.size()));
 
-  const TargetRegisterClass::iterator OrigR = RenameOrder[SuperRC];
-  const TargetRegisterClass::iterator EndR = ((OrigR == RE) ? RB : OrigR);
-  TargetRegisterClass::iterator R = OrigR;
+  unsigned OrigR = RenameOrder[SuperRC];
+  unsigned EndR = ((OrigR == Order.size()) ? 0 : OrigR);
+  unsigned R = OrigR;
   do {
-    if (R == RB) R = RE;
+    if (R == 0) R = Order.size();
     --R;
-    const unsigned NewSuperReg = *R;
+    const unsigned NewSuperReg = Order[R];
     // Don't consider non-allocatable registers
-    if (!AllocatableSet.test(NewSuperReg)) continue;
+    if (!RegClassInfo.isAllocatable(NewSuperReg)) continue;
     // Don't replace a register with itself.
     if (NewSuperReg == SuperReg) continue;
 
@@ -819,7 +820,7 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
         DEBUG(dbgs() << "\tAntidep reg: " << TRI->getName(AntiDepReg));
         assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
 
-        if (!AllocatableSet.test(AntiDepReg)) {
+        if (!RegClassInfo.isAllocatable(AntiDepReg)) {
           // Don't break anti-dependencies on non-allocatable registers.
           DEBUG(dbgs() << " (non-allocatable)\n");
           continue;

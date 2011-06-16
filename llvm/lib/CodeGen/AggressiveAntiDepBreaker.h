@@ -30,6 +30,8 @@
 #include <map>
 
 namespace llvm {
+class RegisterClassInfo;
+
   /// Class AggressiveAntiDepState
   /// Contains all the state necessary for anti-dep breaking.
   class AggressiveAntiDepState {
@@ -117,11 +119,7 @@ namespace llvm {
     MachineRegisterInfo &MRI;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
-
-    /// AllocatableSet - The set of allocatable registers.
-    /// We'll be ignoring anti-dependencies on non-allocatable registers,
-    /// because they may not be safe to break.
-    const BitVector AllocatableSet;
+    const RegisterClassInfo &RegClassInfo;
 
     /// CriticalPathSet - The set of registers that should only be
     /// renamed if they are on the critical path.
@@ -133,6 +131,7 @@ namespace llvm {
 
   public:
     AggressiveAntiDepBreaker(MachineFunction& MFi,
+                             const RegisterClassInfo &RCI,
                              TargetSubtarget::RegClassVector& CriticalPathRCs);
     ~AggressiveAntiDepBreaker();
 
@@ -158,8 +157,8 @@ namespace llvm {
     void FinishBlock();
 
   private:
-    typedef std::map<const TargetRegisterClass *,
-                     TargetRegisterClass::const_iterator> RenameOrderType;
+    /// Keep track of a position in the allocation order for each regclass.
+    typedef std::map<const TargetRegisterClass *, unsigned> RenameOrderType;
 
     /// IsImplicitDefUse - Return true if MO represents a register
     /// that is both implicitly used and defined in MI

@@ -27,12 +27,12 @@
 using namespace llvm;
 
 CriticalAntiDepBreaker::
-CriticalAntiDepBreaker(MachineFunction& MFi) :
+CriticalAntiDepBreaker(MachineFunction& MFi, const RegisterClassInfo &RCI) :
   AntiDepBreaker(), MF(MFi),
   MRI(MF.getRegInfo()),
   TII(MF.getTarget().getInstrInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
-  AllocatableSet(TRI->getAllocatableSet(MF)),
+  RegClassInfo(RCI),
   Classes(TRI->getNumRegs(), static_cast<const TargetRegisterClass *>(0)),
   KillIndices(TRI->getNumRegs(), 0),
   DefIndices(TRI->getNumRegs(), 0) {}
@@ -385,11 +385,9 @@ CriticalAntiDepBreaker::findSuitableFreeRegister(RegRefIter RegRefBegin,
                                                  unsigned LastNewReg,
                                                  const TargetRegisterClass *RC)
 {
-  for (TargetRegisterClass::iterator R = RC->allocation_order_begin(MF),
-       RE = RC->allocation_order_end(MF); R != RE; ++R) {
-    unsigned NewReg = *R;
-    // Don't consider non-allocatable registers
-    if (!AllocatableSet.test(NewReg)) continue;
+  ArrayRef<unsigned> Order = RegClassInfo.getOrder(RC);
+  for (unsigned i = 0; i != Order.size(); ++i) {
+    unsigned NewReg = Order[i];
     // Don't replace a register with itself.
     if (NewReg == AntiDepReg) continue;
     // Don't replace a register with one that was recently used to repair
@@ -534,7 +532,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
         if (Edge->getKind() == SDep::Anti) {
           AntiDepReg = Edge->getReg();
           assert(AntiDepReg != 0 && "Anti-dependence on reg0?");
-          if (!AllocatableSet.test(AntiDepReg))
+          if (!RegClassInfo.isAllocatable(AntiDepReg))
             // Don't break anti-dependencies on non-allocatable registers.
             AntiDepReg = 0;
           else if (KeepRegs.count(AntiDepReg))

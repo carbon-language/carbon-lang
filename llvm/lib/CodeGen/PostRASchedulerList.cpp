@@ -22,6 +22,7 @@
 #include "AntiDepBreaker.h"
 #include "AggressiveAntiDepBreaker.h"
 #include "CriticalAntiDepBreaker.h"
+#include "RegisterClassInfo.h"
 #include "ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
@@ -80,6 +81,7 @@ namespace {
   class PostRAScheduler : public MachineFunctionPass {
     AliasAnalysis *AA;
     const TargetInstrInfo *TII;
+    RegisterClassInfo RegClassInfo;
     CodeGenOpt::Level OptLevel;
 
   public:
@@ -135,7 +137,8 @@ namespace {
   public:
     SchedulePostRATDList(
       MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
-      AliasAnalysis *AA, TargetSubtarget::AntiDepBreakMode AntiDepMode,
+      AliasAnalysis *AA, const RegisterClassInfo&,
+      TargetSubtarget::AntiDepBreakMode AntiDepMode,
       SmallVectorImpl<TargetRegisterClass*> &CriticalPathRCs);
 
     ~SchedulePostRATDList();
@@ -179,7 +182,8 @@ namespace {
 
 SchedulePostRATDList::SchedulePostRATDList(
   MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
-  AliasAnalysis *AA, TargetSubtarget::AntiDepBreakMode AntiDepMode,
+  AliasAnalysis *AA, const RegisterClassInfo &RCI,
+  TargetSubtarget::AntiDepBreakMode AntiDepMode,
   SmallVectorImpl<TargetRegisterClass*> &CriticalPathRCs)
   : ScheduleDAGInstrs(MF, MLI, MDT), Topo(SUnits), AA(AA),
     KillIndices(TRI->getNumRegs())
@@ -190,9 +194,9 @@ SchedulePostRATDList::SchedulePostRATDList(
     TM.getInstrInfo()->CreateTargetPostRAHazardRecognizer(InstrItins, this);
   AntiDepBreak =
     ((AntiDepMode == TargetSubtarget::ANTIDEP_ALL) ?
-     (AntiDepBreaker *)new AggressiveAntiDepBreaker(MF, CriticalPathRCs) :
+     (AntiDepBreaker *)new AggressiveAntiDepBreaker(MF, RCI, CriticalPathRCs) :
      ((AntiDepMode == TargetSubtarget::ANTIDEP_CRITICAL) ?
-      (AntiDepBreaker *)new CriticalAntiDepBreaker(MF) : NULL));
+      (AntiDepBreaker *)new CriticalAntiDepBreaker(MF, RCI) : NULL));
 }
 
 SchedulePostRATDList::~SchedulePostRATDList() {
@@ -205,6 +209,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
   AliasAnalysis *AA = &getAnalysis<AliasAnalysis>();
+  RegClassInfo.runOnMachineFunction(Fn);
 
   // Check for explicit enable/disable of post-ra scheduling.
   TargetSubtarget::AntiDepBreakMode AntiDepMode = TargetSubtarget::ANTIDEP_NONE;
@@ -230,7 +235,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 
   DEBUG(dbgs() << "PostRAScheduler\n");
 
-  SchedulePostRATDList Scheduler(Fn, MLI, MDT, AA, AntiDepMode,
+  SchedulePostRATDList Scheduler(Fn, MLI, MDT, AA, RegClassInfo, AntiDepMode,
                                  CriticalPathRCs);
 
   // Loop over all of the basic blocks

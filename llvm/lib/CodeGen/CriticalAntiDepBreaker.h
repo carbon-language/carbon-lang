@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_CRITICALANTIDEPBREAKER_H
 
 #include "AntiDepBreaker.h"
+#include "RegisterClassInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -27,6 +28,7 @@
 #include <map>
 
 namespace llvm {
+class RegisterClassInfo;
 class TargetInstrInfo;
 class TargetRegisterInfo;
 
@@ -35,6 +37,7 @@ class TargetRegisterInfo;
     MachineRegisterInfo &MRI;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
+    const RegisterClassInfo &RegClassInfo;
 
     /// AllocatableSet - The set of allocatable registers.
     /// We'll be ignoring anti-dependencies on non-allocatable registers,
@@ -66,7 +69,7 @@ class TargetRegisterInfo;
     SmallSet<unsigned, 4> KeepRegs;
 
   public:
-    CriticalAntiDepBreaker(MachineFunction& MFi);
+    CriticalAntiDepBreaker(MachineFunction& MFi, const RegisterClassInfo&);
     ~CriticalAntiDepBreaker();
 
     /// Start - Initialize anti-dep breaking for a new basic block.
