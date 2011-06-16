@@ -1368,6 +1368,11 @@ def : Pat<(store (i8 (trunc_su (srl_su GR16:$src, (i8 8)))), addr:$dst),
 
 
 // (shl x, 1) ==> (add x, x)
+// Note that if x is undef (immediate or otherwise), we could theoretically
+// end up with the two uses of x getting different values, producing a result
+// where the least significant bit is not 0. However, the probability of this
+// happening is considered low enough that this is officially not a
+// "real problem".
 def : Pat<(shl GR8 :$src1, (i8 1)), (ADD8rr  GR8 :$src1, GR8 :$src1)>;
 def : Pat<(shl GR16:$src1, (i8 1)), (ADD16rr GR16:$src1, GR16:$src1)>;
 def : Pat<(shl GR32:$src1, (i8 1)), (ADD32rr GR32:$src1, GR32:$src1)>;
