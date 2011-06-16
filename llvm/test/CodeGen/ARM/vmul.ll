@@ -439,9 +439,9 @@ define <2 x i64> @vmull_extvec_u32(<2 x i32> %arg) nounwind {
 }
 
 ; rdar://9197392
-define void @distribue(i16* %dst, i8* %src, i32 %mul) nounwind {
+define void @distribute(i16* %dst, i8* %src, i32 %mul) nounwind {
 entry:
-; CHECK: distribue:
+; CHECK: distribute:
 ; CHECK: vmull.u8 [[REG1:(q[0-9]+)]], d{{.*}}, [[REG2:(d[0-9]+)]]
 ; CHECK: vmlal.u8 [[REG1]], d{{.*}}, [[REG2]]
   %0 = trunc i32 %mul to i8
@@ -471,9 +471,9 @@ declare void @llvm.arm.neon.vst1.v8i16(i8*, <8 x i16>, i32) nounwind
 
 %struct.uint8x8_t = type { <8 x i8> }
 
-define void @distribue2(%struct.uint8x8_t* nocapture %dst, i8* %src, i32 %mul) nounwind {
+define void @distribute2(%struct.uint8x8_t* nocapture %dst, i8* %src, i32 %mul) nounwind {
 entry:
-; CHECK: distribue2
+; CHECK: distribute2
 ; CHECK-NOT: vadd.i8
 ; CHECK: vmul.i8
 ; CHECK: vmla.i8
