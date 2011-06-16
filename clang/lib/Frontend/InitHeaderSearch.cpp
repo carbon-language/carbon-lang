@@ -45,7 +45,7 @@ class InitHeaderSearch {
   std::vector<std::pair<IncludeDirGroup, DirectoryLookup> > IncludePath;
   typedef std::vector<std::pair<IncludeDirGroup,
                       DirectoryLookup> >::const_iterator path_iterator;
-  HeaderSearch& Headers;
+  HeaderSearch &Headers;
   bool Verbose;
   std::string IncludeSysroot;
   bool IsNotEmptyOrRoot;
@@ -103,7 +103,7 @@ public:
   void Realize(const LangOptions &Lang);
 };
 
-}
+}  // end anonymous namespace.
 
 void InitHeaderSearch::AddPath(const llvm::Twine &Path,
                                IncludeDirGroup Group, bool isCXXAware,
@@ -245,24 +245,23 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
   DWORD valueSize = maxLength - 1;
   long lResult;
   bool returnValue = false;
+  
   if (strncmp(keyPath, "HKEY_CLASSES_ROOT\\", 18) == 0) {
     hRootKey = HKEY_CLASSES_ROOT;
     subKey = keyPath + 18;
-  }
-  else if (strncmp(keyPath, "HKEY_USERS\\", 11) == 0) {
+  } else if (strncmp(keyPath, "HKEY_USERS\\", 11) == 0) {
     hRootKey = HKEY_USERS;
     subKey = keyPath + 11;
-  }
-  else if (strncmp(keyPath, "HKEY_LOCAL_MACHINE\\", 19) == 0) {
+  } else if (strncmp(keyPath, "HKEY_LOCAL_MACHINE\\", 19) == 0) {
     hRootKey = HKEY_LOCAL_MACHINE;
     subKey = keyPath + 19;
-  }
-  else if (strncmp(keyPath, "HKEY_CURRENT_USER\\", 18) == 0) {
+  } else if (strncmp(keyPath, "HKEY_CURRENT_USER\\", 18) == 0) {
     hRootKey = HKEY_CURRENT_USER;
     subKey = keyPath + 18;
   }
   else
-    return(false);
+    return false;
+  
   const char *placeHolder = strstr(subKey, "$VERSION");
   char bestName[256];
   bestName[0] = '\0';
@@ -338,7 +337,7 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
       RegCloseKey(hKey);
     }
   }
-  return(returnValue);
+  return returnValue;
 }
 #else // _MSC_VER
   // Read registry string.
@@ -351,12 +350,12 @@ static bool getSystemRegistryString(const char*, const char*, char*, size_t) {
 static bool getVisualStudioDir(std::string &path) {
   // First check the environment variables that vsvars32.bat sets.
   const char* vcinstalldir = getenv("VCINSTALLDIR");
-  if(vcinstalldir) {
+  if (vcinstalldir) {
     char *p = const_cast<char *>(strstr(vcinstalldir, "\\VC"));
     if (p)
       *p = '\0';
     path = vcinstalldir;
-    return(true);
+    return true;
   }
 
   char vsIDEInstallDir[256];
@@ -374,56 +373,54 @@ static bool getVisualStudioDir(std::string &path) {
     if (p)
       *p = '\0';
     path = vsIDEInstallDir;
-    return(true);
+    return true;
   }
-  else if (hasVCExpressDir && vsExpressIDEInstallDir[0]) {
+  
+  if (hasVCExpressDir && vsExpressIDEInstallDir[0]) {
     char *p = (char*)strstr(vsExpressIDEInstallDir, "\\Common7\\IDE");
     if (p)
       *p = '\0';
     path = vsExpressIDEInstallDir;
-    return(true);
+    return true;
   }
-  else {
-    // Try the environment.
-    const char* vs100comntools = getenv("VS100COMNTOOLS");
-    const char* vs90comntools = getenv("VS90COMNTOOLS");
-    const char* vs80comntools = getenv("VS80COMNTOOLS");
-    const char* vscomntools = NULL;
 
-    // Try to find the version that we were compiled with
-    if(false) {}
-    #if (_MSC_VER >= 1600)  // VC100
-    else if(vs100comntools) {
-      vscomntools = vs100comntools;
-    }
-    #elif (_MSC_VER == 1500) // VC80
-    else if(vs90comntools) {
-      vscomntools = vs90comntools;
-    }
-    #elif (_MSC_VER == 1400) // VC80
-    else if(vs80comntools) {
-      vscomntools = vs80comntools;
-    }
-    #endif
-    // Otherwise find any version we can
-    else if (vs100comntools)
-      vscomntools = vs100comntools;
-    else if (vs90comntools)
-      vscomntools = vs90comntools;
-    else if (vs80comntools)
-      vscomntools = vs80comntools;
+  // Try the environment.
+  const char *vs100comntools = getenv("VS100COMNTOOLS");
+  const char *vs90comntools = getenv("VS90COMNTOOLS");
+  const char *vs80comntools = getenv("VS80COMNTOOLS");
+  const char *vscomntools = NULL;
 
-    if (vscomntools && *vscomntools) {
-      char *p = const_cast<char *>(strstr(vscomntools, "\\Common7\\Tools"));
-      if (p)
-        *p = '\0';
-      path = vscomntools;
-      return(true);
-    }
-    else
-      return(false);
+  // Try to find the version that we were compiled with
+  if(false) {}
+  #if (_MSC_VER >= 1600)  // VC100
+  else if(vs100comntools) {
+    vscomntools = vs100comntools;
   }
-  return(false);
+  #elif (_MSC_VER == 1500) // VC80
+  else if(vs90comntools) {
+    vscomntools = vs90comntools;
+  }
+  #elif (_MSC_VER == 1400) // VC80
+  else if(vs80comntools) {
+    vscomntools = vs80comntools;
+  }
+  #endif
+  // Otherwise find any version we can
+  else if (vs100comntools)
+    vscomntools = vs100comntools;
+  else if (vs90comntools)
+    vscomntools = vs90comntools;
+  else if (vs80comntools)
+    vscomntools = vs80comntools;
+
+  if (vscomntools && *vscomntools) {
+    char *p = const_cast<char *>(strstr(vscomntools, "\\Common7\\Tools"));
+    if (p)
+      *p = '\0';
+    path = vscomntools;
+    return true;
+  }
+  return false;
 }
 
   // Get Windows SDK installation directory.
@@ -432,7 +429,9 @@ static bool getWindowsSDKDir(std::string &path) {
   // Try the Windows registry.
   bool hasSDKDir = getSystemRegistryString(
    "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows\\$VERSION",
-    "InstallationFolder", windowsSDKInstallDir, sizeof(windowsSDKInstallDir) - 1);
+                                           "InstallationFolder",
+                                           windowsSDKInstallDir,
+                                           sizeof(windowsSDKInstallDir) - 1);
     // If we have both vc80 and vc90, pick version we were compiled with.
   if (hasSDKDir && windowsSDKInstallDir[0]) {
     path = windowsSDKInstallDir;
@@ -1020,23 +1019,24 @@ void InitHeaderSearch::Realize(const LangOptions &Lang) {
   std::vector<DirectoryLookup> SearchList;
   SearchList.reserve(IncludePath.size());
 
-  /* Quoted arguments go first. */
+  // Quoted arguments go first.
   for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
        it != ie; ++it) {
     if (it->first == Quoted)
       SearchList.push_back(it->second);
   }
-  /* Deduplicate and remember index */
+  // Deduplicate and remember index.
   RemoveDuplicates(SearchList, 0, Verbose);
-  unsigned quoted = SearchList.size();
+  unsigned NumQuoted = SearchList.size();
 
   for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
        it != ie; ++it) {
     if (it->first == Angled)
       SearchList.push_back(it->second);
   }
-  RemoveDuplicates(SearchList, quoted, Verbose);
-  unsigned angled = SearchList.size();
+
+  RemoveDuplicates(SearchList, NumQuoted, Verbose);
+  unsigned NumAngled = SearchList.size();
 
   for (path_iterator it = IncludePath.begin(), ie = IncludePath.end();
        it != ie; ++it) {
@@ -1050,16 +1050,16 @@ void InitHeaderSearch::Realize(const LangOptions &Lang) {
       SearchList.push_back(it->second);
   }
 
-  RemoveDuplicates(SearchList, angled, Verbose);
+  RemoveDuplicates(SearchList, NumAngled, Verbose);
 
   bool DontSearchCurDir = false;  // TODO: set to true if -I- is set?
-  Headers.SetSearchPaths(SearchList, quoted, angled, DontSearchCurDir);
+  Headers.SetSearchPaths(SearchList, NumQuoted, NumAngled, DontSearchCurDir);
 
   // If verbose, print the list of directories that will be searched.
   if (Verbose) {
     llvm::errs() << "#include \"...\" search starts here:\n";
     for (unsigned i = 0, e = SearchList.size(); i != e; ++i) {
-      if (i == quoted)
+      if (i == NumQuoted)
         llvm::errs() << "#include <...> search starts here:\n";
       const char *Name = SearchList[i].getName();
       const char *Suffix;

@@ -19,8 +19,8 @@ namespace frontend {
   /// IncludeDirGroup - Identifiers the group a include entry belongs to, which
   /// represents its relative positive in the search list.
   enum IncludeDirGroup {
-    Quoted = 0,     ///< `#include ""` paths. Thing `gcc -iquote`.
-    Angled,         ///< Paths for both `#include ""` and `#include <>`. (`-I`)
+    Quoted = 0,     ///< '#include ""' paths. Think 'gcc -iquote'.
+    Angled,         ///< Paths for both '#include ""' and '#include <>'. ('-I')
     System,         ///< Like Angled, but marks system directories.
     CXXSystem,      ///< Like System, but only used for C++.
     After           ///< Like System, but searched after the system directories.
