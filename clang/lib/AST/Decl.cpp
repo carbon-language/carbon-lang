@@ -231,6 +231,14 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
       if (!FoundExtern)
         return LinkageInfo::internal();
     }
+    if (Var->getStorageClass() == SC_None) {
+      const VarDecl *PrevVar = Var->getPreviousDeclaration();
+      for (; PrevVar; PrevVar = PrevVar->getPreviousDeclaration())
+        if (PrevVar->getStorageClass() == SC_PrivateExtern)
+          break;
+        if (PrevVar)
+          return PrevVar->getLinkageAndVisibility();
+    }
   } else if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
     // C++ [temp]p4:
     //   A non-member function template can have internal linkage; any

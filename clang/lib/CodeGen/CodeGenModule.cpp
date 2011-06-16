@@ -206,17 +206,8 @@ void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
 
   // Set visibility for definitions.
   NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
-  if (LV.visibilityExplicit() || !GV->hasAvailableExternallyLinkage()) {
-    Visibility Vis = LV.visibility();
-    if (Vis == DefaultVisibility)
-      if (const VarDecl *VD = dyn_cast<VarDecl>(D))
-        if (const VarDecl *Old = VD->getPreviousDeclaration()) {
-          Visibility OldVis = Old->getLinkageAndVisibility().visibility();
-          if (OldVis == HiddenVisibility)
-            Vis = HiddenVisibility;
-        }
-    GV->setVisibility(GetLLVMVisibility(Vis));
-  }
+  if (LV.visibilityExplicit() || !GV->hasAvailableExternallyLinkage())
+    GV->setVisibility(GetLLVMVisibility(LV.visibility()));
 }
 
 /// Set the symbol visibility of type information (vtable and RTTI)
