@@ -1652,6 +1652,10 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
   return CDecl;
 }
 
+static bool tryMatchRecordTypes(ASTContext &Context,
+                                Sema::MethodMatchStrategy strategy,
+                                const Type *left, const Type *right);
+
 static bool matchTypes(ASTContext &Context, Sema::MethodMatchStrategy strategy,
                        QualType leftQT, QualType rightQT) {
   const Type *left =
@@ -1681,10 +1685,11 @@ static bool matchTypes(ASTContext &Context, Sema::MethodMatchStrategy strategy,
   if (isa<VectorType>(right)) return false;
 
   // - references should only match references of identical type
-  // - structs, unions, and Objective-C objects must match exactly
+  // - structs, unions, and Objective-C objects must match more-or-less
+  //   exactly
   // - everything else should be a scalar
   if (!left->isScalarType() || !right->isScalarType())
-    return false;
+    return tryMatchRecordTypes(Context, strategy, left, right);
 
   // Make scalars agree in kind, except count bools as chars.
   Type::ScalarTypeKind leftSK = left->getScalarTypeKind();
@@ -1696,6 +1701,36 @@ static bool matchTypes(ASTContext &Context, Sema::MethodMatchStrategy strategy,
   // intermix because of the size differences.
 
   return (leftSK == rightSK);
+}
+
+static bool tryMatchRecordTypes(ASTContext &Context,
+                                Sema::MethodMatchStrategy strategy,
+                                const Type *lt, const Type *rt) {
+  assert(lt && rt && lt != rt);
+
+  if (!isa<RecordType>(lt) || !isa<RecordType>(rt)) return false;
+  RecordDecl *left = cast<RecordType>(lt)->getDecl();
+  RecordDecl *right = cast<RecordType>(rt)->getDecl();
+
+  // Require union-hood to match.
+  if (left->isUnion() != right->isUnion()) return false;
+
+  // Require an exact match if either is non-POD.
+  if ((isa<CXXRecordDecl>(left) && !cast<CXXRecordDecl>(left)->isPOD()) ||
+      (isa<CXXRecordDecl>(right) && !cast<CXXRecordDecl>(right)->isPOD()))
+    return false;
+
+  // Require size and alignment to match.
+  if (Context.getTypeInfo(lt) != Context.getTypeInfo(rt)) return false;
+
+  // Require fields to match.
+  RecordDecl::field_iterator li = left->field_begin(), le = left->field_end();
+  RecordDecl::field_iterator ri = right->field_begin(), re = right->field_end();
+  for (; li != le && ri != re; ++li, ++ri) {
+    if (!matchTypes(Context, strategy, li->getType(), ri->getType()))
+      return false;
+  }
+  return (li == le && ri == re);
 }
 
 /// MatchTwoMethodDeclarations - Checks that two methods have matching type and

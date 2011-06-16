@@ -55,3 +55,19 @@ void f5(id a0, Abstract *a1) {
 void f6(id<A> a0) {
   Abstract *l = [a0 x];
 }
+
+struct test3a { int x, y; };
+struct test3b { unsigned x, y; };
+@interface Test3A - (struct test3a) test3; @end
+@interface Test3B - (struct test3b) test3; @end
+void test3(id x) {
+  (void) [x test3];
+}
+
+struct test4a { int x, y; };
+struct test4b { float x, y; };
+@interface Test4A - (struct test4a) test4; @end //expected-note{{using}}
+@interface Test4B - (struct test4b) test4; @end //expected-note{{also found}}
+void test4(id x) {
+  (void) [x test4]; //expected-warning {{multiple methods named 'test4' found}}
+}
