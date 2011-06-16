@@ -12,23 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLVMContextImpl.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Constants.h"
-#include "llvm/Assembly/Writer.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SCCIterator.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Threading.h"
 #include <algorithm>
 #include <cstdarg>
 using namespace llvm;
@@ -87,7 +71,9 @@ void Type::destroy() const {
     operator delete(const_cast<Type *>(this));
 
     return;
-  } else if (const OpaqueType *opaque_this = dyn_cast<OpaqueType>(this)) {
+  }
+  
+  if (const OpaqueType *opaque_this = dyn_cast<OpaqueType>(this)) {
     LLVMContextImpl *pImpl = this->getContext().pImpl;
     pImpl->OpaqueTypes.erase(opaque_this);
   }
@@ -253,8 +239,8 @@ bool Type::isSizedDerivedType() const {
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy->getElementType()->isSized();
 
-  if (const VectorType *PTy = dyn_cast<VectorType>(this))
-    return PTy->getElementType()->isSized();
+  if (const VectorType *VTy = dyn_cast<VectorType>(this))
+    return VTy->getElementType()->isSized();
 
   if (!this->isStructTy()) 
     return false;
