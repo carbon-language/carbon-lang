@@ -473,11 +473,11 @@ bool FunctionType::isValidArgumentType(const Type *ArgTy) {
 FunctionType::FunctionType(const Type *Result,
                            ArrayRef<const Type*> Params,
                            bool IsVarArgs)
-  : DerivedType(Result->getContext(), FunctionTyID), isVarArgs(IsVarArgs) {
+  : DerivedType(Result->getContext(), FunctionTyID) {
   ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
   NumContainedTys = Params.size() + 1; // + 1 for result type
   assert(isValidReturnType(Result) && "invalid return type for function");
-
+  setSubclassData(IsVarArgs);
 
   bool isAbstract = Result->isAbstract();
   new (&ContainedTys[0]) PATypeHandle(Result, this);

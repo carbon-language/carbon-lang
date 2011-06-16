@@ -69,7 +69,7 @@ public:
 
   void dump() const { Type::dump(); }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const DerivedType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->isDerivedType();
@@ -132,7 +132,7 @@ public:
   /// @brief Is this a power-of-2 byte-width IntegerType ?
   bool isPowerOf2ByteWidth() const;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const IntegerType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == IntegerTyID;
@@ -144,8 +144,6 @@ public:
 ///
 class FunctionType : public DerivedType {
   friend class TypeMap<FunctionValType, FunctionType>;
-  bool isVarArgs;
-
   FunctionType(const FunctionType &);                   // Do not implement
   const FunctionType &operator=(const FunctionType &);  // Do not implement
   FunctionType(const Type *Result, ArrayRef<const Type*> Params,
@@ -155,18 +153,12 @@ public:
   /// FunctionType::get - This static method is the primary way of constructing
   /// a FunctionType.
   ///
-  static FunctionType *get(
-    const Type *Result, ///< The result type
-    ArrayRef<const Type*> Params, ///< The types of the parameters
-    bool isVarArg  ///< Whether this is a variable argument length function
-  );
+  static FunctionType *get(const Type *Result,
+                           ArrayRef<const Type*> Params, bool isVarArg);
 
   /// FunctionType::get - Create a FunctionType taking no parameters.
   ///
-  static FunctionType *get(
-    const Type *Result, ///< The result type
-    bool isVarArg  ///< Whether this is a variable argument length function
-  ) {
+  static FunctionType *get(const Type *Result, bool isVarArg) {
     return get(Result, ArrayRef<const Type *>(), isVarArg);
   }
 
@@ -178,14 +170,14 @@ public:
   /// argument type.
   static bool isValidArgumentType(const Type *ArgTy);
 
-  inline bool isVarArg() const { return isVarArgs; }
-  inline const Type *getReturnType() const { return ContainedTys[0]; }
+  bool isVarArg() const { return getSubclassData(); }
+  const Type *getReturnType() const { return ContainedTys[0]; }
 
   typedef Type::subtype_iterator param_iterator;
   param_iterator param_begin() const { return ContainedTys + 1; }
   param_iterator param_end() const { return &ContainedTys[NumContainedTys]; }
 
-  // Parameter type accessors...
+  // Parameter type accessors.
   const Type *getParamType(unsigned i) const { return ContainedTys[i+1]; }
 
   /// getNumParams - Return the number of fixed parameters this function type
@@ -197,7 +189,7 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const FunctionType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == FunctionTyID;
@@ -206,11 +198,10 @@ public:
 
 
 /// CompositeType - Common super class of ArrayType, StructType, PointerType
-/// and VectorType
+/// and VectorType.
 class CompositeType : public DerivedType {
 protected:
-  inline explicit CompositeType(LLVMContext &C, TypeID id) :
-    DerivedType(C, id) { }
+  explicit CompositeType(LLVMContext &C, TypeID tid) : DerivedType(C, tid) { }
 public:
 
   /// getTypeAtIndex - Given an index value into the type, return the type of
@@ -221,7 +212,7 @@ public:
   virtual bool indexValid(const Value *V) const = 0;
   virtual bool indexValid(unsigned Idx) const = 0;
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const CompositeType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID ||
@@ -232,7 +223,7 @@ public:
 };
 
 
-/// StructType - Class to represent struct types
+/// StructType - Class to represent struct types, both normal and packed.
 ///
 class StructType : public CompositeType {
   friend class TypeMap<StructValType, StructType>;
@@ -243,9 +234,8 @@ public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
   ///
-  static StructType *get(LLVMContext &Context, 
-                         ArrayRef<const Type*> Params,
-                         bool isPacked=false);
+  static StructType *get(LLVMContext &Context, ArrayRef<const Type*> Params,
+                         bool isPacked = false);
 
   /// StructType::get - Create an empty structure type.
   ///
@@ -264,7 +254,9 @@ public:
   /// element type.
   static bool isValidElementType(const Type *ElemTy);
 
-  // Iterator access to the elements
+  bool isPacked() const { return getSubclassData() != 0 ? true : false; }
+
+  // Iterator access to the elements.
   typedef Type::subtype_iterator element_iterator;
   element_iterator element_begin() const { return ContainedTys; }
   element_iterator element_end() const { return &ContainedTys[NumContainedTys];}
@@ -288,13 +280,11 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const StructType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == StructTyID;
   }
-
-  bool isPacked() const { return (0 != getSubclassData()) ? true : false; }
 };
 
 /// SequentialType - This is the superclass of the array, pointer and vector
@@ -306,12 +296,12 @@ public:
 /// components out in memory identically.
 ///
 class SequentialType : public CompositeType {
-  PATypeHandle ContainedType; ///< Storage for the single contained type
+  PATypeHandle ContainedType;       ///< Storage for the single contained type.
   SequentialType(const SequentialType &);                  // Do not implement!
   const SequentialType &operator=(const SequentialType &); // Do not implement!
 
   // avoiding warning: 'this' : used in base member initializer list
-  SequentialType* this_() { return this; }
+  SequentialType *this_() { return this; }
 protected:
   SequentialType(TypeID TID, const Type *ElType)
     : CompositeType(ElType->getContext(), TID), ContainedType(ElType, this_()) {
@@ -337,7 +327,7 @@ public:
     return ContainedTys[0];
   }
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const SequentialType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID ||
@@ -347,7 +337,7 @@ public:
 };
 
 
-/// ArrayType - Class to represent array types
+/// ArrayType - Class to represent array types.
 ///
 class ArrayType : public SequentialType {
   friend class TypeMap<ArrayValType, ArrayType>;
@@ -366,20 +356,20 @@ public:
   /// element type.
   static bool isValidElementType(const Type *ElemTy);
 
-  inline uint64_t getNumElements() const { return NumElements; }
+  uint64_t getNumElements() const { return NumElements; }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const ArrayType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == ArrayTyID;
   }
 };
 
-/// VectorType - Class to represent vector types
+/// VectorType - Class to represent vector types.
 ///
 class VectorType : public SequentialType {
   friend class TypeMap<VectorValType, VectorType>;
@@ -390,7 +380,7 @@ class VectorType : public SequentialType {
   VectorType(const Type *ElType, unsigned NumEl);
 public:
   /// VectorType::get - This static method is the primary way to construct an
-  /// VectorType
+  /// VectorType.
   ///
   static VectorType *get(const Type *ElementType, unsigned NumElements);
 
@@ -431,10 +421,10 @@ public:
   static bool isValidElementType(const Type *ElemTy);
 
   /// @brief Return the number of elements in the Vector type.
-  inline unsigned getNumElements() const { return NumElements; }
+  unsigned getNumElements() const { return NumElements; }
 
   /// @brief Return the number of bits in the Vector type.
-  inline unsigned getBitWidth() const {
+  unsigned getBitWidth() const {
     return NumElements * getElementType()->getPrimitiveSizeInBits();
   }
 
@@ -442,7 +432,7 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const VectorType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == VectorTyID;
@@ -481,7 +471,7 @@ public:
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
-  // Implement support type inquiry through isa, cast, and dyn_cast:
+  // Implement support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const PointerType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == PointerTyID;
@@ -497,11 +487,11 @@ class OpaqueType : public DerivedType {
   const OpaqueType &operator=(const OpaqueType &);  // DO NOT IMPLEMENT
   OpaqueType(LLVMContext &C);
 public:
-  /// OpaqueType::get - Static factory method for the OpaqueType class...
+  /// OpaqueType::get - Static factory method for the OpaqueType class.
   ///
   static OpaqueType *get(LLVMContext &C);
 
-  // Implement support for type inquiry through isa, cast, and dyn_cast:
+  // Implement support for type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const OpaqueType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == OpaqueTyID;
