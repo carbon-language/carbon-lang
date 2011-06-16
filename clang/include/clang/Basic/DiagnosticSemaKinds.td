@@ -269,9 +269,15 @@ def warn_dyn_class_memaccess : Warning<
   InGroup<DiagGroup<"dynamic-class-memaccess">>;
 def note_bad_memaccess_silence : Note<
   "explicitly cast the pointer to silence this warning">;
-def warn_sizeof_pointer : Warning<
-  "the argument to sizeof is pointer type %0, expected %1 to match "
-  "%select{first|second}2 argument to %3">;
+def warn_sizeof_pointer_expr_memaccess : Warning<
+  "argument to 'sizeof' in %0 call is the same expression as the "
+  "%select{destination|source}1; did you mean to "
+  "%select{dereference it|remove the addressof|provide an explicit length}2?">,
+  InGroup<DiagGroup<"sizeof-pointer-memaccess">>;
+def warn_sizeof_pointer_type_memaccess : Warning<
+  "argument to 'sizeof' in %0 call is the same pointer type %1 as the "
+  "%select{destination|source}2; expected %3 or an explicit length">,
+  InGroup<DiagGroup<"sizeof-pointer-memaccess">>;
 
 /// main()
 // static/inline main() are not errors in C, just in C++.

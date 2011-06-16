@@ -30,23 +30,26 @@ void f(Mat m, const Foo& const_foo, char *buffer) {
   char arr[5];
   char* parr[5];
   Foo foo;
+  char* heap_buffer = new char[42];
 
   /* Should warn */
   memset(&s, 0, sizeof(&s));  // \
-      // expected-warning {{the argument to sizeof is pointer type 'S *', expected 'S' to match first argument to 'memset'}}
+      // expected-warning {{argument to 'sizeof' in 'memset' call is the same expression as the destination}}
   memset(ps, 0, sizeof(ps));  // \
-      // expected-warning {{the argument to sizeof is pointer type 'S *', expected 'S' to match first argument to 'memset'}}
+      // expected-warning {{argument to 'sizeof' in 'memset' call is the same expression as the destination}}
   memset(ps2, 0, sizeof(ps2));  // \
-      // expected-warning {{the argument to sizeof is pointer type 'PS' (aka 'S *'), expected 'S' to match first argument to 'memset'}}
+      // expected-warning {{argument to 'sizeof' in 'memset' call is the same expression as the destination}}
   memset(ps2, 0, sizeof(typeof(ps2)));  // \
-      // expected-warning {{the argument to sizeof is pointer type 'typeof (ps2)' (aka 'S *'), expected 'S' to match first argument to 'memset'}}
+      // expected-warning {{argument to 'sizeof' in 'memset' call is the same pointer type}}
   memset(ps2, 0, sizeof(PS));  // \
-      // expected-warning {{the argument to sizeof is pointer type 'PS' (aka 'S *'), expected 'S' to match first argument to 'memset'}}
+      // expected-warning {{argument to 'sizeof' in 'memset' call is the same pointer type}}
+  memset(heap_buffer, 0, sizeof(heap_buffer));  // \
+      // expected-warning {{argument to 'sizeof' in 'memset' call is the same expression as the destination}}
 
   memcpy(&s, 0, sizeof(&s));  // \
-      // expected-warning {{the argument to sizeof is pointer type 'S *', expected 'S' to match first argument to 'memcpy'}}
+      // expected-warning {{argument to 'sizeof' in 'memcpy' call is the same expression as the destination}}
   memcpy(0, &s, sizeof(&s));  // \
-      // expected-warning {{the argument to sizeof is pointer type 'S *', expected 'S' to match second argument to 'memcpy'}}
+      // expected-warning {{argument to 'sizeof' in 'memcpy' call is the same expression as the source}}
 
   /* Shouldn't warn */
   memset((void*)&s, 0, sizeof(&s));

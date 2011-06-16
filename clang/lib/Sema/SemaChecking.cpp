@@ -1828,18 +1828,25 @@ static bool isDynamicClassType(QualType T) {
   return false;
 }
 
-/// \brief If E is a sizeof expression, returns the expression's type in
-/// OutType.
-static bool sizeofExprType(const Expr* E, QualType *OutType) {
+/// \brief If E is a sizeof expression returns the argument expression,
+/// otherwise returns NULL.
+static const Expr *getSizeOfExprArg(const Expr* E) {
   if (const UnaryExprOrTypeTraitExpr *SizeOf =
-      dyn_cast<UnaryExprOrTypeTraitExpr>(E)) {
-    if (SizeOf->getKind() != clang::UETT_SizeOf)
-      return false;
+      dyn_cast<UnaryExprOrTypeTraitExpr>(E))
+    if (SizeOf->getKind() == clang::UETT_SizeOf && !SizeOf->isArgumentType())
+      return SizeOf->getArgumentExpr()->IgnoreParenImpCasts();
 
-    *OutType = SizeOf->getTypeOfArgument();
-    return true;
-  }
-  return false;
+  return 0;
+}
+
+/// \brief If E is a sizeof expression returns the argument type.
+static QualType getSizeOfArgType(const Expr* E) {
+  if (const UnaryExprOrTypeTraitExpr *SizeOf =
+      dyn_cast<UnaryExprOrTypeTraitExpr>(E))
+    if (SizeOf->getKind() == clang::UETT_SizeOf)
+      return SizeOf->getTypeOfArgument();
+
+  return QualType();
 }
 
 /// \brief Check for dangerous or invalid arguments to memset().
@@ -1858,6 +1865,12 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
 
   unsigned LastArg = FnName->isStr("memset")? 1 : 2;
   const Expr *LenExpr = Call->getArg(2)->IgnoreParenImpCasts();
+
+  // We have special checking when the length is a sizeof expression.
+  QualType SizeOfArgTy = getSizeOfArgType(LenExpr);
+  const Expr *SizeOfArg = getSizeOfExprArg(LenExpr);
+  llvm::FoldingSetNodeID SizeOfArgID;
+
   for (unsigned ArgIdx = 0; ArgIdx != LastArg; ++ArgIdx) {
     const Expr *Dest = Call->getArg(ArgIdx)->IgnoreParenImpCasts();
     SourceRange ArgRange = Call->getArg(ArgIdx)->getSourceRange();
@@ -1866,20 +1879,54 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
     if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
       QualType PointeeTy = DestPtrTy->getPointeeType();
 
-      // Don't warn about void pointers or char pointers as both are often used
-      // for directly representing memory, regardless of its underlying type.
-      if (PointeeTy->isVoidType() || PointeeTy->isCharType())
+      // Never warn about void type pointers. This can be used to suppress
+      // false positives.
+      if (PointeeTy->isVoidType())
         continue;
 
-      // Catch "memset(p, 0, sizeof(p))" -- needs to be sizeof(*p).
-      QualType SizeofTy;
-      if (sizeofExprType(LenExpr, &SizeofTy) &&
-          Context.typesAreCompatible(SizeofTy, DestTy)) {
-        // Note: This complains about sizeof(typeof(p)) as well.
-        SourceLocation loc = LenExpr->getSourceRange().getBegin();
-        Diag(loc, diag::warn_sizeof_pointer)
-            << SizeofTy <<  PointeeTy << ArgIdx << FnName;
-        break;
+      // Catch "memset(p, 0, sizeof(p))" -- needs to be sizeof(*p). Do this by
+      // actually comparing the expressions for equality. Because computing the
+      // expression IDs can be expensive, we only do this if the diagnostic is
+      // enabled.
+      if (SizeOfArg &&
+          Diags.getDiagnosticLevel(diag::warn_sizeof_pointer_expr_memaccess,
+                                   SizeOfArg->getExprLoc())) {
+        // We only compute IDs for expressions if the warning is enabled, and
+        // cache the sizeof arg's ID.
+        if (SizeOfArgID == llvm::FoldingSetNodeID())
+          SizeOfArg->Profile(SizeOfArgID, Context, true);
+        llvm::FoldingSetNodeID DestID;
+        Dest->Profile(DestID, Context, true);
+        if (DestID == SizeOfArgID) {
+          unsigned ActionIdx = 0; // Default is to suggest dereferencing.
+          if (const UnaryOperator *UnaryOp = dyn_cast<UnaryOperator>(Dest))
+            if (UnaryOp->getOpcode() == UO_AddrOf)
+              ActionIdx = 1; // If its an address-of operator, just remove it.
+          if (Context.getTypeSize(PointeeTy) == Context.getCharWidth())
+            ActionIdx = 2; // If the pointee's size is sizeof(char),
+                           // suggest an explicit length.
+          DiagRuntimeBehavior(SizeOfArg->getExprLoc(), Dest,
+                              PDiag(diag::warn_sizeof_pointer_expr_memaccess)
+                                << FnName << ArgIdx << ActionIdx
+                                << Dest->getSourceRange()
+                                << SizeOfArg->getSourceRange());
+          break;
+        }
+      }
+
+      // Also check for cases where the sizeof argument is the exact same
+      // type as the memory argument, and where it points to a user-defined
+      // record type.
+      if (SizeOfArgTy != QualType()) {
+        if (PointeeTy->isRecordType() &&
+            Context.typesAreCompatible(SizeOfArgTy, DestTy)) {
+          DiagRuntimeBehavior(LenExpr->getExprLoc(), Dest,
+                              PDiag(diag::warn_sizeof_pointer_type_memaccess)
+                                << FnName << SizeOfArgTy << ArgIdx
+                                << PointeeTy << Dest->getSourceRange()
+                                << LenExpr->getSourceRange());
+          break;
+        }
       }
 
       unsigned DiagID;
