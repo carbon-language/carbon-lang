@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -67,6 +68,11 @@ EnableFastISelVerbose("fast-isel-verbose", cl::Hidden,
 static cl::opt<bool>
 EnableFastISelAbort("fast-isel-abort", cl::Hidden,
           cl::desc("Enable abort calls when \"fast\" instruction fails"));
+
+static cl::opt<bool>
+UseMBPI("use-mbpi",
+        cl::desc("use Machine Branch Probability Info"),
+        cl::init(true), cl::Hidden);
 
 #ifndef NDEBUG
 static cl::opt<bool>
@@ -186,6 +192,7 @@ SelectionDAGISel::SelectionDAGISel(const TargetMachine &tm,
   DAGSize(0) {
     initializeGCModuleInfoPass(*PassRegistry::getPassRegistry());
     initializeAliasAnalysisAnalysisGroup(*PassRegistry::getPassRegistry());
+    initializeBranchProbabilityInfoPass(*PassRegistry::getPassRegistry());
   }
 
 SelectionDAGISel::~SelectionDAGISel() {
@@ -199,6 +206,8 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<AliasAnalysis>();
   AU.addRequired<GCModuleInfo>();
   AU.addPreserved<GCModuleInfo>();
+  if (UseMBPI && OptLevel != CodeGenOpt::None)
+    AU.addRequired<BranchProbabilityInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -262,6 +271,12 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   CurDAG->init(*MF);
   FuncInfo->set(Fn, *MF);
+
+  if (UseMBPI && OptLevel != CodeGenOpt::None)
+    FuncInfo->BPI = &getAnalysis<BranchProbabilityInfo>();
+  else
+    FuncInfo->BPI = 0;
+
   SDB->init(GFI, *AA);
 
   SelectAllBasicBlocks(Fn);

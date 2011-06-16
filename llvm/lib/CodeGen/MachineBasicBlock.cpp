@@ -339,23 +339,62 @@ void MachineBasicBlock::updateTerminator() {
   }
 }
 
-void MachineBasicBlock::addSuccessor(MachineBasicBlock *succ) {
-  Successors.push_back(succ);
-  succ->addPredecessor(this);
-}
+void MachineBasicBlock::addSuccessor(MachineBasicBlock *succ, uint32_t weight) {
+
+  // If we see non-zero value for the first time it means we actually use Weight
+  // list, so we fill all Weights with 0's.
+  if (weight != 0 && Weights.empty())
+    Weights.resize(Successors.size());
+
+  if (weight != 0 || !Weights.empty())
+    Weights.push_back(weight);
+
+   Successors.push_back(succ);
+   succ->addPredecessor(this);
+ }
 
 void MachineBasicBlock::removeSuccessor(MachineBasicBlock *succ) {
   succ->removePredecessor(this);
   succ_iterator I = std::find(Successors.begin(), Successors.end(), succ);
   assert(I != Successors.end() && "Not a current successor!");
+
+  // If Weight list is empty it means we don't use it (disabled optimization).
+  if (!Weights.empty()) {
+    weight_iterator WI = getWeightIterator(I);
+    Weights.erase(WI);
+  }
+
   Successors.erase(I);
 }
 
 MachineBasicBlock::succ_iterator
 MachineBasicBlock::removeSuccessor(succ_iterator I) {
   assert(I != Successors.end() && "Not a current successor!");
+
+  // If Weight list is empty it means we don't use it (disabled optimization).
+  if (!Weights.empty()) {
+    weight_iterator WI = getWeightIterator(I);
+    Weights.erase(WI);
+  }
+
   (*I)->removePredecessor(this);
   return Successors.erase(I);
+}
+
+void MachineBasicBlock::replaceSuccessor(MachineBasicBlock *Old,
+                                         MachineBasicBlock *New) {
+  uint32_t weight = 0;
+  succ_iterator SI = std::find(Successors.begin(), Successors.end(), Old);
+
+  // If Weight list is empty it means we don't use it (disabled optimization).
+  if (!Weights.empty()) {
+    weight_iterator WI = getWeightIterator(SI);
+    weight = *WI;
+  }
+
+  // Update the successor information.
+  removeSuccessor(SI);
+  addSuccessor(New, weight);
 }
 
 void MachineBasicBlock::addPredecessor(MachineBasicBlock *pred) {
@@ -374,7 +413,14 @@ void MachineBasicBlock::transferSuccessors(MachineBasicBlock *fromMBB) {
 
   while (!fromMBB->succ_empty()) {
     MachineBasicBlock *Succ = *fromMBB->succ_begin();
-    addSuccessor(Succ);
+    uint32_t weight = 0;
+
+
+    // If Weight list is empty it means we don't use it (disabled optimization).
+    if (!fromMBB->Weights.empty())
+      weight = *fromMBB->Weights.begin();
+
+    addSuccessor(Succ, weight);
     fromMBB->removeSuccessor(Succ);
   }
 }
@@ -637,8 +683,7 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
   }
 
   // Update the successor information.
-  removeSuccessor(Old);
-  addSuccessor(New);
+  replaceSuccessor(Old, New);
 }
 
 /// CorrectExtraCFGEdges - Various pieces of code can cause excess edges in the
@@ -718,6 +763,23 @@ MachineBasicBlock::findDebugLoc(MachineBasicBlock::iterator &MBBI) {
       DL = MBBI2->getDebugLoc();
   }
   return DL;
+}
+
+/// getSuccWeight - Return weight of the edge from this block to MBB.
+///
+uint32_t MachineBasicBlock::getSuccWeight(MachineBasicBlock *succ) {
+  succ_iterator I = std::find(Successors.begin(), Successors.end(), succ);
+  return *getWeightIterator(I);
+}
+
+/// getWeightIterator - Return wight iterator corresonding to the I successor
+/// iterator
+MachineBasicBlock::weight_iterator MachineBasicBlock::
+getWeightIterator(MachineBasicBlock::succ_iterator I) {
+  assert(Weights.size() == Successors.size() && "Async weight list!");
+  size_t index = std::distance(Successors.begin(), I);
+  assert(index < Weights.size() && "Not a current successor!");
+  return Weights.begin() + index;
 }
 
 void llvm::WriteAsOperand(raw_ostream &OS, const MachineBasicBlock *MBB,

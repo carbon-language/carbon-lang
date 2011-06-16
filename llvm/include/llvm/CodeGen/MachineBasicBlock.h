@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/Support/DataTypes.h"
 #include <functional>
 
 namespace llvm {
@@ -27,6 +28,7 @@ class MCSymbol;
 class SlotIndexes;
 class StringRef;
 class raw_ostream;
+class MachineBranchProbabilityInfo;
 
 template <>
 struct ilist_traits<MachineInstr> : public ilist_default_traits<MachineInstr> {
@@ -63,11 +65,18 @@ class MachineBasicBlock : public ilist_node<MachineBasicBlock> {
   const BasicBlock *BB;
   int Number;
   MachineFunction *xParent;
-  
+
   /// Predecessors/Successors - Keep track of the predecessor / successor
   /// basicblocks.
   std::vector<MachineBasicBlock *> Predecessors;
   std::vector<MachineBasicBlock *> Successors;
+
+
+  /// Weights - Keep track of the weights to the successors. This vector
+  /// has the same order as Successors, or it is empty if we don't use it
+  /// (disable optimization).
+  std::vector<uint32_t> Weights;
+  typedef std::vector<uint32_t>::iterator weight_iterator;
 
   /// LiveIns - Keep track of the physical registers that are livein of
   /// the basicblock.
@@ -244,11 +253,13 @@ public:
   void updateTerminator();
 
   // Machine-CFG mutators
-  
+
   /// addSuccessor - Add succ as a successor of this MachineBasicBlock.
-  /// The Predecessors list of succ is automatically updated.
+  /// The Predecessors list of succ is automatically updated. WEIGHT
+  /// parameter is stored in Weights list and it may be used by
+  /// MachineBranchProbabilityInfo analysis to calculate branch probability.
   ///
-  void addSuccessor(MachineBasicBlock *succ);
+  void addSuccessor(MachineBasicBlock *succ, uint32_t weight = 0);
 
   /// removeSuccessor - Remove successor from the successors list of this
   /// MachineBasicBlock. The Predecessors list of succ is automatically updated.
@@ -260,7 +271,12 @@ public:
   /// updated.  Return the iterator to the element after the one removed.
   ///
   succ_iterator removeSuccessor(succ_iterator I);
-  
+
+  /// replaceSuccessor - Replace successor OLD with NEW and update weight info.
+  ///
+  void replaceSuccessor(MachineBasicBlock *Old, MachineBasicBlock *New);
+
+
   /// transferSuccessors - Transfers all the successors from MBB to this
   /// machine basic block (i.e., copies all the successors fromMBB and
   /// remove all the successors from fromMBB).
@@ -396,8 +412,22 @@ public:
   /// getSymbol - Return the MCSymbol for this basic block.
   ///
   MCSymbol *getSymbol() const;
-  
-private:   // Methods used to maintain doubly linked list of blocks...
+
+
+private:
+  /// getWeightIterator - Return weight iterator corresponding to the I
+  /// successor iterator.
+  weight_iterator getWeightIterator(succ_iterator I);
+
+  friend class MachineBranchProbabilityInfo;
+
+  /// getSuccWeight - Return weight of the edge from this block to MBB. This
+  /// method should NOT be called directly, but by using getEdgeWeight method
+  /// from MachineBranchProbabilityInfo class.
+  uint32_t getSuccWeight(MachineBasicBlock *succ);
+
+
+  // Methods used to maintain doubly linked list of blocks...
   friend struct ilist_traits<MachineBasicBlock>;
 
   // Machine-CFG mutators

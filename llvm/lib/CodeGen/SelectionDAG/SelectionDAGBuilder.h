@@ -434,6 +434,9 @@ private:
                                 const Value* SV,
                                 MachineBasicBlock* Default,
                                 MachineBasicBlock *SwitchBB);
+
+  uint32_t getEdgeWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst);
+  void addSuccessorWithWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst);
 public:
   void visitSwitchCase(CaseBlock &CB,
                        MachineBasicBlock *SwitchBB);

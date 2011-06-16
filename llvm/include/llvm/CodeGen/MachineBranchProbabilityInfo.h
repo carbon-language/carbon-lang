@@ -1,4 +1,5 @@
-//===--- BranchProbabilityInfo.h - Branch Probability Analysis --*- C++ -*-===//
+
+//==- MachineBranchProbabilityInfo.h - Machine Branch Probability Analysis -==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,22 +8,22 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This pass is used to evaluate branch probabilties.
+// This pass is used to evaluate branch probabilties on machine basic blocks.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_BRANCHPROBABILITYINFO_H
-#define LLVM_ANALYSIS_BRANCHPROBABILITYINFO_H
+#ifndef LLVM_CODEGEN_MACHINEBRANCHPROBABILITYINFO_H
+#define LLVM_CODEGEN_MACHINEBRANCHPROBABILITYINFO_H
 
-#include "llvm/InitializePasses.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/BranchProbability.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include <climits>
 
 namespace llvm {
 
 class raw_ostream;
 
-class BranchProbabilityInfo : public FunctionPass {
+class MachineBranchProbabilityInfo : public ImmutablePass {
 
   // Default weight value. Used when we don't have information about the edge.
   // TODO: DEFAULT_WEIGHT makes sense during static predication, when none of
@@ -32,52 +33,45 @@ class BranchProbabilityInfo : public FunctionPass {
   // weight to just "inherit" the non-zero weight of an adjacent successor.
   static const uint32_t DEFAULT_WEIGHT = 16;
 
-  typedef std::pair<BasicBlock *, BasicBlock *> Edge;
-
-  DenseMap<Edge, uint32_t> Weights;
-
   // Get sum of the block successors' weights.
-  uint32_t getSumForBlock(BasicBlock *BB) const;
+  uint32_t getSumForBlock(MachineBasicBlock *MBB) const;
 
 public:
   static char ID;
 
-  BranchProbabilityInfo() : FunctionPass(ID) {
-    initializeBranchProbabilityInfoPass(*PassRegistry::getPassRegistry());
+  MachineBranchProbabilityInfo() : ImmutablePass(ID) {
+    PassRegistry &Registry = *PassRegistry::getPassRegistry();
+    initializeMachineBranchProbabilityInfoPass(Registry);
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequired<LoopInfo>();
     AU.setPreservesAll();
   }
 
-  bool runOnFunction(Function &F);
-
-  // Returned value is between 1 and UINT32_MAX. Look at
-  // BranchProbabilityInfo.cpp for details.
-  uint32_t getEdgeWeight(BasicBlock *Src, BasicBlock *Dst) const;
-
-  // Look at BranchProbabilityInfo.cpp for details. Use it with caution!
-  void setEdgeWeight(BasicBlock *Src, BasicBlock *Dst, uint32_t Weight);
+  // Return edge weight. If we don't have any informations about it - return
+  // DEFAULT_WEIGHT.
+  uint32_t getEdgeWeight(MachineBasicBlock *Src, MachineBasicBlock *Dst) const;
 
   // A 'Hot' edge is an edge which probability is >= 80%.
-  bool isEdgeHot(BasicBlock *Src, BasicBlock *Dst) const;
+  bool isEdgeHot(MachineBasicBlock *Src, MachineBasicBlock *Dst) const;
 
   // Return a hot successor for the block BB or null if there isn't one.
-  BasicBlock *getHotSucc(BasicBlock *BB) const;
+  MachineBasicBlock *getHotSucc(MachineBasicBlock *MBB) const;
 
   // Return a probability as a fraction between 0 (0% probability) and
   // 1 (100% probability), however the value is never equal to 0, and can be 1
   // only iff SRC block has only one successor.
-  BranchProbability getEdgeProbability(BasicBlock *Src, BasicBlock *Dst) const;
+  BranchProbability getEdgeProbability(MachineBasicBlock *Src,
+                                       MachineBasicBlock *Dst) const;
 
   // Print value between 0 (0% probability) and 1 (100% probability),
   // however the value is never equal to 0, and can be 1 only iff SRC block
   // has only one successor.
-  raw_ostream &printEdgeProbability(raw_ostream &OS, BasicBlock *Src,
-                                    BasicBlock *Dst) const;
+  raw_ostream &printEdgeProbability(raw_ostream &OS, MachineBasicBlock *Src,
+                                    MachineBasicBlock *Dst) const;
 };
 
 }
+
 
 #endif
