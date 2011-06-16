@@ -23,11 +23,10 @@ inline Dest bit_cast(const Source& source) {
 }
 
 // http://www.lysator.liu.se/c/c-faq/c-2.html#2-6
-void f(Mat m, const Foo& const_foo) {
+void f(Mat m, const Foo& const_foo, char *buffer) {
   S s;
   S* ps = &s;
   PS ps2 = &s;
-  char c = 42;
   char arr[5];
   char* parr[5];
   Foo foo;
@@ -68,8 +67,9 @@ void f(Mat m, const Foo& const_foo) {
   memcpy(&foo, &const_foo, sizeof(Foo));
   memcpy((void*)&s, 0, sizeof(&s));
   memcpy(0, (void*)&s, sizeof(&s));
-  memcpy(&parr[3], &c, sizeof(&c));
-  memcpy((char*)&parr[3], &c, sizeof(&c));
+  char *cptr;
+  memcpy(&cptr, buffer, sizeof(cptr));
+  memcpy((char*)&cptr, buffer, sizeof(cptr));
 
   CFooRef cfoo = foo;
   memcpy(&foo, &cfoo, sizeof(Foo));
