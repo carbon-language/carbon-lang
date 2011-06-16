@@ -38,6 +38,46 @@ void test_warn() {
   memcpy(0, &x1, sizeof x1); // \
       // expected-warning{{source of this 'memcpy' call is a pointer to dynamic class}} \
       // expected-note {{explicitly cast the pointer to silence this warning}}
+
+  __builtin_memset(&x1, 0, sizeof x1); // \
+      // expected-warning {{destination for this '__builtin_memset' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  __builtin_memset(&x2, 0, sizeof x2); // \
+      // expected-warning {{destination for this '__builtin_memset' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+
+  __builtin_memmove(&x1, 0, sizeof x1); // \
+      // expected-warning{{destination for this '__builtin_memmove' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  __builtin_memmove(0, &x1, sizeof x1); // \
+      // expected-warning{{source of this '__builtin_memmove' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  __builtin_memcpy(&x1, 0, sizeof x1); // \
+      // expected-warning{{destination for this '__builtin_memcpy' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  __builtin_memcpy(0, &x1, sizeof x1); // \
+      // expected-warning{{source of this '__builtin_memcpy' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+
+  __builtin___memset_chk(&x1, 0, sizeof x1, sizeof x1); //                    \
+      // expected-warning {{destination for this '__builtin___memset_chk' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  __builtin___memset_chk(&x2, 0, sizeof x2, sizeof x2); //                    \
+      // expected-warning {{destination for this '__builtin___memset_chk' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+
+  __builtin___memmove_chk(&x1, 0, sizeof x1, sizeof x1); //                   \
+      // expected-warning{{destination for this '__builtin___memmove_chk' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  __builtin___memmove_chk(0, &x1, sizeof x1, sizeof x1); //                   \
+      // expected-warning{{source of this '__builtin___memmove_chk' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  __builtin___memcpy_chk(&x1, 0, sizeof x1, sizeof x1); //                    \
+      // expected-warning{{destination for this '__builtin___memcpy_chk' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
+  __builtin___memcpy_chk(0, &x1, sizeof x1, sizeof x1); //                    \
+      // expected-warning{{source of this '__builtin___memcpy_chk' call is a pointer to dynamic class}} \
+      // expected-note {{explicitly cast the pointer to silence this warning}}
 }
 
 void test_nowarn(void *void_ptr) {
@@ -68,3 +108,5 @@ namespace N {
     N::memset(&x1, 0, sizeof x1);
   }
 }
+
+
