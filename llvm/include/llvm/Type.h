@@ -17,7 +17,6 @@
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/ADT/GraphTraits.h"
 #include <string>
 #include <vector>
 
@@ -30,6 +29,7 @@ class TypeMapBase;
 class raw_ostream;
 class Module;
 class LLVMContext;
+template<class GraphType> struct GraphTraits;
 
 /// The instances of the Type class are immutable: once they are created,
 /// they are never changed.  Also note that only one instance of a particular
