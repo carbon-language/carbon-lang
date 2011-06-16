@@ -61,7 +61,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineBasicBlock &MBB) {
   return OS;
 }
 
-/// addNodeToList (MBB) - When an MBB is added to an MF, we need to update the 
+/// addNodeToList (MBB) - When an MBB is added to an MF, we need to update the
 /// parent pointer of the MBB, the MBB numbering, and any instructions in the
 /// MBB to be on the right operand list for registers.
 ///
@@ -93,7 +93,7 @@ void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock *N) {
 void ilist_traits<MachineInstr>::addNodeToList(MachineInstr *N) {
   assert(N->getParent() == 0 && "machine instruction already in a basic block");
   N->setParent(Parent);
-  
+
   // Add the instruction's register operands to their corresponding
   // use/def lists.
   MachineFunction *MF = Parent->getParent();
@@ -110,7 +110,7 @@ void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr *N) {
 
   // Remove from the use/def lists.
   N->RemoveRegOperandsFromUseLists();
-  
+
   N->setParent(0);
 
   LeakDetector::addGarbageObject(N);
@@ -351,7 +351,7 @@ void MachineBasicBlock::removeSuccessor(MachineBasicBlock *succ) {
   Successors.erase(I);
 }
 
-MachineBasicBlock::succ_iterator 
+MachineBasicBlock::succ_iterator
 MachineBasicBlock::removeSuccessor(succ_iterator I) {
   assert(I != Successors.end() && "Not a current successor!");
   (*I)->removePredecessor(this);
@@ -371,7 +371,7 @@ void MachineBasicBlock::removePredecessor(MachineBasicBlock *pred) {
 void MachineBasicBlock::transferSuccessors(MachineBasicBlock *fromMBB) {
   if (this == fromMBB)
     return;
-  
+
   while (!fromMBB->succ_empty()) {
     MachineBasicBlock *Succ = *fromMBB->succ_begin();
     addSuccessor(Succ);
@@ -383,7 +383,7 @@ void
 MachineBasicBlock::transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB) {
   if (this == fromMBB)
     return;
-  
+
   while (!fromMBB->succ_empty()) {
     MachineBasicBlock *Succ = *fromMBB->succ_begin();
     addSuccessor(Succ);
@@ -645,7 +645,7 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
 /// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
 /// DestB, remove any other MBB successors from the CFG.  DestA and DestB can be
 /// null.
-/// 
+///
 /// Besides DestA and DestB, retain other edges leading to LandingPads
 /// (currently there can be only one; we don't check or require that here).
 /// Note it is possible that DestA and/or DestB are LandingPads.
