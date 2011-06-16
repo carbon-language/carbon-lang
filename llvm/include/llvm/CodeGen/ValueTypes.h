@@ -83,7 +83,7 @@ namespace llvm {
 
       isVoid         =  35,   // This has no value
 
-      untyped        = 36,    // This value takes a register, but has
+      untyped        =  36,   // This value takes a register, but has
                               // unspecified type.  The register class
                               // will be determined by the opcode.
 
