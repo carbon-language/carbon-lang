@@ -16,6 +16,7 @@
 #include "PTXMachineFunctionInfo.h"
 #include "PTXRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -23,6 +24,16 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+// Calling Convention Implementation
+//===----------------------------------------------------------------------===//
+
+#include "PTXGenCallingConv.inc"
+
+//===----------------------------------------------------------------------===//
+// TargetLowering Implementation
+//===----------------------------------------------------------------------===//
 
 PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
@@ -195,44 +206,72 @@ SDValue PTXTargetLowering::
       break;
   }
 
-  // Make sure we don't add argument registers twice
-  if (MFI->isDoneAddArg())
-    llvm_unreachable("cannot add argument registers twice");
+  if (MFI->isKernel()) {
+    // For kernel functions, we just need to emit the proper READ_PARAM ISDs
+    for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
 
-  // Reset argmap before allocation
-  for (struct argmap_entry *i = argmap, *e = argmap + array_lengthof(argmap);
-       i != e; ++ i)
-    i->reset();
+      assert(Ins[i].VT != MVT::i1 && "Kernels cannot take pred operands");
 
-  for (int i = 0, e = Ins.size(); i != e; ++ i) {
-    MVT::SimpleValueType VT = Ins[i].VT.SimpleTy;
+      SDValue ArgValue = DAG.getNode(PTXISD::READ_PARAM, dl, Ins[i].VT, Chain,
+                                     DAG.getTargetConstant(i, MVT::i32));
+      InVals.push_back(ArgValue);
 
-    struct argmap_entry *entry = std::find(argmap,
-                                           argmap + array_lengthof(argmap), VT);
-    if (entry == argmap + array_lengthof(argmap))
-      llvm_unreachable("Type of argument is not supported");
-
-    if (MFI->isKernel() && entry->RC == PTX::RegPredRegisterClass)
-      llvm_unreachable("cannot pass preds to kernel");
-
-    MachineRegisterInfo &RegInfo = DAG.getMachineFunction().getRegInfo();
-
-    unsigned preg = *++(entry->loc); // allocate start from register 1
-    unsigned vreg = RegInfo.createVirtualRegister(entry->RC);
-    RegInfo.addLiveIn(preg, vreg);
-
-    MFI->addArgReg(preg);
-
-    SDValue inval;
-    if (MFI->isKernel())
-      inval = DAG.getNode(PTXISD::READ_PARAM, dl, VT, Chain,
-                          DAG.getTargetConstant(i, MVT::i32));
-    else
-      inval = DAG.getCopyFromReg(Chain, dl, vreg, VT);
-    InVals.push_back(inval);
+      // Instead of storing a physical register in our argument list, we just
+      // store the total size of the parameter, in bits.  The ASM printer
+      // knows how to process this.
+      MFI->addArgReg(Ins[i].VT.getStoreSizeInBits());
+    }
   }
+  else {
+    // For device functions, we use the PTX calling convention to do register
+    // assignments then create CopyFromReg ISDs for the allocated registers
 
-  MFI->doneAddArg();
+    SmallVector<CCValAssign, 16> ArgLocs;
+    CCState CCInfo(CallConv, isVarArg, MF, getTargetMachine(), ArgLocs,
+                   *DAG.getContext());
+
+    CCInfo.AnalyzeFormalArguments(Ins, CC_PTX);
+
+    for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+
+      CCValAssign&         VA    = ArgLocs[i];
+      EVT                  RegVT = VA.getLocVT();
+      TargetRegisterClass* TRC   = 0;
+
+      assert(VA.isRegLoc() && "CCValAssign must be RegLoc");
+
+      // Determine which register class we need
+      if (RegVT == MVT::i1) {
+        TRC = PTX::RegPredRegisterClass;
+      }
+      else if (RegVT == MVT::i16) {
+        TRC = PTX::RegI16RegisterClass;
+      }
+      else if (RegVT == MVT::i32) {
+        TRC = PTX::RegI32RegisterClass;
+      }
+      else if (RegVT == MVT::i64) {
+        TRC = PTX::RegI64RegisterClass;
+      }
+      else if (RegVT == MVT::f32) {
+        TRC = PTX::RegF32RegisterClass;
+      }
+      else if (RegVT == MVT::f64) {
+        TRC = PTX::RegF64RegisterClass;
+      }
+      else {
+        llvm_unreachable("Unknown parameter type");
+      }
+
+      unsigned Reg = MF.getRegInfo().createVirtualRegister(TRC);
+      MF.getRegInfo().addLiveIn(VA.getLocReg(), Reg);
+
+      SDValue ArgValue = DAG.getCopyFromReg(Chain, dl, Reg, RegVT);
+      InVals.push_back(ArgValue);
+
+      MFI->addArgReg(VA.getLocReg());
+    }
+  }
 
   return Chain;
 }
@@ -254,51 +293,43 @@ SDValue PTXTargetLowering::
       assert(Outs.size() == 0 && "Kernel must return void.");
       return DAG.getNode(PTXISD::EXIT, dl, MVT::Other, Chain);
     case CallingConv::PTX_Device:
-      assert(Outs.size() <= 1 && "Can at most return one value.");
+      //assert(Outs.size() <= 1 && "Can at most return one value.");
       break;
   }
 
-  // PTX_Device
-
-  // return void
-  if (Outs.size() == 0)
-    return DAG.getNode(PTXISD::RET, dl, MVT::Other, Chain);
+  MachineFunction& MF = DAG.getMachineFunction();
+  PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+                 getTargetMachine(), RVLocs, *DAG.getContext());
 
   SDValue Flag;
-  unsigned reg;
 
-  if (Outs[0].VT == MVT::i16) {
-    reg = PTX::RH0;
+  CCInfo.AnalyzeReturn(Outs, RetCC_PTX);
+
+  for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
+
+    CCValAssign& VA  = RVLocs[i];
+
+    assert(VA.isRegLoc() && "CCValAssign must be RegLoc");
+
+    unsigned Reg = VA.getLocReg();
+
+    DAG.getMachineFunction().getRegInfo().addLiveOut(Reg);
+
+    Chain = DAG.getCopyToReg(Chain, dl, Reg, OutVals[i], Flag);
+
+    // Guarantee that all emitted copies are stuck together,
+    // avoiding something bad
+    Flag = Chain.getValue(1);
+
+    MFI->addRetReg(Reg);
   }
-  else if (Outs[0].VT == MVT::i32) {
-    reg = PTX::R0;
-  }
-  else if (Outs[0].VT == MVT::i64) {
-    reg = PTX::RD0;
-  }
-  else if (Outs[0].VT == MVT::f32) {
-    reg = PTX::R0;
+
+  if (Flag.getNode() == 0) {
+    return DAG.getNode(PTXISD::RET, dl, MVT::Other, Chain);
   }
   else {
-    assert(Outs[0].VT == MVT::f64 && "Can return only basic types");
-    reg = PTX::RD0;
+    return DAG.getNode(PTXISD::RET, dl, MVT::Other, Chain, Flag);
   }
-
-  MachineFunction &MF = DAG.getMachineFunction();
-  PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
-  MFI->setRetReg(reg);
-
-  // If this is the first return lowered for this function, add the regs to the
-  // liveout set for the function
-  if (DAG.getMachineFunction().getRegInfo().liveout_empty())
-    DAG.getMachineFunction().getRegInfo().addLiveOut(reg);
-
-  // Copy the result values into the output registers
-  Chain = DAG.getCopyToReg(Chain, dl, reg, OutVals[0], Flag);
-
-  // Guarantee that all emitted copies are stuck together,
-  // avoiding something bad
-  Flag = Chain.getValue(1);
-
-  return DAG.getNode(PTXISD::RET, dl, MVT::Other, Chain, Flag);
 }

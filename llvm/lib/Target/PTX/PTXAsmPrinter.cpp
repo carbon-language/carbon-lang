@@ -80,11 +80,11 @@ static const char *getRegisterTypeName(unsigned RegNo) {
 #define TEST_REGCLS(cls, clsstr)                \
   if (PTX::cls ## RegisterClass->contains(RegNo)) return # clsstr;
   TEST_REGCLS(RegPred, pred);
-  TEST_REGCLS(RegI16, u16);
-  TEST_REGCLS(RegI32, u32);
-  TEST_REGCLS(RegI64, u64);
-  TEST_REGCLS(RegF32, f32);
-  TEST_REGCLS(RegF64, f64);
+  TEST_REGCLS(RegI16, b16);
+  TEST_REGCLS(RegI32, b32);
+  TEST_REGCLS(RegI64, b64);
+  TEST_REGCLS(RegF32, b32);
+  TEST_REGCLS(RegF64, b64);
 #undef TEST_REGCLS
 
   llvm_unreachable("Not in any register class!");
@@ -394,17 +394,23 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
 
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
   const bool isKernel = MFI->isKernel();
-  unsigned reg;
 
   std::string decl = isKernel ? ".entry" : ".func";
 
-  // Print return register
-  reg = MFI->retReg();
-  if (!isKernel && reg != PTX::NoRegister) {
-    decl += " (.reg ."; // FIXME: could it return in .param space?
-    decl += getRegisterTypeName(reg);
-    decl += " ";
-    decl += getRegisterName(reg);
+  if (!isKernel) {
+    decl += " (";
+
+    for (PTXMachineFunctionInfo::ret_iterator
+         i = MFI->retRegBegin(), e = MFI->retRegEnd(), b = i;
+         i != e; ++i) {
+      if (i != b) {
+        decl += ", ";
+      }
+      decl += ".reg .";
+      decl += getRegisterTypeName(*i);
+      decl += " ";
+      decl += getRegisterName(*i);
+    }
     decl += ")";
   }
 
@@ -412,40 +418,66 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
   decl += " ";
   decl += CurrentFnSym->getName().str();
 
-  // Print parameter list
-  if (!MFI->argRegEmpty()) {
-    decl += " (";
-    if (isKernel) {
-      unsigned cnt = 0;
-      for(PTXMachineFunctionInfo::reg_iterator
-          i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i;
-          i != e; ++i) {
-        reg = *i;
-        assert(reg != PTX::NoRegister && "Not a valid register!");
-        if (i != b)
-          decl += ", ";
-        decl += ".param .";
-        decl += getRegisterTypeName(reg);
-        decl += " ";
-        decl += PARAM_PREFIX;
-        decl += utostr(++cnt);
-      }
-    } else {
-      for (PTXMachineFunctionInfo::reg_iterator
-           i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i;
-           i != e; ++i) {
-        reg = *i;
-        assert(reg != PTX::NoRegister && "Not a valid register!");
-        if (i != b)
-          decl += ", ";
-        decl += ".reg .";
-        decl += getRegisterTypeName(reg);
-        decl += " ";
-        decl += getRegisterName(reg);
-      }
+  decl += " (";
+
+  unsigned cnt = 0;
+
+  // Print parameters
+  for (PTXMachineFunctionInfo::reg_iterator
+       i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i;
+       i != e; ++i) {
+    if (i != b) {
+      decl += ", ";
     }
-    decl += ")";
+    if (isKernel) {
+      decl += ".param .b";
+      decl += utostr(*i);
+      decl += " ";
+      decl += PARAM_PREFIX;
+      decl += utostr(++cnt);
+    } else {
+      decl += ".reg .";
+      decl += getRegisterTypeName(*i);
+      decl += " ";
+      decl += getRegisterName(*i);
+    }
   }
+  decl += ")";
+
+  // // Print parameter list
+  // if (!MFI->argRegEmpty()) {
+  //   decl += " (";
+  //   if (isKernel) {
+  //     unsigned cnt = 0;
+  //     for(PTXMachineFunctionInfo::reg_iterator
+  //         i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i;
+  //         i != e; ++i) {
+  //       reg = *i;
+  //       assert(reg != PTX::NoRegister && "Not a valid register!");
+  //       if (i != b)
+  //         decl += ", ";
+  //       decl += ".param .";
+  //       decl += getRegisterTypeName(reg);
+  //       decl += " ";
+  //       decl += PARAM_PREFIX;
+  //       decl += utostr(++cnt);
+  //     }
+  //   } else {
+  //     for (PTXMachineFunctionInfo::reg_iterator
+  //          i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i;
+  //          i != e; ++i) {
+  //       reg = *i;
+  //       assert(reg != PTX::NoRegister && "Not a valid register!");
+  //       if (i != b)
+  //         decl += ", ";
+  //       decl += ".reg .";
+  //       decl += getRegisterTypeName(reg);
+  //       decl += " ";
+  //       decl += getRegisterName(reg);
+  //     }
+  //   }
+  //   decl += ")";
+  // }
 
   OutStreamer.EmitRawText(Twine(decl));
 }

@@ -15,6 +15,7 @@
 #define PTX_MACHINE_FUNCTION_INFO_H
 
 #include "PTX.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
@@ -25,7 +26,7 @@ class PTXMachineFunctionInfo : public MachineFunctionInfo {
 private:
   bool is_kernel;
   std::vector<unsigned> reg_arg, reg_local_var;
-  unsigned reg_ret;
+  DenseSet<unsigned> reg_ret;
   bool _isDoneAddArg;
 
 public:
@@ -39,19 +40,18 @@ public:
 
   void addArgReg(unsigned reg) { reg_arg.push_back(reg); }
   void addLocalVarReg(unsigned reg) { reg_local_var.push_back(reg); }
-  void setRetReg(unsigned reg) { reg_ret = reg; }
+  void addRetReg(unsigned reg) { reg_ret.insert(reg); }
 
   void doneAddArg(void) {
     _isDoneAddArg = true;
   }
   void doneAddLocalVar(void) {}
 
-  bool isDoneAddArg(void) { return _isDoneAddArg; }
-
   bool isKernel() const { return is_kernel; }
 
   typedef std::vector<unsigned>::const_iterator         reg_iterator;
   typedef std::vector<unsigned>::const_reverse_iterator reg_reverse_iterator;
+  typedef DenseSet<unsigned>::const_iterator            ret_iterator;
 
   bool         argRegEmpty() const { return reg_arg.empty(); }
   int          getNumArg() const { return reg_arg.size(); }
@@ -64,10 +64,17 @@ public:
   reg_iterator localVarRegBegin() const { return reg_local_var.begin(); }
   reg_iterator localVarRegEnd()   const { return reg_local_var.end(); }
 
-  unsigned retReg() const { return reg_ret; }
+  bool         retRegEmpty() const { return reg_ret.empty(); }
+  int          getNumRet() const { return reg_ret.size(); }
+  ret_iterator retRegBegin() const { return reg_ret.begin(); }
+  ret_iterator retRegEnd()   const { return reg_ret.end(); }
 
   bool isArgReg(unsigned reg) const {
     return std::find(reg_arg.begin(), reg_arg.end(), reg) != reg_arg.end();
+  }
+
+  bool isRetReg(unsigned reg) const {
+    return std::find(reg_ret.begin(), reg_ret.end(), reg) != reg_ret.end();
   }
 
   bool isLocalVarReg(unsigned reg) const {

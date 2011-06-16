@@ -13,6 +13,7 @@ TARGET = PTX
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = PTXGenAsmWriter.inc \
+		PTXGenCallingConv.inc \
 		PTXGenDAGISel.inc \
 		PTXGenInstrInfo.inc \
 		PTXGenInstrNames.inc \

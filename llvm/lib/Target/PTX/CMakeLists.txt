@@ -1,6 +1,7 @@
 set(LLVM_TARGET_DEFINITIONS PTX.td)
 
 tablegen(PTXGenAsmWriter.inc -gen-asm-writer)
+tablegen(PTXGenCallingConv.inc -gen-callingconv)
 tablegen(PTXGenDAGISel.inc -gen-dag-isel)
 tablegen(PTXGenInstrInfo.inc -gen-instr-desc)
 tablegen(PTXGenInstrNames.inc -gen-instr-enums)
