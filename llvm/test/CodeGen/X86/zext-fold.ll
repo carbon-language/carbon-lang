@@ -34,8 +34,8 @@ define void @test3(i8 %x) nounwind readnone {
   ret void
 }
 ; CHECK: test3
-; CHECK: movzbl 16(%esp), %eax
-; CHECK-NEXT: movl %eax, 4(%esp)
-; CHECK-NEXT: andl $224, %eax
-; CHECK-NEXT: movl %eax, (%esp)
+; CHECK: movzbl 16(%esp), [[REGISTER:%e[a-z]{2}]]
+; CHECK-NEXT: movl [[REGISTER]], 4(%esp)
+; CHECK-NEXT: andl $224, [[REGISTER]]
+; CHECK-NEXT: movl [[REGISTER]], (%esp)
 ; CHECK-NEXT: call{{.*}}use
