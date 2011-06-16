@@ -103,7 +103,7 @@ public:
   /// that instance will be returned. Otherwise a new one will be created. Only
   /// one instance with a given NumBits value is ever created.
   /// @brief Get or create an IntegerType instance.
-  static const IntegerType* get(LLVMContext &C, unsigned NumBits);
+  static const IntegerType *get(LLVMContext &C, unsigned NumBits);
 
   /// @brief Get the number of bits in this IntegerType
   unsigned getBitWidth() const { return getSubclassData(); }

@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the declaration of the Type class.  For more "Type"
+// stuff, look in DerivedTypes.h.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TYPE_H
 #define LLVM_TYPE_H
@@ -26,9 +31,6 @@ class raw_ostream;
 class Module;
 class LLVMContext;
 
-/// This file contains the declaration of the Type class.  For more "Type" type
-/// stuff, look in DerivedTypes.h.
-///
 /// The instances of the Type class are immutable: once they are created,
 /// they are never changed.  Also note that only one instance of a particular
 /// type is ever created.  Thus seeing if two types are equal is a matter of
@@ -72,7 +74,7 @@ public:
     DoubleTyID,      ///<  2: 64 bit floating point type
     X86_FP80TyID,    ///<  3: 80 bit floating point type (X87)
     FP128TyID,       ///<  4: 128 bit floating point type (112-bit mantissa)
-    PPC_FP128TyID,   ///<  5: 128 bit floating point type (two 64-bits)
+    PPC_FP128TyID,   ///<  5: 128 bit floating point type (two 64-bits, PowerPC)
     LabelTyID,       ///<  6: Labels
     MetadataTyID,    ///<  7: Metadata
     X86_MMXTyID,     ///<  8: MMX vectors (64 bits)
@@ -359,11 +361,6 @@ public:
     return getForwardedTypeInternal();
   }
 
-  /// getVAArgsPromotedType - Return the type an argument of this type
-  /// will be promoted to if passed through a variable argument
-  /// function.
-  const Type *getVAArgsPromotedType(LLVMContext &C) const; 
-
   /// getScalarType - If this is a vector type, return the element type,
   /// otherwise return this.
   const Type *getScalarType() const;
@@ -506,7 +503,7 @@ inline void PATypeHandle::removeUser() {
 /// type we are pointing to is forwarding to a new type.  If so, we drop our
 /// reference to the type.
 ///
-inline Type* PATypeHolder::get() const {
+inline Type *PATypeHolder::get() const {
   if (Ty == 0) return 0;
   const Type *NewTy = Ty->getForwardedType();
   if (!NewTy) return const_cast<Type*>(Ty);

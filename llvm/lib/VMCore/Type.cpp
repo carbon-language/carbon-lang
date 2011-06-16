@@ -116,15 +116,6 @@ const Type *Type::getPrimitiveType(LLVMContext &C, TypeID IDNumber) {
   }
 }
 
-const Type *Type::getVAArgsPromotedType(LLVMContext &C) const {
-  if (ID == IntegerTyID && getSubclassData() < 32)
-    return Type::getInt32Ty(C);
-  else if (ID == FloatTyID)
-    return Type::getDoubleTy(C);
-  else
-    return this;
-}
-
 /// getScalarType - If this is a vector type, return the element type,
 /// otherwise return this.
 const Type *Type::getScalarType() const {
