@@ -155,14 +155,14 @@ struct SequenceOp : public SetTheory::Operator {
       From = II->getValue();
     else
       throw "From must be an integer: " + Expr->getAsString();
-    if (From < 0 || From >= UINT_MAX)
+    if (From < 0 || From >= (1 << 30))
       throw "From out of range";
 
     if (IntInit *II = dynamic_cast<IntInit*>(Expr->arg_begin()[2]))
       To = II->getValue();
     else
       throw "From must be an integer: " + Expr->getAsString();
-    if (To < 0 || To >= UINT_MAX)
+    if (To < 0 || To >= (1 << 30))
       throw "To out of range";
 
     RecordKeeper &Records =
