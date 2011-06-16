@@ -39,7 +39,7 @@ void EdgeBundles::getAnalysisUsage(AnalysisUsage &AU) const {
 bool EdgeBundles::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   EC.clear();
-  EC.grow(2 * MF->size());
+  EC.grow(2 * MF->getNumBlockIDs());
 
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
        ++I) {
