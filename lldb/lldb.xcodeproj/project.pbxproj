@@ -3431,6 +3431,9 @@
 					Foundation,
 					"-framework",
 					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
 				);
 				PRODUCT_NAME = LLDB;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -3480,6 +3483,9 @@
 					Foundation,
 					"-framework",
 					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
 				);
 				PRODUCT_NAME = LLDB;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -3708,6 +3714,9 @@
 					Foundation,
 					"-framework",
 					AppKit,
+					"-v",
+					"-t",
+					"-Wl,-v",
 				);
 				PRODUCT_NAME = LLDB;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
