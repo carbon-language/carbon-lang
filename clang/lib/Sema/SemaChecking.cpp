@@ -1866,7 +1866,9 @@ void Sema::CheckMemsetcpymoveArguments(const CallExpr *Call,
     if (const PointerType *DestPtrTy = DestTy->getAs<PointerType>()) {
       QualType PointeeTy = DestPtrTy->getPointeeType();
 
-      if (PointeeTy->isVoidType())
+      // Don't warn about void pointers or char pointers as both are often used
+      // for directly representing memory, regardless of its underlying type.
+      if (PointeeTy->isVoidType() || PointeeTy->isCharType())
         continue;
 
       // Catch "memset(p, 0, sizeof(p))" -- needs to be sizeof(*p).
