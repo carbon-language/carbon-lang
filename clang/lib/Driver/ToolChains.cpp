@@ -1516,6 +1516,9 @@ Linux::Linux(const HostInfo &Host, const llvm::Triple &Triple)
     else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-pc-linux-gnu",
              Exists) && Exists)
       GccTriple = "x86_64-pc-linux-gnu";
+    else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-redhat-linux6E",
+             Exists) && Exists)
+      GccTriple = "x86_64-redhat-linux6E";
     else if (!llvm::sys::fs::exists("/usr/lib/gcc/x86_64-redhat-linux",
              Exists) && Exists)
       GccTriple = "x86_64-redhat-linux";
