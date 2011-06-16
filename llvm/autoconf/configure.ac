@@ -831,6 +831,17 @@ case "$withval" in
 esac
 AC_SUBST(EXTRA_OPTIONS,$EXTRA_OPTIONS)
 
+dnl Specify extra linker build options
+AC_ARG_WITH(extra-ld-options,
+  AS_HELP_STRING([--with-extra-ld-options],
+                 [Specify additional options to link LLVM with]),,
+                 withval=default)
+case "$withval" in
+  default) EXTRA_LD_OPTIONS= ;;
+  *) EXTRA_LD_OPTIONS=$withval ;;
+esac
+AC_SUBST(EXTRA_LD_OPTIONS,$EXTRA_LD_OPTIONS)
+
 dnl Allow specific bindings to be specified for building (or not)
 AC_ARG_ENABLE([bindings],AS_HELP_STRING([--enable-bindings],
     [Build specific language bindings: all,auto,none,{binding-name} (default=auto)]),,

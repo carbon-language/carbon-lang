@@ -582,6 +582,10 @@ endif
 # Options To Invoke Tools
 #----------------------------------------------------------
 
+ifdef EXTRA_LD_OPTIONS
+LD.Flags += $(EXTRA_LD_OPTIONS)
+endif
+
 ifndef NO_PEDANTIC
 CompileCommonOpts += -pedantic -Wno-long-long
 endif
