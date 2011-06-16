@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -o - | FileCheck %s
+; RUN: llc < %s -mtriple=armv7-apple-ios -o - | FileCheck %s
 ; RUN: llc < %s -mtriple=arm-none-eabi -o - | FileCheck --check-prefix=EABI %s
 
 @from = common global [500 x i32] zeroinitializer, align 4
