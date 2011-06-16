@@ -221,7 +221,8 @@ const GRState *CStringChecker::CheckLocation(CheckerContext &C,
   // Get the size of the array.
   const SubRegion *superReg = cast<SubRegion>(ER->getSuperRegion());
   SValBuilder &svalBuilder = C.getSValBuilder();
-  SVal Extent = svalBuilder.convertToArrayIndex(superReg->getExtent(svalBuilder));
+  SVal Extent = 
+    svalBuilder.convertToArrayIndex(superReg->getExtent(svalBuilder));
   DefinedOrUnknownSVal Size = cast<DefinedOrUnknownSVal>(Extent);
 
   // Get the index of the accessed element.
@@ -277,7 +278,7 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
     return NULL;
 
   SValBuilder &svalBuilder = C.getSValBuilder();
-  ASTContext &Ctx = C.getASTContext();
+  ASTContext &Ctx = svalBuilder.getContext();
 
   QualType sizeTy = Size->getType();
   QualType PtrTy = Ctx.getPointerType(Ctx.CharTy);
@@ -373,8 +374,7 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
   state = stateFalse;
 
   // Which value comes first?
-  ASTContext &Ctx = svalBuilder.getContext();
-  QualType cmpTy = Ctx.IntTy;
+  QualType cmpTy = svalBuilder.getComparisonType();
   SVal reverse = svalBuilder.evalBinOpLL(state, BO_GT,
                                          *firstLoc, *secondLoc, cmpTy);
   DefinedOrUnknownSVal *reverseTest = dyn_cast<DefinedOrUnknownSVal>(&reverse);
@@ -408,7 +408,8 @@ const GRState *CStringChecker::CheckOverlap(CheckerContext &C,
   // Convert the first buffer's start address to char*.
   // Bail out if the cast fails.
   QualType CharPtrTy = Ctx.getPointerType(Ctx.CharTy);
-  SVal FirstStart = svalBuilder.evalCast(*firstLoc, CharPtrTy, First->getType());
+  SVal FirstStart = svalBuilder.evalCast(*firstLoc, CharPtrTy, 
+                                         First->getType());
   Loc *FirstStartLoc = dyn_cast<Loc>(&FirstStart);
   if (!FirstStartLoc)
     return state;
@@ -790,7 +791,8 @@ void CStringChecker::evalCopyCommon(CheckerContext &C,
   QualType sizeTy = Size->getType();
 
   const GRState *stateZeroSize, *stateNonZeroSize;
-  llvm::tie(stateZeroSize, stateNonZeroSize) = assumeZero(C, state, sizeVal, sizeTy);
+  llvm::tie(stateZeroSize, stateNonZeroSize) =
+    assumeZero(C, state, sizeVal, sizeTy);
 
   // Get the value of the Dest.
   SVal destVal = state->getSVal(Dest);
@@ -946,7 +948,7 @@ void CStringChecker::evalMemcmp(CheckerContext &C, const CallExpr *CE) const {
     const GRState *StSameBuf, *StNotSameBuf;
     llvm::tie(StSameBuf, StNotSameBuf) = state->assume(SameBuf);
 
-    // If the two arguments might be the same buffer, we know the result is zero,
+    // If the two arguments might be the same buffer, we know the result is 0,
     // and we only need to check one size.
     if (StSameBuf) {
       state = StSameBuf;
@@ -1034,7 +1036,7 @@ void CStringChecker::evalstrLengthCommon(CheckerContext &C, const CallExpr *CE,
   // If the check is for strnlen() then bind the return value to no more than
   // the maxlen value.
   if (IsStrnlen) {
-    QualType cmpTy = C.getSValBuilder().getContext().IntTy;
+    QualType cmpTy = C.getSValBuilder().getComparisonType();
 
     // It's a little unfortunate to be getting this again,
     // but it's not that expensive...
@@ -1269,7 +1271,8 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
   // string length to strlen(src) + strlen(dst) since the buffer will
   // ultimately contain both.
   if (isAppending) {
-    // Get the string length of the destination, or give up.
+    // Get the string length of the destination. If the destination is memory
+    // that can't have a string length, we shouldn't be copying into it anyway.
     SVal dstStrLength = getCStringLength(C, state, Dst, DstVal);
     if (dstStrLength.isUndef())
       return;
