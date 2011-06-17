@@ -1606,10 +1606,11 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     bool useCFI, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, TargetAsmBackend *TAB,
                                     bool ShowInst) {
+#if 0
   if (isVerboseAsm)
     return new MCLSDADecoderAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                         useCFI, IP, CE, TAB, ShowInst);
-
+#endif
   return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc, useCFI,
                            IP, CE, TAB, ShowInst);
 }
