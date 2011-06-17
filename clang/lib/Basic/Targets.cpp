@@ -2069,6 +2069,9 @@ public:
       R = std::string("^") + std::string(Constraint, 2);
       Constraint++;
       break;
+    case 'p': // 'p' should be translated to 'r' by default.
+      R = std::string("r");
+      break;
     default:
       return std::string(1, *Constraint);
     }
