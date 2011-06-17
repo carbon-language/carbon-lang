@@ -375,6 +375,7 @@ BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
     SplitBlockPredecessors(Header, &OutsideBlocks[0], OutsideBlocks.size(),
                            ".preheader", this);
 
+  NewBB->getTerminator()->setDebugLoc(Header->getFirstNonPHI()->getDebugLoc());
   DEBUG(dbgs() << "LoopSimplify: Creating pre-header " << NewBB->getName()
                << "\n");
 
