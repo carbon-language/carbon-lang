@@ -16,3 +16,13 @@ void test_foo() {
 }
 
 char test2[__has_feature(attribute_unavailable_with_message) ? 1 : -1];
+
+// rdar://9623855
+void unavail(void)  __attribute__((__unavailable__));
+void unavail(void) {
+  // No complains inside an unavailable function.
+  int ir = foo(1);
+  double dr = dfoo(1.0);
+  void (*fp)() = &bar;
+  double (*fp4)(double) = dfoo;
+}

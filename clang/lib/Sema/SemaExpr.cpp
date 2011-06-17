@@ -104,18 +104,20 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
     break;
 
   case AR_Unavailable:
-    if (Message.empty()) {
-      if (!UnknownObjCClass)
-        Diag(Loc, diag::err_unavailable) << D->getDeclName();
-      else
-        Diag(Loc, diag::warn_unavailable_fwdclass_message) 
-             << D->getDeclName();
+    if (cast<Decl>(CurContext)->getAvailability() != AR_Unavailable) {
+      if (Message.empty()) {
+        if (!UnknownObjCClass)
+          Diag(Loc, diag::err_unavailable) << D->getDeclName();
+        else
+          Diag(Loc, diag::warn_unavailable_fwdclass_message) 
+               << D->getDeclName();
+      }
+      else 
+        Diag(Loc, diag::err_unavailable_message) 
+          << D->getDeclName() << Message;
+      Diag(D->getLocation(), diag::note_unavailable_here) 
+        << isa<FunctionDecl>(D) << false;
     }
-    else 
-      Diag(Loc, diag::err_unavailable_message) 
-        << D->getDeclName() << Message;
-    Diag(D->getLocation(), diag::note_unavailable_here) 
-      << isa<FunctionDecl>(D) << false;    
     break;
   }
 
