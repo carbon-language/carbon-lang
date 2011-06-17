@@ -2835,10 +2835,9 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
 /// ParseFunctionBody
 ///   ::= '{' BasicBlock+ '}'
-///   ::= 'begin' BasicBlock+ 'end'  // FIXME: remove in LLVM 3.0
 ///
 bool LLParser::ParseFunctionBody(Function &Fn) {
-  if (Lex.getKind() != lltok::lbrace && Lex.getKind() != lltok::kw_begin)
+  if (Lex.getKind() != lltok::lbrace)
     return TokError("expected '{' in function body");
   Lex.Lex();  // eat the {.
 
@@ -2848,10 +2847,10 @@ bool LLParser::ParseFunctionBody(Function &Fn) {
   PerFunctionState PFS(*this, Fn, FunctionNumber);
 
   // We need at least one basic block.
-  if (Lex.getKind() == lltok::rbrace || Lex.getKind() == lltok::kw_end)
+  if (Lex.getKind() == lltok::rbrace)
     return TokError("function body requires at least one basic block");
   
-  while (Lex.getKind() != lltok::rbrace && Lex.getKind() != lltok::kw_end)
+  while (Lex.getKind() != lltok::rbrace)
     if (ParseBasicBlock(PFS)) return true;
 
   // Eat the }.

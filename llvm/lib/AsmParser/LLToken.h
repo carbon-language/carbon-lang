@@ -32,7 +32,6 @@ namespace lltok {
     exclaim,           // !
 
     kw_x,
-    kw_begin,   kw_end,
     kw_true,    kw_false,
     kw_declare, kw_define,
     kw_global,  kw_constant,

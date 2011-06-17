@@ -4,7 +4,6 @@
 ; delcared return type of the function they live in.
 ;
 
-define i32 @testfunc()
-begin
+define i32 @testfunc() {
 	ret i32* null
-end
+}
