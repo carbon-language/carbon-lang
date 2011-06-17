@@ -702,8 +702,12 @@ private:
     /// \brief Whether this variable is the for-range-declaration in a C++0x
     /// for-range statement.
     unsigned CXXForRangeDecl : 1;
+
+    /// \brief Whether this variable is an ARC pseudo-__strong
+    /// variable;  see isARCPseudoStrong() for details.
+    unsigned ARCPseudoStrong : 1;
   };
-  enum { NumVarDeclBits = 13 }; // two reserved bits for now
+  enum { NumVarDeclBits = 13 }; // one reserved bit
 
   friend class ASTDeclReader;
   friend class StmtIteratorBase;
@@ -1102,6 +1106,13 @@ public:
   /// a C++0x for-range statement.
   bool isCXXForRangeDecl() const { return VarDeclBits.CXXForRangeDecl; }
   void setCXXForRangeDecl(bool FRD) { VarDeclBits.CXXForRangeDecl = FRD; }
+
+  /// \brief Determine whether this variable is an ARC pseudo-__strong
+  /// variable.  A pseudo-__strong variable has a __strong-qualified
+  /// type but does not actually retain the object written into it.
+  /// Generally such variables are also 'const' for safety.
+  bool isARCPseudoStrong() const { return VarDeclBits.ARCPseudoStrong; }
+  void setARCPseudoStrong(bool ps) { VarDeclBits.ARCPseudoStrong = ps; }
   
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member

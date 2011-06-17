@@ -710,6 +710,7 @@ void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->VarDeclBits.ExceptionVar = Record[Idx++];
   VD->VarDeclBits.NRVOVariable = Record[Idx++];
   VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];
+  VD->VarDeclBits.ARCPseudoStrong = Record[Idx++];
   if (Record[Idx++])
     VD->setInit(Reader.ReadExpr(F));
 

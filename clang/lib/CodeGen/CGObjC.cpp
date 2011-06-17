@@ -1110,6 +1110,9 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     elementLValue = EmitLValue(&tempDRE);
     elementType = D->getType();
     elementIsVariable = true;
+
+    if (D->isARCPseudoStrong())
+      elementLValue.getQuals().setObjCLifetime(Qualifiers::OCL_ExplicitNone);
   } else {
     elementLValue = LValue(); // suppress warning
     elementType = cast<Expr>(S.getElement())->getType();
@@ -1136,10 +1139,12 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
   // Make sure we have an l-value.  Yes, this gets evaluated every
   // time through the loop.
-  if (!elementIsVariable)
+  if (!elementIsVariable) {
     elementLValue = EmitLValue(cast<Expr>(S.getElement()));
-
-  EmitStoreThroughLValue(RValue::get(CurrentItem), elementLValue, elementType);
+    EmitStoreThroughLValue(RValue::get(CurrentItem), elementLValue, elementType);
+  } else {
+    EmitScalarInit(CurrentItem, elementLValue);
+  }
 
   // If we do have an element variable, this assignment is the end of
   // its initialization.

@@ -71,22 +71,23 @@ void Sema::ActOnForEachDeclStmt(DeclGroupPtrTy dg) {
   // suppress any potential 'unused variable' warning.
   var->setUsed();
 
-  // In ARC, we don't want to lifetime for the iteration
-  // variable of a fast enumeration loop.  Rather than actually
-  // trying to catch that during declaration processing, we
-  // remove the consequences here.
-  if (getLangOptions().ObjCAutoRefCount) {
-    SplitQualType split = var->getType().split();
+  // foreach variables are never actually initialized in the way that
+  // the parser came up with.
+  var->setInit(0);
 
-    // Inferred lifetime will show up as a local qualifier because
-    // explicit lifetime would have shown up as an AttributedType
-    // instead.
-    if (split.second.hasObjCLifetime()) {
-      // Change the qualification to 'const __unsafe_unretained'.
-      split.second.setObjCLifetime(Qualifiers::OCL_ExplicitNone);
-      split.second.addConst();
-      var->setType(Context.getQualifiedType(split.first, split.second));
-      var->setInit(0);
+  // In ARC, we don't need to retain the iteration variable of a fast
+  // enumeration loop.  Rather than actually trying to catch that
+  // during declaration processing, we remove the consequences here.
+  if (getLangOptions().ObjCAutoRefCount) {
+    QualType type = var->getType();
+
+    // Only do this if we inferred the lifetime.  Inferred lifetime
+    // will show up as a local qualifier because explicit lifetime
+    // should have shown up as an AttributedType instead.
+    if (type.getLocalQualifiers().getObjCLifetime() == Qualifiers::OCL_Strong) {
+      // Add 'const' and mark the variable as pseudo-strong.
+      var->setType(type.withConst());
+      var->setARCPseudoStrong(true);
     }
   }
 }

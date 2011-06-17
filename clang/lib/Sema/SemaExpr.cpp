@@ -8161,25 +8161,28 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_ConstQualified:
     Diag = diag::err_typecheck_assign_const;
 
-    // In ARC, use some specialized diagnostics for the times when we
-    // infer const.
+    // In ARC, use some specialized diagnostics for occasions where we
+    // infer 'const'.  These are always pseudo-strong variables.
     if (S.getLangOptions().ObjCAutoRefCount) {
       DeclRefExpr *declRef = dyn_cast<DeclRefExpr>(E->IgnoreParenCasts());
       if (declRef && isa<VarDecl>(declRef->getDecl())) {
         VarDecl *var = cast<VarDecl>(declRef->getDecl());
 
-        // If the variable wasn't written with 'const', there are some
-        // cases where we infer const anyway:
-        //  - self
-        //  - fast enumeration variables
-        if (!var->getTypeSourceInfo() ||
-            !var->getTypeSourceInfo()->getType().isConstQualified()) {
+        // Use the normal diagnostic if it's pseudo-__strong but the
+        // user actually wrote 'const'.
+        if (var->isARCPseudoStrong() &&
+            (!var->getTypeSourceInfo() ||
+             !var->getTypeSourceInfo()->getType().isConstQualified())) {
+          // There are two pseudo-strong cases:
+          //  - self
           ObjCMethodDecl *method = S.getCurMethodDecl();
           if (method && var == method->getSelfDecl())
             Diag = diag::err_typecheck_arr_assign_self;
-          else if (var->getType().getObjCLifetime()
-                     == Qualifiers::OCL_ExplicitNone)
+
+          //  - fast enumeration variables
+          else
             Diag = diag::err_typecheck_arr_assign_enumeration;
+
           SourceRange Assign;
           if (Loc != OrigLoc)
             Assign = SourceRange(OrigLoc, OrigLoc);

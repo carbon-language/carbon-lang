@@ -421,10 +421,7 @@ public:
       if (IsLV != Expr::MLV_ConstQualified)
         return true;
       VarDecl *var = cast<VarDecl>(declRef->getDecl());
-      if (var->getType().getLocalQualifiers().getObjCLifetime()
-          == Qualifiers::OCL_ExplicitNone &&
-          (var->getTypeSourceInfo() &&
-           !var->getTypeSourceInfo()->getType().isConstQualified())) {
+      if (var->isARCPseudoStrong()) {
         Transaction Trans(Pass.TA);
         if (Pass.TA.clearDiagnostic(diag::err_typecheck_arr_assign_enumeration,
                                     Exp->getOperatorLoc())) {
