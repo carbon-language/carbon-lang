@@ -4662,9 +4662,18 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       //   A storage-class-specifier shall not be specified in an explicit
       //   specialization (14.7.3)
       if (SC != SC_None) {
-        Diag(NewFD->getLocation(), 
-             diag::ext_explicit_specialization_storage_class)
-          << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
+        if (SC != NewFD->getStorageClass())
+          Diag(NewFD->getLocation(),
+               diag::err_explicit_specialization_inconsistent_storage_class)
+            << SC
+            << FixItHint::CreateRemoval(
+                                      D.getDeclSpec().getStorageClassSpecLoc());
+            
+        else
+          Diag(NewFD->getLocation(), 
+               diag::ext_explicit_specialization_storage_class)
+            << FixItHint::CreateRemoval(
+                                      D.getDeclSpec().getStorageClassSpecLoc());
       }
       
     } else if (isExplicitSpecialization && isa<CXXMethodDecl>(NewFD)) {

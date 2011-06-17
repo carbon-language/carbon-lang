@@ -1914,6 +1914,9 @@ def err_function_specialization_in_class : Error<
   "cannot specialize a function %0 within class scope">;
 def ext_explicit_specialization_storage_class : ExtWarn<
   "explicit specialization cannot have a storage class">;
+def err_explicit_specialization_inconsistent_storage_class : Error<
+  "explicit specialization has extraneous, inconsistent storage class "
+  "'%select{none|extern|static|__private_extern__|auto|register}0'">;
 
 // C++ class template specializations and out-of-line definitions
 def err_template_spec_needs_header : Error<
