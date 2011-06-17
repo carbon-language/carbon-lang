@@ -3079,9 +3079,7 @@ bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
 /// ParseRet - Parse a return instruction.
 ///   ::= 'ret' void (',' !dbg, !1)*
 ///   ::= 'ret' TypeAndValue (',' !dbg, !1)*
-///   ::= 'ret' TypeAndValue (',' TypeAndValue)+  (',' !dbg, !1)*
-///         [[obsolete: LLVM 3.0]]
-int LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
+bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
                        PerFunctionState &PFS) {
   PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseType(Ty, true /*void allowed*/)) return true;
@@ -3094,38 +3092,8 @@ int LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
   Value *RV;
   if (ParseValue(Ty, RV, PFS)) return true;
 
-  bool ExtraComma = false;
-  if (EatIfPresent(lltok::comma)) {
-    // Parse optional custom metadata, e.g. !dbg
-    if (Lex.getKind() == lltok::MetadataVar) {
-      ExtraComma = true;
-    } else {
-      // The normal case is one return value.
-      // FIXME: LLVM 3.0 remove MRV support for 'ret i32 1, i32 2', requiring
-      // use of 'ret {i32,i32} {i32 1, i32 2}'
-      SmallVector<Value*, 8> RVs;
-      RVs.push_back(RV);
-
-      do {
-        // If optional custom metadata, e.g. !dbg is seen then this is the 
-        // end of MRV.
-        if (Lex.getKind() == lltok::MetadataVar)
-          break;
-        if (ParseTypeAndValue(RV, PFS)) return true;
-        RVs.push_back(RV);
-      } while (EatIfPresent(lltok::comma));
-
-      RV = UndefValue::get(PFS.getFunction().getReturnType());
-      for (unsigned i = 0, e = RVs.size(); i != e; ++i) {
-        Instruction *I = InsertValueInst::Create(RV, RVs[i], i, "mrv");
-        BB->getInstList().push_back(I);
-        RV = I;
-      }
-    }
-  }
-
   Inst = ReturnInst::Create(Context, RV);
-  return ExtraComma ? InstExtraComma : InstNormal;
+  return false;
 }
 
 

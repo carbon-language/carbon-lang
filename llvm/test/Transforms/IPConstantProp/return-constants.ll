@@ -4,38 +4,43 @@
 ;; Check that the second return values didn't get propagated
 ; RUN: cat %t | grep {%N = add i32 %B, %D}
 
-define internal {i32, i32} @foo(i1 %Q) {
-        br i1 %Q, label %T, label %F
+%0 = type { i32, i32 }
 
-T:              ; preds = %0
-        ret i32 21, i32 22
+define internal %0 @foo(i1 %Q) {
+  br i1 %Q, label %T, label %F
 
-F:              ; preds = %0
-        ret i32 21, i32 23
+T:                                                ; preds = %0
+  %mrv = insertvalue %0 undef, i32 21, 0
+  %mrv1 = insertvalue %0 %mrv, i32 22, 1
+  ret %0 %mrv1
+
+F:                                                ; preds = %0
+  %mrv2 = insertvalue %0 undef, i32 21, 0
+  %mrv3 = insertvalue %0 %mrv2, i32 23, 1
+  ret %0 %mrv3
 }
 
-define internal {i32, i32} @bar(i1 %Q) {
-        %A = insertvalue { i32, i32 } undef, i32 21, 0
-        br i1 %Q, label %T, label %F
+define internal %0 @bar(i1 %Q) {
+  %A = insertvalue %0 undef, i32 21, 0
+  br i1 %Q, label %T, label %F
 
-T:              ; preds = %0
-        %B = insertvalue { i32, i32 } %A, i32 22, 1
-        ret { i32, i32 } %B
+T:                                                ; preds = %0
+  %B = insertvalue %0 %A, i32 22, 1
+  ret %0 %B
 
-F:              ; preds = %0
-        %C = insertvalue { i32, i32 } %A, i32 23, 1
-        ret { i32, i32 } %C
+F:                                                ; preds = %0
+  %C = insertvalue %0 %A, i32 23, 1
+  ret %0 %C
 }
 
-define { i32, i32 } @caller(i1 %Q) {
-        %X = call {i32, i32} @foo( i1 %Q )
-        %A = getresult {i32, i32} %X, 0
-        %B = getresult {i32, i32} %X, 1
-        %Y = call {i32, i32} @bar( i1 %Q )
-        %C = extractvalue {i32, i32} %Y, 0
-        %D = extractvalue {i32, i32} %Y, 1
-        %M = add i32 %A, %C
-        %N = add i32 %B, %D
-        ret { i32, i32 } %X
+define %0 @caller(i1 %Q) {
+  %X = call %0 @foo(i1 %Q)
+  %A = extractvalue %0 %X, 0
+  %B = extractvalue %0 %X, 1
+  %Y = call %0 @bar(i1 %Q)
+  %C = extractvalue %0 %Y, 0
+  %D = extractvalue %0 %Y, 1
+  %M = add i32 %A, %C
+  %N = add i32 %B, %D
+  ret %0 %X
 }
-

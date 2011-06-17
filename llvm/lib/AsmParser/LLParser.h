@@ -340,7 +340,7 @@ namespace llvm {
                          PerFunctionState &PFS);
     bool ParseCmpPredicate(unsigned &Pred, unsigned Opc);
 
-    int ParseRet(Instruction *&Inst, BasicBlock *BB, PerFunctionState &PFS);
+    bool ParseRet(Instruction *&Inst, BasicBlock *BB, PerFunctionState &PFS);
     bool ParseBr(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseSwitch(Instruction *&Inst, PerFunctionState &PFS);
     bool ParseIndirectBr(Instruction *&Inst, PerFunctionState &PFS);
