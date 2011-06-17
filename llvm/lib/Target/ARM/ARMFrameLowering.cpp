@@ -427,6 +427,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);
+    MBBI = NewMI;
   }
 
   if (VARegSaveSize)
