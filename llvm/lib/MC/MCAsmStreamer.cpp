@@ -1605,7 +1605,11 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     bool useCFI, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, TargetAsmBackend *TAB,
                                     bool ShowInst) {
-  if (isVerboseAsm)
+  ExceptionHandling::ExceptionsType ET =
+    Context.getAsmInfo().getExceptionHandlingType();
+
+  if (isVerboseAsm &&
+      (ET == ExceptionHandling::SjLj || ET == ExceptionHandling::DwarfCFI))
     return new MCLSDADecoderAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                         useCFI, IP, CE, TAB, ShowInst);
 
