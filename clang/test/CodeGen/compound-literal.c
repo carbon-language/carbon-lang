@@ -27,7 +27,7 @@ void f() {
   // CHECK-NEXT: store i32 [[TMP]], i32* [[CY]]
   // CHECK-NEXT: [[SI8:%[a-zA-Z0-9.]+]] = bitcast [[STRUCT]]* [[S]] to i8*
   // CHECK-NEXT: [[COMPOUNDLITI8:%[a-zA-Z0-9.]+]] = bitcast [[STRUCT]]* [[COMPOUNDLIT]] to i8*
-  // CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[SI8]], i8* [[COMPOUNDLITI8]], i64 8, i32 4, i1 false)
+  // CHECK-NEXT: call void @llvm.memcpy{{.*}}(i8* [[SI8]], i8* [[COMPOUNDLITI8]]
   s = (S){s.y,s.x};
   // CHECK-NEXT: ret void
 }
