@@ -1,4 +1,4 @@
-"""Test Python APIs for target, breakpoint, and process."""
+"""Test Python APIs for target (launch and attach), breakpoint, and process."""
 
 import os, sys, time
 import unittest2
@@ -18,23 +18,70 @@ class HelloWorldTestCase(TestBase):
         self.buildDsym()
         self.hello_world_python(useLaunchAPI = False)
 
+    def test_with_dwarf_and_run_command(self):
+        """Create target, breakpoint, launch a process, and then kill it.
+
+        Use dwarf debug map and lldb "run" command.
+        """
+        self.buildDwarf()
+        self.hello_world_python(useLaunchAPI = False)
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
+    def test_with_dsym_and_process_launch_api(self):
+        """Create target, breakpoint, launch a process, and then kill it.
+
+        Use dsym info and process launch API.
+        """
+        self.buildDsym()
+        self.hello_world_python(useLaunchAPI = True)
+
     @python_api_test
     def test_with_dwarf_and_process_launch_api(self):
         """Create target, breakpoint, launch a process, and then kill it.
 
-        Use dwarf map (no dsym) and process launch API.
+        Use dwarf debug map and process launch API.
         """
         self.buildDwarf()
         self.hello_world_python(useLaunchAPI = True)
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
+    def test_with_dsym_and_attach_to_process_with_id_api(self):
+        """Create target, breakpoint, spawn a process, and attach to it with process id.
+
+        Use dsym info and attach to process with id API.
+        """
+        self.buildDsym()
+        self.hello_world_attach_with_id_api()
+
     @python_api_test
     def test_with_dwarf_and_attach_to_process_with_id_api(self):
-        """Create target, breakpoint, spawn a process, and attach to it.
+        """Create target, breakpoint, spawn a process, and attach to it with process id.
 
         Use dwarf map (no dsym) and attach to process with id API.
         """
         self.buildDwarf()
-        self.hello_world_attach_api()
+        self.hello_world_attach_with_id_api()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
+    def test_with_dsym_and_attach_to_process_with_name_api(self):
+        """Create target, breakpoint, spawn a process, and attach to it with process name.
+
+        Use dsym info and attach to process with name API.
+        """
+        self.buildDsym()
+        self.hello_world_attach_with_name_api()
+
+    @python_api_test
+    def test_with_dwarf_and_attach_to_process_with_name_api(self):
+        """Create target, breakpoint, spawn a process, and attach to it with process name.
+
+        Use dwarf map (no dsym) and attach to process with name API.
+        """
+        self.buildDwarf()
+        self.hello_world_attach_with_name_api()
 
     def setUp(self):
         # Call super's setUp().
@@ -90,8 +137,8 @@ class HelloWorldTestCase(TestBase):
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
 
-    def hello_world_attach_api(self):
-        """Create target, breakpoint, spawn a process, and attach to it."""
+    def hello_world_attach_with_id_api(self):
+        """Create target, breakpoint, spawn a process, and attach to it by id."""
 
         target = self.dbg.CreateTarget(self.exe)
 
@@ -105,6 +152,35 @@ class HelloWorldTestCase(TestBase):
         process = target.AttachToProcessWithID(listener, popen.pid, error)
 
         self.assertTrue(process, PROCESS_IS_VALID)
+
+        # Let's check the stack traces of the attached process.
+        import lldbutil
+        stacktraces = lldbutil.print_stacktraces(process, string_buffer=True)
+        self.expect(stacktraces, exe=False,
+            substrs = ['main.c:%d' % self.line2,
+                       '(int)argc=3'])
+
+    def hello_world_attach_with_name_api(self):
+        """Create target, breakpoint, spawn a process, and attach to it by name."""
+
+        target = self.dbg.CreateTarget(self.exe)
+
+        # Spawn a new process.
+        import subprocess
+        popen = subprocess.Popen([self.exe, "abc", "xyz"])
+        #print "pid of spawned process: %d" % popen.pid
+
+        listener = lldb.SBListener("my.attach.listener")
+        error = lldb.SBError()
+        # Pass 'False' since we don't want to wait for new instance of "hello_world" to be launched.
+        name = os.path.basename(self.exe)
+        process = target.AttachToProcessWithName(listener, name, False, error)
+
+        self.assertTrue(process, PROCESS_IS_VALID)
+
+        # Verify that after attach, our selected target indeed matches name.
+        self.expect(self.dbg.GetSelectedTarget().GetExecutable().GetFilename(), exe=False,
+            startstr = name)
 
         # Let's check the stack traces of the attached process.
         import lldbutil

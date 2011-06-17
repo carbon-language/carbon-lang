@@ -330,6 +330,10 @@ SBTarget::AttachToProcessWithName
         if (sb_process.IsValid())
         {
             error.SetError (sb_process->Attach (name, wait_for));
+            // If we are doing synchronous mode, then wait for the
+            // process to stop!
+            if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
+                sb_process->WaitForProcessToStop (NULL);
         }
         else
         {
