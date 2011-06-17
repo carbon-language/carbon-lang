@@ -1605,8 +1605,8 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     bool isVerboseAsm, bool useLoc,
                                     bool useCFI, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, TargetAsmBackend *TAB,
-                                    bool ShowInst, bool DecodeLSDA) {
-  if (DecodeLSDA)
+                                    bool ShowInst) {
+  if (isVerboseAsm)
     return new MCLSDADecoderAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                         useCFI, IP, CE, TAB, ShowInst);
 

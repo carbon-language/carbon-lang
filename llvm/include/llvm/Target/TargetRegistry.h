@@ -47,8 +47,7 @@ namespace llvm {
                                 MCInstPrinter *InstPrint,
                                 MCCodeEmitter *CE,
                                 TargetAsmBackend *TAB,
-                                bool ShowInst,
-                                bool DecodeLSDA);
+                                bool ShowInst);
 
   /// Target - Wrapper for Target specific information.
   ///
@@ -101,8 +100,7 @@ namespace llvm {
                                              MCInstPrinter *InstPrint,
                                              MCCodeEmitter *CE,
                                              TargetAsmBackend *TAB,
-                                             bool ShowInst,
-                                             bool DecodeLSDA);
+                                             bool ShowInst);
 
   private:
     /// Next - The next registered target in the linked list, maintained by the
@@ -336,11 +334,10 @@ namespace llvm {
                                   MCInstPrinter *InstPrint,
                                   MCCodeEmitter *CE,
                                   TargetAsmBackend *TAB,
-                                  bool ShowInst,
-                                  bool DecodeLSDA) const {
+                                  bool ShowInst) const {
       // AsmStreamerCtorFn is default to llvm::createAsmStreamer
       return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useLoc, useCFI,
-                               InstPrint, CE, TAB, ShowInst, DecodeLSDA);
+                               InstPrint, CE, TAB, ShowInst);
     }
 
     /// @}

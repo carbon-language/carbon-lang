@@ -557,8 +557,7 @@ namespace llvm {
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
                                 TargetAsmBackend *TAB = 0,
-                                bool ShowInst = false,
-                                bool DecodeLSDA = false);
+                                bool ShowInst = false);
 
   /// createMachOStreamer - Create a machine code streamer which will generate
   /// Mach-O format object files.

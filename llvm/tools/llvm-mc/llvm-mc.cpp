@@ -61,10 +61,6 @@ static cl::opt<bool>
 ShowInstOperands("show-inst-operands",
                  cl::desc("Show instructions operands as parsed"));
 
-static cl::opt<bool>
-DecodeLSDA("decode-lsda",
-           cl::desc("Print LSDA in human readable format"));
-
 static cl::opt<unsigned>
 OutputAsmVariant("output-asm-variant",
                  cl::desc("Syntax variant to use for output printing"));
@@ -361,8 +357,7 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
                                            /*useLoc*/ true,
                                            /*useCFI*/ true, IP, CE, TAB,
-                                           ShowInst,
-                                           DecodeLSDA));
+                                           ShowInst));
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));
   } else {
