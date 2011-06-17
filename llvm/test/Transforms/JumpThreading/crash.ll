@@ -18,7 +18,7 @@ bb13:		; preds = %bb
 	br label %bb
 
 bb110:		; preds = %bb
-	%mrv_gr124 = getresult %struct.system__secondary_stack__mark_id %tmp120, 1		; <i64> [#uses=0]
+	%mrv_gr124 = extractvalue %struct.system__secondary_stack__mark_id %tmp120, 1		; <i64> [#uses=0]
 	unreachable
 }
 

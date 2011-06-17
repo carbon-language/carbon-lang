@@ -113,7 +113,7 @@ bb116:		; preds = %bb131, %entry
 	br i1 false, label %bb141, label %bb131
 
 bb131:		; preds = %bb116
-	%mrv_gr125 = getresult %struct.NSRange %tmp123, 1		; <i64> [#uses=0]
+	%mrv_gr125 = extractvalue %struct.NSRange %tmp123, 1		; <i64> [#uses=0]
 	br label %bb116
 
 bb141:		; preds = %bb116

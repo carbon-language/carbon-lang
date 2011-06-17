@@ -3024,7 +3024,6 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
       return ParseStore(Inst, PFS, true);
     else
       return TokError("expected 'load' or 'store'");
-  case lltok::kw_getresult:     return ParseGetResult(Inst, PFS);
   case lltok::kw_getelementptr: return ParseGetElementPtr(Inst, PFS);
   case lltok::kw_extractvalue:  return ParseExtractValue(Inst, PFS);
   case lltok::kw_insertvalue:   return ParseInsertValue(Inst, PFS);
@@ -3715,25 +3714,6 @@ int LLParser::ParseStore(Instruction *&Inst, PerFunctionState &PFS,
 
   Inst = new StoreInst(Val, Ptr, isVolatile, Alignment);
   return AteExtraComma ? InstExtraComma : InstNormal;
-}
-
-/// ParseGetResult
-///   ::= 'getresult' TypeAndValue ',' i32
-/// FIXME: Remove support for getresult in LLVM 3.0
-bool LLParser::ParseGetResult(Instruction *&Inst, PerFunctionState &PFS) {
-  Value *Val; LocTy ValLoc, EltLoc;
-  unsigned Element;
-  if (ParseTypeAndValue(Val, ValLoc, PFS) ||
-      ParseToken(lltok::comma, "expected ',' after getresult operand") ||
-      ParseUInt32(Element, EltLoc))
-    return true;
-
-  if (!Val->getType()->isStructTy() && !Val->getType()->isArrayTy())
-    return Error(ValLoc, "getresult inst requires an aggregate operand");
-  if (!ExtractValueInst::getIndexedType(Val->getType(), Element))
-    return Error(EltLoc, "invalid getresult index for value");
-  Inst = ExtractValueInst::Create(Val, Element);
-  return false;
 }
 
 /// ParseGetElementPtr

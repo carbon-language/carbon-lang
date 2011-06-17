@@ -361,7 +361,6 @@ namespace llvm {
     int ParseAlloc(Instruction *&I, PerFunctionState &PFS);
     int ParseLoad(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
     int ParseStore(Instruction *&I, PerFunctionState &PFS, bool isVolatile);
-    bool ParseGetResult(Instruction *&I, PerFunctionState &PFS);
     int ParseGetElementPtr(Instruction *&I, PerFunctionState &PFS);
     int ParseExtractValue(Instruction *&I, PerFunctionState &PFS);
     int ParseInsertValue(Instruction *&I, PerFunctionState &PFS);

@@ -123,7 +123,7 @@ namespace lltok {
 
     kw_alloca, kw_load, kw_store, kw_getelementptr,
 
-    kw_extractelement, kw_insertelement, kw_shufflevector, kw_getresult,
+    kw_extractelement, kw_insertelement, kw_shufflevector,
     kw_extractvalue, kw_insertvalue, kw_blockaddress,
 
     // Unsigned Valued tokens (UIntVal).

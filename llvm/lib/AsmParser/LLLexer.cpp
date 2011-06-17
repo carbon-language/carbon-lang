@@ -635,7 +635,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(extractelement, ExtractElement);
   INSTKEYWORD(insertelement,  InsertElement);
   INSTKEYWORD(shufflevector,  ShuffleVector);
-  INSTKEYWORD(getresult,      ExtractValue);
   INSTKEYWORD(extractvalue,   ExtractValue);
   INSTKEYWORD(insertvalue,    InsertValue);
 #undef INSTKEYWORD
