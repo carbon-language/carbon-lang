@@ -1972,6 +1972,11 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
   if (ImplicitInitKind == IIK_Copy) {
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
+
+    // Suppress copying zero-width bitfields.
+    if (const Expr *Width = Field->getBitWidth())
+      if (Width->EvaluateAsInt(SemaRef.Context) == 0)
+        return false;
     
     Expr *MemberExprBase = 
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
@@ -2256,11 +2261,10 @@ Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
   return false;
 }
                                
-bool
-Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
-                                  CXXCtorInitializer **Initializers,
-                                  unsigned NumInitializers,
-                                  bool AnyErrors) {
+bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor,
+                               CXXCtorInitializer **Initializers,
+                               unsigned NumInitializers,
+                               bool AnyErrors) {
   if (Constructor->getDeclContext()->isDependentContext()) {
     // Just store the initializers as written, they will be checked during
     // instantiation.
@@ -7011,6 +7015,11 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
       Invalid = true;      
       continue;
     }
+
+    // Suppress assigning zero-width bitfields.
+    if (const Expr *Width = Field->getBitWidth())
+      if (Width->EvaluateAsInt(Context) == 0)
+        continue;
     
     QualType FieldType = Field->getType().getNonReferenceType();
     if (FieldType->isIncompleteArrayType()) {
