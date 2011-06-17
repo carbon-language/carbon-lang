@@ -776,7 +776,8 @@ uint32_t MachineBasicBlock::getSuccWeight(MachineBasicBlock *succ) {
 /// iterator
 MachineBasicBlock::weight_iterator MachineBasicBlock::
 getWeightIterator(MachineBasicBlock::succ_iterator I) {
-  assert(Weights.size() == Successors.size() && "Async weight list!");
+  assert((Weights.size() == Successors.size() || Weights.empty()) &&
+         "Async weight list!");
   size_t index = std::distance(Successors.begin(), I);
   assert(index < Weights.size() && "Not a current successor!");
   return Weights.begin() + index;
