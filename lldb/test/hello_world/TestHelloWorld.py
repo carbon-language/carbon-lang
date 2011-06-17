@@ -39,6 +39,8 @@ class HelloWorldTestCase(TestBase):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
+        # Get the full path to our executable to be debugged.
+        self.exe = os.path.join(os.getcwd(), "hello_world")
         # Find a couple of the line numbers within main.c.
         self.line1 = line_number('main.c', '// Set break point at this line.')
         self.line2 = line_number('main.c', '// Waiting to be attached...')
@@ -46,9 +48,7 @@ class HelloWorldTestCase(TestBase):
     def hello_world_python(self, useLaunchAPI):
         """Create target, breakpoint, launch a process, and then kill it."""
 
-        exe = os.path.join(os.getcwd(), "a.out")
-
-        target = self.dbg.CreateTarget(exe)
+        target = self.dbg.CreateTarget(self.exe)
 
         breakpoint = target.BreakpointCreateByLocation("main.c", self.line1)
 
@@ -93,13 +93,11 @@ class HelloWorldTestCase(TestBase):
     def hello_world_attach_api(self):
         """Create target, breakpoint, spawn a process, and attach to it."""
 
-        exe = os.path.join(os.getcwd(), "a.out")
-
-        target = self.dbg.CreateTarget(exe)
+        target = self.dbg.CreateTarget(self.exe)
 
         # Spawn a new process.
         import subprocess
-        popen = subprocess.Popen([exe, "abc", "xyz"])
+        popen = subprocess.Popen([self.exe, "abc", "xyz"])
         #print "pid of spawned process: %d" % popen.pid
 
         listener = lldb.SBListener("my.attach.listener")
