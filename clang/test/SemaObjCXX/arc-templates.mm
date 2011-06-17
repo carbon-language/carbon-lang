@@ -94,6 +94,16 @@ int check_make_weak0[is_same<make_weak<id>::type, __weak id>::value? 1 : -1];
 int check_make_weak1[is_same<make_weak<__strong id>::type, __weak id>::value? 1 : -1];
 int check_make_weak2[is_same<make_weak<__autoreleasing id>::type, __weak id>::value? 1 : -1];
 
+template<typename T>
+struct make_weak_fail {
+  typedef T T_type;
+  typedef __weak T_type type; // expected-error{{the type 'T_type' (aka '__weak id') already has retainment attributes set on it}} \
+  // expected-error{{the type 'T_type' (aka '__strong id') already has retainment attributes set on it}}
+};
+
+int check_make_weak_fail0[is_same<make_weak_fail<__weak id>::type, __weak id>::value? 1 : -1]; // expected-note{{in instantiation of template class 'make_weak_fail<__weak id>' requested here}}
+
+int check_make_weak_fail1[is_same<make_weak_fail<id>::type, __weak id>::value? -1 : 1]; // expected-note{{in instantiation of template class 'make_weak_fail<id>' requested here}}
 
 // Check template argument deduction from function templates.
 template<typename T> struct identity { };

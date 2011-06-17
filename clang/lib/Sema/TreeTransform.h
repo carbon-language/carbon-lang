@@ -3177,8 +3177,7 @@ TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
   if (Quals.hasObjCLifetime()) {
     if (!Result->isObjCLifetimeType() && !Result->isDependentType())
       Quals.removeObjCLifetime();
-    else if (Result.getObjCLifetime() && 
-             Result.getObjCLifetime() != Quals.getObjCLifetime()) {
+    else if (Result.getObjCLifetime()) {
       // Objective-C ARC: 
       //   A lifetime qualifier applied to a substituted template parameter
       //   overrides the lifetime qualifier from the template argument.
@@ -3195,8 +3194,12 @@ TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
                                                               Replacement);
         TLB.TypeWasModifiedSafely(Result);
       } else {
-        // Otherwise, drop the new qualifier.
-        // FIXME: I don't recall the justification for this!
+        // Otherwise, complain about the addition of a qualifier to an
+        // already-qualified type.
+        SourceRange R = TLB.getTemporaryTypeLoc(Result).getSourceRange();
+        SemaRef.Diag(R.getBegin(), diag::err_attr_objc_lifetime_redundant)
+          << Result << R;
+        
         Quals.removeObjCLifetime();
       }
     }

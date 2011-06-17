@@ -598,12 +598,15 @@ if it is a retainable object pointer type or an array type whose
 element type is a retainable object owner type.</p>
 
 <p>An <span class="term">ownership qualifier</span> is a type
-qualifier which applies only to retainable object owner types.  A
-program is ill-formed if it attempts to apply an ownership qualifier
+qualifier which applies only to retainable object owner types. An array type is
+ownership-qualified according to its element type, and adding an ownership 
+qualifier to an array type so qualifies its element type.</p>
+
+<p>A program is ill-formed if it attempts to apply an ownership qualifier
 to a type which is already ownership-qualified, even if it is the same
-qualifier.  An array type is ownership-qualified according to its
-element type, and adding an ownership qualifier to an array type so
-qualifies its element type.</p>
+qualifier. There is a single exception to this rule: an ownership qualifier 
+may be applied to a substituted template type parameter, which overrides the
+ownership qualifier provided by the template argument.</p>
 
 <p>Except as described under
 the <a href="#ownership.inference">inference rules</a>, a program is
@@ -612,7 +615,7 @@ retainable object owner type which lacks an ownership qualifier.</p>
 
 <div class="rationale"><p>Rationale: these rules, together with the
 inference rules, ensure that all objects and lvalues of retainable
-object pointer type have an ownership qualifier.</p></div>
+object pointer type have an ownership qualifier. The ability to override an ownership qualifier during template substitution is required to counteract the <a href="#ownership.inference.template_arguments">inference of <tt>__strong</tt> for template type arguments</a>. </p></div>
 
 <p>There are four ownership qualifiers:</p>
 
