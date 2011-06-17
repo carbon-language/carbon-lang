@@ -490,6 +490,10 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
   if (TailBB.canFallThrough())
     return false;
 
+  // Don't try to tail-duplicate single-block loops.
+  if (TailBB.isSuccessor(&TailBB))
+    return false;
+
   // Set the limit on the cost to duplicate. When optimizing for size,
   // duplicate only one, because one branch instruction can be eliminated to
   // compensate for the duplication.
@@ -500,50 +504,45 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
   else
     MaxDuplicateCount = TailDuplicateSize;
 
-  if (PreRegAlloc) {
-    if (TailBB.empty())
-      return false;
-    const TargetInstrDesc &TID = TailBB.back().getDesc();
-    // Pre-regalloc tail duplication hurts compile time and doesn't help
-    // much except for indirect branches.
-    if (!TID.isIndirectBranch())
-      return false;
-    // If the target has hardware branch prediction that can handle indirect
-    // branches, duplicating them can often make them predictable when there
-    // are common paths through the code.  The limit needs to be high enough
-    // to allow undoing the effects of tail merging and other optimizations
-    // that rearrange the predecessors of the indirect branch.
-    MaxDuplicateCount = 20;
-  }
+  // If the target has hardware branch prediction that can handle indirect
+  // branches, duplicating them can often make them predictable when there
+  // are common paths through the code.  The limit needs to be high enough
+  // to allow undoing the effects of tail merging and other optimizations
+  // that rearrange the predecessors of the indirect branch.
 
-  // Don't try to tail-duplicate single-block loops.
-  if (TailBB.isSuccessor(&TailBB))
-    return false;
+  if (PreRegAlloc && !TailBB.empty()) {
+    const TargetInstrDesc &TID = TailBB.back().getDesc();
+    if (TID.isIndirectBranch())
+      MaxDuplicateCount = 20;
+  }
 
   // Check the instructions in the block to determine whether tail-duplication
   // is invalid or unlikely to be profitable.
   unsigned InstrCount = 0;
-  bool HasCall = false;
   for (MachineBasicBlock::const_iterator I = TailBB.begin(); I != TailBB.end();
        ++I) {
     // Non-duplicable things shouldn't be tail-duplicated.
-    if (I->getDesc().isNotDuplicable()) return false;
+    if (I->getDesc().isNotDuplicable())
+      return false;
+
     // Do not duplicate 'return' instructions if this is a pre-regalloc run.
     // A return may expand into a lot more instructions (e.g. reload of callee
     // saved registers) after PEI.
-    if (PreRegAlloc && I->getDesc().isReturn()) return false;
-    // Don't duplicate more than the threshold.
-    if (InstrCount == MaxDuplicateCount) return false;
-    // Remember if we saw a call.
-    if (I->getDesc().isCall()) HasCall = true;
+    if (PreRegAlloc && I->getDesc().isReturn())
+      return false;
+
+    // Avoid duplicating calls before register allocation. Calls presents a
+    // barrier to register allocation so duplicating them may end up increasing
+    // spills.
+    if (PreRegAlloc && I->getDesc().isCall())
+      return false;
+
     if (!I->isPHI() && !I->isDebugValue())
       InstrCount += 1;
+
+    if (InstrCount > MaxDuplicateCount)
+      return false;
   }
-  // Don't tail-duplicate calls before register allocation. Calls presents a
-  // barrier to register allocation so duplicating them may end up increasing
-  // spills.
-  if (InstrCount > 1 && (PreRegAlloc && HasCall))
-    return false;
 
   return true;
 }
@@ -618,6 +617,10 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
                                TII->get(TargetOpcode::COPY),
                                CopyInfos[i].first).addReg(CopyInfos[i].second));
     }
+
+    // Simplify
+    TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond, true);
+
     NumInstrDups += TailBB->size() - 1; // subtract one for removed branch
 
     // Update the CFG.
