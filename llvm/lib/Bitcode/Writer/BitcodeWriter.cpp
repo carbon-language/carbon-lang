@@ -1103,7 +1103,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Vals.push_back(cast<LoadInst>(I).isVolatile());
     break;
   case Instruction::Store:
-    Code = bitc::FUNC_CODE_INST_STORE2;
+    Code = bitc::FUNC_CODE_INST_STORE;
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);  // ptrty + ptr
     Vals.push_back(VE.getValueID(I.getOperand(0)));       // val.
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
@@ -1114,7 +1114,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     const PointerType *PTy = cast<PointerType>(CI.getCalledValue()->getType());
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
 
-    Code = bitc::FUNC_CODE_INST_CALL2;
+    Code = bitc::FUNC_CODE_INST_CALL;
 
     Vals.push_back(VE.getAttributeID(CI.getAttributes()));
     Vals.push_back((CI.getCallingConv() << 1) | unsigned(CI.isTailCall()));
@@ -1258,7 +1258,7 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
         Vals.push_back(DL.getCol());
         Vals.push_back(Scope ? VE.getValueID(Scope)+1 : 0);
         Vals.push_back(IA ? VE.getValueID(IA)+1 : 0);
-        Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC2, Vals);
+        Stream.EmitRecord(bitc::FUNC_CODE_DEBUG_LOC, Vals);
         Vals.clear();
         
         LastDL = DL;

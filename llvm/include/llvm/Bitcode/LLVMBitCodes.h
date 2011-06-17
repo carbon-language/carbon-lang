@@ -233,7 +233,7 @@ namespace bitc {
     // This store code encodes the pointer type, rather than the value type
     // this is so information only available in the pointer type (e.g. address
     // spaces) is retained.
-    FUNC_CODE_INST_STORE2      = 24, // STORE:      [ptrty,ptr,val, align, vol]
+    FUNC_CODE_INST_STORE       = 24, // STORE:      [ptrty,ptr,val, align, vol]
     // 25 is unused.
     FUNC_CODE_INST_EXTRACTVAL  = 26, // EXTRACTVAL: [n x operands]
     FUNC_CODE_INST_INSERTVAL   = 27, // INSERTVAL:  [n x operands]
@@ -247,9 +247,9 @@ namespace bitc {
     // 32 is unused.
     FUNC_CODE_DEBUG_LOC_AGAIN  = 33, // DEBUG_LOC_AGAIN
 
-    FUNC_CODE_INST_CALL2       = 34, // CALL2:      [attr, fnty, fnid, args...]
+    FUNC_CODE_INST_CALL        = 34, // CALL:       [attr, fnty, fnid, args...]
 
-    FUNC_CODE_DEBUG_LOC2       = 35  // DEBUG_LOC2: [Line,Col,ScopeVal, IAVal]
+    FUNC_CODE_DEBUG_LOC        = 35  // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
   };
 } // End bitc namespace
 } // End llvm namespace
