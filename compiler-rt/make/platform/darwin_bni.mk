@@ -29,8 +29,8 @@ FUNCTIONS := absvdi2 absvsi2 addvdi3 addvsi3 ashldi3 ashrdi3 \
              divdc3 divdi3 divsc3 ffsdi2 \
              fixdfdi fixsfdi fixunsdfdi fixunsdfsi fixunssfdi \
              fixunssfsi floatdidf floatdisf floatundidf floatundisf \
-             gcc_personality_v0 lshrdi3 moddi3 muldc3 muldi3 mulosi3 \
-             mulodi3 muloti3 mulsc3 mulvdi3 mulvsi3 negdi2 negvdi2 negvsi2 \
+             gcc_personality_v0 lshrdi3 moddi3 muldc3 muldi3 mulosi4 \
+             mulodi4 muloti4 mulsc3 mulvdi3 mulvsi3 negdi2 negvdi2 negvsi2 \
              paritydi2 paritysi2 popcountdi2 popcountsi2 powidf2 \
              powisf2 subvdi3 subvsi3 ucmpdi2 udivdi3 \
              udivmoddi4 umoddi3 apple_versioning eprintf
@@ -51,7 +51,7 @@ FUNCTIONS.x86_64 := $(FUNCTIONS) \
                 fixunsxfti fixxfdi fixxfti floatdixf floattidf \
                 floattisf floattixf floatundixf floatuntidf \
                 floatuntisf floatuntixf lshrti3 modti3 multi3 \
-                muloti3 mulvti3 mulxc3 negti2 negvti2 parityti2 \
+                muloti4 mulvti3 mulxc3 negti2 negvti2 parityti2 \
                 popcountti2 powixf2 subvti3 ucmpti2 udivmodti4 \
                 udivti3 umodti3 clear_cache enable_execute_stack
 FUNCTIONS.armv5 := $(FUNCTIONS) \
