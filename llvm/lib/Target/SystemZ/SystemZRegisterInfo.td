@@ -161,13 +161,17 @@ def F15L : FPRL<15, "f15", [F15S]>;
 // Status register
 def PSW : SystemZReg<"psw">;
 
-/// Register classes
-def GR32 : RegisterClass<"SystemZ", [i32], 32, (sequence "R%uW", 0, 15)>;
+/// Register classes.
+/// Allocate the callee-saved R6-R12 backwards. That way they can be saved
+/// together with R14 and R15 in one prolog instruction.
+def GR32 : RegisterClass<"SystemZ", [i32], 32, (add (sequence "R%uW",  0, 5),
+                                                    (sequence "R%uW", 15, 6))>;
 
 /// Registers used to generate address. Everything except R0.
 def ADDR32 : RegisterClass<"SystemZ", [i32], 32, (sub GR32, R0W)>;
 
-def GR64 : RegisterClass<"SystemZ", [i64], 64, (sequence "R%uD", 0, 15)> {
+def GR64 : RegisterClass<"SystemZ", [i64], 64, (add (sequence "R%uD",  0, 5),
+                                                    (sequence "R%uD", 15, 6))> {
   let SubRegClasses = [(GR32 subreg_32bit)];
 }
 
@@ -176,13 +180,15 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64, (sub GR64, R0D)> {
 }
 
 // Even-odd register pairs
-def GR64P : RegisterClass<"SystemZ", [v2i32], 64, (add R0P, R2P, R4P, R6P, R8P,
-                                                       R10P, R12P, R14P)> {
+def GR64P : RegisterClass<"SystemZ", [v2i32], 64, (add R0P, R2P, R4P,
+                                                       R12P, R10P, R8P, R6P,
+                                                       R14P)> {
   let SubRegClasses = [(GR32 subreg_32bit, subreg_odd32)];
 }
 
-def GR128 : RegisterClass<"SystemZ", [v2i64], 128, (add R0Q, R2Q, R4Q, R6Q, R8Q,
-                                                        R10Q, R12Q, R14Q)> {
+def GR128 : RegisterClass<"SystemZ", [v2i64], 128, (add R0Q, R2Q, R4Q,
+                                                        R12Q, R10Q, R8Q, R6Q,
+                                                        R14Q)> {
   let SubRegClasses = [(GR32 subreg_32bit, subreg_odd32),
                        (GR64 subreg_even, subreg_odd)];
 }
