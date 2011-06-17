@@ -768,6 +768,9 @@ MachineBasicBlock::findDebugLoc(MachineBasicBlock::iterator &MBBI) {
 /// getSuccWeight - Return weight of the edge from this block to MBB.
 ///
 uint32_t MachineBasicBlock::getSuccWeight(MachineBasicBlock *succ) {
+  if (Weights.empty())
+    return 0;
+
   succ_iterator I = std::find(Successors.begin(), Successors.end(), succ);
   return *getWeightIterator(I);
 }
@@ -776,8 +779,7 @@ uint32_t MachineBasicBlock::getSuccWeight(MachineBasicBlock *succ) {
 /// iterator
 MachineBasicBlock::weight_iterator MachineBasicBlock::
 getWeightIterator(MachineBasicBlock::succ_iterator I) {
-  assert((Weights.size() == Successors.size() || Weights.empty()) &&
-         "Async weight list!");
+  assert(Weights.size() == Successors.size() && "Async weight list!");
   size_t index = std::distance(Successors.begin(), I);
   assert(index < Weights.size() && "Not a current successor!");
   return Weights.begin() + index;
