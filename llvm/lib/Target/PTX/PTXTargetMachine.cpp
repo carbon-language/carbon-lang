@@ -27,7 +27,8 @@ namespace llvm {
                                    MCInstPrinter *InstPrint,
                                    MCCodeEmitter *CE,
                                    TargetAsmBackend *TAB,
-                                   bool ShowInst);
+                                   bool ShowInst,
+                                   bool DecodeLSDA);
 }
 
 extern "C" void LLVMInitializePTXTarget() {

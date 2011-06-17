@@ -533,7 +533,8 @@ namespace llvm {
                                    bool isVerboseAsm, bool useLoc, bool useCFI,
                                    MCInstPrinter *IP,
                                    MCCodeEmitter *CE, TargetAsmBackend *TAB,
-                                   bool ShowInst) {
+                                   bool ShowInst,
+                                   bool /*DecodeLSDA*/) {
     return new PTXMCAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                 IP, CE, ShowInst);
   }

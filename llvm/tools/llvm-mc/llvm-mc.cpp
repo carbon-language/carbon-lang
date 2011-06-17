@@ -61,6 +61,10 @@ static cl::opt<bool>
 ShowInstOperands("show-inst-operands",
                  cl::desc("Show instructions operands as parsed"));
 
+static cl::opt<bool>
+DecodeLSDA("decode-lsda",
+           cl::desc("Print LSDA in human readable format"));
+
 static cl::opt<unsigned>
 OutputAsmVariant("output-asm-variant",
                  cl::desc("Syntax variant to use for output printing"));
@@ -97,7 +101,7 @@ IncludeDirs("I", cl::desc("Directory of include files"),
 
 static cl::opt<std::string>
 ArchName("arch", cl::desc("Target arch to assemble for, "
-                            "see -version for available targets"));
+                          "see -version for available targets"));
 
 static cl::opt<std::string>
 TripleName("triple", cl::desc("Target triple to assemble for, "
@@ -110,12 +114,11 @@ MCPU("mcpu",
      cl::init(""));
 
 static cl::opt<bool>
-NoInitialTextSection("n", cl::desc(
-                   "Don't assume assembly file starts in the text section"));
+NoInitialTextSection("n", cl::desc("Don't assume assembly file starts "
+                                   "in the text section"));
 
 static cl::opt<bool>
-SaveTempLabels("L", cl::desc(
-                 "Don't discard temporary labels"));
+SaveTempLabels("L", cl::desc("Don't discard temporary labels"));
 
 enum ActionType {
   AC_AsLex,
@@ -358,7 +361,8 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
                                            /*useLoc*/ true,
                                            /*useCFI*/ true, IP, CE, TAB,
-                                           ShowInst));
+                                           ShowInst,
+                                           DecodeLSDA));
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));
   } else {

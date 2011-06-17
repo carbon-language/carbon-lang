@@ -547,6 +547,9 @@ namespace llvm {
   ///
   /// \param ShowInst - Whether to show the MCInst representation inline with
   /// the assembly.
+  ///
+  /// \param DecodeLSDA - If true, emit comments that translates the LSDA into a
+  /// human readable format. Only usable with CFI.
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
                                 bool isVerboseAsm,
                                 bool useLoc,
@@ -554,7 +557,8 @@ namespace llvm {
                                 MCInstPrinter *InstPrint = 0,
                                 MCCodeEmitter *CE = 0,
                                 TargetAsmBackend *TAB = 0,
-                                bool ShowInst = false);
+                                bool ShowInst = false,
+                                bool DecodeLSDA = false);
 
   /// createMachOStreamer - Create a machine code streamer which will generate
   /// Mach-O format object files.

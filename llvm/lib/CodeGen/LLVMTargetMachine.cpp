@@ -72,6 +72,8 @@ static cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
     cl::desc("Show encoding in .s output"));
 static cl::opt<bool> ShowMCInst("show-mc-inst", cl::Hidden,
     cl::desc("Show instruction structure in .s output"));
+static cl::opt<bool> DecodeMCLSDA("decode-mc-lsda", cl::Hidden,
+    cl::desc("Print LSDA in human readable format in .s output"));
 static cl::opt<bool> EnableMCLogging("enable-mc-api-logging", cl::Hidden,
     cl::desc("Enable MC API logging"));
 static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
@@ -152,7 +154,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                                   hasMCUseCFI(),
                                                   InstPrinter,
                                                   MCE, TAB,
-                                                  ShowMCInst);
+                                                  ShowMCInst,
+                                                  DecodeMCLSDA);
     AsmStreamer.reset(S);
     break;
   }
