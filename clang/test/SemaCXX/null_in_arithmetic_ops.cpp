@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fblocks -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fblocks -Wnull-arithmetic -verify %s
 #include <stddef.h>
 
 void f() {
