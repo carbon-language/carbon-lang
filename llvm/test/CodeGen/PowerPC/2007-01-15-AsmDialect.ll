@@ -7,7 +7,6 @@ entry:
 	%temp = alloca i32, align 4		; <i32*> [#uses=2]
 	%ctz_x = alloca i32, align 4		; <i32*> [#uses=3]
 	%ctz_c = alloca i32, align 4		; <i32*> [#uses=2]
-	"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i32 61440, i32* %ctz_x
 	%tmp = load i32* %ctz_x		; <i32> [#uses=1]
 	%tmp1 = sub i32 0, %tmp		; <i32> [#uses=1]

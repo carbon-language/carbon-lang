@@ -1,13 +1,13 @@
 ; RUN: llc < %s 
 ; PR1228
 
-	"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >::_Alloc_hider" = type { i8* }
-	"struct.std::locale" = type { "struct.std::locale::_Impl"* }
-	"struct.std::locale::_Impl" = type { i32, "struct.std::locale::facet"**, i32, "struct.std::locale::facet"**, i8** }
-	"struct.std::locale::facet" = type { i32 (...)**, i32 }
-	"struct.std::string" = type { "struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >::_Alloc_hider" }
+	%"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >::_Alloc_hider" = type { i8* }
+	%"struct.std::locale" = type { %"struct.std::locale::_Impl"* }
+	%"struct.std::locale::_Impl" = type { i32, %"struct.std::locale::facet"**, i32, %"struct.std::locale::facet"**, i8** }
+	%"struct.std::locale::facet" = type { i32 (...)**, i32 }
+	%"struct.std::string" = type { %"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >::_Alloc_hider" }
 
-define void @_ZNKSt6locale4nameEv("struct.std::string"* %agg.result) {
+define void @_ZNKSt6locale4nameEv(%"struct.std::string"* %agg.result) {
 entry:
 	%tmp105 = icmp eq i8* null, null		; <i1> [#uses=1]
 	br i1 %tmp105, label %cond_true, label %cond_true222

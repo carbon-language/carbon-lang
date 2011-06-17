@@ -33,7 +33,6 @@ entry:
 	%c = alloca i32, align 4		; <i32*> [#uses=4]
 	%l = alloca %struct.list*, align 4		; <%struct.list**> [#uses=5]
 	%op = alloca %struct.operator*, align 4		; <%struct.operator**> [#uses=3]
-	"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i32 %arity, i32* %arity_addr
 	store i32 0, i32* %c
 	%tmp1 = load %struct.list** @operators		; <%struct.list*> [#uses=1]

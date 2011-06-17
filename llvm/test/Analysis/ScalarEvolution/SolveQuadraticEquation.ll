@@ -7,7 +7,7 @@
 
 define void @test(i32 %N) {
 entry:
-        "alloca point" = bitcast i32 0 to i32           ; <i32> [#uses=0]
+        %"alloca point" = bitcast i32 0 to i32           ; <i32> [#uses=0]
         br label %bb3
 
 bb:             ; preds = %bb3

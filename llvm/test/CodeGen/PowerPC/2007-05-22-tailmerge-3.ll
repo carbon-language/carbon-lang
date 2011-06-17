@@ -13,7 +13,6 @@ entry:
 	%i_addr = alloca i32		; <i32*> [#uses=2]
 	%q_addr = alloca i32		; <i32*> [#uses=2]
 	%retval = alloca i32, align 4		; <i32*> [#uses=1]
-	"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i32 %i, i32* %i_addr
 	store i32 %q, i32* %q_addr
 	%tmp = load i32* %i_addr		; <i32> [#uses=1]

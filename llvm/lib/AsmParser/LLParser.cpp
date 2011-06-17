@@ -165,7 +165,6 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_deplibs: if (ParseDepLibs()) return true; break;
     case lltok::kw_type:    if (ParseUnnamedType()) return true; break;
     case lltok::LocalVarID: if (ParseUnnamedType()) return true; break;
-    case lltok::StringConstant: // FIXME: REMOVE IN LLVM 3.0
     case lltok::LocalVar:   if (ParseNamedType()) return true; break;
     case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
@@ -1353,7 +1352,6 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
       return true;
     break;
   case lltok::LocalVar:
-  case lltok::StringConstant:  // FIXME: REMOVE IN LLVM 3.0
     // TypeRec ::= %foo
     if (const Type *T = M->getTypeByName(Lex.getStrVal())) {
       Result = T;
@@ -1513,8 +1511,7 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
     if (ArgTy->isVoidTy())
       return Error(TypeLoc, "argument can not have void type");
 
-    if (Lex.getKind() == lltok::LocalVar ||
-        Lex.getKind() == lltok::StringConstant) { // FIXME: REMOVE IN LLVM 3.0
+    if (Lex.getKind() == lltok::LocalVar) {
       Name = Lex.getStrVal();
       Lex.Lex();
     }
@@ -1539,8 +1536,7 @@ bool LLParser::ParseArgumentList(std::vector<ArgInfo> &ArgList,
       if (ArgTy->isVoidTy())
         return Error(TypeLoc, "argument can not have void type");
 
-      if (Lex.getKind() == lltok::LocalVar ||
-          Lex.getKind() == lltok::StringConstant) { // FIXME: REMOVE IN LLVM 3.0
+      if (Lex.getKind() == lltok::LocalVar) {
         Name = Lex.getStrVal();
         Lex.Lex();
       } else {
@@ -1969,7 +1965,6 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     ID.Kind = ValID::t_LocalID;
     break;
   case lltok::LocalVar:  // %foo
-  case lltok::StringConstant:  // "foo" - FIXME: REMOVE IN LLVM 3.0
     ID.StrVal = Lex.getStrVal();
     ID.Kind = ValID::t_LocalName;
     break;
@@ -2897,9 +2892,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
       Lex.Lex();
       if (ParseToken(lltok::equal, "expected '=' after instruction id"))
         return true;
-    } else if (Lex.getKind() == lltok::LocalVar ||
-               // FIXME: REMOVE IN LLVM 3.0
-               Lex.getKind() == lltok::StringConstant) {
+    } else if (Lex.getKind() == lltok::LocalVar) {
       NameStr = Lex.getStrVal();
       Lex.Lex();
       if (ParseToken(lltok::equal, "expected '=' after instruction name"))

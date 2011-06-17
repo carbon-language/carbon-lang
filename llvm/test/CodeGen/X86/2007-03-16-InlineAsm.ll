@@ -9,7 +9,6 @@ entry:
 	%retval = alloca i32, align 4		; <i32*> [#uses=2]
 	%tmp = alloca i32, align 4		; <i32*> [#uses=2]
 	%ret = alloca i32, align 4		; <i32*> [#uses=2]
-	"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i32 %A, i32* %A_addr
 	store i32 %B, i32* %B_addr
 	%tmp1 = load i32* %A_addr		; <i32> [#uses=1]
