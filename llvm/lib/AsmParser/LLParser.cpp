@@ -356,8 +356,7 @@ bool LLParser::ParseNamedType() {
   }
 
   // Inserting a name that is already defined, get the existing name.
-  const Type *Existing = M->getTypeByName(Name);
-  assert(Existing && "Conflict but no matching type?!");
+  assert(M->getTypeByName(Name) && "Conflict but no matching type?!");
 
   // Otherwise, this is an attempt to redefine a type, report the error.
   return Error(NameLoc, "redefinition of type named '" + Name + "' of type '" +
