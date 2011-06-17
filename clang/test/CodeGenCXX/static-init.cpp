@@ -16,6 +16,9 @@ void f() {
   // CHECK: call void @_ZN1AC1Ev
   // CHECK: call i32 @__cxa_atexit(void (i8*)* bitcast (void (%struct.A*)* @_ZN1AD1Ev to void (i8*)*), i8* getelementptr inbounds (%struct.A* @_ZZ1fvE1a, i32 0, i32 0), i8* bitcast (i8** @__dso_handle to i8*))
   // CHECK: call void @__cxa_guard_release
+
+  // rdar://problem/9496726
+  // CHECK: call void @llvm.memory.barrier(i1 true, i1 true, i1 false, i1 false, i1 false)
   static A a;
 }
 
