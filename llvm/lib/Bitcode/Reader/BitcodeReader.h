@@ -174,17 +174,10 @@ class BitcodeReader : public GVMaterializer {
   typedef std::pair<unsigned, GlobalVariable*> BlockAddrRefTy;
   DenseMap<Function*, std::vector<BlockAddrRefTy> > BlockAddrFwdRefs;
 
-  /// LLVM2_7MetadataDetected - True if metadata produced by LLVM 2.7 or
-  /// earlier was detected, in which case we behave slightly differently,
-  /// for compatibility.
-  /// FIXME: Remove in LLVM 3.0.
-  bool LLVM2_7MetadataDetected;
-  
 public:
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
     : Context(C), TheModule(0), Buffer(buffer), BufferOwned(false),
-      ErrorString(0), ValueList(C), MDValueList(C),
-      LLVM2_7MetadataDetected(false) {
+      ErrorString(0), ValueList(C), MDValueList(C) {
     HasReversedFunctionsWithBodies = false;
   }
   ~BitcodeReader() {
