@@ -81,6 +81,9 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::MUL_I32] = "__mulsi3";
   Names[RTLIB::MUL_I64] = "__muldi3";
   Names[RTLIB::MUL_I128] = "__multi3";
+  Names[RTLIB::MULO_I32] = "__mulosi4";
+  Names[RTLIB::MULO_I64] = "__mulodi4";
+  Names[RTLIB::MULO_I128] = "__muloti4";
   Names[RTLIB::SDIV_I8] = "__divqi3";
   Names[RTLIB::SDIV_I16] = "__divhi3";
   Names[RTLIB::SDIV_I32] = "__divsi3";
@@ -1914,7 +1917,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
   // comparisons.
   if (isa<ConstantSDNode>(N0.getNode()))
     return DAG.getSetCC(dl, VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
-  
+
   if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode())) {
     const APInt &C1 = N1C->getAPIntValue();
 
@@ -2673,9 +2676,9 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                   std::string &Constraint,
                                                   std::vector<SDValue> &Ops,
                                                   SelectionDAG &DAG) const {
-  
+
   if (Constraint.length() > 1) return;
-  
+
   char ConstraintLetter = Constraint[0];
   switch (ConstraintLetter) {
   default: break;
@@ -2865,7 +2868,7 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
           report_fatal_error("Indirect operand for inline asm not a pointer!");
         OpTy = PtrTy->getElementType();
       }
-      
+
       // Look for vector wrapped in a struct. e.g. { <16 x i8> }.
       if (const StructType *STy = dyn_cast<StructType>(OpTy))
         if (STy->getNumElements() == 1)

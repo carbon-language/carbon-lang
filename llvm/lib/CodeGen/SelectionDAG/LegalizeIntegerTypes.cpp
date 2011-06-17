@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LegalizeTypes.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1072,6 +1073,8 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   case ISD::SSUBO: ExpandIntRes_SADDSUBO(N, Lo, Hi); break;
   case ISD::UADDO:
   case ISD::USUBO: ExpandIntRes_UADDSUBO(N, Lo, Hi); break;
+  case ISD::UMULO:
+  case ISD::SMULO: ExpandIntRes_XMULO(N, Lo, Hi); break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -2146,6 +2149,66 @@ void DAGTypeLegalizer::ExpandIntRes_UADDSUBO(SDNode *N,
                              ISD::SETULT : ISD::SETUGT);
 
   // Use the calculated overflow everywhere.
+  ReplaceValueWith(SDValue(N, 1), Ofl);
+}
+
+void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
+                                          SDValue &Lo, SDValue &Hi) {
+  EVT VT = N->getValueType(0);
+  const Type *RetTy = VT.getTypeForEVT(*DAG.getContext());
+  EVT PtrVT = TLI.getPointerTy();
+  const Type *PtrTy = PtrVT.getTypeForEVT(*DAG.getContext());
+  DebugLoc dl = N->getDebugLoc();
+
+  // Expand the result by simply replacing it with the equivalent
+  // non-overflow-checking operation.
+  RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+  if (VT == MVT::i32)
+    LC = RTLIB::MULO_I32;
+  else if (VT == MVT::i64)
+    LC = RTLIB::MULO_I64;
+  else if (VT == MVT::i128)
+    LC = RTLIB::MULO_I128;
+  assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported XMULO!");
+
+  SDValue Temp = DAG.CreateStackTemporary(PtrVT);
+  // Temporary for the overflow value, default it to zero.
+  SDValue Chain = DAG.getStore(DAG.getEntryNode(), dl,
+			       DAG.getConstant(0, PtrVT), Temp,
+			       MachinePointerInfo(), false, false, 0);
+
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    EVT ArgVT = N->getOperand(i).getValueType();
+    const Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Entry.Node = N->getOperand(i);
+    Entry.Ty = ArgTy;
+    Entry.isSExt = true;
+    Entry.isZExt = false;
+    Args.push_back(Entry);
+  }
+
+  // Also pass the address of the overflow check.
+  Entry.Node = Temp;
+  Entry.Ty = PtrTy->getPointerTo();
+  Entry.isSExt = true;
+  Entry.isZExt = false;
+  Args.push_back(Entry);
+
+  SDValue Func = DAG.getExternalSymbol(TLI.getLibcallName(LC), PtrVT);
+  std::pair<SDValue, SDValue> CallInfo =
+    TLI.LowerCallTo(Chain, RetTy, true, false, false, false,
+		    0, TLI.getLibcallCallingConv(LC), false,
+		    true, Func, Args, DAG, dl);
+
+  SplitInteger(CallInfo.first, Lo, Hi);
+  SDValue Temp2 = DAG.getLoad(PtrVT, dl, CallInfo.second, Temp,
+			      MachinePointerInfo(), false, false, 0);
+  SDValue Ofl = DAG.getSetCC(dl, N->getValueType(1), Temp2,
+                             DAG.getConstant(0, PtrVT),
+                             ISD::SETNE);
+  // Use the overflow from the libcall everywhere.
   ReplaceValueWith(SDValue(N, 1), Ofl);
 }
 
