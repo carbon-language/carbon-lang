@@ -29,7 +29,7 @@ class HelloWorldTestCase(TestBase):
 
     @python_api_test
     def test_with_dwarf_and_attach_to_process_with_id_api(self):
-        """Create target, breakpoint, start a process, and attach to it.
+        """Create target, breakpoint, spawn a process, and attach to it.
 
         Use dwarf map (no dsym) and attach to process with id API.
         """
@@ -91,7 +91,7 @@ class HelloWorldTestCase(TestBase):
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
 
     def hello_world_attach_api(self):
-        """Create target, breakpoint, start a process, and attach to it."""
+        """Create target, breakpoint, spawn a process, and attach to it."""
 
         exe = os.path.join(os.getcwd(), "a.out")
 
