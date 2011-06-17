@@ -1836,9 +1836,8 @@ private:
 
         // Build a new vector type and check if it is legal.
         MVT NVT = MVT::getVectorVT(EltVT.getSimpleVT(), NumElts);
-
         // Found a legal promoted vector type.
-        if (ValueTypeActions.getTypeAction(NVT) == TypeLegal)
+        if (NVT != MVT() && ValueTypeActions.getTypeAction(NVT) == TypeLegal)
           return LegalizeKind(TypePromoteInteger,
                               EVT::getVectorVT(Context, EltVT, NumElts));
       }
