@@ -17,15 +17,13 @@ struct is_same<T, T> {
 // adjustments.
 template<typename T>
 struct X0 {
-  typedef T* pointer; // expected-error{{pointer to non-const type 'id' with no explicit lifetime}} \
-  // expected-error{{pointer to non-const type 'A *' with no explicit lifetime}}
-  typedef T& reference; // expected-error{{reference to non-const type 'id' with no explicit lifetime}} \
-  // expected-error{{reference to non-const type 'A *' with no explicit lifetime}}
+  typedef T* pointer; // okay: ends up being strong.
+  typedef T& reference; // okay: ends up being strong
 };
 
 void test_X0() {
-  X0<id> x0id; // expected-note{{in instantiation of template class 'X0<id>' requested here}}
-  X0<A*> x0a; // expected-note{{in instantiation of template class 'X0<A *>' requested here}}
+  X0<id> x0id;
+  X0<A*> x0a;
   X0<__strong A*> x0sa;
 
   id __strong *ptr;
@@ -33,6 +31,8 @@ void test_X0() {
   X0<__strong id>::pointer &ptr_ref = ptr;
   X0<__strong id>::reference ref = val;
 }
+
+int check_infer_strong[is_same<id, __strong id>::value? 1 : -1];
 
 // Check template argument deduction (e.g., for specialization) using
 // lifetime qualifiers.
@@ -58,6 +58,21 @@ struct make_strong_pointer {
   typedef __strong T *type;
 };
 
+template<typename T>
+struct make_strong_pointer<__weak T> {
+  typedef __strong T *type;
+};
+
+template<typename T>
+struct make_strong_pointer<__autoreleasing T> {
+  typedef __strong T *type;
+};
+
+template<typename T>
+struct make_strong_pointer<__unsafe_unretained T> {
+  typedef __strong T *type;
+};
+
 // Adding qualifiers
 int check_make_strong1[is_same<make_strong_pointer<id>::type, __strong id *>::value ? 1 : -1];
 int check_make_strong2[is_same<make_strong_pointer<A*>::type, A* __strong *>::value ? 1 : -1];
@@ -68,7 +83,17 @@ int check_make_strong4[is_same<make_strong_pointer<__strong A*>::type, A* __stro
 
 // Adding nonsensical qualifiers.
 int check_make_strong5[is_same<make_strong_pointer<int>::type, int *>::value ? 1 : -1];
-int check_make_strong6[is_same<make_strong_pointer<__weak id>::type, __weak id *>::value ? 1 : -1];
+int check_make_strong6[is_same<make_strong_pointer<__weak id>::type, __strong id *>::value ? 1 : -1];
+
+template<typename T>
+struct make_weak {
+  typedef __weak T type;
+};
+
+int check_make_weak0[is_same<make_weak<id>::type, __weak id>::value? 1 : -1];
+int check_make_weak1[is_same<make_weak<__strong id>::type, __weak id>::value? 1 : -1];
+int check_make_weak2[is_same<make_weak<__autoreleasing id>::type, __weak id>::value? 1 : -1];
+
 
 // Check template argument deduction from function templates.
 template<typename T> struct identity { };

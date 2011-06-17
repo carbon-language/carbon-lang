@@ -2357,8 +2357,20 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
     return true;
 
   // Add the converted template type argument.
-  Converted.push_back(
-                 TemplateArgument(Context.getCanonicalType(Arg.getAsType())));
+  QualType ArgType = Context.getCanonicalType(Arg.getAsType());
+  
+  // Objective-C ARC:
+  //   If an explicitly-specified template argument type is a lifetime type
+  //   with no lifetime qualifier, the __strong lifetime qualifier is inferred.
+  if (getLangOptions().ObjCAutoRefCount &&
+      ArgType->isObjCLifetimeType() &&
+      !ArgType.getObjCLifetime()) {
+    Qualifiers Qs;
+    Qs.setObjCLifetime(Qualifiers::OCL_Strong);
+    ArgType = Context.getQualifiedType(ArgType, Qs);
+  }
+  
+  Converted.push_back(TemplateArgument(ArgType));
   return false;
 }
 

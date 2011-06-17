@@ -1016,6 +1016,15 @@ DeduceTemplateArguments(Sema &S,
       DeducedQs.removeAddressSpace();
     if (ParamQs.hasObjCLifetime())
       DeducedQs.removeObjCLifetime();
+    
+    // Objective-C ARC:
+    //   If template deduction would produce an argument type with lifetime type
+    //   but no lifetime qualifier, the __strong lifetime qualifier is inferred.
+    if (S.getLangOptions().ObjCAutoRefCount &&
+        DeducedType->isObjCLifetimeType() &&
+        !DeducedQs.hasObjCLifetime())
+      DeducedQs.setObjCLifetime(Qualifiers::OCL_Strong);
+    
     DeducedType = S.Context.getQualifiedType(DeducedType.getUnqualifiedType(),
                                              DeducedQs);
     

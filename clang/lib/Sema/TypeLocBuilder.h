@@ -91,7 +91,6 @@ class TypeLocBuilder {
   /// modified in some safe way that doesn't affect type-location information.
   void TypeWasModifiedSafely(QualType T) {
 #ifndef NDEBUG
-    assert(T.getLocalUnqualifiedType() == LastTy.getLocalUnqualifiedType());
     LastTy = T;
 #endif
   }

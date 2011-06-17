@@ -3173,12 +3173,34 @@ TreeTransform<Derived>::TransformQualifiedType(TypeLocBuilder &TLB,
     return Result;
 
   // Suppress Objective-C lifetime qualifiers if they don't make sense for the
-  // resulting type or if the resulting type already has one.
-  if (Quals.hasObjCLifetime() && 
-      (Result.getObjCLifetime() ||
-       (!Result->isObjCLifetimeType() && !Result->isDependentType())))
-    Quals.removeObjCLifetime();
-  
+  // resulting type.
+  if (Quals.hasObjCLifetime()) {
+    if (!Result->isObjCLifetimeType() && !Result->isDependentType())
+      Quals.removeObjCLifetime();
+    else if (Result.getObjCLifetime() && 
+             Result.getObjCLifetime() != Quals.getObjCLifetime()) {
+      // Objective-C ARC: 
+      //   A lifetime qualifier applied to a substituted template parameter
+      //   overrides the lifetime qualifier from the template argument.
+      if (const SubstTemplateTypeParmType *SubstTypeParam 
+                                = dyn_cast<SubstTemplateTypeParmType>(Result)) {
+        QualType Replacement = SubstTypeParam->getReplacementType();
+        Qualifiers Qs = Replacement.getQualifiers();
+        Qs.removeObjCLifetime();
+        Replacement 
+          = SemaRef.Context.getQualifiedType(Replacement.getUnqualifiedType(),
+                                             Qs);
+        Result = SemaRef.Context.getSubstTemplateTypeParmType(
+                                        SubstTypeParam->getReplacedParameter(), 
+                                                              Replacement);
+        TLB.TypeWasModifiedSafely(Result);
+      } else {
+        // Otherwise, drop the new qualifier.
+        // FIXME: I don't recall the justification for this!
+        Quals.removeObjCLifetime();
+      }
+    }
+  }
   if (!Quals.empty()) {
     Result = SemaRef.BuildQualifiedType(Result, T.getBeginLoc(), Quals);
     TLB.push<QualifiedTypeLoc>(Result);

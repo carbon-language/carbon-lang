@@ -277,8 +277,10 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
     break;
     
   case Type: {
+    PrintingPolicy SubPolicy(Policy);
+    SubPolicy.SuppressStrongLifetime = true;
     std::string TypeStr;
-    getAsType().getAsStringInternal(TypeStr, Policy);
+    getAsType().getAsStringInternal(TypeStr, SubPolicy);
     Out << TypeStr;
     break;
   }
