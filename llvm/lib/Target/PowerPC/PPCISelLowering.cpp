@@ -1870,7 +1870,11 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
       InVals.push_back(FIN);
       if (ObjSize==1 || ObjSize==2) {
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
+          unsigned VReg;
+          if (isPPC64)
+            VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
+          else
+            VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
           SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
                                             MachinePointerInfo(),
@@ -1889,7 +1893,11 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
         // to memory.  ArgVal will be address of the beginning of
         // the object.
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
+          unsigned VReg;
+          if (isPPC64)
+            VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
+          else
+            VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
           SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
@@ -4675,7 +4683,7 @@ PPCTargetLowering::EmitPartwordAtomicBinary(MachineInstr *MI,
     .addReg(TmpReg).addReg(MaskReg);
   BuildMI(BB, dl, TII->get(is64bit ? PPC::OR8 : PPC::OR), Tmp4Reg)
     .addReg(Tmp3Reg).addReg(Tmp2Reg);
-  BuildMI(BB, dl, TII->get(PPC::STWCX))
+  BuildMI(BB, dl, TII->get(is64bit ? PPC::STDCX : PPC::STWCX))
     .addReg(Tmp4Reg).addReg(ZeroReg).addReg(PtrReg);
   BuildMI(BB, dl, TII->get(PPC::BCC))
     .addImm(PPC::PRED_NE).addReg(PPC::CR0).addMBB(loopMBB);

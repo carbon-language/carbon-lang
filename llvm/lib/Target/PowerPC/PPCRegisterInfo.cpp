@@ -504,6 +504,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   const TargetRegisterClass *RC = Subtarget.isPPC64() ? G8RC : GPRC;
   unsigned Reg = findScratchRegister(II, RS, RC, SPAdj);
   unsigned SrcReg = MI.getOperand(0).getReg();
+  bool LP64 = Subtarget.isPPC64();
 
   // We need to store the CR in the low 4-bits of the saved value. First, issue
   // an MFCRpsued to save all of the CRBits and, if needed, kill the SrcReg.
@@ -520,7 +521,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
       .addImm(0)
       .addImm(31);
 
-  addFrameReference(BuildMI(MBB, II, dl, TII.get(PPC::STW))
+  addFrameReference(BuildMI(MBB, II, dl, TII.get(LP64 ? PPC::STW8 : PPC::STW))
                     .addReg(Reg, getKillRegState(MI.getOperand(1).getImm())),
                     FrameIndex);
 
