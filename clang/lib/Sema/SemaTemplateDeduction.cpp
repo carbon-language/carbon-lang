@@ -2314,6 +2314,88 @@ Sema::SubstituteExplicitTemplateArguments(
   return TDK_Success;
 }
 
+/// \brief Check whether the deduced argument type for a call to a function
+/// template matches the actual argument type per C++ [temp.deduct.call]p4.
+static bool 
+CheckOriginalCallArgDeduction(Sema &S, Sema::OriginalCallArg OriginalArg, 
+                              QualType DeducedA) {
+  ASTContext &Context = S.Context;
+  
+  QualType A = OriginalArg.OriginalArgType;
+  QualType OriginalParamType = OriginalArg.OriginalParamType;
+  
+  // Check for type equality (top-level cv-qualifiers are ignored).
+  if (Context.hasSameUnqualifiedType(A, DeducedA))
+    return false;
+  
+  // Strip off references on the argument types; they aren't needed for
+  // the following checks.
+  if (const ReferenceType *DeducedARef = DeducedA->getAs<ReferenceType>())
+    DeducedA = DeducedARef->getPointeeType();
+  if (const ReferenceType *ARef = A->getAs<ReferenceType>())
+    A = ARef->getPointeeType();
+  
+  // C++ [temp.deduct.call]p4:
+  //   [...] However, there are three cases that allow a difference:
+  //     - If the original P is a reference type, the deduced A (i.e., the 
+  //       type referred to by the reference) can be more cv-qualified than 
+  //       the transformed A.
+  if (const ReferenceType *OriginalParamRef
+      = OriginalParamType->getAs<ReferenceType>()) {
+    // We don't want to keep the reference around any more.
+    OriginalParamType = OriginalParamRef->getPointeeType();
+    
+    Qualifiers AQuals = A.getQualifiers();
+    Qualifiers DeducedAQuals = DeducedA.getQualifiers();
+    if (AQuals == DeducedAQuals) {
+      // Qualifiers match; there's nothing to do.
+    } else if (!DeducedAQuals.compatiblyIncludes(AQuals)) {
+      return Sema::TDK_SubstitutionFailure;
+    } else {        
+      // Qualifiers are compatible, so have the argument type adopt the
+      // deduced argument type's qualifiers as if we had performed the
+      // qualification conversion.
+      A = Context.getQualifiedType(A.getUnqualifiedType(), DeducedAQuals);
+    }
+  }
+  
+  //    - The transformed A can be another pointer or pointer to member 
+  //      type that can be converted to the deduced A via a qualification 
+  //      conversion.
+  bool ObjCLifetimeConversion = false;
+  if ((A->isAnyPointerType() || A->isMemberPointerType()) &&
+      S.IsQualificationConversion(A, DeducedA, false, ObjCLifetimeConversion))
+    return false;
+  
+  
+  //    - If P is a class and P has the form simple-template-id, then the 
+  //      transformed A can be a derived class of the deduced A. [...]
+  //     [...] Likewise, if P is a pointer to a class of the form 
+  //      simple-template-id, the transformed A can be a pointer to a 
+  //      derived class pointed to by the deduced A.
+  if (const PointerType *OriginalParamPtr
+      = OriginalParamType->getAs<PointerType>()) {
+    if (const PointerType *DeducedAPtr = DeducedA->getAs<PointerType>()) {
+      if (const PointerType *APtr = A->getAs<PointerType>()) {
+        if (A->getPointeeType()->isRecordType()) {
+          OriginalParamType = OriginalParamPtr->getPointeeType();
+          DeducedA = DeducedAPtr->getPointeeType();
+          A = APtr->getPointeeType();
+        }
+      }
+    }
+  }
+  
+  if (Context.hasSameUnqualifiedType(A, DeducedA))
+    return false;
+  
+  if (A->isRecordType() && isSimpleTemplateIdType(OriginalParamType) &&
+      S.IsDerivedFrom(A, DeducedA))
+    return false;
+  
+  return true;
+}
+
 /// \brief Finish template argument deduction for a function template,
 /// checking the deduced template arguments for completeness and forming
 /// the function template specialization.
@@ -2487,85 +2569,14 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
     //   is transformed as described above). [...]
     for (unsigned I = 0, N = OriginalCallArgs->size(); I != N; ++I) {
       OriginalCallArg OriginalArg = (*OriginalCallArgs)[I];
-      QualType A = OriginalArg.OriginalArgType;
       unsigned ParamIdx = OriginalArg.ArgIdx;
       
       if (ParamIdx >= Specialization->getNumParams())
         continue;
       
       QualType DeducedA = Specialization->getParamDecl(ParamIdx)->getType();
-      QualType OriginalParamType = OriginalArg.OriginalParamType;
-      
-      // Check for type equality (top-level cv-qualifiers are ignored).
-      if (Context.hasSameUnqualifiedType(A, DeducedA))
-        continue;
-      
-      // Strip off references on the argument types; they aren't needed for
-      // the following checks.
-      if (const ReferenceType *DeducedARef = DeducedA->getAs<ReferenceType>())
-        DeducedA = DeducedARef->getPointeeType();
-      if (const ReferenceType *ARef = A->getAs<ReferenceType>())
-        A = ARef->getPointeeType();
-          
-      // C++ [temp.deduct.call]p4:
-      //   [...] However, there are three cases that allow a difference:
-      //     - If the original P is a reference type, the deduced A (i.e., the 
-      //       type referred to by the reference) can be more cv-qualified than 
-      //       the transformed A.
-      if (const ReferenceType *OriginalParamRef
-                                  = OriginalParamType->getAs<ReferenceType>()) {
-        // We don't want to keep the reference around any more.
-        OriginalParamType = OriginalParamRef->getPointeeType();
-        
-        Qualifiers AQuals = A.getQualifiers();
-        Qualifiers DeducedAQuals = DeducedA.getQualifiers();
-        if (AQuals == DeducedAQuals) {
-          // Qualifiers match; there's nothing to do.
-        } else if (!DeducedAQuals.compatiblyIncludes(AQuals)) {
-          return Sema::TDK_SubstitutionFailure;
-        } else {        
-          // Qualifiers are compatible, so have the argument type adopt the
-          // deduced argument type's qualifiers as if we had performed the
-          // qualification conversion.
-          A = Context.getQualifiedType(A.getUnqualifiedType(), DeducedAQuals);
-        }
-      }
-      
-      //    - The transformed A can be another pointer or pointer to member 
-      //      type that can be converted to the deduced A via a qualification 
-      //      conversion.
-      bool ObjCLifetimeConversion = false;
-      if ((A->isAnyPointerType() || A->isMemberPointerType()) &&
-          IsQualificationConversion(A, DeducedA, false, ObjCLifetimeConversion))
-        continue;
-      
-      
-      //    - If P is a class and P has the form simple-template-id, then the 
-      //      transformed A can be a derived class of the deduced A. [...]
-      //     [...] Likewise, if P is a pointer to a class of the form 
-      //      simple-template-id, the transformed A can be a pointer to a 
-      //      derived class pointed to by the deduced A.
-      if (const PointerType *OriginalParamPtr
-                                    = OriginalParamType->getAs<PointerType>()) {
-        if (const PointerType *DeducedAPtr = DeducedA->getAs<PointerType>()) {
-          if (const PointerType *APtr = A->getAs<PointerType>()) {
-            if (A->getPointeeType()->isRecordType()) {
-              OriginalParamType = OriginalParamPtr->getPointeeType();
-              DeducedA = DeducedAPtr->getPointeeType();
-              A = APtr->getPointeeType();
-            }
-          }
-        }
-      }
-
-      if (Context.hasSameUnqualifiedType(A, DeducedA))
-        continue;
-
-      if (A->isRecordType() && isSimpleTemplateIdType(OriginalParamType) &&
-          IsDerivedFrom(A, DeducedA))
-        continue;
-
-      return Sema::TDK_SubstitutionFailure;
+      if (CheckOriginalCallArgDeduction(*this, OriginalArg, DeducedA))
+        return Sema::TDK_SubstitutionFailure;
     }
   }
   
