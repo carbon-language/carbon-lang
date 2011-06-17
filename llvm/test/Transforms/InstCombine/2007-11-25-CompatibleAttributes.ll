@@ -5,7 +5,7 @@
 
 define i32 @main(i32 %argc, i8** %argv) {
 entry:
-	%tmp32 = tail call i32 (i8* noalias , ...) * bitcast (i32 (i8*, ...) nounwind * @printf to i32 (i8* noalias , ...) nounwind *)( i8* getelementptr ([4 x i8]* @.str, i32 0, i32 0)  , i32 0 ) nounwind 		; <i32> [#uses=0]
+	%tmp32 = tail call i32 (i8*  , ...) * bitcast (i32 (i8*, ...)  * @printf to i32 (i8*  , ...)  *)( i8* getelementptr ([4 x i8]* @.str, i32 0, i32 0)  , i32 0 ) nounwind 		; <i32> [#uses=0]
 	ret i32 undef
 }
 

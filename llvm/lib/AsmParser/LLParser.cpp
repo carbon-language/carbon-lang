@@ -1559,22 +1559,16 @@ bool LLParser::ParseFunctionType(PATypeHolder &Result) {
 
   std::vector<ArgInfo> ArgList;
   bool isVarArg;
-  unsigned Attrs;
-  if (ParseArgumentList(ArgList, isVarArg, true) ||
-      // FIXME: Allow, but ignore attributes on function types!
-      // FIXME: Remove in LLVM 3.0
-      ParseOptionalAttrs(Attrs, 2))
+  if (ParseArgumentList(ArgList, isVarArg, true))
     return true;
 
   // Reject names on the arguments lists.
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i) {
     if (!ArgList[i].Name.empty())
       return Error(ArgList[i].Loc, "argument name invalid in function type");
-    if (!ArgList[i].Attrs != 0) {
-      // Allow but ignore attributes on function types; this permits
-      // auto-upgrade.
-      // FIXME: REJECT ATTRIBUTES ON FUNCTION TYPES in LLVM 3.0
-    }
+    if (ArgList[i].Attrs != 0)
+      return Error(ArgList[i].Loc,
+                   "argument attributes invalid in function type");
   }
 
   std::vector<const Type*> ArgListTy;

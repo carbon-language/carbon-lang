@@ -15,7 +15,7 @@ entry:
 	%tmp3 = getelementptr %struct.FRAME.nest* %FRAME.0, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 %n, i32* %tmp3, align 8
 	%FRAME.06 = bitcast %struct.FRAME.nest* %FRAME.0 to i8*		; <i8*> [#uses=1]
-	%tramp = call i8* @llvm.init.trampoline( i8* %TRAMP.216.sub, i8* bitcast (i32 (%struct.FRAME.nest* nest , i32)* @f to i8*), i8* %FRAME.06 )		; <i8*> [#uses=1]
+	%tramp = call i8* @llvm.init.trampoline( i8* %TRAMP.216.sub, i8* bitcast (i32 (%struct.FRAME.nest* , i32)* @f to i8*), i8* %FRAME.06 )		; <i8*> [#uses=1]
 	%tmp7 = getelementptr %struct.FRAME.nest* %FRAME.0, i32 0, i32 1		; <i32 (i32)**> [#uses=1]
 	%tmp89 = bitcast i8* %tramp to i32 (i32)*		; <i32 (i32)*> [#uses=2]
 	store i32 (i32)* %tmp89, i32 (i32)** %tmp7, align 8
