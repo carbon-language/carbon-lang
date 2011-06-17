@@ -48,7 +48,7 @@ class HelloWorldTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_with_dsym_and_attach_to_process_with_id_api(self):
-        """Create target, breakpoint, spawn a process, and attach to it with process id.
+        """Create target, spawn a process, and attach to it with process id.
 
         Use dsym info and attach to process with id API.
         """
@@ -57,7 +57,7 @@ class HelloWorldTestCase(TestBase):
 
     @python_api_test
     def test_with_dwarf_and_attach_to_process_with_id_api(self):
-        """Create target, breakpoint, spawn a process, and attach to it with process id.
+        """Create target, spawn a process, and attach to it with process id.
 
         Use dwarf map (no dsym) and attach to process with id API.
         """
@@ -67,7 +67,7 @@ class HelloWorldTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_with_dsym_and_attach_to_process_with_name_api(self):
-        """Create target, breakpoint, spawn a process, and attach to it with process name.
+        """Create target, spawn a process, and attach to it with process name.
 
         Use dsym info and attach to process with name API.
         """
@@ -76,7 +76,7 @@ class HelloWorldTestCase(TestBase):
 
     @python_api_test
     def test_with_dwarf_and_attach_to_process_with_name_api(self):
-        """Create target, breakpoint, spawn a process, and attach to it with process name.
+        """Create target, spawn a process, and attach to it with process name.
 
         Use dwarf map (no dsym) and attach to process with name API.
         """
@@ -138,20 +138,21 @@ class HelloWorldTestCase(TestBase):
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
 
     def hello_world_attach_with_id_api(self):
-        """Create target, breakpoint, spawn a process, and attach to it by id."""
+        """Create target, spawn a process, and attach to it by id."""
 
         target = self.dbg.CreateTarget(self.exe)
 
-        # Spawn a new process.
+        # Spawn a new process and don't display the stdout if not in TraceOn() mode.
         import subprocess
-        popen = subprocess.Popen([self.exe, "abc", "xyz"])
+        popen = subprocess.Popen([self.exe, "abc", "xyz"],
+                                 stdout = open(os.devnull, 'w') if not self.TraceOn() else None)
         #print "pid of spawned process: %d" % popen.pid
 
         listener = lldb.SBListener("my.attach.listener")
         error = lldb.SBError()
         process = target.AttachToProcessWithID(listener, popen.pid, error)
 
-        self.assertTrue(process, PROCESS_IS_VALID)
+        self.assertTrue(error.Success() and process, PROCESS_IS_VALID)
 
         # Let's check the stack traces of the attached process.
         import lldbutil
@@ -161,13 +162,14 @@ class HelloWorldTestCase(TestBase):
                        '(int)argc=3'])
 
     def hello_world_attach_with_name_api(self):
-        """Create target, breakpoint, spawn a process, and attach to it by name."""
+        """Create target, spawn a process, and attach to it by name."""
 
         target = self.dbg.CreateTarget(self.exe)
 
-        # Spawn a new process.
+        # Spawn a new process and don't display the stdout if not in TraceOn() mode.
         import subprocess
-        popen = subprocess.Popen([self.exe, "abc", "xyz"])
+        popen = subprocess.Popen([self.exe, "abc", "xyz"],
+                                 stdout = open(os.devnull, 'w') if not self.TraceOn() else None)
         #print "pid of spawned process: %d" % popen.pid
 
         listener = lldb.SBListener("my.attach.listener")
@@ -176,7 +178,7 @@ class HelloWorldTestCase(TestBase):
         name = os.path.basename(self.exe)
         process = target.AttachToProcessWithName(listener, name, False, error)
 
-        self.assertTrue(process, PROCESS_IS_VALID)
+        self.assertTrue(error.Success() and process, PROCESS_IS_VALID)
 
         # Verify that after attach, our selected target indeed matches name.
         self.expect(self.dbg.GetSelectedTarget().GetExecutable().GetFilename(), exe=False,
