@@ -2,7 +2,7 @@
 
 %struct.S = type { i16 }
 
-define i1 @f(i16 signext  %b) zeroext  {
+define zeroext i1 @f(i16 signext  %b)   {
 entry:
 	%b_addr = alloca i16		; <i16*> [#uses=2]
 	%retval = alloca i32		; <i32*> [#uses=2]

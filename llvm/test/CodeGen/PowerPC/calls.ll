@@ -1,7 +1,7 @@
 ; Test various forms of calls.
 
 ; RUN: llc < %s -march=ppc32 | \
-; RUN:   grep {bl } | count 2
+; RUN:   grep {bl } | count 1
 ; RUN: llc < %s -march=ppc32 | \
 ; RUN:   grep {bctrl} | count 1
 ; RUN: llc < %s -march=ppc32 | \
@@ -11,11 +11,6 @@ declare void @foo()
 
 define void @test_direct() {
         call void @foo( )
-        ret void
-}
-
-define void @test_extsym(i8* %P) {
-        free i8* %P
         ret void
 }
 

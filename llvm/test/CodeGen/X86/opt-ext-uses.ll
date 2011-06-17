@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 | grep movw | count 1
 
-define i16 @t() signext  {
+define signext i16 @t()   {
 entry:
         %tmp180 = load i16* null, align 2               ; <i16> [#uses=3]
         %tmp180181 = sext i16 %tmp180 to i32            ; <i32> [#uses=1]

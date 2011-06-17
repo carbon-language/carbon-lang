@@ -26,7 +26,7 @@
     [1 x %struct._objc_method] [ %struct._objc_method {
         %struct.objc_selector* bitcast ([12 x i8]* @"\01L_OBJC_METH_VAR_NAME_0" to %struct.objc_selector*), 
         i8* getelementptr ([7 x i8]* @"\01L_OBJC_METH_VAR_TYPE_0", i32 0, i32 0), 
-        i8* bitcast (i8 (%struct.NSString*, %struct.objc_selector*) signext * @"-[NSString(local) isNullOrNil]" to i8*) } ] }, section "__OBJC,__cat_inst_meth,regular,no_dead_strip"		; <{ i32, i32, [1 x %struct._objc_method] }*> [#uses=3]
+        i8* bitcast (i8 (%struct.NSString*, %struct.objc_selector*)  * @"-[NSString(local) isNullOrNil]" to i8*) } ] }, section "__OBJC,__cat_inst_meth,regular,no_dead_strip"		; <{ i32, i32, [1 x %struct._objc_method] }*> [#uses=3]
 @"\01L_OBJC_CATEGORY_NSString_local" = internal global { i8*, i8*, %struct._objc_method_list*, i32, i32, i32, i32 } {
     i8* getelementptr ([6 x i8]* @"\01L_OBJC_CLASS_NAME_0", i32 0, i32 0), 
     i8* getelementptr ([9 x i8]* @"\01L_OBJC_CLASS_NAME_1", i32 0, i32 0), 
@@ -51,7 +51,7 @@
 @"\01L_OBJC_METH_VAR_TYPE_0" = internal global [7 x i8] c"c8@0:4\00", section "__TEXT,__cstring,cstring_literals"		; <[7 x i8]*> [#uses=2]
 @llvm.used = appending global [11 x i8*] [ i8* bitcast ({ i32, i32, i16, i16, [1 x %struct._objc_category*] }* @"\01L_OBJC_SYMBOLS" to i8*), i8* bitcast ({ i32, i32, [1 x %struct._objc_method] }* @"\01L_OBJC_CATEGORY_INSTANCE_METHODS_NSString_local" to i8*), i8* bitcast ({ i8*, i8*, %struct._objc_method_list*, i32, i32, i32, i32 }* @"\01L_OBJC_CATEGORY_NSString_local" to i8*), i8* bitcast ([2 x i32]* @"\01L_OBJC_IMAGE_INFO" to i8*), i8* bitcast (%struct._objc_module* @"\01L_OBJC_MODULES" to i8*), i8* bitcast (i32* @"\01.objc_category_name_NSString_local" to i8*), i8* getelementptr ([1 x i8]* @"\01L_OBJC_CLASS_NAME_2", i32 0, i32 0), i8* getelementptr ([9 x i8]* @"\01L_OBJC_CLASS_NAME_1", i32 0, i32 0), i8* getelementptr ([6 x i8]* @"\01L_OBJC_CLASS_NAME_0", i32 0, i32 0), i8* getelementptr ([12 x i8]* @"\01L_OBJC_METH_VAR_NAME_0", i32 0, i32 0), i8* getelementptr ([7 x i8]* @"\01L_OBJC_METH_VAR_TYPE_0", i32 0, i32 0) ], section "llvm.metadata"		; <[11 x i8*]*> [#uses=0]
 
-define internal i8 @"-[NSString(local) isNullOrNil]"(%struct.NSString* %self, %struct.objc_selector* %_cmd) signext  {
+define internal signext i8 @"-[NSString(local) isNullOrNil]"(%struct.NSString* %self, %struct.objc_selector* %_cmd)   {
 entry:
 	%self_addr = alloca %struct.NSString*		; <%struct.NSString**> [#uses=1]
 	%_cmd_addr = alloca %struct.objc_selector*		; <%struct.objc_selector**> [#uses=1]

@@ -201,12 +201,12 @@ define <4 x i32> @andi_v4i32_4(<4 x i32> %in) {
         ret <4 x i32> %tmp2
 }
 
-define i32 @andi_u32(i32 zeroext  %in) zeroext  {
+define zeroext i32 @andi_u32(i32 zeroext  %in)   {
         %tmp37 = and i32 %in, 37
         ret i32 %tmp37
 }
 
-define i32 @andi_i32(i32 signext  %in) signext  {
+define signext i32 @andi_i32(i32 signext  %in)   {
         %tmp38 = and i32 %in, 37
         ret i32 %tmp38
 }
@@ -241,12 +241,12 @@ define <8 x i16> @andhi_v8i16_4(<8 x i16> %in) {
         ret <8 x i16> %tmp2
 }
 
-define i16 @andhi_u16(i16 zeroext  %in) zeroext  {
+define zeroext i16 @andhi_u16(i16 zeroext  %in)   {
         %tmp37 = and i16 %in, 37         ; <i16> [#uses=1]
         ret i16 %tmp37
 }
 
-define i16 @andhi_i16(i16 signext  %in) signext  {
+define signext i16 @andhi_i16(i16 signext  %in)   {
         %tmp38 = and i16 %in, 37         ; <i16> [#uses=1]
         ret i16 %tmp38
 }
@@ -260,13 +260,13 @@ define <16 x i8> @and_v16i8(<16 x i8> %in) {
         ret <16 x i8> %tmp2
 }
 
-define i8 @and_u8(i8 zeroext  %in) zeroext  {
+define zeroext i8 @and_u8(i8 zeroext  %in)   {
         ; ANDBI generated:
         %tmp37 = and i8 %in, 37
         ret i8 %tmp37
 }
 
-define i8 @and_sext8(i8 signext  %in) signext  {
+define signext i8 @and_sext8(i8 signext  %in)   {
         ; ANDBI generated
         %tmp38 = and i8 %in, 37
         ret i8 %tmp38

@@ -10,15 +10,6 @@ define i32* @test() align 32 {
         %Z = alloca i32         ; <i32*> [#uses=0]
         ret i32* %X
 }
-
-define i32* @test2() {
-        %X = malloc i32, align 4                ; <i32*> [#uses=1]
-        %Y = malloc i32, i32 42, align 16               ; <i32*> [#uses=0]
-        %Z = malloc i32         ; <i32*> [#uses=0]
-        %T = malloc i32, align 256              ; <i32*> [#uses=0]
-        ret i32* %X
-}
-
 define void @test3() alignstack(16) {
         ret void
 }

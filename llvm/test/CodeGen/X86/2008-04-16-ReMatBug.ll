@@ -6,7 +6,7 @@
 	%struct.pthread_mutex_t = type { i32, [40 x i8] }
 @iodbcdm_global_lock = external global %struct.pthread_mutex_t		; <%struct.pthread_mutex_t*> [#uses=1]
 
-define i16 @SQLDriversW(i8* %henv, i16 zeroext  %fDir, i32* %szDrvDesc, i16 signext  %cbDrvDescMax, i16* %pcbDrvDesc, i32* %szDrvAttr, i16 signext  %cbDrvAttrMax, i16* %pcbDrvAttr) signext nounwind  {
+define i16 @SQLDriversW(i8* %henv, i16 zeroext  %fDir, i32* %szDrvDesc, i16 signext  %cbDrvDescMax, i16* %pcbDrvDesc, i32* %szDrvAttr, i16 signext  %cbDrvAttrMax, i16* %pcbDrvAttr) nounwind  {
 entry:
 	%tmp12 = bitcast i8* %henv to %struct.GENV_t*		; <%struct.GENV_t*> [#uses=1]
 	br i1 true, label %bb28, label %bb
@@ -23,7 +23,7 @@ bb74:		; preds = %bb37
 bb92:		; preds = %bb74, %bb37
 	%tmp95180 = shl i16 %cbDrvAttrMax, 2		; <i16> [#uses=1]
 	%tmp100178 = shl i16 %cbDrvDescMax, 2		; <i16> [#uses=1]
-	%tmp113 = tail call i16 @SQLDrivers_Internal( i8* %henv, i16 zeroext  %fDir, i8* null, i16 signext  %tmp100178, i16* %pcbDrvDesc, i8* null, i16 signext  %tmp95180, i16* %pcbDrvAttr, i8 zeroext  87 ) signext nounwind 		; <i16> [#uses=1]
+	%tmp113 = tail call i16 @SQLDrivers_Internal( i8* %henv, i16 zeroext  %fDir, i8* null, i16 signext  %tmp100178, i16* %pcbDrvDesc, i8* null, i16 signext  %tmp95180, i16* %pcbDrvAttr, i8 zeroext  87 )  nounwind 		; <i16> [#uses=1]
 	br i1 false, label %done, label %bb137
 bb137:		; preds = %bb92
 	ret i16 0
@@ -41,6 +41,6 @@ bb167:		; preds = %done
 
 declare i32 @pthread_mutex_unlock(%struct.pthread_mutex_t*)
 
-declare i16 @SQLDrivers_Internal(i8*, i16 zeroext , i8*, i16 signext , i16*, i8*, i16 signext , i16*, i8 zeroext ) signext nounwind 
+declare i16 @SQLDrivers_Internal(i8*, i16 zeroext , i8*, i16 signext , i16*, i8*, i16 signext , i16*, i8 zeroext )  nounwind 
 
 declare void @trace_SQLDriversW(i32, i32, i8*, i16 zeroext , i32*, i16 signext , i16*, i32*, i16 signext , i16*)

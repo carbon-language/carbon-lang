@@ -4,7 +4,7 @@ target triple = "powerpc-apple-darwin8.8.0"
 ; RUN: llc < %s -march=ppc32 | grep {rlwinm r3, r3, 23, 30, 30}
 ; PR1473
 
-define i8 @foo(i16 zeroext  %a) zeroext  {
+define zeroext i8 @foo(i16 zeroext  %a)   {
         %tmp2 = lshr i16 %a, 10         ; <i16> [#uses=1]
         %tmp23 = trunc i16 %tmp2 to i8          ; <i8> [#uses=1]
         %tmp4 = shl i8 %tmp23, 1                ; <i8> [#uses=1]

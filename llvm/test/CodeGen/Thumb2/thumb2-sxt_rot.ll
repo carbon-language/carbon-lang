@@ -7,7 +7,7 @@ define i32 @test0(i8 %A) {
 	ret i32 %B
 }
 
-define i8 @test1(i32 %A) signext {
+define signext i8 @test1(i32 %A)  {
 ; CHECK: test1
 ; CHECK: sxtb.w r0, r0, ror #8
 	%B = lshr i32 %A, 8
@@ -17,7 +17,7 @@ define i8 @test1(i32 %A) signext {
 	ret i8 %E
 }
 
-define i32 @test2(i32 %A, i32 %X) signext {
+define signext i32 @test2(i32 %A, i32 %X)  {
 ; CHECK: test2
 ; CHECK: lsrs r0, r0, #8
 ; CHECK: sxtab  r0, r1, r0

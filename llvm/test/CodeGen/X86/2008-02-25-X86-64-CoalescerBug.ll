@@ -4,7 +4,7 @@
 	%struct.YY = type { i64 }
 	%struct.ZZ = type opaque
 
-define i8 @f(%struct.XX*** %fontMap, %struct.XX* %uen) signext  {
+define signext i8 @f(%struct.XX*** %fontMap, %struct.XX* %uen)   {
 entry:
 	%tmp45 = add i16 0, 1		; <i16> [#uses=2]
 	br i1 false, label %bb124, label %bb53

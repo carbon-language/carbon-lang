@@ -3,7 +3,7 @@
 
 define void @blah(i16* %tmp10) {
 entry:
-	call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend_stret to void (i16* sret )*)( i16* %tmp10 sret  )
+	call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend_stret to void (i16* sret )*)( i16*  sret %tmp10  )
 	ret void
 }
 

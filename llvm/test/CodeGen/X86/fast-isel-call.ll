@@ -14,12 +14,12 @@ BB2:
 ; CHECK: calll
 ; CHECK-NEXT: testb	$1
 }
-declare i1 @foo() zeroext nounwind
+declare zeroext i1 @foo()  nounwind
 
 declare void @foo2(%struct.s* byval)
 
 define void @test2(%struct.s* %d) nounwind {
-  call void @foo2(%struct.s* %d byval)
+  call void @foo2(%struct.s* byval %d )
   ret void
 ; CHECK: test2:
 ; CHECK: movl	(%eax)

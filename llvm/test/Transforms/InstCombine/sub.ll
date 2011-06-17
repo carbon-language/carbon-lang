@@ -203,7 +203,7 @@ define i1 @test21(i32 %g, i32 %h) {
 }
 
 ; PR2298
-define i1 @test22(i32 %a, i32 %b) zeroext nounwind  {
+define zeroext i1 @test22(i32 %a, i32 %b)  nounwind  {
 	%tmp2 = sub i32 0, %a	
 	%tmp4 = sub i32 0, %b	
 	%tmp5 = icmp eq i32 %tmp2, %tmp4	

@@ -245,10 +245,12 @@ entry:
 ; VLAs.
 define void @test12() {
 bb4.i:
-        %0 = malloc [0 x %struct.Item]          ; <[0 x %struct.Item]*> [#uses=1]
+        %malloccall = tail call i8* @malloc(i32 0)
+        %0 = bitcast i8* %malloccall to [0 x %struct.Item]*
         %.sub.i.c.i = getelementptr [0 x %struct.Item]* %0, i32 0, i32 0                ; <%struct.Item*> [#uses=0]
         unreachable
 }
+declare noalias i8* @malloc(i32)
 
 ; PR8680
 define void @test13() nounwind {

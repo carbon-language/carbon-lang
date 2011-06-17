@@ -362,7 +362,7 @@ bb1159:		; preds = %cond_next1150
 
 cond_true1169:		; preds = %bb1159
 	%tmp11741175 = trunc i64 %lsum.11225.0 to i32		; <i32> [#uses=1]
-	%tmp1178 = tail call i32 (%struct._IO_FILE* noalias , i8* noalias , ...)* @fprintf( %struct._IO_FILE* %file noalias , i8* getelementptr ([49 x i8]* @.str32, i32 0, i64 0) noalias , i32 %tmp11741175, i32 0 )		; <i32> [#uses=0]
+	%tmp1178 = tail call i32 (%struct._IO_FILE* noalias , i8* noalias , ...)* @fprintf( %struct._IO_FILE* noalias %file  , i8* getelementptr ([49 x i8]* @.str32, i32 0, i64 0)  , i32 %tmp11741175, i32 0 )		; <i32> [#uses=0]
 	ret void
 
 UnifiedReturnBlock:		; preds = %bb1159
@@ -379,9 +379,9 @@ declare i32 @reg_preferred_class(i32)
 
 declare i32 @reg_alternate_class(i32)
 
-declare i8 @maybe_hot_bb_p(%struct.basic_block_def*) zeroext 
+declare zeroext i8 @maybe_hot_bb_p(%struct.basic_block_def*)  
 
-declare i8 @probably_never_executed_bb_p(%struct.basic_block_def*) zeroext 
+declare zeroext i8 @probably_never_executed_bb_p(%struct.basic_block_def*)  
 
 declare void @dump_regset(%struct.bitmap_head_def*, %struct._IO_FILE*)
 

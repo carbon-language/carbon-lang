@@ -31,7 +31,7 @@ return:                                           ; preds = %bb2
   ret i32 %.0, !dbg !29
 }
 
-define linkonce_odr void @_ZN4SValC1Ev(%struct.SVal* %this) nounwind ssp align 2 {
+define linkonce_odr void @_ZN4SValC1Ev(%struct.SVal* %this) nounwind ssp align 2  {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   call void @llvm.dbg.value(metadata !{%struct.SVal* %this}, i64 0, metadata !31), !dbg !34

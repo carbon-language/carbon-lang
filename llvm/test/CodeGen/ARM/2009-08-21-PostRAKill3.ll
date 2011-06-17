@@ -14,7 +14,8 @@ entry:
   br i1 %p, label %bb8, label %bb1
 
 bb1:                                              ; preds = %entry
-  %0 = malloc %struct.Village                     ; <%struct.Village*> [#uses=3]
+  %malloccall = tail call i8* @malloc(i32 ptrtoint (%struct.Village* getelementptr (%struct.Village* null, i32 1) to i32))
+  %0 = bitcast i8* %malloccall to %struct.Village*
   %exp2 = call double @ldexp(double 1.000000e+00, i32 %level) nounwind ; <double> [#uses=1]
   %.c = fptosi double %exp2 to i32                ; <i32> [#uses=1]
   store i32 %.c, i32* null
@@ -29,3 +30,4 @@ bb8:                                              ; preds = %entry
 }
 
 declare double @ldexp(double, i32)
+declare noalias i8* @malloc(i32)

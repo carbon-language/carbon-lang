@@ -43,7 +43,7 @@ define i32 @test5(i32 %A, i32 %B) {
 }
 
 ; PR2298
-define i8 @test6(i32 %a, i32 %b) zeroext nounwind  {
+define zeroext i8 @test6(i32 %a, i32 %b)  nounwind  {
 entry:
 	%tmp1not = xor i32 %a, -1		; <i32> [#uses=1]
 	%tmp2not = xor i32 %b, -1		; <i32> [#uses=1]

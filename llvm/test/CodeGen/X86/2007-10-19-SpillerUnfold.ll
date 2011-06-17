@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86 -x86-asm-syntax=intel | grep inc | not grep PTR
 
-define i16 @t(i32* %bitptr, i32* %source, i8** %byteptr, i32 %scale, i32 %round) signext  {
+define signext   i16 @t(i32* %bitptr, i32* %source, i8** %byteptr, i32 %scale, i32 %round) {
 entry:
 	br label %bb
 

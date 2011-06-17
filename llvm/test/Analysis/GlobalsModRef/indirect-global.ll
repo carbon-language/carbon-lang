@@ -3,8 +3,11 @@
 
 @G = internal global i32* null		; <i32**> [#uses=3]
 
+
+declare i8* @malloc(i32)
 define void @test() {
-	%A = malloc i32		; <i32*> [#uses=1]
+	%a = call i8* @malloc(i32 4)
+        %A = bitcast i8* %a to i32*
 	store i32* %A, i32** @G
 	ret void
 }

@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86
 
-define i16 @t(i32 %depth) signext nounwind  {
+define signext i16 @t(i32 %depth)  nounwind  {
 entry:
 	br i1 false, label %bb74, label %bb
 bb:		; preds = %entry

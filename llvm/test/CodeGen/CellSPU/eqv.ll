@@ -79,7 +79,7 @@ define i32 @equiv_i32_5(i32 %arg1, i32 %arg2) {
         ret i32 %C
 }
 
-define i16 @equiv_i16_1(i16 signext %arg1, i16 signext %arg2) signext {
+define signext i16 @equiv_i16_1(i16 signext %arg1, i16 signext %arg2)  {
         %A = and i16 %arg1, %arg2               ; <i16> [#uses=1]
         %B = or i16 %arg1, %arg2                ; <i16> [#uses=1]
         %Bnot = xor i16 %B, -1                  ; <i16> [#uses=1]
@@ -87,7 +87,7 @@ define i16 @equiv_i16_1(i16 signext %arg1, i16 signext %arg2) signext {
         ret i16 %C
 }
 
-define i16 @equiv_i16_2(i16 signext %arg1, i16 signext %arg2) signext {
+define signext i16 @equiv_i16_2(i16 signext %arg1, i16 signext %arg2) {
         %B = or i16 %arg1, %arg2                ; <i16> [#uses=1]
         %Bnot = xor i16 %B, -1                  ; <i16> [#uses=1]
         %A = and i16 %arg1, %arg2               ; <i16> [#uses=1]
@@ -95,7 +95,7 @@ define i16 @equiv_i16_2(i16 signext %arg1, i16 signext %arg2) signext {
         ret i16 %C
 }
 
-define i16 @equiv_i16_3(i16 signext %arg1, i16 signext %arg2) signext {
+define signext i16 @equiv_i16_3(i16 signext %arg1, i16 signext %arg2)  {
         %B = or i16 %arg1, %arg2                ; <i16> [#uses=1]
         %A = and i16 %arg1, %arg2               ; <i16> [#uses=1]
         %Bnot = xor i16 %B, -1                  ; <i16> [#uses=1]
@@ -103,7 +103,7 @@ define i16 @equiv_i16_3(i16 signext %arg1, i16 signext %arg2) signext {
         ret i16 %C
 }
 
-define i8 @equiv_i8_1(i8 signext %arg1, i8 signext %arg2) signext {
+define signext i8 @equiv_i8_1(i8 signext %arg1, i8 signext %arg2)  {
         %A = and i8 %arg1, %arg2                ; <i8> [#uses=1]
         %B = or i8 %arg1, %arg2         ; <i8> [#uses=1]
         %Bnot = xor i8 %B, -1                   ; <i8> [#uses=1]
@@ -111,7 +111,7 @@ define i8 @equiv_i8_1(i8 signext %arg1, i8 signext %arg2) signext {
         ret i8 %C
 }
 
-define i8 @equiv_i8_2(i8 signext %arg1, i8 signext %arg2) signext {
+define signext i8 @equiv_i8_2(i8 signext %arg1, i8 signext %arg2)  {
         %B = or i8 %arg1, %arg2         ; <i8> [#uses=1]
         %Bnot = xor i8 %B, -1                   ; <i8> [#uses=1]
         %A = and i8 %arg1, %arg2                ; <i8> [#uses=1]
@@ -119,7 +119,7 @@ define i8 @equiv_i8_2(i8 signext %arg1, i8 signext %arg2) signext {
         ret i8 %C
 }
 
-define i8 @equiv_i8_3(i8 signext %arg1, i8 signext %arg2) signext {
+define signext i8 @equiv_i8_3(i8 signext %arg1, i8 signext %arg2)  {
         %B = or i8 %arg1, %arg2         ; <i8> [#uses=1]
         %A = and i8 %arg1, %arg2                ; <i8> [#uses=1]
         %Bnot = xor i8 %B, -1                   ; <i8> [#uses=1]
@@ -127,7 +127,7 @@ define i8 @equiv_i8_3(i8 signext %arg1, i8 signext %arg2) signext {
         ret i8 %C
 }
 
-define i8 @equiv_u8_1(i8 zeroext %arg1, i8 zeroext %arg2) zeroext {
+define zeroext i8 @equiv_u8_1(i8 zeroext %arg1, i8 zeroext %arg2)  {
         %A = and i8 %arg1, %arg2                ; <i8> [#uses=1]
         %B = or i8 %arg1, %arg2         ; <i8> [#uses=1]
         %Bnot = xor i8 %B, -1                   ; <i8> [#uses=1]
@@ -135,7 +135,7 @@ define i8 @equiv_u8_1(i8 zeroext %arg1, i8 zeroext %arg2) zeroext {
         ret i8 %C
 }
 
-define i8 @equiv_u8_2(i8 zeroext %arg1, i8 zeroext %arg2) zeroext {
+define zeroext i8 @equiv_u8_2(i8 zeroext %arg1, i8 zeroext %arg2)  {
         %B = or i8 %arg1, %arg2         ; <i8> [#uses=1]
         %Bnot = xor i8 %B, -1                   ; <i8> [#uses=1]
         %A = and i8 %arg1, %arg2                ; <i8> [#uses=1]
@@ -143,7 +143,7 @@ define i8 @equiv_u8_2(i8 zeroext %arg1, i8 zeroext %arg2) zeroext {
         ret i8 %C
 }
 
-define i8 @equiv_u8_3(i8 zeroext %arg1, i8 zeroext %arg2) zeroext {
+define zeroext i8 @equiv_u8_3(i8 zeroext %arg1, i8 zeroext %arg2)  {
         %B = or i8 %arg1, %arg2         ; <i8> [#uses=1]
         %A = and i8 %arg1, %arg2                ; <i8> [#uses=1]
         %Bnot = xor i8 %B, -1                   ; <i8> [#uses=1]

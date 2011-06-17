@@ -278,7 +278,7 @@ invcont:		; preds = %bb_main
 	br label %bb_main
 
 invcont.fragment:		; preds = %bb_main
-	invoke void @_ZN9Fibonacci10get_numberEj( %struct.BigInt* null sret , %struct.Fibonacci* %this_this, i32 %n_i_n_i )
+	invoke void @_ZN9Fibonacci10get_numberEj( %struct.BigInt* sret null  , %struct.Fibonacci* %this_this, i32 %n_i_n_i )
 			to label %invcont14 unwind label %meshBB37
 
 invcont.unwind10_crit_edge:		; preds = %bb_main
@@ -304,7 +304,7 @@ invcont14:		; preds = %invcont.fragment, %bb_main
 	br label %bb_main
 
 invcont14.normaldest:		; No predecessors!
-	invoke %"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"* @___ZN9__gnu_cxx17__normal_iteratorIP6BigIntSt6vectorIS1_SaIS1_EEEppEv___ZNSt6vectorImSaImEED1Ev___ZN6BigIntD1Ev___ZN9__gnu_cxx13new_allocatorI6BigIntE7destroyEPS1____ZSt8_DestroyIP6BigIntSaIS0_EEvT_S3_T0_( i32 14, %"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"* null, %"struct.std::vector<ulong,std::allocator<ulong> >"* null, %struct.BigInt* null, %struct.__false_type* null, %struct.BigInt* null, %struct.__false_type* null noalias  )
+	invoke %"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"* @___ZN9__gnu_cxx17__normal_iteratorIP6BigIntSt6vectorIS1_SaIS1_EEEppEv___ZNSt6vectorImSaImEED1Ev___ZN6BigIntD1Ev___ZN9__gnu_cxx13new_allocatorI6BigIntE7destroyEPS1____ZSt8_DestroyIP6BigIntSaIS0_EEvT_S3_T0_( i32 14, %"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"* null, %"struct.std::vector<ulong,std::allocator<ulong> >"* null, %struct.BigInt* null, %struct.__false_type* null, %struct.BigInt* null, %struct.__false_type* noalias null   )
 			to label %invcont15 unwind label %meshBB345		; <%"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"*>:0 [#uses=0]
 
 invcont14.unwind10_crit_edge:		; preds = %bb_main
@@ -372,7 +372,7 @@ invcont.cond_next_crit_edge:		; preds = %bb_main
 	br label %bb_main
 
 cond_true:		; preds = %bb_main
-	invoke void @_ZN9Fibonacci10get_numberEj( %struct.BigInt* null sret , %struct.Fibonacci* %this_this, i32 %n_i_n_i )
+	invoke void @_ZN9Fibonacci10get_numberEj( %struct.BigInt* sret null , %struct.Fibonacci* %this_this, i32 %n_i_n_i )
 			to label %meshBB323 unwind label %cond_true.unwind_crit_edge
 
 cond_true.unwind_crit_edge:		; preds = %cond_true, %bb_main
@@ -385,7 +385,7 @@ invcont12:		; preds = %bb_main
 	br label %bb_main
 
 invcont12.fragment:		; preds = %bb_main
-	invoke %"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"* @___ZN9__gnu_cxx17__normal_iteratorIP6BigIntSt6vectorIS1_SaIS1_EEEppEv___ZNSt6vectorImSaImEED1Ev___ZN6BigIntD1Ev___ZN9__gnu_cxx13new_allocatorI6BigIntE7destroyEPS1____ZSt8_DestroyIP6BigIntSaIS0_EEvT_S3_T0_( i32 14, %"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"* null, %"struct.std::vector<ulong,std::allocator<ulong> >"* null, %struct.BigInt* null, %struct.__false_type* null, %struct.BigInt* null, %struct.__false_type* null noalias  )
+	invoke %"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"* @___ZN9__gnu_cxx17__normal_iteratorIP6BigIntSt6vectorIS1_SaIS1_EEEppEv___ZNSt6vectorImSaImEED1Ev___ZN6BigIntD1Ev___ZN9__gnu_cxx13new_allocatorI6BigIntE7destroyEPS1____ZSt8_DestroyIP6BigIntSaIS0_EEvT_S3_T0_( i32 14, %"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"* null, %"struct.std::vector<ulong,std::allocator<ulong> >"* null, %struct.BigInt* null, %struct.__false_type* null, %struct.BigInt* null, %struct.__false_type* noalias null   )
 			to label %meshBB30 unwind label %meshBB337		; <%"struct.__gnu_cxx::__normal_iterator<BigInt*,std::vector<BigInt, std::allocator<BigInt> > >"*>:1 [#uses=0]
 
 invcont12.unwind_crit_edge:		; preds = %bb_main
@@ -467,7 +467,7 @@ invcont30.unwind_crit_edge.unwinddest:		; No predecessors!
 	br label %bb_main
 
 invcont33:		; preds = %bb_main
-	invoke void @_ZNKSt19basic_ostringstreamIcSt11char_traitsIcESaIcEE3strEv( %"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* null sret , %"struct.std::ostringstream"* null )
+	invoke void @_ZNKSt19basic_ostringstreamIcSt11char_traitsIcESaIcEE3strEv( %"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >"* sret null  , %"struct.std::ostringstream"* null )
 			to label %invcont36 unwind label %invcont33.unwind_crit_edge
 
 invcont33.unwind_crit_edge:		; preds = %invcont33, %bb_main

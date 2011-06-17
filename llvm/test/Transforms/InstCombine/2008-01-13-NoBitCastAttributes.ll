@@ -1,6 +1,6 @@
 ; RUN: opt < %s -instcombine -S | grep bitcast | count 2
 
-define i32 @b(i32* inreg  %x) signext  {
+define signext i32 @b(i32* inreg  %x)   {
 	ret i32 0
 }
 

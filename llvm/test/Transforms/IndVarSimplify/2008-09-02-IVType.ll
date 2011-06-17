@@ -16,7 +16,7 @@
 	%struct.YUVGeneralParams = type { i16*, i8*, i8*, i8*, i8*, i8*, void (i8*, i16**, i32, %struct.YUVGeneralParams*)*, i16, i16, i16, [6 x i8], void (i8*, i16**, i32, %struct.YUVGeneralParams*)*, i16, i16 }
 @llvm.used = appending global [1 x i8*] [ i8* bitcast (i16 (%struct.JPEGGlobals*)* @ExtractBufferedBlocksIgnored to i8*) ], section "llvm.metadata"		; <[1 x i8*]*> [#uses=0]
 
-define i16 @ExtractBufferedBlocksIgnored(%struct.JPEGGlobals* %globp) signext nounwind {
+define signext i16 @ExtractBufferedBlocksIgnored(%struct.JPEGGlobals* %globp)  nounwind {
 entry:
 	%tmp4311 = getelementptr %struct.JPEGGlobals* %globp, i32 0, i32 70		; <i32*> [#uses=1]
 	%tmp4412 = load i32* %tmp4311, align 16		; <i32> [#uses=2]

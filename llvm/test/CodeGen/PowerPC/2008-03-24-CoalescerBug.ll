@@ -18,7 +18,7 @@ define void @"-[PFTPersistentSymbols saveSymbolWithName:address:path:lineNumber:
 entry:
 	br i1 false, label %bb12, label %bb21
 bb12:		; preds = %entry
-	%tmp17 = tail call i8 inttoptr (i64 4294901504 to i8 (%struct..0objc_object*, %struct.objc_selector*, %struct.NSArray*)*)( %struct..0objc_object* null, %struct.objc_selector* null, %struct.NSArray* bitcast (%struct.__builtin_CFString* @0 to %struct.NSArray*) ) signext nounwind 		; <i8> [#uses=0]
+	%tmp17 = tail call signext i8 inttoptr (i64 4294901504 to i8 (%struct..0objc_object*, %struct.objc_selector*, %struct.NSArray*)*)( %struct..0objc_object* null, %struct.objc_selector* null, %struct.NSArray* bitcast (%struct.__builtin_CFString* @0 to %struct.NSArray*) )  nounwind 		; <i8> [#uses=0]
 	br i1 false, label %bb25, label %bb21
 bb21:		; preds = %bb12, %entry
 	%tmp24 = or i64 %flags, 4		; <i64> [#uses=1]

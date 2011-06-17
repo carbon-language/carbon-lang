@@ -51,8 +51,8 @@ entry:
         store i16 %a5, i16* %tmp8, align 16
         %tmp10 = getelementptr %struct.s* %a, i32 0, i32 5
         store i16 %a6, i16* %tmp10, align 16
-        call void @f( %struct.s* %a byval )
-        call void @f( %struct.s* %a byval )
+        call void @f( %struct.s* byval %a )
+        call void @f( %struct.s* byval %a )
         ret void
 }
 

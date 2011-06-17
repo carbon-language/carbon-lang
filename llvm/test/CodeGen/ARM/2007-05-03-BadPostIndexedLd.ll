@@ -2,7 +2,7 @@
 
 	%struct.Connection = type { i32, [10 x i8], i32 }
 	%struct.IntChunk = type { %struct.cppobjtype, i32, i32*, i32 }
-	%struct.Point = type { i8*, %struct.cppobjtype, i16 (%struct.Point*) signext *, i16 (%struct.Point*) signext *, double (%struct.Point*)*, double (%struct.Point*)* }
+	%struct.Point = type { i8*, %struct.cppobjtype, i16 (%struct.Point*)  *, i16 (%struct.Point*)  *, double (%struct.Point*)*, double (%struct.Point*)* }
 	%struct.RefPoint = type { %struct.Point*, %struct.cppobjtype }
 	%struct.ShortArray = type { %struct.cppobjtype, i32, i16* }
 	%struct.TestObj = type { i8*, %struct.cppobjtype, i8, [32 x i8], i8*, i8**, i16, i16, i32, i32, i32, i32, float, double, %struct.cppobjtype, i32, i16*, i16**, i8**, i32, %struct.XyPoint, [3 x %struct.Connection], %struct.Point*, %struct.XyPoint*, i32, i8*, i8*, i16*, %struct.ShortArray, %struct.IntChunk, %struct.cppobjtype, %struct.cppobjtype, %struct.RefPoint, i32, %struct.cppobjtype, %struct.cppobjtype }

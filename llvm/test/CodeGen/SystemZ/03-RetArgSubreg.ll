@@ -8,12 +8,12 @@ entry:
     ret i32 %b
 }
 
-define i32 @foo1(i32 %a, i32 %b) zeroext {
+define zeroext i32 @foo1(i32 %a, i32 %b)  {
 entry:
     ret i32 %b
 }
 
-define i32 @foo2(i32 %a, i32 %b) signext {
+define signext i32 @foo2(i32 %a, i32 %b)  {
 entry:
     ret i32 %b
 }

@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=systemz | FileCheck %s
 
-define i32 @foo1(i32 %a, i32 *%b, i64 %idx) signext {
+define signext i32 @foo1(i32 %a, i32 *%b, i64 %idx)  {
 ; CHECK: foo1:
 ; CHECK:  a %r2, 4(%r1,%r3)
 entry:
@@ -11,7 +11,7 @@ entry:
     ret i32 %d
 }
 
-define i32 @foo2(i32 %a, i32 *%b, i64 %idx) signext {
+define signext i32 @foo2(i32 %a, i32 *%b, i64 %idx) {
 ; CHECK: foo2:
 ; CHECK:  ay %r2, -4(%r1,%r3)
 entry:
@@ -22,7 +22,7 @@ entry:
     ret i32 %d
 }
 
-define i64 @foo3(i64 %a, i64 *%b, i64 %idx) signext {
+define signext i64 @foo3(i64 %a, i64 *%b, i64 %idx)  {
 ; CHECK: foo3:
 ; CHECK:  ag %r2, 8(%r1,%r3)
 entry:
@@ -33,7 +33,7 @@ entry:
     ret i64 %d
 }
 
-define i32 @foo4(i32 %a, i32 *%b, i64 %idx) signext {
+define signext i32 @foo4(i32 %a, i32 *%b, i64 %idx)  {
 ; CHECK: foo4:
 ; CHECK:  n %r2, 4(%r1,%r3)
 entry:
@@ -44,7 +44,7 @@ entry:
     ret i32 %d
 }
 
-define i32 @foo5(i32 %a, i32 *%b, i64 %idx) signext {
+define signext i32 @foo5(i32 %a, i32 *%b, i64 %idx) {
 ; CHECK: foo5:
 ; CHECK:  ny %r2, -4(%r1,%r3)
 entry:
@@ -55,7 +55,7 @@ entry:
     ret i32 %d
 }
 
-define i64 @foo6(i64 %a, i64 *%b, i64 %idx) signext {
+define signext i64 @foo6(i64 %a, i64 *%b, i64 %idx)  {
 ; CHECK: foo6:
 ; CHECK:  ng %r2, 8(%r1,%r3)
 entry:
@@ -66,7 +66,7 @@ entry:
     ret i64 %d
 }
 
-define i32 @foo7(i32 %a, i32 *%b, i64 %idx) signext {
+define signext i32 @foo7(i32 %a, i32 *%b, i64 %idx) {
 ; CHECK: foo7:
 ; CHECK:  o %r2, 4(%r1,%r3)
 entry:
@@ -77,7 +77,7 @@ entry:
     ret i32 %d
 }
 
-define i32 @foo8(i32 %a, i32 *%b, i64 %idx) signext {
+define signext i32 @foo8(i32 %a, i32 *%b, i64 %idx)  {
 ; CHECK: foo8:
 ; CHECK:  oy %r2, -4(%r1,%r3)
 entry:
@@ -88,7 +88,7 @@ entry:
     ret i32 %d
 }
 
-define i64 @foo9(i64 %a, i64 *%b, i64 %idx) signext {
+define signext i64 @foo9(i64 %a, i64 *%b, i64 %idx)  {
 ; CHECK: foo9:
 ; CHECK:  og %r2, 8(%r1,%r3)
 entry:
@@ -99,7 +99,7 @@ entry:
     ret i64 %d
 }
 
-define i32 @foo10(i32 %a, i32 *%b, i64 %idx) signext {
+define signext i32 @foo10(i32 %a, i32 *%b, i64 %idx)  {
 ; CHECK: foo10:
 ; CHECK:  x %r2, 4(%r1,%r3)
 entry:
@@ -110,7 +110,7 @@ entry:
     ret i32 %d
 }
 
-define i32 @foo11(i32 %a, i32 *%b, i64 %idx) signext {
+define signext i32 @foo11(i32 %a, i32 *%b, i64 %idx)  {
 ; CHECK: foo11:
 ; CHECK:  xy %r2, -4(%r1,%r3)
 entry:
@@ -121,7 +121,7 @@ entry:
     ret i32 %d
 }
 
-define i64 @foo12(i64 %a, i64 *%b, i64 %idx) signext {
+define signext i64 @foo12(i64 %a, i64 *%b, i64 %idx)  {
 ; CHECK: foo12:
 ; CHECK:  xg %r2, 8(%r1,%r3)
 entry:

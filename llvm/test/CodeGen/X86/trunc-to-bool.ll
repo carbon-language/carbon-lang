@@ -3,7 +3,7 @@
 ; value and as the operand of a branch.
 ; RUN: llc < %s -march=x86 | FileCheck %s
 
-define i1 @test1(i32 %X) zeroext nounwind {
+define zeroext i1 @test1(i32 %X)  nounwind {
     %Y = trunc i32 %X to i1
     ret i1 %Y
 }

@@ -75,7 +75,7 @@ bb5334:		; preds = %bb3314
 bb5484:		; preds = %bb3314
 	ret void
 bb5657:		; preds = %bb3314
-	%tmp5661 = invoke i16 @_ZNK10wxDateTime12GetDayOfYearERKNS_8TimeZoneE( %struct.wxDateTime* %this, %"struct.wxDateTime::TimeZone"* %tz ) zeroext 
+	%tmp5661 = invoke zeroext i16 @_ZNK10wxDateTime12GetDayOfYearERKNS_8TimeZoneE( %struct.wxDateTime* %this, %"struct.wxDateTime::TimeZone"* %tz )  
 			to label %invcont5660 unwind label %lpad		; <i16> [#uses=0]
 invcont5660:		; preds = %bb5657
 	ret void
@@ -120,7 +120,7 @@ invcont5814:		; preds = %bb448.i8694, %bb265.i8606
 	invoke void (%struct.wxString*, i32*, ...)* @_ZN8wxString6FormatEPKwz( %struct.wxString* noalias sret  null, i32* null, i32 %tmp58165817 )
 			to label %invcont5831 unwind label %lpad
 invcont5831:		; preds = %invcont5814
-	%tmp5862 = invoke i8 @_ZN12wxStringBase10ConcatSelfEmPKwm( %struct.wxStringBase* null, i32 0, i32* null, i32 0 ) zeroext 
+	%tmp5862 = invoke zeroext  i8 @_ZN12wxStringBase10ConcatSelfEmPKwm( %struct.wxStringBase* null, i32 0, i32* null, i32 0 ) 
 			to label %bb7834 unwind label %lpad8185		; <i8> [#uses=0]
 bb5968:		; preds = %bb3314
 	invoke void (%struct.wxString*, i32*, ...)* @_ZN8wxString6FormatEPKwz( %struct.wxString* noalias sret  null, i32* null, i32 0 )
@@ -158,11 +158,11 @@ lpad8185:		; preds = %invcont5831
 
 declare void @_Z10wxOnAssertPKwiPKcS0_S0_(i32*, i32, i8*, i32*, i32*)
 
-declare i8 @_ZN12wxStringBase10ConcatSelfEmPKwm(%struct.wxStringBase*, i32, i32*, i32) zeroext 
+declare zeroext  i8 @_ZN12wxStringBase10ConcatSelfEmPKwm(%struct.wxStringBase*, i32, i32*, i32) 
 
 declare %struct.tm* @gmtime_r(i32*, %struct.tm*)
 
-declare i16 @_ZNK10wxDateTime12GetDayOfYearERKNS_8TimeZoneE(%struct.wxDateTime*, %"struct.wxDateTime::TimeZone"*) zeroext 
+declare zeroext  i16 @_ZNK10wxDateTime12GetDayOfYearERKNS_8TimeZoneE(%struct.wxDateTime*, %"struct.wxDateTime::TimeZone"*) 
 
 declare %struct.wxStringBase* @_ZN12wxStringBase6appendEmw(%struct.wxStringBase*, i32, i32)
 

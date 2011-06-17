@@ -30,12 +30,12 @@ entry:
     ret i32 4294967295
 }
 
-define i32 @foo6() zeroext {
+define zeroext i32 @foo6()  {
 entry:
     ret i32 4294967295
 }
 
-define i32 @foo7() signext {
+define signext i32 @foo7()  {
 entry:
     ret i32 4294967295
 }

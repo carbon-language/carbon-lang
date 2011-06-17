@@ -10,7 +10,7 @@ define i32 @test0(i8 %A) {
 	ret i32 %B
 }
 
-define i8 @test1(i32 %A) signext {
+define signext i8 @test1(i32 %A) {
 	%B = lshr i32 %A, 8
 	%C = shl i32 %A, 24
 	%D = or i32 %B, %C
@@ -18,7 +18,7 @@ define i8 @test1(i32 %A) signext {
 	ret i8 %E
 }
 
-define i32 @test2(i32 %A, i32 %X) signext {
+define signext i32 @test2(i32 %A, i32 %X) {
 	%B = lshr i32 %A, 8
 	%C = shl i32 %A, 24
 	%D = or i32 %B, %C

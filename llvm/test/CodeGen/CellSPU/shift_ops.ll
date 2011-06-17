@@ -33,22 +33,22 @@ define i16 @shlh_i16_2(i16 %arg1, i16 %arg2) {
         ret i16 %A
 }
 
-define i16 @shlh_i16_3(i16 signext %arg1, i16 signext %arg2) signext {
+define signext i16 @shlh_i16_3(i16 signext %arg1, i16 signext %arg2) {
         %A = shl i16 %arg1, %arg2
         ret i16 %A
 }
 
-define i16 @shlh_i16_4(i16 signext %arg1, i16 signext %arg2) signext {
+define signext i16 @shlh_i16_4(i16 signext %arg1, i16 signext %arg2) {
         %A = shl i16 %arg2, %arg1
         ret i16 %A
 }
 
-define i16 @shlh_i16_5(i16 zeroext %arg1, i16 zeroext %arg2) zeroext {
+define zeroext i16 @shlh_i16_5(i16 zeroext %arg1, i16 zeroext %arg2)  {
         %A = shl i16 %arg1, %arg2
         ret i16 %A
 }
 
-define i16 @shlh_i16_6(i16 zeroext %arg1, i16 zeroext %arg2) zeroext {
+define zeroext i16 @shlh_i16_6(i16 zeroext %arg1, i16 zeroext %arg2) {
         %A = shl i16 %arg2, %arg1
         ret i16 %A
 }
@@ -76,46 +76,46 @@ define i16 @shlhi_i16_4(i16 %arg1) {
         ret i16 %A
 }
 
-define i16 @shlhi_i16_5(i16 signext %arg1) signext {
+define signext i16 @shlhi_i16_5(i16 signext %arg1)  {
         %A = shl i16 %arg1, 12
         ret i16 %A
 }
 
 ; Should not generate anything other than the return, arg1 << 0 = arg1
-define i16 @shlhi_i16_6(i16 signext %arg1) signext {
+define signext i16 @shlhi_i16_6(i16 signext %arg1) {
         %A = shl i16 %arg1, 0
         ret i16 %A
 }
 
-define i16 @shlhi_i16_7(i16 signext %arg1) signext {
+define signext i16 @shlhi_i16_7(i16 signext %arg1) {
         %A = shl i16 16383, %arg1
         ret i16 %A
 }
 
 ; Should generate 0, 0 << arg1 = 0
-define i16 @shlhi_i16_8(i16 signext %arg1) signext {
+define signext i16 @shlhi_i16_8(i16 signext %arg1)  {
         %A = shl i16 0, %arg1
         ret i16 %A
 }
 
-define i16 @shlhi_i16_9(i16 zeroext %arg1) zeroext {
+define zeroext i16 @shlhi_i16_9(i16 zeroext %arg1)  {
         %A = shl i16 %arg1, 12
         ret i16 %A
 }
 
 ; Should not generate anything other than the return, arg1 << 0 = arg1
-define i16 @shlhi_i16_10(i16 zeroext %arg1) zeroext {
+define zeroext i16 @shlhi_i16_10(i16 zeroext %arg1)  {
         %A = shl i16 %arg1, 0
         ret i16 %A
 }
 
-define i16 @shlhi_i16_11(i16 zeroext %arg1) zeroext {
+define zeroext i16 @shlhi_i16_11(i16 zeroext %arg1)  {
         %A = shl i16 16383, %arg1
         ret i16 %A
 }
 
 ; Should generate 0, 0 << arg1 = 0
-define i16 @shlhi_i16_12(i16 zeroext %arg1) zeroext {
+define zeroext i16 @shlhi_i16_12(i16 zeroext %arg1)  {
         %A = shl i16 0, %arg1
         ret i16 %A
 }
@@ -133,22 +133,22 @@ define i32 @shl_i32_2(i32 %arg1, i32 %arg2) {
         ret i32 %A
 }
 
-define i32 @shl_i32_3(i32 signext %arg1, i32 signext %arg2) signext {
+define signext i32 @shl_i32_3(i32 signext %arg1, i32 signext %arg2)  {
         %A = shl i32 %arg1, %arg2
         ret i32 %A
 }
 
-define i32 @shl_i32_4(i32 signext %arg1, i32 signext %arg2) signext {
+define signext i32 @shl_i32_4(i32 signext %arg1, i32 signext %arg2)  {
         %A = shl i32 %arg2, %arg1
         ret i32 %A
 }
 
-define i32 @shl_i32_5(i32 zeroext %arg1, i32 zeroext %arg2) zeroext {
+define zeroext i32 @shl_i32_5(i32 zeroext %arg1, i32 zeroext %arg2)  {
         %A = shl i32 %arg1, %arg2
         ret i32 %A
 }
 
-define i32 @shl_i32_6(i32 zeroext %arg1, i32 zeroext %arg2) zeroext {
+define zeroext i32 @shl_i32_6(i32 zeroext %arg1, i32 zeroext %arg2)  {
         %A = shl i32 %arg2, %arg1
         ret i32 %A
 }
@@ -176,46 +176,46 @@ define i32 @shli_i32_4(i32 %arg1) {
         ret i32 %A
 }
 
-define i32 @shli_i32_5(i32 signext %arg1) signext {
+define signext i32 @shli_i32_5(i32 signext %arg1)  {
         %A = shl i32 %arg1, 12
         ret i32 %A
 }
 
 ; Should not generate anything other than the return, arg1 << 0 = arg1
-define i32 @shli_i32_6(i32 signext %arg1) signext {
+define signext i32 @shli_i32_6(i32 signext %arg1) {
         %A = shl i32 %arg1, 0
         ret i32 %A
 }
 
-define i32 @shli_i32_7(i32 signext %arg1) signext {
+define signext i32 @shli_i32_7(i32 signext %arg1)  {
         %A = shl i32 16383, %arg1
         ret i32 %A
 }
 
 ; Should generate 0, 0 << arg1 = 0
-define i32 @shli_i32_8(i32 signext %arg1) signext {
+define signext i32 @shli_i32_8(i32 signext %arg1) {
         %A = shl i32 0, %arg1
         ret i32 %A
 }
 
-define i32 @shli_i32_9(i32 zeroext %arg1) zeroext {
+define zeroext i32 @shli_i32_9(i32 zeroext %arg1)  {
         %A = shl i32 %arg1, 12
         ret i32 %A
 }
 
 ; Should not generate anything other than the return, arg1 << 0 = arg1
-define i32 @shli_i32_10(i32 zeroext %arg1) zeroext {
+define zeroext i32 @shli_i32_10(i32 zeroext %arg1)  {
         %A = shl i32 %arg1, 0
         ret i32 %A
 }
 
-define i32 @shli_i32_11(i32 zeroext %arg1) zeroext {
+define zeroext i32 @shli_i32_11(i32 zeroext %arg1) {
         %A = shl i32 16383, %arg1
         ret i32 %A
 }
 
 ; Should generate 0, 0 << arg1 = 0
-define i32 @shli_i32_12(i32 zeroext %arg1) zeroext {
+define zeroext i32 @shli_i32_12(i32 zeroext %arg1) {
         %A = shl i32 0, %arg1
         ret i32 %A
 }

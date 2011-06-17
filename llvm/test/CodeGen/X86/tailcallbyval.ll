@@ -13,6 +13,6 @@ entry:
 
 define  fastcc i32 @tailcaller(%struct.s* byval %a) nounwind {
 entry:
-        %tmp4 = tail call fastcc i32 @tailcallee(%struct.s* %a byval)
+        %tmp4 = tail call fastcc i32 @tailcallee(%struct.s* byval %a )
         ret i32 %tmp4
 }

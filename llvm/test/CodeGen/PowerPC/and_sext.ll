@@ -9,7 +9,7 @@ define i32 @test1(i32 %mode.0.i.0) {
         ret i32 %tmp.81
 }
 
-define i16 @test2(i16 signext %X, i16 signext %x) signext {
+define signext i16 @test2(i16 signext %X, i16 signext %x)  {
         %tmp = sext i16 %X to i32
         %tmp1 = sext i16 %x to i32
         %tmp2 = add i32 %tmp, %tmp1
@@ -20,7 +20,7 @@ define i16 @test2(i16 signext %X, i16 signext %x) signext {
         ret i16 %retval
 }
 
-define i16 @test3(i32 zeroext %X) signext {
+define signext i16 @test3(i32 zeroext %X)  {
         %tmp1 = lshr i32 %X, 16
         %tmp2 = trunc i32 %tmp1 to i16
         ret i16 %tmp2

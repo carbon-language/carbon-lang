@@ -5,15 +5,15 @@
 %ZFunTy = type i33(i8 zeroext)
 %SFunTy = type i33(i8 signext)
 
-declare i16 @"test"(i16 signext %arg) signext 
-declare i8  @"test2" (i16 zeroext %a2) zeroext 
+declare signext i16 @"test"(i16 signext %arg)  
+declare zeroext i8  @"test2" (i16 zeroext %a2)  
 
 
 define i33 @main(i33 %argc, i8 **%argv) {
     %val = trunc i33 %argc to i16
-    %res = call i16 (i16 signext) signext *@test(i16 signext %val) signext
+    %res = call signext i16 (i16 signext) *@test(i16 signext %val) 
     %two = add i16 %res, %res
-    %res2 = call i8 @test2(i16 %two zeroext) zeroext 
+    %res2 = call zeroext i8 @test2(i16 zeroext %two )  
     %retVal = sext i16 %two to i33
     ret i33 %retVal
 }

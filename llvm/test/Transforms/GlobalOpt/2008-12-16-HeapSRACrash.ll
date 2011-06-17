@@ -6,11 +6,14 @@ target triple = "i386-apple-darwin7"
 
 define void @bar(i32 %Size) nounwind noinline {
 entry:
-	%tmp = malloc [1000000 x %struct.foo]		; <[1000000 x %struct.foo]*> [#uses=1]
+        %malloccall = tail call i8* @malloc(i32 trunc (i64 mul (i64 ptrtoint (i32* getelementptr (i32* null, i32 1) to i64), i64 2000000) to i32))
+        %tmp = bitcast i8* %malloccall to [1000000 x %struct.foo]*
 	%.sub = getelementptr [1000000 x %struct.foo]* %tmp, i32 0, i32 0		; <%struct.foo*> [#uses=1]
 	store %struct.foo* %.sub, %struct.foo** @X, align 4
 	ret void
 }
+
+declare noalias i8* @malloc(i32)
 
 define i32 @baz() nounwind readonly noinline {
 bb1.thread:

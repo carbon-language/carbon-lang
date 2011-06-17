@@ -99,14 +99,6 @@ define void @test11(i32* %P) {
 ; CHECK: ret void
 }
 
-define i32* @test12() {
-        %p = malloc [4 x i8]            ; <[4 x i8]*> [#uses=1]
-        %c = bitcast [4 x i8]* %p to i32*               ; <i32*> [#uses=1]
-        ret i32* %c
-; CHECK: %malloccall = tail call i8* @malloc(i32 4)
-; CHECK: ret i32* %c
-}
-
 define i8* @test13(i64 %A) {
         %c = getelementptr [0 x i8]* bitcast ([32832 x i8]* @inbuf to [0 x i8]*), i64 0, i64 %A             ; <i8*> [#uses=1]
         ret i8* %c
@@ -268,17 +260,6 @@ define i1 @test31(i64 %A) {
 ; CHECK: %C = and i64 %A, 42
 ; CHECK: %D = icmp eq i64 %C, 10
 ; CHECK: ret i1 %D
-}
-
-define void @test32(double** %tmp) {
-        %tmp8 = malloc [16 x i8]                ; <[16 x i8]*> [#uses=1]
-        %tmp8.upgrd.1 = bitcast [16 x i8]* %tmp8 to double*             ; <double*> [#uses=1]
-        store double* %tmp8.upgrd.1, double** %tmp
-        ret void
-; CHECK: %malloccall = tail call i8* @malloc(i32 16)
-; CHECK: %tmp8.upgrd.1 = bitcast i8* %malloccall to double*
-; CHECK: store double* %tmp8.upgrd.1, double** %tmp
-; CHECK: ret void
 }
 
 define i32 @test33(i32 %c1) {

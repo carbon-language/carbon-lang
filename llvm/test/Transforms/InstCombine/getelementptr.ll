@@ -52,14 +52,6 @@ define void @test5(i8 %B) {
 ; CHECK: store i8 %B, i8* getelementptr inbounds ([10 x i8]* @Global, i64 0, i64 4)
 }
 
-define i32* @test6() {
-        %M = malloc [4 x i32] 
-        %A = getelementptr [4 x i32]* %M, i64 0, i64 0
-        %B = getelementptr i32* %A, i64 2             
-        ret i32* %B
-; CHECK: @test6
-; CHECK: getelementptr i8* %malloccall, i64 8
-}
 
 define i32* @test7(i32* %I, i64 %C, i64 %D) {
         %A = getelementptr i32* %I, i64 %C 

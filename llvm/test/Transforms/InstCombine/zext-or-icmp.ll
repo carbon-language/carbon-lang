@@ -4,7 +4,7 @@
 	%struct.Rock = type { i16, i16 }
 @some_idx = internal constant [4 x i8] c"\0A\0B\0E\0F"		; <[4 x i8]*> [#uses=1]
 
-define i8 @t(%struct.FooBar* %up, i8 zeroext  %intra_flag, i32 %blk_i) zeroext nounwind  {
+define zeroext  i8 @t(%struct.FooBar* %up, i8 zeroext  %intra_flag, i32 %blk_i) nounwind  {
 entry:
 	%tmp2 = lshr i32 %blk_i, 1		; <i32> [#uses=1]
 	%tmp3 = and i32 %tmp2, 2		; <i32> [#uses=1]

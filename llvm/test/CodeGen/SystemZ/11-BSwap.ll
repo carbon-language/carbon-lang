@@ -5,32 +5,32 @@ target datalayout = "E-p:64:64:64-i8:8:16-i16:16:16-i32:32:32-i64:64:64-f32:32:3
 target triple = "s390x-ibm-linux"
 
 
-define i16 @foo(i16 zeroext %a) zeroext {
+define zeroext i16 @foo(i16 zeroext %a)  {
 	%res = tail call i16 @llvm.bswap.i16(i16 %a)
 	ret i16 %res
 }
 
-define i32 @foo2(i32 zeroext %a) zeroext {
+define zeroext i32 @foo2(i32 zeroext %a)  {
 ; CHECK: foo2:
 ; CHECK:  lrvr [[R1:%r.]], %r2
         %res = tail call i32 @llvm.bswap.i32(i32 %a)
         ret i32 %res
 }
 
-define i64 @foo3(i64 %a) zeroext {
+define zeroext i64 @foo3(i64 %a)  {
 ; CHECK: foo3:
 ; CHECK:  lrvgr %r2, %r2
         %res = tail call i64 @llvm.bswap.i64(i64 %a)
         ret i64 %res
 }
 
-define i16 @foo4(i16* %b) zeroext {
+define zeroext i16 @foo4(i16* %b)  {
 	%a = load i16* %b
         %res = tail call i16 @llvm.bswap.i16(i16 %a)
         ret i16 %res
 }
 
-define i32 @foo5(i32* %b) zeroext {
+define zeroext i32 @foo5(i32* %b)  {
 ; CHECK: foo5:
 ; CHECK:  lrv [[R1:%r.]], 0(%r2)
 	%a = load i32* %b

@@ -6,7 +6,7 @@ target triple = "thumb-apple-darwin8"
 @"L_OBJC_IMAGE_INFO" = internal global [2 x i32] zeroinitializer		; <[2 x i32]*> [#uses=1]
 @llvm.used = appending global [1 x i8*] [ i8* bitcast ([2 x i32]* @"L_OBJC_IMAGE_INFO" to i8*) ]		; <[1 x i8*]*> [#uses=0]
 
-define i16 @__NSCharToUnicharCFWrapper(i8 zeroext  %ch) zeroext  {
+define zeroext i16 @__NSCharToUnicharCFWrapper(i8 zeroext  %ch)   {
 entry:
 	%iftmp.0.0.in.in = select i1 false, i16* @replacementUnichar, i16* null		; <i16*> [#uses=1]
 	%iftmp.0.0.in = load i16* %iftmp.0.0.in.in		; <i16> [#uses=1]

@@ -11,11 +11,14 @@ entry:
 ; CHECK: @test1
 ; CHECK: call void @llvm.memcpy
 
-  %call3 = malloc [13 x i8]                       ; <[13 x i8]*> [#uses=1]
+  %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i8* getelementptr (i8* null, i32 1) to i64), i64 13) to i32))
+  %call3 = bitcast i8* %malloccall to [13 x i8]*
   %call3.sub = getelementptr inbounds [13 x i8]* %call3, i64 0, i64 0 ; <i8*> [#uses=2]
   tail call void @llvm.memmove.i64(i8* %call3.sub, i8* %src, i64 13, i32 1)
   ret i8* %call3.sub
 }
+declare noalias i8* @malloc(i32)
+
 
 define void @test2(i8* %P) nounwind {
 entry:
