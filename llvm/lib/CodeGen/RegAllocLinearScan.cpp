@@ -1440,8 +1440,12 @@ unsigned RALinScan::getFreePhysReg(LiveInterval* cur,
   if (TargetRegisterInfo::isVirtualRegister(physReg) && vrm_->hasPhys(physReg))
     physReg = vrm_->getPhys(physReg);
 
-  ArrayRef<unsigned> Order = tri_->getRawAllocationOrder(RC, Hint.first,
-                                                         physReg, *mf_);
+  ArrayRef<unsigned> Order;
+  if (Hint.first)
+    Order = tri_->getRawAllocationOrder(RC, Hint.first, physReg, *mf_);
+  else
+    Order = RegClassInfo.getOrder(RC);
+
   assert(!Order.empty() && "No allocatable register in this register class!");
 
   // Scan for the first available register.
