@@ -3017,6 +3017,12 @@ def REV16 : AMiscA1I<0b01101011, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
                                (and (shl GPR:$Rm, (i32 8)), 0xFF000000)))))]>,
                Requires<[IsARM, HasV6]>;
 
+def : ARMV6Pat<(or (or (or (and (srl GPR:$Rm, (i32 8)), 0xFF0000),
+                           (and (shl GPR:$Rm, (i32 8)), 0xFF000000)),
+                       (and (srl GPR:$Rm, (i32 8)), 0xFF)),
+                   (and (shl GPR:$Rm, (i32 8)), 0xFF00)),
+               (REV16 GPR:$Rm)>;
+
 def REVSH : AMiscA1I<0b01101111, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
                IIC_iUNAr, "revsh", "\t$Rd, $Rm",
                [(set GPR:$Rd,

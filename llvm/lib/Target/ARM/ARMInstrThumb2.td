@@ -2593,6 +2593,12 @@ def t2REV16 : T2I_misc<0b01, 0b01, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
                             (or (and (srl rGPR:$Rm, (i32 8)), 0xFF0000),
                                (and (shl rGPR:$Rm, (i32 8)), 0xFF000000)))))]>;
 
+def : T2Pat<(or (or (or (and (srl rGPR:$Rm, (i32 8)), 0xFF0000),
+                        (and (shl rGPR:$Rm, (i32 8)), 0xFF000000)),
+                    (and (srl rGPR:$Rm, (i32 8)), 0xFF)),
+                (and (shl rGPR:$Rm, (i32 8)), 0xFF00)),
+            (t2REV16 rGPR:$Rm)>;
+
 def t2REVSH : T2I_misc<0b01, 0b11, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
                        "revsh", ".w\t$Rd, $Rm",
                  [(set rGPR:$Rd,
