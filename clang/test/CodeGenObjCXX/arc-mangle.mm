@@ -6,7 +6,7 @@ void f(__strong id *) {}
 void f(__weak id *) {}
 // CHECK: define void @_Z1fPU15__autoreleasingP11objc_object(i8**)
 void f(__autoreleasing id *) {}
-// CHECK: define void @_Z1fPU19__unsafe_unretainedP11objc_object(i8**)
+// CHECK: define void @_Z1fPP11objc_object(i8**)
 void f(__unsafe_unretained id *) {}
 // CHECK: define void @_Z1fPKU8__strongP11objc_object(i8**)
 void f(const __strong id *) {}
@@ -14,7 +14,7 @@ void f(const __strong id *) {}
 void f(const __weak id *) {}
 // CHECK: define void @_Z1fPKU15__autoreleasingP11objc_object(i8**)
 void f(const __autoreleasing id *) {}
-// CHECK: define void @_Z1fPKU19__unsafe_unretainedP11objc_object(i8**)
+// CHECK: define void @_Z1fPKP11objc_object(i8**)
 void f(const __unsafe_unretained id *) {}
 
 

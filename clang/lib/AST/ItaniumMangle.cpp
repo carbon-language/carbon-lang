@@ -1472,7 +1472,6 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
   //   <type> ::= U "__strong"
   //   <type> ::= U "__weak"
   //   <type> ::= U "__autoreleasing"
-  //   <type> ::= U "__unsafe_unretained"
   case Qualifiers::OCL_None:
     break;
     
@@ -1489,7 +1488,13 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
     break;
     
   case Qualifiers::OCL_ExplicitNone:
-    LifetimeName = "__unsafe_unretained";
+    // The __unsafe_unretained qualifier is *not* mangled, so that
+    // __unsafe_unretained types in ARC produce the same manglings as the
+    // equivalent (but, naturally, unqualified) types in non-ARC, providing
+    // better ABI compatibility.
+    //
+    // It's safe to do this because unqualified 'id' won't show up
+    // in any type signatures that need to be mangled.
     break;
   }
   if (!LifetimeName.empty())
