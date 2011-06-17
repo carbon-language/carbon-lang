@@ -84,7 +84,6 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 
 declare void @test5a(%struct.S* byval align 16) nounwind ssp
 
-declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
 ; rdar://8713376 - This memcpy can't be eliminated.
 define i32 @test5(i32 %x) nounwind ssp {

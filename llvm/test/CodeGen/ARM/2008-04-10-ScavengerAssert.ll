@@ -188,11 +188,6 @@ bb231:		; preds = %bb226
 	ret void
 }
 
-	%struct.III_psy_xmin = type { [22 x double], [13 x [3 x double]] }
-	%struct.III_scalefac_t = type { [22 x i32], [13 x [3 x i32]] }
-	%struct.gr_info = type { i32, i32, i32, i32, i32, i32, i32, i32, [3 x i32], [3 x i32], i32, i32, i32, i32, i32, i32, i32, i32, i32, i32*, [4 x i32] }
-	%struct.lame_global_flags = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i8*, i8*, i32, i32, float, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, float, i32, i32, i32, float, float, float, float, i32, i32, i32, i32, i32, i32, i32, i32 }
-
 define fastcc void @outer_loop2(%struct.lame_global_flags* %gfp, double* %xr, i32 %targ_bits, double* %best_noise, %struct.III_psy_xmin* %l3_xmin, i32* %l3_enc, %struct.III_scalefac_t* %scalefac, %struct.gr_info* %cod_info, i32 %ch) {
 entry:
 	%cod_info.20128.1 = getelementptr %struct.gr_info* %cod_info, i32 0, i32 20, i32 1		; <i32*> [#uses=1]

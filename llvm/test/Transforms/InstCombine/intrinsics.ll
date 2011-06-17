@@ -213,5 +213,4 @@ define i32 @cttz_simplify1(i32 %x) nounwind readnone ssp {
 ; CHECK-NEXT: ret i32
 }
 
-declare i32 @llvm.ctlz.i32(i32) nounwind readnone
 

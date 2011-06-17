@@ -87,8 +87,6 @@ for.inc:		; preds = %for.inc, %lor.end.i, %lor.rhs.i, %land.lhs.true3.i
 	br label %for.inc
 }
 
-declare i32 @safe()
-
 define i32 @func_35(i8 signext %p_35) nounwind readonly {
 entry:
   %tobool = icmp eq i8 %p_35, 0                   ; <i1> [#uses=1]

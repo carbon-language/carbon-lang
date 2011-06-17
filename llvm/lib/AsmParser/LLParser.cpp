@@ -352,18 +352,14 @@ bool LLParser::ParseNamedType() {
     cast<DerivedType>(FI->second.first.get())->refineAbstractTypeTo(Ty);
     Ty = FI->second.first.get();
     ForwardRefTypes.erase(FI);
+    return false;
   }
 
   // Inserting a name that is already defined, get the existing name.
   const Type *Existing = M->getTypeByName(Name);
   assert(Existing && "Conflict but no matching type?!");
 
-  // Otherwise, this is an attempt to redefine a type. That's okay if
-  // the redefinition is identical to the original.
-  // FIXME: REMOVE REDEFINITIONS IN LLVM 3.0
-  if (Existing == Ty) return false;
-
-  // Any other kind of (non-equivalent) redefinition is an error.
+  // Otherwise, this is an attempt to redefine a type, report the error.
   return Error(NameLoc, "redefinition of type named '" + Name + "' of type '" +
                Ty->getDescription() + "'");
 }
@@ -2761,21 +2757,9 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       
       ForwardRefVals.erase(FRVI);
     } else if ((Fn = M->getFunction(FunctionName))) {
-      // If this function already exists in the symbol table, then it is
-      // multiply defined.  We accept a few cases for old backwards compat.
-      // FIXME: Remove this stuff for LLVM 3.0.
-      if (Fn->getType() != PFT || Fn->getAttributes() != PAL ||
-          (!Fn->isDeclaration() && isDefine)) {
-        // If the redefinition has different type or different attributes,
-        // reject it.  If both have bodies, reject it.
-        return Error(NameLoc, "invalid redefinition of function '" +
-                     FunctionName + "'");
-      } else if (Fn->isDeclaration()) {
-        // Make sure to strip off any argument names so we can't get conflicts.
-        for (Function::arg_iterator AI = Fn->arg_begin(), AE = Fn->arg_end();
-             AI != AE; ++AI)
-          AI->setName("");
-      }
+      // Reject redefinitions.
+      return Error(NameLoc, "invalid redefinition of function '" +
+                   FunctionName + "'");
     } else if (M->getNamedValue(FunctionName)) {
       return Error(NameLoc, "redefinition of function '@" + FunctionName + "'");
     }

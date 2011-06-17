@@ -312,8 +312,6 @@ entry:
   ret void
 }
 
-declare void @foo()
-
 ; If caller / callee calling convention mismatch then check if the return
 ; values are returned in the same registers.
 ; rdar://7874780

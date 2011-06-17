@@ -6,9 +6,6 @@
 ; RUN: grep .Lbaz: %t
 ; RUN: grep ila.*\.Lbaz %t
 
-
-declare void @foo()
-
 define private void @foo() {
         ret void
 }

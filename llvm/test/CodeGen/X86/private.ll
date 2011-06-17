@@ -5,8 +5,6 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux | grep .Lbaz:
 ; RUN: llc < %s -mtriple=x86_64-pc-linux | grep movl.*\.Lbaz
 
-declare void @foo()
-
 define private void @foo() {
         ret void
 }

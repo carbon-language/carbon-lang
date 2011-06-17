@@ -24,8 +24,6 @@ define i32 @test0(i8* %P) {
 ; CHECK: ret i32 0
 }
 
-declare void @llvm.memcpy.i8(i8*, i8*, i8, i32)
-
 define i8 @test1() {
 ; CHECK: @test1
   %A = alloca i8

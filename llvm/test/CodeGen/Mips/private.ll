@@ -6,8 +6,6 @@
 ; RUN: grep \\\$baz: %t
 ; RUN: grep lw.*\\\$baz %t
 
-declare void @foo()
-
 define private void @foo() {
         ret void
 }

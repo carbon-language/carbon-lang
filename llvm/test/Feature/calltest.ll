@@ -4,8 +4,6 @@
 
 %FunTy = type i32 (i32)
 
-declare i32 @test(i32)   ; Test forward declaration merging
-
 define void @invoke(%FunTy* %x) {
         %foo = call i32 %x( i32 123 )           ; <i32> [#uses=0]
         %foo2 = tail call i32 %x( i32 123 )             ; <i32> [#uses=0]

@@ -50,10 +50,6 @@ entry:
 }
 
 ; PR5284
-declare i64 @llvm.bswap.i64(i64)
-declare i32 @llvm.bswap.i32(i32)
-declare i16 @llvm.bswap.i16(i16)
-
 define i16 @test7(i32 %A) {
   %B = tail call i32 @llvm.bswap.i32(i32 %A) nounwind 
   %C = trunc i32 %B to i16

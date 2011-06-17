@@ -30,5 +30,4 @@ define float @fabsf(float %f) {
         ret float %t
 }
 
-declare float @fabsf(float %f)
 declare x86_fp80 @fabsl(x86_fp80 %f)

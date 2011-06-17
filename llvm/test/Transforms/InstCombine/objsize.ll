@@ -149,8 +149,6 @@ declare i8* @__memset_chk(i8*, i32, i32, i32) nounwind
 
 declare noalias i8* @malloc(i32) nounwind
 
-declare i32 @llvm.objectsize.i32(i8*, i1) nounwind readonly
-
 define i32 @test7() {
 ; CHECK: @test7
   %alloc = call noalias i8* @malloc(i32 48) nounwind
