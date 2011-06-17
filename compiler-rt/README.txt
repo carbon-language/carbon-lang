@@ -106,6 +106,15 @@ si_int __mulvsi3(si_int a, si_int b);  // a * b
 di_int __mulvdi3(di_int a, di_int b);  // a * b
 ti_int __mulvti3(ti_int a, ti_int b);  // a * b
 
+
+// Integral arithmetic which returns if overflow
+
+si_int __mulosi4(si_int a, si_int b, int* overflow);  // a * b, overflow set to one if result not in signed range
+di_int __mulodi4(di_int a, di_int b, int* overflow);  // a * b, overflow set to one if result not in signed range
+ti_int __muloti4(ti_int a, ti_int b, int* overflow);  // a * b, overflow set to
+ one if result not in signed range
+
+
 //  Integral comparison: a  < b -> 0
 //                       a == b -> 1
 //                       a  > b -> 2

@@ -1,7 +1,7 @@
 
 Description := Target for Darwin using an Apple-style build.
 
-Configs := Debug Release Profile Static 
+Configs := Debug Release Profile Static
 
 # We override this with RC_ARCHS because B&I may want to build on an ARCH we
 # haven't explicitly defined support for. If all goes well, this will just work
@@ -18,7 +18,7 @@ endif
 
 
 CFLAGS := -Wall -Os -fomit-frame-pointer -g
-CFLAGS.Static := $(CFLAGS) -static 
+CFLAGS.Static := $(CFLAGS) -static
 
 VISIBILITY_HIDDEN := 0
 VISIBILITY_HIDDEN.Static  := 1
@@ -29,8 +29,8 @@ FUNCTIONS := absvdi2 absvsi2 addvdi3 addvsi3 ashldi3 ashrdi3 \
              divdc3 divdi3 divsc3 ffsdi2 \
              fixdfdi fixsfdi fixunsdfdi fixunsdfsi fixunssfdi \
              fixunssfsi floatdidf floatdisf floatundidf floatundisf \
-             gcc_personality_v0 lshrdi3 moddi3 muldc3 muldi3 \
-             mulsc3 mulvdi3 mulvsi3 negdi2 negvdi2 negvsi2 \
+             gcc_personality_v0 lshrdi3 moddi3 muldc3 muldi3 mulosi3 \
+             mulodi3 muloti3 mulsc3 mulvdi3 mulvsi3 negdi2 negvdi2 negvsi2 \
              paritydi2 paritysi2 popcountdi2 popcountsi2 powidf2 \
              powisf2 subvdi3 subvsi3 ucmpdi2 udivdi3 \
              udivmoddi4 umoddi3 apple_versioning eprintf
@@ -51,7 +51,7 @@ FUNCTIONS.x86_64 := $(FUNCTIONS) \
                 fixunsxfti fixxfdi fixxfti floatdixf floattidf \
                 floattisf floattixf floatundixf floatuntidf \
                 floatuntisf floatuntixf lshrti3 modti3 multi3 \
-                mulvti3 mulxc3 negti2 negvti2 parityti2 \
+                muloti3 mulvti3 mulxc3 negti2 negvti2 parityti2 \
                 popcountti2 powixf2 subvti3 ucmpti2 udivmodti4 \
                 udivti3 umodti3 clear_cache enable_execute_stack
 FUNCTIONS.armv5 := $(FUNCTIONS) \
@@ -65,7 +65,7 @@ FUNCTIONS.armv5 := $(FUNCTIONS) \
                 truncdfsf2  \
                 modsi3 umodsi3 udivsi3 divsi3 udivmodsi4 divmodsi4 \
                 switch8 switchu8 switch16 switch32 \
-                sync_synchronize 
+                sync_synchronize
 
 FUNCTIONS.armv6 := $(FUNCTIONS) \
 				comparedf2 comparesf2 \
@@ -81,7 +81,7 @@ FUNCTIONS.armv6 := $(FUNCTIONS) \
                 modsi3 umodsi3 udivsi3 divsi3 udivmodsi4 divmodsi4 \
                 switch8 switchu8 switch16 switch32 \
                 restore_vfp_d8_d15_regs save_vfp_d8_d15_regs \
-                sync_synchronize 
+                sync_synchronize
 
 FUNCTIONS.armv7 := $(FUNCTIONS) \
 				comparedf2 comparesf2 \
@@ -95,4 +95,3 @@ FUNCTIONS.armv7 := $(FUNCTIONS) \
                 nedf2vfp nesf2vfp \
                 subdf3vfp subsf3vfp truncdfsf2vfp unorddf2vfp unordsf2vfp \
                 modsi3 umodsi3 udivsi3 divsi3 udivmodsi4 divmodsi4
-

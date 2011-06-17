@@ -42,6 +42,11 @@ UniversalArchs.10.4 := $(call CheckArches,i386 x86_64)
 Configs += ios
 UniversalArchs.ios := $(call CheckArches,i386 x86_64 armv6 armv7)
 
+# Configuration for targetting OSX. These functions may not be in libSystem
+# so we should provide our own.
+Configs += osx
+UniversalArchs.osx := $(call CheckArches,i386 x86_64)
+
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
 UniversalArchs.cc_kext := $(call CheckArches,armv6 armv7 i386 x86_64)
@@ -74,6 +79,10 @@ CFLAGS.ios.i386		:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
 CFLAGS.ios.x86_64	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv6	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
 CFLAGS.ios.armv7	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
+CFLAGS.osx.i386         := $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
+CFLAGS.osx.x86_64       := $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
+CFLAGS.osx.armv6        := $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
+CFLAGS.osx.armv7        := $(CFLAGS) $(ARM_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.i386	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.x86_64	:= $(CFLAGS) $(X86_DEPLOYMENT_ARGS)
 CFLAGS.cc_kext.armv6	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS) -mthumb
@@ -82,7 +91,7 @@ CFLAGS.cc_kext.armv7	:= $(CFLAGS) $(ARM_DEPLOYMENT_ARGS) -mthumb
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
 
-FUNCTIONS.ios	    := divmodsi4 udivmodsi4
+FUNCTIONS.ios	    := divmodsi4 udivmodsi4 mulosi4 mulodi4 muloti4
 # On x86, the divmod functions reference divsi.
 FUNCTIONS.ios.i386   := $(FUNCTIONS.ios) \
                         divsi3 udivsi3
@@ -92,6 +101,8 @@ FUNCTIONS.ios.armv6 := $(FUNCTIONS.ios) \
                        sync_synchronize \
                        switch16 switch32 switch8 switchu8 \
                        save_vfp_d8_d15_regs restore_vfp_d8_d15_regs
+
+FUNCTIONS.osx	:= mulosi4 mulodi4 muloti4
 
 CCKEXT_COMMON_FUNCTIONS := \
 	absvdi2 \
