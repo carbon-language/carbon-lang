@@ -51,6 +51,7 @@ lldb_private::GetFormatAsCString (lldb::Format format)
         case eFormatBytes:          return "bytes";
         case eFormatBytesWithASCII: return "bytes with ASCII";
         case eFormatChar:           return "character";
+        case eFormatCharArray:      return "character array";
         case eFormatCharPrintable:  return "printable character";
         case eFormatComplexFloat:   return "complet float";
         case eFormatCString:        return "c-string";

@@ -788,6 +788,7 @@ ClangASTType::DumpTypeValue
 
                     case eFormatChar: 
                     case eFormatCharPrintable:  
+                    case eFormatCharArray:
                     case eFormatBytes:
                     case eFormatBytesWithASCII:
                         item_count = (byte_size * item_count);

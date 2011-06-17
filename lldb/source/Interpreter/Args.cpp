@@ -908,6 +908,7 @@ Args::StringToFormat
             case 'Y': format = eFormatBytesWithASCII;   break;
             case 'b': format = eFormatBinary;           break;
             case 'B': format = eFormatBoolean;          break;
+            case 'a': format = eFormatCharArray;        break;
             case 'c': format = eFormatChar;             break;
             case 'C': format = eFormatCharPrintable;    break;
             case 'o': format = eFormatOctal;            break;
@@ -930,6 +931,7 @@ Args::StringToFormat
         }
         if (!success)
             error.SetErrorStringWithFormat ("Invalid format specification '%s'. Valid values are:\n"
+                                            "  a - char buffer\n"
                                             "  b - binary\n"
                                             "  B - boolean\n"
                                             "  c - char\n"

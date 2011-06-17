@@ -505,7 +505,7 @@ ValueObject::GetSummaryAsCString ()
                                         sstr << '"';
                                         data.Dump (&sstr,
                                                    0,                 // Start offset in "data"
-                                                   eFormatChar,       // Print as characters
+                                                   eFormatCharArray,  // Print as characters
                                                    1,                 // Size of item (1 byte for a char!)
                                                    bytes_read,        // How many bytes to print?
                                                    UINT32_MAX,        // num per line
@@ -535,7 +535,7 @@ ValueObject::GetSummaryAsCString ()
 
                                         data.Dump (&sstr,
                                                    0,                 // Start offset in "data"
-                                                   eFormatChar,       // Print as characters
+                                                   eFormatCharArray,  // Print as characters
                                                    1,                 // Size of item (1 byte for a char!)
                                                    len,               // How many bytes to print?
                                                    UINT32_MAX,        // num per line

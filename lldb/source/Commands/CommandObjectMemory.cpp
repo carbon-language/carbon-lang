@@ -210,6 +210,7 @@ public:
                 if (!count_option_set)
                     m_count = 32;
                 break;
+            case eFormatCharArray:
             case eFormatChar:
             case eFormatCharPrintable:
                 if (!byte_size_option_set)
@@ -1062,6 +1063,7 @@ public:
                 buffer.PutMaxHex64 (uval64, item_byte_size);
                 break;
 
+            case eFormatCharArray:
             case eFormatChar:
             case eFormatCString:
                 if (value_str[0])

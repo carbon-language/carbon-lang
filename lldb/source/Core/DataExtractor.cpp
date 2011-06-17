@@ -1354,6 +1354,7 @@ DataExtractor::Dump
         else
         if (item_format != eFormatChar &&
             item_format != eFormatCharPrintable &&
+            item_format != eFormatCharArray &&
             count > 0)
         {
             s->PutChar(' ');
@@ -1397,6 +1398,7 @@ DataExtractor::Dump
 
         case eFormatChar:
         case eFormatCharPrintable:
+        case eFormatCharArray:
             {
                 // If we are only printing one character surround it with single
                 // quotes
@@ -1406,7 +1408,7 @@ DataExtractor::Dump
                 uint32_t ch = GetMaxU64(&offset, item_byte_size);
                 if (isprint(ch))
                     s->Printf ("%c", ch);
-                else if (item_format == eFormatChar)
+                else if (item_format != eFormatCharPrintable)
                 {
                     switch (ch)
                     {
@@ -1608,7 +1610,7 @@ DataExtractor::Dump
 
         case eFormatVectorOfChar:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatChar, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, start_offset, eFormatCharArray, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 

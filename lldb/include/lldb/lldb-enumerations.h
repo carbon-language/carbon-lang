@@ -92,6 +92,7 @@ namespace lldb {
         eFormatBytesWithASCII,
         eFormatChar,
         eFormatCharPrintable,   // Only printable characters, space if not printable
+        eFormatCharArray,       // Print characters with no single quotes, used for character arrays that can contain non printable characters
         eFormatComplex,         // Floating point complex type
         eFormatComplexFloat = eFormatComplex,
         eFormatCString,         // NULL terminated C strings
