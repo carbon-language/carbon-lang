@@ -12,7 +12,6 @@ class ConnectRemoteTestCase(TestBase):
 
     mydir = "connect_remote"
 
-    @unittest2.expectedFailure
     def test_connect_remote(self):
         """Test "process connect connect:://localhost:12345"."""
 
