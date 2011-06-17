@@ -417,7 +417,7 @@ bool Function::hasAddressTaken(const User* *PutOffender) const {
 /// setjmp or other function that gcc recognizes as "returning twice".
 ///
 /// FIXME: Remove after <rdar://problem/8031714> is fixed.
-/// FIXME: Is the obove FIXME valid?
+/// FIXME: Is the above FIXME valid?
 bool Function::callsFunctionThatReturnsTwice() const {
   const Module *M = this->getParent();
   static const char *ReturnsTwiceFns[] = {
