@@ -116,8 +116,6 @@ def ccc_arrmt_check : Flag<"-ccc-arrmt-check">, CCCDriverOpt,
   HelpText<"Check for ARC migration issues that need manual handling">;
 def ccc_arrmt_modify : Flag<"-ccc-arrmt-modify">, CCCDriverOpt,
   HelpText<"Apply modifications to files to conform to ARC">;
-def ccc_arrmt_modify_in_memory : Flag<"-ccc-arrmt-modify-in-memory">,
-  HelpText<"Apply ARC conforming modifications & compile using memory buffers">;
 
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<"-ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;

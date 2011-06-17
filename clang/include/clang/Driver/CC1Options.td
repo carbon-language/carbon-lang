@@ -387,8 +387,6 @@ def arcmt_check : Flag<"-arcmt-check">,
   HelpText<"Check for ARC migration issues that need manual handling">;
 def arcmt_modify : Flag<"-arcmt-modify">,
   HelpText<"Apply modifications to files to conform to ARC">;
-def arcmt_modify_in_memory : Flag<"-arcmt-modify-in-memory">,
-  HelpText<"Apply ARC conforming modifications & compile using memory buffers">;
 
 def import_module : Separate<"-import-module">,
   HelpText<"Import a module definition file">;

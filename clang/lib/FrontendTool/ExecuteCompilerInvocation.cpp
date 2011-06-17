@@ -100,9 +100,6 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   case FrontendOptions::ARCMT_Modify:
     Act = new arcmt::TransformationAction(Act);
     break;
-  case FrontendOptions::ARCMT_ModifyInMemory:
-    Act = new arcmt::InMemoryTransformationAction(Act);
-    break;
   }
 
   // If there are any AST files to merge, create a frontend action

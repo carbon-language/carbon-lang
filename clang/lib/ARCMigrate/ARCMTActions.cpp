@@ -41,18 +41,3 @@ void TransformationAction::ExecuteAction() {
 
 TransformationAction::TransformationAction(FrontendAction *WrappedAction)
   : WrapperFrontendAction(WrappedAction) {}
-
-void InMemoryTransformationAction::ExecuteAction() {
-  CompilerInstance &CI = getCompilerInstance();
-  if (arcmt::applyTransformationsInMemory(CI.getInvocation(), getCurrentFile(),
-                                          getCurrentFileKind(),
-                                          CI.getDiagnostics().getClient()))
-    return;
-
-  WrapperFrontendAction::ExecuteAction();
-}
-
-InMemoryTransformationAction::InMemoryTransformationAction(
-    FrontendAction *WrappedAction)
-  : WrapperFrontendAction(WrappedAction) {}
-

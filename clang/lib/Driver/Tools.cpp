@@ -1391,8 +1391,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_fno_objc_arc)) {
     if (const Arg *A = Args.getLastArg(options::OPT_ccc_arrmt_check,
-                                       options::OPT_ccc_arrmt_modify,
-                                       options::OPT_ccc_arrmt_modify_in_memory)) {
+                                       options::OPT_ccc_arrmt_modify)) {
       switch (A->getOption().getID()) {
       default:
         llvm_unreachable("missed a case");
@@ -1401,9 +1400,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         break;
       case options::OPT_ccc_arrmt_modify:
         CmdArgs.push_back("-arcmt-modify");
-        break;
-      case options::OPT_ccc_arrmt_modify_in_memory:
-        CmdArgs.push_back("-arcmt-modify-in-memory");
         break;
       }
     }

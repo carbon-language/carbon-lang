@@ -424,9 +424,6 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
   case FrontendOptions::ARCMT_Modify:
     Res.push_back("-arcmt-modify");
     break;
-  case FrontendOptions::ARCMT_ModifyInMemory:
-    Res.push_back("-arcmt-modify-in-memory");
-    break;
   }
 
   bool NeedLang = false;
@@ -1242,8 +1239,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
 
   Opts.ARCMTAction = FrontendOptions::ARCMT_None;
   if (const Arg *A = Args.getLastArg(OPT_arcmt_check,
-                                     OPT_arcmt_modify,
-                                     OPT_arcmt_modify_in_memory)) {
+                                     OPT_arcmt_modify)) {
     switch (A->getOption().getID()) {
     default:
       llvm_unreachable("missed a case");
@@ -1252,9 +1248,6 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       break;
     case OPT_arcmt_modify:
       Opts.ARCMTAction = FrontendOptions::ARCMT_Modify;
-      break;
-    case OPT_arcmt_modify_in_memory:
-      Opts.ARCMTAction = FrontendOptions::ARCMT_ModifyInMemory;
       break;
     }
   }

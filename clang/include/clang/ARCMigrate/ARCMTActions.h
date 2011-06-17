@@ -32,14 +32,6 @@ public:
   TransformationAction(FrontendAction *WrappedAction);
 };
 
-class InMemoryTransformationAction : public WrapperFrontendAction {
-protected:
-  virtual void ExecuteAction();
-
-public:
-  InMemoryTransformationAction(FrontendAction *WrappedAction);
-};
-
 }
 }
 

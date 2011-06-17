@@ -41,12 +41,6 @@ bool applyTransformations(CompilerInvocation &origCI,
                           llvm::StringRef Filename, InputKind Kind,
                           DiagnosticClient *DiagClient);
 
-/// \brief Like applyTransformations but no source file is modified, compilation
-/// happens using in-memory buffers.
-bool applyTransformationsInMemory(CompilerInvocation &origCI,
-                                  llvm::StringRef Filename, InputKind Kind,
-                                  DiagnosticClient *DiagClient);
-
 typedef void (*TransformFn)(MigrationPass &pass);
 
 std::vector<TransformFn> getAllTransformations();

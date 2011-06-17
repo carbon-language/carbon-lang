@@ -80,8 +80,7 @@ public:
   enum {
     ARCMT_None,
     ARCMT_Check,
-    ARCMT_Modify,
-    ARCMT_ModifyInMemory
+    ARCMT_Modify
   } ARCMTAction;
 
   /// The input files and their types.

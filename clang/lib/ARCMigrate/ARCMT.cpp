@@ -277,41 +277,6 @@ bool arcmt::applyTransformations(CompilerInvocation &origCI,
 }
 
 //===----------------------------------------------------------------------===//
-// applyTransformationsInMemory.
-//===----------------------------------------------------------------------===//
-
-bool arcmt::applyTransformationsInMemory(CompilerInvocation &origCI,
-                                       llvm::StringRef Filename, InputKind Kind,
-                                       DiagnosticClient *DiagClient) {
-  if (!origCI.getLangOpts().ObjC1)
-    return false;
-
-  // Make sure checking is successful first.
-  CompilerInvocation CInvokForCheck(origCI);
-  if (arcmt::checkForManualIssues(CInvokForCheck, Filename, Kind, DiagClient))
-    return true;
-
-  CompilerInvocation CInvok(origCI);
-  CInvok.getFrontendOpts().Inputs.clear();
-  CInvok.getFrontendOpts().Inputs.push_back(std::make_pair(Kind, Filename));
-  
-  MigrationProcess migration(CInvok, DiagClient);
-
-  std::vector<TransformFn> transforms = arcmt::getAllTransformations();
-  assert(!transforms.empty());
-
-  for (unsigned i=0, e = transforms.size(); i != e; ++i) {
-    bool err = migration.applyTransform(transforms[i]);
-    if (err) return true;
-  }
-
-  origCI.getLangOpts().ObjCAutoRefCount = true;
-  migration.getRemapper().transferMappingsAndClear(origCI);
-
-  return false;
-}
-
-//===----------------------------------------------------------------------===//
 // CollectTransformActions.
 //===----------------------------------------------------------------------===//
 
