@@ -479,19 +479,19 @@ ARMBaseRegisterInfo::getRawAllocationOrder(const TargetRegisterClass *RC,
 
     if (!TFI->hasFP(MF)) {
       if (!STI.isR9Reserved())
-        return GPREven1;
+        return ArrayRef<unsigned>(GPREven1);
       else
-        return GPREven4;
+        return ArrayRef<unsigned>(GPREven4);
     } else if (FramePtr == ARM::R7) {
       if (!STI.isR9Reserved())
-        return GPREven2;
+        return ArrayRef<unsigned>(GPREven2);
       else
-        return GPREven5;
+        return ArrayRef<unsigned>(GPREven5);
     } else { // FramePtr == ARM::R11
       if (!STI.isR9Reserved())
-        return GPREven3;
+        return ArrayRef<unsigned>(GPREven3);
       else
-        return GPREven6;
+        return ArrayRef<unsigned>(GPREven6);
     }
   } else if (HintType == ARMRI::RegPairOdd) {
     if (isPhysicalRegister(HintReg) && getRegisterPairOdd(HintReg, MF) == 0)
@@ -501,19 +501,19 @@ ARMBaseRegisterInfo::getRawAllocationOrder(const TargetRegisterClass *RC,
 
     if (!TFI->hasFP(MF)) {
       if (!STI.isR9Reserved())
-        return GPROdd1;
+        return ArrayRef<unsigned>(GPROdd1);
       else
-        return GPROdd4;
+        return ArrayRef<unsigned>(GPROdd4);
     } else if (FramePtr == ARM::R7) {
       if (!STI.isR9Reserved())
-        return GPROdd2;
+        return ArrayRef<unsigned>(GPROdd2);
       else
-        return GPROdd5;
+        return ArrayRef<unsigned>(GPROdd5);
     } else { // FramePtr == ARM::R11
       if (!STI.isR9Reserved())
-        return GPROdd3;
+        return ArrayRef<unsigned>(GPROdd3);
       else
-        return GPROdd6;
+        return ArrayRef<unsigned>(GPROdd6);
     }
   }
   return RC->getRawAllocationOrder(MF);
