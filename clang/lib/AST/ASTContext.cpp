@@ -4511,6 +4511,8 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
            BE = CXXRec->bases_end(); BI != BE; ++BI) {
       if (!BI->isVirtual()) {
         CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
+        if (base->isEmpty())
+          continue;
         uint64_t offs = layout.getBaseClassOffsetInBits(base);
         FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
                                   std::make_pair(offs, base));
@@ -4532,6 +4534,8 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
            BI = CXXRec->vbases_begin(),
            BE = CXXRec->vbases_end(); BI != BE; ++BI) {
       CXXRecordDecl *base = BI->getType()->getAsCXXRecordDecl();
+      if (base->isEmpty())
+        continue;
       uint64_t offs = layout.getVBaseClassOffsetInBits(base);
       FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
                                 std::make_pair(offs, base));
@@ -4595,8 +4599,8 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
       // expands virtual bases each time one is encountered in the hierarchy,
       // making the encoding type bigger than it really is.
       getObjCEncodingForStructureImpl(base, S, FD, /*includeVBases*/false);
-      if (!base->isEmpty())
-        CurOffs += toBits(getASTRecordLayout(base).getNonVirtualSize());
+      assert(!base->isEmpty());
+      CurOffs += toBits(getASTRecordLayout(base).getNonVirtualSize());
     } else {
       FieldDecl *field = cast<FieldDecl>(dcl);
       if (FD) {

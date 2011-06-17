@@ -91,6 +91,20 @@ namespace rdar9357400 {
   const char gg[] = @encode(vector4f);
 }
 
+// rdar://9624314
+namespace rdar9624314 {
+  struct B2 { int x; };
+  struct B3 {};
+  struct S : B2, B3 {};
+
+  // CHECK: @_ZN11rdar9624314L2ggE = internal constant [6 x i8] c"{S=i}\00"
+  const char gg[] = @encode(S);
+
+  struct S2 { unsigned : 0; int x; unsigned : 0; };
+  // CHECK: @_ZN11rdar9624314L2g2E = internal constant [11 x i8] c"{S2=b0ib0}\00"
+  const char g2[] = @encode(S2);
+}
+
 struct Base1 {
   char x;
 };
