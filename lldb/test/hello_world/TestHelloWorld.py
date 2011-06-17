@@ -27,6 +27,22 @@ class HelloWorldTestCase(TestBase):
         self.buildDwarf()
         self.hello_world_python(useLaunchAPI = True)
 
+    @python_api_test
+    def test_with_dwarf_and_attach_to_process_with_id_api(self):
+        """Create target, breakpoint, start a process, and attach to it.
+
+        Use dwarf map (no dsym) and attach to process with id API.
+        """
+        self.buildDwarf()
+        self.hello_world_attach_api()
+
+    def setUp(self):
+        # Call super's setUp().
+        TestBase.setUp(self)
+        # Find a couple of the line numbers within main.c.
+        self.line1 = line_number('main.c', '// Set break point at this line.')
+        self.line2 = line_number('main.c', '// Waiting to be attached...')
+
     def hello_world_python(self, useLaunchAPI):
         """Create target, breakpoint, launch a process, and then kill it."""
 
@@ -34,7 +50,7 @@ class HelloWorldTestCase(TestBase):
 
         target = self.dbg.CreateTarget(exe)
 
-        breakpoint = target.BreakpointCreateByLocation("main.c", 4)
+        breakpoint = target.BreakpointCreateByLocation("main.c", self.line1)
 
         # The default state after breakpoint creation should be enabled.
         self.assertTrue(breakpoint.IsEnabled(),
@@ -73,6 +89,31 @@ class HelloWorldTestCase(TestBase):
 
         # The breakpoint should have a hit count of 1.
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
+
+    def hello_world_attach_api(self):
+        """Create target, breakpoint, start a process, and attach to it."""
+
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        target = self.dbg.CreateTarget(exe)
+
+        # Spawn a new process.
+        import subprocess
+        popen = subprocess.Popen([exe, "abc", "xyz"])
+        #print "pid of spawned process: %d" % popen.pid
+
+        listener = lldb.SBListener("my.attach.listener")
+        error = lldb.SBError()
+        process = target.AttachToProcessWithID(listener, popen.pid, error)
+
+        self.assertTrue(process, PROCESS_IS_VALID)
+
+        # Let's check the stack traces of the attached process.
+        import lldbutil
+        stacktraces = lldbutil.print_stacktraces(process, string_buffer=True)
+        self.expect(stacktraces, exe=False,
+            substrs = ['main.c:%d' % self.line2,
+                       '(int)argc=3'])
 
 
 if __name__ == '__main__':
