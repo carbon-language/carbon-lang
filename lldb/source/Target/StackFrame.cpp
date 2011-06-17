@@ -460,7 +460,9 @@ StackFrame::GetVariableList (bool get_file_globals)
         {
             const bool get_child_variables = true;
             const bool can_create = true;
-            m_variable_list_sp = frame_block->GetVariableList (get_child_variables, can_create);
+            const bool stop_if_child_block_is_inlined_function = true;
+            m_variable_list_sp.reset(new VariableList());
+            frame_block->AppendBlockVariables(can_create, get_child_variables, stop_if_child_block_is_inlined_function, m_variable_list_sp.get());
         }
     }
     

@@ -281,10 +281,15 @@ public:
     ///     for this block.
     //------------------------------------------------------------------
     lldb::VariableListSP
-    GetVariableList (bool get_child_variables, 
-                     bool can_create);
+    GetBlockVariableList (bool can_create);
 
 
+    uint32_t
+    AppendBlockVariables (bool can_create,
+                          bool get_child_block_variables,
+                          bool stop_if_child_block_is_inlined_function,
+                          VariableList *variable_list);
+                          
     //------------------------------------------------------------------
     /// Appends the variables from this block, and optionally from all
     /// parent blocks, to \a variable_list.
@@ -431,6 +436,9 @@ public:
     bool
     GetStartAddress (Address &addr);
     
+    void
+    SetDidParseVariables (bool b, bool set_children);
+
 protected:
     typedef std::vector<lldb::BlockSP> collection;
     //------------------------------------------------------------------

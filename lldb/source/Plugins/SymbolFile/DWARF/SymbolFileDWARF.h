@@ -311,6 +311,17 @@ protected:
                                 m_debug_map_symfile = debug_map_symfile;
                             }
 
+    const DWARFDebugInfoEntry *
+                            FindBlockContainingSpecification (dw_offset_t func_die_offset, 
+                                                              dw_offset_t spec_block_die_offset,
+                                                              DWARFCompileUnit **dwarf_cu_handle);
+
+    const DWARFDebugInfoEntry *
+                            FindBlockContainingSpecification (DWARFCompileUnit* dwarf_cu,
+                                                              const DWARFDebugInfoEntry *die,
+                                                              dw_offset_t spec_block_die_offset,
+                                                              DWARFCompileUnit **dwarf_cu_handle);
+
     clang::NamespaceDecl *
     ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoEntry *die);
     

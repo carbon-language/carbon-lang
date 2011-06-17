@@ -3983,7 +3983,12 @@ SymbolFileDWARF::ParseVariablesForContext (const SymbolContext& sc)
             dw_addr_t func_lo_pc = function_die->GetAttributeValueAsUnsigned (this, dwarf_cu, DW_AT_low_pc, DW_INVALID_ADDRESS);
             assert (func_lo_pc != DW_INVALID_ADDRESS);
 
-            return ParseVariables(sc, dwarf_cu, func_lo_pc, function_die->GetFirstChild(), true, true);
+            const size_t num_variables = ParseVariables(sc, dwarf_cu, func_lo_pc, function_die->GetFirstChild(), true, true);
+            
+            // Let all blocks know they have parse all their variables
+            sc.function->GetBlock (false).SetDidParseVariables (true, true);
+
+            return num_variables;
         }
         else if (sc.comp_unit)
         {
@@ -4161,6 +4166,74 @@ SymbolFileDWARF::ParseVariableDIE
     return var_sp;
 }
 
+
+const DWARFDebugInfoEntry *
+SymbolFileDWARF::FindBlockContainingSpecification (dw_offset_t func_die_offset, 
+                                                   dw_offset_t spec_block_die_offset,
+                                                   DWARFCompileUnit **result_die_cu_handle)
+{
+    // Give the concrete function die specified by "func_die_offset", find the 
+    // concrete block whose DW_AT_specification or DW_AT_abstract_origin points
+    // to "spec_block_die_offset"
+    DWARFDebugInfo* info = DebugInfo();
+
+    const DWARFDebugInfoEntry *die = info->GetDIEPtrWithCompileUnitHint(func_die_offset, result_die_cu_handle);
+    if (die)
+    {
+        assert (*result_die_cu_handle);
+        return FindBlockContainingSpecification (*result_die_cu_handle, die, spec_block_die_offset, result_die_cu_handle);
+    }
+    return NULL;
+}
+
+
+const DWARFDebugInfoEntry *
+SymbolFileDWARF::FindBlockContainingSpecification(DWARFCompileUnit* dwarf_cu,
+                                                  const DWARFDebugInfoEntry *die,
+                                                  dw_offset_t spec_block_die_offset,
+                                                  DWARFCompileUnit **result_die_cu_handle)
+{
+    if (die)
+    {
+        switch (die->Tag())
+        {
+        case DW_TAG_subprogram:
+        case DW_TAG_inlined_subroutine:
+        case DW_TAG_lexical_block:
+            {
+                if (die->GetAttributeValueAsReference (this, dwarf_cu, DW_AT_specification, DW_INVALID_OFFSET) == spec_block_die_offset)
+                {
+                    *result_die_cu_handle = dwarf_cu;
+                    return die;
+                }
+
+                if (die->GetAttributeValueAsReference (this, dwarf_cu, DW_AT_abstract_origin, DW_INVALID_OFFSET) == spec_block_die_offset)
+                {
+                    *result_die_cu_handle = dwarf_cu;
+                    return die;
+                }
+            }
+            break;
+        }
+
+        // Give the concrete function die specified by "func_die_offset", find the 
+        // concrete block whose DW_AT_specification or DW_AT_abstract_origin points
+        // to "spec_block_die_offset"
+        for (const DWARFDebugInfoEntry *child_die = die->GetFirstChild(); child_die != NULL; child_die = child_die->GetSibling())
+        {
+            const DWARFDebugInfoEntry *result_die = FindBlockContainingSpecification (dwarf_cu,
+                                                                                      child_die,
+                                                                                      spec_block_die_offset,
+                                                                                      result_die_cu_handle);
+            if (result_die)
+                return result_die;
+        }
+    }
+    
+    *result_die_cu_handle = NULL;
+    return NULL;
+}
+
 size_t
 SymbolFileDWARF::ParseVariables
 (
@@ -4176,126 +4249,125 @@ SymbolFileDWARF::ParseVariables
     if (orig_die == NULL)
         return 0;
 
+    VariableListSP variable_list_sp;
+
+    size_t vars_added = 0;
     const DWARFDebugInfoEntry *die = orig_die;
-    const DWARFDebugInfoEntry *sc_parent_die = GetParentSymbolContextDIE(orig_die);
-    dw_tag_t parent_tag = sc_parent_die ? sc_parent_die->Tag() : 0;
-    VariableListSP variables;
-    switch (parent_tag)
+    while (die != NULL)
     {
-    case DW_TAG_compile_unit:
-        if (sc.comp_unit != NULL)
+        dw_tag_t tag = die->Tag();
+
+        // Check to see if we have already parsed this variable or constant?
+        if (m_die_to_variable_sp[die])
         {
-            variables = sc.comp_unit->GetVariableList(false);
-            if (variables.get() == NULL)
-            {
-                variables.reset(new VariableList());
-                sc.comp_unit->SetVariableList(variables);
-            }
+            if (cc_variable_list)
+                cc_variable_list->AddVariableIfUnique (m_die_to_variable_sp[die]);
         }
         else
         {
-            fprintf (stderr, 
-                     "error: parent 0x%8.8x %s with no valid compile unit in symbol context for 0x%8.8x %s.\n",
-                     sc_parent_die->GetOffset(),
-                     DW_TAG_value_to_name (parent_tag),
-                     orig_die->GetOffset(),
-                     DW_TAG_value_to_name (orig_die->Tag()));
-        }
-        break;
-
-    case DW_TAG_subprogram:
-    case DW_TAG_inlined_subroutine:
-    case DW_TAG_lexical_block:
-        if (sc.function != NULL)
-        {
-            // Check to see if we already have parsed the variables for the given scope
-            
-            Block *block = sc.function->GetBlock(true).FindBlockByID(sc_parent_die->GetOffset());
-            if (block != NULL)
+            // We haven't already parsed it, lets do that now.
+            if ((tag == DW_TAG_variable) ||
+                (tag == DW_TAG_constant) ||
+                (tag == DW_TAG_formal_parameter && sc.function))
             {
-                variables = block->GetVariableList(false, false);
-                if (variables.get() == NULL)
+                if (variable_list_sp.get() == NULL)
                 {
-                    variables.reset(new VariableList());
-                    block->SetVariableList(variables);
+                    const DWARFDebugInfoEntry *sc_parent_die = GetParentSymbolContextDIE(orig_die);
+                    dw_tag_t parent_tag = sc_parent_die ? sc_parent_die->Tag() : 0;
+                    switch (parent_tag)
+                    {
+                        case DW_TAG_compile_unit:
+                            if (sc.comp_unit != NULL)
+                            {
+                                variable_list_sp = sc.comp_unit->GetVariableList(false);
+                                if (variable_list_sp.get() == NULL)
+                                {
+                                    variable_list_sp.reset(new VariableList());
+                                    sc.comp_unit->SetVariableList(variable_list_sp);
+                                }
+                            }
+                            else
+                            {
+                                fprintf (stderr, 
+                                         "error: parent 0x%8.8x %s with no valid compile unit in symbol context for 0x%8.8x %s.\n",
+                                         sc_parent_die->GetOffset(),
+                                         DW_TAG_value_to_name (parent_tag),
+                                         orig_die->GetOffset(),
+                                         DW_TAG_value_to_name (orig_die->Tag()));
+                            }
+                            break;
+                            
+                        case DW_TAG_subprogram:
+                        case DW_TAG_inlined_subroutine:
+                        case DW_TAG_lexical_block:
+                            if (sc.function != NULL)
+                            {
+                                // Check to see if we already have parsed the variables for the given scope
+                                
+                                Block *block = sc.function->GetBlock(true).FindBlockByID(sc_parent_die->GetOffset());
+                                if (block == NULL)
+                                {
+                                    // This must be a specification or abstract origin with 
+                                    // a concrete block couterpart in the current function. We need
+                                    // to find the concrete block so we can correctly add the 
+                                    // variable to it
+                                    DWARFCompileUnit *concrete_block_die_cu = dwarf_cu;
+                                    const DWARFDebugInfoEntry *concrete_block_die = FindBlockContainingSpecification (sc.function->GetID(), 
+                                                                                                                      sc_parent_die->GetOffset(), 
+                                                                                                                      &concrete_block_die_cu);
+                                    if (concrete_block_die)
+                                        block = sc.function->GetBlock(true).FindBlockByID(concrete_block_die->GetOffset());
+                                }
+                                
+                                if (block != NULL)
+                                {
+                                    const bool can_create = false;
+                                    variable_list_sp = block->GetBlockVariableList (can_create);
+                                    if (variable_list_sp.get() == NULL)
+                                    {
+                                        variable_list_sp.reset(new VariableList());
+                                        block->SetVariableList(variable_list_sp);
+                                    }
+                                }
+                            }
+                            break;
+                            
+                        default:
+                            fprintf (stderr, 
+                                     "error: didn't find appropriate parent DIE for variable list for 0x%8.8x %s.\n",
+                                     orig_die->GetOffset(),
+                                     DW_TAG_value_to_name (orig_die->Tag()));
+                            break;
+                    }
                 }
-            }
-            else
-            {
-                fprintf (stderr, 
-                         "error: NULL block for 0x%8.8x %s for variable at 0x%8.8x %s\n", 
-                         sc_parent_die->GetOffset(),
-                         DW_TAG_value_to_name (parent_tag),
-                         orig_die->GetOffset(),
-                         DW_TAG_value_to_name (orig_die->Tag()));
-            }
-        }
-        else
-        {
-            fprintf (stderr, 
-                     "error: parent 0x%8.8x %s with no valid function in symbol context for 0x%8.8x %s.\n",
-                     sc_parent_die->GetOffset(),
-                     DW_TAG_value_to_name (parent_tag),
-                     orig_die->GetOffset(),
-                     DW_TAG_value_to_name (orig_die->Tag()));
-        }
-        break;
-
-    default:
-        fprintf (stderr, 
-                 "error: didn't find appropriate parent DIE for variable list for 0x%8.8x %s.\n",
-                 orig_die->GetOffset(),
-                 DW_TAG_value_to_name (orig_die->Tag()));
-        break;
-    }
-
-    // We need to have a variable list at this point that we can add variables to
-    if (variables.get())
-    {
-        size_t vars_added = 0;
-        while (die != NULL)
-        {
-            dw_tag_t tag = die->Tag();
-
-            // Check to see if we have already parsed this variable or constant?
-            if (m_die_to_variable_sp[die])
-            {
-                if (cc_variable_list)
-                    cc_variable_list->AddVariableIfUnique (m_die_to_variable_sp[die]);
-            }
-            else
-            {
-                // We haven't already parsed it, lets do that now.
-                if ((tag == DW_TAG_variable) ||
-                    (tag == DW_TAG_constant) ||
-                    (tag == DW_TAG_formal_parameter && sc.function))
+                
+                if (variable_list_sp)
                 {
                     VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die, func_low_pc));
                     if (var_sp)
                     {
-                        variables->AddVariableIfUnique (var_sp);
+                        variable_list_sp->AddVariableIfUnique (var_sp);
                         if (cc_variable_list)
                             cc_variable_list->AddVariableIfUnique (var_sp);
                         ++vars_added;
                     }
                 }
             }
-
-            bool skip_children = (sc.function == NULL && tag == DW_TAG_subprogram);
-
-            if (!skip_children && parse_children && die->HasChildren())
-            {
-                vars_added += ParseVariables(sc, dwarf_cu, func_low_pc, die->GetFirstChild(), true, true, cc_variable_list);
-            }
-
-            if (parse_siblings)
-                die = die->GetSibling();
-            else
-                die = NULL;
         }
-        return vars_added;
+
+        bool skip_children = (sc.function == NULL && tag == DW_TAG_subprogram);
+
+        if (!skip_children && parse_children && die->HasChildren())
+        {
+            vars_added += ParseVariables(sc, dwarf_cu, func_low_pc, die->GetFirstChild(), true, true, cc_variable_list);
+        }
+
+        if (parse_siblings)
+            die = die->GetSibling();
+        else
+            die = NULL;
     }
-    return 0;
+    return vars_added;
 }
 
 //------------------------------------------------------------------

@@ -52,6 +52,8 @@ public:
     DWARFCompileUnitSP GetCompileUnitContainingDIE(dw_offset_t die_offset);
 
     DWARFDebugInfoEntry* GetDIEPtr(dw_offset_t die_offset, DWARFCompileUnitSP* cu_sp_ptr);
+    DWARFDebugInfoEntry* GetDIEPtrWithCompileUnitHint (dw_offset_t die_offset, DWARFCompileUnit**cu_handle);
+
     const DWARFDebugInfoEntry* GetDIEPtrContainingOffset(dw_offset_t die_offset, DWARFCompileUnitSP* cu_sp_ptr);
 
     void Dump(lldb_private::Stream *s, const uint32_t die_offset, const uint32_t recurse_depth);

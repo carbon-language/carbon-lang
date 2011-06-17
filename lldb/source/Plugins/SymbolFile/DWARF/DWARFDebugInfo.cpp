@@ -263,6 +263,29 @@ DWARFDebugInfo::GetDIEPtr(dw_offset_t die_offset, DWARFCompileUnitSP* cu_sp_ptr)
     return NULL;    // Not found in any compile units
 }
 
+DWARFDebugInfoEntry*
+DWARFDebugInfo::GetDIEPtrWithCompileUnitHint (dw_offset_t die_offset, DWARFCompileUnit**cu_handle)
+{
+    assert (cu_handle);
+    DWARFDebugInfoEntry* die = NULL;
+    if (*cu_handle)
+        die = (*cu_handle)->GetDIEPtr(die_offset);
+
+    if (die == NULL)
+    {
+        DWARFCompileUnitSP cu_sp (GetCompileUnitContainingDIE(die_offset));
+        if (cu_sp.get())
+        {
+            *cu_handle = cu_sp.get();
+            die = cu_sp->GetDIEPtr(die_offset);
+        }
+    }
+    if (die == NULL)
+        *cu_handle = NULL;
+    return die;
+}
+
+
 const DWARFDebugInfoEntry*
 DWARFDebugInfo::GetDIEPtrContainingOffset(dw_offset_t die_offset, DWARFCompileUnitSP* cu_sp_ptr)
 {

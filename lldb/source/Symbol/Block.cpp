@@ -455,9 +455,8 @@ Block::SetInlinedFunctionInfo(const char *name, const char *mangled, const Decla
 
 
 VariableListSP
-Block::GetVariableList (bool get_child_variables, bool can_create)
+Block::GetBlockVariableList (bool can_create)
 {
-    VariableListSP variable_list_sp;
     if (m_parsed_block_variables == false)
     {
         if (m_variable_list_sp.get() == NULL && can_create)
@@ -469,31 +468,40 @@ Block::GetVariableList (bool get_child_variables, bool can_create)
             sc.module_sp->GetSymbolVendor()->ParseVariablesForContext(sc);
         }
     }
+    return m_variable_list_sp;
+}
 
-    if (m_variable_list_sp.get())
+uint32_t
+Block::AppendBlockVariables (bool can_create,
+                             bool get_child_block_variables,
+                             bool stop_if_child_block_is_inlined_function,
+                             VariableList *variable_list)
+{
+    uint32_t num_variables_added = 0;
+    VariableList *block_var_list = GetBlockVariableList (can_create).get();
+    if (block_var_list)
     {
-        variable_list_sp.reset(new VariableList());
-        if (variable_list_sp.get())
-            variable_list_sp->AddVariables(m_variable_list_sp.get());
-
-        if (get_child_variables)
-        {
-            for (Block *child_block = GetFirstChild(); 
-                 child_block != NULL; 
-                 child_block = child_block->GetSibling())
-            {   
-                if (child_block->GetInlinedFunctionInfo() == NULL)
-                {
-                    VariableListSP child_block_variable_list(child_block->GetVariableList(get_child_variables, can_create));
-                    if (child_block_variable_list.get())
-                        variable_list_sp->AddVariables(child_block_variable_list.get());
-                }
-                
+        num_variables_added += block_var_list->GetSize();
+        variable_list->AddVariables (block_var_list);
+    }
+    
+    if (get_child_block_variables)
+    {
+        for (Block *child_block = GetFirstChild(); 
+             child_block != NULL; 
+             child_block = child_block->GetSibling())
+        {   
+            if (stop_if_child_block_is_inlined_function == false || 
+                child_block->GetInlinedFunctionInfo() == NULL)
+            {
+                num_variables_added += child_block->AppendBlockVariables (can_create,
+                                                                          get_child_block_variables,
+                                                                          stop_if_child_block_is_inlined_function,
+                                                                          variable_list);
             }
         }
     }
-
-    return variable_list_sp;
+    return num_variables_added;
 }
 
 uint32_t
@@ -506,7 +514,7 @@ Block::AppendVariables
 )
 {
     uint32_t num_variables_added = 0;
-    VariableListSP variable_list_sp(GetVariableList(false, can_create));
+    VariableListSP variable_list_sp(GetBlockVariableList(can_create));
 
     bool is_inlined_function = GetInlinedFunctionInfo() != NULL;
     if (variable_list_sp.get())
@@ -538,3 +546,15 @@ Block::SetBlockInfoHasBeenParsed (bool b, bool set_children)
             child_block->SetBlockInfoHasBeenParsed (b, true);
     }
 }
+
+void
+Block::SetDidParseVariables (bool b, bool set_children)
+{
+    m_parsed_block_variables = b;
+    if (set_children)
+    {
+        for (Block *child_block = GetFirstChild(); child_block != NULL; child_block = child_block->GetSibling())
+            child_block->SetDidParseVariables (b, true);
+    }
+}
+
