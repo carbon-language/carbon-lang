@@ -54,8 +54,7 @@ void f() {
 
   auto *fail1 = 0; // expected-error {{variable 'fail1' with type 'auto *' has incompatible initializer of type 'int'}}
   int **p;
-  // FIXME: due to PR9233, we get the wrong diagnostic here.
-  const auto **fail2(p); // desired-error {{variable 'fail2' with type 'auto const **' has incompatible initializer of type 'int **'}} expected-error {{cannot initialize}}
+  const auto **fail2(p); // expected-error {{variable 'fail2' with type 'auto const **' has incompatible initializer of type 'int **'}}
 }
 
 struct S {

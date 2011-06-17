@@ -3344,8 +3344,19 @@ Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *Init,
   QualType DeducedType = Deduced[0].getAsType();
   if (DeducedType.isNull())
     return false;
-
+  
   Result = SubstituteAutoTransform(*this, DeducedType).TransformType(Type);
+  
+  // Check that the deduced argument type is compatible with the original
+  // argument type per C++ [temp.deduct.call]p4.
+  if (Result &&
+      CheckOriginalCallArgDeduction(*this, 
+                                    Sema::OriginalCallArg(FuncParam,0,InitType),
+                                    Result->getType())) {
+    Result = 0;
+    return false;
+  }
+
   return true;
 }
 
