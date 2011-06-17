@@ -118,10 +118,10 @@ namespace bitc {
     // 5 is unused.
     METADATA_KIND          = 6,   // [n x [id, name]]
     // 7 is unused.
-    METADATA_NODE2         = 8,   // NODE2:         [n x (type num, value num)]
-    METADATA_FN_NODE2      = 9,   // FN_NODE2:      [n x (type num, value num)]
-    METADATA_NAMED_NODE2   = 10,  // NAMED_NODE2:   [n x mdnodes]
-    METADATA_ATTACHMENT2   = 11   // [m x [value, [n x [id, mdnode]]]
+    METADATA_NODE          = 8,   // NODE:          [n x (type num, value num)]
+    METADATA_FN_NODE       = 9,   // FN_NODE:       [n x (type num, value num)]
+    METADATA_NAMED_NODE    = 10,  // NAMED_NODE:    [n x mdnodes]
+    METADATA_ATTACHMENT    = 11   // [m x [value, [n x [id, mdnode]]]
   };
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
   // constant and maintains an implicit current type value.

@@ -790,9 +790,9 @@ bool BitcodeReader::ParseMetadata() {
       Record.clear();
       Code = Stream.ReadCode();
 
-      // METADATA_NAME is always followed by METADATA_NAMED_NODE2.
+      // METADATA_NAME is always followed by METADATA_NAMED_NODE.
       unsigned NextBitCode = Stream.ReadRecord(Code, Record);
-      assert(NextBitCode == bitc::METADATA_NAMED_NODE2); (void)NextBitCode;
+      assert(NextBitCode == bitc::METADATA_NAMED_NODE); (void)NextBitCode;
 
       // Read named metadata elements.
       unsigned Size = Record.size();
@@ -805,18 +805,18 @@ bool BitcodeReader::ParseMetadata() {
       }
       break;
     }
-    case bitc::METADATA_FN_NODE2:
+    case bitc::METADATA_FN_NODE:
       IsFunctionLocal = true;
       // fall-through
-    case bitc::METADATA_NODE2: {
+    case bitc::METADATA_NODE: {
       if (Record.size() % 2 == 1)
-        return Error("Invalid METADATA_NODE2 record");
+        return Error("Invalid METADATA_NODE record");
 
       unsigned Size = Record.size();
       SmallVector<Value*, 8> Elts;
       for (unsigned i = 0; i != Size; i += 2) {
         const Type *Ty = getTypeByID(Record[i]);
-        if (!Ty) return Error("Invalid METADATA_NODE2 record");
+        if (!Ty) return Error("Invalid METADATA_NODE record");
         if (Ty->isMetadataTy())
           Elts.push_back(MDValueList.getValueFwdRef(Record[i+1]));
         else if (!Ty->isVoidTy())
@@ -1736,7 +1736,7 @@ bool BitcodeReader::ParseMetadataAttachment() {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: ignore.
       break;
-    case bitc::METADATA_ATTACHMENT2: {
+    case bitc::METADATA_ATTACHMENT: {
       unsigned RecordLength = Record.size();
       if (Record.empty() || (RecordLength - 1) % 2 == 1)
         return Error ("Invalid METADATA_ATTACHMENT reader!");
