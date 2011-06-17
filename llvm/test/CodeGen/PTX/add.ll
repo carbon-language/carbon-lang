@@ -22,14 +22,14 @@ define ptx_device i64 @t1_u64(i64 %x, i64 %y) {
 }
 
 define ptx_device float @t1_f32(float %x, float %y) {
-; CHECK: add.f32 r0, r1, r2
+; CHECK: add.rn.f32 r0, r1, r2
 ; CHECK-NEXT: ret;
   %z = fadd float %x, %y
   ret float %z
 }
 
 define ptx_device double @t1_f64(double %x, double %y) {
-; CHECK: add.f64 rd0, rd1, rd2
+; CHECK: add.rn.f64 rd0, rd1, rd2
 ; CHECK-NEXT: ret;
   %z = fadd double %x, %y
   ret double %z
@@ -57,14 +57,14 @@ define ptx_device i64 @t2_u64(i64 %x) {
 }
 
 define ptx_device float @t2_f32(float %x) {
-; CHECK: add.f32 r0, r1, 0F3F800000;
+; CHECK: add.rn.f32 r0, r1, 0F3F800000;
 ; CHECK-NEXT: ret;
   %z = fadd float %x, 1.0
   ret float %z
 }
 
 define ptx_device double @t2_f64(double %x) {
-; CHECK: add.f64 rd0, rd1, 0D3FF0000000000000;
+; CHECK: add.rn.f64 rd0, rd1, 0D3FF0000000000000;
 ; CHECK-NEXT: ret;
   %z = fadd double %x, 1.0
   ret double %z

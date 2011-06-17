@@ -584,24 +584,39 @@ defm REM : INT3<"rem", urem>;
 defm FNEG : PTX_FLOAT_2OP<"neg", fneg>;
 
 // Standard Binary Operations
-defm FADD : PTX_FLOAT_3OP<"add", fadd>;
-defm FSUB : PTX_FLOAT_3OP<"sub", fsub>;
-defm FMUL : PTX_FLOAT_3OP<"mul", fmul>;
+defm FADD : PTX_FLOAT_3OP<"add.rn", fadd>;
+defm FSUB : PTX_FLOAT_3OP<"sub.rn", fsub>;
+defm FMUL : PTX_FLOAT_3OP<"mul.rn", fmul>;
 
-// TODO: Allow user selection of rounding modes for fdiv.
-// For division, we need to have f32 and f64 differently.
-// For f32, we just always use .approx since it is supported on all hardware
-// for PTX 1.4+, which is our minimum target.
-def FDIVrr32 : InstPTX<(outs RegF32:$d),
+// For floating-point division:
+// SM_13+ defaults to .rn for f32 and f64,
+// SM10 must *not* provide a rounding
+
+// TODO: 
+//     - Allow user selection of rounding modes for fdiv
+//     - Add support for -prec-div=false (.approx)
+
+def FDIVrr32SM13 : InstPTX<(outs RegF32:$d),
                        (ins RegF32:$a, RegF32:$b),
-                       "div.approx.f32\t$d, $a, $b",
-                       [(set RegF32:$d, (fdiv RegF32:$a, RegF32:$b))]>;
-def FDIVri32 : InstPTX<(outs RegF32:$d),
+                       "div.rn.f32\t$d, $a, $b",
+                       [(set RegF32:$d, (fdiv RegF32:$a, RegF32:$b))]>,
+                   Requires<[SupportsSM13]>;
+def FDIVri32SM13 : InstPTX<(outs RegF32:$d),
                        (ins RegF32:$a, f32imm:$b),
-                       "div.approx.f32\t$d, $a, $b",
-                       [(set RegF32:$d, (fdiv RegF32:$a, fpimm:$b))]>;
+                       "div.rn.f32\t$d, $a, $b",
+                       [(set RegF32:$d, (fdiv RegF32:$a, fpimm:$b))]>,
+                   Requires<[SupportsSM13]>;
+def FDIVrr32SM10 : InstPTX<(outs RegF32:$d),
+                       (ins RegF32:$a, RegF32:$b),
+                       "div.f32\t$d, $a, $b",
+                       [(set RegF32:$d, (fdiv RegF32:$a, RegF32:$b))]>,
+                   Requires<[DoesNotSupportSM13]>;
+def FDIVri32SM10 : InstPTX<(outs RegF32:$d),
+                       (ins RegF32:$a, f32imm:$b),
+                       "div.f32\t$d, $a, $b",
+                       [(set RegF32:$d, (fdiv RegF32:$a, fpimm:$b))]>,
+                   Requires<[DoesNotSupportSM13]>;
 
-// For f64, we must specify a rounding for sm 1.3+ but *not* for sm 1.0.
 def FDIVrr64SM13 : InstPTX<(outs RegF64:$d),
                            (ins RegF64:$a, RegF64:$b),
                            "div.rn.f64\t$d, $a, $b",
@@ -825,11 +840,11 @@ def CVT_pred_u64
             [(set RegPred:$d, (trunc RegI64:$a))]>;
 
 def CVT_pred_f32
-  : InstPTX<(outs RegPred:$d), (ins RegF32:$a), "cvt.rni.pred.f32\t$d, $a",
+  : InstPTX<(outs RegPred:$d), (ins RegF32:$a), "cvt.rzi.pred.f32\t$d, $a",
             [(set RegPred:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_pred_f64
-  : InstPTX<(outs RegPred:$d), (ins RegF64:$a), "cvt.rni.pred.f64\t$d, $a",
+  : InstPTX<(outs RegPred:$d), (ins RegF64:$a), "cvt.rzi.pred.f64\t$d, $a",
             [(set RegPred:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to u16
@@ -847,11 +862,11 @@ def CVT_u16_u64
             [(set RegI16:$d, (trunc RegI64:$a))]>;
 
 def CVT_u16_f32
-  : InstPTX<(outs RegI16:$d), (ins RegF32:$a), "cvt.rni.u16.f32\t$d, $a",
+  : InstPTX<(outs RegI16:$d), (ins RegF32:$a), "cvt.rzi.u16.f32\t$d, $a",
             [(set RegI16:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_u16_f64
-  : InstPTX<(outs RegI16:$d), (ins RegF64:$a), "cvt.rni.u16.f64\t$d, $a",
+  : InstPTX<(outs RegI16:$d), (ins RegF64:$a), "cvt.rzi.u16.f64\t$d, $a",
             [(set RegI16:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to u32
@@ -869,11 +884,11 @@ def CVT_u32_u64
             [(set RegI32:$d, (trunc RegI64:$a))]>;
 
 def CVT_u32_f32
-  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "cvt.rni.u32.f32\t$d, $a",
+  : InstPTX<(outs RegI32:$d), (ins RegF32:$a), "cvt.rzi.u32.f32\t$d, $a",
             [(set RegI32:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_u32_f64
-  : InstPTX<(outs RegI32:$d), (ins RegF64:$a), "cvt.rni.u32.f64\t$d, $a",
+  : InstPTX<(outs RegI32:$d), (ins RegF64:$a), "cvt.rzi.u32.f64\t$d, $a",
             [(set RegI32:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to u64
@@ -891,11 +906,11 @@ def CVT_u64_u32
             [(set RegI64:$d, (zext RegI32:$a))]>;
 
 def CVT_u64_f32
-  : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rni.u64.f32\t$d, $a",
+  : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rzi.u64.f32\t$d, $a",
             [(set RegI64:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_u64_f64
-  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "cvt.rni.u64.f64\t$d, $a",
+  : InstPTX<(outs RegI64:$d), (ins RegF64:$a), "cvt.rzi.u64.f64\t$d, $a",
             [(set RegI64:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to f32

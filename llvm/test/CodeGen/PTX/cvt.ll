@@ -31,7 +31,7 @@ define ptx_device i32 @cvt_pred_i64(i64 %x, i1 %y) {
 }
 
 define ptx_device i32 @cvt_pred_f32(float %x, i1 %y) {
-; CHECK: cvt.rni.pred.f32 p0, r1;
+; CHECK: cvt.rzi.pred.f32 p0, r1;
 ; CHECK: ret;
 	%a = fptoui float %x to i1
 	%b = and i1 %a, %y
@@ -40,7 +40,7 @@ define ptx_device i32 @cvt_pred_f32(float %x, i1 %y) {
 }
 
 define ptx_device i32 @cvt_pred_f64(double %x, i1 %y) {
-; CHECK: cvt.rni.pred.f64 p0, rd1;
+; CHECK: cvt.rzi.pred.f64 p0, rd1;
 ; CHECK: ret;
 	%a = fptoui double %x to i1
 	%b = and i1 %a, %y
@@ -72,14 +72,14 @@ define ptx_device i16 @cvt_i16_i64(i64 %x) {
 }
 
 define ptx_device i16 @cvt_i16_f32(float %x) {
-; CHECK: cvt.rni.u16.f32 rh0, r1;
+; CHECK: cvt.rzi.u16.f32 rh0, r1;
 ; CHECK: ret;
 	%a = fptoui float %x to i16
 	ret i16 %a
 }
 
 define ptx_device i16 @cvt_i16_f64(double %x) {
-; CHECK: cvt.rni.u16.f64 rh0, rd1;
+; CHECK: cvt.rzi.u16.f64 rh0, rd1;
 ; CHECK: ret;
 	%a = fptoui double %x to i16
 	ret i16 %a
@@ -109,14 +109,14 @@ define ptx_device i32 @cvt_i32_i64(i64 %x) {
 }
 
 define ptx_device i32 @cvt_i32_f32(float %x) {
-; CHECK: cvt.rni.u32.f32 r0, r1;
+; CHECK: cvt.rzi.u32.f32 r0, r1;
 ; CHECK: ret;
 	%a = fptoui float %x to i32
 	ret i32 %a
 }
 
 define ptx_device i32 @cvt_i32_f64(double %x) {
-; CHECK: cvt.rni.u32.f64 r0, rd1;
+; CHECK: cvt.rzi.u32.f64 r0, rd1;
 ; CHECK: ret;
 	%a = fptoui double %x to i32
 	ret i32 %a
@@ -146,14 +146,14 @@ define ptx_device i64 @cvt_i64_i32(i32 %x) {
 }
 
 define ptx_device i64 @cvt_i64_f32(float %x) {
-; CHECK: cvt.rni.u64.f32 rd0, r1;
+; CHECK: cvt.rzi.u64.f32 rd0, r1;
 ; CHECK: ret;
 	%a = fptoui float %x to i64
 	ret i64 %a
 }
 
 define ptx_device i64 @cvt_i64_f64(double %x) {
-; CHECK: cvt.rni.u64.f64 rd0, rd1;
+; CHECK: cvt.rzi.u64.f64 rd0, rd1;
 ; CHECK: ret;
 	%a = fptoui double %x to i64
 	ret i64 %a
