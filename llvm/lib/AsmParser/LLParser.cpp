@@ -59,24 +59,6 @@ bool LLParser::ValidateEndOfModule() {
   }
   
   
-  // Update auto-upgraded malloc calls to "malloc".
-  // FIXME: Remove in LLVM 3.0.
-  if (MallocF) {
-    MallocF->setName("malloc");
-    // If setName() does not set the name to "malloc", then there is already a 
-    // declaration of "malloc".  In that case, iterate over all calls to MallocF
-    // and get them to call the declared "malloc" instead.
-    if (MallocF->getName() != "malloc") {
-      Constant *RealMallocF = M->getFunction("malloc");
-      if (RealMallocF->getType() != MallocF->getType())
-        RealMallocF = ConstantExpr::getBitCast(RealMallocF, MallocF->getType());
-      MallocF->replaceAllUsesWith(RealMallocF);
-      MallocF->eraseFromParent();
-      MallocF = NULL;
-    }
-  }
-  
-  
   // If there are entries in ForwardRefBlockAddresses at this point, they are
   // references after the function was defined.  Resolve those now.
   while (!ForwardRefBlockAddresses.empty()) {
@@ -176,7 +158,6 @@ bool LLParser::ParseTopLevelEntities() {
     switch (Lex.getKind()) {
     default:         return TokError("expected top-level entity");
     case lltok::Eof: return false;
-    //case lltok::kw_define:
     case lltok::kw_declare: if (ParseDeclare()) return true; break;
     case lltok::kw_define:  if (ParseDefine()) return true; break;
     case lltok::kw_module:  if (ParseModuleAsm()) return true; break;
@@ -931,33 +912,23 @@ bool LLParser::ParseOptionalAddrSpace(unsigned &AddrSpace) {
 /// ParseOptionalAttrs - Parse a potentially empty attribute list.  AttrKind
 /// indicates what kind of attribute list this is: 0: function arg, 1: result,
 /// 2: function attr.
-/// 3: function arg after value: FIXME: REMOVE IN LLVM 3.0
 bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
   Attrs = Attribute::None;
   LocTy AttrLoc = Lex.getLoc();
 
   while (1) {
     switch (Lex.getKind()) {
-    case lltok::kw_sext:
-    case lltok::kw_zext:
-      // Treat these as signext/zeroext if they occur in the argument list after
-      // the value, as in "call i8 @foo(i8 10 sext)".  If they occur before the
-      // value, as in "call i8 @foo(i8 sext (" then it is part of a constant
-      // expr.
-      // FIXME: REMOVE THIS IN LLVM 3.0
-      if (AttrKind == 3) {
-        if (Lex.getKind() == lltok::kw_sext)
-          Attrs |= Attribute::SExt;
-        else
-          Attrs |= Attribute::ZExt;
-        break;
-      }
-      // FALL THROUGH.
     default:  // End of attributes.
       if (AttrKind != 2 && (Attrs & Attribute::FunctionOnly))
         return Error(AttrLoc, "invalid use of function-only attribute");
 
-      if (AttrKind != 0 && AttrKind != 3 && (Attrs & Attribute::ParameterOnly))
+      // As a hack, we allow "align 2" on functions as a synonym for
+      // "alignstack 2".
+      if (AttrKind == 2 &&
+          (Attrs & ~(Attribute::FunctionOnly | Attribute::Alignment)))
+        return Error(AttrLoc, "invalid use of attribute on a function");
+
+      if (AttrKind != 0 && (Attrs & Attribute::ParameterOnly))
         return Error(AttrLoc, "invalid use of parameter-only attribute");
 
       return false;
@@ -1496,11 +1467,7 @@ bool LLParser::ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
       return true;
 
     // Otherwise, handle normal operands.
-    if (ParseOptionalAttrs(ArgAttrs1, 0) ||
-        ParseValue(ArgTy, V, PFS) ||
-        // FIXME: Should not allow attributes after the argument, remove this
-        // in LLVM 3.0.
-        ParseOptionalAttrs(ArgAttrs2, 3))
+    if (ParseOptionalAttrs(ArgAttrs1, 0) || ParseValue(ArgTy, V, PFS))
       return true;
     ArgList.push_back(ParamInfo(ArgLoc, V, ArgAttrs1|ArgAttrs2));
   }
@@ -2763,13 +2730,6 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   // and do semantic checks.
   std::vector<const Type*> ParamTypeList;
   SmallVector<AttributeWithIndex, 8> Attrs;
-  // FIXME : In 3.0, stop accepting zext, sext and inreg as optional function
-  // attributes.
-  unsigned ObsoleteFuncAttrs = Attribute::ZExt|Attribute::SExt|Attribute::InReg;
-  if (FuncAttrs & ObsoleteFuncAttrs) {
-    RetAttrs |= FuncAttrs & ObsoleteFuncAttrs;
-    FuncAttrs &= ~ObsoleteFuncAttrs;
-  }
 
   if (RetAttrs != Attribute::None)
     Attrs.push_back(AttributeWithIndex::get(0, RetAttrs));
@@ -3063,8 +3023,6 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_tail:           return ParseCall(Inst, PFS, true);
   // Memory.
   case lltok::kw_alloca:         return ParseAlloc(Inst, PFS);
-  case lltok::kw_malloc:         return ParseAlloc(Inst, PFS, BB, false);
-  case lltok::kw_free:           return ParseFree(Inst, PFS, BB);
   case lltok::kw_load:           return ParseLoad(Inst, PFS, false);
   case lltok::kw_store:          return ParseStore(Inst, PFS, false);
   case lltok::kw_volatile:
@@ -3341,14 +3299,6 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   // Look up the callee.
   Value *Callee;
   if (ConvertValIDToValue(PFTy, CalleeID, Callee, &PFS)) return true;
-
-  // FIXME: In LLVM 3.0, stop accepting zext, sext and inreg as optional
-  // function attributes.
-  unsigned ObsoleteFuncAttrs = Attribute::ZExt|Attribute::SExt|Attribute::InReg;
-  if (FnAttrs & ObsoleteFuncAttrs) {
-    RetAttrs |= FnAttrs & ObsoleteFuncAttrs;
-    FnAttrs &= ~ObsoleteFuncAttrs;
-  }
 
   // Set up the Attributes for the function.
   SmallVector<AttributeWithIndex, 8> Attrs;
@@ -3687,14 +3637,6 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   Value *Callee;
   if (ConvertValIDToValue(PFTy, CalleeID, Callee, &PFS)) return true;
 
-  // FIXME: In LLVM 3.0, stop accepting zext, sext and inreg as optional
-  // function attributes.
-  unsigned ObsoleteFuncAttrs = Attribute::ZExt|Attribute::SExt|Attribute::InReg;
-  if (FnAttrs & ObsoleteFuncAttrs) {
-    RetAttrs |= FnAttrs & ObsoleteFuncAttrs;
-    FnAttrs &= ~ObsoleteFuncAttrs;
-  }
-
   // Set up the Attributes for the function.
   SmallVector<AttributeWithIndex, 8> Attrs;
   if (RetAttrs != Attribute::None)
@@ -3744,10 +3686,8 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 //===----------------------------------------------------------------------===//
 
 /// ParseAlloc
-///   ::= 'malloc' Type (',' TypeAndValue)? (',' OptionalInfo)?
 ///   ::= 'alloca' Type (',' TypeAndValue)? (',' OptionalInfo)?
-int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
-                         BasicBlock* BB, bool isAlloca) {
+int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
   PATypeHolder Ty(Type::getVoidTy(Context));
   Value *Size = 0;
   LocTy SizeLoc;
@@ -3770,37 +3710,8 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
   if (Size && !Size->getType()->isIntegerTy())
     return Error(SizeLoc, "element count must have integer type");
 
-  if (isAlloca) {
-    Inst = new AllocaInst(Ty, Size, Alignment);
-    return AteExtraComma ? InstExtraComma : InstNormal;
-  }
-
-  // Autoupgrade old malloc instruction to malloc call.
-  // FIXME: Remove in LLVM 3.0.
-  if (Size && !Size->getType()->isIntegerTy(32))
-    return Error(SizeLoc, "element count must be i32");
-  const Type *IntPtrTy = Type::getInt32Ty(Context);
-  Constant *AllocSize = ConstantExpr::getSizeOf(Ty);
-  AllocSize = ConstantExpr::getTruncOrBitCast(AllocSize, IntPtrTy);
-  if (!MallocF)
-    // Prototype malloc as "void *(int32)".
-    // This function is renamed as "malloc" in ValidateEndOfModule().
-    MallocF = cast<Function>(
-       M->getOrInsertFunction("", Type::getInt8PtrTy(Context), IntPtrTy, NULL));
-  Inst = CallInst::CreateMalloc(BB, IntPtrTy, Ty, AllocSize, Size, MallocF);
-return AteExtraComma ? InstExtraComma : InstNormal;
-}
-
-/// ParseFree
-///   ::= 'free' TypeAndValue
-bool LLParser::ParseFree(Instruction *&Inst, PerFunctionState &PFS,
-                         BasicBlock* BB) {
-  Value *Val; LocTy Loc;
-  if (ParseTypeAndValue(Val, Loc, PFS)) return true;
-  if (!Val->getType()->isPointerTy())
-    return Error(Loc, "operand to free must be a pointer");
-  Inst = CallInst::CreateFree(Val, BB);
-  return false;
+  Inst = new AllocaInst(Ty, Size, Alignment);
+  return AteExtraComma ? InstExtraComma : InstNormal;
 }
 
 /// ParseLoad
