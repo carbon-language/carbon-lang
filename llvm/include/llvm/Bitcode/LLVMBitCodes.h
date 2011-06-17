@@ -223,21 +223,18 @@ namespace bitc {
     FUNC_CODE_INST_UNREACHABLE = 15, // UNREACHABLE
 
     FUNC_CODE_INST_PHI         = 16, // PHI:        [ty, val0,bb0, ...]
-    FUNC_CODE_INST_MALLOC      = 17, // MALLOC:     [instty, op, align]
-    FUNC_CODE_INST_FREE        = 18, // FREE:       [opty, op]
+    // 17 is unused.
+    // 18 is unused.
     FUNC_CODE_INST_ALLOCA      = 19, // ALLOCA:     [instty, op, align]
     FUNC_CODE_INST_LOAD        = 20, // LOAD:       [opty, op, align, vol]
-    // FIXME: Remove STORE in favor of STORE2 in LLVM 3.0
-    FUNC_CODE_INST_STORE       = 21, // STORE:      [valty,val,ptr, align, vol]
-    // FIXME: Remove CALL in favor of CALL2 in LLVM 3.0
-    FUNC_CODE_INST_CALL        = 22, // CALL with potentially invalid metadata
+    // 21 is unused.
+    // 22 is unused.
     FUNC_CODE_INST_VAARG       = 23, // VAARG:      [valistty, valist, instty]
     // This store code encodes the pointer type, rather than the value type
     // this is so information only available in the pointer type (e.g. address
     // spaces) is retained.
     FUNC_CODE_INST_STORE2      = 24, // STORE:      [ptrty,ptr,val, align, vol]
-    // FIXME: Remove GETRESULT in favor of EXTRACTVAL in LLVM 3.0
-    FUNC_CODE_INST_GETRESULT   = 25, // GETRESULT:  [ty, opval, n]
+    // 25 is unused.
     FUNC_CODE_INST_EXTRACTVAL  = 26, // EXTRACTVAL: [n x operands]
     FUNC_CODE_INST_INSERTVAL   = 27, // INSERTVAL:  [n x operands]
     // fcmp/icmp returning Int1TY or vector of Int1Ty. Same as CMP, exists to
@@ -247,9 +244,7 @@ namespace bitc {
     FUNC_CODE_INST_VSELECT     = 29, // VSELECT:    [ty,opval,opval,predty,pred]
     FUNC_CODE_INST_INBOUNDS_GEP= 30, // INBOUNDS_GEP: [n x operands]
     FUNC_CODE_INST_INDIRECTBR  = 31, // INDIRECTBR: [opty, op0, op1, ...]
-    
-    // FIXME: Remove DEBUG_LOC in favor of DEBUG_LOC2 in LLVM 3.0
-    FUNC_CODE_DEBUG_LOC        = 32, // DEBUG_LOC with potentially invalid metadata
+    // 32 is unused.
     FUNC_CODE_DEBUG_LOC_AGAIN  = 33, // DEBUG_LOC_AGAIN
 
     FUNC_CODE_INST_CALL2       = 34, // CALL2:      [attr, fnty, fnid, args...]
