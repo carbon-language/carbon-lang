@@ -123,9 +123,6 @@ $(BUILT_SOURCES) : $(ObjMakefiles)
 reconfigure:
 	$(Echo) Reconfiguring $(PROJ_OBJ_ROOT)
 	$(Verb) cd $(PROJ_OBJ_ROOT) && \
-	  if test -w $(PROJ_OBJ_ROOT)/config.cache ; then \
-	    $(RM) $(PROJ_OBJ_ROOT)/config.cache ; \
-	  fi ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
 
@@ -133,9 +130,6 @@ reconfigure:
 $(ConfigStatusScript): $(ConfigureScript)
 	$(Echo) Reconfiguring with $<
 	$(Verb) cd $(PROJ_OBJ_ROOT) && \
-	  if test -w $(PROJ_OBJ_ROOT)/config.cache ; then \
-	    $(RM) $(PROJ_OBJ_ROOT)/config.cache ; \
-	  fi ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
 
