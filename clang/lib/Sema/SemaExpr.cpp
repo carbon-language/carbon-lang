@@ -439,7 +439,11 @@ ExprResult Sema::DefaultArgumentPromotion(Expr *E) {
 /// interfaces passed by value.
 ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                                                   FunctionDecl *FDecl) {
-  ExprResult ExprRes = DefaultArgumentPromotion(E);
+  ExprResult ExprRes = CheckPlaceholderExpr(E);
+  if (ExprRes.isInvalid())
+    return ExprError();
+  
+  ExprRes = DefaultArgumentPromotion(E);
   if (ExprRes.isInvalid())
     return ExprError();
   E = ExprRes.take();

@@ -12,3 +12,19 @@ void test(bool b) {
   (void)(b? ovl<float> : &ovl); // expected-error{{cannot resolve overloaded function 'ovl' from context}}
   (void)(b? ovl<float> : ovl<float>);
 }
+
+namespace rdar9623945 {
+  void f(...) {
+  }
+  
+  class X {
+  public:
+    const char* text(void);
+    void g(void) {
+      f(text());
+      f(text); // expected-error{{a bound member function may only be called}}
+      f(text());
+      f(text); // expected-error{{a bound member function may only be called}}
+    }
+  };
+}
