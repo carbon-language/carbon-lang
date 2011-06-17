@@ -985,7 +985,7 @@ to be intentional in template code.</p></div>
 <p>If a template argument for a template type parameter is an
 retainable object owner type that does not have an explicit ownership
 qualifier, it is adjusted to have <tt>__strong</tt>
-qualification. This adjustment occurs both regardless of whether the
+qualification. This adjustment occurs regardless of whether the
 template argument was deduced or explicitly specified. </p>
 
 <div class="rationale"><p>Rationale: <tt>__strong</tt> is a useful default for containers (e.g., <tt>std::vector&lt;id&gt;</tt>), which would otherwise require explicit qualification. Moreover, unqualified retainable object pointer types are unlikely to be useful within templates, since they generally need to have a qualifier applied to the before being used.</p></div>
