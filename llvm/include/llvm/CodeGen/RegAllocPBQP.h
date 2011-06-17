@@ -161,7 +161,8 @@ namespace llvm {
                             PBQP::PBQPNum benefit);
   };
 
-  FunctionPass* createPBQPRegisterAllocator(std::auto_ptr<PBQPBuilder> builder);
+  FunctionPass* createPBQPRegisterAllocator(std::auto_ptr<PBQPBuilder> builder,
+                                            char *customPassID=0);
 }
 
 #endif /* LLVM_CODEGEN_REGALLOCPBQP_H */

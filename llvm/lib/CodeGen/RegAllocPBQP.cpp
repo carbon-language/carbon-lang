@@ -84,8 +84,8 @@ public:
   static char ID;
 
   /// Construct a PBQP register allocator.
-  RegAllocPBQP(std::auto_ptr<PBQPBuilder> b)
-      : MachineFunctionPass(ID), builder(b) {
+  RegAllocPBQP(std::auto_ptr<PBQPBuilder> b, char *cPassID=0)
+      : MachineFunctionPass(ID), builder(b), customPassID(cPassID) {
     initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
     initializeRegisterCoalescerAnalysisGroup(*PassRegistry::getPassRegistry());
@@ -121,6 +121,8 @@ private:
 
 
   std::auto_ptr<PBQPBuilder> builder;
+
+  char *customPassID;
 
   MachineFunction *mf;
   const TargetMachine *tm;
@@ -449,6 +451,8 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addRequired<LiveIntervals>();
   //au.addRequiredID(SplitCriticalEdgesID);
   au.addRequired<RegisterCoalescer>();
+  if (customPassID)
+    au.addRequiredID(*customPassID);
   au.addRequired<CalculateSpillWeights>();
   au.addRequired<LiveStacks>();
   au.addPreserved<LiveStacks>();
@@ -702,8 +706,9 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 }
 
 FunctionPass* llvm::createPBQPRegisterAllocator(
-                                           std::auto_ptr<PBQPBuilder> builder) {
-  return new RegAllocPBQP(builder);
+                                           std::auto_ptr<PBQPBuilder> builder,
+                                           char *customPassID) {
+  return new RegAllocPBQP(builder, customPassID);
 }
 
 FunctionPass* llvm::createDefaultPBQPRegisterAllocator() {
