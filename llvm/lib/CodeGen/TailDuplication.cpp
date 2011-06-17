@@ -242,6 +242,14 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
             MachineOperand &UseMO = UI.getOperand();
             MachineInstr *UseMI = &*UI;
             ++UI;
+            if (UseMI->isDebugValue()) {
+              // SSAUpdate can replace the use with an undef. That creates
+              // a debug instruction that is a kill.
+              // FIXME: Should it SSAUpdate job to delete debug instructions
+              // instead of replacing the use with undef?
+              UseMI->eraseFromParent();
+              continue;
+            }
             if (UseMI->getParent() == DefBB && !UseMI->isPHI())
               continue;
             SSAUpdate.RewriteUse(UseMO);
@@ -283,6 +291,8 @@ static bool isDefLiveOut(unsigned Reg, MachineBasicBlock *BB,
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
     MachineInstr *UseMI = &*UI;
+    if (UseMI->isDebugValue())
+      continue;
     if (UseMI->getParent() != BB)
       return true;
   }
