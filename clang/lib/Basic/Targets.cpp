@@ -104,6 +104,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Builder.defineMacro("__bridge", "");
     Builder.defineMacro("__bridge_transfer", "");
     Builder.defineMacro("__bridge_retained", "");
+    Builder.defineMacro("__bridge_retain", "");
   }
   
   if (Opts.Static)

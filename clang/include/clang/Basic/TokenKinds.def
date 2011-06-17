@@ -426,6 +426,7 @@ KEYWORD(__pixel                     , KEYALTIVEC)
 KEYWORD(__bridge                     , KEYARC)
 KEYWORD(__bridge_transfer            , KEYARC)
 KEYWORD(__bridge_retained            , KEYARC)
+KEYWORD(__bridge_retain              , KEYARC)
 
 // Alternate spelling for various tokens.  There are GCC extensions in all
 // languages, but should not be disabled in strict conformance mode.

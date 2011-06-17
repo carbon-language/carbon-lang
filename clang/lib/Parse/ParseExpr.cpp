@@ -1780,7 +1780,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   } else if (ExprType >= CompoundLiteral && 
              (Tok.is(tok::kw___bridge) || 
               Tok.is(tok::kw___bridge_transfer) ||
-              Tok.is(tok::kw___bridge_retained))) {
+              Tok.is(tok::kw___bridge_retained) ||
+              Tok.is(tok::kw___bridge_retain))) { // FIXME: temporary workaround
     // Parse an Objective-C ARC ownership cast expression.
     ObjCBridgeCastKind Kind;
     if (Tok.is(tok::kw___bridge))

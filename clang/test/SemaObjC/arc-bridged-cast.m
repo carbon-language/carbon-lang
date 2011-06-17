@@ -27,7 +27,10 @@ void to_cf(id obj) {
   CFTypeRef cf1 = (__bridge_retained CFTypeRef)CreateSomething();
   CFStringRef cf2 = (__bridge_retained CFStringRef)CreateNSString();
   CFTypeRef cf3 = (__bridge CFTypeRef)CreateSomething();
-  CFStringRef cf4 = (__bridge CFStringRef)CreateNSString(); 
+  CFStringRef cf4 = (__bridge CFStringRef)CreateNSString();
+
+  // rdar://problem/9629566 - temporary workaround
+  CFTypeRef cf5 = (__bridge_retain CFTypeRef)CreateSomething();
 }
 
 void fixits() {
