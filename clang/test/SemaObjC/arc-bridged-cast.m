@@ -30,7 +30,7 @@ void to_cf(id obj) {
   CFStringRef cf4 = (__bridge CFStringRef)CreateNSString();
 
   // rdar://problem/9629566 - temporary workaround
-  CFTypeRef cf5 = (__bridge_retain CFTypeRef)CreateSomething();
+  CFTypeRef cf5 = (__bridge_retain CFTypeRef)CreateSomething(); // expected-error {{unknown cast annotation __bridge_retain; did you mean __bridge_retained?}}
 }
 
 void fixits() {

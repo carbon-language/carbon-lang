@@ -263,6 +263,11 @@ def warn_objc_protocol_qualifier_missing_id : Warning<
 def err_objc_unknown_at : Error<"expected an Objective-C directive after '@'">;
 def err_illegal_super_cast : Error<
   "cannot cast 'super' (it isn't an expression)">;
+
+let CategoryName = "Automatic Reference Counting Issue" in {
+def err_arc_bridge_retain : Error<
+  "unknown cast annotation __bridge_retain; did you mean __bridge_retained?">;
+}
   
 def err_objc_illegal_visibility_spec : Error<
   "illegal visibility specification">;

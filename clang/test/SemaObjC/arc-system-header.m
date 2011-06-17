@@ -46,3 +46,5 @@ void test7(Test7 *p) {
   [p setProp: 0]; // expected-error {{'setProp:' is unavailable: this system declaration uses an unsupported type}}
 }
 #endif
+
+// test8 in header

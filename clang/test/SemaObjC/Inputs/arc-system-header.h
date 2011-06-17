@@ -40,3 +40,13 @@ extern struct Test6 *const kMagicConstant;
 @interface Test7
 @property id *prop;
 @end
+
+
+
+
+
+
+
+static inline void *test8(id ptr) {
+  return (__bridge_retain void*) ptr;
+}
