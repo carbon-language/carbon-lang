@@ -270,6 +270,9 @@ PlatformRemoteiOS::GetDeviceSupportDirectory()
 const char *
 PlatformRemoteiOS::GetDeviceSupportDirectoryForOSVersion()
 {
+    if (m_sdk_sysroot)
+        return m_sdk_sysroot.GetCString();
+
     if (m_device_support_directory_for_os_version.empty())
     {
         const char *device_support_dir = GetDeviceSupportDirectory();
@@ -374,6 +377,16 @@ PlatformRemoteiOS::GetFile (const FileSpec &platform_file,
         const char * os_version_dir = GetDeviceSupportDirectoryForOSVersion();
         if (os_version_dir)
         {
+            ::snprintf (resolved_path, 
+                        sizeof(resolved_path), 
+                        "%s/%s", 
+                        os_version_dir, 
+                        platform_file_path);
+            
+            local_file.SetFile(resolved_path, true);
+            if (local_file.Exists())
+                return error;
+
             ::snprintf (resolved_path, 
                         sizeof(resolved_path), 
                         "%s/Symbols.Internal/%s", 

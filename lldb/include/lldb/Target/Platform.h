@@ -383,6 +383,32 @@ namespace lldb_private {
         {
             return m_max_gid_name_len;
         }
+        
+        const ConstString &
+        GetSDKRootDirectory () const
+        {
+            return m_sdk_sysroot;
+        }
+
+        void
+        SetSDKRootDirectory (const ConstString &dir)
+        {
+            m_sdk_sysroot = dir;
+        }
+
+        const ConstString &
+        GetSDKBuild () const
+        {
+            return m_sdk_build;
+        }
+        
+        void
+        SetSDKBuild (const ConstString &sdk_build)
+        {
+            m_sdk_build = sdk_build;
+        }    
+        
+
     protected:
         bool m_is_host;
         // Set to true when we are able to actually set the OS version while 
@@ -392,6 +418,8 @@ namespace lldb_private {
         // will be set to the once we call Host::GetOSVersion().
         bool m_os_version_set_while_connected;
         bool m_system_arch_set_while_connected;
+        ConstString m_sdk_sysroot; // the root location of where the SDK files are all located
+        ConstString m_sdk_build;
         std::string m_remote_url;
         std::string m_name;
         uint32_t m_major_os_version;

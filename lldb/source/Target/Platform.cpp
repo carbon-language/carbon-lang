@@ -161,6 +161,8 @@ Platform::Platform (bool is_host) :
     m_is_host (is_host),
     m_os_version_set_while_connected (false),
     m_system_arch_set_while_connected (false),
+    m_sdk_sysroot (),
+    m_sdk_build (),
     m_remote_url (),
     m_name (),
     m_major_os_version (UINT32_MAX),

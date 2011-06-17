@@ -880,6 +880,22 @@ SBDebugger::SetCurrentPlatform (const char *platform_name)
 }
 
 bool
+SBDebugger::SetCurrentPlatformSDKRoot (const char *sysroot)
+{
+    if (m_opaque_sp)
+    {
+        PlatformSP platform_sp (m_opaque_sp->GetPlatformList().GetSelectedPlatform());
+        
+        if (platform_sp)
+        {
+            platform_sp->SetSDKRootDirectory (ConstString (sysroot));
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
 SBDebugger::GetCloseInputOnEOF () const
 {
     if (m_opaque_sp)

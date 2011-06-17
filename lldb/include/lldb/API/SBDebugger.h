@@ -126,6 +126,9 @@ public:
     lldb::SBError
     SetCurrentPlatform (const char *platform_name);
     
+    bool
+    SetCurrentPlatformSDKRoot (const char *sysroot);
+
     // FIXME: Once we get the set show stuff in place, the driver won't need
     // an interface to the Set/Get UseExternalEditor.
     bool

@@ -38,7 +38,7 @@ GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name,
                                                const char *listener_name, 
                                                bool is_platform) :
     Communication(comm_name),
-    m_packet_timeout (60),
+    m_packet_timeout (1),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
     m_public_is_running (false),
     m_private_is_running (false),
@@ -246,6 +246,7 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
         size_t content_length = 0;
         size_t total_length = 0;
         size_t checksum_idx = std::string::npos;
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
 
         switch (m_bytes[0])
         {
@@ -281,16 +282,20 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 break;
 
             default:
+                {
+                    if (log)
+                        log->Printf ("GDBRemoteCommunication::%s tossing junk byte at %c",__FUNCTION__, m_bytes[0]);
+                    m_bytes.erase(0, 1);
+                }
                 break;
         }
 
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
         if (content_length == std::string::npos)
         {
             packet.Clear();
             return false;
         }
-        else if (content_length > 0)
+        else if (total_length > 0)
         {
 
             // We have a valid packet...
@@ -344,12 +349,6 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
             m_bytes.erase(0, total_length);
             packet.SetFilePos(0);
             return success;
-        }
-        else
-        {
-            if (log)
-                log->Printf ("GDBRemoteCommunication::%s tossing junk byte at %c",__FUNCTION__, m_bytes[0]);
-            m_bytes.erase(0, 1);
         }
     }
     packet.Clear();

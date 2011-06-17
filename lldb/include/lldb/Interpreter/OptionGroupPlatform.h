@@ -14,6 +14,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/ConstString.h"
 #include "lldb/Interpreter/Options.h"
 
 namespace lldb_private {
@@ -30,6 +31,7 @@ public:
     OptionGroupPlatform (bool include_platform_option) :
         OptionGroup(),
         m_platform_name (),
+        m_sdk_sysroot (),
         m_os_version_major (UINT32_MAX),
         m_os_version_minor (UINT32_MAX),
         m_os_version_update (UINT32_MAX),
@@ -75,9 +77,36 @@ public:
         else
             m_platform_name.clear();
     }
+    
+    const ConstString &
+    GetSDKRootDirectory () const
+    {
+        return m_sdk_sysroot;
+    }
+    
+    void
+    SetSDKRootDirectory (const ConstString &sdk_root_directory)
+    {
+        m_sdk_sysroot = sdk_root_directory;
+    }    
+
+    const ConstString &
+    GetSDKBuild () const
+    {
+        return m_sdk_build;
+    }
+    
+    void
+    SetSDKBuild (const ConstString &sdk_build)
+    {
+        m_sdk_build = sdk_build;
+    }    
+    
 
 protected:
     std::string m_platform_name;
+    ConstString m_sdk_sysroot;
+    ConstString m_sdk_build;
     uint32_t m_os_version_major;
     uint32_t m_os_version_minor;
     uint32_t m_os_version_update;
