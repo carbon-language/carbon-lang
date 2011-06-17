@@ -91,9 +91,7 @@ public:
   void VisitMemberExpr(MemberExpr *ME) { EmitAggLoadOfLValue(ME); }
   void VisitUnaryDeref(UnaryOperator *E) { EmitAggLoadOfLValue(E); }
   void VisitStringLiteral(StringLiteral *E) { EmitAggLoadOfLValue(E); }
-  void VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
-    EmitAggLoadOfLValue(E);
-  }
+  void VisitCompoundLiteralExpr(CompoundLiteralExpr *E);
   void VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
     EmitAggLoadOfLValue(E);
   }
@@ -246,6 +244,13 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 void AggExprEmitter::VisitOpaqueValueExpr(OpaqueValueExpr *e) {
   EmitFinalDestCopy(e, CGF.getOpaqueLValueMapping(e));
 }
+
+void
+AggExprEmitter::VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+  AggValueSlot Slot = EnsureSlot(E->getType());
+  CGF.EmitAggExpr(E->getInitializer(), Slot);
+}
+
 
 void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   switch (E->getCastKind()) {
