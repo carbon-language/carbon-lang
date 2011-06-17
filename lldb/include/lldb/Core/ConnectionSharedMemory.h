@@ -44,7 +44,11 @@ public:
     Disconnect (Error *error_ptr);
 
     virtual size_t
-    Read (void *dst, size_t dst_len, lldb::ConnectionStatus &status, Error *error_ptr);
+    Read (void *dst, 
+          size_t dst_len, 
+          uint32_t timeout_usec,
+          lldb::ConnectionStatus &status, 
+          Error *error_ptr);
 
     virtual size_t
     Write (const void *src, size_t src_len, lldb::ConnectionStatus &status, Error *error_ptr);

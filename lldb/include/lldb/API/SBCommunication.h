@@ -41,15 +41,6 @@ public:
     AdoptFileDesriptor (int fd, bool owns_fd);
 
     lldb::ConnectionStatus
-    CheckIfBytesAvailable ();
-
-    lldb::ConnectionStatus
-    WaitForBytesAvailableInfinite ();
-
-    lldb::ConnectionStatus
-    WaitForBytesAvailableWithTimeout (uint32_t timeout_usec);
-
-    lldb::ConnectionStatus
     Connect (const char *url);
 
     lldb::ConnectionStatus

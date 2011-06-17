@@ -56,14 +56,8 @@ public:
 
     // Wait for a packet within 'nsec' seconds
     size_t
-    WaitForPacket (StringExtractorGDBRemote &response,
-                   uint32_t sec);
-
-    // Wait for a packet with an absolute timeout time. If 'timeout' is NULL
-    // wait indefinitely.
-    size_t
-    WaitForPacket (StringExtractorGDBRemote &response,
-                   const lldb_private::TimeValue* timeout);
+    WaitForPacketWithTimeoutMicroSeconds (StringExtractorGDBRemote &response,
+                                          uint32_t usec);
 
     char
     GetAck ();
@@ -81,12 +75,10 @@ public:
     bool
     GetSequenceMutex(lldb_private::Mutex::Locker& locker);
 
-    //------------------------------------------------------------------
-    // Communication overrides
-    //------------------------------------------------------------------
-    virtual void
-    AppendBytesToCache (const uint8_t *src, size_t src_len, bool broadcast, lldb::ConnectionStatus status);
-
+    bool
+    CheckForPacket (const uint8_t *src, 
+                    size_t src_len, 
+                    StringExtractorGDBRemote &packet);
     bool
     IsRunning() const
     {
@@ -121,6 +113,11 @@ public:
         return old_packet_timeout;
     }
 
+    uint32_t
+    GetPacketTimeoutInMicroSeconds () const
+    {
+        return m_packet_timeout * USEC_PER_SEC;
+    }
     //------------------------------------------------------------------
     // Start a debugserver instance on the current host using the
     // supplied connection URL.
@@ -130,6 +127,7 @@ public:
                              const char *unix_socket_name,
                              lldb_private::ProcessLaunchInfo &launch_info); 
 
+    
 protected:
     typedef std::list<std::string> packet_collection;
 
@@ -138,8 +136,8 @@ protected:
                       size_t payload_length);
 
     size_t
-    WaitForPacketNoLock (StringExtractorGDBRemote &response, 
-                         const lldb_private::TimeValue* timeout_ptr);
+    WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractorGDBRemote &response, 
+                                                uint32_t timeout_usec);
 
     bool
     WaitForNotRunningPrivate (const lldb_private::TimeValue *timeout_ptr);
@@ -148,7 +146,6 @@ protected:
     // Classes that inherit from GDBRemoteCommunication can see and modify these
     //------------------------------------------------------------------
     uint32_t m_packet_timeout;
-    lldb_private::Listener m_rx_packet_listener;
     lldb_private::Mutex m_sequence_mutex;    // Restrict access to sending/receiving packets to a single thread at a time
     lldb_private::Predicate<bool> m_public_is_running;
     lldb_private::Predicate<bool> m_private_is_running;

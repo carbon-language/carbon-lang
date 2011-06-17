@@ -78,13 +78,13 @@ GDBRemoteCommunicationServer::~GDBRemoteCommunicationServer()
 //}
 //
 bool
-GDBRemoteCommunicationServer::GetPacketAndSendResponse (const TimeValue* timeout_ptr, 
+GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec, 
                                                         Error &error,
                                                         bool &interrupt, 
                                                         bool &quit)
 {
     StringExtractorGDBRemote packet;
-    if (WaitForPacketNoLock (packet, timeout_ptr))
+    if (WaitForPacketWithTimeoutMicroSeconds(packet, timeout_usec))
     {
         const StringExtractorGDBRemote::ServerPacketType packet_type = packet.GetServerPacketType ();
         switch (packet_type)
@@ -199,9 +199,7 @@ GDBRemoteCommunicationServer::SendOKResponse ()
 bool
 GDBRemoteCommunicationServer::HandshakeWithClient(Error *error_ptr)
 {
-    if (StartReadThread(error_ptr))
-        return GetAck();
-    return false;
+    return GetAck();
 }
 
 bool
@@ -517,7 +515,7 @@ AcceptPortFromInferior (void *arg)
         char pid_str[256];
         ::memset (pid_str, 0, sizeof(pid_str));
         ConnectionStatus status;
-        const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), status, NULL);
+        const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), NULL, status, NULL);
         if (pid_str_len > 0)
         {
             int pid = atoi (pid_str);

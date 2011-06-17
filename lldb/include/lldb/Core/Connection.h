@@ -47,24 +47,6 @@ public:
     ~Connection ();
 
     //------------------------------------------------------------------
-    /// Poll for bytes available if the communications supports it.
-    ///
-    /// @param[in] timeout_usec
-    ///     A timeout value in micro-seconds.
-    ///
-    /// @param[out] error
-    ///     A reference to an error object that should be given an
-    ///     approriate error value if this method returns false. This
-    ///     value can be NULL if the error value should be ignored.
-    ///
-    /// @return
-    ///     \b True if the bytes are, or became available within the
-    ///     timeout period, \b false otherwise.
-    //------------------------------------------------------------------
-    virtual lldb::ConnectionStatus
-    BytesAvailable (uint32_t timeout_usec, Error *error_ptr) = 0;
-
-    //------------------------------------------------------------------
     /// Connect using the connect string \a url.
     ///
     /// @param[in] url
@@ -137,7 +119,11 @@ public:
     /// @see size_t Communication::Read (void *, size_t, uint32_t);
     //------------------------------------------------------------------
     virtual size_t
-    Read (void *dst, size_t dst_len, lldb::ConnectionStatus &status, Error *error_ptr) = 0;
+    Read (void *dst, 
+          size_t dst_len, 
+          uint32_t timeout_usec,
+          lldb::ConnectionStatus &status, 
+          Error *error_ptr) = 0;
 
     //------------------------------------------------------------------
     /// The actual write function that attempts to write to the

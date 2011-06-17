@@ -39,7 +39,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     Connection(),
     m_fd (-1),
     m_is_socket (false),
-    m_should_close_fd (false)
+    m_should_close_fd (false), 
+    m_socket_timeout_usec(0)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT,
                                  "%p ConnectionFileDescriptor::ConnectionFileDescriptor ()",
@@ -50,7 +51,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     Connection(),
     m_fd (fd),
     m_is_socket (false),
-    m_should_close_fd (owns_fd)
+    m_should_close_fd (owns_fd),
+    m_socket_timeout_usec(0)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT,
                                  "%p ConnectionFileDescriptor::ConnectionFileDescriptor (fd = %i, owns_fd = %i)",
@@ -185,12 +187,32 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
 }
 
 size_t
-ConnectionFileDescriptor::Read (void *dst, size_t dst_len, ConnectionStatus &status, Error *error_ptr)
+ConnectionFileDescriptor::Read (void *dst, 
+                                size_t dst_len, 
+                                uint32_t timeout_usec,
+                                ConnectionStatus &status, 
+                                Error *error_ptr)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Read () ::read (fd = %i, dst = %p, dst_len = %zu)...",
                      this, m_fd, dst, dst_len);
+
+    if (timeout_usec == UINT32_MAX)
+    {
+        if (m_is_socket)
+            SetSocketRecieveTimeout (0);
+        status = eConnectionStatusSuccess;
+    }
+    else
+    {
+        if (m_is_socket && SetSocketRecieveTimeout (timeout_usec))
+            status = eConnectionStatusSuccess;
+        else
+            status = BytesAvailable (timeout_usec, error_ptr);
+    }
+    if (status != eConnectionStatusSuccess)
+        return 0;
 
     Error error;
     ssize_t bytes_read = ::read (m_fd, dst, dst_len);
@@ -370,7 +392,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
 
         log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION);
         if (log)
-            log->Printf("%p ConnectionFileDescriptor::Write()  ::select (nfds = %i, fd = %i, NULL, NULL, timeout = %p)...",
+            log->Printf("%p ConnectionFileDescriptor::BytesAvailable()  ::select (nfds = %i, fd = %i, NULL, NULL, timeout = %p)...",
                         this, nfds, m_fd, tv_ptr);
 
         const int num_set_fds = ::select (nfds, &read_fds, NULL, NULL, tv_ptr);
@@ -381,7 +403,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
 
         log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION);
         if (log)
-            log->Printf("%p ConnectionFileDescriptor::Write()  ::select (nfds = %i, fd = %i, NULL, NULL, timeout = %p) => %d, error = %s",
+            log->Printf("%p ConnectionFileDescriptor::BytesAvailable()  ::select (nfds = %i, fd = %i, NULL, NULL, timeout = %p) => %d, error = %s",
                         this, nfds, m_fd, tv_ptr, num_set_fds, error.AsCString());
 
         if (error_ptr)
@@ -701,6 +723,27 @@ ConnectionFileDescriptor::SetSocketOption(int fd, int level, int option_name, in
 #endif // #if defined(__MINGW32__) || defined(__MINGW64__)
 
 	return ::setsockopt(fd, level, option_name, option_value_p, sizeof(option_value));
+}
+
+bool
+ConnectionFileDescriptor::SetSocketRecieveTimeout (uint32_t timeout_usec)
+{
+    if (m_is_socket)
+    {
+        // Check in case timeout for m_fd has already been set to this value
+        if (timeout_usec == m_socket_timeout_usec)
+            return true;
+
+        struct timeval timeout;
+        timeout.tv_sec = timeout_usec / USEC_PER_SEC;
+        timeout.tv_usec = timeout_usec % USEC_PER_SEC;
+        if (::setsockopt (m_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == 0)
+        {
+            m_socket_timeout_usec = timeout_usec;
+            return true;
+        }
+    }
+    return false;
 }
 
 

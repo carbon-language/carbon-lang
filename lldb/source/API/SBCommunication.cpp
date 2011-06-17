@@ -59,30 +59,6 @@ SBCommunication::SetCloseOnEOF (bool b)
 }
 
 ConnectionStatus
-SBCommunication::CheckIfBytesAvailable ()
-{
-    if (m_opaque)
-        return m_opaque->BytesAvailable (0, NULL);
-    return eConnectionStatusNoConnection;
-}
-
-ConnectionStatus
-SBCommunication::WaitForBytesAvailableInfinite ()
-{
-    if (m_opaque)
-        return m_opaque->BytesAvailable (UINT32_MAX, NULL);
-    return eConnectionStatusNoConnection;
-}
-
-ConnectionStatus
-SBCommunication::WaitForBytesAvailableWithTimeout (uint32_t timeout_usec)
-{
-    if (m_opaque)
-        return m_opaque->BytesAvailable (timeout_usec, NULL);
-    return eConnectionStatusNoConnection;
-}
-
-ConnectionStatus
 SBCommunication::Connect (const char *url)
 {
     if (m_opaque)

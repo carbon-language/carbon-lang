@@ -68,9 +68,6 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_os_version_minor (UINT32_MAX),
     m_os_version_update (UINT32_MAX)
 {
-    m_rx_packet_listener.StartListeningForEvents(this,
-                                                 Communication::eBroadcastBitPacketAvailable  |
-                                                 Communication::eBroadcastBitReadThreadDidExit);
 }
 
 //----------------------------------------------------------------------
@@ -78,14 +75,8 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
 //----------------------------------------------------------------------
 GDBRemoteCommunicationClient::~GDBRemoteCommunicationClient()
 {
-    m_rx_packet_listener.StopListeningForEvents(this,
-                                                Communication::eBroadcastBitPacketAvailable  |
-                                                Communication::eBroadcastBitReadThreadDidExit);
     if (IsConnected())
-    {
-        StopReadThread();
         Disconnect();
-    }
 }
 
 bool
@@ -94,7 +85,7 @@ GDBRemoteCommunicationClient::HandshakeWithServer (Error *error_ptr)
     // Start the read thread after we send the handshake ack since if we
     // fail to send the handshake ack, there is no reason to continue...
     if (SendAck())
-        return StartReadThread (error_ptr);
+        return true;
     
     if (error_ptr)
         error_ptr->SetErrorString("failed to send the handshake ack");
@@ -245,15 +236,12 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
 )
 {
     Mutex::Locker locker;
-    TimeValue timeout_time;
-    timeout_time = TimeValue::Now();
-    timeout_time.OffsetWithSeconds (m_packet_timeout);
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
     if (GetSequenceMutex (locker))
     {
         if (SendPacketNoLock (payload, payload_length))
-            return WaitForPacketNoLock (response, &timeout_time);
+            return WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
     }
     else
     {
@@ -272,6 +260,10 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
             {
                 if (sent_interrupt)
                 {
+                    TimeValue timeout_time;
+                    timeout_time = TimeValue::Now();
+                    timeout_time.OffsetWithSeconds (m_packet_timeout);
+
                     if (log) 
                         log->Printf ("async: sent interrupt");
                     if (m_async_packet_predicate.WaitForValueEqualTo (false, &timeout_time, &timed_out))
@@ -380,7 +372,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
         if (log)
             log->Printf ("GDBRemoteCommunicationClient::%s () WaitForPacket(%.*s)", __FUNCTION__);
 
-        if (WaitForPacket (response, (TimeValue*)NULL))
+        if (WaitForPacketWithTimeoutMicroSeconds (response, UINT32_MAX))
         {
             if (response.Empty())
                 state = eStateInvalid;
@@ -1662,13 +1654,9 @@ GDBRemoteCommunicationClient::GetCurrentThreadIDs (std::vector<lldb::tid_t> &thr
         sequence_mutex_unavailable = false;
         StringExtractorGDBRemote response;
         
-        TimeValue timeout_time;
-        timeout_time = TimeValue::Now();
-        timeout_time.OffsetWithSeconds (m_packet_timeout*2); // We will always send at least two packets here...
-
-        for (SendPacketNoLock ("qfThreadInfo", strlen("qfThreadInfo")) && WaitForPacketNoLock (response, &timeout_time);
+        for (SendPacketNoLock ("qfThreadInfo", strlen("qfThreadInfo")) && WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
              response.IsNormalResponse();
-             SendPacketNoLock ("qsThreadInfo", strlen("qsThreadInfo")) && WaitForPacketNoLock (response, &timeout_time))
+             SendPacketNoLock ("qsThreadInfo", strlen("qsThreadInfo")) && WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ()))
         {
             char ch = response.GetChar();
             if (ch == 'l')

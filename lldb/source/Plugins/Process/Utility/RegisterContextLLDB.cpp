@@ -258,26 +258,40 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             m_current_offset_backed_up_one = -1;
             addr_t cfa_regval;
             int row_register_kind = m_full_unwind_plan_sp->GetRegisterKind ();
-            uint32_t cfa_regnum = m_full_unwind_plan_sp->GetRowForFunctionOffset(0)->GetCFARegister();
-            int cfa_offset = m_full_unwind_plan_sp->GetRowForFunctionOffset(0)->GetCFAOffset();
-            if (!ReadGPRValue (row_register_kind, cfa_regnum, cfa_regval))
+            const UnwindPlan::Row *row = m_full_unwind_plan_sp->GetRowForFunctionOffset(0);
+            if (row)
             {
-                if (log)
+                uint32_t cfa_regnum = row->GetCFARegister();
+                int cfa_offset = row->GetCFAOffset();
+                if (!ReadGPRValue (row_register_kind, cfa_regnum, cfa_regval))
                 {
-                    log->Printf("%*sFrame %u failed to get cfa value",
-                                m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
+                    if (log)
+                    {
+                        log->Printf("%*sFrame %u failed to get cfa value",
+                                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
+                    }
+                    m_frame_type = eNormalFrame;
+                    return;
                 }
-                m_frame_type = eNormalFrame;
-                return;
-            }
-            m_cfa = cfa_regval + cfa_offset;
+                m_cfa = cfa_regval + cfa_offset;
 
-            // A couple of sanity checks..
-            if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
+                // A couple of sanity checks..
+                if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
+                {
+                    if (log)
+                    {
+                        log->Printf("%*sFrame %u could not find a valid cfa address",
+                                    m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
+                    }
+                    m_frame_type = eNotAValidFrame;
+                    return;
+                }
+            }
+            else
             {
                 if (log)
                 {
-                    log->Printf("%*sFrame %u could not find a valid cfa address",
+                    log->Printf("%*sFrame %u could not find a row for function offset zero",
                                 m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
                 }
                 m_frame_type = eNotAValidFrame;

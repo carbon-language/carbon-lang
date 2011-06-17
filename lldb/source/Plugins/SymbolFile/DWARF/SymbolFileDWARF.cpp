@@ -2273,10 +2273,16 @@ SymbolFileDWARF::FindTypes(const SymbolContext& sc, const ConstString &name, boo
         {
             // We found a type pointer, now find the shared pointer form our type list
             TypeSP type_sp (GetTypeList()->FindType(matching_type->GetID()));
-            assert (type_sp.get() != NULL);
-            types.InsertUnique (type_sp);
-            if (types.GetSize() >= max_matches)
-                break;
+            if (type_sp)
+            {
+                types.InsertUnique (type_sp);
+                if (types.GetSize() >= max_matches)
+                    break;
+            }
+            else
+            {
+                fprintf (stderr, "error: can't find shared pointer for type 0x%8.8x.\n", matching_type->GetID());
+            }
         }
     }
     return types.GetSize() - initial_types_size;
@@ -4170,7 +4176,6 @@ SymbolFileDWARF::ParseVariables
     if (orig_die == NULL)
         return 0;
 
-    size_t vars_added = 0;
     const DWARFDebugInfoEntry *die = orig_die;
     const DWARFDebugInfoEntry *sc_parent_die = GetParentSymbolContextDIE(orig_die);
     dw_tag_t parent_tag = sc_parent_die ? sc_parent_die->Tag() : 0;
@@ -4189,8 +4194,12 @@ SymbolFileDWARF::ParseVariables
         }
         else
         {
-            assert(!"Parent DIE was a compile unit, yet we don't have a valid compile unit in the symbol context...");
-            vars_added = 0;
+            fprintf (stderr, 
+                     "error: parent 0x%8.8x %s with no valid compile unit in symbol context for 0x%8.8x %s.\n",
+                     sc_parent_die->GetOffset(),
+                     DW_TAG_value_to_name (parent_tag),
+                     orig_die->GetOffset(),
+                     DW_TAG_value_to_name (orig_die->Tag()));
         }
         break;
 
@@ -4202,71 +4211,91 @@ SymbolFileDWARF::ParseVariables
             // Check to see if we already have parsed the variables for the given scope
             
             Block *block = sc.function->GetBlock(true).FindBlockByID(sc_parent_die->GetOffset());
-            assert (block != NULL);
-            variables = block->GetVariableList(false, false);
-            if (variables.get() == NULL)
+            if (block != NULL)
             {
-                variables.reset(new VariableList());
-                block->SetVariableList(variables);
+                variables = block->GetVariableList(false, false);
+                if (variables.get() == NULL)
+                {
+                    variables.reset(new VariableList());
+                    block->SetVariableList(variables);
+                }
+            }
+            else
+            {
+                fprintf (stderr, 
+                         "error: NULL block for 0x%8.8x %s for variable at 0x%8.8x %s\n", 
+                         sc_parent_die->GetOffset(),
+                         DW_TAG_value_to_name (parent_tag),
+                         orig_die->GetOffset(),
+                         DW_TAG_value_to_name (orig_die->Tag()));
             }
         }
         else
         {
-            assert(!"Parent DIE was a function or block, yet we don't have a function in the symbol context...");
-            vars_added = 0;
+            fprintf (stderr, 
+                     "error: parent 0x%8.8x %s with no valid function in symbol context for 0x%8.8x %s.\n",
+                     sc_parent_die->GetOffset(),
+                     DW_TAG_value_to_name (parent_tag),
+                     orig_die->GetOffset(),
+                     DW_TAG_value_to_name (orig_die->Tag()));
         }
         break;
 
     default:
-        assert(!"Didn't find appropriate parent DIE for variable list...");
+        fprintf (stderr, 
+                 "error: didn't find appropriate parent DIE for variable list for 0x%8.8x %s.\n",
+                 orig_die->GetOffset(),
+                 DW_TAG_value_to_name (orig_die->Tag()));
         break;
     }
 
     // We need to have a variable list at this point that we can add variables to
-    assert(variables.get());
-
-    while (die != NULL)
+    if (variables.get())
     {
-        dw_tag_t tag = die->Tag();
+        size_t vars_added = 0;
+        while (die != NULL)
+        {
+            dw_tag_t tag = die->Tag();
 
-        // Check to see if we have already parsed this variable or constant?
-        if (m_die_to_variable_sp[die])
-        {
-            if (cc_variable_list)
-                cc_variable_list->AddVariableIfUnique (m_die_to_variable_sp[die]);
-        }
-        else
-        {
-            // We haven't already parsed it, lets do that now.
-            if ((tag == DW_TAG_variable) ||
-                (tag == DW_TAG_constant) ||
-                (tag == DW_TAG_formal_parameter && sc.function))
+            // Check to see if we have already parsed this variable or constant?
+            if (m_die_to_variable_sp[die])
             {
-                VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die, func_low_pc));
-                if (var_sp)
+                if (cc_variable_list)
+                    cc_variable_list->AddVariableIfUnique (m_die_to_variable_sp[die]);
+            }
+            else
+            {
+                // We haven't already parsed it, lets do that now.
+                if ((tag == DW_TAG_variable) ||
+                    (tag == DW_TAG_constant) ||
+                    (tag == DW_TAG_formal_parameter && sc.function))
                 {
-                    variables->AddVariableIfUnique (var_sp);
-                    if (cc_variable_list)
-                        cc_variable_list->AddVariableIfUnique (var_sp);
-                    ++vars_added;
+                    VariableSP var_sp (ParseVariableDIE(sc, dwarf_cu, die, func_low_pc));
+                    if (var_sp)
+                    {
+                        variables->AddVariableIfUnique (var_sp);
+                        if (cc_variable_list)
+                            cc_variable_list->AddVariableIfUnique (var_sp);
+                        ++vars_added;
+                    }
                 }
             }
+
+            bool skip_children = (sc.function == NULL && tag == DW_TAG_subprogram);
+
+            if (!skip_children && parse_children && die->HasChildren())
+            {
+                vars_added += ParseVariables(sc, dwarf_cu, func_low_pc, die->GetFirstChild(), true, true, cc_variable_list);
+            }
+
+            if (parse_siblings)
+                die = die->GetSibling();
+            else
+                die = NULL;
         }
-
-        bool skip_children = (sc.function == NULL && tag == DW_TAG_subprogram);
-
-        if (!skip_children && parse_children && die->HasChildren())
-        {
-            vars_added += ParseVariables(sc, dwarf_cu, func_low_pc, die->GetFirstChild(), true, true, cc_variable_list);
-        }
-
-        if (parse_siblings)
-            die = die->GetSibling();
-        else
-            die = NULL;
+        return vars_added;
     }
-
-    return vars_added;
+    return 0;
 }
 
 //------------------------------------------------------------------

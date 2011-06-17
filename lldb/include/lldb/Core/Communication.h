@@ -121,20 +121,6 @@ public:
     Clear ();
 
     //------------------------------------------------------------------
-    /// Poll for bytes available if the communications supports it.
-    ///
-    /// @param[in] timeout_usec
-    ///     A timeout value in micro-seconds, UINT32_MAX for infinite
-    ///     wait.
-    ///
-    /// @return
-    ///     \b True if the bytes are, or became available within the
-    ///     timeout period, \b false otherwise.
-    //------------------------------------------------------------------
-    virtual lldb::ConnectionStatus
-    BytesAvailable (uint32_t timeout_usec, Error *error_ptr);
-
-    //------------------------------------------------------------------
     /// Connect using the current connection by passing \a url to its
     /// connect function.
     /// string.
@@ -185,10 +171,7 @@ public:
     /// Read bytes from the current connection.
     ///
     /// If no read thread is running, this function call the
-    /// connection's Connection::BytesAvailable(uint32_t) method to
-    /// wait for available data, and then call the
-    /// Connection::Read(void *, size_t) function to get any available
-    /// bytes if Connection::BytesAvailable(uint32_t) returned true.
+    /// connection's Connection::Read(...) function to get any available.
     ///
     /// If a read thread has been started, this function will check for
     /// any cached bytes that have already been read and return any
@@ -212,7 +195,6 @@ public:
     /// @return
     ///     The number of bytes actually read.
     ///
-    /// @see bool Connection::BytesAvailable (uint32_t);
     /// @see size_t Connection::Read (void *, size_t);
     //------------------------------------------------------------------
     size_t
@@ -365,6 +347,7 @@ protected:
     size_t
     ReadFromConnection (void *dst, 
                         size_t dst_len, 
+                        uint32_t timeout_usec,
                         lldb::ConnectionStatus &status, 
                         Error *error_ptr);
     //------------------------------------------------------------------

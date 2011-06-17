@@ -72,7 +72,7 @@ main (int argc, char *argv[])
     StreamSP log_stream_sp;
     Args log_args;
     Error error;
-    std::string listen_host_post;
+    std::string listen_host_port;
     char ch;
     Debugger::Initialize();
     
@@ -163,7 +163,7 @@ main (int argc, char *argv[])
             break;
         
         case 'L':
-            listen_host_post.append (optarg);
+            listen_host_port.append (optarg);
             break;
         }
     }
@@ -181,15 +181,15 @@ main (int argc, char *argv[])
 
 
     GDBRemoteCommunicationServer gdb_server (true);
-    if (!listen_host_post.empty())
+    if (!listen_host_port.empty())
     {
         std::auto_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
         if (conn_ap.get())
         {
             std::string connect_url ("listen://");
-            connect_url.append(listen_host_post.c_str());
+            connect_url.append(listen_host_port.c_str());
 
-            printf ("Listening for a connection on %s...\n", listen_host_post.c_str());
+            printf ("Listening for a connection on %s...\n", listen_host_port.c_str());
             if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
             {
                 printf ("Connection established.\n");
@@ -208,7 +208,7 @@ main (int argc, char *argv[])
             bool done = false;
             while (!interrupt && !done)
             {
-                if (!gdb_server.GetPacketAndSendResponse(NULL, error, interrupt, done))
+                if (!gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done))
                     break;
             }
         }

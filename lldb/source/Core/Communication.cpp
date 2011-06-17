@@ -69,19 +69,6 @@ Communication::Clear()
 }
 
 ConnectionStatus
-Communication::BytesAvailable (uint32_t timeout_usec, Error *error_ptr)
-{
-    lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION, "%p Communication::BytesAvailable (timeout_usec = %u)", this, timeout_usec);
-
-    lldb::ConnectionSP connection_sp (m_connection_sp);
-    if (connection_sp.get())
-        return connection_sp->BytesAvailable (timeout_usec, error_ptr);
-    if (error_ptr)
-        error_ptr->SetErrorString("Invalid connection.");
-    return eConnectionStatusNoConnection;
-}
-
-ConnectionStatus
 Communication::Connect (const char *url, Error *error_ptr)
 {
     Clear();
@@ -139,7 +126,7 @@ size_t
 Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, ConnectionStatus &status, Error *error_ptr)
 {
     lldb_private::LogIfAnyCategoriesSet (LIBLLDB_LOG_COMMUNICATION,
-                                         "%p Communication::Read (dst = %p, dst_len = %zu, timeout_usec = %u) connection = %p",
+                                         "%p Communication::Read (dst = %p, dst_len = %zu, timeout = %u usec) connection = %p",
                                          this, 
                                          dst, 
                                          dst_len, 
@@ -196,9 +183,7 @@ Communication::Read (void *dst, size_t dst_len, uint32_t timeout_usec, Connectio
     lldb::ConnectionSP connection_sp (m_connection_sp);
     if (connection_sp.get())
     {
-        status = connection_sp->BytesAvailable (timeout_usec, error_ptr);
-        if (status == eConnectionStatusSuccess)
-            return connection_sp->Read (dst, dst_len, status, error_ptr);
+        return connection_sp->Read (dst, dst_len, timeout_usec, status, error_ptr);
     }
 
     if (error_ptr)
@@ -320,11 +305,15 @@ Communication::AppendBytesToCache (const uint8_t * bytes, size_t len, bool broad
 }
 
 size_t
-Communication::ReadFromConnection (void *dst, size_t dst_len, ConnectionStatus &status, Error *error_ptr)
+Communication::ReadFromConnection (void *dst, 
+                                   size_t dst_len, 
+                                   uint32_t timeout_usec,
+                                   ConnectionStatus &status, 
+                                   Error *error_ptr)
 {
     lldb::ConnectionSP connection_sp (m_connection_sp);
     if (connection_sp.get())
-        return connection_sp->Read (dst, dst_len, status, error_ptr);
+        return connection_sp->Read (dst, dst_len, timeout_usec, status, error_ptr);
     return 0;
 }
 
@@ -351,20 +340,15 @@ Communication::ReadThread (void *p)
     bool done = false;
     while (!done && comm->m_read_thread_enabled)
     {
-        status = comm->BytesAvailable (UINT32_MAX, &error);
-
-        if (status == eConnectionStatusSuccess)
+        size_t bytes_read = comm->ReadFromConnection (buf, sizeof(buf), 5 * USEC_PER_SEC, status, &error);
+        if (bytes_read > 0)
+            comm->AppendBytesToCache (buf, bytes_read, true, status);
+        else if ((bytes_read == 0)
+                && status == eConnectionStatusEndOfFile)
         {
-            size_t bytes_read = comm->ReadFromConnection (buf, sizeof(buf), status, &error);
-            if (bytes_read > 0)
-                comm->AppendBytesToCache (buf, bytes_read, true, status);
-            else if ((bytes_read == 0)
-                    && status == eConnectionStatusEndOfFile)
-            {
-                if (comm->GetCloseOnEOF ())
-                    comm->Disconnect ();
-                comm->AppendBytesToCache (buf, bytes_read, true, status);
-            }
+            if (comm->GetCloseOnEOF ())
+                comm->Disconnect ();
+            comm->AppendBytesToCache (buf, bytes_read, true, status);
         }
 
         switch (status)
@@ -384,7 +368,7 @@ Communication::ReadThread (void *p)
         case eConnectionStatusError:            // Check GetError() for details
         case eConnectionStatusTimedOut:         // Request timed out
             if (log)
-                error.LogIfError(log.get(), "%p Communication::BytesAvailable () => status = %i", p, status);
+                error.LogIfError(log.get(), "%p Communication::ReadFromConnection () => status = %i", p, status);
             break;
         }
     }

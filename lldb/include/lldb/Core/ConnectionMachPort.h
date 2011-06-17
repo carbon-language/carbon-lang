@@ -45,6 +45,7 @@ public:
     virtual size_t
     Read (void *dst, 
           size_t dst_len, 
+          uint32_t timeout_usec,
           lldb::ConnectionStatus &status, 
           lldb_private::Error *error_ptr);
 

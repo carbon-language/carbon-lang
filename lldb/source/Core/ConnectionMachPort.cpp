@@ -213,7 +213,11 @@ ConnectionMachPort::Disconnect (Error *error_ptr)
 }
 
 size_t
-ConnectionMachPort::Read (void *dst, size_t dst_len, ConnectionStatus &status, Error *error_ptr)
+ConnectionMachPort::Read (void *dst, 
+                          size_t dst_len, 
+                          uint32_t timeout_usec,
+                          ConnectionStatus &status, 
+                          Error *error_ptr)
 {
     PayloadType payload;
     

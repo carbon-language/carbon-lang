@@ -34,21 +34,29 @@ public:
     IsConnected () const;
 
     virtual lldb::ConnectionStatus
-    BytesAvailable (uint32_t timeout_usec, Error *error_ptr);
-
-    virtual lldb::ConnectionStatus
     Connect (const char *s, Error *error_ptr);
 
     virtual lldb::ConnectionStatus
     Disconnect (Error *error_ptr);
 
     virtual size_t
-    Read (void *dst, size_t dst_len, lldb::ConnectionStatus &status, Error *error_ptr);
+    Read (void *dst, 
+          size_t dst_len, 
+          uint32_t timeout_usec,
+          lldb::ConnectionStatus &status, 
+          Error *error_ptr);
 
     virtual size_t
-    Write (const void *src, size_t src_len, lldb::ConnectionStatus &status, Error *error_ptr);
+    Write (const void *src, 
+           size_t src_len, 
+           lldb::ConnectionStatus &status, 
+           Error *error_ptr);
 
 protected:
+    
+    lldb::ConnectionStatus
+    BytesAvailable (uint32_t timeout_usec, Error *error_ptr);
+    
     lldb::ConnectionStatus
     SocketListen (uint16_t listen_port_num, Error *error_ptr);
 
@@ -67,9 +75,13 @@ protected:
     int m_fd;    // Socket we use to communicate once conn established
     bool m_is_socket;
     bool m_should_close_fd; // True if this class should close the file descriptor when it goes away.
-
+    uint32_t m_socket_timeout_usec;
+    
     static int
     SetSocketOption(int fd, int level, int option_name, int option_value);
+
+    bool
+    SetSocketRecieveTimeout (uint32_t timeout_usec);
 
 private:
     DISALLOW_COPY_AND_ASSIGN (ConnectionFileDescriptor);

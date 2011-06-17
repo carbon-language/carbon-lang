@@ -195,7 +195,7 @@ AcceptPIDFromInferior (void *arg)
         char pid_str[256];
         ::memset (pid_str, 0, sizeof(pid_str));
         ConnectionStatus status;
-        const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), status, NULL);
+        const size_t pid_str_len = file_conn.Read (pid_str, sizeof(pid_str), NULL, status, NULL);
         if (pid_str_len > 0)
         {
             int pid = atoi (pid_str);

@@ -39,16 +39,12 @@ GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name,
                                                bool is_platform) :
     Communication(comm_name),
     m_packet_timeout (60),
-    m_rx_packet_listener (listener_name),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
     m_public_is_running (false),
     m_private_is_running (false),
     m_send_acks (true),
     m_is_platform (is_platform)
 {
-    m_rx_packet_listener.StartListeningForEvents(this,
-                                                 Communication::eBroadcastBitPacketAvailable  |
-                                                 Communication::eBroadcastBitReadThreadDidExit);
 }
 
 //----------------------------------------------------------------------
@@ -56,12 +52,8 @@ GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name,
 //----------------------------------------------------------------------
 GDBRemoteCommunication::~GDBRemoteCommunication()
 {
-    m_rx_packet_listener.StopListeningForEvents(this,
-                                                Communication::eBroadcastBitPacketAvailable  |
-                                                Communication::eBroadcastBitReadThreadDidExit);
     if (IsConnected())
     {
-        StopReadThread();
         Disconnect();
     }
 }
@@ -167,7 +159,7 @@ char
 GDBRemoteCommunication::GetAck ()
 {
     StringExtractorGDBRemote packet;
-    if (WaitForPacket (packet, m_packet_timeout) == 1)
+    if (WaitForPacketWithTimeoutMicroSeconds (packet, GetPacketTimeoutInMicroSeconds ()) == 1)
         return packet.GetChar();
     return 0;
 }
@@ -186,99 +178,63 @@ GDBRemoteCommunication::WaitForNotRunningPrivate (const TimeValue *timeout_ptr)
 }
 
 size_t
-GDBRemoteCommunication::WaitForPacket (StringExtractorGDBRemote &packet, uint32_t timeout_seconds)
+GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSeconds (StringExtractorGDBRemote &packet, uint32_t timeout_usec)
 {
     Mutex::Locker locker(m_sequence_mutex);
-    TimeValue timeout_time;
-    timeout_time = TimeValue::Now();
-    timeout_time.OffsetWithSeconds (timeout_seconds);
-    return WaitForPacketNoLock (packet, &timeout_time);
+    return WaitForPacketWithTimeoutMicroSecondsNoLock (packet, timeout_usec);
 }
 
 size_t
-GDBRemoteCommunication::WaitForPacket (StringExtractorGDBRemote &packet, const TimeValue* timeout_time_ptr)
+GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractorGDBRemote &packet, uint32_t timeout_usec)
 {
-    Mutex::Locker locker(m_sequence_mutex);
-    return WaitForPacketNoLock (packet, timeout_time_ptr);
-}
+    uint8_t buffer[8192];
+    Error error;
 
-size_t
-GDBRemoteCommunication::WaitForPacketNoLock (StringExtractorGDBRemote &packet, const TimeValue* timeout_time_ptr)
-{
-    bool checksum_error = false;
-    packet.Clear ();
+    // Check for a packet from our cache first without trying any reading...
+    if (CheckForPacket (NULL, 0, packet))
+        return packet.GetStringRef().size();
 
-    EventSP event_sp;
-
-    if (m_rx_packet_listener.WaitForEvent (timeout_time_ptr, event_sp))
+    bool timed_out = false;
+    while (IsConnected() && !timed_out)
     {
-        const uint32_t event_type = event_sp->GetType();
-        if (event_type | Communication::eBroadcastBitPacketAvailable)
+        lldb::ConnectionStatus status;
+        size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
+        if (bytes_read > 0)
         {
-            const EventDataBytes *event_bytes = EventDataBytes::GetEventDataFromEvent(event_sp.get());
-            if (event_bytes)
+            if (CheckForPacket (buffer, bytes_read, packet))
+                return packet.GetStringRef().size();
+        }
+        else
+        {
+            switch (status)
             {
-                const char *packet_data =  (const char *)event_bytes->GetBytes();
-                const uint32_t packet_size =  event_bytes->GetByteSize();
-                LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
-                if (log)
-                    log->Printf ("read packet: %.*s", packet_size, packet_data);
-                if (packet_data && packet_size > 0)
-                {
-                    std::string &packet_str = packet.GetStringRef();
-                    if (packet_data[0] == '$')
-                    {
-                        bool success = false;
-                        if (packet_size < 4)
-                            ::fprintf (stderr, "Packet that starts with $ is too short: '%s'\n", packet_data);
-                        else if (packet_data[packet_size-3] != '#' || 
-                                 !::isxdigit (packet_data[packet_size-2]) || 
-                                 !::isxdigit (packet_data[packet_size-1]))
-                            ::fprintf (stderr, "Invalid checksum footer for packet: '%s'\n", packet_data);
-                        else
-                            success = true;
-                        
-                        if (success)
-                            packet_str.assign (packet_data + 1, packet_size - 4);
-                        if (GetSendAcks ())
-                        {
-                            if (success)
-                            {
-                                char packet_checksum = strtol (&packet_data[packet_size-2], NULL, 16);
-                                char actual_checksum = CalculcateChecksum (&packet_str[0], packet_str.size());
-                                checksum_error = packet_checksum != actual_checksum;
-                            }
-                            // Send the ack or nack if needed
-                            if (checksum_error || !success)
-                                SendNack();
-                            else
-                                SendAck();
-                        }
-                    }
-                    else
-                    {
-                        packet_str.assign (packet_data, packet_size);
-                    }
-                    return packet_str.size();
-                }
+            case eConnectionStatusSuccess:
+                break;
+                
+            case eConnectionStatusEndOfFile:
+            case eConnectionStatusNoConnection:
+            case eConnectionStatusLostConnection:
+            case eConnectionStatusError:
+                Disconnect();
+                break;
+            
+            case eConnectionStatusTimedOut:
+                timed_out = true;
+                break;
             }
         }
-        else if (event_type | Communication::eBroadcastBitReadThreadDidExit)
-        {
-            // Our read thread exited on us so just fall through and return zero...
-            Disconnect();
-        }
     }
+    packet.Clear ();    
     return 0;
 }
 
-void
-GDBRemoteCommunication::AppendBytesToCache (const uint8_t *src, size_t src_len, bool broadcast, 
-                                            ConnectionStatus status)
+bool
+GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, StringExtractorGDBRemote &packet)
 {
     // Put the packet data into the buffer in a thread safe fashion
     Mutex::Locker locker(m_bytes_mutex);
-    m_bytes.append ((const char *)src, src_len);
+    if (src && src_len > 0)
+        m_bytes.append ((const char *)src, src_len);
 
     // Parse up the packets into gdb remote packets
     while (!m_bytes.empty())
@@ -286,29 +242,40 @@ GDBRemoteCommunication::AppendBytesToCache (const uint8_t *src, size_t src_len, 
         // end_idx must be one past the last valid packet byte. Start
         // it off with an invalid value that is the same as the current
         // index.
-        size_t end_idx = 0;
+        size_t content_start = 0;
+        size_t content_length = 0;
+        size_t total_length = 0;
+        size_t checksum_idx = std::string::npos;
 
         switch (m_bytes[0])
         {
             case '+':       // Look for ack
             case '-':       // Look for cancel
             case '\x03':    // ^C to halt target
-                end_idx = 1;  // The command is one byte long...
+                content_length = total_length = 1;  // The command is one byte long...
                 break;
 
             case '$':
                 // Look for a standard gdb packet?
-                end_idx = m_bytes.find('#');
-                if (end_idx != std::string::npos)
                 {
-                    if (end_idx + 2 < m_bytes.size())
+                    size_t hash_pos = m_bytes.find('#');
+                    if (hash_pos != std::string::npos)
                     {
-                        end_idx += 3;
-                    }
-                    else
-                    {
-                        // Checksum bytes aren't all here yet
-                        end_idx = std::string::npos;
+                        if (hash_pos + 2 < m_bytes.size())
+                        {
+                            checksum_idx = hash_pos + 1;
+                            // Skip the dollar sign
+                            content_start = 1; 
+                            // Don't include the # in the content or the $ in the content length
+                            content_length = hash_pos - 1;  
+                            
+                            total_length = hash_pos + 3; // Skip the # and the two hex checksum bytes
+                        }
+                        else
+                        {
+                            // Checksum bytes aren't all here yet
+                            content_length = std::string::npos;
+                        }
                     }
                 }
                 break;
@@ -317,27 +284,76 @@ GDBRemoteCommunication::AppendBytesToCache (const uint8_t *src, size_t src_len, 
                 break;
         }
 
-        if (end_idx == std::string::npos)
+        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+        if (content_length == std::string::npos)
         {
-            //ProcessGDBRemoteLog::LogIf (GDBR_LOG_PACKETS | GDBR_LOG_VERBOSE, "GDBRemoteCommunication::%s packet not yet complete: '%s'",__FUNCTION__, m_bytes.c_str());
-            return;
+            packet.Clear();
+            return false;
         }
-        else if (end_idx > 0)
+        else if (content_length > 0)
         {
+
             // We have a valid packet...
-            assert (end_idx <= m_bytes.size());
-            std::auto_ptr<EventDataBytes> event_bytes_ap (new EventDataBytes (&m_bytes[0], end_idx));
-            ProcessGDBRemoteLog::LogIf (GDBR_LOG_COMM, "got full packet: %s", event_bytes_ap->GetBytes());
-            BroadcastEvent (eBroadcastBitPacketAvailable, event_bytes_ap.release());
-            m_bytes.erase(0, end_idx);
+            assert (content_length <= m_bytes.size());
+            assert (total_length <= m_bytes.size());
+            assert (content_length <= total_length);
+            
+            bool success = true;
+            std::string &packet_str = packet.GetStringRef();
+            packet_str.assign (m_bytes, content_start, content_length);
+            if (m_bytes[0] == '$')
+            {
+                assert (checksum_idx < m_bytes.size());
+                if (::isxdigit (m_bytes[checksum_idx+0]) || 
+                    ::isxdigit (m_bytes[checksum_idx+1]))
+                {
+                    if (GetSendAcks ())
+                    {
+                        const char *packet_checksum_cstr = &m_bytes[checksum_idx];
+                        char packet_checksum = strtol (packet_checksum_cstr, NULL, 16);
+                        char actual_checksum = CalculcateChecksum (packet_str.c_str(), packet_str.size());
+                        success = packet_checksum == actual_checksum;
+                        if (!success)
+                        {
+                            if (log)
+                                log->Printf ("error: checksum mismatch: %.*s expected 0x%2.2x, got 0x%2.2x", 
+                                             (int)(total_length), 
+                                             m_bytes.c_str(),
+                                             (uint8_t)packet_checksum,
+                                             (uint8_t)actual_checksum);
+                        }
+                        // Send the ack or nack if needed
+                        if (!success)
+                            SendNack();
+                        else
+                            SendAck();
+                    }
+                    if (success)
+                    {
+                        if (log)
+                            log->Printf ("read packet: %.*s", (int)(total_length), m_bytes.c_str());
+                    }
+                }
+                else
+                {
+                    success = false;
+                    if (log)
+                        log->Printf ("error: invalid checksum in packet: '%s'\n", (int)(total_length), m_bytes.c_str());
+                }
+            }
+            m_bytes.erase(0, total_length);
+            packet.SetFilePos(0);
+            return success;
         }
         else
         {
-            assert (1 <= m_bytes.size());
-            ProcessGDBRemoteLog::LogIf (GDBR_LOG_COMM, "GDBRemoteCommunication::%s tossing junk byte at %c",__FUNCTION__, m_bytes[0]);
+            if (log)
+                log->Printf ("GDBRemoteCommunication::%s tossing junk byte at %c",__FUNCTION__, m_bytes[0]);
             m_bytes.erase(0, 1);
         }
     }
+    packet.Clear();
+    return false;
 }
 
 Error

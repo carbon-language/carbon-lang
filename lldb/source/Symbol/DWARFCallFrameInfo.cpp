@@ -300,7 +300,7 @@ DWARFCallFrameInfo::GetFDEIndex ()
     }
     while (m_cfi_data.ValidOffsetForDataOfSize (offset, 8))
     {
-        dw_offset_t current_entry = offset;
+        const dw_offset_t current_entry = offset;
         uint32_t len = m_cfi_data.GetU32 (&offset);
         dw_offset_t next_entry = current_entry + len + 4;
         dw_offset_t cie_id = m_cfi_data.GetU32 (&offset);
@@ -312,20 +312,29 @@ DWARFCallFrameInfo::GetFDEIndex ()
             continue;
         }
 
-        const CIE *cie = GetCIE (current_entry + 4 - cie_id);
-        assert (cie != NULL);
+        const dw_offset_t cie_offset = current_entry + 4 - cie_id;
+        const CIE *cie = GetCIE (cie_offset);
+        if (cie)
+        {
+            const lldb::addr_t pc_rel_addr = m_section->GetFileAddress();
+            const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
+            const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
 
-        const lldb::addr_t pc_rel_addr = m_section->GetFileAddress();
-        const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
-        const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
-
-        lldb::addr_t addr = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);
-        lldb::addr_t length = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
-        FDEEntry fde;
-        fde.bounds = AddressRange (addr, length, m_objfile.GetSectionList());
-        fde.offset = current_entry;
-        m_fde_index.push_back(fde);
-
+            lldb::addr_t addr = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);
+            lldb::addr_t length = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding & DW_EH_PE_MASK_ENCODING, pc_rel_addr, text_addr, data_addr);
+            FDEEntry fde;
+            fde.bounds = AddressRange (addr, length, m_objfile.GetSectionList());
+            fde.offset = current_entry;
+            m_fde_index.push_back(fde);
+        }
+        else
+        {
+            fprintf (stderr, 
+                     "error: unable to find CIE at 0x%8.8x for cie_id = 0x%8.8x for entry at 0x%8.8x.\n", 
+                     cie_offset,
+                     cie_id,
+                     current_entry);
+        }
         offset = next_entry;
     }
     std::sort (m_fde_index.begin(), m_fde_index.end());

@@ -37,7 +37,7 @@ public:
     ~GDBRemoteCommunicationServer();
 
     bool
-    GetPacketAndSendResponse (const lldb_private::TimeValue* timeout_ptr,
+    GetPacketAndSendResponse (uint32_t timeout_usec,
                               lldb_private::Error &error,
                               bool &interrupt, 
                               bool &quit);
