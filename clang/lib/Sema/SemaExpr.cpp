@@ -8935,12 +8935,11 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     rhs = move(resolvedRHS);
   }
 
-  bool LeftNull = Expr::NPCK_GNUNull ==
-      lhs.get()->isNullPointerConstant(Context,
-                                       Expr::NPC_ValueDependentIsNotNull);
-  bool RightNull = Expr::NPCK_GNUNull ==
-      rhs.get()->isNullPointerConstant(Context,
-                                       Expr::NPC_ValueDependentIsNotNull);
+  // The canonical way to check for a GNU null is with isNullPointerConstant,
+  // but we use a bit of a hack here for speed; this is a relatively
+  // hot path, and isNullPointerConstant is slow.
+  bool LeftNull = isa<GNUNullExpr>(lhs.get()->IgnoreParenImpCasts());
+  bool RightNull = isa<GNUNullExpr>(rhs.get()->IgnoreParenImpCasts());
 
   // Detect when a NULL constant is used improperly in an expression.  These
   // are mainly cases where the null pointer is used as an integer instead
