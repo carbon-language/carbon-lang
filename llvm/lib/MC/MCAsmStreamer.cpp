@@ -1394,7 +1394,6 @@ void MCLSDADecoderAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
     InLSDA = (LSDASize == 0 || BytesRead < LSDASize);
   } else {
     // We're reading a ULEB128. Make it so!
-    assert(Size == 1 && "Non-byte representation of a ULEB128?");
     ULEB128Value.push_back(Value);
 
     if ((Value & 0x80) == 0) {
@@ -1605,7 +1604,6 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     bool useCFI, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, TargetAsmBackend *TAB,
                                     bool ShowInst) {
-#if 0
   ExceptionHandling::ExceptionsType ET =
     Context.getAsmInfo().getExceptionHandlingType();
 
@@ -1613,7 +1611,7 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
       (ET == ExceptionHandling::SjLj || ET == ExceptionHandling::DwarfCFI))
     return new MCLSDADecoderAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                         useCFI, IP, CE, TAB, ShowInst);
-#endif
+
   return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc, useCFI,
                            IP, CE, TAB, ShowInst);
 }
