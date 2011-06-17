@@ -7,13 +7,13 @@ template<typename T> void f(T) {}
 template<typename T> static void g(T) {}
 
 
-template<> static void f<int>(int); // expected-error{{explicit specialization cannot have a storage class}}
+template<> static void f<int>(int); // expected-warning{{explicit specialization cannot have a storage class}}
 template static void f<float>(float); // expected-error{{explicit instantiation cannot have a storage class}}
 
 template<> void f<double>(double);
 template void f<long>(long);
 
-template<> static void g<int>(int); // expected-error{{explicit specialization cannot have a storage class}}
+template<> static void g<int>(int); // expected-warning{{explicit specialization cannot have a storage class}}
 template static void g<float>(float); // expected-error{{explicit instantiation cannot have a storage class}}
 
 template<> void g<double>(double);

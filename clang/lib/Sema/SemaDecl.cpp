@@ -4663,7 +4663,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       //   specialization (14.7.3)
       if (SC != SC_None) {
         Diag(NewFD->getLocation(), 
-             diag::err_explicit_specialization_storage_class)
+             diag::ext_explicit_specialization_storage_class)
           << FixItHint::CreateRemoval(D.getDeclSpec().getStorageClassSpecLoc());
       }
       
