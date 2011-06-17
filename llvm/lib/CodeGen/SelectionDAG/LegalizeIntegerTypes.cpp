@@ -2160,8 +2160,7 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
   const Type *PtrTy = PtrVT.getTypeForEVT(*DAG.getContext());
   DebugLoc dl = N->getDebugLoc();
 
-  // Expand the result by simply replacing it with the equivalent
-  // non-overflow-checking operation.
+  // Replace this with a libcall that will check overflow.
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   if (VT == MVT::i32)
     LC = RTLIB::MULO_I32;
