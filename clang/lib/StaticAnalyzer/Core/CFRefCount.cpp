@@ -3582,7 +3582,7 @@ void RetainReleaseChecker::checkPostStmt(const CastExpr *CE,
   if (!BE)
     return;
   
-  ArgEffect AE;
+  ArgEffect AE = IncRef;
   
   switch (BE->getBridgeKind()) {
     case clang::OBC_Bridge:
