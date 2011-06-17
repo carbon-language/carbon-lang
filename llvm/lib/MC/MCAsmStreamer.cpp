@@ -1482,7 +1482,7 @@ void MCLSDADecoderAsmStreamer::EmitEHTableDescription() {
   CMT << "@CallSite Encoding: " << DecodeDWARFEncoding(LSDAEncoding[4]) << "\n";
   CMT << "@Action Table Size: " << LSDAEncoding[5] << " bytes\n\n";
 
-  bool isSjLjEH = (MAI.getExceptionHandlingType() == ExceptionHandling::ARM);
+  bool isSjLjEH = (MAI.getExceptionHandlingType() == ExceptionHandling::SjLj);
 
   int64_t CallSiteTableSize = LSDAEncoding[5];
   unsigned CallSiteEntrySize;
@@ -1493,14 +1493,13 @@ void MCLSDADecoderAsmStreamer::EmitEHTableDescription() {
                         1;  // TType index.
   else
     CallSiteEntrySize = 1 + // Call index.
-                        1 + // Landing pad.
                         1;  // TType index.
 
   unsigned NumEntries = CallSiteTableSize / CallSiteEntrySize;
   assert(CallSiteTableSize % CallSiteEntrySize == 0 &&
          "The action table size is not a multiple of what it should be!");
   unsigned TTypeIdx = 5 +              // Action table size index.
-     (isSjLjEH ? 3 : 4) * NumEntries + // Action table entries.
+     (isSjLjEH ? 2 : 4) * NumEntries + // Action table entries.
                       1;               // Just because.
 
   // Emit the action table.
@@ -1518,20 +1517,20 @@ void MCLSDADecoderAsmStreamer::EmitEHTableDescription() {
       // The end of the throwing region.
       Idx = LSDAEncoding[I++];
       OS << *cast<MCBinaryExpr>(Assignments[Idx - 1])->getLHS();
-    } else {
-      CMT << "  A throw from call " << *Assignments[Idx - 1];
-    }
 
-    // The landing pad.
-    Idx = LSDAEncoding[I++];
-    if (Idx) {
-      OS << " jumps to "
-         << *cast<MCBinaryExpr>(Assignments[Idx - 1])->getLHS()
-         << " on an exception.\n";
+      // The landing pad.
+      Idx = LSDAEncoding[I++];
+      if (Idx) {
+        OS << " jumps to "
+           << *cast<MCBinaryExpr>(Assignments[Idx - 1])->getLHS()
+           << " on an exception.\n";
+      } else {
+        OS << " does not have a landing pad.\n";
+        ++I;
+        continue;
+      }
     } else {
-      OS << " does not have a landing pad.\n";
-      ++I;
-      continue;
+      CMT << "  A throw from call " << Idx << "\n";
     }
 
     // The index into the action table.
@@ -1606,11 +1605,10 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     bool useCFI, MCInstPrinter *IP,
                                     MCCodeEmitter *CE, TargetAsmBackend *TAB,
                                     bool ShowInst) {
-#if 0
   if (isVerboseAsm)
     return new MCLSDADecoderAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                         useCFI, IP, CE, TAB, ShowInst);
-#endif
+
   return new MCAsmStreamer(Context, OS, isVerboseAsm, useLoc, useCFI,
                            IP, CE, TAB, ShowInst);
 }
