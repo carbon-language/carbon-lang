@@ -1095,12 +1095,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                "two address instruction invalid");
 
         unsigned regB = mi->getOperand(SrcIdx).getReg();
-        TiedOperandMap::iterator OI = TiedOperands.find(regB);
-        if (OI == TiedOperands.end()) {
-          SmallVector<std::pair<unsigned, unsigned>, 4> TiedPair;
-          OI = TiedOperands.insert(std::make_pair(regB, TiedPair)).first;
-        }
-        OI->second.push_back(std::make_pair(SrcIdx, DstIdx));
+        TiedOperands[regB].push_back(std::make_pair(SrcIdx, DstIdx));
       }
 
       // Now iterate over the information collected above.
