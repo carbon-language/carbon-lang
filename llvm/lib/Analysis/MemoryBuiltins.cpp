@@ -50,13 +50,8 @@ static bool isMallocCall(const CallInst *CI) {
   const FunctionType *FTy = Callee->getFunctionType();
   if (FTy->getNumParams() != 1)
     return false;
-  if (IntegerType *ITy = dyn_cast<IntegerType>(FTy->param_begin()->get())) {
-    if (ITy->getBitWidth() != 32 && ITy->getBitWidth() != 64)
-      return false;
-    return true;
-  }
-
-  return false;
+  return FTy->getParamType(0)->isIntegerTy(32) ||
+         FTy->getParamType(0)->isIntegerTy(64);
 }
 
 /// extractMallocCall - Returns the corresponding CallInst if the instruction
@@ -211,7 +206,7 @@ const CallInst *llvm::isFreeCall(const Value *I) {
     return 0;
   if (FTy->getNumParams() != 1)
     return 0;
-  if (FTy->param_begin()->get() != Type::getInt8PtrTy(Callee->getContext()))
+  if (FTy->getParamType(0) != Type::getInt8PtrTy(Callee->getContext()))
     return 0;
 
   return CI;
