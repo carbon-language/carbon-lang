@@ -727,37 +727,37 @@ void DIVariable::dump() const {
 
 /// fixupObjcLikeName - Replace contains special characters used
 /// in a typical Objective-C names with '.' in a given string.
-static void fixupObjcLikeName(std::string &Str) {
+static void fixupObjcLikeName(StringRef Str, SmallVectorImpl<char> &Out) {
+  bool isObjCLike = false;
   for (size_t i = 0, e = Str.size(); i < e; ++i) {
     char C = Str[i];
-    if (C == '[' || C == ']' || C == ' ' || C == ':' || C == '+' ||
-        C == '(' || C == ')')
-      Str[i] = '.';
+    if (C == '[')
+      isObjCLike = true;
+
+    if (isObjCLike && (C == '[' || C == ']' || C == ' ' || C == ':' ||
+                       C == '+' || C == '(' || C == ')'))
+      Out.push_back('.');
+    else
+      Out.push_back(C);
   }
 }
 
 /// getFnSpecificMDNode - Return a NameMDNode, if available, that is 
 /// suitable to hold function specific information.
 NamedMDNode *llvm::getFnSpecificMDNode(const Module &M, StringRef FuncName) {
-  if (FuncName.find('[') == StringRef::npos)
-    return M.getNamedMetadata(Twine("llvm.dbg.lv.", FuncName));
-  std::string Name = FuncName;
-  fixupObjcLikeName(Name);
-  return M.getNamedMetadata(Twine("llvm.dbg.lv.", Name));
+  SmallString<32> Name = StringRef("llvm.dbg.lv.");
+  fixupObjcLikeName(FuncName, Name);
+
+  return M.getNamedMetadata(Name.str());
 }
 
 /// getOrInsertFnSpecificMDNode - Return a NameMDNode that is suitable
 /// to hold function specific information.
 NamedMDNode *llvm::getOrInsertFnSpecificMDNode(Module &M, StringRef FuncName) {
-  SmallString<32> Out;
-  if (FuncName.find('[') == StringRef::npos)
-    return M.getOrInsertNamedMetadata(Twine("llvm.dbg.lv.", FuncName)
-                                      .toStringRef(Out));
-  
-  std::string Name = FuncName;
-  fixupObjcLikeName(Name);
-  return M.getOrInsertNamedMetadata(Twine("llvm.dbg.lv.", Name)
-                                    .toStringRef(Out));
+  SmallString<32> Name = StringRef("llvm.dbg.lv.");
+  fixupObjcLikeName(FuncName, Name);
+
+  return M.getOrInsertNamedMetadata(Name.str());
 }
 
 
