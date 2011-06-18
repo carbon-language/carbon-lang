@@ -886,7 +886,8 @@ AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI,
 
 void AsmMatcherInfo::
 BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
-  const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
+  const std::vector<CodeGenRegister*> &Registers =
+    Target.getRegBank().getRegisters();
   const std::vector<CodeGenRegisterClass> &RegClassList =
     Target.getRegisterClasses();
 
@@ -910,9 +911,9 @@ BuildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   // a unique register set class), and build the mapping of registers to the set
   // they should classify to.
   std::map<Record*, std::set<Record*> > RegisterMap;
-  for (std::vector<CodeGenRegister>::const_iterator it = Registers.begin(),
+  for (std::vector<CodeGenRegister*>::const_iterator it = Registers.begin(),
          ie = Registers.end(); it != ie; ++it) {
-    const CodeGenRegister &CGR = *it;
+    const CodeGenRegister &CGR = **it;
     // Compute the intersection of all sets containing this register.
     std::set<Record*> ContainingSet;
 
@@ -1745,14 +1746,16 @@ static void EmitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
                                   raw_ostream &OS) {
   // Construct the match list.
   std::vector<StringMatcher::StringPair> Matches;
-  for (unsigned i = 0, e = Target.getRegisters().size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Target.getRegisters()[i];
-    if (Reg.TheDef->getValueAsString("AsmName").empty())
+  const std::vector<CodeGenRegister*> &Regs =
+    Target.getRegBank().getRegisters();
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister *Reg = Regs[i];
+    if (Reg->TheDef->getValueAsString("AsmName").empty())
       continue;
 
     Matches.push_back(StringMatcher::StringPair(
-                                        Reg.TheDef->getValueAsString("AsmName"),
-                                        "return " + utostr(i + 1) + ";"));
+                                     Reg->TheDef->getValueAsString("AsmName"),
+                                     "return " + utostr(Reg->EnumValue) + ";"));
   }
 
   OS << "static unsigned MatchRegisterName(StringRef Name) {\n";

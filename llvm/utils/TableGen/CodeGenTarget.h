@@ -96,10 +96,6 @@ public:
   /// getRegBank - Return the register bank description.
   CodeGenRegBank &getRegBank() const;
 
-  const std::vector<CodeGenRegister> &getRegisters() const {
-    return getRegBank().getRegisters();
-  }
-
   /// getRegisterByName - If there is a register with the specific AsmName,
   /// return it.
   const CodeGenRegister *getRegisterByName(StringRef Name) const;

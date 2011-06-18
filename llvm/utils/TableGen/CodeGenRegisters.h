@@ -148,7 +148,7 @@ namespace llvm {
 
     std::vector<Record*> SubRegIndices;
     unsigned NumNamedIndices;
-    std::vector<CodeGenRegister> Registers;
+    std::vector<CodeGenRegister*> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
 
     std::vector<CodeGenRegisterClass> RegClasses;
@@ -179,7 +179,7 @@ namespace llvm {
     // Find or create a sub-register index representing the A+B composition.
     Record *getCompositeSubRegIndex(Record *A, Record *B, bool create = false);
 
-    const std::vector<CodeGenRegister> &getRegisters() { return Registers; }
+    const std::vector<CodeGenRegister*> &getRegisters() { return Registers; }
 
     // Find a register from its Record def.
     CodeGenRegister *getReg(Record*);

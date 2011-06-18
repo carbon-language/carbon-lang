@@ -28,9 +28,9 @@ using namespace llvm;
 void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
   CodeGenTarget Target(Records);
   CodeGenRegBank &Bank = Target.getRegBank();
-  const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
+  const std::vector<CodeGenRegister*> &Registers = Bank.getRegisters();
 
-  std::string Namespace = Registers[0].TheDef->getValueAsString("Namespace");
+  std::string Namespace = Registers[0]->TheDef->getValueAsString("Namespace");
 
   EmitSourceFileHeader("Target Register Enum Values", OS);
   OS << "namespace llvm {\n\n";
@@ -40,9 +40,9 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
   OS << "enum {\n  NoRegister,\n";
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    OS << "  " << Registers[i].getName() << " = " <<
-      Registers[i].EnumValue << ",\n";
-  assert(Registers.size() == Registers[Registers.size()-1].EnumValue &&
+    OS << "  " << Registers[i]->getName() << " = " <<
+      Registers[i]->EnumValue << ",\n";
+  assert(Registers.size() == Registers[Registers.size()-1]->EnumValue &&
          "Register enum value mismatch!");
   OS << "  NUM_TARGET_REGS \t// " << Registers.size()+1 << "\n";
   OS << "};\n";
@@ -409,11 +409,11 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
 
   typedef std::map<Record*, std::vector<int64_t>, LessRecord> DwarfRegNumsMapTy;
   DwarfRegNumsMapTy DwarfRegNums;
-  const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
+  const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
 
   // Emit an overlap list for all registers.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister *Reg = &Regs[i];
+    const CodeGenRegister *Reg = Regs[i];
     const CodeGenRegister::Set &O = Overlaps[Reg];
     // Move Reg to the front so TRI::getAliasSet can share the list.
     OS << "  const unsigned " << Reg->getName() << "_Overlaps[] = { "
@@ -430,7 +430,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // Loop over all of the registers which have sub-registers, emitting the
   // sub-registers list to memory.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Regs[i];
+    const CodeGenRegister &Reg = *Regs[i];
     if (Reg.getSubRegs().empty())
      continue;
     // getSubRegs() orders by SubRegIndex. We want a topological order.
@@ -447,7 +447,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // Loop over all of the registers which have super-registers, emitting the
   // super-registers list to memory.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Regs[i];
+    const CodeGenRegister &Reg = *Regs[i];
     const CodeGenRegister::SuperRegList &SR = Reg.getSuperRegs();
     if (SR.empty())
       continue;
@@ -463,7 +463,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // Now that register alias and sub-registers sets have been emitted, emit the
   // register descriptors now.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Regs[i];
+    const CodeGenRegister &Reg = *Regs[i];
     OS << "    { \"";
     OS << Reg.getName() << "\",\t" << Reg.getName() << "_Overlaps,\t";
     if (!Reg.getSubRegs().empty())
@@ -514,10 +514,10 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
      << "  switch (RegNo) {\n"
      << "  default:\n    return 0;\n";
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister::SubRegMap &SRM = Regs[i].getSubRegs();
+    const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
     if (SRM.empty())
       continue;
-    OS << "  case " << getQualifiedName(Regs[i].TheDef) << ":\n";
+    OS << "  case " << getQualifiedName(Regs[i]->TheDef) << ":\n";
     OS << "    switch (Index) {\n";
     OS << "    default: return 0;\n";
     for (CodeGenRegister::SubRegMap::const_iterator ii = SRM.begin(),
@@ -535,10 +535,10 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
      << "  switch (RegNo) {\n"
      << "  default:\n    return 0;\n";
    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-     const CodeGenRegister::SubRegMap &SRM = Regs[i].getSubRegs();
+     const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
      if (SRM.empty())
        continue;
-    OS << "  case " << getQualifiedName(Regs[i].TheDef) << ":\n";
+    OS << "  case " << getQualifiedName(Regs[i]->TheDef) << ":\n";
     for (CodeGenRegister::SubRegMap::const_iterator ii = SRM.begin(),
          ie = SRM.end(); ii != ie; ++ii)
       OS << "    if (SubRegNo == " << getQualifiedName(ii->second->TheDef)
@@ -587,7 +587,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   // First, just pull all provided information to the map
   unsigned maxLength = 0;
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    Record *Reg = Regs[i].TheDef;
+    Record *Reg = Regs[i]->TheDef;
     std::vector<int64_t> RegNums = Reg->getValueAsListOfInts("DwarfNumbers");
     maxLength = std::max((size_t)maxLength, RegNums.size());
     if (DwarfRegNums.count(Reg))
@@ -630,7 +630,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   OS << "  };\n}\n\n";
 
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    Record *Reg = Regs[i].TheDef;
+    Record *Reg = Regs[i]->TheDef;
     const RecordVal *V = Reg->getValue("DwarfAlias");
     if (!V || !V->getValue())
       continue;

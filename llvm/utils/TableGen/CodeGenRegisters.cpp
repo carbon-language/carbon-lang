@@ -272,7 +272,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   Registers.reserve(Regs.size());
   // Assign the enumeration values.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
-    Registers.push_back(CodeGenRegister(Regs[i], i + 1));
+    getReg(Regs[i]);
 
   // Read in register class definitions.
   std::vector<Record*> RCs = Records.getAllDerivedDefinitions("RegisterClass");
@@ -285,14 +285,12 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
 }
 
 CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
-  if (Def2Reg.empty())
-    for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-      Def2Reg[Registers[i].TheDef] = &Registers[i];
-
-  if (CodeGenRegister *Reg = Def2Reg[Def])
+  CodeGenRegister *&Reg = Def2Reg[Def];
+  if (Reg)
     return Reg;
-
-  throw TGError(Def->getLoc(), "Not a known Register!");
+  Reg = new CodeGenRegister(Def, Registers.size() + 1);
+  Registers.push_back(Reg);
+  return Reg;
 }
 
 CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
@@ -332,10 +330,10 @@ void CodeGenRegBank::computeComposites() {
   // Precompute all sub-register maps. This will create Composite entries for
   // all inferred sub-register indices.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
-    Registers[i].getSubRegs(*this);
+    Registers[i]->getSubRegs(*this);
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    CodeGenRegister *Reg1 = &Registers[i];
+    CodeGenRegister *Reg1 = Registers[i];
     const CodeGenRegister::SubRegMap &SRM1 = Reg1->getSubRegs();
     for (CodeGenRegister::SubRegMap::const_iterator i1 = SRM1.begin(),
          e1 = SRM1.end(); i1 != e1; ++i1) {
@@ -421,7 +419,7 @@ computeOverlaps(std::map<const CodeGenRegister*, CodeGenRegister::Set> &Map) {
 
   // Collect overlaps that don't follow from rule 2.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    CodeGenRegister *Reg = &Registers[i];
+    CodeGenRegister *Reg = Registers[i];
     CodeGenRegister::Set &Overlaps = Map[Reg];
 
     // Reg overlaps itself.
@@ -447,7 +445,7 @@ computeOverlaps(std::map<const CodeGenRegister*, CodeGenRegister::Set> &Map) {
 
   // Apply rule 2. and inherit all sub-register overlaps.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    CodeGenRegister *Reg = &Registers[i];
+    CodeGenRegister *Reg = Registers[i];
     CodeGenRegister::Set &Overlaps = Map[Reg];
     const CodeGenRegister::SubRegMap &SRM = Reg->getSubRegs();
     for (CodeGenRegister::SubRegMap::const_iterator i2 = SRM.begin(),

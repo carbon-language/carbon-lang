@@ -462,7 +462,8 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
   CodeGenTarget Target(Records);
   Record *AsmWriter = Target.getAsmWriter();
   std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
-  const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
+  const std::vector<CodeGenRegister*> &Registers =
+    Target.getRegBank().getRegisters();
 
   StringToOffsetTable StringTable;
   O <<
@@ -476,7 +477,7 @@ void AsmWriterEmitter::EmitGetRegisterName(raw_ostream &O) {
   << "\n"
   << "  static const unsigned RegAsmOffset[] = {";
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Registers[i];
+    const CodeGenRegister &Reg = *Registers[i];
 
     std::string AsmName = Reg.TheDef->getValueAsString("AsmName");
     if (AsmName.empty())

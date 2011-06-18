@@ -167,12 +167,10 @@ CodeGenRegBank &CodeGenTarget::getRegBank() const {
 /// getRegisterByName - If there is a register with the specific AsmName,
 /// return it.
 const CodeGenRegister *CodeGenTarget::getRegisterByName(StringRef Name) const {
-  const std::vector<CodeGenRegister> &Regs = getRegBank().getRegisters();
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = Regs[i];
-    if (Reg.TheDef->getValueAsString("AsmName") == Name)
-      return &Reg;
-  }
+  const std::vector<CodeGenRegister*> &Regs = getRegBank().getRegisters();
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
+    if (Regs[i]->TheDef->getValueAsString("AsmName") == Name)
+      return Regs[i];
 
   return 0;
 }
