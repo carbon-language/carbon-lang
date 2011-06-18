@@ -649,7 +649,7 @@ static void ProcessSDDbgValues(SDNode *N, SelectionDAG *DAG,
   // order number right after the N.
   MachineBasicBlock *BB = Emitter.getBlock();
   MachineBasicBlock::iterator InsertPos = Emitter.getInsertPos();
-  SmallVector<SDDbgValue*,2> &DVs = DAG->GetDbgValues(N);
+  ArrayRef<SDDbgValue*> DVs = DAG->GetDbgValues(N);
   for (unsigned i = 0, e = DVs.size(); i != e; ++i) {
     if (DVs[i]->isInvalidated())
       continue;

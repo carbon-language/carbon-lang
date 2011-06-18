@@ -96,8 +96,12 @@ public:
     return DbgValues.empty() && ByvalParmDbgValues.empty();
   }
 
-  SmallVector<SDDbgValue*,2> &getSDDbgValues(const SDNode *Node) {
-    return DbgValMap[Node];
+  ArrayRef<SDDbgValue*> getSDDbgValues(const SDNode *Node) {
+    DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> >::iterator I =
+      DbgValMap.find(Node);
+    if (I != DbgValMap.end())
+      return I->second;
+    return ArrayRef<SDDbgValue*>();
   }
 
   typedef SmallVector<SDDbgValue*,32>::iterator DbgIterator;
@@ -898,7 +902,7 @@ public:
   void AddDbgValue(SDDbgValue *DB, SDNode *SD, bool isParameter);
 
   /// GetDbgValues - Get the debug values which reference the given SDNode.
-  SmallVector<SDDbgValue*,2> &GetDbgValues(const SDNode* SD) {
+  ArrayRef<SDDbgValue*> GetDbgValues(const SDNode* SD) {
     return DbgInfo->getSDDbgValues(SD);
   }
 

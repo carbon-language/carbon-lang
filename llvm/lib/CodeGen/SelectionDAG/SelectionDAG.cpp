@@ -598,7 +598,7 @@ void SelectionDAG::DeallocateNode(SDNode *N) {
   Ordering->remove(N);
 
   // If any of the SDDbgValue nodes refer to this SDNode, invalidate them.
-  SmallVector<SDDbgValue*, 2> &DbgVals = DbgInfo->getSDDbgValues(N);
+  ArrayRef<SDDbgValue*> DbgVals = DbgInfo->getSDDbgValues(N);
   for (unsigned i = 0, e = DbgVals.size(); i != e; ++i)
     DbgVals[i]->setIsInvalidated();
 }
@@ -5508,9 +5508,9 @@ void SelectionDAG::TransferDbgValues(SDValue From, SDValue To) {
     return;
   SDNode *FromNode = From.getNode();
   SDNode *ToNode = To.getNode();
-  SmallVector<SDDbgValue *, 2> &DVs = GetDbgValues(FromNode);
+  ArrayRef<SDDbgValue *> DVs = GetDbgValues(FromNode);
   SmallVector<SDDbgValue *, 2> ClonedDVs;
-  for (SmallVector<SDDbgValue *, 2>::iterator I = DVs.begin(), E = DVs.end();
+  for (ArrayRef<SDDbgValue *>::iterator I = DVs.begin(), E = DVs.end();
        I != E; ++I) {
     SDDbgValue *Dbg = *I;
     if (Dbg->getKind() == SDDbgValue::SDNODE) {
