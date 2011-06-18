@@ -170,7 +170,6 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_module:  if (ParseModuleAsm()) return true; break;
     case lltok::kw_target:  if (ParseTargetDefinition()) return true; break;
     case lltok::kw_deplibs: if (ParseDepLibs()) return true; break;
-    case lltok::kw_type:    if (ParseUnnamedType()) return true; break;
     case lltok::LocalVarID: if (ParseUnnamedType()) return true; break;
     case lltok::LocalVar:   if (ParseNamedType()) return true; break;
     case lltok::GlobalID:   if (ParseUnnamedGlobal()) return true; break;
@@ -291,24 +290,18 @@ bool LLParser::ParseDepLibs() {
 }
 
 /// ParseUnnamedType:
-///   ::= 'type' type
 ///   ::= LocalVarID '=' 'type' type
 bool LLParser::ParseUnnamedType() {
-  unsigned TypeID = NumberedTypes.size();
-
-  // Handle the LocalVarID form.
-  if (Lex.getKind() == lltok::LocalVarID) {
-    if (Lex.getUIntVal() != TypeID)
-      return Error(Lex.getLoc(), "type expected to be numbered '%" +
-                   Twine(TypeID) + "'");
-    Lex.Lex(); // eat LocalVarID;
-
-    if (ParseToken(lltok::equal, "expected '=' after name"))
-      return true;
-  }
-
   LocTy TypeLoc = Lex.getLoc();
-  if (ParseToken(lltok::kw_type, "expected 'type' after '='")) return true;
+  unsigned TypeID = NumberedTypes.size();
+  if (Lex.getUIntVal() != TypeID)
+    return Error(Lex.getLoc(), "type expected to be numbered '%" +
+                 Twine(TypeID) + "'");
+  Lex.Lex(); // eat LocalVarID;
+
+  if (ParseToken(lltok::equal, "expected '=' after name") ||
+      ParseToken(lltok::kw_type, "expected 'type' after '='"))
+    return true;
 
   PATypeHolder Ty(Type::getVoidTy(Context));
   if (ParseType(Ty)) return true;
