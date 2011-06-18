@@ -2450,6 +2450,77 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI) {
   return !DeadCases.empty();
 }
 
+/// FindPHIForConditionForwarding - If BB would be eligible for simplification
+/// by TryToSimplifyUncondBranchFromEmptyBlock (i.e. it is empty and terminated
+/// by an unconditional branch), look at the phi node for BB in the successor
+/// block and see if the incoming value is equal to CaseValue. If so, return
+/// the phi node, and set PhiIndex to BB's index in the phi node.
+static PHINode *FindPHIForConditionForwarding(ConstantInt *CaseValue,
+                                              BasicBlock *BB,
+                                              int *PhiIndex) {
+  if (BB->getFirstNonPHIOrDbg() != BB->getTerminator())
+    return NULL; // BB must be empty to be a candidate for simplification.
+  if (!BB->getSinglePredecessor())
+    return NULL; // BB must be dominated by the switch.
+
+  BranchInst *Branch = dyn_cast<BranchInst>(BB->getTerminator());
+  if (!Branch || !Branch->isUnconditional())
+    return NULL; // Terminator must be unconditional branch.
+
+  BasicBlock *Succ = Branch->getSuccessor(0);
+
+  BasicBlock::iterator I = Succ->begin();
+  while (PHINode *PHI = dyn_cast<PHINode>(I++)) {
+    int Idx = PHI->getBasicBlockIndex(BB);
+    assert(Idx >= 0 && "PHI has no entry for predecessor?");
+
+    Value *InValue = PHI->getIncomingValue(Idx);
+    if (InValue != CaseValue) continue;
+
+    *PhiIndex = Idx;
+    return PHI;
+  }
+
+  return NULL;
+}
+
+/// ForwardSwitchConditionToPHI - Try to forward the condition of a switch
+/// instruction to a phi node dominated by the switch, if that would mean that
+/// some of the destination blocks of the switch can be folded away.
+/// Returns true if a change is made.
+static bool ForwardSwitchConditionToPHI(SwitchInst *SI) {
+  typedef DenseMap<PHINode*, SmallVector<int,4> > ForwardingNodesMap;
+  ForwardingNodesMap ForwardingNodes;
+
+  for (unsigned I = 1; I < SI->getNumCases(); ++I) { // 0 is the default case.
+    ConstantInt *CaseValue = SI->getCaseValue(I);
+    BasicBlock *CaseDest = SI->getSuccessor(I);
+
+    int PhiIndex;
+    PHINode *PHI = FindPHIForConditionForwarding(CaseValue, CaseDest,
+                                                 &PhiIndex);
+    if (!PHI) continue;
+
+    ForwardingNodes[PHI].push_back(PhiIndex);
+  }
+
+  bool Changed = false;
+
+  for (ForwardingNodesMap::iterator I = ForwardingNodes.begin(),
+       E = ForwardingNodes.end(); I != E; ++I) {
+    PHINode *Phi = I->first;
+    SmallVector<int,4> &Indexes = I->second;
+
+    if (Indexes.size() < 2) continue;
+
+    for (size_t I = 0, E = Indexes.size(); I != E; ++I)
+      Phi->setIncomingValue(Indexes[I], SI->getCondition());
+    Changed = true;
+  }
+
+  return Changed;
+}
+
 bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   // If this switch is too complex to want to look at, ignore it.
   if (!isValueEqualityComparison(SI))
@@ -2484,6 +2555,9 @@ bool SimplifyCFGOpt::SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
 
   // Remove unreachable cases.
   if (EliminateDeadSwitchCases(SI))
+    return SimplifyCFG(BB) | true;
+
+  if (ForwardSwitchConditionToPHI(SI))
     return SimplifyCFG(BB) | true;
 
   return false;
