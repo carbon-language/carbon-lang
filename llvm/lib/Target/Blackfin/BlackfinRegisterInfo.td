@@ -254,17 +254,7 @@ def PI : RegisterClass<"BF", [i32], 32, (add P, I)>;
 let CopyCost = -1, Size = 8 in {
 def JustCC  : RegisterClass<"BF", [i32], 8, (add CC)>;
 def NotCC   : RegisterClass<"BF", [i32], 8, (add NCC)>;
-def AnyCC   : RegisterClass<"BF", [i32], 8, (add CC, NCC)> {
-  let MethodProtos = [{
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    AnyCCClass::iterator
-    AnyCCClass::allocation_order_end(const MachineFunction &MF) const {
-      return allocation_order_begin(MF)+1;
-    }
-  }];
-}
+def AnyCC   : RegisterClass<"BF", [i32], 8, (add CC, NCC)>;
 def StatBit : RegisterClass<"BF", [i1], 8,
     (add AZ, AN, CC, AQ, AC0, AC1, AV0, AV0S, AV1, AV1S, V, VS)>;
 }
