@@ -16,7 +16,7 @@ bb1:
 ; CHECK: LBB0_1:
 ; CHECK: movaps %xmm0, (%rsp)
   %tmp2 = phi i32 [ %tmp3, %bb1 ], [ 0, %entry ]
-  call void @llvm.memcpy.i64(i8* %tmp1, i8* getelementptr inbounds ([28 x i8]* @str, i64 0, i64 0), i64 28, i32 1)
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp1, i8* getelementptr inbounds ([28 x i8]* @str, i64 0, i64 0), i64 28, i32 1, i1 false)
   %tmp3 = add i32 %tmp2, 1
   %tmp4 = icmp eq i32 %tmp3, %count
   br i1 %tmp4, label %bb2, label %bb1
@@ -25,4 +25,4 @@ bb2:
   ret void
 }
 
-declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind

@@ -9,24 +9,21 @@ entry:
 
         ; CHECK: memmove
         ; EABI: __aeabi_memmove
-        call void @llvm.memmove.i32( i8* bitcast ([500 x i32]* @from to i8*), i8* bitcast ([500 x i32]* @to to i8*), i32 500, i32 0 )
+        call void @llvm.memmove.p0i8.p0i8.i32(i8* bitcast ([500 x i32]* @from to i8*), i8* bitcast ([500 x i32]* @to to i8*), i32 500, i32 0, i1 false)
 
         ; CHECK: memcpy
         ; EABI: __aeabi_memcpy
-        call void @llvm.memcpy.i32( i8* bitcast ([500 x i32]* @from to i8*), i8* bitcast ([500 x i32]* @to to i8*), i32 500, i32 0 )
+        call void @llvm.memcpy.p0i8.p0i8.i32(i8* bitcast ([500 x i32]* @from to i8*), i8* bitcast ([500 x i32]* @to to i8*), i32 500, i32 0, i1 false)
 
         ; EABI memset swaps arguments
         ; CHECK: mov r1, #0
         ; CHECK: memset
         ; EABI: mov r2, #0
         ; EABI: __aeabi_memset
-        call void @llvm.memset.i32( i8* bitcast ([500 x i32]* @from to i8*), i8 0, i32 500, i32 0 )
+        call void @llvm.memset.p0i8.i32(i8* bitcast ([500 x i32]* @from to i8*), i8 0, i32 500, i32 0, i1 false)
         unreachable
 }
 
-declare void @llvm.memmove.i32(i8*, i8*, i32, i32)
-
-declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
-
-declare void @llvm.memset.i32(i8*, i8, i32, i32)
-
+declare void @llvm.memmove.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
+declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
+declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind

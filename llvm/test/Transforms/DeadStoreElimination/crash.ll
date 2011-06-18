@@ -36,11 +36,11 @@ bb14:                                             ; preds = %bb4
   %6 = getelementptr inbounds i16* %2, i64 undef  ; <i16*> [#uses=1]
   store i16 undef, i16* %6, align 2
   %7 = getelementptr inbounds i8* %5, i64 undef   ; <i8*> [#uses=1]
-  call void @llvm.memcpy.i64(i8* %7, i8* undef, i64 undef, i32 1) nounwind
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %7, i8* undef, i64 undef, i32 1, i1 false)
   unreachable
 }
 
-declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
 
 ; rdar://7635088

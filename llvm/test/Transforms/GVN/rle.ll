@@ -135,7 +135,7 @@ define i8* @coerce_mustalias7(i64 %V, i64* %P) {
 define signext i16 @memset_to_i16_local(i16* %A) nounwind ssp {
 entry:
   %conv = bitcast i16* %A to i8* 
-  tail call void @llvm.memset.i64(i8* %conv, i8 1, i64 200, i32 1)
+  tail call void @llvm.memset.p0i8.i64(i8* %conv, i8 1, i64 200, i32 1, i1 false)
   %arrayidx = getelementptr inbounds i16* %A, i64 42
   %tmp2 = load i16* %arrayidx
   ret i16 %tmp2
@@ -148,7 +148,7 @@ entry:
 define float @memset_to_float_local(float* %A, i8 %Val) nounwind ssp {
 entry:
   %conv = bitcast float* %A to i8*                ; <i8*> [#uses=1]
-  tail call void @llvm.memset.i64(i8* %conv, i8 %Val, i64 400, i32 1)
+  tail call void @llvm.memset.p0i8.i64(i8* %conv, i8 %Val, i64 400, i32 1, i1 false)
   %arrayidx = getelementptr inbounds float* %A, i64 42 ; <float*> [#uses=1]
   %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
   ret float %tmp2
@@ -168,11 +168,11 @@ define i16 @memset_to_i16_nonlocal0(i16* %P, i1 %cond) {
   %P3 = bitcast i16* %P to i8*
   br i1 %cond, label %T, label %F
 T:
-  tail call void @llvm.memset.i64(i8* %P3, i8 1, i64 400, i32 1)
+  tail call void @llvm.memset.p0i8.i64(i8* %P3, i8 1, i64 400, i32 1, i1 false)
   br label %Cont
   
 F:
-  tail call void @llvm.memset.i64(i8* %P3, i8 2, i64 400, i32 1)
+  tail call void @llvm.memset.p0i8.i64(i8* %P3, i8 2, i64 400, i32 1, i1 false)
   br label %Cont
 
 Cont:
@@ -193,7 +193,7 @@ Cont:
 define float @memcpy_to_float_local(float* %A) nounwind ssp {
 entry:
   %conv = bitcast float* %A to i8*                ; <i8*> [#uses=1]
-  tail call void @llvm.memcpy.i64(i8* %conv, i8* bitcast ({i32, float, i32 }* @GCst to i8*), i64 12, i32 1)
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %conv, i8* bitcast ({i32, float, i32 }* @GCst to i8*), i64 12, i32 1, i1 false)
   %arrayidx = getelementptr inbounds float* %A, i64 1 ; <float*> [#uses=1]
   %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
   ret float %tmp2
@@ -201,11 +201,6 @@ entry:
 ; CHECK-NOT: load
 ; CHECK: ret float 1.400000e+01
 }
-
-
-declare void @llvm.memset.i64(i8* nocapture, i8, i64, i32) nounwind
-declare void @llvm.memcpy.i64(i8* nocapture, i8* nocapture, i64, i32) nounwind
-
 
 
 
@@ -539,7 +534,7 @@ define i32 @memset_to_load() nounwind readnone {
 entry:
   %x = alloca [256 x i32], align 4                ; <[256 x i32]*> [#uses=2]
   %tmp = bitcast [256 x i32]* %x to i8*           ; <i8*> [#uses=1]
-  call void @llvm.memset.i64(i8* %tmp, i8 0, i64 1024, i32 4)
+  call void @llvm.memset.p0i8.i64(i8* %tmp, i8 0, i64 1024, i32 4, i1 false)
   %arraydecay = getelementptr inbounds [256 x i32]* %x, i32 0, i32 0 ; <i32*>
   %tmp1 = load i32* %arraydecay                   ; <i32> [#uses=1]
   ret i32 %tmp1
@@ -642,4 +637,8 @@ entry:
 ; CHECK-NOT: load
 ; CHECK-ret i32
 }
+
+declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
+
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 

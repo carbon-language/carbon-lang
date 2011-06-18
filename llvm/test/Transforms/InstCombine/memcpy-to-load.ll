@@ -4,11 +4,10 @@ target triple = "i686-apple-darwin8"
 
 define void @foo(double* %X, double* %Y) {
 entry:
-	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%tmp2 = bitcast double* %X to i8*		; <i8*> [#uses=1]
-	%tmp13 = bitcast double* %Y to i8*		; <i8*> [#uses=1]
-	call void @llvm.memcpy.i32( i8* %tmp2, i8* %tmp13, i32 8, i32 1 )
-	ret void
+  %tmp2 = bitcast double* %X to i8*
+  %tmp13 = bitcast double* %Y to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp2, i8* %tmp13, i32 8, i32 1, i1 false)
+  ret void
 }
 
-declare void @llvm.memcpy.i32(i8*, i8*, i32, i32) nounwind 
+declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
