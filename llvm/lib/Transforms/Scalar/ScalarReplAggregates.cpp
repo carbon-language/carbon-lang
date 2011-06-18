@@ -384,7 +384,6 @@ void ConvertToScalarInfo::MergeInTypeForLoadOrStore(const Type *In,
   // Otherwise, we have a case that we can't handle with an optimized vector
   // form.  We can still turn this into a large integer.
   ScalarKind = Integer;
-  VectorTy = 0;
 }
 
 /// MergeInVectorType - Handles the vector case of MergeInTypeForLoadOrStore,
