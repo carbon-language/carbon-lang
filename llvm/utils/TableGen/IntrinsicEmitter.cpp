@@ -214,7 +214,7 @@ static void EmitTypeGenerate(raw_ostream &OS,
   if (ArgTypes.size() == 1)
     return EmitTypeGenerate(OS, ArgTypes.front(), ArgNo);
 
-  OS << "StructType::get(Context, ";
+  OS << "StructType::get(";
 
   for (std::vector<Record*>::const_iterator
          I = ArgTypes.begin(), E = ArgTypes.end(); I != E; ++I) {

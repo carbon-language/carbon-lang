@@ -91,8 +91,7 @@ bool SjLjEHPass::doInitialization(Module &M) {
           Type::getInt8PtrTy(M.getContext());
   const Type *Int32Ty = Type::getInt32Ty(M.getContext());
   FunctionContextTy =
-    StructType::get(M.getContext(),
-                    VoidPtrTy,                        // __prev
+    StructType::get(VoidPtrTy,                        // __prev
                     Int32Ty,                          // call_site
                     ArrayType::get(Int32Ty, 4),       // __data
                     VoidPtrTy,                        // __personality

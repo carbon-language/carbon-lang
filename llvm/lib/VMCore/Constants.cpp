@@ -1537,8 +1537,8 @@ Constant *ConstantExpr::getSizeOf(const Type* Ty) {
 Constant *ConstantExpr::getAlignOf(const Type* Ty) {
   // alignof is implemented as: (i64) gep ({i1,Ty}*)null, 0, 1
   // Note that a non-inbounds gep is used, as null isn't within any object.
-  const Type *AligningTy = StructType::get(Ty->getContext(),
-                                   Type::getInt1Ty(Ty->getContext()), Ty, NULL);
+  const Type *AligningTy = 
+    StructType::get(Type::getInt1Ty(Ty->getContext()), Ty, NULL);
   Constant *NullPtr = Constant::getNullValue(AligningTy->getPointerTo());
   Constant *Zero = ConstantInt::get(Type::getInt64Ty(Ty->getContext()), 0);
   Constant *One = ConstantInt::get(Type::getInt32Ty(Ty->getContext()), 1);

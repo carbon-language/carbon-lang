@@ -237,14 +237,13 @@ public:
 
   /// StructType::get - Create an empty structure type.
   ///
-  static StructType *get(LLVMContext &Context, bool isPacked=false);
+  static StructType *get(LLVMContext &Context, bool isPacked = false);
   
-  /// StructType::get - This static method is a convenience method for
-  /// creating structure types by specifying the elements as arguments.
-  /// Note that this method always returns a non-packed struct.  To get
-  /// an empty struct, pass NULL, NULL.
-  static StructType *get(LLVMContext &Context, 
-                         const Type *type, ...) END_WITH_NULL;
+  /// StructType::get - This static method is a convenience method for creating
+  /// structure types by specifying the elements as arguments.  Note that this
+  /// method always returns a non-packed struct, and requires at least one
+  /// element type.
+  static StructType *get(const Type *elt1, ...) END_WITH_NULL;
 
   /// isValidElementType - Return true if the specified type is valid as a
   /// element type.

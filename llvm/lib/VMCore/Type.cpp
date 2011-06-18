@@ -939,15 +939,17 @@ StructType *StructType::get(LLVMContext &Context,
   return ST;
 }
 
-StructType *StructType::get(LLVMContext &Context, const Type *type, ...) {
+StructType *StructType::get(const Type *type, ...) {
+  assert(type != 0 && "Cannot create a struct type with no elements with this");
+  LLVMContext &Ctx = type->getContext();
   va_list ap;
-  std::vector<const llvm::Type*> StructFields;
+  SmallVector<const llvm::Type*, 8> StructFields;
   va_start(ap, type);
   while (type) {
     StructFields.push_back(type);
     type = va_arg(ap, llvm::Type*);
   }
-  return llvm::StructType::get(Context, StructFields);
+  return llvm::StructType::get(Ctx, StructFields);
 }
 
 bool StructType::isValidElementType(const Type *ElemTy) {

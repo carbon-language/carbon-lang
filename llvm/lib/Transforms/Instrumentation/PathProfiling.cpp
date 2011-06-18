@@ -376,7 +376,7 @@ namespace llvm {
   public:
     static const StructType *get(LLVMContext& C) {
       return( StructType::get(
-                C, TypeBuilder<types::i<32>, xcompile>::get(C), // type
+                TypeBuilder<types::i<32>, xcompile>::get(C), // type
                 TypeBuilder<types::i<32>, xcompile>::get(C), // array size
                 TypeBuilder<types::i<8>*, xcompile>::get(C), // array/hash ptr
                 NULL));
