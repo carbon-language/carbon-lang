@@ -17,7 +17,6 @@
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Support/Casting.h"
-#include <string>
 #include <vector>
 
 namespace llvm {
