@@ -130,6 +130,9 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   setCurrentFile(Filename, InputKind);
   setCompilerInstance(&CI);
 
+  if (!BeginInvocation(CI))
+    goto failure;
+
   // AST files follow a very different path, since they share objects via the
   // AST unit.
   if (InputKind == IK_AST) {
@@ -386,8 +389,13 @@ ASTConsumer *WrapperFrontendAction::CreateASTConsumer(CompilerInstance &CI,
                                                       llvm::StringRef InFile) {
   return WrappedAction->CreateASTConsumer(CI, InFile);
 }
+bool WrapperFrontendAction::BeginInvocation(CompilerInstance &CI) {
+  return WrappedAction->BeginInvocation(CI);
+}
 bool WrapperFrontendAction::BeginSourceFileAction(CompilerInstance &CI,
                                                   llvm::StringRef Filename) {
+  WrappedAction->setCurrentFile(getCurrentFile(), getCurrentFileKind());
+  WrappedAction->setCompilerInstance(&CI);
   return WrappedAction->BeginSourceFileAction(CI, Filename);
 }
 void WrapperFrontendAction::ExecuteAction() {

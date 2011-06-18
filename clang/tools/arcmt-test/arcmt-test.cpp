@@ -111,10 +111,11 @@ static bool checkForMigration(llvm::StringRef resourcesPath,
   if (!CI.getLangOpts().ObjC1)
     return false;
 
-  return arcmt::checkForManualIssues(CI,
-                                     CI.getFrontendOpts().Inputs[0].second,
-                                     CI.getFrontendOpts().Inputs[0].first,
-                                     Diags->getClient());
+  arcmt::checkForManualIssues(CI,
+                              CI.getFrontendOpts().Inputs[0].second,
+                              CI.getFrontendOpts().Inputs[0].first,
+                              Diags->getClient());
+  return Diags->getClient()->getNumErrors() > 0;
 }
 
 static void printResult(FileRemapper &remapper, llvm::raw_ostream &OS) {

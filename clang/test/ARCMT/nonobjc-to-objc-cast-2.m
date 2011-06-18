@@ -1,4 +1,4 @@
-// RUN: arcmt-test -check-only -verify --args %s
+// RUN: %clang_cc1 -arcmt-check -verify -triple x86_64-apple-darwin10 -fobjc-nonfragile-abi %s
 
 typedef int BOOL;
 typedef const struct __CFString * CFStringRef;

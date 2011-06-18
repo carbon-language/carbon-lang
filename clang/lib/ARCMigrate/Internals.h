@@ -30,6 +30,8 @@ public:
   bool hasDiagnostic(llvm::ArrayRef<unsigned> IDs, SourceRange range) const;
 
   void reportDiagnostics(Diagnostic &diags) const;
+
+  bool hasErrors() const;
 };
 
 class TransformActions {

@@ -78,6 +78,14 @@ protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          llvm::StringRef InFile) = 0;
 
+  /// \brief Callback before starting processing a single input, giving the
+  /// opportunity to modify the CompilerInvocation or do some other action
+  /// before BeginSourceFileAction is called.
+  ///
+  /// \return True on success; on failure \see BeginSourceFileAction() and
+  /// ExecutionAction() and EndSourceFileAction() will not be called.
+  virtual bool BeginInvocation(CompilerInstance &CI) { return true; }
+
   /// BeginSourceFileAction - Callback at the start of processing a single
   /// input.
   ///
@@ -265,6 +273,7 @@ class WrapperFrontendAction : public FrontendAction {
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          llvm::StringRef InFile);
+  virtual bool BeginInvocation(CompilerInstance &CI);
   virtual bool BeginSourceFileAction(CompilerInstance &CI,
                                      llvm::StringRef Filename);
   virtual void ExecuteAction();

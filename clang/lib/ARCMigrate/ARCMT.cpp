@@ -79,6 +79,14 @@ void CapturedDiagList::reportDiagnostics(Diagnostic &Diags) const {
     Diags.Report(*I);
 }
 
+bool CapturedDiagList::hasErrors() const {
+  for (ListTy::const_iterator I = List.begin(), E = List.end(); I != E; ++I)
+    if (I->getLevel() >= Diagnostic::Error)
+      return true;
+
+  return false;
+}
+
 namespace {
 
 class CaptureDiagnosticClient : public DiagnosticClient {
@@ -236,7 +244,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 
   DiagClient->EndSourceFile();
 
-  return Diags->getClient()->getNumErrors() > 0;
+  return capturedDiags.hasErrors();
 }
 
 //===----------------------------------------------------------------------===//

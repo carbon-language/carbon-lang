@@ -14,29 +14,24 @@
 using namespace clang;
 using namespace arcmt;
 
-void CheckAction::ExecuteAction() {
-  CompilerInstance &CI = getCompilerInstance();
+bool CheckAction::BeginInvocation(CompilerInstance &CI) {
   if (arcmt::checkForManualIssues(CI.getInvocation(), getCurrentFile(),
                                   getCurrentFileKind(),
                                   CI.getDiagnostics().getClient()))
-    return;
+    return false; // errors, stop the action.
 
   // We only want to see warnings reported from arcmt::checkForManualIssues.
   CI.getDiagnostics().setIgnoreAllWarnings(true);
-  WrapperFrontendAction::ExecuteAction();
+  return true;
 }
 
 CheckAction::CheckAction(FrontendAction *WrappedAction)
   : WrapperFrontendAction(WrappedAction) {}
 
-void TransformationAction::ExecuteAction() {
-  CompilerInstance &CI = getCompilerInstance();
-  if (arcmt::applyTransformations(CI.getInvocation(), getCurrentFile(),
+bool TransformationAction::BeginInvocation(CompilerInstance &CI) {
+  return !arcmt::applyTransformations(CI.getInvocation(), getCurrentFile(),
                                   getCurrentFileKind(),
-                                  CI.getDiagnostics().getClient()))
-    return;
-
-  WrapperFrontendAction::ExecuteAction();
+                                  CI.getDiagnostics().getClient());
 }
 
 TransformationAction::TransformationAction(FrontendAction *WrappedAction)
