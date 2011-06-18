@@ -354,10 +354,7 @@ void MCDwarfLineAddr::Encode(int64_t LineDelta, uint64_t AddrDelta,
       OS << char(dwarf::DW_LNS_const_add_pc);
     else {
       OS << char(dwarf::DW_LNS_advance_pc);
-      SmallString<32> Tmp;
-      raw_svector_ostream OSE(Tmp);
-      MCObjectWriter::EncodeULEB128(AddrDelta, OSE);
-      OS << OSE.str();
+      MCObjectWriter::EncodeULEB128(AddrDelta, OS);
     }
     OS << char(dwarf::DW_LNS_extended_op);
     OS << char(1);
