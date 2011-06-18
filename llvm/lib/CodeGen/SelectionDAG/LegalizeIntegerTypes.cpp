@@ -2724,7 +2724,6 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_SUBVECTOR(SDNode *N) {
   SDValue InOp0 = N->getOperand(0);
   EVT InVT = InOp0.getValueType();
-  EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
 
   EVT OutVT = N->getValueType(0);
   EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
@@ -2774,11 +2773,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VECTOR_SHUFFLE(SDNode *N) {
 
 
 SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_VECTOR(SDNode *N) {
-
-  SDValue InOp0 = N->getOperand(0);
-  EVT InVT = InOp0.getValueType();
-  EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
-
   EVT OutVT = N->getValueType(0);
   EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
   assert(NOutVT.isVector() && "This type must be promoted to a vector type");
@@ -2800,10 +2794,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SCALAR_TO_VECTOR(SDNode *N) {
 
   DebugLoc dl = N->getDebugLoc();
 
-  SDValue InOp0 = N->getOperand(0);
-  EVT InVT = InOp0.getValueType();
-  EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
-  assert(!InVT.isVector() && "Input must not be a scalar");
+  assert(!N->getOperand(0).getValueType().isVector() &&
+         "Input must be a scalar");
 
   EVT OutVT = N->getValueType(0);
   EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
@@ -2816,12 +2808,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SCALAR_TO_VECTOR(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_INSERT_VECTOR_ELT(SDNode *N) {
-
-  SDValue InOp0 = N->getOperand(0);
-  EVT InVT = InOp0.getValueType();
-  EVT InElVT = InVT.getVectorElementType();
-  EVT NInVT = TLI.getTypeToTransformTo(*DAG.getContext(), InVT);
-
   EVT OutVT = N->getValueType(0);
   EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
   assert(NOutVT.isVector() && "This type must be promoted to a vector type");
@@ -2830,7 +2816,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_INSERT_VECTOR_ELT(SDNode *N) {
 
   DebugLoc dl = N->getDebugLoc();
 
-  SDValue ConvertedVector = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT, InOp0);
+  SDValue ConvertedVector = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
+                                        N->getOperand(0));
 
   SDValue ConvElem = DAG.getNode(ISD::ANY_EXTEND, dl,
     NOutVTElem, N->getOperand(1));

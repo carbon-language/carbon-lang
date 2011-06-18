@@ -12186,8 +12186,8 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
-static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG, const X86TargetLowering *XTLI) {
-  DebugLoc dl = N->getDebugLoc();
+static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
+                                        const X86TargetLowering *XTLI) {
   SDValue Op0 = N->getOperand(0);
   // Transform (SINT_TO_FP (i64 ...)) into an x87 operation if we have
   // a 32-bit target where SSE doesn't support i64->FP operations.
@@ -12198,7 +12198,8 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG, const X86T
         ISD::isNON_EXTLoad(Op0.getNode()) && Op0.hasOneUse() &&
         !XTLI->getSubtarget()->is64Bit() &&
         !DAG.getTargetLoweringInfo().isTypeLegal(VT)) {
-      SDValue FILDChain = XTLI->BuildFILD(SDValue(N, 0), Ld->getValueType(0), Ld->getChain(), Op0, DAG);
+      SDValue FILDChain = XTLI->BuildFILD(SDValue(N, 0), Ld->getValueType(0),
+                                          Ld->getChain(), Op0, DAG);
       DAG.ReplaceAllUsesOfValueWith(Op0.getValue(1), FILDChain.getValue(1));
       return FILDChain;
     }

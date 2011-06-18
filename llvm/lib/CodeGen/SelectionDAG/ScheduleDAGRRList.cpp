@@ -1833,8 +1833,6 @@ bool RegReductionPQBase::HighRegPressure(const SUnit *SU) const {
     }
     for (ScheduleDAGSDNodes::RegDefIter RegDefPos(PredSU, scheduleDAG);
          RegDefPos.IsValid(); RegDefPos.Advance()) {
-      EVT VT = RegDefPos.GetValue();
-
       unsigned RCId, Cost;
       GetCostForDef(RegDefPos, TLI, TII, TRI, RCId, Cost);
 

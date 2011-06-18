@@ -5587,7 +5587,6 @@ static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
   // Create VPADDL node.
   SelectionDAG &DAG = DCI.DAG;
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  DebugLoc DL = N->getDebugLoc();
 
   // Build operand list.
   SmallVector<SDValue, 8> Ops;
