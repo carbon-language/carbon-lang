@@ -10,7 +10,8 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 ; CHECK: main
 ; CHECK-NOT: alloca
-; CHECK: extractelement <2 x float> zeroinitializer
+; CHECK: %[[A:[a-z0-9]*]] = and i128
+; CHECK: %[[B:[a-z0-9]*]] = trunc i128 %[[A]] to i32
 
 define void @main() uwtable ssp {
 entry:
@@ -27,7 +28,8 @@ entry:
 
 ; CHECK: test1
 ; CHECK-NOT: alloca
-; CHECK: extractelement <2 x float> zeroinitializer
+; CHECK: %[[A:[a-z0-9]*]] = and i128
+; CHECK: %[[B:[a-z0-9]*]] = trunc i128 %[[A]] to i32
 
 define void @test1() uwtable ssp {
 entry:
