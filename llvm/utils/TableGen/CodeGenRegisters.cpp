@@ -172,9 +172,27 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   }
   assert(!VTs.empty() && "RegisterClass must contain at least one ValueType!");
 
+  // Default allocation order always contains all registers.
   Elements = RegBank.getSets().expand(R);
   for (unsigned i = 0, e = Elements->size(); i != e; ++i)
     Members.insert(RegBank.getReg((*Elements)[i]));
+
+  // Alternative allocation orders may be subsets.
+  ListInit *Alts = R->getValueAsListInit("AltOrders");
+  AltOrders.resize(Alts->size());
+  SetTheory::RecSet Order;
+  for (unsigned i = 0, e = Alts->size(); i != e; ++i) {
+    RegBank.getSets().evaluate(Alts->getElement(i), Order);
+    AltOrders[i].append(Order.begin(), Order.end());
+    // Verify that all altorder members are regclass members.
+    while (!Order.empty()) {
+      CodeGenRegister *Reg = RegBank.getReg(Order.back());
+      Order.pop_back();
+      if (!contains(Reg))
+        throw TGError(R->getLoc(), " AltOrder register " + Reg->getName() +
+                      " is not a class member");
+    }
+  }
 
   // SubRegClasses is a list<dag> containing (RC, subregindex, ...) dags.
   ListInit *SRC = R->getValueAsListInit("SubRegClasses");
@@ -209,6 +227,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   Allocatable = R->getValueAsBit("isAllocatable");
   MethodBodies = R->getValueAsCode("MethodBodies");
   MethodProtos = R->getValueAsCode("MethodProtos");
+  AltOrderSelect = R->getValueAsCode("AltOrderSelect");
 }
 
 bool CodeGenRegisterClass::contains(const CodeGenRegister *Reg) const {

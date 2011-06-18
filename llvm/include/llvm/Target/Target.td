@@ -138,6 +138,22 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // overload virtual methods.
   code MethodProtos = [{}];
   code MethodBodies = [{}];
+
+  // AltOrders - List of alternative allocation orders. The default order is
+  // MemberList itself, and that is good enough for most targets since the
+  // register allocators automatically remove reserved registers and move
+  // callee-saved registers to the end.
+  list<dag> AltOrders = [];
+
+  // AltOrderSelect - The body of a function that selects the allocation order
+  // to use in a given machine function. The code will be inserted in a
+  // function like this:
+  //
+  //   static inline unsigned f(const MachineFunction &MF) { ... }
+  //
+  // The function should return 0 to select the default order defined by
+  // MemberList, 1 to select the first AltOrders entry and so on.
+  code AltOrderSelect = [{}];
 }
 
 // The memberList in a RegisterClass is a dag of set operations. TableGen

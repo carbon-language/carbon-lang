@@ -108,12 +108,16 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
     OS << "\n  };\n\n";
 
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-      const std::string &Name = RegisterClasses[i].getName();
+      const CodeGenRegisterClass &RC = RegisterClasses[i];
+      const std::string &Name = RC.getName();
 
       // Output the register class definition.
       OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
-         << "    " << Name << "Class();\n"
-         << RegisterClasses[i].MethodProtos << "  };\n";
+         << "    " << Name << "Class();\n";
+      if (!RC.AltOrderSelect.empty())
+        OS << "    ArrayRef<unsigned> "
+              "getRawAllocationOrder(const MachineFunction&) const;\n";
+      OS << RC.MethodProtos << "  };\n";
 
       // Output the extern for the instance.
       OS << "  extern " << Name << "Class\t" << Name << "RegClass;\n";
@@ -349,7 +353,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       OS << "\n  };\n\n";
     }
 
-
+    // Emit methods.
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
       OS << RC.MethodBodies << "\n";
@@ -371,6 +375,27 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
          << RC.getName() << ", " << RC.getName() << " + "
          << RC.getOrder().size()
          << ") {}\n";
+      if (!RC.AltOrderSelect.empty()) {
+        OS << "\nstatic inline unsigned " << RC.getName()
+           << "AltOrderSelect(const MachineFunction &MF) {"
+           << RC.AltOrderSelect << "}\n\nArrayRef<unsigned> "
+           << RC.getName() << "Class::"
+           << "getRawAllocationOrder(const MachineFunction &MF) const {\n";
+        for (unsigned oi = 1 , oe = RC.getNumOrders(); oi != oe; ++oi) {
+          ArrayRef<Record*> Elems = RC.getOrder(oi);
+          OS << "  static const unsigned AltOrder" << oi << "[] = {";
+          for (unsigned elem = 0; elem != Elems.size(); ++elem)
+            OS << (elem ? ", " : " ") << getQualifiedName(Elems[elem]);
+          OS << " };\n";
+        }
+        OS << "  static const ArrayRef<unsigned> Order[] = {\n"
+           << "    ArrayRef<unsigned>(" << RC.getName();
+        for (unsigned oi = 1, oe = RC.getNumOrders(); oi != oe; ++oi)
+          OS << "),\n    ArrayRef<unsigned>(AltOrder" << oi;
+        OS << ")\n  };\n  const unsigned Select = " << RC.getName()
+           << "AltOrderSelect(MF);\n  assert(Select < " << RC.getNumOrders()
+           << ");\n  return Order[Select];\n}\n";
+        }
     }
 
     OS << "}\n";
