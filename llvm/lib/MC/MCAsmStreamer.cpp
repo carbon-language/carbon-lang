@@ -1342,6 +1342,7 @@ public:
       Assignments.push_back(Value);
     MCAsmStreamer::EmitAssignment(Symbol, Value);
   }
+  virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
   virtual void EmitIntValue(uint64_t Value, unsigned Size,
                             unsigned AddrSpace = 0);
   virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
@@ -1359,6 +1360,22 @@ public:
 };
 
 } // end anonymous namespace
+
+void MCLSDADecoderAsmStreamer::EmitBytes(StringRef Data, unsigned AddrSpace) {
+  if (InLSDA && Data.size() == 1) {
+    LSDAEncoding.push_back((unsigned)(unsigned char)Data[0]);
+    ++BytesRead;
+
+    if (LSDAEncoding.size() == 4)
+      // The fourth value tells us where the bottom of the type table is.
+      LSDASize = BytesRead + LSDAEncoding[3];
+    else if (LSDAEncoding.size() == 6)
+      // The sixth value tells us where the start of the action table is.
+      ActionTableBytes = BytesRead;
+  }
+
+  MCAsmStreamer::EmitBytes(Data, AddrSpace);
+}
 
 void MCLSDADecoderAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size,
                                             unsigned AddrSpace) {
@@ -1607,7 +1624,7 @@ MCStreamer *llvm::createAsmStreamer(MCContext &Context,
   ExceptionHandling::ExceptionsType ET =
     Context.getAsmInfo().getExceptionHandlingType();
 
-  if (isVerboseAsm &&
+  if (useCFI && isVerboseAsm &&
       (ET == ExceptionHandling::SjLj || ET == ExceptionHandling::DwarfCFI))
     return new MCLSDADecoderAsmStreamer(Context, OS, isVerboseAsm, useLoc,
                                         useCFI, IP, CE, TAB, ShowInst);
