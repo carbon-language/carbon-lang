@@ -286,29 +286,41 @@ void Type::typeBecameConcrete(const DerivedType *AbsTy) {
   llvm_unreachable("DerivedType is already a concrete type!");
 }
 
-bool StructType::indexValid(const Value *V) const {
-  // Structure indexes require 32-bit integer constants.
-  if (V->getType()->isIntegerTy(32))
-    if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
-      return indexValid(CU->getZExtValue());
-  return false;
+const Type *CompositeType::getTypeAtIndex(const Value *V) const {
+  if (const StructType *STy = dyn_cast<StructType>(this)) {
+    unsigned Idx = (unsigned)cast<ConstantInt>(V)->getZExtValue();
+    assert(indexValid(Idx) && "Invalid structure index!");
+    return STy->getElementType(Idx);
+  }
+    
+  return cast<SequentialType>(this)->getElementType();
+}
+const Type *CompositeType::getTypeAtIndex(unsigned Idx) const {
+  if (const StructType *STy = dyn_cast<StructType>(this)) {
+    assert(indexValid(Idx) && "Invalid structure index!");
+    return STy->getElementType(Idx);
+  }
+  
+  return cast<SequentialType>(this)->getElementType();
+}
+bool CompositeType::indexValid(const Value *V) const {
+  if (const StructType *STy = dyn_cast<StructType>(this)) {
+    // Structure indexes require 32-bit integer constants.
+    if (V->getType()->isIntegerTy(32))
+      if (const ConstantInt *CU = dyn_cast<ConstantInt>(V))
+        return CU->getZExtValue() < STy->getNumElements();
+    return false;
+  }
+  
+  // Sequential types can be indexed by any integer.
+  return V->getType()->isIntegerTy();
 }
 
-bool StructType::indexValid(unsigned V) const {
-  return V < NumContainedTys;
-}
-
-// getTypeAtIndex - Given an index value into the type, return the type of the
-// element.  For a structure type, this must be a constant value...
-//
-const Type *StructType::getTypeAtIndex(const Value *V) const {
-  unsigned Idx = (unsigned)cast<ConstantInt>(V)->getZExtValue();
-  return getTypeAtIndex(Idx);
-}
-
-const Type *StructType::getTypeAtIndex(unsigned Idx) const {
-  assert(indexValid(Idx) && "Invalid structure index!");
-  return ContainedTys[Idx];
+bool CompositeType::indexValid(unsigned Idx) const {
+  if (const StructType *STy = dyn_cast<StructType>(this))
+    return Idx < STy->getNumElements();
+  // Sequential types can be indexed by any integer.
+  return true;
 }
 
 
@@ -1199,12 +1211,6 @@ void PointerType::refineAbstractType(const DerivedType *OldType,
 void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
   LLVMContextImpl *pImpl = AbsTy->getContext().pImpl;
   pImpl->PointerTypes.TypeBecameConcrete(this, AbsTy);
-}
-
-bool SequentialType::indexValid(const Value *V) const {
-  if (V->getType()->isIntegerTy()) 
-    return true;
-  return false;
 }
 
 namespace llvm {

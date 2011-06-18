@@ -205,10 +205,10 @@ public:
   /// getTypeAtIndex - Given an index value into the type, return the type of
   /// the element.
   ///
-  virtual const Type *getTypeAtIndex(const Value *V) const = 0;
-  virtual const Type *getTypeAtIndex(unsigned Idx) const = 0;
-  virtual bool indexValid(const Value *V) const = 0;
-  virtual bool indexValid(unsigned Idx) const = 0;
+  const Type *getTypeAtIndex(const Value *V) const;
+  const Type *getTypeAtIndex(unsigned Idx) const;
+  bool indexValid(const Value *V) const;
+  bool indexValid(unsigned Idx) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const CompositeType *) { return true; }
@@ -264,14 +264,6 @@ public:
     return ContainedTys[N];
   }
 
-  /// getTypeAtIndex - Given an index value into the type, return the type of
-  /// the element.  For a structure type, this must be a constant value...
-  ///
-  virtual const Type *getTypeAtIndex(const Value *V) const;
-  virtual const Type *getTypeAtIndex(unsigned Idx) const;
-  virtual bool indexValid(const Value *V) const;
-  virtual bool indexValid(unsigned Idx) const;
-
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
@@ -306,22 +298,7 @@ protected:
   }
 
 public:
-  inline const Type *getElementType() const { return ContainedTys[0]; }
-
-  virtual bool indexValid(const Value *V) const;
-  virtual bool indexValid(unsigned) const {
-    return true;
-  }
-
-  /// getTypeAtIndex - Given an index value into the type, return the type of
-  /// the element.  For sequential types, there is only one subtype...
-  ///
-  virtual const Type *getTypeAtIndex(const Value *) const {
-    return ContainedTys[0];
-  }
-  virtual const Type *getTypeAtIndex(unsigned) const {
-    return ContainedTys[0];
-  }
+  const Type *getElementType() const { return ContainedTys[0]; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const SequentialType *) { return true; }
