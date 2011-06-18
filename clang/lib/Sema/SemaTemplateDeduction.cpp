@@ -2371,9 +2371,16 @@ CheckOriginalCallArgDeduction(Sema &S, Sema::OriginalCallArg OriginalArg,
   //    - The transformed A can be another pointer or pointer to member 
   //      type that can be converted to the deduced A via a qualification 
   //      conversion.
+  //
+  // Also allow conversions which merely strip [[noreturn]] from function types
+  // (recursively) as an extension.
+  // FIXME: Currently, this doesn't place nicely with qualfication conversions.
   bool ObjCLifetimeConversion = false;
+  QualType ResultTy;
   if ((A->isAnyPointerType() || A->isMemberPointerType()) &&
-      S.IsQualificationConversion(A, DeducedA, false, ObjCLifetimeConversion))
+      (S.IsQualificationConversion(A, DeducedA, false,
+                                   ObjCLifetimeConversion) ||
+       S.IsNoReturnConversion(A, DeducedA, ResultTy)))
     return false;
   
   
