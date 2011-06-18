@@ -53,11 +53,11 @@ bool CapturedDiagList::clearDiagnostic(llvm::ArrayRef<unsigned> IDs,
 }
 
 bool CapturedDiagList::hasDiagnostic(llvm::ArrayRef<unsigned> IDs,
-                                     SourceRange range) {
+                                     SourceRange range) const {
   if (range.isInvalid())
     return false;
 
-  ListTy::iterator I = List.begin();
+  ListTy::const_iterator I = List.begin();
   while (I != List.end()) {
     FullSourceLoc diagLoc = I->getLocation();
     if ((IDs.empty() || // empty means any diagnostic in the range.
@@ -74,8 +74,8 @@ bool CapturedDiagList::hasDiagnostic(llvm::ArrayRef<unsigned> IDs,
   return false;
 }
 
-void CapturedDiagList::reportDiagnostics(Diagnostic &Diags) {
-  for (ListTy::iterator I = List.begin(), E = List.end(); I != E; ++I)
+void CapturedDiagList::reportDiagnostics(Diagnostic &Diags) const {
+  for (ListTy::const_iterator I = List.begin(), E = List.end(); I != E; ++I)
     Diags.Report(*I);
 }
 
