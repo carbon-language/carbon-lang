@@ -14,6 +14,10 @@ div.rationale {
   font-style: italic
 }
 
+div.rationale em {
+  font-style: normal
+}
+
 div h1 { font-size: 2em; margin: .67em 0 }
 div div h1 { font-size: 1.5em; margin: .75em 0 }
 div div div h1 { font-size: 1.17em; margin: .83em 0 }
@@ -1136,7 +1140,7 @@ or more calls to <tt>init</tt> methods on the same object, except that
 each <tt>init</tt> method invocation may perform at most one
 delegate init call.</p>
 
-</div> <!-- family.semantics.delegate-init -->
+</div> <!-- family.semantics.init -->
 
 <div id="family.semantics.result_type">
 <h1>Related result types</h1>
@@ -1212,6 +1216,96 @@ still be useful to document them here.</p>
 <div id="misc">
 <h1>Miscellaneous</h1>
 
+<div id="misc.special_methods">
+<h1>Special methods</h1>
+
+<div id="misc.special_methods.retain">
+<h1>Memory management methods</h1>
+
+<p>A program is ill-formed if it contains a method definition, message
+send, or <tt>@selector</tt> expression for any of the following
+selectors:
+<ul>
+<li><tt>autorelease</tt></li>
+<li><tt>release</tt></li>
+<li><tt>retain</tt></li>
+<li><tt>retainCount</tt></li>
+</ul>
+</p>
+
+<div class="rationale"><p>Rationale: <tt>retainCount</tt> is banned
+because ARC robs it of consistent semantics.  The others were banned
+after weighing three options for how to deal with message sends:</p>
+
+<p><b>Honoring</b> them would work out very poorly if a programmer
+naively or accidentally tried to incorporate code written for manual
+retain/release code into an ARC program.  At best, such code would do
+twice as much work as necessary; quite frequently, however, ARC and
+the explicit code would both try to balance the same retain, leading
+to crashes.  The cost is losing the ability to perform <q>unrooted</q>
+retains, i.e. retains not logically corresponding to a strong
+reference in the object graph.</p>
+
+<p><b>Ignoring</b> them would badly violate user expectations about their
+code.  While it <em>would</em> make it easier to develop code simultaneously
+for ARC and non-ARC, there is very little reason to do so except for
+certain library developers.  ARC and non-ARC translation units share
+an execution model and can seamlessly interoperate.  Within a
+translation unit, a developer who faithfully maintains their code in
+non-ARC mode is suffering all the restrictions of ARC for zero
+benefit, while a developer who isn't testing the non-ARC mode is
+likely to be unpleasantly surprised if they try to go back to it.</p>
+
+<p><b>Banning</b> them has the disadvantage of making it very awkward
+to migrate existing code to ARC.  The best answer to that, given a
+number of other changes and restrictions in ARC, is to provide a
+specialized tool to assist users in that migration.</p>
+
+<p>Implementing these methods was banned because they are too integral
+to the semantics of ARC; many tricks which worked tolerably under
+manual reference counting will misbehave if ARC performs an ephemeral
+extra retain or two.  If absolutely required, it is still possible to
+implement them in non-ARC code, for example in a category; the
+implementations must obey the <a href="#objects.retains">semantics</a>
+laid out elsewhere in this document.</p>
+
+</div>
+</div> <!-- misc.special_methods.retain -->
+
+<div id="misc.special_methods.dealloc">
+<h1><tt>dealloc</tt></h1>
+
+<p>A program is ill-formed if it contains a message send
+or <tt>@selector</tt> expression for the selector <tt>dealloc</tt>.</p>
+
+<div class="rationale"><p>Rationale: there are no legitimate reasons
+to call <tt>dealloc</tt> directly.</p></div>
+
+<p>A class may provide a method definition for an instance method
+named <tt>dealloc</tt>.  This method will be called after the final
+<tt>release</tt> of the object but before it is deallocated or any of
+its instance variables are destroyed.  The superclass's implementation
+of <tt>dealloc</tt> will be called automatically when the method
+returns.</p>
+
+<div class="rationale"><p>Rationale: even though ARC destroys instance
+variables automatically, there are still legitimate reasons to write
+a <tt>dealloc</tt> method, such as freeing non-retainable resources.
+Failing to call <tt>[super&nbsp;dealloc]</tt> in such a method is nearly
+always a bug.  Sometimes, the object is simply trying to prevent
+itself from being destroyed, but <tt>dealloc</tt> is really far too
+late for the object to be raising such objections.  Somewhat more
+legitimately, an object may have been pool-allocated and should not be
+deallocated with <tt>free</tt>; for now, this can only be supported
+with a <tt>dealloc</tt> implementation outside of ARC.  Such an
+implementation must be very careful to do all the other work
+that <tt>NSObject</tt>'s <tt>dealloc</tt> would, which is outside the
+scope of this document to describe.</p></div>
+
+</div>
+
+</div> <!-- misc.special_methods -->
+
 <div id="autoreleasepool">
 <h1><tt>@autoreleasepool</tt></h1>
 
@@ -1225,6 +1319,9 @@ whether by fallthrough or directed control flow (such
 as <tt>return</tt> or <tt>break</tt>), the autorelease pool is
 restored to the saved state, releasing all the objects in it.  When
 the block is exited with an exception, the pool is not drained.</p>
+
+<p><tt>@autoreleasepool</tt> may be used in non-ARC translation units,
+with equivalent semantics.</p>
 
 <p>A program is ill-formed if it refers to the
 <tt>NSAutoreleasePool</tt> class.</p>
