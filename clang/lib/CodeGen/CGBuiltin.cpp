@@ -1204,8 +1204,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
 
   if (BuiltinID == ARM::BI__builtin_arm_strexd) {
     Function *F = CGM.getIntrinsic(Intrinsic::arm_strexd);
-    llvm::Type *STy = llvm::StructType::get(getLLVMContext(), Int32Ty, Int32Ty,
-                                            NULL);
+    llvm::Type *STy = llvm::StructType::get(Int32Ty, Int32Ty, NULL);
 
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(Int64Ty, One, "tmp");

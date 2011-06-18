@@ -677,10 +677,8 @@ const llvm::Type *CodeGenModule::getBlockDescriptorType() {
   //   const char *signature;   // the block signature
   //   const char *layout;      // reserved
   // };
-  BlockDescriptorType = llvm::StructType::get(UnsignedLongTy->getContext(),
-                                              UnsignedLongTy,
-                                              UnsignedLongTy,
-                                              NULL);
+  BlockDescriptorType =
+    llvm::StructType::get(UnsignedLongTy, UnsignedLongTy, NULL);
 
   getModule().addTypeName("struct.__block_descriptor",
                           BlockDescriptorType);
@@ -703,8 +701,7 @@ const llvm::Type *CodeGenModule::getGenericBlockLiteralType() {
   //   void (*__invoke)(void *);
   //   struct __block_descriptor *__descriptor;
   // };
-  GenericBlockLiteralType = llvm::StructType::get(getLLVMContext(),
-                                                  VoidPtrTy,
+  GenericBlockLiteralType = llvm::StructType::get(VoidPtrTy,
                                                   IntTy,
                                                   IntTy,
                                                   VoidPtrTy,

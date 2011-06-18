@@ -180,9 +180,7 @@ const llvm::Type *
 ItaniumCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
   if (MPT->isMemberDataPointer())
     return getPtrDiffTy();
-  else
-    return llvm::StructType::get(CGM.getLLVMContext(),
-                                 getPtrDiffTy(), getPtrDiffTy(), NULL);
+  return llvm::StructType::get(getPtrDiffTy(), getPtrDiffTy(), NULL);
 }
 
 /// In the Itanium and ARM ABIs, method pointers have the form:

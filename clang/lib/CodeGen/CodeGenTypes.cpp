@@ -294,7 +294,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   case Type::Complex: {
     const llvm::Type *EltTy =
       ConvertTypeRecursive(cast<ComplexType>(Ty).getElementType());
-    return llvm::StructType::get(TheModule.getContext(), EltTy, EltTy, NULL);
+    return llvm::StructType::get(EltTy, EltTy, NULL);
   }
   case Type::LValueReference:
   case Type::RValueReference: {

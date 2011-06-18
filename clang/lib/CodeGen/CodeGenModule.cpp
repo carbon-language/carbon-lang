@@ -354,7 +354,7 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
 
   // Get the type of a ctor entry, { i32, void ()* }.
   llvm::StructType* CtorStructTy =
-    llvm::StructType::get(VMContext, llvm::Type::getInt32Ty(VMContext),
+    llvm::StructType::get(llvm::Type::getInt32Ty(VMContext),
                           llvm::PointerType::getUnqual(CtorFTy), NULL);
 
   // Construct the constructor and destructor arrays.

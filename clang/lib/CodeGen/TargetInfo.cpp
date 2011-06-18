@@ -1594,8 +1594,7 @@ GetX86_64ByValArgumentPair(const llvm::Type *Lo, const llvm::Type *Hi,
     }
   }
 
-  const llvm::StructType *Result =
-    llvm::StructType::get(Lo->getContext(), Lo, Hi, NULL);
+  const llvm::StructType *Result = llvm::StructType::get(Lo, Hi, NULL);
 
 
   // Verify that the second element is at an 8-byte offset.
@@ -1671,8 +1670,7 @@ classifyReturnType(QualType RetTy) const {
     // %st1.
   case ComplexX87:
     assert(Hi == ComplexX87 && "Unexpected ComplexX87 classification.");
-    ResType = llvm::StructType::get(getVMContext(),
-                                    llvm::Type::getX86_FP80Ty(getVMContext()),
+    ResType = llvm::StructType::get(llvm::Type::getX86_FP80Ty(getVMContext()),
                                     llvm::Type::getX86_FP80Ty(getVMContext()),
                                     NULL);
     break;
@@ -2062,7 +2060,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     const llvm::Type *DoubleTy = llvm::Type::getDoubleTy(VMContext);
     const llvm::Type *DblPtrTy =
       llvm::PointerType::getUnqual(DoubleTy);
-    const llvm::StructType *ST = llvm::StructType::get(VMContext, DoubleTy,
+    const llvm::StructType *ST = llvm::StructType::get(DoubleTy,
                                                        DoubleTy, NULL);
     llvm::Value *V, *Tmp = CGF.CreateTempAlloca(ST);
     V = CGF.Builder.CreateLoad(CGF.Builder.CreateBitCast(RegAddrLo,
@@ -2374,8 +2372,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
   }
 
   const llvm::Type *STy =
-    llvm::StructType::get(getVMContext(),
-                          llvm::ArrayType::get(ElemTy, SizeRegs), NULL, NULL);
+    llvm::StructType::get(llvm::ArrayType::get(ElemTy, SizeRegs), NULL);
   return ABIArgInfo::getDirect(STy);
 }
 
