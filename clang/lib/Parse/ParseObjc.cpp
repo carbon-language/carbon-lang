@@ -864,7 +864,6 @@ Decl *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   }
 
   // Now parse the selector.
-  SourceLocation SelectorStartLoc = Tok.getLocation();
   SourceLocation selLoc;
   IdentifierInfo *SelIdent = ParseObjCSelectorPiece(selLoc);
 

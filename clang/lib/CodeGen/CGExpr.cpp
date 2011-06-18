@@ -2111,7 +2111,6 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
       // Automatic Reference Counting:
       //   If the pseudo-expression names a retainable object with weak or
       //   strong lifetime, the object shall be released.
-      bool isNonGC = false;
       Expr *BaseExpr = PseudoDtor->getBase();
       llvm::Value *BaseValue = NULL;
       Qualifiers BaseQuals;
@@ -2123,8 +2122,6 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
         BaseQuals = PTy->getPointeeType().getQualifiers();
       } else {
         LValue BaseLV = EmitLValue(BaseExpr);
-        if (BaseLV.isNonGC())
-          isNonGC = true;
         BaseValue = BaseLV.getAddress();
         QualType BaseTy = BaseExpr->getType();
         BaseQuals = BaseTy.getQualifiers();

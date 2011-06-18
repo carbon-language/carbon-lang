@@ -2226,8 +2226,6 @@ static llvm::Value *emitARCRetainAfterCall(CodeGenFunction &CGF,
 
 static TryEmitResult
 tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
-  QualType originalType = e->getType();
-
   // The desired result type, if it differs from the type of the
   // ultimate opaque expression.
   const llvm::Type *resultType = 0;
