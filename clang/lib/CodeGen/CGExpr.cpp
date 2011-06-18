@@ -2108,15 +2108,15 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
         DestroyedType->isObjCLifetimeType() &&
         (DestroyedType.getObjCLifetime() == Qualifiers::OCL_Strong ||
          DestroyedType.getObjCLifetime() == Qualifiers::OCL_Weak)) {
-          // Automatic Reference Counting:
-          //   If the pseudo-expression names a retainable object with weak or strong
-          //   lifetime, the object shall be released.
+      // Automatic Reference Counting:
+      //   If the pseudo-expression names a retainable object with weak or
+      //   strong lifetime, the object shall be released.
       bool isNonGC = false;
       Expr *BaseExpr = PseudoDtor->getBase();
       llvm::Value *BaseValue = NULL;
       Qualifiers BaseQuals;
       
-      // If this is s.x, emit s as an lvalue.  If it is s->x, emit s as a scalar.
+      // If this is s.x, emit s as an lvalue. If it is s->x, emit s as a scalar.
       if (PseudoDtor->isArrow()) {
         BaseValue = EmitScalarExpr(BaseExpr);
         const PointerType *PTy = BaseExpr->getType()->getAs<PointerType>();
@@ -2138,7 +2138,7 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
         
       case Qualifiers::OCL_Strong:
         EmitARCRelease(Builder.CreateLoad(BaseValue, 
-                          PseudoDtor->getDestroyedType().isVolatileQualified()), 
+                          PseudoDtor->getDestroyedType().isVolatileQualified()),
                        /*precise*/ true);
         break;
 
