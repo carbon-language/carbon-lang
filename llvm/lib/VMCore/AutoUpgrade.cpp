@@ -28,25 +28,22 @@ using namespace llvm;
 static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   assert(F && "Illegal to upgrade a non-existent Function.");
 
-  // Get the Function's name.
-  const std::string& Name = F->getName();
-
-  // Convenience
-  const FunctionType *FTy = F->getFunctionType();
-
   // Quickly eliminate it, if it's not a candidate.
-  if (Name.length() <= 8 || Name[0] != 'l' || Name[1] != 'l' || 
-      Name[2] != 'v' || Name[3] != 'm' || Name[4] != '.')
+  StringRef Name = F->getName();
+  if (Name.size() <= 8 || !Name.startswith("llvm."))
     return false;
+  Name = Name.substr(5); // Strip off "llvm."
 
+  const FunctionType *FTy = F->getFunctionType();
   Module *M = F->getParent();
-  switch (Name[5]) {
+  
+  switch (Name[0]) {
   default: break;
   case 'p':
     //  This upgrades the llvm.prefetch intrinsic to accept one more parameter,
     //  which is a instruction / data cache identifier. The old version only
     //  implicitly accepted the data version.
-    if (Name.compare(5,8,"prefetch",8) == 0) {
+    if (Name == "prefetch") {
       // Don't do anything if it has the correct number of arguments already
       if (FTy->getNumParams() == 4)
         break;
@@ -56,8 +53,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       //  its type is incorrect, but we cannot overload that name. We
       //  arbitrarily unique it here allowing us to construct a correctly named
       //  and typed function below.
+      std::string NameTmp = F->getName();
       F->setName("");
-      NewFn = cast<Function>(M->getOrInsertFunction(Name,
+      NewFn = cast<Function>(M->getOrInsertFunction(NameTmp,
                                                     FTy->getReturnType(),
                                                     FTy->getParamType(0),
                                                     FTy->getParamType(1),
@@ -68,51 +66,38 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
 
     break;
-  case 'x':
-    // This fixes the poorly named crc32 intrinsics
-    if (Name.compare(5, 13, "x86.sse42.crc", 13) == 0) {
-      const char* NewFnName = NULL;
-      if (Name.compare(18, 2, "32", 2) == 0) {
-        if (Name.compare(20, 2, ".8") == 0 && Name.length() == 22) {
-          NewFnName = "llvm.x86.sse42.crc32.32.8";
-        } else if (Name.compare(20, 3, ".16") == 0 && Name.length() == 23) {
-          NewFnName = "llvm.x86.sse42.crc32.32.16";
-        } else if (Name.compare(20, 3, ".32") == 0 && Name.length() == 23) {
-          NewFnName = "llvm.x86.sse42.crc32.32.32";
-        }
-      }
-      else if (Name.compare(18, 2, "64", 2) == 0) {
-        if (Name.compare(20, 2, ".8") == 0 && Name.length() == 22) {
-          NewFnName = "llvm.x86.sse42.crc32.64.8";
-        } else if (Name.compare(20, 3, ".64") == 0 && Name.length() == 23) {
-          NewFnName = "llvm.x86.sse42.crc32.64.64";
-        }
-      }
-      if (NewFnName) {
-        F->setName(NewFnName);
-        NewFn = F;
-        return true;
-      }
+  case 'x': {
+    const char *NewFnName = NULL;
+    // This fixes the poorly named crc32 intrinsics.
+    if (Name == "x86.sse42.crc32.8")
+      NewFnName = "llvm.x86.sse42.crc32.32.8";
+    else if (Name == "x86.sse42.crc32.16")
+      NewFnName = "llvm.x86.sse42.crc32.32.16";
+    else if (Name == "x86.sse42.crc32.32")
+      NewFnName = "llvm.x86.sse42.crc32.32.32";
+    else if (Name == "x86.sse42.crc64.8")
+      NewFnName = "llvm.x86.sse42.crc32.64.8";
+    else if (Name == "x86.sse42.crc64.64")
+      NewFnName = "llvm.x86.sse42.crc32.64.64";
+    
+    if (NewFnName) {
+      F->setName(NewFnName);
+      NewFn = F;
+      return true;
     }
 
-    if (Name.compare(5, 16, "x86.sse.loadu.ps", 16) == 0 ||
-        Name.compare(5, 17, "x86.sse2.loadu.dq", 17) == 0 ||
-        Name.compare(5, 17, "x86.sse2.loadu.pd", 17) == 0) {
-      // Calls to these instructions are transformed into unaligned loads.
-      NewFn = 0;
+    // Calls to these instructions are transformed into unaligned loads.
+    if (Name == "x86.sse.loadu.ps" || Name == "x86.sse2.loadu.dq" ||
+        Name == "x86.sse2.loadu.pd")
       return true;
-    }
       
-    if (Name.compare(5, 16, "x86.sse.movnt.ps", 16) == 0 ||
-        Name.compare(5, 17, "x86.sse2.movnt.dq", 17) == 0 ||
-        Name.compare(5, 17, "x86.sse2.movnt.pd", 17) == 0 ||
-        Name.compare(5, 17, "x86.sse2.movnt.i", 16) == 0) {
-      // Calls to these instructions are transformed into nontemporal stores.
-      NewFn = 0;
+    // Calls to these instructions are transformed into nontemporal stores.
+    if (Name == "x86.sse.movnt.ps"  || Name == "x86.sse2.movnt.dq" ||
+        Name == "x86.sse2.movnt.pd" || Name == "x86.sse2.movnt.i")
       return true;
-    }
 
     break;
+  }
   }
 
   //  This may not belong here. This function is effectively being overloaded 
