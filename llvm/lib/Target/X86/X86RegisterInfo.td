@@ -281,44 +281,9 @@ let Namespace = "X86" in {
 def GR8 : RegisterClass<"X86", [i8],  8,
                         (add AL, CL, DL, AH, CH, DH, BL, BH, SIL, DIL, BPL, SPL,
                              R8B, R9B, R10B, R11B, R14B, R15B, R12B, R13B)> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned X86_GR8_AO_64[] = {
-      X86::AL,   X86::CL,   X86::DL,   X86::SIL, X86::DIL,
-      X86::R8B,  X86::R9B,  X86::R10B, X86::R11B,
-      X86::BL,   X86::R14B, X86::R15B, X86::R12B, X86::R13B, X86::BPL
-    };
-
-    GR8Class::iterator
-    GR8Class::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-      if (Subtarget.is64Bit())
-        return X86_GR8_AO_64;
-      else
-        return begin();
-    }
-
-    GR8Class::iterator
-    GR8Class::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const TargetFrameLowering *TFI = TM.getFrameLowering();
-      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-      const X86MachineFunctionInfo *MFI = MF.getInfo<X86MachineFunctionInfo>();
-      // Does the function dedicate RBP / EBP to being a frame ptr?
-      if (!Subtarget.is64Bit())
-        // In 32-mode, none of the 8-bit registers aliases EBP or ESP.
-        return begin() + 8;
-      else if (TFI->hasFP(MF) || MFI->getReserveFP())
-        // If so, don't allocate SPL or BPL.
-        return array_endof(X86_GR8_AO_64) - 1;
-      else
-        // If not, just don't allocate SPL.
-        return array_endof(X86_GR8_AO_64);
-    }
+  let AltOrders = [(sub GR8, AH, BH, CH, DH)];
+  let AltOrderSelect = [{
+    return MF.getTarget().getSubtarget<X86Subtarget>().is64Bit();
   }];
 }
 
@@ -394,35 +359,9 @@ def GR64_TCW64 : RegisterClass<"X86", [i64], 64, (add RAX, RCX, RDX,
 // GR8_NOREX - GR8 registers which do not require a REX prefix.
 def GR8_NOREX : RegisterClass<"X86", [i8], 8,
                               (add AL, CL, DL, AH, CH, DH, BL, BH)> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    // In 64-bit mode, it's not safe to blindly allocate H registers.
-    static const unsigned X86_GR8_NOREX_AO_64[] = {
-      X86::AL, X86::CL, X86::DL, X86::BL
-    };
-
-    GR8_NOREXClass::iterator
-    GR8_NOREXClass::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-      if (Subtarget.is64Bit())
-        return X86_GR8_NOREX_AO_64;
-      else
-        return begin();
-    }
-
-    GR8_NOREXClass::iterator
-    GR8_NOREXClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-      if (Subtarget.is64Bit())
-        return array_endof(X86_GR8_NOREX_AO_64);
-      else
-        return end();
-    }
+  let AltOrders = [(sub GR8_NOREX, AH, BH, CH, DH)];
+  let AltOrderSelect = [{
+    return MF.getTarget().getSubtarget<X86Subtarget>().is64Bit();
   }];
 }
 // GR16_NOREX - GR16 registers which do not require a REX prefix.
