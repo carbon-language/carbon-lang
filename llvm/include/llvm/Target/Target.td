@@ -133,12 +133,6 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   // model instruction operand constraints, and should have isAllocatable = 0.
   bit isAllocatable = 1;
 
-  // MethodProtos/MethodBodies - These members can be used to insert arbitrary
-  // code into a generated register class.   The normal usage of this is to
-  // overload virtual methods.
-  code MethodProtos = [{}];
-  code MethodBodies = [{}];
-
   // AltOrders - List of alternative allocation orders. The default order is
   // MemberList itself, and that is good enough for most targets since the
   // register allocators automatically remove reserved registers and move

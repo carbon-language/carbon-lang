@@ -237,29 +237,6 @@ public:
     return SuperClasses[0] != 0;
   }
 
-  /// allocation_order_begin/end - These methods define a range of registers
-  /// which specify the registers in this class that are valid to register
-  /// allocate, and the preferred order to allocate them in.  For example,
-  /// callee saved registers should be at the end of the list, because it is
-  /// cheaper to allocate caller saved registers.
-  ///
-  /// These methods take a MachineFunction argument, which can be used to tune
-  /// the allocatable registers based on the characteristics of the function,
-  /// subtarget, or other criteria.
-  ///
-  /// Register allocators should account for the fact that an allocation
-  /// order iterator may return a reserved register and always check
-  /// if the register is allocatable (getAllocatableSet()) before using it.
-  ///
-  /// By default, these methods return all registers in the class.
-  ///
-  virtual iterator allocation_order_begin(const MachineFunction &MF) const {
-    return begin();
-  }
-  virtual iterator allocation_order_end(const MachineFunction &MF)   const {
-    return end();
-  }
-
   /// getRawAllocationOrder - Returns the preferred order for allocating
   /// registers from this register class in MF. The raw order comes directly
   /// from the .td file and may include reserved registers that are not
@@ -276,9 +253,7 @@ public:
   ///
   virtual
   ArrayRef<unsigned> getRawAllocationOrder(const MachineFunction &MF) const {
-    iterator B = allocation_order_begin(MF);
-    iterator E = allocation_order_end(MF);
-    return ArrayRef<unsigned>(B, E - B);
+    return ArrayRef<unsigned>(begin(), getNumRegs());
   }
 
   /// getSize - Return the size of the register in bytes, which is also the size

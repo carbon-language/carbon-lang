@@ -97,7 +97,7 @@ namespace llvm {
     bool Allocatable;
     // Map SubRegIndex -> RegisterClass
     DenseMap<Record*,Record*> SubRegClasses;
-    std::string MethodProtos, MethodBodies, AltOrderSelect;
+    std::string AltOrderSelect;
 
     const std::string &getName() const;
     const std::vector<MVT::SimpleValueType> &getValueTypes() const {return VTs;}

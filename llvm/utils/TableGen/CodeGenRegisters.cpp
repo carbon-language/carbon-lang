@@ -225,8 +225,6 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   SpillAlignment = R->getValueAsInt("Alignment");
   CopyCost = R->getValueAsInt("CopyCost");
   Allocatable = R->getValueAsBit("isAllocatable");
-  MethodBodies = R->getValueAsCode("MethodBodies");
-  MethodProtos = R->getValueAsCode("MethodProtos");
   AltOrderSelect = R->getValueAsCode("AltOrderSelect");
 }
 

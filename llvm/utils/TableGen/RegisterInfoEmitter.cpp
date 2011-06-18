@@ -117,7 +117,7 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
       if (!RC.AltOrderSelect.empty())
         OS << "    ArrayRef<unsigned> "
               "getRawAllocationOrder(const MachineFunction&) const;\n";
-      OS << RC.MethodProtos << "  };\n";
+      OS << "  };\n";
 
       // Output the extern for the instance.
       OS << "  extern " << Name << "Class\t" << Name << "RegClass;\n";
@@ -356,7 +356,6 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
     // Emit methods.
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
-      OS << RC.MethodBodies << "\n";
       OS << RC.getName() << "Class::" << RC.getName()
          << "Class()  : TargetRegisterClass("
          << RC.getName() + "RegClassID" << ", "
