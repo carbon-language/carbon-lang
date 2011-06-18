@@ -1146,7 +1146,7 @@ bool AsmParser::ParseStatement() {
     if (IDVal == ".weak_def_can_be_hidden")
       return ParseDirectiveSymbolAttribute(MCSA_WeakDefAutoPrivate);
 
-    if (IDVal == ".comm")
+    if (IDVal == ".comm" || IDVal == ".common")
       return ParseDirectiveComm(/*IsLocal=*/false);
     if (IDVal == ".lcomm")
       return ParseDirectiveComm(/*IsLocal=*/true);
