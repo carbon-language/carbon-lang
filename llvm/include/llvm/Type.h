@@ -68,7 +68,7 @@ public:
   /// Also update LLVMTypeKind and LLVMGetTypeKind () in the C binding.
   ///
   enum TypeID {
-    // PrimitiveTypes .. make sure LastPrimitiveTyID stays up to date
+    // PrimitiveTypes - make sure LastPrimitiveTyID stays up to date.
     VoidTyID = 0,    ///<  0: type with no size
     FloatTyID,       ///<  1: 32-bit floating point type
     DoubleTyID,      ///<  2: 64-bit floating point type
@@ -178,17 +178,13 @@ public:
   LLVMContext &getContext() const { return Context; }
 
   //===--------------------------------------------------------------------===//
-  // Property accessors for dealing with types... Some of these virtual methods
-  // are defined in private classes defined in Type.cpp for primitive types.
+  // Accessors for working with types.
   //
-
-  /// getDescription - Return the string representation of the type.
-  std::string getDescription() const;
 
   /// getTypeID - Return the type id for the type.  This will return one
   /// of the TypeID enum elements defined above.
   ///
-  inline TypeID getTypeID() const { return ID; }
+  TypeID getTypeID() const { return ID; }
 
   /// isVoidTy - Return true if this is 'void'.
   bool isVoidTy() const { return ID == VoidTyID; }

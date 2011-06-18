@@ -286,21 +286,6 @@ void Type::typeBecameConcrete(const DerivedType *AbsTy) {
   llvm_unreachable("DerivedType is already a concrete type!");
 }
 
-
-std::string Type::getDescription() const {
-  LLVMContextImpl *pImpl = getContext().pImpl;
-  TypePrinting &Map =
-    isAbstract() ?
-      pImpl->AbstractTypeDescriptions :
-      pImpl->ConcreteTypeDescriptions;
-  
-  std::string DescStr;
-  raw_string_ostream DescOS(DescStr);
-  Map.print(this, DescOS);
-  return DescOS.str();
-}
-
-
 bool StructType::indexValid(const Value *V) const {
   // Structure indexes require 32-bit integer constants.
   if (V->getType()->isIntegerTy(32))
@@ -1066,11 +1051,6 @@ void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   assert(isAbstract() && "refineAbstractTypeTo: Current type is not abstract!");
   assert(this != NewType && "Can't refine to myself!");
   assert(ForwardType == 0 && "This type has already been refined!");
-
-  LLVMContextImpl *pImpl = getContext().pImpl;
-
-  // The descriptions may be out of date.  Conservatively clear them all!
-  pImpl->AbstractTypeDescriptions.clear();
 
 #ifdef DEBUG_MERGE_TYPES
   DEBUG(dbgs() << "REFINING abstract type [" << (void*)this << " "

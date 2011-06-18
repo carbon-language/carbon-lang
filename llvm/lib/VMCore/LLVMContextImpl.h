@@ -22,7 +22,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Metadata.h"
-#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
@@ -182,13 +181,6 @@ public:
   const IntegerType Int32Ty;
   const IntegerType Int64Ty;
 
-  // Concrete/Abstract TypeDescriptions - We lazily calculate type descriptions
-  // for types as they are needed.  Because resolution of types must invalidate
-  // all of the abstract type descriptions, we keep them in a separate map to
-  // make this easy.
-  TypePrinting ConcreteTypeDescriptions;
-  TypePrinting AbstractTypeDescriptions;
-  
   TypeMap<ArrayValType, ArrayType> ArrayTypes;
   TypeMap<VectorValType, VectorType> VectorTypes;
   TypeMap<PointerValType, PointerType> PointerTypes;

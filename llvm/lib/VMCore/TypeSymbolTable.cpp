@@ -59,7 +59,7 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  dbgs() << " Removing Value: " << Result->getDescription() << "\n";
+  dbgs() << " Removing Value: " << *Result << "\n";
 #endif
 
   tmap.erase(Entry);
@@ -69,8 +69,7 @@ Type* TypeSymbolTable::remove(iterator Entry) {
   if (Result->isAbstract()) {
 #if DEBUG_ABSTYPE
     dbgs() << "Removing abstract type from symtab"
-           << Result->getDescription()
-           << "\n";
+           << *Result << "\n";
 #endif
     cast<DerivedType>(Result)->removeAbstractTypeUser(this);
   }
@@ -88,7 +87,7 @@ void TypeSymbolTable::insert(StringRef Name, const Type* T) {
     
 #if DEBUG_SYMBOL_TABLE
     dump();
-    dbgs() << " Inserted type: " << Name << ": " << T->getDescription() << "\n";
+    dbgs() << " Inserted type: " << Name << ": " << *T << "\n";
 #endif
   } else {
     // If there is a name conflict...
@@ -101,7 +100,7 @@ void TypeSymbolTable::insert(StringRef Name, const Type* T) {
 #if DEBUG_SYMBOL_TABLE
     dump();
     dbgs() << " Inserting type: " << UniqueName << ": "
-           << T->getDescription() << "\n";
+           << *T << "\n";
 #endif
 
     // Insert the tmap entry
@@ -112,7 +111,7 @@ void TypeSymbolTable::insert(StringRef Name, const Type* T) {
   if (T->isAbstract()) {
     cast<DerivedType>(T)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
-    dbgs() << "Added abstract type to ST: " << T->getDescription() << "\n";
+    dbgs() << "Added abstract type to ST: " << *T << "\n";
 #endif
   }
 }
@@ -129,7 +128,7 @@ void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
     // FIXME when Types aren't const.
     if (I->second == const_cast<DerivedType *>(OldType)) {
 #if DEBUG_ABSTYPE
-      dbgs() << "Removing type " << OldType->getDescription() << "\n";
+      dbgs() << "Removing type " << *OldType << "\n";
 #endif
       OldType->removeAbstractTypeUser(this);
 
@@ -137,7 +136,7 @@ void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
       I->second = const_cast<Type *>(NewType);
       if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE
-        dbgs() << "Added type " << NewType->getDescription() << "\n";
+        dbgs() << "Added type " << *NewType << "\n";
 #endif
         cast<DerivedType>(NewType)->addAbstractTypeUser(this);
       }

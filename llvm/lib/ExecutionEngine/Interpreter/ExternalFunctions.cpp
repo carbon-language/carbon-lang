@@ -282,10 +282,10 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 
   if (F->getName() == "__main")
     errs() << "Tried to execute an unknown external function: "
-      << F->getType()->getDescription() << " __main\n";
+      << *F->getType() << " __main\n";
   else
     report_fatal_error("Tried to execute an unknown external function: " +
-                      F->getType()->getDescription() + " " +F->getName());
+                       F->getName());
 #ifndef USE_LIBFFI
   errs() << "Recompiling LLVM with --enable-libffi might help.\n";
 #endif

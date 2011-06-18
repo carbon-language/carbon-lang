@@ -25,7 +25,7 @@ ValueSymbolTable::~ValueSymbolTable() {
 #ifndef NDEBUG   // Only do this in -g mode...
   for (iterator VI = vmap.begin(), VE = vmap.end(); VI != VE; ++VI)
     dbgs() << "Value still in symbol table! Type = '"
-           << VI->getValue()->getType()->getDescription() << "' Name = '"
+           << *VI->getValue()->getType() << "' Name = '"
            << VI->getKeyData() << "'\n";
   assert(vmap.empty() && "Values remain in symbol table!");
 #endif

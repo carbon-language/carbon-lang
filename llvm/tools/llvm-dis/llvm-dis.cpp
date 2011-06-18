@@ -74,7 +74,7 @@ public:
     if (!V.getType()->isVoidTy()) {
       OS.PadToColumn(50);
       Padded = true;
-      OS << "; [#uses=" << V.getNumUses() << " type=" << V.getType()->getDescription() << "]";  // Output # uses and type
+      OS << "; [#uses=" << V.getNumUses() << " type=" << *V.getType() << "]";  // Output # uses and type
     }
     if (const Instruction *I = dyn_cast<Instruction>(&V)) {
       const DebugLoc &DL = I->getDebugLoc();

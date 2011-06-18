@@ -26,6 +26,13 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+static std::string getTypeString(const Type *T) {
+  std::string Result;
+  raw_string_ostream Tmp(Result);
+  Tmp << *T;
+  return Tmp.str();
+}
+
 /// Run: module ::= toplevelentity*
 bool LLParser::Run() {
   // Prime the lexer.
@@ -360,7 +367,7 @@ bool LLParser::ParseNamedType() {
 
   // Otherwise, this is an attempt to redefine a type, report the error.
   return Error(NameLoc, "redefinition of type named '" + Name + "' of type '" +
-               Ty->getDescription() + "'");
+               getTypeString(Ty) + "'");
 }
 
 
@@ -786,7 +793,7 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
   if (Val) {
     if (Val->getType() == Ty) return Val;
     Error(Loc, "'@" + Name + "' defined with type '" +
-          Val->getType()->getDescription() + "'");
+          getTypeString(Val->getType()) + "'");
     return 0;
   }
 
@@ -831,7 +838,7 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
   if (Val) {
     if (Val->getType() == Ty) return Val;
     Error(Loc, "'@" + Twine(ID) + "' defined with type '" +
-          Val->getType()->getDescription() + "'");
+          getTypeString(Val->getType()) + "'");
     return 0;
   }
 
@@ -1257,7 +1264,7 @@ PATypeHolder LLParser::HandleUpRefs(const Type *ty) {
 
   PATypeHolder Ty(ty);
 #if 0
-  dbgs() << "Type '" << Ty->getDescription()
+  dbgs() << "Type '" << *Ty
          << "' newly formed.  Resolving upreferences.\n"
          << UpRefs.size() << " upreferences active!\n";
 #endif
@@ -1275,8 +1282,8 @@ PATypeHolder LLParser::HandleUpRefs(const Type *ty) {
                 UpRefs[i].LastContainedTy) != Ty->subtype_end();
 
 #if 0
-    dbgs() << "  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", "
-           << UpRefs[i].LastContainedTy->getDescription() << ") = "
+    dbgs() << "  UR#" << i << " - TypeContains(" << *Ty << ", "
+           << *UpRefs[i].LastContainedTy << ") = "
            << (ContainsType ? "true" : "false")
            << " level=" << UpRefs[i].NestingLevel << "\n";
 #endif
@@ -1765,7 +1772,7 @@ Value *LLParser::PerFunctionState::GetVal(const std::string &Name,
       P.Error(Loc, "'%" + Name + "' is not a basic block");
     else
       P.Error(Loc, "'%" + Name + "' defined with type '" +
-              Val->getType()->getDescription() + "'");
+              getTypeString(Val->getType()) + "'");
     return 0;
   }
 
@@ -1807,7 +1814,7 @@ Value *LLParser::PerFunctionState::GetVal(unsigned ID, const Type *Ty,
       P.Error(Loc, "'%" + Twine(ID) + "' is not a basic block");
     else
       P.Error(Loc, "'%" + Twine(ID) + "' defined with type '" +
-              Val->getType()->getDescription() + "'");
+              getTypeString(Val->getType()) + "'");
     return 0;
   }
 
@@ -1855,7 +1862,7 @@ bool LLParser::PerFunctionState::SetInstName(int NameID,
     if (FI != ForwardRefValIDs.end()) {
       if (FI->second.first->getType() != Inst->getType())
         return P.Error(NameLoc, "instruction forward referenced with type '" +
-                       FI->second.first->getType()->getDescription() + "'");
+                       getTypeString(FI->second.first->getType()) + "'");
       FI->second.first->replaceAllUsesWith(Inst);
       delete FI->second.first;
       ForwardRefValIDs.erase(FI);
@@ -1871,7 +1878,7 @@ bool LLParser::PerFunctionState::SetInstName(int NameID,
   if (FI != ForwardRefVals.end()) {
     if (FI->second.first->getType() != Inst->getType())
       return P.Error(NameLoc, "instruction forward referenced with type '" +
-                     FI->second.first->getType()->getDescription() + "'");
+                     getTypeString(FI->second.first->getType()) + "'");
     FI->second.first->replaceAllUsesWith(Inst);
     delete FI->second.first;
     ForwardRefVals.erase(FI);
@@ -2026,7 +2033,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       if (Elts[i]->getType() != Elts[0]->getType())
         return Error(FirstEltLoc,
                      "vector element #" + Twine(i) +
-                    " is not of type '" + Elts[0]->getType()->getDescription());
+                    " is not of type '" + getTypeString(Elts[0]->getType()));
 
     ID.ConstantVal = ConstantVector::get(Elts);
     ID.Kind = ValID::t_Constant;
@@ -2050,7 +2057,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
 
     if (!Elts[0]->getType()->isFirstClassType())
       return Error(FirstEltLoc, "invalid array element type: " +
-                   Elts[0]->getType()->getDescription());
+                   getTypeString(Elts[0]->getType()));
 
     ArrayType *ATy = ArrayType::get(Elts[0]->getType(), Elts.size());
 
@@ -2059,7 +2066,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       if (Elts[i]->getType() != Elts[0]->getType())
         return Error(FirstEltLoc,
                      "array element #" + Twine(i) +
-                     " is not of type '" +Elts[0]->getType()->getDescription());
+                     " is not of type '" + getTypeString(Elts[0]->getType()));
     }
 
     ID.ConstantVal = ConstantArray::get(ATy, Elts.data(), Elts.size());
@@ -2142,8 +2149,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       return true;
     if (!CastInst::castIsValid((Instruction::CastOps)Opc, SrcVal, DestTy))
       return Error(ID.Loc, "invalid cast opcode for cast from '" +
-                   SrcVal->getType()->getDescription() + "' to '" +
-                   DestTy->getDescription() + "'");
+                   getTypeString(SrcVal->getType()) + "' to '" +
+                   getTypeString(DestTy) + "'");
     ID.ConstantVal = ConstantExpr::getCast((Instruction::CastOps)Opc,
                                                  SrcVal, DestTy);
     ID.Kind = ValID::t_Constant;
@@ -2552,7 +2559,7 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
 
     if (V->getType() != Ty)
       return Error(ID.Loc, "floating point constant does not have type '" +
-                   Ty->getDescription() + "'");
+                   getTypeString(Ty) + "'");
 
     return false;
   case ValID::t_Null:
@@ -3253,7 +3260,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
 
     if (ExpectedTy && ExpectedTy != ArgList[i].V->getType())
       return Error(ArgList[i].Loc, "argument is not of expected type '" +
-                   ExpectedTy->getDescription() + "'");
+                   getTypeString(ExpectedTy) + "'");
     Args.push_back(ArgList[i].V);
     if (ArgList[i].Attrs != Attribute::None)
       Attrs.push_back(AttributeWithIndex::get(i+1, ArgList[i].Attrs));
@@ -3379,8 +3386,8 @@ bool LLParser::ParseCast(Instruction *&Inst, PerFunctionState &PFS,
   if (!CastInst::castIsValid((Instruction::CastOps)Opc, Op, DestTy)) {
     CastInst::castIsValid((Instruction::CastOps)Opc, Op, DestTy);
     return Error(Loc, "invalid cast opcode for cast from '" +
-                 Op->getType()->getDescription() + "' to '" +
-                 DestTy->getDescription() + "'");
+                 getTypeString(Op->getType()) + "' to '" +
+                 getTypeString(DestTy) + "'");
   }
   Inst = CastInst::Create((Instruction::CastOps)Opc, Op, DestTy);
   return false;
@@ -3590,7 +3597,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 
     if (ExpectedTy && ExpectedTy != ArgList[i].V->getType())
       return Error(ArgList[i].Loc, "argument is not of expected type '" +
-                   ExpectedTy->getDescription() + "'");
+                   getTypeString(ExpectedTy) + "'");
     Args.push_back(ArgList[i].V);
     if (ArgList[i].Attrs != Attribute::None)
       Attrs.push_back(AttributeWithIndex::get(i+1, ArgList[i].Attrs));
