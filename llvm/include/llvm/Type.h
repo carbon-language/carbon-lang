@@ -60,7 +60,7 @@ template<class GraphType> struct GraphTraits;
 /// @brief Root of type hierarchy
 class Type : public AbstractTypeUser {
 public:
-  //===-------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
   /// Definitions of all of the base types for the Type system.  Based on this
   /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)
   /// Note: If you add an element to this, you need to add an element to the
@@ -70,17 +70,17 @@ public:
   enum TypeID {
     // PrimitiveTypes .. make sure LastPrimitiveTyID stays up to date
     VoidTyID = 0,    ///<  0: type with no size
-    FloatTyID,       ///<  1: 32 bit floating point type
-    DoubleTyID,      ///<  2: 64 bit floating point type
-    X86_FP80TyID,    ///<  3: 80 bit floating point type (X87)
-    FP128TyID,       ///<  4: 128 bit floating point type (112-bit mantissa)
-    PPC_FP128TyID,   ///<  5: 128 bit floating point type (two 64-bits, PowerPC)
+    FloatTyID,       ///<  1: 32-bit floating point type
+    DoubleTyID,      ///<  2: 64-bit floating point type
+    X86_FP80TyID,    ///<  3: 80-bit floating point type (X87)
+    FP128TyID,       ///<  4: 128-bit floating point type (112-bit mantissa)
+    PPC_FP128TyID,   ///<  5: 128-bit floating point type (two 64-bits, PowerPC)
     LabelTyID,       ///<  6: Labels
     MetadataTyID,    ///<  7: Metadata
-    X86_MMXTyID,     ///<  8: MMX vectors (64 bits)
+    X86_MMXTyID,     ///<  8: MMX vectors (64 bits, X86 specific)
 
-    // Derived types... see DerivedTypes.h file...
-    // Make sure FirstDerivedTyID stays up to date!!!
+    // Derived types... see DerivedTypes.h file.
+    // Make sure FirstDerivedTyID stays up to date!
     IntegerTyID,     ///<  9: Arbitrary bit width integers
     FunctionTyID,    ///< 10: Functions
     StructTyID,      ///< 11: Structures
@@ -112,9 +112,8 @@ private:
 
   const Type *getForwardedTypeInternal() const;
 
-  // Some Type instances are allocated as arrays, some aren't. So we provide
-  // this method to get the right kind of destruction for the type of Type.
-  void destroy() const; // const is a lie, this does "delete this"!
+  // When the last reference to a forwarded type is removed, it is destroyed.
+  void destroy() const;
 
 protected:
   explicit Type(LLVMContext &C, TypeID id) :
@@ -523,7 +522,7 @@ inline void PATypeHolder::dropRef() {
 
 //===----------------------------------------------------------------------===//
 // Provide specializations of GraphTraits to be able to treat a type as a
-// graph of sub types...
+// graph of sub types.
 
 template <> struct GraphTraits<Type*> {
   typedef Type NodeType;
