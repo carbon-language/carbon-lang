@@ -245,7 +245,8 @@ bool CodeGenRegisterClass::hasSubClass(const CodeGenRegisterClass *RC) const {
   return SpillAlignment && RC->SpillAlignment % SpillAlignment == 0 &&
     SpillSize <= RC->SpillSize &&
     std::includes(Members.begin(), Members.end(),
-                  RC->Members.begin(), RC->Members.end());
+                  RC->Members.begin(), RC->Members.end(),
+                  CodeGenRegister::Less());
 }
 
 const std::string &CodeGenRegisterClass::getName() const {
