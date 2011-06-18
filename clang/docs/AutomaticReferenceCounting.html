@@ -424,20 +424,29 @@ rolled into the initialization of the parameter.</p></div>
 
 <p>The implicit <tt>self</tt> parameter of a method may be marked as
 consumed by adding <tt>__attribute__((ns_consumes_self))</tt> to the
-method declaration.  Methods in
-the <tt>init</tt> <a href="#family">family</a> are implicitly
-marked <tt>__attribute__((ns_consumes_self))</tt>.</p>
+method declaration.  Methods in the <tt>init</tt>
+<a href="#family">family</a> are treated as if they were implicitly
+marked with this attribute.</p>
 
-<p>It is undefined behavior if an Objective-C message send of a method
-with <tt>ns_consumed</tt> parameters (other than self) is made to a
-null pointer.</p>
+<p>It is undefined behavior if an Objective-C message send to a method
+with <tt>ns_consumed</tt> parameters (other than self) is made with a
+null receiver.  It is undefined behavior if the method to which an
+Objective-C message send statically resolves to has a different set
+of <tt>ns_consumed</tt> parameters than the method it dynamically
+resolves to.  It is undefined behavior if a block or function call is
+made through a static type with a different set of <tt>ns_consumed</tt>
+parameters than the implementation of the called block or function.</p>
 
-<div class="rationale"><p>Rationale: in fact, it's probably a
-guaranteed leak.</p></div>
+<div class="rationale"><p>Rationale: consumed parameters with null
+receiver are a guaranteed leak.  Mismatches with consumed parameters
+will cause over-retains or over-releases, depending on the direction.
+The rule about function calls is really just an application of the
+existing C/C++ rule about calling functions through an incompatible
+function type, but it's useful to state it explicitly.</p></div>
 
 </div>
 
-<div id="objects.operands.retained-returns">
+<div id="objects.operands.retained_returns">
 <h1>Retained return values</h1>
 
 <p>A function or method which returns a retainable object pointer type
@@ -473,6 +482,20 @@ and <tt>new</tt> <a href="#family">families</a> are implicitly marked
 by explicitly marking the
 method <tt>__attribute__((ns_returns_not_retained))</tt>.</p>
 </div>
+
+<p>It is undefined behavior if the method to which an Objective-C
+message send statically resolves has different retain semantics on its
+result from the method it dynamically resolves to.  It is undefined
+behavior if a block or function call is made through a static type
+with different retain semantics on its result from the implementation
+of the called block or function.</p>
+
+<div class="rationale"><p>Rationale: Mismatches with returned results
+will cause over-retains or over-releases, depending on the direction.
+Again, the rule about function calls is really just an application of
+the existing C/C++ rule about calling functions through an
+incompatible function type.</p></div>
+
 
 <div id="objects.operands.other-returns">
 <h1>Unretained return values</h1>
@@ -1038,9 +1061,9 @@ but <tt>performing:with</tt> would not.</p>
 Objective-C pointer type.  Additionally, a program is ill-formed if it
 declares or contains a call to an <tt>init</tt> method whose return
 type is neither <tt>id</tt> nor a pointer to a super-class or
-sub-class of either the declaring class, if the method was declared on
-a class, or the static receiver type of the call, if it was declared
-on a protocol.</p>
+sub-class of the declaring class (if the method was declared on
+a class) or the static receiver type of the call (if it was declared
+on a protocol).</p>
 
 <div class="rationale"><p>Rationale: there are a fair number of existing
 methods with <tt>init</tt>-like selectors which nonetheless don't
@@ -1051,10 +1074,14 @@ of <tt>init</tt> methods, it's very important not to treat these
 methods as <tt>init</tt> methods if they aren't meant to be.  It was
 felt that implicitly defining these methods out of the family based on
 the exact relationship between the return type and the declaring class
-would much too subtle and fragile.  Therefore we identify a small
+would be much too subtle and fragile.  Therefore we identify a small
 number of legitimate-seeming return types and call everything else an
 error.  This serves the secondary purpose of encouraging programmers
-not to accidentally give methods names in the <tt>init</tt> family.</p></div>
+not to accidentally give methods names in the <tt>init</tt> family.</p>
+
+<p>Note that a method with an <tt>init</tt>-family selector which
+returns a non-Objective-C type (e.g. <tt>void</tt>) is perfectly
+well-formed; it simply isn't in the <tt>init</tt> family.</p></div>
 </li>
 </ul>
 
@@ -1105,22 +1132,22 @@ semantics for its parameters and return type.</p>
 
 <p>Methods in the <tt>alloc</tt>, <tt>copy</tt>, <tt>mutableCopy</tt>,
 and <tt>new</tt> families &mdash; that is, methods in all the
-currently-defined families except <tt>init</tt> &mdash; transfer
-ownership of a +1 retain count on their return value to the calling
-function, as if they were implicitly annotated with
-the <tt>ns_returns_retained</tt> attribute.  However, this is not true
-if the method has either of the <tt>ns_returns_autoreleased</tt> or
+currently-defined families except <tt>init</tt> &mdash; implicitly
+<a href="#objects.operands.retained_returns">return a retained
+object</a> as if they were annotated with
+the <tt>ns_returns_retained</tt> attribute.  This can be overridden by
+annotating the method with either of
+the <tt>ns_returns_autoreleased</tt> or
 <tt>ns_returns_not_retained</tt> attributes.</p>
 
 <div id="family.semantics.init">
 <h1>Semantics of <tt>init</tt></h1>
 
-<p>Methods in the <tt>init</tt> family must be transferred ownership
-of a +1 retain count on their <tt>self</tt> parameter, exactly as if
-the method had the <tt>ns_consumes_self</tt> attribute, and must
-transfer ownership of a +1 retain count on their return value, exactly
-as if they method had the <tt>ns_returns_retained</tt> attribute.
-Neither of these may be altered through attributes.</p>
+<p>Methods in the <tt>init</tt> family implicitly
+<a href="#objects.operands.consumed">consume</a> their <tt>self</tt>
+parameter and <a href="#objects.operands.retained_returns">return a
+retained object</a>.  Neither of these properties can be altered
+through attributes.</p>
 
 <p>A call to an <tt>init</tt> method with a receiver that is either
 <tt>self</tt> (possibly parenthesized or casted) or <tt>super</tt> is
@@ -1128,17 +1155,19 @@ called a <span class="term">delegate init call</span>.  It is an error
 for a delegate init call to be made except from an <tt>init</tt>
 method, and excluding blocks within such methods.</p>
 
-<p>The variable <tt>self</tt> is mutable in an <tt>init</tt> method
-and is implicitly qualified as <tt>__strong</tt>.  However, a program
-is ill-formed, no diagnostic required, if it alters <tt>self</tt>
-except to assign it the immediate result of a delegate init call.  It
-is an error to use the previous value of <tt>self</tt> after the
-completion of a delegate init call.</p>
+<p>As an exception to the <a href="misc.self">usual rule</a>, the
+variable <tt>self</tt> is mutable in an <tt>init</tt> method and has
+the usual semantics for a <tt>__strong</tt> variable.  However, it is
+undefined behavior and the program is ill-formed, no diagnostic
+required, if an <tt>init</tt> method attempts to use the previous
+value of <tt>self</tt> after the completion of a delegate init call.
+It is conventional, but not required, for an <tt>init</tt> method to
+return <tt>self</tt>.</p>
 
-<p>A program is ill-formed, no diagnostic required, if it causes two
-or more calls to <tt>init</tt> methods on the same object, except that
-each <tt>init</tt> method invocation may perform at most one
-delegate init call.</p>
+<p>It is undefined behavior for a program to cause two or more calls
+to <tt>init</tt> methods on the same object, except that
+each <tt>init</tt> method invocation may perform at most one delegate
+init call.</p>
 
 </div> <!-- family.semantics.init -->
 
