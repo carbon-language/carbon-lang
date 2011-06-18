@@ -340,7 +340,7 @@ Communication::ReadThread (void *p)
     bool done = false;
     while (!done && comm->m_read_thread_enabled)
     {
-        size_t bytes_read = comm->ReadFromConnection (buf, sizeof(buf), 5 * USEC_PER_SEC, status, &error);
+        size_t bytes_read = comm->ReadFromConnection (buf, sizeof(buf), 5 * TimeValue::MicroSecPerSec, status, &error);
         if (bytes_read > 0)
             comm->AppendBytesToCache (buf, bytes_read, true, status);
         else if ((bytes_read == 0)

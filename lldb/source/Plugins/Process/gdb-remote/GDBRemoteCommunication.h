@@ -22,6 +22,7 @@
 #include "lldb/Core/Listener.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Predicate.h"
+#include "lldb/Host/TimeValue.h"
 
 #include "Utility/StringExtractorGDBRemote.h"
 
@@ -116,7 +117,7 @@ public:
     uint32_t
     GetPacketTimeoutInMicroSeconds () const
     {
-        return m_packet_timeout * USEC_PER_SEC;
+        return m_packet_timeout * lldb_private::TimeValue::MicroSecPerSec;
     }
     //------------------------------------------------------------------
     // Start a debugserver instance on the current host using the

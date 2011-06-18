@@ -15,10 +15,6 @@
 // Other libraries and framework includes
 // Project includes
 
-#define NSEC_PER_USEC   1000ull
-#define USEC_PER_SEC    1000000ull
-#define NSEC_PER_SEC    1000000000ull
-
 using namespace lldb_private;
 
 //----------------------------------------------------------------------
@@ -38,12 +34,12 @@ TimeValue::TimeValue(const TimeValue& rhs) :
 }
 
 TimeValue::TimeValue(const struct timespec& ts) :
-    m_nano_seconds (ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec)
+    m_nano_seconds (ts.tv_sec * NanoSecPerSec + ts.tv_nsec)
 {
 }
 
 TimeValue::TimeValue(const struct timeval& tv) :
-    m_nano_seconds (tv.tv_sec * NSEC_PER_SEC + tv.tv_usec * NSEC_PER_USEC)
+    m_nano_seconds (tv.tv_sec * NanoSecPerSec + tv.tv_usec * NanoSecPerMicroSec)
 {
 }
 
@@ -64,15 +60,15 @@ TimeValue::GetAsNanoSecondsSinceJan1_1970() const
 uint64_t
 TimeValue::GetAsMicroSecondsSinceJan1_1970() const
 {
-    return m_nano_seconds / NSEC_PER_USEC;
+    return m_nano_seconds / NanoSecPerMicroSec;
 }
 
 struct timespec
 TimeValue::GetAsTimeSpec () const
 {
     struct timespec ts;
-    ts.tv_sec = m_nano_seconds / NSEC_PER_SEC;
-    ts.tv_nsec = m_nano_seconds % NSEC_PER_SEC;
+    ts.tv_sec = m_nano_seconds / NanoSecPerSec;
+    ts.tv_nsec = m_nano_seconds % NanoSecPerSec;
     return ts;
 }
 
@@ -80,8 +76,8 @@ struct timeval
 TimeValue::GetAsTimeVal () const
 {
     struct timeval tv;
-    tv.tv_sec = m_nano_seconds / NSEC_PER_SEC;
-    tv.tv_usec = (m_nano_seconds % NSEC_PER_SEC) / NSEC_PER_USEC;
+    tv.tv_sec = m_nano_seconds / NanoSecPerSec;
+    tv.tv_usec = (m_nano_seconds % NanoSecPerSec) / NanoSecPerMicroSec;
     return tv;
 }
 
@@ -100,13 +96,13 @@ TimeValue::IsValid () const
 void
 TimeValue::OffsetWithSeconds (uint64_t sec)
 {
-    m_nano_seconds += sec * NSEC_PER_SEC;
+    m_nano_seconds += sec * NanoSecPerSec;
 }
 
 void
 TimeValue::OffsetWithMicroSeconds (uint64_t usec)
 {
-    m_nano_seconds += usec * NSEC_PER_USEC;
+    m_nano_seconds += usec * NanoSecPerMicroSec;
 }
 
 void

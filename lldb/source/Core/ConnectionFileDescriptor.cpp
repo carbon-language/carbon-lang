@@ -735,8 +735,8 @@ ConnectionFileDescriptor::SetSocketRecieveTimeout (uint32_t timeout_usec)
             return true;
 
         struct timeval timeout;
-        timeout.tv_sec = timeout_usec / USEC_PER_SEC;
-        timeout.tv_usec = timeout_usec % USEC_PER_SEC;
+        timeout.tv_sec = timeout_usec / TimeValue::MicroSecPerSec;
+        timeout.tv_usec = timeout_usec % TimeValue::MicroSecPerSec;
         if (::setsockopt (m_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == 0)
         {
             m_socket_timeout_usec = timeout_usec;

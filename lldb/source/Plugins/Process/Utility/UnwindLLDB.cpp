@@ -53,9 +53,9 @@ UnwindLLDB::GetFrameCount()
                 uint64_t delta_t = now - time_value;
                 printf ("%u frames in %llu.%09llu ms (%g frames/sec)\n", 
                         FRAME_COUNT,
-                        delta_t / NSEC_PER_SEC, 
-                        delta_t % NSEC_PER_SEC,
-                        (float)FRAME_COUNT / ((float)delta_t / (float)NSEC_PER_SEC));
+                        delta_t / TimeValue::NanoSecPerSec, 
+                        delta_t % TimeValue::NanoSecPerSec,
+                        (float)FRAME_COUNT / ((float)delta_t / (float)TimeValue::NanoSecPerSec));
                 time_value = now;
             }
 #endif
