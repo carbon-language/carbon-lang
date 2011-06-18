@@ -71,6 +71,18 @@ public:
     lldb::SBBlock
     GetBlock () const;
 
+    // Get the appropriate function name for this frame. Inlined functions in
+    // LLDB are represented by Blocks that have inlined function information, so
+    // just looking at the SBFunction or SBSymbol for a frame isn't enough.
+    // This function will return the appriopriate function, symbol or inlined
+    // function name for the frame.
+    const char *
+    GetFunctionName();
+
+    // Return true if this frame represents and an inlined function.
+    bool
+    IsInlined();
+    
     // The version that doesn't supply a "use_dynamic" value will use the target's default.
     lldb::SBValue
     EvaluateExpression (const char *expr);    

@@ -343,8 +343,13 @@ SBFrame::Clear()
 SBValue
 SBFrame::FindVariable (const char *name)
 {
-    lldb::DynamicValueType  use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
-    return FindVariable (name, use_dynamic);
+    SBValue value;
+    if (m_opaque_sp)
+    {
+        lldb::DynamicValueType  use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+        value = FindVariable (name, use_dynamic);
+    }
+    return value;
 }
 
 SBValue
@@ -373,11 +378,12 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
                 var_sp = variable_list.FindVariable (ConstString(name));
             }
         }
+
+        if (var_sp)
+            *sb_value = ValueObjectSP (m_opaque_sp->GetValueObjectForFrameVariable(var_sp, use_dynamic));
+        
     }
     
-    if (var_sp)
-        *sb_value = ValueObjectSP (m_opaque_sp->GetValueObjectForFrameVariable(var_sp, use_dynamic));
-
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::FindVariable (name=\"%s\") => SBValue(%p)", 
@@ -389,8 +395,13 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
 SBValue
 SBFrame::FindValue (const char *name, ValueType value_type)
 {
-    lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
-    return FindValue (name, value_type, use_dynamic);
+    SBValue value;
+    if (m_opaque_sp)
+    {
+        lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+        value = FindValue (name, value_type, use_dynamic);
+    }
+    return value;
 }
 
 SBValue
@@ -579,8 +590,13 @@ SBFrame::GetVariables (bool arguments,
                        bool statics,
                        bool in_scope_only)
 {
-    lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
-    return GetVariables (arguments, locals, statics, in_scope_only, use_dynamic);
+    SBValueList value_list;
+    if (m_opaque_sp)
+    {
+        lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+        value_list = GetVariables (arguments, locals, statics, in_scope_only, use_dynamic);
+    }
+    return value_list;
 }
 
 SBValueList
@@ -706,15 +722,18 @@ SBFrame::GetDescription (SBStream &description)
 SBValue
 SBFrame::EvaluateExpression (const char *expr)
 {
-    lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
-    return EvaluateExpression (expr, use_dynamic);
+    SBValue result;
+    if (m_opaque_sp)
+    {
+        lldb::DynamicValueType use_dynamic = m_opaque_sp->CalculateTarget()->GetPreferDynamicValue();
+        result = EvaluateExpression (expr, use_dynamic);
+    }
+    return result;
 }
 
 SBValue
 SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dynamic_value)
 {
-    Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -725,6 +744,8 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
 
     if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
+        
         ExecutionResults exe_results;
         const bool unwind_on_error = true;
         const bool keep_in_memory = false;
@@ -749,3 +770,48 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
 
     return expr_result;
 }
+
+bool
+SBFrame::IsInlined()
+{
+    if (m_opaque_sp)
+    {
+        Block *block = m_opaque_sp->GetSymbolContext(eSymbolContextBlock).block;
+        if (block)
+            return block->GetContainingInlinedBlock () != NULL;
+    }
+    return false;
+}
+
+const char *
+SBFrame::GetFunctionName()
+{
+    const char *name = NULL;
+    if (m_opaque_sp)
+    {
+        SymbolContext sc (m_opaque_sp->GetSymbolContext(eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol));
+        if (sc.block)
+        {
+            Block *inlined_block = sc.block->GetContainingInlinedBlock ();
+            if (inlined_block)
+            {
+                const InlineFunctionInfo* inlined_info = inlined_block->GetInlinedFunctionInfo();
+                name = inlined_info->GetName().AsCString();
+            }
+        }
+        
+        if (name == NULL)
+        {
+            if (sc.function)
+                name = sc.function->GetName().GetCString();
+        }
+
+        if (name == NULL)
+        {
+            if (sc.symbol)
+                name = sc.symbol->GetName().GetCString();
+        }
+    }
+    return name;
+}
+
