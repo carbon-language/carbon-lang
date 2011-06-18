@@ -202,42 +202,14 @@ def FPEXC   : ARMReg<8, "fpexc">;
 //
 def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
                                                SP, LR, PC)> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned ARM_GPR_AO[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R9, ARM::R10, ARM::R11 };
-
-    // For Thumb1 mode, we don't want to allocate hi regs at all, as we
-    // don't know how to spill them. If we make our prologue/epilogue code
-    // smarter at some point, we can go back to using the above allocation
-    // orders for the Thumb1 instructions that know how to use hi regs.
-    static const unsigned THUMB_GPR_AO[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
-
-    GPRClass::iterator
-    GPRClass::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.isThumb1Only())
-        return THUMB_GPR_AO;
-      return ARM_GPR_AO;
-    }
-
-    GPRClass::iterator
-    GPRClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.isThumb1Only())
-        return THUMB_GPR_AO + (sizeof(THUMB_GPR_AO)/sizeof(unsigned));
-      return ARM_GPR_AO + (sizeof(ARM_GPR_AO)/sizeof(unsigned));
-    }
+  // Allocate LR as the first CSR since it is always saved anyway.
+  // For Thumb1 mode, we don't want to allocate hi regs at all, as we don't
+  // know how to spill them. If we make our prologue/epilogue code smarter at
+  // some point, we can go back to using the above allocation orders for the
+  // Thumb1 instructions that know how to use hi regs.
+  let AltOrders = [(add LR, GPR), (trunc GPR, 8)];
+  let AltOrderSelect = [{
+      return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
 }
 
@@ -246,44 +218,9 @@ def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
 // or SP (R13 or R15) are used. The ARM ISA refers to these operands
 // via the BadReg() pseudo-code description.
 def rGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, SP, PC)> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    static const unsigned ARM_rGPR_AO[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12,ARM::LR,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-      ARM::R8, ARM::R9, ARM::R10,
-      ARM::R11 };
-
-    // For Thumb1 mode, we don't want to allocate hi regs at all, as we
-    // don't know how to spill them. If we make our prologue/epilogue code
-    // smarter at some point, we can go back to using the above allocation
-    // orders for the Thumb1 instructions that know how to use hi regs.
-    static const unsigned THUMB_rGPR_AO[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R4, ARM::R5, ARM::R6, ARM::R7 };
-
-    rGPRClass::iterator
-    rGPRClass::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.isThumb1Only())
-        return THUMB_rGPR_AO;
-      return ARM_rGPR_AO;
-    }
-
-    rGPRClass::iterator
-    rGPRClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-
-      if (Subtarget.isThumb1Only())
-        return THUMB_rGPR_AO + (sizeof(THUMB_rGPR_AO)/sizeof(unsigned));
-      return ARM_rGPR_AO + (sizeof(ARM_rGPR_AO)/sizeof(unsigned));
-    }
+  let AltOrders = [(add LR, rGPR), (trunc rGPR, 8)];
+  let AltOrderSelect = [{
+      return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
 }
 
@@ -296,51 +233,11 @@ def tGPR : RegisterClass<"ARM", [i32], 32, (trunc GPR, 8)>;
 // Note, getMinimalPhysRegClass(R0) returns tGPR because of the names of
 // this class and the preceding one(!)  This is what we want.
 def tcGPR : RegisterClass<"ARM", [i32], 32, (add R0, R1, R2, R3, R9, R12)> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    // R9 is available.
-    static const unsigned ARM_GPR_R9_TC[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R9, ARM::R12 };
-    // R9 is not available.
-    static const unsigned ARM_GPR_NOR9_TC[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-      ARM::R12 };
-
-    // For Thumb1 mode, we don't want to allocate hi regs at all, as we
-    // don't know how to spill them. If we make our prologue/epilogue code
-    // smarter at some point, we can go back to using the above allocation
-    // orders for the Thumb1 instructions that know how to use hi regs.
-    static const unsigned THUMB_GPR_AO_TC[] = {
-      ARM::R0, ARM::R1, ARM::R2, ARM::R3 };
-
-    tcGPRClass::iterator
-    tcGPRClass::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.isThumb1Only())
-        return THUMB_GPR_AO_TC;
-      return Subtarget.isTargetDarwin() ? ARM_GPR_R9_TC : ARM_GPR_NOR9_TC;
-    }
-
-    tcGPRClass::iterator
-    tcGPRClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-
-      if (Subtarget.isThumb1Only())
-        return THUMB_GPR_AO_TC + (sizeof(THUMB_GPR_AO_TC)/sizeof(unsigned));
-
-      return Subtarget.isTargetDarwin() ?
-        ARM_GPR_R9_TC + (sizeof(ARM_GPR_R9_TC)/sizeof(unsigned)) :
-        ARM_GPR_NOR9_TC + (sizeof(ARM_GPR_NOR9_TC)/sizeof(unsigned));
-    }
+  let AltOrders = [(and tcGPR, tGPR)];
+  let AltOrderSelect = [{
+      return MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
 }
-
 
 // Scalar single precision floating point register class..
 def SPR : RegisterClass<"ARM", [f32], 32, (sequence "S%u", 0, 31)>;
@@ -355,48 +252,9 @@ def SPR_8 : RegisterClass<"ARM", [f32], 32, (trunc SPR, 16)>;
 // is double-word alignment though.
 def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
                         (sequence "D%u", 0, 31)> {
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    // VFP2 / VFPv3-D16
-    static const unsigned ARM_DPR_VFP2[] = {
-      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
-      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
-      ARM::D8,  ARM::D9,  ARM::D10, ARM::D11,
-      ARM::D12, ARM::D13, ARM::D14, ARM::D15 };
-    // VFP3: D8-D15 are callee saved and should be allocated last.
-    // Save other low registers for use as DPR_VFP2 and DPR_8 classes.
-    static const unsigned ARM_DPR_VFP3[] = {
-      ARM::D16, ARM::D17, ARM::D18, ARM::D19,
-      ARM::D20, ARM::D21, ARM::D22, ARM::D23,
-      ARM::D24, ARM::D25, ARM::D26, ARM::D27,
-      ARM::D28, ARM::D29, ARM::D30, ARM::D31,
-      ARM::D0,  ARM::D1,  ARM::D2,  ARM::D3,
-      ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7,
-      ARM::D8,  ARM::D9,  ARM::D10, ARM::D11,
-      ARM::D12, ARM::D13, ARM::D14, ARM::D15 };
-
-    DPRClass::iterator
-    DPRClass::allocation_order_begin(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.hasVFP3() && !Subtarget.hasD16())
-        return ARM_DPR_VFP3;
-      return ARM_DPR_VFP2;
-    }
-
-    DPRClass::iterator
-    DPRClass::allocation_order_end(const MachineFunction &MF) const {
-      const TargetMachine &TM = MF.getTarget();
-      const ARMSubtarget &Subtarget = TM.getSubtarget<ARMSubtarget>();
-      if (Subtarget.hasVFP3() && !Subtarget.hasD16())
-        return ARM_DPR_VFP3 + (sizeof(ARM_DPR_VFP3)/sizeof(unsigned));
-      else
-        return ARM_DPR_VFP2 + (sizeof(ARM_DPR_VFP2)/sizeof(unsigned));
-    }
-  }];
+  // Allocate non-VFP2 registers D16-D31 first.
+  let AltOrders = [(rotl DPR, 16)];
+  let AltOrderSelect = [{ return 1; }];
 }
 
 // Subset of DPR that are accessible with VFP2 (and so that also have
@@ -417,29 +275,9 @@ def DPR_8 : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
 def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
                         (sequence "Q%u", 0, 15)> {
   let SubRegClasses = [(DPR dsub_0, dsub_1)];
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    // Q4-Q7 are callee saved and should be allocated last.
-    // Save other low registers for use as QPR_VFP2 and QPR_8 classes.
-    static const unsigned ARM_QPR[] = {
-      ARM::Q8,  ARM::Q9,  ARM::Q10, ARM::Q11,
-      ARM::Q12, ARM::Q13, ARM::Q14, ARM::Q15,
-      ARM::Q0,  ARM::Q1,  ARM::Q2,  ARM::Q3,
-      ARM::Q4,  ARM::Q5,  ARM::Q6,  ARM::Q7 };
-
-    QPRClass::iterator
-    QPRClass::allocation_order_begin(const MachineFunction &MF) const {
-      return ARM_QPR;
-    }
-
-    QPRClass::iterator
-    QPRClass::allocation_order_end(const MachineFunction &MF) const {
-      return ARM_QPR + (sizeof(ARM_QPR)/sizeof(unsigned));
-    }
-  }];
+  // Allocate non-VFP2 aliases Q8-Q15 first.
+  let AltOrders = [(rotl QPR, 8)];
+  let AltOrderSelect = [{ return 1; }];
 }
 
 // Subset of QPR that have 32-bit SPR subregs.
@@ -461,27 +299,9 @@ def QPR_8 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
 def QQPR : RegisterClass<"ARM", [v4i64], 256, (sequence "QQ%u", 0, 7)> {
   let SubRegClasses = [(DPR dsub_0, dsub_1, dsub_2, dsub_3),
                        (QPR qsub_0, qsub_1)];
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    // QQ2-QQ3 are callee saved and should be allocated last.
-    // Save other low registers for use as QPR_VFP2 and QPR_8 classes.
-    static const unsigned ARM_QQPR[] = {
-      ARM::QQ4, ARM::QQ5, ARM::QQ6, ARM::QQ7,
-      ARM::QQ0, ARM::QQ1, ARM::QQ2, ARM::QQ3 };
-
-    QQPRClass::iterator
-    QQPRClass::allocation_order_begin(const MachineFunction &MF) const {
-      return ARM_QQPR;
-    }
-
-    QQPRClass::iterator
-    QQPRClass::allocation_order_end(const MachineFunction &MF) const {
-      return ARM_QQPR + (sizeof(ARM_QQPR)/sizeof(unsigned));
-    }
-  }];
+  // Allocate non-VFP2 aliases first.
+  let AltOrders = [(rotl QQPR, 4)];
+  let AltOrderSelect = [{ return 1; }];
 }
 
 // Subset of QQPR that have 32-bit SPR subregs.
@@ -498,26 +318,9 @@ def QQQQPR : RegisterClass<"ARM", [v8i64], 256, (sequence "QQQQ%u", 0, 3)> {
   let SubRegClasses = [(DPR dsub_0, dsub_1, dsub_2, dsub_3,
                             dsub_4, dsub_5, dsub_6, dsub_7),
                        (QPR qsub_0, qsub_1, qsub_2, qsub_3)];
-  let MethodProtos = [{
-    iterator allocation_order_begin(const MachineFunction &MF) const;
-    iterator allocation_order_end(const MachineFunction &MF) const;
-  }];
-  let MethodBodies = [{
-    // QQQQ1 is callee saved and should be allocated last.
-    // Save QQQQ0 for use as QPR_VFP2 and QPR_8 classes.
-    static const unsigned ARM_QQQQPR[] = {
-      ARM::QQQQ2, ARM::QQQQ3, ARM::QQQQ0, ARM::QQQQ1 };
-
-    QQQQPRClass::iterator
-    QQQQPRClass::allocation_order_begin(const MachineFunction &MF) const {
-      return ARM_QQQQPR;
-    }
-
-    QQQQPRClass::iterator
-    QQQQPRClass::allocation_order_end(const MachineFunction &MF) const {
-      return ARM_QQQQPR + (sizeof(ARM_QQQQPR)/sizeof(unsigned));
-    }
-  }];
+  // Allocate non-VFP2 aliases first.
+  let AltOrders = [(rotl QQQQPR, 2)];
+  let AltOrderSelect = [{ return 1; }];
 }
 
 // Condition code registers.
