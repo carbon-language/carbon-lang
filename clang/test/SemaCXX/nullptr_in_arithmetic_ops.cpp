@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -fblocks -std=c++0x -verify %s
 
-void f() {
+void foo() {
   int a;
   bool b;
 
@@ -49,8 +49,9 @@ void f() {
   b = &a <= nullptr || nullptr <= &a || &a >= nullptr || nullptr >= &a;
   b = &a == nullptr || nullptr == &a || &a != nullptr || nullptr != &a;
 
-  b = 0 == a;
-  b = 0 == &a;
+  b = nullptr < nullptr || nullptr > nullptr;
+  b = nullptr <= nullptr || nullptr >= nullptr;
+  b = nullptr == nullptr || nullptr != nullptr;
 
   b = ((nullptr)) != a;  // expected-error{{invalid operands to binary expression}}
 
@@ -62,4 +63,11 @@ void f() {
   void (X::*d) ();
   d = nullptr;
   b = d == nullptr || nullptr == d || d != nullptr || nullptr != d;
+
+  extern void e();
+  b = e == nullptr || nullptr == e || e != nullptr || nullptr != e;
+
+  int f[2];
+  b = f == nullptr || nullptr == f || f != nullptr || nullptr != f;
+  b = "f" == nullptr || nullptr == "f" || "f" != nullptr || nullptr != "f";
 }

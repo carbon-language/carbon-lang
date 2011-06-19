@@ -59,6 +59,10 @@ void f() {
   b = 0 == a;
   b = 0 == &a;
 
+  b = NULL < NULL || NULL > NULL;
+  b = NULL <= NULL || NULL >= NULL;
+  b = NULL == NULL || NULL != NULL;
+
   b = ((NULL)) != a;  // expected-warning{{use of NULL in arithmetic operation}}
 
   void (^c)();
@@ -67,4 +71,11 @@ void f() {
   class X;
   void (X::*d) ();
   b = d == NULL || NULL == d || d != NULL || NULL != d;
+
+  extern void e();
+  b = e == NULL || NULL == e || e != NULL || NULL != e;
+
+  int f[2];
+  b = f == NULL || NULL == f || f != NULL || NULL != f;
+  b = "f" == NULL || NULL == "f" || "f" != NULL || NULL != "f";
 }

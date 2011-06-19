@@ -289,6 +289,31 @@ bool Type::isDerivedType() const {
   }
 }
 
+/// \brief Tests whether the type behaves like a pointer type.
+///
+/// This includes all of the obviously pointer types including block pointers,
+/// member pointers, and ObjC Object pointers. It also includes function and
+/// array types which behave as pointers due to decay.
+///
+/// \returns True for types which act like pointer types.
+bool Type::isPointerLikeType() const {
+  switch (CanonicalType->getTypeClass()) {
+  case Pointer:
+  case BlockPointer:
+  case MemberPointer:
+  case ConstantArray:
+  case IncompleteArray:
+  case VariableArray:
+  case DependentSizedArray:
+  case FunctionProto:
+  case FunctionNoProto:
+  case ObjCObjectPointer:
+    return true;
+  default:
+    return false;
+  }
+}
+
 bool Type::isClassType() const {
   if (const RecordType *RT = getAs<RecordType>())
     return RT->getDecl()->isClass();

@@ -1373,6 +1373,7 @@ public:
   bool isFunctionProtoType() const { return getAs<FunctionProtoType>(); }
   bool isPointerType() const;
   bool isAnyPointerType() const;   // Any C pointer or ObjC object pointer
+  bool isPointerLikeType() const;
   bool isBlockPointerType() const;
   bool isVoidPointerType() const;
   bool isReferenceType() const;
