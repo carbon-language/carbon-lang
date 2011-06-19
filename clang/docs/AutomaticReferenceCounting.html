@@ -1488,6 +1488,271 @@ from exceptions.</p></div>
 </div> <!-- misc.exceptions -->
 
 </div> <!-- misc -->
+
+<div id="runtime">
+<h1>Runtime support</h1>
+
+<p>This section describes the requirements of the current ARC
+implementation in Clang on the Objective-C runtime.  It is not part of
+the ARC language specification; instead, it is effectively a
+language-specific ABI supplement, akin to the Itanium ABI for C++.</p>
+
+<p>Ownership qualification does not alter the storage requirements for
+an object, except that <tt>__weak</tt> objects must always be
+appropriately aligned for an object of type <tt>id</tt>.</p>
+
+<p>The runtime tracks <tt>__weak</tt> objects which holds non-null
+values.  It is undefined behavior to modify a <tt>__weak</tt> object
+which is being tracked by the runtime except through an
+<a href="#runtime.objc_storeWeak"><tt>objc_storeWeak</tt></a> or
+<a href="#runtime.objc_destroyWeak"><tt>objc_destroyWeak</tt></a>
+call.</p>
+
+<div id="runtime.objc_autorelease">
+<h1><tt>id objc_autorelease(id value);</tt></h1>
+<p><i>Precondition:</i> <tt>value</tt> is null or a pointer to a
+valid object.</p>
+<p>If <tt>value</tt> is null, this call has no effect.  Otherwise, it
+adds the object to the innermost autorelease pool exactly as if the
+object had been sent the <tt>autorelease</tt> message.</p>
+<p>Always returns <tt>value</tt>.</p>
+</div> <!-- runtime.objc_autorelease -->
+
+<div id="runtime.objc_autoreleasePoolPop">
+<h1><tt>void objc_autoreleasePoolPop(void *pool);</tt></h1>
+<p><i>Precondition:</i> <tt>pool</tt> is the result of a previous call to
+<a href="runtime.objc_autoreleasePoolPush"><tt>objc_autoreleasePoolPush</tt></a>
+on the current thread, where neither <tt>pool</tt> nor any enclosing
+pool have previously been popped.</p>
+<p>Releases all the objects added to the given autorelease pool and
+any autorelease pools it encloses, then sets the current autorelease
+pool to the pool directly enclosing <tt>pool</tt>.</p>
+</div> <!-- runtime.objc_autoreleasePoolPop -->
+
+<div id="runtime.objc_autoreleasePoolPush">
+<h1><tt>void *objc_autoreleasePoolPush(void);</tt></h1>
+<p>Creates a new autorelease pool that is enclosed by the current
+pool, makes that the current pool, and returns an opaque <q>handle</q>
+to it.</p>
+
+<div class="rationale"><p>Rationale: while the interface is described
+as an explicit hierarchy of pools, the rules allow the implementation
+to just keep a stack of objects, using the stack depth as the opaque
+pool handle.</p></div>
+
+</div> <!-- runtime.objc_autoreleasePoolPush -->
+
+<div id="runtime.objc_autoreleaseReturnValue">
+<h1><tt>id objc_autoreleaseReturnValue(id value);</tt></h1>
+<p><i>Precondition:</i> <tt>value</tt> is null or a pointer to a
+valid object.</p>
+<p>If <tt>value</tt> is null, this call has no effect.  Otherwise, it
+makes a best effort to hand off ownership of a retain count on the
+object to a call
+to <a href="runtime.objc_retainAutoreleasedReturnValue"><tt>objc_retainAutoreleasedReturnValue</tt></a>
+for the same object in an enclosing call frame.  If this is not
+possible, the object is autoreleased as above.</p>
+<p>Always returns <tt>value</tt>.</p>
+</div> <!-- runtime.objc_autoreleaseReturnValue -->
+
+<div id="runtime.objc_copyWeak">
+<h1><tt>void objc_copyWeak(id *dest, id *src);</tt></h1>
+<p><i>Precondition:</i> <tt>src</tt> is a valid pointer which either
+contains a null pointer or has been registered as a <tt>__weak</tt>
+object.  <tt>dest</tt> is a valid pointer which has not been
+registered as a <tt>__weak</tt> object.</p>
+<p><tt>dest</tt> is initialized to be equivalent to <tt>src</tt>,
+potentially registering it with the runtime.  Equivalent to the
+following code:</p>
+<pre>void objc_copyWeak(id *dest, id *src) {
+  objc_release(objc_initWeak(dest, objc_loadWeakRetained(src)));
+}</pre>
+<p>Must be atomic with respect to calls to <tt>objc_storeWeak</tt>
+on <tt>src</tt>.</p>
+</div> <!-- runtime.objc_copyWeak -->
+
+<div id="runtime.objc_destroyWeak">
+<h1><tt>void objc_destroyWeak(id *object);</tt></h1>
+<p><i>Precondition:</i> <tt>object</tt> is a valid pointer which
+either contains a null pointer or has been registered as
+a <tt>__weak</tt> object.</p>
+<p><tt>object</tt> is unregistered as a weak object, if it ever was.
+The current value of <tt>object</tt> is left unspecified; otherwise,
+equivalent to the following code:</p>
+<pre>void objc_destroyWeak(id *object) {
+  objc_storeWeak(object, nil);
+}</pre>
+<p>Does not need to be atomic with respect to calls
+to <tt>objc_storeWeak</tt> on <tt>object</tt>.</p>
+</div> <!-- runtime.objc_destroyWeak -->
+
+<div id="runtime.objc_initWeak">
+<h1><tt>id objc_initWeak(id *object, id value);</tt></h1>
+<p><i>Precondition:</i> <tt>object</tt> is a valid pointer which has
+not been registered as a <tt>__weak</tt> object.  <tt>value</tt> is
+null or a pointer to a valid object.</p>
+<p>If <tt>value</tt> is a null pointer or the object to which it
+points has begun deallocation, <tt>object</tt> is zero-initialized.
+Otherwise, <tt>object</tt> is registered as a <tt>__weak</tt> object
+pointing to <tt>value</tt>.  Equivalent to the following code:</p>
+<pre>id objc_initWeak(id *object, id value) {
+  *object = nil;
+  return objc_storeWeak(object, value);
+}</pre>
+<p>Returns the value of <tt>object</tt> after the call.</p>
+<p>Does not need to be atomic with respect to calls
+to <tt>objc_storeWeak</tt> on <tt>object</tt>.</p>
+</div> <!-- runtime.objc_initWeak -->
+
+<div id="runtime.objc_loadWeak">
+<h1><tt>id objc_loadWeak(id *object);</tt></h1>
+<p><i>Precondition:</i> <tt>object</tt> is a valid pointer which
+either contains a null pointer or has been registered as
+a <tt>__weak</tt> object.</p>
+<p>If <tt>object</tt> is registered as a <tt>__weak</tt> object, and
+the last value stored into <tt>object</tt> has not yet been
+deallocated or begun deallocation, retains and autoreleases that value
+and returns it.  Otherwise returns null.  Equivalent to the following
+code:</p>
+<pre>id objc_loadWeak(id *object) {
+  return objc_autorelease(objc_loadWeakRetained(object));
+}</pre>
+<p>Must be atomic with respect to calls to <tt>objc_storeWeak</tt>
+on <tt>object</tt>.</p>
+<div class="rationale">Rationale: loading weak references would be
+inherently prone to race conditions without the retain.</div>
+</div> <!-- runtime.objc_loadWeak -->
+
+<div id="runtime.objc_loadWeakRetained">
+<h1><tt>id objc_loadWeakRetained(id *object);</tt></h1>
+<p><i>Precondition:</i> <tt>object</tt> is a valid pointer which
+either contains a null pointer or has been registered as
+a <tt>__weak</tt> object.</p>
+<p>If <tt>object</tt> is registered as a <tt>__weak</tt> object, and
+the last value stored into <tt>object</tt> has not yet been
+deallocated or begun deallocation, retains that value and returns it.
+Otherwise returns null.</p>
+<p>Must be atomic with respect to calls to <tt>objc_storeWeak</tt>
+on <tt>object</tt>.</p>
+</div> <!-- runtime.objc_loadWeakRetained -->
+
+<div id="runtime.objc_moveWeak">
+<h1><tt>void objc_moveWeak(id *dest, id *src);</tt></h1>
+<p><i>Precondition:</i> <tt>src</tt> is a valid pointer which either
+contains a null pointer or has been registered as a <tt>__weak</tt>
+object.  <tt>dest</tt> is a valid pointer which has not been
+registered as a <tt>__weak</tt> object.</p>
+<p><tt>dest</tt> is initialized to be equivalent to <tt>src</tt>,
+potentially registering it with the runtime.  <tt>src</tt> may then be
+left in its original state, in which case this call is equivalent
+to <a href="#runtime.objc_copyWeak"><tt>objc_copyWeak</tt></a>, or it
+may be left as null.</p>
+<p>Must be atomic with respect to calls to <tt>objc_storeWeak</tt>
+on <tt>src</tt>.</p>
+</div> <!-- runtime.objc_moveWeak -->
+
+<div id="runtime.objc_retain">
+<h1><tt>id objc_retain(id value);</tt></h1>
+<p><i>Precondition:</i> <tt>value</tt> is null or a pointer to a
+valid object.</p>
+<p>If <tt>value</tt> is null, this call has no effect.  Otherwise, it
+performs a retain operation exactly as if the object had been sent
+the <tt>retain</tt> message.</p>
+<p>Always returns <tt>value</tt>.</p>
+</div> <!-- runtime.objc_retain -->
+
+<div id="runtime.objc_retainAutorelease">
+<h1><tt>id objc_retainAutorelease(id value);</tt></h1>
+<p><i>Precondition:</i> <tt>value</tt> is null or a pointer to a
+valid object.</p>
+<p>If <tt>value</tt> is null, this call has no effect.  Otherwise, it
+performs a retain operation followed by an autorelease operation.
+Equivalent to the following code:</p>
+<pre>id objc_retainAutorelease(id value) {
+  return objc_autorelease(objc_retain(value));
+}</pre>
+<p>Always returns <tt>value</tt>.</p>
+</div> <!-- runtime.objc_retainAutorelease -->
+
+<div id="runtime.objc_retainAutoreleaseReturnValue">
+<h1><tt>id objc_retainAutoreleaseReturnValue(id value);</tt></h1>
+<p><i>Precondition:</i> <tt>value</tt> is null or a pointer to a
+valid object.</p>
+<p>If <tt>value</tt> is null, this call has no effect.  Otherwise, it
+performs a retain operation followed by the operation described in
+<a href="#runtime.objc_autoreleaseReturnValue"><tt>objc_autoreleaseReturnValue</tt></a>.
+Equivalent to the following code:</p>
+<pre>id objc_retainAutoreleaseReturnValue(id value) {
+  return objc_autoreleaseReturnValue(objc_retain(value));
+}</pre>
+<p>Always returns <tt>value</tt>.</p>
+</div> <!-- runtime.objc_retainAutoreleaseReturnValue -->
+
+<div id="runtime.objc_retainAutoreleasedReturnValue">
+<h1><tt>id objc_retainAutoreleasedReturnValue(id value);</tt></h1>
+<p><i>Precondition:</i> <tt>value</tt> is null or a pointer to a
+valid object.</p>
+<p>If <tt>value</tt> is null, this call has no effect.  Otherwise, it
+attempts to accept a hand off of a retain count from a call to
+<a href="#runtime.objc_autoreleaseReturnValue"><tt>objc_autoreleaseReturnValue</tt></a>
+on <tt>value</tt> in a recently-called function or something it
+calls.  If that fails, it performs a retain operation exactly
+like <a href="#runtime.objc_retain"><tt>objc_retain</tt></a>.</p>
+<p>Always returns <tt>value</tt>.</p>
+</div> <!-- runtime.objc_retainAutoreleasedReturnValue -->
+
+<div id="runtime.objc_retainBlock">
+<h1><tt>id objc_retainBlock(id value);</tt></h1>
+<p><i>Precondition:</i> <tt>value</tt> is null or a pointer to a
+valid block object.</p>
+<p>If <tt>value</tt> is null, this call has no effect.  Otherwise, if
+the block pointed to by <tt>value</tt> is still on the stack, it is
+copied to the heap and the address of the copy is returned.  Otherwise
+a retain operation is performed on the block exactly as if it had been
+sent the <tt>retain</tt> message.</p>
+</div> <!-- runtime.objc_retainBlock -->
+
+<div id="runtime.objc_release">
+<h1><tt>void objc_release(id value);</tt></h1>
+<p><i>Precondition:</i> <tt>value</tt> is null or a pointer to a
+valid object.</p>
+<p>If <tt>value</tt> is null, this call has no effect.  Otherwise, it
+performs a release operation exactly as if the object had been sent
+the <tt>release</tt> message.</p>
+</div> <!-- runtime.objc_release -->
+
+<div id="runtime.objc_storeStrong">
+<h1><tt>id objc_storeStrong(id *object, id value);</tt></h1>
+<p><i>Precondition:</i> <tt>object</tt> is a valid pointer to
+a <tt>__strong</tt> object which is adequately aligned for a
+pointer.  <tt>value</tt> is null or a pointer to a valid object.</p>
+<p>Performs the complete sequence for assigning to a <tt>__strong</tt>
+object of non-block type.  Equivalent to the following code:</p>
+<pre>id objc_storeStrong(id *object, id value) {
+  value = [value retain];
+  id oldValue = *object;
+  *object = value;
+  [oldValue release];
+  return value;
+}</pre>
+<p>Always returns <tt>value</tt>.</p>
+</div> <!-- runtime.objc_storeStrong -->
+
+<div id="runtime.objc_storeWeak">
+<h1><tt>id objc_storeWeak(id *object, id value);</tt></h1>
+<p><i>Precondition:</i> <tt>object</tt> is a valid pointer which
+either contains a null pointer or has been registered as
+a <tt>__weak</tt> object.  <tt>value</tt> is null or a pointer to a
+valid object.</p>
+<p>If <tt>value</tt> is a null pointer or the object to which it
+points has begun deallocation, <tt>object</tt> is assigned null
+and unregistered as a <tt>__weak</tt> object.  Otherwise,
+<tt>object</tt> is registered as a <tt>__weak</tt> object or has its
+registration updated to point to <tt>value</tt>.</p>
+<p>Returns the value of <tt>object</tt> after the call.</p>
+</div> <!-- runtime.objc_storeWeak -->
+
+</div> <!-- runtime -->
 </div> <!-- root -->
 </body>
 </html>
