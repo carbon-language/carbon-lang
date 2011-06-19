@@ -968,7 +968,7 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                                 // using nlist_idx in case we ever start trimming entries out
                                 if (symbol_name[0] == '/')
                                     N_SO_index = sym_idx;
-                                else if (minimize && (N_SO_index == sym_idx - 1))
+                                else if (minimize && (N_SO_index == sym_idx - 1) && ((sym_idx - 1) < num_syms))
                                 {
                                     const char *so_path = sym[sym_idx - 1].GetMangled().GetDemangledName().AsCString();
                                     if (so_path && so_path[0])
