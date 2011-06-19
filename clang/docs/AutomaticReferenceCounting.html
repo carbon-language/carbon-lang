@@ -1502,11 +1502,34 @@ an object, except that <tt>__weak</tt> objects must always be
 appropriately aligned for an object of type <tt>id</tt>.</p>
 
 <p>The runtime tracks <tt>__weak</tt> objects which holds non-null
-values.  It is undefined behavior to modify a <tt>__weak</tt> object
-which is being tracked by the runtime except through an
-<a href="#runtime.objc_storeWeak"><tt>objc_storeWeak</tt></a> or
-<a href="#runtime.objc_destroyWeak"><tt>objc_destroyWeak</tt></a>
+values.  It is undefined behavior to direct modify a <tt>__weak</tt>
+object which is being tracked by the runtime except through an
+<a href="#runtime.objc_storeWeak"><tt>objc_storeWeak</tt></a>,
+<a href="#runtime.objc_destroyWeak"><tt>objc_destroyWeak</tt></a>,
+or <a href="#runtime.objc_moveWeak"><tt>objc_moveWeak</tt></a>
 call.</p>
+
+<p>The runtime must provide a number of new entrypoints which the
+compiler may emit, which are described in the remainder of this
+section.</p>
+
+<div class="rationale"><p>Rationale: Several of these functions are
+semantically equivalent to a message send; we emit calls to C
+functions instead because:</p>
+<ul>
+<li>the machine code to do so is significantly smaller,</li>
+<li>it is much easier to recognize the C functions in the ARC optimizer, and</li>
+<li>a sufficient sophisticated runtime may be able to avoid the
+message send in common cases.</li>
+</ul>
+
+<p>Several other of these functions are <q>fused</q> operations which
+can be described entirely in terms of other operations.  We use the
+fused operations primarily as a code-size optimization, although in
+some cases there is also a real potential for avoiding redundant
+operations in the runtime.</p>
+
+</div>
 
 <div id="runtime.objc_autorelease">
 <h1><tt>id objc_autorelease(id value);</tt></h1>
