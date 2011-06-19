@@ -475,17 +475,9 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
                PartVT.getVectorNumElements() == ValueVT.getVectorNumElements()) {
 
       // Promoted vector extract
-      unsigned NumElts = ValueVT.getVectorNumElements();
-      SmallVector<SDValue, 8> NewOps;
-      for (unsigned i = 0; i < NumElts; ++i) {
-        SDValue Ext = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL,
-                       ValueVT.getScalarType(), Val ,DAG.getIntPtrConstant(i));
-        SDValue Cast = DAG.getNode(ISD::ANY_EXTEND,
-                       DL, PartVT.getScalarType(), Ext);
-        NewOps.push_back(Cast);
-      }
-      Val = DAG.getNode(ISD::BUILD_VECTOR, DL, PartVT,
-                        &NewOps[0], NewOps.size());
+      bool Smaller = PartVT.bitsLE(ValueVT);
+      Val = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
+                        DL, PartVT, Val);
     } else{
       // Vector -> scalar conversion.
       assert(ValueVT.getVectorNumElements() == 1 &&
