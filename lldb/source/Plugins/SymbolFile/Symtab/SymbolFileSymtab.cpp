@@ -76,43 +76,45 @@ uint32_t
 SymbolFileSymtab::GetAbilities ()
 {
     uint32_t abilities = 0;
-    const Symtab *symtab = m_obj_file->GetSymtab();
-    if (symtab)
+    if (m_obj_file)
     {
-
-        //----------------------------------------------------------------------
-        // The snippet of code below will get the indexes the module symbol
-        // table entries that are code, data, or function related (debug info),
-        // sort them by value (address) and dump the sorted symbols.
-        //----------------------------------------------------------------------
-        symtab->AppendSymbolIndexesWithType(eSymbolTypeSourceFile, m_source_indexes);
-        if (!m_source_indexes.empty())
+        const Symtab *symtab = m_obj_file->GetSymtab();
+        if (symtab)
         {
-            abilities |= CompileUnits;
-        }
-        symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugYes, Symtab::eVisibilityAny, m_func_indexes);
-        if (!m_func_indexes.empty())
-        {
-            symtab->SortSymbolIndexesByValue(m_func_indexes, true);
-            abilities |= Functions;
-        }
 
-        symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, m_code_indexes);
-        if (!m_code_indexes.empty())
-        {
-            symtab->SortSymbolIndexesByValue(m_code_indexes, true);
-            abilities |= Labels;
-        }
+            //----------------------------------------------------------------------
+            // The snippet of code below will get the indexes the module symbol
+            // table entries that are code, data, or function related (debug info),
+            // sort them by value (address) and dump the sorted symbols.
+            //----------------------------------------------------------------------
+            symtab->AppendSymbolIndexesWithType(eSymbolTypeSourceFile, m_source_indexes);
+            if (!m_source_indexes.empty())
+            {
+                abilities |= CompileUnits;
+            }
+            symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugYes, Symtab::eVisibilityAny, m_func_indexes);
+            if (!m_func_indexes.empty())
+            {
+                symtab->SortSymbolIndexesByValue(m_func_indexes, true);
+                abilities |= Functions;
+            }
 
-        symtab->AppendSymbolIndexesWithType(eSymbolTypeData, m_data_indexes);
+            symtab->AppendSymbolIndexesWithType(eSymbolTypeCode, Symtab::eDebugNo, Symtab::eVisibilityAny, m_code_indexes);
+            if (!m_code_indexes.empty())
+            {
+                symtab->SortSymbolIndexesByValue(m_code_indexes, true);
+                abilities |= Labels;
+            }
 
-        if (!m_data_indexes.empty())
-        {
-            symtab->SortSymbolIndexesByValue(m_data_indexes, true);
-            abilities |= GlobalVariables;
+            symtab->AppendSymbolIndexesWithType(eSymbolTypeData, m_data_indexes);
+
+            if (!m_data_indexes.empty())
+            {
+                symtab->SortSymbolIndexesByValue(m_data_indexes, true);
+                abilities |= GlobalVariables;
+            }
         }
     }
-
     return abilities;
 }
 
