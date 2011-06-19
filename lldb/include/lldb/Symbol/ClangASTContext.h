@@ -289,6 +289,10 @@ public:
                                                           is_explicit);
     }
     
+    static bool
+    CheckOverloadedOperatorKindParameterCount (uint32_t op_kind, 
+                                               uint32_t num_params);
+
     bool
     FieldIsBitfield (clang::FieldDecl* field,
                      uint32_t& bitfield_bit_size);

@@ -1358,6 +1358,29 @@ IsOperator (const char *name, OverloadedOperatorKind &op_kind)
     return true;
 }
 
+static inline bool
+check_op_param (bool unary, bool binary, uint32_t num_params)
+{
+    // The parameter count doens't include "this"
+    if (num_params == 0)
+        return unary;
+    if (num_params == 1)
+        return binary;
+    return false;
+}
+
+bool
+ClangASTContext::CheckOverloadedOperatorKindParameterCount (uint32_t op_kind, uint32_t num_params)
+{
+#define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) case OO_##Name: return check_op_param (Unary, Binary, num_params);
+    switch (op_kind)
+    {
+#include "clang/Basic/OperatorKinds.def"
+        default: break;
+    }
+    return false;
+}
+
 CXXMethodDecl *
 ClangASTContext::AddMethodToCXXRecordType
 (
@@ -1439,6 +1462,13 @@ ClangASTContext::AddMethodToCXXRecordType
         {
             if (op_kind != NUM_OVERLOADED_OPERATORS)
             {
+                // Check the number of operator parameters. Sometimes we have 
+                // seen bad DWARF that doesn't correctly describe operators and
+                // if we try to create a methed and add it to the class, clang
+                // will assert and crash, so we need to make sure things are
+                // acceptable.
+                if (!ClangASTContext::CheckOverloadedOperatorKindParameterCount (op_kind, num_params))
+                    return NULL;
                 cxx_method_decl = CXXMethodDecl::Create (*ast,
                                                          cxx_record_decl,
                                                          SourceLocation(),
