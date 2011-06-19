@@ -728,7 +728,7 @@ public:
         {return __table_.__emplace_unique();}
 
     template <class _A0,
-              class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _A0>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         pair<iterator, bool> emplace(_A0&& __a0)
             {return __table_.__emplace_unique(_STD::forward<_A0>(__a0));}
@@ -736,7 +736,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class _A0, class... _Args,
-              class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
+              class = typename enable_if<is_constructible<key_type, _A0>::value>::type>
         pair<iterator, bool> emplace(_A0&& __a0, _Args&&... __args);
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
@@ -746,7 +746,7 @@ public:
         {return __table_.__emplace_unique().first;}
 
     template <class _A0,
-              class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _A0>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         iterator emplace_hint(const_iterator, _A0&& __a0)
             {return __table_.__emplace_unique(_STD::forward<_A0>(__a0)).first;}
@@ -754,7 +754,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class _A0, class... _Args,
-              class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
+              class = typename enable_if<is_constructible<key_type, _A0>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         iterator emplace_hint(const_iterator, _A0&& __a0, _Args&&... __args)
             {return emplace(_STD::forward<_A0>(__a0),
@@ -766,7 +766,7 @@ public:
         {return __table_.__insert_unique(__x);}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _P,
-              class = typename enable_if<is_convertible<_P, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _P>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         pair<iterator, bool> insert(_P&& __x)
             {return __table_.__insert_unique(_STD::forward<_P>(__x));}
@@ -776,7 +776,7 @@ public:
         {return insert(__x).first;}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _P,
-              class = typename enable_if<is_convertible<_P, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _P>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         iterator insert(const_iterator, _P&& __x)
             {return insert(_STD::forward<_P>(__x)).first;}
@@ -869,11 +869,11 @@ private:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class _A0, class... _Args,
-              class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
+              class = typename enable_if<is_constructible<key_type, _A0>::value>::type>
         __node_holder __construct_node(_A0&& __a0, _Args&&... __args);
 #endif  // _LIBCPP_HAS_NO_VARIADICS
     template <class _A0,
-              class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _A0>::value>::type>
         __node_holder __construct_node(_A0&& __a0);
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __node_holder __construct_node(const key_type& __k);
@@ -1037,7 +1037,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::operator=(
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0, class... _Args,
-          class // = typename enable_if<is_convertible<_A0, key_type>::value>::type
+          class // = typename enable_if<is_constructible<key_type, _A0>::value>::type
          >
 typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0,
@@ -1058,7 +1058,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0,
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0,
-          class // = typename enable_if<is_convertible<_A0, value_type>::value>::type
+          class // = typename enable_if<is_constructible<value_type, _A0>::value>::type
          >
 typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
@@ -1076,7 +1076,7 @@ unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0, class... _Args,
-          class // = typename enable_if<is_convertible<_A0, key_type>::value>::type
+          class // = typename enable_if<is_constructible<key_type, _A0>::value>::type
          >
 pair<typename unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::iterator, bool>
 unordered_map<_Key, _Tp, _Hash, _Pred, _Alloc>::emplace(_A0&& __a0, _Args&&... __args)
@@ -1332,7 +1332,7 @@ public:
         {return __table_.__emplace_multi();}
 
     template <class _A0,
-              class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _A0>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         iterator emplace(_A0&& __a0)
             {return __table_.__emplace_multi(_STD::forward<_A0>(__a0));}
@@ -1340,7 +1340,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class _A0, class... _Args,
-              class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
+              class = typename enable_if<is_constructible<key_type, _A0>::value>::type>
         iterator emplace(_A0&& __a0, _Args&&... __args);
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
@@ -1350,7 +1350,7 @@ public:
         {return __table_.__emplace_hint_multi(__p.__i_);}
 
     template <class _A0,
-              class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _A0>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         iterator emplace_hint(const_iterator __p, _A0&& __a0)
             {return __table_.__emplace_hint_multi(__p.__i_, _STD::forward<_A0>(__a0));}
@@ -1358,7 +1358,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
     template <class _A0, class... _Args,
-              class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
+              class = typename enable_if<is_constructible<key_type, _A0>::value>::type>
         iterator emplace_hint(const_iterator __p, _A0&& __a0, _Args&&... __args);
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1366,7 +1366,7 @@ public:
     iterator insert(const value_type& __x) {return __table_.__insert_multi(__x);}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _P,
-              class = typename enable_if<is_convertible<_P, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _P>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         iterator insert(_P&& __x)
             {return __table_.__insert_multi(_STD::forward<_P>(__x));}
@@ -1376,7 +1376,7 @@ public:
         {return __table_.__insert_multi(__p.__i_, __x);}
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _P,
-              class = typename enable_if<is_convertible<_P, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _P>::value>::type>
         _LIBCPP_INLINE_VISIBILITY
         iterator insert(const_iterator __p, _P&& __x)
             {return __table_.__insert_multi(__p.__i_, _STD::forward<_P>(__x));}
@@ -1461,10 +1461,10 @@ public:
 private:
 #if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     template <class _A0, class... _Args,
-              class = typename enable_if<is_convertible<_A0, key_type>::value>::type>
+              class = typename enable_if<is_constructible<key_type, _A0>::value>::type>
         __node_holder __construct_node(_A0&& __a0, _Args&&... __args);
     template <class _A0,
-              class = typename enable_if<is_convertible<_A0, value_type>::value>::type>
+              class = typename enable_if<is_constructible<value_type, _A0>::value>::type>
         __node_holder __construct_node(_A0&& __a0);
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 };
@@ -1628,7 +1628,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::operator=(
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0, class... _Args,
-          class // = typename enable_if<is_convertible<_A0, key_type>::value>::type
+          class // = typename enable_if<is_constructible<key_type, _A0>::value>::type
          >
 typename unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
 unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(
@@ -1649,7 +1649,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0,
-          class // = typename enable_if<is_convertible<_A0, value_type>::value>::type
+          class // = typename enable_if<is_constructible<value_type, _A0>::value>::type
          >
 typename unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__node_holder
 unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0)
@@ -1667,7 +1667,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::__construct_node(_A0&& __a0
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0, class... _Args,
-          class // = typename enable_if<is_convertible<_A0, key_type>::value>::type
+          class // = typename enable_if<is_constructible<key_type, _A0>::value>::type
          >
 typename unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::iterator
 unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::emplace(_A0&& __a0, _Args&&... __args)
@@ -1681,7 +1681,7 @@ unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::emplace(_A0&& __a0, _Args&&
 
 template <class _Key, class _Tp, class _Hash, class _Pred, class _Alloc>
 template <class _A0, class... _Args,
-          class // = typename enable_if<is_convertible<_A0, key_type>::value>::type
+          class // = typename enable_if<is_constructible<key_type, _A0>::value>::type
          >
 typename unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::iterator
 unordered_multimap<_Key, _Tp, _Hash, _Pred, _Alloc>::emplace_hint(

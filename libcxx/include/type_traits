@@ -2939,7 +2939,7 @@ struct __check_complete<_R _Class::*>
 template <class ..._Args>
 auto
 __invoke(__any, _Args&& ...__args)
-    -> __nat = delete;
+    -> __nat;
 
 // bullets 1 and 2
 
