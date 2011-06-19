@@ -16,3 +16,8 @@ void test_f2() {
   float &fr = f2(AC().a);
 }
 
+namespace pr10154 {
+  class A{
+      A(decltype(nullptr) param);
+  };
+}

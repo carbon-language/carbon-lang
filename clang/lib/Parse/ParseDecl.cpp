@@ -3018,6 +3018,10 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw___attribute:
     return true;
 
+    // C++0x decltype.
+  case tok::kw_decltype:
+    return true;
+
     // GNU ObjC bizarre protocol extension: <proto1,proto2> with implicit 'id'.
   case tok::less:
     return getLang().ObjC1;
