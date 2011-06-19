@@ -192,10 +192,6 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
     if (NOutVT.bitsEq(NInVT))
       // The input promotes to the same size.  Convert the promoted value.
       return DAG.getNode(ISD::BITCAST, dl, NOutVT, GetPromotedInteger(InOp));
-    if (NInVT.isVector())
-      // Promote vector element via memory load/store.
-      return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
-                         CreateStackStoreLoad(InOp, OutVT));
     break;
   case TargetLowering::TypeSoftenFloat:
     // Promote the integer operand by hand.
@@ -2729,13 +2725,14 @@ SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_SUBVECTOR(SDNode *N) {
   EVT OutVT = N->getValueType(0);
   EVT NOutVT = TLI.getTypeToTransformTo(*DAG.getContext(), OutVT);
   assert(NOutVT.isVector() && "This type must be promoted to a vector type");
-  unsigned OutNumElems = N->getValueType(0).getVectorNumElements();
+  unsigned OutNumElems = OutVT.getVectorNumElements();
   EVT NOutVTElem = NOutVT.getVectorElementType();
 
   DebugLoc dl = N->getDebugLoc();
   SDValue BaseIdx = N->getOperand(1);
 
   SmallVector<SDValue, 8> Ops;
+  Ops.reserve(OutNumElems);
   for (unsigned i = 0; i != OutNumElems; ++i) {
 
     // Extract the element from the original vector.
@@ -2767,9 +2764,9 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VECTOR_SHUFFLE(SDNode *N) {
 
   SDValue V0 = GetPromotedInteger(N->getOperand(0));
   SDValue V1 = GetPromotedInteger(N->getOperand(1));
-  EVT OutVT = TLI.getTypeToTransformTo(*DAG.getContext(), VT);
+  EVT OutVT = V0.getValueType();
 
-  return DAG.getVectorShuffle(OutVT, dl, V0,V1, &NewMask[0]);
+  return DAG.getVectorShuffle(OutVT, dl, V0, V1, &NewMask[0]);
 }
 
 
@@ -2783,6 +2780,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_VECTOR(SDNode *N) {
   DebugLoc dl = N->getDebugLoc();
 
   SmallVector<SDValue, 8> Ops;
+  Ops.reserve(NumElems);
   for (unsigned i = 0; i != NumElems; ++i) {
     SDValue Op = DAG.getNode(ISD::ANY_EXTEND, dl, NOutVTElem, N->getOperand(i));
     Ops.push_back(Op);
