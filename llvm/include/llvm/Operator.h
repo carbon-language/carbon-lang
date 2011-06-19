@@ -15,8 +15,8 @@
 #ifndef LLVM_OPERATOR_H
 #define LLVM_OPERATOR_H
 
-#include "llvm/Constants.h"
 #include "llvm/Instruction.h"
+#include "llvm/Constants.h"
 
 namespace llvm {
 
@@ -183,106 +183,6 @@ public:
     return (isa<Instruction>(V) && classof(cast<Instruction>(V))) ||
            (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
   }
-};
-
-class FAddOperator : public ConcreteOperator<Operator, Instruction::FAdd> {
-  ~FAddOperator(); // DO NOT IMPLEMENT
-};
-class FSubOperator : public ConcreteOperator<Operator, Instruction::FSub> {
-  ~FSubOperator(); // DO NOT IMPLEMENT
-};
-class FMulOperator : public ConcreteOperator<Operator, Instruction::FMul> {
-  ~FMulOperator(); // DO NOT IMPLEMENT
-};
-class FDivOperator : public ConcreteOperator<Operator, Instruction::FDiv> {
-  ~FDivOperator(); // DO NOT IMPLEMENT
-};
-class URemOperator : public ConcreteOperator<Operator, Instruction::URem> {
-  ~URemOperator(); // DO NOT IMPLEMENT
-};
-class SRemOperator : public ConcreteOperator<Operator, Instruction::SRem> {
-  ~SRemOperator(); // DO NOT IMPLEMENT
-};
-class FRemOperator : public ConcreteOperator<Operator, Instruction::FRem> {
-  ~FRemOperator(); // DO NOT IMPLEMENT
-};
-class AndOperator : public ConcreteOperator<Operator, Instruction::And> {
-  ~AndOperator(); // DO NOT IMPLEMENT
-};
-class OrOperator : public ConcreteOperator<Operator, Instruction::Or> {
-  ~OrOperator(); // DO NOT IMPLEMENT
-};
-class XorOperator : public ConcreteOperator<Operator, Instruction::Xor> {
-  ~XorOperator(); // DO NOT IMPLEMENT
-};
-class TruncOperator : public ConcreteOperator<Operator, Instruction::Trunc> {
-  ~TruncOperator(); // DO NOT IMPLEMENT
-};
-class ZExtOperator : public ConcreteOperator<Operator, Instruction::ZExt> {
-  ~ZExtOperator(); // DO NOT IMPLEMENT
-};
-class SExtOperator : public ConcreteOperator<Operator, Instruction::SExt> {
-  ~SExtOperator(); // DO NOT IMPLEMENT
-};
-class FPToUIOperator : public ConcreteOperator<Operator, Instruction::FPToUI> {
-  ~FPToUIOperator(); // DO NOT IMPLEMENT
-};
-class FPToSIOperator : public ConcreteOperator<Operator, Instruction::FPToSI> {
-  ~FPToSIOperator(); // DO NOT IMPLEMENT
-};
-class UIToFPOperator : public ConcreteOperator<Operator, Instruction::UIToFP> {
-  ~UIToFPOperator(); // DO NOT IMPLEMENT
-};
-class SIToFPOperator : public ConcreteOperator<Operator, Instruction::SIToFP> {
-  ~SIToFPOperator(); // DO NOT IMPLEMENT
-};
-class FPTruncOperator
-  : public ConcreteOperator<Operator, Instruction::FPTrunc> {
-  ~FPTruncOperator(); // DO NOT IMPLEMENT
-};
-class FPExtOperator : public ConcreteOperator<Operator, Instruction::FPExt> {
-  ~FPExtOperator(); // DO NOT IMPLEMENT
-};
-class PtrToIntOperator
-  : public ConcreteOperator<Operator, Instruction::PtrToInt> {
-  ~PtrToIntOperator(); // DO NOT IMPLEMENT
-};
-class IntToPtrOperator
-  : public ConcreteOperator<Operator, Instruction::IntToPtr> {
-  ~IntToPtrOperator(); // DO NOT IMPLEMENT
-};
-class BitCastOperator
-  : public ConcreteOperator<Operator, Instruction::BitCast> {
-  ~BitCastOperator(); // DO NOT IMPLEMENT
-};
-class ICmpOperator : public ConcreteOperator<Operator, Instruction::ICmp> {
-  ~ICmpOperator(); // DO NOT IMPLEMENT
-};
-class FCmpOperator : public ConcreteOperator<Operator, Instruction::FCmp> {
-  ~FCmpOperator(); // DO NOT IMPLEMENT
-};
-class SelectOperator : public ConcreteOperator<Operator, Instruction::Select> {
-  ~SelectOperator(); // DO NOT IMPLEMENT
-};
-class ExtractElementOperator
-  : public ConcreteOperator<Operator, Instruction::ExtractElement> {
-  ~ExtractElementOperator(); // DO NOT IMPLEMENT
-};
-class InsertElementOperator
-  : public ConcreteOperator<Operator, Instruction::InsertElement> {
-  ~InsertElementOperator(); // DO NOT IMPLEMENT
-};
-class ShuffleVectorOperator
-  : public ConcreteOperator<Operator, Instruction::ShuffleVector> {
-  ~ShuffleVectorOperator(); // DO NOT IMPLEMENT
-};
-class ExtractValueOperator
-  : public ConcreteOperator<Operator, Instruction::ExtractValue> {
-  ~ExtractValueOperator(); // DO NOT IMPLEMENT
-};
-class InsertValueOperator
-  : public ConcreteOperator<Operator, Instruction::InsertValue> {
-  ~InsertValueOperator(); // DO NOT IMPLEMENT
 };
 
 class AddOperator
