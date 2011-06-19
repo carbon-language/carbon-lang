@@ -342,8 +342,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {
   // (eg: because the value being converted is too big), then the result of the
   // original operation was undefined anyway, so the assert is still correct.
   return DAG.getNode(N->getOpcode() == ISD::FP_TO_UINT ?
-                     ISD::AssertZext : ISD::AssertSext, dl,
-                     NVT, Res, DAG.getValueType(N->getValueType(0)));
+                     ISD::AssertZext : ISD::AssertSext, dl, NVT, Res,
+                     DAG.getValueType(N->getValueType(0).getScalarType()));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_FP32_TO_FP16(SDNode *N) {
@@ -373,7 +373,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_INT_EXTEND(SDNode *N) {
         return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, NVT, Res,
                            DAG.getValueType(N->getOperand(0).getValueType()));
       if (N->getOpcode() == ISD::ZERO_EXTEND)
-        return DAG.getZeroExtendInReg(Res, dl, N->getOperand(0).getValueType());
+        return DAG.getZeroExtendInReg(Res, dl,
+                      N->getOperand(0).getValueType().getScalarType());
       assert(N->getOpcode() == ISD::ANY_EXTEND && "Unknown integer extension!");
       return Res;
     }
