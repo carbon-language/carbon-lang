@@ -16,12 +16,9 @@
 %AAA = type { \2*, {\2*}, [12x{\2*}], {[1x{\2*}]} }
 
 ; Test numbered types
-type %CCC
-type %BBB
+%0 = type %CCC
+%1 = type %BBB
 %Composite = type { %0, %1 }
-
-; Test simple opaque type resolution...
-%intty = type i32
 
 ; Perform a simple forward reference...
 %ty1 = type { %ty2, i32 }

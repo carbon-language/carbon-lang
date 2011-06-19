@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86-64 | grep movslq | count 1
 ; PR4050
 
-	type { i64 }		; type %0
+	%0 = type { i64 }		; type %0
 	%struct.S1 = type { i16, i32 }
 @g_10 = external global %struct.S1		; <%struct.S1*> [#uses=2]
 

@@ -1,10 +1,10 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin9 -mcpu=cortex-a8 -relocation-model=pic -disable-fp-elim
 
-	type { void (%"struct.xalanc_1_8::FormatterToXML"*, i16)*, i32 }		; type %0
-	type { void (%"struct.xalanc_1_8::FormatterToXML"*, i16*)*, i32 }		; type %1
-	type { void (%"struct.xalanc_1_8::FormatterToXML"*, %"struct.xalanc_1_8::XalanDOMString"*)*, i32 }		; type %2
-	type { void (%"struct.xalanc_1_8::FormatterToXML"*, i16*, i32, i32)*, i32 }		; type %3
-	type { void (%"struct.xalanc_1_8::FormatterToXML"*)*, i32 }		; type %4
+	%0 = type { void (%"struct.xalanc_1_8::FormatterToXML"*, i16)*, i32 }		; type %0
+	%1 = type { void (%"struct.xalanc_1_8::FormatterToXML"*, i16*)*, i32 }		; type %1
+	%2 = type { void (%"struct.xalanc_1_8::FormatterToXML"*, %"struct.xalanc_1_8::XalanDOMString"*)*, i32 }		; type %2
+	%3 = type { void (%"struct.xalanc_1_8::FormatterToXML"*, i16*, i32, i32)*, i32 }		; type %3
+	%4 = type { void (%"struct.xalanc_1_8::FormatterToXML"*)*, i32 }		; type %4
 	%"struct.std::CharVectorType" = type { %"struct.std::_Vector_base<char,std::allocator<char> >" }
 	%"struct.std::_Bit_const_iterator" = type { %"struct.std::_Bit_iterator_base" }
 	%"struct.std::_Bit_iterator_base" = type { i32*, i32 }

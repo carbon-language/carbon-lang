@@ -1,11 +1,11 @@
 ; RUN: opt < %s -scalarrepl -disable-output -stats |& grep "Number of aggregates converted to scalar"
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "i386-apple-darwin9.6"
-	type { }		; type %0
-	type { i8*, i32, i32, i16, i16, %2, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %2, %3*, i32, [3 x i8], [1 x i8], %2, i32, i64 }		; type %1
-	type { i8*, i32 }		; type %2
-	type opaque		; type %3
-	type { i32 }		; type %4
+	%0 = type { }		; type %0
+	%1 = type { i8*, i32, i32, i16, i16, %2, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %2, %3*, i32, [3 x i8], [1 x i8], %2, i32, i64 }		; type %1
+	%2 = type { i8*, i32 }		; type %2
+	%3 = type opaque		; type %3
+	%4 = type { i32 }		; type %4
 	%llvm.dbg.anchor.type = type { i32, i32 }
 	%llvm.dbg.basictype.type = type { i32, %0*, i8*, %0*, i32, i64, i64, i64, i32, i32 }
 	%llvm.dbg.compile_unit.type = type { i32, %0*, i32, i8*, i8*, i8*, i1, i1, i8*, i32 }

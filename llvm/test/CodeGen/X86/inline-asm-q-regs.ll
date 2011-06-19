@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86-64
 ; rdar://7066579
 
-	type { i64, i64, i64, i64, i64 }		; type %0
+	%0 = type { i64, i64, i64, i64, i64 }		; type %0
 
 define void @t() nounwind {
 entry:

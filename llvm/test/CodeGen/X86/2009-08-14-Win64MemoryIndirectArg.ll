@@ -2,8 +2,8 @@
 target triple = "x86_64-mingw"
 
 ; ModuleID = 'mm.bc'
-	type opaque		; type %0
-	type opaque		; type %1
+	%0 = type opaque		; type %0
+	%1 = type opaque		; type %1
 
 define internal fastcc float @computeMipmappingRho(%0* %shaderExecutionStatePtr, i32 %index, <4 x float> %texCoord, <4 x float> %texCoordDX, <4 x float> %texCoordDY) readonly {
 indexCheckBlock:

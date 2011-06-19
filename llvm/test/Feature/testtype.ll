@@ -11,8 +11,8 @@
 %fwd    = type %fwdref*
 
 ; same as above with unnamed types
-type { %1* }
-type %0* 
+%0 = type { %1* }
+%1 = type %0* 
 %test = type %1
 
 %test2 = type [2 x i32]

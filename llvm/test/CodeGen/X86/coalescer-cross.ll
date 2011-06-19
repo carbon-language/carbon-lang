@@ -5,8 +5,8 @@
 ; CHECK: os_clock
 ; CHECK-NOT: movaps
 
-	type { %struct.TValue }		; type %0
-	type { %struct.L_Umaxalign, i32, %struct.Node* }		; type %1
+	%0 = type { %struct.TValue }		; type %0
+	%1 = type { %struct.L_Umaxalign, i32, %struct.Node* }		; type %1
 	%struct.CallInfo = type { %struct.TValue*, %struct.TValue*, %struct.TValue*, i32*, i32, i32 }
 	%struct.GCObject = type { %struct.lua_State }
 	%struct.L_Umaxalign = type { double }

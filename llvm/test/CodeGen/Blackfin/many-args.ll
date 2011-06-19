@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=bfin -verify-machineinstrs
 
-	type { i32, float, float, float, float, float, float, float, float, float, float }		; type %0
+	%0 = type { i32, float, float, float, float, float, float, float, float, float, float }		; type %0
 	%struct..s_segment_inf = type { float, i32, i16, i16, float, float, i32, float, float }
 
 define i32 @main(i32 %argc.1, i8** %argv.1) {

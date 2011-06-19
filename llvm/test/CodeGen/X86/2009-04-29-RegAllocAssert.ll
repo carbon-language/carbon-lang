@@ -1,9 +1,9 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -disable-fp-elim -relocation-model=pic
 ; PR4099
 
-	type { [62 x %struct.Bitvec*] }		; type %0
-	type { i8* }		; type %1
-	type { double }		; type %2
+	%0 = type { [62 x %struct.Bitvec*] }		; type %0
+	%1 = type { i8* }		; type %1
+	%2 = type { double }		; type %2
 	%struct..5sPragmaType = type { i8*, i32 }
 	%struct.AggInfo = type { i8, i8, i32, %struct.ExprList*, i32, %struct.AggInfo_col*, i32, i32, i32, %struct.AggInfo_func*, i32, i32 }
 	%struct.AggInfo_col = type { %struct.Table*, i32, i32, i32, i32, %struct.Expr* }

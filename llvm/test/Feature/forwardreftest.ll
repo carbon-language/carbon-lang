@@ -4,9 +4,9 @@
 
 %myty = type i32 
 %myfn = type float (i32,double,i32,i16)
-type i32(%myfn*)
-type i32(i32)
-type i32(i32(i32)*)
+%0 = type i32(%myfn*)
+%1 = type i32(i32)
+%2 = type i32(i32(i32)*)
 
   %thisfuncty = type i32 (i32) *
 

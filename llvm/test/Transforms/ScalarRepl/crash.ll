@@ -188,7 +188,7 @@ entry:
 
 
 ; rdar://6808691 - ZeroLengthMemSet
-        type <{ i32, i16, i8, i8, i64, i64, i16, [0 x i16] }>           
+        %0 = type <{ i32, i16, i8, i8, i64, i64, i16, [0 x i16] }>           
 
 define i32 @test9() {
 entry:

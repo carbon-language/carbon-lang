@@ -1,10 +1,10 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mcpu=cortex-a8 -relocation-model=pic -disable-fp-elim
 
-	type { %struct.GAP }		; type %0
-	type { i16, i8, i8 }		; type %1
-	type { [2 x i32], [2 x i32] }		; type %2
-	type { %struct.rec* }		; type %3
-	type { i8, i8, i16, i8, i8, i8, i8 }		; type %4
+	%0 = type { %struct.GAP }		; type %0
+	%1 = type { i16, i8, i8 }		; type %1
+	%2 = type { [2 x i32], [2 x i32] }		; type %2
+	%3 = type { %struct.rec* }		; type %3
+	%4 = type { i8, i8, i16, i8, i8, i8, i8 }		; type %4
 	%struct.FILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
 	%struct.FILE_POS = type { i8, i8, i16, i32 }
 	%struct.FIRST_UNION = type { %struct.FILE_POS }

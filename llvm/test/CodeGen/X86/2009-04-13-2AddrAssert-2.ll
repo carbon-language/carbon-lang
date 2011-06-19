@@ -2,7 +2,7 @@
 ; rdar://6781755
 ; PR3934
 
-	type { i32, i32 }		; type %0
+	%0 = type { i32, i32 }		; type %0
 
 define void @bn_sqr_comba8(i32* nocapture %r, i32* %a) nounwind {
 entry:

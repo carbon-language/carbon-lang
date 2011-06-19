@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llvm-dis -o /dev/null
-	type { %object.ModuleInfo.__vtbl*, i8*, %"byte[]", %1, %"ClassInfo[]", i32, void ()*, void ()*, void ()*, i8*, void ()* }		; type %0
-	type { i64, %object.ModuleInfo* }		; type %1
-	type { i32, void ()* }		; type %2
+	%0 = type { %object.ModuleInfo.__vtbl*, i8*, %"byte[]", %1, %"ClassInfo[]", i32, void ()*, void ()*, void ()*, i8*, void ()* }		; type %0
+	%1 = type { i64, %object.ModuleInfo* }		; type %1
+	%2 = type { i32, void ()* }		; type %2
 	%"ClassInfo[]" = type { i64, %object.ClassInfo** }
 	%"Interface[]" = type { i64, %object.Interface* }
 	%"ModuleInfo[]" = type { i64, %object.ModuleInfo** }

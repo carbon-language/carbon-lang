@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=bfin -verify-machineinstrs > %t
 
-	type { i24, i1 }		; type %0
+	%0 = type { i24, i1 }		; type %0
 
 define i1 @func2(i24 zeroext %v1, i24 zeroext %v2) nounwind {
 entry:

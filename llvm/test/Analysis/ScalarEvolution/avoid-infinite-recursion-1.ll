@@ -7,32 +7,32 @@ target triple = "x86_64-unknown-freebsd8.0"
 module asm ".ident\09\22$FreeBSD: head/sys/kern/vfs_subr.c 195285 2009-07-02 14:19:33Z jamie $\22"
 module asm ".section set_pcpu, \22aw\22, @progbits"
 module asm ".previous"
-	type <{ [40 x i8] }>		; type %0
-	type <{ %struct.vm_object*, %struct.vm_object** }>		; type %1
-	type <{ %struct.vm_object* }>		; type %2
-	type <{ %struct.vm_page*, %struct.vm_page** }>		; type %3
-	type <{ %struct.pv_entry*, %struct.pv_entry** }>		; type %4
-	type <{ %struct.vm_reserv* }>		; type %5
-	type <{ %struct.bufobj*, %struct.bufobj** }>		; type %6
-	type <{ %struct.proc*, %struct.proc** }>		; type %7
-	type <{ %struct.thread*, %struct.thread** }>		; type %8
-	type <{ %struct.prison*, %struct.prison** }>		; type %9
-	type <{ %struct.prison* }>		; type %10
-	type <{ %struct.task* }>		; type %11
-	type <{ %struct.osd*, %struct.osd** }>		; type %12
-	type <{ %struct.proc* }>		; type %13
-	type <{ %struct.ksiginfo*, %struct.ksiginfo** }>		; type %14
-	type <{ %struct.pv_chunk*, %struct.pv_chunk** }>		; type %15
-	type <{ %struct.pgrp*, %struct.pgrp** }>		; type %16
-	type <{ %struct.knote*, %struct.knote** }>		; type %17
-	type <{ %struct.ktr_request*, %struct.ktr_request** }>		; type %18
-	type <{ %struct.mqueue_notifier* }>		; type %19
-	type <{ %struct.turnstile* }>		; type %20
-	type <{ %struct.namecache* }>		; type %21
-	type <{ %struct.namecache*, %struct.namecache** }>		; type %22
-	type <{ %struct.lockf*, %struct.lockf** }>		; type %23
-	type <{ %struct.lockf_entry*, %struct.lockf_entry** }>		; type %24
-	type <{ %struct.lockf_edge*, %struct.lockf_edge** }>		; type %25
+	%0 = type <{ [40 x i8] }>		; type %0
+	%1 = type <{ %struct.vm_object*, %struct.vm_object** }>		; type %1
+	%2 = type <{ %struct.vm_object* }>		; type %2
+	%3 = type <{ %struct.vm_page*, %struct.vm_page** }>		; type %3
+	%4 = type <{ %struct.pv_entry*, %struct.pv_entry** }>		; type %4
+	%5 = type <{ %struct.vm_reserv* }>		; type %5
+	%6 = type <{ %struct.bufobj*, %struct.bufobj** }>		; type %6
+	%7 = type <{ %struct.proc*, %struct.proc** }>		; type %7
+	%8 = type <{ %struct.thread*, %struct.thread** }>		; type %8
+	%9 = type <{ %struct.prison*, %struct.prison** }>		; type %9
+	%10 = type <{ %struct.prison* }>		; type %10
+	%11 = type <{ %struct.task* }>		; type %11
+	%12 = type <{ %struct.osd*, %struct.osd** }>		; type %12
+	%13 = type <{ %struct.proc* }>		; type %13
+	%14 = type <{ %struct.ksiginfo*, %struct.ksiginfo** }>		; type %14
+	%15 = type <{ %struct.pv_chunk*, %struct.pv_chunk** }>		; type %15
+	%16 = type <{ %struct.pgrp*, %struct.pgrp** }>		; type %16
+	%17 = type <{ %struct.knote*, %struct.knote** }>		; type %17
+	%18 = type <{ %struct.ktr_request*, %struct.ktr_request** }>		; type %18
+	%19 = type <{ %struct.mqueue_notifier* }>		; type %19
+	%20 = type <{ %struct.turnstile* }>		; type %20
+	%21 = type <{ %struct.namecache* }>		; type %21
+	%22 = type <{ %struct.namecache*, %struct.namecache** }>		; type %22
+	%23 = type <{ %struct.lockf*, %struct.lockf** }>		; type %23
+	%24 = type <{ %struct.lockf_entry*, %struct.lockf_entry** }>		; type %24
+	%25 = type <{ %struct.lockf_edge*, %struct.lockf_edge** }>		; type %25
 	%struct.__siginfo = type <{ i32, i32, i32, i32, i32, i32, i8*, %union.sigval, %0 }>
 	%struct.__sigset = type <{ [4 x i32] }>
 	%struct.acl = type <{ i32, i32, [4 x i32], [254 x %struct.acl_entry] }>

@@ -1,9 +1,9 @@
 ; RUN: llc < %s -march=x86
 
-	type { %struct.GAP }		; type %0
-	type { i16, i8, i8 }		; type %1
-	type { [2 x i32], [2 x i32] }		; type %2
-	type { %struct.rec* }		; type %3
+	%0 = type { %struct.GAP }		; type %0
+	%1 = type { i16, i8, i8 }		; type %1
+	%2 = type { [2 x i32], [2 x i32] }		; type %2
+	%3 = type { %struct.rec* }		; type %3
 	%struct.FILE_POS = type { i8, i8, i16, i32 }
 	%struct.FIRST_UNION = type { %struct.FILE_POS }
 	%struct.FOURTH_UNION = type { %struct.STYLE }

@@ -4,7 +4,7 @@
 ; RUN:   grep 7 %t | count 1
 ; RUN:   grep 9 %t | count 1
 
-	type { i32, i32 }		; type %0
+	%0 = type { i32, i32 }		; type %0
 @a = weak constant i32 undef		; <i32*> [#uses=1]
 @b = weak constant i32 5		; <i32*> [#uses=1]
 @c = weak constant %0 { i32 7, i32 9 }		; <%0*> [#uses=1]
