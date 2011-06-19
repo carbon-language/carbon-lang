@@ -119,7 +119,7 @@ public:
   /// illegal to call this method if the global is external, because we cannot
   /// tell what the value is initialized to!
   ///
-  inline /*const FIXME*/ Constant *getInitializer() const {
+  inline const Constant *getInitializer() const {
     assert(hasInitializer() && "GV doesn't have initializer!");
     return static_cast<Constant*>(Op<0>().get());
   }

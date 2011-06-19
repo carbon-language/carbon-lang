@@ -346,7 +346,7 @@ void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
 
     if (gv->hasInitializer())
     {
-      Constant *C = gv->getInitializer();  
+      const Constant *C = gv->getInitializer();  
       if (const ConstantArray *CA = dyn_cast<ConstantArray>(C))
       {
         decl += " = {";

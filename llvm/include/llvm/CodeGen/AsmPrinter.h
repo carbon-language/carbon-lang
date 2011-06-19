@@ -465,8 +465,8 @@ namespace llvm {
     void EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                             const MachineBasicBlock *MBB,
                             unsigned uid) const;
-    void EmitLLVMUsedList(Constant *List);
-    void EmitXXStructorList(Constant *List);
+    void EmitLLVMUsedList(const Constant *List);
+    void EmitXXStructorList(const Constant *List);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }

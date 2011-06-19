@@ -232,7 +232,7 @@ namespace llvm {
     void EmitGlobalDataRelocation(const GlobalValue *GV, unsigned Size, 
                                   ELFSection &GblS, int64_t Offset = 0);
     bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
-    void EmitXXStructorList(Constant *List, ELFSection &Xtor);
+    void EmitXXStructorList(const Constant *List, ELFSection &Xtor);
     void EmitRelocations();
     void EmitRelocation(BinaryObject &RelSec, ELFRelocation &Rel, bool HasRelA);
     void EmitSectionHeader(BinaryObject &SHdrTab, const ELFSection &SHdr);

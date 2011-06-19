@@ -66,7 +66,7 @@ TargetLoweringObjectFile::~TargetLoweringObjectFile() {
 }
 
 static bool isSuitableForBSS(const GlobalVariable *GV) {
-  Constant *C = GV->getInitializer();
+  const Constant *C = GV->getInitializer();
 
   // Must have zero initializer.
   if (!C->isNullValue())
@@ -168,7 +168,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
     return SectionKind::getBSS();
   }
 
-  Constant *C = GVar->getInitializer();
+  const Constant *C = GVar->getInitializer();
 
   // If the global is marked constant, we can put it into a mergable section,
   // a mergable string section, or general .data if it contains relocations.

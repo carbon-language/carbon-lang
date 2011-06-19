@@ -114,7 +114,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   
   MCSymbol *GVSym = Mang->getSymbol(GV);
-  Constant *C = GV->getInitializer();
+  const Constant *C = GV->getInitializer();
   unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
   
   // Mark the start of the global

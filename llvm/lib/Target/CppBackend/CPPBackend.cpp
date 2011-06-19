@@ -989,12 +989,12 @@ void CppWriter::printVariableUses(const GlobalVariable *GV) {
   nl(Out);
   printType(GV->getType());
   if (GV->hasInitializer()) {
-    Constant *Init = GV->getInitializer();
+    const Constant *Init = GV->getInitializer();
     printType(Init->getType());
-    if (Function *F = dyn_cast<Function>(Init)) {
+    if (const Function *F = dyn_cast<Function>(Init)) {
       nl(Out)<< "/ Function Declarations"; nl(Out);
       printFunctionHead(F);
-    } else if (GlobalVariable* gv = dyn_cast<GlobalVariable>(Init)) {
+    } else if (const GlobalVariable* gv = dyn_cast<GlobalVariable>(Init)) {
       nl(Out) << "// Global Variable Declarations"; nl(Out);
       printVariableHead(gv);
       
