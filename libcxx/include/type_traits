@@ -818,7 +818,7 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_polymorphic
 
 // has_virtual_destructor
 
-#ifdef __has_feature(has_virtual_destructor) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+#if __has_feature(has_virtual_destructor) || (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
 
 template <class _Tp> struct _LIBCPP_VISIBLE has_virtual_destructor
     : public integral_constant<bool, __has_virtual_destructor(_Tp)> {};
@@ -1428,6 +1428,8 @@ public:
                      >::type type;
 };
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
 template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename decay<_Tp>::type
@@ -1435,6 +1437,18 @@ __decay_copy(_Tp&& __t)
 {
     return _STD::forward<_Tp>(__t);
 }
+
+#else
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+typename decay<_Tp>::type
+__decay_copy(const _Tp& __t)
+{
+    return _STD::forward<_Tp>(__t);
+}
+
+#endif
 
 template <class _MP, bool _IsMemberFuctionPtr, bool _IsMemberObjectPtr>
 struct __member_pointer_traits_imp
@@ -2925,7 +2939,7 @@ struct __check_complete<_R _Class::*>
 template <class ..._Args>
 auto
 __invoke(__any, _Args&& ...__args)
-    -> __nat;
+    -> __nat = delete;
 
 // bullets 1 and 2
 
