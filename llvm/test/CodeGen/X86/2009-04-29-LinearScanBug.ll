@@ -1,33 +1,33 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin10
 ; rdar://6837009
 
-	type { %struct.pf_state*, %struct.pf_state*, %struct.pf_state*, i32 }		; type %0
-	type { %2 }		; type %1
-	type { %struct.pf_addr, %struct.pf_addr }		; type %2
-	type { %struct.in6_addr }		; type %3
-	type { [4 x i32] }		; type %4
-	type { %struct.pfi_dynaddr*, [4 x i8] }		; type %5
-	type { %struct.pfi_dynaddr*, %struct.pfi_dynaddr** }		; type %6
-	type { %struct.pfr_ktable*, %struct.pfr_ktable*, %struct.pfr_ktable*, i32 }		; type %7
-	type { %struct.pfr_ktable* }		; type %8
-	type { i8* }		; type %9
-	type { %11 }		; type %10
-	type { i8*, i8*, %struct.radix_node* }		; type %11
-	type { [2 x %struct.pf_rulequeue], %13, %13 }		; type %12
-	type { %struct.pf_rulequeue*, %struct.pf_rule**, i32, i32, i32 }		; type %13
-	type { %struct.pf_anchor*, %struct.pf_anchor*, %struct.pf_anchor*, i32 }		; type %14
-	type { %struct.pfi_kif*, %struct.pfi_kif*, %struct.pfi_kif*, i32 }		; type %15
-	type { %struct.ifnet*, %struct.ifnet** }		; type %16
-	type { %18 }		; type %17
-	type { %struct.pkthdr, %19 }		; type %18
-	type { %struct.m_ext, [176 x i8] }		; type %19
-	type { %struct.ifmultiaddr*, %struct.ifmultiaddr** }		; type %20
-	type { i32, %22 }		; type %21
-	type { i8*, [4 x i8] }		; type %22
-	type { %struct.tcphdr* }		; type %23
-	type { %struct.pf_ike_state }		; type %24
-	type { %struct.pf_state_key*, %struct.pf_state_key*, %struct.pf_state_key*, i32 }		; type %25
-	type { %struct.pf_src_node*, %struct.pf_src_node*, %struct.pf_src_node*, i32 }		; type %26
+	%0 = type { %struct.pf_state*, %struct.pf_state*, %struct.pf_state*, i32 }
+	%1 = type { %2 }
+	%2 = type { %struct.pf_addr, %struct.pf_addr }
+	%3 = type { %struct.in6_addr }
+	%4 = type { [4 x i32] }
+	%5 = type { %struct.pfi_dynaddr*, [4 x i8] }
+	%6 = type { %struct.pfi_dynaddr*, %struct.pfi_dynaddr** }
+	%7 = type { %struct.pfr_ktable*, %struct.pfr_ktable*, %struct.pfr_ktable*, i32 }
+	%8 = type { %struct.pfr_ktable* }
+	%9 = type { i8* }
+	%10 = type { %11 }
+	%11 = type { i8*, i8*, %struct.radix_node* }
+	%12 = type { [2 x %struct.pf_rulequeue], %13, %13 }
+	%13 = type { %struct.pf_rulequeue*, %struct.pf_rule**, i32, i32, i32 }
+	%14 = type { %struct.pf_anchor*, %struct.pf_anchor*, %struct.pf_anchor*, i32 }
+	%15 = type { %struct.pfi_kif*, %struct.pfi_kif*, %struct.pfi_kif*, i32 }
+	%16 = type { %struct.ifnet*, %struct.ifnet** }
+	%17 = type { %18 }
+	%18 = type { %struct.pkthdr, %19 }
+	%19 = type { %struct.m_ext, [176 x i8] }
+	%20 = type { %struct.ifmultiaddr*, %struct.ifmultiaddr** }
+	%21 = type { i32, %22 }
+	%22 = type { i8*, [4 x i8] }
+	%23 = type { %struct.tcphdr* }
+	%24 = type { %struct.pf_ike_state }
+	%25 = type { %struct.pf_state_key*, %struct.pf_state_key*, %struct.pf_state_key*, i32 }
+	%26 = type { %struct.pf_src_node*, %struct.pf_src_node*, %struct.pf_src_node*, i32 }
 	%struct.anon = type { %struct.pf_state*, %struct.pf_state** }
 	%struct.au_mask_t = type { i32, i32 }
 	%struct.bpf_if = type opaque
