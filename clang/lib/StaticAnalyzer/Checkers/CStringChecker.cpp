@@ -535,16 +535,15 @@ const GRState *CStringChecker::checkAdditionOverflow(CheckerContext &C,
         BT_AdditionOverflow.reset(new BuiltinBug("API",
           "Sum of expressions causes overflow"));
 
-      llvm::SmallString<120> buf;
-      llvm::raw_svector_ostream os(buf);
       // This isn't a great error message, but this should never occur in real
       // code anyway -- you'd have to create a buffer longer than a size_t can
       // represent, which is sort of a contradiction.
-      os << "This expression will create a string whose length is too big to "
-         << "be represented as a size_t";
+      const char *warning =
+        "This expression will create a string whose length is too big to "
+        "be represented as a size_t";
 
       // Generate a report for this bug.
-      BugReport *report = new BugReport(*BT_AdditionOverflow, os.str(), N);
+      BugReport *report = new BugReport(*BT_AdditionOverflow, warning, N);
       C.EmitReport(report);        
 
       return NULL;
