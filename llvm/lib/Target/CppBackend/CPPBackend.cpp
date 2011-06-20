@@ -1356,7 +1356,7 @@ void CppWriter::printInstruction(const Instruction *I,
     for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
       Out << iName << "->addIncoming("
           << opNames[PHINode::getOperandNumForIncomingValue(i)] << ", "
-          << opNames[PHINode::getOperandNumForIncomingBlock(i)] << ");";
+          << getOpName(phi->getIncomingBlock(i)) << ");";
       nl(Out);
     }
     break;

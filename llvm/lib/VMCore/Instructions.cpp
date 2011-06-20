@@ -87,11 +87,8 @@ PHINode::PHINode(const PHINode &PN)
   : Instruction(PN.getType(), Instruction::PHI,
                 allocHungoffUses(PN.getNumOperands()), PN.getNumOperands()),
     ReservedSpace(PN.getNumOperands()) {
-  Use *OL = OperandList;
-  for (unsigned i = 0, e = PN.getNumOperands(); i != e; i+=2) {
-    OL[i] = PN.getOperand(i);
-    OL[i+1] = PN.getOperand(i+1);
-  }
+  std::copy(PN.op_begin(), PN.op_end(), op_begin());
+  std::copy(PN.block_begin(), PN.block_end(), block_begin());
   SubclassOptionalData = PN.SubclassOptionalData;
 }
 
@@ -99,31 +96,37 @@ PHINode::~PHINode() {
   dropHungoffUses();
 }
 
+Use *PHINode::allocHungoffUses(unsigned N) const {
+  // Allocate the array of Uses of the incoming values, followed by a pointer
+  // (with bottom bit set) to the User, followed by the array of pointers to
+  // the incoming basic blocks.
+  size_t size = N * sizeof(Use) + sizeof(Use::UserRef)
+    + N * sizeof(BasicBlock*);
+  Use *Begin = static_cast<Use*>(::operator new(size));
+  Use *End = Begin + N;
+  (void) new(End) Use::UserRef(const_cast<PHINode*>(this), 1);
+  return Use::initTags(Begin, End);
+}
+
 // removeIncomingValue - Remove an incoming value.  This is useful if a
 // predecessor basic block is deleted.
 Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
-  unsigned NumOps = getNumOperands();
-  Use *OL = OperandList;
-  assert(Idx*2 < NumOps && "BB not in PHI node!");
-  Value *Removed = OL[Idx*2];
+  Value *Removed = getIncomingValue(Idx);
 
   // Move everything after this operand down.
   //
   // FIXME: we could just swap with the end of the list, then erase.  However,
-  // client might not expect this to happen.  The code as it is thrashes the
+  // clients might not expect this to happen.  The code as it is thrashes the
   // use/def lists, which is kinda lame.
-  for (unsigned i = (Idx+1)*2; i != NumOps; i += 2) {
-    OL[i-2] = OL[i];
-    OL[i-2+1] = OL[i+1];
-  }
+  std::copy(op_begin() + Idx + 1, op_end(), op_begin() + Idx);
+  std::copy(block_begin() + Idx + 1, block_end(), block_begin() + Idx);
 
   // Nuke the last value.
-  OL[NumOps-2].set(0);
-  OL[NumOps-2+1].set(0);
-  NumOperands = NumOps-2;
+  Op<-1>().set(0);
+  --NumOperands;
 
   // If the PHI node is dead, because it has zero entries, nuke it now.
-  if (NumOps == 2 && DeletePHIIfEmpty) {
+  if (getNumOperands() == 0 && DeletePHIIfEmpty) {
     // If anyone is using this PHI, make them use a dummy value instead...
     replaceAllUsesWith(UndefValue::get(getType()));
     eraseFromParent();
@@ -137,15 +140,18 @@ Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
 ///
 void PHINode::growOperands() {
   unsigned e = getNumOperands();
-  // Multiply by 1.5 and round down so the result is still even.
-  unsigned NumOps = e + e / 4 * 2;
+  unsigned NumOps = e + e / 2;
   if (NumOps < 4) NumOps = 4;      // 4 op PHI nodes are VERY common.
 
+  Use *OldOps = op_begin();
+  BasicBlock **OldBlocks = block_begin();
+
   ReservedSpace = NumOps;
-  Use *OldOps = OperandList;
-  Use *NewOps = allocHungoffUses(NumOps);
-  std::copy(OldOps, OldOps + e, NewOps);
-  OperandList = NewOps;
+  OperandList = allocHungoffUses(ReservedSpace);
+
+  std::copy(OldOps, OldOps + e, op_begin());
+  std::copy(OldBlocks, OldBlocks + e, block_begin());
+
   Use::zap(OldOps, OldOps + e, true);
 }
 

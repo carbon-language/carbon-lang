@@ -427,10 +427,6 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   BasicBlock *PredBB = DestBB->getSinglePredecessor();
   assert(PredBB && "Block doesn't have a single predecessor!");
   
-  // Splice all the instructions from PredBB to DestBB.
-  PredBB->getTerminator()->eraseFromParent();
-  DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
-
   // Zap anything that took the address of DestBB.  Not doing this will give the
   // address an invalid value.
   if (DestBB->hasAddressTaken()) {
@@ -445,6 +441,10 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   // Anything that branched to PredBB now branches to DestBB.
   PredBB->replaceAllUsesWith(DestBB);
   
+  // Splice all the instructions from PredBB to DestBB.
+  PredBB->getTerminator()->eraseFromParent();
+  DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
+
   if (P) {
     DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>();
     if (DT) {
@@ -660,10 +660,15 @@ bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
     // them, which helps expose duplicates, but we have to check all the
     // operands to be safe in case instcombine hasn't run.
     uintptr_t Hash = 0;
+    // This hash algorithm is quite weak as hash functions go, but it seems
+    // to do a good enough job for this particular purpose, and is very quick.
     for (User::op_iterator I = PN->op_begin(), E = PN->op_end(); I != E; ++I) {
-      // This hash algorithm is quite weak as hash functions go, but it seems
-      // to do a good enough job for this particular purpose, and is very quick.
       Hash ^= reinterpret_cast<uintptr_t>(static_cast<Value *>(*I));
+      Hash = (Hash << 7) | (Hash >> (sizeof(uintptr_t) * CHAR_BIT - 7));
+    }
+    for (PHINode::block_iterator I = PN->block_begin(), E = PN->block_end();
+         I != E; ++I) {
+      Hash ^= reinterpret_cast<uintptr_t>(static_cast<BasicBlock *>(*I));
       Hash = (Hash << 7) | (Hash >> (sizeof(uintptr_t) * CHAR_BIT - 7));
     }
     // Avoid colliding with the DenseMap sentinels ~0 and ~0-1.

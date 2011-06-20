@@ -308,3 +308,19 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const Twine &BBName) {
   return New;
 }
 
+void BasicBlock::replaceSuccessorsPhiUsesWith(BasicBlock *New) {
+  TerminatorInst *TI = getTerminator();
+  if (!TI)
+    // Cope with being called on a BasicBlock that doesn't have a terminator
+    // yet. Clang's CodeGenFunction::EmitReturnBlock() likes to do this.
+    return;
+  for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
+    BasicBlock *Succ = TI->getSuccessor(i);
+    for (iterator II = Succ->begin(); PHINode *PN = dyn_cast<PHINode>(II);
+         ++II) {
+      int i;
+      while ((i = PN->getBasicBlockIndex(this)) >= 0)
+        PN->setIncomingBlock(i, New);
+    }
+  }
+}

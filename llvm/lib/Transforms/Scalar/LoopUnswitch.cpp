@@ -1021,16 +1021,16 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
         while (PHINode *PN = dyn_cast<PHINode>(Succ->begin()))
           ReplaceUsesOfWith(PN, PN->getIncomingValue(0), Worklist, L, LPM);
         
+        // If Succ has any successors with PHI nodes, update them to have
+        // entries coming from Pred instead of Succ.
+        Succ->replaceAllUsesWith(Pred);
+        
         // Move all of the successor contents from Succ to Pred.
         Pred->getInstList().splice(BI, Succ->getInstList(), Succ->begin(),
                                    Succ->end());
         LPM->deleteSimpleAnalysisValue(BI, L);
         BI->eraseFromParent();
         RemoveFromWorklist(BI, Worklist);
-        
-        // If Succ has any successors with PHI nodes, update them to have
-        // entries coming from Pred instead of Succ.
-        Succ->replaceAllUsesWith(Pred);
         
         // Remove Succ from the loop tree.
         LI->removeBlock(Succ);
