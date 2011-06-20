@@ -200,7 +200,6 @@ private:
 
         ~LaunchArgs();
 
-        ProcessMonitor *m_monitor;      // The monitor performing the launch.
         lldb_private::Module *m_module; // The executable image to launch.
         char const **m_argv;            // Process arguments.
         char const **m_envp;            // Process environment.
