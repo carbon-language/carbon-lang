@@ -74,8 +74,8 @@ $(RecursiveTargets)::
 	fi
 endif
 
-#test::
-#	@ $(MAKE) -C test
+test::
+	@ $(MAKE) -C test
 
 #report::
 #	@ $(MAKE) -C test report
