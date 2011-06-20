@@ -55,16 +55,16 @@ void strlen_constant2(char x) {
 }
 
 size_t strlen_null() {
-  return strlen(0); // expected-warning{{Null pointer argument in call to byte string function}}
+  return strlen(0); // expected-warning{{Null pointer argument in call to string length function}}
 }
 
 size_t strlen_fn() {
-  return strlen((char*)&strlen_fn); // expected-warning{{Argument to byte string function is the address of the function 'strlen_fn', which is not a null-terminated string}}
+  return strlen((char*)&strlen_fn); // expected-warning{{Argument to string length function is the address of the function 'strlen_fn', which is not a null-terminated string}}
 }
 
 size_t strlen_nonloc() {
 label:
-  return strlen((char*)&&label); // expected-warning{{Argument to byte string function is the address of the label 'label', which is not a null-terminated string}}
+  return strlen((char*)&&label); // expected-warning{{Argument to string length function is the address of the label 'label', which is not a null-terminated string}}
 }
 
 void strlen_subregion() {
@@ -187,16 +187,16 @@ void strnlen_constant6(char x) {
 }
 
 size_t strnlen_null() {
-  return strnlen(0, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+  return strnlen(0, 3); // expected-warning{{Null pointer argument in call to string length function}}
 }
 
 size_t strnlen_fn() {
-  return strnlen((char*)&strlen_fn, 3); // expected-warning{{Argument to byte string function is the address of the function 'strlen_fn', which is not a null-terminated string}}
+  return strnlen((char*)&strlen_fn, 3); // expected-warning{{Argument to string length function is the address of the function 'strlen_fn', which is not a null-terminated string}}
 }
 
 size_t strnlen_nonloc() {
 label:
-  return strnlen((char*)&&label, 3); // expected-warning{{Argument to byte string function is the address of the label 'label', which is not a null-terminated string}}
+  return strnlen((char*)&&label, 3); // expected-warning{{Argument to string length function is the address of the label 'label', which is not a null-terminated string}}
 }
 
 void strnlen_zero() {
@@ -274,15 +274,15 @@ char *strcpy(char *restrict s1, const char *restrict s2);
 
 
 void strcpy_null_dst(char *x) {
-  strcpy(NULL, x); // expected-warning{{Null pointer argument in call to byte string function}}
+  strcpy(NULL, x); // expected-warning{{Null pointer argument in call to string copy function}}
 }
 
 void strcpy_null_src(char *x) {
-  strcpy(x, NULL); // expected-warning{{Null pointer argument in call to byte string function}}
+  strcpy(x, NULL); // expected-warning{{Null pointer argument in call to string copy function}}
 }
 
 void strcpy_fn(char *x) {
-  strcpy(x, (char*)&strcpy_fn); // expected-warning{{Argument to byte string function is the address of the function 'strcpy_fn', which is not a null-terminated string}}
+  strcpy(x, (char*)&strcpy_fn); // expected-warning{{Argument to string copy function is the address of the function 'strcpy_fn', which is not a null-terminated string}}
 }
 
 void strcpy_effects(char *x, char *y) {
@@ -301,7 +301,7 @@ void strcpy_effects(char *x, char *y) {
 void strcpy_overflow(char *y) {
   char x[4];
   if (strlen(y) == 4)
-    strcpy(x, y); // expected-warning{{Byte string function overflows destination buffer}}
+    strcpy(x, y); // expected-warning{{String copy function overflows destination buffer}}
 }
 
 void strcpy_no_overflow(char *y) {
@@ -345,7 +345,7 @@ void stpcpy_effect(char *x, char *y) {
 void stpcpy_overflow(char *y) {
   char x[4];
   if (strlen(y) == 4)
-    stpcpy(x, y); // expected-warning{{Byte string function overflows destination buffer}}
+    stpcpy(x, y); // expected-warning{{String copy function overflows destination buffer}}
 }
 
 void stpcpy_no_overflow(char *y) {
@@ -374,15 +374,15 @@ char *strcat(char *restrict s1, const char *restrict s2);
 
 
 void strcat_null_dst(char *x) {
-  strcat(NULL, x); // expected-warning{{Null pointer argument in call to byte string function}}
+  strcat(NULL, x); // expected-warning{{Null pointer argument in call to string copy function}}
 }
 
 void strcat_null_src(char *x) {
-  strcat(x, NULL); // expected-warning{{Null pointer argument in call to byte string function}}
+  strcat(x, NULL); // expected-warning{{Null pointer argument in call to string copy function}}
 }
 
 void strcat_fn(char *x) {
-  strcat(x, (char*)&strcat_fn); // expected-warning{{Argument to byte string function is the address of the function 'strcat_fn', which is not a null-terminated string}}
+  strcat(x, (char*)&strcat_fn); // expected-warning{{Argument to string copy function is the address of the function 'strcat_fn', which is not a null-terminated string}}
 }
 
 void strcat_effects(char *y) {
@@ -403,19 +403,19 @@ void strcat_effects(char *y) {
 void strcat_overflow_0(char *y) {
   char x[4] = "12";
   if (strlen(y) == 4)
-    strcat(x, y); // expected-warning{{Byte string function overflows destination buffer}}
+    strcat(x, y); // expected-warning{{String copy function overflows destination buffer}}
 }
 
 void strcat_overflow_1(char *y) {
   char x[4] = "12";
   if (strlen(y) == 3)
-    strcat(x, y); // expected-warning{{Byte string function overflows destination buffer}}
+    strcat(x, y); // expected-warning{{String copy function overflows destination buffer}}
 }
 
 void strcat_overflow_2(char *y) {
   char x[4] = "12";
   if (strlen(y) == 2)
-    strcat(x, y); // expected-warning{{Byte string function overflows destination buffer}}
+    strcat(x, y); // expected-warning{{String copy function overflows destination buffer}}
 }
 
 void strcat_no_overflow(char *y) {
@@ -476,15 +476,15 @@ char *strncat(char *restrict s1, const char *restrict s2, size_t n);
 
 
 void strncat_null_dst(char *x) {
-  strncat(NULL, x, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+  strncat(NULL, x, 4); // expected-warning{{Null pointer argument in call to string copy function}}
 }
 
 void strncat_null_src(char *x) {
-  strncat(x, NULL, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+  strncat(x, NULL, 4); // expected-warning{{Null pointer argument in call to string copy function}}
 }
 
 void strncat_fn(char *x) {
-  strncat(x, (char*)&strncat_fn, 4); // expected-warning{{Argument to byte string function is the address of the function 'strncat_fn', which is not a null-terminated string}}
+  strncat(x, (char*)&strncat_fn, 4); // expected-warning{{Argument to string copy function is the address of the function 'strncat_fn', which is not a null-terminated string}}
 }
 
 void strncat_effects(char *y) {
@@ -505,25 +505,25 @@ void strncat_effects(char *y) {
 void strncat_overflow_0(char *y) {
   char x[4] = "12";
   if (strlen(y) == 4)
-    strncat(x, y, strlen(y)); // expected-warning{{Byte string function overflows destination buffer}}
+    strncat(x, y, strlen(y)); // expected-warning{{String copy function overflows destination buffer}}
 }
 
 void strncat_overflow_1(char *y) {
   char x[4] = "12";
   if (strlen(y) == 3)
-    strncat(x, y, strlen(y)); // expected-warning{{Byte string function overflows destination buffer}}
+    strncat(x, y, strlen(y)); // expected-warning{{String copy function overflows destination buffer}}
 }
 
 void strncat_overflow_2(char *y) {
   char x[4] = "12";
   if (strlen(y) == 2)
-    strncat(x, y, strlen(y)); // expected-warning{{Byte string function overflows destination buffer}}
+    strncat(x, y, strlen(y)); // expected-warning{{String copy function overflows destination buffer}}
 }
 
 void strncat_overflow_3(char *y) {
   char x[4] = "12";
   if (strlen(y) == 4)
-    strncat(x, y, 2); // expected-warning{{Byte string function overflows destination buffer}}
+    strncat(x, y, 2); // expected-warning{{String copy function overflows destination buffer}}
 }
 void strncat_no_overflow_1(char *y) {
   char x[5] = "12";
@@ -585,13 +585,13 @@ void strcmp_2() {
 void strcmp_null_0() {
   char *x = NULL;
   char *y = "123";
-  strcmp(x, y); // expected-warning{{Null pointer argument in call to byte string function}}
+  strcmp(x, y); // expected-warning{{Null pointer argument in call to string comparison function}}
 }
 
 void strcmp_null_1() {
   char *x = "123";
   char *y = NULL;
-  strcmp(x, y); // expected-warning{{Null pointer argument in call to byte string function}}
+  strcmp(x, y); // expected-warning{{Null pointer argument in call to string comparison function}}
 }
 
 void strcmp_diff_length_0() {
@@ -680,13 +680,13 @@ void strncmp_2() {
 void strncmp_null_0() {
   char *x = NULL;
   char *y = "123";
-  strncmp(x, y, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+  strncmp(x, y, 3); // expected-warning{{Null pointer argument in call to string comparison function}}
 }
 
 void strncmp_null_1() {
   char *x = "123";
   char *y = NULL;
-  strncmp(x, y, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+  strncmp(x, y, 3); // expected-warning{{Null pointer argument in call to string comparison function}}
 }
 
 void strncmp_diff_length_0() {
@@ -791,13 +791,13 @@ void strcasecmp_2() {
 void strcasecmp_null_0() {
   char *x = NULL;
   char *y = "123";
-  strcasecmp(x, y); // expected-warning{{Null pointer argument in call to byte string function}}
+  strcasecmp(x, y); // expected-warning{{Null pointer argument in call to string comparison function}}
 }
 
 void strcasecmp_null_1() {
   char *x = "123";
   char *y = NULL;
-  strcasecmp(x, y); // expected-warning{{Null pointer argument in call to byte string function}}
+  strcasecmp(x, y); // expected-warning{{Null pointer argument in call to string comparison function}}
 }
 
 void strcasecmp_diff_length_0() {
@@ -881,13 +881,13 @@ void strncasecmp_2() {
 void strncasecmp_null_0() {
   char *x = NULL;
   char *y = "123";
-  strncasecmp(x, y, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+  strncasecmp(x, y, 3); // expected-warning{{Null pointer argument in call to string comparison function}}
 }
 
 void strncasecmp_null_1() {
   char *x = "123";
   char *y = NULL;
-  strncasecmp(x, y, 3); // expected-warning{{Null pointer argument in call to byte string function}}
+  strncasecmp(x, y, 3); // expected-warning{{Null pointer argument in call to string comparison function}}
 }
 
 void strncasecmp_diff_length_0() {

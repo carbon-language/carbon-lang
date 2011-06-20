@@ -64,14 +64,14 @@ void memcpy1 () {
   char src[] = {1, 2, 3, 4};
   char dst[10];
 
-  memcpy(dst, src, 5); // expected-warning{{Byte string function accesses out-of-bound array element}}
+  memcpy(dst, src, 5); // expected-warning{{Memory copy function accesses out-of-bound array element}}
 }
 
 void memcpy2 () {
   char src[] = {1, 2, 3, 4};
   char dst[1];
 
-  memcpy(dst, src, 4); // expected-warning{{Byte string function overflows destination buffer}}
+  memcpy(dst, src, 4); // expected-warning{{Memory copy function overflows destination buffer}}
 }
 
 void memcpy3 () {
@@ -85,14 +85,14 @@ void memcpy4 () {
   char src[] = {1, 2, 3, 4};
   char dst[10];
 
-  memcpy(dst+2, src+2, 3); // expected-warning{{Byte string function accesses out-of-bound array element}}
+  memcpy(dst+2, src+2, 3); // expected-warning{{Memory copy function accesses out-of-bound array element}}
 }
 
 void memcpy5() {
   char src[] = {1, 2, 3, 4};
   char dst[3];
 
-  memcpy(dst+2, src+2, 2); // expected-warning{{Byte string function overflows destination buffer}}
+  memcpy(dst+2, src+2, 2); // expected-warning{{Memory copy function overflows destination buffer}}
 }
 
 void memcpy6() {
@@ -118,12 +118,12 @@ void memcpy9() {
 
 void memcpy10() {
   char a[4] = {0};
-  memcpy(0, a, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+  memcpy(0, a, 4); // expected-warning{{Null pointer argument in call to memory copy function}}
 }
 
 void memcpy11() {
   char a[4] = {0};
-  memcpy(a, 0, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+  memcpy(a, 0, 4); // expected-warning{{Null pointer argument in call to memory copy function}}
 }
 
 void memcpy12() {
@@ -144,7 +144,7 @@ void memcpy_unknown_size (size_t n) {
 
 void memcpy_unknown_size_warn (size_t n) {
   char a[4];
-  if (memcpy(a, 0, n) != a) // expected-warning{{Null pointer argument in call to byte string function}}
+  if (memcpy(a, 0, n) != a) // expected-warning{{Null pointer argument in call to memory copy function}}
     (void)*(char*)0; // no-warning
 }
 
@@ -186,14 +186,14 @@ void mempcpy1 () {
   char src[] = {1, 2, 3, 4};
   char dst[10];
 
-  mempcpy(dst, src, 5); // expected-warning{{Byte string function accesses out-of-bound array element}}
+  mempcpy(dst, src, 5); // expected-warning{{Memory copy function accesses out-of-bound array element}}
 }
 
 void mempcpy2 () {
   char src[] = {1, 2, 3, 4};
   char dst[1];
 
-  mempcpy(dst, src, 4); // expected-warning{{Byte string function overflows destination buffer}}
+  mempcpy(dst, src, 4); // expected-warning{{Memory copy function overflows destination buffer}}
 }
 
 void mempcpy3 () {
@@ -207,14 +207,14 @@ void mempcpy4 () {
   char src[] = {1, 2, 3, 4};
   char dst[10];
 
-  mempcpy(dst+2, src+2, 3); // expected-warning{{Byte string function accesses out-of-bound array element}}
+  mempcpy(dst+2, src+2, 3); // expected-warning{{Memory copy function accesses out-of-bound array element}}
 }
 
 void mempcpy5() {
   char src[] = {1, 2, 3, 4};
   char dst[3];
 
-  mempcpy(dst+2, src+2, 2); // expected-warning{{Byte string function overflows destination buffer}}
+  mempcpy(dst+2, src+2, 2); // expected-warning{{Memory copy function overflows destination buffer}}
 }
 
 void mempcpy6() {
@@ -240,12 +240,12 @@ void mempcpy9() {
 
 void mempcpy10() {
   char a[4] = {0};
-  mempcpy(0, a, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+  mempcpy(0, a, 4); // expected-warning{{Null pointer argument in call to memory copy function}}
 }
 
 void mempcpy11() {
   char a[4] = {0};
-  mempcpy(a, 0, 4); // expected-warning{{Null pointer argument in call to byte string function}}
+  mempcpy(a, 0, 4); // expected-warning{{Null pointer argument in call to memory copy function}}
 }
 
 void mempcpy12() {
@@ -260,7 +260,7 @@ void mempcpy13() {
 
 void mempcpy_unknown_size_warn (size_t n) {
   char a[4];
-  if (mempcpy(a, 0, n) != a) // expected-warning{{Null pointer argument in call to byte string function}}
+  if (mempcpy(a, 0, n) != a) // expected-warning{{Null pointer argument in call to memory copy function}}
     (void)*(char*)0; // no-warning
 }
 
