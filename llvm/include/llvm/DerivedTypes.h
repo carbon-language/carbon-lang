@@ -232,7 +232,7 @@ public:
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
   ///
-  static StructType *get(LLVMContext &Context, ArrayRef<const Type*> Params,
+  static StructType *get(LLVMContext &Context, ArrayRef<const Type*> Elements,
                          bool isPacked = false);
 
   /// StructType::get - Create an empty structure type.
@@ -256,6 +256,13 @@ public:
   element_iterator element_begin() const { return ContainedTys; }
   element_iterator element_end() const { return &ContainedTys[NumContainedTys];}
 
+  /// isLayoutIdentical - Return true if this is layout identical to the
+  /// specified struct.
+  bool isLayoutIdentical(const StructType *Other) const {
+    return this == Other;
+  }
+  
+  
   // Random access to the elements
   unsigned getNumElements() const { return NumContainedTys; }
   const Type *getElementType(unsigned N) const {
