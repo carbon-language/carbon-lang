@@ -1373,7 +1373,6 @@ public:
   bool isFunctionProtoType() const { return getAs<FunctionProtoType>(); }
   bool isPointerType() const;
   bool isAnyPointerType() const;   // Any C pointer or ObjC object pointer
-  bool isPointerLikeType() const;
   bool isBlockPointerType() const;
   bool isVoidPointerType() const;
   bool isReferenceType() const;
@@ -4517,19 +4516,6 @@ inline bool Type::isPointerType() const {
 inline bool Type::isAnyPointerType() const {
   return isPointerType() || isObjCObjectPointerType();
 }
-
-/// \brief Tests whether the type behaves like a pointer type.
-///
-/// This includes all of the pointer types including block pointers,
-/// member pointers, and ObjC Object pointers.
-///
-/// Note that this is distinct from hasPointerRepresentation.
-///
-/// \returns True for types which behave like pointer types.
-inline bool Type::isPointerLikeType() const {
-  return isAnyPointerType() || isBlockPointerType() || isMemberPointerType();
-}
-
 inline bool Type::isBlockPointerType() const {
   return isa<BlockPointerType>(CanonicalType);
 }
