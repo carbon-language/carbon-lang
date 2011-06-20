@@ -1,5 +1,5 @@
 """
-Test lldb Python API object's default constructor to make sure it is invalid
+Test lldb Python API object's default constructor and make sure it is invalid
 after initial construction.
 
 There are two exceptions to the above general rules, though; the API objects are
