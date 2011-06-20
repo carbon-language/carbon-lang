@@ -520,20 +520,44 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SRL(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   SDValue Res;
+  SDValue InOp = N->getOperand(0);
+  DebugLoc dl = N->getDebugLoc();
 
-  switch (getTypeAction(N->getOperand(0).getValueType())) {
+  switch (getTypeAction(InOp.getValueType())) {
   default: llvm_unreachable("Unknown type action!");
   case TargetLowering::TypeLegal:
   case TargetLowering::TypeExpandInteger:
-    Res = N->getOperand(0);
+    Res = InOp;
     break;
   case TargetLowering::TypePromoteInteger:
-    Res = GetPromotedInteger(N->getOperand(0));
+    Res = GetPromotedInteger(InOp);
     break;
+  case TargetLowering::TypeSplitVector:
+    EVT InVT = InOp.getValueType();
+    assert(InVT.isVector() && "Cannot split scalar types");
+    unsigned NumElts = InVT.getVectorNumElements();
+    assert(NumElts == NVT.getVectorNumElements() &&
+           "Dst and Src must have the same number of elements");
+    EVT EltVT = InVT.getScalarType();
+    assert(isPowerOf2_32(NumElts) &&
+           "Promoted vector type must be a power of two");
+
+    EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), EltVT, NumElts/2);
+    EVT HalfNVT = EVT::getVectorVT(*DAG.getContext(), NVT.getScalarType(),
+                                   NumElts/2);
+
+    SDValue EOp1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, HalfVT, InOp,
+                               DAG.getIntPtrConstant(0));
+    SDValue EOp2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, HalfVT, InOp,
+                               DAG.getIntPtrConstant(NumElts/2));
+    EOp1 = DAG.getNode(ISD::TRUNCATE, dl, HalfNVT, EOp1);
+    EOp2 = DAG.getNode(ISD::TRUNCATE, dl, HalfNVT, EOp2);
+
+    return DAG.getNode(ISD::CONCAT_VECTORS, dl, NVT, EOp1, EOp2);
   }
 
   // Truncate to NVT instead of VT
-  return DAG.getNode(ISD::TRUNCATE, N->getDebugLoc(), NVT, Res);
+  return DAG.getNode(ISD::TRUNCATE, dl, NVT, Res);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_UADDSUBO(SDNode *N, unsigned ResNo) {
