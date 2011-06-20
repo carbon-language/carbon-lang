@@ -826,31 +826,35 @@ defm STs : PTX_ST_ALL<"st.shared", store_shared>;
 // TODO: Do something with st.param if/when it is needed.
 
 // Conversion to pred
-
+// PTX does not directly support converting to a predicate type, so we fake it
+// by performing a greater-than test between the value and zero.  This follows
+// the C convention that any non-zero value is equivalent to 'true'.
 def CVT_pred_u16
-  : InstPTX<(outs RegPred:$d), (ins RegI16:$a), "cvt.pred.u16\t$d, $a",
+  : InstPTX<(outs RegPred:$d), (ins RegI16:$a), "setp.gt.b16\t$d, $a, 0",
             [(set RegPred:$d, (trunc RegI16:$a))]>;
 
 def CVT_pred_u32
-  : InstPTX<(outs RegPred:$d), (ins RegI32:$a), "cvt.pred.u32\t$d, $a",
+  : InstPTX<(outs RegPred:$d), (ins RegI32:$a), "setp.gt.b32\t$d, $a, 0",
             [(set RegPred:$d, (trunc RegI32:$a))]>;
 
 def CVT_pred_u64
-  : InstPTX<(outs RegPred:$d), (ins RegI64:$a), "cvt.pred.u64\t$d, $a",
+  : InstPTX<(outs RegPred:$d), (ins RegI64:$a), "setp.gt.b64\t$d, $a, 0",
             [(set RegPred:$d, (trunc RegI64:$a))]>;
 
 def CVT_pred_f32
-  : InstPTX<(outs RegPred:$d), (ins RegF32:$a), "cvt.rzi.pred.f32\t$d, $a",
+  : InstPTX<(outs RegPred:$d), (ins RegF32:$a), "setp.gt.b32\t$d, $a, 0",
             [(set RegPred:$d, (fp_to_uint RegF32:$a))]>;
 
 def CVT_pred_f64
-  : InstPTX<(outs RegPred:$d), (ins RegF64:$a), "cvt.rzi.pred.f64\t$d, $a",
+  : InstPTX<(outs RegPred:$d), (ins RegF64:$a), "setp.gt.b64\t$d, $a, 0",
             [(set RegPred:$d, (fp_to_uint RegF64:$a))]>;
 
 // Conversion to u16
-
+// PTX does not directly support converting a predicate to a value, so we
+// use a select instruction to select either 0 or 1 (integer or fp) based
+// on the truth value of the predicate.
 def CVT_u16_pred
-  : InstPTX<(outs RegI16:$d), (ins RegPred:$a), "cvt.u16.pred\t$d, $a",
+  : InstPTX<(outs RegI16:$d), (ins RegPred:$a), "selp.u16\t$d, 1, 0, $a",
             [(set RegI16:$d, (zext RegPred:$a))]>;
 
 def CVT_u16_u32
@@ -872,7 +876,7 @@ def CVT_u16_f64
 // Conversion to u32
 
 def CVT_u32_pred
-  : InstPTX<(outs RegI32:$d), (ins RegPred:$a), "cvt.u32.pred\t$d, $a",
+  : InstPTX<(outs RegI32:$d), (ins RegPred:$a), "selp.u32\t$d, 1, 0, $a",
             [(set RegI32:$d, (zext RegPred:$a))]>;
 
 def CVT_u32_u16
@@ -894,7 +898,7 @@ def CVT_u32_f64
 // Conversion to u64
 
 def CVT_u64_pred
-  : InstPTX<(outs RegI64:$d), (ins RegPred:$a), "cvt.u64.pred\t$d, $a",
+  : InstPTX<(outs RegI64:$d), (ins RegPred:$a), "selp.u64\t$d, 1, 0, $a",
             [(set RegI64:$d, (zext RegPred:$a))]>;
 
 def CVT_u64_u16
@@ -916,7 +920,8 @@ def CVT_u64_f64
 // Conversion to f32
 
 def CVT_f32_pred
-  : InstPTX<(outs RegF32:$d), (ins RegPred:$a), "cvt.rn.f32.pred\t$d, $a",
+  : InstPTX<(outs RegF32:$d), (ins RegPred:$a),
+            "selp.f32\t$d, 0F3F800000, 0F00000000, $a",  // 1.0
             [(set RegF32:$d, (uint_to_fp RegPred:$a))]>;
 
 def CVT_f32_u16
@@ -938,7 +943,8 @@ def CVT_f32_f64
 // Conversion to f64
 
 def CVT_f64_pred
-  : InstPTX<(outs RegF64:$d), (ins RegPred:$a), "cvt.rn.f64.pred\t$d, $a",
+  : InstPTX<(outs RegF64:$d), (ins RegPred:$a), 
+            "selp.f64\t$d, 0D3F80000000000000, 0D0000000000000000, $a",  // 1.0
             [(set RegF64:$d, (uint_to_fp RegPred:$a))]>;
 
 def CVT_f64_u16
