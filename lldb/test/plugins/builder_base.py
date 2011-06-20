@@ -15,8 +15,6 @@ variable.
 import os
 import lldbtest
 
-#print "Hello, darwin plugin!"
-
 def getArchitecture():
     """Returns the architecture in effect the test suite is running with."""
     return os.environ["ARCH"] if "ARCH" in os.environ else ""
@@ -74,18 +72,6 @@ def buildDefault(sender=None, architecture=None, compiler=None, dictionary=None)
                     sender=sender)
 
     # True signifies that we can handle building default.
-    return True
-
-def buildDsym(sender=None, architecture=None, compiler=None, dictionary=None):
-    """Build the binaries with dsym debug info."""
-    lldbtest.system(["/bin/sh", "-c",
-                     "make clean" + getCmdLine(dictionary)
-                     + "; make MAKE_DSYM=YES"
-                     + getArchSpec(architecture) + getCCSpec(compiler)
-                     + getCmdLine(dictionary)],
-                    sender=sender)
-
-    # True signifies that we can handle building dsym.
     return True
 
 def buildDwarf(sender=None, architecture=None, compiler=None, dictionary=None):

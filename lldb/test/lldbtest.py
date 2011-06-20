@@ -338,6 +338,9 @@ def getsource_if_available(obj):
     except:
         return repr(obj)
 
+def builder_module():
+    return __import__("builder_" + sys.platform)
+
 class TestBase(unittest2.TestCase):
     """
     This abstract base class is meant to be subclassed.  It provides default
@@ -443,7 +446,7 @@ class TestBase(unittest2.TestCase):
 
         if doCleanup:
             # First, let's do the platform-specific cleanup.
-            module = __import__(sys.platform)
+            module = builder_module()
             if not module.cleanup():
                 raise Exception("Don't know how to do cleanup")
 
@@ -717,13 +720,13 @@ class TestBase(unittest2.TestCase):
 
         # Perform registered teardown cleanup.
         if doCleanup and self.doTearDownCleanup:
-            module = __import__(sys.platform)
+            module = builder_module()
             if not module.cleanup(self, dictionary=self.dict):
                 raise Exception("Don't know how to do cleanup with dictionary: " + self.dict)
 
         # In rare cases where there are multiple teardown cleanups added.
         if doCleanup and self.doTearDownCleanups:
-            module = __import__(sys.platform)
+            module = builder_module()
             if self.dicts:
                 for dict in reversed(self.dicts):
                     if not module.cleanup(self, dictionary=dict):
@@ -874,12 +877,12 @@ class TestBase(unittest2.TestCase):
 
     def getArchitecture(self):
         """Returns the architecture in effect the test suite is running with."""
-        module = __import__(sys.platform)
+        module = builder_module()
         return module.getArchitecture()
 
     def getCompiler(self):
         """Returns the compiler in effect the test suite is running with."""
-        module = __import__(sys.platform)
+        module = builder_module()
         return module.getCompiler()
 
     def getRunOptions(self):
@@ -899,19 +902,19 @@ class TestBase(unittest2.TestCase):
 
     def buildDefault(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build the default binaries."""
-        module = __import__(sys.platform)
+        module = builder_module()
         if not module.buildDefault(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build default binary")
 
     def buildDsym(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build binaries with dsym info."""
-        module = __import__(sys.platform)
+        module = builder_module()
         if not module.buildDsym(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dsym")
 
     def buildDwarf(self, architecture=None, compiler=None, dictionary=None):
         """Platform specific way to build binaries with dwarf maps."""
-        module = __import__(sys.platform)
+        module = builder_module()
         if not module.buildDwarf(self, architecture, compiler, dictionary):
             raise Exception("Don't know how to build binary with dwarf")
 
