@@ -60,6 +60,10 @@ public:
   /// that also works with less standard-compliant compilers
   void swap(Use &RHS);
 
+  // A type for the word following an array of hung-off Uses in memory, which is
+  // a pointer back to their User with the bottom bit set.
+  typedef PointerIntPair<User*, 1, unsigned> UserRef;
+
 private:
   /// Copy ctor - do not implement
   Use(const Use &U);
@@ -206,15 +210,6 @@ public:
   /// User.h
   ///
   unsigned getOperandNo() const;
-};
-
-//===----------------------------------------------------------------------===//
-//                         AugmentedUse layout struct
-//===----------------------------------------------------------------------===//
-
-struct AugmentedUse : public Use {
-  PointerIntPair<User*, 1, unsigned> ref;
-  AugmentedUse(); // not implemented
 };
 
 } // End llvm namespace
