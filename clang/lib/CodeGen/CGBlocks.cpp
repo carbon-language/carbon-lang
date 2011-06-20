@@ -95,9 +95,7 @@ static llvm::Constant *buildBlockDescriptor(CodeGenModule &CGM,
   else
     elements.push_back(llvm::Constant::getNullValue(i8p));
 
-  llvm::Constant *init =
-    llvm::ConstantStruct::get(CGM.getLLVMContext(), elements.data(),
-                              elements.size(), false);
+  llvm::Constant *init = llvm::ConstantStruct::getAnon(elements);
 
   llvm::GlobalVariable *global =
     new llvm::GlobalVariable(CGM.getModule(), init->getType(), true,
@@ -851,9 +849,7 @@ static llvm::Constant *buildGlobalBlock(CodeGenModule &CGM,
   // Descriptor
   fields[4] = buildBlockDescriptor(CGM, blockInfo);
 
-  llvm::Constant *init =
-    llvm::ConstantStruct::get(CGM.getLLVMContext(), fields, BlockHeaderSize,
-                              /*packed*/ false);
+  llvm::Constant *init = llvm::ConstantStruct::getAnon(fields);
 
   llvm::GlobalVariable *literal =
     new llvm::GlobalVariable(CGM.getModule(),

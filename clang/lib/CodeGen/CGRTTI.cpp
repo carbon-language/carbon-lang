@@ -658,9 +658,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
     break;
   }
 
-  llvm::Constant *Init = 
-    llvm::ConstantStruct::get(VMContext, &Fields[0], Fields.size(), 
-                              /*Packed=*/false);
+  llvm::Constant *Init = llvm::ConstantStruct::getAnon(Fields);
 
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(CGM.getModule(), Init->getType(), 

@@ -27,12 +27,12 @@ struct ManyFields {
   int f;
 };
 
-// CHECK: global %0 { i32 1, i32 2, i32 0, i8 0, i32 0, i32 0 }
+// CHECK: global %struct.ManyFields { i32 1, i32 2, i32 0, i8 0, i32 0, i32 0 }
 struct ManyFields FewInits = {1, 2};
 
 
 // PR6766
-// CHECK: @l = global %1 { [24 x i8] c"f\00\00\00o\00\00\00o\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00", i32 1 }
+// CHECK: @l = global %0 { [24 x i8] c"f\00\00\00o\00\00\00o\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00", i32 1 }
 typedef __WCHAR_TYPE__ wchar_t;
 struct K {
   wchar_t L[6];

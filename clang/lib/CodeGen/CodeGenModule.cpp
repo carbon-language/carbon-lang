@@ -353,7 +353,7 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
   llvm::Type *CtorPFTy = llvm::PointerType::getUnqual(CtorFTy);
 
   // Get the type of a ctor entry, { i32, void ()* }.
-  llvm::StructType* CtorStructTy =
+  llvm::StructType *CtorStructTy =
     llvm::StructType::get(llvm::Type::getInt32Ty(VMContext),
                           llvm::PointerType::getUnqual(CtorFTy), NULL);
 
@@ -676,7 +676,7 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
     llvm::ConstantExpr::getBitCast(unitGV, SBP),
     llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), LineNo)
   };
-  return llvm::ConstantStruct::get(VMContext, Fields, 4, false);
+  return llvm::ConstantStruct::getAnon(Fields);
 }
 
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {

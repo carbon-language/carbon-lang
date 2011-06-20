@@ -472,8 +472,7 @@ ItaniumCXXABI::EmitMemberPointerConversion(llvm::Constant *C,
   else
     Values[1] = llvm::ConstantExpr::getAdd(CS->getOperand(1), Offset);
 
-  return llvm::ConstantStruct::get(CGM.getLLVMContext(), Values, 2,
-                                   /*Packed=*/false);
+  return llvm::ConstantStruct::get(CS->getType(), Values);
 }        
 
 
@@ -488,8 +487,7 @@ ItaniumCXXABI::EmitNullMemberPointer(const MemberPointerType *MPT) {
 
   llvm::Constant *Zero = llvm::ConstantInt::get(ptrdiff_t, 0);
   llvm::Constant *Values[2] = { Zero, Zero };
-  return llvm::ConstantStruct::get(CGM.getLLVMContext(), Values, 2,
-                                   /*Packed=*/false);
+  return llvm::ConstantStruct::getAnon(Values);
 }
 
 llvm::Constant *
@@ -554,8 +552,7 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
     MemPtr[1] = llvm::ConstantInt::get(ptrdiff_t, 0);
   }
   
-  return llvm::ConstantStruct::get(CGM.getLLVMContext(),
-                                   MemPtr, 2, /*Packed=*/false);
+  return llvm::ConstantStruct::getAnon(MemPtr);
 }
 
 /// The comparison algorithm is pretty easy: the member pointers are

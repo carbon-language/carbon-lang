@@ -10,7 +10,7 @@ void f();
 void (&fr)() = f;
 
 struct S { int& a; };
-// CHECK: @s = global %0 { i32* @a }
+// CHECK: @s = global %struct.S { i32* @a }
 S s = { a };
 
 // PR5581
@@ -21,7 +21,7 @@ public:
   unsigned f;
 };
 
-// CHECK: @_ZN6PR55812g0E = global %1 { i32 1 }
+// CHECK: @_ZN6PR55812g0E = global %"class.PR5581::C" { i32 1 }
 C g0 = { C::e1 };
 }
 

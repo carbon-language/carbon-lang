@@ -52,14 +52,14 @@ int g9 = (2 + 3i) * (5 + 7i) != (-11 + 29i);
 int g10 = (2.0 + 3.0i) * (5.0 + 7.0i) != (-11.0 + 29.0i);
 
 // PR5108
-// CHECK: @gv1 = global %4 <{ i32 0, i8 7 }>, align 1
+// CHECK: @gv1 = global %struct.anon <{ i32 0, i8 7 }>, align 1
 struct {
   unsigned long a;
   unsigned long b:3;
 } __attribute__((__packed__)) gv1  = { .a = 0x0, .b = 7,  };
 
 // PR5118
-// CHECK: @gv2 = global %5 <{ i8 1, i8* null }>, align 1 
+// CHECK: @gv2 = global %4 <{ i8 1, i8* null }>, align 1 
 struct {
   unsigned char a;
   char *b;

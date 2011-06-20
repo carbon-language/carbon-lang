@@ -433,9 +433,19 @@ llvm::Constant *ConstStructBuilder::
   if (!Builder.Build(ILE))
     return 0;
   
+  // Pick the type to use.  If the type is layout identical to the ConvertType
+  // type then use it, otherwise use whatever the builder produced for us.
+  const llvm::StructType *STy =
+      llvm::ConstantStruct::getTypeForElements(CGM.getLLVMContext(),
+                                               Builder.Elements,Builder.Packed);
+  const llvm::Type *ILETy = CGM.getTypes().ConvertType(ILE->getType());
+  if (const llvm::StructType *ILESTy = dyn_cast<llvm::StructType>(ILETy)) {
+    if (ILESTy->isLayoutIdentical(STy))
+      STy = ILESTy;
+  }
+    
   llvm::Constant *Result =
-  llvm::ConstantStruct::get(CGM.getLLVMContext(),
-                            Builder.Elements, Builder.Packed);
+    llvm::ConstantStruct::get(STy, Builder.Elements);
   
   assert(Builder.NextFieldOffsetInChars.RoundUpToAlignment(
            Builder.getAlignment(Result)) ==
@@ -988,7 +998,10 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                           Result.Val.getComplexIntImag());
 
       // FIXME: the target may want to specify that this is packed.
-      return llvm::ConstantStruct::get(VMContext, Complex, 2, false);
+      llvm::StructType *STy = llvm::StructType::get(Complex[0]->getType(),
+                                                    Complex[1]->getType(),
+                                                    NULL);
+      return llvm::ConstantStruct::get(STy, Complex);
     }
     case APValue::Float:
       return llvm::ConstantFP::get(VMContext, Result.Val.getFloat());
@@ -1001,7 +1014,10 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
                                          Result.Val.getComplexFloatImag());
 
       // FIXME: the target may want to specify that this is packed.
-      return llvm::ConstantStruct::get(VMContext, Complex, 2, false);
+      llvm::StructType *STy = llvm::StructType::get(Complex[0]->getType(),
+                                                    Complex[1]->getType(),
+                                                    NULL);
+      return llvm::ConstantStruct::get(STy, Complex);
     }
     case APValue::Vector: {
       llvm::SmallVector<llvm::Constant *, 4> Inits;
