@@ -139,8 +139,8 @@ svn_info = ''
 # Default verbosity is 0.
 verbose = 0
 
-# By default, search from the current working directory.
-testdirs = [ os.getcwd() ]
+# By default, search from the script directory.
+testdirs = [ sys.path[0] ]
 
 # Separator string.
 separator = '-' * 70
