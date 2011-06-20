@@ -2039,6 +2039,12 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   }
   
   mergeDeclAttributes(New, Old, Context);
+  // weak_import on current declaration is applied to previous
+  // tentative definiton.
+  if (New->getAttr<WeakImportAttr>() &&
+      Old->getStorageClass() == SC_None &&
+      !Old->getAttr<WeakImportAttr>())
+    Old->addAttr(::new (Context) WeakImportAttr(SourceLocation(), Context));
 
   // Merge the types.
   MergeVarDeclTypes(New, Old);
