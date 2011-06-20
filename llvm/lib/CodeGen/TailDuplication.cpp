@@ -669,8 +669,10 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
       PredTBB = NewTarget;
 
     // Make the branch unconditional if possible
-    if (PredTBB == PredFBB)
+    if (PredTBB == PredFBB) {
+      PredCond.clear();
       PredFBB = NULL;
+    }
 
     // Avoid adding fall through branches.
     if (PredFBB == NextBB)
@@ -684,7 +686,10 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
       TII->InsertBranch(*PredBB, PredTBB, PredFBB, PredCond, DebugLoc());
 
     PredBB->removeSuccessor(TailBB);
-    PredBB->addSuccessor(NewTarget);
+    unsigned NumSuccessors = PredBB->succ_size();
+    assert(NumSuccessors <= 1);
+    if (NumSuccessors == 0 || *PredBB->succ_begin() != NewTarget)
+      PredBB->addSuccessor(NewTarget);
 
     TDBBs.push_back(PredBB);
 
@@ -707,7 +712,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   DenseSet<unsigned> UsedByPhi;
   getRegsUsedByPHIs(*TailBB, &UsedByPhi);
 
-  if (0 && isSimpleBB(TailBB)) // Disabled to see if doing so fixes buildbots.
+  if (isSimpleBB(TailBB))
     return duplicateSimpleBB(TailBB, TDBBs, UsedByPhi, Copies);
 
   // Iterate through all the unique predecessors and tail-duplicate this
