@@ -293,7 +293,7 @@ def get_function_names(thread):
     Returns a sequence of function names from the stack frames of this thread.
     """
     def GetFuncName(i):
-        return thread.GetFrameAtIndex(i).GetFunction().GetName()
+        return thread.GetFrameAtIndex(i).GetFunctionName()
 
     return map(GetFuncName, range(thread.GetNumFrames()))
 
@@ -393,8 +393,9 @@ def print_stacktrace(thread, string_buffer = False):
                 num=i, addr=load_addr, mod=mods[i], symbol=symbols[i], offset=symbol_offset)
         else:
             print >> output, "  frame #{num}: {addr:#016x} {mod}`{func} at {file}:{line} {args}".format(
-                num=i, addr=load_addr, mod=mods[i], func=funcs[i], file=files[i], line=lines[i],
-                args=get_args_as_string(frame, showFuncName=False))
+                num=i, addr=load_addr, mod=mods[i],
+                func='%s [inlined]' % funcs[i] if frame.IsInlined() else funcs[i],
+                file=files[i], line=lines[i], args=get_args_as_string(frame, showFuncName=False))
 
     if string_buffer:
         return output.getvalue()
