@@ -1217,8 +1217,14 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
 
   SValBuilder &svalBuilder = C.getSValBuilder();
   QualType cmpTy = svalBuilder.getConditionType();
+  QualType sizeTy = svalBuilder.getContext().getSizeType();
 
+  // These two values allow checking two kinds of errors:
+  // - actual overflows caused by a source that doesn't fit in the destination
+  // - potential overflows caused by a bound that could exceed the destination
   SVal amountCopied = UnknownVal();
+  SVal maxLastElementIndex = UnknownVal();
+  const char *boundWarning = NULL;
 
   // If the function is strncpy, strncat, etc... it is bounded.
   if (isBounded) {
@@ -1227,9 +1233,7 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     SVal lenVal = state->getSVal(lenExpr);
 
     // Protect against misdeclared strncpy().
-    lenVal = svalBuilder.evalCast(lenVal,
-                                  svalBuilder.getContext().getSizeType(),
-                                  lenExpr->getType());
+    lenVal = svalBuilder.evalCast(lenVal, sizeTy, lenExpr->getType());
 
     NonLoc *strLengthNL = dyn_cast<NonLoc>(&strLength);
     NonLoc *lenValNL = dyn_cast<NonLoc>(&lenVal);
@@ -1240,9 +1244,11 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
       const GRState *stateSourceTooLong, *stateSourceNotTooLong;
 
       // Check if the max number to copy is less than the length of the src.
+      // If the bound is equal to the source length, strncpy won't null-
+      // terminate the result!
       llvm::tie(stateSourceTooLong, stateSourceNotTooLong) =
         state->assume(cast<DefinedOrUnknownSVal>
-                      (svalBuilder.evalBinOpNN(state, BO_GT, *strLengthNL,
+                      (svalBuilder.evalBinOpNN(state, BO_GE, *strLengthNL,
                                                *lenValNL, cmpTy)));
 
       if (stateSourceTooLong && !stateSourceNotTooLong) {
@@ -1259,19 +1265,43 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     }
 
     // We still want to know if the bound is known to be too large.
-    const char * const warningMsg =
-      "Size argument is greater than the length of the destination buffer";
-    state = CheckBufferAccess(C, state, lenExpr, Dst, warningMsg,
-                              /* WarnAboutSize = */ true);
-    // FIXME: It'd be nice for this not to be a hard error, so we can warn
-    // about more than one thing, but the multiple calls to CheckLocation
-    // result in the same ExplodedNode, which means we don't keep emitting
-    // bug reports.
-    if (!state)
-      return;
+    if (lenValNL) {
+      if (isAppending) {
+        // For strncat, the check is strlen(dst) + lenVal < sizeof(dst)
+
+        // Get the string length of the destination. If the destination is
+        // memory that can't have a string length, we shouldn't be copying
+        // into it anyway.
+        SVal dstStrLength = getCStringLength(C, state, Dst, DstVal);
+        if (dstStrLength.isUndef())
+          return;
+
+        if (NonLoc *dstStrLengthNL = dyn_cast<NonLoc>(&dstStrLength)) {
+          maxLastElementIndex = svalBuilder.evalBinOpNN(state, BO_Add,
+                                                        *lenValNL,
+                                                        *dstStrLengthNL,
+                                                        sizeTy);
+          boundWarning = "Size argument is greater than the free space in the "
+                         "destination buffer";
+        }
+
+      } else {
+        // For strncpy, this is just checking that lenVal <= sizeof(dst)
+        // (Yes, strncpy and strncat differ in how they treat termination.
+        // strncat ALWAYS terminates, but strncpy doesn't.)
+        NonLoc one = cast<NonLoc>(svalBuilder.makeIntVal(1, sizeTy));
+        maxLastElementIndex = svalBuilder.evalBinOpNN(state, BO_Sub, *lenValNL,
+                                                      one, sizeTy);
+        boundWarning = "Size argument is greater than the length of the "
+                       "destination buffer";
+      }
+    }
 
     // If we couldn't pin down the copy length, at least bound it.
-    if (amountCopied.isUnknown()) {
+    // FIXME: We should actually run this code path for append as well, but
+    // right now it creates problems with constraints (since we can end up
+    // trying to pass constraints from symbol to symbol).
+    if (amountCopied.isUnknown() && !isAppending) {
       // Try to get a "hypothetical" string length symbol, which we can later
       // set as a real value if that turns out to be the case.
       amountCopied = getCStringLength(C, state, lenExpr, srcVal, true);
@@ -1326,8 +1356,6 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     SVal dstStrLength = getCStringLength(C, state, Dst, DstVal);
     if (dstStrLength.isUndef())
       return;
-
-    QualType sizeTy = svalBuilder.getContext().getSizeType();
 
     NonLoc *srcStrLengthNL = dyn_cast<NonLoc>(&amountCopied);
     NonLoc *dstStrLengthNL = dyn_cast<NonLoc>(&dstStrLength);
@@ -1393,17 +1421,34 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
   // If the destination is a MemRegion, try to check for a buffer overflow and
   // record the new string length.
   if (loc::MemRegionVal *dstRegVal = dyn_cast<loc::MemRegionVal>(&DstVal)) {
-    // If the final length is known, we can check for an overflow.
+    QualType ptrTy = Dst->getType();
+
+    // If we have an exact value on a bounded copy, use that to check for
+    // overflows, rather than our estimate about how much is actually copied.
+    if (boundWarning) {
+      if (NonLoc *maxLastNL = dyn_cast<NonLoc>(&maxLastElementIndex)) {
+        SVal maxLastElement = svalBuilder.evalBinOpLN(state, BO_Add, *dstRegVal,
+                                                      *maxLastNL, ptrTy);
+        state = CheckLocation(C, state, CE->getArg(2), maxLastElement, 
+                              boundWarning);
+        if (!state)
+          return;
+      }
+    }
+
+    // Then, if the final length is known...
     if (NonLoc *knownStrLength = dyn_cast<NonLoc>(&finalStrLength)) {
       SVal lastElement = svalBuilder.evalBinOpLN(state, BO_Add, *dstRegVal,
-                                                 *knownStrLength,
-                                                 Dst->getType());
+                                                 *knownStrLength, ptrTy);
 
-      const char * const warningMsg =
-        "String copy function overflows destination buffer";
-      state = CheckLocation(C, state, Dst, lastElement, warningMsg);
-      if (!state)
-        return;
+      // ...and we haven't checked the bound, we'll check the actual copy.
+      if (!boundWarning) {
+        const char * const warningMsg =
+          "String copy function overflows destination buffer";
+        state = CheckLocation(C, state, Dst, lastElement, warningMsg);
+        if (!state)
+          return;
+      }
 
       // If this is a stpcpy-style copy, the last element is the return value.
       if (returnEnd)
@@ -1419,10 +1464,15 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     state = InvalidateBuffer(C, state, Dst, *dstRegVal);
 
     // Set the C string length of the destination, if we know it.
-    if (!isBounded || (amountCopied == strLength))
-      state = setCStringLength(state, dstRegVal->getRegion(), finalStrLength);
-    else
-      state = setCStringLength(state, dstRegVal->getRegion(), UnknownVal());
+    if (isBounded && !isAppending) {
+      // strncpy is annoying in that it doesn't guarantee to null-terminate
+      // the result string. If the original string didn't fit entirely inside
+      // the bound (including the null-terminator), we don't know how long the
+      // result is.
+      if (amountCopied != strLength)
+        finalStrLength = UnknownVal();
+    }
+    state = setCStringLength(state, dstRegVal->getRegion(), finalStrLength);
   }
 
   assert(state);
