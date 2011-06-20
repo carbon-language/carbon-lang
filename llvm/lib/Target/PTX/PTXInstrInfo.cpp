@@ -304,18 +304,16 @@ void PTXInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   // Select the appropriate opcode based on the register class
   if (RC == PTX::RegI16RegisterClass) {
     OpCode = PTX::STACKSTOREI16;
-  }
-  else if (RC == PTX::RegI32RegisterClass) {
+  }  else if (RC == PTX::RegI32RegisterClass) {
     OpCode = PTX::STACKSTOREI32;
-  }
-  else if (RC == PTX::RegI64RegisterClass) {
+  }  else if (RC == PTX::RegI64RegisterClass) {
     OpCode = PTX::STACKSTOREI32;
-  }
-  else if (RC == PTX::RegF32RegisterClass) {
+  }  else if (RC == PTX::RegF32RegisterClass) {
     OpCode = PTX::STACKSTOREF32;
-  }
-  else if (RC == PTX::RegF64RegisterClass) {
+  }  else if (RC == PTX::RegF64RegisterClass) {
     OpCode = PTX::STACKSTOREF64;
+  } else {
+    llvm_unreachable("Unknown PTX register class!");
   }
 
   // Build the store instruction (really a mov)
@@ -341,18 +339,16 @@ void PTXInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   // Select the appropriate opcode based on the register class
   if (RC == PTX::RegI16RegisterClass) {
     OpCode = PTX::STACKLOADI16;
-  }
-  else if (RC == PTX::RegI32RegisterClass) {
+  } else if (RC == PTX::RegI32RegisterClass) {
     OpCode = PTX::STACKLOADI32;
-  }
-  else if (RC == PTX::RegI64RegisterClass) {
+  } else if (RC == PTX::RegI64RegisterClass) {
     OpCode = PTX::STACKLOADI32;
-  }
-  else if (RC == PTX::RegF32RegisterClass) {
+  } else if (RC == PTX::RegF32RegisterClass) {
     OpCode = PTX::STACKLOADF32;
-  }
-  else if (RC == PTX::RegF64RegisterClass) {
+  } else if (RC == PTX::RegF64RegisterClass) {
     OpCode = PTX::STACKLOADF64;
+  } else {
+    llvm_unreachable("Unknown PTX register class!");
   }
 
   // Build the load instruction (really a mov)
