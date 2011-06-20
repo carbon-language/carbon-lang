@@ -113,10 +113,10 @@ endif
 # Make the dSYM file from the executable if $(MAKE_DSYM) != "NO"
 #----------------------------------------------------------------------
 ifeq "$(OS)" "Darwin"
-	ifneq "$(MAKE_DSYM)" "NO"
+ifneq "$(MAKE_DSYM)" "NO"
 $(DSYM) : $(EXE)
 	$(DS) $(DSFLAGS) -o "$(DSYM)" "$(EXE)"
-	endif
+endif
 endif
 
 #----------------------------------------------------------------------
