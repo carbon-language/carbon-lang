@@ -457,6 +457,105 @@ void strcat_too_big(char *dst, char *src) {
 
 
 //===----------------------------------------------------------------------===
+// strncpy()
+//===----------------------------------------------------------------------===
+
+#ifdef VARIANT
+
+#define __strncpy_chk BUILTIN(__strncpy_chk)
+char *__strncpy_chk(char *restrict s1, const char *restrict s2, size_t n, size_t destlen);
+
+#define strncpy(a,b,n) __strncpy_chk(a,b,n,(size_t)-1)
+
+#else /* VARIANT */
+
+#define strncpy BUILTIN(strncpy)
+char *strncpy(char *restrict s1, const char *restrict s2, size_t n);
+
+#endif /* VARIANT */
+
+
+void strncpy_null_dst(char *x) {
+  strncpy(NULL, x, 5); // expected-warning{{Null pointer argument in call to string copy function}}
+}
+
+void strncpy_null_src(char *x) {
+  strncpy(x, NULL, 5); // expected-warning{{Null pointer argument in call to string copy function}}
+}
+
+void strncpy_fn(char *x) {
+  strncpy(x, (char*)&strcpy_fn, 5); // expected-warning{{Argument to string copy function is the address of the function 'strcpy_fn', which is not a null-terminated string}}
+}
+
+void strncpy_effects(char *x, char *y) {
+  char a = x[0];
+
+  if (strncpy(x, y, 5) != x)
+    (void)*(char*)0; // no-warning
+
+  if (strlen(x) != strlen(y))
+    (void)*(char*)0; // expected-warning{{null}}
+
+  if (a != x[0])
+    (void)*(char*)0; // expected-warning{{null}}
+}
+
+void strncpy_overflow(char *y) {
+  char x[4];
+  if (strlen(y) == 4)
+    strncpy(x, y, 5); // expected-warning{{Size argument is greater than the length of the destination buffer}}
+}
+
+void strncpy_no_overflow(char *y) {
+  char x[4];
+  if (strlen(y) == 3)
+    strncpy(x, y, 5); // expected-warning{{Size argument is greater than the length of the destination buffer}}
+}
+
+void strncpy_no_overflow2(char *y, int n) {
+	if (n <= 4)
+		return;
+
+  char x[4];
+  if (strlen(y) == 3)
+    strncpy(x, y, n); // expected-warning{{Size argument is greater than the length of the destination buffer}}
+}
+
+void strncpy_truncate(char *y) {
+  char x[4];
+  if (strlen(y) == 4)
+    strncpy(x, y, 3); // no-warning
+}
+
+void strncpy_no_truncate(char *y) {
+  char x[4];
+  if (strlen(y) == 3)
+    strncpy(x, y, 3); // no-warning
+}
+
+void strncpy_exactly_matching_buffer(char *y) {
+	char x[4];
+	strncpy(x, y, 4); // no-warning
+
+	// strncpy does not null-terminate, so we have no idea what the strlen is
+	// after this.
+	if (strlen(x) > 4)
+		(void)*(int*)0; // expected-warning{{null}}
+}
+
+void strncpy_exactly_matching_buffer2(char *y) {
+	if (strlen(y) >= 4)
+		return;
+
+	char x[4];
+	strncpy(x, y, 4); // no-warning
+
+	// This time, we know that y fits in x anyway.
+	if (strlen(x) > 3)
+		(void)*(int*)0; // no-warning
+}
+
+//===----------------------------------------------------------------------===
 // strncat()
 //===----------------------------------------------------------------------===
 

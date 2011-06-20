@@ -123,12 +123,15 @@ public:
                                    const Expr *FirstBuf,
                                    const Expr *SecondBuf,
                                    const char *firstMessage = NULL,
-                                   const char *secondMessage = NULL) const;
+                                   const char *secondMessage = NULL,
+                                   bool WarnAboutSize = false) const;
   const GRState *CheckBufferAccess(CheckerContext &C, const GRState *state,
                                    const Expr *Size, const Expr *Buf,
-                                   const char *message = NULL) const {
+                                   const char *message = NULL,
+                                   bool WarnAboutSize = false) const {
     // This is a convenience override.
-    return CheckBufferAccess(C, state, Size, Buf, NULL, message, NULL);
+    return CheckBufferAccess(C, state, Size, Buf, NULL, message, NULL,
+                             WarnAboutSize);
   }
   const GRState *CheckOverlap(CheckerContext &C, const GRState *state,
                               const Expr *Size, const Expr *First,
@@ -290,7 +293,8 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
                                                  const Expr *FirstBuf,
                                                  const Expr *SecondBuf,
                                                  const char *firstMessage,
-                                              const char *secondMessage) const {
+                                                 const char *secondMessage,
+                                                 bool WarnAboutSize) const {
   // If a previous check has failed, propagate the failure.
   if (!state)
     return NULL;
@@ -323,9 +327,11 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
   // Check that the first buffer is sufficiently long.
   SVal BufStart = svalBuilder.evalCast(BufVal, PtrTy, FirstBuf->getType());
   if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
+    const Expr *warningExpr = (WarnAboutSize ? Size : FirstBuf);
+
     SVal BufEnd = svalBuilder.evalBinOpLN(state, BO_Add, *BufLoc,
                                           LastOffset, PtrTy);
-    state = CheckLocation(C, state, FirstBuf, BufEnd, firstMessage);
+    state = CheckLocation(C, state, warningExpr, BufEnd, firstMessage);
 
     // If the buffer isn't large enough, abort.
     if (!state)
@@ -341,9 +347,11 @@ const GRState *CStringChecker::CheckBufferAccess(CheckerContext &C,
 
     BufStart = svalBuilder.evalCast(BufVal, PtrTy, SecondBuf->getType());
     if (Loc *BufLoc = dyn_cast<Loc>(&BufStart)) {
+      const Expr *warningExpr = (WarnAboutSize ? Size : SecondBuf);
+
       SVal BufEnd = svalBuilder.evalBinOpLN(state, BO_Add, *BufLoc,
                                             LastOffset, PtrTy);
-      state = CheckLocation(C, state, SecondBuf, BufEnd, secondMessage);
+      state = CheckLocation(C, state, warningExpr, BufEnd, secondMessage);
     }
   }
 
@@ -1251,6 +1259,18 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
       }
     }
 
+    // We still want to know if the bound is known to be too large.
+    const char * const warningMsg =
+      "Size argument is greater than the length of the destination buffer";
+    state = CheckBufferAccess(C, state, lenExpr, Dst, warningMsg,
+                              /* WarnAboutSize = */ true);
+    // FIXME: It'd be nice for this not to be a hard error, so we can warn
+    // about more than one thing, but the multiple calls to CheckLocation
+    // result in the same ExplodedNode, which means we don't keep emitting
+    // bug reports.
+    if (!state)
+      return;
+
     // If we couldn't pin down the copy length, at least bound it.
     if (amountCopied.isUnknown()) {
       // Try to get a "hypothetical" string length symbol, which we can later
@@ -1399,8 +1419,11 @@ void CStringChecker::evalStrcpyCommon(CheckerContext &C, const CallExpr *CE,
     // string, but that's still an improvement over blank invalidation.
     state = InvalidateBuffer(C, state, Dst, *dstRegVal);
 
-    // Set the C string length of the destination.
-    state = setCStringLength(state, dstRegVal->getRegion(), finalStrLength);
+    // Set the C string length of the destination, if we know it.
+    if (!isBounded || (amountCopied == strLength))
+      state = setCStringLength(state, dstRegVal->getRegion(), finalStrLength);
+    else
+      state = setCStringLength(state, dstRegVal->getRegion(), UnknownVal());
   }
 
   assert(state);
@@ -1589,7 +1612,7 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     .Cases("memcmp", "bcmp", &CStringChecker::evalMemcmp)
     .Cases("memmove", "__memmove_chk", &CStringChecker::evalMemmove)
     .Cases("strcpy", "__strcpy_chk", &CStringChecker::evalStrcpy)
-    //.Cases("strncpy", "__strncpy_chk", &CStringChecker::evalStrncpy)
+    .Cases("strncpy", "__strncpy_chk", &CStringChecker::evalStrncpy)
     .Cases("stpcpy", "__stpcpy_chk", &CStringChecker::evalStpcpy)
     .Cases("strcat", "__strcat_chk", &CStringChecker::evalStrcat)
     .Cases("strncat", "__strncat_chk", &CStringChecker::evalStrncat)
