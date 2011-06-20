@@ -141,7 +141,7 @@ Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
 void PHINode::growOperands() {
   unsigned e = getNumOperands();
   unsigned NumOps = e + e / 2;
-  if (NumOps < 4) NumOps = 4;      // 4 op PHI nodes are VERY common.
+  if (NumOps < 2) NumOps = 2;      // 2 op PHI nodes are VERY common.
 
   Use *OldOps = op_begin();
   BasicBlock **OldBlocks = block_begin();
