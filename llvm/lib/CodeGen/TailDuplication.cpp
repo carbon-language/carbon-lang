@@ -707,7 +707,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   DenseSet<unsigned> UsedByPhi;
   getRegsUsedByPHIs(*TailBB, &UsedByPhi);
 
-  if (isSimpleBB(TailBB))
+  if (0 && isSimpleBB(TailBB)) // Disabled to see if doing so fixes buildbots.
     return duplicateSimpleBB(TailBB, TDBBs, UsedByPhi, Copies);
 
   // Iterate through all the unique predecessors and tail-duplicate this
