@@ -236,7 +236,8 @@ struct TupleExpander : SetTheory::Expander {
         if (RV.getName() == "DwarfNumbers" ||
             RV.getName() == "DwarfAlias" ||
             RV.getName() == "Aliases") {
-          NewReg->addValue(*RegisterCl->getValue(RV.getName()));
+          if (const RecordVal *DefRV = RegisterCl->getValue(RV.getName()))
+            NewReg->addValue(*DefRV);
           continue;
         }
 
