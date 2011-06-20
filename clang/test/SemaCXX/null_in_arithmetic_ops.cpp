@@ -4,6 +4,12 @@
 void f() {
   int a;
   bool b;
+  void (^c)();
+  class X;
+  void (X::*d) ();
+  extern void e();
+  int f[2];
+  const void *v;
 
   a = 0 ? NULL + a : a + NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
   a = 0 ? NULL - a : a - NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
@@ -17,6 +23,19 @@ void f() {
   a = 0 ? NULL & a : a & NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
   a = 0 ? NULL | a : a | NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
   a = 0 ? NULL ^ a : a ^ NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
+
+  // Check for warnings or errors when doing arithmetic on pointers and other
+  // types.
+  v = 0 ? NULL + &a : &a + NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
+  v = 0 ? NULL + c : c + NULL; // \
+    expected-error {{invalid operands to binary expression ('long' and 'void (^)()')}} \
+    expected-error {{invalid operands to binary expression ('void (^)()' and 'long')}}
+  v = 0 ? NULL + d : d + NULL; // \
+    expected-error {{invalid operands to binary expression ('long' and 'void (X::*)()')}} \
+    expected-error {{invalid operands to binary expression ('void (X::*)()' and 'long')}}
+  v = 0 ? NULL + e : e + NULL; // expected-error 2{{arithmetic on pointer to function type}}
+  v = 0 ? NULL + f : f + NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
+  v = 0 ? NULL + "f" : "f" + NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
 
   // Using two NULLs should only give one error instead of two.
   a = NULL + NULL; // expected-warning{{use of NULL in arithmetic operation}}
@@ -65,17 +84,10 @@ void f() {
 
   b = ((NULL)) != a;  // expected-warning{{use of NULL in arithmetic operation}}
 
-  void (^c)();
+  // Check that even non-standard pointers don't warn.
   b = c == NULL || NULL == c || c != NULL || NULL != c;
-
-  class X;
-  void (X::*d) ();
   b = d == NULL || NULL == d || d != NULL || NULL != d;
-
-  extern void e();
   b = e == NULL || NULL == e || e != NULL || NULL != e;
-
-  int f[2];
   b = f == NULL || NULL == f || f != NULL || NULL != f;
   b = "f" == NULL || NULL == "f" || "f" != NULL || NULL != "f";
 }
