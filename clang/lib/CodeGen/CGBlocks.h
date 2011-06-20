@@ -17,7 +17,6 @@
 #include "CodeGenTypes.h"
 #include "clang/AST/Type.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/SmallVector.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Expr.h"

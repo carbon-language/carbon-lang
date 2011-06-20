@@ -14,7 +14,6 @@
 #include "clang/Driver/Util.h"
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
   class raw_ostream;

@@ -18,7 +18,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Rewrite/Rewriter.h"
-#include "llvm/ADT/SmallVector.h"
 
 namespace llvm { class raw_ostream; }
 
