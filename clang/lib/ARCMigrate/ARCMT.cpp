@@ -112,6 +112,71 @@ public:
 
 } // end anonymous namespace
 
+static inline llvm::StringRef SimulatorVersionDefineName() {
+  return "__IPHONE_OS_VERSION_MIN_REQUIRED=";
+}
+
+/// \brief Parse the simulator version define:
+/// __IPHONE_OS_VERSION_MIN_REQUIRED=([0-9])([0-9][0-9])([0-9][0-9])
+// and return the grouped values as integers, e.g:
+//   __IPHONE_OS_VERSION_MIN_REQUIRED=40201
+// will return Major=4, Minor=2, Micro=1.
+static bool GetVersionFromSimulatorDefine(llvm::StringRef define,
+                                          unsigned &Major, unsigned &Minor,
+                                          unsigned &Micro) {
+  assert(define.startswith(SimulatorVersionDefineName()));
+  llvm::StringRef name, version;
+  llvm::tie(name, version) = define.split('=');
+  if (version.empty())
+    return false;
+  std::string verstr = version.str();
+  char *end;
+  unsigned num = (unsigned) strtol(verstr.c_str(), &end, 10);
+  if (*end != '\0')
+    return false;
+  Major = num / 10000;
+  num = num % 10000;
+  Minor = num / 100;
+  Micro = num % 100;
+  return true;
+}
+
+static bool HasARCRuntime(CompilerInvocation &origCI) {
+  // This duplicates some functionality from Darwin::AddDeploymentTarget
+  // but this function is well defined, so keep it decoupled from the driver
+  // and avoid unrelated complications.
+
+  for (unsigned i = 0, e = origCI.getPreprocessorOpts().Macros.size();
+         i != e; ++i) {
+    StringRef define = origCI.getPreprocessorOpts().Macros[i].first;
+    bool isUndef = origCI.getPreprocessorOpts().Macros[i].second;
+    if (isUndef)
+      continue;
+    if (!define.startswith(SimulatorVersionDefineName()))
+      continue;
+    unsigned Major, Minor, Micro;
+    if (GetVersionFromSimulatorDefine(define, Major, Minor, Micro) &&
+        Major < 10 && Minor < 100 && Micro < 100)
+      return Major >= 5;
+  }
+
+  llvm::Triple triple(origCI.getTargetOpts().Triple);
+
+  if (triple.getOS() == llvm::Triple::IOS)
+    return triple.getOSMajorVersion() >= 5;
+
+  if (triple.getOS() == llvm::Triple::Darwin)
+    return triple.getOSMajorVersion() >= 11;
+
+  if (triple.getOS() == llvm::Triple::MacOSX) {
+    unsigned Major, Minor, Micro;
+    triple.getOSVersion(Major, Minor, Micro);
+    return Major > 10 || (Major == 10 && Minor >= 7);
+  }
+
+  return false;
+}
+
 CompilerInvocation *createInvocationForMigration(CompilerInvocation &origCI) {
   llvm::OwningPtr<CompilerInvocation> CInvok;
   CInvok.reset(new CompilerInvocation(origCI));
@@ -122,56 +187,7 @@ CompilerInvocation *createInvocationForMigration(CompilerInvocation &origCI) {
   CInvok->getPreprocessorOpts().addMacroDef(define);
   CInvok->getLangOpts().ObjCAutoRefCount = true;
   CInvok->getDiagnosticOpts().ErrorLimit = 0;
-  
-  // FIXME: Hackety hack! Try to find out if there is an ARC runtime.
-  bool hasARCRuntime = false;
-  llvm::SmallVector<std::string, 16> args;
-  args.push_back("-x");
-  args.push_back("objective-c");
-  args.push_back("-fobjc-arc");
-
-  llvm::Triple triple(CInvok->getTargetOpts().Triple);
-  if (triple.getOS() == llvm::Triple::IOS ||
-      triple.getOS() == llvm::Triple::MacOSX) {
-    args.push_back("-ccc-host-triple");
-    std::string forcedTriple = triple.getArchName();
-    forcedTriple += "-apple-darwin10";
-    args.push_back(forcedTriple);
-
-    unsigned Major, Minor, Micro;
-    triple.getOSVersion(Major, Minor, Micro);
-    llvm::SmallString<100> flag;
-    if (triple.getOS() == llvm::Triple::IOS)
-      flag += "-miphoneos-version-min=";
-    else
-      flag += "-mmacosx-version-min=";
-    llvm::raw_svector_ostream(flag) << Major << '.' << Minor << '.' << Micro;
-    args.push_back(flag.str());
-  }
-
-  args.push_back(origCI.getFrontendOpts().Inputs[0].second.c_str());
-  // Also push all defines to deal with the iOS simulator hack.
-  for (unsigned i = 0, e = origCI.getPreprocessorOpts().Macros.size();
-         i != e; ++i) {
-    std::string &def = origCI.getPreprocessorOpts().Macros[i].first;
-    bool isUndef = origCI.getPreprocessorOpts().Macros[i].second;
-    if (!isUndef) {
-      std::string newdef = "-D";
-      newdef += def;
-      args.push_back(newdef);
-    }
-  }
-
-  llvm::SmallVector<const char *, 16> cargs;
-  for (unsigned i = 0, e = args.size(); i != e; ++i)
-    cargs.push_back(args[i].c_str());
-
-  llvm::OwningPtr<CompilerInvocation> checkCI;
-  checkCI.reset(clang::createInvocationFromCommandLine(cargs));
-  if (checkCI)
-    hasARCRuntime = !checkCI->getLangOpts().ObjCNoAutoRefCountRuntime;
-
-  CInvok->getLangOpts().ObjCNoAutoRefCountRuntime = !hasARCRuntime;
+  CInvok->getLangOpts().ObjCNoAutoRefCountRuntime = !HasARCRuntime(origCI);
 
   return CInvok.take();
 }
