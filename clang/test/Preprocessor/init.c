@@ -15,7 +15,7 @@
 // CXX0X:#define __GXX_EXPERIMENTAL_CXX0X__ 1
 // CXX0X:#define __GXX_RTTI 1
 // CXX0X:#define __GXX_WEAK__ 1
-// CXX0X:#define __cplusplus 199711L
+// CXX0X:#define __cplusplus 201103L
 // CXX0X:#define __private_extern__ extern
 //
 // 
