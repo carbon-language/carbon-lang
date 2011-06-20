@@ -453,8 +453,11 @@ namespace {
 
 class NonObjCToObjCCaster : public RecursiveASTVisitor<NonObjCToObjCCaster> {
   MigrationPass &Pass;
+  IdentifierInfo *SelfII;
 public:
-  NonObjCToObjCCaster(MigrationPass &pass) : Pass(pass) { }
+  NonObjCToObjCCaster(MigrationPass &pass) : Pass(pass) {
+    SelfII = &Pass.Ctx.Idents.get("self");
+  }
 
   bool VisitCastExpr(CastExpr *E) {
     if (E->getCastKind() != CK_AnyPointerToObjCPointerCast
@@ -538,6 +541,10 @@ private:
   }
 
   void castToObjCObject(CastExpr *E, bool retained) {
+    rewriteToBridgedCast(E, retained ? OBC_BridgeTransfer : OBC_Bridge);
+  }
+
+  void rewriteToBridgedCast(CastExpr *E, ObjCBridgeCastKind Kind) {
     TransformActions &TA = Pass.TA;
 
     // We will remove the compiler diagnostic.
@@ -546,18 +553,27 @@ private:
                           E->getLocStart()))
       return;
 
+    StringRef bridge;
+    switch(Kind) {
+    case OBC_Bridge:
+      bridge = "__bridge "; break;
+    case OBC_BridgeTransfer:
+      bridge = "__bridge_transfer "; break;
+    case OBC_BridgeRetained:
+      bridge = "__bridge_retained "; break;
+    }
+
     Transaction Trans(TA);
     TA.clearDiagnostic(diag::err_arc_mismatched_cast,
                        diag::err_arc_cast_requires_bridge,
                        E->getLocStart());
     if (CStyleCastExpr *CCE = dyn_cast<CStyleCastExpr>(E)) {
-      TA.insertAfterToken(CCE->getLParenLoc(), retained ? "__bridge_transfer "
-                                                        : "__bridge ");
+      TA.insertAfterToken(CCE->getLParenLoc(), bridge);
     } else {
       SourceLocation insertLoc = E->getSubExpr()->getLocStart();
       llvm::SmallString<128> newCast;
       newCast += '(';
-      newCast +=  retained ? "__bridge_transfer " : "__bridge ";
+      newCast += bridge;
       newCast += E->getType().getAsString(Pass.Ctx.PrintingPolicy);
       newCast += ')';
 
@@ -572,36 +588,16 @@ private:
   }
 
   void transformObjCToNonObjCCast(CastExpr *E) {
-    // FIXME: Handle these casts.
-    return;
-#if 0
-    TransformActions &TA = Pass.TA;
+    if (isSelf(E->getSubExpr()))
+      return rewriteToBridgedCast(E, OBC_Bridge);
+  }
 
-    // We will remove the compiler diagnostic.
-    if (!TA.hasDiagnostic(diag::err_arc_mismatched_cast,
-                          diag::err_arc_cast_requires_bridge,
-                          E->getLocStart()))
-      return;
-
-    Transaction Trans(TA);
-    TA.clearDiagnostic(diag::err_arc_mismatched_cast,
-                              diag::err_arc_cast_requires_bridge,
-                              E->getLocStart());
-
-    assert(!E->getType()->isObjCObjectPointerType());
-
-    bool shouldCast = !isa<CStyleCastExpr>(E) &&
-                      !E->getType()->getPointeeType().isConstQualified();
-    SourceLocation loc = E->getSubExpr()->getLocStart();
-    if (isa<ParenExpr>(E->getSubExpr())) {
-      TA.insert(loc, shouldCast ? "(void*)objc_unretainedPointer"
-                                : "objc_unretainedPointer");
-    } else {
-      TA.insert(loc, shouldCast ? "(void*)objc_unretainedPointer("
-                                : "objc_unretainedPointer(");
-      TA.insertAfterToken(E->getLocEnd(), ")");
-    }
-#endif
+  bool isSelf(Expr *E) {
+    E = E->IgnoreParenLValueCasts();
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+      if (DRE->getDecl()->getIdentifier() == SelfII)
+        return true;
+    return false;
   }
 
   static bool isGlobalVar(Expr *E) {

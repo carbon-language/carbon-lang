@@ -24,9 +24,15 @@ void f(BOOL b, id p) {
   str = (NSString *)(b ? kUTTypeRTF : kUTTypePlainText);
   str = (NSString *)p; // no change.
 
-  // FIXME: Add objc -> c examples that we can handle.
-
   CFUUIDRef   _uuid;
   NSString *_uuidString = (NSString *)CFUUIDCreateString(kCFAllocatorDefault, _uuid);
   _uuidString = [(NSString *)CFUUIDCreateString(kCFAllocatorDefault, _uuid) autorelease];
 }
+
+@implementation NSString (StrExt)
+- (NSString *)stringEscapedAsURI {
+  CFStringRef str = (CFStringRef)self;
+  CFStringRef str2 = self;
+  return self;
+}
+@end
