@@ -1444,9 +1444,9 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc5,0x79,0x7e,0x30]
           vmovd  %xmm14, (%rax)
 
-// CHECK: vmovd  %rax, %xmm14
-// CHECK: encoding: [0xc4,0x61,0xf9,0x6e,0xf0]
-          vmovd  %rax, %xmm14
+// CHECK: vmovd  %eax, %xmm14
+// CHECK: encoding: [0xc5,0x79,0x6e,0xf0]
+          vmovd  %eax, %xmm14
 
 // CHECK: vmovq  %xmm14, (%rax)
 // CHECK: encoding: [0xc5,0x79,0xd6,0x30]

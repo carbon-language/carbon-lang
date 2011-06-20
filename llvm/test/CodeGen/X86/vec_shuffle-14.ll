@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse2
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | grep movd | count 1
-; RUN: llc < %s -march=x86-64 -mattr=+sse2 | grep movd | count 2
-; RUN: llc < %s -march=x86-64 -mattr=+sse2 | grep movq | count 3
+; RUN: llc < %s -march=x86-64 -mattr=+sse2 | grep movd | count 1
+; RUN: llc < %s -march=x86-64 -mattr=+sse2 | grep movq | count 4
 ; RUN: llc < %s -march=x86 -mattr=+sse2 | not grep xor
 
 define <4 x i32> @t1(i32 %a) nounwind  {
