@@ -12,9 +12,14 @@
 
 #----------------------------------------------------------------------
 # If ARCH is not defined, default to x86_64.
+# If OS is not defined, use 'uname -s' to determine the OS name.
 #----------------------------------------------------------------------
 ifeq "$(ARCH)" ""
 	ARCH = x86_64
+endif
+
+ifeq "$(OS)" ""
+	OS = $(shell uname -s)
 endif
 
 #----------------------------------------------------------------------
@@ -31,15 +36,27 @@ endif
 #----------------------------------------------------------------------
 # Change any build/tool options needed
 #----------------------------------------------------------------------
-DS := /usr/bin/dsymutil
-DSFLAGS =
-CFLAGS ?=-arch $(ARCH) -gdwarf-2 -O0
+CFLAGS ?= -gdwarf-2 -O0
 CXXFLAGS +=$(CFLAGS)
 LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
 OBJECTS =
 EXE ?= a.out
-DSYM = $(EXE).dSYM
+
+ifeq "$(OS)" "Darwin"
+	CFLAGS += -arch $(ARCH)
+	DS := /usr/bin/dsymutil
+	DSFLAGS =
+	DSYM = $(EXE).dSYM
+endif
+
+ifneq "$(DYLIB_NAME)" ""
+	ifeq "$(OS)" "Darwin"
+		DYLIB_FILENAME = lib$(DYLIB_NAME).dylib
+	else
+		DYLIB_FILENAME = lib$(DYLIB_NAME).so
+	endif
+endif
 
 # Function that returns the counterpart C++ compiler, given $(CC) as arg.
 cxx_compiler = $(if $(findstring clang,$(1)), $(subst clang,clang++,$(1)), $(if $(findstring llvm-gcc,$(1)), $(subst llvm-gcc,llvm-g++,$(1)), $(subst gcc,g++,$(1))))
@@ -95,9 +112,11 @@ endif
 #----------------------------------------------------------------------
 # Make the dSYM file from the executable if $(MAKE_DSYM) != "NO"
 #----------------------------------------------------------------------
-ifneq "$(MAKE_DSYM)" "NO"
+ifeq "$(OS)" "Darwin"
+	ifneq "$(MAKE_DSYM)" "NO"
 $(DSYM) : $(EXE)
 	$(DS) $(DSFLAGS) -o "$(DSYM)" "$(EXE)"
+	endif
 endif
 
 #----------------------------------------------------------------------
@@ -107,15 +126,19 @@ ifeq "$(DYLIB_NAME)" ""
 $(EXE) : $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o "$(EXE)"
 else
-$(EXE) : $(OBJECTS) $(DYLIB_NAME)
-	$(LD) $(LDFLAGS) $(OBJECTS) -L. -l$(subst lib,,$(basename $(DYLIB_NAME))) -o "$(EXE)"
+$(EXE) : $(OBJECTS) $(DYLIB_FILENAME)
+	$(LD) $(LDFLAGS) $(OBJECTS) -L. -l$(DYLIB_NAME) -o "$(EXE)"
 endif
 
 #----------------------------------------------------------------------
 # Make the dylib
 #----------------------------------------------------------------------
-$(DYLIB_NAME) : $(DYLIB_OBJECTS)
-	$(LD) $(LDFLAGS) $(DYLIB_OBJECTS) -install_name "@executable_path/$(DYLIB_NAME)" -dynamiclib -o "$(DYLIB_NAME)"
+$(DYLIB_FILENAME) : $(DYLIB_OBJECTS)
+ifeq "$(OS)" "Darwin"
+	$(LD) $(LDFLAGS) $(DYLIB_OBJECTS) -install_name "@executable_path/$(DYLIB_FILENAME)" -dynamiclib -o "$(DYLIB_FILENAME)"
+else
+	$(LD) $(LDFLAGS) $(DYLIB_OBJECTS) -shared -o "$(DYLIB_FILENAME)"
+endif
 
 #----------------------------------------------------------------------
 # Automatic variables based on items already entered. Below we create
@@ -173,7 +196,7 @@ clean::
 ifeq "$(DYLIB_NAME)" ""
 	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS)
 else
-	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(DYLIB_OBJECTS) $(DYLIB_NAME) $(DYLIB_NAME).dSYM
+	rm -rf "$(EXE)" "$(DSYM)" $(OBJECTS) $(PREREQS) $(DYLIB_OBJECTS) $(DYLIB_FILENAME) $(DYLIB_FILENAME).dSYM
 endif
 
 #----------------------------------------------------------------------
