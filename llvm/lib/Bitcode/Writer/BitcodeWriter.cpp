@@ -1079,12 +1079,16 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     AbbrevToUse = FUNCTION_INST_UNREACHABLE_ABBREV;
     break;
 
-  case Instruction::PHI:
+  case Instruction::PHI: {
+    const PHINode &PN = cast<PHINode>(I);
     Code = bitc::FUNC_CODE_INST_PHI;
-    Vals.push_back(VE.getTypeID(I.getType()));
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-      Vals.push_back(VE.getValueID(I.getOperand(i)));
+    Vals.push_back(VE.getTypeID(PN.getType()));
+    for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
+      Vals.push_back(VE.getValueID(PN.getIncomingValue(i)));
+      Vals.push_back(VE.getValueID(PN.getIncomingBlock(i)));
+    }
     break;
+  }
 
   case Instruction::Alloca:
     Code = bitc::FUNC_CODE_INST_ALLOCA;

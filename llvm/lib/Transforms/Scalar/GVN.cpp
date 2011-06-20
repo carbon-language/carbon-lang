@@ -1190,8 +1190,10 @@ static Value *ConstructSSAForLoadSet(LoadInst *LI,
     // escaping uses to any values that are operands to these PHIs.
     for (unsigned i = 0, e = NewPHIs.size(); i != e; ++i) {
       PHINode *P = NewPHIs[i];
-      for (unsigned ii = 0, ee = P->getNumIncomingValues(); ii != ee; ++ii)
-        AA->addEscapingUse(P->getOperandUse(2*ii));
+      for (unsigned ii = 0, ee = P->getNumIncomingValues(); ii != ee; ++ii) {
+        unsigned jj = PHINode::getOperandNumForIncomingValue(ii);
+        AA->addEscapingUse(P->getOperandUse(jj));
+      }
     }
   }
 
@@ -2149,8 +2151,11 @@ bool GVN::performPRE(Function &F) {
         // Because we have added a PHI-use of the pointer value, it has now
         // "escaped" from alias analysis' perspective.  We need to inform
         // AA of this.
-        for (unsigned ii = 0, ee = Phi->getNumIncomingValues(); ii != ee; ++ii)
-          VN.getAliasAnalysis()->addEscapingUse(Phi->getOperandUse(2*ii));
+        for (unsigned ii = 0, ee = Phi->getNumIncomingValues(); ii != ee;
+             ++ii) {
+          unsigned jj = PHINode::getOperandNumForIncomingValue(ii);
+          VN.getAliasAnalysis()->addEscapingUse(Phi->getOperandUse(jj));
+        }
         
         if (MD)
           MD->invalidateCachedPointerInfo(Phi);

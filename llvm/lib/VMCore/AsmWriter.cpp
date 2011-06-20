@@ -1905,16 +1905,16 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(I.getOperand(i), true);
     }
     Out << ']';
-  } else if (isa<PHINode>(I)) {
+  } else if (const PHINode *PN = dyn_cast<PHINode>(&I)) {
     Out << ' ';
     TypePrinter.print(I.getType(), Out);
     Out << ' ';
 
-    for (unsigned op = 0, Eop = I.getNumOperands(); op < Eop; op += 2) {
+    for (unsigned op = 0, Eop = PN->getNumIncomingValues(); op < Eop; ++op) {
       if (op) Out << ", ";
       Out << "[ ";
-      writeOperand(I.getOperand(op  ), false); Out << ", ";
-      writeOperand(I.getOperand(op+1), false); Out << " ]";
+      writeOperand(PN->getIncomingValue(op), false); Out << ", ";
+      writeOperand(PN->getIncomingBlock(op), false); Out << " ]";
     }
   } else if (const ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(&I)) {
     Out << ' ';

@@ -1353,9 +1353,10 @@ void CppWriter::printInstruction(const Instruction *I,
     printEscapedString(phi->getName());
     Out << "\", " << bbname << ");";
     nl(Out);
-    for (unsigned i = 0; i < phi->getNumOperands(); i+=2) {
+    for (unsigned i = 0; i < phi->getNumIncomingValues(); ++i) {
       Out << iName << "->addIncoming("
-          << opNames[i] << ", " << opNames[i+1] << ");";
+          << opNames[PHINode::getOperandNumForIncomingValue(i)] << ", "
+          << opNames[PHINode::getOperandNumForIncomingBlock(i)] << ");";
       nl(Out);
     }
     break;

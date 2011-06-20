@@ -1482,8 +1482,10 @@ void Verifier::visitInstruction(Instruction &I) {
         // PHI nodes differ from other nodes because they actually "use" the
         // value in the predecessor basic blocks they correspond to.
         BasicBlock *UseBlock = BB;
-        if (isa<PHINode>(I))
-          UseBlock = dyn_cast<BasicBlock>(I.getOperand(i+1));
+        if (PHINode *PN = dyn_cast<PHINode>(&I)) {
+          unsigned j = PHINode::getIncomingValueNumForOperand(i);
+          UseBlock = PN->getIncomingBlock(j);
+        }
         Assert2(UseBlock, "Invoke operand is PHI node with bad incoming-BB",
                 Op, &I);
 
@@ -1515,10 +1517,11 @@ void Verifier::visitInstruction(Instruction &I) {
                 return;
               }
         }
-      } else if (isa<PHINode>(I)) {
+      } else if (PHINode *PN = dyn_cast<PHINode>(&I)) {
         // PHI nodes are more difficult than other nodes because they actually
         // "use" the value in the predecessor basic blocks they correspond to.
-        BasicBlock *PredBB = dyn_cast<BasicBlock>(I.getOperand(i+1));
+        unsigned j = PHINode::getIncomingValueNumForOperand(i);
+        BasicBlock *PredBB = PN->getIncomingBlock(j);
         Assert2(PredBB && (DT->dominates(OpBlock, PredBB) ||
                            !DT->isReachableFromEntry(PredBB)),
                 "Instruction does not dominate all uses!", Op, &I);

@@ -220,7 +220,7 @@ bool LoopRotate::rotateLoop(Loop *L) {
   // For PHI nodes, the value available in OldPreHeader is just the
   // incoming value from OldPreHeader.
   for (; PHINode *PN = dyn_cast<PHINode>(I); ++I)
-    ValueMap[PN] = PN->getIncomingValue(PN->getBasicBlockIndex(OrigPreheader));
+    ValueMap[PN] = PN->getIncomingValueForBlock(OrigPreheader);
 
   // For the rest of the instructions, either hoist to the OrigPreheader if
   // possible or create a clone in the OldPreHeader if not.
