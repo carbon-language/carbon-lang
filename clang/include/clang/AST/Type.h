@@ -1456,7 +1456,9 @@ public:
 
   /// \brief Determine wither this type is a C++ elaborated-type-specifier.
   bool isElaboratedTypeSpecifier() const;
-  
+
+  bool canDecayToPointerType() const;
+
   /// hasPointerRepresentation - Whether this type is represented
   /// natively as a pointer; this includes pointers, references, block
   /// pointers, and Objective-C interface, qualified id, and qualified
@@ -4515,6 +4517,19 @@ inline bool Type::isPointerType() const {
 inline bool Type::isAnyPointerType() const {
   return isPointerType() || isObjCObjectPointerType();
 }
+
+/// \brief Tests whether the type behaves like a pointer type.
+///
+/// This includes all of the pointer types including block pointers,
+/// member pointers, and ObjC Object pointers.
+///
+/// Note that this is distinct from hasPointerRepresentation.
+///
+/// \returns True for types which behave like pointer types.
+inline bool Type::isPointerLikeType() const {
+  return isAnyPointerType() || isBlockPointerType() || isMemberPointerType();
+}
+
 inline bool Type::isBlockPointerType() const {
   return isa<BlockPointerType>(CanonicalType);
 }
@@ -4647,6 +4662,11 @@ inline bool Type::isSpecificPlaceholderType(unsigned K) const {
 /// an overloaded operator.
 inline bool Type::isOverloadableType() const {
   return isDependentType() || isRecordType() || isEnumeralType();
+}
+
+/// \brief Determines whether this type can decay to a pointer type.
+inline bool Type::canDecayToPointerType() const {
+  return isFunctionType() || isArrayType();
 }
 
 inline bool Type::hasPointerRepresentation() const {
