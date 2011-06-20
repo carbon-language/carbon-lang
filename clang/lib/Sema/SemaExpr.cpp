@@ -7218,13 +7218,13 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
       } else if (PointeeTy->isFunctionType()) {
         if (getLangOptions().CPlusPlus) {
           Diag(Loc, diag::err_typecheck_pointer_arith_function_type)
-            << lex.get()->getType() << lex.get()->getSourceRange();
+            << PExp->getType() << PExp->getSourceRange();
           return QualType();
         }
 
         // GNU extension: arithmetic on pointer to function
         Diag(Loc, diag::ext_gnu_ptr_func_arith)
-          << lex.get()->getType() << lex.get()->getSourceRange();
+          << PExp->getType() << PExp->getSourceRange();
       } else {
         // Check if we require a complete type.
         if (((PExp->getType()->isPointerType() &&

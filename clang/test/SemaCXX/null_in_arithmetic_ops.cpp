@@ -33,7 +33,7 @@ void f() {
   v = 0 ? NULL + d : d + NULL; // \
     expected-error {{invalid operands to binary expression ('long' and 'void (X::*)()')}} \
     expected-error {{invalid operands to binary expression ('void (X::*)()' and 'long')}}
-  v = 0 ? NULL + e : e + NULL; // expected-error 2{{arithmetic on pointer to function type}}
+  v = 0 ? NULL + e : e + NULL; // expected-error 2{{arithmetic on pointer to function type 'void (*)()'}}
   v = 0 ? NULL + f : f + NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
   v = 0 ? NULL + "f" : "f" + NULL; // expected-warning 2{{use of NULL in arithmetic operation}}
 

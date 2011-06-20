@@ -14,7 +14,8 @@ void a(S* b, void* c) {
   /* The next couple tests are only pedantic warnings in gcc */
   void (*d)(S*,void*) = a;
   d += 1;    // expected-warning {{arithmetic on pointer to function type 'void (*)(S *, void *)' is a GNU extension}}
-  d++;       // expected-warning {{arithmetic on pointer to function type 'void (*)(S *, void *)' is a GNU extension}}}
+  d++;       // expected-warning {{arithmetic on pointer to function type 'void (*)(S *, void *)' is a GNU extension}}
   d--;       // expected-warning {{arithmetic on pointer to function type 'void (*)(S *, void *)' is a GNU extension}}
   d -= 1;    // expected-warning {{arithmetic on pointer to function type 'void (*)(S *, void *)' is a GNU extension}}
+  (void)(1 + d); // expected-warning {{arithmetic on pointer to function type 'void (*)(S *, void *)' is a GNU extension}}
 }
