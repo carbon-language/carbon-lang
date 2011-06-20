@@ -621,6 +621,27 @@ Constant *ConstantArray::get(LLVMContext &Context, StringRef Str,
   return get(ATy, ElementVals);
 }
 
+/// getTypeForElements - Return an anonymous struct type to use for a constant
+/// with the specified set of elements.  The list must not be empty.
+StructType *ConstantStruct::getTypeForElements(LLVMContext &Context,
+                                               ArrayRef<Constant*> V,
+                                               bool Packed) {
+  SmallVector<const Type*, 16> EltTypes;
+  for (unsigned i = 0, e = V.size(); i != e; ++i)
+    EltTypes.push_back(V[i]->getType());
+  
+  return StructType::get(Context, EltTypes, Packed);
+}
+
+
+StructType *ConstantStruct::getTypeForElements(ArrayRef<Constant*> V,
+                                               bool Packed) {
+  assert(!V.empty() &&
+         "ConstantStruct::getTypeForElements cannot be called on empty list");
+  return getTypeForElements(V[0]->getContext(), V, Packed);
+}
+
+
 ConstantStruct::ConstantStruct(const StructType *T,
                                const std::vector<Constant*> &V)
   : Constant(T, ConstantStructVal,
@@ -639,45 +660,28 @@ ConstantStruct::ConstantStruct(const StructType *T,
 }
 
 // ConstantStruct accessors.
-Constant *ConstantStruct::get(const StructType* T,
-                              const std::vector<Constant*>& V) {
-  LLVMContextImpl* pImpl = T->getContext().pImpl;
+Constant *ConstantStruct::get(const StructType *ST, ArrayRef<Constant*> V) {
+  assert(ST->getNumElements() == V.size() &&
+         "Incorrect # elements specified to ConstantStruct::get");
   
-  // Create a ConstantAggregateZero value if all elements are zeros...
+  // Create a ConstantAggregateZero value if all elements are zeros.
   for (unsigned i = 0, e = V.size(); i != e; ++i)
-    if (!V[i]->isNullValue())
-      return pImpl->StructConstants.getOrCreate(T, V);
+    if (!V[i]->isNullValue()) {
+      // FIXME: Eliminate temporary std::vector here!
+      return ST->getContext().pImpl->StructConstants.getOrCreate(ST, V.vec());
+    }
 
-  return ConstantAggregateZero::get(T);
+  return ConstantAggregateZero::get(ST);
 }
 
-Constant *ConstantStruct::get(LLVMContext &Context,
-                              const std::vector<Constant*>& V, bool packed) {
-  std::vector<const Type*> StructEls;
-  StructEls.reserve(V.size());
-  for (unsigned i = 0, e = V.size(); i != e; ++i)
-    StructEls.push_back(V[i]->getType());
-  return get(StructType::get(Context, StructEls, packed), V);
-}
-
-Constant *ConstantStruct::get(LLVMContext &Context,
-                              Constant *const *Vals, unsigned NumVals,
-                              bool Packed) {
-  // FIXME: make this the primary ctor method.
-  return get(Context, std::vector<Constant*>(Vals, Vals+NumVals), Packed);
-}
-
-Constant* ConstantStruct::get(LLVMContext &Context, bool Packed,
-                              Constant * Val, ...) {
+Constant* ConstantStruct::get(const StructType *T, ...) {
   va_list ap;
-  std::vector<Constant*> Values;
-  va_start(ap, Val);
-  while (Val) {
+  SmallVector<Constant*, 8> Values;
+  va_start(ap, T);
+  while (Constant *Val = va_arg(ap, llvm::Constant*))
     Values.push_back(Val);
-    Val = va_arg(ap, llvm::Constant*);
-  }
   va_end(ap);
-  return get(Context, Values, Packed);
+  return get(T, Values);
 }
 
 ConstantVector::ConstantVector(const VectorType *T,

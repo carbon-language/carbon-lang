@@ -1399,7 +1399,7 @@ llvm::ConstantFoldCall(Function *F,
             ConstantInt::get(F->getContext(), Res),
             ConstantInt::get(Type::getInt1Ty(F->getContext()), Overflow)
           };
-          return ConstantStruct::get(F->getContext(), Ops, 2, false);
+          return ConstantStruct::get(cast<StructType>(F->getReturnType()), Ops);
         }
         }
       }

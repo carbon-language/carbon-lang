@@ -612,9 +612,10 @@ LLVMValueRef LLVMConstStringInContext(LLVMContextRef C, const char *Str,
 LLVMValueRef LLVMConstStructInContext(LLVMContextRef C, 
                                       LLVMValueRef *ConstantVals,
                                       unsigned Count, LLVMBool Packed) {
-  return wrap(ConstantStruct::get(*unwrap(C),
-                                  unwrap<Constant>(ConstantVals, Count),
-                                  Count, Packed != 0));
+  Constant **Elements = unwrap<Constant>(ConstantVals, Count);
+  return wrap(ConstantStruct::getAnon(*unwrap(C),
+                                      ArrayRef<Constant*>(Elements, Count),
+                                      Packed != 0));
 }
 
 LLVMValueRef LLVMConstString(const char *Str, unsigned Length,

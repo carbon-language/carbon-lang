@@ -942,7 +942,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     }
     
     if (const StructType* ST = dyn_cast<StructType>(AggTy))
-      return ConstantStruct::get(ST->getContext(), Ops, ST->isPacked());
+      return ConstantStruct::get(ST, Ops);
     return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
   }
   
@@ -973,7 +973,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     }
     
     if (const StructType *ST = dyn_cast<StructType>(AggTy))
-      return ConstantStruct::get(ST->getContext(), Ops, ST->isPacked());
+      return ConstantStruct::get(ST, Ops);
     return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
   }
   
@@ -988,7 +988,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
     }
     
     if (const StructType* ST = dyn_cast<StructType>(Agg->getType()))
-      return ConstantStruct::get(ST->getContext(), Ops, ST->isPacked());
+      return ConstantStruct::get(ST, Ops);
     return ConstantArray::get(cast<ArrayType>(Agg->getType()), Ops);
   }
 

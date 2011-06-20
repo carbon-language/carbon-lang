@@ -412,7 +412,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           UndefValue::get(LHS->getType()),
           ConstantInt::getTrue(II->getContext())
         };
-        Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
+        const StructType *ST = cast<StructType>(II->getType());
+        Constant *Struct = ConstantStruct::get(ST, V);
         return InsertValueInst::Create(Struct, Add, 0);
       }
 
@@ -425,7 +426,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           UndefValue::get(LHS->getType()),
           ConstantInt::getFalse(II->getContext())
         };
-        Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
+        const StructType *ST = cast<StructType>(II->getType());
+        Constant *Struct = ConstantStruct::get(ST, V);
         return InsertValueInst::Create(Struct, Add, 0);
       }
     }
@@ -452,7 +454,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           UndefValue::get(II->getArgOperand(0)->getType()),
           ConstantInt::getFalse(II->getContext())
         };
-        Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
+        Constant *Struct =
+          ConstantStruct::get(cast<StructType>(II->getType()), V);
         return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
       }
     }
@@ -472,7 +475,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           UndefValue::get(II->getArgOperand(0)->getType()),
           ConstantInt::getFalse(II->getContext())
         };
-        Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
+        Constant *Struct = 
+          ConstantStruct::get(cast<StructType>(II->getType()), V);
         return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
       }
     }
@@ -503,7 +507,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         UndefValue::get(LHS->getType()),
         Builder->getFalse()
       };
-      Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
+      Constant *Struct = ConstantStruct::get(cast<StructType>(II->getType()),V);
       return InsertValueInst::Create(Struct, Mul, 0);
     }
   } // FALL THROUGH
@@ -532,7 +536,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           UndefValue::get(II->getArgOperand(0)->getType()),
           ConstantInt::getFalse(II->getContext())
         };
-        Constant *Struct = ConstantStruct::get(II->getContext(), V, 2, false);
+        Constant *Struct = 
+          ConstantStruct::get(cast<StructType>(II->getType()), V);
         return InsertValueInst::Create(Struct, II->getArgOperand(0), 0);
       }
     }

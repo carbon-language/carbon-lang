@@ -164,7 +164,8 @@ void llvm::InsertProfilingShutdownCall(Function *Callee, Module *Mod) {
   GlobalVariable *GlobalDtors = new GlobalVariable(
       *Mod, ArrayType::get(GlobalDtorElemTy, 1), false,
       GlobalValue::AppendingLinkage, NULL, "llvm.global_dtors");
-  dtors.push_back(ConstantStruct::get(Mod->getContext(), Elem, 2, false));
+                                    
+  dtors.push_back(ConstantStruct::get(GlobalDtorElemTy, Elem));
   GlobalDtors->setInitializer(ConstantArray::get(
       cast<ArrayType>(GlobalDtors->getType()->getElementType()), dtors));
 }

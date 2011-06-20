@@ -60,7 +60,7 @@ static void PR7658() {
     v2.push_back(ConstantPointerNull::get(p4));
   }
 
-  WeakVH CS = ConstantStruct::get(ctx, v2, false); // { i32 14, opaque* null, opaque* null}
+  WeakVH CS = ConstantStruct::getAnon(ctx, v2, false); // { i32 14, opaque* null, opaque* null}
 
   StructType *s2 = StructType::get(ctx, t2);
   PATypeHolder h2(s2);

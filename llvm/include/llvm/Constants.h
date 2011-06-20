@@ -422,14 +422,29 @@ protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
 public:
   // ConstantStruct accessors
-  static Constant *get(const StructType *T, const std::vector<Constant*> &V);
-  static Constant *get(LLVMContext &Context, 
-                       const std::vector<Constant*> &V, bool Packed);
-  static Constant *get(LLVMContext &Context,
-                       Constant *const *Vals, unsigned NumVals, bool Packed);
-  static Constant *get(LLVMContext &Context, bool Packed,
-                       Constant * Val, ...) END_WITH_NULL;
+  static Constant *get(const StructType *T, ArrayRef<Constant*> V);
+  static Constant *get(const StructType *T, ...) END_WITH_NULL;
 
+  /// getAnon - Return an anonymous struct that has the specified
+  /// elements.  If the struct is possibly empty, then you must specify a
+  /// context.
+  static Constant *getAnon(ArrayRef<Constant*> V, bool Packed = false) {
+    return get(getTypeForElements(V, Packed), V);
+  }
+  static Constant *getAnon(LLVMContext &Ctx, 
+                           ArrayRef<Constant*> V, bool Packed = false) {
+    return get(getTypeForElements(Ctx, V, Packed), V);
+  }
+
+  /// getTypeForElements - Return an anonymous struct type to use for a constant
+  /// with the specified set of elements.  The list must not be empty.
+  static StructType *getTypeForElements(ArrayRef<Constant*> V,
+                                        bool Packed = false);
+  /// getTypeForElements - This version of the method allows an empty list.
+  static StructType *getTypeForElements(LLVMContext &Ctx,
+                                        ArrayRef<Constant*> V,
+                                        bool Packed = false);
+  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

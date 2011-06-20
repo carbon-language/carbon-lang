@@ -1987,8 +1987,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         ParseToken(lltok::rbrace, "expected end of struct constant"))
       return true;
 
-    ID.ConstantVal = ConstantStruct::get(Context, Elts.data(),
-                                         Elts.size(), false);
+    // FIXME: Get this type from context instead of reconstructing it!
+    ID.ConstantVal = ConstantStruct::getAnon(Context, Elts);
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -2007,8 +2007,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       return true;
 
     if (isPackedStruct) {
-      ID.ConstantVal =
-        ConstantStruct::get(Context, Elts.data(), Elts.size(), true);
+      // FIXME: Get this type from context instead of reconstructing it!
+      ID.ConstantVal = ConstantStruct::getAnon(Context, Elts, true);
       ID.Kind = ValID::t_Constant;
       return false;
     }
