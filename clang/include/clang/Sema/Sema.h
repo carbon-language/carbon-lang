@@ -5613,7 +5613,11 @@ public:
   ExprResult CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
                                 Expr *CastExpr, CastKind &Kind,
                                 CXXCastPath &BasePath, bool FunctionalStyle);
-  
+    
+  /// \brief Checks for valid expressions which can be cast to an ObjC
+  /// pointer without needing a bridge cast.
+  bool ValidObjCARCNoBridgeCastExpr(const Expr *Exp);
+    
   /// \brief Checks for invalid conversions and casts between
   /// retainable pointers and other pointer kinds.
   void CheckObjCARCConversion(SourceRange castRange, QualType castType, 

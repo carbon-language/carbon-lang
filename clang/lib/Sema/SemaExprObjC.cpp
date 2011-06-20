@@ -1550,6 +1550,12 @@ namespace {
   };
 }
 
+bool
+Sema::ValidObjCARCNoBridgeCastExpr(const Expr *Exp) {
+  Exp = Exp->IgnoreParenImpCasts();
+  return isa<ObjCMessageExpr>(Exp) || isa<ObjCPropertyRefExpr>(Exp);
+}
+
 void 
 Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
                              Expr *castExpr, CheckedConversionKind CCK) {
@@ -1606,6 +1612,10 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
     
     if (castType->isObjCARCBridgableType() && 
         castExprType->isCARCBridgableType()) {
+      // explicit unbridged casts are allowed if the source of the cast is a 
+      // message sent to an objc method (or property access)
+      if (ValidObjCARCNoBridgeCastExpr(castExpr))
+        return;
       Diag(loc, diag::err_arc_cast_requires_bridge)
         << 2
         << castExprType
