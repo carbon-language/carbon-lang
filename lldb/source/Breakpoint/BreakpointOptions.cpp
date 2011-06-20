@@ -309,6 +309,14 @@ BreakpointOptions::GetDescription (Stream *s, lldb::DescriptionLevel level) cons
         }
     }
             
+    if (m_callback_baton_sp.get())
+    {
+        if (level != eDescriptionLevelBrief)
+        {
+            s->EOL();
+            m_callback_baton_sp->GetDescription (s, level);
+        }
+    }
     if (m_condition_ap.get())
     {
        if (level != eDescriptionLevelBrief)
