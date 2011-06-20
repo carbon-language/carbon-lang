@@ -151,6 +151,104 @@ CodeGenRegister::addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet) const {
 }
 
 //===----------------------------------------------------------------------===//
+//                               RegisterTuples
+//===----------------------------------------------------------------------===//
+
+// A RegisterTuples def is used to generate pseudo-registers from lists of
+// sub-registers. We provide a SetTheory expander class that returns the new
+// registers.
+namespace {
+struct TupleExpander : SetTheory::Expander {
+  void expand(SetTheory &ST, Record *Def, SetTheory::RecSet &Elts) {
+    std::vector<Record*> Indices = Def->getValueAsListOfDefs("SubRegIndices");
+    unsigned Dim = Indices.size();
+    ListInit *SubRegs = Def->getValueAsListInit("SubRegs");
+    if (Dim != SubRegs->getSize())
+      throw TGError(Def->getLoc(), "SubRegIndices and SubRegs size mismatch");
+    if (Dim < 2)
+      throw TGError(Def->getLoc(), "Tuples must have at least 2 sub-registers");
+
+    // Evaluate the sub-register lists to be zipped.
+    unsigned Length = ~0u;
+    SmallVector<SetTheory::RecSet, 4> Lists(Dim);
+    for (unsigned i = 0; i != Dim; ++i) {
+      ST.evaluate(SubRegs->getElement(i), Lists[i]);
+      Length = std::min(Length, unsigned(Lists[i].size()));
+    }
+
+    if (Length == 0)
+      return;
+
+    // Precompute some types.
+    Record *RegisterCl = Def->getRecords().getClass("Register");
+    RecTy *RegisterRecTy = new RecordRecTy(RegisterCl);
+    StringInit *BlankName = new StringInit("");
+
+    // Zip them up.
+    for (unsigned n = 0; n != Length; ++n) {
+      std::string Name;
+      Record *Proto = Lists[0][n];
+      std::vector<Init*> Tuple;
+      unsigned CostPerUse = 0;
+      for (unsigned i = 0; i != Dim; ++i) {
+        Record *Reg = Lists[i][n];
+        if (i) Name += '_';
+        Name += Reg->getName();
+        Tuple.push_back(new DefInit(Reg));
+        CostPerUse = std::max(CostPerUse,
+                              unsigned(Reg->getValueAsInt("CostPerUse")));
+      }
+
+      // Create a new Record representing the synthesized register. This record
+      // is only for consumption by CodeGenRegister, it is not added to the
+      // RecordKeeper.
+      Record *NewReg = new Record(Name, Def->getLoc(), Def->getRecords());
+      Elts.insert(NewReg);
+
+      // Copy Proto super-classes.
+      for (unsigned i = 0, e = Proto->getSuperClasses().size(); i != e; ++i)
+        NewReg->addSuperClass(Proto->getSuperClasses()[i]);
+
+      // Copy Proto fields.
+      for (unsigned i = 0, e = Proto->getValues().size(); i != e; ++i) {
+        RecordVal RV = Proto->getValues()[i];
+
+        // Replace the sub-register list with Tuple.
+        if (RV.getName() == "SubRegs")
+          RV.setValue(new ListInit(Tuple, RegisterRecTy));
+
+        // Provide a blank AsmName. MC hacks are required anyway.
+        if (RV.getName() == "AsmName")
+          RV.setValue(BlankName);
+
+        // CostPerUse is aggregated from all Tuple members.
+        if (RV.getName() == "CostPerUse")
+          RV.setValue(new IntInit(CostPerUse));
+
+        // Copy fields from the RegisterTuples def.
+        if (RV.getName() == "SubRegIndices" ||
+            RV.getName() == "CompositeIndices") {
+          NewReg->addValue(*Def->getValue(RV.getName()));
+          continue;
+        }
+
+        // Some fields get their default uninitialized value.
+        if (RV.getName() == "DwarfNumbers" ||
+            RV.getName() == "DwarfAlias" ||
+            RV.getName() == "Aliases") {
+          NewReg->addValue(*RegisterCl->getValue(RV.getName()));
+          continue;
+        }
+
+        // Everything else is copied from Proto.
+        NewReg->addValue(RV);
+      }
+    }
+  }
+};
+}
+
+//===----------------------------------------------------------------------===//
 //                            CodeGenRegisterClass
 //===----------------------------------------------------------------------===//
 
@@ -258,8 +356,9 @@ const std::string &CodeGenRegisterClass::getName() const {
 //===----------------------------------------------------------------------===//
 
 CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
-  // Configure register Sets to understand register classes.
+  // Configure register Sets to understand register classes and tuples.
   Sets.addFieldExpander("RegisterClass", "MemberList");
+  Sets.addExpander("RegisterTuples", new TupleExpander());
 
   // Read in the user-defined (named) sub-register indices.
   // More indices will be synthesized later.
@@ -274,6 +373,15 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   // Assign the enumeration values.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i)
     getReg(Regs[i]);
+
+  // Expand tuples and number the new registers.
+  std::vector<Record*> Tups =
+    Records.getAllDerivedDefinitions("RegisterTuples");
+  for (unsigned i = 0, e = Tups.size(); i != e; ++i) {
+    const std::vector<Record*> *TupRegs = Sets.expand(Tups[i]);
+    for (unsigned j = 0, je = TupRegs->size(); j != je; ++j)
+      getReg((*TupRegs)[j]);
+  }
 
   // Read in register class definitions.
   std::vector<Record*> RCs = Records.getAllDerivedDefinitions("RegisterClass");
