@@ -14,8 +14,8 @@ BUILD_ARCHIVE = 1
 BUILT_SOURCES := LLDBWrapPython.cpp
 
 include $(LLDB_LEVEL)/Makefile
+-include $(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.d
 
-LLDB_PYTHON_SWIG_CPP = $(PROJ_OBJ_ROOT)/$(BuildMode)/LLDBWrapPython.cpp
 PYTHON_DIR := $(ToolDir)
 ifeq ($(HOST_OS),Darwin)
 PYTHON_DEST_DIR := /Library/Python/$(shell python -c 'import sys; print sys.version[:3]')/site-packages
@@ -32,11 +32,19 @@ DEST_LIBLLDB := $(DESTDIR)$(PROJ_libdir)/liblldb$(SHLIBEXT)
 LLDB_SWIG_INCLUDE_DIRS += -I"/usr/local/include"
 LLDB_SWIG_INCLUDE_DIRS += -I"/usr/include"
 
-LLDBWrapPython.cpp:
+SWIG_DEPEND_OPTIONS = -MMD -MF "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp" \
+                      -MT "$*.cpp" -MT "$(PROJ_OBJ_DIR)/$*.cpp.d"
+CPP_DEPEND_MOVEFILE = then $(MV) -f "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp" "$(PROJ_OBJ_DIR)/$*.cpp.d"; \
+                      else $(RM) "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp"; exit 1; fi
+
+LLDBWrapPython.cpp: $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py \
+                    $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py
 	$(Echo) Generating LLDBWrapPython.cpp
-	$(Verb) swig -c++ -shadow -python $(LLDB_SWIG_INCLUDE_DIRS) \
+	$(Verb) if swig -c++ -shadow -python $(LLDB_SWIG_INCLUDE_DIRS) \
           -D__STDC_LIMIT_MACROS -outdir "$(PYTHON_DIR)"   \
-          -o LLDBWrapPython.cpp "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/lldb.swig"
+          $(SWIG_DEPEND_OPTIONS) \
+          -o LLDBWrapPython.cpp "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/lldb.swig" ; \
+          $(CPP_DEPEND_MOVEFILE)
 	$(Verb) python "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-lldb.py" \
 		  "$(PYTHON_DIR)"
 	$(Verb) python "$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/edit-swig-python-wrapper-file.py" \
@@ -55,3 +63,7 @@ install-local:: $(PYTHON_DIR)/lldb.py $(PYTHON_DIR)/embedded_interpreter.py $(DE
 	$(Verb) $(DataInstall) $(PYTHON_DIR)/embedded_interpreter.py $(PYTHON_DEST_DIR)/embedded_interpreter.py
 	$(Verb) $(RM) -f $(PYTHON_DEST_DIR)/lib-dynload/_lldb.so
 	$(Verb) $(AliasTool) $(DEST_LIBLLDB) $(PYTHON_DEST_DIR)/lib-dynload/_lldb.so
+
+clean-local::
+	$(Verb) $(RM) -f LLDBWrapPython.cpp $(PYTHON_DIR)/_lldb.so \
+	          $(PYTHON_DIR)/embedded_interpreter.py $(PYTHON_DIR)/lldb.py
