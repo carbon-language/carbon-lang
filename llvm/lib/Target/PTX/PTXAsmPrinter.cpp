@@ -23,6 +23,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -192,6 +193,18 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
     def += ' ';
     def += getRegisterName(reg);
     def += ';';
+    OutStreamer.EmitRawText(Twine(def));
+  }
+
+  const MachineFrameInfo* FrameInfo = MF->getFrameInfo();
+  DEBUG(dbgs() << "Have " << FrameInfo->getNumObjects() << " frame object(s)\n");
+  for (unsigned i = 0, e = FrameInfo->getNumObjects(); i != e; ++i) {
+    DEBUG(dbgs() << "Size of object: " << FrameInfo->getObjectSize(i) << "\n");
+    std::string def = "\t.reg .b";
+    def += utostr(FrameInfo->getObjectSize(i)*8); // Convert to bits
+    def += " s";
+    def += utostr(i);
+    def += ";";
     OutStreamer.EmitRawText(Twine(def));
   }
 }

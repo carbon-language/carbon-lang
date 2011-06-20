@@ -977,6 +977,30 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
   def RET  : InstPTX<(outs), (ins), "ret",  [(PTXret)]>;
 }
 
+///===- Spill Instructions ------------------------------------------------===//
+// Special instructions used for stack spilling
+def STACKSTOREI16 : InstPTX<(outs), (ins i32imm:$d, RegI16:$a),
+                            "mov.u16\ts$d, $a", []>;
+def STACKSTOREI32 : InstPTX<(outs), (ins i32imm:$d, RegI32:$a),
+                            "mov.u32\ts$d, $a", []>;
+def STACKSTOREI64 : InstPTX<(outs), (ins i32imm:$d, RegI64:$a),
+                            "mov.u64\ts$d, $a", []>;
+def STACKSTOREF32 : InstPTX<(outs), (ins i32imm:$d, RegF32:$a),
+                            "mov.f32\ts$d, $a", []>;
+def STACKSTOREF64 : InstPTX<(outs), (ins i32imm:$d, RegF64:$a),
+                            "mov.f64\ts$d, $a", []>;
+
+def STACKLOADI16 : InstPTX<(outs), (ins RegI16:$d, i32imm:$a),
+                           "mov.u16\t$d, s$a", []>;
+def STACKLOADI32 : InstPTX<(outs), (ins RegI32:$d, i32imm:$a),
+                           "mov.u32\t$d, s$a", []>;
+def STACKLOADI64 : InstPTX<(outs), (ins RegI64:$d, i32imm:$a),
+                           "mov.u64\t$d, s$a", []>;
+def STACKLOADF32 : InstPTX<(outs), (ins RegF32:$d, i32imm:$a),
+                           "mov.f32\t$d, s$a", []>;
+def STACKLOADF64 : InstPTX<(outs), (ins RegF64:$d, i32imm:$a),
+                           "mov.f64\t$d, s$a", []>;
+
 ///===- Intrinsic Instructions --------------------------------------------===//
 
 include "PTXIntrinsicInstrInfo.td"

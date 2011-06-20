@@ -84,6 +84,29 @@ public:
                                 const SmallVectorImpl<MachineOperand> &Cond,
                                 DebugLoc DL) const;
 
+  // Memory operand folding for spills
+  // TODO: Implement this eventually and get rid of storeRegToStackSlot and
+  //       loadRegFromStackSlot.  Doing so will get rid of the "stack" registers
+  //       we currently use to spill, though I doubt the overall effect on ptxas
+  //       output will be large.  I have yet to see a case where ptxas is unable
+  //       to see through the "stack" register usage and hence generates
+  //       efficient code anyway.
+  // virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+  //                                             MachineInstr* MI,
+  //                                          const SmallVectorImpl<unsigned> &Ops,
+  //                                             int FrameIndex) const;
+
+  virtual void storeRegToStackSlot(MachineBasicBlock& MBB,
+                                   MachineBasicBlock::iterator MII,
+                                   unsigned SrcReg, bool isKill, int FrameIndex,
+                                   const TargetRegisterClass* RC,
+                                   const TargetRegisterInfo* TRI) const;
+  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MII,
+                                    unsigned DestReg, int FrameIdx,
+                                    const TargetRegisterClass *RC,
+                                    const TargetRegisterInfo *TRI) const;
+
   // static helper routines
 
   static MachineSDNode *GetPTXMachineNode(SelectionDAG *DAG, unsigned Opcode,

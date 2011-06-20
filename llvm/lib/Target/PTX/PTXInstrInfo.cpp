@@ -288,6 +288,81 @@ InsertBranch(MachineBasicBlock &MBB,
   }
 }
 
+// Memory operand folding for spills
+void PTXInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator MII,
+                                       unsigned SrcReg, bool isKill, int FrameIdx,
+                                       const TargetRegisterClass *RC,
+                                       const TargetRegisterInfo *TRI) const {
+  MachineInstr& MI = *MII;
+  DebugLoc DL = MI.getDebugLoc();
+
+  DEBUG(dbgs() << "storeRegToStackSlot: " << MI);
+
+  int OpCode;
+
+  // Select the appropriate opcode based on the register class
+  if (RC == PTX::RegI16RegisterClass) {
+    OpCode = PTX::STACKSTOREI16;
+  }
+  else if (RC == PTX::RegI32RegisterClass) {
+    OpCode = PTX::STACKSTOREI32;
+  }
+  else if (RC == PTX::RegI64RegisterClass) {
+    OpCode = PTX::STACKSTOREI32;
+  }
+  else if (RC == PTX::RegF32RegisterClass) {
+    OpCode = PTX::STACKSTOREF32;
+  }
+  else if (RC == PTX::RegF64RegisterClass) {
+    OpCode = PTX::STACKSTOREF64;
+  }
+
+  // Build the store instruction (really a mov)
+  MachineInstrBuilder MIB = BuildMI(MBB, MII, DL, get(OpCode));
+  MIB.addImm(FrameIdx);
+  MIB.addReg(SrcReg);
+
+  AddDefaultPredicate(MIB);
+}
+
+void PTXInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator MII,
+                                        unsigned DestReg, int FrameIdx,
+                                        const TargetRegisterClass *RC,
+                                        const TargetRegisterInfo *TRI) const {
+  MachineInstr& MI = *MII;
+  DebugLoc DL = MI.getDebugLoc();
+
+  DEBUG(dbgs() << "loadRegToStackSlot: " << MI);
+
+  int OpCode;
+
+  // Select the appropriate opcode based on the register class
+  if (RC == PTX::RegI16RegisterClass) {
+    OpCode = PTX::STACKLOADI16;
+  }
+  else if (RC == PTX::RegI32RegisterClass) {
+    OpCode = PTX::STACKLOADI32;
+  }
+  else if (RC == PTX::RegI64RegisterClass) {
+    OpCode = PTX::STACKLOADI32;
+  }
+  else if (RC == PTX::RegF32RegisterClass) {
+    OpCode = PTX::STACKLOADF32;
+  }
+  else if (RC == PTX::RegF64RegisterClass) {
+    OpCode = PTX::STACKLOADF64;
+  }
+
+  // Build the load instruction (really a mov)
+  MachineInstrBuilder MIB = BuildMI(MBB, MII, DL, get(OpCode));
+  MIB.addReg(DestReg);
+  MIB.addImm(FrameIdx);
+
+  AddDefaultPredicate(MIB);
+}
+
 // static helper routines
 
 MachineSDNode *PTXInstrInfo::
