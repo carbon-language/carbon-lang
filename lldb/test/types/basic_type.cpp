@@ -84,7 +84,7 @@ typedef struct a_union_nonzero_tag {
 
 void Puts(char const *msg)
 {
-    puts(msg);
+    puts(msg);  // Here is the line we will break on before stepping out
 }
 
 int 

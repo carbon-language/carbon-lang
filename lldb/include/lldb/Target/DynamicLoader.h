@@ -91,6 +91,8 @@ public:
     //------------------------------------------------------------------
     virtual void
     DidLaunch () = 0;
+    
+    
 
     //------------------------------------------------------------------
     /// Get whether the process should stop when images change.

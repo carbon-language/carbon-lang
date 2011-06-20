@@ -1897,6 +1897,9 @@ Process::ReadScalarIntegerFromMemory (addr_t addr,
 addr_t
 Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
 {
+    if (GetPrivateState() != eStateStopped)
+        return LLDB_INVALID_ADDRESS;
+        
 #if defined (USE_ALLOCATE_MEMORY_CACHE)
     return m_allocated_memory_cache.AllocateMemory(size, permissions, error);
 #else

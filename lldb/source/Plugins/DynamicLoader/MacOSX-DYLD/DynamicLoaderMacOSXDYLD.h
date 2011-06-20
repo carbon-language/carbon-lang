@@ -103,19 +103,11 @@ protected:
     bool
     ReadDYLDInfoFromMemoryAndSetNotificationCallback (lldb::addr_t addr);
 
-    uint32_t
-    UpdateAllImageInfos ();
-
     static bool
     NotifyBreakpointHit (void *baton,
                          lldb_private::StoppointCallbackContext *context,
                          lldb::user_id_t break_id,
                          lldb::user_id_t break_loc_id);
-    void
-    UpdateAllImageInfosHeaderAndLoadCommands ();
-
-    bool
-    UpdateCommPageLoadAddress (lldb_private::Module *module);
 
     uint32_t
     AddrByteSize()
@@ -380,8 +372,42 @@ protected:
     bool
     SetNotificationBreakpoint ();
 
+    // There is a little tricky bit where you might initially attach while dyld is updating
+    // the all_image_infos, and you can't read the infos, so you have to continue and pick it
+    // up when you hit the update breakpoint.  At that point, you need to run this initialize
+    // function, but when you do it that way you DON'T need to do the extra work you would at
+    // the breakpoint.
+    // So this function will only do actual work if the image infos haven't been read yet.
+    // If it does do any work, then it will return true, and false otherwise.  That way you can
+    // call it in the breakpoint action, and if it returns true you're done.
+    bool
+    InitializeFromAllImageInfos ();
+
     bool
     ReadAllImageInfosStructure ();
+    
+    bool
+    AddModulesUsingImageInfosAddress (lldb::addr_t image_infos_addr, uint32_t image_infos_count);
+    
+    bool
+    AddModulesUsingImageInfos (DYLDImageInfo::collection &image_infos);
+    
+    bool
+    RemoveModulesUsingImageInfosAddress (lldb::addr_t image_infos_addr, uint32_t image_infos_count);
+
+    void
+    UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::collection &image_infos, 
+                                          uint32_t infos_count, 
+                                          bool update_executable);
+
+    bool
+    UpdateCommPageLoadAddress (lldb_private::Module *module);
+
+    bool
+    ReadImageInfos (lldb::addr_t image_infos_addr, 
+                    uint32_t image_infos_count, 
+                    DYLDImageInfo::collection &image_infos);
+
 
     DYLDImageInfo m_dyld;               // Info about the current dyld being used
     lldb::addr_t m_dyld_all_image_infos_addr;

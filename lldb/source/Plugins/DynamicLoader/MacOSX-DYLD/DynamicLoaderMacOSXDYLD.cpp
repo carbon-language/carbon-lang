@@ -288,7 +288,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
             }
 
             // Update all image infos
-            UpdateAllImageInfos();
+            InitializeFromAllImageInfos ();
 
             // If we didn't have an executable before, but now we do, then the
             // dyld module shared pointer might be unique and we may need to add
@@ -442,11 +442,79 @@ DynamicLoaderMacOSXDYLD::UnloadImageLoadAddress (Module *module, DYLDImageInfo& 
 // or not (based on global preference).
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXDYLD::NotifyBreakpointHit (void *baton, StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id)
+DynamicLoaderMacOSXDYLD::NotifyBreakpointHit (void *baton, 
+                                              StoppointCallbackContext *context, 
+                                              lldb::user_id_t break_id, 
+                                              lldb::user_id_t break_loc_id)
 {
     // Let the event know that the images have changed
+    // DYLD passes three arguments to the notification breakpoint.
+    // Arg1: enum dyld_image_mode mode - 0 = adding, 1 = removing 
+    // Arg2: uint32_t infoCount        - Number of shared libraries added  
+    // Arg3: dyld_image_info info[]    - Array of structs of the form:
+    //                                     const struct mach_header *imageLoadAddress
+    //                                     const char               *imageFilePath
+    //                                     uintptr_t                 imageFileModDate (a time_t)
+    
     DynamicLoaderMacOSXDYLD* dyld_instance = (DynamicLoaderMacOSXDYLD*) baton;
-    dyld_instance->UpdateAllImageInfos();
+    
+    // First step is to see if we've already initialized the all image infos.  If we haven't then this function
+    // will do so and return true.  In the course of initializing the all_image_infos it will read the complete
+    // current state, so we don't need to figure out what has changed from the data passed in to us.
+    
+    if (dyld_instance->InitializeFromAllImageInfos())
+        return dyld_instance->GetStopWhenImagesChange(); 
+
+    Process *process = context->exe_ctx.process;
+    const lldb::ABISP &abi = process->GetABI();
+    if (abi != NULL)
+    {
+        // Build up the value array to store the three arguments given above, then get the values from the ABI:
+        
+        ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
+        ValueList argument_values;
+        Value input_value;
+        
+        void *clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
+        void *clang_uint32_type   = clang_ast_context->GetBuiltinTypeForEncodingAndBitSize(lldb::eEncodingUint, 32);
+        input_value.SetValueType (Value::eValueTypeScalar);
+        input_value.SetContext (Value::eContextTypeClangType, clang_uint32_type);
+        argument_values.PushValue(input_value);
+        argument_values.PushValue(input_value);
+        input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
+        argument_values.PushValue (input_value);
+        
+        if (abi->GetArgumentValues (*context->exe_ctx.thread, argument_values))
+        {
+            uint32_t dyld_mode = argument_values.GetValueAtIndex(0)->GetScalar().UInt (-1);
+            if (dyld_mode != -1)
+            {
+                // Okay the mode was right, now get the number of elements, and the array of new elements...
+                uint32_t image_infos_count = argument_values.GetValueAtIndex(1)->GetScalar().UInt (-1);
+                if (image_infos_count != -1)
+                {
+                    // Got the number added, now go through the array of added elements, putting out the mach header 
+                    // address, and adding the image.
+                    // Note, I'm not putting in logging here, since the AddModules & RemoveModules functions do
+                    // all the logging internally.
+                    
+                    lldb::addr_t image_infos_addr = argument_values.GetValueAtIndex(2)->GetScalar().ULongLong();
+                    if (dyld_mode == 0)
+                    {
+                        // This is add:
+                        dyld_instance->AddModulesUsingImageInfosAddress (image_infos_addr, image_infos_count);
+                    }
+                    else
+                    {
+                        // This is remove:
+                        dyld_instance->RemoveModulesUsingImageInfosAddress (image_infos_addr, image_infos_count);
+                    }
+                    
+                }
+            }
+        }
+    }
+    
     // Return true to stop the target, false to just let the target run
     return dyld_instance->GetStopWhenImagesChange();
 }
@@ -571,229 +639,297 @@ DynamicLoaderMacOSXDYLD::ReadAllImageInfosStructure ()
     return false;
 }
 
+
+bool
+DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfosAddress (lldb::addr_t image_infos_addr, uint32_t image_infos_count)
+{
+    DYLDImageInfo::collection image_infos;
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    if (log)
+        log->Printf ("Adding %d modules.\n");
+        
+    Mutex::Locker locker(m_mutex);
+    if (m_process->GetStopID() == m_dyld_image_infos_stop_id)
+        return true;
+
+    if (!ReadImageInfos (image_infos_addr, image_infos_count, image_infos))
+        return false;
+        
+    UpdateImageInfosHeaderAndLoadCommands (image_infos, image_infos_count, false);
+    bool return_value = AddModulesUsingImageInfos (image_infos);
+    m_dyld_image_infos_stop_id = m_process->GetStopID();
+    return return_value;
+}
+
+// Adds the modules in image_infos to m_dyld_image_infos.  
+// NB don't call this passing in m_dyld_image_infos.
+
+bool
+DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &image_infos)
+{
+    // Now add these images to the main list.
+    ModuleList loaded_module_list;
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    
+    for (uint32_t idx = 0; idx < image_infos.size(); ++idx)
+    {
+        if (log)
+        {
+            log->Printf ("Adding new image at address=0x%16.16llx.", image_infos[idx].address);
+            image_infos[idx].PutToLog (log.get());
+        }
+        
+        m_dyld_image_infos.push_back(image_infos[idx]);
+        
+        ModuleSP image_module_sp (FindTargetModuleForDYLDImageInfo (image_infos[idx], true, NULL));
+
+        if (image_module_sp)
+        {
+            if (image_infos[idx].header.filetype == llvm::MachO::HeaderFileTypeDynamicLinkEditor)
+                image_module_sp->SetIsDynamicLinkEditor (true);
+
+            ObjectFile *objfile = image_module_sp->GetObjectFile ();
+            if (objfile)
+            {
+                SectionList *sections = objfile->GetSectionList();
+                if (sections)
+                {
+                    ConstString commpage_dbstr("__commpage");
+                    Section *commpage_section = sections->FindSectionByName(commpage_dbstr).get();
+                    if (commpage_section)
+                    {
+                        ModuleList& target_images = m_process->GetTarget().GetImages();
+                        const FileSpec objfile_file_spec = objfile->GetFileSpec();
+                        ArchSpec arch (image_infos[idx].GetArchitecture ());
+                        ModuleSP commpage_image_module_sp(target_images.FindFirstModuleForFileSpec (objfile_file_spec, 
+                                                                                                    &arch, 
+                                                                                                    &commpage_dbstr));
+                        if (!commpage_image_module_sp)
+                        {
+                            commpage_image_module_sp 
+                                    = m_process->GetTarget().GetSharedModule (image_infos[idx].file_spec,
+                                                                              arch,
+                                                                              NULL,
+                                                                              &commpage_dbstr,
+                                                                              objfile->GetOffset() + commpage_section->GetFileOffset());
+                        }
+                        if (commpage_image_module_sp)
+                            UpdateCommPageLoadAddress (commpage_image_module_sp.get());
+                    }
+                }
+            }
+
+            // UpdateImageLoadAddress will return true if any segments
+            // change load address. We need to check this so we don't
+            // mention that all loaded shared libraries are newly loaded
+            // each time we hit out dyld breakpoint since dyld will list all
+            // shared libraries each time.
+            if (UpdateImageLoadAddress (image_module_sp.get(), image_infos[idx]))
+            {
+                loaded_module_list.AppendIfNeeded (image_module_sp);
+            }
+        }
+    }
+    
+    if (loaded_module_list.GetSize() > 0)
+    {
+        // FIXME: This should really be in the Runtime handlers class, which should get
+        // called by the target's ModulesDidLoad, but we're doing it all locally for now 
+        // to save time.
+        // Also, I'm assuming there can be only one libobjc dylib loaded...
+        
+        ObjCLanguageRuntime *objc_runtime = m_process->GetObjCLanguageRuntime();
+        if (objc_runtime != NULL && !objc_runtime->HasReadObjCLibrary())
+        {
+            size_t num_modules = loaded_module_list.GetSize();
+            for (int i = 0; i < num_modules; i++)
+            {
+                if (objc_runtime->IsModuleObjCLibrary (loaded_module_list.GetModuleAtIndex (i)))
+                {
+                    objc_runtime->ReadObjCLibrary (loaded_module_list.GetModuleAtIndex (i));
+                    break;
+                }
+            }
+        }
+        if (log)
+            loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXDYLD::ModulesDidLoad");
+        m_process->GetTarget().ModulesDidLoad (loaded_module_list);
+    }
+    return true;
+}
+
+bool
+DynamicLoaderMacOSXDYLD::RemoveModulesUsingImageInfosAddress (lldb::addr_t image_infos_addr, uint32_t image_infos_count)
+{
+    DYLDImageInfo::collection image_infos;
+    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    
+    Mutex::Locker locker(m_mutex);
+    if (m_process->GetStopID() == m_dyld_image_infos_stop_id)
+        return true;
+
+    // First read in the image_infos for the removed modules, and their headers & load commands.
+    if (!ReadImageInfos (image_infos_addr, image_infos_count, image_infos))
+    {
+        if (log)
+            log->PutCString ("Failed reading image infos array.");
+        return false;
+    }
+    
+    if (log)
+        log->Printf ("Removing %d modules.", image_infos_count);
+    
+    ModuleList unloaded_module_list;
+    for (uint32_t idx = 0; idx < image_infos.size(); ++idx)
+    {        
+        if (log)
+        {
+            log->Printf ("Removing module at address=0x%16.16llx.", image_infos[idx].address);
+            image_infos[idx].PutToLog (log.get());
+        }
+            
+        // Remove this image_infos from the m_all_image_infos.  We do the comparision by address
+        // rather than by file spec because we can have many modules with the same "file spec" in the
+        // case that they are modules loaded from memory.
+        //
+        // Also copy over the uuid from the old entry to the removed entry so we can 
+        // use it to lookup the module in the module list.
+        
+        DYLDImageInfo::collection::iterator pos, end = m_dyld_image_infos.end();
+        for (pos = m_dyld_image_infos.begin(); pos != end; pos++)
+        {
+            if (image_infos[idx].address == (*pos).address)
+            {
+                image_infos[idx].uuid = (*pos).uuid;
+
+                // Add the module from this image_info to the "unloaded_module_list".  We'll remove them all at
+                // one go later on.
+                
+                ModuleSP unload_image_module_sp (FindTargetModuleForDYLDImageInfo (image_infos[idx], false, NULL));
+                if (unload_image_module_sp.get())
+                {
+                    UnloadImageLoadAddress (unload_image_module_sp.get(), image_infos[idx]);
+                    unloaded_module_list.AppendIfNeeded (unload_image_module_sp);
+                }
+                else
+                {
+                    if (log)
+                    {
+                        log->Printf ("Could not find module for unloading info entry:");
+                        image_infos[idx].PutToLog(log.get());
+                    }
+                }
+                
+                // Then remove it from the m_dyld_image_infos:
+                
+                m_dyld_image_infos.erase(pos);
+                break;
+            }
+        }
+        
+        if (pos == end)
+        {
+            if (log)
+            {
+                log->Printf ("Could not find image_info entry for unloading image:");
+                image_infos[idx].PutToLog(log.get());            
+            }
+        }
+    }
+    if (unloaded_module_list.GetSize() > 0)
+    {
+        if (log)
+        {
+            log->PutCString("Unloaded:");
+            unloaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXDYLD::ModulesDidUnload");
+        }
+        m_process->GetTarget().ModulesDidUnload (unloaded_module_list);
+    }
+    m_dyld_image_infos_stop_id = m_process->GetStopID();
+    return true;
+}
+
+bool
+DynamicLoaderMacOSXDYLD::ReadImageInfos (lldb::addr_t image_infos_addr, 
+                                         uint32_t image_infos_count, 
+                                         DYLDImageInfo::collection &image_infos)
+{
+    const ByteOrder endian = m_dyld.GetByteOrder();
+    const uint32_t addr_size = m_dyld.GetAddressByteSize();
+
+    image_infos.resize(image_infos_count);
+    const size_t count = image_infos.size() * 3 * addr_size;
+    DataBufferHeap info_data(count, 0);
+    Error error;
+    const size_t bytes_read = m_process->ReadMemory (image_infos_addr, 
+                                                     info_data.GetBytes(), 
+                                                     info_data.GetByteSize(),
+                                                     error);
+    if (bytes_read == count)
+    {
+        uint32_t info_data_offset = 0;
+        DataExtractor info_data_ref(info_data.GetBytes(), info_data.GetByteSize(), endian, addr_size);
+        for (int i = 0; i < image_infos.size() && info_data_ref.ValidOffset(info_data_offset); i++)
+        {
+            image_infos[i].address = info_data_ref.GetPointer(&info_data_offset);
+            lldb::addr_t path_addr = info_data_ref.GetPointer(&info_data_offset);
+            image_infos[i].mod_date = info_data_ref.GetPointer(&info_data_offset);
+
+            char raw_path[PATH_MAX];
+            m_process->ReadCStringFromMemory (path_addr, raw_path, sizeof(raw_path));
+            // don't resolve the path
+            const bool resolve_path = false;
+            image_infos[i].file_spec.SetFile(raw_path, resolve_path);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 //----------------------------------------------------------------------
 // If we have found where the "_dyld_all_image_infos" lives in memory,
 // read the current info from it, and then update all image load
-// addresses (or lack thereof).
+// addresses (or lack thereof).  Only do this if this is the first time
+// we're reading the dyld infos.  Return true if we actually read anything,
+// and false otherwise.
 //----------------------------------------------------------------------
-uint32_t
-DynamicLoaderMacOSXDYLD::UpdateAllImageInfos()
+bool
+DynamicLoaderMacOSXDYLD::InitializeFromAllImageInfos ()
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
-    ModuleList& target_images = m_process->GetTarget().GetImages();
+    
+    Mutex::Locker locker(m_mutex);
+    if (m_process->GetStopID() == m_dyld_image_infos_stop_id
+          || m_dyld_image_infos.size() != 0)
+        return false;
 
     if (ReadAllImageInfosStructure ())
     {
-        Mutex::Locker locker(m_mutex);
-        if (m_process->GetStopID() == m_dyld_image_infos_stop_id)
-            m_dyld_image_infos.size();
-
-        uint32_t idx;
-        uint32_t i = 0;
-        // Since we can't downsize a vector, we must do this using the swap method
-        DYLDImageInfo::collection old_dyld_all_image_infos;
-        old_dyld_all_image_infos.swap(m_dyld_image_infos);
-
-        // If we made it here, we are assuming that the all dylib info data should
-        // be valid, lets read the info array.
-        const ByteOrder endian = m_dyld.GetByteOrder();
-        const uint32_t addr_size = m_dyld.GetAddressByteSize();
-
         if (m_dyld_all_image_infos.dylib_info_count > 0)
         {
             if (m_dyld_all_image_infos.dylib_info_addr == 0)
             {
-                // DYLD is updating the images right now...
+                // DYLD is updating the images now.  So we should say we have no images, and then we'll 
+                // figure it out when we hit the added breakpoint.
+                return false;
             }
             else
             {
-                m_dyld_image_infos.resize(m_dyld_all_image_infos.dylib_info_count);
-                const size_t count = m_dyld_image_infos.size() * 3 * addr_size;
-                DataBufferHeap info_data(count, 0);
-                Error error;
-                const size_t bytes_read = m_process->ReadMemory (m_dyld_all_image_infos.dylib_info_addr, 
-                                                                 info_data.GetBytes(), 
-                                                                 info_data.GetByteSize(),
-                                                                 error);
-                if (bytes_read == count)
-                {
-                    uint32_t info_data_offset = 0;
-                    DataExtractor info_data_ref(info_data.GetBytes(), info_data.GetByteSize(), endian, addr_size);
-                    for (i = 0; i < m_dyld_image_infos.size() && info_data_ref.ValidOffset(info_data_offset); i++)
-                    {
-                        m_dyld_image_infos[i].address = info_data_ref.GetPointer(&info_data_offset);
-                        lldb::addr_t path_addr = info_data_ref.GetPointer(&info_data_offset);
-                        m_dyld_image_infos[i].mod_date = info_data_ref.GetPointer(&info_data_offset);
-
-                        char raw_path[PATH_MAX];
-                        m_process->ReadCStringFromMemory (path_addr, raw_path, sizeof(raw_path));
-                        // don't resolve the path
-                        const bool resolve_path = false;
-                        m_dyld_image_infos[i].file_spec.SetFile(raw_path, resolve_path);
-                    }
-
-                    UpdateAllImageInfosHeaderAndLoadCommands();
-                }
-                else
+                if (!AddModulesUsingImageInfosAddress (m_dyld_all_image_infos.dylib_info_addr, 
+                                                       m_dyld_all_image_infos.dylib_info_count))
                 {
                     DEBUG_PRINTF( "unable to read all data for all_dylib_infos.");
                     m_dyld_image_infos.clear();
                 }
             }
         }
-
-        // If our new list is smaller than our old list, we have unloaded
-        // some shared libraries
-        if (m_dyld_image_infos.size() != old_dyld_all_image_infos.size())
-        {
-            ModuleList unloaded_module_list;
-            if (old_dyld_all_image_infos.size() == 0)
-            {
-                // This is the first time we are loading shared libraries,
-                // we need to make sure to trim anything that isn't in the
-                // m_dyld_image_infos out of the target module list since
-                // we might have shared libraries that got loaded from
-                // elsewhere due to DYLD_FRAMEWORK_PATH, or DYLD_LIBRARY_PATH
-                // environment variables...
-                const size_t num_images = target_images.GetSize();
-                for (idx = 0; idx < num_images; ++idx)
-                {
-                    ModuleSP module_sp (target_images.GetModuleAtIndex (idx));
-                    
-                    if (GetImageInfo (module_sp.get()) == NULL)
-                        unloaded_module_list.AppendIfNeeded (module_sp);
-                }
-            }
-            else
-            {
-                uint32_t old_idx;
-                for (idx = 0; idx < old_dyld_all_image_infos.size(); ++idx)
-                {
-                    for (old_idx = idx; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
-                    {
-                        if (m_dyld_image_infos[idx].file_spec == old_dyld_all_image_infos[old_idx].file_spec)
-                        {
-                            old_dyld_all_image_infos[old_idx].address = LLDB_INVALID_ADDRESS;
-                            break;
-                        }
-                    }
-                }
-
-                for (old_idx = 0; old_idx < old_dyld_all_image_infos.size(); ++old_idx)
-                {
-                    if (old_dyld_all_image_infos[old_idx].address != LLDB_INVALID_ADDRESS)
-                    {
-                        if (log)
-                            old_dyld_all_image_infos[old_idx].PutToLog (log.get());
-                        ModuleSP unload_image_module_sp (FindTargetModuleForDYLDImageInfo (old_dyld_all_image_infos[old_idx], false, NULL));
-                        if (unload_image_module_sp.get())
-                        {
-                            if (UnloadImageLoadAddress (unload_image_module_sp.get(), old_dyld_all_image_infos[old_idx]))
-                                unloaded_module_list.AppendIfNeeded (unload_image_module_sp);
-                        }
-                    }
-                }
-            }
-
-            if (unloaded_module_list.GetSize() > 0)
-            {
-                if (log)
-                {
-                    log->PutCString("Unloaded:");
-                    unloaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXDYLD::ModulesDidUnload");
-                }
-                m_process->GetTarget().ModulesDidUnload (unloaded_module_list);
-            }
-        }
-        else
-        {
-            if (log)
-                PutToLog(log.get());
-        }
-        m_dyld_image_infos_stop_id = m_process->GetStopID();
+        return true;
     }
     else
-    {
-        m_dyld_image_infos.clear();
-    }
-
-    const uint32_t num_dylibs = m_dyld_image_infos.size();
-    if (num_dylibs > 0)
-    {
-        ModuleList loaded_module_list;
-        for (uint32_t idx = 0; idx<num_dylibs; ++idx)
-        {
-            ModuleSP image_module_sp (FindTargetModuleForDYLDImageInfo (m_dyld_image_infos[idx], true, NULL));
-
-            if (image_module_sp)
-            {
-                if (m_dyld_image_infos[idx].header.filetype == llvm::MachO::HeaderFileTypeDynamicLinkEditor)
-                    image_module_sp->SetIsDynamicLinkEditor (true);
-
-                ObjectFile *objfile = image_module_sp->GetObjectFile ();
-                if (objfile)
-                {
-                    SectionList *sections = objfile->GetSectionList();
-                    if (sections)
-                    {
-                        ConstString commpage_dbstr("__commpage");
-                        Section *commpage_section = sections->FindSectionByName(commpage_dbstr).get();
-                        if (commpage_section)
-                        {
-                            const FileSpec objfile_file_spec = objfile->GetFileSpec();
-                            ArchSpec arch (m_dyld_image_infos[idx].GetArchitecture ());
-                            ModuleSP commpage_image_module_sp(target_images.FindFirstModuleForFileSpec (objfile_file_spec, &arch, &commpage_dbstr));
-                            if (!commpage_image_module_sp)
-                            {
-                                commpage_image_module_sp = m_process->GetTarget().GetSharedModule (m_dyld_image_infos[idx].file_spec,
-                                                                                                   arch,
-                                                                                                   NULL,
-                                                                                                   &commpage_dbstr,
-                                                                                                   objfile->GetOffset() + commpage_section->GetFileOffset());
-                            }
-                            if (commpage_image_module_sp)
-                                UpdateCommPageLoadAddress (commpage_image_module_sp.get());
-                        }
-                    }
-                }
-
-                // UpdateImageLoadAddress will return true if any segments
-                // change load address. We need to check this so we don't
-                // mention that all loaded shared libraries are newly loaded
-                // each time we hit out dyld breakpoint since dyld will list all
-                // shared libraries each time.
-                if (UpdateImageLoadAddress (image_module_sp.get(), m_dyld_image_infos[idx]))
-                {
-                    loaded_module_list.AppendIfNeeded (image_module_sp);
-                }
-            }
-        }
-        if (loaded_module_list.GetSize() > 0)
-        {
-            // FIXME: This should really be in the Runtime handlers class, which should get
-            // called by the target's ModulesDidLoad, but we're doing it all locally for now 
-            // to save time.
-            // Also, I'm assuming there can be only one libobjc dylib loaded...
-            
-            ObjCLanguageRuntime *objc_runtime = m_process->GetObjCLanguageRuntime();
-            if (objc_runtime != NULL && !objc_runtime->HasReadObjCLibrary())
-            {
-                size_t num_modules = loaded_module_list.GetSize();
-                for (int i = 0; i < num_modules; i++)
-                {
-                    if (objc_runtime->IsModuleObjCLibrary (loaded_module_list.GetModuleAtIndex (i)))
-                    {
-                        objc_runtime->ReadObjCLibrary (loaded_module_list.GetModuleAtIndex (i));
-                        break;
-                    }
-                }
-            }
-            if (log)
-                loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXDYLD::ModulesDidLoad");
-            m_process->GetTarget().ModulesDidLoad (loaded_module_list);
-        }
-    }
-    return m_dyld_image_infos.size();
+        return false;
 }
 
 //----------------------------------------------------------------------
@@ -968,40 +1104,41 @@ DynamicLoaderMacOSXDYLD::ParseLoadCommands (const DataExtractor& data, DYLDImage
 // Read the mach_header and load commands for each image that the
 // _dyld_all_image_infos structure points to and cache the results.
 //----------------------------------------------------------------------
+
 void
-DynamicLoaderMacOSXDYLD::UpdateAllImageInfosHeaderAndLoadCommands()
+DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::collection &image_infos, 
+                                                               uint32_t infos_count, 
+                                                               bool update_executable)
 {
     uint32_t exe_idx = UINT32_MAX;
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     // Read any UUID values that we can get
-    for (uint32_t i = 0; i < m_dyld_all_image_infos.dylib_info_count; i++)
+    for (uint32_t i = 0; i < infos_count; i++)
     {
-        if (!m_dyld_image_infos[i].UUIDValid())
+        if (!image_infos[i].UUIDValid())
         {
             DataExtractor data; // Load command data
-            if (!ReadMachHeader (m_dyld_image_infos[i].address, &m_dyld_image_infos[i].header, &data))
+            if (!ReadMachHeader (image_infos[i].address, &image_infos[i].header, &data))
                 continue;
 
-            ParseLoadCommands (data, m_dyld_image_infos[i], NULL);
+            ParseLoadCommands (data, image_infos[i], NULL);
 
-            if (m_dyld_image_infos[i].header.filetype == llvm::MachO::HeaderFileTypeExecutable)
+            if (image_infos[i].header.filetype == llvm::MachO::HeaderFileTypeExecutable)
                 exe_idx = i;
             
-            if (log)
-                m_dyld_image_infos[i].PutToLog (log.get());
         }
     }
 
-    if (exe_idx < m_dyld_image_infos.size())
+    if (exe_idx < image_infos.size())
     {
-        ModuleSP exe_module_sp (FindTargetModuleForDYLDImageInfo (m_dyld_image_infos[exe_idx], false, NULL));
+        ModuleSP exe_module_sp (FindTargetModuleForDYLDImageInfo (image_infos[exe_idx], false, NULL));
 
         if (!exe_module_sp)
         {
-            ArchSpec exe_arch_spec (m_dyld_image_infos[exe_idx].GetArchitecture ());
-            exe_module_sp = m_process->GetTarget().GetSharedModule (m_dyld_image_infos[exe_idx].file_spec,
+            ArchSpec exe_arch_spec (image_infos[exe_idx].GetArchitecture ());
+            exe_module_sp = m_process->GetTarget().GetSharedModule (image_infos[exe_idx].file_spec,
                                                                     exe_arch_spec,
-                                                                    &m_dyld_image_infos[exe_idx].uuid);
+                                                                    &image_infos[exe_idx].uuid);
         }
         
         if (exe_module_sp)

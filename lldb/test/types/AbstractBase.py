@@ -44,8 +44,13 @@ class GenericTester(TestBase):
         # Bring the program to the point where we can issue a series of
         # 'frame variable -T' command.
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
-        self.runCmd("breakpoint set --name Puts")
-        self.runCmd("run", RUN_SUCCEEDED)
+        puts_line = line_number ("basic_type.cpp", "// Here is the line we will break on before stepping out")
+        self.expect("breakpoint set -f basic_type.cpp -l %d" % puts_line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='basic_type.cpp', line = %d, locations = 1" %
+                        puts_line)
+
+        self.expect("run", RUN_SUCCEEDED, patterns = [".*"])
         self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
 
         #self.runCmd("frame variable -T")
@@ -104,8 +109,16 @@ class GenericTester(TestBase):
         # Bring the program to the point where we can issue a series of
         # 'expr' command.
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
-        self.runCmd("breakpoint set --name Puts")
-        self.runCmd("run", RUN_SUCCEEDED)
+        #self.runCmd("breakpoint set --name Puts")
+        #self.runCmd("run", RUN_SUCCEEDED)
+        puts_line = line_number ("basic_type.cpp", "// Here is the line we will break on before stepping out")
+        self.expect("breakpoint set -f basic_type.cpp -l %d" % puts_line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='basic_type.cpp', line = %d, locations = 1" %
+                        puts_line)
+        self.expect("run", RUN_SUCCEEDED, patterns = [".*"])
+        self.runCmd ("process status")
+
         self.runCmd("thread step-out", STEP_OUT_SUCCEEDED)
 
         #self.runCmd("frame variable -T")

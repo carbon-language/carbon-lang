@@ -597,9 +597,9 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     Error error;
     ExecutionResults execution_results = eExecutionSetupError;
     
-    if (exe_ctx.process == NULL)
+    if (exe_ctx.process == NULL || exe_ctx.process->GetState() != lldb::eStateStopped)
     {
-        error.SetErrorString ("Must have a process to evaluate expressions.");
+        error.SetErrorString ("Must have a live but stopped process to evaluate expressions.");
             
         result_valobj_sp = ValueObjectConstResult::Create (NULL, error);
         return eExecutionSetupError;

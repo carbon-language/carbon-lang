@@ -27,6 +27,8 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
     Thread *thread = process->GetThreadList().GetSelectedThread().get();
     if (thread == NULL)
         thread = process->GetThreadList().GetThreadAtIndex(0).get();
+    if (thread == NULL)
+        return false;
 
     const bool append = true;
     const bool include_symbols = true;
