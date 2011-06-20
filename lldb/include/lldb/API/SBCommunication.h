@@ -34,6 +34,9 @@ public:
    ~SBCommunication ();
 
 
+    bool
+    IsValid () const;
+
     lldb::SBBroadcaster
     GetBroadcaster ();
 

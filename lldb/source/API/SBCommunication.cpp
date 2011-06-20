@@ -44,6 +44,12 @@ SBCommunication::~SBCommunication()
 }
 
 bool
+SBCommunication::IsValid () const
+{
+    return m_opaque != NULL;
+}
+
+bool
 SBCommunication::GetCloseOnEOF ()
 {
     if (m_opaque)

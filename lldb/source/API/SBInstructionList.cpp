@@ -40,6 +40,12 @@ SBInstructionList::~SBInstructionList ()
 {
 }
 
+bool
+SBInstructionList::IsValid () const
+{
+    return m_opaque_sp.get() != NULL;
+}
+
 size_t
 SBInstructionList::GetSize ()
 {

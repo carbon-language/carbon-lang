@@ -31,6 +31,9 @@ public:
 
     ~SBInstructionList ();
 
+    bool
+    IsValid () const;
+
     size_t
     GetSize ();
 
