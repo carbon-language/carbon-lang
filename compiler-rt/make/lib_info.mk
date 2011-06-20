@@ -48,4 +48,5 @@ AvailableOptions := AR ARFLAGS \
                     CC CFLAGS FUNCTIONS OPTIMIZED \
                     RANLIB RANLIBFLAGS \
                     VISIBILITY_HIDDEN \
-                    KERNEL_USE
+                    KERNEL_USE \
+                    STRIP LIPO

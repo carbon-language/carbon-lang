@@ -31,3 +31,6 @@ ARFLAGS := cru 2> /dev/null
 RANLIB := ranlib
 # FIXME: Remove these pipes once ranlib errors are fixed.
 RANLIBFLAGS := 2> /dev/null
+
+STRIP := strip
+LIPO := lipo
