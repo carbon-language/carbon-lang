@@ -9147,6 +9147,20 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
   }
 }
 
+/// \brief It accepts a '&' expr that is inside a '|' one.
+/// Emit a diagnostic together with a fixit hint that wraps the '&' expression
+/// in parentheses.
+static void
+EmitDiagnosticForBitwiseAndInBitwiseOr(Sema &Self, SourceLocation OpLoc,
+                                       BinaryOperator *Bop) {
+  assert(Bop->getOpcode() == BO_And);
+  Self.Diag(Bop->getOperatorLoc(), diag::warn_bitwise_and_in_bitwise_or)
+      << Bop->getSourceRange() << OpLoc;
+  SuggestParentheses(Self, Bop->getOperatorLoc(),
+    Self.PDiag(diag::note_bitwise_and_in_bitwise_or_silence),
+    Bop->getSourceRange());
+}
+
 /// \brief It accepts a '&&' expr that is inside a '||' one.
 /// Emit a diagnostic together with a fixit hint that wraps the '&&' expression
 /// in parentheses.
@@ -9212,13 +9226,28 @@ static void DiagnoseLogicalAndInLogicalOrRHS(Sema &S, SourceLocation OpLoc,
   }
 }
 
+/// \brief Look for '&' in the left or right hand of a '|' expr.
+static void DiagnoseBitwiseAndInBitwiseOr(Sema &S, SourceLocation OpLoc,
+                                             Expr *OrArg) {
+  if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(OrArg)) {
+    if (Bop->getOpcode() == BO_And)
+      return EmitDiagnosticForBitwiseAndInBitwiseOr(S, OpLoc, Bop);
+  }
+}
+
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky
 /// precedence.
 static void DiagnoseBinOpPrecedence(Sema &Self, BinaryOperatorKind Opc,
                                     SourceLocation OpLoc, Expr *lhs, Expr *rhs){
   // Diagnose "arg1 'bitwise' arg2 'eq' arg3".
   if (BinaryOperator::isBitwiseOp(Opc))
-    return DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
+    DiagnoseBitwisePrecedence(Self, Opc, OpLoc, lhs, rhs);
+
+  // Diagnose "arg1 & arg2 | arg3"
+  if (Opc == BO_Or && !OpLoc.isMacroID()/* Don't warn in macros. */) {
+    DiagnoseBitwiseAndInBitwiseOr(Self, OpLoc, lhs);
+    DiagnoseBitwiseAndInBitwiseOr(Self, OpLoc, rhs);
+  }
 
   // Warn about arg1 || arg2 && arg3, as GCC 4.3+ does.
   // We don't warn for 'assert(a || b && "bad")' since this is safe.

@@ -62,6 +62,7 @@ def ExitTimeDestructors : DiagGroup<"exit-time-destructors">;
 def FourByteMultiChar : DiagGroup<"four-char-constants">;
 def GlobalConstructors : DiagGroup<"global-constructors">;
 def : DiagGroup<"idiomatic-parentheses">;
+def BitwiseOpParentheses: DiagGroup<"bitwise-op-parentheses">;
 def LogicalOpParentheses: DiagGroup<"logical-op-parentheses">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;
@@ -195,7 +196,8 @@ def DuplicateArgDecl : DiagGroup<"duplicate-method-arg">;
 // in -Wparentheses because most users who use -Wparentheses explicitly
 // do not want these warnings.
 def Parentheses : DiagGroup<"parentheses",
-                            [LogicalOpParentheses]>;
+                            [LogicalOpParentheses,
+                             BitwiseOpParentheses]>;
 
 // -Wconversion has its own warnings, but we split a few out for
 // legacy reasons:

@@ -26,6 +26,12 @@ void bitwise_rel(unsigned i) {
   (void)(i == 1 | i == 2 | i == 3);
   (void)(i != 1 & i != 2 & i != 3);
 
+  (void)(i & i | i); // expected-warning {{'&' within '|'}} \
+                     // expected-note {{place parentheses around the '&' expression to silence this warning}}
+
+  (void)(i | i & i); // expected-warning {{'&' within '|'}} \
+                     // expected-note {{place parentheses around the '&' expression to silence this warning}}
+
   (void)(i ||
              i && i); // expected-warning {{'&&' within '||'}} \
                        // expected-note {{place parentheses around the '&&' expression to silence this warning}}
