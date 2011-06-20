@@ -635,7 +635,7 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
                  << "From simple Succ: " << *TailBB);
 
     MachineBasicBlock *NewTarget = *TailBB->succ_begin();
-    MachineBasicBlock *NextBB = next(MachineFunction::iterator(PredBB));
+    MachineBasicBlock *NextBB = llvm::next(MachineFunction::iterator(PredBB));
 
     DenseMap<unsigned, unsigned> LocalVRMap;
     SmallVector<std::pair<unsigned,unsigned>, 4> CopyInfos;
