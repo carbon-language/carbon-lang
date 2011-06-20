@@ -33,6 +33,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CallSite.h"
@@ -564,6 +565,29 @@ static const Value *FindSingleUseIdentifiedObject(const Value *Arg) {
   return 0;
 }
 
+/// ModuleHasARC - Test if the given module looks interesting to run ARC
+/// optimization on.
+static bool ModuleHasARC(const Module &M) {
+  return
+    M.getNamedValue("objc_retain") ||
+    M.getNamedValue("objc_release") ||
+    M.getNamedValue("objc_autorelease") ||
+    M.getNamedValue("objc_retainAutoreleasedReturnValue") ||
+    M.getNamedValue("objc_retainBlock") ||
+    M.getNamedValue("objc_autoreleaseReturnValue") ||
+    M.getNamedValue("objc_autoreleasePoolPush") ||
+    M.getNamedValue("objc_loadWeakRetained") ||
+    M.getNamedValue("objc_loadWeak") ||
+    M.getNamedValue("objc_destroyWeak") ||
+    M.getNamedValue("objc_storeWeak") ||
+    M.getNamedValue("objc_initWeak") ||
+    M.getNamedValue("objc_moveWeak") ||
+    M.getNamedValue("objc_copyWeak") ||
+    M.getNamedValue("objc_retainedObject") ||
+    M.getNamedValue("objc_unretainedObject") ||
+    M.getNamedValue("objc_unretainedPointer");
+}
+
 //===----------------------------------------------------------------------===//
 // ARC AliasAnalysis.
 //===----------------------------------------------------------------------===//
@@ -749,7 +773,11 @@ namespace {
   /// ObjCARCExpand - Early ARC transformations.
   class ObjCARCExpand : public FunctionPass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    virtual bool doInitialization(Module &M);
     virtual bool runOnFunction(Function &F);
+
+    /// Run - A flag indicating whether this optimization pass should run.
+    bool Run;
 
   public:
     static char ID;
@@ -771,8 +799,17 @@ void ObjCARCExpand::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
 }
 
+bool ObjCARCExpand::doInitialization(Module &M) {
+  Run = ModuleHasARC(M);
+  return false;
+}
+
 bool ObjCARCExpand::runOnFunction(Function &F) {
   if (!EnableARCOpts)
+    return false;
+
+  // If nothing in the Module uses ARC, don't do anything.
+  if (!Run)
     return false;
 
   bool Changed = false;
@@ -840,8 +877,9 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 // usually can't sink them past other calls, which would be the main
 // case where it would be useful.
 
+/// TODO: The pointer returned from objc_loadWeakRetained is retained.
+
 #include "llvm/GlobalAlias.h"
-#include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -1365,10 +1403,12 @@ namespace {
     bool Changed;
     ProvenanceAnalysis PA;
 
+    /// Run - A flag indicating whether this optimization pass should run.
+    bool Run;
+
     /// RetainFunc, RelaseFunc - Declarations for objc_retain,
     /// objc_retainBlock, and objc_release.
-    Function *RetainFunc, *RetainBlockFunc, *RetainRVFunc, *ReleaseFunc,
-             *AutoreleaseFunc;
+    Function *RetainFunc, *RetainBlockFunc, *RetainRVFunc, *ReleaseFunc;
 
     /// RetainRVCallee, etc. - Declarations for ObjC runtime
     /// functions, for use in creating calls to them. These are initialized
@@ -3069,6 +3109,10 @@ bool ObjCARCOpt::doInitialization(Module &M) {
   if (!EnableARCOpts)
     return false;
 
+  Run = ModuleHasARC(M);
+  if (!Run)
+    return false;
+
   // Identify the imprecise release metadata kind.
   ImpreciseReleaseMDKind =
     M.getContext().getMDKindID("clang.imprecise_release");
@@ -3078,7 +3122,6 @@ bool ObjCARCOpt::doInitialization(Module &M) {
   RetainBlockFunc = M.getFunction("objc_retainBlock");
   RetainRVFunc = M.getFunction("objc_retainAutoreleasedReturnValue");
   ReleaseFunc = M.getFunction("objc_release");
-  AutoreleaseFunc = M.getFunction("objc_autorelease");
 
   // Intuitively, objc_retain and others are nocapture, however in practice
   // they are not, because they return their argument value. And objc_release
@@ -3096,6 +3139,10 @@ bool ObjCARCOpt::doInitialization(Module &M) {
 
 bool ObjCARCOpt::runOnFunction(Function &F) {
   if (!EnableARCOpts)
+    return false;
+
+  // If nothing in the Module uses ARC, don't do anything.
+  if (!Run)
     return false;
 
   Changed = false;
@@ -3161,6 +3208,9 @@ namespace {
     AliasAnalysis *AA;
     DominatorTree *DT;
     ProvenanceAnalysis PA;
+
+    /// Run - A flag indicating whether this optimization pass should run.
+    bool Run;
 
     /// StoreStrongCallee, etc. - Declarations for ObjC runtime
     /// functions, for use in creating calls to them. These are initialized
@@ -3384,6 +3434,10 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
 }
 
 bool ObjCARCContract::doInitialization(Module &M) {
+  Run = ModuleHasARC(M);
+  if (!Run)
+    return false;
+
   // These are initialized lazily.
   StoreStrongCallee = 0;
   RetainAutoreleaseCallee = 0;
@@ -3405,6 +3459,10 @@ bool ObjCARCContract::doInitialization(Module &M) {
 
 bool ObjCARCContract::runOnFunction(Function &F) {
   if (!EnableARCOpts)
+    return false;
+
+  // If nothing in the Module uses ARC, don't do anything.
+  if (!Run)
     return false;
 
   Changed = false;
