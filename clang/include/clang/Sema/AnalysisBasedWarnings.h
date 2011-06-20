@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_SEMA_ANALYSIS_WARNINGS_H
 #define LLVM_CLANG_SEMA_ANALYSIS_WARNINGS_H
 
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace clang {
