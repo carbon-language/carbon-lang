@@ -1,9 +1,14 @@
-.PHONY: clean all
+LLDB_LEVEL := ..
+include $(LLDB_LEVEL)/Makefile
+
+.PHONY: programs
+
+all:: check-local
 
 #----------------------------------------------------------------------
 # Make all of the test programs
 #----------------------------------------------------------------------
-all:
+programs:
 	find . -type d -depth 1 | xargs -J % find % \
 		-name Makefile \
 		-exec echo \; \
@@ -11,11 +16,21 @@ all:
 		-execdir make \;
 
 #----------------------------------------------------------------------
-# Make all of the test programs
+# Clean all of the test programs
 #----------------------------------------------------------------------
-clean:
+clean::
 	find . -type d -depth 1 | xargs -J % find % \
 		-name Makefile \
 		-exec echo \; \
 		-exec echo make -f '{}' clean \; \
 		-execdir make clean \;
+
+#----------------------------------------------------------------------
+# Run the tests
+#----------------------------------------------------------------------
+check-local::
+	rm -rf ../test-rdir
+	env PATH="$(ToolDir):$(PATH)" \
+	    PYTHONPATH=$(ToolDir) \
+	    $(SHLIBPATH_VAR)=$(LibDir) \
+	     python $(PROJ_SRC_DIR)/dotest.py -i -v -r ../test-rdir
