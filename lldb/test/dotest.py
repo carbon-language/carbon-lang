@@ -822,7 +822,7 @@ if not sdir_name:
     # The windows platforms don't like ':' in the pathname.
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
     sdir_name = timestamp
-os.environ["LLDB_SESSION_DIRNAME"] = sdir_name
+os.environ["LLDB_SESSION_DIRNAME"] = os.path.join(os.getcwd(), sdir_name)
 
 sys.stderr.write("\nSession logs for test failures/errors/unexpected successes"
                  " will go into directory '%s'\n" % sdir_name)
