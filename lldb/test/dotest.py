@@ -531,6 +531,11 @@ def setupSysPath():
             os.environ["LLDB_TEST"] = rdir
     else:
         os.environ["LLDB_TEST"] = scriptPath
+
+    # Set up the LLDB_SRC environment variable, so that the tests can locate
+    # the LLDB source code.
+    os.environ["LLDB_SRC"] = os.path.join(sys.path[0], os.pardir)
+
     pluginPath = os.path.join(scriptPath, 'plugins')
     pexpectPath = os.path.join(scriptPath, 'pexpect-2.4')
 

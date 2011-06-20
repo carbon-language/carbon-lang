@@ -20,7 +20,7 @@ class HelpCommandTestCase(TestBase):
 
     def version_number_string(self):
         """Helper function to find the version number string of lldb."""
-        plist = os.path.join(os.getcwd(), os.pardir, os.pardir, "resources", "LLDB-info.plist")
+        plist = os.path.join(os.environ["LLDB_SRC"], "resources", "LLDB-Info.plist")
         try:
             CFBundleVersionSegFound = False
             with open(plist, 'r') as f:
