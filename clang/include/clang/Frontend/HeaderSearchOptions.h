@@ -98,7 +98,7 @@ public:
   void AddPath(llvm::StringRef Path, frontend::IncludeDirGroup Group,
                bool IsUserSupplied, bool IsFramework, bool IgnoreSysRoot) {
     UserEntries.push_back(Entry(Path, Group, IsUserSupplied, IsFramework,
-                                !IgnoreSysRoot));
+                                IgnoreSysRoot));
   }
 };
 
