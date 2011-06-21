@@ -290,7 +290,17 @@ static void GetCostForDef(const ScheduleDAGSDNodes::RegDefIter &RegDefPos,
   // Special handling for untyped values.  These values can only come from
   // the expansion of custom DAG-to-DAG patterns.
   if (VT == MVT::untyped) {
-    unsigned Opcode = RegDefPos.GetNode()->getMachineOpcode();
+    const SDNode *Node = RegDefPos.GetNode();
+    unsigned Opcode = Node->getMachineOpcode();
+
+    if (Opcode == TargetOpcode::REG_SEQUENCE) {
+      unsigned DstRCIdx = cast<ConstantSDNode>(Node->getOperand(0))->getZExtValue();
+      const TargetRegisterClass *RC = TRI->getRegClass(DstRCIdx);
+      RegClass = RC->getID();
+      Cost = 1;
+      return;
+    }
+
     unsigned Idx = RegDefPos.GetIdx();
     const TargetInstrDesc Desc = TII->get(Opcode);
     const TargetRegisterClass *RC = Desc.getRegClass(Idx, TRI);
