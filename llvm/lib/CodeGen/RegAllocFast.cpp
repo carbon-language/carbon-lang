@@ -86,7 +86,7 @@ namespace {
     // that is currently available in a physical register.
     LiveRegMap LiveVirtRegs;
 
-    DenseMap<unsigned, MachineInstr *> LiveDbgValueMap;
+    DenseMap<unsigned, SmallVector<MachineInstr *, 4> > LiveDbgValueMap;
 
     // RegState - Track the state of a physical register.
     enum RegState {
@@ -272,7 +272,9 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
     // If this register is used by DBG_VALUE then insert new DBG_VALUE to
     // identify spilled location as the place to find corresponding variable's
     // value.
-    if (MachineInstr *DBG = LiveDbgValueMap.lookup(LRI->first)) {
+    SmallVector<MachineInstr *, 4> &LRIDbgValues = LiveDbgValueMap[LRI->first];
+    for (unsigned li = 0, le = LRIDbgValues.size(); li != le; ++li) {
+      MachineInstr *DBG = LRIDbgValues[li];
       const MDNode *MDPtr =
         DBG->getOperand(DBG->getNumOperands()-1).getMetadata();
       int64_t Offset = 0;
@@ -291,7 +293,7 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
         MachineBasicBlock *MBB = DBG->getParent();
         MBB->insert(MI, NewDV);
         DEBUG(dbgs() << "Inserting debug info due to spill:" << "\n" << *NewDV);
-        LiveDbgValueMap[LRI->first] = NewDV;
+        LRIDbgValues[li] = NewDV;
       }
     }
     if (SpillKill)
@@ -816,7 +818,7 @@ void RAFast::AllocateBasicBlock() {
           if (!MO.isReg()) continue;
           unsigned Reg = MO.getReg();
           if (!TargetRegisterInfo::isVirtualRegister(Reg)) continue;
-          LiveDbgValueMap[Reg] = MI;
+          LiveDbgValueMap[Reg].push_back(MI);
           LiveRegMap::iterator LRI = LiveVirtRegs.find(Reg);
           if (LRI != LiveVirtRegs.end())
             setPhysReg(MI, i, LRI->second.PhysReg);
