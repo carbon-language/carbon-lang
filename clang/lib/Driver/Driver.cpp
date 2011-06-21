@@ -942,10 +942,6 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
   case phases::Precompile:
     return new PrecompileJobAction(Input, types::TY_PCH);
   case phases::Compile: {
-    bool HasO4 = false;
-    if (const Arg *A = Args.getLastArg(options::OPT_O_Group))
-      HasO4 = A->getOption().matches(options::OPT_O4);
-
     if (Args.hasArg(options::OPT_fsyntax_only)) {
       return new CompileJobAction(Input, types::TY_Nothing);
     } else if (Args.hasArg(options::OPT_rewrite_objc)) {
@@ -954,9 +950,7 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
       return new AnalyzeJobAction(Input, types::TY_Plist);
     } else if (Args.hasArg(options::OPT_emit_ast)) {
       return new CompileJobAction(Input, types::TY_AST);
-    } else if (Args.hasArg(options::OPT_emit_llvm) ||
-               Args.hasFlag(options::OPT_flto, options::OPT_fno_lto, false) ||
-               HasO4) {
+    } else if (IsUsingLTO(Args)) {
       types::ID Output =
         Args.hasArg(options::OPT_S) ? types::TY_LTO_IR : types::TY_LTO_BC;
       return new CompileJobAction(Input, Output);
@@ -970,6 +964,19 @@ Action *Driver::ConstructPhaseAction(const ArgList &Args, phases::ID Phase,
 
   assert(0 && "invalid phase in ConstructPhaseAction");
   return 0;
+}
+
+bool Driver::IsUsingLTO(const ArgList &Args) const {
+  // Check for -emit-llvm or -flto.
+  if (Args.hasArg(options::OPT_emit_llvm) ||
+      Args.hasFlag(options::OPT_flto, options::OPT_fno_lto, false))
+    return true;
+
+  // Check for -O4.
+  if (const Arg *A = Args.getLastArg(options::OPT_O_Group))
+      return A->getOption().matches(options::OPT_O4);
+
+  return false;
 }
 
 void Driver::BuildJobs(Compilation &C) const {
