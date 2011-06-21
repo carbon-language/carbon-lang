@@ -92,3 +92,11 @@
 // LINK_OLDER_NODEMANGLE: {{ld(.exe)?"}}
 // LINK_OLDER_NODEMANGLE-NOT: "-demangle"
 // LINK_OLDER_NODEMANGLE: "-lSystem"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### %t.o \
+// RUN:   -mlinker-version=101 -flto 2> %t.log
+// RUN: cat %t.log
+// RUN: FileCheck -check-prefix=LINK_OBJECT_LTO_PATH %s < %t.log
+//
+// LINK_OBJECT_LTO_PATH: {{ld(.exe)?"}}
+// LINK_OBJECT_LTO_PATH: "-object_path_lto"
