@@ -1051,6 +1051,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         } else if (Value == "--fatal-warnings") {
           CmdArgs.push_back("-mllvm");
           CmdArgs.push_back("-fatal-assembler-warnings");
+        } else if (Value == "--noexecstack") {
+          CmdArgs.push_back("-mnoexecstack");
         } else {
           D.Diag(clang::diag::err_drv_unsupported_option_argument)
             << A->getOption().getName() << Value;

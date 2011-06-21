@@ -157,6 +157,8 @@ def mfloat_abi : Separate<"-mfloat-abi">,
   HelpText<"The float ABI to use">;
 def mlimit_float_precision : Separate<"-mlimit-float-precision">,
   HelpText<"Limit float precision to the given value">;
+def mno_exec_stack : Flag<"-mnoexecstack">,
+  HelpText<"Mark the file as not needing an executable stack">;
 def mno_zero_initialized_in_bss : Flag<"-mno-zero-initialized-in-bss">,
   HelpText<"Do not put zero initialized data in the BSS">;
 def momit_leaf_frame_pointer : Flag<"-momit-leaf-frame-pointer">,
