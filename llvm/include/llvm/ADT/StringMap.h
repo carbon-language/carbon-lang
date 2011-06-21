@@ -381,18 +381,6 @@ public:
     return GetOrCreateValue(Key, ValueTy());
   }
 
-  // FIXME: Remove this method.
-  template <typename InitTy>
-  MapEntryTy &GetOrCreateValue(const char *KeyStart, const char *KeyEnd,
-                               InitTy Val) {
-    return GetOrCreateValue(StringRef(KeyStart, KeyEnd - KeyStart), Val);
-  }
-
-  // FIXME: Remove this method.
-  MapEntryTy &GetOrCreateValue(const char *KeyStart, const char *KeyEnd) {
-    return GetOrCreateValue(StringRef(KeyStart, KeyEnd - KeyStart));
-  }
-
   /// remove - Remove the specified key/value pair from the map, but do not
   /// erase it.  This aborts if the key is not in the map.
   void remove(MapEntryTy *KeyValue) {
