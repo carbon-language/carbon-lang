@@ -307,7 +307,7 @@ public:
     return ValueTy();
   }
 
-  ValueTy& operator[](StringRef Key) {
+  ValueTy &operator[](StringRef Key) {
     return GetOrCreateValue(Key).getValue();
   }
 
@@ -355,8 +355,7 @@ public:
   /// exists, return it.  Otherwise, default construct a value, insert it, and
   /// return.
   template <typename InitTy>
-  StringMapEntry<ValueTy> &GetOrCreateValue(StringRef Key,
-                                            InitTy Val) {
+  MapEntryTy &GetOrCreateValue(StringRef Key, InitTy Val) {
     unsigned BucketNo = LookupBucketFor(Key);
     ItemBucket &Bucket = TheTable[BucketNo];
     if (Bucket.Item && Bucket.Item != getTombstoneVal())
@@ -378,19 +377,19 @@ public:
     return *NewItem;
   }
 
-  StringMapEntry<ValueTy> &GetOrCreateValue(StringRef Key) {
+  MapEntryTy &GetOrCreateValue(StringRef Key) {
     return GetOrCreateValue(Key, ValueTy());
   }
 
+  // FIXME: Remove this method.
   template <typename InitTy>
-  StringMapEntry<ValueTy> &GetOrCreateValue(const char *KeyStart,
-                                            const char *KeyEnd,
-                                            InitTy Val) {
+  MapEntryTy &GetOrCreateValue(const char *KeyStart, const char *KeyEnd,
+                               InitTy Val) {
     return GetOrCreateValue(StringRef(KeyStart, KeyEnd - KeyStart), Val);
   }
 
-  StringMapEntry<ValueTy> &GetOrCreateValue(const char *KeyStart,
-                                            const char *KeyEnd) {
+  // FIXME: Remove this method.
+  MapEntryTy &GetOrCreateValue(const char *KeyStart, const char *KeyEnd) {
     return GetOrCreateValue(StringRef(KeyStart, KeyEnd - KeyStart));
   }
 
