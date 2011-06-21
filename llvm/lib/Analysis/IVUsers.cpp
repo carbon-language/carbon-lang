@@ -89,7 +89,7 @@ static bool isInteresting(const SCEV *S, const Instruction *I, const Loop *L,
 /// AddUsersIfInteresting - Inspect the specified instruction.  If it is a
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
-bool IVUsers::AddUsersIfInteresting(Instruction *I, PHINode *Phi) {
+bool IVUsers::AddUsersIfInteresting(Instruction *I) {
   if (!SE->isSCEVable(I->getType()))
     return false;   // Void and FP expressions cannot be reduced.
 
@@ -136,13 +136,12 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I, PHINode *Phi) {
     bool AddUserToIVUsers = false;
     if (LI->getLoopFor(User->getParent()) != L) {
       if (isa<PHINode>(User) || Processed.count(User) ||
-          !AddUsersIfInteresting(User, Phi)) {
+          !AddUsersIfInteresting(User)) {
         DEBUG(dbgs() << "FOUND USER in other loop: " << *User << '\n'
                      << "   OF SCEV: " << *ISE << '\n');
         AddUserToIVUsers = true;
       }
-    } else if (Processed.count(User) ||
-               !AddUsersIfInteresting(User, Phi)) {
+    } else if (Processed.count(User) || !AddUsersIfInteresting(User)) {
       DEBUG(dbgs() << "FOUND USER: " << *User << '\n'
                    << "   OF SCEV: " << *ISE << '\n');
       AddUserToIVUsers = true;
@@ -150,7 +149,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I, PHINode *Phi) {
 
     if (AddUserToIVUsers) {
       // Okay, we found a user that we cannot reduce.
-      IVUses.push_back(new IVStrideUse(this, User, I, Phi));
+      IVUses.push_back(new IVStrideUse(this, User, I));
       IVStrideUse &NewUse = IVUses.back();
       // Autodetect the post-inc loop set, populating NewUse.PostIncLoops.
       // The regular return value here is discarded; instead of recording
@@ -165,8 +164,8 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I, PHINode *Phi) {
   return true;
 }
 
-IVStrideUse &IVUsers::AddUser(Instruction *User, Value *Operand, PHINode *Phi) {
-  IVUses.push_back(new IVStrideUse(this, User, Operand, Phi));
+IVStrideUse &IVUsers::AddUser(Instruction *User, Value *Operand) {
+  IVUses.push_back(new IVStrideUse(this, User, Operand));
   return IVUses.back();
 }
 
@@ -194,7 +193,7 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
   // them by stride.  Start by finding all of the PHI nodes in the header for
   // this loop.  If they are induction variables, inspect their uses.
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I)
-    (void)AddUsersIfInteresting(I, cast<PHINode>(I));
+    (void)AddUsersIfInteresting(I);
 
   return false;
 }

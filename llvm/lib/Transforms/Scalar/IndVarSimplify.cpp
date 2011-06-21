@@ -131,8 +131,7 @@ namespace {
     void EliminateIVComparison(ICmpInst *ICmp, Value *IVOperand);
     void EliminateIVRemainder(BinaryOperator *Rem,
                               Value *IVOperand,
-                              bool IsSigned,
-                              PHINode *IVPhi);
+                              bool IsSigned);
     void pushIVUsers(Instruction *Def);
     bool isSimpleIVUser(Instruction *I, const Loop *L);
     void RewriteNonIntegerIVs(Loop *L);
@@ -523,7 +522,7 @@ void IndVarSimplify::SimplifyIVUsers(SCEVExpander &Rewriter) {
     if (BinaryOperator *Rem = dyn_cast<BinaryOperator>(UseInst)) {
       bool IsSigned = Rem->getOpcode() == Instruction::SRem;
       if (IsSigned || Rem->getOpcode() == Instruction::URem) {
-        EliminateIVRemainder(Rem, IVOperand, IsSigned, I->getPhi());
+        EliminateIVRemainder(Rem, IVOperand, IsSigned);
         continue;
       }
     }
@@ -946,8 +945,7 @@ void IndVarSimplify::EliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
 
 void IndVarSimplify::EliminateIVRemainder(BinaryOperator *Rem,
                                           Value *IVOperand,
-                                          bool IsSigned,
-                                          PHINode *IVPhi) {
+                                          bool IsSigned) {
   // We're only interested in the case where we know something about
   // the numerator.
   if (IVOperand != Rem->getOperand(0))
@@ -992,7 +990,7 @@ void IndVarSimplify::EliminateIVRemainder(BinaryOperator *Rem,
   // Inform IVUsers about the new users.
   if (IU) {
     if (Instruction *I = dyn_cast<Instruction>(Rem->getOperand(0)))
-      IU->AddUsersIfInteresting(I, IVPhi);
+      IU->AddUsersIfInteresting(I);
   }
   DEBUG(dbgs() << "INDVARS: Simplified rem: " << *Rem << '\n');
   ++NumElimRem;
@@ -1011,7 +1009,7 @@ bool IndVarSimplify::EliminateIVUser(Instruction *UseInst,
   if (BinaryOperator *Rem = dyn_cast<BinaryOperator>(UseInst)) {
     bool IsSigned = Rem->getOpcode() == Instruction::SRem;
     if (IsSigned || Rem->getOpcode() == Instruction::URem) {
-      EliminateIVRemainder(Rem, IVOperand, IsSigned, CurrIV);
+      EliminateIVRemainder(Rem, IVOperand, IsSigned);
       return true;
     }
   }
@@ -1283,8 +1281,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // For completeness, inform IVUsers of the IV use in the newly-created
   // loop exit test instruction.
   if (NewICmp && IU)
-    IU->AddUsersIfInteresting(cast<Instruction>(NewICmp->getOperand(0)),
-                              IndVar);
+    IU->AddUsersIfInteresting(cast<Instruction>(NewICmp->getOperand(0)));
 
   // Clean up dead instructions.
   Changed |= DeleteDeadPHIs(L->getHeader());
@@ -1716,5 +1713,5 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PN) {
 
   // Add a new IVUsers entry for the newly-created integer PHI.
   if (IU)
-    IU->AddUsersIfInteresting(NewPHI, NewPHI);
+    IU->AddUsersIfInteresting(NewPHI);
 }
