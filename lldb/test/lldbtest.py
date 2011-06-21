@@ -465,6 +465,15 @@ class TestBase(unittest2.TestCase):
             print >> sys.stderr, "Restore dir to:", cls.oldcwd
         os.chdir(cls.oldcwd)
 
+    def doDelay(self):
+        """See option -w of dotest.py."""
+        if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
+            os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
+            waitTime = 1.0
+            if "LLDB_TIME_WAIT_BETWEEN_TEST_CASES" in os.environ:
+                waitTime = float(os.environ["LLDB_TIME_WAIT_BETWEEN_TEST_CASES"])
+            time.sleep(waitTime)
+
     def setUp(self):
         #import traceback
         #traceback.print_stack()
@@ -496,12 +505,8 @@ class TestBase(unittest2.TestCase):
         except AttributeError:
             pass
 
-        if ("LLDB_WAIT_BETWEEN_TEST_CASES" in os.environ and
-            os.environ["LLDB_WAIT_BETWEEN_TEST_CASES"] == 'YES'):
-            waitTime = 1.0
-            if "LLDB_TIME_WAIT_BETWEEN_TEST_CASES" in os.environ:
-                waitTime = float(os.environ["LLDB_TIME_WAIT_BETWEEN_TEST_CASES"])
-            time.sleep(waitTime)
+        # Insert some delay between successive test cases if specified.
+        self.doDelay()
 
         if "LLDB_MAX_LAUNCH_COUNT" in os.environ:
             self.maxLaunchCount = int(os.environ["LLDB_MAX_LAUNCH_COUNT"])
