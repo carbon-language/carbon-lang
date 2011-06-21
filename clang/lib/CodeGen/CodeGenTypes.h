@@ -37,6 +37,7 @@ namespace clang {
   class CXXConstructorDecl;
   class CXXDestructorDecl;
   class CXXMethodDecl;
+  class CodeGenOptions;
   class FieldDecl;
   class FunctionProtoType;
   class ObjCInterfaceDecl;
@@ -62,6 +63,7 @@ class CodeGenTypes {
   const llvm::TargetData& TheTargetData;
   const ABIInfo& TheABIInfo;
   CGCXXABI &TheCXXABI;
+  const CodeGenOptions &CodeGenOpts;
 
   llvm::SmallVector<std::pair<QualType,
                               llvm::OpaqueType *>, 8>  PointersToResolve;
@@ -108,13 +110,15 @@ private:
 
 public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD,
-               const ABIInfo &Info, CGCXXABI &CXXABI);
+               const ABIInfo &Info, CGCXXABI &CXXABI,
+               const CodeGenOptions &Opts);
   ~CodeGenTypes();
 
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
   const TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
   const ABIInfo &getABIInfo() const { return TheABIInfo; }
+  const CodeGenOptions &getCodeGenOpts() const { return CodeGenOpts; }
   CGCXXABI &getCXXABI() const { return TheCXXABI; }
   llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
 

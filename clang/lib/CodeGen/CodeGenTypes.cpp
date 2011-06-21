@@ -28,9 +28,9 @@ using namespace CodeGen;
 
 CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
                            const llvm::TargetData &TD, const ABIInfo &Info,
-                           CGCXXABI &CXXABI)
+                           CGCXXABI &CXXABI, const CodeGenOptions &CGO)
   : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD),
-    TheABIInfo(Info), TheCXXABI(CXXABI) {
+    TheABIInfo(Info), TheCXXABI(CXXABI), CodeGenOpts(CGO) {
 }
 
 CodeGenTypes::~CodeGenTypes() {
