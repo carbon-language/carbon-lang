@@ -512,6 +512,8 @@ void DwarfException::EmitExceptionTable() {
     SizeAlign = 0;
   }
 
+  bool VerboseAsm = Asm->OutStreamer.isVerboseAsm();
+
   // SjLj Exception handling
   if (IsSJLJ) {
     Asm->EmitEncodingByte(dwarf::DW_EH_PE_udata4, "Call site");
@@ -527,7 +529,7 @@ void DwarfException::EmitExceptionTable() {
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
-      Asm->EmitULEB128(idx, "Landing pad");
+      Asm->EmitULEB128(idx, "Call Site");
 
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
@@ -562,6 +564,7 @@ void DwarfException::EmitExceptionTable() {
     // Add extra padding if it wasn't added to the TType base offset.
     Asm->EmitULEB128(CallSiteTableLength, "Call site table length", SizeAlign);
 
+    unsigned Entry = 0;
     for (SmallVectorImpl<CallSiteEntry>::const_iterator
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
       const CallSiteEntry &S = *I;
@@ -576,19 +579,37 @@ void DwarfException::EmitExceptionTable() {
       if (EndLabel == 0)
         EndLabel = Asm->GetTempSymbol("eh_func_end", Asm->getFunctionNumber());
 
+      if (VerboseAsm) {
+        // Emit comments that decode the call site.
+        Asm->OutStreamer.AddComment(Twine(">> Call Site ") +
+                                    llvm::utostr(++Entry) + " <<");
+        Asm->OutStreamer.AddComment(Twine("  Call between ") +
+                                    BeginLabel->getName() + " and " +
+                                    EndLabel->getName());
+        if (!S.PadLabel) {
+          Asm->OutStreamer.AddComment("    has no landing pad");
+        } else {
+          Asm->OutStreamer.AddComment(Twine("    jumps to ") +
+                                      S.PadLabel->getName());
+
+          if (S.Action == 0)
+            Asm->OutStreamer.AddComment("  On action: cleanup");
+          else
+            Asm->OutStreamer.AddComment(Twine("  On action: ") +
+                                        llvm::utostr((S.Action - 1) / 2 + 1));
+        }
+
+        Asm->OutStreamer.AddBlankLine();
+      }
+
       // Offset of the call site relative to the previous call site, counted in
       // number of 16-byte bundles. The first call site is counted relative to
       // the start of the procedure fragment.
-      Asm->OutStreamer.AddComment("Region start");
       Asm->EmitLabelDifference(BeginLabel, EHFuncBeginSym, 4);
-
-      Asm->OutStreamer.AddComment("Region length");
       Asm->EmitLabelDifference(EndLabel, BeginLabel, 4);
-
 
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
-      Asm->OutStreamer.AddComment("Landing pad");
       if (!S.PadLabel)
         Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
       else
@@ -597,45 +618,63 @@ void DwarfException::EmitExceptionTable() {
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
       // the action table), and 0 indicates that there are no actions.
-      Asm->EmitULEB128(S.Action, "Action");
+      Asm->EmitULEB128(S.Action);
     }
   }
 
   // Emit the Action Table.
-  if (Actions.size() != 0) {
-    Asm->OutStreamer.AddComment("-- Action Record Table --");
-    Asm->OutStreamer.AddBlankLine();
-  }
-
+  int Entry = 0;
   for (SmallVectorImpl<ActionEntry>::const_iterator
          I = Actions.begin(), E = Actions.end(); I != E; ++I) {
     const ActionEntry &Action = *I;
-    Asm->OutStreamer.AddComment("Action Record");
-    Asm->OutStreamer.AddBlankLine();
+
+    if (VerboseAsm) {
+      // Emit comments that decode the action table.
+      Asm->OutStreamer.AddComment(Twine(">> Action Record ") +
+                                  llvm::utostr(++Entry) + " <<");
+      if (Action.ValueForTypeID >= 0)
+        Asm->OutStreamer.AddComment(Twine("  Catch TypeInfo ") +
+                                    llvm::itostr(Action.ValueForTypeID));
+      else 
+        Asm->OutStreamer.AddComment(Twine("  Filter TypeInfo ") +
+                                    llvm::itostr(Action.ValueForTypeID));
+
+      if (Action.NextAction == 0) {
+        Asm->OutStreamer.AddComment("  No further actions");
+      } else {
+        unsigned NextAction = Entry + (Action.NextAction + 1) / 2;
+        Asm->OutStreamer.AddComment(Twine("  Continue to action ") +
+                                    llvm::utostr(NextAction));
+      }
+
+      Asm->OutStreamer.AddBlankLine();
+    }
 
     // Type Filter
     //
     //   Used by the runtime to match the type of the thrown exception to the
     //   type of the catch clauses or the types in the exception specification.
-    Asm->EmitSLEB128(Action.ValueForTypeID, "  TypeInfo index");
+    Asm->EmitSLEB128(Action.ValueForTypeID);
 
     // Action Record
     //
     //   Self-relative signed displacement in bytes of the next action record,
     //   or 0 if there is no next action record.
-    Asm->EmitSLEB128(Action.NextAction, "  Next action");
+    Asm->EmitSLEB128(Action.NextAction);
   }
 
   // Emit the Catch TypeInfos.
-  if (!TypeInfos.empty()) {
-    Asm->OutStreamer.AddComment("-- Catch TypeInfos --");
+  if (VerboseAsm && !TypeInfos.empty()) {
+    Asm->OutStreamer.AddComment(">> Catch TypeInfos <<");
     Asm->OutStreamer.AddBlankLine();
+    Entry = TypeInfos.size();
   }
+
   for (std::vector<const GlobalVariable *>::const_reverse_iterator
          I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
     const GlobalVariable *GV = *I;
-
-    Asm->OutStreamer.AddComment("TypeInfo");
+    if (VerboseAsm)
+      Asm->OutStreamer.AddComment(Twine("TypeInfo ") + llvm::utostr(Entry--));
     if (GV)
       Asm->EmitReference(GV, TTypeEncoding);
     else
@@ -644,14 +683,21 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the Exception Specifications.
-  if (!FilterIds.empty()) {
-    Asm->OutStreamer.AddComment("-- Filter IDs --");
+  if (VerboseAsm && !FilterIds.empty()) {
+    Asm->OutStreamer.AddComment(">> Filter TypeInfos <<");
     Asm->OutStreamer.AddBlankLine();
+    Entry = 0;
   }
   for (std::vector<unsigned>::const_iterator
          I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
     unsigned TypeID = *I;
-    Asm->EmitULEB128(TypeID, TypeID != 0 ? "Exception specification" : 0);
+    if (VerboseAsm) {
+      --Entry;
+      if (TypeID != 0)
+        Asm->OutStreamer.AddComment(Twine("FilterInfo ") + llvm::itostr(Entry));
+    }
+
+    Asm->EmitULEB128(TypeID);
   }
 
   Asm->EmitAlignment(2);
