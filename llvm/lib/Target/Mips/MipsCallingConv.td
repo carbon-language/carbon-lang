@@ -20,8 +20,8 @@ class CCIfSubtarget<string F, CCAction A>:
 // Only the return rules are defined here for O32. The rules for argument
 // passing are defined in MipsISelLowering.cpp.
 def RetCC_MipsO32 : CallingConv<[
-  // i32 are returned in registers V0, V1
-  CCIfType<[i32], CCAssignToReg<[V0, V1]>>,
+  // i32 are returned in registers V0, V1, A0, A1
+  CCIfType<[i32], CCAssignToReg<[V0, V1, A0, A1]>>,
 
   // f32 are returned in registers F0, F2
   CCIfType<[f32], CCAssignToReg<[F0, F2]>>,
