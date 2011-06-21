@@ -94,7 +94,7 @@
 // LINK_OLDER_NODEMANGLE: "-lSystem"
 
 // RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### %t.o \
-// RUN:   -mlinker-version=101 -flto 2> %t.log
+// RUN:   -mlinker-version=117 -flto 2> %t.log
 // RUN: cat %t.log
 // RUN: FileCheck -check-prefix=LINK_OBJECT_LTO_PATH %s < %t.log
 //
