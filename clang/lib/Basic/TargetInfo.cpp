@@ -212,6 +212,20 @@ bool TargetInfo::isValidGCCRegisterName(llvm::StringRef Name) const {
       return true;
   }
 
+  // Check any additional names that we have.
+  const AddlRegName *AddlNames;
+  unsigned NumAddlNames;
+  getGCCAddlRegNames(AddlNames, NumAddlNames);
+  for (unsigned i = 0; i < NumAddlNames; i++)
+    for (unsigned j = 0; j < llvm::array_lengthof(AddlNames[i].Names); j++) {
+      if (!AddlNames[i].Names[j])
+	break;
+      // Make sure the register that the additional name is for is within
+      // the bounds of the register names from above.
+      if (AddlNames[i].Names[j] == Name && AddlNames[i].RegNum < NumNames)
+	return true;
+  }
+
   // Now check aliases.
   const GCCRegAlias *Aliases;
   unsigned NumAliases;
@@ -250,6 +264,20 @@ TargetInfo::getNormalizedGCCRegisterName(llvm::StringRef Name) const {
       return Names[n];
     }
   }
+
+  // Check any additional names that we have.
+  const AddlRegName *AddlNames;
+  unsigned NumAddlNames;
+  getGCCAddlRegNames(AddlNames, NumAddlNames);
+  for (unsigned i = 0; i < NumAddlNames; i++)
+    for (unsigned j = 0; j < llvm::array_lengthof(AddlNames[i].Names); j++) {
+      if (!AddlNames[i].Names[j])
+	break;
+      // Make sure the register that the additional name is for is within
+      // the bounds of the register names from above.
+      if (AddlNames[i].Names[j] == Name && AddlNames[i].RegNum < NumNames)
+	return Name;
+    }
 
   // Now check aliases.
   const GCCRegAlias *Aliases;

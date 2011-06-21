@@ -21,7 +21,7 @@ void test2() {
 // PR7338
 void test3(int *vout, int vin)
 {
-  // CHECK: call void asm "opr $0,$1", "=*r|m|r,r|m|r,~{di},~{dirflag},~{fpsr},~{flags}"
+  // CHECK: call void asm "opr $0,$1", "=*r|m|r,r|m|r,~{edi},~{dirflag},~{fpsr},~{flags}"
 asm(
 		"opr %[vout],%[vin]"
 		: [vout] "=r,=m,=r" (*vout)
@@ -37,4 +37,3 @@ int test4(volatile int *addr) {
   return (int)oldval;
 // CHECK: call i8 asm "frob $0", "=r,0{{.*}}"(i8 -1)
 }
-

@@ -396,6 +396,11 @@ public:
     const char * const Register;
   };
 
+  struct AddlRegName {
+    const char * const Names[5];
+    const unsigned RegNum;
+  };
+
   virtual bool useGlobalsForAutomaticVariables() const { return false; }
 
   /// getCFStringSection - Return the section to use for CFString
@@ -566,6 +571,11 @@ protected:
                               unsigned &NumNames) const = 0;
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                 unsigned &NumAliases) const = 0;
+  virtual void getGCCAddlRegNames(const AddlRegName *&Addl,
+				  unsigned &NumAddl) const {
+    Addl = 0;
+    NumAddl = 0;
+  }
   virtual bool validateAsmConstraint(const char *&Name,
                                      TargetInfo::ConstraintInfo &info) const= 0;
 };
