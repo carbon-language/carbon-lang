@@ -1406,6 +1406,9 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
       if (LoopVar->isInvalidDecl())
         NoteForRangeBeginEndFunction(*this, BeginExpr.get(), BEF_begin);
     }
+  } else {
+    // The range is implicitly used as a placeholder when it is dependent.
+    RangeVar->setUsed();
   }
 
   return Owned(new (Context) CXXForRangeStmt(RangeDS,
