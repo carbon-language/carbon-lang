@@ -82,13 +82,16 @@ public:
   /// Include the system standard C++ library include search directories.
   unsigned UseStandardCXXIncludes : 1;
 
+  /// Use libc++ instead of the default libstdc++.
+  unsigned UseLibcxx : 1;
+
   /// Whether header search information should be output as for -v.
   unsigned Verbose : 1;
 
 public:
   HeaderSearchOptions(llvm::StringRef _Sysroot = "/")
     : Sysroot(_Sysroot), UseBuiltinIncludes(true),
-      UseStandardIncludes(true), UseStandardCXXIncludes(true),
+      UseStandardIncludes(true), UseStandardCXXIncludes(true), UseLibcxx(false),
       Verbose(false) {}
 
   /// AddPath - Add the \arg Path path to the specified \arg Group list.

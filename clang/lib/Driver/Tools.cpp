@@ -330,6 +330,7 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       = types::isObjC(InputType) && isObjCAutoRefCount(Args);
     getToolChain().AddClangCXXStdlibIncludeArgs(Args, CmdArgs, 
                                                 ObjCXXAutoRefCount);
+    Args.AddAllArgs(CmdArgs, options::OPT_stdlib_EQ);
   }
 
   // Add -Wp, and -Xassembler if using the preprocessor.

@@ -553,6 +553,8 @@ static void HeaderSearchOptsToArgs(const HeaderSearchOptions &Opts,
     Res.push_back("-nostdinc");
   if (!Opts.UseStandardCXXIncludes)
     Res.push_back("-nostdinc++");
+  if (Opts.UseLibcxx)
+    Res.push_back("-stdlib=libc++");
   if (Opts.Verbose)
     Res.push_back("-v");
 }
@@ -1330,6 +1332,8 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.UseBuiltinIncludes = !Args.hasArg(OPT_nobuiltininc);
   Opts.UseStandardIncludes = !Args.hasArg(OPT_nostdinc);
   Opts.UseStandardCXXIncludes = !Args.hasArg(OPT_nostdincxx);
+  if (const Arg *A = Args.getLastArg(OPT_stdlib_EQ))
+    Opts.UseLibcxx = (strcmp(A->getValue(Args), "libc++") == 0);
   Opts.ResourceDir = Args.getLastArgValue(OPT_resource_dir);
 
   // Add -I... and -F... options in order.

@@ -461,6 +461,8 @@ def fhidden_weak_vtables : Flag<"-fhidden-weak-vtables">,
   HelpText<"Generate weak vtables and RTTI with hidden visibility">;
 def std_EQ : Joined<"-std=">,
   HelpText<"Language standard to compile for">;
+def stdlib_EQ : Joined<"-stdlib=">,
+  HelpText<"C++ standard library to use">;
 def fmath_errno : Flag<"-fmath-errno">,
   HelpText<"Require math functions to indicate errors by setting errno">;
 def fms_extensions : Flag<"-fms-extensions">,
