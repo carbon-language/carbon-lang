@@ -14,15 +14,13 @@ using namespace lldb;
 using namespace lldb_private;
 
 SBSymbolContextList::SBSymbolContextList () :
-    m_opaque_ap ()
+    m_opaque_ap (new SymbolContextList())
 {
 }
 
 SBSymbolContextList::SBSymbolContextList (const SBSymbolContextList& rhs) :
-    m_opaque_ap ()
+    m_opaque_ap (new SymbolContextList(*rhs.m_opaque_ap))
 {
-    if (rhs.IsValid())
-        *m_opaque_ap = *rhs.m_opaque_ap;
 }
 
 SBSymbolContextList::~SBSymbolContextList ()
@@ -34,8 +32,7 @@ SBSymbolContextList::operator = (const SBSymbolContextList &rhs)
 {
     if (this != &rhs)
     {
-        if (rhs.IsValid())
-            m_opaque_ap.reset (new lldb_private::SymbolContextList(*rhs.m_opaque_ap.get()));
+        *m_opaque_ap = *rhs.m_opaque_ap;
     }
     return *this;
 }
@@ -61,6 +58,13 @@ SBSymbolContextList::GetContextAtIndex (uint32_t idx)
         }
     }
     return sb_sc;
+}
+
+void
+SBSymbolContextList::Clear()
+{
+    if (m_opaque_ap.get())
+        m_opaque_ap->Clear();
 }
 
 

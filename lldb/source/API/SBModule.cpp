@@ -10,8 +10,8 @@
 #include "lldb/API/SBModule.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBFileSpec.h"
-#include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBSymbolContextList.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
@@ -285,3 +285,24 @@ SBModule::GetSymbolAtIndex (size_t idx)
     }
     return sb_symbol;
 }
+
+uint32_t
+SBModule::FindFunctions (const char *name, 
+                         uint32_t name_type_mask, 
+                         bool append, 
+                         lldb::SBSymbolContextList& sc_list)
+{
+    if (!append)
+        sc_list.Clear();
+    if (m_opaque_sp)
+    {
+        const bool symbols_ok = true;
+        return m_opaque_sp->FindFunctions (ConstString(name), 
+                                           name_type_mask, 
+                                           symbols_ok, 
+                                           append, 
+                                           *sc_list);
+    }
+    return 0;
+}
+

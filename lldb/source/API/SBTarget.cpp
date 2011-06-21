@@ -14,6 +14,7 @@
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBModule.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBSymbolContextList.h"
 #include "lldb/Breakpoint/BreakpointID.h"
 #include "lldb/Breakpoint/BreakpointIDList.h"
 #include "lldb/Breakpoint/BreakpointList.h"
@@ -784,3 +785,25 @@ SBTarget::GetDescription (SBStream &description, lldb::DescriptionLevel descript
     
     return true;
 }
+
+
+uint32_t
+SBTarget::FindFunctions (const char *name, 
+                         uint32_t name_type_mask, 
+                         bool append, 
+                         lldb::SBSymbolContextList& sc_list)
+{
+    if (!append)
+        sc_list.Clear();
+    if (m_opaque_sp)
+    {
+        const bool symbols_ok = true;
+        return m_opaque_sp->GetImages().FindFunctions (ConstString(name), 
+                                                       name_type_mask, 
+                                                       symbols_ok, 
+                                                       append, 
+                                                       *sc_list);
+    }
+    return 0;
+}
+

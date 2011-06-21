@@ -183,6 +183,12 @@ public:
     lldb::SBModule
     FindModule (const lldb::SBFileSpec &file_spec);
 
+    uint32_t
+    FindFunctions (const char *name, 
+                   uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
+                   bool append, 
+                   lldb::SBSymbolContextList& sc_list);
+
     void
     Clear ();
 

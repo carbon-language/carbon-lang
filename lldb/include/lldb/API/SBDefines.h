@@ -53,6 +53,7 @@ class SBStream;
 class SBStringList;
 class SBSymbol;
 class SBSymbolContext;
+class SBSymbolContextList;
 class SBTarget;
 class SBThread;
 class SBValue;

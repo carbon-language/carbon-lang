@@ -38,7 +38,13 @@ public:
     SBSymbolContext
     GetContextAtIndex (uint32_t idx);
 
+    void
+    Clear();
+
 protected:
+
+    friend class SBModule;
+    friend class SBTarget;
 
 #ifndef SWIG
 

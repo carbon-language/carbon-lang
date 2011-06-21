@@ -74,6 +74,12 @@ public:
     lldb::SBSymbol
     GetSymbolAtIndex (size_t idx);
 
+    uint32_t
+    FindFunctions (const char *name, 
+                   uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
+                   bool append, 
+                   lldb::SBSymbolContextList& sc_list);
+
 private:
     friend class SBAddress;
     friend class SBFrame;
