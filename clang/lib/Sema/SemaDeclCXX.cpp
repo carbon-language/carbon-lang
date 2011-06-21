@@ -185,9 +185,9 @@ void Sema::ImplicitExceptionSpecification::CalledExpr(Expr *E) {
   // FIXME:
   //
   // C++0x [except.spec]p14:
-  //   [An] implicit exception-speciﬁcation speciﬁes the type-id T if and
-  // only if T is allowed by the exception-speciﬁcation of a function directly
-  // invoked by f’s implicit deﬁnition; f shall allow all exceptions if any
+  //   [An] implicit exception-specification specifies the type-id T if and
+  // only if T is allowed by the exception-specification of a function directly
+  // invoked by f's implicit definition; f shall allow all exceptions if any
   // function it directly invokes allows all exceptions, and f shall allow no
   // exceptions if every function it directly invokes allows no exceptions.
   //

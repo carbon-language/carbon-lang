@@ -1266,7 +1266,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     // passed in memory.
     // 
     // (c) If the size of the aggregate exceeds two eightbytes and the first
-    // eight-byte isn’t SSE or any other eightbyte isn’t SSEUP, the whole 
+    // eight-byte isn't SSE or any other eightbyte isn't SSEUP, the whole 
     // argument is passed in memory.
     // 
     // (d) If SSEUP is not preceded by SSE or SSEUP, it is converted to SSE.
