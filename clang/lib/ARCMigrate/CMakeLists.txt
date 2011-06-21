@@ -8,7 +8,7 @@ add_clang_library(clangARCMigrate
   TransARCAssign.cpp
   TransAutoreleasePool.cpp
   TransBlockObjCVariable.cpp
-  TransEmptyStatements.cpp
+  TransEmptyStatementsAndDealloc.cpp
   TransformActions.cpp
   Transforms.cpp
   TransProperties.cpp
