@@ -82,11 +82,6 @@ typedef struct a_union_nonzero_tag {
 #include <stdint.h>
 #include <stdio.h>
 
-void Puts(char const *msg)
-{
-    puts(msg);  // Here is the line we will break on before stepping out
-}
-
 int 
 main (int argc, char const *argv[])
 {
@@ -173,6 +168,6 @@ main (int argc, char const *argv[])
     printf ("(a_union_zero_t[]) a_union_zero_array_unbounded[1].a = '" T_PRINTF_FORMAT "'\n", a_union_zero_array_unbounded[1].a);
 
 #endif
-    Puts("About to exit, break here to check values...");
+    puts("About to exit, break here to check values..."); // Here is the line we will break on to check variables.
     return 0;
 }
