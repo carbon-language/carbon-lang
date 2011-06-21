@@ -2968,6 +2968,22 @@ def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
             (MOVZDI2PDIrm addr:$src)>;
 }
 
+// These are the correct encodings of the instructions so that we know how to
+// read correct assembly, even though we continue to emit the wrong ones for
+// compatibility with Darwin's buggy assembler.
+def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
+                (MOV64toPQIrr VR128:$dst, GR64:$src), 0>;
+def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
+                (MOV64toSDrr FR64:$dst, GR64:$src), 0>;
+def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
+                (MOVPQIto64rr GR64:$dst, VR128:$src), 0>;
+def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
+                (MOVSDto64rr GR64:$dst, FR64:$src), 0>;
+def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
+                (VMOVZQI2PQIrr VR128:$dst, GR64:$src), 0>;
+def : InstAlias<"movq\t{$src, $dst|$dst, $src}",
+                (MOVZQI2PQIrr VR128:$dst, GR64:$src), 0>;
+
 //===---------------------------------------------------------------------===//
 // SSE2 - Move Quadword
 //===---------------------------------------------------------------------===//
