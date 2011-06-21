@@ -208,7 +208,7 @@ void LTOModule::addObjCClass(GlobalVariable *clgv) {
     if (objcClassNameFromExpression(c->getOperand(1), superclassName)) {
       NameAndAttributes info;
       StringMap<NameAndAttributes>::value_type &entry =
-        _undefines.GetOrCreateValue(superclassName.c_str());
+        _undefines.GetOrCreateValue(superclassName);
       if (!entry.getValue().name) {
         const char *symbolName = entry.getKey().data();
         info.name = symbolName;
@@ -220,7 +220,7 @@ void LTOModule::addObjCClass(GlobalVariable *clgv) {
     std::string className;
     if (objcClassNameFromExpression(c->getOperand(2), className)) {
       StringSet::value_type &entry =
-        _defines.GetOrCreateValue(className.c_str());
+        _defines.GetOrCreateValue(className);
       entry.setValue(1);
       NameAndAttributes info;
       info.name = entry.getKey().data();
@@ -243,7 +243,7 @@ void LTOModule::addObjCCategory(GlobalVariable *clgv) {
       NameAndAttributes info;
 
       StringMap<NameAndAttributes>::value_type &entry =
-        _undefines.GetOrCreateValue(targetclassName.c_str());
+        _undefines.GetOrCreateValue(targetclassName);
 
       if (entry.getValue().name)
         return;
@@ -264,7 +264,7 @@ void LTOModule::addObjCClassRef(GlobalVariable *clgv) {
     NameAndAttributes info;
 
     StringMap<NameAndAttributes>::value_type &entry =
-      _undefines.GetOrCreateValue(targetclassName.c_str());
+      _undefines.GetOrCreateValue(targetclassName);
     if (entry.getValue().name)
       return;
 
@@ -375,7 +375,7 @@ void LTOModule::addDefinedSymbol(GlobalValue *def, Mangler &mangler,
 
   // add to table of symbols
   NameAndAttributes info;
-  StringSet::value_type &entry = _defines.GetOrCreateValue(Buffer.c_str());
+  StringSet::value_type &entry = _defines.GetOrCreateValue(Buffer);
   entry.setValue(1);
 
   StringRef Name = entry.getKey();
@@ -436,7 +436,7 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue *decl,
   mangler.getNameWithPrefix(name, decl, false);
 
   StringMap<NameAndAttributes>::value_type &entry =
-    _undefines.GetOrCreateValue(name.c_str());
+    _undefines.GetOrCreateValue(name);
 
   // we already have the symbol
   if (entry.getValue().name)
