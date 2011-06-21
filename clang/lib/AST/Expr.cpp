@@ -2045,7 +2045,7 @@ Expr *Expr::IgnoreParenImpCasts() {
 
 Expr *Expr::IgnoreConversionOperator() {
   if (CXXMemberCallExpr *MCE = dyn_cast<CXXMemberCallExpr>(this)) {
-    if (isa<CXXConversionDecl>(MCE->getMethodDecl()))
+    if (MCE->getMethodDecl() && isa<CXXConversionDecl>(MCE->getMethodDecl()))
       return MCE->getImplicitObjectArgument();
   }
   return this;

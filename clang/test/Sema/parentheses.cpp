@@ -29,3 +29,17 @@ void f(Stream& s, bool b) {
                                   // expected-note {{place parentheses around the '?:' expression to evaluate it first}} \
                                   // expected-note {{place parentheses around the '<<' expression to silence this warning}}
 }
+
+struct S {
+  operator int() { return 42; }
+  friend S operator+(const S &lhs, bool) { return S(); }
+};
+
+void test(S *s, bool (S::*m_ptr)()) {
+  (void)(*s + true ? "foo" : "bar"); // expected-warning {{operator '?:' has lower precedence than '+'}} \
+                                     // expected-note {{place parentheses around the '?:' expression to evaluate it first}} \
+                                     // expected-note {{place parentheses around the '+' expression to silence this warning}}
+
+  // Don't crash on unusual member call expressions.
+  (void)((s->*m_ptr)() ? "foo" : "bar");
+}
