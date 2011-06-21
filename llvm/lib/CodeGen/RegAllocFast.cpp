@@ -293,9 +293,11 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
         MachineBasicBlock *MBB = DBG->getParent();
         MBB->insert(MI, NewDV);
         DEBUG(dbgs() << "Inserting debug info due to spill:" << "\n" << *NewDV);
-        LRIDbgValues[li] = NewDV;
       }
     }
+    // Now this register is spilled there is should not be any DBG_VALUE pointing
+    // to this register because they are all pointing to spilled value now.
+    LRIDbgValues.clear();
     if (SpillKill)
       LR.LastUse = 0; // Don't kill register again
   }
