@@ -91,6 +91,11 @@ public:
   unsigned UnrollLoops       : 1; /// Control whether loops are unrolled.
   unsigned UnsafeFPMath      : 1; /// Allow unsafe floating point optzns.
   unsigned UnwindTables      : 1; /// Emit unwind tables.
+
+  /// Attempt to use register sized accesses to bit-fields in structures, when
+  /// possible.
+  unsigned UseRegisterSizedBitfieldAccess : 1;
+
   unsigned VerifyModule      : 1; /// Control whether the module should be run
                                   /// through the LLVM Verifier.
 
@@ -176,6 +181,7 @@ public:
     UnrollLoops = 0;
     UnsafeFPMath = 0;
     UnwindTables = 0;
+    UseRegisterSizedBitfieldAccess = 0;
     VerifyModule = 1;
 
     Inlining = NoInlining;

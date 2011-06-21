@@ -18,6 +18,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/Frontend/CodeGenOptions.h"
 #include "CodeGenTypes.h"
 #include "CGCXXABI.h"
 #include "llvm/DerivedTypes.h"
@@ -267,6 +268,18 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
   unsigned NumComponents = 0;
   unsigned AccessedTargetBits = 0;       // The number of target bits accessed.
   unsigned AccessWidth = TypeSizeInBits; // The current access width to attempt.
+
+  // If requested, widen the initial bit-field access to be register sized. The
+  // theory is that this is most likely to allow multiple accesses into the same
+  // structure to be coalesced, and that the backend should be smart enough to
+  // narrow the store if no coalescing is ever done.
+  //
+  // The subsequent code will handle align these access to common boundaries and
+  // guaranteeing that we do not access past the end of the structure.
+  if (Types.getCodeGenOpts().UseRegisterSizedBitfieldAccess) {
+    if (AccessWidth < Types.getTarget().getRegisterWidth())
+      AccessWidth = Types.getTarget().getRegisterWidth();
+  }
 
   // Round down from the field offset to find the first access position that is
   // at an aligned offset of the initial access type.

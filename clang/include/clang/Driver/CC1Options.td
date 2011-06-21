@@ -143,6 +143,8 @@ def femit_coverage_data: Flag<"-femit-coverage-data">,
 def coverage_file : Separate<"-coverage-file">,
   HelpText<"Emit coverage data to this filename. The extension will be replaced.">;
 def coverage_file_EQ : Joined<"-coverage-file=">, Alias<coverage_file>;
+def fuse_register_sized_bitfield_access: Flag<"-fuse-register-sized-bitfield-access">,
+  HelpText<"Use register sized accesses to bit-fields, when possible.">;
 def relaxed_aliasing : Flag<"-relaxed-aliasing">,
   HelpText<"Turn off Type Based Alias Analysis">;
 def masm_verbose : Flag<"-masm-verbose">,
