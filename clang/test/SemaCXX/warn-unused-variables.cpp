@@ -54,3 +54,29 @@ void unused_local_static() {
   static int y = 0; // expected-warning{{unused variable 'y'}}
 #pragma unused(x)
 }
+
+// PR10168
+namespace PR10168 {
+  // We expect a warning in the definition only for non-dependent variables, and
+  // a warning in the instantiation only for dependent variables.
+  template<typename T>
+  struct S {
+    void f() {
+      int a; // expected-warning {{unused variable 'a'}}
+      T b; // expected-warning 2{{unused variable 'b'}}
+    }
+  };
+
+  template<typename T>
+  void f() {
+    int a; // expected-warning {{unused variable 'a'}}
+    T b; // expected-warning 2{{unused variable 'b'}}
+  }
+
+  void g() {
+    S<int>().f(); // expected-note {{here}}
+    S<char>().f(); // expected-note {{here}}
+    f<int>(); // expected-note {{here}}
+    f<char>(); // expected-note {{here}}
+  }
+}

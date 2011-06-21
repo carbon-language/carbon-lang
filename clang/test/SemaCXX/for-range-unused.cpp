@@ -5,8 +5,7 @@
 template <typename T>
   struct Vector {
     void doIt() {
-      // FIXME: PR10168: Only warn once for this!
-      int a; // expected-warning 2{{unused variable 'a'}}
+      int a; // expected-warning {{unused variable 'a'}}
 
       for (auto& e : elements)
         ;
@@ -18,5 +17,5 @@ template <typename T>
 
 int main(int, char**) {
   Vector<int>    vector;
-  vector.doIt(); // expected-note {{requested here}}
+  vector.doIt();
 }

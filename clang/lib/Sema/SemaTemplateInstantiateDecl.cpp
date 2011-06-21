@@ -415,8 +415,10 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
              !Var->isCXXForRangeDecl())
     SemaRef.ActOnUninitializedDecl(Var, false);
 
-  // Diagnose unused local variables.
-  if (!Var->isInvalidDecl() && Owner->isFunctionOrMethod() && !Var->isUsed())
+  // Diagnose unused local variables with dependent types, where the diagnostic
+  // will have been deferred.
+  if (!Var->isInvalidDecl() && Owner->isFunctionOrMethod() && !Var->isUsed() &&
+      D->getType()->isDependentType())
     SemaRef.DiagnoseUnusedDecl(Var);
 
   return Var;
