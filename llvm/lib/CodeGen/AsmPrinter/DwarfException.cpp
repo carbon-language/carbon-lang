@@ -527,14 +527,30 @@ void DwarfException::EmitExceptionTable() {
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I, ++idx) {
       const CallSiteEntry &S = *I;
 
+      if (VerboseAsm) {
+        // Emit comments that decode the call site.
+        Asm->OutStreamer.AddComment(Twine(">> Call Site ") +
+                                    llvm::utostr(idx) + " <<");
+        Asm->OutStreamer.AddComment(Twine("  On exception at call site ") +
+                                    llvm::utostr(idx));
+
+        if (S.Action == 0)
+          Asm->OutStreamer.AddComment("  Action: cleanup");
+        else
+          Asm->OutStreamer.AddComment(Twine("  Action: ") +
+                                      llvm::utostr((S.Action - 1) / 2 + 1));
+
+        Asm->OutStreamer.AddBlankLine();
+      }
+
       // Offset of the landing pad, counted in 16-byte bundles relative to the
       // @LPStart address.
-      Asm->EmitULEB128(idx, "Call Site");
+      Asm->EmitULEB128(idx);
 
       // Offset of the first associated action record, relative to the start of
       // the action table. This value is biased by 1 (1 indicates the start of
       // the action table), and 0 indicates that there are no actions.
-      Asm->EmitULEB128(S.Action, "Action");
+      Asm->EmitULEB128(S.Action);
     }
   } else {
     // DWARF Exception handling
@@ -586,6 +602,7 @@ void DwarfException::EmitExceptionTable() {
         Asm->OutStreamer.AddComment(Twine("  Call between ") +
                                     BeginLabel->getName() + " and " +
                                     EndLabel->getName());
+
         if (!S.PadLabel) {
           Asm->OutStreamer.AddComment("    has no landing pad");
         } else {
