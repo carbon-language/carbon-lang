@@ -739,7 +739,7 @@ def lldbLoggings():
         else:
             gdb_remote_log_option = "packets process"
         ci.HandleCommand(
-            "log enable -n -f " + os.environ["GDB_REMOTE_LOG"] + " process.gdb-remote "
+            "log enable -n -f " + os.environ["GDB_REMOTE_LOG"] + " gdb-remote "
             + gdb_remote_log_option,
             res)
         if not res.Succeeded():
