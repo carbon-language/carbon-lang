@@ -642,7 +642,7 @@ CheckReinterpretCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
     }
   } else if (tcr == TC_Success && Self.getLangOptions().ObjCAutoRefCount) {
     Expr *Exp = SrcExpr.get();
-    // Note that Exp does not change with CCK_OtherCast cat type
+    // Note that Exp does not change with CCK_OtherCast cast type
     Self.CheckObjCARCConversion(OpRange, DestType,
                                 Exp, Sema::CCK_OtherCast);
   }
@@ -708,7 +708,7 @@ CheckStaticCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
       Self.CheckCastAlign(SrcExpr.get(), DestType, OpRange);
     if (Self.getLangOptions().ObjCAutoRefCount) {
       Expr *Exp = SrcExpr.get();
-      // Note that Exp does not change with CCK_OtherCast cat type
+      // Note that Exp does not change with CCK_OtherCast cast type
       Self.CheckObjCARCConversion(OpRange, DestType,
                                   Exp, Sema::CCK_OtherCast);
     }
