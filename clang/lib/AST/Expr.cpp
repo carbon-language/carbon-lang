@@ -1573,10 +1573,6 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return (cast<ImplicitCastExpr>(this)
             ->getSubExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx));
 
-  case MaterializeTemporaryExprClass:
-    return cast<MaterializeTemporaryExpr>(this)->GetTemporaryExpr()
-                                    ->isUnusedResultAWarning(Loc, R1, R2, Ctx);
-      
   case CXXDefaultArgExprClass:
     return (cast<CXXDefaultArgExpr>(this)
             ->getExpr()->isUnusedResultAWarning(Loc, R1, R2, Ctx));

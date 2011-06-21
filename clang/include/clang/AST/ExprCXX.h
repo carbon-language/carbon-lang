@@ -3029,7 +3029,7 @@ public:
   
   /// \brief Determine whether this materialized temporary is bound to an
   /// lvalue reference; otherwise, it's bound to an rvalue reference.
-  bool BoundToLvalueReference() const { 
+  bool isBoundToLvalueReference() const { 
     return getValueKind() == VK_LValue;
   }
   

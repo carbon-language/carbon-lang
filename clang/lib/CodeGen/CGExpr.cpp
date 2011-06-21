@@ -2078,9 +2078,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
                                            const MaterializeTemporaryExpr *E) {
   RValue RV = EmitReferenceBindingToExpr(E->GetTemporaryExpr(),
                                          /*InitializedDecl=*/0);
-  return LValue::MakeAddr(RV.getScalarVal(), E->getType(),
-                          CGM.getContext().getTypeAlign(E->getType()),
-                          CGM.getContext());
+  return MakeAddrLValue(RV.getScalarVal(), E->getType());
 }
 
 

@@ -343,7 +343,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     return ClassifyInternal(Ctx, cast<PackExpansionExpr>(E)->getPattern());
       
   case Expr::MaterializeTemporaryExprClass:
-    return cast<MaterializeTemporaryExpr>(E)->BoundToLvalueReference()
+    return cast<MaterializeTemporaryExpr>(E)->isBoundToLvalueReference()
               ? Cl::CL_LValue 
               : Cl::CL_XValue;
   }

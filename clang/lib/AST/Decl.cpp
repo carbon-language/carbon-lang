@@ -1313,8 +1313,7 @@ void VarDecl::setInit(Expr *I) {
 }
 
 bool VarDecl::extendsLifetimeOfTemporary() const {
-  if (!getType()->isReferenceType())
-    return false;
+  assert(getType()->isReferenceType() &&"Non-references never extend lifetime");
   
   const Expr *E = getInit();
   if (!E)
