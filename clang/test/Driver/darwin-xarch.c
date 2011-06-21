@@ -12,3 +12,9 @@
 // RUN: FileCheck --check-prefix=CHECK-LINK < %t %s
 //
 // CHECK-LINK: ld{{.*}} "-arch" "i386"{{.*}} "-some-linker-arg"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### \
+// RUN:   -arch armv7 -Xarch_armv7 -Wl,-some-linker-arg -filelist X 2> %t
+// RUN: FileCheck --check-prefix=CHECK-ARMV7-LINK < %t %s
+//
+// CHECK-ARMV7-LINK: ld{{.*}} "-arch" "armv7"{{.*}} "-some-linker-arg"

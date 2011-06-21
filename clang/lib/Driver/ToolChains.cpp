@@ -682,8 +682,13 @@ DerivedArgList *Darwin::TranslateArgs(const DerivedArgList &Args,
     Arg *A = *it;
 
     if (A->getOption().matches(options::OPT_Xarch__)) {
+      // Skip this argument unless the architecture matches either the toolchain
+      // triple arch, or the arch being bound.
+      //
       // FIXME: Canonicalize name.
-      if (getArchName() != A->getValue(Args, 0))
+      llvm::StringRef XarchArch = A->getValue(Args, 0);
+      if (!(XarchArch == getArchName()  ||
+            (BoundArch && XarchArch == BoundArch)))
         continue;
 
       Arg *OriginalArg = A;
