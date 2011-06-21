@@ -112,16 +112,13 @@ public:
   Use *getNext() const { return Next; }
 
   
-  /// initTags - initialize the waymarking tags on an array of Uses, so that
-  /// getUser() can find the User from any of those Uses.
-  static Use *initTags(Use *Start, Use *Stop);
-
   /// zap - This is used to destroy Use operands when the number of operands of
   /// a User changes.
   static void zap(Use *Start, const Use *Stop, bool del = false);
 
 private:
   const Use* getImpliedUser() const;
+  static Use *initTags(Use *Start, Use *Stop);
   
   Value *Val;
   Use *Next;
@@ -143,6 +140,7 @@ private:
   }
 
   friend class Value;
+  friend class User;
 };
 
 // simplify_type - Allow clients to treat uses just like values when using

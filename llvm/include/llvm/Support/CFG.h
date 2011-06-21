@@ -33,7 +33,7 @@ class PredIterator : public std::iterator<std::forward_iterator_tag,
   USE_iterator It;
 
   inline void advancePastNonTerminators() {
-    // Loop to ignore non terminator uses (for example BlockAddresses).
+    // Loop to ignore non terminator uses (for example PHI nodes).
     while (!It.atEnd() && !isa<TerminatorInst>(*It))
       ++It;
   }

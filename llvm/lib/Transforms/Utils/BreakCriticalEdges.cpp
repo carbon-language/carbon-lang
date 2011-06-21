@@ -193,22 +193,44 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
   
   // If there are any PHI nodes in DestBB, we need to update them so that they
   // merge incoming values from NewBB instead of from TIBB.
-  {
-    unsigned BBIdx = 0;
-    for (BasicBlock::iterator I = DestBB->begin(); isa<PHINode>(I); ++I) {
-      // We no longer enter through TIBB, now we come in through NewBB.
-      // Revector exactly one entry in the PHI node that used to come from
-      // TIBB to come from NewBB.
-      PHINode *PN = cast<PHINode>(I);
-
-      // Reuse the previous value of BBIdx if it lines up.  In cases where we
-      // have multiple phi nodes with *lots* of predecessors, this is a speed
-      // win because we don't have to scan the PHI looking for TIBB.  This
-      // happens because the BB list of PHI nodes are usually in the same
-      // order.
-      if (PN->getIncomingBlock(BBIdx) != TIBB)
-	BBIdx = PN->getBasicBlockIndex(TIBB);
-      PN->setIncomingBlock(BBIdx, NewBB);
+  if (PHINode *APHI = dyn_cast<PHINode>(DestBB->begin())) {
+    // This conceptually does:
+    //  foreach (PHINode *PN in DestBB)
+    //    PN->setIncomingBlock(PN->getIncomingBlock(TIBB), NewBB);
+    // but is optimized for two cases.
+    
+    if (APHI->getNumIncomingValues() <= 8) {  // Small # preds case.
+      unsigned BBIdx = 0;
+      for (BasicBlock::iterator I = DestBB->begin(); isa<PHINode>(I); ++I) {
+        // We no longer enter through TIBB, now we come in through NewBB.
+        // Revector exactly one entry in the PHI node that used to come from
+        // TIBB to come from NewBB.
+        PHINode *PN = cast<PHINode>(I);
+        
+        // Reuse the previous value of BBIdx if it lines up.  In cases where we
+        // have multiple phi nodes with *lots* of predecessors, this is a speed
+        // win because we don't have to scan the PHI looking for TIBB.  This
+        // happens because the BB list of PHI nodes are usually in the same
+        // order.
+        if (PN->getIncomingBlock(BBIdx) != TIBB)
+          BBIdx = PN->getBasicBlockIndex(TIBB);
+        PN->setIncomingBlock(BBIdx, NewBB);
+      }
+    } else {
+      // However, the foreach loop is slow for blocks with lots of predecessors
+      // because PHINode::getIncomingBlock is O(n) in # preds.  Instead, walk
+      // the user list of TIBB to find the PHI nodes.
+      SmallPtrSet<PHINode*, 16> UpdatedPHIs;
+    
+      for (Value::use_iterator UI = TIBB->use_begin(), E = TIBB->use_end();
+           UI != E; ) {
+        Value::use_iterator Use = UI++;
+        if (PHINode *PN = dyn_cast<PHINode>(*Use)) {
+          // Remove one entry from each PHI.
+          if (PN->getParent() == DestBB && UpdatedPHIs.insert(PN))
+            PN->setOperand(Use.getOperandNo(), NewBB);
+        }
+      }
     }
   }
    

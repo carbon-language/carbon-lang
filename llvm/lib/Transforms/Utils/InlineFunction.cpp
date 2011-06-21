@@ -1097,14 +1097,14 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
         TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
     }
 
-    // Update PHI nodes that use the ReturnBB to use the AfterCallBB.
-    BasicBlock *ReturnBB = Returns[0]->getParent();
-    ReturnBB->replaceAllUsesWith(AfterCallBB);
-
     // Splice the code from the return block into the block that it will return
     // to, which contains the code that was after the call.
+    BasicBlock *ReturnBB = Returns[0]->getParent();
     AfterCallBB->getInstList().splice(AfterCallBB->begin(),
                                       ReturnBB->getInstList());
+
+    // Update PHI nodes that use the ReturnBB to use the AfterCallBB.
+    ReturnBB->replaceAllUsesWith(AfterCallBB);
 
     // Delete the return instruction now and empty ReturnBB now.
     Returns[0]->eraseFromParent();
@@ -1125,8 +1125,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
 
   // Splice the code entry block into calling block, right before the
   // unconditional branch.
-  CalleeEntry->replaceAllUsesWith(OrigBB);  // Update PHI nodes
   OrigBB->getInstList().splice(Br, CalleeEntry->getInstList());
+  CalleeEntry->replaceAllUsesWith(OrigBB);  // Update PHI nodes
 
   // Remove the unconditional branch.
   OrigBB->getInstList().erase(Br);

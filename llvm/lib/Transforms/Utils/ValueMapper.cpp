@@ -16,7 +16,6 @@
 #include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
-#include "llvm/Instructions.h"
 #include "llvm/Metadata.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
@@ -127,19 +126,6 @@ void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
     else
       assert((Flags & RF_IgnoreMissingEntries) &&
              "Referenced value not in value map!");
-  }
-
-  // Remap phi nodes' incoming blocks.
-  if (PHINode *PN = dyn_cast<PHINode>(I)) {
-    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-      Value *V = MapValue(PN->getIncomingBlock(i), VMap, Flags);
-      // If we aren't ignoring missing entries, assert that something happened.
-      if (V != 0)
-        PN->setIncomingBlock(i, cast<BasicBlock>(V));
-      else
-        assert((Flags & RF_IgnoreMissingEntries) &&
-               "Referenced block not in value map!");
-    }
   }
 
   // Remap attached metadata.

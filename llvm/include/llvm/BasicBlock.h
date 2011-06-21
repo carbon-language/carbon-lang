@@ -110,7 +110,7 @@ public:
         Function *getParent()       { return Parent; }
 
   /// use_back - Specialize the methods defined in Value, as we know that an
-  /// BasicBlock can only be used by Users (specifically terminators
+  /// BasicBlock can only be used by Users (specifically PHI nodes, terminators,
   /// and BlockAddress's).
   User       *use_back()       { return cast<User>(*use_begin());}
   const User *use_back() const { return cast<User>(*use_begin());}
@@ -247,10 +247,6 @@ public:
   /// hasAddressTaken - returns true if there are any uses of this basic block
   /// other than direct branches, switches, etc. to it.
   bool hasAddressTaken() const { return getSubclassDataFromValue() != 0; }
-
-  /// replaceSuccessorsPhiUsesWith - Update all phi nodes in all our successors
-  /// to refer to basic block New instead of to us.
-  void replaceSuccessorsPhiUsesWith(BasicBlock *New);
 
 private:
   /// AdjustBlockAddressRefCount - BasicBlock stores the number of BlockAddress
