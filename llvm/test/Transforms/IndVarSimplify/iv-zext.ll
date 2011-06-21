@@ -1,4 +1,5 @@
 ; RUN: opt < %s -indvars -S | FileCheck %s
+; RUN: opt < %s -indvars -disable-iv-rewrite -S | FileCheck %s
 ; CHECK-NOT: and
 ; CHECK-NOT: zext
 
