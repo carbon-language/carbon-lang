@@ -240,6 +240,14 @@ public:
     return getTypeWidth(IntMaxType);
   }
 
+  /// getRegisterWidth - Return the "preferred" register width on this target.
+  uint64_t getRegisterWidth() const {
+    // Currently we assume the register width on the target matches the pointer
+    // width, we can introduce a new variable for this if/when some target wants
+    // it.
+    return LongWidth; 
+  }
+
   /// getUserLabelPrefix - This returns the default value of the
   /// __USER_LABEL_PREFIX__ macro, which is the prefix given to user symbols by
   /// default.  On most platforms this is "_", but it is "" on some, and "." on
