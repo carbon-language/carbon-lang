@@ -21,5 +21,4 @@ using namespace lldb_private;
 void
 Baton::GetDescription (Stream *s, lldb::DescriptionLevel level) const
 {
-    s->Printf("baton: %p", m_data);
 }
