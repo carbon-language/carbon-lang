@@ -2987,6 +2987,64 @@ public:
   // Iterators
   child_range children() { return child_range(); }
 };
+
+/// \brief Represents a prvalue temporary that written into memory so that
+/// a reference can bind to it.
+///
+/// Prvalue expressions are materialized when they need to have an address
+/// in memory for a reference to bind to. This happens when binding a
+/// reference to the result of a conversion, e.g.,
+///
+/// \code
+/// const int &r = 1.0;
+/// \endcode
+///
+/// Here, 1.0 is implicitly converted to an \c int. That resulting \c int is
+/// then materialized via a \c MaterializeTemporaryExpr, and the reference
+/// binds to the temporary. \c MaterializeTemporaryExprs are always glvalues
+/// (either an lvalue or an xvalue, depending on the kind of reference binding
+/// to it), maintaining the invariant that references always bind to glvalues.
+class MaterializeTemporaryExpr : public Expr {
+  /// \brief The temporary-generating expression whose value will be
+  /// materialized.
+ Stmt *Temporary;
+  
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+  
+public:
+  MaterializeTemporaryExpr(Expr *Temporary, bool BoundToLvalueReference)
+    : Expr(MaterializeTemporaryExprClass, Temporary->getType(),
+           BoundToLvalueReference? VK_LValue : VK_XValue, OK_Ordinary,
+           Temporary->isTypeDependent(), Temporary->isValueDependent(),
+           Temporary->containsUnexpandedParameterPack()),
+      Temporary(Temporary) { }
+  
+  MaterializeTemporaryExpr(EmptyShell Empty) 
+    : Expr(MaterializeTemporaryExprClass, Empty) { }
+  
+  /// \brief Retrieve the temporary-generating subexpression whose value will
+  /// be materialized into a glvalue.
+  Expr *GetTemporaryExpr() const { return reinterpret_cast<Expr *>(Temporary); }
+  
+  /// \brief Determine whether this materialized temporary is bound to an
+  /// lvalue reference; otherwise, it's bound to an rvalue reference.
+  bool BoundToLvalueReference() const { 
+    return getValueKind() == VK_LValue;
+  }
+  
+  SourceRange getSourceRange() const { return Temporary->getSourceRange(); }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == MaterializeTemporaryExprClass;
+  }
+  static bool classof(const MaterializeTemporaryExpr *) { 
+    return true; 
+  }
+  
+  // Iterators
+  child_range children() { return child_range(&Temporary, &Temporary + 1); }
+};
   
 }  // end namespace clang
 

@@ -237,8 +237,11 @@ const GRState *IteratorsChecker::invalidateIterators(const GRState *state,
 const GRState *IteratorsChecker::handleAssign(const GRState *state,
     const Expr *lexp, const Expr *rexp, const LocationContext *LC) const {
   // Skip the cast if present.
-  if (isa<ImplicitCastExpr>(lexp))
-    lexp = dyn_cast<ImplicitCastExpr>(lexp)->getSubExpr();
+  if (const MaterializeTemporaryExpr *M 
+                                    = dyn_cast<MaterializeTemporaryExpr>(lexp))
+    lexp = M->GetTemporaryExpr();
+  if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(lexp))
+    lexp = ICE->getSubExpr();
   SVal sv = state->getSVal(lexp);
   const MemRegion *MR = sv.getAsRegion();
   if (!MR)
@@ -260,8 +263,11 @@ const GRState *IteratorsChecker::handleAssign(const GRState *state,
     const MemRegion *MR, const Expr *rexp, const LocationContext *LC) const {
   // Assume unknown until we find something definite.
   state = state->set<IteratorState>(MR, RefState::getUnknown());
-  if (isa<ImplicitCastExpr>(rexp))
-    rexp = dyn_cast<ImplicitCastExpr>(rexp)->getSubExpr();
+  if (const MaterializeTemporaryExpr *M 
+                                    = dyn_cast<MaterializeTemporaryExpr>(rexp))
+    rexp = M->GetTemporaryExpr();
+  if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(rexp))
+    rexp = ICE->getSubExpr();
   // Need to handle three cases: MemberCall, copy, copy with addition.
   if (const CallExpr *CE = dyn_cast<CallExpr>(rexp)) {
     // Handle MemberCall.
@@ -347,8 +353,10 @@ const DeclRefExpr *IteratorsChecker::getDeclRefExpr(const Expr *E) const {
         E = CE->getArg(0);
     }
   }
-  if (isa<ImplicitCastExpr>(E))
-    E = dyn_cast<ImplicitCastExpr>(E)->getSubExpr();
+  if (const MaterializeTemporaryExpr *M = dyn_cast<MaterializeTemporaryExpr>(E))
+    E = M->GetTemporaryExpr();
+  if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+    E = ICE->getSubExpr();
   // If it isn't one of our types, don't do anything.
   if (getTemplateKind(E->getType()) != VectorIteratorKind)
     return NULL;
@@ -520,8 +528,11 @@ void IteratorsChecker::checkPreStmt(const DeclStmt *DS,
     if (const CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(InitEx)) {
       if (CE->getNumArgs() == 1) {
         const Expr *E = CE->getArg(0);
-        if (isa<ImplicitCastExpr>(E))
-          InitEx = dyn_cast<ImplicitCastExpr>(E)->getSubExpr();
+        if (const MaterializeTemporaryExpr *M
+                                        = dyn_cast<MaterializeTemporaryExpr>(E))
+          E = M->GetTemporaryExpr();
+        if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(E))
+          InitEx = ICE->getSubExpr();
         state = handleAssign(state, MR, InitEx,
                                   C.getPredecessor()->getLocationContext());
       }

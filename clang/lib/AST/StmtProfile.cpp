@@ -911,6 +911,11 @@ void StmtProfiler::VisitSubstNonTypeTemplateParmPackExpr(
   VisitTemplateArgument(S->getArgumentPack());
 }
 
+void StmtProfiler::VisitMaterializeTemporaryExpr(
+                                           const MaterializeTemporaryExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
   VisitExpr(E);  
 }

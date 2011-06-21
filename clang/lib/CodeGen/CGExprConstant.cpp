@@ -662,6 +662,10 @@ public:
     return Visit(DAE->getExpr());
   }
 
+  llvm::Constant *VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
+    return Visit(E->GetTemporaryExpr());
+  }
+
   llvm::Constant *EmitArrayInitialization(InitListExpr *ILE) {
     unsigned NumInitElements = ILE->getNumInits();
     if (NumInitElements == 1 && ILE->getType() == ILE->getInit(0)->getType() &&

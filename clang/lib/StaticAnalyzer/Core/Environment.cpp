@@ -83,6 +83,9 @@ SVal Environment::getSVal(const Stmt *E, SValBuilder& svalBuilder,
       case Stmt::CXXBindTemporaryExprClass:
         E = cast<CXXBindTemporaryExpr>(E)->getSubExpr();
         continue;
+      case Stmt::MaterializeTemporaryExprClass:
+        E = cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr();
+        continue;
       // Handle all other Stmt* using a lookup.
       default:
         break;

@@ -100,6 +100,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent,
   case Stmt::SEHTryStmtClass:
   case Stmt::SEHExceptStmtClass:
   case Stmt::SEHFinallyStmtClass:
+  case Stmt::MaterializeTemporaryExprClass:
     K = CXCursor_UnexposedStmt;
     break;
       

@@ -7657,6 +7657,13 @@ TreeTransform<Derived>::TransformSubstNonTypeTemplateParmPackExpr(
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformMaterializeTemporaryExpr(
+                                                  MaterializeTemporaryExpr *E) {
+  return getDerived().TransformExpr(E->GetTemporaryExpr());
+}
+  
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformObjCStringLiteral(ObjCStringLiteral *E) {
   return SemaRef.Owned(E);
 }

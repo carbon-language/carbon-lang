@@ -2591,6 +2591,11 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
     }
     break;
   }
+      
+  case Expr::MaterializeTemporaryExprClass: {
+    mangleExpression(cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr());
+    break;
+  }
   }
 }
 

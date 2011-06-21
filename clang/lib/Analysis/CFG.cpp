@@ -776,7 +776,7 @@ LocalScope* CFGBuilder::addLocalScopeForVarDecl(VarDecl* VD,
     QT = RT->getPointeeType();
     if (!QT.isConstQualified())
       return Scope;
-    if (!VD->getInit() || !VD->getInit()->Classify(*Context).isRValue())
+    if (!VD->extendsLifetimeOfTemporary())
       return Scope;
   }
 
@@ -2762,6 +2762,10 @@ tryAgain:
 
     case Stmt::ParenExprClass:
       E = cast<ParenExpr>(E)->getSubExpr();
+      goto tryAgain;
+      
+    case Stmt::MaterializeTemporaryExprClass:
+      E = cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr();
       goto tryAgain;
   }
 }

@@ -2205,6 +2205,14 @@ static Expr *EvalAddr(Expr *E, llvm::SmallVectorImpl<DeclRefExpr *> &refVars) {
         return NULL;
   }
 
+  case Stmt::MaterializeTemporaryExprClass:
+    if (Expr *Result = EvalAddr(
+                         cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr(),
+                                refVars))
+      return Result;
+      
+    return E;
+      
   // Everything else: we simply don't reason about them.
   default:
     return NULL;
@@ -2305,6 +2313,14 @@ do {
 
     return EvalVal(M->getBase(), refVars);
   }
+
+  case Stmt::MaterializeTemporaryExprClass:
+    if (Expr *Result = EvalVal(
+                          cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr(),
+                               refVars))
+      return Result;
+      
+    return E;
 
   default:
     // Check that we don't return or take the address of a reference to a

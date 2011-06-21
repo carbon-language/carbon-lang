@@ -269,3 +269,31 @@ void h() {
   f(g().b);
 }
 }
+
+// PR9565
+namespace PR9565 {
+  struct a { int a : 10, b : 10; };
+  // CHECK: define void @_ZN6PR95651fEv()
+  void f() {
+    // CHECK: call void @llvm.memcpy
+    a x = { 0, 0 };
+    // CHECK: [[WITH_SEVENTEEN:%[a-zA-Z0-9]+]] = or i32 [[WITHOUT_SEVENTEEN:%[a-zA-Z0-9]+]], 17
+    // CHECK: store i32 [[WITH_SEVENTEEN]], i32* [[XA:%[a-zA-Z0-9]+]]
+    x.a = 17;
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: load 
+    // CHECK-NEXT: and
+    // CHECK-NEXT: shl
+    // CHECK-NEXT: ashr
+    // CHECK-NEXT: store i32
+    // CHECK-NEXT: store i32*
+    const int &y = x.a;
+    // CHECK-NEXT: bitcast
+    // CHECK-NEXT: load
+    // CHECK-NEXT: and
+    // CHECK-NEXT: or
+    // CHECK-NEXT: store i32
+    x.b = 19;
+    // CHECK-NEXT: ret void
+  }
+}

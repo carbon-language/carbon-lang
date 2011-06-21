@@ -129,7 +129,7 @@ public:
   void VisitExprWithCleanups(ExprWithCleanups *E);
   void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   void VisitCXXTypeidExpr(CXXTypeidExpr *E) { EmitAggLoadOfLValue(E); }
-
+  void VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E);
   void VisitOpaqueValueExpr(OpaqueValueExpr *E);
 
   void VisitVAArgExpr(VAArgExpr *E);
@@ -240,6 +240,10 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
+
+void AggExprEmitter::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E){
+  Visit(E->GetTemporaryExpr());
+}
 
 void AggExprEmitter::VisitOpaqueValueExpr(OpaqueValueExpr *e) {
   EmitFinalDestCopy(e, CGF.getOpaqueLValueMapping(e));

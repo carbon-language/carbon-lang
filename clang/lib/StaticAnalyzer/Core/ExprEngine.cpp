@@ -700,6 +700,16 @@ void ExprEngine::Visit(const Stmt* S, ExplodedNode* Pred,
       break;
     }
 
+    case Expr::MaterializeTemporaryExprClass: {
+      const MaterializeTemporaryExpr *Materialize
+                                            = cast<MaterializeTemporaryExpr>(S);
+      if (!Materialize->getType()->isRecordType())
+        CreateCXXTemporaryObject(Materialize->GetTemporaryExpr(), Pred, Dst);
+      else
+        Visit(Materialize->GetTemporaryExpr(), Pred, Dst);
+      break;
+    }
+      
     case Stmt::InitListExprClass:
       VisitInitListExpr(cast<InitListExpr>(S), Pred, Dst);
       break;
@@ -2306,17 +2316,9 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
   //  time a function is called those values may not be current.
   ExplodedNodeSet Tmp;
 
-  if (InitEx) {
-    if (VD->getType()->isReferenceType() && !InitEx->isLValue()) {
-      // If the initializer is C++ record type, it should already has a 
-      // temp object.
-      if (!InitEx->getType()->isRecordType())
-        CreateCXXTemporaryObject(InitEx, Pred, Tmp);
-      else
-        Tmp.Add(Pred);
-    } else
-      Visit(InitEx, Pred, Tmp);
-  } else
+  if (InitEx)
+    Visit(InitEx, Pred, Tmp);
+  else
     Tmp.Add(Pred);
 
   ExplodedNodeSet Tmp2;

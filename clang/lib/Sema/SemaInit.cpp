@@ -4075,12 +4075,13 @@ InitializationSequence::Perform(Sema &S,
       break;
 
     case SK_BindReferenceToTemporary:
-      // Reference binding does not have any corresponding ASTs.
-
       // Check exception specifications
       if (S.CheckExceptionSpecCompatibility(CurInit.get(), DestType))
         return ExprError();
 
+      // Materialize the temporary into memory.
+      CurInit = new (S.Context) MaterializeTemporaryExpr(CurInit.get(),
+                                     Entity.getType()->isLValueReferenceType());
       break;
 
     case SK_ExtraneousCopyToTemporary:

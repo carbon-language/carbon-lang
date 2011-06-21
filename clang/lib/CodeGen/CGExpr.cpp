@@ -207,6 +207,10 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
                             const NamedDecl *InitializedDecl) {
   ObjCARCReferenceLifetimeType = QualType();
   
+  // Look through expressions for materialized temporaries (for now).
+  if (isa<MaterializeTemporaryExpr>(E))
+    E = cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr();
+
   if (const CXXDefaultArgExpr *DAE = dyn_cast<CXXDefaultArgExpr>(E))
     E = DAE->getExpr();
   
@@ -667,6 +671,9 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   case Expr::CXXConstCastExprClass:
   case Expr::ObjCBridgedCastExprClass:
     return EmitCastLValue(cast<CastExpr>(E));
+      
+  case Expr::MaterializeTemporaryExprClass:
+    return EmitMaterializeTemporaryExpr(cast<MaterializeTemporaryExpr>(E));
   }
 }
 
@@ -2067,10 +2074,19 @@ LValue CodeGenFunction::EmitOpaqueValueLValue(const OpaqueValueExpr *e) {
   return getOpaqueLValueMapping(e);
 }
 
+LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
+                                           const MaterializeTemporaryExpr *E) {
+  RValue RV = EmitReferenceBindingToExpr(E->GetTemporaryExpr(),
+                                         /*InitializedDecl=*/0);
+  return LValue::MakeAddr(RV.getScalarVal(), E->getType(),
+                          CGM.getContext().getTypeAlign(E->getType()),
+                          CGM.getContext());
+}
+
+
 //===--------------------------------------------------------------------===//
 //                             Expression Emission
 //===--------------------------------------------------------------------===//
-
 
 RValue CodeGenFunction::EmitCallExpr(const CallExpr *E, 
                                      ReturnValueSlot ReturnValue) {
