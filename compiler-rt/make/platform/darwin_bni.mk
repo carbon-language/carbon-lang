@@ -8,17 +8,30 @@ Configs := Debug Release Profile Static
 # and the resulting lib will just have generic versions for anything unknown.
 UniversalArchs := $(RC_ARCHS)
 
-ifeq (,$(SDKROOT))
-	CC.Release := $(CC)
-	CC.Static  := $(CC)
-else
-	CC.Release := /Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc
-	CC.Static  := /Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cc
+ifneq (,$(SDKROOT))
+	override CC := $(shell xcrun -sdk $(SDKROOT) -find clang) 
+	AR := $(shell xcrun -sdk $(SDKROOT) -find ar) 
+	RANLIB := $(shell xcrun -sdk $(SDKROOT) -find ranlib) 
+	STRIP := $(shell xcrun -sdk $(SDKROOT) -find strip) 
+	LIPO := $(shell xcrun -sdk $(SDKROOT) -find lipo)
 endif
 
+ifneq ($(IPHONEOS_DEPLOYMENT_TARGET),)
+	DEPLOYMENT_FLAGS := -miphoneos-version-min=$(IPHONEOS_DEPLOYMENT_TARGET) 
+else
+	ifneq ($(MACOSX_DEPLOYMENT_TARGET),)
+		DEPLOYMENT_FLAGS := -mmacosx-version-min=$(MACOSX_DEPLOYMENT_TARGET) 
+	endif
+endif
 
-CFLAGS := -Wall -Os -fomit-frame-pointer -g
-CFLAGS.Static := $(CFLAGS) -static
+ifneq (,$(SDKROOT))
+	DEPLOYMENT_FLAGS += -isysroot $(SDKROOT)
+endif
+
+CFLAGS := -Wall -Os -fomit-frame-pointer -g $(DEPLOYMENT_FLAGS)
+CFLAGS.Static := $(CFLAGS) -static  
+DYLIB_FLAGS := $(DEPLOYMENT_FLAGS) \
+		-Xarch_arm -Wl,-alias_list,$(SRCROOT)/lib/arm/softfloat-alias.list
 
 VISIBILITY_HIDDEN := 0
 VISIBILITY_HIDDEN.Static  := 1
