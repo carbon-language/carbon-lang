@@ -21,7 +21,7 @@ class DebugIntegerTypesFailures(AbstractBase.GenericTester):
         # Let's turn on logging just for that.
         if "test_long_long_type_with_dsym" in self.id():
             self.runCmd(
-                "log enable -n -f %s lldb event process state" % os.environ["DEBUG_LLDB_LOG"])
+                "log enable -n -f %s lldb commands event process state" % os.environ["DEBUG_LLDB_LOG"])
             self.runCmd(
                 "log enable -n -f %s gdb-remote packets process" % os.environ["DEBUG_GDB_REMOTE_LOG"])
 
