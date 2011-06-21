@@ -326,9 +326,7 @@ void Preprocessor::HandlePragmaSystemHeader(Token &SysHeaderTok) {
   if (PLoc.isInvalid())
     return;
   
-  unsigned FilenameLen = strlen(PLoc.getFilename());
-  unsigned FilenameID = SourceMgr.getLineTableFilenameID(PLoc.getFilename(),
-                                                         FilenameLen);
+  unsigned FilenameID = SourceMgr.getLineTableFilenameID(PLoc.getFilename());
 
   // Notify the client, if desired, that we are in a new source file.
   if (Callbacks)
@@ -454,8 +452,7 @@ void Preprocessor::HandlePragmaComment(Token &Tok) {
       return;
     }
 
-    ArgumentString = std::string(Literal.GetString(),
-                                 Literal.GetString()+Literal.GetStringLength());
+    ArgumentString = Literal.GetString();
   }
 
   // FIXME: If the kind is "compiler" warn if the string is present (it is
@@ -531,7 +528,7 @@ void Preprocessor::HandlePragmaMessage(Token &Tok) {
     return;
   }
 
-  llvm::StringRef MessageString(Literal.GetString(), Literal.GetStringLength());
+  llvm::StringRef MessageString(Literal.GetString());
 
   if (ExpectClosingParen) {
     if (Tok.isNot(tok::r_paren)) {
@@ -906,7 +903,7 @@ public:
       return;
     }
 
-    llvm::StringRef WarningName(Literal.GetString(), Literal.GetStringLength());
+    llvm::StringRef WarningName(Literal.GetString());
 
     if (WarningName.size() < 3 || WarningName[0] != '-' ||
         WarningName[1] != 'W') {

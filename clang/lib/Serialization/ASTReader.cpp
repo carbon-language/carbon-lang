@@ -657,7 +657,8 @@ public:
       // and associate it with the persistent ID.
       IdentifierInfo *II = KnownII;
       if (!II)
-        II = &Reader.getIdentifierTable().getOwn(k.first, k.first + k.second);
+        II = &Reader.getIdentifierTable().getOwn(llvm::StringRef(k.first,
+                                                                 k.second));
       Reader.SetIdentifierInfo(ID, II);
       II->setIsFromAST();
       return II;
@@ -684,7 +685,8 @@ public:
     // the new IdentifierInfo.
     IdentifierInfo *II = KnownII;
     if (!II)
-      II = &Reader.getIdentifierTable().getOwn(k.first, k.first + k.second);
+      II = &Reader.getIdentifierTable().getOwn(llvm::StringRef(k.first,
+                                                               k.second));
     Reader.SetIdentifierInfo(ID, II);
 
     // Set or check the various bits in the IdentifierInfo structure.
@@ -1001,8 +1003,7 @@ bool ASTReader::ParseLineTable(PerFileData &F,
     std::string Filename(&Record[Idx], &Record[Idx] + FilenameLen);
     Idx += FilenameLen;
     MaybeAddSystemRootToFilename(Filename);
-    FileIDs[I] = LineTable.getLineTableFilenameID(Filename.c_str(),
-                                                  Filename.size());
+    FileIDs[I] = LineTable.getLineTableFilenameID(Filename);
   }
 
   // Parse the line entries
@@ -4545,7 +4546,7 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(unsigned ID) {
     unsigned StrLen = (((unsigned) StrLenPtr[0])
                        | (((unsigned) StrLenPtr[1]) << 8)) - 1;
     IdentifiersLoaded[ID]
-      = &PP->getIdentifierTable().get(Str, StrLen);
+      = &PP->getIdentifierTable().get(llvm::StringRef(Str, StrLen));
     if (DeserializationListener)
       DeserializationListener->IdentifierRead(ID + 1, IdentifiersLoaded[ID]);
   }

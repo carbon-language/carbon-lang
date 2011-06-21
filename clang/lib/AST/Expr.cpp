@@ -498,8 +498,8 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
   return V.convertToDouble();
 }
 
-StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
-                                     unsigned ByteLength, bool Wide,
+StringLiteral *StringLiteral::Create(ASTContext &C, llvm::StringRef Str,
+                                     bool Wide,
                                      bool Pascal, QualType Ty,
                                      const SourceLocation *Loc,
                                      unsigned NumStrs) {
@@ -511,10 +511,10 @@ StringLiteral *StringLiteral::Create(ASTContext &C, const char *StrData,
   StringLiteral *SL = new (Mem) StringLiteral(Ty);
 
   // OPTIMIZE: could allocate this appended to the StringLiteral.
-  char *AStrData = new (C, 1) char[ByteLength];
-  memcpy(AStrData, StrData, ByteLength);
+  char *AStrData = new (C, 1) char[Str.size()];
+  memcpy(AStrData, Str.data(), Str.size());
   SL->StrData = AStrData;
-  SL->ByteLength = ByteLength;
+  SL->ByteLength = Str.size();
   SL->IsWide = Wide;
   SL->IsPascal = Pascal;
   SL->TokLocs[0] = Loc[0];

@@ -2110,8 +2110,7 @@ Stmt *RewriteObjC::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   QualType StrType = Context->getPointerType(Context->CharTy);
   std::string StrEncoding;
   Context->getObjCEncodingForType(Exp->getEncodedType(), StrEncoding);
-  Expr *Replacement = StringLiteral::Create(*Context,StrEncoding.c_str(),
-                                            StrEncoding.length(),
+  Expr *Replacement = StringLiteral::Create(*Context, StrEncoding,
                                             false, false, StrType,
                                             SourceLocation());
   ReplaceStmt(Exp, Replacement);
@@ -2129,9 +2128,8 @@ Stmt *RewriteObjC::RewriteAtSelector(ObjCSelectorExpr *Exp) {
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
   SelExprs.push_back(StringLiteral::Create(*Context,
-                                       Exp->getSelector().getAsString().c_str(),
-                                       Exp->getSelector().getAsString().size(),
-                                       false, false, argType, 
+                                           Exp->getSelector().getAsString(),
+                                           false, false, argType, 
                                            SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size());
@@ -2798,8 +2796,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     llvm::SmallVector<Expr*, 8> ClsExprs;
     QualType argType = Context->getPointerType(Context->CharTy);
     ClsExprs.push_back(StringLiteral::Create(*Context,
-                                   ClassDecl->getIdentifier()->getNameStart(),
-                                   ClassDecl->getIdentifier()->getLength(),
+                                   ClassDecl->getIdentifier()->getName(),
                                    false, false, argType, SourceLocation()));
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
                                                  &ClsExprs[0],
@@ -2877,8 +2874,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
       = Exp->getClassReceiver()->getAs<ObjCObjectType>()->getInterface();
     IdentifierInfo *clsName = Class->getIdentifier();
     ClsExprs.push_back(StringLiteral::Create(*Context,
-                                             clsName->getNameStart(),
-                                             clsName->getLength(),
+                                             clsName->getName(),
                                              false, false, 
                                              argType, SourceLocation()));
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
@@ -2909,8 +2905,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
     llvm::SmallVector<Expr*, 8> ClsExprs;
     QualType argType = Context->getPointerType(Context->CharTy);
     ClsExprs.push_back(StringLiteral::Create(*Context,
-                                   ClassDecl->getIdentifier()->getNameStart(),
-                                   ClassDecl->getIdentifier()->getLength(),
+                                   ClassDecl->getIdentifier()->getName(),
                                    false, false, argType, SourceLocation()));
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                  &ClsExprs[0],
@@ -2991,8 +2986,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
   SelExprs.push_back(StringLiteral::Create(*Context,
-                                       Exp->getSelector().getAsString().c_str(),
-                                       Exp->getSelector().getAsString().size(),
+                                       Exp->getSelector().getAsString(),
                                        false, false, argType, SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size(),

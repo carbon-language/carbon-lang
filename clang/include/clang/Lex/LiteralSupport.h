@@ -167,7 +167,9 @@ public:
   bool AnyWide;
   bool Pascal;
 
-  const char *GetString() { return ResultBuf.data(); }
+  llvm::StringRef GetString() const {
+    return llvm::StringRef(ResultBuf.data(), GetStringLength());
+  }
   unsigned GetStringLength() const { return ResultPtr-ResultBuf.data(); }
 
   unsigned GetNumStringChars() const {

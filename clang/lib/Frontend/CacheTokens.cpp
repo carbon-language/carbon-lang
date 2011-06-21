@@ -247,17 +247,16 @@ void PTHWriter::EmitToken(const Token& T) {
   } else {
     // We cache *un-cleaned* spellings. This gives us 100% fidelity with the
     // source code.
-    const char* s = T.getLiteralData();
-    unsigned len = T.getLength();
+    llvm::StringRef s(T.getLiteralData(), T.getLength());
 
     // Get the string entry.
-    llvm::StringMapEntry<OffsetOpt> *E = &CachedStrs.GetOrCreateValue(s, s+len);
+    llvm::StringMapEntry<OffsetOpt> *E = &CachedStrs.GetOrCreateValue(s);
 
     // If this is a new string entry, bump the PTH offset.
     if (!E->getValue().hasOffset()) {
       E->getValue().setOffset(CurStrOffset);
       StrEntries.push_back(E);
-      CurStrOffset += len + 1;
+      CurStrOffset += s.size() + 1;
     }
 
     // Emit the relative offset into the PTH file for the spelling string.

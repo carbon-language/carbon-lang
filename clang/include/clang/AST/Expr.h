@@ -1205,16 +1205,14 @@ class StringLiteral : public Expr {
 public:
   /// This is the "fully general" constructor that allows representation of
   /// strings formed from multiple concatenated tokens.
-  static StringLiteral *Create(ASTContext &C, const char *StrData,
-                               unsigned ByteLength, bool Wide, bool Pascal,
-                               QualType Ty,
+  static StringLiteral *Create(ASTContext &C, llvm::StringRef Str, bool Wide,
+                               bool Pascal, QualType Ty,
                                const SourceLocation *Loc, unsigned NumStrs);
 
   /// Simple constructor for string literals made from one token.
-  static StringLiteral *Create(ASTContext &C, const char *StrData,
-                               unsigned ByteLength, bool Wide, 
+  static StringLiteral *Create(ASTContext &C, llvm::StringRef Str, bool Wide, 
                                bool Pascal, QualType Ty, SourceLocation Loc) {
-    return Create(C, StrData, ByteLength, Wide, Pascal, Ty, &Loc, 1);
+    return Create(C, Str, Wide, Pascal, Ty, &Loc, 1);
   }
 
   /// \brief Construct an empty string literal.

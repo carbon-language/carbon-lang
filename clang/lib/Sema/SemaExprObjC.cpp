@@ -63,7 +63,7 @@ ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
 
     // Create the aggregate string with the appropriate content and location
     // information.
-    S = StringLiteral::Create(Context, &StrBuf[0], StrBuf.size(),
+    S = StringLiteral::Create(Context, StrBuf,
                               /*Wide=*/false, /*Pascal=*/false,
                               Context.getPointerType(Context.CharTy),
                               &StrLocs[0], StrLocs.size());

@@ -784,8 +784,7 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
       Diag(StrTok, diag::err_pp_linemarker_invalid_filename);
       return DiscardUntilEndOfDirective();
     }
-    FilenameID = SourceMgr.getLineTableFilenameID(Literal.GetString(),
-                                                  Literal.GetStringLength());
+    FilenameID = SourceMgr.getLineTableFilenameID(Literal.GetString());
 
     // Verify that there is nothing after the string, other than EOD.  Because
     // of C99 6.10.4p5, macros that expand to empty tokens are ok.
@@ -918,8 +917,7 @@ void Preprocessor::HandleDigitDirective(Token &DigitTok) {
       Diag(StrTok, diag::err_pp_linemarker_invalid_filename);
       return DiscardUntilEndOfDirective();
     }
-    FilenameID = SourceMgr.getLineTableFilenameID(Literal.GetString(),
-                                                  Literal.GetStringLength());
+    FilenameID = SourceMgr.getLineTableFilenameID(Literal.GetString());
 
     // If a filename was present, read any flags that are present.
     if (ReadLineMarkerFlags(IsFileEntry, IsFileExit,

@@ -411,23 +411,15 @@ public:
     return II;
   }
 
-  IdentifierInfo &get(const char *NameStart, const char *NameEnd) {
-    return get(llvm::StringRef(NameStart, NameEnd-NameStart));
-  }
-
-  IdentifierInfo &get(const char *Name, size_t NameLen) {
-    return get(llvm::StringRef(Name, NameLen));
-  }
-
   /// \brief Gets an IdentifierInfo for the given name without consulting
   ///        external sources.
   ///
   /// This is a version of get() meant for external sources that want to
   /// introduce or modify an identifier. If they called get(), they would
   /// likely end up in a recursion.
-  IdentifierInfo &getOwn(const char *NameStart, const char *NameEnd) {
+  IdentifierInfo &getOwn(llvm::StringRef Name) {
     llvm::StringMapEntry<IdentifierInfo*> &Entry =
-      HashTable.GetOrCreateValue(NameStart, NameEnd);
+      HashTable.GetOrCreateValue(Name);
 
     IdentifierInfo *II = Entry.getValue();
     if (!II) {
@@ -443,9 +435,6 @@ public:
     }
 
     return *II;
-  }
-  IdentifierInfo &getOwn(llvm::StringRef Name) {
-    return getOwn(Name.begin(), Name.end());
   }
 
   typedef HashTableTy::const_iterator iterator;
