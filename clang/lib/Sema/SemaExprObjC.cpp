@@ -1552,36 +1552,56 @@ namespace {
 
 bool
 Sema::ValidObjCARCNoBridgeCastExpr(Expr *&Exp, QualType castType) {
-  Expr *NewExp = Exp->IgnoreParenImpCasts();
+  Expr *NewExp = Exp->IgnoreParenCasts();
   
-  if (!isa<ObjCMessageExpr>(NewExp) && !isa<ObjCPropertyRefExpr>(NewExp))
+  if (!isa<ObjCMessageExpr>(NewExp) && !isa<ObjCPropertyRefExpr>(NewExp)
+      && !isa<CallExpr>(NewExp))
     return false;
   ObjCMethodDecl *method = 0;
+  bool MethodReturnsPlusOne = false;
+  
   if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(NewExp)) {
     method = PRE->getExplicitProperty()->getGetterMethodDecl();
   }
-  else {
-    ObjCMessageExpr *ME = cast<ObjCMessageExpr>(NewExp);
+  else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(NewExp))
     method = ME->getMethodDecl();
-  }
-  if (!method)
-    return false;
-  if (method->hasAttr<CFReturnsNotRetainedAttr>())
-    return true;
-  bool MethodReturnsPlusOne = method->hasAttr<CFReturnsRetainedAttr>();
-  if (!MethodReturnsPlusOne) {
-    ObjCMethodFamily family = method->getSelector().getMethodFamily();
-    switch (family) {
-      case OMF_alloc:
-      case OMF_copy:
-      case OMF_mutableCopy:
-      case OMF_new:
-        MethodReturnsPlusOne = true;
-        break;
-      default:
-        break;
+  else {
+    CallExpr *CE = cast<CallExpr>(NewExp);
+    Decl *CallDecl = CE->getCalleeDecl();
+    if (!CallDecl)
+      return false;
+    if (CallDecl->hasAttr<CFReturnsNotRetainedAttr>())
+      return true;
+    MethodReturnsPlusOne = CallDecl->hasAttr<CFReturnsRetainedAttr>();
+    if (!MethodReturnsPlusOne) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(CallDecl))
+        if (const IdentifierInfo *Id = ND->getIdentifier())
+          if (Id->isStr("__builtin___CFStringMakeConstantString"))
+            return true;
     }
   }
+  
+  if (!MethodReturnsPlusOne) {
+    if (!method)
+      return false;
+    if (method->hasAttr<CFReturnsNotRetainedAttr>())
+      return true;
+    MethodReturnsPlusOne = method->hasAttr<CFReturnsRetainedAttr>();
+    if (!MethodReturnsPlusOne) {
+      ObjCMethodFamily family = method->getSelector().getMethodFamily();
+      switch (family) {
+        case OMF_alloc:
+        case OMF_copy:
+        case OMF_mutableCopy:
+        case OMF_new:
+          MethodReturnsPlusOne = true;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  
   if (MethodReturnsPlusOne) {
     TypeSourceInfo *TSInfo = 
       Context.getTrivialTypeSourceInfo(castType, SourceLocation());
