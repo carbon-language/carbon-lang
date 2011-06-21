@@ -17,9 +17,9 @@ class DebugIntegerTypesFailures(AbstractBase.GenericTester):
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
-        # If we're lucky, test_long_long_type_with_dsym fails.
+        # If we're lucky, test_long_type_with_dsym fails.
         # Let's turn on logging just for that.
-        if "test_long_long_type_with_dsym" in self.id():
+        if "test_long_type_with_dsym" in self.id():
             self.runCmd(
                 "log enable -n -f %s lldb commands event process state" % os.environ["DEBUG_LLDB_LOG"])
             self.runCmd(
@@ -28,9 +28,9 @@ class DebugIntegerTypesFailures(AbstractBase.GenericTester):
     def tearDown(self):
         # Call super's tearDown().
         TestBase.tearDown(self)
-        # If we're lucky, test_long_long_type_with_dsym fails.
+        # If we're lucky, test_long_type_with_dsym fails.
         # Let's turn off logging just for that.
-        if "test_long_long_type_with_dsym" in self.id():
+        if "test_long_type_with_dsym" in self.id():
             self.runCmd("log disable lldb")
             self.runCmd("log disable gdb-remote")
 
