@@ -6377,13 +6377,13 @@ static void DiagnoseConditionalPrecedence(Sema &Self,
       << BinaryOperator::getOpcodeStr(CondOpcode);
 
   SuggestParentheses(Self, OpLoc,
+    Self.PDiag(diag::note_precedence_conditional_first),
+    SourceRange(CondRHS->getLocStart(), RHS->getLocEnd()));
+
+  SuggestParentheses(Self, OpLoc,
     Self.PDiag(diag::note_precedence_conditional_silence)
       << BinaryOperator::getOpcodeStr(CondOpcode),
     SourceRange(Condition->getLocStart(), Condition->getLocEnd()));
-
-  SuggestParentheses(Self, OpLoc,
-    Self.PDiag(diag::note_precedence_conditional_first),
-    SourceRange(CondRHS->getLocStart(), RHS->getLocEnd()));
 }
 
 /// ActOnConditionalOp - Parse a ?: operation.  Note that 'LHS' may be null
