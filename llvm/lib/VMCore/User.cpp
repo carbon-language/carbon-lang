@@ -40,8 +40,10 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
 //===----------------------------------------------------------------------===//
 
 Use *User::allocHungoffUses(unsigned N) const {
-  Use *Begin = static_cast<Use*>(::operator new(sizeof(Use) * N
-                                                + sizeof(Use::UserRef)));
+  // Allocate the array of Uses, followed by a pointer (with bottom bit set) to
+  // the User.
+  size_t size = N * sizeof(Use) + sizeof(Use::UserRef);
+  Use *Begin = static_cast<Use*>(::operator new(size));
   Use *End = Begin + N;
   (void) new(End) Use::UserRef(const_cast<User*>(this), 1);
   return Use::initTags(Begin, End);

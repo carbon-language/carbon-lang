@@ -1814,7 +1814,7 @@ class PHINode : public Instruction {
   explicit PHINode(const Type *Ty, unsigned NumReservedValues,
                    const Twine &NameStr = "", Instruction *InsertBefore = 0)
     : Instruction(Ty, Instruction::PHI, 0, 0, InsertBefore),
-      ReservedSpace(NumReservedValues * 2) {
+      ReservedSpace(NumReservedValues) {
     setName(NameStr);
     OperandList = allocHungoffUses(ReservedSpace);
   }
@@ -1822,11 +1822,16 @@ class PHINode : public Instruction {
   PHINode(const Type *Ty, unsigned NumReservedValues, const Twine &NameStr,
           BasicBlock *InsertAtEnd)
     : Instruction(Ty, Instruction::PHI, 0, 0, InsertAtEnd),
-      ReservedSpace(NumReservedValues * 2) {
+      ReservedSpace(NumReservedValues) {
     setName(NameStr);
     OperandList = allocHungoffUses(ReservedSpace);
   }
 protected:
+  // allocHungoffUses - this is more complicated than the generic
+  // User::allocHungoffUses, because we have to allocate Uses for the incoming
+  // values and pointers to the incoming blocks, all in one allocation.
+  Use *allocHungoffUses(unsigned) const;
+
   virtual PHINode *clone_impl() const;
 public:
   /// Constructors - NumReservedValues is a hint for the number of incoming
@@ -1845,32 +1850,55 @@ public:
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
+  // Block iterator interface. This provides access to the list of incoming
+  // basic blocks, which parallels the list of incoming values.
+
+  typedef BasicBlock **block_iterator;
+  typedef BasicBlock * const *const_block_iterator;
+
+  block_iterator block_begin() {
+    Use::UserRef *ref =
+      reinterpret_cast<Use::UserRef*>(op_begin() + ReservedSpace);
+    return reinterpret_cast<block_iterator>(ref + 1);
+  }
+
+  const_block_iterator block_begin() const {
+    const Use::UserRef *ref =
+      reinterpret_cast<const Use::UserRef*>(op_begin() + ReservedSpace);
+    return reinterpret_cast<const_block_iterator>(ref + 1);
+  }
+
+  block_iterator block_end() {
+    return block_begin() + getNumOperands();
+  }
+
+  const_block_iterator block_end() const {
+    return block_begin() + getNumOperands();
+  }
+
   /// getNumIncomingValues - Return the number of incoming edges
   ///
-  unsigned getNumIncomingValues() const { return getNumOperands()/2; }
+  unsigned getNumIncomingValues() const { return getNumOperands(); }
 
   /// getIncomingValue - Return incoming value number x
   ///
   Value *getIncomingValue(unsigned i) const {
-    assert(i*2 < getNumOperands() && "Invalid value number!");
-    return getOperand(i*2);
+    return getOperand(i);
   }
   void setIncomingValue(unsigned i, Value *V) {
-    assert(i*2 < getNumOperands() && "Invalid value number!");
-    setOperand(i*2, V);
+    setOperand(i, V);
   }
   static unsigned getOperandNumForIncomingValue(unsigned i) {
-    return i*2;
+    return i;
   }
   static unsigned getIncomingValueNumForOperand(unsigned i) {
-    assert(i % 2 == 0 && "Invalid incoming-value operand index!");
-    return i/2;
+    return i;
   }
 
   /// getIncomingBlock - Return incoming basic block number @p i.
   ///
   BasicBlock *getIncomingBlock(unsigned i) const {
-    return cast<BasicBlock>(getOperand(i*2+1));
+    return block_begin()[i];
   }
 
   /// getIncomingBlock - Return incoming basic block corresponding
@@ -1878,7 +1906,7 @@ public:
   ///
   BasicBlock *getIncomingBlock(const Use &U) const {
     assert(this == U.getUser() && "Iterator doesn't point to PHI's Uses?");
-    return cast<BasicBlock>((&U + 1)->get());
+    return getIncomingBlock(&U - op_begin());
   }
 
   /// getIncomingBlock - Return incoming basic block corresponding
@@ -1889,16 +1917,8 @@ public:
     return getIncomingBlock(I.getUse());
   }
 
-
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
-    setOperand(i*2+1, (Value*)BB);
-  }
-  static unsigned getOperandNumForIncomingBlock(unsigned i) {
-    return i*2+1;
-  }
-  static unsigned getIncomingBlockNumForOperand(unsigned i) {
-    assert(i % 2 == 1 && "Invalid incoming-block operand index!");
-    return i/2;
+    block_begin()[i] = BB;
   }
 
   /// addIncoming - Add an incoming value to the end of the PHI list
@@ -1908,13 +1928,12 @@ public:
     assert(BB && "PHI node got a null basic block!");
     assert(getType() == V->getType() &&
            "All operands to PHI node must be the same type as the PHI node!");
-    unsigned OpNo = NumOperands;
-    if (OpNo+2 > ReservedSpace)
+    if (NumOperands == ReservedSpace)
       growOperands();  // Get more space!
     // Initialize some new operands.
-    NumOperands = OpNo+2;
-    OperandList[OpNo] = V;
-    OperandList[OpNo+1] = (Value*)BB;
+    ++NumOperands;
+    setIncomingValue(NumOperands - 1, V);
+    setIncomingBlock(NumOperands - 1, BB);
   }
 
   /// removeIncomingValue - Remove an incoming value.  This is useful if a
@@ -1937,14 +1956,16 @@ public:
   /// block in the value list for this PHI.  Returns -1 if no instance.
   ///
   int getBasicBlockIndex(const BasicBlock *BB) const {
-    Use *OL = OperandList;
-    for (unsigned i = 0, e = getNumOperands(); i != e; i += 2)
-      if (OL[i+1].get() == (const Value*)BB) return i/2;
+    for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+      if (block_begin()[i] == BB)
+        return i;
     return -1;
   }
 
   Value *getIncomingValueForBlock(const BasicBlock *BB) const {
-    return getIncomingValue(getBasicBlockIndex(BB));
+    int Idx = getBasicBlockIndex(BB);
+    assert(Idx >= 0 && "Invalid basic block argument!");
+    return getIncomingValue(Idx);
   }
 
   /// hasConstantValue - If the specified PHI node always merges together the
