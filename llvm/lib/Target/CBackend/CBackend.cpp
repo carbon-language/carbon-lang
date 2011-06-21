@@ -205,6 +205,9 @@ namespace {
     std::string InterpretASMConstraint(InlineAsm::ConstraintInfo& c);
 
     void lowerIntrinsics(Function &F);
+    /// Prints the definition of the intrinsic function F. Supports the 
+    /// intrinsics which need to be explicitly defined in the CBackend.
+    void printIntrinsicDefinition(const Function &F, raw_ostream &Out);
 
     void printModuleTypes(const TypeSymbolTable &ST);
     void printContainedStructs(const Type *Ty, std::set<const Type *> &);
@@ -1777,6 +1780,7 @@ bool CWriter::doInitialization(Module &M) {
   Out << "/* Provide Declarations */\n";
   Out << "#include <stdarg.h>\n";      // Varargs support
   Out << "#include <setjmp.h>\n";      // Unwind support
+  Out << "#include <limits.h>\n";      // With overflow intrinsics support.
   generateCompilerSpecificCode(Out, TD);
 
   // Provide a definition for `bool' if not compiling with a C++ compiler.
@@ -1855,29 +1859,46 @@ bool CWriter::doInitialization(Module &M) {
   Out << "float fmodf(float, float);\n";
   Out << "long double fmodl(long double, long double);\n";
 
+  // Store the intrinsics which will be declared/defined below.
+  SmallVector<const Function*, 8> intrinsicsToDefine;
+
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     // Don't print declarations for intrinsic functions.
-    if (!I->isIntrinsic() && I->getName() != "setjmp" &&
-        I->getName() != "longjmp" && I->getName() != "_setjmp") {
-      if (I->hasExternalWeakLinkage())
-        Out << "extern ";
-      printFunctionSignature(I, true);
-      if (I->hasWeakLinkage() || I->hasLinkOnceLinkage())
-        Out << " __ATTRIBUTE_WEAK__";
-      if (I->hasExternalWeakLinkage())
-        Out << " __EXTERNAL_WEAK__";
-      if (StaticCtors.count(I))
-        Out << " __ATTRIBUTE_CTOR__";
-      if (StaticDtors.count(I))
-        Out << " __ATTRIBUTE_DTOR__";
-      if (I->hasHiddenVisibility())
-        Out << " __HIDDEN__";
-
-      if (I->hasName() && I->getName()[0] == 1)
-        Out << " LLVM_ASM(\"" << I->getName().substr(1) << "\")";
-
-      Out << ";\n";
+    // Store the used intrinsics, which need to be explicitly defined.
+    if (I->isIntrinsic()) {
+      switch (I->getIntrinsicID()) {
+        default:
+          break;
+        case Intrinsic::uadd_with_overflow:
+        case Intrinsic::sadd_with_overflow:
+          intrinsicsToDefine.push_back(I);
+          break;
+      }
+      continue;
     }
+
+    if (I->getName() == "setjmp" ||
+        I->getName() == "longjmp" || I->getName() == "_setjmp")
+      continue;
+
+    if (I->hasExternalWeakLinkage())
+      Out << "extern ";
+    printFunctionSignature(I, true);
+    if (I->hasWeakLinkage() || I->hasLinkOnceLinkage())
+      Out << " __ATTRIBUTE_WEAK__";
+    if (I->hasExternalWeakLinkage())
+      Out << " __EXTERNAL_WEAK__";
+    if (StaticCtors.count(I))
+      Out << " __ATTRIBUTE_CTOR__";
+    if (StaticDtors.count(I))
+      Out << " __ATTRIBUTE_DTOR__";
+    if (I->hasHiddenVisibility())
+      Out << " __HIDDEN__";
+
+    if (I->hasName() && I->getName()[0] == 1)
+      Out << " LLVM_ASM(\"" << I->getName().substr(1) << "\")";
+
+    Out << ";\n";
   }
 
   // Output the global variable declarations
@@ -2012,6 +2033,14 @@ bool CWriter::doInitialization(Module &M) {
   Out << "return X <= Y ; }\n";
   Out << "static inline int llvm_fcmp_oge(double X, double Y) { ";
   Out << "return X >= Y ; }\n";
+
+  // Emit definitions of the intrinsics.
+  for (SmallVector<const Function*, 8>::const_iterator
+       I = intrinsicsToDefine.begin(),
+       E = intrinsicsToDefine.end(); I != E; ++I) {
+    printIntrinsicDefinition(**I, Out);
+  }
+
   return false;
 }
 
@@ -2786,6 +2815,101 @@ void CWriter::visitSelectInst(SelectInst &I) {
   Out << "))";
 }
 
+// Returns the macro name or value of the max or min of an integer type
+// (as defined in limits.h).
+static void printLimitValue(const IntegerType &Ty, bool isSigned, bool isMax,
+                            raw_ostream &Out) {
+  const char* type;
+  const char* sprefix = "";
+
+  unsigned NumBits = Ty.getBitWidth();
+  if (NumBits <= 8) {
+    type = "CHAR";
+    sprefix = "S";
+  } else if (NumBits <= 16) {
+    type = "SHRT";
+  } else if (NumBits <= 32) {
+    type = "INT";
+  } else if (NumBits <= 64) {
+    type = "LLONG";
+  } else {
+    llvm_unreachable("Bit widths > 64 not implemented yet");
+  }
+
+  if (isSigned)
+    Out << sprefix << type << (isMax ? "_MAX" : "_MIN");
+  else
+    Out << "U" << type << (isMax ? "_MAX" : "0");
+}
+
+static bool isSupportedIntegerSize(const IntegerType &T) {
+  return T.getBitWidth() == 8 || T.getBitWidth() == 16 ||
+         T.getBitWidth() == 32 || T.getBitWidth() == 64;
+}
+
+void CWriter::printIntrinsicDefinition(const Function &F, raw_ostream &Out) {
+  const FunctionType *funT = F.getFunctionType();
+  const Type *retT = F.getReturnType();
+  const IntegerType *elemT = cast<IntegerType>(funT->getParamType(1));
+
+  assert(isSupportedIntegerSize(*elemT) &&
+         "CBackend does not support arbitrary size integers.");
+  assert(cast<StructType>(retT)->getElementType(0) == elemT &&
+         elemT == funT->getParamType(0) && funT->getNumParams() == 2);
+
+  switch (F.getIntrinsicID()) {
+  default:
+    llvm_unreachable("Unsupported Intrinsic.");
+  case Intrinsic::uadd_with_overflow:
+    // static inline Rty uadd_ixx(unsigned ixx a, unsigned ixx b) {
+    //   Rty r;
+    //   r.field0 = a + b;
+    //   r.field1 = (r.field0 < a);
+    //   return r;
+    // }
+    Out << "static inline ";
+    printType(Out, retT);
+    Out << GetValueName(&F);
+    Out << "(";
+    printSimpleType(Out, elemT, false);
+    Out << "a,";
+    printSimpleType(Out, elemT, false);
+    Out << "b) {\n  ";
+    printType(Out, retT);
+    Out << "r;\n";
+    Out << "  r.field0 = a + b;\n";
+    Out << "  r.field1 = (r.field0 < a);\n";
+    Out << "  return r;\n}\n";
+    break;
+    
+  case Intrinsic::sadd_with_overflow:            
+    // static inline Rty sadd_ixx(ixx a, ixx b) {
+    //   Rty r;
+    //   r.field1 = (b > 0 && a > XX_MAX - b) ||
+    //              (b < 0 && a < XX_MIN - b);
+    //   r.field0 = r.field1 ? 0 : a + b;
+    //   return r;
+    // }
+    Out << "static ";
+    printType(Out, retT);
+    Out << GetValueName(&F);
+    Out << "(";
+    printSimpleType(Out, elemT, true);
+    Out << "a,";
+    printSimpleType(Out, elemT, true);
+    Out << "b) {\n  ";
+    printType(Out, retT);
+    Out << "r;\n";
+    Out << "  r.field1 = (b > 0 && a > ";
+    printLimitValue(*elemT, true, true, Out);
+    Out << " - b) || (b < 0 && a < ";
+    printLimitValue(*elemT, true, false, Out);
+    Out << " - b);\n";
+    Out << "  r.field0 = r.field1 ? 0 : a + b;\n";
+    Out << "  return r;\n}\n";
+    break;
+  }
+}
 
 void CWriter::lowerIntrinsics(Function &F) {
   // This is used to keep track of intrinsics that get generated to a lowered
@@ -2816,6 +2940,8 @@ void CWriter::lowerIntrinsics(Function &F) {
           case Intrinsic::x86_sse2_cmp_sd:
           case Intrinsic::x86_sse2_cmp_pd:
           case Intrinsic::ppc_altivec_lvsl:
+          case Intrinsic::uadd_with_overflow:
+          case Intrinsic::sadd_with_overflow:
               // We directly implement these intrinsics
             break;
           default:
@@ -3107,6 +3233,14 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     Out << ')';
     Out << "__builtin_altivec_lvsl(0, (void*)";
     writeOperand(I.getArgOperand(0));
+    Out << ")";
+    return true;
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::sadd_with_overflow:
+    Out << GetValueName(I.getCalledFunction()) << "(";
+    writeOperand(I.getArgOperand(0));
+    Out << ", ";
+    writeOperand(I.getArgOperand(1));
     Out << ")";
     return true;
   }
