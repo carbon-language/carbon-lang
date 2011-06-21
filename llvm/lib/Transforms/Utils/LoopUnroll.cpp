@@ -258,7 +258,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
         for (succ_iterator SI = succ_begin(*BB), SE = succ_end(*BB); SI != SE;
              ++SI)
           if (!L->contains(*SI))
-            for (BasicBlock::iterator BBI = (*SI)->begin(), BBE = (*SI)->end();
+            for (BasicBlock::iterator BBI = (*SI)->begin();
                  PHINode *phi = dyn_cast<PHINode>(BBI); ++BBI) {
               Value *Incoming = phi->getIncomingValueForBlock(*BB);
               phi->addIncoming(Incoming, New);
@@ -297,7 +297,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
     BasicBlock *LastIterationBB = cast<BasicBlock>(LastValueMap[LatchBlock]);
     for (succ_iterator SI = succ_begin(LatchBlock), SE = succ_end(LatchBlock);
          SI != SE; ++SI) {
-      for (BasicBlock::iterator BBI = (*SI)->begin(), BBE = (*SI)->end();
+      for (BasicBlock::iterator BBI = (*SI)->begin();
            PHINode *PN = dyn_cast<PHINode>(BBI); ++BBI) {
         Value *InVal = PN->removeIncomingValue(LatchBlock, false);
         // If this value was defined in the loop, take the value defined by the
