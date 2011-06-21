@@ -360,7 +360,7 @@ namespace netbsd {
 
   public:
     Link(const ToolChain &TC, const llvm::Triple &ToolTriple)
-      : Tool("netbsd::Ling", "linker", TC), ToolTriple(ToolTriple) {}
+      : Tool("netbsd::Link", "linker", TC), ToolTriple(ToolTriple) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
 
