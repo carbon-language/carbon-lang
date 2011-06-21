@@ -20,3 +20,12 @@ int64_t foo(int64_t v, volatile int64_t *p)
 
   return r;
 }
+
+// Make sure we translate register names properly.
+void bar (void) {
+  register unsigned int rn asm("r14");
+  register unsigned int d asm("r2");
+
+  // CHECK: call i32 asm sideeffect "sub $1, $1, #32", "={r2},{lr}"
+  asm volatile ("sub %1, %1, #32" : "=r"(d) : "r"(rn));
+}

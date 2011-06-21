@@ -1286,6 +1286,8 @@ AddVariableConstraints(const std::string &Constraint, const Expr &AsmExpr,
     CGM.ErrorUnsupported(&Stmt, "__asm__");
     return Constraint;
   }
+  // Canonicalize the register here before returning it.
+  Register = Target.getNormalizedGCCRegisterName(Register);
   return "{" + Register.str() + "}";
 }
 
