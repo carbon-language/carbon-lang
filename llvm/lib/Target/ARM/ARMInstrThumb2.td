@@ -1206,29 +1206,6 @@ def t2SUBrSPs   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_reg:$imm),
 }
 } // end isCodeGenOnly = 1
 
-// Signed and unsigned division on v7-M
-def t2SDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi,
-                 "sdiv", "\t$Rd, $Rn, $Rm",
-                 [(set rGPR:$Rd, (sdiv rGPR:$Rn, rGPR:$Rm))]>,
-                 Requires<[HasDivide, IsThumb2]> {
-  let Inst{31-27} = 0b11111;
-  let Inst{26-21} = 0b011100;
-  let Inst{20} = 0b1;
-  let Inst{15-12} = 0b1111;
-  let Inst{7-4} = 0b1111;
-}
-
-def t2UDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi,
-                 "udiv", "\t$Rd, $Rn, $Rm",
-                 [(set rGPR:$Rd, (udiv rGPR:$Rn, rGPR:$Rm))]>,
-                 Requires<[HasDivide, IsThumb2]> {
-  let Inst{31-27} = 0b11111;
-  let Inst{26-21} = 0b011101;
-  let Inst{20} = 0b1;
-  let Inst{15-12} = 0b1111;
-  let Inst{7-4} = 0b1111;
-}
-
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
 //
@@ -2558,6 +2535,32 @@ def t2SMLSLD  : T2FourReg_mac<1, 0b101, 0b1100, (outs rGPR:$Ra,rGPR:$Rd),
 def t2SMLSLDX : T2FourReg_mac<1, 0b101, 0b1101, (outs rGPR:$Ra,rGPR:$Rd),
                         (ins rGPR:$Rm,rGPR:$Rn), IIC_iMAC64, "smlsldx",
                         "\t$Ra, $Rd, $Rm, $Rn", []>;
+
+//===----------------------------------------------------------------------===//
+//  Division Instructions.
+//  Signed and unsigned division on v7-M
+//
+def t2SDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi,
+                 "sdiv", "\t$Rd, $Rn, $Rm",
+                 [(set rGPR:$Rd, (sdiv rGPR:$Rn, rGPR:$Rm))]>,
+                 Requires<[HasDivide, IsThumb2]> {
+  let Inst{31-27} = 0b11111;
+  let Inst{26-21} = 0b011100;
+  let Inst{20} = 0b1;
+  let Inst{15-12} = 0b1111;
+  let Inst{7-4} = 0b1111;
+}
+
+def t2UDIV : T2ThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm), IIC_iALUi,
+                 "udiv", "\t$Rd, $Rn, $Rm",
+                 [(set rGPR:$Rd, (udiv rGPR:$Rn, rGPR:$Rm))]>,
+                 Requires<[HasDivide, IsThumb2]> {
+  let Inst{31-27} = 0b11111;
+  let Inst{26-21} = 0b011101;
+  let Inst{20} = 0b1;
+  let Inst{15-12} = 0b1111;
+  let Inst{7-4} = 0b1111;
+}
 
 //===----------------------------------------------------------------------===//
 //  Misc. Arithmetic Instructions.
