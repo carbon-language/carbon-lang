@@ -190,7 +190,9 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   BasicBlock* exitingBlock = exitingBlocks[0];
   BasicBlock::iterator BI = exitBlock->begin();
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
-    P->replaceUsesOfWith(exitingBlock, preheader);
+    int j = P->getBasicBlockIndex(exitingBlock);
+    assert(j >= 0 && "Can't find exiting block in exit block's phi node!");
+    P->setIncomingBlock(j, preheader);
     for (unsigned i = 1; i < exitingBlocks.size(); ++i)
       P->removeIncomingValue(exitingBlocks[i]);
     ++BI;
