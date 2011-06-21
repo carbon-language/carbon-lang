@@ -3008,40 +3008,21 @@ def REV  : AMiscA1I<0b01101011, 0b0011, (outs GPR:$Rd), (ins GPR:$Rm),
               IIC_iUNAr, "rev", "\t$Rd, $Rm",
               [(set GPR:$Rd, (bswap GPR:$Rm))]>, Requires<[IsARM, HasV6]>;
 
+let AddedComplexity = 5 in
 def REV16 : AMiscA1I<0b01101011, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
                IIC_iUNAr, "rev16", "\t$Rd, $Rm",
-               [(set GPR:$Rd,
-                   (or (and (srl GPR:$Rm, (i32 8)), 0xFF),
-                       (or (and (shl GPR:$Rm, (i32 8)), 0xFF00),
-                           (or (and (srl GPR:$Rm, (i32 8)), 0xFF0000),
-                               (and (shl GPR:$Rm, (i32 8)), 0xFF000000)))))]>,
+               [(set GPR:$Rd, (rotr (bswap GPR:$Rm), (i32 16)))]>,
                Requires<[IsARM, HasV6]>;
 
-def : ARMV6Pat<(or (or (or (and (srl GPR:$Rm, (i32 8)), 0xFF0000),
-                           (and (shl GPR:$Rm, (i32 8)), 0xFF000000)),
-                       (and (srl GPR:$Rm, (i32 8)), 0xFF)),
-                   (and (shl GPR:$Rm, (i32 8)), 0xFF00)),
-               (REV16 GPR:$Rm)>;
-
+let AddedComplexity = 5 in
 def REVSH : AMiscA1I<0b01101111, 0b1011, (outs GPR:$Rd), (ins GPR:$Rm),
                IIC_iUNAr, "revsh", "\t$Rd, $Rm",
-               [(set GPR:$Rd,
-                  (sext_inreg
-                    (or (srl GPR:$Rm, (i32 8)),
-                        (shl GPR:$Rm, (i32 8))), i16))]>,
+               [(set GPR:$Rd, (sra (bswap GPR:$Rm), (i32 16)))]>,
                Requires<[IsARM, HasV6]>;
-
-def : ARMV6Pat<(sext_inreg (or (srl (and GPR:$Rm, 0xFF00), (i32 8)),
-                               (shl GPR:$Rm, (i32 8))), i16),
-               (REVSH GPR:$Rm)>;
 
 def : ARMV6Pat<(or (sra (shl GPR:$Rm, (i32 24)), (i32 16)),
                    (and (srl GPR:$Rm, (i32 8)), 0xFF)),
                (REVSH GPR:$Rm)>;
-
-// Need the AddedComplexity or else MOVs + REV would be chosen.
-let AddedComplexity = 5 in
-def : ARMV6Pat<(sra (bswap GPR:$Rm), (i32 16)), (REVSH GPR:$Rm)>;
 
 def lsl_shift_imm : SDNodeXForm<imm, [{
   unsigned Sh = ARM_AM::getSORegOpc(ARM_AM::lsl, N->getZExtValue());

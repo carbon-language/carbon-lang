@@ -2587,34 +2587,15 @@ def t2REV : T2I_misc<0b01, 0b00, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
 
 def t2REV16 : T2I_misc<0b01, 0b01, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
                        "rev16", ".w\t$Rd, $Rm",
-                [(set rGPR:$Rd,
-                    (or (and (srl rGPR:$Rm, (i32 8)), 0xFF),
-                        (or (and (shl rGPR:$Rm, (i32 8)), 0xFF00),
-                            (or (and (srl rGPR:$Rm, (i32 8)), 0xFF0000),
-                               (and (shl rGPR:$Rm, (i32 8)), 0xFF000000)))))]>;
-
-def : T2Pat<(or (or (or (and (srl rGPR:$Rm, (i32 8)), 0xFF0000),
-                        (and (shl rGPR:$Rm, (i32 8)), 0xFF000000)),
-                    (and (srl rGPR:$Rm, (i32 8)), 0xFF)),
-                (and (shl rGPR:$Rm, (i32 8)), 0xFF00)),
-            (t2REV16 rGPR:$Rm)>;
+                [(set rGPR:$Rd, (rotr (bswap rGPR:$Rm), (i32 16)))]>;
 
 def t2REVSH : T2I_misc<0b01, 0b11, (outs rGPR:$Rd), (ins rGPR:$Rm), IIC_iUNAr,
                        "revsh", ".w\t$Rd, $Rm",
-                 [(set rGPR:$Rd,
-                    (sext_inreg
-                      (or (srl rGPR:$Rm, (i32 8)),
-                          (shl rGPR:$Rm, (i32 8))), i16))]>;
-
-def : T2Pat<(sext_inreg (or (srl (and rGPR:$Rm, 0xFF00), (i32 8)),
-                            (shl rGPR:$Rm, (i32 8))), i16),
-            (t2REVSH rGPR:$Rm)>;
+                 [(set rGPR:$Rd, (sra (bswap rGPR:$Rm), (i32 16)))]>;
 
 def : T2Pat<(or (sra (shl rGPR:$Rm, (i32 24)), (i32 16)),
-                   (and (srl rGPR:$Rm, (i32 8)), 0xFF)),
+                (and (srl rGPR:$Rm, (i32 8)), 0xFF)),
             (t2REVSH rGPR:$Rm)>;
-
-def : T2Pat<(sra (bswap rGPR:$Rm), (i32 16)), (t2REVSH rGPR:$Rm)>;
 
 def t2PKHBT : T2ThreeReg<
             (outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm, shift_imm:$sh),

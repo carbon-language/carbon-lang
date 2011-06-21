@@ -84,3 +84,43 @@ entry:
   %or10 = or i32 %or6, %shl
   ret i32 %or10
 }
+
+; rdar://9164521
+define i32 @test7(i32 %a) nounwind readnone {
+entry:
+; CHECK: test7
+; CHECK: rev r0, r0
+; CHECK: lsr r0, r0, #16
+  %and = lshr i32 %a, 8
+  %shr3 = and i32 %and, 255
+  %and2 = shl i32 %a, 8
+  %shl = and i32 %and2, 65280
+  %or = or i32 %shr3, %shl
+  ret i32 %or
+}
+
+define i32 @test8(i32 %a) nounwind readnone {
+entry:
+; CHECK: test8
+; CHECK: revsh r0, r0
+  %and = lshr i32 %a, 8
+  %shr4 = and i32 %and, 255
+  %and2 = shl i32 %a, 8
+  %or = or i32 %shr4, %and2
+  %sext = shl i32 %or, 16
+  %conv3 = ashr exact i32 %sext, 16
+  ret i32 %conv3
+}
+
+define zeroext i16 @test9(i16 zeroext %v) nounwind readnone {
+entry:
+; CHECK: test9
+; CHECK: rev r0, r0
+; CHECK: lsr r0, r0, #16
+  %conv = zext i16 %v to i32
+  %shr4 = lshr i32 %conv, 8
+  %shl = shl nuw nsw i32 %conv, 8
+  %or = or i32 %shr4, %shl
+  %conv3 = trunc i32 %or to i16
+  ret i16 %conv3
+}

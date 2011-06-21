@@ -1176,30 +1176,15 @@ def tREV16 :                    // A8.6.135
   T1pIMiscEncode<{1,0,1,0,0,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "rev16", "\t$Rd, $Rm",
-             [(set tGPR:$Rd,
-                   (or (and (srl tGPR:$Rm, (i32 8)), 0xFF),
-                       (or (and (shl tGPR:$Rm, (i32 8)), 0xFF00),
-                           (or (and (srl tGPR:$Rm, (i32 8)), 0xFF0000),
-                               (and (shl tGPR:$Rm, (i32 8)), 0xFF000000)))))]>,
+             [(set tGPR:$Rd, (rotr (bswap tGPR:$Rm), (i32 16)))]>,
                 Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
 def tREVSH :                    // A8.6.136
   T1pIMiscEncode<{1,0,1,0,1,1,?}, (outs tGPR:$Rd), (ins tGPR:$Rm),
                  IIC_iUNAr,
                  "revsh", "\t$Rd, $Rm",
-                 [(set tGPR:$Rd,
-                       (sext_inreg
-                         (or (srl tGPR:$Rm, (i32 8)),
-                             (shl tGPR:$Rm, (i32 8))), i16))]>,
+                 [(set tGPR:$Rd, (sra (bswap tGPR:$Rm), (i32 16)))]>,
                  Requires<[IsThumb, IsThumb1Only, HasV6]>;
-
-def : T1Pat<(sext_inreg (or (srl (and tGPR:$Rm, 0xFF00), (i32 8)),
-                            (shl tGPR:$Rm, (i32 8))), i16),
-            (tREVSH tGPR:$Rm)>,
-      Requires<[IsThumb, IsThumb1Only, HasV6]>;
-
-def : T1Pat<(sra (bswap tGPR:$Rm), (i32 16)), (tREVSH tGPR:$Rm)>,
-      Requires<[IsThumb, IsThumb1Only, HasV6]>;
 
 // Rotate right register
 def tROR :                      // A8.6.139
