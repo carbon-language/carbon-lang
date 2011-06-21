@@ -5616,12 +5616,12 @@ public:
     
   /// \brief Checks for valid expressions which can be cast to an ObjC
   /// pointer without needing a bridge cast.
-  bool ValidObjCARCNoBridgeCastExpr(const Expr *Exp);
+  bool ValidObjCARCNoBridgeCastExpr(Expr *&Exp, QualType castType);
     
   /// \brief Checks for invalid conversions and casts between
   /// retainable pointers and other pointer kinds.
   void CheckObjCARCConversion(SourceRange castRange, QualType castType, 
-                              Expr *op, CheckedConversionKind CCK);
+                              Expr *&op, CheckedConversionKind CCK);
 
   /// checkRetainCycles - Check whether an Objective-C message send
   /// might create an obvious retain cycle.

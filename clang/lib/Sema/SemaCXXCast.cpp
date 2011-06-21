@@ -641,8 +641,9 @@ CheckReinterpretCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
       diagnoseBadCast(Self, msg, CT_Reinterpret, OpRange, SrcExpr.get(), DestType);
     }
   } else if (tcr == TC_Success && Self.getLangOptions().ObjCAutoRefCount) {
+    Expr *Exp = SrcExpr.get();
     Self.CheckObjCARCConversion(OpRange, DestType,
-                                SrcExpr.get(), Sema::CCK_OtherCast);
+                                Exp, Sema::CCK_OtherCast);
   }
 }
 
@@ -704,9 +705,11 @@ CheckStaticCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
   } else if (tcr == TC_Success) {
     if (Kind == CK_BitCast)
       Self.CheckCastAlign(SrcExpr.get(), DestType, OpRange);
-    if (Self.getLangOptions().ObjCAutoRefCount)
+    if (Self.getLangOptions().ObjCAutoRefCount) {
+      Expr *Exp = SrcExpr.get();
       Self.CheckObjCARCConversion(OpRange, DestType,
-                                  SrcExpr.get(), Sema::CCK_OtherCast);
+                                  Exp, Sema::CCK_OtherCast);
+    }
   }
   else if (Kind == CK_BitCast)
     Self.CheckCastAlign(SrcExpr.get(), DestType, OpRange);

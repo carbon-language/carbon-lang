@@ -1551,14 +1551,50 @@ namespace {
 }
 
 bool
-Sema::ValidObjCARCNoBridgeCastExpr(const Expr *Exp) {
-  Exp = Exp->IgnoreParenImpCasts();
-  return isa<ObjCMessageExpr>(Exp) || isa<ObjCPropertyRefExpr>(Exp);
+Sema::ValidObjCARCNoBridgeCastExpr(Expr *&Exp, QualType castType) {
+  Expr *NewExp = Exp->IgnoreParenImpCasts();
+  
+  if (!isa<ObjCMessageExpr>(NewExp) && !isa<ObjCPropertyRefExpr>(NewExp))
+    return false;
+  ObjCMethodDecl *method = 0;
+  if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(NewExp)) {
+    method = PRE->getExplicitProperty()->getGetterMethodDecl();
+  }
+  else {
+    ObjCMessageExpr *ME = cast<ObjCMessageExpr>(NewExp);
+    method = ME->getMethodDecl();
+  }
+  if (!method)
+    return false;
+  if (method->hasAttr<CFReturnsNotRetainedAttr>())
+    return true;
+  bool MethodReturnsPlusOne = method->hasAttr<CFReturnsRetainedAttr>();
+  if (!MethodReturnsPlusOne) {
+    ObjCMethodFamily family = method->getSelector().getMethodFamily();
+    switch (family) {
+      case OMF_alloc:
+      case OMF_copy:
+      case OMF_mutableCopy:
+      case OMF_new:
+        MethodReturnsPlusOne = true;
+        break;
+      default:
+        break;
+    }
+  }
+  if (MethodReturnsPlusOne) {
+    TypeSourceInfo *TSInfo = 
+      Context.getTrivialTypeSourceInfo(castType, SourceLocation());
+    ExprResult ExpRes = BuildObjCBridgedCast(SourceLocation(), OBC_BridgeTransfer,
+                                             SourceLocation(), TSInfo, Exp);
+    Exp = ExpRes.take();
+  }
+  return true;
 }
 
 void 
 Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
-                             Expr *castExpr, CheckedConversionKind CCK) {
+                             Expr *&castExpr, CheckedConversionKind CCK) {
   QualType castExprType = castExpr->getType();
   
   ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExprType);
@@ -1614,7 +1650,7 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
         castExprType->isCARCBridgableType()) {
       // explicit unbridged casts are allowed if the source of the cast is a 
       // message sent to an objc method (or property access)
-      if (ValidObjCARCNoBridgeCastExpr(castExpr))
+      if (ValidObjCARCNoBridgeCastExpr(castExpr, castType))
         return;
       Diag(loc, diag::err_arc_cast_requires_bridge)
         << 2
