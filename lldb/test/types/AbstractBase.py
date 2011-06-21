@@ -22,14 +22,14 @@ class GenericTester(TestBase):
 
     # FIXME: Remove this method when/if we find out the cause of the failures
     # if no delays are inserted between test cases.
-    def setUp(self):
-        # Call super's setUp().
-        TestBase.setUp(self)
-        # Insert some delay for running test cases under test/types if not
-        # already so by the TestBase.setUp().
-        if "LLDB_WAIT_BETWEEN_TEST_CASES" not in os.environ:
-            #print "some delay, please ...."
-            time.sleep(1.0)
+#     def setUp(self):
+#         # Call super's setUp().
+#         TestBase.setUp(self)
+#         # Insert some delay for running test cases under test/types if not
+#         # already so by the TestBase.setUp().
+#         if "LLDB_WAIT_BETWEEN_TEST_CASES" not in os.environ:
+#             #print "some delay, please ...."
+#             time.sleep(1.0)
 
     def generic_type_tester(self, atoms, quotedDisplay=False):
         """Test that variables with basic types are displayed correctly."""
