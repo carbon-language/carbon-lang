@@ -18,6 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "FastISelEmitter.h"
+#include "Error.h"
 #include "Record.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/VectorExtras.h"

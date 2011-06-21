@@ -26,6 +26,7 @@
 #include "DAGISelEmitter.h"
 #include "DisassemblerEmitter.h"
 #include "EDEmitter.h"
+#include "Error.h"
 #include "FastISelEmitter.h"
 #include "InstrEnumEmitter.h"
 #include "InstrInfoEmitter.h"
@@ -193,12 +194,6 @@ namespace {
                  cl::value_desc("component"), cl::Hidden);
 }
 
-
-static SourceMgr SrcMgr;
-
-void llvm::PrintError(SMLoc ErrorLoc, const Twine &Msg) {
-  SrcMgr.PrintMessage(ErrorLoc, Msg, "error");
-}
 
 int main(int argc, char **argv) {
   RecordKeeper Records;
@@ -403,13 +398,11 @@ int main(int argc, char **argv) {
     return 0;
 
   } catch (const TGError &Error) {
-    errs() << argv[0] << ": error:\n";
-    PrintError(Error.getLoc(), Error.getMessage());
-
+    PrintError(Error);
   } catch (const std::string &Error) {
-    errs() << argv[0] << ": " << Error << "\n";
+    PrintError(Error);
   } catch (const char *Error) {
-    errs() << argv[0] << ": " << Error << "\n";
+    PrintError(Error);
   } catch (...) {
     errs() << argv[0] << ": Unknown unexpected exception occurred.\n";
   }

@@ -9,6 +9,7 @@
 
 #include "DisassemblerEmitter.h"
 #include "CodeGenTarget.h"
+#include "Error.h"
 #include "Record.h"
 #include "X86DisassemblerTables.h"
 #include "X86RecognizableInstr.h"

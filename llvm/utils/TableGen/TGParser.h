@@ -15,6 +15,7 @@
 #define TGPARSER_H
 
 #include "TGLexer.h"
+#include "Error.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include <map>
@@ -60,7 +61,7 @@ public:
   bool ParseFile();
   
   bool Error(SMLoc L, const Twine &Msg) const {
-    Lex.PrintError(L, Msg);
+    PrintError(L, Msg);
     return true;
   }
   bool TokError(const Twine &Msg) const {

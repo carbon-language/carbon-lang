@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Record.h"
+#include "Error.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/StringExtras.h"

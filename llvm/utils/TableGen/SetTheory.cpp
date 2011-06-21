@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SetTheory.h"
+#include "Error.h"
 #include "Record.h"
 #include "llvm/Support/Format.h"
 

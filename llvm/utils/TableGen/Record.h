@@ -1486,21 +1486,7 @@ struct LessRecordFieldName {
   }
 };
 
-
-class TGError {
-  SMLoc Loc;
-  std::string Message;
-public:
-  TGError(SMLoc loc, const std::string &message) : Loc(loc), Message(message) {}
-
-  SMLoc getLoc() const { return Loc; }
-  const std::string &getMessage() const { return Message; }
-};
-
-
 raw_ostream &operator<<(raw_ostream &OS, const RecordKeeper &RK);
-
-void PrintError(SMLoc ErrorLoc, const Twine &Msg);
 
 } // End llvm namespace
 

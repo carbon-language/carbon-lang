@@ -14,6 +14,7 @@
 
 #include "AsmWriterEmitter.h"
 #include "AsmWriterInst.h"
+#include "Error.h"
 #include "CodeGenTarget.h"
 #include "Record.h"
 #include "StringToOffsetTable.h"

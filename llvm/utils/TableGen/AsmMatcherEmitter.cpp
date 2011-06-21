@@ -98,6 +98,7 @@
 
 #include "AsmMatcherEmitter.h"
 #include "CodeGenTarget.h"
+#include "Error.h"
 #include "Record.h"
 #include "StringMatcher.h"
 #include "llvm/ADT/OwningPtr.h"

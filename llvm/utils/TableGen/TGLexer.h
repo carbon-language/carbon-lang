@@ -101,9 +101,6 @@ public:
   }
 
   SMLoc getLoc() const;
-
-  void PrintError(const char *Loc, const Twine &Msg) const;
-  void PrintError(SMLoc Loc, const Twine &Msg) const;
   
 private:
   /// LexToken - Read the next token and return its code.
