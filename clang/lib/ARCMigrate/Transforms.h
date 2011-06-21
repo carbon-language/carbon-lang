@@ -34,12 +34,12 @@ void rewriteUnbridgedCasts(MigrationPass &pass);
 void rewriteAllocCopyWithZone(MigrationPass &pass);
 void makeAssignARCSafe(MigrationPass &pass);
 void removeRetainReleaseDealloc(MigrationPass &pass);
-void removeEmptyStatements(MigrationPass &pass);
 void removeZeroOutPropsInDealloc(MigrationPass &pass);
 void changeIvarsOfAssignProperties(MigrationPass &pass);
 void rewriteBlockObjCVariable(MigrationPass &pass);
-void removeDeallocMethod(MigrationPass &pass);
 void rewriteUnusedInitDelegate(MigrationPass &pass);
+
+void removeEmptyStatementsAndDealloc(MigrationPass &pass);
 
 //===----------------------------------------------------------------------===//
 // Helpers.

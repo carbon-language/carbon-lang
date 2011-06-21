@@ -224,12 +224,9 @@ static void independentTransforms(MigrationPass &pass) {
 std::vector<TransformFn> arcmt::getAllTransformations() {
   std::vector<TransformFn> transforms;
 
-  // This must come first since rewriteAutoreleasePool depends on -release
-  // calls being present to determine the @autorelease ending scope.
   transforms.push_back(independentTransforms);
-
-  transforms.push_back(removeEmptyStatements);
-  transforms.push_back(removeDeallocMethod);
+  // This depends on previous transformations removing various expressions.
+  transforms.push_back(removeEmptyStatementsAndDealloc);
 
   return transforms;
 }
