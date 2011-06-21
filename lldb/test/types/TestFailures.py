@@ -8,6 +8,8 @@ import sys
 import lldb
 from lldbtest import *
 
+# rdar://problem/9649573
+# Capture the lldb and gdb-remote log files for test failures when run with no "-w" option
 class DebugIntegerTypesFailures(AbstractBase.GenericTester):
 
     mydir = "types"
