@@ -196,9 +196,9 @@ template<typename T> struct __enable_if<true, T> {
 // PR5063
 template<typename T> typename __enable_if<__is_scalar_type<T>::__value, void>::__type ft7() { }
 
-// CHECK: @_Z3ft7IiEN11__enable_ifIXsr16__is_scalar_typeIT_E7__valueEvE6__typeEv
+// CHECK: @_Z3ft7IiEN11__enable_ifIXsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv
 template void ft7<int>();
-// CHECK: @_Z3ft7IPvEN11__enable_ifIXsr16__is_scalar_typeIT_E7__valueEvE6__typeEv
+// CHECK: @_Z3ft7IPvEN11__enable_ifIXsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv
 template void ft7<void*>();
 
 // PR5144
@@ -226,9 +226,9 @@ S7::S7() {}
 
 // PR5063
 template<typename T> typename __enable_if<(__is_scalar_type<T>::__value), void>::__type ft8() { }
-// CHECK: @_Z3ft8IiEN11__enable_ifIXsr16__is_scalar_typeIT_E7__valueEvE6__typeEv
+// CHECK: @_Z3ft8IiEN11__enable_ifIXsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv
 template void ft8<int>();
-// CHECK: @_Z3ft8IPvEN11__enable_ifIXsr16__is_scalar_typeIT_E7__valueEvE6__typeEv
+// CHECK: @_Z3ft8IPvEN11__enable_ifIXsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv
 template void ft8<void*>();
 
 // PR5796
@@ -241,7 +241,7 @@ template<bool, typename> struct __enable_if {};
 template<typename T> struct __enable_if<true, T> { typedef T __type; };
 template<typename T>
 
-// CHECK: define linkonce_odr void @_ZN6PR57968__fill_aIiEENS_11__enable_ifIXntsrNS_16__is_scalar_typeIT_EE7__valueEvE6__typeEv
+// CHECK: define linkonce_odr void @_ZN6PR57968__fill_aIiEENS_11__enable_ifIXntsr16__is_scalar_typeIT_EE7__valueEvE6__typeEv
 typename __enable_if<!__is_scalar_type<T>::__value, void>::__type __fill_a() { };
 
 void f() { __fill_a<int>(); }
