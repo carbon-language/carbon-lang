@@ -28,7 +28,6 @@ set(CLANG_TEST_DIRECTORIES
 
 set(LLVM_SOURCE_DIR "${LLVM_MAIN_SRC_DIR}")
 set(LLVM_BINARY_DIR "${LLVM_BINARY_DIR}")
-set(LLVM_BUILD_MODE "%(build_mode)s")
 set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_config)s")
 set(LLVM_LIBS_DIR "${LLVM_BINARY_DIR}/lib/%(build_config)s")
 set(CLANG_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
@@ -39,9 +38,15 @@ else()
   set(ENABLE_SHARED 0)
 endif(BUILD_SHARED_LIBS)
 
+# lit.site.cfg uses the config-time build mode
+set(LLVM_BUILD_MODE "${LLVM_BUILD_MODE}")
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
+
+# Unit/lit.site.cfg substitutes the runtime build_mode
+set(LLVM_BUILD_MODE "%(build_mode)s")
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
