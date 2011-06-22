@@ -525,11 +525,11 @@ typedef struct Bark Bark;
 @implementation Test30
 - (id) new { return 0; }
 - (void) Meth {
-  __weak id x = [Test30 new]; // expected-warning {{cannot assign retained object to weak variable}}
-  id __unsafe_unretained u = [Test30 new]; // expected-warning {{cannot assign retained object to unsafe_unretained variable}}
+  __weak id x = [Test30 new]; // expected-warning {{assigning retained object to weak variable}}
+  id __unsafe_unretained u = [Test30 new]; // expected-warning {{assigning retained object to unsafe_unretained variable}}
   id y = [Test30 new];
-  x = [Test30 new]; // expected-warning {{cannot assign retained object to weak variable}}
-  u = [Test30 new]; // expected-warning {{cannot assign retained object to unsafe_unretained variable}}
+  x = [Test30 new]; // expected-warning {{assigning retained object to weak variable}}
+  u = [Test30 new]; // expected-warning {{assigning retained object to unsafe_unretained variable}}
   y = [Test30 new];
 }
 @end
