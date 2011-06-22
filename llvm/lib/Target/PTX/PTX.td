@@ -16,7 +16,7 @@
 include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
-// Subtarget Features.
+// Subtarget Features
 //===----------------------------------------------------------------------===//
 
 //===- Architectural Features ---------------------------------------------===//
@@ -57,7 +57,7 @@ def FeatureSM20 : SubtargetFeature<"sm20", "PTXShaderModel", "PTX_SM_2_0",
                                    [FeatureSM13]>;
 
 //===----------------------------------------------------------------------===//
-// PTX supported processors.
+// PTX supported processors
 //===----------------------------------------------------------------------===//
 
 class Proc<string Name, list<SubtargetFeature> Features>
