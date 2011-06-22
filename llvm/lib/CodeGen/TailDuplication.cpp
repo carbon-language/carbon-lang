@@ -568,9 +568,9 @@ bool
 TailDuplicatePass::isSimpleBB(MachineBasicBlock *TailBB) {
   if (TailBB->succ_size() != 1)
     return false;
-  MachineBasicBlock::iterator I = TailBB->begin();
+  MachineBasicBlock::iterator I = TailBB->getFirstNonPHI();
   MachineBasicBlock::iterator E = TailBB->end();
-  while (I != E && I->isDebugValue())
+  while (I->isDebugValue() && I != E)
     ++I;
   if (I == E)
     return true;
@@ -712,7 +712,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   DenseSet<unsigned> UsedByPhi;
   getRegsUsedByPHIs(*TailBB, &UsedByPhi);
 
-  if (isSimpleBB(TailBB))
+  if (0 && isSimpleBB(TailBB))
     return duplicateSimpleBB(TailBB, TDBBs, UsedByPhi, Copies);
 
   // Iterate through all the unique predecessors and tail-duplicate this
