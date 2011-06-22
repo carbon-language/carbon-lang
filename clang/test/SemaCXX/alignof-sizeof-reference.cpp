@@ -13,3 +13,9 @@ void f(int);  // expected-note{{candidate function}}
 void g() { 
   sizeof(&f); // expected-error{{cannot resolve overloaded function 'f' from context}}
 }
+
+template<typename T> void f_template(); // expected-note{{candidate function}}
+template<typename T> void f_template(T*); // expected-note{{candidate function}}
+void rdar9659191() {
+  (void)alignof(f_template<int>); // expected-error{{cannot resolve overloaded function 'f_template' from context}}
+}
