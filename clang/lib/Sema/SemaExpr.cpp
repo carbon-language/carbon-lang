@@ -9142,7 +9142,8 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
     SuggestParentheses(Self, OpLoc,
       Self.PDiag(diag::note_precedence_bitwise_first)
         << BinOp::getOpcodeStr(Opc),
-      SourceRange(lhs->getLocEnd(), cast<BinOp>(rhs)->getLHS()->getLocStart()));
+      SourceRange(lhs->getLocStart(), 
+                  cast<BinOp>(rhs)->getLHS()->getLocStart()));
   }
 }
 
