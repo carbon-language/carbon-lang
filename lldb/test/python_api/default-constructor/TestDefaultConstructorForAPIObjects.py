@@ -2,8 +2,8 @@
 Test lldb Python API object's default constructor and make sure it is invalid
 after initial construction.
 
-There are two exceptions to the above general rules, though; the API objects are
-SBCommadnReturnObject and SBStream.
+There are three exceptions to the above general rules, though; the API objects are
+SBCommadnReturnObject, SBStream, and SBSymbolContextList.
 """
 
 import os, time
@@ -198,7 +198,7 @@ class APIDefaultConstructorTestCase(TestBase):
         obj = lldb.SBSymbolContextList()
         if self.TraceOn():
             print obj
-        self.assertFalse(obj)
+        self.assertTrue(obj)
 
     @python_api_test
     def test_SBTarget(self):
