@@ -5,7 +5,6 @@ config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.llvm_libs_dir = "@LLVM_LIBS_DIR@"
 config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
-config.llvm_build_modes = "@LLVM_BUILD_MODE@".split('+')
 config.clang_obj_root = "@CLANG_BINARY_DIR@"
 config.target_triple = "@TARGET_TRIPLE@"
 
