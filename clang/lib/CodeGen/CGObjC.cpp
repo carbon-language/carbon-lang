@@ -1998,6 +1998,7 @@ namespace {
       CallReleaseForObject *Object
         = new (&align) CallReleaseForObject(type, addr, precise);
       Object->Emit(CGF, IsForEH);
+      (void)data[0];
     }
 
     void release(CodeGenFunction &CGF, QualType type, llvm::Value *addr) {
@@ -2061,6 +2062,7 @@ namespace {
       CallWeakReleaseForObject *Object
         = new (&align) CallWeakReleaseForObject(type, addr);
       Object->Emit(CGF, IsForEH);
+      (void)data[0];
     }
     
     void release(CodeGenFunction &CGF, QualType type, llvm::Value *addr) {
