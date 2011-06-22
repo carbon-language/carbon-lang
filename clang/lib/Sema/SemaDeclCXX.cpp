@@ -1610,7 +1610,8 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr **Args,
     // Can't check initialization for a member of dependent type or when
     // any of the arguments are type-dependent expressions.
     Init = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
-                                       RParenLoc);
+                                       RParenLoc,
+                                       Member->getType().getNonReferenceType());
 
     DiscardCleanupsInEvaluationContext();
   } else {
@@ -1646,8 +1647,9 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr **Args,
     // initializer. However, deconstructing the ASTs is a dicey process,
     // and this approach is far more likely to get the corner cases right.
     if (CurContext->isDependentContext())
-      Init = new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
-                                               RParenLoc);
+      Init = new (Context) ParenListExpr(
+          Context, LParenLoc, Args, NumArgs, RParenLoc,
+          Member->getType().getNonReferenceType());
     else
       Init = MemberInit.get();
   }
@@ -1703,22 +1705,7 @@ Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo,
   if (DelegationInit.isInvalid())
     return true;
 
-  // If we are in a dependent context, template instantiation will
-  // perform this type-checking again. Just save the arguments that we
-  // received in a ParenListExpr.
-  // FIXME: This isn't quite ideal, since our ASTs don't capture all
-  // of the information that we have about the base
-  // initializer. However, deconstructing the ASTs is a dicey process,
-  // and this approach is far more likely to get the corner cases right.
-  if (CurContext->isDependentContext()) {
-    ExprResult Init
-      = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args,
-                                          NumArgs, RParenLoc));
-    return new (Context) CXXCtorInitializer(Context, Loc, LParenLoc,
-                                            Constructor, Init.takeAs<Expr>(),
-                                            RParenLoc);
-  }
-
+  assert(!CurContext->isDependentContext());
   return new (Context) CXXCtorInitializer(Context, Loc, LParenLoc, Constructor,
                                           DelegationInit.takeAs<Expr>(),
                                           RParenLoc);
@@ -1803,7 +1790,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
     // any of the arguments are type-dependent expressions.
     ExprResult BaseInit
       = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
-                                          RParenLoc));
+                                          RParenLoc, BaseType));
 
     DiscardCleanupsInEvaluationContext();
 
@@ -1861,7 +1848,7 @@ Sema::BuildBaseInitializer(QualType BaseType, TypeSourceInfo *BaseTInfo,
   if (CurContext->isDependentContext()) {
     ExprResult Init
       = Owned(new (Context) ParenListExpr(Context, LParenLoc, Args, NumArgs,
-                                          RParenLoc));
+                                          RParenLoc, BaseType));
     return new (Context) CXXCtorInitializer(Context, BaseTInfo,
                                                     BaseSpec->isVirtual(),
                                                     LParenLoc, 
@@ -7520,9 +7507,9 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
 
     // Store the initialization expressions as a ParenListExpr.
     unsigned NumExprs = Exprs.size();
-    VDecl->setInit(new (Context) ParenListExpr(Context, LParenLoc,
-                                               (Expr **)Exprs.release(),
-                                               NumExprs, RParenLoc));
+    VDecl->setInit(new (Context) ParenListExpr(
+        Context, LParenLoc, (Expr **)Exprs.release(), NumExprs, RParenLoc,
+        VDecl->getType().getNonReferenceType()));
     return;
   }
   

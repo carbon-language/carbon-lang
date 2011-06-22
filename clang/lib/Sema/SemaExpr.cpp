@@ -5846,7 +5846,8 @@ ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
   if (nexprs == 1 && TypeOfCast && !TypeIsVectorType(TypeOfCast))
     expr = new (Context) ParenExpr(L, R, exprs[0]);
   else
-    expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R);
+    expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R,
+                                       exprs[nexprs-1]->getType());
   return Owned(expr);
 }
 

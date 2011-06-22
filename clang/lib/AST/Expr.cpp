@@ -3033,11 +3033,11 @@ void DesignatedInitExpr::ExpandDesignator(ASTContext &C, unsigned Idx,
 
 ParenListExpr::ParenListExpr(ASTContext& C, SourceLocation lparenloc,
                              Expr **exprs, unsigned nexprs,
-                             SourceLocation rparenloc)
-  : Expr(ParenListExprClass, QualType(), VK_RValue, OK_Ordinary,
+                             SourceLocation rparenloc, QualType T)
+  : Expr(ParenListExprClass, T, VK_RValue, OK_Ordinary,
          false, false, false),
     NumExprs(nexprs), LParenLoc(lparenloc), RParenLoc(rparenloc) {
-
+  assert(!T.isNull() && "ParenListExpr must have a valid type");
   Exprs = new (C) Stmt*[nexprs];
   for (unsigned i = 0; i != nexprs; ++i) {
     if (exprs[i]->isTypeDependent())
