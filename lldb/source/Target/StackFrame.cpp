@@ -262,8 +262,7 @@ StackFrame::Disassemble ()
                                    exe_ctx,
                                    0,
                                    0,
-                                   false,
-                                   false,
+                                   0,
                                    m_disassembly);
         if (m_disassembly.GetSize() == 0)
             return NULL;

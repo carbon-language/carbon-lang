@@ -184,6 +184,13 @@ class Disassembler :
 {
 public:
 
+    enum
+    {
+        eOptionNone             = 0u,
+        eOptionShowBytes        = (1u << 0),
+        eOptionRawOuput         = (1u << 1),
+        eOptionShowCurrentLine  = (1u << 2)
+    };
 
     static Disassembler*
     FindPlugin (const ArchSpec &arch, const char *plugin_name);
@@ -202,8 +209,7 @@ public:
                  const AddressRange &range,
                  uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
-                 bool show_bytes,
-                 bool raw,
+                 uint32_t options,
                  Stream &strm);
 
     static bool
@@ -214,8 +220,7 @@ public:
                  const Address &start,
                  uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
-                 bool show_bytes,
-                 bool raw,
+                 uint32_t options,
                  Stream &strm);
 
     static size_t
@@ -226,8 +231,7 @@ public:
                  SymbolContextList &sc_list,
                  uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
-                 bool show_bytes,
-                 bool raw,
+                 uint32_t options,
                  Stream &strm);
     
     static bool
@@ -239,8 +243,7 @@ public:
                  Module *module,
                  uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
-                 bool show_bytes,
-                 bool raw,
+                 uint32_t options,
                  Stream &strm);
 
     static bool
@@ -250,8 +253,7 @@ public:
                  const ExecutionContext &exe_ctx,
                  uint32_t num_instructions,
                  uint32_t num_mixed_context_lines,
-                 bool show_bytes,
-                 bool raw,
+                 uint32_t options,
                  Stream &strm);
 
     //------------------------------------------------------------------
@@ -269,8 +271,7 @@ public:
                        const ExecutionContext &exe_ctx,
                        uint32_t num_instructions,
                        uint32_t num_mixed_context_lines,
-                       bool show_bytes,
-                       bool raw,
+                       uint32_t options,
                        Stream &strm);
     
     size_t

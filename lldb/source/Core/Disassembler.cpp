@@ -110,8 +110,7 @@ Disassembler::Disassemble
     SymbolContextList &sc_list,
     uint32_t num_instructions,
     uint32_t num_mixed_context_lines,
-    bool show_bytes,
-    bool raw,
+    uint32_t options,
     Stream &strm
 )
 {
@@ -134,8 +133,7 @@ Disassembler::Disassemble
                              range, 
                              num_instructions,
                              num_mixed_context_lines, 
-                             show_bytes, 
-                             raw, 
+                             options, 
                              strm))
             {
                 ++success_count;
@@ -157,8 +155,7 @@ Disassembler::Disassemble
     Module *module,
     uint32_t num_instructions,
     uint32_t num_mixed_context_lines,
-    bool show_bytes,
-    bool raw,
+    uint32_t options,
     Stream &strm
 )
 {
@@ -199,8 +196,7 @@ Disassembler::Disassemble
                             sc_list,
                             num_instructions, 
                             num_mixed_context_lines, 
-                            show_bytes,
-                            raw,
+                            options,
                             strm);
     }
     return false;
@@ -242,8 +238,7 @@ Disassembler::Disassemble
     const AddressRange &disasm_range,
     uint32_t num_instructions,
     uint32_t num_mixed_context_lines,
-    bool show_bytes,
-    bool raw,
+    uint32_t options,
     Stream &strm
 )
 {
@@ -267,8 +262,7 @@ Disassembler::Disassemble
                                       exe_ctx,
                                       num_instructions,
                                       num_mixed_context_lines,
-                                      show_bytes,
-                                      raw,
+                                      options,
                                       strm);
         }
     }
@@ -285,8 +279,7 @@ Disassembler::Disassemble
     const Address &start_address,
     uint32_t num_instructions,
     uint32_t num_mixed_context_lines,
-    bool show_bytes,
-    bool raw,
+    uint32_t options,
     Stream &strm
 )
 {
@@ -307,8 +300,7 @@ Disassembler::Disassemble
                                       exe_ctx,
                                       num_instructions,
                                       num_mixed_context_lines,
-                                      show_bytes,
-                                      raw,
+                                      options,
                                       strm);
         }
     }
@@ -324,8 +316,7 @@ Disassembler::PrintInstructions
     const ExecutionContext &exe_ctx,
     uint32_t num_instructions,
     uint32_t num_mixed_context_lines,
-    bool show_bytes,
-    bool raw,
+    uint32_t options,
     Stream &strm
 )
 {
@@ -384,7 +375,7 @@ Disassembler::PrintInstructions
                                                                                                    sc.line_entry.line,
                                                                                                    num_mixed_context_lines,
                                                                                                    num_mixed_context_lines,
-                                                                                                   num_mixed_context_lines ? "->" : "",
+                                                                                                   ((options & eOptionShowCurrentLine) ? "->" : ""),
                                                                                                    &strm);
                                 }
                             }
@@ -421,6 +412,8 @@ Disassembler::PrintInstructions
                 else
                     strm.PutCString("   ");
             }
+            const bool show_bytes = (options & eOptionShowBytes) != 0;
+            const bool raw = (options & eOptionRawOuput) != 0;
             inst->Dump(&strm, max_opcode_byte_size, true, show_bytes, &exe_ctx, raw);
             strm.EOL();            
         }
@@ -443,8 +436,7 @@ Disassembler::Disassemble
     const ExecutionContext &exe_ctx,
     uint32_t num_instructions,
     uint32_t num_mixed_context_lines,
-    bool show_bytes,
-    bool raw,
+    uint32_t options,
     Stream &strm
 )
 {
@@ -476,8 +468,7 @@ Disassembler::Disassemble
                         range, 
                         num_instructions, 
                         num_mixed_context_lines, 
-                        show_bytes, 
-                        raw, 
+                        options, 
                         strm);
 }
 

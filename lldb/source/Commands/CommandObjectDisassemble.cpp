@@ -258,6 +258,16 @@ CommandObjectDisassemble::Execute
         m_options.num_lines_context = 1;
 
     ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+    uint32_t options = 0;
+
+    if (!m_options.show_mixed)
+        options |= Disassembler::eOptionShowCurrentLine;
+
+    if (m_options.show_bytes)
+        options |= Disassembler::eOptionShowBytes;
+
+    if (m_options.raw)
+        options |= Disassembler::eOptionRawOuput;
 
     if (!m_options.func_name.empty())
     {
@@ -271,8 +281,7 @@ CommandObjectDisassemble::Execute
                                        NULL,    // Module *
                                        m_options.num_instructions,
                                        m_options.show_mixed ? m_options.num_lines_context : 0,
-                                       m_options.show_bytes,
-                                       m_options.raw,
+                                       options,
                                        result.GetOutputStream()))
         {
             result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -369,8 +378,7 @@ CommandObjectDisassemble::Execute
                                            range.GetBaseAddress(),
                                            m_options.num_instructions,
                                            m_options.show_mixed ? m_options.num_lines_context : 0,
-                                           m_options.show_bytes,
-                                           m_options.raw,
+                                           options,
                                            result.GetOutputStream()))
             {
                 result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -413,8 +421,7 @@ CommandObjectDisassemble::Execute
                                            range,
                                            m_options.num_instructions,
                                            m_options.show_mixed ? m_options.num_lines_context : 0,
-                                           m_options.show_bytes,
-                                           m_options.raw,
+                                           options,
                                            result.GetOutputStream()))
             {
                 result.SetStatus (eReturnStatusSuccessFinishResult);
