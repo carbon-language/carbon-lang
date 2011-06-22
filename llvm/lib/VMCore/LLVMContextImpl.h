@@ -25,6 +25,7 @@
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -138,27 +139,30 @@ public:
   // on Context destruction.
   SmallPtrSet<MDNode*, 1> NonUniquedMDNodes;
   
-  ConstantUniqueMap<char, Type, ConstantAggregateZero> AggZeroConstants;
+  ConstantUniqueMap<char, char, Type, ConstantAggregateZero> AggZeroConstants;
 
-  typedef ConstantUniqueMap<std::vector<Constant*>, ArrayType,
-    ConstantArray, true /*largekey*/> ArrayConstantsTy;
+  typedef ConstantUniqueMap<std::vector<Constant*>, ArrayRef<Constant*>,
+    ArrayType, ConstantArray, true /*largekey*/> ArrayConstantsTy;
   ArrayConstantsTy ArrayConstants;
   
-  typedef ConstantUniqueMap<std::vector<Constant*>, StructType,
-    ConstantStruct, true /*largekey*/> StructConstantsTy;
+  typedef ConstantUniqueMap<std::vector<Constant*>, ArrayRef<Constant*>,
+    StructType, ConstantStruct, true /*largekey*/> StructConstantsTy;
   StructConstantsTy StructConstants;
   
-  typedef ConstantUniqueMap<std::vector<Constant*>, VectorType,
-                            ConstantVector> VectorConstantsTy;
+  typedef ConstantUniqueMap<std::vector<Constant*>, ArrayRef<Constant*>,
+                            VectorType, ConstantVector> VectorConstantsTy;
   VectorConstantsTy VectorConstants;
   
-  ConstantUniqueMap<char, PointerType, ConstantPointerNull> NullPtrConstants;
-  ConstantUniqueMap<char, Type, UndefValue> UndefValueConstants;
+  ConstantUniqueMap<char, char, PointerType, ConstantPointerNull>
+    NullPtrConstants;
+  ConstantUniqueMap<char, char, Type, UndefValue> UndefValueConstants;
   
   DenseMap<std::pair<Function*, BasicBlock*> , BlockAddress*> BlockAddresses;
-  ConstantUniqueMap<ExprMapKeyType, Type, ConstantExpr> ExprConstants;
+  ConstantUniqueMap<ExprMapKeyType, const ExprMapKeyType&, Type, ConstantExpr>
+    ExprConstants;
 
-  ConstantUniqueMap<InlineAsmKeyType, PointerType, InlineAsm> InlineAsms;
+  ConstantUniqueMap<InlineAsmKeyType, const InlineAsmKeyType&, PointerType,
+                    InlineAsm> InlineAsms;
   
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;

@@ -568,7 +568,7 @@ struct ConstantKeyData<InlineAsm> {
   }
 };
 
-template<class ValType, class TypeClass, class ConstantClass,
+template<class ValType, class ValRefType, class TypeClass, class ConstantClass,
          bool HasLargeKey = false /*true for arrays and structs*/ >
 class ConstantUniqueMap : public AbstractTypeUser {
 public:
@@ -656,7 +656,7 @@ private:
     }
   }
 
-  ConstantClass* Create(const TypeClass *Ty, const ValType &V,
+  ConstantClass* Create(const TypeClass *Ty, ValRefType V,
                         typename MapTy::iterator I) {
     ConstantClass* Result =
       ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
@@ -675,7 +675,7 @@ public:
     
   /// getOrCreate - Return the specified constant from the map, creating it if
   /// necessary.
-  ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
+  ConstantClass *getOrCreate(const TypeClass *Ty, ValRefType V) {
     MapKey Lookup(Ty, V);
     ConstantClass* Result = 0;
     

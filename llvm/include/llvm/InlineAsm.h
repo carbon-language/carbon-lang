@@ -25,15 +25,16 @@ class PointerType;
 class FunctionType;
 class Module;
 struct InlineAsmKeyType;
-template<class ValType, class TypeClass, class ConstantClass, bool HasLargeKey>
+template<class ValType, class ValRefType, class TypeClass, class ConstantClass,
+         bool HasLargeKey>
 class ConstantUniqueMap;
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
 
 class InlineAsm : public Value {
   friend struct ConstantCreator<InlineAsm, PointerType, InlineAsmKeyType>;
-  friend class ConstantUniqueMap<InlineAsmKeyType, PointerType, InlineAsm,
-                                 false>;
+  friend class ConstantUniqueMap<InlineAsmKeyType, const InlineAsmKeyType&,
+                                 PointerType, InlineAsm, false>;
 
   InlineAsm(const InlineAsm &);             // do not implement
   void operator=(const InlineAsm&);         // do not implement

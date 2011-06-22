@@ -125,6 +125,13 @@ namespace llvm {
     }
     
     /// @}
+    /// @name Conversion operators
+    /// @{
+    operator std::vector<T>() const {
+      return std::vector<T>(Data, Data+Length);
+    }
+    
+    /// @}
   };
   
   // ArrayRefs can be treated like a POD type.
