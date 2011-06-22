@@ -365,6 +365,21 @@ void DarwinClang::AddLinkARCArgs(const ArgList &Args,
   CmdArgs.push_back(Args.MakeArgString(s));
 }
 
+void DarwinClang::AddLinkRuntimeLib(const ArgList &Args,
+                                    ArgStringList &CmdArgs, 
+                                    const char *DarwinStaticLib) const {
+  llvm::sys::Path P(getDriver().ResourceDir);
+  P.appendComponent("lib");
+  P.appendComponent("darwin");
+  P.appendComponent(DarwinStaticLib);
+  
+  // For now, allow missing resource libraries to support developers who may
+  // not have compiler-rt checked out or integrated into their build.
+  bool Exists;
+  if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
+    CmdArgs.push_back(Args.MakeArgString(P.str()));
+}
+
 void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
                                         ArgStringList &CmdArgs) const {
   // Darwin doesn't support real static executables, don't link any runtime
@@ -386,7 +401,6 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
   CmdArgs.push_back("-lSystem");
 
   // Select the dynamic runtime library and the target specific static library.
-  const char *DarwinStaticLib = 0;
   if (isTargetIPhoneOS()) {
     // If we are compiling as iOS / simulator, don't attempt to link libgcc_s.1,
     // it never went into the SDK.
@@ -394,7 +408,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
         CmdArgs.push_back("-lgcc_s.1");
 
     // We currently always need a static runtime library for iOS.
-    DarwinStaticLib = "libclang_rt.ios.a";
+    AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.ios.a");
   } else {
     // The dynamic runtime library was merged with libSystem for 10.6 and
     // beyond; only 10.4 and 10.5 need an additional runtime library.
@@ -412,25 +426,12 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     // libSystem. Therefore, we still must provide a runtime library just for
     // the tiny tiny handful of projects that *might* use that symbol.
     if (isMacosxVersionLT(10, 5)) {
-      DarwinStaticLib = "libclang_rt.10.4.a";
+      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.10.4.a");
     } else {
       if (getTriple().getArch() == llvm::Triple::x86)
-        DarwinStaticLib = "libclang_rt.eprintf.a";
+        AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.eprintf.a");
+      AddLinkRuntimeLib(Args, CmdArgs, "libclang_rt.osx.a");
     }
-  }
-
-  /// Add the target specific static library, if needed.
-  if (DarwinStaticLib) {
-    llvm::sys::Path P(getDriver().ResourceDir);
-    P.appendComponent("lib");
-    P.appendComponent("darwin");
-    P.appendComponent(DarwinStaticLib);
-
-    // For now, allow missing resource libraries to support developers who may
-    // not have compiler-rt checked out or integrated into their build.
-    bool Exists;
-    if (!llvm::sys::fs::exists(P.str(), Exists) && Exists)
-      CmdArgs.push_back(Args.MakeArgString(P.str()));
   }
 }
 

@@ -175,7 +175,7 @@ public:
   /// runtime library.
   virtual void AddLinkRuntimeLibArgs(const ArgList &Args,
                                      ArgStringList &CmdArgs) const = 0;
-
+  
   /// }
   /// @name ToolChain Implementation
   /// {
@@ -266,7 +266,9 @@ public:
 
   virtual void AddLinkRuntimeLibArgs(const ArgList &Args,
                                      ArgStringList &CmdArgs) const;
-
+  void AddLinkRuntimeLib(const ArgList &Args, ArgStringList &CmdArgs, 
+                         const char *DarwinStaticLib) const;
+  
   virtual void AddCXXStdlibLibArgs(const ArgList &Args,
                                    ArgStringList &CmdArgs) const;
 
