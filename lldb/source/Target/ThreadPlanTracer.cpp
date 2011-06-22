@@ -177,6 +177,7 @@ ThreadPlanAssemblyTracer::Log ()
     addr_valid = m_process.GetTarget().GetSectionLoadList().ResolveLoadAddress (pc, pc_addr);
     
     pc_addr.Dump(stream, &m_thread, Address::DumpStyleResolvedDescription, Address::DumpStyleModuleWithFileAddress);
+    stream->PutCString (" ");
     
     if (m_disassembler)
     {        
