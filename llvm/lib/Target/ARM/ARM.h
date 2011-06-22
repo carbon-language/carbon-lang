@@ -16,6 +16,7 @@
 #define TARGET_ARM_H
 
 #include "ARMBaseInfo.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cassert>
