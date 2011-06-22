@@ -1400,6 +1400,8 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, SCEVExpander &Rewriter) {
     // Patch the new value into place.
     if (Op->hasName())
       NewVal->takeName(Op);
+    if (Instruction *NewValI = dyn_cast<Instruction>(NewVal))
+      NewValI->setDebugLoc(User->getDebugLoc());
     User->replaceUsesOfWith(Op, NewVal);
     UI->setOperandValToReplace(NewVal);
 
