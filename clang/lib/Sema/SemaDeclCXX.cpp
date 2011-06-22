@@ -6771,7 +6771,13 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
     PushOnScopeChains(CopyAssignment, S, false);
   ClassDecl->addDecl(CopyAssignment);
   
-  if (ShouldDeleteCopyAssignmentOperator(CopyAssignment))
+  // C++0x [class.copy]p18:
+  //   ... If the class definition declares a move constructor or move
+  //   assignment operator, the implicitly declared copy assignment operator is
+  //   defined as deleted; ...
+  if (ClassDecl->hasUserDeclaredMoveConstructor() ||
+      ClassDecl->hasUserDeclaredMoveAssignment() ||
+      ShouldDeleteCopyAssignmentOperator(CopyAssignment))
     CopyAssignment->setDeletedAsWritten();
   
   AddOverriddenMethods(ClassDecl, CopyAssignment);
@@ -7233,7 +7239,13 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
     PushOnScopeChains(CopyConstructor, S, false);
   ClassDecl->addDecl(CopyConstructor);
 
-  if (ShouldDeleteCopyConstructor(CopyConstructor))
+  // C++0x [class.copy]p7:
+  //   ... If the class definition declares a move constructor or move
+  //   assignment operator, the implicitly declared constructor is defined as
+  //   deleted; ...
+  if (ClassDecl->hasUserDeclaredMoveConstructor() ||
+      ClassDecl->hasUserDeclaredMoveAssignment() ||
+      ShouldDeleteCopyConstructor(CopyConstructor))
     CopyConstructor->setDeletedAsWritten();
   
   return CopyConstructor;
