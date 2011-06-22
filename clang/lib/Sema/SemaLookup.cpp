@@ -2273,7 +2273,8 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
             ArgType->getPointeeType().isConstQualified())
           Result->setConstParamMatch(true);
       }
-    } else if (FunctionTemplateDecl *Tmpl = cast<FunctionTemplateDecl>(*I)) {
+    } else if (FunctionTemplateDecl *Tmpl =
+                 dyn_cast<FunctionTemplateDecl>(*I)) {
       AddTemplateOverloadCandidate(Tmpl, DeclAccessPair::make(Tmpl, AS_public),
                                    0, &Arg, NumArgs, OCS, true);
     }
