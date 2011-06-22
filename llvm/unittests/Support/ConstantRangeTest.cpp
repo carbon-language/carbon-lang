@@ -299,6 +299,8 @@ TEST_F(ConstantRangeTest, Sub) {
   EXPECT_EQ(Empty.sub(APInt(16, 4)), Empty);
   EXPECT_EQ(Some.sub(APInt(16, 4)),
             ConstantRange(APInt(16, 0x6), APInt(16, 0xaa6)));
+  EXPECT_EQ(Some.sub(Some),
+            ConstantRange(APInt(16, 0xf561), APInt(16, 0xaa0)));
   EXPECT_EQ(Wrap.sub(APInt(16, 4)),
             ConstantRange(APInt(16, 0xaa6), APInt(16, 0x6)));
   EXPECT_EQ(One.sub(APInt(16, 4)),

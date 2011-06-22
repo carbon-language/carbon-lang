@@ -529,8 +529,8 @@ ConstantRange::sub(const ConstantRange &Other) const {
     return ConstantRange(getBitWidth(), /*isFullSet=*/true);
 
   APInt Spread_X = getSetSize(), Spread_Y = Other.getSetSize();
-  APInt NewLower = getLower() - Other.getLower();
-  APInt NewUpper = getUpper() - Other.getUpper() + 1;
+  APInt NewLower = getLower() - Other.getUpper() + 1;
+  APInt NewUpper = getUpper() - Other.getLower();
   if (NewLower == NewUpper)
     return ConstantRange(getBitWidth(), /*isFullSet=*/true);
 
