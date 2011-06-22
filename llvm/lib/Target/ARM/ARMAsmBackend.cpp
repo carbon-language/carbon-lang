@@ -28,14 +28,6 @@
 using namespace llvm;
 
 namespace {
-class ARMMachObjectWriter : public MCMachObjectTargetWriter {
-public:
-  ARMMachObjectWriter(bool Is64Bit, uint32_t CPUType,
-                      uint32_t CPUSubtype)
-    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype,
-                               /*UseAggressiveSymbolFolding=*/true) {}
-};
-
 class ARMELFObjectWriter : public MCELFObjectTargetWriter {
 public:
   ARMELFObjectWriter(Triple::OSType OSType)
@@ -423,12 +415,9 @@ public:
     : ARMAsmBackend(T), Subtype(st) { }
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createMachObjectWriter(new ARMMachObjectWriter(
-                                    /*Is64Bit=*/false,
-                                    object::mach::CTM_ARM,
-                                    Subtype),
-                                  OS,
-                                  /*IsLittleEndian=*/true);
+    return createARMMachObjectWriter(OS, /*Is64Bit=*/false,
+                                     object::mach::CTM_ARM,
+                                     Subtype);
   }
 
   void ApplyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
