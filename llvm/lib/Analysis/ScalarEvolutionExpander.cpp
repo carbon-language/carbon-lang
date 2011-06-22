@@ -159,7 +159,8 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
   }
 
   // If we haven't found this binop, insert it.
-  Value *BO = Builder.CreateBinOp(Opcode, LHS, RHS, "tmp");
+  Instruction *BO = cast<Instruction>(Builder.CreateBinOp(Opcode, LHS, RHS, "tmp"));
+  BO->setDebugLoc(SaveInsertPt->getDebugLoc());
   rememberInstruction(BO);
 
   // Restore the original insert point.
@@ -1155,6 +1156,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
         Instruction *Add = BinaryOperator::CreateAdd(CanonicalIV, One,
                                                      "indvar.next",
                                                      HP->getTerminator());
+        Add->setDebugLoc(HP->getTerminator()->getDebugLoc());
         rememberInstruction(Add);
         CanonicalIV->addIncoming(Add, HP);
       } else {
