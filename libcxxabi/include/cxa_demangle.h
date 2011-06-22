@@ -127,6 +127,7 @@ private:
     const char* __parse_pack_expansion(const char*, const char*);
     const char* __parse_sizeof_function_param_pack_expr(const char*, const char*);
     const char* __parse_dot_suffix(const char*, const char*);
+    const char* __parse_unresolved_qualifier_level(const char*, const char*);
     const char* __parse_hex_number(const char*, const char*, unsigned long long&);
 
     template <class _Tp> bool __make();

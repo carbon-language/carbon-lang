@@ -11308,68 +11308,107 @@ __demangle_tree::__parse_unresolved_type(const char* first, const char* last)
     return first;
 }
 
+// <unresolved-qualifier-level> ::= <source-name> [ <template-args> ]
+
+const char*
+__demangle_tree::__parse_unresolved_qualifier_level(const char* first, const char* last)
+{
+    if (first != last)
+    {
+            const char* t = __parse_source_name(first, last);
+            if (t != first)
+                first = __parse_template_args(t, last);
+    }
+    return first;
+}
+
 // <unresolved-name>
-//                   ::= sr <name> <base-unresolved-name>                # extension, subtly different than srN ...
-//                   ::= sr <unresolved-type> <base-unresolved-name>     # T::x / decltype(p)::x
-//                                                                       # T::N::x /decltype(p)::N::x
+//  extension        ::= srN <unresolved-type> [<template-args>] <unresolved-qualifier-level>* E <base-unresolved-name>
 //                   ::= [gs] <base-unresolved-name>                     # x or (with "gs") ::x
 //                   ::= [gs] sr <unresolved-qualifier-level>+ E <base-unresolved-name>  
 //                                                                       # A::x, N::y, A<T>::z; "gs" means leading "::"
-//  (ignored)        ::= srN <unresolved-type> <unresolved-qualifier-level>+ E <base-unresolved-name>
+//                   ::= sr <unresolved-type> <base-unresolved-name>     # T::x / decltype(p)::x
+//                                                                       # T::N::x /decltype(p)::N::x
+//  (ignored)        ::= srN <unresolved-type>  <unresolved-qualifier-level>+ E <base-unresolved-name>
 
 const char*
 __demangle_tree::__parse_unresolved_name(const char* first, const char* last)
 {
     if (last - first > 2)
     {
-        if (first[0] == 's' && first[1] == 'r')
+        const char* t = first;
+        bool global = false;
+        if (t[0] == 'g' && t[1] == 's')
         {
-            const char* t = __parse_name(first+2, last);
-            if (t == first+2)
-                t = __parse_unresolved_type(first+2, last);
-            if (t != first+2)
-            {
-                __node* name = __root_;
-                const char* t2 = __parse_base_unresolved_name(t, last);
-                if (t2 != t && __make<__unresolved_name>(name, __root_))
-                    first = t2;
-            }
+            global = true;
+            t += 2;
         }
-        else
+        const char* t2 = __parse_base_unresolved_name(t, last);
+        if (t2 != t)
         {
-            const char* t = first;
-            bool global = false;
-            if (t[0] == 'g' && t[1] == 's')
+            if (__make<__unresolved_name>(global, (__node*)0, __root_))
+                first = t2;
+        }
+        else if (last - t > 2 && t[0] == 's' && t[1] == 'r')
+        {
+            if (!global && t[2] == 'N')
             {
-                global = true;
-                t += 2;
-            }
-            if (last - t > 2)
-            {
-                const char* t2;
-                __node* name = NULL;
-                if (t[0] == 's' && t[1] == 'r')
+                t2 = __parse_unresolved_type(t+3, last);
+                if (t2 != t+3 && t2 != last)
                 {
-                    t += 2;
-                    t2 = __parse_simple_id(t, last);
-                    if (t2 == t || t2 == last)
+                    t = __parse_template_args(t2, last);
+                    if (t == last)
                         return first;
-                    name = __root_;
-                    while (*t2 != 'E')
+                    __node* name = __root_;
+                    while (*t != 'E')
                     {
-                        t = t2;
-                        t2 = __parse_simple_id(t, last);
-                        if (t2 == t)
+                        t2 = __parse_unresolved_qualifier_level(t, last);
+                        if (t2 == t || t2 == last)
                             return first;
                         if (!__make<__nested_delimeter>(name, __root_))
                             return first;
                         name = __root_;
+                        t = t2;
                     }
-                    t = t2+1;
+                    t2 = __parse_base_unresolved_name(++t, last);
+                    if (t2 != t && __make<__unresolved_name>(false, name, __root_))
+                        first = t2;
                 }
-                t2 = __parse_base_unresolved_name(t, last);
-                if (t2 != t && __make<__unresolved_name>(global, name, __root_))
-                    first = t2;
+            }
+            else
+            {
+                if (!global)
+                {
+                    t2 = __parse_unresolved_type(t+2, last);
+                    if (t2 != t+2)
+                    {
+                        t = t2;
+                        __node* name = __root_;
+                        t2 = __parse_base_unresolved_name(t, last);
+                        if (t2 != t && __make<__unresolved_name>(false, name, __root_))
+                            return t2;
+                        return first;
+                    }
+                }
+                t2 = __parse_unresolved_qualifier_level(t+2, last);
+                if (t2 != t+2 && t2 != last)
+                {
+                    __node* name = __root_;
+                    t = t2;
+                    while (*t != 'E')
+                    {
+                        t2 = __parse_unresolved_qualifier_level(t, last);
+                        if (t2 == t || t2 == last)
+                            return first;
+                        if (!__make<__nested_delimeter>(name, __root_))
+                            return first;
+                        name = __root_;
+                        t = t2;
+                    }
+                    t2 = __parse_base_unresolved_name(++t, last);
+                    if (t2 != t && __make<__unresolved_name>(global, name, __root_))
+                        first = t2;
+                }
             }
         }
     }
@@ -14696,7 +14735,7 @@ __demangle_tree::__parse_encoding(const char* first, const char* last)
     const char* t = __parse_name(first, last);
     if (t != first)
     {
-        if (t != last && *t != 'E')
+        if (t != last && *t != 'E' && *t != '.')
         {
             __node* name = __root_;
             bool has_return = name->ends_with_template() &&
