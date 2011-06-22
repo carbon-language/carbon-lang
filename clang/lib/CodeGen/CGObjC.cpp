@@ -1985,6 +1985,21 @@ namespace {
     CallReleaseForObject(QualType type, llvm::Value *addr, bool precise)
       : ObjCReleasingCleanup(type, addr), precise(precise) {}
 
+    using ObjCReleasingCleanup::Emit;
+    static void Emit(CodeGenFunction &CGF, bool IsForEH,
+                     QualType type, llvm::Value *addr, bool precise) {
+      // EHScopeStack::Cleanup objects can never have their destructors called,
+      // so use placement new to construct our temporary object.
+      union {
+        void* align;
+        char data[sizeof(CallReleaseForObject)];
+      };
+      
+      CallReleaseForObject *Object
+        = new (&align) CallReleaseForObject(type, addr, precise);
+      Object->Emit(CGF, IsForEH);
+    }
+
     void release(CodeGenFunction &CGF, QualType type, llvm::Value *addr) {
       llvm::Value *ptr = CGF.Builder.CreateLoad(addr, "tmp");
       CGF.EmitARCRelease(ptr, precise);
@@ -2033,6 +2048,21 @@ namespace {
     CallWeakReleaseForObject(QualType type, llvm::Value *addr)
       : ObjCReleasingCleanup(type, addr) {}
 
+    using ObjCReleasingCleanup::Emit;
+    static void Emit(CodeGenFunction &CGF, bool IsForEH,
+                     QualType type, llvm::Value *addr) {
+      // EHScopeStack::Cleanup objects can never have their destructors called,
+      // so use placement new to construct our temporary object.
+      union {
+        void* align;
+        char data[sizeof(CallWeakReleaseForObject)];
+      };
+      
+      CallWeakReleaseForObject *Object
+        = new (&align) CallWeakReleaseForObject(type, addr);
+      Object->Emit(CGF, IsForEH);
+    }
+    
     void release(CodeGenFunction &CGF, QualType type, llvm::Value *addr) {
       CGF.EmitARCDestroyWeak(addr);
     }
@@ -2099,16 +2129,24 @@ void CodeGenFunction::EmitObjCAutoreleasePoolCleanup(llvm::Value *Ptr) {
 void CodeGenFunction::PushARCReleaseCleanup(CleanupKind cleanupKind,
                                             QualType type,
                                             llvm::Value *addr,
-                                            bool precise) {
-  EHStack.pushCleanup<CallReleaseForObject>(cleanupKind, type, addr, precise);
+                                            bool precise,
+                                            bool forFullExpr) {
+  if (forFullExpr)
+    pushFullExprCleanup<CallReleaseForObject>(cleanupKind, type, addr, precise);
+  else
+    EHStack.pushCleanup<CallReleaseForObject>(cleanupKind, type, addr, precise);
 }
 
 /// PushARCWeakReleaseCleanup - Enter a cleanup to perform a weak
 /// release on the given object or array of objects.
 void CodeGenFunction::PushARCWeakReleaseCleanup(CleanupKind cleanupKind,
                                                 QualType type,
-                                                llvm::Value *addr) {
-  EHStack.pushCleanup<CallWeakReleaseForObject>(cleanupKind, type, addr);
+                                                llvm::Value *addr,
+                                                bool forFullExpr) {
+  if (forFullExpr)
+    pushFullExprCleanup<CallWeakReleaseForObject>(cleanupKind, type, addr);
+  else
+    EHStack.pushCleanup<CallWeakReleaseForObject>(cleanupKind, type, addr);
 }
 
 /// PushARCReleaseCleanup - Enter a cleanup to perform a release on a
