@@ -204,15 +204,18 @@ void PTXAsmPrinter::EmitFunctionBodyStart() {
   }
 
   const MachineFrameInfo* FrameInfo = MF->getFrameInfo();
-  DEBUG(dbgs() << "Have " << FrameInfo->getNumObjects() << " frame object(s)\n");
+  DEBUG(dbgs() << "Have " << FrameInfo->getNumObjects()
+               << " frame object(s)\n");
   for (unsigned i = 0, e = FrameInfo->getNumObjects(); i != e; ++i) {
     DEBUG(dbgs() << "Size of object: " << FrameInfo->getObjectSize(i) << "\n");
-    std::string def = "\t.reg .b";
-    def += utostr(FrameInfo->getObjectSize(i)*8); // Convert to bits
-    def += " s";
-    def += utostr(i);
-    def += ";";
-    OutStreamer.EmitRawText(Twine(def));
+    if (FrameInfo->getObjectSize(i) > 0) {
+      std::string def = "\t.reg .b";
+      def += utostr(FrameInfo->getObjectSize(i)*8); // Convert to bits
+      def += " s";
+      def += utostr(i);
+      def += ";";
+      OutStreamer.EmitRawText(Twine(def));
+    }
   }
 }
 

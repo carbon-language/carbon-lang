@@ -291,7 +291,7 @@ InsertBranch(MachineBasicBlock &MBB,
 // Memory operand folding for spills
 void PTXInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MII,
-                                       unsigned SrcReg, bool isKill, int FrameIdx,
+                                     unsigned SrcReg, bool isKill, int FrameIdx,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI) const {
   MachineInstr& MI = *MII;
@@ -318,7 +318,7 @@ void PTXInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
   // Build the store instruction (really a mov)
   MachineInstrBuilder MIB = BuildMI(MBB, MII, DL, get(OpCode));
-  MIB.addImm(FrameIdx);
+  MIB.addFrameIndex(FrameIdx);
   MIB.addReg(SrcReg);
 
   AddDefaultPredicate(MIB);
@@ -354,7 +354,7 @@ void PTXInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   // Build the load instruction (really a mov)
   MachineInstrBuilder MIB = BuildMI(MBB, MII, DL, get(OpCode));
   MIB.addReg(DestReg);
-  MIB.addImm(FrameIdx);
+  MIB.addFrameIndex(FrameIdx);
 
   AddDefaultPredicate(MIB);
 }

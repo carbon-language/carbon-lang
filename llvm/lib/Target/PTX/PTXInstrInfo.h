@@ -93,7 +93,7 @@ public:
   //       efficient code anyway.
   // virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
   //                                             MachineInstr* MI,
-  //                                          const SmallVectorImpl<unsigned> &Ops,
+  //                                       const SmallVectorImpl<unsigned> &Ops,
   //                                             int FrameIndex) const;
 
   virtual void storeRegToStackSlot(MachineBasicBlock& MBB,
