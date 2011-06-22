@@ -666,10 +666,8 @@ Constant *ConstantStruct::get(const StructType *ST, ArrayRef<Constant*> V) {
   
   // Create a ConstantAggregateZero value if all elements are zeros.
   for (unsigned i = 0, e = V.size(); i != e; ++i)
-    if (!V[i]->isNullValue()) {
-      // FIXME: Eliminate temporary std::vector here!
-      return ST->getContext().pImpl->StructConstants.getOrCreate(ST, V.vec());
-    }
+    if (!V[i]->isNullValue())
+      return ST->getContext().pImpl->StructConstants.getOrCreate(ST, V);
 
   return ConstantAggregateZero::get(ST);
 }
