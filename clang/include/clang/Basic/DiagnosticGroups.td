@@ -171,7 +171,14 @@ def CustomAtomic : DiagGroup<"custom-atomic-properties">;
 def AtomicProperties : DiagGroup<"atomic-properties",
                                  [ImplicitAtomic, CustomAtomic]>;
 def AutomaticReferenceCountingABI : DiagGroup<"arc-abi">;
-def AutomaticReferenceCounting : DiagGroup<"arc", [AutomaticReferenceCountingABI]>;
+def ARCUnsafeRetainedAssign : DiagGroup<"arc-unsafe-retained-assign">;
+def ARCRetainCycles : DiagGroup<"arc-retain-cycles">;
+def ARCNonPodMemAccess : DiagGroup<"arc-non-pod-memaccess">;
+def AutomaticReferenceCounting : DiagGroup<"arc",
+                                           [AutomaticReferenceCountingABI,
+                                            ARCUnsafeRetainedAssign,
+                                            ARCRetainCycles,
+                                            ARCNonPodMemAccess]>;
 def Selector : DiagGroup<"selector">;
 def NonfragileAbi2 : DiagGroup<"nonfragile-abi2">;
 def Protocol : DiagGroup<"protocol">;
