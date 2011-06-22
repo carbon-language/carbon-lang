@@ -2062,7 +2062,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
                      " is not of type '" + getTypeString(Elts[0]->getType()));
     }
 
-    ID.ConstantVal = ConstantArray::get(ATy, Elts.data(), Elts.size());
+    ID.ConstantVal = ConstantArray::get(ATy, Elts);
     ID.Kind = ValID::t_Constant;
     return false;
   }

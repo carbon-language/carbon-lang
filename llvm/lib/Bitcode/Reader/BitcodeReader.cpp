@@ -292,7 +292,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
       // Make the new constant.
       Constant *NewC;
       if (ConstantArray *UserCA = dyn_cast<ConstantArray>(UserC)) {
-        NewC = ConstantArray::get(UserCA->getType(), &NewOps[0], NewOps.size());
+        NewC = ConstantArray::get(UserCA->getType(), NewOps);
       } else if (ConstantStruct *UserCS = dyn_cast<ConstantStruct>(UserC)) {
         NewC = ConstantStruct::get(UserCS->getType(), NewOps);
       } else if (isa<ConstantVector>(UserC)) {

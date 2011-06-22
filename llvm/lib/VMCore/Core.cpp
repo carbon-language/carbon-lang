@@ -625,9 +625,8 @@ LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
 }
 LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length) {
-  return wrap(ConstantArray::get(ArrayType::get(unwrap(ElementTy), Length),
-                                 unwrap<Constant>(ConstantVals, Length),
-                                 Length));
+  ArrayRef<Constant*> V(unwrap<Constant>(ConstantVals, Length), Length);
+  return wrap(ConstantArray::get(ArrayType::get(unwrap(ElementTy), Length), V));
 }
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              LLVMBool Packed) {

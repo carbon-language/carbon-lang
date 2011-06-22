@@ -7470,7 +7470,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
         const TargetData &TD = *TLI.getTargetData();
 
         // Create a ConstantArray of the two constants.
-        Constant *CA = ConstantArray::get(ArrayType::get(FPTy, 2), Elts, 2);
+        Constant *CA = ConstantArray::get(ArrayType::get(FPTy, 2), Elts);
         SDValue CPIdx = DAG.getConstantPool(CA, TLI.getPointerTy(),
                                             TD.getPrefTypeAlignment(FPTy));
         unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();

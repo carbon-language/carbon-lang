@@ -350,9 +350,7 @@ protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
 public:
   // ConstantArray accessors
-  static Constant *get(const ArrayType *T, const std::vector<Constant*> &V);
-  static Constant *get(const ArrayType *T, Constant *const *Vals, 
-                       unsigned NumVals);
+  static Constant *get(const ArrayType *T, ArrayRef<Constant*> V);
                              
   /// This method constructs a ConstantArray and initializes it with a text
   /// string. The default behavior (AddNull==true) causes a null terminator to

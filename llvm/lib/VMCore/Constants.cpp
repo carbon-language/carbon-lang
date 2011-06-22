@@ -571,8 +571,7 @@ ConstantArray::ConstantArray(const ArrayType *T,
   }
 }
 
-Constant *ConstantArray::get(const ArrayType *Ty, 
-                             const std::vector<Constant*> &V) {
+Constant *ConstantArray::get(const ArrayType *Ty, ArrayRef<Constant*> V) {
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert(V[i]->getType() == Ty->getElementType() &&
            "Wrong type in array element initializer");
@@ -590,13 +589,6 @@ Constant *ConstantArray::get(const ArrayType *Ty,
   }
   
   return ConstantAggregateZero::get(Ty);
-}
-
-
-Constant *ConstantArray::get(const ArrayType* T, Constant *const* Vals,
-                             unsigned NumVals) {
-  // FIXME: make this the primary ctor method.
-  return get(T, std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
 /// ConstantArray::get(const string&) - Return an array that is initialized to

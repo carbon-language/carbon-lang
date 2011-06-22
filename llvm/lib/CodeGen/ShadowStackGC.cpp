@@ -201,6 +201,7 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
       NumMeta = I + 1;
     Metadata.push_back(ConstantExpr::getBitCast(C, VoidPtr));
   }
+  Metadata.resize(NumMeta);
 
   const Type *Int32Ty = Type::getInt32Ty(F.getContext());
   
@@ -211,8 +212,7 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
 
   Constant *DescriptorElts[] = {
     ConstantStruct::get(StructType::get(Int32Ty, Int32Ty, NULL), BaseElts),
-    ConstantArray::get(ArrayType::get(VoidPtr, NumMeta),
-                       Metadata.begin(), NumMeta)
+    ConstantArray::get(ArrayType::get(VoidPtr, NumMeta), Metadata)
   };
 
   Constant *FrameMap =

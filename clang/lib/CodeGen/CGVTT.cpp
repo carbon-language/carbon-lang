@@ -390,8 +390,7 @@ CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
     llvm::ArrayType::get(Int8PtrTy, Builder.getVTTComponents().size());
   
   llvm::Constant *Init = 
-    llvm::ConstantArray::get(ArrayType, Builder.getVTTComponents().data(),
-                             Builder.getVTTComponents().size());
+    llvm::ConstantArray::get(ArrayType, Builder.getVTTComponents());
 
   VTT->setInitializer(Init);
 

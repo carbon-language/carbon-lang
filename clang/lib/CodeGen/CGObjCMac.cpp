@@ -3402,7 +3402,7 @@ void CGObjCCommonMac::EmitImageInfo() {
     Section = "__DATA, __objc_imageinfo, regular, no_dead_strip";
   llvm::GlobalVariable *GV =
     CreateMetadataVar("\01L_OBJC_IMAGE_INFO",
-                      llvm::ConstantArray::get(AT, values, 2),
+                      llvm::ConstantArray::get(AT, values),
                       Section,
                       0,
                       true);
