@@ -4080,7 +4080,9 @@ InitializationSequence::Perform(Sema &S,
         return ExprError();
 
       // Materialize the temporary into memory.
-      CurInit = new (S.Context) MaterializeTemporaryExpr(CurInit.get(),
+      CurInit = new (S.Context) MaterializeTemporaryExpr(
+                                         Entity.getType().getNonReferenceType(),
+                                                         CurInit.get(),
                                      Entity.getType()->isLValueReferenceType());
       break;
 

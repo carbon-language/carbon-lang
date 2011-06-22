@@ -3013,8 +3013,9 @@ class MaterializeTemporaryExpr : public Expr {
   friend class ASTStmtWriter;
   
 public:
-  MaterializeTemporaryExpr(Expr *Temporary, bool BoundToLvalueReference)
-    : Expr(MaterializeTemporaryExprClass, Temporary->getType(),
+  MaterializeTemporaryExpr(QualType T, Expr *Temporary, 
+                           bool BoundToLvalueReference)
+    : Expr(MaterializeTemporaryExprClass, T,
            BoundToLvalueReference? VK_LValue : VK_XValue, OK_Ordinary,
            Temporary->isTypeDependent(), Temporary->isValueDependent(),
            Temporary->containsUnexpandedParameterPack()),
