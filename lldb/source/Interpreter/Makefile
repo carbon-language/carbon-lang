@@ -32,8 +32,7 @@ DEST_LIBLLDB := $(DESTDIR)$(PROJ_libdir)/liblldb$(SHLIBEXT)
 LLDB_SWIG_INCLUDE_DIRS += -I"/usr/local/include"
 LLDB_SWIG_INCLUDE_DIRS += -I"/usr/include"
 
-SWIG_DEPEND_OPTIONS = -MMD -MF "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp" \
-                      -MT "$*.cpp" -MT "$(PROJ_OBJ_DIR)/$*.cpp.d"
+SWIG_DEPEND_OPTIONS = -MMD -MF "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp"
 CPP_DEPEND_MOVEFILE = then $(MV) -f "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp" "$(PROJ_OBJ_DIR)/$*.cpp.d"; \
                       else $(RM) "$(PROJ_OBJ_DIR)/$*.cpp.d.tmp"; exit 1; fi
 
