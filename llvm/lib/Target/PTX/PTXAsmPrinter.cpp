@@ -163,6 +163,13 @@ void PTXAsmPrinter::EmitStartOfAsmFile(Module &M)
   OutStreamer.EmitRawText(Twine("\t.target " + ST.getTargetString() +
                                 (ST.supportsDouble() ? ""
                                                      : ", map_f64_to_f32")));
+  // .address_size directive is optional, but it must immediately follow
+  // the .target directive if present within a module
+  if (ST.supportsPTX23()) {
+    std::string addrSize = ST.is64Bit() ? "64" : "32";
+    OutStreamer.EmitRawText(Twine("\t.address_size " + addrSize));
+  }
+
   OutStreamer.AddBlankLine();
 
   // declare global variables

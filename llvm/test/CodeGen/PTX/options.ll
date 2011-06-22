@@ -5,6 +5,8 @@
 ; RUN: llc < %s -march=ptx32 -mattr=sm10 | grep ".target sm_10"
 ; RUN: llc < %s -march=ptx32 -mattr=sm13 | grep ".target sm_13"
 ; RUN: llc < %s -march=ptx32 -mattr=sm20 | grep ".target sm_20"
+; RUN: llc < %s -march=ptx32 -mattr=ptx23 | grep ".address_size 32"
+; RUN: llc < %s -march=ptx64 -mattr=ptx23 | grep ".address_size 64"
 
 define ptx_device void @t1() {
 	ret void
