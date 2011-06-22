@@ -54,6 +54,42 @@ define ptx_device i32 @test_setp_ge_u32_rr(i32 %x, i32 %y) {
 	ret i32 %z
 }
 
+define ptx_device i32 @test_setp_lt_s32_rr(i32 %x, i32 %y) {
+; CHECK: setp.lt.s32 p0, r1, r2;
+; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
+; CHECK-NEXT: ret;
+	%p = icmp slt i32 %x, %y
+	%z = zext i1 %p to i32
+	ret i32 %z
+}
+
+define ptx_device i32 @test_setp_le_s32_rr(i32 %x, i32 %y) {
+; CHECK: setp.le.s32 p0, r1, r2;
+; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
+; CHECK-NEXT: ret;
+	%p = icmp sle i32 %x, %y
+	%z = zext i1 %p to i32
+	ret i32 %z
+}
+
+define ptx_device i32 @test_setp_gt_s32_rr(i32 %x, i32 %y) {
+; CHECK: setp.gt.s32 p0, r1, r2;
+; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
+; CHECK-NEXT: ret;
+	%p = icmp sgt i32 %x, %y
+	%z = zext i1 %p to i32
+	ret i32 %z
+}
+
+define ptx_device i32 @test_setp_ge_s32_rr(i32 %x, i32 %y) {
+; CHECK: setp.ge.s32 p0, r1, r2;
+; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
+; CHECK-NEXT: ret;
+	%p = icmp sge i32 %x, %y
+	%z = zext i1 %p to i32
+	ret i32 %z
+}
+
 define ptx_device i32 @test_setp_eq_u32_ri(i32 %x) {
 ; CHECK: setp.eq.u32 p0, r1, 1;
 ; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
@@ -104,6 +140,42 @@ define ptx_device i32 @test_setp_ge_u32_ri(i32 %x) {
 ; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
 ; CHECK-NEXT: ret;
 	%p = icmp uge i32 %x, 1
+	%z = zext i1 %p to i32
+	ret i32 %z
+}
+
+define ptx_device i32 @test_setp_lt_s32_ri(i32 %x) {
+; CHECK: setp.lt.s32 p0, r1, 1;
+; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
+; CHECK-NEXT: ret;
+	%p = icmp slt i32 %x, 1
+	%z = zext i1 %p to i32
+	ret i32 %z
+}
+
+define ptx_device i32 @test_setp_le_s32_ri(i32 %x) {
+; CHECK: setp.lt.s32 p0, r1, 2;
+; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
+; CHECK-NEXT: ret;
+	%p = icmp sle i32 %x, 1
+	%z = zext i1 %p to i32
+	ret i32 %z
+}
+
+define ptx_device i32 @test_setp_gt_s32_ri(i32 %x) {
+; CHECK: setp.gt.s32 p0, r1, 1;
+; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
+; CHECK-NEXT: ret;
+	%p = icmp sgt i32 %x, 1
+	%z = zext i1 %p to i32
+	ret i32 %z
+}
+
+define ptx_device i32 @test_setp_ge_s32_ri(i32 %x) {
+; CHECK: setp.gt.s32 p0, r1, 0;
+; CHECK-NEXT: selp.u32 r0, 1, 0, p0;
+; CHECK-NEXT: ret;
+	%p = icmp sge i32 %x, 1
 	%z = zext i1 %p to i32
 	ret i32 %z
 }

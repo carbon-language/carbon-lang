@@ -696,6 +696,10 @@ defm SETPLTu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETULT, "lt">;
 defm SETPLEu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETULE, "le">;
 defm SETPGTu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETUGT, "gt">;
 defm SETPGEu16 : PTX_SETP_I<RegI16, "u16", i16imm, SETUGE, "ge">;
+defm SETPLTs16 : PTX_SETP_I<RegI16, "s16", i16imm, SETLT,  "lt">;
+defm SETPLEs16 : PTX_SETP_I<RegI16, "s16", i16imm, SETLE,  "le">;
+defm SETPGTs16 : PTX_SETP_I<RegI16, "s16", i16imm, SETGT,  "gt">;
+defm SETPGEs16 : PTX_SETP_I<RegI16, "s16", i16imm, SETGE,  "ge">;
 
 // Compare u32
 
@@ -705,6 +709,10 @@ defm SETPLTu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETULT, "lt">;
 defm SETPLEu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETULE, "le">;
 defm SETPGTu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETUGT, "gt">;
 defm SETPGEu32 : PTX_SETP_I<RegI32, "u32", i32imm, SETUGE, "ge">;
+defm SETPLTs32 : PTX_SETP_I<RegI32, "s32", i32imm, SETLT,  "lt">;
+defm SETPLEs32 : PTX_SETP_I<RegI32, "s32", i32imm, SETLE,  "le">;
+defm SETPGTs32 : PTX_SETP_I<RegI32, "s32", i32imm, SETGT,  "gt">;
+defm SETPGEs32 : PTX_SETP_I<RegI32, "s32", i32imm, SETGE,  "ge">;
 
 // Compare u64
 
@@ -714,6 +722,10 @@ defm SETPLTu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETULT, "lt">;
 defm SETPLEu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETULE, "le">;
 defm SETPGTu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETUGT, "gt">;
 defm SETPGEu64 : PTX_SETP_I<RegI64, "u64", i64imm, SETUGE, "ge">;
+defm SETPLTs64 : PTX_SETP_I<RegI64, "s64", i64imm, SETLT,  "lt">;
+defm SETPLEs64 : PTX_SETP_I<RegI64, "s64", i64imm, SETLE,  "le">;
+defm SETPGTs64 : PTX_SETP_I<RegI64, "s64", i64imm, SETGT,  "gt">;
+defm SETPGEs64 : PTX_SETP_I<RegI64, "s64", i64imm, SETGE,  "ge">;
 
 // Compare f32
 
