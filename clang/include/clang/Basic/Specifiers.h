@@ -83,7 +83,7 @@ namespace clang {
   /// ExprValueKind - The categorization of expression values,
   /// currently following the C++0x scheme.
   enum ExprValueKind {
-    /// An r-value expression (a gr-value in the C++0x taxonomy)
+    /// An r-value expression (a pr-value in the C++0x taxonomy)
     /// produces a temporary value.
     VK_RValue,
 
