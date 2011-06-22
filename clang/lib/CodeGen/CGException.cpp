@@ -1298,14 +1298,16 @@ namespace {
 /// Enters a finally block for an implementation using zero-cost
 /// exceptions.  This is mostly general, but hard-codes some
 /// language/ABI-specific behavior in the catch-all sections.
-CodeGenFunction::FinallyInfo
-CodeGenFunction::EnterFinallyBlock(const Stmt *Body,
-                                   llvm::Constant *BeginCatchFn,
-                                   llvm::Constant *EndCatchFn,
-                                   llvm::Constant *RethrowFn) {
-  assert((BeginCatchFn != 0) == (EndCatchFn != 0) &&
+void CodeGenFunction::FinallyInfo::enter(CodeGenFunction &CGF,
+                                         const Stmt *body,
+                                         llvm::Constant *beginCatchFn,
+                                         llvm::Constant *endCatchFn,
+                                         llvm::Constant *rethrowFn) {
+  assert((beginCatchFn != 0) == (endCatchFn != 0) &&
          "begin/end catch functions not paired");
-  assert(RethrowFn && "rethrow function is required");
+  assert(rethrowFn && "rethrow function is required");
+
+  BeginCatchFn = beginCatchFn;
 
   // The rethrow function has one of the following two types:
   //   void (*)()
@@ -1313,13 +1315,12 @@ CodeGenFunction::EnterFinallyBlock(const Stmt *Body,
   // In the latter case we need to pass it the exception object.
   // But we can't use the exception slot because the @finally might
   // have a landing pad (which would overwrite the exception slot).
-  const llvm::FunctionType *RethrowFnTy =
+  const llvm::FunctionType *rethrowFnTy =
     cast<llvm::FunctionType>(
-      cast<llvm::PointerType>(RethrowFn->getType())
-      ->getElementType());
-  llvm::Value *SavedExnVar = 0;
-  if (RethrowFnTy->getNumParams())
-    SavedExnVar = CreateTempAlloca(Builder.getInt8PtrTy(), "finally.exn");
+      cast<llvm::PointerType>(rethrowFn->getType())->getElementType());
+  SavedExnVar = 0;
+  if (rethrowFnTy->getNumParams())
+    SavedExnVar = CGF.CreateTempAlloca(CGF.Int8PtrTy, "finally.exn");
 
   // A finally block is a statement which must be executed on any edge
   // out of a given scope.  Unlike a cleanup, the finally block may
@@ -1333,67 +1334,64 @@ CodeGenFunction::EnterFinallyBlock(const Stmt *Body,
   // The finally block itself is generated in the context of a cleanup
   // which conditionally leaves the catch-all.
 
-  FinallyInfo Info;
-
   // Jump destination for performing the finally block on an exception
   // edge.  We'll never actually reach this block, so unreachable is
   // fine.
-  JumpDest RethrowDest = getJumpDestInCurrentScope(getUnreachableBlock());
+  RethrowDest = CGF.getJumpDestInCurrentScope(CGF.getUnreachableBlock());
 
   // Whether the finally block is being executed for EH purposes.
-  llvm::AllocaInst *ForEHVar = CreateTempAlloca(Builder.getInt1Ty(),
-                                                "finally.for-eh");
-  InitTempAlloca(ForEHVar, llvm::ConstantInt::getFalse(getLLVMContext()));
+  ForEHVar = CGF.CreateTempAlloca(CGF.Builder.getInt1Ty(), "finally.for-eh");
+  CGF.Builder.CreateStore(CGF.Builder.getFalse(), ForEHVar);
 
   // Enter a normal cleanup which will perform the @finally block.
-  EHStack.pushCleanup<PerformFinally>(NormalCleanup, Body,
-                                      ForEHVar, EndCatchFn,
-                                      RethrowFn, SavedExnVar);
+  CGF.EHStack.pushCleanup<PerformFinally>(NormalCleanup, body,
+                                          ForEHVar, endCatchFn,
+                                          rethrowFn, SavedExnVar);
 
   // Enter a catch-all scope.
-  llvm::BasicBlock *CatchAllBB = createBasicBlock("finally.catchall");
-  CGBuilderTy::InsertPoint SavedIP = Builder.saveIP();
-  Builder.SetInsertPoint(CatchAllBB);
-
-  // If there's a begin-catch function, call it.
-  if (BeginCatchFn) {
-    Builder.CreateCall(BeginCatchFn, Builder.CreateLoad(getExceptionSlot()))
-      ->setDoesNotThrow();
-  }
-
-  // If we need to remember the exception pointer to rethrow later, do so.
-  if (SavedExnVar) {
-    llvm::Value *SavedExn = Builder.CreateLoad(getExceptionSlot());
-    Builder.CreateStore(SavedExn, SavedExnVar);
-  }
-
-  // Tell the finally block that we're in EH.
-  Builder.CreateStore(llvm::ConstantInt::getTrue(getLLVMContext()), ForEHVar);
-
-  // Thread a jump through the finally cleanup.
-  EmitBranchThroughCleanup(RethrowDest);
-
-  Builder.restoreIP(SavedIP);
-
-  EHCatchScope *CatchScope = EHStack.pushCatch(1);
-  CatchScope->setCatchAllHandler(0, CatchAllBB);
-
-  return Info;
+  llvm::BasicBlock *catchBB = CGF.createBasicBlock("finally.catchall");
+  EHCatchScope *catchScope = CGF.EHStack.pushCatch(1);
+  catchScope->setCatchAllHandler(0, catchBB);
 }
 
-void CodeGenFunction::ExitFinallyBlock(FinallyInfo &Info) {
+void CodeGenFunction::FinallyInfo::exit(CodeGenFunction &CGF) {
   // Leave the finally catch-all.
-  EHCatchScope &Catch = cast<EHCatchScope>(*EHStack.begin());
-  llvm::BasicBlock *CatchAllBB = Catch.getHandler(0).Block;
-  EHStack.popCatch();
+  EHCatchScope &catchScope = cast<EHCatchScope>(*CGF.EHStack.begin());
+  llvm::BasicBlock *catchBB = catchScope.getHandler(0).Block;
+  CGF.EHStack.popCatch();
 
-  // And leave the normal cleanup.
-  PopCleanupBlock();
+  // If there are any references to the catch-all block, emit it.
+  if (catchBB->use_empty()) {
+    delete catchBB;
+  } else {
+    CGBuilderTy::InsertPoint savedIP = CGF.Builder.saveAndClearIP();
+    CGF.EmitBlock(catchBB);
 
-  CGBuilderTy::InsertPoint SavedIP = Builder.saveAndClearIP();
-  EmitBlock(CatchAllBB, true);
+    llvm::Value *exn = 0;
 
-  Builder.restoreIP(SavedIP);
+    // If there's a begin-catch function, call it.
+    if (BeginCatchFn) {
+      exn = CGF.Builder.CreateLoad(CGF.getExceptionSlot());
+      CGF.Builder.CreateCall(BeginCatchFn, exn)->setDoesNotThrow();
+    }
+
+    // If we need to remember the exception pointer to rethrow later, do so.
+    if (SavedExnVar) {
+      if (!exn) exn = CGF.Builder.CreateLoad(CGF.getExceptionSlot());
+      CGF.Builder.CreateStore(exn, SavedExnVar);
+    }
+
+    // Tell the cleanups in the finally block that we're do this for EH.
+    CGF.Builder.CreateStore(CGF.Builder.getTrue(), ForEHVar);
+
+    // Thread a jump through the finally cleanup.
+    CGF.EmitBranchThroughCleanup(RethrowDest);
+
+    CGF.Builder.restoreIP(savedIP);
+  }
+
+  // Finally, leave the @finally cleanup.
+  CGF.PopCleanupBlock();
 }
 
 llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {

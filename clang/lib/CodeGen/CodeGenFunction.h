@@ -635,16 +635,28 @@ public:
   /// rethrows.
   llvm::SmallVector<llvm::Value*, 8> ObjCEHValueStack;
 
-  // A struct holding information about a finally block's IR
-  // generation.  For now, doesn't actually hold anything.
-  struct FinallyInfo {
-  };
+  /// A class controlling the emission of a finally block.
+  class FinallyInfo {
+    /// Where the catchall's edge through the cleanup should go.
+    JumpDest RethrowDest;
 
-  FinallyInfo EnterFinallyBlock(const Stmt *Stmt,
-                                llvm::Constant *BeginCatchFn,
-                                llvm::Constant *EndCatchFn,
-                                llvm::Constant *RethrowFn);
-  void ExitFinallyBlock(FinallyInfo &FinallyInfo);
+    /// A function to call to enter the catch.
+    llvm::Constant *BeginCatchFn;
+
+    /// An i1 variable indicating whether or not the @finally is
+    /// running for an exception.
+    llvm::AllocaInst *ForEHVar;
+
+    /// An i8* variable into which the exception pointer to rethrow
+    /// has been saved.
+    llvm::AllocaInst *SavedExnVar;
+
+  public:
+    void enter(CodeGenFunction &CGF, const Stmt *Finally,
+               llvm::Constant *beginCatchFn, llvm::Constant *endCatchFn,
+               llvm::Constant *rethrowFn);
+    void exit(CodeGenFunction &CGF);
+  };
 
   /// pushFullExprCleanup - Push a cleanup to be run at the end of the
   /// current full-expression.  Safe against the possibility that

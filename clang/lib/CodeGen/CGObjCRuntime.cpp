@@ -175,10 +175,8 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
 
   CodeGenFunction::FinallyInfo FinallyInfo;
   if (const ObjCAtFinallyStmt *Finally = S.getFinallyStmt())
-    FinallyInfo = CGF.EnterFinallyBlock(Finally->getFinallyBody(),
-                                        beginCatchFn,
-                                        endCatchFn,
-                                        exceptionRethrowFn);
+    FinallyInfo.enter(CGF, Finally->getFinallyBody(),
+                      beginCatchFn, endCatchFn, exceptionRethrowFn);
 
   llvm::SmallVector<CatchHandler, 8> Handlers;
 
@@ -266,9 +264,9 @@ void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
   // Go back to the try-statement fallthrough.
   CGF.Builder.restoreIP(SavedIP);
 
-  // Pop out of the normal cleanup on the finally.
+  // Pop out of the finally.
   if (S.getFinallyStmt())
-    CGF.ExitFinallyBlock(FinallyInfo);
+    FinallyInfo.exit(CGF);
 
   if (Cont.isValid())
     CGF.EmitBlock(Cont.getBlock());
