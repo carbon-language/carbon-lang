@@ -20,23 +20,12 @@ class GenericTester(TestBase):
     # Assert message.
     DATA_TYPE_GROKKED = "Data type from expr parser output is parsed correctly"
 
-    # FIXME: Remove this method when/if we find out the cause of the failures
-    # if no delays are inserted between test cases.
-#     def setUp(self):
-#         # Call super's setUp().
-#         TestBase.setUp(self)
-#         # Insert some delay for running test cases under test/types if not
-#         # already so by the TestBase.setUp().
-#         if "LLDB_WAIT_BETWEEN_TEST_CASES" not in os.environ:
-#             #print "some delay, please ...."
-#             time.sleep(1.0)
-
-    def generic_type_tester(self, atoms, quotedDisplay=False):
+    def generic_type_tester(self, exe_name, atoms, quotedDisplay=False):
         """Test that variables with basic types are displayed correctly."""
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        go = system("./a.out", sender=self)[0]
+        go = system("./%s" % exe_name, sender=self)[0]
         # This golden list contains a list of (variable, value) pairs extracted
         # from the golden output.
         gl = []
@@ -54,7 +43,7 @@ class GenericTester(TestBase):
 
         # Bring the program to the point where we can issue a series of
         # 'frame variable -T' command.
-        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+        self.runCmd("file %s" % exe_name, CURRENT_EXECUTABLE_SET)
         puts_line = line_number ("basic_type.cpp", "// Here is the line we will break on to check variables")
         self.expect("breakpoint set -f basic_type.cpp -l %d" % puts_line,
                     BREAKPOINT_CREATED,
@@ -98,12 +87,12 @@ class GenericTester(TestBase):
             self.expect(output, Msg(var, val, True), exe=False,
                 substrs = [nv])
 
-    def generic_type_expr_tester(self, atoms, quotedDisplay=False):
+    def generic_type_expr_tester(self, exe_name, atoms, quotedDisplay=False):
         """Test that variable expressions with basic types are evaluated correctly."""
 
         # First, capture the golden output emitted by the oracle, i.e., the
         # series of printf statements.
-        go = system("./a.out", sender=self)[0]
+        go = system("./%s" % exe_name, sender=self)[0]
         # This golden list contains a list of (variable, value) pairs extracted
         # from the golden output.
         gl = []
@@ -121,7 +110,7 @@ class GenericTester(TestBase):
 
         # Bring the program to the point where we can issue a series of
         # 'expr' command.
-        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+        self.runCmd("file %s" % exe_name, CURRENT_EXECUTABLE_SET)
         puts_line = line_number ("basic_type.cpp", "// Here is the line we will break on to check variables.")
         self.expect("breakpoint set -f basic_type.cpp -l %d" % puts_line,
                     BREAKPOINT_CREATED,

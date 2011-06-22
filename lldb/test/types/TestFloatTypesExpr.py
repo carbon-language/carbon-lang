@@ -15,42 +15,42 @@ class FloatTypesExprTestCase(AbstractBase.GenericTester):
     # test/types failures for Test*TypesExpr.py: element offset computed wrong and sign error?
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_float_types_with_dsym(self):
+    def test_float_type_with_dsym(self):
         """Test that float-type variable expressions are evaluated correctly."""
-        d = {'CXX_SOURCES': 'float.cpp'}
+        d = {'CXX_SOURCES': 'float.cpp', 'EXE': 'float_type_dsym'}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.float_type_expr()
+        self.float_type_expr('float_type_dsym')
 
     def test_float_type_with_dwarf(self):
         """Test that float-type variable expressions are evaluated correctly."""
-        d = {'CXX_SOURCES': 'float.cpp'}
+        d = {'CXX_SOURCES': 'float.cpp', 'EXE': 'float_type_dwarf'}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.float_type_expr()
+        self.float_type_expr('float_type_dwarf')
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_double_type_with_dsym(self):
         """Test that double-type variable expressions are evaluated correctly."""
-        d = {'CXX_SOURCES': 'double.cpp'}
+        d = {'CXX_SOURCES': 'double.cpp', 'EXE': 'double_type_dsym'}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.double_type_expr()
+        self.double_type_expr('double_type_dsym')
 
     def test_double_type_with_dwarf(self):
         """Test that double-type variable expressions are evaluated correctly."""
-        d = {'CXX_SOURCES': 'double.cpp'}
+        d = {'CXX_SOURCES': 'double.cpp', 'EXE': 'double_type_dwarf'}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.double_type_expr()
+        self.double_type_expr('double_type_dwarf')
 
-    def float_type_expr(self):
+    def float_type_expr(self, exe_name):
         """Test that float-type variable expressions are evaluated correctly."""
-        self.generic_type_expr_tester(set(['float']))
+        self.generic_type_expr_tester(exe_name, set(['float']))
 
-    def double_type_expr(self):
+    def double_type_expr(self, exe_name):
         """Test that double-type variable expressions are evaluated correctly."""
-        self.generic_type_expr_tester(set(['double']))
+        self.generic_type_expr_tester(exe_name, set(['double']))
 
 
 if __name__ == '__main__':
