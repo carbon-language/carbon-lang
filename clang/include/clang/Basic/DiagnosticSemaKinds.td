@@ -2287,6 +2287,8 @@ def err_inline_declaration_block_scope : Error<
   "inline declaration of %0 not allowed in block scope">;
 def err_static_non_static : Error<
   "static declaration of %0 follows non-static declaration">;
+def warn_weak_import : Warning <
+  "an already-declared variable is made a weak_import declaration %0">;
 def warn_static_non_static : ExtWarn<
   "static declaration of %0 follows non-static declaration">;
 def err_non_static_static : Error<

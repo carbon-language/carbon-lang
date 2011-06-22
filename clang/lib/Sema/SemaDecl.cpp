@@ -2039,12 +2039,17 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   }
   
   mergeDeclAttributes(New, Old, Context);
-  // weak_import on current declaration is applied to previous
-  // tentative definiton.
+  // Warn if an already-declared variable is made a weak_import in a subsequent declaration
   if (New->getAttr<WeakImportAttr>() &&
       Old->getStorageClass() == SC_None &&
-      !Old->getAttr<WeakImportAttr>())
-    Old->addAttr(::new (Context) WeakImportAttr(SourceLocation(), Context));
+      !Old->getAttr<WeakImportAttr>()) {
+    Diag(New->getLocation(), diag::warn_weak_import) << New->getDeclName();
+    Diag(Old->getLocation(), diag::note_previous_definition);
+    // Remove weak_import attribute on new declaration.
+    // I am just dropping all attributes in curernt decl. We have
+    // already issued a warning, so we are OK.
+    New->dropAttrs();
+  }
 
   // Merge the types.
   MergeVarDeclTypes(New, Old);
