@@ -195,6 +195,7 @@ class APIDefaultConstructorTestCase(TestBase):
 
     @python_api_test
     def test_SBSymbolContextList(self):
+        """SBSymbolContextList object is valid after default construction."""
         obj = lldb.SBSymbolContextList()
         if self.TraceOn():
             print obj
