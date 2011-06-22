@@ -55,7 +55,7 @@ ThreadPlanTracer::GetLogStream ()
     if (m_stream_sp.get())
         return m_stream_sp.get();
     else
-        return m_thread.GetProcess().GetTarget().GetDebugger().GetAsyncOutputStream().get();
+        return &m_thread.GetProcess().GetTarget().GetDebugger().GetOutputStream();
 }
 
 void 
