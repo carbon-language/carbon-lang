@@ -847,13 +847,13 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
 }
 
 static bool 
-shouldUseExceptionTablesForObjCExceptions(const ArgList &Args, 
+shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
                                           const llvm::Triple &Triple) {
   // We use the zero-cost exception tables for Objective-C if the non-fragile
   // ABI is enabled or when compiling for x86_64 and ARM on Snow Leopard and
   // later.
 
-  if (Args.hasArg(options::OPT_fobjc_nonfragile_abi))
+  if (objcABIVersion >= 2)
     return true;
 
   if (Triple.getOS() != llvm::Triple::Darwin)
@@ -872,6 +872,7 @@ shouldUseExceptionTablesForObjCExceptions(const ArgList &Args,
 static void addExceptionArgs(const ArgList &Args, types::ID InputType,
                              const llvm::Triple &Triple,
                              bool KernelOrKext, bool IsRewriter,
+                             unsigned objcABIVersion,
                              ArgStringList &CmdArgs) {
   if (KernelOrKext)
     return;
@@ -908,7 +909,7 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
     CmdArgs.push_back("-fobjc-exceptions");
 
     ShouldUseExceptionTables |= 
-      shouldUseExceptionTablesForObjCExceptions(Args, Triple);
+      shouldUseExceptionTablesForObjCExceptions(objcABIVersion, Triple);
   }
 
   if (types::isCXX(InputType)) {
@@ -1710,13 +1711,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("-fno-elide-constructors");
 
-  // Add exception args.
-  addExceptionArgs(Args, InputType, getToolChain().getTriple(),
-                   KernelOrKext, IsRewriter, CmdArgs);
-
-  if (getToolChain().UseSjLjExceptions())
-    CmdArgs.push_back("-fsjlj-exceptions");
-
   // -frtti is default.
   if (KernelOrKext ||
       !Args.hasFlag(options::OPT_frtti, options::OPT_fno_rtti))
@@ -1793,21 +1787,22 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fgnu-runtime");
 
   // -fobjc-nonfragile-abi=0 is default.
+  unsigned objcABIVersion = 0;
   if (types::isObjC(InputType)) {
     // Compute the Objective-C ABI "version" to use. Version numbers are
     // slightly confusing for historical reasons:
     //   1 - Traditional "fragile" ABI
     //   2 - Non-fragile ABI, version 1
     //   3 - Non-fragile ABI, version 2
-    unsigned Version = 1;
+    objcABIVersion = 1;
     // If -fobjc-abi-version= is present, use that to set the version.
     if (Arg *A = Args.getLastArg(options::OPT_fobjc_abi_version_EQ)) {
       if (llvm::StringRef(A->getValue(Args)) == "1")
-        Version = 1;
+        objcABIVersion = 1;
       else if (llvm::StringRef(A->getValue(Args)) == "2")
-        Version = 2;
+        objcABIVersion = 2;
       else if (llvm::StringRef(A->getValue(Args)) == "3")
-        Version = 3;
+        objcABIVersion = 3;
       else
         D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
     } else {
@@ -1833,13 +1828,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
               << A->getAsString(Args);
         }
 
-        Version = 1 + NonFragileABIVersion;
+        objcABIVersion = 1 + NonFragileABIVersion;
       } else {
-        Version = 1;
+        objcABIVersion = 1;
       }
     }
 
-    if (Version == 2 || Version == 3) {
+    if (objcABIVersion == 2 || objcABIVersion == 3) {
       CmdArgs.push_back("-fobjc-nonfragile-abi");
 
       // -fobjc-dispatch-method is only relevant with the nonfragile-abi, and
@@ -1868,6 +1863,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 #endif
   }
 
+  // Add exception args.
+  addExceptionArgs(Args, InputType, getToolChain().getTriple(),
+                   KernelOrKext, IsRewriter, objcABIVersion, CmdArgs);
+
+  if (getToolChain().UseSjLjExceptions())
+    CmdArgs.push_back("-fsjlj-exceptions");
+
+  // C++ "sane" operator new.
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
                     options::OPT_fno_assume_sane_operator_new))
     CmdArgs.push_back("-fno-assume-sane-operator-new");

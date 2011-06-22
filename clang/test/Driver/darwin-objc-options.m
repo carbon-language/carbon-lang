@@ -15,5 +15,7 @@
 
 // CHECK-CHECK-I386_ABI2: "-cc1"
 // CHECK-CHECK-I386_ABI2: -fobjc-nonfragile-abi
+// CHECK-CHECK-I386_ABI2: -fobjc-exceptions
+// CHECK-CHECK-I386_ABI2: -fexceptions
 // CHECK-CHECK-I386_ABI2-NOT: -fobjc-dispatch-method
 // CHECK-CHECK-I386_ABI2: darwin-objc-options
