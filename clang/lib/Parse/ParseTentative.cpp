@@ -908,8 +908,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     return TPResult::True();
 
   case tok::annot_template_id: {
-    TemplateIdAnnotation *TemplateId
-      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
     if (TemplateId->Kind != TNK_Type_template)
       return TPResult::False();
     CXXScopeSpec SS;

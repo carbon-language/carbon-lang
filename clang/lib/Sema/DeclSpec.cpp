@@ -792,9 +792,6 @@ bool DeclSpec::isMissingDeclaratorOk() {
 }
 
 void UnqualifiedId::clear() {
-  if (Kind == IK_TemplateId)
-    TemplateId->Destroy();
-  
   Kind = IK_Identifier;
   Identifier = 0;
   StartLocation = SourceLocation();

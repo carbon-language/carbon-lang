@@ -955,8 +955,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
     Token Next = NextToken();
     if (Next.is(tok::annot_template_id)) {
-      TemplateIdAnnotation *TemplateId
-        = static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue());
+      TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Next);
       if (TemplateId->Kind == TNK_Type_template) {
         // We have a qualified template-id that we know refers to a
         // type, translate it into a type and continue parsing as a
@@ -975,8 +974,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   }
 
   case tok::annot_template_id: { // [C++]          template-id
-    TemplateIdAnnotation *TemplateId
-      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
     if (TemplateId->Kind == TNK_Type_template) {
       // We have a template-id that we know refers to a type,
       // translate it into a type and continue parsing as a cast

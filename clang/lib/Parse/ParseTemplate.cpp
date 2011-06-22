@@ -861,8 +861,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
 void Parser::AnnotateTemplateIdTokenAsType() {
   assert(Tok.is(tok::annot_template_id) && "Requires template-id tokens");
 
-  TemplateIdAnnotation *TemplateId
-    = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+  TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
   assert((TemplateId->Kind == TNK_Type_template ||
           TemplateId->Kind == TNK_Dependent_template_name) &&
          "Only works for type and dependent templates");
@@ -888,7 +887,6 @@ void Parser::AnnotateTemplateIdTokenAsType() {
   // Replace the template-id annotation token, and possible the scope-specifier
   // that precedes it, with the typename annotation token.
   PP.AnnotateCachedTokens(Tok);
-  TemplateId->Destroy();
 }
 
 /// \brief Determine whether the given token can end a template argument.

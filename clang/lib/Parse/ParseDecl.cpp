@@ -1396,8 +1396,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         // Thus, if the template-name is actually the constructor
         // name, then the code is ill-formed; this interpretation is
         // reinforced by the NAD status of core issue 635. 
-        TemplateIdAnnotation *TemplateId
-          = static_cast<TemplateIdAnnotation *>(Next.getAnnotationValue());
+        TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Next);
         if ((DSContext == DSC_top_level ||
              (DSContext == DSC_class && DS.isFriendSpecified())) &&
             TemplateId->Name &&
@@ -1599,8 +1598,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
       // type-name
     case tok::annot_template_id: {
-      TemplateIdAnnotation *TemplateId
-        = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+      TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
       if (TemplateId->Kind != TNK_Type_template) {
         // This template-id does not refer to a type name, so we're
         // done with the type-specifiers.

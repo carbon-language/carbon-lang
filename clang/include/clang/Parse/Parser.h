@@ -15,6 +15,7 @@
 #define LLVM_CLANG_PARSE_PARSER_H
 
 #include "clang/Basic/Specifiers.h"
+#include "clang/Basic/DelayedCleanupPool.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Sema/Sema.h"
@@ -169,6 +170,10 @@ class Parser : public CodeCompletionHandler {
   
   /// Factory object for creating AttributeList objects.
   AttributeFactory AttrFactory;
+
+  /// \brief Gathers and cleans up objects when parsing of a top-level
+  /// declaration is finished.
+  DelayedCleanupPool TopLevelDeclCleanupPool;
 
 public:
   Parser(Preprocessor &PP, Sema &Actions);
@@ -467,7 +472,12 @@ private:
   bool TryAltiVecTokenOutOfLine(DeclSpec &DS, SourceLocation Loc,
                                 const char *&PrevSpec, unsigned &DiagID,
                                 bool &isInvalid);
-    
+
+  /// \brief Get the TemplateIdAnnotation from the token and put it in the
+  /// cleanup pool so that it gets destroyed when parsing the current top level
+  /// declaration is finished.
+  TemplateIdAnnotation *takeTemplateIdAnnotation(const Token &tok);
+
   /// TentativeParsingAction - An object that is used as a kind of "tentative
   /// parsing transaction". It gets instantiated to mark the token position and
   /// after the token consumption is done, Commit() or Revert() is called to

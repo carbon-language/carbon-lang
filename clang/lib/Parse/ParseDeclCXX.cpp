@@ -701,8 +701,7 @@ Parser::TypeResult Parser::ParseClassName(SourceLocation &EndLocation,
                                           CXXScopeSpec &SS) {
   // Check whether we have a template-id that names a type.
   if (Tok.is(tok::annot_template_id)) {
-    TemplateIdAnnotation *TemplateId
-      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
     if (TemplateId->Kind == TNK_Type_template ||
         TemplateId->Kind == TNK_Dependent_template_name) {
       AnnotateTemplateIdTokenAsType();
@@ -976,7 +975,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       }
     }
   } else if (Tok.is(tok::annot_template_id)) {
-    TemplateId = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    TemplateId = takeTemplateIdAnnotation(Tok);
     NameLoc = ConsumeToken();
 
     if (TemplateId->Kind != TNK_Type_template &&
@@ -993,7 +992,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
       DS.SetTypeSpecError();
       SkipUntil(tok::semi, false, true);
-      TemplateId->Destroy();
       if (SuppressingAccessChecks)
         Actions.ActOnStopSuppressingAccessChecks();
 
@@ -1051,9 +1049,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     }
 
     SkipUntil(tok::comma, true);
-
-    if (TemplateId)
-      TemplateId->Destroy();
     return;
   }
 
@@ -1149,7 +1144,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                     TemplateParams? &(*TemplateParams)[0] : 0,
                                  TemplateParams? TemplateParams->size() : 0));
     }
-    TemplateId->Destroy();
   } else if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
              TUK == Sema::TUK_Declaration) {
     // Explicit instantiation of a member of a class template
@@ -2248,8 +2242,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
   ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false);
   ParsedType TemplateTypeTy;
   if (Tok.is(tok::annot_template_id)) {
-    TemplateIdAnnotation *TemplateId
-      = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+    TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
     if (TemplateId->Kind == TNK_Type_template ||
         TemplateId->Kind == TNK_Dependent_template_name) {
       AnnotateTemplateIdTokenAsType();

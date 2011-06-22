@@ -245,8 +245,7 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
       // So we need to check whether the simple-template-id is of the
       // right kind (it should name a type or be dependent), and then
       // convert it into a type within the nested-name-specifier.
-      TemplateIdAnnotation *TemplateId
-        = static_cast<TemplateIdAnnotation *>(Tok.getAnnotationValue());
+      TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
       if (CheckForDestructor && GetLookAheadToken(2).is(tok::tilde)) {
         *MayBePseudoDestructor = true;
         return false;
@@ -281,10 +280,6 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         SS.SetInvalid(SourceRange(StartLoc, CCLoc));
       }
 
-      // If we are caching tokens we will process the TemplateId again,
-      // otherwise destroy it.
-      if (!PP.isBacktrackEnabled())
-        TemplateId->Destroy();
       continue;
     }
 
@@ -1606,8 +1601,7 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
   // unqualified-id:
   //   template-id (already parsed and annotated)
   if (Tok.is(tok::annot_template_id)) {
-    TemplateIdAnnotation *TemplateId
-      = static_cast<TemplateIdAnnotation*>(Tok.getAnnotationValue());
+    TemplateIdAnnotation *TemplateId = takeTemplateIdAnnotation(Tok);
 
     // If the template-name names the current class, then this is a constructor 
     if (AllowConstructorName && TemplateId->Name &&
@@ -1630,7 +1624,6 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
                                             /*NontrivialTypeSourceInfo=*/true),
                                   TemplateId->TemplateNameLoc, 
                                   TemplateId->RAngleLoc);
-        TemplateId->Destroy();
         ConsumeToken();
         return false;
       }
