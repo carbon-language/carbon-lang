@@ -2060,9 +2060,19 @@ Process::Launch
                 else
                 {
                     EventSP event_sp;
-                    StateType state = WaitForProcessStopPrivate(NULL, event_sp);
+                    TimeValue timeout_time;
+                    timeout_time = TimeValue::Now();
+                    timeout_time.OffsetWithSeconds(10);
+                    StateType state = WaitForProcessStopPrivate(&timeout_time, event_sp);
 
-                    if (state == eStateStopped || state == eStateCrashed)
+                    if (state == eStateInvalid || event_sp.get() == NULL)
+                    {
+                        // We were able to launch the process, but we failed to
+                        // catch the initial stop.
+                        SetExitStatus (0, "failed to catch stop after launch");
+                        Destroy();
+                    }
+                    else if (state == eStateStopped || state == eStateCrashed)
                     {
 
                         DidLaunch ();
