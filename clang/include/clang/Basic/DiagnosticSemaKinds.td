@@ -3151,9 +3151,12 @@ def err_qualified_objc_catch_parm : Error<
   "@catch parameter declarator cannot be qualified">;
 def err_objc_pointer_cxx_catch_gnu : Error<
   "can't catch Objective C exceptions in C++ in the GNU runtime">;
-def err_objc_pointer_cxx_catch_fragile : Error<
-  "can't catch Objective C exceptions in C++ in the non-unified "
+def warn_objc_pointer_cxx_catch_fragile : Warning<
+  "catching Objective C id's exceptions in C++ in the non-unified "
   "exception model">;
+def err_objc_pointer_cxx_catch_fragile : Error<
+"can't catch Objective C exceptions in C++ in the non-unified "
+"exception model">;
 def err_objc_object_catch : Error<
   "can't catch an Objective C object by value">;
 def err_incomplete_type_objc_at_encode : Error<

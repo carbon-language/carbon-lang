@@ -438,7 +438,7 @@ public:
                                    bool lval = false);
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
       *Method);
-  virtual llvm::Constant *GetEHType(QualType T);
+  virtual llvm::Constant *GetEHType(QualType T, const CodeGenFunction *CGF=0);
 
   virtual llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
                                          const ObjCContainerDecl *CD);
@@ -832,7 +832,7 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
   return GetSelector(Builder, Method->getSelector(), SelTypes, false);
 }
 
-llvm::Constant *CGObjCGNU::GetEHType(QualType T) {
+llvm::Constant *CGObjCGNU::GetEHType(QualType T, const CodeGenFunction *CGF) {
   if (!CGM.getLangOptions().CPlusPlus) {
       if (T->isObjCIdType()
           || T->isObjCQualifiedIdType()) {

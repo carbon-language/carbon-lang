@@ -8046,8 +8046,12 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
       Invalid = true;
     } else if (T->isObjCObjectPointerType()) {
       if (!getLangOptions().ObjCNonFragileABI) {
-        Diag(Loc, diag::err_objc_pointer_cxx_catch_fragile);
-        Invalid = true;
+        if (T->isObjCIdType() || T->isObjCQualifiedIdType())
+          Diag(Loc, diag::warn_objc_pointer_cxx_catch_fragile);
+        else {
+          Diag(Loc, diag::err_objc_pointer_cxx_catch_fragile);
+          Invalid = true;
+        }
       }
     }
   }

@@ -200,7 +200,7 @@ public:
   const llvm::Type *CacheTy;
   /// CachePtrTy - LLVM type for struct objc_cache *.
   const llvm::Type *CachePtrTy;
-
+  
   llvm::Constant *getGetPropertyFn() {
     CodeGen::CodeGenTypes &Types = CGM.getTypes();
     ASTContext &Ctx = CGM.getContext();
@@ -452,7 +452,7 @@ public:
 
   /// ExceptionDataTy - LLVM type for struct _objc_exception_data.
   const llvm::Type *ExceptionDataTy;
-
+  
   /// ExceptionTryEnterFn - LLVM objc_exception_try_enter function.
   llvm::Constant *getExceptionTryEnterFn() {
     const llvm::Type *params[] = { ExceptionDataTy->getPointerTo() };
@@ -633,7 +633,7 @@ public:
 
   const llvm::StructType *EHTypeTy;
   const llvm::Type *EHTypePtrTy;
-
+  
   ObjCNonFragileABITypesHelper(CodeGen::CodeGenModule &cgm);
   ~ObjCNonFragileABITypesHelper(){}
 };
@@ -1010,7 +1010,7 @@ public:
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
                                    const ObjCMethodDecl *Method);
 
-  virtual llvm::Constant *GetEHType(QualType T);
+  virtual llvm::Constant *GetEHType(QualType T, const CodeGenFunction *CGF=0);
 
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
 
@@ -1271,7 +1271,7 @@ public:
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *PD);
 
-  virtual llvm::Constant *GetEHType(QualType T);
+  virtual llvm::Constant *GetEHType(QualType T, const CodeGenFunction *CGF=0);
 
   virtual llvm::Constant *GetPropertyGetFunction() {
     return ObjCTypes.getGetPropertyFn();
@@ -1414,7 +1414,12 @@ llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
   return EmitSelector(Builder, Method->getSelector());
 }
 
-llvm::Constant *CGObjCMac::GetEHType(QualType T) {
+llvm::Constant *CGObjCMac::GetEHType(QualType T, const CodeGenFunction *CGF) {
+  if (T->isObjCIdType() ||
+      T->isObjCQualifiedIdType()) {
+    return CGM.GetAddrOfRTTIDescriptor(
+              CGF->getContext().ObjCIdRedefinitionType, /*ForEH=*/true);
+  }
   llvm_unreachable("asking for catch type for ObjC type in fragile runtime");
   return 0;
 }
@@ -4176,6 +4181,7 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   CacheTy = llvm::OpaqueType::get(VMContext);
   CGM.getModule().addTypeName("struct._objc_cache", CacheTy);
   CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
+    
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
@@ -4580,7 +4586,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
 
   // SuperMessageRefPtrTy - LLVM for struct _super_message_ref_t*
   SuperMessageRefPtrTy = llvm::PointerType::getUnqual(SuperMessageRefTy);
-
+    
 
   // struct objc_typeinfo {
   //   const void** vtable; // objc_ehtype_vtable + 2
@@ -6015,7 +6021,7 @@ CGObjCNonFragileABIMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 }
 
 llvm::Constant *
-CGObjCNonFragileABIMac::GetEHType(QualType T) {
+CGObjCNonFragileABIMac::GetEHType(QualType T, const CodeGenFunction *CGF) {
   // There's a particular fixed type info for 'id'.
   if (T->isObjCIdType() ||
       T->isObjCQualifiedIdType()) {
