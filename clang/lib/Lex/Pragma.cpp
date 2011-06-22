@@ -836,8 +836,11 @@ struct PragmaDebugHandler : public PragmaHandler {
 
 /// PragmaDiagnosticHandler - e.g. '#pragma GCC diagnostic ignored "-Wformat"'
 struct PragmaDiagnosticHandler : public PragmaHandler {
+private:
+  const char *Namespace;
 public:
-  explicit PragmaDiagnosticHandler() : PragmaHandler("diagnostic") {}
+  explicit PragmaDiagnosticHandler(const char *NS) :
+    PragmaHandler("diagnostic"), Namespace(NS) {}
   virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                             Token &DiagToken) {
     SourceLocation DiagLoc = DiagToken.getLocation();
@@ -848,6 +851,7 @@ public:
       return;
     }
     IdentifierInfo *II = Tok.getIdentifierInfo();
+    PPCallbacks *Callbacks = PP.getPPCallbacks();
 
     diag::Mapping Map;
     if (II->isStr("warning"))
@@ -861,10 +865,13 @@ public:
     else if (II->isStr("pop")) {
       if (!PP.getDiagnostics().popMappings(DiagLoc))
         PP.Diag(Tok, diag::warn_pragma_diagnostic_cannot_pop);
-
+      else if (Callbacks)
+        Callbacks->PragmaDiagnosticPop(DiagLoc, Namespace);
       return;
     } else if (II->isStr("push")) {
       PP.getDiagnostics().pushMappings(DiagLoc);
+      if (Callbacks)
+        Callbacks->PragmaDiagnosticPush(DiagLoc, Namespace);
       return;
     } else {
       PP.Diag(Tok, diag::warn_pragma_diagnostic_invalid);
@@ -916,6 +923,8 @@ public:
                                                       Map, DiagLoc))
       PP.Diag(StrToks[0].getLocation(),
               diag::warn_pragma_diagnostic_unknown_warning) << WarningName;
+    else if (Callbacks)
+      Callbacks->PragmaDiagnostic(DiagLoc, Namespace, Map, WarningName);
   }
 };
 
@@ -1010,13 +1019,13 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler("GCC", new PragmaPoisonHandler());
   AddPragmaHandler("GCC", new PragmaSystemHeaderHandler());
   AddPragmaHandler("GCC", new PragmaDependencyHandler());
-  AddPragmaHandler("GCC", new PragmaDiagnosticHandler());
+  AddPragmaHandler("GCC", new PragmaDiagnosticHandler("GCC"));
   // #pragma clang ...
   AddPragmaHandler("clang", new PragmaPoisonHandler());
   AddPragmaHandler("clang", new PragmaSystemHeaderHandler());
   AddPragmaHandler("clang", new PragmaDebugHandler());
   AddPragmaHandler("clang", new PragmaDependencyHandler());
-  AddPragmaHandler("clang", new PragmaDiagnosticHandler());
+  AddPragmaHandler("clang", new PragmaDiagnosticHandler("clang"));
 
   AddPragmaHandler("STDC", new PragmaSTDC_FENV_ACCESSHandler());
   AddPragmaHandler("STDC", new PragmaSTDC_CX_LIMITED_RANGEHandler());

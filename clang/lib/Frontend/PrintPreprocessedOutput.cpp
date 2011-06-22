@@ -26,6 +26,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstdio>
 using namespace clang;
 
@@ -122,6 +123,12 @@ public:
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
                              const std::string &Str);
   virtual void PragmaMessage(SourceLocation Loc, llvm::StringRef Str);
+  virtual void PragmaDiagnosticPush(SourceLocation Loc,
+                                    llvm::StringRef Namespace);
+  virtual void PragmaDiagnosticPop(SourceLocation Loc,
+                                   llvm::StringRef Namespace);
+  virtual void PragmaDiagnostic(SourceLocation Loc, llvm::StringRef Namespace,
+                                diag::Mapping Map, llvm::StringRef Str);
 
   bool HandleFirstTokOnLine(Token &Tok);
   bool MoveToLine(SourceLocation Loc) {
@@ -361,6 +368,43 @@ void PrintPPOutputPPCallbacks::PragmaMessage(SourceLocation Loc,
   EmittedTokensOnThisLine = true;
 }
 
+void PrintPPOutputPPCallbacks::
+PragmaDiagnosticPush(SourceLocation Loc, llvm::StringRef Namespace) {
+  MoveToLine(Loc);
+  OS << "#pragma " << Namespace << " diagnostic push";
+  EmittedTokensOnThisLine = true;
+}
+
+void PrintPPOutputPPCallbacks::
+PragmaDiagnosticPop(SourceLocation Loc, llvm::StringRef Namespace) {
+  MoveToLine(Loc);
+  OS << "#pragma " << Namespace << " diagnostic pop";
+  EmittedTokensOnThisLine = true;
+}
+
+void PrintPPOutputPPCallbacks::
+PragmaDiagnostic(SourceLocation Loc, llvm::StringRef Namespace,
+                 diag::Mapping Map, llvm::StringRef Str) {
+  MoveToLine(Loc);
+  OS << "#pragma " << Namespace << " diagnostic ";
+  switch (Map) {
+  default: llvm_unreachable("unexpected diagnostic kind");
+  case diag::MAP_WARNING:
+    OS << "warning";
+    break;
+  case diag::MAP_ERROR:
+    OS << "error";
+    break;
+  case diag::MAP_IGNORE:
+    OS << "ignored";
+    break;
+  case diag::MAP_FATAL:
+    OS << "fatal";
+    break;
+  }
+  OS << " \"" << Str << '"';
+  EmittedTokensOnThisLine = true;
+}
 
 /// HandleFirstTokOnLine - When emitting a preprocessed file in -E mode, this
 /// is called for the first token on each new line.  If this really is the start

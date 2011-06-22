@@ -16,6 +16,7 @@
 
 #include "clang/Lex/DirectoryLookup.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/DiagnosticIDs.h"
 #include "llvm/ADT/StringRef.h"
 #include <string>
 
@@ -124,6 +125,24 @@ public:
   virtual void PragmaMessage(SourceLocation Loc, llvm::StringRef Str) {
   }
 
+  /// PragmaDiagnosticPush - This callback is invoked when a
+  /// #pragma gcc dianostic push directive is read.
+  virtual void PragmaDiagnosticPush(SourceLocation Loc,
+                                    llvm::StringRef Namespace) {
+  }
+
+  /// PragmaDiagnosticPop - This callback is invoked when a
+  /// #pragma gcc dianostic pop directive is read.
+  virtual void PragmaDiagnosticPop(SourceLocation Loc,
+                                   llvm::StringRef Namespace) {
+  }
+
+  /// PragmaDiagnostic - This callback is invoked when a
+  /// #pragma gcc dianostic directive is read.
+  virtual void PragmaDiagnostic(SourceLocation Loc, llvm::StringRef Namespace,
+                                diag::Mapping mapping, llvm::StringRef Str) {
+  }
+
   /// MacroExpands - This is called by
   /// Preprocessor::HandleMacroExpandedIdentifier when a macro invocation is
   /// found.
@@ -230,6 +249,24 @@ public:
   virtual void PragmaMessage(SourceLocation Loc, llvm::StringRef Str) {
     First->PragmaMessage(Loc, Str);
     Second->PragmaMessage(Loc, Str);
+  }
+
+  virtual void PragmaDiagnosticPush(SourceLocation Loc,
+                                    llvm::StringRef Namespace) {
+    First->PragmaDiagnosticPush(Loc, Namespace);
+    Second->PragmaDiagnosticPush(Loc, Namespace);
+  }
+
+  virtual void PragmaDiagnosticPop(SourceLocation Loc,
+                                    llvm::StringRef Namespace) {
+    First->PragmaDiagnosticPop(Loc, Namespace);
+    Second->PragmaDiagnosticPop(Loc, Namespace);
+  }
+
+  virtual void PragmaDiagnostic(SourceLocation Loc, llvm::StringRef Namespace,
+                                diag::Mapping mapping, llvm::StringRef Str) {
+    First->PragmaDiagnostic(Loc, Namespace, mapping, Str);
+    Second->PragmaDiagnostic(Loc, Namespace, mapping, Str);
   }
 
   virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI) {
