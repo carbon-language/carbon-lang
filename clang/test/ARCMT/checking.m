@@ -253,3 +253,15 @@ void rdar9491791(int p) {
 void rdar9504750(id p) {
   RELEASE_MACRO(p); // expected-error {{ARC forbids explicit message send of 'release'}}
 }
+
+// rdar://8939557
+@interface TestReadonlyProperty : NSObject
+@property(assign,readonly) NSObject *value;
+@end
+
+@implementation TestReadonlyProperty
+@synthesize value;
+- (void)viewDidLoad {
+  value = [NSObject new]; // expected-error {{assigning retained object}}
+}
+@end

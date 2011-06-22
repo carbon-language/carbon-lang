@@ -187,6 +187,8 @@ CompilerInvocation *createInvocationForMigration(CompilerInvocation &origCI) {
   CInvok->getPreprocessorOpts().addMacroDef(define);
   CInvok->getLangOpts().ObjCAutoRefCount = true;
   CInvok->getDiagnosticOpts().ErrorLimit = 0;
+  CInvok->getDiagnosticOpts().Warnings.push_back(
+                                            "error=arc-unsafe-retained-assign");
   CInvok->getLangOpts().ObjCNoAutoRefCountRuntime = !HasARCRuntime(origCI);
 
   return CInvok.take();
