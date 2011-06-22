@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -disable-cgp-branch-opts | FileCheck %s
+; RUN: llc < %s -mtriple=armv4t-unknown-linux-gnueabi -disable-cgp-branch-opts | FileCheck %s
 
 define i32 @f1() {
 ; CHECK: f1
