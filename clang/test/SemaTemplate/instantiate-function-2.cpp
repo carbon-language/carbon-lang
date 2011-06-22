@@ -31,3 +31,14 @@ namespace UsedAttr {
     foo<int>(); // expected-note{{instantiation of}}
   }
 }
+
+namespace PR9654 {
+  typedef void ftype(int);
+
+  template<typename T>
+  ftype f;
+
+  void g() {
+    f<int>(0);
+  }
+}

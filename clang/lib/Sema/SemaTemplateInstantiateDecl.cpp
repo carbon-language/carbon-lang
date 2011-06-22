@@ -1090,9 +1090,26 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   Function->setLexicalDeclContext(LexicalDC);
 
   // Attach the parameters
-  for (unsigned P = 0; P < Params.size(); ++P)
-    if (Params[P])
-      Params[P]->setOwningFunction(Function);
+  if (isa<FunctionProtoType>(Function->getType())) {
+    // Adopt the already-instantiated parameters into our own context.
+    for (unsigned P = 0; P < Params.size(); ++P)
+      if (Params[P])
+        Params[P]->setOwningFunction(Function);
+  } else {
+    // Since we were instantiated via a typedef of a function type, create
+    // new parameters.
+    const FunctionProtoType *Proto
+      = Function->getType()->getAs<FunctionProtoType>();
+    assert(Proto && "No function prototype in template instantiation?");
+    for (FunctionProtoType::arg_type_iterator AI = Proto->arg_type_begin(),
+         AE = Proto->arg_type_end(); AI != AE; ++AI) {
+      ParmVarDecl *Param
+        = SemaRef.BuildParmVarDeclForTypedef(Function, Function->getLocation(),
+                                             *AI);
+      Param->setScopeInfo(0, Params.size());
+      Params.push_back(Param);
+    }
+  }
   Function->setParams(Params.data(), Params.size());
 
   SourceLocation InstantiateAtPOI;
