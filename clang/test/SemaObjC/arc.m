@@ -563,3 +563,12 @@ id Test32(__weak ITest32 *x) {
            : (*x).ivar;  // expected-error {{dereferencing a __weak pointer is not allowed}}
 }
 
+// rdar://9619861
+extern int printf(const char*, ...);
+typedef long intptr_t;
+
+int Test33(id someid) {
+  printf( "Hello%ld", (intptr_t)someid);
+  return (int)someid;
+}
+

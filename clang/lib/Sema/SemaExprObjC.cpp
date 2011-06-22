@@ -1620,7 +1620,7 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
   ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExprType);
   ARCConversionTypeClass castACTC = classifyTypeForARCConversion(castType);
   if (exprACTC == castACTC) return;
-  if (exprACTC && castType->isBooleanType()) return;
+  if (exprACTC && castType->isIntegralType(Context)) return;
   
   // Allow casts between pointers to lifetime types (e.g., __strong id*)
   // and pointers to void (e.g., cv void *). Casting from void* to lifetime*
