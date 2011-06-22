@@ -177,6 +177,12 @@
   <ul>
   <li><code>cd libcxx/test</code></li>
   <li><code>./testit</code></li>
+     <ul>
+       <li><p>On Mac OS 10.6 add "-U__STRICT_ANSI__" to the command line with:</p>
+           <blockquote><pre>
+export OPTIONS="-std=c++0x -stdlib=libc++ -U__STRICT_ANSI__"
+           </pre></blockqutoe></li>
+     </ul>
   </ul>
 
   <p>Send discussions to the
