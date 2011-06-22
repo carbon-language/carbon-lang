@@ -2225,7 +2225,7 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
     // there is no semantic difference for class types in this restricted
     // case.
     ExprValueKind VK;
-    if (SM == CXXCopyAssignment || SM == CXXMoveAssignment)
+    if (SM == CXXCopyConstructor || SM == CXXCopyAssignment)
       VK = VK_LValue;
     else
       VK = VK_RValue;
