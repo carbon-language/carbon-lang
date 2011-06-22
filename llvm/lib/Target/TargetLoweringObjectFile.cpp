@@ -43,6 +43,7 @@ TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   StaticCtorSection = 0;
   StaticDtorSection = 0;
   LSDASection = 0;
+  CompactUnwindSection = 0;
 
   CommDirectiveSupportsAlignment = true;
   DwarfAbbrevSection = 0;

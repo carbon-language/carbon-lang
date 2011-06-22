@@ -68,6 +68,11 @@ protected:
   /// LSDASection - If exception handling is supported by the target, this is
   /// the section the Language Specific Data Area information is emitted to.
   const MCSection *LSDASection;
+
+  /// CompactUnwindSection - If exception handling is supported by the target
+  /// and the target can support a compact representation of the CIE and FDE,
+  /// this is the section to emit them into.
+  const MCSection *CompactUnwindSection;
   
   // Dwarf sections for debug info.  If a target supports debug info, these must
   // be set.
@@ -132,6 +137,7 @@ public:
   const MCSection *getStaticCtorSection() const { return StaticCtorSection; }
   const MCSection *getStaticDtorSection() const { return StaticDtorSection; }
   const MCSection *getLSDASection() const { return LSDASection; }
+  const MCSection *getCompactUnwindSection() const{return CompactUnwindSection;}
   virtual const MCSection *getEHFrameSection() const = 0;
   virtual void emitPersonalityValue(MCStreamer &Streamer,
                                     const TargetMachine &TM,

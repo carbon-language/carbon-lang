@@ -605,6 +605,12 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   // Exception Handling.
   LSDASection = getContext().getMachOSection("__TEXT", "__gcc_except_tab", 0,
                                              SectionKind::getReadOnlyWithRel());
+
+  CompactUnwindSection =
+    getContext().getMachOSection("__LD", "__compact_unwind",
+                                 MCSectionMachO::S_ATTR_DEBUG,
+                                 SectionKind::getReadOnly());
+
   // Debug Information.
   DwarfAbbrevSection =
     getContext().getMachOSection("__DWARF", "__debug_abbrev",
