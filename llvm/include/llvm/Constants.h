@@ -491,8 +491,6 @@ protected:
 public:
   // ConstantVector accessors
   static Constant *get(ArrayRef<Constant*> V);
-  // FIXME: Eliminate this constructor form.
-  static Constant *get(const VectorType *T, const std::vector<Constant*> &V);
   
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

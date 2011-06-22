@@ -559,7 +559,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
       for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
         res.push_back(ConstantExpr::getCast(opc,
                                             CV->getOperand(i), DstEltTy));
-      return ConstantVector::get(DestVecTy, res);
+      return ConstantVector::get(res);
     }
 
   // We actually have to do a cast now. Perform the cast according to the

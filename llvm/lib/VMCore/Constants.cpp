@@ -698,9 +698,9 @@ ConstantVector::ConstantVector(const VectorType *T,
 }
 
 // ConstantVector accessors.
-Constant *ConstantVector::get(const VectorType *T,
-                              const std::vector<Constant*> &V) {
+Constant *ConstantVector::get(ArrayRef<Constant*> V) {
   assert(!V.empty() && "Vectors can't be empty");
+  const VectorType *T = VectorType::get(V.front()->getType(), V.size());
   LLVMContextImpl *pImpl = T->getContext().pImpl;
 
   // If this is an all-undef or all-zero vector, return a
@@ -723,12 +723,6 @@ Constant *ConstantVector::get(const VectorType *T,
     return UndefValue::get(T);
     
   return pImpl->VectorConstants.getOrCreate(T, V);
-}
-
-Constant *ConstantVector::get(ArrayRef<Constant*> V) {
-  // FIXME: make this the primary ctor method.
-  assert(!V.empty() && "Vectors cannot be empty");
-  return get(VectorType::get(V.front()->getType(), V.size()), V.vec());
 }
 
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
@@ -2118,7 +2112,7 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Values.push_back(Val);
   }
   
-  Constant *Replacement = get(cast<VectorType>(getRawType()), Values);
+  Constant *Replacement = get(Values);
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
