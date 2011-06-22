@@ -171,15 +171,21 @@ site.exp: FORCE
 	@test ! -f site.exp || mv site.exp site.bak
 	@mv site.tmp site.exp
 
+ifeq ($(DISABLE_ASSERTIONS),1)
+ENABLE_ASSERTIONS=0
+else
+ENABLE_ASSERTIONS=1
+endif
+
 lit.site.cfg: site.exp
 	@echo "Making LLVM 'lit.site.cfg' file..."
 	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g > lit.tmp
 	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp
-	@$(ECHOPATH) s=@LLVM_BUILD_MODE@=$(BuildMode)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVMGCCDIR@=$(LLVMGCCDIR)=g >> lit.tmp
 	@$(ECHOPATH) s=@PYTHON_EXECUTABLE@=python=g >> lit.tmp
 	@$(ECHOPATH) s=@ENABLE_SHARED@=$(ENABLE_SHARED)=g >> lit.tmp
+	@$(ECHOPATH) s=@LLVM_ENABLE_ASSERTIONS@=$(ENABLE_ASSERTIONS)=g >> lit.tmp
 	@sed -f lit.tmp $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 	@-rm -f lit.tmp
 

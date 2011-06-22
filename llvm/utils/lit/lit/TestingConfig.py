@@ -74,7 +74,6 @@ class TestingConfig:
 
     def clone(self, path):
         # FIXME: Chain implementations?
-        # See attribute chaining in finish()
         #
         # FIXME: Allow extra parameters?
         cfg = TestingConfig(self, self.name, self.suffixes, self.test_format,
@@ -102,9 +101,3 @@ class TestingConfig:
             # files. Should we distinguish them?
             self.test_source_root = str(self.test_source_root)
         self.excludes = set(self.excludes)
-
-        # chain attributes by copying them
-        if self.parent:
-            for k,v in vars(self.parent).items():
-                if not hasattr(self, k):
-                    setattr(self, k, v)

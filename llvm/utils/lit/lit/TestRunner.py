@@ -473,11 +473,9 @@ def parseIntegratedTestScript(test, normalize_slashes=False):
     if script[-1][-1] == '\\':
         return (Test.UNRESOLVED, "Test has unterminated run lines (with '\\')")
 
-    # Check that we have the required features or build modes:
+    # Check that we have the required features:
     missing_required_features = [f for f in requires
-                                 if f not in test.config.available_features
-                                 and f not in test.config.llvm_build_modes]
-
+                                 if f not in test.config.available_features]
     if missing_required_features:
         msg = ', '.join(missing_required_features)
         return (Test.UNSUPPORTED,

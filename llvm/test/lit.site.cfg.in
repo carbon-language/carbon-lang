@@ -5,9 +5,9 @@ config.llvm_obj_root = "@LLVM_BINARY_DIR@"
 config.llvm_tools_dir = "@LLVM_TOOLS_DIR@"
 config.llvmgcc_dir = "@LLVMGCCDIR@"
 config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
-config.llvm_build_modes = "@LLVM_BUILD_MODE@".split('+')
 config.python_executable = "@PYTHON_EXECUTABLE@"
 config.enable_shared = @ENABLE_SHARED@
+config.enable_assertions = @LLVM_ENABLE_ASSERTIONS@
 
 # Support substitution of the tools_dir with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
