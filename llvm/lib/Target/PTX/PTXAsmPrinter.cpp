@@ -63,6 +63,8 @@ public:
                        const char *Modifier = 0);
   void printParamOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
                          const char *Modifier = 0);
+  void printReturnOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
+                          const char *Modifier = 0); 
   void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
 
   // autogen'd.
@@ -76,6 +78,7 @@ private:
 } // namespace
 
 static const char PARAM_PREFIX[] = "__param_";
+static const char RETURN_PREFIX[] = "__ret_";
 
 static const char *getRegisterTypeName(unsigned RegNo) {
 #define TEST_REGCLS(cls, clsstr)                \
@@ -298,6 +301,11 @@ void PTXAsmPrinter::printParamOperand(const MachineInstr *MI, int opNum,
   OS << PARAM_PREFIX << (int) MI->getOperand(opNum).getImm() + 1;
 }
 
+void PTXAsmPrinter::printReturnOperand(const MachineInstr *MI, int opNum,
+                                       raw_ostream &OS, const char *Modifier) {
+  OS << RETURN_PREFIX << (int) MI->getOperand(opNum).getImm() + 1;
+}
+
 void PTXAsmPrinter::EmitVariableDeclaration(const GlobalVariable *gv) {
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (EmitSpecialLLVMGlobal(gv))
@@ -421,6 +429,8 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
 
   std::string decl = isKernel ? ".entry" : ".func";
 
+  unsigned cnt = 0;
+
   if (!isKernel) {
     decl += " (";
 
@@ -430,10 +440,18 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
       if (i != b) {
         decl += ", ";
       }
-      decl += ".reg .";
-      decl += getRegisterTypeName(*i);
-      decl += " ";
-      decl += getRegisterName(*i);
+      if (ST.getShaderModel() >= PTXSubtarget::PTX_SM_2_0) {
+        decl += ".param .b";
+        decl += utostr(*i);
+        decl += " ";
+        decl += RETURN_PREFIX;
+        decl += utostr(++cnt);
+      } else {
+        decl += ".reg .";
+        decl += getRegisterTypeName(*i);
+        decl += " ";
+        decl += getRegisterName(*i);
+      }
     }
     decl += ")";
   }
@@ -444,7 +462,7 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
 
   decl += " (";
 
-  unsigned cnt = 0;
+  cnt = 0;
 
   // Print parameters
   for (PTXMachineFunctionInfo::reg_iterator

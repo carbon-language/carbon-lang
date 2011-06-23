@@ -105,8 +105,8 @@ const char *PTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
       llvm_unreachable("Unknown opcode");
     case PTXISD::COPY_ADDRESS:
       return "PTXISD::COPY_ADDRESS";
-    case PTXISD::READ_PARAM:
-      return "PTXISD::READ_PARAM";
+    case PTXISD::LOAD_PARAM:
+      return "PTXISD::LOAD_PARAM";
     case PTXISD::STORE_PARAM:
       return "PTXISD::STORE_PARAM";
     case PTXISD::EXIT:
@@ -215,13 +215,13 @@ SDValue PTXTargetLowering::
   // SM < 2.0               ->  Use registers for arguments
   
   if (MFI->isKernel() || ST.getShaderModel() >= PTXSubtarget::PTX_SM_2_0) {
-    // We just need to emit the proper READ_PARAM ISDs
+    // We just need to emit the proper LOAD_PARAM ISDs
     for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
 
       assert((!MFI->isKernel() || Ins[i].VT != MVT::i1) &&
              "Kernels cannot take pred operands");
 
-      SDValue ArgValue = DAG.getNode(PTXISD::READ_PARAM, dl, Ins[i].VT, Chain,
+      SDValue ArgValue = DAG.getNode(PTXISD::LOAD_PARAM, dl, Ins[i].VT, Chain,
                                      DAG.getTargetConstant(i, MVT::i32));
       InVals.push_back(ArgValue);
 

@@ -163,6 +163,10 @@ def MEMpi : Operand<i32> {
   let PrintMethod = "printParamOperand";
   let MIOperandInfo = (ops i32imm);
 }
+def MEMret : Operand<i32> {
+  let PrintMethod = "printReturnOperand";
+  let MIOperandInfo = (ops i32imm);
+}
 
 // Branch & call targets have OtherVT type.
 def brtarget   : Operand<OtherVT>;
@@ -185,6 +189,10 @@ def PTXret
 def PTXcopyaddress
   : SDNode<"PTXISD::COPY_ADDRESS", SDTypeProfile<1, 1, []>, []>;
 
+// Load/store .param space
+def PTXloadparam
+  : SDNode<"PTXISD::LOAD_PARAM", SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>,
+           [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
 def PTXstoreparam
   : SDNode<"PTXISD::STORE_PARAM", SDTypeProfile<0, 2, [SDTCisVT<0, i32>]>,
            [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
@@ -821,34 +829,48 @@ defm LDc : PTX_LD_ALL<"ld.const",  load_constant>;
 defm LDl : PTX_LD_ALL<"ld.local",  load_local>;
 defm LDs : PTX_LD_ALL<"ld.shared", load_shared>;
 
-// This is a special instruction that is manually inserted for parameters
-def LDpiU16 : InstPTX<(outs RegI16:$d), (ins MEMpi:$a),
-                      "ld.param.u16\t$d, [$a]", []>;
-def LDpiU32 : InstPTX<(outs RegI32:$d), (ins MEMpi:$a),
-                      "ld.param.u32\t$d, [$a]", []>;
-def LDpiU64 : InstPTX<(outs RegI64:$d), (ins MEMpi:$a),
-                      "ld.param.u64\t$d, [$a]", []>;
-def LDpiF32 : InstPTX<(outs RegF32:$d), (ins MEMpi:$a),
-                      "ld.param.f32\t$d, [$a]", []>;
-def LDpiF64 : InstPTX<(outs RegF64:$d), (ins MEMpi:$a),
-                      "ld.param.f64\t$d, [$a]", []>;
+// These instructions are used to load/store from the .param space for
+// device and kernel parameters
 
-// def STpiPred : InstPTX<(outs), (ins i1imm:$d, RegPred:$a),
-//                        "st.param.pred\t[$d], $a",
-//                        [(PTXstoreparam imm:$d, RegPred:$a)]>;
-// def STpiU16 : InstPTX<(outs), (ins i16imm:$d, RegI16:$a),
-//                       "st.param.u16\t[$d], $a",
-//                       [(PTXstoreparam imm:$d, RegI16:$a)]>;
-def STpiU32 : InstPTX<(outs), (ins i32imm:$d, RegI32:$a),
-                      "st.param.u32\t[$d], $a",
-                      [(PTXstoreparam timm:$d, RegI32:$a)]>;
-// def STpiU64 : InstPTX<(outs), (ins i64imm:$d, RegI64:$a),
-//                       "st.param.u64\t[$d], $a",
-//                       [(PTXstoreparam imm:$d, RegI64:$a)]>;
-// def STpiF32 : InstPTX<(outs), (ins MEMpi:$d, RegF32:$a),
-//                       "st.param.f32\t[$d], $a", []>;
-// def STpiF64 : InstPTX<(outs), (ins MEMpi:$d, RegF64:$a),
-//                       "st.param.f64\t[$d], $a", []>;
+let hasSideEffects = 1 in {
+  def LDpiPred : InstPTX<(outs RegPred:$d), (ins MEMpi:$a),
+                         "ld.param.pred\t$d, [$a]",
+                         [(set RegPred:$d, (PTXloadparam timm:$a))]>;
+  def LDpiU16  : InstPTX<(outs RegI16:$d), (ins MEMpi:$a),
+                         "ld.param.u16\t$d, [$a]",
+                         [(set RegI16:$d, (PTXloadparam timm:$a))]>;
+  def LDpiU32  : InstPTX<(outs RegI32:$d), (ins MEMpi:$a),
+                         "ld.param.u32\t$d, [$a]",
+                         [(set RegI32:$d, (PTXloadparam timm:$a))]>;
+  def LDpiU64  : InstPTX<(outs RegI64:$d), (ins MEMpi:$a),
+                         "ld.param.u64\t$d, [$a]",
+                         [(set RegI64:$d, (PTXloadparam timm:$a))]>;
+  def LDpiF32  : InstPTX<(outs RegF32:$d), (ins MEMpi:$a),
+                         "ld.param.f32\t$d, [$a]",
+                         [(set RegF32:$d, (PTXloadparam timm:$a))]>;
+  def LDpiF64  : InstPTX<(outs RegF64:$d), (ins MEMpi:$a),
+                         "ld.param.f64\t$d, [$a]",
+                         [(set RegF64:$d, (PTXloadparam timm:$a))]>;
+
+  def STpiPred : InstPTX<(outs), (ins MEMret:$d, RegPred:$a),
+                         "st.param.pred\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegPred:$a)]>;
+  def STpiU16  : InstPTX<(outs), (ins MEMret:$d, RegI16:$a),
+                         "st.param.u16\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegI16:$a)]>;
+  def STpiU32  : InstPTX<(outs), (ins MEMret:$d, RegI32:$a),
+                         "st.param.u32\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegI32:$a)]>;
+  def STpiU64  : InstPTX<(outs), (ins MEMret:$d, RegI64:$a),
+                         "st.param.u64\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegI64:$a)]>;
+  def STpiF32  : InstPTX<(outs), (ins MEMret:$d, RegF32:$a),
+                         "st.param.f32\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegF32:$a)]>;
+  def STpiF64  : InstPTX<(outs), (ins MEMret:$d, RegF64:$a),
+                         "st.param.f64\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegF64:$a)]>;
+}
 
 // Stores
 defm STg : PTX_ST_ALL<"st.global", store_global>;
