@@ -89,7 +89,7 @@ static void recursive_mkdir(const char *filename) {
       pathname = malloc(i + 1);
       strncpy(pathname, filename, i);
       pathname[i] = '\0';
-#ifdef _MSC_VER
+#ifdef _WIN32
       _mkdir(pathname);
 #else
       mkdir(pathname, 0750);  /* some of these will fail, ignore it. */
