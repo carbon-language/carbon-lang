@@ -520,20 +520,6 @@ void Decl::dropAttrs() {
   getASTContext().eraseDeclAttrs(this);
 }
 
-void Decl::dropWeakImportAttr() {
-  if (!HasAttrs) return;
-  AttrVec &Attrs = getASTContext().getDeclAttrs(this);
-  for (llvm::SmallVectorImpl<Attr*>::iterator A = Attrs.begin();
-       A != Attrs.end(); ++A) {
-    if (isa<WeakImportAttr>(*A)) {
-      Attrs.erase(A);
-      break;
-    }
-  }
-  if (Attrs.empty())
-    HasAttrs = false;
-}
-
 const AttrVec &Decl::getAttrs() const {
   assert(HasAttrs && "No attrs to get!");
   return getASTContext().getDeclAttrs(this);
@@ -584,6 +570,22 @@ Decl *Decl::castFromDeclContext (const DeclContext *D) {
       return 0;
   }
 }
+
+template <typename T>
+void Decl::dropAttr() {
+  if (!HasAttrs) return;
+  AttrVec &Attrs = getASTContext().getDeclAttrs(this);
+  for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
+    if (isa<T>(Attrs[i])) {
+      Attrs.erase(Attrs.begin() + i);
+      --i, --e;
+    }
+  }
+  if (Attrs.empty())
+    HasAttrs = false;
+}
+// Force instantiation for WeakImportAttr which gets used.
+template void Decl::dropAttr<WeakImportAttr>();
 
 DeclContext *Decl::castToDeclContext(const Decl *D) {
   Decl::Kind DK = D->getKind();
