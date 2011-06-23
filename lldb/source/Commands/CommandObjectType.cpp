@@ -156,7 +156,7 @@ public:
             Debugger::AddFormatForType(typeCS, format, m_options.m_cascade);
         }
         
-        
+        result.SetStatus(eReturnStatusSuccessFinishNoResult);
         return result.Succeeded();
     }
         
@@ -214,8 +214,11 @@ public:
         const char* typeA = command.GetArgumentAtIndex(0);
         ConstString typeCS(typeA);
         
-        if(Debugger::DeleteFormatForType(typeCS))
+        if (Debugger::DeleteFormatForType(typeCS))
+        {
+            result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
+        }
         else
         {
             result.AppendErrorWithFormat ("no custom format for %s.\n", typeA);
@@ -283,6 +286,7 @@ public:
             param = new CommandObjectTypeList_LoopCallbackParam(this,&result);
         Debugger::LoopThroughFormatList(CommandObjectTypeList_LoopCallback, param);
         delete param;
+        result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
     
