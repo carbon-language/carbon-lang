@@ -63,9 +63,9 @@ class Token {
 
   /// Kind - The actual flavor of token this is.
   ///
-  unsigned char Kind; // DON'T make Kind a 'tok::TokenKind';
-                      // MSVC will treat it as a signed char and
-                      // TokenKinds > 127 won't be handled correctly.
+  unsigned short Kind; // DON'T make Kind a 'tok::TokenKind';
+                       // MSVC will treat it as a signed char and
+                       // TokenKinds > 127 won't be handled correctly.
 
   /// Flags - Bits we track about this token, members of the TokenFlags enum.
   unsigned char Flags;
