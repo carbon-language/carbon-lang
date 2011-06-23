@@ -28,3 +28,12 @@ void bar() {
   foo(); // expected-error {{call to unavailable function 'foo': not available - replaced}}
 }
 }
+
+void unavail(short* sp)  __attribute__((__unavailable__));
+void unavail(short* sp) {
+  // No complains inside an unavailable function.
+  int &ir = foo(1);
+  double &dr = foo(1.0);
+  foo(sp);
+  foo();
+}

@@ -1315,6 +1315,13 @@ public:
                              bool IsForUsingDecl);
   bool IsOverload(FunctionDecl *New, FunctionDecl *Old, bool IsForUsingDecl);
 
+  /// \brief Checks availability of the function depending on the current
+  /// function context.Inside an unavailable function,unavailability is ignored.
+  ///
+  /// \returns true if \arg FD is unavailable and current context is inside
+  /// an available function, false otherwise.
+  bool isFunctionConsideredUnavailable(FunctionDecl *FD);
+
   ImplicitConversionSequence
   TryImplicitConversion(Expr *From, QualType ToType,
                         bool SuppressUserConversions,

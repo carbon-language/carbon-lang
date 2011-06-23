@@ -736,6 +736,15 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
   return false;
 }
 
+/// \brief Checks availability of the function depending on the current
+/// function context. Inside an unavailable function, unavailability is ignored.
+///
+/// \returns true if \arg FD is unavailable and current context is inside
+/// an available function, false otherwise.
+bool Sema::isFunctionConsideredUnavailable(FunctionDecl *FD) {
+  return FD->isUnavailable() && !cast<Decl>(CurContext)->isUnavailable();
+}
+
 /// TryImplicitConversion - Attempt to perform an implicit conversion
 /// from the given expression (Expr) to the given type (ToType). This
 /// function returns an implicit conversion sequence that can be used
@@ -6592,7 +6601,8 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
 
   // Best is the best viable function.
   if (Best->Function &&
-      (Best->Function->isDeleted() || Best->Function->isUnavailable()))
+      (Best->Function->isDeleted() ||
+       S.isFunctionConsideredUnavailable(Best->Function)))
     return OR_Deleted;
 
   return OR_Success;
@@ -7087,7 +7097,8 @@ void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
   FunctionDecl *Fn = Cand->Function;
 
   // Note deleted candidates, but only if they're viable.
-  if (Cand->Viable && (Fn->isDeleted() || Fn->isUnavailable())) {
+  if (Cand->Viable && (Fn->isDeleted() ||
+      S.isFunctionConsideredUnavailable(Fn))) {
     std::string FnDesc;
     OverloadCandidateKind FnKind = ClassifyOverloadCandidate(S, Fn, FnDesc);
 
