@@ -133,6 +133,15 @@ class BlockFrequencyImpl {
   }
 
 
+  /// Return a probability of getting to the DST block through SRC->DST edge.
+  ///
+  BranchProbability getBackEdgeProbability(BlockT *Src, BlockT *Dst) const {
+    uint32_t N = getEdgeFreq(Src, Dst);
+    uint32_t D = getBlockFreq(Dst);
+
+    return BranchProbability(N, D);
+  }
+
   /// isReachable - Returns if BB block is reachable from the entry.
   ///
   bool isReachable(BlockT *BB) {
@@ -213,7 +222,9 @@ class BlockFrequencyImpl {
       return;
 
     assert(START_FREQ >= CycleProb[BB]);
-    divBlockFreq(BB, BranchProbability(START_FREQ - CycleProb[BB], START_FREQ));
+    uint32_t CProb = CycleProb[BB];
+    uint32_t Numerator = START_FREQ - CProb ? START_FREQ - CProb : 1;
+    divBlockFreq(BB, BranchProbability(Numerator, START_FREQ));
   }
 
   /// doLoop - Propagate block frequency down throught the loop.
@@ -238,18 +249,16 @@ class BlockFrequencyImpl {
       BlockT *Pred = *PI;
       assert(Pred);
       if (isReachable(Pred) && isBackedge(Pred, Head)) {
-        BranchProbability Prob = BPI->getBackEdgeProbability(Pred, Head);
+        BranchProbability Prob = getBackEdgeProbability(Pred, Head);
         uint64_t N = Prob.getNumerator();
         uint64_t D = Prob.getDenominator();
         uint64_t Res = (N * START_FREQ) / D;
 
-        // CycleProb[Head] += getEdgeFreq(Pred, Head);
         assert(Res <= UINT32_MAX);
         CycleProb[Head] += (uint32_t) Res;
       }
     }
   }
-
 
   friend class BlockFrequency;
 
