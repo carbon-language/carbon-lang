@@ -36,6 +36,8 @@
 
 #include <cstdlib> // ::getenv
 
+#include "llvm/Config/config.h" // for CXX_INCLUDE_ROOT
+
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
 
