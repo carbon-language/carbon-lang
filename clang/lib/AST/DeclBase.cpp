@@ -575,11 +575,13 @@ template <typename T>
 void Decl::dropAttr() {
   if (!HasAttrs) return;
   AttrVec &Attrs = getASTContext().getDeclAttrs(this);
-  for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
+  for (unsigned i = 0, e = Attrs.size(); i != e; /* in loop */) {
     if (isa<T>(Attrs[i])) {
       Attrs.erase(Attrs.begin() + i);
-      --i, --e;
+      --e;
     }
+    else
+      ++i;
   }
   if (Attrs.empty())
     HasAttrs = false;
