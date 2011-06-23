@@ -759,7 +759,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
 
   // Initial Instructions
 
-  const std::vector<MachineMove> Moves = asmInfo.getInitialFrameState();
+  const std::vector<MachineMove> &Moves = asmInfo.getInitialFrameState();
   std::vector<MCCFIInstruction> Instructions;
 
   for (int i = 0, n = Moves.size(); i != n; ++i) {
