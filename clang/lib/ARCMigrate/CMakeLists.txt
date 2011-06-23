@@ -4,7 +4,6 @@ add_clang_library(clangARCMigrate
   ARCMT.cpp
   ARCMTActions.cpp
   FileRemapper.cpp
-  TransAllocCopyWithZone.cpp
   TransARCAssign.cpp
   TransAutoreleasePool.cpp
   TransBlockObjCVariable.cpp
