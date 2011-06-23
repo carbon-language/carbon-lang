@@ -18,9 +18,9 @@ include $(LLDB_LEVEL)/Makefile
 
 PYTHON_DIR := $(ToolDir)
 ifeq ($(HOST_OS),Darwin)
-PYTHON_DEST_DIR := $(DESTDIR)/$(call realpath /Library/Python/$(shell python -c 'import sys; print sys.version[:3]')/site-packages)
+PYTHON_DEST_DIR := $(DESTDIR)/$(call realpath,/Library/Python/$(shell python -c 'import sys; print sys.version[:3]')/site-packages)
 else
-PYTHON_DEST_DIR := $(DESTDIR)/$(call realpath $(shell python -c 'import sys; print sys.exec_prefix')/lib/python$(shell python -c 'import sys; print sys.version[:3]')/site-packages)
+PYTHON_DEST_DIR := $(DESTDIR)/$(call realpath,$(shell python -c 'import sys; print sys.exec_prefix')/lib/python$(shell python -c 'import sys; print sys.version[:3]')/site-packages)
 endif
 LLDB_SWIG_INCLUDE_DIRS:= -I"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include" -I./.
 LIBLLDB := $(LibDir)/liblldb$(SHLIBEXT)
