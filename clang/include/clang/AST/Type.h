@@ -849,6 +849,18 @@ public:
     return isDestructedTypeImpl(*this);
   }
 
+  /// \brief Determine whether expressions of the given type are forbidden 
+  /// from being lvalues in C.
+  ///
+  /// The expression types that are forbidden to be lvalues are:
+  ///   - 'void', but not qualified void
+  ///   - function types
+  ///
+  /// The exact rule here is C99 6.3.2.1:
+  ///   An lvalue is an expression with an object type or an incomplete
+  ///   type other than void.
+  bool isCForbiddenLValueType() const;
+
   /// \brief Determine whether this type has trivial copy-assignment semantics.
   bool hasTrivialCopyAssignment(ASTContext &Context) const;
   
@@ -1457,7 +1469,7 @@ public:
   bool isElaboratedTypeSpecifier() const;
 
   bool canDecayToPointerType() const;
-
+  
   /// hasPointerRepresentation - Whether this type is represented
   /// natively as a pointer; this includes pointers, references, block
   /// pointers, and Objective-C interface, qualified id, and qualified
@@ -4471,6 +4483,11 @@ inline QualType QualType::getNonReferenceType() const {
     return RefType->getPointeeType();
   else
     return *this;
+}
+
+inline bool QualType::isCForbiddenLValueType() const {
+  return ((getTypePtr()->isVoidType() && !hasQualifiers()) ||
+          getTypePtr()->isFunctionType());
 }
 
 /// \brief Tests whether the type is categorized as a fundamental type.
