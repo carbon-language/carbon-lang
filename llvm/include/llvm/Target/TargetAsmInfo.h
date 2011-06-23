@@ -59,6 +59,10 @@ public:
     return TLOF->getEHFrameSection();
   }
 
+  const MCSection *getCompactUnwindSection() const {
+    return TLOF->getCompactUnwindSection();
+  }
+
   const MCSection *getDwarfFrameSection() const {
     return TLOF->getDwarfFrameSection();
   }
