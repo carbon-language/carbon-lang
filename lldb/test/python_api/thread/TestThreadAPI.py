@@ -43,19 +43,19 @@ class ThreadAPITestCase(TestBase):
     def test_run_to_address_with_dsym(self):
         """Test Python SBThread.RunToAddress() API."""
         # We build a different executable than the default buildDwarf() does.
-        d = {'CXX_SOURCES': 'main2.cpp'}
+        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': 'b.out'}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.run_to_address()
+        self.run_to_address('b.out')
 
     @python_api_test
     def test_run_to_address_with_dwarf(self):
         """Test Python SBThread.RunToAddress() API."""
         # We build a different executable than the default buildDwarf() does.
-        d = {'CXX_SOURCES': 'main2.cpp'}
+        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': 'b.out'}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.run_to_address()
+        self.run_to_address('b.out')
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
@@ -220,14 +220,9 @@ class ThreadAPITestCase(TestBase):
         self.assertTrue(thread.GetStopReason() == lldb.eStopReasonPlanComplete)
         self.assertTrue(lineEntry.GetLine() == self.line3)
 
-    def run_to_address(self):
+    def run_to_address(self, exe_name):
         """Test Python SBThread.RunToAddress() API."""
-        # We build a different executable than the default buildDwarf() does.
-        d = {'CXX_SOURCES': 'main2.cpp'}
-        self.buildDwarf(dictionary=d)
-        self.setTearDownCleanup(dictionary=d)
-
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = os.path.join(os.getcwd(), exe_name)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
