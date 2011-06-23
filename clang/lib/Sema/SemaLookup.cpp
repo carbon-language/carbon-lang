@@ -2240,7 +2240,7 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
     ThisTy.addConst();
   if (VolatileThis)
     ThisTy.addVolatile();
-  Expr::Classification ObjectClassification =
+  Expr::Classification Classification =
     (new (Context) OpaqueValueExpr(SourceLocation(), ThisTy,
                                    RValueThis ? VK_RValue : VK_LValue))->
         Classify(Context);
@@ -2256,12 +2256,21 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
   assert((I != E) &&
          "lookup for a constructor or assignment operator was empty");
   for ( ; I != E; ++I) {
-    if ((*I)->isInvalidDecl())
+    Decl *DD = *I;
+    
+    if (UsingShadowDecl *U = dyn_cast<UsingShadowDecl>(D))
+      DD = U->getTargetDecl();
+
+    if (DD->isInvalidDecl())
       continue;
 
-    if (CXXMethodDecl *M = dyn_cast<CXXMethodDecl>(*I)) {
-      AddOverloadCandidate(M, DeclAccessPair::make(M, AS_public), &Arg, NumArgs,
-                           OCS, true);
+    if (CXXMethodDecl *M = dyn_cast<CXXMethodDecl>(DD)) {
+      if (SM == CXXCopyAssignment || SM == CXXMoveAssignment)
+        AddMethodCandidate(M, DeclAccessPair::make(M, AS_public), D, ThisTy,
+                           Classification, &Arg, NumArgs, OCS, true);
+      else
+        AddOverloadCandidate(M, DeclAccessPair::make(M, AS_public), &Arg,
+                             NumArgs, OCS, true);
 
       // Here we're looking for a const parameter to speed up creation of
       // implicit copy methods.
@@ -2274,9 +2283,14 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
           Result->setConstParamMatch(true);
       }
     } else if (FunctionTemplateDecl *Tmpl =
-                 dyn_cast<FunctionTemplateDecl>(*I)) {
-      AddTemplateOverloadCandidate(Tmpl, DeclAccessPair::make(Tmpl, AS_public),
-                                   0, &Arg, NumArgs, OCS, true);
+                 dyn_cast<FunctionTemplateDecl>(DD)) {
+      if (SM == CXXCopyAssignment || SM == CXXMoveAssignment)
+        AddMethodTemplateCandidate(Tmpl, DeclAccessPair::make(Tmpl, AS_public),
+                                   D, 0, ThisTy, Classification, &Arg, NumArgs,
+                                   OCS, true);
+      else
+        AddTemplateOverloadCandidate(Tmpl, DeclAccessPair::make(Tmpl, AS_public),
+                                     0, &Arg, NumArgs, OCS, true);
     }
   }
 
