@@ -349,7 +349,6 @@ endif( MINGW )
 
 if( MSVC )
   set(error_t int)
-  set(mode_t "unsigned short")
   set(LTDL_SHLIBPATH_VAR "PATH")
   set(LTDL_SYSSEARCHPATH "")
   set(LTDL_DLOPEN_DEPLIBS 1)
