@@ -3154,7 +3154,7 @@ def err_qualified_objc_catch_parm : Error<
 def err_objc_pointer_cxx_catch_gnu : Error<
   "can't catch Objective C exceptions in C++ in the GNU runtime">;
 def warn_objc_pointer_cxx_catch_fragile : Warning<
-  "catching Objective C exceptions in C++ in the non-unified "
+  "can not catch an exception thrown with @throw in C++ in the non-unified "
   "exception model">, InGroup<ObjCNonUnifiedException>;
 def err_objc_object_catch : Error<
   "can't catch an Objective C object by value">;
