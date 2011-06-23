@@ -79,6 +79,10 @@ public:
     return TLOF->isFunctionEHFrameSymbolPrivate();
   }
 
+  bool getSupportsCompactUnwindInfo() const {
+    return TLOF->getSupportsCompactUnwindInfo();
+  }
+
   const unsigned *getCalleeSavedRegs(MachineFunction *MF = 0) const {
     return TRI->getCalleeSavedRegs(MF);
   }
