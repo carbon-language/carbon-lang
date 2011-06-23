@@ -71,6 +71,8 @@ if(PYTHONINTERP_FOUND)
   MAKE_DIRECTORY(${CMAKE_CURRENT_BINARY_DIR}/Unit)
 
   # Configuration-time: See Unit/lit.site.cfg.in
+  set(LLVM_BUILD_MODE "%(build_mode)s")
+
   set(LLVM_SOURCE_DIR ${LLVM_MAIN_SRC_DIR})
   set(LLVM_BINARY_DIR ${LLVM_BINARY_DIR})
   set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}/%(build_config)s")
@@ -85,17 +87,10 @@ if(PYTHONINTERP_FOUND)
     set(ENABLE_ASSERTIONS "0")
   endif(LLVM_ENABLE_ASSERTIONS)
 
-  # lit.site.cfg uses the config-time build mode
-  set(LLVM_BUILD_MODE "${LLVM_BUILD_MODE}")
-
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
     ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
     @ONLY)
-
-  # Unit/lit.site.cfg substitutes the runtime build_mode
-  set(LLVM_BUILD_MODE "%(build_mode)s")
-
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
     ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
