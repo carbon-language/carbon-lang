@@ -491,10 +491,13 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
         if (!SuperClassDecl)
           Diag(SuperLoc, diag::err_undef_superclass)
             << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
-        else if (SuperClassDecl->isForwardDecl())
-          Diag(SuperLoc, diag::err_undef_superclass)
+        else if (SuperClassDecl->isForwardDecl()) {
+          Diag(SuperLoc, diag::err_forward_superclass)
             << SuperClassDecl->getDeclName() << ClassName
             << SourceRange(AtInterfaceLoc, ClassLoc);
+          Diag(SuperClassDecl->getLocation(), diag::note_forward_class);
+          SuperClassDecl = 0;
+        }
       }
       IDecl->setSuperClass(SuperClassDecl);
       IDecl->setSuperClassLoc(SuperLoc);

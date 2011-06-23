@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 
-@class SUPER, Y;
+@class SUPER, Y; // expected-note 2 {{forward class is declared here}}
 
-@interface INTF :SUPER  // expected-error {{cannot find interface declaration for 'SUPER', superclass of 'INTF'}}
+@interface INTF :SUPER  // expected-error {{attempting to use the forward class 'SUPER' as superclass of 'INTF'}}
 @end
 
 @interface SUPER @end
@@ -13,7 +13,7 @@
 @interface INTF2 : INTF1
 @end
 
-@interface INTF3 : Y // expected-error {{cannot find interface declaration for 'Y', superclass of 'INTF3'}} \
+@interface INTF3 : Y // expected-error {{attempting to use the forward class 'Y' as superclass of 'INTF3'}} \
                      // expected-note{{'INTF3' declared here}}
 @end
 
