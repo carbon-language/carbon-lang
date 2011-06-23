@@ -363,6 +363,7 @@ public:
   const AttrVec &getAttrs() const;
   void swapAttrs(Decl *D);
   void dropAttrs();
+  void dropWeakImportAttr();
 
   void addAttr(Attr *A) {
     if (hasAttrs())
