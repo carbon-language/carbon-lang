@@ -50,8 +50,7 @@ using namespace llvm;
 
 // Note: when DWARF2_LINE_MIN_INSN_LENGTH == 1 which is the current setting,
 // this routine is a nop and will be optimized away.
-static inline uint64_t ScaleAddrDelta(uint64_t AddrDelta)
-{
+static inline uint64_t ScaleAddrDelta(uint64_t AddrDelta) {
   if (DWARF2_LINE_MIN_INSN_LENGTH == 1)
     return AddrDelta;
   if (AddrDelta % DWARF2_LINE_MIN_INSN_LENGTH != 0) {
@@ -895,46 +894,45 @@ namespace llvm {
   };
 }
 
-void MCDwarfFrameEmitter::Emit(MCStreamer &streamer,
-                               bool usingCFI,
-                               bool isEH) {
-  MCContext &context = streamer.getContext();
-  const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
-  const MCSection &section = isEH ?
-    *asmInfo.getEHFrameSection() :
-    *asmInfo.getDwarfFrameSection();
-  streamer.SwitchSection(&section);
-  MCSymbol *SectionStart = context.CreateTempSymbol();
-  streamer.EmitLabel(SectionStart);
+void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer,
+                               bool UsingCFI,
+                               bool IsEH) {
+  MCContext &Context = Streamer.getContext();
+  const TargetAsmInfo &AsmInfo = Context.getTargetAsmInfo();
+  const MCSection &Section = IsEH ? *AsmInfo.getEHFrameSection() :
+                                    *AsmInfo.getDwarfFrameSection();
+  Streamer.SwitchSection(&Section);
+  MCSymbol *SectionStart = Context.CreateTempSymbol();
+  Streamer.EmitLabel(SectionStart);
 
-  MCSymbol *fdeEnd = NULL;
+  MCSymbol *FDEEnd = NULL;
   DenseMap<CIEKey, const MCSymbol*> CIEStarts;
-  FrameEmitterImpl Emitter(usingCFI, isEH, SectionStart);
+  FrameEmitterImpl Emitter(UsingCFI, IsEH, SectionStart);
 
   const MCSymbol *DummyDebugKey = NULL;
-  for (unsigned i = 0, n = streamer.getNumFrameInfos(); i < n; ++i) {
-    const MCDwarfFrameInfo &frame = streamer.getFrameInfo(i);
-    CIEKey key(frame.Personality, frame.PersonalityEncoding,
-               frame.LsdaEncoding);
-    const MCSymbol *&cieStart = isEH ? CIEStarts[key] : DummyDebugKey;
-    if (isEH && asmInfo.getCompactUnwindSection() &&
-        Emitter.EmitCompactUnwind(streamer, frame))
+  for (unsigned i = 0, n = Streamer.getNumFrameInfos(); i < n; ++i) {
+    const MCDwarfFrameInfo &Frame = Streamer.getFrameInfo(i);
+    if (IsEH && AsmInfo.getCompactUnwindSection() &&
+        Emitter.EmitCompactUnwind(Streamer, Frame))
       continue;
 
-    if (!cieStart)
-      cieStart = &Emitter.EmitCIE(streamer, frame.Personality,
-                                  frame.PersonalityEncoding, frame.Lsda,
-                                  frame.LsdaEncoding);
+    CIEKey Key(Frame.Personality, Frame.PersonalityEncoding,
+               Frame.LsdaEncoding);
+    const MCSymbol *&CIEStart = IsEH ? CIEStarts[Key] : DummyDebugKey;
+    if (!CIEStart)
+      CIEStart = &Emitter.EmitCIE(Streamer, Frame.Personality,
+                                  Frame.PersonalityEncoding, Frame.Lsda,
+                                  Frame.LsdaEncoding);
 
-    fdeEnd = Emitter.EmitFDE(streamer, *cieStart, frame);
+    FDEEnd = Emitter.EmitFDE(Streamer, *CIEStart, Frame);
 
     if (i != n - 1)
-      streamer.EmitLabel(fdeEnd);
+      Streamer.EmitLabel(FDEEnd);
   }
 
-  streamer.EmitValueToAlignment(asmInfo.getPointerSize());
-  if (fdeEnd)
-    streamer.EmitLabel(fdeEnd);
+  Streamer.EmitValueToAlignment(AsmInfo.getPointerSize());
+  if (FDEEnd)
+    Streamer.EmitLabel(FDEEnd);
 }
 
 void MCDwarfFrameEmitter::EmitAdvanceLoc(MCStreamer &Streamer,
