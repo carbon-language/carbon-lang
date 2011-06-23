@@ -572,12 +572,12 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     // removed, so we just need to splice the blocks.
     BI->eraseFromParent();
     
-    // Move all the instructions in the succ to the pred.
-    I->getInstList().splice(I->end(), Dest->getInstList());
-    
     // Make all PHI nodes that referred to Dest now refer to I as their source.
     Dest->replaceAllUsesWith(I);
 
+    // Move all the instructions in the succ to the pred.
+    I->getInstList().splice(I->end(), Dest->getInstList());
+    
     // Remove the dest block.
     Dest->eraseFromParent();
     

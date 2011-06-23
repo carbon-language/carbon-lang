@@ -47,6 +47,14 @@ static inline void RemapInstruction(Instruction *I,
     if (It != VMap.end())
       I->setOperand(op, It->second);
   }
+
+  if (PHINode *PN = dyn_cast<PHINode>(I)) {
+    for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+      ValueToValueMapTy::iterator It = VMap.find(PN->getIncomingBlock(i));
+      if (It != VMap.end())
+        PN->setIncomingBlock(i, cast<BasicBlock>(It->second));
+    }
+  }
 }
 
 /// FoldBlockIntoPredecessor - Folds a basic block into its predecessor if it
@@ -75,12 +83,12 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI) {
   // Delete the unconditional branch from the predecessor...
   OnlyPred->getInstList().pop_back();
 
-  // Move all definitions in the successor to the predecessor...
-  OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
-
   // Make all PHI nodes that referred to BB now refer to Pred as their
   // source...
   BB->replaceAllUsesWith(OnlyPred);
+
+  // Move all definitions in the successor to the predecessor...
+  OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
 
   std::string OldName = BB->getName();
 
@@ -121,14 +129,14 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
 
   BasicBlock *Header = L->getHeader();
   BranchInst *BI = dyn_cast<BranchInst>(LatchBlock->getTerminator());
-
+  
   if (!BI || BI->isUnconditional()) {
     // The loop-rotate pass can be helpful to avoid this in many cases.
     DEBUG(dbgs() <<
              "  Can't unroll; loop not terminated by a conditional branch.\n");
     return false;
   }
-
+  
   if (Header->hasAddressTaken()) {
     // The loop-rotate pass can be helpful to avoid this in many cases.
     DEBUG(dbgs() <<
@@ -202,7 +210,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
     OrigPHINode.push_back(PN);
-    if (Instruction *I =
+    if (Instruction *I = 
                 dyn_cast<Instruction>(PN->getIncomingValueForBlock(LatchBlock)))
       if (L->contains(I))
         LastValueMap[I] = I;
@@ -215,7 +223,7 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
 
   for (unsigned It = 1; It != Count; ++It) {
     std::vector<BasicBlock*> NewBlocks;
-
+    
     for (std::vector<BasicBlock*>::iterator BB = LoopBlocks.begin(),
          E = LoopBlocks.end(); BB != E; ++BB) {
       ValueToValueMapTy VMap;
@@ -247,16 +255,14 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
       // the successor of the latch block.  The successor of the exit block will
       // be updated specially after unrolling all the way.
       if (*BB != LatchBlock)
-        for (Value::use_iterator UI = (*BB)->use_begin(), UE = (*BB)->use_end();
-             UI != UE;) {
-          Instruction *UseInst = cast<Instruction>(*UI);
-          ++UI;
-          if (isa<PHINode>(UseInst) && !L->contains(UseInst)) {
-            PHINode *phi = cast<PHINode>(UseInst);
-            Value *Incoming = phi->getIncomingValueForBlock(*BB);
-            phi->addIncoming(Incoming, New);
-          }
-        }
+        for (succ_iterator SI = succ_begin(*BB), SE = succ_end(*BB); SI != SE;
+             ++SI)
+          if (!L->contains(*SI))
+            for (BasicBlock::iterator BBI = (*SI)->begin();
+                 PHINode *phi = dyn_cast<PHINode>(BBI); ++BBI) {
+              Value *Incoming = phi->getIncomingValueForBlock(*BB);
+              phi->addIncoming(Incoming, New);
+            }
 
       // Keep track of new headers and latches as we create them, so that
       // we can insert the proper branches later.
@@ -276,36 +282,32 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
 
       NewBlocks.push_back(New);
     }
-
+    
     // Remap all instructions in the most recent iteration
     for (unsigned i = 0; i < NewBlocks.size(); ++i)
       for (BasicBlock::iterator I = NewBlocks[i]->begin(),
            E = NewBlocks[i]->end(); I != E; ++I)
         ::RemapInstruction(I, LastValueMap);
   }
-
+  
   // The latch block exits the loop.  If there are any PHI nodes in the
   // successor blocks, update them to use the appropriate values computed as the
   // last iteration of the loop.
   if (Count != 1) {
-    SmallPtrSet<PHINode*, 8> Users;
-    for (Value::use_iterator UI = LatchBlock->use_begin(),
-         UE = LatchBlock->use_end(); UI != UE; ++UI)
-      if (PHINode *phi = dyn_cast<PHINode>(*UI))
-        Users.insert(phi);
-
     BasicBlock *LastIterationBB = cast<BasicBlock>(LastValueMap[LatchBlock]);
-    for (SmallPtrSet<PHINode*,8>::iterator SI = Users.begin(), SE = Users.end();
+    for (succ_iterator SI = succ_begin(LatchBlock), SE = succ_end(LatchBlock);
          SI != SE; ++SI) {
-      PHINode *PN = *SI;
-      Value *InVal = PN->removeIncomingValue(LatchBlock, false);
-      // If this value was defined in the loop, take the value defined by the
-      // last iteration of the loop.
-      if (Instruction *InValI = dyn_cast<Instruction>(InVal)) {
-        if (L->contains(InValI))
-          InVal = LastValueMap[InVal];
+      for (BasicBlock::iterator BBI = (*SI)->begin();
+           PHINode *PN = dyn_cast<PHINode>(BBI); ++BBI) {
+        Value *InVal = PN->removeIncomingValue(LatchBlock, false);
+        // If this value was defined in the loop, take the value defined by the
+        // last iteration of the loop.
+        if (Instruction *InValI = dyn_cast<Instruction>(InVal)) {
+          if (L->contains(InValI))
+            InVal = LastValueMap[InVal];
+        }
+        PN->addIncoming(InVal, LastIterationBB);
       }
-      PN->addIncoming(InVal, LastIterationBB);
     }
   }
 
@@ -352,14 +354,19 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count,
       // Replace the conditional branch with an unconditional one.
       BranchInst::Create(Dest, Term);
       Term->eraseFromParent();
-      // Merge adjacent basic blocks, if possible.
-      if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI)) {
-        std::replace(Latches.begin(), Latches.end(), Dest, Fold);
-        std::replace(Headers.begin(), Headers.end(), Dest, Fold);
-      }
     }
   }
 
+  // Merge adjacent basic blocks, if possible.
+  for (unsigned i = 0, e = Latches.size(); i != e; ++i) {
+    BranchInst *Term = cast<BranchInst>(Latches[i]->getTerminator());
+    if (Term->isUnconditional()) {
+      BasicBlock *Dest = Term->getSuccessor(0);
+      if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI))
+        std::replace(Latches.begin(), Latches.end(), Dest, Fold);
+    }
+  }
+  
   // At this point, the code is well formed.  We now do a quick sweep over the
   // inserted code, doing constant propagation and dead code elimination as we
   // go.
