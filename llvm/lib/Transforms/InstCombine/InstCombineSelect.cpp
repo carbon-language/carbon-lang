@@ -796,7 +796,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
             // So at this point we know we have (Y -> OtherAddOp):
             //        select C, (add X, Y), (sub X, Z)
             Value *NegVal;  // Compute -Z
-            if (SI.getType()->isFloatingPointTy()) {
+            if (SI.getType()->isFPOrFPVectorTy()) {
               NegVal = Builder->CreateFNeg(SubOp->getOperand(1));
             } else {
               NegVal = Builder->CreateNeg(SubOp->getOperand(1));
@@ -810,7 +810,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               Builder->CreateSelect(CondVal, NewTrueOp,
                                     NewFalseOp, SI.getName() + ".p");
 
-            if (SI.getType()->isFloatingPointTy())
+            if (SI.getType()->isFPOrFPVectorTy())
               return BinaryOperator::CreateFAdd(SubOp->getOperand(0), NewSel);
             else
               return BinaryOperator::CreateAdd(SubOp->getOperand(0), NewSel);

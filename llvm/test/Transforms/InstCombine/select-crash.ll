@@ -18,3 +18,15 @@ entry:
   %add94 = fadd double undef, %mul91
   ret double %add94
 }
+
+; PR10180: same crash, but with vectors
+define <4 x float> @foo(i1 %b, <4 x float> %x, <4 x float> %y, <4 x float> %z) {
+; CHECK: @foo
+; CHECK: fsub <4 x float>
+; CHECK: select
+; CHECK: fadd <4 x float>
+  %a = fadd <4 x float> %x, %y
+  %sub = fsub <4 x float> %x, %z
+  %sel = select i1 %b, <4 x float> %a, <4 x float> %sub 
+  ret <4 x float> %sel
+}
