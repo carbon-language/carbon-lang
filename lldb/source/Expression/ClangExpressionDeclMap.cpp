@@ -557,37 +557,65 @@ ClangExpressionDeclMap::GetFunctionAddress
     return true;
 }
 
-bool 
-ClangExpressionDeclMap::GetSymbolAddress
-(
-    Target &target,
-    const ConstString &name,
-    uint64_t &ptr
-)
+addr_t
+ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &name)
 {
     SymbolContextList sc_list;
     
     target.GetImages().FindSymbolsWithNameAndType(name, eSymbolTypeAny, sc_list);
     
-    if (!sc_list.GetSize())
-        return false;
+    const uint32_t num_matches = sc_list.GetSize();
+    addr_t symbol_load_addr = LLDB_INVALID_ADDRESS;
+
+    for (uint32_t i=0; i<num_matches && symbol_load_addr == LLDB_INVALID_ADDRESS; i++)
+    {
+        SymbolContext sym_ctx;
+        sc_list.GetContextAtIndex(i, sym_ctx);
     
-    SymbolContext sym_ctx;
-    sc_list.GetContextAtIndex(0, sym_ctx);
+        const Address *sym_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
+        if (sym_address)
+        {
+            switch (sym_ctx.symbol->GetType())
+            {
+                case eSymbolTypeCode:
+                case eSymbolTypeTrampoline:
+                    symbol_load_addr = sym_address->GetCallableLoadAddress (&target);
+                    break;
+                    
+                case eSymbolTypeData:
+                case eSymbolTypeRuntime:
+                case eSymbolTypeVariable:
+                case eSymbolTypeLocal:
+                case eSymbolTypeParam:
+                case eSymbolTypeInvalid:
+                case eSymbolTypeAbsolute:
+                case eSymbolTypeExtern:
+                case eSymbolTypeException:
+                case eSymbolTypeSourceFile:
+                case eSymbolTypeHeaderFile:
+                case eSymbolTypeObjectFile:
+                case eSymbolTypeCommonBlock:
+                case eSymbolTypeBlock:
+                case eSymbolTypeVariableType:
+                case eSymbolTypeLineEntry:
+                case eSymbolTypeLineHeader:
+                case eSymbolTypeScopeBegin:
+                case eSymbolTypeScopeEnd:
+                case eSymbolTypeAdditional:
+                case eSymbolTypeCompiler:
+                case eSymbolTypeInstrumentation:
+                case eSymbolTypeUndefined:
+                    symbol_load_addr = sym_address->GetLoadAddress (&target);
+                    break;
+            }
+        }
+    }
     
-    const Address *sym_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
-    
-    ptr = sym_address->GetCallableLoadAddress(&target);
-    
-    return true;
+    return symbol_load_addr;
 }
 
-bool 
-ClangExpressionDeclMap::GetSymbolAddress
-(
-    const ConstString &name,
-    uint64_t &ptr
-)
+addr_t
+ClangExpressionDeclMap::GetSymbolAddress (const ConstString &name)
 {
     assert (m_parser_vars.get());
     
@@ -595,9 +623,7 @@ ClangExpressionDeclMap::GetSymbolAddress
         !m_parser_vars->m_exe_ctx->target)
         return false;
     
-    return GetSymbolAddress(*m_parser_vars->m_exe_ctx->target,
-                            name,
-                            ptr);
+    return GetSymbolAddress(*m_parser_vars->m_exe_ctx->target, name);
 }
 
 // Interface for CommandObjectExpression
@@ -1238,9 +1264,9 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
     {
         location_value.reset(new Value);
         
-        uint64_t location_load_addr;
+        addr_t location_load_addr = GetSymbolAddress(*exe_ctx.target, name);
         
-        if (!GetSymbolAddress(*exe_ctx.target, name, location_load_addr))
+        if (location_load_addr == LLDB_INVALID_ADDRESS)
         {
             if (log)
                 err.SetErrorStringWithFormat ("Couldn't find value for global symbol %s", 

@@ -333,20 +333,15 @@ public:
     /// @param[in] name
     ///     The name of the symbol.  
     ///
-    /// @param[out] ptr
-    ///     The absolute address of the function in the target.
-    ///
     /// @return
-    ///     True if the address could be retrieved; false otherwise.
+    ///     Valid load address for the symbol
     //------------------------------------------------------------------
-    bool 
+    lldb::addr_t 
     GetSymbolAddress (Target &target,
-                      const ConstString &name,
-                      uint64_t &ptr);
+                      const ConstString &name);
     
-    bool 
-    GetSymbolAddress (const ConstString &name,
-                      uint64_t &ptr);
+    lldb::addr_t
+    GetSymbolAddress (const ConstString &name);
     
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Materialize the entire struct

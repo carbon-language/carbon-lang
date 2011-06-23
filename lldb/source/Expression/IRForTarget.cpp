@@ -1327,9 +1327,9 @@ IRForTarget::HandleSymbol (Value *symbol)
     
     lldb_private::ConstString name(symbol->getName().str().c_str());
     
-    uint64_t symbol_addr;
+    lldb::addr_t symbol_addr = m_decl_map->GetSymbolAddress (name);
     
-    if (!m_decl_map->GetSymbolAddress (name, symbol_addr))
+    if (symbol_addr == LLDB_INVALID_ADDRESS)
     {
         if (log)
             log->Printf ("Symbol \"%s\" had no address", name.GetCString());
