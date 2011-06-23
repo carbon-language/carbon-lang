@@ -490,7 +490,8 @@ void MachObjectWriter::WriteDysymtabLoadCommand(uint32_t FirstLocalSymbol,
   assert(OS.tell() - Start == macho::DysymtabLoadCommandSize);
 }
 
-void MachObjectWriter::WriteNlist(MachSymbolData &MSD, const MCAsmLayout &Layout) {
+void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
+                                  const MCAsmLayout &Layout) {
   MCSymbolData &Data = *MSD.SymbolData;
   const MCSymbol &Symbol = Data.getSymbol();
   uint8_t Type = 0;
@@ -1058,7 +1059,8 @@ void MachObjectWriter::RecordTLVPRelocation(const MCAssembler &Asm,
   Relocations[Fragment->getParent()].push_back(MRE);
 }
 
-bool MachObjectWriter::getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
+bool MachObjectWriter::getARMFixupKindMachOInfo(unsigned Kind,
+                                                unsigned &RelocType,
                                                 unsigned &Log2Size) {
   RelocType = unsigned(macho::RIT_Vanilla);
   Log2Size = ~0U;
@@ -1379,10 +1381,11 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
 /// \param StringTable [out] - The string table data.
 /// \param StringIndexMap [out] - Map from symbol names to offsets in the
 /// string table.
-void MachObjectWriter::ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
-                                          std::vector<MachSymbolData> &LocalSymbolData,
-                                          std::vector<MachSymbolData> &ExternalSymbolData,
-                                          std::vector<MachSymbolData> &UndefinedSymbolData) {
+void MachObjectWriter::
+ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
+                   std::vector<MachSymbolData> &LocalSymbolData,
+                   std::vector<MachSymbolData> &ExternalSymbolData,
+                   std::vector<MachSymbolData> &UndefinedSymbolData) {
   // Build section lookup table.
   DenseMap<const MCSection*, uint8_t> SectionIndexMap;
   unsigned Index = 1;
@@ -1505,7 +1508,8 @@ void MachObjectWriter::computeSectionAddresses(const MCAssembler &Asm,
   }
 }
 
-void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm, const MCAsmLayout &Layout) {
+void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
+                                                const MCAsmLayout &Layout) {
   computeSectionAddresses(Asm, Layout);
 
   // Create symbol data for any indirect symbols.
@@ -1516,11 +1520,12 @@ void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm, const MCAsmLay
                      UndefinedSymbolData);
 }
 
-bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
-                                                              const MCSymbolData &DataA,
-                                                              const MCFragment &FB,
-                                                              bool InSet,
-                                                              bool IsPCRel) const {
+bool MachObjectWriter::
+IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+                                       const MCSymbolData &DataA,
+                                       const MCFragment &FB,
+                                       bool InSet,
+                                       bool IsPCRel) const {
   if (InSet)
     return true;
 
