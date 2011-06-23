@@ -43,66 +43,69 @@ class ThreadAPITestCase(TestBase):
     def test_run_to_address_with_dsym(self):
         """Test Python SBThread.RunToAddress() API."""
         # We build a different executable than the default buildDwarf() does.
-        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': 'b.out'}
+        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': self.exe_name}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.run_to_address('b.out')
+        self.run_to_address(self.exe_name)
 
     @python_api_test
     def test_run_to_address_with_dwarf(self):
         """Test Python SBThread.RunToAddress() API."""
         # We build a different executable than the default buildDwarf() does.
-        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': 'b.out'}
+        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': self.exe_name}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.run_to_address('b.out')
+        self.run_to_address(self.exe_name)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_step_out_of_malloc_into_function_b_with_dsym(self):
         """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
         # We build a different executable than the default buildDsym() does.
-        d = {'CXX_SOURCES': 'main2.cpp'}
+        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': self.exe_name}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.step_out_of_malloc_into_function_b()
+        self.step_out_of_malloc_into_function_b(self.exe_name)
 
     @python_api_test
     def test_step_out_of_malloc_into_function_b_with_dwarf(self):
         """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
         # We build a different executable than the default buildDwarf() does.
-        d = {'CXX_SOURCES': 'main2.cpp'}
+        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': self.exe_name}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.step_out_of_malloc_into_function_b()
+        self.step_out_of_malloc_into_function_b(self.exe_name)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_step_over_3_times_with_dsym(self):
         """Test Python SBThread.StepOver() API."""
         # We build a different executable than the default buildDsym() does.
-        d = {'CXX_SOURCES': 'main2.cpp'}
+        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': self.exe_name}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.step_over_3_times()
+        self.step_over_3_times(self.exe_name)
 
     @python_api_test
     def test_step_over_3_times_with_dwarf(self):
         """Test Python SBThread.StepOver() API."""
         # We build a different executable than the default buildDwarf() does.
-        d = {'CXX_SOURCES': 'main2.cpp'}
+        d = {'CXX_SOURCES': 'main2.cpp', 'EXE': self.exe_name}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.step_over_3_times()
+        self.step_over_3_times(self.exe_name)
 
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number within main.cpp to break inside main().
-        self.line = line_number("main.cpp", "// Set break point at this line and check variable 'my_char'.")
-        # Find the line numbers within main2.cpp for step_over_3_times() and step_out_of_malloc_into_function_b().
-        self.line2 = line_number("main2.cpp", "// thread step-out of malloc into function b.")
-        self.line3 = line_number("main2.cpp", "// we should reach here after 3 step-over's.")
+        self.break_line = line_number("main.cpp", "// Set break point at this line and check variable 'my_char'.")
+        # Find the line numbers within main2.cpp for step_out_of_malloc_into_function_b() and step_over_3_times().
+        self.step_out_of_malloc = line_number("main2.cpp", "// thread step-out of malloc into function b.")
+        self.after_3_step_overs = line_number("main2.cpp", "// we should reach here after 3 step-over's.")
+
+        # We'll use the test method name as the exe_name for executable comppiled from main2.cpp.
+        self.exe_name = self.testMethodName
 
     def get_process(self):
         """Test Python SBThread.GetProcess() API."""
@@ -111,7 +114,7 @@ class ThreadAPITestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.break_line)
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
         self.runCmd("breakpoint list")
 
@@ -133,7 +136,7 @@ class ThreadAPITestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.line)
+        breakpoint = target.BreakpointCreateByLocation("main.cpp", self.break_line)
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
         #self.runCmd("breakpoint list")
 
@@ -151,9 +154,9 @@ class ThreadAPITestCase(TestBase):
         self.expect(stop_description, exe=False,
             startstr = 'breakpoint')
 
-    def step_out_of_malloc_into_function_b(self):
+    def step_out_of_malloc_into_function_b(self, exe_name):
         """Test Python SBThread.StepOut() API to step out of a malloc call where the call site is at function b()."""
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = os.path.join(os.getcwd(), exe_name)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -181,17 +184,17 @@ class ThreadAPITestCase(TestBase):
         thread.StepOut()
         self.runCmd("thread backtrace")
         #self.runCmd("process status")           
-        self.assertTrue(thread.GetFrameAtIndex(0).GetLineEntry().GetLine() == self.line2,
+        self.assertTrue(thread.GetFrameAtIndex(0).GetLineEntry().GetLine() == self.step_out_of_malloc,
                         "step out of malloc into function b is successful")
 
-    def step_over_3_times(self):
+    def step_over_3_times(self, exe_name):
         """Test Python SBThread.StepOver() API."""
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = os.path.join(os.getcwd(), exe_name)
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        breakpoint = target.BreakpointCreateByLocation('main2.cpp', self.line2)
+        breakpoint = target.BreakpointCreateByLocation('main2.cpp', self.step_out_of_malloc)
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
         self.runCmd("breakpoint list")
 
@@ -200,14 +203,14 @@ class ThreadAPITestCase(TestBase):
 
         self.assertTrue(process, PROCESS_IS_VALID)
 
-        # Frame #0 should be on self.line2.
+        # Frame #0 should be on self.step_out_of_malloc.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         self.runCmd("thread backtrace")
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()
-        self.assertTrue(lineEntry.GetLine() == self.line2)
+        self.assertTrue(lineEntry.GetLine() == self.step_out_of_malloc)
 
         thread.StepOver()
         thread.StepOver()
@@ -218,7 +221,7 @@ class ThreadAPITestCase(TestBase):
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()
         self.assertTrue(thread.GetStopReason() == lldb.eStopReasonPlanComplete)
-        self.assertTrue(lineEntry.GetLine() == self.line3)
+        self.assertTrue(lineEntry.GetLine() == self.after_3_step_overs)
 
     def run_to_address(self, exe_name):
         """Test Python SBThread.RunToAddress() API."""
@@ -227,7 +230,7 @@ class ThreadAPITestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        breakpoint = target.BreakpointCreateByLocation('main2.cpp', self.line2)
+        breakpoint = target.BreakpointCreateByLocation('main2.cpp', self.step_out_of_malloc)
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
         self.runCmd("breakpoint list")
 
@@ -236,14 +239,14 @@ class ThreadAPITestCase(TestBase):
 
         self.assertTrue(process, PROCESS_IS_VALID)
 
-        # Frame #0 should be on self.line2.
+        # Frame #0 should be on self.step_out_of_malloc.
         self.assertTrue(process.GetState() == lldb.eStateStopped)
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
         self.runCmd("thread backtrace")
         frame0 = thread.GetFrameAtIndex(0)
         lineEntry = frame0.GetLineEntry()
-        self.assertTrue(lineEntry.GetLine() == self.line2)
+        self.assertTrue(lineEntry.GetLine() == self.step_out_of_malloc)
 
         # Get the start/end addresses for this line entry.
         start_addr = lineEntry.GetStartAddress().GetLoadAddress(target)
@@ -262,7 +265,7 @@ class ThreadAPITestCase(TestBase):
         self.runCmd("thread backtrace")
 
         # Now ask SBThread to run to the address 'start_addr' we got earlier, which
-        # corresponds to self.line2 line entry's start address.
+        # corresponds to self.step_out_of_malloc line entry's start address.
         thread.RunToAddress(start_addr)
         self.runCmd("process status")
         #self.runCmd("thread backtrace")

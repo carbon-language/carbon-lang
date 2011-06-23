@@ -356,6 +356,7 @@ class TestBase(unittest2.TestCase):
 
         - The setUp method sets up things to facilitate subsequent interactions
           with the debugger as part of the test.  These include:
+              - populate the test method name
               - create/get a debugger set with synchronous mode (self.dbg)
               - get the command interpreter from with the debugger (self.ci)
               - create a result object for use with the command interpreter
@@ -477,6 +478,14 @@ class TestBase(unittest2.TestCase):
     def setUp(self):
         #import traceback
         #traceback.print_stack()
+
+        # Assign the test method name to self.testMethodName.
+        #
+        # For an example of the use of this attribute, look at test/types dir.
+        # There are a bunch of test cases under test/types and we don't want the
+        # module cacheing subsystem to be confused with executable name "a.out"
+        # used for all the test cases.
+        self.testMethodName = self._testMethodName
 
         if "LLDB_EXEC" in os.environ:
             self.lldbExec = os.environ["LLDB_EXEC"]

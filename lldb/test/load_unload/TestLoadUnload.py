@@ -21,6 +21,7 @@ class LoadUnloadTestCase(TestBase):
         self.line_d_function = line_number('d.c',
                                            '// Find this line number within d_dunction().')
 
+    @unittest2.expectedFailure
     def test_modules_search_paths(self):
         """Test target modules list after moving libd.dylib, and verifies that it works with 'target modules search-paths add'."""
 

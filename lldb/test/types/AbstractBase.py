@@ -27,7 +27,7 @@ class GenericTester(TestBase):
         # There are a bunch of test cases under test/types and we don't want the
         # module cacheing subsystem to be confused with executable name "a.out"
         # used for all the test cases.
-        self.exe_name = self._testMethodName
+        self.exe_name = self.testMethodName
 
     def generic_type_tester(self, exe_name, atoms, quotedDisplay=False):
         """Test that variables with basic types are displayed correctly."""
