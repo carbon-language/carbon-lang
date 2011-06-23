@@ -571,24 +571,6 @@ Decl *Decl::castFromDeclContext (const DeclContext *D) {
   }
 }
 
-template <typename T>
-void Decl::dropAttr() {
-  if (!HasAttrs) return;
-  AttrVec &Attrs = getASTContext().getDeclAttrs(this);
-  for (unsigned i = 0, e = Attrs.size(); i != e; /* in loop */) {
-    if (isa<T>(Attrs[i])) {
-      Attrs.erase(Attrs.begin() + i);
-      --e;
-    }
-    else
-      ++i;
-  }
-  if (Attrs.empty())
-    HasAttrs = false;
-}
-// Force instantiation for WeakImportAttr which gets used.
-template void Decl::dropAttr<WeakImportAttr>();
-
 DeclContext *Decl::castToDeclContext(const Decl *D) {
   Decl::Kind DK = D->getKind();
   switch(DK) {
