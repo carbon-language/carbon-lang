@@ -18,13 +18,13 @@ include $(LLDB_LEVEL)/Makefile
 
 PYTHON_DIR := $(ToolDir)
 ifeq ($(HOST_OS),Darwin)
-PYTHON_DEST_DIR := /Library/Python/$(shell python -c 'import sys; print sys.version[:3]')/site-packages
+PYTHON_DEST_DIR := $(DESTDIR)/$(call realpath /Library/Python/$(shell python -c 'import sys; print sys.version[:3]')/site-packages)
 else
-PYTHON_DEST_DIR := $(shell python -c 'import sys; print sys.exec_prefix')/lib/python$(shell python -c 'import sys; print sys.version[:3]')/site-packages
+PYTHON_DEST_DIR := $(DESTDIR)/$(call realpath $(shell python -c 'import sys; print sys.exec_prefix')/lib/python$(shell python -c 'import sys; print sys.version[:3]')/site-packages)
 endif
 LLDB_SWIG_INCLUDE_DIRS:= -I"$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/include" -I./.
 LIBLLDB := $(LibDir)/liblldb$(SHLIBEXT)
-DEST_LIBLLDB := $(DESTDIR)$(PROJ_libdir)/liblldb$(SHLIBEXT)
+INST_LIBLLDB := $(PROJ_libdir)/liblldb$(SHLIBEXT)
 
 # We need Swig to process stdint.h, but by default it will not inspect system
 # include directories.  The following should cover the standard locations on
@@ -55,13 +55,13 @@ LLDBWrapPython.cpp: $(PROJ_SRC_DIR)/$(LLDB_LEVEL)/scripts/Python/modify-python-l
 	$(Verb) $(RM) -f $(PYTHON_DIR)/_lldb.so
 	$(Verb) $(AliasTool) $(LIBLLDB) $(PYTHON_DIR)/_lldb.so
 
-install-local:: $(PYTHON_DIR)/lldb.py $(PYTHON_DIR)/embedded_interpreter.py $(DEST_LIBLLDB)
+install-local:: $(PYTHON_DIR)/lldb.py $(PYTHON_DIR)/embedded_interpreter.py
 	$(Echo) Installing $(BuildMode) LLDB python modules
 	$(Verb) $(MKDIR) $(PYTHON_DEST_DIR)/lib-dynload
 	$(Verb) $(DataInstall) $(PYTHON_DIR)/lldb.py $(PYTHON_DEST_DIR)/lldb.py
 	$(Verb) $(DataInstall) $(PYTHON_DIR)/embedded_interpreter.py $(PYTHON_DEST_DIR)/embedded_interpreter.py
 	$(Verb) $(RM) -f $(PYTHON_DEST_DIR)/lib-dynload/_lldb.so
-	$(Verb) $(AliasTool) $(DEST_LIBLLDB) $(PYTHON_DEST_DIR)/lib-dynload/_lldb.so
+	$(Verb) $(AliasTool) $(INST_LIBLLDB) $(PYTHON_DEST_DIR)/lib-dynload/_lldb.so
 
 clean-local::
 	$(Verb) $(RM) -f LLDBWrapPython.cpp $(PYTHON_DIR)/_lldb.so \
