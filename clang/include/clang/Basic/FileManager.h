@@ -21,9 +21,12 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Config/config.h" // for mode_t
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
+
+#ifdef _MSC_VER
+typedef unsigned short mode_t;
+#endif
 
 struct stat;
 

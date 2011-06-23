@@ -38,6 +38,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Config/config.h"
 using namespace clang;
 
 CompilerInstance::CompilerInstance()
