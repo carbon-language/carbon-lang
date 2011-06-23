@@ -661,6 +661,23 @@ ValueObject::GetValueAsCString ()
     {
         if (UpdateValueIfNeeded())
         {
+            /*
+             this is a quick fix for the case in which we display a variable, then change its format with
+             type format add and the old display string keeps showing until one steps through the code
+             */
+            {
+                const Value::ContextType context_type = m_value.GetContextType();
+                switch (context_type)
+                {
+                    case Value::eContextTypeClangType:
+                    case Value::eContextTypeLLDBType:
+                    case Value::eContextTypeVariable:
+                        Format format = GetFormat();
+                        if (format != m_last_format)
+                            m_value_str.clear();
+                        break;
+                }
+            }
             if (m_value_str.empty())
             {
                 const Value::ContextType context_type = m_value.GetContextType();
@@ -682,7 +699,7 @@ ValueObject::GetValueAsCString ()
                             if (ClangASTType::DumpTypeValue (GetClangAST(),            // The clang AST
                                                              clang_type,               // The clang type to display
                                                              &sstr,
-                                                             format,                   // Format to display this type with
+                                                             m_last_format = format,   // Format to display this type with
                                                              m_data,                   // Data to extract from
                                                              0,                        // Byte offset into "m_data"
                                                              GetByteSize(),            // Byte size of item in "m_data"

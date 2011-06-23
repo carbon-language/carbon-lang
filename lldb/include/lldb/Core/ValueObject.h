@@ -505,6 +505,7 @@ protected:
     ValueObject *m_deref_valobj;
 
     lldb::Format        m_format;
+    lldb::Format        m_last_format;
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
                         m_children_count_valid:1,
