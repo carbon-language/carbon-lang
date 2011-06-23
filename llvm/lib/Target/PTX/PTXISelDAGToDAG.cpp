@@ -15,6 +15,7 @@
 #include "PTXTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -42,7 +43,8 @@ class PTXDAGToDAGISel : public SelectionDAGISel {
 
   private:
     SDNode *SelectREAD_PARAM(SDNode *Node);
-
+    //SDNode *SelectSTORE_PARAM(SDNode *Node);
+    
     // We need this only because we can't match intruction BRAdp
     // pattern (PTXbrcond bb:$d, ...) in PTXInstrInfo.td
     SDNode *SelectBRCOND(SDNode *Node);
@@ -69,6 +71,8 @@ SDNode *PTXDAGToDAGISel::Select(SDNode *Node) {
   switch (Node->getOpcode()) {
     case PTXISD::READ_PARAM:
       return SelectREAD_PARAM(Node);
+    // case PTXISD::STORE_PARAM:
+    //   return SelectSTORE_PARAM(Node);
     case ISD::BRCOND:
       return SelectBRCOND(Node);
     default:
@@ -86,26 +90,57 @@ SDNode *PTXDAGToDAGISel::SelectREAD_PARAM(SDNode *Node) {
 
   if (Node->getValueType(0) == MVT::i16) {
     opcode = PTX::LDpiU16;
-  }
-  else if (Node->getValueType(0) == MVT::i32) {
+  } else if (Node->getValueType(0) == MVT::i32) {
     opcode = PTX::LDpiU32;
-  }
-  else if (Node->getValueType(0) == MVT::i64) {
+  } else if (Node->getValueType(0) == MVT::i64) {
     opcode = PTX::LDpiU64;
-  }
-  else if (Node->getValueType(0) == MVT::f32) {
+  } else if (Node->getValueType(0) == MVT::f32) {
     opcode = PTX::LDpiF32;
-  }
-  else if (Node->getValueType(0) == MVT::f64) {
+  } else if (Node->getValueType(0) == MVT::f64) {
     opcode = PTX::LDpiF64;
-  }
-  else {
+  } else {
     llvm_unreachable("Unknown parameter type for ld.param");
   }
 
   return PTXInstrInfo::
     GetPTXMachineNode(CurDAG, opcode, dl, Node->getValueType(0), index);
 }
+
+// SDNode *PTXDAGToDAGISel::SelectSTORE_PARAM(SDNode *Node) {
+//   SDValue  Chain = Node->getOperand(0);
+//   SDValue  index = Node->getOperand(1);
+//   SDValue  value = Node->getOperand(2);
+//   DebugLoc dl    = Node->getDebugLoc();
+//   unsigned opcode;
+
+//   if (index.getOpcode() != ISD::TargetConstant)
+//     llvm_unreachable("STORE_PARAM: index is not ISD::TargetConstant");
+
+//   if (value->getValueType(0) == MVT::i16) {
+//     opcode = PTX::STpiU16;
+//   } else if (value->getValueType(0) == MVT::i32) {
+//     opcode = PTX::STpiU32;
+//   } else if (value->getValueType(0) == MVT::i64) {
+//     opcode = PTX::STpiU64;
+//   } else if (value->getValueType(0) == MVT::f32) {
+//     opcode = PTX::STpiF32;
+//   } else if (value->getValueType(0) == MVT::f64) {
+//     opcode = PTX::STpiF64;
+//   } else {
+//     llvm_unreachable("Unknown parameter type for st.param");
+//   }
+
+//   SDVTList VTs = CurDAG->getVTList(MVT::Other, MVT::Glue);
+//   SDValue PredReg = CurDAG->getRegister(PTX::NoRegister, MVT::i1);
+//   SDValue PredOp = CurDAG->getTargetConstant(PTX::PRED_NORMAL, MVT::i32);
+//   SDValue Ops[] = { Chain, index, value, PredReg, PredOp };
+//   //SDNode *RetNode = PTXInstrInfo::
+//   //  GetPTXMachineNode(CurDAG, opcode, dl, VTs, index, value);
+//   SDNode *RetNode = CurDAG->getMachineNode(opcode, dl, VTs, Ops, array_lengthof(Ops));
+//   DEBUG(dbgs() << "SelectSTORE_PARAM: Selected: ");
+//   RetNode->dumpr(CurDAG);
+//   return RetNode;
+// }
 
 SDNode *PTXDAGToDAGISel::SelectBRCOND(SDNode *Node) {
   assert(Node->getNumOperands() >= 3);

@@ -18,7 +18,7 @@
 
 namespace llvm {
   class PTXSubtarget : public TargetSubtarget {
-    private:
+    public:
 
       /**
        * Enumeration of Shader Models supported by the back-end.
@@ -41,6 +41,8 @@ namespace llvm {
         PTX_VERSION_2_3   /*< PTX Version 2.3 */
       };
 
+  private:
+
       /// Shader Model supported on the target GPU.
       PTXShaderModelEnum PTXShaderModel;
 
@@ -58,8 +60,10 @@ namespace llvm {
       bool Is64Bit;
 
     public:
+
       PTXSubtarget(const std::string &TT, const std::string &FS, bool is64Bit);
 
+      // Target architecture accessors
       std::string getTargetString() const;
 
       std::string getPTXVersionString() const;
@@ -79,6 +83,9 @@ namespace llvm {
       bool supportsPTX22() const { return PTXVersion >= PTX_VERSION_2_2; }
 
       bool supportsPTX23() const { return PTXVersion >= PTX_VERSION_2_3; }
+
+      PTXShaderModelEnum getShaderModel() const { return PTXShaderModel; }
+
 
       std::string ParseSubtargetFeatures(const std::string &FS,
                                          const std::string &CPU);

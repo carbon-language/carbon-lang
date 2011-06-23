@@ -417,6 +417,7 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
 
   const PTXMachineFunctionInfo *MFI = MF->getInfo<PTXMachineFunctionInfo>();
   const bool isKernel = MFI->isKernel();
+  const PTXSubtarget& ST = TM.getSubtarget<PTXSubtarget>();
 
   std::string decl = isKernel ? ".entry" : ".func";
 
@@ -452,7 +453,7 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
     if (i != b) {
       decl += ", ";
     }
-    if (isKernel) {
+    if (isKernel || ST.getShaderModel() >= PTXSubtarget::PTX_SM_2_0) {
       decl += ".param .b";
       decl += utostr(*i);
       decl += " ";

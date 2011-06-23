@@ -25,11 +25,12 @@ namespace PTXISD {
   enum NodeType {
     FIRST_NUMBER = ISD::BUILTIN_OP_END,
     READ_PARAM,
+    STORE_PARAM,
     EXIT,
     RET,
     COPY_ADDRESS
   };
-} // namespace PTXISD
+}                               // namespace PTXISD
 
 class PTXTargetLowering : public TargetLowering {
   public:

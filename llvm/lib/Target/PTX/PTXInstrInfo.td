@@ -180,9 +180,14 @@ def PTXsra : SDNode<"ISD::SRA", SDTIntBinOp>;
 def PTXexit
   : SDNode<"PTXISD::EXIT", SDTNone, [SDNPHasChain]>;
 def PTXret
-  : SDNode<"PTXISD::RET",  SDTNone, [SDNPHasChain]>;
+  : SDNode<"PTXISD::RET",  SDTNone,
+           [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def PTXcopyaddress
   : SDNode<"PTXISD::COPY_ADDRESS", SDTypeProfile<1, 1, []>, []>;
+
+def PTXstoreparam
+  : SDNode<"PTXISD::STORE_PARAM", SDTypeProfile<0, 2, [SDTCisVT<0, i32>]>,
+           [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue]>;
 
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
@@ -816,7 +821,7 @@ defm LDc : PTX_LD_ALL<"ld.const",  load_constant>;
 defm LDl : PTX_LD_ALL<"ld.local",  load_local>;
 defm LDs : PTX_LD_ALL<"ld.shared", load_shared>;
 
-// This is a special instruction that is manually inserted for kernel parameters
+// This is a special instruction that is manually inserted for parameters
 def LDpiU16 : InstPTX<(outs RegI16:$d), (ins MEMpi:$a),
                       "ld.param.u16\t$d, [$a]", []>;
 def LDpiU32 : InstPTX<(outs RegI32:$d), (ins MEMpi:$a),
@@ -827,6 +832,23 @@ def LDpiF32 : InstPTX<(outs RegF32:$d), (ins MEMpi:$a),
                       "ld.param.f32\t$d, [$a]", []>;
 def LDpiF64 : InstPTX<(outs RegF64:$d), (ins MEMpi:$a),
                       "ld.param.f64\t$d, [$a]", []>;
+
+// def STpiPred : InstPTX<(outs), (ins i1imm:$d, RegPred:$a),
+//                        "st.param.pred\t[$d], $a",
+//                        [(PTXstoreparam imm:$d, RegPred:$a)]>;
+// def STpiU16 : InstPTX<(outs), (ins i16imm:$d, RegI16:$a),
+//                       "st.param.u16\t[$d], $a",
+//                       [(PTXstoreparam imm:$d, RegI16:$a)]>;
+def STpiU32 : InstPTX<(outs), (ins i32imm:$d, RegI32:$a),
+                      "st.param.u32\t[$d], $a",
+                      [(PTXstoreparam timm:$d, RegI32:$a)]>;
+// def STpiU64 : InstPTX<(outs), (ins i64imm:$d, RegI64:$a),
+//                       "st.param.u64\t[$d], $a",
+//                       [(PTXstoreparam imm:$d, RegI64:$a)]>;
+// def STpiF32 : InstPTX<(outs), (ins MEMpi:$d, RegF32:$a),
+//                       "st.param.f32\t[$d], $a", []>;
+// def STpiF64 : InstPTX<(outs), (ins MEMpi:$d, RegF64:$a),
+//                       "st.param.f64\t[$d], $a", []>;
 
 // Stores
 defm STg : PTX_ST_ALL<"st.global", store_global>;
