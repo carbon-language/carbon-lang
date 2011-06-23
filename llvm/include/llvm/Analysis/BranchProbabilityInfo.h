@@ -39,6 +39,9 @@ class BranchProbabilityInfo : public FunctionPass {
   // Get sum of the block successors' weights.
   uint32_t getSumForBlock(BasicBlock *BB) const;
 
+  // Get sum of the edge weights going to the BB block.
+  uint32_t getBackSumForBlock(BasicBlock *BB) const;
+
 public:
   static char ID;
 
@@ -70,6 +73,13 @@ public:
   // 1 (100% probability), however the value is never equal to 0, and can be 1
   // only iff SRC block has only one successor.
   BranchProbability getEdgeProbability(BasicBlock *Src, BasicBlock *Dst) const;
+
+  // Return a probability of getting to the DST block through SRC->DST edge.
+  // Returned value is a fraction between 0 (0% probability) and
+  // 1 (100% probability), however the value is never equal to 0, and can be 1
+  // only iff DST block has only one predecesor.
+  BranchProbability getBackEdgeProbability(BasicBlock *Src,
+                                           BasicBlock *Dst) const;
 
   // Print value between 0 (0% probability) and 1 (100% probability),
   // however the value is never equal to 0, and can be 1 only iff SRC block

@@ -279,6 +279,21 @@ uint32_t BranchProbabilityInfo::getSumForBlock(BasicBlock *BB) const {
   return Sum;
 }
 
+uint32_t BranchProbabilityInfo::getBackSumForBlock(BasicBlock *BB) const {
+  uint32_t Sum = 0;
+
+  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
+    BasicBlock *Pred = *I;
+    uint32_t Weight = getEdgeWeight(Pred, BB);
+    uint32_t PrevSum = Sum;
+
+    Sum += Weight;
+    assert(Sum > PrevSum); (void) PrevSum;
+  }
+
+  return Sum;
+}
+
 bool BranchProbabilityInfo::isEdgeHot(BasicBlock *Src, BasicBlock *Dst) const {
   // Hot probability is at least 4/5 = 80%
   uint32_t Weight = getEdgeWeight(Src, Dst);
@@ -341,6 +356,15 @@ getEdgeProbability(BasicBlock *Src, BasicBlock *Dst) const {
 
   uint32_t N = getEdgeWeight(Src, Dst);
   uint32_t D = getSumForBlock(Src);
+
+  return BranchProbability(N, D);
+}
+
+BranchProbability BranchProbabilityInfo::
+getBackEdgeProbability(BasicBlock *Src, BasicBlock *Dst) const {
+
+  uint32_t N = getEdgeWeight(Src, Dst);
+  uint32_t D = getBackSumForBlock(Dst);
 
   return BranchProbability(N, D);
 }
