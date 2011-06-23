@@ -61,7 +61,6 @@ TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   
   IsFunctionEHFrameSymbolPrivate = true;
   SupportsWeakOmittedEHFrame = true;
-  SupportsCompactUnwindInfo = false;
 }
 
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {

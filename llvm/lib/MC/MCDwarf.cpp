@@ -917,7 +917,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &streamer,
     CIEKey key(frame.Personality, frame.PersonalityEncoding,
                frame.LsdaEncoding);
     const MCSymbol *&cieStart = isEH ? CIEStarts[key] : DummyDebugKey;
-    if (isEH && asmInfo.getSupportsCompactUnwindInfo() &&
+    if (isEH && asmInfo.getCompactUnwindSection() &&
         Emitter.EmitCompactUnwind(streamer, frame))
       continue;
 

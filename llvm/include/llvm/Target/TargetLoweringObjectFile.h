@@ -108,10 +108,6 @@ protected:
   /// non-.globl label.  This defaults to true.
   bool IsFunctionEHFrameSymbolPrivate;
 
-  /// SupportsCompactUnwindInfo - This flag is set to true if the CIE and FDE
-  /// information should be emitted in a compact form.
-  bool SupportsCompactUnwindInfo;
-
 public:
   MCContext &getContext() const { return *Ctx; }
   
@@ -132,9 +128,6 @@ public:
   }
   bool getCommDirectiveSupportsAlignment() const {
     return CommDirectiveSupportsAlignment;
-  }
-  bool getSupportsCompactUnwindInfo() const {
-    return SupportsCompactUnwindInfo;
   }
 
   const MCSection *getTextSection() const { return TextSection; }

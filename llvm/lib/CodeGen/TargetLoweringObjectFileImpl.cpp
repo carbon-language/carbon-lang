@@ -487,12 +487,8 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
 
   // .comm doesn't support alignment before Leopard.
   Triple T(((LLVMTargetMachine&)TM).getTargetTriple());
-  if (T.isMacOSX()) {
-    if (T.isMacOSXVersionLT(10, 5))
-      CommDirectiveSupportsAlignment = false;
-    if (!T.isMacOSXVersionLT(10, 6))
-      SupportsCompactUnwindInfo = true;
-  }
+  if (T.isMacOSX() && T.isMacOSXVersionLT(10, 5))
+    CommDirectiveSupportsAlignment = false;
 
   TargetLoweringObjectFile::Initialize(Ctx, TM);
 
@@ -610,10 +606,11 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
   LSDASection = getContext().getMachOSection("__TEXT", "__gcc_except_tab", 0,
                                              SectionKind::getReadOnlyWithRel());
 
-  CompactUnwindSection =
-    getContext().getMachOSection("__LD", "__compact_unwind",
-                                 MCSectionMachO::S_ATTR_DEBUG,
-                                 SectionKind::getReadOnly());
+  if (T.isMacOSX() && !T.isMacOSXVersionLT(10, 6))
+    CompactUnwindSection =
+      getContext().getMachOSection("__LD", "__compact_unwind",
+                                   MCSectionMachO::S_ATTR_DEBUG,
+                                   SectionKind::getReadOnly());
 
   // Debug Information.
   DwarfAbbrevSection =
