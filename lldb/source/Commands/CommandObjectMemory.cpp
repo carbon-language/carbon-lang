@@ -988,6 +988,7 @@ public:
 
             switch (m_options.m_format)
             {
+            case kNumFormats:
             case eFormatFloat:  // TODO: add support for floats soon
             case eFormatCharPrintable:
             case eFormatBytesWithASCII:

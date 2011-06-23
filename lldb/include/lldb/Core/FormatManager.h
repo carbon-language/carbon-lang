@@ -51,37 +51,57 @@ namespace std
 
 namespace lldb_private {
 
-    struct compareFormatMapKeys {
-        bool operator()(const char* k1, const char* k2) {
-            //return strcmp(k1,k2) == 0;
-            return (k1 == k2);
-        } 
-    };
-    
-    typedef struct format_entry_t {
-        lldb::Format FormatStyle;
-        bool Cascades;
-        format_entry_t(lldb::Format fmt) : FormatStyle(fmt), Cascades(false) {}
-        format_entry_t(lldb::Format fmt, bool csc) : FormatStyle(fmt), Cascades(csc) {}
-        format_entry_t() : FormatStyle((lldb::Format)0), Cascades(false) {} //eFormatDefault
-    } FormatEntry;
-    
-    typedef std::map<const char*, format_entry_t> FormatMap;
-    typedef FormatMap::iterator FormatIterator;
-    
-    typedef bool(*FormatCallback)(void*, const char*, lldb::Format, bool);
     
 class FormatManager
 {
 public:
-    
-    FormatManager() : m_format_map(FormatMap()), m_format_map_mutex(Mutex::eMutexTypeRecursive) {}
-    bool GetFormatForType (const ConstString &type, lldb::Format& format, bool& cascade);
-    void AddFormatForType (const ConstString &type, lldb::Format format, bool cascade);
-    bool DeleteFormatForType (const ConstString &type);
-    void LoopThroughFormatList (FormatCallback cback, void* param);
+
+    typedef bool(*Callback)(void*, const char*, lldb::Format, bool);
+
+    FormatManager() : 
+        m_format_map(FormatMap()), 
+        m_format_map_mutex(Mutex::eMutexTypeRecursive) 
+    {
+    }
+
+    bool
+    GetFormatForType (const ConstString &type, lldb::Format& format, bool& cascade);
+
+    void
+    AddFormatForType (const ConstString &type, lldb::Format format, bool cascade);
+
+    bool
+    DeleteFormatForType (const ConstString &type);
+
+    void
+    LoopThroughFormatList (Callback cback, void* param);
+
+    static bool
+    GetFormatFromCString (const char *format_cstr,
+                          bool partial_match_ok,
+                          lldb::Format &format);
+
+    static char
+    GetFormatAsFormatChar (lldb::Format format);
+
+    static const char *
+    GetFormatAsCString (lldb::Format format);
 
 private:
+    struct Entry 
+    {
+        lldb::Format format;
+        bool cascades;
+        Entry (lldb::Format f = lldb::eFormatInvalid, bool c = false) : 
+            format (f), 
+            cascades (c) 
+        {
+        }
+    };
+    
+    typedef std::map<const char*, Entry> FormatMap;
+    typedef FormatMap::iterator FormatIterator;
+
     FormatMap m_format_map;
     Mutex m_format_map_mutex;
 };

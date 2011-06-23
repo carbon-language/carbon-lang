@@ -483,7 +483,8 @@ public:
     DeleteFormatForType (const ConstString &type);
     
     static void
-    LoopThroughFormatList (FormatCallback cback, void* param);
+    LoopThroughFormatList (FormatManager::Callback callback, 
+                           void* callback_baton);
 };
 
 } // namespace lldb_private

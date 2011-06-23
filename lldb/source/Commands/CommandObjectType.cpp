@@ -14,6 +14,8 @@
 
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/FormatManager.h"
+#include "lldb/Core/State.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -135,15 +137,13 @@ public:
             return false;
         }
         
-        const char* formatA = command.GetArgumentAtIndex(0);
-        ConstString formatCS(formatA);
-        const char* formatU = formatCS.GetCString();
+        const char* format_cstr = command.GetArgumentAtIndex(0);
         lldb::Format format;
-        uint32_t byte_size_ptr;
-        Error fmt_error = Args::StringToFormat(formatU, format, &byte_size_ptr);
+        Error error = Args::StringToFormat(format_cstr, format, NULL);
         
-        if(fmt_error.Fail()) {
-            result.AppendError(fmt_error.AsCString());
+        if (error.Fail()) 
+        {
+            result.AppendError(error.AsCString());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -289,72 +289,15 @@ public:
 private:
     
     bool
-    LoopCallback (
-                  const char* type,
+    LoopCallback (const char* type,
                   lldb::Format format,
                   bool cascade,
                   RegularExpression* regex,
-                  CommandReturnObject *result
-                  )
+                  CommandReturnObject *result)
     {
-        if(regex && !regex->Execute(type)) return true;
-        Stream &ostrm = result->GetOutputStream();
-        ostrm.Printf("(%s) %scascading ",type, cascade ? "" : "not ");
-        switch(format) {
-            case eFormatBytes:
-                ostrm.Printf("y\n");
-                break;
-            case eFormatBytesWithASCII:
-                ostrm.Printf("Y\n");
-                break;
-            case eFormatBinary:
-                ostrm.Printf("b\n");
-                break;
-            case eFormatBoolean:
-                ostrm.Printf("B\n");
-                break;
-            case eFormatCharArray:
-                ostrm.Printf("a\n");
-                break;
-            case eFormatChar:
-                ostrm.Printf("c\n");
-                break;
-            case eFormatCharPrintable:
-                ostrm.Printf("C\n");
-                break;
-            case eFormatOctal:
-                ostrm.Printf("o\n");
-                break;
-            case eFormatOSType:
-                ostrm.Printf("O\n");
-                break;
-            case eFormatDecimal:
-                ostrm.Printf("i or d\n");
-                break;
-            case eFormatComplexInteger:
-                ostrm.Printf("I\n");
-                break;
-            case eFormatUnsigned:
-                ostrm.Printf("u\n");
-                break;
-            case eFormatHex:
-                ostrm.Printf("x\n");
-                break;
-            case eFormatComplex:
-                ostrm.Printf("X\n");
-                break;
-            case eFormatFloat:
-                ostrm.Printf("f e or g\n");
-                break;
-            case eFormatPointer:
-                ostrm.Printf("p\n");
-                break;
-            case eFormatCString:
-                ostrm.Printf("s\n");
-                break;
-            default:
-                ostrm.Printf("other\n");
-                break;
+        if (regex == NULL || regex->Execute(type)) 
+        {
+            result->GetOutputStream().Printf ("%s: %s\n", type, FormatManager::GetFormatAsCString (format));
         }
         return true;
     }

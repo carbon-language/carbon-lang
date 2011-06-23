@@ -13,6 +13,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Interpreter/Args.h"
@@ -339,7 +340,7 @@ OptionValueUUID::SetValueFromCString (const char *value_cstr)
 void
 OptionValueFormat::DumpValue (Stream &strm)
 {
-    strm.PutCString (GetFormatAsCString (m_current_value));
+    strm.PutCString (FormatManager::GetFormatAsCString (m_current_value));
 }
 
 Error

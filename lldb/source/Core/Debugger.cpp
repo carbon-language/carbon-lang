@@ -1339,9 +1339,9 @@ Debugger::DeleteFormatForType (const ConstString &type)
 }
 
 void
-Debugger::LoopThroughFormatList (FormatCallback cback, void* param)
+Debugger::LoopThroughFormatList (FormatManager::Callback callback, void* callback_baton)
 {
-    return GetFormatManager().LoopThroughFormatList(cback, param);
+    return GetFormatManager().LoopThroughFormatList(callback, callback_baton);
 }
 
 #pragma mark Debugger::SettingsController

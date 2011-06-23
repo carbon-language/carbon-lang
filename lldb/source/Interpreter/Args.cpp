@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
@@ -899,61 +900,25 @@ Args::StringToFormat
                 *byte_size_ptr = 0;
         }
 
-        bool success = s[1] == '\0';
-        if (success)
+        const bool partial_match_ok = true;
+        if (!FormatManager::GetFormatFromCString (s, partial_match_ok, format))
         {
-            switch (s[0])
+            StreamString error_strm;
+            error_strm.Printf ("Invalid format character or name '%s'. Valid values are:\n", s);
+            for (Format f = eFormatDefault; f < kNumFormats; ++f)
             {
-            case 'y': format = eFormatBytes;            break;
-            case 'Y': format = eFormatBytesWithASCII;   break;
-            case 'b': format = eFormatBinary;           break;
-            case 'B': format = eFormatBoolean;          break;
-            case 'a': format = eFormatCharArray;        break;
-            case 'c': format = eFormatChar;             break;
-            case 'C': format = eFormatCharPrintable;    break;
-            case 'o': format = eFormatOctal;            break;
-            case 'O': format = eFormatOSType;           break;
-            case 'i':
-            case 'd': format = eFormatDecimal;          break;
-            case 'I': format = eFormatComplexInteger;   break;
-            case 'u': format = eFormatUnsigned;         break;
-            case 'x': format = eFormatHex;              break;
-            case 'X': format = eFormatComplex;          break;
-            case 'f':
-            case 'e':
-            case 'g': format = eFormatFloat;            break;
-            case 'p': format = eFormatPointer;          break;
-            case 's': format = eFormatCString;          break;
-            default:
-                success = false;
-                break;
+                char format_char = FormatManager::GetFormatAsFormatChar(f);
+                if (format_char)
+                    error_strm.Printf ("'%c' or ", format_char);
+            
+                error_strm.Printf ("\"%s\"", FormatManager::GetFormatAsCString(f));
+                error_strm.EOL();
             }
+            
+            if (byte_size_ptr)
+                error_strm.PutCString ("An optional byte size can precede the format character.\n");
+            error.SetErrorString(error_strm.GetString().c_str());
         }
-        if (!success)
-            error.SetErrorStringWithFormat ("Invalid format specification '%s'. Valid values are:\n"
-                                            "  a - char buffer\n"
-                                            "  b - binary\n"
-                                            "  B - boolean\n"
-                                            "  c - char\n"
-                                            "  C - printable char\n"
-                                            "  d - signed decimal\n"
-                                            "  e - float\n"
-                                            "  f - float\n"
-                                            "  g - float\n"
-                                            "  i - signed decimal\n"
-                                            "  I - complex integer\n"
-                                            "  o - octal\n"
-                                            "  O - OSType\n"
-                                            "  p - pointer\n"
-                                            "  s - c-string\n"
-                                            "  u - unsigned decimal\n"
-                                            "  x - hex\n"
-                                            "  X - complex float\n"
-                                            "  y - bytes\n"
-                                            "  Y - bytes with ASCII\n%s",
-                                            s, 
-                                            byte_size_ptr ? "An optional byte size can precede the format character.\n" : "");
-
 
         if (error.Fail())
             return error;

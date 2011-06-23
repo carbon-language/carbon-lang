@@ -672,9 +672,14 @@ ValueObject::GetValueAsCString ()
                     case Value::eContextTypeClangType:
                     case Value::eContextTypeLLDBType:
                     case Value::eContextTypeVariable:
-                        Format format = GetFormat();
-                        if (format != m_last_format)
-                            m_value_str.clear();
+                        {
+                            Format format = GetFormat();
+                            if (format != m_last_format)
+                                m_value_str.clear();
+                        }
+                        break;
+
+                    default:
                         break;
                 }
             }
