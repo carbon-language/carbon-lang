@@ -20,7 +20,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
@@ -286,7 +285,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 }
 
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS, 
-                           bool is64Bit)
+                           bool is64Bit, unsigned StackAlignOverride)
   : PICStyle(PICStyles::None)
   , X86SSELevel(NoMMXSSE)
   , X863DNowLevel(NoThreeDNow)
@@ -308,10 +307,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
   , TargetTriple(TT)
   , Is64Bit(is64Bit) {
 
-  // default to hard float ABI
-  if (FloatABIType == FloatABI::Default)
-    FloatABIType = FloatABI::Hard;
-    
   // Determine default and user specified characteristics
   if (!FS.empty()) {
     // If feature string is not empty, parse features string.
@@ -346,33 +341,9 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &FS,
 
   // Stack alignment is 16 bytes on Darwin, FreeBSD, Linux and Solaris (both
   // 32 and 64 bit) and for all 64-bit targets.
-  if (isTargetDarwin() || isTargetFreeBSD() || isTargetLinux() ||
-      isTargetSolaris() || Is64Bit)
+  if (StackAlignOverride)
+    stackAlignment = StackAlignOverride;
+  else if (isTargetDarwin() || isTargetFreeBSD() || isTargetLinux() ||
+           isTargetSolaris() || Is64Bit)
     stackAlignment = 16;
-
-  if (StackAlignment)
-    stackAlignment = StackAlignment;
-}
-
-/// IsCalleePop - Determines whether the callee is required to pop its
-/// own arguments. Callee pop is necessary to support tail calls.
-bool X86Subtarget::IsCalleePop(bool IsVarArg,
-                               CallingConv::ID CallingConv) const {
-  if (IsVarArg)
-    return false;
-
-  switch (CallingConv) {
-  default:
-    return false;
-  case CallingConv::X86_StdCall:
-    return !is64Bit();
-  case CallingConv::X86_FastCall:
-    return !is64Bit();
-  case CallingConv::X86_ThisCall:
-    return !is64Bit();
-  case CallingConv::Fast:
-    return GuaranteedTailCallOpt;
-  case CallingConv::GHC:
-    return GuaranteedTailCallOpt;
-  }
 }

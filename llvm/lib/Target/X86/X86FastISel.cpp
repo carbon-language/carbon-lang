@@ -15,6 +15,7 @@
 
 #include "X86.h"
 #include "X86InstrBuilder.h"
+#include "X86ISelLowering.h"
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
@@ -1493,7 +1494,8 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
     return false;
 
   // Fast-isel doesn't know about callee-pop yet.
-  if (Subtarget->IsCalleePop(isVarArg, CC))
+  if (X86::isCalleePop(CC, Subtarget->is64Bit(), isVarArg,
+                       GuaranteedTailCallOpt))
     return false;
 
   // Check whether the function can return without sret-demotion.

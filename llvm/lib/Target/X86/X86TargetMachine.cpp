@@ -117,7 +117,7 @@ X86_64TargetMachine::X86_64TargetMachine(const Target &T, const std::string &TT,
 X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T, TT),
-    Subtarget(TT, FS, is64Bit),
+    Subtarget(TT, FS, is64Bit, StackAlignment),
     FrameLowering(*this, Subtarget),
     ELFWriterInfo(is64Bit, true) {
   DefRelocModel = getRelocationModel();
@@ -182,6 +182,10 @@ X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
   // Finally, if we have "none" as our PIC style, force to static mode.
   if (Subtarget.getPICStyle() == PICStyles::None)
     setRelocationModel(Reloc::Static);
+
+  // default to hard float ABI
+  if (FloatABIType == FloatABI::Default)
+    FloatABIType = FloatABI::Hard;    
 }
 
 //===----------------------------------------------------------------------===//

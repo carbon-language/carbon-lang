@@ -466,6 +466,12 @@ namespace llvm {
     /// fit into displacement field of the instruction.
     bool isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
                                       bool hasSymbolicDisplacement = true);
+
+
+    /// isCalleePop - Determines whether the callee is required to pop its
+    /// own arguments. Callee pop is necessary to support tail calls.
+    bool isCalleePop(CallingConv::ID CallingConv,
+                     bool is64Bit, bool IsVarArg, bool TailCallOpt);
   }
 
   //===--------------------------------------------------------------------===//

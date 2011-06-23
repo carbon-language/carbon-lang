@@ -117,7 +117,8 @@ public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   ///
-  X86Subtarget(const std::string &TT, const std::string &FS, bool is64Bit);
+  X86Subtarget(const std::string &TT, const std::string &FS, bool is64Bit,
+               unsigned StackAlignOverride);
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every
@@ -248,9 +249,6 @@ public:
   /// indicating the number of scheduling cycles of backscheduling that
   /// should be attempted.
   unsigned getSpecialAddressLatency() const;
-
-  /// IsCalleePop - Test whether a function should pop its own arguments.
-  bool IsCalleePop(bool isVarArg, CallingConv::ID CallConv) const;
 };
 
 } // End llvm namespace

@@ -1898,7 +1898,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   }
 
   // Some CCs need callee pop.
-  if (Subtarget->IsCalleePop(isVarArg, CallConv)) {
+  if (X86::isCalleePop(CallConv, Is64Bit, isVarArg, GuaranteedTailCallOpt)) {
     FuncInfo->setBytesToPopOnReturn(StackSize); // Callee pops everything.
   } else {
     FuncInfo->setBytesToPopOnReturn(0); // Callee pops nothing.
@@ -2383,7 +2383,7 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Create the CALLSEQ_END node.
   unsigned NumBytesForCalleeToPush;
-  if (Subtarget->IsCalleePop(isVarArg, CallConv))
+  if (X86::isCalleePop(CallConv, Is64Bit, isVarArg, GuaranteedTailCallOpt))
     NumBytesForCalleeToPush = NumBytes;    // Callee pops everything
   else if (!Is64Bit && !IsTailCallConvention(CallConv) && IsStructRet)
     // If this is a call to a struct-return function, the callee
@@ -2874,6 +2874,29 @@ bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
     return true;
 
   return false;
+}
+
+/// isCalleePop - Determines whether the callee is required to pop its
+/// own arguments. Callee pop is necessary to support tail calls.
+bool X86::isCalleePop(CallingConv::ID CallingConv,
+                      bool is64Bit, bool IsVarArg, bool TailCallOpt) {
+  if (IsVarArg)
+    return false;
+
+  switch (CallingConv) {
+  default:
+    return false;
+  case CallingConv::X86_StdCall:
+    return !is64Bit;
+  case CallingConv::X86_FastCall:
+    return !is64Bit;
+  case CallingConv::X86_ThisCall:
+    return !is64Bit;
+  case CallingConv::Fast:
+    return TailCallOpt;
+  case CallingConv::GHC:
+    return TailCallOpt;
+  }
 }
 
 /// TranslateX86CC - do a one to one translation of a ISD::CondCode to the X86
