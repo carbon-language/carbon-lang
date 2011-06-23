@@ -30,6 +30,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
@@ -37,8 +38,6 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 
-
-#include "Debugger.h"
 
 using namespace lldb;
 using namespace lldb_private;

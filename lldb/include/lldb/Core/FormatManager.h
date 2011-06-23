@@ -35,7 +35,7 @@ namespace std
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-public.h"
-#include "lldb-enumerations.h"
+#include "lldb/lldb-enumerations.h"
 
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/InputReaderStack.h"

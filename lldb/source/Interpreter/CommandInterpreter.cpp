@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 #include "CommandObjectScript.h"
-#include "CommandObjectRegexCommand.h"
+#include "lldb/Interpreter/CommandObjectRegexCommand.h"
 
 #include "../Commands/CommandObjectApropos.h"
 #include "../Commands/CommandObjectArgs.h"
