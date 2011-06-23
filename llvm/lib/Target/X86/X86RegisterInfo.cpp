@@ -60,7 +60,6 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   Is64Bit = Subtarget->is64Bit();
   IsWin64 = Subtarget->isTargetWin64();
-  StackAlign = TM.getFrameLowering()->getStackAlignment();
 
   if (Is64Bit) {
     SlotSize = 8;
@@ -557,6 +556,7 @@ bool X86RegisterInfo::canRealignStack(const MachineFunction &MF) const {
 bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *F = MF.getFunction();
+  unsigned StackAlign = TM.getFrameLowering()->getStackAlignment();
   bool requiresRealignment = ((MFI->getMaxAlignment() > StackAlign) ||
                                F->hasFnAttr(Attribute::StackAlignment));
 
@@ -632,6 +632,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // We need to keep the stack aligned properly.  To do this, we round the
     // amount of space needed for the outgoing arguments up to the next
     // alignment boundary.
+    unsigned StackAlign = TM.getFrameLowering()->getStackAlignment();
     Amount = (Amount + StackAlign - 1) / StackAlign * StackAlign;
 
     MachineInstr *New = 0;
@@ -927,10 +928,10 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF) {
       const X86TargetMachine *TM =
         static_cast<const X86TargetMachine *>(&MF.getTarget());
-      const X86RegisterInfo *X86RI = TM->getRegisterInfo();
+      const TargetFrameLowering *TFI = TM->getFrameLowering();
       MachineRegisterInfo &RI = MF.getRegInfo();
       X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
-      unsigned StackAlignment = X86RI->getStackAlignment();
+      unsigned StackAlignment = TFI->getStackAlignment();
 
       // Be over-conservative: scan over all vreg defs and find whether vector
       // registers are used. If yes, there is a possibility that vector register

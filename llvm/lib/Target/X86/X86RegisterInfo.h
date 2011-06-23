@@ -56,10 +56,6 @@ private:
   ///
   unsigned SlotSize;
 
-  /// StackAlign - Default stack alignment.
-  ///
-  unsigned StackAlign;
-
   /// StackPtr - X86 physical register used as stack ptr.
   ///
   unsigned StackPtr;
@@ -74,8 +70,6 @@ public:
   /// getX86RegNum - Returns the native X86 register number for the given LLVM
   /// register identifier.
   static unsigned getX86RegNum(unsigned RegNo);
-
-  unsigned getStackAlignment() const { return StackAlign; }
 
   /// getDwarfRegNum - allows modification of X86GenRegisterInfo::getDwarfRegNum
   /// (created by TableGen) for target dependencies.
