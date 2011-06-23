@@ -521,7 +521,7 @@ void CodeGenFunction::EnterCXXTryStmt(const CXXTryStmt &S, bool IsFnTryBlock) {
 
       llvm::Value *TypeInfo = 0;
       if (CaughtType->isObjCObjectPointerType())
-        TypeInfo = CGM.getObjCRuntime().GetEHType(CaughtType, this);
+        TypeInfo = CGM.getObjCRuntime().GetEHType(CaughtType);
       else
         TypeInfo = CGM.GetAddrOfRTTIDescriptor(CaughtType, /*ForEH=*/true);
       CatchScope->setHandler(I, TypeInfo, Handler);

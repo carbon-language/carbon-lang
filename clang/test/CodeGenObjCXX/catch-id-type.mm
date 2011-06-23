@@ -11,17 +11,32 @@
 
 id Groups();
 
+@protocol P @end;
+
+@interface INTF<P> {
+    double dd;
+}
+@end
+
 id FUNC() {
     id groups;
     try
     {
       groups = Groups();  // throws on errors.
     }
+    catch( INTF<P>* error )
+    {
+      Groups();
+    }
     catch( id error )
     { 
-      // CHECK: call i32 (i8*, i8*, ...)* @llvm.eh.selector({{.*}} @__gxx_personality_v0 {{.*}} @_ZTIP11objc_object
+      // CHECK: call i32 (i8*, i8*, ...)* @llvm.eh.selector({{.*}} @__gxx_personality_v0 {{.*}} @_ZTIP4INTF {{.*}} @_ZTIP11objc_object {{.*}} @_ZTIP10objc_class
       error = error; 
       groups = [ns_array array]; 
+    }
+    catch (Class cl) {
+      cl = cl;
+      groups = [ns_array array];
     }
     return groups;
 

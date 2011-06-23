@@ -6,7 +6,7 @@ void opaque();
 namespace test0 {
   void test() {
     try {
-    } catch (NSException *e) { // expected-error {{can't catch Objective C exceptions in C++ in the non-unified exception model}}
+    } catch (NSException *e) { // expected-warning {{catching Objective C exceptions in C++ in the non-unified exception model [-Wobjc-nonunified-exceptions]}}
     }
   }
 }

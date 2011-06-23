@@ -1010,7 +1010,7 @@ public:
   virtual llvm::Value *GetSelector(CGBuilderTy &Builder,
                                    const ObjCMethodDecl *Method);
 
-  virtual llvm::Constant *GetEHType(QualType T, const CodeGenFunction *CGF=0);
+  virtual llvm::Constant *GetEHType(QualType T);
 
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
 
@@ -1271,7 +1271,7 @@ public:
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *PD);
 
-  virtual llvm::Constant *GetEHType(QualType T, const CodeGenFunction *CGF=0);
+  virtual llvm::Constant *GetEHType(QualType T);
 
   virtual llvm::Constant *GetPropertyGetFunction() {
     return ObjCTypes.getGetPropertyFn();
@@ -1414,12 +1414,20 @@ llvm::Value *CGObjCMac::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
   return EmitSelector(Builder, Method->getSelector());
 }
 
-llvm::Constant *CGObjCMac::GetEHType(QualType T, const CodeGenFunction *CGF) {
+llvm::Constant *CGObjCMac::GetEHType(QualType T) {
   if (T->isObjCIdType() ||
       T->isObjCQualifiedIdType()) {
     return CGM.GetAddrOfRTTIDescriptor(
-              CGF->getContext().ObjCIdRedefinitionType, /*ForEH=*/true);
+              CGM.getContext().ObjCIdRedefinitionType, /*ForEH=*/true);
   }
+  if (T->isObjCClassType() ||
+      T->isObjCQualifiedClassType()) {
+    return CGM.GetAddrOfRTTIDescriptor(
+             CGM.getContext().ObjCClassRedefinitionType, /*ForEH=*/true);
+  }
+  if (T->isObjCObjectPointerType())
+    return CGM.GetAddrOfRTTIDescriptor(T,  /*ForEH=*/true);
+  
   llvm_unreachable("asking for catch type for ObjC type in fragile runtime");
   return 0;
 }
@@ -6021,7 +6029,7 @@ CGObjCNonFragileABIMac::EmitSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 }
 
 llvm::Constant *
-CGObjCNonFragileABIMac::GetEHType(QualType T, const CodeGenFunction *CGF) {
+CGObjCNonFragileABIMac::GetEHType(QualType T) {
   // There's a particular fixed type info for 'id'.
   if (T->isObjCIdType() ||
       T->isObjCQualifiedIdType()) {
