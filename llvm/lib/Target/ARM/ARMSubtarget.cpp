@@ -15,7 +15,6 @@
 #include "ARMGenSubtarget.inc"
 #include "ARMBaseRegisterInfo.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
@@ -60,10 +59,6 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , CPUString("generic")
   , TargetTriple(TT)
   , TargetABI(ARM_ABI_APCS) {
-  // Default to soft float ABI
-  if (FloatABIType == FloatABI::Default)
-    FloatABIType = FloatABI::Soft;
-
   // Determine default and user specified characteristics
 
   // When no arch is specified either by CPU or by attributes, make the default

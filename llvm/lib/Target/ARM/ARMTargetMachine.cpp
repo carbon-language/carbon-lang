@@ -85,6 +85,10 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {
   DefRelocModel = getRelocationModel();
+
+  // Default to soft float ABI
+  if (FloatABIType == FloatABI::Default)
+    FloatABIType = FloatABI::Soft;
 }
 
 ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
