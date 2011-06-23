@@ -486,41 +486,6 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
   }
   decl += ")";
 
-  // // Print parameter list
-  // if (!MFI->argRegEmpty()) {
-  //   decl += " (";
-  //   if (isKernel) {
-  //     unsigned cnt = 0;
-  //     for(PTXMachineFunctionInfo::reg_iterator
-  //         i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i;
-  //         i != e; ++i) {
-  //       reg = *i;
-  //       assert(reg != PTX::NoRegister && "Not a valid register!");
-  //       if (i != b)
-  //         decl += ", ";
-  //       decl += ".param .";
-  //       decl += getRegisterTypeName(reg);
-  //       decl += " ";
-  //       decl += PARAM_PREFIX;
-  //       decl += utostr(++cnt);
-  //     }
-  //   } else {
-  //     for (PTXMachineFunctionInfo::reg_iterator
-  //          i = MFI->argRegBegin(), e = MFI->argRegEnd(), b = i;
-  //          i != e; ++i) {
-  //       reg = *i;
-  //       assert(reg != PTX::NoRegister && "Not a valid register!");
-  //       if (i != b)
-  //         decl += ", ";
-  //       decl += ".reg .";
-  //       decl += getRegisterTypeName(reg);
-  //       decl += " ";
-  //       decl += getRegisterName(reg);
-  //     }
-  //   }
-  //   decl += ")";
-  // }
-
   OutStreamer.EmitRawText(Twine(decl));
 }
 
