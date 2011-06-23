@@ -153,12 +153,12 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   // Delete the unconditional branch from the predecessor...
   PredBB->getInstList().pop_back();
   
+  // Move all definitions in the successor to the predecessor...
+  PredBB->getInstList().splice(PredBB->end(), BB->getInstList());
+  
   // Make all PHI nodes that referred to BB now refer to Pred as their
   // source...
   BB->replaceAllUsesWith(PredBB);
-  
-  // Move all definitions in the successor to the predecessor...
-  PredBB->getInstList().splice(PredBB->end(), BB->getInstList());
   
   // Inherit predecessors name if it exists.
   if (!PredBB->hasName())

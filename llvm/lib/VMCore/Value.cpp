@@ -305,9 +305,6 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
 
     U.set(New);
   }
-
-  if (BasicBlock *BB = dyn_cast<BasicBlock>(this))
-    BB->replaceSuccessorsPhiUsesWith(cast<BasicBlock>(New));
 }
 
 void Value::replaceAllUsesWith(Value *New) {

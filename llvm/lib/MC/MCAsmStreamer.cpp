@@ -1119,7 +1119,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
     } else {
       // Otherwise, write out in binary.
       OS << "0b";
-      for (unsigned j = 8; j--;) {
+      for (int j = 7; j >= 0; j--) {
         unsigned Bit = (Code[i] >> j) & 1;
 
         unsigned FixupBit;
@@ -1128,9 +1128,9 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
         else
           FixupBit = i * 8 + (7-j);
 
-        if (uint8_t MapEntry = FixupMap[FixupBit]) {
-          assert(Bit == 0 && "Encoder wrote into fixed up bit!");
-          OS << char('A' + MapEntry - 1);
+        if (uint8_t FixupMapEntry = FixupMap[FixupBit]) {
+          //assert(Bit == 0 && "Encoder wrote into fixed up bit!");
+          OS << char('A' + FixupMapEntry - 1);
         } else
           OS << Bit;
       }

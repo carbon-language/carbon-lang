@@ -1139,6 +1139,9 @@ void Verifier::visitPHINode(PHINode &PN) {
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
     Assert1(PN.getType() == PN.getIncomingValue(i)->getType(),
             "PHI node operands are not the same type as the result!", &PN);
+    Assert1(isa<BasicBlock>(PN.getOperand(
+                PHINode::getOperandNumForIncomingBlock(i))),
+            "PHI node incoming block is not a BasicBlock!", &PN);
   }
 
   // All other PHI node constraints are checked in the visitBasicBlock method.
