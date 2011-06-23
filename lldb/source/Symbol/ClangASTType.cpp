@@ -16,6 +16,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/RecordLayout.h"
+#include "clang/AST/Type.h"
 
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -36,6 +37,9 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 
+
+#include "Debugger.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -55,22 +59,9 @@ ClangASTType::GetClangTypeName (clang_type_t clang_type)
     ConstString clang_type_name;
     if (clang_type)
     {
-        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-
-        const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
-        if (typedef_type)
-        {
-            const clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
-            std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
-            if (!clang_typedef_name.empty())
-                clang_type_name.SetCString (clang_typedef_name.c_str());
-        }
-        else
-        {
-            std::string type_name(qual_type.getAsString());
-            if (!type_name.empty())
-                clang_type_name.SetCString (type_name.c_str());
-        }
+        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));        
+        return GetClangTypeName(qual_type);
+        
     }
     else
     {
@@ -80,6 +71,26 @@ ClangASTType::GetClangTypeName (clang_type_t clang_type)
     return clang_type_name;
 }
 
+ConstString
+ClangASTType::GetClangTypeName (clang::QualType qual_type)
+{
+    ConstString clang_type_name;
+    const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
+    if (typedef_type)
+    {
+        const clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
+        std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
+        if (!clang_typedef_name.empty())
+            clang_type_name.SetCString (clang_typedef_name.c_str());
+    }
+    else
+    {
+        std::string type_name(qual_type.getAsString());
+        if (!type_name.empty())
+            clang_type_name.SetCString (type_name.c_str());
+    }
+    return clang_type_name;
+}
 
 clang_type_t
 ClangASTType::GetPointeeType ()
@@ -237,8 +248,25 @@ ClangASTType::GetFormat ()
 lldb::Format
 ClangASTType::GetFormat (clang_type_t clang_type)
 {
+    // first of all, check for a valid format for this type itself
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-
+    lldb::Format format;
+    bool cascade;
+    if(Debugger::GetFormatForType(GetClangTypeName(qual_type), format, cascade))
+        return format; // return it if found
+    
+    // here, I know this type does not have a direct format. two things can happen:
+    // 1) this is a typedef - I expand this to its parent type and look there
+    // 2) this is not a typedef - I use the default formatting options
+    const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
+    while (typedef_type) {
+        qual_type = typedef_type->getDecl()->getUnderlyingType();
+        std::string name = qual_type.getAsString();
+        if(Debugger::GetFormatForType(GetClangTypeName(qual_type), format, cascade) && cascade) // if I have a cascading format...
+            return format; // ...use it
+        typedef_type = qual_type->getAs<clang::TypedefType>(); // try to expand another level
+    }
+    
     switch (qual_type->getTypeClass())
     {
     case clang::Type::FunctionNoProto:

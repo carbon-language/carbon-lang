@@ -74,6 +74,9 @@ public:
     static ConstString
     GetClangTypeName (lldb::clang_type_t clang_type);
 
+    static ConstString
+    GetClangTypeName (clang::QualType qual_type);
+    
     uint32_t
     GetClangTypeBitWidth ();
 

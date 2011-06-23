@@ -17,7 +17,9 @@
 
 #include <stack>
 
+#include "lldb/lldb-public.h"
 #include "lldb/Core/Communication.h"
+#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/InputReaderStack.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Core/StreamFile.h"
@@ -468,6 +470,20 @@ private:
     Debugger ();
 
     DISALLOW_COPY_AND_ASSIGN (Debugger);
+    
+public:
+    
+    static bool
+    GetFormatForType (const ConstString &type, lldb::Format& format, bool& cascade);
+    
+    static void
+    AddFormatForType (const ConstString &type, lldb::Format format, bool cascade);
+    
+    static bool
+    DeleteFormatForType (const ConstString &type);
+    
+    static void
+    LoopThroughFormatList (FormatCallback cback, void* param);
 };
 
 } // namespace lldb_private

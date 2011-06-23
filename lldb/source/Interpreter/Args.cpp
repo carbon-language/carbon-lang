@@ -941,7 +941,7 @@ Args::StringToFormat
                                             "  f - float\n"
                                             "  g - float\n"
                                             "  i - signed decimal\n"
-                                            "  i - complex integer\n"
+                                            "  I - complex integer\n"
                                             "  o - octal\n"
                                             "  O - OSType\n"
                                             "  p - pointer\n"

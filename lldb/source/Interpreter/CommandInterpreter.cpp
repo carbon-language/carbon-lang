@@ -13,13 +13,14 @@
 #include <getopt.h>
 #include <stdlib.h>
 
+#include "CommandObjectScript.h"
+#include "CommandObjectRegexCommand.h"
+
 #include "../Commands/CommandObjectApropos.h"
 #include "../Commands/CommandObjectArgs.h"
 #include "../Commands/CommandObjectBreakpoint.h"
-//#include "../Commands/CommandObjectCall.h"
 #include "../Commands/CommandObjectDisassemble.h"
 #include "../Commands/CommandObjectExpression.h"
-//#include "../Commands/CommandObjectFile.h"
 #include "../Commands/CommandObjectFrame.h"
 #include "../Commands/CommandObjectHelp.h"
 #include "../Commands/CommandObjectLog.h"
@@ -27,15 +28,14 @@
 #include "../Commands/CommandObjectPlatform.h"
 #include "../Commands/CommandObjectProcess.h"
 #include "../Commands/CommandObjectQuit.h"
-#include "lldb/Interpreter/CommandObjectRegexCommand.h"
 #include "../Commands/CommandObjectRegister.h"
-#include "CommandObjectScript.h"
 #include "../Commands/CommandObjectSettings.h"
 #include "../Commands/CommandObjectSource.h"
 #include "../Commands/CommandObjectCommands.h"
 #include "../Commands/CommandObjectSyntax.h"
 #include "../Commands/CommandObjectTarget.h"
 #include "../Commands/CommandObjectThread.h"
+#include "../Commands/CommandObjectType.h"
 #include "../Commands/CommandObjectVersion.h"
 
 #include "lldb/Interpreter/Args.h"
@@ -261,6 +261,7 @@ CommandInterpreter::LoadCommandDictionary ()
     m_command_dict["source"]    = CommandObjectSP (new CommandObjectMultiwordSource (*this));
     m_command_dict["target"]    = CommandObjectSP (new CommandObjectMultiwordTarget (*this));
     m_command_dict["thread"]    = CommandObjectSP (new CommandObjectMultiwordThread (*this));
+    m_command_dict["type"]    = CommandObjectSP (new CommandObjectType (*this));
     m_command_dict["version"]   = CommandObjectSP (new CommandObjectVersion (*this));
 
     std::auto_ptr<CommandObjectRegexCommand>

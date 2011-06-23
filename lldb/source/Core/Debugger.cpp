@@ -7,9 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Core/Debugger.h"
+
+#include <map>
+
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
-#include "lldb/Core/Debugger.h"
+#include "lldb/Core/FormatManager.h"
 #include "lldb/Core/InputReader.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/State.h"
@@ -1307,6 +1311,37 @@ Debugger::FormatPrompt
     if (end) 
         *end = p;
     return success;
+}
+
+
+static FormatManager&
+GetFormatManager() {
+    static FormatManager g_format_manager;
+    return g_format_manager;
+}
+
+bool
+Debugger::GetFormatForType (const ConstString &type, lldb::Format& format, bool& cascade)
+{
+    return GetFormatManager().GetFormatForType(type, format, cascade);
+}
+
+void
+Debugger::AddFormatForType (const ConstString &type, lldb::Format format, bool cascade)
+{
+    GetFormatManager().AddFormatForType(type,format, cascade);
+}
+
+bool
+Debugger::DeleteFormatForType (const ConstString &type)
+{
+    return GetFormatManager().DeleteFormatForType(type);
+}
+
+void
+Debugger::LoopThroughFormatList (FormatCallback cback, void* param)
+{
+    return GetFormatManager().LoopThroughFormatList(cback, param);
 }
 
 #pragma mark Debugger::SettingsController
