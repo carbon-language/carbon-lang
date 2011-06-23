@@ -133,8 +133,8 @@ namespace llvm {
   /// as their parent function, etc.), using an alternate ABI if necessary.
   extern bool GuaranteedTailCallOpt;
 
-  /// StackAlignment - Override default stack alignment for target.
-  extern unsigned StackAlignment;
+  /// StackAlignmentOverride - Override default stack alignment for target.
+  extern unsigned StackAlignmentOverride;
 
   /// RealignStack - This flag indicates whether the stack should be
   /// automatically realigned, if needed.

@@ -43,7 +43,7 @@ namespace llvm {
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
   bool GuaranteedTailCallOpt;
-  unsigned StackAlignment;
+  unsigned StackAlignmentOverride;
   bool RealignStack;
   bool DisableJumpTables;
   bool StrongPHIElim;
@@ -183,7 +183,7 @@ EnableGuaranteedTailCallOpt("tailcallopt",
 static cl::opt<unsigned, true>
 OverrideStackAlignment("stack-alignment",
   cl::desc("Override default stack alignment"),
-  cl::location(StackAlignment),
+  cl::location(StackAlignmentOverride),
   cl::init(0));
 static cl::opt<bool, true>
 EnableRealignStack("realign-stack",
