@@ -185,7 +185,7 @@ lit.site.cfg: site.exp
 	@$(ECHOPATH) s=@LLVMGCCDIR@=$(LLVMGCCDIR)=g >> lit.tmp
 	@$(ECHOPATH) s=@PYTHON_EXECUTABLE@=python=g >> lit.tmp
 	@$(ECHOPATH) s=@ENABLE_SHARED@=$(ENABLE_SHARED)=g >> lit.tmp
-	@$(ECHOPATH) s=@LLVM_ENABLE_ASSERTIONS@=$(ENABLE_ASSERTIONS)=g >> lit.tmp
+	@$(ECHOPATH) s=@ENABLE_ASSERTIONS@=$(ENABLE_ASSERTIONS)=g >> lit.tmp
 	@sed -f lit.tmp $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 	@-rm -f lit.tmp
 

@@ -79,6 +79,12 @@ if(PYTHONINTERP_FOUND)
   set(ENABLE_SHARED ${LLVM_SHARED_LIBS_ENABLED})
   set(SHLIBPATH_VAR ${SHLIBPATH_VAR})
 
+  if(LLVM_ENABLE_ASSERTIONS)
+    set(ENABLE_ASSERTIONS "1")
+  else()
+    set(ENABLE_ASSERTIONS "0")
+  endif(LLVM_ENABLE_ASSERTIONS)
+
   # lit.site.cfg uses the config-time build mode
   set(LLVM_BUILD_MODE "${LLVM_BUILD_MODE}")
 
