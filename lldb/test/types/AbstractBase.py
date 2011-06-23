@@ -20,6 +20,15 @@ class GenericTester(TestBase):
     # Assert message.
     DATA_TYPE_GROKKED = "Data type from expr parser output is parsed correctly"
 
+    def setUp(self):
+        # Call super's setUp().
+        TestBase.setUp(self)
+        # We'll use the test method name as the exe_name.
+        # There are a bunch of test cases under test/types and we don't want the
+        # module cacheing subsystem to be confused with executable name "a.out"
+        # used for all the test cases.
+        self.exe_name = self._testMethodName
+
     def generic_type_tester(self, exe_name, atoms, quotedDisplay=False):
         """Test that variables with basic types are displayed correctly."""
 

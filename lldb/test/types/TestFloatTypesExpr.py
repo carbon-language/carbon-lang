@@ -17,32 +17,32 @@ class FloatTypesExprTestCase(AbstractBase.GenericTester):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_float_type_with_dsym(self):
         """Test that float-type variable expressions are evaluated correctly."""
-        d = {'CXX_SOURCES': 'float.cpp', 'EXE': 'float_type_dsym'}
+        d = {'CXX_SOURCES': 'float.cpp', 'EXE': self.exe_name}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.float_type_expr('float_type_dsym')
+        self.float_type_expr(self.exe_name)
 
     def test_float_type_with_dwarf(self):
         """Test that float-type variable expressions are evaluated correctly."""
-        d = {'CXX_SOURCES': 'float.cpp', 'EXE': 'float_type_dwarf'}
+        d = {'CXX_SOURCES': 'float.cpp', 'EXE': self.exe_name}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.float_type_expr('float_type_dwarf')
+        self.float_type_expr(self.exe_name)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_double_type_with_dsym(self):
         """Test that double-type variable expressions are evaluated correctly."""
-        d = {'CXX_SOURCES': 'double.cpp', 'EXE': 'double_type_dsym'}
+        d = {'CXX_SOURCES': 'double.cpp', 'EXE': self.exe_name}
         self.buildDsym(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.double_type_expr('double_type_dsym')
+        self.double_type_expr(self.exe_name)
 
     def test_double_type_with_dwarf(self):
         """Test that double-type variable expressions are evaluated correctly."""
-        d = {'CXX_SOURCES': 'double.cpp', 'EXE': 'double_type_dwarf'}
+        d = {'CXX_SOURCES': 'double.cpp', 'EXE': self.exe_name}
         self.buildDwarf(dictionary=d)
         self.setTearDownCleanup(dictionary=d)
-        self.double_type_expr('double_type_dwarf')
+        self.double_type_expr(self.exe_name)
 
     def float_type_expr(self, exe_name):
         """Test that float-type variable expressions are evaluated correctly."""
