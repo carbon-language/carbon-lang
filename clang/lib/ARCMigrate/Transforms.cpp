@@ -218,7 +218,6 @@ static void independentTransforms(MigrationPass &pass) {
   makeAssignARCSafe(pass);
   rewriteUnbridgedCasts(pass);
   rewriteBlockObjCVariable(pass);
-  rewriteAllocCopyWithZone(pass);
 }
 
 std::vector<TransformFn> arcmt::getAllTransformations() {

@@ -31,7 +31,6 @@ namespace trans {
 
 void rewriteAutoreleasePool(MigrationPass &pass);
 void rewriteUnbridgedCasts(MigrationPass &pass);
-void rewriteAllocCopyWithZone(MigrationPass &pass);
 void makeAssignARCSafe(MigrationPass &pass);
 void removeRetainReleaseDealloc(MigrationPass &pass);
 void removeZeroOutPropsInDealloc(MigrationPass &pass);

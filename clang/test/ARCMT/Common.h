@@ -4,7 +4,6 @@
 #define NS_AUTOMATED_REFCOUNT_UNAVAILABLE
 #endif
 
-typedef struct _NSZone NSZone;
 typedef int BOOL;
 typedef unsigned NSUInteger;
 typedef int int32_t;
@@ -18,23 +17,12 @@ typedef unsigned char UChar;
 - (NSUInteger)retainCount NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 - (oneway void)release NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 - (id)autorelease NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
-
-- (NSZone *)zone NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
-@end
-
-@protocol NSCopying
-- (id)copyWithZone:(NSZone *)zone;
-@end
-
-@protocol NSMutableCopying
-- (id)mutableCopyWithZone:(NSZone *)zone;
 @end
 
 @interface NSObject <NSObject> {}
 - (id)init;
 
 + (id)new;
-+ (id)allocWithZone:(NSZone *)zone NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 + (id)alloc;
 - (void)dealloc;
 
@@ -42,12 +30,7 @@ typedef unsigned char UChar;
 
 - (id)copy;
 - (id)mutableCopy;
-
-+ (id)copyWithZone:(NSZone *)zone NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
-+ (id)mutableCopyWithZone:(NSZone *)zone NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 @end
-
-extern void NSRecycleZone(NSZone *zone);
 
 NS_AUTOMATED_REFCOUNT_UNAVAILABLE
 @interface NSAutoreleasePool : NSObject {
