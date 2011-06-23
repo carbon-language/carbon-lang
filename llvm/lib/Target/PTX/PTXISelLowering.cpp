@@ -307,49 +307,35 @@ SDValue PTXTargetLowering::
 
   MachineFunction& MF = DAG.getMachineFunction();
   PTXMachineFunctionInfo *MFI = MF.getInfo<PTXMachineFunctionInfo>();
-  const PTXSubtarget& ST = getTargetMachine().getSubtarget<PTXSubtarget>();
 
   SDValue Flag;
 
-  if (ST.getShaderModel() >= PTXSubtarget::PTX_SM_2_0) {
-    // For SM 2.0+, we return arguments in the param space
-    for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
-      SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
-      SDValue ParamIndex = DAG.getTargetConstant(i, MVT::i32);
-      SDValue Ops[] = { Chain, ParamIndex, OutVals[i], Flag };
-      Chain = DAG.getNode(PTXISD::STORE_PARAM, dl, VTs, Ops,
-                          Flag.getNode() ? 4 : 3);
-      Flag = Chain.getValue(1);
-      // Instead of storing a physical register in our argument list, we just
-      // store the total size of the parameter, in bits.  The ASM printer
-      // knows how to process this.
-      MFI->addRetReg(Outs[i].VT.getStoreSizeInBits());
-    }
-  } else {
-    // For SM < 2.0, we return arguments in registers
-    SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-    getTargetMachine(), RVLocs, *DAG.getContext());
+  // Even though we could use the .param space for return arguments for
+  // device functions if SM >= 2.0 and the number of return arguments is
+  // only 1, we just always use registers since this makes the codegen
+  // easier.
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+  getTargetMachine(), RVLocs, *DAG.getContext());
 
-    CCInfo.AnalyzeReturn(Outs, RetCC_PTX);
+  CCInfo.AnalyzeReturn(Outs, RetCC_PTX);
 
-    for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
-      CCValAssign& VA  = RVLocs[i];
+  for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
+    CCValAssign& VA  = RVLocs[i];
 
-      assert(VA.isRegLoc() && "CCValAssign must be RegLoc");
+    assert(VA.isRegLoc() && "CCValAssign must be RegLoc");
 
-      unsigned Reg = VA.getLocReg();
+    unsigned Reg = VA.getLocReg();
 
-      DAG.getMachineFunction().getRegInfo().addLiveOut(Reg);
+    DAG.getMachineFunction().getRegInfo().addLiveOut(Reg);
 
-      Chain = DAG.getCopyToReg(Chain, dl, Reg, OutVals[i], Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, Reg, OutVals[i], Flag);
 
-      // Guarantee that all emitted copies are stuck together,
-      // avoiding something bad
-      Flag = Chain.getValue(1);
+    // Guarantee that all emitted copies are stuck together,
+    // avoiding something bad
+    Flag = Chain.getValue(1);
 
-      MFI->addRetReg(Reg);
-    }
+    MFI->addRetReg(Reg);
   }
 
   if (Flag.getNode() == 0) {

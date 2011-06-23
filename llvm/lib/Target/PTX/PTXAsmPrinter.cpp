@@ -433,25 +433,16 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
 
   if (!isKernel) {
     decl += " (";
-
     for (PTXMachineFunctionInfo::ret_iterator
          i = MFI->retRegBegin(), e = MFI->retRegEnd(), b = i;
          i != e; ++i) {
       if (i != b) {
         decl += ", ";
       }
-      if (ST.getShaderModel() >= PTXSubtarget::PTX_SM_2_0) {
-        decl += ".param .b";
-        decl += utostr(*i);
-        decl += " ";
-        decl += RETURN_PREFIX;
-        decl += utostr(++cnt);
-      } else {
-        decl += ".reg .";
-        decl += getRegisterTypeName(*i);
-        decl += " ";
-        decl += getRegisterName(*i);
-      }
+      decl += ".reg .";
+      decl += getRegisterTypeName(*i);
+      decl += " ";
+      decl += getRegisterName(*i);
     }
     decl += ")";
   }

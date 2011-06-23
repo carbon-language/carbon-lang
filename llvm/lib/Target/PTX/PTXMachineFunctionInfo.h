@@ -26,7 +26,7 @@ class PTXMachineFunctionInfo : public MachineFunctionInfo {
 private:
   bool is_kernel;
   std::vector<unsigned> reg_arg, reg_local_var;
-  DenseSet<unsigned> reg_ret;
+  std::vector<unsigned> reg_ret;
   bool _isDoneAddArg;
 
 public:
@@ -40,7 +40,11 @@ public:
 
   void addArgReg(unsigned reg) { reg_arg.push_back(reg); }
   void addLocalVarReg(unsigned reg) { reg_local_var.push_back(reg); }
-  void addRetReg(unsigned reg) { reg_ret.insert(reg); }
+  void addRetReg(unsigned reg) {
+    if (!isRetReg(reg)) {
+      reg_ret.push_back(reg);
+    }
+  }
 
   void doneAddArg(void) {
     _isDoneAddArg = true;
@@ -51,7 +55,7 @@ public:
 
   typedef std::vector<unsigned>::const_iterator         reg_iterator;
   typedef std::vector<unsigned>::const_reverse_iterator reg_reverse_iterator;
-  typedef DenseSet<unsigned>::const_iterator            ret_iterator;
+  typedef std::vector<unsigned>::const_iterator         ret_iterator;
 
   bool         argRegEmpty() const { return reg_arg.empty(); }
   int          getNumArg() const { return reg_arg.size(); }
