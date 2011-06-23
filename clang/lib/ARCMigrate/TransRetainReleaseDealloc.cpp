@@ -31,7 +31,6 @@ namespace {
 
 class RetainReleaseDeallocRemover :
                        public RecursiveASTVisitor<RetainReleaseDeallocRemover> {
-  Decl *Dcl;
   Stmt *Body;
   MigrationPass &Pass;
 
@@ -39,8 +38,8 @@ class RetainReleaseDeallocRemover :
   llvm::OwningPtr<ParentMap> StmtMap;
 
 public:
-  RetainReleaseDeallocRemover(Decl *D, MigrationPass &pass)
-    : Dcl(D), Body(0), Pass(pass) { }
+  RetainReleaseDeallocRemover(MigrationPass &pass)
+    : Body(0), Pass(pass) { }
 
   void transformBody(Stmt *body) {
     Body = body;

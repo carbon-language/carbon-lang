@@ -32,15 +32,14 @@ using llvm::StringRef;
 namespace {
 
 class UnusedInitRewriter : public RecursiveASTVisitor<UnusedInitRewriter> {
-  Decl *Dcl;
   Stmt *Body;
   MigrationPass &Pass;
 
   ExprSet Removables;
 
 public:
-  UnusedInitRewriter(Decl *D, MigrationPass &pass)
-    : Dcl(D), Body(0), Pass(pass) { }
+  UnusedInitRewriter(MigrationPass &pass)
+    : Body(0), Pass(pass) { }
 
   void transformBody(Stmt *body) {
     Body = body;

@@ -69,8 +69,8 @@ namespace {
 class AutoreleasePoolRewriter
                          : public RecursiveASTVisitor<AutoreleasePoolRewriter> {
 public:
-  AutoreleasePoolRewriter(Decl *D, MigrationPass &pass)
-    : Dcl(D), Body(0), Pass(pass) {
+  AutoreleasePoolRewriter(MigrationPass &pass)
+    : Body(0), Pass(pass) {
     PoolII = &pass.Ctx.Idents.get("NSAutoreleasePool");
     DrainSel = pass.Ctx.Selectors.getNullarySelector(
                                                  &pass.Ctx.Idents.get("drain"));
@@ -411,7 +411,6 @@ private:
     return S;
   }
 
-  Decl *Dcl;
   Stmt *Body;
   MigrationPass &Pass;
 
