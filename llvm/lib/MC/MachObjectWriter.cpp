@@ -123,7 +123,7 @@ private:
                             const MCAsmLayout &Layout) const;
 
   uint64_t getFragmentAddress(const MCFragment *Fragment,
-                            const MCAsmLayout &Layout) const {
+                              const MCAsmLayout &Layout) const {
     return getSectionAddress(Fragment->getParent()) +
       Layout.getFragmentOffset(Fragment);
   }
