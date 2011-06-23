@@ -4372,7 +4372,7 @@ QualType Sema::CheckConditionalOperands(ExprResult &Cond, ExprResult &LHS, ExprR
 
   // Now check the two expressions.
   if (LHSTy->isVectorType() || RHSTy->isVectorType())
-    return CheckVectorOperands(QuestionLoc, LHS, RHS);
+    return CheckVectorOperands(LHS, RHS, QuestionLoc, /*isCompAssign*/false);
 
   // OpenCL: If the condition is a vector, and both operands are scalar,
   // attempt to implicity convert them to the vector type to act like the
@@ -5470,7 +5470,8 @@ QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &lex, ExprResult &
   return QualType();
 }
 
-QualType Sema::CheckVectorOperands(SourceLocation Loc, ExprResult &lex, ExprResult &rex) {
+QualType Sema::CheckVectorOperands(ExprResult &lex, ExprResult &rex,
+                                   SourceLocation Loc, bool isCompAssign) {
   // For conversion purposes, we ignore any qualifiers.
   // For example, "const float" and "float" are equivalent.
   QualType lhsType =
@@ -5482,42 +5483,33 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, ExprResult &lex, ExprResu
   if (lhsType == rhsType)
     return lhsType;
 
-  // Handle the case of a vector & extvector type of the same size and element
-  // type.  It would be nice if we only had one vector type someday.
-  if (getLangOptions().LaxVectorConversions) {
-    if (const VectorType *LV = lhsType->getAs<VectorType>()) {
-      if (const VectorType *RV = rhsType->getAs<VectorType>()) {
-        if (LV->getElementType() == RV->getElementType() &&
-            LV->getNumElements() == RV->getNumElements()) {
-          if (lhsType->isExtVectorType()) {
-            rex = ImpCastExprToType(rex.take(), lhsType, CK_BitCast);
-            return lhsType;
-          } 
-
-          lex = ImpCastExprToType(lex.take(), rhsType, CK_BitCast);
-          return rhsType;
-        } else if (Context.getTypeSize(lhsType) ==Context.getTypeSize(rhsType)){
-          // If we are allowing lax vector conversions, and LHS and RHS are both
-          // vectors, the total size only needs to be the same. This is a
-          // bitcast; no bits are changed but the result type is different.
-          rex = ImpCastExprToType(rex.take(), lhsType, CK_BitCast);
-          return lhsType;
-        }
-      }
-    }
-  }
-
   // Handle the case of equivalent AltiVec and GCC vector types
   if (lhsType->isVectorType() && rhsType->isVectorType() &&
       Context.areCompatibleVectorTypes(lhsType, rhsType)) {
-    lex = ImpCastExprToType(lex.take(), rhsType, CK_BitCast);
+    if (lhsType->isExtVectorType()) {
+      rex = ImpCastExprToType(rex.take(), lhsType, CK_BitCast);
+      return lhsType;
+    }
+
+    if (!isCompAssign)
+      lex = ImpCastExprToType(lex.take(), rhsType, CK_BitCast);
     return rhsType;
+  }
+
+  if (getLangOptions().LaxVectorConversions &&
+      Context.getTypeSize(lhsType) == Context.getTypeSize(rhsType)) {
+    // If we are allowing lax vector conversions, and LHS and RHS are both
+    // vectors, the total size only needs to be the same. This is a
+    // bitcast; no bits are changed but the result type is different.
+    // FIXME: Should we really be allowing this?
+    rex = ImpCastExprToType(rex.take(), lhsType, CK_BitCast);
+    return lhsType;
   }
 
   // Canonicalize the ExtVector to the LHS, remember if we swapped so we can
   // swap back (so that we don't reverse the inputs to a subtract, for instance.
   bool swapped = false;
-  if (rhsType->isExtVectorType()) {
+  if (rhsType->isExtVectorType() && !isCompAssign) {
     swapped = true;
     std::swap(rex, lex);
     std::swap(rhsType, lhsType);
@@ -5550,6 +5542,7 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, ExprResult &lex, ExprResu
   }
 
   // Vectors of different size or scalar and non-ext-vector are errors.
+  if (swapped) std::swap(rex, lex);
   Diag(Loc, diag::err_typecheck_vector_not_convertable)
     << lex.get()->getType() << rex.get()->getType()
     << lex.get()->getSourceRange() << rex.get()->getSourceRange();
@@ -5559,7 +5552,7 @@ QualType Sema::CheckVectorOperands(SourceLocation Loc, ExprResult &lex, ExprResu
 QualType Sema::CheckMultiplyDivideOperands(
   ExprResult &lex, ExprResult &rex, SourceLocation Loc, bool isCompAssign, bool isDiv) {
   if (lex.get()->getType()->isVectorType() || rex.get()->getType()->isVectorType())
-    return CheckVectorOperands(Loc, lex, rex);
+    return CheckVectorOperands(lex, rex, Loc, isCompAssign);
 
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   if (lex.isInvalid() || rex.isInvalid())
@@ -5583,7 +5576,7 @@ QualType Sema::CheckRemainderOperands(
   if (lex.get()->getType()->isVectorType() || rex.get()->getType()->isVectorType()) {
     if (lex.get()->getType()->hasIntegerRepresentation() && 
         rex.get()->getType()->hasIntegerRepresentation())
-      return CheckVectorOperands(Loc, lex, rex);
+      return CheckVectorOperands(lex, rex, Loc, isCompAssign);
     return InvalidOperands(Loc, lex, rex);
   }
 
@@ -5605,7 +5598,7 @@ QualType Sema::CheckRemainderOperands(
 QualType Sema::CheckAdditionOperands( // C99 6.5.6
   ExprResult &lex, ExprResult &rex, SourceLocation Loc, QualType* CompLHSTy) {
   if (lex.get()->getType()->isVectorType() || rex.get()->getType()->isVectorType()) {
-    QualType compType = CheckVectorOperands(Loc, lex, rex);
+    QualType compType = CheckVectorOperands(lex, rex, Loc, CompLHSTy);
     if (CompLHSTy) *CompLHSTy = compType;
     return compType;
   }
@@ -5690,7 +5683,7 @@ QualType Sema::CheckAdditionOperands( // C99 6.5.6
 QualType Sema::CheckSubtractionOperands(ExprResult &lex, ExprResult &rex,
                                         SourceLocation Loc, QualType* CompLHSTy) {
   if (lex.get()->getType()->isVectorType() || rex.get()->getType()->isVectorType()) {
-    QualType compType = CheckVectorOperands(Loc, lex, rex);
+    QualType compType = CheckVectorOperands(lex, rex, Loc, CompLHSTy);
     if (CompLHSTy) *CompLHSTy = compType;
     return compType;
   }
@@ -5913,7 +5906,7 @@ QualType Sema::CheckShiftOperands(ExprResult &lex, ExprResult &rex, SourceLocati
 
   // Vector shifts promote their scalar inputs to vector type.
   if (lex.get()->getType()->isVectorType() || rex.get()->getType()->isVectorType())
-    return CheckVectorOperands(Loc, lex, rex);
+    return CheckVectorOperands(lex, rex, Loc, isCompAssign);
 
   // Shifts don't perform usual arithmetic conversions, they just do integer
   // promotions on each operand. C99 6.5.7p3
@@ -6382,7 +6375,7 @@ QualType Sema::CheckVectorCompareOperands(ExprResult &lex, ExprResult &rex,
                                           bool isRelational) {
   // Check to make sure we're operating on vectors of the same type and width,
   // Allowing one side to be a scalar of element type.
-  QualType vType = CheckVectorOperands(Loc, lex, rex);
+  QualType vType = CheckVectorOperands(lex, rex, Loc, /*isCompAssign*/false);
   if (vType.isNull())
     return vType;
 
@@ -6437,7 +6430,7 @@ inline QualType Sema::CheckBitwiseOperands(
   if (lex.get()->getType()->isVectorType() || rex.get()->getType()->isVectorType()) {
     if (lex.get()->getType()->hasIntegerRepresentation() &&
         rex.get()->getType()->hasIntegerRepresentation())
-      return CheckVectorOperands(Loc, lex, rex);
+      return CheckVectorOperands(lex, rex, Loc, isCompAssign);
     
     return InvalidOperands(Loc, lex, rex);
   }

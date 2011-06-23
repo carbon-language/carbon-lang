@@ -37,7 +37,7 @@ static void test() {
      vec4 /= 5.2f;
      vec4 %= 4; // expected-error {{invalid operands to binary expression ('float4' and 'int')}}
     ivec4 %= 4;
-    ivec4 += vec4; // expected-error {{can't convert between vector values of different size ('float4' and 'int4')}}
+    ivec4 += vec4; // expected-error {{can't convert between vector values of different size ('int4' and 'float4')}}
     ivec4 += (int4)vec4;
     ivec4 -= ivec4;
     ivec4 |= ivec4;

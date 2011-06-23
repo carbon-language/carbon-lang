@@ -5559,7 +5559,8 @@ public:
                                   SourceLocation QuestionLoc);
 
   /// type checking for vector binary operators.
-  QualType CheckVectorOperands(SourceLocation l, ExprResult &lex, ExprResult &rex);
+  QualType CheckVectorOperands(ExprResult &lex, ExprResult &rex,
+                               SourceLocation Loc, bool isCompAssign);
   QualType CheckVectorCompareOperands(ExprResult &lex, ExprResult &rx,
                                       SourceLocation l, bool isRel);
 

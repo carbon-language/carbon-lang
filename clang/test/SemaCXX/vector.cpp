@@ -176,10 +176,10 @@ void test_implicit_conversions(bool Cond, char16 c16, longlong16 ll16,
   (void)(to_c16 * to_c16e);
   (void)(to_c16 / to_c16e);
   (void)(rto_c16 = c16e); // expected-error{{no viable overloaded '='}}
-  (void)(rto_c16 += to_c16e); // expected-error{{expression is not assignable}}
-  (void)(rto_c16 -= to_c16e); // expected-error{{expression is not assignable}}
-  (void)(rto_c16 *= to_c16e); // expected-error{{expression is not assignable}}
-  (void)(rto_c16 /= to_c16e); // expected-error{{expression is not assignable}}
+  (void)(rto_c16 += to_c16e);
+  (void)(rto_c16 -= to_c16e);
+  (void)(rto_c16 *= to_c16e);
+  (void)(rto_c16 /= to_c16e);
 
   (void)(Cond? to_c16 : to_c16e);
   (void)(Cond? to_ll16e : to_ll16);
