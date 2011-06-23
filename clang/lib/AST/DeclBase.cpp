@@ -641,12 +641,8 @@ DeclContext *Decl::getNonClosureContext() {
   // This is basically "while (DC->isClosure()) DC = DC->getParent();"
   // except that it's significantly more efficient to cast to a known
   // decl type and call getDeclContext() than to call getParent().
-  do {
-    if (isa<BlockDecl>(DC)) {
-      DC = cast<BlockDecl>(DC)->getDeclContext();
-      continue;
-    }
-  } while (false);
+  while (isa<BlockDecl>(DC))
+    DC = cast<BlockDecl>(DC)->getDeclContext();
 
   assert(!DC->isClosure());
   return DC;
