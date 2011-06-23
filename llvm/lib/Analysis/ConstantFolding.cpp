@@ -31,9 +31,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/FEnv.h"
 #include <cerrno>
 #include <cmath>
+
+#include "FEnv.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

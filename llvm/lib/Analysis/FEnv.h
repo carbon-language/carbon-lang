@@ -1,4 +1,4 @@
-//===- llvm/Support/FEnv.h - Host floating-point exceptions ------*- C++ -*-===//
+//===- FEnv.h - Host floating-point exceptions ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
