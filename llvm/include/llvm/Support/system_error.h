@@ -222,7 +222,7 @@ template <> struct hash<std::error_code>;
 
 */
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/type_traits.h"
 #include <cerrno>
 #include <string>
