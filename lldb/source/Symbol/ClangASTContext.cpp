@@ -58,6 +58,10 @@
 #include "lldb/Core/dwarf.h"
 #include "lldb/Core/Flags.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/ObjCLanguageRuntime.h"
+
 
 #include <stdio.h>
 
@@ -2445,6 +2449,7 @@ ClangASTContext::GetNumPointeeChildren (clang_type_t clang_type)
 clang_type_t
 ClangASTContext::GetChildClangTypeAtIndex
 (
+    ExecutionContext *exe_ctx,
     const char *parent_name,
     clang_type_t parent_clang_type,
     uint32_t idx,
@@ -2461,7 +2466,8 @@ ClangASTContext::GetChildClangTypeAtIndex
 {
     if (parent_clang_type)
 
-        return GetChildClangTypeAtIndex (getASTContext(),
+        return GetChildClangTypeAtIndex (exe_ctx,
+                                         getASTContext(),
                                          parent_name,
                                          parent_clang_type,
                                          idx,
@@ -2480,6 +2486,7 @@ ClangASTContext::GetChildClangTypeAtIndex
 clang_type_t
 ClangASTContext::GetChildClangTypeAtIndex
 (
+    ExecutionContext *exe_ctx,
     ASTContext *ast,
     const char *parent_name,
     clang_type_t parent_clang_type,
@@ -2677,8 +2684,27 @@ ClangASTContext::GetChildClangTypeAtIndex
                                     child_byte_size = ivar_type_info.first / 8;
 
                                     // Figure out the field offset within the current struct/union/class type
-                                    bit_offset = interface_layout.getFieldOffset (child_idx - superclass_idx);
-                                    child_byte_offset = bit_offset / 8;
+                                    // For ObjC objects, we can't trust the bit offset we get from the Clang AST, since
+                                    // that doesn't account for the space taken up by unbacked properties, or from 
+                                    // the changing size of base classes that are newer than this class.
+                                    // So if we have a process around that we can ask about this object, do so.
+                                    child_byte_offset = LLDB_INVALID_IVAR_OFFSET;
+                                    
+                                    if (exe_ctx && exe_ctx->process)
+                                    {
+                                        ObjCLanguageRuntime *objc_runtime = exe_ctx->process->GetObjCLanguageRuntime();
+                                        if (objc_runtime != NULL)
+                                        {
+                                            ClangASTType parent_ast_type (parent_qual_type.getAsOpaquePtr(), ast);
+                                            child_byte_offset = objc_runtime->GetByteOffsetForIvar (parent_ast_type, ivar_decl->getNameAsString().c_str());
+                                        }
+                                    }
+                                    
+                                    if (child_byte_offset == LLDB_INVALID_IVAR_OFFSET)
+                                    {
+                                        bit_offset = interface_layout.getFieldOffset (child_idx - superclass_idx);
+                                        child_byte_offset = bit_offset / 8;
+                                    }
 
                                     return ivar_qual_type.getAsOpaquePtr();
                                 }
@@ -2699,7 +2725,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                 {
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
-                    return GetChildClangTypeAtIndex (ast,
+                    return GetChildClangTypeAtIndex (exe_ctx,
+                                                     ast,
                                                      parent_name,
                                                      pointer_type->getPointeeType().getAsOpaquePtr(),
                                                      idx,
@@ -2772,7 +2799,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                 {
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
-                    return GetChildClangTypeAtIndex (ast,
+                    return GetChildClangTypeAtIndex (exe_ctx,
+                                                     ast,
                                                      parent_name,
                                                      pointer_type->getPointeeType().getAsOpaquePtr(),
                                                      idx,
@@ -2819,7 +2847,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                 {
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
-                    return GetChildClangTypeAtIndex (ast,
+                    return GetChildClangTypeAtIndex (exe_ctx,
+                                                     ast,
                                                      parent_name,
                                                      pointee_clang_type,
                                                      idx,
@@ -2855,7 +2884,8 @@ ClangASTContext::GetChildClangTypeAtIndex
             break;
 
         case clang::Type::Typedef:
-            return GetChildClangTypeAtIndex (ast,
+            return GetChildClangTypeAtIndex (exe_ctx,
+                                             ast,
                                              parent_name,
                                              cast<TypedefType>(parent_qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(),
                                              idx,

@@ -7,13 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AppleObjCRuntimeV2.h"
-#include "AppleObjCTrampolineHandler.h"
 
-#include "llvm/Support/MachO.h"
-#include "clang/AST/Type.h"
+#include <string>
+#include <vector>
+#include <memory>
+#include <stdint.h>
+
+#include "lldb/lldb-enumerations.h"
+#include "lldb/Core/ClangForward.h"
+#include "lldb/Symbol/ClangASTType.h"
 
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
@@ -31,10 +36,15 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
+#include "AppleObjCRuntimeV2.h"
+#include "AppleObjCTrampolineHandler.h"
+
+
 #include <vector>
 
 using namespace lldb;
 using namespace lldb_private;
+    
 
 static const char *pluginName = "AppleObjCRuntimeV2";
 static const char *pluginDesc = "Apple Objective C Language Runtime - Version 2";
@@ -514,3 +524,41 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
 
     return new ClangUtilityFunction(check_function_code, name);
 }
+
+size_t
+AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const char *ivar_name)
+{
+    const char *class_name = parent_ast_type.GetClangTypeName().AsCString();
+
+    if (!class_name || *class_name == '\0' || !ivar_name || *ivar_name == '\0')
+        return LLDB_INVALID_IVAR_OFFSET;
+    
+    std::string buffer("OBJC_IVAR_$_");
+    buffer.append (class_name);
+    buffer.push_back ('.');
+    buffer.append (ivar_name);
+    ConstString ivar_const_str (buffer.c_str());
+    
+    SymbolContextList sc_list;
+    Target *target = &(m_process->GetTarget());
+    
+    target->GetImages().FindSymbolsWithNameAndType(ivar_const_str, eSymbolTypeRuntime, sc_list);
+
+    SymbolContext ivar_offset_symbol;
+    if (sc_list.GetSize() != 1 
+        || !sc_list.GetContextAtIndex(0, ivar_offset_symbol) 
+        || ivar_offset_symbol.symbol == NULL)
+        return LLDB_INVALID_IVAR_OFFSET;
+    
+    lldb::addr_t ivar_offset_address = ivar_offset_symbol.symbol->GetValue().GetLoadAddress(target);
+    
+    Error error;
+    
+    uint32_t ivar_offset = m_process->ReadUnsignedIntegerFromMemory (ivar_offset_address, 
+                                                                     4, 
+                                                                     LLDB_INVALID_IVAR_OFFSET, 
+                                                                     error);
+    return ivar_offset;
+}
+
+

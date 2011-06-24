@@ -28,7 +28,7 @@ class AppleObjCRuntimeV2 :
         public AppleObjCRuntime
 {
 public:
-    ~AppleObjCRuntimeV2() { }
+    virtual ~AppleObjCRuntimeV2() { }
     
     // These are generic runtime functions:
     virtual bool
@@ -73,6 +73,10 @@ public:
     {
         return eAppleObjC_V2;
     }
+
+    virtual size_t
+    GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
+
     
 protected:
     

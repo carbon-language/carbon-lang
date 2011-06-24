@@ -28,7 +28,7 @@ class AppleObjCRuntime :
 {
 public:
     
-    ~AppleObjCRuntime() { }
+    virtual ~AppleObjCRuntime() { }
     
     // These are generic runtime functions:
     virtual bool

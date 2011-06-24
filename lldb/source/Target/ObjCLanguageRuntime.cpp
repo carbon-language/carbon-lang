@@ -93,3 +93,10 @@ ObjCLanguageRuntime::LookupInClassNameCache (lldb::addr_t class_addr)
         return (*pos).second;
     return TypeAndOrName ();
 }
+
+size_t
+ObjCLanguageRuntime::GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name)
+{
+    return LLDB_INVALID_IVAR_OFFSET;
+}
+

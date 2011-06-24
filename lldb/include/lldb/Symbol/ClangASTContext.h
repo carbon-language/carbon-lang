@@ -399,7 +399,8 @@ public:
     GetNumPointeeChildren (lldb::clang_type_t clang_type);
 
     lldb::clang_type_t
-    GetChildClangTypeAtIndex (const char *parent_name,
+    GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
+                              const char *parent_name,
                               lldb::clang_type_t  parent_clang_type,
                               uint32_t idx,
                               bool transparent_pointers,
@@ -413,7 +414,8 @@ public:
                               bool &child_is_deref_of_parent);
  
     static lldb::clang_type_t
-    GetChildClangTypeAtIndex (clang::ASTContext *ast,
+    GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
+                              clang::ASTContext *ast,
                               const char *parent_name,
                               lldb::clang_type_t  parent_clang_type,
                               uint32_t idx,

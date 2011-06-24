@@ -407,7 +407,12 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
         clang::ASTContext *clang_ast = GetClangAST();
         clang_type_t clang_type = GetClangType();
         clang_type_t child_clang_type;
-        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (clang_ast,
+        
+        ExecutionContext exe_ctx;
+        GetExecutionContextScope()->CalculateExecutionContext (exe_ctx);
+        
+        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (&exe_ctx,
+                                                                      clang_ast,
                                                                       GetName().GetCString(),
                                                                       clang_type,
                                                                       idx,
@@ -1436,7 +1441,12 @@ ValueObject::Dereference (Error &error)
         clang::ASTContext *clang_ast = GetClangAST();
         clang_type_t clang_type = GetClangType();
         clang_type_t child_clang_type;
-        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (clang_ast,
+
+        ExecutionContext exe_ctx;
+        GetExecutionContextScope()->CalculateExecutionContext (exe_ctx);
+        
+        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (&exe_ctx,
+                                                                      clang_ast,
                                                                       GetName().GetCString(),
                                                                       clang_type,
                                                                       0,

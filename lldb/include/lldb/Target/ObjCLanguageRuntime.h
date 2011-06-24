@@ -73,6 +73,12 @@ public:
         return eObjC_VersionUnknown;
     }
     
+    // Finds the byte offset of the child_type ivar in parent_type.  If it can't find the
+    // offset, returns LLDB_INVALID_IVAR_OFFSET.
+    
+    virtual size_t
+    GetByteOffsetForIvar (ClangASTType &parent_qual_type, const char *ivar_name);
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ObjCLanguageRuntime can see and modify these

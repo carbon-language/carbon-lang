@@ -118,7 +118,8 @@ SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMembe
     if (IsValid ())
     {
 
-        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (static_cast<clang::ASTContext *>(m_ast),
+        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (NULL,
+                                                                      static_cast<clang::ASTContext *>(m_ast),
                                                                       NULL,
                                                                       m_type,
                                                                       idx,
