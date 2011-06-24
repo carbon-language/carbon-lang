@@ -679,9 +679,17 @@ SourceLocation Lexer::AdvanceToTokenCharacter(SourceLocation TokStart,
 SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
                                           const SourceManager &SM,
                                           const LangOptions &Features) {
-  if (Loc.isInvalid() || !Loc.isFileID())
+  if (Loc.isInvalid())
     return SourceLocation();
-  
+
+  if (Loc.isMacroID()) {
+    if (Offset > 0 || !SM.isAtEndOfMacroInstantiation(Loc))
+      return SourceLocation(); // Points inside the macro instantiation.
+
+    // Continue and find the location just after the macro instantiation.
+    Loc = SM.getInstantiationRange(Loc).second;
+  }
+
   unsigned Len = Lexer::MeasureTokenLength(Loc, SM, Features);
   if (Len > Offset)
     Len = Len - Offset;
