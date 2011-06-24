@@ -364,6 +364,20 @@ namespace {
     }
   };
 
+  struct ExtendGCLifetime : EHScopeStack::Cleanup {
+    const VarDecl &Var;
+    ExtendGCLifetime(const VarDecl *var) : Var(*var) {}
+
+    void Emit(CodeGenFunction &CGF, bool forEH) {
+      // Compute the address of the local variable, in case it's a
+      // byref or something.
+      DeclRefExpr DRE(const_cast<VarDecl*>(&Var), Var.getType(), VK_LValue,
+                      SourceLocation());
+      llvm::Value *value = CGF.EmitLoadOfScalar(CGF.EmitDeclRefLValue(&DRE));
+      CGF.EmitExtendGCLifetime(value);
+    }
+  };
+
   struct CallCleanupFunction : EHScopeStack::Cleanup {
     llvm::Constant *CleanupFn;
     const CGFunctionInfo &FnInfo;
@@ -1027,6 +1041,12 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
       llvm::Value *loc = emission.getObjectAddress(*this);
       EmitAutoVarWithLifetime(*this, D, loc, lifetime);
     }
+  }
+
+  // In GC mode, honor objc_precise_lifetime.
+  if (getLangOptions().getGCMode() != LangOptions::NonGC &&
+      D.hasAttr<ObjCPreciseLifetimeAttr>()) {
+    EHStack.pushCleanup<ExtendGCLifetime>(NormalCleanup, &D);
   }
 
   // Handle the cleanup attribute.

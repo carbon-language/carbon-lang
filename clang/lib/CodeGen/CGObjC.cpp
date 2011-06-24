@@ -2484,4 +2484,22 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
     DI->EmitRegionEnd(Builder);
   }
 }
+
+/// EmitExtendGCLifetime - Given a pointer to an Objective-C object,
+/// make sure it survives garbage collection until this point.
+void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
+  // We just use an inline assembly.
+  const llvm::Type *paramTypes[] = { VoidPtrTy };
+  llvm::FunctionType *extenderType
+    = llvm::FunctionType::get(VoidTy, paramTypes, /*variadic*/ false);
+  llvm::Value *extender
+    = llvm::InlineAsm::get(extenderType,
+                           /* assembly */ "",
+                           /* constraints */ "r",
+                           /* side effects */ true);
+
+  object = Builder.CreateBitCast(object, VoidPtrTy);
+  Builder.CreateCall(extender, object)->setDoesNotThrow();
+}
+
 CGObjCRuntime::~CGObjCRuntime() {}

@@ -2146,6 +2146,10 @@ public:
   void EmitGCMemmoveCollectable(llvm::Value *DestPtr, llvm::Value *SrcPtr,
                                 QualType Ty);
 
+  /// EmitExtendGCLifetime - Given a pointer to an Objective-C object,
+  /// make sure it survives garbage collection until this point.
+  void EmitExtendGCLifetime(llvm::Value *object);
+
   /// EmitComplexExpr - Emit the computation of the specified expression of
   /// complex type, returning the result.
   ComplexPairTy EmitComplexExpr(const Expr *E,
