@@ -2302,8 +2302,6 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
     } else {
       assert(isa<UsingDecl>(Cand) && "illegal Kind of operator = Decl");
     }
-
-  Continue:;
   }
 
   OverloadCandidateSet::iterator Best;
