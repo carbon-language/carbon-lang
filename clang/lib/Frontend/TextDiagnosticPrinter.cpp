@@ -317,7 +317,8 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(Diagnostic::Level Level,
 
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
     // FIXME: Map ranges?
-    EmitCaretDiagnostic(Level, OneLevelUp, Ranges, NumRanges, SM, 0, 0, Columns,
+    EmitCaretDiagnostic(Level, OneLevelUp, Ranges, NumRanges, SM,
+                        Hints, NumHints, Columns,
                         OnMacroInst + 1, MacroSkipStart, MacroSkipEnd);
     
     // Map the location.
@@ -355,7 +356,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(Diagnostic::Level Level,
       }
       OS << "note: instantiated from:\n";
       
-      EmitCaretDiagnostic(Level, Loc, Ranges, NumRanges, SM, Hints, NumHints,
+      EmitCaretDiagnostic(Level, Loc, Ranges, NumRanges, SM, 0, 0,
                           Columns, OnMacroInst + 1, MacroSkipStart,
                           MacroSkipEnd);
       return;
