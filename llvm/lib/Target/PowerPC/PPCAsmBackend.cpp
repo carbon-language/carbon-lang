@@ -13,6 +13,7 @@
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Object/MachOFormat.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
@@ -23,6 +24,11 @@ public:
   PPCMachObjectWriter(bool Is64Bit, uint32_t CPUType,
                       uint32_t CPUSubtype)
     : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
+
+  void RecordRelocation(MachObjectWriter *Writer,
+                        const MCAssembler &Asm, const MCAsmLayout &Layout,
+                        const MCFragment *Fragment, const MCFixup &Fixup,
+                        MCValue Target, uint64_t &FixedValue) {}
 };
 
 class PPCAsmBackend : public TargetAsmBackend {
