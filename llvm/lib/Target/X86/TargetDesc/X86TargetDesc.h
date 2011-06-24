@@ -11,6 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+namespace llvm {
+class Target;
+
+extern Target TheX86_32Target, TheX86_64Target;
+} // End llvm namespace
+
 // Defines symbolic names for X86 registers.  This defines a mapping from
 // register name to register number.
 //

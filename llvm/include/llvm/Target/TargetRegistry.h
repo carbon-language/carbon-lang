@@ -66,8 +66,7 @@ namespace llvm {
 
     typedef MCAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
                                           StringRef TT);
-    typedef MCRegisterInfo *(*RegInfoCtorFnTy)(const Target &T,
-                                               StringRef TT);
+    typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(void);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
                                                   const std::string &Features);
@@ -127,9 +126,9 @@ namespace llvm {
     /// registered.
     AsmInfoCtorFnTy AsmInfoCtorFn;
 
-    /// RegInfoCtorFn - Constructor function for this target's MCRegisterInfo,
+    /// MCRegInfoCtorFn - Constructor function for this target's MCRegisterInfo,
     /// if registered.
-    RegInfoCtorFnTy RegInfoCtorFn;
+    MCRegInfoCtorFnTy MCRegInfoCtorFn;
 
     /// TargetMachineCtorFn - Construction function for this target's
     /// TargetMachine, if registered.
@@ -240,17 +239,12 @@ namespace llvm {
       return AsmInfoCtorFn(*this, Triple);
     }
 
-    /// createRegInfo - Create a MCRegisterInfo implementation for the specified
-    /// target triple.
+    /// createMCRegInfo - Create a MCRegisterInfo implementation.
     ///
-    /// \arg Triple - This argument is used to determine the target machine
-    /// feature set; it should always be provided. Generally this should be
-    /// either the target triple from the module, or the target triple of the
-    /// host if that does not exist.
-    MCRegisterInfo *createRegInfo(StringRef Triple) const {
-      if (!RegInfoCtorFn)
+    MCRegisterInfo *createMCRegInfo() const {
+      if (!MCRegInfoCtorFn)
         return 0;
-      return RegInfoCtorFn(*this, Triple);
+      return MCRegInfoCtorFn();
     }
 
     /// createTargetMachine - Create a target specific machine implementation
@@ -466,7 +460,7 @@ namespace llvm {
         T.AsmInfoCtorFn = Fn;
     }
 
-    /// RegisterRegInfo - Register a MCRegisterInfo implementation for the
+    /// RegisterMCRegInfo - Register a MCRegisterInfo implementation for the
     /// given target.
     ///
     /// Clients are responsible for ensuring that registration doesn't occur
@@ -475,10 +469,10 @@ namespace llvm {
     ///
     /// @param T - The target being registered.
     /// @param Fn - A function to construct a MCRegisterInfo for the target.
-    static void RegisterRegInfo(Target &T, Target::RegInfoCtorFnTy Fn) {
+    static void RegisterMCRegInfo(Target &T, Target::MCRegInfoCtorFnTy Fn) {
       // Ignore duplicate registration.
-      if (!T.RegInfoCtorFn)
-        T.RegInfoCtorFn = Fn;
+      if (!T.MCRegInfoCtorFn)
+        T.MCRegInfoCtorFn = Fn;
     }
 
     /// RegisterTargetMachine - Register a TargetMachine implementation for the
@@ -691,6 +685,38 @@ namespace llvm {
     }
   };
 
+  /// RegisterMCRegInfo - Helper template for registering a target register info
+  /// implementation.  This invokes the static "Create" method on the class to
+  /// actually do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCRegInfo<FooMCRegInfo> X(TheFooTarget);
+  /// }
+  template<class MCRegisterInfoImpl>
+  struct RegisterMCRegInfo {
+    RegisterMCRegInfo(Target &T) {
+      TargetRegistry::RegisterMCRegInfo(T, &Allocator);
+    }
+  private:
+    static MCRegisterInfo *Allocator() {
+      return new MCRegisterInfoImpl();
+    }
+  };
+
+  /// RegisterMCRegInfoFn - Helper template for registering a target register
+  /// info implementation.  This invokes the specified function to do the
+  /// construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCRegInfoFn X(TheFooTarget, TheFunction);
+  /// }
+  struct RegisterMCRegInfoFn {
+    RegisterMCRegInfoFn(Target &T, Target::MCRegInfoCtorFnTy Fn) {
+      TargetRegistry::RegisterMCRegInfo(T, Fn);
+    }
+  };
 
   /// RegisterTargetMachine - Helper template for registering a target machine
   /// implementation, for use in the target machine initialization

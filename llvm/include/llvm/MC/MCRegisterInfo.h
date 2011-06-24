@@ -30,7 +30,7 @@ namespace llvm {
 /// super-registers of the specific register, e.g. RAX, EAX, are super-registers
 /// of AX.
 ///
-struct TargetRegisterDesc {
+struct MCRegisterDesc {
   const char     *Name;         // Printable name for the reg (for debugging)
   const unsigned *Overlaps;     // Overlapping registers, described above
   const unsigned *SubRegs;      // Sub-register set, described above
@@ -43,20 +43,26 @@ struct TargetRegisterDesc {
 /// to this array so that we can turn register number into a register
 /// descriptor.
 ///
+/// Note this class is designed to be a base class of TargetRegisterInfo, which
+/// is the interface used by codegen. However, specific targets *should never*
+/// specialize this class. MCRegisterInfo should only contain getters to access
+/// TableGen generated physical register data. It must not be extended with
+/// virtual methods.
+///
 class MCRegisterInfo {
 private:
-  const TargetRegisterDesc *Desc;             // Pointer to the descriptor array
+  const MCRegisterDesc *Desc;             // Pointer to the descriptor array
   unsigned NumRegs;                           // Number of entries in the array
 
 public:
   /// InitMCRegisterInfo - Initialize MCRegisterInfo, called by TableGen
   /// auto-generated routines. *DO NOT USE*.
-  void InitMCRegisterInfo(const TargetRegisterDesc *D, unsigned NR) {
+  void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR) {
     Desc = D;
     NumRegs = NR;
   }
     
-  const TargetRegisterDesc &operator[](unsigned RegNo) const {
+  const MCRegisterDesc &operator[](unsigned RegNo) const {
     assert(RegNo < NumRegs &&
            "Attempting to access record for invalid register number!");
     return Desc[RegNo];
@@ -65,7 +71,7 @@ public:
   /// Provide a get method, equivalent to [], but more useful if we have a
   /// pointer to this object.
   ///
-  const TargetRegisterDesc &get(unsigned RegNo) const {
+  const MCRegisterDesc &get(unsigned RegNo) const {
     return operator[](RegNo);
   }
 

@@ -256,6 +256,9 @@ public:
   bool isAllocatable() const { return Allocatable; }
 };
 
+/// TargetRegisterDesc - It's just an alias of MCRegisterDesc.
+typedef MCRegisterDesc TargetRegisterDesc;
+
 /// TargetRegisterInfoDesc - Extra information, not in MCRegisterDesc, about
 /// registers. These are used by codegen, not by MC.
 struct TargetRegisterInfoDesc {

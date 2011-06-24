@@ -631,7 +631,7 @@ void RegisterInfoEmitter::runDesc(raw_ostream &OS) {
   const std::string &TargetName = Target.getName();
   std::string ClassName = TargetName + "GenMCRegisterInfo";
   OS << "struct " << ClassName << " : public MCRegisterInfo {\n"
-     << "  explicit " << ClassName << "(const TargetRegisterDesc *D);\n";
+     << "  explicit " << ClassName << "(const MCRegisterDesc *D);\n";
   OS << "};\n";
 
   OS << "\nnamespace {\n";
@@ -684,7 +684,7 @@ void RegisterInfoEmitter::runDesc(raw_ostream &OS) {
     OS << "0 };\n";
   }
 
-  OS << "\n  const TargetRegisterDesc " << TargetName
+  OS << "\n  const MCRegisterDesc " << TargetName
      << "RegDesc[] = { // Descriptors\n";
   OS << "    { \"NOREG\",\t0,\t0,\t0 },\n";
 
