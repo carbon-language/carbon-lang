@@ -901,7 +901,6 @@ ProcessGDBRemote::DoResume ()
         
         if (continue_packet_error)
         {
-            continue_packet_error = false;
             // Either no vCont support, or we tried to use part of the vCont
             // packet that wasn't supported by the remote GDB server.
             // We need to try and make a simple packet that can do our continue
@@ -916,7 +915,8 @@ ProcessGDBRemote::DoResume ()
                 {
                     // All threads are resuming...
                     m_gdb_comm.SetCurrentThreadForRun (-1);
-                    continue_packet.PutChar ('c');                
+                    continue_packet.PutChar ('c'); 
+                    continue_packet_error = false;
                 }
                 else if (num_continue_c_tids == 1 &&
                          num_continue_C_tids == 0 && 
@@ -926,57 +926,60 @@ ProcessGDBRemote::DoResume ()
                     // Only one thread is continuing
                     m_gdb_comm.SetCurrentThreadForRun (m_continue_c_tids.front());
                     continue_packet.PutChar ('c');                
-                }
-                else
-                {
-                    // We can't represent this continue packet....
-                    continue_packet_error = true;
+                    continue_packet_error = false;
                 }
             }
 
-            if (!continue_packet_error && num_continue_C_tids > 0)
+            if (continue_packet_error && num_continue_C_tids > 0)
             {
-                if (num_continue_C_tids == num_threads)
+                if ((num_continue_C_tids + num_continue_c_tids) == num_threads && 
+                    num_continue_C_tids > 0 && 
+                    num_continue_s_tids == 0 && 
+                    num_continue_S_tids == 0 )
                 {
                     const int continue_signo = m_continue_C_tids.front().second;
+                    // Only one thread is continuing
                     if (num_continue_C_tids > 1)
                     {
-                        for (size_t i=1; i<num_threads; ++i)
+                        // More that one thread with a signal, yet we don't have 
+                        // vCont support and we are being asked to resume each
+                        // thread with a signal, we need to make sure they are
+                        // all the same signal, or we can't issue the continue
+                        // accurately with the current support...
+                        if (num_continue_C_tids > 1)
                         {
-                            if (m_continue_C_tids[i].second != continue_signo)
-                                continue_packet_error = true;
+                            continue_packet_error = false;
+                            for (size_t i=1; i<m_continue_C_tids.size(); ++i)
+                            {
+                                if (m_continue_C_tids[i].second != continue_signo)
+                                    continue_packet_error = true;
+                            }
                         }
+                        if (!continue_packet_error)
+                            m_gdb_comm.SetCurrentThreadForRun (-1);
+                    }
+                    else
+                    {
+                        // Set the continue thread ID
+                        continue_packet_error = false;
+                        m_gdb_comm.SetCurrentThreadForRun (m_continue_C_tids.front().first);
                     }
                     if (!continue_packet_error)
                     {
                         // Add threads continuing with the same signo...
-                        m_gdb_comm.SetCurrentThreadForRun (-1);
                         continue_packet.Printf("C%2.2x", continue_signo);
                     }
                 }
-                else if (num_continue_c_tids == 0 &&
-                         num_continue_C_tids == 1 && 
-                         num_continue_s_tids == 0 && 
-                         num_continue_S_tids == 0 )
-                {
-                    // Only one thread is continuing with signal
-                    m_gdb_comm.SetCurrentThreadForRun (m_continue_C_tids.front().first);
-                    continue_packet.Printf("C%2.2x", m_continue_C_tids.front().second);
-                }
-                else
-                {
-                    // We can't represent this continue packet....
-                    continue_packet_error = true;
-                }
             }
 
-            if (!continue_packet_error && num_continue_s_tids > 0)
+            if (continue_packet_error && num_continue_s_tids > 0)
             {
                 if (num_continue_s_tids == num_threads)
                 {
                     // All threads are resuming...
                     m_gdb_comm.SetCurrentThreadForRun (-1);
-                    continue_packet.PutChar ('s');                
+                    continue_packet.PutChar ('s');
+                    continue_packet_error = false;
                 }
                 else if (num_continue_c_tids == 0 &&
                          num_continue_C_tids == 0 && 
@@ -986,11 +989,7 @@ ProcessGDBRemote::DoResume ()
                     // Only one thread is stepping
                     m_gdb_comm.SetCurrentThreadForRun (m_continue_s_tids.front());
                     continue_packet.PutChar ('s');                
-                }
-                else
-                {
-                    // We can't represent this continue packet....
-                    continue_packet_error = true;
+                    continue_packet_error = false;
                 }
             }
 
@@ -1000,6 +999,7 @@ ProcessGDBRemote::DoResume ()
                 {
                     const int step_signo = m_continue_S_tids.front().second;
                     // Are all threads trying to step with the same signal?
+                    continue_packet_error = false;
                     if (num_continue_S_tids > 1)
                     {
                         for (size_t i=1; i<num_threads; ++i)
@@ -1023,11 +1023,7 @@ ProcessGDBRemote::DoResume ()
                     // Only one thread is stepping with signal
                     m_gdb_comm.SetCurrentThreadForRun (m_continue_S_tids.front().first);
                     continue_packet.Printf("S%2.2x", m_continue_S_tids.front().second);
-                }
-                else
-                {
-                    // We can't represent this continue packet....
-                    continue_packet_error = true;
+                    continue_packet_error = false;
                 }
             }
         }

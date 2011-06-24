@@ -282,11 +282,43 @@ SBTarget::AttachToProcessWithID
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
-        if (listener.IsValid())
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+
+        StateType state = eStateInvalid;
+        sb_process.SetProcess (m_opaque_sp->GetProcessSP());
+        if (sb_process.IsValid())
+        {
+            state = sb_process->GetState();
+            
+            if (sb_process->IsAlive() && state != eStateConnected)
+            {       
+                if (state == eStateAttaching)
+                    error.SetErrorString ("process attach is in progress");
+                else
+                    error.SetErrorString ("a process is already being debugged");
+                sb_process.Clear();
+                return sb_process;
+            }            
+        }
+
+        if (state == eStateConnected)
+        {
+            // If we are already connected, then we have already specified the
+            // listener, so if a valid listener is supplied, we need to error out
+            // to let the client know.
+            if (listener.IsValid())
+            {
+                error.SetErrorString ("process is connected and already has a listener, pass empty listener");
+                sb_process.Clear();
+                return sb_process;
+            }
+        }
         else
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
-        
+        {
+            if (listener.IsValid())
+                sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+            else
+                sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        }
 
         if (sb_process.IsValid())
         {
@@ -323,10 +355,42 @@ SBTarget::AttachToProcessWithName
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
 
-        if (listener.IsValid())
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+        StateType state = eStateInvalid;
+        sb_process.SetProcess (m_opaque_sp->GetProcessSP());
+        if (sb_process.IsValid())
+        {
+            state = sb_process->GetState();
+            
+            if (sb_process->IsAlive() && state != eStateConnected)
+            {       
+                if (state == eStateAttaching)
+                    error.SetErrorString ("process attach is in progress");
+                else
+                    error.SetErrorString ("a process is already being debugged");
+                sb_process.Clear();
+                return sb_process;
+            }            
+        }
+        
+        if (state == eStateConnected)
+        {
+            // If we are already connected, then we have already specified the
+            // listener, so if a valid listener is supplied, we need to error out
+            // to let the client know.
+            if (listener.IsValid())
+            {
+                error.SetErrorString ("process is connected and already has a listener, pass empty listener");
+                sb_process.Clear();
+                return sb_process;
+            }
+        }
         else
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        {
+            if (listener.IsValid())
+                sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+            else
+                sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+        }
 
         if (sb_process.IsValid())
         {

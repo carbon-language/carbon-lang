@@ -479,15 +479,15 @@ SBProcess::GetAddressByteSize () const
 SBError
 SBProcess::Continue ()
 {
-    Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::Continue ()...", m_opaque_sp.get());
     
     SBError sb_error;
-    if (IsValid())
+    if (m_opaque_sp)
     {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        
         Error error (m_opaque_sp->Resume());
         if (error.Success())
         {
@@ -545,7 +545,7 @@ SBError
 SBProcess::Stop ()
 {
     SBError sb_error;
-    if (IsValid())
+    if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
         sb_error.SetError (m_opaque_sp->Halt());
