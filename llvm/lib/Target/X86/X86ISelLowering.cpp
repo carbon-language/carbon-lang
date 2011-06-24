@@ -2556,6 +2556,11 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   if (isCalleeStructRet || isCallerStructRet)
     return false;
 
+  // An stdcall caller is expected to clean up its arguments; the callee
+  // isn't going to do that.
+  if (!CCMatch && CallerCC==CallingConv::X86_StdCall)
+    return false;
+
   // Do not sibcall optimize vararg calls unless all arguments are passed via
   // registers.
   if (isVarArg && !Outs.empty()) {
@@ -2691,11 +2696,6 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
       }
     }
   }
-
-  // An stdcall caller is expected to clean up its arguments; the callee
-  // isn't going to do that.
-  if (!CCMatch && CallerCC==CallingConv::X86_StdCall)
-    return false;
 
   return true;
 }
