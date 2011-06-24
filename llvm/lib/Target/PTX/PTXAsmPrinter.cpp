@@ -22,10 +22,12 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
@@ -35,6 +37,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -67,6 +70,9 @@ public:
                           const char *Modifier = 0); 
   void printPredicateOperand(const MachineInstr *MI, raw_ostream &O);
 
+  unsigned GetOrCreateSourceID(StringRef FileName,
+                               StringRef DirName);
+
   // autogen'd.
   void printInstruction(const MachineInstr *MI, raw_ostream &OS);
   static const char *getRegisterName(unsigned RegNo);
@@ -74,6 +80,8 @@ public:
 private:
   void EmitVariableDeclaration(const GlobalVariable *gv);
   void EmitFunctionDeclaration();
+
+  StringMap<unsigned> SourceIdMap;
 }; // class PTXAsmPrinter
 } // namespace
 
@@ -175,6 +183,20 @@ void PTXAsmPrinter::EmitStartOfAsmFile(Module &M)
 
   OutStreamer.AddBlankLine();
 
+  // Define any .file directives
+  DebugInfoFinder DbgFinder;
+  DbgFinder.processModule(M);
+
+  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
+       E = DbgFinder.compile_unit_end(); I != E; ++I) {
+    DICompileUnit DIUnit(*I);
+    StringRef FN = DIUnit.getFilename();
+    StringRef Dir = DIUnit.getDirectory();
+    GetOrCreateSourceID(FN, Dir);
+  }
+
+  OutStreamer.AddBlankLine();
+
   // declare global variables
   for (Module::const_global_iterator i = M.global_begin(), e = M.global_end();
        i != e; ++i)
@@ -227,6 +249,54 @@ void PTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   str.reserve(64);
 
   raw_string_ostream OS(str);
+
+  DebugLoc DL = MI->getDebugLoc();
+  if (!DL.isUnknown()) {
+
+    const MDNode *S = DL.getScope(MF->getFunction()->getContext());
+
+    // This is taken from DwarfDebug.cpp, which is conveniently not a public
+    // LLVM class.
+    StringRef Fn;
+    StringRef Dir;
+    unsigned Src = 1;
+    if (S) {
+      DIDescriptor Scope(S);
+      if (Scope.isCompileUnit()) {
+        DICompileUnit CU(S);
+        Fn = CU.getFilename();
+        Dir = CU.getDirectory();
+      } else if (Scope.isFile()) {
+        DIFile F(S);
+        Fn = F.getFilename();
+        Dir = F.getDirectory();
+      } else if (Scope.isSubprogram()) {
+        DISubprogram SP(S);
+        Fn = SP.getFilename();
+        Dir = SP.getDirectory();
+      } else if (Scope.isLexicalBlock()) {
+        DILexicalBlock DB(S);
+        Fn = DB.getFilename();
+        Dir = DB.getDirectory();
+      } else
+        assert(0 && "Unexpected scope info");
+
+      Src = GetOrCreateSourceID(Fn, Dir);
+    }
+    OutStreamer.EmitDwarfLocDirective(Src, DL.getLine(), DL.getCol(),
+                                     0, 0, 0, Fn);
+
+    const MCDwarfLoc& MDL = OutContext.getCurrentDwarfLoc();
+
+    OS << "\t.loc ";
+    OS << utostr(MDL.getFileNum());
+    OS << " ";
+    OS << utostr(MDL.getLine());
+    OS << " ";
+    OS << utostr(MDL.getColumn());
+    OS << "\n";
+  }
+
 
   // Emit predicate
   printPredicateOperand(MI, OS);
@@ -497,6 +567,33 @@ printPredicateOperand(const MachineInstr *MI, raw_ostream &O) {
       O << '!';
     O << getRegisterName(reg);
   }
+}
+
+unsigned PTXAsmPrinter::GetOrCreateSourceID(StringRef FileName,
+                                            StringRef DirName) {
+  // If FE did not provide a file name, then assume stdin.
+  if (FileName.empty())
+    return GetOrCreateSourceID("<stdin>", StringRef());
+
+  // MCStream expects full path name as filename.
+  if (!DirName.empty() && !sys::path::is_absolute(FileName)) {
+    SmallString<128> FullPathName = DirName;
+    sys::path::append(FullPathName, FileName);
+    // Here FullPathName will be copied into StringMap by GetOrCreateSourceID.
+    return GetOrCreateSourceID(StringRef(FullPathName), StringRef());
+  }
+
+  StringMapEntry<unsigned> &Entry = SourceIdMap.GetOrCreateValue(FileName);
+  if (Entry.getValue())
+    return Entry.getValue();
+
+  unsigned SrcId = SourceIdMap.size();
+  Entry.setValue(SrcId);
+
+  // Print out a .file directive to specify files for .loc directives.
+  OutStreamer.EmitDwarfFileDirective(SrcId, Entry.getKey());
+
+  return SrcId;
 }
 
 #include "PTXGenAsmWriter.inc"
