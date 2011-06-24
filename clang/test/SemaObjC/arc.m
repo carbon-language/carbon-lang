@@ -518,12 +518,12 @@ typedef struct Bark Bark;
 
 // rdar://9495837
 @interface Test30
-- (id) new;
++ (id) new;
 - (void)Meth;
 @end
 
 @implementation Test30
-- (id) new { return 0; }
++ (id) new { return 0; }
 - (void) Meth {
   __weak id x = [Test30 new]; // expected-warning {{assigning retained object to weak variable}}
   id __unsafe_unretained u = [Test30 new]; // expected-warning {{assigning retained object to unsafe_unretained variable}}

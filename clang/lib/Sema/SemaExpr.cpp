@@ -6735,8 +6735,8 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, ExprResult &RHS,
     if (ConvTy == Compatible) {
       if (LHSType.getObjCLifetime() == Qualifiers::OCL_Strong)
         checkRetainCycles(LHS, RHS.get());
-      else
-        checkUnsafeAssigns(Loc, LHSType, RHS.get());
+      else if (getLangOptions().ObjCAutoRefCount)
+        checkUnsafeExprAssigns(Loc, LHS, RHS.get());
     }
   } else {
     // Compound assignment "x += y"
