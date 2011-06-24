@@ -219,7 +219,7 @@ DIType DIBuilder::createInheritance(DIType Ty, DIType BaseTy,
 }
 
 /// createMemberType - Create debugging information entry for a member.
-DIType DIBuilder::createMemberType(StringRef Name, 
+DIType DIBuilder::createMemberType(DIDescriptor Scope, StringRef Name, 
                                    DIFile File, unsigned LineNumber, 
                                    uint64_t SizeInBits, uint64_t AlignInBits,
                                    uint64_t OffsetInBits, unsigned Flags, 
@@ -227,7 +227,7 @@ DIType DIBuilder::createMemberType(StringRef Name,
   // TAG_member is encoded in DIDerivedType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_member),
-    File, // Or TheCU ? Ty ?
+    Scope,
     MDString::get(VMContext, Name),
     File,
     ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
