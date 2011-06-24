@@ -139,9 +139,11 @@ class CGDebugInfo {
   llvm::DIType createFieldType(llvm::StringRef name, QualType type,
                                Expr *bitWidth, SourceLocation loc,
                                AccessSpecifier AS, uint64_t offsetInBits,
-                               llvm::DIFile tunit);
+                               llvm::DIFile tunit,
+                               llvm::DIDescriptor scope);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
-                           llvm::SmallVectorImpl<llvm::Value *> &E);
+                           llvm::SmallVectorImpl<llvm::Value *> &E,
+                           llvm::DIType RecordTy);
 
   void CollectVTableInfo(const CXXRecordDecl *Decl,
                          llvm::DIFile F,
