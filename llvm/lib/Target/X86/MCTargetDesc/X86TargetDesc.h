@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef X86TARGETDESC_H
+#define X86TARGETDESC_H
+
 namespace llvm {
 class Target;
 
@@ -21,3 +24,5 @@ extern Target TheX86_32Target, TheX86_64Target;
 // register name to register number.
 //
 #include "X86GenRegisterNames.inc"
+
+#endif
