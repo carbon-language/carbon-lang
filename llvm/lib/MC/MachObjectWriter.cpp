@@ -1099,6 +1099,7 @@ bool MachObjectWriter::getARMFixupKindMachOInfo(unsigned Kind,
     Log2Size = llvm::Log2_32(2);
     return true;
       
+  case ARM::fixup_t2_uncondbranch:
   case ARM::fixup_arm_thumb_bl:
   case ARM::fixup_arm_thumb_blx:
     RelocType = unsigned(macho::RIT_ARM_ThumbBranch22Bit);
