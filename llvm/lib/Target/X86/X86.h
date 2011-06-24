@@ -84,11 +84,9 @@ MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 
-extern Target TheX86_32Target, TheX86_64Target;
-
 } // End llvm namespace
 
-#include "TargetDesc/X86TargetDesc.h"
+#include "MCTargetDesc/X86TargetDesc.h"
 
 // Defines symbolic names for the X86 instructions.
 //

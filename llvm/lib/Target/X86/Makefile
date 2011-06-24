@@ -21,6 +21,6 @@ BUILT_SOURCES = X86GenRegisterNames.inc X86GenRegisterDesc.inc \
                 X86GenCallingConv.inc X86GenSubtarget.inc \
 		X86GenEDInfo.inc
 
-DIRS = InstPrinter AsmParser Disassembler TargetInfo TargetDesc Utils
+DIRS = InstPrinter AsmParser Disassembler TargetInfo MCTargetDesc Utils
 
 include $(LEVEL)/Makefile.common
