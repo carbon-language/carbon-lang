@@ -79,7 +79,7 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
 
   OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
      << "  explicit " << ClassName
-     << "(const TargetRegisterDesc *D, const TargetRegisterInfoDesc *ID, "
+     << "(const MCRegisterDesc *D, const TargetRegisterInfoDesc *ID, "
      << "int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
      << "unsigned Flavour) const;\n"
@@ -518,7 +518,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
 
   // Emit the constructor of the class...
   OS << ClassName << "::" << ClassName
-     << "(const TargetRegisterDesc *D, const TargetRegisterInfoDesc *ID, "
+     << "(const MCRegisterDesc *D, const TargetRegisterInfoDesc *ID, "
      << "int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
      << "  : TargetRegisterInfo(ID"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
