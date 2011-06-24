@@ -1911,7 +1911,7 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     if (LoadSymAddr) {
       // Load callee address
       Callee = DAG.getNode(MipsISD::WrapperPIC, dl, MVT::i32, Callee);
-      SDValue LoadValue = DAG.getLoad(MVT::i32, dl, Chain, Callee,
+      SDValue LoadValue = DAG.getLoad(MVT::i32, dl, DAG.getEntryNode(), Callee,
                                       MachinePointerInfo::getGOT(),
                                       false, false, 0);
 
@@ -1921,9 +1921,6 @@ MipsTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         Callee = DAG.getNode(ISD::ADD, dl, MVT::i32, LoadValue, Lo);
       } else
         Callee = LoadValue;
-
-      // Use chain output from LoadValue
-      Chain = LoadValue.getValue(1);
     }
 
     // copy to T9

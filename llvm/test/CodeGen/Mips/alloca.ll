@@ -8,11 +8,9 @@ entry:
 ; CHECK: subu  $[[T2:[0-9]+]], $sp, $[[SZ]]
 ; CHECK: addu  $sp, $zero, $[[T2]]
 ; CHECK: addiu $[[T3:[0-9]+]], $sp, [[OFF]]
-; CHECK: lw  $25, %call16(foo)($gp)
-; CHECK: addu $4, $zero, $[[T1]]
-; CHECK: jalr  $25
-; CHECK: lw  $25, %call16(foo)($gp)
-; CHECK: addu $4, $zero, $[[T3]]
+; CHECK: lw    $[[T4:[0-9]+]], %call16(foo)($gp)
+; CHECK: addu  $25, $zero, $[[T4]]
+; CHECK: addu  $4, $zero, $[[T1]]
 ; CHECK: jalr  $25
   %tmp1 = alloca i8, i32 %size, align 4
   %add.ptr = getelementptr inbounds i8* %tmp1, i32 5
