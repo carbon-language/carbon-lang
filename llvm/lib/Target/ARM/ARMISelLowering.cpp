@@ -506,6 +506,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
     setTargetDAGCombine(ISD::INSERT_VECTOR_ELT);
     setTargetDAGCombine(ISD::STORE);
+    setTargetDAGCombine(ISD::FP_TO_SINT);
+    setTargetDAGCombine(ISD::FP_TO_UINT);
+    setTargetDAGCombine(ISD::FDIV);
   }
 
   computeRegisterProperties();
@@ -6479,7 +6482,104 @@ static SDValue PerformVDUPLANECombine(SDNode *N,
   return DCI.DAG.getNode(ISD::BITCAST, N->getDebugLoc(), VT, Op);
 }
 
-/// getVShiftImm - Check if this is a valid build_vector for the immediate
+// isConstVecPow2 - Return true if each vector element is a power of 2, all 
+// elements are the same constant, C, and Log2(C) ranges from 1 to 32.
+static bool isConstVecPow2(SDValue ConstVec, bool isSigned, uint64_t &C)
+{
+  integerPart c0, cN;
+  for (unsigned I = 0, E = ConstVec.getValueType().getVectorNumElements();
+       I != E; I++) {
+    ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(ConstVec.getOperand(I));
+    if (!C)
+      return false;
+
+    bool isExact;    
+    APFloat APF = C->getValueAPF();
+    if (APF.convertToInteger(&cN, 64, isSigned, APFloat::rmTowardZero, &isExact)
+        != APFloat::opOK || !isExact)
+      return false;
+
+    c0 = (I == 0) ? cN : c0;
+    if (!isPowerOf2_64(cN) || c0 != cN || Log2_64(c0) < 1 || Log2_64(c0) > 32)
+      return false;
+  }
+  C = c0;
+  return true;
+}
+
+/// PerformVCVTCombine - VCVT (floating-point to fixed-point, Advanced SIMD)
+/// can replace combinations of VMUL and VCVT (floating-point to integer)
+/// when the VMUL has a constant operand that is a power of 2.
+///
+/// Example (assume d17 = <float 8.000000e+00, float 8.000000e+00>):
+///  vmul.f32        d16, d17, d16
+///  vcvt.s32.f32    d16, d16
+/// becomes:
+///  vcvt.s32.f32    d16, d16, #3
+static SDValue PerformVCVTCombine(SDNode *N,
+                                  TargetLowering::DAGCombinerInfo &DCI,
+                                  const ARMSubtarget *Subtarget) {
+  SelectionDAG &DAG = DCI.DAG;
+  SDValue Op = N->getOperand(0);
+
+  if (!Subtarget->hasNEON() || !Op.getValueType().isVector() ||
+      Op.getOpcode() != ISD::FMUL)
+    return SDValue();
+
+  uint64_t C;
+  SDValue N0 = Op->getOperand(0);
+  SDValue ConstVec = Op->getOperand(1);
+  bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
+
+  if (ConstVec.getOpcode() != ISD::BUILD_VECTOR || 
+      !isConstVecPow2(ConstVec, isSigned, C))
+    return SDValue();
+
+  unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfp2fxs :
+    Intrinsic::arm_neon_vcvtfp2fxu;
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, N->getDebugLoc(),
+                     N->getValueType(0),
+                     DAG.getConstant(IntrinsicOpcode, MVT::i32), N0, 
+                     DAG.getConstant(Log2_64(C), MVT::i32));
+}
+
+/// PerformVDIVCombine - VCVT (fixed-point to floating-point, Advanced SIMD)
+/// can replace combinations of VCVT (integer to floating-point) and VDIV
+/// when the VDIV has a constant operand that is a power of 2.
+///
+/// Example (assume d17 = <float 8.000000e+00, float 8.000000e+00>):
+///  vcvt.f32.s32    d16, d16
+///  vdiv.f32        d16, d17, d16
+/// becomes:
+///  vcvt.f32.s32    d16, d16, #3
+static SDValue PerformVDIVCombine(SDNode *N,
+                                  TargetLowering::DAGCombinerInfo &DCI,
+                                  const ARMSubtarget *Subtarget) {
+  SelectionDAG &DAG = DCI.DAG;
+  SDValue Op = N->getOperand(0);
+  unsigned OpOpcode = Op.getNode()->getOpcode();
+
+  if (!Subtarget->hasNEON() || !N->getValueType(0).isVector() ||
+      (OpOpcode != ISD::SINT_TO_FP && OpOpcode != ISD::UINT_TO_FP))
+    return SDValue();
+
+  uint64_t C;
+  SDValue ConstVec = N->getOperand(1);
+  bool isSigned = OpOpcode == ISD::SINT_TO_FP;
+
+  if (ConstVec.getOpcode() != ISD::BUILD_VECTOR ||
+      !isConstVecPow2(ConstVec, isSigned, C))
+    return SDValue();
+
+  unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfxs2fp : 
+    Intrinsic::arm_neon_vcvtfxu2fp;
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, N->getDebugLoc(),
+                     Op.getValueType(),
+                     DAG.getConstant(IntrinsicOpcode, MVT::i32), 
+                     Op.getOperand(0), DAG.getConstant(Log2_64(C), MVT::i32));
+}
+
+/// Getvshiftimm - Check if this is a valid build_vector for the immediate
 /// operand of a vector shift operation, where all the elements of the
 /// build_vector must have the same constant integer value.
 static bool getVShiftImm(SDValue Op, unsigned ElementBits, int64_t &Cnt) {
@@ -6868,6 +6968,9 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::INSERT_VECTOR_ELT: return PerformInsertEltCombine(N, DCI);
   case ISD::VECTOR_SHUFFLE: return PerformVECTOR_SHUFFLECombine(N, DCI.DAG);
   case ARMISD::VDUPLANE: return PerformVDUPLANECombine(N, DCI);
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT: return PerformVCVTCombine(N, DCI, Subtarget);
+  case ISD::FDIV:       return PerformVDIVCombine(N, DCI, Subtarget);
   case ISD::INTRINSIC_WO_CHAIN: return PerformIntrinsicCombine(N, DCI.DAG);
   case ISD::SHL:
   case ISD::SRA:
