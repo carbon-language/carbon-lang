@@ -265,3 +265,16 @@ void rdar9504750(id p) {
   value = [NSObject new]; // expected-error {{assigning retained object}}
 }
 @end
+
+// rdar://9601437
+@interface I9601437 {
+  __unsafe_unretained id x;
+}
+-(void)Meth;
+@end
+
+@implementation I9601437
+-(void)Meth {
+  self->x = [NSObject new]; // expected-error {{assigning retained object}}
+}
+@end
