@@ -659,21 +659,6 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
     MachineBasicBlock *NewTarget = *TailBB->succ_begin();
     MachineBasicBlock *NextBB = llvm::next(MachineFunction::iterator(PredBB));
 
-    DenseMap<unsigned, unsigned> LocalVRMap;
-    SmallVector<std::pair<unsigned,unsigned>, 4> CopyInfos;
-    for (MachineBasicBlock::iterator I = TailBB->begin();
-         I != TailBB->end() && I->isPHI();) {
-      MachineInstr *MI = &*I;
-      ++I;
-      ProcessPHI(MI, TailBB, PredBB, LocalVRMap, CopyInfos, UsedByPhi, true);
-    }
-    MachineBasicBlock::iterator Loc = PredBB->getFirstTerminator();
-    for (unsigned i = 0, e = CopyInfos.size(); i != e; ++i) {
-      Copies.push_back(BuildMI(*PredBB, Loc, DebugLoc(),
-                               TII->get(TargetOpcode::COPY),
-                               CopyInfos[i].first).addReg(CopyInfos[i].second));
-    }
-
     // Make PredFBB explicit.
     if (PredCond.empty())
       PredFBB = PredTBB;
