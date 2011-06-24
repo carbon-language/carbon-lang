@@ -1,5 +1,17 @@
 ; RUN: llc < %s -march=ptx32 | FileCheck %s
 
+;CHECK: .extern .global .b8 array_i8[10];
+@array_i8 = external global [10 x i8]
+
+;CHECK: .extern .const .b8 array_constant_i8[10];
+@array_constant_i8 = external addrspace(1) constant [10 x i8]
+
+;CHECK: .extern .local .b8 array_local_i8[10];
+@array_local_i8 = external addrspace(2) global [10 x i8]
+
+;CHECK: .extern .shared .b8 array_shared_i8[10];
+@array_shared_i8 = external addrspace(4) global [10 x i8]
+
 ;CHECK: .extern .global .b8 array_i16[20];
 @array_i16 = external global [10 x i16]
 
@@ -60,6 +72,13 @@
 ;CHECK: .extern .shared .b8 array_shared_double[80];
 @array_shared_double = external addrspace(4) global [10 x double]
 
+define ptx_device i8 @t1_u8(i8* %p) {
+entry:
+;CHECK: ld.global.u8 rq{{[0-9]+}}, [r{{[0-9]+}}];
+;CHECK-NEXT: ret;
+  %x = load i8* %p
+  ret i8 %x
+}
 
 define ptx_device i16 @t1_u16(i16* %p) {
 entry:
@@ -99,6 +118,15 @@ entry:
 ;CHECK-NEXT: ret;
   %x = load double* %p
   ret double %x
+}
+
+define ptx_device i8 @t2_u8(i8* %p) {
+entry:
+;CHECK: ld.global.u8 rq{{[0-9]+}}, [r{{[0-9]+}}+1];
+;CHECK-NEXT: ret;
+  %i = getelementptr i8* %p, i32 1
+  %x = load i8* %i
+  ret i8 %x
 }
 
 define ptx_device i16 @t2_u16(i16* %p) {
@@ -144,6 +172,15 @@ entry:
   %i = getelementptr double* %p, i32 1
   %x = load double* %i
   ret double %x
+}
+
+define ptx_device i8 @t3_u8(i8* %p, i32 %q) {
+entry:
+;CHECK: add.u32 r[[R0:[0-9]+]], r{{[0-9]+}}, r{{[0-9]+}};
+;CHECK-NEXT: ld.global.u8 rq{{[0-9]+}}, [r[[R0]]];
+  %i = getelementptr i8* %p, i32 %q
+  %x = load i8* %i
+  ret i8 %x
 }
 
 define ptx_device i16 @t3_u16(i16* %p, i32 %q) {
@@ -194,6 +231,16 @@ entry:
   %i = getelementptr double* %p, i32 %q
   %x = load double* %i
   ret double %x
+}
+
+define ptx_device i8 @t4_global_u8() {
+entry:
+;CHECK: mov.u32 r[[R0:[0-9]+]], array_i8;
+;CHECK-NEXT: ld.global.u8 rq{{[0-9]+}}, [r[[R0]]];
+;CHECK-NEXT: ret;
+  %i = getelementptr [10 x i8]* @array_i8, i32 0, i32 0
+  %x = load i8* %i
+  ret i8 %x
 }
 
 define ptx_device i16 @t4_global_u16() {
@@ -296,6 +343,16 @@ entry:
   ret double %x
 }
 
+define ptx_device i8 @t4_local_u8() {
+entry:
+;CHECK: mov.u32 r[[R0:[0-9]+]], array_local_i8;
+;CHECK-NEXT: ld.local.u8 rq{{[0-9]+}}, [r[[R0]]];
+;CHECK-NEXT: ret;
+  %i = getelementptr [10 x i8] addrspace(2)* @array_local_i8, i32 0, i32 0
+  %x = load i8 addrspace(2)* %i
+  ret i8 %x
+}
+
 define ptx_device i16 @t4_local_u16() {
 entry:
 ;CHECK: mov.u32 r[[R0:[0-9]+]], array_local_i16;
@@ -346,6 +403,16 @@ entry:
   ret double %x
 }
 
+define ptx_device i8 @t4_shared_u8() {
+entry:
+;CHECK: mov.u32 r[[R0:[0-9]+]], array_shared_i8;
+;CHECK-NEXT: ld.shared.u8 rq{{[0-9]+}}, [r[[R0]]];
+;CHECK-NEXT: ret;
+  %i = getelementptr [10 x i8] addrspace(4)* @array_shared_i8, i32 0, i32 0
+  %x = load i8 addrspace(4)* %i
+  ret i8 %x
+}
+
 define ptx_device i16 @t4_shared_u16() {
 entry:
 ;CHECK: mov.u32 r[[R0:[0-9]+]], array_shared_i16;
@@ -394,6 +461,16 @@ entry:
   %i = getelementptr [10 x double] addrspace(4)* @array_shared_double, i32 0, i32 0
   %x = load double addrspace(4)* %i
   ret double %x
+}
+
+define ptx_device i8 @t5_u8() {
+entry:
+;CHECK: mov.u32 r[[R0:[0-9]+]], array_i8;
+;CHECK-NEXT: ld.global.u8 rq{{[0-9]+}}, [r[[R0]]+1];
+;CHECK-NEXT: ret;
+  %i = getelementptr [10 x i8]* @array_i8, i32 0, i32 1
+  %x = load i8* %i
+  ret i8 %x
 }
 
 define ptx_device i16 @t5_u16() {

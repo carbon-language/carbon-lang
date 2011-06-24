@@ -537,6 +537,7 @@ multiclass PTX_LD<string opstr, string typestr, RegisterClass RC, PatFrag pat_lo
 }
 
 multiclass PTX_LD_ALL<string opstr, PatFrag pat_load> {
+  defm u8  : PTX_LD<opstr, ".u8",  RegI8,  pat_load>;
   defm u16 : PTX_LD<opstr, ".u16", RegI16, pat_load>;
   defm u32 : PTX_LD<opstr, ".u32", RegI32, pat_load>;
   defm u64 : PTX_LD<opstr, ".u64", RegI64, pat_load>;
@@ -572,6 +573,7 @@ multiclass PTX_ST<string opstr, string typestr, RegisterClass RC, PatFrag pat_st
 }
 
 multiclass PTX_ST_ALL<string opstr, PatFrag pat_store> {
+  defm u8  : PTX_ST<opstr, ".u8",  RegI8,  pat_store>;
   defm u16 : PTX_ST<opstr, ".u16", RegI16, pat_store>;
   defm u32 : PTX_ST<opstr, ".u32", RegI32, pat_store>;
   defm u64 : PTX_ST<opstr, ".u64", RegI64, pat_store>;
@@ -783,22 +785,27 @@ defm XOR : PTX_LOGIC<"xor", xor>;
 let neverHasSideEffects = 1 in {
   def MOVPREDrr
     : InstPTX<(outs RegPred:$d), (ins RegPred:$a), "mov.pred\t$d, $a", []>;
+  def MOVU8rr
+    : InstPTX<(outs RegI8:$d),   (ins RegI8:$a),   "mov.u8\t$d, $a",  []>;
   def MOVU16rr
-    : InstPTX<(outs RegI16:$d), (ins RegI16:$a), "mov.u16\t$d, $a", []>;
+    : InstPTX<(outs RegI16:$d),  (ins RegI16:$a),  "mov.u16\t$d, $a", []>;
   def MOVU32rr
-    : InstPTX<(outs RegI32:$d), (ins RegI32:$a), "mov.u32\t$d, $a", []>;
+    : InstPTX<(outs RegI32:$d),  (ins RegI32:$a),  "mov.u32\t$d, $a", []>;
   def MOVU64rr
-    : InstPTX<(outs RegI64:$d), (ins RegI64:$a), "mov.u64\t$d, $a", []>;
+    : InstPTX<(outs RegI64:$d),  (ins RegI64:$a),  "mov.u64\t$d, $a", []>;
   def MOVF32rr
-    : InstPTX<(outs RegF32:$d), (ins RegF32:$a), "mov.f32\t$d, $a", []>;
+    : InstPTX<(outs RegF32:$d),  (ins RegF32:$a),  "mov.f32\t$d, $a", []>;
   def MOVF64rr
-    : InstPTX<(outs RegF64:$d), (ins RegF64:$a), "mov.f64\t$d, $a", []>;
+    : InstPTX<(outs RegF64:$d),  (ins RegF64:$a),  "mov.f64\t$d, $a", []>;
 }
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def MOVPREDri
     : InstPTX<(outs RegPred:$d), (ins i1imm:$a), "mov.pred\t$d, $a",
               [(set RegPred:$d, imm:$a)]>;
+  def MOVU8ri
+    : InstPTX<(outs RegI8:$d),  (ins i8imm:$a),  "mov.u8\t$d, $a",
+              [(set RegI8:$d, imm:$a)]>;
   def MOVU16ri
     : InstPTX<(outs RegI16:$d), (ins i16imm:$a), "mov.u16\t$d, $a",
               [(set RegI16:$d, imm:$a)]>;
@@ -838,6 +845,9 @@ let hasSideEffects = 1 in {
   def LDpiPred : InstPTX<(outs RegPred:$d), (ins MEMpi:$a),
                          "ld.param.pred\t$d, [$a]",
                          [(set RegPred:$d, (PTXloadparam timm:$a))]>;
+  def LDpiU8   : InstPTX<(outs RegI8:$d), (ins MEMpi:$a),
+                         "ld.param.u8\t$d, [$a]",
+                         [(set RegI8:$d,  (PTXloadparam timm:$a))]>;
   def LDpiU16  : InstPTX<(outs RegI16:$d), (ins MEMpi:$a),
                          "ld.param.u16\t$d, [$a]",
                          [(set RegI16:$d, (PTXloadparam timm:$a))]>;
@@ -857,6 +867,9 @@ let hasSideEffects = 1 in {
   def STpiPred : InstPTX<(outs), (ins MEMret:$d, RegPred:$a),
                          "st.param.pred\t[$d], $a",
                          [(PTXstoreparam timm:$d, RegPred:$a)]>;
+  def STpiU8   : InstPTX<(outs), (ins MEMret:$d, RegI8:$a),
+                         "st.param.u8\t[$d], $a",
+                         [(PTXstoreparam timm:$d, RegI8:$a)]>;
   def STpiU16  : InstPTX<(outs), (ins MEMret:$d, RegI16:$a),
                          "st.param.u16\t[$d], $a",
                          [(PTXstoreparam timm:$d, RegI16:$a)]>;
@@ -887,6 +900,10 @@ defm STs : PTX_ST_ALL<"st.shared", store_shared>;
 // PTX does not directly support converting to a predicate type, so we fake it
 // by performing a greater-than test between the value and zero.  This follows
 // the C convention that any non-zero value is equivalent to 'true'.
+def CVT_pred_u8
+  : InstPTX<(outs RegPred:$d), (ins RegI8:$a), "setp.gt.b8\t$d, $a, 0",
+            [(set RegPred:$d, (trunc RegI8:$a))]>;
+
 def CVT_pred_u16
   : InstPTX<(outs RegPred:$d), (ins RegI16:$a), "setp.gt.b16\t$d, $a, 0",
             [(set RegPred:$d, (trunc RegI16:$a))]>;
@@ -907,6 +924,34 @@ def CVT_pred_f64
   : InstPTX<(outs RegPred:$d), (ins RegF64:$a), "setp.gt.b64\t$d, $a, 0",
             [(set RegPred:$d, (fp_to_uint RegF64:$a))]>;
 
+// Conversion to u8
+// PTX does not directly support converting a predicate to a value, so we
+// use a select instruction to select either 0 or 1 (integer or fp) based
+// on the truth value of the predicate.
+def CVT_u8_pred
+  : InstPTX<(outs RegI8:$d), (ins RegPred:$a), "selp.u8\t$d, 1, 0, $a",
+            [(set RegI8:$d, (zext RegPred:$a))]>;
+
+def CVT_u8_preds
+  : InstPTX<(outs RegI8:$d), (ins RegPred:$a), "selp.u8\t$d, 1, 0, $a",
+            [(set RegI8:$d, (sext RegPred:$a))]>;
+
+def CVT_u8_u32
+  : InstPTX<(outs RegI8:$d), (ins RegI32:$a), "cvt.u8.u32\t$d, $a",
+            [(set RegI8:$d, (trunc RegI32:$a))]>;
+
+def CVT_u8_u64
+  : InstPTX<(outs RegI8:$d), (ins RegI64:$a), "cvt.u8.u64\t$d, $a",
+            [(set RegI8:$d, (trunc RegI64:$a))]>;
+
+def CVT_u8_f32
+  : InstPTX<(outs RegI8:$d), (ins RegF32:$a), "cvt.rzi.u8.f32\t$d, $a",
+            [(set RegI8:$d, (fp_to_uint RegF32:$a))]>;
+
+def CVT_u8_f64
+  : InstPTX<(outs RegI8:$d), (ins RegF64:$a), "cvt.rzi.u8.f64\t$d, $a",
+            [(set RegI8:$d, (fp_to_uint RegF64:$a))]>;
+
 // Conversion to u16
 // PTX does not directly support converting a predicate to a value, so we
 // use a select instruction to select either 0 or 1 (integer or fp) based
@@ -914,6 +959,18 @@ def CVT_pred_f64
 def CVT_u16_pred
   : InstPTX<(outs RegI16:$d), (ins RegPred:$a), "selp.u16\t$d, 1, 0, $a",
             [(set RegI16:$d, (zext RegPred:$a))]>;
+
+def CVT_u16_preds
+  : InstPTX<(outs RegI16:$d), (ins RegPred:$a), "selp.u16\t$d, 1, 0, $a",
+            [(set RegI16:$d, (sext RegPred:$a))]>;
+
+def CVT_u16_u8
+  : InstPTX<(outs RegI16:$d), (ins RegI8:$a), "cvt.u16.u8\t$d, $a",
+            [(set RegI16:$d, (zext RegI8:$a))]>;
+
+def CVT_u16_s8
+  : InstPTX<(outs RegI16:$d), (ins RegI8:$a), "cvt.u16.s8\t$d, $a",
+            [(set RegI16:$d, (sext RegI8:$a))]>;
 
 def CVT_u16_u32
   : InstPTX<(outs RegI16:$d), (ins RegI32:$a), "cvt.u16.u32\t$d, $a",
@@ -937,9 +994,25 @@ def CVT_u32_pred
   : InstPTX<(outs RegI32:$d), (ins RegPred:$a), "selp.u32\t$d, 1, 0, $a",
             [(set RegI32:$d, (zext RegPred:$a))]>;
 
+def CVT_u32_u8
+  : InstPTX<(outs RegI32:$d), (ins RegI8:$a), "cvt.u32.u8\t$d, $a",
+            [(set RegI32:$d, (zext RegI8:$a))]>;
+
 def CVT_u32_u16
   : InstPTX<(outs RegI32:$d), (ins RegI16:$a), "cvt.u32.u16\t$d, $a",
             [(set RegI32:$d, (zext RegI16:$a))]>;
+
+def CVT_u32_preds
+  : InstPTX<(outs RegI32:$d), (ins RegPred:$a), "selp.u32\t$d, 1, 0, $a",
+            [(set RegI32:$d, (sext RegPred:$a))]>;
+
+def CVT_u32_s8
+  : InstPTX<(outs RegI32:$d), (ins RegI8:$a), "cvt.u32.s8\t$d, $a",
+            [(set RegI32:$d, (zext RegI8:$a))]>;
+
+def CVT_u32_s16
+  : InstPTX<(outs RegI32:$d), (ins RegI16:$a), "cvt.u32.s16\t$d, $a",
+            [(set RegI32:$d, (sext RegI16:$a))]>;
 
 def CVT_u32_u64
   : InstPTX<(outs RegI32:$d), (ins RegI64:$a), "cvt.u32.u64\t$d, $a",
@@ -959,6 +1032,10 @@ def CVT_u64_pred
   : InstPTX<(outs RegI64:$d), (ins RegPred:$a), "selp.u64\t$d, 1, 0, $a",
             [(set RegI64:$d, (zext RegPred:$a))]>;
 
+def CVT_u64_u8
+  : InstPTX<(outs RegI64:$d), (ins RegI8:$a), "cvt.u64.u8\t$d, $a",
+            [(set RegI64:$d, (zext RegI8:$a))]>;
+
 def CVT_u64_u16
   : InstPTX<(outs RegI64:$d), (ins RegI16:$a), "cvt.u64.u16\t$d, $a",
             [(set RegI64:$d, (zext RegI16:$a))]>;
@@ -966,6 +1043,22 @@ def CVT_u64_u16
 def CVT_u64_u32
   : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.u64.u32\t$d, $a",
             [(set RegI64:$d, (zext RegI32:$a))]>;
+
+def CVT_u64_preds
+  : InstPTX<(outs RegI64:$d), (ins RegPred:$a), "selp.u64\t$d, 1, 0, $a",
+            [(set RegI64:$d, (sext RegPred:$a))]>;
+
+def CVT_u64_s8
+  : InstPTX<(outs RegI64:$d), (ins RegI8:$a), "cvt.u64.s8\t$d, $a",
+            [(set RegI64:$d, (zext RegI8:$a))]>;
+
+def CVT_u64_s16
+  : InstPTX<(outs RegI64:$d), (ins RegI16:$a), "cvt.u64.s16\t$d, $a",
+            [(set RegI64:$d, (sext RegI16:$a))]>;
+
+def CVT_u64_s32
+  : InstPTX<(outs RegI64:$d), (ins RegI32:$a), "cvt.u64.s32\t$d, $a",
+            [(set RegI64:$d, (sext RegI32:$a))]>;
 
 def CVT_u64_f32
   : InstPTX<(outs RegI64:$d), (ins RegF32:$a), "cvt.rzi.u64.f32\t$d, $a",
@@ -981,6 +1074,10 @@ def CVT_f32_pred
   : InstPTX<(outs RegF32:$d), (ins RegPred:$a),
             "selp.f32\t$d, 0F3F800000, 0F00000000, $a",  // 1.0
             [(set RegF32:$d, (uint_to_fp RegPred:$a))]>;
+
+def CVT_f32_u8
+  : InstPTX<(outs RegF32:$d), (ins RegI8:$a), "cvt.rn.f32.u8\t$d, $a",
+            [(set RegF32:$d, (uint_to_fp RegI8:$a))]>;
 
 def CVT_f32_u16
   : InstPTX<(outs RegF32:$d), (ins RegI16:$a), "cvt.rn.f32.u16\t$d, $a",
@@ -1004,6 +1101,10 @@ def CVT_f64_pred
   : InstPTX<(outs RegF64:$d), (ins RegPred:$a), 
             "selp.f64\t$d, 0D3F80000000000000, 0D0000000000000000, $a",  // 1.0
             [(set RegF64:$d, (uint_to_fp RegPred:$a))]>;
+
+def CVT_f64_u8
+  : InstPTX<(outs RegF64:$d), (ins RegI8:$a), "cvt.rn.f64.u8\t$d, $a",
+            [(set RegF64:$d, (uint_to_fp RegI8:$a))]>;
 
 def CVT_f64_u16
   : InstPTX<(outs RegF64:$d), (ins RegI16:$a), "cvt.rn.f64.u16\t$d, $a",
@@ -1043,6 +1144,8 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
 
 ///===- Spill Instructions ------------------------------------------------===//
 // Special instructions used for stack spilling
+def STACKSTOREI8  : InstPTX<(outs), (ins i32imm:$d, RegI8:$a),
+                            "mov.u8\ts$d, $a", []>;
 def STACKSTOREI16 : InstPTX<(outs), (ins i32imm:$d, RegI16:$a),
                             "mov.u16\ts$d, $a", []>;
 def STACKSTOREI32 : InstPTX<(outs), (ins i32imm:$d, RegI32:$a),
@@ -1054,6 +1157,8 @@ def STACKSTOREF32 : InstPTX<(outs), (ins i32imm:$d, RegF32:$a),
 def STACKSTOREF64 : InstPTX<(outs), (ins i32imm:$d, RegF64:$a),
                             "mov.f64\ts$d, $a", []>;
 
+def STACKLOADI8  : InstPTX<(outs), (ins RegI8:$d, i32imm:$a),
+                           "mov.u8\t$d, s$a", []>;
 def STACKLOADI16 : InstPTX<(outs), (ins RegI16:$d, i32imm:$a),
                            "mov.u16\t$d, s$a", []>;
 def STACKLOADI32 : InstPTX<(outs), (ins RegI32:$d, i32imm:$a),

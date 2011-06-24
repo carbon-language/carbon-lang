@@ -40,6 +40,7 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   // Set up the register classes.
   addRegisterClass(MVT::i1,  PTX::RegPredRegisterClass);
+  addRegisterClass(MVT::i8,  PTX::RegI8RegisterClass);
   addRegisterClass(MVT::i16, PTX::RegI16RegisterClass);
   addRegisterClass(MVT::i32, PTX::RegI32RegisterClass);
   addRegisterClass(MVT::i64, PTX::RegI64RegisterClass);
@@ -52,10 +53,20 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
 
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
   setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
-
+  
+  // Promote i1 type
+  setLoadExtAction(ISD::EXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  
+  setTruncStoreAction(MVT::i8, MVT::i1, Promote);
+  
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+  
   // Turn i16 (z)extload into load + (z)extend
   setLoadExtAction(ISD::EXTLOAD, MVT::i16, Expand);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
 
   // Turn f32 extload into load + fextend
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
@@ -176,6 +187,7 @@ struct argmap_entry {
   bool operator==(MVT::SimpleValueType _VT) const { return VT == _VT; }
 } argmap[] = {
   argmap_entry(MVT::i1,  PTX::RegPredRegisterClass),
+  argmap_entry(MVT::i8,  PTX::RegI8RegisterClass),
   argmap_entry(MVT::i16, PTX::RegI16RegisterClass),
   argmap_entry(MVT::i32, PTX::RegI32RegisterClass),
   argmap_entry(MVT::i64, PTX::RegI64RegisterClass),
@@ -251,6 +263,9 @@ SDValue PTXTargetLowering::
       // Determine which register class we need
       if (RegVT == MVT::i1) {
         TRC = PTX::RegPredRegisterClass;
+      }
+      else if (RegVT == MVT::i8) {
+        TRC = PTX::RegI8RegisterClass;
       }
       else if (RegVT == MVT::i16) {
         TRC = PTX::RegI16RegisterClass;
