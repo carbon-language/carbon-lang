@@ -521,7 +521,8 @@ void ScheduleDAGSDNodes::RegDefIter::Advance() {
       if (!Node->hasAnyUseOfValue(DefIdx))
         continue;
       if (Node->isMachineOpcode() &&
-          Node->getMachineOpcode() == TargetOpcode::EXTRACT_SUBREG) {
+          Node->getMachineOpcode() == TargetOpcode::EXTRACT_SUBREG &&
+          Node->getOperand(0).getValueType() != MVT::untyped) {
         // Propagate the incoming (full-register) type. I doubt it's needed.
         ValueType = Node->getOperand(0).getValueType();
       }
