@@ -889,7 +889,7 @@ static unsigned GetNeonEnum(const std::string &proto, StringRef typestr) {
   return ret;
 }
 
-// Generate the definition for this intrinsic, e.g. __builtin_neon_cls(a)
+// Generate the definition for this intrinsic.
 static std::string GenBuiltin(const std::string &name, const std::string &proto,
                               StringRef typestr, ClassKind ck) {
   std::string s;
@@ -923,7 +923,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
 
   bool splat = proto.find('a') != std::string::npos;
 
-  s += "__builtin_neon_";
+  s += "__builtin_";
   if (splat) {
     // Call the non-splat builtin: chop off the "_n" suffix from the name.
     std::string vname(name, 0, name.size()-2);
@@ -1009,7 +1009,7 @@ static std::string GenBuiltin(const std::string &name, const std::string &proto,
 static std::string GenBuiltinDef(const std::string &name,
                                  const std::string &proto,
                                  StringRef typestr, ClassKind ck) {
-  std::string s("BUILTIN(__builtin_neon_");
+  std::string s("BUILTIN(__builtin_");
 
   // If all types are the same size, bitcasting the args will take care
   // of arg checking.  The actual signedness etc. will be taken care of with
@@ -1354,11 +1354,11 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
       }
     }
     if (mask)
-      OS << "case ARM::BI__builtin_neon_"
+      OS << "case ARM::BI__builtin_"
          << MangleName(name, TypeVec[si], ClassB)
          << ": mask = " << "0x" << utohexstr(mask) << "; break;\n";
     if (qmask)
-      OS << "case ARM::BI__builtin_neon_"
+      OS << "case ARM::BI__builtin_"
          << MangleName(name, TypeVec[qi], ClassB)
          << ": mask = " << "0x" << utohexstr(qmask) << "; break;\n";
   }
@@ -1446,7 +1446,7 @@ void NeonEmitter::runHeader(raw_ostream &OS) {
           case 'i': ie = ii + 1; break;
         }
       }
-      OS << "case ARM::BI__builtin_neon_" << MangleName(name, TypeVec[ti], ck)
+      OS << "case ARM::BI__builtin_" << MangleName(name, TypeVec[ti], ck)
          << ": i = " << immidx << "; " << rangestr << "; break;\n";
     }
   }
