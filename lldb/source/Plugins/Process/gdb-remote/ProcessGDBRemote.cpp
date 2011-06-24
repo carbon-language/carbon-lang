@@ -132,7 +132,6 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_dispatch_queue_offsets_addr (LLDB_INVALID_ADDRESS),
     m_max_memory_size (512),
     m_waiting_for_attach (false),
-    m_local_debugserver (true),
     m_thread_observation_bps()
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
@@ -464,7 +463,8 @@ ProcessGDBRemote::DoLaunch
             // a pseudo terminal to instead of relying on the 'O' packets for stdio
             // since 'O' packets can really slow down debugging if the inferior 
             // does a lot of output.
-            if (m_local_debugserver && !disable_stdio)
+            PlatformSP platform_sp (m_target.GetPlatform());
+            if (platform_sp && platform_sp->IsHost() && !disable_stdio)
             {
                 const char *slave_name = NULL;
                 if (stdin_path == NULL || stdout_path == NULL || stderr_path == NULL)

@@ -311,7 +311,6 @@ protected:
     lldb::addr_t m_dispatch_queue_offsets_addr;
     size_t m_max_memory_size;       // The maximum number of bytes to read/write when reading and writing memory
     bool m_waiting_for_attach;
-    bool m_local_debugserver;  // Is the debugserver process we are talking to local or on another machine.
     std::vector<lldb::user_id_t>  m_thread_observation_bps;
     MMapMap m_addr_to_mmap_size;
     bool
