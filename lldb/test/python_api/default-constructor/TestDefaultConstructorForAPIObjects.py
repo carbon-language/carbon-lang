@@ -81,6 +81,9 @@ class APIDefaultConstructorTestCase(TestBase):
         if self.TraceOn():
             print obj
         self.assertFalse(obj)
+        # Do fuzz testing on the invalid obj, it should not crash lldb.
+        import sb_communication
+        sb_communication.fuzz_obj(obj)
 
     @python_api_test
     def test_SBCompileUnit(self):
