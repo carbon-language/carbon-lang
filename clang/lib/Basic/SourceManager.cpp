@@ -1218,7 +1218,11 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
 bool SourceManager::isAtStartOfMacroInstantiation(SourceLocation loc) const {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
 
-  unsigned FID = getFileID(loc).ID;
+  std::pair<FileID, unsigned> infoLoc = getDecomposedLoc(loc);
+  if (infoLoc.second > 0)
+    return false; // Does not point at the start of token.
+
+  unsigned FID = infoLoc.first.ID;
   assert(FID > 1);
   std::pair<SourceLocation, SourceLocation>
     instRange = getImmediateInstantiationRange(loc);
