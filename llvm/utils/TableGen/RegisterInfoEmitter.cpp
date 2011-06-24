@@ -709,7 +709,7 @@ void RegisterInfoEmitter::runDesc(raw_ostream &OS) {
   OS << "}\n\n";       // End of anonymous namespace...
 
   // MCRegisterInfo initialization routine.
-  OS << "void " << "Init" << TargetName
+  OS << "static inline void Init" << TargetName
      << "MCRegisterInfo(MCRegisterInfo *RI) {\n";
   OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ");\n}\n\n";
