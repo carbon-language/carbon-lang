@@ -196,6 +196,10 @@ void CodeGenModule::ErrorUnsupported(const Decl *D, const char *Type,
   getDiags().Report(Context.getFullLoc(D->getLocation()), DiagID) << Msg;
 }
 
+llvm::ConstantInt *CodeGenModule::getSize(CharUnits size) {
+  return llvm::ConstantInt::get(SizeTy, size.getQuantity());
+}
+
 void CodeGenModule::setGlobalVisibility(llvm::GlobalValue *GV,
                                         const NamedDecl *D) const {
   // Internal definitions always have default visibility.

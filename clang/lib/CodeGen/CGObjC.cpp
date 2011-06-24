@@ -1894,9 +1894,10 @@ namespace {
 
       // If it's a VLA, we have to load the stored size.  Note that
       // this is the size of the VLA in bytes, not its size in elements.
-      llvm::Value *vlaSizeInBytes = 0;
+      llvm::Value *numVLAElements = 0;
       if (isa<VariableArrayType>(arrayType)) {
-        vlaSizeInBytes = CGF.GetVLASize(cast<VariableArrayType>(arrayType));
+        numVLAElements =
+          CGF.getVLASize(cast<VariableArrayType>(arrayType)).first;
 
         // Walk into all VLAs.  This doesn't require changes to addr,
         // which has type T* where T is the first non-VLA element type.
@@ -1907,7 +1908,7 @@ namespace {
           // If we only have VLA components, 'addr' requires no adjustment.
           if (!arrayType) {
             baseType = elementType;
-            return divideVLASizeByBaseType(CGF, vlaSizeInBytes, baseType);
+            return numVLAElements;
           }
         } while (isa<VariableArrayType>(arrayType));
 
@@ -1947,22 +1948,20 @@ namespace {
         assert(arrayType && "LLVM and Clang types are out-of-synch");
       }
 
+      baseType = arrayType->getElementType();
+
       // Create the actual GEP.
       addr = CGF.Builder.CreateInBoundsGEP(addr, gepIndices.begin(),
                                            gepIndices.end(), "array.begin");
 
-      baseType = arrayType->getElementType();
+      llvm::Value *numElements
+        = llvm::ConstantInt::get(CGF.IntPtrTy, countFromCLAs);
 
-      // If we had an VLA dimensions, we need to use the captured size.
-      if (vlaSizeInBytes)
-        return divideVLASizeByBaseType(CGF, vlaSizeInBytes, baseType);
+      // If we had any VLA dimensions, factor them in.
+      if (numVLAElements)
+        numElements = CGF.Builder.CreateNUWMul(numVLAElements, numElements);
 
-      // Otherwise, use countFromCLAs.
-      assert(countFromCLAs == (uint64_t)
-               (Ctx.getTypeSizeInChars(origArrayType).getQuantity() /
-                Ctx.getTypeSizeInChars(baseType).getQuantity()));
-
-      return llvm::ConstantInt::get(CGF.IntPtrTy, countFromCLAs);
+      return numElements;
     }
 
     static llvm::Value *divideVLASizeByBaseType(CodeGenFunction &CGF,

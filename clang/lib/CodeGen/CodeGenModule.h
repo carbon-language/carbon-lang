@@ -33,6 +33,7 @@
 namespace llvm {
   class Module;
   class Constant;
+  class ConstantInt;
   class Function;
   class GlobalValue;
   class TargetData;
@@ -381,6 +382,9 @@ public:
 
   static void DecorateInstruction(llvm::Instruction *Inst,
                                   llvm::MDNode *TBAAInfo);
+
+  /// getSize - Emit the given number of characters as a value of type size_t.
+  llvm::ConstantInt *getSize(CharUnits numChars);
 
   /// setGlobalVisibility - Set the visibility for the given LLVM
   /// GlobalValue.

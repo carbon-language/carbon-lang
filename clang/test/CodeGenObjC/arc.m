@@ -487,23 +487,23 @@ void test20(unsigned n) {
   id x[n];
 
   // Capture the VLA size.
+  // CHECK-NEXT: [[T0:%.*]] = load i32* [[N]], align 4
+  // CHECK-NEXT: [[DIM:%.*]] = zext i32 [[T0]] to i64
+
+  // Save the stack pointer.
   // CHECK-NEXT: [[T0:%.*]] = call i8* @llvm.stacksave()
   // CHECK-NEXT: store i8* [[T0]], i8** [[SAVED_STACK]]
-  // CHECK-NEXT: [[T0:%.*]] = load i32* [[N]], align 4
-  // CHECK-NEXT: [[T1:%.*]] = zext i32 [[T0]] to i64
-  // CHECK-NEXT: [[VLA_SIZE:%.*]] = mul i64 8, [[T1]]
 
   // Allocate the VLA.
-  // CHECK-NEXT: [[T0:%.*]] = alloca i8, i64 [[VLA_SIZE]], align 16
-  // CHECK-NEXT: [[VLA:%.*]] = bitcast i8* [[T0]] to i8**
+  // CHECK-NEXT: [[VLA:%.*]] = alloca i8*, i64 [[DIM]], align 16
 
   // Zero-initialize.
   // CHECK-NEXT: [[T0:%.*]] = bitcast i8** [[VLA]] to i8*
-  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 [[VLA_SIZE]], i32 8, i1 false)
+  // CHECK-NEXT: [[T1:%.*]] = mul nuw i64 [[DIM]], 8
+  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 [[T1]], i32 8, i1 false)
 
   // Destroy.
-  // CHECK-NEXT: [[VLA_COUNT:%.*]] = udiv i64 [[VLA_SIZE]], 8
-  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[VLA]], i64 [[VLA_COUNT]]
+  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[VLA]], i64 [[DIM]]
   // CHECK-NEXT: br label
 
   // CHECK:      [[CUR:%.*]] = phi i8**
@@ -529,25 +529,28 @@ void test21(unsigned n) {
   id x[2][n][3];
 
   // Capture the VLA size.
+  // CHECK-NEXT: [[T0:%.*]] = load i32* [[N]], align 4
+  // CHECK-NEXT: [[DIM:%.*]] = zext i32 [[T0]] to i64
+
   // CHECK-NEXT: [[T0:%.*]] = call i8* @llvm.stacksave()
   // CHECK-NEXT: store i8* [[T0]], i8** [[SAVED_STACK]]
-  // CHECK-NEXT: [[T0:%.*]] = load i32* [[N]], align 4
-  // CHECK-NEXT: [[T1:%.*]] = zext i32 [[T0]] to i64
-  // CHECK-NEXT: [[T2:%.*]] = mul i64 24, [[T1]]
-  // CHECK-NEXT: [[VLA_SIZE:%.*]] = mul i64 [[T2]], 2
+
 
   // Allocate the VLA.
-  // CHECK-NEXT: [[T0:%.*]] = alloca i8, i64 [[VLA_SIZE]], align 16
-  // CHECK-NEXT: [[VLA:%.*]] = bitcast i8* [[T0]] to [3 x i8*]*
+  // CHECK-NEXT: [[T0:%.*]] = mul nuw i64 2, [[DIM]]
+  // CHECK-NEXT: [[VLA:%.*]] = alloca [3 x i8*], i64 [[T0]], align 16
 
   // Zero-initialize.
   // CHECK-NEXT: [[T0:%.*]] = bitcast [3 x i8*]* [[VLA]] to i8*
-  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 [[VLA_SIZE]], i32 8, i1 false)
+  // CHECK-NEXT: [[T1:%.*]] = mul nuw i64 2, [[DIM]]
+  // CHECK-NEXT: [[T2:%.*]] = mul nuw i64 [[T1]], 24
+  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 [[T2]], i32 8, i1 false)
 
   // Destroy.
+  // CHECK-NEXT: [[T0:%.*]] = mul nuw i64 2, [[DIM]]
   // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [3 x i8*]* [[VLA]], i32 0, i32 0
-  // CHECK-NEXT: [[VLA_COUNT:%.*]] = udiv i64 [[VLA_SIZE]], 8
-  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[BEGIN]], i64 [[VLA_COUNT]]
+  // CHECK-NEXT: [[T1:%.*]] = mul nuw i64 [[T0]], 3
+  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[BEGIN]], i64 [[T1]]
   // CHECK-NEXT: br label
 
   // CHECK:      [[CUR:%.*]] = phi i8**

@@ -98,7 +98,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
     QualType Ty = TD.getUnderlyingType();
 
     if (Ty->isVariablyModifiedType())
-      EmitVLASize(Ty);
+      EmitVariablyModifiedType(Ty);
   }
   }
 }
@@ -258,7 +258,7 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   // even though that doesn't really make any sense.
   // Make sure to evaluate VLA bounds now so that we have them for later.
   if (D.getType()->isVariablyModifiedType())
-    EmitVLASize(D.getType());
+    EmitVariablyModifiedType(D.getType());
   
   // Local static block variables must be treated as globals as they may be
   // referenced in their RHS initializer block-literal expresion.
@@ -699,6 +699,10 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
   CharUnits alignment = getContext().getDeclAlign(&D);
   emission.Alignment = alignment;
 
+  // If the type is variably-modified, emit all the VLA sizes for it.
+  if (Ty->isVariablyModifiedType())
+    EmitVariablyModifiedType(Ty);
+
   llvm::Value *DeclPtr;
   if (Ty->isConstantSizeType()) {
     if (!Target.useGlobalsForAutomaticVariables()) {
@@ -778,10 +782,6 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       DeclPtr = CreateStaticVarDecl(D, Class,
                                     llvm::GlobalValue::InternalLinkage);
     }
-
-    // FIXME: Can this happen?
-    if (Ty->isVariablyModifiedType())
-      EmitVLASize(Ty);
   } else {
     EnsureInsertPoint();
 
@@ -801,19 +801,17 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       EHStack.pushCleanup<CallStackRestore>(NormalCleanup, Stack);
     }
 
-    // Get the element type.
-    const llvm::Type *LElemTy = ConvertTypeForMem(Ty);
-    const llvm::Type *LElemPtrTy =
-      LElemTy->getPointerTo(CGM.getContext().getTargetAddressSpace(Ty));
+    llvm::Value *elementCount;
+    QualType elementType;
+    llvm::tie(elementCount, elementType) = getVLASize(Ty);
 
-    llvm::Value *VLASize = EmitVLASize(Ty);
+    const llvm::Type *llvmTy = ConvertTypeForMem(elementType);
 
     // Allocate memory for the array.
-    llvm::AllocaInst *VLA = 
-      Builder.CreateAlloca(llvm::Type::getInt8Ty(getLLVMContext()), VLASize, "vla");
-    VLA->setAlignment(alignment.getQuantity());
+    llvm::AllocaInst *vla = Builder.CreateAlloca(llvmTy, elementCount, "vla");
+    vla->setAlignment(alignment.getQuantity());
 
-    DeclPtr = Builder.CreateBitCast(VLA, LElemPtrTy, "tmp");
+    DeclPtr = vla;
   }
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];

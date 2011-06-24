@@ -269,14 +269,12 @@ public:
   Value *VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
     return CGF.CGM.EmitNullConstant(E->getType());
   }
-  Value *VisitCastExpr(CastExpr *E) {
-    // Make sure to evaluate VLA bounds now so that we have them for later.
+  Value *VisitExplicitCastExpr(ExplicitCastExpr *E) {
     if (E->getType()->isVariablyModifiedType())
-      CGF.EmitVLASize(E->getType());
-
-    return EmitCastExpr(E);
+      CGF.EmitVariablyModifiedType(E->getType());
+    return VisitCastExpr(E);
   }
-  Value *EmitCastExpr(CastExpr *E);
+  Value *VisitCastExpr(CastExpr *E);
 
   Value *VisitCallExpr(const CallExpr *E) {
     if (E->getCallReturnType()->isReferenceType())
@@ -1001,7 +999,7 @@ static bool ShouldNullCheckClassCastValue(const CastExpr *CE) {
 // VisitCastExpr - Emit code for an explicit or implicit cast.  Implicit casts
 // have to handle a more broad range of conversions than explicit casts, as they
 // handle things like function to ptr-to-function decay etc.
-Value *ScalarExprEmitter::EmitCastExpr(CastExpr *CE) {
+Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   Expr *E = CE->getSubExpr();
   QualType DestTy = CE->getType();
   CastKind Kind = CE->getCastKind();
@@ -1298,15 +1296,12 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
 
     // VLA types don't have constant size.
     if (type->isVariableArrayType()) {
-      llvm::Value *vlaSize =
-        CGF.GetVLASize(CGF.getContext().getAsVariableArrayType(type));
-      value = CGF.EmitCastToVoidPtr(value);
-      if (!isInc) vlaSize = Builder.CreateNSWNeg(vlaSize, "vla.negsize");
+      llvm::Value *numElts = CGF.getVLASize(type).first;
+      if (!isInc) numElts = Builder.CreateNSWNeg(numElts, "vla.negsize");
       if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
-        value = Builder.CreateGEP(value, vlaSize, "vla.inc");
+        value = Builder.CreateGEP(value, numElts, "vla.inc");
       else
-        value = Builder.CreateInBoundsGEP(value, vlaSize, "vla.inc");
-      value = Builder.CreateBitCast(value, input->getType());
+        value = Builder.CreateInBoundsGEP(value, numElts, "vla.inc");
     
     // Arithmetic on function pointers (!) is just +-1.
     } else if (type->isFunctionType()) {
@@ -1526,14 +1521,25 @@ ScalarExprEmitter::VisitUnaryExprOrTypeTraitExpr(
           CGF.getContext().getAsVariableArrayType(TypeToSize)) {
       if (E->isArgumentType()) {
         // sizeof(type) - make sure to emit the VLA size.
-        CGF.EmitVLASize(TypeToSize);
+        CGF.EmitVariablyModifiedType(TypeToSize);
       } else {
         // C99 6.5.3.4p2: If the argument is an expression of type
         // VLA, it is evaluated.
         CGF.EmitIgnoredExpr(E->getArgumentExpr());
       }
 
-      return CGF.GetVLASize(VAT);
+      QualType eltType;
+      llvm::Value *numElts;
+      llvm::tie(numElts, eltType) = CGF.getVLASize(VAT);
+
+      llvm::Value *size = numElts;
+
+      // Scale the number of non-VLA elements by the non-VLA element size.
+      CharUnits eltSize = CGF.getContext().getTypeSizeInChars(eltType);
+      if (!eltSize.isOne())
+        size = CGF.Builder.CreateNUWMul(CGF.CGM.getSize(eltSize), numElts);
+
+      return size;
     }
   }
 

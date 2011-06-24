@@ -1526,16 +1526,18 @@ public:
   // instruction in LLVM instead once it works well enough.
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty);
 
-  /// EmitVLASize - Generate code for any VLA size expressions that might occur
-  /// in a variably modified type. If Ty is a VLA, will return the value that
-  /// corresponds to the size in bytes of the VLA type. Will return 0 otherwise.
+  /// EmitVLASize - Capture all the sizes for the VLA expressions in
+  /// the given variably-modified type and store them in the VLASizeMap.
   ///
   /// This function can be called with a null (unreachable) insert point.
-  llvm::Value *EmitVLASize(QualType Ty);
+  void EmitVariablyModifiedType(QualType Ty);
 
-  // GetVLASize - Returns an LLVM value that corresponds to the size in bytes
-  // of a variable length array type.
-  llvm::Value *GetVLASize(const VariableArrayType *);
+  /// getVLASize - Returns an LLVM value that corresponds to the size,
+  /// in non-variably-sized elements, of a variable length array type,
+  /// plus that largest non-variably-sized element type.  Assumes that
+  /// the type has already been emitted with EmitVariablyModifiedType.
+  std::pair<llvm::Value*,QualType> getVLASize(const VariableArrayType *vla);
+  std::pair<llvm::Value*,QualType> getVLASize(QualType vla);
 
   /// LoadCXXThis - Load the value of 'this'. This function is only valid while
   /// generating code for an C++ member function.

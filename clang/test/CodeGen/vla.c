@@ -88,13 +88,17 @@ int test2(int n)
 // http://llvm.org/PR8567
 // CHECK: define double @test_PR8567
 double test_PR8567(int n, double (*p)[n][5]) {
-  // CHECK: store [[vla_type:.*]] %p,
-  // CHECK: load i32*
-  // CHECK-NEXT: mul i32 40
-  // CHECK-NEXT: [[byte_idx:%.*]] = mul i32 1
-  // CHECK-NEXT: [[tmp_1:%.*]] = load [[vla_type]]*
-  // CHECK-NEXT: [[tmp_2:%.*]] = bitcast [[vla_type]] [[tmp_1]] to i8*
-  // CHECK-NEXT: [[idx:%.*]] = getelementptr inbounds i8* [[tmp_2]], i32 [[byte_idx]]
-  // CHECK-NEXT: bitcast i8* [[idx]] to [[vla_type]]
+  // CHECK:      [[NV:%.*]] = alloca i32, align 4
+  // CHECK-NEXT: [[PV:%.*]] = alloca [5 x double]*, align 4
+  // CHECK-NEXT: store
+  // CHECK-NEXT: store
+  // CHECK-NEXT: [[N:%.*]] = load i32* [[NV]], align 4
+  // CHECK-NEXT: [[P:%.*]] = load [5 x double]** [[PV]], align 4
+  // CHECK-NEXT: [[T0:%.*]] = mul i32 1, [[N]]
+  // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [5 x double]* [[P]], i32 [[T0]]
+  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [5 x double]* [[T1]], i32 2
+  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [5 x double]* [[T2]], i32 0, i32 3
+  // CHECK-NEXT: [[T4:%.*]] = load double* [[T3]]
+  // CHECK-NEXT: ret double [[T4]]
  return p[1][2][3];
 }

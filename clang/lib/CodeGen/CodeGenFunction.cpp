@@ -343,7 +343,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
     QualType Ty = (*i)->getType();
 
     if (Ty->isVariablyModifiedType())
-      EmitVLASize(Ty);
+      EmitVariablyModifiedType(Ty);
   }
 }
 
@@ -709,13 +709,20 @@ CodeGenFunction::EmitNullInitialization(llvm::Value *DestPtr, QualType Ty) {
     if (const VariableArrayType *vlaType =
           dyn_cast_or_null<VariableArrayType>(
                                           getContext().getAsArrayType(Ty))) {
-      SizeVal = GetVLASize(vlaType);
+      QualType eltType;
+      llvm::Value *numElts;
+      llvm::tie(numElts, eltType) = getVLASize(vlaType);
+
+      SizeVal = numElts;
+      CharUnits eltSize = getContext().getTypeSizeInChars(eltType);
+      if (!eltSize.isOne())
+        SizeVal = Builder.CreateNUWMul(SizeVal, CGM.getSize(eltSize));
       vla = vlaType;
     } else {
       return;
     }
   } else {
-    SizeVal = llvm::ConstantInt::get(IntPtrTy, Size.getQuantity());
+    SizeVal = CGM.getSize(Size);
     vla = 0;
   }
 
@@ -778,60 +785,120 @@ llvm::BasicBlock *CodeGenFunction::GetIndirectGotoBlock() {
   return IndirectBranch->getParent();
 }
 
-llvm::Value *CodeGenFunction::GetVLASize(const VariableArrayType *VAT) {
-  llvm::Value *&SizeEntry = VLASizeMap[VAT->getSizeExpr()];
-
-  assert(SizeEntry && "Did not emit size for type");
-  return SizeEntry;
+std::pair<llvm::Value*, QualType>
+CodeGenFunction::getVLASize(QualType type) {
+  const VariableArrayType *vla = getContext().getAsVariableArrayType(type);
+  assert(vla && "type was not a variable array type!");
+  return getVLASize(vla);
 }
 
-llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty) {
-  assert(Ty->isVariablyModifiedType() &&
+std::pair<llvm::Value*, QualType>
+CodeGenFunction::getVLASize(const VariableArrayType *type) {
+  // The number of elements so far; always size_t.
+  llvm::Value *numElements = 0;
+
+  QualType elementType;
+  do {
+    elementType = type->getElementType();
+    llvm::Value *vlaSize = VLASizeMap[type->getSizeExpr()];
+    assert(vlaSize && "no size for VLA!");
+    assert(vlaSize->getType() == SizeTy);
+
+    if (!numElements) {
+      numElements = vlaSize;
+    } else {
+      // It's undefined behavior if this wraps around, so mark it that way.
+      numElements = Builder.CreateNUWMul(numElements, vlaSize);
+    }
+  } while ((type = getContext().getAsVariableArrayType(elementType)));
+
+  return std::pair<llvm::Value*,QualType>(numElements, elementType);
+}
+
+void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
+  assert(type->isVariablyModifiedType() &&
          "Must pass variably modified type to EmitVLASizes!");
 
   EnsureInsertPoint();
 
-  if (const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty)) {
-    // unknown size indication requires no size computation.
-    if (!VAT->getSizeExpr())
-      return 0;
-    llvm::Value *&SizeEntry = VLASizeMap[VAT->getSizeExpr()];
+  // We're going to walk down into the type and look for VLA
+  // expressions.
+  type = type.getCanonicalType();
+  do {
+    assert(type->isVariablyModifiedType());
 
-    if (!SizeEntry) {
-      const llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
+    const Type *ty = type.getTypePtr();
+    switch (ty->getTypeClass()) {
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base) case Type::Class:
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+#define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class, Base) case Type::Class:
+#include "clang/AST/TypeNodes.def"
+      llvm_unreachable("unexpected dependent or non-canonical type!");
 
-      // Get the element size;
-      QualType ElemTy = VAT->getElementType();
-      llvm::Value *ElemSize;
-      if (ElemTy->isVariableArrayType())
-        ElemSize = EmitVLASize(ElemTy);
-      else
-        ElemSize = llvm::ConstantInt::get(SizeTy,
-            getContext().getTypeSizeInChars(ElemTy).getQuantity());
+    // These types are never variably-modified.
+    case Type::Builtin:
+    case Type::Complex:
+    case Type::Vector:
+    case Type::ExtVector:
+    case Type::Record:
+    case Type::Enum:
+    case Type::ObjCObject:
+    case Type::ObjCInterface:
+    case Type::ObjCObjectPointer:
+      llvm_unreachable("type class is never variably-modified!");
 
-      llvm::Value *NumElements = EmitScalarExpr(VAT->getSizeExpr());
-      NumElements = Builder.CreateIntCast(NumElements, SizeTy, false, "tmp");
+    case Type::Pointer:
+      type = cast<PointerType>(ty)->getPointeeType();
+      break;
 
-      SizeEntry = Builder.CreateMul(ElemSize, NumElements);
+    case Type::BlockPointer:
+      type = cast<BlockPointerType>(ty)->getPointeeType();
+      break;
+
+    case Type::LValueReference:
+    case Type::RValueReference:
+      type = cast<ReferenceType>(ty)->getPointeeType();
+      break;
+
+    case Type::MemberPointer:
+      type = cast<MemberPointerType>(ty)->getPointeeType();
+      break;
+
+    case Type::ConstantArray:
+    case Type::IncompleteArray:
+      // Losing element qualification here is fine.
+      type = cast<ArrayType>(ty)->getElementType();
+      break;
+
+    case Type::VariableArray: {
+      // Losing element qualification here is fine.
+      const VariableArrayType *vat = cast<VariableArrayType>(ty);
+
+      // Unknown size indication requires no size computation.
+      // Otherwise, evaluate and record it.
+      if (const Expr *size = vat->getSizeExpr()) {
+        // It's possible that we might have emitted this already,
+        // e.g. with a typedef and a pointer to it.
+        llvm::Value *&entry = VLASizeMap[size];
+        if (!entry) {
+          // Always zexting here would be wrong if it weren't
+          // undefined behavior to have a negative bound.
+          entry = Builder.CreateIntCast(EmitScalarExpr(size), SizeTy,
+                                        /*signed*/ false);
+        }
+      }
+      type = vat->getElementType();
+      break;
     }
 
-    return SizeEntry;
-  }
-
-  if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
-    EmitVLASize(AT->getElementType());
-    return 0;
-  }
-
-  if (const ParenType *PT = dyn_cast<ParenType>(Ty)) {
-    EmitVLASize(PT->getInnerType());
-    return 0;
-  }
-
-  const PointerType *PT = Ty->getAs<PointerType>();
-  assert(PT && "unknown VM type!");
-  EmitVLASize(PT->getPointeeType());
-  return 0;
+    case Type::FunctionProto: 
+    case Type::FunctionNoProto:
+      type = cast<FunctionType>(ty)->getResultType();
+      break;
+    }
+  } while (type->isVariablyModifiedType());
 }
 
 llvm::Value* CodeGenFunction::EmitVAListRef(const Expr* E) {

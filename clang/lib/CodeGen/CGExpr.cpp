@@ -1579,21 +1579,22 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // size is a VLA or Objective-C interface.
   llvm::Value *Address = 0;
   unsigned ArrayAlignment = 0;
-  if (const VariableArrayType *VAT =
+  if (const VariableArrayType *vla =
         getContext().getAsVariableArrayType(E->getType())) {
-    llvm::Value *VLASize = GetVLASize(VAT);
+    // The base must be a pointer, which is not an aggregate.  Emit
+    // it.  It needs to be emitted first in case it's what captures
+    // the VLA bounds.
+    Address = EmitScalarExpr(E->getBase());
 
-    Idx = Builder.CreateMul(Idx, VLASize);
+    // The element count here is the total number of non-VLA elements.
+    llvm::Value *numElements = getVLASize(vla).first;
 
-    // The base must be a pointer, which is not an aggregate.  Emit it.
-    llvm::Value *Base = EmitScalarExpr(E->getBase());
+    Idx = Builder.CreateMul(Idx, numElements);
 
-    Address = EmitCastToVoidPtr(Base);
     if (getContext().getLangOptions().isSignedOverflowDefined())
       Address = Builder.CreateGEP(Address, Idx, "arrayidx");
     else
       Address = Builder.CreateInBoundsGEP(Address, Idx, "arrayidx");
-    Address = Builder.CreateBitCast(Address, Base->getType());
   } else if (const ObjCObjectType *OIT = E->getType()->getAs<ObjCObjectType>()){
     // Indexing over an interface, as in "NSString *P; P[4];"
     llvm::Value *InterfaceSize =
