@@ -33,9 +33,14 @@ void f1(x, y)
 
 int i0 = { 17 };
 
+#define ONE 1
+#define TWO 2
+
 int test_cond(int y, int fooBar) {
 // CHECK: int x = y ? 1 : 4+fooBar;
   int x = y ? 1 4+foobar;
+// CHECK: x = y ? ONE : TWO;
+  x = y ? ONE TWO;
   return x;
 }
 

@@ -309,8 +309,9 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         // suggest inserting the colon in between them, otherwise insert ": ".
         SourceLocation FILoc = Tok.getLocation();
         const char *FIText = ": ";
-        if (FILoc.isFileID()) {
-          const SourceManager &SM = PP.getSourceManager();
+        const SourceManager &SM = PP.getSourceManager();
+        if (FILoc.isFileID() || SM.isAtStartOfMacroInstantiation(FILoc)) {
+          FILoc = SM.getInstantiationLoc(FILoc);
           bool IsInvalid = false;
           const char *SourcePtr =
             SM.getCharacterData(FILoc.getFileLocWithOffset(-1), &IsInvalid);
