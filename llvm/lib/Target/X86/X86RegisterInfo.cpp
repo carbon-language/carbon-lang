@@ -39,6 +39,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/CommandLine.h"
+#include "X86GenRegisterDesc.inc"
+#include "X86GenRegisterInfo.inc"
 using namespace llvm;
 
 cl::opt<bool>
@@ -49,7 +51,8 @@ ForceStackAlign("force-align-stack",
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
-  : X86GenRegisterInfo(tm.getSubtarget<X86Subtarget>().is64Bit() ?
+  : X86GenRegisterInfo(X86RegDesc, X86RegInfoDesc,
+                       tm.getSubtarget<X86Subtarget>().is64Bit() ?
                          X86::ADJCALLSTACKDOWN64 :
                          X86::ADJCALLSTACKDOWN32,
                        tm.getSubtarget<X86Subtarget>().is64Bit() ?
@@ -917,8 +920,6 @@ unsigned getX86SubSuperRegister(unsigned Reg, EVT VT, bool High) {
   return Reg;
 }
 }
-
-#include "X86GenRegisterInfo.inc"
 
 namespace {
   struct MSAH : public MachineFunctionPass {

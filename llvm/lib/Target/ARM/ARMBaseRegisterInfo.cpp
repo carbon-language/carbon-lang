@@ -39,6 +39,8 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CommandLine.h"
+#include "ARMGenRegisterDesc.inc"
+#include "ARMGenRegisterInfo.inc"
 
 using namespace llvm;
 
@@ -54,7 +56,8 @@ EnableBasePointer("arm-use-base-pointer", cl::Hidden, cl::init(true),
 
 ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
                                          const ARMSubtarget &sti)
-  : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
+  : ARMGenRegisterInfo(ARMRegDesc, ARMRegInfoDesc,
+                       ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii), STI(sti),
     FramePtr((STI.isTargetDarwin() || STI.isThumb()) ? ARM::R7 : ARM::R11),
     BasePtr(ARM::R6) {
@@ -1287,5 +1290,3 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MI.setDesc(TII.get(ARM::t2SUBri));
   }
 }
-
-#include "ARMGenRegisterInfo.inc"

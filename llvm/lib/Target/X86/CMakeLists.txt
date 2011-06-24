@@ -1,8 +1,9 @@
 set(LLVM_TARGET_DEFINITIONS X86.td)
 
-tablegen(X86GenRegisterInfo.h.inc -gen-register-desc-header)
 tablegen(X86GenRegisterNames.inc -gen-register-enums)
-tablegen(X86GenRegisterInfo.inc -gen-register-desc)
+tablegen(X86GenRegisterDesc.inc -gen-register-desc)
+tablegen(X86GenRegisterInfo.h.inc -gen-register-info-header)
+tablegen(X86GenRegisterInfo.inc -gen-register-info)
 tablegen(X86GenDisassemblerTables.inc -gen-disassembler)
 tablegen(X86GenInstrNames.inc -gen-instr-enums)
 tablegen(X86GenInstrInfo.inc -gen-instr-desc)

@@ -36,12 +36,14 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
-
+#include "MBlazeGenRegisterDesc.inc"
+#include "MBlazeGenRegisterInfo.inc"
 using namespace llvm;
 
 MBlazeRegisterInfo::
 MBlazeRegisterInfo(const MBlazeSubtarget &ST, const TargetInstrInfo &tii)
-  : MBlazeGenRegisterInfo(MBlaze::ADJCALLSTACKDOWN, MBlaze::ADJCALLSTACKUP),
+  : MBlazeGenRegisterInfo(MBlazeRegDesc, MBlazeRegInfoDesc,
+                          MBlaze::ADJCALLSTACKDOWN, MBlaze::ADJCALLSTACKUP),
     Subtarget(ST), TII(tii) {}
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.
@@ -359,6 +361,3 @@ int MBlazeRegisterInfo::getDwarfRegNum(unsigned RegNo, bool isEH) const {
 int MBlazeRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
   return MBlazeGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
 }
-
-#include "MBlazeGenRegisterInfo.inc"
-

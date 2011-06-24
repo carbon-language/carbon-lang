@@ -35,12 +35,15 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "MipsGenRegisterDesc.inc"
+#include "MipsGenRegisterInfo.inc"
 
 using namespace llvm;
 
 MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST,
                                    const TargetInstrInfo &tii)
-  : MipsGenRegisterInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
+  : MipsGenRegisterInfo(MipsRegDesc, MipsRegInfoDesc,
+                        Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     Subtarget(ST), TII(tii) {}
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.
@@ -285,5 +288,3 @@ getDwarfRegNum(unsigned RegNum, bool isEH) const {
 int MipsRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
   return MipsGenRegisterInfo::getLLVMRegNumFull(DwarfRegNo,0);
 }
-
-#include "MipsGenRegisterInfo.inc"

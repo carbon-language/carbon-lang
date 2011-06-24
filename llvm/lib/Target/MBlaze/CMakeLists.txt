@@ -1,8 +1,9 @@
 set(LLVM_TARGET_DEFINITIONS MBlaze.td)
 
-tablegen(MBlazeGenRegisterInfo.h.inc -gen-register-desc-header)
 tablegen(MBlazeGenRegisterNames.inc -gen-register-enums)
-tablegen(MBlazeGenRegisterInfo.inc -gen-register-desc)
+tablegen(MBlazeGenRegisterDesc.inc -gen-register-desc)
+tablegen(MBlazeGenRegisterInfo.h.inc -gen-register-info-header)
+tablegen(MBlazeGenRegisterInfo.inc -gen-register-info)
 tablegen(MBlazeGenInstrNames.inc -gen-instr-enums)
 tablegen(MBlazeGenInstrInfo.inc -gen-instr-desc)
 tablegen(MBlazeGenCodeEmitter.inc -gen-emitter)

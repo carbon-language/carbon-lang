@@ -1,8 +1,9 @@
 set(LLVM_TARGET_DEFINITIONS Blackfin.td)
 
-tablegen(BlackfinGenRegisterInfo.h.inc -gen-register-desc-header)
 tablegen(BlackfinGenRegisterNames.inc -gen-register-enums)
-tablegen(BlackfinGenRegisterInfo.inc -gen-register-desc)
+tablegen(BlackfinGenRegisterDesc.inc -gen-register-desc)
+tablegen(BlackfinGenRegisterInfo.h.inc -gen-register-info-header)
+tablegen(BlackfinGenRegisterInfo.inc -gen-register-info)
 tablegen(BlackfinGenInstrNames.inc -gen-instr-enums)
 tablegen(BlackfinGenInstrInfo.inc -gen-instr-desc)
 tablegen(BlackfinGenAsmWriter.inc -gen-asm-writer)

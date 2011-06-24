@@ -33,6 +33,9 @@ public:
 
   // runEnums - Print out enum values for all of the registers.
   void runEnums(raw_ostream &o);
+
+  // runDesc - Print out register descriptions.
+  void runDesc(raw_ostream &o);
 };
 
 } // End llvm namespace

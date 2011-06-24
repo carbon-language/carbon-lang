@@ -33,6 +33,7 @@ namespace llvm {
   class MCContext;
   class MCDisassembler;
   class MCInstPrinter;
+  class MCRegisterInfo;
   class MCStreamer;
   class TargetAsmBackend;
   class TargetAsmLexer;
@@ -64,7 +65,9 @@ namespace llvm {
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
 
     typedef MCAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
-                                                StringRef TT);
+                                          StringRef TT);
+    typedef MCRegisterInfo *(*RegInfoCtorFnTy)(const Target &T,
+                                               StringRef TT);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
                                                   const std::string &Features);
@@ -120,7 +123,13 @@ namespace llvm {
     /// HasJIT - Whether this target supports the JIT.
     bool HasJIT;
 
+    /// AsmInfoCtorFn - Constructor function for this target's MCAsmInfo, if
+    /// registered.
     AsmInfoCtorFnTy AsmInfoCtorFn;
+
+    /// RegInfoCtorFn - Constructor function for this target's MCRegisterInfo,
+    /// if registered.
+    RegInfoCtorFnTy RegInfoCtorFn;
 
     /// TargetMachineCtorFn - Construction function for this target's
     /// TargetMachine, if registered.
@@ -229,6 +238,19 @@ namespace llvm {
       if (!AsmInfoCtorFn)
         return 0;
       return AsmInfoCtorFn(*this, Triple);
+    }
+
+    /// createRegInfo - Create a MCRegisterInfo implementation for the specified
+    /// target triple.
+    ///
+    /// \arg Triple - This argument is used to determine the target machine
+    /// feature set; it should always be provided. Generally this should be
+    /// either the target triple from the module, or the target triple of the
+    /// host if that does not exist.
+    MCRegisterInfo *createRegInfo(StringRef Triple) const {
+      if (!RegInfoCtorFn)
+        return 0;
+      return RegInfoCtorFn(*this, Triple);
     }
 
     /// createTargetMachine - Create a target specific machine implementation
@@ -442,6 +464,21 @@ namespace llvm {
       // Ignore duplicate registration.
       if (!T.AsmInfoCtorFn)
         T.AsmInfoCtorFn = Fn;
+    }
+
+    /// RegisterRegInfo - Register a MCRegisterInfo implementation for the
+    /// given target.
+    ///
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct a MCRegisterInfo for the target.
+    static void RegisterRegInfo(Target &T, Target::RegInfoCtorFnTy Fn) {
+      // Ignore duplicate registration.
+      if (!T.RegInfoCtorFn)
+        T.RegInfoCtorFn = Fn;
     }
 
     /// RegisterTargetMachine - Register a TargetMachine implementation for the

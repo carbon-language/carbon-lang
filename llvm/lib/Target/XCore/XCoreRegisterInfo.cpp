@@ -32,11 +32,13 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include "XCoreGenRegisterDesc.inc"
+#include "XCoreGenRegisterInfo.inc"
 using namespace llvm;
 
 XCoreRegisterInfo::XCoreRegisterInfo(const TargetInstrInfo &tii)
-  : XCoreGenRegisterInfo(XCore::ADJCALLSTACKDOWN, XCore::ADJCALLSTACKUP),
+  : XCoreGenRegisterInfo(XCoreRegDesc, XCoreRegInfoDesc,
+                         XCore::ADJCALLSTACKDOWN, XCore::ADJCALLSTACKUP),
     TII(tii) {
 }
 
@@ -328,6 +330,3 @@ unsigned XCoreRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
 unsigned XCoreRegisterInfo::getRARegister() const {
   return XCore::LR;
 }
-
-#include "XCoreGenRegisterInfo.inc"
-

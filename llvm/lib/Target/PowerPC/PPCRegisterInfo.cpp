@@ -43,6 +43,8 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
+#include "PPCGenRegisterDesc.inc"
+#include "PPCGenRegisterInfo.inc"
 
 // FIXME (64-bit): Eventually enable by default.
 namespace llvm {
@@ -110,7 +112,8 @@ unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
 
 PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
                                  const TargetInstrInfo &tii)
-  : PPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
+  : PPCGenRegisterInfo(PPCRegDesc, PPCRegInfoDesc,
+                       PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
     Subtarget(ST), TII(tii) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
@@ -710,5 +713,3 @@ int PPCRegisterInfo::getLLVMRegNum(unsigned RegNum, bool isEH) const {
 
   return PPCGenRegisterInfo::getLLVMRegNumFull(RegNum, Flavour);
 }
-
-#include "PPCGenRegisterInfo.inc"

@@ -29,11 +29,14 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "BlackfinGenRegisterDesc.inc"
+#include "BlackfinGenRegisterInfo.inc"
 using namespace llvm;
 
 BlackfinRegisterInfo::BlackfinRegisterInfo(BlackfinSubtarget &st,
                                            const TargetInstrInfo &tii)
-  : BlackfinGenRegisterInfo(BF::ADJCALLSTACKDOWN, BF::ADJCALLSTACKUP),
+  : BlackfinGenRegisterInfo(BlackfinRegDesc, BlackfinRegInfoDesc,
+                            BF::ADJCALLSTACKDOWN, BF::ADJCALLSTACKUP),
     Subtarget(st),
     TII(tii) {}
 
@@ -356,6 +359,3 @@ int BlackfinRegisterInfo::getLLVMRegNum(unsigned DwarfRegNum,
   llvm_unreachable("What is the dwarf register number");
   return -1;
 }
-
-#include "BlackfinGenRegisterInfo.inc"
-

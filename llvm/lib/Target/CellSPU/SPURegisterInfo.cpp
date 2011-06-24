@@ -42,6 +42,8 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
+#include "SPUGenRegisterDesc.inc"
+#include "SPUGenRegisterInfo.inc"
 
 using namespace llvm;
 
@@ -185,7 +187,8 @@ unsigned SPURegisterInfo::getRegisterNumbering(unsigned RegEnum) {
 
 SPURegisterInfo::SPURegisterInfo(const SPUSubtarget &subtarget,
                                  const TargetInstrInfo &tii) :
-  SPUGenRegisterInfo(SPU::ADJCALLSTACKDOWN, SPU::ADJCALLSTACKUP),
+  SPUGenRegisterInfo(SPURegDesc, SPURegInfoDesc,
+                     SPU::ADJCALLSTACKDOWN, SPU::ADJCALLSTACKUP),
   Subtarget(subtarget),
   TII(tii)
 {
@@ -371,5 +374,3 @@ SPURegisterInfo::findScratchRegister(MachineBasicBlock::iterator II,
   assert( Reg && "Register scavenger failed");
   return Reg;
 }
-
-#include "SPUGenRegisterInfo.inc"

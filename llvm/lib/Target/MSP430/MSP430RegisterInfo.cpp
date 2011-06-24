@@ -25,13 +25,16 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "MSP430GenRegisterDesc.inc"
+#include "MSP430GenRegisterInfo.inc"
 
 using namespace llvm;
 
 // FIXME: Provide proper call frame setup / destroy opcodes.
 MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm,
                                        const TargetInstrInfo &tii)
-  : MSP430GenRegisterInfo(MSP430::ADJCALLSTACKDOWN, MSP430::ADJCALLSTACKUP),
+  : MSP430GenRegisterInfo(MSP430RegDesc, MSP430RegInfoDesc,
+                          MSP430::ADJCALLSTACKDOWN, MSP430::ADJCALLSTACKUP),
     TM(tm), TII(tii) {
   StackAlign = TM.getFrameLowering()->getStackAlignment();
 }
@@ -250,5 +253,3 @@ int MSP430RegisterInfo::getLLVMRegNum(unsigned RegNum, bool isEH) const {
   llvm_unreachable("Not implemented yet!");
   return 0;
 }
-
-#include "MSP430GenRegisterInfo.inc"

@@ -16,6 +16,7 @@
 #ifndef LLVM_TARGET_TARGETREGISTERINFO_H
 #define LLVM_TARGET_TARGETREGISTERINFO_H
 
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -31,25 +32,6 @@ class MachineMove;
 class RegScavenger;
 template<class T> class SmallVectorImpl;
 class raw_ostream;
-
-/// TargetRegisterDesc - This record contains all of the information known about
-/// a particular register.  The Overlaps field contains a pointer to a zero
-/// terminated array of registers that this register aliases, starting with
-/// itself. This is needed for architectures like X86 which have AL alias AX
-/// alias EAX. The SubRegs field is a zero terminated array of registers that
-/// are sub-registers of the specific register, e.g. AL, AH are sub-registers of
-/// AX. The SuperRegs field is a zero terminated array of registers that are
-/// super-registers of the specific register, e.g. RAX, EAX, are super-registers
-/// of AX.
-///
-struct TargetRegisterDesc {
-  const char     *Name;         // Printable name for the reg (for debugging)
-  const unsigned *Overlaps;     // Overlapping registers, described above
-  const unsigned *SubRegs;      // Sub-register set, described above
-  const unsigned *SuperRegs;    // Super-register set, described above
-  unsigned CostPerUse;          // Extra cost of instructions using register.
-  bool inAllocatableClass;      // Register belongs to an allocatable regclass.
-};
 
 class TargetRegisterClass {
 public:
@@ -274,6 +256,12 @@ public:
   bool isAllocatable() const { return Allocatable; }
 };
 
+/// TargetRegisterInfoDesc - Extra information, not in MCRegisterDesc, about
+/// registers. These are used by codegen, not by MC.
+struct TargetRegisterInfoDesc {
+  unsigned CostPerUse;          // Extra cost of instructions using register.
+  bool inAllocatableClass;      // Register belongs to an allocatable regclass.
+};
 
 /// TargetRegisterInfo base class - We assume that the target defines a static
 /// array of TargetRegisterDesc objects that represent all of the machine
@@ -281,20 +269,17 @@ public:
 /// to this array so that we can turn register number into a register
 /// descriptor.
 ///
-class TargetRegisterInfo {
+class TargetRegisterInfo : public MCRegisterInfo {
 public:
   typedef const TargetRegisterClass * const * regclass_iterator;
 private:
-  const TargetRegisterDesc *Desc;             // Pointer to the descriptor array
+  const TargetRegisterInfoDesc *InfoDesc;     // Extra desc array for codegen
   const char *const *SubRegIndexNames;        // Names of subreg indexes.
-  unsigned NumRegs;                           // Number of entries in the array
-
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
-
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 
 protected:
-  TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
+  TargetRegisterInfo(const TargetRegisterInfoDesc *ID,
                      regclass_iterator RegClassBegin,
                      regclass_iterator RegClassEnd,
                      const char *const *subregindexnames,
@@ -379,71 +364,16 @@ public:
   BitVector getAllocatableSet(const MachineFunction &MF,
                               const TargetRegisterClass *RC = NULL) const;
 
-  const TargetRegisterDesc &operator[](unsigned RegNo) const {
-    assert(RegNo < NumRegs &&
-           "Attempting to access record for invalid register number!");
-    return Desc[RegNo];
-  }
-
-  /// Provide a get method, equivalent to [], but more useful if we have a
-  /// pointer to this object.
-  ///
-  const TargetRegisterDesc &get(unsigned RegNo) const {
-    return operator[](RegNo);
-  }
-
-  /// getAliasSet - Return the set of registers aliased by the specified
-  /// register, or a null list of there are none.  The list returned is zero
-  /// terminated.
-  ///
-  const unsigned *getAliasSet(unsigned RegNo) const {
-    // The Overlaps set always begins with Reg itself.
-    return get(RegNo).Overlaps + 1;
-  }
-
-  /// getOverlaps - Return a list of registers that overlap Reg, including
-  /// itself. This is the same as the alias set except Reg is included in the
-  /// list.
-  /// These are exactly the registers in { x | regsOverlap(x, Reg) }.
-  ///
-  const unsigned *getOverlaps(unsigned RegNo) const {
-    return get(RegNo).Overlaps;
-  }
-
-  /// getSubRegisters - Return the list of registers that are sub-registers of
-  /// the specified register, or a null list of there are none. The list
-  /// returned is zero terminated and sorted according to super-sub register
-  /// relations. e.g. X86::RAX's sub-register list is EAX, AX, AL, AH.
-  ///
-  const unsigned *getSubRegisters(unsigned RegNo) const {
-    return get(RegNo).SubRegs;
-  }
-
-  /// getSuperRegisters - Return the list of registers that are super-registers
-  /// of the specified register, or a null list of there are none. The list
-  /// returned is zero terminated and sorted according to super-sub register
-  /// relations. e.g. X86::AL's super-register list is AX, EAX, RAX.
-  ///
-  const unsigned *getSuperRegisters(unsigned RegNo) const {
-    return get(RegNo).SuperRegs;
-  }
-
-  /// getName - Return the human-readable symbolic target-specific name for the
-  /// specified physical register.
-  const char *getName(unsigned RegNo) const {
-    return get(RegNo).Name;
-  }
-
   /// getCostPerUse - Return the additional cost of using this register instead
   /// of other registers in its class.
   unsigned getCostPerUse(unsigned RegNo) const {
-    return get(RegNo).CostPerUse;
+    return InfoDesc[RegNo].CostPerUse;
   }
 
-  /// getNumRegs - Return the number of registers this target has (useful for
-  /// sizing arrays holding per register information)
-  unsigned getNumRegs() const {
-    return NumRegs;
+  /// isInAllocatableClass - Return true if the register is in the allocation
+  /// of any register class.
+  bool isInAllocatableClass(unsigned RegNo) const {
+    return InfoDesc[RegNo].inAllocatableClass;
   }
 
   /// getSubRegIndexName - Return the human-readable symbolic target-specific

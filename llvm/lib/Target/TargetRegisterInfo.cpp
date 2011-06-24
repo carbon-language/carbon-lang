@@ -20,15 +20,12 @@
 
 using namespace llvm;
 
-TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
+TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterInfoDesc *ID,
                              regclass_iterator RCB, regclass_iterator RCE,
                              const char *const *subregindexnames,
                              int CFSO, int CFDO)
-  : Desc(D), SubRegIndexNames(subregindexnames), NumRegs(NR),
+  : InfoDesc(ID), SubRegIndexNames(subregindexnames),
     RegClassBegin(RCB), RegClassEnd(RCE) {
-  assert(isPhysicalRegister(NumRegs) &&
-         "Target has too many physical registers!");
-
   CallFrameSetupOpcode   = CFSO;
   CallFrameDestroyOpcode = CFDO;
 }
@@ -86,7 +83,7 @@ static void getAllocatableSetForRC(const MachineFunction &MF,
 
 BitVector TargetRegisterInfo::getAllocatableSet(const MachineFunction &MF,
                                           const TargetRegisterClass *RC) const {
-  BitVector Allocatable(NumRegs);
+  BitVector Allocatable(getNumRegs());
   if (RC) {
     getAllocatableSetForRC(MF, RC, Allocatable);
   } else {

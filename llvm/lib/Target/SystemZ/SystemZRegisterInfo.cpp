@@ -25,11 +25,14 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
+#include "SystemZGenRegisterDesc.inc"
+#include "SystemZGenRegisterInfo.inc"
 using namespace llvm;
 
 SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm,
                                          const SystemZInstrInfo &tii)
-  : SystemZGenRegisterInfo(SystemZ::ADJCALLSTACKUP, SystemZ::ADJCALLSTACKDOWN),
+  : SystemZGenRegisterInfo(SystemZRegDesc, SystemZRegInfoDesc,
+                           SystemZ::ADJCALLSTACKUP, SystemZ::ADJCALLSTACKDOWN),
     TM(tm), TII(tii) {
 }
 
@@ -153,6 +156,3 @@ int SystemZRegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
   assert(0 && "What is the dwarf register number");
   return -1;
 }
-
-
-#include "SystemZGenRegisterInfo.inc"

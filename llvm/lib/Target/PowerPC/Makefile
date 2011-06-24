@@ -14,6 +14,7 @@ TARGET = PPC
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = PPCGenInstrNames.inc PPCGenRegisterNames.inc \
                 PPCGenAsmWriter.inc  PPCGenCodeEmitter.inc \
+		PPCGenRegisterDesc.inc \
                 PPCGenRegisterInfo.h.inc PPCGenRegisterInfo.inc \
                 PPCGenInstrInfo.inc PPCGenDAGISel.inc \
                 PPCGenSubtarget.inc PPCGenCallingConv.inc \

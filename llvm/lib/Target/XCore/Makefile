@@ -13,7 +13,8 @@ TARGET = XCore
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = XCoreGenRegisterInfo.h.inc XCoreGenRegisterNames.inc \
-                XCoreGenRegisterInfo.inc XCoreGenInstrNames.inc \
+                XCoreGenRegisterInfo.inc XCoreGenRegisterDesc.inc \
+		XCoreGenInstrNames.inc \
                 XCoreGenInstrInfo.inc XCoreGenAsmWriter.inc \
                 XCoreGenDAGISel.inc XCoreGenCallingConv.inc \
 		XCoreGenSubtarget.inc

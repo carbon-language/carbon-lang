@@ -112,7 +112,7 @@ public:
   /// register, so a register allocator needs to track its liveness and
   /// availability.
   bool isAllocatable(unsigned PhysReg) const {
-    return TRI->get(PhysReg).inAllocatableClass && !isReserved(PhysReg);
+    return TRI->isInAllocatableClass(PhysReg) && !isReserved(PhysReg);
   }
 };
 } // end namespace llvm

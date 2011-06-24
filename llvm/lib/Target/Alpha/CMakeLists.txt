@@ -1,8 +1,9 @@
 set(LLVM_TARGET_DEFINITIONS Alpha.td)
 
-tablegen(AlphaGenRegisterInfo.h.inc -gen-register-desc-header)
 tablegen(AlphaGenRegisterNames.inc -gen-register-enums)
-tablegen(AlphaGenRegisterInfo.inc -gen-register-desc)
+tablegen(AlphaGenRegisterDesc.inc -gen-register-desc)
+tablegen(AlphaGenRegisterInfo.h.inc -gen-register-info-header)
+tablegen(AlphaGenRegisterInfo.inc -gen-register-info)
 tablegen(AlphaGenInstrNames.inc -gen-instr-enums)
 tablegen(AlphaGenInstrInfo.inc -gen-instr-desc)
 tablegen(AlphaGenAsmWriter.inc -gen-asm-writer)
