@@ -305,8 +305,19 @@ Function::GetBlock (bool can_create)
     {
         SymbolContext sc;
         CalculateSymbolContext(&sc);
-        assert(sc.module_sp);
-        sc.module_sp->GetSymbolVendor()->ParseFunctionBlocks(sc);
+        if (sc.module_sp)
+        {
+            sc.module_sp->GetSymbolVendor()->ParseFunctionBlocks(sc);
+        }
+        else
+        {
+            ::fprintf (stderr, 
+                       "unable to find module shared pointer for function '%s' in %s%s%s\n", 
+                       GetName().GetCString(),
+                       m_comp_unit->GetDirectory().GetCString(),
+                       m_comp_unit->GetDirectory() ? "/" : "",
+                       m_comp_unit->GetFilename().GetCString());
+        }
         m_block.SetBlockInfoHasBeenParsed (true, true);
     }
     return m_block;
