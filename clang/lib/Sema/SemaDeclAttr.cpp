@@ -3258,7 +3258,7 @@ void Sema::DelayedDiagnostics::popParsingDecl(Sema &S, ParsingDeclState state,
 
   // We only want to actually emit delayed diagnostics when we
   // successfully parsed a decl.
-  if (decl) {
+  if (decl && !decl->isInvalidDecl()) {
     // We emit all the active diagnostics, not just those starting
     // from the saved state.  The idea is this:  we get one push for a
     // decl spec and another for each declarator;  in a decl group like:
