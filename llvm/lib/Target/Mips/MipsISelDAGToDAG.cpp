@@ -170,7 +170,8 @@ SelectAddr(SDValue Addr, SDValue &Offset, SDValue &Base) {
          Addr.getOperand(0).getOpcode() == ISD::LOAD) &&
         Addr.getOperand(1).getOpcode() == MipsISD::Lo) {
       SDValue LoVal = Addr.getOperand(1);
-      if (dyn_cast<ConstantPoolSDNode>(LoVal.getOperand(0))) {
+      if (isa<ConstantPoolSDNode>(LoVal.getOperand(0)) || 
+          isa<GlobalAddressSDNode>(LoVal.getOperand(0))) {
         Base = Addr.getOperand(0);
         Offset = LoVal.getOperand(0);
         return true;

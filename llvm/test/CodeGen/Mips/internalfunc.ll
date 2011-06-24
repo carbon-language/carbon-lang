@@ -15,7 +15,7 @@ entry:
 define void @caller(i32 %a0, i32 %a1) nounwind {
 entry:
 ; CHECK: lw  $[[R1:[0-9]+]], %got(caller.sf1)($gp)
-; CHECK: addiu ${{[0-9]+}}, $[[R1]], %lo(caller.sf1)
+; CHECK: lw  $25, %lo(caller.sf1)($[[R1]])
   %tobool = icmp eq i32 %a1, 0
   br i1 %tobool, label %if.end, label %if.then
 
@@ -26,9 +26,9 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %entry, %if.then
 ; CHECK: lw  $[[R2:[0-9]+]], %got(sf2)($gp)
-; CHECK: lw  $[[R3:[0-9]+]], %got(caller.sf1)($gp)
 ; CHECK: addiu ${{[0-9]+}}, $[[R2]], %lo(sf2)
-; CHECK: addiu ${{[0-9]+}}, $[[R3]], %lo(caller.sf1)
+; CHECK: lw  $[[R3:[0-9]+]], %got(caller.sf1)($gp)
+; CHECK: sw  ${{[0-9]+}}, %lo(caller.sf1)($[[R3]])
   %tobool3 = icmp ne i32 %a0, 0
   %tmp4 = load void (...)** @gf1, align 4
   %cond = select i1 %tobool3, void (...)* %tmp4, void (...)* bitcast (void ()* @sf2 to void (...)*)

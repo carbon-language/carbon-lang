@@ -24,7 +24,7 @@ entry:
 ; CHECK: sw  $[[R4]], 28($sp)
 ; CHECK: sw  $[[R5]], 32($sp)
 ; CHECK: sw  $[[R6]], 36($sp)
-; CHECK: lw  $6, 0($[[R0]])
+; CHECK: lw  $6, %lo(f1.s1)($[[R1]])
 ; CHECK: lw  $7, 4($[[R0]])
   %agg.tmp10 = alloca %struct.S3, align 4
   call void @callee1(float 2.000000e+01, %struct.S1* byval bitcast (%0* @f1.s1 to %struct.S1*)) nounwind
