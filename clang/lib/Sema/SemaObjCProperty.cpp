@@ -1273,7 +1273,7 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
     // Is there a matching propery synthesize/dynamic?
     if (Prop->isInvalidDecl() ||
         Prop->getPropertyImplementation() == ObjCPropertyDecl::Optional ||
-        PropImplMap.count(Prop))
+        PropImplMap.count(Prop) || Prop->hasAttr<UnavailableAttr>())
       continue;
     if (!InsMap.count(Prop->getGetterName())) {
       Diag(Prop->getLocation(),

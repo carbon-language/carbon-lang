@@ -1076,6 +1076,9 @@ void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
 
 void Sema::WarnUndefinedMethod(SourceLocation ImpLoc, ObjCMethodDecl *method,
                                bool &IncompleteImpl, unsigned DiagID) {
+  // No point warning no definition of method which is 'unavailable'.
+  if (method->hasAttr<UnavailableAttr>())
+    return;
   if (!IncompleteImpl) {
     Diag(ImpLoc, diag::warn_incomplete_impl);
     IncompleteImpl = true;
