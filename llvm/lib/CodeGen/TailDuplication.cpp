@@ -97,7 +97,7 @@ namespace {
     bool shouldTailDuplicate(const MachineFunction &MF,
                              bool IsSimple, MachineBasicBlock &TailBB);
     bool isSimpleBB(MachineBasicBlock *TailBB);
-    bool canCompletelyDuplicateBB(MachineBasicBlock &BB, bool IsSimple);
+    bool canCompletelyDuplicateBB(MachineBasicBlock &BB);
     bool duplicateSimpleBB(MachineBasicBlock *TailBB,
                            SmallVector<MachineBasicBlock*, 8> &TDBBs,
                            const DenseSet<unsigned> &RegsUsedByPhi,
@@ -573,7 +573,7 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
   if (!PreRegAlloc)
     return true;
 
-  return canCompletelyDuplicateBB(TailBB, IsSimple);
+  return canCompletelyDuplicateBB(TailBB);
 }
 
 /// isSimpleBB - True if this BB has only one unconditional jump.
@@ -606,30 +606,22 @@ bothUsedInPHI(const MachineBasicBlock &A,
 }
 
 bool
-TailDuplicatePass::canCompletelyDuplicateBB(MachineBasicBlock &BB,
-                                            bool isSimple) {
+TailDuplicatePass::canCompletelyDuplicateBB(MachineBasicBlock &BB) {
   SmallPtrSet<MachineBasicBlock*, 8> Succs(BB.succ_begin(), BB.succ_end());
 
   for (MachineBasicBlock::pred_iterator PI = BB.pred_begin(),
        PE = BB.pred_end(); PI != PE; ++PI) {
     MachineBasicBlock *PredBB = *PI;
 
-    if (isSimple) {
-      if (PredBB->getLandingPadSuccessor())
-        return false;
-      if (bothUsedInPHI(*PredBB, Succs))
-        return false;
-    } else {
-      if (PredBB->succ_size() > 1)
-        return false;
-    }
+    if (PredBB->succ_size() > 1)
+      return false;
 
     MachineBasicBlock *PredTBB = NULL, *PredFBB = NULL;
     SmallVector<MachineOperand, 4> PredCond;
     if (TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond, true))
       return false;
 
-    if (!isSimple && !PredCond.empty())
+    if (!PredCond.empty())
       return false;
   }
   return true;
