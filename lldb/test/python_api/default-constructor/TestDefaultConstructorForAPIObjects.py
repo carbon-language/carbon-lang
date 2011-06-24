@@ -2,8 +2,9 @@
 Test lldb Python API object's default constructor and make sure it is invalid
 after initial construction.
 
-There are three exceptions to the above general rules, though; the API objects are
-SBCommadnReturnObject, SBStream, and SBSymbolContextList.
+There are three exceptions to the above general rules, though; API objects
+SBCommadnReturnObject, SBStream, and SBSymbolContextList, are all valid objects
+after default construction.
 """
 
 import os, time
@@ -42,6 +43,9 @@ class APIDefaultConstructorTestCase(TestBase):
         if self.TraceOn():
             print obj
         self.assertFalse(obj)
+        # Do fuzz testing on the invalid obj, it should not crash lldb.
+        import sb_breakpoint
+        sb_breakpoint.fuzz_obj(obj)
 
     @python_api_test
     def test_SBBreakpointLocation(self):
