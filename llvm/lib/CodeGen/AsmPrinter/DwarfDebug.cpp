@@ -618,6 +618,21 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DbgScope *Scope) {
   return ScopeDIE;
 }
 
+/// isUnsignedDIType - Return true if type encoding is unsigned.
+static bool isUnsignedDIType(DIType Ty) {
+  DIDerivedType DTy(Ty);
+  if (DTy.Verify())
+    return isUnsignedDIType(DTy.getTypeDerivedFrom());
+
+  DIBasicType BTy(Ty);
+  if (BTy.Verify()) {
+    unsigned Encoding = BTy.getEncoding();
+    if (Encoding == dwarf::DW_ATE_unsigned ||
+        Encoding == dwarf::DW_ATE_unsigned_char)
+      return true;
+  }
+  return false;
+}
 
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
 DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
@@ -718,6 +733,11 @@ DIE *DwarfDebug::constructVariableDIE(DbgVariable *DV, DbgScope *Scope) {
       else if (DVInsn->getOperand(0).isFPImm())
         updated =
           VariableCU->addConstantFPValue(VariableDie, DVInsn->getOperand(0));
+      else if (DVInsn->getOperand(0).isCImm())
+        updated =
+          VariableCU->addConstantValue(VariableDie, 
+                                       DVInsn->getOperand(0).getCImm(),
+                                       isUnsignedDIType(DV->getType()));
     } else {
       VariableCU->addVariableAddress(DV, VariableDie, 
                                      Asm->getDebugValueLocation(DVInsn));
@@ -913,22 +933,6 @@ CompileUnit *DwarfDebug::getCompileUnit(const MDNode *N) const {
   return I->second;
 }
 
-/// isUnsignedDIType - Return true if type encoding is unsigned.
-static bool isUnsignedDIType(DIType Ty) {
-  DIDerivedType DTy(Ty);
-  if (DTy.Verify())
-    return isUnsignedDIType(DTy.getTypeDerivedFrom());
-
-  DIBasicType BTy(Ty);
-  if (BTy.Verify()) {
-    unsigned Encoding = BTy.getEncoding();
-    if (Encoding == dwarf::DW_ATE_unsigned ||
-        Encoding == dwarf::DW_ATE_unsigned_char)
-      return true;
-  }
-  return false;
-}
-
 // Return const exprssion if value is a GEP to access merged global
 // constant. e.g.
 // i8* getelementptr ({ i8, i8, i8, i8 }* @_MergedGlobals, i32 0, i32 0)
@@ -1017,7 +1021,7 @@ void DwarfDebug::constructGlobalVariableDIE(const MDNode *N) {
     } else {
       TheCU->addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
     } 
-  } else if (ConstantInt *CI = 
+  } else if (const ConstantInt *CI = 
              dyn_cast_or_null<ConstantInt>(GV.getConstant()))
     TheCU->addConstantValue(VariableDIE, CI, isUnsignedDIType(GTy));
   else if (const ConstantExpr *CE = getMergedGlobalExpr(N->getOperand(11))) {

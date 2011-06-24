@@ -181,7 +181,7 @@ public:
 
   /// addConstantValue - Add constant value entry in variable DIE.
   bool addConstantValue(DIE *Die, const MachineOperand &MO, DIType Ty);
-  bool addConstantValue(DIE *Die, ConstantInt *CI, bool Unsigned);
+  bool addConstantValue(DIE *Die, const ConstantInt *CI, bool Unsigned);
 
   /// addConstantFPValue - Add constant value entry in variable DIE.
   bool addConstantFPValue(DIE *Die, const MachineOperand &MO);

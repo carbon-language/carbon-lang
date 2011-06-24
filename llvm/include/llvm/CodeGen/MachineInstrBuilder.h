@@ -77,6 +77,11 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &addCImm(const ConstantInt *Val) const {
+    MI->addOperand(MachineOperand::CreateCImm(Val));
+    return *this;
+  }
+
   const MachineInstrBuilder &addFPImm(const ConstantFP *Val) const {
     MI->addOperand(MachineOperand::CreateFPImm(Val));
     return *this;

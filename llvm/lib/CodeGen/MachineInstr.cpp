@@ -267,6 +267,9 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
   case MachineOperand::MO_Immediate:
     OS << getImm();
     break;
+  case MachineOperand::MO_CImmediate:
+    getCImm()->getValue().print(OS, false);
+    break;
   case MachineOperand::MO_FPImmediate:
     if (getFPImm()->getType()->isFloatTy())
       OS << getFPImm()->getValueAPF().convertToFloat();

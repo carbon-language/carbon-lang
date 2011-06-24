@@ -491,7 +491,7 @@ bool CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
-bool CompileUnit::addConstantValue(DIE *Die, ConstantInt *CI,
+bool CompileUnit::addConstantValue(DIE *Die, const ConstantInt *CI,
                                    bool Unsigned) {
   unsigned CIBitWidth = CI->getBitWidth();
   if (CIBitWidth <= 64) {

@@ -556,9 +556,14 @@ bool FastISel::SelectCall(const User *I) {
         .addReg(0U).addImm(DI->getOffset())
         .addMetadata(DI->getVariable());
     } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
-        .addImm(CI->getZExtValue()).addImm(DI->getOffset())
-        .addMetadata(DI->getVariable());
+      if (CI->getBitWidth() > 64)
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+          .addCImm(CI).addImm(DI->getOffset())
+          .addMetadata(DI->getVariable());
+      else 
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
+          .addImm(CI->getZExtValue()).addImm(DI->getOffset())
+          .addMetadata(DI->getVariable());
     } else if (const ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
         .addFPImm(CF).addImm(DI->getOffset())

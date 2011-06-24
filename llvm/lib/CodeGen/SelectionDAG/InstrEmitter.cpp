@@ -616,12 +616,8 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
   } else if (SD->getKind() == SDDbgValue::CONST) {
     const Value *V = SD->getConst();
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      // FIXME: SDDbgValue constants aren't updated with legalization, so it's 
-      // possible to have i128 constants in them at this point. Dwarf writer
-      // does not handle i128 constants at the moment so, as a crude workaround,
-      // just drop the debug info if this happens.
-      if (!CI->getValue().isSignedIntN(64))
-        MIB.addReg(0U);
+      if (CI->getBitWidth() > 64)
+        MIB.addCImm(CI);
       else
         MIB.addImm(CI->getSExtValue());
     } else if (const ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
