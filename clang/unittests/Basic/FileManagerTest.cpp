@@ -30,7 +30,7 @@ private:
   void InjectFileOrDirectory(const char *Path, ino_t INode, bool IsFile) {
     struct stat statBuf = {};
     statBuf.st_dev = 1;
-#ifndef LLVM_ON_WIN32  // struct stat has no st_ino field on Windows.
+#ifndef _WIN32  // struct stat has no st_ino field on Windows.
     statBuf.st_ino = INode;
 #endif
     statBuf.st_mode = IsFile ? (0777 | S_IFREG)  // a regular file
@@ -187,7 +187,7 @@ TEST_F(FileManagerTest, getFileReturnsNULLForNonexistentFile) {
 
 // The following tests apply to Unix-like system only.
 
-#ifndef LLVM_ON_WIN32
+#ifndef _WIN32
 
 // getFile() returns the same FileEntry for real files that are aliases.
 TEST_F(FileManagerTest, getFileReturnsSameFileEntryForAliasedRealFiles) {
@@ -217,6 +217,6 @@ TEST_F(FileManagerTest, getFileReturnsSameFileEntryForAliasedVirtualFiles) {
   EXPECT_EQ(manager.getFile("abc/foo.cpp"), manager.getFile("abc/bar.cpp"));
 }
 
-#endif  // !LLVM_ON_WIN32
+#endif  // !_WIN32
 
 } // anonymous namespace
