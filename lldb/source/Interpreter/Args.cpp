@@ -905,7 +905,7 @@ Args::StringToFormat
         {
             StreamString error_strm;
             error_strm.Printf ("Invalid format character or name '%s'. Valid values are:\n", s);
-            for (Format f = eFormatDefault; f < kNumFormats; ++f)
+            for (Format f = eFormatDefault; f < kNumFormats; f = Format(f+1))
             {
                 char format_char = FormatManager::GetFormatAsFormatChar(f);
                 if (format_char)
