@@ -462,7 +462,7 @@ void PTXAsmPrinter::EmitFunctionDeclaration() {
     if (i != b) {
       decl += ", ";
     }
-    if (isKernel || ST.getShaderModel() >= PTXSubtarget::PTX_SM_2_0) {
+    if (isKernel || ST.useParamSpaceForDeviceArgs()) {
       decl += ".param .b";
       decl += utostr(*i);
       decl += " ";

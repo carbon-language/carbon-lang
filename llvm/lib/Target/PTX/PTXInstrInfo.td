@@ -26,10 +26,10 @@ def Use32BitAddresses : Predicate<"!getSubtarget().is64Bit()">;
 def Use64BitAddresses : Predicate<"getSubtarget().is64Bit()">;
 
 // Shader Model Support
-def SupportsSM13       : Predicate<"getSubtarget().supportsSM13()">;
-def DoesNotSupportSM13 : Predicate<"!getSubtarget().supportsSM13()">;
-def SupportsSM20       : Predicate<"getSubtarget().supportsSM20()">;
-def DoesNotSupportSM20 : Predicate<"!getSubtarget().supportsSM20()">;
+def FDivNeedsRoundingMode : Predicate<"getSubtarget().fdivNeedsRoundingMode()">;
+def FDivNoRoundingMode : Predicate<"!getSubtarget().fdivNeedsRoundingMode()">;
+def FMadNeedsRoundingMode : Predicate<"getSubtarget().fmadNeedsRoundingMode()">;
+def FMadNoRoundingMode : Predicate<"!getSubtarget().fmadNeedsRoundingMode()">;
 
 // PTX Version Support
 def SupportsPTX21       : Predicate<"getSubtarget().supportsPTX21()">;
@@ -613,43 +613,43 @@ def FDIVrr32SM13 : InstPTX<(outs RegF32:$d),
                        (ins RegF32:$a, RegF32:$b),
                        "div.rn.f32\t$d, $a, $b",
                        [(set RegF32:$d, (fdiv RegF32:$a, RegF32:$b))]>,
-                   Requires<[SupportsSM13]>;
+                   Requires<[FDivNeedsRoundingMode]>;
 def FDIVri32SM13 : InstPTX<(outs RegF32:$d),
                        (ins RegF32:$a, f32imm:$b),
                        "div.rn.f32\t$d, $a, $b",
                        [(set RegF32:$d, (fdiv RegF32:$a, fpimm:$b))]>,
-                   Requires<[SupportsSM13]>;
+                   Requires<[FDivNeedsRoundingMode]>;
 def FDIVrr32SM10 : InstPTX<(outs RegF32:$d),
                        (ins RegF32:$a, RegF32:$b),
                        "div.f32\t$d, $a, $b",
                        [(set RegF32:$d, (fdiv RegF32:$a, RegF32:$b))]>,
-                   Requires<[DoesNotSupportSM13]>;
+                   Requires<[FDivNoRoundingMode]>;
 def FDIVri32SM10 : InstPTX<(outs RegF32:$d),
                        (ins RegF32:$a, f32imm:$b),
                        "div.f32\t$d, $a, $b",
                        [(set RegF32:$d, (fdiv RegF32:$a, fpimm:$b))]>,
-                   Requires<[DoesNotSupportSM13]>;
+                   Requires<[FDivNoRoundingMode]>;
 
 def FDIVrr64SM13 : InstPTX<(outs RegF64:$d),
                            (ins RegF64:$a, RegF64:$b),
                            "div.rn.f64\t$d, $a, $b",
                            [(set RegF64:$d, (fdiv RegF64:$a, RegF64:$b))]>,
-                   Requires<[SupportsSM13]>;
+                   Requires<[FDivNeedsRoundingMode]>;
 def FDIVri64SM13 : InstPTX<(outs RegF64:$d),
                            (ins RegF64:$a, f64imm:$b),
                            "div.rn.f64\t$d, $a, $b",
                            [(set RegF64:$d, (fdiv RegF64:$a, fpimm:$b))]>,
-                   Requires<[SupportsSM13]>;
+                   Requires<[FDivNeedsRoundingMode]>;
 def FDIVrr64SM10 : InstPTX<(outs RegF64:$d),
                            (ins RegF64:$a, RegF64:$b),
                            "div.f64\t$d, $a, $b",
                            [(set RegF64:$d, (fdiv RegF64:$a, RegF64:$b))]>,
-                   Requires<[DoesNotSupportSM13]>;
+                   Requires<[FDivNoRoundingMode]>;
 def FDIVri64SM10 : InstPTX<(outs RegF64:$d),
                            (ins RegF64:$a, f64imm:$b),
                            "div.f64\t$d, $a, $b",
                            [(set RegF64:$d, (fdiv RegF64:$a, fpimm:$b))]>,
-                   Requires<[DoesNotSupportSM13]>;
+                   Requires<[FDivNoRoundingMode]>;
 
 
 
@@ -661,8 +661,10 @@ def FDIVri64SM10 : InstPTX<(outs RegF64:$d),
 // In the short term, mad is supported on all PTX versions and we use a
 // default rounding mode no matter what shader model or PTX version.
 // TODO: Allow the rounding mode to be selectable through llc.
-defm FMADSM13 : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>, Requires<[SupportsSM13, SupportsFMA]>;
-defm FMAD : PTX_FLOAT_4OP<"mad", fmul, fadd>, Requires<[DoesNotSupportSM13, SupportsFMA]>;
+defm FMADSM13 : PTX_FLOAT_4OP<"mad.rn", fmul, fadd>,
+                Requires<[FMadNeedsRoundingMode, SupportsFMA]>;
+defm FMAD : PTX_FLOAT_4OP<"mad", fmul, fadd>,
+            Requires<[FMadNoRoundingMode, SupportsFMA]>;
 
 ///===- Floating-Point Intrinsic Instructions -----------------------------===//
 

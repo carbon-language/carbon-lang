@@ -213,7 +213,7 @@ SDValue PTXTargetLowering::
   // We do one of two things here:
   // IsKernel || SM >= 2.0  ->  Use param space for arguments
   // SM < 2.0               ->  Use registers for arguments
-  if (MFI->isKernel() || ST.getShaderModel() >= PTXSubtarget::PTX_SM_2_0) {
+  if (MFI->isKernel() || ST.useParamSpaceForDeviceArgs()) {
     // We just need to emit the proper LOAD_PARAM ISDs
     for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
 

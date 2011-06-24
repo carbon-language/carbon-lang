@@ -23,10 +23,23 @@ namespace llvm {
       /**
        * Enumeration of Shader Models supported by the back-end.
        */
-      enum PTXShaderModelEnum {
+      enum PTXTargetEnum {
+        PTX_COMPUTE_1_0, /*< Compute Compatibility 1.0 */
+        PTX_COMPUTE_1_1, /*< Compute Compatibility 1.1 */
+        PTX_COMPUTE_1_2, /*< Compute Compatibility 1.2 */
+        PTX_COMPUTE_1_3, /*< Compute Compatibility 1.3 */
+        PTX_COMPUTE_2_0, /*< Compute Compatibility 2.0 */
+        PTX_LAST_COMPUTE,
+
         PTX_SM_1_0, /*< Shader Model 1.0 */
+        PTX_SM_1_1, /*< Shader Model 1.1 */
+        PTX_SM_1_2, /*< Shader Model 1.2 */
         PTX_SM_1_3, /*< Shader Model 1.3 */
-        PTX_SM_2_0  /*< Shader Model 2.0 */
+        PTX_SM_2_0, /*< Shader Model 2.0 */
+        PTX_SM_2_1, /*< Shader Model 2.1 */
+        PTX_SM_2_2, /*< Shader Model 2.2 */
+        PTX_SM_2_3, /*< Shader Model 2.3 */
+        PTX_LAST_SM
       };
 
       /**
@@ -44,7 +57,7 @@ namespace llvm {
   private:
 
       /// Shader Model supported on the target GPU.
-      PTXShaderModelEnum PTXShaderModel;
+      PTXTargetEnum PTXTarget;
 
       /// PTX Language Version.
       PTXVersionEnum PTXVersion;
@@ -74,18 +87,26 @@ namespace llvm {
 
       bool supportsFMA() const { return SupportsFMA; }
 
-      bool supportsSM13() const { return PTXShaderModel >= PTX_SM_1_3; }
-
-      bool supportsSM20() const { return PTXShaderModel >= PTX_SM_2_0; }
-
       bool supportsPTX21() const { return PTXVersion >= PTX_VERSION_2_1; }
 
       bool supportsPTX22() const { return PTXVersion >= PTX_VERSION_2_2; }
 
       bool supportsPTX23() const { return PTXVersion >= PTX_VERSION_2_3; }
 
-      PTXShaderModelEnum getShaderModel() const { return PTXShaderModel; }
+      bool fdivNeedsRoundingMode() const {
+        return (PTXTarget >= PTX_SM_1_3 && PTXTarget < PTX_LAST_SM) ||
+               (PTXTarget >= PTX_COMPUTE_1_3 && PTXTarget < PTX_LAST_COMPUTE);
+      }
 
+      bool fmadNeedsRoundingMode() const {
+        return (PTXTarget >= PTX_SM_1_3 && PTXTarget < PTX_LAST_SM) ||
+               (PTXTarget >= PTX_COMPUTE_1_3 && PTXTarget < PTX_LAST_COMPUTE);
+      }
+
+      bool useParamSpaceForDeviceArgs() const {
+        return (PTXTarget >= PTX_SM_2_0 && PTXTarget < PTX_LAST_SM) ||
+               (PTXTarget >= PTX_COMPUTE_2_0 && PTXTarget < PTX_LAST_COMPUTE);
+      }
 
       std::string ParseSubtargetFeatures(const std::string &FS,
                                          const std::string &CPU);
