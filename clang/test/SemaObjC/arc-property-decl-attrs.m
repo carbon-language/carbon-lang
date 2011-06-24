@@ -5,7 +5,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing lifetime}}
+    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing ownership}}
 }
 @property(strong) id x;
 @property(strong) id y;
@@ -16,7 +16,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing lifetime}}
+    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing ownership}}
 }
 @property(retain) id x;
 @property(retain) id y;
@@ -27,7 +27,7 @@
 @public
     id __unsafe_unretained x;
     id __weak y;
-    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing lifetime}}
+    id __autoreleasing z; // expected-error {{ivars cannot have __autoreleasing ownership}}
 }
 @property(copy) id x;
 @property(copy) id y;

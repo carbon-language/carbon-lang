@@ -6805,7 +6805,7 @@ void DiagnoseBadConversion(Sema &S, OverloadCandidate *Cand, unsigned I) {
     }
 
     if (FromQs.getObjCLifetime() != ToQs.getObjCLifetime()) {
-      S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_lifetime)
+      S.Diag(Fn->getLocation(), diag::note_ovl_candidate_bad_ownership)
         << (unsigned) FnKind << FnDesc
         << (FromExpr ? FromExpr->getSourceRange() : SourceRange())
         << FromTy

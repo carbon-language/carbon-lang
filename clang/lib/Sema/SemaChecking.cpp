@@ -436,7 +436,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   case Qualifiers::OCL_Weak:
   case Qualifiers::OCL_Strong:
   case Qualifiers::OCL_Autoreleasing:
-    Diag(DRE->getLocStart(), diag::err_arc_atomic_lifetime)
+    Diag(DRE->getLocStart(), diag::err_arc_atomic_ownership)
       << ValType << FirstArg->getSourceRange();
     return ExprError();
   }

@@ -59,7 +59,7 @@ void test1(A *a, BOOL b, struct UnsafeS *unsafeS) {
   s = @selector(autorelease); // expected-error {{ARC forbids use of 'autorelease' in a @selector}}
   s = @selector(dealloc); // expected-error {{ARC forbids use of 'dealloc' in a @selector}}
 
-  static id __autoreleasing X1; // expected-error {{global variables cannot have __autoreleasing lifetime}}
+  static id __autoreleasing X1; // expected-error {{global variables cannot have __autoreleasing ownership}}
 }
 
 struct S {
@@ -100,7 +100,7 @@ void * cvt(id arg)
   (void)(int*)arg; // expected-error {{disallowed}}
   (void)(id)arg;
   (void)(__autoreleasing id*)arg; // expected-error {{disallowed}}
-  (void)(id*)arg; // expected-error {{pointer to non-const type 'id' with no explicit lifetime}} expected-error {{disallowed}}
+  (void)(id*)arg; // expected-error {{pointer to non-const type 'id' with no explicit ownership}} expected-error {{disallowed}}
 
   (void)(__autoreleasing id**)voidp_val;
   (void)(void*)voidp_val;

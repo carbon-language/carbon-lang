@@ -206,7 +206,7 @@ public:
     AT_ns_consumed,             // Clang-specific.
     AT_ns_consumes_self,        // Clang-specific.
     AT_objc_gc,
-    AT_objc_lifetime,           // Clang-specific.
+    AT_objc_ownership,          // Clang-specific.
     AT_objc_precise_lifetime,   // Clang-specific.
     AT_opencl_image_access,     // OpenCL-specific.
     AT_opencl_kernel_function,  // OpenCL-specific.

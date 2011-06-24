@@ -1144,7 +1144,7 @@ bool Sema::CheckAllocatedType(QualType AllocType, SourceLocation Loc,
       QualType BaseAllocType = Context.getBaseElementType(AT);
       if (BaseAllocType.getObjCLifetime() == Qualifiers::OCL_None &&
           BaseAllocType->isObjCLifetimeType())
-        return Diag(Loc, diag::err_arc_new_array_without_lifetime)
+        return Diag(Loc, diag::err_arc_new_array_without_ownership)
           << BaseAllocType;
     }
   }

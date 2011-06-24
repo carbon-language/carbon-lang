@@ -4053,7 +4053,7 @@ ExprResult Sema::CheckCastTypes(SourceLocation CastStartLoc, SourceRange TyR,
             ExprPtr->getPointeeType()->isObjCLifetimeType() &&
             !CastQuals.compatiblyIncludesObjCLifetime(ExprQuals)) {
           Diag(castExpr->getLocStart(), 
-               diag::err_typecheck_incompatible_lifetime)
+               diag::err_typecheck_incompatible_ownership)
             << castExprType << castType << AA_Casting
             << castExpr->getSourceRange();
           
@@ -8587,7 +8587,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
 
 
     } else if (lhq.getObjCLifetime() != rhq.getObjCLifetime()) {
-      DiagKind = diag::err_typecheck_incompatible_lifetime;
+      DiagKind = diag::err_typecheck_incompatible_ownership;
       break;
     }
 

@@ -138,8 +138,8 @@ static ScopePair GetDiagForGotoScopeDecl(ASTContext &Context, const Decl *D) {
 
       case Qualifiers::OCL_Strong:
       case Qualifiers::OCL_Weak:
-        return ScopePair(diag::note_protected_by_objc_lifetime,
-                         diag::note_exits_objc_lifetime);
+        return ScopePair(diag::note_protected_by_objc_ownership,
+                         diag::note_exits_objc_ownership);
       }
     }
 

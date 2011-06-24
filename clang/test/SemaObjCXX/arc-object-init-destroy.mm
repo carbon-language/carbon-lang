@@ -37,7 +37,7 @@ void test_new(int n) {
 
   // ... but not for arrays.
   typedef id id_array[2][3];
-  (void)new id_array; // expected-error{{'new' cannot allocate an array of 'id' with no explicit lifetime}}
+  (void)new id_array; // expected-error{{'new' cannot allocate an array of 'id' with no explicit ownership}}
 
   typedef __strong id strong_id_array[2][3];
   typedef __strong id strong_id_3[3];

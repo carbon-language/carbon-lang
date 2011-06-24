@@ -112,7 +112,7 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
 // smallest available pointer type (i.e. 'void*' in 'void**').
 #define OBJC_POINTER_TYPE_ATTRS_CASELIST \
     case AttributeList::AT_objc_gc: \
-    case AttributeList::AT_objc_lifetime
+    case AttributeList::AT_objc_ownership
 
 // Function type attributes.
 #define FUNCTION_TYPE_ATTRS_CASELIST \
@@ -297,15 +297,15 @@ static bool handleFunctionTypeAttr(TypeProcessingState &state,
 static bool handleObjCGCTypeAttr(TypeProcessingState &state,
                                  AttributeList &attr, QualType &type);
 
-static bool handleObjCLifetimeTypeAttr(TypeProcessingState &state,
+static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
                                        AttributeList &attr, QualType &type);
 
 static bool handleObjCPointerTypeAttr(TypeProcessingState &state,
                                       AttributeList &attr, QualType &type) {
   if (attr.getKind() == AttributeList::AT_objc_gc)
     return handleObjCGCTypeAttr(state, attr, type);
-  assert(attr.getKind() == AttributeList::AT_objc_lifetime);
-  return handleObjCLifetimeTypeAttr(state, attr, type);
+  assert(attr.getKind() == AttributeList::AT_objc_ownership);
+  return handleObjCOwnershipTypeAttr(state, attr, type);
 }
 
 /// Given that an objc_gc attribute was written somewhere on a
@@ -1065,9 +1065,9 @@ static QualType inferARCLifetimeForPointee(Sema &S, QualType type,
     if (S.DelayedDiagnostics.shouldDelayDiagnostics()) {
       S.DelayedDiagnostics.add(
           sema::DelayedDiagnostic::makeForbiddenType(loc,
-              diag::err_arc_indirect_no_lifetime, type, isReference));
+              diag::err_arc_indirect_no_ownership, type, isReference));
     } else {
-      S.Diag(loc, diag::err_arc_indirect_no_lifetime) << type << isReference;
+      S.Diag(loc, diag::err_arc_indirect_no_ownership) << type << isReference;
     }
     implicitLifetime = Qualifiers::OCL_Autoreleasing;
   }
@@ -1647,13 +1647,13 @@ static void inferARCWriteback(TypeProcessingState &state,
            chunk.Kind == DeclaratorChunk::BlockPointer);
     for (const AttributeList *attr = chunk.getAttrs(); attr;
            attr = attr->getNext())
-      if (attr->getKind() == AttributeList::AT_objc_lifetime)
+      if (attr->getKind() == AttributeList::AT_objc_ownership)
         return;
 
     // If there wasn't one, add one (with an invalid source location
     // so that we don't make an AttributedType for it).
     AttributeList *attr = declarator.getAttributePool()
-      .create(&S.Context.Idents.get("objc_lifetime"), SourceLocation(),
+      .create(&S.Context.Idents.get("objc_ownership"), SourceLocation(),
               /*scope*/ 0, SourceLocation(),
               &S.Context.Idents.get("autoreleasing"), SourceLocation(),
               /*args*/ 0, 0,
@@ -2474,8 +2474,8 @@ static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
     return AttributeList::AT_neon_polyvector_type;
   case AttributedType::attr_objc_gc:
     return AttributeList::AT_objc_gc;
-  case AttributedType::attr_objc_lifetime:
-    return AttributeList::AT_objc_lifetime;
+  case AttributedType::attr_objc_ownership:
+    return AttributeList::AT_objc_ownership;
   case AttributedType::attr_noreturn:
     return AttributeList::AT_noreturn;
   case AttributedType::attr_cdecl:
@@ -2962,11 +2962,11 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
 }
 
-/// handleObjCLifetimeTypeAttr - Process an objc_lifetime
+/// handleObjCOwnershipTypeAttr - Process an objc_ownership
 /// attribute on the specified type.
 ///
 /// Returns 'true' if the attribute was handled.
-static bool handleObjCLifetimeTypeAttr(TypeProcessingState &state,
+static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
                                        AttributeList &attr,
                                        QualType &type) {
   if (!type->isObjCRetainableType() && !type->isDependentType())
@@ -2975,14 +2975,14 @@ static bool handleObjCLifetimeTypeAttr(TypeProcessingState &state,
   Sema &S = state.getSema();
 
   if (type.getQualifiers().getObjCLifetime()) {
-    S.Diag(attr.getLoc(), diag::err_attr_objc_lifetime_redundant)
+    S.Diag(attr.getLoc(), diag::err_attr_objc_ownership_redundant)
       << type;
     return true;
   }
 
   if (!attr.getParameterName()) {
     S.Diag(attr.getLoc(), diag::err_attribute_argument_n_not_string)
-      << "objc_lifetime" << 1;
+      << "objc_ownership" << 1;
     attr.setInvalid();
     return true;
   }
@@ -2998,7 +2998,7 @@ static bool handleObjCLifetimeTypeAttr(TypeProcessingState &state,
     lifetime = Qualifiers::OCL_Autoreleasing;
   else {
     S.Diag(attr.getLoc(), diag::warn_attribute_type_not_supported)
-      << "objc_lifetime" << attr.getParameterName();
+      << "objc_ownership" << attr.getParameterName();
     attr.setInvalid();
     return true;
   }
@@ -3016,7 +3016,7 @@ static bool handleObjCLifetimeTypeAttr(TypeProcessingState &state,
   // If we have a valid source location for the attribute, use an
   // AttributedType instead.
   if (attr.getLoc().isValid())
-    type = S.Context.getAttributedType(AttributedType::attr_objc_lifetime,
+    type = S.Context.getAttributedType(AttributedType::attr_objc_ownership,
                                        origType, type);
 
   // Forbid __weak if we don't have a runtime.

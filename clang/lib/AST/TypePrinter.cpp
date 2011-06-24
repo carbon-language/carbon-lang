@@ -845,9 +845,9 @@ void TypePrinter::printPackExpansion(const PackExpansionType *T,
 
 void TypePrinter::printAttributed(const AttributedType *T,
                                   std::string &S) {
-  // Prefer the macro forms of the GC and lifetime qualifiers.
+  // Prefer the macro forms of the GC and ownership qualifiers.
   if (T->getAttrKind() == AttributedType::attr_objc_gc ||
-      T->getAttrKind() == AttributedType::attr_objc_lifetime)
+      T->getAttrKind() == AttributedType::attr_objc_ownership)
     return print(T->getEquivalentType(), S);
 
   print(T->getModifiedType(), S);
@@ -916,10 +916,10 @@ void TypePrinter::printAttributed(const AttributedType *T,
     break;
   }
 
-  case AttributedType::attr_objc_lifetime:
-    S += "objc_lifetime(";
+  case AttributedType::attr_objc_ownership:
+    S += "objc_ownership(";
     switch (T->getEquivalentType().getObjCLifetime()) {
-    case Qualifiers::OCL_None: llvm_unreachable("no lifetime!"); break;
+    case Qualifiers::OCL_None: llvm_unreachable("no ownership!"); break;
     case Qualifiers::OCL_ExplicitNone: S += "none"; break;
     case Qualifiers::OCL_Strong: S += "strong"; break;
     case Qualifiers::OCL_Weak: S += "weak"; break;

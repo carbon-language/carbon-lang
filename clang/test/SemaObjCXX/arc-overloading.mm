@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -fblocks %s
 
-// Simple lifetime conversions + diagnostics.
-int &f0(id __strong const *); // expected-note{{candidate function not viable: 1st argument ('__weak id *') has __weak lifetime, but parameter has __strong lifetime}}
+// Simple ownership conversions + diagnostics.
+int &f0(id __strong const *); // expected-note{{candidate function not viable: 1st argument ('__weak id *') has __weak ownership, but parameter has __strong ownership}}
 
 void test_f0() {
   id __strong *sip;
@@ -46,7 +46,7 @@ void test_f2() {
   id __autoreleasing *aip;
   id __unsafe_unretained *uip;
 
-  // Prefer non-lifetime conversions to lifetime conversions.
+  // Prefer non-ownership conversions to ownership conversions.
   int &ir1 = f2(sip);
   int &ir2 = f2(csip);
   float &fr1 = f2(aip);
@@ -55,7 +55,7 @@ void test_f2() {
 }
 
 // Writeback conversion
-int &f3(id __autoreleasing *); // expected-note{{candidate function not viable: 1st argument ('__unsafe_unretained id *') has __unsafe_unretained lifetime, but parameter has __autoreleasing lifetime}}
+int &f3(id __autoreleasing *); // expected-note{{candidate function not viable: 1st argument ('__unsafe_unretained id *') has __unsafe_unretained ownership, but parameter has __autoreleasing ownership}}
 
 void test_f3() {
   id __strong *sip;
@@ -116,9 +116,9 @@ void test_f6() {
 }
 
 // Reference binding
-void f7(__strong id&); // expected-note{{candidate function not viable: 1st argument ('__weak id') has __weak lifetime, but parameter has __strong lifetime}} \
- // expected-note{{candidate function not viable: 1st argument ('__autoreleasing id') has __autoreleasing lifetime, but parameter has __strong lifetime}} \
- // expected-note{{candidate function not viable: 1st argument ('__unsafe_unretained id') has __unsafe_unretained lifetime, but parameter has __strong lifetime}}
+void f7(__strong id&); // expected-note{{candidate function not viable: 1st argument ('__weak id') has __weak ownership, but parameter has __strong ownership}} \
+ // expected-note{{candidate function not viable: 1st argument ('__autoreleasing id') has __autoreleasing ownership, but parameter has __strong ownership}} \
+ // expected-note{{candidate function not viable: 1st argument ('__unsafe_unretained id') has __unsafe_unretained ownership, but parameter has __strong ownership}}
 
 void test_f7() {
   __strong id strong_id;

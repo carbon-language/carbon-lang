@@ -7,7 +7,7 @@ void * cvt(id arg) // expected-note{{candidate function not viable: cannot conve
   (void)(int*)arg; // expected-error {{cast of an Objective-C pointer to 'int *' is disallowed with ARC}}
   (void)(id)arg;
   (void)(__autoreleasing id*)arg; // expected-error{{C-style cast from 'id' to '__autoreleasing id *' casts away qualifiers}}
-  (void)(id*)arg; // expected-error {{pointer to non-const type 'id' with no explicit lifetime}} \
+  (void)(id*)arg; // expected-error {{pointer to non-const type 'id' with no explicit ownership}} \
   // expected-error{{C-style cast from 'id' to '__autoreleasing id *' casts away qualifiers}}
 
   (void)(__autoreleasing id**)voidp_val;
@@ -43,7 +43,7 @@ void static_casts(id arg) {
   (void)static_cast<id>(arg);
   (void)static_cast<__autoreleasing id*>(arg); // expected-error{{cannot cast from type 'id' to pointer type '__autoreleasing id *'}}
   (void)static_cast<id*>(arg); // expected-error {{cannot cast from type 'id' to pointer type '__autoreleasing id *'}} \
-  // expected-error{{pointer to non-const type 'id' with no explicit lifetime}}
+  // expected-error{{pointer to non-const type 'id' with no explicit ownership}}
 
   (void)static_cast<__autoreleasing id**>(voidp_val);
   (void)static_cast<void*>(voidp_val);
@@ -57,8 +57,8 @@ void static_casts(id arg) {
 
 void test_const_cast(__strong id *sip, __weak id *wip, 
                      const __strong id *csip, __weak const id *cwip) {
-  // Cannot use const_cast to cast between lifetime qualifications or
-  // add/remove lifetime qualifications.
+  // Cannot use const_cast to cast between ownership qualifications or
+  // add/remove ownership qualifications.
   (void)const_cast<__strong id *>(wip); // expected-error{{is not allowed}}
   (void)const_cast<__weak id *>(sip); // expected-error{{is not allowed}}
 
@@ -69,7 +69,7 @@ void test_const_cast(__strong id *sip, __weak id *wip,
 
 void test_reinterpret_cast(__strong id *sip, __weak id *wip, 
                            const __strong id *csip, __weak const id *cwip) {
-  // Okay to reinterpret_cast to add/remove/change lifetime
+  // Okay to reinterpret_cast to add/remove/change ownership
   // qualifications.
   (void)reinterpret_cast<__strong id *>(wip);
   (void)reinterpret_cast<__weak id *>(sip);
@@ -83,7 +83,7 @@ void test_reinterpret_cast(__strong id *sip, __weak id *wip,
 
 void test_cstyle_cast(__strong id *sip, __weak id *wip, 
                       const __strong id *csip, __weak const id *cwip) {
-  // C-style casts aren't allowed to change Objective-C lifetime
+  // C-style casts aren't allowed to change Objective-C ownership
   // qualifiers (beyond what the normal implicit conversion allows).
 
   (void)(__strong id *)wip; // expected-error{{C-style cast from '__weak id *' to '__strong id *' casts away qualifiers}}
@@ -103,7 +103,7 @@ void test_cstyle_cast(__strong id *sip, __weak id *wip,
 
 void test_functional_cast(__strong id *sip, __weak id *wip,
                           __autoreleasing id *aip) {
-  // Functional casts aren't allowed to change Objective-C lifetime
+  // Functional casts aren't allowed to change Objective-C ownership
   // qualifiers (beyond what the normal implicit conversion allows).
 
   typedef __strong id *strong_id_pointer;

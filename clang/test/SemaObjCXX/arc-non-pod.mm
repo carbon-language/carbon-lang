@@ -21,7 +21,7 @@ namespace {
 }
 
 // Don't complain if the Objective-C pointer type was explicitly given
-// no lifetime.
+// no ownership.
 struct HasObjectMember3 { 
   __unsafe_unretained id x[3][2];
 };
@@ -107,7 +107,7 @@ void vla(int n) {
 @interface Crufty {
   union {
     struct {
-      id object; // expected-note{{has __strong lifetime}}
+      id object; // expected-note{{has __strong ownership}}
     } an_object; // expected-error{{union member 'an_object' has a non-trivial copy constructor}}
     void *ptr;
   } storage;

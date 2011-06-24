@@ -3518,7 +3518,7 @@ bool Sema::inferObjCARCLifetime(ValueDecl *decl) {
     // Thread-local variables cannot have lifetime.
     if (lifetime && lifetime != Qualifiers::OCL_ExplicitNone &&
         var->isThreadSpecified()) {
-      Diag(var->getLocation(), diag::err_arc_thread_lifetime)
+      Diag(var->getLocation(), diag::err_arc_thread_ownership)
         << var->getType();
       return true;
     }
@@ -6137,7 +6137,7 @@ ParmVarDecl *Sema::CheckParameter(DeclContext *DC, SourceLocation StartLoc,
     //   - otherwise, it's an error
     if (T->isArrayType()) {
       if (!T.isConstQualified()) {
-        Diag(NameLoc, diag::err_arc_array_param_no_lifetime)
+        Diag(NameLoc, diag::err_arc_array_param_no_ownership)
           << TSInfo->getTypeLoc().getSourceRange();
       }
       lifetime = Qualifiers::OCL_ExplicitNone;
@@ -7902,7 +7902,7 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
           if (getSourceManager().isInSystemHeader(Loc)) {
             if (!FD->hasAttr<UnavailableAttr>())
               FD->addAttr(new (Context) UnavailableAttr(Loc, Context,
-                                  "this system field has retaining lifetime"));
+                                  "this system field has retaining ownership"));
             return false;
           }
         }
@@ -8069,7 +8069,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
       case Qualifiers::OCL_Autoreleasing:
       case Qualifiers::OCL_Weak:
       case Qualifiers::OCL_Strong:
-        Diag((*fi)->getLocation(), diag::note_nontrivial_objc_lifetime)
+        Diag((*fi)->getLocation(), diag::note_nontrivial_objc_ownership)
           << QT << EltTy.getObjCLifetime();
         return;
       }
@@ -8386,7 +8386,7 @@ void Sema::ActOnFields(Scope* S,
           if (getSourceManager().isInSystemHeader(loc)) {
             if (!FD->hasAttr<UnavailableAttr>()) {
               FD->addAttr(new (Context) UnavailableAttr(loc, Context,
-                                "this system field has retaining lifetime"));
+                                "this system field has retaining ownership"));
             }
           } else {
             Diag(FD->getLocation(), diag::err_arc_objc_object_in_struct);

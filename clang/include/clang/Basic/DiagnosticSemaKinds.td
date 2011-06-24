@@ -1181,9 +1181,9 @@ def err_as_qualified_auto_decl : Error<
   "automatic variable qualified with an address space">;
 def err_arg_with_address_space : Error<
   "parameter may not be qualified with an address space">;
-def err_attr_objc_lifetime_bad_type : Error<
+def err_attr_objc_ownership_bad_type : Error<
   "the type %0 cannot be retained">;
-def err_attr_objc_lifetime_redundant : Error<
+def err_attr_objc_ownership_redundant : Error<
   "the type %0 already has retainment attributes set on it">;
 def err_attribute_not_string : Error<
   "argument to %0 attribute was not a string literal">;
@@ -1603,8 +1603,8 @@ def note_ovl_candidate_bad_gc : Note<"candidate "
     "function (the implicit move assignment operator)|"
     "constructor (inherited)}0%1 not viable: "
     "%select{%ordinal6|'this'}5 argument (%2) has %select{no|__weak|__strong}3 "
-    "lifetime, but parameter has %select{no|__weak|__strong}4 lifetime">;
-def note_ovl_candidate_bad_lifetime : Note<"candidate "
+    "ownership, but parameter has %select{no|__weak|__strong}4 ownership">;
+def note_ovl_candidate_bad_ownership : Note<"candidate "
     "%select{function|function|constructor|"
     "function |function |constructor |"
     "constructor (the implicit default constructor)|"
@@ -1612,9 +1612,9 @@ def note_ovl_candidate_bad_lifetime : Note<"candidate "
     "function (the implicit copy assignment operator)|"
     "constructor (inherited)}0%1 not viable: "
     "%select{%ordinal6|'this'}5 argument (%2) has "
-    "%select{no|__unsafe_unretained|__strong|__weak|__autoreleasing}3 lifetime,"
+    "%select{no|__unsafe_unretained|__strong|__weak|__autoreleasing}3 ownership,"
     " but parameter has %select{no|__unsafe_unretained|__strong|__weak|"
-    "__autoreleasing}4 lifetime">;
+    "__autoreleasing}4 ownership">;
 def note_ovl_candidate_bad_cvr_this : Note<"candidate "
     "%select{|function|||function||||"
     "function (the implicit copy assignment operator)|}0 not viable: "
@@ -2498,7 +2498,7 @@ def note_protected_by_cxx_catch : Note<
   "jump bypasses initialization of catch block">;
 def note_protected_by___block : Note<
   "jump bypasses setup of __block variable">;
-def note_protected_by_objc_lifetime : Note<
+def note_protected_by_objc_ownership : Note<
   "jump bypasses initialization of retaining variable">;
 
 def note_exits_cleanup : Note<
@@ -2521,7 +2521,7 @@ def note_exits_cxx_catch : Note<
   "jump exits catch block">;
 def note_exits_objc_autoreleasepool : Note<
   "jump exits autoreleasepool block">;
-def note_exits_objc_lifetime : Note<
+def note_exits_objc_ownership : Note<
   "jump exits scope of retaining variable">;
 
 def err_func_returning_array_function : Error<
@@ -2608,22 +2608,22 @@ def warn_arc_trivial_member_function_with_object_member : Warning<
   "code; add a non-trivial %select{copy constructor|copy assignment operator|"
   "destructor}1 to make it ABI-compatible">, 
   InGroup<AutomaticReferenceCountingABI>, DefaultIgnore;
-def err_arc_new_array_without_lifetime : Error<
-  "'new' cannot allocate an array of %0 with no explicit lifetime">;
+def err_arc_new_array_without_ownership : Error<
+  "'new' cannot allocate an array of %0 with no explicit ownership">;
 def warn_err_new_delete_object_array : Warning<
   "%select{allocating|destroying}0 an array of %1; this array must not "
   "%select{be deleted in|have been allocated from}0 non-ARC code">,
   InGroup<AutomaticReferenceCountingABI>, DefaultIgnore;
 def err_arc_autoreleasing_var : Error<
   "%select{__block variables|global variables|fields|ivars}0 cannot have "
-  "__autoreleasing lifetime">;
-def err_arc_thread_lifetime : Error<
-  "thread-local variable has non-trivial lifetime: type is %0">;
-def err_arc_indirect_no_lifetime : Error<
-  "%select{pointer|reference}1 to non-const type %0 with no explicit lifetime">,
+  "__autoreleasing ownership">;
+def err_arc_thread_ownership : Error<
+  "thread-local variable has non-trivial ownership: type is %0">;
+def err_arc_indirect_no_ownership : Error<
+  "%select{pointer|reference}1 to non-const type %0 with no explicit ownership">,
   InGroup<AutomaticReferenceCounting>;
-def err_arc_array_param_no_lifetime : Error<
-  "must explicitly describe intended lifetime of an object array parameter">;
+def err_arc_array_param_no_ownership : Error<
+  "must explicitly describe intended ownership of an object array parameter">;
 def err_arc_pseudo_dtor_inconstant_quals : Error<
   "pseudo-destructor destroys object of type %0 with inconsistently-qualified "
   "type %1">;
@@ -2650,24 +2650,24 @@ def warn_arc_retain_cycle : Warning<
 def note_arc_retain_cycle_owner : Note<
   "block will be retained by %select{the captured object|an object strongly "
   "retained by the captured object}0">;
-def note_nontrivial_objc_lifetime : Note<
+def note_nontrivial_objc_ownership : Note<
   "because type %0 has %select{no|no|__strong|__weak|__autoreleasing}1 "
-  "lifetime">;
+  "ownership">;
 def warn_arc_object_memaccess : Warning<
   "%select{destination for|source of}0 this %1 call is a pointer to "
-  "lifetime-qualified type %2">, InGroup<ARCNonPodMemAccess>;
+  "ownership-qualified type %2">, InGroup<ARCNonPodMemAccess>;
 
-def err_arc_strong_property_lifetime : Error<
+def err_arc_strong_property_ownership : Error<
   "existing ivar %1 for strong property %0 may not be "
   "%select{|__unsafe_unretained||__weak}2">;
-def err_arc_assign_property_lifetime : Error<
+def err_arc_assign_property_ownership : Error<
   "existing ivar %1 for unsafe_unretained property %0 must be __unsafe_unretained">;
-def err_arc_inconsistent_property_lifetime : Error<
+def err_arc_inconsistent_property_ownership : Error<
   "%select{strong|weak|unsafe_unretained}1 property %0 may not also be "
   "declared %select{|__unsafe_unretained|__strong|__weak|__autoreleasing}2">;
-def err_arc_atomic_lifetime : Error<
+def err_arc_atomic_ownership : Error<
   "cannot perform atomic operation on a pointer to type %0: type has "
-  "non-trivial lifetime">;
+  "non-trivial ownership">;
 
 def err_arc_bridge_cast_incompatible : Error<
   "incompatible types casting %0 to %1 with a %select{__bridge|"
@@ -3541,7 +3541,7 @@ def err_typecheck_incompatible_address_space : Error<
   "|sending %0 to parameter of type %1"
   "|casting %0 to type %1}2"
   " changes address space of pointer">;
-def err_typecheck_incompatible_lifetime : Error<
+def err_typecheck_incompatible_ownership : Error<
   "%select{assigning %1 to %0"
   "|passing %0 to parameter of type %1"
   "|returning %0 from a function with result type %1"

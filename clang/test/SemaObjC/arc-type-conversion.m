@@ -6,7 +6,7 @@ void * cvt(id arg)
   (void)(int*)arg; // expected-error {{cast of an Objective-C pointer to 'int *' is disallowed with ARC}}
   (void)(id)arg;
   (void)(__autoreleasing id*)arg; // expected-error {{cast of an Objective-C pointer to '__autoreleasing id *' is disallowed with ARC}}
-  (void)(id*)arg; // expected-error {{pointer to non-const type 'id' with no explicit lifetime}} expected-error {{cast of an Objective-C pointer to '__autoreleasing id *' is disallowed with ARC}}
+  (void)(id*)arg; // expected-error {{pointer to non-const type 'id' with no explicit ownership}} expected-error {{cast of an Objective-C pointer to '__autoreleasing id *' is disallowed with ARC}}
 
   (void)(__autoreleasing id**)voidp_val;
   (void)(void*)voidp_val;

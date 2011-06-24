@@ -180,7 +180,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
     .Case("cf_returns_autoreleased", AT_cf_returns_autoreleased)
     .Case("ns_consumes_self", AT_ns_consumes_self)
     .Case("ns_consumed", AT_ns_consumed)
-    .Case("objc_lifetime", AT_objc_lifetime)
+    .Case("objc_ownership", AT_objc_ownership)
     .Case("objc_precise_lifetime", AT_objc_precise_lifetime)
     .Case("ownership_returns", AT_ownership_returns)
     .Case("ownership_holds", AT_ownership_holds)

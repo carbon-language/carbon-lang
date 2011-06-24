@@ -22,7 +22,7 @@ union u {
 @end
 
 struct S { 
-    id __attribute__((objc_lifetime(none))) i;
+    id __attribute__((objc_ownership(none))) i;
     void * vp;
     int i1;
 };
@@ -31,17 +31,17 @@ struct S {
 
 @class NSError;
 
-__autoreleasing id X; // expected-error {{global variables cannot have __autoreleasing lifetime}}
-__autoreleasing NSError *E; // expected-error {{global variables cannot have __autoreleasing lifetime}}
+__autoreleasing id X; // expected-error {{global variables cannot have __autoreleasing ownership}}
+__autoreleasing NSError *E; // expected-error {{global variables cannot have __autoreleasing ownership}}
 
 
-extern id __autoreleasing X1; // expected-error {{global variables cannot have __autoreleasing lifetime}}
+extern id __autoreleasing X1; // expected-error {{global variables cannot have __autoreleasing ownership}}
 
 void func()
 {
     id X;
-    static id __autoreleasing X1; // expected-error {{global variables cannot have __autoreleasing lifetime}}
-    extern id __autoreleasing E; // expected-error {{global variables cannot have __autoreleasing lifetime}}
+    static id __autoreleasing X1; // expected-error {{global variables cannot have __autoreleasing ownership}}
+    extern id __autoreleasing E; // expected-error {{global variables cannot have __autoreleasing ownership}}
 
 }
 

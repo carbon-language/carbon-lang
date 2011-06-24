@@ -63,7 +63,7 @@ static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
 
   property->setInvalidDecl();
   S.Diag(property->getLocation(),
-         diag::err_arc_inconsistent_property_lifetime)
+         diag::err_arc_inconsistent_property_ownership)
     << property->getDeclName()
     << selector
     << propertyLifetime;
@@ -420,7 +420,7 @@ static void checkARCPropertyImpl(Sema &S, SourceLocation propertyImplLoc,
 
     case Qualifiers::OCL_ExplicitNone:
     case Qualifiers::OCL_Weak:
-      S.Diag(propertyImplLoc, diag::err_arc_strong_property_lifetime)
+      S.Diag(propertyImplLoc, diag::err_arc_strong_property_ownership)
         << property->getDeclName()
         << ivar->getDeclName()
         << ivarLifetime;
@@ -463,7 +463,7 @@ static void checkARCPropertyImpl(Sema &S, SourceLocation propertyImplLoc,
 
     case Qualifiers::OCL_Weak:
     case Qualifiers::OCL_Strong:
-      S.Diag(propertyImplLoc, diag::err_arc_assign_property_lifetime)
+      S.Diag(propertyImplLoc, diag::err_arc_assign_property_ownership)
         << property->getDeclName()
         << ivar->getDeclName();
       break;

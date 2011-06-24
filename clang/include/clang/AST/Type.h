@@ -3152,7 +3152,7 @@ public:
 
     // Enumerated operand (string or keyword).
     attr_objc_gc,
-    attr_objc_lifetime,
+    attr_objc_ownership,
     attr_pcs,
 
     FirstEnumOperandKind = attr_objc_gc,

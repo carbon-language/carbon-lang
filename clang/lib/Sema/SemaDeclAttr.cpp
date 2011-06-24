@@ -2780,7 +2780,7 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &attr,
   };
 }
 
-static void HandleObjCLifetimeAttr(Decl *d, const AttributeList &attr,
+static void HandleObjCOwnershipAttr(Decl *d, const AttributeList &attr,
                                    Sema &S) {
   if (hasDeclarator(d)) return;
 
@@ -2978,8 +2978,8 @@ static void ProcessInheritableDeclAttr(Scope *scope, Decl *D,
   case AttributeList::AT_shared:      HandleSharedAttr      (D, Attr, S); break;
   case AttributeList::AT_vecreturn:   HandleVecReturnAttr   (D, Attr, S); break;
 
-  case AttributeList::AT_objc_lifetime:
-    HandleObjCLifetimeAttr(D, Attr, S); break;
+  case AttributeList::AT_objc_ownership:
+    HandleObjCOwnershipAttr(D, Attr, S); break;
   case AttributeList::AT_objc_precise_lifetime:
     HandleObjCPreciseLifetimeAttr(D, Attr, S); break;
 
