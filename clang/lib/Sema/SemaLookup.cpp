@@ -2137,15 +2137,15 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   }
 }
 
-Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
+Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
                                                             CXXSpecialMember SM,
                                                             bool ConstArg,
                                                             bool VolatileArg,
                                                             bool RValueThis,
                                                             bool ConstThis,
                                                             bool VolatileThis) {
-  D = D->getDefinition();
-  assert((D && !D->isBeingDefined()) &&
+  RD = RD->getDefinition();
+  assert((RD && !RD->isBeingDefined()) &&
          "doing special member lookup into record that isn't fully complete");
   if (RValueThis || ConstThis || VolatileThis)
     assert((SM == CXXCopyAssignment || SM == CXXMoveAssignment) &&
@@ -2155,7 +2155,7 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
            "parameter-less special members can't have qualified arguments");
 
   llvm::FoldingSetNodeID ID;
-  ID.AddPointer(D);
+  ID.AddPointer(RD);
   ID.AddInteger(SM);
   ID.AddInteger(ConstArg);
   ID.AddInteger(VolatileArg);
@@ -2176,9 +2176,9 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
   SpecialMemberCache.InsertNode(Result, InsertPoint);
 
   if (SM == CXXDestructor) {
-    if (!D->hasDeclaredDestructor())
-      DeclareImplicitDestructor(D);
-    CXXDestructorDecl *DD = D->getDestructor();
+    if (!RD->hasDeclaredDestructor())
+      DeclareImplicitDestructor(RD);
+    CXXDestructorDecl *DD = RD->getDestructor();
     assert(DD && "record without a destructor");
     Result->setMethod(DD);
     Result->setSuccess(DD->isDeleted());
@@ -2188,7 +2188,7 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
 
   // Prepare for overload resolution. Here we construct a synthetic argument
   // if necessary and make sure that implicit functions are declared.
-  CanQualType CanTy = Context.getCanonicalType(Context.getTagDeclType(D));
+  CanQualType CanTy = Context.getCanonicalType(Context.getTagDeclType(RD));
   DeclarationName Name;
   Expr *Arg = 0;
   unsigned NumArgs;
@@ -2196,18 +2196,18 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
   if (SM == CXXDefaultConstructor) {
     Name = Context.DeclarationNames.getCXXConstructorName(CanTy);
     NumArgs = 0;
-    if (D->needsImplicitDefaultConstructor())
-      DeclareImplicitDefaultConstructor(D);
+    if (RD->needsImplicitDefaultConstructor())
+      DeclareImplicitDefaultConstructor(RD);
   } else {
     if (SM == CXXCopyConstructor || SM == CXXMoveConstructor) {
       Name = Context.DeclarationNames.getCXXConstructorName(CanTy);
-      if (!D->hasDeclaredCopyConstructor())
-        DeclareImplicitCopyConstructor(D);
+      if (!RD->hasDeclaredCopyConstructor())
+        DeclareImplicitCopyConstructor(RD);
       // TODO: Move constructors
     } else {
       Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
-      if (!D->hasDeclaredCopyAssignment())
-        DeclareImplicitCopyAssignment(D);
+      if (!RD->hasDeclaredCopyAssignment())
+        DeclareImplicitCopyAssignment(RD);
       // TODO: Move assignment
     }
 
@@ -2252,21 +2252,29 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
   DeclContext::lookup_iterator I, E;
   Result->setConstParamMatch(false);
 
-  llvm::tie(I, E) = D->lookup(Name);
+  llvm::tie(I, E) = RD->lookup(Name);
   assert((I != E) &&
          "lookup for a constructor or assignment operator was empty");
   for ( ; I != E; ++I) {
-    Decl *DD = *I;
-    
-    if (UsingShadowDecl *U = dyn_cast<UsingShadowDecl>(D))
-      DD = U->getTargetDecl();
+    Decl *Cand = *I;
 
-    if (DD->isInvalidDecl())
+    if (Cand->isInvalidDecl())
       continue;
 
-    if (CXXMethodDecl *M = dyn_cast<CXXMethodDecl>(DD)) {
+    if (UsingShadowDecl *U = dyn_cast<UsingShadowDecl>(Cand)) {
+      // FIXME: [namespace.udecl]p15 says that we should only consider a
+      // using declaration here if it does not match a declaration in the
+      // derived class. We do not implement this correctly in other cases
+      // either.
+      Cand = U->getTargetDecl();
+
+      if (Cand->isInvalidDecl())
+        continue;
+    }
+
+    if (CXXMethodDecl *M = dyn_cast<CXXMethodDecl>(Cand)) {
       if (SM == CXXCopyAssignment || SM == CXXMoveAssignment)
-        AddMethodCandidate(M, DeclAccessPair::make(M, AS_public), D, ThisTy,
+        AddMethodCandidate(M, DeclAccessPair::make(M, AS_public), RD, ThisTy,
                            Classification, &Arg, NumArgs, OCS, true);
       else
         AddOverloadCandidate(M, DeclAccessPair::make(M, AS_public), &Arg,
@@ -2283,15 +2291,19 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *D,
           Result->setConstParamMatch(true);
       }
     } else if (FunctionTemplateDecl *Tmpl =
-                 dyn_cast<FunctionTemplateDecl>(DD)) {
+                 dyn_cast<FunctionTemplateDecl>(Cand)) {
       if (SM == CXXCopyAssignment || SM == CXXMoveAssignment)
         AddMethodTemplateCandidate(Tmpl, DeclAccessPair::make(Tmpl, AS_public),
-                                   D, 0, ThisTy, Classification, &Arg, NumArgs,
+                                   RD, 0, ThisTy, Classification, &Arg, NumArgs,
                                    OCS, true);
       else
         AddTemplateOverloadCandidate(Tmpl, DeclAccessPair::make(Tmpl, AS_public),
                                      0, &Arg, NumArgs, OCS, true);
+    } else {
+      assert(isa<UsingDecl>(Cand) && "illegal Kind of operator = Decl");
     }
+
+  Continue:;
   }
 
   OverloadCandidateSet::iterator Best;
