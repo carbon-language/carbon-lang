@@ -98,7 +98,7 @@ namespace {
                              bool IsSimple, MachineBasicBlock &TailBB);
     bool isSimpleBB(MachineBasicBlock *TailBB);
     bool canCompletelyDuplicateBB(MachineBasicBlock &BB, bool IsSimple);
-    void duplicateSimpleBB(MachineBasicBlock *TailBB,
+    bool duplicateSimpleBB(MachineBasicBlock *TailBB,
                            SmallVector<MachineBasicBlock*, 8> &TDBBs,
                            const DenseSet<unsigned> &RegsUsedByPhi,
                            SmallVector<MachineInstr*, 16> &Copies);
@@ -568,7 +568,7 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
     return true;
 
   if (IsSimple)
-    return canCompletelyDuplicateBB(TailBB, IsSimple);
+    return true;
 
   if (!PreRegAlloc)
     return true;
@@ -635,24 +635,32 @@ TailDuplicatePass::canCompletelyDuplicateBB(MachineBasicBlock &BB,
   return true;
 }
 
-void
+bool
 TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
                                      SmallVector<MachineBasicBlock*, 8> &TDBBs,
                                      const DenseSet<unsigned> &UsedByPhi,
                                      SmallVector<MachineInstr*, 16> &Copies) {
+  SmallPtrSet<MachineBasicBlock*, 8> Succs(TailBB->succ_begin(),
+                                           TailBB->succ_end());
   SmallVector<MachineBasicBlock*, 8> Preds(TailBB->pred_begin(),
                                            TailBB->pred_end());
+  bool Changed = false;
   for (SmallSetVector<MachineBasicBlock *, 8>::iterator PI = Preds.begin(),
        PE = Preds.end(); PI != PE; ++PI) {
     MachineBasicBlock *PredBB = *PI;
 
+    if (PredBB->getLandingPadSuccessor())
+      continue;
+
+    if (bothUsedInPHI(*PredBB, Succs))
+      continue;
+
     MachineBasicBlock *PredTBB = NULL, *PredFBB = NULL;
     SmallVector<MachineOperand, 4> PredCond;
-    bool NotAnalyzable =
-      TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond, true);
-    (void)NotAnalyzable;
-    assert(!NotAnalyzable && "Cannot duplicate this!");
+    if (TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond, true))
+      continue;
 
+    Changed = true;
     DEBUG(dbgs() << "\nTail-duplicating into PredBB: " << *PredBB
                  << "From simple Succ: " << *TailBB);
 
@@ -700,6 +708,7 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
 
     TDBBs.push_back(PredBB);
   }
+  return Changed;
 }
 
 /// TailDuplicate - If it is profitable, duplicate TailBB's contents in each
@@ -718,11 +727,8 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB, MachineFunction &MF,
   DenseSet<unsigned> UsedByPhi;
   getRegsUsedByPHIs(*TailBB, &UsedByPhi);
 
-  if (IsSimple) {
-    duplicateSimpleBB(TailBB, TDBBs, UsedByPhi, Copies);
-    return true;
-  }
-
+  if (IsSimple)
+    return duplicateSimpleBB(TailBB, TDBBs, UsedByPhi, Copies);
 
   // Iterate through all the unique predecessors and tail-duplicate this
   // block into them, if possible. Copying the list ahead of time also
