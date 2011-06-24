@@ -591,8 +591,12 @@ def setupSysPath():
         os.system('%s -v' % lldbExec)
     
     import subprocess
-    pipe = subprocess.Popen(["svn", "info", base], stdout = subprocess.PIPE)
-    svn_info = pipe.stdout.read()
+    if os.path.isdir(os.path.join(base, '.svn')):
+        pipe = subprocess.Popen(["svn", "info", base], stdout = subprocess.PIPE)
+        svn_info = pipe.stdout.read()
+    elif os.path.isdir(os.path.join(base, '.git')):
+        pipe = subprocess.Popen(["git", "svn", "info", base], stdout = subprocess.PIPE)
+        svn_info = pipe.stdout.read()
     print svn_info
 
     global ignore
