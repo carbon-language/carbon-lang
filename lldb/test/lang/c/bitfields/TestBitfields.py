@@ -7,7 +7,7 @@ from lldbtest import *
 
 class BitfieldsTestCase(TestBase):
 
-    mydir = "bitfields"
+    mydir = os.path.join("lang", "c", "bitfields")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

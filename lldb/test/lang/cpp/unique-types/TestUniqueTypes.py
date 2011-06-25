@@ -9,7 +9,7 @@ from lldbtest import *
 
 class UniqueTypesTestCase(TestBase):
 
-    mydir = "unique-types"
+    mydir = os.path.join("lang", "cpp", "unique-types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):

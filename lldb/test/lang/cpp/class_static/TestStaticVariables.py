@@ -9,7 +9,7 @@ from lldbtest import *
 
 class StaticVariableTestCase(TestBase):
 
-    mydir = "class_static"
+    mydir = os.path.join("lang", "cpp", "class_static")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

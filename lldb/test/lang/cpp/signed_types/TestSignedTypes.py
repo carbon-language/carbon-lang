@@ -10,7 +10,7 @@ from lldbtest import *
 
 class UnsignedTypesTestCase(TestBase):
 
-    mydir = "signed_types"
+    mydir = os.path.join("lang", "cpp", "signed_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):

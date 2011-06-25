@@ -9,7 +9,7 @@ from lldbtest import *
 
 class IterateFrameAndDisassembleTestCase(TestBase):
 
-    mydir = "class_types"
+    mydir = os.path.join("lang", "cpp", "class_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

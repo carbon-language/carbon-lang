@@ -7,7 +7,7 @@ from lldbtest import *
 
 class ArrayTypesTestCase(TestBase):
 
-    mydir = "array_types"
+    mydir = os.path.join("lang", "c", "array_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
