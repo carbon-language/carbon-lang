@@ -352,6 +352,8 @@ ComplexPairTy ComplexExprEmitter::EmitComplexToComplexCast(ComplexPairTy Val,
 ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op, 
                                            QualType DestTy) {
   switch (CK) {
+  case CK_Dependent: llvm_unreachable("dependent cast kind in IR gen!");
+
   case CK_GetObjCProperty: {
     LValue LV = CGF.EmitLValue(Op);
     assert(LV.isPropertyRef() && "Unknown LValue type!");
@@ -360,39 +362,73 @@ ComplexPairTy ComplexExprEmitter::EmitCast(CastExpr::CastKind CK, Expr *Op,
 
   case CK_NoOp:
   case CK_LValueToRValue:
+  case CK_UserDefinedConversion:
     return Visit(Op);
 
-  // TODO: do all of these
-  default:
-    break;
-  }
-
-  // Two cases here: cast from (complex to complex) and (scalar to complex).
-  if (Op->getType()->isAnyComplexType())
-    return EmitComplexToComplexCast(Visit(Op), Op->getType(), DestTy);
-
-  // FIXME: We should be looking at all of the cast kinds here, not
-  // cherry-picking the ones we have test cases for.
-  if (CK == CK_LValueBitCast) {
+  case CK_LValueBitCast: {
     llvm::Value *V = CGF.EmitLValue(Op).getAddress();
     V = Builder.CreateBitCast(V, 
-                      CGF.ConvertType(CGF.getContext().getPointerType(DestTy)));
+                    CGF.ConvertType(CGF.getContext().getPointerType(DestTy)));
     // FIXME: Are the qualifiers correct here?
     return EmitLoadOfComplex(V, DestTy.isVolatileQualified());
   }
-  
-  // C99 6.3.1.7: When a value of real type is converted to a complex type, the
-  // real part of the complex result value is determined by the rules of
-  // conversion to the corresponding real type and the imaginary part of the
-  // complex result value is a positive zero or an unsigned zero.
-  llvm::Value *Elt = CGF.EmitScalarExpr(Op);
 
-  // Convert the input element to the element type of the complex.
-  DestTy = DestTy->getAs<ComplexType>()->getElementType();
-  Elt = CGF.EmitScalarConversion(Elt, Op->getType(), DestTy);
+  case CK_BitCast:
+  case CK_BaseToDerived:
+  case CK_DerivedToBase:
+  case CK_UncheckedDerivedToBase:
+  case CK_Dynamic:
+  case CK_ToUnion:
+  case CK_ArrayToPointerDecay:
+  case CK_FunctionToPointerDecay:
+  case CK_NullToPointer:
+  case CK_NullToMemberPointer:
+  case CK_BaseToDerivedMemberPointer:
+  case CK_DerivedToBaseMemberPointer:
+  case CK_MemberPointerToBoolean:
+  case CK_ConstructorConversion:
+  case CK_IntegralToPointer:
+  case CK_PointerToIntegral:
+  case CK_PointerToBoolean:
+  case CK_ToVoid:
+  case CK_VectorSplat:
+  case CK_IntegralCast:
+  case CK_IntegralToBoolean:
+  case CK_IntegralToFloating:
+  case CK_FloatingToIntegral:
+  case CK_FloatingToBoolean:
+  case CK_FloatingCast:
+  case CK_AnyPointerToObjCPointerCast:
+  case CK_AnyPointerToBlockPointerCast:
+  case CK_ObjCObjectLValueCast:
+  case CK_FloatingComplexToReal:
+  case CK_FloatingComplexToBoolean:
+  case CK_IntegralComplexToReal:
+  case CK_IntegralComplexToBoolean:
+  case CK_ObjCProduceObject:
+  case CK_ObjCConsumeObject:
+    llvm_unreachable("invalid cast kind for complex value");
 
-  // Return (realval, 0).
-  return ComplexPairTy(Elt, llvm::Constant::getNullValue(Elt->getType()));
+  case CK_FloatingRealToComplex:
+  case CK_IntegralRealToComplex: {
+    llvm::Value *Elt = CGF.EmitScalarExpr(Op);
+
+    // Convert the input element to the element type of the complex.
+    DestTy = DestTy->getAs<ComplexType>()->getElementType();
+    Elt = CGF.EmitScalarConversion(Elt, Op->getType(), DestTy);
+
+    // Return (realval, 0).
+    return ComplexPairTy(Elt, llvm::Constant::getNullValue(Elt->getType()));
+  }
+
+  case CK_FloatingComplexCast:
+  case CK_FloatingComplexToIntegralComplex:
+  case CK_IntegralComplexCast:
+  case CK_IntegralComplexToFloatingComplex:
+    return EmitComplexToComplexCast(Visit(Op), Op->getType(), DestTy);
+  }
+
+  llvm_unreachable("unknown cast resulting in complex value");
 }
 
 ComplexPairTy ComplexExprEmitter::VisitUnaryMinus(const UnaryOperator *E) {

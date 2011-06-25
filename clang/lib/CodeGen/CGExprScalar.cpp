@@ -1146,15 +1146,10 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
 
     return Builder.CreateIntToPtr(IntResult, ConvertType(DestTy));
   }
-  case CK_PointerToIntegral: {
-    Value *Src = Visit(const_cast<Expr*>(E));
+  case CK_PointerToIntegral:
+    assert(!DestTy->isBooleanType() && "bool should use PointerToBool");
+    return Builder.CreatePtrToInt(Visit(E), ConvertType(DestTy));
 
-    // Handle conversion to bool correctly.
-    if (DestTy->isBooleanType())
-      return EmitScalarConversion(Src, E->getType(), DestTy);
-
-    return Builder.CreatePtrToInt(Src, ConvertType(DestTy));
-  }
   case CK_ToVoid: {
     CGF.EmitIgnoredExpr(E);
     return 0;
