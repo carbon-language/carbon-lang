@@ -12,7 +12,7 @@ def Msg(expr, val):
 
 class CppVirtualMadness(TestBase):
 
-    mydir = os.path.join("cpp", "virtual")
+    mydir = os.path.join("lang", "cpp", "virtual")
 
     # This is the pattern by design to match the "my_expr = 'value'" output from
     # printf() stmts (see main.cpp).

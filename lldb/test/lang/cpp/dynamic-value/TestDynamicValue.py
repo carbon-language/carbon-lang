@@ -10,7 +10,7 @@ from lldbtest import *
 
 class DynamicValueTestCase(TestBase):
 
-    mydir = os.path.join("cpp", "dynamic-value")
+    mydir = os.path.join("lang", "cpp", "dynamic-value")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
