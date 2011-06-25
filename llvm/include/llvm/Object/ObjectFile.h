@@ -14,15 +14,13 @@
 #ifndef LLVM_OBJECT_OBJECT_FILE_H
 #define LLVM_OBJECT_OBJECT_FILE_H
 
+#include "llvm/Object/Binary.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <cstring>
 
 namespace llvm {
-
-class MemoryBuffer;
-class StringRef;
-
 namespace object {
 
 class ObjectFile;
@@ -93,16 +91,17 @@ const uint64_t UnknownAddressOrSize = ~0ULL;
 /// ObjectFile - This class is the base class for all object file types.
 /// Concrete instances of this object are created by createObjectFile, which
 /// figure out which type to create.
-class ObjectFile {
+class ObjectFile : public Binary {
 private:
   ObjectFile(); // = delete
   ObjectFile(const ObjectFile &other); // = delete
 
 protected:
-  MemoryBuffer *MapFile;
-  const uint8_t *base;
+  ObjectFile(unsigned int Type, MemoryBuffer *source, error_code &ec);
 
-  ObjectFile(MemoryBuffer *Object);
+  const uint8_t *base() const {
+    return reinterpret_cast<const uint8_t *>(Data->getBufferStart());
+  }
 
   // These functions are for SymbolRef to call internally. The main goal of
   // this is to allow SymbolRef::SymbolPimpl to point directly to the symbol
@@ -156,8 +155,6 @@ public:
   typedef content_iterator<SymbolRef> symbol_iterator;
   typedef content_iterator<SectionRef> section_iterator;
 
-  virtual ~ObjectFile();
-
   virtual symbol_iterator begin_symbols() const = 0;
   virtual symbol_iterator end_symbols() const = 0;
 
@@ -171,8 +168,6 @@ public:
   virtual StringRef getFileFormatName() const = 0;
   virtual /* Triple::ArchType */ unsigned getArch() const = 0;
 
-  StringRef getFilename() const;
-
   /// @returns Pointer to ObjectFile subclass to handle this type of object.
   /// @param ObjectPath The path to the object file. ObjectPath.isObject must
   ///        return true.
@@ -180,12 +175,16 @@ public:
   static ObjectFile *createObjectFile(StringRef ObjectPath);
   static ObjectFile *createObjectFile(MemoryBuffer *Object);
 
-private:
+  static inline bool classof(const Binary *v) {
+    return v->getType() >= isObject &&
+           v->getType() < lastObject;
+  }
+  static inline bool classof(const ObjectFile *v) { return true; }
+
+public:
   static ObjectFile *createCOFFObjectFile(MemoryBuffer *Object);
   static ObjectFile *createELFObjectFile(MemoryBuffer *Object);
   static ObjectFile *createMachOObjectFile(MemoryBuffer *Object);
-  static ObjectFile *createArchiveObjectFile(MemoryBuffer *Object);
-  static ObjectFile *createLibObjectFile(MemoryBuffer *Object);
 };
 
 // Inline function definitions.

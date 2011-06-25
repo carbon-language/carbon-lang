@@ -277,7 +277,7 @@ static void DumpSymbolNamesFromObject(ObjectFile *obj) {
     SymbolList.push_back(s);
   }
 
-  CurrentFilename = obj->getFilename();
+  CurrentFilename = obj->getFileName();
   SortAndPrintSymbolList();
 }
 

@@ -237,7 +237,7 @@ protected:
   virtual bool       isSectionText(DataRefImpl Sec) const;
 
 public:
-  ELFObjectFile(MemoryBuffer *Object);
+  ELFObjectFile(MemoryBuffer *Object, error_code &ec);
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
   virtual section_iterator begin_sections() const;
@@ -259,9 +259,9 @@ void ELFObjectFile<target_endianness, is64Bits>
   //        an error object around.
   if (!(  symb
         && SymbolTableSection
-        && symb >= (const Elf_Sym*)(base
+        && symb >= (const Elf_Sym*)(base()
                    + SymbolTableSection->sh_offset)
-        && symb <  (const Elf_Sym*)(base
+        && symb <  (const Elf_Sym*)(base()
                    + SymbolTableSection->sh_offset
                    + SymbolTableSection->sh_size)))
     // FIXME: Proper error handling.
@@ -444,7 +444,7 @@ template<support::endianness target_endianness, bool is64Bits>
 StringRef ELFObjectFile<target_endianness, is64Bits>
                        ::getSectionContents(DataRefImpl Sec) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  const char *start = (char*)base + sec->sh_offset;
+  const char *start = (char*)base() + sec->sh_offset;
   return StringRef(start, sec->sh_size);
 }
 
@@ -458,21 +458,22 @@ bool ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object)
-  : ObjectFile(Object)
+ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
+                                                          , error_code &ec)
+  : ObjectFile(Binary::isELF, Object, ec)
   , SectionHeaderTable(0)
   , dot_shstrtab_sec(0)
   , dot_strtab_sec(0) {
-  Header = reinterpret_cast<const Elf_Ehdr *>(base);
+  Header = reinterpret_cast<const Elf_Ehdr *>(base());
 
   if (Header->e_shoff == 0)
     return;
 
   SectionHeaderTable =
-    reinterpret_cast<const Elf_Shdr *>(base + Header->e_shoff);
+    reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
   uint32_t SectionTableSize = Header->e_shnum * Header->e_shentsize;
   if (!(  (const uint8_t *)SectionHeaderTable + SectionTableSize
-         <= base + MapFile->getBufferSize()))
+         <= base() + Data->getBufferSize()))
     // FIXME: Proper error handling.
     report_fatal_error("Section table goes past end of file!");
 
@@ -491,7 +492,7 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object)
   dot_shstrtab_sec = getSection(Header->e_shstrndx);
   if (dot_shstrtab_sec) {
     // Verify that the last byte in the string table in a null.
-    if (((const char*)base + dot_shstrtab_sec->sh_offset)
+    if (((const char*)base() + dot_shstrtab_sec->sh_offset)
         [dot_shstrtab_sec->sh_size - 1] != 0)
       // FIXME: Proper error handling.
       report_fatal_error("String table must end with a null terminator!");
@@ -509,7 +510,7 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object)
           // FIXME: Proper error handling.
           report_fatal_error("Already found section named .strtab!");
         dot_strtab_sec = sh;
-        const char *dot_strtab = (const char*)base + sh->sh_offset;
+        const char *dot_strtab = (const char*)base() + sh->sh_offset;
           if (dot_strtab[sh->sh_size - 1] != 0)
             // FIXME: Proper error handling.
             report_fatal_error("String table must end with a null terminator!");
@@ -548,7 +549,7 @@ ObjectFile::section_iterator ELFObjectFile<target_endianness, is64Bits>
                                           ::begin_sections() const {
   DataRefImpl ret;
   memset(&ret, 0, sizeof(DataRefImpl));
-  ret.p = reinterpret_cast<intptr_t>(base + Header->e_shoff);
+  ret.p = reinterpret_cast<intptr_t>(base() + Header->e_shoff);
   return section_iterator(SectionRef(ret, this));
 }
 
@@ -557,7 +558,7 @@ ObjectFile::section_iterator ELFObjectFile<target_endianness, is64Bits>
                                           ::end_sections() const {
   DataRefImpl ret;
   memset(&ret, 0, sizeof(DataRefImpl));
-  ret.p = reinterpret_cast<intptr_t>(base
+  ret.p = reinterpret_cast<intptr_t>(base()
                                      + Header->e_shoff
                                      + (Header->e_shentsize * Header->e_shnum));
   return section_iterator(SectionRef(ret, this));
@@ -613,7 +614,7 @@ const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
 ELFObjectFile<target_endianness, is64Bits>::getSymbol(DataRefImpl Symb) const {
   const Elf_Shdr *sec = SymbolTableSections[Symb.d.b];
   return reinterpret_cast<const Elf_Sym *>(
-           base
+           base()
            + sec->sh_offset
            + (Symb.d.a * sec->sh_entsize));
 }
@@ -656,8 +657,8 @@ const char *ELFObjectFile<target_endianness, is64Bits>
   assert(section && section->sh_type == ELF::SHT_STRTAB && "Invalid section!");
   if (offset >= section->sh_size)
     // FIXME: Proper error handling.
-    report_fatal_error("Sybol name offset outside of string table!");
-  return (const char *)base + section->sh_offset + offset;
+    report_fatal_error("Symbol name offset outside of string table!");
+  return (const char *)base() + section->sh_offset + offset;
 }
 
 // EI_CLASS, EI_DATA.
@@ -673,14 +674,15 @@ namespace llvm {
 
   ObjectFile *ObjectFile::createELFObjectFile(MemoryBuffer *Object) {
     std::pair<unsigned char, unsigned char> Ident = getElfArchType(Object);
+    error_code ec;
     if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB)
-      return new ELFObjectFile<support::little, false>(Object);
+      return new ELFObjectFile<support::little, false>(Object, ec);
     else if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2MSB)
-      return new ELFObjectFile<support::big, false>(Object);
+      return new ELFObjectFile<support::big, false>(Object, ec);
     else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2LSB)
-      return new ELFObjectFile<support::little, true>(Object);
+      return new ELFObjectFile<support::little, true>(Object, ec);
     else if (Ident.first == ELF::ELFCLASS64 && Ident.second == ELF::ELFDATA2MSB)
-      return new ELFObjectFile<support::big, true>(Object);
+      return new ELFObjectFile<support::big, true>(Object, ec);
     // FIXME: Proper error handling.
     report_fatal_error("Not an ELF object file!");
   }
