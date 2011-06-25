@@ -7,7 +7,7 @@ from lldbtest import *
 
 class ForwardDeclarationTestCase(TestBase):
 
-    mydir = "forward"
+    mydir = os.path.join("lang", "c", "forward")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

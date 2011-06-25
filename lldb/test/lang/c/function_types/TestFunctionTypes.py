@@ -7,7 +7,7 @@ from lldbtest import *
 
 class FunctionTypesTestCase(TestBase):
 
-    mydir = "function_types"
+    mydir = os.path.join("lang", "c", "function_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
