@@ -131,9 +131,6 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
   OS << "} // End llvm namespace \n";
 }
 
-typedef std::pair<unsigned, unsigned> UUPair;
-typedef std::vector<UUPair> UUVector;
-
 //
 // RegisterInfoEmitter::run - Main register file description emitter.
 //
