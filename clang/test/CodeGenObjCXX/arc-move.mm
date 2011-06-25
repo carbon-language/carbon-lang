@@ -61,3 +61,15 @@ void library_move(__strong id &y) {
   // CHECK-NEXT: call void @objc_release(i8* [[OBJ]])
   // CHECK-NEXT: ret void
 }
+
+// CHECK: define void @_Z10const_moveRKU8__strongP11objc_object(
+void const_move(const __strong id &x) {
+  // CHECK:      [[Y:%.*]] = alloca i8*,
+  // CHECK:      [[X:%.*]] = call i8** @_Z4moveIRKU8__strongP11objc_objectEON16remove_referenceIT_E4typeEOS5_(
+  // CHECK-NEXT: [[T0:%.*]] = load i8** [[X]]
+  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
+  // CHECK-NEXT: store i8* [[T1]], i8** [[Y]]
+  // CHECK-NEXT: [[T0:%.*]] = load i8** [[Y]]
+  // CHECK-NEXT: call void @objc_release(i8* [[T0]])
+  id y = move(x);
+}

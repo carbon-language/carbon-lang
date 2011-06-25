@@ -2269,7 +2269,7 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
   // If we're loading retained from a __strong xvalue, we can avoid 
   // an extra retain/release pair by zeroing out the source of this
   // "move" operation.
-  if (e->isXValue() &&
+  if (e->isXValue() && !e->getType().isConstQualified() &&
       e->getType().getObjCLifetime() == Qualifiers::OCL_Strong) {
     // Emit the lvalue
     LValue lv = CGF.EmitLValue(e);
