@@ -7,7 +7,7 @@ from lldbtest import *
 
 class EnumTypesTestCase(TestBase):
 
-    mydir = "enum_types"
+    mydir = os.path.join("lang", "c", "enum_types")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
