@@ -737,6 +737,12 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
         PIDecl->setGetterCXXConstructor(ResExpr);
       }
     }
+    if (property->hasAttr<NSReturnsNotRetainedAttr>() &&
+        !getterMethod->hasAttr<NSReturnsNotRetainedAttr>()) {
+      Diag(getterMethod->getLocation(), 
+           diag::warn_property_getter_owning_mismatch);
+      Diag(property->getLocation(), diag::note_property_declare);
+    }
   }
   if (ObjCMethodDecl *setterMethod = property->getSetterMethodDecl()) {
     setterMethod->createImplicitParams(Context, IDecl);
@@ -1369,7 +1375,8 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
       continue;
     
     const ObjCPropertyDecl *PD = PID->getPropertyDecl();
-    if (PD && !D->getInstanceMethod(PD->getGetterName())) {
+    if (PD && !PD->hasAttr<NSReturnsNotRetainedAttr>() &&
+        !D->getInstanceMethod(PD->getGetterName())) {
       ObjCMethodDecl *method = PD->getGetterMethodDecl();
       if (!method)
         continue;
@@ -1465,6 +1472,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
     // and the real context should be the same.
     if (lexicalDC)
       GetterMethod->setLexicalDeclContext(lexicalDC);
+    if (property->hasAttr<NSReturnsNotRetainedAttr>())
+      GetterMethod->addAttr(
+        ::new (Context) NSReturnsNotRetainedAttr(Loc, Context));
   } else
     // A user declared getter will be synthesize when @synthesize of
     // the property with the same name is seen in the @implementation

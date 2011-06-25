@@ -2716,6 +2716,8 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &attr,
 
   if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(d))
     returnType = MD->getResultType();
+  else if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(d))
+    returnType = PD->getType();
   else if (S.getLangOptions().ObjCAutoRefCount && hasDeclarator(d) &&
            (attr.getKind() == AttributeList::AT_ns_returns_retained))
     return; // ignore: was handled as a type attribute

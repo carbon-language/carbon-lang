@@ -441,6 +441,9 @@ def warn_atomic_property_rule : Warning<
 def warn_ownin_getter_rule : Warning<
   "property's synthesized getter follows Cocoa naming"
   " convention for returning 'owned' objects">;
+def warn_property_getter_owning_mismatch : Warning<
+  "property declared as returning non-retained objects"
+  "; getter returning retained objects">;
 def err_ownin_getter_rule : Error<
   "property's synthesized getter follows Cocoa naming"
   " convention for returning 'owned' objects">;
