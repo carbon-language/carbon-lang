@@ -375,10 +375,12 @@ public:
 
     // Check that the block wasn't partially defined, and that the offset isn't
     // bogus.
-    if (AtEndOfStream() || NextChar+NumWords*4 > BitStream->getLastChar())
+    const unsigned char *const SkipTo = NextChar + NumWords*4;
+    if (AtEndOfStream() || SkipTo > BitStream->getLastChar() ||
+                           SkipTo < BitStream->getFirstChar())
       return true;
 
-    NextChar += NumWords*4;
+    NextChar = SkipTo;
     return false;
   }
 
