@@ -77,7 +77,7 @@
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       customWorkingDirectory = "/Volumes/work/gclayton/Documents/devb/attach"
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       ignoresPersistentStateOnLaunch = "YES"
       enablesOpenGLESFrameCapture = "YES">
       <BuildableProductRunnable>

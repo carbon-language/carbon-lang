@@ -22,6 +22,7 @@
 #include "lldb/Core/ValueObjectRegister.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/VariableList.h"
@@ -746,6 +747,13 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
     {
         Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
         
+        
+        StreamString frame_description;
+        m_opaque_sp->DumpUsingSettingsFormat (&frame_description);
+
+        Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
+                                             expr, fetch_dynamic_value, frame_description.GetString().c_str());
+
         ExecutionResults exe_results;
         const bool unwind_on_error = true;
         const bool keep_in_memory = false;
