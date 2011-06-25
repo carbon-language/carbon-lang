@@ -4,7 +4,7 @@
 ; (note: we convert back to i32 to return)
 
 define ptx_device i32 @cvt_pred_i16(i16 %x, i1 %y) {
-; CHECK: setp.gt.b16 p[[P0:[0-9]+]], rh{{[0-9]+}}, 0
+; CHECK: setp.gt.u16 p[[P0:[0-9]+]], rh{{[0-9]+}}, 0
 ; CHECK-NEXT: and.pred p0, p[[P0:[0-9]+]], p{{[0-9]+}};
 ; CHECK-NEXT: selp.u32 r{{[0-9]+}}, 1, 0, p[[P0:[0-9]+]];
 ; CHECK-NEXT: ret;
@@ -15,7 +15,7 @@ define ptx_device i32 @cvt_pred_i16(i16 %x, i1 %y) {
 }
 
 define ptx_device i32 @cvt_pred_i32(i32 %x, i1 %y) {
-; CHECK: setp.gt.b32 p[[P0:[0-9]+]], r{{[0-9]+}}, 0
+; CHECK: setp.gt.u32 p[[P0:[0-9]+]], r{{[0-9]+}}, 0
 ; CHECK-NEXT: and.pred p0, p[[P0:[0-9]+]], p{{[0-9]+}};
 ; CHECK-NEXT: selp.u32 r{{[0-9]+}}, 1, 0, p[[P0:[0-9]+]];
 ; CHECK-NEXT: ret;
@@ -26,7 +26,7 @@ define ptx_device i32 @cvt_pred_i32(i32 %x, i1 %y) {
 }
 
 define ptx_device i32 @cvt_pred_i64(i64 %x, i1 %y) {
-; CHECK: setp.gt.b64 p[[P0:[0-9]+]], rd{{[0-9]+}}, 0
+; CHECK: setp.gt.u64 p[[P0:[0-9]+]], rd{{[0-9]+}}, 0
 ; CHECK-NEXT: and.pred p0, p[[P0:[0-9]+]], p{{[0-9]+}};
 ; CHECK-NEXT: selp.u32 r{{[0-9]+}}, 1, 0, p[[P0:[0-9]+]];
 ; CHECK-NEXT: ret;
@@ -37,7 +37,7 @@ define ptx_device i32 @cvt_pred_i64(i64 %x, i1 %y) {
 }
 
 define ptx_device i32 @cvt_pred_f32(float %x, i1 %y) {
-; CHECK: setp.gt.b32 p[[P0:[0-9]+]], r{{[0-9]+}}, 0
+; CHECK: setp.gt.f32 p[[P0:[0-9]+]], r{{[0-9]+}}, 0
 ; CHECK-NEXT: and.pred p0, p[[P0:[0-9]+]], p{{[0-9]+}};
 ; CHECK-NEXT: selp.u32 r{{[0-9]+}}, 1, 0, p[[P0:[0-9]+]];
 ; CHECK-NEXT: ret;
@@ -48,7 +48,7 @@ define ptx_device i32 @cvt_pred_f32(float %x, i1 %y) {
 }
 
 define ptx_device i32 @cvt_pred_f64(double %x, i1 %y) {
-; CHECK: setp.gt.b64 p[[P0:[0-9]+]], rd{{[0-9]+}}, 0
+; CHECK: setp.gt.f64 p[[P0:[0-9]+]], rd{{[0-9]+}}, 0
 ; CHECK-NEXT: and.pred p0, p[[P0:[0-9]+]], p{{[0-9]+}};
 ; CHECK-NEXT: selp.u32 r{{[0-9]+}}, 1, 0, p[[P0:[0-9]+]];
 ; CHECK-NEXT: ret;

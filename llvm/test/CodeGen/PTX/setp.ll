@@ -193,7 +193,7 @@ define ptx_device i32 @test_setp_4_op_format_1(i32 %x, i32 %y, i32 %u, i32 %v) {
 }
 
 define ptx_device i32 @test_setp_4_op_format_2(i32 %x, i32 %y, i32 %w) {
-; CHECK: setp.gt.b32 p[[P0:[0-9]+]], r{{[0-9]+}}, 0;
+; CHECK: setp.gt.u32 p[[P0:[0-9]+]], r{{[0-9]+}}, 0;
 ; CHECK-NEXT: setp.eq.and.u32 p[[P0]], r{{[0-9]+}}, r{{[0-9]+}}, !p[[P0]];
 ; CHECK-NEXT: selp.u32 r{{[0-9]+}}, 1, 0, p[[P0]];
 ; CHECK-NEXT: ret;
