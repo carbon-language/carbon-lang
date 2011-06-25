@@ -1079,14 +1079,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
   assert(!DS.isFriendSpecified());
   assert(!Init || !HasDeferredInit);
 
-  bool isFunc = false;
-  if (D.isFunctionDeclarator())
-    isFunc = true;
-  else if (D.getNumTypeObjects() == 0 &&
-           D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_typename) {
-    QualType TDType = GetTypeFromParser(DS.getRepAsType());
-    isFunc = TDType->isFunctionType();
-  }
+  bool isFunc = D.isDeclarationOfFunction();
 
   // C++ 9.2p6: A member shall not be declared to have automatic storage
   // duration (auto, register) or with the extern storage-class-specifier.

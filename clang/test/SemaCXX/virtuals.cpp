@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fcxx-exceptions -verify -std=c++0x %s
 
 class A {
   virtual void f();
@@ -38,7 +38,10 @@ A fn(A) // expected-error{{parameter type 'A' is an abstract class}} \
 
 namespace rdar9670557 {
   typedef int func(int);
+  func *a();
   struct X {
     virtual func f = 0;
+    virtual func (g) = 0;
+    func *h = 0;
   };
 }

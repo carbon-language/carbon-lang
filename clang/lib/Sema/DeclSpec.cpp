@@ -216,8 +216,22 @@ DeclaratorChunk DeclaratorChunk::getFunction(bool hasProto, bool isVariadic,
 }
 
 bool Declarator::isDeclarationOfFunction() const {
-  if (isFunctionDeclarator())
-    return true;
+  for (unsigned i = 0, i_end = DeclTypeInfo.size(); i < i_end; ++i) {
+    switch (DeclTypeInfo[i].Kind) {
+    case DeclaratorChunk::Function:
+      return true;
+    case DeclaratorChunk::Paren:
+      continue;
+    case DeclaratorChunk::Pointer:
+    case DeclaratorChunk::Reference:
+    case DeclaratorChunk::Array:
+    case DeclaratorChunk::BlockPointer:
+    case DeclaratorChunk::MemberPointer:
+      return false;
+    }
+    llvm_unreachable("Invalid type chunk");
+    return false;
+  }
   
   switch (DS.getTypeSpecType()) {
     case TST_auto:
