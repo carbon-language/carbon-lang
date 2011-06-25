@@ -317,13 +317,13 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
     MultipleFiles = true;
     std::for_each (Modules.begin(), Modules.end(), DumpSymbolNamesFromModule);
   } else if (aPath.isObjectFile()) {
-    std::auto_ptr<ObjectFile> obj(ObjectFile::createObjectFile(aPath.str()));
-    if (!obj.get()) {
-      errs() << ToolName << ": " << Filename << ": "
-             << "Failed to open object file\n";
+    OwningPtr<Binary> obj;
+    if (error_code ec = object::createBinary(aPath.str(), obj)) {
+      errs() << ToolName << ": " << Filename << ": " << ec.message() << ".\n";
       return;
     }
-    DumpSymbolNamesFromObject(obj.get());
+    if (object::ObjectFile *o = dyn_cast<ObjectFile>(obj.get()))
+      DumpSymbolNamesFromObject(o);
   } else {
     errs() << ToolName << ": " << Filename << ": "
            << "unrecognizable file type\n";
