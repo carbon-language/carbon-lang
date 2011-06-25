@@ -10,7 +10,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class FoundationDisassembleTestCase(TestBase):
 
-    mydir = "foundation"
+    mydir = os.path.join("lang", "objc", "foundation")
 
     # rdar://problem/8504895
     # Crash while doing 'disassemble -n "-[NSNumber descriptionWithLocale:]"

@@ -10,7 +10,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class FoundationTestCase2(TestBase):
 
-    mydir = "foundation"
+    mydir = os.path.join("lang", "objc", "foundation")
 
     def test_more_expr_commands_with_dsym(self):
         """More expression commands for objective-c."""

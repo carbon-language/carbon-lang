@@ -1,4 +1,4 @@
-LEVEL = ../make
+LEVEL = ../../../make
 
 OBJC_SOURCES := main.m my-base.m
 #OBJC_SOURCES := const-strings.m

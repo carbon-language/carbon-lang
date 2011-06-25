@@ -11,7 +11,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class ConstStringTestCase(TestBase):
 
-    mydir = "foundation"
+    mydir = os.path.join("lang", "objc", "foundation")
     d = {'OBJC_SOURCES': 'const-strings.m'}
 
     def test_break_with_dsym(self):

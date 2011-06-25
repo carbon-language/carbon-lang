@@ -10,7 +10,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class FoundationSymtabTestCase(TestBase):
 
-    mydir = "foundation"
+    mydir = os.path.join("lang", "objc", "foundation")
 
     symbols_list = ['-[MyString initWithNSString:]',
                     '-[MyString dealloc]',

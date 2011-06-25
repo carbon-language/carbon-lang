@@ -11,7 +11,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class FoundationTestCase(TestBase):
 
-    mydir = "foundation"
+    mydir = os.path.join("lang", "objc", "foundation")
 
     def test_break_with_dsym(self):
         """Test setting objc breakpoints using '_regexp-break' and 'breakpoint set'."""
