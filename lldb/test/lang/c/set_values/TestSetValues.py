@@ -7,7 +7,7 @@ from lldbtest import *
 
 class SetValuesTestCase(TestBase):
 
-    mydir = "set_values"
+    mydir = os.path.join("lang", "c", "set_values")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):

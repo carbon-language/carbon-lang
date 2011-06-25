@@ -9,7 +9,7 @@ from lldbtest import *
 
 class StdCXXDisassembleTestCase(TestBase):
 
-    mydir = "stl"
+    mydir = os.path.join("lang", "cpp", "stl")
 
     def setUp(self):
         # Call super's setUp().

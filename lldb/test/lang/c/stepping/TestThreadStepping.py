@@ -10,7 +10,7 @@ from lldbtest import *
 
 class ThreadSteppingTestCase(TestBase):
 
-    mydir = "stepping"
+    mydir = os.path.join("lang", "c", "stepping")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_step_out_with_dsym_and_run_command(self):
