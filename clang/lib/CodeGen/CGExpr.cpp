@@ -1589,12 +1589,17 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     // The element count here is the total number of non-VLA elements.
     llvm::Value *numElements = getVLASize(vla).first;
 
-    Idx = Builder.CreateMul(Idx, numElements);
-
-    if (getContext().getLangOptions().isSignedOverflowDefined())
+    // Effectively, the multiply by the VLA size is part of the GEP.
+    // GEP indexes are signed, and scaling an index isn't permitted to
+    // signed-overflow, so we use the same semantics for our explicit
+    // multiply.  We suppress this if overflow is not undefined behavior.
+    if (getLangOptions().isSignedOverflowDefined()) {
+      Idx = Builder.CreateMul(Idx, numElements);
       Address = Builder.CreateGEP(Address, Idx, "arrayidx");
-    else
+    } else {
+      Idx = Builder.CreateNSWMul(Idx, numElements);
       Address = Builder.CreateInBoundsGEP(Address, Idx, "arrayidx");
+    }
   } else if (const ObjCObjectType *OIT = E->getType()->getAs<ObjCObjectType>()){
     // Indexing over an interface, as in "NSString *P; P[4];"
     llvm::Value *InterfaceSize =

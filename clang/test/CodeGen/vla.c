@@ -94,11 +94,54 @@ double test_PR8567(int n, double (*p)[n][5]) {
   // CHECK-NEXT: store
   // CHECK-NEXT: [[N:%.*]] = load i32* [[NV]], align 4
   // CHECK-NEXT: [[P:%.*]] = load [5 x double]** [[PV]], align 4
-  // CHECK-NEXT: [[T0:%.*]] = mul i32 1, [[N]]
+  // CHECK-NEXT: [[T0:%.*]] = mul nsw i32 1, [[N]]
   // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [5 x double]* [[P]], i32 [[T0]]
   // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [5 x double]* [[T1]], i32 2
   // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [5 x double]* [[T2]], i32 0, i32 3
   // CHECK-NEXT: [[T4:%.*]] = load double* [[T3]]
   // CHECK-NEXT: ret double [[T4]]
  return p[1][2][3];
+}
+
+int test4(unsigned n, char (*p)[n][n+1][6]) {
+  // CHECK:    define i32 @test4(
+  // CHECK:      [[N:%.*]] = alloca i32, align 4
+  // CHECK-NEXT: [[P:%.*]] = alloca [6 x i8]*, align 4
+  // CHECK-NEXT: [[P2:%.*]] = alloca [6 x i8]*, align 4
+  // CHECK-NEXT: store i32
+  // CHECK-NEXT: store [6 x i8]*
+
+  // VLA captures.
+  // CHECK-NEXT: [[DIM0:%.*]] = load i32* [[N]], align 4
+  // CHECK-NEXT: [[T0:%.*]] = load i32* [[N]], align 4
+  // CHECK-NEXT: [[DIM1:%.*]] = add i32 [[T0]], 1
+
+  // __typeof.  FIXME: does this really need to be loaded?
+  // CHECK-NEXT: load [6 x i8]** [[P]]
+
+  // CHECK-NEXT: [[T0:%.*]] = load [6 x i8]** [[P]], align 4
+  // CHECK-NEXT: [[T1:%.*]] = load i32* [[N]], align 4
+  // CHECK-NEXT: [[T2:%.*]] = udiv i32 [[T1]], 2
+  // CHECK-NEXT: [[T3:%.*]] = mul nuw i32 [[DIM0]], [[DIM1]]
+  // CHECK-NEXT: [[T4:%.*]] = mul nsw i32 [[T2]], [[T3]]
+  // CHECK-NEXT: [[T5:%.*]] = getelementptr inbounds [6 x i8]* [[T0]], i32 [[T4]]
+  // CHECK-NEXT: [[T6:%.*]] = load i32* [[N]], align 4
+  // CHECK-NEXT: [[T7:%.*]] = udiv i32 [[T6]], 4
+  // CHECK-NEXT: [[T8:%.*]] = sub i32 0, [[T7]]
+  // CHECK-NEXT: [[T9:%.*]] = mul nuw i32 [[DIM0]], [[DIM1]]
+  // CHECK-NEXT: [[T10:%.*]] = mul nsw i32 [[T8]], [[T9]]
+  // CHECK-NEXT: [[T11:%.*]] = getelementptr inbounds [6 x i8]* [[T5]], i32 [[T10]]
+  // CHECK-NEXT: store [6 x i8]* [[T11]], [6 x i8]** [[P2]], align 4
+  __typeof(p) p2 = (p + n/2) - n/4;
+
+  // CHECK-NEXT: [[T0:%.*]] = load [6 x i8]** [[P2]], align 4
+  // CHECK-NEXT: [[T1:%.*]] = load [6 x i8]** [[P]], align 4
+  // CHECK-NEXT: [[T2:%.*]] = ptrtoint [6 x i8]* [[T0]] to i32
+  // CHECK-NEXT: [[T3:%.*]] = ptrtoint [6 x i8]* [[T1]] to i32
+  // CHECK-NEXT: [[T4:%.*]] = sub i32 [[T2]], [[T3]]
+  // CHECK-NEXT: [[T5:%.*]] = mul nuw i32 [[DIM0]], [[DIM1]]
+  // CHECK-NEXT: [[T6:%.*]] = mul nuw i32 6, [[T5]]
+  // CHECK-NEXT: [[T7:%.*]] = sdiv exact i32 [[T4]], [[T6]]
+  // CHECK-NEXT: ret i32 [[T7]]
+  return p2 - p;
 }

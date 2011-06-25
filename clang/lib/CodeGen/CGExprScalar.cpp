@@ -1285,7 +1285,7 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     // overflow because of promotion rules; we're just eliding a few steps here.
     if (type->isSignedIntegerOrEnumerationType() &&
         value->getType()->getPrimitiveSizeInBits() >=
-            CGF.CGM.IntTy->getBitWidth())
+            CGF.IntTy->getBitWidth())
       value = EmitAddConsiderOverflowBehavior(E, value, amt, isInc);
     else
       value = Builder.CreateAdd(value, amt, isInc ? "inc" : "dec");
@@ -1295,8 +1295,9 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     QualType type = ptr->getPointeeType();
 
     // VLA types don't have constant size.
-    if (type->isVariableArrayType()) {
-      llvm::Value *numElts = CGF.getVLASize(type).first;
+    if (const VariableArrayType *vla
+          = CGF.getContext().getAsVariableArrayType(type)) {
+      llvm::Value *numElts = CGF.getVLASize(vla).first;
       if (!isInc) numElts = Builder.CreateNSWNeg(numElts, "vla.negsize");
       if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
         value = Builder.CreateGEP(value, numElts, "vla.inc");
@@ -1828,196 +1829,187 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   return phi;
 }
 
-Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
-  if (!Ops.Ty->isAnyPointerType()) {
-    if (Ops.Ty->isSignedIntegerOrEnumerationType()) {
-      switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
-      case LangOptions::SOB_Undefined:
-        return Builder.CreateNSWAdd(Ops.LHS, Ops.RHS, "add");
-      case LangOptions::SOB_Defined:
-        return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
-      case LangOptions::SOB_Trapping:
-        return EmitOverflowCheckedBinOp(Ops);
-      }
+/// Emit pointer + index arithmetic.
+static Value *emitPointerArithmetic(CodeGenFunction &CGF,
+                                    const BinOpInfo &op,
+                                    bool isSubtraction) {
+  // Must have binary (not unary) expr here.  Unary pointer
+  // increment/decrement doesn't use this path.
+  const BinaryOperator *expr = cast<BinaryOperator>(op.E);
+  
+  Value *pointer = op.LHS;
+  Expr *pointerOperand = expr->getLHS();
+  Value *index = op.RHS;
+  Expr *indexOperand = expr->getRHS();
+
+  // In a subtraction, the LHS is always the pointer.
+  if (!isSubtraction && !pointer->getType()->isPointerTy()) {
+    std::swap(pointer, index);
+    std::swap(pointerOperand, indexOperand);
+  }
+
+  unsigned width = cast<llvm::IntegerType>(index->getType())->getBitWidth();
+  if (width != CGF.PointerWidthInBits) {
+    // Zero-extend or sign-extend the pointer value according to
+    // whether the index is signed or not.
+    bool isSigned = indexOperand->getType()->isSignedIntegerOrEnumerationType();
+    index = CGF.Builder.CreateIntCast(index, CGF.PtrDiffTy, isSigned,
+                                      "idx.ext");
+  }
+
+  // If this is subtraction, negate the index.
+  if (isSubtraction)
+    index = CGF.Builder.CreateNeg(index, "idx.neg");
+
+  const PointerType *pointerType
+    = pointerOperand->getType()->getAs<PointerType>();
+  if (!pointerType) {
+    QualType objectType = pointerOperand->getType()
+                                        ->castAs<ObjCObjectPointerType>()
+                                        ->getPointeeType();
+    llvm::Value *objectSize
+      = CGF.CGM.getSize(CGF.getContext().getTypeSizeInChars(objectType));
+
+    index = CGF.Builder.CreateMul(index, objectSize);
+
+    Value *result = CGF.Builder.CreateBitCast(pointer, CGF.VoidPtrTy);
+    result = CGF.Builder.CreateGEP(result, index, "add.ptr");
+    return CGF.Builder.CreateBitCast(result, pointer->getType());
+  }
+
+  QualType elementType = pointerType->getPointeeType();
+  if (const VariableArrayType *vla
+        = CGF.getContext().getAsVariableArrayType(elementType)) {
+    // The element count here is the total number of non-VLA elements.
+    llvm::Value *numElements = CGF.getVLASize(vla).first;
+
+    // Effectively, the multiply by the VLA size is part of the GEP.
+    // GEP indexes are signed, and scaling an index isn't permitted to
+    // signed-overflow, so we use the same semantics for our explicit
+    // multiply.  We suppress this if overflow is not undefined behavior.
+    if (CGF.getLangOptions().isSignedOverflowDefined()) {
+      index = CGF.Builder.CreateMul(index, numElements, "vla.index");
+      pointer = CGF.Builder.CreateGEP(pointer, index, "add.ptr");
+    } else {
+      index = CGF.Builder.CreateNSWMul(index, numElements, "vla.index");
+      pointer = CGF.Builder.CreateInBoundsGEP(pointer, index, "add.ptr");
     }
-    
-    if (Ops.LHS->getType()->isFPOrFPVectorTy())
-      return Builder.CreateFAdd(Ops.LHS, Ops.RHS, "add");
-
-    return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
-  }
-
-  // Must have binary (not unary) expr here.  Unary pointer decrement doesn't
-  // use this path.
-  const BinaryOperator *BinOp = cast<BinaryOperator>(Ops.E);
-  
-  if (Ops.Ty->isPointerType() &&
-      Ops.Ty->getAs<PointerType>()->isVariableArrayType()) {
-    // The amount of the addition needs to account for the VLA size
-    CGF.ErrorUnsupported(BinOp, "VLA pointer addition");
-  }
-  
-  Value *Ptr, *Idx;
-  Expr *IdxExp;
-  const PointerType *PT = BinOp->getLHS()->getType()->getAs<PointerType>();
-  const ObjCObjectPointerType *OPT =
-    BinOp->getLHS()->getType()->getAs<ObjCObjectPointerType>();
-  if (PT || OPT) {
-    Ptr = Ops.LHS;
-    Idx = Ops.RHS;
-    IdxExp = BinOp->getRHS();
-  } else {  // int + pointer
-    PT = BinOp->getRHS()->getType()->getAs<PointerType>();
-    OPT = BinOp->getRHS()->getType()->getAs<ObjCObjectPointerType>();
-    assert((PT || OPT) && "Invalid add expr");
-    Ptr = Ops.RHS;
-    Idx = Ops.LHS;
-    IdxExp = BinOp->getLHS();
-  }
-
-  unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-  if (Width < CGF.PointerWidthInBits) {
-    // Zero or sign extend the pointer value based on whether the index is
-    // signed or not.
-    const llvm::Type *IdxType = CGF.IntPtrTy;
-    if (IdxExp->getType()->isSignedIntegerOrEnumerationType())
-      Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
-    else
-      Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
-  }
-  const QualType ElementType = PT ? PT->getPointeeType() : OPT->getPointeeType();
-  // Handle interface types, which are not represented with a concrete type.
-  if (const ObjCObjectType *OIT = ElementType->getAs<ObjCObjectType>()) {
-    llvm::Value *InterfaceSize =
-      llvm::ConstantInt::get(Idx->getType(),
-          CGF.getContext().getTypeSizeInChars(OIT).getQuantity());
-    Idx = Builder.CreateMul(Idx, InterfaceSize);
-    const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
-    Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
-    Value *Res = Builder.CreateGEP(Casted, Idx, "add.ptr");
-    return Builder.CreateBitCast(Res, Ptr->getType());
+    return pointer;
   }
 
   // Explicitly handle GNU void* and function pointer arithmetic extensions. The
   // GNU void* casts amount to no-ops since our void* type is i8*, but this is
   // future proof.
-  if (ElementType->isVoidType() || ElementType->isFunctionType()) {
-    const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
-    Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
-    Value *Res = Builder.CreateGEP(Casted, Idx, "add.ptr");
-    return Builder.CreateBitCast(Res, Ptr->getType());
+  if (elementType->isVoidType() || elementType->isFunctionType()) {
+    Value *result = CGF.Builder.CreateBitCast(pointer, CGF.VoidPtrTy);
+    result = CGF.Builder.CreateGEP(result, index, "add.ptr");
+    return CGF.Builder.CreateBitCast(result, pointer->getType());
   }
 
-  if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
-    return Builder.CreateGEP(Ptr, Idx, "add.ptr");
-  return Builder.CreateInBoundsGEP(Ptr, Idx, "add.ptr");
+  if (CGF.getLangOptions().isSignedOverflowDefined())
+    return CGF.Builder.CreateGEP(pointer, index, "add.ptr");
+
+  return CGF.Builder.CreateInBoundsGEP(pointer, index, "add.ptr");
 }
 
-Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
-  if (!isa<llvm::PointerType>(Ops.LHS->getType())) {
-    if (Ops.Ty->isSignedIntegerOrEnumerationType()) {
+Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &op) {
+  if (op.LHS->getType()->isPointerTy() ||
+      op.RHS->getType()->isPointerTy())
+    return emitPointerArithmetic(CGF, op, /*subtraction*/ false);
+
+  if (op.Ty->isSignedIntegerOrEnumerationType()) {
+    switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
+    case LangOptions::SOB_Undefined:
+      return Builder.CreateNSWAdd(op.LHS, op.RHS, "add");
+    case LangOptions::SOB_Defined:
+      return Builder.CreateAdd(op.LHS, op.RHS, "add");
+    case LangOptions::SOB_Trapping:
+      return EmitOverflowCheckedBinOp(op);
+    }
+  }
+    
+  if (op.LHS->getType()->isFPOrFPVectorTy())
+    return Builder.CreateFAdd(op.LHS, op.RHS, "add");
+
+  return Builder.CreateAdd(op.LHS, op.RHS, "add");
+}
+
+Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
+  // The LHS is always a pointer if either side is.
+  if (!op.LHS->getType()->isPointerTy()) {
+    if (op.Ty->isSignedIntegerOrEnumerationType()) {
       switch (CGF.getContext().getLangOptions().getSignedOverflowBehavior()) {
       case LangOptions::SOB_Undefined:
-        return Builder.CreateNSWSub(Ops.LHS, Ops.RHS, "sub");
+        return Builder.CreateNSWSub(op.LHS, op.RHS, "sub");
       case LangOptions::SOB_Defined:
-        return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
+        return Builder.CreateSub(op.LHS, op.RHS, "sub");
       case LangOptions::SOB_Trapping:
-        return EmitOverflowCheckedBinOp(Ops);
+        return EmitOverflowCheckedBinOp(op);
       }
     }
     
-    if (Ops.LHS->getType()->isFPOrFPVectorTy())
-      return Builder.CreateFSub(Ops.LHS, Ops.RHS, "sub");
+    if (op.LHS->getType()->isFPOrFPVectorTy())
+      return Builder.CreateFSub(op.LHS, op.RHS, "sub");
 
-    return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
+    return Builder.CreateSub(op.LHS, op.RHS, "sub");
   }
 
-  // Must have binary (not unary) expr here.  Unary pointer increment doesn't
-  // use this path.
-  const BinaryOperator *BinOp = cast<BinaryOperator>(Ops.E);
-  
-  if (BinOp->getLHS()->getType()->isPointerType() &&
-      BinOp->getLHS()->getType()->getAs<PointerType>()->isVariableArrayType()) {
-    // The amount of the addition needs to account for the VLA size for
-    // ptr-int
-    // The amount of the division needs to account for the VLA size for
-    // ptr-ptr.
-    CGF.ErrorUnsupported(BinOp, "VLA pointer subtraction");
-  }
+  // If the RHS is not a pointer, then we have normal pointer
+  // arithmetic.
+  if (!op.RHS->getType()->isPointerTy())
+    return emitPointerArithmetic(CGF, op, /*subtraction*/ true);
 
-  const QualType LHSType = BinOp->getLHS()->getType();
-  const QualType LHSElementType = LHSType->getPointeeType();
-  if (!isa<llvm::PointerType>(Ops.RHS->getType())) {
-    // pointer - int
-    Value *Idx = Ops.RHS;
-    unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
-    if (Width < CGF.PointerWidthInBits) {
-      // Zero or sign extend the pointer value based on whether the index is
-      // signed or not.
-      const llvm::Type *IdxType = CGF.IntPtrTy;
-      if (BinOp->getRHS()->getType()->isSignedIntegerOrEnumerationType())
-        Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
-      else
-        Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
-    }
-    Idx = Builder.CreateNeg(Idx, "sub.ptr.neg");
+  // Otherwise, this is a pointer subtraction.
 
-    // Handle interface types, which are not represented with a concrete type.
-    if (const ObjCObjectType *OIT = LHSElementType->getAs<ObjCObjectType>()) {
-      llvm::Value *InterfaceSize =
-        llvm::ConstantInt::get(Idx->getType(),
-                               CGF.getContext().
-                                 getTypeSizeInChars(OIT).getQuantity());
-      Idx = Builder.CreateMul(Idx, InterfaceSize);
-      const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
-      Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
-      Value *Res = Builder.CreateGEP(LHSCasted, Idx, "add.ptr");
-      return Builder.CreateBitCast(Res, Ops.LHS->getType());
-    }
+  // Do the raw subtraction part.
+  llvm::Value *LHS
+    = Builder.CreatePtrToInt(op.LHS, CGF.PtrDiffTy, "sub.ptr.lhs.cast");
+  llvm::Value *RHS
+    = Builder.CreatePtrToInt(op.RHS, CGF.PtrDiffTy, "sub.ptr.rhs.cast");
+  Value *diffInChars = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
 
-    // Explicitly handle GNU void* and function pointer arithmetic
-    // extensions. The GNU void* casts amount to no-ops since our void* type is
-    // i8*, but this is future proof.
-    if (LHSElementType->isVoidType() || LHSElementType->isFunctionType()) {
-      const llvm::Type *i8Ty = llvm::Type::getInt8PtrTy(VMContext);
-      Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
-      Value *Res = Builder.CreateGEP(LHSCasted, Idx, "sub.ptr");
-      return Builder.CreateBitCast(Res, Ops.LHS->getType());
-    }
+  // Okay, figure out the element size.
+  const BinaryOperator *expr = cast<BinaryOperator>(op.E);
+  QualType elementType = expr->getLHS()->getType()->getPointeeType();
 
-    if (CGF.getContext().getLangOptions().isSignedOverflowDefined())
-      return Builder.CreateGEP(Ops.LHS, Idx, "sub.ptr");
-    return Builder.CreateInBoundsGEP(Ops.LHS, Idx, "sub.ptr");
+  llvm::Value *divisor = 0;
+
+  // For a variable-length array, this is going to be non-constant.
+  if (const VariableArrayType *vla
+        = CGF.getContext().getAsVariableArrayType(elementType)) {
+    llvm::Value *numElements;
+    llvm::tie(numElements, elementType) = CGF.getVLASize(vla);
+
+    divisor = numElements;
+
+    // Scale the number of non-VLA elements by the non-VLA element size.
+    CharUnits eltSize = CGF.getContext().getTypeSizeInChars(elementType);
+    if (!eltSize.isOne())
+      divisor = CGF.Builder.CreateNUWMul(CGF.CGM.getSize(eltSize), divisor);
+
+  // For everything elese, we can just compute it, safe in the
+  // assumption that Sema won't let anything through that we can't
+  // safely compute the size of.
+  } else {
+    CharUnits elementSize;
+    // Handle GCC extension for pointer arithmetic on void* and
+    // function pointer types.
+    if (elementType->isVoidType() || elementType->isFunctionType())
+      elementSize = CharUnits::One();
+    else
+      elementSize = CGF.getContext().getTypeSizeInChars(elementType);
+
+    // Don't even emit the divide for element size of 1.
+    if (elementSize.isOne())
+      return diffInChars;
+
+    divisor = CGF.CGM.getSize(elementSize);
   }
   
-  // pointer - pointer
-  Value *LHS = Ops.LHS;
-  Value *RHS = Ops.RHS;
-
-  CharUnits ElementSize;
-
-  // Handle GCC extension for pointer arithmetic on void* and function pointer
-  // types.
-  if (LHSElementType->isVoidType() || LHSElementType->isFunctionType())
-    ElementSize = CharUnits::One();
-  else
-    ElementSize = CGF.getContext().getTypeSizeInChars(LHSElementType);
-
-  const llvm::Type *ResultType = ConvertType(Ops.Ty);
-  LHS = Builder.CreatePtrToInt(LHS, ResultType, "sub.ptr.lhs.cast");
-  RHS = Builder.CreatePtrToInt(RHS, ResultType, "sub.ptr.rhs.cast");
-  Value *BytesBetween = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
-
-  // Optimize out the shift for element size of 1.
-  if (ElementSize.isOne())
-    return BytesBetween;
-
   // Otherwise, do a full sdiv. This uses the "exact" form of sdiv, since
   // pointer difference in C is only defined in the case where both operands
   // are pointing to elements of an array.
-  Value *BytesPerElt = 
-      llvm::ConstantInt::get(ResultType, ElementSize.getQuantity());
-  return Builder.CreateExactSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
+  return Builder.CreateExactSDiv(diffInChars, divisor, "sub.ptr.div");
 }
 
 Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
