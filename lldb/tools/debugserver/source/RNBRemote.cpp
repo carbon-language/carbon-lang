@@ -175,6 +175,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (set_max_packet_size,           &RNBRemote::HandlePacket_QSetMaxPacketSize      , NULL, "QSetMaxPacketSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized packet gdb can handle"));
     t.push_back (Packet (set_max_payload_size,          &RNBRemote::HandlePacket_QSetMaxPayloadSize     , NULL, "QSetMaxPayloadSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized payload gdb can handle"));
     t.push_back (Packet (set_environment_variable,      &RNBRemote::HandlePacket_QEnvironment           , NULL, "QEnvironment:", "Add an environment variable to the inferior's environment"));
+    t.push_back (Packet (set_environment_variable_hex,  &RNBRemote::HandlePacket_QEnvironmentHexEncoded , NULL, "QEnvironmentHexEncoded:", "Add an environment variable to the inferior's environment"));
     t.push_back (Packet (set_launch_arch,               &RNBRemote::HandlePacket_QLaunchArch            , NULL, "QLaunchArch:", "Set the architecture to use when launching a process for hosts that can run multiple architecture slices from universal files."));
     t.push_back (Packet (set_disable_aslr,              &RNBRemote::HandlePacket_QSetDisableASLR        , NULL, "QSetDisableASLR:", "Set wether to disable ASLR when launching the process with the set argv ('A') packet"));
     t.push_back (Packet (set_stdin,                     &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDIN:", "Set the standard input for a process to be launched with the 'A' packet"));
@@ -1907,6 +1908,53 @@ RNBRemote::HandlePacket_QEnvironment (const char *p)
     ctx.PushEnvironment (p);
     return SendPacket ("OK");
 }
+
+rnb_err_t
+RNBRemote::HandlePacket_QEnvironmentHexEncoded (const char *p)
+{
+    /* This sets the environment for the target program.  The packet is of the form:
+
+        QEnvironmentHexEncoded:VARIABLE=VALUE
+
+        The VARIABLE=VALUE part is sent hex-encoded so chracters like '#' with special
+        meaning in the remote protocol won't break it.
+    */
+       
+    DNBLogThreadedIf (LOG_RNB_REMOTE, "%8u RNBRemote::%s Handling QEnvironmentHexEncoded: \"%s\"", 
+        (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), __FUNCTION__, p);
+
+    p += sizeof ("QEnvironmentHexEncoded:") - 1;
+        
+    std::string arg;
+    const char *c;
+    c = p;
+    while (*c != '\0')
+      {
+        if (*(c + 1) == '\0')
+        {
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'QEnvironmentHexEncoded' pkt");
+        }
+        char smallbuf[3];
+        smallbuf[0] = *c;
+        smallbuf[1] = *(c + 1);
+        smallbuf[2] = '\0';
+        errno = 0;
+        int ch = strtoul (smallbuf, NULL, 16);
+        if (errno != 0 && ch == 0)
+          {
+            return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "non-hex char in arg on 'QEnvironmentHexEncoded' pkt");
+          }
+        arg.push_back(ch);
+        c += 2;
+      }
+
+    RNBContext& ctx = Context();
+    if (arg.length() > 0)
+      ctx.PushEnvironment (arg.c_str());  
+
+    return SendPacket ("OK");
+}
+
 
 rnb_err_t
 RNBRemote::HandlePacket_QLaunchArch (const char *p)
