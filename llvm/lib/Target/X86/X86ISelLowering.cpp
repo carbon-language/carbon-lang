@@ -2505,6 +2505,10 @@ bool MatchingStackOffset(SDValue Arg, unsigned Offset, ISD::ArgFlagsTy Flags,
     if (!FINode)
       return false;
     FI = FINode->getIndex();
+  } else if (Arg.getOpcode() == ISD::FrameIndex && Flags.isByVal()) {
+    FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(Arg);
+    FI = FINode->getIndex();
+    Bytes = Flags.getByValSize();
   } else
     return false;
 
