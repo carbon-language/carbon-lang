@@ -10,7 +10,7 @@ from lldbtest import *
 
 class ObjCDynamicValueTestCase(TestBase):
 
-    mydir = "objc-dynamic-value"
+    mydir = os.path.join("lang", "objc", "objc-dynamic-value")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test

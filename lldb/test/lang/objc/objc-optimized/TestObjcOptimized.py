@@ -17,7 +17,7 @@ from lldbtest import *
 @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
 class ObjcOptimizedTestCase(TestBase):
 
-    mydir = "objc-optimized"
+    mydir = os.path.join("lang", "objc", "objc-optimized")
     myclass = "MyClass"
     mymethod = "description"
     method_spec = "-[%s %s]" % (myclass, mymethod)
