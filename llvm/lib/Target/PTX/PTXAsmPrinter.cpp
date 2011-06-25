@@ -92,7 +92,6 @@ static const char *getRegisterTypeName(unsigned RegNo) {
 #define TEST_REGCLS(cls, clsstr)                \
   if (PTX::cls ## RegisterClass->contains(RegNo)) return # clsstr;
   TEST_REGCLS(RegPred, pred);
-  TEST_REGCLS(RegI8,  b8);
   TEST_REGCLS(RegI16, b16);
   TEST_REGCLS(RegI32, b32);
   TEST_REGCLS(RegI64, b64);
@@ -125,7 +124,6 @@ static const char *getTypeName(const Type* type) {
       case Type::IntegerTyID:
         switch (type->getPrimitiveSizeInBits()) {
           default: llvm_unreachable("Unknown integer bit-width");
-          case 8:  return ".u8";
           case 16: return ".u16";
           case 32: return ".u32";
           case 64: return ".u64";

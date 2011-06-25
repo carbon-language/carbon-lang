@@ -40,7 +40,6 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   // Set up the register classes.
   addRegisterClass(MVT::i1,  PTX::RegPredRegisterClass);
-  addRegisterClass(MVT::i8,  PTX::RegI8RegisterClass);
   addRegisterClass(MVT::i16, PTX::RegI16RegisterClass);
   addRegisterClass(MVT::i32, PTX::RegI32RegisterClass);
   addRegisterClass(MVT::i64, PTX::RegI64RegisterClass);
@@ -48,48 +47,59 @@ PTXTargetLowering::PTXTargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f64, PTX::RegF64RegisterClass);
 
   setBooleanContents(ZeroOrOneBooleanContent);
-
-  setOperationAction(ISD::EXCEPTIONADDR, MVT::i32, Expand);
-
-  setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
-  setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
+  setMinFunctionAlignment(2);
   
-  // Promote i1 type
-  setLoadExtAction(ISD::EXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  ////////////////////////////////////
+  /////////// Expansion //////////////
+  ////////////////////////////////////
   
-  setTruncStoreAction(MVT::i8, MVT::i1, Promote);
+  // (any/zero/sign) extload => load + (any/zero/sign) extend
   
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
-  
-  // Turn i16 (z)extload into load + (z)extend
   setLoadExtAction(ISD::EXTLOAD, MVT::i16, Expand);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
-
-  // Turn f32 extload into load + fextend
-  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
-
-  // Turn f64 truncstore into trunc + store.
-  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
-
-  // Customize translation of memory addresses
-  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
-  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
-
-  // Expand BR_CC into BRCOND
+  
+  // f32 extload => load + fextend
+  
+  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);  
+  
+  // f64 truncstore => trunc + store
+  
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand); 
+  
+  // sign_extend_inreg => sign_extend
+  
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+  
+  // br_cc => brcond
+  
   setOperationAction(ISD::BR_CC, MVT::Other, Expand);
 
-  // Expand SELECT_CC into SETCC
+  // select_cc => setcc
+  
   setOperationAction(ISD::SELECT_CC, MVT::Other, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::f32, Expand);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Expand);
-
-  // need to lower SETCC of RegPred into bitwise logic
+  
+  ////////////////////////////////////
+  //////////// Legal /////////////////
+  ////////////////////////////////////
+  
+  setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
+  setOperationAction(ISD::ConstantFP, MVT::f64, Legal);
+  
+  ////////////////////////////////////
+  //////////// Custom ////////////////
+  ////////////////////////////////////
+  
+  // customise setcc to use bitwise logic if possible
+  
   setOperationAction(ISD::SETCC, MVT::i1, Custom);
 
-  setMinFunctionAlignment(2);
+  // customize translation of memory addresses
+  
+  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
@@ -187,7 +197,6 @@ struct argmap_entry {
   bool operator==(MVT::SimpleValueType _VT) const { return VT == _VT; }
 } argmap[] = {
   argmap_entry(MVT::i1,  PTX::RegPredRegisterClass),
-  argmap_entry(MVT::i8,  PTX::RegI8RegisterClass),
   argmap_entry(MVT::i16, PTX::RegI16RegisterClass),
   argmap_entry(MVT::i32, PTX::RegI32RegisterClass),
   argmap_entry(MVT::i64, PTX::RegI64RegisterClass),
@@ -263,9 +272,6 @@ SDValue PTXTargetLowering::
       // Determine which register class we need
       if (RegVT == MVT::i1) {
         TRC = PTX::RegPredRegisterClass;
-      }
-      else if (RegVT == MVT::i8) {
-        TRC = PTX::RegI8RegisterClass;
       }
       else if (RegVT == MVT::i16) {
         TRC = PTX::RegI16RegisterClass;

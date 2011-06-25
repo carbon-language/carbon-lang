@@ -33,7 +33,6 @@ static const struct map_entry {
   const TargetRegisterClass *cls;
   const int opcode;
 } map[] = {
-  { &PTX::RegI8RegClass,  PTX::MOVU8rr },
   { &PTX::RegI16RegClass, PTX::MOVU16rr },
   { &PTX::RegI32RegClass, PTX::MOVU32rr },
   { &PTX::RegI64RegClass, PTX::MOVU64rr },
@@ -303,9 +302,7 @@ void PTXInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   int OpCode;
 
   // Select the appropriate opcode based on the register class
-  if (RC == PTX::RegI8RegisterClass) {
-    OpCode = PTX::STACKSTOREI8;
-  } else if (RC == PTX::RegI16RegisterClass) {
+  if (RC == PTX::RegI16RegisterClass) {
     OpCode = PTX::STACKSTOREI16;
   }  else if (RC == PTX::RegI32RegisterClass) {
     OpCode = PTX::STACKSTOREI32;
@@ -340,9 +337,7 @@ void PTXInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   int OpCode;
 
   // Select the appropriate opcode based on the register class
-  if (RC == PTX::RegI8RegisterClass) {
-    OpCode = PTX::STACKLOADI8;
-  } else if (RC == PTX::RegI16RegisterClass) {
+  if (RC == PTX::RegI16RegisterClass) {
     OpCode = PTX::STACKLOADI16;
   } else if (RC == PTX::RegI32RegisterClass) {
     OpCode = PTX::STACKLOADI32;

@@ -1,11 +1,5 @@
 ; RUN: llc < %s -march=ptx32 | FileCheck %s
 
-define ptx_device i8 @t1_u8() {
-; CHECK: mov.u8 rq{{[0-9]+}}, 0;
-; CHECK: ret;
-	ret i8 0
-}
-
 define ptx_device i16 @t1_u16() {
 ; CHECK: mov.u16 rh{{[0-9]+}}, 0;
 ; CHECK: ret;
@@ -34,12 +28,6 @@ define ptx_device double @t1_f64() {
 ; CHECK: mov.f64 rd{{[0-9]+}}, 0D0000000000000000;
 ; CHECK: ret;
 	ret double 0.0
-}
-
-define ptx_device i8 @t2_u8(i8 %x) {
-; CHECK: mov.u8 rq{{[0-9]+}}, rq{{[0-9]+}};
-; CHECK: ret;
-	ret i8 %x
 }
 
 define ptx_device i16 @t2_u16(i16 %x) {
