@@ -1697,6 +1697,14 @@ public:
     return const_cast<Declarator*>(this)->getFunctionTypeInfo();
   }
 
+  /// \brief Determine whether the declaration that will be produced from 
+  /// this declaration will be a function.
+  /// 
+  /// A declaration can declare a function even if the declarator itself
+  /// isn't a function declarator, if the type specifier refers to a function
+  /// type. This routine checks for both cases.
+  bool isDeclarationOfFunction() const;
+  
   /// takeAttributes - Takes attributes from the given parsed-attributes
   /// set and add them to this declarator.
   ///

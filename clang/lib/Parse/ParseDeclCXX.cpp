@@ -1822,7 +1822,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         Diag(Tok, diag::err_bitfield_member_init);
         SkipUntil(tok::comma, true, true);
       } else {
-        HasDeferredInitializer = !DeclaratorInfo.isFunctionDeclarator() &&
+        HasDeferredInitializer = !DeclaratorInfo.isDeclarationOfFunction() &&
           DeclaratorInfo.getDeclSpec().getStorageClassSpec()
             != DeclSpec::SCS_static &&
           DeclaratorInfo.getDeclSpec().getStorageClassSpec()
@@ -1831,7 +1831,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         if (!HasDeferredInitializer) {
           SourceLocation EqualLoc;
           Init = ParseCXXMemberInitializer(
-            DeclaratorInfo.isFunctionDeclarator(), EqualLoc);
+            DeclaratorInfo.isDeclarationOfFunction(), EqualLoc);
           if (Init.isInvalid())
             SkipUntil(tok::comma, true, true);
         }
