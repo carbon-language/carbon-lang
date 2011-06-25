@@ -37,6 +37,8 @@ std::string _object_error_category::message(int ev) const {
     return "The file was not recognized as a valid object file";
   case object_error::parse_failed:
     return "Invalid data was encountered while parsing the file";
+  case object_error::unexpected_eof:
+    return "The end of the file was unexpectedly encountered";
   default:
     llvm_unreachable("An enumerator of object_error does not have a message "
                      "defined.");

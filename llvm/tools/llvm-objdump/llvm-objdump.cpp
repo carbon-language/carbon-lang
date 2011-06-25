@@ -69,6 +69,14 @@ namespace {
                             "see -version for available targets"));
 
   StringRef ToolName;
+
+  bool error(error_code ec) {
+    if (!ec) return false;
+
+    outs() << ToolName << ": error reading file: " << ec.message() << ".\n";
+    outs().flush();
+    return true;
+  }
 }
 
 static const Target *GetTarget(const ObjectFile *Obj = NULL) {
@@ -161,12 +169,18 @@ static void DisassembleInput(const StringRef &Filename) {
   outs() << Filename
          << ":\tfile format " << Obj->getFileFormatName() << "\n\n\n";
 
+  error_code ec;
   for (ObjectFile::section_iterator i = Obj->begin_sections(),
                                     e = Obj->end_sections();
-                                    i != e; ++i) {
-    if (!i->isText())
-      continue;
-    outs() << "Disassembly of section " << i->getName() << ":\n\n";
+                                    i != e; i.increment(ec)) {
+    if (error(ec)) break;
+    bool text;
+    if (error(i->isText(text))) break;
+    if (!text) continue;
+
+    StringRef name;
+    if (error(i->getName(name))) break;
+    outs() << "Disassembly of section " << name << ":\n\n";
 
     // Set up disassembler.
     OwningPtr<const MCAsmInfo> AsmInfo(TheTarget->createAsmInfo(TripleName));
@@ -202,7 +216,8 @@ static void DisassembleInput(const StringRef &Filename) {
       return;
     }
 
-    StringRef Bytes = i->getContents();
+    StringRef Bytes;
+    if (error(i->getContents(Bytes))) break;
     StringRefMemoryObject memoryObject(Bytes);
     uint64_t Size;
     uint64_t Index;
@@ -217,7 +232,9 @@ static void DisassembleInput(const StringRef &Filename) {
 #     endif
 
       if (DisAsm->getInstruction(Inst, Size, memoryObject, Index, DebugOut)) {
-        outs() << format("%8x:\t", i->getAddress() + Index);
+        uint64_t addr;
+        if (error(i->getAddress(addr))) break;
+        outs() << format("%8x:\t", addr + Index);
         DumpBytes(StringRef(Bytes.data() + Index, Size));
         IP->printInst(&Inst, outs());
         outs() << "\n";

@@ -69,29 +69,33 @@ struct coff_section {
 
 class COFFObjectFile : public ObjectFile {
 private:
-        uint64_t         HeaderOff;
   const coff_file_header *Header;
   const coff_section     *SectionTable;
   const coff_symbol      *SymbolTable;
   const char             *StringTable;
+        uint32_t          StringTableSize;
 
-  const coff_section     *getSection(std::size_t index) const;
-  const char             *getString(std::size_t offset) const;
+        error_code        getSection(int32_t index,
+                                     const coff_section *&Res) const;
+        error_code        getString(uint32_t offset, StringRef &Res) const;
+
+  const coff_symbol      *toSymb(DataRefImpl Symb) const;
+  const coff_section     *toSec(DataRefImpl Sec) const;
 
 protected:
-  virtual SymbolRef getSymbolNext(DataRefImpl Symb) const;
-  virtual StringRef getSymbolName(DataRefImpl Symb) const;
-  virtual uint64_t  getSymbolAddress(DataRefImpl Symb) const;
-  virtual uint64_t  getSymbolSize(DataRefImpl Symb) const;
-  virtual char      getSymbolNMTypeChar(DataRefImpl Symb) const;
-  virtual bool      isSymbolInternal(DataRefImpl Symb) const;
+  virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
+  virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
+  virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
+  virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
 
-  virtual SectionRef getSectionNext(DataRefImpl Sec) const;
-  virtual StringRef  getSectionName(DataRefImpl Sec) const;
-  virtual uint64_t   getSectionAddress(DataRefImpl Sec) const;
-  virtual uint64_t   getSectionSize(DataRefImpl Sec) const;
-  virtual StringRef  getSectionContents(DataRefImpl Sec) const;
-  virtual bool       isSectionText(DataRefImpl Sec) const;
+  virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
+  virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const;
+  virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
+  virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
 
 public:
   COFFObjectFile(MemoryBuffer *Object, error_code &ec);

@@ -143,6 +143,14 @@ namespace {
   StringRef CurrentFilename;
   typedef std::vector<NMSymbol> SymbolListT;
   SymbolListT SymbolList;
+
+  bool error(error_code ec) {
+    if (!ec) return false;
+
+    outs() << ToolName << ": error reading file: " << ec.message() << ".\n";
+    outs().flush();
+    return true;
+  }
 }
 
 static void SortAndPrintSymbolList() {
@@ -261,19 +269,25 @@ static void DumpSymbolNamesFromModule(Module *M) {
 }
 
 static void DumpSymbolNamesFromObject(ObjectFile *obj) {
+  error_code ec;
   for (ObjectFile::symbol_iterator i = obj->begin_symbols(),
-                                   e = obj->end_symbols(); i != e; ++i) {
-    if (!DebugSyms && i->isInternal())
+                                   e = obj->end_symbols();
+                                   i != e; i.increment(ec)) {
+    if (error(ec)) break;
+    bool internal;
+    if (error(i->isInternal(internal))) break;
+    if (!DebugSyms && internal)
       continue;
     NMSymbol s;
     s.Size = object::UnknownAddressOrSize;
     s.Address = object::UnknownAddressOrSize;
-    if (PrintSize || SizeSort)
-      s.Size = i->getSize();
+    if (PrintSize || SizeSort) {
+      if (error(i->getSize(s.Size))) break;
+    }
     if (PrintAddress)
-      s.Address = i->getAddress();
-    s.TypeChar = i->getNMTypeChar();
-    s.Name     = i->getName();
+      if (error(i->getAddress(s.Address))) break;
+    if (error(i->getNMTypeChar(s.TypeChar))) break;
+    if (error(i->getName(s.Name))) break;
     SymbolList.push_back(s);
   }
 

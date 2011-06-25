@@ -222,19 +222,19 @@ class ELFObjectFile : public ObjectFile {
   const char     *getString(const Elf_Shdr *section, uint32_t offset) const;
 
 protected:
-  virtual SymbolRef getSymbolNext(DataRefImpl Symb) const;
-  virtual StringRef getSymbolName(DataRefImpl Symb) const;
-  virtual uint64_t  getSymbolAddress(DataRefImpl Symb) const;
-  virtual uint64_t  getSymbolSize(DataRefImpl Symb) const;
-  virtual char      getSymbolNMTypeChar(DataRefImpl Symb) const;
-  virtual bool      isSymbolInternal(DataRefImpl Symb) const;
+  virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
+  virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
+  virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
+  virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
 
-  virtual SectionRef getSectionNext(DataRefImpl Sec) const;
-  virtual StringRef  getSectionName(DataRefImpl Sec) const;
-  virtual uint64_t   getSectionAddress(DataRefImpl Sec) const;
-  virtual uint64_t   getSectionSize(DataRefImpl Sec) const;
-  virtual StringRef  getSectionContents(DataRefImpl Sec) const;
-  virtual bool       isSectionText(DataRefImpl Sec) const;
+  virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
+  virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const;
+  virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
+  virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
 
 public:
   ELFObjectFile(MemoryBuffer *Object, error_code &ec);
@@ -269,8 +269,9 @@ void ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-SymbolRef ELFObjectFile<target_endianness, is64Bits>
-                       ::getSymbolNext(DataRefImpl Symb) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolNext(DataRefImpl Symb,
+                                        SymbolRef &Result) const {
   validateSymbol(Symb);
   const Elf_Shdr *SymbolTableSection = SymbolTableSections[Symb.d.b];
 
@@ -287,63 +288,80 @@ SymbolRef ELFObjectFile<target_endianness, is64Bits>
     }
   }
 
-  return SymbolRef(Symb, this);
+  Result = SymbolRef(Symb, this);
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-StringRef ELFObjectFile<target_endianness, is64Bits>
-                       ::getSymbolName(DataRefImpl Symb) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolName(DataRefImpl Symb,
+                                        StringRef &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
   if (symb->st_name == 0) {
     const Elf_Shdr *section = getSection(symb->st_shndx);
     if (!section)
-      return "";
-    return getString(dot_shstrtab_sec, section->sh_name);
+      Result = "";
+    else
+      Result = getString(dot_shstrtab_sec, section->sh_name);
+    return object_error::success;
   }
 
   // Use the default symbol table name section.
-  return getString(dot_strtab_sec, symb->st_name);
+  Result = getString(dot_strtab_sec, symb->st_name);
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-uint64_t ELFObjectFile<target_endianness, is64Bits>
-                      ::getSymbolAddress(DataRefImpl Symb) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolAddress(DataRefImpl Symb,
+                                           uint64_t &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
   const Elf_Shdr *Section;
   switch (symb->st_shndx) {
   case ELF::SHN_COMMON:
    // Undefined symbols have no address yet.
-  case ELF::SHN_UNDEF: return UnknownAddressOrSize;
-  case ELF::SHN_ABS: return symb->st_value;
+  case ELF::SHN_UNDEF:
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  case ELF::SHN_ABS:
+    Result = symb->st_value;
+    return object_error::success;
   default: Section = getSection(symb->st_shndx);
   }
 
   switch (symb->getType()) {
-  case ELF::STT_SECTION: return Section ? Section->sh_addr
-                                        : UnknownAddressOrSize;
+  case ELF::STT_SECTION:
+    Result = Section ? Section->sh_addr : UnknownAddressOrSize;
+    return object_error::success;
   case ELF::STT_FUNC:
   case ELF::STT_OBJECT:
   case ELF::STT_NOTYPE:
-    return symb->st_value;
-  default: return UnknownAddressOrSize;
+    Result = symb->st_value;
+    return object_error::success;
+  default:
+    Result = UnknownAddressOrSize;
+    return object_error::success;
   }
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-uint64_t ELFObjectFile<target_endianness, is64Bits>
-                      ::getSymbolSize(DataRefImpl Symb) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolSize(DataRefImpl Symb,
+                                        uint64_t &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
   if (symb->st_size == 0)
-    return UnknownAddressOrSize;
-  return symb->st_size;
+    Result = UnknownAddressOrSize;
+  Result = symb->st_size;
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-char ELFObjectFile<target_endianness, is64Bits>
-                  ::getSymbolNMTypeChar(DataRefImpl Symb) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSymbolNMTypeChar(DataRefImpl Symb,
+                                              char &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
   const Elf_Shdr *Section = getSection(symb->st_shndx);
@@ -390,71 +408,91 @@ char ELFObjectFile<target_endianness, is64Bits>
         ret = 'W';
   }
 
-  if (ret == '?' && symb->getType() == ELF::STT_SECTION)
-    return StringSwitch<char>(getSymbolName(Symb))
+  if (ret == '?' && symb->getType() == ELF::STT_SECTION) {
+    StringRef name;
+    if (error_code ec = getSymbolName(Symb, name))
+      return ec;
+    Result = StringSwitch<char>(name)
       .StartsWith(".debug", 'N')
       .StartsWith(".note", 'n');
+    return object_error::success;
+  }
 
-  return ret;
+  Result = ret;
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-bool ELFObjectFile<target_endianness, is64Bits>
-                  ::isSymbolInternal(DataRefImpl Symb) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::isSymbolInternal(DataRefImpl Symb,
+                                           bool &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
 
   if (  symb->getType() == ELF::STT_FILE
      || symb->getType() == ELF::STT_SECTION)
-    return true;
-  return false;
+    Result = true;
+  Result = false;
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-SectionRef ELFObjectFile<target_endianness, is64Bits>
-                        ::getSectionNext(DataRefImpl Sec) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSectionNext(DataRefImpl Sec, SectionRef &Result) const {
   const uint8_t *sec = reinterpret_cast<const uint8_t *>(Sec.p);
   sec += Header->e_shentsize;
   Sec.p = reinterpret_cast<intptr_t>(sec);
-  return SectionRef(Sec, this);
+  Result = SectionRef(Sec, this);
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-StringRef ELFObjectFile<target_endianness, is64Bits>
-                       ::getSectionName(DataRefImpl Sec) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSectionName(DataRefImpl Sec,
+                                         StringRef &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  return StringRef(getString(dot_shstrtab_sec, sec->sh_name));
+  Result = StringRef(getString(dot_shstrtab_sec, sec->sh_name));
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-uint64_t ELFObjectFile<target_endianness, is64Bits>
-                      ::getSectionAddress(DataRefImpl Sec) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSectionAddress(DataRefImpl Sec,
+                                            uint64_t &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  return sec->sh_addr;
+  Result = sec->sh_addr;
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-uint64_t ELFObjectFile<target_endianness, is64Bits>
-                      ::getSectionSize(DataRefImpl Sec) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSectionSize(DataRefImpl Sec,
+                                         uint64_t &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  return sec->sh_size;
+  Result = sec->sh_size;
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-StringRef ELFObjectFile<target_endianness, is64Bits>
-                       ::getSectionContents(DataRefImpl Sec) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getSectionContents(DataRefImpl Sec,
+                                             StringRef &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  const char *start = (char*)base() + sec->sh_offset;
-  return StringRef(start, sec->sh_size);
+  const char *start = (const char*)base() + sec->sh_offset;
+  Result = StringRef(start, sec->sh_size);
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>
-bool ELFObjectFile<target_endianness, is64Bits>
-                  ::isSectionText(DataRefImpl Sec) const {
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::isSectionText(DataRefImpl Sec,
+                                        bool &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   if (sec->sh_flags & ELF::SHF_EXECINSTR)
-    return true;
-  return false;
+    Result = true;
+  else
+    Result = false;
+  return object_error::success;
 }
 
 template<support::endianness target_endianness, bool is64Bits>

@@ -17,6 +17,7 @@
 #include "llvm/Object/Binary.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstring>
 
@@ -29,7 +30,7 @@ union DataRefImpl {
   struct {
     uint32_t a, b;
   } d;
-  intptr_t p;
+  uintptr_t p;
 };
 
 static bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
@@ -38,6 +39,19 @@ static bool operator ==(const DataRefImpl &a, const DataRefImpl &b) {
   return std::memcmp(&a, &b, sizeof(DataRefImpl)) == 0;
 }
 
+class RelocationRef {
+  DataRefImpl RelocationPimpl;
+  const ObjectFile *OwningObject;
+
+public:
+  RelocationRef() : OwningObject(NULL) { std::memset(&RelocationPimpl, 0, sizeof(RelocationPimpl)); }
+  RelocationRef(DataRefImpl RelocationP, const ObjectFile *Owner);
+
+  bool operator==(const RelocationRef &Other) const;
+
+  error_code getNext(RelocationRef &Result);
+};
+
 /// SymbolRef - This is a value type class that represents a single symbol in
 /// the list of symbols in the object file.
 class SymbolRef {
@@ -45,23 +59,24 @@ class SymbolRef {
   const ObjectFile *OwningObject;
 
 public:
+  SymbolRef() : OwningObject(NULL) { std::memset(&SymbolPimpl, 0, sizeof(SymbolPimpl)); }
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
 
   bool operator==(const SymbolRef &Other) const;
 
-  SymbolRef getNext() const;
+  error_code getNext(SymbolRef &Result) const;
 
-  StringRef getName() const;
-  uint64_t  getAddress() const;
-  uint64_t  getSize() const;
+  error_code getName(StringRef &Result) const;
+  error_code getAddress(uint64_t &Result) const;
+  error_code getSize(uint64_t &Result) const;
 
   /// Returns the ascii char that should be displayed in a symbol table dump via
   /// nm for this symbol.
-  char      getNMTypeChar() const;
+  error_code getNMTypeChar(char &Result) const;
 
   /// Returns true for symbols that are internal to the object file format such
   /// as section symbols.
-  bool      isInternal() const;
+  error_code isInternal(bool &Result) const;
 };
 
 /// SectionRef - This is a value type class that represents a single section in
@@ -71,19 +86,20 @@ class SectionRef {
   const ObjectFile *OwningObject;
 
 public:
+  SectionRef() : OwningObject(NULL) { std::memset(&SectionPimpl, 0, sizeof(SectionPimpl)); }
   SectionRef(DataRefImpl SectionP, const ObjectFile *Owner);
 
   bool operator==(const SectionRef &Other) const;
 
-  SectionRef getNext() const;
+  error_code getNext(SectionRef &Result) const;
 
-  StringRef getName() const;
-  uint64_t  getAddress() const;
-  uint64_t  getSize() const;
-  StringRef getContents() const;
+  error_code getName(StringRef &Result) const;
+  error_code getAddress(uint64_t &Result) const;
+  error_code getSize(uint64_t &Result) const;
+  error_code getContents(StringRef &Result) const;
 
   // FIXME: Move to the normalization layer when it's created.
-  bool      isText() const;
+  error_code isText(bool &Result) const;
 };
 
 const uint64_t UnknownAddressOrSize = ~0ULL;
@@ -108,22 +124,25 @@ protected:
   // entry in the memory mapped object file. SymbolPimpl cannot contain any
   // virtual functions because then it could not point into the memory mapped
   // file.
+  //
+  // Implementations assume that the DataRefImpl is valid and has not been
+  // modified externally. It's UB otherwise.
   friend class SymbolRef;
-  virtual SymbolRef getSymbolNext(DataRefImpl Symb) const = 0;
-  virtual StringRef getSymbolName(DataRefImpl Symb) const = 0;
-  virtual uint64_t  getSymbolAddress(DataRefImpl Symb) const = 0;
-  virtual uint64_t  getSymbolSize(DataRefImpl Symb) const = 0;
-  virtual char      getSymbolNMTypeChar(DataRefImpl Symb) const = 0;
-  virtual bool      isSymbolInternal(DataRefImpl Symb) const = 0;
+  virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const = 0;
+  virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const = 0;
+  virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const =0;
+  virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
+  virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const = 0;
+  virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const = 0;
 
   // Same as above for SectionRef.
   friend class SectionRef;
-  virtual SectionRef getSectionNext(DataRefImpl Sec) const = 0;
-  virtual StringRef  getSectionName(DataRefImpl Sec) const = 0;
-  virtual uint64_t   getSectionAddress(DataRefImpl Sec) const = 0;
-  virtual uint64_t   getSectionSize(DataRefImpl Sec) const = 0;
-  virtual StringRef  getSectionContents(DataRefImpl Sec) const = 0;
-  virtual bool       isSectionText(DataRefImpl Sec) const = 0;
+  virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const = 0;
+  virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const = 0;
+  virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const =0;
+  virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const = 0;
+  virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res)const=0;
+  virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const = 0;
 
 
 public:
@@ -146,8 +165,12 @@ public:
       return !(*this == other);
     }
 
-    content_iterator& operator++() {  // Preincrement
-      Current = Current.getNext();
+    content_iterator& increment(error_code &err) {
+      content_type next;
+      if (error_code ec = Current.getNext(next))
+        err = ec;
+      else
+        Current = next;
       return *this;
     }
   };
@@ -196,28 +219,28 @@ inline bool SymbolRef::operator==(const SymbolRef &Other) const {
   return SymbolPimpl == Other.SymbolPimpl;
 }
 
-inline SymbolRef SymbolRef::getNext() const {
-  return OwningObject->getSymbolNext(SymbolPimpl);
+inline error_code SymbolRef::getNext(SymbolRef &Result) const {
+  return OwningObject->getSymbolNext(SymbolPimpl, Result);
 }
 
-inline StringRef SymbolRef::getName() const {
-  return OwningObject->getSymbolName(SymbolPimpl);
+inline error_code SymbolRef::getName(StringRef &Result) const {
+  return OwningObject->getSymbolName(SymbolPimpl, Result);
 }
 
-inline uint64_t SymbolRef::getAddress() const {
-  return OwningObject->getSymbolAddress(SymbolPimpl);
+inline error_code SymbolRef::getAddress(uint64_t &Result) const {
+  return OwningObject->getSymbolAddress(SymbolPimpl, Result);
 }
 
-inline uint64_t SymbolRef::getSize() const {
-  return OwningObject->getSymbolSize(SymbolPimpl);
+inline error_code SymbolRef::getSize(uint64_t &Result) const {
+  return OwningObject->getSymbolSize(SymbolPimpl, Result);
 }
 
-inline char SymbolRef::getNMTypeChar() const {
-  return OwningObject->getSymbolNMTypeChar(SymbolPimpl);
+inline error_code SymbolRef::getNMTypeChar(char &Result) const {
+  return OwningObject->getSymbolNMTypeChar(SymbolPimpl, Result);
 }
 
-inline bool SymbolRef::isInternal() const {
-  return OwningObject->isSymbolInternal(SymbolPimpl);
+inline error_code SymbolRef::isInternal(bool &Result) const {
+  return OwningObject->isSymbolInternal(SymbolPimpl, Result);
 }
 
 
@@ -231,28 +254,28 @@ inline bool SectionRef::operator==(const SectionRef &Other) const {
   return SectionPimpl == Other.SectionPimpl;
 }
 
-inline SectionRef SectionRef::getNext() const {
-  return OwningObject->getSectionNext(SectionPimpl);
+inline error_code SectionRef::getNext(SectionRef &Result) const {
+  return OwningObject->getSectionNext(SectionPimpl, Result);
 }
 
-inline StringRef SectionRef::getName() const {
-  return OwningObject->getSectionName(SectionPimpl);
+inline error_code SectionRef::getName(StringRef &Result) const {
+  return OwningObject->getSectionName(SectionPimpl, Result);
 }
 
-inline uint64_t SectionRef::getAddress() const {
-  return OwningObject->getSectionAddress(SectionPimpl);
+inline error_code SectionRef::getAddress(uint64_t &Result) const {
+  return OwningObject->getSectionAddress(SectionPimpl, Result);
 }
 
-inline uint64_t SectionRef::getSize() const {
-  return OwningObject->getSectionSize(SectionPimpl);
+inline error_code SectionRef::getSize(uint64_t &Result) const {
+  return OwningObject->getSectionSize(SectionPimpl, Result);
 }
 
-inline StringRef SectionRef::getContents() const {
-  return OwningObject->getSectionContents(SectionPimpl);
+inline error_code SectionRef::getContents(StringRef &Result) const {
+  return OwningObject->getSectionContents(SectionPimpl, Result);
 }
 
-inline bool SectionRef::isText() const {
-  return OwningObject->isSectionText(SectionPimpl);
+inline error_code SectionRef::isText(bool &Result) const {
+  return OwningObject->isSectionText(SectionPimpl, Result);
 }
 
 } // end namespace object

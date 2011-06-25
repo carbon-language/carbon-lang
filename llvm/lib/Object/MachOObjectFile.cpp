@@ -47,19 +47,19 @@ public:
   virtual unsigned getArch() const;
 
 protected:
-  virtual SymbolRef getSymbolNext(DataRefImpl Symb) const;
-  virtual StringRef getSymbolName(DataRefImpl Symb) const;
-  virtual uint64_t  getSymbolAddress(DataRefImpl Symb) const;
-  virtual uint64_t  getSymbolSize(DataRefImpl Symb) const;
-  virtual char      getSymbolNMTypeChar(DataRefImpl Symb) const;
-  virtual bool      isSymbolInternal(DataRefImpl Symb) const;
+  virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
+  virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
+  virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
+  virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
+  virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
 
-  virtual SectionRef getSectionNext(DataRefImpl Sec) const;
-  virtual StringRef  getSectionName(DataRefImpl Sec) const;
-  virtual uint64_t   getSectionAddress(DataRefImpl Sec) const;
-  virtual uint64_t   getSectionSize(DataRefImpl Sec) const;
-  virtual StringRef  getSectionContents(DataRefImpl Sec) const;
-  virtual bool       isSectionText(DataRefImpl Sec) const;
+  virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
+  virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const;
+  virtual error_code getSectionSize(DataRefImpl Sec, uint64_t &Res) const;
+  virtual error_code getSectionContents(DataRefImpl Sec, StringRef &Res) const;
+  virtual error_code isSectionText(DataRefImpl Sec, bool &Res) const;
 
 private:
   MachOObject *MachOObj;
@@ -115,29 +115,38 @@ void MachOObjectFile::getSymbolTableEntry(DataRefImpl DRI,
 }
 
 
-SymbolRef MachOObjectFile::getSymbolNext(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSymbolNext(DataRefImpl DRI,
+                                          SymbolRef &Result) const {
   DRI.d.b++;
   moveToNextSymbol(DRI);
-  return SymbolRef(DRI, this);
+  Result = SymbolRef(DRI, this);
+  return object_error::success;
 }
 
-StringRef MachOObjectFile::getSymbolName(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSymbolName(DataRefImpl DRI,
+                                          StringRef &Result) const {
   InMemoryStruct<macho::SymbolTableEntry> Entry;
   getSymbolTableEntry(DRI, Entry);
-  return MachOObj->getStringAtIndex(Entry->StringIndex);
+  Result = MachOObj->getStringAtIndex(Entry->StringIndex);
+  return object_error::success;
 }
 
-uint64_t MachOObjectFile::getSymbolAddress(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSymbolAddress(DataRefImpl DRI,
+                                             uint64_t &Result) const {
   InMemoryStruct<macho::SymbolTableEntry> Entry;
   getSymbolTableEntry(DRI, Entry);
-  return Entry->Value;
+  Result = Entry->Value;
+  return object_error::success;
 }
 
-uint64_t MachOObjectFile::getSymbolSize(DataRefImpl DRI) const {
-  return UnknownAddressOrSize;
+error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
+                                          uint64_t &Result) const {
+  Result = UnknownAddressOrSize;
+  return object_error::success;
 }
 
-char MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
+                                                char &Result) const {
   InMemoryStruct<macho::SymbolTableEntry> Entry;
   getSymbolTableEntry(DRI, Entry);
 
@@ -157,13 +166,16 @@ char MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI) const {
 
   if (Entry->Flags & (macho::STF_External | macho::STF_PrivateExtern))
     Char = toupper(Char);
-  return Char;
+  Result = Char;
+  return object_error::success;
 }
 
-bool MachOObjectFile::isSymbolInternal(DataRefImpl DRI) const {
+error_code MachOObjectFile::isSymbolInternal(DataRefImpl DRI,
+                                             bool &Result) const {
   InMemoryStruct<macho::SymbolTableEntry> Entry;
   getSymbolTableEntry(DRI, Entry);
-  return Entry->Flags & macho::STF_StabsEntryMask;
+  Result = Entry->Flags & macho::STF_StabsEntryMask;
+  return object_error::success;
 }
 
 ObjectFile::symbol_iterator MachOObjectFile::begin_symbols() const {
@@ -205,10 +217,12 @@ void MachOObjectFile::moveToNextSection(DataRefImpl &DRI) const {
   }
 }
 
-SectionRef MachOObjectFile::getSectionNext(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSectionNext(DataRefImpl DRI,
+                                           SectionRef &Result) const {
   DRI.d.b++;
   moveToNextSection(DRI);
-  return SectionRef(DRI, this);
+  Result = SectionRef(DRI, this);
+  return object_error::success;
 }
 
 void
@@ -220,43 +234,53 @@ MachOObjectFile::getSection(DataRefImpl DRI,
   MachOObj->ReadSection(LCI, DRI.d.b, Res);
 }
 
-StringRef MachOObjectFile::getSectionName(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
+                                           StringRef &Result) const {
   InMemoryStruct<macho::SegmentLoadCommand> SLC;
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
   MachOObj->ReadSegmentLoadCommand(LCI, SLC);
   InMemoryStruct<macho::Section> Sect;
   MachOObj->ReadSection(LCI, DRI.d.b, Sect);
 
-  static char Result[34];
-  strcpy(Result, SLC->Name);
-  strcat(Result, ",");
-  strcat(Result, Sect->Name);
-  return StringRef(Result);
+  static char result[34];
+  strcpy(result, SLC->Name);
+  strcat(result, ",");
+  strcat(result, Sect->Name);
+  Result = StringRef(result);
+  return object_error::success;
 }
 
-uint64_t MachOObjectFile::getSectionAddress(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSectionAddress(DataRefImpl DRI,
+                                              uint64_t &Result) const {
   InMemoryStruct<macho::Section> Sect;
   getSection(DRI, Sect);
-  return Sect->Address;
+  Result = Sect->Address;
+  return object_error::success;
 }
 
-uint64_t MachOObjectFile::getSectionSize(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSectionSize(DataRefImpl DRI,
+                                           uint64_t &Result) const {
   InMemoryStruct<macho::Section> Sect;
   getSection(DRI, Sect);
-  return Sect->Size;
+  Result = Sect->Size;
+  return object_error::success;
 }
 
-StringRef MachOObjectFile::getSectionContents(DataRefImpl DRI) const {
+error_code MachOObjectFile::getSectionContents(DataRefImpl DRI,
+                                               StringRef &Result) const {
   InMemoryStruct<macho::Section> Sect;
   getSection(DRI, Sect);
-  return MachOObj->getData(Sect->Offset, Sect->Size);
+  Result = MachOObj->getData(Sect->Offset, Sect->Size);
+  return object_error::success;
 }
 
-bool MachOObjectFile::isSectionText(DataRefImpl DRI) const {
+error_code MachOObjectFile::isSectionText(DataRefImpl DRI,
+                                          bool &Result) const {
   InMemoryStruct<macho::SegmentLoadCommand> SLC;
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
   MachOObj->ReadSegmentLoadCommand(LCI, SLC);
-  return !strcmp(SLC->Name, "__TEXT");
+  Result = !strcmp(SLC->Name, "__TEXT");
+  return object_error::success;
 }
 
 ObjectFile::section_iterator MachOObjectFile::begin_sections() const {

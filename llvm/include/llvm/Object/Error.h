@@ -25,7 +25,8 @@ struct object_error {
 enum _ {
   success = 0,
   invalid_file_type,
-  parse_failed
+  parse_failed,
+  unexpected_eof
 };
   _ v_;
 

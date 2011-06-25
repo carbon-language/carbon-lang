@@ -41,19 +41,28 @@ LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef ObjectFile,
 }
 
 void LLVMMoveToNextSection(LLVMSectionIteratorRef SI) {
-  // We can't use unwrap() here because the argument to ++ must be an lvalue.
-  ++*reinterpret_cast<ObjectFile::section_iterator*>(SI);
+  error_code ec;
+  unwrap(SI)->increment(ec);
+  if (ec) report_fatal_error("LLVMMoveToNextSection failed: " + ec.message());
 }
 
 const char *LLVMGetSectionName(LLVMSectionIteratorRef SI) {
-  return (*unwrap(SI))->getName().data();
+  StringRef ret;
+  if (error_code ec = (*unwrap(SI))->getName(ret))
+   report_fatal_error(ec.message());
+  return ret.data();
 }
 
 uint64_t LLVMGetSectionSize(LLVMSectionIteratorRef SI) {
-  return (*unwrap(SI))->getSize();
+  uint64_t ret;
+  if (error_code ec = (*unwrap(SI))->getSize(ret))
+    report_fatal_error(ec.message());
+  return ret;
 }
 
 const char *LLVMGetSectionContents(LLVMSectionIteratorRef SI) {
-  return (*unwrap(SI))->getContents().data();
+  StringRef ret;
+  if (error_code ec = (*unwrap(SI))->getContents(ret))
+    report_fatal_error(ec.message());
+  return ret.data();
 }
-
