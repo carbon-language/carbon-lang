@@ -9,7 +9,7 @@ from lldbtest import *
 
 class NamespaceTestCase(TestBase):
 
-    mydir = "namespace"
+    mydir = os.path.join("lang", "cpp", "namespace")
 
     # rdar://problem/8668674
     @unittest2.expectedFailure
