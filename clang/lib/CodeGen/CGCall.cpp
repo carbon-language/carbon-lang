@@ -359,7 +359,7 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
     if (CodeGenFunction::hasAggregateLLVMType(FT)) {
       AI = ExpandTypeFromArgs(FT, LV, AI);
     } else {
-      EmitStoreThroughLValue(RValue::get(AI), LV, FT);
+      EmitStoreThroughLValue(RValue::get(AI), LV);
       ++AI;
     }
   }
@@ -386,7 +386,7 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
     if (CodeGenFunction::hasAggregateLLVMType(FT)) {
       ExpandTypeToArgs(FT, RValue::getAggregate(LV.getAddress()), Args);
     } else {
-      RValue RV = EmitLoadOfLValue(LV, FT);
+      RValue RV = EmitLoadOfLValue(LV);
       assert(RV.isScalar() &&
              "Unexpected non-scalar rvalue during struct expansion.");
       Args.push_back(RV.getScalarVal());
@@ -1329,8 +1329,7 @@ static void emitWriteback(CodeGenFunction &CGF,
   // Perform the writeback.
   QualType srcAddrType = writeback.AddressType;
   CGF.EmitStoreThroughLValue(RValue::get(value),
-                             CGF.MakeAddrLValue(srcAddr, srcAddrType),
-                             srcAddrType);
+                             CGF.MakeAddrLValue(srcAddr, srcAddrType));
 
   // Jump to the continuation block.
   if (!provablyNonNull)
@@ -1407,7 +1406,7 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
   // Perform a copy if necessary.
   if (shouldCopy) {
     LValue srcLV = CGF.MakeAddrLValue(srcAddr, srcAddrType);
-    RValue srcRV = CGF.EmitLoadOfLValue(srcLV, srcAddrType);
+    RValue srcRV = CGF.EmitLoadOfLValue(srcLV);
     assert(srcRV.isScalar());
 
     llvm::Value *src = srcRV.getScalarVal();

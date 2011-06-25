@@ -1856,6 +1856,11 @@ public:
   llvm::Value *EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                 unsigned Alignment, QualType Ty,
                                 llvm::MDNode *TBAAInfo = 0);
+
+  /// EmitLoadOfScalar - Load a scalar value from an address, taking
+  /// care to appropriately convert from the memory representation to
+  /// the LLVM value representation.  The l-value must be a simple
+  /// l-value.
   llvm::Value *EmitLoadOfScalar(LValue lvalue);
 
   /// EmitStoreOfScalar - Store a scalar value to an address, taking
@@ -1864,23 +1869,27 @@ public:
   void EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                          bool Volatile, unsigned Alignment, QualType Ty,
                          llvm::MDNode *TBAAInfo = 0);
+
+  /// EmitStoreOfScalar - Store a scalar value to an address, taking
+  /// care to appropriately convert from the memory representation to
+  /// the LLVM value representation.  The l-value must be a simple
+  /// l-value.
   void EmitStoreOfScalar(llvm::Value *value, LValue lvalue);
 
   /// EmitLoadOfLValue - Given an expression that represents a value lvalue,
   /// this method emits the address of the lvalue, then loads the result as an
   /// rvalue, returning the rvalue.
-  RValue EmitLoadOfLValue(LValue V, QualType LVType);
-  RValue EmitLoadOfExtVectorElementLValue(LValue V, QualType LVType);
-  RValue EmitLoadOfBitfieldLValue(LValue LV, QualType ExprType);
+  RValue EmitLoadOfLValue(LValue V);
+  RValue EmitLoadOfExtVectorElementLValue(LValue V);
+  RValue EmitLoadOfBitfieldLValue(LValue LV);
   RValue EmitLoadOfPropertyRefLValue(LValue LV,
                                  ReturnValueSlot Return = ReturnValueSlot());
 
   /// EmitStoreThroughLValue - Store the specified rvalue into the specified
   /// lvalue, where both are guaranteed to the have the same type, and that type
   /// is 'Ty'.
-  void EmitStoreThroughLValue(RValue Src, LValue Dst, QualType Ty);
-  void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst,
-                                                QualType Ty);
+  void EmitStoreThroughLValue(RValue Src, LValue Dst);
+  void EmitStoreThroughExtVectorComponentLValue(RValue Src, LValue Dst);
   void EmitStoreThroughPropertyRefLValue(RValue Src, LValue Dst);
 
   /// EmitStoreThroughLValue - Store Src into Dst with same constraints as
@@ -1889,7 +1898,7 @@ public:
   /// \param Result [out] - If non-null, this will be set to a Value* for the
   /// bit-field contents after the store, appropriate for use as the result of
   /// an assignment to the bit-field.
-  void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst, QualType Ty,
+  void EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
                                       llvm::Value **Result=0);
 
   /// Emit an l-value for an assignment (simple or compound) of complex type.
@@ -2064,8 +2073,8 @@ public:
   void EmitARCMoveWeak(llvm::Value *dst, llvm::Value *src);
   llvm::Value *EmitARCRetainAutorelease(QualType type, llvm::Value *value);
   llvm::Value *EmitARCRetainAutoreleaseNonBlock(llvm::Value *value);
-  llvm::Value *EmitARCStoreStrong(LValue addr, QualType type,
-                                  llvm::Value *value, bool ignored);
+  llvm::Value *EmitARCStoreStrong(LValue lvalue, llvm::Value *value,
+                                  bool ignored);
   llvm::Value *EmitARCStoreStrongCall(llvm::Value *addr, llvm::Value *value,
                                       bool ignored);
   llvm::Value *EmitARCRetain(QualType type, llvm::Value *value);

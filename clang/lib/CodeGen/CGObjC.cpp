@@ -466,7 +466,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     } 
     else {
         LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), 
-                                    Ivar, 0);
+                                      Ivar, 0);
         QualType propType = PD->getType();
 
         llvm::Value *value;
@@ -478,7 +478,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
               PD->getType()->isObjCRetainableType())
             value = emitARCRetainLoadOfScalar(*this, LV, IVART);
           else
-            value = EmitLoadOfLValue(LV, IVART).getScalarVal();
+            value = EmitLoadOfLValue(LV).getScalarVal();
 
           value = Builder.CreateBitCast(value, ConvertType(propType));
         }
@@ -1141,7 +1141,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   // time through the loop.
   if (!elementIsVariable) {
     elementLValue = EmitLValue(cast<Expr>(S.getElement()));
-    EmitStoreThroughLValue(RValue::get(CurrentItem), elementLValue, elementType);
+    EmitStoreThroughLValue(RValue::get(CurrentItem), elementLValue);
   } else {
     EmitScalarInit(CurrentItem, elementLValue);
   }
@@ -1205,7 +1205,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
 
     llvm::Value *null = llvm::Constant::getNullValue(convertedElementType);
     elementLValue = EmitLValue(cast<Expr>(S.getElement()));
-    EmitStoreThroughLValue(RValue::get(null), elementLValue, elementType);
+    EmitStoreThroughLValue(RValue::get(null), elementLValue);
   }
 
   if (DI) {
@@ -1566,9 +1566,10 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(llvm::Value *addr,
 /// Store into a strong object.  Sometimes calls this:
 ///   call void @objc_storeStrong(i8** %addr, i8* %value)
 /// Other times, breaks it down into components.
-llvm::Value *CodeGenFunction::EmitARCStoreStrong(LValue dst, QualType type,
+llvm::Value *CodeGenFunction::EmitARCStoreStrong(LValue dst,
                                                  llvm::Value *newValue,
                                                  bool ignored) {
+  QualType type = dst.getType();
   bool isBlock = type->isBlockPointerType();
 
   // Use a store barrier at -O0 unless this is a block type or the
@@ -1585,15 +1586,11 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrong(LValue dst, QualType type,
   newValue = EmitARCRetain(type, newValue);
 
   // Read the old value.
-  llvm::Value *oldValue =
-    EmitLoadOfScalar(dst.getAddress(), dst.isVolatileQualified(),
-                     dst.getAlignment(), type, dst.getTBAAInfo());
+  llvm::Value *oldValue = EmitLoadOfScalar(dst);
 
   // Store.  We do this before the release so that any deallocs won't
   // see the old value.
-  EmitStoreOfScalar(newValue, dst.getAddress(),
-                    dst.isVolatileQualified(), dst.getAlignment(),
-                    type, dst.getTBAAInfo());
+  EmitStoreOfScalar(newValue, dst);
 
   // Finally, release the old value.
   EmitARCRelease(oldValue, /*precise*/ false);
@@ -2184,7 +2181,7 @@ static TryEmitResult tryEmitARCRetainLoadOfScalar(CodeGenFunction &CGF,
   case Qualifiers::OCL_ExplicitNone:
   case Qualifiers::OCL_Strong:
   case Qualifiers::OCL_Autoreleasing:
-    return TryEmitResult(CGF.EmitLoadOfLValue(lvalue, type).getScalarVal(),
+    return TryEmitResult(CGF.EmitLoadOfLValue(lvalue).getScalarVal(),
                          false);
 
   case Qualifiers::OCL_Weak:
@@ -2279,7 +2276,7 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
     
     // Load the object pointer and cast it to the appropriate type.
     QualType exprType = e->getType();
-    llvm::Value *result = CGF.EmitLoadOfLValue(lv, exprType).getScalarVal();
+    llvm::Value *result = CGF.EmitLoadOfLValue(lv).getScalarVal();
     
     if (resultType)
       result = CGF.Builder.CreateBitCast(result, resultType);
@@ -2288,8 +2285,7 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
     llvm::Value *null 
       = llvm::ConstantPointerNull::get(
                             cast<llvm::PointerType>(CGF.ConvertType(exprType)));
-    CGF.EmitStoreOfScalar(null, lv.getAddress(), lv.isVolatileQualified(),
-                          lv.getAlignment(), exprType);
+    CGF.EmitStoreOfScalar(null, lv);
     
     return TryEmitResult(result, true);
   }
@@ -2430,7 +2426,7 @@ CodeGenFunction::EmitARCStoreStrong(const BinaryOperator *e,
                       e->getType(), lvalue.getTBAAInfo());
     EmitARCRelease(oldValue, /*precise*/ false);
   } else {
-    value = EmitARCStoreStrong(lvalue, e->getType(), value, ignored);
+    value = EmitARCStoreStrong(lvalue, value, ignored);
   }
 
   return std::pair<LValue,llvm::Value*>(lvalue, value);

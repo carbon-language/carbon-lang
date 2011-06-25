@@ -556,7 +556,7 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
       CGF.EmitExprAsInit(MemberInit->getInit(), Field, LHS, false);
     } else {
       RValue RHS = RValue::get(CGF.EmitScalarExpr(MemberInit->getInit()));
-      CGF.EmitStoreThroughLValue(RHS, LHS, FieldType);
+      CGF.EmitStoreThroughLValue(RHS, LHS);
     }
   } else if (MemberInit->getInit()->getType()->isAnyComplexType()) {
     CGF.EmitComplexExprIntoAddr(MemberInit->getInit(), LHS.getAddress(),

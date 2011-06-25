@@ -482,7 +482,7 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
     llvm::Value *value = EmitScalarExpr(init);
     if (capturedByInit)
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    EmitStoreThroughLValue(RValue::get(value), lvalue, lvalue.getType());
+    EmitStoreThroughLValue(RValue::get(value), lvalue);
     return;
   }
 
@@ -579,7 +579,7 @@ void CodeGenFunction::EmitScalarInit(const Expr *init,
 void CodeGenFunction::EmitScalarInit(llvm::Value *init, LValue lvalue) {
   Qualifiers::ObjCLifetime lifetime = lvalue.getObjCLifetime();
   if (!lifetime)
-    return EmitStoreThroughLValue(RValue::get(init), lvalue, lvalue.getType());
+    return EmitStoreThroughLValue(RValue::get(init), lvalue);
 
   switch (lifetime) {
   case Qualifiers::OCL_None:
@@ -982,7 +982,7 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
     RValue rvalue = EmitReferenceBindingToExpr(init, D);
     if (capturedByInit) 
       drillIntoBlockVariable(*this, lvalue, cast<VarDecl>(D));
-    EmitStoreThroughLValue(rvalue, lvalue, type);
+    EmitStoreThroughLValue(rvalue, lvalue);
   } else if (!hasAggregateLLVMType(type)) {
     EmitScalarInit(init, D, lvalue, capturedByInit);
   } else if (type->isAnyComplexType()) {
@@ -1163,10 +1163,11 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     }
 
     // Store the initial value into the alloca.
-    if (doStore)
-      EmitStoreOfScalar(Arg, DeclPtr, Ty.isVolatileQualified(),
-                        getContext().getDeclAlign(&D).getQuantity(), Ty,
-                        CGM.getTBAAInfo(Ty));
+    if (doStore) {
+      LValue lv = MakeAddrLValue(DeclPtr, Ty,
+                                 getContext().getDeclAlign(&D).getQuantity());
+      EmitStoreOfScalar(Arg, lv);
+    }
   }
 
   llvm::Value *&DMEntry = LocalDeclMap[&D];
