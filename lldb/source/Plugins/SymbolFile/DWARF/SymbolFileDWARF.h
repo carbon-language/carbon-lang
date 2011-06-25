@@ -18,6 +18,7 @@
 #include <vector>
 
 // Other libraries and framework includes
+#include "clang/AST/ExternalASTSource.h"
 #include "llvm/ADT/DenseMap.h"
 
 #include "lldb/Core/ClangForward.h"
@@ -127,6 +128,12 @@ public:
     
     static void
     CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *);
+    
+    static void
+    FindExternalVisibleDeclsByName (void *baton,
+                                    const clang::DeclContext *DC,
+                                    clang::DeclarationName Name,
+                                    llvm::SmallVectorImpl <clang::NamedDecl *> *results);
 
     //------------------------------------------------------------------
     // PluginInterface protocol
@@ -180,6 +187,11 @@ public:
 
     clang::DeclContext *
     GetClangDeclContextForDIEOffset (dw_offset_t die_offset);
+    
+    void
+    SearchNamespace (const clang::NamespaceDecl *namespace_decl, 
+                     const char *name, 
+                     llvm::SmallVectorImpl <clang::NamedDecl *> *results);
 
     lldb_private::Flags&
     GetFlags ()
@@ -328,6 +340,13 @@ protected:
     UniqueDWARFASTTypeMap &
     GetUniqueDWARFASTTypeMap ();
 
+    void                    LinkDeclContextToDIE (clang::DeclContext *decl_ctx,
+                                                  const DWARFDebugInfoEntry *die)
+                            {
+                                m_die_to_decl_ctx[die] = decl_ctx;
+                                m_decl_ctx_to_die[decl_ctx] = die;
+                            }
+    
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;
     lldb_private::Flags             m_flags;
@@ -360,11 +379,13 @@ protected:
     std::auto_ptr<DWARFDebugRanges>     m_ranges;
     UniqueDWARFASTTypeMap m_unique_ast_type_map;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *> DIEToDeclContextMap;
+    typedef llvm::DenseMap<const clang::DeclContext *, const DWARFDebugInfoEntry *> DeclContextToDIEMap;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb_private::Type *> DIEToTypePtr;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::clang_type_t> DIEToClangType;
     typedef llvm::DenseMap<lldb::clang_type_t, const DWARFDebugInfoEntry *> ClangTypeToDIE;
     DIEToDeclContextMap m_die_to_decl_ctx;
+    DeclContextToDIEMap m_decl_ctx_to_die;
     DIEToTypePtr m_die_to_type;
     DIEToVariableSP m_die_to_variable_sp;
     DIEToClangType m_forward_decl_die_to_clang_type;

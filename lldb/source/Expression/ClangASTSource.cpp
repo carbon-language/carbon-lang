@@ -266,3 +266,18 @@ NameSearchContext::AddTypeDecl(void *type)
     }
     return NULL;
 }
+
+void 
+NameSearchContext::AddLookupResult (clang::DeclContextLookupConstResult result)
+{
+    for (clang::NamedDecl * const *decl_iterator = result.first;
+         decl_iterator != result.second;
+         ++decl_iterator)
+        m_decls.push_back (*decl_iterator);
+}
+
+void
+NameSearchContext::AddNamedDecl (clang::NamedDecl *decl)
+{
+    m_decls.push_back (decl);
+}

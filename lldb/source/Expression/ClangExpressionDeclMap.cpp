@@ -1656,6 +1656,69 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             log->Printf("Ignoring a query during an import");
         return;
     }
+    
+    do
+    {
+        if (isa<TranslationUnitDecl>(context.m_decl_context))
+            break;
+        
+        if (log)
+            log->Printf("'%s' is in something other than a translation unit", name.GetCString());
+        
+        const Decl *context_decl = dyn_cast<Decl>(context.m_decl_context);
+            
+        if (!context_decl)
+            return;
+        
+        if (const NamespaceDecl *namespace_decl = dyn_cast<NamespaceDecl>(context_decl))
+        {
+            Decl *original_decl;
+            ASTContext *original_ctx;
+            
+            if (log)
+                log->Printf("Resolving the containing context's origin...");
+            
+            if (!m_parser_vars->GetASTImporter(context.GetASTContext())->ResolveDeclOrigin(namespace_decl, &original_decl, &original_ctx))
+                break;
+            
+            if (log)
+                log->Printf("Casting it to a DeclContext...");
+            
+            DeclContext *original_decl_context = dyn_cast<DeclContext>(original_decl);
+            
+            if (!original_decl_context)
+                break;
+            
+            if (log)
+            {                
+                std::string s;
+                llvm::raw_string_ostream os(s);
+                original_decl->print(os);
+                os.flush();
+                
+                log->Printf("Containing context:");
+                log->Printf("%s", s.c_str());
+            }
+            
+            if (!original_ctx->getExternalSource())
+                break;
+                
+            DeclContextLookupConstResult original_lookup_result = original_ctx->getExternalSource()->FindExternalVisibleDeclsByName(original_decl_context, context.m_decl_name);
+                        
+            NamedDecl *const *iter;
+            
+            for (iter = original_lookup_result.first;
+                 iter != original_lookup_result.second;
+                 ++iter)
+            {
+                clang::NamedDecl *copied_result = dyn_cast<NamedDecl>(m_parser_vars->GetASTImporter(context.GetASTContext())->CopyDecl(original_ctx, *iter));
+                
+                if (copied_result)
+                    context.AddNamedDecl(copied_result);
+            }
+        }
+    }
+    while (0);
         
     SymbolContextList sc_list;
     
@@ -1721,14 +1784,6 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
                     else if (non_extern_symbol)
                         AddOneFunction (context, NULL, non_extern_symbol);
                 }
-                
-                ClangNamespaceDecl namespace_decl (m_parser_vars->m_sym_ctx.FindNamespace(name));
-                if (namespace_decl)
-                {
-                    clang::NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decl);
-                    if (clang_namespace_decl)
-                        clang_namespace_decl->setHasExternalLexicalStorage();
-                }
             }
             else
             {
@@ -1740,6 +1795,26 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
                 if (data_symbol)
                     AddOneGenericVariable(context, *data_symbol);
             }
+        }
+        
+        ClangNamespaceDecl namespace_decl (m_parser_vars->m_sym_ctx.FindNamespace(name));
+        
+        if (namespace_decl)
+        {
+            if (log)
+            {                
+                std::string s;
+                llvm::raw_string_ostream os(s);
+                namespace_decl.GetNamespaceDecl()->print(os);
+                os.flush();
+                
+                log->Printf("Added namespace decl:");
+                log->Printf("%s", s.c_str());
+            }
+            
+            clang::NamespaceDecl *clang_namespace_decl = AddNamespace(context, namespace_decl);
+            if (clang_namespace_decl)
+                clang_namespace_decl->setHasExternalLexicalStorage();
         }
     }
     else
@@ -1883,7 +1958,47 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         AddOneType(context, user_type, false);
     }
 }
+
+const clang::DeclContext *
+ClangExpressionDeclMap::CompleteDeclContext (clang::ASTContext *ast_context,
+                                             const clang::DeclContext *decl_context)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    if (log)
+    {
+        const NamedDecl *named_decl = dyn_cast<NamedDecl>(decl_context);
         
+        if (named_decl)
+            log->Printf("Completing a '%s' DeclContext named '%s'", decl_context->getDeclKindName(), named_decl->getDeclName().getAsString().c_str());
+        else
+            log->Printf("Completing a '%s' DeclContext", decl_context->getDeclKindName());
+    }
+    
+    assert (m_parser_vars.get());
+    
+    if (!m_parser_vars->GetASTImporter (ast_context)->CompleteDeclContext(decl_context))
+        return NULL;
+    
+    if (log)
+    {
+        const Decl *decl = dyn_cast<Decl>(decl_context);
+        
+        if (decl)
+        {
+            std::string s;
+            llvm::raw_string_ostream os(s);
+            decl->print(os);
+            os.flush();
+            
+            log->Printf("After:");
+            log->Printf("%s", s.c_str());
+        }
+    }
+    
+    return decl_context;
+}
+
 Value *
 ClangExpressionDeclMap::GetVariableValue
 (
@@ -2247,9 +2362,10 @@ ClangExpressionDeclMap::AddNamespace (NameSearchContext &context, const ClangNam
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    clang::Decl *copied_decl = ClangASTContext::CopyDecl (context.GetASTContext(),
-                                                          namespace_decl.GetASTContext(),
-                                                          namespace_decl.GetNamespaceDecl());
+    assert (m_parser_vars.get());
+    
+    clang::Decl *copied_decl = m_parser_vars->GetASTImporter(context.GetASTContext())->CopyDecl(namespace_decl.GetASTContext(), 
+                                                                                                namespace_decl.GetNamespaceDecl());
 
     return dyn_cast<clang::NamespaceDecl>(copied_decl);
 }
@@ -2393,9 +2509,12 @@ ClangExpressionDeclMap::GuardedCopyType (ASTContext *dest_context,
     
     m_parser_vars->m_ignore_lookups = true;
     
-    void *ret = ClangASTContext::CopyType (dest_context,
-                                           source_context,
-                                           clang_type);
+    lldb_private::ClangASTImporter *importer = m_parser_vars->GetASTImporter(dest_context);
+    
+    QualType ret_qual_type = importer->CopyType (source_context,
+                                                 QualType::getFromOpaquePtr(clang_type));
+    
+    void *ret = ret_qual_type.getAsOpaquePtr();
     
     m_parser_vars->m_ignore_lookups = false;
     

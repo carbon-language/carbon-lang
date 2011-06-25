@@ -25,6 +25,7 @@
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Symbol/TaggedASTType.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -471,6 +472,23 @@ public:
               const ConstString &name);
     
     //------------------------------------------------------------------
+    /// [Used by ClangASTSource] Fill in all the members of a (potentially
+    ///     incomplete) DeclContext.
+    ///
+    /// @param[in] ast_context
+    ///     The parser's AST context, in which the DeclContext is resident
+    ///
+    /// @param[in] decl_context
+    ///     The DeclContext that needs to be filled in.
+    ///
+    /// @return
+    ///     The completed context on success; NULL otherwise.
+    //------------------------------------------------------------------
+    const clang::DeclContext *
+    CompleteDeclContext (clang::ASTContext *ast_context,
+                         const clang::DeclContext *decl_context);
+    
+    //------------------------------------------------------------------
     /// [Used by ClangASTSource] Report whether a $__lldb variable has
     /// been searched for yet.  This is the trigger for beginning to 
     /// actually look for externally-defined names.  (Names that come
@@ -535,11 +553,24 @@ private:
                 m_sym_ctx.target_sp.get();
             return NULL;
         }
+        
+        ClangASTImporter *GetASTImporter (clang::ASTContext *ast_context)
+        {            
+            if (!m_ast_importer.get())
+                m_ast_importer.reset(new ClangASTImporter(ast_context));
+            
+            if (m_ast_importer->TargetASTContext() != ast_context)
+                return NULL;
+            
+            return m_ast_importer.get();
+        }
+        
         ExecutionContext           *m_exe_ctx;          ///< The execution context to use when parsing.
         SymbolContext               m_sym_ctx;          ///< The symbol context to use in finding variables and types.
         ClangPersistentVariables   *m_persistent_vars;  ///< The persistent variables for the process.
         bool                        m_enable_lookups;   ///< Set to true during parsing if we have found the first "$__lldb" name.
         bool                        m_ignore_lookups;   ///< True during an import when we should be ignoring type lookups.
+        std::auto_ptr<ClangASTImporter> m_ast_importer; ///< The importer used to import types on the parser's behalf.
     private:
         DISALLOW_COPY_AND_ASSIGN (ParserVars);
     };

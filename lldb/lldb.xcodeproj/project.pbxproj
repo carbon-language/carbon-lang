@@ -390,6 +390,7 @@
 		26F73062139D8FDB00FD51C7 /* History.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F73061139D8FDB00FD51C7 /* History.cpp */; };
 		49C850771384A02F007DB519 /* ProcessDataAllocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 49C850761384A02F007DB519 /* ProcessDataAllocator.h */; };
 		49C8507C1384A786007DB519 /* ProcessDataAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49C850781384A0CA007DB519 /* ProcessDataAllocator.cpp */; };
+		49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */; };
 		4C74CB6312288704006A8171 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C74CB6212288704006A8171 /* Carbon.framework */; };
 		4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */; };
 		4CCA644D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA643D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp */; };
@@ -1091,6 +1092,8 @@
 		49D4FE871210B61C00CDB854 /* ClangPersistentVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangPersistentVariables.cpp; path = source/Expression/ClangPersistentVariables.cpp; sourceTree = "<group>"; };
 		49D7072611B5AD03001AD875 /* ClangASTSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTSource.h; path = include/lldb/Expression/ClangASTSource.h; sourceTree = "<group>"; };
 		49D7072811B5AD11001AD875 /* ClangASTSource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTSource.cpp; path = source/Expression/ClangASTSource.cpp; sourceTree = "<group>"; };
+		49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangASTImporter.cpp; path = source/Symbol/ClangASTImporter.cpp; sourceTree = "<group>"; };
+		49D8FB3713B5594900411094 /* ClangASTImporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTImporter.h; path = include/lldb/Symbol/ClangASTImporter.h; sourceTree = "<group>"; };
 		49DA742F11DE6A5A006AEF7E /* IRToDWARF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IRToDWARF.cpp; path = source/Expression/IRToDWARF.cpp; sourceTree = "<group>"; };
 		49DA743411DE6BB2006AEF7E /* IRToDWARF.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IRToDWARF.h; path = include/lldb/Expression/IRToDWARF.h; sourceTree = "<group>"; };
 		49E45FA911F660DC008F7B28 /* ClangASTType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClangASTType.h; path = include/lldb/Symbol/ClangASTType.h; sourceTree = "<group>"; };
@@ -2001,6 +2004,8 @@
 				26BC7F1310F1B8EC00F91463 /* Block.cpp */,
 				26BC7C5610F1B6E900F91463 /* ClangASTContext.h */,
 				26BC7F1410F1B8EC00F91463 /* ClangASTContext.cpp */,
+				49D8FB3713B5594900411094 /* ClangASTImporter.h */,
+				49D8FB3513B558DE00411094 /* ClangASTImporter.cpp */,
 				49E45FA911F660DC008F7B28 /* ClangASTType.h */,
 				49E45FAD11F660FE008F7B28 /* ClangASTType.cpp */,
 				26E6902E129C6BD500DDECD9 /* ClangExternalASTSourceCallbacks.h */,
@@ -3233,6 +3238,7 @@
 				4CCA645813B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.cpp in Sources */,
 				9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */,
 				9415F61813B2C0EF00A52B36 /* FormatManager.cpp in Sources */,
+				49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

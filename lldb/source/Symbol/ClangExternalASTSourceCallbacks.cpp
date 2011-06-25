@@ -52,6 +52,17 @@ ClangExternalASTSourceCallbacks::FindExternalVisibleDeclsByName
     clang::DeclarationName clang_decl_name
 )
 {
+    if (m_callback_find_by_name)
+    {
+        llvm::SmallVector <clang::NamedDecl *, 3> results;
+        
+        m_callback_find_by_name (m_callback_baton, decl_ctx, clang_decl_name, &results);
+        
+        DeclContextLookupResult lookup_result (SetExternalVisibleDeclsForName(decl_ctx, clang_decl_name, results));
+        
+        return lookup_result;
+    }
+        
     std::string decl_name (clang_decl_name.getAsString());
 
     switch (clang_decl_name.getNameKind()) {

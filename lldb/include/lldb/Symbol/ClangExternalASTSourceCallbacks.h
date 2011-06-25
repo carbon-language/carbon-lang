@@ -58,17 +58,19 @@ public:
 
     typedef void (*CompleteTagDeclCallback)(void *baton, clang::TagDecl *);
     typedef void (*CompleteObjCInterfaceDeclCallback)(void *baton, clang::ObjCInterfaceDecl *);
-
+    typedef void (*FindExternalVisibleDeclsByNameCallback)(void *baton, const clang::DeclContext *DC, clang::DeclarationName Name, llvm::SmallVectorImpl <clang::NamedDecl *> *results);
 
     ClangExternalASTSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                      CompleteObjCInterfaceDeclCallback objc_decl_callback,
+                                     FindExternalVisibleDeclsByNameCallback find_by_name_callback,
                                      void *callback_baton) :
         m_callback_tag_decl (tag_decl_callback),
         m_callback_objc_decl (objc_decl_callback),
+        m_callback_find_by_name (find_by_name_callback),
         m_callback_baton (callback_baton)
     {
     }
-
+    
     //------------------------------------------------------------------
     // clang::ExternalASTSource
     //------------------------------------------------------------------
@@ -140,10 +142,12 @@ public:
     void
     SetExternalSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                 CompleteObjCInterfaceDeclCallback objc_decl_callback,
+                                FindExternalVisibleDeclsByNameCallback find_by_name_callback,
                                 void *callback_baton)
     {
         m_callback_tag_decl = tag_decl_callback;
         m_callback_objc_decl = objc_decl_callback;
+        m_callback_find_by_name = find_by_name_callback;
         m_callback_baton = callback_baton;    
     }
 
@@ -154,6 +158,7 @@ public:
         {
             m_callback_tag_decl = NULL;
             m_callback_objc_decl = NULL;
+            m_callback_find_by_name = NULL;
         }
     }
 
@@ -163,6 +168,7 @@ protected:
     //------------------------------------------------------------------
     CompleteTagDeclCallback                 m_callback_tag_decl;
     CompleteObjCInterfaceDeclCallback       m_callback_objc_decl;
+    FindExternalVisibleDeclsByNameCallback  m_callback_find_by_name;
     void *                                  m_callback_baton;
 };
 

@@ -81,6 +81,7 @@ SymbolFileDWARFDebugMap::InitializeObject()
     llvm::OwningPtr<clang::ExternalASTSource> ast_source_ap (
         new ClangExternalASTSourceCallbacks (SymbolFileDWARFDebugMap::CompleteTagDecl,
                                              SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl,
+                                             NULL,
                                              this));
 
     GetClangASTContext().SetExternalSource (ast_source_ap);

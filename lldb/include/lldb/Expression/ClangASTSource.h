@@ -251,6 +251,26 @@ struct NameSearchContext {
     ///     The opaque QualType for the TypeDecl being registered.
     //------------------------------------------------------------------
     clang::NamedDecl *AddTypeDecl(void *type);
+    
+    
+    //------------------------------------------------------------------
+    /// Add Decls from the provided DeclContextLookupResult to the list
+    /// of results.
+    ///
+    /// @param[in] result
+    ///     The DeclContextLookupResult, usually returned as the result
+    ///     of querying a DeclContext.
+    //------------------------------------------------------------------
+    void AddLookupResult (clang::DeclContextLookupConstResult result);
+    
+    //------------------------------------------------------------------
+    /// Add a NamedDecl to the list of results.
+    ///
+    /// @param[in] decl
+    ///     The NamedDecl, usually returned as the result
+    ///     of querying a DeclContext.
+    //------------------------------------------------------------------
+    void AddNamedDecl (clang::NamedDecl *decl);
 };
 
 }

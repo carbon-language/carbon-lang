@@ -4644,3 +4644,45 @@ ClangASTContext::GetCompleteType (clang_type_t clang_type)
     return ClangASTContext::GetCompleteType (getASTContext(), clang_type);
 }
 
+bool
+ClangASTContext::GetCompleteDecl (clang::ASTContext *ast,
+                                  clang::Decl *decl)
+{
+    if (!decl)
+        return false;
+    
+    ExternalASTSource *ast_source = ast->getExternalSource();
+    
+    if (!ast_source)
+        return false;
+        
+    if (clang::TagDecl *tag_decl = llvm::dyn_cast<clang::TagDecl>(decl))
+    {
+        if (tag_decl->getDefinition())
+            return true;
+        
+        if (!tag_decl->hasExternalLexicalStorage())
+            return false;
+        
+        ast_source->CompleteType(tag_decl);
+        
+        return !tag_decl->getTypeForDecl()->isIncompleteType();
+    }
+    else if (clang::ObjCInterfaceDecl *objc_interface_decl = llvm::dyn_cast<clang::ObjCInterfaceDecl>(decl))
+    {
+        if (!objc_interface_decl->isForwardDecl())
+            return true;
+        
+        if (!objc_interface_decl->hasExternalLexicalStorage())
+            return false;
+        
+        ast_source->CompleteType(objc_interface_decl);
+        
+        return !objc_interface_decl->isForwardDecl();
+    }
+    else
+    {
+        return false;
+    }
+}
+

@@ -218,6 +218,7 @@ SymbolFileDWARF::GetClangASTContext ()
         llvm::OwningPtr<clang::ExternalASTSource> ast_source_ap (
             new ClangExternalASTSourceCallbacks (SymbolFileDWARF::CompleteTagDecl,
                                                  SymbolFileDWARF::CompleteObjCInterfaceDecl,
+                                                 SymbolFileDWARF::FindExternalVisibleDeclsByName,
                                                  this));
 
         ast.SetExternalSource (ast_source_ap);
@@ -2789,7 +2790,7 @@ SymbolFileDWARF::ResolveNamespaceDIE (DWARFCompileUnit *curr_cu, const DWARFDebu
             Declaration decl;   // TODO: fill in the decl object
             clang::NamespaceDecl *namespace_decl = GetClangASTContext().GetUniqueNamespaceDeclaration (namespace_name, decl, GetClangDeclContextForDIE (curr_cu, die->GetParent()));
             if (namespace_decl)
-                m_die_to_decl_ctx[die] = (clang::DeclContext*)namespace_decl;
+                LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
             return namespace_decl;
         }
     }
@@ -2834,7 +2835,7 @@ SymbolFileDWARF::GetClangDeclContextForDIE (DWARFCompileUnit *curr_cu, const DWA
                         if (namespace_decl)
                         {
                             //printf ("SymbolFileDWARF::GetClangDeclContextForDIE ( die = 0x%8.8x ) => 0x%8.8x\n", decl_die->GetOffset(), die->GetOffset());
-                            m_die_to_decl_ctx[die] = (clang::DeclContext*)namespace_decl;
+                            LinkDeclContextToDIE((clang::DeclContext*)namespace_decl, die);
                         }
                         return namespace_decl;
                     }
@@ -3282,8 +3283,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     // Store a forward declaration to this class type in case any 
                     // parameters in any class methods need it for the clang 
-                    // types for function prototypes. 
-                    m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
+                    // types for function prototypes.
+                    LinkDeclContextToDIE(ClangASTContext::GetDeclContextForType(clang_type), die);
                     type_sp.reset (new Type (die->GetOffset(), 
                                              this, 
                                              type_name_const_str, 
@@ -3396,7 +3397,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             assert (enumerator_clang_type != NULL);
                         }
 
-                        m_die_to_decl_ctx[die] = ClangASTContext::GetDeclContextForType (clang_type);
+                        LinkDeclContextToDIE(ClangASTContext::GetDeclContextForType(clang_type), die);
+                        
                         type_sp.reset( new Type (die->GetOffset(), 
                                                  this, 
                                                  type_name_const_str, 
@@ -3661,7 +3663,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             
                             // Add the decl to our DIE to decl context map
                             assert (function_decl);
-                            m_die_to_decl_ctx[die] = function_decl;
+                            LinkDeclContextToDIE(function_decl, die);
                             if (!function_param_decls.empty())
                                 ast.SetFunctionParameters (function_decl, 
                                                            &function_param_decls.front(), 
@@ -4409,3 +4411,69 @@ SymbolFileDWARF::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDec
         symbol_file_dwarf->ResolveClangOpaqueTypeDefinition (clang_type);
 }
 
+void
+SymbolFileDWARF::SearchNamespace (const clang::NamespaceDecl *namespace_decl, 
+                                  const char *name, 
+                                  llvm::SmallVectorImpl <clang::NamedDecl *> *results)
+{    
+    DeclContextToDIEMap::iterator iter = m_decl_ctx_to_die.find((const clang::DeclContext*)namespace_decl);
+    
+    if (iter == m_decl_ctx_to_die.end())
+        return;
+    
+    const DWARFDebugInfoEntry *namespace_die = iter->second;
+    
+    if (!results)
+        return;
+    
+    DWARFDebugInfo* info = DebugInfo();
+    
+    std::vector<NameToDIE::Info> die_info_array;
+    
+    size_t num_matches = m_type_index.Find (name, die_info_array);
+    
+    if (num_matches)
+    {
+        for (int i = 0;
+             i < num_matches;
+             ++i)
+        {
+            DWARFCompileUnit* compile_unit = info->GetCompileUnitAtIndex(die_info_array[i].cu_idx);
+            compile_unit->ExtractDIEsIfNeeded (false);
+            const DWARFDebugInfoEntry *die = compile_unit->GetDIEAtIndexUnchecked(die_info_array[i].die_idx);
+            
+            if (die->GetParent() != namespace_die)
+                continue;
+            
+            Type *matching_type = ResolveType (compile_unit, die);
+            
+            lldb::clang_type_t type = matching_type->GetClangFullType();
+            clang::QualType qual_type = clang::QualType::getFromOpaquePtr(type);
+            
+            
+            if (const clang::TagType *tag_type = dyn_cast<clang::TagType>(qual_type.getTypePtr()))
+            {
+                clang::TagDecl *tag_decl = tag_type->getDecl();
+                results->push_back(tag_decl);
+            }
+            else if (const clang::TypedefType *typedef_type = dyn_cast<clang::TypedefType>(qual_type.getTypePtr()))
+            {
+                clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
+                results->push_back(typedef_decl); 
+            }
+        }
+    }
+}
+
+void
+SymbolFileDWARF::FindExternalVisibleDeclsByName (void *baton,
+                                                 const clang::DeclContext *DC,
+                                                 clang::DeclarationName Name,
+                                                 llvm::SmallVectorImpl <clang::NamedDecl *> *results)
+{
+    SymbolFileDWARF *symbol_file_dwarf = (SymbolFileDWARF *)baton;
+                
+    const clang::NamespaceDecl *DC_namespace = llvm::dyn_cast<clang::NamespaceDecl>(DC);
+    
+    symbol_file_dwarf->SearchNamespace (DC_namespace, Name.getAsString().c_str(), results);
+}

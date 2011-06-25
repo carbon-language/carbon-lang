@@ -123,6 +123,16 @@ public:
     GetCompleteType (clang::ASTContext *ast,
                      lldb::clang_type_t clang_type);
 
+    bool
+    GetCompleteDecl (clang::Decl *decl)
+    {
+        return ClangASTContext::GetCompleteDecl(getASTContext(), decl);
+    }
+    
+    static bool
+    GetCompleteDecl (clang::ASTContext *ast,
+                     clang::Decl *decl);
+    
     //------------------------------------------------------------------
     // Basic Types
     //------------------------------------------------------------------
