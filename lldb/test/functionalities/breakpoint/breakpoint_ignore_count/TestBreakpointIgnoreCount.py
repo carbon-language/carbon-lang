@@ -10,7 +10,7 @@ from lldbtest import *
 
 class BreakpointIgnoreCountTestCase(TestBase):
 
-    mydir = "breakpoint_ignore_count"
+    mydir = os.path.join("functionalities", "breakpoint", "breakpoint_ignore_count")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

@@ -10,7 +10,7 @@ from lldbtest import *
 
 class BreakpointConditionsTestCase(TestBase):
 
-    mydir = "breakpoint_conditions"
+    mydir = os.path.join("functionalities", "breakpoint", "breakpoint_conditions")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

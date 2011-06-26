@@ -9,7 +9,7 @@ from lldbtest import *
 
 class BreakpointCommandTestCase(TestBase):
 
-    mydir = "breakpoint_command"
+    mydir = os.path.join("functionalities", "breakpoint", "breakpoint_command")
 
     @classmethod
     def classCleanup(cls):
