@@ -7,7 +7,7 @@ from lldbtest import *
 
 class HelloWorldTestCase(TestBase):
 
-    mydir = "hello_world"
+    mydir = os.path.join("python_api", "hello_world")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
