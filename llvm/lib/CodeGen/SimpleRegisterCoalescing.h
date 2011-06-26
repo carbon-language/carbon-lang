@@ -27,15 +27,6 @@ namespace llvm {
   class VirtRegMap;
   class MachineLoopInfo;
 
-  /// CopyRec - Representation for copy instructions in coalescer queue.
-  ///
-  struct CopyRec {
-    MachineInstr *MI;
-    unsigned LoopDepth;
-    CopyRec(MachineInstr *mi, unsigned depth)
-      : MI(mi), LoopDepth(depth) {}
-  };
-
   class SimpleRegisterCoalescing : public MachineFunctionPass,
                                    public RegisterCoalescer {
     MachineFunction* mf_;
@@ -88,14 +79,14 @@ namespace llvm {
     /// CopyCoalesceInMBB - Coalesce copies in the specified MBB, putting
     /// copies that cannot yet be coalesced into the "TryAgain" list.
     void CopyCoalesceInMBB(MachineBasicBlock *MBB,
-                           std::vector<CopyRec> &TryAgain);
+                           std::vector<MachineInstr*> &TryAgain);
 
     /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns true
     /// if the copy was successfully coalesced away. If it is not currently
     /// possible to coalesce this interval, but it may be possible if other
     /// things get coalesced, then it returns true by reference in 'Again'.
-    bool JoinCopy(CopyRec &TheCopy, bool &Again);
+    bool JoinCopy(MachineInstr *TheCopy, bool &Again);
 
     /// JoinIntervals - Attempt to join these two intervals.  On failure, this
     /// returns false.  The output "SrcInt" will not have been modified, so we can

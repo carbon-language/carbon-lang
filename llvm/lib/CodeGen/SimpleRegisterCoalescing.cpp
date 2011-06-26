@@ -839,8 +839,7 @@ SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned SrcReg,
 /// if the copy was successfully coalesced away. If it is not currently
 /// possible to coalesce this interval, but it may be possible if other
 /// things get coalesced, then it returns true by reference in 'Again'.
-bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
-  MachineInstr *CopyMI = TheCopy.MI;
+bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI, bool &Again) {
 
   Again = false;
   if (JoinedCopies.count(CopyMI) || ReMatCopies.count(CopyMI))
@@ -1268,12 +1267,12 @@ namespace {
 }
 
 void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
-                                               std::vector<CopyRec> &TryAgain) {
+                                            std::vector<MachineInstr*> &TryAgain) {
   DEBUG(dbgs() << MBB->getName() << ":\n");
 
-  SmallVector<CopyRec, 8> VirtCopies;
-  SmallVector<CopyRec, 8> PhysCopies;
-  SmallVector<CopyRec, 8> ImpDefCopies;
+  SmallVector<MachineInstr*, 8> VirtCopies;
+  SmallVector<MachineInstr*, 8> PhysCopies;
+  SmallVector<MachineInstr*, 8> ImpDefCopies;
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E;) {
     MachineInstr *Inst = MII++;
@@ -1292,32 +1291,32 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     bool SrcIsPhys = TargetRegisterInfo::isPhysicalRegister(SrcReg);
     bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
     if (li_->hasInterval(SrcReg) && li_->getInterval(SrcReg).empty())
-      ImpDefCopies.push_back(CopyRec(Inst, 0));
+      ImpDefCopies.push_back(Inst);
     else if (SrcIsPhys || DstIsPhys)
-      PhysCopies.push_back(CopyRec(Inst, 0));
+      PhysCopies.push_back(Inst);
     else
-      VirtCopies.push_back(CopyRec(Inst, 0));
+      VirtCopies.push_back(Inst);
   }
 
   // Try coalescing implicit copies and insert_subreg <undef> first,
   // followed by copies to / from physical registers, then finally copies
   // from virtual registers to virtual registers.
   for (unsigned i = 0, e = ImpDefCopies.size(); i != e; ++i) {
-    CopyRec &TheCopy = ImpDefCopies[i];
+    MachineInstr *TheCopy = ImpDefCopies[i];
     bool Again = false;
     if (!JoinCopy(TheCopy, Again))
       if (Again)
         TryAgain.push_back(TheCopy);
   }
   for (unsigned i = 0, e = PhysCopies.size(); i != e; ++i) {
-    CopyRec &TheCopy = PhysCopies[i];
+    MachineInstr *TheCopy = PhysCopies[i];
     bool Again = false;
     if (!JoinCopy(TheCopy, Again))
       if (Again)
         TryAgain.push_back(TheCopy);
   }
   for (unsigned i = 0, e = VirtCopies.size(); i != e; ++i) {
-    CopyRec &TheCopy = VirtCopies[i];
+    MachineInstr *TheCopy = VirtCopies[i];
     bool Again = false;
     if (!JoinCopy(TheCopy, Again))
       if (Again)
@@ -1328,7 +1327,7 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
 void SimpleRegisterCoalescing::joinIntervals() {
   DEBUG(dbgs() << "********** JOINING INTERVALS ***********\n");
 
-  std::vector<CopyRec> TryAgainList;
+  std::vector<MachineInstr*> TryAgainList;
   if (loopInfo->empty()) {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
@@ -1362,14 +1361,14 @@ void SimpleRegisterCoalescing::joinIntervals() {
     ProgressMade = false;
 
     for (unsigned i = 0, e = TryAgainList.size(); i != e; ++i) {
-      CopyRec &TheCopy = TryAgainList[i];
-      if (!TheCopy.MI)
+      MachineInstr *&TheCopy = TryAgainList[i];
+      if (!TheCopy)
         continue;
 
       bool Again = false;
       bool Success = JoinCopy(TheCopy, Again);
       if (Success || !Again) {
-        TheCopy.MI = 0;   // Mark this one as done.
+        TheCopy= 0;   // Mark this one as done.
         ProgressMade = true;
       }
     }
