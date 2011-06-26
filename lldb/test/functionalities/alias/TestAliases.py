@@ -9,7 +9,7 @@ from lldbtest import *
 
 class AliasTestCase(TestBase):
 
-    mydir = os.path.join("functionalities", "alias_tests")
+    mydir = os.path.join("functionalities", "alias")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym (self):

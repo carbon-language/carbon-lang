@@ -9,7 +9,7 @@ from lldbtest import *
 
 class AbbreviationsTestCase(TestBase):
     
-    mydir = os.path.join("functionalities", "abbreviation_tests")
+    mydir = os.path.join("functionalities", "abbreviation")
 
     def test_nonrunning_command_abbreviations (self):
         self.expect("ap script",
