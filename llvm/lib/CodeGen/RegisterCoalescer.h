@@ -142,18 +142,6 @@ namespace llvm {
       initializeRegisterCoalescerPass(*PassRegistry::getPassRegistry());
     }
 
-    /// Run the coalescer on this function, providing interference
-    /// data to query.  Return whether we removed any copies.
-    virtual bool coalesceFunction(MachineFunction &mf,
-                                  RegallocQuery &ifd) {
-      // This runs as an independent pass, so don't do anything.
-      return false;
-    }
-
-    /// Reset state.  Can be used to allow a coalescer run by
-    /// PassManager to be run again by the register allocator.
-    virtual void reset(MachineFunction &mf) {}
-
     /// Register allocators must call this from their own
     /// getAnalysisUsage to cover the case where the coalescer is not
     /// a Pass in the proper sense and isn't managed by PassManager.
@@ -220,7 +208,6 @@ namespace llvm {
   ///   // We don't reset the coalescer so if it's already been run this
   ///   // takes almost no time.
   ///   LinearScanRegallocQuery ifd(*li_);
-  ///   coalescer.coalesceFunction(fn, ifd);
   ///
   class RegallocQuery {
   public:
