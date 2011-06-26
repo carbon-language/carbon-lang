@@ -14,10 +14,10 @@
 #ifndef LLVM_CODEGEN_SIMPLE_REGISTER_COALESCING_H
 #define LLVM_CODEGEN_SIMPLE_REGISTER_COALESCING_H
 
+#include "RegisterCoalescer.h"
+#include "RegisterClassInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
-#include "llvm/CodeGen/RegisterCoalescer.h"
-#include "RegisterClassInfo.h"
 
 namespace llvm {
   class SimpleRegisterCoalescing;
