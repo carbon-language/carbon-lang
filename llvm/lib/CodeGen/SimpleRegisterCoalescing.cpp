@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regcoalescing"
-#include "SimpleRegisterCoalescing.h"
+#include "RegisterCoalescer.h"
 #include "VirtRegMap.h"
 #include "LiveDebugVariables.h"
 #include "RegisterCoalescer.h"

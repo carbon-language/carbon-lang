@@ -11,7 +11,7 @@
 
 #include "Splitter.h"
 
-#include "SimpleRegisterCoalescing.h"
+#include "RegisterCoalescer.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
