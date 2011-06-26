@@ -10,23 +10,6 @@ class HelloWorldTestCase(TestBase):
     mydir = "hello_world"
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_with_dsym_and_run_command(self):
-        """Create target, breakpoint, launch a process, and then kill it.
-
-        Use dsym info and lldb "run" command.
-        """
-        self.buildDsym()
-        self.hello_world_python(useLaunchAPI = False)
-
-    def test_with_dwarf_and_run_command(self):
-        """Create target, breakpoint, launch a process, and then kill it.
-
-        Use dwarf debug map and lldb "run" command.
-        """
-        self.buildDwarf()
-        self.hello_world_python(useLaunchAPI = False)
-
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_with_dsym_and_process_launch_api(self):
         """Create target, breakpoint, launch a process, and then kill it.
@@ -34,7 +17,7 @@ class HelloWorldTestCase(TestBase):
         Use dsym info and process launch API.
         """
         self.buildDsym()
-        self.hello_world_python(useLaunchAPI = True)
+        self.hello_world_python()
 
     @python_api_test
     def test_with_dwarf_and_process_launch_api(self):
@@ -43,7 +26,7 @@ class HelloWorldTestCase(TestBase):
         Use dwarf debug map and process launch API.
         """
         self.buildDwarf()
-        self.hello_world_python(useLaunchAPI = True)
+        self.hello_world_python()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
@@ -92,7 +75,7 @@ class HelloWorldTestCase(TestBase):
         self.line1 = line_number('main.c', '// Set break point at this line.')
         self.line2 = line_number('main.c', '// Waiting to be attached...')
 
-    def hello_world_python(self, useLaunchAPI):
+    def hello_world_python(self):
         """Create target, breakpoint, launch a process, and then kill it."""
 
         target = self.dbg.CreateTarget(self.exe)
@@ -114,16 +97,12 @@ class HelloWorldTestCase(TestBase):
         # rdar://problem/8364687
         # SBTarget.Launch() issue (or is there some race condition)?
 
-        if useLaunchAPI:
-            process = target.LaunchSimple(None, None, os.getcwd())
-            # The following isn't needed anymore, rdar://8364687 is fixed.
-            #
-            # Apply some dances after LaunchProcess() in order to break at "main".
-            # It only works sometimes.
-            #self.breakAfterLaunch(process, "main")
-        else:
-            # On the other hand, the following line of code are more reliable.
-            self.runCmd("run")
+        process = target.LaunchSimple(None, None, os.getcwd())
+        # The following isn't needed anymore, rdar://8364687 is fixed.
+        #
+        # Apply some dances after LaunchProcess() in order to break at "main".
+        # It only works sometimes.
+        #self.breakAfterLaunch(process, "main")
 
         process = target.GetProcess()
         self.assertTrue(process, PROCESS_IS_VALID)
