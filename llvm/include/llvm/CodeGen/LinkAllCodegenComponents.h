@@ -39,8 +39,6 @@ namespace {
       (void) llvm::createGreedyRegisterAllocator();
       (void) llvm::createDefaultPBQPRegisterAllocator();
 
-      (void) llvm::createSimpleRegisterCoalescer();
-      
       llvm::linkOcamlGC();
       llvm::linkShadowStackGC();
       

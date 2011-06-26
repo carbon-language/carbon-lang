@@ -55,7 +55,6 @@ STATISTIC(NumReMats   , "Number of instructions re-materialized");
 STATISTIC(numPeep     , "Number of identity moves eliminated after coalescing");
 STATISTIC(numAborts   , "Number of times interval joining aborted");
 
-char SimpleRegisterCoalescing::ID = 0;
 static cl::opt<bool>
 EnableJoining("join-liveintervals",
               cl::desc("Coalesce copies (default=true)"),
@@ -76,9 +75,8 @@ VerifyCoalescing("verify-coalescing",
          cl::desc("Verify machine instrs before and after register coalescing"),
          cl::Hidden);
 
-INITIALIZE_AG_PASS_BEGIN(SimpleRegisterCoalescing, RegisterCoalescer,
-                "simple-register-coalescing", "Simple Register Coalescing", 
-                false, false, true)
+INITIALIZE_PASS_BEGIN(RegisterCoalescer, "simple-register-coalescing",
+                      "Simple Register Coalescing", false, false)
 INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
 INITIALIZE_PASS_DEPENDENCY(LiveDebugVariables)
 INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
@@ -87,24 +85,10 @@ INITIALIZE_PASS_DEPENDENCY(StrongPHIElimination)
 INITIALIZE_PASS_DEPENDENCY(PHIElimination)
 INITIALIZE_PASS_DEPENDENCY(TwoAddressInstructionPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_AG_PASS_END(SimpleRegisterCoalescing, RegisterCoalescer,
-                "simple-register-coalescing", "Simple Register Coalescing", 
-                false, false, true)
+INITIALIZE_PASS_END(RegisterCoalescer, "simple-register-coalescing",
+                    "Simple Register Coalescing", false, false)
 
-char &llvm::SimpleRegisterCoalescingID = SimpleRegisterCoalescing::ID;
-
-// Register the RegisterCoalescer interface, providing a nice name to refer to.
-INITIALIZE_ANALYSIS_GROUP(RegisterCoalescer, "Register Coalescer", 
-                          SimpleRegisterCoalescing)
 char RegisterCoalescer::ID = 0;
-
-// RegisterCoalescer destructor: DO NOT move this to the header file
-// for RegisterCoalescer or else clients of the RegisterCoalescer
-// class may not depend on the RegisterCoalescer.o file in the current
-// .a file, causing alias analysis support to not be included in the
-// tool correctly!
-//
-RegisterCoalescer::~RegisterCoalescer() {}
 
 unsigned CoalescerPair::compose(unsigned a, unsigned b) const {
   if (!a) return b;
@@ -259,14 +243,7 @@ bool CoalescerPair::isCoalescable(const MachineInstr *MI) const {
   }
 }
 
-// Because of the way .a files work, we must force the SimpleRC
-// implementation to be pulled in if the RegisterCoalescer classes are
-// pulled in.  Otherwise we run the risk of RegisterCoalescer being
-// used, but the default implementation not being linked into the tool
-// that uses it.
-DEFINING_FILE_FOR(RegisterCoalescer)
-
-void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
+void RegisterCoalescer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addRequired<AliasAnalysis>();
   AU.addRequired<LiveIntervals>();
@@ -283,7 +260,7 @@ void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-void SimpleRegisterCoalescing::markAsJoined(MachineInstr *CopyMI) {
+void RegisterCoalescer::markAsJoined(MachineInstr *CopyMI) {
   /// Joined copies are not deleted immediately, but kept in JoinedCopies.
   JoinedCopies.insert(CopyMI);
 
@@ -310,7 +287,7 @@ void SimpleRegisterCoalescing::markAsJoined(MachineInstr *CopyMI) {
 ///
 /// This returns true if an interval was modified.
 ///
-bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
+bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
                                                     MachineInstr *CopyMI) {
   // Bail if there is no dst interval - can happen when merging physical subreg
   // operations.
@@ -464,7 +441,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(const CoalescerPair &CP,
 
 /// HasOtherReachingDefs - Return true if there are definitions of IntB
 /// other than BValNo val# that can reach uses of AValno val# of IntA.
-bool SimpleRegisterCoalescing::HasOtherReachingDefs(LiveInterval &IntA,
+bool RegisterCoalescer::HasOtherReachingDefs(LiveInterval &IntA,
                                                     LiveInterval &IntB,
                                                     VNInfo *AValNo,
                                                     VNInfo *BValNo) {
@@ -510,7 +487,7 @@ bool SimpleRegisterCoalescing::HasOtherReachingDefs(LiveInterval &IntA,
 ///
 /// This returns true if an interval was modified.
 ///
-bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
+bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
                                                         MachineInstr *CopyMI) {
   // FIXME: For now, only eliminate the copy by commuting its def when the
   // source register is a virtual register. We want to guard against cases
@@ -693,7 +670,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(const CoalescerPair &CP,
 
 /// ReMaterializeTrivialDef - If the source of a copy is defined by a trivial
 /// computation, replace the copy by rematerialize the definition.
-bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
+bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
                                                        bool preserveSrcInt,
                                                        unsigned DstReg,
                                                        unsigned DstSubIdx,
@@ -788,7 +765,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
 /// being updated is not zero, make sure to set it to the correct physical
 /// subregister.
 void
-SimpleRegisterCoalescing::UpdateRegDefsUses(const CoalescerPair &CP) {
+RegisterCoalescer::UpdateRegDefsUses(const CoalescerPair &CP) {
   bool DstIsPhys = CP.isPhys();
   unsigned SrcReg = CP.getSrcReg();
   unsigned DstReg = CP.getDstReg();
@@ -879,7 +856,7 @@ static bool removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *li_,
 
 /// RemoveDeadDef - If a def of a live interval is now determined dead, remove
 /// the val# it defines. If the live interval becomes empty, remove it as well.
-bool SimpleRegisterCoalescing::RemoveDeadDef(LiveInterval &li,
+bool RegisterCoalescer::RemoveDeadDef(LiveInterval &li,
                                              MachineInstr *DefMI) {
   SlotIndex DefIdx = li_->getInstructionIndex(DefMI).getDefIndex();
   LiveInterval::iterator MLR = li.FindLiveRangeContaining(DefIdx);
@@ -889,7 +866,7 @@ bool SimpleRegisterCoalescing::RemoveDeadDef(LiveInterval &li,
   return removeIntervalIfEmpty(li, li_, tri_);
 }
 
-void SimpleRegisterCoalescing::RemoveCopyFlag(unsigned DstReg,
+void RegisterCoalescer::RemoveCopyFlag(unsigned DstReg,
                                               const MachineInstr *CopyMI) {
   SlotIndex DefIdx = li_->getInstructionIndex(CopyMI).getDefIndex();
   if (li_->hasInterval(DstReg)) {
@@ -915,7 +892,7 @@ void SimpleRegisterCoalescing::RemoveCopyFlag(unsigned DstReg,
 /// virtual register. Once the coalescing is done, it cannot be broken and these
 /// are not spillable! If the destination interval uses are far away, think
 /// twice about coalescing them!
-bool SimpleRegisterCoalescing::shouldJoinPhys(CoalescerPair &CP) {
+bool RegisterCoalescer::shouldJoinPhys(CoalescerPair &CP) {
   bool Allocatable = li_->isAllocatable(CP.getDstReg());
   LiveInterval &JoinVInt = li_->getInterval(CP.getSrcReg());
 
@@ -966,8 +943,8 @@ bool SimpleRegisterCoalescing::shouldJoinPhys(CoalescerPair &CP) {
 /// isWinToJoinCrossClass - Return true if it's profitable to coalesce
 /// two virtual registers from different register classes.
 bool
-SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned SrcReg,
-                                                unsigned DstReg,
+RegisterCoalescer::isWinToJoinCrossClass(unsigned SrcReg,
+                                             unsigned DstReg,
                                              const TargetRegisterClass *SrcRC,
                                              const TargetRegisterClass *DstRC,
                                              const TargetRegisterClass *NewRC) {
@@ -1019,7 +996,7 @@ SimpleRegisterCoalescing::isWinToJoinCrossClass(unsigned SrcReg,
 /// if the copy was successfully coalesced away. If it is not currently
 /// possible to coalesce this interval, but it may be possible if other
 /// things get coalesced, then it returns true by reference in 'Again'.
-bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI, bool &Again) {
+bool RegisterCoalescer::JoinCopy(MachineInstr *CopyMI, bool &Again) {
 
   Again = false;
   if (JoinedCopies.count(CopyMI) || ReMatCopies.count(CopyMI))
@@ -1211,7 +1188,7 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
 
 /// JoinIntervals - Attempt to join these two intervals.  On failure, this
 /// returns false.
-bool SimpleRegisterCoalescing::JoinIntervals(CoalescerPair &CP) {
+bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
   LiveInterval &RHS = li_->getInterval(CP.getSrcReg());
   DEBUG({ dbgs() << "\t\tRHS = "; RHS.print(dbgs(), tri_); dbgs() << "\n"; });
 
@@ -1446,7 +1423,7 @@ namespace {
   };
 }
 
-void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
+void RegisterCoalescer::CopyCoalesceInMBB(MachineBasicBlock *MBB,
                                             std::vector<MachineInstr*> &TryAgain) {
   DEBUG(dbgs() << MBB->getName() << ":\n");
 
@@ -1504,7 +1481,7 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
   }
 }
 
-void SimpleRegisterCoalescing::joinIntervals() {
+void RegisterCoalescer::joinIntervals() {
   DEBUG(dbgs() << "********** JOINING INTERVALS ***********\n");
 
   std::vector<MachineInstr*> TryAgainList;
@@ -1555,13 +1532,13 @@ void SimpleRegisterCoalescing::joinIntervals() {
   }
 }
 
-void SimpleRegisterCoalescing::releaseMemory() {
+void RegisterCoalescer::releaseMemory() {
   JoinedCopies.clear();
   ReMatCopies.clear();
   ReMatDefs.clear();
 }
 
-bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
+bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
   mf_ = &fn;
   mri_ = &fn.getRegInfo();
   tm_ = &fn.getTarget();
@@ -1706,13 +1683,10 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 }
 
 /// print - Implement the dump method.
-void SimpleRegisterCoalescing::print(raw_ostream &O, const Module* m) const {
+void RegisterCoalescer::print(raw_ostream &O, const Module* m) const {
    li_->print(O, m);
 }
 
-RegisterCoalescer* llvm::createSimpleRegisterCoalescer() {
-  return new SimpleRegisterCoalescing();
+RegisterCoalescer *llvm::createRegisterCoalescer() {
+  return new RegisterCoalescer();
 }
-
-// Make sure that anything that uses RegisterCoalescer pulls in this file...
-DEFINING_FILE_FOR(SimpleRegisterCoalescing)

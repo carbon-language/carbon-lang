@@ -41,9 +41,8 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeProcessImplicitDefsPass(Registry);
   initializePEIPass(Registry);
   initializeRALinScanPass(Registry);
-  initializeRegisterCoalescerAnalysisGroup(Registry);
+  initializeRegisterCoalescerPass(Registry);
   initializeRenderMachineFunctionPass(Registry);
-  initializeSimpleRegisterCoalescingPass(Registry);
   initializeSlotIndexesPass(Registry);
   initializeLoopSplitterPass(Registry);
   initializeStackProtectorPass(Registry);

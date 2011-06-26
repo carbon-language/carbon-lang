@@ -88,7 +88,7 @@ public:
       : MachineFunctionPass(ID), builder(b), customPassID(cPassID) {
     initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
-    initializeRegisterCoalescerAnalysisGroup(*PassRegistry::getPassRegistry());
+    initializeRegisterCoalescerPass(*PassRegistry::getPassRegistry());
     initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
     initializeLiveStacksPass(*PassRegistry::getPassRegistry());
     initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());

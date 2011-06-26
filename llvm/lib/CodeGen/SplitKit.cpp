@@ -122,7 +122,7 @@ void SplitAnalysis::analyzeUses() {
   // Compute per-live block info.
   if (!calcLiveBlockInfo()) {
     // FIXME: calcLiveBlockInfo found inconsistencies in the live range.
-    // I am looking at you, SimpleRegisterCoalescing!
+    // I am looking at you, RegisterCoalescer!
     DidRepairRange = true;
     ++NumRepairs;
     DEBUG(dbgs() << "*** Fixing inconsistent live interval! ***\n");
@@ -165,7 +165,7 @@ bool SplitAnalysis::calcLiveBlockInfo() {
     tie(Start, Stop) = LIS.getSlotIndexes()->getMBBRange(BI.MBB);
 
     // If the block contains no uses, the range must be live through. At one
-    // point, SimpleRegisterCoalescing could create dangling ranges that ended
+    // point, RegisterCoalescer could create dangling ranges that ended
     // mid-block.
     if (UseI == UseE || *UseI >= Stop) {
       ++NumThroughBlocks;

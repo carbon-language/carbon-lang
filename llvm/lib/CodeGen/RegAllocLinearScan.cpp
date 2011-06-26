@@ -101,7 +101,7 @@ namespace {
       initializeLiveDebugVariablesPass(*PassRegistry::getPassRegistry());
       initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
       initializeStrongPHIEliminationPass(*PassRegistry::getPassRegistry());
-      initializeRegisterCoalescerAnalysisGroup(
+      initializeRegisterCoalescerPass(
         *PassRegistry::getPassRegistry());
       initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
       initializePreAllocSplittingPass(*PassRegistry::getPassRegistry());
@@ -405,7 +405,7 @@ INITIALIZE_PASS_DEPENDENCY(PreAllocSplitting)
 INITIALIZE_PASS_DEPENDENCY(LiveStacks)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_DEPENDENCY(VirtRegMap)
-INITIALIZE_AG_DEPENDENCY(RegisterCoalescer)
+INITIALIZE_PASS_DEPENDENCY(RegisterCoalescer)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(RALinScan, "linearscan-regalloc",
                     "Linear Scan Register Allocator", false, false)
