@@ -262,3 +262,33 @@ namespace PR10053 {
     }
   }
 }
+
+namespace PR10187 {
+  namespace A {
+    template<typename T>
+    struct S {
+      void f() {
+        for (auto &a : e)
+          __range(a); // expected-error {{undeclared identifier '__range'}}
+      }
+      int e[10];
+    };
+    void g() {
+      S<int>().f(); // expected-note {{here}}
+    }
+  }
+
+  namespace B {
+    template<typename T> void g(); // expected-note {{not viable}}
+    template<typename T> void f() {
+      g<int>(T()); // expected-error {{no matching function}}
+    }
+
+    namespace {
+      struct S {};
+    }
+    void g(S);
+
+    template void f<S>(); // expected-note {{here}}
+  }
+}
