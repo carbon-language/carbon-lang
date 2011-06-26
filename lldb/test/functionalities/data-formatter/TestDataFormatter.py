@@ -9,7 +9,7 @@ from lldbtest import *
 
 class DataFormatterTestCase(TestBase):
 
-    mydir = "data-formatter"
+    mydir = os.path.join("functionalities", "data-formatter")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

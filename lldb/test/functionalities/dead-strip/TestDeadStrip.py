@@ -9,7 +9,7 @@ from lldbtest import *
 
 class DeadStripTestCase(TestBase):
 
-    mydir = "dead-strip"
+    mydir = os.path.join("functionalities", "dead-strip")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):

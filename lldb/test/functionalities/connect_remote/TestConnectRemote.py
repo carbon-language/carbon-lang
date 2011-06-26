@@ -10,7 +10,7 @@ from lldbtest import *
 
 class ConnectRemoteTestCase(TestBase):
 
-    mydir = "connect_remote"
+    mydir = os.path.join("functionalities", "connect_remote")
 
     def test_connect_remote(self):
         """Test "process connect connect:://localhost:12345"."""

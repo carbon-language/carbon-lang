@@ -15,7 +15,7 @@ from lldbtest import *
 
 class ConditionalBreakTestCase(TestBase):
 
-    mydir = "conditional_break"
+    mydir = os.path.join("functionalities", "conditional_break")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test

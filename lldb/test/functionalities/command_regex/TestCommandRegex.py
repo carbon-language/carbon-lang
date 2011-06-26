@@ -10,7 +10,7 @@ from lldbtest import *
 
 class CommandRegexTestCase(TestBase):
 
-    mydir = "command_regex"
+    mydir = os.path.join("functionalities", "command_regex")
 
     def test_command_regex(self):
         """Test a simple scenario of 'command regexp' invocation and subsequent use."""

@@ -11,7 +11,7 @@ from lldbtest import *
 
 class CommandSourceTestCase(TestBase):
 
-    mydir = "command_source"
+    mydir = os.path.join("functionalities", "command_source")
 
     def test_command_source(self):
         """Test that lldb command "command source" works correctly."""
