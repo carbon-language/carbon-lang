@@ -79,7 +79,6 @@ add_llvm_library(LLVMCodeGen
   ScoreboardHazardRecognizer.cpp
   ShadowStackGC.cpp
   ShrinkWrapping.cpp
-  SimpleRegisterCoalescing.cpp
   SjLjEHPrepare.cpp
   SlotIndexes.cpp
   Spiller.cpp
