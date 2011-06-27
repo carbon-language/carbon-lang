@@ -64,7 +64,7 @@ class PrintObjTestCase(TestBase):
         self.assertTrue(this_thread)
 
         # Find the other thread.  The iteration protocol of SBProcess and the
-        # rich comparison method (equality) comes in handy.
+        # rich comparison methods (__eq__/__ne__) of SBThread come in handy.
         other_thread = None
         for t in process:
             if t != this_thread:
@@ -74,6 +74,8 @@ class PrintObjTestCase(TestBase):
         # Set the other thread as the selected thread to issue our 'po' command.other
         self.assertTrue(other_thread)
         process.SetSelectedThread(other_thread)
+        if self.TraceOn():
+            print "selected thread:" + lldbutil.get_description(other_thread)
         self.runCmd("thread backtrace")
 
         # We want to traverse the frame to the one corresponding to blocked.m to
@@ -86,7 +88,7 @@ class PrintObjTestCase(TestBase):
             if name == 'main':
                 other_thread.SetSelectedFrame(i)
                 if self.TraceOn():
-                    print "selected frame:" + str(frame)
+                    print "selected frame:" + lldbutil.get_description(frame)
                 break
 
         self.expect("po lock_me", OBJECT_PRINTED_CORRECTLY,
