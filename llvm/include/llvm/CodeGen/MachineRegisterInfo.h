@@ -32,11 +32,6 @@ class MachineRegisterInfo {
   IndexedMap<std::pair<const TargetRegisterClass*, MachineOperand*>,
              VirtReg2IndexFunctor> VRegInfo;
 
-  /// RegClassVRegMap - This vector acts as a map from TargetRegisterClass to
-  /// virtual registers. For each target register class, it keeps a list of
-  /// virtual registers belonging to the class.
-  std::vector<unsigned> *RegClass2VRegMap;
-
   /// RegAllocHints - This vector records register allocation hints for virtual
   /// registers. For each virtual register, it keeps a register and hint type
   /// pair making up the allocation hint. Hint type is target specific except
@@ -215,13 +210,6 @@ public:
   /// getNumVirtRegs - Return the number of virtual registers created.
   ///
   unsigned getNumVirtRegs() const { return VRegInfo.size(); }
-
-  /// getRegClassVirtRegs - Return the list of virtual registers of the given
-  /// target register class.
-  const std::vector<unsigned> &
-  getRegClassVirtRegs(const TargetRegisterClass *RC) const {
-    return RegClass2VRegMap[RC->getID()];
-  }
 
   /// setRegAllocationHint - Specify a register allocation hint for the
   /// specified virtual register.

@@ -20,7 +20,6 @@ using namespace llvm;
 MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI) {
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
-  RegClass2VRegMap = new std::vector<unsigned>[TRI.getNumRegClasses()];
   UsedPhysRegs.resize(TRI.getNumRegs());
   
   // Create the physreg use/def lists.
@@ -38,25 +37,13 @@ MachineRegisterInfo::~MachineRegisterInfo() {
            "PhysRegUseDefLists has entries after all instructions are deleted");
 #endif
   delete [] PhysRegUseDefLists;
-  delete [] RegClass2VRegMap;
 }
 
 /// setRegClass - Set the register class of the specified virtual register.
 ///
 void
 MachineRegisterInfo::setRegClass(unsigned Reg, const TargetRegisterClass *RC) {
-  const TargetRegisterClass *OldRC = VRegInfo[Reg].first;
   VRegInfo[Reg].first = RC;
-
-  // Remove from old register class's vregs list. This may be slow but
-  // fortunately this operation is rarely needed.
-  std::vector<unsigned> &VRegs = RegClass2VRegMap[OldRC->getID()];
-  std::vector<unsigned>::iterator I =
-    std::find(VRegs.begin(), VRegs.end(), Reg);
-  VRegs.erase(I);
-
-  // Add to new register class's vregs list.
-  RegClass2VRegMap[RC->getID()].push_back(Reg);
 }
 
 const TargetRegisterClass *
@@ -95,7 +82,6 @@ MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
   if (ArrayBase && &VRegInfo[FirstVirtReg] != ArrayBase)
     // The vector reallocated, handle this now.
     HandleVRegListReallocation();
-  RegClass2VRegMap[RegClass->getID()].push_back(Reg);
   return Reg;
 }
 
