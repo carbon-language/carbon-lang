@@ -188,25 +188,32 @@ public:
   // in the backend.
   
   enum {
+    // Fixed operands on an INLINEASM SDNode.
     Op_InputChain = 0,
     Op_AsmString = 1,
     Op_MDNode = 2,
     Op_ExtraInfo = 3,    // HasSideEffects, IsAlignStack
     Op_FirstOperand = 4,
 
+    // Fixed operands on an INLINEASM MachineInstr.
     MIOp_AsmString = 0,
     MIOp_ExtraInfo = 1,    // HasSideEffects, IsAlignStack
     MIOp_FirstOperand = 2,
 
+    // Interpretation of the MIOp_ExtraInfo bit field.
     Extra_HasSideEffects = 1,
     Extra_IsAlignStack = 2,
-    
-    Kind_RegUse = 1,
-    Kind_RegDef = 2,
-    Kind_Imm = 3,
-    Kind_Mem = 4,
-    Kind_RegDefEarlyClobber = 6,
-    
+
+    // Inline asm operands map to multiple SDNode / MachineInstr operands.
+    // The first operand is an immediate describing the asm operand, the low
+    // bits is the kind:
+    Kind_RegUse = 1,             // Input register, "r".
+    Kind_RegDef = 2,             // Output register, "=r".
+    Kind_RegDefEarlyClobber = 3, // Early-clobber output register, "=&r".
+    Kind_Clobber = 4,            // Clobbered register, "~r".
+    Kind_Imm = 5,                // Immediate.
+    Kind_Mem = 6,                // Memory operand, "m".
+
     Flag_MatchingOperand = 0x80000000
   };
   
@@ -233,7 +240,10 @@ public:
   static bool isRegDefEarlyClobberKind(unsigned Flag) {
     return getKind(Flag) == Kind_RegDefEarlyClobber;
   }
-  
+  static bool isClobberKind(unsigned Flag) {
+    return getKind(Flag) == Kind_Clobber;
+  }
+
   /// getNumOperandRegisters - Extract the number of registers field from the
   /// inline asm operand flag.
   static unsigned getNumOperandRegisters(unsigned Flag) {

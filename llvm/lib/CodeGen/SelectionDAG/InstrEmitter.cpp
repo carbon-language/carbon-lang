@@ -851,6 +851,7 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
         }
         break;
       case InlineAsm::Kind_RegDefEarlyClobber:
+      case InlineAsm::Kind_Clobber:
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
           MI->addOperand(MachineOperand::CreateReg(Reg, /*isDef=*/ true,
