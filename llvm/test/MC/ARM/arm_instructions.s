@@ -21,22 +21,30 @@
         vqdmull.s32     q8, d17, d16
 
 @ CHECK: ldmia r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe8]
+@ CHECK: ldmia r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe8]
 @ CHECK: ldmib r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe9]
 @ CHECK: ldmda r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x12,0xe8]
 @ CHECK: ldmdb r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x12,0xe9]
+@ CHECK: ldmia r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x92,0xe8]
+        ldm       r2, {r1,r3-r6,sp}
         ldmia     r2, {r1,r3-r6,sp}
         ldmib     r2, {r1,r3-r6,sp}
         ldmda     r2, {r1,r3-r6,sp}
         ldmdb     r2, {r1,r3-r6,sp}
+        ldmfd     r2, {r1,r3-r6,sp}
 
+@ CHECK: stmia r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x82,0xe8]
 @ CHECK: stmia r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x82,0xe8]
 @ CHECK: stmib r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x82,0xe9]
 @ CHECK: stmda r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x02,0xe8]
 @ CHECK: stmdb r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x02,0xe9]
+@ CHECK: stmdb r2, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0x02,0xe9]
+        stm       r2, {r1,r3-r6,sp}
         stmia     r2, {r1,r3-r6,sp}
         stmib     r2, {r1,r3-r6,sp}
         stmda     r2, {r1,r3-r6,sp}
         stmdb     r2, {r1,r3-r6,sp}
+        stmfd     r2, {r1,r3-r6,sp}
 
 @ CHECK: ldmia r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xb2,0xe8]
 @ CHECK: ldmib r2!, {r1, r3, r4, r5, r6, sp} @ encoding: [0x7a,0x20,0xb2,0xe9]

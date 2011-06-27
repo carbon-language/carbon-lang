@@ -2006,6 +2006,8 @@ defm STM : arm_ldst_mult<"stm", 0, LdStMulFrm, IIC_iStore_m, IIC_iStore_mu>;
 } // neverHasSideEffects
 
 // Load / Store Multiple Mnemonic Aliases
+def : MnemonicAlias<"ldmfd", "ldmia">;
+def : MnemonicAlias<"stmfd", "stmdb">;
 def : MnemonicAlias<"ldm", "ldmia">;
 def : MnemonicAlias<"stm", "stmia">;
 
