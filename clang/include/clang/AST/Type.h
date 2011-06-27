@@ -1139,7 +1139,7 @@ protected:
 
     /// Extra information which affects how the function is called, like
     /// regparm and the calling convention.
-    unsigned ExtInfo : 9;
+    unsigned ExtInfo : 8;
 
     /// Whether the function is variadic.  Only used by FunctionProtoType.
     unsigned Variadic : 1;
@@ -2474,18 +2474,19 @@ class FunctionType : public Type {
   // * AST read and write
   // * Codegen
   class ExtInfo {
-    // Feel free to rearrange or add bits, but if you go over 9,
+    // Feel free to rearrange or add bits, but if you go over 8,
     // you'll need to adjust both the Bits field below and
     // Type::FunctionTypeBitfields.
 
-    //   |  CC  |noreturn|produces|hasregparm|regparm
-    //   |0 .. 2|   3    |    4   |    5     |6 ..  8
+    //   |  CC  |noreturn|produces|regparm|
+    //   |0 .. 2|   3    |    4   | 5 .. 7|
+    //
+    // regparm is either 0 (no regparm attribute) or the regparm value+1.
     enum { CallConvMask = 0x7 };
     enum { NoReturnMask = 0x8 };
     enum { ProducesResultMask = 0x10 };
-    enum { HasRegParmMask = 0x20 };
     enum { RegParmMask = ~(CallConvMask | NoReturnMask | ProducesResultMask),
-           RegParmOffset = 6 }; // Assumed to be the last field
+           RegParmOffset = 5 }; // Assumed to be the last field
 
     uint16_t Bits;
 
@@ -2498,11 +2499,11 @@ class FunctionType : public Type {
     // have all the elements (when reading an AST file for example).
     ExtInfo(bool noReturn, bool hasRegParm, unsigned regParm, CallingConv cc,
             bool producesResult) {
+      assert((!hasRegParm || regParm < 7) && "Invalid regparm value");
       Bits = ((unsigned) cc) |
              (noReturn ? NoReturnMask : 0) |
              (producesResult ? ProducesResultMask : 0) |
-             (hasRegParm ? HasRegParmMask : 0) |
-             (regParm << RegParmOffset);
+             (hasRegParm ? ((regParm + 1) << RegParmOffset) : 0);
     }
 
     // Constructor with all defaults. Use when for example creating a
@@ -2511,8 +2512,13 @@ class FunctionType : public Type {
 
     bool getNoReturn() const { return Bits & NoReturnMask; }
     bool getProducesResult() const { return Bits & ProducesResultMask; }
-    bool getHasRegParm() const { return Bits & HasRegParmMask; }
-    unsigned getRegParm() const { return Bits >> RegParmOffset; }
+    bool getHasRegParm() const { return (Bits >> RegParmOffset) != 0; }
+    unsigned getRegParm() const { 
+      unsigned RegParm = Bits >> RegParmOffset;
+      if (RegParm > 0)
+        --RegParm;
+      return RegParm;
+    }
     CallingConv getCC() const { return CallingConv(Bits & CallConvMask); }
 
     bool operator==(ExtInfo Other) const {
@@ -2540,9 +2546,9 @@ class FunctionType : public Type {
     }
 
     ExtInfo withRegParm(unsigned RegParm) const {
+      assert(RegParm < 7 && "Invalid regparm value");
       return ExtInfo((Bits & ~RegParmMask) |
-                     (HasRegParmMask) |
-                     (RegParm << RegParmOffset));
+                     ((RegParm + 1) << RegParmOffset));
     }
 
     ExtInfo withCallingConv(CallingConv cc) const {

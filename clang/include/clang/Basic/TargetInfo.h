@@ -524,6 +524,7 @@ public:
 
   // getRegParmMax - Returns maximal number of args passed in registers.
   unsigned getRegParmMax() const {
+    assert(RegParmMax < 7 && "RegParmMax value is larger than AST can handle");
     return RegParmMax;
   }
 
