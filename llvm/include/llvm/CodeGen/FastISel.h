@@ -118,6 +118,10 @@ public:
     DebugLoc DL;
   };
 
+  /// recomputeDebugLocForMaterializedRegs - Recompute debug location for
+  /// very first instruction in a basic block.
+  void recomputeDebugLocForMaterializedRegs();
+
   /// enterLocalValueArea - Prepare InsertPt to begin inserting instructions
   /// into the local value area and return the old insert position.
   SavePoint enterLocalValueArea();

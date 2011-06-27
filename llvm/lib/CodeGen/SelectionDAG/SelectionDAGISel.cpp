@@ -964,6 +964,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
     else
       ++NumFastIselBlocks;
 
+    if (FastIS)
+      FastIS->recomputeDebugLocForMaterializedRegs();
     if (Begin != BI) {
       // Run SelectionDAG instruction selection on the remainder of the block
       // not handled by FastISel. If FastISel is not run, this is the entire
