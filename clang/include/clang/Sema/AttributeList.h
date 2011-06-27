@@ -77,6 +77,8 @@ private:
   /// availability attribute.
   unsigned IsAvailability : 1;
 
+  unsigned AttrKind : 8;
+
   /// \brief The location of the 'unavailable' keyword in an
   /// availability attribute.
   SourceLocation UnavailableLoc;
@@ -123,6 +125,7 @@ private:
       DeclspecAttribute(declspec), CXX0XAttribute(cxx0x), Invalid(false),
       IsAvailability(false), NextInPosition(0), NextInPool(0) {
     if (numArgs) memcpy(getArgsBuffer(), args, numArgs * sizeof(Expr*));
+    AttrKind = getKind(getName());
   }
 
   AttributeList(IdentifierInfo *attrName, SourceLocation attrLoc,
@@ -141,6 +144,7 @@ private:
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
     new (&getAvailabilitySlot(DeprecatedSlot)) AvailabilityChange(deprecated);
     new (&getAvailabilitySlot(ObsoletedSlot)) AvailabilityChange(obsoleted);
+    AttrKind = getKind(getName());
   }
 
   friend class AttributePool;
@@ -259,7 +263,7 @@ public:
   bool isInvalid() const { return Invalid; }
   void setInvalid(bool b = true) const { Invalid = b; }
 
-  Kind getKind() const { return getKind(getName()); }
+  Kind getKind() const { return Kind(AttrKind); }
   static Kind getKind(const IdentifierInfo *Name);
 
   AttributeList *getNext() const { return NextInPosition; }
