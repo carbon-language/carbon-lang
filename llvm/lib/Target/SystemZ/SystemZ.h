@@ -53,7 +53,8 @@ namespace llvm {
 
 // Defines symbolic names for SystemZ registers.
 // This defines a mapping from register name to register number.
-#include "SystemZGenRegisterNames.inc"
+#define GET_REGINFO_ENUM
+#include "SystemZGenRegisterInfo.inc"
 
 // Defines symbolic names for the SystemZ instructions.
 #include "SystemZGenInstrNames.inc"

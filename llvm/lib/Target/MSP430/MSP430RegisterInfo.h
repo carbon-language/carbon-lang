@@ -15,7 +15,9 @@
 #define LLVM_TARGET_MSP430REGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "MSP430GenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "MSP430GenRegisterInfo.inc"
 
 namespace llvm {
 

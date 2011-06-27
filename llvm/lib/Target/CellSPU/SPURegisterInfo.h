@@ -16,7 +16,9 @@
 #define SPU_REGISTERINFO_H
 
 #include "SPU.h"
-#include "SPUGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "SPUGenRegisterInfo.inc"
 
 namespace llvm {
   class SPUSubtarget;

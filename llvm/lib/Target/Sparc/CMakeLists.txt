@@ -1,8 +1,5 @@
 set(LLVM_TARGET_DEFINITIONS Sparc.td)
 
-tablegen(SparcGenRegisterNames.inc -gen-register-enums)
-tablegen(SparcGenRegisterDesc.inc -gen-register-desc)
-tablegen(SparcGenRegisterInfo.h.inc -gen-register-info-header)
 tablegen(SparcGenRegisterInfo.inc -gen-register-info)
 tablegen(SparcGenInstrNames.inc -gen-instr-enums)
 tablegen(SparcGenInstrInfo.inc -gen-instr-desc)

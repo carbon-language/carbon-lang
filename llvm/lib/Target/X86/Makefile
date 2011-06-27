@@ -12,8 +12,7 @@ LIBRARYNAME = LLVMX86CodeGen
 TARGET = X86
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = X86GenRegisterNames.inc X86GenRegisterDesc.inc \
-		X86GenRegisterInfo.h.inc X86GenRegisterInfo.inc \
+BUILT_SOURCES = X86GenRegisterInfo.inc \
 		X86GenInstrNames.inc X86GenInstrInfo.inc \
 		X86GenAsmWriter.inc X86GenAsmMatcher.inc \
                 X86GenAsmWriter1.inc X86GenDAGISel.inc  \

@@ -54,7 +54,7 @@ using namespace llvm;
 enum ActionType {
   PrintRecords,
   GenEmitter,
-  GenRegisterEnums, GenRegisterDesc, GenRegisterInfo, GenRegisterInfoHeader,
+  GenRegisterInfo,
   GenInstrEnums, GenInstrs, GenAsmWriter, GenAsmMatcher,
   GenARMDecoder,
   GenDisassembler,
@@ -93,14 +93,8 @@ namespace {
                                "Print all records to stdout (default)"),
                     clEnumValN(GenEmitter, "gen-emitter",
                                "Generate machine code emitter"),
-                    clEnumValN(GenRegisterEnums, "gen-register-enums",
-                               "Generate enum values for registers"),
-                    clEnumValN(GenRegisterDesc, "gen-register-desc",
-                               "Generate register descriptions"),
                     clEnumValN(GenRegisterInfo, "gen-register-info",
-                               "Generate registers & reg-classes info"),
-                    clEnumValN(GenRegisterInfoHeader, "gen-register-info-header",
-                               "Generate registers & reg-classes info header"),
+                               "Generate registers and register classes info"),
                     clEnumValN(GenInstrEnums, "gen-instr-enums",
                                "Generate enum values for instructions"),
                     clEnumValN(GenInstrs, "gen-instr-desc",
@@ -263,17 +257,8 @@ int main(int argc, char **argv) {
     case GenEmitter:
       CodeEmitterGen(Records).run(Out.os());
       break;
-    case GenRegisterEnums:
-      RegisterInfoEmitter(Records).runEnums(Out.os());
-      break;
-    case GenRegisterDesc:
-      RegisterInfoEmitter(Records).runDesc(Out.os());
-      break;
     case GenRegisterInfo:
       RegisterInfoEmitter(Records).run(Out.os());
-      break;
-    case GenRegisterInfoHeader:
-      RegisterInfoEmitter(Records).runHeader(Out.os());
       break;
     case GenInstrEnums:
       InstrEnumEmitter(Records).run(Out.os());

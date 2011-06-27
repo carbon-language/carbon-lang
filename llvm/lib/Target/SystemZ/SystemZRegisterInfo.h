@@ -15,7 +15,9 @@
 #define SystemZREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "SystemZGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "SystemZGenRegisterInfo.inc"
 
 namespace llvm {
 

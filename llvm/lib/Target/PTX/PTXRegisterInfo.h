@@ -17,7 +17,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/BitVector.h"
 
-#include "PTXGenRegisterInfo.h.inc"
+#define GET_REGINFO_HEADER
+#include "PTXGenRegisterInfo.inc"
 
 namespace llvm {
 class PTXTargetMachine;

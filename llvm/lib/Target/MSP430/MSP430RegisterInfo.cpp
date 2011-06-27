@@ -25,7 +25,9 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "MSP430GenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "MSP430GenRegisterInfo.inc"
 
 using namespace llvm;

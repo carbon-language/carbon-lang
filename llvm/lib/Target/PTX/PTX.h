@@ -47,7 +47,8 @@ namespace llvm {
 } // namespace llvm;
 
 // Defines symbolic names for PTX registers.
-#include "PTXGenRegisterNames.inc"
+#define GET_REGINFO_ENUM
+#include "PTXGenRegisterInfo.inc"
 
 // Defines symbolic names for the PTX instructions.
 #include "PTXGenInstrNames.inc"

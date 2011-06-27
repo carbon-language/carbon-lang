@@ -12,9 +12,7 @@ LIBRARYNAME = LLVMSystemZCodeGen
 TARGET = SystemZ
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = SystemZGenRegisterInfo.h.inc SystemZGenRegisterNames.inc \
-                SystemZGenRegisterInfo.inc SystemZGenRegisterDesc.inc \
-		SystemZGenInstrNames.inc \
+BUILT_SOURCES = SystemZGenRegisterInfo.inc SystemZGenInstrNames.inc \
                 SystemZGenInstrInfo.inc SystemZGenAsmWriter.inc \
                 SystemZGenDAGISel.inc SystemZGenSubtarget.inc SystemZGenCallingConv.inc
 

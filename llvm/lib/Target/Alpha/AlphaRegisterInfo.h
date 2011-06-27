@@ -15,7 +15,9 @@
 #define ALPHAREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "AlphaGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "AlphaGenRegisterInfo.inc"
 
 namespace llvm {
 

@@ -27,12 +27,11 @@
 using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
+#define GET_REGINFO_ENUM
+#include "X86GenRegisterInfo.inc"
 #define GET_INSTRUCTION_NAME
 #define PRINT_ALIAS_INSTR
-#include "X86GenRegisterNames.inc"
 #include "X86GenAsmWriter.inc"
-#undef PRINT_ALIAS_INSTR
-#undef GET_INSTRUCTION_NAME
 
 X86ATTInstPrinter::X86ATTInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
   : MCInstPrinter(MAI) {

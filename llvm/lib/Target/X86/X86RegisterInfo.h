@@ -15,7 +15,9 @@
 #define X86REGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "X86GenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "X86GenRegisterInfo.inc"
 
 namespace llvm {
   class Type;

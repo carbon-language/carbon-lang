@@ -35,7 +35,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
-#include "MipsGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "MipsGenRegisterInfo.inc"
 
 using namespace llvm;

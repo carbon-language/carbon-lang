@@ -17,7 +17,9 @@
 
 #include "MBlaze.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "MBlazeGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "MBlazeGenRegisterInfo.inc"
 
 namespace llvm {
 class MBlazeSubtarget;

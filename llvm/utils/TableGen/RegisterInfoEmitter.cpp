@@ -25,14 +25,18 @@
 using namespace llvm;
 
 // runEnums - Print out enum values for all of the registers.
-void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
-  CodeGenTarget Target(Records);
-  CodeGenRegBank &Bank = Target.getRegBank();
+void
+RegisterInfoEmitter::runEnums(raw_ostream &OS,
+                              CodeGenTarget &Target, CodeGenRegBank &Bank) {
   const std::vector<CodeGenRegister*> &Registers = Bank.getRegisters();
 
   std::string Namespace = Registers[0]->TheDef->getValueAsString("Namespace");
 
   EmitSourceFileHeader("Target Register Enum Values", OS);
+
+  OS << "\n#ifdef GET_REGINFO_ENUM\n";
+  OS << "#undef GET_REGINFO_ENUM\n";
+
   OS << "namespace llvm {\n\n";
 
   if (!Namespace.empty())
@@ -63,12 +67,33 @@ void RegisterInfoEmitter::runEnums(raw_ostream &OS) {
     if (!Namespace.empty())
       OS << "}\n";
   }
+
+  const std::vector<CodeGenRegisterClass> &RegisterClasses =
+    Target.getRegisterClasses();
+
+  if (!RegisterClasses.empty()) {
+    OS << "\n// Register classes\n";
+    OS << "namespace " << RegisterClasses[0].Namespace << " {\n";
+    OS << "enum {\n";
+    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+      if (i) OS << ",\n";
+      OS << "  " << RegisterClasses[i].getName() << "RegClassID";
+      OS << " = " << i;
+    }
+    OS << "\n  };\n";
+    OS << "}\n";
+  }
+
   OS << "} // End llvm namespace \n";
+  OS << "#endif // GET_REGINFO_ENUM\n\n";
 }
 
-void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
+void RegisterInfoEmitter::runHeader(raw_ostream &OS, CodeGenTarget &Target) {
   EmitSourceFileHeader("Register Information Header Fragment", OS);
-  CodeGenTarget Target(Records);
+
+  OS << "\n#ifdef GET_REGINFO_HEADER\n";
+  OS << "#undef GET_REGINFO_HEADER\n";
+
   const std::string &TargetName = Target.getName();
   std::string ClassName = TargetName + "GenRegisterInfo";
 
@@ -100,14 +125,6 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
     OS << "namespace " << RegisterClasses[0].Namespace
        << " { // Register classes\n";
 
-    OS << "  enum {\n";
-    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-      if (i) OS << ",\n";
-      OS << "    " << RegisterClasses[i].getName() << "RegClassID";
-      OS << " = " << i;
-    }
-    OS << "\n  };\n\n";
-
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
       const std::string &Name = RC.getName();
@@ -129,17 +146,125 @@ void RegisterInfoEmitter::runHeader(raw_ostream &OS) {
     OS << "} // end of namespace " << TargetName << "\n\n";
   }
   OS << "} // End llvm namespace \n";
+  OS << "#endif // GET_REGINFO_HEADER\n\n";
 }
 
 //
-// RegisterInfoEmitter::run - Main register file description emitter.
+// runMCDesc - Print out MC register descriptions.
 //
-void RegisterInfoEmitter::run(raw_ostream &OS) {
-  CodeGenTarget Target(Records);
-  CodeGenRegBank &RegBank = Target.getRegBank();
-  RegBank.computeDerivedInfo();
+void
+RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
+                               CodeGenRegBank &RegBank) {
+  EmitSourceFileHeader("MC Register Information", OS);
 
-  EmitSourceFileHeader("Register Information Source Fragment", OS);
+  OS << "\n#ifdef GET_REGINFO_MC_DESC\n";
+  OS << "#undef GET_REGINFO_MC_DESC\n";
+
+  std::map<const CodeGenRegister*, CodeGenRegister::Set> Overlaps;
+  RegBank.computeOverlaps(Overlaps);
+
+  OS << "namespace llvm {\n\n";
+
+  const std::string &TargetName = Target.getName();
+  std::string ClassName = TargetName + "GenMCRegisterInfo";
+  OS << "struct " << ClassName << " : public MCRegisterInfo {\n"
+     << "  explicit " << ClassName << "(const MCRegisterDesc *D);\n";
+  OS << "};\n";
+
+  OS << "\nnamespace {\n";
+
+  const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
+
+  // Emit an overlap list for all registers.
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister *Reg = Regs[i];
+    const CodeGenRegister::Set &O = Overlaps[Reg];
+    // Move Reg to the front so TRI::getAliasSet can share the list.
+    OS << "  const unsigned " << Reg->getName() << "_Overlaps[] = { "
+       << getQualifiedName(Reg->TheDef) << ", ";
+    for (CodeGenRegister::Set::const_iterator I = O.begin(), E = O.end();
+         I != E; ++I)
+      if (*I != Reg)
+        OS << getQualifiedName((*I)->TheDef) << ", ";
+    OS << "0 };\n";
+  }
+
+  // Emit the empty sub-registers list
+  OS << "  const unsigned Empty_SubRegsSet[] = { 0 };\n";
+  // Loop over all of the registers which have sub-registers, emitting the
+  // sub-registers list to memory.
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister &Reg = *Regs[i];
+    if (Reg.getSubRegs().empty())
+     continue;
+    // getSubRegs() orders by SubRegIndex. We want a topological order.
+    SetVector<CodeGenRegister*> SR;
+    Reg.addSubRegsPreOrder(SR);
+    OS << "  const unsigned " << Reg.getName() << "_SubRegsSet[] = { ";
+    for (unsigned j = 0, je = SR.size(); j != je; ++j)
+      OS << getQualifiedName(SR[j]->TheDef) << ", ";
+    OS << "0 };\n";
+  }
+
+  // Emit the empty super-registers list
+  OS << "  const unsigned Empty_SuperRegsSet[] = { 0 };\n";
+  // Loop over all of the registers which have super-registers, emitting the
+  // super-registers list to memory.
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister &Reg = *Regs[i];
+    const CodeGenRegister::SuperRegList &SR = Reg.getSuperRegs();
+    if (SR.empty())
+      continue;
+    OS << "  const unsigned " << Reg.getName() << "_SuperRegsSet[] = { ";
+    for (unsigned j = 0, je = SR.size(); j != je; ++j)
+      OS << getQualifiedName(SR[j]->TheDef) << ", ";
+    OS << "0 };\n";
+  }
+
+  OS << "\n  const MCRegisterDesc " << TargetName
+     << "RegDesc[] = { // Descriptors\n";
+  OS << "    { \"NOREG\",\t0,\t0,\t0 },\n";
+
+  // Now that register alias and sub-registers sets have been emitted, emit the
+  // register descriptors now.
+  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+    const CodeGenRegister &Reg = *Regs[i];
+    OS << "    { \"";
+    OS << Reg.getName() << "\",\t" << Reg.getName() << "_Overlaps,\t";
+    if (!Reg.getSubRegs().empty())
+      OS << Reg.getName() << "_SubRegsSet,\t";
+    else
+      OS << "Empty_SubRegsSet,\t";
+    if (!Reg.getSuperRegs().empty())
+      OS << Reg.getName() << "_SuperRegsSet";
+    else
+      OS << "Empty_SuperRegsSet";
+    OS << " },\n";
+  }
+  OS << "  };\n";      // End of register descriptors...
+
+  OS << "}\n\n";       // End of anonymous namespace...
+
+  // MCRegisterInfo initialization routine.
+  OS << "static inline void Init" << TargetName
+     << "MCRegisterInfo(MCRegisterInfo *RI) {\n";
+  OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
+     << Regs.size()+1 << ");\n}\n\n";
+
+  OS << "} // End llvm namespace \n";
+  OS << "#endif // GET_REGINFO_MC_DESC\n\n";
+}
+
+//
+// runTargetDesc - Output the target register and register file descriptions.
+//
+void
+RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
+                                   CodeGenRegBank &RegBank){
+  EmitSourceFileHeader("Target Register and Register Classes Information", OS);
+
+  OS << "\n#ifdef GET_REGINFO_TARGET_DESC\n";
+  OS << "#undef GET_REGINFO_TARGET_DESC\n";
 
   OS << "namespace llvm {\n\n";
 
@@ -614,102 +739,16 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   OS << "  };\n}\n\n";
 
   OS << "} // End llvm namespace \n";
+  OS << "#endif // GET_REGINFO_TARGET_DESC\n\n";
 }
 
-void RegisterInfoEmitter::runDesc(raw_ostream &OS) {
+void RegisterInfoEmitter::run(raw_ostream &OS) {
   CodeGenTarget Target(Records);
   CodeGenRegBank &RegBank = Target.getRegBank();
   RegBank.computeDerivedInfo();
-  std::map<const CodeGenRegister*, CodeGenRegister::Set> Overlaps;
-  RegBank.computeOverlaps(Overlaps);
 
-  OS << "namespace llvm {\n\n";
-
-  const std::string &TargetName = Target.getName();
-  std::string ClassName = TargetName + "GenMCRegisterInfo";
-  OS << "struct " << ClassName << " : public MCRegisterInfo {\n"
-     << "  explicit " << ClassName << "(const MCRegisterDesc *D);\n";
-  OS << "};\n";
-
-  OS << "\nnamespace {\n";
-
-  const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
-
-  // Emit an overlap list for all registers.
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister *Reg = Regs[i];
-    const CodeGenRegister::Set &O = Overlaps[Reg];
-    // Move Reg to the front so TRI::getAliasSet can share the list.
-    OS << "  const unsigned " << Reg->getName() << "_Overlaps[] = { "
-       << getQualifiedName(Reg->TheDef) << ", ";
-    for (CodeGenRegister::Set::const_iterator I = O.begin(), E = O.end();
-         I != E; ++I)
-      if (*I != Reg)
-        OS << getQualifiedName((*I)->TheDef) << ", ";
-    OS << "0 };\n";
-  }
-
-  // Emit the empty sub-registers list
-  OS << "  const unsigned Empty_SubRegsSet[] = { 0 };\n";
-  // Loop over all of the registers which have sub-registers, emitting the
-  // sub-registers list to memory.
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = *Regs[i];
-    if (Reg.getSubRegs().empty())
-     continue;
-    // getSubRegs() orders by SubRegIndex. We want a topological order.
-    SetVector<CodeGenRegister*> SR;
-    Reg.addSubRegsPreOrder(SR);
-    OS << "  const unsigned " << Reg.getName() << "_SubRegsSet[] = { ";
-    for (unsigned j = 0, je = SR.size(); j != je; ++j)
-      OS << getQualifiedName(SR[j]->TheDef) << ", ";
-    OS << "0 };\n";
-  }
-
-  // Emit the empty super-registers list
-  OS << "  const unsigned Empty_SuperRegsSet[] = { 0 };\n";
-  // Loop over all of the registers which have super-registers, emitting the
-  // super-registers list to memory.
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = *Regs[i];
-    const CodeGenRegister::SuperRegList &SR = Reg.getSuperRegs();
-    if (SR.empty())
-      continue;
-    OS << "  const unsigned " << Reg.getName() << "_SuperRegsSet[] = { ";
-    for (unsigned j = 0, je = SR.size(); j != je; ++j)
-      OS << getQualifiedName(SR[j]->TheDef) << ", ";
-    OS << "0 };\n";
-  }
-
-  OS << "\n  const MCRegisterDesc " << TargetName
-     << "RegDesc[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t0,\t0,\t0 },\n";
-
-  // Now that register alias and sub-registers sets have been emitted, emit the
-  // register descriptors now.
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister &Reg = *Regs[i];
-    OS << "    { \"";
-    OS << Reg.getName() << "\",\t" << Reg.getName() << "_Overlaps,\t";
-    if (!Reg.getSubRegs().empty())
-      OS << Reg.getName() << "_SubRegsSet,\t";
-    else
-      OS << "Empty_SubRegsSet,\t";
-    if (!Reg.getSuperRegs().empty())
-      OS << Reg.getName() << "_SuperRegsSet";
-    else
-      OS << "Empty_SuperRegsSet";
-    OS << " },\n";
-  }
-  OS << "  };\n";      // End of register descriptors...
-
-  OS << "}\n\n";       // End of anonymous namespace...
-
-  // MCRegisterInfo initialization routine.
-  OS << "static inline void Init" << TargetName
-     << "MCRegisterInfo(MCRegisterInfo *RI) {\n";
-  OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
-     << Regs.size()+1 << ");\n}\n\n";
-
-  OS << "} // End llvm namespace \n";
+  runEnums(OS, Target, RegBank);
+  runHeader(OS, Target);
+  runMCDesc(OS, Target, RegBank);
+  runTargetDesc(OS, Target, RegBank);
 }

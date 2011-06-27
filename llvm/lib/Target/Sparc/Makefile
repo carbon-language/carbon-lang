@@ -12,9 +12,7 @@ LIBRARYNAME = LLVMSparcCodeGen
 TARGET = Sparc
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = SparcGenRegisterInfo.h.inc SparcGenRegisterNames.inc \
-                SparcGenRegisterInfo.inc SparcGenRegisterDesc.inc \
-		SparcGenInstrNames.inc \
+BUILT_SOURCES = SparcGenRegisterInfo.inc SparcGenInstrNames.inc \
                 SparcGenInstrInfo.inc SparcGenAsmWriter.inc \
                 SparcGenDAGISel.inc SparcGenSubtarget.inc SparcGenCallingConv.inc
 

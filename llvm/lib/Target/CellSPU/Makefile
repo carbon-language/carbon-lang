@@ -10,10 +10,8 @@
 LEVEL = ../../..
 LIBRARYNAME = LLVMCellSPUCodeGen
 TARGET = SPU
-BUILT_SOURCES = SPUGenInstrNames.inc \
+BUILT_SOURCES = SPUGenInstrNames.inc SPUGenRegisterInfo.inc \
 		SPUGenAsmWriter.inc SPUGenCodeEmitter.inc \
-		SPUGenRegisterNames.inc SPUGenRegisterDesc.inc \
-		SPUGenRegisterInfo.h.inc SPUGenRegisterInfo.inc \
 		SPUGenInstrInfo.inc SPUGenDAGISel.inc \
 		SPUGenSubtarget.inc SPUGenCallingConv.inc
 

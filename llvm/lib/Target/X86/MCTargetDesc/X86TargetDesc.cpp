@@ -14,7 +14,9 @@
 #include "X86TargetDesc.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "X86GenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#include "X86GenRegisterInfo.inc"
 using namespace llvm;
 
 MCRegisterInfo *createX86MCRegisterInfo() {

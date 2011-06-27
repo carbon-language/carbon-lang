@@ -13,6 +13,7 @@
 // Define symbolic names for Cell registers.  This defines a mapping from
 // register name to register number.
 //
-#include "SPUGenRegisterNames.inc"
+#define GET_REGINFO_ENUM
+#include "SPUGenRegisterInfo.inc"
 
 #endif

@@ -39,7 +39,9 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CommandLine.h"
-#include "ARMGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "ARMGenRegisterInfo.inc"
 
 using namespace llvm;

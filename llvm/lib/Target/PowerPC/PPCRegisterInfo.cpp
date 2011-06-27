@@ -43,7 +43,9 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
-#include "PPCGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "PPCGenRegisterInfo.inc"
 
 // FIXME (64-bit): Eventually enable by default.

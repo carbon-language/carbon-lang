@@ -15,7 +15,9 @@
 #define XCOREREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "XCoreGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "XCoreGenRegisterInfo.inc"
 
 namespace llvm {
 

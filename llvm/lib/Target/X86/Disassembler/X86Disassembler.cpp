@@ -26,7 +26,8 @@
 #include "llvm/Support/MemoryObject.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "X86GenRegisterNames.inc"
+#define GET_REGINFO_ENUM
+#include "X86GenRegisterInfo.inc"
 #include "X86GenEDInfo.inc"
 
 using namespace llvm;

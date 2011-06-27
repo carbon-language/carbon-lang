@@ -25,7 +25,8 @@
 // Defines symbolic names for ARM registers.  This defines a mapping from
 // register name to register number.
 //
-#include "ARMGenRegisterNames.inc"
+#define GET_REGINFO_ENUM
+#include "ARMGenRegisterInfo.inc"
 
 // Defines symbolic names for the ARM instructions.
 //

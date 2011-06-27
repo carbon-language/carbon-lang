@@ -16,7 +16,9 @@
 #define BLACKFINREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "BlackfinGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "BlackfinGenRegisterInfo.inc"
 
 namespace llvm {
 

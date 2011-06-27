@@ -1,8 +1,5 @@
 set(LLVM_TARGET_DEFINITIONS XCore.td)
 
-tablegen(XCoreGenRegisterNames.inc -gen-register-enums)
-tablegen(XCoreGenRegisterDesc.inc -gen-register-desc)
-tablegen(XCoreGenRegisterInfo.h.inc -gen-register-info-header)
 tablegen(XCoreGenRegisterInfo.inc -gen-register-info)
 tablegen(XCoreGenInstrNames.inc -gen-instr-enums)
 tablegen(XCoreGenInstrInfo.inc -gen-instr-desc)

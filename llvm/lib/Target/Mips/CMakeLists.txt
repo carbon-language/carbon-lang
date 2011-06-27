@@ -1,8 +1,5 @@
 set(LLVM_TARGET_DEFINITIONS Mips.td)
 
-tablegen(MipsGenRegisterNames.inc -gen-register-enums)
-tablegen(MipsGenRegisterDesc.inc -gen-register-desc)
-tablegen(MipsGenRegisterInfo.h.inc -gen-register-info-header)
 tablegen(MipsGenRegisterInfo.inc -gen-register-info)
 tablegen(MipsGenInstrNames.inc -gen-instr-enums)
 tablegen(MipsGenInstrInfo.inc -gen-instr-desc)

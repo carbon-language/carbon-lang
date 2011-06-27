@@ -12,9 +12,7 @@ LIBRARYNAME = LLVMBlackfinCodeGen
 TARGET = Blackfin
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = BlackfinGenRegisterNames.inc BlackfinGenRegisterDesc.inc \
-		BlackfinGenRegisterInfo.h.inc BlackfinGenRegisterInfo.inc \
-		BlackfinGenInstrNames.inc \
+BUILT_SOURCES = BlackfinGenRegisterInfo.inc BlackfinGenInstrNames.inc \
                 BlackfinGenInstrInfo.inc BlackfinGenAsmWriter.inc \
                 BlackfinGenDAGISel.inc BlackfinGenSubtarget.inc \
 		BlackfinGenCallingConv.inc BlackfinGenIntrinsics.inc

@@ -23,6 +23,7 @@ extern Target TheX86_32Target, TheX86_64Target;
 // Defines symbolic names for X86 registers.  This defines a mapping from
 // register name to register number.
 //
-#include "X86GenRegisterNames.inc"
+#define GET_REGINFO_ENUM
+#include "X86GenRegisterInfo.inc"
 
 #endif

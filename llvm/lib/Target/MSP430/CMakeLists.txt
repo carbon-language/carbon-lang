@@ -1,8 +1,5 @@
 set(LLVM_TARGET_DEFINITIONS MSP430.td)
 
-tablegen(MSP430GenRegisterNames.inc -gen-register-enums)
-tablegen(MSP430GenRegisterDesc.inc -gen-register-desc)
-tablegen(MSP430GenRegisterInfo.h.inc -gen-register-info-header)
 tablegen(MSP430GenRegisterInfo.inc -gen-register-info)
 tablegen(MSP430GenInstrNames.inc -gen-instr-enums)
 tablegen(MSP430GenInstrInfo.inc -gen-instr-desc)

@@ -23,8 +23,11 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
-#include "SparcGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "SparcGenRegisterInfo.inc"
+
 using namespace llvm;
 
 SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,

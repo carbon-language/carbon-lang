@@ -33,8 +33,11 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
-#include "AlphaGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "AlphaGenRegisterInfo.inc"
+
 using namespace llvm;
 
 AlphaRegisterInfo::AlphaRegisterInfo(const TargetInstrInfo &tii)

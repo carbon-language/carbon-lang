@@ -1,12 +1,9 @@
 set(LLVM_TARGET_DEFINITIONS PPC.td)
 
 tablegen(PPCGenInstrNames.inc -gen-instr-enums)
-tablegen(PPCGenRegisterNames.inc -gen-register-enums)
 tablegen(PPCGenAsmWriter.inc -gen-asm-writer)
 tablegen(PPCGenCodeEmitter.inc -gen-emitter)
 tablegen(PPCGenMCCodeEmitter.inc -gen-emitter -mc-emitter)
-tablegen(PPCGenRegisterDesc.inc -gen-register-desc)
-tablegen(PPCGenRegisterInfo.h.inc -gen-register-info-header)
 tablegen(PPCGenRegisterInfo.inc -gen-register-info)
 tablegen(PPCGenInstrInfo.inc -gen-instr-desc)
 tablegen(PPCGenDAGISel.inc -gen-dag-isel)

@@ -16,7 +16,9 @@
 
 #include "Mips.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "MipsGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "MipsGenRegisterInfo.inc"
 
 namespace llvm {
 class MipsSubtarget;

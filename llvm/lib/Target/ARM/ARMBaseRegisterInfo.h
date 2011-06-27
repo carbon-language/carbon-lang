@@ -16,7 +16,9 @@
 
 #include "ARM.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "ARMGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "ARMGenRegisterInfo.inc"
 
 namespace llvm {
   class ARMSubtarget;

@@ -32,8 +32,11 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "XCoreGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "XCoreGenRegisterInfo.inc"
+
 using namespace llvm;
 
 XCoreRegisterInfo::XCoreRegisterInfo(const TargetInstrInfo &tii)

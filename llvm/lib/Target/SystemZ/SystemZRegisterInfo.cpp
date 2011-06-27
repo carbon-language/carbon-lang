@@ -25,8 +25,11 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
-#include "SystemZGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "SystemZGenRegisterInfo.inc"
+
 using namespace llvm;
 
 SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm,

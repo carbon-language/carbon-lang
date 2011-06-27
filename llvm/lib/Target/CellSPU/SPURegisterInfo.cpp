@@ -42,7 +42,9 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
-#include "SPUGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "SPUGenRegisterInfo.inc"
 
 using namespace llvm;

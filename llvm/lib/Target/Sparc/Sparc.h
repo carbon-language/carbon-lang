@@ -36,7 +36,8 @@ namespace llvm {
 // Defines symbolic names for Sparc registers.  This defines a mapping from
 // register name to register number.
 //
-#include "SparcGenRegisterNames.inc"
+#define GET_REGINFO_ENUM
+#include "SparcGenRegisterInfo.inc"
 
 // Defines symbolic names for the Sparc instructions.
 //

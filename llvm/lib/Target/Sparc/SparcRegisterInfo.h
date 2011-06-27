@@ -15,7 +15,9 @@
 #define SPARCREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "SparcGenRegisterInfo.h.inc"
+
+#define GET_REGINFO_HEADER
+#include "SparcGenRegisterInfo.inc"
 
 namespace llvm {
 

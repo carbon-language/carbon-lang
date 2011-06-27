@@ -29,8 +29,11 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
-#include "BlackfinGenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "BlackfinGenRegisterInfo.inc"
+
 using namespace llvm;
 
 BlackfinRegisterInfo::BlackfinRegisterInfo(BlackfinSubtarget &st,

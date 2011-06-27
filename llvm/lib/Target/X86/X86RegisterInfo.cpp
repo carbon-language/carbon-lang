@@ -39,8 +39,11 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/CommandLine.h"
-#include "X86GenRegisterDesc.inc"
+
+#define GET_REGINFO_MC_DESC
+#define GET_REGINFO_TARGET_DESC
 #include "X86GenRegisterInfo.inc"
+
 using namespace llvm;
 
 cl::opt<bool>

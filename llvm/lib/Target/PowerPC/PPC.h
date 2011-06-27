@@ -84,7 +84,8 @@ namespace llvm {
 // Defines symbolic names for PowerPC registers.  This defines a mapping from
 // register name to register number.
 //
-#include "PPCGenRegisterNames.inc"
+#define GET_REGINFO_ENUM
+#include "PPCGenRegisterInfo.inc"
 
 // Defines symbolic names for the PowerPC instructions.
 //
