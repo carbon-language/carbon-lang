@@ -53,24 +53,8 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
   if (!Namespace.empty())
     OS << "}\n";
 
-  const std::vector<Record*> &SubRegIndices = Bank.getSubRegIndices();
-  if (!SubRegIndices.empty()) {
-    OS << "\n// Subregister indices\n";
-    Namespace = SubRegIndices[0]->getValueAsString("Namespace");
-    if (!Namespace.empty())
-      OS << "namespace " << Namespace << " {\n";
-    OS << "enum {\n  NoSubRegister,\n";
-    for (unsigned i = 0, e = Bank.getNumNamedIndices(); i != e; ++i)
-      OS << "  " << SubRegIndices[i]->getName() << ",\t// " << i+1 << "\n";
-    OS << "  NUM_TARGET_NAMED_SUBREGS = " << SubRegIndices.size()+1 << "\n";
-    OS << "};\n";
-    if (!Namespace.empty())
-      OS << "}\n";
-  }
-
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
     Target.getRegisterClasses();
-
   if (!RegisterClasses.empty()) {
     OS << "\n// Register classes\n";
     OS << "namespace " << RegisterClasses[0].Namespace << " {\n";
@@ -86,67 +70,6 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
 
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_REGINFO_ENUM\n\n";
-}
-
-void RegisterInfoEmitter::runHeader(raw_ostream &OS, CodeGenTarget &Target) {
-  EmitSourceFileHeader("Register Information Header Fragment", OS);
-
-  OS << "\n#ifdef GET_REGINFO_HEADER\n";
-  OS << "#undef GET_REGINFO_HEADER\n";
-
-  const std::string &TargetName = Target.getName();
-  std::string ClassName = TargetName + "GenRegisterInfo";
-
-  OS << "#include \"llvm/Target/TargetRegisterInfo.h\"\n";
-  OS << "#include <string>\n\n";
-
-  OS << "namespace llvm {\n\n";
-
-  OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
-     << "  explicit " << ClassName
-     << "(const MCRegisterDesc *D, const TargetRegisterInfoDesc *ID, "
-     << "int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
-     << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
-     << "unsigned Flavour) const;\n"
-     << "  virtual int getLLVMRegNumFull(unsigned DwarfRegNum, "
-     << "unsigned Flavour) const;\n"
-     << "  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;\n"
-     << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
-     << "     { return false; }\n"
-     << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
-     << "  unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const;\n"
-     << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
-     << "};\n\n";
-
-  const std::vector<CodeGenRegisterClass> &RegisterClasses =
-    Target.getRegisterClasses();
-
-  if (!RegisterClasses.empty()) {
-    OS << "namespace " << RegisterClasses[0].Namespace
-       << " { // Register classes\n";
-
-    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-      const CodeGenRegisterClass &RC = RegisterClasses[i];
-      const std::string &Name = RC.getName();
-
-      // Output the register class definition.
-      OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
-         << "    " << Name << "Class();\n";
-      if (!RC.AltOrderSelect.empty())
-        OS << "    ArrayRef<unsigned> "
-              "getRawAllocationOrder(const MachineFunction&) const;\n";
-      OS << "  };\n";
-
-      // Output the extern for the instance.
-      OS << "  extern " << Name << "Class\t" << Name << "RegClass;\n";
-      // Output the extern for the pointer to the instance (should remove).
-      OS << "  static TargetRegisterClass * const "<< Name <<"RegisterClass = &"
-         << Name << "RegClass;\n";
-    }
-    OS << "} // end of namespace " << TargetName << "\n\n";
-  }
-  OS << "} // End llvm namespace \n";
-  OS << "#endif // GET_REGINFO_HEADER\n\n";
 }
 
 //
@@ -253,6 +176,84 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_REGINFO_MC_DESC\n\n";
+}
+
+void
+RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
+                                     CodeGenRegBank &RegBank) {
+  EmitSourceFileHeader("Register Information Header Fragment", OS);
+
+  OS << "\n#ifdef GET_REGINFO_HEADER\n";
+  OS << "#undef GET_REGINFO_HEADER\n";
+
+  const std::string &TargetName = Target.getName();
+  std::string ClassName = TargetName + "GenRegisterInfo";
+
+  OS << "#include \"llvm/Target/TargetRegisterInfo.h\"\n";
+  OS << "#include <string>\n\n";
+
+  OS << "namespace llvm {\n\n";
+
+  OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
+     << "  explicit " << ClassName
+     << "(const MCRegisterDesc *D, const TargetRegisterInfoDesc *ID, "
+     << "int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
+     << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
+     << "unsigned Flavour) const;\n"
+     << "  virtual int getLLVMRegNumFull(unsigned DwarfRegNum, "
+     << "unsigned Flavour) const;\n"
+     << "  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;\n"
+     << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
+     << "     { return false; }\n"
+     << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
+     << "  unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const;\n"
+     << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
+     << "};\n\n";
+
+  const std::vector<Record*> &SubRegIndices = RegBank.getSubRegIndices();
+  if (!SubRegIndices.empty()) {
+    OS << "\n// Subregister indices\n";
+    std::string Namespace = SubRegIndices[0]->getValueAsString("Namespace");
+    if (!Namespace.empty())
+      OS << "namespace " << Namespace << " {\n";
+    OS << "enum {\n  NoSubRegister,\n";
+    for (unsigned i = 0, e = RegBank.getNumNamedIndices(); i != e; ++i)
+      OS << "  " << SubRegIndices[i]->getName() << ",\t// " << i+1 << "\n";
+    OS << "  NUM_TARGET_NAMED_SUBREGS = " << SubRegIndices.size()+1 << "\n";
+    OS << "};\n";
+    if (!Namespace.empty())
+      OS << "}\n";
+  }
+
+  const std::vector<CodeGenRegisterClass> &RegisterClasses =
+    Target.getRegisterClasses();
+
+  if (!RegisterClasses.empty()) {
+    OS << "namespace " << RegisterClasses[0].Namespace
+       << " { // Register classes\n";
+
+    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+      const CodeGenRegisterClass &RC = RegisterClasses[i];
+      const std::string &Name = RC.getName();
+
+      // Output the register class definition.
+      OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
+         << "    " << Name << "Class();\n";
+      if (!RC.AltOrderSelect.empty())
+        OS << "    ArrayRef<unsigned> "
+              "getRawAllocationOrder(const MachineFunction&) const;\n";
+      OS << "  };\n";
+
+      // Output the extern for the instance.
+      OS << "  extern " << Name << "Class\t" << Name << "RegClass;\n";
+      // Output the extern for the pointer to the instance (should remove).
+      OS << "  static TargetRegisterClass * const "<< Name <<"RegisterClass = &"
+         << Name << "RegClass;\n";
+    }
+    OS << "} // end of namespace " << TargetName << "\n\n";
+  }
+  OS << "} // End llvm namespace \n";
+  OS << "#endif // GET_REGINFO_HEADER\n\n";
 }
 
 //
@@ -748,7 +749,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
   RegBank.computeDerivedInfo();
 
   runEnums(OS, Target, RegBank);
-  runHeader(OS, Target);
   runMCDesc(OS, Target, RegBank);
+  runTargetHeader(OS, Target, RegBank);
   runTargetDesc(OS, Target, RegBank);
 }
