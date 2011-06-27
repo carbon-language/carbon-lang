@@ -10,7 +10,7 @@ from lldbtest import *
 
 class StopHookMechanismTestCase(TestBase):
 
-    mydir = "stop-hook"
+    mydir = os.path.join("functionalities", "stop-hook")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):

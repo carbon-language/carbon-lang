@@ -9,7 +9,7 @@ from lldbtest import *
 
 class targetCommandTestCase(TestBase):
 
-    mydir = "target"
+    mydir = os.path.join("functionalities", "target_command")
 
     def setUp(self):
         # Call super's setUp().

@@ -9,7 +9,7 @@ from lldbtest import *
 
 class ProcessLaunchTestCase(TestBase):
 
-    mydir = "process_launch"
+    mydir = os.path.join("functionalities", "process_launch")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_io_with_dsym (self):

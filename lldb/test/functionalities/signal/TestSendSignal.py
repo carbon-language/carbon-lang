@@ -7,7 +7,7 @@ from lldbtest import *
 
 class SendSignalTestCase(TestBase):
 
-    mydir = "signal"
+    mydir = os.path.join("functionalities", "signal")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
