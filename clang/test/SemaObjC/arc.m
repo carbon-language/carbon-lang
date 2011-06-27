@@ -592,3 +592,16 @@ int Test33(id someid) {
 @synthesize newName2;
 @end
 
+void test35(void) {
+  extern void test36_helper(id*);
+  id x;
+  __strong id *xp = 0;
+
+  test36_helper(&x);
+  test36_helper(xp); // expected-error {{passing address of non-local object to __autoreleasing parameter for write-back}}
+
+  // rdar://problem/9665710
+  __block id y;
+  test36_helper(&y);
+  ^{ test36_helper(&y); }();
+}
