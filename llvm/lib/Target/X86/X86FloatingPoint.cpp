@@ -126,9 +126,19 @@ namespace {
     void bundleCFG(MachineFunction &MF);
 
     MachineBasicBlock *MBB;     // Current basic block
+
+    // The hardware keeps track of how many FP registers are live, so we have
+    // to model that exactly. Usually, each live register corresponds to an
+    // FP<n> register, but when dealing with calls, returns, and inline
+    // assembly, it is sometimes neccesary to have live scratch registers.
     unsigned Stack[8];          // FP<n> Registers in each stack slot...
-    unsigned RegMap[8];         // Track which stack slot contains each register
     unsigned StackTop;          // The current top of the FP stack.
+
+    // For each live FP<n> register, point to its Stack[] entry.
+    // The first entries correspond to FP0-FP6, the rest are scratch registers
+    // used when we need slightly different live registers than what the
+    // register allocator thinks.
+    unsigned RegMap[16];
 
     // Set up our stack model to match the incoming registers to MBB.
     void setupBlockStack();
@@ -148,7 +158,7 @@ namespace {
     /// getSlot - Return the stack slot number a particular register number is
     /// in.
     unsigned getSlot(unsigned RegNo) const {
-      assert(RegNo < 8 && "Regno out of range!");
+      assert(RegNo < array_lengthof(RegMap) && "Regno out of range!");
       return RegMap[RegNo];
     }
 
@@ -160,7 +170,7 @@ namespace {
 
     /// getScratchReg - Return an FP register that is not currently in use.
     unsigned getScratchReg() {
-      for (int i = 7; i >= 0; --i)
+      for (int i = array_lengthof(RegMap) - 1; i >= 8; --i)
         if (!isLive(i))
           return i;
       llvm_unreachable("Ran out of scratch FP registers");
@@ -181,7 +191,7 @@ namespace {
 
     // pushReg - Push the specified FP<n> register onto the stack.
     void pushReg(unsigned Reg) {
-      assert(Reg < 8 && "Register number out of range!");
+      assert(Reg < array_lengthof(RegMap) && "Register number out of range!");
       if (StackTop >= 8)
         report_fatal_error("Stack overflow!");
       Stack[StackTop] = Reg;
@@ -236,7 +246,7 @@ namespace {
     /// Adjust the live registers to be the set in Mask.
     void adjustLiveRegs(unsigned Mask, MachineBasicBlock::iterator I);
 
-    /// Shuffle the top FixCount stack entries susch that FP reg FixStack[0] is
+    /// Shuffle the top FixCount stack entries such that FP reg FixStack[0] is
     /// st(0), FP reg FixStack[1] is st(1) etc.
     void shuffleStackTop(const unsigned char *FixStack, unsigned FixCount,
                          MachineBasicBlock::iterator I);
