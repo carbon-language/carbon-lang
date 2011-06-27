@@ -21,24 +21,6 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-//  TargetOperandInfo
-//===----------------------------------------------------------------------===//
-
-/// getRegClass - Get the register class for the operand, handling resolution
-/// of "symbolic" pointer register classes etc.  If this is not a register
-/// operand, this returns null.
-const TargetRegisterClass *
-TargetOperandInfo::getRegClass(const TargetRegisterInfo *TRI) const {
-  if (isLookupPtrRegClass())
-    return TRI->getPointerRegClass(RegClass);
-  // Instructions like INSERT_SUBREG do not have fixed register classes.
-  if (RegClass < 0)
-    return 0;
-  // Otherwise just look it up normally.
-  return TRI->getRegClass(RegClass);
-}
-
-//===----------------------------------------------------------------------===//
 //  TargetInstrInfo
 //===----------------------------------------------------------------------===//
 
@@ -48,6 +30,24 @@ TargetInstrInfo::TargetInstrInfo(const TargetInstrDesc* Desc,
 }
 
 TargetInstrInfo::~TargetInstrInfo() {
+}
+
+const TargetRegisterClass*
+TargetInstrInfo::getRegClass(const TargetInstrDesc &TID, unsigned OpNum,
+                             const TargetRegisterInfo *TRI) const {
+  if (OpNum >= TID.getNumOperands())
+    return 0;
+
+  short RegClass = TID.OpInfo[OpNum].RegClass;
+  if (TID.OpInfo[OpNum].isLookupPtrRegClass())
+    return TRI->getPointerRegClass(RegClass);
+
+  // Instructions like INSERT_SUBREG do not have fixed register classes.
+  if (RegClass < 0)
+    return 0;
+
+  // Otherwise just look it up normally.
+  return TRI->getRegClass(RegClass);
 }
 
 unsigned

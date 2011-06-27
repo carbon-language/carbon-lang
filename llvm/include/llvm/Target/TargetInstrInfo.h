@@ -60,6 +60,12 @@ public:
     return Descriptors[Opcode];
   }
 
+  /// getRegClass - Givem a machine instruction descriptor, returns the register
+  /// class constraint for OpNum, or NULL.
+  const TargetRegisterClass *getRegClass(const TargetInstrDesc &TID,
+                                         unsigned OpNum,
+                                         const TargetRegisterInfo *TRI) const;
+
   /// isTriviallyReMaterializable - Return true if the instruction is trivially
   /// rematerializable, meaning it has no side effects and requires no operands
   /// that aren't always available.

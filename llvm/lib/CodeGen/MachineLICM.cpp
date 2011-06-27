@@ -1020,7 +1020,7 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   if (NewOpc == 0) return 0;
   const TargetInstrDesc &TID = TII->get(NewOpc);
   if (TID.getNumDefs() != 1) return 0;
-  const TargetRegisterClass *RC = TID.OpInfo[LoadRegIndex].getRegClass(TRI);
+  const TargetRegisterClass *RC = TII->getRegClass(TID, LoadRegIndex, TRI);
   // Ok, we're unfolding. Create a temporary register and do the unfold.
   unsigned Reg = MRI->createVirtualRegister(RC);
 

@@ -52,9 +52,6 @@ public:
   /// if the operand is a register.  If isLookupPtrRegClass is set, then this is
   /// an index that is passed to TargetRegisterInfo::getPointerRegClass(x) to
   /// get a dynamic register class.
-  ///
-  /// NOTE: This member should be considered to be private, all access should go
-  /// through "getRegClass(TRI)" below.
   short RegClass;
   
   /// Flags - These are flags from the TOI::OperandFlags enum.
@@ -64,12 +61,6 @@ public:
   /// bits are used to specify the value of constraints (4 bits each).
   unsigned Constraints;
   /// Currently no other information.
-  
-  /// getRegClass - Get the register class for the operand, handling resolution
-  /// of "symbolic" pointer register classes etc.  If this is not a register
-  /// operand, this returns null.
-  const TargetRegisterClass *getRegClass(const TargetRegisterInfo *TRI) const;
-  
   
   /// isLookupPtrRegClass - Set if this operand is a pointer value and it
   /// requires a callback to look up its register class.
@@ -152,12 +143,6 @@ public:
       return (int)(OpInfo[OpNum].Constraints >> Pos) & 0xf;
     }
     return -1;
-  }
-
-  /// getRegClass - Returns the register class constraint for OpNum, or NULL.
-  const TargetRegisterClass *getRegClass(unsigned OpNum,
-                                         const TargetRegisterInfo *TRI) const {
-    return OpNum < NumOperands ? OpInfo[OpNum].getRegClass(TRI) : 0;
   }
 
   /// getOpcode - Return the opcode number for this descriptor.

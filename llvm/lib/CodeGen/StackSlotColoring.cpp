@@ -521,7 +521,7 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
         if (MO.getSubReg() || MII->isSubregToReg())
           return false;
 
-        const TargetRegisterClass *RC = TID.OpInfo[i].getRegClass(TRI);
+        const TargetRegisterClass *RC = TII->getRegClass(TID, i, TRI);
         if (RC && !RC->contains(NewReg))
           return false;
 
@@ -583,7 +583,7 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
         if (MO.getSubReg())
           return false;
 
-        const TargetRegisterClass *RC = TID.OpInfo[i].getRegClass(TRI);
+        const TargetRegisterClass *RC = TII->getRegClass(TID, i, TRI);
         if (RC && !RC->contains(NewReg))
           return false;
         if (MO.isKill())

@@ -303,7 +303,7 @@ static void GetCostForDef(const ScheduleDAGSDNodes::RegDefIter &RegDefPos,
 
     unsigned Idx = RegDefPos.GetIdx();
     const TargetInstrDesc Desc = TII->get(Opcode);
-    const TargetRegisterClass *RC = Desc.getRegClass(Idx, TRI);
+    const TargetRegisterClass *RC = TII->getRegClass(Desc, Idx, TRI);
     RegClass = RC->getID();
     // FIXME: Cost arbitrarily set to 1 because there doesn't seem to be a
     // better way to determine it.

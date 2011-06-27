@@ -154,13 +154,13 @@ void BlackfinDAGToDAGISel::FixRegisterClasses(SelectionDAG &DAG) {
       if (UI.getUse().getResNo() >= DefTID.getNumDefs())
         continue;
       const TargetRegisterClass *DefRC =
-        DefTID.OpInfo[UI.getUse().getResNo()].getRegClass(TRI);
+        TII.getRegClass(DefTID, UI.getUse().getResNo(), TRI);
 
       const TargetInstrDesc &UseTID = TII.get(UI->getMachineOpcode());
       if (UseTID.getNumDefs()+UI.getOperandNo() >= UseTID.getNumOperands())
         continue;
       const TargetRegisterClass *UseRC =
-        UseTID.OpInfo[UseTID.getNumDefs()+UI.getOperandNo()].getRegClass(TRI);
+        TII.getRegClass(UseTID, UseTID.getNumDefs()+UI.getOperandNo(), TRI);
       if (!DefRC || !UseRC)
         continue;
       // We cannot copy CC <-> !(CC/D)

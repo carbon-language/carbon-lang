@@ -2274,7 +2274,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         return NULL;
       bool NarrowToMOV32rm = false;
       if (Size) {
-        unsigned RCSize =  MI->getDesc().OpInfo[i].getRegClass(&RI)->getSize();
+        unsigned RCSize = getRegClass(MI->getDesc(), i, &RI)->getSize();
         if (Size < RCSize) {
           // Check if it's safe to fold the load. If the size of the object is
           // narrower than the load width, then it's not.
@@ -2590,8 +2590,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   UnfoldStore &= FoldedStore;
 
   const TargetInstrDesc &TID = get(Opc);
-  const TargetOperandInfo &TOI = TID.OpInfo[Index];
-  const TargetRegisterClass *RC = TOI.getRegClass(&RI);
+  const TargetRegisterClass *RC = getRegClass(TID, Index, &RI);
   if (!MI->hasOneMemOperand() &&
       RC == &X86::VR128RegClass &&
       !TM.getSubtarget<X86Subtarget>().isUnalignedMemAccessFast())
@@ -2686,7 +2685,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
   // Emit the store instruction.
   if (UnfoldStore) {
-    const TargetRegisterClass *DstRC = TID.OpInfo[0].getRegClass(&RI);
+    const TargetRegisterClass *DstRC = getRegClass(TID, 0, &RI);
     std::pair<MachineInstr::mmo_iterator,
               MachineInstr::mmo_iterator> MMOs =
       MF.extractStoreMemRefs(MI->memoperands_begin(),
@@ -2712,7 +2711,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   bool FoldedLoad = I->second.second & (1 << 4);
   bool FoldedStore = I->second.second & (1 << 5);
   const TargetInstrDesc &TID = get(Opc);
-  const TargetRegisterClass *RC = TID.OpInfo[Index].getRegClass(&RI);
+  const TargetRegisterClass *RC = getRegClass(TID, Index, &RI);
   unsigned NumDefs = TID.NumDefs;
   std::vector<SDValue> AddrOps;
   std::vector<SDValue> BeforeOps;
@@ -2758,7 +2757,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   std::vector<EVT> VTs;
   const TargetRegisterClass *DstRC = 0;
   if (TID.getNumDefs() > 0) {
-    DstRC = TID.OpInfo[0].getRegClass(&RI);
+    DstRC = getRegClass(TID, 0, &RI);
     VTs.push_back(*DstRC->vt_begin());
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {

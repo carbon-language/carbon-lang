@@ -62,6 +62,7 @@ namespace {
     raw_ostream *OS;
     const MachineFunction *MF;
     const TargetMachine *TM;
+    const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     const MachineRegisterInfo *MRI;
 
@@ -255,6 +256,7 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
 
   this->MF = &MF;
   TM = &MF.getTarget();
+  TII = TM->getInstrInfo();
   TRI = TM->getRegisterInfo();
   MRI = &MF.getRegInfo();
 
@@ -387,8 +389,6 @@ static bool matchPair(MachineBasicBlock::const_succ_iterator i,
 
 void
 MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
-
   // Count the number of landing pad successors.
   SmallPtrSet<MachineBasicBlock*, 4> LandingPadSuccs;
   for (MachineBasicBlock::const_succ_iterator I = MBB->succ_begin(),
@@ -723,7 +723,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           }
           sr = s;
         }
-        if (const TargetRegisterClass *DRC = TOI.getRegClass(TRI)) {
+        if (const TargetRegisterClass *DRC = TII->getRegClass(TI, MONum, TRI)) {
           if (!DRC->contains(sr)) {
             report("Illegal physical register for instruction", MO, MONum);
             *OS << TRI->getName(sr) << " is not a "
@@ -743,7 +743,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           }
           RC = SRC;
         }
-        if (const TargetRegisterClass *DRC = TOI.getRegClass(TRI)) {
+        if (const TargetRegisterClass *DRC = TII->getRegClass(TI, MONum, TRI)) {
           if (!RC->hasSuperClassEq(DRC)) {
             report("Illegal virtual register for instruction", MO, MONum);
             *OS << "Expected a " << DRC->getName() << " register, but got a "
