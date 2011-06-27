@@ -361,6 +361,21 @@ static void HandleIBOutletCollection(Decl *d, const AttributeList &Attr,
                                                       QT));
 }
 
+static void PossibleTransparentUnionPointerType(QualType &T) {
+  if (const RecordType *UT = T->getAsUnionType())
+    if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>()) {
+      RecordDecl *UD = UT->getDecl();
+      for (RecordDecl::field_iterator it = UD->field_begin(),
+           itend = UD->field_end(); it != itend; ++it) {
+        QualType QT = it->getType();
+        if (QT->isAnyPointerType() || QT->isBlockPointerType()) {
+          T = QT;
+          return;
+        }
+      }
+    }
+}
+
 static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   // GCC ignores the nonnull attribute on K&R style function prototypes, so we
   // ignore it as well
@@ -413,6 +428,8 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
 
     // Is the function argument a pointer type?
     QualType T = getFunctionOrMethodArgType(d, x).getNonReferenceType();
+    PossibleTransparentUnionPointerType(T);
+    
     if (!T->isAnyPointerType() && !T->isBlockPointerType()) {
       // FIXME: Should also highlight argument in decl.
       S.Diag(Attr.getLoc(), diag::warn_nonnull_pointers_only)
@@ -428,21 +445,9 @@ static void HandleNonNullAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (NonNullArgs.empty()) {
     for (unsigned I = 0, E = getFunctionOrMethodNumArgs(d); I != E; ++I) {
       QualType T = getFunctionOrMethodArgType(d, I).getNonReferenceType();
+      PossibleTransparentUnionPointerType(T);
       if (T->isAnyPointerType() || T->isBlockPointerType())
         NonNullArgs.push_back(I);
-      else if (const RecordType *UT = T->getAsUnionType()) {
-        if (UT && UT->getDecl()->hasAttr<TransparentUnionAttr>()) {
-          RecordDecl *UD = UT->getDecl();
-          for (RecordDecl::field_iterator it = UD->field_begin(),
-               itend = UD->field_end(); it != itend; ++it) {
-            T = it->getType();
-            if (T->isAnyPointerType() || T->isBlockPointerType()) {
-              NonNullArgs.push_back(I);
-              break;
-            }
-          }
-        }
-      }
     }
 
     // No pointer arguments?
