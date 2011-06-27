@@ -7,14 +7,14 @@ struct X0 {
   };
   
   T* f0(T* ptr) { 
-    return ptr + 1; // expected-error{{pointer to function}}
+    return ptr + 1; // expected-error{{pointer to the function}}
   } 
   
   static T* static_member;
 };
 
 template<typename T>
-T* X0<T>::static_member = ((T*)0) + 1; // expected-error{{pointer to function}}
+T* X0<T>::static_member = ((T*)0) + 1; // expected-error{{pointer to the function}}
 
 template class X0<int>; // okay
 

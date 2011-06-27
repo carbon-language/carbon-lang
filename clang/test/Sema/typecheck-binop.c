@@ -7,15 +7,15 @@ int sub1(int *a, double *b) {
 }
 
 void *sub2(struct incomplete *P) {
-  return P-4;      /* expected-error{{subtraction of pointer 'struct incomplete *' requires pointee to be a complete object type}} */
+  return P-4;      /* expected-error{{arithmetic on a pointer to an incomplete type 'struct incomplete'}} */
 }
 
 void *sub3(void *P) {
-  return P-4;      /* expected-warning{{GNU void* extension}} */
+  return P-4;      /* expected-warning{{arithmetic on a pointer to void is a GNU extension}} */
 }
 
 int sub4(void *P, void *Q) {
-  return P-Q;      /* expected-warning{{GNU void* extension}} */
+  return P-Q;      /* expected-warning{{arithmetic on pointers to void is a GNU extension}} */
 }
 
 int sub5(void *P, int *Q) {
