@@ -59,3 +59,9 @@ void f8_test() {
 // CHECK: declare void @f8_user({{.*}}*)
 // CHECK: declare void @f8_callback()
 }
+
+// PR10204: don't crash
+static void test9_helper(void) {}
+void test9() {
+  (void) test9_helper;
+}
