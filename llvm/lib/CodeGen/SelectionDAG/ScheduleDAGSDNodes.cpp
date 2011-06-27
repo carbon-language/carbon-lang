@@ -520,15 +520,7 @@ void ScheduleDAGSDNodes::RegDefIter::Advance() {
     for (;DefIdx < NodeNumDefs; ++DefIdx) {
       if (!Node->hasAnyUseOfValue(DefIdx))
         continue;
-      if (Node->isMachineOpcode() &&
-          Node->getMachineOpcode() == TargetOpcode::EXTRACT_SUBREG &&
-          Node->getOperand(0).getValueType() != MVT::untyped) {
-        // Propagate the incoming (full-register) type. I doubt it's needed.
-        ValueType = Node->getOperand(0).getValueType();
-      }
-      else {
-        ValueType = Node->getValueType(DefIdx);
-      }
+      ValueType = Node->getValueType(DefIdx);
       ++DefIdx;
       return; // Found a normal regdef.
     }

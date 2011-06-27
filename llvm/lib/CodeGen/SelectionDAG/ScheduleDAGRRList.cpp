@@ -2029,13 +2029,9 @@ void RegReductionPQBase::UnscheduledNode(SUnit *SU) {
     unsigned POpc = PN->getMachineOpcode();
     if (POpc == TargetOpcode::IMPLICIT_DEF)
       continue;
-    if (POpc == TargetOpcode::EXTRACT_SUBREG) {
-      EVT VT = PN->getOperand(0).getValueType();
-      unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
-      RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
-      continue;
-    } else if (POpc == TargetOpcode::INSERT_SUBREG ||
-               POpc == TargetOpcode::SUBREG_TO_REG) {
+    if (POpc == TargetOpcode::EXTRACT_SUBREG ||
+        POpc == TargetOpcode::INSERT_SUBREG ||
+        POpc == TargetOpcode::SUBREG_TO_REG) {
       EVT VT = PN->getValueType(0);
       unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
       RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
