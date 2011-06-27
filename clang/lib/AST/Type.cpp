@@ -1586,10 +1586,18 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
-  ID.AddBoolean(epi.Variadic);
-  ID.AddInteger(epi.TypeQuals);
-  ID.AddInteger(epi.RefQualifier);
-  ID.AddInteger(epi.ExceptionSpecType);
+  // This method is relatively performance sensitive, so as a performance
+  // shortcut, use one AddInteger call instead of four for the next four
+  // fields.
+  assert(!(unsigned(epi.Variadic) & ~1) &&
+         !(unsigned(epi.TypeQuals) & ~255) &&
+         !(unsigned(epi.RefQualifier) & ~3) &&
+         !(unsigned(epi.ExceptionSpecType) & ~7) &&
+         "Values larger than expected.");
+  ID.AddInteger(unsigned(epi.Variadic) +
+                (epi.TypeQuals << 1) +
+                (epi.RefQualifier << 9) +
+                (epi.ExceptionSpecType << 11));
   if (epi.ExceptionSpecType == EST_Dynamic) {
     for (unsigned i = 0; i != epi.NumExceptions; ++i)
       ID.AddPointer(epi.Exceptions[i].getAsOpaquePtr());

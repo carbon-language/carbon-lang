@@ -9,13 +9,7 @@
 CLANG_LEVEL := ../..
 
 TOOLNAME = clang
-ifndef CLANG_IS_PRODUCTION
 TOOLALIAS = clang++
-else
-  ifdef CLANGXX_IS_PRODUCTION
-    TOOLALIAS = clang++
-  endif
-endif
 
 # We don't currently expect production Clang builds to be interested in
 # plugins. This is important for startup performance.
@@ -72,7 +66,5 @@ endif
 # Translate make variable to define when building a "production" clang.
 ifdef CLANG_IS_PRODUCTION
 CPP.Defines += -DCLANG_IS_PRODUCTION
-endif
-ifdef CLANGXX_IS_PRODUCTION
 CPP.Defines += -DCLANGXX_IS_PRODUCTION
 endif
