@@ -26,7 +26,7 @@ define double @test2() {
 ; CHECK-NOT: fstp
 ; CHECK: ret
 define void @test3(x86_fp80 %X) {
-        call void asm sideeffect "frob ", "{st(0)},~{dirflag},~{fpsr},~{flags}"( x86_fp80 %X)
+        call void asm sideeffect "frob ", "{st(0)},~{st},~{dirflag},~{fpsr},~{flags}"( x86_fp80 %X)
         ret void
 }
 
@@ -37,7 +37,7 @@ define void @test3(x86_fp80 %X) {
 ; CHECK-NOT: fstp
 ; CHECK: ret
 define void @test4(double %X) {
-        call void asm sideeffect "frob ", "{st(0)},~{dirflag},~{fpsr},~{flags}"( double %X)
+        call void asm sideeffect "frob ", "{st(0)},~{st},~{dirflag},~{fpsr},~{flags}"( double %X)
         ret void
 }
 
@@ -49,7 +49,7 @@ define void @test4(double %X) {
 ; CHECK: ret
 define void @test5(double %X) {
         %Y = fadd double %X, 123.0
-        call void asm sideeffect "frob ", "{st(0)},~{dirflag},~{fpsr},~{flags}"( double %Y)
+        call void asm sideeffect "frob ", "{st(0)},~{st},~{dirflag},~{fpsr},~{flags}"( double %Y)
         ret void
 }
 
@@ -86,3 +86,77 @@ entry:
 	ret void
 }
 
+; PR4185
+; Passing a non-killed value to asm in {st}.
+; Make sure it is duped before.
+; asm kills st(0), so we shouldn't pop anything
+; CHECK: testPR4185
+; CHECK: fld %st(0)
+; CHECK: fistpl
+; CHECK-NOT: fstp
+; CHECK: fistpl
+; CHECK-NOT: fstp
+; CHECK: ret
+; A valid alternative would be to remat the constant pool load before each
+; inline asm.
+define void @testPR4185() {
+return:
+	call void asm sideeffect "fistpl $0", "{st},~{st}"(double 1.000000e+06)
+	call void asm sideeffect "fistpl $0", "{st},~{st}"(double 1.000000e+06)
+	ret void
+}
+
+; PR4459
+; The return value from ceil must be duped before being consumed by asm.
+; CHECK: testPR4459
+; CHECK: ceil
+; CHECK: fld %st(0)
+; CHECK-NOT: fxch
+; CHECK: fistpl
+; CHECK-NOT: fxch
+; CHECK: fstpt
+; CHECK: test
+define void @testPR4459(x86_fp80 %a) {
+entry:
+	%0 = call x86_fp80 @ceil(x86_fp80 %a)
+	call void asm sideeffect "fistpl $0", "{st},~{st}"( x86_fp80 %0)
+	call void @test3(x86_fp80 %0 )
+        ret void
+}
+declare x86_fp80 @ceil(x86_fp80)
+
+; PR4484
+; test1 leaves a value on the stack that is needed after the asm.
+; CHECK: testPR4484
+; CHECK: test1
+; CHECK-NOT: fstp
+; Load %a from stack after ceil
+; CHECK: fldt
+; CHECK-NOT: fxch
+; CHECK: fistpl
+; CHECK-NOT: fstp
+; Set up call to test.
+; CHECK: fstpt
+; CHECK: test
+define void @testPR4484(x86_fp80 %a) {
+entry:
+	%0 = call x86_fp80 @test1()
+	call void asm sideeffect "fistpl $0", "{st},~{st}"(x86_fp80 %a)
+	call void @test3(x86_fp80 %0)
+	ret void
+}
+
+; PR4485
+; CHECK: testPR4485
+define void @testPR4485(x86_fp80* %a) {
+entry:
+	%0 = load x86_fp80* %a, align 16
+	%1 = fmul x86_fp80 %0, 0xK4006B400000000000000
+	%2 = fmul x86_fp80 %1, 0xK4012F424000000000000
+	tail call void asm sideeffect "fistpl $0", "{st},~{st}"(x86_fp80 %2)
+	%3 = load x86_fp80* %a, align 16
+	%4 = fmul x86_fp80 %3, 0xK4006B400000000000000
+	%5 = fmul x86_fp80 %4, 0xK4012F424000000000000
+	tail call void asm sideeffect "fistpl $0", "{st},~{st}"(x86_fp80 %5)
+	ret void
+}
