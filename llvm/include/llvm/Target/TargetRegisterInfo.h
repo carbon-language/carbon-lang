@@ -28,7 +28,6 @@ namespace llvm {
 
 class BitVector;
 class MachineFunction;
-class MachineMove;
 class RegScavenger;
 template<class T> class SmallVectorImpl;
 class raw_ostream;
