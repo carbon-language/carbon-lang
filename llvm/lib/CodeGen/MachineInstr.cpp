@@ -1367,6 +1367,8 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   // Print the rest of the operands.
   bool OmittedAnyCallClobbers = false;
   bool FirstOp = true;
+  unsigned AsmDescOp = ~0u;
+  unsigned AsmOpCount = 0;
 
   if (isInlineAsm()) {
     // Print asm string.
@@ -1380,7 +1382,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     if (ExtraInfo & InlineAsm::Extra_IsAlignStack)
       OS << " [alignstack]";
 
-    StartOp = InlineAsm::MIOp_FirstOperand;
+    StartOp = AsmDescOp = InlineAsm::MIOp_FirstOperand;
     FirstOp = false;
   }
 
@@ -1434,6 +1436,25 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
         MO.print(OS, TM);
     } else if (TM && (isInsertSubreg() || isRegSequence()) && MO.isImm()) {
       OS << TM->getRegisterInfo()->getSubRegIndexName(MO.getImm());
+    } else if (i == AsmDescOp && MO.isImm()) {
+      // Pretty print the inline asm operand descriptor.
+      OS << '$' << AsmOpCount++;
+      unsigned Flag = MO.getImm();
+      switch (InlineAsm::getKind(Flag)) {
+      case InlineAsm::Kind_RegUse:             OS << ":[reguse]"; break;
+      case InlineAsm::Kind_RegDef:             OS << ":[regdef]"; break;
+      case InlineAsm::Kind_Imm:                OS << ":[imm]"; break;
+      case InlineAsm::Kind_Mem:                OS << ":[mem]"; break;
+      case InlineAsm::Kind_RegDefEarlyClobber: OS << ":[regdef-ec]"; break;
+      default: OS << ":[??" << InlineAsm::getKind(Flag) << ']'; break;
+      }
+
+      unsigned TiedTo = 0;
+      if (InlineAsm::isUseOperandTiedToDef(Flag, TiedTo))
+        OS << " [tiedto:$" << TiedTo << ']';
+
+      // Compute the index of the next operand descriptor.
+      AsmDescOp += 1 + InlineAsm::getNumOperandRegisters(Flag);
     } else
       MO.print(OS, TM);
   }
