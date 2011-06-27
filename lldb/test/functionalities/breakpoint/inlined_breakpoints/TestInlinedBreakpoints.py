@@ -11,7 +11,7 @@ from lldbtest import *
 class InlinedBreakpointsTestCase(TestBase):
     """Bug fixed: rdar://problem/8464339"""
 
-    mydir = "inlined_breakpoints"
+    mydir = os.path.join("functionalities", "breakpoint", "inlined_breakpoints")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):

@@ -10,7 +10,7 @@ from lldbtest import *
 
 class LoadUnloadTestCase(TestBase):
 
-    mydir = "load_unload"
+    mydir = os.path.join("functionalities", "load_unload")
 
     def setUp(self):
         # Call super's setUp().

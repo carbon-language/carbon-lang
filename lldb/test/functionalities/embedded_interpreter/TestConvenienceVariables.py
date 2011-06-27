@@ -8,7 +8,7 @@ from lldbtest import *
 
 class ConvenienceVariablesCase(TestBase):
 
-    mydir = "embedded_interpreter"
+    mydir = os.path.join("functionalities", "embedded_interpreter")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
