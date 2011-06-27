@@ -166,6 +166,15 @@ defm VSTM : vfp_ldst_mult<"vstm", 0, IIC_fpLoad_m, IIC_fpLoad_mu>;
 def : MnemonicAlias<"vldm", "vldmia">;
 def : MnemonicAlias<"vstm", "vstmia">;
 
+def : InstAlias<"vpush${p} $r", (VSTMDDB_UPD SP, pred:$p, dpr_reglist:$r)>,
+                Requires<[HasVFP2]>;
+def : InstAlias<"vpush${p} $r", (VSTMSDB_UPD SP, pred:$p, spr_reglist:$r)>,
+                Requires<[HasVFP2]>;
+def : InstAlias<"vpop${p} $r",  (VLDMDIA_UPD SP, pred:$p, dpr_reglist:$r)>,
+                Requires<[HasVFP2]>;
+def : InstAlias<"vpop${p} $r",  (VLDMSIA_UPD SP, pred:$p, spr_reglist:$r)>,
+                Requires<[HasVFP2]>;
+
 // FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
 
 //===----------------------------------------------------------------------===//
