@@ -5,3 +5,10 @@ struct A {
 
   virtual void f() = 0; // expected-note 2 {{'f' declared here}}
 };
+
+// Don't warn (or note) when calling the function on a pointer. (PR10195)
+struct B {
+  A *a;
+  B() { a->f(); };
+  ~B() { a->f(); };
+};
