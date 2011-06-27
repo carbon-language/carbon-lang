@@ -152,7 +152,8 @@ namespace {
     void RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocaInst *AI,
                                       SmallVector<AllocaInst*, 32> &NewElts);
 
-    static MemTransferInst *isOnlyCopiedFromConstantGlobal(AllocaInst *AI);
+    static MemTransferInst *isOnlyCopiedFromConstantGlobal(
+        AllocaInst *AI, SmallVector<Instruction*, 4> &ToDelete);
   };
   
   // SROA_DT - SROA that uses DominatorTree.
@@ -1443,8 +1444,8 @@ static bool ShouldAttemptScalarRepl(AllocaInst *AI) {
 
 
 // performScalarRepl - This algorithm is a simple worklist driven algorithm,
-// which runs on all of the malloc/alloca instructions in the function, removing
-// them if they are only used by getelementptr instructions.
+// which runs on all of the alloca instructions in the function, removing them
+// if they are only used by getelementptr instructions.
 //
 bool SROA::performScalarRepl(Function &F) {
   std::vector<AllocaInst*> WorkList;
@@ -1478,12 +1479,15 @@ bool SROA::performScalarRepl(Function &F) {
     // the constant global instead.  This is commonly produced by the CFE by
     // constructs like "void foo() { int A[] = {1,2,3,4,5,6,7,8,9...}; }" if 'A'
     // is only subsequently read.
-    if (MemTransferInst *TheCopy = isOnlyCopiedFromConstantGlobal(AI)) {
+    SmallVector<Instruction *, 4> ToDelete;
+    if (MemTransferInst *Copy = isOnlyCopiedFromConstantGlobal(AI, ToDelete)) {
       DEBUG(dbgs() << "Found alloca equal to global: " << *AI << '\n');
-      DEBUG(dbgs() << "  memcpy = " << *TheCopy << '\n');
-      Constant *TheSrc = cast<Constant>(TheCopy->getSource());
+      DEBUG(dbgs() << "  memcpy = " << *Copy << '\n');
+      for (unsigned i = 0, e = ToDelete.size(); i != e; ++i)
+        ToDelete[i]->eraseFromParent();
+      Constant *TheSrc = cast<Constant>(Copy->getSource());
       AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
-      TheCopy->eraseFromParent();  // Don't mutate the global.
+      Copy->eraseFromParent();  // Don't mutate the global.
       AI->eraseFromParent();
       ++NumGlobals;
       Changed = true;
@@ -2507,8 +2511,14 @@ static bool PointsToConstantGlobal(Value *V) {
 /// the uses.  If we see a memcpy/memmove that targets an unoffseted pointer to
 /// the alloca, and if the source pointer is a pointer to a constant global, we
 /// can optimize this.
-static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
-                                           bool isOffset) {
+static bool
+isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
+                               bool isOffset,
+                               SmallVector<Instruction *, 4> &LifetimeMarkers) {
+  // We track lifetime intrinsics as we encounter them.  If we decide to go
+  // ahead and replace the value with the global, this lets the caller quickly
+  // eliminate the markers.
+
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
     User *U = cast<Instruction>(*UI);
 
@@ -2520,7 +2530,8 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
 
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
       // If uses of the bitcast are ok, we are ok.
-      if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, isOffset))
+      if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, isOffset,
+                                          LifetimeMarkers))
         return false;
       continue;
     }
@@ -2528,7 +2539,8 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       // If the GEP has all zero indices, it doesn't offset the pointer.  If it
       // doesn't, it does.
       if (!isOnlyCopiedFromConstantGlobal(GEP, TheCopy,
-                                         isOffset || !GEP->hasAllZeroIndices()))
+                                          isOffset || !GEP->hasAllZeroIndices(),
+                                          LifetimeMarkers))
         return false;
       continue;
     }
@@ -2552,6 +2564,16 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       // copy, so it is only a read of the alloca.
       if (CS.paramHasAttr(ArgNo+1, Attribute::ByVal))
         continue;
+    }
+
+    // Lifetime intrinsics can be handled by the caller.
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
+      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+          II->getIntrinsicID() == Intrinsic::lifetime_end) {
+        assert(II->use_empty() && "Lifetime markers have no result to use!");
+        LifetimeMarkers.push_back(II);
+        continue;
+      }
     }
 
     // If this is isn't our memcpy/memmove, reject it as something we can't
@@ -2590,9 +2612,11 @@ static bool isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
 /// isOnlyCopiedFromConstantGlobal - Return true if the specified alloca is only
 /// modified by a copy from a constant global.  If we can prove this, we can
 /// replace any uses of the alloca with uses of the global directly.
-MemTransferInst *SROA::isOnlyCopiedFromConstantGlobal(AllocaInst *AI) {
+MemTransferInst *
+SROA::isOnlyCopiedFromConstantGlobal(AllocaInst *AI,
+                                     SmallVector<Instruction*, 4> &ToDelete) {
   MemTransferInst *TheCopy = 0;
-  if (::isOnlyCopiedFromConstantGlobal(AI, TheCopy, false))
+  if (::isOnlyCopiedFromConstantGlobal(AI, TheCopy, false, ToDelete))
     return TheCopy;
   return 0;
 }
