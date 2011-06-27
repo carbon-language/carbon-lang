@@ -140,7 +140,7 @@ namespace llvm {
       }
 
       unsigned GetIdx() const {
-        return DefIdx;
+        return DefIdx-1;
       }
 
       void Advance();
