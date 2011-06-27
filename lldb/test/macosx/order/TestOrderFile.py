@@ -10,7 +10,7 @@ from lldbtest import *
 
 class OrderFileTestCase(TestBase):
 
-    mydir = "order"
+    mydir = os.path.join("macosx", "order")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):

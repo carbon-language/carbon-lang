@@ -7,7 +7,7 @@ from lldbtest import *
 
 class CrashingInferiorTestCase(TestBase):
 
-    mydir = "inferior-crashing"
+    mydir = os.path.join("functionalities", "inferior-crashing")
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_inferior_crashing_dsym(self):

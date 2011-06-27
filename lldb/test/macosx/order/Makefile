@@ -1,4 +1,4 @@
-LEVEL = ../make
+LEVEL = ../../make
 
 C_SOURCES := main.c
 LDFLAGS = $(CFLAGS) -Xlinker -order_file ./order-file
