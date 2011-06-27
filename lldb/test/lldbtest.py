@@ -155,6 +155,8 @@ BREAKPOINT_HIT_TWICE = "Breakpoint resolved with hit cout = 2"
 
 BREAKPOINT_HIT_THRICE = "Breakpoint resolved with hit cout = 3"
 
+OBJECT_PRINTED_CORRECTLY = "Object printed correctly"
+
 SOURCE_DISPLAYED_CORRECTLY = "Source code displayed correctly"
 
 STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
@@ -360,7 +362,7 @@ class TestBase(unittest2.TestCase):
               - create/get a debugger set with synchronous mode (self.dbg)
               - get the command interpreter from with the debugger (self.ci)
               - create a result object for use with the command interpreter
-                (self.result)
+                (self.res)
               - plus other stuffs
 
         - The tearDown method tries to perform some necessary cleanup on behalf

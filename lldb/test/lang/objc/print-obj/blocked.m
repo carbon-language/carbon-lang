@@ -50,7 +50,7 @@ my_pthread_routine (void *data)
 {
     printf ("my_pthread_routine about to enter.\n");  
     pthread_mutex_lock(&test_mutex);
-    printf ("Releasing Lock.\n"); /// Set a breakpoint here.
+    printf ("Releasing Lock.\n"); // Set a breakpoint here.
     pthread_mutex_unlock(&test_mutex);
     return NULL;
 }
