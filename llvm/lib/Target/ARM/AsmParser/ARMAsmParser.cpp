@@ -350,6 +350,22 @@ public:
   bool isCondCode() const { return Kind == CondCode; }
   bool isCCOut() const { return Kind == CCOut; }
   bool isImm() const { return Kind == Immediate; }
+  bool isImm0_255() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return Value >= 0 && Value < 256;
+  }
+  bool isT2SOImm() const {
+    if (Kind != Immediate)
+      return false;
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    int64_t Value = CE->getValue();
+    return ARM_AM::getT2SOImmVal(Value) != -1;
+  }
   bool isReg() const { return Kind == Register; }
   bool isRegList() const { return Kind == RegisterList; }
   bool isDPRRegList() const { return Kind == DPRRegisterList; }
@@ -511,6 +527,16 @@ public:
   }
 
   void addImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
+  }
+
+  void addImm0_255Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    addExpr(Inst, getImm());
+  }
+
+  void addT2SOImmOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     addExpr(Inst, getImm());
   }

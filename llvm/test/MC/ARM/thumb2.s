@@ -49,6 +49,22 @@
 @ CHECK: mov.w	r0, #66846720           @ encoding: [0x7f,0x70,0x4f,0xf0]
   mov.w	r0, #66846720
 
+@ Aliases w/ the vanilla 'mov' mnemonic, and explicit alternative selection.
+  mov r2, #0xbf000000
+  mov r1, #0x100
+  mov r3, #32
+  mov.w r3, #32
+  movw r3, #32
+
+@ CHECK: mov.w r2, #3204448256 @ encoding: [0x4f,0xf0,0x3f,0x42]
+@ CHECK: mov.w r1, #256 @ encoding: [0x4f,0xf4,0x80,0x71]
+@ CHECK: mov r3, #32 @ encoding: [0x20,0x23]
+@ CHECK: mov.w r3, #32 @ encoding: [0x4f,0xf0,0x20,0x03]
+@ CHECK: movw  r3, #32 @ encoding: [0x40,0xf2,0x20,0x03]
+
+
+
+
 @ CHECK: rrx	r0, r0                  @ encoding: [0x30,0x00,0x4f,0xea]
   rrx	r0, r0
 

@@ -44,9 +44,11 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
 // t2_so_imm - Match a 32-bit immediate operand, which is an
 // 8-bit immediate rotated by an arbitrary number of bits, or an 8-bit
 // immediate splatted into multiple bytes of the word.
+def t2_so_imm_asmoperand : AsmOperandClass { let Name = "T2SOImm"; }
 def t2_so_imm : Operand<i32>, ImmLeaf<i32, [{
     return ARM_AM::getT2SOImmVal(Imm) != -1;
   }]> {
+  let ParserMatchClass = t2_so_imm_asmoperand;
   let EncoderMethod = "getT2SOImmOpValue";
 }
 
@@ -1645,6 +1647,10 @@ def t2MOVi : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), IIC_iMOVi,
   let Inst{15} = 0;
 }
 
+def : InstAlias<"mov${s}${p} $Rd, $imm", (t2MOVi rGPR:$Rd, t2_so_imm:$imm,
+                                                 pred:$p, cc_out:$s)>,
+                Requires<[IsThumb2]>;
+
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins i32imm_hilo16:$imm), IIC_iMOVi,
                    "movw", "\t$Rd, $imm",
@@ -2709,6 +2715,8 @@ def t2MOVCCr : T2TwoReg<
   let Inst{7-4} = 0b0000;
 }
 
+// FIXME: Pseudo-ize these. For now, just mark codegen only.
+let isCodeGenOnly = 1 in {
 let isMoveImm = 1 in
 def t2MOVCCi : T2OneRegImm<(outs rGPR:$Rd), (ins rGPR:$false, t2_so_imm:$imm),
                    IIC_iCMOVi, "mov", ".w\t$Rd, $imm",
@@ -2789,6 +2797,7 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$Rd),
                              IIC_iCMOVsi, "ror", ".w\t$Rd, $Rm, $imm", []>,
                  RegConstraint<"$false = $Rd">;
 } // neverHasSideEffects
+} // isCodeGenOnly = 1
 
 //===----------------------------------------------------------------------===//
 // Atomic operations intrinsics

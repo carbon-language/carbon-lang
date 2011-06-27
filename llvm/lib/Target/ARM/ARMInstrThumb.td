@@ -34,9 +34,10 @@ def imm0_7_neg : PatLeaf<(i32 imm), [{
   return (uint32_t)-N->getZExtValue() < 8;
 }], imm_neg_XFORM>;
 
-def imm0_255 : ImmLeaf<i32, [{
-  return Imm >= 0 && Imm < 256;
-}]>;
+def imm0_255_asmoperand : AsmOperandClass { let Name = "Imm0_255"; }
+def imm0_255 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 256; }]> {
+  let ParserMatchClass = imm0_255_asmoperand;
+}
 def imm0_255_comp : PatLeaf<(i32 imm), [{
   return ~((uint32_t)N->getZExtValue()) < 256;
 }]>;
@@ -1072,7 +1073,7 @@ def tLSRrr :                    // A8.6.91
 
 // Move register
 let isMoveImm = 1 in
-def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins i32imm:$imm8), IIC_iMOVi,
+def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
                   "mov", "\t$Rd, $imm8",
                   [(set tGPR:$Rd, imm0_255:$imm8)]>,
              T1General<{1,0,0,?,?}> {
