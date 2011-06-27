@@ -38,6 +38,7 @@
 #include "llvm/Analysis/DIBuilder.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -71,22 +72,6 @@ struct DenseMapInfo<std::pair<BasicBlock*, unsigned> > {
     return LHS == RHS;
   }
 };
-}
-
-/// onlyUsedByLifetimeMarkers - Return true if the only users of this pointer
-/// are lifetime markers.
-///
-static bool onlyUsedByLifetimeMarkers(const Value *V) {
-  for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
-       UI != UE; ++UI) {
-    const IntrinsicInst *II = dyn_cast<IntrinsicInst>(*UI);
-    if (!II) return false;
-
-    if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
-        II->getIntrinsicID() != Intrinsic::lifetime_end)
-      return false;
-  }
-  return true;
 }
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.

@@ -158,6 +158,10 @@ namespace llvm {
     return GetUnderlyingObject(const_cast<Value *>(V), TD, MaxLookup);
   }
 
+  /// onlyUsedByLifetimeMarkers - Return true if the only users of this pointer
+  /// are lifetime markers.
+  bool onlyUsedByLifetimeMarkers(const Value *V);
+
 } // end namespace llvm
 
 #endif

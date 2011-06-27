@@ -1783,3 +1783,19 @@ llvm::GetUnderlyingObject(Value *V, const TargetData *TD, unsigned MaxLookup) {
   }
   return V;
 }
+
+/// onlyUsedByLifetimeMarkers - Return true if the only users of this pointer
+/// are lifetime markers.
+///
+bool llvm::onlyUsedByLifetimeMarkers(const Value *V) {
+  for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
+       UI != UE; ++UI) {
+    const IntrinsicInst *II = dyn_cast<IntrinsicInst>(*UI);
+    if (!II) return false;
+
+    if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
+        II->getIntrinsicID() != Intrinsic::lifetime_end)
+      return false;
+  }
+  return true;
+}
