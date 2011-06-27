@@ -78,7 +78,8 @@ public:
 
   /// AddMinGW64CXXPaths - Add the necessary paths to support
   /// libstdc++ of x86_64-w64-mingw32 aka mingw-w64.
-  void AddMinGW64CXXPaths(llvm::StringRef Base);
+  void AddMinGW64CXXPaths(llvm::StringRef Base,
+                          llvm::StringRef Version);
 
   /// AddDelimitedPaths - Add a list of paths delimited by the system PATH
   /// separator. The processing follows that of the CPATH variable for gcc.
@@ -90,7 +91,8 @@ public:
 
   // AddDefaultCPlusPlusIncludePaths -  Add paths that should be searched when
   //  compiling c++.
-  void AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple);
+  void AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple,
+                                       const HeaderSearchOptions &HSOpts);
 
   /// AddDefaultSystemIncludePaths - Adds the default system include paths so
   ///  that e.g. stdio.h is found.
@@ -216,12 +218,16 @@ void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(llvm::StringRef Base,
           CXXSystem, true, false, false);
 }
 
-void InitHeaderSearch::AddMinGW64CXXPaths(llvm::StringRef Base) {
-  AddPath(Base,
+void InitHeaderSearch::AddMinGW64CXXPaths(llvm::StringRef Base,
+                                          llvm::StringRef Version) {
+  // Assumes Base is HeaderSearchOpts' ResourceDir
+  AddPath(Base + "/../../../include/c++/" + Version,
           CXXSystem, true, false, false);
-  AddPath(Base + "/x86_64-w64-mingw32",
+  AddPath(Base + "/../../../include/c++/" + Version + "/x86_64-w64-mingw32",
           CXXSystem, true, false, false);
-  AddPath(Base + "/backward",
+  AddPath(Base + "/../../../include/c++/" + Version + "/i686-w64-mingw32",
+          CXXSystem, true, false, false);
+  AddPath(Base + "/../../../include/c++/" + Version + "/backward",
           CXXSystem, true, false, false);
 }
 
@@ -550,14 +556,23 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
   case llvm::Triple::Cygwin:
     AddPath("/usr/include/w32api", System, true, false, false);
     break;
-  case llvm::Triple::MinGW32:
-    // FIXME: We should be aware of i686-w64-mingw32.
-    if (triple.getArch() == llvm::Triple::x86_64)
-      AddPath("c:/mingw/x86_64-w64-mingw32/include",
-              System, true, false, false);
-    AddPath("/mingw/include", System, true, false, false);
-    AddPath("c:/mingw/include", System, true, false, false);
+  case llvm::Triple::MinGW32: { 
+      // mingw-w64 crt include paths
+      llvm::sys::Path P(HSOpts.ResourceDir);
+      P.appendComponent("../../../i686-w64-mingw32/include"); // <sysroot>/i686-w64-mingw32/include
+      AddPath(P.str(), System, true, false, false);
+      P = llvm::sys::Path(HSOpts.ResourceDir);
+      P.appendComponent("../../../x86_64-w64-mingw32/include"); // <sysroot>/x86_64-w64-mingw32/include
+      AddPath(P.str(), System, true, false, false);
+      // mingw.org crt include paths
+      P = llvm::sys::Path(HSOpts.ResourceDir);
+      P.appendComponent("../../../include"); // <sysroot>/include
+      AddPath(P.str(), System, true, false, false);
+      AddPath("/mingw/include", System, true, false, false);
+      AddPath("c:/mingw/include", System, true, false, false); 
+    }
     break;
+      
   case llvm::Triple::Linux:
     // Generic Debian multiarch support:
     if (triple.getArch() == llvm::Triple::x86_64) {
@@ -579,7 +594,7 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
 }
 
 void InitHeaderSearch::
-AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
+AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOptions &HSOpts) {
   llvm::Triple::OSType os = triple.getOS();
   llvm::StringRef CxxIncludeRoot(CXX_INCLUDE_ROOT);
   if (CxxIncludeRoot != "") {
@@ -639,20 +654,17 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple) {
     AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "3.4.4");
     break;
   case llvm::Triple::MinGW32:
-    // FIXME: We should be aware of i686-w64-mingw32.
-    if (triple.getArch() == llvm::Triple::x86_64) {
-      // mingw-w64-20110207
-      AddMinGW64CXXPaths("c:/mingw/x86_64-w64-mingw32/include/c++/4.5.3");
-      // mingw-w64-20101129
-      AddMinGW64CXXPaths("c:/mingw/x86_64-w64-mingw32/include/c++/4.5.2");
-    }
-    // Try gcc 4.5.2 (MSYS)
-    AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32", "4.5.2");
-    // Try gcc 4.5.0
+    // mingw-w64 C++ include paths (i686-w64-mingw32 and x86_64-w64-mingw32)
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.0");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.1");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.2");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.3");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.0");
+    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.1");
+    // mingw.org C++ include paths
+    AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32", "4.5.2"); //MSYS
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.5.0");
-    // Try gcc 4.4.0
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.4.0");
-    // Try gcc 4.3.0
     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
     break;
   case llvm::Triple::DragonFly:
@@ -924,7 +936,7 @@ void InitHeaderSearch::AddDefaultSystemIncludePaths(const LangOptions &Lang,
     if (HSOpts.UseLibcxx)
       AddPath("/usr/include/c++/v1", CXXSystem, true, false, false);
     else
-      AddDefaultCPlusPlusIncludePaths(triple);
+      AddDefaultCPlusPlusIncludePaths(triple, HSOpts);
   }
 
   AddDefaultCIncludePaths(triple, HSOpts);
