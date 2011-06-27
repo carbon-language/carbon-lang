@@ -67,3 +67,12 @@ void rdar_7780304() {
   b.x |= 1; // expected-warning{{The left expression of the compound assignment is an uninitialized value. The computed value will also be garbage}}
 }
 
+
+// The flip side of PR10163 -- float arrays that are actually uninitialized
+// (The main test is in uninit-vals.m)
+void test_PR10163(float);
+void PR10163 (void) {
+  float x[2];
+  test_PR10163(x[1]); // expected-warning{{uninitialized value}}
+}
+
