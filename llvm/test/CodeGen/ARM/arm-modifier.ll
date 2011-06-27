@@ -46,9 +46,9 @@ ret void
 define void @f3() nounwind {
 entry:
 ; CHECK: f3
-; CHECK: stm r{{[0-9]+}}, {[[REG1:(r[0-9]+)]], r{{[0-9]+}}}
-; CHECK: adds lr, [[REG1]]
-; CHECK: ldm r{{[0-9]+}}, {r{{[0-9]+}}, r{{[0-9]+}}}
+; CHECK: stm {{lr|r[0-9]+}}, {[[REG1:(r[0-9]+)]], r{{[0-9]+}}}
+; CHECK: adds {{lr|r[0-9]+}}, [[REG1]]
+; CHECK: ldm {{lr|r[0-9]+}}, {r{{[0-9]+}}, r{{[0-9]+}}}
 %tmp = load i64* @f3_var, align 4
 %tmp1 = load i64* @f3_var2, align 4
 %0 = call i64 asm sideeffect "stm ${0:m}, ${1:M}\0A\09adds $3, $1\0A\09", "=*m,=r,1,r"(i64** @f3_ptr, i64 %tmp, i64 %tmp1) nounwind
