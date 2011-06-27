@@ -791,9 +791,7 @@ RValue CodeGenFunction::EmitLoadOfLValue(LValue LV) {
     return RValue::get(EmitARCLoadWeak(LV.getAddress()));
 
   if (LV.isSimple()) {
-    // Functions are l-values that don't require loading.
-    if (LV.getType()->isFunctionType())
-      return RValue::get(LV.getAddress());
+    assert(!LV.getType()->isFunctionType());
 
     // Everything needs a load.
     return RValue::get(EmitLoadOfScalar(LV));
