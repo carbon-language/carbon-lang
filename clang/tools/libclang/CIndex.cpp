@@ -4627,6 +4627,24 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
     break;
   }
 
+  // Avoid having the cursor of an expression "overwrite" the annotation of the
+  // variable declaration that it belongs to.
+  // This can happen for C++ constructor expressions whose range generally
+  // include the variable declaration, e.g.:
+  //  MyCXXClass foo; // Make sure we don't annotate 'foo' as a CallExpr cursor.
+  if (clang_isExpression(cursorK)) {
+    Expr *E = getCursorExpr(cursor);
+    if (Decl *D = getCursorDecl(cursor)) {
+      const unsigned I = NextToken();
+      if (E->getLocStart().isValid() && D->getLocation().isValid() &&
+          E->getLocStart() == D->getLocation() &&
+          E->getLocStart() == GetTokenLoc(I)) {
+        Cursors[I] = updateC;
+        AdvanceToken();
+      }
+    }
+  }
+
   // Visit children to get their cursor information.
   const unsigned BeforeChildren = NextToken();
   VisitChildren(cursor);

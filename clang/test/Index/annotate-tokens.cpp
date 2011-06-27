@@ -17,9 +17,10 @@ struct S1 { void f(); };
 struct S2 { S1 *operator->(); };
 void test3(S2 s2) {
   s2->f();
+  X foo;
 }
 
-// RUN: c-index-test -test-annotate-tokens=%s:1:1:20:1 %s | FileCheck %s
+// RUN: c-index-test -test-annotate-tokens=%s:1:1:21:1 %s | FileCheck %s
 // CHECK: Keyword: "struct" [1:1 - 1:7] StructDecl=bonk:1:8 (Definition)
 // CHECK: Identifier: "bonk" [1:8 - 1:12] StructDecl=bonk:1:8 (Definition)
 // CHECK: Punctuation: "{" [1:13 - 1:14] StructDecl=bonk:1:8 (Definition)
@@ -115,4 +116,7 @@ void test3(S2 s2) {
 // CHECK: Punctuation: "(" [19:8 - 19:9] CallExpr=f:16:18
 // CHECK: Punctuation: ")" [19:9 - 19:10] CallExpr=f:16:18
 // CHECK: Punctuation: ";" [19:10 - 19:11] UnexposedStmt=
-// CHECK: Punctuation: "}" [20:1 - 20:2] UnexposedStmt=
+// CHECK: Identifier: "X" [20:3 - 20:4] TypeRef=struct X:7:8
+// CHECK: Identifier: "foo" [20:5 - 20:8] VarDecl=foo:20:5 (Definition)
+// CHECK: Punctuation: ";" [20:8 - 20:9] UnexposedStmt=
+// CHECK: Punctuation: "}" [21:1 - 21:2] UnexposedStmt=
