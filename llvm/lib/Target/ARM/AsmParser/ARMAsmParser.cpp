@@ -1761,7 +1761,7 @@ static StringRef SplitMnemonic(StringRef Mnemonic,
       Mnemonic == "vcle" ||
       (Mnemonic == "smlal" || Mnemonic == "umaal" || Mnemonic == "umlal" ||
        Mnemonic == "vabal" || Mnemonic == "vmlal" || Mnemonic == "vpadal" ||
-       Mnemonic == "vqdmlal"))
+       Mnemonic == "vqdmlal" || Mnemonic == "bics"))
     return Mnemonic;
 
   // First, split out any predication code.
