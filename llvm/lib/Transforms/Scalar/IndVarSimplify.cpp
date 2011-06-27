@@ -1158,8 +1158,12 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Create a rewriter object which we'll use to transform the code with.
   SCEVExpander Rewriter(*SE);
-  if (DisableIVRewrite)
+
+  // Eliminate redundant IV users.
+  if (DisableIVRewrite) {
     Rewriter.disableCanonicalMode();
+    SimplifyIVUsersNoRewrite(L, Rewriter);
+  }
 
   // Check to see if this loop has a computable loop-invariant execution count.
   // If so, this means that we can compute the final value of any expressions
@@ -1171,9 +1175,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
     RewriteLoopExitValues(L, Rewriter);
 
   // Eliminate redundant IV users.
-  if (DisableIVRewrite)
-    SimplifyIVUsersNoRewrite(L, Rewriter);
-  else
+  if (!DisableIVRewrite)
     SimplifyIVUsers(Rewriter);
 
   // Compute the type of the largest recurrence expression, and decide whether
