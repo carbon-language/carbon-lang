@@ -209,3 +209,16 @@ namespace test15 {
     new (p) A[n];
   }
 }
+
+namespace PR10197 {
+  // CHECK: define weak_odr void @_ZN7PR101971fIiEEvv()
+  template<typename T>
+  void f() {
+    // CHECK: [[CALL:%.*]] = call noalias i8* @_Znwm
+    // CHECK-NEXT: [[CASTED:%.*]] = bitcast i8* [[CALL]] to 
+    new T;
+    // CHECK-NEXT: ret void
+  }
+
+  template void f<int>();
+}
