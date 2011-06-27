@@ -31,6 +31,10 @@ struct YDerived : Y {
   X getAnotherX() { return member; }
 };
 
+void test() {
+  X foo;
+}
+
 // RUN: c-index-test -cursor-at=%s:12:20 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
 // RUN: c-index-test -cursor-at=%s:13:21 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
 // RUN: c-index-test -cursor-at=%s:13:28 %s | FileCheck -check-prefix=CHECK-VALUE-REF %s
@@ -61,3 +65,6 @@ struct YDerived : Y {
 // RUN: c-index-test -cursor-at=%s:27:10 %s | FileCheck -check-prefix=CHECK-IMPLICIT-MEMREF %s
 // RUN: c-index-test -cursor-at=%s:31:28 %s | FileCheck -check-prefix=CHECK-IMPLICIT-MEMREF %s
 // CHECK-IMPLICIT-MEMREF: MemberRefExpr=member:21:7
+
+// RUN: c-index-test -cursor-at=%s:35:5 %s | FileCheck -check-prefix=CHECK-DECL %s
+// CHECK-DECL: VarDecl=foo:35:5

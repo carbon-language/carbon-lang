@@ -3393,11 +3393,34 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
   return createCXString((const char*) 0);
 }
 
+struct GetCursorData {
+  SourceLocation TokenBeginLoc;
+  CXCursor &BestCursor;
+
+  GetCursorData(SourceLocation tokenBegin, CXCursor &outputCursor)
+    : TokenBeginLoc(tokenBegin), BestCursor(outputCursor) { }
+};
+
 enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
                                          CXCursor parent,
                                          CXClientData client_data) {
-  CXCursor *BestCursor = static_cast<CXCursor *>(client_data);
-  
+  GetCursorData *Data = static_cast<GetCursorData *>(client_data);
+  CXCursor *BestCursor = &Data->BestCursor;
+
+  if (clang_isExpression(cursor.kind) &&
+      clang_isDeclaration(BestCursor->kind)) {
+    Decl *D = getCursorDecl(*BestCursor);
+
+    // Avoid having the cursor of an expression replace the declaration cursor
+    // when the expression source range overlaps the declaration range.
+    // This can happen for C++ constructor expressions whose range generally
+    // include the variable declaration, e.g.:
+    //  MyCXXClass foo; // Make sure pointing at 'foo' returns a VarDecl cursor.
+    if (D->getLocation().isValid() && Data->TokenBeginLoc.isValid() &&
+        D->getLocation() == Data->TokenBeginLoc)
+      return CXChildVisit_Break;
+  }
+
   // If our current best cursor is the construction of a temporary object, 
   // don't replace that cursor with a type reference, because we want 
   // clang_getCursor() to point at the constructor.
@@ -3441,8 +3464,9 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     // FIXME: Would be great to have a "hint" cursor, then walk from that
     // hint cursor upward until we find a cursor whose source range encloses
     // the region of interest, rather than starting from the translation unit.
+    GetCursorData ResultData(SLoc, Result);
     CXCursor Parent = clang_getTranslationUnitCursor(TU);
-    CursorVisitor CursorVis(TU, GetCursorVisitor, &Result,
+    CursorVisitor CursorVis(TU, GetCursorVisitor, &ResultData,
                             Decl::MaxPCHLevel, true, SourceLocation(SLoc));
     CursorVis.VisitChildren(Parent);
   }
