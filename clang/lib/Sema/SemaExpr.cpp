@@ -3092,9 +3092,8 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
 
   if (ResultType->isVoidType() && !getLangOptions().CPlusPlus) {
     // GNU extension: subscripting on pointer to void
-    // FIXME: Use a better warning for this.
-    Diag(LLoc, diag::ext_gnu_void_ptr)
-      << 0 << BaseExpr->getSourceRange();
+    Diag(LLoc, diag::ext_gnu_subscript_void_type)
+      << BaseExpr->getSourceRange();
 
     // C forbids expressions of unqualified void type from being l-values.
     // See IsCForbiddenLValueType.

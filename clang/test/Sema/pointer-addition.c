@@ -9,7 +9,7 @@ void a(S* b, void* c) {
   c += 1;    // expected-warning {{arithmetic on a pointer to void is a GNU extension}}
   c--;       // expected-warning {{arithmetic on a pointer to void is a GNU extension}}
   c -= 1;    // expected-warning {{arithmetic on a pointer to void is a GNU extension}}
-  (void) c[1]; // expected-warning {{arithmetic on a pointer to void is a GNU extension}}
+  (void) c[1]; // expected-warning {{subscript of a pointer to void is a GNU extension}}
   b = 1+b;   // expected-error {{arithmetic on a pointer to an incomplete type}}
   /* The next couple tests are only pedantic warnings in gcc */
   void (*d)(S*,void*) = a;
