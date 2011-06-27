@@ -130,7 +130,6 @@ public:
   uint64_t        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
-  const TargetRegisterClass **RCBarriers; // Reg classes completely "clobbered"
   const TargetOperandInfo *OpInfo; // 'NumOperands' entries about operands
 
   /// getOperandConstraint - Returns the value of the specific constraint if
@@ -249,17 +248,6 @@ public:
       for (; *ImpDefs; ++ImpDefs)
         if (*ImpDefs == Reg) return true;
     return false;
-  }
-
-  /// getRegClassBarriers - Return a list of register classes that are
-  /// completely clobbered by this machine instruction. For example, on X86
-  /// the call instructions will completely clobber all the registers in the
-  /// fp stack and XMM classes.
-  ///
-  /// This method returns null if the instruction doesn't completely clobber
-  /// any register class.
-  const TargetRegisterClass **getRegClassBarriers() const {
-    return RCBarriers;
   }
 
   /// getSchedClass - Return the scheduling class for this instruction.  The

@@ -44,7 +44,6 @@ private:
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
                   std::map<std::vector<Record*>, unsigned> &EL,
-                  std::map<Record*, unsigned> &BM,
                   const OperandInfoMapTy &OpInfo,
                   raw_ostream &OS);
 
