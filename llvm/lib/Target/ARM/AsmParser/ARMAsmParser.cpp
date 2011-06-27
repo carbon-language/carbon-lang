@@ -1826,6 +1826,7 @@ static StringRef SplitMnemonic(StringRef Mnemonic,
 void ARMAsmParser::
 GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
                       bool &CanAcceptPredicationCode) {
+  bool isThumbOne = TM.getSubtarget<ARMSubtarget>().isThumb1Only();
   bool isThumb = TM.getSubtarget<ARMSubtarget>().isThumb();
 
   if (Mnemonic == "and" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
@@ -1836,7 +1837,7 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
       Mnemonic == "rsb" || Mnemonic == "rsc" || Mnemonic == "orn" ||
       Mnemonic == "sbc" || Mnemonic == "mla" || Mnemonic == "umull" ||
       Mnemonic == "eor" || Mnemonic == "smlal" ||
-      (Mnemonic == "mov" && !isThumb)) {
+      (Mnemonic == "mov" && !isThumbOne)) {
     CanAcceptCarrySet = true;
   } else {
     CanAcceptCarrySet = false;
@@ -1856,7 +1857,7 @@ GetMnemonicAcceptInfo(StringRef Mnemonic, bool &CanAcceptCarrySet,
   if (isThumb)
     if (Mnemonic == "bkpt" || Mnemonic == "mcr" || Mnemonic == "mcrr" ||
         Mnemonic == "mrc" || Mnemonic == "mrrc" || Mnemonic == "cdp" ||
-        Mnemonic == "mov")
+        (Mnemonic == "mov" && isThumbOne))
       CanAcceptPredicationCode = false;
 }
 
