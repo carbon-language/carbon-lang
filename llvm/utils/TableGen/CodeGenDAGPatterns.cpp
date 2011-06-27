@@ -1242,6 +1242,16 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
 ///
 static EEVT::TypeSet getImplicitType(Record *R, unsigned ResNo,
                                      bool NotRegisters, TreePattern &TP) {
+  // Check to see if this is a register operand.
+  if (R->isSubClassOf("RegisterOperand")) {
+    assert(ResNo == 0 && "Regoperand ref only has one result!");
+    if (NotRegisters)
+      return EEVT::TypeSet(); // Unknown.
+    Record *RegClass = R->getValueAsDef("RegClass");
+    const CodeGenTarget &T = TP.getDAGPatterns().getTargetInfo();
+    return EEVT::TypeSet(T.getRegisterClass(RegClass).getValueTypes());
+  }
+
   // Check to see if this is a register or a register class.
   if (R->isSubClassOf("RegisterClass")) {
     assert(ResNo == 0 && "Regclass ref only has one result!");
@@ -1524,6 +1534,11 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 
       if (ResultNode->isSubClassOf("PointerLikeRegClass")) {
         MadeChange |= UpdateNodeType(ResNo, MVT::iPTR, TP);
+      } else if (ResultNode->isSubClassOf("RegisterOperand")) {
+        Record *RegClass = ResultNode->getValueAsDef("RegClass");
+        const CodeGenRegisterClass &RC =
+          CDP.getTargetInfo().getRegisterClass(RegClass);
+        MadeChange |= UpdateNodeType(ResNo, RC.getValueTypes(), TP);
       } else if (ResultNode->getName() == "unknown") {
         // Nothing to do.
       } else {
@@ -1581,6 +1596,11 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       if (OperandNode->isSubClassOf("RegisterClass")) {
         const CodeGenRegisterClass &RC =
           CDP.getTargetInfo().getRegisterClass(OperandNode);
+        MadeChange |= Child->UpdateNodeType(ChildResNo, RC.getValueTypes(), TP);
+      } else if (OperandNode->isSubClassOf("RegisterOperand")) {
+        Record *RegClass = OperandNode->getValueAsDef("RegClass");
+        const CodeGenRegisterClass &RC =
+          CDP.getTargetInfo().getRegisterClass(RegClass);
         MadeChange |= Child->UpdateNodeType(ChildResNo, RC.getValueTypes(), TP);
       } else if (OperandNode->isSubClassOf("Operand")) {
         VT = getValueType(OperandNode->getValueAsDef("Type"));
@@ -1928,7 +1948,8 @@ InferAllTypes(const StringMap<SmallVector<TreePatternNode*,1> > *InNamedTypes) {
           //  def : Pat<(v1i64 (bitconvert(v2i32 DPR:$src))), (v1i64 DPR:$src)>;
           if (Nodes[i] == Trees[0] && Nodes[i]->isLeaf()) {
             DefInit *DI = dynamic_cast<DefInit*>(Nodes[i]->getLeafValue());
-            if (DI && DI->getDef()->isSubClassOf("RegisterClass"))
+            if (DI && (DI->getDef()->isSubClassOf("RegisterClass") ||
+                       DI->getDef()->isSubClassOf("RegisterOperand")))
               continue;
           }
 
@@ -2211,7 +2232,8 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
   if (Pat->getName().empty()) {
     if (Pat->isLeaf()) {
       DefInit *DI = dynamic_cast<DefInit*>(Pat->getLeafValue());
-      if (DI && DI->getDef()->isSubClassOf("RegisterClass"))
+      if (DI && (DI->getDef()->isSubClassOf("RegisterClass") ||
+                 DI->getDef()->isSubClassOf("RegisterOperand")))
         I->error("Input " + DI->getDef()->getName() + " must be named!");
     }
     return false;
@@ -2318,6 +2340,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       I->error("set destination should be a register!");
 
     if (Val->getDef()->isSubClassOf("RegisterClass") ||
+        Val->getDef()->isSubClassOf("RegisterOperand") ||
         Val->getDef()->isSubClassOf("PointerLikeRegClass")) {
       if (Dest->getName().empty())
         I->error("set destination must have a name!");

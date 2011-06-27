@@ -871,6 +871,31 @@ AsmMatcherInfo::getOperandClass(const CGIOperandList::OperandInfo &OI,
   if (SubOpIdx != -1)
     Rec = dynamic_cast<DefInit*>(OI.MIOperandInfo->getArg(SubOpIdx))->getDef();
 
+  if (Rec->isSubClassOf("RegisterOperand")) {
+    // RegisterOperand may have an associated ParserMatchClass. If it does,
+    // use it, else just fall back to the underlying register class.
+    const RecordVal *R = Rec->getValue("ParserMatchClass");
+    if (R == 0 || R->getValue() == 0)
+      throw "Record `" + Rec->getName() +
+        "' does not have a ParserMatchClass!\n";
+
+    if (DefInit *DI= dynamic_cast<DefInit*>(R->getValue())) {
+      Record *MatchClass = DI->getDef();
+      if (ClassInfo *CI = AsmOperandClasses[MatchClass])
+        return CI;
+    }
+
+    // No custom match class. Just use the register class.
+    Record *ClassRec = Rec->getValueAsDef("RegClass");
+    if (!ClassRec)
+      throw TGError(Rec->getLoc(), "RegisterOperand `" + Rec->getName() +
+                    "' has no associated register class!\n");
+    if (ClassInfo *CI = RegisterClassClasses[ClassRec])
+      return CI;
+    throw TGError(Rec->getLoc(), "register class has no class info!");
+  }
+
+
   if (Rec->isSubClassOf("RegisterClass")) {
     if (ClassInfo *CI = RegisterClassClasses[Rec])
       return CI;

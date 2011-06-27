@@ -224,6 +224,7 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   Record *LeafRec = DI->getDef();
   if (// Handle register references.  Nothing to do here, they always match.
       LeafRec->isSubClassOf("RegisterClass") ||
+      LeafRec->isSubClassOf("RegisterOperand") ||
       LeafRec->isSubClassOf("PointerLikeRegClass") ||
       LeafRec->isSubClassOf("SubRegIndex") ||
       // Place holder for SRCVALUE nodes. Nothing to do here.
@@ -579,15 +580,16 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
 
   // If this is an explicit register reference, handle it.
   if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
-    if (DI->getDef()->isSubClassOf("Register")) {
+    Record *Def = DI->getDef();
+    if (Def->isSubClassOf("Register")) {
       const CodeGenRegister *Reg =
-        CGP.getTargetInfo().getRegBank().getReg(DI->getDef());
+        CGP.getTargetInfo().getRegBank().getReg(Def);
       AddMatcher(new EmitRegisterMatcher(Reg, N->getType(0)));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }
 
-    if (DI->getDef()->getName() == "zero_reg") {
+    if (Def->getName() == "zero_reg") {
       AddMatcher(new EmitRegisterMatcher(0, N->getType(0)));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;
@@ -595,16 +597,18 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
 
     // Handle a reference to a register class. This is used
     // in COPY_TO_SUBREG instructions.
-    if (DI->getDef()->isSubClassOf("RegisterClass")) {
-      std::string Value = getQualifiedName(DI->getDef()) + "RegClassID";
+    if (Def->isSubClassOf("RegisterOperand"))
+      Def = Def->getValueAsDef("RegClass");
+    if (Def->isSubClassOf("RegisterClass")) {
+      std::string Value = getQualifiedName(Def) + "RegClassID";
       AddMatcher(new EmitStringIntegerMatcher(Value, MVT::i32));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }
 
     // Handle a subregister index. This is used for INSERT_SUBREG etc.
-    if (DI->getDef()->isSubClassOf("SubRegIndex")) {
-      std::string Value = getQualifiedName(DI->getDef());
+    if (Def->isSubClassOf("SubRegIndex")) {
+      std::string Value = getQualifiedName(Def);
       AddMatcher(new EmitStringIntegerMatcher(Value, MVT::i32));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;

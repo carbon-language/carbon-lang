@@ -1443,6 +1443,25 @@ Record::getValueAsListOfInts(StringRef FieldName) const {
   return Ints;
 }
 
+/// getValueAsListOfStrings - This method looks up the specified field and
+/// returns its value as a vector of strings, throwing an exception if the
+/// field does not exist or if the value is not the right type.
+///
+std::vector<std::string>
+Record::getValueAsListOfStrings(StringRef FieldName) const {
+  ListInit *List = getValueAsListInit(FieldName);
+  std::vector<std::string> Strings;
+  for (unsigned i = 0; i < List->getSize(); i++) {
+    if (StringInit *II = dynamic_cast<StringInit*>(List->getElement(i))) {
+      Strings.push_back(II->getValue());
+    } else {
+      throw "Record `" + getName() + "', field `" + FieldName.str() +
+            "' does not have a list of strings initializer!";
+    }
+  }
+  return Strings;
+}
+
 /// getValueAsDef - This method looks up the specified field and returns its
 /// value as a Record, throwing an exception if the field does not exist or if
 /// the value is not the right type.

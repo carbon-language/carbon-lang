@@ -112,6 +112,18 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "0 };\n";
   }
 
+  const std::vector<Record*> RegAltNameIndices = Target.getRegAltNameIndices();
+  // If the only definition is the default NoRegAltName, we don't need to
+  // emit anything.
+  if (RegAltNameIndices.size() > 1) {
+    OS << "\n// Register alternate name indices\n";
+    OS << "enum {\n";
+    for (unsigned i = 0, e = RegAltNameIndices.size(); i != e; ++i)
+      OS << "  " << RegAltNameIndices[i]->getName() << ",\t// " << i << "\n";
+    OS << "  NUM_TARGET_REG_ALT_NAMES = " << RegAltNameIndices.size() << "\n";
+    OS << "};\n";
+  }
+
   // Emit the empty sub-registers list
   OS << "  const unsigned Empty_SubRegsSet[] = { 0 };\n";
   // Loop over all of the registers which have sub-registers, emitting the

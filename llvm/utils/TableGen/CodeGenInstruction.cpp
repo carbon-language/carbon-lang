@@ -69,7 +69,9 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
     std::string EncoderMethod;
     unsigned NumOps = 1;
     DagInit *MIOpInfo = 0;
-    if (Rec->isSubClassOf("Operand")) {
+    if (Rec->isSubClassOf("RegisterOperand")) {
+      PrintMethod = Rec->getValueAsString("PrintMethod");
+    } else if (Rec->isSubClassOf("Operand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
       // If there is an explicit encoder method, use it.
       EncoderMethod = Rec->getValueAsString("EncoderMethod");
@@ -415,6 +417,9 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
 
   // Handle explicit registers.
   if (ADI && ADI->getDef()->isSubClassOf("Register")) {
+    if (InstOpRec->isSubClassOf("RegisterOperand"))
+      InstOpRec = InstOpRec->getValueAsDef("RegClass");
+
     if (!InstOpRec->isSubClassOf("RegisterClass"))
       return false;
 

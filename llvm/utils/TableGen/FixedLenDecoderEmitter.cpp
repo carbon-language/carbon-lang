@@ -1305,8 +1305,10 @@ bool FixedLenDecoderEmitter::populateInstruction(const CodeGenInstruction &CGI,
       RecordRecTy *Type = dynamic_cast<RecordRecTy*>(TI->getType());
       Record *TypeRecord = Type->getRecord();
       bool isReg = false;
+      if (TypeRecord->isSubClassOf("RegisterOperand"))
+        TypeRecord = TypeRecord->getValueAsDef("RegClass");
       if (TypeRecord->isSubClassOf("RegisterClass")) {
-        Decoder = "Decode" + Type->getRecord()->getName() + "RegisterClass";
+        Decoder = "Decode" + TypeRecord->getName() + "RegisterClass";
         isReg = true;
       }
 

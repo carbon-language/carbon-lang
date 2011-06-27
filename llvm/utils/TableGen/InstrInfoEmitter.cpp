@@ -43,10 +43,10 @@ void InstrInfoEmitter::GatherItinClasses() {
   std::vector<Record*> DefList =
   Records.getAllDerivedDefinitions("InstrItinClass");
   std::sort(DefList.begin(), DefList.end(), LessRecord());
-  
+
   for (unsigned i = 0, N = DefList.size(); i < N; i++)
     ItinClassMap[DefList[i]->getName()] = i;
-}  
+}
 
 unsigned InstrInfoEmitter::getItinClassNumber(const Record *InstRec) {
   return ItinClassMap[InstRec->getValueAsDef("Itinerary")->getName()];
@@ -59,7 +59,7 @@ unsigned InstrInfoEmitter::getItinClassNumber(const Record *InstRec) {
 std::vector<std::string>
 InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
   std::vector<std::string> Result;
-  
+
   for (unsigned i = 0, e = Inst.Operands.size(); i != e; ++i) {
     // Handle aggregate operands and normal operands the same way by expanding
     // either case into a list of operands for this op.
@@ -70,7 +70,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
     // operand, which has a single operand, but no declared class for the
     // operand.
     DagInit *MIOI = Inst.Operands[i].MIOperandInfo;
-    
+
     if (!MIOI || MIOI->getNumArgs() == 0) {
       // Single, anonymous, operand.
       OperandList.push_back(Inst.Operands[i]);
@@ -86,7 +86,9 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
     for (unsigned j = 0, e = OperandList.size(); j != e; ++j) {
       Record *OpR = OperandList[j].Rec;
       std::string Res;
-      
+
+      if (OpR->isSubClassOf("RegisterOperand"))
+        OpR = OpR->getValueAsDef("RegClass");
       if (OpR->isSubClassOf("RegisterClass"))
         Res += getQualifiedName(OpR) + "RegClassID, ";
       else if (OpR->isSubClassOf("PointerLikeRegClass"))
@@ -94,10 +96,10 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       else
         // -1 means the operand does not have a fixed register class.
         Res += "-1, ";
-      
+
       // Fill in applicable flags.
       Res += "0";
-        
+
       // Ptr value whose register class is resolved via callback.
       if (OpR->isSubClassOf("PointerLikeRegClass"))
         Res += "|(1<<TOI::LookupPtrRegClass)";
@@ -106,7 +108,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       // was of type PredicateOperand.
       if (Inst.Operands[i].Rec->isSubClassOf("PredicateOperand"))
         Res += "|(1<<TOI::Predicate)";
-        
+
       // Optional def operands.  Check to see if the original unexpanded operand
       // was of type OptionalDefOperand.
       if (Inst.Operands[i].Rec->isSubClassOf("OptionalDefOperand"))
@@ -114,7 +116,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
 
       // Fill in constraint info.
       Res += ", ";
-      
+
       const CGIOperandList::ConstraintInfo &Constraint =
         Inst.Operands[i].Constraints[j];
       if (Constraint.isNone())
@@ -126,7 +128,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
         Res += "((" + utostr(Constraint.getTiedOperand()) +
                     " << 16) | (1 << TOI::TIED_TO))";
       }
-        
+
       Result.push_back(Res);
     }
   }
@@ -134,12 +136,12 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
   return Result;
 }
 
-void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS, 
+void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS,
                                        OperandInfoMapTy &OperandInfoIDs) {
   // ID #0 is for no operand info.
   unsigned OperandListNum = 0;
   OperandInfoIDs[std::vector<std::string>()] = ++OperandListNum;
-  
+
   OS << "\n";
   const CodeGenTarget &Target = CDP.getTargetInfo();
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
@@ -147,7 +149,7 @@ void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS,
     std::vector<std::string> OperandInfo = GetOperandInfo(**II);
     unsigned &N = OperandInfoIDs[OperandInfo];
     if (N != 0) continue;
-    
+
     N = ++OperandListNum;
     OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
     for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i)
@@ -205,7 +207,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   std::map<std::vector<Record*>, unsigned> EmittedBarriers;
   unsigned BarrierNumber = 0;
   std::map<Record*, unsigned> BarriersMap;
- 
+
   // Emit all of the instruction's implicit uses and defs.
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
          E = Target.inst_end(); II != E; ++II) {
@@ -231,10 +233,10 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   }
 
   OperandInfoMapTy OperandInfoIDs;
-  
+
   // Emit all of the operand info records.
   EmitOperandInfo(OS, OperandInfoIDs);
-  
+
   // Emit all of the TargetInstrDesc records in their ENUM ordering.
   //
   OS << "\nstatic const TargetInstrDesc " << TargetName

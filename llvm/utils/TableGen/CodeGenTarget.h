@@ -66,7 +66,9 @@ class CodeGenTarget {
 
   mutable DenseMap<const Record*, CodeGenInstruction*> Instructions;
   mutable CodeGenRegBank *RegBank;
+  mutable std::vector<Record*> RegAltNameIndices;
   mutable std::vector<MVT::SimpleValueType> LegalValueTypes;
+  void ReadRegAltNameIndices() const;
   void ReadInstructions() const;
   void ReadLegalValueTypes() const;
 
@@ -99,6 +101,11 @@ public:
   /// getRegisterByName - If there is a register with the specific AsmName,
   /// return it.
   const CodeGenRegister *getRegisterByName(StringRef Name) const;
+
+  const std::vector<Record*> &getRegAltNameIndices() const {
+    if (RegAltNameIndices.empty()) ReadRegAltNameIndices();
+    return RegAltNameIndices;
+  }
 
   const std::vector<CodeGenRegisterClass> &getRegisterClasses() const {
     return getRegBank().getRegClasses();

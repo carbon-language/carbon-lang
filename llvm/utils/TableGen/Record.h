@@ -1368,6 +1368,12 @@ public:
   ///
   std::vector<int64_t> getValueAsListOfInts(StringRef FieldName) const;
 
+  /// getValueAsListOfStrings - This method looks up the specified field and
+  /// returns its value as a vector of strings, throwing an exception if the
+  /// field does not exist or if the value is not the right type.
+  ///
+  std::vector<std::string> getValueAsListOfStrings(StringRef FieldName) const;
+
   /// getValueAsDef - This method looks up the specified field and returns its
   /// value as a Record, throwing an exception if the field does not exist or if
   /// the value is not the right type.
