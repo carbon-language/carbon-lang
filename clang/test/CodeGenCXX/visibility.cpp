@@ -422,3 +422,35 @@ namespace test21 {
   // CHECK: define weak_odr void @_ZN6test211AILNS_2EnE0EE3fooEv(
   template void A<en>::foo();
 }
+
+// rdar://problem/9616154
+// Visibility on explicit specializations should take precedence.
+namespace test22 {
+  class A1 {};
+  class A2 {};
+
+  template <class T> struct B {};
+  template <> struct DEFAULT B<A1> {
+    static void foo();
+    static void bar() {}
+  };
+  template <> struct B<A2> {
+    static void foo();
+    static void bar() {}
+  };
+
+  void test() {
+    B<A1>::foo();
+    B<A1>::bar();
+    B<A2>::foo();
+    B<A2>::bar();
+  }
+  // CHECK: declare void @_ZN6test221BINS_2A1EE3fooEv()
+  // CHECK: define linkonce_odr void @_ZN6test221BINS_2A1EE3barEv()
+  // CHECK: declare void @_ZN6test221BINS_2A2EE3fooEv()
+  // CHECK: define linkonce_odr void @_ZN6test221BINS_2A2EE3barEv()
+  // CHECK-HIDDEN: declare void @_ZN6test221BINS_2A1EE3fooEv()
+  // CHECK-HIDDEN: define linkonce_odr void @_ZN6test221BINS_2A1EE3barEv()
+  // CHECK-HIDDEN: declare void @_ZN6test221BINS_2A2EE3fooEv()
+  // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test221BINS_2A2EE3barEv()
+}

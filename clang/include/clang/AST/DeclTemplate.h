@@ -314,6 +314,10 @@ public:
     return (TemplateSpecializationKind)(Template.getInt() + 1);
   }
 
+  bool isExplicitSpecialization() const {
+    return getTemplateSpecializationKind() == TSK_ExplicitSpecialization;
+  }
+
   /// \brief Set the template specialization kind.
   void setTemplateSpecializationKind(TemplateSpecializationKind TSK) {
     assert(TSK != TSK_Undeclared &&
@@ -1396,6 +1400,10 @@ public:
   /// declaration represents.
   TemplateSpecializationKind getSpecializationKind() const {
     return static_cast<TemplateSpecializationKind>(SpecializationKind);
+  }
+
+  bool isExplicitSpecialization() const {
+    return getSpecializationKind() == TSK_ExplicitSpecialization;
   }
 
   void setSpecializationKind(TemplateSpecializationKind TSK) {
