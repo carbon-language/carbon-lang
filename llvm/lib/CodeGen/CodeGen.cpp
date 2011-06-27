@@ -37,7 +37,6 @@ void llvm::initializeCodeGen(PassRegistry &Registry) {
   initializeOptimizePHIsPass(Registry);
   initializePHIEliminationPass(Registry);
   initializePeepholeOptimizerPass(Registry);
-  initializePreAllocSplittingPass(Registry);
   initializeProcessImplicitDefsPass(Registry);
   initializePEIPass(Registry);
   initializeRALinScanPass(Registry);

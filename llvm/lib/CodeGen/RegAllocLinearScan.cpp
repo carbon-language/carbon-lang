@@ -58,11 +58,6 @@ NewHeuristic("new-spilling-heuristic",
              cl::init(false), cl::Hidden);
 
 static cl::opt<bool>
-PreSplitIntervals("pre-alloc-split",
-                  cl::desc("Pre-register allocation live interval splitting"),
-                  cl::init(false), cl::Hidden);
-
-static cl::opt<bool>
 TrivCoalesceEnds("trivial-coalesce-ends",
                   cl::desc("Attempt trivial coalescing of interval ends"),
                   cl::init(false), cl::Hidden);
@@ -104,7 +99,6 @@ namespace {
       initializeRegisterCoalescerPass(
         *PassRegistry::getPassRegistry());
       initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
-      initializePreAllocSplittingPass(*PassRegistry::getPassRegistry());
       initializeLiveStacksPass(*PassRegistry::getPassRegistry());
       initializeMachineDominatorTreePass(*PassRegistry::getPassRegistry());
       initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
@@ -217,8 +211,6 @@ namespace {
       // to coalescing and which analyses coalescing invalidates.
       AU.addRequiredTransitive<RegisterCoalescer>();
       AU.addRequired<CalculateSpillWeights>();
-      if (PreSplitIntervals)
-        AU.addRequiredID(PreAllocSplittingID);
       AU.addRequiredID(LiveStacksID);
       AU.addPreservedID(LiveStacksID);
       AU.addRequired<MachineLoopInfo>();
@@ -401,7 +393,6 @@ INITIALIZE_PASS_BEGIN(RALinScan, "linearscan-regalloc",
 INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
 INITIALIZE_PASS_DEPENDENCY(StrongPHIElimination)
 INITIALIZE_PASS_DEPENDENCY(CalculateSpillWeights)
-INITIALIZE_PASS_DEPENDENCY(PreAllocSplitting)
 INITIALIZE_PASS_DEPENDENCY(LiveStacks)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_DEPENDENCY(VirtRegMap)

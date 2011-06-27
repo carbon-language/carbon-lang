@@ -177,7 +177,6 @@ void initializePostDomOnlyViewerPass(PassRegistry&);
 void initializePostDomPrinterPass(PassRegistry&);
 void initializePostDomViewerPass(PassRegistry&);
 void initializePostDominatorTreePass(PassRegistry&);
-void initializePreAllocSplittingPass(PassRegistry&);
 void initializePreVerifierPass(PassRegistry&);
 void initializePrintDbgInfoPass(PassRegistry&);
 void initializePrintFunctionPassPass(PassRegistry&);

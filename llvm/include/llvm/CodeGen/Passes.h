@@ -73,8 +73,6 @@ namespace llvm {
   ///  This pass is still in development
   extern char &StrongPHIEliminationID;
 
-  extern char &PreAllocSplittingID;
-
   /// LiveStacks pass. An analysis keeping track of the liveness of stack slots.
   extern char &LiveStacksID;
 
