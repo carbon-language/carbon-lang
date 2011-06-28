@@ -143,24 +143,23 @@ void strlen_liveness(const char *x) {
 // strnlen()
 //===----------------------------------------------------------------------===
 
-#define strnlen BUILTIN(strnlen)
 size_t strnlen(const char *s, size_t maxlen);
 
 void strnlen_constant0() {
   if (strnlen("123", 10) != 3)
-    (void)*(char*)0; // no-warning
+    (void)*(char*)0; // expected-warning{{never executed}}
 }
 
 void strnlen_constant1() {
   const char *a = "123";
   if (strnlen(a, 10) != 3)
-    (void)*(char*)0; // no-warning
+    (void)*(char*)0; // expected-warning{{never executed}}
 }
 
 void strnlen_constant2(char x) {
   char a[] = "123";
   if (strnlen(a, 10) != 3)
-    (void)*(char*)0; // no-warning
+    (void)*(char*)0; // expected-warning{{never executed}}
   a[0] = x;
   if (strnlen(a, 10) != 3)
     (void)*(char*)0; // expected-warning{{null}}
@@ -168,19 +167,19 @@ void strnlen_constant2(char x) {
 
 void strnlen_constant4() {
   if (strnlen("123456", 3) != 3)
-    (void)*(char*)0; // no-warning
+    (void)*(char*)0; // expected-warning{{never executed}}
 }
 
 void strnlen_constant5() {
   const char *a = "123456";
   if (strnlen(a, 3) != 3)
-    (void)*(char*)0; // no-warning
+    (void)*(char*)0; // expected-warning{{never executed}}
 }
 
 void strnlen_constant6(char x) {
   char a[] = "123456";
   if (strnlen(a, 3) != 3)
-    (void)*(char*)0; // no-warning
+    (void)*(char*)0; // expected-warning{{never executed}}
   a[0] = x;
   if (strnlen(a, 3) != 3)
     (void)*(char*)0; // expected-warning{{null}}
@@ -201,7 +200,7 @@ label:
 
 void strnlen_zero() {
   if (strnlen("abc", 0) != 0)
-    (void)*(char*)0; // no-warning
+    (void)*(char*)0; // expected-warning{{never executed}}
   if (strnlen(NULL, 0) != 0) // no-warning
     (void)*(char*)0; // no-warning
 }
