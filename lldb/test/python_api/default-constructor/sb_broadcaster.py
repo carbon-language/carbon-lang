@@ -17,3 +17,4 @@ def fuzz_obj(obj):
     obj.EventTypeHasListeners(0)
     obj.RemoveListener(listener, 0xffffffff)
     obj.RemoveListener(listener, 0)
+    obj.Clear()

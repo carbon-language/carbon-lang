@@ -15,3 +15,4 @@ def fuzz_obj(obj):
     obj.BroadcasterMatchesPtr(None)
     obj.BroadcasterMatchesRef(broadcaster)
     obj.GetDescription(lldb.SBStream())
+    obj.Clear()

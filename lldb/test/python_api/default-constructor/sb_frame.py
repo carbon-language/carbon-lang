@@ -32,3 +32,4 @@ def fuzz_obj(obj):
     obj.FindVariable("my_var")
     obj.FindVariable("my_var", lldb.eDynamicCanRunTarget)
     obj.GetDescription(lldb.SBStream())
+    obj.Clear()

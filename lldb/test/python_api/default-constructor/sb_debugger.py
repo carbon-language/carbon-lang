@@ -49,3 +49,4 @@ def fuzz_obj(obj):
     obj.GetCloseInputOnEOF()
     obj.SetCloseInputOnEOF(True)
     obj.SetCloseInputOnEOF(False)
+    obj.Clear()

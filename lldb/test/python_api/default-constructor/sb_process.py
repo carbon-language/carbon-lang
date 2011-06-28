@@ -40,3 +40,4 @@ def fuzz_obj(obj):
     obj.GetDescription(lldb.SBStream())
     obj.LoadImage(lldb.SBFileSpec(), error)
     obj.UnloadImage(0)
+    obj.Clear()

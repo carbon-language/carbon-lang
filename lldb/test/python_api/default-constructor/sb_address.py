@@ -10,3 +10,4 @@ def fuzz_obj(obj):
     obj.GetLoadAddress(lldb.SBTarget())
     obj.OffsetAddress(sys.maxint)
     obj.GetDescription(lldb.SBStream())
+    obj.Clear()

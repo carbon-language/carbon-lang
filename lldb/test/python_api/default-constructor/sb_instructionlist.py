@@ -12,3 +12,4 @@ def fuzz_obj(obj):
     obj.Print(None)
     obj.GetDescription(lldb.SBStream())
     obj.DumpEmulationForAllInstructions("armv7")
+    obj.Clear()

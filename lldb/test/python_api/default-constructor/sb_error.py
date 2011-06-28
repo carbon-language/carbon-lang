@@ -17,3 +17,4 @@ def fuzz_obj(obj):
     obj.SetErrorString("xyz")
     obj.SetErrorStringWithFormat("%s!", "error")
     obj.GetDescription(lldb.SBStream())
+    obj.Clear()
