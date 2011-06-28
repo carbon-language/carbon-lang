@@ -2996,7 +2996,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   Args.AddLastArg(CmdArgs, options::OPT_dynamic);
   Args.AddAllArgs(CmdArgs, options::OPT_exported__symbols__list);
   Args.AddLastArg(CmdArgs, options::OPT_flat__namespace);
-  Args.AddLastArg(CmdArgs, options::OPT_force__load);
+  Args.AddAllArgs(CmdArgs, options::OPT_force__load);
   Args.AddAllArgs(CmdArgs, options::OPT_headerpad__max__install__names);
   Args.AddAllArgs(CmdArgs, options::OPT_image__base);
   Args.AddAllArgs(CmdArgs, options::OPT_init);

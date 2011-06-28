@@ -100,3 +100,11 @@
 //
 // LINK_OBJECT_LTO_PATH: {{ld(.exe)?"}}
 // LINK_OBJECT_LTO_PATH: "-object_path_lto"
+
+// RUN: %clang -ccc-host-triple x86_64-apple-darwin10 -### %t.o \
+// RUN:   -force_load a -force_load b 2> %t.log
+// RUN: cat %t.log
+// RUN: FileCheck -check-prefix=FORCE_LOAD %s < %t.log
+//
+// FORCE_LOAD: {{ld(.exe)?"}}
+// FORCE_LOAD: "-force_load" "a" "-force_load" "b"
