@@ -1,5 +1,4 @@
-; RUN: llc < %s -mcpu=i486 | grep fstpl | count 5
-; RUN: llc < %s -mcpu=i486 | grep fstps | count 2
+; RUN: llc < %s -mcpu=i486 | FileCheck %s
 ; PR1505
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"
@@ -30,19 +29,41 @@ declare void @_ZNSt8ios_base4InitC1Ev(%"struct.std::ctype_base"*)
 
 declare i32 @__cxa_atexit(void (i8*)*, i8*, i8*)
 
+; CHECK: main
 define i32 @main() {
 entry:
+; CHECK: flds
 	%tmp6 = volatile load float* @a		; <float> [#uses=1]
+; CHECK: fstps (%esp)
+; CHECK: tanf
 	%tmp9 = tail call float @tanf( float %tmp6 )		; <float> [#uses=1]
+; Spill returned value:
+; CHECK: fstp
+
+; CHECK: fldl
 	%tmp12 = volatile load double* @b		; <double> [#uses=1]
+; CHECK: fstpl (%esp)
+; CHECK: tan
 	%tmp13 = tail call double @tan( double %tmp12 )		; <double> [#uses=1]
+; Spill returned value:
+; CHECK: fstp
 	%tmp1314 = fptrunc double %tmp13 to float		; <float> [#uses=1]
 	%tmp16 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc( %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZSt4cout, i8* getelementptr ([12 x i8]* @.str, i32 0, i32 0) )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=1]
 	%tmp1920 = fpext float %tmp9 to double		; <double> [#uses=1]
+; reload:
+; CHECK: fld
+; CHECK: fstpl
+; CHECK: ZNSolsEd
 	%tmp22 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZNSolsEd( %"struct.std::basic_ostream<char,std::char_traits<char> >"* %tmp16, double %tmp1920 )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=1]
 	%tmp30 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_( %"struct.std::basic_ostream<char,std::char_traits<char> >"* %tmp22 )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=0]
+; reload:
+; CHECK: fld
+; CHECK: fstps
+; CHECK: ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc
 	%tmp34 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZStlsISt11char_traitsIcEERSt13basic_ostreamIcT_ES5_PKc( %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZSt4cout, i8* getelementptr ([13 x i8]* @.str1, i32 0, i32 0) )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=1]
 	%tmp3940 = fpext float %tmp1314 to double		; <double> [#uses=1]
+; CHECK: fstpl
+; CHECK: ZNSolsEd
 	%tmp42 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZNSolsEd( %"struct.std::basic_ostream<char,std::char_traits<char> >"* %tmp34, double %tmp3940 )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=1]
 	%tmp51 = tail call %"struct.std::basic_ostream<char,std::char_traits<char> >"* @_ZSt4endlIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_( %"struct.std::basic_ostream<char,std::char_traits<char> >"* %tmp42 )		; <%"struct.std::basic_ostream<char,std::char_traits<char> >"*> [#uses=0]
 	ret i32 0
