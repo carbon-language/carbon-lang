@@ -500,18 +500,6 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(X86::BPL);
   }
 
-  // Mark the x87 stack registers as reserved, since they don't behave normally
-  // with respect to liveness. We don't fully model the effects of x87 stack
-  // pushes and pops after stackification.
-  Reserved.set(X86::ST0);
-  Reserved.set(X86::ST1);
-  Reserved.set(X86::ST2);
-  Reserved.set(X86::ST3);
-  Reserved.set(X86::ST4);
-  Reserved.set(X86::ST5);
-  Reserved.set(X86::ST6);
-  Reserved.set(X86::ST7);
-
   // Mark the segment registers as reserved.
   Reserved.set(X86::CS);
   Reserved.set(X86::SS);

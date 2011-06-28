@@ -106,6 +106,25 @@ return:
 	ret void
 }
 
+; Passing a non-killed value through asm in {st}.
+; Make sure it is not duped before.
+; Second asm kills st(0), so we shouldn't pop anything
+; CHECK: testPR4185b
+; CHECK-NOT: fld %st(0)
+; CHECK: fistl
+; CHECK-NOT: fstp
+; CHECK: fistpl
+; CHECK-NOT: fstp
+; CHECK: ret
+; A valid alternative would be to remat the constant pool load before each
+; inline asm.
+define void @testPR4185b() {
+return:
+	call void asm sideeffect "fistl $0", "{st}"(double 1.000000e+06)
+	call void asm sideeffect "fistpl $0", "{st},~{st}"(double 1.000000e+06)
+	ret void
+}
+
 ; PR4459
 ; The return value from ceil must be duped before being consumed by asm.
 ; CHECK: testPR4459
@@ -159,4 +178,154 @@ entry:
 	%5 = fmul x86_fp80 %4, 0xK4012F424000000000000
 	tail call void asm sideeffect "fistpl $0", "{st},~{st}"(x86_fp80 %5)
 	ret void
+}
+
+; An input argument in a fixed position is implicitly popped by the asm only if
+; the input argument is tied to an output register, or it is in the clobber list.
+; The clobber list case is tested above.
+;
+; This doesn't implicitly pop the stack:
+;
+;   void fist1(long double x, int *p) {
+;     asm volatile ("fistl %1" : : "t"(x), "m"(*p));
+;   }
+;
+; CHECK: fist1
+; CHECK: fldt
+; CHECK: fistl (%e
+; CHECK: fstp
+; CHECK: ret
+define void @fist1(x86_fp80 %x, i32* %p) nounwind ssp {
+entry:
+  tail call void asm sideeffect "fistl $1", "{st},*m,~{memory},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, i32* %p) nounwind
+  ret void
+}
+
+; Here, the input operand is tied to an output which means that is is
+; implicitly popped (and then the output is implicitly pushed).
+;
+;   long double fist2(long double x, int *p) {
+;     long double y;
+;     asm ("fistl %1" : "=&t"(y) : "0"(x), "m"(*p) : "memory");
+;     return y;
+;   }
+;
+; CHECK: fist2
+; CHECK: fldt
+; CHECK: fistl (%e
+; CHECK-NOT: fstp
+; CHECK: ret
+define x86_fp80 @fist2(x86_fp80 %x, i32* %p) nounwind ssp {
+entry:
+  %0 = tail call x86_fp80 asm "fistl $2", "=&{st},0,*m,~{memory},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, i32* %p) nounwind
+  ret x86_fp80 %0
+}
+
+; An 'f' constraint is never implicitly popped:
+;
+;   void fucomp1(long double x, long double y) {
+;     asm volatile ("fucomp %1" : : "t"(x), "f"(y) : "st");
+;   }
+; CHECK: fucomp1
+; CHECK: fldt
+; CHECK: fldt
+; CHECK: fucomp %st
+; CHECK: fstp
+; CHECK-NOT: fstp
+; CHECK: ret
+define void @fucomp1(x86_fp80 %x, x86_fp80 %y) nounwind ssp {
+entry:
+  tail call void asm sideeffect "fucomp $1", "{st},f,~{st},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, x86_fp80 %y) nounwind
+  ret void
+}
+
+; The 'u' constraint is only popped implicitly when clobbered:
+;
+;   void fucomp2(long double x, long double y) {
+;     asm volatile ("fucomp %1" : : "t"(x), "u"(y) : "st");
+;   }
+;
+;   void fucomp3(long double x, long double y) {
+;     asm volatile ("fucompp %1" : : "t"(x), "u"(y) : "st", "st(1)");
+;   }
+;
+; CHECK: fucomp2
+; CHECK: fldt
+; CHECK: fldt
+; CHECK: fucomp %st(1)
+; CHECK: fstp
+; CHECK-NOT: fstp
+; CHECK: ret
+;
+; CHECK: fucomp3
+; CHECK: fldt
+; CHECK: fldt
+; CHECK: fucompp %st(1)
+; CHECK-NOT: fstp
+; CHECK: ret
+define void @fucomp2(x86_fp80 %x, x86_fp80 %y) nounwind ssp {
+entry:
+  tail call void asm sideeffect "fucomp $1", "{st},{st(1)},~{st},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, x86_fp80 %y) nounwind
+  ret void
+}
+define void @fucomp3(x86_fp80 %x, x86_fp80 %y) nounwind ssp {
+entry:
+  tail call void asm sideeffect "fucompp $1", "{st},{st(1)},~{st},~{st(1)},~{dirflag},~{fpsr},~{flags}"(x86_fp80 %x, x86_fp80 %y) nounwind
+  ret void
+}
+
+; One input, two outputs, one dead output.
+%complex = type { float, float }
+; CHECK: sincos1
+; CHECK: flds
+; CHECK-NOT: fxch
+; CHECK: sincos
+; CHECK-NOT: fstp
+; CHECK: fstp %st(1)
+; CHECK-NOT: fstp
+; CHECK: ret
+define float @sincos1(float %x) nounwind ssp {
+entry:
+  %0 = tail call %complex asm "sincos", "={st},={st(1)},0,~{dirflag},~{fpsr},~{flags}"(float %x) nounwind
+  %asmresult = extractvalue %complex %0, 0
+  ret float %asmresult
+}
+
+; Same thing, swapped output operands.
+; CHECK: sincos2
+; CHECK: flds
+; CHECK-NOT: fxch
+; CHECK: sincos
+; CHECK-NOT: fstp
+; CHECK: fstp %st(1)
+; CHECK-NOT: fstp
+; CHECK: ret
+define float @sincos2(float %x) nounwind ssp {
+entry:
+  %0 = tail call %complex asm "sincos", "={st(1)},={st},1,~{dirflag},~{fpsr},~{flags}"(float %x) nounwind
+  %asmresult = extractvalue %complex %0, 1
+  ret float %asmresult
+}
+
+; Clobber st(0) after it was live-out/dead from the previous asm.
+; CHECK: sincos3
+; Load x, make a copy for the second asm.
+; CHECK: flds
+; CHECK: fld %st(0)
+; CHECK: sincos
+; Discard dead result in st(0), bring x to the top.
+; CHECK: fstp %st(0)
+; CHECK: fxch
+; x is now in st(0) for the second asm
+; CHECK: sincos
+; Discard both results.
+; CHECK: fstp
+; CHECK: fstp
+; CHECK: ret
+define float @sincos3(float %x) nounwind ssp {
+entry:
+  %0 = tail call %complex asm sideeffect "sincos", "={st(1)},={st},1,~{dirflag},~{fpsr},~{flags}"(float %x) nounwind
+  %1 = tail call %complex asm sideeffect "sincos", "={st(1)},={st},1,~{dirflag},~{fpsr},~{flags}"(float %x) nounwind
+  %asmresult = extractvalue %complex %0, 0
+  ret float %asmresult
 }

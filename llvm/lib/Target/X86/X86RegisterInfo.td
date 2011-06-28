@@ -206,15 +206,22 @@ let Namespace = "X86" in {
   def YMM15: RegisterWithSubRegs<"ymm15", [XMM15]>, DwarfRegAlias<XMM15>;
   }
 
-  // Floating point stack registers
-  def ST0 : Register<"st(0)">, DwarfRegNum<[33, 12, 11]>;
-  def ST1 : Register<"st(1)">, DwarfRegNum<[34, 13, 12]>;
-  def ST2 : Register<"st(2)">, DwarfRegNum<[35, 14, 13]>;
-  def ST3 : Register<"st(3)">, DwarfRegNum<[36, 15, 14]>;
-  def ST4 : Register<"st(4)">, DwarfRegNum<[37, 16, 15]>;
-  def ST5 : Register<"st(5)">, DwarfRegNum<[38, 17, 16]>;
-  def ST6 : Register<"st(6)">, DwarfRegNum<[39, 18, 17]>;
-  def ST7 : Register<"st(7)">, DwarfRegNum<[40, 19, 18]>;
+  class STRegister<string Name, list<Register> A> : Register<Name> {
+    let Aliases = A;
+  }
+
+  // Floating point stack registers. These don't map one-to-one to the FP
+  // pseudo registers, but we still mark them as aliasing FP registers. That
+  // way both kinds can be live without exceeding the stack depth. ST registers
+  // are only live around inline assembly.
+  def ST0 : STRegister<"st(0)", []>, DwarfRegNum<[33, 12, 11]>;
+  def ST1 : STRegister<"st(1)", [FP6]>, DwarfRegNum<[34, 13, 12]>;
+  def ST2 : STRegister<"st(2)", [FP5]>, DwarfRegNum<[35, 14, 13]>;
+  def ST3 : STRegister<"st(3)", [FP4]>, DwarfRegNum<[36, 15, 14]>;
+  def ST4 : STRegister<"st(4)", [FP3]>, DwarfRegNum<[37, 16, 15]>;
+  def ST5 : STRegister<"st(5)", [FP2]>, DwarfRegNum<[38, 17, 16]>;
+  def ST6 : STRegister<"st(6)", [FP1]>, DwarfRegNum<[39, 18, 17]>;
+  def ST7 : STRegister<"st(7)", [FP0]>, DwarfRegNum<[40, 19, 18]>;
 
   // Status flags register
   def EFLAGS : Register<"flags">;

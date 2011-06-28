@@ -112,31 +112,8 @@ let usesCustomInserter = 1 in {  // Expanded after instruction selection.
 // a pattern) and the FPI instruction should have emission info (e.g. opcode
 // encoding and asm printing info).
 
-// Pseudo Instructions for FP stack return values.
-def FpGET_ST0_32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
-def FpGET_ST0_64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
-def FpGET_ST0_80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP, []>; // FPR = ST(0)
-
-// FpGET_ST1* should only be issued *after* an FpGET_ST0* has been issued when
-// there are two values live out on the stack from a call or inlineasm.  This
-// magic is handled by the stackifier.  It is not valid to emit FpGET_ST1* and
-// then FpGET_ST0*.  In addition, it is invalid for any FP-using operations to
-// occur between them.
-def FpGET_ST1_32 : FpI_<(outs RFP32:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
-def FpGET_ST1_64 : FpI_<(outs RFP64:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
-def FpGET_ST1_80 : FpI_<(outs RFP80:$dst), (ins), SpecialFP, []>; // FPR = ST(1)
-
-let Defs = [ST0] in {
-def FpSET_ST0_32 : FpI_<(outs), (ins RFP32:$src), SpecialFP, []>; // ST(0) = FPR
-def FpSET_ST0_64 : FpI_<(outs), (ins RFP64:$src), SpecialFP, []>; // ST(0) = FPR
-def FpSET_ST0_80 : FpI_<(outs), (ins RFP80:$src), SpecialFP, []>; // ST(0) = FPR
-}
-
-let Defs = [ST1] in {
-def FpSET_ST1_32 : FpI_<(outs), (ins RFP32:$src), SpecialFP, []>; // ST(1) = FPR
-def FpSET_ST1_64 : FpI_<(outs), (ins RFP64:$src), SpecialFP, []>; // ST(1) = FPR
-def FpSET_ST1_80 : FpI_<(outs), (ins RFP80:$src), SpecialFP, []>; // ST(1) = FPR
-}
+// Pseudo Instruction for FP stack return values.
+def FpPOP_RETVAL : FpI_<(outs RFP80:$dst), (ins), SpecialFP, []>;
 
 // FpIf32, FpIf64 - Floating Point Pseudo Instruction template.
 // f32 instructions can use SSE1 and are predicated on FPStackf32 == !SSE1.
@@ -146,19 +123,6 @@ class FpIf32<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
   FpI_<outs, ins, fp, pattern>, Requires<[FPStackf32]>;
 class FpIf64<dag outs, dag ins, FPFormat fp, list<dag> pattern> :
   FpI_<outs, ins, fp, pattern>, Requires<[FPStackf64]>;
-
-// Register copies.  Just copies, the shortening ones do not truncate.
-let neverHasSideEffects = 1 in {
-  def MOV_Fp3232 : FpIf32<(outs RFP32:$dst), (ins RFP32:$src), SpecialFP, []>; 
-  def MOV_Fp3264 : FpIf32<(outs RFP64:$dst), (ins RFP32:$src), SpecialFP, []>; 
-  def MOV_Fp6432 : FpIf32<(outs RFP32:$dst), (ins RFP64:$src), SpecialFP, []>; 
-  def MOV_Fp6464 : FpIf64<(outs RFP64:$dst), (ins RFP64:$src), SpecialFP, []>; 
-  def MOV_Fp8032 : FpIf32<(outs RFP32:$dst), (ins RFP80:$src), SpecialFP, []>; 
-  def MOV_Fp3280 : FpIf32<(outs RFP80:$dst), (ins RFP32:$src), SpecialFP, []>; 
-  def MOV_Fp8064 : FpIf64<(outs RFP64:$dst), (ins RFP80:$src), SpecialFP, []>; 
-  def MOV_Fp6480 : FpIf64<(outs RFP80:$dst), (ins RFP64:$src), SpecialFP, []>; 
-  def MOV_Fp8080 : FpI_  <(outs RFP80:$dst), (ins RFP80:$src), SpecialFP, []>; 
-}
 
 // Factoring for arithmetic.
 multiclass FPBinary_rr<SDNode OpNode> {

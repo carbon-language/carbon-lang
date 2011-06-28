@@ -1511,20 +1511,15 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
     // If this is a call to a function that returns an fp value on the floating
     // point stack, we must guarantee the the value is popped from the stack, so
     // a CopyFromReg is not good enough - the copy instruction may be eliminated
-    // if the return value is not used. We use the FpGET_ST0 instructions
+    // if the return value is not used. We use the FpPOP_RETVAL instruction
     // instead.
     if (VA.getLocReg() == X86::ST0 || VA.getLocReg() == X86::ST1) {
       // If we prefer to use the value in xmm registers, copy it out as f80 and
       // use a truncate to move it from fp stack reg to xmm reg.
       if (isScalarFPTypeInSSEReg(VA.getValVT())) CopyVT = MVT::f80;
-      bool isST0 = VA.getLocReg() == X86::ST0;
-      unsigned Opc = 0;
-      if (CopyVT == MVT::f32) Opc = isST0 ? X86::FpGET_ST0_32:X86::FpGET_ST1_32;
-      if (CopyVT == MVT::f64) Opc = isST0 ? X86::FpGET_ST0_64:X86::FpGET_ST1_64;
-      if (CopyVT == MVT::f80) Opc = isST0 ? X86::FpGET_ST0_80:X86::FpGET_ST1_80;
       SDValue Ops[] = { Chain, InFlag };
-      Chain = SDValue(DAG.getMachineNode(Opc, dl, CopyVT, MVT::Other, MVT::Glue,
-                                         Ops, 2), 1);
+      Chain = SDValue(DAG.getMachineNode(X86::FpPOP_RETVAL, dl, CopyVT,
+                                         MVT::Other, MVT::Glue, Ops, 2), 1);
       Val = Chain.getValue(0);
 
       // Round the f80 to the right size, which also moves it to the appropriate
