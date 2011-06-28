@@ -1377,7 +1377,7 @@ endif
 #---------------------------------------------------------
 
 ifeq ($(HOST_OS),Darwin)
-ifdef TOOL_ORDER_FINE
+ifdef TOOL_ORDER_FILE
 
 LD.Flags += -Wl,-order_file,$(TOOL_ORDER_FILE)
 
