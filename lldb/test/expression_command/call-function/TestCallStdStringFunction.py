@@ -18,14 +18,16 @@ class ExprCommandCallFunctionTestCase(TestBase):
         self.line = line_number('main.cpp',
                                 '// Please test these expressions while stopped at this line:')
 
+    # rdar://problem/9471744 test failure: ./dotest.py -C clang -v -w -t -p CallStdString
+    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym(self):
         """Test calling std::String member function."""
         self.buildDsym()
         self.call_function()
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @python_api_test
+    # rdar://problem/9471744 test failure: ./dotest.py -C clang -v -w -t -p CallStdString
+    @unittest2.expectedFailure
     def test_with_dwarf_(self):
         """Test calling std::String member function."""
         self.buildDsym()

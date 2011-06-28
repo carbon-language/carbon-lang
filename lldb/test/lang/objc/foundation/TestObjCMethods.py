@@ -199,7 +199,6 @@ class FoundationTestCase(TestBase):
         self.expect("expression -o -- my", "Object description displayed correctly",
             patterns = ["Hello from.*a.out.*with timestamp: "])
 
-    @unittest2.expectedFailure
     # See: <rdar://problem/8717050> lldb needs to use the ObjC runtime symbols for ivar offsets
     # Only fails for the ObjC 2.0 runtime.
     def print_ivars_correctly(self) :
