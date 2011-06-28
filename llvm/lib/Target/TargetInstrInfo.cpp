@@ -24,7 +24,10 @@ using namespace llvm;
 //  TargetInstrInfo
 //===----------------------------------------------------------------------===//
 
-TargetInstrInfo::TargetInstrInfo(const MCInstrDesc* Desc, unsigned numOpcodes) {
+TargetInstrInfo::TargetInstrInfo(const MCInstrDesc* Desc, unsigned numOpcodes,
+                                 int CFSetupOpcode, int CFDestroyOpcode)
+  : CallFrameSetupOpcode(CFSetupOpcode),
+    CallFrameDestroyOpcode(CFDestroyOpcode) {
   InitMCInstrInfo(Desc, numOpcodes);
 }
 

@@ -54,13 +54,7 @@ ForceStackAlign("force-align-stack",
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
-  : X86GenRegisterInfo(tm.getSubtarget<X86Subtarget>().is64Bit() ?
-                         X86::ADJCALLSTACKDOWN64 :
-                         X86::ADJCALLSTACKDOWN32,
-                       tm.getSubtarget<X86Subtarget>().is64Bit() ?
-                         X86::ADJCALLSTACKUP64 :
-                         X86::ADJCALLSTACKUP32),
-    TM(tm), TII(tii) {
+  : X86GenRegisterInfo(), TM(tm), TII(tii) {
   // Cache some information.
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   Is64Bit = Subtarget->is64Bit();
@@ -608,7 +602,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
   bool reseveCallFrame = TFI->hasReservedCallFrame(MF);
   int Opcode = I->getOpcode();
-  bool isDestroy = Opcode == getCallFrameDestroyOpcode();
+  bool isDestroy = Opcode == TII.getCallFrameDestroyOpcode();
   DebugLoc DL = I->getDebugLoc();
   uint64_t Amount = !reseveCallFrame ? I->getOperand(0).getImm() : 0;
   uint64_t CalleeAmt = isDestroy ? I->getOperand(1).getImm() : 0;
@@ -629,13 +623,13 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     Amount = (Amount + StackAlign - 1) / StackAlign * StackAlign;
 
     MachineInstr *New = 0;
-    if (Opcode == getCallFrameSetupOpcode()) {
+    if (Opcode == TII.getCallFrameSetupOpcode()) {
       New = BuildMI(MF, DL, TII.get(getSUBriOpcode(Is64Bit, Amount)),
                     StackPtr)
         .addReg(StackPtr)
         .addImm(Amount);
     } else {
-      assert(Opcode == getCallFrameDestroyOpcode());
+      assert(Opcode == TII.getCallFrameDestroyOpcode());
 
       // Factor out the amount the callee already popped.
       Amount -= CalleeAmt;
@@ -658,7 +652,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     return;
   }
 
-  if (Opcode == getCallFrameDestroyOpcode() && CalleeAmt) {
+  if (Opcode == TII.getCallFrameDestroyOpcode() && CalleeAmt) {
     // If we are performing frame pointer elimination and if the callee pops
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.

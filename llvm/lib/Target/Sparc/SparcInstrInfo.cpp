@@ -27,7 +27,8 @@
 using namespace llvm;
 
 SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
-  : TargetInstrInfoImpl(SparcInsts, array_lengthof(SparcInsts)),
+  : TargetInstrInfoImpl(SparcInsts, array_lengthof(SparcInsts),
+                        SP::ADJCALLSTACKDOWN, SP::ADJCALLSTACKUP),
     RI(ST, *this), Subtarget(ST) {
 }
 

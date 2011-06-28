@@ -1549,7 +1549,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
   NumBytes = CCInfo.getNextStackOffset();
 
   // Issue CALLSEQ_START
-  unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
+  unsigned AdjStackDown = TII.getCallFrameSetupOpcode();
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(AdjStackDown))
                   .addImm(NumBytes));
@@ -1647,7 +1647,7 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
                              const Instruction *I, CallingConv::ID CC,
                              unsigned &NumBytes) {
   // Issue CALLSEQ_END
-  unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
+  unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(AdjStackUp))
                   .addImm(NumBytes).addImm(0));

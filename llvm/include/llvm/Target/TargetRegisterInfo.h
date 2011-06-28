@@ -275,15 +275,12 @@ private:
   const TargetRegisterInfoDesc *InfoDesc;     // Extra desc array for codegen
   const char *const *SubRegIndexNames;        // Names of subreg indexes.
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
-  int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 
 protected:
   TargetRegisterInfo(const TargetRegisterInfoDesc *ID,
                      regclass_iterator RegClassBegin,
                      regclass_iterator RegClassEnd,
-                     const char *const *subregindexnames,
-                     int CallFrameSetupOpcode = -1,
-                     int CallFrameDestroyOpcode = -1);
+                     const char *const *subregindexnames);
   virtual ~TargetRegisterInfo();
 public:
 
@@ -661,15 +658,6 @@ public:
     return false; // Must return a value in order to compile with VS 2005
   }
 
-  /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
-  /// frame setup/destroy instructions if they exist (-1 otherwise).  Some
-  /// targets use pseudo instructions in order to abstract away the difference
-  /// between operating with a frame pointer and operating without, through the
-  /// use of these two instructions.
-  ///
-  int getCallFrameSetupOpcode() const { return CallFrameSetupOpcode; }
-  int getCallFrameDestroyOpcode() const { return CallFrameDestroyOpcode; }
-
   /// eliminateCallFramePseudoInstr - This method is called during prolog/epilog
   /// code insertion to eliminate call frame setup and destroy pseudo
   /// instructions (but only if the Target is using them).  It is responsible
@@ -681,9 +669,6 @@ public:
   eliminateCallFramePseudoInstr(MachineFunction &MF,
                                 MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI) const {
-    assert(getCallFrameSetupOpcode()== -1 && getCallFrameDestroyOpcode()== -1 &&
-           "eliminateCallFramePseudoInstr must be implemented if using"
-           " call frame setup/destroy pseudo instructions!");
     assert(0 && "Call Frame Pseudo Instructions do not exist on this target!");
   }
 

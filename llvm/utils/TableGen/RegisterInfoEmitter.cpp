@@ -214,8 +214,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
   OS << "namespace llvm {\n\n";
 
   OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
-     << "  explicit " << ClassName
-     << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
+     << "  explicit " << ClassName << "();\n"
      << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
      << "unsigned Flavour) const;\n"
      << "  virtual int getLLVMRegNumFull(unsigned DwarfRegNum, "
@@ -660,11 +659,10 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the constructor of the class...
   OS << ClassName << "::" << ClassName
-     << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
+     << "()\n"
      << "  : TargetRegisterInfo(" << TargetName << "RegInfoDesc"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
-     << "                 SubRegIndexTable,\n"
-     << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {\n"
+     << "                 SubRegIndexTable) {\n"
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ");\n"
      << "}\n\n";

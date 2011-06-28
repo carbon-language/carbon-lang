@@ -38,9 +38,7 @@ using namespace llvm;
 
 BlackfinRegisterInfo::BlackfinRegisterInfo(BlackfinSubtarget &st,
                                            const TargetInstrInfo &tii)
-  : BlackfinGenRegisterInfo(BF::ADJCALLSTACKDOWN, BF::ADJCALLSTACKUP),
-    Subtarget(st),
-    TII(tii) {}
+  : BlackfinGenRegisterInfo(), Subtarget(st), TII(tii) {}
 
 const unsigned*
 BlackfinRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {

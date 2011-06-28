@@ -25,7 +25,8 @@
 using namespace llvm;
 
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
-  : TargetInstrInfoImpl(MipsInsts, array_lengthof(MipsInsts)),
+  : TargetInstrInfoImpl(MipsInsts, array_lengthof(MipsInsts),
+                        Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
 
 static bool isZeroImm(const MachineOperand &op) {

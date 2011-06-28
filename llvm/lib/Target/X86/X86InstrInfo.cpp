@@ -54,7 +54,13 @@ ReMatPICStubLoad("remat-pic-stub-load",
                  cl::init(false), cl::Hidden);
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
-  : TargetInstrInfoImpl(X86Insts, array_lengthof(X86Insts)),
+  : TargetInstrInfoImpl(X86Insts, array_lengthof(X86Insts),
+                        (tm.getSubtarget<X86Subtarget>().is64Bit()
+                         ? X86::ADJCALLSTACKDOWN64
+                         : X86::ADJCALLSTACKDOWN32),
+                        (tm.getSubtarget<X86Subtarget>().is64Bit()
+                         ? X86::ADJCALLSTACKUP64
+                         : X86::ADJCALLSTACKUP32)),
     TM(tm), RI(tm, *this) {
   enum {
     TB_NOT_REVERSABLE = 1U << 31,

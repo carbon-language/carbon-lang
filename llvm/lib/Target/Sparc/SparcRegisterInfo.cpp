@@ -32,8 +32,7 @@ using namespace llvm;
 
 SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,
                                      const TargetInstrInfo &tii)
-  : SparcGenRegisterInfo(SP::ADJCALLSTACKDOWN, SP::ADJCALLSTACKUP),
-    Subtarget(st), TII(tii) {
+  : SparcGenRegisterInfo(), Subtarget(st), TII(tii) {
 }
 
 const unsigned* SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)

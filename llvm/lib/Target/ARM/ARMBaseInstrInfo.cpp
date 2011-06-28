@@ -77,7 +77,8 @@ static const ARM_MLxEntry ARM_MLxTable[] = {
 };
 
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget& STI)
-  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
+  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts),
+                        ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     Subtarget(STI) {
   for (unsigned i = 0, e = array_lengthof(ARM_MLxTable); i != e; ++i) {
     if (!MLxEntryMap.insert(std::make_pair(ARM_MLxTable[i].MLxOpc, i)).second)

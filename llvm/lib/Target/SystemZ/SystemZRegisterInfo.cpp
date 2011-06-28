@@ -34,8 +34,7 @@ using namespace llvm;
 
 SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm,
                                          const SystemZInstrInfo &tii)
-  : SystemZGenRegisterInfo(SystemZ::ADJCALLSTACKUP, SystemZ::ADJCALLSTACKDOWN),
-    TM(tm), TII(tii) {
+  : SystemZGenRegisterInfo(), TM(tm), TII(tii) {
 }
 
 const unsigned*

@@ -22,12 +22,9 @@ using namespace llvm;
 
 TargetRegisterInfo::TargetRegisterInfo(const TargetRegisterInfoDesc *ID,
                              regclass_iterator RCB, regclass_iterator RCE,
-                             const char *const *subregindexnames,
-                             int CFSO, int CFDO)
+                             const char *const *subregindexnames)
   : InfoDesc(ID), SubRegIndexNames(subregindexnames),
     RegClassBegin(RCB), RegClassEnd(RCE) {
-  CallFrameSetupOpcode   = CFSO;
-  CallFrameDestroyOpcode = CFDO;
 }
 
 TargetRegisterInfo::~TargetRegisterInfo() {}

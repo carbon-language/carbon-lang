@@ -1630,7 +1630,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
   // Issue CALLSEQ_START
-  unsigned AdjStackDown = TM.getRegisterInfo()->getCallFrameSetupOpcode();
+  unsigned AdjStackDown = TII.getCallFrameSetupOpcode();
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(AdjStackDown))
     .addImm(NumBytes);
 
@@ -1803,7 +1803,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
     MIB.addReg(RegArgs[i]);
 
   // Issue CALLSEQ_END
-  unsigned AdjStackUp = TM.getRegisterInfo()->getCallFrameDestroyOpcode();
+  unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
   unsigned NumBytesCallee = 0;
   if (!Subtarget->is64Bit() && CS.paramHasAttr(1, Attribute::StructRet))
     NumBytesCallee = 4;

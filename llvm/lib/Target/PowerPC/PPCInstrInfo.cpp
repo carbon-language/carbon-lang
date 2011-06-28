@@ -39,8 +39,9 @@ extern cl::opt<bool> EnablePPC64RS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.
 using namespace llvm;
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
-  : TargetInstrInfoImpl(PPCInsts, array_lengthof(PPCInsts)), TM(tm),
-    RI(*TM.getSubtargetImpl(), *this) {}
+  : TargetInstrInfoImpl(PPCInsts, array_lengthof(PPCInsts),
+                        PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
+    TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
 
 /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for
 /// this target when scheduling the DAG.

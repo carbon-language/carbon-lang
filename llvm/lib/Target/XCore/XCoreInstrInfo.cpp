@@ -40,7 +40,8 @@ namespace XCore {
 using namespace llvm;
 
 XCoreInstrInfo::XCoreInstrInfo()
-  : TargetInstrInfoImpl(XCoreInsts, array_lengthof(XCoreInsts)),
+  : TargetInstrInfoImpl(XCoreInsts, array_lengthof(XCoreInsts),
+                        XCore::ADJCALLSTACKDOWN, XCore::ADJCALLSTACKUP),
     RI(*this) {
 }
 

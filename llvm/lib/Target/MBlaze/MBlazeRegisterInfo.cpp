@@ -45,8 +45,7 @@ using namespace llvm;
 
 MBlazeRegisterInfo::
 MBlazeRegisterInfo(const MBlazeSubtarget &ST, const TargetInstrInfo &tii)
-  : MBlazeGenRegisterInfo(MBlaze::ADJCALLSTACKDOWN, MBlaze::ADJCALLSTACKUP),
-    Subtarget(ST), TII(tii) {}
+  : MBlazeGenRegisterInfo(), Subtarget(ST), TII(tii) {}
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.
 /// MBlaze::R0, return the number that it corresponds to (e.g. 0).

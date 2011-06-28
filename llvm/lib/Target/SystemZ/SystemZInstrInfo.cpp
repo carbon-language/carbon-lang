@@ -29,7 +29,8 @@
 using namespace llvm;
 
 SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)
-  : TargetInstrInfoImpl(SystemZInsts, array_lengthof(SystemZInsts)),
+  : TargetInstrInfoImpl(SystemZInsts, array_lengthof(SystemZInsts),
+                        SystemZ::ADJCALLSTACKUP, SystemZ::ADJCALLSTACKDOWN),
     RI(tm, *this), TM(tm) {
 }
 

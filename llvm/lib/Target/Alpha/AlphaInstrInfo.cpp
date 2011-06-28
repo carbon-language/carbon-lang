@@ -25,7 +25,8 @@
 using namespace llvm;
 
 AlphaInstrInfo::AlphaInstrInfo()
-  : TargetInstrInfoImpl(AlphaInsts, array_lengthof(AlphaInsts)),
+  : TargetInstrInfoImpl(AlphaInsts, array_lengthof(AlphaInsts),
+                        Alpha::ADJUSTSTACKDOWN, Alpha::ADJUSTSTACKUP),
     RI(*this) { }
 
 

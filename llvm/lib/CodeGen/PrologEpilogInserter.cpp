@@ -145,6 +145,7 @@ void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
 /// pseudo instructions.
 void PEI::calculateCallsInformation(MachineFunction &Fn) {
   const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
+  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
   const TargetFrameLowering *TFI = Fn.getTarget().getFrameLowering();
   MachineFrameInfo *MFI = Fn.getFrameInfo();
 
@@ -152,8 +153,8 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
   bool AdjustsStack = MFI->adjustsStack();
 
   // Get the function call frame set-up and tear-down instruction opcode
-  int FrameSetupOpcode   = RegInfo->getCallFrameSetupOpcode();
-  int FrameDestroyOpcode = RegInfo->getCallFrameDestroyOpcode();
+  int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
+  int FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
 
   // Early exit for targets which have no call frame setup/destroy pseudo
   // instructions.
@@ -705,12 +706,13 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 
   const TargetMachine &TM = Fn.getTarget();
   assert(TM.getRegisterInfo() && "TM::getRegisterInfo() must be implemented!");
+  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
   const TargetFrameLowering *TFI = TM.getFrameLowering();
   bool StackGrowsDown =
     TFI->getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
-  int FrameSetupOpcode   = TRI.getCallFrameSetupOpcode();
-  int FrameDestroyOpcode = TRI.getCallFrameDestroyOpcode();
+  int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
+  int FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
 
   for (MachineFunction::iterator BB = Fn.begin(),
          E = Fn.end(); BB != E; ++BB) {

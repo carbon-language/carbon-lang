@@ -28,7 +28,8 @@
 using namespace llvm;
 
 MSP430InstrInfo::MSP430InstrInfo(MSP430TargetMachine &tm)
-  : TargetInstrInfoImpl(MSP430Insts, array_lengthof(MSP430Insts)),
+  : TargetInstrInfoImpl(MSP430Insts, array_lengthof(MSP430Insts),
+                        MSP430::ADJCALLSTACKDOWN, MSP430::ADJCALLSTACKUP),
     RI(tm, *this), TM(tm) {}
 
 void MSP430InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,

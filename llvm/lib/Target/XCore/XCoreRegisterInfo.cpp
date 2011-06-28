@@ -40,8 +40,7 @@
 using namespace llvm;
 
 XCoreRegisterInfo::XCoreRegisterInfo(const TargetInstrInfo &tii)
-  : XCoreGenRegisterInfo(XCore::ADJCALLSTACKDOWN, XCore::ADJCALLSTACKUP),
-    TII(tii) {
+  : XCoreGenRegisterInfo(), TII(tii) {
 }
 
 // helper functions

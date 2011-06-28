@@ -44,7 +44,9 @@ class TargetInstrInfo : public MCInstrInfo {
   TargetInstrInfo(const TargetInstrInfo &);  // DO NOT IMPLEMENT
   void operator=(const TargetInstrInfo &);   // DO NOT IMPLEMENT
 public:
-  TargetInstrInfo(const MCInstrDesc *desc, unsigned NumOpcodes);
+  TargetInstrInfo(const MCInstrDesc *desc, unsigned NumOpcodes,
+                  int CallFrameSetupOpcode = -1,
+                  int CallFrameDestroyOpcode = -1);
   virtual ~TargetInstrInfo();
 
   /// getRegClass - Givem a machine instruction descriptor, returns the register
@@ -86,6 +88,15 @@ private:
                                                 AliasAnalysis *AA) const;
 
 public:
+  /// getCallFrameSetup/DestroyOpcode - These methods return the opcode of the
+  /// frame setup/destroy instructions if they exist (-1 otherwise).  Some
+  /// targets use pseudo instructions in order to abstract away the difference
+  /// between operating with a frame pointer and operating without, through the
+  /// use of these two instructions.
+  ///
+  int getCallFrameSetupOpcode() const { return CallFrameSetupOpcode; }
+  int getCallFrameDestroyOpcode() const { return CallFrameDestroyOpcode; }
+
   /// isCoalescableExtInstr - Return true if the instruction is a "coalescable"
   /// extension instruction. That is, it's like a copy where it's legal for the
   /// source to overlap the destination. e.g. X86::MOVSX64rr32. If this returns
@@ -656,6 +667,9 @@ public:
   virtual
   bool hasLowDefLatency(const InstrItineraryData *ItinData,
                         const MachineInstr *DefMI, unsigned DefIdx) const;
+
+private:
+  int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };
 
 /// TargetInstrInfoImpl - This is the default implementation of
@@ -664,7 +678,9 @@ public:
 /// libcodegen, not in libtarget.
 class TargetInstrInfoImpl : public TargetInstrInfo {
 protected:
-  TargetInstrInfoImpl(const MCInstrDesc *desc, unsigned NumOpcodes)
+  TargetInstrInfoImpl(const MCInstrDesc *desc, unsigned NumOpcodes,
+                      int CallFrameSetupOpcode = -1,
+                      int CallFrameDestroyOpcode = -1)
   : TargetInstrInfo(desc, NumOpcodes) {}
 public:
   virtual void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,

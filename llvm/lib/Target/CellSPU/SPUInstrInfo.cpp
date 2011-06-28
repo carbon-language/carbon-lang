@@ -53,7 +53,8 @@ namespace {
 }
 
 SPUInstrInfo::SPUInstrInfo(SPUTargetMachine &tm)
-  : TargetInstrInfoImpl(SPUInsts, sizeof(SPUInsts)/sizeof(SPUInsts[0])),
+  : TargetInstrInfoImpl(SPUInsts, sizeof(SPUInsts)/sizeof(SPUInsts[0]),
+                        SPU::ADJCALLSTACKDOWN, SPU::ADJCALLSTACKUP),
     TM(tm),
     RI(*TM.getSubtargetImpl(), *this)
 { /* NOP */ }
