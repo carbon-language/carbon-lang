@@ -158,13 +158,13 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
 }
 
 bool MSP430InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.isTerminator()) return false;
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.isTerminator()) return false;
 
   // Conditional branch is a special case.
-  if (TID.isBranch() && !TID.isBarrier())
+  if (MCID.isBranch() && !MCID.isBarrier())
     return true;
-  if (!TID.isPredicable())
+  if (!MCID.isPredicable())
     return true;
   return !isPredicated(MI);
 }
@@ -293,7 +293,7 @@ MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 /// instruction may be.  This returns the maximum number of bytes.
 ///
 unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
-  const TargetInstrDesc &Desc = MI->getDesc();
+  const MCInstrDesc &Desc = MI->getDesc();
 
   switch (Desc.TSFlags & MSP430II::SizeMask) {
   default:

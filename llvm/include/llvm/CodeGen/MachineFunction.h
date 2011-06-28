@@ -345,7 +345,7 @@ public:
   /// CreateMachineInstr - Allocate a new MachineInstr. Use this instead
   /// of `new MachineInstr'.
   ///
-  MachineInstr *CreateMachineInstr(const TargetInstrDesc &TID,
+  MachineInstr *CreateMachineInstr(const MCInstrDesc &MCID,
                                    DebugLoc DL,
                                    bool NoImp = false);
 

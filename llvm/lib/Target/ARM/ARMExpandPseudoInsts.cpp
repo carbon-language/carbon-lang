@@ -68,7 +68,7 @@ namespace {
 void ARMExpandPseudo::TransferImpOps(MachineInstr &OldMI,
                                      MachineInstrBuilder &UseMI,
                                      MachineInstrBuilder &DefMI) {
-  const TargetInstrDesc &Desc = OldMI.getDesc();
+  const MCInstrDesc &Desc = OldMI.getDesc();
   for (unsigned i = Desc.getNumOperands(), e = OldMI.getNumOperands();
        i != e; ++i) {
     const MachineOperand &MO = OldMI.getOperand(i);

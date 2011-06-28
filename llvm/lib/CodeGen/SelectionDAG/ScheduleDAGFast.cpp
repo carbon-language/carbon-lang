@@ -249,14 +249,14 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NewSU->NodeNum);
       
-    const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
-    for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
-      if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
+    const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
+    for (unsigned i = 0; i != MCID.getNumOperands(); ++i) {
+      if (MCID.getOperandConstraint(i, MCOI::TIED_TO) != -1) {
         NewSU->isTwoAddress = true;
         break;
       }
     }
-    if (TID.isCommutable())
+    if (MCID.isCommutable())
       NewSU->isCommutable = true;
 
     // LoadNode may already exist. This can happen when there is another
@@ -422,10 +422,10 @@ void ScheduleDAGFast::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
 /// FIXME: Move to SelectionDAG?
 static EVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
                                  const TargetInstrInfo *TII) {
-  const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
-  assert(TID.ImplicitDefs && "Physical reg def must be in implicit def list!");
-  unsigned NumRes = TID.getNumDefs();
-  for (const unsigned *ImpDef = TID.getImplicitDefs(); *ImpDef; ++ImpDef) {
+  const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
+  assert(MCID.ImplicitDefs && "Physical reg def must be in implicit def list!");
+  unsigned NumRes = MCID.getNumDefs();
+  for (const unsigned *ImpDef = MCID.getImplicitDefs(); *ImpDef; ++ImpDef) {
     if (Reg == *ImpDef)
       break;
     ++NumRes;
@@ -505,10 +505,10 @@ bool ScheduleDAGFast::DelayForLiveRegsBottomUp(SUnit *SU,
     }
     if (!Node->isMachineOpcode())
       continue;
-    const TargetInstrDesc &TID = TII->get(Node->getMachineOpcode());
-    if (!TID.ImplicitDefs)
+    const MCInstrDesc &MCID = TII->get(Node->getMachineOpcode());
+    if (!MCID.ImplicitDefs)
       continue;
-    for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg) {
+    for (const unsigned *Reg = MCID.ImplicitDefs; *Reg; ++Reg) {
       CheckForLiveRegDef(SU, *Reg, LiveRegDefs, RegAdded, LRegs, TRI);
     }
   }

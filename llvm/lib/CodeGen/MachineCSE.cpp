@@ -260,12 +260,12 @@ bool MachineCSE::isCSECandidate(MachineInstr *MI) {
     return false;
 
   // Ignore stuff that we obviously can't move.
-  const TargetInstrDesc &TID = MI->getDesc();  
-  if (TID.mayStore() || TID.isCall() || TID.isTerminator() ||
+  const MCInstrDesc &MCID = MI->getDesc();  
+  if (MCID.mayStore() || MCID.isCall() || MCID.isTerminator() ||
       MI->hasUnmodeledSideEffects())
     return false;
 
-  if (TID.mayLoad()) {
+  if (MCID.mayLoad()) {
     // Okay, this instruction does a load. As a refinement, we allow the target
     // to decide whether the loaded value is actually a constant. If so, we can
     // actually use it as a load.

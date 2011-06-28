@@ -14,7 +14,7 @@
 #ifndef LLVM_TARGET_TARGETINSTRINFO_H
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
-#include "llvm/Target/TargetInstrDesc.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
@@ -40,29 +40,16 @@ template<class T> class SmallVectorImpl;
 ///
 /// TargetInstrInfo - Interface to description of machine instruction set
 ///
-class TargetInstrInfo {
-  const TargetInstrDesc *Descriptors; // Raw array to allow static init'n
-  unsigned NumOpcodes;                // Number of entries in the desc array
-
+class TargetInstrInfo : public MCInstrInfo {
   TargetInstrInfo(const TargetInstrInfo &);  // DO NOT IMPLEMENT
   void operator=(const TargetInstrInfo &);   // DO NOT IMPLEMENT
 public:
-  TargetInstrInfo(const TargetInstrDesc *desc, unsigned NumOpcodes);
+  TargetInstrInfo(const MCInstrDesc *desc, unsigned NumOpcodes);
   virtual ~TargetInstrInfo();
-
-  unsigned getNumOpcodes() const { return NumOpcodes; }
-
-  /// get - Return the machine instruction descriptor that corresponds to the
-  /// specified instruction opcode.
-  ///
-  const TargetInstrDesc &get(unsigned Opcode) const {
-    assert(Opcode < NumOpcodes && "Invalid opcode!");
-    return Descriptors[Opcode];
-  }
 
   /// getRegClass - Givem a machine instruction descriptor, returns the register
   /// class constraint for OpNum, or NULL.
-  const TargetRegisterClass *getRegClass(const TargetInstrDesc &TID,
+  const TargetRegisterClass *getRegClass(const MCInstrDesc &TID,
                                          unsigned OpNum,
                                          const TargetRegisterInfo *TRI) const;
 
@@ -677,7 +664,7 @@ public:
 /// libcodegen, not in libtarget.
 class TargetInstrInfoImpl : public TargetInstrInfo {
 protected:
-  TargetInstrInfoImpl(const TargetInstrDesc *desc, unsigned NumOpcodes)
+  TargetInstrInfoImpl(const MCInstrDesc *desc, unsigned NumOpcodes)
   : TargetInstrInfo(desc, NumOpcodes) {}
 public:
   virtual void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,

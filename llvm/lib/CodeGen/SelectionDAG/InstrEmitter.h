@@ -22,7 +22,7 @@
 
 namespace llvm {
 
-class TargetInstrDesc;
+class MCInstrDesc;
 class SDDbgValue;
 
 class InstrEmitter {
@@ -49,7 +49,7 @@ class InstrEmitter {
                                     unsigned ResNo) const;
 
   void CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
-                              const TargetInstrDesc &II,
+                              const MCInstrDesc &II,
                               bool IsClone, bool IsCloned,
                               DenseMap<SDValue, unsigned> &VRBaseMap);
 
@@ -63,7 +63,7 @@ class InstrEmitter {
   /// not in the required register class.
   void AddRegisterOperand(MachineInstr *MI, SDValue Op,
                           unsigned IIOpNum,
-                          const TargetInstrDesc *II,
+                          const MCInstrDesc *II,
                           DenseMap<SDValue, unsigned> &VRBaseMap,
                           bool IsDebug, bool IsClone, bool IsCloned);
 
@@ -73,7 +73,7 @@ class InstrEmitter {
   /// assertions only.
   void AddOperand(MachineInstr *MI, SDValue Op,
                   unsigned IIOpNum,
-                  const TargetInstrDesc *II,
+                  const MCInstrDesc *II,
                   DenseMap<SDValue, unsigned> &VRBaseMap,
                   bool IsDebug, bool IsClone, bool IsCloned);
 

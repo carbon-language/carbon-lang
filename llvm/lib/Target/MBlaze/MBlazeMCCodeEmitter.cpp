@@ -179,7 +179,7 @@ void MBlazeMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   unsigned Opcode = MI.getOpcode();
-  const TargetInstrDesc &Desc = TII.get(Opcode);
+  const MCInstrDesc &Desc = TII.get(Opcode);
   uint64_t TSFlags = Desc.TSFlags;
   // Keep track of the current byte being emitted.
   unsigned CurByte = 0;

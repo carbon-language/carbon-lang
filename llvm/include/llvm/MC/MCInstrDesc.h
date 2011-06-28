@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetInstrDesc.h - Instruction Descriptors -*- C++ -*-===//
+//===-- llvm/Mc/McInstrDesc.h - Instruction Descriptors -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,26 +7,23 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the TargetOperandInfo and TargetInstrDesc classes, which
+// This file defines the McOperandInfo and McInstrDesc classes, which
 // are used to describe target instructions and their operands. 
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETINSTRDESC_H
-#define LLVM_TARGET_TARGETINSTRDESC_H
+#ifndef LLVM_MC_MCINSTRDESC_H
+#define LLVM_MC_MCINSTRDESC_H
 
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
-class TargetRegisterClass;
-class TargetRegisterInfo;
-  
 //===----------------------------------------------------------------------===//
 // Machine Operand Flags and Description
 //===----------------------------------------------------------------------===//
   
-namespace TOI {
+namespace MCOI {
   // Operand constraints
   enum OperandConstraint {
     TIED_TO = 0,    // Must be allocated the same register as.
@@ -34,7 +31,7 @@ namespace TOI {
   };
   
   /// OperandFlags - These are flags set on operands, but should be considered
-  /// private, all access should go through the TargetOperandInfo accessors.
+  /// private, all access should go through the MCOperandInfo accessors.
   /// See the accessors for a description of what these are.
   enum OperandFlags {
     LookupPtrRegClass = 0,
@@ -43,10 +40,10 @@ namespace TOI {
   };
 }
 
-/// TargetOperandInfo - This holds information about one operand of a machine
+/// MCOperandInfo - This holds information about one operand of a machine
 /// instruction, indicating the register class for register operands, etc.
 ///
-class TargetOperandInfo {
+class MCOperandInfo {
 public:
   /// RegClass - This specifies the register class enumeration of the operand 
   /// if the operand is a register.  If isLookupPtrRegClass is set, then this is
@@ -54,7 +51,7 @@ public:
   /// get a dynamic register class.
   short RegClass;
   
-  /// Flags - These are flags from the TOI::OperandFlags enum.
+  /// Flags - These are flags from the MCOI::OperandFlags enum.
   unsigned short Flags;
   
   /// Lower 16 bits are used to specify which constraints are set. The higher 16
@@ -64,15 +61,15 @@ public:
   
   /// isLookupPtrRegClass - Set if this operand is a pointer value and it
   /// requires a callback to look up its register class.
-  bool isLookupPtrRegClass() const { return Flags&(1 <<TOI::LookupPtrRegClass);}
+  bool isLookupPtrRegClass() const { return Flags&(1 <<MCOI::LookupPtrRegClass);}
   
   /// isPredicate - Set if this is one of the operands that made up of
   /// the predicate operand that controls an isPredicable() instruction.
-  bool isPredicate() const { return Flags & (1 << TOI::Predicate); }
+  bool isPredicate() const { return Flags & (1 << MCOI::Predicate); }
   
   /// isOptionalDef - Set if this operand is a optional def.
   ///
-  bool isOptionalDef() const { return Flags & (1 << TOI::OptionalDef); }
+  bool isOptionalDef() const { return Flags & (1 << MCOI::OptionalDef); }
 };
 
   
@@ -80,11 +77,11 @@ public:
 // Machine Instruction Flags and Description
 //===----------------------------------------------------------------------===//
 
-/// TargetInstrDesc flags - These should be considered private to the
-/// implementation of the TargetInstrDesc class.  Clients should use the
-/// predicate methods on TargetInstrDesc, not use these directly.  These
-/// all correspond to bitfields in the TargetInstrDesc::Flags field.
-namespace TID {
+/// MCInstrDesc flags - These should be considered private to the
+/// implementation of the MCInstrDesc class.  Clients should use the predicate
+/// methods on MCInstrDesc, not use these directly.  These all correspond to
+/// bitfields in the MCInstrDesc::Flags field.
+namespace MCID {
   enum {
     Variadic = 0,
     HasOptionalDef,
@@ -114,12 +111,12 @@ namespace TID {
   };
 }
 
-/// TargetInstrDesc - Describe properties that are true of each
-/// instruction in the target description file.  This captures information about
-/// side effects, register use and many other things.  There is one instance of
-/// this struct for each target instruction class, and the MachineInstr class
-/// points to this struct directly to describe itself.
-class TargetInstrDesc {
+/// MCInstrDesc - Describe properties that are true of each instruction in the
+/// target description file.  This captures information about side effects,
+/// register use and many other things.  There is one instance of this struct
+/// for each target instruction class, and the MachineInstr class points to
+/// this struct directly to describe itself.
+class MCInstrDesc {
 public:
   unsigned short  Opcode;        // The opcode number
   unsigned short  NumOperands;   // Num of args (may be more if variable_ops)
@@ -130,12 +127,12 @@ public:
   uint64_t        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
-  const TargetOperandInfo *OpInfo; // 'NumOperands' entries about operands
+  const MCOperandInfo *OpInfo;   // 'NumOperands' entries about operands
 
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
   int getOperandConstraint(unsigned OpNum,
-                           TOI::OperandConstraint Constraint) const {
+                           MCOI::OperandConstraint Constraint) const {
     if (OpNum < NumOperands &&
         (OpInfo[OpNum].Constraints & (1 << Constraint))) {
       unsigned Pos = 16 + Constraint * 4;
@@ -177,13 +174,13 @@ public:
   /// operands but before the implicit definitions and uses (if any are
   /// present).
   bool isVariadic() const {
-    return Flags & (1 << TID::Variadic);
+    return Flags & (1 << MCID::Variadic);
   }
   
   /// hasOptionalDef - Set if this instruction has an optional definition, e.g.
   /// ARM instructions which can set condition code if 's' bit is set.
   bool hasOptionalDef() const {
-    return Flags & (1 << TID::HasOptionalDef);
+    return Flags & (1 << MCID::HasOptionalDef);
   }
   
   /// getImplicitUses - Return a list of registers that are potentially
@@ -198,7 +195,7 @@ public:
   const unsigned *getImplicitUses() const {
     return ImplicitUses;
   }
-  
+      
   /// getNumImplicitUses - Return the number of implicit uses this instruction
   /// has.
   unsigned getNumImplicitUses() const {
@@ -207,8 +204,7 @@ public:
     for (; ImplicitUses[i]; ++i) /*empty*/;
     return i;
   }
-  
-  
+
   /// getImplicitDefs - Return a list of registers that are potentially
   /// written by any instance of this machine instruction.  For example, on X86,
   /// many instructions implicitly set the flags register.  In this case, they
@@ -260,18 +256,18 @@ public:
   }
   
   bool isReturn() const {
-    return Flags & (1 << TID::Return);
+    return Flags & (1 << MCID::Return);
   }
   
   bool isCall() const {
-    return Flags & (1 << TID::Call);
+    return Flags & (1 << MCID::Call);
   }
   
   /// isBarrier - Returns true if the specified instruction stops control flow
   /// from executing the instruction immediately following it.  Examples include
   /// unconditional branches and return instructions.
   bool isBarrier() const {
-    return Flags & (1 << TID::Barrier);
+    return Flags & (1 << MCID::Barrier);
   }
   
   /// isTerminator - Returns true if this instruction part of the terminator for
@@ -281,7 +277,7 @@ public:
   /// Various passes use this to insert code into the bottom of a basic block,
   /// but before control flow occurs.
   bool isTerminator() const {
-    return Flags & (1 << TID::Terminator);
+    return Flags & (1 << MCID::Terminator);
   }
   
   /// isBranch - Returns true if this is a conditional, unconditional, or
@@ -289,13 +285,13 @@ public:
   /// these cases, and the TargetInstrInfo::AnalyzeBranch method can be used to
   /// get more information.
   bool isBranch() const {
-    return Flags & (1 << TID::Branch);
+    return Flags & (1 << MCID::Branch);
   }
 
   /// isIndirectBranch - Return true if this is an indirect branch, such as a
   /// branch through a register.
   bool isIndirectBranch() const {
-    return Flags & (1 << TID::IndirectBranch);
+    return Flags & (1 << MCID::IndirectBranch);
   }
 
   /// isConditionalBranch - Return true if this is a branch which may fall
@@ -319,37 +315,37 @@ public:
   /// values.   There are various methods in TargetInstrInfo that can be used to
   /// control and modify the predicate in this instruction.
   bool isPredicable() const {
-    return Flags & (1 << TID::Predicable);
+    return Flags & (1 << MCID::Predicable);
   }
   
   /// isCompare - Return true if this instruction is a comparison.
   bool isCompare() const {
-    return Flags & (1 << TID::Compare);
+    return Flags & (1 << MCID::Compare);
   }
   
   /// isMoveImmediate - Return true if this instruction is a move immediate
   /// (including conditional moves) instruction. 
   bool isMoveImmediate() const {
-    return Flags & (1 << TID::MoveImm);
+    return Flags & (1 << MCID::MoveImm);
   }
 
   /// isBitcast - Return true if this instruction is a bitcast instruction.
   ///
   bool isBitcast() const {
-    return Flags & (1 << TID::Bitcast);
+    return Flags & (1 << MCID::Bitcast);
   }
   
   /// isNotDuplicable - Return true if this instruction cannot be safely
   /// duplicated.  For example, if the instruction has a unique labels attached
   /// to it, duplicating it would cause multiple definition errors.
   bool isNotDuplicable() const {
-    return Flags & (1 << TID::NotDuplicable);
+    return Flags & (1 << MCID::NotDuplicable);
   }
   
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
   bool hasDelaySlot() const {
-    return Flags & (1 << TID::DelaySlot);
+    return Flags & (1 << MCID::DelaySlot);
   }
   
   /// canFoldAsLoad - Return true for instructions that can be folded as
@@ -361,7 +357,7 @@ public:
   /// This should only be set on instructions that return a value in their
   /// only virtual register definition.
   bool canFoldAsLoad() const {
-    return Flags & (1 << TID::FoldableAsLoad);
+    return Flags & (1 << MCID::FoldableAsLoad);
   }
   
   //===--------------------------------------------------------------------===//
@@ -372,7 +368,7 @@ public:
   /// Instructions with this flag set are not necessarily simple load
   /// instructions, they may load a value and modify it, for example.
   bool mayLoad() const {
-    return Flags & (1 << TID::MayLoad);
+    return Flags & (1 << MCID::MayLoad);
   }
   
   
@@ -381,7 +377,7 @@ public:
   /// instructions, they may store a modified value based on their operands, or
   /// may not actually modify anything, for example.
   bool mayStore() const {
-    return Flags & (1 << TID::MayStore);
+    return Flags & (1 << MCID::MayStore);
   }
   
   /// hasUnmodeledSideEffects - Return true if this instruction has side
@@ -398,7 +394,7 @@ public:
   /// LLVM, etc.
   ///
   bool hasUnmodeledSideEffects() const {
-    return Flags & (1 << TID::UnmodeledSideEffects);
+    return Flags & (1 << MCID::UnmodeledSideEffects);
   }
   
   //===--------------------------------------------------------------------===//
@@ -416,7 +412,7 @@ public:
   /// Also note that some instructions require non-trivial modification to
   /// commute them.
   bool isCommutable() const {
-    return Flags & (1 << TID::Commutable);
+    return Flags & (1 << MCID::Commutable);
   }
   
   /// isConvertibleTo3Addr - Return true if this is a 2-address instruction
@@ -434,7 +430,7 @@ public:
   /// instruction (e.g. shl reg, 4 on x86).
   ///
   bool isConvertibleTo3Addr() const {
-    return Flags & (1 << TID::ConvertibleTo3Addr);
+    return Flags & (1 << MCID::ConvertibleTo3Addr);
   }
   
   /// usesCustomInsertionHook - Return true if this instruction requires
@@ -446,7 +442,7 @@ public:
   /// If this is true, the TargetLoweringInfo::InsertAtEndOfBasicBlock method
   /// is used to insert this into the MachineBasicBlock.
   bool usesCustomInsertionHook() const {
-    return Flags & (1 << TID::UsesCustomInserter);
+    return Flags & (1 << MCID::UsesCustomInserter);
   }
   
   /// isRematerializable - Returns true if this instruction is a candidate for
@@ -454,7 +450,7 @@ public:
   /// flag is set, the isReallyTriviallyReMaterializable() method is called to
   /// verify the instruction is really rematable.
   bool isRematerializable() const {
-    return Flags & (1 << TID::Rematerializable);
+    return Flags & (1 << MCID::Rematerializable);
   }
 
   /// isAsCheapAsAMove - Returns true if this instruction has the same cost (or
@@ -464,7 +460,7 @@ public:
   /// more than moving the instruction into the appropriate register. Note, we
   /// are not marking copies from and to the same register class with this flag.
   bool isAsCheapAsAMove() const {
-    return Flags & (1 << TID::CheapAsAMove);
+    return Flags & (1 << MCID::CheapAsAMove);
   }
 
   /// hasExtraSrcRegAllocReq - Returns true if this instruction source operands
@@ -474,7 +470,7 @@ public:
   /// Post-register allocation passes should not attempt to change allocations
   /// for sources of instructions with this flag.
   bool hasExtraSrcRegAllocReq() const {
-    return Flags & (1 << TID::ExtraSrcRegAllocReq);
+    return Flags & (1 << MCID::ExtraSrcRegAllocReq);
   }
 
   /// hasExtraDefRegAllocReq - Returns true if this instruction def operands
@@ -484,7 +480,7 @@ public:
   /// Post-register allocation passes should not attempt to change allocations
   /// for definitions of instructions with this flag.
   bool hasExtraDefRegAllocReq() const {
-    return Flags & (1 << TID::ExtraDefRegAllocReq);
+    return Flags & (1 << MCID::ExtraDefRegAllocReq);
   }
 };
 

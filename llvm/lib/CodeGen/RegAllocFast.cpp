@@ -118,7 +118,7 @@ namespace {
     // SkippedInstrs - Descriptors of instructions whose clobber list was
     // ignored because all registers were spilled. It is still necessary to
     // mark all the clobbered registers as used by the function.
-    SmallPtrSet<const TargetInstrDesc*, 4> SkippedInstrs;
+    SmallPtrSet<const MCInstrDesc*, 4> SkippedInstrs;
 
     // isBulkSpilling - This flag is set when LiveRegMap will be cleared
     // completely after spilling all live registers. LiveRegMap entries should
@@ -777,7 +777,7 @@ void RAFast::AllocateBasicBlock() {
   // Otherwise, sequentially allocate each instruction in the MBB.
   while (MII != MBB->end()) {
     MachineInstr *MI = MII++;
-    const TargetInstrDesc &TID = MI->getDesc();
+    const MCInstrDesc &MCID = MI->getDesc();
     DEBUG({
         dbgs() << "\n>> " << *MI << "Regs:";
         for (unsigned Reg = 1, E = TRI->getNumRegs(); Reg != E; ++Reg) {
@@ -890,7 +890,7 @@ void RAFast::AllocateBasicBlock() {
         VirtOpEnd = i+1;
         if (MO.isUse()) {
           hasTiedOps = hasTiedOps ||
-                                TID.getOperandConstraint(i, TOI::TIED_TO) != -1;
+                              MCID.getOperandConstraint(i, MCOI::TIED_TO) != -1;
         } else {
           if (MO.isEarlyClobber())
             hasEarlyClobbers = true;
@@ -920,7 +920,7 @@ void RAFast::AllocateBasicBlock() {
     // We didn't detect inline asm tied operands above, so just make this extra
     // pass for all inline asm.
     if (MI->isInlineAsm() || hasEarlyClobbers || hasPartialRedefs ||
-        (hasTiedOps && (hasPhysDefs || TID.getNumDefs() > 1))) {
+        (hasTiedOps && (hasPhysDefs || MCID.getNumDefs() > 1))) {
       handleThroughOperands(MI, VirtDead);
       // Don't attempt coalescing when we have funny stuff going on.
       CopyDst = 0;
@@ -965,7 +965,7 @@ void RAFast::AllocateBasicBlock() {
     }
 
     unsigned DefOpEnd = MI->getNumOperands();
-    if (TID.isCall()) {
+    if (MCID.isCall()) {
       // Spill all virtregs before a call. This serves two purposes: 1. If an
       // exception is thrown, the landing pad is going to expect to find
       // registers in their spill slots, and 2. we don't have to wade through
@@ -976,7 +976,7 @@ void RAFast::AllocateBasicBlock() {
 
       // The imp-defs are skipped below, but we still need to mark those
       // registers as used by the function.
-      SkippedInstrs.insert(&TID);
+      SkippedInstrs.insert(&MCID);
     }
 
     // Third scan.
@@ -1062,7 +1062,7 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   MRI->closePhysRegsUsed(*TRI);
 
   // Add the clobber lists for all the instructions we skipped earlier.
-  for (SmallPtrSet<const TargetInstrDesc*, 4>::const_iterator
+  for (SmallPtrSet<const MCInstrDesc*, 4>::const_iterator
        I = SkippedInstrs.begin(), E = SkippedInstrs.end(); I != E; ++I)
     if (const unsigned *Defs = (*I)->getImplicitDefs())
       while (*Defs)

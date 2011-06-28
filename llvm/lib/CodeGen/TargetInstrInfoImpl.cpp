@@ -59,8 +59,8 @@ TargetInstrInfoImpl::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
 // the two operands returned by findCommutedOpIndices.
 MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
                                                       bool NewMI) const {
-  const TargetInstrDesc &TID = MI->getDesc();
-  bool HasDef = TID.getNumDefs();
+  const MCInstrDesc &MCID = MI->getDesc();
+  bool HasDef = MCID.getNumDefs();
   if (HasDef && !MI->getOperand(0).isReg())
     // No idea how to commute this instruction. Target should implement its own.
     return 0;
@@ -81,7 +81,7 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
   bool ChangeReg0 = false;
   if (HasDef && MI->getOperand(0).getReg() == Reg1) {
     // Must be two address instruction!
-    assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
+    assert(MI->getDesc().getOperandConstraint(0, MCOI::TIED_TO) &&
            "Expecting a two-address instruction!");
     Reg2IsKill = false;
     ChangeReg0 = true;
@@ -119,12 +119,12 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
 bool TargetInstrInfoImpl::findCommutedOpIndices(MachineInstr *MI,
                                                 unsigned &SrcOpIdx1,
                                                 unsigned &SrcOpIdx2) const {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.isCommutable())
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.isCommutable())
     return false;
   // This assumes v0 = op v1, v2 and commuting would swap v1 and v2. If this
   // is not true, then the target must implement this.
-  SrcOpIdx1 = TID.getNumDefs();
+  SrcOpIdx1 = MCID.getNumDefs();
   SrcOpIdx2 = SrcOpIdx1 + 1;
   if (!MI->getOperand(SrcOpIdx1).isReg() ||
       !MI->getOperand(SrcOpIdx2).isReg())
@@ -137,12 +137,12 @@ bool TargetInstrInfoImpl::findCommutedOpIndices(MachineInstr *MI,
 bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
                             const SmallVectorImpl<MachineOperand> &Pred) const {
   bool MadeChange = false;
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.isPredicable())
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.isPredicable())
     return false;
 
   for (unsigned j = 0, i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    if (TID.OpInfo[i].isPredicate()) {
+    if (MCID.OpInfo[i].isPredicate()) {
       MachineOperand &MO = MI->getOperand(i);
       if (MO.isReg()) {
         MO.setReg(Pred[j].getReg());
@@ -332,10 +332,10 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
       MF.getFrameInfo()->isImmutableObjectIndex(FrameIdx))
     return true;
 
-  const TargetInstrDesc &TID = MI->getDesc();
+  const MCInstrDesc &MCID = MI->getDesc();
 
   // Avoid instructions obviously unsafe for remat.
-  if (TID.isNotDuplicable() || TID.mayStore() ||
+  if (MCID.isNotDuplicable() || MCID.mayStore() ||
       MI->hasUnmodeledSideEffects())
     return false;
 
@@ -345,7 +345,7 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
     return false;
 
   // Avoid instructions which load from potentially varying memory.
-  if (TID.mayLoad() && !MI->isInvariantLoad(AA))
+  if (MCID.mayLoad() && !MI->isInvariantLoad(AA))
     return false;
 
   // If any of the registers accessed are non-constant, conservatively assume

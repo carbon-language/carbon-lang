@@ -541,19 +541,19 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
 }
 
 void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
-  const TargetInstrDesc &TI = MI->getDesc();
-  if (MI->getNumOperands() < TI.getNumOperands()) {
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (MI->getNumOperands() < MCID.getNumOperands()) {
     report("Too few operands", MI);
-    *OS << TI.getNumOperands() << " operands expected, but "
+    *OS << MCID.getNumOperands() << " operands expected, but "
         << MI->getNumExplicitOperands() << " given.\n";
   }
 
   // Check the MachineMemOperands for basic consistency.
   for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
        E = MI->memoperands_end(); I != E; ++I) {
-    if ((*I)->isLoad() && !TI.mayLoad())
+    if ((*I)->isLoad() && !MCID.mayLoad())
       report("Missing mayLoad flag", MI);
-    if ((*I)->isStore() && !TI.mayStore())
+    if ((*I)->isStore() && !MCID.mayStore())
       report("Missing mayStore flag", MI);
   }
 
@@ -575,29 +575,30 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
 void
 MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
   const MachineInstr *MI = MO->getParent();
-  const TargetInstrDesc &TI = MI->getDesc();
-  const TargetOperandInfo &TOI = TI.OpInfo[MONum];
+  const MCInstrDesc &MCID = MI->getDesc();
+  const MCOperandInfo &MCOI = MCID.OpInfo[MONum];
 
-  // The first TI.NumDefs operands must be explicit register defines
-  if (MONum < TI.getNumDefs()) {
+  // The first MCID.NumDefs operands must be explicit register defines
+  if (MONum < MCID.getNumDefs()) {
     if (!MO->isReg())
       report("Explicit definition must be a register", MO, MONum);
     else if (!MO->isDef())
       report("Explicit definition marked as use", MO, MONum);
     else if (MO->isImplicit())
       report("Explicit definition marked as implicit", MO, MONum);
-  } else if (MONum < TI.getNumOperands()) {
+  } else if (MONum < MCID.getNumOperands()) {
     // Don't check if it's the last operand in a variadic instruction. See,
     // e.g., LDM_RET in the arm back end.
-    if (MO->isReg() && !(TI.isVariadic() && MONum == TI.getNumOperands()-1)) {
-      if (MO->isDef() && !TOI.isOptionalDef())
+    if (MO->isReg() &&
+        !(MCID.isVariadic() && MONum == MCID.getNumOperands()-1)) {
+      if (MO->isDef() && !MCOI.isOptionalDef())
           report("Explicit operand marked as def", MO, MONum);
       if (MO->isImplicit())
         report("Explicit operand marked as implicit", MO, MONum);
     }
   } else {
     // ARM adds %reg0 operands to indicate predicates. We'll allow that.
-    if (MO->isReg() && !MO->isImplicit() && !TI.isVariadic() && MO->getReg())
+    if (MO->isReg() && !MO->isImplicit() && !MCID.isVariadic() && MO->getReg())
       report("Extra explicit operand on non-variadic instruction", MO, MONum);
   }
 
@@ -709,7 +710,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     }
 
     // Check register classes.
-    if (MONum < TI.getNumOperands() && !MO->isImplicit()) {
+    if (MONum < MCID.getNumOperands() && !MO->isImplicit()) {
       unsigned SubIdx = MO->getSubReg();
 
       if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
@@ -723,7 +724,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           }
           sr = s;
         }
-        if (const TargetRegisterClass *DRC = TII->getRegClass(TI, MONum, TRI)) {
+        if (const TargetRegisterClass *DRC = TII->getRegClass(MCID,MONum,TRI)) {
           if (!DRC->contains(sr)) {
             report("Illegal physical register for instruction", MO, MONum);
             *OS << TRI->getName(sr) << " is not a "
@@ -743,7 +744,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
           }
           RC = SRC;
         }
-        if (const TargetRegisterClass *DRC = TII->getRegClass(TI, MONum, TRI)) {
+        if (const TargetRegisterClass *DRC = TII->getRegClass(MCID,MONum,TRI)) {
           if (!RC->hasSuperClassEq(DRC)) {
             report("Illegal virtual register for instruction", MO, MONum);
             *OS << "Expected a " << DRC->getName() << " register, but got a "
@@ -765,11 +766,11 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
         LiveInts && !LiveInts->isNotInMIMap(MI)) {
       LiveInterval &LI = LiveStks->getInterval(MO->getIndex());
       SlotIndex Idx = LiveInts->getInstructionIndex(MI);
-      if (TI.mayLoad() && !LI.liveAt(Idx.getUseIndex())) {
+      if (MCID.mayLoad() && !LI.liveAt(Idx.getUseIndex())) {
         report("Instruction loads from dead spill slot", MO, MONum);
         *OS << "Live stack: " << LI << '\n';
       }
-      if (TI.mayStore() && !LI.liveAt(Idx.getDefIndex())) {
+      if (MCID.mayStore() && !LI.liveAt(Idx.getDefIndex())) {
         report("Instruction stores to dead spill slot", MO, MONum);
         *OS << "Live stack: " << LI << '\n';
       }

@@ -54,10 +54,6 @@ private:
   // Operand information.
   void EmitOperandInfo(raw_ostream &OS, OperandInfoMapTy &OperandInfoIDs);
   std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
-
-  void DetectRegisterClassBarriers(std::vector<Record*> &Defs,
-                                   const std::vector<CodeGenRegisterClass> &RCs,
-                                   std::vector<Record*> &Barriers);
 };
 
 } // End llvm namespace

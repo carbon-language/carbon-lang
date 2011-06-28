@@ -1689,13 +1689,13 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
 }
 
 bool X86InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.isTerminator()) return false;
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.isTerminator()) return false;
 
   // Conditional branch is a special case.
-  if (TID.isBranch() && !TID.isBarrier())
+  if (MCID.isBranch() && !MCID.isBarrier())
     return true;
-  if (!TID.isPredicable())
+  if (!MCID.isPredicable())
     return true;
   return !isPredicated(MI);
 }
@@ -2225,7 +2225,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   bool isTwoAddrFold = false;
   unsigned NumOps = MI->getDesc().getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
-    MI->getDesc().getOperandConstraint(1, TOI::TIED_TO) != -1;
+    MI->getDesc().getOperandConstraint(1, MCOI::TIED_TO) != -1;
 
   // FIXME: AsmPrinter doesn't know how to handle
   // X86II::MO_GOT_ABSOLUTE_ADDRESS after folding.
@@ -2543,7 +2543,7 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   unsigned Opc = MI->getOpcode();
   unsigned NumOps = MI->getDesc().getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
-    MI->getDesc().getOperandConstraint(1, TOI::TIED_TO) != -1;
+    MI->getDesc().getOperandConstraint(1, MCOI::TIED_TO) != -1;
 
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
@@ -2589,8 +2589,8 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     return false;
   UnfoldStore &= FoldedStore;
 
-  const TargetInstrDesc &TID = get(Opc);
-  const TargetRegisterClass *RC = getRegClass(TID, Index, &RI);
+  const MCInstrDesc &MCID = get(Opc);
+  const TargetRegisterClass *RC = getRegClass(MCID, Index, &RI);
   if (!MI->hasOneMemOperand() &&
       RC == &X86::VR128RegClass &&
       !TM.getSubtarget<X86Subtarget>().isUnalignedMemAccessFast())
@@ -2632,7 +2632,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   }
 
   // Emit the data processing instruction.
-  MachineInstr *DataMI = MF.CreateMachineInstr(TID, MI->getDebugLoc(), true);
+  MachineInstr *DataMI = MF.CreateMachineInstr(MCID, MI->getDebugLoc(), true);
   MachineInstrBuilder MIB(DataMI);
 
   if (FoldedStore)
@@ -2685,7 +2685,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
   // Emit the store instruction.
   if (UnfoldStore) {
-    const TargetRegisterClass *DstRC = getRegClass(TID, 0, &RI);
+    const TargetRegisterClass *DstRC = getRegClass(MCID, 0, &RI);
     std::pair<MachineInstr::mmo_iterator,
               MachineInstr::mmo_iterator> MMOs =
       MF.extractStoreMemRefs(MI->memoperands_begin(),
@@ -2710,9 +2710,9 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   unsigned Index = I->second.second & 0xf;
   bool FoldedLoad = I->second.second & (1 << 4);
   bool FoldedStore = I->second.second & (1 << 5);
-  const TargetInstrDesc &TID = get(Opc);
-  const TargetRegisterClass *RC = getRegClass(TID, Index, &RI);
-  unsigned NumDefs = TID.NumDefs;
+  const MCInstrDesc &MCID = get(Opc);
+  const TargetRegisterClass *RC = getRegClass(MCID, Index, &RI);
+  unsigned NumDefs = MCID.NumDefs;
   std::vector<SDValue> AddrOps;
   std::vector<SDValue> BeforeOps;
   std::vector<SDValue> AfterOps;
@@ -2756,13 +2756,13 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   // Emit the data processing instruction.
   std::vector<EVT> VTs;
   const TargetRegisterClass *DstRC = 0;
-  if (TID.getNumDefs() > 0) {
-    DstRC = getRegClass(TID, 0, &RI);
+  if (MCID.getNumDefs() > 0) {
+    DstRC = getRegClass(MCID, 0, &RI);
     VTs.push_back(*DstRC->vt_begin());
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     EVT VT = N->getValueType(i);
-    if (VT != MVT::Other && i >= (unsigned)TID.getNumDefs())
+    if (VT != MVT::Other && i >= (unsigned)MCID.getNumDefs())
       VTs.push_back(VT);
   }
   if (Load)

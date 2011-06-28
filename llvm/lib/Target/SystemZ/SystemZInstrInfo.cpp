@@ -199,13 +199,13 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
 }
 
 bool SystemZInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.isTerminator()) return false;
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.isTerminator()) return false;
 
   // Conditional branch is a special case.
-  if (TID.isBranch() && !TID.isBarrier())
+  if (MCID.isBranch() && !MCID.isBarrier())
     return true;
-  if (!TID.isPredicable())
+  if (!MCID.isPredicable())
     return true;
   return !isPredicated(MI);
 }
@@ -343,7 +343,7 @@ SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return Count;
 }
 
-const TargetInstrDesc&
+const MCInstrDesc&
 SystemZInstrInfo::getBrCond(SystemZCC::CondCodes CC) const {
   switch (CC) {
   default:
@@ -408,7 +408,7 @@ SystemZInstrInfo::getOppositeCondition(SystemZCC::CondCodes CC) const {
   }
 }
 
-const TargetInstrDesc&
+const MCInstrDesc&
 SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   switch (Opc) {
   default:

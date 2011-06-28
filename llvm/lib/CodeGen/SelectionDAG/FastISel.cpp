@@ -569,7 +569,7 @@ bool FastISel::SelectCall(const User *I) {
   case Intrinsic::dbg_value: {
     // This form of DBG_VALUE is target-independent.
     const DbgValueInst *DI = cast<DbgValueInst>(Call);
-    const TargetInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
+    const MCInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
     const Value *V = DI->getValue();
     if (!V) {
       // Currently the optimizer can produce this; insert an undef to
@@ -1112,7 +1112,7 @@ unsigned FastISel::createResultReg(const TargetRegisterClass* RC) {
 unsigned FastISel::FastEmitInst_(unsigned MachineInstOpcode,
                                  const TargetRegisterClass* RC) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg);
   return ResultReg;
@@ -1122,7 +1122,7 @@ unsigned FastISel::FastEmitInst_r(unsigned MachineInstOpcode,
                                   const TargetRegisterClass *RC,
                                   unsigned Op0, bool Op0IsKill) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -1142,7 +1142,7 @@ unsigned FastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
                                    unsigned Op0, bool Op0IsKill,
                                    unsigned Op1, bool Op1IsKill) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -1164,7 +1164,7 @@ unsigned FastISel::FastEmitInst_rrr(unsigned MachineInstOpcode,
                                    unsigned Op1, bool Op1IsKill,
                                    unsigned Op2, bool Op2IsKill) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -1187,7 +1187,7 @@ unsigned FastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
                                    unsigned Op0, bool Op0IsKill,
                                    uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -1208,7 +1208,7 @@ unsigned FastISel::FastEmitInst_rii(unsigned MachineInstOpcode,
                                    unsigned Op0, bool Op0IsKill,
                                    uint64_t Imm1, uint64_t Imm2) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -1231,7 +1231,7 @@ unsigned FastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
                                    unsigned Op0, bool Op0IsKill,
                                    const ConstantFP *FPImm) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -1253,7 +1253,7 @@ unsigned FastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
                                     unsigned Op1, bool Op1IsKill,
                                     uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -1275,7 +1275,7 @@ unsigned FastISel::FastEmitInst_i(unsigned MachineInstOpcode,
                                   const TargetRegisterClass *RC,
                                   uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg).addImm(Imm);
@@ -1291,7 +1291,7 @@ unsigned FastISel::FastEmitInst_ii(unsigned MachineInstOpcode,
                                   const TargetRegisterClass *RC,
                                   uint64_t Imm1, uint64_t Imm2) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)

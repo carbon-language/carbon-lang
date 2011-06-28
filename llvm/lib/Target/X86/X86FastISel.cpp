@@ -1393,7 +1393,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     assert(DI->getAddress() && "Null address should be checked earlier!");
     if (!X86SelectAddress(DI->getAddress(), AM))
       return false;
-    const TargetInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
+    const MCInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
     // FIXME may need to add RegState::Debug to any registers produced,
     // although ESP/EBP should be the only ones at the moment.
     addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II), AM).

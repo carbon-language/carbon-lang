@@ -19,11 +19,11 @@ using namespace llvm;
 static bool hasRAWHazard(MachineInstr *DefMI, MachineInstr *MI,
                          const TargetRegisterInfo &TRI) {
   // FIXME: Detect integer instructions properly.
-  const TargetInstrDesc &TID = MI->getDesc();
-  unsigned Domain = TID.TSFlags & ARMII::DomainMask;
-  if (TID.mayStore())
+  const MCInstrDesc &MCID = MI->getDesc();
+  unsigned Domain = MCID.TSFlags & ARMII::DomainMask;
+  if (MCID.mayStore())
     return false;
-  unsigned Opcode = TID.getOpcode();
+  unsigned Opcode = MCID.getOpcode();
   if (Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
     return false;
   if ((Domain & ARMII::DomainVFP) || (Domain & ARMII::DomainNEON))
@@ -43,15 +43,15 @@ ARMHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
 
     // Look for special VMLA / VMLS hazards. A VMUL / VADD / VSUB following
     // a VMLA / VMLS will cause 4 cycle stall.
-    const TargetInstrDesc &TID = MI->getDesc();
-    if (LastMI && (TID.TSFlags & ARMII::DomainMask) != ARMII::DomainGeneral) {
+    const MCInstrDesc &MCID = MI->getDesc();
+    if (LastMI && (MCID.TSFlags & ARMII::DomainMask) != ARMII::DomainGeneral) {
       MachineInstr *DefMI = LastMI;
-      const TargetInstrDesc &LastTID = LastMI->getDesc();
+      const MCInstrDesc &LastMCID = LastMI->getDesc();
       // Skip over one non-VFP / NEON instruction.
-      if (!LastTID.isBarrier() &&
+      if (!LastMCID.isBarrier() &&
           // On A9, AGU and NEON/FPU are muxed.
-          !(STI.isCortexA9() && (LastTID.mayLoad() || LastTID.mayStore())) &&
-          (LastTID.TSFlags & ARMII::DomainMask) == ARMII::DomainGeneral) {
+          !(STI.isCortexA9() && (LastMCID.mayLoad() || LastMCID.mayStore())) &&
+          (LastMCID.TSFlags & ARMII::DomainMask) == ARMII::DomainGeneral) {
         MachineBasicBlock::iterator I = LastMI;
         if (I != LastMI->getParent()->begin()) {
           I = llvm::prior(I);

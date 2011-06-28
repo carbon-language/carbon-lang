@@ -61,9 +61,9 @@ bool MipsExpandPseudo::runOnMachineBasicBlock(MachineBasicBlock& MBB) {
 
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end();) {
-    const TargetInstrDesc& Tid = I->getDesc();
+    const MCInstrDesc& MCid = I->getDesc();
 
-    switch(Tid.getOpcode()) {
+    switch(MCid.getOpcode()) {
     default: 
       ++I;
       continue;
@@ -87,7 +87,7 @@ void MipsExpandPseudo::ExpandBuildPairF64(MachineBasicBlock& MBB,
                                             MachineBasicBlock::iterator I) {  
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
-  const TargetInstrDesc& Mtc1Tdd = TII->get(Mips::MTC1);
+  const MCInstrDesc& Mtc1Tdd = TII->get(Mips::MTC1);
   DebugLoc dl = I->getDebugLoc();
   const unsigned* SubReg =
     TM.getRegisterInfo()->getSubRegisters(DstReg);
@@ -103,7 +103,7 @@ void MipsExpandPseudo::ExpandExtractElementF64(MachineBasicBlock& MBB,
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned SrcReg = I->getOperand(1).getReg();
   unsigned N = I->getOperand(2).getImm();
-  const TargetInstrDesc& Mfc1Tdd = TII->get(Mips::MFC1);
+  const MCInstrDesc& Mfc1Tdd = TII->get(Mips::MFC1);
   DebugLoc dl = I->getDebugLoc();
   const unsigned* SubReg = TM.getRegisterInfo()->getSubRegisters(SrcReg);
 

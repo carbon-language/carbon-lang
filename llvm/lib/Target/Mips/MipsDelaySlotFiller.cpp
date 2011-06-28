@@ -59,10 +59,10 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB)
 {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ++I) {
-    const TargetInstrDesc& Tid = I->getDesc();
-    if (Tid.hasDelaySlot() &&
+    const MCInstrDesc& MCid = I->getDesc();
+    if (MCid.hasDelaySlot() &&
         (TM.getSubtarget<MipsSubtarget>().isMips1() ||
-         Tid.isCall() || Tid.isBranch() || Tid.isReturn())) {
+         MCid.isCall() || MCid.isBranch() || MCid.isReturn())) {
       MachineBasicBlock::iterator J = I;
       ++J;
       BuildMI(MBB, J, I->getDebugLoc(), TII->get(Mips::NOP));

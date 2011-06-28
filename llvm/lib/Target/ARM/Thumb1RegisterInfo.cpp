@@ -239,9 +239,9 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       unsigned Chunk = (1 << 3) - 1;
       unsigned ThisVal = (Bytes > Chunk) ? Chunk : Bytes;
       Bytes -= ThisVal;
-      const TargetInstrDesc &TID = TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3);
+      const MCInstrDesc &MCID = TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3);
       const MachineInstrBuilder MIB =
-        AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TID, DestReg).setMIFlags(MIFlags));
+        AddDefaultT1CC(BuildMI(MBB, MBBI, dl, MCID, DestReg).setMIFlags(MIFlags));
       AddDefaultPred(MIB.addReg(BaseReg, RegState::Kill).addImm(ThisVal));
     } else {
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), DestReg)
@@ -291,8 +291,8 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
   }
 
   if (ExtraOpc) {
-    const TargetInstrDesc &TID = TII.get(ExtraOpc);
-    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TID, DestReg))
+    const MCInstrDesc &MCID = TII.get(ExtraOpc);
+    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, MCID, DestReg))
                    .addReg(DestReg, RegState::Kill)
                    .addImm(((unsigned)NumBytes) & 3)
                    .setMIFlags(MIFlags));
@@ -360,8 +360,8 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
   if (Imm > 0)
     emitThumbRegPlusImmediate(MBB, MBBI, dl, DestReg, DestReg, Imm, TII, MRI);
   if (isSub) {
-    const TargetInstrDesc &TID = TII.get(ARM::tRSB);
-    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TID, DestReg))
+    const MCInstrDesc &MCID = TII.get(ARM::tRSB);
+    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, MCID, DestReg))
                    .addReg(DestReg, RegState::Kill));
   }
 }
@@ -396,7 +396,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc dl = MI.getDebugLoc();
   unsigned Opcode = MI.getOpcode();
-  const TargetInstrDesc &Desc = MI.getDesc();
+  const MCInstrDesc &Desc = MI.getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
 
   if (Opcode == ARM::tADDrSPi) {
@@ -653,7 +653,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   assert(Offset && "This code isn't needed if offset already handled!");
 
   unsigned Opcode = MI.getOpcode();
-  const TargetInstrDesc &Desc = MI.getDesc();
+  const MCInstrDesc &Desc = MI.getDesc();
 
   // Remove predicate first.
   int PIdx = MI.findFirstPredOperandIdx();

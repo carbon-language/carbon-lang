@@ -17,7 +17,7 @@
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/Target/TargetInstrDesc.h"
+#include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Target/TargetOpcodes.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
@@ -30,7 +30,6 @@ namespace llvm {
 
 template <typename T> class SmallVectorImpl;
 class AliasAnalysis;
-class TargetInstrDesc;
 class TargetInstrInfo;
 class TargetRegisterInfo;
 class MachineFunction;
@@ -57,7 +56,7 @@ public:
                                         // function frame setup code.
   };
 private:
-  const TargetInstrDesc *TID;           // Instruction descriptor.
+  const MCInstrDesc *MCID;              // Instruction descriptor.
   uint16_t NumImplicitOps;              // Number of implicit operands (which
                                         // are determined at construction time).
 
@@ -94,7 +93,7 @@ private:
   MachineInstr(MachineFunction &, const MachineInstr &);
 
   /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
-  /// TID NULL and no operands.
+  /// MCID NULL and no operands.
   MachineInstr();
 
   // The next two constructors have DebugLoc and non-DebugLoc versions;
@@ -103,25 +102,25 @@ private:
 
   /// MachineInstr ctor - This constructor creates a MachineInstr and adds the
   /// implicit operands.  It reserves space for the number of operands specified
-  /// by the TargetInstrDesc.  The version with a DebugLoc should be preferred.
-  explicit MachineInstr(const TargetInstrDesc &TID, bool NoImp = false);
+  /// by the MCInstrDesc.  The version with a DebugLoc should be preferred.
+  explicit MachineInstr(const MCInstrDesc &MCID, bool NoImp = false);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.  The version with a DebugLoc should be preferred.
-  MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &TID);
+  MachineInstr(MachineBasicBlock *MBB, const MCInstrDesc &MCID);
 
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
   /// implicit operands.  It reserves space for number of operands specified by
-  /// TargetInstrDesc.  An explicit DebugLoc is supplied.
-  explicit MachineInstr(const TargetInstrDesc &TID, const DebugLoc dl,
+  /// MCInstrDesc.  An explicit DebugLoc is supplied.
+  explicit MachineInstr(const MCInstrDesc &MCID, const DebugLoc dl,
                         bool NoImp = false);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.
   MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
-               const TargetInstrDesc &TID);
+               const MCInstrDesc &MCID);
 
   ~MachineInstr();
 
@@ -183,11 +182,11 @@ public:
 
   /// getDesc - Returns the target instruction descriptor of this
   /// MachineInstr.
-  const TargetInstrDesc &getDesc() const { return *TID; }
+  const MCInstrDesc &getDesc() const { return *MCID; }
 
   /// getOpcode - Returns the opcode of this MachineInstr.
   ///
-  int getOpcode() const { return TID->Opcode; }
+  int getOpcode() const { return MCID->Opcode; }
 
   /// Access to explicit operands of the instruction.
   ///
@@ -464,8 +463,8 @@ public:
 
   /// hasUnmodeledSideEffects - Return true if this instruction has side
   /// effects that are not modeled by mayLoad / mayStore, etc.
-  /// For all instructions, the property is encoded in TargetInstrDesc::Flags
-  /// (see TargetInstrDesc::hasUnmodeledSideEffects(). The only exception is
+  /// For all instructions, the property is encoded in MCInstrDesc::Flags
+  /// (see MCInstrDesc::hasUnmodeledSideEffects(). The only exception is
   /// INLINEASM instruction, in which case the side effect property is encoded
   /// in one of its operands (see InlineAsm::Extra_HasSideEffect).
   ///
@@ -497,7 +496,7 @@ public:
   /// setDesc - Replace the instruction descriptor (thus opcode) of
   /// the current instruction with a new one.
   ///
-  void setDesc(const TargetInstrDesc &tid) { TID = &tid; }
+  void setDesc(const MCInstrDesc &tid) { MCID = &tid; }
 
   /// setDebugLoc - Replace current source information with new such.
   /// Avoid using this, the constructor argument is preferable.

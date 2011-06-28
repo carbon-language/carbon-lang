@@ -529,8 +529,8 @@ TailDuplicatePass::shouldTailDuplicate(const MachineFunction &MF,
 
   bool hasIndirectBR = false;
   if (PreRegAlloc && !TailBB.empty()) {
-    const TargetInstrDesc &TID = TailBB.back().getDesc();
-    if (TID.isIndirectBranch()) {
+    const MCInstrDesc &MCID = TailBB.back().getDesc();
+    if (MCID.isIndirectBranch()) {
       MaxDuplicateCount = 20;
       hasIndirectBR = true;
     }

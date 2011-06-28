@@ -341,8 +341,8 @@ void MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB,
                                 const SmallVectorImpl<MachineOperand>& Cond)
   const {
   unsigned Opc = Cond[0].getImm();
-  const TargetInstrDesc &TID = get(Opc);
-  MachineInstrBuilder MIB = BuildMI(&MBB, DL, TID);
+  const MCInstrDesc &MCID = get(Opc);
+  MachineInstrBuilder MIB = BuildMI(&MBB, DL, MCID);
 
   for (unsigned i = 1; i < Cond.size(); ++i)
     MIB.addReg(Cond[i].getReg());

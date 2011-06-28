@@ -115,12 +115,12 @@ ScoreboardHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
   // Use the itinerary for the underlying instruction to check for
   // free FU's in the scoreboard at the appropriate future cycles.
 
-  const TargetInstrDesc *TID = DAG->getInstrDesc(SU);
-  if (TID == NULL) {
+  const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
+  if (MCID == NULL) {
     // Don't check hazards for non-machineinstr Nodes.
     return NoHazard;
   }
-  unsigned idx = TID->getSchedClass();
+  unsigned idx = MCID->getSchedClass();
   for (const InstrStage *IS = ItinData->beginStage(idx),
          *E = ItinData->endStage(idx); IS != E; ++IS) {
     // We must find one of the stage's units free for every cycle the
@@ -173,16 +173,16 @@ void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
 
   // Use the itinerary for the underlying instruction to reserve FU's
   // in the scoreboard at the appropriate future cycles.
-  const TargetInstrDesc *TID = DAG->getInstrDesc(SU);
-  assert(TID && "The scheduler must filter non-machineinstrs");
-  if (DAG->TII->isZeroCost(TID->Opcode))
+  const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
+  assert(MCID && "The scheduler must filter non-machineinstrs");
+  if (DAG->TII->isZeroCost(MCID->Opcode))
     return;
 
   ++IssueCount;
 
   unsigned cycle = 0;
 
-  unsigned idx = TID->getSchedClass();
+  unsigned idx = MCID->getSchedClass();
   for (const InstrStage *IS = ItinData->beginStage(idx),
          *E = ItinData->endStage(idx); IS != E; ++IS) {
     // We must reserve one of the stage's units for every cycle the

@@ -34,7 +34,7 @@ namespace llvm {
   class ScheduleDAG;
   class SDNode;
   class TargetInstrInfo;
-  class TargetInstrDesc;
+  class MCInstrDesc;
   class TargetMachine;
   class TargetRegisterClass;
   template<class Graph> class GraphWriter;
@@ -507,9 +507,9 @@ namespace llvm {
 
     virtual ~ScheduleDAG();
 
-    /// getInstrDesc - Return the TargetInstrDesc of this SUnit.
+    /// getInstrDesc - Return the MCInstrDesc of this SUnit.
     /// Return NULL for SDNodes without a machine opcode.
-    const TargetInstrDesc *getInstrDesc(const SUnit *SU) const {
+    const MCInstrDesc *getInstrDesc(const SUnit *SU) const {
       if (SU->isInstr()) return &SU->getInstr()->getDesc();
       return getNodeDesc(SU->getNode());
     }
@@ -579,8 +579,8 @@ namespace llvm {
     void EmitPhysRegCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
 
   private:
-    // Return the TargetInstrDesc of this SDNode or NULL.
-    const TargetInstrDesc *getNodeDesc(const SDNode *Node) const;
+    // Return the MCInstrDesc of this SDNode or NULL.
+    const MCInstrDesc *getNodeDesc(const SDNode *Node) const;
   };
 
   class SUnitIterator : public std::iterator<std::forward_iterator_tag,

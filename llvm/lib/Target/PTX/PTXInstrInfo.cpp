@@ -47,8 +47,8 @@ void PTXInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                bool KillSrc) const {
   for (int i = 0, e = sizeof(map)/sizeof(map[0]); i != e; ++ i) {
     if (map[i].cls->contains(DstReg, SrcReg)) {
-      const TargetInstrDesc &TID = get(map[i].opcode);
-      MachineInstr *MI = BuildMI(MBB, I, DL, TID, DstReg).
+      const MCInstrDesc &MCID = get(map[i].opcode);
+      MachineInstr *MI = BuildMI(MBB, I, DL, MCID, DstReg).
         addReg(SrcReg, getKillRegState(KillSrc));
       AddDefaultPredicate(MI);
       return;
@@ -69,8 +69,8 @@ bool PTXInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   for (int i = 0, e = sizeof(map)/sizeof(map[0]); i != e; ++ i)
     if (DstRC == map[i].cls) {
-      const TargetInstrDesc &TID = get(map[i].opcode);
-      MachineInstr *MI = BuildMI(MBB, I, DL, TID, DstReg).addReg(SrcReg);
+      const MCInstrDesc &MCID = get(map[i].opcode);
+      MachineInstr *MI = BuildMI(MBB, I, DL, MCID, DstReg).addReg(SrcReg);
       AddDefaultPredicate(MI);
       return true;
     }
@@ -178,13 +178,13 @@ AnalyzeBranch(MachineBasicBlock &MBB,
 
   MachineBasicBlock::const_iterator iter = MBB.end();
   const MachineInstr& instLast1 = *--iter;
-  const TargetInstrDesc &desc1 = instLast1.getDesc();
+  const MCInstrDesc &desc1 = instLast1.getDesc();
   // for special case that MBB has only 1 instruction
   const bool IsSizeOne = MBB.size() == 1;
   // if IsSizeOne is true, *--iter and instLast2 are invalid
   // we put a dummy value in instLast2 and desc2 since they are used
   const MachineInstr& instLast2 = IsSizeOne ? instLast1 : *--iter;
-  const TargetInstrDesc &desc2 = IsSizeOne ? desc1 : instLast2.getDesc();
+  const MCInstrDesc &desc2 = IsSizeOne ? desc1 : instLast2.getDesc();
 
   DEBUG(dbgs() << "\n");
   DEBUG(dbgs() << "AnalyzeBranch: opcode: " << instLast1.getOpcode() << "\n");
@@ -387,7 +387,7 @@ void PTXInstrInfo::AddDefaultPredicate(MachineInstr *MI) {
 }
 
 bool PTXInstrInfo::IsAnyKindOfBranch(const MachineInstr& inst) {
-  const TargetInstrDesc &desc = inst.getDesc();
+  const MCInstrDesc &desc = inst.getDesc();
   return desc.isTerminator() || desc.isBranch() || desc.isIndirectBranch();
 }
 

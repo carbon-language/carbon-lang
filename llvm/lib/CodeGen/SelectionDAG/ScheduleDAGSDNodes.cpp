@@ -111,7 +111,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
 
   unsigned ResNo = User->getOperand(2).getResNo();
   if (Def->isMachineOpcode()) {
-    const TargetInstrDesc &II = TII->get(Def->getMachineOpcode());
+    const MCInstrDesc &II = TII->get(Def->getMachineOpcode());
     if (ResNo >= II.getNumDefs() &&
         II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
       PhysReg = Reg;
@@ -255,8 +255,8 @@ void ScheduleDAGSDNodes::ClusterNodes() {
       continue;
 
     unsigned Opc = Node->getMachineOpcode();
-    const TargetInstrDesc &TID = TII->get(Opc);
-    if (TID.mayLoad())
+    const MCInstrDesc &MCID = TII->get(Opc);
+    if (MCID.mayLoad())
       // Cluster loads from "near" addresses into combined SUnits.
       ClusterNeighboringLoads(Node);
   }
@@ -390,14 +390,14 @@ void ScheduleDAGSDNodes::AddSchedEdges() {
 
     if (MainNode->isMachineOpcode()) {
       unsigned Opc = MainNode->getMachineOpcode();
-      const TargetInstrDesc &TID = TII->get(Opc);
-      for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
-        if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
+      const MCInstrDesc &MCID = TII->get(Opc);
+      for (unsigned i = 0; i != MCID.getNumOperands(); ++i) {
+        if (MCID.getOperandConstraint(i, MCOI::TIED_TO) != -1) {
           SU->isTwoAddress = true;
           break;
         }
       }
-      if (TID.isCommutable())
+      if (MCID.isCommutable())
         SU->isCommutable = true;
     }
 

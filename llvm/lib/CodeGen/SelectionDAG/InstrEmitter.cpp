@@ -106,7 +106,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
             continue;
           Match = false;
           if (User->isMachineOpcode()) {
-            const TargetInstrDesc &II = TII->get(User->getMachineOpcode());
+            const MCInstrDesc &II = TII->get(User->getMachineOpcode());
             const TargetRegisterClass *RC = 0;
             if (i+II.getNumDefs() < II.getNumOperands())
               RC = TII->getRegClass(II, i+II.getNumDefs(), TRI);
@@ -178,7 +178,7 @@ unsigned InstrEmitter::getDstOfOnlyCopyToRegUse(SDNode *Node,
 }
 
 void InstrEmitter::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
-                                       const TargetInstrDesc &II,
+                                       const MCInstrDesc &II,
                                        bool IsClone, bool IsCloned,
                                        DenseMap<SDValue, unsigned> &VRBaseMap) {
   assert(Node->getMachineOpcode() != TargetOpcode::IMPLICIT_DEF &&
@@ -242,7 +242,7 @@ unsigned InstrEmitter::getVR(SDValue Op,
       Op.getMachineOpcode() == TargetOpcode::IMPLICIT_DEF) {
     // Add an IMPLICIT_DEF instruction before every use.
     unsigned VReg = getDstOfOnlyCopyToRegUse(Op.getNode(), Op.getResNo());
-    // IMPLICIT_DEF can produce any type of result so its TargetInstrDesc
+    // IMPLICIT_DEF can produce any type of result so its MCInstrDesc
     // does not include operand register class info.
     if (!VReg) {
       const TargetRegisterClass *RC = TLI->getRegClassFor(Op.getValueType());
@@ -265,7 +265,7 @@ unsigned InstrEmitter::getVR(SDValue Op,
 void
 InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
                                  unsigned IIOpNum,
-                                 const TargetInstrDesc *II,
+                                 const MCInstrDesc *II,
                                  DenseMap<SDValue, unsigned> &VRBaseMap,
                                  bool IsDebug, bool IsClone, bool IsCloned) {
   assert(Op.getValueType() != MVT::Other &&
@@ -275,9 +275,9 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
   unsigned VReg = getVR(Op, VRBaseMap);
   assert(TargetRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
 
-  const TargetInstrDesc &TID = MI->getDesc();
-  bool isOptDef = IIOpNum < TID.getNumOperands() &&
-    TID.OpInfo[IIOpNum].isOptionalDef();
+  const MCInstrDesc &MCID = MI->getDesc();
+  bool isOptDef = IIOpNum < MCID.getNumOperands() &&
+    MCID.OpInfo[IIOpNum].isOptionalDef();
 
   // If the instruction requires a register in a different class, create
   // a new virtual register and copy the value into it.
@@ -286,7 +286,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
     const TargetRegisterClass *DstRC = 0;
     if (IIOpNum < II->getNumOperands())
       DstRC = TII->getRegClass(*II, IIOpNum, TRI);
-    assert((DstRC || (TID.isVariadic() && IIOpNum >= TID.getNumOperands())) &&
+    assert((DstRC || (MCID.isVariadic() && IIOpNum >= MCID.getNumOperands())) &&
            "Don't have operand info for this instruction!");
     if (DstRC && !SrcRC->hasSuperClassEq(DstRC)) {
       unsigned NewVReg = MRI->createVirtualRegister(DstRC);
@@ -312,7 +312,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
     while (Idx > 0 &&
            MI->getOperand(Idx-1).isReg() && MI->getOperand(Idx-1).isImplicit())
       --Idx;
-    bool isTied = MI->getDesc().getOperandConstraint(Idx, TOI::TIED_TO) != -1;
+    bool isTied = MI->getDesc().getOperandConstraint(Idx, MCOI::TIED_TO) != -1;
     if (isTied)
       isKill = false;
   }
@@ -330,7 +330,7 @@ InstrEmitter::AddRegisterOperand(MachineInstr *MI, SDValue Op,
 /// assertions only.
 void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
                               unsigned IIOpNum,
-                              const TargetInstrDesc *II,
+                              const MCInstrDesc *II,
                               DenseMap<SDValue, unsigned> &VRBaseMap,
                               bool IsDebug, bool IsClone, bool IsCloned) {
   if (Op.isMachineOpcode()) {
@@ -556,7 +556,7 @@ void InstrEmitter::EmitRegSequence(SDNode *Node,
   unsigned NumOps = Node->getNumOperands();
   assert((NumOps & 1) == 1 &&
          "REG_SEQUENCE must have an odd number of operands!");
-  const TargetInstrDesc &II = TII->get(TargetOpcode::REG_SEQUENCE);
+  const MCInstrDesc &II = TII->get(TargetOpcode::REG_SEQUENCE);
   for (unsigned i = 1; i != NumOps; ++i) {
     SDValue Op = Node->getOperand(i);
     if ((i & 1) == 0) {
@@ -597,7 +597,7 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
     return TII->emitFrameIndexDebugValue(*MF, FrameIx, Offset, MDPtr, DL);
   }
   // Otherwise, we're going to create an instruction here.
-  const TargetInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
+  const MCInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
   MachineInstrBuilder MIB = BuildMI(*MF, DL, II);
   if (SD->getKind() == SDDbgValue::SDNODE) {
     SDNode *Node = SD->getSDNode();
@@ -668,7 +668,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
     // We want a unique VR for each IMPLICIT_DEF use.
     return;
   
-  const TargetInstrDesc &II = TII->get(Opc);
+  const MCInstrDesc &II = TII->get(Opc);
   unsigned NumResults = CountResults(Node);
   unsigned NodeOperands = CountOperands(Node);
   bool HasPhysRegOuts = NumResults > II.getNumDefs() && II.getImplicitDefs()!=0;
@@ -697,9 +697,9 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
         UsedRegs.push_back(cast<RegisterSDNode>(F->getOperand(1))->getReg());
       else {
         // Collect declared implicit uses.
-        const TargetInstrDesc &TID = TII->get(F->getMachineOpcode());
-        UsedRegs.append(TID.getImplicitUses(),
-                        TID.getImplicitUses() + TID.getNumImplicitUses());
+        const MCInstrDesc &MCID = TII->get(F->getMachineOpcode());
+        UsedRegs.append(MCID.getImplicitUses(),
+                        MCID.getImplicitUses() + MCID.getNumImplicitUses());
         // In addition to declared implicit uses, we must also check for
         // direct RegisterSDNode operands.
         for (unsigned i = 0, e = F->getNumOperands(); i != e; ++i)

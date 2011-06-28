@@ -24,22 +24,21 @@ using namespace llvm;
 //  TargetInstrInfo
 //===----------------------------------------------------------------------===//
 
-TargetInstrInfo::TargetInstrInfo(const TargetInstrDesc* Desc,
-                                 unsigned numOpcodes)
-  : Descriptors(Desc), NumOpcodes(numOpcodes) {
+TargetInstrInfo::TargetInstrInfo(const MCInstrDesc* Desc, unsigned numOpcodes) {
+  InitMCInstrInfo(Desc, numOpcodes);
 }
 
 TargetInstrInfo::~TargetInstrInfo() {
 }
 
 const TargetRegisterClass*
-TargetInstrInfo::getRegClass(const TargetInstrDesc &TID, unsigned OpNum,
+TargetInstrInfo::getRegClass(const MCInstrDesc &MCID, unsigned OpNum,
                              const TargetRegisterInfo *TRI) const {
-  if (OpNum >= TID.getNumOperands())
+  if (OpNum >= MCID.getNumOperands())
     return 0;
 
-  short RegClass = TID.OpInfo[OpNum].RegClass;
-  if (TID.OpInfo[OpNum].isLookupPtrRegClass())
+  short RegClass = MCID.OpInfo[OpNum].RegClass;
+  if (MCID.OpInfo[OpNum].isLookupPtrRegClass())
     return TRI->getPointerRegClass(RegClass);
 
   // Instructions like INSERT_SUBREG do not have fixed register classes.
@@ -135,13 +134,13 @@ void TargetInstrInfo::insertNoop(MachineBasicBlock &MBB,
 
 
 bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.isTerminator()) return false;
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.isTerminator()) return false;
 
   // Conditional branch is a special case.
-  if (TID.isBranch() && !TID.isBarrier())
+  if (MCID.isBranch() && !MCID.isBarrier())
     return true;
-  if (!TID.isPredicable())
+  if (!MCID.isPredicable())
     return true;
   return !isPredicated(MI);
 }

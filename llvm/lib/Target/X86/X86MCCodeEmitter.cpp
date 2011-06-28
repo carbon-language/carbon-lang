@@ -111,7 +111,7 @@ public:
                          SmallVectorImpl<MCFixup> &Fixups) const;
 
   void EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte, int MemOperand,
-                           const MCInst &MI, const TargetInstrDesc &Desc,
+                           const MCInst &MI, const MCInstrDesc &Desc,
                            raw_ostream &OS) const;
 
   void EmitSegmentOverridePrefix(uint64_t TSFlags, unsigned &CurByte,
@@ -119,7 +119,7 @@ public:
                                  raw_ostream &OS) const;
 
   void EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte, int MemOperand,
-                        const MCInst &MI, const TargetInstrDesc &Desc,
+                        const MCInst &MI, const MCInstrDesc &Desc,
                         raw_ostream &OS) const;
 };
 
@@ -379,7 +379,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 /// called VEX.
 void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                            int MemOperand, const MCInst &MI,
-                                           const TargetInstrDesc &Desc,
+                                           const MCInstrDesc &Desc,
                                            raw_ostream &OS) const {
   bool HasVEX_4V = false;
   if ((TSFlags >> X86II::VEXShift) & X86II::VEX_4V)
@@ -586,7 +586,7 @@ void X86MCCodeEmitter::EmitVEXOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 /// REX prefix which specifies 1) 64-bit instructions, 2) non-default operand
 /// size, and 3) use of X86-64 extended registers.
 static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
-                                   const TargetInstrDesc &Desc) {
+                                   const MCInstrDesc &Desc) {
   unsigned REX = 0;
   if (TSFlags & X86II::REX_W)
     REX |= 1 << 3; // set REX.W
@@ -596,7 +596,7 @@ static unsigned DetermineREXPrefix(const MCInst &MI, uint64_t TSFlags,
   unsigned NumOps = MI.getNumOperands();
   // FIXME: MCInst should explicitize the two-addrness.
   bool isTwoAddr = NumOps > 1 &&
-                      Desc.getOperandConstraint(1, TOI::TIED_TO) != -1;
+                      Desc.getOperandConstraint(1, MCOI::TIED_TO) != -1;
 
   // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
   unsigned i = isTwoAddr ? 1 : 0;
@@ -713,7 +713,7 @@ void X86MCCodeEmitter::EmitSegmentOverridePrefix(uint64_t TSFlags,
 /// Not present, it is -1.
 void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
                                         int MemOperand, const MCInst &MI,
-                                        const TargetInstrDesc &Desc,
+                                        const MCInstrDesc &Desc,
                                         raw_ostream &OS) const {
 
   // Emit the lock opcode prefix as needed.
@@ -803,7 +803,7 @@ void X86MCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   unsigned Opcode = MI.getOpcode();
-  const TargetInstrDesc &Desc = TII.get(Opcode);
+  const MCInstrDesc &Desc = TII.get(Opcode);
   uint64_t TSFlags = Desc.TSFlags;
 
   // Pseudo instructions don't get encoded.
@@ -814,9 +814,9 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   // FIXME: This should be handled during MCInst lowering.
   unsigned NumOps = Desc.getNumOperands();
   unsigned CurOp = 0;
-  if (NumOps > 1 && Desc.getOperandConstraint(1, TOI::TIED_TO) != -1)
+  if (NumOps > 1 && Desc.getOperandConstraint(1, MCOI::TIED_TO) != -1)
     ++CurOp;
-  else if (NumOps > 2 && Desc.getOperandConstraint(NumOps-1, TOI::TIED_TO)== 0)
+  else if (NumOps > 2 && Desc.getOperandConstraint(NumOps-1, MCOI::TIED_TO)== 0)
     // Skip the last source operand that is tied_to the dest reg. e.g. LXADD32
     --NumOps;
 

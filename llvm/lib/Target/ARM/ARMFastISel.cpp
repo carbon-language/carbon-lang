@@ -219,8 +219,8 @@ class ARMFastISel : public FastISel {
 // we don't care about implicit defs here, just places we'll need to add a
 // default CCReg argument. Sets CPSR if we're setting CPSR instead of CCR.
 bool ARMFastISel::DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR) {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.hasOptionalDef())
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.hasOptionalDef())
     return false;
 
   // Look to see if our OptionalDef is defining CPSR or CCR.
@@ -234,15 +234,15 @@ bool ARMFastISel::DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR) {
 }
 
 bool ARMFastISel::isARMNEONPred(const MachineInstr *MI) {
-  const TargetInstrDesc &TID = MI->getDesc();
+  const MCInstrDesc &MCID = MI->getDesc();
 
   // If we're a thumb2 or not NEON function we were handled via isPredicable.
-  if ((TID.TSFlags & ARMII::DomainMask) != ARMII::DomainNEON ||
+  if ((MCID.TSFlags & ARMII::DomainMask) != ARMII::DomainNEON ||
        AFI->isThumb2Function())
     return false;
 
-  for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i)
-    if (TID.OpInfo[i].isPredicate())
+  for (unsigned i = 0, e = MCID.getNumOperands(); i != e; ++i)
+    if (MCID.OpInfo[i].isPredicate())
       return true;
 
   return false;
@@ -278,7 +278,7 @@ ARMFastISel::AddOptionalDefs(const MachineInstrBuilder &MIB) {
 unsigned ARMFastISel::FastEmitInst_(unsigned MachineInstOpcode,
                                     const TargetRegisterClass* RC) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg));
   return ResultReg;
@@ -288,7 +288,7 @@ unsigned ARMFastISel::FastEmitInst_r(unsigned MachineInstOpcode,
                                      const TargetRegisterClass *RC,
                                      unsigned Op0, bool Op0IsKill) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -308,7 +308,7 @@ unsigned ARMFastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
                                       unsigned Op0, bool Op0IsKill,
                                       unsigned Op1, bool Op1IsKill) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -331,7 +331,7 @@ unsigned ARMFastISel::FastEmitInst_rrr(unsigned MachineInstOpcode,
                                        unsigned Op1, bool Op1IsKill,
                                        unsigned Op2, bool Op2IsKill) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -355,7 +355,7 @@ unsigned ARMFastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
                                       unsigned Op0, bool Op0IsKill,
                                       uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -377,7 +377,7 @@ unsigned ARMFastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
                                       unsigned Op0, bool Op0IsKill,
                                       const ConstantFP *FPImm) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -400,7 +400,7 @@ unsigned ARMFastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
                                        unsigned Op1, bool Op1IsKill,
                                        uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -423,7 +423,7 @@ unsigned ARMFastISel::FastEmitInst_i(unsigned MachineInstOpcode,
                                      const TargetRegisterClass *RC,
                                      uint64_t Imm) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
@@ -442,7 +442,7 @@ unsigned ARMFastISel::FastEmitInst_ii(unsigned MachineInstOpcode,
                                       const TargetRegisterClass *RC,
                                       uint64_t Imm1, uint64_t Imm2) {
   unsigned ResultReg = createResultReg(RC);
-  const TargetInstrDesc &II = TII.get(MachineInstOpcode);
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
   if (II.getNumDefs() >= 1)
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)

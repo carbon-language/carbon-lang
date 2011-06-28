@@ -302,7 +302,7 @@ static void GetCostForDef(const ScheduleDAGSDNodes::RegDefIter &RegDefPos,
     }
 
     unsigned Idx = RegDefPos.GetIdx();
-    const TargetInstrDesc Desc = TII->get(Opcode);
+    const MCInstrDesc Desc = TII->get(Opcode);
     const TargetRegisterClass *RC = TII->getRegClass(Desc, Idx, TRI);
     RegClass = RC->getID();
     // FIXME: Cost arbitrarily set to 1 because there doesn't seem to be a
@@ -837,14 +837,14 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     assert(N->getNodeId() == -1 && "Node already inserted!");
     N->setNodeId(NewSU->NodeNum);
 
-    const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
-    for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
-      if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
+    const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
+    for (unsigned i = 0; i != MCID.getNumOperands(); ++i) {
+      if (MCID.getOperandConstraint(i, MCOI::TIED_TO) != -1) {
         NewSU->isTwoAddress = true;
         break;
       }
     }
-    if (TID.isCommutable())
+    if (MCID.isCommutable())
       NewSU->isCommutable = true;
 
     InitNumRegDefsLeft(NewSU);
@@ -1024,10 +1024,10 @@ void ScheduleDAGRRList::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
 /// FIXME: Move to SelectionDAG?
 static EVT getPhysicalRegisterVT(SDNode *N, unsigned Reg,
                                  const TargetInstrInfo *TII) {
-  const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
-  assert(TID.ImplicitDefs && "Physical reg def must be in implicit def list!");
-  unsigned NumRes = TID.getNumDefs();
-  for (const unsigned *ImpDef = TID.getImplicitDefs(); *ImpDef; ++ImpDef) {
+  const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
+  assert(MCID.ImplicitDefs && "Physical reg def must be in implicit def list!");
+  unsigned NumRes = MCID.getNumDefs();
+  for (const unsigned *ImpDef = MCID.getImplicitDefs(); *ImpDef; ++ImpDef) {
     if (Reg == *ImpDef)
       break;
     ++NumRes;
@@ -1108,10 +1108,10 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
 
     if (!Node->isMachineOpcode())
       continue;
-    const TargetInstrDesc &TID = TII->get(Node->getMachineOpcode());
-    if (!TID.ImplicitDefs)
+    const MCInstrDesc &MCID = TII->get(Node->getMachineOpcode());
+    if (!MCID.ImplicitDefs)
       continue;
-    for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg)
+    for (const unsigned *Reg = MCID.ImplicitDefs; *Reg; ++Reg)
       CheckForLiveRegDef(SU, *Reg, LiveRegDefs, RegAdded, LRegs, TRI);
   }
 
@@ -2606,11 +2606,11 @@ void RegReductionPQBase::initNodes(std::vector<SUnit> &sunits) {
 bool RegReductionPQBase::canClobber(const SUnit *SU, const SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->getNode()->getMachineOpcode();
-    const TargetInstrDesc &TID = TII->get(Opc);
-    unsigned NumRes = TID.getNumDefs();
-    unsigned NumOps = TID.getNumOperands() - NumRes;
+    const MCInstrDesc &MCID = TII->get(Opc);
+    unsigned NumRes = MCID.getNumDefs();
+    unsigned NumOps = MCID.getNumOperands() - NumRes;
     for (unsigned i = 0; i != NumOps; ++i) {
-      if (TID.getOperandConstraint(i+NumRes, TOI::TIED_TO) != -1) {
+      if (MCID.getOperandConstraint(i+NumRes, MCOI::TIED_TO) != -1) {
         SDNode *DU = SU->getNode()->getOperand(i).getNode();
         if (DU->getNodeId() != -1 &&
             Op->OrigNode == &(*SUnits)[DU->getNodeId()])
@@ -2790,11 +2790,11 @@ void RegReductionPQBase::AddPseudoTwoAddrDeps() {
 
     bool isLiveOut = hasOnlyLiveOutUses(SU);
     unsigned Opc = Node->getMachineOpcode();
-    const TargetInstrDesc &TID = TII->get(Opc);
-    unsigned NumRes = TID.getNumDefs();
-    unsigned NumOps = TID.getNumOperands() - NumRes;
+    const MCInstrDesc &MCID = TII->get(Opc);
+    unsigned NumRes = MCID.getNumDefs();
+    unsigned NumOps = MCID.getNumOperands() - NumRes;
     for (unsigned j = 0; j != NumOps; ++j) {
-      if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) == -1)
+      if (MCID.getOperandConstraint(j+NumRes, MCOI::TIED_TO) == -1)
         continue;
       SDNode *DU = SU->getNode()->getOperand(j).getNode();
       if (DU->getNodeId() == -1)

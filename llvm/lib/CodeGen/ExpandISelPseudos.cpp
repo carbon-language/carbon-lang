@@ -62,8 +62,8 @@ bool ExpandISelPseudos::runOnMachineFunction(MachineFunction &MF) {
       MachineInstr *MI = MBBI++;
 
       // If MI is a pseudo, expand it.
-      const TargetInstrDesc &TID = MI->getDesc();
-      if (TID.usesCustomInsertionHook()) {
+      const MCInstrDesc &MCID = MI->getDesc();
+      if (MCID.usesCustomInsertionHook()) {
         Changed = true;
         MachineBasicBlock *NewMBB =
           TLI->EmitInstrWithCustomInserter(MI, MBB);

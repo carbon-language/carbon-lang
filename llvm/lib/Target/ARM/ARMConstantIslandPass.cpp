@@ -1692,9 +1692,9 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   for (unsigned i = 0, e = T2JumpTables.size(); i != e; ++i) {
     MachineInstr *MI = T2JumpTables[i];
-    const TargetInstrDesc &TID = MI->getDesc();
-    unsigned NumOps = TID.getNumOperands();
-    unsigned JTOpIdx = NumOps - (TID.isPredicable() ? 3 : 2);
+    const MCInstrDesc &MCID = MI->getDesc();
+    unsigned NumOps = MCID.getNumOperands();
+    unsigned JTOpIdx = NumOps - (MCID.isPredicable() ? 3 : 2);
     MachineOperand JTOP = MI->getOperand(JTOpIdx);
     unsigned JTI = JTOP.getIndex();
     assert(JTI < JT.size());
@@ -1815,9 +1815,9 @@ bool ARMConstantIslands::ReorderThumb2JumpTables(MachineFunction &MF) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   for (unsigned i = 0, e = T2JumpTables.size(); i != e; ++i) {
     MachineInstr *MI = T2JumpTables[i];
-    const TargetInstrDesc &TID = MI->getDesc();
-    unsigned NumOps = TID.getNumOperands();
-    unsigned JTOpIdx = NumOps - (TID.isPredicable() ? 3 : 2);
+    const MCInstrDesc &MCID = MI->getDesc();
+    unsigned NumOps = MCID.getNumOperands();
+    unsigned JTOpIdx = NumOps - (MCID.isPredicable() ? 3 : 2);
     MachineOperand JTOP = MI->getOperand(JTOpIdx);
     unsigned JTI = JTOP.getIndex();
     assert(JTI < JT.size());

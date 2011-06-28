@@ -280,8 +280,8 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
 /// isTwoAddrUse - Return true if the specified MI is using the specified
 /// register as a two-address operand.
 static bool isTwoAddrUse(MachineInstr *UseMI, unsigned Reg) {
-  const TargetInstrDesc &TID = UseMI->getDesc();
-  for (unsigned i = 0, e = TID.getNumOperands(); i != e; ++i) {
+  const MCInstrDesc &MCID = UseMI->getDesc();
+  for (unsigned i = 0, e = MCID.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = UseMI->getOperand(i);
     if (MO.isReg() && MO.getReg() == Reg &&
         (MO.isDef() || UseMI->isRegTiedToDefOperand(i)))
@@ -443,8 +443,9 @@ static bool isKilled(MachineInstr &MI, unsigned Reg,
 /// isTwoAddrUse - Return true if the specified MI uses the specified register
 /// as a two-address use. If so, return the destination register by reference.
 static bool isTwoAddrUse(MachineInstr &MI, unsigned Reg, unsigned &DstReg) {
-  const TargetInstrDesc &TID = MI.getDesc();
-  unsigned NumOps = MI.isInlineAsm() ? MI.getNumOperands():TID.getNumOperands();
+  const MCInstrDesc &MCID = MI.getDesc();
+  unsigned NumOps = MI.isInlineAsm()
+    ? MI.getNumOperands() : MCID.getNumOperands();
   for (unsigned i = 0; i != NumOps; ++i) {
     const MachineOperand &MO = MI.getOperand(i);
     if (!MO.isReg() || !MO.isUse() || MO.getReg() != Reg)
@@ -761,10 +762,10 @@ void TwoAddressInstructionPass::ProcessCopy(MachineInstr *MI,
 static bool isSafeToDelete(MachineInstr *MI,
                            const TargetInstrInfo *TII,
                            SmallVector<unsigned, 4> &Kills) {
-  const TargetInstrDesc &TID = MI->getDesc();
-  if (TID.mayStore() || TID.isCall())
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (MCID.mayStore() || MCID.isCall())
     return false;
-  if (TID.isTerminator() || MI->hasUnmodeledSideEffects())
+  if (MCID.isTerminator() || MI->hasUnmodeledSideEffects())
     return false;
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
@@ -854,7 +855,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
                         MachineFunction::iterator &mbbi,
                         unsigned SrcIdx, unsigned DstIdx, unsigned Dist,
                         SmallPtrSet<MachineInstr*, 8> &Processed) {
-  const TargetInstrDesc &TID = mi->getDesc();
+  const MCInstrDesc &MCID = mi->getDesc();
   unsigned regA = mi->getOperand(DstIdx).getReg();
   unsigned regB = mi->getOperand(SrcIdx).getReg();
 
@@ -876,7 +877,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   unsigned regCIdx = ~0U;
   bool TryCommute = false;
   bool AggressiveCommute = false;
-  if (TID.isCommutable() && mi->getNumOperands() >= 3 &&
+  if (MCID.isCommutable() && mi->getNumOperands() >= 3 &&
       TII->findCommutedOpIndices(mi, SrcOp1, SrcOp2)) {
     if (SrcIdx == SrcOp1)
       regCIdx = SrcOp2;
@@ -907,7 +908,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   if (TargetRegisterInfo::isVirtualRegister(regA))
     ScanUses(regA, &*mbbi, Processed);
 
-  if (TID.isConvertibleTo3Addr()) {
+  if (MCID.isConvertibleTo3Addr()) {
     // This instruction is potentially convertible to a true
     // three-address instruction.  Check if it is profitable.
     if (!regBKilled || isProfitableToConv3Addr(regA, regB)) {
@@ -927,7 +928,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
   //   movq (%rax), %rcx
   //   addq %rdx, %rcx
   // because it's preferable to schedule a load than a register copy.
-  if (TID.mayLoad() && !regBKilled) {
+  if (MCID.mayLoad() && !regBKilled) {
     // Determine if a load can be unfolded.
     unsigned LoadRegIndex;
     unsigned NewOpc =
@@ -936,14 +937,14 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
                                       /*UnfoldStore=*/false,
                                       &LoadRegIndex);
     if (NewOpc != 0) {
-      const TargetInstrDesc &UnfoldTID = TII->get(NewOpc);
-      if (UnfoldTID.getNumDefs() == 1) {
+      const MCInstrDesc &UnfoldMCID = TII->get(NewOpc);
+      if (UnfoldMCID.getNumDefs() == 1) {
         MachineFunction &MF = *mbbi->getParent();
 
         // Unfold the load.
         DEBUG(dbgs() << "2addr:   UNFOLDING: " << *mi);
         const TargetRegisterClass *RC =
-          TII->getRegClass(UnfoldTID, LoadRegIndex, TRI);
+          TII->getRegClass(UnfoldMCID, LoadRegIndex, TRI);
         unsigned Reg = MRI->createVirtualRegister(RC);
         SmallVector<MachineInstr *, 2> NewMIs;
         if (!TII->unfoldMemoryOperand(MF, mi, Reg,
@@ -1067,7 +1068,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
       if (mi->isRegSequence())
         RegSequences.push_back(&*mi);
 
-      const TargetInstrDesc &TID = mi->getDesc();
+      const MCInstrDesc &MCID = mi->getDesc();
       bool FirstTied = true;
 
       DistanceMap.insert(std::make_pair(mi, ++Dist));
@@ -1077,7 +1078,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
       // First scan through all the tied register uses in this instruction
       // and record a list of pairs of tied operands for each register.
       unsigned NumOps = mi->isInlineAsm()
-        ? mi->getNumOperands() : TID.getNumOperands();
+        ? mi->getNumOperands() : MCID.getNumOperands();
       for (unsigned SrcIdx = 0; SrcIdx < NumOps; ++SrcIdx) {
         unsigned DstIdx = 0;
         if (!mi->isRegTiedToDefOperand(SrcIdx, &DstIdx))

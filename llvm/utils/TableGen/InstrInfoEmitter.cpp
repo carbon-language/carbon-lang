@@ -94,17 +94,17 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
 
       // Ptr value whose register class is resolved via callback.
       if (OpR->isSubClassOf("PointerLikeRegClass"))
-        Res += "|(1<<TOI::LookupPtrRegClass)";
+        Res += "|(1<<MCOI::LookupPtrRegClass)";
 
       // Predicate operands.  Check to see if the original unexpanded operand
       // was of type PredicateOperand.
       if (Inst.Operands[i].Rec->isSubClassOf("PredicateOperand"))
-        Res += "|(1<<TOI::Predicate)";
+        Res += "|(1<<MCOI::Predicate)";
 
       // Optional def operands.  Check to see if the original unexpanded operand
       // was of type OptionalDefOperand.
       if (Inst.Operands[i].Rec->isSubClassOf("OptionalDefOperand"))
-        Res += "|(1<<TOI::OptionalDef)";
+        Res += "|(1<<MCOI::OptionalDef)";
 
       // Fill in constraint info.
       Res += ", ";
@@ -114,11 +114,11 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       if (Constraint.isNone())
         Res += "0";
       else if (Constraint.isEarlyClobber())
-        Res += "(1 << TOI::EARLY_CLOBBER)";
+        Res += "(1 << MCOI::EARLY_CLOBBER)";
       else {
         assert(Constraint.isTied());
         Res += "((" + utostr(Constraint.getTiedOperand()) +
-                    " << 16) | (1 << TOI::TIED_TO))";
+                    " << 16) | (1 << MCOI::TIED_TO))";
       }
 
       Result.push_back(Res);
@@ -143,7 +143,7 @@ void InstrInfoEmitter::EmitOperandInfo(raw_ostream &OS,
     if (N != 0) continue;
 
     N = ++OperandListNum;
-    OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
+    OS << "static const MCOperandInfo OperandInfo" << N << "[] = { ";
     for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i)
       OS << "{ " << OperandInfo[i] << " }, ";
     OS << "};\n";
@@ -190,9 +190,9 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   // Emit all of the operand info records.
   EmitOperandInfo(OS, OperandInfoIDs);
 
-  // Emit all of the TargetInstrDesc records in their ENUM ordering.
+  // Emit all of the MCInstrDesc records in their ENUM ordering.
   //
-  OS << "\nstatic const TargetInstrDesc " << TargetName
+  OS << "\nstatic const MCInstrDesc " << TargetName
      << "Insts[] = {\n";
   const std::vector<const CodeGenInstruction*> &NumberedInstructions =
     Target.getInstructionsByEnumValue();
@@ -221,31 +221,31 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
      << ",\t\"" << Inst.TheDef->getName() << "\", 0";
 
   // Emit all of the target indepedent flags...
-  if (Inst.isReturn)           OS << "|(1<<TID::Return)";
-  if (Inst.isBranch)           OS << "|(1<<TID::Branch)";
-  if (Inst.isIndirectBranch)   OS << "|(1<<TID::IndirectBranch)";
-  if (Inst.isCompare)          OS << "|(1<<TID::Compare)";
-  if (Inst.isMoveImm)          OS << "|(1<<TID::MoveImm)";
-  if (Inst.isBitcast)          OS << "|(1<<TID::Bitcast)";
-  if (Inst.isBarrier)          OS << "|(1<<TID::Barrier)";
-  if (Inst.hasDelaySlot)       OS << "|(1<<TID::DelaySlot)";
-  if (Inst.isCall)             OS << "|(1<<TID::Call)";
-  if (Inst.canFoldAsLoad)      OS << "|(1<<TID::FoldableAsLoad)";
-  if (Inst.mayLoad)            OS << "|(1<<TID::MayLoad)";
-  if (Inst.mayStore)           OS << "|(1<<TID::MayStore)";
-  if (Inst.isPredicable)       OS << "|(1<<TID::Predicable)";
-  if (Inst.isConvertibleToThreeAddress) OS << "|(1<<TID::ConvertibleTo3Addr)";
-  if (Inst.isCommutable)       OS << "|(1<<TID::Commutable)";
-  if (Inst.isTerminator)       OS << "|(1<<TID::Terminator)";
-  if (Inst.isReMaterializable) OS << "|(1<<TID::Rematerializable)";
-  if (Inst.isNotDuplicable)    OS << "|(1<<TID::NotDuplicable)";
-  if (Inst.Operands.hasOptionalDef) OS << "|(1<<TID::HasOptionalDef)";
-  if (Inst.usesCustomInserter) OS << "|(1<<TID::UsesCustomInserter)";
-  if (Inst.Operands.isVariadic)OS << "|(1<<TID::Variadic)";
-  if (Inst.hasSideEffects)     OS << "|(1<<TID::UnmodeledSideEffects)";
-  if (Inst.isAsCheapAsAMove)   OS << "|(1<<TID::CheapAsAMove)";
-  if (Inst.hasExtraSrcRegAllocReq) OS << "|(1<<TID::ExtraSrcRegAllocReq)";
-  if (Inst.hasExtraDefRegAllocReq) OS << "|(1<<TID::ExtraDefRegAllocReq)";
+  if (Inst.isReturn)           OS << "|(1<<MCID::Return)";
+  if (Inst.isBranch)           OS << "|(1<<MCID::Branch)";
+  if (Inst.isIndirectBranch)   OS << "|(1<<MCID::IndirectBranch)";
+  if (Inst.isCompare)          OS << "|(1<<MCID::Compare)";
+  if (Inst.isMoveImm)          OS << "|(1<<MCID::MoveImm)";
+  if (Inst.isBitcast)          OS << "|(1<<MCID::Bitcast)";
+  if (Inst.isBarrier)          OS << "|(1<<MCID::Barrier)";
+  if (Inst.hasDelaySlot)       OS << "|(1<<MCID::DelaySlot)";
+  if (Inst.isCall)             OS << "|(1<<MCID::Call)";
+  if (Inst.canFoldAsLoad)      OS << "|(1<<MCID::FoldableAsLoad)";
+  if (Inst.mayLoad)            OS << "|(1<<MCID::MayLoad)";
+  if (Inst.mayStore)           OS << "|(1<<MCID::MayStore)";
+  if (Inst.isPredicable)       OS << "|(1<<MCID::Predicable)";
+  if (Inst.isConvertibleToThreeAddress) OS << "|(1<<MCID::ConvertibleTo3Addr)";
+  if (Inst.isCommutable)       OS << "|(1<<MCID::Commutable)";
+  if (Inst.isTerminator)       OS << "|(1<<MCID::Terminator)";
+  if (Inst.isReMaterializable) OS << "|(1<<MCID::Rematerializable)";
+  if (Inst.isNotDuplicable)    OS << "|(1<<MCID::NotDuplicable)";
+  if (Inst.Operands.hasOptionalDef) OS << "|(1<<MCID::HasOptionalDef)";
+  if (Inst.usesCustomInserter) OS << "|(1<<MCID::UsesCustomInserter)";
+  if (Inst.Operands.isVariadic)OS << "|(1<<MCID::Variadic)";
+  if (Inst.hasSideEffects)     OS << "|(1<<MCID::UnmodeledSideEffects)";
+  if (Inst.isAsCheapAsAMove)   OS << "|(1<<MCID::CheapAsAMove)";
+  if (Inst.hasExtraSrcRegAllocReq) OS << "|(1<<MCID::ExtraSrcRegAllocReq)";
+  if (Inst.hasExtraDefRegAllocReq) OS << "|(1<<MCID::ExtraDefRegAllocReq)";
 
   // Emit all of the target-specific flags...
   BitsInit *TSF = Inst.TheDef->getValueAsBitsInit("TSFlags");

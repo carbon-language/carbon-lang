@@ -52,7 +52,7 @@ struct MCRegisterDesc {
 class MCRegisterInfo {
 private:
   const MCRegisterDesc *Desc;             // Pointer to the descriptor array
-  unsigned NumRegs;                           // Number of entries in the array
+  unsigned NumRegs;                       // Number of entries in the array
 
 public:
   /// InitMCRegisterInfo - Initialize MCRegisterInfo, called by TableGen

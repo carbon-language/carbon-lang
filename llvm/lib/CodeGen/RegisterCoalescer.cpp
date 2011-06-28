@@ -526,8 +526,8 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   MachineInstr *DefMI = li_->getInstructionFromIndex(AValNo->def);
   if (!DefMI)
     return false;
-  const TargetInstrDesc &TID = DefMI->getDesc();
-  if (!TID.isCommutable())
+  const MCInstrDesc &MCID = DefMI->getDesc();
+  if (!MCID.isCommutable())
     return false;
   // If DefMI is a two-address instruction then commuting it will change the
   // destination register.
@@ -687,21 +687,21 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   if (!DefMI)
     return false;
   assert(DefMI && "Defining instruction disappeared");
-  const TargetInstrDesc &TID = DefMI->getDesc();
-  if (!TID.isAsCheapAsAMove())
+  const MCInstrDesc &MCID = DefMI->getDesc();
+  if (!MCID.isAsCheapAsAMove())
     return false;
   if (!tii_->isTriviallyReMaterializable(DefMI, AA))
     return false;
   bool SawStore = false;
   if (!DefMI->isSafeToMove(tii_, AA, SawStore))
     return false;
-  if (TID.getNumDefs() != 1)
+  if (MCID.getNumDefs() != 1)
     return false;
   if (!DefMI->isImplicitDef()) {
     // Make sure the copy destination register class fits the instruction
     // definition register class. The mismatch can happen as a result of earlier
     // extract_subreg, insert_subreg, subreg_to_reg coalescing.
-    const TargetRegisterClass *RC = tii_->getRegClass(TID, 0, tri_);
+    const TargetRegisterClass *RC = tii_->getRegClass(MCID, 0, tri_);
     if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
       if (mri_->getRegClass(DstReg) != RC)
         return false;
@@ -712,13 +712,13 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   // If destination register has a sub-register index on it, make sure it
   // matches the instruction register class.
   if (DstSubIdx) {
-    const TargetInstrDesc &TID = DefMI->getDesc();
-    if (TID.getNumDefs() != 1)
+    const MCInstrDesc &MCID = DefMI->getDesc();
+    if (MCID.getNumDefs() != 1)
       return false;
     const TargetRegisterClass *DstRC = mri_->getRegClass(DstReg);
     const TargetRegisterClass *DstSubRC =
       DstRC->getSubRegisterRegClass(DstSubIdx);
-    const TargetRegisterClass *DefRC = tii_->getRegClass(TID, 0, tri_);
+    const TargetRegisterClass *DefRC = tii_->getRegClass(MCID, 0, tri_);
     if (DefRC == DstRC)
       DstSubIdx = 0;
     else if (DefRC != DstSubRC)

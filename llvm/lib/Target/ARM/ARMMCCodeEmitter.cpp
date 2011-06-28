@@ -1274,7 +1274,7 @@ void ARMMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   // Pseudo instructions don't get encoded.
-  const TargetInstrDesc &Desc = TII.get(MI.getOpcode());
+  const MCInstrDesc &Desc = TII.get(MI.getOpcode());
   uint64_t TSFlags = Desc.TSFlags;
   if ((TSFlags & ARMII::FormMask) == ARMII::Pseudo)
     return;

@@ -504,7 +504,7 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
     bool FoundDef = false;  // Not counting 2address def.
 
     Uses.clear();
-    const TargetInstrDesc &TID = MII->getDesc();
+    const MCInstrDesc &MCID = MII->getDesc();
     for (unsigned i = 0, e = MII->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MII->getOperand(i);
       if (!MO.isReg())
@@ -521,7 +521,7 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
         if (MO.getSubReg() || MII->isSubregToReg())
           return false;
 
-        const TargetRegisterClass *RC = TII->getRegClass(TID, i, TRI);
+        const TargetRegisterClass *RC = TII->getRegClass(MCID, i, TRI);
         if (RC && !RC->contains(NewReg))
           return false;
 
@@ -566,7 +566,7 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
   SmallVector<MachineOperand*, 4> Uses;
   while (++MII != MBB->end()) {
     bool FoundKill = false;
-    const TargetInstrDesc &TID = MII->getDesc();
+    const MCInstrDesc &MCID = MII->getDesc();
     for (unsigned i = 0, e = MII->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MII->getOperand(i);
       if (!MO.isReg())
@@ -583,7 +583,7 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
         if (MO.getSubReg())
           return false;
 
-        const TargetRegisterClass *RC = TII->getRegClass(TID, i, TRI);
+        const TargetRegisterClass *RC = TII->getRegClass(MCID, i, TRI);
         if (RC && !RC->contains(NewReg))
           return false;
         if (MO.isKill())

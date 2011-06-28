@@ -329,10 +329,10 @@ bool ARMDAGToDAGISel::hasNoVMLxHazardUse(SDNode *N) const {
   if (Use->getOpcode() == ISD::CopyToReg)
     return true;
   if (Use->isMachineOpcode()) {
-    const TargetInstrDesc &TID = TII->get(Use->getMachineOpcode());
-    if (TID.mayStore())
+    const MCInstrDesc &MCID = TII->get(Use->getMachineOpcode());
+    if (MCID.mayStore())
       return true;
-    unsigned Opcode = TID.getOpcode();
+    unsigned Opcode = MCID.getOpcode();
     if (Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
       return true;
     // vmlx feeding into another vmlx. We actually want to unfold

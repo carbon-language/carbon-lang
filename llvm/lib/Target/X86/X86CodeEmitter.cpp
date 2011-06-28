@@ -68,7 +68,7 @@ namespace {
       return "X86 Machine Code Emitter";
     }
 
-    void emitInstruction(MachineInstr &MI, const TargetInstrDesc *Desc);
+    void emitInstruction(MachineInstr &MI, const MCInstrDesc *Desc);
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -132,7 +132,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
       MCE.StartMachineBasicBlock(MBB);
       for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
            I != E; ++I) {
-        const TargetInstrDesc &Desc = I->getDesc();
+        const MCInstrDesc &Desc = I->getDesc();
         emitInstruction(*I, &Desc);
         // MOVPC32r is basically a call plus a pop instruction.
         if (Desc.getOpcode() == X86::MOVPC32r)
@@ -150,7 +150,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
 /// size, and 3) use of X86-64 extended registers.
 static unsigned determineREX(const MachineInstr &MI) {
   unsigned REX = 0;
-  const TargetInstrDesc &Desc = MI.getDesc();
+  const MCInstrDesc &Desc = MI.getDesc();
   
   // Pseudo instructions do not need REX prefix byte.
   if ((Desc.TSFlags & X86II::FormMask) == X86II::Pseudo)
@@ -161,7 +161,7 @@ static unsigned determineREX(const MachineInstr &MI) {
   unsigned NumOps = Desc.getNumOperands();
   if (NumOps) {
     bool isTwoAddr = NumOps > 1 &&
-    Desc.getOperandConstraint(1, TOI::TIED_TO) != -1;
+    Desc.getOperandConstraint(1, MCOI::TIED_TO) != -1;
     
     // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
     unsigned i = isTwoAddr ? 1 : 0;
@@ -598,7 +598,7 @@ void Emitter<CodeEmitter>::emitMemModRMByte(const MachineInstr &MI,
 
 template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
-                                           const TargetInstrDesc *Desc) {
+                                           const MCInstrDesc *Desc) {
   DEBUG(dbgs() << MI);
   
   // If this is a pseudo instruction, lower it.
@@ -708,9 +708,9 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
   // If this is a two-address instruction, skip one of the register operands.
   unsigned NumOps = Desc->getNumOperands();
   unsigned CurOp = 0;
-  if (NumOps > 1 && Desc->getOperandConstraint(1, TOI::TIED_TO) != -1)
+  if (NumOps > 1 && Desc->getOperandConstraint(1, MCOI::TIED_TO) != -1)
     ++CurOp;
-  else if (NumOps > 2 && Desc->getOperandConstraint(NumOps-1, TOI::TIED_TO)== 0)
+  else if (NumOps > 2 && Desc->getOperandConstraint(NumOps-1,MCOI::TIED_TO)== 0)
     // Skip the last source operand that is tied_to the dest reg. e.g. LXADD32
     --NumOps;
 

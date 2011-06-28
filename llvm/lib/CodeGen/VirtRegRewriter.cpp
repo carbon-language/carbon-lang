@@ -679,8 +679,8 @@ static void ReMaterialize(MachineBasicBlock &MBB,
                           VirtRegMap &VRM) {
   MachineInstr *ReMatDefMI = VRM.getReMaterializedMI(Reg);
 #ifndef NDEBUG
-  const TargetInstrDesc &TID = ReMatDefMI->getDesc();
-  assert(TID.getNumDefs() == 1 &&
+  const MCInstrDesc &MCID = ReMatDefMI->getDesc();
+  assert(MCID.getNumDefs() == 1 &&
          "Don't know how to remat instructions that define > 1 values!");
 #endif
   TII->reMaterialize(MBB, MII, DestReg, 0, ReMatDefMI, *TRI);
@@ -1483,11 +1483,11 @@ OptimizeByUnfold(MachineBasicBlock::iterator &MII,
 /// where SrcReg is r1 and it is tied to r0. Return true if after
 /// commuting this instruction it will be r0 = op r2, r1.
 static bool CommuteChangesDestination(MachineInstr *DefMI,
-                                      const TargetInstrDesc &TID,
+                                      const MCInstrDesc &MCID,
                                       unsigned SrcReg,
                                       const TargetInstrInfo *TII,
                                       unsigned &DstIdx) {
-  if (TID.getNumDefs() != 1 && TID.getNumOperands() != 3)
+  if (MCID.getNumDefs() != 1 && MCID.getNumOperands() != 3)
     return false;
   if (!DefMI->getOperand(1).isReg() ||
       DefMI->getOperand(1).getReg() != SrcReg)
@@ -1527,11 +1527,11 @@ CommuteToFoldReload(MachineBasicBlock::iterator &MII,
   MachineInstr &MI = *MII;
   MachineBasicBlock::iterator DefMII = prior(MII);
   MachineInstr *DefMI = DefMII;
-  const TargetInstrDesc &TID = DefMI->getDesc();
+  const MCInstrDesc &MCID = DefMI->getDesc();
   unsigned NewDstIdx;
   if (DefMII != MBB->begin() &&
-      TID.isCommutable() &&
-      CommuteChangesDestination(DefMI, TID, SrcReg, TII, NewDstIdx)) {
+      MCID.isCommutable() &&
+      CommuteChangesDestination(DefMI, MCID, SrcReg, TII, NewDstIdx)) {
     MachineOperand &NewDstMO = DefMI->getOperand(NewDstIdx);
     unsigned NewReg = NewDstMO.getReg();
     if (!NewDstMO.isKill() || TRI->regsOverlap(NewReg, SrcReg))
@@ -1658,9 +1658,9 @@ SpillRegToStackSlot(MachineBasicBlock::iterator &MII,
 /// isSafeToDelete - Return true if this instruction doesn't produce any side
 /// effect and all of its defs are dead.
 static bool isSafeToDelete(MachineInstr &MI) {
-  const TargetInstrDesc &TID = MI.getDesc();
-  if (TID.mayLoad() || TID.mayStore() || TID.isTerminator() ||
-      TID.isCall() || TID.isBarrier() || TID.isReturn() ||
+  const MCInstrDesc &MCID = MI.getDesc();
+  if (MCID.mayLoad() || MCID.mayStore() || MCID.isTerminator() ||
+      MCID.isCall() || MCID.isBarrier() || MCID.isReturn() ||
       MI.isLabel() || MI.isDebugValue() ||
       MI.hasUnmodeledSideEffects())
     return false;

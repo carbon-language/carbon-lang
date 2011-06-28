@@ -109,7 +109,7 @@ static bool delayHasHazard(MachineBasicBlock::iterator &candidate,
   // Hazard check
   MachineBasicBlock::iterator a = candidate;
   MachineBasicBlock::iterator b = slot;
-  TargetInstrDesc desc = candidate->getDesc();
+  MCInstrDesc desc = candidate->getDesc();
 
   // MBB layout:-
   //    candidate := a0 = operation(a1, a2)
@@ -183,7 +183,7 @@ static bool isDelayFiller(MachineBasicBlock &MBB,
   if (candidate == MBB.begin())
     return false;
 
-  TargetInstrDesc brdesc = (--candidate)->getDesc();
+  MCInstrDesc brdesc = (--candidate)->getDesc();
   return (brdesc.hasDelaySlot());
 }
 
@@ -211,7 +211,7 @@ findDelayInstr(MachineBasicBlock &MBB,MachineBasicBlock::iterator slot) {
       break;
 
     --I;
-    TargetInstrDesc desc = I->getDesc();
+    MCInstrDesc desc = I->getDesc();
     if (desc.hasDelaySlot() || desc.isBranch() || isDelayFiller(MBB,I) ||
         desc.isCall() || desc.isReturn() || desc.isBarrier() ||
         hasUnknownSideEffects(I))

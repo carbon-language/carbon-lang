@@ -25,7 +25,6 @@
 namespace llvm {
 
 class InstrItineraryData;
-class TargetInstrDesc;
 class ScheduleDAG;
 class SUnit;
 

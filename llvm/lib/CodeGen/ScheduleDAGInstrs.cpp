@@ -236,13 +236,13 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
       continue;
     }
 
-    const TargetInstrDesc &TID = MI->getDesc();
-    assert(!TID.isTerminator() && !MI->isLabel() &&
+    const MCInstrDesc &MCID = MI->getDesc();
+    assert(!MCID.isTerminator() && !MI->isLabel() &&
            "Cannot schedule terminators or labels!");
     // Create the SUnit for this MI.
     SUnit *SU = NewSUnit(MI);
-    SU->isCall = TID.isCall();
-    SU->isCommutable = TID.isCommutable();
+    SU->isCall = MCID.isCall();
+    SU->isCommutable = MCID.isCommutable();
 
     // Assign the Latency field of SU using target-provided information.
     if (UnitLatencies)
@@ -309,13 +309,13 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
           if (SpecialAddressLatency != 0 && !UnitLatencies &&
               UseSU != &ExitSU) {
             MachineInstr *UseMI = UseSU->getInstr();
-            const TargetInstrDesc &UseTID = UseMI->getDesc();
+            const MCInstrDesc &UseMCID = UseMI->getDesc();
             int RegUseIndex = UseMI->findRegisterUseOperandIdx(Reg);
             assert(RegUseIndex >= 0 && "UseMI doesn's use register!");
             if (RegUseIndex >= 0 &&
-                (UseTID.mayLoad() || UseTID.mayStore()) &&
-                (unsigned)RegUseIndex < UseTID.getNumOperands() &&
-                UseTID.OpInfo[RegUseIndex].isLookupPtrRegClass())
+                (UseMCID.mayLoad() || UseMCID.mayStore()) &&
+                (unsigned)RegUseIndex < UseMCID.getNumOperands() &&
+                UseMCID.OpInfo[RegUseIndex].isLookupPtrRegClass())
               LDataLatency += SpecialAddressLatency;
           }
           // Adjust the dependence latency using operand def/use
@@ -352,17 +352,17 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
             unsigned Count = I->second.second;
             const MachineInstr *UseMI = UseMO->getParent();
             unsigned UseMOIdx = UseMO - &UseMI->getOperand(0);
-            const TargetInstrDesc &UseTID = UseMI->getDesc();
+            const MCInstrDesc &UseMCID = UseMI->getDesc();
             // TODO: If we knew the total depth of the region here, we could
             // handle the case where the whole loop is inside the region but
             // is large enough that the isScheduleHigh trick isn't needed.
-            if (UseMOIdx < UseTID.getNumOperands()) {
+            if (UseMOIdx < UseMCID.getNumOperands()) {
               // Currently, we only support scheduling regions consisting of
               // single basic blocks. Check to see if the instruction is in
               // the same region by checking to see if it has the same parent.
               if (UseMI->getParent() != MI->getParent()) {
                 unsigned Latency = SU->Latency;
-                if (UseTID.OpInfo[UseMOIdx].isLookupPtrRegClass())
+                if (UseMCID.OpInfo[UseMOIdx].isLookupPtrRegClass())
                   Latency += SpecialAddressLatency;
                 // This is a wild guess as to the portion of the latency which
                 // will be overlapped by work done outside the current
@@ -374,7 +374,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
                                     /*isMustAlias=*/false,
                                     /*isArtificial=*/true));
               } else if (SpecialAddressLatency > 0 &&
-                         UseTID.OpInfo[UseMOIdx].isLookupPtrRegClass()) {
+                         UseMCID.OpInfo[UseMOIdx].isLookupPtrRegClass()) {
                 // The entire loop body is within the current scheduling region
                 // and the latency of this operation is assumed to be greater
                 // than the latency of the loop.
@@ -417,9 +417,9 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
     // produce more precise dependence information.
 #define STORE_LOAD_LATENCY 1
     unsigned TrueMemOrderLatency = 0;
-    if (TID.isCall() || MI->hasUnmodeledSideEffects() ||
+    if (MCID.isCall() || MI->hasUnmodeledSideEffects() ||
         (MI->hasVolatileMemoryRef() &&
-         (!TID.mayLoad() || !MI->isInvariantLoad(AA)))) {
+         (!MCID.mayLoad() || !MI->isInvariantLoad(AA)))) {
       // Be conservative with these and add dependencies on all memory
       // references, even those that are known to not alias.
       for (std::map<const Value *, SUnit *>::iterator I =
@@ -458,7 +458,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
       PendingLoads.clear();
       AliasMemDefs.clear();
       AliasMemUses.clear();
-    } else if (TID.mayStore()) {
+    } else if (MCID.mayStore()) {
       bool MayAlias = true;
       TrueMemOrderLatency = STORE_LOAD_LATENCY;
       if (const Value *V = getUnderlyingObjectForInstr(MI, MFI, MayAlias)) {
@@ -514,7 +514,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
                             /*Reg=*/0, /*isNormalMemory=*/false,
                             /*isMustAlias=*/false,
                             /*isArtificial=*/true));
-    } else if (TID.mayLoad()) {
+    } else if (MCID.mayLoad()) {
       bool MayAlias = true;
       TrueMemOrderLatency = 0;
       if (MI->isInvariantLoad(AA)) {

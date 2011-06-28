@@ -298,7 +298,7 @@ bool Filler::isDelayFiller(MachineBasicBlock &MBB,
     return false;
   if (candidate->getOpcode() == SP::UNIMP)
     return true;
-  const TargetInstrDesc &prevdesc = (--candidate)->getDesc();
+  const MCInstrDesc &prevdesc = (--candidate)->getDesc();
   return prevdesc.hasDelaySlot();
 }
 

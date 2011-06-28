@@ -137,11 +137,11 @@ unsigned MLxExpansion::getDefReg(MachineInstr *MI) const {
 
 bool MLxExpansion::hasRAWHazard(unsigned Reg, MachineInstr *MI) const {
   // FIXME: Detect integer instructions properly.
-  const TargetInstrDesc &TID = MI->getDesc();
-  unsigned Domain = TID.TSFlags & ARMII::DomainMask;
-  if (TID.mayStore())
+  const MCInstrDesc &MCID = MI->getDesc();
+  unsigned Domain = MCID.TSFlags & ARMII::DomainMask;
+  if (MCID.mayStore())
     return false;
-  unsigned Opcode = TID.getOpcode();
+  unsigned Opcode = MCID.getOpcode();
   if (Opcode == ARM::VMOVRS || Opcode == ARM::VMOVRRD)
     return false;
   if ((Domain & ARMII::DomainVFP) || (Domain & ARMII::DomainNEON))
@@ -218,18 +218,18 @@ MLxExpansion::ExpandFPMLxInstruction(MachineBasicBlock &MBB, MachineInstr *MI,
   ARMCC::CondCodes Pred = (ARMCC::CondCodes)MI->getOperand(NextOp).getImm();
   unsigned PredReg = MI->getOperand(++NextOp).getReg();
 
-  const TargetInstrDesc &TID1 = TII->get(MulOpc);
-  const TargetInstrDesc &TID2 = TII->get(AddSubOpc);
-  unsigned TmpReg = MRI->createVirtualRegister(TII->getRegClass(TID1, 0, TRI));
+  const MCInstrDesc &MCID1 = TII->get(MulOpc);
+  const MCInstrDesc &MCID2 = TII->get(AddSubOpc);
+  unsigned TmpReg = MRI->createVirtualRegister(TII->getRegClass(MCID1, 0, TRI));
 
-  MachineInstrBuilder MIB = BuildMI(MBB, *MI, MI->getDebugLoc(), TID1, TmpReg)
+  MachineInstrBuilder MIB = BuildMI(MBB, *MI, MI->getDebugLoc(), MCID1, TmpReg)
     .addReg(Src1Reg, getKillRegState(Src1Kill))
     .addReg(Src2Reg, getKillRegState(Src2Kill));
   if (HasLane)
     MIB.addImm(LaneImm);
   MIB.addImm(Pred).addReg(PredReg);
 
-  MIB = BuildMI(MBB, *MI, MI->getDebugLoc(), TID2)
+  MIB = BuildMI(MBB, *MI, MI->getDebugLoc(), MCID2)
     .addReg(DstReg, getDefRegState(true) | getDeadRegState(DstDead));
 
   if (NegAcc) {
@@ -273,15 +273,15 @@ bool MLxExpansion::ExpandFPMLxInstructions(MachineBasicBlock &MBB) {
       continue;
     }
 
-    const TargetInstrDesc &TID = MI->getDesc();
-    if (TID.isBarrier()) {
+    const MCInstrDesc &MCID = MI->getDesc();
+    if (MCID.isBarrier()) {
       clearStack();
       Skip = 0;
       ++MII;
       continue;
     }
 
-    unsigned Domain = TID.TSFlags & ARMII::DomainMask;
+    unsigned Domain = MCID.TSFlags & ARMII::DomainMask;
     if (Domain == ARMII::DomainGeneral) {
       if (++Skip == 2)
         // Assume dual issues of non-VFP / NEON instructions.
@@ -291,7 +291,7 @@ bool MLxExpansion::ExpandFPMLxInstructions(MachineBasicBlock &MBB) {
 
       unsigned MulOpc, AddSubOpc;
       bool NegAcc, HasLane;
-      if (!TII->isFpMLxInstruction(TID.getOpcode(),
+      if (!TII->isFpMLxInstruction(MCID.getOpcode(),
                                    MulOpc, AddSubOpc, NegAcc, HasLane) ||
           !FindMLxHazard(MI))
         pushStack(MI);

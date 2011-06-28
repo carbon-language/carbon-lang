@@ -960,7 +960,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
 int64_t ARMBaseRegisterInfo::
 getFrameIndexInstrOffset(const MachineInstr *MI, int Idx) const {
-  const TargetInstrDesc &Desc = MI->getDesc();
+  const MCInstrDesc &Desc = MI->getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   int64_t InstrOffs = 0;;
   int Scale = 1;
@@ -1110,11 +1110,11 @@ materializeFrameBaseRegister(MachineBasicBlock *MBB,
   if (Ins != MBB->end())
     DL = Ins->getDebugLoc();
 
-  const TargetInstrDesc &TID = TII.get(ADDriOpc);
+  const MCInstrDesc &MCID = TII.get(ADDriOpc);
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
-  MRI.constrainRegClass(BaseReg, TII.getRegClass(TID, 0, this));
+  MRI.constrainRegClass(BaseReg, TII.getRegClass(MCID, 0, this));
 
-  MachineInstrBuilder MIB = BuildMI(*MBB, Ins, DL, TID, BaseReg)
+  MachineInstrBuilder MIB = BuildMI(*MBB, Ins, DL, MCID, BaseReg)
     .addFrameIndex(FrameIdx).addImm(Offset);
 
   if (!AFI->isThumb1OnlyFunction())
@@ -1150,7 +1150,7 @@ ARMBaseRegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
 
 bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
                                              int64_t Offset) const {
-  const TargetInstrDesc &Desc = MI->getDesc();
+  const MCInstrDesc &Desc = MI->getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   unsigned i = 0;
 

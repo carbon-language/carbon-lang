@@ -120,7 +120,7 @@ PPCInstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   // destination register as well.
   if (Reg0 == Reg1) {
     // Must be two address instruction!
-    assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
+    assert(MI->getDesc().getOperandConstraint(0, MCOI::TIED_TO) &&
            "Expecting a two-address instruction!");
     Reg2IsKill = false;
     ChangeReg0 = true;
@@ -315,12 +315,12 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   else
     llvm_unreachable("Impossible reg-to-reg copy");
 
-  const TargetInstrDesc &TID = get(Opc);
-  if (TID.getNumOperands() == 3)
-    BuildMI(MBB, I, DL, TID, DestReg)
+  const MCInstrDesc &MCID = get(Opc);
+  if (MCID.getNumOperands() == 3)
+    BuildMI(MBB, I, DL, MCID, DestReg)
       .addReg(SrcReg).addReg(SrcReg, getKillRegState(KillSrc));
   else
-    BuildMI(MBB, I, DL, TID, DestReg).addReg(SrcReg, getKillRegState(KillSrc));
+    BuildMI(MBB, I, DL, MCID, DestReg).addReg(SrcReg, getKillRegState(KillSrc));
 }
 
 bool

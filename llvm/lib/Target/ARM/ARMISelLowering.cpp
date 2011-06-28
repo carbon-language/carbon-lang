@@ -977,12 +977,12 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
   // Load are scheduled for latency even if there instruction itinerary
   // is not available.
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  const TargetInstrDesc &TID = TII->get(N->getMachineOpcode());
+  const MCInstrDesc &MCID = TII->get(N->getMachineOpcode());
 
-  if (TID.getNumDefs() == 0)
+  if (MCID.getNumDefs() == 0)
     return Sched::RegPressure;
   if (!Itins->isEmpty() &&
-      Itins->getOperandCycle(TID.getSchedClass(), 0) > 2)
+      Itins->getOperandCycle(MCID.getSchedClass(), 0) > 2)
     return Sched::Latency;
 
   return Sched::RegPressure;

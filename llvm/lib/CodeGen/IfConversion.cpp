@@ -651,12 +651,12 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     if (I->isDebugValue())
       continue;
 
-    const TargetInstrDesc &TID = I->getDesc();
-    if (TID.isNotDuplicable())
+    const MCInstrDesc &MCID = I->getDesc();
+    if (MCID.isNotDuplicable())
       BBI.CannotBeCopied = true;
 
     bool isPredicated = TII->isPredicated(I);
-    bool isCondBr = BBI.IsBrAnalyzable && TID.isConditionalBranch();
+    bool isCondBr = BBI.IsBrAnalyzable && MCID.isConditionalBranch();
 
     if (!isCondBr) {
       if (!isPredicated) {
@@ -1414,9 +1414,9 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 
   for (MachineBasicBlock::iterator I = FromBBI.BB->begin(),
          E = FromBBI.BB->end(); I != E; ++I) {
-    const TargetInstrDesc &TID = I->getDesc();
+    const MCInstrDesc &MCID = I->getDesc();
     // Do not copy the end of the block branches.
-    if (IgnoreBr && TID.isBranch())
+    if (IgnoreBr && MCID.isBranch())
       break;
 
     MachineInstr *MI = MF.CloneMachineInstr(I);

@@ -22,7 +22,7 @@
 
 namespace llvm {
 
-class TargetInstrDesc;
+class MCInstrDesc;
 class MDNode;
 
 namespace RegState {
@@ -180,8 +180,8 @@ public:
 ///
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
-                                   const TargetInstrDesc &TID) {
-  return MachineInstrBuilder(MF.CreateMachineInstr(TID, DL));
+                                   const MCInstrDesc &MCID) {
+  return MachineInstrBuilder(MF.CreateMachineInstr(MCID, DL));
 }
 
 /// BuildMI - This version of the builder sets up the first operand as a
@@ -189,9 +189,9 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF,
 ///
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
-                                   const TargetInstrDesc &TID,
+                                   const MCInstrDesc &MCID,
                                    unsigned DestReg) {
-  return MachineInstrBuilder(MF.CreateMachineInstr(TID, DL))
+  return MachineInstrBuilder(MF.CreateMachineInstr(MCID, DL))
            .addReg(DestReg, RegState::Define);
 }
 
@@ -202,9 +202,9 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF,
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    DebugLoc DL,
-                                   const TargetInstrDesc &TID,
+                                   const MCInstrDesc &MCID,
                                    unsigned DestReg) {
-  MachineInstr *MI = BB.getParent()->CreateMachineInstr(TID, DL);
+  MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI).addReg(DestReg, RegState::Define);
 }
@@ -216,8 +216,8 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    DebugLoc DL,
-                                   const TargetInstrDesc &TID) {
-  MachineInstr *MI = BB.getParent()->CreateMachineInstr(TID, DL);
+                                   const MCInstrDesc &MCID) {
+  MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI);
 }
@@ -228,8 +228,8 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
                                    DebugLoc DL,
-                                   const TargetInstrDesc &TID) {
-  return BuildMI(*BB, BB->end(), DL, TID);
+                                   const MCInstrDesc &MCID) {
+  return BuildMI(*BB, BB->end(), DL, MCID);
 }
 
 /// BuildMI - This version of the builder inserts the newly-built
@@ -238,9 +238,9 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
                                    DebugLoc DL,
-                                   const TargetInstrDesc &TID,
+                                   const MCInstrDesc &MCID,
                                    unsigned DestReg) {
-  return BuildMI(*BB, BB->end(), DL, TID, DestReg);
+  return BuildMI(*BB, BB->end(), DL, MCID, DestReg);
 }
 
 inline unsigned getDefRegState(bool B) {
