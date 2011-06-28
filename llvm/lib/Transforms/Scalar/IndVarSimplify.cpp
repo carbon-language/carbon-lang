@@ -1085,7 +1085,7 @@ void IndVarSimplify::SimplifyIVUsersNoRewrite(Loop *L, SCEVExpander &Rewriter) {
   // simplification on the wide IVs.
   while (!LoopPhis.empty()) {
     // Evaluate as many IV expressions as possible before widening any IVs. This
-    // forces SCEV to propagate no-wrap flags before evaluating sign/zero
+    // forces SCEV to set no-wrap flags before evaluating sign/zero
     // extension. The first time SCEV attempts to normalize sign/zero extension,
     // the result becomes final. So for the most predictable results, we delay
     // evaluation of sign/zero extend evaluation until needed, and avoid running
@@ -1176,7 +1176,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Simplification works best when run before other consumers of SCEV. We
   // attempt to avoid evaluating SCEVs for sign/zero extend operations until
   // other expressions involving loop IVs have been evaluated. This helps SCEV
-  // propagate no-wrap flags before normalizing sign/zero extension.
+  // set no-wrap flags before normalizing sign/zero extension.
   if (DisableIVRewrite) {
     Rewriter.disableCanonicalMode();
     SimplifyIVUsersNoRewrite(L, Rewriter);
