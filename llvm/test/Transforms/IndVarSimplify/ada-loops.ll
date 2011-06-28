@@ -1,14 +1,18 @@
-; RUN: opt < %s -indvars -S > %t
-; RUN: grep phi %t | count 4
-; RUN: grep {= phi i32} %t | count 4
-; RUN: not grep {sext i} %t
-; RUN: not grep {zext i} %t
-; RUN: not grep {trunc i} %t
-; RUN: not grep {add i8} %t
+; RUN: opt < %s -indvars -S | FileCheck %s
+; RUN: opt < %s -indvars -disable-iv-rewrite -S | FileCheck %s
+;
 ; PR1301
 
 ; Do a bunch of analysis and prove that the loops can use an i32 trip
 ; count without casting.
+;
+; Note that all four functions should actually be converted to
+; memset. However, this test case validates indvars behavior.  We
+; don't check that phis are "folded together" because that is a job
+; for loop strength reduction. But indvars must remove sext, zext,
+; trunc, and add i8.
+;
+; CHECK-NOT: {{sext|zext|trunc|add i8}}
 
 ; ModuleID = 'ada.bc'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-n:8:16:32"
