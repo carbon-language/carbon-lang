@@ -85,7 +85,7 @@ if(PYTHONINTERP_FOUND)
     set(ENABLE_ASSERTIONS "1")
   else()
     set(ENABLE_ASSERTIONS "0")
-  endif(LLVM_ENABLE_ASSERTIONS)
+  endif()
 
   configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
