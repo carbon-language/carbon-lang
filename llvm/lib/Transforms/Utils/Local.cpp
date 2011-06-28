@@ -642,7 +642,7 @@ bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
   bool Changed = false;
 
   // This implementation doesn't currently consider undef operands
-  // specially. Theroetically, two phis which are identical except for
+  // specially. Theoretically, two phis which are identical except for
   // one having an undef where the other doesn't could be collapsed.
 
   // Map from PHI hash values to PHI nodes. If multiple PHIs have
