@@ -6486,7 +6486,8 @@ static SDValue PerformVDUPLANECombine(SDNode *N,
 // elements are the same constant, C, and Log2(C) ranges from 1 to 32.
 static bool isConstVecPow2(SDValue ConstVec, bool isSigned, uint64_t &C)
 {
-  integerPart c0, cN;
+  integerPart cN;
+  integerPart c0 = 0;
   for (unsigned I = 0, E = ConstVec.getValueType().getVectorNumElements();
        I != E; I++) {
     ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(ConstVec.getOperand(I));
