@@ -3178,7 +3178,15 @@ void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
   TypoResultsMap *& Map = BestResults[Correction.getEditDistance()];
   if (!Map)
     Map = new TypoResultsMap;
-  (*Map)[Name] = Correction;
+
+  TypoCorrection &CurrentCorrection = (*Map)[Name];
+  if (!CurrentCorrection ||
+      // FIXME: The following should be rolled up into an operator< on
+      // TypoCorrection with a more principled definition.
+      CurrentCorrection.isKeyword() < Correction.isKeyword() ||
+      Correction.getAsString(SemaRef.getLangOptions()) <
+      CurrentCorrection.getAsString(SemaRef.getLangOptions()))
+    CurrentCorrection = Correction;
 
   while (BestResults.size() > MaxTypoDistanceResultSets) {
     TypoEditDistanceMap::iterator Last = BestResults.end();
