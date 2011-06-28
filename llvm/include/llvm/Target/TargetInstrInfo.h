@@ -681,7 +681,8 @@ protected:
   TargetInstrInfoImpl(const MCInstrDesc *desc, unsigned NumOpcodes,
                       int CallFrameSetupOpcode = -1,
                       int CallFrameDestroyOpcode = -1)
-  : TargetInstrInfo(desc, NumOpcodes) {}
+    : TargetInstrInfo(desc, NumOpcodes,
+                      CallFrameSetupOpcode, CallFrameDestroyOpcode) {}
 public:
   virtual void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                        MachineBasicBlock *NewDest) const;
