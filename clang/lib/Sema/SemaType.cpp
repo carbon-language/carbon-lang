@@ -1728,6 +1728,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   // have a type.
   QualType T;
   TypeSourceInfo *ReturnTypeInfo = 0;
+  TagDecl *OwnedTagDeclInternal = 0;
 
   TypeProcessingState state(*this, D);
 
@@ -1752,7 +1753,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       TagDecl* Owned = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
       // Owned declaration is embedded in declarator.
       Owned->setEmbeddedInDeclarator(true);
-      if (OwnedDecl) *OwnedDecl = Owned;
+      OwnedTagDeclInternal = Owned;
     }
     break;
 
@@ -2456,6 +2457,39 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     return Context.getNullTypeSourceInfo();
   else if (D.isInvalidType())
     return Context.getTrivialTypeSourceInfo(T);
+
+  if (OwnedTagDeclInternal && OwnedDecl)
+    *OwnedDecl = OwnedTagDeclInternal;
+
+  if (getLangOptions().CPlusPlus &&
+      OwnedTagDeclInternal && OwnedTagDeclInternal->isDefinition()) {
+    // Check the contexts where C++ forbids the declaration of a new class
+    // or enumeration in a type-specifier-seq.
+    switch (D.getContext()) {
+    case Declarator::FileContext:
+    case Declarator::PrototypeContext:
+    case Declarator::ObjCPrototypeContext:
+    case Declarator::KNRTypeListContext:
+    case Declarator::TypeNameContext:
+    case Declarator::MemberContext:
+    case Declarator::BlockContext:
+    case Declarator::ForContext:
+    case Declarator::TemplateParamContext:
+    case Declarator::CXXCatchContext:
+    case Declarator::BlockLiteralContext:
+    case Declarator::TemplateTypeArgContext:
+    case Declarator::AliasDeclContext:
+    case Declarator::AliasTemplateContext:
+      break;
+    case Declarator::ConditionContext:
+      // C++ 6.4p2:
+      // The type-specifier-seq shall not contain typedef and shall not declare
+      // a new class or enumeration.
+      Diag(OwnedTagDeclInternal->getLocation(), diag::err_type_defined_in_condition);
+      break;
+    }
+  }
+  
   return GetTypeSourceInfoForDeclarator(D, T, ReturnTypeInfo);
 }
 

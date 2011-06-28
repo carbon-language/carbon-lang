@@ -16,6 +16,7 @@ void test() {
   for (;s;) ; // expected-error {{value of type 'struct S' is not contextually convertible to 'bool'}}
   switch (s) {} // expected-error {{statement requires expression of integer type ('struct S' invalid)}}
 
+  while (struct NewS *x=0) ;
   while (struct S {} *x=0) ; // expected-error {{types may not be defined in conditions}}
   while (struct {} *x=0) ; // expected-error {{types may not be defined in conditions}}
   switch (enum {E} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize}} \
