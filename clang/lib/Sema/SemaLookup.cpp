@@ -3237,6 +3237,7 @@ class NamespaceSpecifierSet {
 }
 
 DeclContextList NamespaceSpecifierSet::BuildContextChain(DeclContext *Start) {
+  assert(Start && "Bulding a context chain from a null context");
   DeclContextList Chain;
   for (DeclContext *DC = Start->getPrimaryContext(); DC != NULL;
        DC = DC->getLookupParent()) {
@@ -3267,7 +3268,7 @@ void NamespaceSpecifierSet::SortNamespaces() {
 }
 
 void NamespaceSpecifierSet::AddNamespace(NamespaceDecl *ND) {
-  DeclContext *Ctx = dyn_cast<DeclContext>(ND);
+  DeclContext *Ctx = cast<DeclContext>(ND);
   NestedNameSpecifier *NNS = NULL;
   unsigned NumSpecifiers = 0;
   DeclContextList NamespaceDeclChain(BuildContextChain(Ctx));
@@ -3275,7 +3276,8 @@ void NamespaceSpecifierSet::AddNamespace(NamespaceDecl *ND) {
   // Eliminate common elements from the two DeclContext chains
   for (DeclContextList::reverse_iterator C = CurContextChain.rbegin(),
                                       CEnd = CurContextChain.rend();
-       C != CEnd && NamespaceDeclChain.back() == *C; ++C) {
+       C != CEnd && !NamespaceDeclChain.empty() &&
+       NamespaceDeclChain.back() == *C; ++C) {
     NamespaceDeclChain.pop_back();
   }
 
