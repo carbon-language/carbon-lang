@@ -86,21 +86,13 @@ namespace {
     DominatorTree   *DT;
     TargetData      *TD;
 
-    PHINode         *CurrIV; // Current IV being simplified.
-
-     // Instructions processed by SimplifyIVUsers for CurrIV.
-    SmallPtrSet<Instruction*,16> Simplified;
-
-    // Use-def pairs if IVUsers waiting to be processed for CurrIV.
-    SmallVector<std::pair<Instruction*, Instruction*>, 8> SimpleIVUsers;
-
     SmallVector<WeakVH, 16> DeadInsts;
     bool Changed;
   public:
 
     static char ID; // Pass identification, replacement for typeid
     IndVarSimplify() : LoopPass(ID), IU(0), LI(0), SE(0), DT(0), TD(0),
-                       CurrIV(0), Changed(false) {
+                       Changed(false) {
       initializeIndVarSimplifyPass(*PassRegistry::getPassRegistry());
     }
 
@@ -132,7 +124,6 @@ namespace {
     void EliminateIVRemainder(BinaryOperator *Rem,
                               Value *IVOperand,
                               bool IsSigned);
-    void pushIVUsers(Instruction *Def);
     bool isSimpleIVUser(Instruction *I, const Loop *L);
     void RewriteNonIntegerIVs(Loop *L);
 
@@ -1030,7 +1021,10 @@ bool IndVarSimplify::EliminateIVUser(Instruction *UseInst,
 
 /// pushIVUsers - Add all uses of Def to the current IV's worklist.
 ///
-void IndVarSimplify::pushIVUsers(Instruction *Def) {
+static void pushIVUsers(
+  Instruction *Def,
+  SmallPtrSet<Instruction*,16> &Simplified,
+  SmallVectorImpl< std::pair<Instruction*,Instruction*> > &SimpleIVUsers) {
 
   for (Value::use_iterator UI = Def->use_begin(), E = Def->use_end();
        UI != E; ++UI) {
@@ -1079,50 +1073,70 @@ bool IndVarSimplify::isSimpleIVUser(Instruction *I, const Loop *L) {
 /// Once DisableIVRewrite is default, LSR will be the only client of IVUsers.
 ///
 void IndVarSimplify::SimplifyIVUsersNoRewrite(Loop *L, SCEVExpander &Rewriter) {
-  // Simplification is performed independently for each IV, as represented by a
-  // loop header phi. Each round of simplification first iterates through the
-  // SimplifyIVUsers worklist, then determines whether the current IV should be
-  // widened. Widening adds a new phi to LoopPhis, inducing another round of
-  // simplification on the wide IV.
+  std::map<PHINode *, WideIVInfo> WideIVMap;
+
   SmallVector<PHINode*, 8> LoopPhis;
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I) {
     LoopPhis.push_back(cast<PHINode>(I));
   }
+  // Each round of simplification iterates through the SimplifyIVUsers worklist
+  // for all current phis, then determines whether any IVs can be
+  // widened. Widening adds new phis to LoopPhis, inducing another round of
+  // simplification on the wide IVs.
   while (!LoopPhis.empty()) {
-    CurrIV = LoopPhis.pop_back_val();
-    Simplified.clear();
-    assert(SimpleIVUsers.empty() && "expect empty IV users list");
+    // Evaluate as many IV expressions as possible before widening any IVs. This
+    // forces SCEV to propagate no-wrap flags before evaluating sign/zero
+    // extension. The first time SCEV attempts to normalize sign/zero extension,
+    // the result becomes final. So for the most predictable results, we delay
+    // evaluation of sign/zero extend evaluation until needed, and avoid running
+    // other SCEV based analysis prior to SimplifyIVUsersNoRewrite.
+    do {
+      PHINode *CurrIV = LoopPhis.pop_back_val();
 
-    WideIVInfo WI;
+      // Information about sign/zero extensions of CurrIV.
+      WideIVInfo WI;
 
-    pushIVUsers(CurrIV);
+      // Instructions processed by SimplifyIVUsers for CurrIV.
+      SmallPtrSet<Instruction*,16> Simplified;
 
-    while (!SimpleIVUsers.empty()) {
-      Instruction *UseInst, *Operand;
-      tie(UseInst, Operand) = SimpleIVUsers.pop_back_val();
+      // Use-def pairs if IVUsers waiting to be processed for CurrIV.
+      SmallVector<std::pair<Instruction*, Instruction*>, 8> SimpleIVUsers;
 
-      if (EliminateIVUser(UseInst, Operand)) {
-        pushIVUsers(Operand);
-        continue;
-      }
-      if (CastInst *Cast = dyn_cast<CastInst>(UseInst)) {
-        bool IsSigned = Cast->getOpcode() == Instruction::SExt;
-        if (IsSigned || Cast->getOpcode() == Instruction::ZExt) {
-          CollectExtend(Cast, IsSigned, WI, SE, TD);
+      pushIVUsers(CurrIV, Simplified, SimpleIVUsers);
+
+      while (!SimpleIVUsers.empty()) {
+        Instruction *UseInst, *Operand;
+        tie(UseInst, Operand) = SimpleIVUsers.pop_back_val();
+
+        if (EliminateIVUser(UseInst, Operand)) {
+          pushIVUsers(Operand, Simplified, SimpleIVUsers);
+          continue;
         }
-        continue;
+        if (CastInst *Cast = dyn_cast<CastInst>(UseInst)) {
+          bool IsSigned = Cast->getOpcode() == Instruction::SExt;
+          if (IsSigned || Cast->getOpcode() == Instruction::ZExt) {
+            CollectExtend(Cast, IsSigned, WI, SE, TD);
+          }
+          continue;
+        }
+        if (isSimpleIVUser(UseInst, L)) {
+          pushIVUsers(UseInst, Simplified, SimpleIVUsers);
+        }
       }
-      if (isSimpleIVUser(UseInst, L)) {
-        pushIVUsers(UseInst);
+      if (WI.WidestNativeType) {
+        WideIVMap[CurrIV] = WI;
       }
-    }
-    if (WI.WidestNativeType) {
-      WidenIV Widener(CurrIV, WI, LI, SE, DT, DeadInsts);
+    } while(!LoopPhis.empty());
+
+    for (std::map<PHINode *, WideIVInfo>::const_iterator I = WideIVMap.begin(),
+           E = WideIVMap.end(); I != E; ++I) {
+      WidenIV Widener(I->first, I->second, LI, SE, DT, DeadInsts);
       if (PHINode *WidePhi = Widener.CreateWideIV(Rewriter)) {
         Changed = true;
         LoopPhis.push_back(WidePhi);
       }
     }
+    WideIVMap.clear();
   }
 }
 
@@ -1145,8 +1159,6 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   DT = &getAnalysis<DominatorTree>();
   TD = getAnalysisIfAvailable<TargetData>();
 
-  CurrIV = NULL;
-  Simplified.clear();
   DeadInsts.clear();
   Changed = false;
 
@@ -1160,6 +1172,11 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   SCEVExpander Rewriter(*SE);
 
   // Eliminate redundant IV users.
+  //
+  // Simplification works best when run before other consumers of SCEV. We
+  // attempt to avoid evaluating SCEVs for sign/zero extend operations until
+  // other expressions involving loop IVs have been evaluated. This helps SCEV
+  // propagate no-wrap flags before normalizing sign/zero extension.
   if (DisableIVRewrite) {
     Rewriter.disableCanonicalMode();
     SimplifyIVUsersNoRewrite(L, Rewriter);
