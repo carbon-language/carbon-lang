@@ -223,10 +223,11 @@ SBModule::SetModule (const lldb::ModuleSP& module_sp)
 bool
 SBModule::ResolveFileAddress (lldb::addr_t vm_addr, SBAddress& addr)
 {
-    if (m_opaque_sp)
+    if (m_opaque_sp && addr.IsValid())
         return m_opaque_sp->ResolveFileAddress (vm_addr, *addr);
     
-    addr->Clear();
+    if (addr.IsValid())
+        addr->Clear();
     return false;
 }
 
