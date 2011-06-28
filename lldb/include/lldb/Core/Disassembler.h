@@ -189,7 +189,8 @@ public:
         eOptionNone             = 0u,
         eOptionShowBytes        = (1u << 0),
         eOptionRawOuput         = (1u << 1),
-        eOptionShowCurrentLine  = (1u << 2)
+        eOptionMarkPCSourceLine = (1u << 2), // Mark the source line that contains the current PC (mixed mode only)
+        eOptionMarkPCAddress    = (1u << 3)  // Mark the disassembly line the contains the PC
     };
 
     static Disassembler*

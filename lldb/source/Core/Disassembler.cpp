@@ -337,7 +337,6 @@ Disassembler::PrintInstructions
         pc_addr_ptr = &exe_ctx.frame->GetFrameCodeAddress();
     const uint32_t scope = eSymbolContextLineEntry | eSymbolContextFunction | eSymbolContextSymbol;
     const bool use_inline_block_range = false;
-
     for (size_t i=0; i<num_instructions_found; ++i)
     {
         Instruction *inst = disasm_ptr->GetInstructionList().GetInstructionAtIndex (i).get();
@@ -375,7 +374,7 @@ Disassembler::PrintInstructions
                                                                                                    sc.line_entry.line,
                                                                                                    num_mixed_context_lines,
                                                                                                    num_mixed_context_lines,
-                                                                                                   ((options & eOptionShowCurrentLine) ? "->" : ""),
+                                                                                                   ((inst_is_at_pc && (options & eOptionMarkPCSourceLine)) ? "->" : ""),
                                                                                                    &strm);
                                 }
                             }
@@ -405,12 +404,9 @@ Disassembler::PrintInstructions
                 }
             }
 
-            if (pc_addr_ptr)
+            if ((options & eOptionMarkPCAddress) && pc_addr_ptr)
             {
-                if (inst_is_at_pc)
-                    strm.PutCString("-> ");
-                else
-                    strm.PutCString("   ");
+                strm.PutCString(inst_is_at_pc ? "-> " : "   ");
             }
             const bool show_bytes = (options & eOptionShowBytes) != 0;
             const bool raw = (options & eOptionRawOuput) != 0;

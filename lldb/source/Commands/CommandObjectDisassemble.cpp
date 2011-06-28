@@ -258,10 +258,12 @@ CommandObjectDisassemble::Execute
         m_options.num_lines_context = 1;
 
     ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-    uint32_t options = 0;
+    // Always show the PC in the disassembly
+    uint32_t options = Disassembler::eOptionMarkPCAddress;
 
-    if (!m_options.show_mixed)
-        options |= Disassembler::eOptionShowCurrentLine;
+    // Mark the source line for the current PC only if we are doing mixed source and assembly
+    if (m_options.show_mixed)
+        options |= Disassembler::eOptionMarkPCSourceLine;
 
     if (m_options.show_bytes)
         options |= Disassembler::eOptionShowBytes;
