@@ -52,6 +52,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -72,11 +73,9 @@ STATISTIC(NumElimExt     , "Number of IV sign/zero extends eliminated");
 STATISTIC(NumElimRem     , "Number of IV remainder operations eliminated");
 STATISTIC(NumElimCmp     , "Number of IV comparisons eliminated");
 
-// DisableIVRewrite mode currently affects IVUsers, so is defined in libAnalysis
-// and referenced here.
-namespace llvm {
-  extern bool DisableIVRewrite;
-}
+static cl::opt<bool> DisableIVRewrite(
+  "disable-iv-rewrite", cl::Hidden,
+  cl::desc("Disable canonical induction variable rewriting"));
 
 namespace {
   class IndVarSimplify : public LoopPass {
@@ -104,7 +103,8 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequiredID(LCSSAID);
-      AU.addRequired<IVUsers>();
+      if (!DisableIVRewrite)
+        AU.addRequired<IVUsers>();
       AU.addPreserved<ScalarEvolution>();
       AU.addPreservedID(LoopSimplifyID);
       AU.addPreservedID(LCSSAID);
