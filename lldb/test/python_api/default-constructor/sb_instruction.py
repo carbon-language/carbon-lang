@@ -7,7 +7,7 @@ import lldb
 
 def fuzz_obj(obj):
     obj.GetAddress()
-    obj.GetByteSize
+    obj.GetByteSize()
     obj.DoesBranch()
     obj.Print(None)
     obj.GetDescription(lldb.SBStream())
