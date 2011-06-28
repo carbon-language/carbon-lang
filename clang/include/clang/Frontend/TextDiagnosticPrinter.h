@@ -62,18 +62,17 @@ public:
                       std::string &CaretLine,
                       const std::string &SourceLine);
 
-  void EmitCaretDiagnostic(Diagnostic::Level Level, SourceLocation Loc,
-                           CharSourceRange *Ranges, unsigned NumRanges,
-                           const SourceManager &SM,
-                           const FixItHint *Hints,
-                           unsigned NumHints,
-                           unsigned Columns,  
-                           unsigned OnMacroInst,
-                           unsigned MacroSkipStart,
-                           unsigned MacroSkipEnd);
-
   virtual void HandleDiagnostic(Diagnostic::Level Level,
                                 const DiagnosticInfo &Info);
+
+private:
+  void EmitCaretDiagnostic(SourceLocation Loc, CharSourceRange *Ranges,
+                           unsigned NumRanges, const SourceManager &SM,
+                           const FixItHint *Hints,
+                           unsigned NumHints, unsigned Columns,  
+                           unsigned OnMacroInst, unsigned MacroSkipStart,
+                           unsigned MacroSkipEnd);
+  
 };
 
 } // end namespace clang

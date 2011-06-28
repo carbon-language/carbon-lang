@@ -292,8 +292,7 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   }
 }
 
-void TextDiagnosticPrinter::EmitCaretDiagnostic(Diagnostic::Level Level,
-                                                SourceLocation Loc,
+void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 CharSourceRange *Ranges,
                                                 unsigned NumRanges,
                                                 const SourceManager &SM,
@@ -314,10 +313,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(Diagnostic::Level Level,
     bool Suppressed 
       = OnMacroInst >= MacroSkipStart && OnMacroInst < MacroSkipEnd;
     
-
     SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
+    
     // FIXME: Map ranges?
-    EmitCaretDiagnostic(Level, OneLevelUp, Ranges, NumRanges, SM,
+    EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM,
                         Hints, NumHints, Columns,
                         OnMacroInst + 1, MacroSkipStart, MacroSkipEnd);
     
@@ -356,7 +355,10 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(Diagnostic::Level Level,
       }
       OS << "note: instantiated from:\n";
       
-      EmitCaretDiagnostic(Level, Loc, Ranges, NumRanges, SM, 0, 0,
+      // Don't print recursive instantiation notes from an instantiation note.
+      Loc = SM.getSpellingLoc(Loc);
+
+      EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, 0, 0,
                           Columns, OnMacroInst + 1, MacroSkipStart,
                           MacroSkipEnd);
       return;
@@ -371,7 +373,7 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(Diagnostic::Level Level,
     
     return;
   }
-
+  
   // Decompose the location into a FID/Offset pair.
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(Loc);
   FileID FID = LocInfo.first;
@@ -1059,7 +1061,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       }
     }        
     
-    EmitCaretDiagnostic(Level, LastLoc, Ranges, NumRanges, LastLoc.getManager(),
+    EmitCaretDiagnostic(LastLoc, Ranges, NumRanges, LastLoc.getManager(),
                         Info.getFixItHints(),
                         Info.getNumFixItHints(),
                         DiagOpts->MessageLength, 
