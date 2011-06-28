@@ -1011,17 +1011,32 @@ bool ConstantArray::isCString() const {
 }
 
 
-/// getAsString - If the sub-element type of this array is i8
-/// then this method converts the array to an std::string and returns it.
-/// Otherwise, it asserts out.
+/// convertToString - Helper function for getAsString() and getAsCString().
+static std::string convertToString(const User *U, unsigned len)
+{
+  std::string Result;
+  Result.reserve(len);
+  for (unsigned i = 0; i != len; ++i)
+    Result.push_back((char)cast<ConstantInt>(U->getOperand(i))->getZExtValue());
+  return Result;
+}
+
+/// getAsString - If this array is isString(), then this method converts the
+/// array to an std::string and returns it.  Otherwise, it asserts out.
 ///
 std::string ConstantArray::getAsString() const {
   assert(isString() && "Not a string!");
-  std::string Result;
-  Result.reserve(getNumOperands());
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    Result.push_back((char)cast<ConstantInt>(getOperand(i))->getZExtValue());
-  return Result;
+  return convertToString(this, getNumOperands());
+}
+
+
+/// getAsCString - If this array is isCString(), then this method converts the
+/// array (without the trailing null byte) to an std::string and returns it.
+/// Otherwise, it asserts out.
+///
+std::string ConstantArray::getAsCString() const {
+  assert(isCString() && "Not a string!");
+  return convertToString(this, getNumOperands() - 1);
 }
 
 

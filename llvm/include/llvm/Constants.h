@@ -387,6 +387,12 @@ public:
   ///
   std::string getAsString() const;
 
+  /// getAsCString - If this array is isCString(), then this method converts the
+  /// array (without the trailing null byte) to an std::string and returns it.
+  /// Otherwise, it asserts out.
+  ///
+  std::string getAsCString() const;
+
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because zero arrays are always
   /// created as ConstantAggregateZero objects.
