@@ -2607,15 +2607,8 @@ Decl *Sema::ActOnObjCExceptionDecl(Scope *S, Declarator &D) {
   if (getLangOptions().CPlusPlus)
     CheckExtraCXXDefaultArguments(D);
   
-  TagDecl *OwnedDecl = 0;
-  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S, &OwnedDecl);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType ExceptionType = TInfo->getType();
-  
-  if (getLangOptions().CPlusPlus && OwnedDecl && OwnedDecl->isDefinition()) {
-    // Objective-C++: Types shall not be defined in exception types.
-    Diag(OwnedDecl->getLocation(), diag::err_type_defined_in_param_type)
-      << Context.getTypeDeclType(OwnedDecl);
-  }
 
   VarDecl *New = BuildObjCExceptionDecl(TInfo, ExceptionType,
                                         D.getSourceRange().getBegin(),

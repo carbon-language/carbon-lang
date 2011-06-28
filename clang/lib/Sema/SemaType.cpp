@@ -2467,7 +2467,6 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     // or enumeration in a type-specifier-seq.
     switch (D.getContext()) {
     case Declarator::FileContext:
-    case Declarator::PrototypeContext:
     case Declarator::ObjCPrototypeContext:
     case Declarator::KNRTypeListContext:
     case Declarator::TypeNameContext:
@@ -2480,6 +2479,12 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::TemplateTypeArgContext:
     case Declarator::AliasDeclContext:
     case Declarator::AliasTemplateContext:
+      break;
+    case Declarator::PrototypeContext:
+      // C++ [dcl.fct]p6:
+      //   Types shall not be defined in return or parameter types.
+      Diag(OwnedTagDeclInternal->getLocation(), diag::err_type_defined_in_param_type)
+        << Context.getTypeDeclType(OwnedTagDeclInternal);
       break;
     case Declarator::ConditionContext:
       // C++ 6.4p2:
