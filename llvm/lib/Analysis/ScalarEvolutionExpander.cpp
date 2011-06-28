@@ -936,7 +936,8 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
   BasicBlock *Header = L->getHeader();
   Builder.SetInsertPoint(Header, Header->begin());
   pred_iterator HPB = pred_begin(Header), HPE = pred_end(Header);
-  PHINode *PN = Builder.CreatePHI(ExpandTy, std::distance(HPB, HPE), "lsr.iv");
+  PHINode *PN = Builder.CreatePHI(ExpandTy, std::distance(HPB, HPE),
+                                  Twine(Label) + ".iv");
   rememberInstruction(PN);
 
   // Create the step instructions and populate the PHI.
@@ -972,8 +973,8 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
       }
     } else {
       IncV = isNegative ?
-        Builder.CreateSub(PN, StepV, "lsr.iv.next") :
-        Builder.CreateAdd(PN, StepV, "lsr.iv.next");
+        Builder.CreateSub(PN, StepV, Twine(Label) + ".iv.next") :
+        Builder.CreateAdd(PN, StepV, Twine(Label) + ".iv.next");
       rememberInstruction(IncV);
     }
     PN->addIncoming(IncV, Pred);

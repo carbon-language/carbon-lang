@@ -30,6 +30,10 @@ namespace llvm {
   /// memory.
   class SCEVExpander : public SCEVVisitor<SCEVExpander, Value*> {
     ScalarEvolution &SE;
+
+    // New instructions receive a name to identifies them with the current pass.
+    const char* Label;
+
     std::map<std::pair<const SCEV *, Instruction *>, AssertingVH<Value> >
       InsertedExpressions;
     std::set<AssertingVH<Value> > InsertedValues;
@@ -67,8 +71,8 @@ namespace llvm {
 
   public:
     /// SCEVExpander - Construct a SCEVExpander in "canonical" mode.
-    explicit SCEVExpander(ScalarEvolution &se)
-      : SE(se), IVIncInsertLoop(0), CanonicalMode(true),
+    explicit SCEVExpander(ScalarEvolution &se, const char *label)
+      : SE(se), Label(label), IVIncInsertLoop(0), CanonicalMode(true),
         Builder(se.getContext(), TargetFolder(se.TD)) {}
 
     /// clear - Erase the contents of the InsertedExpressions map so that users

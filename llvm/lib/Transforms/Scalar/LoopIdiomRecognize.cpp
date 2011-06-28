@@ -467,7 +467,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
   // header.  This allows us to insert code for it in the preheader.
   BasicBlock *Preheader = CurLoop->getLoopPreheader();
   IRBuilder<> Builder(Preheader->getTerminator());
-  SCEVExpander Expander(*SE);
+  SCEVExpander Expander(*SE, "loop-idiom");
 
   // Okay, we have a strided store "p[i]" of a splattable value.  We can turn
   // this into a memset in the loop preheader now if we want.  However, this
@@ -556,7 +556,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   // header.  This allows us to insert code for it in the preheader.
   BasicBlock *Preheader = CurLoop->getLoopPreheader();
   IRBuilder<> Builder(Preheader->getTerminator());
-  SCEVExpander Expander(*SE);
+  SCEVExpander Expander(*SE, "loop-idiom");
 
   // Okay, we have a strided store "p[i]" of a loaded value.  We can turn
   // this into a memcpy in the loop preheader now if we want.  However, this

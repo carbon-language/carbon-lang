@@ -3698,7 +3698,7 @@ LSRInstance::ImplementSolution(const SmallVectorImpl<const Formula *> &Solution,
   // we can remove them after we are done working.
   SmallVector<WeakVH, 16> DeadInsts;
 
-  SCEVExpander Rewriter(SE);
+  SCEVExpander Rewriter(SE, "lsr");
   Rewriter.disableCanonicalMode();
   Rewriter.setIVIncInsertPos(L, IVIncInsertPos);
 

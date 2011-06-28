@@ -1169,7 +1169,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
 
   // Create a rewriter object which we'll use to transform the code with.
-  SCEVExpander Rewriter(*SE);
+  SCEVExpander Rewriter(*SE, "indvars");
 
   // Eliminate redundant IV users.
   //
