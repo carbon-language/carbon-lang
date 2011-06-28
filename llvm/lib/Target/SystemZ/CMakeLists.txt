@@ -1,8 +1,7 @@
 set(LLVM_TARGET_DEFINITIONS SystemZ.td)
 
 tablegen(SystemZGenRegisterInfo.inc -gen-register-info)
-tablegen(SystemZGenInstrNames.inc -gen-instr-enums)
-tablegen(SystemZGenInstrInfo.inc -gen-instr-desc)
+tablegen(SystemZGenInstrInfo.inc -gen-instr-info)
 tablegen(SystemZGenAsmWriter.inc -gen-asm-writer)
 tablegen(SystemZGenDAGISel.inc -gen-dag-isel)
 tablegen(SystemZGenCallingConv.inc -gen-callingconv)

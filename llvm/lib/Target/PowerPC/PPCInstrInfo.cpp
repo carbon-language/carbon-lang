@@ -15,7 +15,6 @@
 #include "PPCInstrBuilder.h"
 #include "PPCMachineFunctionInfo.h"
 #include "PPCPredicates.h"
-#include "PPCGenInstrInfo.inc"
 #include "PPCTargetMachine.h"
 #include "PPCHazardRecognizers.h"
 #include "llvm/ADT/STLExtras.h"
@@ -28,6 +27,9 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/MC/MCAsmInfo.h"
+
+#define GET_INSTRINFO_MC_DESC
+#include "PPCGenInstrInfo.inc"
 
 namespace llvm {
 extern cl::opt<bool> EnablePPC32RS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.

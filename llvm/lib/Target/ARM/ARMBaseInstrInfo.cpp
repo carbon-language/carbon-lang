@@ -18,7 +18,6 @@
 #include "ARMHazardRecognizer.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
-#include "ARMGenInstrInfo.inc"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalValue.h"
@@ -35,6 +34,10 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/STLExtras.h"
+
+#define GET_INSTRINFO_MC_DESC
+#include "ARMGenInstrInfo.inc"
+
 using namespace llvm;
 
 static cl::opt<bool>

@@ -12,7 +12,7 @@ LIBRARYNAME = LLVMPowerPCCodeGen
 TARGET = PPC
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = PPCGenInstrNames.inc PPCGenRegisterInfo.inc \
+BUILT_SOURCES = PPCGenRegisterInfo.inc \
                 PPCGenAsmWriter.inc  PPCGenCodeEmitter.inc \
                 PPCGenInstrInfo.inc PPCGenDAGISel.inc \
                 PPCGenSubtarget.inc PPCGenCallingConv.inc \

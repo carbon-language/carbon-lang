@@ -12,8 +12,7 @@ LIBRARYNAME = LLVMARMCodeGen
 TARGET = ARM
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = ARMGenRegisterInfo.inc \
-		ARMGenInstrNames.inc ARMGenInstrInfo.inc \
+BUILT_SOURCES = ARMGenRegisterInfo.inc ARMGenInstrInfo.inc \
 		ARMGenAsmWriter.inc ARMGenAsmMatcher.inc \
                 ARMGenDAGISel.inc ARMGenSubtarget.inc \
                 ARMGenCodeEmitter.inc ARMGenCallingConv.inc \

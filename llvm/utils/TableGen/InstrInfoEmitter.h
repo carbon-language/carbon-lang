@@ -39,8 +39,9 @@ public:
   void run(raw_ostream &OS);
 
 private:
-  typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;
-  
+  void emitEnums(raw_ostream &OS);
+
+  typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;  
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
                   std::map<std::vector<Record*>, unsigned> &EL,

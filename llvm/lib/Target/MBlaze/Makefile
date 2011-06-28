@@ -11,8 +11,8 @@ LIBRARYNAME = LLVMMBlazeCodeGen
 TARGET = MBlaze
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = MBlazeGenRegisterInfo.inc MBlazeGenInstrNames.inc \
-                MBlazeGenInstrInfo.inc MBlazeGenAsmWriter.inc \
+BUILT_SOURCES = MBlazeGenRegisterInfo.inc MBlazeGenInstrInfo.inc \
+		MBlazeGenAsmWriter.inc \
                 MBlazeGenDAGISel.inc MBlazeGenAsmMatcher.inc \
                 MBlazeGenCodeEmitter.inc MBlazeGenCallingConv.inc \
                 MBlazeGenSubtarget.inc MBlazeGenIntrinsics.inc \

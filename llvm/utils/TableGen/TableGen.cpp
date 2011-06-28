@@ -28,7 +28,6 @@
 #include "EDEmitter.h"
 #include "Error.h"
 #include "FastISelEmitter.h"
-#include "InstrEnumEmitter.h"
 #include "InstrInfoEmitter.h"
 #include "IntrinsicEmitter.h"
 #include "LLVMCConfigurationEmitter.h"
@@ -55,7 +54,9 @@ enum ActionType {
   PrintRecords,
   GenEmitter,
   GenRegisterInfo,
-  GenInstrEnums, GenInstrs, GenAsmWriter, GenAsmMatcher,
+  GenInstrInfo,
+  GenAsmWriter,
+  GenAsmMatcher,
   GenARMDecoder,
   GenDisassembler,
   GenCallingConv,
@@ -95,9 +96,7 @@ namespace {
                                "Generate machine code emitter"),
                     clEnumValN(GenRegisterInfo, "gen-register-info",
                                "Generate registers and register classes info"),
-                    clEnumValN(GenInstrEnums, "gen-instr-enums",
-                               "Generate enum values for instructions"),
-                    clEnumValN(GenInstrs, "gen-instr-desc",
+                    clEnumValN(GenInstrInfo, "gen-instr-info",
                                "Generate instruction descriptions"),
                     clEnumValN(GenCallingConv, "gen-callingconv",
                                "Generate calling convention descriptions"),
@@ -260,10 +259,7 @@ int main(int argc, char **argv) {
     case GenRegisterInfo:
       RegisterInfoEmitter(Records).run(Out.os());
       break;
-    case GenInstrEnums:
-      InstrEnumEmitter(Records).run(Out.os());
-      break;
-    case GenInstrs:
+    case GenInstrInfo:
       InstrInfoEmitter(Records).run(Out.os());
       break;
     case GenCallingConv:

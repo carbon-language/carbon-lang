@@ -12,8 +12,8 @@ LIBRARYNAME = LLVMXCoreCodeGen
 TARGET = XCore
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = XCoreGenRegisterInfo.inc XCoreGenInstrNames.inc \
-                XCoreGenInstrInfo.inc XCoreGenAsmWriter.inc \
+BUILT_SOURCES = XCoreGenRegisterInfo.inc XCoreGenInstrInfo.inc \
+		XCoreGenAsmWriter.inc \
                 XCoreGenDAGISel.inc XCoreGenCallingConv.inc \
 		XCoreGenSubtarget.inc
 

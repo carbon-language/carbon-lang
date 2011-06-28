@@ -19,6 +19,8 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/ErrorHandling.h"
+
+#define GET_INSTRINFO_MC_DESC
 #include "BlackfinGenInstrInfo.inc"
 
 using namespace llvm;

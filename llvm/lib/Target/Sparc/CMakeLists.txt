@@ -1,8 +1,7 @@
 set(LLVM_TARGET_DEFINITIONS Sparc.td)
 
 tablegen(SparcGenRegisterInfo.inc -gen-register-info)
-tablegen(SparcGenInstrNames.inc -gen-instr-enums)
-tablegen(SparcGenInstrInfo.inc -gen-instr-desc)
+tablegen(SparcGenInstrInfo.inc -gen-instr-info)
 tablegen(SparcGenAsmWriter.inc -gen-asm-writer)
 tablegen(SparcGenDAGISel.inc -gen-dag-isel)
 tablegen(SparcGenSubtarget.inc -gen-subtarget)

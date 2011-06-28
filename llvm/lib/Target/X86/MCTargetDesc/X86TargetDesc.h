@@ -26,4 +26,9 @@ extern Target TheX86_32Target, TheX86_64Target;
 #define GET_REGINFO_ENUM
 #include "X86GenRegisterInfo.inc"
 
+// Defines symbolic names for the X86 instructions.
+//
+#define GET_INSTRINFO_ENUM
+#include "X86GenInstrInfo.inc"
+
 #endif

@@ -12,8 +12,7 @@ LIBRARYNAME = LLVMAlphaCodeGen
 TARGET = Alpha
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = AlphaGenRegisterInfo.inc \
-		AlphaGenInstrNames.inc AlphaGenInstrInfo.inc \
+BUILT_SOURCES = AlphaGenRegisterInfo.inc AlphaGenInstrInfo.inc \
                 AlphaGenAsmWriter.inc AlphaGenDAGISel.inc \
                 AlphaGenCallingConv.inc AlphaGenSubtarget.inc
 

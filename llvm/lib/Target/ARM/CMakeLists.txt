@@ -1,8 +1,7 @@
 set(LLVM_TARGET_DEFINITIONS ARM.td)
 
 tablegen(ARMGenRegisterInfo.inc -gen-register-info)
-tablegen(ARMGenInstrNames.inc -gen-instr-enums)
-tablegen(ARMGenInstrInfo.inc -gen-instr-desc)
+tablegen(ARMGenInstrInfo.inc -gen-instr-info)
 tablegen(ARMGenCodeEmitter.inc -gen-emitter)
 tablegen(ARMGenMCCodeEmitter.inc -gen-emitter -mc-emitter)
 tablegen(ARMGenAsmWriter.inc -gen-asm-writer)

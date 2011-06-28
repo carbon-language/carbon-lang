@@ -27,6 +27,7 @@
 
 // #include "MBlazeGenDecoderTables.inc"
 // #include "MBlazeGenRegisterNames.inc"
+#define GET_INSTRINFO_MC_DESC
 #include "MBlazeGenInstrInfo.inc"
 #include "MBlazeGenEDInfo.inc"
 

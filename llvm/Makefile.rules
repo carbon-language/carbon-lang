@@ -1720,35 +1720,15 @@ TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) \
 # All of these files depend on tblgen and the .td files.
 $(INCTMPFiles) : $(TBLGEN) $(TDFiles)
 
-$(TARGET:%=$(ObjDir)/%GenRegisterNames.inc.tmp): \
-$(ObjDir)/%GenRegisterNames.inc.tmp : %.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) register names with tblgen"
-	$(Verb) $(TableGen) -gen-register-enums -o $(call SYSPATH, $@) $<
-
-$(TARGET:%=$(ObjDir)/%GenRegisterDesc.inc.tmp): \
-$(ObjDir)/%GenRegisterDesc.inc.tmp : %.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) register descriptions with tblgen"
-	$(Verb) $(TableGen) -gen-register-desc -o $(call SYSPATH, $@) $<
-
-$(TARGET:%=$(ObjDir)/%GenRegisterInfo.h.inc.tmp): \
-$(ObjDir)/%GenRegisterInfo.h.inc.tmp : %.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) register information header with tblgen"
-	$(Verb) $(TableGen) -gen-register-info-header -o $(call SYSPATH, $@) $<
-
 $(TARGET:%=$(ObjDir)/%GenRegisterInfo.inc.tmp): \
 $(ObjDir)/%GenRegisterInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) register info implementation with tblgen"
 	$(Verb) $(TableGen) -gen-register-info -o $(call SYSPATH, $@) $<
 
-$(TARGET:%=$(ObjDir)/%GenInstrNames.inc.tmp): \
-$(ObjDir)/%GenInstrNames.inc.tmp : %.td $(ObjDir)/.dir
-	$(Echo) "Building $(<F) instruction names with tblgen"
-	$(Verb) $(TableGen) -gen-instr-enums -o $(call SYSPATH, $@) $<
-
 $(TARGET:%=$(ObjDir)/%GenInstrInfo.inc.tmp): \
 $(ObjDir)/%GenInstrInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction information with tblgen"
-	$(Verb) $(TableGen) -gen-instr-desc -o $(call SYSPATH, $@) $<
+	$(Verb) $(TableGen) -gen-instr-info -o $(call SYSPATH, $@) $<
 
 $(TARGET:%=$(ObjDir)/%GenAsmWriter.inc.tmp): \
 $(ObjDir)/%GenAsmWriter.inc.tmp : %.td $(ObjDir)/.dir

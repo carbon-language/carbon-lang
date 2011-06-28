@@ -15,6 +15,7 @@
 #ifndef TARGET_X86_H
 #define TARGET_X86_H
 
+#include "MCTargetDesc/X86TargetDesc.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -85,11 +86,5 @@ MCObjectWriter *createX86MachObjectWriter(raw_ostream &OS,
                                           uint32_t CPUSubtype);
 
 } // End llvm namespace
-
-#include "MCTargetDesc/X86TargetDesc.h"
-
-// Defines symbolic names for the X86 instructions.
-//
-#include "X86GenInstrNames.inc"
 
 #endif

@@ -51,6 +51,7 @@ namespace llvm {
 #include "MSP430GenRegisterInfo.inc"
 
 // Defines symbolic names for the MSP430 instructions.
-#include "MSP430GenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "MSP430GenInstrInfo.inc"
 
 #endif

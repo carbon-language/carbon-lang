@@ -1,8 +1,7 @@
 set(LLVM_TARGET_DEFINITIONS Alpha.td)
 
 tablegen(AlphaGenRegisterInfo.inc -gen-register-info)
-tablegen(AlphaGenInstrNames.inc -gen-instr-enums)
-tablegen(AlphaGenInstrInfo.inc -gen-instr-desc)
+tablegen(AlphaGenInstrInfo.inc -gen-instr-info)
 tablegen(AlphaGenAsmWriter.inc -gen-asm-writer)
 tablegen(AlphaGenDAGISel.inc -gen-dag-isel)
 tablegen(AlphaGenCallingConv.inc -gen-callingconv)

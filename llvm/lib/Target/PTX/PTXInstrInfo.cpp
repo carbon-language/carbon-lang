@@ -21,9 +21,10 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
-using namespace llvm;
-
+#define GET_INSTRINFO_MC_DESC
 #include "PTXGenInstrInfo.inc"
+
+using namespace llvm;
 
 PTXInstrInfo::PTXInstrInfo(PTXTargetMachine &_TM)
   : TargetInstrInfoImpl(PTXInsts, array_lengthof(PTXInsts)),

@@ -20,6 +20,8 @@
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+
+#define GET_INSTRINFO_MC_DESC
 #include "MBlazeGenInstrInfo.inc"
 
 using namespace llvm;

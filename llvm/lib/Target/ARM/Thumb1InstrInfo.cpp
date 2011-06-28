@@ -13,7 +13,6 @@
 
 #include "Thumb1InstrInfo.h"
 #include "ARM.h"
-#include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

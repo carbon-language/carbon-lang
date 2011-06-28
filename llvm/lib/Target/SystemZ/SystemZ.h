@@ -57,6 +57,7 @@ namespace llvm {
 #include "SystemZGenRegisterInfo.inc"
 
 // Defines symbolic names for the SystemZ instructions.
-#include "SystemZGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "SystemZGenInstrInfo.inc"
 
 #endif

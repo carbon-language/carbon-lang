@@ -15,7 +15,6 @@
 #include "ARM.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMAddressingModes.h"
-#include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
 #include "Thumb2InstrInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"

@@ -39,6 +39,7 @@ namespace llvm {
 #include "MipsGenRegisterInfo.inc"
 
 // Defines symbolic names for the Mips instructions.
-#include "MipsGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "MipsGenInstrInfo.inc"
 
 #endif

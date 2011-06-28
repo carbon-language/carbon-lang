@@ -12,11 +12,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86TargetDesc.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Target/TargetRegistry.h"
 
 #define GET_REGINFO_MC_DESC
 #include "X86GenRegisterInfo.inc"
+
+#define GET_INSTRINFO_MC_DESC
+#include "X86GenInstrInfo.inc"
+
 using namespace llvm;
 
 MCRegisterInfo *createX86MCRegisterInfo() {

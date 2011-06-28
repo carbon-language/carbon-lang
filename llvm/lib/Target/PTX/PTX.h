@@ -51,6 +51,7 @@ namespace llvm {
 #include "PTXGenRegisterInfo.inc"
 
 // Defines symbolic names for the PTX instructions.
-#include "PTXGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "PTXGenInstrInfo.inc"
 
 #endif // PTX_H

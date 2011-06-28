@@ -30,7 +30,8 @@
 
 // Defines symbolic names for the ARM instructions.
 //
-#include "ARMGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "ARMGenInstrInfo.inc"
 
 namespace llvm {
 

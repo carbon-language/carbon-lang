@@ -34,6 +34,7 @@ namespace llvm {
 #include "BlackfinGenRegisterInfo.inc"
 
 // Defines symbolic names for the Blackfin instructions.
-#include "BlackfinGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "BlackfinGenInstrInfo.inc"
 
 #endif

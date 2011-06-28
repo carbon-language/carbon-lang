@@ -16,19 +16,17 @@
 #include "X86ATTInstPrinter.h"
 #include "X86InstComments.h"
 #include "X86Subtarget.h"
+#include "MCTargetDesc/X86TargetDesc.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
-#include "X86GenInstrNames.inc"
 #include <map>
 using namespace llvm;
 
 // Include the auto-generated portion of the assembly writer.
-#define GET_REGINFO_ENUM
-#include "X86GenRegisterInfo.inc"
 #define GET_INSTRUCTION_NAME
 #define PRINT_ALIAS_INSTR
 #include "X86GenAsmWriter.inc"

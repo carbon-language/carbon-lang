@@ -89,6 +89,7 @@ namespace llvm {
 
 // Defines symbolic names for the PowerPC instructions.
 //
-#include "PPCGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "PPCGenInstrInfo.inc"
 
 #endif

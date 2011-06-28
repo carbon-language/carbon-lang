@@ -37,6 +37,7 @@ namespace llvm {
 
 // Defines symbolic names for the XCore instructions.
 //
-#include "XCoreGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "XCoreGenInstrInfo.inc"
 
 #endif

@@ -43,6 +43,7 @@ namespace llvm {
 #include "MBlazeGenRegisterInfo.inc"
 
 // Defines symbolic names for the MBlaze instructions.
-#include "MBlazeGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "MBlazeGenInstrInfo.inc"
 
 #endif

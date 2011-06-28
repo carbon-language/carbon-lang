@@ -71,6 +71,7 @@
 /// { ARM::CCRRegClassID, 0|(1<<MCOI::OptionalDef), 0 }
 ///
 /// And this maps to one MCOperand with the regsiter kind of ARM::CPSR.
+#define GET_INSTRINFO_MC_DESC
 #include "ARMGenInstrInfo.inc"
 
 using namespace llvm;

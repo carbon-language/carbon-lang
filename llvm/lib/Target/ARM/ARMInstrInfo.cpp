@@ -14,7 +14,6 @@
 #include "ARMInstrInfo.h"
 #include "ARM.h"
 #include "ARMAddressingModes.h"
-#include "ARMGenInstrInfo.inc"
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveVariables.h"

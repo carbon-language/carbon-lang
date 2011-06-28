@@ -30,6 +30,7 @@ namespace llvm {
 
 // Defines symbolic names for the SPU instructions.
 //
-#include "SPUGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "SPUGenInstrInfo.inc"
 
 #endif /* LLVM_TARGET_IBMCELLSPU_H */

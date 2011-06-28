@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the McOperandInfo and McInstrDesc classes, which
+// This file defines the MCOperandInfo and MCInstrDesc classes, which
 // are used to describe target instructions and their operands. 
 //
 //===----------------------------------------------------------------------===//

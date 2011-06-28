@@ -13,7 +13,6 @@
 
 #include "X86InstrInfo.h"
 #include "X86.h"
-#include "X86GenInstrInfo.inc"
 #include "X86InstrBuilder.h"
 #include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
@@ -35,6 +34,9 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include <limits>
+
+#define GET_INSTRINFO_MC_DESC
+#include "X86GenInstrInfo.inc"
 
 using namespace llvm;
 

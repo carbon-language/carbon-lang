@@ -15,13 +15,15 @@
 #include "MSP430InstrInfo.h"
 #include "MSP430MachineFunctionInfo.h"
 #include "MSP430TargetMachine.h"
-#include "MSP430GenInstrInfo.inc"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/ErrorHandling.h"
+
+#define GET_INSTRINFO_MC_DESC
+#include "MSP430GenInstrInfo.inc"
 
 using namespace llvm;
 

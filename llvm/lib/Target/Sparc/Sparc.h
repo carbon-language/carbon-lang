@@ -41,7 +41,8 @@ namespace llvm {
 
 // Defines symbolic names for the Sparc instructions.
 //
-#include "SparcGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "SparcGenInstrInfo.inc"
 
 
 namespace llvm {

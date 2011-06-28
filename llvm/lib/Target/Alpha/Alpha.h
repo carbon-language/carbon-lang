@@ -50,6 +50,7 @@ namespace llvm {
 
 // Defines symbolic names for the Alpha instructions.
 //
-#include "AlphaGenInstrNames.inc"
+#define GET_INSTRINFO_ENUM
+#include "AlphaGenInstrInfo.inc"
 
 #endif
