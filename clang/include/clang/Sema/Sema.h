@@ -780,7 +780,6 @@ public:
   QualType BuildParenType(QualType T);
 
   TypeSourceInfo *GetTypeForDeclarator(Declarator &D, Scope *S,
-                                       TagDecl **OwnedDecl = 0,
                                        bool AllowAutoInTypeName = false);
   TypeSourceInfo *GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
                                                TypeSourceInfo *ReturnTypeInfo);

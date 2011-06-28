@@ -828,7 +828,7 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
     }
   }
 
-  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, /*Scope=*/0, /*OwnedDecl=*/0,
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, /*Scope=*/0,
                                                /*AllowAuto=*/true);
   QualType AllocType = TInfo->getType();
   if (D.isInvalidType())

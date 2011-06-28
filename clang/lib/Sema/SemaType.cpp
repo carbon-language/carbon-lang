@@ -1722,13 +1722,12 @@ static void DiagnoseIgnoredQualifiers(unsigned Quals,
 /// The result of this call will never be null, but the associated
 /// type may be a null type if there's an unrecoverable error.
 TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
-                                           TagDecl **OwnedDecl,
                                            bool AutoAllowedInTypeName) {
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
   QualType T;
   TypeSourceInfo *ReturnTypeInfo = 0;
-  TagDecl *OwnedTagDeclInternal = 0;
+  TagDecl *OwnedTagDecl = 0;
 
   TypeProcessingState state(*this, D);
 
@@ -1750,10 +1749,9 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     T = ConvertDeclSpecToType(*this, state);
     
     if (!D.isInvalidType() && D.getDeclSpec().isTypeSpecOwned()) {
-      TagDecl* Owned = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
+      OwnedTagDecl = cast<TagDecl>(D.getDeclSpec().getRepAsDecl());
       // Owned declaration is embedded in declarator.
-      Owned->setEmbeddedInDeclarator(true);
-      OwnedTagDeclInternal = Owned;
+      OwnedTagDecl->setEmbeddedInDeclarator(true);
     }
     break;
 
@@ -2458,39 +2456,46 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
   else if (D.isInvalidType())
     return Context.getTrivialTypeSourceInfo(T);
 
-  if (OwnedTagDeclInternal && OwnedDecl)
-    *OwnedDecl = OwnedTagDeclInternal;
-
   if (getLangOptions().CPlusPlus &&
-      OwnedTagDeclInternal && OwnedTagDeclInternal->isDefinition()) {
+      OwnedTagDecl && OwnedTagDecl->isDefinition()) {
     // Check the contexts where C++ forbids the declaration of a new class
     // or enumeration in a type-specifier-seq.
     switch (D.getContext()) {
     case Declarator::FileContext:
-    case Declarator::ObjCPrototypeContext:
-    case Declarator::KNRTypeListContext:
-    case Declarator::TypeNameContext:
     case Declarator::MemberContext:
     case Declarator::BlockContext:
     case Declarator::ForContext:
+    case Declarator::BlockLiteralContext:
+      // C++0x [dcl.type]p3:
+      //   A type-specifier-seq shall not define a class or enumeration unless
+      //   it appears in the type-id of an alias-declaration (7.1.3) that is not
+      //   the declaration of a template-declaration.
+    case Declarator::AliasDeclContext:
+      break;
+    case Declarator::AliasTemplateContext:
+      Diag(OwnedTagDecl->getLocation(),diag::err_type_defined_in_alias_template)
+        << Context.getTypeDeclType(OwnedTagDecl);
+      break;
+    case Declarator::TypeNameContext:
     case Declarator::TemplateParamContext:
     case Declarator::CXXCatchContext:
-    case Declarator::BlockLiteralContext:
     case Declarator::TemplateTypeArgContext:
-    case Declarator::AliasDeclContext:
-    case Declarator::AliasTemplateContext:
+      Diag(OwnedTagDecl->getLocation(),diag::err_type_defined_in_type_specifier)
+        << Context.getTypeDeclType(OwnedTagDecl);
       break;
     case Declarator::PrototypeContext:
+    case Declarator::ObjCPrototypeContext:
+    case Declarator::KNRTypeListContext:
       // C++ [dcl.fct]p6:
       //   Types shall not be defined in return or parameter types.
-      Diag(OwnedTagDeclInternal->getLocation(), diag::err_type_defined_in_param_type)
-        << Context.getTypeDeclType(OwnedTagDeclInternal);
+      Diag(OwnedTagDecl->getLocation(), diag::err_type_defined_in_param_type)
+        << Context.getTypeDeclType(OwnedTagDecl);
       break;
     case Declarator::ConditionContext:
       // C++ 6.4p2:
       // The type-specifier-seq shall not contain typedef and shall not declare
       // a new class or enumeration.
-      Diag(OwnedTagDeclInternal->getLocation(), diag::err_type_defined_in_condition);
+      Diag(OwnedTagDecl->getLocation(), diag::err_type_defined_in_condition);
       break;
     }
   }
@@ -2916,8 +2921,7 @@ TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   // the parser.
   assert(D.getIdentifier() == 0 && "Type name should have no identifier!");
 
-  TagDecl *OwnedTag = 0;
-  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S, &OwnedTag);
+  TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
   QualType T = TInfo->getType();
   if (D.isInvalidType())
     return true;
@@ -2925,19 +2929,6 @@ TypeResult Sema::ActOnTypeName(Scope *S, Declarator &D) {
   if (getLangOptions().CPlusPlus) {
     // Check that there are no default arguments (C++ only).
     CheckExtraCXXDefaultArguments(D);
-
-    // C++0x [dcl.type]p3:
-    //   A type-specifier-seq shall not define a class or enumeration unless
-    //   it appears in the type-id of an alias-declaration (7.1.3) that is not
-    //   the declaration of a template-declaration.
-    if (OwnedTag && OwnedTag->isDefinition()) {
-      if (D.getContext() == Declarator::AliasTemplateContext)
-        Diag(OwnedTag->getLocation(), diag::err_type_defined_in_alias_template)
-          << Context.getTypeDeclType(OwnedTag);
-      else if (D.getContext() != Declarator::AliasDeclContext)
-        Diag(OwnedTag->getLocation(), diag::err_type_defined_in_type_specifier)
-          << Context.getTypeDeclType(OwnedTag);
-    }
   }
 
   return CreateParsedType(T, TInfo);
