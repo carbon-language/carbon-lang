@@ -167,7 +167,7 @@ static void deleteDeadInstruction(Instruction *I, ScalarEvolution &SE) {
 static void deleteIfDeadInstruction(Value *V, ScalarEvolution &SE) {
   if (Instruction *I = dyn_cast<Instruction>(V))
     if (isInstructionTriviallyDead(I))
-      deleteDeadInstruction(I, SE);    
+      deleteDeadInstruction(I, SE);
 }
 
 bool LoopIdiomRecognize::runOnLoop(Loop *L, LPPassManager &LPM) {
@@ -468,7 +468,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
   BasicBlock *Preheader = CurLoop->getLoopPreheader();
   IRBuilder<> Builder(Preheader->getTerminator());
   SCEVExpander Expander(*SE);
-  
+
   // Okay, we have a strided store "p[i]" of a splattable value.  We can turn
   // this into a memset in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
@@ -488,7 +488,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
     deleteIfDeadInstruction(BasePtr, *SE);
     return false;
   }
-  
+
   // Okay, everything looks good, insert the memset.
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
@@ -557,7 +557,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   BasicBlock *Preheader = CurLoop->getLoopPreheader();
   IRBuilder<> Builder(Preheader->getTerminator());
   SCEVExpander Expander(*SE);
-  
+
   // Okay, we have a strided store "p[i]" of a loaded value.  We can turn
   // this into a memcpy in the loop preheader now if we want.  However, this
   // would be unsafe to do if there is anything else in the loop that may read
@@ -568,7 +568,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
     Expander.expandCodeFor(StoreEv->getStart(),
                            Builder.getInt8PtrTy(SI->getPointerAddressSpace()),
                            Preheader->getTerminator());
-  
+
   if (mayLoopAccessLocation(StoreBasePtr, AliasAnalysis::ModRef,
                             CurLoop, BECount, StoreSize,
                             getAnalysis<AliasAnalysis>(), SI)) {
@@ -593,9 +593,9 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
     deleteIfDeadInstruction(StoreBasePtr, *SE);
     return false;
   }
-  
+
   // Okay, everything is safe, we can transform this!
-  
+
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
@@ -619,7 +619,7 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
   DEBUG(dbgs() << "  Formed memcpy: " << *NewCall << "\n"
                << "    from load ptr=" << *LoadEv << " at: " << *LI << "\n"
                << "    from store ptr=" << *StoreEv << " at: " << *SI << "\n");
-  
+
 
   // Okay, the memset has been formed.  Zap the original store and anything that
   // feeds into it.
