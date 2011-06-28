@@ -753,7 +753,7 @@ ASTContext::getTypeInfo(const Type *T) const {
 #define NON_CANONICAL_TYPE(Class, Base)
 #define DEPENDENT_TYPE(Class, Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
-    assert(false && "Should not see dependent types");
+    llvm_unreachable("Should not see dependent types");
     break;
 
   case Type::FunctionNoProto:

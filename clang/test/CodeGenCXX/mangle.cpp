@@ -711,3 +711,45 @@ namespace test27 {
     b<A>(f);
   }
 }
+
+// An injected class name type in a unresolved-name.
+namespace test28 {
+  template <class T> struct A {
+    enum { bit };
+  };
+
+  template <class T> void foo(decltype(A<T>::A::bit) x);
+
+  void test() {
+    foo<char>(A<char>::bit);
+    // CHECK: call void @_ZN6test283fooIcEEvDtsr1AIT_E1AE3bitE(
+  }
+}
+
+// An enclosing template type parameter in an unresolved-name.
+namespace test29 {
+  template <class T> struct A {
+    template <class U> static void foo(decltype(T::fn(U())) x);
+  };
+  struct B { static int fn(int); static long fn(long); };
+
+  void test() {
+    A<B>::foo<int>(0);
+    // CHECK: call void @_ZN6test291AINS_1BEE3fooIiEEvDTclsrS1_2fncvT__EEE(
+  }
+}
+
+// An enclosing template template parameter in an unresolved-name.
+namespace test30 {
+  template <template <class> class T> struct A {
+    template <class U> static void foo(decltype(T<U>::fn()) x);
+  };
+  template <class T> struct B { static T fn(); };
+
+  void test() {
+    A<B>::foo<int>(0);
+    // FIXME: it's not clear what this mangling should be;  maybe this?
+    //   call void @_ZN6test301AINS_1BEE3fooIiEEvDTclsrS1_IT_EE2fnEE(
+    // Currently it's 1B instead of S1_.
+  }
+}
