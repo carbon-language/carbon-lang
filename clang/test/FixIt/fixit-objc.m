@@ -39,3 +39,17 @@ void f(Test *t) {
   [t test:@"Foo"]]; // expected-error{{extraneous ']' before ';'}}
   g(@"Foo")); // expected-error{{extraneous ')' before ';'}}
 }
+
+// rdar://7861841
+@interface Radar7861841 {
+@public
+  int x;
+}
+
+@property (assign) int y;
+@end
+
+int f0(Radar7861841 *a) { return a.x; } // expected-error {{property 'x' not found on object of type 'Radar7861841 *'; did you mean to access ivar 'x'}}
+
+int f1(Radar7861841 *a) { return a->y; } // expected-error {{property 'y' found on object of type 'Radar7861841 *'; did you mean to access it with the "." operator?}}
+

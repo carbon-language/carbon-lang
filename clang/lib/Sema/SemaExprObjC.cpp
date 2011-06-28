@@ -516,7 +516,8 @@ ObjCMethodDecl *Sema::LookupMethodInQualifiedType(Selector Sel,
 /// objective C interface.  This is a property reference expression.
 ExprResult Sema::
 HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
-                          Expr *BaseExpr, DeclarationName MemberName,
+                          Expr *BaseExpr, SourceLocation OpLoc,
+                          DeclarationName MemberName,
                           SourceLocation MemberLoc,
                           SourceLocation SuperLoc, QualType SuperType,
                           bool Super) {
@@ -672,7 +673,8 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
     ObjCPropertyDecl *Property = Res.getAsSingle<ObjCPropertyDecl>();
     Diag(Property->getLocation(), diag::note_previous_decl)
       << Property->getDeclName();
-    return HandleExprPropertyRefExpr(OPT, BaseExpr, TypoResult, MemberLoc,
+    return HandleExprPropertyRefExpr(OPT, BaseExpr, OpLoc,
+                                     TypoResult, MemberLoc,
                                      SuperLoc, SuperType, Super);
   }
   ObjCInterfaceDecl *ClassDeclared;
@@ -690,6 +692,11 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
           return ExprError();
         }
     }
+    Diag(MemberLoc, 
+         diag::err_ivar_access_using_property_syntax_suggest)
+    << MemberName << QualType(OPT, 0) << Ivar->getDeclName()
+    << FixItHint::CreateReplacement(OpLoc, "->");
+    return ExprError();
   }
   
   Diag(MemberLoc, diag::err_property_not_found)
@@ -726,7 +733,9 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
           T = Context.getObjCObjectPointerType(T);
         
           return HandleExprPropertyRefExpr(T->getAsObjCInterfacePointerType(),
-                                           /*BaseExpr*/0, &propertyName,
+                                           /*BaseExpr*/0, 
+                                           SourceLocation()/*OpLoc*/, 
+                                           &propertyName,
                                            propertyNameLoc,
                                            receiverNameLoc, T, true);
         }

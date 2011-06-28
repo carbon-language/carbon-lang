@@ -1080,6 +1080,13 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
         Diag(IV->getLocation(), diag::note_previous_decl)
           << IV->getDeclName();
       } else {
+        if (IsArrow && IDecl->FindPropertyDeclaration(Member)) {
+          Diag(MemberLoc, 
+          diag::err_property_found_suggest)
+          << Member << BaseExpr.get()->getType()
+          << FixItHint::CreateReplacement(OpLoc, ".");
+          return ExprError();
+        }
         Res.clear();
         Res.setLookupName(Member);
 
@@ -1284,7 +1291,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
     }
 
     // Normal property access.
-    return HandleExprPropertyRefExpr(OPT, BaseExpr.get(), MemberName, MemberLoc,
+    return HandleExprPropertyRefExpr(OPT, BaseExpr.get(), OpLoc, 
+                                     MemberName, MemberLoc,
                                      SourceLocation(), QualType(), false);
   }
 
