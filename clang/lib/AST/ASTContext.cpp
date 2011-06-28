@@ -1089,8 +1089,12 @@ void ASTContext::DeepCollectObjCIvars(const ObjCInterfaceDecl *OI,
          E = OI->ivar_end(); I != E; ++I)
       Ivars.push_back(*I);
   }
-  else
-    ShallowCollectObjCIvars(OI, Ivars);
+  else {
+    ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl *>(OI);
+    for (ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv; 
+         Iv= Iv->getNextIvar())
+      Ivars.push_back(Iv);
+  }
 }
 
 /// CollectInheritedProtocols - Collect all protocols in current class and

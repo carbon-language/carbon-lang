@@ -2410,11 +2410,8 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   ObjCInterfaceDecl *OID =
     const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
 
-  llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
-  CGM.getContext().ShallowCollectObjCIvars(OID, OIvars);
-
-  for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
-    ObjCIvarDecl *IVD = OIvars[i];
+  for (ObjCIvarDecl *IVD = OID->all_declared_ivar_begin(); 
+       IVD; IVD = IVD->getNextIvar()) {
     // Ignore unnamed bit-fields.
     if (!IVD->getDeclName())
       continue;
@@ -3908,16 +3905,21 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
       !CGM.getLangOptions().ObjCAutoRefCount)
     return llvm::Constant::getNullValue(PtrTy);
 
-  llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
-  const ObjCInterfaceDecl *OI = OMD->getClassInterface();
-  if (CGM.getLangOptions().ObjCAutoRefCount)
-    CGM.getContext().ShallowCollectObjCIvars(OI, Ivars);
-  else
+  ObjCInterfaceDecl *OI = 
+    const_cast<ObjCInterfaceDecl*>(OMD->getClassInterface());
+  llvm::SmallVector<FieldDecl*, 32> RecFields;
+  if (CGM.getLangOptions().ObjCAutoRefCount) {
+    for (ObjCIvarDecl *IVD = OI->all_declared_ivar_begin(); 
+         IVD; IVD = IVD->getNextIvar())
+      RecFields.push_back(cast<FieldDecl>(IVD));
+  }
+  else {
+    llvm::SmallVector<ObjCIvarDecl*, 32> Ivars;
     CGM.getContext().DeepCollectObjCIvars(OI, true, Ivars);
 
-  llvm::SmallVector<FieldDecl*, 32> RecFields;
-  for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
-    RecFields.push_back(cast<FieldDecl>(Ivars[k]));
+    for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
+      RecFields.push_back(cast<FieldDecl>(Ivars[k]));
+  }
 
   if (RecFields.empty())
     return llvm::Constant::getNullValue(PtrTy);
@@ -5277,17 +5279,14 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
 
   std::vector<llvm::Constant*> Ivars, Ivar(5);
 
-  const ObjCInterfaceDecl *OID = ID->getClassInterface();
+  ObjCInterfaceDecl *OID = 
+    const_cast<ObjCInterfaceDecl*>(ID->getClassInterface());
   assert(OID && "CGObjCNonFragileABIMac::EmitIvarList - null interface");
 
   // FIXME. Consolidate this with similar code in GenerateClass.
 
-  // Collect declared and synthesized ivars in a small vector.
-  llvm::SmallVector<ObjCIvarDecl*, 16> OIvars;
-  CGM.getContext().ShallowCollectObjCIvars(OID, OIvars);
-
-  for (unsigned i = 0, e = OIvars.size(); i != e; ++i) {
-    ObjCIvarDecl *IVD = OIvars[i];
+  for (ObjCIvarDecl *IVD = OID->all_declared_ivar_begin(); 
+       IVD; IVD = IVD->getNextIvar()) {
     // Ignore unnamed bit-fields.
     if (!IVD->getDeclName())
       continue;

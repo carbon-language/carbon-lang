@@ -52,14 +52,14 @@ static uint64_t LookupFieldBitOffset(CodeGen::CodeGenModule &CGM,
   // implemented. This should be fixed to get the information from the layout
   // directly.
   unsigned Index = 0;
-  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  CGM.getContext().ShallowCollectObjCIvars(Container, Ivars);
-  for (unsigned k = 0, e = Ivars.size(); k != e; ++k) {
-    if (Ivar == Ivars[k])
+  ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl*>(Container);
+
+  for (ObjCIvarDecl *IVD = IDecl->all_declared_ivar_begin(); 
+       IVD; IVD = IVD->getNextIvar()) {
+    if (Ivar == IVD)
       break;
     ++Index;
   }
-  assert(Index != Ivars.size() && "Ivar is not inside container!");
   assert(Index < RL->getFieldCount() && "Ivar is not inside record layout!");
 
   return RL->getFieldOffset(Index);

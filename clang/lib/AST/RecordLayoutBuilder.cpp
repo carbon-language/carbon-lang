@@ -1242,12 +1242,11 @@ void RecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D) {
   }
 
   InitializeLayout(D);
-
+  ObjCInterfaceDecl *OI = const_cast<ObjCInterfaceDecl*>(D);
   // Layout each ivar sequentially.
-  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  Context.ShallowCollectObjCIvars(D, Ivars);
-  for (unsigned i = 0, e = Ivars.size(); i != e; ++i)
-    LayoutField(Ivars[i]);
+  for (ObjCIvarDecl *IVD = OI->all_declared_ivar_begin(); 
+       IVD; IVD = IVD->getNextIvar())
+    LayoutField(IVD);
 
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
