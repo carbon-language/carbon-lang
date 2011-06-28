@@ -215,10 +215,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::VASTART           , MVT::Other, Custom);
 
   // VAARG is custom lowered with the 32-bit SVR4 ABI.
-  if (    TM.getSubtarget<PPCSubtarget>().isSVR4ABI()
-      && !TM.getSubtarget<PPCSubtarget>().isPPC64())
+  if (TM.getSubtarget<PPCSubtarget>().isSVR4ABI()
+      && !TM.getSubtarget<PPCSubtarget>().isPPC64()) {
     setOperationAction(ISD::VAARG, MVT::Other, Custom);
-  else
+    setOperationAction(ISD::VAARG, MVT::i64, Custom);
+  } else
     setOperationAction(ISD::VAARG, MVT::Other, Expand);
 
   // Use the default implementation.
@@ -1262,9 +1263,110 @@ SDValue PPCTargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
                                       const PPCSubtarget &Subtarget) const {
+  SDNode *Node = Op.getNode();
+  EVT VT = Node->getValueType(0);
+  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  SDValue InChain = Node->getOperand(0);
+  SDValue VAListPtr = Node->getOperand(1);
+  const Value *SV = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
+  DebugLoc dl = Node->getDebugLoc();
 
-  llvm_unreachable("VAARG not yet implemented for the SVR4 ABI!");
-  return SDValue(); // Not reached
+  assert(!Subtarget.isPPC64() && "LowerVAARG is PPC32 only");
+
+  // gpr_index
+  SDValue GprIndex = DAG.getExtLoad(ISD::ZEXTLOAD, dl, MVT::i32, InChain,
+                                    VAListPtr, MachinePointerInfo(SV), MVT::i8,
+                                    false, false, 0);
+  InChain = GprIndex.getValue(1);
+
+  if (VT == MVT::i64) {
+    // Check if GprIndex is even
+    SDValue GprAnd = DAG.getNode(ISD::AND, dl, MVT::i32, GprIndex,
+                                 DAG.getConstant(1, MVT::i32));
+    SDValue CC64 = DAG.getSetCC(dl, MVT::i32, GprAnd,
+                                DAG.getConstant(0, MVT::i32), ISD::SETNE);
+    SDValue GprIndexPlusOne = DAG.getNode(ISD::ADD, dl, MVT::i32, GprIndex,
+                                          DAG.getConstant(1, MVT::i32));
+    // Align GprIndex to be even if it isn't
+    GprIndex = DAG.getNode(ISD::SELECT, dl, MVT::i32, CC64, GprIndexPlusOne,
+                           GprIndex);
+  }
+
+  // fpr index is 1 byte after gpr
+  SDValue FprPtr = DAG.getNode(ISD::ADD, dl, PtrVT, VAListPtr,
+                               DAG.getConstant(1, MVT::i32));
+
+  // fpr
+  SDValue FprIndex = DAG.getExtLoad(ISD::ZEXTLOAD, dl, MVT::i32, InChain,
+                                    FprPtr, MachinePointerInfo(SV), MVT::i8,
+                                    false, false, 0);
+  InChain = FprIndex.getValue(1);
+
+  SDValue RegSaveAreaPtr = DAG.getNode(ISD::ADD, dl, PtrVT, VAListPtr,
+                                       DAG.getConstant(8, MVT::i32));
+
+  SDValue OverflowAreaPtr = DAG.getNode(ISD::ADD, dl, PtrVT, VAListPtr,
+                                        DAG.getConstant(4, MVT::i32));
+
+  // areas
+  SDValue OverflowArea = DAG.getLoad(MVT::i32, dl, InChain, OverflowAreaPtr,
+                                     MachinePointerInfo(), false, false, 0);
+  InChain = OverflowArea.getValue(1);
+
+  SDValue RegSaveArea = DAG.getLoad(MVT::i32, dl, InChain, RegSaveAreaPtr,
+                                    MachinePointerInfo(), false, false, 0);
+  InChain = RegSaveArea.getValue(1);
+
+  // select overflow_area if index > 8
+  SDValue CC = DAG.getSetCC(dl, MVT::i32, VT.isInteger() ? GprIndex : FprIndex,
+                            DAG.getConstant(8, MVT::i32), ISD::SETLT);
+
+  SDValue Area = DAG.getNode(ISD::SELECT, dl, MVT::i32, CC, RegSaveArea,
+                             OverflowArea);
+
+  // adjustment constant gpr_index * 4/8
+  SDValue RegConstant = DAG.getNode(ISD::MUL, dl, MVT::i32,
+                                    VT.isInteger() ? GprIndex : FprIndex,
+                                    DAG.getConstant(VT.isInteger() ? 4 : 8,
+                                                    MVT::i32));
+
+  // OurReg = RegSaveArea + RegConstant
+  SDValue OurReg = DAG.getNode(ISD::ADD, dl, PtrVT, RegSaveArea,
+                               RegConstant);
+
+  // Floating types are 32 bytes into RegSaveArea
+  if (VT.isFloatingPoint())
+    OurReg = DAG.getNode(ISD::ADD, dl, PtrVT, OurReg,
+                         DAG.getConstant(32, MVT::i32));
+
+  // increase {f,g}pr_index by 1 (or 2 if VT is i64)
+  SDValue IndexPlus1 = DAG.getNode(ISD::ADD, dl, MVT::i32,
+                                   VT.isInteger() ? GprIndex : FprIndex,
+                                   DAG.getConstant(VT == MVT::i64 ? 2 : 1,
+                                                   MVT::i32));
+
+  InChain = DAG.getTruncStore(InChain, dl, IndexPlus1,
+                              VT.isInteger() ? VAListPtr : FprPtr,
+                              MachinePointerInfo(SV),
+                              MVT::i8, false, false, 0);
+
+  // determine if we should load from reg_save_area or overflow_area
+  SDValue Result = DAG.getNode(ISD::SELECT, dl, PtrVT, CC, OurReg, OverflowArea);
+
+  // increase overflow_area by 4/8 if gpr/fpr > 8
+  SDValue OverflowAreaPlusN = DAG.getNode(ISD::ADD, dl, PtrVT, OverflowArea,
+                                          DAG.getConstant(VT.isInteger() ? 4 : 8,
+                                          MVT::i32));
+
+  OverflowArea = DAG.getNode(ISD::SELECT, dl, MVT::i32, CC, OverflowArea,
+                             OverflowAreaPlusN);
+
+  InChain = DAG.getTruncStore(InChain, dl, OverflowArea,
+                              OverflowAreaPtr,
+                              MachinePointerInfo(),
+                              MVT::i32, false, false, 0);
+
+  return DAG.getLoad(VT, dl, InChain, Result, MachinePointerInfo(), false, false, 0);
 }
 
 SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op,
@@ -4429,11 +4531,27 @@ SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
 void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
                                            SmallVectorImpl<SDValue>&Results,
                                            SelectionDAG &DAG) const {
+  const TargetMachine &TM = getTargetMachine();
   DebugLoc dl = N->getDebugLoc();
   switch (N->getOpcode()) {
   default:
     assert(false && "Do not know how to custom type legalize this operation!");
     return;
+  case ISD::VAARG: {
+    if (!TM.getSubtarget<PPCSubtarget>().isSVR4ABI()
+        || TM.getSubtarget<PPCSubtarget>().isPPC64())
+      return;
+
+    EVT VT = N->getValueType(0);
+
+    if (VT == MVT::i64) {
+      SDValue NewNode = LowerVAARG(SDValue(N, 1), DAG, PPCSubTarget);
+
+      Results.push_back(NewNode);
+      Results.push_back(NewNode.getValue(1));
+    }
+    return;
+  }
   case ISD::FP_ROUND_INREG: {
     assert(N->getValueType(0) == MVT::ppcf128);
     assert(N->getOperand(0).getValueType() == MVT::ppcf128);
