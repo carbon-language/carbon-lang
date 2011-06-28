@@ -76,12 +76,14 @@ SlotIndex SplitAnalysis::computeLastSplitPoint(unsigned Num) {
       return LSP.first;
     // There may not be a call instruction (?) in which case we ignore LPad.
     LSP.second = LSP.first;
-    for (MachineBasicBlock::const_iterator I = FirstTerm, E = MBB->begin();
-         I != E; --I)
+    for (MachineBasicBlock::const_iterator I = MBB->end(), E = MBB->begin();
+         I != E;) {
+      --I;
       if (I->getDesc().isCall()) {
         LSP.second = LIS.getInstructionIndex(I);
         break;
       }
+    }
   }
 
   // If CurLI is live into a landing pad successor, move the last split point
