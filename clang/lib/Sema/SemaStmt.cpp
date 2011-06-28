@@ -1990,7 +1990,7 @@ StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, bool IsSimple,
 
     llvm::StringRef Clobber = Literal->getString();
 
-    if (!Context.Target.isValidGCCRegisterName(Clobber))
+    if (!Context.Target.isValidClobber(Clobber))
       return StmtError(Diag(Literal->getLocStart(),
                   diag::err_asm_unknown_register_name) << Clobber);
   }
@@ -2350,4 +2350,3 @@ Sema::ActOnSEHFinallyBlock(SourceLocation Loc,
   assert(Block);
   return Owned(SEHFinallyStmt::Create(Context,Loc,Block));
 }
-

@@ -181,6 +181,14 @@ static llvm::StringRef removeGCCRegisterPrefix(llvm::StringRef Name) {
   return Name;
 }
 
+/// isValidClobber - Returns whether the passed in string is
+/// a valid clobber in an inline asm statement. This is used by
+/// Sema.
+bool TargetInfo::isValidClobber(llvm::StringRef Name) const {
+  return (isValidGCCRegisterName(Name) ||
+	  Name == "memory" || Name == "cc");
+}
+
 /// isValidGCCRegisterName - Returns whether the passed in string
 /// is a valid register name according to GCC. This is used by Sema for
 /// inline asm statements.
@@ -193,9 +201,6 @@ bool TargetInfo::isValidGCCRegisterName(llvm::StringRef Name) const {
 
   // Get rid of any register prefix.
   Name = removeGCCRegisterPrefix(Name);
-
-  if (Name == "memory" || Name == "cc")
-    return true;
 
   getGCCRegNames(Names, NumNames);
 
