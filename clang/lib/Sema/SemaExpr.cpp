@@ -1397,39 +1397,44 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
   }
 
   // We didn't find anything, so try to correct for a typo.
-  DeclarationName Corrected;
-  if (S && (Corrected = CorrectTypo(R, S, &SS, 0, false, CTC))) {
-    if (!R.empty()) {
-      if (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin())) {
+  TypoCorrection Corrected;
+  if (S && (Corrected = CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(),
+                                    S, &SS, NULL, false, CTC))) {
+    std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
+    std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
+    R.setLookupName(Corrected.getCorrection());
+
+    if (!Corrected.isKeyword()) {
+      NamedDecl *ND = Corrected.getCorrectionDecl();
+      R.addDecl(ND);
+      if (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND)) {
         if (SS.isEmpty())
-          Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName()
-            << FixItHint::CreateReplacement(R.getNameLoc(),
-                                            R.getLookupName().getAsString());
+          Diag(R.getNameLoc(), diagnostic_suggest) << Name << CorrectedQuotedStr
+            << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
         else
           Diag(R.getNameLoc(), diag::err_no_member_suggest)
-            << Name << computeDeclContext(SS, false) << R.getLookupName()
+            << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
             << SS.getRange()
-            << FixItHint::CreateReplacement(R.getNameLoc(),
-                                            R.getLookupName().getAsString());
-        if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
+            << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
+        if (ND)
           Diag(ND->getLocation(), diag::note_previous_decl)
-            << ND->getDeclName();
+            << CorrectedQuotedStr;
 
         // Tell the callee to try to recover.
         return false;
       }
 
-      if (isa<TypeDecl>(*R.begin()) || isa<ObjCInterfaceDecl>(*R.begin())) {
+      if (isa<TypeDecl>(ND) || isa<ObjCInterfaceDecl>(ND)) {
         // FIXME: If we ended up with a typo for a type name or
         // Objective-C class name, we're in trouble because the parser
         // is in the wrong place to recover. Suggest the typo
         // correction, but don't make it a fix-it since we're not going
         // to recover well anyway.
         if (SS.isEmpty())
-          Diag(R.getNameLoc(), diagnostic_suggest) << Name << R.getLookupName();
+          Diag(R.getNameLoc(), diagnostic_suggest) << Name << CorrectedQuotedStr;
         else
           Diag(R.getNameLoc(), diag::err_no_member_suggest)
-            << Name << computeDeclContext(SS, false) << R.getLookupName()
+            << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
             << SS.getRange();
 
         // Don't try to recover; it won't work.
@@ -1439,15 +1444,15 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
       // FIXME: We found a keyword. Suggest it, but don't provide a fix-it
       // because we aren't able to recover.
       if (SS.isEmpty())
-        Diag(R.getNameLoc(), diagnostic_suggest) << Name << Corrected;
+        Diag(R.getNameLoc(), diagnostic_suggest) << Name << CorrectedQuotedStr;
       else
         Diag(R.getNameLoc(), diag::err_no_member_suggest)
-        << Name << computeDeclContext(SS, false) << Corrected
+        << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
         << SS.getRange();
       return true;
     }
-    R.clear();
   }
+  R.clear();
 
   // Emit a special diagnostic for failed member lookups.
   // FIXME: computing the declaration context might fail here (?)

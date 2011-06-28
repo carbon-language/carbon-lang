@@ -625,6 +625,9 @@ private:
   /// \brief The OpenCL extension settings.
   llvm::SmallVector<uint64_t, 1> OpenCLExtensions;
 
+  /// \brief A list of the namespaces we've seen.
+  llvm::SmallVector<uint64_t, 4> KnownNamespaces;
+
   //@}
 
   /// \brief Diagnostic IDs and their mappings that the user changed.
@@ -1124,6 +1127,11 @@ public:
   /// instance and factory methods, respectively, with this selector.
   virtual std::pair<ObjCMethodList, ObjCMethodList>
     ReadMethodPool(Selector Sel);
+
+  /// \brief Load the set of namespaces that are known to the external source,
+  /// which will be used during typo correction.
+  virtual void ReadKnownNamespaces(
+                           llvm::SmallVectorImpl<NamespaceDecl *> &Namespaces);
 
   /// \brief Load a selector from disk, registering its ID if it exists.
   void LoadSelector(Selector Sel);

@@ -464,26 +464,29 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     // We haven't found anything, and we're not recovering from a
     // different kind of error, so look for typos.
     DeclarationName Name = Found.getLookupName();
-    if (CorrectTypo(Found, S, &SS, LookupCtx, EnteringContext,  
-                    CTC_NoKeywords) &&
-        Found.isSingleResult() &&
-        isAcceptableNestedNameSpecifier(Found.getAsSingle<NamedDecl>())) {
+    TypoCorrection Corrected;
+    Found.clear();
+    if ((Corrected = CorrectTypo(Found.getLookupNameInfo(),
+                                 Found.getLookupKind(), S, &SS, LookupCtx,
+                                 EnteringContext, CTC_NoKeywords)) &&
+        isAcceptableNestedNameSpecifier(Corrected.getCorrectionDecl())) {
+      std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
+      std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
       if (LookupCtx)
         Diag(Found.getNameLoc(), diag::err_no_member_suggest)
-          << Name << LookupCtx << Found.getLookupName() << SS.getRange()
-          << FixItHint::CreateReplacement(Found.getNameLoc(),
-                                          Found.getLookupName().getAsString());
+          << Name << LookupCtx << CorrectedQuotedStr << SS.getRange()
+          << FixItHint::CreateReplacement(Found.getNameLoc(), CorrectedStr);
       else
         Diag(Found.getNameLoc(), diag::err_undeclared_var_use_suggest)
-          << Name << Found.getLookupName()
-          << FixItHint::CreateReplacement(Found.getNameLoc(),
-                                          Found.getLookupName().getAsString());
+          << Name << CorrectedQuotedStr
+          << FixItHint::CreateReplacement(Found.getNameLoc(), CorrectedStr);
       
-      if (NamedDecl *ND = Found.getAsSingle<NamedDecl>())
-        Diag(ND->getLocation(), diag::note_previous_decl)
-          << ND->getDeclName();
+      if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
+        Diag(ND->getLocation(), diag::note_previous_decl) << CorrectedQuotedStr;
+        Found.addDecl(ND);
+      }
+      Found.setLookupName(Corrected.getCorrection());
     } else {
-      Found.clear();
       Found.setLookupName(&Identifier);
     }
   }

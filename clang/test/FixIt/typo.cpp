@@ -74,3 +74,9 @@ int foo() {
   unsinged *ptr = 0; // expected-error{{use of undeclared identifier 'unsinged'; did you mean 'unsigned'?}}
   return *i + *ptr + global_val; // expected-error{{use of undeclared identifier 'global_val'; did you mean 'global_value'?}}
 }
+
+namespace nonstd {
+  typedef std::basic_string<char> yarn; // expected-note{{'nonstd::yarn' declared here}}
+}
+
+yarn str4; // expected-error{{unknown type name 'yarn'; did you mean 'nonstd::yarn'?}}

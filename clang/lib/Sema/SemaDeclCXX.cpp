@@ -1426,25 +1426,27 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
       }
 
       // If no results were found, try to correct typos.
+      TypoCorrection Corr;
       if (R.empty() && BaseType.isNull() &&
-          CorrectTypo(R, S, &SS, ClassDecl, 0, CTC_NoKeywords) && 
-          R.isSingleResult()) {
-        if (FieldDecl *Member = R.getAsSingle<FieldDecl>()) {
+          (Corr = CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(), S, &SS,
+                              ClassDecl, false, CTC_NoKeywords))) {
+        std::string CorrectedStr(Corr.getAsString(getLangOptions()));
+        std::string CorrectedQuotedStr(Corr.getQuoted(getLangOptions()));
+        if (FieldDecl *Member = Corr.getCorrectionDeclAs<FieldDecl>()) {
           if (Member->getDeclContext()->getRedeclContext()->Equals(ClassDecl)) {
             // We have found a non-static data member with a similar
             // name to what was typed; complain and initialize that
             // member.
             Diag(R.getNameLoc(), diag::err_mem_init_not_member_or_class_suggest)
-              << MemberOrBase << true << R.getLookupName()
-              << FixItHint::CreateReplacement(R.getNameLoc(),
-                                              R.getLookupName().getAsString());
+              << MemberOrBase << true << CorrectedQuotedStr
+              << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
             Diag(Member->getLocation(), diag::note_previous_decl)
-              << Member->getDeclName();
+              << CorrectedQuotedStr;
 
             return BuildMemberInitializer(Member, (Expr**)Args, NumArgs, IdLoc,
                                           LParenLoc, RParenLoc);
           }
-        } else if (TypeDecl *Type = R.getAsSingle<TypeDecl>()) {
+        } else if (TypeDecl *Type = Corr.getCorrectionDeclAs<TypeDecl>()) {
           const CXXBaseSpecifier *DirectBaseSpec;
           const CXXBaseSpecifier *VirtualBaseSpec;
           if (FindBaseInitializer(*this, ClassDecl, 
@@ -1454,9 +1456,8 @@ Sema::ActOnMemInitializer(Decl *ConstructorD,
             // similar name to what was typed; complain and initialize
             // that base class.
             Diag(R.getNameLoc(), diag::err_mem_init_not_member_or_class_suggest)
-              << MemberOrBase << false << R.getLookupName()
-              << FixItHint::CreateReplacement(R.getNameLoc(),
-                                              R.getLookupName().getAsString());
+              << MemberOrBase << false << CorrectedQuotedStr
+              << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
 
             const CXXBaseSpecifier *BaseSpec = DirectBaseSpec? DirectBaseSpec 
                                                              : VirtualBaseSpec;
@@ -4706,6 +4707,13 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
       // Make our StdNamespace cache point at the first real definition of the
       // "std" namespace.
       StdNamespace = Namespc;
+
+      // Add this instance of "std" to the set of known namespaces
+      KnownNamespaces[Namespc] = false;
+    } else if (!Namespc->isInline()) {
+      // Since this is an "original" namespace, add it to the known set of
+      // namespaces if it is not an inline namespace.
+      KnownNamespaces[Namespc] = false;
     }
 
     PushOnScopeChains(Namespc, DeclRegionScope);
@@ -4841,6 +4849,39 @@ static bool IsUsingDirectiveInToplevelContext(DeclContext *CurContext) {
   }
 }
 
+static bool TryNamespaceTypoCorrection(Sema &S, LookupResult &R, Scope *Sc,
+                                       CXXScopeSpec &SS,
+                                       SourceLocation IdentLoc,
+                                       IdentifierInfo *Ident) {
+  R.clear();
+  if (TypoCorrection Corrected = S.CorrectTypo(R.getLookupNameInfo(),
+                                               R.getLookupKind(), Sc, &SS, NULL,
+                                               false, S.CTC_NoKeywords, NULL)) {
+    if (Corrected.getCorrectionDeclAs<NamespaceDecl>() ||
+        Corrected.getCorrectionDeclAs<NamespaceAliasDecl>()) {
+      std::string CorrectedStr(Corrected.getAsString(S.getLangOptions()));
+      std::string CorrectedQuotedStr(Corrected.getQuoted(S.getLangOptions()));
+      if (DeclContext *DC = S.computeDeclContext(SS, false))
+        S.Diag(IdentLoc, diag::err_using_directive_member_suggest)
+          << Ident << DC << CorrectedQuotedStr << SS.getRange()
+          << FixItHint::CreateReplacement(IdentLoc, CorrectedStr);
+      else
+        S.Diag(IdentLoc, diag::err_using_directive_suggest)
+          << Ident << CorrectedQuotedStr
+          << FixItHint::CreateReplacement(IdentLoc, CorrectedStr);
+
+      S.Diag(Corrected.getCorrectionDecl()->getLocation(),
+           diag::note_namespace_defined_here) << CorrectedQuotedStr;
+
+      Ident = Corrected.getCorrectionAsIdentifierInfo();
+      R.addDecl(Corrected.getCorrectionDecl());
+      return true;
+    }
+    R.setLookupName(Ident);
+  }
+  return false;
+}
+
 Decl *Sema::ActOnUsingDirective(Scope *S,
                                           SourceLocation UsingLoc,
                                           SourceLocation NamespcLoc,
@@ -4869,6 +4910,7 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
     return 0;
 
   if (R.empty()) {
+    R.clear();
     // Allow "using namespace std;" or "using namespace ::std;" even if 
     // "std" hasn't been defined yet, for GCC compatibility.
     if ((!Qualifier || Qualifier->getKind() == NestedNameSpecifier::Global) &&
@@ -4878,27 +4920,7 @@ Decl *Sema::ActOnUsingDirective(Scope *S,
       R.resolveKind();
     } 
     // Otherwise, attempt typo correction.
-    else if (DeclarationName Corrected = CorrectTypo(R, S, &SS, 0, false, 
-                                                       CTC_NoKeywords, 0)) {
-      if (R.getAsSingle<NamespaceDecl>() || 
-          R.getAsSingle<NamespaceAliasDecl>()) {
-        if (DeclContext *DC = computeDeclContext(SS, false))
-          Diag(IdentLoc, diag::err_using_directive_member_suggest)
-            << NamespcName << DC << Corrected << SS.getRange()
-            << FixItHint::CreateReplacement(IdentLoc, Corrected.getAsString());        
-        else
-          Diag(IdentLoc, diag::err_using_directive_suggest)
-            << NamespcName << Corrected
-            << FixItHint::CreateReplacement(IdentLoc, Corrected.getAsString());
-        Diag(R.getFoundDecl()->getLocation(), diag::note_namespace_defined_here)
-          << Corrected;
-        
-        NamespcName = Corrected.getAsIdentifierInfo();
-      } else {
-        R.clear();
-        R.setLookupName(NamespcName);
-      }
-    }
+    else TryNamespaceTypoCorrection(*this, R, S, SS, IdentLoc, NamespcName);
   }
   
   if (!R.empty()) {
@@ -5816,30 +5838,7 @@ Decl *Sema::ActOnNamespaceAliasDef(Scope *S,
     return 0;
 
   if (R.empty()) {
-    if (DeclarationName Corrected = CorrectTypo(R, S, &SS, 0, false, 
-                                                CTC_NoKeywords, 0)) {
-      if (R.getAsSingle<NamespaceDecl>() || 
-          R.getAsSingle<NamespaceAliasDecl>()) {
-        if (DeclContext *DC = computeDeclContext(SS, false))
-          Diag(IdentLoc, diag::err_using_directive_member_suggest)
-            << Ident << DC << Corrected << SS.getRange()
-            << FixItHint::CreateReplacement(IdentLoc, Corrected.getAsString());        
-        else
-          Diag(IdentLoc, diag::err_using_directive_suggest)
-            << Ident << Corrected
-            << FixItHint::CreateReplacement(IdentLoc, Corrected.getAsString());
-        
-        Diag(R.getFoundDecl()->getLocation(), diag::note_namespace_defined_here)
-          << Corrected;
-        
-        Ident = Corrected.getAsIdentifierInfo();
-      } else {
-        R.clear();
-        R.setLookupName(Ident);
-      }
-    }
-    
-    if (R.empty()) {
+    if (!TryNamespaceTypoCorrection(*this, R, S, SS, IdentLoc, Ident)) {
       Diag(NamespaceLoc, diag::err_expected_namespace_name) << SS.getRange();
       return 0;
     }

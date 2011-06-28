@@ -49,6 +49,11 @@ public:
   /// instance and factory methods, respectively, with this selector.
   virtual std::pair<ObjCMethodList,ObjCMethodList> ReadMethodPool(Selector Sel);
 
+  /// \brief Load the set of namespaces that are known to the external source,
+  /// which will be used during typo correction.
+  virtual void ReadKnownNamespaces(
+                           llvm::SmallVectorImpl<NamespaceDecl *> &Namespaces);
+  
   /// \brief Do last resort, unqualified lookup on a LookupResult that
   /// Sema cannot find.
   ///

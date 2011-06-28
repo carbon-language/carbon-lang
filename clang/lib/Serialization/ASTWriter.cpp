@@ -781,6 +781,8 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(FP_PRAGMA_OPTIONS);
   RECORD(OPENCL_EXTENSIONS);
   RECORD(DELEGATING_CTORS);
+  RECORD(FILE_SOURCE_LOCATION_OFFSETS);
+  RECORD(KNOWN_NAMESPACES);
   
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
@@ -2845,6 +2847,16 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     AddDeclRef(Context.getcudaConfigureCallDecl(), CUDASpecialDeclRefs);
   }
 
+  // Build a record containing all of the known namespaces.
+  RecordData KnownNamespaces;
+  for (llvm::DenseMap<NamespaceDecl*, bool>::iterator 
+            I = SemaRef.KnownNamespaces.begin(),
+         IEnd = SemaRef.KnownNamespaces.end();
+       I != IEnd; ++I) {
+    if (!I->second)
+      AddDeclRef(I->first, KnownNamespaces);
+  }
+  
   // Write the remaining AST contents.
   RecordData Record;
   Stream.EnterSubblock(AST_BLOCK_ID, 5);
@@ -2954,6 +2966,10 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   if (!DelegatingCtorDecls.empty())
     Stream.EmitRecord(DELEGATING_CTORS, DelegatingCtorDecls);
 
+  // Write the known namespaces.
+  if (!KnownNamespaces.empty())
+    Stream.EmitRecord(KNOWN_NAMESPACES, KnownNamespaces);
+  
   // Some simple statistics
   Record.clear();
   Record.push_back(NumStatements);

@@ -294,26 +294,31 @@ void Sema::LookupTemplateName(LookupResult &Found,
   if (Found.empty() && !isDependent) {
     // If we did not find any names, attempt to correct any typos.
     DeclarationName Name = Found.getLookupName();
-    if (DeclarationName Corrected = CorrectTypo(Found, S, &SS, LookupCtx,
-                                                false, CTC_CXXCasts)) {
+    Found.clear();
+    if (TypoCorrection Corrected = CorrectTypo(Found.getLookupNameInfo(),
+                                               Found.getLookupKind(), S, &SS,
+                                               LookupCtx, false,
+                                               CTC_CXXCasts)) {
+      Found.setLookupName(Corrected.getCorrection());
+      if (Corrected.getCorrectionDecl())
+        Found.addDecl(Corrected.getCorrectionDecl());
       FilterAcceptableTemplateNames(Found);
       if (!Found.empty()) {
+        std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
+        std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
         if (LookupCtx)
           Diag(Found.getNameLoc(), diag::err_no_member_template_suggest)
-            << Name << LookupCtx << Found.getLookupName() << SS.getRange()
-            << FixItHint::CreateReplacement(Found.getNameLoc(),
-                                          Found.getLookupName().getAsString());
+            << Name << LookupCtx << CorrectedQuotedStr << SS.getRange()
+            << FixItHint::CreateReplacement(Found.getNameLoc(), CorrectedStr);
         else
           Diag(Found.getNameLoc(), diag::err_no_template_suggest)
-            << Name << Found.getLookupName()
-            << FixItHint::CreateReplacement(Found.getNameLoc(),
-                                          Found.getLookupName().getAsString());
+            << Name << CorrectedQuotedStr
+            << FixItHint::CreateReplacement(Found.getNameLoc(), CorrectedStr);
         if (TemplateDecl *Template = Found.getAsSingle<TemplateDecl>())
           Diag(Template->getLocation(), diag::note_previous_decl)
-            << Template->getDeclName();
+            << CorrectedQuotedStr;
       }
     } else {
-      Found.clear();
       Found.setLookupName(Name);
     }
   }

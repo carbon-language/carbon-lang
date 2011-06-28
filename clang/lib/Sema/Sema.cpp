@@ -154,6 +154,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
     AnalysisWarnings(*this)
 {
   TUScope = 0;
+  LoadedExternalKnownNamespaces = false;
+  
   if (getLangOptions().CPlusPlus)
     FieldCollector.reset(new CXXFieldCollector());
 
@@ -776,6 +778,10 @@ ExternalSemaSource::~ExternalSemaSource() {}
 std::pair<ObjCMethodList, ObjCMethodList>
 ExternalSemaSource::ReadMethodPool(Selector Sel) {
   return std::pair<ObjCMethodList, ObjCMethodList>();
+}
+
+void ExternalSemaSource::ReadKnownNamespaces(
+                           llvm::SmallVectorImpl<NamespaceDecl *> &Namespaces) {  
 }
 
 void PrettyDeclStackTraceEntry::print(llvm::raw_ostream &OS) const {

@@ -2369,6 +2369,15 @@ ASTReader::ReadASTBlock(PerFileData &F) {
         TentativeDefinitions.insert(TentativeDefinitions.end(),
                                     Record.begin(), Record.end());
       break;
+        
+    case KNOWN_NAMESPACES:
+      // Optimization for the first block.
+      if (KnownNamespaces.empty())
+        KnownNamespaces.swap(Record);
+      else
+        KnownNamespaces.insert(KnownNamespaces.end(), 
+                               Record.begin(), Record.end());
+      break;
     }
     First = false;
   }
@@ -4450,6 +4459,17 @@ ASTReader::ReadMethodPool(Selector Sel) {
 
   ++NumMethodPoolMisses;
   return std::pair<ObjCMethodList, ObjCMethodList>();
+}
+
+void ASTReader::ReadKnownNamespaces(
+                          llvm::SmallVectorImpl<NamespaceDecl *> &Namespaces) {
+  Namespaces.clear();
+  
+  for (unsigned I = 0, N = KnownNamespaces.size(); I != N; ++I) {
+    if (NamespaceDecl *Namespace 
+                = dyn_cast_or_null<NamespaceDecl>(GetDecl(KnownNamespaces[I])))
+      Namespaces.push_back(Namespace);
+  }
 }
 
 void ASTReader::LoadSelector(Selector Sel) {

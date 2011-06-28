@@ -555,20 +555,24 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   // We didn't find anything with the given name, so try to correct
   // for typos.
   DeclarationName Name = R.getLookupName();
-  if (SemaRef.CorrectTypo(R, 0, &SS, DC, false, Sema::CTC_MemberLookup) &&
-      !R.empty() &&
-      (isa<ValueDecl>(*R.begin()) || isa<FunctionTemplateDecl>(*R.begin()))) {
+  TypoCorrection Corrected = SemaRef.CorrectTypo(R.getLookupNameInfo(),
+                                                 R.getLookupKind(), NULL,
+                                                 &SS, DC, false,
+                                                 Sema::CTC_MemberLookup);
+  NamedDecl *ND = Corrected.getCorrectionDecl();
+  R.clear();
+  if (ND && (isa<ValueDecl>(ND) || isa<FunctionTemplateDecl>(ND))) {
+    std::string CorrectedStr(
+        Corrected.getAsString(SemaRef.getLangOptions()));
+    std::string CorrectedQuotedStr(
+        Corrected.getQuoted(SemaRef.getLangOptions()));
+    R.setLookupName(Corrected.getCorrection());
+    R.addDecl(ND);
     SemaRef.Diag(R.getNameLoc(), diag::err_no_member_suggest)
-      << Name << DC << R.getLookupName() << SS.getRange()
-      << FixItHint::CreateReplacement(R.getNameLoc(),
-                                      R.getLookupName().getAsString());
-    if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
-      SemaRef.Diag(ND->getLocation(), diag::note_previous_decl)
-        << ND->getDeclName();
-    return false;
-  } else {
-    R.clear();
-    R.setLookupName(Name);
+      << Name << DC << CorrectedQuotedStr << SS.getRange()
+      << FixItHint::CreateReplacement(R.getNameLoc(), CorrectedStr);
+    SemaRef.Diag(ND->getLocation(), diag::note_previous_decl)
+      << ND->getDeclName();
   }
 
   return false;
@@ -1068,10 +1072,10 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       // Attempt to correct for typos in ivar names.
       LookupResult Res(*this, R.getLookupName(), R.getNameLoc(),
                        LookupMemberName);
-      if (CorrectTypo(Res, 0, 0, IDecl, false, 
-                      IsArrow ? CTC_ObjCIvarLookup
-                              : CTC_ObjCPropertyLookup) &&
-          (IV = Res.getAsSingle<ObjCIvarDecl>())) {
+      TypoCorrection Corrected = CorrectTypo(
+          R.getLookupNameInfo(), LookupMemberName, NULL, NULL, IDecl, false,
+          IsArrow ? CTC_ObjCIvarLookup : CTC_ObjCPropertyLookup);
+      if ((IV = Corrected.getCorrectionDeclAs<ObjCIvarDecl>())) {
         Diag(R.getNameLoc(),
              diag::err_typecheck_member_reference_ivar_suggest)
           << IDecl->getDeclName() << MemberName << IV->getDeclName()

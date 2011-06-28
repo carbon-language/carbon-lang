@@ -371,7 +371,11 @@ namespace clang {
 
       /// \brief Record code for the table of offsets into the block
       /// of file source-location information.
-      FILE_SOURCE_LOCATION_OFFSETS = 45
+      FILE_SOURCE_LOCATION_OFFSETS = 45,
+      
+      /// \brief Record code for the set of known namespaces, which are used
+      /// for typo correction.
+      KNOWN_NAMESPACES = 46
 
     };
 

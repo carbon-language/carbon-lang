@@ -287,41 +287,42 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
   
   // There may have been a typo in the name of the type. Look up typo
   // results, in case we have something that we can suggest.
-  LookupResult Lookup(*this, &II, IILoc, LookupOrdinaryName, 
-                      NotForRedeclaration);
+  if (TypoCorrection Corrected = CorrectTypo(DeclarationNameInfo(&II, IILoc),
+                                             LookupOrdinaryName, S, SS, NULL,
+                                             false, CTC_Type)) {
+    std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
+    std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
 
-  if (DeclarationName Corrected = CorrectTypo(Lookup, S, SS, 0, 0, CTC_Type)) {
-    if (NamedDecl *Result = Lookup.getAsSingle<NamedDecl>()) {
+    if (Corrected.isKeyword()) {
+      // We corrected to a keyword.
+      // FIXME: Actually recover with the keyword we suggest, and emit a fix-it.
+      Diag(IILoc, diag::err_unknown_typename_suggest)
+        << &II << CorrectedQuotedStr;
+      return true;      
+    } else {
+      NamedDecl *Result = Corrected.getCorrectionDecl();
       if ((isa<TypeDecl>(Result) || isa<ObjCInterfaceDecl>(Result)) &&
           !Result->isInvalidDecl()) {
         // We found a similarly-named type or interface; suggest that.
         if (!SS || !SS->isSet())
           Diag(IILoc, diag::err_unknown_typename_suggest)
-            << &II << Lookup.getLookupName()
-            << FixItHint::CreateReplacement(SourceRange(IILoc),
-                                            Result->getNameAsString());
+            << &II << CorrectedQuotedStr
+            << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
         else if (DeclContext *DC = computeDeclContext(*SS, false))
           Diag(IILoc, diag::err_unknown_nested_typename_suggest) 
-            << &II << DC << Lookup.getLookupName() << SS->getRange()
-            << FixItHint::CreateReplacement(SourceRange(IILoc),
-                                            Result->getNameAsString());
+            << &II << DC << CorrectedQuotedStr << SS->getRange()
+            << FixItHint::CreateReplacement(SourceRange(IILoc), CorrectedStr);
         else
           llvm_unreachable("could not have corrected a typo here");
 
         Diag(Result->getLocation(), diag::note_previous_decl)
-          << Result->getDeclName();
+          << CorrectedQuotedStr;
         
         SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS,
                                     false, false, ParsedType(),
                                     /*NonTrivialTypeSourceInfo=*/true);
         return true;
       }
-    } else if (Lookup.empty()) {
-      // We corrected to a keyword.
-      // FIXME: Actually recover with the keyword we suggest, and emit a fix-it.
-      Diag(IILoc, diag::err_unknown_typename_suggest)
-        << &II << Corrected;
-      return true;      
     }
   }
 
@@ -509,11 +510,14 @@ Corrected:
     // Perform typo correction to determine if there is another name that is
     // close to this name.
     if (!SecondTry) {
-      if (DeclarationName Corrected = CorrectTypo(Result, S, &SS)) {
+      if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
+                                                 Result.getLookupKind(), S, &SS)) {
         unsigned UnqualifiedDiag = diag::err_undeclared_var_use_suggest;
         unsigned QualifiedDiag = diag::err_no_member_suggest;
+        std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
+        std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
         
-        NamedDecl *FirstDecl = Result.empty()? 0 : *Result.begin();
+        NamedDecl *FirstDecl = Corrected.getCorrectionDecl();
         NamedDecl *UnderlyingFirstDecl
           = FirstDecl? FirstDecl->getUnderlyingDecl() : 0;
         if (getLangOptions().CPlusPlus && NextToken.is(tok::less) &&
@@ -528,25 +532,34 @@ Corrected:
            QualifiedDiag = diag::err_unknown_nested_typename_suggest;
          }
         
+        if (Corrected.getCorrectionSpecifier())
+          SS.MakeTrivial(Context, Corrected.getCorrectionSpecifier(), SourceRange(NameLoc));
+
         if (SS.isEmpty())
           Diag(NameLoc, UnqualifiedDiag)
-            << Name << Corrected
-            << FixItHint::CreateReplacement(NameLoc, Corrected.getAsString());
+            << Name << CorrectedQuotedStr
+            << FixItHint::CreateReplacement(NameLoc, CorrectedStr);
         else
           Diag(NameLoc, QualifiedDiag)
-            << Name << computeDeclContext(SS, false) << Corrected
+            << Name << computeDeclContext(SS, false) << CorrectedQuotedStr
             << SS.getRange()
-            << FixItHint::CreateReplacement(NameLoc, Corrected.getAsString());
+            << FixItHint::CreateReplacement(NameLoc, CorrectedStr);
 
         // Update the name, so that the caller has the new name.
-        Name = Corrected.getAsIdentifierInfo();
+        Name = Corrected.getCorrectionAsIdentifierInfo();
         
+        // Also update the LookupResult...
+        // FIXME: This should probably go away at some point
+        Result.clear();
+        Result.setLookupName(Corrected.getCorrection());
+        if (FirstDecl) Result.addDecl(FirstDecl);
+
         // Typo correction corrected to a keyword.
-        if (Result.empty())
-          return Corrected.getAsIdentifierInfo();
+        if (Corrected.isKeyword())
+          return Corrected.getCorrectionAsIdentifierInfo();
         
         Diag(FirstDecl->getLocation(), diag::note_previous_decl)
-          << FirstDecl->getDeclName();
+          << CorrectedQuotedStr;
 
         // If we found an Objective-C instance variable, let
         // LookupInObjCMethod build the appropriate expression to
@@ -1137,17 +1150,18 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 /// class could not be found.
 ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
                                               SourceLocation IdLoc,
-                                              bool TypoCorrection) {
+                                              bool DoTypoCorrection) {
   // The third "scope" argument is 0 since we aren't enabling lazy built-in
   // creation from this context.
   NamedDecl *IDecl = LookupSingleName(TUScope, Id, IdLoc, LookupOrdinaryName);
 
-  if (!IDecl && TypoCorrection) {
+  if (!IDecl && DoTypoCorrection) {
     // Perform typo correction at the given location, but only if we
     // find an Objective-C class name.
-    LookupResult R(*this, Id, IdLoc, LookupOrdinaryName);
-    if (CorrectTypo(R, TUScope, 0, 0, false, CTC_NoKeywords) &&
-        (IDecl = R.getAsSingle<ObjCInterfaceDecl>())) {
+    TypoCorrection C;
+    if ((C = CorrectTypo(DeclarationNameInfo(Id, IdLoc), LookupOrdinaryName,
+                         TUScope, NULL, NULL, false, CTC_NoKeywords)) &&
+        (IDecl = C.getCorrectionDeclAs<ObjCInterfaceDecl>())) {
       Diag(IdLoc, diag::err_undef_interface_suggest)
         << Id << IDecl->getDeclName() 
         << FixItHint::CreateReplacement(IdLoc, IDecl->getNameAsString());

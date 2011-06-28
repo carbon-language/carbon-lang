@@ -1443,19 +1443,23 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         // was a typo for another field name.
         LookupResult R(SemaRef, FieldName, D->getFieldLoc(),
                        Sema::LookupMemberName);
-        if (SemaRef.CorrectTypo(R, /*Scope=*/0, /*SS=*/0, RT->getDecl(), false,
-                                Sema::CTC_NoKeywords) &&
-            (ReplacementField = R.getAsSingle<FieldDecl>()) &&
+        TypoCorrection Corrected = SemaRef.CorrectTypo(
+            DeclarationNameInfo(FieldName, D->getFieldLoc()),
+            Sema::LookupMemberName, /*Scope=*/NULL, /*SS=*/NULL,
+            RT->getDecl(), false, Sema::CTC_NoKeywords);
+        if ((ReplacementField = Corrected.getCorrectionDeclAs<FieldDecl>()) &&
             ReplacementField->getDeclContext()->getRedeclContext()
                                                       ->Equals(RT->getDecl())) {
+          std::string CorrectedStr(
+              Corrected.getAsString(SemaRef.getLangOptions()));
+          std::string CorrectedQuotedStr(
+              Corrected.getQuoted(SemaRef.getLangOptions()));
           SemaRef.Diag(D->getFieldLoc(),
                        diag::err_field_designator_unknown_suggest)
-            << FieldName << CurrentObjectType << R.getLookupName()
-            << FixItHint::CreateReplacement(D->getFieldLoc(),
-                                            R.getLookupName().getAsString());
+            << FieldName << CurrentObjectType << CorrectedQuotedStr
+            << FixItHint::CreateReplacement(D->getFieldLoc(), CorrectedStr);
           SemaRef.Diag(ReplacementField->getLocation(),
-                       diag::note_previous_decl)
-            << ReplacementField->getDeclName();
+                       diag::note_previous_decl) << CorrectedQuotedStr;
         } else {
           SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
             << FieldName << CurrentObjectType;
