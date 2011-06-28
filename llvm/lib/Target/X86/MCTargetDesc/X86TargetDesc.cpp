@@ -24,6 +24,12 @@
 
 using namespace llvm;
 
+MCInstrInfo *createX86MCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitX86MCInstrInfo(X);
+  return X;
+}
+
 MCRegisterInfo *createX86MCRegisterInfo() {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitX86MCRegisterInfo(X);

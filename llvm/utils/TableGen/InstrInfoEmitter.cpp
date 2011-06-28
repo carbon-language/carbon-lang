@@ -206,7 +206,15 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i)
     emitRecord(*NumberedInstructions[i], i, InstrInfo, EmittedLists,
                OperandInfoIDs, OS);
-  OS << "};\n";
+  OS << "};\n\n";
+
+
+  // MCInstrInfo initialization routine.
+  OS << "static inline void Init" << TargetName
+     << "MCInstrInfo(MCInstrInfo *II) {\n";
+  OS << "  II->InitMCInstrInfo(" << TargetName << "Insts, "
+     << NumberedInstructions.size() << ");\n}\n\n";
+
   OS << "} // End llvm namespace \n";
 
   OS << "#endif // GET_INSTRINFO_MC_DESC\n\n";

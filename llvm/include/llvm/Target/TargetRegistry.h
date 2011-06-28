@@ -33,6 +33,7 @@ namespace llvm {
   class MCContext;
   class MCDisassembler;
   class MCInstPrinter;
+  class MCInstrInfo;
   class MCRegisterInfo;
   class MCStreamer;
   class TargetAsmBackend;
@@ -66,6 +67,7 @@ namespace llvm {
 
     typedef MCAsmInfo *(*AsmInfoCtorFnTy)(const Target &T,
                                           StringRef TT);
+    typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(void);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
@@ -125,6 +127,10 @@ namespace llvm {
     /// AsmInfoCtorFn - Constructor function for this target's MCAsmInfo, if
     /// registered.
     AsmInfoCtorFnTy AsmInfoCtorFn;
+
+    /// MCInstrInfoCtorFn - Constructor function for this target's MCInstrInfo,
+    /// if registered.
+    MCInstrInfoCtorFnTy MCInstrInfoCtorFn;
 
     /// MCRegInfoCtorFn - Constructor function for this target's MCRegisterInfo,
     /// if registered.
@@ -237,6 +243,14 @@ namespace llvm {
       if (!AsmInfoCtorFn)
         return 0;
       return AsmInfoCtorFn(*this, Triple);
+    }
+
+    /// createMCInstrInfo - Create a MCInstrInfo implementation.
+    ///
+    MCInstrInfo *createMCInstrInfo() const {
+      if (!MCInstrInfoCtorFn)
+        return 0;
+      return MCInstrInfoCtorFn();
     }
 
     /// createMCRegInfo - Create a MCRegisterInfo implementation.
@@ -458,6 +472,21 @@ namespace llvm {
       // Ignore duplicate registration.
       if (!T.AsmInfoCtorFn)
         T.AsmInfoCtorFn = Fn;
+    }
+
+    /// RegisterMCInstrInfo - Register a MCInstrInfo implementation for the
+    /// given target.
+    ///
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct a MCInstrInfo for the target.
+    static void RegisterMCInstrInfo(Target &T, Target::MCInstrInfoCtorFnTy Fn) {
+      // Ignore duplicate registration.
+      if (!T.MCInstrInfoCtorFn)
+        T.MCInstrInfoCtorFn = Fn;
     }
 
     /// RegisterMCRegInfo - Register a MCRegisterInfo implementation for the
@@ -682,6 +711,39 @@ namespace llvm {
   struct RegisterAsmInfoFn {
     RegisterAsmInfoFn(Target &T, Target::AsmInfoCtorFnTy Fn) {
       TargetRegistry::RegisterAsmInfo(T, Fn);
+    }
+  };
+
+  /// RegisterMCInstrInfo - Helper template for registering a target instruction
+  /// info implementation.  This invokes the static "Create" method on the class
+  /// to actually do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCInstrInfo<FooMCInstrInfo> X(TheFooTarget);
+  /// }
+  template<class MCInstrInfoImpl>
+  struct RegisterMCInstrInfo {
+    RegisterMCInstrInfo(Target &T) {
+      TargetRegistry::RegisterMCInstrInfo(T, &Allocator);
+    }
+  private:
+    static MCInstrInfo *Allocator() {
+      return new MCInstrInfoImpl();
+    }
+  };
+
+  /// RegisterMCInstrInfoFn - Helper template for registering a target
+  /// instruction info implementation.  This invokes the specified function to
+  /// do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCInstrInfoFn X(TheFooTarget, TheFunction);
+  /// }
+  struct RegisterMCInstrInfoFn {
+    RegisterMCInstrInfoFn(Target &T, Target::MCInstrInfoCtorFnTy Fn) {
+      TargetRegistry::RegisterMCInstrInfo(T, Fn);
     }
   };
 
