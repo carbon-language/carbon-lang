@@ -465,7 +465,8 @@ multiclass T2I_un_irs<bits<4> opcod, string opc,
 /// changed to modify CPSR.
 multiclass T2I_bin_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                       PatFrag opnode, bit Commutable = 0, string wide = ""> {
+                       PatFrag opnode, string baseOpc, bit Commutable = 0,
+                       string wide = ""> {
    // shifted imm
    def ri : T2sTwoRegImm<
                 (outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm), iii,
@@ -497,14 +498,31 @@ multiclass T2I_bin_irs<bits<4> opcod, string opc,
      let Inst{26-25} = 0b01;
      let Inst{24-21} = opcod;
    }
+  // Assembly aliases for optional destination operand when it's the same
+  // as the source operand.
+  def : InstAlias<!strconcat(opc, "${s}${p} $Rdn, $imm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rdn, rGPR:$Rdn,
+                                                    t2_so_imm:$imm, pred:$p,
+                                                    cc_out:$s)>,
+     Requires<[IsThumb2]>;
+  def : InstAlias<!strconcat(opc, "${s}${p}", wide, " $Rdn, $Rm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "rr")) rGPR:$Rdn, rGPR:$Rdn,
+                                                    rGPR:$Rm, pred:$p,
+                                                    cc_out:$s)>,
+     Requires<[IsThumb2]>;
+  def : InstAlias<!strconcat(opc, "${s}${p}", wide, " $Rdn, $shift"),
+     (!cast<Instruction>(!strconcat(baseOpc, "rs")) rGPR:$Rdn, rGPR:$Rdn,
+                                                    t2_so_reg:$shift, pred:$p,
+                                                    cc_out:$s)>,
+     Requires<[IsThumb2]>;
 }
 
 /// T2I_bin_w_irs - Same as T2I_bin_irs except these operations need
-//  the ".w" prefix to indicate that they are wide.
+//  the ".w" suffix to indicate that they are wide.
 multiclass T2I_bin_w_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                         PatFrag opnode, bit Commutable = 0> :
-    T2I_bin_irs<opcod, opc, iii, iir, iis, opnode, Commutable, ".w">;
+                         PatFrag opnode, string baseOpc, bit Commutable = 0> :
+    T2I_bin_irs<opcod, opc, iii, iir, iis, opnode, baseOpc, Commutable, ".w">;
 
 /// T2I_rbin_is - Same as T2I_bin_irs except the order of operands are
 /// reversed.  The 'rr' form is only defined for the disassembler; for codegen
@@ -2069,17 +2087,18 @@ def t2MOVsra_flag : T2TwoRegShiftImm<
 
 defm t2AND  : T2I_bin_w_irs<0b0000, "and",
                             IIC_iBITi, IIC_iBITr, IIC_iBITsi,
-                            BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
+                            BinOpFrag<(and node:$LHS, node:$RHS)>, "t2AND", 1>;
 defm t2ORR  : T2I_bin_w_irs<0b0010, "orr",
                             IIC_iBITi, IIC_iBITr, IIC_iBITsi,
-                            BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
+                            BinOpFrag<(or  node:$LHS, node:$RHS)>, "t2ORR", 1>;
 defm t2EOR  : T2I_bin_w_irs<0b0100, "eor",
                             IIC_iBITi, IIC_iBITr, IIC_iBITsi,
-                            BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
+                            BinOpFrag<(xor node:$LHS, node:$RHS)>, "t2EOR", 1>;
 
 defm t2BIC  : T2I_bin_w_irs<0b0001, "bic",
                             IIC_iBITi, IIC_iBITr, IIC_iBITsi,
-                            BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
+                            BinOpFrag<(and node:$LHS, (not node:$RHS))>,
+                            "t2BIC">;
 
 class T2BitFI<dag oops, dag iops, InstrItinClass itin,
               string opc, string asm, list<dag> pattern>
@@ -2179,7 +2198,8 @@ let Constraints = "$src = $Rd" in {
 
 defm t2ORN  : T2I_bin_irs<0b0011, "orn",
                           IIC_iBITi, IIC_iBITr, IIC_iBITsi,
-                          BinOpFrag<(or  node:$LHS, (not node:$RHS))>, 0, "">;
+                          BinOpFrag<(or  node:$LHS, (not node:$RHS))>,
+                          "t2ORN", 0, "">;
 
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
