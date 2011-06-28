@@ -57,7 +57,8 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
     Target.getRegisterClasses();
   if (!RegisterClasses.empty()) {
     OS << "\n// Register classes\n";
-    OS << "namespace " << RegisterClasses[0].Namespace << " {\n";
+    if (!Namespace.empty())
+      OS << "namespace " << Namespace << " {\n";
     OS << "enum {\n";
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       if (i) OS << ",\n";
@@ -65,8 +66,26 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
       OS << " = " << i;
     }
     OS << "\n  };\n";
-    OS << "}\n";
+    if (!Namespace.empty())
+      OS << "}\n";
   }
+
+  const std::vector<Record*> RegAltNameIndices = Target.getRegAltNameIndices();
+  // If the only definition is the default NoRegAltName, we don't need to
+  // emit anything.
+  if (RegAltNameIndices.size() > 1) {
+    OS << "\n// Register alternate name indices\n";
+    if (!Namespace.empty())
+      OS << "namespace " << Namespace << " {\n";
+    OS << "enum {\n";
+    for (unsigned i = 0, e = RegAltNameIndices.size(); i != e; ++i)
+      OS << "  " << RegAltNameIndices[i]->getName() << ",\t// " << i << "\n";
+    OS << "  NUM_TARGET_REG_ALT_NAMES = " << RegAltNameIndices.size() << "\n";
+    OS << "};\n";
+    if (!Namespace.empty())
+      OS << "}\n";
+  }
+
 
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_REGINFO_ENUM\n\n";
@@ -110,18 +129,6 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
       if (*I != Reg)
         OS << getQualifiedName((*I)->TheDef) << ", ";
     OS << "0 };\n";
-  }
-
-  const std::vector<Record*> RegAltNameIndices = Target.getRegAltNameIndices();
-  // If the only definition is the default NoRegAltName, we don't need to
-  // emit anything.
-  if (RegAltNameIndices.size() > 1) {
-    OS << "\n// Register alternate name indices\n";
-    OS << "enum {\n";
-    for (unsigned i = 0, e = RegAltNameIndices.size(); i != e; ++i)
-      OS << "  " << RegAltNameIndices[i]->getName() << ",\t// " << i << "\n";
-    OS << "  NUM_TARGET_REG_ALT_NAMES = " << RegAltNameIndices.size() << "\n";
-    OS << "};\n";
   }
 
   // Emit the empty sub-registers list
