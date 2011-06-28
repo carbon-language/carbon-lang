@@ -1748,7 +1748,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
 
   SourceRange TypeIdParens;
   DeclSpec DS(AttrFactory);
-  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  Declarator DeclaratorInfo(DS, Declarator::CXXNewContext);
   if (Tok.is(tok::l_paren)) {
     // If it turns out to be a placement, we change the type location.
     PlacementLParen = ConsumeParen();

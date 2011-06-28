@@ -779,8 +779,7 @@ public:
                                  SourceLocation Loc, DeclarationName Entity);
   QualType BuildParenType(QualType T);
 
-  TypeSourceInfo *GetTypeForDeclarator(Declarator &D, Scope *S,
-                                       bool AllowAutoInTypeName = false);
+  TypeSourceInfo *GetTypeForDeclarator(Declarator &D, Scope *S);
   TypeSourceInfo *GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
                                                TypeSourceInfo *ReturnTypeInfo);
   /// \brief Package the given type and TSI into a ParsedType.

@@ -1349,6 +1349,7 @@ public:
     ForContext,          // Declaration within first part of a for loop.
     ConditionContext,    // Condition declaration in a C++ if/switch/while/for.
     TemplateParamContext,// Within a template parameter list.
+    CXXNewContext,       // C++ new-expression.
     CXXCatchContext,     // C++ catch exception-declaration
     BlockLiteralContext,  // Block literal declarator.
     TemplateTypeArgContext, // Template type argument.
@@ -1499,6 +1500,7 @@ public:
     case PrototypeContext:
     case ObjCPrototypeContext:
     case TemplateParamContext:
+    case CXXNewContext:
     case CXXCatchContext:
     case BlockLiteralContext:
     case TemplateTypeArgContext:
@@ -1524,6 +1526,7 @@ public:
       return true;
 
     case TypeNameContext:
+    case CXXNewContext:
     case AliasDeclContext:
     case AliasTemplateContext:
     case ObjCPrototypeContext:
@@ -1553,6 +1556,7 @@ public:
     case TemplateParamContext:
     case CXXCatchContext:
     case TypeNameContext:
+    case CXXNewContext:
     case AliasDeclContext:
     case AliasTemplateContext:
     case BlockLiteralContext:

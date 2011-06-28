@@ -1721,8 +1721,7 @@ static void DiagnoseIgnoredQualifiers(unsigned Quals,
 ///
 /// The result of this call will never be null, but the associated
 /// type may be a null type if there's an unrecoverable error.
-TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
-                                           bool AutoAllowedInTypeName) {
+TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   // Determine the type of the declarator. Not all forms of declarator
   // have a type.
   QualType T;
@@ -1820,13 +1819,13 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       Error = 9; // Type alias
       break;
     case Declarator::TypeNameContext:
-      if (!AutoAllowedInTypeName)
-        Error = 11; // Generic
+      Error = 11; // Generic
       break;
     case Declarator::FileContext:
     case Declarator::BlockContext:
     case Declarator::ForContext:
     case Declarator::ConditionContext:
+    case Declarator::CXXNewContext:
       break;
     }
 
@@ -2434,6 +2433,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
     case Declarator::KNRTypeListContext:
     case Declarator::ObjCPrototypeContext: // FIXME: special diagnostic here?
     case Declarator::TypeNameContext:
+    case Declarator::CXXNewContext:
     case Declarator::AliasDeclContext:
     case Declarator::AliasTemplateContext:
     case Declarator::MemberContext:
@@ -2478,6 +2478,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S,
       break;
     case Declarator::TypeNameContext:
     case Declarator::TemplateParamContext:
+    case Declarator::CXXNewContext:
     case Declarator::CXXCatchContext:
     case Declarator::TemplateTypeArgContext:
       Diag(OwnedTagDecl->getLocation(),diag::err_type_defined_in_type_specifier)
