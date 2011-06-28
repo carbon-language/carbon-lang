@@ -423,7 +423,7 @@ void RAFast::definePhysReg(MachineInstr *MI, unsigned PhysReg,
 // Returns spillImpossible when PhysReg or an alias can't be spilled.
 unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
   if (UsedInInstr.test(PhysReg)) {
-    DEBUG(dbgs() << "PhysReg: " << PhysReg << " is already used in instr.\n");
+    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " is already used in instr.\n");
     return spillImpossible;
   }
   switch (unsigned VirtReg = PhysRegState[PhysReg]) {
@@ -432,15 +432,15 @@ unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
   case regFree:
     return 0;
   case regReserved:
-    DEBUG(dbgs() << "VirtReg: " << VirtReg << " corresponding to PhysReg: "
-          << PhysReg << " is reserved already.\n");
+    DEBUG(dbgs() << PrintReg(VirtReg, TRI) << " corresponding "
+                 << PrintReg(PhysReg, TRI) << " is reserved already.\n");
     return spillImpossible;
   default:
     return LiveVirtRegs.lookup(VirtReg).Dirty ? spillDirty : spillClean;
   }
 
   // This is a disabled register, add up cost of aliases.
-  DEBUG(dbgs() << "\tRegister: " << PhysReg << " is disabled.\n");
+  DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " is disabled.\n");
   unsigned Cost = 0;
   for (const unsigned *AS = TRI->getAliasSet(PhysReg);
        unsigned Alias = *AS; ++AS) {
@@ -515,7 +515,7 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
   unsigned BestReg = 0, BestCost = spillImpossible;
   for (ArrayRef<unsigned>::iterator I = AO.begin(), E = AO.end(); I != E; ++I) {
     unsigned Cost = calcSpillCost(*I);
-    DEBUG(dbgs() << "\tRegister: " << *I << "\n");
+    DEBUG(dbgs() << "\tRegister: " << PrintReg(*I, TRI) << "\n");
     DEBUG(dbgs() << "\tCost: " << Cost << "\n");
     DEBUG(dbgs() << "\tBestCost: " << BestCost << "\n");
     // Cost is 0 when all aliases are already disabled.
@@ -726,7 +726,8 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
     if (!MO.isReg() || (MO.isDef() && !MO.isEarlyClobber())) continue;
     unsigned Reg = MO.getReg();
     if (!Reg || !TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
-    DEBUG(dbgs() << "\tSetting reg " << Reg << " as used in instr\n");
+    DEBUG(dbgs() << "\tSetting " << PrintReg(Reg, TRI)
+                 << " as used in instr\n");
     UsedInInstr.set(Reg);
   }
 
