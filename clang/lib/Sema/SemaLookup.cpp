@@ -3045,7 +3045,7 @@ LabelDecl *Sema::LookupOrCreateLabel(IdentifierInfo *II, SourceLocation Loc,
 namespace {
 
 typedef llvm::StringMap<TypoCorrection, llvm::BumpPtrAllocator> TypoResultsMap;
-typedef std::map<unsigned, TypoResultsMap> TypoEditDistanceMap;
+typedef std::map<unsigned, TypoResultsMap *> TypoEditDistanceMap;
 
 static const unsigned MaxTypoDistanceResultSets = 5;
 
@@ -3071,6 +3071,14 @@ public:
       MaxEditDistance((std::numeric_limits<unsigned>::max)()),
       SemaRef(SemaRef) { }
 
+  ~TypoCorrectionConsumer() {
+    for (TypoEditDistanceMap::iterator I = BestResults.begin(),
+                                    IEnd = BestResults.end();
+         I != IEnd;
+         ++I)
+      delete I->second;
+  }
+  
   virtual void FoundDecl(NamedDecl *ND, NamedDecl *Hiding, bool InBaseClass);
   void FoundName(llvm::StringRef Name);
   void addKeywordResult(llvm::StringRef Keyword);
@@ -3087,7 +3095,7 @@ public:
   bool empty() const { return BestResults.empty(); }
 
   TypoCorrection &operator[](llvm::StringRef Name) {
-    return BestResults.begin()->second[Name];
+    return (*BestResults.begin()->second)[Name];
   }
 
   unsigned getMaxEditDistance() const {
@@ -3167,10 +3175,16 @@ void TypoCorrectionConsumer::addName(llvm::StringRef Name,
 
 void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
   llvm::StringRef Name = Correction.getCorrectionAsIdentifierInfo()->getName();
-  BestResults[Correction.getEditDistance()][Name] = Correction;
+  TypoResultsMap *& Map = BestResults[Correction.getEditDistance()];
+  if (!Map)
+    Map = new TypoResultsMap;
+  (*Map)[Name] = Correction;
 
   while (BestResults.size() > MaxTypoDistanceResultSets) {
-    BestResults.erase(--BestResults.end());
+    TypoEditDistanceMap::iterator Last = BestResults.end();
+    --Last;
+    delete Last->second;
+    BestResults.erase(Last);
   }
 }
 
@@ -3681,8 +3695,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   while (!Consumer.empty()) {
     TypoCorrectionConsumer::distance_iterator DI = Consumer.begin();
     unsigned ED = DI->first;
-    for (TypoCorrectionConsumer::result_iterator I = DI->second.begin(),
-                                              IEnd = DI->second.end();
+    for (TypoCorrectionConsumer::result_iterator I = DI->second->begin(),
+                                              IEnd = DI->second->end();
          I != IEnd; /* Increment in loop. */) {
       // If the item already has been looked up or is a keyword, keep it
       if (I->second.isResolved()) {
@@ -3704,7 +3718,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         {
           TypoCorrectionConsumer::result_iterator Next = I;
           ++Next;
-          DI->second.erase(I);
+          DI->second->erase(I);
           I = Next;
         }
         break;
@@ -3722,7 +3736,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       }
     }
 
-    if (DI->second.empty())
+    if (DI->second->empty())
       Consumer.erase(DI);
     else if (!getLangOptions().CPlusPlus || QualifiedResults.empty() || !ED)
       // If there are results in the closest possible bucket, stop
@@ -3772,7 +3786,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // No corrections remain...
   if (Consumer.empty()) return TypoCorrection();
 
-  TypoResultsMap &BestResults = Consumer.begin()->second;
+  TypoResultsMap &BestResults = *Consumer.begin()->second;
   ED = Consumer.begin()->first;
 
   if (ED > 0 && Typo->getName().size() / ED < 3) {
@@ -3788,13 +3802,13 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   // corrections without additional namespace qualifiers)
   if (getLangOptions().CPlusPlus && BestResults.size() > 1) {
     TypoCorrectionConsumer::distance_iterator DI = Consumer.begin();
-    for (TypoCorrectionConsumer::result_iterator I = DI->second.begin(),
-                                              IEnd = DI->second.end();
+    for (TypoCorrectionConsumer::result_iterator I = DI->second->begin(),
+                                              IEnd = DI->second->end();
          I != IEnd; /* Increment in loop. */) {
       if (I->second.getCorrectionSpecifier() != NULL) {
         TypoCorrectionConsumer::result_iterator Cur = I;
         ++I;
-        DI->second.erase(Cur);
+        DI->second->erase(Cur);
       } else ++I;
     }
   }
