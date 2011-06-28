@@ -20,7 +20,7 @@ namespace D {
 
 namespace C {
   class C {}; // expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'B::B' to 'const C::C &' for 1st argument}}
-  void func(C); // expected-note {{'C::func' declared here}} \
+  void func(C); // expected-note {{'D::func' declared here}} \
                 // expected-note {{passing argument to parameter here}}
   C operator+(C,C);
   D::D operator+(D::D,D::D);
@@ -38,7 +38,7 @@ namespace Test {
     // delaying, or argument checking before emitting diagnostics is needed to
     // avoid accepting and printing out a typo correction that proves to be
     // incorrect once argument-dependent lookup resolution has occurred.
-    func(B::B()); // expected-error {{use of undeclared identifier 'func'; did you mean 'C::func'?}} \
+    func(B::B()); // expected-error {{use of undeclared identifier 'func'; did you mean 'D::func'?}} \
                   // expected-error {{no viable conversion from 'B::B' to 'C::C'}}
     func(C::C());
     A::A() + A::A();
