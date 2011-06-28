@@ -58,8 +58,7 @@ EnableBasePointer("arm-use-base-pointer", cl::Hidden, cl::init(true),
 
 ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
                                          const ARMSubtarget &sti)
-  : ARMGenRegisterInfo(ARMRegDesc, ARMRegInfoDesc,
-                       ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
+  : ARMGenRegisterInfo(ARM::ADJCALLSTACKDOWN, ARM::ADJCALLSTACKUP),
     TII(tii), STI(sti),
     FramePtr((STI.isTargetDarwin() || STI.isThumb()) ? ARM::R7 : ARM::R11),
     BasePtr(ARM::R6) {

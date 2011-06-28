@@ -114,8 +114,7 @@ unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
 
 PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
                                  const TargetInstrInfo &tii)
-  : PPCGenRegisterInfo(PPCRegDesc, PPCRegInfoDesc,
-                       PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
+  : PPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
     Subtarget(ST), TII(tii) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;

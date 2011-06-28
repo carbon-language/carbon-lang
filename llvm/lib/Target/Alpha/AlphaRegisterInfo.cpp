@@ -41,8 +41,7 @@
 using namespace llvm;
 
 AlphaRegisterInfo::AlphaRegisterInfo(const TargetInstrInfo &tii)
-  : AlphaGenRegisterInfo(AlphaRegDesc, AlphaRegInfoDesc,
-                         Alpha::ADJUSTSTACKDOWN, Alpha::ADJUSTSTACKUP),
+  : AlphaGenRegisterInfo(Alpha::ADJUSTSTACKDOWN, Alpha::ADJUSTSTACKUP),
     TII(tii) {
 }
 

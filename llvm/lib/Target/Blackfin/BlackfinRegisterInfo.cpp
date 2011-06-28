@@ -38,8 +38,7 @@ using namespace llvm;
 
 BlackfinRegisterInfo::BlackfinRegisterInfo(BlackfinSubtarget &st,
                                            const TargetInstrInfo &tii)
-  : BlackfinGenRegisterInfo(BlackfinRegDesc, BlackfinRegInfoDesc,
-                            BF::ADJCALLSTACKDOWN, BF::ADJCALLSTACKUP),
+  : BlackfinGenRegisterInfo(BF::ADJCALLSTACKDOWN, BF::ADJCALLSTACKUP),
     Subtarget(st),
     TII(tii) {}
 

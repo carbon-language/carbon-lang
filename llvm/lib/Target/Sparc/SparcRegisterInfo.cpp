@@ -32,8 +32,7 @@ using namespace llvm;
 
 SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,
                                      const TargetInstrInfo &tii)
-  : SparcGenRegisterInfo(SparcRegDesc, SparcRegInfoDesc,
-                         SP::ADJCALLSTACKDOWN, SP::ADJCALLSTACKUP),
+  : SparcGenRegisterInfo(SP::ADJCALLSTACKDOWN, SP::ADJCALLSTACKUP),
     Subtarget(st), TII(tii) {
 }
 

@@ -44,8 +44,7 @@ using namespace llvm;
 
 MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST,
                                    const TargetInstrInfo &tii)
-  : MipsGenRegisterInfo(MipsRegDesc, MipsRegInfoDesc,
-                        Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
+  : MipsGenRegisterInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     Subtarget(ST), TII(tii) {}
 
 /// getRegisterNumbering - Given the enum value for some register, e.g.

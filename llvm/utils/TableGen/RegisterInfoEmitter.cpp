@@ -215,8 +215,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
      << "  explicit " << ClassName
-     << "(const MCRegisterDesc *D, const TargetRegisterInfoDesc *ID, "
-     << "int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
+     << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
      << "unsigned Flavour) const;\n"
      << "  virtual int getLLVMRegNumFull(unsigned DwarfRegNum, "
@@ -549,8 +548,9 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "  };\n";
 
   // Emit extra information about registers.
+  const std::string &TargetName = Target.getName();
   OS << "\n  static const TargetRegisterInfoDesc "
-     << Target.getName() << "RegInfoDesc[] = "
+     << TargetName << "RegInfoDesc[] = "
      << "{ // Extra Descriptors\n";
   OS << "    { 0, 0 },\n";
 
@@ -660,13 +660,13 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the constructor of the class...
   OS << ClassName << "::" << ClassName
-     << "(const MCRegisterDesc *D, const TargetRegisterInfoDesc *ID, "
-     << "int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
-     << "  : TargetRegisterInfo(ID"
+     << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
+     << "  : TargetRegisterInfo(" << TargetName << "RegInfoDesc"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
      << "                 SubRegIndexTable,\n"
      << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {\n"
-     << "  InitMCRegisterInfo(D, " << Regs.size()+1 << ");\n"
+     << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
+     << Regs.size()+1 << ");\n"
      << "}\n\n";
 
   // Collect all information about dwarf register numbers

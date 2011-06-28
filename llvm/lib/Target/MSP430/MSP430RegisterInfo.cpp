@@ -35,8 +35,7 @@ using namespace llvm;
 // FIXME: Provide proper call frame setup / destroy opcodes.
 MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm,
                                        const TargetInstrInfo &tii)
-  : MSP430GenRegisterInfo(MSP430RegDesc, MSP430RegInfoDesc,
-                          MSP430::ADJCALLSTACKDOWN, MSP430::ADJCALLSTACKUP),
+  : MSP430GenRegisterInfo(MSP430::ADJCALLSTACKDOWN, MSP430::ADJCALLSTACKUP),
     TM(tm), TII(tii) {
   StackAlign = TM.getFrameLowering()->getStackAlignment();
 }

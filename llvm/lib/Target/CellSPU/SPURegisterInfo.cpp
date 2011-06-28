@@ -189,8 +189,7 @@ unsigned SPURegisterInfo::getRegisterNumbering(unsigned RegEnum) {
 
 SPURegisterInfo::SPURegisterInfo(const SPUSubtarget &subtarget,
                                  const TargetInstrInfo &tii) :
-  SPUGenRegisterInfo(SPURegDesc, SPURegInfoDesc,
-                     SPU::ADJCALLSTACKDOWN, SPU::ADJCALLSTACKUP),
+  SPUGenRegisterInfo(SPU::ADJCALLSTACKDOWN, SPU::ADJCALLSTACKUP),
   Subtarget(subtarget),
   TII(tii)
 {

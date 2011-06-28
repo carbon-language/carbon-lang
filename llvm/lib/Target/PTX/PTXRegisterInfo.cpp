@@ -25,7 +25,7 @@ using namespace llvm;
 
 PTXRegisterInfo::PTXRegisterInfo(PTXTargetMachine &TM,
                                  const TargetInstrInfo &TII)
-  : PTXGenRegisterInfo(PTXRegDesc, PTXRegInfoDesc) {
+  : PTXGenRegisterInfo() {
 }
 
 void PTXRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,

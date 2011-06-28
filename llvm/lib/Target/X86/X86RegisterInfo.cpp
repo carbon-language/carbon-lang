@@ -54,8 +54,7 @@ ForceStackAlign("force-align-stack",
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
-  : X86GenRegisterInfo(X86RegDesc, X86RegInfoDesc,
-                       tm.getSubtarget<X86Subtarget>().is64Bit() ?
+  : X86GenRegisterInfo(tm.getSubtarget<X86Subtarget>().is64Bit() ?
                          X86::ADJCALLSTACKDOWN64 :
                          X86::ADJCALLSTACKDOWN32,
                        tm.getSubtarget<X86Subtarget>().is64Bit() ?
