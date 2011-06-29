@@ -670,20 +670,18 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   Streamer.EmitAbsValue(Range, Size);
 
   // Personality Function
-  if (Frame.Personality) {
-    Size = getSizeForEncoding(Streamer, Frame.PersonalityEncoding);
+  Size = getSizeForEncoding(Streamer, Frame.PersonalityEncoding);
+  if (Frame.Personality)
     Streamer.EmitSymbolValue(Frame.Personality, Size);
-  } else {
-    Streamer.EmitIntValue(Frame.PersonalityEncoding, 0); // No personality fn
-  }
+  else
+    Streamer.EmitIntValue(0, Size); // No personality fn
 
   // LSDA
-  if (Frame.Lsda) {
-    Size = getSizeForEncoding(Streamer, Frame.LsdaEncoding);
+  Size = getSizeForEncoding(Streamer, Frame.LsdaEncoding);
+  if (Frame.Lsda)
     Streamer.EmitSymbolValue(Frame.Lsda, Size);
-  } else {
-    Streamer.EmitIntValue(Frame.LsdaEncoding, 0); // No LSDA
-  }
+  else
+    Streamer.EmitIntValue(0, Size); // No LSDA
 
   return true;
 #endif
