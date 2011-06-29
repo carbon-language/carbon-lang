@@ -34,6 +34,7 @@ add_llvm_library(LLVMMC
   MachObjectWriter.cpp
   WinCOFFStreamer.cpp
   WinCOFFObjectWriter.cpp
+  SubtargetFeature.cpp
   TargetAsmBackend.cpp
   )
 
