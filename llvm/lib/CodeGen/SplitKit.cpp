@@ -636,7 +636,6 @@ unsigned SplitEditor::openIntv() {
 void SplitEditor::selectIntv(unsigned Idx) {
   assert(Idx != 0 && "Cannot select the complement interval");
   assert(Idx < Edit->size() && "Can only select previously opened interval");
-  DEBUG(dbgs() << "    selectIntv " << OpenIdx << " -> " << Idx << '\n');
   OpenIdx = Idx;
 }
 
@@ -654,24 +653,6 @@ SlotIndex SplitEditor::enterIntvBefore(SlotIndex Idx) {
   assert(MI && "enterIntvBefore called with invalid index");
 
   VNInfo *VNI = defFromParent(OpenIdx, ParentVNI, Idx, *MI->getParent(), MI);
-  return VNI->def;
-}
-
-SlotIndex SplitEditor::enterIntvAfter(SlotIndex Idx) {
-  assert(OpenIdx && "openIntv not called before enterIntvAfter");
-  DEBUG(dbgs() << "    enterIntvAfter " << Idx);
-  Idx = Idx.getBoundaryIndex();
-  VNInfo *ParentVNI = Edit->getParent().getVNInfoAt(Idx);
-  if (!ParentVNI) {
-    DEBUG(dbgs() << ": not live\n");
-    return Idx;
-  }
-  DEBUG(dbgs() << ": valno " << ParentVNI->id << '\n');
-  MachineInstr *MI = LIS.getInstructionFromIndex(Idx);
-  assert(MI && "enterIntvAfter called with invalid index");
-
-  VNInfo *VNI = defFromParent(OpenIdx, ParentVNI, Idx, *MI->getParent(),
-                              llvm::next(MachineBasicBlock::iterator(MI)));
   return VNI->def;
 }
 
@@ -1025,6 +1006,12 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
       for (unsigned i = 0, e = Edit->size(); i != e; ++i)
         markComplexMapped(i, ParentVNI);
   }
+
+#ifndef NDEBUG
+  // Every new interval must have a def by now, otherwise the split is bogus.
+  for (LiveRangeEdit::iterator I = Edit->begin(), E = Edit->end(); I != E; ++I)
+    assert((*I)->hasAtLeastOneValue() && "Split interval has no value");
+#endif
 
   // Transfer the simply mapped values, check if any are skipped.
   bool Skipped = transferValues();
