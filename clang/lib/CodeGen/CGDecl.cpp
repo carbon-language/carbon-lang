@@ -454,7 +454,8 @@ static bool isAccessedBy(const VarDecl &var, const Stmt *s) {
   }
 
   for (Stmt::const_child_range children = s->children(); children; ++children)
-    if (isAccessedBy(var, *children))
+    // children might be null; as in missing decl or conditional of an if-stmt.
+    if ((*children) && isAccessedBy(var, *children))
       return true;
 
   return false;
