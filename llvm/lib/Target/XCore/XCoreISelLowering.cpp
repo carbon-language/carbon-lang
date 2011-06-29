@@ -1591,21 +1591,18 @@ XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM,
 //                           XCore Inline Assembly Support
 //===----------------------------------------------------------------------===//
 
-std::vector<unsigned> XCoreTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  EVT VT) const
-{
-  if (Constraint.size() != 1)
-    return std::vector<unsigned>();
-
-  switch (Constraint[0]) {
+std::pair<unsigned, const TargetRegisterClass*>
+XCoreTargetLowering::
+getRegForInlineAsmConstraint(const std::string &Constraint,
+			     EVT VT) const {
+  if (Constraint.size() == 1) {
+    switch (Constraint[0]) {
     default : break;
     case 'r':
-      return make_vector<unsigned>(XCore::R0, XCore::R1,  XCore::R2,
-                                   XCore::R3, XCore::R4,  XCore::R5,
-                                   XCore::R6, XCore::R7,  XCore::R8,
-                                   XCore::R9, XCore::R10, XCore::R11, 0);
-      break;
+      return std::make_pair(0U, XCore::GRRegsRegisterClass);
+    }
   }
-  return std::vector<unsigned>();
+  // Use the default implementation in TargetLowering to convert the register
+  // constraint into a member of a register class.
+  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }

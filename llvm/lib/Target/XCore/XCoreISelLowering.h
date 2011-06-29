@@ -148,9 +148,9 @@ namespace llvm {
     SDValue LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) const;
 
     // Inline asm support
-    std::vector<unsigned>
-    getRegClassForInlineAsmConstraint(const std::string &Constraint,
-              EVT VT) const;
+    std::pair<unsigned, const TargetRegisterClass*>
+    getRegForInlineAsmConstraint(const std::string &Constraint,
+				 EVT VT) const;
 
     // Expand specifics
     SDValue TryExpandADDWithMul(SDNode *Op, SelectionDAG &DAG) const;
