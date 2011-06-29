@@ -5526,7 +5526,7 @@ SDValue combineSelectAndUse(SDNode *N, SDValue Slct, SDValue OtherOp,
   return SDValue();
 }
 
-// AddCombineToVPADDL- For pair-wise add on neon, use the vpaddl instruction 
+// AddCombineToVPADDL- For pair-wise add on neon, use the vpaddl instruction
 // (only after legalization).
 static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
                                  TargetLowering::DAGCombinerInfo &DCI,
@@ -5557,25 +5557,25 @@ static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
   SDNode *V = Vec.getNode();
   unsigned nextIndex = 0;
 
-  // For each operands to the ADD which are BUILD_VECTORs, 
+  // For each operands to the ADD which are BUILD_VECTORs,
   // check to see if each of their operands are an EXTRACT_VECTOR with
   // the same vector and appropriate index.
   for (unsigned i = 0, e = N0->getNumOperands(); i != e; ++i) {
     if (N0->getOperand(i)->getOpcode() == ISD::EXTRACT_VECTOR_ELT
         && N1->getOperand(i)->getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
-      
+
       SDValue ExtVec0 = N0->getOperand(i);
       SDValue ExtVec1 = N1->getOperand(i);
-      
+
       // First operand is the vector, verify its the same.
       if (V != ExtVec0->getOperand(0).getNode() ||
           V != ExtVec1->getOperand(0).getNode())
         return SDValue();
-      
+
       // Second is the constant, verify its correct.
       ConstantSDNode *C0 = dyn_cast<ConstantSDNode>(ExtVec0->getOperand(1));
       ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(ExtVec1->getOperand(1));
-      
+
       // For the constant, we want to see all the even or all the odd.
       if (!C0 || !C1 || C0->getZExtValue() != nextIndex
           || C1->getZExtValue() != nextIndex+1)
@@ -5583,7 +5583,7 @@ static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
 
       // Increment index.
       nextIndex+=2;
-    } else 
+    } else
       return SDValue();
   }
 
@@ -5598,7 +5598,7 @@ static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
 
   // Input is the vector.
   Ops.push_back(Vec);
-  
+
   // Get widened type and narrowed type.
   MVT widenType;
   unsigned numElem = VT.getVectorNumElements();
@@ -5627,7 +5627,7 @@ static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
   SDValue Result = AddCombineToVPADDL(N, N0, N1, DCI, Subtarget);
   if (Result.getNode())
     return Result;
-  
+
   // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
   if (N0.getOpcode() == ISD::SELECT && N0.getNode()->hasOneUse()) {
     SDValue Result = combineSelectAndUse(N, N0, N1, DCI);
@@ -6482,7 +6482,7 @@ static SDValue PerformVDUPLANECombine(SDNode *N,
   return DCI.DAG.getNode(ISD::BITCAST, N->getDebugLoc(), VT, Op);
 }
 
-// isConstVecPow2 - Return true if each vector element is a power of 2, all 
+// isConstVecPow2 - Return true if each vector element is a power of 2, all
 // elements are the same constant, C, and Log2(C) ranges from 1 to 32.
 static bool isConstVecPow2(SDValue ConstVec, bool isSigned, uint64_t &C)
 {
@@ -6494,7 +6494,7 @@ static bool isConstVecPow2(SDValue ConstVec, bool isSigned, uint64_t &C)
     if (!C)
       return false;
 
-    bool isExact;    
+    bool isExact;
     APFloat APF = C->getValueAPF();
     if (APF.convertToInteger(&cN, 64, isSigned, APFloat::rmTowardZero, &isExact)
         != APFloat::opOK || !isExact)
@@ -6532,7 +6532,7 @@ static SDValue PerformVCVTCombine(SDNode *N,
   SDValue ConstVec = Op->getOperand(1);
   bool isSigned = N->getOpcode() == ISD::FP_TO_SINT;
 
-  if (ConstVec.getOpcode() != ISD::BUILD_VECTOR || 
+  if (ConstVec.getOpcode() != ISD::BUILD_VECTOR ||
       !isConstVecPow2(ConstVec, isSigned, C))
     return SDValue();
 
@@ -6540,7 +6540,7 @@ static SDValue PerformVCVTCombine(SDNode *N,
     Intrinsic::arm_neon_vcvtfp2fxu;
   return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, N->getDebugLoc(),
                      N->getValueType(0),
-                     DAG.getConstant(IntrinsicOpcode, MVT::i32), N0, 
+                     DAG.getConstant(IntrinsicOpcode, MVT::i32), N0,
                      DAG.getConstant(Log2_64(C), MVT::i32));
 }
 
@@ -6572,11 +6572,11 @@ static SDValue PerformVDIVCombine(SDNode *N,
       !isConstVecPow2(ConstVec, isSigned, C))
     return SDValue();
 
-  unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfxs2fp : 
+  unsigned IntrinsicOpcode = isSigned ? Intrinsic::arm_neon_vcvtfxs2fp :
     Intrinsic::arm_neon_vcvtfxu2fp;
   return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, N->getDebugLoc(),
                      Op.getValueType(),
-                     DAG.getConstant(IntrinsicOpcode, MVT::i32), 
+                     DAG.getConstant(IntrinsicOpcode, MVT::i32),
                      Op.getOperand(0), DAG.getConstant(Log2_64(C), MVT::i32));
 }
 
@@ -7554,47 +7554,6 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     return std::make_pair(unsigned(ARM::CPSR), ARM::CCRRegisterClass);
 
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
-}
-
-std::vector<unsigned> ARMTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  EVT VT) const {
-  if (Constraint.size() != 1)
-    return std::vector<unsigned>();
-
-  switch (Constraint[0]) {      // GCC ARM Constraint Letters
-  default: break;
-  case 'l':
-    return make_vector<unsigned>(ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-                                 ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-                                 0);
-  case 'r':
-    return make_vector<unsigned>(ARM::R0, ARM::R1, ARM::R2, ARM::R3,
-                                 ARM::R4, ARM::R5, ARM::R6, ARM::R7,
-                                 ARM::R8, ARM::R9, ARM::R10, ARM::R11,
-                                 ARM::R12, ARM::LR, 0);
-  case 'w':
-    if (VT == MVT::f32)
-      return make_vector<unsigned>(ARM::S0, ARM::S1, ARM::S2, ARM::S3,
-                                   ARM::S4, ARM::S5, ARM::S6, ARM::S7,
-                                   ARM::S8, ARM::S9, ARM::S10, ARM::S11,
-                                   ARM::S12,ARM::S13,ARM::S14,ARM::S15,
-                                   ARM::S16,ARM::S17,ARM::S18,ARM::S19,
-                                   ARM::S20,ARM::S21,ARM::S22,ARM::S23,
-                                   ARM::S24,ARM::S25,ARM::S26,ARM::S27,
-                                   ARM::S28,ARM::S29,ARM::S30,ARM::S31, 0);
-    if (VT.getSizeInBits() == 64)
-      return make_vector<unsigned>(ARM::D0, ARM::D1, ARM::D2, ARM::D3,
-                                   ARM::D4, ARM::D5, ARM::D6, ARM::D7,
-                                   ARM::D8, ARM::D9, ARM::D10,ARM::D11,
-                                   ARM::D12,ARM::D13,ARM::D14,ARM::D15, 0);
-    if (VT.getSizeInBits() == 128)
-      return make_vector<unsigned>(ARM::Q0, ARM::Q1, ARM::Q2, ARM::Q3,
-                                   ARM::Q4, ARM::Q5, ARM::Q6, ARM::Q7, 0);
-      break;
-  }
-
-  return std::vector<unsigned>();
 }
 
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
