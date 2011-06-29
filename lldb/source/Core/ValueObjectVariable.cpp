@@ -169,7 +169,7 @@ ValueObjectVariable::UpdateValue ()
                 // Make sure this type has a value before we try and read it
 
                 // If we have a file address, convert it to a load address if we can.
-                if (value_type == Value::eValueTypeFileAddress && exe_ctx.process)
+                if (value_type == Value::eValueTypeFileAddress && exe_ctx.process && exe_ctx.process->IsAlive())
                 {
                     lldb::addr_t file_addr = m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
                     if (file_addr != LLDB_INVALID_ADDRESS)

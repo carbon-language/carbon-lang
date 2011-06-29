@@ -15,6 +15,10 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ValueObjectList.h"
+#include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Symbol/VariableList.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -307,3 +311,34 @@ SBModule::FindFunctions (const char *name,
     return 0;
 }
 
+
+SBValueList
+SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_matches)
+{
+    SBValueList sb_value_list;
+    if (m_opaque_sp)
+    {
+        VariableList variable_list;
+        const uint32_t match_count = m_opaque_sp->FindGlobalVariables (ConstString (name), 
+                                                                       false, 
+                                                                       max_matches,
+                                                                       variable_list);
+
+        if (match_count > 0)
+        {
+            ValueObjectList &value_object_list = sb_value_list.ref();
+            for (uint32_t i=0; i<match_count; ++i)
+            {
+                lldb::ValueObjectSP valobj_sp;
+                if (target.IsValid())
+                    valobj_sp = ValueObjectVariable::Create (target.get(), variable_list.GetVariableAtIndex(i));
+                else
+                    valobj_sp = ValueObjectVariable::Create (NULL, variable_list.GetVariableAtIndex(i));
+                if (valobj_sp)
+                    value_object_list.Append(valobj_sp);
+            }
+        }
+    }
+    
+    return sb_value_list;
+}

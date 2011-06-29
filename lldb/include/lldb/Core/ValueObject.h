@@ -239,6 +239,9 @@ public:
     
     virtual bool
     IsPossibleCPlusPlusDynamicType ();
+    
+    virtual bool
+    IsPossibleDynamicType ();
 
     virtual bool
     IsBaseClass ()

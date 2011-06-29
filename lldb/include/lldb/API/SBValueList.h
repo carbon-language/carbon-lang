@@ -30,6 +30,9 @@ public:
     void
     Append (const lldb::SBValue &val_obj);
 
+    void
+    Append (const lldb::SBValueList& value_list);
+
     uint32_t
     GetSize() const;
 
@@ -58,7 +61,10 @@ public:
     
     lldb_private::ValueObjectList *
     get ();
-    
+
+    lldb_private::ValueObjectList &
+    ref ();
+
 #endif
 
 private:

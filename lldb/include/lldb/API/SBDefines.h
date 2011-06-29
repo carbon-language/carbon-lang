@@ -57,6 +57,7 @@ class SBSymbolContextList;
 class SBTarget;
 class SBThread;
 class SBValue;
+class SBValueList;
 
 }
 

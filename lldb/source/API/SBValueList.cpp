@@ -25,10 +25,10 @@ SBValueList::SBValueList () :
 SBValueList::SBValueList (const SBValueList &rhs) :
     m_opaque_ap ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (rhs.IsValid())
-        m_opaque_ap.reset (new lldb_private::ValueObjectList (*rhs));
+        m_opaque_ap.reset (new ValueObjectList (*rhs));
 
     if (log)
     {
@@ -38,13 +38,13 @@ SBValueList::SBValueList (const SBValueList &rhs) :
     }
 }
 
-SBValueList::SBValueList (const lldb_private::ValueObjectList *lldb_object_ptr) :
+SBValueList::SBValueList (const ValueObjectList *lldb_object_ptr) :
     m_opaque_ap ()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (lldb_object_ptr)
-        m_opaque_ap.reset (new lldb_private::ValueObjectList (*lldb_object_ptr));
+        m_opaque_ap.reset (new ValueObjectList (*lldb_object_ptr));
 
     if (log)
     {
@@ -70,32 +70,32 @@ SBValueList::operator = (const SBValueList &rhs)
     if (this != &rhs)
     {
         if (rhs.IsValid())
-            m_opaque_ap.reset (new lldb_private::ValueObjectList (*rhs));
+            m_opaque_ap.reset (new ValueObjectList (*rhs));
         else
             m_opaque_ap.reset ();
     }
     return *this;
 }
 
-lldb_private::ValueObjectList *
+ValueObjectList *
 SBValueList::operator->()
 {
     return m_opaque_ap.get();
 }
 
-lldb_private::ValueObjectList &
+ValueObjectList &
 SBValueList::operator*()
 {
     return *m_opaque_ap;
 }
 
-const lldb_private::ValueObjectList *
+const ValueObjectList *
 SBValueList::operator->() const
 {
     return m_opaque_ap.get();
 }
 
-const lldb_private::ValueObjectList &
+const ValueObjectList &
 SBValueList::operator*() const
 {
     return *m_opaque_ap;
@@ -121,11 +121,21 @@ SBValueList::Append (lldb::ValueObjectSP& val_obj_sp)
     }
 }
 
+void
+SBValueList::Append (const lldb::SBValueList& value_list)
+{
+    if (value_list.IsValid())
+    {
+        CreateIfNeeded ();
+        m_opaque_ap->Append (*value_list);
+    }
+}
+
 
 SBValue
 SBValueList::GetValueAtIndex (uint32_t idx) const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     //if (log)
     //    log->Printf ("SBValueList::GetValueAtIndex (uint32_t idx) idx = %d", idx);
@@ -148,7 +158,7 @@ SBValueList::GetValueAtIndex (uint32_t idx) const
 uint32_t
 SBValueList::GetSize () const
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     //if (log)
     //    log->Printf ("SBValueList::GetSize ()");
@@ -180,9 +190,17 @@ SBValueList::FindValueObjectByUID (lldb::user_id_t uid)
     return sb_value;
 }
 
-lldb_private::ValueObjectList *
+ValueObjectList *
 SBValueList::get ()
 {
     return m_opaque_ap.get();
 }
+
+ValueObjectList &
+SBValueList::ref ()
+{
+    CreateIfNeeded();
+    return *m_opaque_ap.get();
+}
+
 

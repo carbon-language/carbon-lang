@@ -189,6 +189,10 @@ public:
                    bool append, 
                    lldb::SBSymbolContextList& sc_list);
 
+    lldb::SBValueList
+    FindGlobalVariables (const char *name, 
+                         uint32_t max_matches);
+
     void
     Clear ();
 
@@ -260,6 +264,7 @@ protected:
     friend class SBFunction;
     friend class SBProcess;
     friend class SBSymbol;
+    friend class SBModule;
 
     //------------------------------------------------------------------
     // Constructors are private, use static Target::Create function to

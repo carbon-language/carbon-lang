@@ -51,6 +51,16 @@ ValueObjectList::Append (const ValueObjectSP &val_obj_sp)
     m_value_objects.push_back(val_obj_sp);
 }
 
+void
+ValueObjectList::Append (const ValueObjectList &valobj_list)
+{
+    std::copy(valobj_list.m_value_objects.begin(),  // source begin
+              valobj_list.m_value_objects.end(),    // source end
+              back_inserter(m_value_objects));      // destination
+    
+}
+
+
 uint32_t
 ValueObjectList::GetSize() const
 {

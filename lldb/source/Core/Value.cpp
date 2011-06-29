@@ -516,6 +516,7 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
     Error error;
     lldb::addr_t address = LLDB_INVALID_ADDRESS;
     AddressType address_type = eAddressTypeFile;
+    Address file_so_addr;
     switch (m_value_type)
     {
     default:
@@ -541,11 +542,11 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
     case eValueTypeLoadAddress:
         if (exe_ctx == NULL)
         {
-            error.SetErrorString ("can't read memory (no execution context)");
+            error.SetErrorString ("can't read load address (no execution context)");
         }
         else if (exe_ctx->process == NULL)
         {
-            error.SetErrorString ("can't read memory (invalid process)");
+            error.SetErrorString ("can't read load address (invalid process)");
         }
         else
         {
@@ -557,6 +558,15 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
         break;
 
     case eValueTypeFileAddress:
+        if (exe_ctx == NULL)
+        {
+            error.SetErrorString ("can't read file address (no execution context)");
+        }
+        else if (exe_ctx->target == NULL)
+        {
+            error.SetErrorString ("can't read file address (invalid target)");
+        }
+        else
         {
             // The only thing we can currently lock down to a module so that
             // we can resolve a file address, is a variable.
@@ -564,9 +574,10 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
 
             if (GetVariable())
             {
-                lldb::addr_t file_addr = m_value.ULongLong(LLDB_INVALID_ADDRESS);
-                if (file_addr != LLDB_INVALID_ADDRESS)
+                address = m_value.ULongLong(LLDB_INVALID_ADDRESS);
+                if (address != LLDB_INVALID_ADDRESS)
                 {
+                    bool resolved = false;
                     SymbolContext var_sc;
                     variable->CalculateSymbolContext(&var_sc);
                     if (var_sc.module_sp)
@@ -574,31 +585,46 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
                         ObjectFile *objfile = var_sc.module_sp->GetObjectFile();
                         if (objfile)
                         {
-                            Address so_addr(file_addr, objfile->GetSectionList());
-                            address = so_addr.GetLoadAddress (exe_ctx->target);
-                            if (address != LLDB_INVALID_ADDRESS)
+                            Address so_addr(address, objfile->GetSectionList());
+                            addr_t load_address = so_addr.GetLoadAddress (exe_ctx->target);
+                            if (load_address != LLDB_INVALID_ADDRESS)
                             {
+                                resolved = true;
+                                address = load_address;
                                 address_type = eAddressTypeLoad;
                                 data.SetByteOrder(exe_ctx->target->GetArchitecture().GetByteOrder());
                                 data.SetAddressByteSize(exe_ctx->target->GetArchitecture().GetAddressByteSize());
                             }
                             else
                             {
-                                data.SetByteOrder(objfile->GetByteOrder());
-                                data.SetAddressByteSize(objfile->GetAddressByteSize());
+                                if (so_addr.IsSectionOffset())
+                                {
+                                    resolved = true;
+                                    file_so_addr = so_addr;
+                                    data.SetByteOrder(objfile->GetByteOrder());
+                                    data.SetAddressByteSize(objfile->GetAddressByteSize());
+                                }
                             }
                         }
-                        if (address_type == eAddressTypeFile)
-                            error.SetErrorStringWithFormat ("%s is not loaded.\n", var_sc.module_sp->GetFileSpec().GetFilename().AsCString());
                     }
-                    else
+                    if (!resolved)
                     {
-                        error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx for variable '%s'", file_addr, variable->GetName().AsCString(""));
+                        if (var_sc.module_sp)
+                            error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx for variable '%s' in %s%s%s", 
+                                                            address, 
+                                                            variable->GetName().AsCString(""),
+                                                            var_sc.module_sp->GetFileSpec().GetDirectory().GetCString(),
+                                                            var_sc.module_sp->GetFileSpec().GetDirectory() ? "/" : "",
+                                                            var_sc.module_sp->GetFileSpec().GetFilename().GetCString());
+                        else
+                            error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx for variable '%s'", 
+                                                            address, 
+                                                            variable->GetName().AsCString(""));
                     }
                 }
                 else
                 {
-                    error.SetErrorString ("Invalid file address.");
+                    error.SetErrorString ("invalid file address");
                 }
             }
             else
@@ -651,14 +677,28 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
             // The address is an address in this process, so just copy it
             memcpy (dst, (uint8_t*)NULL + address, byte_size);
         }
-        else if (address_type == eAddressTypeLoad)
+        else if ((address_type == eAddressTypeLoad) || (address_type == eAddressTypeFile))
         {
-            if (exe_ctx->process->ReadMemory(address, dst, byte_size, error) != byte_size)
+            if (file_so_addr.IsValid())
             {
-                if (error.Success())
-                    error.SetErrorStringWithFormat("read %u bytes of memory from 0x%llx failed", (uint64_t)address, byte_size);
-                else
+                // We have a file address that we were able to translate into a
+                // section offset address so we might be able to read this from
+                // the object files if we don't have a live process. Lets always
+                // try and read from the process if we have one though since we
+                // want to read the actual value by setting "prefer_file_cache"
+                // to false. 
+                const bool prefer_file_cache = false;
+                if (exe_ctx->target->ReadMemory(file_so_addr, prefer_file_cache, dst, byte_size, error) != byte_size)
+                {
                     error.SetErrorStringWithFormat("read memory from 0x%llx failed", (uint64_t)address);
+                }
+            }
+            else
+            {
+                if (exe_ctx->process->ReadMemory(address, dst, byte_size, error) != byte_size)
+                {
+                    error.SetErrorStringWithFormat("read memory from 0x%llx failed", (uint64_t)address);
+                }
             }
         }
         else

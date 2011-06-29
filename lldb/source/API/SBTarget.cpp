@@ -11,8 +11,12 @@
 
 #include "lldb/lldb-public.h"
 
+#include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBBreakpoint.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBListener.h"
 #include "lldb/API/SBModule.h"
+#include "lldb/API/SBProcess.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBSymbolContextList.h"
 #include "lldb/Breakpoint/BreakpointID.h"
@@ -22,16 +26,19 @@
 #include "lldb/Core/Address.h"
 #include "lldb/Core/AddressResolver.h"
 #include "lldb/Core/AddressResolverName.h"
-#include "lldb/Interpreter/Args.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Disassembler.h"
-#include "lldb/Host/FileSpec.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/SearchFilter.h"
 #include "lldb/Core/STLUtils.h"
+#include "lldb/Core/ValueObjectList.h"
+#include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Interpreter/Args.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
@@ -39,10 +46,6 @@
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "../source/Commands/CommandObjectBreakpoint.h"
 
-#include "lldb/API/SBDebugger.h"
-#include "lldb/API/SBProcess.h"
-#include "lldb/API/SBListener.h"
-#include "lldb/API/SBBreakpoint.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -870,5 +873,37 @@ SBTarget::FindFunctions (const char *name,
                                                        *sc_list);
     }
     return 0;
+}
+
+SBValueList
+SBTarget::FindGlobalVariables (const char *name, uint32_t max_matches)
+{
+    SBValueList sb_value_list;
+    
+    if (m_opaque_sp)
+    {
+        VariableList variable_list;
+        const bool append = true;
+        const uint32_t match_count = m_opaque_sp->GetImages().FindGlobalVariables (ConstString (name), 
+                                                                                   append, 
+                                                                                   max_matches,
+                                                                                   variable_list);
+        
+        if (match_count > 0)
+        {
+            ExecutionContextScope *exe_scope = m_opaque_sp->GetProcessSP().get();
+            if (exe_scope == NULL)
+                exe_scope = m_opaque_sp.get();
+            ValueObjectList &value_object_list = sb_value_list.ref();
+            for (uint32_t i=0; i<match_count; ++i)
+            {
+                lldb::ValueObjectSP valobj_sp (ValueObjectVariable::Create (exe_scope, variable_list.GetVariableAtIndex(i)));
+                if (valobj_sp)
+                    value_object_list.Append(valobj_sp);
+            }
+        }
+    }
+
+    return sb_value_list;
 }
 

@@ -44,6 +44,9 @@ public:
     void
     Append (const lldb::ValueObjectSP &val_obj_sp);
 
+    void
+    Append (const ValueObjectList &valobj_list);
+
     lldb::ValueObjectSP
     FindValueObjectByPointer (ValueObject *valobj);
 

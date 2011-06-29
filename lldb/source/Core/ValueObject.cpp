@@ -285,21 +285,21 @@ ValueObjectSP
 ValueObject::GetChildAtIndex (uint32_t idx, bool can_create)
 {
     ValueObjectSP child_sp;
-    if (UpdateValueIfNeeded())
+    // We may need to update our value if we are dynamic
+    if (IsPossibleDynamicType ())
+        UpdateValueIfNeeded();
+    if (idx < GetNumChildren())
     {
-        if (idx < GetNumChildren())
+        // Check if we have already made the child value object?
+        if (can_create && m_children[idx] == NULL)
         {
-            // Check if we have already made the child value object?
-            if (can_create && m_children[idx] == NULL)
-            {
-                // No we haven't created the child at this index, so lets have our
-                // subclass do it and cache the result for quick future access.
-                m_children[idx] = CreateChildAtIndex (idx, false, 0);
-            }
-            
-            if (m_children[idx] != NULL)
-                return m_children[idx]->GetSP();
+            // No we haven't created the child at this index, so lets have our
+            // subclass do it and cache the result for quick future access.
+            m_children[idx] = CreateChildAtIndex (idx, false, 0);
         }
+        
+        if (m_children[idx] != NULL)
+            return m_children[idx]->GetSP();
     }
     return child_sp;
 }
@@ -322,36 +322,37 @@ ValueObject::GetChildMemberWithName (const ConstString &name, bool can_create)
     // need a vector of indexes that can get us down to the correct child
     ValueObjectSP child_sp;
 
-    if (UpdateValueIfNeeded())
+    // We may need to update our value if we are dynamic
+    if (IsPossibleDynamicType ())
+        UpdateValueIfNeeded();
+
+    std::vector<uint32_t> child_indexes;
+    clang::ASTContext *clang_ast = GetClangAST();
+    void *clang_type = GetClangType();
+    bool omit_empty_base_classes = true;
+    const size_t num_child_indexes =  ClangASTContext::GetIndexOfChildMemberWithName (clang_ast,
+                                                                                      clang_type,
+                                                                                      name.GetCString(),
+                                                                                      omit_empty_base_classes,
+                                                                                      child_indexes);
+    if (num_child_indexes > 0)
     {
-        std::vector<uint32_t> child_indexes;
-        clang::ASTContext *clang_ast = GetClangAST();
-        void *clang_type = GetClangType();
-        bool omit_empty_base_classes = true;
-        const size_t num_child_indexes =  ClangASTContext::GetIndexOfChildMemberWithName (clang_ast,
-                                                                                          clang_type,
-                                                                                          name.GetCString(),
-                                                                                          omit_empty_base_classes,
-                                                                                          child_indexes);
-        if (num_child_indexes > 0)
+        std::vector<uint32_t>::const_iterator pos = child_indexes.begin ();
+        std::vector<uint32_t>::const_iterator end = child_indexes.end ();
+
+        child_sp = GetChildAtIndex(*pos, can_create);
+        for (++pos; pos != end; ++pos)
         {
-            std::vector<uint32_t>::const_iterator pos = child_indexes.begin ();
-            std::vector<uint32_t>::const_iterator end = child_indexes.end ();
-
-            child_sp = GetChildAtIndex(*pos, can_create);
-            for (++pos; pos != end; ++pos)
+            if (child_sp)
             {
-                if (child_sp)
-                {
-                    ValueObjectSP new_child_sp(child_sp->GetChildAtIndex (*pos, can_create));
-                    child_sp = new_child_sp;
-                }
-                else
-                {
-                    child_sp.reset();
-                }
-
+                ValueObjectSP new_child_sp(child_sp->GetChildAtIndex (*pos, can_create));
+                child_sp = new_child_sp;
             }
+            else
+            {
+                child_sp.reset();
+            }
+
         }
     }
     return child_sp;
@@ -391,62 +392,59 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
 {
     ValueObject *valobj = NULL;
     
-    if (UpdateValueIfNeeded())
+    bool omit_empty_base_classes = true;
+
+    std::string child_name_str;
+    uint32_t child_byte_size = 0;
+    int32_t child_byte_offset = 0;
+    uint32_t child_bitfield_bit_size = 0;
+    uint32_t child_bitfield_bit_offset = 0;
+    bool child_is_base_class = false;
+    bool child_is_deref_of_parent = false;
+
+    const bool transparent_pointers = synthetic_array_member == false;
+    clang::ASTContext *clang_ast = GetClangAST();
+    clang_type_t clang_type = GetClangType();
+    clang_type_t child_clang_type;
+    
+    ExecutionContext exe_ctx;
+    GetExecutionContextScope()->CalculateExecutionContext (exe_ctx);
+    
+    child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (&exe_ctx,
+                                                                  clang_ast,
+                                                                  GetName().GetCString(),
+                                                                  clang_type,
+                                                                  idx,
+                                                                  transparent_pointers,
+                                                                  omit_empty_base_classes,
+                                                                  child_name_str,
+                                                                  child_byte_size,
+                                                                  child_byte_offset,
+                                                                  child_bitfield_bit_size,
+                                                                  child_bitfield_bit_offset,
+                                                                  child_is_base_class,
+                                                                  child_is_deref_of_parent);
+    if (child_clang_type && child_byte_size)
     {
-        bool omit_empty_base_classes = true;
+        if (synthetic_index)
+            child_byte_offset += child_byte_size * synthetic_index;
 
-        std::string child_name_str;
-        uint32_t child_byte_size = 0;
-        int32_t child_byte_offset = 0;
-        uint32_t child_bitfield_bit_size = 0;
-        uint32_t child_bitfield_bit_offset = 0;
-        bool child_is_base_class = false;
-        bool child_is_deref_of_parent = false;
+        ConstString child_name;
+        if (!child_name_str.empty())
+            child_name.SetCString (child_name_str.c_str());
 
-        const bool transparent_pointers = synthetic_array_member == false;
-        clang::ASTContext *clang_ast = GetClangAST();
-        clang_type_t clang_type = GetClangType();
-        clang_type_t child_clang_type;
-        
-        ExecutionContext exe_ctx;
-        GetExecutionContextScope()->CalculateExecutionContext (exe_ctx);
-        
-        child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (&exe_ctx,
-                                                                      clang_ast,
-                                                                      GetName().GetCString(),
-                                                                      clang_type,
-                                                                      idx,
-                                                                      transparent_pointers,
-                                                                      omit_empty_base_classes,
-                                                                      child_name_str,
-                                                                      child_byte_size,
-                                                                      child_byte_offset,
-                                                                      child_bitfield_bit_size,
-                                                                      child_bitfield_bit_offset,
-                                                                      child_is_base_class,
-                                                                      child_is_deref_of_parent);
-        if (child_clang_type && child_byte_size)
-        {
-            if (synthetic_index)
-                child_byte_offset += child_byte_size * synthetic_index;
-
-            ConstString child_name;
-            if (!child_name_str.empty())
-                child_name.SetCString (child_name_str.c_str());
-
-            valobj = new ValueObjectChild (*this,
-                                           clang_ast,
-                                           child_clang_type,
-                                           child_name,
-                                           child_byte_size,
-                                           child_byte_offset,
-                                           child_bitfield_bit_size,
-                                           child_bitfield_bit_offset,
-                                           child_is_base_class,
-                                           child_is_deref_of_parent);            
-            if (m_pointers_point_to_load_addrs)
-                valobj->SetPointersPointToLoadAddrs (m_pointers_point_to_load_addrs);
-        }
+        valobj = new ValueObjectChild (*this,
+                                       clang_ast,
+                                       child_clang_type,
+                                       child_name,
+                                       child_byte_size,
+                                       child_byte_offset,
+                                       child_bitfield_bit_size,
+                                       child_bitfield_bit_offset,
+                                       child_is_base_class,
+                                       child_is_deref_of_parent);            
+        if (m_pointers_point_to_load_addrs)
+            valobj->SetPointersPointToLoadAddrs (m_pointers_point_to_load_addrs);
     }
     
     return valobj;
@@ -992,6 +990,12 @@ bool
 ValueObject::IsPossibleCPlusPlusDynamicType ()
 {
     return ClangASTContext::IsPossibleCPlusPlusDynamicType (GetClangAST (), GetClangType());
+}
+
+bool
+ValueObject::IsPossibleDynamicType ()
+{
+    return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType());
 }
 
 ValueObjectSP

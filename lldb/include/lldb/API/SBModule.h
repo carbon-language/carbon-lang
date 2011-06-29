@@ -12,6 +12,7 @@
 
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBSymbolContext.h"
+#include "lldb/API/SBValueList.h"
 
 namespace lldb {
 
@@ -79,6 +80,12 @@ public:
                    uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
                    bool append, 
                    lldb::SBSymbolContextList& sc_list);
+
+    lldb::SBValueList
+    FindGlobalVariables (lldb::SBTarget &target, 
+                         const char *name, 
+                         uint32_t max_matches);
+    
 
 private:
     friend class SBAddress;
