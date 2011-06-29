@@ -22,6 +22,7 @@ def fuzz_obj(obj):
     obj.FindModule(filespec)
     contextlist = lldb.SBSymbolContextList()
     obj.FindFunctions("the_func", 0xff, True, contextlist)
+    obj.FindGlobalVariables("my_global_var", 1)
     address = lldb.SBAddress()
     obj.ResolveLoadAddress(0xffff, address)
     obj.ResolveSymbolContextForAddress(address, 0)

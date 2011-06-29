@@ -17,3 +17,4 @@ def fuzz_obj(obj):
     obj.GetNumSymbols()
     obj.GetSymbolAtIndex(sys.maxint)
     obj.FindFunctions("my_func", 0xffffffff, True, lldb.SBSymbolContextList())
+    obj.FindGlobalVariables(lldb.SBTarget(), "my_global_var", 1)
