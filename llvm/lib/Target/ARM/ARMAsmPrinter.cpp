@@ -1018,11 +1018,10 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
         Offset = -MI->getOperand(2).getImm();
         break;
       case ARM::SUBri:
-      case ARM::t2SUBrSPi:
-        Offset =  MI->getOperand(2).getImm();
+        Offset = MI->getOperand(2).getImm();
         break;
       case ARM::tSUBspi:
-        Offset =  MI->getOperand(2).getImm()*4;
+        Offset = MI->getOperand(2).getImm()*4;
         break;
       case ARM::tADDspi:
       case ARM::tADDrSPi:
@@ -1097,13 +1096,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
-  case ARM::t2ADDrSPi:
-  case ARM::t2ADDrSPi12:
-  case ARM::t2SUBrSPi:
-  case ARM::t2SUBrSPi12:
-    assert ((MI->getOperand(1).getReg() == ARM::SP) &&
-            "Unexpected source register!");
-    break;
 
   case ARM::t2MOVi32imm: assert(0 && "Should be lowered by thumb2it pass");
   case ARM::DBG_VALUE: {

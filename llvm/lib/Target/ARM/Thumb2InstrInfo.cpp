@@ -251,7 +251,7 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
       }
 
       // sub rd, sp, so_imm
-      Opc = isSub ? ARM::t2SUBrSPi : ARM::t2ADDrSPi;
+      Opc = isSub ? ARM::t2SUBri : ARM::t2ADDri;
       if (ARM_AM::getT2SOImmVal(NumBytes) != -1) {
         NumBytes = 0;
       } else {
@@ -425,9 +425,9 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     if (Offset < 0) {
       Offset = -Offset;
       isSub = true;
-      MI.setDesc(TII.get(isSP ? ARM::t2SUBrSPi : ARM::t2SUBri));
+      MI.setDesc(TII.get(ARM::t2SUBri));
     } else {
-      MI.setDesc(TII.get(isSP ? ARM::t2ADDrSPi : ARM::t2ADDri));
+      MI.setDesc(TII.get(ARM::t2ADDri));
     }
 
     // Common case: small offset, fits into instruction.
@@ -443,9 +443,7 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     // Another common case: imm12.
     if (Offset < 4096 &&
         (!HasCCOut || MI.getOperand(MI.getNumOperands()-1).getReg() == 0)) {
-      unsigned NewOpc = isSP
-        ? (isSub ? ARM::t2SUBrSPi12 : ARM::t2ADDrSPi12)
-        : (isSub ? ARM::t2SUBri12   : ARM::t2ADDri12);
+      unsigned NewOpc = isSub ? ARM::t2SUBri12 : ARM::t2ADDri12;
       MI.setDesc(TII.get(NewOpc));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Offset);

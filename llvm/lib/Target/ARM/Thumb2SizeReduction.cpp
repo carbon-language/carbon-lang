@@ -57,10 +57,8 @@ namespace {
   static const ReduceEntry ReduceTable[] = {
     // Wide,        Narrow1,      Narrow2,     imm1,imm2,  lo1, lo2, P/C, PF, S
     { ARM::t2ADCrr, 0,            ARM::tADC,     0,   0,    0,   1,  0,0, 0,0 },
-    { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  0,0, 0,0 },
+    { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  0,0, 0,1 },
     { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,    1,   0,  0,1, 0,0 },
-    // Note: immediate scale is 4.
-    { ARM::t2ADDrSPi,ARM::tADDrSPi,0,            8,   0,    1,   0,  1,0, 0,1 },
     { ARM::t2ADDSri,ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  2,2, 0,1 },
     { ARM::t2ADDSrr,ARM::tADDrr,  0,             0,   0,    1,   0,  2,0, 0,1 },
     { ARM::t2ANDrr, 0,            ARM::tAND,     0,   0,    0,   1,  0,0, 1,0 },
@@ -291,7 +289,7 @@ static bool VerifyLowRegs(MachineInstr *MI) {
                  Opc == ARM::t2LDMDB     || Opc == ARM::t2LDMIA_UPD ||
                  Opc == ARM::t2LDMDB_UPD);
   bool isLROk = (Opc == ARM::t2STMIA_UPD || Opc == ARM::t2STMDB_UPD);
-  bool isSPOk = isPCOk || isLROk || (Opc == ARM::t2ADDrSPi);
+  bool isSPOk = isPCOk || isLROk;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || MO.isImplicit())
@@ -481,6 +479,44 @@ bool
 Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
                                 const ReduceEntry &Entry,
                                 bool LiveCPSR, MachineInstr *CPSRDef) {
+  unsigned Opc = MI->getOpcode();
+  if (Opc == ARM::t2ADDri) {
+    // If the source register is SP, try to reduce to tADDrSPi, otherwise
+    // it's a normal reduce.
+    if (MI->getOperand(1).getReg() != ARM::SP) {
+      if (ReduceTo2Addr(MBB, MI, Entry, LiveCPSR, CPSRDef))
+        return true;
+      return ReduceToNarrow(MBB, MI, Entry, LiveCPSR, CPSRDef);
+    }
+    // Try to reduce to tADDrSPi.
+    unsigned Imm = MI->getOperand(2).getImm();
+    // The immediate must be in range, the destination register must be a low
+    // reg, and the condition flags must not be being set.
+    if (Imm & 3 || Imm > 1024)
+      return false;
+    if (!isARMLowRegister(MI->getOperand(0).getReg()))
+      return false;
+    const MCInstrDesc &MCID = MI->getDesc();
+    if (MCID.hasOptionalDef() &&
+        MI->getOperand(MCID.getNumOperands()-1).getReg() == ARM::CPSR)
+      return false;
+
+    MachineInstrBuilder MIB = BuildMI(MBB, *MI, MI->getDebugLoc(),
+                                      TII->get(ARM::tADDrSPi))
+      .addOperand(MI->getOperand(0))
+      .addOperand(MI->getOperand(1))
+      .addImm(Imm / 4); // The tADDrSPi has an implied scale by four.
+
+    // Transfer MI flags.
+    MIB.setMIFlags(MI->getFlags());
+
+    DEBUG(errs() << "Converted 32-bit: " << *MI << "       to 16-bit: " <<*MIB);
+
+    MBB.erase(MI);
+    ++NumNarrows;
+    return true;
+  }
+
   if (Entry.LowRegs1 && !VerifyLowRegs(MI))
     return false;
 
@@ -488,7 +524,6 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
   if (MCID.mayLoad() || MCID.mayStore())
     return ReduceLoadStore(MBB, MI, Entry);
 
-  unsigned Opc = MI->getOpcode();
   switch (Opc) {
   default: break;
   case ARM::t2ADDSri:
@@ -529,13 +564,6 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
       { ARM::t2CMPrr,ARM::tCMPr, 0, 0, 0, 1, 1,2, 0, 0,1 };
     if (ReduceToNarrow(MBB, MI, NarrowEntry, LiveCPSR, CPSRDef))
       return true;
-    return ReduceToNarrow(MBB, MI, Entry, LiveCPSR, CPSRDef);
-  }
-  case ARM::t2ADDrSPi: {
-    static const ReduceEntry NarrowEntry =
-      { ARM::t2ADDrSPi,ARM::tADDspi, 0, 7, 0, 1, 0, 1, 0, 0,1 };
-    if (MI->getOperand(0).getReg() == ARM::SP)
-      return ReduceToNarrow(MBB, MI, NarrowEntry, LiveCPSR, CPSRDef);
     return ReduceToNarrow(MBB, MI, Entry, LiveCPSR, CPSRDef);
   }
   }
@@ -645,9 +673,8 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
     return false;
 
   unsigned Limit = ~0U;
-  unsigned Scale = (Entry.WideOpc == ARM::t2ADDrSPi) ? 4 : 1;
   if (Entry.Imm1Limit)
-    Limit = ((1 << Entry.Imm1Limit) - 1) * Scale;
+    Limit = (1 << Entry.Imm1Limit) - 1;
 
   const MCInstrDesc &MCID = MI->getDesc();
   for (unsigned i = 0, e = MCID.getNumOperands(); i != e; ++i) {
@@ -658,13 +685,11 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
       unsigned Reg = MO.getReg();
       if (!Reg || Reg == ARM::CPSR)
         continue;
-      if (Entry.WideOpc == ARM::t2ADDrSPi && Reg == ARM::SP)
-        continue;
       if (Entry.LowRegs1 && !isARMLowRegister(Reg))
         return false;
     } else if (MO.isImm() &&
                !MCID.OpInfo[i].isPredicate()) {
-      if (((unsigned)MO.getImm()) > Limit || (MO.getImm() & (Scale-1)) != 0)
+      if (((unsigned)MO.getImm()) > Limit)
         return false;
     }
   }
@@ -723,15 +748,11 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
     if (SkipPred && isPred)
         continue;
     const MachineOperand &MO = MI->getOperand(i);
-    if (Scale > 1 && !isPred && MO.isImm())
-      MIB.addImm(MO.getImm() / Scale);
-    else {
-      if (MO.isReg() && MO.isImplicit() && MO.getReg() == ARM::CPSR)
-        // Skip implicit def of CPSR. Either it's modeled as an optional
-        // def now or it's already an implicit def on the new instruction.
-        continue;
-      MIB.addOperand(MO);
-    }
+    if (MO.isReg() && MO.isImplicit() && MO.getReg() == ARM::CPSR)
+      // Skip implicit def of CPSR. Either it's modeled as an optional
+      // def now or it's already an implicit def on the new instruction.
+      continue;
+    MIB.addOperand(MO);
   }
   if (!MCID.isPredicable() && NewMCID.isPredicable())
     AddDefaultPred(MIB);

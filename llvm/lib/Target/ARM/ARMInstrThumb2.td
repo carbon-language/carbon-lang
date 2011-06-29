@@ -1169,63 +1169,6 @@ def t2LEApcrelJT : t2PseudoInst<(outs rGPR:$Rd),
                                 []>;
 
 
-// FIXME: None of these add/sub SP special instructions should be necessary
-// at all for thumb2 since they use the same encodings as the generic
-// add/sub instructions. In thumb1 we need them since they have dedicated
-// encodings. At the least, they should be pseudo instructions.
-// ADD r, sp, {so_imm|i12}
-let isCodeGenOnly = 1 in {
-def t2ADDrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm),
-                        IIC_iALUi, "add", ".w\t$Rd, $Rn, $imm", []> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25} = 0;
-  let Inst{24-21} = 0b1000;
-  let Inst{15} = 0;
-}
-def t2ADDrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, imm0_4095:$imm),
-                       IIC_iALUi, "addw", "\t$Rd, $Rn, $imm", []> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25-20} = 0b100000;
-  let Inst{15} = 0;
-}
-
-// ADD r, sp, so_reg
-def t2ADDrSPs   : T2sTwoRegShiftedReg<
-                        (outs GPR:$Rd), (ins GPR:$Rn, t2_so_reg:$ShiftedRm),
-                        IIC_iALUsi, "add", ".w\t$Rd, $Rn, $ShiftedRm", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b01;
-  let Inst{24-21} = 0b1000;
-  let Inst{15} = 0;
-}
-
-// SUB r, sp, {so_imm|i12}
-def t2SUBrSPi   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_imm:$imm),
-                        IIC_iALUi, "sub", ".w\t$Rd, $Rn, $imm", []> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25} = 0;
-  let Inst{24-21} = 0b1101;
-  let Inst{15} = 0;
-}
-def t2SUBrSPi12 : T2TwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, imm0_4095:$imm),
-                       IIC_iALUi, "subw", "\t$Rd, $Rn, $imm", []> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25-20} = 0b101010;
-  let Inst{15} = 0;
-}
-
-// SUB r, sp, so_reg
-def t2SUBrSPs   : T2sTwoRegImm<(outs GPR:$Rd), (ins GPR:$Rn, t2_so_reg:$imm),
-                       IIC_iALUsi,
-                       "sub", "\t$Rd, $Rn, $imm", []> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b01;
-  let Inst{24-21} = 0b1101;
-  let Inst{19-16} = 0b1101; // Rn = sp
-  let Inst{15} = 0;
-}
-} // end isCodeGenOnly = 1
-
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
 //

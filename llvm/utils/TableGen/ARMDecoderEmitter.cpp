@@ -1640,12 +1640,8 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     // Ignore tADDrSP, tADDspr, and tPICADD, prefer the generic tADDhirr.
     // Ignore t2SUBrSPs, prefer the t2SUB[S]r[r|s].
     // Ignore t2ADDrSPs, prefer the t2ADD[S]r[r|s].
-    // Ignore t2ADDrSPi/t2SUBrSPi, which have more generic couterparts.
-    // Ignore t2ADDrSPi12/t2SUBrSPi12, which have more generic couterparts
     if (Name == "tADDrSP" || Name == "tADDspr" || Name == "tPICADD" ||
-        Name == "t2SUBrSPs" || Name == "t2ADDrSPs" ||
-        Name == "t2ADDrSPi" || Name == "t2SUBrSPi" ||
-        Name == "t2ADDrSPi12" || Name == "t2SUBrSPi12")
+        Name == "t2SUBrSPs" || Name == "t2ADDrSPs")
       return false;
 
     // FIXME: Use ldr.n to work around a Darwin assembler bug.
