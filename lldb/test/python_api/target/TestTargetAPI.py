@@ -14,6 +14,19 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    def test_find_global_variables_with_dsym(self):
+        """Exercise SBTaget.FindGlobalVariables() API."""
+        self.buildDsym()
+        self.find_global_variables()
+
+    @python_api_test
+    def test_find_global_variables_with_dwarf(self):
+        """Exercise SBTarget.FindGlobalVariables() API."""
+        self.buildDwarf()
+        self.find_global_variables()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_get_description_with_dsym(self):
         """Exercise SBTaget.GetDescription() API."""
         self.buildDsym()
@@ -57,6 +70,24 @@ class TargetAPITestCase(TestBase):
         # Find the line number to of function 'c'.
         self.line1 = line_number('main.c', '// Find the line number for breakpoint 1 here.')
         self.line2 = line_number('main.c', '// Find the line number for breakpoint 2 here.')
+
+    def find_global_variables(self):
+        """Exercise SBTaget.FindGlobalVariables() API."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        value_list = target.FindGlobalVariables('my_global_var_of_char_type', 1)
+        self.assertTrue(value_list.GetSize() == 1)
+        my_global_var = value_list.GetValueAtIndex(0)
+        self.expect(my_global_var.GetName(), exe=False,
+            startstr = "my_global_var_of_char_type")
+        self.expect(my_global_var.GetTypeName(), exe=False,
+            startstr = "char")
+        self.expect(my_global_var.GetValue(), exe=False,
+            startstr = "'X'")
 
     def get_description(self):
         """Exercise SBTaget.GetDescription() API."""

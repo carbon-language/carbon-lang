@@ -18,6 +18,8 @@
 //
 // The two symbol context should point to the same symbol, i.e., 'a' function.
 
+char my_global_var_of_char_type = 'X'; // Test SBTarget.FindGlobalVariables(...).
+
 int a(int);
 int b(int);
 int c(int);
