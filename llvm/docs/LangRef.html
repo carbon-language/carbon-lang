@@ -7309,7 +7309,7 @@ LLVM</a>.</p>
             store i32 4, %ptr
 
 %result1  = load i32* %ptr      <i>; yields {i32}:result1 = 4</i>
-            call void @llvm.memory.barrier(i1 false, i1 true, i1 false, i1 false)
+            call void @llvm.memory.barrier(i1 false, i1 true, i1 false, i1 false, i1 true)
                                 <i>; guarantee the above finishes</i>
             store i32 8, %ptr   <i>; before this begins</i>
 </pre>
