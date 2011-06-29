@@ -444,8 +444,6 @@ def femit_all_decls : Flag<"-femit-all-decls">,
   HelpText<"Emit all declarations, even if unused">;
 def fblocks : Flag<"-fblocks">,
   HelpText<"enable the 'blocks' language feature">;
-def freset_local_blocks : Flag<"-freset-local-blocks">,
-  HelpText<"reset local blocks when they go out of scope">;
 def fheinous_gnu_extensions : Flag<"-fheinous-gnu-extensions">;
 def fexceptions : Flag<"-fexceptions">,
   HelpText<"Enable support for exception handling">;

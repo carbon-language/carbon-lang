@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm  -fblocks -freset-local-blocks -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm  -fblocks -fcatch-undefined-behavior -o - %s | FileCheck %s
 // rdar://9227352
 
 typedef int (^BLOCK)();

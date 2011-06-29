@@ -1709,8 +1709,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
          !Args.hasArg(options::OPT_fno_blocks))) {
     CmdArgs.push_back("-fblocks");
   }
-  if (Args.hasArg(options::OPT_freset_local_blocks))
-    CmdArgs.push_back("-freset-local-blocks");
 
   // -faccess-control is default.
   if (Args.hasFlag(options::OPT_fno_access_control,

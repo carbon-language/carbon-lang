@@ -665,7 +665,7 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
   llvm::Value *result =
     Builder.CreateBitCast(blockAddr,
                           ConvertType(blockInfo.getBlockExpr()->getType()));
-  if (getLangOptions().ResetLocalBlocks)
+  if (getLangOptions().CatchUndefined)
     EHStack.pushCleanup<CallMemsetLocalBlockObject>(NormalCleanup, blockAddr, 
                                                     blockInfo.BlockSize);
 
