@@ -149,8 +149,10 @@ SBValue::IsInScope ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        result = m_opaque_sp->IsInScope ();
+            result = m_opaque_sp->IsInScope ();
+        }
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -173,8 +175,10 @@ SBValue::GetValue ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        cstr = m_opaque_sp->GetValueAsCString ();
+            cstr = m_opaque_sp->GetValueAsCString ();
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -226,8 +230,10 @@ SBValue::GetObjectDescription ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        cstr = m_opaque_sp->GetObjectDescription ();
+            cstr = m_opaque_sp->GetObjectDescription ();
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -253,8 +259,10 @@ SBValue::GetValueDidChange ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        result = m_opaque_sp->GetValueDidChange ();
+            result = m_opaque_sp->GetValueDidChange ();
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -276,8 +284,10 @@ SBValue::GetSummary ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        cstr = m_opaque_sp->GetSummaryAsCString();
+            cstr = m_opaque_sp->GetSummaryAsCString();
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -303,8 +313,10 @@ SBValue::GetLocation ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        cstr = m_opaque_sp->GetLocationAsCString();
+            cstr = m_opaque_sp->GetLocationAsCString();
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -330,8 +342,10 @@ SBValue::SetValueFromCString (const char *value_str)
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        success = m_opaque_sp->SetValueFromCString (value_str);
+            success = m_opaque_sp->SetValueFromCString (value_str);
+        }
     }
     return success;
 }
@@ -351,16 +365,18 @@ SBValue::GetChildAtIndex (uint32_t idx, lldb::DynamicValueType use_dynamic)
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
         
-        child_sp = m_opaque_sp->GetChildAtIndex (idx, true);
-        if (use_dynamic != lldb::eNoDynamicValues)
-        {
-            if (child_sp)
+            child_sp = m_opaque_sp->GetChildAtIndex (idx, true);
+            if (use_dynamic != lldb::eNoDynamicValues)
             {
-                lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic);
-                if (dynamic_sp)
-                    child_sp = dynamic_sp;
+                if (child_sp)
+                {
+                    lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic);
+                    if (dynamic_sp)
+                        child_sp = dynamic_sp;
+                }
             }
         }
     }
@@ -380,9 +396,11 @@ SBValue::GetIndexOfChildWithName (const char *name)
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
         
-        idx = m_opaque_sp->GetIndexOfChildWithName (ConstString(name));
+            idx = m_opaque_sp->GetIndexOfChildWithName (ConstString(name));
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -412,15 +430,17 @@ SBValue::GetChildMemberWithName (const char *name, lldb::DynamicValueType use_dy
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
-            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
-        child_sp = m_opaque_sp->GetChildMemberWithName (str_name, true);
-        if (use_dynamic_value != lldb::eNoDynamicValues)
         {
-            if (child_sp)
+            Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
+            child_sp = m_opaque_sp->GetChildMemberWithName (str_name, true);
+            if (use_dynamic_value != lldb::eNoDynamicValues)
             {
-                lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic_value);
-                if (dynamic_sp)
-                    child_sp = dynamic_sp;
+                if (child_sp)
+                {
+                    lldb::ValueObjectSP dynamic_sp = child_sp->GetDynamicValue (use_dynamic_value);
+                    if (dynamic_sp)
+                        child_sp = dynamic_sp;
+                }
             }
         }
     }
@@ -443,9 +463,11 @@ SBValue::GetNumChildren ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
 
-        num_children = m_opaque_sp->GetNumChildren();
+            num_children = m_opaque_sp->GetNumChildren();
+        }
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -463,10 +485,12 @@ SBValue::Dereference ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
 
-        Error error;
-        sb_value = m_opaque_sp->Dereference (error);
+            Error error;
+            sb_value = m_opaque_sp->Dereference (error);
+        }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -483,9 +507,11 @@ SBValue::TypeIsPointerType ()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
 
-        is_ptr_type = m_opaque_sp->IsPointerType();
+            is_ptr_type = m_opaque_sp->IsPointerType();
+        }
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -502,9 +528,11 @@ SBValue::GetOpaqueType()
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetUpdatePoint().GetTarget())
+        {
             Mutex::Locker api_locker (m_opaque_sp->GetUpdatePoint().GetTarget()->GetAPIMutex());
 
-        return m_opaque_sp->GetClangType();
+            return m_opaque_sp->GetClangType();
+        }
     }
     return NULL;
 }
