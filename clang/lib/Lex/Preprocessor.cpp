@@ -225,6 +225,10 @@ Preprocessor::macro_begin(bool IncludeExternalMacros) const {
   return Macros.begin();
 }
 
+size_t Preprocessor::getTotalMemory() const {
+  return BP.getTotalMemory();
+}
+
 Preprocessor::macro_iterator
 Preprocessor::macro_end(bool IncludeExternalMacros) const {
   if (IncludeExternalMacros && ExternalSource &&

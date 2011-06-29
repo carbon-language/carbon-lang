@@ -770,6 +770,8 @@ public:
 
   void PrintStats();
 
+  size_t getTotalMemory() const;
+
   /// HandleMicrosoftCommentPaste - When the macro expander pastes together a
   /// comment (/##/) in microsoft mode, this method handles updating the current
   /// state, returning the token on the next source line.
