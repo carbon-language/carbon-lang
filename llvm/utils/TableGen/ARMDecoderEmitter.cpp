@@ -1592,10 +1592,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     // The following special cases are for conflict resolutions.
     //
 
-    // RSCSri and RSCSrs set the 's' bit, but are not predicated.  We are
-    // better off using the generic RSCri and RSCrs instructions.
-    if (Name == "RSCSri" || Name == "RSCSrs") return false;
-
     // A8-598: VEXT
     // Vector Extract extracts elements from the bottom end of the second
     // operand vector and the top end of the first, concatenates them and
