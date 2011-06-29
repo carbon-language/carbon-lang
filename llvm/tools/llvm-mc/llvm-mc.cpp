@@ -19,11 +19,11 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetRegistry.h"
-#include "llvm/Target/SubtargetFeature.h" // FIXME.
 #include "llvm/Target/TargetAsmInfo.h"  // FIXME.
 #include "llvm/Target/TargetLowering.h"  // FIXME.
 #include "llvm/Target/TargetLoweringObjectFile.h"  // FIXME.

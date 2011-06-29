@@ -654,8 +654,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   OS << "#include \"llvm/Support/Debug.h\"\n";
   OS << "#include \"llvm/Support/raw_ostream.h\"\n";
-  OS << "#include \"llvm/Target/SubtargetFeature.h\"\n";
-  OS << "#include \"llvm/Target/TargetInstrItineraries.h\"\n\n";
+  OS << "#include \"llvm/MC/SubtargetFeature.h\"\n";
+  OS << "#include \"llvm/MC/MCInstrItineraries.h\"\n\n";
 
 //  Enumeration(OS, "FuncUnit", true);
 //  OS<<"\n";

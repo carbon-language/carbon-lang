@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cctype>
 using namespace llvm;

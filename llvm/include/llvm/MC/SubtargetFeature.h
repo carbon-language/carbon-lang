@@ -1,4 +1,4 @@
-//===-- llvm/Target/SubtargetFeature.h - CPU characteristics ----*- C++ -*-===//
+//===-- llvm/MC/SubtargetFeature.h - CPU characteristics --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_SUBTARGETFEATURE_H
-#define LLVM_TARGET_SUBTARGETFEATURE_H
+#ifndef LLVM_MC_SUBTARGETFEATURE_H
+#define LLVM_MC_SUBTARGETFEATURE_H
 
 #include <string>
 #include <vector>

@@ -14,10 +14,9 @@
 #ifndef POWERPCSUBTARGET_H
 #define POWERPCSUBTARGET_H
 
-#include "llvm/ADT/Triple.h"
-#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetSubtarget.h"
-
+#include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/ADT/Triple.h"
 #include <string>
 
 // GCC #defines PPC on Linux but we use it as our namespace name

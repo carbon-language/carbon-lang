@@ -15,7 +15,7 @@
 #define SUBTARGET_EMITTER_H
 
 #include "TableGenBackend.h"
-#include "llvm/Target/TargetInstrItineraries.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include <vector>
 #include <map>
 #include <string>

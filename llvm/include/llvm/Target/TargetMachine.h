@@ -14,29 +14,29 @@
 #ifndef LLVM_TARGET_TARGETMACHINE_H
 #define LLVM_TARGET_TARGETMACHINE_H
 
-#include "llvm/Target/TargetInstrItineraries.h"
 #include <cassert>
 #include <string>
 
 namespace llvm {
 
-class Target;
+class InstrItineraryData;
+class JITCodeEmitter;
 class MCAsmInfo;
+class MCContext;
+class Pass;
+class PassManager;
+class PassManagerBase;
+class Target;
 class TargetData;
-class TargetSubtarget;
+class TargetELFWriterInfo;
+class TargetFrameLowering;
 class TargetInstrInfo;
 class TargetIntrinsicInfo;
 class TargetJITInfo;
 class TargetLowering;
-class TargetSelectionDAGInfo;
-class TargetFrameLowering;
-class JITCodeEmitter;
-class MCContext;
 class TargetRegisterInfo;
-class PassManagerBase;
-class PassManager;
-class Pass;
-class TargetELFWriterInfo;
+class TargetSelectionDAGInfo;
+class TargetSubtarget;
 class formatted_raw_ostream;
 class raw_ostream;
 

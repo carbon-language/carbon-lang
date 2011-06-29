@@ -16,11 +16,11 @@
 #define DEBUG_TYPE ::llvm::ScoreboardHazardRecognizer::DebugType
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetInstrItineraries.h"
 
 using namespace llvm;
 

@@ -1,4 +1,4 @@
-//===-- llvm/Target/TargetInstrItineraries.h - Scheduling -------*- C++ -*-===//
+//===-- llvm/MC/MCInstrItineraries.h - Scheduling ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETINSTRITINERARIES_H
-#define LLVM_TARGET_TARGETINSTRITINERARIES_H
+#ifndef LLVM_MC_MCINSTRITINERARIES_H
+#define LLVM_MC_MCINSTRITINERARIES_H
 
 #include <algorithm>
 

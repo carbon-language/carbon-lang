@@ -17,6 +17,7 @@
 #include "ScheduleDAGSDNodes.h"
 #include "InstrEmitter.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"

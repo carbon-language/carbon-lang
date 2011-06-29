@@ -14,9 +14,8 @@
 #ifndef CELLSUBTARGET_H
 #define CELLSUBTARGET_H
 
-#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetSubtarget.h"
-
+#include "llvm/MC/MCInstrItineraries.h"
 #include <string>
 
 namespace llvm {

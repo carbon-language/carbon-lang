@@ -14,9 +14,8 @@
 #ifndef ARMSUBTARGET_H
 #define ARMSUBTARGET_H
 
-#include "llvm/Target/TargetInstrItineraries.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtarget.h"
+#include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/ADT/Triple.h"
 #include <string>
 

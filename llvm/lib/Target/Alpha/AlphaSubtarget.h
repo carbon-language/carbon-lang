@@ -14,9 +14,8 @@
 #ifndef ALPHASUBTARGET_H
 #define ALPHASUBTARGET_H
 
-#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetSubtarget.h"
-
+#include "llvm/MC/MCInstrItineraries.h"
 #include <string>
 
 namespace llvm {

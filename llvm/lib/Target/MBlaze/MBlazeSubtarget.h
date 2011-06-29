@@ -15,8 +15,7 @@
 #define MBLAZESUBTARGET_H
 
 #include "llvm/Target/TargetSubtarget.h"
-#include "llvm/Target/TargetMachine.h"
-
+#include "llvm/MC/MCInstrItineraries.h"
 #include <string>
 
 namespace llvm {
