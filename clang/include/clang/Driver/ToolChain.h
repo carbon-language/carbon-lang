@@ -167,7 +167,7 @@ public:
   virtual bool UseSjLjExceptions() const { return false; }
 
   /// HasARCRuntime - Does this tool chain provide a specialized ARC runtime.
-  virtual bool HasARCRuntime() const { return false; }
+  virtual bool HasARCRuntime() const { return true; }
 
   /// ComputeLLVMTriple - Return the LLVM target triple to use, after taking
   /// command line arguments into account.
