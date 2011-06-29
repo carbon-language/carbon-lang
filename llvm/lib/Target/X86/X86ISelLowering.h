@@ -596,10 +596,6 @@ namespace llvm {
     virtual ConstraintWeight getSingleConstraintMatchWeight(
       AsmOperandInfo &info, const char *constraint) const;
 
-    std::vector<unsigned>
-      getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                        EVT VT) const;
-
     virtual const char *LowerXConstraint(EVT ConstraintVT) const;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
