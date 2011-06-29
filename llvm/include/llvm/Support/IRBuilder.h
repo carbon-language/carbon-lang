@@ -82,7 +82,7 @@ public:
     InsertPt = I;
     SetCurrentDebugLocation(I->getDebugLoc());
   }
-  
+
   /// SetInsertPoint - This specifies that created instructions should be
   /// inserted at the specified point.
   void SetInsertPoint(BasicBlock *TheBB, BasicBlock::iterator IP) {
@@ -110,7 +110,7 @@ public:
   /// getCurrentFunctionReturnType - Get the return type of the current function
   /// that we're emitting into.
   const Type *getCurrentFunctionReturnType() const;
-  
+
   /// InsertPoint - A saved insertion point.
   class InsertPoint {
     BasicBlock *Block;
@@ -198,7 +198,7 @@ public:
   ConstantInt *getInt64(uint64_t C) {
     return ConstantInt::get(getInt64Ty(), C);
   }
-  
+
   /// getInt - Get a constant integer value.
   ConstantInt *getInt(const APInt &AI) {
     return ConstantInt::get(Context, AI);
@@ -263,7 +263,7 @@ public:
                          bool isVolatile = false, MDNode *TBAATag = 0) {
     return CreateMemSet(Ptr, Val, getInt64(Size), Align, isVolatile, TBAATag);
   }
-  
+
   CallInst *CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
                          bool isVolatile = false, MDNode *TBAATag = 0);
 
@@ -274,7 +274,7 @@ public:
                          bool isVolatile = false, MDNode *TBAATag = 0) {
     return CreateMemCpy(Dst, Src, getInt64(Size), Align, isVolatile, TBAATag);
   }
-  
+
   CallInst *CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
                          bool isVolatile = false, MDNode *TBAATag = 0);
 
@@ -285,9 +285,9 @@ public:
                           bool isVolatile = false, MDNode *TBAATag = 0) {
     return CreateMemMove(Dst, Src, getInt64(Size), Align, isVolatile, TBAATag);
   }
-  
+
   CallInst *CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
-                          bool isVolatile = false, MDNode *TBAATag = 0);  
+                          bool isVolatile = false, MDNode *TBAATag = 0);
 
   /// CreateLifetimeStart - Create a lifetime.start intrinsic.  If the pointer
   /// isn't i8* it will be converted.
@@ -341,7 +341,7 @@ public:
     SetInsertPoint(IP);
     SetCurrentDebugLocation(IP->getDebugLoc());
   }
-  
+
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
     : IRBuilderBase(TheBB->getContext()), Folder(F) {
     SetInsertPoint(TheBB, IP);
