@@ -835,8 +835,6 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
     case 'r':
       return std::make_pair(0U, Alpha::GPRCRegisterClass);
     case 'f':
-      // TODO: Do we need to add the 64-bit register class here when
-      // it contains the same registers?
       return std::make_pair(0U, Alpha::F4RCRegisterClass);
     }
   }
