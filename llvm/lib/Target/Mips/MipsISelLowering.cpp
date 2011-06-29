@@ -2329,9 +2329,9 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
   return weight;
 }
 
-/// getRegClassForInlineAsmConstraint - Given a constraint letter (e.g. "r"),
-/// return a list of registers that can be used to satisfy the constraint.
-/// This should only be used for C_RegisterClass constraints.
+/// Given a register class constraint, like 'r', if this corresponds directly
+/// to an LLVM register class, return a register of 0 and the register class
+/// pointer.
 std::pair<unsigned, const TargetRegisterClass*> MipsTargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
 {
