@@ -353,8 +353,13 @@ SBValue::SetValueFromCString (const char *value_str)
 SBValue
 SBValue::GetChildAtIndex (uint32_t idx)
 {
-    lldb::DynamicValueType use_dynamic_value = m_opaque_sp->GetUpdatePoint().GetTarget()->GetPreferDynamicValue();
-    return GetChildAtIndex (idx, use_dynamic_value);
+    if (m_opaque_sp)
+    {
+        lldb::DynamicValueType use_dynamic_value = m_opaque_sp->GetUpdatePoint().GetTarget()->GetPreferDynamicValue();
+        return GetChildAtIndex (idx, use_dynamic_value);
+    }
+    else
+        return GetChildAtIndex (idx, eNoDynamicValues);
 }
 
 SBValue
@@ -416,8 +421,13 @@ SBValue::GetIndexOfChildWithName (const char *name)
 SBValue
 SBValue::GetChildMemberWithName (const char *name)
 {
-    lldb::DynamicValueType use_dynamic_value = m_opaque_sp->GetUpdatePoint().GetTarget()->GetPreferDynamicValue();
-    return GetChildMemberWithName (name, use_dynamic_value);
+    if (m_opaque_sp)
+    {
+        lldb::DynamicValueType use_dynamic_value = m_opaque_sp->GetUpdatePoint().GetTarget()->GetPreferDynamicValue();
+        return GetChildMemberWithName (name, use_dynamic_value);
+    }
+    else
+        return GetChildMemberWithName (name, eNoDynamicValues);
 }
 
 SBValue

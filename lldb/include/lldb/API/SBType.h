@@ -53,7 +53,7 @@ public:
     GetChildIndexForName (bool omit_empty_base_classes, const char *name);
 
     bool
-    IsPointerType ();
+    IsAPointerType ();
 
     SBType
     GetPointeeType ();

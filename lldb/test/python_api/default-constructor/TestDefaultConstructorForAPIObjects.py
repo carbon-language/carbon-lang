@@ -297,6 +297,9 @@ class APIDefaultConstructorTestCase(TestBase):
         if self.TraceOn():
             print obj
         self.assertFalse(obj)
+        # Do fuzz testing on the invalid obj, it should not crash lldb.
+        import sb_type
+        sb_type.fuzz_obj(obj)
 
     @python_api_test
     def test_SBValue(self):
@@ -304,6 +307,9 @@ class APIDefaultConstructorTestCase(TestBase):
         if self.TraceOn():
             print obj
         self.assertFalse(obj)
+        # Do fuzz testing on the invalid obj, it should not crash lldb.
+        import sb_value
+        sb_value.fuzz_obj(obj)
 
     @python_api_test
     def test_SBValueList(self):
@@ -311,6 +317,9 @@ class APIDefaultConstructorTestCase(TestBase):
         if self.TraceOn():
             print obj
         self.assertFalse(obj)
+        # Do fuzz testing on the invalid obj, it should not crash lldb.
+        import sb_valuelist
+        sb_valuelist.fuzz_obj(obj)
 
 
 if __name__ == '__main__':

@@ -165,7 +165,7 @@ SBType::GetChildIndexForName (bool omit_empty_base_classes, const char *name)
 }
 
 bool
-SBType::IsPointerType ()
+SBType::IsAPointerType ()
 {
     return ClangASTContext::IsPointerType (m_type);
 }
@@ -174,7 +174,7 @@ SBType
 SBType::GetPointeeType ()
 {
     void *pointee_type = NULL;
-    if (IsPointerType ())
+    if (IsAPointerType ())
     {
         pointee_type = ClangASTType::GetPointeeType (m_type);
     }
@@ -187,7 +187,7 @@ SBType::GetDescription (SBStream &description)
     const char *name = GetName();
     uint64_t byte_size = GetByteSize();
     uint64_t num_children = GetNumberChildren (true);
-    bool is_ptr = IsPointerType ();
+    bool is_ptr = IsAPointerType ();
 
     description.Printf ("type_name: %s, size: %d bytes", (name != NULL ? name : "<unknown type name>"), byte_size);
     if (is_ptr)
