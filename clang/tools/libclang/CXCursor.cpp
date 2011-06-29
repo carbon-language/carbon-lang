@@ -484,6 +484,10 @@ Attr *cxcursor::getCursorAttr(CXCursor Cursor) {
   return (Attr *)Cursor.data[1];
 }
 
+Decl *cxcursor::getCursorParentDecl(CXCursor Cursor) {
+  return (Decl *)Cursor.data[0];
+}
+
 ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
   return getCursorASTUnit(Cursor)->getASTContext();
 }

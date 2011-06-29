@@ -4658,7 +4658,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   //  MyCXXClass foo; // Make sure we don't annotate 'foo' as a CallExpr cursor.
   if (clang_isExpression(cursorK)) {
     Expr *E = getCursorExpr(cursor);
-    if (Decl *D = getCursorDecl(cursor)) {
+    if (Decl *D = getCursorParentDecl(cursor)) {
       const unsigned I = NextToken();
       if (E->getLocStart().isValid() && D->getLocation().isValid() &&
           E->getLocStart() == D->getLocation() &&
