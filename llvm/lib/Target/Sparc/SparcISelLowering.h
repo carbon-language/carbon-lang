@@ -65,9 +65,6 @@ namespace llvm {
     ConstraintType getConstraintType(const std::string &Constraint) const;
     std::pair<unsigned, const TargetRegisterClass*>
     getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const;
-    std::vector<unsigned>
-    getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                      EVT VT) const;
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 

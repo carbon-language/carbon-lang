@@ -1,4 +1,3 @@
-
 //===-- SparcISelLowering.cpp - Sparc DAG Lowering Implementation ---------===//
 //
 //                     The LLVM Compiler Infrastructure
@@ -1263,26 +1262,6 @@ SparcTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   }
 
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
-}
-
-std::vector<unsigned> SparcTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  EVT VT) const {
-  if (Constraint.size() != 1)
-    return std::vector<unsigned>();
-
-  switch (Constraint[0]) {
-  default: break;
-  case 'r':
-    return make_vector<unsigned>(SP::L0, SP::L1, SP::L2, SP::L3,
-                                 SP::L4, SP::L5, SP::L6, SP::L7,
-                                 SP::I0, SP::I1, SP::I2, SP::I3,
-                                 SP::I4, SP::I5,
-                                 SP::O0, SP::O1, SP::O2, SP::O3,
-                                 SP::O4, SP::O5, SP::O7, 0);
-  }
-
-  return std::vector<unsigned>();
 }
 
 bool
