@@ -90,6 +90,19 @@ public:
     InsertPt = IP;
   }
 
+  /// SetInsertPoint(Use) - Find the nearest point that dominates this use, and
+  /// specify that created instructions should be inserted at this point.
+  void SetInsertPoint(Use &U) {
+    Instruction *UseInst = cast<Instruction>(U.getUser());
+    if (PHINode *Phi = dyn_cast<PHINode>(UseInst)) {
+      BasicBlock *PredBB = Phi->getIncomingBlock(U);
+      assert(U != PredBB->getTerminator() && "critical edge not split");
+      SetInsertPoint(PredBB, PredBB->getTerminator());
+      return;
+    }
+    SetInsertPoint(UseInst);
+  }
+
   /// SetCurrentDebugLocation - Set location information used by debugging
   /// information.
   void SetCurrentDebugLocation(const DebugLoc &L) {
@@ -340,6 +353,12 @@ public:
     : IRBuilderBase(IP->getContext()), Folder() {
     SetInsertPoint(IP);
     SetCurrentDebugLocation(IP->getDebugLoc());
+  }
+
+  explicit IRBuilder(Use &U)
+    : IRBuilderBase(U->getContext()), Folder() {
+    SetInsertPoint(U);
+    SetCurrentDebugLocation(cast<Instruction>(U.getUser())->getDebugLoc());
   }
 
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
