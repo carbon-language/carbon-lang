@@ -94,9 +94,9 @@ namespace llvm {
     ConstraintWeight getSingleConstraintMatchWeight(
       AsmOperandInfo &info, const char *constraint) const;
 
-    std::vector<unsigned>
-      getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                        EVT VT) const;
+    std::pair<unsigned, const TargetRegisterClass*>
+    getRegForInlineAsmConstraint(const std::string &Constraint,
+				 EVT VT) const;
 
     MachineBasicBlock *
       EmitInstrWithCustomInserter(MachineInstr *MI,

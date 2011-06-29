@@ -824,41 +824,23 @@ AlphaTargetLowering::getSingleConstraintMatchWeight(
   return weight;
 }
 
-std::vector<unsigned> AlphaTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  EVT VT) const {
+/// Given a register class constraint, like 'r', if this corresponds directly
+/// to an LLVM register class, return a register of 0 and the register class
+/// pointer.
+std::pair<unsigned, const TargetRegisterClass*> AlphaTargetLowering::
+getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
+{
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
-    default: break;  // Unknown constriant letter
-    case 'f':
-      return make_vector<unsigned>(Alpha::F0 , Alpha::F1 , Alpha::F2 ,
-                                   Alpha::F3 , Alpha::F4 , Alpha::F5 ,
-                                   Alpha::F6 , Alpha::F7 , Alpha::F8 ,
-                                   Alpha::F9 , Alpha::F10, Alpha::F11,
-                                   Alpha::F12, Alpha::F13, Alpha::F14,
-                                   Alpha::F15, Alpha::F16, Alpha::F17,
-                                   Alpha::F18, Alpha::F19, Alpha::F20,
-                                   Alpha::F21, Alpha::F22, Alpha::F23,
-                                   Alpha::F24, Alpha::F25, Alpha::F26,
-                                   Alpha::F27, Alpha::F28, Alpha::F29,
-                                   Alpha::F30, Alpha::F31, 0);
     case 'r':
-      return make_vector<unsigned>(Alpha::R0 , Alpha::R1 , Alpha::R2 ,
-                                   Alpha::R3 , Alpha::R4 , Alpha::R5 ,
-                                   Alpha::R6 , Alpha::R7 , Alpha::R8 ,
-                                   Alpha::R9 , Alpha::R10, Alpha::R11,
-                                   Alpha::R12, Alpha::R13, Alpha::R14,
-                                   Alpha::R15, Alpha::R16, Alpha::R17,
-                                   Alpha::R18, Alpha::R19, Alpha::R20,
-                                   Alpha::R21, Alpha::R22, Alpha::R23,
-                                   Alpha::R24, Alpha::R25, Alpha::R26,
-                                   Alpha::R27, Alpha::R28, Alpha::R29,
-                                   Alpha::R30, Alpha::R31, 0);
+      return std::make_pair(0U, Alpha::GPRCRegisterClass);
+    case 'f':
+      return std::make_pair(0U, Alpha::F4RCRegisterClass);
     }
   }
-
-  return std::vector<unsigned>();
+  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 }
+
 //===----------------------------------------------------------------------===//
 //  Other Lowering Code
 //===----------------------------------------------------------------------===//
