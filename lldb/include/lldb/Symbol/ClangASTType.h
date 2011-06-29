@@ -182,6 +182,13 @@ public:
                  
     static lldb::Format
     GetFormat (lldb::clang_type_t opaque_clang_qual_type);
+    
+    uint32_t
+    GetTypeByteSize();
+    
+    static uint32_t
+    GetTypeByteSize(clang::ASTContext *ast_context,
+                    lldb::clang_type_t opaque_clang_qual_type);
 
     bool
     GetValueAsScalar (const DataExtractor &data,

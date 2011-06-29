@@ -11,6 +11,9 @@
 
 #include <map>
 
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/Type.h"
+
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/FormatManager.h"
@@ -20,6 +23,7 @@
 #include "lldb/Core/StreamAsynchronousIO.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/TargetList.h"
@@ -698,13 +702,20 @@ Debugger::FormatPrompt
     const ExecutionContext *exe_ctx,
     const Address *addr,
     Stream &s,
-    const char **end
+    const char **end,
+    ValueObject* vobj
 )
 {
+    ValueObject* realvobj = NULL; // makes it super-easy to parse pointers
     bool success = true;
     const char *p;
     for (p = format; *p != '\0'; ++p)
     {
+        if(realvobj)
+        {
+            vobj = realvobj;
+            realvobj = NULL;
+        }
         size_t non_special_chars = ::strcspn (p, "${}\\");
         if (non_special_chars > 0)
         {
@@ -732,7 +743,7 @@ Debugger::FormatPrompt
 
             ++p;  // Skip the '{'
             
-            if (FormatPrompt (p, sc, exe_ctx, addr, sub_strm, &p))
+            if (FormatPrompt (p, sc, exe_ctx, addr, sub_strm, &p, vobj))
             {
                 // The stream had all it needed
                 s.Write(sub_strm.GetData(), sub_strm.GetSize());
@@ -777,6 +788,284 @@ Debugger::FormatPrompt
                         bool var_success = false;
                         switch (var_name_begin[0])
                         {
+                        case '*':
+                            {
+                                if (!vobj) break;
+                                var_name_begin++;
+                                lldb::clang_type_t pointer_clang_type = vobj->GetClangType();
+                                clang_type_t elem_or_pointee_clang_type;
+                                const Flags type_flags (ClangASTContext::GetTypeInfo (pointer_clang_type, 
+                                                                                      vobj->GetClangAST(), 
+                                                                                      &elem_or_pointee_clang_type));
+                                if (type_flags.Test (ClangASTContext::eTypeIsPointer))
+                                {
+                                    if (ClangASTContext::IsCharType (elem_or_pointee_clang_type))
+                                    {
+                                        StreamString sstr;
+                                        ExecutionContextScope *exe_scope = vobj->GetExecutionContextScope();
+                                        Process *process = exe_scope->CalculateProcess();
+                                        if(!process) break;
+                                        lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
+                                        AddressType cstr_address_type = eAddressTypeInvalid;
+                                        DataExtractor data;
+                                        size_t bytes_read = 0;
+                                        std::vector<char> data_buffer;
+                                        Error error;
+                                        cstr_address = vobj->GetPointerValue (cstr_address_type, true);
+                                        {
+                                            const size_t k_max_buf_size = 256;
+                                            data_buffer.resize (k_max_buf_size + 1);
+                                            // NULL terminate in case we don't get the entire C string
+                                            data_buffer.back() = '\0';
+                                            
+                                            sstr << '"';
+                                            
+                                            data.SetData (&data_buffer.front(), data_buffer.size(), endian::InlHostByteOrder());
+                                            while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
+                                            {
+                                                size_t len = strlen(&data_buffer.front());
+                                                if (len == 0)
+                                                    break;
+                                                if (len > bytes_read)
+                                                    len = bytes_read;
+                                                
+                                                data.Dump (&sstr,
+                                                           0,                 // Start offset in "data"
+                                                           eFormatCharArray,  // Print as characters
+                                                           1,                 // Size of item (1 byte for a char!)
+                                                           len,               // How many bytes to print?
+                                                           UINT32_MAX,        // num per line
+                                                           LLDB_INVALID_ADDRESS,// base address
+                                                           0,                 // bitfield bit size
+                                                           0);                // bitfield bit offset
+                                                
+                                                if (len < k_max_buf_size)
+                                                    break;
+                                                cstr_address += k_max_buf_size;
+                                            }
+                                            sstr << '"';
+                                            s.PutCString(sstr.GetData());
+                                            var_success = true;
+                                            break;
+                                        }
+                                    }
+                                    else /*if (ClangASTContext::IsAggregateType (elem_or_pointee_clang_type)) or this is some other pointer type*/
+                                    {
+                                        Error error;
+                                        realvobj = vobj;
+                                        vobj = vobj->Dereference(error).get();
+                                        if(!vobj || error.Fail())
+                                            break;
+                                    }
+                                }
+                                else
+                                    break;
+                            }
+                        case 'v':
+                            {
+                            const char* targetvalue;
+                            bool use_summary = false;
+                            ValueObject* target;
+                            lldb::Format custom_format = eFormatInvalid;
+                            int bitfield_lower = -1;
+                            int bitfield_higher = -1;
+                            if (!vobj) break;
+                            // simplest case ${var}, just print vobj's value
+                            if (::strncmp (var_name_begin, "var}", strlen("var}")) == 0)
+                                target = vobj;
+                            else if (::strncmp(var_name_begin,"var%",strlen("var%")) == 0)
+                            {
+                                // this is a variable with some custom format applied to it
+                                const char* var_name_final;
+                                target = vobj;
+                                {
+                                    const char* percent_position = ::strchr(var_name_begin,'%'); // TODO: make this a constant
+                                    //if(!percent_position || percent_position > var_name_end)
+                                    //    var_name_final = var_name_end;
+                                    //else
+                                    //{
+                                    var_name_final = percent_position;
+                                    char* format_name = new char[var_name_end-var_name_final]; format_name[var_name_end-var_name_final-1] = '\0';
+                                    memcpy(format_name, var_name_final+1, var_name_end-var_name_final-1);
+                                    FormatManager::GetFormatFromCString(format_name,
+                                                                        true,
+                                                                        custom_format); // if this fails, custom_format is reset to invalid
+                                    delete format_name;
+                                    //}
+                                }
+                            }
+                            else if (::strncmp(var_name_begin,"var[",strlen("var[")) == 0)
+                            {
+                                // this is a bitfield variable
+                                const char *var_name_final;
+                                target = vobj;
+                                
+                                {
+                                    const char* percent_position = ::strchr(var_name_begin,'%');
+                                    if(!percent_position || percent_position > var_name_end)
+                                        var_name_final = var_name_end;
+                                    else
+                                    {
+                                        var_name_final = percent_position;
+                                        char* format_name = new char[var_name_end-var_name_final]; format_name[var_name_end-var_name_final-1] = '\0';
+                                        memcpy(format_name, var_name_final+1, var_name_end-var_name_final-1);
+                                        FormatManager::GetFormatFromCString(format_name,
+                                                                            true,
+                                                                            custom_format); // if this fails, custom_format is reset to invalid
+                                        delete format_name;
+                                    }
+                                }
+                                
+                                {
+                                    // code here might be simpler than in the case below
+                                    const char* open_bracket_position = ::strchr(var_name_begin,'[');
+                                    if(open_bracket_position && open_bracket_position < var_name_final)
+                                    {
+                                        char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
+                                        char* close_bracket_position = ::strchr(open_bracket_position,']');
+                                        // as usual, we assume that [] will come before %
+                                        //printf("trying to expand a []\n");
+                                        var_name_final = open_bracket_position;
+                                        if (separator_position == NULL || separator_position > var_name_end)
+                                        {
+                                            char *end = NULL;
+                                            bitfield_lower = ::strtoul (open_bracket_position+1, &end, 0);
+                                            bitfield_higher = bitfield_lower;
+                                            //printf("got to read low=%d high same\n",bitfield_lower);
+                                        }
+                                        else if(close_bracket_position && close_bracket_position < var_name_end)
+                                        {
+                                            char *end = NULL;
+                                            bitfield_lower = ::strtoul (open_bracket_position+1, &end, 0);
+                                            bitfield_higher = ::strtoul (separator_position+1, &end, 0);
+                                            //printf("got to read low=%d high=%d\n",bitfield_lower,bitfield_higher);
+                                        }
+                                        else
+                                            break;
+                                        if(bitfield_lower > bitfield_higher)
+                                            break;
+                                    }
+                                }
+                            }
+                                // this is ${var.something} or multiple .something nested
+                            else if (::strncmp (var_name_begin, "var", strlen("var")) == 0)
+                            {
+                                // check for custom format string
+                                
+                                // we need this because we might have ${var.something%format}. in this case var_name_end
+                                // still points to the closing }, but we must extract the variable name only up to
+                                // before the %. var_name_final will point to that % sign position
+                                const char* var_name_final;
+                                
+                                {
+                                    const char* percent_position = ::strchr(var_name_begin,'%');
+                                    if(!percent_position || percent_position > var_name_end)
+                                        var_name_final = var_name_end;
+                                    else
+                                    {
+                                        var_name_final = percent_position;
+                                        char* format_name = new char[var_name_end-var_name_final]; format_name[var_name_end-var_name_final-1] = '\0';
+                                        memcpy(format_name, var_name_final+1, var_name_end-var_name_final-1);
+                                        FormatManager::GetFormatFromCString(format_name,
+                                                                            true,
+                                                                            custom_format); // if this fails, custom_format is reset to invalid
+                                        delete format_name;
+                                    }
+                                }
+                                
+                                {
+                                    const char* open_bracket_position = ::strchr(var_name_begin,'[');
+                                    if(open_bracket_position && open_bracket_position < var_name_final)
+                                    {
+                                        char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
+                                        char* close_bracket_position = ::strchr(open_bracket_position,']');
+                                        // as usual, we assume that [] will come before %
+                                        //printf("trying to expand a []\n");
+                                        var_name_final = open_bracket_position;
+                                        if (separator_position == NULL || separator_position > var_name_end)
+                                        {
+                                            char *end = NULL;
+                                            bitfield_lower = ::strtoul (open_bracket_position+1, &end, 0);
+                                            bitfield_higher = bitfield_lower;
+                                            //printf("got to read low=%d high same\n",bitfield_lower);
+                                        }
+                                        else if(close_bracket_position && close_bracket_position < var_name_end)
+                                        {
+                                            char *end = NULL;
+                                            bitfield_lower = ::strtoul (open_bracket_position+1, &end, 0);
+                                            bitfield_higher = ::strtoul (separator_position+1, &end, 0);
+                                            //printf("got to read low=%d high=%d\n",bitfield_lower,bitfield_higher);
+                                        }
+                                        else
+                                            break;
+                                        if(bitfield_lower > bitfield_higher)
+                                            break;
+                                        //*((char*)open_bracket_position) = '\0';
+                                        //printf("variable name is %s\n",var_name_begin);
+                                        //*((char*)open_bracket_position) = '[';
+                                    }
+                                }
+
+                                Error error;
+                                lldb::VariableSP var_sp;
+                                StreamString sstring;
+                                vobj->GetExpressionPath(sstring, true, ValueObject::eHonorPointers);
+                                //printf("name to expand in phase 0: %s\n",sstring.GetData());
+                                sstring.PutRawBytes(var_name_begin+3, var_name_final-var_name_begin-3);
+                                //printf("name to expand in phase 1: %s\n",sstring.GetData());
+                                std::string name = std::string(sstring.GetData());
+                                target = exe_ctx->frame->GetValueForVariableExpressionPath (name.c_str(),
+                                                                                            eNoDynamicValues, 
+                                                                                            0,
+                                                                                            var_sp,
+                                                                                            error).get();
+                                if (error.Fail())
+                                {
+                                    //printf("ERROR: %s\n",error.AsCString("unknown"));
+                                    break;
+                                }
+                            }
+                            else
+                                break;
+                            if(*(var_name_end+1)=='s')
+                            {
+                                use_summary = true;
+                                var_name_end++;
+                            }
+                            if (bitfield_lower >= 0)
+                            {
+                                //printf("trying to print a []\n");
+                                // format this as a bitfield
+                                DataExtractor extractor = target->GetDataExtractor();
+                                uint32_t item_byte_size = ClangASTType::GetTypeByteSize(target->GetClangAST(), target->GetClangType());
+                                if(custom_format == eFormatInvalid)
+                                    custom_format = eFormatHex;
+                                var_success = 
+                                    extractor.Dump(&s, 0, custom_format, item_byte_size, 1, 1, LLDB_INVALID_ADDRESS, bitfield_higher-bitfield_lower+1, bitfield_lower) > 0;
+                                //printf("var_success = %s\n",var_success ? "true" : "false");
+                            }
+                            else
+                            {
+                                //printf("here I come 1\n");
+                                // format this as usual
+                                if(custom_format != eFormatInvalid)
+                                    target->SetFormat(custom_format);
+                                //printf("here I come 2\n");
+                                if(!use_summary)
+                                    targetvalue = target->GetValueAsCString();
+                                else
+                                    targetvalue = target->GetSummaryAsCString();
+                                //printf("here I come 3\n");
+                                if(targetvalue)
+                                    s.PutCString(targetvalue);
+                                var_success = targetvalue;
+                                //printf("here I come 4 : %s\n",var_success ? "good" : "bad");
+                                if(custom_format != eFormatInvalid)
+                                    target->SetFormat(eFormatDefault);
+                                //printf("here I come 5\n");
+                            }
+                                break;
+                            }
                         case 'a':
                             if (::strncmp (var_name_begin, "addr}", strlen("addr}")) == 0)
                             {
@@ -1321,27 +1610,76 @@ GetFormatManager() {
 }
 
 bool
-Debugger::GetFormatForType (const ConstString &type, lldb::Format& format, bool& cascade)
+Debugger::ValueFormats::Get(ValueObject& vobj, ValueFormat::SharedPointer &entry)
 {
-    return GetFormatManager().GetFormatForType(type, format, cascade);
+    return GetFormatManager().Value().Get(vobj,entry);
 }
 
 void
-Debugger::AddFormatForType (const ConstString &type, lldb::Format format, bool cascade)
+Debugger::ValueFormats::Add(const ConstString &type, const ValueFormat::SharedPointer &entry)
 {
-    GetFormatManager().AddFormatForType(type,format, cascade);
+    GetFormatManager().Value().Add(type.AsCString(),entry);
 }
 
 bool
-Debugger::DeleteFormatForType (const ConstString &type)
+Debugger::ValueFormats::Delete(const ConstString &type)
 {
-    return GetFormatManager().DeleteFormatForType(type);
+    return GetFormatManager().Value().Delete(type.AsCString());
 }
 
 void
-Debugger::LoopThroughFormatList (FormatManager::Callback callback, void* callback_baton)
+Debugger::ValueFormats::Clear()
 {
-    return GetFormatManager().LoopThroughFormatList(callback, callback_baton);
+    GetFormatManager().Value().Clear();
+}
+
+void
+Debugger::ValueFormats::LoopThrough(FormatManager::ValueCallback callback, void* callback_baton)
+{
+    GetFormatManager().Value().LoopThrough(callback, callback_baton);
+}
+
+uint32_t
+Debugger::ValueFormats::GetCurrentRevision()
+{
+    return GetFormatManager().GetCurrentRevision();
+}
+
+
+bool
+Debugger::SummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
+{
+    return GetFormatManager().Summary().Get(vobj,entry);
+}
+
+void
+Debugger::SummaryFormats::Add(const ConstString &type, const SummaryFormat::SharedPointer &entry)
+{
+    GetFormatManager().Summary().Add(type.AsCString(),entry);
+}
+
+bool
+Debugger::SummaryFormats::Delete(const ConstString &type)
+{
+    return GetFormatManager().Summary().Delete(type.AsCString());
+}
+
+void
+Debugger::SummaryFormats::Clear()
+{
+    GetFormatManager().Summary().Clear();
+}
+
+void
+Debugger::SummaryFormats::LoopThrough(FormatManager::SummaryCallback callback, void* callback_baton)
+{
+    GetFormatManager().Summary().LoopThrough(callback, callback_baton);
+}
+
+uint32_t
+Debugger::SummaryFormats::GetCurrentRevision()
+{
+    return GetFormatManager().GetCurrentRevision();
 }
 
 #pragma mark Debugger::SettingsController

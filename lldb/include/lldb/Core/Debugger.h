@@ -415,7 +415,8 @@ public:
                   const ExecutionContext *exe_ctx,
                   const Address *addr,
                   Stream &s,
-                  const char **end);
+                  const char **end,
+                  ValueObject* vobj = NULL);
 
 
     void
@@ -473,18 +474,50 @@ private:
     
 public:
     
-    static bool
-    GetFormatForType (const ConstString &type, lldb::Format& format, bool& cascade);
+    class ValueFormats
+    {
+        public:
+            static bool
+            Get(ValueObject& vobj, ValueFormat::SharedPointer &entry);
+            
+            static void
+            Add(const ConstString &type, const ValueFormat::SharedPointer &entry);
+            
+            static bool
+            Delete(const ConstString &type);
+            
+            static void
+            Clear();
+            
+            static void
+            LoopThrough(FormatManager::ValueCallback callback, void* callback_baton);
+            
+            static uint32_t GetCurrentRevision();
+    };
     
-    static void
-    AddFormatForType (const ConstString &type, lldb::Format format, bool cascade);
+    class SummaryFormats
+    {
+        public:
+        
+            static bool
+            Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry);
+            
+            static void
+            Add(const ConstString &type, const SummaryFormat::SharedPointer &entry);
+            
+            static bool
+            Delete(const ConstString &type);
+            
+            static void
+            Clear();
+            
+            static void
+            LoopThrough(FormatManager::SummaryCallback callback, void* callback_baton);
+            
+            static uint32_t
+            GetCurrentRevision();
+    };
     
-    static bool
-    DeleteFormatForType (const ConstString &type);
-    
-    static void
-    LoopThroughFormatList (FormatManager::Callback callback, 
-                           void* callback_baton);
 };
 
 } // namespace lldb_private

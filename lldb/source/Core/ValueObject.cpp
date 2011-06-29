@@ -19,6 +19,7 @@
 
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/ValueObjectChild.h"
 #include "lldb/Core/ValueObjectConstResult.h"
@@ -71,7 +72,10 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_children_count_valid (false),
     m_old_value_valid (false),
     m_pointers_point_to_load_addrs (false),
-    m_is_deref_of_parent (false)
+    m_is_deref_of_parent (false),
+    m_last_format_mgr_revision(0),
+    m_last_summary_format(),
+    m_last_value_format()
 {
     m_manager->ManageObject(this);
 }
@@ -103,7 +107,10 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_children_count_valid (false),
     m_old_value_valid (false),
     m_pointers_point_to_load_addrs (false),
-    m_is_deref_of_parent (false)
+    m_is_deref_of_parent (false),
+    m_last_format_mgr_revision(0),
+    m_last_summary_format(),
+    m_last_value_format()
 {
     m_manager = new ValueObjectManager();
     m_manager->ManageObject (this);
@@ -119,6 +126,9 @@ ValueObject::~ValueObject ()
 bool
 ValueObject::UpdateValueIfNeeded ()
 {
+    
+    UpdateFormatsIfNeeded();
+    
     // If this is a constant value, then our success is predicated on whether
     // we have an error or not
     if (GetIsConstant())
@@ -166,6 +176,26 @@ ValueObject::UpdateValueIfNeeded ()
         }
     }
     return m_error.Success();
+}
+
+void
+ValueObject::UpdateFormatsIfNeeded()
+{
+    /*printf("CHECKING FOR UPDATES. I am at revision %d, while the format manager is at revision %d\n",
+           m_last_format_mgr_revision,
+           Debugger::ValueFormats::GetCurrentRevision());*/
+    if (m_last_format_mgr_revision != Debugger::ValueFormats::GetCurrentRevision())
+    {
+        if (m_last_summary_format.get())
+            m_last_summary_format.reset((SummaryFormat*)NULL);
+        if (m_last_value_format.get())
+            m_last_value_format.reset((ValueFormat*)NULL);
+        Debugger::ValueFormats::Get(*this, m_last_value_format);
+        Debugger::SummaryFormats::Get(*this, m_last_summary_format);
+        m_last_format_mgr_revision = Debugger::ValueFormats::GetCurrentRevision();
+        m_value_str.clear();
+        m_summary_str.clear();
+    }
 }
 
 DataExtractor &
@@ -454,9 +484,23 @@ const char *
 ValueObject::GetSummaryAsCString ()
 {
     if (UpdateValueIfNeeded ())
-    {
+    {        
         if (m_summary_str.empty())
         {
+            if (m_last_summary_format.get())
+            {
+                StreamString s;
+                ExecutionContext exe_ctx;
+                this->GetExecutionContextScope()->CalculateExecutionContext(exe_ctx);
+                SymbolContext sc = exe_ctx.frame->GetSymbolContext(eSymbolContextEverything);
+                if (Debugger::FormatPrompt(m_last_summary_format->m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, NULL, this))
+                {
+                    m_summary_str.swap(s.GetString());
+                    return m_summary_str.c_str();
+                }
+                return NULL;
+            }
+            
             clang_type_t clang_type = GetClangType();
 
             // See if this is a pointer to a C string?
@@ -664,28 +708,6 @@ ValueObject::GetValueAsCString ()
     {
         if (UpdateValueIfNeeded())
         {
-            /*
-             this is a quick fix for the case in which we display a variable, then change its format with
-             type format add and the old display string keeps showing until one steps through the code
-             */
-            {
-                const Value::ContextType context_type = m_value.GetContextType();
-                switch (context_type)
-                {
-                    case Value::eContextTypeClangType:
-                    case Value::eContextTypeLLDBType:
-                    case Value::eContextTypeVariable:
-                        {
-                            Format format = GetFormat();
-                            if (format != m_last_format)
-                                m_value_str.clear();
-                        }
-                        break;
-
-                    default:
-                        break;
-                }
-            }
             if (m_value_str.empty())
             {
                 const Value::ContextType context_type = m_value.GetContextType();
@@ -701,13 +723,18 @@ ValueObject::GetValueAsCString ()
                         {
                             StreamString sstr;
                             Format format = GetFormat();
-                            if (format == eFormatDefault)
-                                format = ClangASTType::GetFormat(clang_type);
+                            if (format == eFormatDefault)                                
+                            {
+                                if (m_last_value_format)
+                                    format = m_last_value_format->m_format;
+                                else
+                                    format = ClangASTType::GetFormat(clang_type);
+                            }
 
                             if (ClangASTType::DumpTypeValue (GetClangAST(),            // The clang AST
                                                              clang_type,               // The clang type to display
                                                              &sstr,
-                                                             m_last_format = format,   // Format to display this type with
+                                                             format,                   // Format to display this type with
                                                              m_data,                   // Data to extract from
                                                              0,                        // Byte offset into "m_data"
                                                              GetByteSize(),            // Byte size of item in "m_data"
@@ -1123,16 +1150,22 @@ ValueObject::GetNonBaseClassParent()
 }
 
 void
-ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes)
+ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExpressionPathFormat epformat)
 {
     const bool is_deref_of_parent = IsDereferenceOfParent ();
-    
-    if (is_deref_of_parent)
-        s.PutCString("*(");
 
-    if (GetParent())
-        GetParent()->GetExpressionPath (s, qualify_cxx_base_classes);
+    if(is_deref_of_parent && epformat == eDereferencePointers) {
+        // this is the original format of GetExpressionPath() producing code like *(a_ptr).memberName, which is entirely
+        // fine, until you put this into StackFrame::GetValueForVariableExpressionPath() which prefers to see a_ptr->memberName.
+        // the eHonorPointers mode is meant to produce strings in this latter format
+        s.PutCString("*(");
+    }
     
+    ValueObject* parent = GetParent();
+    
+    if (parent)
+        parent->GetExpressionPath (s, qualify_cxx_base_classes, epformat);
+            
     if (!IsBaseClass())
     {
         if (!is_deref_of_parent)
@@ -1145,14 +1178,21 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes)
                 {
                     const uint32_t non_base_class_parent_type_info = ClangASTContext::GetTypeInfo (non_base_class_parent_clang_type, NULL, NULL);
                     
-                    if (non_base_class_parent_type_info & ClangASTContext::eTypeIsPointer)
+                    if(parent && parent->IsDereferenceOfParent() && epformat == eHonorPointers)
                     {
                         s.PutCString("->");
                     }
-                    else if ((non_base_class_parent_type_info & ClangASTContext::eTypeHasChildren) &&
-                        !(non_base_class_parent_type_info & ClangASTContext::eTypeIsArray))
-                    {
-                        s.PutChar('.');
+                    else
+                    {                    
+                        if (non_base_class_parent_type_info & ClangASTContext::eTypeIsPointer)
+                        {
+                            s.PutCString("->");
+                        }
+                        else if ((non_base_class_parent_type_info & ClangASTContext::eTypeHasChildren) &&
+                                 !(non_base_class_parent_type_info & ClangASTContext::eTypeIsArray))
+                        {
+                            s.PutChar('.');
+                        }
                     }
                 }
             }
@@ -1170,8 +1210,9 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes)
         }
     }
     
-    if (is_deref_of_parent)
+    if (is_deref_of_parent && epformat == eDereferencePointers) {
         s.PutChar(')');
+    }
 }
 
 void
@@ -1245,6 +1286,8 @@ ValueObject::DumpValueObject
         }
         
         const char *val_cstr = NULL;
+        const char *sum_cstr = NULL;
+        SummaryFormat* entry = valobj->m_last_summary_format.get();
         
         if (err_cstr == NULL)
         {
@@ -1261,10 +1304,13 @@ ValueObject::DumpValueObject
             const bool is_ref = type_flags.Test (ClangASTContext::eTypeIsReference);
             if (print_valobj)
             {
-                const char *sum_cstr = valobj->GetSummaryAsCString();
+                
+                sum_cstr = valobj->GetSummaryAsCString();
 
-                if (val_cstr)
-                    s.Printf(" %s", val_cstr);
+                // We must calculate this value in realtime because entry might alter this variable's value
+                // (e.g. by saying ${var%fmt}) and render precached values useless
+                if (val_cstr && (!entry || entry->DoesPrintValue() || !sum_cstr))
+                    s.Printf(" %s", valobj->GetValueAsCString());
 
                 if (sum_cstr)
                     s.Printf(" %s", sum_cstr);
@@ -1314,7 +1360,32 @@ ValueObject::DumpValueObject
                         print_children = false;
                 }
                 
-                if (print_children)
+                if (entry && entry->IsOneliner())
+                {
+                    const uint32_t num_children = valobj->GetNumChildren();
+                    if (num_children)
+                    {
+                        
+                        s.PutChar('(');
+                        
+                        for (uint32_t idx=0; idx<num_children; ++idx)
+                        {
+                            ValueObjectSP child_sp(valobj->GetChildAtIndex(idx, true));
+                            if (child_sp.get())
+                            {
+                                if (idx)
+                                    s.PutCString(", ");
+                                s.PutCString(child_sp.get()->GetName().AsCString());
+                                s.PutChar('=');
+                                s.PutCString(child_sp.get()->GetValueAsCString());
+                            }
+                        }
+                        
+                        s.PutChar(')');
+                        s.EOL();
+                    }
+                }
+                else if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
                 {
                     const uint32_t num_children = valobj->GetNumChildren();
                     if (num_children)

@@ -247,25 +247,8 @@ ClangASTType::GetFormat ()
 lldb::Format
 ClangASTType::GetFormat (clang_type_t clang_type)
 {
-    // first of all, check for a valid format for this type itself
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-    lldb::Format format;
-    bool cascade;
-    if(Debugger::GetFormatForType(GetClangTypeName(qual_type), format, cascade))
-        return format; // return it if found
-    
-    // here, I know this type does not have a direct format. two things can happen:
-    // 1) this is a typedef - I expand this to its parent type and look there
-    // 2) this is not a typedef - I use the default formatting options
-    const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
-    while (typedef_type) {
-        qual_type = typedef_type->getDecl()->getUnderlyingType();
-        std::string name = qual_type.getAsString();
-        if(Debugger::GetFormatForType(GetClangTypeName(qual_type), format, cascade) && cascade) // if I have a cascading format...
-            return format; // ...use it
-        typedef_type = qual_type->getAs<clang::TypedefType>(); // try to expand another level
-    }
-    
+
     switch (qual_type->getTypeClass())
     {
     case clang::Type::FunctionNoProto:
@@ -1345,6 +1328,23 @@ ClangASTType::ReadFromMemory
                            addr,
                            address_type,
                            data);
+}
+
+uint32_t
+ClangASTType::GetTypeByteSize()
+{
+    return GetTypeByteSize(m_ast,
+                           m_type);
+}
+
+uint32_t
+ClangASTType::GetTypeByteSize(
+                clang::ASTContext *ast_context,
+                lldb::clang_type_t opaque_clang_qual_type)
+{
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(opaque_clang_qual_type));
+    
+    return (ast_context->getTypeSize (qual_type) + 7) / 8;
 }
 
 

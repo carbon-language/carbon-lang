@@ -64,6 +64,12 @@ namespace lldb_private {
 class ValueObject : public UserID
 {
 public:
+    
+    enum GetExpressionPathFormat
+    {
+        eDereferencePointers = 1,
+        eHonorPointers,
+    };
 
     class EvaluationPoint 
     {
@@ -262,8 +268,8 @@ public:
     GetBaseClassPath (Stream &s);
 
     virtual void
-    GetExpressionPath (Stream &s, bool qualify_cxx_base_classes);
-
+    GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExpressionPathFormat = eDereferencePointers);
+    
     virtual bool
     IsInScope ()
     {
@@ -347,6 +353,9 @@ public:
 
     bool
     UpdateValueIfNeeded ();
+    
+    void
+    UpdateFormatsIfNeeded();
 
     DataExtractor &
     GetDataExtractor ();
@@ -508,7 +517,9 @@ protected:
     ValueObject *m_deref_valobj;
 
     lldb::Format        m_format;
-    lldb::Format        m_last_format;
+    uint32_t            m_last_format_mgr_revision;
+    lldb::SummaryFormatSP m_last_summary_format;
+    lldb::ValueFormatSP m_last_value_format;
     bool                m_value_is_valid:1,
                         m_value_did_change:1,
                         m_children_count_valid:1,

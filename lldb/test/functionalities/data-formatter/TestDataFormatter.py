@@ -51,11 +51,8 @@ class DataFormatterTestCase(TestBase):
         # This is the function to remove the custom formats in order to have a
         # clean slate for the next test case.
         def cleanup():
-            self.runCmd('type format delete Speed', check=False)
-            self.runCmd('type format delete Bitfield', check=False)
-            self.runCmd('type format delete RealNumber', check=False)
-            self.runCmd('type format delete Type2', check=False)
-            self.runCmd('type format delete Type1', check=False)
+            self.runCmd('type format clear', check=False)
+            self.runCmd('type summary clear', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -87,6 +84,33 @@ class DataFormatterTestCase(TestBase):
         # Delete type format for 'Speed', we should expect an error message.
         self.expect("type format delete Speed", error=True,
             substrs = ['no custom format for Speed'])
+        
+        # For some reason the type system is calling this "struct"
+        self.runCmd("type summary add -o yes \"\" Point")
+            
+        self.expect("frame variable iAmSomewhere",
+            substrs = ['x=4',
+                       'y=6'])
+        
+        self.expect("type summary list",
+            substrs = ['Point',
+                       'one-line'])
+
+        self.runCmd("type summary add \"y=${var.y%x}\" Point")
+
+        self.expect("frame variable iAmSomewhere",
+            substrs = ['y=0x'])
+
+        self.runCmd("type summary add \"hello\" Point -h yes")
+
+        self.expect("type summary list",
+            substrs = ['Point',
+                       'show children'])
+        
+        self.expect("frame variable iAmSomewhere",
+            substrs = ['hello',
+                       'x = 4',
+                       '}'])
 
 
 if __name__ == '__main__':

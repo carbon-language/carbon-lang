@@ -60,6 +60,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::StopInfo>::Type StopInfoSP;
     typedef SharedPtr<lldb_private::StoppointLocation>::Type StoppointLocationSP;
     typedef SharedPtr<lldb_private::Stream>::Type StreamSP;
+    typedef SharedPtr<lldb_private::SummaryFormat>::Type SummaryFormatSP;
     typedef SharedPtr<lldb_private::SymbolFile>::Type SymbolFileSP;
     typedef SharedPtr<lldb_private::SymbolContextSpecifier>::Type SymbolContextSpecifierSP;
     typedef SharedPtr<lldb_private::Target>::Type TargetSP;
@@ -72,6 +73,7 @@ namespace lldb {
     typedef SharedPtr<lldb_private::UnwindPlan>::Type UnwindPlanSP;
     typedef SharedPtr<lldb_private::ValueObject>::Type ValueObjectSP;
     typedef SharedPtr<lldb_private::Value>::Type ValueSP;
+    typedef SharedPtr<lldb_private::ValueFormat>::Type ValueFormatSP;
     typedef SharedPtr<lldb_private::ValueList>::Type ValueListSP;
     typedef SharedPtr<lldb_private::Variable>::Type VariableSP;
     typedef SharedPtr<lldb_private::VariableList>::Type VariableListSP;
