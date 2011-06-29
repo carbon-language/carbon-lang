@@ -56,7 +56,6 @@ define i64 @f6(i64 %a) {
 ;
 ; CHECK: livecarry:
 ; CHECK: adds
-; CHECK: adcs
 ; CHECK: adc
 define i64 @livecarry(i64 %carry, i32 %digit) nounwind {
   %ch = lshr i64 %carry, 32

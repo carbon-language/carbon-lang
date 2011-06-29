@@ -24,7 +24,6 @@ entry:
 define i64 @f3(i32 %al, i32 %bl) {
 ; CHECK: f3:
 ; CHECK: adds r
-; CHECK: adcs r
 ; CHECK: adc r
 entry:
         ; unsigned wide add
