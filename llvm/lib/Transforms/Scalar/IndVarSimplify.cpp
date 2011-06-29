@@ -609,8 +609,7 @@ protected:
 
   const SCEVAddRecExpr *GetWideRecurrence(Instruction *NarrowUse);
 
-  Instruction *WidenIVUse(Instruction *NarrowUse,
-                          Instruction *NarrowDef,
+  Instruction *WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
                           Instruction *WideDef);
 };
 } // anonymous namespace
@@ -724,9 +723,10 @@ static bool HoistStep(Instruction *IncV, Instruction *InsertPos,
 
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
-Instruction *WidenIV::WidenIVUse(Instruction *NarrowUse,
-                                 Instruction *NarrowDef,
+Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
                                  Instruction *WideDef) {
+  Instruction *NarrowUse = cast<Instruction>(NarrowDefUse.getUser());
+
   // To be consistent with IVUsers, stop traversing the def-use chain at
   // inner-loop phis or post-loop phis.
   if (isa<PHINode>(NarrowUse) && LI->getLoopFor(NarrowUse->getParent()) != L)
@@ -744,7 +744,7 @@ Instruction *WidenIV::WidenIVUse(Instruction *NarrowUse,
       unsigned IVWidth = SE->getTypeSizeInBits(WideType);
       if (CastWidth < IVWidth) {
         // The cast isn't as wide as the IV, so insert a Trunc.
-        IRBuilder<> Builder(NarrowUse);
+        IRBuilder<> Builder(NarrowDefUse);
         NewDef = Builder.CreateTrunc(WideDef, NarrowUse->getType());
       }
       else {
@@ -778,11 +778,15 @@ Instruction *WidenIV::WidenIVUse(Instruction *NarrowUse,
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
     // eventually isolating the original narrow IV so it can be removed.
-    IRBuilder<> Builder(NarrowUse);
+    IRBuilder<> Builder(NarrowDefUse);
     Value *Trunc = Builder.CreateTrunc(WideDef, NarrowDef->getType());
     NarrowUse->replaceUsesOfWith(NarrowDef, Trunc);
     return 0;
   }
+  // We assume that block terminators are not SCEVable.
+  assert(NarrowUse != NarrowUse->getParent()->getTerminator() &&
+         "can't split terminators");
+
   // Reuse the IV increment that SCEVExpander created as long as it dominates
   // NarrowUse.
   Instruction *WideUse = 0;
@@ -876,20 +880,20 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
     NarrowIVUsers.push_back(std::make_pair(&UI.getUse(), WidePhi));
   }
   while (!NarrowIVUsers.empty()) {
-    Use *NarrowDefUse;
+    Use *UsePtr;
     Instruction *WideDef;
-    tie(NarrowDefUse, WideDef) = NarrowIVUsers.pop_back_val();
+    tie(UsePtr, WideDef) = NarrowIVUsers.pop_back_val();
+    Use &NarrowDefUse = *UsePtr;
 
     // Process a def-use edge. This may replace the use, so don't hold a
     // use_iterator across it.
-    Instruction *NarrowDef = cast<Instruction>(NarrowDefUse->get());
-    Instruction *NarrowUse = cast<Instruction>(NarrowDefUse->getUser());
-    Instruction *WideUse = WidenIVUse(NarrowUse, NarrowDef, WideDef);
+    Instruction *NarrowDef = cast<Instruction>(NarrowDefUse.get());
+    Instruction *WideUse = WidenIVUse(NarrowDefUse, NarrowDef, WideDef);
 
     // Follow all def-use edges from the previous narrow use.
     if (WideUse) {
-      for (Value::use_iterator UI = NarrowUse->use_begin(),
-             UE = NarrowUse->use_end(); UI != UE; ++UI) {
+      for (Value::use_iterator UI = NarrowDefUse.getUser()->use_begin(),
+             UE = NarrowDefUse.getUser()->use_end(); UI != UE; ++UI) {
         NarrowIVUsers.push_back(std::make_pair(&UI.getUse(), WideUse));
       }
     }
@@ -1050,6 +1054,10 @@ bool IndVarSimplify::isSimpleIVUser(Instruction *I, const Loop *L) {
 
   // Get the symbolic expression for this instruction.
   const SCEV *S = SE->getSCEV(I);
+
+  // We assume that terminators are not SCEVable.
+  assert((!S || I != I->getParent()->getTerminator()) &&
+         "can't fold terminators");
 
   // Only consider affine recurrences.
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S);

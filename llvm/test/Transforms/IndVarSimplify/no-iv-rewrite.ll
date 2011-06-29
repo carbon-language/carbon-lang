@@ -153,8 +153,37 @@ loop:
   br i1 %cond, label %loop, label %exit
 
 exit:
-  br label %return
+  ret void
+}
 
-return:
+define void @maxvisitor(i32 %limit, i32* %base) nounwind {
+entry: br label %loop
+
+; CHECK: loop:
+; CHECK: phi i64
+; CHECK: trunc
+; CHECK: exit
+loop:
+  %idx = phi i32 [ 0, %entry ], [ %idx.next, %loop.inc ]
+  %max = phi i32 [ 0, %entry ], [ %max.next, %loop.inc ]
+  %idxprom = sext i32 %idx to i64
+  %adr = getelementptr inbounds i32* %base, i64 %idxprom
+  %val = load i32* %adr
+  %cmp19 = icmp sgt i32 %val, %max
+  br i1 %cmp19, label %if.then, label %if.else
+
+if.then:
+  br label %loop.inc
+
+if.else:
+  br label %loop.inc
+
+loop.inc:
+  %max.next = phi i32 [ %idx, %if.then ], [ %max, %if.else ]
+  %idx.next = add nsw i32 %idx, 1
+  %cmp = icmp slt i32 %idx.next, %limit
+  br i1 %cmp, label %loop, label %exit
+
+exit:
   ret void
 }
