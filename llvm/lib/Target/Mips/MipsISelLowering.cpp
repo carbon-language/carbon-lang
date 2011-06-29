@@ -2337,6 +2337,8 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
 {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
+    case 'd': // Address register. Same as 'r' unless generating MIPS16 code.
+    case 'y': // Same as 'r'. Exists for compatibility.
     case 'r':
       return std::make_pair(0U, Mips::CPURegsRegisterClass);
     case 'f':
@@ -2345,53 +2347,10 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
       if (VT == MVT::f64)
         if ((!Subtarget->isSingleFloat()) && (!Subtarget->isFP64bit()))
           return std::make_pair(0U, Mips::AFGR64RegisterClass);
+      break;
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
-}
-
-/// Given a register class constraint, like 'r', if this corresponds directly
-/// to an LLVM register class, return a register of 0 and the register class
-/// pointer.
-std::vector<unsigned> MipsTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  EVT VT) const
-{
-  if (Constraint.size() != 1)
-    return std::vector<unsigned>();
-
-  switch (Constraint[0]) {
-    default : break;
-    case 'r':
-    // GCC Mips Constraint Letters
-    case 'd':
-    case 'y':
-      return make_vector<unsigned>(Mips::T0, Mips::T1, Mips::T2, Mips::T3,
-             Mips::T4, Mips::T5, Mips::T6, Mips::T7, Mips::S0, Mips::S1,
-             Mips::S2, Mips::S3, Mips::S4, Mips::S5, Mips::S6, Mips::S7,
-             Mips::T8, 0);
-
-    case 'f':
-      if (VT == MVT::f32) {
-        if (Subtarget->isSingleFloat())
-          return make_vector<unsigned>(Mips::F2, Mips::F3, Mips::F4, Mips::F5,
-                 Mips::F6, Mips::F7, Mips::F8, Mips::F9, Mips::F10, Mips::F11,
-                 Mips::F20, Mips::F21, Mips::F22, Mips::F23, Mips::F24,
-                 Mips::F25, Mips::F26, Mips::F27, Mips::F28, Mips::F29,
-                 Mips::F30, Mips::F31, 0);
-        else
-          return make_vector<unsigned>(Mips::F2, Mips::F4, Mips::F6, Mips::F8,
-                 Mips::F10, Mips::F20, Mips::F22, Mips::F24, Mips::F26,
-                 Mips::F28, Mips::F30, 0);
-      }
-
-      if (VT == MVT::f64)
-        if ((!Subtarget->isSingleFloat()) && (!Subtarget->isFP64bit()))
-          return make_vector<unsigned>(Mips::D1, Mips::D2, Mips::D3, Mips::D4,
-                 Mips::D5, Mips::D10, Mips::D11, Mips::D12, Mips::D13,
-                 Mips::D14, Mips::D15, 0);
-  }
-  return std::vector<unsigned>();
 }
 
 bool
