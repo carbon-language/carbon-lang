@@ -467,7 +467,7 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     const CodeGenRegister &Reg = *Registers[i];
 
-    StringRef AsmName;
+    std::string AsmName;
     // "NoRegAltName" is special. We don't need to do a lookup for that,
     // as it's just a reference to the default register name.
     if (AltName == "" || AltName == "NoRegAltName") {
