@@ -1184,6 +1184,15 @@ void InitListChecker::CheckStructUnionTypes(const InitializedEntity &Entity,
       continue;
     }
 
+    // Make sure we can use this declaration.
+    if (SemaRef.DiagnoseUseOfDecl(*Field, 
+                                  IList->getInit(Index)->getLocStart())) {
+      ++Index;
+      ++Field;
+      hadError = true;
+      continue;
+    }        
+
     InitializedEntity MemberEntity =
       InitializedEntity::InitializeMember(*Field, &Entity);
     CheckSubElementType(MemberEntity, IList, Field->getType(), Index,
@@ -1502,6 +1511,12 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       FieldIndex = 0;
       StructuredList->setInitializedFieldInUnion(*Field);
     }
+
+    // Make sure we can use this declaration.
+    if (SemaRef.DiagnoseUseOfDecl(*Field, D->getFieldLoc())) {
+      ++Index;
+      return true;
+    }        
 
     // Update the designator with the field declaration.
     D->setField(*Field);
