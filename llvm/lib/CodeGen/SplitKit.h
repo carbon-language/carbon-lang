@@ -81,6 +81,12 @@ public:
     bool LiveThrough;     ///< Live in whole block (Templ 5. above).
     bool LiveIn;          ///< Current reg is live in.
     bool LiveOut;         ///< Current reg is live out.
+
+    /// isOneInstr - Returns true when this BlockInfo describes a single
+    /// instruction.
+    bool isOneInstr() const {
+      return SlotIndex::isSameInstr(FirstUse, LastUse);
+    }
   };
 
 private:
@@ -359,6 +365,10 @@ public:
   /// If the parent interval is not live before Idx, a COPY is not inserted.
   /// Return the beginning of the new live range.
   SlotIndex enterIntvBefore(SlotIndex Idx);
+
+  /// enterIntvAfter - Enter the open interval after the instruction at Idx.
+  /// Return the beginning of the new live range.
+  SlotIndex enterIntvAfter(SlotIndex Idx);
 
   /// enterIntvAtEnd - Enter the open interval at the end of MBB.
   /// Use the open interval from he inserted copy to the MBB end.
