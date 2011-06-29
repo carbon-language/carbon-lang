@@ -6,3 +6,9 @@
 
 // CHECK-ERRORS: error: invalid hexadecimal number
 .long 80+0xzz
+
+// CHECK-ERRORS: error: literal value out of range for directive
+.byte 256
+
+// CHECK-ERRORS: error: literal value out of range for directive
+.long 4e71cf69 // double floating point constant due to missing "0x"

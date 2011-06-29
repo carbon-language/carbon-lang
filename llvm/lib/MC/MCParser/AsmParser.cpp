@@ -28,6 +28,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1612,13 +1613,18 @@ bool AsmParser::ParseDirectiveValue(unsigned Size) {
 
     for (;;) {
       const MCExpr *Value;
+      SMLoc ExprLoc = getLexer().getLoc();
       if (ParseExpression(Value))
         return true;
 
       // Special case constant expressions to match code generator.
-      if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(Value))
-        getStreamer().EmitIntValue(MCE->getValue(), Size, DEFAULT_ADDRSPACE);
-      else
+      if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(Value)) {
+        assert(Size <= 8 && "Invalid size");
+        uint64_t IntValue = MCE->getValue();
+        if (!isUIntN(8 * Size, IntValue) && !isIntN(8 * Size, IntValue))
+          return Error(ExprLoc, "literal value out of range for directive");
+        getStreamer().EmitIntValue(IntValue, Size, DEFAULT_ADDRSPACE);
+      } else
         getStreamer().EmitValue(Value, Size, DEFAULT_ADDRSPACE);
 
       if (getLexer().is(AsmToken::EndOfStatement))
