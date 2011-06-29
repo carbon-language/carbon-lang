@@ -662,6 +662,13 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
     // The EFLAGS implicit def is dead.
     New->getOperand(3).setIsDead();
+
+    // We are not tracking the stack pointer adjustment by the callee, so make
+    // sure we restore the stack pointer immediately after the call, there may
+    // be spill code inserted between the CALL and ADJCALLSTACKUP instructions.
+    MachineBasicBlock::iterator B = MBB.begin();
+    while (I != B && !llvm::prior(I)->getDesc().isCall())
+      --I;
     MBB.insert(I, New);
   }
 }
