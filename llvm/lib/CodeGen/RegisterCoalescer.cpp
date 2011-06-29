@@ -90,15 +90,15 @@ INITIALIZE_PASS_END(RegisterCoalescer, "simple-register-coalescing",
 
 char RegisterCoalescer::ID = 0;
 
-unsigned CoalescerPair::compose(unsigned a, unsigned b) const {
+static unsigned compose(const TargetRegisterInfo &tri, unsigned a, unsigned b) {
   if (!a) return b;
   if (!b) return a;
-  return tri_.composeSubRegIndices(a, b);
+  return tri.composeSubRegIndices(a, b);
 }
 
-bool CoalescerPair::isMoveInstr(const MachineInstr *MI,
-                                unsigned &Src, unsigned &Dst,
-                                unsigned &SrcSub, unsigned &DstSub) const {
+static bool isMoveInstr(const TargetRegisterInfo &tri, const MachineInstr *MI,
+                        unsigned &Src, unsigned &Dst,
+                        unsigned &SrcSub, unsigned &DstSub) {
   if (MI->isCopy()) {
     Dst = MI->getOperand(0).getReg();
     DstSub = MI->getOperand(0).getSubReg();
@@ -106,7 +106,8 @@ bool CoalescerPair::isMoveInstr(const MachineInstr *MI,
     SrcSub = MI->getOperand(1).getSubReg();
   } else if (MI->isSubregToReg()) {
     Dst = MI->getOperand(0).getReg();
-    DstSub = compose(MI->getOperand(0).getSubReg(), MI->getOperand(3).getImm());
+    DstSub = compose(tri, MI->getOperand(0).getSubReg(),
+                     MI->getOperand(3).getImm());
     Src = MI->getOperand(2).getReg();
     SrcSub = MI->getOperand(2).getSubReg();
   } else
@@ -120,7 +121,7 @@ bool CoalescerPair::setRegisters(const MachineInstr *MI) {
   flipped_ = crossClass_ = false;
 
   unsigned Src, Dst, SrcSub, DstSub;
-  if (!isMoveInstr(MI, Src, Dst, SrcSub, DstSub))
+  if (!isMoveInstr(tri_, MI, Src, Dst, SrcSub, DstSub))
     return false;
   partial_ = SrcSub || DstSub;
 
@@ -210,7 +211,7 @@ bool CoalescerPair::isCoalescable(const MachineInstr *MI) const {
   if (!MI)
     return false;
   unsigned Src, Dst, SrcSub, DstSub;
-  if (!isMoveInstr(MI, Src, Dst, SrcSub, DstSub))
+  if (!isMoveInstr(tri_, MI, Src, Dst, SrcSub, DstSub))
     return false;
 
   // Find the virtual register that is srcReg_.
@@ -239,7 +240,7 @@ bool CoalescerPair::isCoalescable(const MachineInstr *MI) const {
     if (dstReg_ != Dst)
       return false;
     // Registers match, do the subregisters line up?
-    return compose(subIdx_, SrcSub) == DstSub;
+    return compose(tri_, subIdx_, SrcSub) == DstSub;
   }
 }
 

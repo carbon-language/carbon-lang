@@ -281,13 +281,6 @@ namespace llvm {
     /// is a physreg.
     const TargetRegisterClass *newRC_;
 
-    /// compose - Compose subreg indices a and b, either may be 0.
-    unsigned compose(unsigned, unsigned) const;
-
-    /// isMoveInstr - Return true if MI is a move or subreg instruction.
-    bool isMoveInstr(const MachineInstr *MI, unsigned &Src, unsigned &Dst,
-                     unsigned &SrcSub, unsigned &DstSub) const;
-
   public:
     CoalescerPair(const TargetInstrInfo &tii, const TargetRegisterInfo &tri)
       : tii_(tii), tri_(tri), dstReg_(0), srcReg_(0), subIdx_(0),
