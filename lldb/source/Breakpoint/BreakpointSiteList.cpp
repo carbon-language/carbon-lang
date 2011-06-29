@@ -209,6 +209,41 @@ BreakpointSiteList::GetByIndex (uint32_t i) const
     return stop_sp;
 }
 
+bool
+BreakpointSiteList::FindInRange (lldb::addr_t lower_bound, lldb::addr_t upper_bound, BreakpointSiteList &bp_site_list) const
+{
+        
+    if (lower_bound > upper_bound)
+        return false;
+    
+    collection::const_iterator lower, upper, pos;
+    lower = m_bp_site_list.lower_bound(lower_bound);
+    if (lower == m_bp_site_list.end()
+            || (*lower).first >= upper_bound)
+        return false;
+    
+    // This is one tricky bit.  The breakpoint might overlap the bottom end of the range.  So we grab the
+    // breakpoint prior to the lower bound, and check that that + its byte size isn't in our range.
+    if (lower != m_bp_site_list.begin())
+    {
+        collection::const_iterator prev_pos = lower;
+        prev_pos--;
+        const BreakpointSiteSP &prev_bp = (*prev_pos).second;
+        if (prev_bp->GetLoadAddress() + prev_bp->GetByteSize() > lower_bound)
+            bp_site_list.Add (prev_bp);
+        
+    }
+    
+    upper = m_bp_site_list.upper_bound(upper_bound);
+        
+    for (pos = lower; pos != upper; pos++)
+    {
+        bp_site_list.Add ((*pos).second);
+    }
+    return true;
+}
+
+
 void
 BreakpointSiteList::SetEnabledForAll (const bool enabled, const lldb::break_id_t except_id)
 {

@@ -165,6 +165,9 @@ public:
 
     void
     SetEnabledForAll(const bool enable, const lldb::break_id_t except_id = LLDB_INVALID_BREAK_ID);
+    
+    bool
+    FindInRange (lldb::addr_t lower_bound, lldb::addr_t upper_bound, BreakpointSiteList &bp_site_list) const;
 
     typedef void (*BreakpointSiteSPMapFunc) (lldb::BreakpointSiteSP &bp, void *baton);
 
