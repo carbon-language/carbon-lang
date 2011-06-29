@@ -25,7 +25,7 @@ namespace llvm {
 ///
 class MCInstrInfo {
   const MCInstrDesc *Desc;  // Raw array to allow static init'n
-  unsigned NumOpcodes;             // Number of entries in the desc array
+  unsigned NumOpcodes;      // Number of entries in the desc array
 
 public:
   /// InitMCInstrInfo - Initialize MCInstrInfo, called by TableGen
