@@ -173,10 +173,6 @@ namespace llvm {
               getRegForInlineAsmConstraint(const std::string &Constraint,
               EVT VT) const;
 
-    std::vector<unsigned>
-    getRegClassForInlineAsmConstraint(const std::string &Constraint,
-              EVT VT) const;
-
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 
     /// isFPImmLegal - Returns true if the target can instruction select the
