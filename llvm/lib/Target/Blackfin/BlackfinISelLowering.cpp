@@ -621,37 +621,19 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const {
   case 'w': return Pair(0U, ALLRegisterClass);
   case 'Z': return Pair(P3, PRegisterClass);
   case 'Y': return Pair(P1, PRegisterClass);
+  case 'z': return Pair(0U, zConsRegisterClass);
+  case 'D': return Pair(0U, DConsRegisterClass);
+  case 'W': return Pair(0U, WConsRegisterClass);
+  case 'c': return Pair(0U, cConsRegisterClass);
+  case 't': return Pair(0U, tConsRegisterClass);
+  case 'u': return Pair(0U, uConsRegisterClass);
+  case 'k': return Pair(0U, kConsRegisterClass);
+  case 'y': return Pair(0U, yConsRegisterClass);
   }
 
   // Not implemented: q0-q7, qA. Use {R2} etc instead.
-  // Constraints z, D, W, c, t, u, k, and y use non-existing classes, defer to
-  // getRegClassForInlineAsmConstraint()
 
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
-}
-
-std::vector<unsigned> BlackfinTargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint, EVT VT) const {
-  using namespace BF;
-
-  if (Constraint.size() != 1)
-    return std::vector<unsigned>();
-
-  switch (Constraint[0]) {
-  case 'z': return make_vector<unsigned>(P0, P1, P2, 0);
-  case 'D': return make_vector<unsigned>(R0, R2, R4, R6, 0);
-  case 'W': return make_vector<unsigned>(R1, R3, R5, R7, 0);
-  case 'c': return make_vector<unsigned>(I0, I1, I2, I3,
-                                         B0, B1, B2, B3,
-                                         L0, L1, L2, L3, 0);
-  case 't': return make_vector<unsigned>(LT0, LT1, 0);
-  case 'u': return make_vector<unsigned>(LB0, LB1, 0);
-  case 'k': return make_vector<unsigned>(LC0, LC1, 0);
-  case 'y': return make_vector<unsigned>(RETS, RETN, RETI, RETX, RETE,
-                                         ASTAT, SEQSTAT, USP, 0);
-  }
-
-  return std::vector<unsigned>();
 }
 
 bool BlackfinTargetLowering::

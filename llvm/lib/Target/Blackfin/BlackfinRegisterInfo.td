@@ -261,3 +261,17 @@ def StatBit : RegisterClass<"BF", [i1], 8,
 
 // Should be i40, but that isn't defined. It is not a legal type yet anyway.
 def Accu : RegisterClass<"BF", [i64], 64, (add A0, A1)>;
+
+// Register classes to match inline asm constraints.
+def zCons : RegisterClass<"BF", [i32], 32, (add P0, P1, P2)>;
+def DCons : RegisterClass<"BF", [i32], 32, (add R0, R2, R4, R6)>;
+def WCons : RegisterClass<"BF", [i32], 32, (add R1, R3, R5, R7)>;
+def cCons : RegisterClass<"BF", [i32], 32, (add I0, I1, I2, I3,
+    	    			       	   	B0, B1, B2, B3,
+						L0, L1, L2, L3)>;
+def tCons : RegisterClass<"BF", [i32], 32, (add LT0, LT1)>;
+def uCons : RegisterClass<"BF", [i32], 32, (add LB0, LB1)>;
+def kCons : RegisterClass<"BF", [i32], 32, (add LC0, LC1)>;
+def yCons : RegisterClass<"BF", [i32], 32, (add RETS, RETN, RETI, RETX,
+    	    			       	   	RETE, ASTAT, SEQSTAT,
+						USP)>;
