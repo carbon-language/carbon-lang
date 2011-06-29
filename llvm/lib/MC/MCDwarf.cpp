@@ -637,9 +637,6 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   const TargetAsmInfo &TAI = Context.getTargetAsmInfo();
   Streamer.SwitchSection(TAI.getCompactUnwindSection());
 
-  unsigned FDEEncoding = TAI.getFDEEncoding(UsingCFI);
-  unsigned Size = getSizeForEncoding(Streamer, FDEEncoding);
-
   // range-start range-length  compact-unwind-enc personality-func   lsda
   //  _foo       LfooEnd-_foo  0x00000023          0                 0
   //  _bar       LbarEnd-_bar  0x00000025         __gxx_personality  except_tab1
@@ -663,12 +660,30 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   //   .quad except_tab1
 
   // Range Start
-  EmitSymbol(Streamer, *Frame.Begin, FDEEncoding);
+  unsigned FDEEncoding = TAI.getFDEEncoding(UsingCFI);
+  unsigned Size = getSizeForEncoding(Streamer, FDEEncoding);
+  Streamer.EmitSymbolValue(Frame.Function, Size);
 
   // Range Length
   const MCExpr *Range = MakeStartMinusEndExpr(Streamer, *Frame.Begin,
                                               *Frame.End, 0);
   Streamer.EmitAbsValue(Range, Size);
+
+  // Personality Function
+  if (Frame.Personality) {
+    Size = getSizeForEncoding(Streamer, Frame.PersonalityEncoding);
+    Streamer.EmitSymbolValue(Frame.Personality, Size);
+  } else {
+    Streamer.EmitIntValue(Frame.PersonalityEncoding, 0); // No personality fn
+  }
+
+  // LSDA
+  if (Frame.Lsda) {
+    Size = getSizeForEncoding(Streamer, Frame.LsdaEncoding);
+    Streamer.EmitSymbolValue(Frame.Lsda, Size);
+  } else {
+    Streamer.EmitIntValue(Frame.LsdaEncoding, 0); // No LSDA
+  }
 
   return true;
 #endif
