@@ -1007,6 +1007,7 @@ bool IndVarSimplify::EliminateIVUser(Instruction *UseInst,
 
   // Eliminate any operation that SCEV can prove is an identity function.
   if (!SE->isSCEVable(UseInst->getType()) ||
+      (UseInst->getType() != IVOperand->getType()) ||
       (SE->getSCEV(UseInst) != SE->getSCEV(IVOperand)))
     return false;
 

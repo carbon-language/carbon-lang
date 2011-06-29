@@ -23,6 +23,7 @@ ph:
 ; sext should be eliminated while preserving gep inboundsness.
 ; CHECK-NOT: sext
 ; CHECK: getelementptr inbounds
+; CHECK: exit
 loop:
   %i.02 = phi i32 [ 0, %ph ], [ %iinc, %loop ]
   %s.01 = phi i32 [ 0, %ph ], [ %sinc, %loop ]
@@ -63,6 +64,7 @@ ph:
 ; CHECK: getelementptr inbounds
 ; %vall sext should obviously not be eliminated
 ; CHECK: sext
+; CHECK: exit
 loop:
   %i.02 = phi i32 [ 0, %ph ], [ %iinc, %loop ]
   %s.01 = phi i64 [ 0, %ph ], [ %sinc, %loop ]
@@ -106,6 +108,7 @@ ph:
 ; Preserve gep inboundsness, and don't factor it.
 ; CHECK: getelementptr inbounds i32* %ptriv, i32 1
 ; CHECK-NOT: add
+; CHECK: exit
 loop:
   %ptriv = phi i32* [ %first, %ph ], [ %ptrpost, %loop ]
   %ofs = sext i32 %idx to i64
@@ -113,6 +116,40 @@ loop:
   store i32 3, i32* %adr
   %ptrpost = getelementptr inbounds i32* %ptriv, i32 1
   %cond = icmp ne i32* %ptrpost, %last
+  br i1 %cond, label %loop, label %exit
+
+exit:
+  br label %return
+
+return:
+  ret void
+}
+
+%struct = type { i32 }
+
+define void @bitcastiv(i32 %start, i32 %limit, i32 %step, %struct* %base)
+nounwind
+{
+entry:
+  br label %loop
+
+; CHECK: loop:
+;
+; Preserve casts
+; CHECK: phi i32
+; CHECK: bitcast
+; CHECK: getelementptr
+; CHECK: exit
+loop:
+  %iv = phi i32 [%start, %entry], [%next, %loop]
+  %p = phi %struct* [%base, %entry], [%pinc, %loop]
+  %adr = getelementptr %struct* %p, i32 0, i32 0
+  store i32 3, i32* %adr
+  %pp = bitcast %struct* %p to i32*
+  store i32 4, i32* %pp
+  %pinc = getelementptr %struct* %p, i32 1
+  %next = add i32 %iv, 1
+  %cond = icmp ne i32 %next, %limit
   br i1 %cond, label %loop, label %exit
 
 exit:
