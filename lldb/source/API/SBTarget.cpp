@@ -504,13 +504,14 @@ bool
 SBTarget::ResolveLoadAddress (lldb::addr_t vm_addr, 
                               lldb::SBAddress& addr)
 {
-    if (m_opaque_sp)
+    if (m_opaque_sp && addr.IsValid())
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         return m_opaque_sp->GetSectionLoadList().ResolveLoadAddress (vm_addr, *addr);
     }
 
-    addr->Clear();
+    if (addr.IsValid())
+        addr->Clear();
     return false;    
 }
 
@@ -518,7 +519,7 @@ SBSymbolContext
 SBTarget::ResolveSymbolContextForAddress (const SBAddress& addr, uint32_t resolve_scope)
 {
     SBSymbolContext sc;
-    if (m_opaque_sp)
+    if (m_opaque_sp && addr.IsValid())
         m_opaque_sp->GetImages().ResolveSymbolContextForAddress (*addr, resolve_scope, sc.ref());
     return sc;
 }
