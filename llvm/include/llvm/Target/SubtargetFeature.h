@@ -20,7 +20,6 @@
 
 #include <string>
 #include <vector>
-#include <cstring>
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
 
