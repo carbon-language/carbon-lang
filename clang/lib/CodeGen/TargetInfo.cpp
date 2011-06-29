@@ -1765,6 +1765,8 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // COMPLEX_X87, it is passed in memory.
   case X87:
   case ComplexX87:
+    if (isRecordWithNonTrivialDestructorOrCopyConstructor(Ty))
+      ++neededInt;
     return getIndirectResult(Ty);
 
   case SSEUp:

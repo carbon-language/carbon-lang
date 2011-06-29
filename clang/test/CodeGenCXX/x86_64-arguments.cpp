@@ -115,3 +115,22 @@ namespace test6 {
   }
   // CHECK: define i32 @_ZN5test64testENS_5outerE(i64 %x.coerce0, i32 %x.coerce1)
 }
+
+namespace test7 {
+  struct StringRef {char* ptr; long len; };
+  class A { public: ~A(); };
+  A x(A, A, long, long, StringRef) { return A(); }
+  // Check that the StringRef is passed byval instead of expanded
+  // (which would split it between registers and memory).
+  // rdar://problem/9686430
+  // CHECK: define void @_ZN5test71xENS_1AES0_llNS_9StringRefE({{.*}} byval align 8)
+
+  // And a couple extra related tests:
+  A y(A, long double, long, long, StringRef) { return A(); }
+  // CHECK: define void @_ZN5test71yENS_1AEellNS_9StringRefE({{.*}} i8*
+  struct StringDouble {char * ptr; double d;};
+  A z(A, A, A, A, A, StringDouble) { return A(); }
+  A zz(A, A, A, A, StringDouble) { return A(); }
+  // CHECK: define void @_ZN5test71zENS_1AES0_S0_S0_S0_NS_12StringDoubleE({{.*}} byval align 8)
+  // CHECK: define void @_ZN5test72zzENS_1AES0_S0_S0_NS_12StringDoubleE({{.*}} i8*
+}
