@@ -284,15 +284,11 @@ void TokenLexer::ExpandFunctionArguments() {
     assert(!OwnsTokens && "This would leak if we already own the token list");
     // This is deleted in the dtor.
     NumTokens = ResultToks.size();
-    llvm::BumpPtrAllocator &Alloc = PP.getPreprocessorAllocator();
-    Token *Res =
-      static_cast<Token *>(Alloc.Allocate(sizeof(Token)*ResultToks.size(),
-                                          llvm::alignOf<Token>()));
-    if (NumTokens)
-      memcpy(Res, &ResultToks[0], NumTokens*sizeof(Token));
-    Tokens = Res;
+    // The tokens will be added to Preprocessor's cache and will be removed
+    // when this TokenLexer finishes lexing them.
+    Tokens = PP.cacheMacroExpandedTokens(this, ResultToks);
 
-    // The preprocessor bump pointer owns these tokens, not us.
+    // The preprocessor cache of macro expanded tokens owns these tokens,not us.
     OwnsTokens = false;
   }
 }

@@ -265,6 +265,10 @@ bool Preprocessor::HandleEndOfTokenLexer(Token &Result) {
   assert(CurTokenLexer && !CurPPLexer &&
          "Ending a macro when currently in a #include file!");
 
+  if (!MacroExpandingLexersStack.empty() &&
+      MacroExpandingLexersStack.back().first == CurTokenLexer.get())
+    removeCachedMacroExpandedTokensOfLastLexer();
+
   // Delete or cache the now-dead macro expander.
   if (NumCachedTokenLexers == TokenLexerCacheSize)
     CurTokenLexer.reset();

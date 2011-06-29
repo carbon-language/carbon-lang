@@ -43,10 +43,13 @@ class TokenLexer {
   /// Tokens - This is the pointer to an array of tokens that the macro is
   /// defined to, with arguments expanded for function-like macros.  If this is
   /// a token stream, these are the tokens we are returning.  This points into
-  /// the macro definition we are lexing from, a scratch buffer allocated from
-  /// the preprocessor's bump pointer allocator, or some other buffer that we
-  /// may or may not own (depending on OwnsTokens).
+  /// the macro definition we are lexing from, a cache buffer that is owned by
+  /// the preprocessor, or some other buffer that we may or may not own
+  /// (depending on OwnsTokens).
+  /// Note that if it points into Preprocessor's cache buffer, the Preprocessor
+  /// may update the pointer as needed.
   const Token *Tokens;
+  friend class Preprocessor;
 
   /// NumTokens - This is the length of the Tokens array.
   ///

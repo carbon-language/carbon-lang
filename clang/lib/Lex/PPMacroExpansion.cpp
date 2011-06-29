@@ -22,6 +22,7 @@
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/ExternalPreprocessorSource.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdio>
@@ -488,6 +489,46 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
 
   return MacroArgs::create(MI, ArgTokens.data(), ArgTokens.size(),
                            isVarargsElided, *this);
+}
+
+/// \brief Keeps macro expanded tokens for TokenLexers.
+//
+/// Works like a stack; a TokenLexer adds the macro expanded tokens that is
+/// going to lex in the cache and when it finishes the tokens are removed
+/// from the end of the cache.
+Token *Preprocessor::cacheMacroExpandedTokens(TokenLexer *tokLexer,
+                                              llvm::ArrayRef<Token> tokens) {
+  assert(tokLexer);
+  if (tokens.empty())
+    return 0;
+
+  size_t newIndex = MacroExpandedTokens.size();
+  bool cacheNeedsToGrow = tokens.size() >
+                      MacroExpandedTokens.capacity()-MacroExpandedTokens.size(); 
+  MacroExpandedTokens.append(tokens.begin(), tokens.end());
+
+  if (cacheNeedsToGrow) {
+    // Go through all the TokenLexers whose 'Tokens' pointer points in the
+    // buffer and update the pointers to the (potential) new buffer array.
+    for (unsigned i = 0, e = MacroExpandingLexersStack.size(); i != e; ++i) {
+      TokenLexer *prevLexer;
+      size_t tokIndex;
+      llvm::tie(prevLexer, tokIndex) = MacroExpandingLexersStack[i];
+      prevLexer->Tokens = MacroExpandedTokens.data() + tokIndex;
+    }
+  }
+
+  MacroExpandingLexersStack.push_back(std::make_pair(tokLexer, newIndex));
+  return MacroExpandedTokens.data() + newIndex;
+}
+
+void Preprocessor::removeCachedMacroExpandedTokensOfLastLexer() {
+  assert(!MacroExpandingLexersStack.empty());
+  size_t tokIndex = MacroExpandingLexersStack.back().second;
+  assert(tokIndex < MacroExpandedTokens.size());
+  // Pop the cached macro expanded tokens from the end.
+  MacroExpandedTokens.resize(tokIndex);
+  MacroExpandingLexersStack.pop_back();
 }
 
 /// ComputeDATE_TIME - Compute the current time, enter it into the specified

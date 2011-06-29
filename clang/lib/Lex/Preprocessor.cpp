@@ -118,6 +118,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
 
 Preprocessor::~Preprocessor() {
   assert(BacktrackPositions.empty() && "EnableBacktrack/Backtrack imbalance!");
+  assert(MacroExpandingLexersStack.empty() && MacroExpandedTokens.empty() &&
+         "Preprocessor::HandleEndOfTokenLexer should have cleared those");
 
   while (!IncludeMacroStack.empty()) {
     delete IncludeMacroStack.back().TheLexer;
@@ -226,7 +228,7 @@ Preprocessor::macro_begin(bool IncludeExternalMacros) const {
 }
 
 size_t Preprocessor::getTotalMemory() const {
-  return BP.getTotalMemory();
+  return BP.getTotalMemory() + MacroExpandedTokens.capacity()*sizeof(Token);
 }
 
 Preprocessor::macro_iterator
