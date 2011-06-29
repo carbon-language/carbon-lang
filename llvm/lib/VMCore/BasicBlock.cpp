@@ -147,26 +147,6 @@ Instruction* BasicBlock::getFirstNonPHIOrDbg() {
   return &*i;
 }
 
-Instruction* BasicBlock::getFirstNonPHIOrDbgOrLifetime() {
-  // All valid basic blocks should have a terminator,
-  // which is not a PHINode. If we have an invalid basic
-  // block we'll get an assertion failure when dereferencing
-  // a past-the-end iterator.
-  BasicBlock::iterator i = begin();
-  for (;; ++i) {
-    if (isa<PHINode>(i) || isa<DbgInfoIntrinsic>(i))
-      continue;
-
-    const IntrinsicInst *II = dyn_cast<IntrinsicInst>(i);
-    if (!II)
-      break;
-    if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
-        II->getIntrinsicID() != Intrinsic::lifetime_end)
-      break;
-  }
-  return &*i;
-}
-
 void BasicBlock::dropAllReferences() {
   for(iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
