@@ -3299,8 +3299,18 @@ Sema::RegisterLocallyScopedExternCDecl(NamedDecl *ND,
   if (S && IdResolver.ReplaceDecl(PrevDecl, ND)) {
     // The previous declaration was found on the identifer resolver
     // chain, so remove it from its scope.
-    while (S && !S->isDeclScope(PrevDecl))
-      S = S->getParent();
+
+    if (S->isDeclScope(PrevDecl)) {
+      // Special case for redeclarations in the SAME scope.
+      // Because this declaration is going to be added to the identifier chain
+      // later, we should temporarily take it OFF the chain.
+      IdResolver.RemoveDecl(ND);
+
+    } else {
+      // Find the scope for the original declaration.
+      while (S && !S->isDeclScope(PrevDecl))
+        S = S->getParent();
+    }
 
     if (S)
       S->RemoveDecl(PrevDecl);
