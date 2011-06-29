@@ -377,11 +377,9 @@ static void removeOperands(MachineInstr &MI, unsigned i) {
 static unsigned convertToNonSPOpcode(unsigned Opcode) {
   switch (Opcode) {
   case ARM::tLDRspi:
-  case ARM::tRestore:           // FIXME: Should this opcode be here?
     return ARM::tLDRi;
 
   case ARM::tSTRspi:
-  case ARM::tSpill:             // FIXME: Should this opcode be here?
     return ARM::tSTRi;
   }
 
@@ -524,7 +522,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
 
     // If this is a thumb spill / restore, we will be using a constpool load to
     // materialize the offset.
-    if (Opcode == ARM::tRestore || Opcode == ARM::tSpill) {
+    if (Opcode == ARM::tLDRspi || Opcode == ARM::tSTRspi) {
       ImmOp.ChangeToImmediate(0);
     } else {
       // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
@@ -664,7 +662,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Use the destination register to materialize sp + offset.
     unsigned TmpReg = MI.getOperand(0).getReg();
     bool UseRR = false;
-    if (Opcode == ARM::tRestore) {
+    if (Opcode == ARM::tLDRspi) {
       if (FrameReg == ARM::SP)
         emitThumbRegPlusImmInReg(MBB, II, dl, TmpReg, FrameReg,
                                  Offset, false, TII, *this);
@@ -687,7 +685,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       VReg = MF.getRegInfo().createVirtualRegister(ARM::tGPRRegisterClass);
       bool UseRR = false;
 
-      if (Opcode == ARM::tSpill) {
+      if (Opcode == ARM::tSTRspi) {
         if (FrameReg == ARM::SP)
           emitThumbRegPlusImmInReg(MBB, II, dl, VReg, FrameReg,
                                    Offset, false, TII, *this);

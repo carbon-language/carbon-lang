@@ -792,7 +792,7 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
     break;
   case ARM::STRi12:
   case ARM::t2STRi12:
-  case ARM::tSpill:
+  case ARM::tSTRspi:
   case ARM::VSTRD:
   case ARM::VSTRS:
     if (MI->getOperand(1).isFI() &&
@@ -927,7 +927,7 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
     break;
   case ARM::LDRi12:
   case ARM::t2LDRi12:
-  case ARM::tRestore:
+  case ARM::tLDRspi:
   case ARM::VLDRD:
   case ARM::VLDRS:
     if (MI->getOperand(1).isFI() &&

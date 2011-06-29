@@ -75,7 +75,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                               MachineMemOperand::MOStore,
                               MFI.getObjectSize(FI),
                               MFI.getObjectAlignment(FI));
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tSpill))
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tSTRspi))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
   }
@@ -104,7 +104,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                               MachineMemOperand::MOLoad,
                               MFI.getObjectSize(FI),
                               MFI.getObjectAlignment(FI));
-    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tRestore), DestReg)
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tLDRspi), DestReg)
                    .addFrameIndex(FI).addImm(0).addMemOperand(MMO));
   }
 }

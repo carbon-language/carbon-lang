@@ -177,7 +177,7 @@ static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
 }
 
 static bool isCSRestore(MachineInstr *MI, const unsigned *CSRegs) {
-  if (MI->getOpcode() == ARM::tRestore &&
+  if (MI->getOpcode() == ARM::tLDRspi &&
       MI->getOperand(1).isFI() &&
       isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs))
     return true;

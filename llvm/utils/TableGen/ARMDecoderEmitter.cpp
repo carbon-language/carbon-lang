@@ -1667,14 +1667,12 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     //   tPOP_RET/t2LDMIA_RET conflict with tPOP/t2LDM (ditto)
     //   tMOVCCi conflicts with tMOVi8
     //   tMOVCCr conflicts with tMOVgpr2gpr
-    //   tSpill conflicts with tSTRspi
     //   tLDRcp conflicts with tLDRspi
-    //   tRestore conflicts with tLDRspi
     //   t2MOVCCi16 conflicts with tMOVi16
     if (Name == "tBfar" ||
         Name == "tPOP_RET" || Name == "t2LDMIA_RET" ||
         Name == "tMOVCCi" || Name == "tMOVCCr" ||
-        Name == "tSpill" || Name == "tLDRcp" || Name == "tRestore" ||
+        Name == "tLDRcp" || 
         Name == "t2MOVCCi16")
       return false;
   }
