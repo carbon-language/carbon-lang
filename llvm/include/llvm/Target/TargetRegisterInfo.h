@@ -720,6 +720,12 @@ public:
   virtual int getSEHRegNum(unsigned i) const {
     return i;
   }
+
+  /// getCompactUnwindRegNum - This function maps the register to the number for
+  /// compact unwind encoding. Return -1 if the register isn't valid.
+  virtual int getCompactUnwindRegNum(unsigned) const {
+    return -1;
+  }
 };
 
 
