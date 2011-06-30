@@ -7544,7 +7544,7 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       if (Subtarget->isThumb())
 	return RCPair(0U, ARM::hGPRRegisterClass);
       else
-	return RCPair(0u, static_cast<const TargetRegisterClass*>(0));
+	return RCPair(0U, static_cast<const TargetRegisterClass*>(0));
     case 'r':
       return RCPair(0U, ARM::GPRRegisterClass);
     case 'w':
