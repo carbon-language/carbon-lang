@@ -21,6 +21,7 @@ struct isl_map;
 struct isl_union_map;
 struct isl_set;
 struct isl_union_set;
+struct isl_schedule;
 
 namespace polly {
 
@@ -41,6 +42,8 @@ std::string stringFromIslObj(/*__isl_keep*/ isl_map *map);
 std::string stringFromIslObj(/*__isl_keep*/ isl_union_map *umap);
 std::string stringFromIslObj(/*__isl_keep*/ isl_set *set);
 std::string stringFromIslObj(/*__isl_keep*/ isl_union_set *uset);
+std::string stringFromIslObj(/*__isl_keep*/ isl_schedule *schedule);
+
 //@}
 } //end namespace polly
 

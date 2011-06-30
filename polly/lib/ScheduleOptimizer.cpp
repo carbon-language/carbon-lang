@@ -20,6 +20,7 @@
 #include "polly/Cloog.h"
 #include "polly/LinkAllPasses.h"
 
+#include "polly/Support/GICHelper.h"
 #include "polly/Dependences.h"
 #include "polly/ScopInfo.h"
 
@@ -27,6 +28,7 @@
 #include "isl/map.h"
 #include "isl/constraint.h"
 #include "isl/schedule.h"
+#include "isl/band.h"
 
 #define DEBUG_TYPE "polly-optimize-isl"
 #include "llvm/Support/Debug.h"
@@ -91,57 +93,154 @@ static void extendScattering(Scop &S, unsigned scatDimensions) {
   }
 }
 
-// @brief Tile a band.
+// getTileMap - Create a map that describes a n-dimensonal tiling.
 //
-// This function recieves a map that assigns to the instances of a statement
-// an execution time.
+// getTileMap creates a map from a n-dimensional scattering space into an
+// 2*n-dimensional scattering space. The map describes a rectangular tiling.
 //
-// [i_0, i_1, i_2] -> [o_0, o_1, o_2, i_0, i_1, i_2]:
-//   o_0 % 32 = 0 and o_1 % 32 = 0 and o_2 % 32 = 0
-//   and o0 <= i0 <= o0 + 32 and o1 <= i1 <= o1 + 32 and o2 <= i2 <= o2 + 32
+// Example:
+//   scheduleDimensions = 2, parameterDimensions = 1, tileSize = 32
+//
+//   tileMap := [p0] -> {[s0, s1] -> [t0, t1, s0, s1]:
+//                        t0 % 32 = 0 and t0 <= s0 < t0 + 32 and
+//                        t1 % 32 = 0 and t1 <= s1 < t1 + 32}
+//
+//  Before tiling:
+//
+//  for (i = 0; i < N; i++)
+//    for (j = 0; j < M; j++)
+//	S(i,j)
+//
+//  After tiling:
+//
+//  for (t_i = 0; t_i < N; i+=32)
+//    for (t_j = 0; t_j < M; j+=32)
+//	for (i = t_i; i < min(t_i + 32, N); i++)  | Unknown that N % 32 = 0
+//	  for (j = t_j; j < t_j + 32; j++)        |   Known that M % 32 = 0
+//	    S(i,j)
+//
+static isl_basic_map *getTileMap(isl_ctx *ctx, int scheduleDimensions,
+				 int parameterDimensions, int tileSize = 32) {
+  // We construct
+  //
+  // tileMap := [p0] -> {[s0, s1] -> [t0, t1, p0, p1, a0, a1]:
+  //	                  s0 = a0 * 32 and s0 = p0 and t0 <= p0 < t0 + 32 and
+  //	                  s1 = a1 * 32 and s1 = p1 and t1 <= p1 < t1 + 32}
+  //
+  // and project out the auxilary dimensions a0 and a1.
+  isl_dim *dim = isl_dim_alloc(ctx, parameterDimensions, scheduleDimensions,
+			       scheduleDimensions * 3);
+  isl_basic_map *tileMap = isl_basic_map_universe(isl_dim_copy(dim));
 
-static isl_map *tileBand(isl_map *band) {
-  int dimensions = isl_map_n_out(band);
-  int tileSize = 32;
+  for (int x = 0; x < scheduleDimensions; x++) {
+    int sX = x;
+    int tX = x;
+    int pX = scheduleDimensions + x;
+    int aX = 2 * scheduleDimensions + x;
 
-  isl_dim *dim = isl_dim_alloc(isl_map_get_ctx(band), isl_map_n_param(band),
-                               dimensions, dimensions * 3);
-  isl_basic_map *tiledBand = isl_basic_map_universe(isl_dim_copy(dim));
+    isl_constraint *c;
 
-  for (int i = 0; i < dimensions; i++) {
-    isl_constraint *c = isl_equality_alloc(isl_dim_copy(dim));
-    isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
-    isl_constraint_set_coefficient_si(c, isl_dim_out, 2 * dimensions + i,
-                                      -tileSize);
-    tiledBand = isl_basic_map_add_constraint(tiledBand, c);
-
-
+    // sX = aX * tileSize;
     c = isl_equality_alloc(isl_dim_copy(dim));
-    isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
-    isl_constraint_set_coefficient_si(c, isl_dim_out, dimensions + i, 1);
-    tiledBand = isl_basic_map_add_constraint(tiledBand, c);
+    isl_constraint_set_coefficient_si(c, isl_dim_out, sX, 1);
+    isl_constraint_set_coefficient_si(c, isl_dim_out, aX, -tileSize);
+    tileMap = isl_basic_map_add_constraint(tileMap, c);
 
-    c = isl_inequality_alloc(isl_dim_copy(dim));
-    isl_constraint_set_coefficient_si(c, isl_dim_out, i, -1);
-    isl_constraint_set_coefficient_si(c, isl_dim_out, dimensions + i, 1);
-    tiledBand = isl_basic_map_add_constraint(tiledBand, c);
+    // pX = sX;
+    c = isl_equality_alloc(isl_dim_copy(dim));
+    isl_constraint_set_coefficient_si(c, isl_dim_out, pX, 1);
+    isl_constraint_set_coefficient_si(c, isl_dim_in, sX, -1);
+    tileMap = isl_basic_map_add_constraint(tileMap, c);
 
+    // tX <= pX
     c = isl_inequality_alloc(isl_dim_copy(dim));
-    isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
-    isl_constraint_set_coefficient_si(c, isl_dim_out, dimensions + i, -1);
+    isl_constraint_set_coefficient_si(c, isl_dim_out, pX, 1);
+    isl_constraint_set_coefficient_si(c, isl_dim_out, tX, -1);
+    tileMap = isl_basic_map_add_constraint(tileMap, c);
+
+    // pX <= tX + (tileSize - 1)
+    c = isl_inequality_alloc(isl_dim_copy(dim));
+    isl_constraint_set_coefficient_si(c, isl_dim_out, tX, 1);
+    isl_constraint_set_coefficient_si(c, isl_dim_out, pX, -1);
     isl_constraint_set_constant_si(c, tileSize - 1);
-    tiledBand = isl_basic_map_add_constraint(tiledBand, c);
+    tileMap = isl_basic_map_add_constraint(tileMap, c);
   }
 
-  // Project out auxilary dimensions (introduced to ensure 'ii % tileSize = 0')
+  // Project out auxilary dimensions.
   //
-  // The real dimensions are transformed into existentially quantified ones.
-  // This reduces the number of visible scattering dimensions.  Also, Cloog
-  // produces better code, if auxilary dimensions are existentially quantified.
-  tiledBand = isl_basic_map_project_out(tiledBand, isl_dim_out, 2 * dimensions,
-                                        dimensions);
+  // The auxilary dimensions are transformed into existentially quantified ones.
+  // This reduces the number of visible scattering dimensions and allows Cloog
+  // to produces better code.
+  tileMap = isl_basic_map_project_out(tileMap, isl_dim_out,
+				      2 * scheduleDimensions,
+				      scheduleDimensions);
+  isl_dim_free(dim);
+  return tileMap;
+}
 
-  return isl_map_apply_range(band, isl_map_from_basic_map(tiledBand));
+isl_union_map *getTiledPartialSchedule(isl_band *band) {
+  isl_union_map *partialSchedule;
+  int scheduleDimensions, parameterDimensions;
+  isl_ctx *ctx;
+  isl_dim *dim;
+  isl_basic_map *tileMap;
+  isl_union_map *tileUnionMap;
+
+  partialSchedule = isl_band_get_partial_schedule(band);
+  ctx = isl_union_map_get_ctx(partialSchedule);
+  dim = isl_union_map_get_dim(partialSchedule);
+  scheduleDimensions = isl_band_n_member(band);
+  parameterDimensions = isl_dim_size(dim, isl_dim_param);
+
+  tileMap = getTileMap(ctx, scheduleDimensions, parameterDimensions);
+  tileUnionMap = isl_union_map_from_map(isl_map_from_basic_map(tileMap));
+
+  partialSchedule = isl_union_map_apply_range(partialSchedule, tileUnionMap);
+
+  isl_dim_free(dim);
+  isl_ctx_free(ctx);
+
+  return partialSchedule;
+}
+
+// tileBandList - Tile all bands contained in a band forest.
+//
+// Recursively walk the band forest and tile all bands in the forest. Return
+// a schedule that describes the tiled scattering.
+static isl_union_map *tileBandList(isl_band_list *blist) {
+  int numBands = isl_band_list_n_band(blist);
+
+  isl_union_map *finalSchedule = 0;
+
+  for (int i = 0; i < numBands; i++) {
+    isl_band *band;
+    isl_union_map *partialSchedule;
+    band = isl_band_list_get_band(blist, i);
+    partialSchedule = getTiledPartialSchedule(band);
+
+    if (isl_band_has_children(band)) {
+      isl_band_list *children = isl_band_get_children(band);
+      isl_union_map *suffixSchedule = tileBandList(children);
+      partialSchedule = isl_union_map_flat_range_product(partialSchedule,
+							 suffixSchedule);
+    }
+
+    if (finalSchedule)
+      isl_union_map_union(finalSchedule, partialSchedule);
+    else
+      finalSchedule = partialSchedule;
+
+    isl_band_free(band);
+  }
+
+  return finalSchedule;
+}
+
+static isl_union_map *tileSchedule(isl_schedule *schedule) {
+  isl_band_list *blist = isl_schedule_get_band_forest(schedule);
+  isl_union_map *tiledSchedule = tileBandList(blist);
+  isl_band_list_free(blist);
+  return tiledSchedule;
 }
 
 bool ScheduleOptimizer::runOnScop(Scop &S) {
@@ -179,49 +278,29 @@ bool ScheduleOptimizer::runOnScop(Scop &S) {
 
   schedule  = isl_union_set_compute_schedule(domain, validity, proximity);
 
-  // Get the complete schedule.
-  isl_union_map *scheduleMap = isl_schedule_get_map(schedule);
-
   DEBUG(dbgs() << "Computed schedule: ");
-  DEBUG(isl_union_map_dump(scheduleMap));
+  DEBUG(dbgs() << stringFromIslObj(schedule));
   DEBUG(dbgs() << "Individual bands: ");
 
-  // Get individual tileable bands.
-  for (int i = 0; i <  isl_schedule_n_band(schedule); i++) {
-    isl_union_map *band = isl_schedule_get_band(schedule, i);
+  isl_union_map *tiledSchedule = tileSchedule(schedule);
 
-    DEBUG(dbgs() << "Band " << i << ": ");
-    DEBUG(isl_union_map_dump(band));
+  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
+    ScopStmt *stmt = *SI;
 
-    for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-      ScopStmt *stmt = *SI;
+    if (stmt->isFinalRead())
+      continue;
 
-      if (stmt->isFinalRead())
-        continue;
-
-      isl_set *domain = stmt->getDomain();
-      isl_union_map *stmtBand;
-      stmtBand = isl_union_map_intersect_domain(isl_union_map_copy(band),
-                                                isl_union_set_from_set(domain));
-
-      isl_map *sband;
-      isl_union_map_foreach_map(stmtBand, getSingleMap, &sband);
-
-      sband = tileBand(sband);
-      DEBUG(dbgs() << "tiled band: ");
-      DEBUG(isl_map_dump(sband));
-
-      if (i == 0)
-        stmt->setScattering(sband);
-      else {
-        isl_map *scattering = stmt->getScattering();
-        scattering = isl_map_range_product(scattering, sband);
-        scattering = isl_map_flatten(scattering);
-        stmt->setScattering(scattering);
-      }
-    }
-
+    isl_set *domain = stmt->getDomain();
+    isl_union_map *stmtBand;
+    stmtBand = isl_union_map_intersect_domain(isl_union_map_copy(tiledSchedule),
+					      isl_union_set_from_set(domain));
+    isl_map *stmtSchedule;
+    isl_union_map_foreach_map(stmtBand, getSingleMap, &stmtSchedule);
+    stmt->setScattering(stmtSchedule);
   }
+
+  isl_union_map_free(tiledSchedule);
+  isl_schedule_free(schedule);
 
   unsigned maxScatDims = 0;
 
@@ -229,7 +308,6 @@ bool ScheduleOptimizer::runOnScop(Scop &S) {
     maxScatDims = std::max(isl_map_n_out((*SI)->getScattering()), maxScatDims);
 
   extendScattering(S, maxScatDims);
-  isl_schedule_free(schedule);
   return false;
 }
 

@@ -16,6 +16,7 @@
 #include "isl/union_set.h"
 #include "isl/map.h"
 #include "isl/union_map.h"
+#include "isl/schedule.h"
 
 using namespace llvm;
 
@@ -85,6 +86,15 @@ std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_map *umap) {
 std::string polly::stringFromIslObj(/*__isl_keep*/ isl_union_set *uset) {
   isl_printer *p = isl_printer_to_str(isl_union_set_get_ctx(uset));
   isl_printer_print_union_set(p, uset);
+  std::string string(isl_printer_get_str(p));
+  isl_printer_free(p);
+  return string;
+}
+
+std::string polly::stringFromIslObj(/*__isl_keep*/ isl_schedule *schedule) {
+  isl_ctx *ctx = isl_union_map_get_ctx(isl_schedule_get_map(schedule));
+  isl_printer *p = isl_printer_to_str(ctx);
+  isl_printer_print_schedule(p, schedule);
   std::string string(isl_printer_get_str(p));
   isl_printer_free(p);
   return string;
