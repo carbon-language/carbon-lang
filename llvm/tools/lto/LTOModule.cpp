@@ -157,9 +157,10 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
 
   // construct LTOModule, hand over ownership of module and target
   SubtargetFeatures Features;
-  Features.getDefaultSubtargetFeatures("" /* cpu */, llvm::Triple(Triple));
+  Features.getDefaultSubtargetFeatures(llvm::Triple(Triple));
   std::string FeatureStr = Features.getString();
-  TargetMachine *target = march->createTargetMachine(Triple, FeatureStr);
+  std::string CPU;
+  TargetMachine *target = march->createTargetMachine(Triple, CPU, FeatureStr);
   LTOModule *Ret = new LTOModule(m.take(), target);
   bool Err = Ret->ParseSymbols();
   if (Err) {

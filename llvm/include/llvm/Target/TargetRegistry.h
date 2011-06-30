@@ -71,6 +71,7 @@ namespace llvm {
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(void);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
+                                                  const std::string &CPU,
                                                   const std::string &Features);
     typedef AsmPrinter *(*AsmPrinterCtorTy)(TargetMachine &TM,
                                             MCStreamer &Streamer);
@@ -269,10 +270,11 @@ namespace llvm {
     /// either the target triple from the module, or the target triple of the
     /// host if that does not exist.
     TargetMachine *createTargetMachine(const std::string &Triple,
+                                       const std::string &CPU,
                                        const std::string &Features) const {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(*this, Triple, Features);
+      return TargetMachineCtorFn(*this, Triple, CPU, Features);
     }
 
     /// createAsmBackend - Create a target specific assembly parser.
@@ -796,8 +798,9 @@ namespace llvm {
 
   private:
     static TargetMachine *Allocator(const Target &T, const std::string &TT,
+                                    const std::string &CPU,
                                     const std::string &FS) {
-      return new TargetMachineImpl(T, TT, FS);
+      return new TargetMachineImpl(T, TT, CPU, FS);
     }
   };
 

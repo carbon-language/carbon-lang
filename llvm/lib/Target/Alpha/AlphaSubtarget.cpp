@@ -16,10 +16,13 @@
 #include "AlphaGenSubtarget.inc"
 using namespace llvm;
 
-AlphaSubtarget::AlphaSubtarget(const std::string &TT, const std::string &FS)
+AlphaSubtarget::AlphaSubtarget(const std::string &TT, const std::string &CPU,
+                               const std::string &FS)
   : HasCT(false) {
-  std::string CPU = "generic";
+  std::string CPUName = CPU;
+  if (CPUName.empty())
+    CPUName = "generic";
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPU);
+  ParseSubtargetFeatures(FS, CPUName);
 }

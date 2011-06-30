@@ -20,7 +20,8 @@
 namespace llvm {
 
 struct CTargetMachine : public TargetMachine {
-  CTargetMachine(const Target &T, const std::string &TT, const std::string &FS)
+  CTargetMachine(const Target &T, const std::string &TT,
+                 const std::string &CPU, const std::string &FS)
     : TargetMachine(T) {}
 
   virtual bool addPassesToEmitFile(PassManagerBase &PM,

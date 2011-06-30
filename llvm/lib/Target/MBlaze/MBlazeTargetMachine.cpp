@@ -80,9 +80,9 @@ extern "C" void LLVMInitializeMBlazeTarget() {
 // an easier handling.
 MBlazeTargetMachine::
 MBlazeTargetMachine(const Target &T, const std::string &TT,
-                    const std::string &FS):
+                    const std::string &CPU, const std::string &FS):
   LLVMTargetMachine(T, TT),
-  Subtarget(TT, FS),
+  Subtarget(TT, CPU, FS),
   DataLayout("E-p:32:32:32-i8:8:8-i16:16:16"),
   InstrInfo(*this),
   FrameLowering(Subtarget),

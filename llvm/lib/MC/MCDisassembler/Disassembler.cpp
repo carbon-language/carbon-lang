@@ -55,11 +55,13 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
+  std::string CPU;
 
   // FIXME: We shouldn't need to do this (and link in codegen).
   //        When we split this out, we should do it in a way that makes
   //        it straightforward to switch subtargets on the fly.
-  TargetMachine *TM = TheTarget->createTargetMachine(TripleName, FeaturesStr);
+  TargetMachine *TM = TheTarget->createTargetMachine(TripleName, CPU,
+                                                     FeaturesStr);
   assert(TM && "Unable to create target machine!");
 
   // Get the target assembler info needed to setup the context.

@@ -309,17 +309,13 @@ static int AssembleInput(const char *ProgName) {
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
-  if (MCPU.size()) {
-    SubtargetFeatures Features;
-    Features.setCPU(MCPU);
-    FeaturesStr = Features.getString();
-  }
 
   // FIXME: We shouldn't need to do this (and link in codegen).
   //        When we split this out, we should do it in a way that makes
   //        it straightforward to switch subtargets on the fly (.e.g,
   //        the .cpu and .code16 directives).
   OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
+                                                             MCPU,
                                                              FeaturesStr));
 
   if (!TM) {
@@ -415,17 +411,13 @@ static int DisassembleInput(const char *ProgName, bool Enhanced) {
   } else {
     // Package up features to be passed to target/subtarget
     std::string FeaturesStr;
-    if (MCPU.size()) {
-      SubtargetFeatures Features;
-      Features.setCPU(MCPU);
-      FeaturesStr = Features.getString();
-    }
 
     // FIXME: We shouldn't need to do this (and link in codegen).
     //        When we split this out, we should do it in a way that makes
     //        it straightforward to switch subtargets on the fly (.e.g,
     //        the .cpu and .code16 directives).
     OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
+                                                               MCPU, 
                                                                FeaturesStr));
 
     if (!TM) {

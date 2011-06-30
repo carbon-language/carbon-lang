@@ -201,7 +201,8 @@ static void DisassembleInput(const StringRef &Filename) {
     //        it straightforward to switch subtargets on the fly (.e.g,
     //        the .cpu and .code16 directives).
     std::string FeaturesStr;
-    OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
+    std::string CPU;
+    OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName, CPU,
                                                                FeaturesStr));
     if (!TM) {
       errs() << "error: could not create target for triple " << TripleName << "\n";

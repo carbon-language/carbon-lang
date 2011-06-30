@@ -80,26 +80,19 @@ public:
   std::string getString() const;
   void setString(const std::string &Initial);
 
-  /// Set the CPU string.  Replaces previous setting.  Setting to "" clears CPU.
-  void setCPU(const std::string &String);
-
-  /// Setting CPU string only if no string is set.
-  void setCPUIfNone(const std::string &String);
-
-  /// Returns current CPU string.
-  const std::string & getCPU() const;
-
   /// Adding Features.
   void AddFeature(const std::string &String, bool IsEnabled = true);
            
-  /// Get feature bits.
-  uint64_t getBits(const SubtargetFeatureKV *CPUTable,
-                         size_t CPUTableSize,
-                   const SubtargetFeatureKV *FeatureTable,
-                         size_t FeatureTableSize);
+  /// Get feature bits of a CPU.
+  uint64_t getFeatureBits(const std::string &CPU,
+                          const SubtargetFeatureKV *CPUTable,
+                          size_t CPUTableSize,
+                          const SubtargetFeatureKV *FeatureTable,
+                          size_t FeatureTableSize);
                          
-  /// Get info pointer
-  void *getInfo(const SubtargetInfoKV *Table, size_t TableSize);
+  /// Get scheduling itinerary of a CPU.
+  void *getItinerary(const std::string &CPU,
+                     const SubtargetInfoKV *Table, size_t TableSize);
   
   /// Print feature string.
   void print(raw_ostream &OS) const;
@@ -109,8 +102,7 @@ public:
 
   /// Retrieve a formatted string of the default features for the specified
   /// target triple.
-  void getDefaultSubtargetFeatures(const std::string &CPU,
-                                   const Triple& Triple);
+  void getDefaultSubtargetFeatures(const Triple& Triple);
 };
 
 } // End namespace llvm

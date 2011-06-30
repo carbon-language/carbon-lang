@@ -167,9 +167,9 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   if (!Tgt)
     return;
   
+  std::string CPU;
   std::string featureString;
-  
-  TargetMachine.reset(Tgt->createTargetMachine(tripleString,
+  TargetMachine.reset(Tgt->createTargetMachine(tripleString, CPU,
                                                featureString));
   
   const TargetRegisterInfo *registerInfo = TargetMachine->getRegisterInfo();

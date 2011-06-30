@@ -86,8 +86,9 @@ namespace {
       : MBlazeBaseAsmLexer(T, MAI) {
       std::string tripleString("mblaze-unknown-unknown");
       std::string featureString;
+      std::string CPU;
       OwningPtr<const TargetMachine> 
-        targetMachine(T.createTargetMachine(tripleString, featureString));
+        targetMachine(T.createTargetMachine(tripleString, CPU, featureString));
       InitRegisterMap(targetMachine->getRegisterInfo());
     }
   };

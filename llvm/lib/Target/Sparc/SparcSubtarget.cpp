@@ -15,20 +15,23 @@
 #include "SparcGenSubtarget.inc"
 using namespace llvm;
 
-SparcSubtarget::SparcSubtarget(const std::string &TT, const std::string &FS, 
-                               bool is64Bit) :
+SparcSubtarget::SparcSubtarget(const std::string &TT, const std::string &CPU,
+                               const std::string &FS,  bool is64Bit) :
   IsV9(false),
   V8DeprecatedInsts(false),
   IsVIS(false),
   Is64Bit(is64Bit) {
   
   // Determine default and user specified characteristics
-  const char *CPU = "v8";
-  if (is64Bit) {
-    CPU = "v9";
-    IsV9 = true;
+  std::string CPUName = CPU;
+  if (CPUName.empty()) {
+    if (is64Bit)
+      CPUName = "v9";
+    else
+      CPUName = "v8";
   }
+  IsV9 = CPUName == "v9";
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPU);
+  ParseSubtargetFeatures(FS, CPUName);
 }

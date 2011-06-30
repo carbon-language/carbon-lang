@@ -33,7 +33,7 @@ class XCoreTargetMachine : public LLVMTargetMachine {
   XCoreSelectionDAGInfo TSInfo;
 public:
   XCoreTargetMachine(const Target &T, const std::string &TT,
-                     const std::string &FS);
+                     const std::string &CPU, const std::string &FS);
 
   virtual const XCoreInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const XCoreFrameLowering *getFrameLowering() const {

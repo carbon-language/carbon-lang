@@ -15,6 +15,7 @@
 #include "XCore.h"
 using namespace llvm;
 
-XCoreSubtarget::XCoreSubtarget(const std::string &TT, const std::string &FS)
+XCoreSubtarget::XCoreSubtarget(const std::string &TT,
+                               const std::string &CPU, const std::string &FS)
 {
 }

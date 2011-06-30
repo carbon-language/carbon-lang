@@ -36,7 +36,7 @@ namespace llvm {
     BlackfinIntrinsicInfo IntrinsicInfo;
   public:
     BlackfinTargetMachine(const Target &T, const std::string &TT,
-                          const std::string &FS);
+                          const std::string &CPU, const std::string &FS);
 
     virtual const BlackfinInstrInfo *getInstrInfo() const { return &InstrInfo; }
     virtual const TargetFrameLowering *getFrameLowering() const {

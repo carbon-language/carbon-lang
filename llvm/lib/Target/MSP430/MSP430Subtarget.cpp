@@ -17,7 +17,9 @@
 
 using namespace llvm;
 
-MSP430Subtarget::MSP430Subtarget(const std::string &TT, const std::string &FS) {
+MSP430Subtarget::MSP430Subtarget(const std::string &TT,
+                                 const std::string &CPUIgnored,
+                                 const std::string &FS) {
   std::string CPU = "generic";
 
   // Parse features string.

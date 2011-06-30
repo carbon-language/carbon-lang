@@ -261,16 +261,16 @@ int main(int argc, char **argv) {
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
-  if (MCPU.size() || MAttrs.size()) {
+  if (MAttrs.size()) {
     SubtargetFeatures Features;
-    Features.setCPU(MCPU);
     for (unsigned i = 0; i != MAttrs.size(); ++i)
       Features.AddFeature(MAttrs[i]);
     FeaturesStr = Features.getString();
   }
 
   std::auto_ptr<TargetMachine>
-    target(TheTarget->createTargetMachine(TheTriple.getTriple(), FeaturesStr));
+    target(TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU,
+                                          FeaturesStr));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 

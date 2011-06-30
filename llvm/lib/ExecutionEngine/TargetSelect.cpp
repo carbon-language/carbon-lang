@@ -75,9 +75,8 @@ TargetMachine *EngineBuilder::selectTarget(Module *Mod,
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
-  if (!MCPU.empty() || !MAttrs.empty()) {
+  if (!MAttrs.empty()) {
     SubtargetFeatures Features;
-    Features.setCPU(MCPU);
     for (unsigned i = 0; i != MAttrs.size(); ++i)
       Features.AddFeature(MAttrs[i]);
     FeaturesStr = Features.getString();
@@ -85,7 +84,7 @@ TargetMachine *EngineBuilder::selectTarget(Module *Mod,
 
   // Allocate a target...
   TargetMachine *Target =
-    TheTarget->createTargetMachine(TheTriple.getTriple(), FeaturesStr);
+    TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU, FeaturesStr);
   assert(Target && "Could not allocate target machine!");
   return Target;
 }

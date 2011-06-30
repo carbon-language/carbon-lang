@@ -16,18 +16,20 @@
 #include "MipsGenSubtarget.inc"
 using namespace llvm;
 
-MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &FS,
-                             bool little) :
+MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
+                             const std::string &FS, bool little) :
   MipsArchVersion(Mips1), MipsABI(O32), IsLittle(little), IsSingleFloat(false),
   IsFP64bit(false), IsGP64bit(false), HasVFPU(false), IsLinux(true),
   HasSEInReg(false), HasCondMov(false), HasMulDivAdd(false), HasMinMax(false),
   HasSwap(false), HasBitCount(false)
 {
-  std::string CPU = "mips1";
+  std::string CPUName = CPU;
+  if (CPUName.empty())
+    CPUName = "mips1";
   MipsArchVersion = Mips1;
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPU);
+  ParseSubtargetFeatures(FS, CPUName);
 
   // Is the target system Linux ?
   if (TT.find("linux") == std::string::npos)

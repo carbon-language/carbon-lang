@@ -18,18 +18,22 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-MBlazeSubtarget::MBlazeSubtarget(const std::string &TT, const std::string &FS):
+MBlazeSubtarget::MBlazeSubtarget(const std::string &TT,
+                                 const std::string &CPU,
+                                 const std::string &FS):
   HasBarrel(false), HasDiv(false), HasMul(false), HasPatCmp(false),
   HasFPU(false), HasMul64(false), HasSqrt(false)
 {
   // Parse features string.
-  std::string CPU = "mblaze";
-  CPU = ParseSubtargetFeatures(FS, CPU);
+  std::string CPUName = CPU;
+  if (CPUName.empty())
+    CPUName = "mblaze";
+  ParseSubtargetFeatures(FS, CPUName);
 
   // Only use instruction scheduling if the selected CPU has an instruction
   // itinerary (the default CPU is the only one that doesn't).
-  HasItin = CPU != "mblaze";
-  DEBUG(dbgs() << "CPU " << CPU << "(" << HasItin << ")\n");
+  HasItin = CPUName != "mblaze";
+  DEBUG(dbgs() << "CPU " << CPUName << "(" << HasItin << ")\n");
 
   // Compute the issue width of the MBlaze itineraries
   computeIssueWidth();

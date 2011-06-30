@@ -30,8 +30,8 @@ static cl::opt<bool>
 StrictAlign("arm-strict-align", cl::Hidden,
             cl::desc("Disallow all unaligned memory accesses"));
 
-ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
-                           bool isT)
+ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
+                           const std::string &FS, bool isT)
   : ARMArchVersion(V4)
   , ARMProcFamily(Others)
   , ARMFPUType(None)
@@ -56,7 +56,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   , FPOnlySP(false)
   , AllowsUnalignedMem(false)
   , stackAlignment(4)
-  , CPUString("generic")
+  , CPUString(CPU)
   , TargetTriple(TT)
   , TargetABI(ARM_ABI_APCS) {
   // Determine default and user specified characteristics
@@ -64,9 +64,11 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
   // When no arch is specified either by CPU or by attributes, make the default
   // ARMv4T.
   const char *ARMArchFeature = "";
+  if (CPUString.empty())
+    CPUString = "generic";
   if (CPUString == "generic" && (FS.empty() || FS == "generic")) {
     ARMArchVersion = V4T;
-    ARMArchFeature = ",+v4t";
+    ARMArchFeature = "+v4t";
   }
 
   // Set the boolean corresponding to the current target triple, or the default
@@ -85,29 +87,29 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
     unsigned SubVer = TT[Idx];
     if (SubVer >= '7' && SubVer <= '9') {
       ARMArchVersion = V7A;
-      ARMArchFeature = ",+v7a";
+      ARMArchFeature = "+v7a";
       if (Len >= Idx+2 && TT[Idx+1] == 'm') {
         ARMArchVersion = V7M;
-        ARMArchFeature = ",+v7m";
+        ARMArchFeature = "+v7m";
       }
     } else if (SubVer == '6') {
       ARMArchVersion = V6;
-      ARMArchFeature = ",+v6";
+      ARMArchFeature = "+v6";
       if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2') {
         ARMArchVersion = V6T2;
-        ARMArchFeature = ",+v6t2";
+        ARMArchFeature = "+v6t2";
       }
     } else if (SubVer == '5') {
       ARMArchVersion = V5T;
-      ARMArchFeature = ",+v5t";
+      ARMArchFeature = "+v5t";
       if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e') {
         ARMArchVersion = V5TE;
-        ARMArchFeature = ",+v5te";
+        ARMArchFeature = "+v5te";
       }
     } else if (SubVer == '4') {
       if (Len >= Idx+2 && TT[Idx+1] == 't') {
         ARMArchVersion = V4T;
-        ARMArchFeature = ",+v4t";
+        ARMArchFeature = "+v4t";
       } else {
         ARMArchVersion = V4;
         ARMArchFeature = "";
@@ -129,7 +131,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &FS,
     FSWithArch = std::string(ARMArchFeature) + FS;
   else
     FSWithArch = FS;
-  CPUString = ParseSubtargetFeatures(FSWithArch, CPUString);
+  ParseSubtargetFeatures(FSWithArch, CPUString);
 
   // After parsing Itineraries, set ItinData.IssueWidth.
   computeIssueWidth();

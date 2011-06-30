@@ -67,9 +67,10 @@ extern "C" void LLVMInitializePowerPCTarget() {
 
 
 PPCTargetMachine::PPCTargetMachine(const Target &T, const std::string &TT,
+                                   const std::string &CPU,
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T, TT),
-    Subtarget(TT, FS, is64Bit),
+    Subtarget(TT, CPU, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameLowering(Subtarget), JITInfo(*this, is64Bit),
     TLInfo(*this), TSInfo(*this),
@@ -88,14 +89,16 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const std::string &TT,
 bool PPCTargetMachine::getEnableTailMergeDefault() const { return false; }
 
 PPC32TargetMachine::PPC32TargetMachine(const Target &T, const std::string &TT, 
+                                       const std::string &CPU,
                                        const std::string &FS) 
-  : PPCTargetMachine(T, TT, FS, false) {
+  : PPCTargetMachine(T, TT, CPU, FS, false) {
 }
 
 
 PPC64TargetMachine::PPC64TargetMachine(const Target &T, const std::string &TT, 
+                                       const std::string &CPU, 
                                        const std::string &FS)
-  : PPCTargetMachine(T, TT, FS, true) {
+  : PPCTargetMachine(T, TT, CPU, FS, true) {
 }
 
 

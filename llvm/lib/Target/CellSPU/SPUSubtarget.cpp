@@ -19,7 +19,8 @@
 
 using namespace llvm;
 
-SPUSubtarget::SPUSubtarget(const std::string &TT, const std::string &FS) :
+SPUSubtarget::SPUSubtarget(const std::string &TT, const std::string &CPU,
+                           const std::string &FS) :
   StackAlignment(16),
   ProcDirective(SPU::DEFAULT_PROC),
   UseLargeMem(false)

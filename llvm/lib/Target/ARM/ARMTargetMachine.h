@@ -41,7 +41,8 @@ private:
 
 public:
   ARMBaseTargetMachine(const Target &T, const std::string &TT,
-                       const std::string &FS, bool isThumb);
+                       const std::string &CPU, const std::string &FS,
+                       bool isThumb);
 
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
@@ -70,7 +71,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   ARMFrameLowering    FrameLowering;
  public:
   ARMTargetMachine(const Target &T, const std::string &TT,
-                   const std::string &FS);
+                   const std::string &CPU, const std::string &FS);
 
   virtual const ARMRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
@@ -109,7 +110,7 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   OwningPtr<ARMFrameLowering> FrameLowering;
 public:
   ThumbTargetMachine(const Target &T, const std::string &TT,
-                     const std::string &FS);
+                     const std::string &CPU, const std::string &FS);
 
   /// returns either Thumb1RegisterInfo or Thumb2RegisterInfo
   virtual const ARMBaseRegisterInfo *getRegisterInfo() const {

@@ -37,7 +37,7 @@ class AlphaTargetMachine : public LLVMTargetMachine {
 
 public:
   AlphaTargetMachine(const Target &T, const std::string &TT,
-                     const std::string &FS);
+                     const std::string &CPU, const std::string &FS);
 
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameLowering  *getFrameLowering() const {

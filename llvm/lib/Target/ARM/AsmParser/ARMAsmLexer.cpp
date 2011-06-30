@@ -87,8 +87,9 @@ public:
     : ARMBaseAsmLexer(T, MAI) {
     std::string tripleString("arm-unknown-unknown");
     std::string featureString;
+    std::string CPU;
     OwningPtr<const TargetMachine>
-      targetMachine(T.createTargetMachine(tripleString, featureString));
+      targetMachine(T.createTargetMachine(tripleString, CPU, featureString));
     InitRegisterMap(targetMachine->getRegisterInfo());
   }
 };
@@ -99,8 +100,9 @@ public:
     : ARMBaseAsmLexer(T, MAI) {
     std::string tripleString("thumb-unknown-unknown");
     std::string featureString;
+    std::string CPU;
     OwningPtr<const TargetMachine>
-      targetMachine(T.createTargetMachine(tripleString, featureString));
+      targetMachine(T.createTargetMachine(tripleString, CPU, featureString));
     InitRegisterMap(targetMachine->getRegisterInfo());
   }
 };

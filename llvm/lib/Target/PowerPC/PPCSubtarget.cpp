@@ -57,8 +57,8 @@ static const char *GetCurrentPowerPCCPU() {
 #endif
 
 
-PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &FS,
-                           bool is64Bit)
+PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
+                           const std::string &FS, bool is64Bit)
   : StackAlignment(16)
   , DarwinDirective(PPC::DIR_NONE)
   , IsGigaProcessor(false)
@@ -73,13 +73,16 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &FS,
   , TargetTriple(TT) {
 
   // Determine default and user specified characteristics
-  std::string CPU = "generic";
+  std::string CPUName = CPU;
+  if (CPUName.empty())
+    CPUName = "generic";
 #if defined(__APPLE__)
-  CPU = GetCurrentPowerPCCPU();
+  if (CPUName == "generic")
+    CPUName = GetCurrentPowerPCCPU();
 #endif
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPU);
+  ParseSubtargetFeatures(FS, CPUName);
 
   // If we are generating code for ppc64, verify that options make sense.
   if (is64Bit) {

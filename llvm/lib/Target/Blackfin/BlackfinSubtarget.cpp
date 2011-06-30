@@ -17,6 +17,7 @@
 using namespace llvm;
 
 BlackfinSubtarget::BlackfinSubtarget(const std::string &TT,
+                                     const std::string &CPU,
                                      const std::string &FS)
   : sdram(false),
     icplb(false),
@@ -30,7 +31,9 @@ BlackfinSubtarget::BlackfinSubtarget(const std::string &TT,
     wa_killed_mmr(false),
     wa_rets(false)
 {
-  std::string CPU = "generic";
+  std::string CPUName = CPU;
+  if (CPUName.empty())
+    CPUName = "generic";
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPU);
+  ParseSubtargetFeatures(FS, CPUName);
 }
