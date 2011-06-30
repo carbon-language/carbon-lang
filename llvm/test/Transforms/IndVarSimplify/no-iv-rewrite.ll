@@ -23,7 +23,7 @@ ph:
 ; sext should be eliminated while preserving gep inboundsness.
 ; CHECK-NOT: sext
 ; CHECK: getelementptr inbounds
-; CHECK: exit
+; CHECK: exit:
 loop:
   %i.02 = phi i32 [ 0, %ph ], [ %iinc, %loop ]
   %s.01 = phi i32 [ 0, %ph ], [ %sinc, %loop ]
@@ -64,7 +64,7 @@ ph:
 ; CHECK: getelementptr inbounds
 ; %vall sext should obviously not be eliminated
 ; CHECK: sext
-; CHECK: exit
+; CHECK: exit:
 loop:
   %i.02 = phi i32 [ 0, %ph ], [ %iinc, %loop ]
   %s.01 = phi i64 [ 0, %ph ], [ %sinc, %loop ]
@@ -108,7 +108,7 @@ ph:
 ; Preserve gep inboundsness, and don't factor it.
 ; CHECK: getelementptr inbounds i32* %ptriv, i32 1
 ; CHECK-NOT: add
-; CHECK: exit
+; CHECK: exit:
 loop:
   %ptriv = phi i32* [ %first, %ph ], [ %ptrpost, %loop ]
   %ofs = sext i32 %idx to i64
@@ -139,7 +139,7 @@ entry:
 ; CHECK: phi i32
 ; CHECK: bitcast
 ; CHECK: getelementptr
-; CHECK: exit
+; CHECK: exit:
 loop:
   %iv = phi i32 [%start, %entry], [%next, %loop]
   %p = phi %struct* [%base, %entry], [%pinc, %loop]
@@ -157,12 +157,13 @@ exit:
 }
 
 define void @maxvisitor(i32 %limit, i32* %base) nounwind {
-entry: br label %loop
+entry:
+ br label %loop
 
 ; CHECK: loop:
 ; CHECK: phi i64
 ; CHECK: trunc
-; CHECK: exit
+; CHECK: exit:
 loop:
   %idx = phi i32 [ 0, %entry ], [ %idx.next, %loop.inc ]
   %max = phi i32 [ 0, %entry ], [ %max.next, %loop.inc ]
@@ -182,6 +183,30 @@ loop.inc:
   %max.next = phi i32 [ %idx, %if.then ], [ %max, %if.else ]
   %idx.next = add nsw i32 %idx, 1
   %cmp = icmp slt i32 %idx.next, %limit
+  br i1 %cmp, label %loop, label %exit
+
+exit:
+  ret void
+}
+
+; CHECK: loop:
+; CHECK: phi i32
+; CHECK-NOT: phi
+; CHECK: exit:
+define void @identityphi(i32 %limit) nounwind {
+entry:
+  br label %loop
+
+loop:
+  %iv = phi i32 [ 0, %entry], [ %iv.next, %control ]
+  br i1 undef, label %if.then, label %control
+
+if.then:
+  br label %control
+
+control:
+  %iv.next = phi i32 [ %iv, %loop ], [ undef, %if.then ]
+  %cmp = icmp slt i32 %iv.next, %limit
   br i1 %cmp, label %loop, label %exit
 
 exit:

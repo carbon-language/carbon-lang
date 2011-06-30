@@ -1015,9 +1015,9 @@ bool IndVarSimplify::EliminateIVUser(Instruction *UseInst,
       (SE->getSCEV(UseInst) != SE->getSCEV(IVOperand)))
     return false;
 
-  UseInst->replaceAllUsesWith(IVOperand);
-
   DEBUG(dbgs() << "INDVARS: Eliminated identity: " << *UseInst << '\n');
+
+  UseInst->replaceAllUsesWith(IVOperand);
   ++NumElimIdentity;
   Changed = true;
   DeadInsts.push_back(UseInst);
@@ -1037,7 +1037,9 @@ static void pushIVUsers(
 
     // Avoid infinite or exponential worklist processing.
     // Also ensure unique worklist users.
-    if (Simplified.insert(User))
+    // If Def is a LoopPhi, it may not be in the Simplified set, so check for
+    // self edges first.
+    if (User != Def && Simplified.insert(User))
       SimpleIVUsers.push_back(std::make_pair(User, Def));
   }
 }
@@ -1111,6 +1113,9 @@ void IndVarSimplify::SimplifyIVUsersNoRewrite(Loop *L, SCEVExpander &Rewriter) {
       // Use-def pairs if IVUsers waiting to be processed for CurrIV.
       SmallVector<std::pair<Instruction*, Instruction*>, 8> SimpleIVUsers;
 
+      // Push users of the current LoopPhi. In rare cases, pushIVUsers may be
+      // called multiple times for the same LoopPhi. This is the proper thing to
+      // do for loop header phis that use each other.
       pushIVUsers(CurrIV, Simplified, SimpleIVUsers);
 
       while (!SimpleIVUsers.empty()) {
