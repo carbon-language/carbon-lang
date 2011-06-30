@@ -835,7 +835,8 @@ getRegForInlineAsmConstraint(const std::string &Constraint, EVT VT) const
     case 'r':
       return std::make_pair(0U, Alpha::GPRCRegisterClass);
     case 'f':
-      return std::make_pair(0U, Alpha::F4RCRegisterClass);
+      return VT == MVT::f64 ? std::make_pair(0U, Alpha::F8RCRegisterClass) :
+	std::make_pair(0U, Alpha::F4RCRegisterClass);
     }
   }
   return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
