@@ -1187,6 +1187,65 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
   return ThisValNoAssignments[VN] = UltimateVN;
 }
 
+
+// Find out if we have something like
+// A = X
+// B = X
+// if so, we can pretend this is actually
+// A = X
+// B = A
+// which allows us to coalesce A and B.
+// MI is the definition of B. LR is the life range of A that includes
+// the slot just before B. If we return true, we add "B = X" to DupCopies.
+static bool RegistersDefinedFromSameValue(const TargetRegisterInfo &tri,
+                                          CoalescerPair &CP, MachineInstr *MI,
+                                          LiveRange *LR,
+                                     SmallVector<MachineInstr*, 8> &DupCopies) {
+  // FIXME: This is very conservative. For example, we don't handle
+  // physical registers.
+
+  if (!MI->isFullCopy() || CP.isPartial() || CP.isPhys())
+    return false;
+
+  unsigned Dst = MI->getOperand(0).getReg();
+  unsigned Src = MI->getOperand(1).getReg();
+
+  if (!TargetRegisterInfo::isVirtualRegister(Src) ||
+      !TargetRegisterInfo::isVirtualRegister(Dst))
+    return false;
+
+  unsigned A = CP.getDstReg();
+  unsigned B = CP.getSrcReg();
+
+  if (B == Dst)
+    std::swap(A, B);
+  assert(Dst == A);
+
+  VNInfo *Other = LR->valno;
+  if (!Other->isDefByCopy())
+    return false;
+  const MachineInstr *OtherMI = Other->getCopy();
+
+  if (!OtherMI->isFullCopy())
+    return false;
+
+  unsigned OtherDst = OtherMI->getOperand(0).getReg();
+  unsigned OtherSrc = OtherMI->getOperand(1).getReg();
+
+  if (!TargetRegisterInfo::isVirtualRegister(OtherSrc) ||
+      !TargetRegisterInfo::isVirtualRegister(OtherDst))
+    return false;
+
+  assert(OtherDst == B);
+
+  if (Src != OtherSrc)
+    return false;
+
+  DupCopies.push_back(MI);
+
+  return true;
+}
+
 /// JoinIntervals - Attempt to join these two intervals.  On failure, this
 /// returns false.
 bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
@@ -1242,6 +1301,8 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
   DenseMap<VNInfo*, VNInfo*> RHSValsDefinedFromLHS;
   SmallVector<VNInfo*, 16> NewVNInfo;
 
+  SmallVector<MachineInstr*, 8> DupCopies;
+
   LiveInterval &LHS = li_->getOrCreateInterval(CP.getDstReg());
   DEBUG({ dbgs() << "\t\tLHS = "; LHS.print(dbgs(), tri_); dbgs() << "\n"; });
 
@@ -1257,15 +1318,18 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
     if (VNI->hasRedefByEC())
       return false;
 
-    // DstReg is known to be a register in the LHS interval.  If the src is
-    // from the RHS interval, we can use its value #.
-    if (!CP.isCoalescable(VNI->getCopy()))
-      continue;
-
     // Figure out the value # from the RHS.
     LiveRange *lr = RHS.getLiveRangeContaining(VNI->def.getPrevSlot());
     // The copy could be to an aliased physreg.
     if (!lr) continue;
+
+    // DstReg is known to be a register in the LHS interval.  If the src is
+    // from the RHS interval, we can use its value #.
+    MachineInstr *MI = VNI->getCopy();
+    if (!CP.isCoalescable(MI) &&
+        !RegistersDefinedFromSameValue(*tri_, CP, MI, lr, DupCopies))
+      continue;
+
     LHSValsDefinedFromRHS[VNI] = lr->valno;
   }
 
@@ -1281,15 +1345,18 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
     if (VNI->hasRedefByEC())
       return false;
 
-    // DstReg is known to be a register in the RHS interval.  If the src is
-    // from the LHS interval, we can use its value #.
-    if (!CP.isCoalescable(VNI->getCopy()))
-      continue;
-
     // Figure out the value # from the LHS.
     LiveRange *lr = LHS.getLiveRangeContaining(VNI->def.getPrevSlot());
     // The copy could be to an aliased physreg.
     if (!lr) continue;
+
+    // DstReg is known to be a register in the RHS interval.  If the src is
+    // from the LHS interval, we can use its value #.
+    MachineInstr *MI = VNI->getCopy();
+    if (!CP.isCoalescable(MI) &&
+        !RegistersDefinedFromSameValue(*tri_, CP, MI, lr, DupCopies))
+        continue;
+
     RHSValsDefinedFromLHS[VNI] = lr->valno;
   }
 
@@ -1393,6 +1460,24 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
     LHSValNoAssignments.push_back(-1);
   if (RHSValNoAssignments.empty())
     RHSValNoAssignments.push_back(-1);
+
+  for (SmallVector<MachineInstr*, 8>::iterator I = DupCopies.begin(),
+         E = DupCopies.end(); I != E; ++I) {
+    MachineInstr *MI = *I;
+
+    // We have pretended that the assignment to B in
+    // A = X
+    // B = X
+    // was actually a copy from A. Now that we decided to coalesce A and B,
+    // transform the code into
+    // A = X
+    // X = X
+    // and mark the X as coalesced to keep the illusion.
+    unsigned Src = MI->getOperand(1).getReg();
+    MI->getOperand(0).substVirtReg(Src, 0, *tri_);
+
+    markAsJoined(MI);
+  }
 
   // If we get here, we know that we can coalesce the live ranges.  Ask the
   // intervals to coalesce themselves now.
