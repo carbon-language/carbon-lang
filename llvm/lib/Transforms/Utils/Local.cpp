@@ -536,9 +536,9 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB is known to contain an
 /// unconditional branch, and contains no instructions other than PHI nodes,
-/// potential debug intrinsics and the branch.  If possible, eliminate BB by
-/// rewriting all the predecessors to branch to the successor block and return
-/// true.  If we can't transform, return false.
+/// potential side-effect free intrinsics and the branch.  If possible,
+/// eliminate BB by rewriting all the predecessors to branch to the successor
+/// block and return true.  If we can't transform, return false.
 bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
   assert(BB != &BB->getParent()->getEntryBlock() &&
          "TryToSimplifyUncondBranchFromEmptyBlock called on entry block!");
@@ -613,13 +613,15 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
     }
   }
   
-  while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
-    if (Succ->getSinglePredecessor()) {
-      // BB is the only predecessor of Succ, so Succ will end up with exactly
-      // the same predecessors BB had.
-      Succ->getInstList().splice(Succ->begin(),
-                                 BB->getInstList(), BB->begin());
-    } else {
+  if (Succ->getSinglePredecessor()) {
+    // BB is the only predecessor of Succ, so Succ will end up with exactly
+    // the same predecessors BB had.
+
+    // Copy over any phi, debug or lifetime instruction.
+    BB->getTerminator()->eraseFromParent();
+    Succ->getInstList().splice(Succ->getFirstNonPHI(), BB->getInstList());
+  } else {
+    while (PHINode *PN = dyn_cast<PHINode>(&BB->front())) {
       // We explicitly check for such uses in CanPropagatePredecessorsForPHIs.
       assert(PN->use_empty() && "There shouldn't be any uses here!");
       PN->eraseFromParent();
