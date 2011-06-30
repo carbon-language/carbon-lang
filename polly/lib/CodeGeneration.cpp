@@ -1208,7 +1208,7 @@ public:
   }
 
   void addParameters(const CloogNames *names) {
-    SCEVExpander Rewriter(SE);
+    SCEVExpander Rewriter(SE, "polly");
 
     // Create an instruction that specifies the location where the parameters
     // are expanded.
