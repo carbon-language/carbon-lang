@@ -4189,8 +4189,9 @@ def ext_return_missing_expr : ExtWarn<
   "non-void %select{function|method}1 %0 should return a value">, DefaultError,
   InGroup<ReturnType>;
 def ext_return_has_expr : ExtWarn<
-  "void %select{function|method}1 %0 should not return a value">, DefaultError,
-  InGroup<ReturnType>;
+  "%select{void function|void method|constructor|destructor}1 %0 "
+  "should not return a value">,
+  DefaultError, InGroup<ReturnType>;
 def ext_return_has_void_expr : Extension<
   "void %select{function|method}1 %0 should not return void expression">;
 def warn_noreturn_function_has_return_expr : Warning<

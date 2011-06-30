@@ -1761,8 +1761,17 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         if (D != diag::ext_return_has_void_expr ||
             !getLangOptions().CPlusPlus) {
           NamedDecl *CurDecl = getCurFunctionOrMethodDecl();
+
+          int FunctionKind = 0;
+          if (isa<ObjCMethodDecl>(CurDecl))
+            FunctionKind = 1;
+          else if (isa<CXXConstructorDecl>(CurDecl))
+            FunctionKind = 2;
+          else if (isa<CXXDestructorDecl>(CurDecl))
+            FunctionKind = 3;
+
           Diag(ReturnLoc, D)
-            << CurDecl->getDeclName() << isa<ObjCMethodDecl>(CurDecl)
+            << CurDecl->getDeclName() << FunctionKind
             << RetValExp->getSourceRange();
         }
       }
