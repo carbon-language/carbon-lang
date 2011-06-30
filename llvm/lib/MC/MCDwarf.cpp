@@ -460,13 +460,14 @@ static unsigned getSizeForEncoding(MCStreamer &streamer,
 }
 
 static void EmitSymbol(MCStreamer &streamer, const MCSymbol &symbol,
-                       unsigned symbolEncoding) {
+                       unsigned symbolEncoding, const char *comment = 0) {
   MCContext &context = streamer.getContext();
   const MCAsmInfo &asmInfo = context.getAsmInfo();
   const MCExpr *v = asmInfo.getExprForFDESymbol(&symbol,
                                                 symbolEncoding,
                                                 streamer);
   unsigned size = getSizeForEncoding(streamer, symbolEncoding);
+  if (streamer.isVerboseAsm() && comment) streamer.AddComment(comment);
   streamer.EmitAbsValue(v, size);
 }
 
@@ -882,16 +883,18 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   MCSymbol *fdeStart = context.CreateTempSymbol();
   MCSymbol *fdeEnd = context.CreateTempSymbol();
   const TargetAsmInfo &TAsmInfo = context.getTargetAsmInfo();
+  bool verboseAsm = streamer.isVerboseAsm();
 
   if (!TAsmInfo.isFunctionEHFrameSymbolPrivate() && IsEH) {
-    MCSymbol *EHSym = context.GetOrCreateSymbol(
-      frame.Function->getName() + Twine(".eh"));
+    MCSymbol *EHSym =
+      context.GetOrCreateSymbol(frame.Function->getName() + Twine(".eh"));
     streamer.EmitEHSymAttributes(frame.Function, EHSym);
     streamer.EmitLabel(EHSym);
   }
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *fdeStart, *fdeEnd, 0);
+  if (verboseAsm) streamer.AddComment("FDE Length");
   streamer.EmitAbsValue(Length, 4);
 
   streamer.EmitLabel(fdeStart);
@@ -901,6 +904,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   if (IsEH) {
     const MCExpr *offset = MakeStartMinusEndExpr(streamer, cieStart, *fdeStart,
                                                  0);
+    if (verboseAsm) streamer.AddComment("FDE CIE Offset");
     streamer.EmitAbsValue(offset, 4);
   } else if (!asmInfo.doesDwarfRequireRelocationForSectionOffset()) {
     const MCExpr *offset = MakeStartMinusEndExpr(streamer, *SectionStart,
@@ -909,6 +913,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   } else {
     streamer.EmitSymbolValue(&cieStart, 4);
   }
+
   unsigned fdeEncoding = TAsmInfo.getFDEEncoding(UsingCFI);
   unsigned size = getSizeForEncoding(streamer, fdeEncoding);
 
@@ -916,11 +921,12 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   unsigned PCBeginEncoding = IsEH ? fdeEncoding :
     (unsigned)dwarf::DW_EH_PE_absptr;
   unsigned PCBeginSize = getSizeForEncoding(streamer, PCBeginEncoding);
-  EmitSymbol(streamer, *frame.Begin, PCBeginEncoding);
+  EmitSymbol(streamer, *frame.Begin, PCBeginEncoding, "FDE initial location");
 
   // PC Range
   const MCExpr *Range = MakeStartMinusEndExpr(streamer, *frame.Begin,
                                               *frame.End, 0);
+  if (verboseAsm) streamer.AddComment("FDE address range");
   streamer.EmitAbsValue(Range, size);
 
   if (IsEH) {
@@ -930,11 +936,13 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
     if (frame.Lsda)
       augmentationLength += getSizeForEncoding(streamer, frame.LsdaEncoding);
 
+    if (verboseAsm) streamer.AddComment("Augmentation size");
     streamer.EmitULEB128IntValue(augmentationLength);
 
     // Augmentation Data
     if (frame.Lsda)
-      EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding);
+      EmitSymbol(streamer, *frame.Lsda, frame.LsdaEncoding,
+                 "Language Specific Data Area");
   }
 
   // Call Frame Instructions
