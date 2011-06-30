@@ -28,8 +28,8 @@ system of your operating system.
 <h3> Install ISL / CLooG libraries </h3>
 
 Polly requires the latest versions of <a href="http://www.cloog.org">CLooG</a>
-and <a href="http://repo.or.cz/w/isl.git">isl</a> to be installed. The CLooG git
-repository contains both the latest version of CLooG and isl.
+and the version of <a href="http://repo.or.cz/w/isl.git">isl</a> included with
+CLooG. To install both use the following commands.
 
 <pre>
 git clone git://repo.or.cz/cloog.git
@@ -37,6 +37,27 @@ cd cloog
 ./get_submodules.sh
 ./autogen.sh
 ./configure --with-gmp-prefix=/path/to/gmp/installation --prefix=/path/to/cloog/installation
+make
+make install
+</pre>
+
+<h4 id="islTrunk">Use isl trunk</h4>
+
+In rare case it is necessary to use an isl version that is even newer than
+the one included in CLooG. This may happen, because we work in close interaction
+with the developers of isl such that Polly sometimes uses features that are not
+yet available in the version of isl which is included with CLooG.  To get the
+most recent version of isl perform these additional steps.<br />
+<em>Only perform these steps if a recent mailing list message asks you to do
+so.</em>
+
+<pre>
+cd isl
+git remote update
+git checkout origin/master
+cd ..
+./autogen.sh
+./configure  --with-gmp-prefix=/path/to/gmp/installation --prefix=/path/to/cloog/installation
 make
 make install
 </pre>
