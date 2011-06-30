@@ -491,10 +491,13 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
     // Try to reduce to tADDrSPi.
     unsigned Imm = MI->getOperand(2).getImm();
     // The immediate must be in range, the destination register must be a low
-    // reg, and the condition flags must not be being set.
+    // reg, the predicate must be "always" and the condition flags must not
+    // be being set.
     if (Imm & 3 || Imm > 1024)
       return false;
     if (!isARMLowRegister(MI->getOperand(0).getReg()))
+      return false;
+    if (MI->getOperand(3).getImm() != ARMCC::AL)
       return false;
     const MCInstrDesc &MCID = MI->getDesc();
     if (MCID.hasOptionalDef() &&
