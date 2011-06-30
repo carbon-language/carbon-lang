@@ -64,11 +64,16 @@ make install
 
 <h3> Install Pocc (Optional) </h3>
 
-Polly can use <a href="http://www.cse.ohio-state.edu/~pouchet/software/pocc">
-PoCC</a> as an external optimizer. PoCC provides an
-integrated version of <a href="http://pluto.sf.net">Pluto</a>, an advanced
-data-locality and tileability optimizer.  To enable this feature install PoCC
-1.0-rc3.1 (the one with Polly support) and add it to your PATH.
+<p>Polly can use <a href="http://www.cse.ohio-state.edu/~pouchet/software/pocc">
+PoCC</a> as an external optimizer. PoCC is a research project that provides
+an integrated version of <a href="http://pluto.sf.net">Pluto</a>, an
+advanced data-locality and tileability optimizer. Similar functionality was
+recently integrated in Polly (through isl), however the optimizations are not as
+mature as the ones in Pluto/PoCC. Hence, if you want to use Pluto to optimize
+your code or you want to compare the optimizer integrated in Polly to Pluto you
+may want to use PoCC.</p>
+
+Install PoCC 1.0-rc3.1 (the one with Polly support) and add it to your PATH.
 
 <pre>
 wget <a
@@ -79,8 +84,7 @@ cd pocc-1.0-rc3.1
 export PATH=`pwd`/bin
 </pre>
 
-Furthermore, scoplib-0.2.0 has to be installed such that polly can link to
-it.
+Install scoplib-0.2.0
 
 <pre>
 wget <a
