@@ -268,13 +268,13 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
       // bic r4, r4, MaxAlign
       // mov sp, r4
       // FIXME: It will be better just to find spare register here.
-      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2tgpr), ARM::R4)
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), ARM::R4)
         .addReg(ARM::SP, RegState::Kill));
       AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl,
                                           TII.get(ARM::t2BICri), ARM::R4)
                                   .addReg(ARM::R4, RegState::Kill)
                                   .addImm(MaxAlign-1)));
-      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::SP)
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), ARM::SP)
         .addReg(ARM::R4, RegState::Kill));
     }
 
@@ -293,7 +293,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
         .addReg(ARM::SP)
         .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
     else
-      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr),
                              RegInfo->getBaseRegister())
         .addReg(ARM::SP));
   }
@@ -364,7 +364,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                  "No scratch register to restore SP from FP!");
           emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::R4, FramePtr, -NumBytes,
                                  ARMCC::AL, 0, TII);
-          AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),
+          AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr),
                                  ARM::SP)
             .addReg(ARM::R4));
         }
@@ -374,7 +374,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
           BuildMI(MBB, MBBI, dl, TII.get(ARM::MOVr), ARM::SP)
             .addReg(FramePtr).addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
         else
-          AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),
+          AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr),
                                  ARM::SP)
             .addReg(FramePtr));
       }

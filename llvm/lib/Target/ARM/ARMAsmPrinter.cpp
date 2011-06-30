@@ -1010,8 +1010,6 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
         MI->dump();
         assert(0 && "Unsupported opcode for unwinding information");
       case ARM::MOVr:
-      case ARM::tMOVgpr2gpr:
-      case ARM::tMOVgpr2tgpr:
         Offset = 0;
         break;
       case ARM::ADDri:
@@ -1456,7 +1454,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM::t2BR_JT: {
     // Lower and emit the instruction itself, then the jump table following it.
     MCInst TmpInst;
-    TmpInst.setOpcode(ARM::tMOVgpr2gpr);
+    TmpInst.setOpcode(ARM::tMOVr);
     TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     // Add predicate operands.
@@ -1505,7 +1503,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // mov pc, target
     MCInst TmpInst;
     unsigned Opc = MI->getOpcode() == ARM::BR_JTr ?
-      ARM::MOVr : ARM::tMOVgpr2gpr;
+      ARM::MOVr : ARM::tMOVr;
     TmpInst.setOpcode(Opc);
     TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
@@ -1518,7 +1516,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
 
     // Make sure the Thumb jump table is 4-byte aligned.
-    if (Opc == ARM::tMOVgpr2gpr)
+    if (Opc == ARM::tMOVr)
       EmitAlignment(2);
 
     // Output the data for the jump table itself
@@ -1610,7 +1608,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCSymbol *Label = GetARMSJLJEHLabel();
     {
       MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tMOVgpr2tgpr);
+      TmpInst.setOpcode(ARM::tMOVr);
       TmpInst.addOperand(MCOperand::CreateReg(ValReg));
       TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
       // Predicate.
@@ -1829,7 +1827,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     {
       MCInst TmpInst;
-      TmpInst.setOpcode(ARM::tMOVtgpr2gpr);
+      TmpInst.setOpcode(ARM::tMOVr);
       TmpInst.addOperand(MCOperand::CreateReg(ARM::SP));
       TmpInst.addOperand(MCOperand::CreateReg(ScratchReg));
       // Predicate.

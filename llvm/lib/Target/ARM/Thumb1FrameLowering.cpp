@@ -160,7 +160,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   // will be allocated after this, so we can still use the base pointer
   // to reference locals.
   if (RegInfo->hasBasePointer(MF))
-    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), BasePtr)
+    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), BasePtr)
                    .addReg(ARM::SP));
 
   // If the frame has variable sized objects then the epilogue must restore
@@ -240,11 +240,11 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
                "No scratch register to restore SP from FP!");
         emitThumbRegPlusImmediate(MBB, MBBI, dl, ARM::R4, FramePtr, -NumBytes,
                                   TII, *RegInfo);
-        AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr),
+        AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr),
                                ARM::SP)
           .addReg(ARM::R4));
       } else
-        AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr),
+        AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr),
                                ARM::SP)
           .addReg(FramePtr));
     } else {

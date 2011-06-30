@@ -1054,15 +1054,15 @@ def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
 // TODO: A7-73: MOV(2) - mov setting flag.
 
 let neverHasSideEffects = 1 in {
-def tMOVr : Thumb1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), AddrModeNone,
+def tMOVr : Thumb1pI<(outs GPR:$Rd), (ins GPR:$Rm), AddrModeNone,
                       Size2Bytes, IIC_iMOVr,
                       "mov", "\t$Rd, $Rm", "", []>,
-                  T1Special<0b1000> {
+                  T1Special<{1,0,?,?}> {
   // A8.6.97
   bits<4> Rd;
   bits<4> Rm;
-  // Bits {7-6} are encoded by the T1Special value.
-  let Inst{5-3} = Rm{2-0};
+  let Inst{7}   = Rd{3};
+  let Inst{6-3} = Rm;
   let Inst{2-0} = Rd{2-0};
 }
 let Defs = [CPSR] in
@@ -1074,40 +1074,6 @@ def tMOVSr      : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
   let Inst{15-6} = 0b0000000000;
   let Inst{5-3}  = Rm;
   let Inst{2-0}  = Rd;
-}
-
-// FIXME: Do we really need separate instructions for GPR<-->tGPR like this?
-//        They all map to the same instruction (MOV encoding T1).
-def tMOVgpr2tgpr : Thumb1pI<(outs tGPR:$Rd), (ins GPR:$Rm), AddrModeNone,
-                            Size2Bytes, IIC_iMOVr, "mov", "\t$Rd, $Rm", "", []>,
-                   T1Special<{1,0,0,?}> {
-  // A8.6.97
-  bits<4> Rd;
-  bits<4> Rm;
-  // Bit {7} is encoded by the T1Special value.
-  let Inst{6-3} = Rm;
-  let Inst{2-0} = Rd{2-0};
-}
-def tMOVtgpr2gpr : Thumb1pI<(outs GPR:$Rd), (ins tGPR:$Rm), AddrModeNone,
-                            Size2Bytes, IIC_iMOVr, "mov", "\t$Rd, $Rm", "", []>,
-                   T1Special<{1,0,?,0}> {
-  // A8.6.97
-  bits<4> Rd;
-  bits<4> Rm;
-  // Bit {6} is encoded by the T1Special value.
-  let Inst{7}   = Rd{3};
-  let Inst{5-3} = Rm{2-0};
-  let Inst{2-0} = Rd{2-0};
-}
-def tMOVgpr2gpr  : Thumb1pI<(outs GPR:$Rd), (ins GPR:$Rm), AddrModeNone,
-                            Size2Bytes, IIC_iMOVr, "mov", "\t$Rd, $Rm", "", []>,
-                   T1Special<{1,0,?,?}> {
-  // A8.6.97
-  bits<4> Rd;
-  bits<4> Rm;
-  let Inst{7}   = Rd{3};
-  let Inst{6-3} = Rm;
-  let Inst{2-0} = Rd{2-0};
 }
 } // neverHasSideEffects
 

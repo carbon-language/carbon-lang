@@ -98,9 +98,6 @@ static bool isCopy(MachineInstr *MI) {
   case ARM::MOVr:
   case ARM::MOVr_TC:
   case ARM::tMOVr:
-  case ARM::tMOVgpr2tgpr:
-  case ARM::tMOVtgpr2gpr:
-  case ARM::tMOVgpr2gpr:
   case ARM::t2MOVr:
     return true;
   }

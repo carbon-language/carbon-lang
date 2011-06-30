@@ -36,17 +36,7 @@ void Thumb1InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I, DebugLoc DL,
                                   unsigned DestReg, unsigned SrcReg,
                                   bool KillSrc) const {
-  bool tDest = ARM::tGPRRegClass.contains(DestReg);
-  bool tSrc  = ARM::tGPRRegClass.contains(SrcReg);
-  unsigned Opc = ARM::tMOVgpr2gpr;
-  if (tDest && tSrc)
-    Opc = ARM::tMOVr;
-  else if (tSrc)
-    Opc = ARM::tMOVtgpr2gpr;
-  else if (tDest)
-    Opc = ARM::tMOVgpr2tgpr;
-
-  AddDefaultPred(BuildMI(MBB, I, DL, get(Opc), DestReg)
+  AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tMOVr), DestReg)
     .addReg(SrcReg, getKillRegState(KillSrc)));
   assert(ARM::GPRRegClass.contains(DestReg, SrcReg) &&
          "Thumb1 can only copy GPR registers");

@@ -417,7 +417,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
     unsigned PredReg;
     if (Offset == 0 && getInstrPredicate(&MI, PredReg) == ARMCC::AL) {
       // Turn it into a move.
-      MI.setDesc(TII.get(ARM::tMOVgpr2tgpr));
+      MI.setDesc(TII.get(ARM::tMOVr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       // Remove offset and add predicate operands.
       MI.RemoveOperand(FrameRegIdx+1);
@@ -564,7 +564,7 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
   // the function, the offset will be negative. Use R12 instead since that's
   // a call clobbered register that we know won't be used in Thumb1 mode.
   DebugLoc DL;
-  AddDefaultPred(BuildMI(MBB, I, DL, TII.get(ARM::tMOVtgpr2gpr))
+  AddDefaultPred(BuildMI(MBB, I, DL, TII.get(ARM::tMOVr))
     .addReg(ARM::R12, RegState::Define)
     .addReg(Reg, RegState::Kill));
 
@@ -589,7 +589,7 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
     }
   }
   // Restore the register from R12
-  AddDefaultPred(BuildMI(MBB, UseMI, DL, TII.get(ARM::tMOVgpr2tgpr)).
+  AddDefaultPred(BuildMI(MBB, UseMI, DL, TII.get(ARM::tMOVr)).
     addReg(Reg, RegState::Define).addReg(ARM::R12, RegState::Kill));
 
   return true;
