@@ -143,7 +143,7 @@ class FoundationTestCase(TestBase):
         self.expect("frame variable -T -s", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["ARG: (MyString *) self"],
             patterns = ["ARG: \(.*\) _cmd",
-                        "(struct objc_selector *)|(SEL)"])
+                        "(objc_selector *)|(SEL)"])
 
         # rdar://problem/8651752
         # don't crash trying to ask clang how many children an empty record has

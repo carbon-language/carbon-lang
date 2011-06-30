@@ -69,14 +69,17 @@ public:
     }
 
     ConstString
-    GetClangTypeName ();
+    GetConstTypeName ();
 
     static ConstString
-    GetClangTypeName (lldb::clang_type_t clang_type);
-
-    static ConstString
-    GetClangTypeName (clang::QualType qual_type);
+    GetConstTypeName (lldb::clang_type_t clang_type);
     
+    static std::string
+    GetTypeNameForQualType (clang::QualType qual_type);
+
+    static std::string
+    GetTypeNameForOpaqueQualType (lldb::clang_type_t opaque_qual_type);
+
     uint32_t
     GetClangTypeBitWidth ();
 

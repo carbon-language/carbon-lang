@@ -612,7 +612,7 @@ private:
     
     Function                       *m_function_ptr;                 ///< The function we're going to call.  May be NULL if we don't have debug info for the function.
     Address                         m_function_addr;                ///< If we don't have the FunctionSP, we at least need the address & return type.
-    void                           *m_function_return_qual_type;    ///< The opaque clang qual type for the function return type.
+    lldb::clang_type_t              m_function_return_qual_type;    ///< The opaque clang qual type for the function return type.
     ClangASTContext                *m_clang_ast_context;            ///< This is the clang_ast_context that we're getting types from the and value, and the function return the function pointer is NULL.
 
     std::string                     m_wrapper_function_name;        ///< The name of the wrapper function.

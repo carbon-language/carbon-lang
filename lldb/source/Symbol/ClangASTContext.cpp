@@ -2571,9 +2571,8 @@ ClangASTContext::GetChildClangTypeAtIndex
                             // Base classes should be a multiple of 8 bits in size
                             assert (bit_offset % 8 == 0);
                             child_byte_offset = bit_offset/8;
-                            std::string base_class_type_name(base_class->getType().getAsString());
-
-                            child_name.assign(base_class_type_name.c_str());
+                            
+                            child_name = ClangASTType::GetTypeNameForQualType(base_class->getType());
 
                             uint64_t clang_type_info_bit_size = ast->getTypeSize(base_class->getType());
 
@@ -3401,7 +3400,8 @@ ClangASTContext::GetIndexOfChildWithName
                         if (omit_empty_base_classes && RecordHasFields(base_class_decl) == false)
                             continue;
 
-                        if (base_class->getType().getAsString().compare (name) == 0)
+                        std::string base_class_type_name (ClangASTType::GetTypeNameForQualType(base_class->getType()));
+                        if (base_class_type_name.compare (name) == 0)
                             return child_idx;
                         ++child_idx;
                     }
@@ -4658,28 +4658,6 @@ ClangASTContext::CreateTypedefType (const char *name, clang_type_t clang_type, D
         return ast->getTypedefType (decl).getAsOpaquePtr();
     }
     return NULL;
-}
-
-
-std::string
-ClangASTContext::GetTypeName (clang_type_t opaque_qual_type)
-{
-    std::string return_name;
-    
-    QualType qual_type(QualType::getFromOpaquePtr(opaque_qual_type));
-
-    const TypedefType *typedef_type = qual_type->getAs<TypedefType>();
-    if (typedef_type)
-    {
-        const TypedefNameDecl *typedef_decl = typedef_type->getDecl();
-        return_name = typedef_decl->getQualifiedNameAsString();
-    }
-    else
-    {
-        return_name = qual_type.getAsString();
-    }
-
-    return return_name;
 }
 
 // Disable this for now since I can't seem to get a nicely formatted float

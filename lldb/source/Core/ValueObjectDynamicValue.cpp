@@ -62,7 +62,7 @@ ValueObjectDynamicValue::GetTypeName()
 {
     const bool success = UpdateValueIfNeeded();
     if (success && m_type_sp)
-        return ClangASTType::GetClangTypeName (GetClangType());
+        return ClangASTType::GetConstTypeName (GetClangType());
     else
         return m_parent->GetTypeName();
 }

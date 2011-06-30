@@ -194,14 +194,10 @@ Type::Dump (Stream *s, bool show_context)
 const ConstString &
 Type::GetName()
 {
-    if (!(m_name))
+    if (!m_name)
     {
         if (ResolveClangType(eResolveStateForward))
-        {
-            std::string type_name = ClangASTContext::GetTypeName (m_clang_type);
-            if (!type_name.empty())
-                m_name.SetCString (type_name.c_str());
-        }
+            m_name = ClangASTType::GetConstTypeName (m_clang_type);
     }
     return m_name;
 }

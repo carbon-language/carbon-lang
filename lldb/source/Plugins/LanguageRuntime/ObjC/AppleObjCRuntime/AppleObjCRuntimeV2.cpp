@@ -528,7 +528,7 @@ AppleObjCRuntimeV2::CreateObjectChecker(const char *name)
 size_t
 AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const char *ivar_name)
 {
-    const char *class_name = parent_ast_type.GetClangTypeName().AsCString();
+    const char *class_name = parent_ast_type.GetConstTypeName().AsCString();
 
     if (!class_name || *class_name == '\0' || !ivar_name || *ivar_name == '\0')
         return LLDB_INVALID_IVAR_OFFSET;

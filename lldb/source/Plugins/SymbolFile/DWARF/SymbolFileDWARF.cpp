@@ -1493,7 +1493,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
             
             if (class_language == eLanguageTypeObjC)
             {
-                std::string class_str (ClangASTContext::GetTypeName (clang_type));
+                std::string class_str (ClangASTType::GetTypeNameForOpaqueQualType(clang_type));
                 if (!class_str.empty())
                 {
                 

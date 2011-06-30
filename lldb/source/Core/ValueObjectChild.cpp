@@ -71,7 +71,7 @@ ValueObjectChild::GetTypeName()
 {
     if (m_type_name.IsEmpty())
     {
-        m_type_name = ClangASTType::GetClangTypeName (GetClangType());
+        m_type_name = ClangASTType::GetConstTypeName (GetClangType());
         if (m_type_name)
         {
             if (m_bitfield_bit_size > 0)

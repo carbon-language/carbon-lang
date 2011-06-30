@@ -38,57 +38,88 @@
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 
-
 using namespace lldb;
 using namespace lldb_private;
+
 
 ClangASTType::~ClangASTType()
 {
 }
 
-ConstString
-ClangASTType::GetClangTypeName ()
+std::string
+ClangASTType::GetTypeNameForQualType (clang::QualType qual_type)
 {
-    return GetClangTypeName (m_type);
-}
-
-ConstString
-ClangASTType::GetClangTypeName (clang_type_t clang_type)
-{
-    ConstString clang_type_name;
-    if (clang_type)
-    {
-        clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));        
-        return GetClangTypeName(qual_type);
-        
-    }
-    else
-    {
-        clang_type_name.SetCString ("<invalid>");
-    }
-
-    return clang_type_name;
-}
-
-ConstString
-ClangASTType::GetClangTypeName (clang::QualType qual_type)
-{
-    ConstString clang_type_name;
+    std::string type_name;
+    
     const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
     if (typedef_type)
     {
         const clang::TypedefNameDecl *typedef_decl = typedef_type->getDecl();
-        std::string clang_typedef_name (typedef_decl->getQualifiedNameAsString());
-        if (!clang_typedef_name.empty())
-            clang_type_name.SetCString (clang_typedef_name.c_str());
+        type_name = typedef_decl->getQualifiedNameAsString();
     }
     else
     {
-        std::string type_name(qual_type.getAsString());
-        if (!type_name.empty())
-            clang_type_name.SetCString (type_name.c_str());
+        type_name = qual_type.getAsString();
     }
-    return clang_type_name;
+    
+    // There is no call to a clang type to get the type name without the
+    // class/struct/union on the front, so lets strip it here
+    const char *type_name_cstr = type_name.c_str();
+    if (type_name_cstr[0] == 'c' &&
+        type_name_cstr[1] == 'l' &&
+        type_name_cstr[2] == 'a' &&
+        type_name_cstr[3] == 's' &&
+        type_name_cstr[4] == 's' &&
+        type_name_cstr[5] == ' ')
+    {
+        type_name.erase (0, 6);
+    }
+    else if (type_name_cstr[0] == 's' &&
+             type_name_cstr[1] == 't' &&
+             type_name_cstr[2] == 'r' &&
+             type_name_cstr[3] == 'u' &&
+             type_name_cstr[4] == 'c' &&
+             type_name_cstr[5] == 't' &&
+             type_name_cstr[6] == ' ')
+    {
+        type_name.erase (0, 7);
+    }
+    else if (type_name_cstr[0] == 'u' &&
+             type_name_cstr[1] == 'n' &&
+             type_name_cstr[2] == 'i' &&
+             type_name_cstr[3] == 'o' &&
+             type_name_cstr[4] == 'n' &&
+             type_name_cstr[5] == ' ')
+    {
+        type_name.erase (0, 6);
+    }
+    return type_name;
+}
+
+std::string
+ClangASTType::GetTypeNameForOpaqueQualType (clang_type_t opaque_qual_type)
+{
+    return GetTypeNameForQualType (clang::QualType::getFromOpaquePtr(opaque_qual_type));
+}
+
+
+ConstString
+ClangASTType::GetConstTypeName ()
+{
+    return GetConstTypeName (m_type);
+}
+
+ConstString
+ClangASTType::GetConstTypeName (clang_type_t clang_type)
+{
+    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
+    std::string type_name (GetTypeNameForQualType (qual_type));
+    ConstString const_type_name;
+    if (type_name.empty())
+        const_type_name.SetCString ("<invalid>");
+    else
+        const_type_name.SetCString(type_name.c_str());
+    return const_type_name;
 }
 
 clang_type_t

@@ -659,9 +659,6 @@ public:
     //------------------------------------------------------------------
     // Type names
     //------------------------------------------------------------------
-    static std::string
-    GetTypeName(lldb::clang_type_t clang_type);
-    
     static bool
     IsFloatingPointType (lldb::clang_type_t clang_type, uint32_t &count, bool &is_complex);
 

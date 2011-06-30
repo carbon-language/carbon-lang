@@ -322,7 +322,7 @@ ConstString
 ValueObjectRegister::GetTypeName()
 {
     if (m_type_name.IsEmpty())
-        m_type_name = ClangASTType::GetClangTypeName (GetClangType());
+        m_type_name = ClangASTType::GetConstTypeName (GetClangType());
     return m_type_name;
 }
 

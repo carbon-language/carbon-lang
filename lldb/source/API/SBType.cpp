@@ -71,7 +71,7 @@ const char *
 SBType::GetName ()
 {
     if (IsValid ())
-        return ClangASTType::GetClangTypeName (m_type).AsCString(NULL);
+        return ClangASTType::GetConstTypeName (m_type).AsCString(NULL);
     return NULL;
 }
 

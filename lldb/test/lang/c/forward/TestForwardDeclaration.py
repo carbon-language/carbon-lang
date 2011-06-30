@@ -47,13 +47,13 @@ class ForwardDeclarationTestCase(TestBase):
         # This should display correctly.
         # Note that the member fields of a = 1 and b = 2 is by design.
         self.expect("frame variable -T *bar_ptr", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['(struct bar) *bar_ptr = ',
+            substrs = ['(bar) *bar_ptr = ',
                        '(int) a = 1',
                        '(int) b = 2'])
 
         # And so should this.
         self.expect("expression *bar_ptr", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ['(struct bar)',
+            substrs = ['(bar)',
                        '(int) a = 1',
                        '(int) b = 2'])
 
