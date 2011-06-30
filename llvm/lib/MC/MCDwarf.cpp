@@ -667,7 +667,14 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   // Range Length
   const MCExpr *Range = MakeStartMinusEndExpr(Streamer, *Frame.Begin,
                                               *Frame.End, 0);
-  Streamer.EmitAbsValue(Range, Size);
+  Streamer.EmitAbsValue(Range, 4);
+
+  // FIXME:
+  // Compact Encoding
+  uint32_t Encoding = 0;
+  Size = getSizeForEncoding(Streamer, dwarf::DW_EH_PE_udata4);
+  Streamer.EmitIntValue(Encoding, Size);
+
 
   // Personality Function
   Size = getSizeForEncoding(Streamer, Frame.PersonalityEncoding);
