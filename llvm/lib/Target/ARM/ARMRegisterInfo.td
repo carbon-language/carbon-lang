@@ -228,6 +228,9 @@ def rGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, SP, PC)> {
 // the general GPR register class above (MOV, e.g.)
 def tGPR : RegisterClass<"ARM", [i32], 32, (trunc GPR, 8)>;
 
+// The high registers in thumb mode, R8-R15.
+def hGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, tGPR)>;
+
 // For tail calls, we can't use callee-saved registers, as they are restored
 // to the saved value before the tail call, which would clobber a call address.
 // Note, getMinimalPhysRegClass(R0) returns tGPR because of the names of

@@ -7482,6 +7482,7 @@ ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
     default:  break;
     case 'l': return C_RegisterClass;
     case 'w': return C_RegisterClass;
+    case 'h': return C_RegisterClass;
     }
   } else if (Constraint.size() == 2) {
     switch (Constraint[0]) {
@@ -7534,11 +7535,16 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   if (Constraint.size() == 1) {
     // GCC ARM Constraint Letters
     switch (Constraint[0]) {
-    case 'l':
+    case 'l': // Low regs or general regs.
       if (Subtarget->isThumb())
         return Pair(0U, ARM::tGPRRegisterClass);
       else
         return Pair(0U, ARM::GPRRegisterClass);
+    case 'h': // High regs or no regs.
+      if (Subtarget->isThumb())
+	return Pair(0U, ARM::hGPRRegisterClass);
+      else
+	return Pair(0u, static_cast<const TargetRegisterClass*>(0));
     case 'r':
       return Pair(0U, ARM::GPRRegisterClass);
     case 'w':
