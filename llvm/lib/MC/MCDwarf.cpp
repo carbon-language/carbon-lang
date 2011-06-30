@@ -621,7 +621,8 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
       if (VerboseAsm) Streamer.AddComment(Twine("Offset ") + Twine(Offset));
       Streamer.EmitSLEB128IntValue(Offset);
     } else if (Reg < 64) {
-      if (VerboseAsm) Streamer.AddComment("DW_CFA_offset");
+      if (VerboseAsm) Streamer.AddComment(Twine("DW_CFA_offset + Reg(") +
+                                          Twine(Reg) + ")");
       Streamer.EmitIntValue(dwarf::DW_CFA_offset + Reg, 1);
       if (VerboseAsm) Streamer.AddComment(Twine("Offset ") + Twine(Offset));
       Streamer.EmitULEB128IntValue(Offset);
