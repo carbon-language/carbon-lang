@@ -180,11 +180,7 @@ Spiller *createInlineSpiller(MachineFunctionPass &pass,
 /// isFullCopyOf - If MI is a COPY to or from Reg, return the other register,
 /// otherwise return 0.
 static unsigned isFullCopyOf(const MachineInstr *MI, unsigned Reg) {
-  if (!MI->isCopy())
-    return 0;
-  if (MI->getOperand(0).getSubReg() != 0)
-    return 0;
-  if (MI->getOperand(1).getSubReg() != 0)
+  if (!MI->isFullCopy())
     return 0;
   if (MI->getOperand(0).getReg() == Reg)
       return MI->getOperand(1).getReg();
