@@ -33,6 +33,7 @@ class OverloadedTemplateStorage;
 struct PrintingPolicy;
 class QualifiedTemplateName;
 class NamedDecl;
+class SubstTemplateTemplateParmStorage;
 class SubstTemplateTemplateParmPackStorage;
 class TemplateArgument;
 class TemplateDecl;
@@ -42,38 +43,49 @@ class TemplateTemplateParmDecl;
 /// template names or an already-substituted template template parameter pack.
 class UncommonTemplateNameStorage {
 protected:
+  enum Kind {
+    Overloaded,
+    SubstTemplateTemplateParm,
+    SubstTemplateTemplateParmPack
+  };
+
   union {
     struct {
-      /// \brief If true, this is an OverloadedTemplateStorage instance; 
-      /// otherwise, it's a SubstTemplateTemplateParmPackStorage instance.
-      unsigned IsOverloadedStorage : 1;
+      /// \brief A Kind.
+      unsigned Kind : 2;
       
       /// \brief The number of stored templates or template arguments,
       /// depending on which subclass we have.
-      unsigned Size : 31;
+      unsigned Size : 30;
     } Bits;
     
     void *PointerAlignment;
   };
   
-  UncommonTemplateNameStorage(unsigned Size, bool OverloadedStorage) {
-    Bits.IsOverloadedStorage = OverloadedStorage;
-    Bits.Size = Size;
+  UncommonTemplateNameStorage(Kind kind, unsigned size) {
+    Bits.Kind = kind;
+    Bits.Size = size;
   }
   
 public:
   unsigned size() const { return Bits.Size; }
   
   OverloadedTemplateStorage *getAsOverloadedStorage()  {
-    return Bits.IsOverloadedStorage
+    return Bits.Kind == Overloaded
              ? reinterpret_cast<OverloadedTemplateStorage *>(this) 
              : 0;
   }
   
+  SubstTemplateTemplateParmStorage *getAsSubstTemplateTemplateParm() {
+    return Bits.Kind == SubstTemplateTemplateParm
+             ? reinterpret_cast<SubstTemplateTemplateParmStorage *>(this)
+             : 0;
+  }
+
   SubstTemplateTemplateParmPackStorage *getAsSubstTemplateTemplateParmPack() {
-    return Bits.IsOverloadedStorage
-             ? 0
-             : reinterpret_cast<SubstTemplateTemplateParmPackStorage *>(this) ;
+    return Bits.Kind == SubstTemplateTemplateParmPack
+             ? reinterpret_cast<SubstTemplateTemplateParmPackStorage *>(this)
+             : 0;
   }
 };
   
@@ -82,8 +94,8 @@ public:
 class OverloadedTemplateStorage : public UncommonTemplateNameStorage {
   friend class ASTContext;
 
-  OverloadedTemplateStorage(unsigned Size) 
-    : UncommonTemplateNameStorage(Size, true) { }
+  OverloadedTemplateStorage(unsigned size) 
+    : UncommonTemplateNameStorage(Overloaded, size) { }
 
   NamedDecl **getStorage() {
     return reinterpret_cast<NamedDecl **>(this + 1);
@@ -98,8 +110,7 @@ public:
   iterator begin() const { return getStorage(); }
   iterator end() const { return getStorage() + size(); }
 };
-  
-  
+
 /// \brief A structure for storing an already-substituted template template
 /// parameter pack.
 ///
@@ -109,16 +120,14 @@ public:
 class SubstTemplateTemplateParmPackStorage
   : public UncommonTemplateNameStorage, public llvm::FoldingSetNode
 {
-  ASTContext &Context;
   TemplateTemplateParmDecl *Parameter;
   const TemplateArgument *Arguments;
   
 public:
-  SubstTemplateTemplateParmPackStorage(ASTContext &Context,
-                                       TemplateTemplateParmDecl *Parameter,
+  SubstTemplateTemplateParmPackStorage(TemplateTemplateParmDecl *Parameter,
                                        unsigned Size, 
                                        const TemplateArgument *Arguments)
-    : UncommonTemplateNameStorage(Size, false), Context(Context),
+    : UncommonTemplateNameStorage(SubstTemplateTemplateParmPack, Size),
       Parameter(Parameter), Arguments(Arguments) { }
   
   /// \brief Retrieve the template template parameter pack being substituted.
@@ -130,9 +139,10 @@ public:
   /// parameter was substituted.
   TemplateArgument getArgumentPack() const;
   
-  void Profile(llvm::FoldingSetNodeID &ID);
+  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context);
   
-  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      ASTContext &Context,
                       TemplateTemplateParmDecl *Parameter,
                       const TemplateArgument &ArgPack);
 };
@@ -189,6 +199,9 @@ public:
     /// \brief A dependent template name that has not been resolved to a 
     /// template (or set of templates).
     DependentTemplate,
+    /// \brief A template template parameter that has been substituted
+    /// for some other template name.
+    SubstTemplateTemplateParm,
     /// \brief A template template parameter pack that has been substituted for 
     /// a template template argument pack, but has not yet been expanded into
     /// individual arguments.
@@ -199,6 +212,7 @@ public:
   explicit TemplateName(TemplateDecl *Template) : Storage(Template) { }
   explicit TemplateName(OverloadedTemplateStorage *Storage)
     : Storage(Storage) { }
+  explicit TemplateName(SubstTemplateTemplateParmStorage *Storage);
   explicit TemplateName(SubstTemplateTemplateParmPackStorage *Storage)
     : Storage(Storage) { }
   explicit TemplateName(QualifiedTemplateName *Qual) : Storage(Qual) { }
@@ -234,6 +248,19 @@ public:
     return 0;
   }
 
+  /// \brief Retrieve the substituted template template parameter, if 
+  /// known.
+  ///
+  /// \returns The storage for the substituted template template parameter,
+  /// if known. Otherwise, returns NULL.
+  SubstTemplateTemplateParmStorage *getAsSubstTemplateTemplateParm() const {
+    if (UncommonTemplateNameStorage *uncommon = 
+          Storage.dyn_cast<UncommonTemplateNameStorage *>())
+      return uncommon->getAsSubstTemplateTemplateParm();
+    
+    return 0;
+  }
+
   /// \brief Retrieve the substituted template template parameter pack, if 
   /// known.
   ///
@@ -259,6 +286,8 @@ public:
   DependentTemplateName *getAsDependentTemplateName() const {
     return Storage.dyn_cast<DependentTemplateName *>();
   }
+
+  TemplateName getUnderlying() const;
 
   /// \brief Determines whether this is a dependent template name.
   bool isDependent() const;
@@ -299,6 +328,41 @@ public:
 /// into a diagnostic with <<.
 const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                     TemplateName N);
+
+/// \brief A structure for storing the information associated with a
+/// substituted template template parameter.
+class SubstTemplateTemplateParmStorage
+  : public UncommonTemplateNameStorage, public llvm::FoldingSetNode {
+  friend class ASTContext;
+
+  TemplateTemplateParmDecl *Parameter;
+  TemplateName Replacement;
+
+  SubstTemplateTemplateParmStorage(TemplateTemplateParmDecl *parameter,
+                                   TemplateName replacement)
+    : UncommonTemplateNameStorage(SubstTemplateTemplateParm, 0),
+      Parameter(parameter), Replacement(replacement) {}
+
+public:
+  TemplateTemplateParmDecl *getParameter() const { return Parameter; }
+  TemplateName getReplacement() const { return Replacement; }
+
+  void Profile(llvm::FoldingSetNodeID &ID);
+  
+  static void Profile(llvm::FoldingSetNodeID &ID,
+                      TemplateTemplateParmDecl *parameter,
+                      TemplateName replacement);
+};
+
+inline TemplateName::TemplateName(SubstTemplateTemplateParmStorage *Storage)
+  : Storage(Storage) { }
+
+inline TemplateName TemplateName::getUnderlying() const {
+  if (SubstTemplateTemplateParmStorage *subst
+        = getAsSubstTemplateTemplateParm())
+    return subst->getReplacement().getUnderlying();
+  return *this;
+}
 
 /// \brief Represents a template name that was expressed as a
 /// qualified name.

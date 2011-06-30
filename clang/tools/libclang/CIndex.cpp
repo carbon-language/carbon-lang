@@ -1330,6 +1330,11 @@ bool CursorVisitor::VisitTemplateName(TemplateName Name, SourceLocation Loc) {
     return Visit(MakeCursorTemplateRef(
                                   Name.getAsQualifiedTemplateName()->getDecl(), 
                                        Loc, TU));
+
+  case TemplateName::SubstTemplateTemplateParm:
+    return Visit(MakeCursorTemplateRef(
+                         Name.getAsSubstTemplateTemplateParm()->getParameter(),
+                                       Loc, TU));
       
   case TemplateName::SubstTemplateTemplateParmPack:
     return Visit(MakeCursorTemplateRef(

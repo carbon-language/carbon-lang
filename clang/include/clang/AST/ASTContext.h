@@ -124,7 +124,10 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
 
   mutable llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
   mutable llvm::FoldingSet<DependentTemplateName> DependentTemplateNames;
-  mutable llvm::FoldingSet<SubstTemplateTemplateParmPackStorage> 
+  mutable llvm::FoldingSet<SubstTemplateTemplateParmStorage> 
+    SubstTemplateTemplateParms;
+  mutable llvm::ContextualFoldingSet<SubstTemplateTemplateParmPackStorage,
+                                     ASTContext&> 
     SubstTemplateTemplateParmPacks;
   
   /// \brief The set of nested name specifiers.
@@ -1019,6 +1022,8 @@ public:
                                         const IdentifierInfo *Name) const;
   TemplateName getDependentTemplateName(NestedNameSpecifier *NNS,
                                         OverloadedOperatorKind Operator) const;
+  TemplateName getSubstTemplateTemplateParm(TemplateTemplateParmDecl *param,
+                                            TemplateName replacement) const;
   TemplateName getSubstTemplateTemplateParmPack(TemplateTemplateParmDecl *Param,
                                         const TemplateArgument &ArgPack) const;
   

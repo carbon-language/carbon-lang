@@ -4742,6 +4742,14 @@ ASTReader::ReadTemplateName(PerFileData &F, const RecordData &Record,
     return Context->getDependentTemplateName(NNS,
                                          (OverloadedOperatorKind)Record[Idx++]);
   }
+
+  case TemplateName::SubstTemplateTemplateParm: {
+    TemplateTemplateParmDecl *param
+      = cast_or_null<TemplateTemplateParmDecl>(GetDecl(Record[Idx++]));
+    if (!param) return TemplateName();
+    TemplateName replacement = ReadTemplateName(F, Record, Idx);
+    return Context->getSubstTemplateTemplateParm(param, replacement);
+  }
       
   case TemplateName::SubstTemplateTemplateParmPack: {
     TemplateTemplateParmDecl *Param 

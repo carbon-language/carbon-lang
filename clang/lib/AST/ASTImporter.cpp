@@ -4201,6 +4201,20 @@ TemplateName ASTImporter::Import(TemplateName From) {
     
     return ToContext.getDependentTemplateName(Qualifier, DTN->getOperator());
   }
+
+  case TemplateName::SubstTemplateTemplateParm: {
+    SubstTemplateTemplateParmStorage *subst
+      = From.getAsSubstTemplateTemplateParm();
+    TemplateTemplateParmDecl *param
+      = cast_or_null<TemplateTemplateParmDecl>(Import(subst->getParameter()));
+    if (!param)
+      return TemplateName();
+
+    TemplateName replacement = Import(subst->getReplacement());
+    if (replacement.isNull()) return TemplateName();
+    
+    return ToContext.getSubstTemplateTemplateParm(param, replacement);
+  }
       
   case TemplateName::SubstTemplateTemplateParmPack: {
     SubstTemplateTemplateParmPackStorage *SubstPack

@@ -3457,8 +3457,10 @@ class TemplateSpecializationType
   /// \brief The name of the template being specialized.  This is
   /// either a TemplateName::Template (in which case it is a
   /// ClassTemplateDecl*, a TemplateTemplateParmDecl*, or a
-  /// TypeAliasTemplateDecl*) or a
-  /// TemplateName::SubstTemplateTemplateParmPack.
+  /// TypeAliasTemplateDecl*), a
+  /// TemplateName::SubstTemplateTemplateParmPack, or a
+  /// TemplateName::SubstTemplateTemplateParm (in which case the
+  /// replacement must, recursively, be one of these).
   TemplateName Template;
 
   /// \brief - The number of template arguments named in this class

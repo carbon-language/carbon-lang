@@ -1369,6 +1369,10 @@ void CXXNameMangler::mangleType(TemplateName TN) {
     break;
   }
 
+  case TemplateName::SubstTemplateTemplateParm:
+    llvm_unreachable("mangling a substituted template name!");
+    break;
+
   case TemplateName::SubstTemplateTemplateParmPack: {
     SubstTemplateTemplateParmPackStorage *SubstPack
       = TN.getAsSubstTemplateTemplateParmPack();
