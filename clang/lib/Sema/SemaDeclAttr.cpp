@@ -1483,7 +1483,7 @@ static void HandleReqdWorkGroupSize(Decl *D, const AttributeList &Attr,
                                     Sema &S) {
   // Attribute has 3 arguments.
   if (Attr.getNumArgs() != 3) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 3;
     return;
   }
 
