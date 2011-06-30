@@ -3432,28 +3432,33 @@ public:
   static bool classof(const AutoType *T) { return true; }
 };
 
-/// \brief Represents the type of a template specialization as written
-/// in the source code.
+/// \brief Represents a type template specialization; the template
+/// must be a class template, a type alias template, or a template
+/// template parameter.  A template which cannot be resolved to one of
+/// these, e.g. because it is written with a dependent scope
+/// specifier, is instead represented as a
+/// @c DependentTemplateSpecializationType.
 ///
-/// Template specialization types represent the syntactic form of a
-/// template-id that refers to a type, e.g., @c vector<int>. Some
-/// template specialization types are syntactic sugar, whose canonical
-/// type will point to some other type node that represents the
-/// instantiation or class template specialization. For example, a
-/// class template specialization type of @c vector<int> will refer to
-/// a tag type for the instantiation
-/// @c std::vector<int, std::allocator<int>>.
+/// A non-dependent template specialization type is always "sugar",
+/// typically for a @c RecordType.  For example, a class template
+/// specialization type of @c vector<int> will refer to a tag type for
+/// the instantiation @c std::vector<int, std::allocator<int>>
 ///
-/// Other template specialization types, for which the template name
-/// is dependent, may be canonical types. These types are always
-/// dependent.
+/// Template specializations are dependent if either the template or
+/// any of the template arguments are dependent, in which case the
+/// type may also be canonical.
 ///
-/// An instance of this type is followed by an array of TemplateArgument*s,
-/// then, if the template specialization type is for a type alias template,
-/// a QualType representing the non-canonical aliased type.
+/// Instances of this type are allocated with a trailing array of
+/// TemplateArguments, followed by a QualType representing the
+/// non-canonical aliased type when the template is a type alias
+/// template.
 class TemplateSpecializationType
   : public Type, public llvm::FoldingSetNode {
-  /// \brief The name of the template being specialized.
+  /// \brief The name of the template being specialized.  This is
+  /// either a TemplateName::Template (in which case it is a
+  /// ClassTemplateDecl*, a TemplateTemplateParmDecl*, or a
+  /// TypeAliasTemplateDecl*) or a
+  /// TemplateName::SubstTemplateTemplateParmPack.
   TemplateName Template;
 
   /// \brief - The number of template arguments named in this class

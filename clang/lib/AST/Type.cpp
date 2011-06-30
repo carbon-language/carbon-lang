@@ -1763,6 +1763,9 @@ TemplateSpecializationType(TemplateName T,
     Template(T), NumArgs(NumArgs) {
   assert(!T.getAsDependentTemplateName() && 
          "Use DependentTemplateSpecializationType for dependent template-name");
+  assert((T.getKind() == TemplateName::Template ||
+          T.getKind() == TemplateName::SubstTemplateTemplateParmPack) &&
+         "Unexpected template name for TemplateSpecializationType");
   assert((!Canon.isNull() ||
           T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)) &&
          "No canonical type for non-dependent class template specialization");
