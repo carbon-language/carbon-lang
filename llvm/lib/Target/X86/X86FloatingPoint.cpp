@@ -1467,13 +1467,13 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     }
 
     if (STUses && !isMask_32(STUses))
-      report_fatal_error("Inline asm fixed inputs"
+      report_fatal_error("Inline asm fixed input regs"
                          " must be last on the x87 stack");
     unsigned NumSTUses = CountTrailingOnes_32(STUses);
 
     // Defs must be contiguous from the stack top. ST0-STn.
     if (STDefs && !isMask_32(STDefs))
-      report_fatal_error("Inline asm fixed outputs"
+      report_fatal_error("Inline asm output regs"
                          " must be last on the x87 stack");
     unsigned NumSTDefs = CountTrailingOnes_32(STDefs);
 
@@ -1484,7 +1484,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     // Popped inputs are the ones that are also clobbered or defined.
     unsigned STPopped = STUses & (STDefs | STClobbers);
     if (STPopped && !isMask_32(STPopped))
-      report_fatal_error("Inline asm popped inputs"
+      report_fatal_error("Inline asm implicitly popped regs"
                          " must be last on the x87 stack");
     unsigned NumSTPopped = CountTrailingOnes_32(STPopped);
 
