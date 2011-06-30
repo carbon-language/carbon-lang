@@ -1208,10 +1208,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   // Look up the file, create a File ID for it.
   FileID FID = SourceMgr.createFileID(File, FilenameTok.getLocation(),
                                       FileCharacter);
-  if (FID.isInvalid()) {
-    Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
-    return;
-  }
+  assert(!FID.isInvalid() && "Expected valid file ID");
 
   // Finally, if all is good, enter the new file!
   EnterSourceFile(FID, CurDir, FilenameTok.getLocation());
