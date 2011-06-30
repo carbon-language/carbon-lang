@@ -419,7 +419,6 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       return true;
     }
 
-    bool isSP = FrameReg == ARM::SP;
     bool HasCCOut = Opcode != ARM::t2ADDri12;
 
     if (Offset < 0) {
