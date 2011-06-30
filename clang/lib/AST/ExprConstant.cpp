@@ -955,15 +955,19 @@ public:
   IntExprEvaluator(EvalInfo &info, APValue &result)
     : ExprEvaluatorBaseTy(info), Result(result) {}
 
-  bool Success(const llvm::APSInt &SI, const Expr *E) {
-    assert(E->getType()->isIntegralOrEnumerationType() && 
+  bool Success(const llvm::APSInt &SI, QualType Ty) {
+    assert(Ty->isIntegralOrEnumerationType() &&
            "Invalid evaluation result.");
-    assert(SI.isSigned() == E->getType()->isSignedIntegerOrEnumerationType() &&
+    assert(SI.isSigned() == Ty->isSignedIntegerOrEnumerationType() &&
            "Invalid evaluation result.");
-    assert(SI.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
+    assert(SI.getBitWidth() == Info.Ctx.getIntWidth(Ty) &&
            "Invalid evaluation result.");
     Result = APValue(SI);
     return true;
+  }
+
+  bool Success(const llvm::APSInt &SI, const Expr *E) {
+    return Success(SI, E->getType());
   }
 
   bool Success(const llvm::APInt &I, const Expr *E) {
@@ -1106,8 +1110,11 @@ static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
 
 bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
   // Enums are integer constant exprs.
-  if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D))
-    return Success(ECD->getInitVal(), E);
+  if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
+    // Note: provide the type of ECD (rather than that of E),
+    // so that signedness/width will match the ECD init value.
+    return Success(ECD->getInitVal(), ECD->getType());
+  }
 
   // In C++, const, non-volatile integers initialized with ICEs are ICEs.
   // In C, they can also be folded, although they are not ICEs.
