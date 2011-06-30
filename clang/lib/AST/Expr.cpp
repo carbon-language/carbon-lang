@@ -593,7 +593,7 @@ getLocationOfByte(unsigned ByteNo, const SourceManager &SM,
     
     // If the byte is in this token, return the location of the byte.
     if (ByteNo < TokNumBytes ||
-        (ByteNo == TokNumBytes && TokNo == getNumConcatenated())) {
+        (ByteNo == TokNumBytes && TokNo == getNumConcatenated() - 1)) {
       unsigned Offset = SLP.getOffsetOfStringByte(TheTok, ByteNo); 
       
       // Now that we know the offset of the token in the spelling, use the
