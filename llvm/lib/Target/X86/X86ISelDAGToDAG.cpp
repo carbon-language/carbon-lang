@@ -1612,16 +1612,18 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, EVT NVT) {
         Opc = AtomicOpcTbl[Op][I32];
       break;
     case MVT::i64:
+      Opc = AtomicOpcTbl[Op][I64];
       if (isCN) {
         if (immSext8(Val.getNode()))
           Opc = AtomicOpcTbl[Op][SextConstantI64];
         else if (i64immSExt32(Val.getNode()))
           Opc = AtomicOpcTbl[Op][ConstantI64];
-      } else
-        Opc = AtomicOpcTbl[Op][I64];
+      }
       break;
   }
   
+  assert(Opc != 0 && "Invalid arith lock transform!");
+
   DebugLoc dl = Node->getDebugLoc();
   SDValue Undef = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
                                                  dl, NVT), 0);
