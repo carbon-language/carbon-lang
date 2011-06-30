@@ -2737,13 +2737,6 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   }
 }
 
-std::vector<unsigned> TargetLowering::
-getRegClassForInlineAsmConstraint(const std::string &Constraint,
-                                  EVT VT) const {
-  return std::vector<unsigned>();
-}
-
-
 std::pair<unsigned, const TargetRegisterClass*> TargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint,
                              EVT VT) const {
