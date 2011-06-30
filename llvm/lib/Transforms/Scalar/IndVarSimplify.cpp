@@ -659,9 +659,11 @@ Instruction *WidenIV::CloneIVUser(Instruction *NarrowUse,
                                                     LHS, RHS,
                                                     NarrowBO->getName());
     Builder.Insert(WideBO);
-    if (NarrowBO->hasNoUnsignedWrap()) WideBO->setHasNoUnsignedWrap();
-    if (NarrowBO->hasNoSignedWrap()) WideBO->setHasNoSignedWrap();
-
+    if (const OverflowingBinaryOperator *OBO =
+        dyn_cast<OverflowingBinaryOperator>(NarrowBO)) {
+      if (OBO->hasNoUnsignedWrap()) WideBO->setHasNoUnsignedWrap();
+      if (OBO->hasNoSignedWrap()) WideBO->setHasNoSignedWrap();
+    }
     return WideBO;
   }
   llvm_unreachable(0);
@@ -1121,6 +1123,8 @@ void IndVarSimplify::SimplifyIVUsersNoRewrite(Loop *L, SCEVExpander &Rewriter) {
       while (!SimpleIVUsers.empty()) {
         Instruction *UseInst, *Operand;
         tie(UseInst, Operand) = SimpleIVUsers.pop_back_val();
+        // Bypass back edges to avoid extra work.
+        if (UseInst == CurrIV) continue;
 
         if (EliminateIVUser(UseInst, Operand)) {
           pushIVUsers(Operand, Simplified, SimpleIVUsers);

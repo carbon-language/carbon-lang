@@ -160,6 +160,8 @@ define void @maxvisitor(i32 %limit, i32* %base) nounwind {
 entry:
  br label %loop
 
+; Test inserting a truncate at a phi use.
+;
 ; CHECK: loop:
 ; CHECK: phi i64
 ; CHECK: trunc
@@ -189,14 +191,17 @@ exit:
   ret void
 }
 
-; CHECK: loop:
-; CHECK: phi i32
-; CHECK-NOT: phi
-; CHECK: exit:
 define void @identityphi(i32 %limit) nounwind {
 entry:
   br label %loop
 
+; Test an edge case of removing an identity phi that directly feeds
+; back to the loop iv.
+;
+; CHECK: loop:
+; CHECK: phi i32
+; CHECK-NOT: phi
+; CHECK: exit:
 loop:
   %iv = phi i32 [ 0, %entry], [ %iv.next, %control ]
   br i1 undef, label %if.then, label %control
@@ -211,4 +216,33 @@ control:
 
 exit:
   ret void
+}
+
+define i64 @cloneOr(i32 %limit, i64* %base) nounwind {
+entry:
+  ; ensure that the loop can't overflow
+  %halfLim = ashr i32 %limit, 2
+  br label %loop
+
+; Test cloning an or, which is not an OverflowBinaryOperator.
+;
+; CHECK: loop:
+; CHECK: phi i64
+; CHECK-NOT: sext
+; CHECK: or i64
+; CHECK: exit:
+loop:
+  %iv = phi i32 [ 0, %entry], [ %iv.next, %loop ]
+  %t1 = sext i32 %iv to i64
+  %adr = getelementptr i64* %base, i64 %t1
+  %val = load i64* %adr
+  %t2 = or i32 %iv, 1
+  %t3 = sext i32 %t2 to i64
+  %iv.next = add i32 %iv, 2
+  %cmp = icmp slt i32 %iv.next, %halfLim
+  br i1 %cmp, label %loop, label %exit
+
+exit:
+  %result = and i64 %val, %t3
+  ret i64 %result
 }
