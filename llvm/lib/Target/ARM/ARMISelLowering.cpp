@@ -7527,7 +7527,8 @@ ARMTargetLowering::getSingleConstraintMatchWeight(
   return weight;
 }
 
-std::pair<unsigned, const TargetRegisterClass*>
+typedef std::pair<unsigned, const TargetRegisterClass*> Pair;
+Pair
 ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
                                                 EVT VT) const {
   if (Constraint.size() == 1) {
@@ -7535,18 +7536,18 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     switch (Constraint[0]) {
     case 'l':
       if (Subtarget->isThumb())
-        return std::make_pair(0U, ARM::tGPRRegisterClass);
+        return Pair(0U, ARM::tGPRRegisterClass);
       else
-        return std::make_pair(0U, ARM::GPRRegisterClass);
+        return Pair(0U, ARM::GPRRegisterClass);
     case 'r':
-      return std::make_pair(0U, ARM::GPRRegisterClass);
+      return Pair(0U, ARM::GPRRegisterClass);
     case 'w':
       if (VT == MVT::f32)
-        return std::make_pair(0U, ARM::SPRRegisterClass);
+        return Pair(0U, ARM::SPRRegisterClass);
       if (VT.getSizeInBits() == 64)
-        return std::make_pair(0U, ARM::DPRRegisterClass);
+        return Pair(0U, ARM::DPRRegisterClass);
       if (VT.getSizeInBits() == 128)
-        return std::make_pair(0U, ARM::QPRRegisterClass);
+        return Pair(0U, ARM::QPRRegisterClass);
       break;
     }
   }
