@@ -1849,9 +1849,10 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
     // out as F80 and use a truncate to move it from fp stack reg to xmm reg.
     if ((RVLocs[i].getLocReg() == X86::ST0 ||
          RVLocs[i].getLocReg() == X86::ST1)) {
-      if (isScalarFPTypeInSSEReg(RVLocs[i].getValVT()))
+      if (isScalarFPTypeInSSEReg(RVLocs[i].getValVT())) {
         CopyVT = MVT::f80;
-      CopyReg = createResultReg(X86::RFP80RegisterClass);
+        CopyReg = createResultReg(X86::RFP80RegisterClass);
+      }
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(X86::FpPOP_RETVAL),
               CopyReg);
     } else {
