@@ -244,8 +244,8 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
         AddDefaultT1CC(BuildMI(MBB, MBBI, dl, MCID, DestReg).setMIFlags(MIFlags));
       AddDefaultPred(MIB.addReg(BaseReg, RegState::Kill).addImm(ThisVal));
     } else {
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), DestReg)
-        .addReg(BaseReg, RegState::Kill)
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), DestReg)
+        .addReg(BaseReg, RegState::Kill))
         .setMIFlags(MIFlags);
     }
     BaseReg = DestReg;
@@ -419,11 +419,10 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
       // Turn it into a move.
       MI.setDesc(TII.get(ARM::tMOVgpr2tgpr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
-      // Remove offset and remaining explicit predicate operands.
-      do MI.RemoveOperand(FrameRegIdx+1);
-      while (MI.getNumOperands() > FrameRegIdx+1 &&
-             (!MI.getOperand(FrameRegIdx+1).isReg() ||
-              !MI.getOperand(FrameRegIdx+1).isImm()));
+      // Remove offset and add predicate operands.
+      MI.RemoveOperand(FrameRegIdx+1);
+      MachineInstrBuilder MIB(&MI);
+      AddDefaultPred(MIB);
       return true;
     }
 
@@ -565,8 +564,9 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
   // the function, the offset will be negative. Use R12 instead since that's
   // a call clobbered register that we know won't be used in Thumb1 mode.
   DebugLoc DL;
-  BuildMI(MBB, I, DL, TII.get(ARM::tMOVtgpr2gpr)).
-    addReg(ARM::R12, RegState::Define).addReg(Reg, RegState::Kill);
+  AddDefaultPred(BuildMI(MBB, I, DL, TII.get(ARM::tMOVtgpr2gpr))
+    .addReg(ARM::R12, RegState::Define)
+    .addReg(Reg, RegState::Kill));
 
   // The UseMI is where we would like to restore the register. If there's
   // interference with R12 before then, however, we'll need to restore it
@@ -589,8 +589,8 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
     }
   }
   // Restore the register from R12
-  BuildMI(MBB, UseMI, DL, TII.get(ARM::tMOVgpr2tgpr)).
-    addReg(Reg, RegState::Define).addReg(ARM::R12, RegState::Kill);
+  AddDefaultPred(BuildMI(MBB, UseMI, DL, TII.get(ARM::tMOVgpr2tgpr)).
+    addReg(Reg, RegState::Define).addReg(ARM::R12, RegState::Kill));
 
   return true;
 }

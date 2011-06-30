@@ -122,8 +122,8 @@ void Thumb2InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   else if (tDest)
     Opc = ARM::tMOVgpr2tgpr;
 
-  BuildMI(MBB, I, DL, get(Opc), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc));
+  AddDefaultPred(BuildMI(MBB, I, DL, get(Opc), DestReg)
+    .addReg(SrcReg, getKillRegState(KillSrc)));
 }
 
 void Thumb2InstrInfo::
@@ -231,8 +231,8 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
     unsigned Opc = 0;
     if (DestReg == ARM::SP && BaseReg != ARM::SP) {
       // mov sp, rn. Note t2MOVr cannot be used.
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),DestReg)
-        .addReg(BaseReg).setMIFlags(MIFlags);
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),DestReg)
+        .addReg(BaseReg).setMIFlags(MIFlags));
       BaseReg = ARM::SP;
       continue;
     }
@@ -413,9 +413,9 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       // Remove offset and remaining explicit predicate operands.
       do MI.RemoveOperand(FrameRegIdx+1);
-      while (MI.getNumOperands() > FrameRegIdx+1 &&
-             (!MI.getOperand(FrameRegIdx+1).isReg() ||
-              !MI.getOperand(FrameRegIdx+1).isImm()));
+      while (MI.getNumOperands() > FrameRegIdx+1);
+      MachineInstrBuilder MIB(&MI);
+      AddDefaultPred(MIB);
       return true;
     }
 

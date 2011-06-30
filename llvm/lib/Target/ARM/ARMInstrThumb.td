@@ -409,7 +409,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
 def tPOP_RET : tPseudoInst<(outs), (ins pred:$p, reglist:$regs, variable_ops),
-                           Size4Bytes, IIC_iPop_Br, []>;
+                           Size2Bytes, IIC_iPop_Br, []>;
 
 // All calls clobber the non-callee saved registers. SP is marked as a use to
 // prevent stack-pointer assignments that appear immediately before calls from
@@ -1054,9 +1054,9 @@ def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
 // TODO: A7-73: MOV(2) - mov setting flag.
 
 let neverHasSideEffects = 1 in {
-// FIXME: Make this predicable.
-def tMOVr       : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
-                      "mov\t$Rd, $Rm", []>,
+def tMOVr : Thumb1pI<(outs tGPR:$Rd), (ins tGPR:$Rm), AddrModeNone,
+                      Size2Bytes, IIC_iMOVr,
+                      "mov", "\t$Rd, $Rm", "", []>,
                   T1Special<0b1000> {
   // A8.6.97
   bits<4> Rd;
@@ -1076,9 +1076,10 @@ def tMOVSr      : T1I<(outs tGPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
   let Inst{2-0}  = Rd;
 }
 
-// FIXME: Make these predicable.
-def tMOVgpr2tgpr : T1I<(outs tGPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
-                       "mov\t$Rd, $Rm", []>,
+// FIXME: Do we really need separate instructions for GPR<-->tGPR like this?
+//        They all map to the same instruction (MOV encoding T1).
+def tMOVgpr2tgpr : Thumb1pI<(outs tGPR:$Rd), (ins GPR:$Rm), AddrModeNone,
+                            Size2Bytes, IIC_iMOVr, "mov", "\t$Rd, $Rm", "", []>,
                    T1Special<{1,0,0,?}> {
   // A8.6.97
   bits<4> Rd;
@@ -1087,8 +1088,8 @@ def tMOVgpr2tgpr : T1I<(outs tGPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
   let Inst{6-3} = Rm;
   let Inst{2-0} = Rd{2-0};
 }
-def tMOVtgpr2gpr : T1I<(outs GPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
-                       "mov\t$Rd, $Rm", []>,
+def tMOVtgpr2gpr : Thumb1pI<(outs GPR:$Rd), (ins tGPR:$Rm), AddrModeNone,
+                            Size2Bytes, IIC_iMOVr, "mov", "\t$Rd, $Rm", "", []>,
                    T1Special<{1,0,?,0}> {
   // A8.6.97
   bits<4> Rd;
@@ -1098,8 +1099,8 @@ def tMOVtgpr2gpr : T1I<(outs GPR:$Rd), (ins tGPR:$Rm), IIC_iMOVr,
   let Inst{5-3} = Rm{2-0};
   let Inst{2-0} = Rd{2-0};
 }
-def tMOVgpr2gpr  : T1I<(outs GPR:$Rd), (ins GPR:$Rm), IIC_iMOVr,
-                       "mov\t$Rd, $Rm", []>,
+def tMOVgpr2gpr  : Thumb1pI<(outs GPR:$Rd), (ins GPR:$Rm), AddrModeNone,
+                            Size2Bytes, IIC_iMOVr, "mov", "\t$Rd, $Rm", "", []>,
                    T1Special<{1,0,?,?}> {
   // A8.6.97
   bits<4> Rd;

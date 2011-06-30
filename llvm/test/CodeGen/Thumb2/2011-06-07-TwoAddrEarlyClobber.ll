@@ -1,13 +1,11 @@
-; RUN: llc < %s | FileCheck %s
-target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:32:64-v128:32:128-a0:0:32-n32"
-target triple = "thumbv7-apple-darwin10"
+; RUN: llc -mtriple=thumbv7-apple-darwin10 < %s | FileCheck %s
 
 %struct.op = type { %struct.op*, %struct.op*, %struct.op* ()*, i32, i16, i16, i8, i8 }
 
 ; CHECK: Perl_ck_sort
-; CHECK: ldr
-; CHECK: mov [[REGISTER:(r[0-9]+)|(lr)]]
-; CHECK: str {{(r[0-9])|(lr)}}, {{\[}}[[REGISTER]]{{\]}}, #24
+; CHECK: ldreq
+; CHECK: moveq [[REGISTER:(r[0-9]+)|(lr)]]
+; CHECK: streq {{(r[0-9])|(lr)}}, {{\[}}[[REGISTER]]{{\]}}, #24
 
 define void @Perl_ck_sort() nounwind optsize {
 entry:

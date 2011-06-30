@@ -268,14 +268,14 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
       // bic r4, r4, MaxAlign
       // mov sp, r4
       // FIXME: It will be better just to find spare register here.
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2tgpr), ARM::R4)
-        .addReg(ARM::SP, RegState::Kill);
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2tgpr), ARM::R4)
+        .addReg(ARM::SP, RegState::Kill));
       AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl,
                                           TII.get(ARM::t2BICri), ARM::R4)
                                   .addReg(ARM::R4, RegState::Kill)
                                   .addImm(MaxAlign-1)));
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::SP)
-        .addReg(ARM::R4, RegState::Kill);
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::SP)
+        .addReg(ARM::R4, RegState::Kill));
     }
 
     AFI->setShouldRestoreSPFromFP(true);
@@ -293,9 +293,9 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
         .addReg(ARM::SP)
         .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
     else
-      BuildMI(MBB, MBBI, dl,
-              TII.get(ARM::tMOVgpr2gpr), RegInfo->getBaseRegister())
-        .addReg(ARM::SP);
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),
+                             RegInfo->getBaseRegister())
+        .addReg(ARM::SP));
   }
 
   // If the frame has variable sized objects then the epilogue must restore
@@ -364,8 +364,9 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
                  "No scratch register to restore SP from FP!");
           emitT2RegPlusImmediate(MBB, MBBI, dl, ARM::R4, FramePtr, -NumBytes,
                                  ARMCC::AL, 0, TII);
-          BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), ARM::SP)
-            .addReg(ARM::R4);
+          AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),
+                                 ARM::SP)
+            .addReg(ARM::R4));
         }
       } else {
         // Thumb2 or ARM.
@@ -373,8 +374,9 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
           BuildMI(MBB, MBBI, dl, TII.get(ARM::MOVr), ARM::SP)
             .addReg(FramePtr).addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
         else
-          BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr), ARM::SP)
-            .addReg(FramePtr);
+          AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2gpr),
+                                 ARM::SP)
+            .addReg(FramePtr));
       }
     } else if (NumBytes)
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);

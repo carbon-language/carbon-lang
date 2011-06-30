@@ -1223,6 +1223,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       TmpInst.setOpcode(ARM::tMOVr);
       TmpInst.addOperand(MCOperand::CreateReg(ARM::LR));
       TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
+      // Add predicate operands.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
       OutStreamer.EmitInstruction(TmpInst);
     }
     {
@@ -1610,8 +1613,9 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       TmpInst.setOpcode(ARM::tMOVgpr2tgpr);
       TmpInst.addOperand(MCOperand::CreateReg(ValReg));
       TmpInst.addOperand(MCOperand::CreateReg(ARM::PC));
-      // 's' bit operand
-      TmpInst.addOperand(MCOperand::CreateReg(ARM::CPSR));
+      // Predicate.
+      TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+      TmpInst.addOperand(MCOperand::CreateReg(0));
       OutStreamer.AddComment("eh_setjmp begin");
       OutStreamer.EmitInstruction(TmpInst);
     }
