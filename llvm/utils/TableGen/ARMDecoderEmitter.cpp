@@ -1624,10 +1624,6 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
     if (Name == "tBX_RET" || Name == "tBX_RET_vararg")
       return false;
 
-    // Ignore the TPsoft (TLS) instructions, which conflict with tBLr9.
-    if (Name == "tTPsoft" || Name == "t2TPsoft")
-      return false;
-
     // Ignore tADR, prefer tADDrPCi.
     if (Name == "tADR")
       return false;

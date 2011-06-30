@@ -1392,13 +1392,11 @@ def tCDP : T1Cop<(outs), (ins p_imm:$cop, i32imm:$opc1,
 //
 
 // __aeabi_read_tp preserves the registers r1-r3.
-let isCall = 1, Defs = [R0, LR], Uses = [SP] in
-def tTPsoft : TIx2<0b11110, 0b11, 1, (outs), (ins), IIC_Br,
-                   "bl\t__aeabi_read_tp",
-                   [(set R0, ARMthread_pointer)]> {
-  // Encoding is 0xf7fffffe.
-  let Inst = 0xf7fffffe;
-}
+// This is a pseudo inst so that we can get the encoding right,
+// complete with fixup for the aeabi_read_tp function.
+let isCall = 1, Defs = [R0, R12, LR, CPSR], Uses = [SP] in
+def tTPsoft : tPseudoInst<(outs), (ins), Size4Bytes, IIC_Br,
+                          [(set R0, ARMthread_pointer)]>;
 
 //===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics

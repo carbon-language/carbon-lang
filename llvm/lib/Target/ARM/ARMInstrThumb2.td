@@ -2909,22 +2909,6 @@ def t2CLREX : T2XI<(outs), (ins), NoItinerary, "clrex",
 }
 
 //===----------------------------------------------------------------------===//
-// TLS Instructions
-//
-
-// __aeabi_read_tp preserves the registers r1-r3.
-let isCall = 1,
-  Defs = [R0, R12, LR, CPSR], Uses = [SP] in {
-  def t2TPsoft : T2XI<(outs), (ins), IIC_Br,
-                     "bl\t__aeabi_read_tp",
-                     [(set R0, ARMthread_pointer)]> {
-    let Inst{31-27} = 0b11110;
-    let Inst{15-14} = 0b11;
-    let Inst{12} = 1;
-  }
-}
-
-//===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics
 //   eh_sjlj_setjmp() is an instruction sequence to store the return
 //   address and save #0 in R0 for the non-longjmp case.
