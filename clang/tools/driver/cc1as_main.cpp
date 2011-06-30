@@ -261,7 +261,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
     return false;
 
   // FIXME: We shouldn't need to do this (and link in codegen).
-  OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(Opts.Triple, ""));
+  OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(Opts.Triple,
+                                                             "", ""));
   if (!TM) {
     Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
     return false;

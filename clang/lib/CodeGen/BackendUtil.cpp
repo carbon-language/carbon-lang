@@ -258,16 +258,16 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
                                     const_cast<char **>(&BackendArgs[0]));
 
   std::string FeaturesStr;
-  if (TargetOpts.CPU.size() || TargetOpts.Features.size()) {
+  if (TargetOpts.Features.size()) {
     SubtargetFeatures Features;
-    Features.setCPU(TargetOpts.CPU);
     for (std::vector<std::string>::const_iterator
            it = TargetOpts.Features.begin(),
            ie = TargetOpts.Features.end(); it != ie; ++it)
       Features.AddFeature(*it);
     FeaturesStr = Features.getString();
   }
-  TargetMachine *TM = TheTarget->createTargetMachine(Triple, FeaturesStr);
+  TargetMachine *TM = TheTarget->createTargetMachine(Triple, TargetOpts.CPU,
+                                                     FeaturesStr);
 
   if (CodeGenOpts.RelaxAll)
     TM->setMCRelaxAll(true);
