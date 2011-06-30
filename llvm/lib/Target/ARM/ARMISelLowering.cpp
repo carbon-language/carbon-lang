@@ -7528,8 +7528,8 @@ ARMTargetLowering::getSingleConstraintMatchWeight(
   return weight;
 }
 
-typedef std::pair<unsigned, const TargetRegisterClass*> Pair;
-Pair
+typedef std::pair<unsigned, const TargetRegisterClass*> RCPair;
+RCPair
 ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
                                                 EVT VT) const {
   if (Constraint.size() == 1) {
@@ -7537,23 +7537,23 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     switch (Constraint[0]) {
     case 'l': // Low regs or general regs.
       if (Subtarget->isThumb())
-        return Pair(0U, ARM::tGPRRegisterClass);
+        return RCPair(0U, ARM::tGPRRegisterClass);
       else
-        return Pair(0U, ARM::GPRRegisterClass);
+        return RCPair(0U, ARM::GPRRegisterClass);
     case 'h': // High regs or no regs.
       if (Subtarget->isThumb())
-	return Pair(0U, ARM::hGPRRegisterClass);
+	return RCPair(0U, ARM::hGPRRegisterClass);
       else
-	return Pair(0u, static_cast<const TargetRegisterClass*>(0));
+	return RCPair(0u, static_cast<const TargetRegisterClass*>(0));
     case 'r':
-      return Pair(0U, ARM::GPRRegisterClass);
+      return RCPair(0U, ARM::GPRRegisterClass);
     case 'w':
       if (VT == MVT::f32)
-        return Pair(0U, ARM::SPRRegisterClass);
+        return RCPair(0U, ARM::SPRRegisterClass);
       if (VT.getSizeInBits() == 64)
-        return Pair(0U, ARM::DPRRegisterClass);
+        return RCPair(0U, ARM::DPRRegisterClass);
       if (VT.getSizeInBits() == 128)
-        return Pair(0U, ARM::QPRRegisterClass);
+        return RCPair(0U, ARM::QPRRegisterClass);
       break;
     }
   }
