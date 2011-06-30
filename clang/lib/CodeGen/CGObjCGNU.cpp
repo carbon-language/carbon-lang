@@ -393,7 +393,8 @@ private:
   /// is no class of the matching name.
   void EmitClassRef(const std::string &className);
   /// Emits a pointer to the named class
-  llvm::Value *GetClassNamed(CGBuilderTy &Builder, const std::string &Name);
+  llvm::Value *GetClassNamed(CGBuilderTy &Builder, const std::string &Name,
+                             bool isWeak);
 protected:
   /// Looks up the method for sending a message to the specified object.  This
   /// mechanism differs between the GCC and GNU runtimes, so this method must be
@@ -776,7 +777,8 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
 }
 
 llvm::Value *CGObjCGNU::GetClassNamed(CGBuilderTy &Builder,
-                                      const std::string &Name) {
+                                      const std::string &Name,
+                                      bool isWeak) {
   llvm::Value *ClassName = CGM.GetAddrOfConstantCString(Name);
   // With the incompatible ABI, this will need to be replaced with a direct
   // reference to the class symbol.  For the compatible nonfragile ABI we are
@@ -785,7 +787,8 @@ llvm::Value *CGObjCGNU::GetClassNamed(CGBuilderTy &Builder,
   //
   // Libobjc2 contains an LLVM pass that replaces calls to objc_lookup_class
   // with memoized versions or with static references if it's safe to do so.
-  EmitClassRef(Name);
+  if (!isWeak)
+    EmitClassRef(Name);
   ClassName = Builder.CreateStructGEP(ClassName, 0);
 
   llvm::Constant *ClassLookupFn =
@@ -798,10 +801,10 @@ llvm::Value *CGObjCGNU::GetClassNamed(CGBuilderTy &Builder,
 // techniques can modify the name -> class mapping.
 llvm::Value *CGObjCGNU::GetClass(CGBuilderTy &Builder,
                                  const ObjCInterfaceDecl *OID) {
-  return GetClassNamed(Builder, OID->getNameAsString());
+  return GetClassNamed(Builder, OID->getNameAsString(), OID->isWeakImported());
 }
 llvm::Value *CGObjCGNU::EmitNSAutoreleasePoolClassRef(CGBuilderTy &Builder) {
-  return GetClassNamed(Builder, "NSAutoreleasePool");
+  return GetClassNamed(Builder, "NSAutoreleasePool", false);
 }
 
 llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, Selector Sel,
