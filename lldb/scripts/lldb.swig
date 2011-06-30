@@ -4,12 +4,34 @@
    This is the input file for SWIG, to create the appropriate C++ wrappers and
    functions for various scripting languages, to enable them to call the
    liblldb Script Bridge functions.
-
 */
 
-/*  The name of the module to be created.  */
+/* Define our module docstring. */
+%define DOCSTRING
+"The lldb module contains the public APIs for Python binding.
 
-%module lldb
+Some of the important classes are describe here:
+
+o SBTarget: Represents the target program running under the debugger.
+o SBProcess: Represents the process associated with the target program.
+o SBThread: Represents a thread of execution. SBProcess contains SBThread(s).
+o SBFrame: Represents one of the stack frames associated with a thread. SBThread
+      contains SBFrame(s).
+o SBSymbolContext: A container that stores various debugger related info.
+o SBValue: Represents the value of a variable, a register, or an expression.
+o SBModule: Represents an executable image and its associated object and symbol
+      files.
+o SBSymbol: Represents the symbol associated with a stack frame.
+o SBCompileUnit: Represents a compilation unit, or compiled source file.
+o SBFunction: Represents a generic function, which can be inlined or not.
+o SBBlock: Represents a lexical block. SBFunction contains SBBlock(s).
+o SBLineEntry: Specifies an association with a contiguous range of instructions
+      and a source file location. SBCompileUnit contains SBLineEntry(s)"
+%enddef
+
+/*  The name of the module to be created.  */
+%module(docstring=DOCSTRING) lldb
+
 
 /* Typemap definitions, to allow SWIG to properly handle 'char**' data types. */
 
