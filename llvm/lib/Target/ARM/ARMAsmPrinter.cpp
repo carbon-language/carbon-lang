@@ -1096,6 +1096,14 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
+  case ARM::tPOP_RET: {
+    // As above for LDMIA_RET. Map to the tPOP instruction.
+    MCInst TmpInst;
+    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
+    TmpInst.setOpcode(ARM::tPOP);
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
 
   case ARM::t2MOVi32imm: assert(0 && "Should be lowered by thumb2it pass");
   case ARM::DBG_VALUE: {

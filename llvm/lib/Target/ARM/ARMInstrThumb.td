@@ -408,15 +408,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 // FIXME: remove when we have a way to marking a MI with these properties.
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1 in
-def tPOP_RET : T1I<(outs), (ins pred:$p, reglist:$regs, variable_ops),
-                   IIC_iPop_Br,
-                   "pop${p}\t$regs", []>,
-               T1Misc<{1,1,0,?,?,?,?}> {
-  // A8.6.121
-  bits<16> regs;
-  let Inst{8}   = regs{15};     // registers = P:'0000000':register_list
-  let Inst{7-0} = regs{7-0};
-}
+def tPOP_RET : tPseudoInst<(outs), (ins pred:$p, reglist:$regs, variable_ops),
+                           Size4Bytes, IIC_iPop_Br, []>;
 
 // All calls clobber the non-callee saved registers. SP is marked as a use to
 // prevent stack-pointer assignments that appear immediately before calls from
