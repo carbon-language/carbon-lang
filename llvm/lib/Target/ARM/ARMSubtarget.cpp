@@ -120,17 +120,14 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   if (TT.find("eabi") != std::string::npos)
     TargetABI = ARM_ABI_AAPCS;
 
-  // Parse features string.  If the first entry in FS (the CPU) is missing,
-  // insert the architecture feature derived from the target triple.  This is
-  // important for setting features that are implied based on the architecture
-  // version.
-  std::string FSWithArch;
-  if (FS.empty())
-    FSWithArch = std::string(ARMArchFeature);
-  else if (FS.find(',') == 0)
-    FSWithArch = std::string(ARMArchFeature) + FS;
-  else
+  // Insert the architecture feature derived from the target triple into the
+  // feature string. This is important for setting features that are implied
+  // based on the architecture version.
+  std::string FSWithArch = std::string(ARMArchFeature);
+  if (FSWithArch.empty())
     FSWithArch = FS;
+  else if (!FS.empty())
+    FSWithArch = FSWithArch + "," + FS;
   ParseSubtargetFeatures(FSWithArch, CPUString);
 
   // After parsing Itineraries, set ItinData.IssueWidth.
