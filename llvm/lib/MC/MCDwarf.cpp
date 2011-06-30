@@ -526,6 +526,40 @@ namespace {
     void EmitCFIInstruction(MCStreamer &Streamer,
                             const MCCFIInstruction &Instr);
   };
+
+} // end anonymous namespace
+
+static void EmitEncodingByte(MCStreamer &Streamer, unsigned Encoding,
+                             StringRef Prefix) {
+  if (Streamer.isVerboseAsm()) {
+    const char *EncStr = 0;
+    switch (Encoding) {
+    default: EncStr = "<unknown encoding>";
+    case dwarf::DW_EH_PE_absptr: EncStr = "absptr";
+    case dwarf::DW_EH_PE_omit:   EncStr = "omit";
+    case dwarf::DW_EH_PE_pcrel:  EncStr = "pcrel";
+    case dwarf::DW_EH_PE_udata4: EncStr = "udata4";
+    case dwarf::DW_EH_PE_udata8: EncStr = "udata8";
+    case dwarf::DW_EH_PE_sdata4: EncStr = "sdata4";
+    case dwarf::DW_EH_PE_sdata8: EncStr = "sdata8";
+    case dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_udata4: EncStr = "pcrel udata4";
+    case dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata4: EncStr = "pcrel sdata4";
+    case dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_udata8: EncStr = "pcrel udata8";
+    case dwarf::DW_EH_PE_pcrel |dwarf::DW_EH_PE_sdata8: EncStr = "pcrel sdata8";
+    case dwarf::DW_EH_PE_indirect |dwarf::DW_EH_PE_pcrel|dwarf::DW_EH_PE_udata4:
+      EncStr = "indirect pcrel udata4";
+    case dwarf::DW_EH_PE_indirect |dwarf::DW_EH_PE_pcrel|dwarf::DW_EH_PE_sdata4:
+      EncStr = "indirect pcrel sdata4";
+    case dwarf::DW_EH_PE_indirect |dwarf::DW_EH_PE_pcrel|dwarf::DW_EH_PE_udata8:
+      EncStr = "indirect pcrel udata8";
+    case dwarf::DW_EH_PE_indirect |dwarf::DW_EH_PE_pcrel|dwarf::DW_EH_PE_sdata8:
+      EncStr = "indirect pcrel sdata8";
+    }
+
+    Streamer.AddComment(Twine(Prefix) + " = " + EncStr);
+  }
+
+  Streamer.EmitIntValue(Encoding, 1);
 }
 
 void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
@@ -635,7 +669,7 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
 #else
   MCContext &Context = Streamer.getContext();
   const TargetAsmInfo &TAI = Context.getTargetAsmInfo();
-  Streamer.SwitchSection(TAI.getCompactUnwindSection());
+  bool VerboseAsm = Streamer.isVerboseAsm();
 
   // range-start range-length  compact-unwind-enc personality-func   lsda
   //  _foo       LfooEnd-_foo  0x00000023          0                 0
@@ -659,25 +693,31 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   //   .quad __gxx_personality
   //   .quad except_tab1
 
+  Streamer.SwitchSection(TAI.getCompactUnwindSection());
+
   // Range Start
   unsigned FDEEncoding = TAI.getFDEEncoding(UsingCFI);
   unsigned Size = getSizeForEncoding(Streamer, FDEEncoding);
+  if (VerboseAsm) Streamer.AddComment("Range Start");
   Streamer.EmitSymbolValue(Frame.Function, Size);
 
   // Range Length
   const MCExpr *Range = MakeStartMinusEndExpr(Streamer, *Frame.Begin,
                                               *Frame.End, 0);
+  if (VerboseAsm) Streamer.AddComment("Range Length");
   Streamer.EmitAbsValue(Range, 4);
 
   // FIXME:
   // Compact Encoding
+  const std::vector<MachineMove> &Moves = TAI.getInitialFrameState();
   uint32_t Encoding = 0;
   Size = getSizeForEncoding(Streamer, dwarf::DW_EH_PE_udata4);
+  if (VerboseAsm) Streamer.AddComment("Compact Unwind Encoding");
   Streamer.EmitIntValue(Encoding, Size);
-
 
   // Personality Function
   Size = getSizeForEncoding(Streamer, Frame.PersonalityEncoding);
+  if (VerboseAsm) Streamer.AddComment("Personality Function");
   if (Frame.Personality)
     Streamer.EmitSymbolValue(Frame.Personality, Size);
   else
@@ -685,6 +725,7 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
 
   // LSDA
   Size = getSizeForEncoding(Streamer, Frame.LsdaEncoding);
+  if (VerboseAsm) Streamer.AddComment("LSDA");
   if (Frame.Lsda)
     Streamer.EmitSymbolValue(Frame.Lsda, Size);
   else
@@ -701,6 +742,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
                                           unsigned lsdaEncoding) {
   MCContext &context = streamer.getContext();
   const TargetAsmInfo &asmInfo = context.getTargetAsmInfo();
+  bool verboseAsm = streamer.isVerboseAsm();
 
   MCSymbol *sectionStart;
   if (asmInfo.isFunctionEHFrameSymbolPrivate() || !IsEH)
@@ -708,6 +750,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   else
     sectionStart = context.GetOrCreateSymbol(Twine("EH_frame") + Twine(CIENum));
 
+  streamer.EmitLabel(sectionStart);
   CIENum++;
 
   MCSymbol *sectionEnd = streamer.getContext().CreateTempSymbol();
@@ -715,19 +758,22 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *sectionStart,
                                                *sectionEnd, 4);
-  streamer.EmitLabel(sectionStart);
+  if (verboseAsm) streamer.AddComment("CIE Length");
   streamer.EmitAbsValue(Length, 4);
 
   // CIE ID
   unsigned CIE_ID = IsEH ? 0 : -1;
+  if (verboseAsm) streamer.AddComment("CIE ID Tag");
   streamer.EmitIntValue(CIE_ID, 4);
 
   // Version
+  if (verboseAsm) streamer.AddComment("DW_CIE_VERSION");
   streamer.EmitIntValue(dwarf::DW_CIE_VERSION, 1);
 
   // Augmentation String
   SmallString<8> Augmentation;
   if (IsEH) {
+    if (verboseAsm) streamer.AddComment("CIE Augmentation");
     Augmentation += "z";
     if (personality)
       Augmentation += "P";
@@ -739,12 +785,15 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   streamer.EmitIntValue(0, 1);
 
   // Code Alignment Factor
+  if (verboseAsm) streamer.AddComment("CIE Code Alignment Factor");
   streamer.EmitULEB128IntValue(1);
 
   // Data Alignment Factor
+  if (verboseAsm) streamer.AddComment("CIE Data Alignment Factor");
   streamer.EmitSLEB128IntValue(getDataAlignmentFactor(streamer));
 
   // Return Address Register
+  if (verboseAsm) streamer.AddComment("CIE Return Address Column");
   streamer.EmitULEB128IntValue(asmInfo.getDwarfRARegNum(true));
 
   // Augmentation Data Length (optional)
@@ -762,19 +811,25 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
     // Encoding of the FDE pointers
     augmentationLength += 1;
 
+    if (verboseAsm) streamer.AddComment("Augmentation Size");
     streamer.EmitULEB128IntValue(augmentationLength);
 
     // Augmentation Data (optional)
     if (personality) {
       // Personality Encoding
-      streamer.EmitIntValue(personalityEncoding, 1);
+      EmitEncodingByte(streamer, personalityEncoding,
+                       "Personality Encoding");
       // Personality
+      if (verboseAsm) streamer.AddComment("Personality");
       EmitPersonality(streamer, *personality, personalityEncoding);
     }
+
     if (lsda)
-      streamer.EmitIntValue(lsdaEncoding, 1); // LSDA Encoding
+      EmitEncodingByte(streamer, lsdaEncoding, "LSDA Encoding");
+
     // Encoding of the FDE pointers
-    streamer.EmitIntValue(asmInfo.getFDEEncoding(UsingCFI), 1);
+    EmitEncodingByte(streamer, asmInfo.getFDEEncoding(UsingCFI),
+                     "FDE Encoding");
   }
 
   // Initial Instructions
