@@ -3168,6 +3168,20 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &lex, ExprResult &rex,
                                             ExprValueKind &VK,
                                             SourceLocation Loc,
                                             bool isIndirect) {
+  assert(!lex.get()->getType()->isPlaceholderType() &&
+         !rex.get()->getType()->isPlaceholderType() &&
+         "placeholders should have been weeded out by now");
+
+  // The LHS undergoes lvalue conversions if this is ->*.
+  if (isIndirect) {
+    lex = DefaultLvalueConversion(lex.take());
+    if (lex.isInvalid()) return QualType();
+  }
+
+  // The RHS always undergoes lvalue conversions.
+  rex = DefaultLvalueConversion(rex.take());
+  if (rex.isInvalid()) return QualType();
+
   const char *OpSpelling = isIndirect ? "->*" : ".*";
   // C++ 5.5p2
   //   The binary operator .* [p3: ->*] binds its second operand, which shall

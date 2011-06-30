@@ -296,3 +296,19 @@ namespace PR9973 {
     mem_fn(&test::nullary_v)(t); // expected-note{{in instantiation of}}
   }
 }
+
+namespace test8 {
+  struct A { int foo; };
+  int test1() {
+    // Verify that we perform (and check) an lvalue conversion on the operands here.
+    return (*((A**) 0)) // expected-warning {{indirection of non-volatile null pointer will be deleted}} expected-note {{consider}}
+             ->**(int A::**) 0; // expected-warning {{indirection of non-volatile null pointer will be deleted}} expected-note {{consider}}
+  }
+
+  int test2() {
+    // Verify that we perform (and check) an lvalue conversion on the operands here.
+    // TODO: the .* should itself warn about being a dereference of null.
+    return (*((A*) 0))
+             .**(int A::**) 0; // expected-warning {{indirection of non-volatile null pointer will be deleted}} expected-note {{consider}}
+  }
+}
