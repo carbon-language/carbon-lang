@@ -69,3 +69,14 @@ namespace PR10057 {
     return S() = value;
   }
 }
+
+namespace return_has_expr {
+  struct S {
+    S() {
+      return 42; // expected-error {{constructor 'S' should not return a value}}
+    }
+    ~S() {
+      return 42; // expected-error {{destructor '~S' should not return a value}}
+    }
+  };
+}
