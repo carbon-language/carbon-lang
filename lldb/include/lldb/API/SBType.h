@@ -40,8 +40,10 @@ public:
     uint64_t
     GetByteSize();
 
-	lldb::Encoding
+#ifndef SWIG
+    lldb::Encoding
     GetEncoding (uint32_t &count);
+#endif
 
     uint64_t
     GetNumberChildren (bool omit_empty_base_classes);
