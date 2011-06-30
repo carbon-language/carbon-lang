@@ -32,9 +32,16 @@
 
 #define DEBUG_TYPE "polly-optimize-isl"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 using namespace polly;
+
+static cl::opt<bool>
+Prevector("enable-schedule-prevector",
+	  cl::desc("Enable the prevectorization in the scheduler"), cl::Hidden,
+	  cl::value_desc("Prevectorization enabled"),
+	  cl::init(false));
 
 namespace {
 
@@ -203,6 +210,68 @@ isl_union_map *getTiledPartialSchedule(isl_band *band) {
   return partialSchedule;
 }
 
+static isl_map *getPrevectorMap(isl_ctx *ctx, int vectorDimension,
+				int scheduleDimensions,
+				int parameterDimensions,
+				int vectorWidth = 4) {
+  assert (0 <= vectorDimension < scheduleDimensions);
+
+  isl_dim *dim = isl_dim_alloc(ctx, parameterDimensions, scheduleDimensions,
+			       scheduleDimensions + 2);
+  isl_basic_map *tilingMap = isl_basic_map_universe(isl_dim_copy(dim));
+
+  isl_constraint *c;
+
+  for (int i = 0; i < vectorDimension; i++) {
+    c = isl_equality_alloc(isl_dim_copy(dim));
+    isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
+    isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
+    tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+  }
+
+  for (int i = vectorDimension + 1; i < scheduleDimensions; i++) {
+    c = isl_equality_alloc(isl_dim_copy(dim));
+    isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
+    isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
+    tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+  }
+
+  int stepDimension = scheduleDimensions;
+  int auxilaryDimension = scheduleDimensions + 1;
+
+  c = isl_equality_alloc(isl_dim_copy(dim));
+  isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, 1);
+  isl_constraint_set_coefficient_si(c, isl_dim_out, auxilaryDimension,
+				    -vectorWidth);
+  tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+
+  c = isl_equality_alloc(isl_dim_copy(dim));
+  isl_constraint_set_coefficient_si(c, isl_dim_in, vectorDimension, -1);
+  isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, 1);
+  tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+
+  c = isl_inequality_alloc(isl_dim_copy(dim));
+  isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, -1);
+  isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, 1);
+  tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+
+  c = isl_inequality_alloc(isl_dim_copy(dim));
+  isl_constraint_set_coefficient_si(c, isl_dim_out, vectorDimension, 1);
+  isl_constraint_set_coefficient_si(c, isl_dim_out, stepDimension, -1);
+  isl_constraint_set_constant_si(c, vectorWidth- 1);
+  tilingMap = isl_basic_map_add_constraint(tilingMap, c);
+
+  // Project out auxilary dimensions (introduced to ensure 'ii % tileSize = 0')
+  //
+  // The real dimensions are transformed into existentially quantified ones.
+  // This reduces the number of visible scattering dimensions.  Also, Cloog
+  // produces better code, if auxilary dimensions are existentially quantified.
+  tilingMap = isl_basic_map_project_out(tilingMap, isl_dim_out,
+					scheduleDimensions + 1, 1);
+
+  return isl_map_from_basic_map(tilingMap);
+}
+
 // tileBandList - Tile all bands contained in a band forest.
 //
 // Recursively walk the band forest and tile all bands in the forest. Return
@@ -223,6 +292,20 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
       isl_union_map *suffixSchedule = tileBandList(children);
       partialSchedule = isl_union_map_flat_range_product(partialSchedule,
 							 suffixSchedule);
+    } else if (Prevector) {
+      isl_map *tileMap;
+      isl_union_map *tileUnionMap;
+      isl_ctx *ctx;
+      int scheduleDimensions, parameterDimensions;
+
+      ctx = isl_union_map_get_ctx(partialSchedule);
+      scheduleDimensions = isl_band_n_member(band);
+      tileMap = getPrevectorMap(ctx, scheduleDimensions * 2 - 1,
+				scheduleDimensions * 2,
+				parameterDimensions);
+      tileUnionMap = isl_union_map_from_map(tileMap);
+      partialSchedule = isl_union_map_apply_range(partialSchedule,
+						  tileUnionMap);
     }
 
     if (finalSchedule)

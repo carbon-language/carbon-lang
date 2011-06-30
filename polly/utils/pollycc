@@ -115,7 +115,9 @@ def createAssemblyFile(tmpDir, file, number, args, polly):
 
     if args.fvector:
       commandLine.append('-enable-polly-vector')
-      commandLine.append('-enable-pluto-prevector')
+      commandLine.append('-enable-schedule-prevector')
+      if (args.ftile or args.fpluto):
+	commandLine.append('-enable-pluto-prevector')
 
     if args.pollyexport:
       commandLine.append('-polly-export-jscop')
