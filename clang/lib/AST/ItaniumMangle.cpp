@@ -1369,9 +1369,16 @@ void CXXNameMangler::mangleType(TemplateName TN) {
     break;
   }
 
-  case TemplateName::SubstTemplateTemplateParm:
-    llvm_unreachable("mangling a substituted template name!");
-    break;
+  case TemplateName::SubstTemplateTemplateParm: {
+    // Substituted template parameters are mangled as the substituted
+    // template.  This will check for the substitution twice, which is
+    // fine, but we have to return early so that we don't try to *add*
+    // the substitution twice.
+    SubstTemplateTemplateParmStorage *subst
+      = TN.getAsSubstTemplateTemplateParm();
+    mangleType(subst->getReplacement());
+    return;
+  }
 
   case TemplateName::SubstTemplateTemplateParmPack: {
     SubstTemplateTemplateParmPackStorage *SubstPack
