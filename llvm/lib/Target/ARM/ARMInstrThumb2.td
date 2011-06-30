@@ -2962,28 +2962,13 @@ let Defs =
 //
 
 // FIXME: remove when we have a way to marking a MI with these properties.
-// FIXME: $dst1 should be a def. But the extra ops must be in the end of the
-// operand list.
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-def t2LDMIA_RET: T2XIt<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
-                                        reglist:$regs, variable_ops),
-                        IIC_iLoad_mBr,
-                        "ldmia${p}.w\t$Rn!, $regs",
-                        "$Rn = $wb", []> {
-  bits<4>  Rn;
-  bits<16> regs;
-
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b00;
-  let Inst{24-23} = 0b01;     // Increment After
-  let Inst{22}    = 0;
-  let Inst{21}    = 1;        // Writeback
-  let Inst{20}    = 1;
-  let Inst{19-16} = Rn;
-  let Inst{15-0}  = regs;
-}
+def t2LDMIA_RET: t2PseudoInst<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
+                                                   reglist:$regs, variable_ops),
+                              Size4Bytes, IIC_iLoad_mBr, []>,
+                         RegConstraint<"$Rn = $wb">;
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 let isPredicable = 1 in

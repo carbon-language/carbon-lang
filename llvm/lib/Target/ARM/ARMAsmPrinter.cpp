@@ -1096,6 +1096,14 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
+  case ARM::t2LDMIA_RET: {
+    // As above for LDMIA_RET. Map to the tPOP instruction.
+    MCInst TmpInst;
+    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
+    TmpInst.setOpcode(ARM::t2LDMIA_UPD);
+    OutStreamer.EmitInstruction(TmpInst);
+    return;
+  }
   case ARM::tPOP_RET: {
     // As above for LDMIA_RET. Map to the tPOP instruction.
     MCInst TmpInst;
