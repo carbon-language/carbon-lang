@@ -299,13 +299,17 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
       int scheduleDimensions, parameterDimensions;
 
       ctx = isl_union_map_get_ctx(partialSchedule);
-      scheduleDimensions = isl_band_n_member(band);
-      tileMap = getPrevectorMap(ctx, scheduleDimensions * 2 - 1,
-				scheduleDimensions * 2,
-				parameterDimensions);
-      tileUnionMap = isl_union_map_from_map(tileMap);
-      partialSchedule = isl_union_map_apply_range(partialSchedule,
-						  tileUnionMap);
+      for (int i = scheduleDimensions - 1 ;  i >= 0 ; i--) {
+	if (isl_band_member_is_parallel(band, i)) {
+	  tileMap = getPrevectorMap(ctx, scheduleDimensions + i,
+				    scheduleDimensions * 2,
+				    parameterDimensions);
+	  tileUnionMap = isl_union_map_from_map(tileMap);
+	  partialSchedule = isl_union_map_apply_range(partialSchedule,
+						      tileUnionMap);
+	  break;
+	}
+      }
     }
 
     if (finalSchedule)
