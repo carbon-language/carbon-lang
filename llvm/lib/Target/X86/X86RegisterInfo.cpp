@@ -110,10 +110,10 @@ int X86RegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
 int X86RegisterInfo::getCompactUnwindRegNum(unsigned RegNum) const {
   switch (RegNum) {
   case X86::EBX: case X86::RBX: return 1;
-  case X86::ECX: case X86::RCX: return 2;
-  case X86::EDX: case X86::RDX: return 3;
-  case X86::EDI: case X86::RDI: return 4;
-  case X86::ESI: case X86::RSI: return 5;
+  case X86::ECX: case X86::R12: return 2;
+  case X86::EDX: case X86::R13: return 3;
+  case X86::EDI: case X86::R14: return 4;
+  case X86::ESI: case X86::R15: return 5;
   case X86::EBP: case X86::RBP: return 6;
   }
 
