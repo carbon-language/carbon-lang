@@ -411,6 +411,8 @@ let Uses = [RDX, RAX, RCX] in
 let Defs = [RAX, RDI], Uses = [RDX, RDI] in
   def XSTORE : I<0xc0, RawFrm, (outs), (ins), "xstore", []>, A7;
 
+def : InstAlias<"xstorerng", (XSTORE)>;
+
 let Defs = [RSI, RDI], Uses = [RBX, RDX, RSI, RDI] in {
   def XCRYPTECB : I<0xc8, RawFrm, (outs), (ins), "xcryptecb", []>, A7;
   def XCRYPTCBC : I<0xd0, RawFrm, (outs), (ins), "xcryptcbc", []>, A7;

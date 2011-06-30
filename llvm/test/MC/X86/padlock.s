@@ -4,6 +4,10 @@
 // CHECK: xstore
 // CHECK: encoding: [0x0f,0xa7,0xc0]
 
+	xstorerng
+// CHECK: xstore
+// CHECK: encoding: [0x0f,0xa7,0xc0]
+
 	rep xcryptecb
 // CHECK: rep
 // CHECK: encoding: [0xf3]
