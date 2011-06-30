@@ -30,23 +30,23 @@ using namespace llvm;
 #define SPECIAL_ADDR(op) (((op) - DWARF2_LINE_OPCODE_BASE)/DWARF2_LINE_RANGE)
 
 // The maximum address skip amount that can be encoded with a special op.
-#define MAX_SPECIAL_ADDR_DELTA		SPECIAL_ADDR(255)
+#define MAX_SPECIAL_ADDR_DELTA         SPECIAL_ADDR(255)
 
 // First special line opcode - leave room for the standard opcodes.
 // Note: If you want to change this, you'll have to update the
 // "standard_opcode_lengths" table that is emitted in DwarfFileTable::Emit().  
-#define DWARF2_LINE_OPCODE_BASE		13
+#define DWARF2_LINE_OPCODE_BASE         13
 
 // Minimum line offset in a special line info. opcode.  This value
 // was chosen to give a reasonable range of values.
-#define DWARF2_LINE_BASE		-5
+#define DWARF2_LINE_BASE                -5
 
 // Range of line offsets in a special line info. opcode.
-# define DWARF2_LINE_RANGE		14
+#define DWARF2_LINE_RANGE               14
 
 // Define the architecture-dependent minimum instruction length (in bytes).
 // This value should be rather too small than too big.
-# define DWARF2_LINE_MIN_INSN_LENGTH	1
+#define DWARF2_LINE_MIN_INSN_LENGTH     1
 
 // Note: when DWARF2_LINE_MIN_INSN_LENGTH == 1 which is the current setting,
 // this routine is a nop and will be optimized away.
@@ -290,7 +290,7 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   const std::vector<const MCSection *> &MCLineSectionOrder =
     MCOS->getContext().getMCLineSectionOrder();
   for (std::vector<const MCSection*>::const_iterator it =
-	MCLineSectionOrder.begin(), ie = MCLineSectionOrder.end(); it != ie;
+         MCLineSectionOrder.begin(), ie = MCLineSectionOrder.end(); it != ie;
        ++it) {
     const MCSection *Sec = *it;
     const MCLineSection *Line = MCLineSections.lookup(Sec);
