@@ -190,8 +190,8 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     void swap(unique_lock& __u)
     {
-        _STD::swap(__m_, __u.__m_);
-        _STD::swap(__owns_, __u.__owns_);
+        _VSTD::swap(__m_, __u.__m_);
+        _VSTD::swap(__owns_, __u.__owns_);
     }
     _LIBCPP_INLINE_VISIBILITY
     mutex_type* release()
@@ -429,7 +429,7 @@ condition_variable::wait_for(unique_lock<mutex>& __lk,
                              _Predicate __pred)
 {
     return wait_until(__lk, chrono::steady_clock::now() + __d,
-                      _STD::move(__pred));
+                      _VSTD::move(__pred));
 }
 
 _LIBCPP_END_NAMESPACE_STD

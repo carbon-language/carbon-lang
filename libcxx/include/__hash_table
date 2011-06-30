@@ -86,7 +86,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
-        pointer operator->() const {return _STD::addressof(__node_->__value_);}
+        pointer operator->() const {return _VSTD::addressof(__node_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_iterator& operator++()
@@ -164,7 +164,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
         reference operator*() const {return __node_->__value_;}
     _LIBCPP_INLINE_VISIBILITY
-        pointer operator->() const {return _STD::addressof(__node_->__value_);}
+        pointer operator->() const {return _VSTD::addressof(__node_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
     __hash_const_iterator& operator++()
@@ -388,7 +388,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     __bucket_list_deallocator(__bucket_list_deallocator&& __x)
         _NOEXCEPT_(is_nothrow_move_constructible<allocator_type>::value)
-        : __data_(_STD::move(__x.__data_))
+        : __data_(_VSTD::move(__x.__data_))
     {
         __x.size() = 0;
     }
@@ -441,7 +441,7 @@ public:
     void operator()(pointer __p) _NOEXCEPT
     {
         if (__value_constructed)
-            __alloc_traits::destroy(__na_, _STD::addressof(__p->__value_));
+            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_));
         if (__p)
             __alloc_traits::deallocate(__na_, __p, 1);
     }
@@ -688,7 +688,7 @@ public:
         return __bc != 0 ? (float)size() / __bc : 0.f;
     }
     _LIBCPP_INLINE_VISIBILITY void max_load_factor(float __mlf) _NOEXCEPT
-        {max_load_factor() = _STD::max(__mlf, load_factor());}
+        {max_load_factor() = _VSTD::max(__mlf, load_factor());}
 
     _LIBCPP_INLINE_VISIBILITY local_iterator       begin(size_type __n)
         {return local_iterator(__bucket_list_[__n], __n, bucket_count());}
@@ -741,8 +741,8 @@ private:
             is_nothrow_move_assignable<__node_allocator>::value)
     {
         __bucket_list_.get_deleter().__alloc() =
-                _STD::move(__u.__bucket_list_.get_deleter().__alloc());
-        __node_alloc() = _STD::move(__u.__node_alloc());
+                _VSTD::move(__u.__bucket_list_.get_deleter().__alloc());
+        __node_alloc() = _VSTD::move(__u.__node_alloc());
     }
     _LIBCPP_INLINE_VISIBILITY
         void __move_assign_alloc(__hash_table&, false_type) _NOEXCEPT {}
@@ -769,7 +769,7 @@ private:
     __swap_alloc(_A& __x, _A& __y, true_type)
         _NOEXCEPT_(__is_nothrow_swappable<_A>::value)
     {
-        using _STD::swap;
+        using _VSTD::swap;
         swap(__x, __y);
     }
 
@@ -859,15 +859,15 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u)
             is_nothrow_move_constructible<__first_node>::value &&
             is_nothrow_move_constructible<hasher>::value &&
             is_nothrow_move_constructible<key_equal>::value)
-    : __bucket_list_(_STD::move(__u.__bucket_list_)),
-      __p1_(_STD::move(__u.__p1_)),
-      __p2_(_STD::move(__u.__p2_)),
-      __p3_(_STD::move(__u.__p3_))
+    : __bucket_list_(_VSTD::move(__u.__bucket_list_)),
+      __p1_(_VSTD::move(__u.__p1_)),
+      __p2_(_VSTD::move(__u.__p2_)),
+      __p3_(_VSTD::move(__u.__p3_))
 {
     if (size() > 0)
     {
         __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-            static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
+            static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
         __u.__p1_.first().__next_ = nullptr;
         __u.size() = 0;
     }
@@ -878,8 +878,8 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u,
                                                        const allocator_type& __a)
     : __bucket_list_(nullptr, __bucket_list_deleter(__pointer_allocator(__a), 0)),
       __p1_(__node_allocator(__a)),
-      __p2_(0, _STD::move(__u.hash_function())),
-      __p3_(_STD::move(__u.__p3_))
+      __p2_(0, _VSTD::move(__u.hash_function())),
+      __p3_(_VSTD::move(__u.__p3_))
 {
     if (__a == allocator_type(__u.__node_alloc()))
     {
@@ -891,7 +891,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__hash_table(__hash_table&& __u,
             __p1_.first().__next_ = __u.__p1_.first().__next_;
             __u.__p1_.first().__next_ = nullptr;
             __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-                static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
+                static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
             size() = __u.size();
             __u.size() = 0;
         }
@@ -945,7 +945,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__deallocate(__node_pointer __np)
     while (__np != nullptr)
     {
         __node_pointer __next = __np->__next_;
-        __node_traits::destroy(__na, _STD::addressof(__np->__value_));
+        __node_traits::destroy(__na, _VSTD::addressof(__np->__value_));
         __node_traits::deallocate(__na, __np, 1);
         __np = __next;
     }
@@ -981,14 +981,14 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
     __u.__bucket_list_.get_deleter().size() = 0;
     __move_assign_alloc(__u);
     size() = __u.size();
-    hash_function() = _STD::move(__u.hash_function());
+    hash_function() = _VSTD::move(__u.hash_function());
     max_load_factor() = __u.max_load_factor();
-    key_eq() = _STD::move(__u.key_eq());
+    key_eq() = _VSTD::move(__u.key_eq());
     __p1_.first().__next_ = __u.__p1_.first().__next_;
     if (size() > 0)
     {
         __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-            static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
+            static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
         __u.__p1_.first().__next_ = nullptr;
         __u.size() = 0;
     }
@@ -1003,8 +1003,8 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
         __move_assign(__u, true_type());
     else
     {
-        hash_function() = _STD::move(__u.hash_function());
-        key_eq() = _STD::move(__u.key_eq());
+        hash_function() = _VSTD::move(__u.hash_function());
+        key_eq() = _VSTD::move(__u.key_eq());
         max_load_factor() = __u.max_load_factor();
         if (bucket_count() != 0)
         {
@@ -1016,7 +1016,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
                 const_iterator __i = __u.begin();
                 while (__cache != nullptr && __u.size() != 0)
                 {
-                    __cache->__value_ = _STD::move(__u.remove(__i++)->__value_);
+                    __cache->__value_ = _VSTD::move(__u.remove(__i++)->__value_);
                     __node_pointer __next = __cache->__next_;
                     __node_insert_multi(__cache);
                     __cache = __next;
@@ -1035,7 +1035,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__move_assign(
         while (__u.size() != 0)
         {
             __node_holder __h =
-                    __construct_node(_STD::move(__u.remove(__i++)->__value_));
+                    __construct_node(_VSTD::move(__u.remove(__i++)->__value_));
             __node_insert_multi(__h.get());
             __h.release();
         }
@@ -1201,7 +1201,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_unique(__node_pointer __
     {
         if (size()+1 > __bc * max_load_factor() || __bc == 0)
         {
-            rehash(_STD::max<size_type>(2 * __bc + 1,
+            rehash(_VSTD::max<size_type>(2 * __bc + 1,
                            size_type(ceil(float(size() + 1) / max_load_factor()))));
             __bc = bucket_count();
             __chash = __nd->__hash_ % __bc;
@@ -1210,7 +1210,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_unique(__node_pointer __
         __node_pointer __pn = __bucket_list_[__chash];
         if (__pn == nullptr)
         {
-            __pn = static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
+            __pn = static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
             __nd->__next_ = __pn->__next_;
             __pn->__next_ = __nd;
             // fix up __bucket_list_
@@ -1240,7 +1240,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(__node_pointer __c
     size_type __bc = bucket_count();
     if (size()+1 > __bc * max_load_factor() || __bc == 0)
     {
-        rehash(_STD::max<size_type>(2 * __bc + 1,
+        rehash(_VSTD::max<size_type>(2 * __bc + 1,
                        size_type(ceil(float(size() + 1) / max_load_factor()))));
         __bc = bucket_count();
     }
@@ -1248,7 +1248,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(__node_pointer __c
     __node_pointer __pn = __bucket_list_[__chash];
     if (__pn == nullptr)
     {
-        __pn = static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
+        __pn = static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
         __cp->__next_ = __pn->__next_;
         __pn->__next_ = __cp;
         // fix up __bucket_list_
@@ -1301,7 +1301,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__node_insert_multi(
         size_type __bc = bucket_count();
         if (size()+1 > __bc * max_load_factor() || __bc == 0)
         {
-            rehash(_STD::max<size_type>(2 * __bc + 1,
+            rehash(_VSTD::max<size_type>(2 * __bc + 1,
                            size_type(ceil(float(size() + 1) / max_load_factor()))));
             __bc = bucket_count();
         }
@@ -1345,7 +1345,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
         __node_holder __h = __construct_node(__x, __hash);
         if (size()+1 > __bc * max_load_factor() || __bc == 0)
         {
-            rehash(_STD::max<size_type>(2 * __bc + 1,
+            rehash(_VSTD::max<size_type>(2 * __bc + 1,
                            size_type(ceil(float(size() + 1) / max_load_factor()))));
             __bc = bucket_count();
             __chash = __hash % __bc;
@@ -1354,7 +1354,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
         __node_pointer __pn = __bucket_list_[__chash];
         if (__pn == nullptr)
         {
-            __pn = static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
+            __pn = static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
             __h->__next_ = __pn->__next_;
             __pn->__next_ = __h.get();
             // fix up __bucket_list_
@@ -1384,7 +1384,7 @@ template <class... _Args>
 pair<typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator, bool>
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__emplace_unique(_Args&&... __args)
 {
-    __node_holder __h = __construct_node(_STD::forward<_Args>(__args)...);
+    __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     pair<iterator, bool> __r = __node_insert_unique(__h.get());
     if (__r.second)
         __h.release();
@@ -1396,7 +1396,7 @@ template <class... _Args>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__emplace_multi(_Args&&... __args)
 {
-    __node_holder __h = __construct_node(_STD::forward<_Args>(__args)...);
+    __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     iterator __r = __node_insert_multi(__h.get());
     __h.release();
     return __r;
@@ -1408,7 +1408,7 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__emplace_hint_multi(
         const_iterator __p, _Args&&... __args)
 {
-    __node_holder __h = __construct_node(_STD::forward<_Args>(__args)...);
+    __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     iterator __r = __node_insert_multi(__p, __h.get());
     __h.release();
     return __r;
@@ -1421,7 +1421,7 @@ template <class _P>
 pair<typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator, bool>
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(_P&& __x)
 {
-    __node_holder __h = __construct_node(_STD::forward<_P>(__x));
+    __node_holder __h = __construct_node(_VSTD::forward<_P>(__x));
     pair<iterator, bool> __r = __node_insert_unique(__h.get());
     if (__r.second)
         __h.release();
@@ -1437,7 +1437,7 @@ template <class _P>
 typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(_P&& __x)
 {
-    __node_holder __h = __construct_node(_STD::forward<_P>(__x));
+    __node_holder __h = __construct_node(_VSTD::forward<_P>(__x));
     iterator __r = __node_insert_multi(__h.get());
     __h.release();
     return __r;
@@ -1449,7 +1449,7 @@ typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_multi(const_iterator __p,
                                                          _P&& __x)
 {
-    __node_holder __h = __construct_node(_STD::forward<_P>(__x));
+    __node_holder __h = __construct_node(_VSTD::forward<_P>(__x));
     iterator __r = __node_insert_multi(__p, __h.get());
     __h.release();
     return __r;
@@ -1484,13 +1484,13 @@ template <class _Tp, class _Hash, class _Equal, class _Alloc>
 void
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::rehash(size_type __n)
 {
-    __n = __next_prime(_STD::max<size_type>(__n, size() > 0));
+    __n = __next_prime(_VSTD::max<size_type>(__n, size() > 0));
     size_type __bc = bucket_count();
     if (__n > __bc)
         __rehash(__n);
     else
     {
-        __n = _STD::max<size_type>
+        __n = _VSTD::max<size_type>
               (
                   __n,
                   __next_prime(size_t(ceil(float(size()) / max_load_factor())))
@@ -1512,7 +1512,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__rehash(size_type __nbc)
     {
         for (size_type __i = 0; __i < __nbc; ++__i)
             __bucket_list_[__i] = nullptr;
-        __node_pointer __pp(static_cast<__node_pointer>(_STD::addressof(__p1_.first())));
+        __node_pointer __pp(static_cast<__node_pointer>(_VSTD::addressof(__p1_.first())));
         __node_pointer __cp = __pp->__next_;
         if (__cp != nullptr)
         {
@@ -1612,7 +1612,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(_Args&& ...__args)
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, _STD::addressof(__h->__value_), _STD::forward<_Args>(__args)...);
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_), _VSTD::forward<_Args>(__args)...);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = hash_function()(__h->__value_);
     __h->__next_ = nullptr;
@@ -1628,11 +1628,11 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(value_type&& __v,
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, _STD::addressof(__h->__value_), _STD::move(__v));
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_), _VSTD::move(__v));
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = __hash;
     __h->__next_ = nullptr;
-    return _STD::move(__h);
+    return _VSTD::move(__h);
 }
 
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1643,11 +1643,11 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, _STD::addressof(__h->__value_), __v);
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_), __v);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = hash_function()(__h->__value_);
     __h->__next_ = nullptr;
-    return _STD::move(__h);
+    return _VSTD::move(__h);
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1659,11 +1659,11 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__construct_node(const value_type& __v
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, _STD::addressof(__h->__value_), __v);
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_), __v);
     __h.get_deleter().__value_constructed = true;
     __h->__hash_ = __hash;
     __h->__next_ = nullptr;
-    return _STD::move(__h);
+    return _VSTD::move(__h);
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
@@ -1737,7 +1737,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::remove(const_iterator __p) _NOEXCEPT
     // Fix up __bucket_list_
         // if __pn is not in same bucket (before begin is not in same bucket) &&
         //    if __cn->__next_ is not in same bucket (nullptr is not in same bucket)
-    if (__pn == _STD::addressof(__p1_.first()) || __pn->__hash_ % __bc != __chash)
+    if (__pn == _VSTD::addressof(__p1_.first()) || __pn->__hash_ % __bc != __chash)
     {
         if (__cn->__next_ == nullptr || __cn->__next_->__hash_ % __bc != __chash)
             __bucket_list_[__chash] = nullptr;
@@ -1868,19 +1868,19 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::swap(__hash_table& __u)
     __bucket_list_.reset(__u.__bucket_list_.release());
     __u.__bucket_list_.reset(__npp);
     }
-    _STD::swap(__bucket_list_.get_deleter().size(), __u.__bucket_list_.get_deleter().size());
+    _VSTD::swap(__bucket_list_.get_deleter().size(), __u.__bucket_list_.get_deleter().size());
     __swap_alloc(__bucket_list_.get_deleter().__alloc(),
              __u.__bucket_list_.get_deleter().__alloc());
     __swap_alloc(__node_alloc(), __u.__node_alloc());
-    _STD::swap(__p1_.first().__next_, __u.__p1_.first().__next_);
+    _VSTD::swap(__p1_.first().__next_, __u.__p1_.first().__next_);
     __p2_.swap(__u.__p2_);
     __p3_.swap(__u.__p3_);
     if (size() > 0)
         __bucket_list_[__p1_.first().__next_->__hash_ % bucket_count()] =
-            static_cast<__node_pointer>(_STD::addressof(__p1_.first()));
+            static_cast<__node_pointer>(_VSTD::addressof(__p1_.first()));
     if (__u.size() > 0)
         __u.__bucket_list_[__u.__p1_.first().__next_->__hash_ % __u.bucket_count()] =
-            static_cast<__node_pointer>(_STD::addressof(__u.__p1_.first()));
+            static_cast<__node_pointer>(_VSTD::addressof(__u.__p1_.first()));
 }
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>

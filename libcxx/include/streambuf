@@ -399,13 +399,13 @@ template <class _CharT, class _Traits>
 void
 basic_streambuf<_CharT, _Traits>::swap(basic_streambuf& __sb)
 {
-    _STD::swap(__loc_, __sb.__loc_);
-    _STD::swap(__binp_, __sb.__binp_);
-    _STD::swap(__ninp_, __sb.__ninp_);
-    _STD::swap(__einp_, __sb.__einp_);
-    _STD::swap(__bout_, __sb.__bout_);
-    _STD::swap(__nout_, __sb.__nout_);
-    _STD::swap(__eout_, __sb.__eout_);
+    _VSTD::swap(__loc_, __sb.__loc_);
+    _VSTD::swap(__binp_, __sb.__binp_);
+    _VSTD::swap(__ninp_, __sb.__ninp_);
+    _VSTD::swap(__einp_, __sb.__einp_);
+    _VSTD::swap(__bout_, __sb.__bout_);
+    _VSTD::swap(__nout_, __sb.__nout_);
+    _VSTD::swap(__eout_, __sb.__eout_);
 }
 
 template <class _CharT, class _Traits>

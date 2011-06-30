@@ -407,7 +407,7 @@ public:
                 (ratio_divide<_Period2, period>::type::den == 1 &&
                  !treat_as_floating_point<_Rep2>::value)
             >::type* = 0)
-                : __rep_(_STD::chrono::duration_cast<duration>(__d).count()) {}
+                : __rep_(_VSTD::chrono::duration_cast<duration>(__d).count()) {}
 
     // observer
 
@@ -726,7 +726,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 time_point<_Clock, _ToDuration>
 time_point_cast(const time_point<_Clock, _Duration>& __t)
 {
-    return time_point<_Clock, _ToDuration>(_STD::chrono::duration_cast<_ToDuration>(__t.time_since_epoch()));
+    return time_point<_Clock, _ToDuration>(_VSTD::chrono::duration_cast<_ToDuration>(__t.time_since_epoch()));
 }
 
 // time_point ==

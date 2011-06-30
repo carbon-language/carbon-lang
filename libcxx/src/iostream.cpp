@@ -33,11 +33,11 @@ ios_base::Init __start_std_streams;
 ios_base::Init::Init()
 {
     cin.tie(&cout);
-    _STD::unitbuf(cerr);
+    _VSTD::unitbuf(cerr);
     cerr.tie(&cout);
 
     wcin.tie(&wcout);
-    _STD::unitbuf(wcerr);
+    _VSTD::unitbuf(wcerr);
     wcerr.tie(&wcout);
 }
 

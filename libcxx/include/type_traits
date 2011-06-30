@@ -1208,7 +1208,7 @@ struct _LIBCPP_VISIBLE common_type<_Tp, _Up, _Vp...>
 // is_assignable
 
 template <class _Tp, class _Arg>
-decltype((_STD::declval<_Tp>() = _STD::declval<_Arg>(), true_type()))
+decltype((_VSTD::declval<_Tp>() = _VSTD::declval<_Arg>(), true_type()))
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __is_assignable_test(_Tp&&, _Arg&&);
 #else
@@ -1265,7 +1265,7 @@ struct __destructible_test
 };
 
 template <class _Tp>
-decltype((_STD::declval<__destructible_test<_Tp> >().~__destructible_test<_Tp>(), true_type()))
+decltype((_VSTD::declval<__destructible_test<_Tp> >().~__destructible_test<_Tp>(), true_type()))
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 __is_destructible_test(_Tp&&);
 #else
@@ -1435,7 +1435,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename decay<_Tp>::type
 __decay_copy(_Tp&& __t)
 {
-    return _STD::forward<_Tp>(__t);
+    return _VSTD::forward<_Tp>(__t);
 }
 
 #else
@@ -1445,7 +1445,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename decay<_Tp>::type
 __decay_copy(const _Tp& __t)
 {
-    return _STD::forward<_Tp>(__t);
+    return _VSTD::forward<_Tp>(__t);
 }
 
 #endif
@@ -1715,7 +1715,7 @@ struct __result_of_mdp;
 template <class _R, class _Class, class _Tp>
 struct __result_of_mdp<_R _Class::*, _Tp, false>
 {
-    typedef typename __apply_cv<decltype(*_STD::declval<_Tp>()), _R>::type&& type;
+    typedef typename __apply_cv<decltype(*_VSTD::declval<_Tp>()), _R>::type&& type;
 };
 
 template <class _R, class _Class, class _Tp>
@@ -1800,7 +1800,7 @@ struct __result_of_mdp;
 template <class _R, class _Class, class _Tp>
 struct __result_of_mdp<_R _Class::*, _Tp, false>
 {
-    typedef typename __apply_cv<decltype(*_STD::declval<_Tp>()), _R>::type& type;
+    typedef typename __apply_cv<decltype(*_VSTD::declval<_Tp>()), _R>::type& type;
 };
 
 template <class _R, class _Class, class _Tp>
@@ -1901,7 +1901,7 @@ class _LIBCPP_VISIBLE result_of<_Fn(_A0, _A1, _A2)>
 //      main is_constructible test
 
 template <class _Tp, class ..._Args>
-decltype(_STD::move(_Tp(_STD::declval<_Args>()...)), true_type())
+decltype(_VSTD::move(_Tp(_VSTD::declval<_Args>()...)), true_type())
 __is_constructible_test(_Tp&&, _Args&& ...);
 
 template <class ..._Args>
@@ -2028,7 +2028,7 @@ false_type
 __is_constructible0_test(__any);
 
 template <class _Tp, class _A0>
-decltype((_Tp(_STD::declval<_A0>()), true_type()))
+decltype((_Tp(_VSTD::declval<_A0>()), true_type()))
 __is_constructible1_test(_Tp&, _A0&);
 
 template <class _A0>
@@ -2036,7 +2036,7 @@ false_type
 __is_constructible1_test(__any, _A0&);
 
 template <class _Tp, class _A0, class _A1>
-decltype((_Tp(_STD::declval<_A0>(), _STD::declval<_A1>()), true_type()))
+decltype((_Tp(_VSTD::declval<_A0>(), _VSTD::declval<_A1>()), true_type()))
 __is_constructible2_test(_Tp&, _A0&, _A1&);
 
 template <class _A0, class _A1>
@@ -2608,7 +2608,7 @@ struct __is_nothrow_assignable<false, _Tp, _Arg>
 
 template <class _Tp, class _Arg>
 struct __is_nothrow_assignable<true, _Tp, _Arg>
-    : public integral_constant<bool, noexcept(_STD::declval<_Tp>() = _STD::declval<_Arg>()) >
+    : public integral_constant<bool, noexcept(_VSTD::declval<_Tp>() = _VSTD::declval<_Arg>()) >
 {
 };
 
@@ -2694,7 +2694,7 @@ struct __is_nothrow_destructible<false, _Tp>
 
 template <class _Tp>
 struct __is_nothrow_destructible<true, _Tp>
-    : public integral_constant<bool, noexcept(_STD::declval<_Tp>().~_Tp()) >
+    : public integral_constant<bool, noexcept(_VSTD::declval<_Tp>().~_Tp()) >
 {
 };
 
@@ -2946,31 +2946,31 @@ __invoke(__any, _Args&& ...__args)
 template <class _F, class _A0, class ..._Args>
 auto
 __invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
-    -> decltype((_STD::forward<_A0>(__a0).*__f)(_STD::forward<_Args>(__args)...));
+    -> decltype((_VSTD::forward<_A0>(__a0).*__f)(_VSTD::forward<_Args>(__args)...));
 
 template <class _F, class _A0, class ..._Args>
 auto
 __invoke(_F&& __f, _A0&& __a0, _Args&& ...__args)
-    -> decltype(((*_STD::forward<_A0>(__a0)).*__f)(_STD::forward<_Args>(__args)...));
+    -> decltype(((*_VSTD::forward<_A0>(__a0)).*__f)(_VSTD::forward<_Args>(__args)...));
 
 // bullets 3 and 4
 
 template <class _F, class _A0>
 auto
 __invoke(_F&& __f, _A0&& __a0)
-    -> decltype(_STD::forward<_A0>(__a0).*__f);
+    -> decltype(_VSTD::forward<_A0>(__a0).*__f);
 
 template <class _F, class _A0>
 auto
 __invoke(_F&& __f, _A0&& __a0)
-    -> decltype((*_STD::forward<_A0>(__a0)).*__f);
+    -> decltype((*_VSTD::forward<_A0>(__a0)).*__f);
 
 // bullet 5
 
 template <class _F, class ..._Args>
 auto
 __invoke(_F&& __f, _Args&& ...__args)
-    -> decltype(_STD::forward<_F>(__f)(_STD::forward<_Args>(__args)...));
+    -> decltype(_VSTD::forward<_F>(__f)(_VSTD::forward<_Args>(__args)...));
 
 // __invokable
 
@@ -2979,7 +2979,7 @@ struct __invokable_imp
     : private __check_complete<_F, _Args...>
 {
     typedef decltype(
-            __invoke(_STD::declval<_F>(), _STD::declval<_Args>()...)
+            __invoke(_VSTD::declval<_F>(), _VSTD::declval<_Args>()...)
                     ) type;
     static const bool value = !is_same<type, __nat>::value;
 };
@@ -3022,9 +3022,9 @@ typename enable_if
 swap(_Tp& __x, _Tp& __y) _NOEXCEPT_(is_nothrow_move_constructible<_Tp>::value &&
                                     is_nothrow_move_assignable<_Tp>::value)
 {
-    _Tp __t(_STD::move(__x));
-    __x = _STD::move(__y);
-    __y = _STD::move(__t);
+    _Tp __t(_VSTD::move(__x));
+    __x = _VSTD::move(__y);
+    __y = _VSTD::move(__t);
 }
 
 template <class _ForwardIterator1, class _ForwardIterator2>
@@ -3032,8 +3032,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
     //                                  _NOEXCEPT_(_NOEXCEPT_(swap(*__a, *__b)))
-               _NOEXCEPT_(_NOEXCEPT_(swap(*_STD::declval<_ForwardIterator1>(),
-                                          *_STD::declval<_ForwardIterator2>())))
+               _NOEXCEPT_(_NOEXCEPT_(swap(*_VSTD::declval<_ForwardIterator1>(),
+                                          *_VSTD::declval<_ForwardIterator2>())))
 {
     swap(*__a, *__b);
 }
@@ -3043,13 +3043,13 @@ iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
 namespace __detail
 {
 
-using _STD::swap;
+using _VSTD::swap;
 __nat swap(__any, __any);
 
 template <class _Tp>
 struct __swappable
 {
-    typedef decltype(swap(_STD::declval<_Tp&>(), _STD::declval<_Tp&>())) type;
+    typedef decltype(swap(_VSTD::declval<_Tp&>(), _VSTD::declval<_Tp&>())) type;
     static const bool value = !is_same<type, __nat>::value;
 };
 
@@ -3065,8 +3065,8 @@ struct __is_swappable
 
 template <bool, class _Tp>
 struct __is_nothrow_swappable_imp
-    : public integral_constant<bool, noexcept(swap(_STD::declval<_Tp&>(),
-                                                   _STD::declval<_Tp&>()))>
+    : public integral_constant<bool, noexcept(swap(_VSTD::declval<_Tp&>(),
+                                                   _VSTD::declval<_Tp&>()))>
 {
 };
 

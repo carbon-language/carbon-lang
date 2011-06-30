@@ -842,7 +842,7 @@ struct __4th_helper
 template <class _T1, class _R>
 struct __4th_helper<_T1, _R, true>
 {
-    typedef typename __apply_cv<decltype(*_STD::declval<_T1>()), _R>::type type;
+    typedef typename __apply_cv<decltype(*_VSTD::declval<_T1>()), _R>::type type;
 };
 
 template <class _R, class _T, class _T1>
@@ -959,13 +959,13 @@ struct __invoke_return
 template <class _F>
 struct __invoke_return<_F, false>
 {
-    typedef decltype(__invoke(_STD::declval<_F>())) type;
+    typedef decltype(__invoke(_VSTD::declval<_F>())) type;
 };
 
 template <class _Tp, class _A0>
 struct __invoke_return0
 {
-    typedef decltype(__invoke(_STD::declval<_Tp>(), _STD::declval<_A0>())) type;
+    typedef decltype(__invoke(_VSTD::declval<_Tp>(), _VSTD::declval<_A0>())) type;
 };
 
 template <class _R, class _T, class _A0>
@@ -983,16 +983,16 @@ struct __invoke_return0<_R _T::*, _A0*>
 template <class _Tp, class _A0, class _A1>
 struct __invoke_return1
 {
-    typedef decltype(__invoke(_STD::declval<_Tp>(), _STD::declval<_A0>(),
-                                                    _STD::declval<_A1>())) type;
+    typedef decltype(__invoke(_VSTD::declval<_Tp>(), _VSTD::declval<_A0>(),
+                                                    _VSTD::declval<_A1>())) type;
 };
 
 template <class _Tp, class _A0, class _A1, class _A2>
 struct __invoke_return2
 {
-    typedef decltype(__invoke(_STD::declval<_Tp>(), _STD::declval<_A0>(),
-                                                    _STD::declval<_A1>(),
-                                                    _STD::declval<_A2>())) type;
+    typedef decltype(__invoke(_VSTD::declval<_Tp>(), _VSTD::declval<_A0>(),
+                                                    _VSTD::declval<_A1>(),
+                                                    _VSTD::declval<_A2>())) type;
 };
 
 template <class _Tp>

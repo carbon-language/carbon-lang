@@ -195,7 +195,7 @@ template <size_t _N_words, size_t _Size>
 inline _LIBCPP_INLINE_VISIBILITY
 __bitset<_N_words, _Size>::__bitset() _NOEXCEPT
 {
-    _STD::fill_n(__first_, _N_words, __storage_type(0));
+    _VSTD::fill_n(__first_, _N_words, __storage_type(0));
 }
 
 template <size_t _N_words, size_t _Size>
@@ -205,8 +205,8 @@ __bitset<_N_words, _Size>::__init(unsigned long long __v, false_type)
     __storage_type __t[sizeof(unsigned long long) / sizeof(__storage_type)];
     for (size_t __i = 0; __i < sizeof(__t)/sizeof(__t[0]); ++__i, __v >>= __bits_per_word)
         __t[__i] = static_cast<__storage_type>(__v);
-    _STD::copy(__t, __t + sizeof(__t)/sizeof(__t[0]), __first_);
-    _STD::fill(__first_ + sizeof(__t)/sizeof(__t[0]), __first_ + sizeof(__first_)/sizeof(__first_[0]),
+    _VSTD::copy(__t, __t + sizeof(__t)/sizeof(__t[0]), __first_);
+    _VSTD::fill(__first_ + sizeof(__t)/sizeof(__t[0]), __first_ + sizeof(__first_)/sizeof(__first_[0]),
                __storage_type(0));
 }
 
@@ -216,7 +216,7 @@ void
 __bitset<_N_words, _Size>::__init(unsigned long long __v, true_type)
 {
     __first_[0] = __v;
-    _STD::fill(__first_ + 1, __first_ + sizeof(__first_)/sizeof(__first_[0]), __storage_type(0));
+    _VSTD::fill(__first_ + 1, __first_ + sizeof(__first_)/sizeof(__first_[0]), __storage_type(0));
 }
 
 template <size_t _N_words, size_t _Size>
@@ -277,7 +277,7 @@ unsigned long
 __bitset<_N_words, _Size>::to_ulong(false_type) const
 {
     const_iterator __e = __make_iter(_Size);
-    const_iterator __i = _STD::find(__make_iter(sizeof(unsigned long) * CHAR_BIT), __e, true);
+    const_iterator __i = _VSTD::find(__make_iter(sizeof(unsigned long) * CHAR_BIT), __e, true);
     if (__i != __e)
 #ifndef _LIBCPP_NO_EXCEPTIONS
         throw overflow_error("bitset to_ulong overflow error");
@@ -300,7 +300,7 @@ unsigned long long
 __bitset<_N_words, _Size>::to_ullong(false_type) const
 {
     const_iterator __e = __make_iter(_Size);
-    const_iterator __i = _STD::find(__make_iter(sizeof(unsigned long long) * CHAR_BIT), __e, true);
+    const_iterator __i = _VSTD::find(__make_iter(sizeof(unsigned long long) * CHAR_BIT), __e, true);
     if (__i != __e)
 #ifndef _LIBCPP_NO_EXCEPTIONS
         throw overflow_error("bitset to_ullong overflow error");
@@ -674,7 +674,7 @@ bitset<_Size>::bitset(const _CharT* __str,
                       typename basic_string<_CharT>::size_type __n,
                       _CharT __zero, _CharT __one)
 {
-    size_t __rlen = _STD::min(__n, char_traits<_CharT>::length(__str));
+    size_t __rlen = _VSTD::min(__n, char_traits<_CharT>::length(__str));
     for (size_t __i = 0; __i < __rlen; ++__i)
         if (__str[__i] != __zero && __str[__i] != __one)
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -682,7 +682,7 @@ bitset<_Size>::bitset(const _CharT* __str,
 #else
             assert(!"bitset string ctor has invalid argument");
 #endif
-    size_t _M = _STD::min(__rlen, _Size);
+    size_t _M = _VSTD::min(__rlen, _Size);
     size_t __i = 0;
     for (; __i < _M; ++__i)
     {
@@ -692,7 +692,7 @@ bitset<_Size>::bitset(const _CharT* __str,
         else
             (*this)[__i] = true;
     }
-    _STD::fill(base::__make_iter(__i), base::__make_iter(_Size), false);
+    _VSTD::fill(base::__make_iter(__i), base::__make_iter(_Size), false);
 }
 
 template <size_t _Size>
@@ -708,7 +708,7 @@ bitset<_Size>::bitset(const basic_string<_CharT,_Traits,_Allocator>& __str,
 #else
         assert(!"bitset string pos out of range");
 #endif
-    size_t __rlen = _STD::min(__n, __str.size() - __pos);
+    size_t __rlen = _VSTD::min(__n, __str.size() - __pos);
     for (size_t __i = __pos; __i < __pos + __rlen; ++__i)
         if (!_Traits::eq(__str[__i], __zero) && !_Traits::eq(__str[__i], __one))
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -716,7 +716,7 @@ bitset<_Size>::bitset(const basic_string<_CharT,_Traits,_Allocator>& __str,
 #else
             assert(!"bitset string ctor has invalid argument");
 #endif
-    size_t _M = _STD::min(__rlen, _Size);
+    size_t _M = _VSTD::min(__rlen, _Size);
     size_t __i = 0;
     for (; __i < _M; ++__i)
     {
@@ -726,7 +726,7 @@ bitset<_Size>::bitset(const basic_string<_CharT,_Traits,_Allocator>& __str,
         else
             (*this)[__i] = true;
     }
-    _STD::fill(base::__make_iter(__i), base::__make_iter(_Size), false);
+    _VSTD::fill(base::__make_iter(__i), base::__make_iter(_Size), false);
 }
 
 template <size_t _Size>
@@ -760,9 +760,9 @@ template <size_t _Size>
 bitset<_Size>&
 bitset<_Size>::operator<<=(size_t __pos) _NOEXCEPT
 {
-    __pos = _STD::min(__pos, _Size);
-    _STD::copy_backward(base::__make_iter(0), base::__make_iter(_Size - __pos), base::__make_iter(_Size));
-    _STD::fill_n(base::__make_iter(0), __pos, false);
+    __pos = _VSTD::min(__pos, _Size);
+    _VSTD::copy_backward(base::__make_iter(0), base::__make_iter(_Size - __pos), base::__make_iter(_Size));
+    _VSTD::fill_n(base::__make_iter(0), __pos, false);
     return *this;
 }
 
@@ -770,9 +770,9 @@ template <size_t _Size>
 bitset<_Size>&
 bitset<_Size>::operator>>=(size_t __pos) _NOEXCEPT
 {
-    __pos = _STD::min(__pos, _Size);
-    _STD::copy(base::__make_iter(__pos), base::__make_iter(_Size), base::__make_iter(0));
-    _STD::fill_n(base::__make_iter(_Size - __pos), __pos, false);
+    __pos = _VSTD::min(__pos, _Size);
+    _VSTD::copy(base::__make_iter(__pos), base::__make_iter(_Size), base::__make_iter(0));
+    _VSTD::fill_n(base::__make_iter(_Size - __pos), __pos, false);
     return *this;
 }
 
@@ -781,7 +781,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 bitset<_Size>&
 bitset<_Size>::set() _NOEXCEPT
 {
-    _STD::fill_n(base::__make_iter(0), _Size, true);
+    _VSTD::fill_n(base::__make_iter(0), _Size, true);
     return *this;
 }
 
@@ -804,7 +804,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 bitset<_Size>&
 bitset<_Size>::reset() _NOEXCEPT
 {
-    _STD::fill_n(base::__make_iter(0), _Size, false);
+    _VSTD::fill_n(base::__make_iter(0), _Size, false);
     return *this;
 }
 
@@ -917,7 +917,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 size_t
 bitset<_Size>::count() const _NOEXCEPT
 {
-    return static_cast<size_t>(_STD::count(base::__make_iter(0), base::__make_iter(_Size), true));
+    return static_cast<size_t>(_VSTD::count(base::__make_iter(0), base::__make_iter(_Size), true));
 }
 
 template <size_t _Size>
@@ -925,7 +925,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 bool
 bitset<_Size>::operator==(const bitset& __rhs) const _NOEXCEPT
 {
-    return _STD::equal(base::__make_iter(0), base::__make_iter(_Size), __rhs.__make_iter(0));
+    return _VSTD::equal(base::__make_iter(0), base::__make_iter(_Size), __rhs.__make_iter(0));
 }
 
 template <size_t _Size>

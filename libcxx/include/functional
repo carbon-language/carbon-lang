@@ -884,7 +884,7 @@ public:
        typename __invoke_return<type, _ArgTypes...>::type
           operator() (_ArgTypes&&... __args)
           {
-              return __invoke(__f_, _STD::forward<_ArgTypes>(__args)...);
+              return __invoke(__f_, _VSTD::forward<_ArgTypes>(__args)...);
           }
 };
 
@@ -992,9 +992,9 @@ class __func<_F, _Alloc, _R(_ArgTypes...)>
     __compressed_pair<_F, _Alloc> __f_;
 public:
     _LIBCPP_INLINE_VISIBILITY
-    explicit __func(_F __f) : __f_(_STD::move(__f)) {}
+    explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
     _LIBCPP_INLINE_VISIBILITY
-    explicit __func(_F __f, _Alloc __a) : __f_(_STD::move(__f), _STD::move(__a)) {}
+    explicit __func(_F __f, _Alloc __a) : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
     virtual __base<_R(_ArgTypes...)>* __clone() const;
     virtual void __clone(__base<_R(_ArgTypes...)>*) const;
     virtual void destroy() _NOEXCEPT;
@@ -1046,7 +1046,7 @@ template<class _F, class _Alloc, class _R, class ..._ArgTypes>
 _R
 __func<_F, _Alloc, _R(_ArgTypes...)>::operator()(_ArgTypes&& ... __arg)
 {
-    return __invoke(__f_.first(), _STD::forward<_ArgTypes>(__arg)...);
+    return __invoke(__f_.first(), _VSTD::forward<_ArgTypes>(__arg)...);
 }
 
 #ifndef _LIBCPP_NO_RTTI
@@ -1162,7 +1162,7 @@ public:
     template<class _F, class _Alloc>
       _LIBCPP_INLINE_VISIBILITY
       void assign(_F&& __f, const _Alloc& __a)
-        {function(allocator_arg, __a, _STD::forward<_F>(__f)).swap(*this);}
+        {function(allocator_arg, __a, _VSTD::forward<_F>(__f)).swap(*this);}
 
     // function capacity:
     _LIBCPP_INLINE_VISIBILITY
@@ -1263,7 +1263,7 @@ function<_R(_ArgTypes...)>::function(_F __f,
         if (sizeof(_FF) <= sizeof(__buf_) && is_nothrow_copy_constructible<_F>::value)
         {
             __f_ = (__base*)&__buf_;
-            ::new (__f_) _FF(_STD::move(__f));
+            ::new (__f_) _FF(_VSTD::move(__f));
         }
         else
         {
@@ -1271,7 +1271,7 @@ function<_R(_ArgTypes...)>::function(_F __f,
             _A __a;
             typedef __allocator_destructor<_A> _D;
             unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
-            ::new (__hold.get()) _FF(_STD::move(__f), allocator<_F>(__a));
+            ::new (__hold.get()) _FF(_VSTD::move(__f), allocator<_F>(__a));
             __f_ = __hold.release();
         }
     }
@@ -1290,7 +1290,7 @@ function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc& __a0, _F __f
         if (sizeof(_FF) <= sizeof(__buf_) && is_nothrow_copy_constructible<_F>::value)
         {
             __f_ = (__base*)&__buf_;
-            ::new (__f_) _FF(_STD::move(__f));
+            ::new (__f_) _FF(_VSTD::move(__f));
         }
         else
         {
@@ -1304,7 +1304,7 @@ function<_R(_ArgTypes...)>::function(allocator_arg_t, const _Alloc& __a0, _F __f
             _A __a(__a0);
             typedef __allocator_destructor<_A> _D;
             unique_ptr<__base, _D> __hold(__a.allocate(1), _D(__a, 1));
-            ::new (__hold.get()) _FF(_STD::move(__f), _Alloc(__a));
+            ::new (__hold.get()) _FF(_VSTD::move(__f), _Alloc(__a));
             __f_ = __hold.release();
         }
     }
@@ -1361,7 +1361,7 @@ typename enable_if
 >::type
 function<_R(_ArgTypes...)>::operator=(_F&& __f)
 {
-    function(_STD::forward<_F>(__f)).swap(*this);
+    function(_VSTD::forward<_F>(__f)).swap(*this);
     return *this;
 }
 
@@ -1408,7 +1408,7 @@ function<_R(_ArgTypes...)>::swap(function& __f) _NOEXCEPT
         __f_ = (__base*)&__buf_;
     }
     else
-        _STD::swap(__f_, __f.__f_);
+        _VSTD::swap(__f_, __f.__f_);
 }
 
 template<class _R, class ..._ArgTypes>
@@ -1419,7 +1419,7 @@ function<_R(_ArgTypes...)>::operator()(_ArgTypes... __arg) const
     if (__f_ == 0)
         throw bad_function_call();
 #endif  // _LIBCPP_NO_EXCEPTIONS
-    return (*__f_)(_STD::forward<_ArgTypes>(__arg)...);
+    return (*__f_)(_VSTD::forward<_ArgTypes>(__arg)...);
 }
 
 #ifndef _LIBCPP_NO_RTTI
@@ -1524,7 +1524,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename __invoke_of<_Ti&, _Uj...>::type
 __mu_expand(_Ti& __ti, tuple<_Uj...>& __uj, __tuple_indices<_Indx...>)
 {
-    return __ti(_STD::forward<_Uj>(get<_Indx>(__uj))...);
+    return __ti(_VSTD::forward<_Uj>(get<_Indx>(__uj))...);
 }
 
 template <class _Ti, class ..._Uj>
@@ -1559,7 +1559,7 @@ typename enable_if
 __mu(_Ti&, _Uj& __uj)
 {
     const size_t _Indx = is_placeholder<_Ti>::value - 1;
-    return _STD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj));
+    return _VSTD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj));
 }
 
 template <class _Ti, class _Uj>
@@ -1668,14 +1668,14 @@ class __bind
 public:
     _LIBCPP_INLINE_VISIBILITY
     __bind(__bind&& __b)
-        : __f_(_STD::move(__b.__f_)),
-          __bound_args_(_STD::move(__b.__bound_args_)) {}
+        : __f_(_VSTD::move(__b.__f_)),
+          __bound_args_(_VSTD::move(__b.__bound_args_)) {}
 
     template <class _G, class ..._BA>
       _LIBCPP_INLINE_VISIBILITY
       explicit __bind(_G&& __f, _BA&& ...__bound_args)
-        : __f_(_STD::forward<_G>(__f)),
-          __bound_args_(_STD::forward<_BA>(__bound_args)...) {}
+        : __f_(_VSTD::forward<_G>(__f)),
+          __bound_args_(_VSTD::forward<_BA>(__bound_args)...) {}
 
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
@@ -1683,7 +1683,7 @@ public:
         operator()(_Args&& ...__args)
         {
             return __apply_functor(__f_, __bound_args_, __indices(),
-                                  tuple<_Args&&...>(_STD::forward<_Args>(__args)...));
+                                  tuple<_Args&&...>(_VSTD::forward<_Args>(__args)...));
         }
 
     template <class ..._Args>
@@ -1692,7 +1692,7 @@ public:
         operator()(_Args&& ...__args) const
         {
             return __apply_functor(__f_, __bound_args_, __indices(),
-                                   tuple<_Args&&...>(_STD::forward<_Args>(__args)...));
+                                   tuple<_Args&&...>(_VSTD::forward<_Args>(__args)...));
         }
 };
 
@@ -1709,20 +1709,20 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     __bind_r(__bind_r&& __b)
-        : base(_STD::forward<base>(__b)) {}
+        : base(_VSTD::forward<base>(__b)) {}
 
     template <class _G, class ..._BA>
       _LIBCPP_INLINE_VISIBILITY
       explicit __bind_r(_G&& __f, _BA&& ...__bound_args)
-        : base(_STD::forward<_G>(__f),
-               _STD::forward<_BA>(__bound_args)...) {}
+        : base(_VSTD::forward<_G>(__f),
+               _VSTD::forward<_BA>(__bound_args)...) {}
 
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
         result_type
         operator()(_Args&& ...__args)
         {
-            return base::operator()(_STD::forward<_Args>(__args)...);
+            return base::operator()(_VSTD::forward<_Args>(__args)...);
         }
 
     template <class ..._Args>
@@ -1730,7 +1730,7 @@ public:
         result_type
         operator()(_Args&& ...__args) const
         {
-            return base::operator()(_STD::forward<_Args>(__args)...);
+            return base::operator()(_VSTD::forward<_Args>(__args)...);
         }
 };
 
@@ -1743,7 +1743,7 @@ __bind<_F, _BoundArgs...>
 bind(_F&& __f, _BoundArgs&&... __bound_args)
 {
     typedef __bind<_F, _BoundArgs...> type;
-    return type(_STD::forward<_F>(__f), _STD::forward<_BoundArgs>(__bound_args)...);
+    return type(_VSTD::forward<_F>(__f), _VSTD::forward<_BoundArgs>(__bound_args)...);
 }
 
 template<class _R, class _F, class ..._BoundArgs>
@@ -1752,7 +1752,7 @@ __bind_r<_R, _F, _BoundArgs...>
 bind(_F&& __f, _BoundArgs&&... __bound_args)
 {
     typedef __bind_r<_R, _F, _BoundArgs...> type;
-    return type(_STD::forward<_F>(__f), _STD::forward<_BoundArgs>(__bound_args)...);
+    return type(_VSTD::forward<_F>(__f), _VSTD::forward<_BoundArgs>(__bound_args)...);
 }
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS

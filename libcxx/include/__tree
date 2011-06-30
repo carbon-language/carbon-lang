@@ -529,7 +529,7 @@ public:
     void operator()(pointer __p) _NOEXCEPT
     {
         if (__value_constructed)
-            __alloc_traits::destroy(__na_, _STD::addressof(__p->__value_));
+            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_));
         if (__p)
             __alloc_traits::deallocate(__na_, __p, 1);
     }
@@ -604,7 +604,7 @@ public:
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
         explicit __tree_node(_Args&& ...__args)
-            : __value_(_STD::forward<_Args>(__args)...) {}
+            : __value_(_VSTD::forward<_Args>(__args)...) {}
 #else  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     _LIBCPP_INLINE_VISIBILITY
     explicit __tree_node(const value_type& __v)
@@ -1075,7 +1075,7 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__tree& __t, true_type)
         _NOEXCEPT_(is_nothrow_move_assignable<__node_allocator>::value)
-        {__node_alloc() = _STD::move(__t.__node_alloc());}
+        {__node_alloc() = _VSTD::move(__t.__node_alloc());}
     _LIBCPP_INLINE_VISIBILITY
     void __move_assign_alloc(__tree& __t, false_type) _NOEXCEPT {}
 
@@ -1090,7 +1090,7 @@ private:
     static void __swap_alloc(__node_allocator& __x, __node_allocator& __y, true_type)
         _NOEXCEPT_(__is_nothrow_swappable<__node_allocator>::value)
         {
-            using _STD::swap;
+            using _VSTD::swap;
             swap(__x, __y);
         }
     _LIBCPP_INLINE_VISIBILITY
@@ -1284,9 +1284,9 @@ __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t)
     _NOEXCEPT_(
         is_nothrow_move_constructible<__node_allocator>::value &&
         is_nothrow_move_constructible<value_compare>::value)
-    : __begin_node_(_STD::move(__t.__begin_node_)),
-      __pair1_(_STD::move(__t.__pair1_)),
-      __pair3_(_STD::move(__t.__pair3_))
+    : __begin_node_(_VSTD::move(__t.__begin_node_)),
+      __pair1_(_VSTD::move(__t.__pair1_)),
+      __pair3_(_VSTD::move(__t.__pair3_))
 {
     if (size() == 0)
         __begin_node() = __end_node();
@@ -1302,7 +1302,7 @@ __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t)
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t, const allocator_type& __a)
     : __pair1_(__node_allocator(__a)),
-      __pair3_(0, _STD::move(__t.value_comp()))
+      __pair3_(0, _VSTD::move(__t.value_comp()))
 {
     if (__a == __t.__alloc())
     {
@@ -1335,7 +1335,7 @@ __tree<_Tp, _Compare, _Allocator>::__move_assign(__tree& __t, true_type)
     __begin_node_ = __t.__begin_node_;
     __pair1_.first() = __t.__pair1_.first();
     __move_assign_alloc(__t);
-    __pair3_ = _STD::move(__t.__pair3_);
+    __pair3_ = _VSTD::move(__t.__pair3_);
     if (size() == 0)
         __begin_node() = __end_node();
     else
@@ -1355,7 +1355,7 @@ __tree<_Tp, _Compare, _Allocator>::__move_assign(__tree& __t, false_type)
         __move_assign(__t, true_type());
     else
     {
-        value_comp() = _STD::move(__t.value_comp());
+        value_comp() = _VSTD::move(__t.value_comp());
         const_iterator __e = end();
         if (size() != 0)
         {
@@ -1366,7 +1366,7 @@ __tree<_Tp, _Compare, _Allocator>::__move_assign(__tree& __t, false_type)
 #endif  // _LIBCPP_NO_EXCEPTIONS
                 while (__cache != nullptr && __t.size() != 0)
                 {
-                    __cache->__value_ = _STD::move(__t.remove(__t.begin())->__value_);
+                    __cache->__value_ = _VSTD::move(__t.remove(__t.begin())->__value_);
                     __node_pointer __next = __detach(__cache);
                     __node_insert_multi(__cache);
                     __cache = __next;
@@ -1389,7 +1389,7 @@ __tree<_Tp, _Compare, _Allocator>::__move_assign(__tree& __t, false_type)
             }
         }
         while (__t.size() != 0)
-            __insert_multi(__e, _STD::move(__t.remove(__t.begin())->__value_));
+            __insert_multi(__e, _VSTD::move(__t.remove(__t.begin())->__value_));
     }
 }
 
@@ -1424,7 +1424,7 @@ __tree<_Tp, _Compare, _Allocator>::destroy(__node_pointer __nd) _NOEXCEPT
         destroy(static_cast<__node_pointer>(__nd->__left_));
         destroy(static_cast<__node_pointer>(__nd->__right_));
         __node_allocator& __na = __node_alloc();
-        __node_traits::destroy(__na, _STD::addressof(__nd->__value_));
+        __node_traits::destroy(__na, _VSTD::addressof(__nd->__value_));
         __node_traits::deallocate(__na, __nd, 1);
     }
 }
@@ -1437,7 +1437,7 @@ __tree<_Tp, _Compare, _Allocator>::swap(__tree& __t)
         (!__node_traits::propagate_on_container_swap::value ||
          __is_nothrow_swappable<__node_allocator>::value))
 {
-    using _STD::swap;
+    using _VSTD::swap;
     swap(__begin_node_, __t.__begin_node_);
     swap(__pair1_.first(), __t.__pair1_.first());
     __swap_alloc(__node_alloc(), __t.__node_alloc());
@@ -1661,10 +1661,10 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(const_iterator __hint,
     else if (value_comp()(*__hint, __v))  // check after
     {
         // *__hint < __v
-        const_iterator __next = _STD::next(__hint);
+        const_iterator __next = _VSTD::next(__hint);
         if (__next == end() || value_comp()(__v, *__next))
         {
-            // *__hint < __v < *_STD::next(__hint)
+            // *__hint < __v < *_VSTD::next(__hint)
             if (__hint.__ptr_->__right_ == nullptr)
             {
                 __parent = const_cast<__node_pointer&>(__hint.__ptr_);
@@ -1710,7 +1710,7 @@ __tree<_Tp, _Compare, _Allocator>::__construct_node(_Args&& ...__args)
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, _STD::addressof(__h->__value_), _STD::forward<_Args>(__args)...);
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_), _VSTD::forward<_Args>(__args)...);
     __h.get_deleter().__value_constructed = true;
     return __h;
 }
@@ -1720,7 +1720,7 @@ template <class... _Args>
 pair<typename __tree<_Tp, _Compare, _Allocator>::iterator, bool>
 __tree<_Tp, _Compare, _Allocator>::__emplace_unique(_Args&&... __args)
 {
-    __node_holder __h = __construct_node(_STD::forward<_Args>(__args)...);
+    __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_equal(__parent, __h->__value_);
     __node_pointer __r = static_cast<__node_pointer>(__child);
@@ -1739,7 +1739,7 @@ template <class... _Args>
 typename __tree<_Tp, _Compare, _Allocator>::iterator
 __tree<_Tp, _Compare, _Allocator>::__emplace_hint_unique(const_iterator __p, _Args&&... __args)
 {
-    __node_holder __h = __construct_node(_STD::forward<_Args>(__args)...);
+    __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_equal(__p, __parent, __h->__value_);
     __node_pointer __r = static_cast<__node_pointer>(__child);
@@ -1756,7 +1756,7 @@ template <class... _Args>
 typename __tree<_Tp, _Compare, _Allocator>::iterator
 __tree<_Tp, _Compare, _Allocator>::__emplace_multi(_Args&&... __args)
 {
-    __node_holder __h = __construct_node(_STD::forward<_Args>(__args)...);
+    __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf_high(__parent, __h->__value_);
     __insert_node_at(__parent, __child, __h.get());
@@ -1769,7 +1769,7 @@ typename __tree<_Tp, _Compare, _Allocator>::iterator
 __tree<_Tp, _Compare, _Allocator>::__emplace_hint_multi(const_iterator __p,
                                                         _Args&&... __args)
 {
-    __node_holder __h = __construct_node(_STD::forward<_Args>(__args)...);
+    __node_holder __h = __construct_node(_VSTD::forward<_Args>(__args)...);
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf(__p, __parent, __h->__value_);
     __insert_node_at(__parent, __child, __h.get());
@@ -1783,7 +1783,7 @@ template <class _V>
 pair<typename __tree<_Tp, _Compare, _Allocator>::iterator, bool>
 __tree<_Tp, _Compare, _Allocator>::__insert_unique(_V&& __v)
 {
-    __node_holder __h = __construct_node(_STD::forward<_V>(__v));
+    __node_holder __h = __construct_node(_VSTD::forward<_V>(__v));
     pair<iterator, bool> __r = __node_insert_unique(__h.get());
     if (__r.second)
         __h.release();
@@ -1795,7 +1795,7 @@ template <class _V>
 typename __tree<_Tp, _Compare, _Allocator>::iterator
 __tree<_Tp, _Compare, _Allocator>::__insert_unique(const_iterator __p, _V&& __v)
 {
-    __node_holder __h = __construct_node(_STD::forward<_V>(__v));
+    __node_holder __h = __construct_node(_VSTD::forward<_V>(__v));
     iterator __r = __node_insert_unique(__p, __h.get());
     if (__r.__ptr_ == __h.get())
         __h.release();
@@ -1807,7 +1807,7 @@ template <class _V>
 typename __tree<_Tp, _Compare, _Allocator>::iterator
 __tree<_Tp, _Compare, _Allocator>::__insert_multi(_V&& __v)
 {
-    __node_holder __h = __construct_node(_STD::forward<_V>(__v));
+    __node_holder __h = __construct_node(_VSTD::forward<_V>(__v));
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf_high(__parent, __h->__value_);
     __insert_node_at(__parent, __child, __h.get());
@@ -1819,7 +1819,7 @@ template <class _V>
 typename __tree<_Tp, _Compare, _Allocator>::iterator
 __tree<_Tp, _Compare, _Allocator>::__insert_multi(const_iterator __p, _V&& __v)
 {
-    __node_holder __h = __construct_node(_STD::forward<_V>(__v));
+    __node_holder __h = __construct_node(_VSTD::forward<_V>(__v));
     __node_base_pointer __parent;
     __node_base_pointer& __child = __find_leaf(__p, __parent, __h->__value_);
     __insert_node_at(__parent, __child, __h.get());
@@ -1834,9 +1834,9 @@ __tree<_Tp, _Compare, _Allocator>::__construct_node(const value_type& __v)
 {
     __node_allocator& __na = __node_alloc();
     __node_holder __h(__node_traits::allocate(__na, 1), _D(__na));
-    __node_traits::construct(__na, _STD::addressof(__h->__value_), __v);
+    __node_traits::construct(__na, _VSTD::addressof(__h->__value_), __v);
     __h.get_deleter().__value_constructed = true;
-    return _STD::move(__h);
+    return _VSTD::move(__h);
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1962,7 +1962,7 @@ __tree<_Tp, _Compare, _Allocator>::erase(const_iterator __p)
         __begin_node() = __r.__ptr_;
     --size();
     __node_allocator& __na = __node_alloc();
-    __node_traits::destroy(__na, const_cast<value_type*>(_STD::addressof(*__p)));
+    __node_traits::destroy(__na, const_cast<value_type*>(_VSTD::addressof(*__p)));
     __tree_remove(__end_node()->__left_,
                   static_cast<__node_base_pointer>(__np));
     __node_traits::deallocate(__na, __np, 1);
@@ -2064,7 +2064,7 @@ __tree<_Tp, _Compare, _Allocator>::__count_multi(const _Key& __k) const
         else if (value_comp()(__rt->__value_, __k))
             __rt = static_cast<__node_const_pointer>(__rt->__right_);
         else
-            return _STD::distance(
+            return _VSTD::distance(
                 __lower_bound(__k, static_cast<__node_const_pointer>(__rt->__left_), __rt),
                 __upper_bound(__k, static_cast<__node_const_pointer>(__rt->__right_), __result)
             );

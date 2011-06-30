@@ -165,7 +165,7 @@ ios_base::iword(int index)
         size_t newcap;
         const size_t mx = std::numeric_limits<size_t>::max();
         if (req_size < mx/2)
-            newcap = _STD::max(2 * __iarray_cap_, req_size);
+            newcap = _VSTD::max(2 * __iarray_cap_, req_size);
         else
             newcap = mx;
         long* iarray = (long*)realloc(__iarray_, newcap * sizeof(long));
@@ -193,7 +193,7 @@ ios_base::pword(int index)
         size_t newcap;
         const size_t mx = std::numeric_limits<size_t>::max();
         if (req_size < mx/2)
-            newcap = _STD::max(2 * __parray_cap_, req_size);
+            newcap = _VSTD::max(2 * __parray_cap_, req_size);
         else
             newcap = mx;
         void** parray = (void**)realloc(__parray_, newcap * sizeof(void*));
@@ -223,7 +223,7 @@ ios_base::register_callback(event_callback fn, int index)
         size_t newcap;
         const size_t mx = std::numeric_limits<size_t>::max();
         if (req_size < mx/2)
-            newcap = _STD::max(2 * __event_cap_, req_size);
+            newcap = _VSTD::max(2 * __event_cap_, req_size);
         else
             newcap = mx;
         event_callback* fns = (event_callback*)realloc(__fn_, newcap * sizeof(event_callback));
@@ -403,24 +403,24 @@ ios_base::move(ios_base& rhs)
 void
 ios_base::swap(ios_base& rhs)
 {
-    _STD::swap(__fmtflags_, rhs.__fmtflags_);
-    _STD::swap(__precision_, rhs.__precision_);
-    _STD::swap(__width_, rhs.__width_);
-    _STD::swap(__rdstate_, rhs.__rdstate_);
-    _STD::swap(__exceptions_, rhs.__exceptions_);
+    _VSTD::swap(__fmtflags_, rhs.__fmtflags_);
+    _VSTD::swap(__precision_, rhs.__precision_);
+    _VSTD::swap(__width_, rhs.__width_);
+    _VSTD::swap(__rdstate_, rhs.__rdstate_);
+    _VSTD::swap(__exceptions_, rhs.__exceptions_);
     locale& lhs_loc = *(locale*)&__loc_;
     locale& rhs_loc = *(locale*)&rhs.__loc_;
-    _STD::swap(lhs_loc, rhs_loc);
-    _STD::swap(__fn_, rhs.__fn_);
-    _STD::swap(__index_, rhs.__index_);
-    _STD::swap(__event_size_, rhs.__event_size_);
-    _STD::swap(__event_cap_, rhs.__event_cap_);
-    _STD::swap(__iarray_, rhs.__iarray_);
-    _STD::swap(__iarray_size_, rhs.__iarray_size_);
-    _STD::swap(__iarray_cap_, rhs.__iarray_cap_);
-    _STD::swap(__parray_, rhs.__parray_);
-    _STD::swap(__parray_size_, rhs.__parray_size_);
-    _STD::swap(__parray_cap_, rhs.__parray_cap_);
+    _VSTD::swap(lhs_loc, rhs_loc);
+    _VSTD::swap(__fn_, rhs.__fn_);
+    _VSTD::swap(__index_, rhs.__index_);
+    _VSTD::swap(__event_size_, rhs.__event_size_);
+    _VSTD::swap(__event_cap_, rhs.__event_cap_);
+    _VSTD::swap(__iarray_, rhs.__iarray_);
+    _VSTD::swap(__iarray_size_, rhs.__iarray_size_);
+    _VSTD::swap(__iarray_cap_, rhs.__iarray_cap_);
+    _VSTD::swap(__parray_, rhs.__parray_);
+    _VSTD::swap(__parray_size_, rhs.__parray_size_);
+    _VSTD::swap(__parray_cap_, rhs.__parray_cap_);
 }
 
 void

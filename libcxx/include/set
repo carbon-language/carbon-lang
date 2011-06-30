@@ -370,8 +370,8 @@ public:
     typedef typename __base::difference_type       difference_type;
     typedef typename __base::const_iterator        iterator;
     typedef typename __base::const_iterator        const_iterator;
-    typedef _STD::reverse_iterator<iterator>       reverse_iterator;
-    typedef _STD::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef _VSTD::reverse_iterator<iterator>       reverse_iterator;
+    typedef _VSTD::reverse_iterator<const_iterator> const_reverse_iterator;
 
     _LIBCPP_INLINE_VISIBILITY
     explicit set(const value_compare& __comp = value_compare())
@@ -412,7 +412,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     set(set&& __s)
         _NOEXCEPT_(is_nothrow_move_constructible<__base>::value)
-        : __tree_(_STD::move(__s.__tree_)) {}
+        : __tree_(_VSTD::move(__s.__tree_)) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY
@@ -457,7 +457,7 @@ public:
     set& operator=(set&& __s)
         _NOEXCEPT_(is_nothrow_move_assignable<__base>::value)
         {
-            __tree_ = _STD::move(__s.__tree_);
+            __tree_ = _VSTD::move(__s.__tree_);
             return *this;
         }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -505,11 +505,11 @@ public:
     template <class... _Args>
         _LIBCPP_INLINE_VISIBILITY
         pair<iterator, bool> emplace(_Args&&... __args)
-            {return __tree_.__emplace_unique(_STD::forward<_Args>(__args)...);}
+            {return __tree_.__emplace_unique(_VSTD::forward<_Args>(__args)...);}
     template <class... _Args>
         _LIBCPP_INLINE_VISIBILITY
         iterator emplace_hint(const_iterator __p, _Args&&... __args)
-            {return __tree_.__emplace_hint_unique(__p, _STD::forward<_Args>(__args)...);}
+            {return __tree_.__emplace_hint_unique(__p, _VSTD::forward<_Args>(__args)...);}
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     _LIBCPP_INLINE_VISIBILITY
     pair<iterator,bool> insert(const value_type& __v)
@@ -517,7 +517,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     pair<iterator,bool> insert(value_type&& __v)
-        {return __tree_.__insert_unique(_STD::move(__v));}
+        {return __tree_.__insert_unique(_VSTD::move(__v));}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __p, const value_type& __v)
@@ -525,7 +525,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __p, value_type&& __v)
-        {return __tree_.__insert_unique(__p, _STD::move(__v));}
+        {return __tree_.__insert_unique(__p, _VSTD::move(__v));}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIterator>
         _LIBCPP_INLINE_VISIBILITY
@@ -593,13 +593,13 @@ public:
 
 template <class _Key, class _Compare, class _Allocator>
 set<_Key, _Compare, _Allocator>::set(set&& __s, const allocator_type& __a)
-    : __tree_(_STD::move(__s.__tree_), __a)
+    : __tree_(_VSTD::move(__s.__tree_), __a)
 {
     if (__a != __s.get_allocator())
     {
         const_iterator __e = cend();
         while (!__s.empty())
-            insert(__e, _STD::move(__s.__tree_.remove(__s.begin())->__value_));
+            insert(__e, _VSTD::move(__s.__tree_.remove(__s.begin())->__value_));
     }
 }
 
@@ -611,7 +611,7 @@ bool
 operator==(const set<_Key, _Compare, _Allocator>& __x,
            const set<_Key, _Compare, _Allocator>& __y)
 {
-    return __x.size() == __y.size() && _STD::equal(__x.begin(), __x.end(), __y.begin());
+    return __x.size() == __y.size() && _VSTD::equal(__x.begin(), __x.end(), __y.begin());
 }
 
 template <class _Key, class _Compare, class _Allocator>
@@ -620,7 +620,7 @@ bool
 operator< (const set<_Key, _Compare, _Allocator>& __x,
            const set<_Key, _Compare, _Allocator>& __y)
 {
-    return _STD::lexicographical_compare(__x.begin(), __x.end(), __y.begin(), __y.end());
+    return _VSTD::lexicographical_compare(__x.begin(), __x.end(), __y.begin(), __y.end());
 }
 
 template <class _Key, class _Compare, class _Allocator>
@@ -698,8 +698,8 @@ public:
     typedef typename __base::difference_type       difference_type;
     typedef typename __base::const_iterator        iterator;
     typedef typename __base::const_iterator        const_iterator;
-    typedef _STD::reverse_iterator<iterator>       reverse_iterator;
-    typedef _STD::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef _VSTD::reverse_iterator<iterator>       reverse_iterator;
+    typedef _VSTD::reverse_iterator<const_iterator> const_reverse_iterator;
 
     // construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY
@@ -742,7 +742,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     multiset(multiset&& __s)
         _NOEXCEPT_(is_nothrow_move_constructible<__base>::value)
-        : __tree_(_STD::move(__s.__tree_)) {}
+        : __tree_(_VSTD::move(__s.__tree_)) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     explicit multiset(const allocator_type& __a)
@@ -784,7 +784,7 @@ public:
     multiset& operator=(multiset&& __s)
         _NOEXCEPT_(is_nothrow_move_assignable<__base>::value)
         {
-            __tree_ = _STD::move(__s.__tree_);
+            __tree_ = _VSTD::move(__s.__tree_);
             return *this;
         }
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -832,11 +832,11 @@ public:
     template <class... _Args>
         _LIBCPP_INLINE_VISIBILITY
         iterator emplace(_Args&&... __args)
-            {return __tree_.__emplace_multi(_STD::forward<_Args>(__args)...);}
+            {return __tree_.__emplace_multi(_VSTD::forward<_Args>(__args)...);}
     template <class... _Args>
         _LIBCPP_INLINE_VISIBILITY
         iterator emplace_hint(const_iterator __p, _Args&&... __args)
-            {return __tree_.__emplace_hint_multi(__p, _STD::forward<_Args>(__args)...);}
+            {return __tree_.__emplace_hint_multi(__p, _VSTD::forward<_Args>(__args)...);}
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const value_type& __v)
@@ -844,7 +844,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(value_type&& __v)
-        {return __tree_.__insert_multi(_STD::move(__v));}
+        {return __tree_.__insert_multi(_VSTD::move(__v));}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __p, const value_type& __v)
@@ -852,7 +852,7 @@ public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     iterator insert(const_iterator __p, value_type&& __v)
-        {return __tree_.__insert_multi(_STD::move(__v));}
+        {return __tree_.__insert_multi(_VSTD::move(__v));}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
     template <class _InputIterator>
         _LIBCPP_INLINE_VISIBILITY
@@ -920,13 +920,13 @@ public:
 
 template <class _Key, class _Compare, class _Allocator>
 multiset<_Key, _Compare, _Allocator>::multiset(multiset&& __s, const allocator_type& __a)
-    : __tree_(_STD::move(__s.__tree_), __a)
+    : __tree_(_VSTD::move(__s.__tree_), __a)
 {
     if (__a != __s.get_allocator())
     {
         const_iterator __e = cend();
         while (!__s.empty())
-            insert(__e, _STD::move(__s.__tree_.remove(__s.begin())->__value_));
+            insert(__e, _VSTD::move(__s.__tree_.remove(__s.begin())->__value_));
     }
 }
 
@@ -938,7 +938,7 @@ bool
 operator==(const multiset<_Key, _Compare, _Allocator>& __x,
            const multiset<_Key, _Compare, _Allocator>& __y)
 {
-    return __x.size() == __y.size() && _STD::equal(__x.begin(), __x.end(), __y.begin());
+    return __x.size() == __y.size() && _VSTD::equal(__x.begin(), __x.end(), __y.begin());
 }
 
 template <class _Key, class _Compare, class _Allocator>
@@ -947,7 +947,7 @@ bool
 operator< (const multiset<_Key, _Compare, _Allocator>& __x,
            const multiset<_Key, _Compare, _Allocator>& __y)
 {
-    return _STD::lexicographical_compare(__x.begin(), __x.end(), __y.begin(), __y.end());
+    return _VSTD::lexicographical_compare(__x.begin(), __x.end(), __y.begin(), __y.end());
 }
 
 template <class _Key, class _Compare, class _Allocator>

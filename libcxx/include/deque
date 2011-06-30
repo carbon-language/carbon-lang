@@ -535,7 +535,7 @@ copy(_RAIter __f,
             __n = __bs;
             __m = __f + __n;
         }
-        _STD::copy(__f, __m, __rb);
+        _VSTD::copy(__f, __m, __rb);
         __f = __m;
         __r += __n;
     }
@@ -562,7 +562,7 @@ copy(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
             __bs = __n;
             __fe = __fb + __bs;
         }
-        __r = _STD::copy(__fb, __fe, __r);
+        __r = _VSTD::copy(__fb, __fe, __r);
         __n -= __bs;
         __f += __bs;
     }
@@ -589,7 +589,7 @@ copy(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
             __bs = __n;
             __fe = __fb + __bs;
         }
-        __r = _STD::copy(__fb, __fe, __r);
+        __r = _VSTD::copy(__fb, __fe, __r);
         __n -= __bs;
         __f += __bs;
     }
@@ -610,7 +610,7 @@ copy_backward(_RAIter __f,
     typedef typename __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2>::pointer pointer;
     while (__f != __l)
     {
-        __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2> __rp = _STD::prev(__r);
+        __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2> __rp = _VSTD::prev(__r);
         pointer __rb = *__rp.__m_iter_;
         pointer __re = __rp.__ptr_ + 1;
         difference_type __bs = __re - __rb;
@@ -621,7 +621,7 @@ copy_backward(_RAIter __f,
             __n = __bs;
             __m = __l - __n;
         }
-        _STD::copy_backward(__m, __l, __re);
+        _VSTD::copy_backward(__m, __l, __re);
         __l = __m;
         __r -= __n;
     }
@@ -649,7 +649,7 @@ copy_backward(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
             __bs = __n;
             __lb = __le - __bs;
         }
-        __r = _STD::copy_backward(__lb, __le, __r);
+        __r = _VSTD::copy_backward(__lb, __le, __r);
         __n -= __bs;
         __l -= __bs - 1;
     }
@@ -677,7 +677,7 @@ copy_backward(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
             __bs = __n;
             __lb = __le - __bs;
         }
-        __r = _STD::copy_backward(__lb, __le, __r);
+        __r = _VSTD::copy_backward(__lb, __le, __r);
         __n -= __bs;
         __l -= __bs - 1;
     }
@@ -708,7 +708,7 @@ move(_RAIter __f,
             __n = __bs;
             __m = __f + __n;
         }
-        _STD::move(__f, __m, __rb);
+        _VSTD::move(__f, __m, __rb);
         __f = __m;
         __r += __n;
     }
@@ -735,7 +735,7 @@ move(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
             __bs = __n;
             __fe = __fb + __bs;
         }
-        __r = _STD::move(__fb, __fe, __r);
+        __r = _VSTD::move(__fb, __fe, __r);
         __n -= __bs;
         __f += __bs;
     }
@@ -762,7 +762,7 @@ move(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
             __bs = __n;
             __fe = __fb + __bs;
         }
-        __r = _STD::move(__fb, __fe, __r);
+        __r = _VSTD::move(__fb, __fe, __r);
         __n -= __bs;
         __f += __bs;
     }
@@ -783,7 +783,7 @@ move_backward(_RAIter __f,
     typedef typename __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2>::pointer pointer;
     while (__f != __l)
     {
-        __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2> __rp = _STD::prev(__r);
+        __deque_iterator<_V2, _P2, _R2, _M2, _D2, _B2> __rp = _VSTD::prev(__r);
         pointer __rb = *__rp.__m_iter_;
         pointer __re = __rp.__ptr_ + 1;
         difference_type __bs = __re - __rb;
@@ -794,7 +794,7 @@ move_backward(_RAIter __f,
             __n = __bs;
             __m = __l - __n;
         }
-        _STD::move_backward(__m, __l, __re);
+        _VSTD::move_backward(__m, __l, __re);
         __l = __m;
         __r -= __n;
     }
@@ -822,7 +822,7 @@ move_backward(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
             __bs = __n;
             __lb = __le - __bs;
         }
-        __r = _STD::move_backward(__lb, __le, __r);
+        __r = _VSTD::move_backward(__lb, __le, __r);
         __n -= __bs;
         __l -= __bs - 1;
     }
@@ -850,7 +850,7 @@ move_backward(__deque_iterator<_V1, _P1, _R1, _M1, _D1, _B1> __f,
             __bs = __n;
             __lb = __le - __bs;
         }
-        __r = _STD::move_backward(__lb, __le, __r);
+        __r = _VSTD::move_backward(__lb, __le, __r);
         __n -= __bs;
         __l -= __bs - 1;
     }
@@ -961,7 +961,7 @@ protected:
         _NOEXCEPT_(__alloc_traits::propagate_on_container_move_assignment::value &&
                    is_nothrow_move_assignable<allocator_type>::value)
     {
-        __map_ = _STD::move(__c.__map_);
+        __map_ = _VSTD::move(__c.__map_);
         __start_ = __c.__start_;
         size() = __c.size();
         __move_assign_alloc(__c);
@@ -980,7 +980,7 @@ private:
     void __move_assign_alloc(const __deque_base& __c, true_type)
         _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
         {
-            __alloc() = _STD::move(__c.__alloc());
+            __alloc() = _VSTD::move(__c.__alloc());
         }
 
     _LIBCPP_INLINE_VISIBILITY
@@ -998,7 +998,7 @@ private:
     static void __swap_alloc(allocator_type& __x, allocator_type& __y, true_type)
         _NOEXCEPT_(__is_nothrow_swappable<allocator_type>::value)
         {
-            using _STD::swap;
+            using _VSTD::swap;
             swap(__x, __y);
         }
 
@@ -1097,9 +1097,9 @@ __deque_base<_Tp, _Allocator>::~__deque_base()
 template <class _Tp, class _Allocator>
 __deque_base<_Tp, _Allocator>::__deque_base(__deque_base&& __c)
     _NOEXCEPT_(is_nothrow_move_constructible<allocator_type>::value)
-    : __map_(_STD::move(__c.__map_)),
-      __start_(_STD::move(__c.__start_)),
-      __size_(_STD::move(__c.__size_))
+    : __map_(_VSTD::move(__c.__map_)),
+      __start_(_VSTD::move(__c.__start_)),
+      __size_(_VSTD::move(__c.__size_))
 {
     __c.__start_ = 0;
     __c.size() = 0;
@@ -1107,9 +1107,9 @@ __deque_base<_Tp, _Allocator>::__deque_base(__deque_base&& __c)
 
 template <class _Tp, class _Allocator>
 __deque_base<_Tp, _Allocator>::__deque_base(__deque_base&& __c, const allocator_type& __a)
-    : __map_(_STD::move(__c.__map_), __pointer_allocator(__a)),
-      __start_(_STD::move(__c.__start_)),
-      __size_(_STD::move(__c.size()), __a)
+    : __map_(_VSTD::move(__c.__map_), __pointer_allocator(__a)),
+      __start_(_VSTD::move(__c.__start_)),
+      __size_(_VSTD::move(__c.size()), __a)
 {
     if (__a == __c.__alloc())
     {
@@ -1133,8 +1133,8 @@ __deque_base<_Tp, _Allocator>::swap(__deque_base& __c)
                    __is_nothrow_swappable<allocator_type>::value)
 {
     __map_.swap(__c.__map_);
-    _STD::swap(__start_, __c.__start_);
-    _STD::swap(size(), __c.size());
+    _VSTD::swap(__start_, __c.__start_);
+    _VSTD::swap(size(), __c.size());
     __swap_alloc(__alloc(), __c.__alloc());
 }
 
@@ -1144,7 +1144,7 @@ __deque_base<_Tp, _Allocator>::clear() _NOEXCEPT
 {
     allocator_type& __a = __alloc();
     for (iterator __i = begin(), __e = end(); __i != __e; ++__i)
-        __alloc_traits::destroy(__a, _STD::addressof(*__i));
+        __alloc_traits::destroy(__a, _VSTD::addressof(*__i));
     size() = 0;
     while (__map_.size() > 2)
     {
@@ -1184,8 +1184,8 @@ public:
 
     typedef typename __base::pointer               pointer;
     typedef typename __base::const_pointer         const_pointer;
-    typedef _STD::reverse_iterator<iterator>       reverse_iterator;
-    typedef _STD::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef _VSTD::reverse_iterator<iterator>       reverse_iterator;
+    typedef _VSTD::reverse_iterator<const_iterator> const_reverse_iterator;
 
     // construct/copy/destroy:
     _LIBCPP_INLINE_VISIBILITY
@@ -1483,14 +1483,14 @@ template <class _Tp, class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 deque<_Tp, _Allocator>::deque(deque&& __c)
     _NOEXCEPT_(is_nothrow_move_constructible<__base>::value)
-    : __base(_STD::move(__c))
+    : __base(_VSTD::move(__c))
 {
 }
 
 template <class _Tp, class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 deque<_Tp, _Allocator>::deque(deque&& __c, const allocator_type& __a)
-    : __base(_STD::move(__c), __a)
+    : __base(_VSTD::move(__c), __a)
 {
     if (__a != __c.__alloc())
     {
@@ -1562,11 +1562,11 @@ deque<_Tp, _Allocator>::assign(_RAIter __f, _RAIter __l,
     if (static_cast<size_type>(__l - __f) > __base::size())
     {
         _RAIter __m = __f + __base::size();
-        _STD::copy(__f, __m, __base::begin());
+        _VSTD::copy(__f, __m, __base::begin());
         __append(__m, __l);
     }
     else
-        __erase_to_end(_STD::copy(__f, __l, __base::begin()));
+        __erase_to_end(_VSTD::copy(__f, __l, __base::begin()));
 }
 
 template <class _Tp, class _Allocator>
@@ -1575,12 +1575,12 @@ deque<_Tp, _Allocator>::assign(size_type __n, const value_type& __v)
 {
     if (__n > __base::size())
     {
-        _STD::fill_n(__base::begin(), __base::size(), __v);
+        _VSTD::fill_n(__base::begin(), __base::size(), __v);
         __n -= __base::size();
         __append(__n, __v);
     }
     else
-        __erase_to_end(_STD::fill_n(__base::begin(), __n, __v));
+        __erase_to_end(_VSTD::fill_n(__base::begin(), __n, __v));
 }
 
 template <class _Tp, class _Allocator>
@@ -1726,7 +1726,7 @@ deque<_Tp, _Allocator>::push_back(const value_type& __v)
     if (__back_spare() == 0)
         __add_back_capacity();
     // __back_spare() >= 1
-    __alloc_traits::construct(__a, _STD::addressof(*__base::end()), __v);
+    __alloc_traits::construct(__a, _VSTD::addressof(*__base::end()), __v);
     ++__base::size();
 }
 
@@ -1740,7 +1740,7 @@ deque<_Tp, _Allocator>::push_back(value_type&& __v)
     if (__back_spare() == 0)
         __add_back_capacity();
     // __back_spare() >= 1
-    __alloc_traits::construct(__a, _STD::addressof(*__base::end()), _STD::move(__v));
+    __alloc_traits::construct(__a, _VSTD::addressof(*__base::end()), _VSTD::move(__v));
     ++__base::size();
 }
 
@@ -1755,7 +1755,7 @@ deque<_Tp, _Allocator>::emplace_back(_Args&&... __args)
     if (__back_spare() == 0)
         __add_back_capacity();
     // __back_spare() >= 1
-    __alloc_traits::construct(__a, _STD::addressof(*__base::end()), _STD::forward<_Args>(__args)...);
+    __alloc_traits::construct(__a, _VSTD::addressof(*__base::end()), _VSTD::forward<_Args>(__args)...);
     ++__base::size();
 }
 
@@ -1770,7 +1770,7 @@ deque<_Tp, _Allocator>::push_front(const value_type& __v)
     if (__front_spare() == 0)
         __add_front_capacity();
     // __front_spare() >= 1
-    __alloc_traits::construct(__a, _STD::addressof(*--__base::begin()), __v);
+    __alloc_traits::construct(__a, _VSTD::addressof(*--__base::begin()), __v);
     --__base::__start_;
     ++__base::size();
 }
@@ -1785,7 +1785,7 @@ deque<_Tp, _Allocator>::push_front(value_type&& __v)
     if (__front_spare() == 0)
         __add_front_capacity();
     // __front_spare() >= 1
-    __alloc_traits::construct(__a, _STD::addressof(*--__base::begin()), _STD::move(__v));
+    __alloc_traits::construct(__a, _VSTD::addressof(*--__base::begin()), _VSTD::move(__v));
     --__base::__start_;
     ++__base::size();
 }
@@ -1801,7 +1801,7 @@ deque<_Tp, _Allocator>::emplace_front(_Args&&... __args)
     if (__front_spare() == 0)
         __add_front_capacity();
     // __front_spare() >= 1
-    __alloc_traits::construct(__a, _STD::addressof(*--__base::begin()), _STD::forward<_Args>(__args)...);
+    __alloc_traits::construct(__a, _VSTD::addressof(*--__base::begin()), _VSTD::forward<_Args>(__args)...);
     --__base::__start_;
     ++__base::size();
 }
@@ -1823,7 +1823,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, const value_type& __v)
         // __front_spare() >= 1
         if (__pos == 0)
         {
-            __alloc_traits::construct(__a, _STD::addressof(*--__base::begin()), __v);
+            __alloc_traits::construct(__a, _VSTD::addressof(*--__base::begin()), __v);
             --__base::__start_;
             ++__base::size();
         }
@@ -1831,14 +1831,14 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, const value_type& __v)
         {
             const_pointer __vt = pointer_traits<const_pointer>::pointer_to(__v);
             iterator __b = __base::begin();
-            iterator __bm1 = _STD::prev(__b);
+            iterator __bm1 = _VSTD::prev(__b);
             if (__vt == pointer_traits<const_pointer>::pointer_to(*__b))
                 __vt = pointer_traits<const_pointer>::pointer_to(*__bm1);
-            __alloc_traits::construct(__a, _STD::addressof(*__bm1), _STD::move(*__b));
+            __alloc_traits::construct(__a, _VSTD::addressof(*__bm1), _VSTD::move(*__b));
             --__base::__start_;
             ++__base::size();
             if (__pos > 1)
-                __b = __move_and_check(_STD::next(__b), __b + __pos, __b, __vt);
+                __b = __move_and_check(_VSTD::next(__b), __b + __pos, __b, __vt);
             *__b = *__vt;
         }
     }
@@ -1850,17 +1850,17 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, const value_type& __v)
         size_type __de = __base::size() - __pos;
         if (__de == 0)
         {
-            __alloc_traits::construct(__a, _STD::addressof(*__base::end()), __v);
+            __alloc_traits::construct(__a, _VSTD::addressof(*__base::end()), __v);
             ++__base::size();
         }
         else
         {
             const_pointer __vt = pointer_traits<const_pointer>::pointer_to(__v);
             iterator __e = __base::end();
-            iterator __em1 = _STD::prev(__e);
+            iterator __em1 = _VSTD::prev(__e);
             if (__vt == pointer_traits<const_pointer>::pointer_to(*__em1))
                 __vt = pointer_traits<const_pointer>::pointer_to(*__e);
-            __alloc_traits::construct(__a, _STD::addressof(*__e), _STD::move(*__em1));
+            __alloc_traits::construct(__a, _VSTD::addressof(*__e), _VSTD::move(*__em1));
             ++__base::size();
             if (__de > 1)
                 __e = __move_backward_and_check(__e - __de, __em1, __e, __vt);
@@ -1886,20 +1886,20 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, value_type&& __v)
         // __front_spare() >= 1
         if (__pos == 0)
         {
-            __alloc_traits::construct(__a, _STD::addressof(*--__base::begin()), _STD::move(__v));
+            __alloc_traits::construct(__a, _VSTD::addressof(*--__base::begin()), _VSTD::move(__v));
             --__base::__start_;
             ++__base::size();
         }
         else
         {
             iterator __b = __base::begin();
-            iterator __bm1 = _STD::prev(__b);
-            __alloc_traits::construct(__a, _STD::addressof(*__bm1), _STD::move(*__b));
+            iterator __bm1 = _VSTD::prev(__b);
+            __alloc_traits::construct(__a, _VSTD::addressof(*__bm1), _VSTD::move(*__b));
             --__base::__start_;
             ++__base::size();
             if (__pos > 1)
-                __b = _STD::move(_STD::next(__b), __b + __pos, __b);
-            *__b = _STD::move(__v);
+                __b = _VSTD::move(_VSTD::next(__b), __b + __pos, __b);
+            *__b = _VSTD::move(__v);
         }
     }
     else
@@ -1910,18 +1910,18 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, value_type&& __v)
         size_type __de = __base::size() - __pos;
         if (__de == 0)
         {
-            __alloc_traits::construct(__a, _STD::addressof(*__base::end()), _STD::move(__v));
+            __alloc_traits::construct(__a, _VSTD::addressof(*__base::end()), _VSTD::move(__v));
             ++__base::size();
         }
         else
         {
             iterator __e = __base::end();
-            iterator __em1 = _STD::prev(__e);
-            __alloc_traits::construct(__a, _STD::addressof(*__e), _STD::move(*__em1));
+            iterator __em1 = _VSTD::prev(__e);
+            __alloc_traits::construct(__a, _VSTD::addressof(*__e), _VSTD::move(*__em1));
             ++__base::size();
             if (__de > 1)
-                __e = _STD::move_backward(__e - __de, __em1, __e);
-            *--__e = _STD::move(__v);
+                __e = _VSTD::move_backward(__e - __de, __em1, __e);
+            *--__e = _VSTD::move(__v);
         }
     }
     return __base::begin() + __pos;
@@ -1944,20 +1944,20 @@ deque<_Tp, _Allocator>::emplace(const_iterator __p, _Args&&... __args)
         // __front_spare() >= 1
         if (__pos == 0)
         {
-            __alloc_traits::construct(__a, _STD::addressof(*--__base::begin()), _STD::forward<_Args>(__args)...);
+            __alloc_traits::construct(__a, _VSTD::addressof(*--__base::begin()), _VSTD::forward<_Args>(__args)...);
             --__base::__start_;
             ++__base::size();
         }
         else
         {
             iterator __b = __base::begin();
-            iterator __bm1 = _STD::prev(__b);
-            __alloc_traits::construct(__a, _STD::addressof(*__bm1), _STD::move(*__b));
+            iterator __bm1 = _VSTD::prev(__b);
+            __alloc_traits::construct(__a, _VSTD::addressof(*__bm1), _VSTD::move(*__b));
             --__base::__start_;
             ++__base::size();
             if (__pos > 1)
-                __b = _STD::move(_STD::next(__b), __b + __pos, __b);
-            *__b = value_type(_STD::forward<_Args>(__args)...);
+                __b = _VSTD::move(_VSTD::next(__b), __b + __pos, __b);
+            *__b = value_type(_VSTD::forward<_Args>(__args)...);
         }
     }
     else
@@ -1968,18 +1968,18 @@ deque<_Tp, _Allocator>::emplace(const_iterator __p, _Args&&... __args)
         size_type __de = __base::size() - __pos;
         if (__de == 0)
         {
-            __alloc_traits::construct(__a, _STD::addressof(*__base::end()), _STD::forward<_Args>(__args)...);
+            __alloc_traits::construct(__a, _VSTD::addressof(*__base::end()), _VSTD::forward<_Args>(__args)...);
             ++__base::size();
         }
         else
         {
             iterator __e = __base::end();
-            iterator __em1 = _STD::prev(__e);
-            __alloc_traits::construct(__a, _STD::addressof(*__e), _STD::move(*__em1));
+            iterator __em1 = _VSTD::prev(__e);
+            __alloc_traits::construct(__a, _VSTD::addressof(*__e), _VSTD::move(*__em1));
             ++__base::size();
             if (__de > 1)
-                __e = _STD::move_backward(__e - __de, __em1, __e);
-            *--__e = value_type(_STD::forward<_Args>(__args)...);
+                __e = _VSTD::move_backward(__e - __de, __em1, __e);
+            *--__e = value_type(_VSTD::forward<_Args>(__args)...);
         }
     }
     return __base::begin() + __pos;
@@ -2006,7 +2006,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, size_type __n, const value_ty
         if (__n > __pos)
         {
             for (size_type __m = __n - __pos; __m; --__m, --__base::__start_, ++__base::size())
-                __alloc_traits::construct(__a, _STD::addressof(*--__i), __v);
+                __alloc_traits::construct(__a, _VSTD::addressof(*--__i), __v);
             __n = __pos;
         }
         if (__n > 0)
@@ -2016,7 +2016,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, size_type __n, const value_ty
             __move_construct_backward_and_check(__old_begin, __obn, __i, __vt);
             if (__n < __pos)
                 __old_begin = __move_and_check(__obn, __old_begin + __pos, __old_begin, __vt);
-            _STD::fill_n(__old_begin, __n, *__vt);
+            _VSTD::fill_n(__old_begin, __n, *__vt);
         }
     }
     else
@@ -2032,7 +2032,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, size_type __n, const value_ty
         if (__n > __de)
         {
             for (size_type __m = __n - __de; __m; --__m, ++__i, ++__base::size())
-                __alloc_traits::construct(__a, _STD::addressof(*__i), __v);
+                __alloc_traits::construct(__a, _VSTD::addressof(*__i), __v);
             __n = __de;
         }
         if (__n > 0)
@@ -2042,7 +2042,7 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, size_type __n, const value_ty
             __move_construct_and_check(__oen, __old_end, __i, __vt);
             if (__n < __de)
                 __old_end = __move_backward_and_check(__old_end - __de, __oen, __old_end, __vt);
-            _STD::fill_n(__old_end - __n, __n, *__vt);
+            _VSTD::fill_n(__old_end - __n, __n, *__vt);
         }
     }
     return __base::begin() + __pos;
@@ -2067,7 +2067,7 @@ typename deque<_Tp, _Allocator>::iterator
 deque<_Tp, _Allocator>::insert(const_iterator __p, _BiIter __f, _BiIter __l,
                                typename enable_if<__is_bidirectional_iterator<_BiIter>::value>::type*)
 {
-    size_type __n = _STD::distance(__f, __l);
+    size_type __n = _VSTD::distance(__f, __l);
     size_type __pos = __p - __base::begin();
     size_type __to_end = __base::size() - __pos;
     allocator_type& __a = __base::__alloc();
@@ -2082,9 +2082,9 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, _BiIter __f, _BiIter __l,
         _BiIter __m = __f;
         if (__n > __pos)
         {
-            __m = __pos < __n / 2 ? _STD::prev(__l, __pos) : _STD::next(__f, __n - __pos);
+            __m = __pos < __n / 2 ? _VSTD::prev(__l, __pos) : _VSTD::next(__f, __n - __pos);
             for (_BiIter __j = __m; __j != __f; --__base::__start_, ++__base::size())
-                __alloc_traits::construct(__a, _STD::addressof(*--__i), *--__j);
+                __alloc_traits::construct(__a, _VSTD::addressof(*--__i), *--__j);
             __n = __pos;
         }
         if (__n > 0)
@@ -2092,13 +2092,13 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, _BiIter __f, _BiIter __l,
             iterator __obn = __old_begin + __n;
             for (iterator __j = __obn; __j != __old_begin;)
             {
-                __alloc_traits::construct(__a, _STD::addressof(*--__i), _STD::move(*--__j));
+                __alloc_traits::construct(__a, _VSTD::addressof(*--__i), _VSTD::move(*--__j));
                 --__base::__start_;
                 ++__base::size();
             }
             if (__n < __pos)
-                __old_begin = _STD::move(__obn, __old_begin + __pos, __old_begin);
-            _STD::copy(__m, __l, __old_begin);
+                __old_begin = _VSTD::move(__obn, __old_begin + __pos, __old_begin);
+            _VSTD::copy(__m, __l, __old_begin);
         }
     }
     else
@@ -2114,19 +2114,19 @@ deque<_Tp, _Allocator>::insert(const_iterator __p, _BiIter __f, _BiIter __l,
         size_type __de = __base::size() - __pos;
         if (__n > __de)
         {
-            __m = __de < __n / 2 ? _STD::next(__f, __de) : _STD::prev(__l, __n - __de);
+            __m = __de < __n / 2 ? _VSTD::next(__f, __de) : _VSTD::prev(__l, __n - __de);
             for (_BiIter __j = __m; __j != __l; ++__i, ++__j, ++__base::size())
-                __alloc_traits::construct(__a, _STD::addressof(*__i), *__j);
+                __alloc_traits::construct(__a, _VSTD::addressof(*__i), *__j);
             __n = __de;
         }
         if (__n > 0)
         {
             iterator __oen = __old_end - __n;
             for (iterator __j = __oen; __j != __old_end; ++__i, ++__j, ++__base::size())
-                __alloc_traits::construct(__a, _STD::addressof(*__i), _STD::move(*__j));
+                __alloc_traits::construct(__a, _VSTD::addressof(*__i), _VSTD::move(*__j));
             if (__n < __de)
-                __old_end = _STD::move_backward(__old_end - __de, __oen, __old_end);
-            _STD::copy_backward(__f, __m, __old_end);
+                __old_end = _VSTD::move_backward(__old_end - __de, __oen, __old_end);
+            _VSTD::copy_backward(__f, __m, __old_end);
         }
     }
     return __base::begin() + __pos;
@@ -2149,14 +2149,14 @@ void
 deque<_Tp, _Allocator>::__append(_ForIter __f, _ForIter __l,
                                  typename enable_if<__is_forward_iterator<_ForIter>::value>::type*)
 {
-    size_type __n = _STD::distance(__f, __l);
+    size_type __n = _VSTD::distance(__f, __l);
     allocator_type& __a = __base::__alloc();
     size_type __back_capacity = __back_spare();
     if (__n > __back_capacity)
         __add_back_capacity(__n - __back_capacity);
     // __n <= __back_capacity
     for (iterator __i = __base::end(); __f != __l; ++__i, ++__f, ++__base::size())
-        __alloc_traits::construct(__a, _STD::addressof(*__i), *__f);
+        __alloc_traits::construct(__a, _VSTD::addressof(*__i), *__f);
 }
 
 template <class _Tp, class _Allocator>
@@ -2169,7 +2169,7 @@ deque<_Tp, _Allocator>::__append(size_type __n)
         __add_back_capacity(__n - __back_capacity);
     // __n <= __back_capacity
     for (iterator __i = __base::end(); __n; --__n, ++__i, ++__base::size())
-        __alloc_traits::construct(__a, _STD::addressof(*__i));
+        __alloc_traits::construct(__a, _VSTD::addressof(*__i));
 }
 
 template <class _Tp, class _Allocator>
@@ -2182,7 +2182,7 @@ deque<_Tp, _Allocator>::__append(size_type __n, const value_type& __v)
         __add_back_capacity(__n - __back_capacity);
     // __n <= __back_capacity
     for (iterator __i = __base::end(); __n; --__n, ++__i, ++__base::size())
-        __alloc_traits::construct(__a, _STD::addressof(*__i), __v);
+        __alloc_traits::construct(__a, _VSTD::addressof(*__i), __v);
 }
 
 // Create front capacity for one block of elements.
@@ -2240,10 +2240,10 @@ deque<_Tp, _Allocator>::__add_front_capacity()
         for (typename __base::__map_pointer __i = __base::__map_.begin();
                 __i != __base::__map_.end(); ++__i)
             __buf.push_back(*__i);
-        _STD::swap(__base::__map_.__first_, __buf.__first_);
-        _STD::swap(__base::__map_.__begin_, __buf.__begin_);
-        _STD::swap(__base::__map_.__end_, __buf.__end_);
-        _STD::swap(__base::__map_.__end_cap(), __buf.__end_cap());
+        _VSTD::swap(__base::__map_.__first_, __buf.__first_);
+        _VSTD::swap(__base::__map_.__begin_, __buf.__begin_);
+        _VSTD::swap(__base::__map_.__end_, __buf.__end_);
+        _VSTD::swap(__base::__map_.__end_cap(), __buf.__end_cap());
         __base::__start_ = __base::__map_.size() == 1 ?
                                __base::__block_size / 2 :
                                __base::__start_ + __base::__block_size;
@@ -2260,7 +2260,7 @@ deque<_Tp, _Allocator>::__add_front_capacity(size_type __n)
     size_type __nb = __recommend_blocks(__n + __base::__map_.empty());
     // Number of unused blocks at back:
     size_type __back_capacity = __back_spare() / __base::__block_size;
-    __back_capacity = _STD::min(__back_capacity, __nb);  // don't take more than you need
+    __back_capacity = _VSTD::min(__back_capacity, __nb);  // don't take more than you need
     __nb -= __back_capacity;  // number of blocks need to allocate
     // If __nb == 0, then we have sufficient capacity.
     if (__nb == 0)
@@ -2327,10 +2327,10 @@ deque<_Tp, _Allocator>::__add_front_capacity(size_type __n)
         for (typename __base::__map_pointer __i = __base::__map_.begin();
                 __i != __base::__map_.end(); ++__i)
             __buf.push_back(*__i);
-        _STD::swap(__base::__map_.__first_, __buf.__first_);
-        _STD::swap(__base::__map_.__begin_, __buf.__begin_);
-        _STD::swap(__base::__map_.__end_, __buf.__end_);
-        _STD::swap(__base::__map_.__end_cap(), __buf.__end_cap());
+        _VSTD::swap(__base::__map_.__first_, __buf.__first_);
+        _VSTD::swap(__base::__map_.__begin_, __buf.__begin_);
+        _VSTD::swap(__base::__map_.__end_, __buf.__end_);
+        _VSTD::swap(__base::__map_.__end_cap(), __buf.__end_cap());
         __base::__start_ += __ds;
     }
 }
@@ -2388,10 +2388,10 @@ deque<_Tp, _Allocator>::__add_back_capacity()
         for (typename __base::__map_pointer __i = __base::__map_.end();
                 __i != __base::__map_.begin();)
             __buf.push_front(*--__i);
-        _STD::swap(__base::__map_.__first_, __buf.__first_);
-        _STD::swap(__base::__map_.__begin_, __buf.__begin_);
-        _STD::swap(__base::__map_.__end_, __buf.__end_);
-        _STD::swap(__base::__map_.__end_cap(), __buf.__end_cap());
+        _VSTD::swap(__base::__map_.__first_, __buf.__first_);
+        _VSTD::swap(__base::__map_.__begin_, __buf.__begin_);
+        _VSTD::swap(__base::__map_.__end_, __buf.__end_);
+        _VSTD::swap(__base::__map_.__end_cap(), __buf.__end_cap());
     }
 }
 
@@ -2405,7 +2405,7 @@ deque<_Tp, _Allocator>::__add_back_capacity(size_type __n)
     size_type __nb = __recommend_blocks(__n + __base::__map_.empty());
     // Number of unused blocks at front:
     size_type __front_capacity = __front_spare() / __base::__block_size;
-    __front_capacity = _STD::min(__front_capacity, __nb);  // don't take more than you need
+    __front_capacity = _VSTD::min(__front_capacity, __nb);  // don't take more than you need
     __nb -= __front_capacity;  // number of blocks need to allocate
     // If __nb == 0, then we have sufficient capacity.
     if (__nb == 0)
@@ -2474,10 +2474,10 @@ deque<_Tp, _Allocator>::__add_back_capacity(size_type __n)
         for (typename __base::__map_pointer __i = __base::__map_.end();
                 __i != __base::__map_.begin();)
             __buf.push_front(*--__i);
-        _STD::swap(__base::__map_.__first_, __buf.__first_);
-        _STD::swap(__base::__map_.__begin_, __buf.__begin_);
-        _STD::swap(__base::__map_.__end_, __buf.__end_);
-        _STD::swap(__base::__map_.__end_cap(), __buf.__end_cap());
+        _VSTD::swap(__base::__map_.__first_, __buf.__first_);
+        _VSTD::swap(__base::__map_.__begin_, __buf.__begin_);
+        _VSTD::swap(__base::__map_.__end_, __buf.__end_);
+        _VSTD::swap(__base::__map_.__end_cap(), __buf.__end_cap());
         __base::__start_ -= __ds;
     }
 }
@@ -2525,7 +2525,7 @@ deque<_Tp, _Allocator>::__move_and_check(iterator __f, iterator __l, iterator __
 {
     // as if
     //   for (; __f != __l; ++__f, ++__r)
-    //       *__r = _STD::move(*__f);
+    //       *__r = _VSTD::move(*__f);
     difference_type __n = __l - __f;
     while (__n > 0)
     {
@@ -2539,7 +2539,7 @@ deque<_Tp, _Allocator>::__move_and_check(iterator __f, iterator __l, iterator __
         }
         if (__fb <= __vt && __vt < __fe)
             __vt = (const_iterator(__f.__m_iter_, __vt) -= __f - __r).__ptr_;
-        __r = _STD::move(__fb, __fe, __r);
+        __r = _VSTD::move(__fb, __fe, __r);
         __n -= __bs;
         __f += __bs;
     }
@@ -2555,7 +2555,7 @@ deque<_Tp, _Allocator>::__move_backward_and_check(iterator __f, iterator __l, it
 {
     // as if
     //   while (__f != __l)
-    //       *--__r = _STD::move(*--__l);
+    //       *--__r = _VSTD::move(*--__l);
     difference_type __n = __l - __f;
     while (__n > 0)
     {
@@ -2570,7 +2570,7 @@ deque<_Tp, _Allocator>::__move_backward_and_check(iterator __f, iterator __l, it
         }
         if (__lb <= __vt && __vt < __le)
             __vt = (const_iterator(__l.__m_iter_, __vt) += __r - __l - 1).__ptr_;
-        __r = _STD::move_backward(__lb, __le, __r);
+        __r = _VSTD::move_backward(__lb, __le, __r);
         __n -= __bs;
         __l -= __bs - 1;
     }
@@ -2587,7 +2587,7 @@ deque<_Tp, _Allocator>::__move_construct_and_check(iterator __f, iterator __l,
     allocator_type& __a = __base::__alloc();
     // as if
     //   for (; __f != __l; ++__r, ++__f, ++__base::size())
-    //       __alloc_traits::construct(__a, _STD::addressof(*__r), _STD::move(*__f));
+    //       __alloc_traits::construct(__a, _VSTD::addressof(*__r), _VSTD::move(*__f));
     difference_type __n = __l - __f;
     while (__n > 0)
     {
@@ -2602,7 +2602,7 @@ deque<_Tp, _Allocator>::__move_construct_and_check(iterator __f, iterator __l,
         if (__fb <= __vt && __vt < __fe)
             __vt = (const_iterator(__f.__m_iter_, __vt) += __r - __f).__ptr_;
         for (; __fb != __fe; ++__fb, ++__r, ++__base::size())
-            __alloc_traits::construct(__a, _STD::addressof(*__r), _STD::move(*__fb));
+            __alloc_traits::construct(__a, _VSTD::addressof(*__r), _VSTD::move(*__fb));
         __n -= __bs;
         __f += __bs;
     }
@@ -2619,7 +2619,7 @@ deque<_Tp, _Allocator>::__move_construct_backward_and_check(iterator __f, iterat
     // as if
     //   for (iterator __j = __l; __j != __f;)
     //   {
-    //       __alloc_traitsconstruct(__a, _STD::addressof(*--__r), _STD::move(*--__j));
+    //       __alloc_traitsconstruct(__a, _VSTD::addressof(*--__r), _VSTD::move(*--__j));
     //       --__base::__start_;
     //       ++__base::size();
     //   }
@@ -2639,7 +2639,7 @@ deque<_Tp, _Allocator>::__move_construct_backward_and_check(iterator __f, iterat
             __vt = (const_iterator(__l.__m_iter_, __vt) -= __l - __r + 1).__ptr_;
         while (__le != __lb)
         {
-            __alloc_traits::construct(__a, _STD::addressof(*--__r), _STD::move(*--__le));
+            __alloc_traits::construct(__a, _VSTD::addressof(*--__r), _VSTD::move(*--__le));
             --__base::__start_;
             ++__base::size();
         }
@@ -2659,8 +2659,8 @@ deque<_Tp, _Allocator>::erase(const_iterator __f)
     allocator_type& __a = __base::__alloc();
     if (__pos < (__base::size() - 1) / 2)
     {   // erase from front
-        _STD::move_backward(__b, __p, _STD::next(__p));
-        __alloc_traits::destroy(__a, _STD::addressof(*__b));
+        _VSTD::move_backward(__b, __p, _VSTD::next(__p));
+        __alloc_traits::destroy(__a, _VSTD::addressof(*__b));
         --__base::size();
         ++__base::__start_;
         if (__front_spare() >= 2 * __base::__block_size)
@@ -2672,8 +2672,8 @@ deque<_Tp, _Allocator>::erase(const_iterator __f)
     }
     else
     {   // erase from back
-        iterator __i = _STD::move(_STD::next(__p), __base::end(), __p);
-        __alloc_traits::destroy(__a, _STD::addressof(*__i));
+        iterator __i = _VSTD::move(_VSTD::next(__p), __base::end(), __p);
+        __alloc_traits::destroy(__a, _VSTD::addressof(*__i));
         --__base::size();
         if (__back_spare() >= 2 * __base::__block_size)
         {
@@ -2697,9 +2697,9 @@ deque<_Tp, _Allocator>::erase(const_iterator __f, const_iterator __l)
         allocator_type& __a = __base::__alloc();
         if (__pos < (__base::size() - __n) / 2)
         {   // erase from front
-            iterator __i = _STD::move_backward(__b, __p, __p + __n);
+            iterator __i = _VSTD::move_backward(__b, __p, __p + __n);
             for (; __b != __i; ++__b)
-                __alloc_traits::destroy(__a, _STD::addressof(*__b));
+                __alloc_traits::destroy(__a, _VSTD::addressof(*__b));
             __base::size() -= __n;
             __base::__start_ += __n;
             while (__front_spare() >= 2 * __base::__block_size)
@@ -2711,9 +2711,9 @@ deque<_Tp, _Allocator>::erase(const_iterator __f, const_iterator __l)
         }
         else
         {   // erase from back
-            iterator __i = _STD::move(__p + __n, __base::end(), __p);
+            iterator __i = _VSTD::move(__p + __n, __base::end(), __p);
             for (iterator __e = __base::end(); __i != __e; ++__i)
-                __alloc_traits::destroy(__a, _STD::addressof(*__i));
+                __alloc_traits::destroy(__a, _VSTD::addressof(*__i));
             __base::size() -= __n;
             while (__back_spare() >= 2 * __base::__block_size)
             {
@@ -2737,7 +2737,7 @@ deque<_Tp, _Allocator>::__erase_to_end(const_iterator __f)
         iterator __b = __base::begin();
         difference_type __pos = __f - __b;
         for (iterator __p = __b + __pos; __p != __e; ++__p)
-            __alloc_traits::destroy(__a, _STD::addressof(*__p));
+            __alloc_traits::destroy(__a, _VSTD::addressof(*__p));
         __base::size() -= __n;
         while (__back_spare() >= 2 * __base::__block_size)
         {
@@ -2771,7 +2771,7 @@ bool
 operator==(const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 {
     const typename deque<_Tp, _Allocator>::size_type __sz = __x.size();
-    return __sz == __y.size() && _STD::equal(__x.begin(), __x.end(), __y.begin());
+    return __sz == __y.size() && _VSTD::equal(__x.begin(), __x.end(), __y.begin());
 }
 
 template <class _Tp, class _Allocator>
@@ -2787,7 +2787,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator< (const deque<_Tp, _Allocator>& __x, const deque<_Tp, _Allocator>& __y)
 {
-    return _STD::lexicographical_compare(__x.begin(), __x.end(), __y.begin(), __y.end());
+    return _VSTD::lexicographical_compare(__x.begin(), __x.end(), __y.begin(), __y.end());
 }
 
 template <class _Tp, class _Allocator>

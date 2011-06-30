@@ -136,10 +136,10 @@ struct _LIBCPP_VISIBLE array
 
     // No explicit construct/copy/destroy for aggregate type
     _LIBCPP_INLINE_VISIBILITY void fill(const value_type& __u)
-        {_STD::fill_n(__elems_, _Size, __u);}
+        {_VSTD::fill_n(__elems_, _Size, __u);}
     _LIBCPP_INLINE_VISIBILITY
     void swap(array& __a) _NOEXCEPT_(__is_nothrow_swappable<_Tp>::value)
-        {_STD::swap_ranges(__elems_, __elems_ + _Size, __a.__elems_);}
+        {_VSTD::swap_ranges(__elems_, __elems_ + _Size, __a.__elems_);}
 
     // iterators:
     _LIBCPP_INLINE_VISIBILITY
@@ -225,7 +225,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator==(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 {
-    return _STD::equal(__x.__elems_, __x.__elems_ + _Size, __y.__elems_);
+    return _VSTD::equal(__x.__elems_, __x.__elems_ + _Size, __y.__elems_);
 }
 
 template <class _Tp, size_t _Size>
@@ -241,7 +241,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 bool
 operator<(const array<_Tp, _Size>& __x, const array<_Tp, _Size>& __y)
 {
-    return _STD::lexicographical_compare(__x.__elems_, __x.__elems_ + _Size, __y.__elems_, __y.__elems_ + _Size);
+    return _VSTD::lexicographical_compare(__x.__elems_, __x.__elems_ + _Size, __y.__elems_, __y.__elems_ + _Size);
 }
 
 template <class _Tp, size_t _Size>
@@ -326,7 +326,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 _Tp&&
 get(array<_Tp, _Size>&& __a) _NOEXCEPT
 {
-    return _STD::move(__a[_Ip]);
+    return _VSTD::move(__a[_Ip]);
 }
 
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES

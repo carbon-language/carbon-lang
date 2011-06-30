@@ -41,7 +41,7 @@ namespace with_locale { namespace {
   using ::localeconv_l;
   using ::mbsrtowcs_l;
 
-  decltype(MB_CUR_MAX_L(_STD::declval<locale_t>()))
+  decltype(MB_CUR_MAX_L(_VSTD::declval<locale_t>()))
   inline _LIBCPP_INLINE_VISIBILITY
   mb_cur_max_l(locale_t loc)
   {
@@ -188,10 +188,10 @@ locale::__imp::__imp(size_t refs)
       facets_(N)
 {
     facets_.clear();
-    install(&make<_STD::collate<char> >(1));
-    install(&make<_STD::collate<wchar_t> >(1));
-    install(&make<_STD::ctype<char> >((ctype_base::mask*)0, false, 1));
-    install(&make<_STD::ctype<wchar_t> >(1));
+    install(&make<_VSTD::collate<char> >(1));
+    install(&make<_VSTD::collate<wchar_t> >(1));
+    install(&make<_VSTD::ctype<char> >((ctype_base::mask*)0, false, 1));
+    install(&make<_VSTD::ctype<wchar_t> >(1));
     install(&make<codecvt<char, char, mbstate_t> >(1));
     install(&make<codecvt<wchar_t, char, mbstate_t> >(1));
     install(&make<codecvt<char16_t, char, mbstate_t> >(1));
@@ -214,8 +214,8 @@ locale::__imp::__imp(size_t refs)
     install(&make<time_get<wchar_t> >(1));
     install(&make<time_put<char> >(1));
     install(&make<time_put<wchar_t> >(1));
-    install(&make<_STD::messages<char> >(1));
-    install(&make<_STD::messages<wchar_t> >(1));
+    install(&make<_VSTD::messages<char> >(1));
+    install(&make<_VSTD::messages<wchar_t> >(1));
 }
 
 locale::__imp::__imp(const string& name, size_t refs)
@@ -358,17 +358,17 @@ locale::__imp::__imp(const __imp& other, const __imp& one, locale::category c)
 #endif  // _LIBCPP_NO_EXCEPTIONS
         if (c & locale::collate)
         {
-            install_from<_STD::collate<char> >(one);
-            install_from<_STD::collate<wchar_t> >(one);
+            install_from<_VSTD::collate<char> >(one);
+            install_from<_VSTD::collate<wchar_t> >(one);
         }
         if (c & locale::ctype)
         {
-            install_from<_STD::ctype<char> >(one);
-            install_from<_STD::ctype<wchar_t> >(one);
-            install_from<_STD::codecvt<char, char, mbstate_t> >(one);
-            install_from<_STD::codecvt<char16_t, char, mbstate_t> >(one);
-            install_from<_STD::codecvt<char32_t, char, mbstate_t> >(one);
-            install_from<_STD::codecvt<wchar_t, char, mbstate_t> >(one);
+            install_from<_VSTD::ctype<char> >(one);
+            install_from<_VSTD::ctype<wchar_t> >(one);
+            install_from<_VSTD::codecvt<char, char, mbstate_t> >(one);
+            install_from<_VSTD::codecvt<char16_t, char, mbstate_t> >(one);
+            install_from<_VSTD::codecvt<char32_t, char, mbstate_t> >(one);
+            install_from<_VSTD::codecvt<wchar_t, char, mbstate_t> >(one);
         }
         if (c & locale::monetary)
         {
@@ -399,8 +399,8 @@ locale::__imp::__imp(const __imp& other, const __imp& one, locale::category c)
         }
         if (c & locale::messages)
         {
-            install_from<_STD::messages<char> >(one);
-            install_from<_STD::messages<wchar_t> >(one);
+            install_from<_VSTD::messages<char> >(one);
+            install_from<_VSTD::messages<wchar_t> >(one);
         }
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }

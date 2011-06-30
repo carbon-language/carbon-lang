@@ -467,7 +467,7 @@ class __call_once_param
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    explicit __call_once_param(_F&& __f) : __f_(_STD::move(__f)) {}
+    explicit __call_once_param(_F&& __f) : __f_(_VSTD::move(__f)) {}
 #else
     _LIBCPP_INLINE_VISIBILITY
     explicit __call_once_param(const _F& __f) : __f_(__f) {}
@@ -485,7 +485,7 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     void __execute(__tuple_indices<_Indices...>)
     {
-        __invoke(_STD::move(_STD::get<0>(__f_)), _STD::move(_STD::get<_Indices>(__f_))...);
+        __invoke(_VSTD::move(_VSTD::get<0>(__f_)), _VSTD::move(_VSTD::get<_Indices>(__f_))...);
     }
 };
 
@@ -498,7 +498,7 @@ class __call_once_param
 public:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
-    explicit __call_once_param(_F&& __f) : __f_(_STD::move(__f)) {}
+    explicit __call_once_param(_F&& __f) : __f_(_VSTD::move(__f)) {}
 #else
     _LIBCPP_INLINE_VISIBILITY
     explicit __call_once_param(const _F& __f) : __f_(__f) {}
@@ -533,8 +533,8 @@ call_once(once_flag& __flag, _Callable&& __func, _Args&&... __args)
     if (__builtin_expect(__flag.__state_ , ~0ul) != ~0ul)
     {
         typedef tuple<typename decay<_Callable>::type, typename decay<_Args>::type...> _G;
-        __call_once_param<_G> __p(_G(__decay_copy(_STD::forward<_Callable>(__func)),
-                                __decay_copy(_STD::forward<_Args>(__args))...));
+        __call_once_param<_G> __p(_G(__decay_copy(_VSTD::forward<_Callable>(__func)),
+                                __decay_copy(_VSTD::forward<_Args>(__args))...));
         __call_once(__flag.__state_, &__p, &__call_once_proxy<_G>);
     }
 }

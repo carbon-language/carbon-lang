@@ -82,7 +82,7 @@ struct _LIBCPP_VISIBLE nullptr_t
 
 inline _LIBCPP_ALWAYS_INLINE nullptr_t __get_nullptr_t() {return nullptr_t(0);}
 
-#define nullptr _STD::__get_nullptr_t()
+#define nullptr _VSTD::__get_nullptr_t()
 
 #endif  // _LIBCPP_HAS_NO_NULLPTR
 

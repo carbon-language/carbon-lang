@@ -363,7 +363,7 @@ __scan_keyword(_InputIterator& __b, _InputIterator __e,
                bool __case_sensitive = true)
 {
     typedef typename iterator_traits<_InputIterator>::value_type _CharT;
-    size_t __nkw = _STD::distance(__kb, __ke);
+    size_t __nkw = _VSTD::distance(__kb, __ke);
     const unsigned char __doesnt_match = '\0';
     const unsigned char __might_match = '\1';
     const unsigned char __does_match = '\2';
@@ -2614,7 +2614,7 @@ time_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
     char_type* __nb = __nar;
     char_type* __ne = __nb + 100;
     __do_put(__nb, __ne, __tm, __fmt, __mod);
-    return _STD::copy(__nb, __ne, __s);
+    return _VSTD::copy(__nb, __ne, __s);
 }
 
 extern template class time_put<char>;
@@ -3282,7 +3282,7 @@ __money_put<_CharT>::__format(char_type* __mb, char_type*& __mi, char_type*& __m
             break;
         case money_base::symbol:
             if (!__sym.empty() && (__flags & ios_base::showbase))
-                __me = _STD::copy(__sym.begin(), __sym.end(), __me);
+                __me = _VSTD::copy(__sym.begin(), __sym.end(), __me);
             break;
         case money_base::value:
             {
@@ -3341,7 +3341,7 @@ __money_put<_CharT>::__format(char_type* __mb, char_type*& __mi, char_type*& __m
     }
     // print rest of sign, if any
     if (__sn.size() > 1)
-        __me = _STD::copy(__sn.begin()+1, __sn.end(), __me);
+        __me = _VSTD::copy(__sn.begin()+1, __sn.end(), __me);
     // set alignment
     if ((__flags & ios_base::adjustfield) == ios_base::left)
         __mi = __me;
@@ -3716,8 +3716,8 @@ template<class _Codecvt, class _Elem, class _Wide_alloc, class _Byte_alloc>
 inline _LIBCPP_ALWAYS_INLINE
 wstring_convert<_Codecvt, _Elem, _Wide_alloc, _Byte_alloc>::
     wstring_convert(wstring_convert&& __wc)
-        : __byte_err_string_(_STD::move(__wc.__byte_err_string_)),
-          __wide_err_string_(_STD::move(__wc.__wide_err_string_)),
+        : __byte_err_string_(_VSTD::move(__wc.__byte_err_string_)),
+          __wide_err_string_(_VSTD::move(__wc.__wide_err_string_)),
           __cvtptr_(__wc.__cvtptr_),
           __cvtstate_(__wc.__cvtstate_), __cvtcount_(__wc.__cvtstate_)
 {
@@ -4010,7 +4010,7 @@ wbuffer_convert<_Codecvt, _Elem, _Tr>::underflow()
             memmove(__extbuf_, __extbufnext_, __extbufend_ - __extbufnext_);
             __extbufnext_ = __extbuf_ + (__extbufend_ - __extbufnext_);
             __extbufend_ = __extbuf_ + (__extbuf_ == __extbuf_min_ ? sizeof(__extbuf_min_) : __ebs_);
-            streamsize __nmemb = _STD::min(static_cast<streamsize>(this->egptr() - this->eback() - __unget_sz),
+            streamsize __nmemb = _VSTD::min(static_cast<streamsize>(this->egptr() - this->eback() - __unget_sz),
                                  static_cast<streamsize>(__extbufend_ - __extbufnext_));
             codecvt_base::result __r;
             state_type __svs = __st_;

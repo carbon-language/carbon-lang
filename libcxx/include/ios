@@ -266,8 +266,8 @@ public:
     enum seekdir {beg, cur, end};
     typedef seekdir seek_dir;
 
-    typedef _STD::streamoff streamoff;
-    typedef _STD::streampos streampos;
+    typedef _VSTD::streamoff streamoff;
+    typedef _VSTD::streampos streampos;
 
     class Init;
 
@@ -776,8 +776,8 @@ void
 basic_ios<_CharT, _Traits>::swap(basic_ios& __rhs)
 {
     ios_base::swap(__rhs);
-    _STD::swap(__tie_, __rhs.__tie_);
-    _STD::swap(__fill_, __rhs.__fill_);
+    _VSTD::swap(__tie_, __rhs.__tie_);
+    _VSTD::swap(__fill_, __rhs.__fill_);
 }
 
 template <class _CharT, class _Traits>

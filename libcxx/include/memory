@@ -938,7 +938,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     static pointer pointer_to(typename conditional<is_void<element_type>::value,
                                       __nat, element_type>::type& __r) _NOEXCEPT
-        {return _STD::addressof(__r);}
+        {return _VSTD::addressof(__r);}
 };
 
 // allocator_traits
@@ -1072,7 +1072,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename pointer_traits<_Pointer>::element_type*
 __to_raw_pointer(_Pointer __p) _NOEXCEPT
 {
-    return _STD::__to_raw_pointer(__p.operator->());
+    return _VSTD::__to_raw_pointer(__p.operator->());
 }
 
 template <class _Tp>
@@ -1296,8 +1296,8 @@ struct __has_allocate_hint
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Alloc, class _Tp, class ..._Args>
-decltype(_STD::declval<_Alloc>().construct(_STD::declval<_Tp*>(),
-                                           _STD::declval<_Args>()...),
+decltype(_VSTD::declval<_Alloc>().construct(_VSTD::declval<_Tp*>(),
+                                           _VSTD::declval<_Args>()...),
                                            true_type())
 __has_construct_test(_Alloc&& __a, _Tp* __p, _Args&& ...__args);
 
@@ -1467,7 +1467,7 @@ struct _LIBCPP_VISIBLE allocator_traits
         _LIBCPP_INLINE_VISIBILITY
         static void construct(allocator_type& __a, _Tp* __p, _Args&&... __args)
             {__construct(__has_construct<allocator_type, pointer, _Args...>(),
-                         __a, __p, _STD::forward<_Args>(__args)...);}
+                         __a, __p, _VSTD::forward<_Args>(__args)...);}
 #else  // _LIBCPP_HAS_NO_VARIADICS
     template <class _Tp>
         _LIBCPP_INLINE_VISIBILITY
@@ -1528,12 +1528,12 @@ private:
     template <class _Tp, class... _Args>
         _LIBCPP_INLINE_VISIBILITY
         static void __construct(true_type, allocator_type& __a, _Tp* __p, _Args&&... __args)
-            {__a.construct(__p, _STD::forward<_Args>(__args)...);}
+            {__a.construct(__p, _VSTD::forward<_Args>(__args)...);}
     template <class _Tp, class... _Args>
         _LIBCPP_INLINE_VISIBILITY
         static void __construct(false_type, allocator_type&, _Tp* __p, _Args&&... __args)
             {
-                ::new ((void*)__p) _Tp(_STD::forward<_Args>(__args)...);
+                ::new ((void*)__p) _Tp(_VSTD::forward<_Args>(__args)...);
             }
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
@@ -1638,9 +1638,9 @@ public:
     _LIBCPP_INLINE_VISIBILITY allocator() _NOEXCEPT {}
     template <class _Up> _LIBCPP_INLINE_VISIBILITY allocator(const allocator<_Up>&) _NOEXCEPT {}
     _LIBCPP_INLINE_VISIBILITY pointer address(reference __x) const _NOEXCEPT
-        {return _STD::addressof(__x);}
+        {return _VSTD::addressof(__x);}
     _LIBCPP_INLINE_VISIBILITY const_pointer address(const_reference __x) const _NOEXCEPT
-        {return _STD::addressof(__x);}
+        {return _VSTD::addressof(__x);}
     _LIBCPP_INLINE_VISIBILITY pointer allocate(size_type __n, allocator<void>::const_pointer = 0)
         {return static_cast<pointer>(::operator new(__n * sizeof(_Tp)));}
     _LIBCPP_INLINE_VISIBILITY void deallocate(pointer __p, size_type) _NOEXCEPT
@@ -1653,7 +1653,7 @@ public:
         void
         construct(_Up* __p, _Args&&... __args)
         {
-            ::new((void*)__p) _Up(_STD::forward<_Args>(__args)...);
+            ::new((void*)__p) _Up(_VSTD::forward<_Args>(__args)...);
         }
 #else  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
         _LIBCPP_INLINE_VISIBILITY
@@ -1694,7 +1694,7 @@ public:
         >::type
         construct(pointer __p, _A0 __a0)
         {
-            ::new((void*)__p) _Tp(_STD::move(__a0));
+            ::new((void*)__p) _Tp(_VSTD::move(__a0));
         }
 # endif  // defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
     template <class _A0, class _A1>
@@ -1883,17 +1883,17 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1, int = 0)
-        : __first_(_STD::forward<_T1_param>(__t1)) {}
+        : __first_(_VSTD::forward<_T1_param>(__t1)) {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T2_param __t2, int* = 0)
-        : __second_(_STD::forward<_T2_param>(__t2)) {}
+        : __second_(_VSTD::forward<_T2_param>(__t2)) {}
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
-        : __first_(_STD::forward<_T1_param>(__t1)), __second_(_STD::forward<_T2_param>(__t2)) {}
+        : __first_(_VSTD::forward<_T1_param>(__t1)), __second_(_VSTD::forward<_T2_param>(__t2)) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
                    is_nothrow_move_constructible<_T2>::value)
-        : __first_(_STD::forward<_T1>(__p.first())), __second_(_STD::forward<_T2>(__p.second())) {}
+        : __first_(_VSTD::forward<_T1>(__p.first())), __second_(_VSTD::forward<_T2>(__p.second())) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return __first_;}
@@ -1906,7 +1906,7 @@ public:
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
                    __is_nothrow_swappable<_T1>::value)
     {
-        using _STD::swap;
+        using _VSTD::swap;
         swap(__first_, __x.__first_);
         swap(__second_, __x.__second_);
     }
@@ -1930,17 +1930,17 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1, int = 0)
-        : _T1(_STD::forward<_T1_param>(__t1)) {}
+        : _T1(_VSTD::forward<_T1_param>(__t1)) {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T2_param __t2, int* = 0)
-        : __second_(_STD::forward<_T2_param>(__t2)) {}
+        : __second_(_VSTD::forward<_T2_param>(__t2)) {}
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
-        : _T1(_STD::forward<_T1_param>(__t1)), __second_(_STD::forward<_T2_param>(__t2)) {}
+        : _T1(_VSTD::forward<_T1_param>(__t1)), __second_(_VSTD::forward<_T2_param>(__t2)) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
                    is_nothrow_move_constructible<_T2>::value)
-        : _T1(_STD::move(__p.first())), __second_(_STD::forward<_T2>(__p.second())) {}
+        : _T1(_VSTD::move(__p.first())), __second_(_VSTD::forward<_T2>(__p.second())) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return *this;}
@@ -1953,7 +1953,7 @@ public:
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
                    __is_nothrow_swappable<_T1>::value)
     {
-        using _STD::swap;
+        using _VSTD::swap;
         swap(__second_, __x.__second_);
     }
 };
@@ -1976,17 +1976,17 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1)
-        : __first_(_STD::forward<_T1_param>(__t1)) {}
+        : __first_(_VSTD::forward<_T1_param>(__t1)) {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T2_param __t2)
-        : _T2(_STD::forward<_T2_param>(__t2)) {}
+        : _T2(_VSTD::forward<_T2_param>(__t2)) {}
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
                    is_nothrow_move_constructible<_T2>::value)
-        : _T2(_STD::forward<_T2_param>(__t2)), __first_(_STD::forward<_T1_param>(__t1)) {}
+        : _T2(_VSTD::forward<_T2_param>(__t2)), __first_(_VSTD::forward<_T1_param>(__t1)) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
-        : _T2(_STD::forward<_T2>(__p.second())), __first_(_STD::move(__p.first())) {}
+        : _T2(_VSTD::forward<_T2>(__p.second())), __first_(_VSTD::move(__p.first())) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return __first_;}
@@ -1999,7 +1999,7 @@ public:
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
                    __is_nothrow_swappable<_T1>::value)
     {
-        using _STD::swap;
+        using _VSTD::swap;
         swap(__first_, __x.__first_);
     }
 };
@@ -2021,17 +2021,17 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1)
-        : _T1(_STD::forward<_T1_param>(__t1)) {}
+        : _T1(_VSTD::forward<_T1_param>(__t1)) {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T2_param __t2)
-        : _T2(_STD::forward<_T2_param>(__t2)) {}
+        : _T2(_VSTD::forward<_T2_param>(__t2)) {}
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(_T1_param __t1, _T2_param __t2)
-        : _T1(_STD::forward<_T1_param>(__t1)), _T2(_STD::forward<_T2_param>(__t2)) {}
+        : _T1(_VSTD::forward<_T1_param>(__t1)), _T2(_VSTD::forward<_T2_param>(__t2)) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp(__libcpp_compressed_pair_imp&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
                    is_nothrow_move_constructible<_T2>::value)
-        : _T1(_STD::move(__p.first())), _T2(_STD::move(__p.second())) {}
+        : _T1(_VSTD::move(__p.first())), _T2(_VSTD::move(__p.second())) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return *this;}
@@ -2064,17 +2064,17 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY __compressed_pair() {}
     _LIBCPP_INLINE_VISIBILITY explicit __compressed_pair(_T1_param __t1, int = 0)
-        : base(_STD::forward<_T1_param>(__t1)) {}
+        : base(_VSTD::forward<_T1_param>(__t1)) {}
     _LIBCPP_INLINE_VISIBILITY explicit __compressed_pair(_T2_param __t2, int* = 0)
-        : base(_STD::forward<_T2_param>(__t2)) {}
+        : base(_VSTD::forward<_T2_param>(__t2)) {}
     _LIBCPP_INLINE_VISIBILITY __compressed_pair(_T1_param __t1, _T2_param __t2)
-        : base(_STD::forward<_T1_param>(__t1), _STD::forward<_T2_param>(__t2)) {}
+        : base(_VSTD::forward<_T1_param>(__t1), _VSTD::forward<_T2_param>(__t2)) {}
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     __compressed_pair(__compressed_pair&& __p)
         _NOEXCEPT_(is_nothrow_move_constructible<_T1>::value &&
                    is_nothrow_move_constructible<_T2>::value)
-        : base(_STD::move(__p)) {}
+        : base(_VSTD::move(__p)) {}
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
     _LIBCPP_INLINE_VISIBILITY _T1_reference       first() _NOEXCEPT       {return base::first();}
@@ -2167,7 +2167,7 @@ public:
                 "unique_ptr constructed with null function pointer deleter");
         }
     _LIBCPP_INLINE_VISIBILITY explicit unique_ptr(pointer __p) _NOEXCEPT
-        : __ptr_(_STD::move(__p))
+        : __ptr_(_VSTD::move(__p))
         {
             static_assert(!is_pointer<deleter_type>::value,
                 "unique_ptr constructed with null function pointer deleter");
@@ -2183,12 +2183,12 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr(pointer __p, typename remove_reference<deleter_type>::type&& __d)
              _NOEXCEPT
-        : __ptr_(__p, _STD::move(__d))
+        : __ptr_(__p, _VSTD::move(__d))
         {
             static_assert(!is_reference<deleter_type>::value, "rvalue deleter bound to reference");
         }
     _LIBCPP_INLINE_VISIBILITY unique_ptr(unique_ptr&& __u) _NOEXCEPT
-        : __ptr_(__u.release(), _STD::forward<deleter_type>(__u.get_deleter())) {}
+        : __ptr_(__u.release(), _VSTD::forward<deleter_type>(__u.get_deleter())) {}
     template <class _Up, class _Ep>
         _LIBCPP_INLINE_VISIBILITY
         unique_ptr(unique_ptr<_Up, _Ep>&& __u,
@@ -2203,7 +2203,7 @@ public:
                          ),
                          __nat
                       >::type = __nat()) _NOEXCEPT
-            : __ptr_(__u.release(), _STD::forward<_Ep>(__u.get_deleter())) {}
+            : __ptr_(__u.release(), _VSTD::forward<_Ep>(__u.get_deleter())) {}
 
     template <class _Up>
         _LIBCPP_INLINE_VISIBILITY unique_ptr(auto_ptr<_Up>&& __p,
@@ -2219,7 +2219,7 @@ public:
         _LIBCPP_INLINE_VISIBILITY unique_ptr& operator=(unique_ptr&& __u) _NOEXCEPT
             {
                 reset(__u.release());
-                __ptr_.second() = _STD::forward<deleter_type>(__u.get_deleter());
+                __ptr_.second() = _VSTD::forward<deleter_type>(__u.get_deleter());
                 return *this;
             }
 
@@ -2233,7 +2233,7 @@ public:
             operator=(unique_ptr<_Up, _Ep>&& __u) _NOEXCEPT
             {
                 reset(__u.release());
-                __ptr_.second() = _STD::forward<_Ep>(__u.get_deleter());
+                __ptr_.second() = _VSTD::forward<_Ep>(__u.get_deleter());
                 return *this;
             }
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -2244,18 +2244,18 @@ public:
     }
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr(__rv<unique_ptr> __u)
-        : __ptr_(__u->release(), _STD::forward<deleter_type>(__u->get_deleter())) {}
+        : __ptr_(__u->release(), _VSTD::forward<deleter_type>(__u->get_deleter())) {}
 
     template <class _Up, class _Ep>
     _LIBCPP_INLINE_VISIBILITY unique_ptr& operator=(unique_ptr<_Up, _Ep> __u)
     {
         reset(__u.release());
-        __ptr_.second() = _STD::forward<deleter_type>(__u.get_deleter());
+        __ptr_.second() = _VSTD::forward<deleter_type>(__u.get_deleter());
         return *this;
     }
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr(pointer __p, deleter_type __d)
-        : __ptr_(_STD::move(__p), _STD::move(__d)) {}
+        : __ptr_(_VSTD::move(__p), _VSTD::move(__d)) {}
 
     template <class _Up>
         _LIBCPP_INLINE_VISIBILITY
@@ -2380,25 +2380,25 @@ public:
              >
     _LIBCPP_INLINE_VISIBILITY unique_ptr(_P __p, typename remove_reference<deleter_type>::type&& __d)
              _NOEXCEPT
-        : __ptr_(__p, _STD::move(__d))
+        : __ptr_(__p, _VSTD::move(__d))
         {
             static_assert(!is_reference<deleter_type>::value, "rvalue deleter bound to reference");
         }
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr(nullptr_t, typename remove_reference<deleter_type>::type&& __d)
              _NOEXCEPT
-        : __ptr_(pointer(), _STD::move(__d))
+        : __ptr_(pointer(), _VSTD::move(__d))
         {
             static_assert(!is_reference<deleter_type>::value, "rvalue deleter bound to reference");
         }
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr(unique_ptr&& __u) _NOEXCEPT
-        : __ptr_(__u.release(), _STD::forward<deleter_type>(__u.get_deleter())) {}
+        : __ptr_(__u.release(), _VSTD::forward<deleter_type>(__u.get_deleter())) {}
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr& operator=(unique_ptr&& __u) _NOEXCEPT
         {
             reset(__u.release());
-            __ptr_.second() = _STD::forward<deleter_type>(__u.get_deleter());
+            __ptr_.second() = _VSTD::forward<deleter_type>(__u.get_deleter());
             return *this;
         }
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -2411,10 +2411,10 @@ public:
         }
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr(pointer __p, deleter_type __d)
-        : __ptr_(__p, _STD::forward<deleter_type>(__d)) {}
+        : __ptr_(__p, _VSTD::forward<deleter_type>(__d)) {}
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr(nullptr_t, deleter_type __d)
-        : __ptr_(pointer(), _STD::forward<deleter_type>(__d)) {}
+        : __ptr_(pointer(), _VSTD::forward<deleter_type>(__d)) {}
 
     _LIBCPP_INLINE_VISIBILITY operator __rv<unique_ptr>()
     {
@@ -2422,12 +2422,12 @@ public:
     }
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr(__rv<unique_ptr> __u)
-        : __ptr_(__u->release(), _STD::forward<deleter_type>(__u->get_deleter())) {}
+        : __ptr_(__u->release(), _VSTD::forward<deleter_type>(__u->get_deleter())) {}
 
     _LIBCPP_INLINE_VISIBILITY unique_ptr& operator=(__rv<unique_ptr> __u)
     {
         reset(__u->release());
-        __ptr_.second() = _STD::forward<deleter_type>(__u->get_deleter());
+        __ptr_.second() = _VSTD::forward<deleter_type>(__u->get_deleter());
         return *this;
     }
 
@@ -2752,7 +2752,7 @@ class __shared_ptr_pointer
 public:
     _LIBCPP_INLINE_VISIBILITY
     __shared_ptr_pointer(_Tp __p, _Dp __d, _Alloc __a)
-        :  __data_(__compressed_pair<_Tp, _Dp>(__p, _STD::move(__d)), _STD::move(__a)) {}
+        :  __data_(__compressed_pair<_Tp, _Dp>(__p, _VSTD::move(__d)), _VSTD::move(__a)) {}
 
 #ifndef _LIBCPP_NO_RTTI
     virtual const void* __get_deleter(const type_info&) const _NOEXCEPT;
@@ -2801,12 +2801,12 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     __shared_ptr_emplace(_Alloc __a)
-        :  __data_(_STD::move(__a)) {}
+        :  __data_(_VSTD::move(__a)) {}
 
     template <class ..._Args>
         _LIBCPP_INLINE_VISIBILITY
         __shared_ptr_emplace(_Alloc __a, _Args&& ...__args)
-            :  __data_(_STD::move(__a), _Tp(_STD::forward<_Args>(__args)...)) {}
+            :  __data_(_VSTD::move(__a), _Tp(_VSTD::forward<_Args>(__args)...)) {}
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
 
@@ -3271,7 +3271,7 @@ shared_ptr<_Tp>::make_shared(_Args&& ...__args)
     typedef __allocator_destructor<_A2> _D2;
     _A2 __a2;
     unique_ptr<_CntrlBlk, _D2> __hold2(__a2.allocate(1), _D2(__a2, 1));
-    ::new(__hold2.get()) _CntrlBlk(__a2, _STD::forward<_Args>(__args)...);
+    ::new(__hold2.get()) _CntrlBlk(__a2, _VSTD::forward<_Args>(__args)...);
     shared_ptr<_Tp> __r;
     __r.__ptr_ = __hold2.get()->get();
     __r.__cntrl_ = __hold2.release();
@@ -3289,7 +3289,7 @@ shared_ptr<_Tp>::allocate_shared(const _Alloc& __a, _Args&& ...__args)
     typedef __allocator_destructor<_A2> _D2;
     _A2 __a2(__a);
     unique_ptr<_CntrlBlk, _D2> __hold2(__a2.allocate(1), _D2(__a2, 1));
-    ::new(__hold2.get()) _CntrlBlk(__a, _STD::forward<_Args>(__args)...);
+    ::new(__hold2.get()) _CntrlBlk(__a, _VSTD::forward<_Args>(__args)...);
     shared_ptr<_Tp> __r;
     __r.__ptr_ = __hold2.get()->get();
     __r.__cntrl_ = __hold2.release();
@@ -3477,7 +3477,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>&
 shared_ptr<_Tp>::operator=(shared_ptr&& __r) _NOEXCEPT
 {
-    shared_ptr(_STD::move(__r)).swap(*this);
+    shared_ptr(_VSTD::move(__r)).swap(*this);
     return *this;
 }
 
@@ -3487,7 +3487,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>&
 shared_ptr<_Tp>::operator=(shared_ptr<_Yp>&& __r)
 {
-    shared_ptr(_STD::move(__r)).swap(*this);
+    shared_ptr(_VSTD::move(__r)).swap(*this);
     return *this;
 }
 
@@ -3497,7 +3497,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>&
 shared_ptr<_Tp>::operator=(auto_ptr<_Yp>&& __r)
 {
-    shared_ptr(_STD::move(__r)).swap(*this);
+    shared_ptr(_VSTD::move(__r)).swap(*this);
     return *this;
 }
 
@@ -3507,7 +3507,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>&
 shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp>&& __r)
 {
-    shared_ptr(_STD::move(__r)).swap(*this);
+    shared_ptr(_VSTD::move(__r)).swap(*this);
     return *this;
 }
 
@@ -3529,7 +3529,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>&
 shared_ptr<_Tp>::operator=(unique_ptr<_Yp, _Dp> __r)
 {
-    shared_ptr(_STD::move(__r)).swap(*this);
+    shared_ptr(_VSTD::move(__r)).swap(*this);
     return *this;
 }
 
@@ -3540,8 +3540,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 shared_ptr<_Tp>::swap(shared_ptr& __r) _NOEXCEPT
 {
-    _STD::swap(__ptr_, __r.__ptr_);
-    _STD::swap(__cntrl_, __r.__cntrl_);
+    _VSTD::swap(__ptr_, __r.__ptr_);
+    _VSTD::swap(__cntrl_, __r.__cntrl_);
 }
 
 template<class _Tp>
@@ -3586,7 +3586,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>
 make_shared(_Args&& ...__args)
 {
-    return shared_ptr<_Tp>::make_shared(_STD::forward<_Args>(__args)...);
+    return shared_ptr<_Tp>::make_shared(_VSTD::forward<_Args>(__args)...);
 }
 
 template<class _Tp, class _Alloc, class ..._Args>
@@ -3594,7 +3594,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 shared_ptr<_Tp>
 allocate_shared(const _Alloc& __a, _Args&& ...__args)
 {
-    return shared_ptr<_Tp>::allocate_shared(__a, _STD::forward<_Args>(__args)...);
+    return shared_ptr<_Tp>::allocate_shared(__a, _VSTD::forward<_Args>(__args)...);
 }
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
@@ -3866,8 +3866,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 weak_ptr<_Tp>::swap(weak_ptr& __r) _NOEXCEPT
 {
-    _STD::swap(__ptr_, __r.__ptr_);
-    _STD::swap(__cntrl_, __r.__cntrl_);
+    _VSTD::swap(__ptr_, __r.__ptr_);
+    _VSTD::swap(__cntrl_, __r.__cntrl_);
 }
 
 template<class _Tp>

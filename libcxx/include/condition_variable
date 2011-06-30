@@ -243,7 +243,7 @@ condition_variable_any::wait_for(_Lock& __lock,
                                  _Predicate __pred)
 {
     return wait_until(__lock, chrono::steady_clock::now() + __d,
-                      _STD::move(__pred));
+                      _VSTD::move(__pred));
 }
 
 _LIBCPP_VISIBLE

@@ -314,8 +314,8 @@ class __func<_F, _Alloc, _R()>
 {
     __compressed_pair<_F, _Alloc> __f_;
 public:
-    explicit __func(_F __f) : __f_(_STD::move(__f)) {}
-    explicit __func(_F __f, _Alloc __a) : __f_(_STD::move(__f), _STD::move(__a)) {}
+    explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
+    explicit __func(_F __f, _Alloc __a) : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
     virtual __base<_R()>* __clone() const;
     virtual void __clone(__base<_R()>*) const;
     virtual void destroy();
@@ -396,9 +396,9 @@ class __func<_F, _Alloc, _R(_A0)>
 {
     __compressed_pair<_F, _Alloc> __f_;
 public:
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_STD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
     _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
-        : __f_(_STD::move(__f), _STD::move(__a)) {}
+        : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
     virtual __base<_R(_A0)>* __clone() const;
     virtual void __clone(__base<_R(_A0)>*) const;
     virtual void destroy();
@@ -479,9 +479,9 @@ class __func<_F, _Alloc, _R(_A0, _A1)>
 {
     __compressed_pair<_F, _Alloc> __f_;
 public:
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_STD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
     _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
-        : __f_(_STD::move(__f), _STD::move(__a)) {}
+        : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
     virtual __base<_R(_A0, _A1)>* __clone() const;
     virtual void __clone(__base<_R(_A0, _A1)>*) const;
     virtual void destroy();
@@ -562,9 +562,9 @@ class __func<_F, _Alloc, _R(_A0, _A1, _A2)>
 {
     __compressed_pair<_F, _Alloc> __f_;
 public:
-    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_STD::move(__f)) {}
+    _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f) : __f_(_VSTD::move(__f)) {}
     _LIBCPP_INLINE_VISIBILITY explicit __func(_F __f, _Alloc __a)
-        : __f_(_STD::move(__f), _STD::move(__a)) {}
+        : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
     virtual __base<_R(_A0, _A1, _A2)>* __clone() const;
     virtual void __clone(__base<_R(_A0, _A1, _A2)>*) const;
     virtual void destroy();
@@ -831,7 +831,7 @@ typename enable_if
 >::type
 function<_R()>::operator=(_F __f)
 {
-    function(_STD::move(__f)).swap(*this);
+    function(_VSTD::move(__f)).swap(*this);
     return *this;
 }
 
@@ -878,7 +878,7 @@ function<_R()>::swap(function& __f)
         __f_ = (__base*)&__buf_;
     }
     else
-        _STD::swap(__f_, __f.__f_);
+        _VSTD::swap(__f_, __f.__f_);
 }
 
 template<class _R>
@@ -1133,7 +1133,7 @@ typename enable_if
 >::type
 function<_R(_A0)>::operator=(_F __f)
 {
-    function(_STD::move(__f)).swap(*this);
+    function(_VSTD::move(__f)).swap(*this);
     return *this;
 }
 
@@ -1180,7 +1180,7 @@ function<_R(_A0)>::swap(function& __f)
         __f_ = (__base*)&__buf_;
     }
     else
-        _STD::swap(__f_, __f.__f_);
+        _VSTD::swap(__f_, __f.__f_);
 }
 
 template<class _R, class _A0>
@@ -1435,7 +1435,7 @@ typename enable_if
 >::type
 function<_R(_A0, _A1)>::operator=(_F __f)
 {
-    function(_STD::move(__f)).swap(*this);
+    function(_VSTD::move(__f)).swap(*this);
     return *this;
 }
 
@@ -1482,7 +1482,7 @@ function<_R(_A0, _A1)>::swap(function& __f)
         __f_ = (__base*)&__buf_;
     }
     else
-        _STD::swap(__f_, __f.__f_);
+        _VSTD::swap(__f_, __f.__f_);
 }
 
 template<class _R, class _A0, class _A1>
@@ -1737,7 +1737,7 @@ typename enable_if
 >::type
 function<_R(_A0, _A1, _A2)>::operator=(_F __f)
 {
-    function(_STD::move(__f)).swap(*this);
+    function(_VSTD::move(__f)).swap(*this);
     return *this;
 }
 
@@ -1784,7 +1784,7 @@ function<_R(_A0, _A1, _A2)>::swap(function& __f)
         __f_ = (__base*)&__buf_;
     }
     else
-        _STD::swap(__f_, __f.__f_);
+        _VSTD::swap(__f_, __f.__f_);
 }
 
 template<class _R, class _A0, class _A1, class _A2>
@@ -1909,7 +1909,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename __mu_return1<true, _Ti, _Uj...>::type
 __mu_expand(_Ti& __ti, tuple<_Uj...>&& __uj, __tuple_indices<_Indx...>)
 {
-    __ti(_STD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj))...);
+    __ti(_VSTD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj))...);
 }
 
 template <class _Ti, class ..._Uj>
@@ -1947,7 +1947,7 @@ __mu(_Ti&, _Uj& __uj)
     // compiler bug workaround
     typename tuple_element<_Indx, _Uj>::type __t = get<_Indx>(__uj);
     return __t;
-//    return _STD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj));
+//    return _VSTD::forward<typename tuple_element<_Indx, _Uj>::type>(get<_Indx>(__uj));
 }
 
 template <class _Ti, class _Uj>
@@ -2051,8 +2051,8 @@ class __bind
 public:
     template <class _G, class ..._BA>
       explicit __bind(_G&& __f, _BA&& ...__bound_args)
-        : __f_(_STD::forward<_G>(__f)),
-          __bound_args_(_STD::forward<_BA>(__bound_args)...) {}
+        : __f_(_VSTD::forward<_G>(__f)),
+          __bound_args_(_VSTD::forward<_BA>(__bound_args)...) {}
 
     template <class ..._Args>
         typename __bind_return<_F, tuple<_BoundArgs...>, tuple<_Args&&...> >::type
@@ -2085,21 +2085,21 @@ public:
 
     template <class _G, class ..._BA>
       explicit __bind_r(_G&& __f, _BA&& ...__bound_args)
-        : base(_STD::forward<_G>(__f),
-               _STD::forward<_BA>(__bound_args)...) {}
+        : base(_VSTD::forward<_G>(__f),
+               _VSTD::forward<_BA>(__bound_args)...) {}
 
     template <class ..._Args>
         result_type
         operator()(_Args&& ...__args)
         {
-            return base::operator()(_STD::forward<_Args>(__args)...);
+            return base::operator()(_VSTD::forward<_Args>(__args)...);
         }
 
     template <class ..._Args>
         result_type
         operator()(_Args&& ...__args) const
         {
-            return base::operator()(_STD::forward<_Args>(__args)...);
+            return base::operator()(_VSTD::forward<_Args>(__args)...);
         }
 };
 
@@ -2112,7 +2112,7 @@ __bind<typename decay<_F>::type, typename decay<_BoundArgs>::type...>
 bind(_F&& __f, _BoundArgs&&... __bound_args)
 {
     typedef __bind<typename decay<_F>::type, typename decay<_BoundArgs>::type...> type;
-    return type(_STD::forward<_F>(__f), _STD::forward<_BoundArgs>(__bound_args)...);
+    return type(_VSTD::forward<_F>(__f), _VSTD::forward<_BoundArgs>(__bound_args)...);
 }
 
 template<class _R, class _F, class ..._BoundArgs>
@@ -2121,7 +2121,7 @@ __bind_r<_R, typename decay<_F>::type, typename decay<_BoundArgs>::type...>
 bind(_F&& __f, _BoundArgs&&... __bound_args)
 {
     typedef __bind_r<_R, typename decay<_F>::type, typename decay<_BoundArgs>::type...> type;
-    return type(_STD::forward<_F>(__f), _STD::forward<_BoundArgs>(__bound_args)...);
+    return type(_VSTD::forward<_F>(__f), _VSTD::forward<_BoundArgs>(__bound_args)...);
 }
 */
 

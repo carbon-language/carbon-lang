@@ -199,7 +199,7 @@ throw_with_nested (_Tp& __t, typename enable_if<
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    throw __nested<typename remove_reference<_Tp>::type>(_STD::forward<_Tp>(__t));
+    throw __nested<typename remove_reference<_Tp>::type>(_VSTD::forward<_Tp>(__t));
 #endif
 }
 
@@ -218,7 +218,7 @@ throw_with_nested (_Tp& __t, typename enable_if<
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    throw _STD::forward<_Tp>(__t);
+    throw _VSTD::forward<_Tp>(__t);
 #endif
 }
 

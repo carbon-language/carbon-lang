@@ -2862,7 +2862,7 @@ valarray<_Tp>::operator=(const valarray& __v)
     {
         if (size() != __v.size())
             resize(__v.size());
-        _STD::copy(__v.__begin_, __v.__end_, __begin_);
+        _VSTD::copy(__v.__begin_, __v.__end_, __begin_);
     }
     return *this;
 }
@@ -2889,7 +2889,7 @@ valarray<_Tp>::operator=(initializer_list<value_type> __il)
 {
     if (size() != __il.size())
         resize(__il.size());
-    _STD::copy(__il.begin(), __il.end(), __begin_);
+    _VSTD::copy(__il.begin(), __il.end(), __begin_);
     return *this;
 }
 
@@ -2900,7 +2900,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 valarray<_Tp>&
 valarray<_Tp>::operator=(const value_type& __x)
 {
-    _STD::fill(__begin_, __end_, __x);
+    _VSTD::fill(__begin_, __end_, __x);
     return *this;
 }
 
@@ -3415,8 +3415,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 valarray<_Tp>::swap(valarray& __v)
 {
-    _STD::swap(__begin_, __v.__begin_);
-    _STD::swap(__end_, __v.__end_);
+    _VSTD::swap(__begin_, __v.__begin_);
+    _VSTD::swap(__end_, __v.__end_);
 }
 
 template <class _Tp>
@@ -3440,7 +3440,7 @@ valarray<_Tp>::min() const
 {
     if (__begin_ == __end_)
         return value_type();
-    return *_STD::min_element(__begin_, __end_);
+    return *_VSTD::min_element(__begin_, __end_);
 }
 
 template <class _Tp>
@@ -3450,7 +3450,7 @@ valarray<_Tp>::max() const
 {
     if (__begin_ == __end_)
         return value_type();
-    return *_STD::max_element(__begin_, __end_);
+    return *_VSTD::max_element(__begin_, __end_);
 }
 
 template <class _Tp>
@@ -3469,14 +3469,14 @@ valarray<_Tp>::shift(int __i) const
         value_type* __te;
         if (__i >= 0)
         {
-            __i = _STD::min(__i, static_cast<int>(__n));
+            __i = _VSTD::min(__i, static_cast<int>(__n));
             __sb = __begin_ + __i;
             __tb = __r.__begin_;
             __te = __r.__begin_ + (__n - __i);
         }
         else
         {
-            __i = _STD::min(-__i, static_cast<int>(__n));
+            __i = _VSTD::min(-__i, static_cast<int>(__n));
             __sb = __begin_;
             __tb = __r.__begin_ + __i;
             __te = __r.__begin_ + __n;
