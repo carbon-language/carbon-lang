@@ -670,6 +670,7 @@ void FrameEmitterImpl::EmitCFIInstructions(MCStreamer &streamer,
     if (BaseLabel && Label) {
       MCSymbol *ThisSym = Label;
       if (ThisSym != BaseLabel) {
+        if (streamer.isVerboseAsm()) streamer.AddComment("DW_CFA_advance_loc4");
         streamer.EmitDwarfAdvanceFrameAddr(BaseLabel, ThisSym);
         BaseLabel = ThisSym;
       }
