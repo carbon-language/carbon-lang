@@ -1051,7 +1051,7 @@ def tMOVi8 : T1sI<(outs tGPR:$Rd), (ins imm0_255:$imm8), IIC_iMOVi,
   let Inst{7-0}  = imm8;
 }
 
-// TODO: A7-73: MOV(2) - mov setting flag.
+// A7-73: MOV(2) - mov setting flag.
 
 let neverHasSideEffects = 1 in {
 def tMOVr : Thumb1pI<(outs GPR:$Rd), (ins GPR:$Rm), AddrModeNone,
@@ -1214,31 +1214,6 @@ let usesCustomInserter = 1 in  // Expanded after instruction selection.
   PseudoInst<(outs tGPR:$dst), (ins tGPR:$false, tGPR:$true, pred:$cc),
               NoItinerary,
              [/*(set tGPR:$dst, (ARMcmov tGPR:$false, tGPR:$true, imm:$cc))*/]>;
-
-
-// 16-bit movcc in IT blocks for Thumb2.
-let neverHasSideEffects = 1 in {
-def tMOVCCr : T1pIt<(outs GPR:$Rdn), (ins GPR:$Rn, GPR:$Rm), IIC_iCMOVr,
-                    "mov", "\t$Rdn, $Rm", []>,
-              T1Special<{1,0,?,?}> {
-  bits<4> Rdn;
-  bits<4> Rm;
-  let Inst{7}   = Rdn{3};
-  let Inst{6-3} = Rm;
-  let Inst{2-0} = Rdn{2-0};
-}
-
-let isMoveImm = 1 in
-def tMOVCCi : T1pIt<(outs tGPR:$Rdn), (ins tGPR:$Rn, i32imm:$Rm), IIC_iCMOVi,
-                    "mov", "\t$Rdn, $Rm", []>,
-              T1General<{1,0,0,?,?}> {
-  bits<3> Rdn;
-  bits<8> Rm;
-  let Inst{10-8} = Rdn;
-  let Inst{7-0}  = Rm;
-}
-
-} // neverHasSideEffects
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.

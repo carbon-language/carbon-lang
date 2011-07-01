@@ -2664,35 +2664,21 @@ defm t2TEQ  : T2I_cmp_irs<0b0100, "teq",
 // FIXME: should be able to write a pattern for ARMcmov, but can't use
 // a two-value operand where a dag node expects two operands. :(
 let neverHasSideEffects = 1 in {
-def t2MOVCCr : T2TwoReg<
-                   (outs rGPR:$Rd), (ins rGPR:$false, rGPR:$Rm), IIC_iCMOVr,
-                   "mov", ".w\t$Rd, $Rm",
+def t2MOVCCr : t2PseudoInst<(outs rGPR:$Rd),
+                            (ins rGPR:$false, rGPR:$Rm, pred:$p),
+                            Size4Bytes, IIC_iCMOVr,
    [/*(set rGPR:$Rd, (ARMcmov rGPR:$false, rGPR:$Rm, imm:$cc, CCR:$ccr))*/]>,
-                RegConstraint<"$false = $Rd"> {
-  let Inst{31-27} = 0b11101;
-  let Inst{26-25} = 0b01;
-  let Inst{24-21} = 0b0010;
-  let Inst{20} = 0; // The S bit.
-  let Inst{19-16} = 0b1111; // Rn
-  let Inst{14-12} = 0b000;
-  let Inst{7-4} = 0b0000;
-}
+                RegConstraint<"$false = $Rd">;
+
+let isMoveImm = 1 in
+def t2MOVCCi : t2PseudoInst<(outs rGPR:$Rd),
+                            (ins rGPR:$false, t2_so_imm:$imm, pred:$p),
+                   Size4Bytes, IIC_iCMOVi,
+[/*(set rGPR:$Rd,(ARMcmov rGPR:$false,t2_so_imm:$imm, imm:$cc, CCR:$ccr))*/]>,
+                   RegConstraint<"$false = $Rd">;
 
 // FIXME: Pseudo-ize these. For now, just mark codegen only.
 let isCodeGenOnly = 1 in {
-let isMoveImm = 1 in
-def t2MOVCCi : T2OneRegImm<(outs rGPR:$Rd), (ins rGPR:$false, t2_so_imm:$imm),
-                   IIC_iCMOVi, "mov", ".w\t$Rd, $imm",
-[/*(set rGPR:$Rd,(ARMcmov rGPR:$false,t2_so_imm:$imm, imm:$cc, CCR:$ccr))*/]>,
-                   RegConstraint<"$false = $Rd"> {
-  let Inst{31-27} = 0b11110;
-  let Inst{25} = 0;
-  let Inst{24-21} = 0b0010;
-  let Inst{20} = 0; // The S bit.
-  let Inst{19-16} = 0b1111; // Rn
-  let Inst{15} = 0;
-}
-
 let isMoveImm = 1 in
 def t2MOVCCi16 : T2I<(outs rGPR:$Rd), (ins rGPR:$false, i32imm_hilo16:$imm),
                       IIC_iCMOVi,
@@ -2759,8 +2745,8 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$Rd),
                              (ins rGPR:$false, rGPR:$Rm, i32imm:$imm),
                              IIC_iCMOVsi, "ror", ".w\t$Rd, $Rm, $imm", []>,
                  RegConstraint<"$false = $Rd">;
-} // neverHasSideEffects
 } // isCodeGenOnly = 1
+} // neverHasSideEffects
 
 //===----------------------------------------------------------------------===//
 // Atomic operations intrinsics

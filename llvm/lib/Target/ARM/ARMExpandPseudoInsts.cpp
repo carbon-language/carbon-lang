@@ -727,8 +727,10 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
+    case ARM::t2MOVCCr:
     case ARM::MOVCCr: {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVr),
+      unsigned Opc = AFI->isThumbFunction() ? ARM::t2MOVr : ARM::MOVr;
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc),
               MI.getOperand(1).getReg())
         .addReg(MI.getOperand(2).getReg(),
                 getKillRegState(MI.getOperand(2).isKill()))
@@ -764,8 +766,10 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MI.eraseFromParent();
       return true;
     }
+    case ARM::t2MOVCCi:
     case ARM::MOVCCi: {
-      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi),
+      unsigned Opc = AFI->isThumbFunction() ? ARM::t2MOVi : ARM::MOVi;
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc),
               MI.getOperand(1).getReg())
         .addImm(MI.getOperand(2).getImm())
         .addImm(MI.getOperand(3).getImm()) // 'pred'
