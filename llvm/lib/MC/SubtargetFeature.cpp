@@ -27,7 +27,7 @@ using namespace llvm;
 
 /// hasFlag - Determine if a feature has a flag; '+' or '-'
 ///
-static inline bool hasFlag(const std::string &Feature) {
+static inline bool hasFlag(const StringRef Feature) {
   assert(!Feature.empty() && "Empty string");
   // Get first character
   char Ch = Feature[0];
@@ -37,13 +37,13 @@ static inline bool hasFlag(const std::string &Feature) {
 
 /// StripFlag - Return string stripped of flag.
 ///
-static inline std::string StripFlag(const std::string &Feature) {
+static inline std::string StripFlag(const StringRef Feature) {
   return hasFlag(Feature) ? Feature.substr(1) : Feature;
 }
 
 /// isEnabled - Return true if enable flag; '+'.
 ///
-static inline bool isEnabled(const std::string &Feature) {
+static inline bool isEnabled(const StringRef Feature) {
   assert(!Feature.empty() && "Empty string");
   // Get first character
   char Ch = Feature[0];
@@ -53,16 +53,19 @@ static inline bool isEnabled(const std::string &Feature) {
 
 /// PrependFlag - Return a string with a prepended flag; '+' or '-'.
 ///
-static inline std::string PrependFlag(const std::string &Feature,
-                                      bool IsEnabled) {
+static inline StringRef PrependFlag(const StringRef Feature,
+                                    bool IsEnabled) {
   assert(!Feature.empty() && "Empty string");
-  if (hasFlag(Feature)) return Feature;
-  return std::string(IsEnabled ? "+" : "-") + Feature;
+  if (hasFlag(Feature))
+    return Feature;
+  std::string Prefix = IsEnabled ? "+" : "-";
+  Prefix += Feature;
+  return StringRef(Prefix);
 }
 
 /// Split - Splits a string of comma separated items in to a vector of strings.
 ///
-static void Split(std::vector<std::string> &V, const std::string &S) {
+static void Split(std::vector<std::string> &V, const StringRef S) {
   if (S.empty())
     return;
 
@@ -106,7 +109,7 @@ static std::string Join(const std::vector<std::string> &V) {
 }
 
 /// Adding features.
-void SubtargetFeatures::AddFeature(const std::string &String,
+void SubtargetFeatures::AddFeature(const StringRef String,
                                    bool IsEnabled) {
   // Don't add empty features
   if (!String.empty()) {
@@ -116,10 +119,10 @@ void SubtargetFeatures::AddFeature(const std::string &String,
 }
 
 /// Find KV in array using binary search.
-template<typename T> const T *Find(const std::string &S, const T *A, size_t L) {
+template<typename T> const T *Find(const StringRef S, const T *A, size_t L) {
   // Make the lower bound element we're looking for
   T KV;
-  KV.Key = S.c_str();
+  KV.Key = S.data();
   // Determine the end of the array
   const T *Hi = A + L;
   // Binary search the array
@@ -173,20 +176,14 @@ static void Help(const SubtargetFeatureKV *CPUTable, size_t CPUTableSize,
 //                    SubtargetFeatures Implementation
 //===----------------------------------------------------------------------===//
 
-SubtargetFeatures::SubtargetFeatures(const std::string &Initial) {
+SubtargetFeatures::SubtargetFeatures(const StringRef Initial) {
   // Break up string into separate features
   Split(Features, Initial);
 }
 
 
-std::string SubtargetFeatures::getString() const {
+StringRef SubtargetFeatures::getString() const {
   return Join(Features);
-}
-void SubtargetFeatures::setString(const std::string &Initial) {
-  // Throw out old features
-  Features.clear();
-  // Break up string into separate features
-  Split(Features, LowercaseString(Initial));
 }
 
 /// SetImpliedBits - For each feature that is (transitively) implied by this
@@ -229,7 +226,7 @@ void ClearImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
 
 /// getFeatureBits - Get feature bits a CPU.
 ///
-uint64_t SubtargetFeatures::getFeatureBits(const std::string &CPU,
+uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
                                          const SubtargetFeatureKV *CPUTable,
                                          size_t CPUTableSize,
                                          const SubtargetFeatureKV *FeatureTable,
@@ -272,7 +269,7 @@ uint64_t SubtargetFeatures::getFeatureBits(const std::string &CPU,
   }
   // Iterate through each feature
   for (size_t i = 0, E = Features.size(); i < E; i++) {
-    const std::string &Feature = Features[i];
+    const StringRef Feature = Features[i];
     
     // Check for help
     if (Feature == "+help")
@@ -306,7 +303,7 @@ uint64_t SubtargetFeatures::getFeatureBits(const std::string &CPU,
 }
 
 /// Get scheduling itinerary of a CPU.
-void *SubtargetFeatures::getItinerary(const std::string &CPU,
+void *SubtargetFeatures::getItinerary(const StringRef CPU,
                                       const SubtargetInfoKV *Table,
                                       size_t TableSize) {
   assert(Table && "missing table");

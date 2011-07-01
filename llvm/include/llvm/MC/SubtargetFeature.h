@@ -18,13 +18,13 @@
 #ifndef LLVM_MC_SUBTARGETFEATURE_H
 #define LLVM_MC_SUBTARGETFEATURE_H
 
-#include <string>
 #include <vector>
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
   class raw_ostream;
+  class StringRef;
   
 //===----------------------------------------------------------------------===//
 ///
@@ -74,24 +74,23 @@ struct SubtargetInfoKV {
 class SubtargetFeatures {
   std::vector<std::string> Features;    // Subtarget features as a vector
 public:
-  explicit SubtargetFeatures(const std::string &Initial = std::string());
+  explicit SubtargetFeatures(const StringRef Initial = "");
 
   /// Features string accessors.
-  std::string getString() const;
-  void setString(const std::string &Initial);
+  StringRef getString() const;
 
   /// Adding Features.
-  void AddFeature(const std::string &String, bool IsEnabled = true);
+  void AddFeature(const StringRef String, bool IsEnabled = true);
            
   /// Get feature bits of a CPU.
-  uint64_t getFeatureBits(const std::string &CPU,
+  uint64_t getFeatureBits(const StringRef CPU,
                           const SubtargetFeatureKV *CPUTable,
                           size_t CPUTableSize,
                           const SubtargetFeatureKV *FeatureTable,
                           size_t FeatureTableSize);
                          
   /// Get scheduling itinerary of a CPU.
-  void *getItinerary(const std::string &CPU,
+  void *getItinerary(const StringRef CPU,
                      const SubtargetInfoKV *Table, size_t TableSize);
   
   /// Print feature string.
