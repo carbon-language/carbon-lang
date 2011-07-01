@@ -770,3 +770,35 @@ namespace test31 { // instantiation-dependent mangling of decltype
   // CHECK: define weak_odr void @_ZN6test312f3IiEEDTcl1gfp_EET_
   template void f3(int);
 }
+
+// PR10205
+namespace test32 {
+  template<typename T, int=T::value> struct A {
+    typedef int type;
+  };
+  struct B { enum { value = 4 }; };
+
+  template <class T> typename A<T>::type foo() { return 0; }
+  void test() {
+    foo<B>();
+    // CHECK: call i32 @_ZN6test323fooINS_1BEEENS_1AIT_XsrS3_5valueEE4typeEv()
+  }
+}
+
+namespace test33 {
+  template <class T> struct X {
+    enum { value = T::value };
+  };
+
+  template<typename T, int=X<T>::value> struct A {
+    typedef int type;
+  };
+  struct B { enum { value = 4 }; };
+
+  template <class T> typename A<T>::type foo() { return 0; }
+
+  void test() {
+    foo<B>();
+    // CHECK: call i32 @_ZN6test333fooINS_1BEEENS_1AIT_Xsr1XIS3_EE5valueEE4typeEv()
+  }
+}

@@ -818,27 +818,20 @@ void CXXNameMangler::mangleUnresolvedPrefix(NestedNameSpecifier *qualifier,
     case Type::Decltype:
     case Type::TemplateTypeParm:
     case Type::UnaryTransform:
+    case Type::SubstTemplateTypeParm:
     unresolvedType:
       assert(!qualifier->getPrefix());
 
       // We only get here recursively if we're followed by identifiers.
       if (recursive) Out << 'N';
 
-      // This seems to do everything we want.
+      // This seems to do everything we want.  It's not really
+      // sanctioned for a substituted template parameter, though.
       mangleType(QualType(type, 0));
 
       // We never want to print 'E' directly after an unresolved-type,
       // so we return directly.
       return;
-
-    // Substituted template type parameters should only come up with
-    // enclosing templates.
-    // <unresolved-type> ::= <existing-substitution> [ <template-args> ]
-    case Type::SubstTemplateTypeParm: {
-      if (recursive) Out << 'N';
-      mangleExistingSubstitution(QualType(type, 0));
-      return;
-    }
 
     case Type::Typedef:
       mangleSourceName(cast<TypedefType>(type)->getDecl()->getIdentifier());
