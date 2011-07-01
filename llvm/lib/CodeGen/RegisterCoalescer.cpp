@@ -1197,7 +1197,8 @@ static unsigned ComputeUltimateVN(VNInfo *VNI,
 // which allows us to coalesce A and B.
 // MI is the definition of B. LR is the life range of A that includes
 // the slot just before B. If we return true, we add "B = X" to DupCopies.
-static bool RegistersDefinedFromSameValue(const TargetRegisterInfo &tri,
+static bool RegistersDefinedFromSameValue(LiveIntervals &li,
+                                          const TargetRegisterInfo &tri,
                                           CoalescerPair &CP, MachineInstr *MI,
                                           LiveRange *LR,
                                      SmallVector<MachineInstr*, 8> &DupCopies) {
@@ -1207,13 +1208,15 @@ static bool RegistersDefinedFromSameValue(const TargetRegisterInfo &tri,
   if (!MI->isFullCopy() || CP.isPartial() || CP.isPhys())
     return false;
 
-  // FIXME: If "B = X" kills X, we have to move the kill back to its
-  // previous use. For now we just avoid the optimization in that case.
-  if (MI->getOperand(1).isKill())
-    return false;
-
   unsigned Dst = MI->getOperand(0).getReg();
   unsigned Src = MI->getOperand(1).getReg();
+
+  // FIXME: If "B = X" kills X, we have to move the kill back to its
+  // previous use. For now we just avoid the optimization in that case.
+  SlotIndex CopyIdx = li.getInstructionIndex(MI).getNextIndex().getDefIndex();
+  LiveInterval &SrcInt = li.getInterval(Src);
+  if (SrcInt.killedAt(CopyIdx))
+    return false;
 
   if (!TargetRegisterInfo::isVirtualRegister(Src) ||
       !TargetRegisterInfo::isVirtualRegister(Dst))
@@ -1332,7 +1335,7 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
     // from the RHS interval, we can use its value #.
     MachineInstr *MI = VNI->getCopy();
     if (!CP.isCoalescable(MI) &&
-        !RegistersDefinedFromSameValue(*tri_, CP, MI, lr, DupCopies))
+        !RegistersDefinedFromSameValue(*li_, *tri_, CP, MI, lr, DupCopies))
       continue;
 
     LHSValsDefinedFromRHS[VNI] = lr->valno;
@@ -1359,7 +1362,7 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
     // from the LHS interval, we can use its value #.
     MachineInstr *MI = VNI->getCopy();
     if (!CP.isCoalescable(MI) &&
-        !RegistersDefinedFromSameValue(*tri_, CP, MI, lr, DupCopies))
+        !RegistersDefinedFromSameValue(*li_, *tri_, CP, MI, lr, DupCopies))
         continue;
 
     RHSValsDefinedFromLHS[VNI] = lr->valno;
