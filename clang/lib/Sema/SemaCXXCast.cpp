@@ -134,17 +134,23 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
 /// ActOnCXXNamedCast - Parse {dynamic,static,reinterpret,const}_cast's.
 ExprResult
 Sema::ActOnCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
-                        SourceLocation LAngleBracketLoc, ParsedType Ty,
+                        SourceLocation LAngleBracketLoc, Declarator &D,
                         SourceLocation RAngleBracketLoc,
                         SourceLocation LParenLoc, Expr *E,
                         SourceLocation RParenLoc) {
-  
-  TypeSourceInfo *DestTInfo;
-  QualType DestType = GetTypeFromParser(Ty, &DestTInfo);
-  if (!DestTInfo)
-    DestTInfo = Context.getTrivialTypeSourceInfo(DestType, SourceLocation());
 
-  return BuildCXXNamedCast(OpLoc, Kind, DestTInfo, move(E),
+  assert(!D.isInvalidType());
+
+  TypeSourceInfo *TInfo = GetTypeForDeclaratorCast(D, E->getType());
+  if (D.isInvalidType())
+    return ExprError();
+
+  if (getLangOptions().CPlusPlus) {
+    // Check that there are no default arguments (C++ only).
+    CheckExtraCXXDefaultArguments(D);
+  }
+
+  return BuildCXXNamedCast(OpLoc, Kind, TInfo, move(E),
                            SourceRange(LAngleBracketLoc, RAngleBracketLoc),
                            SourceRange(LParenLoc, RParenLoc));
 }

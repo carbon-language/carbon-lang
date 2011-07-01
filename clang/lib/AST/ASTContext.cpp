@@ -3512,6 +3512,25 @@ QualType ASTContext::getPromotedIntegerType(QualType Promotable) const {
   return (PromotableSize != IntSize) ? IntTy : UnsignedIntTy;
 }
 
+/// \brief Recurses in pointer/array types until it finds an objc retainable
+/// type and returns its ownership.
+Qualifiers::ObjCLifetime ASTContext::getInnerObjCOwnership(QualType T) const {
+  while (!T.isNull()) {
+    if (T.getObjCLifetime() != Qualifiers::OCL_None)
+      return T.getObjCLifetime();
+    if (T->isArrayType())
+      T = getBaseElementType(T);
+    else if (const PointerType *PT = T->getAs<PointerType>())
+      T = PT->getPointeeType();
+    else if (const ReferenceType *RT = T->getAs<ReferenceType>())
+      RT->getPointeeType();
+    else
+      break;
+  }
+
+  return Qualifiers::OCL_None;
+}
+
 /// getIntegerTypeOrder - Returns the highest ranked integer type:
 /// C99 6.3.1.8p1.  If LHS > RHS, return 1.  If LHS == RHS, return 0. If
 /// LHS < RHS, return -1.

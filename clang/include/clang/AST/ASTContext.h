@@ -1347,6 +1347,10 @@ public:
   /// integer type.
   QualType getPromotedIntegerType(QualType PromotableType) const;
 
+  /// \brief Recurses in pointer/array types until it finds an objc retainable
+  /// type and returns its ownership.
+  Qualifiers::ObjCLifetime getInnerObjCOwnership(QualType T) const;
+
   /// \brief Whether this is a promotable bitfield reference according
   /// to C99 6.3.1.1p2, bullet 2 (and GCC extensions).
   ///

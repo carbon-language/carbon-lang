@@ -2534,6 +2534,117 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   return GetFullTypeForDeclarator(state, T, ReturnTypeInfo);
 }
 
+static void transferARCOwnershipToDeclSpec(Sema &S,
+                                           QualType &declSpecTy,
+                                           Qualifiers::ObjCLifetime ownership) {
+  if (declSpecTy->isObjCRetainableType() &&
+      declSpecTy.getObjCLifetime() == Qualifiers::OCL_None) {
+    Qualifiers qs;
+    qs.addObjCLifetime(ownership);
+    declSpecTy = S.Context.getQualifiedType(declSpecTy, qs);
+  }
+  return;
+}
+
+static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
+                                            Qualifiers::ObjCLifetime ownership,
+                                            unsigned chunkIndex) {
+  Sema &S = state.getSema();
+  Declarator &D = state.getDeclarator();
+
+  // Look for an explicit lifetime attribute.
+  DeclaratorChunk &chunk = D.getTypeObject(chunkIndex);
+  for (const AttributeList *attr = chunk.getAttrs(); attr;
+         attr = attr->getNext())
+    if (attr->getKind() == AttributeList::AT_objc_ownership)
+      return;
+
+  const char *attrStr = 0;
+  switch (ownership) {
+  case Qualifiers::OCL_None: llvm_unreachable("no ownership!"); break;
+  case Qualifiers::OCL_ExplicitNone: attrStr = "none"; break;
+  case Qualifiers::OCL_Strong: attrStr = "strong"; break;
+  case Qualifiers::OCL_Weak: attrStr = "weak"; break;
+  case Qualifiers::OCL_Autoreleasing: attrStr = "autoreleasing"; break;
+  }
+  if (!attrStr)
+    return;
+
+  // If there wasn't one, add one (with an invalid source location
+  // so that we don't make an AttributedType for it).
+  AttributeList *attr = D.getAttributePool()
+    .create(&S.Context.Idents.get("objc_ownership"), SourceLocation(),
+            /*scope*/ 0, SourceLocation(),
+            &S.Context.Idents.get(attrStr), SourceLocation(),
+            /*args*/ 0, 0,
+            /*declspec*/ false, /*C++0x*/ false);
+  spliceAttrIntoList(*attr, chunk.getAttrListRef());
+
+  // TODO: mark whether we did this inference?
+}
+
+static void transferARCOwnership(TypeProcessingState &state,
+                                 QualType &declSpecTy,
+                                 Qualifiers::ObjCLifetime ownership) {
+  Sema &S = state.getSema();
+  Declarator &D = state.getDeclarator();
+
+  int inner = -1;
+  for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
+    DeclaratorChunk &chunk = D.getTypeObject(i);
+    switch (chunk.Kind) {
+    case DeclaratorChunk::Paren:
+      // Ignore parens.
+      break;
+
+    case DeclaratorChunk::Array:
+    case DeclaratorChunk::Reference:
+    case DeclaratorChunk::Pointer:
+      inner = i;
+      break;
+
+    case DeclaratorChunk::BlockPointer:
+      return transferARCOwnershipToDeclaratorChunk(state, ownership, i);
+
+    case DeclaratorChunk::Function:
+    case DeclaratorChunk::MemberPointer:
+      return;
+    }
+  }
+
+  if (inner == -1)
+    return transferARCOwnershipToDeclSpec(S, declSpecTy, ownership);
+
+  DeclaratorChunk &chunk = D.getTypeObject(inner); 
+  if (chunk.Kind == DeclaratorChunk::Pointer) {
+    if (declSpecTy->isObjCRetainableType())
+      return transferARCOwnershipToDeclSpec(S, declSpecTy, ownership);
+    if (declSpecTy->isObjCObjectType())
+      return transferARCOwnershipToDeclaratorChunk(state, ownership, inner);
+  } else {
+    assert(chunk.Kind == DeclaratorChunk::Array ||
+           chunk.Kind == DeclaratorChunk::Reference);
+    return transferARCOwnershipToDeclSpec(S, declSpecTy, ownership);
+  }
+}
+
+TypeSourceInfo *Sema::GetTypeForDeclaratorCast(Declarator &D, QualType FromTy) {
+  TypeProcessingState state(*this, D);
+
+  TypeSourceInfo *ReturnTypeInfo = 0;
+  QualType declSpecTy = GetDeclSpecTypeForDeclarator(state, ReturnTypeInfo);
+  if (declSpecTy.isNull())
+    return Context.getNullTypeSourceInfo();
+
+  if (getLangOptions().ObjCAutoRefCount) {
+    Qualifiers::ObjCLifetime ownership = Context.getInnerObjCOwnership(FromTy);
+    if (ownership != Qualifiers::OCL_None)
+      transferARCOwnership(state, declSpecTy, ownership);
+  }
+
+  return GetFullTypeForDeclarator(state, declSpecTy, ReturnTypeInfo);
+}
+
 /// Map an AttributedType::Kind to an AttributeList::Kind.
 static AttributeList::Kind getAttrListKind(AttributedType::Kind kind) {
   switch (kind) {

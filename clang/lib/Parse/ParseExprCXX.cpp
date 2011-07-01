@@ -538,7 +538,14 @@ ExprResult Parser::ParseCXXCasts() {
   if (ExpectAndConsume(tok::less, diag::err_expected_less_after, CastName))
     return ExprError();
 
-  TypeResult CastTy = ParseTypeName();
+  // Parse the common declaration-specifiers piece.
+  DeclSpec DS(AttrFactory);
+  ParseSpecifierQualifierList(DS);
+
+  // Parse the abstract-declarator, if present.
+  Declarator DeclaratorInfo(DS, Declarator::TypeNameContext);
+  ParseDeclarator(DeclaratorInfo);
+
   SourceLocation RAngleBracketLoc = Tok.getLocation();
 
   if (ExpectAndConsume(tok::greater, diag::err_expected_greater))
@@ -554,9 +561,9 @@ ExprResult Parser::ParseCXXCasts() {
   // Match the ')'.
   RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-  if (!Result.isInvalid() && !CastTy.isInvalid())
+  if (!Result.isInvalid() && !DeclaratorInfo.isInvalidType())
     Result = Actions.ActOnCXXNamedCast(OpLoc, Kind,
-                                       LAngleBracketLoc, CastTy.get(),
+                                       LAngleBracketLoc, DeclaratorInfo,
                                        RAngleBracketLoc,
                                        LParenLoc, Result.take(), RParenLoc);
 

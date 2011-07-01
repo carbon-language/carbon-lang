@@ -783,6 +783,7 @@ public:
   QualType BuildParenType(QualType T);
 
   TypeSourceInfo *GetTypeForDeclarator(Declarator &D, Scope *S);
+  TypeSourceInfo *GetTypeForDeclaratorCast(Declarator &D, QualType FromTy);
   TypeSourceInfo *GetTypeSourceInfoForDeclarator(Declarator &D, QualType T,
                                                TypeSourceInfo *ReturnTypeInfo);
   /// \brief Package the given type and TSI into a ParsedType.
@@ -2825,7 +2826,7 @@ public:
   ExprResult ActOnCXXNamedCast(SourceLocation OpLoc,
                                tok::TokenKind Kind,
                                SourceLocation LAngleBracketLoc,
-                               ParsedType Ty,
+                               Declarator &D,
                                SourceLocation RAngleBracketLoc,
                                SourceLocation LParenLoc,
                                Expr *E,

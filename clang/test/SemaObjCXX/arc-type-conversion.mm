@@ -42,8 +42,7 @@ void static_casts(id arg) {
   (void)static_cast<int*>(arg); // expected-error {{cannot cast from type 'id' to pointer type 'int *'}}
   (void)static_cast<id>(arg);
   (void)static_cast<__autoreleasing id*>(arg); // expected-error{{cannot cast from type 'id' to pointer type '__autoreleasing id *'}}
-  (void)static_cast<id*>(arg); // expected-error {{cannot cast from type 'id' to pointer type '__autoreleasing id *'}} \
-  // expected-error{{pointer to non-const type 'id' with no explicit ownership}}
+  (void)static_cast<id*>(arg); // expected-error {{cannot cast from type 'id' to pointer type '__strong id *'}}
 
   (void)static_cast<__autoreleasing id**>(voidp_val);
   (void)static_cast<void*>(voidp_val);
@@ -195,4 +194,25 @@ void from_void(void *vp) {
   wip = vp; // expected-error{{assigning to '__weak id *' from incompatible type 'void *'}}
   aip = vp; // expected-error{{assigning to '__autoreleasing id *' from incompatible type 'void *'}}
   uip = vp; // expected-error{{assigning to '__unsafe_unretained id *' from incompatible type 'void *'}}
+}
+
+typedef void (^Block)();
+typedef void (^Block_strong)() __strong;
+typedef void (^Block_autoreleasing)() __autoreleasing;
+
+@class NSString;
+
+void ownership_transfer_in_cast(void *vp, Block *pblk) {
+  __strong NSString **sip2 = static_cast<NSString **>(static_cast<__strong id *>(vp));
+  __weak NSString **wip2 = static_cast<NSString **>(static_cast<__weak id *>(vp));
+  __autoreleasing id *aip2 = static_cast<id *>(static_cast<__autoreleasing id *>(vp));
+  __unsafe_unretained id *uip2 = static_cast<id *>(static_cast<__unsafe_unretained id *>(vp));
+  __strong id *sip3 = reinterpret_cast<id *>(reinterpret_cast<__strong id *>(vp));
+  __weak id *wip3 = reinterpret_cast<id *>(reinterpret_cast<__weak id *>(vp));
+  __autoreleasing id *aip3 = reinterpret_cast<id *>(reinterpret_cast<__autoreleasing id *>(vp));
+  __unsafe_unretained id *uip3 = reinterpret_cast<id *>(reinterpret_cast<__unsafe_unretained id *>(vp));
+
+  Block_strong blk_strong1;
+  Block_strong blk_strong2 = static_cast<Block>(blk_strong1);
+  Block_autoreleasing *blk_auto = static_cast<Block*>(pblk);
 }
