@@ -1213,7 +1213,7 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
 
   // FIXME: If "B = X" kills X, we have to move the kill back to its
   // previous use. For now we just avoid the optimization in that case.
-  SlotIndex CopyIdx = li.getInstructionIndex(MI).getNextIndex().getDefIndex();
+  SlotIndex CopyIdx = li.getInstructionIndex(MI).getDefIndex();
   LiveInterval &SrcInt = li.getInterval(Src);
   if (SrcInt.killedAt(CopyIdx))
     return false;
