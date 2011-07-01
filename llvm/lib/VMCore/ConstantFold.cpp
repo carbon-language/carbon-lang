@@ -1014,20 +1014,38 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
     case Instruction::Add:
     case Instruction::Sub:
       return UndefValue::get(C1->getType());
-    case Instruction::Mul:
     case Instruction::And:
+      if (isa<UndefValue>(C1) && isa<UndefValue>(C2)) // undef & undef -> undef
+        return C1;
+      return Constant::getNullValue(C1->getType());   // undef & X -> 0
+    case Instruction::Mul: {
+      ConstantInt *CI;
+      // X * undef -> undef   if X is odd or undef
+      if (((CI = dyn_cast<ConstantInt>(C1)) && CI->getValue()[0]) ||
+          ((CI = dyn_cast<ConstantInt>(C2)) && CI->getValue()[0]) ||
+          (isa<UndefValue>(C1) && isa<UndefValue>(C2)))
+        return UndefValue::get(C1->getType());
+
+      // X * undef -> 0       otherwise
       return Constant::getNullValue(C1->getType());
+    }
     case Instruction::UDiv:
     case Instruction::SDiv:
+      // undef / 1 -> undef
+      if (Opcode == Instruction::UDiv || Opcode == Instruction::SDiv)
+        if (ConstantInt *CI2 = dyn_cast<ConstantInt>(C2))
+          if (CI2->isOne())
+            return C1;
+      // FALL THROUGH
     case Instruction::URem:
     case Instruction::SRem:
       if (!isa<UndefValue>(C2))                    // undef / X -> 0
         return Constant::getNullValue(C1->getType());
       return C2;                                   // X / undef -> undef
     case Instruction::Or:                          // X | undef -> -1
-      if (const VectorType *PTy = dyn_cast<VectorType>(C1->getType()))
-        return Constant::getAllOnesValue(PTy);
-      return Constant::getAllOnesValue(C1->getType());
+      if (isa<UndefValue>(C1) && isa<UndefValue>(C2)) // undef | undef -> undef
+        return C1;
+      return Constant::getAllOnesValue(C1->getType()); // undef | X -> ~0
     case Instruction::LShr:
       if (isa<UndefValue>(C2) && isa<UndefValue>(C1))
         return C1;                                  // undef lshr undef -> undef
@@ -1041,6 +1059,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       else
         return C1;                                  // X ashr undef --> X
     case Instruction::Shl:
+      if (isa<UndefValue>(C2) && isa<UndefValue>(C1))
+        return C1;                                  // undef shl undef -> undef
       // undef << X -> 0   or   X << undef -> 0
       return Constant::getNullValue(C1->getType());
     }
