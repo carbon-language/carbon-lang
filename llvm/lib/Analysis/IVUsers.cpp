@@ -46,17 +46,20 @@ Pass *llvm::createIVUsersPass() {
 /// used by the given expression, within the context of analyzing the
 /// given loop.
 static bool isInteresting(const SCEV *S, const Instruction *I, const Loop *L,
-                          ScalarEvolution *SE) {
+                          ScalarEvolution *SE, LoopInfo *LI) {
   // An addrec is interesting if it's affine or if it has an interesting start.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
-    // Keep things simple. Don't touch loop-variant strides.
+    // Keep things simple. Don't touch loop-variant strides unless they're
+    // only used outside the loop and we can simplify them.
     if (AR->getLoop() == L)
-      return AR->isAffine() || !L->contains(I);
+      return AR->isAffine() ||
+             (!L->contains(I) &&
+              SE->getSCEVAtScope(AR, LI->getLoopFor(I->getParent())) != AR);
     // Otherwise recurse to see if the start value is interesting, and that
     // the step value is not interesting, since we don't yet know how to
     // do effective SCEV expansions for addrecs with interesting steps.
-    return isInteresting(AR->getStart(), I, L, SE) &&
-          !isInteresting(AR->getStepRecurrence(*SE), I, L, SE);
+    return isInteresting(AR->getStart(), I, L, SE, LI) &&
+          !isInteresting(AR->getStepRecurrence(*SE), I, L, SE, LI);
   }
 
   // An add is interesting if exactly one of its operands is interesting.
@@ -64,7 +67,7 @@ static bool isInteresting(const SCEV *S, const Instruction *I, const Loop *L,
     bool AnyInterestingYet = false;
     for (SCEVAddExpr::op_iterator OI = Add->op_begin(), OE = Add->op_end();
          OI != OE; ++OI)
-      if (isInteresting(*OI, I, L, SE)) {
+      if (isInteresting(*OI, I, L, SE, LI)) {
         if (AnyInterestingYet)
           return false;
         AnyInterestingYet = true;
@@ -98,7 +101,7 @@ bool IVUsers::AddUsersIfInteresting(Instruction *I) {
 
   // If we've come to an uninteresting expression, stop the traversal and
   // call this a user.
-  if (!isInteresting(ISE, I, L, SE))
+  if (!isInteresting(ISE, I, L, SE, LI))
     return false;
 
   SmallPtrSet<Instruction *, 4> UniqueUsers;

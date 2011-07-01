@@ -1,23 +1,30 @@
-; RUN: llc -march=x86-64 < %s | FileCheck %s
+; RUN: llc -asm-verbose=false -march=x86-64 -o - < %s | FileCheck %s
 
-; LSR should compute the correct starting values for this loop. Note that
-; it's not necessarily LSR's job to compute loop exit expressions; that's
-; indvars' job.
-; CHECK: movl  $12
-; CHECK: movl  $42
+; LSR should leave non-affine expressions alone because it currently
+; doesn't know how to do anything with them, and when it tries, it
+; gets SCEVExpander's current expansion for them, which is suboptimal.
 
-define i32 @real_symmetric_eigen(i32 %n) nounwind {
-while.body127:                                    ; preds = %while.cond122
-  br label %while.cond141
+; CHECK:        xorl %eax, %eax
+; CHECK-NEXT:   align
+; CHECK-NEXT: BB0_1:
+; CHECK-NEXT:   movq  %rax, (%rdx)
+; CHECK-NEXT:   addq  %rsi, %rax
+; CHECK-NEXT:   cmpq  %rdi, %rax
+; CHECK-NEXT:   jl
+; CHECK-NEXT:   imulq %rax, %rax
+; CHECK-NEXT:   ret
+define i64 @foo(i64 %n, i64 %s, i64* %p) nounwind {
+entry:
+  br label %loop
 
-while.cond141:                                    ; preds = %while.cond141, %while.body127
-  %0 = phi i32 [ 7, %while.body127 ], [ %indvar.next67, %while.cond141 ] ; <i32> [#uses=3]
-  %indvar.next67 = add i32 %0, 1                  ; <i32> [#uses=1]
-  %t = icmp slt i32 %indvar.next67, %n
-  br i1 %t, label %if.then171, label %while.cond141
+loop:
+  %i = phi i64 [ 0, %entry ], [ %i.next, %loop ]
+  volatile store i64 %i, i64* %p
+  %i.next = add i64 %i, %s
+  %c = icmp slt i64 %i.next, %n
+  br i1 %c, label %loop, label %exit
 
-if.then171:                                       ; preds = %while.cond141
-  %mul150 = mul i32 %0, %0                 ; <i32> [#uses=1]
-  %add174 = add i32 %mul150, %0                 ; <i32> [#uses=1]
-  ret i32 %add174
+exit:
+  %mul = mul i64 %i.next, %i.next
+  ret i64 %mul
 }
