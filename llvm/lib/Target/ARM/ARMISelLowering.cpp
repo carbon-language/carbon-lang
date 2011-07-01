@@ -7484,6 +7484,7 @@ ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
     case 'w': return C_RegisterClass;
     case 'h': return C_RegisterClass;
     case 'x': return C_RegisterClass;
+    case 't': return C_RegisterClass;
     }
   } else if (Constraint.size() == 2) {
     switch (Constraint[0]) {
@@ -7562,6 +7563,10 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 	return RCPair(0U, ARM::DPR_8RegisterClass);
       if (VT.getSizeInBits() == 128)
 	return RCPair(0U, ARM::QPR_8RegisterClass);
+      break;
+    case 't':
+      if (VT == MVT::f32)
+	return RCPair(0U, ARM::SPRRegisterClass);
       break;
     }
   }

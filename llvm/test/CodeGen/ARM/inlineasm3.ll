@@ -68,3 +68,23 @@ entry:
   %0 = tail call float asm "flds s15, $0", "=x"() nounwind
   ret float %0
 }
+
+; Radar 9307836 & 9119939
+
+define double @t7(double %y) nounwind ssp {
+entry:
+; CHECK: t7
+; CHECK: flds s15, d0
+  %0 = tail call double asm "flds s15, $0", "=x"() nounwind
+  ret double %0
+}
+
+; Radar 9307836 & 9119939
+
+define float @t8(float %y) nounwind ssp {
+entry:
+; CHECK: t8
+; CHECK: flds s15, s0
+  %0 = tail call float asm "flds s15, $0", "=t"() nounwind
+  ret float %0
+}
