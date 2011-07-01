@@ -1303,7 +1303,7 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const TargetData *TD) {
         LoadInst *TrueLoad = 
           Builder.CreateLoad(SI->getTrueValue(), LI->getName()+".t");
         LoadInst *FalseLoad = 
-          Builder.CreateLoad(SI->getFalseValue(), LI->getName()+".t");
+          Builder.CreateLoad(SI->getFalseValue(), LI->getName()+".f");
         
         // Transfer alignment and TBAA info if present.
         TrueLoad->setAlignment(LI->getAlignment());
