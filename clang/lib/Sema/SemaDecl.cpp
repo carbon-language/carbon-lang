@@ -45,7 +45,12 @@
 using namespace clang;
 using namespace sema;
 
-Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(Decl *Ptr) {
+Sema::DeclGroupPtrTy Sema::ConvertDeclToDeclGroup(Decl *Ptr, Decl *OwnedType) {
+  if (OwnedType) {
+    Decl *Group[2] = { OwnedType, Ptr };
+    return DeclGroupPtrTy::make(DeclGroupRef::Create(Context, Group, 2));
+  }
+
   return DeclGroupPtrTy::make(DeclGroupRef(Ptr));
 }
 

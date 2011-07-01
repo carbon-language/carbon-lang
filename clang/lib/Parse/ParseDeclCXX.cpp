@@ -314,7 +314,8 @@ Decl *Parser::ParseLinkage(ParsingDeclSpec &DS, unsigned Context) {
 Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
                                          const ParsedTemplateInfo &TemplateInfo,
                                                SourceLocation &DeclEnd,
-                                             ParsedAttributesWithRange &attrs) {
+                                             ParsedAttributesWithRange &attrs,
+                                               Decl **OwnedType) {
   assert(Tok.is(tok::kw_using) && "Not using token");
 
   // Eat 'using'.
@@ -342,7 +343,8 @@ Decl *Parser::ParseUsingDirectiveOrDeclaration(unsigned Context,
   // Using declarations can't have attributes.
   ProhibitAttributes(attrs);
 
-  return ParseUsingDeclaration(Context, TemplateInfo, UsingLoc, DeclEnd);
+  return ParseUsingDeclaration(Context, TemplateInfo, UsingLoc, DeclEnd,
+                               AS_none, OwnedType);
 }
 
 /// ParseUsingDirective - Parse C++ using-directive, assumes
@@ -422,7 +424,8 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
                                     const ParsedTemplateInfo &TemplateInfo,
                                     SourceLocation UsingLoc,
                                     SourceLocation &DeclEnd,
-                                    AccessSpecifier AS) {
+                                    AccessSpecifier AS,
+                                    Decl **OwnedType) {
   CXXScopeSpec SS;
   SourceLocation TypenameLoc;
   bool IsTypeName;
@@ -511,7 +514,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
 
     TypeAlias = ParseTypeName(0, TemplateInfo.Kind ?
                               Declarator::AliasTemplateContext :
-                              Declarator::AliasDeclContext);
+                              Declarator::AliasDeclContext, 0, AS, OwnedType);
   } else
     // Parse (optional) attributes (most likely GNU strong-using extension).
     MaybeParseGNUAttributes(attrs);

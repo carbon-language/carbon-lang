@@ -839,7 +839,7 @@ public:
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
 
-  DeclGroupPtrTy ConvertDeclToDeclGroup(Decl *Ptr);
+  DeclGroupPtrTy ConvertDeclToDeclGroup(Decl *Ptr, Decl *OwnedType = 0);
 
   void DiagnoseUseOfUnimplementedSelectors();
 

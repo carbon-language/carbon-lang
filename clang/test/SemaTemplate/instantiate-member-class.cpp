@@ -104,3 +104,17 @@ namespace test2 {
   };
   template class C<int>;
 }
+
+namespace AliasTagDef {
+  template<typename T>
+  struct F {
+    using S = struct U { // expected-warning {{C++0x}}
+      T g() {
+        return T();
+      }
+    };
+  };
+
+  int m = F<int>::S().g();
+  int n = F<int>::U().g();
+}
