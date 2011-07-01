@@ -95,7 +95,8 @@ public:
     Solaris,
     Win32,
     Haiku,
-    Minix
+    Minix,
+    RTEMS
   };
   enum EnvironmentType {
     UnknownEnvironment,

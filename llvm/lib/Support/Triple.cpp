@@ -113,6 +113,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case Win32: return "win32";
   case Haiku: return "haiku";
   case Minix: return "minix";
+  case RTEMS: return "rtems";
   }
 
   return "<invalid>";

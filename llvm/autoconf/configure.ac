@@ -297,6 +297,8 @@ AC_CACHE_CHECK([type of operating system we're going to target],
     llvm_cv_target_os_type="MingW" ;;
   *-*-haiku*)
     llvm_cv_target_os_type="Haiku" ;;
+  *-*-rtems*)
+    llvm_cv_target_os_type="RTEMS" ;;
   *-unknown-eabi*)
     llvm_cv_target_os_type="Freestanding" ;;
   *)
