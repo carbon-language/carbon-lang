@@ -373,7 +373,12 @@ public:
                   const hasher& __hf, const key_equal& __eql,
                   const allocator_type& __a);
     // ~unordered_set() = default;
-    // unordered_set& operator=(const unordered_set& __u) = default;
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_set& operator=(const unordered_set& __u)
+    {
+        __table_ = __u.__table_;
+        return *this;
+    }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_set& operator=(unordered_set&& __u)
         _NOEXCEPT_(is_nothrow_move_assignable<__table>::value);
@@ -766,7 +771,12 @@ public:
                        const hasher& __hf, const key_equal& __eql,
                        const allocator_type& __a);
     // ~unordered_multiset() = default;
-    // unordered_multiset& operator=(const unordered_multiset& __u) = default;
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_multiset& operator=(const unordered_multiset& __u)
+    {
+        __table_ = __u.__table_;
+        return *this;
+    }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_multiset& operator=(unordered_multiset&& __u)
         _NOEXCEPT_(is_nothrow_move_assignable<__table>::value);

@@ -107,7 +107,7 @@ int main()
     assert(new_called == 1);
     assert(f.target<A>());
     assert(f.target<int(*)(int)>() == 0);
-    std::function<int(int)> f2 = _STD::move(f);
+    std::function<int(int)> f2 = std::move(f);
     assert(A::count == 1);
     assert(new_called == 1);
     assert(f2.target<A>());

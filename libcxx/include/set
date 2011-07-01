@@ -408,6 +408,13 @@ public:
             insert(__s.begin(), __s.end());
         }
 
+    _LIBCPP_INLINE_VISIBILITY
+    set& operator=(const set& __s)
+        {
+            __tree_ = __s.__tree_;
+            return *this;
+        }
+
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     set(set&& __s)
@@ -736,6 +743,13 @@ public:
           __alloc_traits::select_on_container_copy_construction(__s.__tree_.__alloc()))
         {
             insert(__s.begin(), __s.end());
+        }
+
+    _LIBCPP_INLINE_VISIBILITY
+    multiset& operator=(const multiset& __s)
+        {
+            __tree_ = __s.__tree_;
+            return *this;
         }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES

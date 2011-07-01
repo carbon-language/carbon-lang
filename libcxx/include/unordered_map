@@ -691,7 +691,12 @@ public:
                   const hasher& __hf, const key_equal& __eql,
                   const allocator_type& __a);
     // ~unordered_map() = default;
-    // unordered_map& operator=(const unordered_map& __u) = default;
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_map& operator=(const unordered_map& __u)
+    {
+        __table_ = __u.__table_;
+        return *this;
+    }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_map& operator=(unordered_map&& __u)
         _NOEXCEPT_(is_nothrow_move_assignable<__table>::value);
@@ -1295,7 +1300,12 @@ public:
                        const hasher& __hf, const key_equal& __eql,
                        const allocator_type& __a);
     // ~unordered_multimap() = default;
-    // unordered_multimap& operator=(const unordered_multimap& __u) = default;
+    _LIBCPP_INLINE_VISIBILITY
+    unordered_multimap& operator=(const unordered_multimap& __u)
+    {
+        __table_ = __u.__table_;
+        return *this;
+    }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     unordered_multimap& operator=(unordered_multimap&& __u)
         _NOEXCEPT_(is_nothrow_move_assignable<__table>::value);
