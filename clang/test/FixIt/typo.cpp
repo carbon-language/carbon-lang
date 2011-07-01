@@ -80,3 +80,9 @@ namespace nonstd {
 }
 
 yarn str4; // expected-error{{unknown type name 'yarn'; did you mean 'nonstd::yarn'?}}
+
+namespace check_bool {
+  void f() {
+    Bool b; // expected-error{{use of undeclared identifier 'Bool'; did you mean 'bool'?}}
+  }
+}

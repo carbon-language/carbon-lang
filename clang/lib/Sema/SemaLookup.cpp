@@ -3417,7 +3417,7 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
     // Add type-specifier keywords to the set of results.
     const char *CTypeSpecs[] = {
       "char", "const", "double", "enum", "float", "int", "long", "short",
-      "signed", "struct", "union", "unsigned", "void", "volatile", "_Bool",
+      "signed", "struct", "union", "unsigned", "void", "volatile", 
       "_Complex", "_Imaginary",
       // storage-specifiers as well
       "extern", "inline", "static", "typedef"
@@ -3431,7 +3431,9 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
       Consumer.addKeywordResult("restrict");
     if (SemaRef.getLangOptions().Bool || SemaRef.getLangOptions().CPlusPlus)
       Consumer.addKeywordResult("bool");
-
+    else if (SemaRef.getLangOptions().C99)
+      Consumer.addKeywordResult("_Bool");
+    
     if (SemaRef.getLangOptions().CPlusPlus) {
       Consumer.addKeywordResult("class");
       Consumer.addKeywordResult("typename");
