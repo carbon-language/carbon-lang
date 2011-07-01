@@ -23,6 +23,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Type.h"
+#include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -1351,7 +1352,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
 
   bool isInc = false, isDec = false, isSub = false, isCN = false;
   ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Val);
-  if (CN) {
+  if (CN && CN->getSExtValue() == (int32_t)CN->getSExtValue()) {
     isCN = true;
     int64_t CNVal = CN->getSExtValue();
     if (CNVal == 1)
@@ -1371,6 +1372,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
     Val = Val.getOperand(1);
   }
 
+  DebugLoc dl = Node->getDebugLoc();
   unsigned Opc = 0;
   switch (NVT.getSimpleVT().SimpleTy) {
   default: return 0;
@@ -1462,7 +1464,6 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, EVT NVT) {
     break;
   }
 
-  DebugLoc dl = Node->getDebugLoc();
   SDValue Undef = SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF,
                                                  dl, NVT), 0);
   MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
@@ -1579,7 +1580,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, EVT NVT) {
   
   bool isCN = false;
   ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Val);
-  if (CN) {
+  if (CN && (int32_t)CN->getSExtValue() == CN->getSExtValue()) {
     isCN = true;
     Val = CurDAG->getTargetConstant(CN->getSExtValue(), NVT);
   }
