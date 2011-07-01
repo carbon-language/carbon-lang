@@ -53,14 +53,14 @@ static inline bool isEnabled(const StringRef Feature) {
 
 /// PrependFlag - Return a string with a prepended flag; '+' or '-'.
 ///
-static inline StringRef PrependFlag(const StringRef Feature,
+static inline std::string PrependFlag(const StringRef Feature,
                                     bool IsEnabled) {
   assert(!Feature.empty() && "Empty string");
   if (hasFlag(Feature))
     return Feature;
   std::string Prefix = IsEnabled ? "+" : "-";
   Prefix += Feature;
-  return StringRef(Prefix);
+  return Prefix;
 }
 
 /// Split - Splits a string of comma separated items in to a vector of strings.
