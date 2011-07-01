@@ -128,7 +128,7 @@ template<typename T> const T *Find(const StringRef S, const T *A, size_t L) {
   // Binary search the array
   const T *F = std::lower_bound(A, Hi, KV);
   // If not found then return NULL
-  if (F == Hi || std::string(F->Key) != S) return NULL;
+  if (F == Hi || StringRef(F->Key) != S) return NULL;
   // Return the found array item
   return F;
 }
