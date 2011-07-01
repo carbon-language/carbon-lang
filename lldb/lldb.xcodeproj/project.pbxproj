@@ -924,7 +924,7 @@
 		26BC7E9610F1B85900F91463 /* Timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Timer.cpp; path = source/Core/Timer.cpp; sourceTree = "<group>"; };
 		26BC7E9810F1B85900F91463 /* UserID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UserID.cpp; path = source/Core/UserID.cpp; sourceTree = "<group>"; };
 		26BC7E9910F1B85900F91463 /* Value.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Value.cpp; path = source/Core/Value.cpp; sourceTree = "<group>"; };
-		26BC7E9A10F1B85900F91463 /* ValueObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; name = ValueObject.cpp; path = source/Core/ValueObject.cpp; sourceTree = "<group>"; };
+		26BC7E9A10F1B85900F91463 /* ValueObject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObject.cpp; path = source/Core/ValueObject.cpp; sourceTree = "<group>"; };
 		26BC7E9B10F1B85900F91463 /* ValueObjectChild.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectChild.cpp; path = source/Core/ValueObjectChild.cpp; sourceTree = "<group>"; };
 		26BC7E9C10F1B85900F91463 /* ValueObjectList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectList.cpp; path = source/Core/ValueObjectList.cpp; sourceTree = "<group>"; };
 		26BC7E9D10F1B85900F91463 /* ValueObjectVariable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueObjectVariable.cpp; path = source/Core/ValueObjectVariable.cpp; sourceTree = "<group>"; };
