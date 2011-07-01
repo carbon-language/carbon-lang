@@ -203,6 +203,9 @@ void VirtRegAuxInfo::CalculateRegClass(unsigned reg) {
     // TRI doesn't have accurate enough information to model this yet.
     if (I.getOperand().getSubReg())
       return;
+    // Inline asm instuctions don't remember their constraints.
+    if (I->isInlineAsm())
+      return;
     const TargetRegisterClass *OpRC =
       TII->getRegClass(I->getDesc(), I.getOperandNo(), TRI);
     if (OpRC)
