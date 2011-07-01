@@ -1150,16 +1150,19 @@ static llvm::MemoryBuffer *CreatePaddedMainFileBuffer(llvm::MemoryBuffer *Old,
 /// buffer that should be used in place of the main file when doing so.
 /// Otherwise, returns a NULL pointer.
 llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
-                                          CompilerInvocation PreambleInvocation,
+                              const CompilerInvocation &PreambleInvocationIn,
                                                            bool AllowRebuild,
                                                            unsigned MaxLines) {
-  FrontendOptions &FrontendOpts = PreambleInvocation.getFrontendOpts();
+  
+  llvm::IntrusiveRefCntPtr<CompilerInvocation>
+    PreambleInvocation(new CompilerInvocation(PreambleInvocationIn));
+  FrontendOptions &FrontendOpts = PreambleInvocation->getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts
-    = PreambleInvocation.getPreprocessorOpts();
+    = PreambleInvocation->getPreprocessorOpts();
 
   bool CreatedPreambleBuffer = false;
   std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> > NewPreamble 
-    = ComputePreamble(PreambleInvocation, MaxLines, CreatedPreambleBuffer);
+    = ComputePreamble(*PreambleInvocation, MaxLines, CreatedPreambleBuffer);
 
   // If ComputePreamble() Take ownership of the
   llvm::OwningPtr<llvm::MemoryBuffer> OwnedPreambleBuffer;
@@ -1260,7 +1263,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
         // have occurred in the preamble.
         getDiagnostics().Reset();
         ProcessWarningOptions(getDiagnostics(), 
-                              PreambleInvocation.getDiagnosticOpts());
+                              PreambleInvocation->getDiagnosticOpts());
         getDiagnostics().setNumWarnings(NumWarningsInPreamble);
         if (StoredDiagnostics.size() > NumStoredDiagnosticsInPreamble)
           StoredDiagnostics.erase(
@@ -1357,7 +1360,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
     CICleanup(Clang.get());
 
-  Clang->setInvocation(&PreambleInvocation);
+  Clang->setInvocation(&*PreambleInvocation);
   OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].second;
   
   // Set up diagnostics, capturing all of the diagnostics produced.

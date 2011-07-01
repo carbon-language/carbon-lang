@@ -363,7 +363,7 @@ private:
                   unsigned MaxLines, bool &CreatedBuffer);
   
   llvm::MemoryBuffer *getMainBufferWithPrecompiledPreamble(
-                                         CompilerInvocation PreambleInvocation,
+                               const CompilerInvocation &PreambleInvocationIn,
                                                      bool AllowRebuild = true,
                                                         unsigned MaxLines = 0);
   void RealizeTopLevelDeclsFromPreamble();
