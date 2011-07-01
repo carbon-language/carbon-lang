@@ -182,7 +182,7 @@ SubtargetFeatures::SubtargetFeatures(const StringRef Initial) {
 }
 
 
-StringRef SubtargetFeatures::getString() const {
+std::string SubtargetFeatures::getString() const {
   return Join(Features);
 }
 

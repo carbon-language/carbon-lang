@@ -77,7 +77,7 @@ public:
   explicit SubtargetFeatures(const StringRef Initial = "");
 
   /// Features string accessors.
-  StringRef getString() const;
+  std::string getString() const;
 
   /// Adding Features.
   void AddFeature(const StringRef String, bool IsEnabled = true);
