@@ -491,7 +491,7 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
     // The immediate must be in range, the destination register must be a low
     // reg, the predicate must be "always" and the condition flags must not
     // be being set.
-    if (Imm & 3 || Imm > 1024)
+    if (Imm & 3 || Imm > 1020)
       return false;
     if (!isARMLowRegister(MI->getOperand(0).getReg()))
       return false;
