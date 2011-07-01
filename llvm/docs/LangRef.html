@@ -6626,7 +6626,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use llvm.ctpop on any integer bit
-   width. Not all targets support all bit widths however.</p>
+   width, or on any vector with integer elements. Not all targets support all
+  bit widths or vector types, however.</p>
 
 <pre>
   declare i8 @llvm.ctpop.i8(i8  &lt;src&gt;)
@@ -6634,6 +6635,7 @@ LLVM</a>.</p>
   declare i32 @llvm.ctpop.i32(i32 &lt;src&gt;)
   declare i64 @llvm.ctpop.i64(i64 &lt;src&gt;)
   declare i256 @llvm.ctpop.i256(i256 &lt;src&gt;)
+  declare &lt;2 x i32&gt; @llvm.ctpop.v2i32(&lt;2 x i32&gt; &lt;src&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -6642,10 +6644,12 @@ LLVM</a>.</p>
 
 <h5>Arguments:</h5>
 <p>The only argument is the value to be counted.  The argument may be of any
-   integer type.  The return type must match the argument type.</p>
+   integer type, or a vector with integer elements.
+   The return type must match the argument type.</p>
 
 <h5>Semantics:</h5>
-<p>The '<tt>llvm.ctpop</tt>' intrinsic counts the 1's in a variable.</p>
+<p>The '<tt>llvm.ctpop</tt>' intrinsic counts the 1's in a variable, or within each
+   element of a vector.</p>
 
 </div>
 
@@ -6658,7 +6662,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.ctlz</tt> on any
-   integer bit width. Not all targets support all bit widths however.</p>
+   integer bit width, or any vector whose elements are integers. Not all
+   targets support all bit widths or vector types, however.</p>
 
 <pre>
   declare i8 @llvm.ctlz.i8 (i8  &lt;src&gt;)
@@ -6666,6 +6671,7 @@ LLVM</a>.</p>
   declare i32 @llvm.ctlz.i32(i32 &lt;src&gt;)
   declare i64 @llvm.ctlz.i64(i64 &lt;src&gt;)
   declare i256 @llvm.ctlz.i256(i256 &lt;src&gt;)
+  declare &lt;2 x i32&gt; @llvm.ctlz.v2i32(&lt;2 x i32&gt; &lt;src;gt)
 </pre>
 
 <h5>Overview:</h5>
@@ -6674,11 +6680,13 @@ LLVM</a>.</p>
 
 <h5>Arguments:</h5>
 <p>The only argument is the value to be counted.  The argument may be of any
-   integer type. The return type must match the argument type.</p>
+   integer type, or any vector type with integer element type.
+   The return type must match the argument type.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>llvm.ctlz</tt>' intrinsic counts the leading (most significant)
-   zeros in a variable.  If the src == 0 then the result is the size in bits of
+   zeros in a variable, or within each element of the vector if the operation
+   is of vector type.  If the src == 0 then the result is the size in bits of
    the type of src. For example, <tt>llvm.ctlz(i32 2) = 30</tt>.</p>
 
 </div>
@@ -6692,7 +6700,8 @@ LLVM</a>.</p>
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.cttz</tt> on any
-   integer bit width. Not all targets support all bit widths however.</p>
+   integer bit width, or any vector of integer elements. Not all targets
+   support all bit widths or vector types, however.</p>
 
 <pre>
   declare i8 @llvm.cttz.i8 (i8  &lt;src&gt;)
@@ -6700,6 +6709,7 @@ LLVM</a>.</p>
   declare i32 @llvm.cttz.i32(i32 &lt;src&gt;)
   declare i64 @llvm.cttz.i64(i64 &lt;src&gt;)
   declare i256 @llvm.cttz.i256(i256 &lt;src&gt;)
+  declase &lt;2 x i32&gt; @llvm.cttz.v2i32(&lt;2 x i32&gt; &lt;src&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -6708,11 +6718,13 @@ LLVM</a>.</p>
 
 <h5>Arguments:</h5>
 <p>The only argument is the value to be counted.  The argument may be of any
-   integer type.  The return type must match the argument type.</p>
+   integer type, or a vectory with integer element type..  The return type
+   must match the argument type.</p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>llvm.cttz</tt>' intrinsic counts the trailing (least significant)
-   zeros in a variable.  If the src == 0 then the result is the size in bits of
+   zeros in a variable, or within each element of a vector.
+   If the src == 0 then the result is the size in bits of
    the type of src.  For example, <tt>llvm.cttz(2) = 1</tt>.</p>
 
 </div>

@@ -355,7 +355,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::cttz: {
     // If all bits below the first known one are known zero,
     // this value is constant.
-    const IntegerType *IT = cast<IntegerType>(II->getArgOperand(0)->getType());
+    const IntegerType *IT = dyn_cast<IntegerType>(II->getArgOperand(0)->getType());
+    // FIXME: Try to simplify vectors of integers.
+    if (!IT) break;
     uint32_t BitWidth = IT->getBitWidth();
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
@@ -372,7 +374,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::ctlz: {
     // If all bits above the first known one are known zero,
     // this value is constant.
-    const IntegerType *IT = cast<IntegerType>(II->getArgOperand(0)->getType());
+    const IntegerType *IT = dyn_cast<IntegerType>(II->getArgOperand(0)->getType());
+    // FIXME: Try to simplify vectors of integers.
+    if (!IT) break;
     uint32_t BitWidth = IT->getBitWidth();
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
