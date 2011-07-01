@@ -113,6 +113,22 @@ namespace InitVTable {
   B::B(int x) : A(x + 5) {}
 }
 
+namespace rdar9694300 {
+  struct X {
+    int x;
+  };
+
+  // CHECK: define void @_ZN11rdar96943001fEv
+  void f() {
+    // CHECK: alloca
+    X x;
+    // CHECK-NEXT: [[I:%.*]] = alloca i32
+    // CHECK-NEXT: store i32 17, i32* [[I]]
+    int i = 17;
+    // CHECK-NEXT: ret void
+  }
+}
+
 template<typename T>
 struct X {
   X(const X &);
@@ -133,19 +149,3 @@ template<typename T>
 X<T>::X(const X &other) : start(0), end(0) { }
 
 X<int> get_X(X<int> x) { return x; }
-
-namespace rdar9694300 {
-  struct X {
-    int x;
-  };
-
-  // CHECK: define void @_ZN11rdar96943001fEv
-  void f() {
-    // CHECK: alloca
-    X x;
-    // CHECK-NEXT: [[I:%.*]] = alloca i32
-    // CHECK-NEXT: store i32 17, i32* [[I]]
-    int i = 17;
-    // CHECK-NEXT: ret void
-  }
-}
