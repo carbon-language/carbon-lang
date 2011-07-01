@@ -20,7 +20,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "X86GenSubtarget.inc"
+#include "X86GenSubtargetInfo.inc"
 
 namespace llvm {
 class GlobalValue;

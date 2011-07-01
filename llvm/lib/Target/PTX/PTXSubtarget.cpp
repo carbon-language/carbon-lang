@@ -17,7 +17,7 @@
 #define GET_SUBTARGETINFO_CTOR
 #define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
-#include "PTXGenSubtarget.inc"
+#include "PTXGenSubtargetInfo.inc"
 
 using namespace llvm;
 
@@ -63,5 +63,3 @@ std::string PTXSubtarget::getPTXVersionString() const {
     case PTX_VERSION_2_3: return "2.3";
   }
 }
-
-#include "PTXGenSubtarget.inc"

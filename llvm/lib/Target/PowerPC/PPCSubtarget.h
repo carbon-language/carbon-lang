@@ -20,7 +20,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "PPCGenSubtarget.inc"
+#include "PPCGenSubtargetInfo.inc"
 
 // GCC #defines PPC on Linux but we use it as our namespace name
 #undef PPC

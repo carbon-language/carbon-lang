@@ -17,7 +17,7 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 
 #define GET_SUBTARGETINFO_HEADER
-#include "MSP430GenSubtarget.inc"
+#include "MSP430GenSubtargetInfo.inc"
 
 #include <string>
 

@@ -17,7 +17,7 @@ BUILT_SOURCES = PTXGenAsmWriter.inc \
 		PTXGenDAGISel.inc \
 		PTXGenInstrInfo.inc \
 		PTXGenRegisterInfo.inc \
-		PTXGenSubtarget.inc
+		PTXGenSubtargetInfo.inc
 
 DIRS = TargetInfo
 

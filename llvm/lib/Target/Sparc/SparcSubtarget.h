@@ -18,7 +18,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "SparcGenSubtarget.inc"
+#include "SparcGenSubtargetInfo.inc"
 
 namespace llvm {
 

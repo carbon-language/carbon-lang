@@ -18,7 +18,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "SystemZGenSubtarget.inc"
+#include "SystemZGenSubtargetInfo.inc"
 
 namespace llvm {
 class GlobalValue;

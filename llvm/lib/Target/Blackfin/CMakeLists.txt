@@ -4,7 +4,7 @@ tablegen(BlackfinGenRegisterInfo.inc -gen-register-info)
 tablegen(BlackfinGenInstrInfo.inc -gen-instr-info)
 tablegen(BlackfinGenAsmWriter.inc -gen-asm-writer)
 tablegen(BlackfinGenDAGISel.inc -gen-dag-isel)
-tablegen(BlackfinGenSubtarget.inc -gen-subtarget)
+tablegen(BlackfinGenSubtargetInfo.inc -gen-subtarget)
 tablegen(BlackfinGenCallingConv.inc -gen-callingconv)
 tablegen(BlackfinGenIntrinsics.inc -gen-tgt-intrinsic)
 

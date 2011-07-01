@@ -18,7 +18,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "BlackfinGenSubtarget.inc"
+#include "BlackfinGenSubtargetInfo.inc"
 
 namespace llvm {
 

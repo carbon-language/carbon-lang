@@ -13,8 +13,8 @@ TARGET = SystemZ
 
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = SystemZGenRegisterInfo.inc SystemZGenInstrInfo.inc \
-		SystemZGenAsmWriter.inc \
-                SystemZGenDAGISel.inc SystemZGenSubtarget.inc SystemZGenCallingConv.inc
+		SystemZGenAsmWriter.inc SystemZGenDAGISel.inc \
+		SystemZGenSubtargetInfo.inc SystemZGenCallingConv.inc
 
 DIRS = TargetInfo
 

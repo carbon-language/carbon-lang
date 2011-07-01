@@ -9,7 +9,7 @@ tablegen(X86GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(X86GenDAGISel.inc -gen-dag-isel)
 tablegen(X86GenFastISel.inc -gen-fast-isel)
 tablegen(X86GenCallingConv.inc -gen-callingconv)
-tablegen(X86GenSubtarget.inc -gen-subtarget)
+tablegen(X86GenSubtargetInfo.inc -gen-subtarget)
 tablegen(X86GenEDInfo.inc -gen-enhanced-disassembly-info)
 
 set(sources

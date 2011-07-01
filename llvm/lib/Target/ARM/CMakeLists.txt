@@ -9,7 +9,7 @@ tablegen(ARMGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(ARMGenDAGISel.inc -gen-dag-isel)
 tablegen(ARMGenFastISel.inc -gen-fast-isel)
 tablegen(ARMGenCallingConv.inc -gen-callingconv)
-tablegen(ARMGenSubtarget.inc -gen-subtarget)
+tablegen(ARMGenSubtargetInfo.inc -gen-subtarget)
 tablegen(ARMGenEDInfo.inc -gen-enhanced-disassembly-info)
 tablegen(ARMGenDecoderTables.inc -gen-arm-decoder)
 

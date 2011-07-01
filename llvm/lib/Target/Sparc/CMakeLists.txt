@@ -4,7 +4,7 @@ tablegen(SparcGenRegisterInfo.inc -gen-register-info)
 tablegen(SparcGenInstrInfo.inc -gen-instr-info)
 tablegen(SparcGenAsmWriter.inc -gen-asm-writer)
 tablegen(SparcGenDAGISel.inc -gen-dag-isel)
-tablegen(SparcGenSubtarget.inc -gen-subtarget)
+tablegen(SparcGenSubtargetInfo.inc -gen-subtarget)
 tablegen(SparcGenCallingConv.inc -gen-callingconv)
 
 add_llvm_target(SparcCodeGen

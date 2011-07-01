@@ -13,12 +13,11 @@
 
 #include "AlphaSubtarget.h"
 #include "Alpha.h"
-#include "AlphaGenSubtarget.inc"
 
 #define GET_SUBTARGETINFO_CTOR
 #define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
-#include "AlphaGenSubtarget.inc"
+#include "AlphaGenSubtargetInfo.inc"
 
 using namespace llvm;
 

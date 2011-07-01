@@ -15,7 +15,7 @@ TARGET = MSP430
 BUILT_SOURCES = MSP430GenRegisterInfo.inc MSP430GenInstrInfo.inc \
 		MSP430GenAsmWriter.inc \
 		MSP430GenDAGISel.inc MSP430GenCallingConv.inc \
-		MSP430GenSubtarget.inc
+		MSP430GenSubtargetInfo.inc
 
 DIRS = InstPrinter TargetInfo
 

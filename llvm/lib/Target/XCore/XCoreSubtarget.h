@@ -19,7 +19,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "XCoreGenSubtarget.inc"
+#include "XCoreGenSubtargetInfo.inc"
 
 namespace llvm {
 

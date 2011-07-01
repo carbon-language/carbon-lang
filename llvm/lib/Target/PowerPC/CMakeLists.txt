@@ -7,7 +7,7 @@ tablegen(PPCGenRegisterInfo.inc -gen-register-info)
 tablegen(PPCGenInstrInfo.inc -gen-instr-info)
 tablegen(PPCGenDAGISel.inc -gen-dag-isel)
 tablegen(PPCGenCallingConv.inc -gen-callingconv)
-tablegen(PPCGenSubtarget.inc -gen-subtarget)
+tablegen(PPCGenSubtargetInfo.inc -gen-subtarget)
 
 add_llvm_target(PowerPCCodeGen
   PPCAsmBackend.cpp

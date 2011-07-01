@@ -15,7 +15,7 @@ TARGET = Mips
 BUILT_SOURCES = MipsGenRegisterInfo.inc MipsGenInstrInfo.inc \
 		MipsGenAsmWriter.inc \
                 MipsGenDAGISel.inc MipsGenCallingConv.inc \
-                MipsGenSubtarget.inc
+                MipsGenSubtargetInfo.inc
 
 DIRS = TargetInfo
 

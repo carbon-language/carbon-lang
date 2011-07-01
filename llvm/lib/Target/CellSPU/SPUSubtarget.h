@@ -19,7 +19,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "SPUGenSubtarget.inc"
+#include "SPUGenSubtargetInfo.inc"
 
 namespace llvm {
   class GlobalValue;

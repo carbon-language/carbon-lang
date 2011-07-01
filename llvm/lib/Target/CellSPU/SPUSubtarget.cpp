@@ -19,7 +19,7 @@
 #define GET_SUBTARGETINFO_CTOR
 #define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
-#include "SPUGenSubtarget.inc"
+#include "SPUGenSubtargetInfo.inc"
 
 using namespace llvm;
 

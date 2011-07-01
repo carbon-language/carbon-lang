@@ -1775,8 +1775,8 @@ $(ObjDir)/%GenFastISel.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) \"fast\" instruction selector implementation with tblgen"
 	$(Verb) $(TableGen) -gen-fast-isel -o $(call SYSPATH, $@) $<
 
-$(TARGET:%=$(ObjDir)/%GenSubtarget.inc.tmp): \
-$(ObjDir)/%GenSubtarget.inc.tmp : %.td $(ObjDir)/.dir
+$(TARGET:%=$(ObjDir)/%GenSubtargetInfo.inc.tmp): \
+$(ObjDir)/%GenSubtargetInfo.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) subtarget information with tblgen"
 	$(Verb) $(TableGen) -gen-subtarget -o $(call SYSPATH, $@) $<
 

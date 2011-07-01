@@ -15,7 +15,7 @@ TARGET = XCore
 BUILT_SOURCES = XCoreGenRegisterInfo.inc XCoreGenInstrInfo.inc \
 		XCoreGenAsmWriter.inc \
                 XCoreGenDAGISel.inc XCoreGenCallingConv.inc \
-		XCoreGenSubtarget.inc
+		XCoreGenSubtargetInfo.inc
 
 DIRS = TargetInfo
 

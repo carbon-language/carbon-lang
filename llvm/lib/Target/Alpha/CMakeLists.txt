@@ -5,7 +5,7 @@ tablegen(AlphaGenInstrInfo.inc -gen-instr-info)
 tablegen(AlphaGenAsmWriter.inc -gen-asm-writer)
 tablegen(AlphaGenDAGISel.inc -gen-dag-isel)
 tablegen(AlphaGenCallingConv.inc -gen-callingconv)
-tablegen(AlphaGenSubtarget.inc -gen-subtarget)
+tablegen(AlphaGenSubtargetInfo.inc -gen-subtarget)
 
 add_llvm_target(AlphaCodeGen
   AlphaAsmPrinter.cpp

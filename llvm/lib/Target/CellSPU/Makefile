@@ -13,7 +13,7 @@ TARGET = SPU
 BUILT_SOURCES = SPUGenInstrInfo.inc SPUGenRegisterInfo.inc \
 		SPUGenAsmWriter.inc SPUGenCodeEmitter.inc \
 		SPUGenDAGISel.inc \
-		SPUGenSubtarget.inc SPUGenCallingConv.inc
+		SPUGenSubtargetInfo.inc SPUGenCallingConv.inc
 
 DIRS = TargetInfo
 

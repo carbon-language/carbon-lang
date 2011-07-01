@@ -7,7 +7,7 @@ tablegen(MBlazeGenAsmWriter.inc -gen-asm-writer)
 tablegen(MBlazeGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(MBlazeGenDAGISel.inc -gen-dag-isel)
 tablegen(MBlazeGenCallingConv.inc -gen-callingconv)
-tablegen(MBlazeGenSubtarget.inc -gen-subtarget)
+tablegen(MBlazeGenSubtargetInfo.inc -gen-subtarget)
 tablegen(MBlazeGenIntrinsics.inc -gen-tgt-intrinsic)
 tablegen(MBlazeGenEDInfo.inc -gen-enhanced-disassembly-info)
 

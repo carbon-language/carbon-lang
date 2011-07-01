@@ -15,7 +15,7 @@ TARGET = PPC
 BUILT_SOURCES = PPCGenRegisterInfo.inc \
                 PPCGenAsmWriter.inc  PPCGenCodeEmitter.inc \
                 PPCGenInstrInfo.inc PPCGenDAGISel.inc \
-                PPCGenSubtarget.inc PPCGenCallingConv.inc \
+                PPCGenSubtargetInfo.inc PPCGenCallingConv.inc \
                 PPCGenMCCodeEmitter.inc
 
 DIRS = InstPrinter TargetInfo

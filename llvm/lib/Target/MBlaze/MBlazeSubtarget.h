@@ -19,7 +19,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "MBlazeGenSubtarget.inc"
+#include "MBlazeGenSubtargetInfo.inc"
 
 namespace llvm {
 

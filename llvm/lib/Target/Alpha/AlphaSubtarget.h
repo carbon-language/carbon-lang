@@ -19,7 +19,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "AlphaGenSubtarget.inc"
+#include "AlphaGenSubtargetInfo.inc"
 
 namespace llvm {
 

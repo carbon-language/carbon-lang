@@ -14,7 +14,7 @@ TARGET = ARM
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = ARMGenRegisterInfo.inc ARMGenInstrInfo.inc \
 		ARMGenAsmWriter.inc ARMGenAsmMatcher.inc \
-                ARMGenDAGISel.inc ARMGenSubtarget.inc \
+                ARMGenDAGISel.inc ARMGenSubtargetInfo.inc \
                 ARMGenCodeEmitter.inc ARMGenCallingConv.inc \
                 ARMGenDecoderTables.inc ARMGenEDInfo.inc \
                 ARMGenFastISel.inc ARMGenMCCodeEmitter.inc

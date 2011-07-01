@@ -19,7 +19,7 @@
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER
-#include "MipsGenSubtarget.inc"
+#include "MipsGenSubtargetInfo.inc"
 
 namespace llvm {
 
