@@ -1203,6 +1203,7 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
                                           VNInfo *VNI,
                                           LiveRange *LR,
                                      SmallVector<MachineInstr*, 8> &DupCopies) {
+  return false; // To see if this fixes the i386 dragonegg buildbot miscompile.
   // FIXME: This is very conservative. For example, we don't handle
   // physical registers.
 
