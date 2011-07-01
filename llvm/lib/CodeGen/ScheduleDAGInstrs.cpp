@@ -25,7 +25,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallSet.h"
@@ -206,7 +206,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   bool UnitLatencies = ForceUnitLatencies();
 
   // Ask the target if address-backscheduling is desirable, and if so how much.
-  const TargetSubtarget &ST = TM.getSubtarget<TargetSubtarget>();
+  const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
   unsigned SpecialAddressLatency = ST.getSpecialAddressLatency();
 
   // Remove any stale debug info; sometimes BuildSchedGraph is called again

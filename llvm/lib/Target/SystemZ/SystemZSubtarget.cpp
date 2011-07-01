@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the SystemZ specific subclass of TargetSubtarget.
+// This file implements the SystemZ specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

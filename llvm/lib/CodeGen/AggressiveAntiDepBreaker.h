@@ -23,7 +23,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
@@ -131,8 +131,8 @@ class RegisterClassInfo;
 
   public:
     AggressiveAntiDepBreaker(MachineFunction& MFi,
-                             const RegisterClassInfo &RCI,
-                             TargetSubtarget::RegClassVector& CriticalPathRCs);
+                          const RegisterClassInfo &RCI,
+                          TargetSubtargetInfo::RegClassVector& CriticalPathRCs);
     ~AggressiveAntiDepBreaker();
 
     /// Start - Initialize anti-dep breaking for a new basic block.

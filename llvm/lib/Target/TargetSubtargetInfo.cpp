@@ -1,4 +1,4 @@
-//===-- TargetSubtarget.cpp - General Target Information -------------------==//
+//===-- TargetSubtargetInfo.cpp - General Target Information ---------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,18 +11,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 //---------------------------------------------------------------------------
-// TargetSubtarget Class
+// TargetSubtargetInfo Class
 //
-TargetSubtarget::TargetSubtarget() {}
+TargetSubtargetInfo::TargetSubtargetInfo() {}
 
-TargetSubtarget::~TargetSubtarget() {}
+TargetSubtargetInfo::~TargetSubtargetInfo() {}
 
-bool TargetSubtarget::enablePostRAScheduler(
+bool TargetSubtargetInfo::enablePostRAScheduler(
           CodeGenOpt::Level OptLevel,
           AntiDepBreakMode& Mode,
           RegClassVector& CriticalPathRCs) const {

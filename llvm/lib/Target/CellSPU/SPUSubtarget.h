@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the Cell SPU-specific subclass of TargetSubtarget.
+// This file declares the Cell SPU-specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef CELLSUBTARGET_H
 #define CELLSUBTARGET_H
 
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include <string>
 
@@ -88,7 +88,7 @@ namespace llvm {
     }
 
     bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                               TargetSubtarget::AntiDepBreakMode& Mode,
+                               TargetSubtargetInfo::AntiDepBreakMode& Mode,
                                RegClassVector& CriticalPathRCs) const;
   };
 } // End llvm namespace

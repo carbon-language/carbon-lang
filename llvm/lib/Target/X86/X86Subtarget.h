@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the X86 specific subclass of TargetSubtarget.
+// This file declares the X86 specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,7 +15,7 @@
 #define X86SUBTARGET_H
 
 #include "llvm/ADT/Triple.h"
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/CallingConv.h"
 #include <string>
 

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the XCore specific subclass of TargetSubtarget.
+// This file implements the XCore specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

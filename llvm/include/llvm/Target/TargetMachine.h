@@ -36,7 +36,7 @@ class TargetJITInfo;
 class TargetLowering;
 class TargetRegisterInfo;
 class TargetSelectionDAGInfo;
-class TargetSubtarget;
+class TargetSubtargetInfo;
 class formatted_raw_ostream;
 class raw_ostream;
 
@@ -94,8 +94,8 @@ protected: // Can only create subclasses.
   TargetMachine(const Target &);
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
-  /// a reference to that target's TargetSubtarget-derived member variable.
-  virtual const TargetSubtarget *getSubtargetImpl() const { return 0; }
+  /// a reference to that target's TargetSubtargetInfo-derived member variable.
+  virtual const TargetSubtargetInfo *getSubtargetImpl() const { return 0; }
 
   /// TheTarget - The Target that this machine was created for.
   const Target &TheTarget;
@@ -132,7 +132,7 @@ public:
   const MCAsmInfo *getMCAsmInfo() const { return AsmInfo; }
 
   /// getSubtarget - This method returns a pointer to the specified type of
-  /// TargetSubtarget.  In debug builds, it verifies that the object being
+  /// TargetSubtargetInfo.  In debug builds, it verifies that the object being
   /// returned is of the correct type.
   template<typename STC> const STC &getSubtarget() const {
     return *static_cast<const STC*>(getSubtargetImpl());

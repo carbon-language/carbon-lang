@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the MSP430 specific subclass of TargetSubtarget.
+// This file declares the MSP430 specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TARGET_MSP430_SUBTARGET_H
 #define LLVM_TARGET_MSP430_SUBTARGET_H
 
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 #define GET_SUBTARGETINFO_HEADER
 #include "MSP430GenSubtarget.inc"

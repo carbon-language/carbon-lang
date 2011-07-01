@@ -1,4 +1,4 @@
-//==-- llvm/Target/TargetSubtarget.h - Target Information --------*- C++ -*-==//
+//==-- llvm/Target/TargetSubtargetInfo.h - Target Information ----*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETSUBTARGET_H
-#define LLVM_TARGET_TARGETSUBTARGET_H
+#ifndef LLVM_TARGET_TARGETSUBTARGETINFO_H
+#define LLVM_TARGET_TARGETSUBTARGETINFO_H
 
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -26,22 +26,22 @@ template <typename T> class SmallVectorImpl;
 
 //===----------------------------------------------------------------------===//
 ///
-/// TargetSubtarget - Generic base class for all target subtargets.  All
+/// TargetSubtargetInfo - Generic base class for all target subtargets.  All
 /// Target-specific options that control code generation and printing should
-/// be exposed through a TargetSubtarget-derived class.
+/// be exposed through a TargetSubtargetInfo-derived class.
 ///
-class TargetSubtarget : public MCSubtargetInfo {
-  TargetSubtarget(const TargetSubtarget&);   // DO NOT IMPLEMENT
-  void operator=(const TargetSubtarget&);  // DO NOT IMPLEMENT
+class TargetSubtargetInfo : public MCSubtargetInfo {
+  TargetSubtargetInfo(const TargetSubtargetInfo&);   // DO NOT IMPLEMENT
+  void operator=(const TargetSubtargetInfo&);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses...
-  TargetSubtarget();
+  TargetSubtargetInfo();
 public:
   // AntiDepBreakMode - Type of anti-dependence breaking that should
   // be performed before post-RA scheduling.
   typedef enum { ANTIDEP_NONE, ANTIDEP_CRITICAL, ANTIDEP_ALL } AntiDepBreakMode;
   typedef SmallVectorImpl<TargetRegisterClass*> RegClassVector;
 
-  virtual ~TargetSubtarget();
+  virtual ~TargetSubtargetInfo();
 
   /// getSpecialAddressLatency - For targets where it is beneficial to
   /// backschedule instructions that compute addresses, return a value

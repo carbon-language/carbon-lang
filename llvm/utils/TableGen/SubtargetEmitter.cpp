@@ -695,13 +695,13 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   OS << "#endif // GET_SUBTARGETINFO_TARGET_DESC\n\n";
 
-  // Create a TargetSubtarget subclass to hide the MC layer initialization.
+  // Create a TargetSubtargetInfo subclass to hide the MC layer initialization.
   OS << "\n#ifdef GET_SUBTARGETINFO_HEADER\n";
   OS << "#undef GET_SUBTARGETINFO_HEADER\n";
 
   std::string ClassName = Target + "GenSubtargetInfo";
   OS << "namespace llvm {\n";
-  OS << "struct " << ClassName << " : public TargetSubtarget {\n"
+  OS << "struct " << ClassName << " : public TargetSubtargetInfo {\n"
      << "  explicit " << ClassName << "();\n"
      << "};\n";
   OS << "} // End llvm namespace \n";
@@ -713,7 +713,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   OS << "namespace llvm {\n";
   OS << ClassName << "::" << ClassName << "()\n"
-     << "  : TargetSubtarget() {\n"
+     << "  : TargetSubtargetInfo() {\n"
      << "  InitMCSubtargetInfo(";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";

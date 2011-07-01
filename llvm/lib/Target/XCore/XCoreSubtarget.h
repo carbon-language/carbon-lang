@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the XCore specific subclass of TargetSubtarget.
+// This file declares the XCore specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef XCORESUBTARGET_H
 #define XCORESUBTARGET_H
 
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include <string>
 

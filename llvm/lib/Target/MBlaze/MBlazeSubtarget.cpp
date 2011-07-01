@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the MBlaze specific subclass of TargetSubtarget.
+// This file implements the MBlaze specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 
@@ -54,9 +54,9 @@ void MBlazeSubtarget::computeIssueWidth() {
 
 bool MBlazeSubtarget::
 enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                      TargetSubtarget::AntiDepBreakMode& Mode,
+                      TargetSubtargetInfo::AntiDepBreakMode& Mode,
                       RegClassVector& CriticalPathRCs) const {
-  Mode = TargetSubtarget::ANTIDEP_CRITICAL;
+  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
   CriticalPathRCs.clear();
   CriticalPathRCs.push_back(&MBlaze::GPRRegClass);
   return HasItin && OptLevel >= CodeGenOpt::Default;

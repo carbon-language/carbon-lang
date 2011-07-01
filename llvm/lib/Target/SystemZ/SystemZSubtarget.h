@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the SystemZ specific subclass of TargetSubtarget.
+// This file declares the SystemZ specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TARGET_SystemZ_SUBTARGET_H
 #define LLVM_TARGET_SystemZ_SUBTARGET_H
 
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER

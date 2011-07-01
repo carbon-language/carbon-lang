@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the blackfin specific subclass of TargetSubtarget.
+// This file implements the blackfin specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

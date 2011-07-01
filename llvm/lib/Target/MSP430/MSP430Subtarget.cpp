@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the MSP430 specific subclass of TargetSubtarget.
+// This file implements the MSP430 specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

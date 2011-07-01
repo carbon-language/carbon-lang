@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the X86 specific subclass of TargetSubtarget.
+// This file implements the X86 specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

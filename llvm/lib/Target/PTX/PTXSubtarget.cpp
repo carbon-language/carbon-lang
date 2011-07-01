@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the PTX specific subclass of TargetSubtarget.
+// This file implements the PTX specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

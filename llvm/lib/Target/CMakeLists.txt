@@ -12,7 +12,7 @@ add_llvm_library(LLVMTarget
   TargetLoweringObjectFile.cpp
   TargetMachine.cpp
   TargetRegisterInfo.cpp
-  TargetSubtarget.cpp
+  TargetSubtargetInfo.cpp
   )
 
 set(LLVM_ENUM_ASM_PRINTERS "")

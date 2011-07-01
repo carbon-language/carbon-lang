@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the PPC specific subclass of TargetSubtarget.
+// This file implements the PPC specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

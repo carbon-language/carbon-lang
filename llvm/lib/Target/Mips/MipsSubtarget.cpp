@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Mips specific subclass of TargetSubtarget.
+// This file implements the Mips specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

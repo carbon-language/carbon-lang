@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the SPARC specific subclass of TargetSubtarget.
+// This file implements the SPARC specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

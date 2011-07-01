@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the CellSPU-specific subclass of TargetSubtarget.
+// This file implements the CellSPU-specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 
@@ -49,9 +49,9 @@ void SPUSubtarget::SetJITMode() {
 /// Enable PostRA scheduling for optimization levels -O2 and -O3.
 bool SPUSubtarget::enablePostRAScheduler(
                        CodeGenOpt::Level OptLevel,
-                       TargetSubtarget::AntiDepBreakMode& Mode,
+                       TargetSubtargetInfo::AntiDepBreakMode& Mode,
                        RegClassVector& CriticalPathRCs) const {
-  Mode = TargetSubtarget::ANTIDEP_CRITICAL;
+  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
   // CriticalPathsRCs seems to be the set of
   // RegisterClasses that antidep breakings are performed for.
   // Do it for all register classes 

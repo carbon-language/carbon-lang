@@ -38,7 +38,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -53,7 +53,7 @@ STATISTIC(NumStalls, "Number of pipeline stalls");
 STATISTIC(NumFixedAnti, "Number of fixed anti-dependencies");
 
 // Post-RA scheduling is enabled with
-// TargetSubtarget.enablePostRAScheduler(). This flag can be used to
+// TargetSubtargetInfo.enablePostRAScheduler(). This flag can be used to
 // override the target.
 static cl::opt<bool>
 EnablePostRAScheduler("post-RA-scheduler",
@@ -138,7 +138,7 @@ namespace {
     SchedulePostRATDList(
       MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
       AliasAnalysis *AA, const RegisterClassInfo&,
-      TargetSubtarget::AntiDepBreakMode AntiDepMode,
+      TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
       SmallVectorImpl<TargetRegisterClass*> &CriticalPathRCs);
 
     ~SchedulePostRATDList();
@@ -183,7 +183,7 @@ namespace {
 SchedulePostRATDList::SchedulePostRATDList(
   MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
   AliasAnalysis *AA, const RegisterClassInfo &RCI,
-  TargetSubtarget::AntiDepBreakMode AntiDepMode,
+  TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
   SmallVectorImpl<TargetRegisterClass*> &CriticalPathRCs)
   : ScheduleDAGInstrs(MF, MLI, MDT), Topo(SUnits), AA(AA),
     KillIndices(TRI->getNumRegs())
@@ -193,9 +193,9 @@ SchedulePostRATDList::SchedulePostRATDList(
   HazardRec =
     TM.getInstrInfo()->CreateTargetPostRAHazardRecognizer(InstrItins, this);
   AntiDepBreak =
-    ((AntiDepMode == TargetSubtarget::ANTIDEP_ALL) ?
+    ((AntiDepMode == TargetSubtargetInfo::ANTIDEP_ALL) ?
      (AntiDepBreaker *)new AggressiveAntiDepBreaker(MF, RCI, CriticalPathRCs) :
-     ((AntiDepMode == TargetSubtarget::ANTIDEP_CRITICAL) ?
+     ((AntiDepMode == TargetSubtargetInfo::ANTIDEP_CRITICAL) ?
       (AntiDepBreaker *)new CriticalAntiDepBreaker(MF, RCI) : NULL));
 }
 
@@ -212,7 +212,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   RegClassInfo.runOnMachineFunction(Fn);
 
   // Check for explicit enable/disable of post-ra scheduling.
-  TargetSubtarget::AntiDepBreakMode AntiDepMode = TargetSubtarget::ANTIDEP_NONE;
+  TargetSubtargetInfo::AntiDepBreakMode AntiDepMode = TargetSubtargetInfo::ANTIDEP_NONE;
   SmallVector<TargetRegisterClass*, 4> CriticalPathRCs;
   if (EnablePostRAScheduler.getPosition() > 0) {
     if (!EnablePostRAScheduler)
@@ -220,17 +220,18 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   } else {
     // Check that post-RA scheduling is enabled for this target.
     // This may upgrade the AntiDepMode.
-    const TargetSubtarget &ST = Fn.getTarget().getSubtarget<TargetSubtarget>();
+    const TargetSubtargetInfo &ST = Fn.getTarget().getSubtarget<TargetSubtargetInfo>();
     if (!ST.enablePostRAScheduler(OptLevel, AntiDepMode, CriticalPathRCs))
       return false;
   }
 
   // Check for antidep breaking override...
   if (EnableAntiDepBreaking.getPosition() > 0) {
-    AntiDepMode = (EnableAntiDepBreaking == "all") ?
-      TargetSubtarget::ANTIDEP_ALL :
-        (EnableAntiDepBreaking == "critical")
-           ? TargetSubtarget::ANTIDEP_CRITICAL : TargetSubtarget::ANTIDEP_NONE;
+    AntiDepMode = (EnableAntiDepBreaking == "all")
+      ? TargetSubtargetInfo::ANTIDEP_ALL
+      : ((EnableAntiDepBreaking == "critical")
+         ? TargetSubtargetInfo::ANTIDEP_CRITICAL
+         : TargetSubtargetInfo::ANTIDEP_NONE);
   }
 
   DEBUG(dbgs() << "PostRAScheduler\n");

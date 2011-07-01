@@ -116,7 +116,7 @@ bool AggressiveAntiDepState::IsLive(unsigned Reg)
 AggressiveAntiDepBreaker::
 AggressiveAntiDepBreaker(MachineFunction& MFi,
                          const RegisterClassInfo &RCI,
-                         TargetSubtarget::RegClassVector& CriticalPathRCs) :
+                         TargetSubtargetInfo::RegClassVector& CriticalPathRCs) :
   AntiDepBreaker(), MF(MFi),
   MRI(MF.getRegInfo()),
   TII(MF.getTarget().getInstrInfo()),

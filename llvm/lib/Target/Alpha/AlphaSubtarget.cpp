@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Alpha specific subclass of TargetSubtarget.
+// This file implements the Alpha specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 

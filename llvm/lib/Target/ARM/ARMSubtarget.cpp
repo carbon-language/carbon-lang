@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the ARM specific subclass of TargetSubtarget.
+// This file implements the ARM specific subclass of TargetSubtargetInfo.
 //
 //===----------------------------------------------------------------------===//
 
 #include "ARMSubtarget.h"
 #include "ARMBaseRegisterInfo.h"
 #include "llvm/GlobalValue.h"
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -251,9 +251,9 @@ void ARMSubtarget::computeIssueWidth() {
 
 bool ARMSubtarget::enablePostRAScheduler(
            CodeGenOpt::Level OptLevel,
-           TargetSubtarget::AntiDepBreakMode& Mode,
+           TargetSubtargetInfo::AntiDepBreakMode& Mode,
            RegClassVector& CriticalPathRCs) const {
-  Mode = TargetSubtarget::ANTIDEP_CRITICAL;
+  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
   CriticalPathRCs.clear();
   CriticalPathRCs.push_back(&ARM::GPRRegClass);
   return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
