@@ -35,6 +35,7 @@ namespace llvm {
   class MCInstPrinter;
   class MCInstrInfo;
   class MCRegisterInfo;
+  class MCSubtargetInfo;
   class MCStreamer;
   class TargetAsmBackend;
   class TargetAsmLexer;
@@ -69,6 +70,7 @@ namespace llvm {
                                           StringRef TT);
     typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(void);
+    typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(void);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
                                                   const std::string &CPU,
@@ -136,6 +138,10 @@ namespace llvm {
     /// MCRegInfoCtorFn - Constructor function for this target's MCRegisterInfo,
     /// if registered.
     MCRegInfoCtorFnTy MCRegInfoCtorFn;
+
+    /// MCSubtargetInfoCtorFn - Constructor function for this target's
+    /// MCSubtargetInfo, if registered.
+    MCSubtargetInfoCtorFnTy MCSubtargetInfoCtorFn;
 
     /// TargetMachineCtorFn - Construction function for this target's
     /// TargetMachine, if registered.
@@ -260,6 +266,14 @@ namespace llvm {
       if (!MCRegInfoCtorFn)
         return 0;
       return MCRegInfoCtorFn();
+    }
+
+    /// createMCSubtargetInfo - Create a MCSubtargetInfo implementation.
+    ///
+    MCSubtargetInfo *createMCSubtargetInfo() const {
+      if (!MCSubtargetInfoCtorFn)
+        return 0;
+      return MCSubtargetInfoCtorFn();
     }
 
     /// createTargetMachine - Create a target specific machine implementation
@@ -504,6 +518,22 @@ namespace llvm {
       // Ignore duplicate registration.
       if (!T.MCRegInfoCtorFn)
         T.MCRegInfoCtorFn = Fn;
+    }
+
+    /// RegisterMCSubtargetInfo - Register a MCSubtargetInfo implementation for
+    /// the given target.
+    ///
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct a MCSubtargetInfo for the target.
+    static void RegisterMCSubtargetInfo(Target &T,
+                                        Target::MCSubtargetInfoCtorFnTy Fn) {
+      // Ignore duplicate registration.
+      if (!T.MCSubtargetInfoCtorFn)
+        T.MCSubtargetInfoCtorFn = Fn;
     }
 
     /// RegisterTargetMachine - Register a TargetMachine implementation for the
@@ -779,6 +809,39 @@ namespace llvm {
   struct RegisterMCRegInfoFn {
     RegisterMCRegInfoFn(Target &T, Target::MCRegInfoCtorFnTy Fn) {
       TargetRegistry::RegisterMCRegInfo(T, Fn);
+    }
+  };
+
+  /// RegisterMCSubtargetInfo - Helper template for registering a target
+  /// subtarget info implementation.  This invokes the static "Create" method
+  /// on the class to actually do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCSubtargetInfo<FooMCSubtargetInfo> X(TheFooTarget);
+  /// }
+  template<class MCSubtargetInfoImpl>
+  struct RegisterMCSubtargetInfo {
+    RegisterMCSubtargetInfo(Target &T) {
+      TargetRegistry::RegisterMCSubtargetInfo(T, &Allocator);
+    }
+  private:
+    static MCSubtargetInfo *Allocator() {
+      return new MCSubtargetInfoImpl();
+    }
+  };
+
+  /// RegisterMCSubtargetInfoFn - Helper template for registering a target
+  /// subtarget info implementation.  This invokes the specified function to
+  /// do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCSubtargetInfoFn X(TheFooTarget, TheFunction);
+  /// }
+  struct RegisterMCSubtargetInfoFn {
+    RegisterMCSubtargetInfoFn(Target &T, Target::MCSubtargetInfoCtorFnTy Fn) {
+      TargetRegistry::RegisterMCSubtargetInfo(T, Fn);
     }
   };
 
