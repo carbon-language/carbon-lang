@@ -62,6 +62,9 @@ public:
     lldb::SBProcess
     GetProcess ();
 
+#ifdef SWIG
+    %feature("autodoc", "
+#endif
     //------------------------------------------------------------------
     /// Launch a new process.
     ///
@@ -115,6 +118,9 @@ public:
     /// @return
     ///      A process object for the newly created process.
     //------------------------------------------------------------------
+#ifdef SWIG
+    ") Launch;
+#endif
     lldb::SBProcess
     Launch (SBListener &listener, 
             char const **argv,
@@ -128,6 +134,9 @@ public:
             lldb::SBError& error);
             
     
+#ifdef SWIG
+    %feature("autodoc", "
+#endif
     //------------------------------------------------------------------
     /// Launch a new process with sensible defaults.
     ///
@@ -154,26 +163,107 @@ public:
     /// @return
     ///      A process object for the newly created process.
     //------------------------------------------------------------------
+#ifdef SWIG
+    ") LaunchSimple;
+#endif
     lldb::SBProcess
     LaunchSimple (const char **argv, 
                   const char **envp,
                   const char *working_directory);
     
+#ifdef SWIG
+    %feature("autodoc", "
+#endif
+    //------------------------------------------------------------------
+    /// Attach to process with pid.
+    ///
+    /// @param[in] listener
+    ///     An optional listener that will receive all process events.
+    ///     If \a listener is valid then \a listener will listen to all
+    ///     process events. If not valid, then this target's debugger
+    ///     (SBTarget::GetDebugger()) will listen to all process events.
+    ///
+    /// @param[in] pid
+    ///     The process ID to attach to.
+    ///
+    /// @param[out]
+    ///     An error explaining what went wrong if attach fails.
+    ///
+    /// @return
+    ///      A process object for the attached process.
+    //------------------------------------------------------------------
+#ifdef SWIG
+    ") AttachToProcessWithID;
+#endif
     lldb::SBProcess
-    AttachToProcessWithID (SBListener &listener, 
-                           lldb::pid_t pid, // The process ID to attach to
-                           lldb::SBError& error); // An error explaining what went wrong if attach fails
+    AttachToProcessWithID (SBListener &listener,
+                           lldb::pid_t pid,
+                           lldb::SBError& error);
 
+#ifdef SWIG
+    %feature("autodoc", "
+#endif
+    //------------------------------------------------------------------
+    /// Attach to process with name.
+    ///
+    /// @param[in] listener
+    ///     An optional listener that will receive all process events.
+    ///     If \a listener is valid then \a listener will listen to all
+    ///     process events. If not valid, then this target's debugger
+    ///     (SBTarget::GetDebugger()) will listen to all process events.
+    ///
+    /// @param[in] name
+    ///     Basename of process to attach to.
+    ///
+    /// @param[in] wait_for
+    ///     If true wait for a new instance of 'name' to be launched.
+    ///
+    /// @param[out]
+    ///     An error explaining what went wrong if attach fails.
+    ///
+    /// @return
+    ///      A process object for the attached process.
+    //------------------------------------------------------------------
+#ifdef SWIG
+    ") AttachToProcessWithName;
+#endif
     lldb::SBProcess
-    AttachToProcessWithName (SBListener &listener, 
-                             const char *name,  // basename of process to attach to
-                             bool wait_for,     // if true wait for a new instance of "name" to be launched
-                             lldb::SBError& error);   // An error explaining what went wrong if attach fails
+    AttachToProcessWithName (SBListener &listener,
+                             const char *name,
+                             bool wait_for,
+                             lldb::SBError& error);
 
+#ifdef SWIG
+    %feature("autodoc", "
+#endif
+    //------------------------------------------------------------------
+    /// Attach to process with name.
+    ///
+    /// @param[in] listener
+    ///     An optional listener that will receive all process events.
+    ///     If \a listener is valid then \a listener will listen to all
+    ///     process events. If not valid, then this target's debugger
+    ///     (SBTarget::GetDebugger()) will listen to all process events.
+    ///
+    /// @param[in] url
+    ///     The url to connect to, e.g., 'connect://localhost:12345'.
+    ///
+    /// @param[in] plugin_name
+    ///     The plugin name to be used; can be NULL.
+    ///
+    /// @param[out]
+    ///     An error explaining what went wrong if the connect fails.
+    ///
+    /// @return
+    ///      A process object for the connected process.
+    //------------------------------------------------------------------
+#ifdef SWIG
+    ") ConnectRemote;
+#endif
     lldb::SBProcess
     ConnectRemote (SBListener &listener,
                    const char *url,
-                   const char *plugin_name, // Can be NULL
+                   const char *plugin_name,
                    SBError& error);
     
     lldb::SBFileSpec

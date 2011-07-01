@@ -6,6 +6,12 @@
 # objects, implements truth value testing for certain lldb objects, and adds a
 # global variable 'debugger_unique_id' which is initialized to 0.
 #
+# As a cleanup step, it also removes the 'residues' from the autodoc features of
+# swig.  For an example, take a look at SBTarget.h header file, where we take
+# advantage of the already existing C++-style headerdoc and make it the Python
+# docstring for the same method.  The 'residues' in this context include the
+# '#endif' and the '#ifdef SWIG' lines.
+#
 # It also calls SBDebugger.Initialize() to initialize the lldb debugger
 # subsystem.
 #
@@ -18,6 +24,10 @@ else:
     output_name = sys.argv[1] + "/lldb.py"
 
 # print "output_name is '" + output_name + "'"
+
+# Residues to be removed.
+c_endif_swig = "#endif"
+c_ifdef_swig = "#ifdef SWIG"
 
 #
 # lldb_iter() should appear before our first SB* class definition.
@@ -148,6 +158,12 @@ lldb_iter_defined = False;
 # value testing and the built-in operation bool().
 state = NORMAL
 for line in content.splitlines():
+    # Cleanse the lldb.py of the autodoc'ed residues.
+    if c_ifdef_swig in line or c_endif_swig in line:
+        continue
+    # Also remove the '\a ' substrings.
+    line = line.replace('\a ', '')
+
     if state == NORMAL:
         match = class_pattern.search(line)
         # Inserts the lldb_iter() definition before the first class definition.
