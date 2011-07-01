@@ -2546,7 +2546,6 @@ static void transferARCOwnershipToDeclSpec(Sema &S,
     qs.addObjCLifetime(ownership);
     declSpecTy = S.Context.getQualifiedType(declSpecTy, qs);
   }
-  return;
 }
 
 static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
@@ -2570,8 +2569,6 @@ static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
   case Qualifiers::OCL_Weak: attrStr = "weak"; break;
   case Qualifiers::OCL_Autoreleasing: attrStr = "autoreleasing"; break;
   }
-  if (!attrStr)
-    return;
 
   // If there wasn't one, add one (with an invalid source location
   // so that we don't make an AttributedType for it).

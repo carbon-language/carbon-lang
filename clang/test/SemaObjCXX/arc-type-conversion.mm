@@ -203,6 +203,7 @@ typedef void (^Block_autoreleasing)() __autoreleasing;
 
 void ownership_transfer_in_cast(void *vp, Block *pblk) {
   __strong NSString **sip2 = static_cast<NSString **>(static_cast<__strong id *>(vp));
+  __strong NSString **&si2pref = static_cast<NSString **&>(sip2);
   __weak NSString **wip2 = static_cast<NSString **>(static_cast<__weak id *>(vp));
   __autoreleasing id *aip2 = static_cast<id *>(static_cast<__autoreleasing id *>(vp));
   __unsafe_unretained id *uip2 = static_cast<id *>(static_cast<__unsafe_unretained id *>(vp));

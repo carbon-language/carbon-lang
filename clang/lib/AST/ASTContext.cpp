@@ -3523,7 +3523,7 @@ Qualifiers::ObjCLifetime ASTContext::getInnerObjCOwnership(QualType T) const {
     else if (const PointerType *PT = T->getAs<PointerType>())
       T = PT->getPointeeType();
     else if (const ReferenceType *RT = T->getAs<ReferenceType>())
-      RT->getPointeeType();
+      T = RT->getPointeeType();
     else
       break;
   }
