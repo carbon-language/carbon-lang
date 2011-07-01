@@ -1562,6 +1562,10 @@ QualType Sema::GetTypeFromParser(ParsedType Ty, TypeSourceInfo **TInfo) {
   return QT;
 }
 
+static void transferARCOwnershipToDeclaratorChunk(TypeProcessingState &state,
+                                            Qualifiers::ObjCLifetime ownership,
+                                            unsigned chunkIndex);
+
 /// Given that this is the declaration of a parameter under ARC,
 /// attempt to infer attributes and such for pointer-to-whatever
 /// types.
@@ -1652,15 +1656,8 @@ static void inferARCWriteback(TypeProcessingState &state,
       if (attr->getKind() == AttributeList::AT_objc_ownership)
         return;
 
-    // If there wasn't one, add one (with an invalid source location
-    // so that we don't make an AttributedType for it).
-    AttributeList *attr = declarator.getAttributePool()
-      .create(&S.Context.Idents.get("objc_ownership"), SourceLocation(),
-              /*scope*/ 0, SourceLocation(),
-              &S.Context.Idents.get("autoreleasing"), SourceLocation(),
-              /*args*/ 0, 0,
-              /*declspec*/ false, /*C++0x*/ false);
-    spliceAttrIntoList(*attr, chunk.getAttrListRef());
+    transferARCOwnershipToDeclaratorChunk(state, Qualifiers::OCL_Autoreleasing,
+                                          outermostPointerIndex);
 
   // Any other number of pointers/references does not trigger the rule.
   } else return;
