@@ -350,11 +350,13 @@ public:
 
 #endif
 
+#ifndef SWIG
     bool
-    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel);
+    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
+#endif
 
     bool
-    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel) const;
+    GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level) const;
 
 protected:
     friend class SBAddress;
