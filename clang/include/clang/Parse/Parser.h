@@ -1135,10 +1135,10 @@ private:
   ExprResult ParseCastExpression(bool isUnaryExpression,
                                  bool isAddressOfOperand,
                                  bool &NotCastExpr,
-                                 ParsedType TypeOfCast);
+                                 bool isTypeCast);
   ExprResult ParseCastExpression(bool isUnaryExpression,
                                  bool isAddressOfOperand = false,
-                                 ParsedType TypeOfCast = ParsedType());
+                                 bool isTypeCast = false);
 
   /// Returns true if the next token would start a postfix-expression
   /// suffix.
@@ -1179,7 +1179,7 @@ private:
   };
   ExprResult ParseParenExpression(ParenParseOption &ExprType,
                                         bool stopIfCastExpr,
-                                        ParsedType TypeOfCast,
+                                        bool isTypeCast,
                                         ParsedType &CastTy,
                                         SourceLocation &RParenLoc);
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-nonfragile-abi -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-nonfragile-abi -verify -fblocks %s
 
 void * cvt(id arg)
 {
@@ -6,7 +6,7 @@ void * cvt(id arg)
   (void)(int*)arg; // expected-error {{cast of an Objective-C pointer to 'int *' is disallowed with ARC}}
   (void)(id)arg;
   (void)(__autoreleasing id*)arg; // expected-error {{cast of an Objective-C pointer to '__autoreleasing id *' is disallowed with ARC}}
-  (void)(id*)arg; // expected-error {{pointer to non-const type 'id' with no explicit ownership}} expected-error {{cast of an Objective-C pointer to '__autoreleasing id *' is disallowed with ARC}}
+  (void)(id*)arg; // expected-error {{cast of an Objective-C pointer to '__strong id *' is disallowed with ARC}}
 
   (void)(__autoreleasing id**)voidp_val;
   (void)(void*)voidp_val;
@@ -52,4 +52,26 @@ void from_void(void *vp) {
   wip = vp; // expected-error{{implicit conversion of a non-Objective-C pointer type 'void *' to '__weak id *' is disallowed with ARC}}
   aip = vp; // expected-error{{implicit conversion of a non-Objective-C pointer type 'void *' to '__autoreleasing id *' is disallowed with ARC}}
   uip = vp; // expected-error{{implicit conversion of a non-Objective-C pointer type 'void *' to '__unsafe_unretained id *' is disallowed with ARC}}
+}
+
+typedef void (^Block)();
+typedef void (^Block_strong)() __strong;
+typedef void (^Block_autoreleasing)() __autoreleasing;
+
+@class NSString;
+
+void ownership_transfer_in_cast(void *vp, Block *pblk) {
+  __strong NSString **sip = (NSString**)(__strong id *)vp;
+  __weak NSString **wip = (NSString**)(__weak id *)vp;
+  __autoreleasing id *aip = (id*)(__autoreleasing id *)vp;
+  __unsafe_unretained id *uip = (id*)(__unsafe_unretained id *)vp;
+
+  __strong id **sipp = (id**)(__strong id **)vp;
+  __weak id **wipp = (id**)(__weak id **)vp;
+  __autoreleasing id **aipp = (id**)(__autoreleasing id **)vp;
+  __unsafe_unretained id **uipp = (id**)(__unsafe_unretained id **)vp;
+
+  Block_strong blk_strong1;
+  Block_strong blk_strong2 = (Block)blk_strong1;
+  Block_autoreleasing *blk_auto = (Block*)pblk;
 }

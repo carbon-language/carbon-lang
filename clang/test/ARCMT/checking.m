@@ -100,7 +100,7 @@ void * cvt(id arg)
   (void)(int*)arg; // expected-error {{disallowed}}
   (void)(id)arg;
   (void)(__autoreleasing id*)arg; // expected-error {{disallowed}}
-  (void)(id*)arg; // expected-error {{pointer to non-const type 'id' with no explicit ownership}} expected-error {{disallowed}}
+  (void)(id*)arg; // expected-error {{disallowed}}
 
   (void)(__autoreleasing id**)voidp_val;
   (void)(void*)voidp_val;
