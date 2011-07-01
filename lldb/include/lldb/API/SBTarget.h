@@ -18,8 +18,16 @@ namespace lldb {
 
 class SBBreakpoint;
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents the target program running under the debugger."
+         ) SBTarget;
+#endif
 class SBTarget
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
     //------------------------------------------------------------------
     // Broadcaster bits.

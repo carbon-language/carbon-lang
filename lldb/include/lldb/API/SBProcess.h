@@ -19,8 +19,17 @@ namespace lldb {
 
 class SBEvent;
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents the process associated with the target program."
+         ) SBProcess;
+#endif
 class SBProcess
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
+
 public:
     //------------------------------------------------------------------
     /// Broadcaster event bits definitions.

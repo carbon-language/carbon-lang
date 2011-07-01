@@ -17,8 +17,16 @@
 
 namespace lldb {
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents the symbol associated with a stack frame."
+         ) SBSymbol;
+#endif
 class SBSymbol
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
 
     SBSymbol ();

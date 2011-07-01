@@ -20,8 +20,16 @@
 
 namespace lldb {
 
+#ifdef SWIG
+%feature("docstring",
+         "A container that stores various debugger related info."
+         ) SBSymbolContext;
+#endif
 class SBSymbolContext
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
     SBSymbolContext ();
 

@@ -17,8 +17,18 @@ namespace lldb {
 
 class SBValue;
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents one of the stack frames associated with a thread."
+         " SBThread contains SBFrame(s)."
+         ) SBFrame;
+#endif
 class SBFrame
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
+
 public:
     SBFrame ();
 
@@ -161,7 +171,9 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+#ifndef SWIG
     SBFrame (const lldb::StackFrameSP &lldb_object_sp);
+#endif
 
 protected:
     friend class SBValue;

@@ -16,8 +16,17 @@
 
 namespace lldb {
 
+#ifdef SWIG
+%feature("docstring",
+         "Specifies an association with a contiguous range of instructions and"
+         " a source file location. SBCompileUnit contains SBLineEntry(s)."
+         ) SBLineEntry;
+#endif
 class SBLineEntry
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
 
     SBLineEntry ();

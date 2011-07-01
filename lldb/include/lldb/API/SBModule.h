@@ -16,8 +16,18 @@
 
 namespace lldb {
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents an executable image and its associated object and symbol"
+         " files."
+         ) SBModule;
+#endif
 class SBModule
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
+
 public:
 
     SBModule ();

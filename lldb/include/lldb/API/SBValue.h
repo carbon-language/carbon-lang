@@ -16,8 +16,16 @@
 
 namespace lldb {
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents the value of a variable, a register, or an expression."
+         ) SBValue;
+#endif
 class SBValue
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
     SBValue ();
 

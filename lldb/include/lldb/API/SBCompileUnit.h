@@ -15,8 +15,16 @@
 
 namespace lldb {
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents a compilation unit, or compiled source file."
+         ) SBCompileUnit;
+#endif
 class SBCompileUnit
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
 
     SBCompileUnit ();

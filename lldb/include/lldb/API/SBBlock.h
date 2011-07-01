@@ -14,8 +14,16 @@
 
 namespace lldb {
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents a lexical block. SBFunction contains SBBlock(s)."
+         ) SBBlock;
+#endif
 class SBBlock
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
 
     SBBlock ();

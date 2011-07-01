@@ -18,8 +18,18 @@ namespace lldb {
 
 class SBFrame;
 
+#ifdef SWIG
+%feature("docstring",
+         "Represents a thread of execution."
+         " SBProcess contains SBThread(s)."
+         ) SBThread;
+#endif
 class SBThread
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
+
 public:
     SBThread ();
 

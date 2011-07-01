@@ -26,7 +26,7 @@ o SBCompileUnit: Represents a compilation unit, or compiled source file.
 o SBFunction: Represents a generic function, which can be inlined or not.
 o SBBlock: Represents a lexical block. SBFunction contains SBBlock(s).
 o SBLineEntry: Specifies an association with a contiguous range of instructions
-      and a source file location. SBCompileUnit contains SBLineEntry(s)"
+      and a source file location. SBCompileUnit contains SBLineEntry(s)."
 %enddef
 
 /*  The name of the module to be created.  */
