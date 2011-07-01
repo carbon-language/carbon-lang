@@ -873,6 +873,21 @@ static bool isCapturedBy(const VarDecl &var, const Expr *e) {
   return false;
 }
 
+/// \brief Determine whether the given initializer is trivial in the sense
+/// that it requires no code to be generated.
+static bool isTrivialInitializer(const Expr *Init) {
+  if (!Init)
+    return true;
+  
+  if (const CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init))
+    if (CXXConstructorDecl *Constructor = Construct->getConstructor())
+      if (Constructor->isTrivial() &&
+          Constructor->isDefaultConstructor() &&
+          !Construct->requiresZeroInitialization())
+        return true;
+      
+  return false;
+}
 void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   assert(emission.Variable && "emission was not valid!");
 
@@ -896,7 +911,9 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   if (emission.IsByRef)
     emitByrefStructureInit(emission);
 
-  if (!Init) return;
+  if (isTrivialInitializer(Init))
+    return;
+  
 
   CharUnits alignment = emission.Alignment;
 
