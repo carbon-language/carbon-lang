@@ -58,3 +58,13 @@ entry:
 call void asm sideeffect "flds s15, $0 \0A", "*^Uvm,~{s15}"(float* @k.2126) nounwind
 ret i32 0
 }
+
+; Radar 9307836 & 9119939
+
+define float @t6(float %y) nounwind {
+entry:
+; CHECK: t6
+; CHECK: flds s15, s0
+  %0 = tail call float asm "flds s15, $0", "=x"() nounwind
+  ret float %0
+}
