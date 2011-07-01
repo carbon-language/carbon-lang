@@ -99,15 +99,17 @@ void test() {
 
 // <rdar://problem/8315440>: Don't crash
 // FIXME: the recovery here is really bad.
-namespace test1 { // expected-note{{to match this '{'}}
-  template<typename T> class A : public unknown::X { // expected-error {{undeclared identifier 'unknown'}} expected-error {{expected class name}} \
-    // expected-note{{template parameter is declared here}}
+namespace test1 {
+  template<typename T> class A : public unknown::X { // expected-error {{undeclared identifier 'unknown'}} expected-error {{expected class name}}
     A(UndeclaredType n) : X(n) {} // expected-error{{expected ')'}} expected-note{{to match this '('}} \
-    // expected-error{{use of undeclared identifier 'n'}}
+    // expected-error{{use of undeclared identifier 'n'}} \
+    // expected-error{{expected ';' at end of declaration list}} \
+    // expected-error{{field has incomplete type 'test1::A<char>'}}
   };
-  template<typename T> class B : public A<T>     { // expected-error{{declaration of 'T' shadows template parameter}}
+  template<typename T> class B : public A<T>     {
     virtual void foo() {}
   };
-  extern template class A<char>; // expected-error{{expected member name or ';' after declaration specifiers}}
-  extern template class B<char>; // expected-error{{expected member name or ';' after declaration specifiers}}
-} // expected-error{{expected ';' after class}} // expected-error{{expected '}'}}
+  extern template class A<char>; // expected-note {{in instantiation of template class 'test1::A<char>' requested here}} \
+                                 // expected-note {{definition of 'test1::A<char>' is not complete until the closing '}'}}
+  extern template class B<char>;
+}

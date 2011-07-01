@@ -1260,7 +1260,6 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         if (Tok.isNot(tok::r_paren)) {
           if (ParseExpressionList(ArgExprs, CommaLocs, &Sema::CodeCompleteCall,
                                   LHS.get())) {
-            SkipUntil(tok::r_paren);
             LHS = ExprError();
           }
         }
