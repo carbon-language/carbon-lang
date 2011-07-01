@@ -215,3 +215,6 @@ void ownership_transfer_in_cast(void *vp, Block *pblk) {
   Block_strong blk_strong2 = static_cast<Block>(blk_strong1);
   Block_autoreleasing *blk_auto = static_cast<Block*>(pblk);
 }
+
+// Make sure we don't crash.
+void writeback_test(NSString & &) {} // expected-error {{type name declared as a reference to a reference}}

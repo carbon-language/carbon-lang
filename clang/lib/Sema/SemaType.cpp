@@ -1644,8 +1644,9 @@ static void inferARCWriteback(TypeProcessingState &state,
 
     // Look for an explicit lifetime attribute there.
     DeclaratorChunk &chunk = declarator.getTypeObject(outermostPointerIndex);
-    assert(chunk.Kind == DeclaratorChunk::Pointer ||
-           chunk.Kind == DeclaratorChunk::BlockPointer);
+    if (chunk.Kind != DeclaratorChunk::Pointer &&
+        chunk.Kind != DeclaratorChunk::BlockPointer)
+      return;
     for (const AttributeList *attr = chunk.getAttrs(); attr;
            attr = attr->getNext())
       if (attr->getKind() == AttributeList::AT_objc_ownership)
