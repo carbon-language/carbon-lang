@@ -2204,15 +2204,15 @@ Value *llvm::SimplifySelectInst(Value *CondVal, Value *TrueVal, Value *FalseVal,
   if (TrueVal == FalseVal)
     return TrueVal;
 
-  if (isa<UndefValue>(TrueVal))   // select C, undef, X -> X
-    return FalseVal;
-  if (isa<UndefValue>(FalseVal))   // select C, X, undef -> X
-    return TrueVal;
   if (isa<UndefValue>(CondVal)) {  // select undef, X, Y -> X or Y
     if (isa<Constant>(TrueVal))
       return TrueVal;
     return FalseVal;
   }
+  if (isa<UndefValue>(TrueVal))   // select C, undef, X -> X
+    return FalseVal;
+  if (isa<UndefValue>(FalseVal))   // select C, X, undef -> X
+    return TrueVal;
 
   return 0;
 }

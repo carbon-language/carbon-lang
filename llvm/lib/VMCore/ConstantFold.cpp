@@ -730,9 +730,12 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
   }
 
 
+  if (isa<UndefValue>(Cond)) {
+    if (isa<UndefValue>(V1)) return V1;
+    return V2;
+  }
   if (isa<UndefValue>(V1)) return V2;
   if (isa<UndefValue>(V2)) return V1;
-  if (isa<UndefValue>(Cond)) return V1;
   if (V1 == V2) return V1;
 
   if (ConstantExpr *TrueVal = dyn_cast<ConstantExpr>(V1)) {
@@ -1851,7 +1854,9 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2)) {
     // For EQ and NE, we can always pick a value for the undef to make the
     // predicate pass or fail, so we can return undef.
-    if (ICmpInst::isEquality(ICmpInst::Predicate(pred)))
+    // Also, if both operands are undef, we can return undef.
+    if (ICmpInst::isEquality(ICmpInst::Predicate(pred)) ||
+        (isa<UndefValue>(C1) && isa<UndefValue>(C2)))
       return UndefValue::get(ResultTy);
     // Otherwise, pick the same value as the non-undef operand, and fold
     // it to true or false.

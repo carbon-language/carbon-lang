@@ -97,3 +97,31 @@ define i64 @test13() {
   %r = lshr i64 undef, undef
   ret i64 %r
 }
+
+; @test14
+; CHECK: ret i1 undef
+define i1 @test14() {
+  %r = icmp slt i64 undef, undef
+  ret i1 %r
+}
+
+; @test15
+; CHECK: ret i1 undef
+define i1 @test15() {
+  %r = icmp ult i64 undef, undef
+  ret i1 %r
+}
+
+; @test16
+; CHECK: ret i64 undef
+define i64 @test16(i64 %a) {
+  %r = select i1 undef, i64 %a, i64 undef
+  ret i64 %r
+}
+
+; @test17
+; CHECK: ret i64 undef
+define i64 @test17(i64 %a) {
+  %r = select i1 undef, i64 undef, i64 %a
+  ret i64 %r
+}
