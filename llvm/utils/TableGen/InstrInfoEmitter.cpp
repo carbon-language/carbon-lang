@@ -208,7 +208,6 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
                OperandInfoIDs, OS);
   OS << "};\n\n";
 
-
   // MCInstrInfo initialization routine.
   OS << "static inline void Init" << TargetName
      << "MCInstrInfo(MCInstrInfo *II) {\n";
@@ -218,6 +217,31 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "} // End llvm namespace \n";
 
   OS << "#endif // GET_INSTRINFO_MC_DESC\n\n";
+
+  // Create a TargetInstrInfo subclass to hide the MC layer initialization.
+  OS << "\n#ifdef GET_INSTRINFO_HEADER\n";
+  OS << "#undef GET_INSTRINFO_HEADER\n";
+
+  std::string ClassName = TargetName + "GenInstrInfo";
+  OS << "namespace llvm {\n\n";
+  OS << "struct " << ClassName << " : public TargetInstrInfoImpl {\n"
+     << "  explicit " << ClassName << "(int SO = -1, int DO = -1);\n"
+     << "};\n";
+  OS << "} // End llvm namespace \n";
+
+  OS << "#endif // GET_INSTRINFO_HEADER\n\n";
+
+  OS << "\n#ifdef GET_INSTRINFO_CTOR\n";
+  OS << "#undef GET_INSTRINFO_CTOR\n";
+
+  OS << "namespace llvm {\n\n";
+  OS << ClassName << "::" << ClassName << "(int SO, int DO)\n"
+     << "  : TargetInstrInfoImpl(SO, DO) {\n"
+     << "  InitMCInstrInfo(" << TargetName << "Insts, "
+     << NumberedInstructions.size() << ");\n}\n";
+  OS << "} // End llvm namespace \n";
+
+  OS << "#endif // GET_INSTRINFO_CTOR\n\n";
 }
 
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,

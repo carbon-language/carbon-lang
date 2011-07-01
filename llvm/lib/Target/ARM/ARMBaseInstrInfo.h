@@ -20,6 +20,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 
+#define GET_INSTRINFO_HEADER
+#include "ARMGenInstrInfo.inc"
+
 namespace llvm {
   class ARMSubtarget;
   class ARMBaseRegisterInfo;
@@ -172,7 +175,7 @@ namespace ARMII {
   };
 }
 
-class ARMBaseInstrInfo : public TargetInstrInfoImpl {
+class ARMBaseInstrInfo : public ARMGenInstrInfo {
   const ARMSubtarget &Subtarget;
 
 protected:

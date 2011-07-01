@@ -17,9 +17,12 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "XCoreRegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "XCoreGenInstrInfo.inc"
+
 namespace llvm {
 
-class XCoreInstrInfo : public TargetInstrInfoImpl {
+class XCoreInstrInfo : public XCoreGenInstrInfo {
   const XCoreRegisterInfo RI;
 public:
   XCoreInstrInfo();

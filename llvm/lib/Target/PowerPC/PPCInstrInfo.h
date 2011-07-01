@@ -18,6 +18,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "PPCRegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "PPCGenInstrInfo.inc"
+
 namespace llvm {
 
 /// PPCII - This namespace holds all of the PowerPC target-specific
@@ -61,7 +64,7 @@ enum PPC970_Unit {
 } // end namespace PPCII
 
 
-class PPCInstrInfo : public TargetInstrInfoImpl {
+class PPCInstrInfo : public PPCGenInstrInfo {
   PPCTargetMachine &TM;
   const PPCRegisterInfo RI;
 

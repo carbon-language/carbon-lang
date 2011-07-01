@@ -23,14 +23,14 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_MC_DESC
 #include "SystemZGenInstrInfo.inc"
 
 using namespace llvm;
 
 SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)
-  : TargetInstrInfoImpl(SystemZInsts, array_lengthof(SystemZInsts),
-                        SystemZ::ADJCALLSTACKUP, SystemZ::ADJCALLSTACKDOWN),
+  : SystemZGenInstrInfo(SystemZ::ADJCALLSTACKUP, SystemZ::ADJCALLSTACKDOWN),
     RI(tm, *this), TM(tm) {
 }
 

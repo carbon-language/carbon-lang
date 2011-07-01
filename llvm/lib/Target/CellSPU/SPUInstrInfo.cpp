@@ -22,6 +22,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/MC/MCContext.h"
 
+#define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_MC_DESC
 #include "SPUGenInstrInfo.inc"
 
@@ -53,8 +54,7 @@ namespace {
 }
 
 SPUInstrInfo::SPUInstrInfo(SPUTargetMachine &tm)
-  : TargetInstrInfoImpl(SPUInsts, sizeof(SPUInsts)/sizeof(SPUInsts[0]),
-                        SPU::ADJCALLSTACKDOWN, SPU::ADJCALLSTACKUP),
+  : SPUGenInstrInfo(SPU::ADJCALLSTACKDOWN, SPU::ADJCALLSTACKUP),
     TM(tm),
     RI(*TM.getSubtargetImpl(), *this)
 { /* NOP */ }

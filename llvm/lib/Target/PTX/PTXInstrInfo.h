@@ -17,6 +17,9 @@
 #include "PTXRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "PTXGenInstrInfo.inc"
+
 namespace llvm {
 class PTXTargetMachine;
 
@@ -24,7 +27,7 @@ class MachineSDNode;
 class SDValue;
 class SelectionDAG;
 
-class PTXInstrInfo : public TargetInstrInfoImpl {
+class PTXInstrInfo : public PTXGenInstrInfo {
 private:
   const PTXRegisterInfo RI;
   PTXTargetMachine &TM;

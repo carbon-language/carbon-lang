@@ -28,6 +28,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/MC/MCAsmInfo.h"
 
+#define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_MC_DESC
 #include "PPCGenInstrInfo.inc"
 
@@ -39,8 +40,7 @@ extern cl::opt<bool> EnablePPC64RS;  // FIXME (64-bit): See PPCRegisterInfo.cpp.
 using namespace llvm;
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
-  : TargetInstrInfoImpl(PPCInsts, array_lengthof(PPCInsts),
-                        PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
+  : PPCGenInstrInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP),
     TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
 
 /// CreateTargetHazardRecognizer - Return the hazard recognizer to use for

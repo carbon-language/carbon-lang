@@ -21,13 +21,14 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
+#define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_MC_DESC
 #include "PTXGenInstrInfo.inc"
 
 using namespace llvm;
 
 PTXInstrInfo::PTXInstrInfo(PTXTargetMachine &_TM)
-  : TargetInstrInfoImpl(PTXInsts, array_lengthof(PTXInsts)),
+  : PTXGenInstrInfo(),
     RI(_TM, *this), TM(_TM) {}
 
 static const struct map_entry {

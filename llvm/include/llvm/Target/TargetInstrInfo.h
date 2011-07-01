@@ -44,9 +44,11 @@ class TargetInstrInfo : public MCInstrInfo {
   TargetInstrInfo(const TargetInstrInfo &);  // DO NOT IMPLEMENT
   void operator=(const TargetInstrInfo &);   // DO NOT IMPLEMENT
 public:
-  TargetInstrInfo(const MCInstrDesc *desc, unsigned NumOpcodes,
-                  int CallFrameSetupOpcode = -1,
-                  int CallFrameDestroyOpcode = -1);
+  TargetInstrInfo(int CFSetupOpcode = -1, int CFDestroyOpcode = -1)
+    : CallFrameSetupOpcode(CFSetupOpcode),
+      CallFrameDestroyOpcode(CFDestroyOpcode) {
+  }
+    
   virtual ~TargetInstrInfo();
 
   /// getRegClass - Givem a machine instruction descriptor, returns the register
@@ -678,11 +680,9 @@ private:
 /// libcodegen, not in libtarget.
 class TargetInstrInfoImpl : public TargetInstrInfo {
 protected:
-  TargetInstrInfoImpl(const MCInstrDesc *desc, unsigned NumOpcodes,
-                      int CallFrameSetupOpcode = -1,
+  TargetInstrInfoImpl(int CallFrameSetupOpcode = -1,
                       int CallFrameDestroyOpcode = -1)
-    : TargetInstrInfo(desc, NumOpcodes,
-                      CallFrameSetupOpcode, CallFrameDestroyOpcode) {}
+    : TargetInstrInfo(CallFrameSetupOpcode, CallFrameDestroyOpcode) {}
 public:
   virtual void ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                        MachineBasicBlock *NewDest) const;

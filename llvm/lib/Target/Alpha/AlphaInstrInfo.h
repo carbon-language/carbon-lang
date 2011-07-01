@@ -17,9 +17,12 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "AlphaRegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "AlphaGenInstrInfo.inc"
+
 namespace llvm {
 
-class AlphaInstrInfo : public TargetInstrInfoImpl {
+class AlphaInstrInfo : public AlphaGenInstrInfo {
   const AlphaRegisterInfo RI;
 public:
   AlphaInstrInfo();

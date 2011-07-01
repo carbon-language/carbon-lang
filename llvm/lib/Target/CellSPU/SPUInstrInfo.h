@@ -18,9 +18,12 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "SPURegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "SPUGenInstrInfo.inc"
+
 namespace llvm {
   //! Cell SPU instruction information class
-  class SPUInstrInfo : public TargetInstrInfoImpl {
+  class SPUInstrInfo : public SPUGenInstrInfo {
     SPUTargetMachine &TM;
     const SPURegisterInfo RI;
   public:

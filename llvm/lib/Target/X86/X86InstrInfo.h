@@ -19,6 +19,9 @@
 #include "X86RegisterInfo.h"
 #include "llvm/ADT/DenseMap.h"
 
+#define GET_INSTRINFO_HEADER
+#include "X86GenInstrInfo.inc"
+
 namespace llvm {
   class X86RegisterInfo;
   class X86TargetMachine;
@@ -611,7 +614,7 @@ inline static bool isMem(const MachineInstr *MI, unsigned Op) {
     isLeaMem(MI, Op);
 }
 
-class X86InstrInfo : public TargetInstrInfoImpl {
+class X86InstrInfo : public X86GenInstrInfo {
   X86TargetMachine &TM;
   const X86RegisterInfo RI;
 

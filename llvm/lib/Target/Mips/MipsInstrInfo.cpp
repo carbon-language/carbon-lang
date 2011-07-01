@@ -19,14 +19,14 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_MC_DESC
 #include "MipsGenInstrInfo.inc"
 
 using namespace llvm;
 
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
-  : TargetInstrInfoImpl(MipsInsts, array_lengthof(MipsInsts),
-                        Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
+  : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
 
 static bool isZeroImm(const MachineOperand &op) {

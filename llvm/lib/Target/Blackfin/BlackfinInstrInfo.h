@@ -17,9 +17,12 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "BlackfinRegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "BlackfinGenInstrInfo.inc"
+
 namespace llvm {
 
-  class BlackfinInstrInfo : public TargetInstrInfoImpl {
+  class BlackfinInstrInfo : public BlackfinGenInstrInfo {
     const BlackfinRegisterInfo RI;
     const BlackfinSubtarget& Subtarget;
   public:

@@ -19,6 +19,9 @@
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "SystemZGenInstrInfo.inc"
+
 namespace llvm {
 
 class SystemZTargetMachine;
@@ -47,7 +50,7 @@ namespace SystemZII {
   };
 }
 
-class SystemZInstrInfo : public TargetInstrInfoImpl {
+class SystemZInstrInfo : public SystemZGenInstrInfo {
   const SystemZRegisterInfo RI;
   SystemZTargetMachine &TM;
 public:

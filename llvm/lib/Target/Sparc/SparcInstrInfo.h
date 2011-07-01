@@ -17,6 +17,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "SparcRegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "SparcGenInstrInfo.inc"
+
 namespace llvm {
 
 /// SPII - This namespace holds all of the target specific flags that
@@ -31,7 +34,7 @@ namespace SPII {
   };
 }
 
-class SparcInstrInfo : public TargetInstrInfoImpl {
+class SparcInstrInfo : public SparcGenInstrInfo {
   const SparcRegisterInfo RI;
   const SparcSubtarget& Subtarget;
 public:

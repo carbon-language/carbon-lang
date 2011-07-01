@@ -21,14 +21,14 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "SparcMachineFunctionInfo.h"
 
+#define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_MC_DESC
 #include "SparcGenInstrInfo.inc"
 
 using namespace llvm;
 
 SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
-  : TargetInstrInfoImpl(SparcInsts, array_lengthof(SparcInsts),
-                        SP::ADJCALLSTACKDOWN, SP::ADJCALLSTACKUP),
+  : SparcGenInstrInfo(SP::ADJCALLSTACKDOWN, SP::ADJCALLSTACKUP),
     RI(ST, *this), Subtarget(ST) {
 }
 

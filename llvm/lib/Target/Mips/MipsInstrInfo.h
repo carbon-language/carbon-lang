@@ -19,6 +19,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "MipsRegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "MipsGenInstrInfo.inc"
+
 namespace llvm {
 
 namespace Mips {
@@ -164,7 +167,7 @@ namespace MipsII {
   };
 }
 
-class MipsInstrInfo : public TargetInstrInfoImpl {
+class MipsInstrInfo : public MipsGenInstrInfo {
   MipsTargetMachine &TM;
   const MipsRegisterInfo RI;
 public:

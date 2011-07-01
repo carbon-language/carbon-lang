@@ -21,13 +21,14 @@
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_MC_DESC
+#define GET_INSTRINFO_CTOR
 #include "AlphaGenInstrInfo.inc"
 using namespace llvm;
 
 AlphaInstrInfo::AlphaInstrInfo()
-  : TargetInstrInfoImpl(AlphaInsts, array_lengthof(AlphaInsts),
-                        Alpha::ADJUSTSTACKDOWN, Alpha::ADJUSTSTACKUP),
-    RI(*this) { }
+  : AlphaGenInstrInfo(Alpha::ADJUSTSTACKDOWN, Alpha::ADJUSTSTACKUP),
+    RI(*this) {
+}
 
 
 unsigned 

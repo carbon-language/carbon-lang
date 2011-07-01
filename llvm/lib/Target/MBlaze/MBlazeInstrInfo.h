@@ -19,6 +19,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "MBlazeRegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "MBlazeGenInstrInfo.inc"
+
 namespace llvm {
 
 namespace MBlaze {
@@ -219,7 +222,7 @@ namespace MBlazeII {
   };
 }
 
-class MBlazeInstrInfo : public TargetInstrInfoImpl {
+class MBlazeInstrInfo : public MBlazeGenInstrInfo {
   MBlazeTargetMachine &TM;
   const MBlazeRegisterInfo RI;
 public:

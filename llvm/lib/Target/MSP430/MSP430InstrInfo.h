@@ -17,6 +17,9 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "MSP430RegisterInfo.h"
 
+#define GET_INSTRINFO_HEADER
+#include "MSP430GenInstrInfo.inc"
+
 namespace llvm {
 
 class MSP430TargetMachine;
@@ -37,7 +40,7 @@ namespace MSP430II {
   };
 }
 
-class MSP430InstrInfo : public TargetInstrInfoImpl {
+class MSP430InstrInfo : public MSP430GenInstrInfo {
   const MSP430RegisterInfo RI;
   MSP430TargetMachine &TM;
 public:
