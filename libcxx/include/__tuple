@@ -214,11 +214,7 @@ struct __tuple_convertible_imp : public false_type {};
 template <class _Tp0, class ..._Tp, class _Up0, class ..._Up>
 struct __tuple_convertible_imp<true, __tuple_types<_Tp0, _Tp...>, __tuple_types<_Up0, _Up...> >
     : public integral_constant<bool,
-#if 1 // waiting on cwg 1170
-                               is_convertible<_Tp0, _Up0>::value &&
-#else
                                is_constructible<_Up0, _Tp0>::value &&
-#endif
                                __tuple_convertible_imp<true, __tuple_types<_Tp...>, __tuple_types<_Up...> >::value> {};
 
 template <>
