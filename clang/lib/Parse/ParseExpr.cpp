@@ -1900,7 +1900,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     if (!ParseExpressionList(ArgExprs, CommaLocs)) {
       ExprType = SimpleExpr;
       Result = Actions.ActOnParenOrParenListExpr(OpenLoc, Tok.getLocation(),
-                                          move_arg(ArgExprs), TypeOfCast);
+                                                 move_arg(ArgExprs));
     }
   } else {
     InMessageExpressionRAIIObject InMessage(*this, false);
