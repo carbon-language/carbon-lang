@@ -1351,6 +1351,7 @@ public:
     TemplateParamContext,// Within a template parameter list.
     CXXNewContext,       // C++ new-expression.
     CXXCatchContext,     // C++ catch exception-declaration
+    ObjCCatchContext,    // Objective-C catch exception-declaration
     BlockLiteralContext,  // Block literal declarator.
     TemplateTypeArgContext, // Template type argument.
     AliasDeclContext,    // C++0x alias-declaration.
@@ -1502,6 +1503,7 @@ public:
     case TemplateParamContext:
     case CXXNewContext:
     case CXXCatchContext:
+    case ObjCCatchContext:
     case BlockLiteralContext:
     case TemplateTypeArgContext:
       return true;
@@ -1523,6 +1525,7 @@ public:
     case PrototypeContext:
     case TemplateParamContext:
     case CXXCatchContext:
+    case ObjCCatchContext:
       return true;
 
     case TypeNameContext:
@@ -1555,6 +1558,7 @@ public:
     case ObjCPrototypeContext:
     case TemplateParamContext:
     case CXXCatchContext:
+    case ObjCCatchContext:
     case TypeNameContext:
     case CXXNewContext:
     case AliasDeclContext:

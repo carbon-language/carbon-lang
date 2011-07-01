@@ -1633,10 +1633,7 @@ StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         if (Tok.isNot(tok::ellipsis)) {
           DeclSpec DS(AttrFactory);
           ParseDeclarationSpecifiers(DS);
-          // For some odd reason, the name of the exception variable is
-          // optional. As a result, we need to use "PrototypeContext", because
-          // we must accept either 'declarator' or 'abstract-declarator' here.
-          Declarator ParmDecl(DS, Declarator::PrototypeContext);
+          Declarator ParmDecl(DS, Declarator::ObjCCatchContext);
           ParseDeclarator(ParmDecl);
 
           // Inform the actions module about the declarator, so it

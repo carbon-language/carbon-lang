@@ -1803,6 +1803,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       }
       break;
     case Declarator::CXXCatchContext:
+    case Declarator::ObjCCatchContext:
       Error = 4; // Exception declaration
       break;
     case Declarator::TemplateParamContext:
@@ -2441,6 +2442,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     case Declarator::ForContext:
     case Declarator::ConditionContext:
     case Declarator::CXXCatchContext:
+    case Declarator::ObjCCatchContext:
     case Declarator::BlockLiteralContext:
     case Declarator::TemplateTypeArgContext:
       // FIXME: We may want to allow parameter packs in block-literal contexts
@@ -2480,6 +2482,7 @@ TypeSourceInfo *Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
     case Declarator::TemplateParamContext:
     case Declarator::CXXNewContext:
     case Declarator::CXXCatchContext:
+    case Declarator::ObjCCatchContext:
     case Declarator::TemplateTypeArgContext:
       Diag(OwnedTagDecl->getLocation(),diag::err_type_defined_in_type_specifier)
         << Context.getTypeDeclType(OwnedTagDecl);

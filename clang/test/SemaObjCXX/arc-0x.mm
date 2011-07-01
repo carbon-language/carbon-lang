@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++0x -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -fblocks %s
+// RUN: %clang_cc1 -std=c++0x -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -fblocks -fobjc-exceptions %s
 
 // "Move" semantics, trivial version.
 void move_it(__strong id &&from) {
@@ -24,5 +24,9 @@ void deduction(id obj) {
   __strong id array[17];
   for (auto x : array) {
     __strong id *xPtr = &x;
+  }
+
+  @try {
+  } @catch (auto e) { // expected-error {{'auto' not allowed in exception declaration}}
   }
 }
