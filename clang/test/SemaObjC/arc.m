@@ -604,4 +604,6 @@ void test35(void) {
   __block id y;
   test36_helper(&y);
   ^{ test36_helper(&y); }();
+
+  __strong int non_objc_type; // expected-warning {{'__strong' only applies to objective-c object or block pointer types}} 
 }

@@ -87,6 +87,11 @@ static void diagnoseBadTypeAttribute(Sema &S, const AttributeList &attr,
     useInstantiationLoc = true;
     break;
 
+  case AttributeList::AT_objc_ownership:
+    diagID = diag::warn_objc_object_attribute_wrong_type;
+    useInstantiationLoc = true;
+    break;
+
   default:
     // Assume everything else was a function attribute.
     diagID = diag::warn_function_attribute_wrong_type;
