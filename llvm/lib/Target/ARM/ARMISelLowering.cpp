@@ -7485,6 +7485,7 @@ ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
     case 'h': return C_RegisterClass;
     case 'x': return C_RegisterClass;
     case 't': return C_RegisterClass;
+    case 'j': return C_Other; // Constant for movw.
     }
   } else if (Constraint.size() == 2) {
     switch (Constraint[0]) {
@@ -7590,6 +7591,7 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   char ConstraintLetter = Constraint[0];
   switch (ConstraintLetter) {
   default: break;
+  case 'j':
   case 'I': case 'J': case 'K': case 'L':
   case 'M': case 'N': case 'O':
     ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
@@ -7604,6 +7606,13 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       return;
 
     switch (ConstraintLetter) {
+      case 'j':
+	// Constant suitable for movw, must be between 0 and
+	// 65535.
+	if (Subtarget->hasV6T2Ops())
+	  if (CVal >= 0 && CVal <= 65535)
+	    break;
+	return;
       case 'I':
         if (Subtarget->isThumb1Only()) {
           // This must be a constant between 0 and 255, for ADD
