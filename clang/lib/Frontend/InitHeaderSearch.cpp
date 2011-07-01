@@ -553,6 +553,8 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     AddPath("/boot/develop/headers/posix", System, true, false, false);
     AddPath("/boot/develop/headers",  System, true, false, false);
     break;
+  case llvm::Triple::RTEMS:
+    break;
   case llvm::Triple::Cygwin:
     AddPath("/usr/include/w32api", System, true, false, false);
     break;
@@ -590,7 +592,8 @@ void InitHeaderSearch::AddDefaultCIncludePaths(const llvm::Triple &triple,
     break;
   }
 
-  AddPath("/usr/include", System, false, false, false);
+  if ( os != llvm::Triple::RTEMS )
+    AddPath("/usr/include", System, false, false, false);
 }
 
 void InitHeaderSearch::

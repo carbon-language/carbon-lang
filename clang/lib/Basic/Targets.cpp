@@ -1665,6 +1665,65 @@ public:
 };
 } // end anonymous namespace
 
+// RTEMS Target
+template<typename Target>
+class RTEMSTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
+                            MacroBuilder &Builder) const {
+    // RTEMS defines; list based off of gcc output
+
+    // FIXME: Move version number handling to llvm::Triple.
+    llvm::StringRef Release = Triple.getOSName().substr(strlen("rtems"), 1);
+
+    Builder.defineMacro("__rtems__");
+    Builder.defineMacro("__ELF__");
+  }
+public:
+  RTEMSTargetInfo(const std::string &triple)
+    : OSTargetInfo<Target>(triple) {
+      this->UserLabelPrefix = "";
+
+      llvm::Triple Triple(triple);
+      switch (Triple.getArch()) {
+        default:
+        case llvm::Triple::x86:
+          // this->MCountName = ".mcount";
+          break;
+        case llvm::Triple::mips:
+        case llvm::Triple::mipsel:
+        case llvm::Triple::ppc:
+        case llvm::Triple::ppc64:
+          // this->MCountName = "_mcount";
+          break;
+        case llvm::Triple::arm:
+          // this->MCountName = "__mcount";
+          break;
+      }
+
+    }
+};
+
+namespace {
+// x86-32 RTEMS target
+class RTEMSX86_32TargetInfo : public X86_32TargetInfo {
+public:
+  RTEMSX86_32TargetInfo(const std::string& triple)
+    : X86_32TargetInfo(triple) {
+    SizeType = UnsignedLong;
+    IntPtrType = SignedLong;
+    PtrDiffType = SignedLong;
+    this->UserLabelPrefix = "";
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    X86_32TargetInfo::getTargetDefines(Opts, Builder);
+    Builder.defineMacro("__INTEL__");
+    Builder.defineMacro("__rtems__");
+  }
+};
+} // end anonymous namespace
+
 namespace {
 // x86-64 generic target
 class X86_64TargetInfo : public X86TargetInfo {
@@ -2753,11 +2812,15 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new LinuxTargetInfo<ARMTargetInfo>(T);
     case llvm::Triple::FreeBSD:
       return new FreeBSDTargetInfo<ARMTargetInfo>(T);
+    case llvm::Triple::RTEMS:
+      return new RTEMSTargetInfo<ARMTargetInfo>(T);
     default:
       return new ARMTargetInfo(T);
     }
 
   case llvm::Triple::bfin:
+    if ( os == llvm::Triple::RTEMS )
+      return new RTEMSTargetInfo<BlackfinTargetInfo>(T);
     return new BlackfinTargetInfo(T);
 
   case llvm::Triple::msp430:
@@ -2768,6 +2831,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new PSPTargetInfo<MipsTargetInfo>(T);
     if (os == llvm::Triple::Linux)
       return new LinuxTargetInfo<MipsTargetInfo>(T);
+    if (os == llvm::Triple::RTEMS)
+      return new RTEMSTargetInfo<MipsTargetInfo>(T);
     return new MipsTargetInfo(T);
 
   case llvm::Triple::mipsel:
@@ -2775,6 +2840,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new PSPTargetInfo<MipselTargetInfo>(T);
     if (os == llvm::Triple::Linux)
       return new LinuxTargetInfo<MipselTargetInfo>(T);
+    if (os == llvm::Triple::RTEMS)
+      return new RTEMSTargetInfo<MipselTargetInfo>(T);
     return new MipselTargetInfo(T);
 
   case llvm::Triple::ppc:
@@ -2782,6 +2849,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new DarwinPPC32TargetInfo(T);
     else if (os == llvm::Triple::FreeBSD)
       return new FreeBSDTargetInfo<PPC32TargetInfo>(T);
+    if ( os == llvm::Triple::RTEMS )
+      return new RTEMSTargetInfo<PPC32TargetInfo>(T);
     return new PPC32TargetInfo(T);
 
   case llvm::Triple::ppc64:
@@ -2806,6 +2875,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new AuroraUXSparcV8TargetInfo(T);
     if (os == llvm::Triple::Solaris)
       return new SolarisSparcV8TargetInfo(T);
+    if ( os == llvm::Triple::RTEMS )
+      return new RTEMSTargetInfo<SparcV8TargetInfo>(T);
     return new SparcV8TargetInfo(T);
 
   // FIXME: Need a real SPU target.
@@ -2847,6 +2918,8 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new VisualStudioWindowsX86_32TargetInfo(T);
     case llvm::Triple::Haiku:
       return new HaikuX86_32TargetInfo(T);
+    case llvm::Triple::RTEMS:
+      return new RTEMSX86_32TargetInfo(T);
     default:
       return new X86_32TargetInfo(T);
     }
