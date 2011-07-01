@@ -186,6 +186,10 @@ public:
   /// type or not.
   bool isDependent() const;
 
+  /// \brief Whether this nested name specifier involves a template
+  /// parameter.
+  bool isInstantiationDependent() const;
+
   /// \brief Whether this nested-name-specifier contains an unexpanded
   /// parameter pack (for C++0x variadic templates).
   bool containsUnexpandedParameterPack() const;

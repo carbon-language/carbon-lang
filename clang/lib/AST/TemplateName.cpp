@@ -99,6 +99,15 @@ bool TemplateName::isDependent() const {
   return true;
 }
 
+bool TemplateName::isInstantiationDependent() const {
+  if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName()) {
+    if (QTN->getQualifier()->isInstantiationDependent())
+      return true;
+  }
+  
+  return isDependent();
+}
+
 bool TemplateName::containsUnexpandedParameterPack() const {
   if (TemplateDecl *Template = getAsTemplateDecl()) {
     if (TemplateTemplateParmDecl *TTP 

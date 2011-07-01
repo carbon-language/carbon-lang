@@ -174,6 +174,28 @@ bool NestedNameSpecifier::isDependent() const {
   return false;
 }
 
+/// \brief Whether this nested name specifier refers to a dependent
+/// type or not.
+bool NestedNameSpecifier::isInstantiationDependent() const {
+  switch (getKind()) {
+  case Identifier:
+    // Identifier specifiers always represent dependent types
+    return true;
+    
+  case Namespace:
+  case NamespaceAlias:
+  case Global:
+    return false;
+    
+  case TypeSpec:
+  case TypeSpecWithTemplate:
+    return getAsType()->isInstantiationDependentType();
+  }
+  
+  // Necessary to suppress a GCC warning.
+  return false;
+}
+
 bool NestedNameSpecifier::containsUnexpandedParameterPack() const {
   switch (getKind()) {
   case Identifier:

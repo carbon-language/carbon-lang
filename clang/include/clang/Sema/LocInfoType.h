@@ -37,6 +37,7 @@ class LocInfoType : public Type {
 
   LocInfoType(QualType ty, TypeSourceInfo *TInfo)
     : Type((TypeClass)LocInfo, ty, ty->isDependentType(), 
+           ty->isInstantiationDependentType(),
            ty->isVariablyModifiedType(),
            ty->containsUnexpandedParameterPack()), 
     DeclInfo(TInfo) {

@@ -330,7 +330,7 @@ class CXXBoolLiteralExpr : public Expr {
 public:
   CXXBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) :
     Expr(CXXBoolLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
-         false),
+         false, false),
     Value(val), Loc(l) {}
 
   explicit CXXBoolLiteralExpr(EmptyShell Empty)
@@ -359,7 +359,7 @@ class CXXNullPtrLiteralExpr : public Expr {
 public:
   CXXNullPtrLiteralExpr(QualType Ty, SourceLocation l) :
     Expr(CXXNullPtrLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
-         false),
+         false, false),
     Loc(l) {}
 
   explicit CXXNullPtrLiteralExpr(EmptyShell Empty)
@@ -395,6 +395,7 @@ public:
            false,
            // typeid is value-dependent if the type or expression are dependent
            Operand->getType()->isDependentType(),
+           Operand->getType()->isInstantiationDependentType(),
            Operand->getType()->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
   
@@ -404,6 +405,7 @@ public:
            false,
         // typeid is value-dependent if the type or expression are dependent
            Operand->isTypeDependent() || Operand->isValueDependent(),
+           Operand->isInstantiationDependent(),
            Operand->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
 
@@ -471,12 +473,14 @@ public:
   CXXUuidofExpr(QualType Ty, TypeSourceInfo *Operand, SourceRange R)
     : Expr(CXXUuidofExprClass, Ty, VK_LValue, OK_Ordinary,
            false, Operand->getType()->isDependentType(),
+           Operand->getType()->isInstantiationDependentType(),
            Operand->getType()->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
   
   CXXUuidofExpr(QualType Ty, Expr *Operand, SourceRange R)
     : Expr(CXXUuidofExprClass, Ty, VK_LValue, OK_Ordinary,
            false, Operand->isTypeDependent(),
+           Operand->isInstantiationDependent(),
            Operand->containsUnexpandedParameterPack()),
       Operand(Operand), Range(R) { }
 
@@ -552,6 +556,7 @@ public:
            // 'this' is type-dependent if the class type of the enclosing
            // member function is dependent (C++ [temp.dep.expr]p2)
            Type->isDependentType(), Type->isDependentType(),
+           Type->isInstantiationDependentType(),
            /*ContainsUnexpandedParameterPack=*/false),
       Loc(L), Implicit(isImplicit) { }
 
@@ -587,6 +592,7 @@ public:
   // can by null, if the optional expression to throw isn't present.
   CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l) :
     Expr(CXXThrowExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
+         expr && expr->isInstantiationDependent(),
          expr && expr->containsUnexpandedParameterPack()),
     Op(expr), ThrowLoc(l) {}
   CXXThrowExpr(EmptyShell Empty) : Expr(CXXThrowExprClass, Empty) {}
@@ -636,14 +642,14 @@ class CXXDefaultArgExpr : public Expr {
              ? param->getType().getNonReferenceType()
              : param->getDefaultArg()->getType(),
            param->getDefaultArg()->getValueKind(),
-           param->getDefaultArg()->getObjectKind(), false, false, false),
+           param->getDefaultArg()->getObjectKind(), false, false, false, false),
       Param(param, false), Loc(Loc) { }
 
   CXXDefaultArgExpr(StmtClass SC, SourceLocation Loc, ParmVarDecl *param, 
                     Expr *SubExpr)
     : Expr(SC, SubExpr->getType(),
            SubExpr->getValueKind(), SubExpr->getObjectKind(),
-           false, false, false), 
+           false, false, false, false), 
       Param(param, true), Loc(Loc) {
     *reinterpret_cast<Expr **>(this + 1) = SubExpr;
   }
@@ -742,6 +748,7 @@ class CXXBindTemporaryExpr : public Expr {
    : Expr(CXXBindTemporaryExprClass, SubExpr->getType(),
           VK_RValue, OK_Ordinary, SubExpr->isTypeDependent(), 
           SubExpr->isValueDependent(),
+          SubExpr->isInstantiationDependent(),
           SubExpr->containsUnexpandedParameterPack()),
      Temp(temp), SubExpr(SubExpr) { }
 
@@ -995,7 +1002,7 @@ public:
                          TypeSourceInfo *TypeInfo,
                          SourceLocation rParenLoc ) :
     Expr(CXXScalarValueInitExprClass, Type, VK_RValue, OK_Ordinary,
-         false, false, false),
+         false, false, Type->isInstantiationDependentType(), false),
     RParenLoc(rParenLoc), TypeInfo(TypeInfo) {}
 
   explicit CXXScalarValueInitExpr(EmptyShell Shell)
@@ -1241,6 +1248,7 @@ public:
                 bool arrayFormAsWritten, bool usualArrayDeleteWantsSize,
                 FunctionDecl *operatorDelete, Expr *arg, SourceLocation loc)
     : Expr(CXXDeleteExprClass, ty, VK_RValue, OK_Ordinary, false, false,
+           arg->isInstantiationDependent(),
            arg->containsUnexpandedParameterPack()),
       GlobalDelete(globalDelete),
       ArrayForm(arrayForm), ArrayFormAsWritten(arrayFormAsWritten),
@@ -1500,6 +1508,7 @@ public:
                      SourceLocation rparen, QualType ty)
     : Expr(UnaryTypeTraitExprClass, ty, VK_RValue, OK_Ordinary,
            false,  queried->getType()->isDependentType(),
+           queried->getType()->isInstantiationDependentType(),
            queried->getType()->containsUnexpandedParameterPack()),
       UTT(utt), Value(value), Loc(loc), RParen(rparen), QueriedType(queried) { }
 
@@ -1558,6 +1567,8 @@ public:
     : Expr(BinaryTypeTraitExprClass, ty, VK_RValue, OK_Ordinary, false, 
            lhsType->getType()->isDependentType() ||
            rhsType->getType()->isDependentType(),
+           (lhsType->getType()->isInstantiationDependentType() ||
+            rhsType->getType()->isInstantiationDependentType()),
            (lhsType->getType()->containsUnexpandedParameterPack() ||
             rhsType->getType()->containsUnexpandedParameterPack())),
       BTT(btt), Value(value), Loc(loc), RParen(rparen),
@@ -1625,6 +1636,8 @@ public:
                      Expr *dimension, SourceLocation rparen, QualType ty)
     : Expr(ArrayTypeTraitExprClass, ty, VK_RValue, OK_Ordinary,
            false, queried->getType()->isDependentType(),
+           (queried->getType()->isInstantiationDependentType() ||
+            (dimension && dimension->isInstantiationDependent())),
            queried->getType()->containsUnexpandedParameterPack()),
       ATT(att), Value(value), Dimension(dimension),
       Loc(loc), RParen(rparen), QueriedType(queried) { }
@@ -1684,6 +1697,7 @@ public:
            false, // Not type-dependent
            // Value-dependent if the argument is type-dependent.
            queried->isTypeDependent(),
+           queried->isInstantiationDependent(),
            queried->containsUnexpandedParameterPack()),
       ET(et), Value(value), Loc(loc), RParen(rparen), QueriedExpression(queried) { }
 
@@ -1736,8 +1750,9 @@ protected:
                const DeclarationNameInfo &NameInfo,
                const TemplateArgumentListInfo *TemplateArgs,
                UnresolvedSetIterator Begin, UnresolvedSetIterator End,
-               bool KnownDependent = false,
-               bool KnownContainsUnexpandedParameterPack = false);
+               bool KnownDependent,
+               bool KnownInstantiationDependent,
+               bool KnownContainsUnexpandedParameterPack);
 
   OverloadExpr(StmtClass K, EmptyShell Empty)
     : Expr(K, Empty), Results(0), NumResults(0),
@@ -1880,7 +1895,7 @@ class UnresolvedLookupExpr : public OverloadExpr {
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End,
                        bool StdIsAssociatedNamespace)
     : OverloadExpr(UnresolvedLookupExprClass, C, QualifierLoc, NameInfo, 
-                   TemplateArgs, Begin, End),
+                   TemplateArgs, Begin, End, false, false, false),
       RequiresADL(RequiresADL),
       StdIsAssociatedNamespace(StdIsAssociatedNamespace),
       Overloaded(Overloaded), NamingClass(NamingClass)
@@ -2727,6 +2742,7 @@ public:
     : Expr(CXXNoexceptExprClass, Ty, VK_RValue, OK_Ordinary,
            /*TypeDependent*/false,
            /*ValueDependent*/Val == CT_Dependent,
+           Val == CT_Dependent || Operand->isInstantiationDependent(),
            Operand->containsUnexpandedParameterPack()),
       Value(Val == CT_Cannot), Operand(Operand), Range(Keyword, RParen)
   { }
@@ -2787,7 +2803,8 @@ public:
                     llvm::Optional<unsigned> NumExpansions)
     : Expr(PackExpansionExprClass, T, Pattern->getValueKind(), 
            Pattern->getObjectKind(), /*TypeDependent=*/true, 
-           /*ValueDependent=*/true, /*ContainsUnexpandedParameterPack=*/false),
+           /*ValueDependent=*/true, /*InstantiationDependent=*/true,
+           /*ContainsUnexpandedParameterPack=*/false),
       EllipsisLoc(EllipsisLoc),
       NumExpansions(NumExpansions? *NumExpansions + 1 : 0),
       Pattern(Pattern) { }
@@ -2874,6 +2891,7 @@ public:
                  SourceLocation PackLoc, SourceLocation RParenLoc)
     : Expr(SizeOfPackExprClass, SizeType, VK_RValue, OK_Ordinary,
            /*TypeDependent=*/false, /*ValueDependent=*/true,
+           /*InstantiationDependent=*/true,
            /*ContainsUnexpandedParameterPack=*/false),
       OperatorLoc(OperatorLoc), PackLoc(PackLoc), RParenLoc(RParenLoc),
       Length(0), Pack(Pack) { }
@@ -2885,6 +2903,7 @@ public:
                  unsigned Length)
   : Expr(SizeOfPackExprClass, SizeType, VK_RValue, OK_Ordinary,
          /*TypeDependent=*/false, /*ValueDependent=*/false,
+         /*InstantiationDependent=*/false,
          /*ContainsUnexpandedParameterPack=*/false),
     OperatorLoc(OperatorLoc), PackLoc(PackLoc), RParenLoc(RParenLoc),
     Length(Length), Pack(Pack) { }
@@ -3018,6 +3037,7 @@ public:
     : Expr(MaterializeTemporaryExprClass, T,
            BoundToLvalueReference? VK_LValue : VK_XValue, OK_Ordinary,
            Temporary->isTypeDependent(), Temporary->isValueDependent(),
+           Temporary->isInstantiationDependent(),
            Temporary->containsUnexpandedParameterPack()),
       Temporary(Temporary) { }
   

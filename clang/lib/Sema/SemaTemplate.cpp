@@ -1898,6 +1898,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 
   QualType CanonType;
 
+  bool InstantiationDependent = false;
   if (TypeAliasTemplateDecl *AliasTemplate
         = dyn_cast<TypeAliasTemplateDecl>(Template)) {
     // Find the canonical type for this type alias template specialization.
@@ -1923,7 +1924,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
       return QualType();
   } else if (Name.isDependent() ||
              TemplateSpecializationType::anyDependentTemplateArguments(
-               TemplateArgs)) {
+               TemplateArgs, InstantiationDependent)) {
     // This class template specialization is a dependent
     // type. Therefore, its canonical type is another class template
     // specialization type that contains all of the converted
@@ -4833,10 +4834,12 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                          Converted))
       return true;
 
+    bool InstantiationDependent;
     if (!Name.isDependent() &&
         !TemplateSpecializationType::anyDependentTemplateArguments(
                                              TemplateArgs.getArgumentArray(),
-                                                         TemplateArgs.size())) {
+                                                         TemplateArgs.size(),
+                                                     InstantiationDependent)) {
       Diag(TemplateNameLoc, diag::err_partial_spec_fully_specialized)
         << ClassTemplate->getDeclName();
       isPartialSpecialization = false;

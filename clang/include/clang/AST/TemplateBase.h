@@ -235,8 +235,13 @@ public:
   bool isNull() const { return Kind == Null; }
 
   /// \brief Whether this template argument is dependent on a template
-  /// parameter.
+  /// parameter such that its result can change from one instantiation to
+  /// another.
   bool isDependent() const;
+
+  /// \brief Whether this template argument is dependent on a template
+  /// parameter.
+  bool isInstantiationDependent() const;
 
   /// \brief Whether this template argument contains an unexpanded
   /// parameter pack.

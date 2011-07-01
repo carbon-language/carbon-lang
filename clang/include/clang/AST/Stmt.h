@@ -154,9 +154,10 @@ protected:
     unsigned ObjectKind : 2;
     unsigned TypeDependent : 1;
     unsigned ValueDependent : 1;
+    unsigned InstantiationDependent : 1;
     unsigned ContainsUnexpandedParameterPack : 1;
   };
-  enum { NumExprBits = 15 };
+  enum { NumExprBits = 16 };
 
   class DeclRefExprBitfields {
     friend class DeclRefExpr;

@@ -132,7 +132,7 @@ Decl *TemplateDeclInstantiator::InstantiateTypedefNameDecl(TypedefNameDecl *D,
                                                            bool IsTypeAlias) {
   bool Invalid = false;
   TypeSourceInfo *DI = D->getTypeSourceInfo();
-  if (DI->getType()->isDependentType() ||
+  if (DI->getType()->isInstantiationDependentType() ||
       DI->getType()->isVariablyModifiedType()) {
     DI = SemaRef.SubstType(DI, TemplateArgs,
                            D->getLocation(), D->getDeclName());
@@ -435,7 +435,7 @@ Decl *TemplateDeclInstantiator::VisitAccessSpecDecl(AccessSpecDecl *D) {
 Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
   bool Invalid = false;
   TypeSourceInfo *DI = D->getTypeSourceInfo();
-  if (DI->getType()->isDependentType() ||
+  if (DI->getType()->isInstantiationDependentType() ||
       DI->getType()->isVariablyModifiedType())  {
     DI = SemaRef.SubstType(DI, TemplateArgs,
                            D->getLocation(), D->getDeclName());

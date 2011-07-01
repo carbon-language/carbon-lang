@@ -807,7 +807,7 @@ bool TemplateInstantiator::AlreadyTransformed(QualType T) {
   if (T.isNull())
     return true;
   
-  if (T->isDependentType() || T->isVariablyModifiedType())
+  if (T->isInstantiationDependentType() || T->isVariablyModifiedType())
     return false;
   
   getSema().MarkDeclarationsReferencedInType(Loc, T);
@@ -1340,7 +1340,7 @@ TypeSourceInfo *Sema::SubstType(TypeSourceInfo *T,
          "Cannot perform an instantiation without some context on the "
          "instantiation stack");
   
-  if (!T->getType()->isDependentType() && 
+  if (!T->getType()->isInstantiationDependentType() && 
       !T->getType()->isVariablyModifiedType())
     return T;
 
@@ -1359,7 +1359,7 @@ TypeSourceInfo *Sema::SubstType(TypeLoc TL,
   if (TL.getType().isNull())
     return 0;
 
-  if (!TL.getType()->isDependentType() && 
+  if (!TL.getType()->isInstantiationDependentType() && 
       !TL.getType()->isVariablyModifiedType()) {
     // FIXME: Make a copy of the TypeLoc data here, so that we can
     // return a new TypeSourceInfo. Inefficient!
@@ -1388,7 +1388,7 @@ QualType Sema::SubstType(QualType T,
 
   // If T is not a dependent type or a variably-modified type, there
   // is nothing to do.
-  if (!T->isDependentType() && !T->isVariablyModifiedType())
+  if (!T->isInstantiationDependentType() && !T->isVariablyModifiedType())
     return T;
 
   TemplateInstantiator Instantiator(*this, TemplateArgs, Loc, Entity);
@@ -1396,7 +1396,8 @@ QualType Sema::SubstType(QualType T,
 }
 
 static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
-  if (T->getType()->isDependentType() || T->getType()->isVariablyModifiedType())
+  if (T->getType()->isInstantiationDependentType() || 
+      T->getType()->isVariablyModifiedType())
     return true;
 
   TypeLoc TL = T->getTypeLoc().IgnoreParens();
@@ -1410,7 +1411,7 @@ static bool NeedsInstantiationAsFunctionType(TypeSourceInfo *T) {
     // The parameter's type as written might be dependent even if the
     // decayed type was not dependent.
     if (TypeSourceInfo *TSInfo = P->getTypeSourceInfo())
-      if (TSInfo->getType()->isDependentType())
+      if (TSInfo->getType()->isInstantiationDependentType())
         return true;
 
     // TODO: currently we always rebuild expressions.  When we

@@ -751,3 +751,22 @@ namespace test30 {
     // CHECK: call void @_ZN6test301AINS_1BEE3fooIiEEvDTclsrS1_IT_EE2fnEE(
   }
 }
+
+namespace test31 { // instantiation-dependent mangling of decltype
+  int x;
+  template<class T> auto f1(T p)->decltype(x) { return 0; }
+  // The return type in the mangling of the template signature
+  // is encoded as "i".
+  template<class T> auto f2(T p)->decltype(p) { return 0; }
+  // The return type in the mangling of the template signature
+  // is encoded as "Dtfp_E".
+  void g(int);
+  template<class T> auto f3(T p)->decltype(g(p)) {}
+
+  // CHECK: define weak_odr i32 @_ZN6test312f1IiEEiT_(
+  template int f1(int);
+  // CHECK: define weak_odr i32 @_ZN6test312f2IiEEDtfp_ET_
+  template int f2(int);
+  // CHECK: define weak_odr void @_ZN6test312f3IiEEDTcl1gfp_EET_
+  template void f3(int);
+}

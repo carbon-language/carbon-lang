@@ -492,6 +492,9 @@ public:
     LocInfo.CXXLiteralOperatorName.OpNameLoc = Loc.getRawEncoding();
   }
 
+  /// \brief Determine whether this name involves a template parameter.
+  bool isInstantiationDependent() const;
+  
   /// \brief Determine whether this name contains an unexpanded
   /// parameter pack.
   bool containsUnexpandedParameterPack() const;

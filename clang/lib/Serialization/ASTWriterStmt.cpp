@@ -375,6 +375,7 @@ void ASTStmtWriter::VisitExpr(Expr *E) {
   Writer.AddTypeRef(E->getType(), Record);
   Record.push_back(E->isTypeDependent());
   Record.push_back(E->isValueDependent());
+  Record.push_back(E->isInstantiationDependent());
   Record.push_back(E->containsUnexpandedParameterPack());
   Record.push_back(E->getValueKind());
   Record.push_back(E->getObjectKind());
