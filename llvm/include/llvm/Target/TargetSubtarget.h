@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETSUBTARGET_H
 #define LLVM_TARGET_TARGETSUBTARGET_H
 
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -29,7 +30,7 @@ template <typename T> class SmallVectorImpl;
 /// Target-specific options that control code generation and printing should
 /// be exposed through a TargetSubtarget-derived class.
 ///
-class TargetSubtarget {
+class TargetSubtarget : public MCSubtargetInfo {
   TargetSubtarget(const TargetSubtarget&);   // DO NOT IMPLEMENT
   void operator=(const TargetSubtarget&);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses...

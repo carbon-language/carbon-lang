@@ -19,10 +19,13 @@
 #include "llvm/ADT/Triple.h"
 #include <string>
 
+#define GET_SUBTARGETINFO_HEADER
+#include "ARMGenSubtarget.inc"
+
 namespace llvm {
 class GlobalValue;
 
-class ARMSubtarget : public TargetSubtarget {
+class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
   enum ARMArchEnum {
     V4, V4T, V5T, V5TE, V6, V6M, V6T2, V7A, V7M

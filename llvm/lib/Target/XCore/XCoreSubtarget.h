@@ -16,12 +16,14 @@
 
 #include "llvm/Target/TargetSubtarget.h"
 #include "llvm/Target/TargetMachine.h"
-
 #include <string>
+
+#define GET_SUBTARGETINFO_HEADER
+#include "XCoreGenSubtarget.inc"
 
 namespace llvm {
 
-class XCoreSubtarget : public TargetSubtarget {
+class XCoreSubtarget : public XCoreGenSubtargetInfo {
 
 public:
   /// This constructor initializes the data members to match that

@@ -15,8 +15,13 @@
 #include "PPC.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetMachine.h"
-#include "PPCGenSubtarget.inc"
 #include <cstdlib>
+
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
+#include "PPCGenSubtarget.inc"
+
 using namespace llvm;
 
 #if defined(__APPLE__)
@@ -59,7 +64,8 @@ static const char *GetCurrentPowerPCCPU() {
 
 PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, bool is64Bit)
-  : StackAlignment(16)
+  : PPCGenSubtargetInfo()
+  , StackAlignment(16)
   , DarwinDirective(PPC::DIR_NONE)
   , IsGigaProcessor(false)
   , Has64BitSupport(false)
@@ -83,6 +89,9 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
 
   // Parse features string.
   ParseSubtargetFeatures(FS, CPUName);
+
+  // Initialize scheduling itinerary for the specified CPU.
+  InstrItins = getInstrItineraryForCPU(CPUName);
 
   // If we are generating code for ppc64, verify that options make sense.
   if (is64Bit) {

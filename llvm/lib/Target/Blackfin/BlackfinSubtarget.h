@@ -17,9 +17,12 @@
 #include "llvm/Target/TargetSubtarget.h"
 #include <string>
 
+#define GET_SUBTARGETINFO_HEADER
+#include "BlackfinGenSubtarget.inc"
+
 namespace llvm {
 
-  class BlackfinSubtarget : public TargetSubtarget {
+  class BlackfinSubtarget : public BlackfinGenSubtargetInfo {
     bool sdram;
     bool icplb;
     bool wa_mi_shift;

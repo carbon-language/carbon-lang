@@ -18,9 +18,12 @@
 #include "llvm/MC/MCInstrItineraries.h"
 #include <string>
 
+#define GET_SUBTARGETINFO_HEADER
+#include "AlphaGenSubtarget.inc"
+
 namespace llvm {
 
-class AlphaSubtarget : public TargetSubtarget {
+class AlphaSubtarget : public AlphaGenSubtargetInfo {
 protected:
 
   bool HasCT;

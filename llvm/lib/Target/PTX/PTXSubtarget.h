@@ -16,8 +16,11 @@
 
 #include "llvm/Target/TargetSubtarget.h"
 
+#define GET_SUBTARGETINFO_HEADER
+#include "PTXGenSubtarget.inc"
+
 namespace llvm {
-  class PTXSubtarget : public TargetSubtarget {
+  class PTXSubtarget : public PTXGenSubtargetInfo {
     public:
 
       /**

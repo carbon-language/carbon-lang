@@ -28,6 +28,7 @@ add_llvm_library(LLVMMC
   MCSectionELF.cpp
   MCSectionMachO.cpp
   MCStreamer.cpp
+  MCSubtargetInfo.cpp
   MCSymbol.cpp
   MCValue.cpp
   MCWin64EH.cpp

@@ -13,14 +13,19 @@
 
 #include "SPUSubtarget.h"
 #include "SPU.h"
-#include "SPUGenSubtarget.inc"
 #include "llvm/ADT/SmallVector.h"
 #include "SPURegisterInfo.h"
+
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
+#include "SPUGenSubtarget.inc"
 
 using namespace llvm;
 
 SPUSubtarget::SPUSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS) :
+  SPUGenSubtargetInfo(),
   StackAlignment(16),
   ProcDirective(SPU::DEFAULT_PROC),
   UseLargeMem(false)
@@ -31,6 +36,9 @@ SPUSubtarget::SPUSubtarget(const std::string &TT, const std::string &CPU,
 
   // Parse features string.
   ParseSubtargetFeatures(FS, default_cpu);
+
+  // Initialize scheduling itinerary for the specified CPU.
+  InstrItins = getInstrItineraryForCPU(default_cpu);
 }
 
 /// SetJITMode - This is called to inform the subtarget info that we are

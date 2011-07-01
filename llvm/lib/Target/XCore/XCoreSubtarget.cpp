@@ -13,9 +13,16 @@
 
 #include "XCoreSubtarget.h"
 #include "XCore.h"
+
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
+#include "XCoreGenSubtarget.inc"
+
 using namespace llvm;
 
 XCoreSubtarget::XCoreSubtarget(const std::string &TT,
                                const std::string &CPU, const std::string &FS)
+  : XCoreGenSubtargetInfo()
 {
 }

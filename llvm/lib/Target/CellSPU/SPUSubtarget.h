@@ -18,6 +18,9 @@
 #include "llvm/MC/MCInstrItineraries.h"
 #include <string>
 
+#define GET_SUBTARGETINFO_HEADER
+#include "SPUGenSubtarget.inc"
+
 namespace llvm {
   class GlobalValue;
 
@@ -28,7 +31,7 @@ namespace llvm {
     };
   }
     
-  class SPUSubtarget : public TargetSubtarget {
+  class SPUSubtarget : public SPUGenSubtargetInfo {
   protected:
     /// stackAlignment - The minimum alignment known to hold of the stack frame
     /// on entry to the function and which must be maintained by every function.

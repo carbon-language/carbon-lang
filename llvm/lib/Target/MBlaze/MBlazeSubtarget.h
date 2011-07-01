@@ -18,9 +18,12 @@
 #include "llvm/MC/MCInstrItineraries.h"
 #include <string>
 
+#define GET_SUBTARGETINFO_HEADER
+#include "MBlazeGenSubtarget.inc"
+
 namespace llvm {
 
-class MBlazeSubtarget : public TargetSubtarget {
+class MBlazeSubtarget : public MBlazeGenSubtargetInfo {
 
 protected:
   bool HasBarrel;

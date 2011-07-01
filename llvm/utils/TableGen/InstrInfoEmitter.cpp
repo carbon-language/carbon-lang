@@ -223,7 +223,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_INSTRINFO_HEADER\n";
 
   std::string ClassName = TargetName + "GenInstrInfo";
-  OS << "namespace llvm {\n\n";
+  OS << "namespace llvm {\n";
   OS << "struct " << ClassName << " : public TargetInstrInfoImpl {\n"
      << "  explicit " << ClassName << "(int SO = -1, int DO = -1);\n"
      << "};\n";
@@ -234,7 +234,7 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "\n#ifdef GET_INSTRINFO_CTOR\n";
   OS << "#undef GET_INSTRINFO_CTOR\n";
 
-  OS << "namespace llvm {\n\n";
+  OS << "namespace llvm {\n";
   OS << ClassName << "::" << ClassName << "(int SO, int DO)\n"
      << "  : TargetInstrInfoImpl(SO, DO) {\n"
      << "  InitMCInstrInfo(" << TargetName << "Insts, "

@@ -13,16 +13,20 @@
 
 #include "SystemZSubtarget.h"
 #include "SystemZ.h"
-#include "SystemZGenSubtarget.inc"
 #include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetMachine.h"
+
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
+#include "SystemZGenSubtarget.inc"
 
 using namespace llvm;
 
 SystemZSubtarget::SystemZSubtarget(const std::string &TT, 
                                    const std::string &CPU,
                                    const std::string &FS):
-  HasZ10Insts(false) {
+  SystemZGenSubtargetInfo(), HasZ10Insts(false) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "z9";

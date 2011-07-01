@@ -19,6 +19,9 @@
 #include "llvm/CallingConv.h"
 #include <string>
 
+#define GET_SUBTARGETINFO_HEADER
+#include "X86GenSubtarget.inc"
+
 namespace llvm {
 class GlobalValue;
 class TargetMachine;
@@ -35,7 +38,7 @@ enum Style {
 };
 }
 
-class X86Subtarget : public TargetSubtarget {
+class X86Subtarget : public X86GenSubtargetInfo {
 protected:
   enum X86SSEEnum {
     NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42

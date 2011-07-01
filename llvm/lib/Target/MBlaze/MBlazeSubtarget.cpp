@@ -14,13 +14,19 @@
 #include "MBlazeSubtarget.h"
 #include "MBlaze.h"
 #include "MBlazeRegisterInfo.h"
-#include "MBlazeGenSubtarget.inc"
 #include "llvm/Support/CommandLine.h"
+
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
+#include "MBlazeGenSubtarget.inc"
+
 using namespace llvm;
 
 MBlazeSubtarget::MBlazeSubtarget(const std::string &TT,
                                  const std::string &CPU,
                                  const std::string &FS):
+  MBlazeGenSubtargetInfo(),
   HasBarrel(false), HasDiv(false), HasMul(false), HasPatCmp(false),
   HasFPU(false), HasMul64(false), HasSqrt(false)
 {
@@ -34,6 +40,9 @@ MBlazeSubtarget::MBlazeSubtarget(const std::string &TT,
   // itinerary (the default CPU is the only one that doesn't).
   HasItin = CPUName != "mblaze";
   DEBUG(dbgs() << "CPU " << CPUName << "(" << HasItin << ")\n");
+
+  // Initialize scheduling itinerary for the specified CPU.
+  InstrItins = getInstrItineraryForCPU(CPUName);
 
   // Compute the issue width of the MBlaze itineraries
   computeIssueWidth();

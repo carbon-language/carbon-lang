@@ -15,14 +15,16 @@
 #define LLVM_TARGET_SystemZ_SUBTARGET_H
 
 #include "llvm/Target/TargetSubtarget.h"
-
 #include <string>
+
+#define GET_SUBTARGETINFO_HEADER
+#include "SystemZGenSubtarget.inc"
 
 namespace llvm {
 class GlobalValue;
 class TargetMachine;
 
-class SystemZSubtarget : public TargetSubtarget {
+class SystemZSubtarget : public SystemZGenSubtargetInfo {
   bool HasZ10Insts;
 public:
   /// This constructor initializes the data members to match that

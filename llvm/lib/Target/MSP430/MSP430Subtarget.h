@@ -16,11 +16,14 @@
 
 #include "llvm/Target/TargetSubtarget.h"
 
+#define GET_SUBTARGETINFO_HEADER
+#include "MSP430GenSubtarget.inc"
+
 #include <string>
 
 namespace llvm {
 
-class MSP430Subtarget : public TargetSubtarget {
+class MSP430Subtarget : public MSP430GenSubtargetInfo {
   bool ExtendedInsts;
 public:
   /// This constructor initializes the data members to match that

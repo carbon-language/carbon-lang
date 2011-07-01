@@ -14,11 +14,17 @@
 #include "PTXSubtarget.h"
 #include "llvm/Support/ErrorHandling.h"
 
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
+#include "PTXGenSubtarget.inc"
+
 using namespace llvm;
 
 PTXSubtarget::PTXSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, bool is64Bit)
-  : PTXTarget(PTX_COMPUTE_1_0),
+  : PTXGenSubtargetInfo(),
+    PTXTarget(PTX_COMPUTE_1_0),
     PTXVersion(PTX_VERSION_2_0),
     SupportsDouble(false),
     SupportsFMA(true),

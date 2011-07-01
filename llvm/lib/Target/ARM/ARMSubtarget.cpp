@@ -12,11 +12,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMSubtarget.h"
-#include "ARMGenSubtarget.inc"
 #include "ARMBaseRegisterInfo.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/Target/TargetSubtarget.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallVector.h"
+
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
+#include "ARMGenSubtarget.inc"
+
 using namespace llvm;
 
 static cl::opt<bool>
@@ -32,7 +38,8 @@ StrictAlign("arm-strict-align", cl::Hidden,
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, bool isT)
-  : ARMArchVersion(V4)
+  : ARMGenSubtargetInfo()
+  , ARMArchVersion(V4)
   , ARMProcFamily(Others)
   , ARMFPUType(None)
   , UseNEONForSinglePrecisionFP(false)
@@ -129,6 +136,9 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   else if (!FS.empty())
     FSWithArch = FSWithArch + "," + FS;
   ParseSubtargetFeatures(FSWithArch, CPUString);
+
+  // Initialize scheduling itinerary for the specified CPU.
+  InstrItins = getInstrItineraryForCPU(CPUString);
 
   // After parsing Itineraries, set ItinData.IssueWidth.
   computeIssueWidth();

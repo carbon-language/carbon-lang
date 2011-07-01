@@ -17,9 +17,12 @@
 #include "llvm/Target/TargetSubtarget.h"
 #include <string>
 
+#define GET_SUBTARGETINFO_HEADER
+#include "SparcGenSubtarget.inc"
+
 namespace llvm {
 
-class SparcSubtarget : public TargetSubtarget {
+class SparcSubtarget : public SparcGenSubtargetInfo {
   bool IsV9;
   bool V8DeprecatedInsts;
   bool IsVIS;

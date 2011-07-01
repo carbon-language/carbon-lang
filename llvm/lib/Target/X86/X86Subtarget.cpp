@@ -14,13 +14,18 @@
 #define DEBUG_TYPE "subtarget"
 #include "X86Subtarget.h"
 #include "X86InstrInfo.h"
-#include "X86GenSubtarget.inc"
 #include "llvm/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/SmallVector.h"
+
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
+#include "X86GenSubtarget.inc"
+
 using namespace llvm;
 
 #if defined(_MSC_VER)
@@ -287,7 +292,8 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, 
                            bool is64Bit, unsigned StackAlignOverride)
-  : PICStyle(PICStyles::None)
+  : X86GenSubtargetInfo()
+  , PICStyle(PICStyles::None)
   , X86SSELevel(NoMMXSSE)
   , X863DNowLevel(NoThreeDNow)
   , HasCMov(false)

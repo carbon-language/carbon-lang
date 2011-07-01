@@ -12,11 +12,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcSubtarget.h"
+
+#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_MC_DESC
+#define GET_SUBTARGETINFO_TARGET_DESC
 #include "SparcGenSubtarget.inc"
+
 using namespace llvm;
 
 SparcSubtarget::SparcSubtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS,  bool is64Bit) :
+  SparcGenSubtargetInfo(),
   IsV9(false),
   V8DeprecatedInsts(false),
   IsVIS(false),

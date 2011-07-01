@@ -18,9 +18,12 @@
 #include "llvm/MC/MCInstrItineraries.h"
 #include <string>
 
+#define GET_SUBTARGETINFO_HEADER
+#include "MipsGenSubtarget.inc"
+
 namespace llvm {
 
-class MipsSubtarget : public TargetSubtarget {
+class MipsSubtarget : public MipsGenSubtargetInfo {
 
 public:
   enum MipsABIEnum {
