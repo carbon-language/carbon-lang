@@ -70,6 +70,20 @@ namespace test3 {
   const char *test() { return var; }
 }
 
+namespace test6 {
+  struct A {
+    A();
+  };
+  extern int foo();
+
+  // This needs an initialization function and guard variables.
+  // CHECK: load i8* bitcast (i64* @_ZGVN5test61xE
+  // CHECK: [[CALL:%.*]] = call i32 @_ZN5test63fooEv
+  // CHECK-NEXT: store i32 [[CALL]], i32* @_ZN5test61xE
+  // CHECK-NEXT: store i64 1, i64* @_ZGVN5test61xE
+  __attribute__((weak)) int x = foo();
+}
+
 namespace PR5974 {
   struct A { int a; };
   struct B { int b; };
@@ -97,15 +111,6 @@ namespace test5 {
   };
 }
 
-namespace test6 {
-  struct A {
-    A();
-  };
-  extern int foo();
-
-  // This needs an initialization function but not guard variables.
-  __attribute__((weak)) int x = foo();
-}
 
 // At the end of the file, we check that y is initialized before z.
 

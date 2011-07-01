@@ -269,12 +269,11 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                 getTypes().getNullaryFunctionInfo(),
                 FunctionArgList(), SourceLocation());
 
-  // Use guarded initialization if the global variable is weak due to
-  // being a class template's static data member.  These will always
-  // have weak_odr linkage.
-  if (Addr->getLinkage() == llvm::GlobalValue::WeakODRLinkage &&
-      D->isStaticDataMember() &&
-      D->getInstantiatedFromStaticDataMember()) {
+  // Use guarded initialization if the global variable is weak. This
+  // occurs for, e.g., instantiated static data members and
+  // definitions explicitly marked weak.
+  if (Addr->getLinkage() == llvm::GlobalValue::WeakODRLinkage ||
+      Addr->getLinkage() == llvm::GlobalValue::WeakAnyLinkage) {
     EmitCXXGuardedInit(*D, Addr);
   } else {
     EmitCXXGlobalVarDeclInit(*D, Addr);
