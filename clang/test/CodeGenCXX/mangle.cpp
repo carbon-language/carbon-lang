@@ -748,8 +748,6 @@ namespace test30 {
 
   void test() {
     A<B>::foo<int>(0);
-    // FIXME: it's not clear what this mangling should be;  maybe this?
-    //   call void @_ZN6test301AINS_1BEE3fooIiEEvDTclsrS1_IT_EE2fnEE(
-    // Currently it's 1B instead of S1_.
+    // CHECK: call void @_ZN6test301AINS_1BEE3fooIiEEvDTclsrS1_IT_EE2fnEE(
   }
 }
