@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2xtpk |  FileCheck %s
+; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2xtpk,+t2dsp |  FileCheck %s
 
 @x = weak global i16 0          ; <i16*> [#uses=1]
 @y = weak global i16 0          ; <i16*> [#uses=0]

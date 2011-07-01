@@ -62,6 +62,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , HasMPExtension(false)
   , FPOnlySP(false)
   , AllowsUnalignedMem(false)
+  , Thumb2DSP(false)
   , stackAlignment(4)
   , CPUString(CPU)
   , TargetTriple(TT)
@@ -98,6 +99,9 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
       if (Len >= Idx+2 && TT[Idx+1] == 'm') {
         ARMArchVersion = V7M;
         ARMArchFeature = "+v7m";
+      } else if (Len >= Idx+3 && TT[Idx+1] == 'e'&& TT[Idx+2] == 'm') {
+        ARMArchVersion = V7EM;
+        ARMArchFeature = "+v7em";
       }
     } else if (SubVer == '6') {
       ARMArchVersion = V6;

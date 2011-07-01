@@ -1,7 +1,8 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep smmul | count 1
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | grep umull | count 1
+; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2dsp | FileCheck %s
 
 define i32 @smulhi(i32 %x, i32 %y) {
+; CHECK: smulhi
+; CHECK: smmul r0, r1, r0
         %tmp = sext i32 %x to i64               ; <i64> [#uses=1]
         %tmp1 = sext i32 %y to i64              ; <i64> [#uses=1]
         %tmp2 = mul i64 %tmp1, %tmp             ; <i64> [#uses=1]
@@ -11,6 +12,8 @@ define i32 @smulhi(i32 %x, i32 %y) {
 }
 
 define i32 @umulhi(i32 %x, i32 %y) {
+; CHECK: umulhi
+; CHECK: umull r1, r0, r1, r0
         %tmp = zext i32 %x to i64               ; <i64> [#uses=1]
         %tmp1 = zext i32 %y to i64              ; <i64> [#uses=1]
         %tmp2 = mul i64 %tmp1, %tmp             ; <i64> [#uses=1]

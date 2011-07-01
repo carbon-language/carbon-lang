@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2xtpk | FileCheck %s
+; RUN: llc < %s -march=thumb -mattr=+thumb2,+t2xtpk,+t2dsp | FileCheck %s
 
 define i32 @f3(i32 %a, i16 %x, i32 %y) {
 ; CHECK: f3

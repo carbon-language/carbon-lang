@@ -541,7 +541,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
     setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
   }
-  if (Subtarget->isThumb1Only() || !Subtarget->hasV6Ops())
+  if (Subtarget->isThumb1Only() || !Subtarget->hasV6Ops()
+      || (Subtarget->isThumb2() && !Subtarget->hasThumb2DSP()))
     setOperationAction(ISD::MULHS, MVT::i32, Expand);
 
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Custom);

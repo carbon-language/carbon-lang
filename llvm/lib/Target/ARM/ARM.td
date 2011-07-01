@@ -75,6 +75,10 @@ def FeatureAvoidPartialCPSR : SubtargetFeature<"avoid-partial-cpsr",
                                                "AvoidCPSRPartialUpdate", "true",
                                  "Avoid CPSR partial update for OOO execution">;
 
+/// Some M architectures don't have the DSP extension (v7E-M vs. v7M)
+def FeatureDSPThumb2 : SubtargetFeature<"t2dsp", "Thumb2DSP", "true",
+                                 "Supports v7 DSP instructions in Thumb2.">;
+
 // Multiprocessing extension.
 def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
                                  "Supports Multiprocessing extension">;
@@ -93,14 +97,20 @@ def ArchV6M     : SubtargetFeature<"v6m", "ARMArchVersion", "V6M",
                                    [FeatureNoARM, FeatureDB]>;
 def ArchV6T2    : SubtargetFeature<"v6t2", "ARMArchVersion", "V6T2",
                                    "ARM v6t2",
-                                   [FeatureThumb2]>;
+                                   [FeatureThumb2, FeatureDSPThumb2]>;
 def ArchV7A     : SubtargetFeature<"v7a", "ARMArchVersion", "V7A",
                                    "ARM v7A",
-                                   [FeatureThumb2, FeatureNEON, FeatureDB]>;
+                                   [FeatureThumb2, FeatureNEON, FeatureDB,
+                                    FeatureDSPThumb2]>;
 def ArchV7M     : SubtargetFeature<"v7m", "ARMArchVersion", "V7M",
                                    "ARM v7M",
                                    [FeatureThumb2, FeatureNoARM, FeatureDB,
                                     FeatureHWDiv]>;
+def ArchV7EM    : SubtargetFeature<"v7em", "ARMArchVersion", "V7EM",
+                                   "ARM v7E-M",
+                                   [FeatureThumb2, FeatureNoARM, FeatureDB,
+                                    FeatureHWDiv, FeatureDSPThumb2,
+                                    FeatureT2XtPk]>;
 
 //===----------------------------------------------------------------------===//
 // ARM Processors supported.
@@ -192,7 +202,7 @@ def : Processor<"cortex-a9-mp",     CortexA9Itineraries,
 
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [ArchV7M]>;
-def : ProcNoItin<"cortex-m4",       [ArchV7M, FeatureVFP2, FeatureVFPOnlySP]>;
+def : ProcNoItin<"cortex-m4",       [ArchV7EM, FeatureVFP2, FeatureVFPOnlySP]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

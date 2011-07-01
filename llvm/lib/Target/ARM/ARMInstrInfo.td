@@ -164,6 +164,8 @@ def HasFP16          : Predicate<"Subtarget->hasFP16()">, AssemblerPredicate;
 def HasDivide        : Predicate<"Subtarget->hasDivide()">, AssemblerPredicate;
 def HasT2ExtractPack : Predicate<"Subtarget->hasT2ExtractPack()">,
                                  AssemblerPredicate;
+def HasThumb2DSP     : Predicate<"Subtarget->hasThumb2DSP()">,
+                                 AssemblerPredicate;
 def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
                                  AssemblerPredicate;
 def HasMP            : Predicate<"Subtarget->hasMPExtension()">,

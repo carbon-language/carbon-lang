@@ -28,7 +28,7 @@ class GlobalValue;
 class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
   enum ARMArchEnum {
-    V4, V4T, V5T, V5TE, V6, V6M, V6T2, V7A, V7M
+    V4, V4T, V5T, V5TE, V6, V6M, V6T2, V7A, V7M, V7EM
   };
 
   enum ARMProcFamilyEnum {
@@ -45,7 +45,7 @@ protected:
   };
 
   /// ARMArchVersion - ARM architecture version: V4, V4T (base), V5T, V5TE,
-  /// V6, V6T2, V7A, V7M.
+  /// V6, V6T2, V7A, V7M, V7EM.
   ARMArchEnum ARMArchVersion;
 
   /// ARMProcFamily - ARM processor family: Cortex-A8, Cortex-A9, and others.
@@ -130,6 +130,10 @@ protected:
   /// ARMTargetLowering::allowsUnalignedMemoryAccesses().
   bool AllowsUnalignedMem;
 
+  /// Thumb2DSP - If true, the subtarget supports the v7 DSP (saturating arith
+  /// and such) instructions in Thumb2 code.
+  bool Thumb2DSP;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -199,6 +203,7 @@ protected:
   bool prefers32BitThumb() const { return Pref32BitThumb; }
   bool avoidCPSRPartialUpdate() const { return AvoidCPSRPartialUpdate; }
   bool hasMPExtension() const { return HasMPExtension; }
+  bool hasThumb2DSP() const { return Thumb2DSP; }
 
   bool hasFP16() const { return HasFP16; }
   bool hasD16() const { return HasD16; }
