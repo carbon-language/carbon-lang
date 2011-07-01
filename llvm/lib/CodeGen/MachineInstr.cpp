@@ -194,6 +194,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
            getSubReg() == Other.getSubReg();
   case MachineOperand::MO_Immediate:
     return getImm() == Other.getImm();
+  case MachineOperand::MO_CImmediate:
+    return getCImm() == Other.getCImm();
   case MachineOperand::MO_FPImmediate:
     return getFPImm() == Other.getFPImm();
   case MachineOperand::MO_MachineBasicBlock:
