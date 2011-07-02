@@ -47,7 +47,6 @@ const unsigned MArchMapSize = NextHighestPowerOf2(MArchNumKeysARM);
 const char* MArchMCpuKeysARM[] = { "iwmmxt", "ep9312" };
 const char* MArchMCpuValuesARM[] = { "iwmmxt", "ep9312"};
 const unsigned MArchMCpuNumKeysARM = NUM_KEYS(MArchMCpuKeysARM);
-const unsigned MArchMCpuMapSize = NextHighestPowerOf2(MArchMCpuNumKeysARM);
 
 
 void FillInArgMap(ArgMap& Args, const char* Keys[],
