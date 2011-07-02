@@ -12,7 +12,7 @@ def detectCPUs():
             if isinstance(ncpus, int) and ncpus > 0:
                 return ncpus
         else: # OSX:
-            return int(os.popen2("sysctl -n hw.ncpu")[1].read())
+            return int(capture(['sysctl', '-n', 'hw.ncpu']))
     # Windows:
     if os.environ.has_key("NUMBER_OF_PROCESSORS"):
         ncpus = int(os.environ["NUMBER_OF_PROCESSORS"])
