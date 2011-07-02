@@ -530,16 +530,10 @@ void RAFast::allocVirtReg(MachineInstr *MI, LiveRegEntry &LRE, unsigned Hint) {
     return assignVirtToPhysReg(LRE, BestReg);
   }
 
-  // Nothing we can do.
-  std::string msg;
-  raw_string_ostream Msg(msg);
-  Msg << "Ran out of registers during register allocation!";
-  if (MI->isInlineAsm()) {
-    Msg << "\nPlease check your inline asm statement for "
-        << "invalid constraints:\n";
-    MI->print(Msg, TM);
-  }
-  report_fatal_error(Msg.str());
+  // Nothing we can do. Report an error and keep going with a bad allocation.
+  MI->emitError("ran out of registers during register allocation");
+  definePhysReg(MI, *AO.begin(), regFree);
+  assignVirtToPhysReg(LRE, *AO.begin());
 }
 
 /// defineVirtReg - Allocate a register for VirtReg and mark it as dirty.

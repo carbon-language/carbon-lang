@@ -5,10 +5,8 @@
 ; RUN: FileCheck %s < %t2
 ; RUN: FileCheck %s < %t3
 
-; The register allocator must fail on this function, and it should print the
-; inline asm in the diagnostic.
-; CHECK: LLVM ERROR: Ran out of registers during register allocation!
-; CHECK: INLINEASM <es:hello world>
+; The register allocator must fail on this function.
+; CHECK: error: ran out of registers during register allocation
 
 define void @f(i32 %x0, i32 %x1, i32 %x2, i32 %x3, i32 %x4, i32 %x5, i32 %x6, i32 %x7, i32 %x8, i32 %x9) nounwind ssp {
 entry:
