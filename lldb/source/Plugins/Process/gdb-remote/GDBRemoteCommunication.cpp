@@ -194,8 +194,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
     if (CheckForPacket (NULL, 0, packet))
         return packet.GetStringRef().size();
 
-    bool timed_out = false;
-    while (IsConnected() && !timed_out)
+    while (IsConnected())
     {
         lldb::ConnectionStatus status;
         size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
@@ -209,6 +208,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
             switch (status)
             {
             case eConnectionStatusSuccess:
+            case eConnectionStatusTimedOut:
                 break;
                 
             case eConnectionStatusEndOfFile:
@@ -217,11 +217,10 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
             case eConnectionStatusError:
                 Disconnect();
                 break;
-            
-            case eConnectionStatusTimedOut:
-                timed_out = true;
-                break;
             }
+            
+            // Get out of the while loop we we finally timeout without getting any data
+            break;
         }
     }
     packet.Clear ();    
@@ -233,11 +232,21 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
 {
     // Put the packet data into the buffer in a thread safe fashion
     Mutex::Locker locker(m_bytes_mutex);
+    
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+
     if (src && src_len > 0)
+    {
+        if (log)
+        {
+            StreamString s;
+            log->Printf ("GDBRemoteCommunication::%s adding %zu bytes: %s\n",__FUNCTION__, src_len, src);
+        }
         m_bytes.append ((const char *)src, src_len);
+    }
 
     // Parse up the packets into gdb remote packets
-    while (!m_bytes.empty())
+    if (!m_bytes.empty())
     {
         // end_idx must be one past the last valid packet byte. Start
         // it off with an invalid value that is the same as the current
@@ -246,7 +255,6 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
         size_t content_length = 0;
         size_t total_length = 0;
         size_t checksum_idx = std::string::npos;
-        LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
 
         switch (m_bytes[0])
         {
@@ -283,9 +291,33 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
 
             default:
                 {
+                    // We have an unexpected byte and we need to flush all bad 
+                    // data that is in m_bytes, so we need to find the first
+                    // byte that is a '+' (ACK), '-' (NACK), \x03 (CTRL+C interrupt),
+                    // or '$' character (start of packet header) or of course,
+                    // the end of the data in m_bytes...
+                    const size_t bytes_len = m_bytes.size();
+                    bool done = false;
+                    uint32_t idx;
+                    for (idx = 1; !done && idx < bytes_len; ++idx)
+                    {
+                        switch (m_bytes[idx])
+                        {
+                        case '+':
+                        case '-':
+                        case '\x03':
+                        case '$':
+                            done = true;
+                            break;
+                                
+                        default:
+                            break;
+                        }
+                    }
                     if (log)
-                        log->Printf ("GDBRemoteCommunication::%s tossing junk byte at %c",__FUNCTION__, m_bytes[0]);
-                    m_bytes.erase(0, 1);
+                        log->Printf ("GDBRemoteCommunication::%s tossing %u junk bytes: '%.*s'",
+                                     __FUNCTION__, idx, idx, m_bytes.c_str());
+                    m_bytes.erase(0, idx);
                 }
                 break;
         }

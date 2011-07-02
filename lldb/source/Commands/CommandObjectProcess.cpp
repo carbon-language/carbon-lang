@@ -366,7 +366,7 @@ public:
         }
         else
         {
-            result.AppendErrorWithFormat ("Process launch failed: %s", error.AsCString());
+            result.AppendErrorWithFormat ("process launch failed: %s", error.AsCString());
             result.SetStatus (eReturnStatusFailed);
         }
 
@@ -1832,18 +1832,18 @@ CommandObjectMultiwordProcess::CommandObjectMultiwordProcess (CommandInterpreter
                             "A set of commands for operating on a process.",
                             "process <subcommand> [<subcommand-options>]")
 {
-    LoadSubCommand ("attach",      CommandObjectSP (new CommandObjectProcessAttach (interpreter)));
-    LoadSubCommand ("launch",      CommandObjectSP (new CommandObjectProcessLaunch (interpreter)));
-    LoadSubCommand ("continue",    CommandObjectSP (new CommandObjectProcessContinue (interpreter)));
-    LoadSubCommand ("connect",     CommandObjectSP (new CommandObjectProcessConnect (interpreter)));
-    LoadSubCommand ("detach",      CommandObjectSP (new CommandObjectProcessDetach (interpreter)));
-    LoadSubCommand ("load",        CommandObjectSP (new CommandObjectProcessLoad (interpreter)));
-    LoadSubCommand ("unload",      CommandObjectSP (new CommandObjectProcessUnload (interpreter)));
-    LoadSubCommand ("signal",      CommandObjectSP (new CommandObjectProcessSignal (interpreter)));
-    LoadSubCommand ("handle",      CommandObjectSP (new CommandObjectProcessHandle (interpreter)));
-    LoadSubCommand ("status",      CommandObjectSP (new CommandObjectProcessStatus (interpreter)));
+    LoadSubCommand ("attach",      CommandObjectSP (new CommandObjectProcessAttach    (interpreter)));
+    LoadSubCommand ("launch",      CommandObjectSP (new CommandObjectProcessLaunch    (interpreter)));
+    LoadSubCommand ("continue",    CommandObjectSP (new CommandObjectProcessContinue  (interpreter)));
+    LoadSubCommand ("connect",     CommandObjectSP (new CommandObjectProcessConnect   (interpreter)));
+    LoadSubCommand ("detach",      CommandObjectSP (new CommandObjectProcessDetach    (interpreter)));
+    LoadSubCommand ("load",        CommandObjectSP (new CommandObjectProcessLoad      (interpreter)));
+    LoadSubCommand ("unload",      CommandObjectSP (new CommandObjectProcessUnload    (interpreter)));
+    LoadSubCommand ("signal",      CommandObjectSP (new CommandObjectProcessSignal    (interpreter)));
+    LoadSubCommand ("handle",      CommandObjectSP (new CommandObjectProcessHandle    (interpreter)));
+    LoadSubCommand ("status",      CommandObjectSP (new CommandObjectProcessStatus    (interpreter)));
     LoadSubCommand ("interrupt",   CommandObjectSP (new CommandObjectProcessInterrupt (interpreter)));
-    LoadSubCommand ("kill",        CommandObjectSP (new CommandObjectProcessKill (interpreter)));
+    LoadSubCommand ("kill",        CommandObjectSP (new CommandObjectProcessKill      (interpreter)));
 }
 
 CommandObjectMultiwordProcess::~CommandObjectMultiwordProcess ()

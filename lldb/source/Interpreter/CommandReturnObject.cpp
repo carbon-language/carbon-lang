@@ -18,6 +18,29 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static void
+DumpStringToStreamWithNewline (Stream &strm, const std::string &s, bool add_newline_if_empty)
+{
+    bool add_newline = false;
+    if (s.empty())
+    {
+        add_newline = add_newline_if_empty;
+    }
+    else
+    {
+        // We already checked for empty above, now make sure there is a newline
+        // in the error, and if there isn't one, add one.
+        strm.Write(s.c_str(), s.size());
+
+        const char last_char = *s.rbegin();
+        add_newline = last_char != '\n' && last_char != '\r';
+
+    }
+    if (add_newline)
+        strm.EOL();
+}
+
+
 CommandReturnObject::CommandReturnObject () :
     m_out_stream (),
     m_err_stream (),
@@ -39,7 +62,14 @@ CommandReturnObject::AppendErrorWithFormat (const char *format, ...)
     sstrm.PrintfVarArg(format, args);
     va_end (args);
 
-    GetErrorStream().Printf("error: %s", sstrm.GetData());
+    
+    const std::string &s = sstrm.GetString();
+    if (!s.empty())
+    {
+        Stream &error_strm = GetErrorStream();
+        error_strm.PutCString ("error: ");
+        DumpStringToStreamWithNewline (error_strm, s, false);
+    }
 }
 
 void
