@@ -176,4 +176,9 @@ RegularExpression::GetErrorAsCString (char *err_str, size_t err_str_max_len) con
     return ::regerror (m_comp_err, &m_preg, err_str, err_str_max_len);
 }
 
+bool
+RegularExpression::operator < (const RegularExpression& rhs) const
+{
+    return (m_re < rhs.m_re);
+}
 

@@ -15,6 +15,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/FormatManager.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/State.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandObject.h"
@@ -54,10 +55,13 @@ private:
             
             switch (short_option)
             {
-                case 'c':
+                case 'C':
                     m_cascade = Args::StringToBoolean(option_arg, true, &success);
                     if (!success)
                         error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
+                    break;
+                case 'f':
+                    error = Args::StringToFormat(option_arg, m_format, NULL);
                     break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
@@ -71,6 +75,7 @@ private:
         OptionParsingStarting ()
         {
             m_cascade = true;
+            m_format = eFormatInvalid;
         }
         
         const OptionDefinition*
@@ -86,6 +91,7 @@ private:
         // Instance variables to hold the values for command options.
         
         bool m_cascade;
+        lldb::Format m_format;
     };
     
     CommandOptions m_options;
@@ -103,21 +109,14 @@ public:
                    "Add a new formatting style for a type.",
                    NULL), m_options (interpreter)
     {
-        CommandArgumentEntry format_arg;
-        CommandArgumentData format_style_arg;
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
         
-        format_style_arg.arg_type = eArgTypeFormat;
-        format_style_arg.arg_repetition = eArgRepeatPlain;
-                
         type_style_arg.arg_type = eArgTypeName;
         type_style_arg.arg_repetition = eArgRepeatPlus;
         
-        format_arg.push_back (format_style_arg);
         type_arg.push_back (type_style_arg);
-        
-        m_arguments.push_back (format_arg);
+
         m_arguments.push_back (type_arg);
     }
     
@@ -130,40 +129,27 @@ public:
     {
         const size_t argc = command.GetArgumentCount();
         
-        if (argc < 2)
+        if (argc < 1)
         {
-            result.AppendErrorWithFormat ("%s takes two or more args.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
         
-        const char* format_cstr = command.GetArgumentAtIndex(0);
-        
-        if (!format_cstr || !format_cstr[0])
+        if(m_options.m_format == eFormatInvalid)
         {
-            result.AppendError("empty format strings not allowed");
+            result.AppendErrorWithFormat ("%s needs a valid format.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
         
-        lldb::Format format;
-        Error error;
+        ValueFormatSP entry;
         
-        error = Args::StringToFormat(format_cstr, format, NULL);
-        ValueFormat::SharedPointer entry;
-        
-        entry.reset(new ValueFormat(format,m_options.m_cascade));
+        entry.reset(new ValueFormat(m_options.m_format,m_options.m_cascade));
 
-        if (error.Fail()) 
-        {
-            result.AppendError(error.AsCString());
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
-        
         // now I have a valid format, let's add it to every type
         
-        for(int i = 1; i < argc; i++) {
+        for(int i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
             ConstString typeCS(typeA);
             if (typeCS)
@@ -179,13 +165,13 @@ public:
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
         return result.Succeeded();
     }
-        
 };
 
 OptionDefinition
 CommandObjectTypeFormatAdd::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "cascade", 'c', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
+    { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
+    { LLDB_OPT_SET_ALL, false, "format", 'f', required_argument, NULL, 0, eArgTypeFormat,    "The format to use to display this type."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -411,25 +397,31 @@ private:
             
             switch (short_option)
             {
-                case 'c':
+                case 'C':
                     m_cascade = Args::StringToBoolean(option_arg, true, &success);
                     if (!success)
                         error.SetErrorStringWithFormat("Invalid value for cascade: %s.\n", option_arg);
                     break;
-                case 'h':
-                    m_no_children = !Args::StringToBoolean(option_arg, true, &success);
-                    if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for nochildren: %s.\n", option_arg);
+                case 'e':
+                    m_no_children = false;
                     break;
                 case 'v':
-                    m_no_value = !Args::StringToBoolean(option_arg, true, &success);
-                    if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for novalue: %s.\n", option_arg);
+                    m_no_value = true;
                     break;
-                case 'o':
-                    m_one_liner = Args::StringToBoolean(option_arg, true, &success);
-                    if (!success)
-                        error.SetErrorStringWithFormat("Invalid value for oneliner: %s.\n", option_arg);
+                case 'c':
+                    m_one_liner = true;
+                    break;
+                case 'f':
+                    m_format_string = std::string(option_arg);
+                    break;
+                case 'p':
+                    m_skip_pointers = true;
+                    break;
+                case 'r':
+                    m_skip_references = true;
+                    break;
+                case 'x':
+                    m_regex = true;
                     break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
@@ -446,6 +438,9 @@ private:
             m_no_children = true;
             m_no_value = false;
             m_one_liner = false;
+            m_skip_references = false;
+            m_skip_pointers = false;
+            m_regex = false;
         }
         
         const OptionDefinition*
@@ -464,6 +459,10 @@ private:
         bool m_no_children;
         bool m_no_value;
         bool m_one_liner;
+        bool m_skip_references;
+        bool m_skip_pointers;
+        bool m_regex;
+        std::string m_format_string;
     };
     
     CommandOptions m_options;
@@ -481,21 +480,14 @@ public:
                    "Add a new summary style for a type.",
                    NULL), m_options (interpreter)
     {
-        CommandArgumentEntry format_arg;
-        CommandArgumentData format_style_arg;
         CommandArgumentEntry type_arg;
         CommandArgumentData type_style_arg;
-        
-        format_style_arg.arg_type = eArgTypeFormat;
-        format_style_arg.arg_repetition = eArgRepeatPlain;
         
         type_style_arg.arg_type = eArgTypeName;
         type_style_arg.arg_repetition = eArgRepeatPlus;
         
-        format_arg.push_back (format_style_arg);
         type_arg.push_back (type_style_arg);
         
-        m_arguments.push_back (format_arg);
         m_arguments.push_back (type_arg);
     }
     
@@ -508,34 +500,29 @@ public:
     {
         const size_t argc = command.GetArgumentCount();
         
-        // we support just one custom syntax: type summary add -o yes typeName
-        // anything else, must take the usual route
-        // e.g. type summary add -o yes "" type1 type2 ... typeN
-        
-        bool isValidShortcut = m_options.m_one_liner && (argc == 1);
-        bool isValid = (argc >= 2);
-        
-        if (!isValidShortcut && !isValid)
+        if (argc < 1)
         {
-            result.AppendErrorWithFormat ("%s takes two or more args.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat ("%s takes one or more args.\n", m_cmd_name.c_str());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
         
-        const char* format_cstr = (isValidShortcut ? "" : command.GetArgumentAtIndex(0));
-        
-        if ( (!format_cstr || !format_cstr[0]) && !m_options.m_one_liner )
+        if(!m_options.m_one_liner && m_options.m_format_string.empty())
         {
             result.AppendError("empty summary strings not allowed");
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
         
+        const char* format_cstr = (m_options.m_one_liner ? "" : m_options.m_format_string.c_str());
+        
         Error error;
         
         SummaryFormat::SharedPointer entry(new SummaryFormat(format_cstr,m_options.m_cascade,
                                              m_options.m_no_children,m_options.m_no_value,
-                                             m_options.m_one_liner));
+                                             m_options.m_one_liner,
+                                             m_options.m_skip_pointers,
+                                             m_options.m_skip_references));
         
         if (error.Fail()) 
         {
@@ -546,16 +533,30 @@ public:
         
         // now I have a valid format, let's add it to every type
         
-        for(int i = (isValidShortcut ? 0 : 1); i < argc; i++) {
+        for(int i = 0; i < argc; i++) {
             const char* typeA = command.GetArgumentAtIndex(i);
-            ConstString typeCS(typeA);
-            if (typeCS)
-                Debugger::SummaryFormats::Add(typeCS, entry);
-            else
+            if(!typeA || typeA[0] == '\0')
             {
                 result.AppendError("empty typenames not allowed");
                 result.SetStatus(eReturnStatusFailed);
                 return false;
+            }
+            ConstString typeCS(typeA);
+            if(!m_options.m_regex)
+            {
+                Debugger::SummaryFormats::Add(typeCS, entry);
+            }
+            else
+            {
+                RegularExpressionSP typeRX(new RegularExpression());
+                if(!typeRX->Compile(typeA))
+                {
+                    result.AppendError("regex format error (maybe this is not really a regex?)");
+                    result.SetStatus(eReturnStatusFailed);
+                    return false;
+                }
+                Debugger::RegexSummaryFormats::Delete(typeCS);
+                Debugger::RegexSummaryFormats::Add(typeRX, entry);
             }
         }
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
@@ -567,10 +568,14 @@ public:
 OptionDefinition
 CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "cascade", 'c', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
-    { LLDB_OPT_SET_ALL, false, "show-children", 'h', required_argument, NULL, 0, eArgTypeBoolean,    "If true, print children."},
-    { LLDB_OPT_SET_ALL, false, "show-value", 'v', required_argument, NULL, 0, eArgTypeBoolean,    "If true, print value."},
-    { LLDB_OPT_SET_ALL, false, "one-liner", 'o', required_argument, NULL, 0, eArgTypeBoolean,    "If true, just print a one-line preformatted summary."},
+    { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
+    { LLDB_OPT_SET_ALL, false, "no-value", 'v', no_argument, NULL, 0, eArgTypeBoolean,         "Don't show the value, just show the summary, for this type."},
+    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
+    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
+    { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeBoolean,    "Type names are actually regular expressions."},
+    { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeBoolean,    "If true, inline all child values into summary string."},
+    { LLDB_OPT_SET_2  , true, "format-string", 'f', required_argument, NULL, 0, eArgTypeFormatString,    "Format string used to display text and object contents."},
+    { LLDB_OPT_SET_2, false, "expand", 'e', no_argument, NULL, 0, eArgTypeBoolean,    "Expand aggregate data types to show children on separate lines."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -626,8 +631,9 @@ public:
             return false;
         }
         
-        
-        if (Debugger::SummaryFormats::Delete(typeCS))
+        bool delete_summary = Debugger::SummaryFormats::Delete(typeCS);
+        bool delete_regex = Debugger::RegexSummaryFormats::Delete(typeCS);
+        if (delete_summary || delete_regex)
         {
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
@@ -666,6 +672,7 @@ public:
     Execute (Args& command, CommandReturnObject &result)
     {
         Debugger::SummaryFormats::Clear();
+        Debugger::RegexSummaryFormats::Clear();
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
@@ -677,6 +684,7 @@ public:
 //-------------------------------------------------------------------------
 
 bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, const char* type, const SummaryFormat::SharedPointer& entry);
+bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SummaryFormat::SharedPointer& entry);
 
 class CommandObjectTypeSummaryList;
 
@@ -686,6 +694,14 @@ struct CommandObjectTypeSummaryList_LoopCallbackParam {
     RegularExpression* regex;
     CommandObjectTypeSummaryList_LoopCallbackParam(CommandObjectTypeSummaryList* S, CommandReturnObject* R,
                                                   RegularExpression* X = NULL) : self(S), result(R), regex(X) {}
+};
+
+struct CommandObjectTypeRXSummaryList_LoopCallbackParam {
+    CommandObjectTypeSummaryList* self;
+    CommandReturnObject* result;
+    RegularExpression* regex;
+    CommandObjectTypeRXSummaryList_LoopCallbackParam(CommandObjectTypeSummaryList* S, CommandReturnObject* R,
+                                                   RegularExpression* X = NULL) : self(S), result(R), regex(X) {}
 };
 
 class CommandObjectTypeSummaryList : public CommandObject
@@ -718,6 +734,7 @@ public:
         const size_t argc = command.GetArgumentCount();
         
         CommandObjectTypeSummaryList_LoopCallbackParam *param;
+        CommandObjectTypeRXSummaryList_LoopCallbackParam *rxparam;
         
         if (argc == 1) {
             RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
@@ -728,6 +745,24 @@ public:
             param = new CommandObjectTypeSummaryList_LoopCallbackParam(this,&result);
         Debugger::SummaryFormats::LoopThrough(CommandObjectTypeSummaryList_LoopCallback, param);
         delete param;
+        
+        if(Debugger::RegexSummaryFormats::GetCount() == 0)
+        {
+            result.SetStatus(eReturnStatusSuccessFinishResult);
+            return result.Succeeded();
+        }
+        
+        result.GetOutputStream().Printf("Regex-based summaries (slower):\n");
+        if (argc == 1) {
+            RegularExpression* regex = new RegularExpression(command.GetArgumentAtIndex(0));
+            regex->Compile(command.GetArgumentAtIndex(0));
+            rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result,regex);
+        }
+        else
+            rxparam = new CommandObjectTypeRXSummaryList_LoopCallbackParam(this,&result);
+        Debugger::RegexSummaryFormats::LoopThrough(CommandObjectTypeRXSummaryList_LoopCallback, rxparam);
+        delete rxparam;
+        
         result.SetStatus(eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
@@ -742,18 +777,21 @@ private:
     {
         if (regex == NULL || regex->Execute(type)) 
         {
-                result->GetOutputStream().Printf ("%s: `%s`%s%s%s%s\n", type, 
+                result->GetOutputStream().Printf ("%s: `%s`%s%s%s%s%s%s\n", type, 
                                                   entry->m_format.c_str(),
                                                   entry->m_cascades ? "" : " (not cascading)",
                                                   entry->m_dont_show_children ? "" : " (show children)",
-                                                  entry->m_dont_show_value ? "" : " (show value)",
-                                                  entry->m_show_members_oneliner ? " (one-line printout)" : "");
+                                                  entry->m_dont_show_value ? " (hide value)" : "",
+                                                  entry->m_show_members_oneliner ? " (one-line printout)" : "",
+                                                  entry->m_skip_pointers ? " (skip pointers)" : "",
+                                                  entry->m_skip_references ? " (skip references)" : "");
         }
         return true;
     }
     
     friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, const char* type, const SummaryFormat::SharedPointer& entry);
-    
+    friend bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const SummaryFormat::SharedPointer& entry);
+
 };
 
 bool
@@ -766,6 +804,15 @@ CommandObjectTypeSummaryList_LoopCallback (
     return param->self->LoopCallback(type, entry, param->regex, param->result);
 }
 
+bool
+CommandObjectTypeRXSummaryList_LoopCallback (
+                                           void* pt2self,
+                                           lldb::RegularExpressionSP regex,
+                                           const SummaryFormat::SharedPointer& entry)
+{
+    CommandObjectTypeRXSummaryList_LoopCallbackParam* param = (CommandObjectTypeRXSummaryList_LoopCallbackParam*)pt2self;
+    return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
+}
 
 
 
@@ -796,7 +843,7 @@ class CommandObjectTypeSummary : public CommandObjectMultiword
 public:
     CommandObjectTypeSummary (CommandInterpreter &interpreter) :
     CommandObjectMultiword (interpreter,
-                            "type format",
+                            "type summary",
                             "A set of commands for editing variable summary display options",
                             "type summary [<sub-command-options>] ")
     {

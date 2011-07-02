@@ -33,6 +33,10 @@ namespace std
 #include <stack>
 
 // Other libraries and framework includes
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/Type.h"
+#include "clang/AST/DeclObjC.h"
+
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/lldb-enumerations.h"
@@ -40,6 +44,7 @@ namespace std
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/InputReaderStack.h"
 #include "lldb/Core/Listener.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Core/UserID.h"
@@ -48,9 +53,6 @@ namespace std
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/TargetList.h"
-
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/Type.h"
 
 namespace lldb_private {
     
@@ -72,12 +74,22 @@ struct SummaryFormat
     bool m_dont_show_value;
     bool m_show_members_oneliner;
     bool m_cascades;
-    SummaryFormat(std::string f = "", bool c = false, bool nochildren = true, bool novalue = true, bool oneliner = false) :
+    bool m_skip_references;
+    bool m_skip_pointers;
+    SummaryFormat(std::string f = "",
+                  bool c = false,
+                  bool nochildren = true,
+                  bool novalue = true,
+                  bool oneliner = false,
+                  bool skipptr = false,
+                  bool skipref = false) :
     m_format(f),
     m_dont_show_children(nochildren),
     m_dont_show_value(novalue),
     m_show_members_oneliner(oneliner),
-    m_cascades(c)
+    m_cascades(c),
+    m_skip_references(skipref),
+    m_skip_pointers(skipptr)
     {
     }
     
@@ -100,6 +112,8 @@ struct SummaryFormat
     }
     
     typedef lldb::SharedPtr<SummaryFormat>::Type SharedPointer;
+    typedef bool(*SummaryCallback)(void*, const char*, const SummaryFormat::SharedPointer&);
+    typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const SummaryFormat::SharedPointer&);
     
 };
 
@@ -107,13 +121,21 @@ struct ValueFormat
 {
     lldb::Format m_format;
     bool m_cascades;
-    ValueFormat (lldb::Format f = lldb::eFormatInvalid, bool c = false) : 
+    bool m_skip_references;
+    bool m_skip_pointers;
+    ValueFormat (lldb::Format f = lldb::eFormatInvalid,
+                 bool c = false,
+                 bool skipptr = false,
+                 bool skipref = false) : 
     m_format (f), 
-    m_cascades (c)
+    m_cascades (c),
+    m_skip_references(skipref),
+    m_skip_pointers(skipptr)
     {
     }
     
     typedef lldb::SharedPtr<ValueFormat>::Type SharedPointer;
+    typedef bool(*ValueCallback)(void*, const char*, const ValueFormat::SharedPointer&);
     
     ~ValueFormat()
     {
@@ -160,7 +182,7 @@ public:
     }
     
     bool
-    Delete(const MapKeyType& type)
+    Delete(const char* type)
     {
         Mutex::Locker(m_map_mutex);
         MapIterator iter = m_map.find(type);
@@ -197,6 +219,12 @@ public:
         }
     }
     
+    uint32_t
+    GetCount()
+    {
+        return m_map.size();
+    }
+    
     ~FormatNavigator()
     {
     }
@@ -210,7 +238,7 @@ private:
     DISALLOW_COPY_AND_ASSIGN(FormatNavigator);
     
     bool
-    Get(const MapKeyType &type, MapValueType& entry)
+    Get(const char* type, MapValueType& entry)
     {
         Mutex::Locker(m_map_mutex);
         MapIterator iter = m_map.find(type);
@@ -228,16 +256,62 @@ private:
             return false;
         clang::QualType type = q_type.getUnqualifiedType();
         type.removeLocalConst(); type.removeLocalVolatile(); type.removeLocalRestrict();
-        ConstString name(type.getAsString().c_str());
+        const clang::Type* typePtr = type.getTypePtrOrNull();
+        if (!typePtr)
+            return false;
+        ConstString name(ClangASTType::GetTypeNameForQualType(type).c_str());
         //printf("trying to get format for VO name %s of type %s\n",vobj.GetName().AsCString(),name.AsCString());
         if (Get(name.GetCString(), entry))
             return true;
         // look for a "base type", whatever that means
-        const clang::Type* typePtr = type.getTypePtrOrNull();
-        if (!typePtr)
-            return false;
         if (typePtr->isReferenceType())
-            return Get(vobj,type.getNonReferenceType(),entry);
+        {
+            if (Get(vobj,type.getNonReferenceType(),entry) && !entry->m_skip_references)
+                return true;
+        }
+        if (typePtr->isPointerType())
+        {
+            if (Get(vobj, typePtr->getPointeeType(), entry) && !entry->m_skip_pointers)
+                return true;
+        }
+        if (typePtr->isObjCObjectPointerType())
+        {
+            /*
+             for some reason, C++ can quite easily obtain the type hierarchy for a ValueObject
+             even if the VO represent a pointer-to-class, as long as the typePtr is right
+             Objective-C on the other hand cannot really complete an @interface when
+             the VO refers to a pointer-to-@interface
+             */
+            Error error;
+            ValueObject* target = vobj.Dereference(error).get();
+            if(error.Fail() || !target)
+                return false;
+            if (Get(*target, typePtr->getPointeeType(), entry) && !entry->m_skip_pointers)
+                return true;
+        }
+        const clang::ObjCObjectType *objc_class_type = typePtr->getAs<clang::ObjCObjectType>();
+        if (objc_class_type)
+        {
+            //printf("working with ObjC\n");
+            clang::ASTContext *ast = vobj.GetClangAST();
+            if (ClangASTContext::GetCompleteType(ast, vobj.GetClangType()) && !objc_class_type->isObjCId())
+            {
+                clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+                if(class_interface_decl)
+                {
+                    //printf("down here\n");
+                    clang::ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
+                    //printf("one further step and we're there...\n");
+                    if(superclass_interface_decl)
+                    {
+                        //printf("the end is here\n");
+                        clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
+                        if (Get(vobj, ivar_qual_type, entry) && entry->m_cascades)
+                            return true;
+                    }
+                }
+            }
+        }
         // for C++ classes, navigate up the hierarchy
         if (typePtr->isRecordType())
         {
@@ -245,15 +319,7 @@ private:
             if (record)
             {
                 if (!record->hasDefinition())
-                    // dummy call to do the complete
-                    ClangASTContext::GetNumChildren(vobj.GetClangAST(), vobj.GetClangType(), false);
-                clang::IdentifierInfo *info = record->getIdentifier();
-                if (info) {
-                    // this is the class name, plain and simple
-                    ConstString id_info(info->getName().str().c_str());
-                    if (Get(id_info.GetCString(), entry))
-                        return true;
-                }
+                    ClangASTContext::GetCompleteType(vobj.GetClangAST(), vobj.GetClangType());
                 if (record->hasDefinition())
                 {
                     clang::CXXRecordDecl::base_class_iterator pos,end;
@@ -287,25 +353,34 @@ private:
     }
     
 };
-
+    
+template<>
+bool
+FormatNavigator<std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer>, SummaryFormat::RegexSummaryCallback>::Get(const char* key,
+                                                                                                                     SummaryFormat::SharedPointer& value);
+    
+template<>
+bool
+FormatNavigator<std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer>, SummaryFormat::RegexSummaryCallback>::Delete(const char* type);
+    
 class FormatManager : public IFormatChangeListener
 {
     
 public:
     
-    typedef bool(*ValueCallback)(void*, const char*, const ValueFormat::SharedPointer&);
-    typedef bool(*SummaryCallback)(void*, const char*, const SummaryFormat::SharedPointer&);
-    
 private:
     
     typedef std::map<const char*, ValueFormat::SharedPointer> ValueMap;
     typedef std::map<const char*, SummaryFormat::SharedPointer> SummaryMap;
+    typedef std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer> RegexSummaryMap;
     
-    typedef FormatNavigator<ValueMap, ValueCallback> ValueNavigator;
-    typedef FormatNavigator<SummaryMap, SummaryCallback> SummaryNavigator;
+    typedef FormatNavigator<ValueMap, ValueFormat::ValueCallback> ValueNavigator;
+    typedef FormatNavigator<SummaryMap, SummaryFormat::SummaryCallback> SummaryNavigator;
+    typedef FormatNavigator<RegexSummaryMap, SummaryFormat::RegexSummaryCallback> RegexSummaryNavigator;
     
     ValueNavigator m_value_nav;
     SummaryNavigator m_summary_nav;
+    RegexSummaryNavigator m_regex_summary_nav;
         
     uint32_t m_last_revision;
     
@@ -314,6 +389,7 @@ public:
     FormatManager() : 
     m_value_nav(this),
     m_summary_nav(this),
+    m_regex_summary_nav(this),
     m_last_revision(0)
     {
     }
@@ -321,6 +397,8 @@ public:
 
     ValueNavigator& Value() { return m_value_nav; }
     SummaryNavigator& Summary() { return m_summary_nav; }
+    RegexSummaryNavigator& RegexSummary() { return m_regex_summary_nav; }
+
     
     static bool
     GetFormatFromCString (const char *format_cstr,

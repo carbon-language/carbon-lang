@@ -73,6 +73,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_old_value_valid (false),
     m_pointers_point_to_load_addrs (false),
     m_is_deref_of_parent (false),
+    m_is_array_item_for_pointer(false),
     m_last_format_mgr_revision(0),
     m_last_summary_format(),
     m_last_value_format()
@@ -108,6 +109,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_old_value_valid (false),
     m_pointers_point_to_load_addrs (false),
     m_is_deref_of_parent (false),
+    m_is_array_item_for_pointer(false),
     m_last_format_mgr_revision(0),
     m_last_summary_format(),
     m_last_value_format()
@@ -124,10 +126,11 @@ ValueObject::~ValueObject ()
 }
 
 bool
-ValueObject::UpdateValueIfNeeded ()
+ValueObject::UpdateValueIfNeeded (bool update_format)
 {
     
-    UpdateFormatsIfNeeded();
+    if (update_format)
+        UpdateFormatsIfNeeded();
     
     // If this is a constant value, then our success is predicated on whether
     // we have an error or not
@@ -191,7 +194,8 @@ ValueObject::UpdateFormatsIfNeeded()
         if (m_last_value_format.get())
             m_last_value_format.reset((ValueFormat*)NULL);
         Debugger::ValueFormats::Get(*this, m_last_value_format);
-        Debugger::SummaryFormats::Get(*this, m_last_summary_format);
+        if (!Debugger::SummaryFormats::Get(*this, m_last_summary_format))
+            Debugger::RegexSummaryFormats::Get(*this, m_last_summary_format);
         m_last_format_mgr_revision = Debugger::ValueFormats::GetCurrentRevision();
         m_value_str.clear();
         m_summary_str.clear();
@@ -493,12 +497,47 @@ ValueObject::GetSummaryAsCString ()
                 ExecutionContext exe_ctx;
                 this->GetExecutionContextScope()->CalculateExecutionContext(exe_ctx);
                 SymbolContext sc = exe_ctx.frame->GetSymbolContext(eSymbolContextEverything);
-                if (Debugger::FormatPrompt(m_last_summary_format->m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, NULL, this))
+                
+                if (m_last_summary_format->m_show_members_oneliner)
                 {
-                    m_summary_str.swap(s.GetString());
-                    return m_summary_str.c_str();
+                    const uint32_t num_children = GetNumChildren();
+                    if (num_children)
+                    {
+                        
+                        s.PutChar('(');
+                        
+                        for (uint32_t idx=0; idx<num_children; ++idx)
+                        {
+                            ValueObjectSP child_sp(GetChildAtIndex(idx, true));
+                            if (child_sp.get())
+                            {
+                                if (idx)
+                                    s.PutCString(", ");
+                                s.PutCString(child_sp.get()->GetName().AsCString());
+                                s.PutChar('=');
+                                s.PutCString(child_sp.get()->GetValueAsCString());
+                            }
+                        }
+                        
+                        s.PutChar(')');
+                        
+                        m_summary_str.swap(s.GetString());
+                        return m_summary_str.c_str();
+                    }
+                    else
+                        return "()";
+
                 }
-                return NULL;
+                else
+                {
+                    if (Debugger::FormatPrompt(m_last_summary_format->m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, NULL, this))
+                    {
+                        m_summary_str.swap(s.GetString());
+                        return m_summary_str.c_str();
+                    }
+                    else
+                        return NULL;
+                }
             }
             
             clang_type_t clang_type = GetClangType();
@@ -655,12 +694,13 @@ ValueObject::GetSummaryAsCString ()
 const char *
 ValueObject::GetObjectDescription ()
 {
-    if (!m_object_desc_str.empty())
-        return m_object_desc_str.c_str();
-        
+    
     if (!UpdateValueIfNeeded ())
         return NULL;
-        
+
+    if (!m_object_desc_str.empty())
+        return m_object_desc_str.c_str();
+
     ExecutionContextScope *exe_scope = GetExecutionContextScope();
     if (exe_scope == NULL)
         return NULL;
@@ -780,6 +820,37 @@ ValueObject::GetValueAsCString ()
     if (m_value_str.empty())
         return NULL;
     return m_value_str.c_str();
+}
+
+const char *
+ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
+                                        lldb::Format custom_format)
+{
+    if(custom_format != lldb::eFormatInvalid)
+        SetFormat(custom_format);
+    
+    const char * return_value;
+    
+    switch(val_obj_display)
+    {
+        case eDisplayValue:
+            return_value = GetValueAsCString();
+            break;
+        case eDisplaySummary:
+            return_value = GetSummaryAsCString();
+            break;
+        case eDisplayLanguageSpecific:
+            return_value = GetObjectDescription();
+            break;
+    }
+    
+    
+    // try to use the value if the user's choice failed
+    if(!return_value && val_obj_display != eDisplayValue)
+        return_value = GetValueAsCString();
+    
+    return return_value;
+
 }
 
 addr_t
@@ -1049,6 +1120,8 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
             {
                 AddSyntheticChild(index_const_str, synthetic_child);
                 synthetic_child_sp = synthetic_child->GetSP();
+                synthetic_child_sp->SetName(index_str);
+                synthetic_child_sp->m_is_array_item_for_pointer = true;
             }
         }
     }
@@ -1165,6 +1238,12 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
     
     if (parent)
         parent->GetExpressionPath (s, qualify_cxx_base_classes, epformat);
+    
+    // if we are a deref_of_parent just because we are synthetic array
+    // members made up to allow ptr[%d] syntax to work in variable
+    // printing, then add our name ([%d]) to the expression path
+    if(m_is_array_item_for_pointer && epformat == eHonorPointers)
+        s.PutCString(m_name.AsCString());
             
     if (!IsBaseClass())
     {
@@ -1312,8 +1391,17 @@ ValueObject::DumpValueObject
                 if (val_cstr && (!entry || entry->DoesPrintValue() || !sum_cstr))
                     s.Printf(" %s", valobj->GetValueAsCString());
 
-                if (sum_cstr)
-                    s.Printf(" %s", sum_cstr);
+                if(sum_cstr)
+                {
+                    // for some reason, using %@ (ObjC description) in a summary string, makes
+                    // us believe we need to reset ourselves, thus invalidating the content of
+                    // sum_cstr. Thus, IF we had a valid sum_cstr before, but it is now empty
+                    // let us recalculate it!
+                    if (sum_cstr[0] == '\0')
+                        s.Printf(" %s", valobj->GetSummaryAsCString());
+                    else
+                        s.Printf(" %s", sum_cstr);
+                }
                 
                 if (use_objc)
                 {
@@ -1323,7 +1411,7 @@ ValueObject::DumpValueObject
                     else
                         s.Printf (" [no Objective-C description available]\n");
                     return;
-                }                
+                }
             }
 
             if (curr_depth < max_depth)
@@ -1360,32 +1448,7 @@ ValueObject::DumpValueObject
                         print_children = false;
                 }
                 
-                if (entry && entry->IsOneliner())
-                {
-                    const uint32_t num_children = valobj->GetNumChildren();
-                    if (num_children)
-                    {
-                        
-                        s.PutChar('(');
-                        
-                        for (uint32_t idx=0; idx<num_children; ++idx)
-                        {
-                            ValueObjectSP child_sp(valobj->GetChildAtIndex(idx, true));
-                            if (child_sp.get())
-                            {
-                                if (idx)
-                                    s.PutCString(", ");
-                                s.PutCString(child_sp.get()->GetName().AsCString());
-                                s.PutChar('=');
-                                s.PutCString(child_sp.get()->GetValueAsCString());
-                            }
-                        }
-                        
-                        s.PutChar(')');
-                        s.EOL();
-                    }
-                }
-                else if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
+                if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
                 {
                     const uint32_t num_children = valobj->GetNumChildren();
                     if (num_children)

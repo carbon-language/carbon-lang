@@ -70,6 +70,13 @@ public:
         eDereferencePointers = 1,
         eHonorPointers,
     };
+    
+    enum ValueObjectRepresentationStyle
+    {
+        eDisplayValue,
+        eDisplaySummary,
+        eDisplayLanguageSpecific
+    };
 
     class EvaluationPoint 
     {
@@ -344,6 +351,10 @@ public:
     
     const char *
     GetObjectDescription ();
+    
+    const char *
+    GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display = eDisplaySummary,
+                               lldb::Format custom_format = lldb::eFormatInvalid);
 
     bool
     GetValueIsValid () const;
@@ -352,7 +363,7 @@ public:
     GetValueDidChange ();
 
     bool
-    UpdateValueIfNeeded ();
+    UpdateValueIfNeeded (bool update_format = true);
     
     void
     UpdateFormatsIfNeeded();
@@ -525,7 +536,8 @@ protected:
                         m_children_count_valid:1,
                         m_old_value_valid:1,
                         m_pointers_point_to_load_addrs:1,
-                        m_is_deref_of_parent:1;
+                        m_is_deref_of_parent:1,
+                        m_is_array_item_for_pointer:1;
     
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName

@@ -80,7 +80,7 @@ ValueObjectDynamicValue::CalculateNumChildren()
 clang::ASTContext *
 ValueObjectDynamicValue::GetClangAST ()
 {
-    const bool success = UpdateValueIfNeeded();
+    const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)
         return m_type_sp->GetClangAST();
     else

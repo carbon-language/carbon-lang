@@ -351,6 +351,7 @@ namespace lldb {
         eArgTypeExprFormat,
         eArgTypeFilename,
         eArgTypeFormat,
+        eArgTypeFormatString,
         eArgTypeFrameIndex,
         eArgTypeFullName,
         eArgTypeFunctionName,

@@ -627,6 +627,37 @@ BreakpointIDRangeHelpTextCallback ()
     return "A 'breakpoint id list' is a manner of specifying multiple breakpoints. This can be done  through several mechanisms.  The easiest way is to just enter a space-separated list of breakpoint ids.  To specify all the breakpoint locations under a major breakpoint, you can use the major breakpoint number followed by '.*', eg. '5.*' means all the locations under breakpoint 5.  You can also indicate a range of breakpoints by using <start-bp-id> - <end-bp-id>.  The start-bp-id and end-bp-id for a range can be any valid breakpoint ids.  It is not legal, however, to specify a range using specific locations that cross major breakpoint numbers.  I.e. 3.2 - 3.7 is legal; 2 - 5 is legal; but 3.2 - 4.4 is not legal.";
 }
 
+static const char *
+FormatHelpTextCallback ()
+{
+    StreamString sstr;
+    sstr << "One of the format names (or one-character names) that can be used to show a variable's value:\n";
+    for (Format f = eFormatDefault; f < kNumFormats; f = Format(f+1))
+    {
+        char format_char = FormatManager::GetFormatAsFormatChar(f);
+        if (format_char)
+            sstr.Printf("'%c' or ", format_char);
+        
+        sstr.Printf ("\"%s\" ; ", FormatManager::GetFormatAsCString(f));
+    }
+    
+    sstr.Flush();
+    
+    std::string data = sstr.GetString();
+    
+    char* help = new char[data.length()+1];
+    
+    data.copy(help, data.length());
+    
+    return help;
+}
+
+static const char *
+FormatStringHelpTextCallback()
+{
+    return "Ask me tomorrow";
+}
+
 const char * 
 CommandObject::GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type)
 {
@@ -662,7 +693,8 @@ CommandObject::g_arguments_data[] =
     { eArgTypeExpression, "expr", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeExprFormat, "expression-format", CommandCompletions::eNoCompletion, NULL, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]" },
     { eArgTypeFilename, "filename", CommandCompletions::eDiskFileCompletion, NULL, "The name of a file (can include path)." },
-    { eArgTypeFormat, "format", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeFormat, "format", CommandCompletions::eNoCompletion, FormatHelpTextCallback, NULL },
+    { eArgTypeFormatString, "format-string", CommandCompletions::eNoCompletion, FormatStringHelpTextCallback, NULL },
     { eArgTypeFrameIndex, "frame-index", CommandCompletions::eNoCompletion, NULL, "Index into a thread's list of frames." },
     { eArgTypeFullName, "fullname", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeFunctionName, "function-name", CommandCompletions::eNoCompletion, NULL, "The name of a function." },

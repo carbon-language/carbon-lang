@@ -791,15 +791,201 @@ Debugger::FormatPrompt
                         case '*':
                             {
                                 if (!vobj) break;
-                                var_name_begin++;
                                 lldb::clang_type_t pointer_clang_type = vobj->GetClangType();
                                 clang_type_t elem_or_pointee_clang_type;
                                 const Flags type_flags (ClangASTContext::GetTypeInfo (pointer_clang_type, 
                                                                                       vobj->GetClangAST(), 
                                                                                       &elem_or_pointee_clang_type));
-                                if (type_flags.Test (ClangASTContext::eTypeIsPointer))
+                                bool is_pointer = type_flags.Test (ClangASTContext::eTypeIsPointer),
+                                is_array = type_flags.Test (ClangASTContext::eTypeIsArray);
+                                if ( is_array || 
+                                    ( is_pointer && ::strchr(var_name_begin,'[') && ::strchr(var_name_begin,'[') < var_name_end )
+                                   )
                                 {
-                                    if (ClangASTContext::IsCharType (elem_or_pointee_clang_type))
+                                    const char* var_name_final;
+                                    char* close_bracket_position = NULL;
+                                    const char* percent_position = NULL;
+                                    const char* targetvalue;
+                                    lldb::Format custom_format = eFormatInvalid;
+                                    int index_lower = -1;
+                                    int index_higher = -1;
+                                    ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eDisplaySummary;
+                                    {
+                                        percent_position = ::strchr(var_name_begin,'%');
+                                        if(!percent_position || percent_position > var_name_end)
+                                            var_name_final = var_name_end;
+                                        else
+                                        {
+                                            var_name_final = percent_position;
+                                            char* format_name = new char[var_name_end-var_name_final]; format_name[var_name_end-var_name_final-1] = '\0';
+                                            memcpy(format_name, var_name_final+1, var_name_end-var_name_final-1);
+                                            if ( !FormatManager::GetFormatFromCString(format_name,
+                                                                                      true,
+                                                                                      custom_format) )
+                                            {
+                                                // if this is an @ sign, print ObjC description
+                                                if(*format_name == '@')
+                                                    val_obj_display = ValueObject::eDisplayLanguageSpecific;
+                                                // if this is a V, print the value using the default format
+                                                if(*format_name == 'V')
+                                                    val_obj_display = ValueObject::eDisplayValue;
+                                            }
+                                            // a good custom format tells us to print the value using it
+                                            else
+                                                val_obj_display = ValueObject::eDisplayValue;
+                                        }
+                                    }
+                                    
+                                    {
+                                        const char* open_bracket_position = ::strchr(var_name_begin,'[');
+                                        if(open_bracket_position && open_bracket_position < var_name_final)
+                                        {
+                                            // TODO: pick a way to say "all entries". this will make more sense once
+                                            // regex typenames are in place. now, you need to be size-aware anyways
+                                            char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
+                                            close_bracket_position = ::strchr(open_bracket_position,']');
+                                            // as usual, we assume that [] will come before %
+                                            //printf("trying to expand a []\n");
+                                            var_name_final = open_bracket_position;
+                                            if(close_bracket_position - open_bracket_position == 1)
+                                            {
+                                                if(is_array)
+                                                {
+                                                    index_lower = 0;
+                                                    index_higher = vobj->GetNumChildren() - 1;
+                                                }
+                                                else
+                                                    break; // cannot auto-determine size for pointers
+                                            }
+                                            else if (separator_position == NULL || separator_position > var_name_end)
+                                            {
+                                                char *end = NULL;
+                                                index_lower = ::strtoul (open_bracket_position+1, &end, 0);
+                                                index_higher = index_lower;
+                                                //printf("got to read low=%d high same\n",bitfield_lower);
+                                            }
+                                            else if(close_bracket_position && close_bracket_position < var_name_end)
+                                            {
+                                                char *end = NULL;
+                                                index_lower = ::strtoul (open_bracket_position+1, &end, 0);
+                                                index_higher = ::strtoul (separator_position+1, &end, 0);
+                                                //printf("got to read low=%d high=%d\n",bitfield_lower,bitfield_higher);
+                                            }
+                                            else
+                                                break;
+                                            if (index_lower > index_higher)
+                                            {
+                                                int temp = index_lower;
+                                                index_lower = index_higher;
+                                                index_higher = temp;
+                                            }
+                                            //*((char*)open_bracket_position) = '\0';
+                                            //printf("variable name is %s\n",var_name_begin);
+                                            //*((char*)open_bracket_position) = '[';
+                                        }
+                                    }
+                                    
+                                    // if you just type a range, lldb will do the "right thing" in picking
+                                    // a reasonable display for the array entries. you can override this by
+                                    // giving other input (e.g. ${*var[1-3].member1%uint8_t[]}) and they
+                                    // will be honored
+                                    char* special_directions = NULL;
+                                    if (close_bracket_position && (var_name_end-close_bracket_position > 1))
+                                    {
+                                        int base_len = var_name_end-close_bracket_position;
+                                        special_directions = new char[8+base_len];
+                                        special_directions[0] = '$';
+                                        special_directions[1] = '{';                                        
+                                        special_directions[2] = 'v';
+                                        special_directions[3] = 'a';
+                                        special_directions[4] = 'r';
+                                        memcpy(special_directions+5, close_bracket_position+1, base_len);
+                                        special_directions[base_len+7] = '\0';
+                                        printf("%s\n",special_directions);
+                                    }
+                                    
+                                    // let us display items index_lower thru index_higher of this array
+                                    s.PutChar('[');
+                                    var_success = true;
+                                    const char* expr_path = NULL;
+                                    const char* ptr_deref_format = "%s[%d]";
+                                    char* ptr_deref_buffer = new char[1024];
+                                    StreamString expr_path_string;
+                                    
+                                    if(is_pointer)
+                                    {
+                                        vobj->GetExpressionPath(expr_path_string, true, ValueObject::eHonorPointers);
+                                        expr_path = expr_path_string.GetData();
+                                    }
+                                    
+                                    for(;index_lower<=index_higher;index_lower++)
+                                    {
+                                        ValueObject* item;
+                                        
+                                        if(is_array)
+                                            item = vobj->GetChildAtIndex(index_lower, true).get();
+                                        else
+                                        {
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT
+                                            printf("name to deref in phase 0: %s\n",expr_path);
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                            ::sprintf(ptr_deref_buffer, ptr_deref_format, expr_path, index_lower);
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT
+                                            printf("name to deref in phase 1: %s\n",ptr_deref_buffer);
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                            lldb::VariableSP var_sp;
+                                            Error error;
+                                            item = exe_ctx->frame->GetValueForVariableExpressionPath (ptr_deref_buffer,
+                                                                                                      eNoDynamicValues, 
+                                                                                                      0,
+                                                                                                      var_sp,
+                                                                                                      error).get();
+                                            if (error.Fail())
+                                            {
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT
+                                                printf("ERROR: %s\n",error.AsCString("unknown"));
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                                break;
+                                            }
+                                        }
+                                        
+                                        if (!special_directions)
+                                        {
+                                            targetvalue = item->GetPrintableRepresentation(val_obj_display, custom_format);
+                                            if(targetvalue)
+                                                s.PutCString(targetvalue);
+                                            var_success &= (targetvalue != NULL);
+                                            if(custom_format != eFormatInvalid)
+                                                item->SetFormat(eFormatDefault);
+                                        }
+                                        else
+                                        {
+                                            var_success &= FormatPrompt(special_directions, sc, exe_ctx, addr, s, NULL, item);
+                                        }
+                                        
+                                        if(index_lower < index_higher)
+                                            s.PutChar(',');
+                                    }
+                                    s.PutChar(']');
+                                    break;
+
+                                }
+                                else if (is_pointer)
+                                {
+                                    var_name_begin++;
+                                    uint32_t offset = 0;
+                                    DataExtractor read_for_null = vobj->GetDataExtractor();
+                                    if (read_for_null.GetPointer(&offset) == 0)
+                                        break;
+                                    if (ClangASTContext::IsAggregateType (elem_or_pointee_clang_type) )
+                                    {
+                                        Error error;
+                                        realvobj = vobj;
+                                        vobj = vobj->Dereference(error).get();
+                                        if(!vobj || error.Fail())
+                                            break;
+                                    }
+                                    else if (ClangASTContext::IsCharType (elem_or_pointee_clang_type))
                                     {
                                         StreamString sstr;
                                         ExecutionContextScope *exe_scope = vobj->GetExecutionContextScope();
@@ -849,7 +1035,7 @@ Debugger::FormatPrompt
                                             break;
                                         }
                                     }
-                                    else /*if (ClangASTContext::IsAggregateType (elem_or_pointee_clang_type)) or this is some other pointer type*/
+                                    else /*some other pointer type*/
                                     {
                                         Error error;
                                         realvobj = vobj;
@@ -864,7 +1050,7 @@ Debugger::FormatPrompt
                         case 'v':
                             {
                             const char* targetvalue;
-                            bool use_summary = false;
+                            ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eDisplaySummary;
                             ValueObject* target;
                             lldb::Format custom_format = eFormatInvalid;
                             int bitfield_lower = -1;
@@ -872,12 +1058,16 @@ Debugger::FormatPrompt
                             if (!vobj) break;
                             // simplest case ${var}, just print vobj's value
                             if (::strncmp (var_name_begin, "var}", strlen("var}")) == 0)
+                            {
                                 target = vobj;
+                                val_obj_display = ValueObject::eDisplayValue;
+                            }
                             else if (::strncmp(var_name_begin,"var%",strlen("var%")) == 0)
                             {
                                 // this is a variable with some custom format applied to it
                                 const char* var_name_final;
                                 target = vobj;
+                                val_obj_display = ValueObject::eDisplayValue;
                                 {
                                     const char* percent_position = ::strchr(var_name_begin,'%'); // TODO: make this a constant
                                     //if(!percent_position || percent_position > var_name_end)
@@ -887,9 +1077,14 @@ Debugger::FormatPrompt
                                     var_name_final = percent_position;
                                     char* format_name = new char[var_name_end-var_name_final]; format_name[var_name_end-var_name_final-1] = '\0';
                                     memcpy(format_name, var_name_final+1, var_name_end-var_name_final-1);
-                                    FormatManager::GetFormatFromCString(format_name,
+                                    if ( !FormatManager::GetFormatFromCString(format_name,
                                                                         true,
-                                                                        custom_format); // if this fails, custom_format is reset to invalid
+                                                                        custom_format) )
+                                    {
+                                        // if this is an @ sign, print ObjC description
+                                        if(*format_name == '@')
+                                            val_obj_display = ValueObject::eDisplayLanguageSpecific;
+                                    }
                                     delete format_name;
                                     //}
                                 }
@@ -899,7 +1094,7 @@ Debugger::FormatPrompt
                                 // this is a bitfield variable
                                 const char *var_name_final;
                                 target = vobj;
-                                
+                                val_obj_display = ValueObject::eDisplayValue;
                                 {
                                     const char* percent_position = ::strchr(var_name_begin,'%');
                                     if(!percent_position || percent_position > var_name_end)
@@ -909,10 +1104,15 @@ Debugger::FormatPrompt
                                         var_name_final = percent_position;
                                         char* format_name = new char[var_name_end-var_name_final]; format_name[var_name_end-var_name_final-1] = '\0';
                                         memcpy(format_name, var_name_final+1, var_name_end-var_name_final-1);
-                                        FormatManager::GetFormatFromCString(format_name,
-                                                                            true,
-                                                                            custom_format); // if this fails, custom_format is reset to invalid
-                                        delete format_name;
+                                        if ( !FormatManager::GetFormatFromCString(format_name,
+                                                                                  true,
+                                                                                  custom_format) )
+                                        {
+                                            delete format_name;
+                                            break;
+                                        }
+                                        else
+                                            delete format_name;
                                     }
                                 }
                                 
@@ -943,7 +1143,11 @@ Debugger::FormatPrompt
                                         else
                                             break;
                                         if(bitfield_lower > bitfield_higher)
-                                            break;
+                                        {
+                                            int temp = bitfield_lower;
+                                            bitfield_lower = bitfield_higher;
+                                            bitfield_higher = temp;
+                                        }
                                     }
                                 }
                             }
@@ -966,10 +1170,20 @@ Debugger::FormatPrompt
                                         var_name_final = percent_position;
                                         char* format_name = new char[var_name_end-var_name_final]; format_name[var_name_end-var_name_final-1] = '\0';
                                         memcpy(format_name, var_name_final+1, var_name_end-var_name_final-1);
-                                        FormatManager::GetFormatFromCString(format_name,
-                                                                            true,
-                                                                            custom_format); // if this fails, custom_format is reset to invalid
-                                        delete format_name;
+                                        if ( !FormatManager::GetFormatFromCString(format_name,
+                                                                                  true,
+                                                                                  custom_format) )
+                                        {
+                                            // if this is an @ sign, print ObjC description
+                                            if(*format_name == '@')
+                                                val_obj_display = ValueObject::eDisplayLanguageSpecific;
+                                            // if this is a V, print the value using the default format
+                                            if(*format_name == 'V')
+                                                val_obj_display = ValueObject::eDisplayValue;
+                                        }
+                                        // a good custom format tells us to print the value using it
+                                        else
+                                            val_obj_display = ValueObject::eDisplayValue;
                                     }
                                 }
                                 
@@ -999,7 +1213,11 @@ Debugger::FormatPrompt
                                         else
                                             break;
                                         if(bitfield_lower > bitfield_higher)
-                                            break;
+                                        {
+                                            int temp = bitfield_lower;
+                                            bitfield_lower = bitfield_higher;
+                                            bitfield_higher = temp;
+                                        }
                                         //*((char*)open_bracket_position) = '\0';
                                         //printf("variable name is %s\n",var_name_begin);
                                         //*((char*)open_bracket_position) = '[';
@@ -1010,9 +1228,13 @@ Debugger::FormatPrompt
                                 lldb::VariableSP var_sp;
                                 StreamString sstring;
                                 vobj->GetExpressionPath(sstring, true, ValueObject::eHonorPointers);
-                                //printf("name to expand in phase 0: %s\n",sstring.GetData());
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                printf("name to expand in phase 0: %s\n",sstring.GetData());
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
                                 sstring.PutRawBytes(var_name_begin+3, var_name_final-var_name_begin-3);
-                                //printf("name to expand in phase 1: %s\n",sstring.GetData());
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT
+                                printf("name to expand in phase 1: %s\n",sstring.GetData());
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
                                 std::string name = std::string(sstring.GetData());
                                 target = exe_ctx->frame->GetValueForVariableExpressionPath (name.c_str(),
                                                                                             eNoDynamicValues, 
@@ -1021,17 +1243,14 @@ Debugger::FormatPrompt
                                                                                             error).get();
                                 if (error.Fail())
                                 {
-                                    //printf("ERROR: %s\n",error.AsCString("unknown"));
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                    printf("ERROR: %s\n",error.AsCString("unknown"));
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
                                     break;
                                 }
                             }
                             else
                                 break;
-                            if(*(var_name_end+1)=='s')
-                            {
-                                use_summary = true;
-                                var_name_end++;
-                            }
                             if (bitfield_lower >= 0)
                             {
                                 //printf("trying to print a []\n");
@@ -1046,16 +1265,8 @@ Debugger::FormatPrompt
                             }
                             else
                             {
-                                //printf("here I come 1\n");
                                 // format this as usual
-                                if(custom_format != eFormatInvalid)
-                                    target->SetFormat(custom_format);
-                                //printf("here I come 2\n");
-                                if(!use_summary)
-                                    targetvalue = target->GetValueAsCString();
-                                else
-                                    targetvalue = target->GetSummaryAsCString();
-                                //printf("here I come 3\n");
+                                targetvalue = target->GetPrintableRepresentation(val_obj_display, custom_format);
                                 if(targetvalue)
                                     s.PutCString(targetvalue);
                                 var_success = targetvalue;
@@ -1634,7 +1845,7 @@ Debugger::ValueFormats::Clear()
 }
 
 void
-Debugger::ValueFormats::LoopThrough(FormatManager::ValueCallback callback, void* callback_baton)
+Debugger::ValueFormats::LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton)
 {
     GetFormatManager().Value().LoopThrough(callback, callback_baton);
 }
@@ -1645,6 +1856,11 @@ Debugger::ValueFormats::GetCurrentRevision()
     return GetFormatManager().GetCurrentRevision();
 }
 
+uint32_t
+Debugger::ValueFormats::GetCount()
+{
+    return GetFormatManager().Value().GetCount();
+}
 
 bool
 Debugger::SummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
@@ -1671,7 +1887,7 @@ Debugger::SummaryFormats::Clear()
 }
 
 void
-Debugger::SummaryFormats::LoopThrough(FormatManager::SummaryCallback callback, void* callback_baton)
+Debugger::SummaryFormats::LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton)
 {
     GetFormatManager().Summary().LoopThrough(callback, callback_baton);
 }
@@ -1680,6 +1896,54 @@ uint32_t
 Debugger::SummaryFormats::GetCurrentRevision()
 {
     return GetFormatManager().GetCurrentRevision();
+}
+
+uint32_t
+Debugger::SummaryFormats::GetCount()
+{
+    return GetFormatManager().Summary().GetCount();
+}
+
+bool
+Debugger::RegexSummaryFormats::Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry)
+{
+    return GetFormatManager().RegexSummary().Get(vobj,entry);
+}
+
+void
+Debugger::RegexSummaryFormats::Add(const lldb::RegularExpressionSP &type, const SummaryFormat::SharedPointer &entry)
+{
+    GetFormatManager().RegexSummary().Add(type,entry);
+}
+
+bool
+Debugger::RegexSummaryFormats::Delete(const ConstString &type)
+{
+    return GetFormatManager().RegexSummary().Delete(type.AsCString());
+}
+
+void
+Debugger::RegexSummaryFormats::Clear()
+{
+    GetFormatManager().RegexSummary().Clear();
+}
+
+void
+Debugger::RegexSummaryFormats::LoopThrough(SummaryFormat::RegexSummaryCallback callback, void* callback_baton)
+{
+    GetFormatManager().RegexSummary().LoopThrough(callback, callback_baton);
+}
+
+uint32_t
+Debugger::RegexSummaryFormats::GetCurrentRevision()
+{
+    return GetFormatManager().GetCurrentRevision();
+}
+
+uint32_t
+Debugger::RegexSummaryFormats::GetCount()
+{
+    return GetFormatManager().RegexSummary().GetCount();
 }
 
 #pragma mark Debugger::SettingsController

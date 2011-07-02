@@ -476,47 +476,81 @@ public:
     
     class ValueFormats
     {
-        public:
-            static bool
-            Get(ValueObject& vobj, ValueFormat::SharedPointer &entry);
-            
-            static void
-            Add(const ConstString &type, const ValueFormat::SharedPointer &entry);
-            
-            static bool
-            Delete(const ConstString &type);
-            
-            static void
-            Clear();
-            
-            static void
-            LoopThrough(FormatManager::ValueCallback callback, void* callback_baton);
-            
-            static uint32_t GetCurrentRevision();
+    public:
+        static bool
+        Get(ValueObject& vobj, ValueFormat::SharedPointer &entry);
+        
+        static void
+        Add(const ConstString &type, const ValueFormat::SharedPointer &entry);
+        
+        static bool
+        Delete(const ConstString &type);
+        
+        static void
+        Clear();
+        
+        static void
+        LoopThrough(ValueFormat::ValueCallback callback, void* callback_baton);
+        
+        static uint32_t
+        GetCurrentRevision();
+    
+        static uint32_t
+        GetCount();
     };
     
     class SummaryFormats
     {
-        public:
+    public:
+    
+        static bool
+        Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry);
         
-            static bool
-            Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry);
-            
-            static void
-            Add(const ConstString &type, const SummaryFormat::SharedPointer &entry);
-            
-            static bool
-            Delete(const ConstString &type);
-            
-            static void
-            Clear();
-            
-            static void
-            LoopThrough(FormatManager::SummaryCallback callback, void* callback_baton);
-            
-            static uint32_t
-            GetCurrentRevision();
+        static void
+        Add(const ConstString &type, const SummaryFormat::SharedPointer &entry);
+        
+        static bool
+        Delete(const ConstString &type);
+        
+        static void
+        Clear();
+        
+        static void
+        LoopThrough(SummaryFormat::SummaryCallback callback, void* callback_baton);
+        
+        static uint32_t
+        GetCurrentRevision();
+    
+        static uint32_t
+        GetCount();
     };
+    
+    class RegexSummaryFormats
+    {
+    public:
+        
+        static bool
+        Get(ValueObject& vobj, SummaryFormat::SharedPointer &entry);
+        
+        static void
+        Add(const lldb::RegularExpressionSP &type, const SummaryFormat::SharedPointer &entry);
+        
+        static bool
+        Delete(const ConstString &type);
+        
+        static void
+        Clear();
+        
+        static void
+        LoopThrough(SummaryFormat::RegexSummaryCallback callback, void* callback_baton);
+        
+        static uint32_t
+        GetCurrentRevision();
+        
+        static uint32_t
+        GetCount();
+    };
+
     
 };
 

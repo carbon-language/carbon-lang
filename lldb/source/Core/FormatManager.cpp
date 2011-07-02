@@ -151,3 +151,40 @@ FormatManager::GetFormatAsCString (Format format)
         return g_format_infos[format].format_name;
     return NULL;
 }
+
+template<>
+bool
+FormatNavigator<std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer>, SummaryFormat::RegexSummaryCallback>::Get(const char* key,
+                                                                                                                     SummaryFormat::SharedPointer& value)
+{
+    Mutex::Locker(m_map_mutex);
+    MapIterator pos, end = m_map.end();
+    for (pos = m_map.begin(); pos != end; pos++)
+    {
+        lldb::RegularExpressionSP regex = pos->first;
+        if (regex->Execute(key))
+        {
+            value = pos->second;
+            return true;
+        }
+    }
+    return false;
+}
+
+template<>
+bool
+FormatNavigator<std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer>, SummaryFormat::RegexSummaryCallback>::Delete(const char* type)
+{
+    Mutex::Locker(m_map_mutex);
+    MapIterator pos, end = m_map.end();
+    for (pos = m_map.begin(); pos != end; pos++)
+    {
+        lldb::RegularExpressionSP regex = pos->first;
+        if ( ::strcmp(type,regex->GetText()) == 0)
+        {
+            m_map.erase(pos);
+            return true;
+        }
+    }
+    return false;
+}
