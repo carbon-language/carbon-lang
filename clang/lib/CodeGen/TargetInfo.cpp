@@ -1801,12 +1801,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // order from %xmm0 to %xmm7.
   case SSE: {
     const llvm::Type *IRType = CGT.ConvertTypeRecursive(Ty);
-    if (Hi != NoClass || !UseX86_MMXType(IRType))
-      ResType = GetSSETypeAtOffset(IRType, 0, Ty, 0);
-    else
-      // This is an MMX type. Treat it as such.
-      ResType = llvm::Type::getX86_MMXTy(getVMContext());
-
+    ResType = GetSSETypeAtOffset(IRType, 0, Ty, 0);
     ++neededSSE;
     break;
   }

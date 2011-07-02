@@ -259,3 +259,6 @@ void f9122143()
   func(ss);
 }
 
+// CHECK: define double @f36(double %arg.coerce)
+typedef unsigned v2i32 __attribute((__vector_size__(8)));
+v2i32 f36(v2i32 arg) { return arg; }
