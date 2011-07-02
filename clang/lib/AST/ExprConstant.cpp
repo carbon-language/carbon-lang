@@ -955,19 +955,15 @@ public:
   IntExprEvaluator(EvalInfo &info, APValue &result)
     : ExprEvaluatorBaseTy(info), Result(result) {}
 
-  bool Success(const llvm::APSInt &SI, QualType Ty) {
-    assert(Ty->isIntegralOrEnumerationType() &&
+  bool Success(const llvm::APSInt &SI, const Expr *E) {
+    assert(E->getType()->isIntegralOrEnumerationType() &&
            "Invalid evaluation result.");
-    assert(SI.isSigned() == Ty->isSignedIntegerOrEnumerationType() &&
+    assert(SI.isSigned() == E->getType()->isSignedIntegerOrEnumerationType() &&
            "Invalid evaluation result.");
-    assert(SI.getBitWidth() == Info.Ctx.getIntWidth(Ty) &&
+    assert(SI.getBitWidth() == Info.Ctx.getIntWidth(E->getType()) &&
            "Invalid evaluation result.");
     Result = APValue(SI);
     return true;
-  }
-
-  bool Success(const llvm::APSInt &SI, const Expr *E) {
-    return Success(SI, E->getType());
   }
 
   bool Success(const llvm::APInt &I, const Expr *E) {
@@ -1111,9 +1107,23 @@ static bool EvaluateInteger(const Expr* E, APSInt &Result, EvalInfo &Info) {
 bool IntExprEvaluator::CheckReferencedDecl(const Expr* E, const Decl* D) {
   // Enums are integer constant exprs.
   if (const EnumConstantDecl *ECD = dyn_cast<EnumConstantDecl>(D)) {
-    // Note: provide the type of ECD (rather than that of E),
-    // so that signedness/width will match the ECD init value.
-    return Success(ECD->getInitVal(), ECD->getType());
+    // Check for signedness/width mismatches between E type and ECD value.
+    bool SameSign = (ECD->getInitVal().isSigned()
+                     == E->getType()->isSignedIntegerOrEnumerationType());
+    bool SameWidth = (ECD->getInitVal().getBitWidth()
+                      == Info.Ctx.getIntWidth(E->getType()));
+    if (SameSign && SameWidth)
+      return Success(ECD->getInitVal(), E);
+    else {
+      // Get rid of mismatch (otherwise Success assertions will fail)
+      // by computing a new value matching the type of E.
+      llvm::APSInt Val = ECD->getInitVal();
+      if (!SameSign)
+        Val.setIsSigned(!ECD->getInitVal().isSigned());
+      if (!SameWidth)
+        Val = Val.extOrTrunc(Info.Ctx.getIntWidth(E->getType()));
+      return Success(Val, E);
+    }
   }
 
   // In C++, const, non-volatile integers initialized with ICEs are ICEs.
