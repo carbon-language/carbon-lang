@@ -803,7 +803,7 @@ Debugger::FormatPrompt
                                    )
                                 {
                                     const char* var_name_final;
-                                    char* close_bracket_position = NULL;
+                                    const char* close_bracket_position = NULL;
                                     const char* percent_position = NULL;
                                     const char* targetvalue;
                                     lldb::Format custom_format = eFormatInvalid;
@@ -842,7 +842,7 @@ Debugger::FormatPrompt
                                         {
                                             // TODO: pick a way to say "all entries". this will make more sense once
                                             // regex typenames are in place. now, you need to be size-aware anyways
-                                            char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
+                                            const char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
                                             close_bracket_position = ::strchr(open_bracket_position,']');
                                             // as usual, we assume that [] will come before %
                                             //printf("trying to expand a []\n");
@@ -1121,8 +1121,8 @@ Debugger::FormatPrompt
                                     const char* open_bracket_position = ::strchr(var_name_begin,'[');
                                     if(open_bracket_position && open_bracket_position < var_name_final)
                                     {
-                                        char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
-                                        char* close_bracket_position = ::strchr(open_bracket_position,']');
+                                        const char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
+                                        const char* close_bracket_position = ::strchr(open_bracket_position,']');
                                         // as usual, we assume that [] will come before %
                                         //printf("trying to expand a []\n");
                                         var_name_final = open_bracket_position;
@@ -1191,8 +1191,8 @@ Debugger::FormatPrompt
                                     const char* open_bracket_position = ::strchr(var_name_begin,'[');
                                     if(open_bracket_position && open_bracket_position < var_name_final)
                                     {
-                                        char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
-                                        char* close_bracket_position = ::strchr(open_bracket_position,']');
+                                        const char* separator_position = ::strchr(open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
+                                        const char* close_bracket_position = ::strchr(open_bracket_position,']');
                                         // as usual, we assume that [] will come before %
                                         //printf("trying to expand a []\n");
                                         var_name_final = open_bracket_position;

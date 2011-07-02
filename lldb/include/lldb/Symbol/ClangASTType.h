@@ -10,6 +10,7 @@
 #ifndef liblldb_ClangASTType_h_
 #define liblldb_ClangASTType_h_
 
+#include <string>
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ClangForward.h"
 
