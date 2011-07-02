@@ -1,4 +1,4 @@
-; RUN: llc < %s | grep {addl	\$3, (%eax)} | count 4
+; RUN: llc < %s | FileCheck %s
 ; PR2182
 
 target datalayout =
@@ -7,18 +7,25 @@ target triple = "i386-apple-darwin8"
 @x = weak global i32 0          ; <i32*> [#uses=8]
 
 define void @loop_2() nounwind  {
-entry:
-        %tmp = volatile load i32* @x, align 4           ; <i32> [#uses=1]
-        %tmp1 = add i32 %tmp, 3         ; <i32> [#uses=1]
-        volatile store i32 %tmp1, i32* @x, align 4
-        %tmp.1 = volatile load i32* @x, align 4         ; <i32> [#uses=1]
-        %tmp1.1 = add i32 %tmp.1, 3             ; <i32> [#uses=1]
-        volatile store i32 %tmp1.1, i32* @x, align 4
-        %tmp.2 = volatile load i32* @x, align 4         ; <i32> [#uses=1]
-        %tmp1.2 = add i32 %tmp.2, 3             ; <i32> [#uses=1]
-        volatile store i32 %tmp1.2, i32* @x, align 4
-        %tmp.3 = volatile load i32* @x, align 4         ; <i32> [#uses=1]
-        %tmp1.3 = add i32 %tmp.3, 3             ; <i32> [#uses=1]
-        volatile store i32 %tmp1.3, i32* @x, align 4
-        ret void
+; CHECK: loop_2:
+; CHECK-NOT: ret
+; CHECK: addl $3, (%{{.*}})
+; CHECK-NEXT: addl $3, (%{{.*}})
+; CHECK-NEXT: addl $3, (%{{.*}})
+; CHECK-NEXT: addl $3, (%{{.*}})
+; CHECK-NEXT: ret
+
+  %tmp = volatile load i32* @x, align 4           ; <i32> [#uses=1]
+  %tmp1 = add i32 %tmp, 3         ; <i32> [#uses=1]
+  volatile store i32 %tmp1, i32* @x, align 4
+  %tmp.1 = volatile load i32* @x, align 4         ; <i32> [#uses=1]
+  %tmp1.1 = add i32 %tmp.1, 3             ; <i32> [#uses=1]
+  volatile store i32 %tmp1.1, i32* @x, align 4
+  %tmp.2 = volatile load i32* @x, align 4         ; <i32> [#uses=1]
+  %tmp1.2 = add i32 %tmp.2, 3             ; <i32> [#uses=1]
+  volatile store i32 %tmp1.2, i32* @x, align 4
+  %tmp.3 = volatile load i32* @x, align 4         ; <i32> [#uses=1]
+  %tmp1.3 = add i32 %tmp.3, 3             ; <i32> [#uses=1]
+  volatile store i32 %tmp1.3, i32* @x, align 4
+  ret void
 }
