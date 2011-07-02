@@ -238,17 +238,8 @@ public:
   /// specialized because it is a common query.
   unsigned getOSMajorVersion() const {
     unsigned Maj, Min, Micro;
-    getDarwinNumber(Maj, Min, Micro);
+    getOSVersion(Maj, Min, Micro);
     return Maj;
-  }
-
-  void getDarwinNumber(unsigned &Major, unsigned &Minor,
-                       unsigned &Micro) const {
-    return getOSVersion(Major, Minor, Micro);
-  }
-
-  unsigned getDarwinMajorNumber() const {
-    return getOSMajorVersion();
   }
 
   /// isOSVersionLT - Helper function for doing comparisons against version
@@ -276,7 +267,7 @@ public:
 
   /// isOSDarwin - Is this a "Darwin" OS (OS X or iOS).
   bool isOSDarwin() const {
-    return isMacOSX() ||getOS() == Triple::IOS;
+    return isMacOSX() || getOS() == Triple::IOS;
   }
 
   /// isOSWindows - Is this a "Windows" OS.
@@ -289,7 +280,7 @@ public:
   /// compatibility, which handles supporting skewed version numbering schemes
   /// used by the "darwin" triples.
   unsigned isMacOSXVersionLT(unsigned Major, unsigned Minor = 0,
-                          unsigned Micro = 0) const {
+			     unsigned Micro = 0) const {
     assert(isMacOSX() && "Not an OS X triple!");
 
     // If this is OS X, expect a sane version number.
@@ -300,7 +291,7 @@ public:
     assert(Major == 10 && "Unexpected major version");
     return isOSVersionLT(Minor + 4, Micro, 0);
   }
-    
+
   /// @}
   /// @name Mutators
   /// @{
