@@ -581,6 +581,7 @@ class WidenIV {
   SmallVectorImpl<WeakVH> &DeadInsts;
 
   SmallPtrSet<Instruction*,16> Widened;
+  SmallVector<std::pair<Use *, Instruction *>, 8> NarrowIVUsers;
 
 public:
   WidenIV(PHINode *PN, const WideIVInfo &WI, LoopInfo *LInfo,
@@ -607,10 +608,10 @@ protected:
                            Instruction *NarrowDef,
                            Instruction *WideDef);
 
-  const SCEVAddRecExpr *GetWideRecurrence(Instruction *NarrowUse);
-
   Instruction *WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
                           Instruction *WideDef);
+
+  void pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef);
 };
 } // anonymous namespace
 
@@ -669,26 +670,6 @@ Instruction *WidenIV::CloneIVUser(Instruction *NarrowUse,
   llvm_unreachable(0);
 }
 
-// GetWideRecurrence - Is this instruction potentially interesting from IVUsers'
-// perspective after widening it's type? In other words, can the extend be
-// safely hoisted out of the loop with SCEV reducing the value to a recurrence
-// on the same loop. If so, return the sign or zero extended
-// recurrence. Otherwise return NULL.
-const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
-  if (!SE->isSCEVable(NarrowUse->getType()))
-    return 0;
-
-  const SCEV *NarrowExpr = SE->getSCEV(NarrowUse);
-  const SCEV *WideExpr = IsSigned ?
-    SE->getSignExtendExpr(NarrowExpr, WideType) :
-    SE->getZeroExtendExpr(NarrowExpr, WideType);
-  const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(WideExpr);
-  if (!AddRec || AddRec->getLoop() != L)
-    return 0;
-
-  return AddRec;
-}
-
 /// HoistStep - Attempt to hoist an IV increment above a potential use.
 ///
 /// To successfully hoist, two criteria must be met:
@@ -729,13 +710,8 @@ Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
                                  Instruction *WideDef) {
   Instruction *NarrowUse = cast<Instruction>(NarrowDefUse.getUser());
 
-  // To be consistent with IVUsers, stop traversing the def-use chain at
-  // inner-loop phis or post-loop phis.
+  // Stop traversing the def-use chain at inner-loop phis or post-loop phis.
   if (isa<PHINode>(NarrowUse) && LI->getLoopFor(NarrowUse->getParent()) != L)
-    return 0;
-
-  // Handle data flow merges and bizarre phi cycles.
-  if (!Widened.insert(NarrowUse))
     return 0;
 
   // Our raison d'etre! Eliminate sign and zero extension.
@@ -775,7 +751,26 @@ Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
     // No further widening is needed. The deceased [sz]ext had done it for us.
     return 0;
   }
-  const SCEVAddRecExpr *WideAddRec = GetWideRecurrence(NarrowUse);
+
+  // Does this user itself evaluate to a recurrence after widening?
+  const SCEVAddRecExpr *WideAddRec = 0;
+  if (SE->isSCEVable(NarrowUse->getType())) {
+    const SCEV *NarrowExpr = SE->getSCEV(NarrowUse);
+    if (SE->getTypeSizeInBits(NarrowExpr->getType())
+        >= SE->getTypeSizeInBits(WideType)) {
+      // NarrowUse implicitly widens its operand. e.g. a gep with a narrow
+      // index. We have already extended the operand, so we're done.
+      return 0;
+    }
+    const SCEV *WideExpr = IsSigned ?
+      SE->getSignExtendExpr(NarrowExpr, WideType) :
+      SE->getZeroExtendExpr(NarrowExpr, WideType);
+
+    // Only widen past values that evaluate to a recurrence in the same loop.
+    const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(WideExpr);
+    if (AddRec && AddRec->getLoop() == L)
+      WideAddRec = AddRec;
+  }
   if (!WideAddRec) {
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
@@ -785,9 +780,10 @@ Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
     NarrowUse->replaceUsesOfWith(NarrowDef, Trunc);
     return 0;
   }
-  // We assume that block terminators are not SCEVable.
+  // We assume that block terminators are not SCEVable. We wouldn't want to
+  // insert a Trunc after a terminator if there happens to be a critical edge.
   assert(NarrowUse != NarrowUse->getParent()->getTerminator() &&
-         "can't split terminators");
+         "SCEV is not expected to evaluate a block terminator");
 
   // Reuse the IV increment that SCEVExpander created as long as it dominates
   // NarrowUse.
@@ -800,8 +796,8 @@ Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
     if (!WideUse)
       return 0;
   }
-  // GetWideRecurrence ensured that the narrow expression could be extended
-  // outside the loop without overflow. This suggests that the wide use
+  // Evaluation of WideAddRec ensured that the narrow expression could be
+  // extended outside the loop without overflow. This suggests that the wide use
   // evaluates to the same expression as the extended narrow use, but doesn't
   // absolutely guarantee it. Hence the following failsafe check. In rare cases
   // where it fails, we simply throw away the newly created wide use.
@@ -814,6 +810,21 @@ Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
 
   // Returning WideUse pushes it on the worklist.
   return WideUse;
+}
+
+/// pushNarrowIVUsers - Add eligible users of NarrowDef to NarrowIVUsers.
+///
+void WidenIV::pushNarrowIVUsers(Instruction *NarrowDef, Instruction *WideDef) {
+  for (Value::use_iterator UI = NarrowDef->use_begin(),
+         UE = NarrowDef->use_end(); UI != UE; ++UI) {
+    Use &U = UI.getUse();
+
+    // Handle data flow merges and bizarre phi cycles.
+    if (!Widened.insert(cast<Instruction>(U.getUser())))
+      continue;
+
+    NarrowIVUsers.push_back(std::make_pair(&UI.getUse(), WideDef));
+  }
 }
 
 /// CreateWideIV - Process a single induction variable. First use the
@@ -873,14 +884,11 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
   ++NumWidened;
 
   // Traverse the def-use chain using a worklist starting at the original IV.
-  assert(Widened.empty() && "expect initial state" );
+  assert(Widened.empty() && NarrowIVUsers.empty() && "expect initial state" );
 
-  // Each worklist entry has a Narrow def-use link and Wide def.
-  SmallVector<std::pair<Use *, Instruction *>, 8> NarrowIVUsers;
-  for (Value::use_iterator UI = OrigPhi->use_begin(),
-         UE = OrigPhi->use_end(); UI != UE; ++UI) {
-    NarrowIVUsers.push_back(std::make_pair(&UI.getUse(), WidePhi));
-  }
+  Widened.insert(OrigPhi);
+  pushNarrowIVUsers(OrigPhi, WidePhi);
+
   while (!NarrowIVUsers.empty()) {
     Use *UsePtr;
     Instruction *WideDef;
@@ -893,12 +901,9 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
     Instruction *WideUse = WidenIVUse(NarrowDefUse, NarrowDef, WideDef);
 
     // Follow all def-use edges from the previous narrow use.
-    if (WideUse) {
-      for (Value::use_iterator UI = NarrowDefUse.getUser()->use_begin(),
-             UE = NarrowDefUse.getUser()->use_end(); UI != UE; ++UI) {
-        NarrowIVUsers.push_back(std::make_pair(&UI.getUse(), WideUse));
-      }
-    }
+    if (WideUse)
+      pushNarrowIVUsers(cast<Instruction>(NarrowDefUse.getUser()), WideUse);
+
     // WidenIVUse may have removed the def-use edge.
     if (NarrowDef->use_empty())
       DeadInsts.push_back(NarrowDef);

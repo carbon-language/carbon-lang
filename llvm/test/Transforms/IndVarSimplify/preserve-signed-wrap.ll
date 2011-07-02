@@ -1,7 +1,5 @@
-; RUN: opt < %s -indvars -S > %t
-; RUN: grep sext %t | count 1
-; RUN: grep phi %t | count 1
-; RUN: grep {phi i64} %t
+; RUN: opt < %s -indvars -S | FileCheck %s
+; RUN: opt < %s -indvars -disable-iv-rewrite -S | FileCheck %s
 
 ; Indvars should insert a 64-bit induction variable to eliminate the
 ; sext for the addressing, however it shouldn't eliminate the sext
@@ -15,6 +13,10 @@ entry:
 bb.nph:		; preds = %entry
 	br label %bb
 
+; CHECK: bb:
+; CHECK: phi i64
+; CHECK: sext i8
+; CHECK-NOT: sext
 bb:		; preds = %bb1, %bb.nph
 	%i.02 = phi i32 [ %5, %bb1 ], [ 0, %bb.nph ]		; <i32> [#uses=2]
 	%p.01 = phi i8 [ %4, %bb1 ], [ -1, %bb.nph ]		; <i8> [#uses=2]

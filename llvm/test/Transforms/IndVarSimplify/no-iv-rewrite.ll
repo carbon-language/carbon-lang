@@ -246,3 +246,27 @@ exit:
   %result = and i64 %val, %t3
   ret i64 %result
 }
+
+; The i induction variable looks like a wrap-around, but it really is just
+; a simple affine IV.  Make sure that indvars simplifies through.
+define i32 @indirectRecurrence() nounwind {
+entry:
+  br label %loop
+
+; ReplaceLoopExitValue should fold the return value to constant 9.
+; CHECK: loop:
+; CHECK: phi i32
+; CHECK: ret i32 9
+loop:
+  %j.0 = phi i32 [ 1, %entry ], [ %j.next, %cond_true ]
+  %i.0 = phi i32 [ 0, %entry ], [ %j.0, %cond_true ]
+  %tmp = icmp ne i32 %j.0, 10
+  br i1 %tmp, label %cond_true, label %return
+
+cond_true:
+  %j.next = add i32 %j.0, 1
+  br label %loop
+
+return:
+  ret i32 %i.0
+}
