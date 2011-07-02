@@ -839,6 +839,14 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
     CmdArgs.push_back(CPUName);
   }
 
+  // The required algorithm here is slightly strange: the options are applied
+  // in order (so -mno-sse -msse2 disables SSE3), but any option that gets
+  // directly overridden later is ignored (so "-mno-sse -msse2 -mno-sse2 -msse"
+  // is equivalent to "-mno-sse2 -msse"). The -cc1 handling deals with the
+  // former correctly, but not the latter; handle directly-overridden
+  // attributes here.
+  llvm::StringMap<unsigned> PrevFeature;
+  std::vector<const char*> Features;
   for (arg_iterator it = Args.filtered_begin(options::OPT_m_x86_Features_Group),
          ie = Args.filtered_end(); it != ie; ++it) {
     llvm::StringRef Name = (*it)->getOption().getName();
@@ -852,8 +860,17 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
     if (IsNegative)
       Name = Name.substr(3);
 
-    CmdArgs.push_back("-target-feature");
-    CmdArgs.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
+    unsigned& Prev = PrevFeature[Name];
+    if (Prev)
+      Features[Prev - 1] = 0;
+    Prev = Features.size() + 1;
+    Features.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
+  }
+  for (unsigned i = 0; i < Features.size(); i++) {
+    if (Features[i]) {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back(Features[i]);
+    }
   }
 }
 
