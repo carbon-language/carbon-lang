@@ -42,3 +42,11 @@ MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
   return InstrItineraryData(Stages, OperandCycles, ForwardingPathes,
                             (InstrItinerary *)Found->Value);
 }
+
+/// getFeatureBits - Get the feature bits for a CPU (optionally supplemented
+/// with feature string).
+uint64_t MCSubtargetInfo::getFeatureBits(StringRef CPU, StringRef FS) const {
+  SubtargetFeatures Features(FS);
+  return Features.getFeatureBits(CPU, ProcDesc, NumProcs,
+                                 ProcFeatures, NumFeatures);
+}

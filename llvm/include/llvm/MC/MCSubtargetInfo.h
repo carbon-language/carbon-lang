@@ -54,6 +54,10 @@ public:
   /// getInstrItineraryForCPU - Get scheduling itinerary of a CPU.
   ///
   InstrItineraryData getInstrItineraryForCPU(StringRef CPU) const;
+
+  /// getFeatureBits - Get the feature bits for a CPU (optionally supplemented
+  /// with feature string).
+  uint64_t getFeatureBits(StringRef CPU, StringRef FS) const;
 };
 
 } // End llvm namespace
