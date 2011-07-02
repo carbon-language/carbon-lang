@@ -1,8 +1,12 @@
-; RUN: llc < %s -march=x86 | grep {orl	\$1, %eax}
-; RUN: llc < %s -march=x86 | grep {leal	3(,%eax,8)}
+; RUN: llc < %s -march=x86 | FileCheck %s
 
 ;; This example can't fold the or into an LEA.
 define i32 @test(float ** %tmp2, i32 %tmp12) nounwind {
+; CHECK: test:
+; CHECK-NOT: ret
+; CHECK: orl $1, %{{.*}}
+; CHECK: ret
+
 	%tmp3 = load float** %tmp2
 	%tmp132 = shl i32 %tmp12, 2		; <i32> [#uses=1]
 	%tmp4 = bitcast float* %tmp3 to i8*		; <i8*> [#uses=1]
@@ -12,9 +16,13 @@ define i32 @test(float ** %tmp2, i32 %tmp12) nounwind {
 	ret i32 %tmp14
 }
 
-
 ;; This can!
 define i32 @test2(i32 %a, i32 %b) nounwind {
+; CHECK: test2:
+; CHECK-NOT: ret
+; CHECK: leal 3(,%{{.*}},8)
+; CHECK: ret
+
 	%c = shl i32 %a, 3
 	%d = or i32 %c, 3
 	ret i32 %d
