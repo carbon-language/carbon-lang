@@ -486,7 +486,8 @@ static void SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   const char *initialization = 0;
   QualType VariableTy = VD->getType().getCanonicalType();
 
-  if (VariableTy->getAs<ObjCObjectPointerType>()) {
+  if (VariableTy->isObjCObjectPointerType() ||
+      VariableTy->isBlockPointerType()) {
     // Check if 'nil' is defined.
     if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("nil")))
       initialization = " = nil";
@@ -499,6 +500,13 @@ static void SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
     initialization = " = false";
   else if (VariableTy->isEnumeralType())
     return;
+  else if (VariableTy->isPointerType() || VariableTy->isMemberPointerType()) {
+    // Check if 'NULL' is defined.
+    if (S.PP.getMacroInfo(&S.getASTContext().Idents.get("NULL")))
+      initialization = " = NULL";
+    else
+      initialization = " = 0";
+  }
   else if (VariableTy->isScalarType())
     initialization = " = 0";
 
