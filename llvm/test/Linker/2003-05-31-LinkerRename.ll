@@ -6,7 +6,7 @@
 
 ; RUN: echo { define internal i32 @foo() \{ ret i32 7 \} } | llvm-as > %t.1.bc
 ; RUN: llvm-as < %s > %t.2.bc
-; RUN: llvm-link %t.1.bc %t.2.bc -S | grep internal | not grep @foo(
+; RUN: llvm-link %t.1.bc %t.2.bc -S | grep internal | not grep {@foo(}
 
 declare i32 @foo() 
 
