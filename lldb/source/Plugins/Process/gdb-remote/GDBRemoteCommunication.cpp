@@ -194,7 +194,8 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
     if (CheckForPacket (NULL, 0, packet))
         return packet.GetStringRef().size();
 
-    while (IsConnected())
+    bool timed_out = false;
+    while (IsConnected() && !timed_out)
     {
         lldb::ConnectionStatus status;
         size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
@@ -207,8 +208,11 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
         {
             switch (status)
             {
-            case eConnectionStatusSuccess:
             case eConnectionStatusTimedOut:
+                timed_out = true;
+                break;
+            case eConnectionStatusSuccess:
+                //printf ("status = success but error = %s\n", error.AsCString("<invalid>"));
                 break;
                 
             case eConnectionStatusEndOfFile:
@@ -218,9 +222,6 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
                 Disconnect();
                 break;
             }
-            
-            // Get out of the while loop we we finally timeout without getting any data
-            break;
         }
     }
     packet.Clear ();    
@@ -237,10 +238,14 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
 
     if (src && src_len > 0)
     {
-        if (log)
+        if (log && log->GetVerbose())
         {
             StreamString s;
-            log->Printf ("GDBRemoteCommunication::%s adding %zu bytes: %s\n",__FUNCTION__, src_len, src);
+            log->Printf ("GDBRemoteCommunication::%s adding %u bytes: %.*s",
+                         __FUNCTION__, 
+                         (uint32_t)src_len, 
+                         (uint32_t)src_len, 
+                         src);
         }
         m_bytes.append ((const char *)src, src_len);
     }

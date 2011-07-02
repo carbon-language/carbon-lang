@@ -111,8 +111,7 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
                 // We have what looks to be a valid file descriptor, but we 
                 // should make it is. We currently are doing this by trying to
                 // get the flags from the file descriptor and making sure it 
-                // isn't a bad fd. We also need to enable non blocking mode for
-                // the fd if it already isn't.
+                // isn't a bad fd.
                 errno = 0;
                 int flags = ::fcntl (m_fd, F_GETFL, 0);
                 if (flags == -1 || errno == EBADF)
@@ -124,11 +123,10 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
                 }
                 else
                 {
-                    if ((flags & O_NONBLOCK) == 0)
-                    {
-                        flags |= O_NONBLOCK;
-                        ::fcntl (m_fd, F_SETFL, flags);
-                    }
+                    // Try and get a socket option from this file descriptor to 
+                    // see if this is a socket and set m_is_socket accordingly.
+                    int resuse;
+                    m_is_socket = GetSocketOption (m_fd, SOL_SOCKET, SO_REUSEADDR, resuse) == 0;
                     m_should_close_fd = true;
                     return eConnectionStatusSuccess;
                 }
@@ -200,13 +198,12 @@ ConnectionFileDescriptor::Read (void *dst,
 
     if (timeout_usec == UINT32_MAX)
     {
-        if (m_is_socket)
-            SetSocketRecieveTimeout (0);
-        status = eConnectionStatusSuccess;
+        if (m_is_socket && SetSocketReceiveTimeout (timeout_usec))
+            status = eConnectionStatusSuccess;
     }
     else
     {
-        if (m_is_socket && SetSocketRecieveTimeout (timeout_usec))
+        if (m_is_socket && SetSocketReceiveTimeout (timeout_usec))
             status = eConnectionStatusSuccess;
         else
             status = BytesAvailable (timeout_usec, error_ptr);
@@ -215,7 +212,12 @@ ConnectionFileDescriptor::Read (void *dst,
         return 0;
 
     Error error;
-    ssize_t bytes_read = ::read (m_fd, dst, dst_len);
+    ssize_t bytes_read;
+    if (m_is_socket)
+        bytes_read = ::recv (m_fd, dst, dst_len, 0);
+    else
+        bytes_read = ::read (m_fd, dst, dst_len);
+
     if (bytes_read == 0)
     {
         error.Clear(); // End-of-file.  Do not automatically close; pass along for the end-of-file handlers.
@@ -713,26 +715,38 @@ ConnectionFileDescriptor::SocketConnect (const char *host_and_port, Error *error
     return eConnectionStatusSuccess;
 }
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+typedef const char * set_socket_option_arg_type;
+typedef char * get_socket_option_arg_type;
+#else // #if defined(__MINGW32__) || defined(__MINGW64__)
+typedef const void * set_socket_option_arg_type;
+typedef void * get_socket_option_arg_type;
+#endif // #if defined(__MINGW32__) || defined(__MINGW64__)
+
+int
+ConnectionFileDescriptor::GetSocketOption(int fd, int level, int option_name, int &option_value)
+{
+    get_socket_option_arg_type option_value_p = static_cast<get_socket_option_arg_type>(&option_value);
+    socklen_t option_value_size = sizeof(int);
+	return ::getsockopt(fd, level, option_name, option_value_p, &option_value_size);
+}
+
 int
 ConnectionFileDescriptor::SetSocketOption(int fd, int level, int option_name, int option_value)
 {
-#if defined(__MINGW32__) || defined(__MINGW64__)
-    const char* option_value_p = static_cast<const char*>(&option_value);
-#else // #if defined(__MINGW32__) || defined(__MINGW64__)
-    const void* option_value_p = &option_name;
-#endif // #if defined(__MINGW32__) || defined(__MINGW64__)
-
+    set_socket_option_arg_type option_value_p = static_cast<get_socket_option_arg_type>(&option_value);
 	return ::setsockopt(fd, level, option_name, option_value_p, sizeof(option_value));
 }
 
 bool
-ConnectionFileDescriptor::SetSocketRecieveTimeout (uint32_t timeout_usec)
+ConnectionFileDescriptor::SetSocketReceiveTimeout (uint32_t timeout_usec)
 {
     if (m_is_socket)
     {
         // Check in case timeout for m_fd has already been set to this value
         if (timeout_usec == m_socket_timeout_usec)
             return true;
+        //printf ("ConnectionFileDescriptor::SetSocketReceiveTimeout (timeout_usec = %u)\n", timeout_usec);
 
         struct timeval timeout;
         timeout.tv_sec = timeout_usec / TimeValue::MicroSecPerSec;

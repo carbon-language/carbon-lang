@@ -78,10 +78,13 @@ protected:
     uint32_t m_socket_timeout_usec;
     
     static int
+    GetSocketOption(int fd, int level, int option_name, int &option_value);
+
+    static int
     SetSocketOption(int fd, int level, int option_name, int option_value);
 
     bool
-    SetSocketRecieveTimeout (uint32_t timeout_usec);
+    SetSocketReceiveTimeout (uint32_t timeout_usec);
 
 private:
     DISALLOW_COPY_AND_ASSIGN (ConnectionFileDescriptor);
