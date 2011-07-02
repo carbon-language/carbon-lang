@@ -2461,9 +2461,9 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
   if (CGM.getLangOptions().ObjCAutoRefCount ||
       (CGM.isTargetDarwin() && 
        ((Triple.getArch() == llvm::Triple::x86_64 && 
-         Triple.getDarwinMajorNumber() >= 11)
+         !Triple.isMacOSXVersionLT(10,7,0))
         || (Triple.getEnvironmentName() == "iphoneos" && 
-            Triple.getDarwinMajorNumber() >= 5)))) {
+            !Triple.isOSVersionLT(5,0))))) {
     llvm::Value *token = EmitObjCAutoreleasePoolPush();
     EHStack.pushCleanup<CallObjCAutoreleasePoolObject>(NormalCleanup, token);
   } else {

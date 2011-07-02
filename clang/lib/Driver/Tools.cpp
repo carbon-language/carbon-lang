@@ -870,7 +870,7 @@ shouldUseExceptionTablesForObjCExceptions(unsigned objcABIVersion,
   if (Triple.getOS() != llvm::Triple::Darwin)
     return false;
 
-  return (Triple.getDarwinMajorNumber() >= 9 &&
+  return (!Triple.isMacOSXVersionLT(10,5) &&
           (Triple.getArch() == llvm::Triple::x86_64 ||
            Triple.getArch() == llvm::Triple::arm));  
 }

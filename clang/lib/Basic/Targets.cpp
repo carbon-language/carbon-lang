@@ -189,7 +189,8 @@ protected:
 public:
   DarwinTargetInfo(const std::string& triple) :
     OSTargetInfo<Target>(triple) {
-      this->TLSSupported = llvm::Triple(triple).getDarwinMajorNumber() > 10;
+      llvm::Triple T = llvm::Triple(triple);
+      this->TLSSupported = T.isMacOSX() && !T.isMacOSXVersionLT(10,7);
       this->MCountName = "\01mcount";
     }
 
