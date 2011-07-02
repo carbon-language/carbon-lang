@@ -1378,7 +1378,7 @@ void Sema::MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls) {
 
   // The types match.  Link up the redeclaration chain if the old
   // declaration was a typedef.
-  // FIXME: this is a potential source of wierdness if the type
+  // FIXME: this is a potential source of weirdness if the type
   // spellings don't match exactly.
   if (TypedefNameDecl *Typedef = dyn_cast<TypedefNameDecl>(Old))
     New->setPreviousDeclaration(Typedef);
@@ -4124,7 +4124,7 @@ static void DiagnoseInvalidRedeclaration(Sema &S, FunctionDecl *NewFD) {
 }
 
 NamedDecl*
-Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
+Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               QualType R, TypeSourceInfo *TInfo,
                               LookupResult &Previous,
                               MultiTemplateParamsArg TemplateParamLists,
@@ -9058,7 +9058,7 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
 
     // Adjust the Expr initializer and type.
     if (ECD->getInitExpr() &&
-	!Context.hasSameType(NewTy, ECD->getInitExpr()->getType()))
+        !Context.hasSameType(NewTy, ECD->getInitExpr()->getType()))
       ECD->setInitExpr(ImplicitCastExpr::Create(Context, NewTy,
                                                 CK_IntegralCast,
                                                 ECD->getInitExpr(),
