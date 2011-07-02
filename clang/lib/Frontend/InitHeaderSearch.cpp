@@ -831,6 +831,10 @@ AddDefaultCPlusPlusIncludePaths(const llvm::Triple &triple, const HeaderSearchOp
                                 "x86_64-unknown-linux-gnu", "", "", triple);
 
     // Arch Linux gcc 4.6
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.1",
+                                "i686-pc-linux-gnu", "", "", triple);
+    AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.1",
+                                "x86_64-unknown-linux-gnu", "", "", triple);
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.0",
                                 "i686-pc-linux-gnu", "", "", triple);
     AddGnuCPlusPlusIncludePaths("/usr/include/c++/4.6.0",
