@@ -1,4 +1,4 @@
-; RUN: llc < %s -disable-cfi -march=x86 -mtriple=i686-apple-darwin | grep {isNullOrNil].eh"} | FileCheck %s
+; RUN: llc < %s -disable-cfi -march=x86 -mtriple=i686-apple-darwin | FileCheck %s
 
 ; CHECK: "_-[NSString(local) isNullOrNil].eh":
 
