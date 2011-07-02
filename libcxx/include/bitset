@@ -130,6 +130,15 @@ template <size_t N> struct hash<std::bitset<N>>;
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <size_t _N_words, size_t _Size>
+class __bitset;
+
+template <size_t _N_words, size_t _Size>
+struct __has_storage_type<__bitset<_N_words, _Size> >
+{
+    static const bool value = true;
+};
+
+template <size_t _N_words, size_t _Size>
 class __bitset
 {
 public:

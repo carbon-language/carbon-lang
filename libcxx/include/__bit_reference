@@ -21,7 +21,13 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 template <class _C, bool _IsConst> class __bit_iterator;
 template <class _C> class __bit_const_reference;
 
-template <class _C>
+template <class _Tp>
+struct __has_storage_type
+{
+    static const bool value = false;
+};
+
+template <class _C, bool = __has_storage_type<_C>::value>
 class __bit_reference
 {
     typedef typename _C::__storage_type    __storage_type;
@@ -64,6 +70,11 @@ private:
     _LIBCPP_INLINE_VISIBILITY
     __bit_reference(__storage_pointer __s, __storage_type __m) _NOEXCEPT
         : __seg_(__s), __mask_(__m) {}
+};
+
+template <class _C>
+class __bit_reference<_C, false>
+{
 };
 
 template <class _C, class _D>
