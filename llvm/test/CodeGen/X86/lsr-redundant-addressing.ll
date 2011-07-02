@@ -1,4 +1,4 @@
-; RUN: llc -march=x86-64 < %s | fgrep {addq	$-16,} | count 1
+; RUN: llc -march=x86-64 < %s | FileCheck %s
 ; rdar://9081094
 
 ; LSR shouldn't create lots of redundant address computations.
@@ -10,6 +10,12 @@
 @isa = external hidden unnamed_addr constant [13 x %1], align 32
 
 define void @main_bb.i() nounwind {
+; CHECK: main_bb.i:
+; CHECK-NOT: ret
+; CHECK: addq $-16,
+; CHECK-NOT: ret
+; CHECK: ret
+
 bb:
   br label %bb38
 
