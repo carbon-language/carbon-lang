@@ -1666,10 +1666,35 @@ class __bind
 
     typedef typename __make_tuple_indices<sizeof...(_BoundArgs)>::type __indices;
 public:
+#ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+
+    _LIBCPP_INLINE_VISIBILITY
+    __bind(const __bind& __b)
+        : __f_(__b.__f_),
+          __bound_args_(__b.__bound_args_) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __bind& operator=(const __bind& __b)
+    {
+        __f_ = __b.__f_;
+        __bound_args_ = __b.__bound_args_;
+        return *this;
+    }
+
     _LIBCPP_INLINE_VISIBILITY
     __bind(__bind&& __b)
         : __f_(_VSTD::move(__b.__f_)),
           __bound_args_(_VSTD::move(__b.__bound_args_)) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __bind& operator=(__bind&& __b)
+    {
+        __f_ = _VSTD::move(__b.__f_);
+        __bound_args_ = _VSTD::move(__b.__bound_args_);
+        return *this;
+    }
+
+#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
     template <class _G, class ..._BA>
       _LIBCPP_INLINE_VISIBILITY
@@ -1707,9 +1732,31 @@ class __bind_r
 public:
     typedef _R result_type;
 
+#ifdef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
+
+    _LIBCPP_INLINE_VISIBILITY
+    __bind_r(const __bind_r& __b)
+        : base(_VSTD::forward<const base&>(__b)) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __bind_r& operator=(const __bind_r& __b)
+    {
+        base::operator=(_VSTD::forward<const base&>(__b));
+        return *this;
+    }
+
     _LIBCPP_INLINE_VISIBILITY
     __bind_r(__bind_r&& __b)
         : base(_VSTD::forward<base>(__b)) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    __bind_r& operator=(__bind_r&& __b)
+    {
+        base::operator=(_VSTD::forward<base>(__b));
+        return *this;
+    }
+
+#endif  // _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
 
     template <class _G, class ..._BA>
       _LIBCPP_INLINE_VISIBILITY
