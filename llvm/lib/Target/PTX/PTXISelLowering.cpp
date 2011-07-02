@@ -184,27 +184,6 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const {
 //                      Calling Convention Implementation
 //===----------------------------------------------------------------------===//
 
-namespace {
-struct argmap_entry {
-  MVT::SimpleValueType VT;
-  TargetRegisterClass *RC;
-  TargetRegisterClass::iterator loc;
-
-  argmap_entry(MVT::SimpleValueType _VT, TargetRegisterClass *_RC)
-    : VT(_VT), RC(_RC), loc(_RC->begin()) {}
-
-  void reset() { loc = RC->begin(); }
-  bool operator==(MVT::SimpleValueType _VT) const { return VT == _VT; }
-} argmap[] = {
-  argmap_entry(MVT::i1,  PTX::RegPredRegisterClass),
-  argmap_entry(MVT::i16, PTX::RegI16RegisterClass),
-  argmap_entry(MVT::i32, PTX::RegI32RegisterClass),
-  argmap_entry(MVT::i64, PTX::RegI64RegisterClass),
-  argmap_entry(MVT::f32, PTX::RegF32RegisterClass),
-  argmap_entry(MVT::f64, PTX::RegF64RegisterClass)
-};
-}                               // end anonymous namespace
-
 SDValue PTXTargetLowering::
   LowerFormalArguments(SDValue Chain,
                        CallingConv::ID CallConv,
