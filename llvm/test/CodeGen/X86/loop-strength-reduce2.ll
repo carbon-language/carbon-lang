@@ -1,6 +1,7 @@
-; RUN: llc < %s -mtriple=i686-apple-darwin -relocation-model=pic | grep {\$pb} | grep mov
+; RUN: llc < %s -mtriple=i686-apple-darwin -relocation-model=pic | FileCheck %s
 ;
 ; Make sure the PIC label flags2-"L1$pb" is not moved up to the preheader.
+; CHECK: mov{{.}} {{.*}}$pb
 
 @flags2 = internal global [8193 x i8] zeroinitializer, align 32		; <[8193 x i8]*> [#uses=1]
 
