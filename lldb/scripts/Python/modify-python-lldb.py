@@ -8,7 +8,7 @@
 #
 # As a cleanup step, it also removes the 'residues' from the autodoc features of
 # swig.  For an example, take a look at SBTarget.h header file, where we take
-# advantage of the already existing C++-style headerdoc and make it the Python
+# advantage of the already existing doxygen C++-docblock and make it the Python
 # docstring for the same method.  The 'residues' in this context include the
 # '#endif' and the '#ifdef SWIG' lines.
 #
@@ -28,6 +28,9 @@ else:
 # Residues to be removed.
 c_endif_swig = "#endif"
 c_ifdef_swig = "#ifdef SWIG"
+c_comment_marker = "//------------"
+# The pattern for recognizing the doxygen comment block line.
+doxygen_comment_start = re.compile("^\s*(    /// ?)")
 
 #
 # lldb_iter() should appear before our first SB* class definition.
@@ -161,8 +164,15 @@ for line in content.splitlines():
     # Cleanse the lldb.py of the autodoc'ed residues.
     if c_ifdef_swig in line or c_endif_swig in line:
         continue
+    # As well as the comment marker line.
+    if c_comment_marker in line:
+        continue
     # Also remove the '\a ' substrings.
     line = line.replace('\a ', '')
+    # And the leading '///' substring.
+    doxygen_comment_match = doxygen_comment_start.match(line)
+    if doxygen_comment_match:
+        line = line.replace(doxygen_comment_match.group(1), '', 1)
 
     if state == NORMAL:
         match = class_pattern.search(line)
