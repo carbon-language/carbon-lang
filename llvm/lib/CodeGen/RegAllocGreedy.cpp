@@ -76,6 +76,7 @@ class RAGreedy : public MachineFunctionPass,
   // state
   std::auto_ptr<Spiller> SpillerInstance;
   std::priority_queue<std::pair<unsigned, unsigned> > Queue;
+  unsigned NextCascade;
 
   // Live ranges pass through a number of stages as we try to allocate them.
   // Some of the stages may also create new live ranges:
@@ -101,30 +102,36 @@ class RAGreedy : public MachineFunctionPass,
 
   static const char *const StageName[];
 
-  IndexedMap<unsigned char, VirtReg2IndexFunctor> LRStage;
+  // RegInfo - Keep additional information about each live range.
+  struct RegInfo {
+    LiveRangeStage Stage;
+
+    // Cascade - Eviction loop prevention. See canEvictInterference().
+    unsigned Cascade;
+
+    RegInfo() : Stage(RS_New), Cascade(0) {}
+  };
+
+  IndexedMap<RegInfo, VirtReg2IndexFunctor> ExtraRegInfo;
 
   LiveRangeStage getStage(const LiveInterval &VirtReg) const {
-    return LiveRangeStage(LRStage[VirtReg.reg]);
+    return ExtraRegInfo[VirtReg.reg].Stage;
+  }
+
+  void setStage(const LiveInterval &VirtReg, LiveRangeStage Stage) {
+    ExtraRegInfo.resize(MRI->getNumVirtRegs());
+    ExtraRegInfo[VirtReg.reg].Stage = Stage;
   }
 
   template<typename Iterator>
   void setStage(Iterator Begin, Iterator End, LiveRangeStage NewStage) {
-    LRStage.resize(MRI->getNumVirtRegs());
+    ExtraRegInfo.resize(MRI->getNumVirtRegs());
     for (;Begin != End; ++Begin) {
       unsigned Reg = (*Begin)->reg;
-      if (LRStage[Reg] == RS_New)
-        LRStage[Reg] = NewStage;
+      if (ExtraRegInfo[Reg].Stage == RS_New)
+        ExtraRegInfo[Reg].Stage = NewStage;
     }
   }
-
-  // Eviction. Sometimes an assigned live range can be evicted without
-  // conditions, but other times it must be split after being evicted to avoid
-  // infinite loops.
-  enum CanEvict {
-    CE_Never,    ///< Can never evict.
-    CE_Always,   ///< Can always evict.
-    CE_WithSplit ///< Can evict only if range is also split or spilled.
-  };
 
   // splitting state.
   std::auto_ptr<SplitAnalysis> SA;
@@ -190,7 +197,7 @@ private:
   void splitAroundRegion(LiveInterval&, GlobalSplitCandidate&,
                          SmallVectorImpl<LiveInterval*>&);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
-  CanEvict canEvict(LiveInterval &A, LiveInterval &B);
+  bool canEvict(LiveInterval &A, LiveInterval &B);
   bool canEvictInterference(LiveInterval&, unsigned, float&);
 
   unsigned tryAssign(LiveInterval&, AllocationOrder&,
@@ -228,7 +235,7 @@ FunctionPass* llvm::createGreedyRegisterAllocator() {
   return new RAGreedy();
 }
 
-RAGreedy::RAGreedy(): MachineFunctionPass(ID), LRStage(RS_New) {
+RAGreedy::RAGreedy(): MachineFunctionPass(ID) {
   initializeLiveDebugVariablesPass(*PassRegistry::getPassRegistry());
   initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
   initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
@@ -308,13 +315,13 @@ void RAGreedy::LRE_DidCloneVirtReg(unsigned New, unsigned Old) {
   // LRE may clone a virtual register because dead code elimination causes it to
   // be split into connected components. Ensure that the new register gets the
   // same stage as the parent.
-  LRStage.grow(New);
-  LRStage[New] = LRStage[Old];
+  ExtraRegInfo.grow(New);
+  ExtraRegInfo[New] = ExtraRegInfo[Old];
 }
 
 void RAGreedy::releaseMemory() {
   SpillerInstance.reset(0);
-  LRStage.clear();
+  ExtraRegInfo.clear();
   GlobalCand.clear();
   RegAllocBase::releaseMemory();
 }
@@ -328,11 +335,11 @@ void RAGreedy::enqueue(LiveInterval *LI) {
          "Can only enqueue virtual registers");
   unsigned Prio;
 
-  LRStage.grow(Reg);
-  if (LRStage[Reg] == RS_New)
-    LRStage[Reg] = RS_First;
+  ExtraRegInfo.grow(Reg);
+  if (ExtraRegInfo[Reg].Stage == RS_New)
+    ExtraRegInfo[Reg].Stage = RS_First;
 
-  if (LRStage[Reg] == RS_Second)
+  if (ExtraRegInfo[Reg].Stage == RS_Second)
     // Unsplit ranges that couldn't be allocated immediately are deferred until
     // everything else has been allocated. Long ranges are allocated last so
     // they are split against realistic interference.
@@ -398,13 +405,10 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
 /// by enqueue() decides which registers ultimately end up being split and
 /// spilled.
 ///
-/// This function must define a non-circular relation when it returns CE_Always,
-/// otherwise infinite eviction loops are possible. When evicting a <= RS_Second
-/// range, it is possible to return CE_WithSplit which forces the evicted
-/// register to be split or spilled before it can evict anything again. That
-/// guarantees progress.
-RAGreedy::CanEvict RAGreedy::canEvict(LiveInterval &A, LiveInterval &B) {
-  return A.weight > B.weight ? CE_Always : CE_Never;
+/// Cascade numbers are used to prevent infinite loops if this function is a
+/// cyclic relation.
+bool RAGreedy::canEvict(LiveInterval &A, LiveInterval &B) {
+  return A.weight > B.weight;
 }
 
 /// canEvict - Return true if all interferences between VirtReg and PhysReg can
@@ -413,6 +417,17 @@ RAGreedy::CanEvict RAGreedy::canEvict(LiveInterval &A, LiveInterval &B) {
 /// On return, set MaxWeight to the maximal spill weight of an interference.
 bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
                                     float &MaxWeight) {
+  // Find VirtReg's cascade number. This will be unassigned if VirtReg was never
+  // involved in an eviction before. If a cascade number was assigned, deny
+  // evicting anything with the same or a newer cascade number. This prevents
+  // infinite eviction loops.
+  //
+  // This works out so a register without a cascade number is allowed to evict
+  // anything, and it can be evicted by anything.
+  unsigned Cascade = ExtraRegInfo[VirtReg.reg].Cascade;
+  if (!Cascade)
+    Cascade = NextCascade;
+
   float Weight = 0;
   for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
@@ -425,18 +440,12 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
       LiveInterval *Intf = Q.interferingVRegs()[i - 1];
       if (TargetRegisterInfo::isPhysicalRegister(Intf->reg))
         return false;
+      if (Cascade <= ExtraRegInfo[Intf->reg].Cascade)
+        return false;
       if (Intf->weight >= MaxWeight)
         return false;
-      switch (canEvict(VirtReg, *Intf)) {
-      case CE_Always:
-        break;
-      case CE_Never:
+      if (!canEvict(VirtReg, *Intf))
         return false;
-      case CE_WithSplit:
-        if (getStage(*Intf) > RS_Second)
-          return false;
-        break;
-      }
       Weight = std::max(Weight, Intf->weight);
     }
   }
@@ -487,20 +496,27 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
   if (!BestPhys)
     return 0;
 
-  DEBUG(dbgs() << "evicting " << PrintReg(BestPhys, TRI) << " interference\n");
+  // We will evict interference. Make sure that VirtReg has a cascade number,
+  // and assign that cascade number to every evicted register. These live
+  // ranges than then only be evicted by a newer cascade, preventing infinite
+  // loops.
+  unsigned Cascade = ExtraRegInfo[VirtReg.reg].Cascade;
+  if (!Cascade)
+    Cascade = ExtraRegInfo[VirtReg.reg].Cascade = NextCascade++;
+
+  DEBUG(dbgs() << "evicting " << PrintReg(BestPhys, TRI)
+               << " interference: Cascade " << Cascade << '\n');
   for (const unsigned *AliasI = TRI->getOverlaps(BestPhys); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
     assert(Q.seenAllInterferences() && "Didn't check all interfererences.");
     for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
       LiveInterval *Intf = Q.interferingVRegs()[i];
       unassign(*Intf, VRM->getPhys(Intf->reg));
+      assert(ExtraRegInfo[Intf->reg].Cascade < Cascade &&
+             "Cannot decrease cascade number, illegal eviction");
+      ExtraRegInfo[Intf->reg].Cascade = Cascade;
       ++NumEvicted;
       NewVRegs.push_back(Intf);
-      // Prevent looping by forcing the evicted ranges to be split before they
-      // can evict anything else.
-      if (getStage(*Intf) < RS_Second &&
-          canEvict(VirtReg, *Intf) == CE_WithSplit)
-        LRStage[Intf->reg] = RS_Second;
     }
   }
   return BestPhys;
@@ -1097,7 +1113,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
   SE->finish(&IntvMap);
   DebugVars->splitRegister(VirtReg.reg, LREdit.regs());
 
-  LRStage.resize(MRI->getNumVirtRegs());
+  ExtraRegInfo.resize(MRI->getNumVirtRegs());
   unsigned OrigBlocks = SA->getNumLiveBlocks();
 
   // Sort out the new intervals created by splitting. We get four kinds:
@@ -1106,27 +1122,27 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
   // - Block-local splits are candidates for local splitting.
   // - DCE leftovers should go back on the queue.
   for (unsigned i = 0, e = LREdit.size(); i != e; ++i) {
-    unsigned Reg = LREdit.get(i)->reg;
+    LiveInterval &Reg = *LREdit.get(i);
 
     // Ignore old intervals from DCE.
-    if (LRStage[Reg] != RS_New)
+    if (getStage(Reg) != RS_New)
       continue;
 
     // Remainder interval. Don't try splitting again, spill if it doesn't
     // allocate.
     if (IntvMap[i] == 0) {
-      LRStage[Reg] = RS_Global;
+      setStage(Reg, RS_Global);
       continue;
     }
 
     // Main interval. Allow repeated splitting as long as the number of live
     // blocks is strictly decreasing.
     if (IntvMap[i] == MainIntv) {
-      if (SA->countLiveBlocks(LREdit.get(i)) >= OrigBlocks) {
+      if (SA->countLiveBlocks(&Reg) >= OrigBlocks) {
         DEBUG(dbgs() << "Main interval covers the same " << OrigBlocks
                      << " blocks as original.\n");
         // Don't allow repeated splitting as a safe guard against looping.
-        LRStage[Reg] = RS_Global;
+        setStage(Reg, RS_Global);
       }
       continue;
     }
@@ -1432,10 +1448,9 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   if (NewGaps >= NumGaps) {
     DEBUG(dbgs() << "Tagging non-progress ranges: ");
     assert(!ProgressRequired && "Didn't make progress when it was required.");
-    LRStage.resize(MRI->getNumVirtRegs());
     for (unsigned i = 0, e = IntvMap.size(); i != e; ++i)
       if (IntvMap[i] == 1) {
-        LRStage[LREdit.get(i)->reg] = RS_Local;
+        setStage(*LREdit.get(i), RS_Local);
         DEBUG(dbgs() << PrintReg(LREdit.get(i)->reg));
       }
     DEBUG(dbgs() << '\n');
@@ -1514,7 +1529,8 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
     return PhysReg;
 
   LiveRangeStage Stage = getStage(VirtReg);
-  DEBUG(dbgs() << StageName[Stage] << '\n');
+  DEBUG(dbgs() << StageName[Stage]
+               << " Cascade " << ExtraRegInfo[VirtReg.reg].Cascade << '\n');
 
   // Try to evict a less worthy live range, but only for ranges from the primary
   // queue. The RS_Second ranges already failed to do this, and they should not
@@ -1529,7 +1545,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   // Wait until the second time, when all smaller ranges have been allocated.
   // This gives a better picture of the interference to split around.
   if (Stage == RS_First) {
-    LRStage[VirtReg.reg] = RS_Second;
+    setStage(VirtReg, RS_Second);
     DEBUG(dbgs() << "wait for second round\n");
     NewVRegs.push_back(&VirtReg);
     return 0;
@@ -1580,8 +1596,9 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
 
   SA.reset(new SplitAnalysis(*VRM, *LIS, *Loops));
   SE.reset(new SplitEditor(*SA, *LIS, *VRM, *DomTree));
-  LRStage.clear();
-  LRStage.resize(MRI->getNumVirtRegs());
+  ExtraRegInfo.clear();
+  ExtraRegInfo.resize(MRI->getNumVirtRegs());
+  NextCascade = 1;
   IntfCache.init(MF, &PhysReg2LiveUnion[0], Indexes, TRI);
 
   allocatePhysRegs();
