@@ -1253,8 +1253,7 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
 
   // If the copies use two different value numbers of X, we cannot merge
   // A and B.
-  if (SrcInt.FindLiveRangeContaining(Other->def)->valno !=
-      SrcInt.FindLiveRangeContaining(VNI->def)->valno)
+  if (SrcInt.getVNInfoAt(Other->def) != SrcInt.getVNInfoAt(VNI->def))
     return false;
 
   DupCopies.push_back(MI);
