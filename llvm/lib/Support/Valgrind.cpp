@@ -39,7 +39,7 @@ void llvm::sys::ValgrindDiscardTranslations(const void *Addr, size_t Len) {
   if (NotUnderValgrind)
     return;
 
-  (void)VALGRIND_DISCARD_TRANSLATIONS(Addr, Len);
+  VALGRIND_DISCARD_TRANSLATIONS(Addr, Len);
 }
 
 #else  // !HAVE_VALGRIND_VALGRIND_H
