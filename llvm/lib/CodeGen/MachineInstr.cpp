@@ -15,13 +15,16 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/InlineAsm.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Metadata.h"
+#include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Value.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -1711,4 +1714,25 @@ MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
     Hash = (unsigned)Key + Hash * 37;
   }
   return Hash;
+}
+
+void MachineInstr::emitError(StringRef Msg) const {
+  // Find the source location cookie.
+  unsigned LocCookie = 0;
+  const MDNode *LocMD = 0;
+  for (unsigned i = getNumOperands(); i != 0; --i) {
+    if (getOperand(i-1).isMetadata() &&
+        (LocMD = getOperand(i-1).getMetadata()) &&
+        LocMD->getNumOperands() != 0) {
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(LocMD->getOperand(0))) {
+        LocCookie = CI->getZExtValue();
+        break;
+      }
+    }
+  }
+
+  if (const MachineBasicBlock *MBB = getParent())
+    if (const MachineFunction *MF = MBB->getParent())
+      return MF->getMMI().getModule()->getContext().emitError(LocCookie, Msg);
+  report_fatal_error(Msg);
 }

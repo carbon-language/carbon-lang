@@ -22,6 +22,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/DebugLoc.h"
 #include <vector>
@@ -179,6 +180,15 @@ public:
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
   DebugLoc getDebugLoc() const { return debugLoc; }
+
+  /// emitError - Emit an error referring to the source location of this
+  /// instruction. This should only be used for inline assembly that is somehow
+  /// impossible to compile. Other errors should have been handled much
+  /// earlier.
+  ///
+  /// If this method returns, the caller should try to recover from the error.
+  ///
+  void emitError(StringRef Msg) const;
 
   /// getDesc - Returns the target instruction descriptor of this
   /// MachineInstr.
