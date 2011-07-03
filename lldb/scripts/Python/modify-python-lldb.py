@@ -29,6 +29,7 @@ else:
 c_endif_swig = "#endif"
 c_ifdef_swig = "#ifdef SWIG"
 c_comment_marker = "//------------"
+trailing_blank_line = '            '
 # The pattern for recognizing the doxygen comment block line.
 doxygen_comment_start = re.compile("^\s*(    /// ?)")
 
@@ -164,8 +165,8 @@ for line in content.splitlines():
     # Cleanse the lldb.py of the autodoc'ed residues.
     if c_ifdef_swig in line or c_endif_swig in line:
         continue
-    # As well as the comment marker line.
-    if c_comment_marker in line:
+    # As well as the comment marker line and trailing blank line.
+    if c_comment_marker in line or line == trailing_blank_line:
         continue
     # Also remove the '\a ' substrings.
     line = line.replace('\a ', '')
