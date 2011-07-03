@@ -106,7 +106,7 @@ public:
     // Note, the alignment values for f64 and i64 on ppc64 in Darwin
     // documentation are wrong; these are correct (i.e. "what gcc does").
     return isPPC64() ? "E-p:64:64-f64:64:64-i64:64:64-f128:64:128-n32:64"
-                     : "E-p:32:32-f64:32:64-i64:32:64-f128:64:128-n32";
+                     : "E-p:32:32-f64:64:64-i64:64:64-f128:64:128-n32";
   }
 
   /// isPPC64 - Return true if we are generating code for 64-bit pointer mode.
