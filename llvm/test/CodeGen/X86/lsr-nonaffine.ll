@@ -7,9 +7,9 @@
 ; CHECK:        xorl %eax, %eax
 ; CHECK-NEXT:   align
 ; CHECK-NEXT: BB0_1:
-; CHECK-NEXT:   movq  %rax, (%rdx)
-; CHECK-NEXT:   addq  %rsi, %rax
-; CHECK-NEXT:   cmpq  %rdi, %rax
+; CHECK-NEXT:   movq  %rax, (%{{rdx|r8}})
+; CHECK-NEXT:   addq  %{{rsi|rdx}}, %rax
+; CHECK-NEXT:   cmpq  %{{rdi|rcx}}, %rax
 ; CHECK-NEXT:   jl
 ; CHECK-NEXT:   imulq %rax, %rax
 ; CHECK-NEXT:   ret
