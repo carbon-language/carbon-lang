@@ -1214,12 +1214,6 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
   unsigned Dst = MI->getOperand(0).getReg();
   unsigned Src = MI->getOperand(1).getReg();
 
-  // FIXME: If "B = X" kills X, we have to move the kill back to its
-  // previous use. For now we just avoid the optimization in that case.
-  LiveInterval &SrcInt = li.getInterval(Src);
-  if (SrcInt.killedAt(VNI->def))
-    return false;
-
   if (!TargetRegisterInfo::isVirtualRegister(Src) ||
       !TargetRegisterInfo::isVirtualRegister(Dst))
     return false;
@@ -1253,6 +1247,7 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
 
   // If the copies use two different value numbers of X, we cannot merge
   // A and B.
+  LiveInterval &SrcInt = li.getInterval(Src);
   if (SrcInt.getVNInfoAt(Other->def) != SrcInt.getVNInfoAt(VNI->def))
     return false;
 
@@ -1476,6 +1471,7 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
   if (RHSValNoAssignments.empty())
     RHSValNoAssignments.push_back(-1);
 
+  SmallVector<unsigned, 8> SourceRegisters;
   for (SmallVector<MachineInstr*, 8>::iterator I = DupCopies.begin(),
          E = DupCopies.end(); I != E; ++I) {
     MachineInstr *MI = *I;
@@ -1489,9 +1485,17 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
     // X = X
     // and mark the X as coalesced to keep the illusion.
     unsigned Src = MI->getOperand(1).getReg();
+    SourceRegisters.push_back(Src);
     MI->getOperand(0).substVirtReg(Src, 0, *tri_);
 
     markAsJoined(MI);
+  }
+
+  // If B = X was the last use of X in a liverange, we have to shrink it now
+  // that B = X is gone.
+  for (SmallVector<unsigned, 8>::iterator I = SourceRegisters.begin(),
+         E = SourceRegisters.end(); I != E; ++I) {
+    li_->shrinkToUses(&li_->getInterval(*I));
   }
 
   // If we get here, we know that we can coalesce the live ranges.  Ask the
