@@ -109,11 +109,18 @@ public:
   // TODO: This can be random access iterator, only operator[] missing.
 
   explicit inline SuccIterator(Term_ T) : Term(T), idx(0) {// begin iterator
-    assert(T && "getTerminator returned null!");
   }
   inline SuccIterator(Term_ T, bool)                       // end iterator
-    : Term(T), idx(Term->getNumSuccessors()) {
-    assert(T && "getTerminator returned null!");
+    : Term(T) {
+    if (Term)
+      idx = Term->getNumSuccessors();
+    else
+      // Term == NULL happens, if a basic block is not fully constructed and
+      // consequently getTerminator() returns NULL. In this case we construct a
+      // SuccIterator which describes a basic block that has zero successors.
+      // Defining SuccIterator for incomplete and malformed CFGs is especially
+      // useful for debugging.
+      idx = 0;
   }
 
   inline const Self &operator=(const Self &I) {
@@ -201,6 +208,7 @@ public:
 
   /// Get the source BB of this iterator.
   inline BB_ *getSource() {
+    assert(Term && "Source not available, if basic block was malformed");
     return Term->getParent();
   }
 };
