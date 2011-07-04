@@ -388,6 +388,12 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Expand pseudo-instructions emitted by ISel.
   PM.add(createExpandISelPseudosPass());
 
+  // Pre-ra tail duplication.
+  if (OptLevel != CodeGenOpt::None && !DisableEarlyTailDup) {
+    PM.add(createTailDuplicatePass(true));
+    printAndVerify(PM, "After Pre-RegAlloc TailDuplicate");
+  }
+
   // Optimize PHIs before DCE: removing dead PHI cycles may make more
   // instructions dead.
   if (OptLevel != CodeGenOpt::None)
@@ -414,12 +420,6 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
     PM.add(createPeepholeOptimizerPass());
     printAndVerify(PM, "After codegen peephole optimization pass");
-  }
-
-  // Pre-ra tail duplication.
-  if (OptLevel != CodeGenOpt::None && !DisableEarlyTailDup) {
-    PM.add(createTailDuplicatePass(true));
-    printAndVerify(PM, "After Pre-RegAlloc TailDuplicate");
   }
 
   // Run pre-ra passes.
