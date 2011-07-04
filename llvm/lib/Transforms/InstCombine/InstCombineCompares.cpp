@@ -1454,7 +1454,11 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             return new ICmpInst(isICMP_NE ? ICmpInst::ICMP_EQ :
                                 ICmpInst::ICMP_NE, LHSI,
                                 Constant::getNullValue(RHS->getType()));
-          
+
+          // Don't perform the following transforms if the AND has multiple uses
+          if (!BO->hasOneUse())
+            break;
+
           // Replace (and X, (1 << size(X)-1) != 0) with x s< 0
           if (BOC->getValue().isSignBit()) {
             Value *X = BO->getOperand(0);
