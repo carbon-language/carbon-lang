@@ -289,8 +289,8 @@ ASTContext::setExternalSource(llvm::OwningPtr<ExternalASTSource> &Source) {
 }
 
 void ASTContext::PrintStats() const {
-  fprintf(stderr, "*** AST Context Stats:\n");
-  fprintf(stderr, "  %d types total.\n", (int)Types.size());
+  llvm::errs() << "\n*** AST Context Stats:\n";
+  llvm::errs() << "  " << Types.size() << " types total.\n";
 
   unsigned counts[] = {
 #define TYPE(Name, Parent) 0,
@@ -308,40 +308,42 @@ void ASTContext::PrintStats() const {
   unsigned TotalBytes = 0;
 #define TYPE(Name, Parent)                                              \
   if (counts[Idx])                                                      \
-    fprintf(stderr, "    %d %s types\n", (int)counts[Idx], #Name);      \
+    llvm::errs() << "    " << counts[Idx] << " " << #Name               \
+                 << " types\n";                                         \
   TotalBytes += counts[Idx] * sizeof(Name##Type);                       \
   ++Idx;
 #define ABSTRACT_TYPE(Name, Parent)
 #include "clang/AST/TypeNodes.def"
 
-  fprintf(stderr, "Total bytes = %d\n", int(TotalBytes));
-  
+  llvm::errs() << "Total bytes = " << TotalBytes << "\n";
+
   // Implicit special member functions.
-  fprintf(stderr, "  %u/%u implicit default constructors created\n",
-          NumImplicitDefaultConstructorsDeclared, 
-          NumImplicitDefaultConstructors);
-  fprintf(stderr, "  %u/%u implicit copy constructors created\n",
-          NumImplicitCopyConstructorsDeclared, 
-          NumImplicitCopyConstructors);
+  llvm::errs() << NumImplicitDefaultConstructorsDeclared << "/"
+               << NumImplicitDefaultConstructors
+               << " implicit default constructors created\n";
+  llvm::errs() << NumImplicitCopyConstructorsDeclared << "/"
+               << NumImplicitCopyConstructors
+               << " implicit copy constructors created\n";
   if (getLangOptions().CPlusPlus)
-    fprintf(stderr, "  %u/%u implicit move constructors created\n",
-            NumImplicitMoveConstructorsDeclared, 
-            NumImplicitMoveConstructors);
-  fprintf(stderr, "  %u/%u implicit copy assignment operators created\n",
-          NumImplicitCopyAssignmentOperatorsDeclared, 
-          NumImplicitCopyAssignmentOperators);
+    llvm::errs() << NumImplicitMoveConstructorsDeclared << "/"
+                 << NumImplicitMoveConstructors
+                 << " implicit move constructors created\n";
+  llvm::errs() << NumImplicitCopyAssignmentOperatorsDeclared << "/"
+               << NumImplicitCopyAssignmentOperators
+               << " implicit copy assignment operators created\n";
   if (getLangOptions().CPlusPlus)
-    fprintf(stderr, "  %u/%u implicit move assignment operators created\n",
-            NumImplicitMoveAssignmentOperatorsDeclared, 
-            NumImplicitMoveAssignmentOperators);
-  fprintf(stderr, "  %u/%u implicit destructors created\n",
-          NumImplicitDestructorsDeclared, NumImplicitDestructors);
-  
+    llvm::errs() << NumImplicitMoveAssignmentOperatorsDeclared << "/"
+                 << NumImplicitMoveAssignmentOperators
+                 << " implicit move assignment operators created\n";
+  llvm::errs() << NumImplicitDestructorsDeclared << "/"
+               << NumImplicitDestructors
+               << " implicit destructors created\n";
+
   if (ExternalSource.get()) {
-    fprintf(stderr, "\n");
+    llvm::errs() << "\n";
     ExternalSource->PrintStats();
   }
-  
+
   BumpAlloc.PrintStats();
 }
 
@@ -6478,4 +6480,3 @@ size_t ASTContext::getSideTableAllocatedMemory() const {
   bytes += InstantiatedFromUnnamedFieldDecl.getMemorySize();
   return bytes;
 }
-

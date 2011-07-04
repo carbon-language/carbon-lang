@@ -97,7 +97,7 @@ void clang::ParseAST(Sema &S, bool PrintStats) {
   Consumer->HandleTranslationUnit(S.getASTContext());
   
   if (PrintStats) {
-    fprintf(stderr, "\nSTATISTICS:\n");
+    llvm::errs() << "\nSTATISTICS:\n";
     P.getActions().PrintStats();
     S.getASTContext().PrintStats();
     Decl::PrintStats();
