@@ -812,9 +812,9 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
     tie(Start, Stop) = Indexes->getMBBRange(BI.MBB);
     Intf.moveToBlock(BI.MBB->getNumber());
     DEBUG(dbgs() << "EB#" << Bundles->getBundle(BI.MBB->getNumber(), 0)
-                 << (RegIn ? " => " : " -- ")
+                 << (BI.LiveIn ? (RegIn ? " => " : " -> ") : "    ")
                  << "BB#" << BI.MBB->getNumber()
-                 << (RegOut ? " => " : " -- ")
+                 << (BI.LiveOut ? (RegOut ? " => " : " -> ") : "    ")
                  << " EB#" << Bundles->getBundle(BI.MBB->getNumber(), 1)
                  << " [" << Start << ';'
                  << SA->getLastSplitPoint(BI.MBB->getNumber()) << '-' << Stop
@@ -1062,7 +1062,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
       //     |---o--    Live-in in MainIntv.
       //     ====---    Switch to LocalIntv before interference.
       //
-      SlotIndex Switch = SE->enterIntvBefore(Intf.first());
+      SlotIndex Switch = SE->enterIntvBefore(std::min(Pos, Intf.first()));
       assert(Switch <= Intf.first() && "Expected to avoid interference");
       SE->useIntv(Switch, Pos);
       SE->selectIntv(MainIntv);
@@ -1080,7 +1080,7 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
       //     |   o--    Defined in block.
       //         ---    Begin LocalIntv at first use.
       //
-      SlotIndex Switch = SE->enterIntvBefore(BI.FirstUse);
+      SlotIndex Switch = SE->enterIntvBefore(std::min(Pos, BI.FirstUse));
       SE->useIntv(Switch, Pos);
     }
   }
