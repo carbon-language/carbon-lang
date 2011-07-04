@@ -15,6 +15,9 @@ else
 	INSTALL_PREFIX="$(SDKROOT)"
 endif
 
+help::
+	echo Use make install DSTROOT=<destination>
+
 installsrc:: $(SRCROOT)
 
 	ditto $(SRCDIRS)/include $(SRCROOT)/include
