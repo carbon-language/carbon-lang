@@ -959,8 +959,7 @@ public:
                                   SourceLocation NameLoc,
                                   const Token &NextToken);
   
-  Decl *ActOnDeclarator(Scope *S, Declarator &D,
-                        bool IsFunctionDefintion = false);
+  Decl *ActOnDeclarator(Scope *S, Declarator &D);
 
   Decl *HandleDeclarator(Scope *S, Declarator &D,
                          MultiTemplateParamsArg TemplateParameterLists,

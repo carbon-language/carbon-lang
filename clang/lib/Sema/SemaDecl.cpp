@@ -2954,10 +2954,9 @@ static bool RebuildDeclaratorInCurrentInstantiation(Sema &S, Declarator &D,
   return false;
 }
 
-Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D,
-                            bool IsFunctionDefinition) {
+Decl *Sema::ActOnDeclarator(Scope *S, Declarator &D) {
   return HandleDeclarator(S, D, MultiTemplateParamsArg(*this),
-                          IsFunctionDefinition);
+                          /*IsFunctionDefinition=*/false);
 }
 
 /// DiagnoseClassNameShadow - Implement C++ [class.mem]p13:
