@@ -29,7 +29,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <cstdio>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -76,26 +75,27 @@ bool Decl::CollectingStats(bool Enable) {
 }
 
 void Decl::PrintStats() {
-  fprintf(stderr, "*** Decl Stats:\n");
+  llvm::errs() << "\n*** Decl Stats:\n";
 
   int totalDecls = 0;
 #define DECL(DERIVED, BASE) totalDecls += n##DERIVED##s;
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
-  fprintf(stderr, "  %d decls total.\n", totalDecls);
+  llvm::errs() << "  " << totalDecls << " decls total.\n";
 
   int totalBytes = 0;
 #define DECL(DERIVED, BASE)                                             \
   if (n##DERIVED##s > 0) {                                              \
     totalBytes += (int)(n##DERIVED##s * sizeof(DERIVED##Decl));         \
-    fprintf(stderr, "    %d " #DERIVED " decls, %d each (%d bytes)\n",  \
-            n##DERIVED##s, (int)sizeof(DERIVED##Decl),                  \
-            (int)(n##DERIVED##s * sizeof(DERIVED##Decl)));              \
+    llvm::errs() << "    " << n##DERIVED##s << " " #DERIVED " decls, "  \
+                 << sizeof(DERIVED##Decl) << " each ("                  \
+                 << n##DERIVED##s * sizeof(DERIVED##Decl)               \
+                 << " bytes)\n";                                        \
   }
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
 
-  fprintf(stderr, "Total bytes = %d\n", totalBytes);
+  llvm::errs() << "Total bytes = " << totalBytes << "\n";
 }
 
 void Decl::add(Kind k) {
