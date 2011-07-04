@@ -1321,9 +1321,6 @@ SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
   SDValue CC = DAG.getSetCC(dl, MVT::i32, VT.isInteger() ? GprIndex : FprIndex,
                             DAG.getConstant(8, MVT::i32), ISD::SETLT);
 
-  SDValue Area = DAG.getNode(ISD::SELECT, dl, MVT::i32, CC, RegSaveArea,
-                             OverflowArea);
-
   // adjustment constant gpr_index * 4/8
   SDValue RegConstant = DAG.getNode(ISD::MUL, dl, MVT::i32,
                                     VT.isInteger() ? GprIndex : FprIndex,
