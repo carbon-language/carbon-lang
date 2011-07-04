@@ -201,93 +201,98 @@ bool TailDuplicatePass::TailDuplicateBlocks(MachineFunction &MF) {
 
     SmallVector<MachineBasicBlock*, 8> TDBBs;
     SmallVector<MachineInstr*, 16> Copies;
-    if (TailDuplicate(MBB, MF, TDBBs, Copies)) {
-      ++NumTails;
+    if (!TailDuplicate(MBB, MF, TDBBs, Copies))
+      continue;
 
-      // TailBB's immediate successors are now successors of those predecessors
-      // which duplicated TailBB. Add the predecessors as sources to the PHI
-      // instructions.
-      bool isDead = MBB->pred_empty() && !MBB->hasAddressTaken();
-      if (PreRegAlloc)
-        UpdateSuccessorsPHIs(MBB, isDead, TDBBs, Succs);
+    ++NumTails;
 
-      // If it is dead, remove it.
-      if (isDead) {
-        NumInstrDups -= MBB->size();
-        RemoveDeadBlock(MBB);
-        ++NumDeadBlocks;
-      }
+    // TailBB's immediate successors are now successors of those predecessors
+    // which duplicated TailBB. Add the predecessors as sources to the PHI
+    // instructions.
+    bool isDead = MBB->pred_empty() && !MBB->hasAddressTaken();
+    if (PreRegAlloc)
+      UpdateSuccessorsPHIs(MBB, isDead, TDBBs, Succs);
 
-      // Update SSA form.
-      if (!SSAUpdateVRs.empty()) {
-        for (unsigned i = 0, e = SSAUpdateVRs.size(); i != e; ++i) {
-          unsigned VReg = SSAUpdateVRs[i];
-          SSAUpdate.Initialize(VReg);
-
-          // If the original definition is still around, add it as an available
-          // value.
-          MachineInstr *DefMI = MRI->getVRegDef(VReg);
-          MachineBasicBlock *DefBB = 0;
-          if (DefMI) {
-            DefBB = DefMI->getParent();
-            SSAUpdate.AddAvailableValue(DefBB, VReg);
-          }
-
-          // Add the new vregs as available values.
-          DenseMap<unsigned, AvailableValsTy>::iterator LI =
-            SSAUpdateVals.find(VReg);  
-          for (unsigned j = 0, ee = LI->second.size(); j != ee; ++j) {
-            MachineBasicBlock *SrcBB = LI->second[j].first;
-            unsigned SrcReg = LI->second[j].second;
-            SSAUpdate.AddAvailableValue(SrcBB, SrcReg);
-          }
-
-          // Rewrite uses that are outside of the original def's block.
-          MachineRegisterInfo::use_iterator UI = MRI->use_begin(VReg);
-          while (UI != MRI->use_end()) {
-            MachineOperand &UseMO = UI.getOperand();
-            MachineInstr *UseMI = &*UI;
-            ++UI;
-            if (UseMI->isDebugValue()) {
-              // SSAUpdate can replace the use with an undef. That creates
-              // a debug instruction that is a kill.
-              // FIXME: Should it SSAUpdate job to delete debug instructions
-              // instead of replacing the use with undef?
-              UseMI->eraseFromParent();
-              continue;
-            }
-            if (UseMI->getParent() == DefBB && !UseMI->isPHI())
-              continue;
-            SSAUpdate.RewriteUse(UseMO);
-          }
-        }
-
-        SSAUpdateVRs.clear();
-        SSAUpdateVals.clear();
-      }
-
-      // Eliminate some of the copies inserted by tail duplication to maintain
-      // SSA form.
-      for (unsigned i = 0, e = Copies.size(); i != e; ++i) {
-        MachineInstr *Copy = Copies[i];
-        if (!Copy->isCopy())
-          continue;
-        unsigned Dst = Copy->getOperand(0).getReg();
-        unsigned Src = Copy->getOperand(1).getReg();
-        MachineRegisterInfo::use_iterator UI = MRI->use_begin(Src);
-        if (++UI == MRI->use_end()) {
-          // Copy is the only use. Do trivial copy propagation here.
-          MRI->replaceRegWith(Dst, Src);
-          Copy->eraseFromParent();
-        }
-      }
-
-      if (PreRegAlloc && TailDupVerify)
-        VerifyPHIs(MF, false);
-      MadeChange = true;
+    // If it is dead, remove it.
+    if (isDead) {
+      NumInstrDups -= MBB->size();
+      RemoveDeadBlock(MBB);
+      ++NumDeadBlocks;
     }
+
+    // Update SSA form.
+    if (!SSAUpdateVRs.empty()) {
+      NewPHIs.clear();
+      for (unsigned i = 0, e = SSAUpdateVRs.size(); i != e; ++i) {
+        unsigned VReg = SSAUpdateVRs[i];
+        SSAUpdate.Initialize(VReg);
+
+        // If the original definition is still around, add it as an available
+        // value.
+        MachineInstr *DefMI = MRI->getVRegDef(VReg);
+        MachineBasicBlock *DefBB = 0;
+        if (DefMI) {
+          DefBB = DefMI->getParent();
+          SSAUpdate.AddAvailableValue(DefBB, VReg);
+        }
+
+        // Add the new vregs as available values.
+        DenseMap<unsigned, AvailableValsTy>::iterator LI =
+          SSAUpdateVals.find(VReg);  
+        for (unsigned j = 0, ee = LI->second.size(); j != ee; ++j) {
+          MachineBasicBlock *SrcBB = LI->second[j].first;
+          unsigned SrcReg = LI->second[j].second;
+          SSAUpdate.AddAvailableValue(SrcBB, SrcReg);
+        }
+
+        // Rewrite uses that are outside of the original def's block.
+        MachineRegisterInfo::use_iterator UI = MRI->use_begin(VReg);
+        while (UI != MRI->use_end()) {
+          MachineOperand &UseMO = UI.getOperand();
+          MachineInstr *UseMI = &*UI;
+          ++UI;
+          if (UseMI->isDebugValue()) {
+            // SSAUpdate can replace the use with an undef. That creates
+            // a debug instruction that is a kill.
+            // FIXME: Should it SSAUpdate job to delete debug instructions
+            // instead of replacing the use with undef?
+            UseMI->eraseFromParent();
+            continue;
+          }
+          if (UseMI->getParent() == DefBB && !UseMI->isPHI())
+            continue;
+          SSAUpdate.RewriteUse(UseMO);
+        }
+      }
+
+      SSAUpdateVRs.clear();
+      SSAUpdateVals.clear();
+    }
+
+    // Eliminate some of the copies inserted by tail duplication to maintain
+    // SSA form.
+    for (unsigned i = 0, e = Copies.size(); i != e; ++i) {
+      MachineInstr *Copy = Copies[i];
+      if (!Copy->isCopy())
+        continue;
+      unsigned Dst = Copy->getOperand(0).getReg();
+      unsigned Src = Copy->getOperand(1).getReg();
+      MachineRegisterInfo::use_iterator UI = MRI->use_begin(Src);
+      if (++UI == MRI->use_end()) {
+        // Copy is the only use. Do trivial copy propagation here.
+        MRI->replaceRegWith(Dst, Src);
+        Copy->eraseFromParent();
+      }
+    }
+
+    if (PreRegAlloc && TailDupVerify)
+      VerifyPHIs(MF, false);
+    MadeChange = true;
+
+    if (NewPHIs.size())
+      NumAddedPHIs += NewPHIs.size();
   }
-  NumAddedPHIs += NewPHIs.size();
+
 
   return MadeChange;
 }
