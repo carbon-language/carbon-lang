@@ -807,6 +807,8 @@ public:
     case llvm::Triple::NetBSD:
         SizeType = UnsignedInt;
         break;
+    default:
+	break;
     }
   }
 
