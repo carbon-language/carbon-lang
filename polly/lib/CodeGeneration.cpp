@@ -727,9 +727,6 @@ public:
     PN = Statement->getInductionVariableForDimension(Dimension);
     const Value *V = PN;
 
-    if (PN->getNumOperands() == 2)
-      V = *(PN->use_begin());
-
     if (VectorVMap)
       (*VectorVMap)[vectorDim][V] = RHS;
 
