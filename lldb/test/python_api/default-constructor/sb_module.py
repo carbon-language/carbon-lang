@@ -9,7 +9,6 @@ def fuzz_obj(obj):
     obj.GetFileSpec()
     obj.GetPlatformFileSpec()
     obj.SetPlatformFileSpec(lldb.SBFileSpec())
-    obj.GetUUIDBytes()
     obj.GetUUIDString()
     obj.ResolveFileAddress(sys.maxint, lldb.SBAddress())
     obj.ResolveSymbolContextForAddress(lldb.SBAddress(), 0)

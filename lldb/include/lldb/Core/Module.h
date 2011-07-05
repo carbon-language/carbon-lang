@@ -169,9 +169,8 @@ public:
     ///     See FunctionNameType for more details.
     ///
     /// @param[in] append
-    ///     If \b true, any matches will be appended to \a
-    ///     variable_list, else matches replace the contents of
-    ///     \a variable_list.
+    ///     If \b true, any matches will be appended to \a sc_list, else
+    ///     matches replace the contents of \a sc_list.
     ///
     /// @param[out] sc_list
     ///     A symbol context list that gets filled in with all of the
@@ -194,9 +193,8 @@ public:
     ///     A regular expression to use when matching the name.
     ///
     /// @param[in] append
-    ///     If \b true, any matches will be appended to \a
-    ///     variable_list, else matches replace the contents of
-    ///     \a variable_list.
+    ///     If \b true, any matches will be appended to \a sc_list, else
+    ///     matches replace the contents of \a sc_list.
     ///
     /// @param[out] sc_list
     ///     A symbol context list that gets filled in with all of the
