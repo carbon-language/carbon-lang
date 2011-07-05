@@ -1168,7 +1168,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::clear() _NOEXCEPT
         __deallocate(__p1_.first().__next_);
         __p1_.first().__next_ = nullptr;
         size_type __bc = bucket_count();
-        for (size_type __i; __i < __bc; ++__i)
+        for (size_type __i = 0; __i < __bc; ++__i)
             __bucket_list_[__i] = nullptr;
         size() = 0;
     }
