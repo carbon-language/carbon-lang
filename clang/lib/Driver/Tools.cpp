@@ -760,7 +760,6 @@ void Clang::AddSparcTargetArgs(const ArgList &Args,
     //
     // FIXME: This changes CPP defines, we need -target-soft-float.
     CmdArgs.push_back("-msoft-float");
-    CmdArgs.push_back("soft");
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back("+soft-float");
   } else {
