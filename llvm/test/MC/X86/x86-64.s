@@ -1148,3 +1148,19 @@ movnti %eax, (%rdi)
 // CHECK: movntiq
 movntiq %rax, (%rdi)
 movnti %rax, (%rdi)
+
+// CHECK: pclmulqdq	$17, %xmm0, %xmm1
+// CHECK: encoding: [0x66,0x0f,0x3a,0x44,0xc8,0x11]
+pclmulhqhqdq %xmm0, %xmm1
+
+// CHECK: pclmulqdq	$1, %xmm0, %xmm1
+// CHECK: encoding: [0x66,0x0f,0x3a,0x44,0xc8,0x01]
+pclmulqdq $1, %xmm0, %xmm1
+
+// CHECK: pclmulqdq	$16, (%rdi), %xmm1
+// CHECK: encoding: [0x66,0x0f,0x3a,0x44,0x0f,0x10]
+pclmullqhqdq (%rdi), %xmm1
+
+// CHECK: pclmulqdq	$0, (%rdi), %xmm1
+// CHECK: encoding: [0x66,0x0f,0x3a,0x44,0x0f,0x00]
+pclmulqdq $0, (%rdi), %xmm1

@@ -710,23 +710,6 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     }
   }
 
-  // FIXME: Hack to recognize vpclmul<src1_quadword, src2_quadword>dq
-  if (PatchedName.startswith("vpclmul")) {
-    unsigned CLMULQuadWordSelect = StringSwitch<unsigned>(
-      PatchedName.slice(7, PatchedName.size() - 2))
-      .Case("lqlq", 0x00) // src1[63:0],   src2[63:0]
-      .Case("hqlq", 0x01) // src1[127:64], src2[63:0]
-      .Case("lqhq", 0x10) // src1[63:0],   src2[127:64]
-      .Case("hqhq", 0x11) // src1[127:64], src2[127:64]
-      .Default(~0U);
-    if (CLMULQuadWordSelect != ~0U) {
-      ExtraImmOp = MCConstantExpr::Create(CLMULQuadWordSelect,
-                                          getParser().getContext());
-      assert(PatchedName.endswith("dq") && "Unexpected mnemonic!");
-      PatchedName = "vpclmulqdq";
-    }
-  }
-
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 
   if (ExtraImmOp)
