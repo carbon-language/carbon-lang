@@ -1090,7 +1090,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
   Function->setLexicalDeclContext(LexicalDC);
 
   // Attach the parameters
-  if (isa<FunctionProtoType>(Function->getType())) {
+  if (isa<FunctionProtoType>(Function->getType().IgnoreParens())) {
     // Adopt the already-instantiated parameters into our own context.
     for (unsigned P = 0; P < Params.size(); ++P)
       if (Params[P])

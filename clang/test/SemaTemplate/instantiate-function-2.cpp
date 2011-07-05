@@ -56,3 +56,11 @@ namespace AliasTagDef {
 
   int n = f<int>();
 }
+
+namespace PR10273 {
+  template<typename T> void (f)(T t) {}
+
+  void g() {
+    (f)(17);
+  }
+}
