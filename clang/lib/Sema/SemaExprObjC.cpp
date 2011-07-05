@@ -204,6 +204,7 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
     case OMF_mutableCopy:
     case OMF_new:
     case OMF_self:
+    case OMF_performSelector:
       break;
     }
   }
@@ -1416,6 +1417,53 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     case OMF_retainCount:
       Diag(Loc, diag::err_arc_illegal_explicit_message)
         << Sel << SelectorLoc;
+      break;
+    
+    case OMF_performSelector:
+      if (Method && NumArgs >= 1) {
+        if (ObjCSelectorExpr *SelExp = dyn_cast<ObjCSelectorExpr>(Args[0])) {
+          Selector ArgSel = SelExp->getSelector();
+          ObjCMethodDecl *SelMethod = 
+            LookupInstanceMethodInGlobalPool(ArgSel,
+                                             SelExp->getSourceRange());
+          if (!SelMethod)
+            SelMethod =
+              LookupFactoryMethodInGlobalPool(ArgSel,
+                                              SelExp->getSourceRange());
+          if (SelMethod) {
+            ObjCMethodFamily SelFamily = SelMethod->getMethodFamily();
+            switch (SelFamily) {
+              case OMF_alloc:
+              case OMF_copy:
+              case OMF_mutableCopy:
+              case OMF_new:
+              case OMF_self:
+              case OMF_init:
+                // Issue error, unless ns_returns_not_retained.
+                if (!SelMethod->hasAttr<NSReturnsNotRetainedAttr>()) {
+                  // selector names a +1 method 
+                  Diag(SelectorLoc, 
+                       diag::err_arc_perform_selector_retains);
+                  Diag(SelMethod->getLocation(), diag::note_method_declared_at);
+                }
+                break;
+              default:
+                // +0 call. OK. unless ns_returns_retained.
+                if (SelMethod->hasAttr<NSReturnsRetainedAttr>()) {
+                  // selector names a +1 method
+                  Diag(SelectorLoc, 
+                       diag::err_arc_perform_selector_retains);
+                  Diag(SelMethod->getLocation(), diag::note_method_declared_at);
+                }
+                break;
+            }
+          }
+        } else {
+          // error (may leak).
+          Diag(SelectorLoc, diag::warn_arc_perform_selector_leaks);
+          Diag(Args[0]->getExprLoc(), diag::note_used_here);
+        }
+      }
       break;
     }
   }

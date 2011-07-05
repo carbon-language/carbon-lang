@@ -397,6 +397,8 @@ ObjCMethodFamily Selector::getMethodFamilyImpl(Selector sel) {
     if (name == "retainCount") return OMF_retainCount;
     if (name == "self") return OMF_self;
   }
+ 
+  if (name == "performSelector") return OMF_performSelector;
 
   // The other method families may begin with a prefix of underscores.
   while (!name.empty() && name.front() == '_')

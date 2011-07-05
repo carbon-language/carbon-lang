@@ -488,7 +488,10 @@ enum ObjCMethodFamily {
   OMF_release,
   OMF_retain,
   OMF_retainCount,
-  OMF_self
+  OMF_self,
+
+  // performSelector families
+  OMF_performSelector
 };
 
 /// Enough bits to store any enumerator in ObjCMethodFamily or

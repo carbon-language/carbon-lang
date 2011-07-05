@@ -452,6 +452,34 @@ ObjCMethodFamily ObjCMethodDecl::getMethodFamily() const {
     if (!isInstanceMethod())
       family = OMF_None;
     break;
+      
+  case OMF_performSelector:
+    if (!isInstanceMethod() ||
+        !getResultType()->isObjCIdType())
+      family = OMF_None;
+    else {
+      unsigned noParams = param_size();
+      if (noParams < 1 || noParams > 3)
+        family = OMF_None;
+      else {
+        ObjCMethodDecl::arg_type_iterator it = arg_type_begin();
+        QualType ArgT = (*it);
+        if (!ArgT->isObjCSelType()) {
+          family = OMF_None;
+          break;
+        }
+        while (--noParams) {
+          it++;
+          ArgT = (*it);
+          if (!ArgT->isObjCIdType()) {
+            family = OMF_None;
+            break;
+          }
+        }
+      }
+    }
+    break;
+      
   }
 
   // Cache the result.

@@ -286,6 +286,11 @@ static bool CheckARCMethodDecl(Sema &S, ObjCMethodDecl *method) {
         method->hasAttr<NSReturnsAutoreleasedAttr>())
       return false;
     break;
+    
+  case OMF_performSelector:
+    // we don't annotate performSelector's
+    return true;
+      
   }
 
   method->addAttr(new (S.Context) NSReturnsRetainedAttr(SourceLocation(),
@@ -366,6 +371,7 @@ void Sema::ActOnStartOfObjCMethodDef(Scope *FnBodyScope, Decl *D) {
     case OMF_copy:
     case OMF_new:
     case OMF_self:
+    case OMF_performSelector:
       break;
     }
   }
@@ -1298,6 +1304,7 @@ static bool checkMethodFamilyMismatch(Sema &S, ObjCMethodDecl *impl,
   case OMF_dealloc:
   case OMF_retainCount:
   case OMF_self:
+  case OMF_performSelector:
     // Mismatches for these methods don't change ownership
     // conventions, so we don't care.
     return false;
@@ -2467,6 +2474,7 @@ Decl *Sema::ActOnMethodDeclaration(
     case OMF_mutableCopy:
     case OMF_release:
     case OMF_retainCount:
+    case OMF_performSelector:
       break;
       
     case OMF_alloc:
