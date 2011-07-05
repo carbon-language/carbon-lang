@@ -842,6 +842,9 @@ Path::makeUnique(bool reuse_current, std::string* ErrMsg) {
 
   // Save the name
   path = FNBuffer;
+
+  // By default mkstemp sets the mode to 0600, so update mode bits now.
+  AddPermissionBits (*this, 0666);
 #elif defined(HAVE_MKTEMP)
   // If we don't have mkstemp, use the old and obsolete mktemp function.
   if (mktemp(FNBuffer) == 0)
