@@ -649,8 +649,6 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand,
 
   for (;;) {
     ArrayRef<unsigned> NewBundles = SpillPlacer->getRecentPositive();
-    if (NewBundles.empty())
-      break;
     // Find new through blocks in the periphery of PrefRegBundles.
     for (int i = 0, e = NewBundles.size(); i != e; ++i) {
       unsigned Bundle = NewBundles[i];
@@ -670,12 +668,12 @@ void RAGreedy::growRegion(GlobalSplitCandidate &Cand,
       }
     }
     // Any new blocks to add?
-    if (ActiveBlocks.size() > AddedTo) {
-      ArrayRef<unsigned> Add(&ActiveBlocks[AddedTo],
-                             ActiveBlocks.size() - AddedTo);
-      addThroughConstraints(Intf, Add);
-      AddedTo = ActiveBlocks.size();
-    }
+    if (ActiveBlocks.size() == AddedTo)
+      break;
+    addThroughConstraints(Intf,
+                          ArrayRef<unsigned>(ActiveBlocks).slice(AddedTo));
+    AddedTo = ActiveBlocks.size();
+
     // Perhaps iterating can enable more bundles?
     SpillPlacer->iterate();
   }
