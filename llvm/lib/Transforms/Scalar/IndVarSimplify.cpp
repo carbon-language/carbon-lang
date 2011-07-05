@@ -608,6 +608,8 @@ protected:
                            Instruction *NarrowDef,
                            Instruction *WideDef);
 
+  const SCEVAddRecExpr *GetWideRecurrence(Instruction *NarrowUse);
+
   Instruction *WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
                           Instruction *WideDef);
 
@@ -704,6 +706,33 @@ static bool HoistStep(Instruction *IncV, Instruction *InsertPos,
   return true;
 }
 
+// GetWideRecurrence - Is this instruction potentially interesting from IVUsers'
+// perspective after widening it's type? In other words, can the extend be
+// safely hoisted out of the loop with SCEV reducing the value to a recurrence
+// on the same loop. If so, return the sign or zero extended
+// recurrence. Otherwise return NULL.
+const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
+  if (!SE->isSCEVable(NarrowUse->getType()))
+    return 0;
+
+  const SCEV *NarrowExpr = SE->getSCEV(NarrowUse);
+  if (SE->getTypeSizeInBits(NarrowExpr->getType())
+      >= SE->getTypeSizeInBits(WideType)) {
+    // NarrowUse implicitly widens its operand. e.g. a gep with a narrow
+    // index. So don't follow this use.
+    return 0;
+  }
+
+  const SCEV *WideExpr = IsSigned ?
+    SE->getSignExtendExpr(NarrowExpr, WideType) :
+    SE->getZeroExtendExpr(NarrowExpr, WideType);
+  const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(WideExpr);
+  if (!AddRec || AddRec->getLoop() != L)
+    return 0;
+
+  return AddRec;
+}
+
 /// WidenIVUse - Determine whether an individual user of the narrow IV can be
 /// widened. If so, return the wide clone of the user.
 Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
@@ -753,24 +782,7 @@ Instruction *WidenIV::WidenIVUse(Use &NarrowDefUse, Instruction *NarrowDef,
   }
 
   // Does this user itself evaluate to a recurrence after widening?
-  const SCEVAddRecExpr *WideAddRec = 0;
-  if (SE->isSCEVable(NarrowUse->getType())) {
-    const SCEV *NarrowExpr = SE->getSCEV(NarrowUse);
-    if (SE->getTypeSizeInBits(NarrowExpr->getType())
-        >= SE->getTypeSizeInBits(WideType)) {
-      // NarrowUse implicitly widens its operand. e.g. a gep with a narrow
-      // index. We have already extended the operand, so we're done.
-      return 0;
-    }
-    const SCEV *WideExpr = IsSigned ?
-      SE->getSignExtendExpr(NarrowExpr, WideType) :
-      SE->getZeroExtendExpr(NarrowExpr, WideType);
-
-    // Only widen past values that evaluate to a recurrence in the same loop.
-    const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(WideExpr);
-    if (AddRec && AddRec->getLoop() == L)
-      WideAddRec = AddRec;
-  }
+  const SCEVAddRecExpr *WideAddRec = GetWideRecurrence(NarrowUse);
   if (!WideAddRec) {
     // This user does not evaluate to a recurence after widening, so don't
     // follow it. Instead insert a Trunc to kill off the original use,
