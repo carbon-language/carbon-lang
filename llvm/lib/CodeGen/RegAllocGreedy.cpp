@@ -958,7 +958,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
     //
     //                 ~    Interference after last use.
     //     |---o---o--o|    Live-out on stack, late last use.
-    //     =========____    Copy to stack after LSP, overlap MainIntv.
+    //     ============     Copy to stack after LSP, overlap MainIntv.
+    //            \_____    Stack interval is live-out.
     //
     if (!RegOut && Intf.first() > BI.LastUse.getBoundaryIndex()) {
       assert(RegIn && "Stack-in, stack-out should already be handled");
@@ -998,8 +999,8 @@ void RAGreedy::splitAroundRegion(LiveInterval &VirtReg,
     // The interference is overlapping somewhere we wanted to use MainIntv. That
     // means we need to create a local interval that can be allocated a
     // different register.
-    DEBUG(dbgs() << ", creating local interval.\n");
     unsigned LocalIntv = SE->openIntv();
+    DEBUG(dbgs() << ", creating local interval " << LocalIntv << ".\n");
 
     // We may be creating copies directly between MainIntv and LocalIntv,
     // bypassing the stack interval. When we do that, we should never use the
