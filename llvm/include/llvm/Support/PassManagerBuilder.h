@@ -67,7 +67,12 @@ public:
     
     /// EP_LoopOptimizerEnd - This extension point allows adding loop passes to
     /// the end of the loop optimizer.
-    EP_LoopOptimizerEnd
+    EP_LoopOptimizerEnd,
+
+    /// EP_ScalarOptimizerLate - This extension point allows adding optimization
+    /// passes after most of the main optimizations, but before the last
+    /// cleanup-ish optimizations.
+    EP_ScalarOptimizerLate
   };
   
   /// The Optimization Level - Specify the basic optimization level.
@@ -188,7 +193,6 @@ public:
       MPM.add(createArgumentPromotionPass());   // Scalarize uninlined fn args
     
     // Start of function pass.
-    MPM.add(createObjCARCExpandPass());         // Canonicalize ObjC ARC code.
     // Break up aggregate allocas, using SSAUpdater.
     MPM.add(createScalarReplAggregatesPass(-1, false));
     MPM.add(createEarlyCSEPass());              // Catch trivial redundancies
@@ -224,7 +228,9 @@ public:
     MPM.add(createJumpThreadingPass());         // Thread jumps
     MPM.add(createCorrelatedValuePropagationPass());
     MPM.add(createDeadStoreEliminationPass());  // Delete dead stores
-    MPM.add(createObjCARCOptPass());            // Objective-C ARC optimizations.
+
+    addExtensionsToPM(EP_ScalarOptimizerLate, MPM);
+
     MPM.add(createAggressiveDCEPass());         // Delete dead instructions
     MPM.add(createCFGSimplificationPass());     // Merge & remove BBs
     MPM.add(createInstructionCombiningPass());  // Clean up after everything.
