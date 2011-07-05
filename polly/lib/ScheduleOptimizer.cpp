@@ -205,7 +205,6 @@ isl_union_map *getTiledPartialSchedule(isl_band *band) {
   partialSchedule = isl_union_map_apply_range(partialSchedule, tileUnionMap);
 
   isl_dim_free(dim);
-  isl_ctx_free(ctx);
 
   return partialSchedule;
 }
@@ -286,6 +285,11 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
     isl_union_map *partialSchedule;
     band = isl_band_list_get_band(blist, i);
     partialSchedule = getTiledPartialSchedule(band);
+    int scheduleDimensions = isl_band_n_member(band);
+    isl_dim *dim = isl_union_map_get_dim(partialSchedule);
+    int parameterDimensions = isl_dim_size(dim, isl_dim_param);
+    isl_dim_free(dim);
+
 
     if (isl_band_has_children(band)) {
       isl_band_list *children = isl_band_get_children(band);
@@ -296,11 +300,10 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
       isl_map *tileMap;
       isl_union_map *tileUnionMap;
       isl_ctx *ctx;
-      int scheduleDimensions, parameterDimensions;
 
       ctx = isl_union_map_get_ctx(partialSchedule);
       for (int i = scheduleDimensions - 1 ;  i >= 0 ; i--) {
-	if (isl_band_member_is_parallel(band, i)) {
+	if (isl_band_member_is_zero_distance(band, i)) {
 	  tileMap = getPrevectorMap(ctx, scheduleDimensions + i,
 				    scheduleDimensions * 2,
 				    parameterDimensions);
@@ -313,7 +316,7 @@ static isl_union_map *tileBandList(isl_band_list *blist) {
     }
 
     if (finalSchedule)
-      isl_union_map_union(finalSchedule, partialSchedule);
+      finalSchedule = isl_union_map_union(finalSchedule, partialSchedule);
     else
       finalSchedule = partialSchedule;
 
