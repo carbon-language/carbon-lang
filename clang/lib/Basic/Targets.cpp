@@ -2837,13 +2837,20 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     return new MSP430TargetInfo(T);
 
   case llvm::Triple::mips:
-    if (os == llvm::Triple::Psp)
+    switch (os) {
+    case llvm::Triple::Psp:
       return new PSPTargetInfo<MipsTargetInfo>(T);
-    if (os == llvm::Triple::Linux)
+    case llvm::Triple::Linux:
       return new LinuxTargetInfo<MipsTargetInfo>(T);
-    if (os == llvm::Triple::RTEMS)
+    case llvm::Triple::RTEMS:
       return new RTEMSTargetInfo<MipsTargetInfo>(T);
-    return new MipsTargetInfo(T);
+    case llvm::Triple::FreeBSD:
+      return new NetBSDTargetInfo<MipsTargetInfo>(T);
+    case llvm::Triple::NetBSD:
+      return new NetBSDTargetInfo<MipsTargetInfo>(T);
+    default:
+      return new MipsTargetInfo(T);
+    }
 
   case llvm::Triple::mipsel:
     if (os == llvm::Triple::Psp)
