@@ -1756,10 +1756,15 @@ bool ParseAsmOperandsOpt(llvm::SmallVectorImpl<IdentifierInfo *> &Names,
   void ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
                                ParsedAttributes &attrs,
                                bool RequiresArg = false);
-  void ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
-                                             IdentifierInfo *FirstIdent,
-                                             SourceLocation FirstIdentLoc,
-                                             Declarator &D);
+  bool isFunctionDeclaratorIdentifierList();
+  void ParseFunctionDeclaratorIdentifierList(
+         Declarator &D,
+         llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo);
+  void ParseParameterDeclarationClause(
+         Declarator &D,
+         ParsedAttributes &attrs,
+         llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo,
+         SourceLocation &EllipsisLoc);
   void ParseBracketDeclarator(Declarator &D);
 
   //===--------------------------------------------------------------------===//

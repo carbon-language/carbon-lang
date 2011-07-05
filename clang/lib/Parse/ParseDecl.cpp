@@ -3649,13 +3649,220 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 /// declarator D up to a paren, which indicates that we are parsing function
 /// arguments.
 ///
-/// If AttrList is non-null, then the caller parsed those arguments immediately
+/// If attrs is non-null, then the caller parsed those arguments immediately
 /// after the open paren - they should be considered to be the first argument of
 /// a parameter.  If RequiresArg is true, then the first argument of the
 /// function is required to be present and required to not be an identifier
 /// list.
 ///
-/// This method also handles this portion of the grammar:
+/// For C++, after the parameter-list, it also parses cv-qualifier-seq[opt],
+/// (C++0x) ref-qualifier[opt], exception-specification[opt], and
+/// (C++0x) trailing-return-type[opt].
+///
+/// [C++0x] exception-specification:
+///           dynamic-exception-specification
+///           noexcept-specification
+///
+void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
+                                     ParsedAttributes &attrs,
+                                     bool RequiresArg) {
+  // lparen is already consumed!
+  assert(D.isPastIdentifier() && "Should not call before identifier!");
+
+  // This should be true when the function has typed arguments.
+  // Otherwise, it is treated as a K&R-style function.
+  bool HasProto = false;
+  // Build up an array of information about the parsed arguments.
+  llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
+  // Remember where we see an ellipsis, if any.
+  SourceLocation EllipsisLoc;
+
+  DeclSpec DS(AttrFactory);
+  bool RefQualifierIsLValueRef = true;
+  SourceLocation RefQualifierLoc;
+  ExceptionSpecificationType ESpecType = EST_None;
+  SourceRange ESpecRange;
+  llvm::SmallVector<ParsedType, 2> DynamicExceptions;
+  llvm::SmallVector<SourceRange, 2> DynamicExceptionRanges;
+  ExprResult NoexceptExpr;
+  ParsedType TrailingReturnType;
+  
+  SourceLocation EndLoc;
+
+  if (isFunctionDeclaratorIdentifierList()) {
+    if (RequiresArg)
+      Diag(Tok, diag::err_argument_required_after_attribute);
+
+    ParseFunctionDeclaratorIdentifierList(D, ParamInfo);
+
+    EndLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  } else {
+    // Enter function-declaration scope, limiting any declarators to the
+    // function prototype scope, including parameter declarators.
+    ParseScope PrototypeScope(this,
+                              Scope::FunctionPrototypeScope|Scope::DeclScope);
+
+    if (Tok.isNot(tok::r_paren))
+      ParseParameterDeclarationClause(D, attrs, ParamInfo, EllipsisLoc);
+    else if (RequiresArg)
+      Diag(Tok, diag::err_argument_required_after_attribute);
+
+    HasProto = ParamInfo.size() || getLang().CPlusPlus;
+
+    // If we have the closing ')', eat it.
+    EndLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+
+    if (getLang().CPlusPlus) {
+      MaybeParseCXX0XAttributes(attrs);
+
+      // Parse cv-qualifier-seq[opt].
+      ParseTypeQualifierListOpt(DS, false /*no attributes*/);
+        if (!DS.getSourceRange().getEnd().isInvalid())
+          EndLoc = DS.getSourceRange().getEnd();
+
+      // Parse ref-qualifier[opt].
+      if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
+        if (!getLang().CPlusPlus0x)
+          Diag(Tok, diag::ext_ref_qualifier);
+        
+        RefQualifierIsLValueRef = Tok.is(tok::amp);
+        RefQualifierLoc = ConsumeToken();
+        EndLoc = RefQualifierLoc;
+      }
+
+      // Parse exception-specification[opt].
+      ESpecType = MaybeParseExceptionSpecification(ESpecRange,
+                                                   DynamicExceptions,
+                                                   DynamicExceptionRanges,
+                                                   NoexceptExpr);
+      if (ESpecType != EST_None)
+        EndLoc = ESpecRange.getEnd();
+
+      // Parse trailing-return-type[opt].
+      if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
+        TrailingReturnType = ParseTrailingReturnType().get();
+      }
+    }
+
+    // Leave prototype scope.
+    PrototypeScope.Exit();
+  }
+
+  // Remember that we parsed a function type, and remember the attributes.
+  D.AddTypeInfo(DeclaratorChunk::getFunction(HasProto,
+                                             /*isVariadic=*/EllipsisLoc.isValid(),
+                                             EllipsisLoc,
+                                             ParamInfo.data(), ParamInfo.size(),
+                                             DS.getTypeQualifiers(),
+                                             RefQualifierIsLValueRef,
+                                             RefQualifierLoc,
+                                             ESpecType, ESpecRange.getBegin(),
+                                             DynamicExceptions.data(),
+                                             DynamicExceptionRanges.data(),
+                                             DynamicExceptions.size(),
+                                             NoexceptExpr.isUsable() ?
+                                               NoexceptExpr.get() : 0,
+                                             LParenLoc, EndLoc, D,
+                                             TrailingReturnType),
+                attrs, EndLoc);
+}
+
+/// isFunctionDeclaratorIdentifierList - This parameter list may have an
+/// identifier list form for a K&R-style function:  void foo(a,b,c)
+///
+/// Note that identifier-lists are only allowed for normal declarators, not for
+/// abstract-declarators.
+bool Parser::isFunctionDeclaratorIdentifierList() {
+  return !getLang().CPlusPlus
+         && Tok.is(tok::identifier)
+         && !TryAltiVecVectorToken()
+         // K&R identifier lists can't have typedefs as identifiers, per C99
+         // 6.7.5.3p11.
+         && (TryAnnotateTypeOrScopeToken() || !Tok.is(tok::annot_typename))
+         // Identifier lists follow a really simple grammar: the identifiers can
+         // be followed *only* by a ", identifier" or ")".  However, K&R
+         // identifier lists are really rare in the brave new modern world, and
+         // it is very common for someone to typo a type in a non-K&R style
+         // list.  If we are presented with something like: "void foo(intptr x,
+         // float y)", we don't want to start parsing the function declarator as
+         // though it is a K&R style declarator just because intptr is an
+         // invalid type.
+         //
+         // To handle this, we check to see if the token after the first
+         // identifier is a "," or ")".  Only then do we parse it as an
+         // identifier list.
+         && (NextToken().is(tok::comma) || NextToken().is(tok::r_paren));
+}
+
+/// ParseFunctionDeclaratorIdentifierList - While parsing a function declarator
+/// we found a K&R-style identifier list instead of a typed parameter list.
+///
+/// After returning, ParamInfo will hold the parsed parameters.
+///
+///       identifier-list: [C99 6.7.5]
+///         identifier
+///         identifier-list ',' identifier
+///
+void Parser::ParseFunctionDeclaratorIdentifierList(
+       Declarator &D,
+       llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo) {
+  // If there was no identifier specified for the declarator, either we are in
+  // an abstract-declarator, or we are in a parameter declarator which was found
+  // to be abstract.  In abstract-declarators, identifier lists are not valid:
+  // diagnose this.
+  if (!D.getIdentifier())
+    Diag(Tok, diag::ext_ident_list_in_param);
+
+  // Maintain an efficient lookup of params we have seen so far.
+  llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
+
+  while (1) {
+    // If this isn't an identifier, report the error and skip until ')'.
+    if (Tok.isNot(tok::identifier)) {
+      Diag(Tok, diag::err_expected_ident);
+      SkipUntil(tok::r_paren, /*StopAtSemi=*/true, /*DontConsume=*/true);
+      // Forget we parsed anything.
+      ParamInfo.clear();
+      return;
+    }
+
+    IdentifierInfo *ParmII = Tok.getIdentifierInfo();
+
+    // Reject 'typedef int y; int test(x, y)', but continue parsing.
+    if (Actions.getTypeName(*ParmII, Tok.getLocation(), getCurScope()))
+      Diag(Tok, diag::err_unexpected_typedef_ident) << ParmII;
+
+    // Verify that the argument identifier has not already been mentioned.
+    if (!ParamsSoFar.insert(ParmII)) {
+      Diag(Tok, diag::err_param_redefinition) << ParmII;
+    } else {
+      // Remember this identifier in ParamInfo.
+      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
+                                                     Tok.getLocation(),
+                                                     0));
+    }
+
+    // Eat the identifier.
+    ConsumeToken();
+
+    // The list continues if we see a comma.
+    if (Tok.isNot(tok::comma))
+      break;
+    ConsumeToken();
+  }
+}
+
+/// ParseParameterDeclarationClause - Parse a (possibly empty) parameter-list
+/// after the opening parenthesis. This function will not parse a K&R-style
+/// identifier list.
+///
+/// D is the declarator being parsed.  If attrs is non-null, then the caller
+/// parsed those arguments immediately after the open paren - they should be
+/// considered to be the first argument of a parameter.
+///
+/// After returning, ParamInfo will hold the parsed parameters. EllipsisLoc will
+/// be the location of the ellipsis, if any was parsed.
+///
 ///       parameter-type-list: [C99 6.7.5]
 ///         parameter-list
 ///         parameter-list ',' '...'
@@ -3674,143 +3881,14 @@ void Parser::ParseParenDeclarator(Declarator &D) {
 ///           '=' assignment-expression
 /// [GNU]   declaration-specifiers abstract-declarator[opt] attributes
 ///
-/// For C++, after the parameter-list, it also parses "cv-qualifier-seq[opt]",
-/// C++0x "ref-qualifier[opt]" and "exception-specification[opt]".
-///
-/// [C++0x] exception-specification:
-///           dynamic-exception-specification
-///           noexcept-specification
-///
-void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
-                                     ParsedAttributes &attrs,
-                                     bool RequiresArg) {
-  // lparen is already consumed!
-  assert(D.isPastIdentifier() && "Should not call before identifier!");
+void Parser::ParseParameterDeclarationClause(
+       Declarator &D,
+       ParsedAttributes &attrs,
+       llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> &ParamInfo,
+       SourceLocation &EllipsisLoc) {
 
-  ParsedType TrailingReturnType;
-
-  // This parameter list may be empty.
-  if (Tok.is(tok::r_paren)) {
-    if (RequiresArg)
-      Diag(Tok, diag::err_argument_required_after_attribute);
-
-    SourceLocation EndLoc = ConsumeParen();  // Eat the closing ')'.
-
-    // cv-qualifier-seq[opt].
-    DeclSpec DS(AttrFactory);
-    SourceLocation RefQualifierLoc;
-    bool RefQualifierIsLValueRef = true;
-    ExceptionSpecificationType ESpecType = EST_None;
-    SourceRange ESpecRange;
-    llvm::SmallVector<ParsedType, 2> DynamicExceptions;
-    llvm::SmallVector<SourceRange, 2> DynamicExceptionRanges;
-    ExprResult NoexceptExpr;
-    if (getLang().CPlusPlus) {
-      MaybeParseCXX0XAttributes(attrs);
-
-      ParseTypeQualifierListOpt(DS, false /*no attributes*/);
-      if (!DS.getSourceRange().getEnd().isInvalid())
-        EndLoc = DS.getSourceRange().getEnd();
-
-      // Parse ref-qualifier[opt]
-      if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
-        if (!getLang().CPlusPlus0x)
-          Diag(Tok, diag::ext_ref_qualifier);
-
-        RefQualifierIsLValueRef = Tok.is(tok::amp);
-        RefQualifierLoc = ConsumeToken();
-        EndLoc = RefQualifierLoc;
-      }
-
-      // Parse exception-specification[opt].
-      ESpecType = MaybeParseExceptionSpecification(ESpecRange,
-                                                   DynamicExceptions,
-                                                   DynamicExceptionRanges,
-                                                   NoexceptExpr);
-      if (ESpecType != EST_None)
-        EndLoc = ESpecRange.getEnd();
-
-      // Parse trailing-return-type.
-      if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
-        TrailingReturnType = ParseTrailingReturnType().get();
-      }
-    }
-
-    // Remember that we parsed a function type, and remember the attributes.
-    // int() -> no prototype, no '...'.
-    D.AddTypeInfo(DeclaratorChunk::getFunction(/*prototype*/getLang().CPlusPlus,
-                                               /*variadic*/ false,
-                                               SourceLocation(),
-                                               /*arglist*/ 0, 0,
-                                               DS.getTypeQualifiers(),
-                                               RefQualifierIsLValueRef,
-                                               RefQualifierLoc,
-                                               ESpecType, ESpecRange.getBegin(),
-                                               DynamicExceptions.data(),
-                                               DynamicExceptionRanges.data(),
-                                               DynamicExceptions.size(),
-                                               NoexceptExpr.isUsable() ?
-                                                 NoexceptExpr.get() : 0,
-                                               LParenLoc, EndLoc, D,
-                                               TrailingReturnType),
-                  attrs, EndLoc);
-    return;
-  }
-
-  // Alternatively, this parameter list may be an identifier list form for a
-  // K&R-style function:  void foo(a,b,c)
-  if (!getLang().CPlusPlus && Tok.is(tok::identifier)
-      && !TryAltiVecVectorToken()) {
-    if (TryAnnotateTypeOrScopeToken() || !Tok.is(tok::annot_typename)) {
-      // K&R identifier lists can't have typedefs as identifiers, per
-      // C99 6.7.5.3p11.
-      if (RequiresArg)
-        Diag(Tok, diag::err_argument_required_after_attribute);
-      
-      // Identifier list.  Note that '(' identifier-list ')' is only allowed for
-      // normal declarators, not for abstract-declarators.  Get the first
-      // identifier.
-      Token FirstTok = Tok;
-      ConsumeToken();  // eat the first identifier.
-      
-      // Identifier lists follow a really simple grammar: the identifiers can
-      // be followed *only* by a ", moreidentifiers" or ")".  However, K&R
-      // identifier lists are really rare in the brave new modern world, and it
-      // is very common for someone to typo a type in a non-k&r style list.  If
-      // we are presented with something like: "void foo(intptr x, float y)",
-      // we don't want to start parsing the function declarator as though it is
-      // a K&R style declarator just because intptr is an invalid type.
-      //
-      // To handle this, we check to see if the token after the first identifier
-      // is a "," or ")".  Only if so, do we parse it as an identifier list.
-      if (Tok.is(tok::comma) || Tok.is(tok::r_paren))
-        return ParseFunctionDeclaratorIdentifierList(LParenLoc,
-                                                   FirstTok.getIdentifierInfo(),
-                                                     FirstTok.getLocation(), D);
-      
-      // If we get here, the code is invalid.  Push the first identifier back
-      // into the token stream and parse the first argument as an (invalid)
-      // normal argument declarator.
-      PP.EnterToken(Tok);
-      Tok = FirstTok;
-    }
-  }
-
-  // Finally, a normal, non-empty parameter type list.
-
-  // Build up an array of information about the parsed arguments.
-  llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
-
-  // Enter function-declaration scope, limiting any declarators to the
-  // function prototype scope, including parameter declarators.
-  ParseScope PrototypeScope(this,
-                            Scope::FunctionPrototypeScope|Scope::DeclScope);
-
-  bool IsVariadic = false;
-  SourceLocation EllipsisLoc;
   while (1) {
     if (Tok.is(tok::ellipsis)) {
-      IsVariadic = true;
       EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
       break;
     }
@@ -3827,6 +3905,11 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
 
     // If the caller parsed attributes for the first argument, add them now.
     // Take them so that we only apply the attributes to the first parameter.
+    // FIXME: If we saw an ellipsis first, this code is not reached. Are the
+    // attributes lost? Should they even be allowed?
+    // FIXME: If we can leave the attributes in the token stream somehow, we can
+    // get rid of a parameter (attrs) and this statement. It might be too much
+    // hassle.
     DS.takeAttributesFrom(attrs);
 
     ParseDeclarationSpecifiers(DS);
@@ -3922,7 +4005,6 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     // If the next token is a comma, consume it and keep reading arguments.
     if (Tok.isNot(tok::comma)) {
       if (Tok.is(tok::ellipsis)) {
-        IsVariadic = true;
         EllipsisLoc = ConsumeToken();     // Consume the ellipsis.
         
         if (!getLang().CPlusPlus) {
@@ -3940,150 +4022,6 @@ void Parser::ParseFunctionDeclarator(SourceLocation LParenLoc, Declarator &D,
     ConsumeToken();
   }
 
-  // If we have the closing ')', eat it.
-  SourceLocation EndLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-
-  DeclSpec DS(AttrFactory);
-  SourceLocation RefQualifierLoc;
-  bool RefQualifierIsLValueRef = true;
-  ExceptionSpecificationType ESpecType = EST_None;
-  SourceRange ESpecRange;
-  llvm::SmallVector<ParsedType, 2> DynamicExceptions;
-  llvm::SmallVector<SourceRange, 2> DynamicExceptionRanges;
-  ExprResult NoexceptExpr;
-  
-  if (getLang().CPlusPlus) {
-    MaybeParseCXX0XAttributes(attrs);
-
-    // Parse cv-qualifier-seq[opt].
-    ParseTypeQualifierListOpt(DS, false /*no attributes*/);
-      if (!DS.getSourceRange().getEnd().isInvalid())
-        EndLoc = DS.getSourceRange().getEnd();
-
-    // Parse ref-qualifier[opt]
-    if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
-      if (!getLang().CPlusPlus0x)
-        Diag(Tok, diag::ext_ref_qualifier);
-      
-      RefQualifierIsLValueRef = Tok.is(tok::amp);
-      RefQualifierLoc = ConsumeToken();
-      EndLoc = RefQualifierLoc;
-    }
-
-    // FIXME: We should leave the prototype scope before parsing the exception
-    // specification, and then reenter it when parsing the trailing return type.
-    // FIXMEFIXME: Why? That wouldn't be right for the noexcept clause.
-
-    // Parse exception-specification[opt].
-    ESpecType = MaybeParseExceptionSpecification(ESpecRange,
-                                                 DynamicExceptions,
-                                                 DynamicExceptionRanges,
-                                                 NoexceptExpr);
-    if (ESpecType != EST_None)
-      EndLoc = ESpecRange.getEnd();
-
-    // Parse trailing-return-type.
-    if (getLang().CPlusPlus0x && Tok.is(tok::arrow)) {
-      TrailingReturnType = ParseTrailingReturnType().get();
-    }
-  }
-
-  // Leave prototype scope.
-  PrototypeScope.Exit();
-
-  // Remember that we parsed a function type, and remember the attributes.
-  D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/true, IsVariadic,
-                                             EllipsisLoc,
-                                             ParamInfo.data(), ParamInfo.size(),
-                                             DS.getTypeQualifiers(),
-                                             RefQualifierIsLValueRef,
-                                             RefQualifierLoc,
-                                             ESpecType, ESpecRange.getBegin(),
-                                             DynamicExceptions.data(),
-                                             DynamicExceptionRanges.data(),
-                                             DynamicExceptions.size(),
-                                             NoexceptExpr.isUsable() ?
-                                               NoexceptExpr.get() : 0,
-                                             LParenLoc, EndLoc, D,
-                                             TrailingReturnType),
-                attrs, EndLoc);
-}
-
-/// ParseFunctionDeclaratorIdentifierList - While parsing a function declarator
-/// we found a K&R-style identifier list instead of a type argument list.  The
-/// first identifier has already been consumed, and the current token is the
-/// token right after it.
-///
-///       identifier-list: [C99 6.7.5]
-///         identifier
-///         identifier-list ',' identifier
-///
-void Parser::ParseFunctionDeclaratorIdentifierList(SourceLocation LParenLoc,
-                                                   IdentifierInfo *FirstIdent,
-                                                   SourceLocation FirstIdentLoc,
-                                                   Declarator &D) {
-  // Build up an array of information about the parsed arguments.
-  llvm::SmallVector<DeclaratorChunk::ParamInfo, 16> ParamInfo;
-  llvm::SmallSet<const IdentifierInfo*, 16> ParamsSoFar;
-
-  // If there was no identifier specified for the declarator, either we are in
-  // an abstract-declarator, or we are in a parameter declarator which was found
-  // to be abstract.  In abstract-declarators, identifier lists are not valid:
-  // diagnose this.
-  if (!D.getIdentifier())
-    Diag(FirstIdentLoc, diag::ext_ident_list_in_param);
-
-  // The first identifier was already read, and is known to be the first
-  // identifier in the list.  Remember this identifier in ParamInfo.
-  ParamsSoFar.insert(FirstIdent);
-  ParamInfo.push_back(DeclaratorChunk::ParamInfo(FirstIdent, FirstIdentLoc, 0));
-
-  while (Tok.is(tok::comma)) {
-    // Eat the comma.
-    ConsumeToken();
-
-    // If this isn't an identifier, report the error and skip until ')'.
-    if (Tok.isNot(tok::identifier)) {
-      Diag(Tok, diag::err_expected_ident);
-      SkipUntil(tok::r_paren);
-      return;
-    }
-
-    IdentifierInfo *ParmII = Tok.getIdentifierInfo();
-
-    // Reject 'typedef int y; int test(x, y)', but continue parsing.
-    if (Actions.getTypeName(*ParmII, Tok.getLocation(), getCurScope()))
-      Diag(Tok, diag::err_unexpected_typedef_ident) << ParmII;
-
-    // Verify that the argument identifier has not already been mentioned.
-    if (!ParamsSoFar.insert(ParmII)) {
-      Diag(Tok, diag::err_param_redefinition) << ParmII;
-    } else {
-      // Remember this identifier in ParamInfo.
-      ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII,
-                                                     Tok.getLocation(),
-                                                     0));
-    }
-
-    // Eat the identifier.
-    ConsumeToken();
-  }
-
-  // If we have the closing ')', eat it and we're done.
-  SourceLocation RLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-
-  // Remember that we parsed a function type, and remember the attributes.  This
-  // function type is always a K&R style function type, which is not varargs and
-  // has no prototype.
-  ParsedAttributes attrs(AttrFactory);
-  D.AddTypeInfo(DeclaratorChunk::getFunction(/*proto*/false, /*varargs*/false,
-                                             SourceLocation(),
-                                             &ParamInfo[0], ParamInfo.size(),
-                                             /*TypeQuals*/0,
-                                             true, SourceLocation(),
-                                             EST_None, SourceLocation(), 0, 0,
-                                             0, 0, LParenLoc, RLoc, D),
-                attrs, RLoc);
 }
 
 /// [C90]   direct-declarator '[' constant-expression[opt] ']'
