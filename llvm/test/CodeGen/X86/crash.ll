@@ -215,3 +215,104 @@ bb2:
 }
 
 declare i64 @llvm.objectsize.i64(i8*, i1) nounwind readnone
+
+; PR10277
+; This test has dead code elimination caused by remat during spilling.
+; DCE causes a live interval to break into connected components.
+; One of the components is spilled.
+
+%t2 = type { i8 }
+%t9 = type { %t10 }
+%t10 = type { %t11 }
+%t11 = type { %t12 }
+%t12 = type { %t13*, %t13*, %t13* }
+%t13 = type { %t14*, %t15, %t15 }
+%t14 = type opaque
+%t15 = type { i8, i32, i32 }
+%t16 = type { %t17, i8* }
+%t17 = type { %t18 }
+%t18 = type { %t19 }
+%t19 = type { %t20*, %t20*, %t20* }
+%t20 = type { i32, i32 }
+%t21 = type { %t13* }
+
+define void @_ZNK4llvm17MipsFrameLowering12emitPrologueERNS_15MachineFunctionE() ssp align 2 {
+bb:
+  %tmp = load %t9** undef, align 4, !tbaa !0
+  %tmp2 = getelementptr inbounds %t9* %tmp, i32 0, i32 0
+  %tmp3 = getelementptr inbounds %t9* %tmp, i32 0, i32 0, i32 0, i32 0, i32 1
+  br label %bb4
+
+bb4:                                              ; preds = %bb37, %bb
+  %tmp5 = phi i96 [ undef, %bb ], [ %tmp38, %bb37 ]
+  %tmp6 = phi i96 [ undef, %bb ], [ %tmp39, %bb37 ]
+  br i1 undef, label %bb34, label %bb7
+
+bb7:                                              ; preds = %bb4
+  %tmp8 = load i32* undef, align 4
+  %tmp9 = and i96 %tmp6, 4294967040
+  %tmp10 = zext i32 %tmp8 to i96
+  %tmp11 = shl nuw nsw i96 %tmp10, 32
+  %tmp12 = or i96 %tmp9, %tmp11
+  %tmp13 = or i96 %tmp12, 1
+  %tmp14 = load i32* undef, align 4
+  %tmp15 = and i96 %tmp5, 4294967040
+  %tmp16 = zext i32 %tmp14 to i96
+  %tmp17 = shl nuw nsw i96 %tmp16, 32
+  %tmp18 = or i96 %tmp15, %tmp17
+  %tmp19 = or i96 %tmp18, 1
+  %tmp20 = load i8* undef, align 1
+  %tmp21 = and i8 %tmp20, 1
+  %tmp22 = icmp ne i8 %tmp21, 0
+  %tmp23 = select i1 %tmp22, i96 %tmp19, i96 %tmp13
+  %tmp24 = select i1 %tmp22, i96 %tmp13, i96 %tmp19
+  store i96 %tmp24, i96* undef, align 4
+  %tmp25 = load %t13** %tmp3, align 4
+  %tmp26 = icmp eq %t13* %tmp25, undef
+  br i1 %tmp26, label %bb28, label %bb27
+
+bb27:                                             ; preds = %bb7
+  br label %bb29
+
+bb28:                                             ; preds = %bb7
+  call void @_ZNSt6vectorIN4llvm11MachineMoveESaIS1_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS1_S3_EERKS1_(%t10* %tmp2, %t21* byval align 4 undef, %t13* undef)
+  br label %bb29
+
+bb29:                                             ; preds = %bb28, %bb27
+  store i96 %tmp23, i96* undef, align 4
+  %tmp30 = load %t13** %tmp3, align 4
+  br i1 false, label %bb33, label %bb31
+
+bb31:                                             ; preds = %bb29
+  %tmp32 = getelementptr inbounds %t13* %tmp30, i32 1
+  store %t13* %tmp32, %t13** %tmp3, align 4
+  br label %bb37
+
+bb33:                                             ; preds = %bb29
+  unreachable
+
+bb34:                                             ; preds = %bb4
+  br i1 undef, label %bb36, label %bb35
+
+bb35:                                             ; preds = %bb34
+  store %t13* null, %t13** %tmp3, align 4
+  br label %bb37
+
+bb36:                                             ; preds = %bb34
+  call void @_ZNSt6vectorIN4llvm11MachineMoveESaIS1_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS1_S3_EERKS1_(%t10* %tmp2, %t21* byval align 4 undef, %t13* undef)
+  br label %bb37
+
+bb37:                                             ; preds = %bb36, %bb35, %bb31
+  %tmp38 = phi i96 [ %tmp23, %bb31 ], [ %tmp5, %bb35 ], [ %tmp5, %bb36 ]
+  %tmp39 = phi i96 [ %tmp24, %bb31 ], [ %tmp6, %bb35 ], [ %tmp6, %bb36 ]
+  %tmp40 = add i32 undef, 1
+  br label %bb4
+}
+
+declare %t14* @_ZN4llvm9MCContext16CreateTempSymbolEv(%t2*)
+
+declare void @_ZNSt6vectorIN4llvm11MachineMoveESaIS1_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS1_S3_EERKS1_(%t10*, %t21* byval align 4, %t13*)
+
+declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
+
+declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind

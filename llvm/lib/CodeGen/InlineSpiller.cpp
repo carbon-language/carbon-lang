@@ -425,6 +425,7 @@ void InlineSpiller::analyzeSiblingValues() {
       // Check possible sibling copies.
       if (VNI->isPHIDef() || VNI->getCopy()) {
         VNInfo *OrigVNI = OrigLI.getVNInfoAt(VNI->def);
+        assert(OrigVNI && "Def outside original live range");
         if (OrigVNI->def != VNI->def)
           DefMI = traceSiblingValue(Reg, VNI, OrigVNI);
       }
