@@ -80,11 +80,17 @@ public:
     void
     AppendEventStateReport (const lldb::SBEvent &event, lldb::SBCommandReturnObject &result);
 
+#ifdef SWIG
+    %feature("docstring", "
+#endif
     //------------------------------------------------------------------
-    // Remote connection related functions. These will fail if the
-    // process is not in eStateConnected. They are intended for use
-    // when connecting to an externally managed debugserver instance.
+    /// Remote connection related functions. These will fail if the
+    /// process is not in eStateConnected. They are intended for use
+    /// when connecting to an externally managed debugserver instance.
     //------------------------------------------------------------------
+#ifdef SWIG
+    ") RemoteAttachToProcessWithID;
+#endif
     bool
     RemoteAttachToProcessWithID (lldb::pid_t pid,
                                  lldb::SBError& error);
