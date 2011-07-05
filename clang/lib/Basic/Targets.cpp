@@ -805,10 +805,10 @@ public:
     switch (getTriple().getOS()) {
     case llvm::Triple::FreeBSD:
     case llvm::Triple::NetBSD:
-        SizeType = UnsignedInt;
-        break;
+      SizeType = UnsignedInt;
+      break;
     default:
-	break;
+      break;
     }
   }
 
