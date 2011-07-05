@@ -438,7 +438,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   // darwin_constant_cfstrings controls this. This is also dependent
   // on other things like the runtime I believe.  This is set even for C code.
-  Builder.defineMacro("__CONSTANT_CFSTRINGS__");
+  if (!LangOpts.NoConstantCFStrings)
+      Builder.defineMacro("__CONSTANT_CFSTRINGS__");
 
   if (LangOpts.ObjC2)
     Builder.defineMacro("OBJC_NEW_PROPERTIES");
