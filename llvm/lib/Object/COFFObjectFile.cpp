@@ -309,9 +309,7 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
     if (!checkSize(Data, ec, 0x3c + 8)) return;
     HeaderStart += *reinterpret_cast<const ulittle32_t *>(base() + 0x3c);
     // Check the PE header. ("PE\0\0")
-    StringRef Actual(reinterpret_cast<const char *>(base() + HeaderStart), 4);
-    StringRef Expected("PE\0\0", 4);
-    if (Actual != Expected) {
+    if (std::memcmp(base() + HeaderStart, "PE\0\0", 4) != 0) {
       ec = object_error::parse_failed;
       return;
     }
