@@ -144,7 +144,7 @@ FlagOption::FlagOption(OptSpecifier ID, const char *Name,
 Arg *FlagOption::accept(const ArgList &Args, unsigned &Index) const {
   // Matches iff this is an exact match.
   // FIXME: Avoid strlen.
-  if (strlen(getName()) != strlen(Args.getArgString(Index)))
+  if (getName().size() != strlen(Args.getArgString(Index)))
     return 0;
 
   return new Arg(getUnaliasedOption(), Index++);
@@ -157,7 +157,7 @@ JoinedOption::JoinedOption(OptSpecifier ID, const char *Name,
 
 Arg *JoinedOption::accept(const ArgList &Args, unsigned &Index) const {
   // Always matches.
-  const char *Value = Args.getArgString(Index) + strlen(getName());
+  const char *Value = Args.getArgString(Index) + getName().size();
   return new Arg(getUnaliasedOption(), Index++, Value);
 }
 
@@ -170,7 +170,7 @@ CommaJoinedOption::CommaJoinedOption(OptSpecifier ID, const char *Name,
 Arg *CommaJoinedOption::accept(const ArgList &Args,
                                unsigned &Index) const {
   // Always matches.
-  const char *Str = Args.getArgString(Index) + strlen(getName());
+  const char *Str = Args.getArgString(Index) + getName().size();
   Arg *A = new Arg(getUnaliasedOption(), Index++);
 
   // Parse out the comma separated values.
@@ -205,7 +205,7 @@ SeparateOption::SeparateOption(OptSpecifier ID, const char *Name,
 Arg *SeparateOption::accept(const ArgList &Args, unsigned &Index) const {
   // Matches iff this is an exact match.
   // FIXME: Avoid strlen.
-  if (strlen(getName()) != strlen(Args.getArgString(Index)))
+  if (getName().size() != strlen(Args.getArgString(Index)))
     return 0;
 
   Index += 2;
@@ -225,7 +225,7 @@ MultiArgOption::MultiArgOption(OptSpecifier ID, const char *Name,
 Arg *MultiArgOption::accept(const ArgList &Args, unsigned &Index) const {
   // Matches iff this is an exact match.
   // FIXME: Avoid strlen.
-  if (strlen(getName()) != strlen(Args.getArgString(Index)))
+  if (getName().size() != strlen(Args.getArgString(Index)))
     return 0;
 
   Index += 1 + NumArgs;
@@ -250,8 +250,8 @@ Arg *JoinedOrSeparateOption::accept(const ArgList &Args,
                                     unsigned &Index) const {
   // If this is not an exact match, it is a joined arg.
   // FIXME: Avoid strlen.
-  if (strlen(getName()) != strlen(Args.getArgString(Index))) {
-    const char *Value = Args.getArgString(Index) + strlen(getName());
+  if (getName().size() != strlen(Args.getArgString(Index))) {
+    const char *Value = Args.getArgString(Index) + getName().size();
     return new Arg(this, Index++, Value);
   }
 
@@ -279,6 +279,6 @@ Arg *JoinedAndSeparateOption::accept(const ArgList &Args,
     return 0;
 
   return new Arg(getUnaliasedOption(), Index - 2,
-                 Args.getArgString(Index-2)+strlen(getName()),
+                 Args.getArgString(Index-2)+getName().size(),
                  Args.getArgString(Index-1));
 }

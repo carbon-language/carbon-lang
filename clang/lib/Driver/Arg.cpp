@@ -113,7 +113,7 @@ void Arg::render(const ArgList &Args, ArgStringList &Output) const {
     break;
 
   case Option::RenderSeparateStyle:
-    Output.push_back(getOption().getName());
+    Output.push_back(getOption().getName().data());
     for (unsigned i = 0, e = getNumValues(); i != e; ++i)
       Output.push_back(getValue(Args, i));
     break;

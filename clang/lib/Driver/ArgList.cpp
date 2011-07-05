@@ -287,9 +287,9 @@ Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option *Opt,
 
 Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option *Opt,
                                    llvm::StringRef Value) const {
-  unsigned Index = BaseArgs.MakeIndex(Opt->getName() + Value.str());
+  unsigned Index = BaseArgs.MakeIndex(Opt->getName().str() + Value.str());
   Arg *A = new Arg(Opt, Index,
-                   BaseArgs.getArgString(Index) + strlen(Opt->getName()),
+                   BaseArgs.getArgString(Index) + Opt->getName().size(),
                    BaseArg);
   SynthesizedArgs.push_back(A);
   return A;
