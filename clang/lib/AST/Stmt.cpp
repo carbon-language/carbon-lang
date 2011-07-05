@@ -366,6 +366,10 @@ unsigned AsmStmt::AnalyzeAsmString(llvm::SmallVectorImpl<AsmStringPiece>&Pieces,
     // Handle %x4 and %x[foo] by capturing x as the modifier character.
     char Modifier = '\0';
     if (isalpha(EscapedChar)) {
+      if (CurPtr == StrEnd) { // Premature end.
+        DiagOffs = CurPtr-StrStart-1;
+        return diag::err_asm_invalid_escape;
+      }
       Modifier = EscapedChar;
       EscapedChar = *CurPtr++;
     }
