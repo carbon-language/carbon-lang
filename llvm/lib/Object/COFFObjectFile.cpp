@@ -310,8 +310,8 @@ COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &ec)
     HeaderStart += *reinterpret_cast<const ulittle32_t *>(base() + 0x3c);
     // Check the PE header. ("PE\0\0")
     StringRef Actual(reinterpret_cast<const char *>(base() + HeaderStart), 4);
-    StringRef Expcted("PE\0\0", 4);
-    if (Actual != Expcted) {
+    StringRef Expected("PE\0\0", 4);
+    if (Actual != Expect) {
       ec = object_error::parse_failed;
       return;
     }
