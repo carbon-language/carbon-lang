@@ -19,6 +19,7 @@ namespace clang {
   class Diagnostic;
   class CodeGenOptions;
   class TargetOptions;
+  class LangOptions;
   
   enum BackendAction {
     Backend_EmitAssembly,  ///< Emit native assembly files
@@ -30,7 +31,8 @@ namespace clang {
   };
   
   void EmitBackendOutput(Diagnostic &Diags, const CodeGenOptions &CGOpts,
-                         const TargetOptions &TOpts, llvm::Module *M,
+                         const TargetOptions &TOpts, const LangOptions &LOpts,
+                         llvm::Module *M,
                          BackendAction Action, llvm::raw_ostream *OS);
 }
 

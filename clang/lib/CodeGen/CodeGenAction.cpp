@@ -34,6 +34,7 @@ namespace clang {
     BackendAction Action;
     const CodeGenOptions &CodeGenOpts;
     const TargetOptions &TargetOpts;
+    const LangOptions &LangOpts;
     llvm::raw_ostream *AsmOutStream;
     ASTContext *Context;
 
@@ -46,13 +47,16 @@ namespace clang {
   public:
     BackendConsumer(BackendAction action, Diagnostic &_Diags,
                     const CodeGenOptions &compopts,
-                    const TargetOptions &targetopts, bool TimePasses,
+                    const TargetOptions &targetopts,
+                    const LangOptions &langopts,
+                    bool TimePasses,
                     const std::string &infile, llvm::raw_ostream *OS,
                     LLVMContext &C) :
       Diags(_Diags),
       Action(action),
       CodeGenOpts(compopts),
       TargetOpts(targetopts),
+      LangOpts(langopts),
       AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
       Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)) {
@@ -126,7 +130,7 @@ namespace clang {
       void *OldContext = Ctx.getInlineAsmDiagnosticContext();
       Ctx.setInlineAsmDiagnosticHandler(InlineAsmDiagHandler, this);
 
-      EmitBackendOutput(Diags, CodeGenOpts, TargetOpts,
+      EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
                         TheModule.get(), Action, AsmOutStream);
       
       Ctx.setInlineAsmDiagnosticHandler(OldHandler, OldContext);
@@ -285,6 +289,7 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
   BEConsumer = 
       new BackendConsumer(BA, CI.getDiagnostics(),
                           CI.getCodeGenOpts(), CI.getTargetOpts(),
+                          CI.getLangOpts(),
                           CI.getFrontendOpts().ShowTimers, InFile, OS.take(),
                           *VMContext);
   return BEConsumer;
@@ -332,7 +337,8 @@ void CodeGenAction::ExecuteAction() {
     }
 
     EmitBackendOutput(CI.getDiagnostics(), CI.getCodeGenOpts(),
-                      CI.getTargetOpts(), TheModule.get(),
+                      CI.getTargetOpts(), CI.getLangOpts(),
+                      TheModule.get(),
                       BA, OS);
     return;
   }
