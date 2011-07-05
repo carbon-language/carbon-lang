@@ -1,4 +1,4 @@
-; RUN: llc -asm-verbose=false -march=x86-64 -o - < %s | FileCheck %s
+; RUN: llc -asm-verbose=false -march=x86-64 -mtriple=x86_64-apple-darwin -o - < %s | FileCheck %s
 
 ; LSR should leave non-affine expressions alone because it currently
 ; doesn't know how to do anything with them, and when it tries, it
@@ -7,9 +7,9 @@
 ; CHECK:        xorl %eax, %eax
 ; CHECK-NEXT:   align
 ; CHECK-NEXT: BB0_1:
-; CHECK-NEXT:   movq  %rax, (%{{rdx|r8}})
-; CHECK-NEXT:   addq  %{{rsi|rdx}}, %rax
-; CHECK-NEXT:   cmpq  %{{rdi|rcx}}, %rax
+; CHECK-NEXT:   movq  %rax, (%rdx)
+; CHECK-NEXT:   addq  %rsi, %rax
+; CHECK-NEXT:   cmpq  %rdi, %rax
 ; CHECK-NEXT:   jl
 ; CHECK-NEXT:   imulq %rax, %rax
 ; CHECK-NEXT:   ret
