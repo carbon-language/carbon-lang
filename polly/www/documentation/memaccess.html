@@ -1,143 +1,87 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+<!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
 <html>
 <head>
-  <meta content="text/html; charset=ISO-8859-1"
- http-equiv="Content-Type">
-  <title>memaccess.html</title>
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <title>Polly - Memory access optimizations</title>
+  <link type="text/css" rel="stylesheet" href="../menu.css">
+  <link type="text/css" rel="stylesheet" href="../content.css">
 </head>
 <body>
-<div style="margin-left: 320px;"><small style="font-weight: bold;"><small><a><big><big><big>Support
-for
-memory access
-transformations in Polly</big></big></big></a></small></small><big><span
- style="font-weight: bold;"></span></big><br>
-<big><span style="font-weight: bold;"></span></big><br>
-<div style="text-align: left;"><strong></strong>This project adds
-memory access transformations to Polly. In many cases<br>
-changing the memory access pattern yields to better data
-locality or removes<br>
-dependences that would otherwise block
-transformations. They may also<br>
-allow LLVM to use registers to store
-certain values.<br>
-</div>
-<br>
-An examples which uses this feature is given below<br>
-</div>
-<div style="margin-left: 320px;"><br>
+<!--#include virtual="../menu.html.incl"-->
+<div id="content">
+  <!--*********************************************************************-->
+  <h1>Polly - Memory access optimizations</h1>
+  <!--*********************************************************************-->
+<p><em>WARNING: This project is part of the Google Summer of Code 2011. Hence,
+it is currently not finished, but it is in the design and implementation stage.
+The Ideas/Plans described here may not yet be implemented in Polly and may be
+changed during the actual implementation.</em></p>
+
+The project which adds memory access transformations to Polly. In many cases
+changing the memory access pattern yields to better data locality or removes
+dependences that would otherwise block transformations.
+
+<p>An examples which uses this feature is given below.</p>
+
 Consider the following loop
-<ul>
-  <ul>
-  </ul>
-</ul>
-<div style="margin-left: 40px;"><small style="font-style: italic;">for
-(i = 0; i &lt; 8; i++)</small><br>
-<small style="font-style: italic;">sum += A[i];</small><br
- style="font-style: italic;">
+<pre>
+for (i = 0; i < 8; i++)
+  sum += A[i];
+</pre>
+Through memory access transformations this loop can be executed in parallel.
+It can be transformed to
+<pre>
+<em>// Create and initialize an array 'tmp' with size 4</em>
+for (i = 0; i < 8; i++)
+  tmp[i % 4] += A[i];
+sum = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+</pre>
+
+Optimizers like PluTo can schedule the code such that an outer, parallel
+loop is created:
+<pre>
+parfor (ii = 0; ii < 4; ii++) {
+  tmp[ii] = 0;
+  for (i = ii * 2; i < (ii+1) * 2; i++)
+    tmp[ii] += A[i];
+  }
+sum = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+</pre>
+
+<h2>TODO</h2>
+<h3>Step 1</h3>
+Polly exports its polyhedral description in a JSCoP file. Define how memory
+layout transformations are expressed in Polly and in the JSCOP file. 
+Example:
+
+<p>Consider the following loop.</p>
+<pre>
+for (i = 0; i < 12; i++)
+  A[i] = 0;
+</pre>
+In the JSCOP file the memory accesses are represented as follows.
+<pre>
+"accesses": [{
+        "kind": "write",
+                "relation": "{ Stmt[i] -> A[i] }"
+}]
+</pre>
+To perform a transformation we generate the following code:
+<pre>
+for (i = 0; i < 12; i++)
+  A[0] = i;
+</pre>
+The representation in the JSCoP file is:
+<pre>
+"accesses": [{
+        "kind": "read",
+                "relation": "{ Stmt[i] -> A[0] }"
+}]
+</pre>
+We need to detect this access function change.
 </div>
-<br>
-With support for memory access transformation this loop can be executed<br>
-in parallel. It can be
-transformed to<small style="font-style: italic;"><br>
-<br>
-</small>
-<div style="margin-left: 40px;"><small style="font-style: italic;">&lt;create
-and
-initialize an array 'tmp'
-with size 4&gt;</small><br>
-<small style="font-style: italic;">for (i = 0; i &lt; 8; i++) {</small><br>
-<small style="font-style: italic;">tmp[i % 4] += A[i];</small><br>
-<small style="font-style: italic;">}</small><small><span
- style="font-style: italic;"></span></small><br>
-<small><span style="font-style: italic;">sum = tmp[0] + tmp[1] + tmp[2]
-+ tmp[3];</span></small><br>
-</div>
-<br>
-With the help of some optimizer (like
-PluTo) the following code can be <br>
-generated, where the outer loop is
-parallel.
-<p style="padding-left: 30px; font-style: italic;"><small>parfor (ii =
-0; ii &lt; 4; ii++) {<br>
-&nbsp; &nbsp; tmp[ii] = 0;<br>
-&nbsp;&nbsp;&nbsp; for (i = ii * 2; i &lt; (ii+1) * 2; i++)<br>
-&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; tmp[ii] += A[i];</small></p>
-<p style="padding-left: 30px; font-style: italic; font-weight: bold;"><small><span
- style="font-weight: normal;">}</span><br style="font-weight: normal;">
-<span style="font-weight: normal;">sum = tmp[0] + tmp[1] + tmp[2] +
-tmp[3];</span><br>
-<strong></strong></small></p>
-<p><strong><span style="text-decoration: underline;">TODO<br>
-</span></strong></p>
-<p><strong><span style="text-decoration: underline;"><small>Step 1</small><br>
-</span></strong></p>
-Polly exports its polyhedral description in a JSCoP file. Define how
-memory <small><br>
-</small>layout transformations are going to be expressed in Polly and
-in
-the JSCOP file. <br>
-A simple example is given below.<br>
-<br>
-Consider the following loop.<br>
-<br>
-<div style="margin-left: 40px;"><small><span style="font-style: italic;">for
-(i
-= 0; i &lt; 12; i++)</span><br style="font-style: italic;">
-<span style="font-style: italic;">&nbsp;&nbsp;&nbsp;&nbsp; A[i] = 0;</span><br
- style="font-style: italic;">
-</small></div>
-<br>
-In the JSCOP file the memory is represented as follows.<br>
-<br>
-<div style="margin-left: 40px;"><small><span style="font-style: italic;">&nbsp;&nbsp;
-"accesses":
-[{</span></small><br style="font-style: italic;">
-<small><span style="font-style: italic;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-"kind":
-"write",</span></small><br style="font-style: italic;">
-<small><span style="font-style: italic;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-"relation":
-"{
-Stmt[i] -&gt; </span><strong
- style="font-style: italic; font-weight: bold;">A</strong><span
- style="font-style: italic;"><span style="font-weight: bold;">[i]</span>
-}"</span></small><br style="font-style: italic;">
-<small><span style="font-style: italic;">&nbsp;&nbsp;&nbsp; }]</span></small><br
- style="font-style: italic;">
-</div>
-<br>
-Suppose
-we want to perform a transformation such that the following<br>
-code is generated<br>
-<br>
-<div style="margin-left: 40px;"><small><span style="font-style: italic;">for
-(i
-= 0; i &lt; 12; i++)</span><br style="font-style: italic;">
-<span style="font-style: italic;">
-&nbsp;&nbsp;&nbsp;&nbsp; A[0] = i;</span><br style="font-style: italic;">
-</small></div>
-<br>
-The corresponding JSCOP file represenation would be<br>
-<br>
-<div style="margin-left: 40px;"><small><span style="font-style: italic;">&nbsp;&nbsp;&nbsp;
-"accesses":
-[{</span><br style="font-style: italic;">
-<span style="font-style: italic;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-"kind":
-"read",</span><br style="font-style: italic;">
-<span style="font-style: italic;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-"relation":
-"{
-Stmt[i] -&gt; </span><strong
- style="font-style: italic; font-weight: bold;">A</strong><span
- style="font-style: italic;"><span style="font-weight: bold;">[0]</span>
-}"</span><br style="font-style: italic;">
-<span style="font-style: italic;">&nbsp;&nbsp;&nbsp; }]</span><br
- style="font-style: italic;">
-</small></div>
-<br>
-We need to detect this access function change.<br>
-</div>
-<span id="q_12f99e5de7fd0932_1" class="h4"></span>
 </body>
 </html>
+
