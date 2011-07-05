@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen -S < %s 2>&1 | not FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen -S %s 2>&1 | not FileCheck %s
 ; RUN: opt %loadPolly %defaultOpts -polly-codegen | lli
 ; XFAIL: *
 ; ModuleID = 'reduction.s'

@@ -1,11 +1,11 @@
-; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly %defaultOpts -polly-codegen -disable-output < %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-cloog -analyze  < %s | FileCheck -check-prefix=IMPORT %s
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-import-jscop-postfix=valid_reverse -polly-cloog -analyze < %s | FileCheck -check-prefix=REVERSE %s > /dev/null
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-import-jscop-postfix=invalid_reverse -polly-cloog -analyze < %s 2>&1  | FileCheck -check-prefix=INVALID %s > /dev/null
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-cloog -analyze  < %s | FileCheck -check-prefix=IMPORT %s 
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-codegen < %s | lli | diff %s.result -
-; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-codegen -S < %s | FileCheck -check-prefix=CODEGEN %s
+; RUN: opt %loadPolly %defaultOpts -polly-cloog -analyze %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen -disable-output %s
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-cloog -analyze  %s | FileCheck -check-prefix=IMPORT %s
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-import-jscop-postfix=valid_reverse -polly-cloog -analyze %s | FileCheck -check-prefix=REVERSE %s > /dev/null
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-import-jscop-postfix=invalid_reverse -polly-cloog -analyze %s 2>&1  | FileCheck -check-prefix=INVALID %s > /dev/null
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-cloog -analyze  %s | FileCheck -check-prefix=IMPORT %s 
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-codegen %s | lli | diff %s.result -
+; RUN: opt %loadPolly %defaultOpts -polly-import-jscop -polly-import-jscop-dir=`dirname %s` -polly-codegen -S %s | FileCheck -check-prefix=CODEGEN %s
 
 
 ; ModuleID = 'do_pluto_matmult.s'

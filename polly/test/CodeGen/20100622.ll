@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen < %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen %s
 ; RUN: opt %loadPolly %defaultOpts -polly-detect -analyze  %s | not FileCheck %s
 
 ; ModuleID = 'a'
