@@ -50,7 +50,6 @@ enum ID {
 struct Info {
   const char *Name, *Type, *Attributes, *HeaderName;
   LanguageID builtin_lang;
-  bool Suppressed;
 
   bool operator==(const Info &RHS) const {
     return !strcmp(Name, RHS.Name) &&
