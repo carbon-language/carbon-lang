@@ -674,7 +674,8 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   }
 
   // Target properties.
-  Builder.defineMacro("_BIG_ENDIAN");
+  if (getTriple().getOS() != llvm::Triple::NetBSD)
+    Builder.defineMacro("_BIG_ENDIAN");
   Builder.defineMacro("__BIG_ENDIAN__");
 
   // Subtarget options.
