@@ -2853,13 +2853,20 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     }
 
   case llvm::Triple::mipsel:
-    if (os == llvm::Triple::Psp)
+    switch (os) {
+    case llvm::Triple::Psp:
       return new PSPTargetInfo<MipselTargetInfo>(T);
-    if (os == llvm::Triple::Linux)
+    case llvm::Triple::Linux:
       return new LinuxTargetInfo<MipselTargetInfo>(T);
-    if (os == llvm::Triple::RTEMS)
+    case llvm::Triple::RTEMS:
       return new RTEMSTargetInfo<MipselTargetInfo>(T);
-    return new MipselTargetInfo(T);
+    case llvm::Triple::FreeBSD:
+      return new NetBSDTargetInfo<MipselTargetInfo>(T);
+    case llvm::Triple::NetBSD:
+      return new NetBSDTargetInfo<MipselTargetInfo>(T);
+    default:
+      return new MipsTargetInfo(T);
+    }
 
   case llvm::Triple::ppc:
     if (Triple.isOSDarwin())
