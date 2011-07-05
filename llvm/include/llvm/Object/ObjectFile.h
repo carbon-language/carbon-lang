@@ -44,7 +44,10 @@ class RelocationRef {
   const ObjectFile *OwningObject;
 
 public:
-  RelocationRef() : OwningObject(NULL) { std::memset(&RelocationPimpl, 0, sizeof(RelocationPimpl)); }
+  RelocationRef() : OwningObject(NULL) {
+    std::memset(&RelocationPimpl, 0, sizeof(RelocationPimpl));
+  }
+
   RelocationRef(DataRefImpl RelocationP, const ObjectFile *Owner);
 
   bool operator==(const RelocationRef &Other) const;
@@ -59,7 +62,10 @@ class SymbolRef {
   const ObjectFile *OwningObject;
 
 public:
-  SymbolRef() : OwningObject(NULL) { std::memset(&SymbolPimpl, 0, sizeof(SymbolPimpl)); }
+  SymbolRef() : OwningObject(NULL) {
+    std::memset(&SymbolPimpl, 0, sizeof(SymbolPimpl));
+  }
+
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
 
   bool operator==(const SymbolRef &Other) const;
@@ -86,7 +92,10 @@ class SectionRef {
   const ObjectFile *OwningObject;
 
 public:
-  SectionRef() : OwningObject(NULL) { std::memset(&SectionPimpl, 0, sizeof(SectionPimpl)); }
+  SectionRef() : OwningObject(NULL) {
+    std::memset(&SectionPimpl, 0, sizeof(SectionPimpl));
+  }
+
   SectionRef(DataRefImpl SectionP, const ObjectFile *Owner);
 
   bool operator==(const SectionRef &Other) const;
