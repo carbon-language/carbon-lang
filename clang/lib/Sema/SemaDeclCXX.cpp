@@ -8914,10 +8914,13 @@ DeclResult Sema::ActOnCXXConditionDeclaration(Scope *S, Declarator &D) {
          "Parser allowed 'typedef' as storage class of condition decl.");
 
   Decl *Dcl = ActOnDeclarator(S, D);
+  if (!Dcl)
+    return true;
+
   if (isa<FunctionDecl>(Dcl)) { // The declarator shall not specify a function.
     Diag(Dcl->getLocation(), diag::err_invalid_use_of_function_type)
       << D.getSourceRange();
-    return DeclResult();
+    return true;
   }
 
   return Dcl;

@@ -95,3 +95,12 @@ namespace PR9026 {
     Write(x);
   }
 }
+
+namespace PR10270 {
+  template<typename T> class C;
+  template<typename T> void f() {
+    if (C<T> == 1) // expected-error{{expected unqualified-id}} \
+                   // expected-error{{invalid '==' at end of declaration}}
+      return;
+  }
+}
