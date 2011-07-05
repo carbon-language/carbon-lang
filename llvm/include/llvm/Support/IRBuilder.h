@@ -73,7 +73,6 @@ public:
   void SetInsertPoint(BasicBlock *TheBB) {
     BB = TheBB;
     InsertPt = BB->end();
-    CurDbgLocation = DebugLoc();
   }
 
   /// SetInsertPoint - This specifies that created instructions should be
