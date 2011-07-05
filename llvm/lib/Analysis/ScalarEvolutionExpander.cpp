@@ -955,7 +955,7 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
     // at IVIncInsertPos.
     Instruction *InsertPos = L == IVIncInsertLoop ?
       IVIncInsertPos : Pred->getTerminator();
-    Builder.SetInsertPoint(InsertPos->getParent(), InsertPos);
+    Builder.SetInsertPoint(InsertPos);
     Value *IncV;
     // If the PHI is a pointer, use a GEP, otherwise use an add or sub.
     if (isPointer) {

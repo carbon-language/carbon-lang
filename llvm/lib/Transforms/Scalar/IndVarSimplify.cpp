@@ -339,7 +339,7 @@ LinearFunctionTestReplace(Loop *L,
                << "      RHS:\t" << *RHS << "\n");
 
   ICmpInst *Cond = new ICmpInst(BI, Opcode, CmpIndVar, ExitCnt, "exitcond");
-
+  Cond->setDebugLoc(BI->getDebugLoc());
   Value *OrigCond = BI->getCondition();
   // It's tempting to use replaceAllUsesWith here to fully replace the old
   // comparison, but that's not immediately safe, since users of the old
