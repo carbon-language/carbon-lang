@@ -59,39 +59,39 @@ UnixSignals::Reset ()
     // order, you can either subclass this class, and use Add & Remove to change them
     // or you can subclass and build them afresh in your constructor;
     m_signals.clear();
-    //        SIGNO  NAME         SHORT NAME SUPPRESS   STOP   NOTIFY DESCRIPTION
-    //        ====== ============ ========== =========  ====== ====== ===================================================
-    AddSignal (1,    "SIGHUP",    "HUP",     false,     true,  true,  "hangup");
-    AddSignal (2,    "SIGINT",    "INT",     true,      true,  true,  "interrupt");
-    AddSignal (3,    "SIGQUIT",   "QUIT",    false,     true,  true,  "quit");
-    AddSignal (4,    "SIGILL",    "ILL",     false,     true,  true,  "illegal instruction");
-    AddSignal (5,    "SIGTRAP",   "TRAP",    true,      true,  true,  "trace trap (not reset when caught)");
-    AddSignal (6,    "SIGABRT",   "ABRT",    false,      true,  true,  "abort()");
-    AddSignal (7,    "SIGEMT",    "EMT",     false,     true,  true,  "pollable event");
-    AddSignal (8,    "SIGFPE",    "FPE",     false,     true,  true,  "floating point exception");
-    AddSignal (9,    "SIGKILL",   "KILL",    false,     true,  true,  "kill");
-    AddSignal (10,   "SIGBUS",    "BUS",     false,     true,  true,  "bus error");
-    AddSignal (11,   "SIGSEGV",   "SEGV",    false,     true,  true,  "segmentation violation");
-    AddSignal (12,   "SIGSYS",    "SYS",     false,     true,  true,  "bad argument to system call");
-    AddSignal (13,   "SIGPIPE",   "PIPE",    false,     true,  true,  "write on a pipe with no one to read it");
-    AddSignal (14,   "SIGALRM",   "ALRM",    false,     false, true,  "alarm clock");
-    AddSignal (15,   "SIGTERM",   "TERM",    false,     true,  true,  "software termination signal from kill");
-    AddSignal (16,   "SIGURG",    "URG",     false,     false, false, "urgent condition on IO channel");
-    AddSignal (17,   "SIGSTOP",   "STOP",    false,     true,  true,  "sendable stop signal not from tty");
-    AddSignal (18,   "SIGTSTP",   "TSTP",    false,     true,  true,  "stop signal from tty");
-    AddSignal (19,   "SIGCONT",   "CONT",    false,     true,  true,  "continue a stopped process");
-    AddSignal (20,   "SIGCHLD",   "CHLD",    false,     false, true,  "to parent on child stop or exit");
-    AddSignal (21,   "SIGTTIN",   "TTIN",    false,     true,  true,  "to readers process group upon background tty read");
-    AddSignal (22,   "SIGTTOU",   "TTOU",    false,     true,  true,  "to readers process group upon background tty write");
-    AddSignal (23,   "SIGIO",     "IO",      false,     false, false, "input/output possible signal");
-    AddSignal (24,   "SIGXCPU",   "XCPU",    false,     true,  true,  "exceeded CPU time limit");
-    AddSignal (25,   "SIGXFSZ",   "XFSZ",    false,     true,  true,  "exceeded file size limit");
-    AddSignal (26,   "SIGVTALRM", "VTALRM",  false,     false, false, "virtual time alarm");
-    AddSignal (27,   "SIGPROF",   "PROF",    false,     false, false, "profiling time alarm");
-    AddSignal (28,   "SIGWINCH",  "WINCH",   false,     false, false, "window size changes");
-    AddSignal (29,   "SIGINFO",   "INFO",    false,     true,  true,  "information request");
-    AddSignal (30,   "SIGUSR1",   "USR1",    false,     true,  true,  "user defined signal 1");
-    AddSignal (31,   "SIGUSR2",   "USR2",    false,     true,  true,  "user defined signal 2");
+    //        SIGNO  NAME         SHORT NAME SUPPRESS STOP   NOTIFY DESCRIPTION
+    //        ====== ============ ========== ======== ====== ====== ===================================================
+    AddSignal (1,    "SIGHUP",    "HUP",     false,   true , true , "hangup");
+    AddSignal (2,    "SIGINT",    "INT",     true ,   true , true , "interrupt");
+    AddSignal (3,    "SIGQUIT",   "QUIT",    false,   true , true , "quit");
+    AddSignal (4,    "SIGILL",    "ILL",     false,   true , true , "illegal instruction");
+    AddSignal (5,    "SIGTRAP",   "TRAP",    true ,   true , true , "trace trap (not reset when caught)");
+    AddSignal (6,    "SIGABRT",   "ABRT",    false,   true , true , "abort()");
+    AddSignal (7,    "SIGEMT",    "EMT",     false,   true , true , "pollable event");
+    AddSignal (8,    "SIGFPE",    "FPE",     false,   true , true , "floating point exception");
+    AddSignal (9,    "SIGKILL",   "KILL",    false,   true , true , "kill");
+    AddSignal (10,   "SIGBUS",    "BUS",     false,   true , true , "bus error");
+    AddSignal (11,   "SIGSEGV",   "SEGV",    false,   true , true , "segmentation violation");
+    AddSignal (12,   "SIGSYS",    "SYS",     false,   true , true , "bad argument to system call");
+    AddSignal (13,   "SIGPIPE",   "PIPE",    false,   true , true , "write on a pipe with no one to read it");
+    AddSignal (14,   "SIGALRM",   "ALRM",    false,   false, true , "alarm clock");
+    AddSignal (15,   "SIGTERM",   "TERM",    false,   true , true , "software termination signal from kill");
+    AddSignal (16,   "SIGURG",    "URG",     false,   false, false, "urgent condition on IO channel");
+    AddSignal (17,   "SIGSTOP",   "STOP",    true ,   true , true , "sendable stop signal not from tty");
+    AddSignal (18,   "SIGTSTP",   "TSTP",    false,   true , true , "stop signal from tty");
+    AddSignal (19,   "SIGCONT",   "CONT",    false,   true , true , "continue a stopped process");
+    AddSignal (20,   "SIGCHLD",   "CHLD",    false,   false, true , "to parent on child stop or exit");
+    AddSignal (21,   "SIGTTIN",   "TTIN",    false,   true , true , "to readers process group upon background tty read");
+    AddSignal (22,   "SIGTTOU",   "TTOU",    false,   true , true , "to readers process group upon background tty write");
+    AddSignal (23,   "SIGIO",     "IO",      false,   false, false, "input/output possible signal");
+    AddSignal (24,   "SIGXCPU",   "XCPU",    false,   true , true , "exceeded CPU time limit");
+    AddSignal (25,   "SIGXFSZ",   "XFSZ",    false,   true , true , "exceeded file size limit");
+    AddSignal (26,   "SIGVTALRM", "VTALRM",  false,   false, false, "virtual time alarm");
+    AddSignal (27,   "SIGPROF",   "PROF",    false,   false, false, "profiling time alarm");
+    AddSignal (28,   "SIGWINCH",  "WINCH",   false,   false, false, "window size changes");
+    AddSignal (29,   "SIGINFO",   "INFO",    false,   true , true , "information request");
+    AddSignal (30,   "SIGUSR1",   "USR1",    false,   true , true , "user defined signal 1");
+    AddSignal (31,   "SIGUSR2",   "USR2",    false,   true , true , "user defined signal 2");
 }
 
 void

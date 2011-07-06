@@ -1000,3 +1000,150 @@ RegisterValue::operator != (const RegisterValue &rhs) const
     return true;
 }
 
+bool
+RegisterValue::ClearBit (uint32_t bit)
+{
+    switch (m_type)
+    {
+        case eTypeInvalid:
+            break;
+
+        case eTypeUInt8:        
+            if (bit < 8)
+            {
+                m_data.uint8 &= ~(1u << bit);
+                return true;
+            }
+            break;
+            
+        case eTypeUInt16:
+            if (bit < 16)
+            {
+                m_data.uint16 &= ~(1u << bit);
+                return true;
+            }
+            break;
+
+        case eTypeUInt32:
+            if (bit < 32)
+            {
+                m_data.uint32 &= ~(1u << bit);
+                return true;
+            }
+            break;
+            
+        case eTypeUInt64:
+            if (bit < 64)
+            {
+                m_data.uint64 &= ~(1ull << (uint64_t)bit);
+                return true;
+            }
+            break;
+#if defined (ENABLE_128_BIT_SUPPORT)
+        case eTypeUInt128:
+            if (bit < 64)
+            {
+                m_data.uint128 &= ~((__uint128_t)1ull << (__uint128_t)bit);
+                return true;
+            }
+#endif
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble:
+            break;
+
+        case eTypeBytes:
+            if (m_data.buffer.byte_order == eByteOrderBig || m_data.buffer.byte_order == eByteOrderLittle)
+            {
+                uint32_t byte_idx;
+                if (m_data.buffer.byte_order == eByteOrderBig)
+                    byte_idx = m_data.buffer.length - (bit / 8) - 1;
+                else
+                    byte_idx = bit / 8;
+
+                const uint32_t byte_bit = bit % 8;
+                if (byte_idx < m_data.buffer.length)
+                {
+                    m_data.buffer.bytes[byte_idx] &= ~(1u << byte_bit);
+                    return true;
+                }
+            }
+            break;
+    }
+    return false;
+}
+
+
+bool
+RegisterValue::SetBit (uint32_t bit)
+{
+    switch (m_type)
+    {
+        case eTypeInvalid:
+            break;
+            
+        case eTypeUInt8:        
+            if (bit < 8)
+            {
+                m_data.uint8 |= (1u << bit);
+                return true;
+            }
+            break;
+            
+        case eTypeUInt16:
+            if (bit < 16)
+            {
+                m_data.uint16 |= (1u << bit);
+                return true;
+            }
+            break;
+            
+        case eTypeUInt32:
+            if (bit < 32)
+            {
+                m_data.uint32 |= (1u << bit);
+                return true;
+            }
+            break;
+            
+        case eTypeUInt64:
+            if (bit < 64)
+            {
+                m_data.uint64 |= (1ull << (uint64_t)bit);
+                return true;
+            }
+            break;
+#if defined (ENABLE_128_BIT_SUPPORT)
+        case eTypeUInt128:
+            if (bit < 64)
+            {
+                m_data.uint128 |= ((__uint128_t)1ull << (__uint128_t)bit);
+                return true;
+            }
+#endif
+        case eTypeFloat:
+        case eTypeDouble:
+        case eTypeLongDouble:
+            break;
+            
+        case eTypeBytes:
+            if (m_data.buffer.byte_order == eByteOrderBig || m_data.buffer.byte_order == eByteOrderLittle)
+            {
+                uint32_t byte_idx;
+                if (m_data.buffer.byte_order == eByteOrderBig)
+                    byte_idx = m_data.buffer.length - (bit / 8) - 1;
+                else
+                    byte_idx = bit / 8;
+                
+                const uint32_t byte_bit = bit % 8;
+                if (byte_idx < m_data.buffer.length)
+                {
+                    m_data.buffer.bytes[byte_idx] |= (1u << byte_bit);
+                    return true;
+                }
+            }
+            break;
+    }
+    return false;
+}
+

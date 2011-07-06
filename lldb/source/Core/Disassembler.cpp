@@ -331,7 +331,7 @@ Disassembler::PrintInstructions
     SymbolContext sc;
     SymbolContext prev_sc;
     AddressRange sc_range;
-    Address *pc_addr_ptr = NULL;
+    const Address *pc_addr_ptr = NULL;
     ExecutionContextScope *exe_scope = exe_ctx.GetBestExecutionContextScope();
     if (exe_ctx.frame)
         pc_addr_ptr = &exe_ctx.frame->GetFrameCodeAddress();

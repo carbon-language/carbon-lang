@@ -119,7 +119,7 @@ bool
 GDBRemoteRegisterContext::ReadRegister (const RegisterInfo *reg_info, RegisterValue &value)
 {
     // Read the register
-    if (ReadRegisterBytes (reg_info, value, m_reg_data))
+    if (ReadRegisterBytes (reg_info, m_reg_data))
     {
         const bool partial_data_ok = false;
         Error error (value.SetValueFromData(reg_info, m_reg_data, reg_info->byte_offset, partial_data_ok));
@@ -156,7 +156,7 @@ GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor
 
 
 bool
-GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, RegisterValue &value, DataExtractor &data)
+GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataExtractor &data)
 {
     GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
 

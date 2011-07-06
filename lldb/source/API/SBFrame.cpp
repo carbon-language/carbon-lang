@@ -258,7 +258,7 @@ SBFrame::GetPC () const
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        addr = m_opaque_sp->GetFrameCodeAddress().GetLoadAddress (&m_opaque_sp->GetThread().GetProcess().GetTarget());
+        addr = m_opaque_sp->GetFrameCodeAddress().GetOpcodeLoadAddress (&m_opaque_sp->GetThread().GetProcess().GetTarget());
     }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));

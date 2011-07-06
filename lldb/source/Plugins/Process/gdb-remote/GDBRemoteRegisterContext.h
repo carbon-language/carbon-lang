@@ -227,7 +227,6 @@ protected:
 
     bool
     ReadRegisterBytes (const lldb_private::RegisterInfo *reg_info,
-                       lldb_private::RegisterValue &value, 
                        lldb_private::DataExtractor &data);
 
     bool

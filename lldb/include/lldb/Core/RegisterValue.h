@@ -204,6 +204,12 @@ namespace lldb_private {
         }
 
         bool
+        ClearBit (uint32_t bit);
+
+        bool
+        SetBit (uint32_t bit);
+
+        bool
         operator == (const RegisterValue &rhs) const;
 
         bool

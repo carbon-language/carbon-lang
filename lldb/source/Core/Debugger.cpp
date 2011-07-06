@@ -715,7 +715,7 @@ ScanFormatDescriptor(const char* var_name_begin,
                      ValueObject::ValueObjectRepresentationStyle* val_obj_display)
 {
     *percent_position = ::strchr(var_name_begin,'%');
-    if(!*percent_position || *percent_position > var_name_end)
+    if (!*percent_position || *percent_position > var_name_end)
         *var_name_final = var_name_end;
     else
     {
@@ -727,10 +727,10 @@ ScanFormatDescriptor(const char* var_name_begin,
                                                   *custom_format) )
         {
             // if this is an @ sign, print ObjC description
-            if(*format_name == '@')
+            if (*format_name == '@')
                 *val_obj_display = ValueObject::eDisplayLanguageSpecific;
             // if this is a V, print the value using the default format
-            if(*format_name == 'V')
+            if (*format_name == 'V')
                 *val_obj_display = ValueObject::eDisplayValue;
         }
         // a good custom format tells us to print the value using it
@@ -753,14 +753,14 @@ ScanBracketedRange(const char* var_name_begin,
                    int64_t* index_higher)
 {
     *open_bracket_position = ::strchr(var_name_begin,'[');
-    if(*open_bracket_position && *open_bracket_position < var_name_final)
+    if (*open_bracket_position && *open_bracket_position < var_name_final)
     {
         *separator_position = ::strchr(*open_bracket_position,'-'); // might be NULL if this is a simple var[N] bitfield
         *close_bracket_position = ::strchr(*open_bracket_position,']');
         // as usual, we assume that [] will come before %
         //printf("trying to expand a []\n");
         *var_name_final_if_array_range = *open_bracket_position;
-        if(*close_bracket_position - *open_bracket_position == 1)
+        if (*close_bracket_position - *open_bracket_position == 1)
         {
             *index_lower = 0;
         }
@@ -771,7 +771,7 @@ ScanBracketedRange(const char* var_name_begin,
             *index_higher = *index_lower;
             //printf("got to read low=%d high same\n",bitfield_lower);
         }
-        else if(*close_bracket_position && *close_bracket_position < var_name_end)
+        else if (*close_bracket_position && *close_bracket_position < var_name_end)
         {
             char *end = NULL;
             *index_lower = ::strtoul (*open_bracket_position+1, &end, 0);
@@ -803,9 +803,9 @@ ExpandExpressionPath(ValueObject* vobj,
     StreamString sstring;
     VariableSP var_sp;
     
-    if(*do_deref_pointer)
+    if (*do_deref_pointer)
         sstring.PutChar('*');
-    else if(vobj->IsDereferenceOfParent() && ClangASTContext::IsPointerType(vobj->GetParent()->GetClangType()) && !vobj->IsArrayItemForPointer())
+    else if (vobj->IsDereferenceOfParent() && ClangASTContext::IsPointerType(vobj->GetParent()->GetClangType()) && !vobj->IsArrayItemForPointer())
     {
         sstring.PutChar('*');
         *do_deref_pointer = true;
@@ -837,7 +837,7 @@ ExpandIndexedExpression(ValueObject* vobj,
     ValueObjectSP item;
     bool is_array = ClangASTContext::IsArrayType(vobj->GetClangType());
 
-    if(is_array)
+    if (is_array)
         return vobj->GetChildAtIndex(index, true);
     else
     {
@@ -881,7 +881,7 @@ Debugger::FormatPrompt
     const char *p;
     for (p = format; *p != '\0'; ++p)
     {
-        if(realvobj)
+        if (realvobj)
         {
             vobj = realvobj;
             realvobj = NULL;
@@ -961,165 +961,169 @@ Debugger::FormatPrompt
                         {
                         case '*':
                             {
-                                if (!vobj) break;
+                                if (!vobj) 
+                                    break;
                                 do_deref_pointer = true;
                                 var_name_begin++;
                             }
+                            // Fall through...
+
                         case 'v':
                             {
-                            ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eDisplaySummary;
-                            ValueObject* target;
-                            lldb::Format custom_format = eFormatInvalid;
-                            const char* var_name_final;
-                            const char* var_name_final_if_array_range = NULL;
-                            const char* close_bracket_position;
-                            int64_t index_lower = -1, index_higher = -1;
-                            bool is_array_range = false;
-                            if (!vobj) break;
-                            // simplest case ${var}, just print vobj's value
-                            if (::strncmp (var_name_begin, "var}", strlen("var}")) == 0)
-                            {
-                                target = vobj;
-                                val_obj_display = ValueObject::eDisplayValue;
-                            }
-                            else if (::strncmp(var_name_begin,"var%",strlen("var%")) == 0)
-                            {
-                                // this is a variable with some custom format applied to it
-                                const char* percent_position;
-                                target = vobj;
-                                val_obj_display = ValueObject::eDisplayValue;
-                                ScanFormatDescriptor(var_name_begin,
-                                                     var_name_end,
-                                                     &var_name_final,
-                                                     &percent_position,
-                                                     &custom_format,
-                                                     &val_obj_display);
-                            }
-                                // this is ${var.something} or multiple .something nested
-                            else if (::strncmp (var_name_begin, "var", strlen("var")) == 0)
-                            {
-
-                                const char* percent_position;
-                                ScanFormatDescriptor(var_name_begin,
-                                                     var_name_end,
-                                                     &var_name_final,
-                                                     &percent_position,
-                                                     &custom_format,
-                                                     &val_obj_display);
-                                
-                                const char* open_bracket_position;
-                                const char* separator_position;
-                                ScanBracketedRange(var_name_begin,
-                                                   var_name_end,
-                                                   var_name_final,
-                                                   &open_bracket_position,
-                                                   &separator_position,
-                                                   &close_bracket_position,
-                                                   &var_name_final_if_array_range,
-                                                   &index_lower,
-                                                   &index_higher);
-                                                                
-                                Error error;
-                                target = ExpandExpressionPath(vobj,
-                                                     exe_ctx->frame,
-                                                     &do_deref_pointer,
-                                                     var_name_begin,
-                                                     var_name_final,
-                                                     error).get();
-
-                                if (error.Fail() || !target)
+                                ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eDisplaySummary;
+                                ValueObject* target = NULL;
+                                lldb::Format custom_format = eFormatInvalid;
+                                const char* var_name_final = NULL;
+                                const char* var_name_final_if_array_range = NULL;
+                                const char* close_bracket_position = NULL;
+                                int64_t index_lower = -1;
+                                int64_t index_higher = -1;
+                                bool is_array_range = false;
+                                if (!vobj) break;
+                                // simplest case ${var}, just print vobj's value
+                                if (::strncmp (var_name_begin, "var}", strlen("var}")) == 0)
                                 {
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-                                    printf("ERROR: %s\n",error.AsCString("unknown"));
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
-                                    if (var_name_final_if_array_range)
+                                    target = vobj;
+                                    val_obj_display = ValueObject::eDisplayValue;
+                                }
+                                else if (::strncmp(var_name_begin,"var%",strlen("var%")) == 0)
+                                {
+                                    // this is a variable with some custom format applied to it
+                                    const char* percent_position;
+                                    target = vobj;
+                                    val_obj_display = ValueObject::eDisplayValue;
+                                    ScanFormatDescriptor (var_name_begin,
+                                                          var_name_end,
+                                                          &var_name_final,
+                                                          &percent_position,
+                                                          &custom_format,
+                                                          &val_obj_display);
+                                }
+                                    // this is ${var.something} or multiple .something nested
+                                else if (::strncmp (var_name_begin, "var", strlen("var")) == 0)
+                                {
+
+                                    const char* percent_position;
+                                    ScanFormatDescriptor (var_name_begin,
+                                                          var_name_end,
+                                                          &var_name_final,
+                                                          &percent_position,
+                                                          &custom_format,
+                                                          &val_obj_display);
+                                    
+                                    const char* open_bracket_position;
+                                    const char* separator_position;
+                                    ScanBracketedRange (var_name_begin,
+                                                        var_name_end,
+                                                        var_name_final,
+                                                        &open_bracket_position,
+                                                        &separator_position,
+                                                        &close_bracket_position,
+                                                        &var_name_final_if_array_range,
+                                                        &index_lower,
+                                                        &index_higher);
+                                                                    
+                                    Error error;
+                                    target = ExpandExpressionPath (vobj,
+                                                                   exe_ctx->frame,
+                                                                   &do_deref_pointer,
+                                                                   var_name_begin,
+                                                                   var_name_final,
+                                                                   error).get();
+
+                                    if (error.Fail() || !target)
                                     {
-                                        target = ExpandExpressionPath(vobj,
-                                                                      exe_ctx->frame,
-                                                                      &do_deref_pointer,
-                                                                      var_name_begin,
-                                                                      var_name_final_if_array_range,
-                                                                      error).get();
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                        printf("ERROR: %s\n",error.AsCString("unknown"));
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                        if (var_name_final_if_array_range)
+                                        {
+                                            target = ExpandExpressionPath(vobj,
+                                                                          exe_ctx->frame,
+                                                                          &do_deref_pointer,
+                                                                          var_name_begin,
+                                                                          var_name_final_if_array_range,
+                                                                          error).get();
+                                        }
+                                        
+                                        IFERROR_PRINT_IT
+                                        else
+                                            is_array_range = true;
                                     }
                                     
-                                    IFERROR_PRINT_IT
-                                    else
-                                        is_array_range = true;
+                                    do_deref_pointer = false; // I have honored the request to deref                               
+
                                 }
-                                
-                                do_deref_pointer = false; // I have honored the request to deref                               
-
-                            }
-                            else
-                                break;
-
-                            if(do_deref_pointer)
-                            {
-                                // I have not deref-ed yet, let's do it
-                                // this happens when we are not going through GetValueForVariableExpressionPath
-                                // to get to the target ValueObject
-                                Error error;
-                                target = target->Dereference(error).get();
-                                IFERROR_PRINT_IT
-                                do_deref_pointer = false;
-                            }
-                                                            
-                            if(!is_array_range)
-                                var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
-                            else
-                            {
-                                bool is_array = ClangASTContext::IsArrayType(vobj->GetClangType());
-                                bool is_pointer = ClangASTContext::IsPointerType(vobj->GetClangType());
-                                
-                                if(!is_array && !is_pointer)
+                                else
                                     break;
-                                
-                                char* special_directions = NULL;
-                                if (close_bracket_position && (var_name_end-close_bracket_position > 1))
-                                {
-                                    int base_len = var_name_end-close_bracket_position;
-                                    special_directions = new char[8+base_len];
-                                    special_directions[0] = '$';
-                                    special_directions[1] = '{';                                        
-                                    special_directions[2] = 'v';
-                                    special_directions[3] = 'a';
-                                    special_directions[4] = 'r';
-                                    memcpy(special_directions+5, close_bracket_position+1, base_len);
-                                    special_directions[base_len+7] = '\0';
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT
-                                    printf("%s\n",special_directions);
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
-                                }
-                                
-                                // let us display items index_lower thru index_higher of this array
-                                s.PutChar('[');
-                                var_success = true;
 
-                                if(index_higher < 0)
-                                    index_higher = vobj->GetNumChildren() - 1;
-                                
-                                for(;index_lower<=index_higher;index_lower++)
+                                if (do_deref_pointer)
                                 {
+                                    // I have not deref-ed yet, let's do it
+                                    // this happens when we are not going through GetValueForVariableExpressionPath
+                                    // to get to the target ValueObject
                                     Error error;
-                                    ValueObject* item = ExpandIndexedExpression(vobj,
-                                                                                index_lower,
-                                                                                exe_ctx->frame,
-                                                                                error).get();
-
-                                    
+                                    target = target->Dereference(error).get();
                                     IFERROR_PRINT_IT
-                                    if (!special_directions)
-                                        var_success &= item->DumpPrintableRepresentation(s,val_obj_display, custom_format);
-                                    else
-                                        var_success &= FormatPrompt(special_directions, sc, exe_ctx, addr, s, NULL, item);
-                                    
-                                    if(index_lower < index_higher)
-                                        s.PutChar(',');
+                                    do_deref_pointer = false;
                                 }
-                                s.PutChar(']');
+                                                                
+                                if (!is_array_range)
+                                    var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
+                                else
+                                {
+                                    bool is_array = ClangASTContext::IsArrayType(vobj->GetClangType());
+                                    bool is_pointer = ClangASTContext::IsPointerType(vobj->GetClangType());
+                                    
+                                    if (!is_array && !is_pointer)
+                                        break;
+                                    
+                                    char* special_directions = NULL;
+                                    if (close_bracket_position && (var_name_end-close_bracket_position > 1))
+                                    {
+                                        int base_len = var_name_end-close_bracket_position;
+                                        special_directions = new char[8+base_len];
+                                        special_directions[0] = '$';
+                                        special_directions[1] = '{';                                        
+                                        special_directions[2] = 'v';
+                                        special_directions[3] = 'a';
+                                        special_directions[4] = 'r';
+                                        memcpy(special_directions+5, close_bracket_position+1, base_len);
+                                        special_directions[base_len+7] = '\0';
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT
+                                        printf("%s\n",special_directions);
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                    }
+                                    
+                                    // let us display items index_lower thru index_higher of this array
+                                    s.PutChar('[');
+                                    var_success = true;
+
+                                    if (index_higher < 0)
+                                        index_higher = vobj->GetNumChildren() - 1;
+                                    
+                                    for (;index_lower<=index_higher;index_lower++)
+                                    {
+                                        Error error;
+                                        ValueObject* item = ExpandIndexedExpression(vobj,
+                                                                                    index_lower,
+                                                                                    exe_ctx->frame,
+                                                                                    error).get();
+
+                                        
+                                        IFERROR_PRINT_IT
+                                        if (!special_directions)
+                                            var_success &= item->DumpPrintableRepresentation(s,val_obj_display, custom_format);
+                                        else
+                                            var_success &= FormatPrompt(special_directions, sc, exe_ctx, addr, s, NULL, item);
+                                        
+                                        if (index_lower < index_higher)
+                                            s.PutChar(',');
+                                    }
+                                    s.PutChar(']');
+                                }
                             }
                             break;
-                            }
                         case 'a':
                             if (::strncmp (var_name_begin, "addr}", strlen("addr}")) == 0)
                             {

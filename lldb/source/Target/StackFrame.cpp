@@ -209,7 +209,7 @@ StackFrame::SetSymbolContextScope (SymbolContextScope *symbol_scope)
     m_id.SetSymbolContextScope (symbol_scope);
 }
 
-Address&
+const Address&
 StackFrame::GetFrameCodeAddress()
 {
     if (m_flags.IsClear(RESOLVED_FRAME_CODE_ADDR) && !m_frame_code_addr.IsSectionOffset())
@@ -218,10 +218,9 @@ StackFrame::GetFrameCodeAddress()
 
         // Resolve the PC into a temporary address because if ResolveLoadAddress
         // fails to resolve the address, it will clear the address object...
-        Address resolved_pc;
-        if (m_thread.GetProcess().GetTarget().GetSectionLoadList().ResolveLoadAddress(m_frame_code_addr.GetOffset(), resolved_pc))
+        
+        if (m_frame_code_addr.SetOpcodeLoadAddress (m_frame_code_addr.GetOffset(), &m_thread.GetProcess().GetTarget()))
         {
-            m_frame_code_addr = resolved_pc;
             const Section *section = m_frame_code_addr.GetSection();
             if (section)
             {

@@ -74,7 +74,7 @@ public:
     StackID&
     GetStackID();
 
-    Address&
+    const Address&
     GetFrameCodeAddress();
     
     void

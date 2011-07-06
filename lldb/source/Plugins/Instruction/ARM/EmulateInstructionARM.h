@@ -189,7 +189,9 @@ public:
     ArchVersion();
 
     bool
-    ConditionPassed (const uint32_t opcode);
+    ConditionPassed (const uint32_t opcode, 
+                     bool *is_conditional = NULL);  // Filled in with true if the opcode is a conditional opcode
+                                                    // Filled in with false if the opcode is always executed
 
     uint32_t
     CurrentCond (const uint32_t opcode);
