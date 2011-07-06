@@ -122,12 +122,9 @@ private:
 class LoadAndStorePromoter {
 protected:
   SSAUpdater &SSA;
-  DbgDeclareInst *DDI;
-  DIBuilder *DIB;
 public:
   LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
-                       SSAUpdater &S, DbgDeclareInst *DDI, DIBuilder *DIB,
-                       StringRef Name = StringRef());
+                       SSAUpdater &S, StringRef Name = StringRef());
   virtual ~LoadAndStorePromoter() {}
   
   /// run - This does the promotion.  Insts is a list of loads and stores to
@@ -161,6 +158,10 @@ public:
   virtual void instructionDeleted(Instruction *I) const {
   }
 
+  /// updateDebugInfo - This is called to update debug info associated with the
+  /// instruction.
+  virtual void updateDebugInfo(Instruction *I) const {
+  }
 };
 
 } // End llvm namespace

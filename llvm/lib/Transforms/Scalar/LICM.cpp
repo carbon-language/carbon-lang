@@ -613,7 +613,7 @@ namespace {
                  SmallPtrSet<Value*, 4> &PMA,
                  SmallVectorImpl<BasicBlock*> &LEB, AliasSetTracker &ast,
                  DebugLoc dl, int alignment)
-      : LoadAndStorePromoter(Insts, S, 0, 0), SomePtr(SP),
+      : LoadAndStorePromoter(Insts, S), SomePtr(SP),
         PointerMustAliases(PMA), LoopExitBlocks(LEB), AST(ast), DL(dl),
         Alignment(alignment) {}
 

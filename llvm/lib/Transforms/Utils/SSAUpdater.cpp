@@ -16,7 +16,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Analysis/DIBuilder.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
@@ -358,8 +357,7 @@ Value *SSAUpdater::GetValueAtEndOfBlockInternal(BasicBlock *BB) {
 
 LoadAndStorePromoter::
 LoadAndStorePromoter(const SmallVectorImpl<Instruction*> &Insts,
-                     SSAUpdater &S, DbgDeclareInst *DD, DIBuilder *DB,
-                     StringRef BaseName) : SSA(S), DDI(DD), DIB(DB) {
+                     SSAUpdater &S, StringRef BaseName) : SSA(S) {
   if (Insts.empty()) return;
   
   Value *SomeVal;
@@ -407,8 +405,7 @@ run(const SmallVectorImpl<Instruction*> &Insts) const {
     if (BlockUses.size() == 1) {
       // If it is a store, it is a trivial def of the value in the block.
       if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
-        if (DDI)
-          ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
+        updateDebugInfo(SI);
         SSA.AddAvailableValue(BB, SI->getOperand(0));
       } else 
         // Otherwise it is a load, queue it to rewrite as a live-in load.
@@ -462,9 +459,7 @@ run(const SmallVectorImpl<Instruction*> &Insts) const {
       if (StoreInst *SI = dyn_cast<StoreInst>(II)) {
         // If this is a store to an unrelated pointer, ignore it.
         if (!isInstInList(SI, Insts)) continue;
-
-        if (DDI)
-          ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
+        updateDebugInfo(SI);
 
         // Remember that this is the active value in the block.
         StoredValue = SI->getOperand(0);
@@ -522,7 +517,4 @@ run(const SmallVectorImpl<Instruction*> &Insts) const {
     instructionDeleted(User);
     User->eraseFromParent();
   }
-
-  if (DDI)
-    DDI->eraseFromParent();
 }

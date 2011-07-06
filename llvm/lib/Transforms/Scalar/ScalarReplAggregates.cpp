@@ -1094,16 +1094,21 @@ bool SROA::runOnFunction(Function &F) {
 namespace {
 class AllocaPromoter : public LoadAndStorePromoter {
   AllocaInst *AI;
+  DbgDeclareInst *DDI;
+  DIBuilder *DIB;
 public:
   AllocaPromoter(const SmallVectorImpl<Instruction*> &Insts, SSAUpdater &S,
-                 DbgDeclareInst *DD, DIBuilder *&DB)
-    : LoadAndStorePromoter(Insts, S, DD, DB), AI(0) {}
+                 DIBuilder *DB)
+    : LoadAndStorePromoter(Insts, S), AI(0), DDI(0), DIB(DB) {}
   
   void run(AllocaInst *AI, const SmallVectorImpl<Instruction*> &Insts) {
     // Remember which alloca we're promoting (for isInstInList).
     this->AI = AI;
+    DDI = FindAllocaDbgDeclare(AI);
     LoadAndStorePromoter::run(Insts);
     AI->eraseFromParent();
+    if (DDI)
+      DDI->eraseFromParent();
   }
   
   virtual bool isInstInList(Instruction *I,
@@ -1111,6 +1116,15 @@ public:
     if (LoadInst *LI = dyn_cast<LoadInst>(I))
       return LI->getOperand(0) == AI;
     return cast<StoreInst>(I)->getPointerOperand() == AI;
+  }
+
+  virtual void updateDebugInfo(Instruction *I) const {
+    if (!DDI)
+      return;
+    if (StoreInst *SI = dyn_cast<StoreInst>(I))
+      ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
+    else if (LoadInst *LI = dyn_cast<LoadInst>(I))
+      ConvertDebugDeclareToDebugValue(DDI, LI, *DIB);
   }
 };
 } // end anon namespace
@@ -1381,10 +1395,9 @@ bool SROA::performPromotion(Function &F) {
     DT = &getAnalysis<DominatorTree>();
 
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
-
+  DIBuilder DIB(*F.getParent());
   bool Changed = false;
   SmallVector<Instruction*, 64> Insts;
-  DIBuilder *DIB = 0;
   while (1) {
     Allocas.clear();
 
@@ -1408,21 +1421,13 @@ bool SROA::performPromotion(Function &F) {
         for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end();
              UI != E; ++UI)
           Insts.push_back(cast<Instruction>(*UI));
-
-        DbgDeclareInst *DDI = FindAllocaDbgDeclare(AI);
-        if (DDI && !DIB)
-          DIB = new DIBuilder(*AI->getParent()->getParent()->getParent());
-        AllocaPromoter(Insts, SSA, DDI, DIB).run(AI, Insts);
+        AllocaPromoter(Insts, SSA, &DIB).run(AI, Insts);
         Insts.clear();
       }
     }
     NumPromoted += Allocas.size();
     Changed = true;
   }
-
-  // FIXME: Is there a better way to handle the lazy initialization of DIB
-  // so that there doesn't need to be an explicit delete?
-  delete DIB;
 
   return Changed;
 }
