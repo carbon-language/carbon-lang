@@ -35,26 +35,26 @@ public:
   Constructable() : value(0) {
     ++numConstructorCalls;
   }
-  
+
   Constructable(int val) : value(val) {
     ++numConstructorCalls;
   }
-  
+
   Constructable(const Constructable & src) {
     value = src.value;
     ++numConstructorCalls;
   }
-  
+
   ~Constructable() {
     ++numDestructorCalls;
   }
-  
+
   Constructable & operator=(const Constructable & src) {
     value = src.value;
     ++numAssignmentCalls;
     return *this;
   }
-  
+
   int getValue() const {
     return abs(value);
   }
@@ -64,7 +64,7 @@ public:
     numDestructorCalls = 0;
     numAssignmentCalls = 0;
   }
-  
+
   static int getNumConstructorCalls() {
     return numConstructorCalls;
   }
@@ -91,10 +91,10 @@ int Constructable::numAssignmentCalls;
 class SmallVectorTest : public testing::Test {
 protected:
   typedef SmallVector<Constructable, 4> VectorType;
-  
+
   VectorType theVector;
   VectorType otherVector;
-  
+
   void SetUp() {
     Constructable::reset();
   }
@@ -111,7 +111,7 @@ protected:
   // Assert that theVector contains the specified values, in order.
   void assertValuesInOrder(VectorType & v, size_t size, ...) {
     EXPECT_EQ(size, v.size());
-    
+
     va_list ap;
     va_start(ap, size);
     for (size_t i = 0; i < size; ++i) {
@@ -121,7 +121,7 @@ protected:
 
     va_end(ap);
   }
-  
+
   // Generate a sequence of values to initialize the vector.
   void makeSequence(VectorType & v, int start, int end) {
     for (int i = start; i <= end; ++i) {
@@ -155,18 +155,24 @@ TEST_F(SmallVectorTest, PushPopTest) {
   theVector.push_back(Constructable(2));
   assertValuesInOrder(theVector, 2u, 1, 2);
 
+  // Insert at beginning
+  theVector.insert(theVector.begin(), theVector[1]);
+  assertValuesInOrder(theVector, 3u, 2, 1, 2);
+
   // Pop one element
   theVector.pop_back();
-  assertValuesInOrder(theVector, 1u, 1);
+  assertValuesInOrder(theVector, 2u, 2, 1);
 
-  // Pop another element
+  // Pop remaining elements
+  theVector.pop_back();
   theVector.pop_back();
   assertEmpty(theVector);
-  
+
   // Check number of constructor calls. Should be 2 for each list element,
-  // one for the argument to push_back, and one for the list element itself.
-  EXPECT_EQ(4, Constructable::getNumConstructorCalls());
-  EXPECT_EQ(4, Constructable::getNumDestructorCalls());
+  // one for the argument to push_back, one for the argument to insert,
+  // and one for the list element itself.
+  EXPECT_EQ(5, Constructable::getNumConstructorCalls());
+  EXPECT_EQ(5, Constructable::getNumDestructorCalls());
 }
 
 // Clear test.
@@ -198,7 +204,7 @@ TEST_F(SmallVectorTest, ResizeGrowTest) {
   SCOPED_TRACE("ResizeGrowTest");
 
   theVector.resize(2);
-  
+
   // The extra constructor/destructor calls come from the temporary object used
   // to initialize the contents of the resized array (via copy construction).
   EXPECT_EQ(3, Constructable::getNumConstructorCalls());
@@ -226,10 +232,10 @@ TEST_F(SmallVectorTest, OverflowTest) {
   for (int i = 0; i < 10; ++i) {
     EXPECT_EQ(i+1, theVector[i].getValue());
   }
-  
+
   // Now resize back to fixed size.
   theVector.resize(1);
-  
+
   assertValuesInOrder(theVector, 1u, 1);
 }
 
@@ -364,13 +370,13 @@ TEST_F(SmallVectorTest, ComparisonTest) {
 
   makeSequence(theVector, 1, 3);
   makeSequence(otherVector, 1, 3);
-  
+
   EXPECT_TRUE(theVector == otherVector);
   EXPECT_FALSE(theVector != otherVector);
 
   otherVector.clear();
   makeSequence(otherVector, 2, 4);
-  
+
   EXPECT_FALSE(theVector == otherVector);
   EXPECT_TRUE(theVector != otherVector);
 }

@@ -410,7 +410,14 @@ public:
       this->setEnd(this->end()+1);
       // Push everything else over.
       std::copy_backward(I, this->end()-1, this->end());
-      *I = Elt;
+
+      // If we just moved the element we're inserting, be sure to update
+      // the reference.
+      const T *EltPtr = &Elt;
+      if (I <= EltPtr && EltPtr < this->EndX)
+        ++EltPtr;
+
+      *I = *EltPtr;
       return I;
     }
     size_t EltNo = I-this->begin();
