@@ -351,6 +351,8 @@ Triple::OSType Triple::ParseOS(StringRef OSName) {
     return Haiku;
   else if (OSName.startswith("minix"))
     return Minix;
+  else if (OSName.startswith("rtems"))
+    return RTEMS;
   else
     return UnknownOS;
 }
