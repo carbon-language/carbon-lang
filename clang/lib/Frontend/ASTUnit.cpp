@@ -2287,9 +2287,9 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
   }
 }
 
-bool ASTUnit::Save(llvm::StringRef File) {
+CXSaveError ASTUnit::Save(llvm::StringRef File) {
   if (getDiagnostics().hasErrorOccurred())
-    return true;
+    return CXSaveError_TranslationErrors;
   
   // FIXME: Can we somehow regenerate the stat cache here, or do we need to 
   // unconditionally create a stat cache when we parse the file?
@@ -2297,11 +2297,11 @@ bool ASTUnit::Save(llvm::StringRef File) {
   llvm::raw_fd_ostream Out(File.str().c_str(), ErrorInfo,
                            llvm::raw_fd_ostream::F_Binary);
   if (!ErrorInfo.empty() || Out.has_error())
-    return true;
+    return CXSaveError_Unknown;
 
   serialize(Out);
   Out.close();
-  return Out.has_error();
+  return Out.has_error()? CXSaveError_Unknown : CXSaveError_None;
 }
 
 bool ASTUnit::serialize(llvm::raw_ostream &OS) {

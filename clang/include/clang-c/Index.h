@@ -933,6 +933,41 @@ enum CXSaveTranslationUnit_Flags {
 CINDEX_LINKAGE unsigned clang_defaultSaveOptions(CXTranslationUnit TU);
 
 /**
+ * \brief Describes the kind of error that occurred (if any) in a call to
+ * \c clang_saveTranslationUnit().
+ */
+enum CXSaveError {
+  /**
+   * \brief Indicates that no error occurred while saving a translation unit.
+   */
+  CXSaveError_None = 0,
+  
+  /**
+   * \brief Indicates that an unknown error occurred while attempting to save
+   * the file.
+   *
+   * This error typically indicates that file I/O failed when attempting to 
+   * write the file.
+   */
+  CXSaveError_Unknown = 1,
+  
+  /**
+   * \brief Indicates that errors during translation prevented this attempt
+   * to save the translation unit.
+   * 
+   * Errors that prevent the translation unit from being saved can be
+   * extracted using \c clang_getNumDiagnostics() and \c clang_getDiagnostic().
+   */
+  CXSaveError_TranslationErrors = 2,
+  
+  /**
+   * \brief Indicates that the translation unit to be saved was somehow
+   * invalid (e.g., NULL).
+   */
+  CXSaveError_InvalidTU = 3
+};
+  
+/**
  * \brief Saves a translation unit into a serialized representation of
  * that translation unit on disk.
  *
@@ -951,8 +986,9 @@ CINDEX_LINKAGE unsigned clang_defaultSaveOptions(CXTranslationUnit TU);
  * is saved. This should be a bitwise OR of the
  * CXSaveTranslationUnit_XXX flags.
  *
- * \returns Zero if the translation unit was saved successfully, a
- * non-zero value otherwise.
+ * \returns A value that will match one of the enumerators of the CXSaveError
+ * enumeration. Zero (CXSaveError_None) indicates that the translation unit was 
+ * saved successfully, while a non-zero value indicates that a problem occurred.
  */
 CINDEX_LINKAGE int clang_saveTranslationUnit(CXTranslationUnit TU,
                                              const char *FileName,

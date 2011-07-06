@@ -2594,9 +2594,9 @@ unsigned clang_defaultSaveOptions(CXTranslationUnit TU) {
 int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
                               unsigned options) {
   if (!TU)
-    return 1;
+    return CXSaveError_InvalidTU;
   
-  int result = static_cast<ASTUnit *>(TU->TUData)->Save(FileName);
+  CXSaveError result = static_cast<ASTUnit *>(TU->TUData)->Save(FileName);
   if (getenv("LIBCLANG_RESOURCE_USAGE"))
     PrintLibclangResourceUsage(TU);
   return result;
