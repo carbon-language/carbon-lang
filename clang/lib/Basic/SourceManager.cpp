@@ -917,7 +917,7 @@ static void ComputeLineNumbers(Diagnostic &Diag, ContentCache *FI,
 
   // Find the file offsets of all of the *physical* source lines.  This does
   // not look at trigraphs, escaped newlines, or anything else tricky.
-  std::vector<unsigned> LineOffsets;
+  llvm::SmallVector<unsigned, 256> LineOffsets;
 
   // Line #1 starts at char 0.
   LineOffsets.push_back(0);
