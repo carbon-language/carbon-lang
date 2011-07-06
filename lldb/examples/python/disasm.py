@@ -11,7 +11,6 @@
 import lldb
 import os
 import sys
-import signal
 
 def disassemble_instructions (insts):
     for i in insts:
