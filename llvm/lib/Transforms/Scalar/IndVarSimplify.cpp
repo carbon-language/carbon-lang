@@ -81,7 +81,7 @@ static cl::opt<bool> DisableIVRewrite(
 
 namespace {
   class IndVarSimplify : public LoopPass {
-    typedef DenseMap<const SCEV *, PHINode *> ExprToIVMapTy;
+    typedef DenseMap< const SCEV *, AssertingVH<PHINode> > ExprToIVMapTy;
 
     IVUsers         *IU;
     LoopInfo        *LI;
@@ -1375,6 +1375,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   // can be deleted in the loop below, causing the AssertingVH in the cache to
   // trigger.
   Rewriter.clear();
+  ExprToIVMap.clear();
 
   // Now that we're done iterating through lists, clean up any instructions
   // which are now dead.
