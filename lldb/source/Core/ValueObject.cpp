@@ -1805,7 +1805,7 @@ ValueObject::EvaluationPoint::EvaluationPoint () :
 ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope, bool use_selected):
     m_needs_update (true),
     m_first_update (true),
-    m_thread_id (LLDB_INVALID_UID),
+    m_thread_id (LLDB_INVALID_THREAD_ID),
     m_stop_id (0)
     
 {
@@ -1931,8 +1931,7 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
         Thread *our_thread = m_process_sp->GetThreadList().FindThreadByIndexID (m_thread_id).get();
         if (our_thread == NULL)
         {
-            //SetInvalid();
-            m_exe_scope = m_process_sp.get();
+            SetInvalid();
         }
         else
         {
