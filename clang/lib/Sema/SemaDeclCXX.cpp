@@ -8046,7 +8046,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S,
                                     ExDeclType, TInfo, SC_None, SC_None);
   ExDecl->setExceptionVariable(true);
   
-  if (!Invalid) {
+  if (!Invalid && !ExDeclType->isDependentType()) {
     if (const RecordType *recordType = ExDeclType->getAs<RecordType>()) {
       // C++ [except.handle]p16:
       //   The object declared in an exception-declaration or, if the 
