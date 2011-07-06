@@ -2288,7 +2288,7 @@ void ASTUnit::CodeComplete(llvm::StringRef File, unsigned Line, unsigned Column,
 }
 
 CXSaveError ASTUnit::Save(llvm::StringRef File) {
-  if (getDiagnostics().hasErrorOccurred())
+  if (getDiagnostics().hasUnrecoverableErrorOccurred())
     return CXSaveError_TranslationErrors;
   
   // FIXME: Can we somehow regenerate the stat cache here, or do we need to 

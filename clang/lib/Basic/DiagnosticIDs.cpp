@@ -686,9 +686,11 @@ bool DiagnosticIDs::ProcessDiag(Diagnostic &Diag) const {
 
   if (DiagLevel >= DiagnosticIDs::Error) {
     Diag.TrapErrorOccurred = true;
-    if (isUnrecoverable(DiagID))
+    if (isUnrecoverable(DiagID)) {
       Diag.TrapUnrecoverableErrorOccurred = true;
-
+      Diag.UnrecoverableErrorOccurred = true;
+    }
+    
     if (Diag.Client->IncludeInDiagnosticCounts()) {
       Diag.ErrorOccurred = true;
       ++Diag.NumErrors;
@@ -733,7 +735,7 @@ bool DiagnosticIDs::isUnrecoverable(unsigned DiagID) const {
   }
 
   // Only errors may be unrecoverable.
-  if (getBuiltinDiagClass(DiagID) < DiagnosticIDs::Error)
+  if (getBuiltinDiagClass(DiagID) < CLASS_ERROR)
     return false;
 
   if (DiagID == diag::err_unavailable ||

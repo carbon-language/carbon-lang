@@ -251,6 +251,9 @@ private:
   bool ErrorOccurred;
   bool FatalErrorOccurred;
 
+  /// \brief Indicates that an unrecoverable error has occurred.
+  bool UnrecoverableErrorOccurred;
+  
   /// \brief Toggles for DiagnosticErrorTrap to check whether an error occurred
   /// during a parsing section, e.g. during parsing a function.
   bool TrapErrorOccurred;
@@ -437,7 +440,12 @@ public:
 
   bool hasErrorOccurred() const { return ErrorOccurred; }
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
-
+  
+  /// \brief Determine whether any kind of unrecoverable error has occurred.
+  bool hasUnrecoverableErrorOccurred() const {
+    return FatalErrorOccurred || UnrecoverableErrorOccurred;
+  }
+  
   unsigned getNumWarnings() const { return NumWarnings; }
 
   void setNumWarnings(unsigned NumWarnings) {

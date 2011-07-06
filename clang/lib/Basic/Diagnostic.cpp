@@ -86,10 +86,12 @@ bool Diagnostic::popMappings(SourceLocation Loc) {
 void Diagnostic::Reset() {
   ErrorOccurred = false;
   FatalErrorOccurred = false;
+  UnrecoverableErrorOccurred = false;
   
   NumWarnings = 0;
   NumErrors = 0;
   NumErrorsSuppressed = 0;
+  
   CurDiagID = ~0U;
   // Set LastDiagLevel to an "unset" state. If we set it to 'Ignored', notes
   // using a Diagnostic associated to a translation unit that follow
