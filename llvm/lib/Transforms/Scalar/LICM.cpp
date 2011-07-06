@@ -606,14 +606,16 @@ namespace {
     SmallVectorImpl<BasicBlock*> &LoopExitBlocks;
     AliasSetTracker &AST;
     DebugLoc DL;
+    int Alignment;
   public:
     LoopPromoter(Value *SP,
                  const SmallVectorImpl<Instruction*> &Insts, SSAUpdater &S,
                  SmallPtrSet<Value*, 4> &PMA,
                  SmallVectorImpl<BasicBlock*> &LEB, AliasSetTracker &ast,
-                 DebugLoc dl)
+                 DebugLoc dl, int alignment)
       : LoadAndStorePromoter(Insts, S, 0, 0), SomePtr(SP),
-        PointerMustAliases(PMA), LoopExitBlocks(LEB), AST(ast), DL(dl) {}
+        PointerMustAliases(PMA), LoopExitBlocks(LEB), AST(ast), DL(dl),
+        Alignment(alignment) {}
     
     virtual bool isInstInList(Instruction *I,
                               const SmallVectorImpl<Instruction*> &) const {
@@ -635,6 +637,7 @@ namespace {
         Value *LiveInValue = SSA.GetValueInMiddleOfBlock(ExitBlock);
         Instruction *InsertPos = ExitBlock->getFirstNonPHI();
         StoreInst *NewSI = new StoreInst(LiveInValue, SomePtr, InsertPos);
+        NewSI->setAlignment(Alignment);
         NewSI->setDebugLoc(DL);
       }
     }
@@ -680,9 +683,13 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
   // It is safe to promote P if all uses are direct load/stores and if at
   // least one is guaranteed to be executed.
   bool GuaranteedToExecute = false;
-  
+
   SmallVector<Instruction*, 64> LoopUses;
   SmallPtrSet<Value*, 4> PointerMustAliases;
+
+  // We start with an alignment of one and try to find instructions that allow
+  // us to prove better alignment.
+  unsigned Alignment = 1;
 
   // Check that all of the pointers in the alias set have the same type.  We
   // cannot (yet) promote a memory location that is loaded and stored in
@@ -706,24 +713,38 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
       
       // If there is an non-load/store instruction in the loop, we can't promote
       // it.
-      if (isa<LoadInst>(Use))
+      unsigned InstAlignment;
+      if (LoadInst *load = dyn_cast<LoadInst>(Use)) {
         assert(!cast<LoadInst>(Use)->isVolatile() && "AST broken");
-      else if (isa<StoreInst>(Use)) {
+        InstAlignment = load->getAlignment();
+      } else if (StoreInst *store = dyn_cast<StoreInst>(Use)) {
         // Stores *of* the pointer are not interesting, only stores *to* the
         // pointer.
         if (Use->getOperand(1) != ASIV)
           continue;
+        InstAlignment = store->getAlignment();
         assert(!cast<StoreInst>(Use)->isVolatile() && "AST broken");
       } else
         return; // Not a load or store.
-      
+
+      // If the alignment of this instruction allows us to specify a more
+      // restrictive (and performant) alignment and if we are sure this
+      // instruction will be executed, update the alignment.
+      // Larger is better, with the exception of 0 being the best alignment.
+      if ((InstAlignment > Alignment || InstAlignment == 0)
+          && (Alignment != 0))
+        if (isSafeToExecuteUnconditionally(*Use)) {
+          GuaranteedToExecute = true;
+          Alignment = InstAlignment;
+        }
+
       if (!GuaranteedToExecute)
         GuaranteedToExecute = isSafeToExecuteUnconditionally(*Use);
       
       LoopUses.push_back(Use);
     }
   }
-  
+
   // If there isn't a guaranteed-to-execute instruction, we can't promote.
   if (!GuaranteedToExecute)
     return;
@@ -746,13 +767,14 @@ void LICM::PromoteAliasSet(AliasSet &AS) {
   SmallVector<PHINode*, 16> NewPHIs;
   SSAUpdater SSA(&NewPHIs);
   LoopPromoter Promoter(SomePtr, LoopUses, SSA, PointerMustAliases, ExitBlocks,
-                        *CurAST, DL);
+                        *CurAST, DL, Alignment);
   
   // Set up the preheader to have a definition of the value.  It is the live-out
   // value from the preheader that uses in the loop will use.
   LoadInst *PreheaderLoad =
     new LoadInst(SomePtr, SomePtr->getName()+".promoted",
                  Preheader->getTerminator());
+  PreheaderLoad->setAlignment(Alignment);
   PreheaderLoad->setDebugLoc(DL);
   SSA.AddAvailableValue(Preheader, PreheaderLoad);
 
