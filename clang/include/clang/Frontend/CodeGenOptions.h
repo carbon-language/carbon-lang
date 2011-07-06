@@ -76,6 +76,7 @@ public:
   unsigned NoNaNsFPMath      : 1; /// Assume FP arguments, results not NaN.
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
   unsigned ObjCDispatchMethod : 2; /// Method of Objective-C dispatch to use.
+  unsigned ObjCRuntimeHasARC : 1; /// The target runtime supports ARC natively
   unsigned OmitLeafFramePointer : 1; /// Set when -momit-leaf-frame-pointer is
                                      /// enabled.
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.

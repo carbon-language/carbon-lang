@@ -596,7 +596,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("objc_arr", LangOpts.ObjCAutoRefCount) // FIXME: REMOVE?
            .Case("objc_arc", LangOpts.ObjCAutoRefCount)
            .Case("objc_arc_weak", LangOpts.ObjCAutoRefCount && 
-                 !LangOpts.ObjCNoAutoRefCountRuntime)
+                 LangOpts.ObjCRuntimeHasWeak)
            .Case("objc_nonfragile_abi", LangOpts.ObjCNonFragileABI)
            .Case("objc_weak_class", LangOpts.ObjCNonFragileABI)
            .Case("ownership_holds", true)

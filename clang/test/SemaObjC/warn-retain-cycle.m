@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-nonfragile-abi -fobjc-arc -fblocks -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-nonfragile-abi -fobjc-runtime-has-weak -fobjc-arc -fblocks -verify %s
 
 @interface Test0
 - (void) setBlock: (void(^)(void)) block;

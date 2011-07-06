@@ -250,7 +250,7 @@ static void AddObjCXXARCLibcxxDefines(const LangOptions &LangOpts,
         << "}\n"
         << "\n";
       
-    if (!LangOpts.ObjCNoAutoRefCountRuntime) {
+    if (LangOpts.ObjCRuntimeHasWeak) {
       Out << "template <class _Tp>\n"
           << "inline __attribute__ ((__visibility__(\"hidden\"),"
           << "__always_inline__))\n"
@@ -318,7 +318,7 @@ static void AddObjCXXARCLibstdcxxDefines(const LangOptions &LangOpts,
         << "};\n"
         << "\n";
       
-    if (!LangOpts.ObjCNoAutoRefCountRuntime) {
+    if (LangOpts.ObjCRuntimeHasWeak) {
       Out << "template<typename _Tp>\n"
           << "struct __is_scalar<__attribute__((objc_ownership(weak))) _Tp> {\n"
           << "  enum { __value = 0 };\n"

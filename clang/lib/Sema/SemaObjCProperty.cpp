@@ -592,7 +592,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
           PropertyIvarType = Context.getQualifiedType(PropertyIvarType, qs);
         }
         else if (kind & ObjCPropertyDecl::OBJC_PR_weak) {
-          if (getLangOptions().ObjCNoAutoRefCountRuntime) {
+          if (!getLangOptions().ObjCRuntimeHasWeak) {
             Diag(PropertyLoc, diag::err_arc_weak_no_runtime);
             Diag(property->getLocation(), diag::note_property_declare);
           }

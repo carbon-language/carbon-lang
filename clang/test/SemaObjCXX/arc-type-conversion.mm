@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -fblocks %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -fobjc-runtime-has-weak -fsyntax-only -fobjc-arc -verify -fblocks %s
 // rdar://8843600
 
 void * cvt(id arg) // expected-note{{candidate function not viable: cannot convert argument of incomplete type 'void *' to '__strong id'}}

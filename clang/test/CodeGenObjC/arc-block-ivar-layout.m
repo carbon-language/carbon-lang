@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fblocks -fobjc-arc -fobjc-nonfragile-abi -triple x86_64-apple-darwin -O0 -emit-llvm %s -o %t-64.s
+// RUN: %clang_cc1 -fblocks -fobjc-arc -fobjc-nonfragile-abi -fobjc-runtime-has-weak -triple x86_64-apple-darwin -O0 -emit-llvm %s -o %t-64.s
 // RUN: FileCheck -check-prefix LP64 --input-file=%t-64.s %s
 // rdar://8991729
 

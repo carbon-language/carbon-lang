@@ -3191,9 +3191,9 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
     type = S.Context.getAttributedType(AttributedType::attr_objc_ownership,
                                        origType, type);
 
-  // Forbid __weak if we don't have a runtime.
+  // Forbid __weak if the runtime doesn't support it.
   if (lifetime == Qualifiers::OCL_Weak &&
-      S.getLangOptions().ObjCNoAutoRefCountRuntime) {
+      !S.getLangOptions().ObjCRuntimeHasWeak) {
 
     // Actually, delay this until we know what we're parsing.
     if (S.DelayedDiagnostics.shouldDelayDiagnostics()) {

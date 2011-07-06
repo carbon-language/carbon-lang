@@ -26,6 +26,7 @@ namespace driver {
   class HostInfo;
   class InputArgList;
   class JobAction;
+  class ObjCRuntime;
   class Tool;
 
 /// ToolChain - Access to tools for a single platform.
@@ -166,9 +167,6 @@ public:
   /// UseSjLjExceptions - Does this tool chain use SjLj exceptions.
   virtual bool UseSjLjExceptions() const { return false; }
 
-  /// HasARCRuntime - Does this tool chain provide a specialized ARC runtime.
-  virtual bool HasARCRuntime() const { return true; }
-
   /// ComputeLLVMTriple - Return the LLVM target triple to use, after taking
   /// command line arguments into account.
   virtual std::string ComputeLLVMTriple(const ArgList &Args) const;
@@ -179,6 +177,12 @@ public:
   /// sets the deployment target) determines the version in the triple passed to
   /// Clang.
   virtual std::string ComputeEffectiveClangTriple(const ArgList &Args) const;
+
+  /// configureObjCRuntime - Configure the known properties of the
+  /// Objective-C runtime for this platform.
+  ///
+  /// FIXME: this doesn't really belong here.
+  virtual void configureObjCRuntime(ObjCRuntime &runtime) const;
 
   // GetCXXStdlibType - Determine the C++ standard library type to use with the
   // given compilation arguments.

@@ -1311,7 +1311,7 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
 
   // In -fobjc-no-arc-runtime, emit weak references to the runtime
   // support library.
-  if (CGM.getLangOptions().ObjCNoAutoRefCountRuntime)
+  if (!CGM.getCodeGenOpts().ObjCRuntimeHasARC)
     if (llvm::Function *f = dyn_cast<llvm::Function>(fn))
       f->setLinkage(llvm::Function::ExternalWeakLinkage);
 
@@ -2457,13 +2457,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
 
   // Keep track of the current cleanup stack depth.
   RunCleanupsScope Scope(*this);
-  const llvm::Triple Triple = getContext().Target.getTriple();
-  if (CGM.getLangOptions().ObjCAutoRefCount ||
-      (CGM.isTargetDarwin() && 
-       ((Triple.getArch() == llvm::Triple::x86_64 && 
-         !Triple.isMacOSXVersionLT(10,7,0))
-        || (Triple.getEnvironmentName() == "iphoneos" && 
-            !Triple.isOSVersionLT(5,0))))) {
+  if (CGM.getCodeGenOpts().ObjCRuntimeHasARC) {
     llvm::Value *token = EmitObjCAutoreleasePoolPush();
     EHStack.pushCleanup<CallObjCAutoreleasePoolObject>(NormalCleanup, token);
   } else {

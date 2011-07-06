@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-arc -fobjc-nonfragile-abi -fobjc-no-arc-runtime -verify %s
+// RUN: %clang_cc1 -fobjc-arc -fobjc-nonfragile-abi -verify %s
 
 // rdar://problem/9150784
 void test(void) {

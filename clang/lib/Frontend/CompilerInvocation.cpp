@@ -123,6 +123,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
     Res.push_back("-dwarf-debug-flags");
     Res.push_back(Opts.DwarfDebugFlags);
   }
+  if (Opts.ObjCRuntimeHasARC)
+    Res.push_back("-fobjc-runtime-has-arc");
   if (Opts.EmitGcovArcs)
     Res.push_back("-femit-coverage-data");
   if (Opts.EmitGcovNotes)
@@ -690,8 +692,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
   }
   if (Opts.ObjCAutoRefCount)
     Res.push_back("-fobjc-arc");
-  if (Opts.ObjCNoAutoRefCountRuntime)
-    Res.push_back("-fobjc-no-arc-runtime");
+  if (Opts.ObjCRuntimeHasWeak)
+    Res.push_back("-fobjc-runtime-has-weak");
   if (!Opts.ObjCInferRelatedResultType)
     Res.push_back("-fno-objc-infer-related-result-type");
   
@@ -976,6 +978,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
   Opts.ObjCAutoRefCountExceptions = Args.hasArg(OPT_fobjc_arc_exceptions);
+  Opts.ObjCRuntimeHasARC = Args.hasArg(OPT_fobjc_runtime_has_arc);
   Opts.CXAAtExit = !Args.hasArg(OPT_fno_use_cxa_atexit);
   Opts.CXXCtorDtorAliases = Args.hasArg(OPT_mconstructor_aliases);
   Opts.CodeModel = Args.getLastArgValue(OPT_mcode_model);
@@ -1532,9 +1535,10 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
       Opts.ObjCAutoRefCount = 1;
       if (!Args.hasArg(OPT_fobjc_nonfragile_abi))
         Diags.Report(diag::err_arc_nonfragile_abi);
-      if (Args.hasArg(OPT_fobjc_no_arc_runtime))
-        Opts.ObjCNoAutoRefCountRuntime = 1;
     }
+
+    if (Args.hasArg(OPT_fobjc_runtime_has_weak))
+      Opts.ObjCRuntimeHasWeak = 1;
 
     if (Args.hasArg(OPT_fno_objc_infer_related_result_type))
       Opts.ObjCInferRelatedResultType = 0;

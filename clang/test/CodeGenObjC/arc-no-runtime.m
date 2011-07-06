@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-arc -fobjc-nonfragile-abi -fobjc-no-arc-runtime -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-arc -fobjc-nonfragile-abi -emit-llvm %s -o - | FileCheck %s
 
 // rdar://problem/9224855
 void test0() {

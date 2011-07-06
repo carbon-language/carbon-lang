@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fobjc-nonfragile-abi -fblocks -fobjc-arc -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fobjc-nonfragile-abi -fobjc-runtime-has-weak -fblocks -fobjc-arc -o - %s | FileCheck %s
 // rdar://8899430
 
 @interface WeakPropertyTest {

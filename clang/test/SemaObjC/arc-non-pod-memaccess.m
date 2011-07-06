@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -fblocks -triple x86_64-apple-darwin10.0.0 %s
-// RUN: %clang_cc1 -x objective-c++ -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -fblocks -triple x86_64-apple-darwin10.0.0 %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -fobjc-runtime-has-weak -verify -fblocks -triple x86_64-apple-darwin10.0.0 %s
+// RUN: %clang_cc1 -x objective-c++ -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -fobjc-runtime-has-weak -verify -fblocks -triple x86_64-apple-darwin10.0.0 %s
 
 #ifdef __cplusplus
 extern "C" {

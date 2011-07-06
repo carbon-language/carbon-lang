@@ -494,10 +494,12 @@ def fobjc_arc : Flag<"-fobjc-arc">,
   HelpText<"Synthesize retain and release calls for Objective-C pointers">;
 def fobjc_arc_cxxlib_EQ : Joined<"-fobjc-arc-cxxlib=">,
   HelpText<"Objective-C++ Automatic Reference Counting standard library kind">;
-def fobjc_no_arc_runtime : Flag<"-fobjc-no-arc-runtime">,
-  HelpText<"Implement -fobjc-arc without any extra runtime support">;
 def fobjc_arc_exceptions : Flag<"-fobjc-arc-exceptions">,
   HelpText<"Use EH-safe code when synthesizing retains and releases in -fobjc-arc">;
+def fobjc_runtime_has_arc : Flag<"-fobjc-runtime-has-arc">,
+  HelpText<"The target Objective-C runtime provides ARC entrypoints">;
+def fobjc_runtime_has_weak : Flag<"-fobjc-runtime-has-weak">,
+  HelpText<"The target Objective-C runtime supports ARC weak operations">;
 def fobjc_gc : Flag<"-fobjc-gc">,
   HelpText<"Enable Objective-C garbage collection">;
 def fobjc_gc_only : Flag<"-fobjc-gc-only">,

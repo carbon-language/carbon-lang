@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-arc-cxxlib=libc++ -fobjc-nonfragile-abi -verify %s
+// RUN: %clang_cc1 -fsyntax-only -fobjc-arc -fobjc-arc-cxxlib=libc++ -fobjc-nonfragile-abi -fobjc-runtime-has-weak -verify %s
 
 @interface A @end
 

@@ -17,6 +17,7 @@
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Job.h"
 #include "clang/Driver/HostInfo.h"
+#include "clang/Driver/ObjCRuntime.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
@@ -1600,47 +1601,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_lax_vector_conversions))
     CmdArgs.push_back("-fno-lax-vector-conversions");
 
-  // Allow -fno-objc-arr to trump -fobjc-arr/-fobjc-arc.
-  // NOTE: This logic is duplicated in ToolChains.cpp.
-  bool ARC = isObjCAutoRefCount(Args);
-  if (ARC) {
-    CmdArgs.push_back("-fobjc-arc");
-
-    // Certain deployment targets don't have runtime support.
-    if (!getToolChain().HasARCRuntime())
-      CmdArgs.push_back("-fobjc-no-arc-runtime");
-
-    // Allow the user to enable full exceptions code emission.
-    // We define off for Objective-CC, on for Objective-C++.
-    if (Args.hasFlag(options::OPT_fobjc_arc_exceptions,
-                     options::OPT_fno_objc_arc_exceptions,
-                     /*default*/ types::isCXX(InputType)))
-      CmdArgs.push_back("-fobjc-arc-exceptions");
-  }
-
-  // -fobjc-infer-related-result-type is the default, except in the Objective-C
-  // rewriter.
-  if (IsRewriter)
-    CmdArgs.push_back("-fno-objc-infer-related-result-type");
-  
-  // Handle -fobjc-gc and -fobjc-gc-only. They are exclusive, and -fobjc-gc-only
-  // takes precedence.
-  const Arg *GCArg = Args.getLastArg(options::OPT_fobjc_gc_only);
-  if (!GCArg)
-    GCArg = Args.getLastArg(options::OPT_fobjc_gc);
-  if (GCArg) {
-    if (ARC) {
-      D.Diag(clang::diag::err_drv_objc_gc_arr)
-        << GCArg->getAsString(Args);
-    } else if (getToolChain().SupportsObjCGC()) {
-      GCArg->render(Args, CmdArgs);
-    } else {
-      // FIXME: We should move this to a hard error.
-      D.Diag(clang::diag::warn_drv_objc_gc_unsupported)
-        << GCArg->getAsString(Args);
-    }
-  }
-
   if (Args.getLastArg(options::OPT_fapple_kext))
     CmdArgs.push_back("-fapple-kext");
 
@@ -1805,17 +1765,23 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("-fgnu89-inline");
 
-  // -fnext-runtime defaults to on Darwin and when rewriting Objective-C, and is
-  // -the -cc1 default.
-  bool NeXTRuntimeIsDefault =
-    IsRewriter || getToolChain().getTriple().getOS() == llvm::Triple::Darwin;
-  if (!Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
-                    NeXTRuntimeIsDefault))
-    CmdArgs.push_back("-fgnu-runtime");
-
   // -fobjc-nonfragile-abi=0 is default.
+  ObjCRuntime objCRuntime;
   unsigned objcABIVersion = 0;
   if (types::isObjC(InputType)) {
+    bool NeXTRuntimeIsDefault
+      = (IsRewriter || getToolChain().getTriple().isOSDarwin());
+    if (Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
+                     NeXTRuntimeIsDefault))
+      objCRuntime.setKind(ObjCRuntime::NeXT);
+    else
+      objCRuntime.setKind(ObjCRuntime::GNU);
+    getToolChain().configureObjCRuntime(objCRuntime);
+    if (objCRuntime.HasARC)
+      CmdArgs.push_back("-fobjc-runtime-has-arc");
+    if (objCRuntime.HasWeak)
+      CmdArgs.push_back("-fobjc-runtime-has-weak");
+
     // Compute the Objective-C ABI "version" to use. Version numbers are
     // slightly confusing for historical reasons:
     //   1 - Traditional "fragile" ABI
@@ -1888,6 +1854,43 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fobjc-default-synthesize-properties");
     }
 #endif
+  }
+
+  // Allow -fno-objc-arr to trump -fobjc-arr/-fobjc-arc.
+  // NOTE: This logic is duplicated in ToolChains.cpp.
+  bool ARC = isObjCAutoRefCount(Args);
+  if (ARC) {
+    CmdArgs.push_back("-fobjc-arc");
+
+    // Allow the user to enable full exceptions code emission.
+    // We define off for Objective-CC, on for Objective-C++.
+    if (Args.hasFlag(options::OPT_fobjc_arc_exceptions,
+                     options::OPT_fno_objc_arc_exceptions,
+                     /*default*/ types::isCXX(InputType)))
+      CmdArgs.push_back("-fobjc-arc-exceptions");
+  }
+
+  // -fobjc-infer-related-result-type is the default, except in the Objective-C
+  // rewriter.
+  if (IsRewriter)
+    CmdArgs.push_back("-fno-objc-infer-related-result-type");
+  
+  // Handle -fobjc-gc and -fobjc-gc-only. They are exclusive, and -fobjc-gc-only
+  // takes precedence.
+  const Arg *GCArg = Args.getLastArg(options::OPT_fobjc_gc_only);
+  if (!GCArg)
+    GCArg = Args.getLastArg(options::OPT_fobjc_gc);
+  if (GCArg) {
+    if (ARC) {
+      D.Diag(clang::diag::err_drv_objc_gc_arr)
+        << GCArg->getAsString(Args);
+    } else if (getToolChain().SupportsObjCGC()) {
+      GCArg->render(Args, CmdArgs);
+    } else {
+      // FIXME: We should move this to a hard error.
+      D.Diag(clang::diag::warn_drv_objc_gc_unsupported)
+        << GCArg->getAsString(Args);
+    }
   }
 
   // Add exception args.
@@ -3237,8 +3240,12 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   // In ARC, if we don't have runtime support, link in the runtime
   // stubs.  We have to do this *before* adding any of the normal
   // linker inputs so that its initializer gets run first.
-  if (!getDarwinToolChain().HasARCRuntime() && isObjCAutoRefCount(Args))
-    getDarwinToolChain().AddLinkARCArgs(Args, CmdArgs);
+  if (isObjCAutoRefCount(Args)) {
+    ObjCRuntime runtime;
+    getDarwinToolChain().configureObjCRuntime(runtime);
+    if (!runtime.HasARC)
+      getDarwinToolChain().AddLinkARCArgs(Args, CmdArgs);
+  }
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
 

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -fblocks %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -fobjc-runtime-has-weak -fsyntax-only -fobjc-arc -verify -fblocks %s
 
 // Simple ownership conversions + diagnostics.
 int &f0(id __strong const *); // expected-note{{candidate function not viable: 1st argument ('__weak id *') has __weak ownership, but parameter has __strong ownership}}

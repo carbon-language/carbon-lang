@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fobjc-nonfragile-abi -fsyntax-only -fobjc-arc -verify -Warc-abi -fblocks -triple x86_64-apple-darwin10.0.0 %s
+// RUN: %clang_cc1 -fobjc-nonfragile-abi -fobjc-runtime-has-weak -fsyntax-only -fobjc-arc -verify -Warc-abi -fblocks -triple x86_64-apple-darwin10.0.0 %s
 
 typedef __strong id strong_id;
 typedef __weak id weak_id;
