@@ -13,6 +13,10 @@
 # '#endif', the '#ifdef SWIG', the c comment marker, the trailing blank (SPC's)
 # line, and the doxygen comment start marker.
 #
+# In addition to the 'residues' removal during the cleanup step, it also
+# transforms the 'char' data type (which was actually 'char *' but the 'autodoc'
+# feature of swig removes ' *' from it into 'str' (as a Python str type).
+#
 # It also calls SBDebugger.Initialize() to initialize the lldb debugger
 # subsystem.
 #
@@ -26,7 +30,9 @@ else:
 
 # print "output_name is '" + output_name + "'"
 
+#
 # Residues to be removed.
+#
 c_endif_swig = "#endif"
 c_ifdef_swig = "#ifdef SWIG"
 c_comment_marker = "//------------"
@@ -36,6 +42,17 @@ doxygen_comment_start = re.compile("^\s*(    /// ?)")
 # The demarcation point for turning on/off residue removal state.
 # When bracketed by the lines, the CLEANUP_DOCSTRING state (see below) is ON.
 toggle_docstring_cleanup_line = '        """'
+
+def char_to_str_xform(line):
+    """This transforms the 'char', i.e, 'char *' to 'str', Python string."""
+    line = line.replace(' char', ' str')
+    line = line.replace('char ', 'str ')
+    return line
+
+#
+# The one-liner docstring also needs char_to_str transformation, btw.
+#
+one_liner_docstring_pattern = re.compile('^        """.*"""$')
 
 #
 # lldb_iter() should appear before our first SB* class definition.
@@ -236,8 +253,15 @@ for line in content.splitlines():
         if doxygen_comment_match:
             line = line.replace(doxygen_comment_match.group(1), '', 1)
 
+        line = char_to_str_xform(line)
+
         # Note that the transition out of CLEANUP_DOCSTRING is handled at the
         # beginning of this function already.
+
+    # This deals with one-liner docstring, for example, SBThread.GetName:
+    # """GetName(self) -> char""".
+    if one_liner_docstring_pattern.match(line):
+        line = char_to_str_xform(line)
 
     # Look for 'def IsValid(*args):', and once located, add implementation
     # of truth value testing for this object by delegation.
