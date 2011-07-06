@@ -200,7 +200,8 @@ def check_options(parser, options, valid_builds):
 
     # See if we can find source directories.
     for src in options.src:
-        for component in ["llvm", "llvm-gcc", "gcc", "dragonegg"]:
+        for component in components:
+            component = component.rstrip("2")
             compsrc = src + "/" + component
             if (not os.path.isdir(compsrc)):
                 parser.error("'" + compsrc + "' does not exist")
@@ -410,6 +411,8 @@ class Builder(threading.Thread):
         configure_flags = dict(
             llvm=dict(debug=["--prefix=" + self.install_prefix,
                              "--with-extra-options=-Werror",
+                             "--enable-assertions",
+                             "--disable-optimized",
                              "--with-cxx-include-root=" + cxxroot,
                              "--with-cxx-include-arch=" + cxxarch],
                       release=["--prefix=" + self.install_prefix,
@@ -419,7 +422,9 @@ class Builder(threading.Thread):
                                "--with-cxx-include-arch=" + cxxarch],
                       paranoid=["--prefix=" + self.install_prefix,
                                 "--with-extra-options=-Werror",
+                                "--enable-assertions",
                                 "--enable-expensive-checks",
+                                "--disable-optimized",
                                 "--with-cxx-include-root=" + cxxroot,
                                 "--with-cxx-include-arch=" + cxxarch]),
             llvm_gcc=dict(debug=["--prefix=" + self.install_prefix,
@@ -444,6 +449,8 @@ class Builder(threading.Thread):
                                     "--enable-languages=c,c++"]),
             llvm2=dict(debug=["--prefix=" + self.install_prefix,
                               "--with-extra-options=-Werror",
+                              "--enable-assertions",
+                              "--disable-optimized",
                               "--with-llvmgccdir=" + self.install_prefix + "/bin",
                               "--with-cxx-include-root=" + cxxroot,
                               "--with-cxx-include-arch=" + cxxarch],
@@ -455,7 +462,9 @@ class Builder(threading.Thread):
                                 "--with-cxx-include-arch=" + cxxarch],
                        paranoid=["--prefix=" + self.install_prefix,
                                  "--with-extra-options=-Werror",
+                                 "--enable-assertions",
                                  "--enable-expensive-checks",
+                                 "--disable-optimized",
                                  "--with-llvmgccdir=" + self.install_prefix + "/bin",
                                  "--with-cxx-include-root=" + cxxroot,
                                  "--with-cxx-include-arch=" + cxxarch]),
@@ -611,7 +620,7 @@ class Builder(threading.Thread):
                            release=dict(),
                            paranoid=dict()))
 
-        for component in ["llvm", "llvm-gcc", "llvm2", "gcc", "dragonegg"]:
+        for component in components:
             comp = component[:]
 
             srcdir = source + "/" + comp.rstrip("2")
@@ -625,7 +634,7 @@ class Builder(threading.Thread):
 
             config_args = configure_flags[comp_key][build][:]
             config_args.extend(getattr(self.options,
-                                       "extra_" + comp_key
+                                       "extra_" + comp_key.rstrip("2")
                                        + "_config_flags").split())
 
             self.logger.info("Configuring " + component + " in " + builddir)
@@ -703,6 +712,8 @@ class Builder(threading.Thread):
 
 # Global constants
 build_abbrev = dict(debug="dbg", release="opt", paranoid="par")
+#components = ["llvm", "llvm-gcc", "llvm2", "gcc", "dragonegg"]
+components = ["llvm", "llvm2", "gcc", "dragonegg"]
 
 # Parse options
 parser = optparse.OptionParser(version="%prog 1.0")
@@ -718,7 +729,10 @@ else:
                         format='%(name)-13s: %(message)s')
 
 source_abbrev = get_path_abbrevs(set(options.src))
-branch_abbrev = get_path_abbrevs(set(options.branch))
+
+branch_abbrev = None
+if options.branch is not None:
+    branch_abbrev = get_path_abbrevs(set(options.branch))
 
 work_queue = queue.Queue()
 
