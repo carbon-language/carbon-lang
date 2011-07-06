@@ -58,24 +58,27 @@ def test_unsaved_files_2():
     spellings = [c.spelling for c in tu.cursor.get_children()]
     assert spellings[-1] == 'x'
 
+def normpaths_equal(path1, path2):
+    """ Compares two paths for equality after normalizing them with
+        os.path.normpath
+    """
+    return os.path.normpath(path1) == os.path.normpath(path2)
 
 def test_includes():
     def eq(expected, actual):
         if not actual.is_input_file:
-            return expected[0] == actual.source.name and \
-                   expected[1] == actual.include.name
+            return  normpaths_equal(expected[0], actual.source.name) and \
+                    normpaths_equal(expected[1], actual.include.name)
         else:
-            return expected[1] == actual.include.name
+            return normpaths_equal(expected[1], actual.include.name)
 
     src = os.path.join(kInputsDir, 'include.cpp')
     h1 = os.path.join(kInputsDir, "header1.h")
     h2 = os.path.join(kInputsDir, "header2.h")
     h3 = os.path.join(kInputsDir, "header3.h")
-    inc = [(None, src), (src, h1), (h1, h3), (src, h2), (h2, h3)]
+    inc = [(src, h1), (h1, h3), (src, h2), (h2, h3)]
 
     index = Index.create()
     tu = index.parse(src)
     for i in zip(inc, tu.get_includes()):
         assert eq(i[0], i[1])
-
-

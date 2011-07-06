@@ -18,10 +18,14 @@ def test_kind_groups():
 
     for k in CursorKind.get_all_kinds():
         group = [n for n in ('is_declaration', 'is_reference', 'is_expression',
-                             'is_statement', 'is_invalid')
+                             'is_statement', 'is_invalid', 'is_attribute')
                  if getattr(k, n)()]
 
-        if k == CursorKind.TRANSLATION_UNIT:
+        if k in (   CursorKind.TRANSLATION_UNIT,
+                    CursorKind.MACRO_DEFINITION,
+                    CursorKind.MACRO_INSTANTIATION,
+                    CursorKind.INCLUSION_DIRECTIVE,
+                    CursorKind.PREPROCESSING_DIRECTIVE):
             assert len(group) == 0
         else:
             assert len(group) == 1

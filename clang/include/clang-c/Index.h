@@ -1474,6 +1474,11 @@ CINDEX_LINKAGE unsigned clang_isExpression(enum CXCursorKind);
 CINDEX_LINKAGE unsigned clang_isStatement(enum CXCursorKind);
 
 /**
+ * \brief Determine whether the given cursor kind represents an attribute.
+ */
+CINDEX_LINKAGE unsigned clang_isAttribute(enum CXCursorKind);
+
+/**
  * \brief Determine whether the given cursor kind represents an invalid
  * cursor.
  */

@@ -3562,6 +3562,10 @@ unsigned clang_isStatement(enum CXCursorKind K) {
   return K >= CXCursor_FirstStmt && K <= CXCursor_LastStmt;
 }
 
+unsigned clang_isAttribute(enum CXCursorKind K) {
+    return K >= CXCursor_FirstAttr && K <= CXCursor_LastAttr;
+}
+
 unsigned clang_isTranslationUnit(enum CXCursorKind K) {
   return K == CXCursor_TranslationUnit;
 }

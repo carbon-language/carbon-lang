@@ -321,6 +321,10 @@ class CursorKind(object):
         """Test if this is a statement kind."""
         return CursorKind_is_stmt(self)
 
+    def is_attribute(self):
+        """Test if this is an attribute kind."""
+        return CursorKind_is_attribute(self)
+
     def is_invalid(self):
         """Test if this is an invalid kind."""
         return CursorKind_is_inv(self)
@@ -978,8 +982,9 @@ class TranslationUnit(ClangObject):
         headers.
         """
         def visitor(fobj, lptr, depth, includes):
-            loc = lptr.contents
-            includes.append(FileInclusion(loc.file, File(fobj), loc, depth))
+            if depth > 0:
+                loc = lptr.contents
+                includes.append(FileInclusion(loc.file, File(fobj), loc, depth))
 
         # Automatically adapt CIndex/ctype pointers to python objects
         includes = []
@@ -1074,7 +1079,7 @@ class File(ClangObject):
     @property
     def name(self):
         """Return the complete file and path name of the file."""
-        return File_name(self)
+        return _CXString_getCString(File_name(self))
 
     @property
     def time(self):
@@ -1147,6 +1152,10 @@ CursorKind_is_stmt = lib.clang_isStatement
 CursorKind_is_stmt.argtypes = [CursorKind]
 CursorKind_is_stmt.restype = bool
 
+CursorKind_is_attribute = lib.clang_isAttribute
+CursorKind_is_attribute.argtypes = [CursorKind]
+CursorKind_is_attribute.restype = bool
+
 CursorKind_is_inv = lib.clang_isInvalid
 CursorKind_is_inv.argtypes = [CursorKind]
 CursorKind_is_inv.restype = bool
@@ -1182,6 +1191,11 @@ Cursor_spelling = lib.clang_getCursorSpelling
 Cursor_spelling.argtypes = [Cursor]
 Cursor_spelling.restype = _CXString
 Cursor_spelling.errcheck = _CXString.from_result
+
+Cursor_displayname = lib.clang_getCursorDisplayName
+Cursor_displayname.argtypes = [Cursor]
+Cursor_displayname.restype = _CXString
+Cursor_displayname.errcheck = _CXString.from_result
 
 Cursor_loc = lib.clang_getCursorLocation
 Cursor_loc.argtypes = [Cursor]
@@ -1253,7 +1267,7 @@ TranslationUnit_includes.argtypes = [TranslationUnit,
 # File Functions
 File_name = lib.clang_getFileName
 File_name.argtypes = [File]
-File_name.restype = c_char_p
+File_name.restype = _CXString
 
 File_time = lib.clang_getFileTime
 File_time.argtypes = [File]
