@@ -45,6 +45,7 @@ cocoa::NamingConvention cocoa::deriveNamingConvention(Selector S) {
   case OMF_retain:
   case OMF_retainCount:
   case OMF_self:
+  case OMF_performSelector:
     return NoConvention;
 
   case OMF_init:
