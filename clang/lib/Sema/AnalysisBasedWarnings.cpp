@@ -741,10 +741,9 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     if (CFG *cfg = AC.getCFG()) {
       // If we successfully built a CFG for this context, record some more
       // detail information about it.
-      unsigned NumBlocks = std::distance(cfg->begin(), cfg->end());
-      NumCFGBlocks += NumBlocks;
+      NumCFGBlocks += cfg->getNumBlockIDs();
       MaxCFGBlocksPerFunction = std::max(MaxCFGBlocksPerFunction,
-                                         NumBlocks);
+                                         cfg->getNumBlockIDs());
     } else {
       ++NumFunctionsWithBadCFGs;
     }
