@@ -145,8 +145,11 @@ bool LowerExpectIntrinsic::runOnFunction(Function &F) {
         continue;
 
       Function *Fn = CI->getCalledFunction();
-      if (Fn && Fn->getIntrinsicID() == Intrinsic::expect)
+      if (Fn && Fn->getIntrinsicID() == Intrinsic::expect) {
+        Value *Exp = CI->getArgOperand(0);
+        CI->replaceAllUsesWith(Exp);
         CI->eraseFromParent();
+      }
     }
   }
 
