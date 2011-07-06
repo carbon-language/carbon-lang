@@ -107,6 +107,11 @@ public:
 
   void dumpCFG();
 
+  /// \brief Returns true if we have built a CFG for this analysis context.
+  /// Note that this doesn't correspond to whether or not a valid CFG exists, it
+  /// corresponds to whether we *attempted* to build one.
+  bool isCFGBuilt() const { return builtCFG; }
+
   ParentMap &getParentMap();
   PseudoConstantAnalysis *getPseudoConstantAnalysis();
   LiveVariables *getLiveVariables();

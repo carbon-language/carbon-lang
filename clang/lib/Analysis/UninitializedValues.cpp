@@ -654,14 +654,18 @@ static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
   return vals.updateValueVectorWithScratch(block);
 }
 
-void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
-                                              const CFG &cfg,
-                                              AnalysisContext &ac,
-                                              UninitVariablesHandler &handler) {
+void clang::runUninitializedVariablesAnalysis(
+    const DeclContext &dc,
+    const CFG &cfg,
+    AnalysisContext &ac,
+    UninitVariablesHandler &handler,
+    UninitVariablesAnalysisStats &stats) {
   CFGBlockValues vals(cfg);
   vals.computeSetOfDeclarations(dc);
   if (vals.hasNoDeclarations())
     return;
+
+  stats.NumVariablesAnalyzed = vals.getNumEntries();
 
   // Mark all variables uninitialized at the entry.
   const CFGBlock &entry = cfg.getEntry();
@@ -684,7 +688,8 @@ void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
 
   while (const CFGBlock *block = worklist.dequeue()) {
     // Did the block change?
-    bool changed = runOnBlock(block, cfg, ac, vals, wasAnalyzed);    
+    bool changed = runOnBlock(block, cfg, ac, vals, wasAnalyzed);
+    ++stats.NumBlockVisits;
     if (changed || !previouslyVisited[block->getBlockID()])
       worklist.enqueueSuccessors(block);    
     previouslyVisited[block->getBlockID()] = true;
@@ -692,11 +697,12 @@ void clang::runUninitializedVariablesAnalysis(const DeclContext &dc,
   
   // Run through the blocks one more time, and report uninitialized variabes.
   for (CFG::const_iterator BI = cfg.begin(), BE = cfg.end(); BI != BE; ++BI) {
-    if (wasAnalyzed[(*BI)->getBlockID()])
+    if (wasAnalyzed[(*BI)->getBlockID()]) {
       runOnBlock(*BI, cfg, ac, vals, wasAnalyzed, &handler,
                  /* flagBlockUses */ true);
+      ++stats.NumBlockVisits;
+    }
   }
 }
 
 UninitVariablesHandler::~UninitVariablesHandler() {}
-

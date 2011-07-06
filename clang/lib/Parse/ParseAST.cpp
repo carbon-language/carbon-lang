@@ -57,6 +57,10 @@ void clang::ParseAST(Sema &S, bool PrintStats) {
     Stmt::CollectingStats(true);
   }
 
+  // Also turn on collection of stats inside of the Sema object.
+  bool OldCollectStats = PrintStats;
+  std::swap(OldCollectStats, S.CollectStats);
+
   ASTConsumer *Consumer = &S.getASTConsumer();
 
   llvm::OwningPtr<Parser> ParseOP(new Parser(S.getPreprocessor(), S));
@@ -95,7 +99,8 @@ void clang::ParseAST(Sema &S, bool PrintStats) {
     Consumer->HandleTopLevelDecl(DeclGroupRef(*I));
   
   Consumer->HandleTranslationUnit(S.getASTContext());
-  
+
+  std::swap(OldCollectStats, S.CollectStats);
   if (PrintStats) {
     llvm::errs() << "\nSTATISTICS:\n";
     P.getActions().PrintStats();

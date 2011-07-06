@@ -32,10 +32,16 @@ public:
                                          const VarDecl *vd,
                                          bool isAlwaysUninit) {}
 };
-  
+
+struct UninitVariablesAnalysisStats {
+  unsigned NumVariablesAnalyzed;
+  unsigned NumBlockVisits;
+};
+
 void runUninitializedVariablesAnalysis(const DeclContext &dc, const CFG &cfg,
                                        AnalysisContext &ac,
-                                       UninitVariablesHandler &handler);
+                                       UninitVariablesHandler &handler,
+                                       UninitVariablesAnalysisStats &stats);
 
 }
 #endif
