@@ -16,4 +16,6 @@ def fuzz_obj(obj):
     obj.IsAPointerType()
     obj.GetPointeeType()
     obj.GetDescription(lldb.SBStream())
+    obj.IsPointerType(None)
+    lldb.SBType.IsPointerType(None)
 
