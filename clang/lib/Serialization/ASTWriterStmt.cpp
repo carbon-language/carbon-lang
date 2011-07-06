@@ -1174,6 +1174,7 @@ void ASTStmtWriter::VisitCXXThrowExpr(CXXThrowExpr *E) {
   VisitExpr(E);
   Writer.AddSourceLocation(E->getThrowLoc(), Record);
   Writer.AddStmt(E->getSubExpr());
+  Record.push_back(E->isThrownVariableInScope());
   Code = serialization::EXPR_CXX_THROW;
 }
 

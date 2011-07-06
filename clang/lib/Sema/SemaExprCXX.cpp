@@ -480,23 +480,63 @@ Sema::ActOnCXXNullPtrLiteral(SourceLocation Loc) {
 
 /// ActOnCXXThrow - Parse throw expressions.
 ExprResult
-Sema::ActOnCXXThrow(SourceLocation OpLoc, Expr *Ex) {
+Sema::ActOnCXXThrow(Scope *S, SourceLocation OpLoc, Expr *Ex) {
+  bool IsThrownVarInScope = false;
+  if (Ex) {
+    // C++0x [class.copymove]p31:
+    //   When certain criteria are met, an implementation is allowed to omit the 
+    //   copy/move construction of a class object [...]
+    //
+    //     - in a throw-expression, when the operand is the name of a 
+    //       non-volatile automatic object (other than a function or catch-
+    //       clause parameter) whose scope does not extend beyond the end of the 
+    //       innermost enclosing try-block (if there is one), the copy/move 
+    //       operation from the operand to the exception object (15.1) can be 
+    //       omitted by constructing the automatic object directly into the 
+    //       exception object
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Ex->IgnoreParens()))
+      if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
+        if (Var->hasLocalStorage() && !Var->getType().isVolatileQualified()) {
+          for( ; S; S = S->getParent()) {
+            if (S->isDeclScope(Var)) {
+              IsThrownVarInScope = true;
+              break;
+            }
+            
+            if (S->getFlags() &
+                (Scope::FnScope | Scope::ClassScope | Scope::BlockScope |
+                 Scope::FunctionPrototypeScope | Scope::ObjCMethodScope |
+                 Scope::TryScope))
+              break;
+          }
+        }
+      }
+  }
+  
+  return BuildCXXThrow(OpLoc, Ex, IsThrownVarInScope);
+}
+
+ExprResult Sema::BuildCXXThrow(SourceLocation OpLoc, Expr *Ex, 
+                               bool IsThrownVarInScope) {
   // Don't report an error if 'throw' is used in system headers.
   if (!getLangOptions().CXXExceptions &&
       !getSourceManager().isInSystemHeader(OpLoc))
     Diag(OpLoc, diag::err_exceptions_disabled) << "throw";
-
+  
   if (Ex && !Ex->isTypeDependent()) {
-    ExprResult ExRes = CheckCXXThrowOperand(OpLoc, Ex);
+    ExprResult ExRes = CheckCXXThrowOperand(OpLoc, Ex, IsThrownVarInScope);
     if (ExRes.isInvalid())
       return ExprError();
     Ex = ExRes.take();
   }
-  return Owned(new (Context) CXXThrowExpr(Ex, Context.VoidTy, OpLoc));
+  
+  return Owned(new (Context) CXXThrowExpr(Ex, Context.VoidTy, OpLoc,
+                                          IsThrownVarInScope));
 }
 
 /// CheckCXXThrowOperand - Validate the operand of a throw.
-ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E) {
+ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
+                                      bool IsThrownVarInScope) {
   // C++ [except.throw]p3:
   //   A throw-expression initializes a temporary object, called the exception
   //   object, the type of which is determined by removing any top-level
@@ -535,14 +575,28 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E) {
 
   // Initialize the exception result.  This implicitly weeds out
   // abstract types or types with inaccessible copy constructors.
-  const VarDecl *NRVOVariable = getCopyElisionCandidate(QualType(), E, false);
-
-  // FIXME: Determine whether we can elide this copy per C++0x [class.copy]p32.
+  
+  // C++0x [class.copymove]p31:
+  //   When certain criteria are met, an implementation is allowed to omit the 
+  //   copy/move construction of a class object [...]
+  //
+  //     - in a throw-expression, when the operand is the name of a 
+  //       non-volatile automatic object (other than a function or catch-clause 
+  //       parameter) whose scope does not extend beyond the end of the 
+  //       innermost enclosing try-block (if there is one), the copy/move 
+  //       operation from the operand to the exception object (15.1) can be 
+  //       omitted by constructing the automatic object directly into the 
+  //       exception object
+  const VarDecl *NRVOVariable = 0;
+  if (IsThrownVarInScope)
+    NRVOVariable = getCopyElisionCandidate(QualType(), E, false);
+  
   InitializedEntity Entity =
       InitializedEntity::InitializeException(ThrowLoc, E->getType(),
-                                             /*NRVO=*/false);
+                                             /*NRVO=*/NRVOVariable != 0);
   Res = PerformMoveOrCopyInitialization(Entity, NRVOVariable,
-                                        QualType(), E);
+                                        QualType(), E,
+                                        IsThrownVarInScope);
   if (Res.isInvalid())
     return ExprError();
   E = Res.take();

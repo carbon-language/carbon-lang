@@ -647,6 +647,10 @@ StmtResult Parser::ParseDefaultStatement(ParsedAttributes &attrs) {
                                   SubStmt.get(), getCurScope());
 }
 
+StmtResult Parser::ParseCompoundStatement(ParsedAttributes &Attr,
+                                          bool isStmtExpr) {
+  return ParseCompoundStatement(Attr, isStmtExpr, Scope::DeclScope);
+}
 
 /// ParseCompoundStatement - Parse a "{}" block.
 ///
@@ -676,14 +680,15 @@ StmtResult Parser::ParseDefaultStatement(ParsedAttributes &attrs) {
 /// [OMP]   flush-directive
 ///
 StmtResult Parser::ParseCompoundStatement(ParsedAttributes &attrs,
-                                                        bool isStmtExpr) {
+                                          bool isStmtExpr,
+                                          unsigned ScopeFlags) {
   //FIXME: Use attributes?
 
   assert(Tok.is(tok::l_brace) && "Not a compount stmt!");
 
   // Enter a scope to hold everything within the compound stmt.  Compound
   // statements can always hold declarations.
-  ParseScope CompoundScope(this, Scope::DeclScope);
+  ParseScope CompoundScope(this, ScopeFlags);
 
   // Parse the statements in the body.
   return ParseCompoundStatementBody(isStmtExpr);
@@ -1910,7 +1915,8 @@ StmtResult Parser::ParseCXXTryBlockCommon(SourceLocation TryLoc) {
     return StmtError(Diag(Tok, diag::err_expected_lbrace));
   // FIXME: Possible draft standard bug: attribute-specifier should be allowed?
   ParsedAttributesWithRange attrs(AttrFactory);
-  StmtResult TryBlock(ParseCompoundStatement(attrs));
+  StmtResult TryBlock(ParseCompoundStatement(attrs, /*isStmtExpr=*/false,
+                                             Scope::DeclScope|Scope::TryScope));
   if (TryBlock.isInvalid())
     return move(TryBlock);
 

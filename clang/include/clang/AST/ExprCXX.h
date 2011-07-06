@@ -586,24 +586,35 @@ public:
 class CXXThrowExpr : public Expr {
   Stmt *Op;
   SourceLocation ThrowLoc;
+  /// \brief Whether the thrown variable (if any) is in scope.
+  unsigned IsThrownVariableInScope : 1;
+  
+  friend class ASTStmtReader;
+  
 public:
   // Ty is the void type which is used as the result type of the
   // exepression.  The l is the location of the throw keyword.  expr
   // can by null, if the optional expression to throw isn't present.
-  CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l) :
+  CXXThrowExpr(Expr *expr, QualType Ty, SourceLocation l,
+               bool IsThrownVariableInScope) :
     Expr(CXXThrowExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
          expr && expr->isInstantiationDependent(),
          expr && expr->containsUnexpandedParameterPack()),
-    Op(expr), ThrowLoc(l) {}
+    Op(expr), ThrowLoc(l), IsThrownVariableInScope(IsThrownVariableInScope) {}
   CXXThrowExpr(EmptyShell Empty) : Expr(CXXThrowExprClass, Empty) {}
 
   const Expr *getSubExpr() const { return cast_or_null<Expr>(Op); }
   Expr *getSubExpr() { return cast_or_null<Expr>(Op); }
-  void setSubExpr(Expr *E) { Op = E; }
 
   SourceLocation getThrowLoc() const { return ThrowLoc; }
-  void setThrowLoc(SourceLocation L) { ThrowLoc = L; }
 
+  /// \brief Determines whether the variable thrown by this expression (if any!)
+  /// is within the innermost try block.
+  ///
+  /// This information is required to determine whether the NRVO can apply to
+  /// this variable.
+  bool isThrownVariableInScope() const { return IsThrownVariableInScope; }
+  
   SourceRange getSourceRange() const {
     if (getSubExpr() == 0)
       return SourceRange(ThrowLoc, ThrowLoc);

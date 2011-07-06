@@ -84,7 +84,10 @@ public:
     /// ThisScope - This is the scope of a struct/union/class definition,
     /// outside of any member function definition, where 'this' is nonetheless
     /// usable.
-    ThisScope = 0x1000
+    ThisScope = 0x1000,
+    
+    /// TryScope - This is the scope of a C++ try statement.
+    TryScope = 0x2000
   };
 private:
   /// The parent scope for this scope.  This is null for the translation-unit
@@ -303,6 +306,9 @@ public:
     }
     return false;
   }
+  
+  /// \brief Determine whether this scope is a C++ 'try' block.
+  bool isTryScope() const { return getFlags() & Scope::TryScope; }
 
   typedef UsingDirectivesTy::iterator udir_iterator;
   typedef UsingDirectivesTy::const_iterator const_udir_iterator;

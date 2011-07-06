@@ -1543,7 +1543,8 @@ ExprResult
 Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
                                       const VarDecl *NRVOCandidate,
                                       QualType ResultType,
-                                      Expr *Value) {
+                                      Expr *Value,
+                                      bool AllowNRVO) {
   // C++0x [class.copy]p33:
   //   When the criteria for elision of a copy operation are met or would
   //   be met save for the fact that the source object is a function
@@ -1551,7 +1552,8 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
   //   overload resolution to select the constructor for the copy is first
   //   performed as if the object were designated by an rvalue.
   ExprResult Res = ExprError();
-  if (NRVOCandidate || getCopyElisionCandidate(ResultType, Value, true)) {
+  if (AllowNRVO &&
+      (NRVOCandidate || getCopyElisionCandidate(ResultType, Value, true))) {
     ImplicitCastExpr AsRvalue(ImplicitCastExpr::OnStack,
                               Value->getType(), CK_LValueToRValue,
                               Value, VK_XValue);

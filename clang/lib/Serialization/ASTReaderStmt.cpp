@@ -1172,8 +1172,9 @@ void ASTStmtReader::VisitCXXThisExpr(CXXThisExpr *E) {
 
 void ASTStmtReader::VisitCXXThrowExpr(CXXThrowExpr *E) {
   VisitExpr(E);
-  E->setThrowLoc(ReadSourceLocation(Record, Idx));
-  E->setSubExpr(Reader.ReadSubExpr());
+  E->ThrowLoc = ReadSourceLocation(Record, Idx);
+  E->Op = Reader.ReadSubExpr();
+  E->IsThrownVariableInScope = Record[Idx++];
 }
 
 void ASTStmtReader::VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
