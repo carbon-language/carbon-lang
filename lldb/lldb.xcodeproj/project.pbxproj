@@ -3335,10 +3335,10 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
+				LLVM_BUILD_DIR = "/Volumes/work/gclayton/Documents/src/llvm/131657/llvm-debug";
 				LLVM_BUILD_DIR_ARCH = "";
-				LLVM_CONFIGURATION = Release;
-				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
+				LLVM_CONFIGURATION = "Debug+Asserts";
+				LLVM_SOURCE_DIR = /Volumes/work/gclayton/Documents/src/llvm/131657/llvm;
 				ONLY_ACTIVE_ARCH = YES;
 				VALID_ARCHS = "x86_64 i386";
 			};
@@ -3366,10 +3366,10 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
+				LLVM_BUILD_DIR = "/Volumes/work/gclayton/Documents/src/llvm/131657/llvm-debug";
 				LLVM_BUILD_DIR_ARCH = "";
-				LLVM_CONFIGURATION = Release;
-				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
+				LLVM_CONFIGURATION = "Debug+Asserts";
+				LLVM_SOURCE_DIR = /Volumes/work/gclayton/Documents/src/llvm/131657/llvm;
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = Release;
@@ -3418,10 +3418,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 66;
+				DYLIB_CURRENT_VERSION = 68;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3470,11 +3470,11 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 66;
+				DYLIB_CURRENT_VERSION = 68;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3521,8 +3521,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 66;
-				DYLIB_CURRENT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
+				DYLIB_CURRENT_VERSION = 68;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3560,9 +3560,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DYLIB_CURRENT_VERSION = 66;
+				DYLIB_CURRENT_VERSION = 68;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3600,9 +3600,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DYLIB_CURRENT_VERSION = 66;
+				DYLIB_CURRENT_VERSION = 68;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3660,8 +3660,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
-				LLVM_CONFIGURATION = Release;
-				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
+				LLVM_CONFIGURATION = "Debug+Asserts";
+				LLVM_SOURCE_DIR = /Volumes/work/gclayton/Documents/src/llvm/131657/llvm;
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = BuildAndIntegration;
@@ -3670,7 +3670,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3701,11 +3701,11 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 66;
+				DYLIB_CURRENT_VERSION = 68;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3830,7 +3830,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -3862,7 +3862,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 66;
+				CURRENT_PROJECT_VERSION = 68;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
