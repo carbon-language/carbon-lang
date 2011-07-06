@@ -123,7 +123,7 @@ public:
   /// getNext - Return the next UserValue in the equivalence class.
   UserValue *getNext() const { return next; }
 
-  /// match - Does this UserValue match the aprameters?
+  /// match - Does this UserValue match the parameters?
   bool match(const MDNode *Var, unsigned Offset) const {
     return Var == variable && Offset == offset;
   }
