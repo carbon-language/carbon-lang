@@ -2450,13 +2450,29 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
     Actions.CodeCompleteTag(getCurScope(), DeclSpec::TST_enum);
     ConsumeCodeCompletionToken();
   }
+
+  bool IsScopedEnum = false;
+  bool IsScopedUsingClassTag = false;
+
+  if (getLang().CPlusPlus0x &&
+      (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
+    IsScopedEnum = true;
+    IsScopedUsingClassTag = Tok.is(tok::kw_class);
+    ConsumeToken();
+  }
   
   // If attributes exist after tag, parse them.
   ParsedAttributes attrs(AttrFactory);
   MaybeParseGNUAttributes(attrs);
 
+  bool AllowFixedUnderlyingType = getLang().CPlusPlus0x || getLang().Microsoft;
+
   CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLang().CPlusPlus) {
+    // "enum foo : bar;" is not a potential typo for "enum foo::bar;"
+    // if a fixed underlying type is allowed.
+    ColonProtectionRAIIObject X(*this, AllowFixedUnderlyingType);
+    
     if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), false))
       return;
 
@@ -2469,17 +2485,6 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
         return;
       }
     }
-  }
-
-  bool AllowFixedUnderlyingType = getLang().CPlusPlus0x || getLang().Microsoft;
-  bool IsScopedEnum = false;
-  bool IsScopedUsingClassTag = false;
-
-  if (getLang().CPlusPlus0x &&
-      (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
-    IsScopedEnum = true;
-    IsScopedUsingClassTag = Tok.is(tok::kw_class);
-    ConsumeToken();
   }
 
   // Must have either 'enum name' or 'enum {...}'.

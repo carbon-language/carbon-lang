@@ -119,3 +119,14 @@ namespace rdar9366066 {
     x % 8; // expected-error{{invalid operands to binary expression ('rdar9366066::X' and 'int')}}
   }
 }
+
+// Part of PR10264
+namespace test5 {
+  namespace ns {
+    typedef unsigned Atype;
+    enum A : Atype;
+  }
+  enum ns::A : ns::Atype {
+    x, y, z
+  };
+}
