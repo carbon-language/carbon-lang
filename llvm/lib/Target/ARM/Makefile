@@ -19,6 +19,6 @@ BUILT_SOURCES = ARMGenRegisterInfo.inc ARMGenInstrInfo.inc \
                 ARMGenDecoderTables.inc ARMGenEDInfo.inc \
                 ARMGenFastISel.inc ARMGenMCCodeEmitter.inc
 
-DIRS = InstPrinter AsmParser Disassembler TargetInfo
+DIRS = InstPrinter AsmParser Disassembler TargetInfo MCTargetDesc
 
 include $(LEVEL)/Makefile.common

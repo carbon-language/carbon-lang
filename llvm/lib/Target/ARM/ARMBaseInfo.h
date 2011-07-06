@@ -17,21 +17,11 @@
 #ifndef ARMBASEINFO_H
 #define ARMBASEINFO_H
 
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"
 
 // Note that the following auto-generated files only defined enum types, and
 // so are safe to include here.
-
-// Defines symbolic names for ARM registers.  This defines a mapping from
-// register name to register number.
-//
-#define GET_REGINFO_ENUM
-#include "ARMGenRegisterInfo.inc"
-
-// Defines symbolic names for the ARM instructions.
-//
-#define GET_INSTRINFO_ENUM
-#include "ARMGenInstrInfo.inc"
 
 namespace llvm {
 
