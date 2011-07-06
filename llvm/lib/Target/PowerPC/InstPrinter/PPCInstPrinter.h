@@ -19,14 +19,12 @@
 namespace llvm {
 
 class MCOperand;
-class TargetMachine;
 
 class PPCInstPrinter : public MCInstPrinter {
   // 0 -> AIX, 1 -> Darwin.
   unsigned SyntaxVariant;
 public:
-  PPCInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI,
-                 unsigned syntaxVariant)
+  PPCInstPrinter(const MCAsmInfo &MAI, unsigned syntaxVariant)
     : MCInstPrinter(MAI), SyntaxVariant(syntaxVariant) {}
   
   bool isDarwinSyntax() const {

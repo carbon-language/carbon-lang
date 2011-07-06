@@ -319,11 +319,10 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
 }
 
 static MCInstPrinter *createMBlazeMCInstPrinter(const Target &T,
-                                                TargetMachine &TM,
                                                 unsigned SyntaxVariant,
                                                 const MCAsmInfo &MAI) {
   if (SyntaxVariant == 0)
-    return new MBlazeInstPrinter(TM, MAI);
+    return new MBlazeInstPrinter(MAI);
   return 0;
 }
 

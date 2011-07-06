@@ -79,7 +79,7 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
 
   // Set up the instruction printer.
   int AsmPrinterVariant = MAI->getAssemblerDialect();
-  MCInstPrinter *IP = TheTarget->createMCInstPrinter(*TM, AsmPrinterVariant,
+  MCInstPrinter *IP = TheTarget->createMCInstPrinter(AsmPrinterVariant,
                                                      *MAI);
   assert(IP && "Unable to create instruction printer!");
 

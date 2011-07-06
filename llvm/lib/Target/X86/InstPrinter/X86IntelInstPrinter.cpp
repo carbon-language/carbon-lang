@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "asm-printer"
 #include "X86IntelInstPrinter.h"
 #include "X86InstComments.h"
-#include "X86Subtarget.h"
 #include "MCTargetDesc/X86TargetDesc.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"

@@ -680,10 +680,9 @@ static AsmPrinter *createPPCAsmPrinterPass(TargetMachine &tm,
 }
 
 static MCInstPrinter *createPPCMCInstPrinter(const Target &T,
-                                             TargetMachine &TM,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI) {
-  return new PPCInstPrinter(TM, MAI, SyntaxVariant);
+  return new PPCInstPrinter(MAI, SyntaxVariant);
 }
 
 

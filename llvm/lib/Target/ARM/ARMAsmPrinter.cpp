@@ -1954,11 +1954,10 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 //===----------------------------------------------------------------------===//
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,
-                                             TargetMachine &TM,
                                              unsigned SyntaxVariant,
                                              const MCAsmInfo &MAI) {
   if (SyntaxVariant == 0)
-    return new ARMInstPrinter(TM, MAI);
+    return new ARMInstPrinter(MAI);
   return 0;
 }
 

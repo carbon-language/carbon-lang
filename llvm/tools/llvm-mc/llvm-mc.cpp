@@ -343,7 +343,7 @@ static int AssembleInput(const char *ProgName) {
   // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (FileType == OFT_AssemblyFile) {
     MCInstPrinter *IP =
-      TheTarget->createMCInstPrinter(*TM, OutputAsmVariant, *MAI);
+      TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI);
     MCCodeEmitter *CE = 0;
     TargetAsmBackend *TAB = 0;
     if (ShowEncoding) {
@@ -426,7 +426,7 @@ static int DisassembleInput(const char *ProgName, bool Enhanced) {
       return 1;
     }
 
-    Res = Disassembler::disassemble(*TheTarget, *TM, TripleName,
+    Res = Disassembler::disassemble(*TheTarget, TripleName,
                                     *Buffer.take(), Out->os());
   }
 

@@ -20,11 +20,10 @@
 namespace llvm {
 
 class MCOperand;
-class TargetMachine;
   
 class X86IntelInstPrinter : public MCInstPrinter {
 public:
-  X86IntelInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
+  X86IntelInstPrinter(const MCAsmInfo &MAI)
     : MCInstPrinter(MAI) {}
 
   virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;

@@ -193,8 +193,7 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   
   InstString.reset(new std::string);
   InstStream.reset(new raw_string_ostream(*InstString));
-  InstPrinter.reset(Tgt->createMCInstPrinter(*TargetMachine, LLVMSyntaxVariant,
-                                             *AsmInfo));
+  InstPrinter.reset(Tgt->createMCInstPrinter(LLVMSyntaxVariant, *AsmInfo));
   
   if (!InstPrinter)
     return;

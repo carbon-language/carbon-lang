@@ -45,6 +45,7 @@ void ScheduleDAG::EmitPhysRegCopy(SUnit *SU,
       unsigned Reg = 0;
       for (SUnit::const_succ_iterator II = SU->Succs.begin(),
              EE = SU->Succs.end(); II != EE; ++II) {
+        if (II->isCtrl()) continue;  // ignore chain preds
         if (II->getReg()) {
           Reg = II->getReg();
           break;
