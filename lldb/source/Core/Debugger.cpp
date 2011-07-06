@@ -954,6 +954,7 @@ Debugger::FormatPrompt
                         const RegisterInfo *reg_info = NULL;
                         RegisterContext *reg_ctx = NULL;
                         bool do_deref_pointer = false;
+                        bool did_deref_pointer = true;
 
                         // Each variable must set success to true below...
                         bool var_success = false;
@@ -1046,18 +1047,37 @@ Debugger::FormatPrompt
                                                                           error).get();
                                         }
                                         
+                                        if (var_name_final_if_array_range && (error.Fail() || !target))
+                                        {
+                                            bool fake_do_deref = false;
+                                            target = ExpandExpressionPath(vobj,
+                                                                          exe_ctx->frame,
+                                                                          &fake_do_deref,
+                                                                          var_name_begin,
+                                                                          var_name_final_if_array_range,
+                                                                          error).get();
+                                            
+                                            did_deref_pointer = false;
+                                            
+                                            if (target && ClangASTContext::IsArrayType(target->GetClangType()))
+                                                error.Clear();
+                                            else
+                                                error.SetErrorString("error in expression");
+                                        }
+                                        
                                         IFERROR_PRINT_IT
                                         else
                                             is_array_range = true;
                                     }
                                     
-                                    do_deref_pointer = false; // I have honored the request to deref                               
+                                    if (did_deref_pointer)
+                                        do_deref_pointer = false; // I have honored the request to deref                               
 
                                 }
                                 else
                                     break;
 
-                                if (do_deref_pointer)
+                                if (do_deref_pointer && !is_array_range)
                                 {
                                     // I have not deref-ed yet, let's do it
                                     // this happens when we are not going through GetValueForVariableExpressionPath
@@ -1082,14 +1102,17 @@ Debugger::FormatPrompt
                                     if (close_bracket_position && (var_name_end-close_bracket_position > 1))
                                     {
                                         int base_len = var_name_end-close_bracket_position;
-                                        special_directions = new char[8+base_len];
+                                        special_directions = new char[7+base_len];
+                                        int star_offset = (do_deref_pointer ? 1 : 0);
                                         special_directions[0] = '$';
-                                        special_directions[1] = '{';                                        
-                                        special_directions[2] = 'v';
-                                        special_directions[3] = 'a';
-                                        special_directions[4] = 'r';
-                                        memcpy(special_directions+5, close_bracket_position+1, base_len);
-                                        special_directions[base_len+7] = '\0';
+                                        special_directions[1] = '{';
+                                        if (do_deref_pointer)
+                                            special_directions[2] = '*';
+                                        special_directions[2+star_offset] = 'v';
+                                        special_directions[3+star_offset] = 'a';
+                                        special_directions[4+star_offset] = 'r';
+                                        memcpy(special_directions+5+star_offset, close_bracket_position+1, base_len);
+                                        special_directions[base_len+5+star_offset] = '\0';
 #ifdef VERBOSE_FORMATPROMPT_OUTPUT
                                         printf("%s\n",special_directions);
 #endif //VERBOSE_FORMATPROMPT_OUTPUT
@@ -1109,7 +1132,6 @@ Debugger::FormatPrompt
                                                                                     index_lower,
                                                                                     exe_ctx->frame,
                                                                                     error).get();
-
                                         
                                         IFERROR_PRINT_IT
                                         if (!special_directions)
