@@ -219,6 +219,12 @@ inb	$161, %al
 // CHECK: pushq	$1
 push $1
 
+// rdar://9716860
+pushq $1
+// CHECK: encoding: [0x6a,0x01]
+pushq $1111111
+// CHECK: encoding: [0x68,0x47,0xf4,0x10,0x00]
+
 // rdar://8017530
 // CHECK: sldtw	4
 sldt	4
