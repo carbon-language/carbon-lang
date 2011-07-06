@@ -14,12 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/ObjectFile.h"
-// This config must be included before llvm-config.h.
-#include "llvm/Config/config.h"
-#include "../../lib/MC/MCDisassembler/EDDisassembler.h"
-#include "../../lib/MC/MCDisassembler/EDInst.h"
-#include "../../lib/MC/MCDisassembler/EDOperand.h"
-#include "../../lib/MC/MCDisassembler/EDToken.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -41,8 +35,6 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
 #include <algorithm>
-#include <cctype>
-#include <cerrno>
 #include <cstring>
 using namespace llvm;
 using namespace object;
