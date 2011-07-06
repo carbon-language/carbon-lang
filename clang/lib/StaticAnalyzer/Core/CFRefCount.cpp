@@ -1349,7 +1349,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
   if (cocoa::isCocoaObjectRef(RetTy)) {
     // EXPERIMENTAL: assume the Cocoa conventions for all objects returned
     //  by instance methods.
-    RetEffect E = cocoa::followsFundamentalRule(S)
+    RetEffect E = cocoa::followsFundamentalRule(S, MD)
                   ? ObjCAllocRetE : RetEffect::MakeNotOwned(RetEffect::ObjC);
 
     return getPersistentSummary(E, ReceiverEff, MayEscape);
@@ -1357,7 +1357,7 @@ RetainSummaryManager::getCommonMethodSummary(const ObjCMethodDecl* MD,
 
   // Look for methods that return an owned core foundation object.
   if (cocoa::isCFObjectRef(RetTy)) {
-    RetEffect E = cocoa::followsFundamentalRule(S)
+    RetEffect E = cocoa::followsFundamentalRule(S, MD)
       ? RetEffect::MakeOwned(RetEffect::CF, true)
       : RetEffect::MakeNotOwned(RetEffect::CF);
 
@@ -1428,7 +1428,7 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
     assert(ScratchArgs.isEmpty());
 
     // "initXXX": pass-through for receiver.
-    if (cocoa::deriveNamingConvention(S) == cocoa::InitRule)
+    if (cocoa::deriveNamingConvention(S, MD) == cocoa::InitRule)
       Summ = getInitMethodSummary(RetTy);
     else
       Summ = getCommonMethodSummary(MD, S, RetTy);

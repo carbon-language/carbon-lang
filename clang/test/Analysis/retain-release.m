@@ -1462,3 +1462,28 @@ extern void rdar_9234108_helper(void *key, void * CF_CONSUMED value);
 void rdar_9234108() {
   rdar_9234108_helper(0, CFStringCreate());
 }
+
+// <rdar://problem/9726279> - Make sure that objc_method_family works
+// to override naming conventions.
+struct TwoDoubles {
+  double one;
+  double two;
+};
+typedef struct TwoDoubles TwoDoubles;
+
+@interface NSValue (Mine)
+- (id)_prefix_initWithTwoDoubles:(TwoDoubles)twoDoubles __attribute__((objc_method_family(init)));
+@end
+
+@implementation NSValue (Mine)
+- (id)_prefix_initWithTwoDoubles:(TwoDoubles)twoDoubles
+{
+  return [self init];
+}
+@end
+
+void rdar9726279() {
+  TwoDoubles twoDoubles = { 0.0, 0.0 };
+  NSValue *value = [[NSValue alloc] _prefix_initWithTwoDoubles:twoDoubles];
+  [value release];
+}

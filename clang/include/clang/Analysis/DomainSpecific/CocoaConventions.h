@@ -17,15 +17,19 @@
 #include "clang/AST/Type.h"
 
 namespace clang {
+  
+class ObjCMethodDecl;
+  
 namespace ento {
 namespace cocoa {
  
   enum NamingConvention { NoConvention, CreateRule, InitRule };
 
-  NamingConvention deriveNamingConvention(Selector S);
+  NamingConvention deriveNamingConvention(Selector S, const ObjCMethodDecl *MD);
 
-  static inline bool followsFundamentalRule(Selector S) {
-    return deriveNamingConvention(S) == CreateRule;
+  static inline bool followsFundamentalRule(Selector S, 
+                                            const ObjCMethodDecl *MD) {
+    return deriveNamingConvention(S, MD) == CreateRule;
   }
   
   bool isRefType(QualType RetTy, llvm::StringRef Prefix,
