@@ -599,21 +599,26 @@ SBValue::GetDescription (SBStream &description)
 {
     if (m_opaque_sp)
     {
-        // Don't call all these APIs and cause more logging!
-//        const char *name = GetName();
-//        const char *type_name = GetTypeName ();
-//        size_t byte_size = GetByteSize ();
-//        uint32_t num_children = GetNumChildren ();
-//        bool is_stale = ValueIsStale ();
-//        description.Printf ("name: '%s', type: %s, size: %d", (name != NULL ? name : "<unknown name>"),
-//                            (type_name != NULL ? type_name : "<unknown type name>"), (int) byte_size);
-//        if (num_children > 0)
-//            description.Printf (", num_children: %d", num_children);
-//
-//        if (is_stale)
-//            description.Printf (" [value is stale]");
-        
-        description.Printf ("name: '%s'", m_opaque_sp->GetName().GetCString());
+        uint32_t ptr_depth = 0;
+        uint32_t curr_depth = 0;
+        uint32_t max_depth = UINT32_MAX;
+        bool show_types = false;
+        bool show_location = false;
+        bool use_objc = false;
+        lldb::DynamicValueType use_dynamic = eNoDynamicValues;
+        bool scope_already_checked = false;
+        bool flat_output = false;
+        ValueObject::DumpValueObject (description.ref(), 
+                                      m_opaque_sp.get(), 
+                                      m_opaque_sp->GetName().GetCString(), 
+                                      ptr_depth, 
+                                      curr_depth, 
+                                      max_depth, 
+                                      show_types, show_location, 
+                                      use_objc, 
+                                      use_dynamic, 
+                                      scope_already_checked, 
+                                      flat_output);
     }
     else
         description.Printf ("No value");

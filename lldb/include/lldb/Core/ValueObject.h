@@ -326,7 +326,7 @@ public:
     // The functions below should NOT be modified by sublasses
     //------------------------------------------------------------------
     const Error &
-    GetError() const;
+    GetError();
 
     const ConstString &
     GetName() const;

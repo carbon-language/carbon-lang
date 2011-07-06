@@ -154,7 +154,7 @@ class ArrayTypesTestCase(TestBase):
         variable = frame.FindVariable("strings")
         var = repr(variable)
         self.expect(var, "Variable for 'strings' looks good with correct name", exe=False,
-            substrs = ["name: '%s'" % variable.GetName()])
+            substrs = ["%s" % variable.GetName()])
         self.DebugSBValue(frame, variable)
         self.assertTrue(variable.GetNumChildren() == 4,
                         "Variable 'strings' should have 4 children")

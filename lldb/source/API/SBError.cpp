@@ -218,35 +218,16 @@ SBError::GetDescription (SBStream &description)
 {
     if (m_opaque_ap.get())
     {
-        if (Success())
-            description.Printf ("Status: Success");
+        if (m_opaque_ap->Success())
+            description.Printf ("success");
         else
         {
             const char * err_string = GetCString();
-            description.Printf ("Status:  Error: %s",  (err_string != NULL ? err_string : ""));
+            description.Printf ("error: %s",  (err_string != NULL ? err_string : ""));
         }
     }
     else
-        description.Printf ("No value");
-
-    return true;
-} 
-
-bool
-SBError::GetDescription (SBStream &description) const
-{
-    if (m_opaque_ap.get())
-    {
-        if (Success())
-            description.Printf ("Status: Success");
-        else
-        {
-            const char * err_string = GetCString();
-            description.Printf ("Status:  Error: %s",  (err_string != NULL ? err_string : ""));
-        }
-    }
-    else
-        description.Printf ("No value");
+        description.Printf ("error: <NULL>");
 
     return true;
 } 

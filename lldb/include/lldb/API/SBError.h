@@ -68,9 +68,6 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
-    bool
-    GetDescription (lldb::SBStream &description) const;
-
 protected:
 
 #ifndef SWIG

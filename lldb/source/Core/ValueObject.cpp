@@ -212,8 +212,9 @@ ValueObject::GetDataExtractor ()
 }
 
 const Error &
-ValueObject::GetError() const
+ValueObject::GetError()
 {
+    UpdateValueIfNeeded();
     return m_error;
 }
 
@@ -1929,7 +1930,10 @@ ValueObject::EvaluationPoint::SyncWithProcessState()
     {
         Thread *our_thread = m_process_sp->GetThreadList().FindThreadByIndexID (m_thread_id).get();
         if (our_thread == NULL)
-            SetInvalid();
+        {
+            //SetInvalid();
+            m_exe_scope = m_process_sp.get();
+        }
         else
         {
             m_exe_scope = our_thread;
