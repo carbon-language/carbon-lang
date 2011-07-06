@@ -1846,8 +1846,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   assert(UserVariables.empty() && DbgValues.empty() && "Maps weren't cleaned");
 
-  /// ProcessedArgs - Collection of arguments already processed.
-  SmallPtrSet<const MDNode *, 8> ProcessedArgs;
   const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
   /// LiveUserVar - Map physreg numbers to the MDNode they contain.
   std::vector<const MDNode*> LiveUserVar(TRI->getNumRegs());
