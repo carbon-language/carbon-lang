@@ -728,7 +728,10 @@ new pointee, unless that object is currently undergoing deallocation,
 in which case it the lvalue is updated to a null pointer.  This must
 execute atomically with respect to other assignments to the object, to
 reads from the object, and to the final release of the new pointed-to
-value.</li>
+value. If class is not compatible with weak references, 
+<tt>objc_arc_weak_unavailable</tt>
+attribute must be specified on class declaration to disallow weak 
+references to their objects.</li>
 <li>For <tt>__unsafe_unretained</tt> objects, the new pointee is
 stored into the lvalue using primitive semantics.</li>
 <li>For <tt>__autoreleasing</tt> objects, the new pointee is retained,
