@@ -1772,10 +1772,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     bool NeXTRuntimeIsDefault
       = (IsRewriter || getToolChain().getTriple().isOSDarwin());
     if (Args.hasFlag(options::OPT_fnext_runtime, options::OPT_fgnu_runtime,
-                     NeXTRuntimeIsDefault))
+                     NeXTRuntimeIsDefault)) {
       objCRuntime.setKind(ObjCRuntime::NeXT);
-    else
+    } else {
+      CmdArgs.push_back("-fgnu-runtime");
       objCRuntime.setKind(ObjCRuntime::GNU);
+    }
     getToolChain().configureObjCRuntime(objCRuntime);
     if (objCRuntime.HasARC)
       CmdArgs.push_back("-fobjc-runtime-has-arc");
