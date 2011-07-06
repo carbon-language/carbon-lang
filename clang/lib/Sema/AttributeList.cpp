@@ -107,6 +107,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name) {
   return llvm::StringSwitch<AttributeList::Kind>(AttrName)
     .Case("weak", AT_weak)
     .Case("weakref", AT_weakref)
+    .Case("objc_arc_weak_reference_unavailable", AT_arc_weakref_unavailable)
     .Case("pure", AT_pure)
     .Case("mode", AT_mode)
     .Case("used", AT_used)

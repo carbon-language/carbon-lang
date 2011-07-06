@@ -484,6 +484,10 @@ def Unavailable : InheritableAttr {
   let Args = [StringArgument<"Message">];
 }
 
+def ArcWeakrefUnavailable : InheritableAttr {
+  let Spellings = ["objc_arc_weak_reference_unavailable"];
+}
+
 def Unused : InheritableAttr {
   let Spellings = ["unused"];
 }

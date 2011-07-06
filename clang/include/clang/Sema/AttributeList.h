@@ -243,6 +243,7 @@ public:
     AT_weak,
     AT_weak_import,
     AT_weakref,
+    AT_arc_weakref_unavailable,
     IgnoredAttribute,
     UnknownAttribute
   };

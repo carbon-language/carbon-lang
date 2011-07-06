@@ -1091,6 +1091,18 @@ static void handleUnavailableAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   D->addAttr(::new (S.Context) UnavailableAttr(Attr.getLoc(), S.Context, Str));
 }
 
+static void handleArcWeakrefUnavailableAttr(Sema &S, Decl *D, 
+                                            const AttributeList &Attr) {
+  unsigned NumArgs = Attr.getNumArgs();
+  if (NumArgs > 0) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments) << 0;
+    return;
+  }
+  
+  D->addAttr(::new (S.Context) ArcWeakrefUnavailableAttr(
+                                          Attr.getLoc(), S.Context));
+}
+
 static void handleAvailabilityAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   IdentifierInfo *Platform = Attr.getParameterName();
@@ -3011,6 +3023,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_MsStruct:    handleMsStructAttr    (S, D, Attr); break;
   case AttributeList::AT_section:     handleSectionAttr     (S, D, Attr); break;
   case AttributeList::AT_unavailable: handleUnavailableAttr (S, D, Attr); break;
+  case AttributeList::AT_arc_weakref_unavailable: 
+    handleArcWeakrefUnavailableAttr (S, D, Attr); 
+    break;
   case AttributeList::AT_unused:      handleUnusedAttr      (S, D, Attr); break;
   case AttributeList::AT_used:        handleUsedAttr        (S, D, Attr); break;
   case AttributeList::AT_visibility:  handleVisibilityAttr  (S, D, Attr); break;

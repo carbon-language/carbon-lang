@@ -357,6 +357,8 @@ def err_class_extension_after_impl : Error<
   "cannot declare class extension for %0 after class implementation">;
 def note_implementation_declared : Note<
   "class implementation is declared here">;
+def note_class_declared : Note<
+  "class is declared here">;
 def warn_dup_category_def : Warning<
   "duplicate definition of category %1 on interface %0">;
 def err_conflicting_super_class : Error<"conflicting super class name %0">;
@@ -2568,6 +2570,8 @@ let CategoryName = "Automatic Reference Counting Issue" in {
 // ARC-mode diagnostics.
 def err_arc_weak_no_runtime : Error<
   "the current deployment target does not support automated __weak references">;
+def err_arc_unsupported_weak_class : Error<
+  "class is incompatible with __weak references">;
 def err_arc_illegal_explicit_message : Error<
   "ARC forbids explicit message send of %0">;
 def err_arc_unused_init_message : Error<
