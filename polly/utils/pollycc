@@ -351,7 +351,7 @@ def createOutputFiles(assemblyFiles, args):
 
   subprocess.call(commandLine)
 
-def checkExecutables(pollyLib):
+def checkExecutables(pollyLib, pluto):
   commandLine = ['opt', '-load', pollyLib, '-help']
   try:
     proc = subprocess.Popen(commandLine, stdout=subprocess.PIPE,
@@ -361,8 +361,9 @@ def checkExecutables(pollyLib):
     if not stdout_value.count('polly-prepare'):
       sys.exit('Polly support not available in opt')
 
-    if not stdout_value.count('polly-optimize'):
-      sys.exit('Polly compiled without POCC/Pluto support')
+    if pluto and not stdout_value.count('Optimize the scop using pocc'):
+      sys.exit('Polly compiled without POCC/Pluto support. -ftile and -fpluto'
+	       ' will not work.')
   except OSError:
     print 'error: opt cannot be executed: '
     print 'failing command: \n' + " ".join(commandLine)
@@ -393,7 +394,7 @@ def main():
 
   pollyLib = os.environ['LIBPOLLY']
 
-  checkExecutables(pollyLib)
+  checkExecutables(pollyLib, args.fpluto)
 
   assemblyFiles = createAssemblyFiles(args.files, args, pollyLib)
   createOutputFiles(assemblyFiles, args)
