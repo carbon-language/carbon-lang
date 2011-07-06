@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <title>LLVM Branch Weight Metadata</title>
+  <link rel="stylesheet" href="llvm.css" type="text/css">
+</head>
+<body>
+
+<h1>
+  LLVM Branch Weight Metadata
+</h1>
+
+<ol>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#supported_instructions">Supported Instructions</a></li>
+  <li><a href="#builtin_expect">Built-in "expect" Instruction </a></li>
+  <li><a href="#cfg_modifications">CFG Modifications</a></li>
+</ol>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:jstaszak@apple.com">Jakub Staszak</a></p>
+</div>
+
+<h2>
+  <a name="introduction">Introduction</a>
+</h2>
+<div>
+<p>Branch Weight Metadata represents branch weights as its likeliness to
+be taken. Metadata is assigned to the <tt>TerminatorInst</tt> as a
+<tt>MDNode</tt> of the <tt>MD_prof</tt> kind. The first operator is always a
+<tt>MDString</tt> node with the string "branch_weights". Number of operators
+depends on the terminator type.</p>
+
+<p>Branch weights might be fetch from the profiling file, or generated based on
+<a href="#builtin_expect"><tt>__builtin_expect</tt></a> instruction.
+</p>
+
+<p>All weights are represented as an unsigned 32-bit values, where higher value
+indicates greater chance to be taken.</p>
+</div>
+
+<h2>
+  <a name="supported_instructions">Supported Instructions</a>
+</h2>
+
+<div>
+  <h4>BranchInst</h4>
+  <div>
+    <p>Metadata is only assign to the conditional branches. There are two extra
+    operarands, for the true and the false branch.</p>
+  </div>
+  <div class="doc_code">
+  <pre>
+!0 = metadata !{
+  metadata !"branch_weights",
+  i32 &lt;TRUE_BRANCH_WEIGHT&gt;,
+  i32 &lt;FALSE_BRANCH_WEIGHT&gt;
+}
+  </pre>
+  </div>
+
+  <h4>SwitchInst</h4>
+  <div>
+  <p>Branch weights are assign to every case (including <tt>default</tt> case
+  which is always case #0).</p>
+  </div>
+  <div class="doc_code">
+  <pre>
+!0 = metadata !{
+  metadata !"branch_weights",
+  i32 &lt;DEFAULT_BRANCH_WEIGHT&gt;
+  [ , i32 &lt;CASE_BRANCH_WEIGHT&gt; ... ]
+}
+  </pre>
+  </div>
+
+  <h4>IndirectBrInst</h4>
+  <div>
+  <p>Branch weights are assign to every destination.</p>
+  </div>
+  <div class="doc_code">
+  <pre>
+!0 = metadata !{
+  metadata !"branch_weights",
+  i32 &lt;LABEL_BRANCH_WEIGHT&gt;
+  [ , i32 &lt;LABEL_BRANCH_WEIGHT&gt; ... ]
+}
+  </pre>
+  </div>
+
+  <h4>Other</h4>
+  <div>
+  <p>Other terminator instructions are not allowed to contain Branch Weight
+  Metadata.</p>
+  </div>
+</div>
+
+<h2>
+  <a name="builtin_expect">Built-in "expect" Instructions</a>
+</h2>
+<div>
+  <p><tt>__builtin_expect(long exp, long c)</tt> instruction provides branch
+  prediction information. The return value is the value of <tt>exp</tt>.</p>
+
+  <p>It is especially useful in conditional statements. Currently Clang supports
+  two conditional statements:
+  </p>
+  <h4><tt>if</tt> statement</h4>
+  <div>
+  <p>The <tt>exp</tt> parameter is the condition. The <tt>c</tt> parameter is
+  the expected comparision value. If it is equal to 1 (true), the condition is
+  likely to be true, in other case condition is likely to be false. For example:
+  </p>
+  </div>
+  <div class="doc_code">
+  <pre>
+  if (__builtin_expect(x &gt; 0, 1)) {
+    // This block is likely to be taken.
+  }
+  </pre>
+  </div>
+
+  <h4><tt>switch</tt> statement</h4>
+  <div>
+  <p>The <tt>exp</tt> parameter is the value. The <tt>c</tt> parameter is the
+  expected value. If the expected value doesn't show on the cases list, the
+  <tt>default</tt> case is assumed to be likely taken.</p>
+  </div>
+  <div class="doc_code">
+  <pre>
+  switch (__builtin_expect(x, 5)) {
+  default: break;
+  case 0:  // ...
+  case 3:  // ...
+  case 5:  // This case is likely to be taken.
+  }
+  </pre>
+  </div>
+</div>
+
+<h2>
+  <a name="cfg_modifications">CFG Modifications</a>
+</h2>
+<div>
+<p>Branch Weight Metatada is not proof against CFG changes. If terminator
+operands' are changed some action should be taken. In other case some
+misoptimizations may occur due to incorrent branch prediction information.</p>
+</div>
+
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss-blue" alt="Valid CSS"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401-blue" alt="Valid HTML 4.01"></a>
+
+  <a href="mailto:jstaszak@apple.com">Jakub Staszak</a><br>
+  <a href="http://llvm.org/">LLVM Compiler Infrastructure</a><br>
+</address>
+
+</body>
+</html>
