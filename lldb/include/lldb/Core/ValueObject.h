@@ -246,6 +246,9 @@ public:
 
     virtual bool
     IsPointerType ();
+    
+    virtual bool
+    IsScalarType ();
 
     virtual bool
     IsPointerOrReferenceType ();
@@ -299,6 +302,12 @@ public:
     GetBitfieldBitOffset()
     {
         return 0;
+    }
+    
+    virtual bool
+    IsArrayItemForPointer()
+    {
+        return m_is_array_item_for_pointer;
     }
     
     virtual bool
@@ -357,6 +366,10 @@ public:
                                lldb::Format custom_format = lldb::eFormatInvalid);
 
     bool
+    DumpPrintableRepresentation(Stream& s,
+                                ValueObjectRepresentationStyle val_obj_display = eDisplaySummary,
+                                lldb::Format custom_format = lldb::eFormatInvalid);
+    bool
     GetValueIsValid () const;
 
     bool
@@ -390,6 +403,9 @@ public:
 
     lldb::ValueObjectSP
     GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create);
+    
+    lldb::ValueObjectSP
+    GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_create);
     
     lldb::ValueObjectSP
     GetDynamicValue (lldb::DynamicValueType valueType);
@@ -537,7 +553,8 @@ protected:
                         m_old_value_valid:1,
                         m_pointers_point_to_load_addrs:1,
                         m_is_deref_of_parent:1,
-                        m_is_array_item_for_pointer:1;
+                        m_is_array_item_for_pointer:1,
+                        m_is_bitfield_for_scalar:1;
     
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName

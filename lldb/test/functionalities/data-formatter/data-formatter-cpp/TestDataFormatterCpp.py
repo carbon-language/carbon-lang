@@ -129,7 +129,7 @@ class DataFormatterTestCase(TestBase):
             substrs = ['a test'],
             matching = False)
 
-        self.runCmd("type summary add -f \"${*var[1-3]}\" \"int [5]\"")
+        self.runCmd("type summary add -f \"${var[1-3]}\" \"int [5]\"")
 
         self.expect("frame variable int_array",
             substrs = ['2',
@@ -138,8 +138,8 @@ class DataFormatterTestCase(TestBase):
 
         self.runCmd("type summary clear")
 
-        self.runCmd("type summary add -f \"${*var[0-2].integer}\" \"i_am_cool *\"")
-        self.runCmd("type summary add -f \"${*var[2-4].integer}\" \"i_am_cool [5]\"")
+        self.runCmd("type summary add -f \"${var[0-2].integer}\" \"i_am_cool *\"")
+        self.runCmd("type summary add -f \"${var[2-4].integer}\" \"i_am_cool [5]\"")
 
         self.expect("frame variable cool_array",
             substrs = ['1,1,6'])

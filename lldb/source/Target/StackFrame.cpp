@@ -645,9 +645,47 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                         {
                             char *end = NULL;
                             long child_index = ::strtol (&var_path[1], &end, 0);
-                            if (end && *end == ']')
+                            if (end && *end == ']'
+                                && *(end-1) != '[') // this code forces an error in the case of arr[]. as bitfield[] is not a good syntax we're good to go
                             {
-
+                                if (ClangASTContext::IsPointerToScalarType(valobj_sp->GetClangType()) && deref)
+                                {
+                                    // what we have is *ptr[low]. the most similar C++ syntax is to deref ptr
+                                    // and extract bit low out of it. reading array item low
+                                    // would be done by saying ptr[low], without a deref * sign
+                                    Error error;
+                                    ValueObjectSP temp(valobj_sp->Dereference(error));
+                                    if (error.Fail())
+                                    {
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                        error.SetErrorStringWithFormat ("could not dereference \"(%s) %s\"", 
+                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                        var_expr_path_strm.GetString().c_str());
+                                        return ValueObjectSP();
+                                    }
+                                    valobj_sp = temp;
+                                    deref = false;
+                                }
+                                else if (ClangASTContext::IsArrayOfScalarType(valobj_sp->GetClangType()) && deref)
+                                {
+                                    // what we have is *arr[low]. the most similar C++ syntax is to get arr[0]
+                                    // (an operation that is equivalent to deref-ing arr)
+                                    // and extract bit low out of it. reading array item low
+                                    // would be done by saying arr[low], without a deref * sign
+                                    Error error;
+                                    ValueObjectSP temp(valobj_sp->GetChildAtIndex (0, true));
+                                    if (error.Fail())
+                                    {
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                        error.SetErrorStringWithFormat ("could not get item 0 for \"(%s) %s\"", 
+                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                        var_expr_path_strm.GetString().c_str());
+                                        return ValueObjectSP();
+                                    }
+                                    valobj_sp = temp;
+                                    deref = false;
+                                }
+                                
                                 if (valobj_sp->IsPointerType ())
                                 {
                                     child_valobj_sp = valobj_sp->GetSyntheticArrayMemberFromPointer (child_index, true);
@@ -670,6 +708,19 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                         valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                                         error.SetErrorStringWithFormat ("array index %i is not valid for \"(%s) %s\"", 
                                                                         child_index, 
+                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                        var_expr_path_strm.GetString().c_str());
+                                    }
+                                }
+                                else if (ClangASTContext::IsScalarType(valobj_sp->GetClangType()))
+                                {
+                                    // this is a bitfield asking to display just one bit
+                                    child_valobj_sp = valobj_sp->GetSyntheticBitFieldChild(child_index, child_index, true);
+                                    if (!child_valobj_sp)
+                                    {
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                        error.SetErrorStringWithFormat ("bitfield range %i-%i is not valid for \"(%s) %s\"", 
+                                                                        child_index, child_index, 
                                                                         valobj_sp->GetTypeName().AsCString("<invalid type>"),
                                                                         var_expr_path_strm.GetString().c_str());
                                     }
@@ -702,6 +753,97 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                 // able to find the child member
                                 break;
                             }
+                            else if(end && *end == '-')
+                            {
+                                // this is most probably a BitField, let's take a look
+                                char *real_end = NULL;
+                                long final_index = ::strtol (end+1, &real_end, 0);
+                                if(real_end && *real_end == ']')
+                                {
+                                    // if the format given is [high-low], swap range
+                                    if(child_index > final_index)
+                                    {
+                                        long temp = child_index;
+                                        child_index = final_index;
+                                        final_index = temp;
+                                    }
+                                    
+                                    if (ClangASTContext::IsPointerToScalarType(valobj_sp->GetClangType()) && deref)
+                                    {
+                                        // what we have is *ptr[low-high]. the most similar C++ syntax is to deref ptr
+                                        // and extract bits low thru high out of it. reading array items low thru high
+                                        // would be done by saying ptr[low-high], without a deref * sign
+                                        Error error;
+                                        ValueObjectSP temp(valobj_sp->Dereference(error));
+                                        if (error.Fail())
+                                        {
+                                            valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                            error.SetErrorStringWithFormat ("could not dereference \"(%s) %s\"", 
+                                                                            valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                            var_expr_path_strm.GetString().c_str());
+                                            return ValueObjectSP();
+                                        }
+                                        valobj_sp = temp;
+                                        deref = false;
+                                    }
+                                    else if (ClangASTContext::IsArrayOfScalarType(valobj_sp->GetClangType()) && deref)
+                                    {
+                                        // what we have is *arr[low-high]. the most similar C++ syntax is to get arr[0]
+                                        // (an operation that is equivalent to deref-ing arr)
+                                        // and extract bits low thru high out of it. reading array items low thru high
+                                        // would be done by saying arr[low-high], without a deref * sign
+                                        Error error;
+                                        ValueObjectSP temp(valobj_sp->GetChildAtIndex (0, true));
+                                        if (error.Fail())
+                                        {
+                                            valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                            error.SetErrorStringWithFormat ("could not get item 0 for \"(%s) %s\"", 
+                                                                            valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                            var_expr_path_strm.GetString().c_str());
+                                            return ValueObjectSP();
+                                        }
+                                        valobj_sp = temp;
+                                        deref = false;
+                                    }
+
+                                    child_valobj_sp = valobj_sp->GetSyntheticBitFieldChild(child_index, final_index, true);
+                                    if (!child_valobj_sp)
+                                    {
+                                        valobj_sp->GetExpressionPath (var_expr_path_strm, false);
+                                        error.SetErrorStringWithFormat ("bitfield range %i-%i is not valid for \"(%s) %s\"", 
+                                                                        child_index, final_index, 
+                                                                        valobj_sp->GetTypeName().AsCString("<invalid type>"),
+                                                                        var_expr_path_strm.GetString().c_str());
+                                    }
+                                }
+                                
+                                if (!child_valobj_sp)
+                                {
+                                    // Invalid bitfield range...
+                                    return ValueObjectSP();
+                                }
+                                
+                                // Erase the bitfield member specification '[%i-%i]' where 
+                                // %i is the index
+                                var_path.erase(0, (real_end - var_path.c_str()) + 1);
+                                separator_idx = var_path.find_first_of(".-[");
+                                if (use_dynamic != lldb::eNoDynamicValues)
+                                {
+                                    ValueObjectSP dynamic_value_sp(child_valobj_sp->GetDynamicValue(use_dynamic));
+                                    if (dynamic_value_sp)
+                                        child_valobj_sp = dynamic_value_sp;
+                                }
+                                // Break out early from the switch since we were 
+                                // able to find the child member
+                                break;
+
+                            }
+                        }
+                        else
+                        {
+                            error.SetErrorStringWithFormat("invalid square bracket encountered after \"%s\" in \"%s\"", 
+                                                           var_expr_path_strm.GetString().c_str(),
+                                                           var_path.c_str());
                         }
                         return ValueObjectSP();
 

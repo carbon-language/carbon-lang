@@ -402,6 +402,7 @@
 		4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CD0BD0E134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp */; };
 		9415F61813B2C0EF00A52B36 /* FormatManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9415F61713B2C0EF00A52B36 /* FormatManager.cpp */; };
 		9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */; };
+		9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */; };
@@ -1165,6 +1166,8 @@
 		9415F61713B2C0EF00A52B36 /* FormatManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatManager.cpp; path = source/Core/FormatManager.cpp; sourceTree = "<group>"; };
 		9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectType.cpp; path = source/Commands/CommandObjectType.cpp; sourceTree = "<group>"; };
 		9463D4CE13B179A500C230D4 /* CommandObjectType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectType.h; path = source/Commands/CommandObjectType.h; sourceTree = "<group>"; };
+		9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeHierarchyNavigator.cpp; path = source/Symbol/TypeHierarchyNavigator.cpp; sourceTree = "<group>"; };
+		9467E65413C3D98900B3B6F3 /* TypeHierarchyNavigator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TypeHierarchyNavigator.h; path = include/lldb/Symbol/TypeHierarchyNavigator.h; sourceTree = "<group>"; };
 		961FABB81235DE1600F93A47 /* FuncUnwinders.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FuncUnwinders.cpp; path = source/Symbol/FuncUnwinders.cpp; sourceTree = "<group>"; };
 		961FABB91235DE1600F93A47 /* UnwindPlan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindPlan.cpp; path = source/Symbol/UnwindPlan.cpp; sourceTree = "<group>"; };
 		961FABBA1235DE1600F93A47 /* UnwindTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnwindTable.cpp; path = source/Symbol/UnwindTable.cpp; sourceTree = "<group>"; };
@@ -2043,6 +2046,8 @@
 				49BB309511F79450001A4197 /* TaggedASTType.h */,
 				26BC7C6510F1B6E900F91463 /* Type.h */,
 				26BC7F2010F1B8EC00F91463 /* Type.cpp */,
+				9467E65413C3D98900B3B6F3 /* TypeHierarchyNavigator.h */,
+				9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */,
 				26BC7C6610F1B6E900F91463 /* TypeList.h */,
 				26BC7F2110F1B8EC00F91463 /* TypeList.cpp */,
 				269FF07F12494F8E00225026 /* UnwindPlan.h */,
@@ -3239,6 +3244,7 @@
 				9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */,
 				9415F61813B2C0EF00A52B36 /* FormatManager.cpp in Sources */,
 				49D8FB3913B5598F00411094 /* ClangASTImporter.cpp in Sources */,
+				9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

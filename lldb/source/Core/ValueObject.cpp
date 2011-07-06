@@ -74,6 +74,7 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_pointers_point_to_load_addrs (false),
     m_is_deref_of_parent (false),
     m_is_array_item_for_pointer(false),
+    m_is_bitfield_for_scalar(false),
     m_last_format_mgr_revision(0),
     m_last_summary_format(),
     m_last_value_format()
@@ -110,6 +111,7 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_pointers_point_to_load_addrs (false),
     m_is_deref_of_parent (false),
     m_is_array_item_for_pointer(false),
+    m_is_bitfield_for_scalar(false),
     m_last_format_mgr_revision(0),
     m_last_summary_format(),
     m_last_value_format()
@@ -515,7 +517,7 @@ ValueObject::GetSummaryAsCString ()
                                     s.PutCString(", ");
                                 s.PutCString(child_sp.get()->GetName().AsCString());
                                 s.PutChar('=');
-                                s.PutCString(child_sp.get()->GetValueAsCString());
+                                s.PutCString(child_sp.get()->GetPrintableRepresentation());
                             }
                         }
                         
@@ -768,7 +770,9 @@ ValueObject::GetValueAsCString ()
                                 if (m_last_value_format)
                                     format = m_last_value_format->m_format;
                                 else
-                                    format = ClangASTType::GetFormat(clang_type);
+                                    // force the system into using unsigned integers for bitfields
+                                    format = (m_is_bitfield_for_scalar ? eFormatUnsigned :
+                                    ClangASTType::GetFormat(clang_type));
                             }
 
                             if (ClangASTType::DumpTypeValue (GetClangAST(),            // The clang AST
@@ -844,13 +848,33 @@ ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_d
             break;
     }
     
+    if (!return_value)
+    {
+        // try to pick the other choice
+        if (val_obj_display == eDisplayValue)
+            return_value = GetSummaryAsCString();
+        else if (val_obj_display == eDisplaySummary)
+            return_value = GetValueAsCString();
+        else
+            return_value = "";
+    }
     
-    // try to use the value if the user's choice failed
-    if(!return_value && val_obj_display != eDisplayValue)
-        return_value = GetValueAsCString();
-    
-    return return_value;
+    return (return_value ? return_value : "");
 
+}
+
+bool
+ValueObject::DumpPrintableRepresentation(Stream& s,
+                                         ValueObjectRepresentationStyle val_obj_display,
+                                         lldb::Format custom_format)
+{
+    const char *targetvalue = GetPrintableRepresentation(val_obj_display, custom_format);
+    if(targetvalue)
+        s.PutCString(targetvalue);
+    bool var_success = (targetvalue != NULL);
+    if(custom_format != eFormatInvalid)
+        SetFormat(eFormatDefault);
+    return var_success;
 }
 
 addr_t
@@ -1073,6 +1097,12 @@ ValueObject::IsPointerType ()
 }
 
 bool
+ValueObject::IsScalarType ()
+{
+    return ClangASTContext::IsScalarType (GetClangType());
+}
+
+bool
 ValueObject::IsIntegerType (bool &is_signed)
 {
     return ClangASTContext::IsIntegerType (GetClangType(), is_signed);
@@ -1122,6 +1152,47 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
                 synthetic_child_sp = synthetic_child->GetSP();
                 synthetic_child_sp->SetName(index_str);
                 synthetic_child_sp->m_is_array_item_for_pointer = true;
+            }
+        }
+    }
+    return synthetic_child_sp;
+}
+
+ValueObjectSP
+ValueObject::GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_create)
+{
+    ValueObjectSP synthetic_child_sp;
+    if (IsScalarType ())
+    {
+        char index_str[64];
+        snprintf(index_str, sizeof(index_str), "[%i-%i]", from, to);
+        ConstString index_const_str(index_str);
+        // Check if we have already created a synthetic array member in this
+        // valid object. If we have we will re-use it.
+        synthetic_child_sp = GetSyntheticChild (index_const_str);
+        if (!synthetic_child_sp)
+        {
+            ValueObjectChild *synthetic_child;
+            // We haven't made a synthetic array member for INDEX yet, so
+            // lets make one and cache it for any future reference.
+            synthetic_child = new ValueObjectChild(*this,
+                                                      GetClangAST(),
+                                                      GetClangType(),
+                                                      index_const_str,
+                                                      GetByteSize(),
+                                                      0,
+                                                      to-from+1,
+                                                      from,
+                                                      false,
+                                                      false);
+            
+            // Cache the value if we got one back...
+            if (synthetic_child)
+            {
+                AddSyntheticChild(index_const_str, synthetic_child);
+                synthetic_child_sp = synthetic_child->GetSP();
+                synthetic_child_sp->SetName(index_str);
+                synthetic_child_sp->m_is_bitfield_for_scalar = true;
             }
         }
     }

@@ -53,13 +53,6 @@ class DataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("type summary add -f \"pippo\" -x \"IUseCharStar\"")
-
-        self.expect("frame variable iEncapsulateCharStar",
-            substrs = ['pippo'])
-
-        self.runCmd("type summary clear")
-
         self.runCmd("type summary add -f \"pippo\" \"i_am_cool\"")
 
         self.runCmd("type summary add -f \"pluto\" -x \"i_am_cool[a-z]*\"")
@@ -77,12 +70,12 @@ class DataFormatterTestCase(TestBase):
 
         self.runCmd("type summary clear")
         
-        self.runCmd("type summary add -f \"${*var[]}\" -x \"int \\[[0-9]\\]")
+        self.runCmd("type summary add -f \"${var[]}\" -x \"int \\[[0-9]\\]")
 
         self.expect("frame variable int_array",
             substrs = ['1,2,3,4,5'])
 
-        self.runCmd("type summary add -f \"${*var[].integer}\" -x \"i_am_cool \\[[0-9]\\]")
+        self.runCmd("type summary add -f \"${var[].integer}\" -x \"i_am_cool \\[[0-9]\\]")
         
         self.expect("frame variable cool_array",
             substrs = ['1,1,1,1,6'])
@@ -93,16 +86,78 @@ class DataFormatterTestCase(TestBase):
         
         self.expect("frame variable iAmInt",
             substrs = ['01'])
-        
-        self.runCmd("type summary add -f \"${*var[0-1]%x}\" \"int\"")
-        
-        self.expect("frame variable iAmInt", matching=False,
-            substrs = ['01'])
-        
+                
         self.runCmd("type summary add -f \"${var[0-1]%x}\" \"int\"")
         
         self.expect("frame variable iAmInt",
             substrs = ['01'])
+
+        self.runCmd("type summary clear")
+
+        self.runCmd("type summary add -f \"${var[0-1]%x}\" int")
+        self.runCmd("type summary add -f \"${var[0-31]%x}\" float")
+                    
+        self.expect("frame variable *pointer",
+            substrs = ['0x',
+                       '2'])
+
+        self.expect("frame variable cool_array[3].floating",
+            substrs = ['0x'])
+                    
+        self.runCmd("type summary add -f \"low bits are ${*var[0-1]} tgt is ${*var}\" \"int *\"")
+
+        self.expect("frame variable pointer",
+            substrs = ['low bits are',
+                       'tgt is 6'])
+
+        self.runCmd("type summary add -f \"${*var[0-1]}\" -x \"int \[[0-9]\]\"")
+
+        self.expect("frame variable int_array",
+            substrs = ['3'])
+
+        self.runCmd("type summary clear")
+            
+        self.runCmd("type summary add -f \"${var[0-1]}\" -x \"int \[[0-9]\]\"")
+
+        self.expect("frame variable int_array",
+            substrs = ['1,2'])
+
+        self.runCmd("type summary clear")
+
+        self.runCmd("type summary add -c -x \"i_am_cool \[[0-9]\]\"")
+        self.runCmd("type summary add -c i_am_cool")
+
+        self.expect("frame variable cool_array",
+            substrs = ['[0]',
+                       '[1]',
+                       '[2]',
+                       '[3]',
+                       '[4]',
+                       'integer',
+                       'character',
+                       'floating'])
+
+        self.runCmd("type summary add -f \"int = ${*var.int_pointer}, float = ${*var.float_pointer}\" IWrapPointers")
+
+        self.expect("frame variable wrapper",
+            substrs = ['int = 4',
+                       'float = 1.1'])
+
+        self.runCmd("type summary add -f \"low bits = ${*var.int_pointer[2]}\" IWrapPointers -p")
+        
+        self.expect("frame variable wrapper",
+            substrs = ['low bits = 1'])
+        
+        self.expect("frame variable *wrap_pointer",
+            substrs = ['low bits = 1'])
+
+        self.runCmd("type summary clear")
+
+        self.runCmd("type summary add -f \"${var[0][0-2]%hex}\" -x \"int \[[0-9]\]\"")
+
+        self.expect("frame variable int_array",
+            substrs = ['0x',
+                       '7'])
 
 
 if __name__ == '__main__':

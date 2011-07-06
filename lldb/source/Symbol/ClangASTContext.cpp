@@ -4464,6 +4464,40 @@ ClangASTContext::IsFloatingPointType (clang_type_t clang_type, uint32_t &count, 
     return false;
 }
 
+bool
+ClangASTContext::IsScalarType (lldb::clang_type_t clang_type)
+{
+    bool is_signed;
+    if (ClangASTContext::IsIntegerType(clang_type, is_signed))
+        return true;
+    
+    uint32_t count;
+    bool is_complex;
+    return ClangASTContext::IsFloatingPointType(clang_type, count, is_complex) && !is_complex;
+}
+
+bool
+ClangASTContext::IsPointerToScalarType (lldb::clang_type_t clang_type)
+{
+    if (!IsPointerType(clang_type))
+        return false;
+    
+    QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+    lldb::clang_type_t pointee_type = qual_type.getTypePtr()->getPointeeType().getAsOpaquePtr();
+    return IsScalarType(pointee_type);
+}
+
+bool
+ClangASTContext::IsArrayOfScalarType (lldb::clang_type_t clang_type)
+{
+    if (!IsArrayType(clang_type))
+        return false;
+    
+    QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+    lldb::clang_type_t item_type = cast<ArrayType>(qual_type.getTypePtr())->getElementType().getAsOpaquePtr();
+    return IsScalarType(item_type);
+}
+
 
 bool
 ClangASTContext::GetCXXClassName (clang_type_t clang_type, std::string &class_name)

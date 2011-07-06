@@ -34,10 +34,11 @@ struct i_am_cooler
     floating((F1 + F2)/2) {}
 };
 
-struct IUseCharStar
+struct IWrapPointers
 {
-	const char* pointer;
-	IUseCharStar() : pointer("Hello world") {}
+    int* int_pointer;
+    float* float_pointer;
+	IWrapPointers() : int_pointer(new int(4)), float_pointer(new float(1.111)) {}
 };
 
 int main (int argc, const char * argv[])
@@ -58,7 +59,13 @@ int main (int argc, const char * argv[])
     
     int int_array[] = {1,2,3,4,5};
     
-    IUseCharStar iEncapsulateCharStar;
+    IWrapPointers wrapper;
+        
+    *int_array = -1;
+    
+    int* pointer = &cool_array[4].integer;
+    
+    IWrapPointers *wrap_pointer = &wrapper;
         
     return 0; // Set break point at this line.
 }

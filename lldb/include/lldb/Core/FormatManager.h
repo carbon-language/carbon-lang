@@ -260,6 +260,13 @@ private:
         if (!typePtr)
             return false;
         ConstString name(ClangASTType::GetTypeNameForQualType(type).c_str());
+        if(vobj.GetBitfieldBitSize() > 0)
+        {
+            // for bitfields, append size to the typename so one can custom format them
+            StreamString sstring;
+            sstring.Printf("%s:%d",name.AsCString(),vobj.GetBitfieldBitSize());
+            name = ConstString(sstring.GetData());
+        }
         //printf("trying to get format for VO name %s of type %s\n",vobj.GetName().AsCString(),name.AsCString());
         if (Get(name.GetCString(), entry))
             return true;
@@ -357,8 +364,7 @@ private:
 template<>
 bool
 FormatNavigator<std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer>, SummaryFormat::RegexSummaryCallback>::Get(const char* key,
-                                                                                                                     SummaryFormat::SharedPointer& value);
-    
+                                                                                                                             SummaryFormat::SharedPointer& value);
 template<>
 bool
 FormatNavigator<std::map<lldb::RegularExpressionSP, SummaryFormat::SharedPointer>, SummaryFormat::RegexSummaryCallback>::Delete(const char* type);

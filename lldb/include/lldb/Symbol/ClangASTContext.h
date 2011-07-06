@@ -661,7 +661,18 @@ public:
     //------------------------------------------------------------------
     static bool
     IsFloatingPointType (lldb::clang_type_t clang_type, uint32_t &count, bool &is_complex);
+    
+    // true iff this is one of the types that can "fit"
+    // in a Scalar object
+    static bool
+    IsScalarType (lldb::clang_type_t clang_type);
+    
+    static bool
+    IsPointerToScalarType (lldb::clang_type_t clang_type);
 
+    static bool
+    IsArrayOfScalarType (lldb::clang_type_t clang_type);
+    
     static bool
     GetCXXClassName (lldb::clang_type_t clang_type, 
                      std::string &class_name);
