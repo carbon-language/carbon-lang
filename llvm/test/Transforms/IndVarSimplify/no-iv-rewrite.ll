@@ -270,3 +270,53 @@ cond_true:
 return:
   ret i32 %i.0
 }
+
+; Eliminate the congruent phis j, k, and l.
+; Eliminate the redundant IV increments k.next and l.next.
+; Two phis should remain, one starting at %init, and one at %init1.
+; Two increments should remain, one by %step and one by %step1.
+; CHECK: loop:
+; CHECK: phi i32
+; CHECK: phi i32
+; CHECK-NOT: phi
+; CHECK: add i32
+; CHECK: add i32
+; CHECK-NOT: add
+; CHECK: return:
+;
+; Five live-outs should remain.
+; CHECK: lcssa = phi
+; CHECK: lcssa = phi
+; CHECK: lcssa = phi
+; CHECK: lcssa = phi
+; CHECK: lcssa = phi
+; CHECK-NOT: phi
+; CHECK: ret
+define i32 @isomorphic(i32 %init, i32 %step, i32 %lim) nounwind {
+entry:
+  %step1 = add i32 %step, 1
+  %init1 = add i32 %init, %step1
+  %l.0 = sub i32 %init1, %step1
+  br label %loop
+
+loop:
+  %ii = phi i32 [ %init1, %entry ], [ %ii.next, %loop ]
+  %i = phi i32 [ %init, %entry ], [ %ii, %loop ]
+  %j = phi i32 [ %init, %entry ], [ %j.next, %loop ]
+  %k = phi i32 [ %init1, %entry ], [ %k.next, %loop ]
+  %l = phi i32 [ %l.0, %entry ], [ %l.next, %loop ]
+  %ii.next = add i32 %ii, %step1
+  %j.next = add i32 %j, %step1
+  %k.next = add i32 %k, %step1
+  %l.step = add i32 %l, %step
+  %l.next = add i32 %l.step, 1
+  %cmp = icmp ne i32 %ii.next, %lim
+  br i1 %cmp, label %loop, label %return
+
+return:
+  %sum1 = add i32 %i, %j.next
+  %sum2 = add i32 %sum1, %k.next
+  %sum3 = add i32 %sum1, %l.step
+  %sum4 = add i32 %sum1, %l.next
+  ret i32 %sum4
+}

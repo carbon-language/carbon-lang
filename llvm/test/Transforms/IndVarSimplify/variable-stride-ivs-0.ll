@@ -1,9 +1,9 @@
-; RUN: opt < %s -indvars -instcombine -S | \
-; RUN:   grep {store i32 0}
+; RUN: opt < %s -indvars -instcombine -S | FileCheck %s
+; RUN: opt < %s -indvars -disable-iv-rewrite -instcombine -S | FileCheck %s
+;
 ; Test that -indvars can reduce variable stride IVs.  If it can reduce variable
-; stride iv's, it will make %iv. and %m.0.0 isomorphic to each other without 
+; stride iv's, it will make %iv. and %m.0.0 isomorphic to each other without
 ; cycles, allowing the tmp.21 subtraction to be eliminated.
-; END.
 
 define void @vnum_test8(i32* %data) {
 entry:
@@ -20,6 +20,7 @@ no_exit.preheader:              ; preds = %entry
         %tmp.16 = getelementptr i32* %data, i32 %tmp.9          ; <i32*> [#uses=1]
         br label %no_exit
 
+; CHECK: store i32 0
 no_exit:                ; preds = %no_exit, %no_exit.preheader
         %iv.ui = phi i32 [ 0, %no_exit.preheader ], [ %iv..inc.ui, %no_exit ]           ; <i32> [#uses=1]
         %iv. = phi i32 [ %tmp.5, %no_exit.preheader ], [ %iv..inc, %no_exit ]           ; <i32> [#uses=2]
