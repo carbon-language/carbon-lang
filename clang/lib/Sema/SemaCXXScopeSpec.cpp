@@ -211,24 +211,39 @@ bool Sema::RequireCompleteDeclContext(CXXScopeSpec &SS,
                                       DeclContext *DC) {
   assert(DC != 0 && "given null context");
 
-  if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
+  if (TagDecl *tag = dyn_cast<TagDecl>(DC)) {
     // If this is a dependent type, then we consider it complete.
-    if (Tag->isDependentContext())
+    if (tag->isDependentContext())
       return false;
 
     // If we're currently defining this type, then lookup into the
     // type is okay: don't complain that it isn't complete yet.
-    const TagType *TagT = Context.getTypeDeclType(Tag)->getAs<TagType>();
-    if (TagT && TagT->isBeingDefined())
+    QualType type = Context.getTypeDeclType(tag);
+    const TagType *tagType = type->getAs<TagType>();
+    if (tagType && tagType->isBeingDefined())
       return false;
 
+    SourceLocation loc = SS.getLastQualifierNameLoc();
+    if (loc.isInvalid()) loc = SS.getRange().getBegin();
+
     // The type must be complete.
-    if (RequireCompleteType(SS.getRange().getBegin(),
-                            Context.getTypeDeclType(Tag),
+    if (RequireCompleteType(loc, type,
                             PDiag(diag::err_incomplete_nested_name_spec)
                               << SS.getRange())) {
       SS.SetInvalid(SS.getRange());
       return true;
+    }
+
+    // Fixed enum types are complete, but they aren't valid as scopes
+    // until we see a definition, so awkwardly pull out this special
+    // case.
+    if (const EnumType *enumType = dyn_cast_or_null<EnumType>(tagType)) {
+      if (!enumType->getDecl()->isDefinition()) {
+        Diag(loc, diag::err_incomplete_nested_name_spec)
+          << type << SS.getRange();
+        SS.SetInvalid(SS.getRange());
+        return true;
+      }
     }
   }
 

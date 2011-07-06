@@ -120,7 +120,7 @@ namespace rdar9366066 {
   }
 }
 
-// Part of PR10264
+// Part 1 of PR10264
 namespace test5 {
   namespace ns {
     typedef unsigned Atype;
@@ -129,4 +129,16 @@ namespace test5 {
   enum ns::A : ns::Atype {
     x, y, z
   };
+}
+
+// Part 2 of PR10264
+namespace test6 {
+  enum A : unsigned;
+  struct A::a; // expected-error {{incomplete type 'test6::A' named in nested name specifier}}
+  enum A::b; // expected-error {{incomplete type 'test6::A' named in nested name specifier}}
+  int A::c; // expected-error {{incomplete type 'test6::A' named in nested name specifier}}
+  void A::d(); // expected-error {{incomplete type 'test6::A' named in nested name specifier}}
+  void test() {
+    (void) A::e; // expected-error {{incomplete type 'test6::A' named in nested name specifier}}
+  }
 }

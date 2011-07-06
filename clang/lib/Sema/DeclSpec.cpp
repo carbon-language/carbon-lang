@@ -126,6 +126,12 @@ void CXXScopeSpec::Adopt(NestedNameSpecifierLoc Other) {
   Builder.Adopt(Other);
 }
 
+SourceLocation CXXScopeSpec::getLastQualifierNameLoc() const {
+  if (!Builder.getRepresentation())
+    return SourceLocation();
+  return Builder.getTemporary().getLocalBeginLoc();
+}
+
 NestedNameSpecifierLoc 
 CXXScopeSpec::getWithLocInContext(ASTContext &Context) const {
   if (!Builder.getRepresentation())

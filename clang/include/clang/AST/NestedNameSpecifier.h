@@ -439,6 +439,14 @@ public:
   /// copied.
   NestedNameSpecifierLoc getWithLocInContext(ASTContext &Context) const;
 
+  /// \brief Retrieve a nested-name-specifier with location
+  /// information based on the information in this builder.  This loc
+  /// will contain references to the builder's internal data and may
+  /// be invalidated by any change to the builder.
+  NestedNameSpecifierLoc getTemporary() const {
+    return NestedNameSpecifierLoc(Representation, Buffer);
+  }
+
   /// \brief Clear out this builder, and prepare it to build another
   /// nested-name-specifier with source-location information.
   void Clear() {
