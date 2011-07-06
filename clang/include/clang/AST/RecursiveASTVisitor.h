@@ -1562,6 +1562,13 @@ bool RecursiveASTVisitor<Derived>::TraverseFunctionHelper(FunctionDecl *D) {
   // including exception specifications.
   TRY_TO(TraverseTypeLoc(D->getTypeSourceInfo()->getTypeLoc()));
 
+  // Parameter declarations
+  for (FunctionDecl::param_iterator I = D->param_begin(),
+                                    E = D->param_end();
+       I != E; ++I) {
+    TRY_TO(TraverseDecl(*I));
+  }
+
   if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(D)) {
     // Constructor initializers.
     for (CXXConstructorDecl::init_iterator I = Ctor->init_begin(),
