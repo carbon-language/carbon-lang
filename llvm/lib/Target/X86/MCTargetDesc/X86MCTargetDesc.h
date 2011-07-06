@@ -1,4 +1,4 @@
-//===-- X86TargetDesc.h - X86 Target Descriptions ---------------*- C++ -*-===//
+//===-- X86MCTargetDesc.h - X86 Target Descriptions -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86TARGETDESC_H
-#define X86TARGETDESC_H
+#ifndef X86MCTARGETDESC_H
+#define X86MCTARGETDESC_H
 
 namespace llvm {
 class Target;

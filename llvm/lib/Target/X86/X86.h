@@ -15,7 +15,7 @@
 #ifndef TARGET_X86_H
 #define TARGET_X86_H
 
-#include "MCTargetDesc/X86TargetDesc.h"
+#include "MCTargetDesc/X86MCTargetDesc.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetMachine.h"
 
