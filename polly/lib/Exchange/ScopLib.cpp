@@ -24,6 +24,7 @@
 
 #include "stdio.h"
 #include "isl/set.h"
+#include "isl/map.h"
 #include "isl/constraint.h"
 
 using namespace llvm;
