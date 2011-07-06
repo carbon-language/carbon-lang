@@ -580,8 +580,9 @@ respectively, is poor form.</p>
 <p>In general, a program which attempts to implicitly or explicitly
 convert a value of retainable object pointer type to any
 non-retainable type, or vice-versa, is ill-formed.  For example, an
-Objective-C object pointer shall not be converted to <tt>intptr_t</tt>
-or <tt>void*</tt>.  The <a href="#objects.operands.casts">bridged
+Objective-C object pointer shall not be converted to <tt>void*</tt>. 
+As an exception, cast to <tt>intptr_t</tt> is allowed becuase such 
+casts are not transferring ownership. The <a href="#objects.operands.casts">bridged
 casts</a> may be used to perform these conversions where
 necessary.</p>
 
