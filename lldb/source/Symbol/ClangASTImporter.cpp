@@ -18,23 +18,26 @@ clang::QualType
 ClangASTImporter::CopyType (clang::ASTContext *src_ast,
                             clang::QualType type)
 {
-    MinionSP minion = GetMinion(src_ast, false);
-    
-    return minion->Import(type);
+    MinionSP minion_sp (GetMinion(src_ast, false));
+    if (minion_sp)
+        return minion_sp->Import(type);
+    return QualType();
 }
 
 clang::Decl *
 ClangASTImporter::CopyDecl (clang::ASTContext *src_ast,
                             clang::Decl *decl)
 {
-    MinionSP minion;
+    MinionSP minion_sp;
     
     if (isa<clang::NamespaceDecl>(decl)) 
-        minion = GetMinion(src_ast, true);
+        minion_sp = GetMinion(src_ast, true);
     else
-        minion = GetMinion(src_ast, false);
+        minion_sp = GetMinion(src_ast, false);
     
-    return minion->Import(decl);
+    if (minion_sp)
+        return minion_sp->Import(decl);
+    return NULL;
 }
 
 const clang::DeclContext *
@@ -53,9 +56,9 @@ ClangASTImporter::CompleteDeclContext (const clang::DeclContext *decl_context)
     if (!ClangASTContext::GetCompleteDecl(context_decl_origin.ctx, context_decl_origin.decl))
         return NULL;
     
-    MinionSP minion = GetMinion(context_decl_origin.ctx, false);
-    
-    minion->ImportDefinition(context_decl_origin.decl);
+    MinionSP minion_sp (GetMinion(context_decl_origin.ctx, false));
+    if (minion_sp)
+        minion_sp->ImportDefinition(context_decl_origin.decl);
     
     return decl_context;
 }

@@ -1831,7 +1831,9 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             
             lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
             
-            if (!this_var)
+            if (!this_var ||
+                !this_var->IsInScope(m_parser_vars->m_exe_ctx->frame) || 
+                !this_var->LocationIsValidForFrame (m_parser_vars->m_exe_ctx->frame))
                 return;
             
             Type *this_type = this_var->GetType();
@@ -1886,7 +1888,9 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         
             lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
         
-            if (!self_var)
+            if (!self_var || 
+                !self_var->IsInScope(m_parser_vars->m_exe_ctx->frame) || 
+                !self_var->LocationIsValidForFrame (m_parser_vars->m_exe_ctx->frame))
                 return;
         
             Type *self_type = self_var->GetType();
