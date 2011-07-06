@@ -34,7 +34,8 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
   for (std::vector<Record*>::iterator I = Insts.begin(), E = Insts.end();
        I != E; ++I) {
     Record *R = *I;
-    if (R->getValueAsString("Namespace") == "TargetOpcode")
+    if (R->getValueAsString("Namespace") == "TargetOpcode" ||
+        R->getValueAsBit("isPseudo"))
       continue;
 
     BitsInit *BI = R->getValueAsBitsInit("Inst");
@@ -231,7 +232,8 @@ void CodeEmitterGen::run(raw_ostream &o) {
     const CodeGenInstruction *CGI = *IN;
     Record *R = CGI->TheDef;
 
-    if (R->getValueAsString("Namespace") == "TargetOpcode") {
+    if (R->getValueAsString("Namespace") == "TargetOpcode" ||
+        R->getValueAsBit("isPseudo")) {
       o << "    0U,\n";
       continue;
     }
@@ -255,7 +257,8 @@ void CodeEmitterGen::run(raw_ostream &o) {
   for (std::vector<Record*>::iterator IC = Insts.begin(), EC = Insts.end();
         IC != EC; ++IC) {
     Record *R = *IC;
-    if (R->getValueAsString("Namespace") == "TargetOpcode")
+    if (R->getValueAsString("Namespace") == "TargetOpcode" ||
+        R->getValueAsBit("isPseudo"))
       continue;
     const std::string &InstName = R->getValueAsString("Namespace") + "::"
       + R->getName();

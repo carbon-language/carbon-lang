@@ -1225,13 +1225,13 @@ bool FixedLenDecoderEmitter::populateInstruction(const CodeGenInstruction &CGI,
   //
   // This also removes pseudo instructions from considerations of disassembly,
   // which is a better design and less fragile than the name matchings.
-  BitsInit &Bits = getBitsField(Def, "Inst");
-  if (Bits.allInComplete()) return false;
-
   // Ignore "asm parser only" instructions.
   if (Def.getValueAsBit("isAsmParserOnly") ||
       Def.getValueAsBit("isCodeGenOnly"))
     return false;
+
+  BitsInit &Bits = getBitsField(Def, "Inst");
+  if (Bits.allInComplete()) return false;
 
   std::vector<OperandInfo> InsnOperands;
 
@@ -1354,7 +1354,8 @@ bool FixedLenDecoderEmitter::populateInstruction(const CodeGenInstruction &CGI,
 void FixedLenDecoderEmitter::populateInstructions() {
   for (unsigned i = 0, e = NumberedInstructions.size(); i < e; ++i) {
     Record *R = NumberedInstructions[i]->TheDef;
-    if (R->getValueAsString("Namespace") == "TargetOpcode")
+    if (R->getValueAsString("Namespace") == "TargetOpcode" ||
+        R->getValueAsBit("isPseudo"))
       continue;
 
     if (populateInstruction(*NumberedInstructions[i], i))

@@ -421,6 +421,9 @@ public:
 protected:
   // Populates the insn given the uid.
   void insnWithID(insn_t &Insn, unsigned Opcode) const {
+    if (AllInstructions[Opcode]->isPseudo)
+      return;
+
     BitsInit &Bits = getBitsField(*AllInstructions[Opcode]->TheDef, "Inst");
 
     for (unsigned i = 0; i < BIT_WIDTH; ++i)
