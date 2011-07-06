@@ -137,8 +137,17 @@ static llvm::Constant *getTerminateFn(CodeGenFunction &CGF) {
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGF.getLLVMContext()), 
                             /*IsVarArgs=*/false);
 
-  return CGF.CGM.CreateRuntimeFunction(FTy, 
-      CGF.CGM.getLangOptions().CPlusPlus ? "_ZSt9terminatev" : "abort");
+  llvm::StringRef name;
+
+  // In C++, use std::terminate().
+  if (CGF.getLangOptions().CPlusPlus)
+    name = "_ZSt9terminatev"; // FIXME: mangling!
+  else if (CGF.getLangOptions().ObjC1 &&
+           CGF.CGM.getCodeGenOpts().ObjCRuntimeHasTerminate)
+    name = "objc_terminate";
+  else
+    name = "abort";
+  return CGF.CGM.CreateRuntimeFunction(FTy, name);
 }
 
 static llvm::Constant *getCatchallRethrowFn(CodeGenFunction &CGF,

@@ -77,6 +77,7 @@ public:
   unsigned NoZeroInitializedInBSS : 1; /// -fno-zero-initialized-in-bss
   unsigned ObjCDispatchMethod : 2; /// Method of Objective-C dispatch to use.
   unsigned ObjCRuntimeHasARC : 1; /// The target runtime supports ARC natively
+  unsigned ObjCRuntimeHasTerminate : 1; /// The ObjC runtime has objc_terminate
   unsigned OmitLeafFramePointer : 1; /// Set when -momit-leaf-frame-pointer is
                                      /// enabled.
   unsigned OptimizationLevel : 3; /// The -O[0-4] option specified.
@@ -141,7 +142,6 @@ public:
 public:
   CodeGenOptions() {
     AsmVerbose = 0;
-    ObjCAutoRefCountExceptions = 0;
     CXAAtExit = 1;
     CXXCtorDtorAliases = 0;
     DataSections = 0;
@@ -168,7 +168,10 @@ public:
     NoNaNsFPMath = 0;
     NoZeroInitializedInBSS = 0;
     NumRegisterParameters = 0;
+    ObjCAutoRefCountExceptions = 0;
     ObjCDispatchMethod = Legacy;
+    ObjCRuntimeHasARC = 0;
+    ObjCRuntimeHasTerminate = 0;
     OmitLeafFramePointer = 0;
     OptimizationLevel = 0;
     OptimizeSize = 0;

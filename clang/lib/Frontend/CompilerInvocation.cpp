@@ -125,6 +125,8 @@ static void CodeGenOptsToArgs(const CodeGenOptions &Opts,
   }
   if (Opts.ObjCRuntimeHasARC)
     Res.push_back("-fobjc-runtime-has-arc");
+  if (Opts.ObjCRuntimeHasTerminate)
+    Res.push_back("-fobjc-runtime-has-terminate");
   if (Opts.EmitGcovArcs)
     Res.push_back("-femit-coverage-data");
   if (Opts.EmitGcovNotes)
@@ -979,6 +981,7 @@ static void ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
   Opts.ObjCAutoRefCountExceptions = Args.hasArg(OPT_fobjc_arc_exceptions);
   Opts.ObjCRuntimeHasARC = Args.hasArg(OPT_fobjc_runtime_has_arc);
+  Opts.ObjCRuntimeHasTerminate = Args.hasArg(OPT_fobjc_runtime_has_terminate);
   Opts.CXAAtExit = !Args.hasArg(OPT_fno_use_cxa_atexit);
   Opts.CXXCtorDtorAliases = Args.hasArg(OPT_mconstructor_aliases);
   Opts.CodeModel = Args.getLastArgValue(OPT_mcode_model);

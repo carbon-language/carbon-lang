@@ -30,7 +30,14 @@ public:
   /// True if the runtime supports ARC zeroing __weak.
   unsigned HasWeak : 1;
 
-  ObjCRuntime() : RuntimeKind(NeXT), HasARC(false), HasWeak(false) {}
+  /// True if the runtime provides the following entrypoint:
+  ///   void objc_terminate(void);
+  /// If available, this will be called instead of abort() when an
+  /// exception is thrown out of an EH cleanup.
+  unsigned HasTerminate : 1;
+
+  ObjCRuntime() : RuntimeKind(NeXT), HasARC(false), HasWeak(false),
+    HasTerminate(false) {}
 };
 
 }

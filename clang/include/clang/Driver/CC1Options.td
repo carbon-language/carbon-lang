@@ -500,6 +500,8 @@ def fobjc_runtime_has_arc : Flag<"-fobjc-runtime-has-arc">,
   HelpText<"The target Objective-C runtime provides ARC entrypoints">;
 def fobjc_runtime_has_weak : Flag<"-fobjc-runtime-has-weak">,
   HelpText<"The target Objective-C runtime supports ARC weak operations">;
+def fobjc_runtime_has_terminate : Flag<"-fobjc-runtime-has-terminate">,
+  HelpText<"The target Objective-C runtime provides an objc_terminate entrypoint">;
 def fobjc_gc : Flag<"-fobjc-gc">,
   HelpText<"Enable Objective-C garbage collection">;
 def fobjc_gc_only : Flag<"-fobjc-gc-only">,

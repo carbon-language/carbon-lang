@@ -99,6 +99,13 @@ void Darwin::configureObjCRuntime(ObjCRuntime &runtime) const {
     return ToolChain::configureObjCRuntime(runtime);
 
   runtime.HasARC = runtime.HasWeak = hasARCRuntime();
+
+  // So far, objc_terminate is only available in iOS 5.
+  // FIXME: do the simulator logic properly.
+  if (!ARCRuntimeForSimulator && isTargetIPhoneOS())
+    runtime.HasTerminate = !isIPhoneOSVersionLT(5);
+  else
+    runtime.HasTerminate = false;
 }
 
 // FIXME: Can we tablegen this?

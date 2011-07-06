@@ -1781,6 +1781,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-fobjc-runtime-has-arc");
     if (objCRuntime.HasWeak)
       CmdArgs.push_back("-fobjc-runtime-has-weak");
+    if (objCRuntime.HasTerminate)
+      CmdArgs.push_back("-fobjc-runtime-has-terminate");
 
     // Compute the Objective-C ABI "version" to use. Version numbers are
     // slightly confusing for historical reasons:

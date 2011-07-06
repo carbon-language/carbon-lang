@@ -55,12 +55,14 @@ void ToolChain::configureObjCRuntime(ObjCRuntime &runtime) const {
     // Assume a minimal NeXT runtime.
     runtime.HasARC = false;
     runtime.HasWeak = false;
+    runtime.HasTerminate = false;
     return;
 
   case ObjCRuntime::GNU:
     // Assume a maximal GNU runtime.
     runtime.HasARC = true;
     runtime.HasWeak = true;
+    runtime.HasTerminate = false; // to be added
     return;
   }
   llvm_unreachable("invalid runtime kind!");
