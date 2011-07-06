@@ -30,6 +30,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Analysis/DIBuilder.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/Loads.h"
@@ -1094,21 +1095,37 @@ bool SROA::runOnFunction(Function &F) {
 namespace {
 class AllocaPromoter : public LoadAndStorePromoter {
   AllocaInst *AI;
-  DbgDeclareInst *DDI;
   DIBuilder *DIB;
+  SmallVector<DbgDeclareInst *, 4> DDIs;
+  SmallVector<DbgValueInst *, 4> DVIs;
 public:
   AllocaPromoter(const SmallVectorImpl<Instruction*> &Insts, SSAUpdater &S,
                  DIBuilder *DB)
-    : LoadAndStorePromoter(Insts, S), AI(0), DDI(0), DIB(DB) {}
+    : LoadAndStorePromoter(Insts, S), AI(0), DIB(DB) {}
   
   void run(AllocaInst *AI, const SmallVectorImpl<Instruction*> &Insts) {
     // Remember which alloca we're promoting (for isInstInList).
     this->AI = AI;
-    DDI = FindAllocaDbgDeclare(AI);
+    if (MDNode *DebugNode = MDNode::getIfExists(AI->getContext(), AI))
+      for (Value::use_iterator UI = DebugNode->use_begin(),
+             E = DebugNode->use_end(); UI != E; ++UI)
+        if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(*UI))
+          DDIs.push_back(DDI);
+        else if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(*UI))
+          DVIs.push_back(DVI);
+
     LoadAndStorePromoter::run(Insts);
     AI->eraseFromParent();
-    if (DDI)
+    for (SmallVector<DbgDeclareInst *, 4>::iterator I = DDIs.begin(), 
+           E = DDIs.end(); I != E; ++I) {
+      DbgDeclareInst *DDI = *I;
       DDI->eraseFromParent();
+    }
+    for (SmallVector<DbgValueInst *, 4>::iterator I = DVIs.begin(), 
+           E = DVIs.end(); I != E; ++I) {
+      DbgValueInst *DVI = *I;
+      DVI->eraseFromParent();
+    }
   }
   
   virtual bool isInstInList(Instruction *I,
@@ -1118,13 +1135,43 @@ public:
     return cast<StoreInst>(I)->getPointerOperand() == AI;
   }
 
-  virtual void updateDebugInfo(Instruction *I) const {
-    if (!DDI)
-      return;
-    if (StoreInst *SI = dyn_cast<StoreInst>(I))
-      ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
-    else if (LoadInst *LI = dyn_cast<LoadInst>(I))
-      ConvertDebugDeclareToDebugValue(DDI, LI, *DIB);
+  virtual void updateDebugInfo(Instruction *Inst) const {
+    for (SmallVector<DbgDeclareInst *, 4>::const_iterator I = DDIs.begin(), 
+           E = DDIs.end(); I != E; ++I) {
+      DbgDeclareInst *DDI = *I;
+      if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+        ConvertDebugDeclareToDebugValue(DDI, SI, *DIB);
+      else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
+        ConvertDebugDeclareToDebugValue(DDI, LI, *DIB);
+    }
+    for (SmallVector<DbgValueInst *, 4>::const_iterator I = DVIs.begin(), 
+           E = DVIs.end(); I != E; ++I) {
+      DbgValueInst *DVI = *I;
+      if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+        Instruction *DbgVal = NULL;
+        // If an argument is zero extended then use argument directly. The ZExt
+        // may be zapped by an optimization pass in future.
+        Argument *ExtendedArg = NULL;
+        if (ZExtInst *ZExt = dyn_cast<ZExtInst>(SI->getOperand(0)))
+          ExtendedArg = dyn_cast<Argument>(ZExt->getOperand(0));
+        if (SExtInst *SExt = dyn_cast<SExtInst>(SI->getOperand(0)))
+          ExtendedArg = dyn_cast<Argument>(SExt->getOperand(0));
+        if (ExtendedArg)
+          DbgVal = DIB->insertDbgValueIntrinsic(ExtendedArg, 0, 
+                                                DIVariable(DVI->getVariable()),
+                                                SI);
+        else
+          DbgVal = DIB->insertDbgValueIntrinsic(SI->getOperand(0), 0, 
+                                                DIVariable(DVI->getVariable()),
+                                                SI);
+        DbgVal->setDebugLoc(SI->getDebugLoc());
+      } else if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
+        Instruction *DbgVal = 
+          DIB->insertDbgValueIntrinsic(LI->getOperand(0), 0, 
+                                       DIVariable(DVI->getVariable()), LI);
+        DbgVal->setDebugLoc(LI->getDebugLoc());
+      }
+    }
   }
 };
 } // end anon namespace
