@@ -9,4 +9,15 @@ int get_num_types(Types...) {
 // CHECK: ret i32 3
 template int get_num_types(int, float, double);
 
+// PR10260 - argument packs that expand to nothing
+namespace test1 {
+  template <class... T> void foo() {
+    int values[sizeof...(T)+1] = { T::value... };
+    // CHECK: define linkonce_odr void @_ZN5test13fooIJEEEvv()
+    // CHECK: alloca [1 x i32], align 4
+  }
 
+  void test() {
+    foo<>();
+  }
+}
