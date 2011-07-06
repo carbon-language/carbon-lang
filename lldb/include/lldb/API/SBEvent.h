@@ -61,8 +61,10 @@ public:
     static const char *
     GetCStringFromEvent (const lldb::SBEvent &event);
 
+#ifndef SWIG
     bool
     GetDescription (lldb::SBStream &description);
+#endif
 
     bool
     GetDescription (lldb::SBStream &description) const;
