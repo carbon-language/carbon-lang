@@ -83,7 +83,7 @@ public:
 
   /// getCompactUnwindRegNum - This function maps the register to the number for
   /// compact unwind encoding. Return -1 if the register isn't valid.
-  int getCompactUnwindRegNum(unsigned RegNum) const;
+  int getCompactUnwindRegNum(unsigned RegNum, bool isEH) const;
 
   /// Code Generation virtual methods...
   /// 

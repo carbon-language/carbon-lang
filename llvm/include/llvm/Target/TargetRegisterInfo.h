@@ -723,7 +723,7 @@ public:
 
   /// getCompactUnwindRegNum - This function maps the register to the number for
   /// compact unwind encoding. Return -1 if the register isn't valid.
-  virtual int getCompactUnwindRegNum(unsigned) const {
+  virtual int getCompactUnwindRegNum(unsigned, bool) const {
     return -1;
   }
 };

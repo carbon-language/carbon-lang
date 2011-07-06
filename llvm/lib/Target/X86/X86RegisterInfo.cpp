@@ -107,8 +107,8 @@ int X86RegisterInfo::getLLVMRegNum(unsigned DwarfRegNo, bool isEH) const {
 
 /// getCompactUnwindRegNum - This function maps the register to the number for
 /// compact unwind encoding. Return -1 if the register isn't valid.
-int X86RegisterInfo::getCompactUnwindRegNum(unsigned RegNum) const {
-  switch (RegNum) {
+int X86RegisterInfo::getCompactUnwindRegNum(unsigned RegNum, bool isEH) const {
+  switch (getLLVMRegNum(RegNum, isEH)) {
   case X86::EBX: case X86::RBX: return 1;
   case X86::ECX: case X86::R12: return 2;
   case X86::EDX: case X86::R13: return 3;

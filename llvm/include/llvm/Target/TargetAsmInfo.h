@@ -107,8 +107,8 @@ public:
     return TRI->getSEHRegNum(RegNum);
   }
 
-  int getCompactUnwindRegNum(unsigned RegNum) const {
-    return TRI->getCompactUnwindRegNum(RegNum);
+  int getCompactUnwindRegNum(unsigned RegNum, bool isEH) const {
+    return TRI->getCompactUnwindRegNum(RegNum, isEH);
   }
 };
 
