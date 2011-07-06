@@ -25,22 +25,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-struct CallMemsetLocalBlockObject : EHScopeStack::Cleanup {
-  llvm::AllocaInst *BlockAddr;
-  CharUnits BlockSize;
-  
-  CallMemsetLocalBlockObject(llvm::AllocaInst *blockAddr, 
-                             CharUnits blocSize) 
-    : BlockAddr(blockAddr), BlockSize(blocSize) {}
-  
-  void Emit(CodeGenFunction &CGF, bool isForEH) {
-    CGF.Builder.CreateMemSet(BlockAddr, 
-                             llvm::ConstantInt::get(CGF.Int8Ty, 0xCD), 
-                             BlockSize.getQuantity(), 
-                             BlockAddr->getAlignment());
-  }
-};
-
 CGBlockInfo::CGBlockInfo(const BlockExpr *blockExpr, const char *N)
   : Name(N), CXXThisIndex(0), CanBeGlobal(false), NeedsCopyDispose(false),
     HasCXXObject(false), UsesStret(false), StructureType(0), Block(blockExpr) {
@@ -665,9 +649,6 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
   llvm::Value *result =
     Builder.CreateBitCast(blockAddr,
                           ConvertType(blockInfo.getBlockExpr()->getType()));
-  if (getLangOptions().CatchUndefined)
-    EHStack.pushCleanup<CallMemsetLocalBlockObject>(NormalCleanup, blockAddr, 
-                                                    blockInfo.BlockSize);
 
   return result;
 }
