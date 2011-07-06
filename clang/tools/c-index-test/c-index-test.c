@@ -1496,6 +1496,7 @@ int write_pch_file(const char *filename, int argc, const char *argv[]) {
   CXTranslationUnit TU;
   struct CXUnsavedFile *unsaved_files = 0;
   int num_unsaved_files = 0;
+  int result = 0;
   
   Idx = clang_createIndex(/* excludeDeclsFromPCH */1, /* displayDiagnosics=*/1);
   
@@ -1517,8 +1518,6 @@ int write_pch_file(const char *filename, int argc, const char *argv[]) {
     return 1;
   }
 
-  int result = 0;
-  
   switch (clang_saveTranslationUnit(TU, filename, 
                                     clang_defaultSaveOptions(TU))) {
   case CXSaveError_None:
