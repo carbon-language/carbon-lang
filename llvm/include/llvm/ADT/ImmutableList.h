@@ -103,6 +103,14 @@ public:
   /// isEmpty - Returns true if the list is empty.
   bool isEmpty() const { return !X; }
 
+  bool contains(const T& V) const {
+    for (iterator I = begin(), E = end(); I != E; ++I) {
+      if (*I == V)
+        return true;
+    }
+    return false;
+  }
+
   /// isEqual - Returns true if two lists are equal.  Because all lists created
   ///  from the same ImmutableListFactory are uniqued, this has O(1) complexity
   ///  because it the contents of the list do not need to be compared.  Note
