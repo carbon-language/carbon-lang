@@ -641,6 +641,18 @@ public:
     return false;
   }
 
+  /// isArcWeakrefUnavailable - Checks for a class or one of its super classes
+  /// to be incompatible with __weak references. Returns true if it is.
+  bool isArcWeakrefUnavailable() const {
+    const ObjCInterfaceDecl *Class = this;
+    while (Class) {
+      if (Class->hasAttr<ArcWeakrefUnavailableAttr>())
+        return true;
+      Class = Class->getSuperClass();
+   }
+   return false; 
+  }
+
   ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName,
                                        ObjCInterfaceDecl *&ClassDeclared);
   ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName) {
