@@ -1141,9 +1141,15 @@ annotating the method with either of
 the <tt>ns_returns_autoreleased</tt> or
 <tt>ns_returns_not_retained</tt> attributes.</p>
 
+<p>Properties also follow same naming rules as methods. This means that 
+those in the <tt>alloc</tt>, <tt>copy</tt>, <tt>mutableCopy</tt>,
+and <tt>new</tt> families provide access to 
+<a href="#objects.operands.retained_returns">retained objects</a>. 
+This can be overridden by annotating the property with 
+<tt>ns_returns_not_retained</tt> attribute.</p>
+
 <div id="family.semantics.init">
 <h1>Semantics of <tt>init</tt></h1>
-
 <p>Methods in the <tt>init</tt> family implicitly
 <a href="#objects.operands.consumed">consume</a> their <tt>self</tt>
 parameter and <a href="#objects.operands.retained_returns">return a
