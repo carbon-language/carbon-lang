@@ -152,6 +152,7 @@ public:
     FPM.add(createCFGSimplificationPass());
     FPM.add(createScalarReplAggregatesPass());
     FPM.add(createEarlyCSEPass());
+    FPM.add(createLowerExpectIntrinsicPass());
   }
   
   /// populateModulePassManager - This sets up the primary pass manager.

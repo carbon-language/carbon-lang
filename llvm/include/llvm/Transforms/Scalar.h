@@ -361,6 +361,14 @@ Pass *createObjCARCOptPass();
 FunctionPass *createInstructionSimplifierPass();
 extern char &InstructionSimplifierID;
 
+
+//===----------------------------------------------------------------------===//
+//
+// LowerExpectIntriniscs - Removes llvm.expect intrinsics and creates
+// "block_weights" metadata.
+FunctionPass *createLowerExpectIntrinsicPass();
+
+
 } // End llvm namespace
 
 #endif

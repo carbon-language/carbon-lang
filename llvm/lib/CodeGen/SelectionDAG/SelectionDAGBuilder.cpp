@@ -4771,6 +4771,13 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::flt_rounds:
     setValue(&I, DAG.getNode(ISD::FLT_ROUNDS_, dl, MVT::i32));
     return 0;
+
+  case Intrinsic::expect: {
+    // Just replace __builtin_expect(exp, c) with EXP.
+    setValue(&I, getValue(I.getArgOperand(0)));
+    return 0;
+  }
+
   case Intrinsic::trap: {
     StringRef TrapFuncName = getTrapFunctionName();
     if (TrapFuncName.empty()) {

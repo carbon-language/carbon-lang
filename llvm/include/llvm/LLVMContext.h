@@ -39,7 +39,8 @@ public:
   // compile-time performance optimization, not a correctness optimization.
   enum {
     MD_dbg = 0,  // "dbg"
-    MD_tbaa = 1  // "tbaa"
+    MD_tbaa = 1, // "tbaa"
+    MD_prof = 2  // "prof"
   };
   
   /// getMDKindID - Return a unique non-zero ID for the specified metadata kind.

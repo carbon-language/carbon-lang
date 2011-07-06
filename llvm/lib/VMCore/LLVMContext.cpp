@@ -39,6 +39,10 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   // Create the 'tbaa' metadata kind.
   unsigned TBAAID = getMDKindID("tbaa");
   assert(TBAAID == MD_tbaa && "tbaa kind id drifted"); (void)TBAAID;
+
+  // Create the 'prof' metadata kind.
+  unsigned ProfID = getMDKindID("prof");
+  assert(ProfID == MD_prof && "prof kind id drifted"); (void)ProfID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 

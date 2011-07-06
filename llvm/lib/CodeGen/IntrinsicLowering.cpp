@@ -353,6 +353,13 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     report_fatal_error("Code generator does not support intrinsic function '"+
                       Callee->getName()+"'!");
 
+  case Intrinsic::expect: {
+    // Just replace __builtin_expect(exp, c) with EXP.
+    Value *V = CI->getArgOperand(0);
+    CI->replaceAllUsesWith(V);
+    break;
+  }
+
     // The setjmp/longjmp intrinsics should only exist in the code if it was
     // never optimized (ie, right out of the CFE), or if it has been hacked on
     // by the lowerinvoke pass.  In both cases, the right thing to do is to

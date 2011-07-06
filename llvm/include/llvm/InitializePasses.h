@@ -141,6 +141,7 @@ void initializeLoopUnrollPass(PassRegistry&);
 void initializeLoopUnswitchPass(PassRegistry&);
 void initializeLoopIdiomRecognizePass(PassRegistry&);
 void initializeLowerAtomicPass(PassRegistry&);
+void initializeLowerExpectIntrinsicPass(PassRegistry&);
 void initializeLowerIntrinsicsPass(PassRegistry&);
 void initializeLowerInvokePass(PassRegistry&);
 void initializeLowerSetJmpPass(PassRegistry&);
