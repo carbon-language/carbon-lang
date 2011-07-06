@@ -33,9 +33,6 @@ using namespace llvm;
 
 X86ATTInstPrinter::X86ATTInstPrinter(TargetMachine &TM, const MCAsmInfo &MAI)
   : MCInstPrinter(MAI) {
-  // Initialize the set of available features.
-  setAvailableFeatures(ComputeAvailableFeatures(
-            &TM.getSubtarget<X86Subtarget>()));
 }
 
 void X86ATTInstPrinter::printRegName(raw_ostream &OS,

@@ -606,92 +606,29 @@ void AsmWriterEmitter::EmitGetInstructionName(raw_ostream &O) {
 }
 
 namespace {
-
-/// SubtargetFeatureInfo - Helper class for storing information on a subtarget
-/// feature which participates in instruction matching.
-struct SubtargetFeatureInfo {
-  /// \brief The predicate record for this feature.
-  const Record *TheDef;
-
-  /// \brief An unique index assigned to represent this feature.
-  unsigned Index;
-
-  SubtargetFeatureInfo(const Record *D, unsigned Idx) : TheDef(D), Index(Idx) {}
-
-  /// \brief The name of the enumerated constant identifying this feature.
-  std::string getEnumName() const {
-    return "Feature_" + TheDef->getName();
-  }
-};
-
-struct AsmWriterInfo {
-  /// Map of Predicate records to their subtarget information.
-  std::map<const Record*, SubtargetFeatureInfo*> SubtargetFeatures;
-
-  /// getSubtargetFeature - Lookup or create the subtarget feature info for the
-  /// given operand.
-  SubtargetFeatureInfo *getSubtargetFeature(const Record *Def) const {
-    assert(Def->isSubClassOf("Predicate") && "Invalid predicate type!");
-    std::map<const Record*, SubtargetFeatureInfo*>::const_iterator I =
-      SubtargetFeatures.find(Def);
-    return I == SubtargetFeatures.end() ? 0 : I->second;
-  }
-
-  void addReqFeatures(const std::vector<Record*> &Features) {
-    for (std::vector<Record*>::const_iterator
-           I = Features.begin(), E = Features.end(); I != E; ++I) {
-      const Record *Pred = *I;
-
-      // Ignore predicates that are not intended for the assembler.
-      if (!Pred->getValueAsBit("AssemblerMatcherPredicate"))
-        continue;
-
-      if (Pred->getName().empty())
-        throw TGError(Pred->getLoc(), "Predicate has no name!");
-
-      // Don't add the predicate again.
-      if (getSubtargetFeature(Pred))
-        continue;
-
-      unsigned FeatureNo = SubtargetFeatures.size();
-      SubtargetFeatures[Pred] = new SubtargetFeatureInfo(Pred, FeatureNo);
-      assert(FeatureNo < 32 && "Too many subtarget features!");
-    }
-  }
-
-  const SubtargetFeatureInfo *getFeatureInfo(const Record *R) {
-    return SubtargetFeatures[R];
-  }
-};
-
 // IAPrinter - Holds information about an InstAlias. Two InstAliases match if
 // they both have the same conditionals. In which case, we cannot print out the
 // alias for that pattern.
 class IAPrinter {
-  AsmWriterInfo &AWI;
   std::vector<std::string> Conds;
   std::map<StringRef, unsigned> OpMap;
   std::string Result;
   std::string AsmString;
   std::vector<Record*> ReqFeatures;
 public:
-  IAPrinter(AsmWriterInfo &Info, std::string R, std::string AS)
-    : AWI(Info), Result(R), AsmString(AS) {}
+  IAPrinter(std::string R, std::string AS)
+    : Result(R), AsmString(AS) {}
 
   void addCond(const std::string &C) { Conds.push_back(C); }
-  void addReqFeatures(const std::vector<Record*> &Features) {
-    AWI.addReqFeatures(Features);
-    ReqFeatures = Features;
-  }
 
   void addOperand(StringRef Op, unsigned Idx) { OpMap[Op] = Idx; }
   unsigned getOpIndex(StringRef Op) { return OpMap[Op]; }
   bool isOpMapped(StringRef Op) { return OpMap.find(Op) != OpMap.end(); }
 
-  bool print(raw_ostream &O) {
+  void print(raw_ostream &O) {
     if (Conds.empty() && ReqFeatures.empty()) {
       O.indent(6) << "return true;\n";
-      return false;
+      return;
     }
 
     O << "if (";
@@ -706,27 +643,6 @@ public:
       O << *I;
     }
 
-    if (!ReqFeatures.empty()) {
-      if (Conds.begin() != Conds.end()) {
-        O << " &&\n";
-        O.indent(8);
-      } else {
-        O << "if (";
-      }
-
-      std::string Req;
-      raw_string_ostream ReqO(Req);
-
-      for (std::vector<Record*>::iterator
-             I = ReqFeatures.begin(), E = ReqFeatures.end(); I != E; ++I) {
-        if (I != ReqFeatures.begin()) ReqO << " | ";
-        ReqO << AWI.getFeatureInfo(*I)->getEnumName();
-      }
-
-      O << "(AvailableFeatures & (" << ReqO.str() << ")) == ("
-        << ReqO.str() << ')';
-    }
-
     O << ") {\n";
     O.indent(6) << "// " << Result << "\n";
     O.indent(6) << "AsmString = \"" << AsmString << "\";\n";
@@ -738,7 +654,6 @@ public:
 
     O.indent(6) << "break;\n";
     O.indent(4) << '}';
-    return !ReqFeatures.empty();
   }
 
   bool operator==(const IAPrinter &RHS) {
@@ -769,53 +684,6 @@ public:
 };
 
 } // end anonymous namespace
-
-/// EmitSubtargetFeatureFlagEnumeration - Emit the subtarget feature flag
-/// definitions.
-static void EmitSubtargetFeatureFlagEnumeration(AsmWriterInfo &Info,
-                                                raw_ostream &O) {
-  O << "namespace {\n\n";
-  O << "// Flags for subtarget features that participate in "
-    << "alias instruction matching.\n";
-  O << "enum SubtargetFeatureFlag {\n";
-
-  for (std::map<const Record*, SubtargetFeatureInfo*>::const_iterator
-         I = Info.SubtargetFeatures.begin(),
-         E = Info.SubtargetFeatures.end(); I != E; ++I) {
-    SubtargetFeatureInfo &SFI = *I->second;
-    O << "  " << SFI.getEnumName() << " = (1 << " << SFI.Index << "),\n";
-  }
-
-  O << "  Feature_None = 0\n";
-  O << "};\n\n";
-  O << "} // end anonymous namespace\n\n";
-}
-
-/// EmitComputeAvailableFeatures - Emit the function to compute the list of
-/// available features given a subtarget.
-static void EmitComputeAvailableFeatures(AsmWriterInfo &Info,
-                                         Record *AsmWriter,
-                                         CodeGenTarget &Target,
-                                         raw_ostream &O) {
-  std::string ClassName = AsmWriter->getValueAsString("AsmWriterClassName");
-
-  O << "unsigned " << Target.getName() << ClassName << "::\n"
-    << "ComputeAvailableFeatures(const " << Target.getName()
-    << "Subtarget *Subtarget) const {\n";
-  O << "  unsigned Features = 0;\n";
-
-  for (std::map<const Record*, SubtargetFeatureInfo*>::const_iterator
-         I = Info.SubtargetFeatures.begin(),
-         E = Info.SubtargetFeatures.end(); I != E; ++I) {
-    SubtargetFeatureInfo &SFI = *I->second;
-    O << "  if (" << SFI.TheDef->getValueAsString("CondString")
-      << ")\n";
-    O << "    Features |= " << SFI.getEnumName() << ";\n";
-  }
-
-  O << "  return Features;\n";
-  O << "}\n\n";
-}
 
 static void EmitGetMapOperandNumber(raw_ostream &O) {
   O << "static unsigned getMapOperandNumber("
@@ -960,7 +828,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   // A map of which conditions need to be met for each instruction operand
   // before it can be matched to the mnemonic.
   std::map<std::string, std::vector<IAPrinter*> > IAPrinterMap;
-  AsmWriterInfo AWI;
 
   for (std::map<std::string, std::vector<CodeGenInstAlias*> >::iterator
          I = AliasMap.begin(), E = AliasMap.end(); I != E; ++I) {
@@ -977,9 +844,8 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
       if (NumResultOps < CountNumOperands(CGA->AsmString))
         continue;
 
-      IAPrinter *IAP = new IAPrinter(AWI, CGA->Result->getAsString(),
+      IAPrinter *IAP = new IAPrinter(CGA->Result->getAsString(),
                                      CGA->AsmString);
-      IAP->addReqFeatures(CGA->TheDef->getValueAsListOfDefs("Predicates"));
 
       std::string Cond;
       Cond = std::string("MI->getNumOperands() == ") + llvm::utostr(LastOpNo);
@@ -1049,9 +915,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
     }
   }
 
-  EmitSubtargetFeatureFlagEnumeration(AWI, O);
-  EmitComputeAvailableFeatures(AWI, AsmWriter, Target, O);
-
   std::string Header;
   raw_string_ostream HeaderO(Header);
 
@@ -1061,7 +924,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
   std::string Cases;
   raw_string_ostream CasesO(Cases);
-  bool NeedAvailableFeatures = false;
 
   for (std::map<std::string, std::vector<IAPrinter*> >::iterator
          I = IAPrinterMap.begin(), E = IAPrinterMap.end(); I != E; ++I) {
@@ -1092,7 +954,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
            II = UniqueIAPs.begin(), IE = UniqueIAPs.end(); II != IE; ++II) {
       IAPrinter *IAP = *II;
       CasesO.indent(4);
-      NeedAvailableFeatures |= IAP->print(CasesO);
+      IAP->print(CasesO);
       CasesO << '\n';
     }
 
@@ -1112,8 +974,6 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
   O << HeaderO.str();
   O.indent(2) << "StringRef AsmString;\n";
   O.indent(2) << "SmallVector<std::pair<StringRef, unsigned>, 4> OpMap;\n";
-  if (NeedAvailableFeatures)
-    O.indent(2) << "unsigned AvailableFeatures = getAvailableFeatures();\n\n";
   O.indent(2) << "switch (MI->getOpcode()) {\n";
   O.indent(2) << "default: return false;\n";
   O << CasesO.str();
