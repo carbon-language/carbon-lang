@@ -366,11 +366,31 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   return TailLen;
 }
 
+void BranchFolder::MaintainLiveIns(MachineBasicBlock *CurMBB,
+                                   MachineBasicBlock *NewMBB) {
+  if (RS) {
+    RS->enterBasicBlock(CurMBB);
+    if (!CurMBB->empty())
+      RS->forward(prior(CurMBB->end()));
+    BitVector RegsLiveAtExit(TRI->getNumRegs());
+    RS->getRegsUsed(RegsLiveAtExit, false);
+    for (unsigned int i = 0, e = TRI->getNumRegs(); i != e; i++)
+      if (RegsLiveAtExit[i])
+        NewMBB->addLiveIn(i);
+  }
+}
+
 /// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
 /// after it, replacing it with an unconditional branch to NewDest.
 void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                            MachineBasicBlock *NewDest) {
+  MachineBasicBlock *CurMBB = OldInst->getParent();
+
   TII->ReplaceTailWithBranchTo(OldInst, NewDest);
+
+  // For targets that use the register scavenger, we must maintain LiveIns.
+  MaintainLiveIns(CurMBB, NewDest);
+
   ++NumTailMerge;
 }
 
@@ -399,16 +419,7 @@ MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
   NewMBB->splice(NewMBB->end(), &CurMBB, BBI1, CurMBB.end());
 
   // For targets that use the register scavenger, we must maintain LiveIns.
-  if (RS) {
-    RS->enterBasicBlock(&CurMBB);
-    if (!CurMBB.empty())
-      RS->forward(prior(CurMBB.end()));
-    BitVector RegsLiveAtExit(TRI->getNumRegs());
-    RS->getRegsUsed(RegsLiveAtExit, false);
-    for (unsigned int i = 0, e = TRI->getNumRegs(); i != e; i++)
-      if (RegsLiveAtExit[i])
-        NewMBB->addLiveIn(i);
-  }
+  MaintainLiveIns(&CurMBB, NewMBB);
 
   return NewMBB;
 }
