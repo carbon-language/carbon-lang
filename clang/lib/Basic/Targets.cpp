@@ -2861,7 +2861,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     case llvm::Triple::RTEMS:
       return new RTEMSTargetInfo<MipselTargetInfo>(T);
     case llvm::Triple::FreeBSD:
-      return new NetBSDTargetInfo<MipselTargetInfo>(T);
+      return new FreeBSDTargetInfo<MipselTargetInfo>(T);
     case llvm::Triple::NetBSD:
       return new NetBSDTargetInfo<MipselTargetInfo>(T);
     default:
