@@ -3335,10 +3335,10 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LLVM_BUILD_DIR = "/Volumes/work/gclayton/Documents/src/llvm/131657/llvm-debug";
+				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
 				LLVM_BUILD_DIR_ARCH = "";
-				LLVM_CONFIGURATION = "Debug+Asserts";
-				LLVM_SOURCE_DIR = /Volumes/work/gclayton/Documents/src/llvm/131657/llvm;
+				LLVM_CONFIGURATION = Release;
+				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				ONLY_ACTIVE_ARCH = YES;
 				VALID_ARCHS = "x86_64 i386";
 			};
@@ -3366,10 +3366,10 @@
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				LLVM_BUILD_DIR = "/Volumes/work/gclayton/Documents/src/llvm/131657/llvm-debug";
+				LLVM_BUILD_DIR = "$(SRCROOT)/llvm";
 				LLVM_BUILD_DIR_ARCH = "";
-				LLVM_CONFIGURATION = "Debug+Asserts";
-				LLVM_SOURCE_DIR = /Volumes/work/gclayton/Documents/src/llvm/131657/llvm;
+				LLVM_CONFIGURATION = Release;
+				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = Release;
@@ -3660,8 +3660,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
-				LLVM_CONFIGURATION = "Debug+Asserts";
-				LLVM_SOURCE_DIR = /Volumes/work/gclayton/Documents/src/llvm/131657/llvm;
+				LLVM_CONFIGURATION = Release;
+				LLVM_SOURCE_DIR = "$(SRCROOT)/llvm";
 				VALID_ARCHS = "x86_64 i386";
 			};
 			name = BuildAndIntegration;
