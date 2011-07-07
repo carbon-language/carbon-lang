@@ -235,6 +235,7 @@ namespace llvm {
     bool isAsCheapAsAMove;
     bool hasExtraSrcRegAllocReq;
     bool hasExtraDefRegAllocReq;
+    bool isCodeGenOnly;
     bool isPseudo;
 
 
