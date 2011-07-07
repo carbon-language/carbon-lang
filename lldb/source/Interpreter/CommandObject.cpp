@@ -469,9 +469,20 @@ CommandObject::GetArgumentHelp (Stream &str, CommandArgumentType arg_type, Comma
     StreamString name_str;
     name_str.Printf ("<%s>", entry->arg_name);
 
-    if (entry->help_function != NULL)
-        interpreter.OutputFormattedHelpText (str, name_str.GetData(), "--", (*(entry->help_function)) (),
-                                             name_str.GetSize());
+    if (entry->help_function)
+    {
+        const char* help_text = entry->help_function();
+        if (!entry->help_function.self_formatting)
+        {
+            interpreter.OutputFormattedHelpText (str, name_str.GetData(), "--", help_text,
+                                                 name_str.GetSize());
+        }
+        else
+        {
+            interpreter.OutputHelpText(str, name_str.GetData(), "--", help_text,
+                                       name_str.GetSize());
+        }
+    }
     else
         interpreter.OutputFormattedHelpText (str, name_str.GetData(), "--", entry->help_text, name_str.GetSize());
 }
@@ -630,32 +641,61 @@ BreakpointIDRangeHelpTextCallback ()
 static const char *
 FormatHelpTextCallback ()
 {
+    
+    static char* help_text_ptr = NULL;
+    
+    if (help_text_ptr)
+        return help_text_ptr;
+    
     StreamString sstr;
     sstr << "One of the format names (or one-character names) that can be used to show a variable's value:\n";
     for (Format f = eFormatDefault; f < kNumFormats; f = Format(f+1))
     {
+        if (f != eFormatDefault)
+            sstr.PutChar('\n');
+        
         char format_char = FormatManager::GetFormatAsFormatChar(f);
         if (format_char)
             sstr.Printf("'%c' or ", format_char);
         
-        sstr.Printf ("\"%s\" ; ", FormatManager::GetFormatAsCString(f));
+        sstr.Printf ("\"%s\"", FormatManager::GetFormatAsCString(f));
     }
     
     sstr.Flush();
     
     std::string data = sstr.GetString();
     
-    char* help = new char[data.length()+1];
+    help_text_ptr = new char[data.length()+1];
     
-    data.copy(help, data.length());
+    data.copy(help_text_ptr, data.length());
     
-    return help;
+    return help_text_ptr;
 }
 
 static const char *
-FormatStringHelpTextCallback()
+SummaryStringHelpTextCallback()
 {
-    return "Ask me tomorrow";
+    return
+        "A summary string is a way to extract information from variables in order to present them using a summary.\n"
+        "Summary strings contain static text, variables, scopes and control sequences:\n"
+        "  - Static text can be any sequence of non-special characters, i.e. anything but '{', '}', '$', or '\\'.\n"
+        "  - Variables are sequences of characters beginning with ${, ending with } and that contain symbols in the format described below.\n"
+        "  - Scopes are any sequence of text between { and }. Anything included in a scope will only appear in the output summary if there were no errors.\n"
+        "  - Control sequences are the usual C/C++ '\\a', '\\n', ..., plus '\\$', '\\{' and '\\}'.\n"
+        "A summary string works by copying static text verbatim, turning control sequences into their character counterpart, expanding variables and trying to expand scopes.\n"
+        "A variable is expanded by giving it a value other than its textual representation, and the way this is done depends on what comes after the ${ marker.\n"
+        "The most common sequence if ${var followed by an expression path, which is the text one would type to access a member of an aggregate types, given a variable of that type"
+        " (e.g. if type T has a member named x, which has a member named y, and if t is of type T, the expression path would be .x.y and the way to fit that into a summary string would be"
+        " ${var.x.y}). In expression paths you can use either . or -> without any difference in meaning. You can also use ${*var followed by an expression path and in that case"
+        " the object referred by the path will be dereferenced before being displayed. If the object is not a pointer, doing so will cause an error.\n"
+        "By default, summary strings attempt to display the summary for any variable they reference, and if that fails the value. If neither can be shown, nothing is displayed."
+        "In a summary string, you can also use an array index [n], or a slice-like range [n-m]. This can have two different meanings depending on what kind of object the expression"
+        " path refers to:\n"
+        "  - if it is a scalar type (any basic type like int, float, ...) the expression is a bitfield, i.e. the bits indicated by the indexing operator are extracted out of the number"
+        " and displayed as an individual variable\n"
+        "  - if it is an array or pointer the array items indicated by the indexing operator are shown as the result of the variable. if the expression is an array, real array items are"
+        " printed; if it is a pointer, the pointer-as-array syntax is used to obtain the values (this means, the latter case can have no range checking)\n"
+        "If you are trying to display an array for which the size is known, you can also use [] instead of giving an exact range. This has the effect of showing items 0 thru size - 1.";    
 }
 
 const char * 
@@ -693,8 +733,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeExpression, "expr", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeExprFormat, "expression-format", CommandCompletions::eNoCompletion, NULL, "[ [bool|b] | [bin] | [char|c] | [oct|o] | [dec|i|d|u] | [hex|x] | [float|f] | [cstr|s] ]" },
     { eArgTypeFilename, "filename", CommandCompletions::eDiskFileCompletion, NULL, "The name of a file (can include path)." },
-    { eArgTypeFormat, "format", CommandCompletions::eNoCompletion, FormatHelpTextCallback, NULL },
-    { eArgTypeFormatString, "format-string", CommandCompletions::eNoCompletion, FormatStringHelpTextCallback, NULL },
+    { eArgTypeFormat, "format", CommandCompletions::eNoCompletion, CommandObject::ArgumentHelpCallback(FormatHelpTextCallback, true), NULL },
     { eArgTypeFrameIndex, "frame-index", CommandCompletions::eNoCompletion, NULL, "Index into a thread's list of frames." },
     { eArgTypeFullName, "fullname", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
     { eArgTypeFunctionName, "function-name", CommandCompletions::eNoCompletion, NULL, "The name of a function." },
@@ -730,6 +769,7 @@ CommandObject::g_arguments_data[] =
     { eArgTypeSourceFile, "source-file", CommandCompletions::eSourceFileCompletion, NULL, "The name of a source file.." },
     { eArgTypeSortOrder, "sort-order", CommandCompletions::eNoCompletion, NULL, "Specify a sort order when dumping lists." },
     { eArgTypeStartAddress, "start-address", CommandCompletions::eNoCompletion, NULL, "Help text goes here." },
+    { eArgTypeSummaryString, "summary-string", CommandCompletions::eNoCompletion, CommandObject::ArgumentHelpCallback(SummaryStringHelpTextCallback, true), NULL },
     { eArgTypeSymbol, "symbol", CommandCompletions::eSymbolCompletion, NULL, "Any symbol name (function name, variable, argument, etc.)" },
     { eArgTypeThreadID, "thread-id", CommandCompletions::eNoCompletion, NULL, "Thread ID number." },
     { eArgTypeThreadIndex, "thread-index", CommandCompletions::eNoCompletion, NULL, "Index into the process' list of threads." },

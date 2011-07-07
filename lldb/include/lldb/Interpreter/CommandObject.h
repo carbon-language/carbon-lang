@@ -29,12 +29,36 @@ public:
 
     typedef const char *(ArgumentHelpCallbackFunction) ();
     
+    struct ArgumentHelpCallback
+    {
+        ArgumentHelpCallbackFunction  *help_callback;
+        bool                           self_formatting;
+        ArgumentHelpCallback(ArgumentHelpCallbackFunction *p,
+                             bool f = false) :
+        help_callback(p),
+        self_formatting(f)
+        {
+        }
+        
+        const char*
+        operator () () const
+        {
+            return (*help_callback)();
+        }
+        
+        operator bool() const
+        {
+            return (help_callback != NULL);
+        }
+        
+    };
+    
     struct ArgumentTableEntry  // Entries in the main argument information table
     {
         lldb::CommandArgumentType  arg_type;
         const char *arg_name;
         CommandCompletions::CommonCompletionTypes completion_type;
-        ArgumentHelpCallbackFunction  *help_function;
+        ArgumentHelpCallback  help_function;
         const char *help_text;
     };
     

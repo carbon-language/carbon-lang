@@ -2014,6 +2014,49 @@ CommandInterpreter::OutputFormattedHelpText (Stream &strm,
 }
 
 void
+CommandInterpreter::OutputHelpText (Stream &strm,
+                                    const char *word_text,
+                                    const char *separator,
+                                    const char *help_text,
+                                    uint32_t max_word_len)
+{
+    int indent_size = max_word_len + strlen (separator) + 2;
+    
+    strm.IndentMore (indent_size);
+    
+    StreamString text_strm;
+    text_strm.Printf ("%-*s %s %s",  max_word_len, word_text, separator, help_text);
+    
+    const uint32_t max_columns = m_debugger.GetTerminalWidth();
+    bool first_line = true;
+    
+    size_t len = text_strm.GetSize();
+    const char *text = text_strm.GetData();
+        
+    uint32_t chars_left = max_columns;
+
+    for (uint32_t i = 0; i < len; i++)
+    {
+        if ((text[i] == ' ' && ::strchr((text+i+1), ' ') && chars_left < ::strchr((text+i+1), ' ')-(text+i)) || text[i] == '\n')
+        {
+            first_line = false;
+            chars_left = max_columns - indent_size;
+            strm.EOL();
+            strm.Indent();
+        }
+        else
+        {
+            strm.PutChar(text[i]);
+            chars_left--;
+        }
+        
+    }
+    
+    strm.EOL();
+    strm.IndentLess(indent_size);
+}
+
+void
 CommandInterpreter::AproposAllSubCommands (CommandObject *cmd_obj, const char *prefix, const char *search_word,
                                            StringList &commands_found, StringList &commands_help)
 {

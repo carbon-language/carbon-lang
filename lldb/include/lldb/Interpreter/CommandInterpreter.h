@@ -242,6 +242,18 @@ public:
                              const char *separator,
                              const char *help_text,
                              uint32_t max_word_len);
+    
+    // this mimics OutputFormattedHelpText but it does perform a much simpler
+    // formatting, basically ensuring line alignment. This is only good if you have
+    // some complicated layout for your help text and want as little help as reasonable
+    // in properly displaying it. Most of the times, you simply want to type some text
+    // and have it printed in a reasonable way on screen. If so, use OutputFormattedHelpText 
+    void
+    OutputHelpText (Stream &stream,
+                             const char *command_word,
+                             const char *separator,
+                             const char *help_text,
+                             uint32_t max_word_len);
 
     Debugger &
     GetDebugger ()

@@ -63,6 +63,12 @@ private:
                 case 'f':
                     error = Args::StringToFormat(option_arg, m_format, NULL);
                     break;
+                case 'p':
+                    m_skip_pointers = true;
+                    break;
+                case 'r':
+                    m_skip_references = true;
+                    break;
                 default:
                     error.SetErrorStringWithFormat ("Unrecognized option '%c'.\n", short_option);
                     break;
@@ -76,6 +82,8 @@ private:
         {
             m_cascade = true;
             m_format = eFormatInvalid;
+            m_skip_pointers = false;
+            m_skip_references = false;
         }
         
         const OptionDefinition*
@@ -92,6 +100,8 @@ private:
         
         bool m_cascade;
         lldb::Format m_format;
+        bool m_skip_references;
+        bool m_skip_pointers;
     };
     
     CommandOptions m_options;
@@ -118,6 +128,34 @@ public:
         type_arg.push_back (type_style_arg);
 
         m_arguments.push_back (type_arg);
+        
+        SetHelpLong(
+                    "Some examples of using this command.\n"
+                    "We use as reference the following snippet of code:\n"
+                    "\n"
+                    "typedef int Aint;\n"
+                    "typedef float Afloat;\n"
+                    "typedef Aint Bint;\n"
+                    "typedef Afloat Bfloat;\n"
+                    "\n"
+                    "Aint ix = 5;\n"
+                    "Bint iy = 5;\n"
+                    "\n"
+                    "Afloat fx = 3.14;\n"
+                    "BFloat fy = 3.14;\n"
+                    "\n"
+                    "Typing:\n"
+                    "type format add -f hex AInt\n"
+                    "frame variable iy\n"
+                    "will produce an hex display of iy, because no formatter is available for Bint and the one for Aint is used instead\n"
+                    "To prevent this type\n"
+                    "type format add -f hex -C no AInt\n"
+                    "\n"
+                    "A similar reasoning applies to\n"
+                    "type format add -f hex -C no float -p\n"
+                    "which now prints all floats and float&s as hexadecimal, but does not format float*s\n"
+                    "and does not change the default display for Afloat and Bfloat objects.\n"
+                    );
     }
     
     ~CommandObjectTypeFormatAdd ()
@@ -145,7 +183,10 @@ public:
         
         ValueFormatSP entry;
         
-        entry.reset(new ValueFormat(m_options.m_format,m_options.m_cascade));
+        entry.reset(new ValueFormat(m_options.m_format,
+                                    m_options.m_cascade,
+                                    m_options.m_skip_pointers,
+                                    m_options.m_skip_references));
 
         // now I have a valid format, let's add it to every type
         
@@ -172,6 +213,8 @@ CommandObjectTypeFormatAdd::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_ALL, false, "cascade", 'C', required_argument, NULL, 0, eArgTypeBoolean,    "If true, cascade to derived typedefs."},
     { LLDB_OPT_SET_ALL, false, "format", 'f', required_argument, NULL, 0, eArgTypeFormat,    "The format to use to display this type."},
+    { LLDB_OPT_SET_ALL, false, "skip-pointers", 'p', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for pointers-to-type objects."},
+    { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
@@ -343,9 +386,11 @@ private:
     {
         if (regex == NULL || regex->Execute(type)) 
         {
-            result->GetOutputStream().Printf ("%s: %s%s\n", type, 
+            result->GetOutputStream().Printf ("%s: %s%s%s%s\n", type, 
                                               FormatManager::GetFormatAsCString (entry->m_format),
-                                              entry->m_cascades ? "" : " (not cascading)");
+                                              entry->m_cascades ? "" : " (not cascading)",
+                                              entry->m_skip_pointers ? " (skip pointers)" : "",
+                                              entry->m_skip_references ? " (skip references)" : "");
         }
         return true;
     }
@@ -489,6 +534,62 @@ public:
         type_arg.push_back (type_style_arg);
         
         m_arguments.push_back (type_arg);
+        
+        SetHelpLong(
+                    "Some examples of using this command.\n"
+                    "We use as reference the following snippet of code:\n"
+                    "struct JustADemo\n"
+                    "{\n"
+                    "int* ptr;\n"
+                    "float value;\n"
+                    "JustADemo(int p = 1, float v = 0.1) : ptr(new int(p)), value(v) {}\n"
+                    "};\n"
+                    "JustADemo object(42,3.14);\n"
+                    "struct AnotherDemo : public JustADemo\n"
+                    "{\n"
+                    "uint8_t byte;\n"
+                    "AnotherDemo(uint8_t b = 'E', int p = 1, float v = 0.1) : JustADemo(p,v), byte(b) {}\n"
+                    "};\n"
+                    "AnotherDemo *another_object = new AnotherDemo('E',42,3.14);\n"
+                    "\n"
+                    "type summary add -f \"the answer is ${*var.ptr}\" JustADemo\n"
+                    "when typing frame variable object you will get \"the answer is 42\"\n"
+                    "type summary add -f \"the answer is ${*var.ptr}, and the question is ${var.value}\" JustADemo\n"
+                    "when typing frame variable object you will get \"the answer is 42 and the question is 3.14\"\n"
+                    "\n"
+                    "Alternatively, you could also say\n"
+                    "type summary add -f \"${var%V} -> ${*var}\" \"int *\"\n"
+                    "and replace the above summary string with\n"
+                    "type summary add -f \"the answer is ${var.ptr}, and the question is ${var.value}\" JustADemo\n"
+                    "to obtain a similar result\n"
+                    "\n"
+                    "To add a summary valid for both JustADemo and AnotherDemo you can use the scoping operator, as in:\n"
+                    "type summary add -f \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes\n"
+                    "\n"
+                    "This will be used for both variables of type JustADemo and AnotherDemo. To prevent this, change the -C to read -C no\n"
+                    "If you do not want pointers to be shown using that summary, you can use the -p option, as in:\n"
+                    "type summary add -f \"${var.ptr}, ${var.value},{${var.byte}}\" JustADemo -C yes -p\n"
+                    "A similar option -r exists for references.\n"
+                    "\n"
+                    "If you simply want a one-line summary of the content of your variable, without typing an explicit string to that effect\n"
+                    "you can use the -c option, without giving any summary string:\n"
+                    "type summary add -c JustADemo\n"
+                    "frame variable object\n"
+                    "the output being similar to (ptr=0xsomeaddress, value=3.14)\n"
+                    "\n"
+                    "If you want to display some summary text, but also expand the structure of your object, you can add the -e option, as in:\n"
+                    "type summary add -e -f \"*ptr = ${*var.ptr}\" JustADemo\n"
+                    "Here the value of the int* is displayed, followed by the standard LLDB sequence of children objects, one per line.\n"
+                    "to get an output like:\n"
+                    "\n"
+                    "*ptr = 42 {\n"
+                    " ptr = 0xsomeaddress\n"
+                    " value = 3.14\n"
+                    "}\n"
+                    "\n"
+                    "A command you may definitely want to try if you're doing C++ debugging is:\n"
+                    "type summary add -f \"${var._M_dataplus._M_p}\" std::string\n"
+        );
     }
     
     ~CommandObjectTypeSummaryAdd ()
@@ -574,7 +675,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeBoolean,         "Don't use this format for references-to-type objects."},
     { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeBoolean,    "Type names are actually regular expressions."},
     { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeBoolean,    "If true, inline all child values into summary string."},
-    { LLDB_OPT_SET_2  , true, "format-string", 'f', required_argument, NULL, 0, eArgTypeFormatString,    "Format string used to display text and object contents."},
+    { LLDB_OPT_SET_2  , true, "format-string", 'f', required_argument, NULL, 0, eArgTypeSummaryString,    "Format string used to display text and object contents."},
     { LLDB_OPT_SET_2, false, "expand", 'e', no_argument, NULL, 0, eArgTypeBoolean,    "Expand aggregate data types to show children on separate lines."},
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
