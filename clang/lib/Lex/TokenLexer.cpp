@@ -121,6 +121,8 @@ void TokenLexer::destroy() {
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from Tokens.
 void TokenLexer::ExpandFunctionArguments() {
+  SourceManager &SM = PP.getSourceManager();
+
   llvm::SmallVector<Token, 128> ResultToks;
 
   // Loop through 'Tokens', expanding them into ResultToks.  Keep
@@ -191,7 +193,10 @@ void TokenLexer::ExpandFunctionArguments() {
     // Otherwise, this is a use of the argument.  Find out if there is a paste
     // (##) operator before or after the argument.
     bool PasteBefore =
-      !ResultToks.empty() && ResultToks.back().is(tok::hashhash);
+      !ResultToks.empty() && ResultToks.back().is(tok::hashhash) &&
+      // If the '##' came from expanding an argument,treat it as a normal token.
+      SM.isBeforeInSourceLocationOffset(ResultToks.back().getLocation(),
+                                        MacroStartSLocOffset);
     bool PasteAfter = i+1 != e && Tokens[i+1].is(tok::hashhash);
 
     // If it is not the LHS/RHS of a ## operator, we must pre-expand the
@@ -215,7 +220,6 @@ void TokenLexer::ExpandFunctionArguments() {
         ResultToks.append(ResultArgToks, ResultArgToks+NumToks);
 
         if(InstantiateLocStart.isValid()) {
-          SourceManager &SM = PP.getSourceManager();
           SourceLocation curInst =
               getMacroExpansionLocation(CurTok.getLocation());
           assert(curInst.isValid() &&
@@ -264,7 +268,6 @@ void TokenLexer::ExpandFunctionArguments() {
       ResultToks.append(ArgToks, ArgToks+NumToks);
 
       if(InstantiateLocStart.isValid()) {
-        SourceManager &SM = PP.getSourceManager();
         SourceLocation curInst =
             getMacroExpansionLocation(CurTok.getLocation());
         assert(curInst.isValid() &&
@@ -371,6 +374,8 @@ void TokenLexer::Lex(Token &Tok) {
     return PPCache.Lex(Tok);
   }
 
+  SourceManager &SM = PP.getSourceManager();
+
   // If this is the first token of the expanded result, we inherit spacing
   // properties later.
   bool isFirstToken = CurToken == 0;
@@ -382,7 +387,10 @@ void TokenLexer::Lex(Token &Tok) {
 
   // If this token is followed by a token paste (##) operator, paste the tokens!
   // Note that ## is a normal token when not expanding a macro.
-  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash) && Macro) {
+  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash) && Macro &&
+      // If the '##' came from expanding an argument,treat it as a normal token.
+      SM.isBeforeInSourceLocationOffset(Tokens[CurToken].getLocation(),
+                                        MacroStartSLocOffset)) {
     // When handling the microsoft /##/ extension, the final token is
     // returned by PasteTokens, not the pasted token.
     if (PasteTokens(Tok))
@@ -391,7 +399,6 @@ void TokenLexer::Lex(Token &Tok) {
     TokenIsFromPaste = true;
   }
 
-  SourceManager &SM = PP.getSourceManager();
   // The token's current location indicate where the token was lexed from.  We
   // need this information to compute the spelling of the token, but any
   // diagnostics for the expanded token should appear as if they came from
