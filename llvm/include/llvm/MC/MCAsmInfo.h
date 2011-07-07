@@ -284,6 +284,10 @@ namespace llvm {
     // use EmitLabelOffsetDifference.
     bool DwarfUsesLabelOffsetForRanges;
 
+    /// DwarfRegNumForCFI - True if dwarf register numbers are printed
+    /// instead of symbolic register names in .cfi_* directives.
+    bool DwarfRegNumForCFI;  // Defaults to false;
+
     //===--- CBE Asm Translation Table -----------------------------------===//
 
     const char *const *AsmTransCBE;          // Defaults to empty
@@ -474,6 +478,9 @@ namespace llvm {
     }
     bool doesDwarfUsesLabelOffsetForRanges() const {
       return DwarfUsesLabelOffsetForRanges;
+    }
+    bool useDwarfRegNumForCFI() const {
+      return DwarfRegNumForCFI;
     }
     const char *const *getAsmCBE() const {
       return AsmTransCBE;

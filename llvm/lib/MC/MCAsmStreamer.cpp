@@ -825,7 +825,7 @@ void MCAsmStreamer::EmitCFIEndProc() {
 }
 
 void MCAsmStreamer::EmitRegisterName(int64_t Register) {
-  if (InstPrinter) {
+  if (InstPrinter && !MAI.useDwarfRegNumForCFI()) {
     const TargetAsmInfo &asmInfo = getContext().getTargetAsmInfo();
     unsigned LLVMRegister = asmInfo.getLLVMRegNum(Register, true);
     InstPrinter->printRegName(OS, LLVMRegister);

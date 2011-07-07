@@ -78,6 +78,7 @@ MCAsmInfo::MCAsmInfo() {
   DwarfRequiresRelocationForSectionOffset = true;
   DwarfSectionOffsetDirective = 0;
   DwarfUsesLabelOffsetForRanges = true;
+  DwarfRegNumForCFI = false;
   HasMicrosoftFastStdCallMangling = false;
 
   AsmTransCBE = 0;
