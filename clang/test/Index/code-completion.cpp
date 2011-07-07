@@ -52,10 +52,21 @@ Z::operator int() const {
 // CHECK-MEMBER: CXXDestructor:{ResultType void}{Informative X::}{TypedText ~X}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: CXXDestructor:{ResultType void}{Informative Y::}{TypedText ~Y}{LeftParen (}{RightParen )}
 // CHECK-MEMBER: CXXDestructor:{ResultType void}{TypedText ~Z}{LeftParen (}{RightParen )}
+// CHECK-MEMBER: Completion contexts:
+// CHECK-MEMBER-NEXT: Dot member access
 
 // CHECK-OVERLOAD: NotImplemented:{ResultType int &}{Text overloaded}{LeftParen (}{Text Z z}{Comma , }{CurrentParameter int second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType float &}{Text overloaded}{LeftParen (}{Text int i}{Comma , }{CurrentParameter long second}{RightParen )}
 // CHECK-OVERLOAD: NotImplemented:{ResultType double &}{Text overloaded}{LeftParen (}{Text float f}{Comma , }{CurrentParameter int second}{RightParen )}
+// CHECK-OVERLOAD: Completion contexts:
+// CHECK-OVERLOAD-NEXT: Any type
+// CHECK-OVERLOAD-NEXT: Any value
+// CHECK-OVERLOAD-NEXT: Enum tag
+// CHECK-OVERLOAD-NEXT: Union tag
+// CHECK-OVERLOAD-NEXT: Struct tag
+// CHECK-OVERLOAD-NEXT: Class name
+// CHECK-OVERLOAD-NEXT: Nested name specifier
+// CHECK-OVERLOAD-NEXT: Objective-C interface
 
 // RUN: c-index-test -code-completion-at=%s:37:10 %s | FileCheck -check-prefix=CHECK-EXPR %s
 // CHECK-EXPR: NotImplemented:{TypedText int} (50)
@@ -65,3 +76,12 @@ Z::operator int() const {
 // CHECK-EXPR: FieldDecl:{ResultType float}{Text Y::}{TypedText member} (18)
 // CHECK-EXPR: CXXMethod:{ResultType void}{TypedText memfunc}{LeftParen (}{Optional {Placeholder int i}}{RightParen )} (37)
 // CHECK-EXPR: Namespace:{TypedText N}{Text ::} (75)
+// CHECK-EXPR: Completion contexts:
+// CHECK-EXPR-NEXT: Any type
+// CHECK-EXPR-NEXT: Any value
+// CHECK-EXPR-NEXT: Enum tag
+// CHECK-EXPR-NEXT: Union tag
+// CHECK-EXPR-NEXT: Struct tag
+// CHECK-EXPR-NEXT: Class name
+// CHECK-EXPR-NEXT: Nested name specifier
+// CHECK-EXPR-NEXT: Objective-C interface

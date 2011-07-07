@@ -185,12 +185,26 @@ public:
     /// is expected.
     CCC_ObjCMessageReceiver,
     /// \brief Code completion occurred on the right-hand side of a member
-    /// access expression.
+    /// access expression using the dot operator.
     ///
     /// The results of this completion are the members of the type being 
     /// accessed. The type itself is available via 
     /// \c CodeCompletionContext::getType().
-    CCC_MemberAccess,
+    CCC_DotMemberAccess,
+    /// \brief Code completion occurred on the right-hand side of a member
+    /// access expression using the arrow operator.
+    ///
+    /// The results of this completion are the members of the type being 
+    /// accessed. The type itself is available via 
+    /// \c CodeCompletionContext::getType().
+    CCC_ArrowMemberAccess,
+    /// \brief Code completion occurred on the right-hand side of an Objective-C
+    /// property access expression.
+    ///
+    /// The results of this completion are the members of the type being 
+    /// accessed. The type itself is available via 
+    /// \c CodeCompletionContext::getType().
+    CCC_ObjCPropertyAccess,
     /// \brief Code completion occurred after the "enum" keyword, to indicate
     /// an enumeration name.
     CCC_EnumTag,
@@ -235,6 +249,15 @@ public:
     /// \brief Code completion in a parenthesized expression, which means that
     /// we may also have types here in C and Objective-C (as well as in C++).
     CCC_ParenthesizedExpression,
+    /// \brief Code completion where an Objective-C instance message is expcted.
+    CCC_ObjCInstanceMessage,
+    /// \brief Code completion where an Objective-C class message is expected. 
+    CCC_ObjCClassMessage,
+    /// \brief Code completion where a superclass of an Objective-C class is
+    /// expected.
+    CCC_ObjCSuperclass,
+    /// \brief Code completion where an Objective-C category name is expected.
+    CCC_ObjCCategoryName,
     /// \brief An unknown context, in which we are recovering from a parsing 
     /// error and don't know which completions we should give.
     CCC_Recovery
@@ -256,7 +279,8 @@ public:
   
   /// \brief Construct a new code-completion context of the given kind.
   CodeCompletionContext(enum Kind Kind, QualType T) : Kind(Kind) { 
-    if (Kind == CCC_MemberAccess)
+    if (Kind == CCC_DotMemberAccess || Kind == CCC_ArrowMemberAccess ||
+        Kind == CCC_ObjCPropertyAccess)
       BaseType = T;
     else
       PreferredType = T;

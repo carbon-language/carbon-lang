@@ -235,6 +235,13 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   
   /// \brief Allocator used to store code completion results.
   clang::CodeCompletionAllocator CodeCompletionAllocator;
+  
+  /// \brief Context under which completion occurred.
+  enum clang::CodeCompletionContext::Kind ContextKind;
+  
+  /// \brief A bitfield representing the acceptable completions for the
+  /// current context.
+  unsigned long long Contexts;
 };
 
 /// \brief Tracks the number of code-completion result objects that are 
@@ -273,6 +280,177 @@ AllocatedCXCodeCompleteResults::~AllocatedCXCodeCompleteResults() {
   
 } // end extern "C"
 
+static unsigned long long getContextsForContextKind(
+                                          enum CodeCompletionContext::Kind kind, 
+                                                    Sema &S) {
+  unsigned long long contexts = 0;
+  switch (kind) {
+    case CodeCompletionContext::CCC_OtherWithMacros: {
+      //We can allow macros here, but we don't know what else is permissible
+      //So we'll say the only thing permissible are macros
+      contexts = CXCompletionContext_MacroName;
+      break;
+    }
+    case CodeCompletionContext::CCC_TopLevel:
+    case CodeCompletionContext::CCC_ObjCIvarList:
+    case CodeCompletionContext::CCC_ClassStructUnion:
+    case CodeCompletionContext::CCC_Type: {
+      contexts = CXCompletionContext_AnyType | 
+                 CXCompletionContext_ObjCInterface;
+      if (S.getLangOptions().CPlusPlus) {
+        contexts |= CXCompletionContext_EnumTag |
+                    CXCompletionContext_UnionTag |
+                    CXCompletionContext_StructTag |
+                    CXCompletionContext_ClassTag |
+                    CXCompletionContext_NestedNameSpecifier;
+      }
+      break;
+    }
+    case CodeCompletionContext::CCC_Statement: {
+      contexts = CXCompletionContext_AnyType |
+                 CXCompletionContext_ObjCInterface |
+                 CXCompletionContext_AnyValue;
+      if (S.getLangOptions().CPlusPlus) {
+        contexts |= CXCompletionContext_EnumTag |
+                    CXCompletionContext_UnionTag |
+                    CXCompletionContext_StructTag |
+                    CXCompletionContext_ClassTag |
+                    CXCompletionContext_NestedNameSpecifier;
+      }
+      break;
+    }
+    case CodeCompletionContext::CCC_Expression: {
+      contexts = CXCompletionContext_AnyValue;
+      if (S.getLangOptions().CPlusPlus) {
+        contexts |= CXCompletionContext_AnyType |
+                    CXCompletionContext_ObjCInterface |
+                    CXCompletionContext_EnumTag |
+                    CXCompletionContext_UnionTag |
+                    CXCompletionContext_StructTag |
+                    CXCompletionContext_ClassTag |
+                    CXCompletionContext_NestedNameSpecifier;
+      }
+      break;
+    }
+    case CodeCompletionContext::CCC_ObjCMessageReceiver: {
+      contexts = CXCompletionContext_ObjCObjectValue |
+                 CXCompletionContext_ObjCSelectorValue |
+                 CXCompletionContext_ObjCInterface;
+      if (S.getLangOptions().CPlusPlus) {
+        contexts |= CXCompletionContext_CXXClassTypeValue |
+                    CXCompletionContext_AnyType |
+                    CXCompletionContext_EnumTag |
+                    CXCompletionContext_UnionTag |
+                    CXCompletionContext_StructTag |
+                    CXCompletionContext_ClassTag |
+                    CXCompletionContext_NestedNameSpecifier;
+      }
+      break;
+    }
+    case CodeCompletionContext::CCC_DotMemberAccess: {
+      contexts = CXCompletionContext_DotMemberAccess;
+      break;
+    }
+    case CodeCompletionContext::CCC_ArrowMemberAccess: {
+      contexts = CXCompletionContext_ArrowMemberAccess;
+      break;
+    }
+    case CodeCompletionContext::CCC_ObjCPropertyAccess: {
+      contexts = CXCompletionContext_ObjCPropertyAccess;
+      break;
+    }
+    case CodeCompletionContext::CCC_EnumTag: {
+      contexts = CXCompletionContext_EnumTag |
+                 CXCompletionContext_NestedNameSpecifier;
+      break;
+    }
+    case CodeCompletionContext::CCC_UnionTag: {
+      contexts = CXCompletionContext_UnionTag |
+                 CXCompletionContext_NestedNameSpecifier;
+      break;
+    }
+    case CodeCompletionContext::CCC_ClassOrStructTag: {
+      contexts = CXCompletionContext_StructTag |
+                 CXCompletionContext_ClassTag |
+                 CXCompletionContext_NestedNameSpecifier;
+      break;
+    }
+    case CodeCompletionContext::CCC_ObjCProtocolName: {
+      contexts = CXCompletionContext_ObjCProtocol;
+      break;
+    }
+    case CodeCompletionContext::CCC_Namespace: {
+      contexts = CXCompletionContext_Namespace;
+      break;
+    }
+    case CodeCompletionContext::CCC_PotentiallyQualifiedName: {
+      contexts = CXCompletionContext_NestedNameSpecifier;
+      break;
+    }
+    case CodeCompletionContext::CCC_MacroNameUse: {
+      contexts = CXCompletionContext_MacroName;
+      break;
+    }
+    case CodeCompletionContext::CCC_NaturalLanguage: {
+      contexts = CXCompletionContext_NaturalLanguage;
+      break;
+    }
+    case CodeCompletionContext::CCC_SelectorName: {
+      contexts = CXCompletionContext_ObjCSelectorName;
+      break;
+    }
+    case CodeCompletionContext::CCC_ParenthesizedExpression: {
+      contexts = CXCompletionContext_AnyType |
+                 CXCompletionContext_ObjCInterface |
+                 CXCompletionContext_AnyValue;
+      if (S.getLangOptions().CPlusPlus) {
+        contexts |= CXCompletionContext_EnumTag |
+                    CXCompletionContext_UnionTag |
+                    CXCompletionContext_StructTag |
+                    CXCompletionContext_ClassTag |
+                    CXCompletionContext_NestedNameSpecifier;
+      }
+      break;
+    }
+    case CodeCompletionContext::CCC_ObjCInstanceMessage: {
+      contexts = CXCompletionContext_ObjCInstanceMessage;
+      break;
+    }
+    case CodeCompletionContext::CCC_ObjCClassMessage: {
+      contexts = CXCompletionContext_ObjCClassMessage;
+      break;
+    }
+    case CodeCompletionContext::CCC_ObjCSuperclass: {
+      contexts = CXCompletionContext_ObjCInterface;
+      break;
+    }
+    case CodeCompletionContext::CCC_ObjCCategoryName: {
+      contexts = CXCompletionContext_ObjCCategory;
+      break;
+    }
+    case CodeCompletionContext::CCC_Other:
+    case CodeCompletionContext::CCC_ObjCInterface:
+    case CodeCompletionContext::CCC_ObjCImplementation:
+    case CodeCompletionContext::CCC_Name:
+    case CodeCompletionContext::CCC_MacroName:
+    case CodeCompletionContext::CCC_PreprocessorExpression:
+    case CodeCompletionContext::CCC_PreprocessorDirective:
+    case CodeCompletionContext::CCC_TypeQualifiers: {
+      //Only Clang results should be accepted, so we'll set all of the other
+      //context bits to 0 (i.e. the empty set)
+      contexts = CXCompletionContext_Unexposed;
+      break;
+    }
+    case CodeCompletionContext::CCC_Recovery: {
+      //We don't know what the current context is, so we'll return unknown
+      //This is the equivalent of setting all of the other context bits
+      contexts = CXCompletionContext_Unknown;
+      break;
+    }
+  }
+  return contexts;
+}
+
 namespace {
   class CaptureCompletionResults : public CodeCompleteConsumer {
     AllocatedCXCodeCompleteResults &AllocatedResults;
@@ -298,6 +476,11 @@ namespace {
         R.CompletionString = StoredCompletion;
         StoredResults.push_back(R);
       }
+      
+      enum CodeCompletionContext::Kind kind = Context.getKind();
+      
+      AllocatedResults.ContextKind = kind;
+      AllocatedResults.Contexts = getContextsForContextKind(kind, S);
     }
     
     virtual void ProcessOverloadCandidates(Sema &S, unsigned CurrentArg,
@@ -538,6 +721,15 @@ clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *ResultsIn,
   return new CXStoredDiagnostic(Results->Diagnostics[Index], Results->LangOpts);
 }
 
+unsigned long long
+clang_codeCompleteGetContexts(CXCodeCompleteResults *ResultsIn) {
+  AllocatedCXCodeCompleteResults *Results
+    = static_cast<AllocatedCXCodeCompleteResults*>(ResultsIn);
+  if (!Results)
+    return 0;
+  
+  return Results->Contexts;
+}
 
 } // end extern "C"
 

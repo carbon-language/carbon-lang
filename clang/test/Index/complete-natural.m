@@ -11,8 +11,9 @@ char in_char = 'a';
 // RUN: c-index-test -code-completion-at=%s:4:32 %s > %t
 // RUN: echo "DONE" >> %t
 // RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t
-// CHECK-CC1-NOT: :
-// CHECK-CC1: DONE
+// CHECK-CC1: Completion contexts:
+// CHECK-CC1-NEXT: Natural language
+// CHECK-CC1-NEXT: DONE
 // RUN: c-index-test -code-completion-at=%s:5:18 %s > %t
 // RUN: echo "DONE" >> %t
 // RUN: FileCheck -check-prefix=CHECK-CC1 %s < %t

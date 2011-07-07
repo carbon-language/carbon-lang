@@ -46,7 +46,9 @@ bool CodeCompletionContext::wantConstructorResults() const {
   case CCC_ObjCImplementation:
   case CCC_ObjCIvarList:
   case CCC_ClassStructUnion:
-  case CCC_MemberAccess:
+  case CCC_DotMemberAccess:
+  case CCC_ArrowMemberAccess:
+  case CCC_ObjCPropertyAccess:
   case CCC_EnumTag:
   case CCC_UnionTag:
   case CCC_ClassOrStructTag:
@@ -64,6 +66,10 @@ bool CodeCompletionContext::wantConstructorResults() const {
   case CCC_TypeQualifiers:
   case CCC_Other:
   case CCC_OtherWithMacros:
+  case CCC_ObjCInstanceMessage:
+  case CCC_ObjCClassMessage:
+  case CCC_ObjCSuperclass:
+  case CCC_ObjCCategoryName:
     return false;
   }
   

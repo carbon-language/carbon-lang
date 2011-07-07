@@ -182,6 +182,10 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
     // all types are available due to functional casts.
     if (LangOpts.CPlusPlus || isa<ObjCInterfaceDecl>(ND))
       Contexts |= (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
+    
+    // In Objective-C, you can only be a subclass of another Objective-C class
+    if (isa<ObjCInterfaceDecl>(ND))
+      Contexts |= (1 << (CodeCompletionContext::CCC_ObjCSuperclass - 1));
 
     // Deal with tag names.
     if (isa<EnumDecl>(ND)) {
@@ -208,6 +212,8 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
              | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1));
   } else if (isa<ObjCProtocolDecl>(ND)) {
     Contexts = (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1));
+  } else if (isa<ObjCCategoryDecl>(ND)) {
+    Contexts = (1 << (CodeCompletionContext::CCC_ObjCCategoryName - 1));
   } else if (isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) {
     Contexts = (1 << (CodeCompletionContext::CCC_Namespace - 1));
    
@@ -1902,7 +1908,7 @@ namespace {
   /// results from an ASTUnit with the code-completion results provided to it,
   /// then passes the result on to 
   class AugmentedCodeCompleteConsumer : public CodeCompleteConsumer {
-    unsigned NormalContexts;
+    unsigned long long NormalContexts;
     ASTUnit &AST;
     CodeCompleteConsumer &Next;
     
@@ -1916,22 +1922,24 @@ namespace {
       // Compute the set of contexts in which we will look when we don't have
       // any information about the specific context.
       NormalContexts 
-        = (1 << (CodeCompletionContext::CCC_TopLevel - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCInterface - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCImplementation - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCIvarList - 1))
-        | (1 << (CodeCompletionContext::CCC_Statement - 1))
-        | (1 << (CodeCompletionContext::CCC_Expression - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
-        | (1 << (CodeCompletionContext::CCC_MemberAccess - 1))
-        | (1 << (CodeCompletionContext::CCC_ObjCProtocolName - 1))
-        | (1 << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
-        | (1 << (CodeCompletionContext::CCC_Recovery - 1));
+        = (1LL << (CodeCompletionContext::CCC_TopLevel - 1))
+        | (1LL << (CodeCompletionContext::CCC_ObjCInterface - 1))
+        | (1LL << (CodeCompletionContext::CCC_ObjCImplementation - 1))
+        | (1LL << (CodeCompletionContext::CCC_ObjCIvarList - 1))
+        | (1LL << (CodeCompletionContext::CCC_Statement - 1))
+        | (1LL << (CodeCompletionContext::CCC_Expression - 1))
+        | (1LL << (CodeCompletionContext::CCC_ObjCMessageReceiver - 1))
+        | (1LL << (CodeCompletionContext::CCC_DotMemberAccess - 1))
+        | (1LL << (CodeCompletionContext::CCC_ArrowMemberAccess - 1))
+        | (1LL << (CodeCompletionContext::CCC_ObjCPropertyAccess - 1))
+        | (1LL << (CodeCompletionContext::CCC_ObjCProtocolName - 1))
+        | (1LL << (CodeCompletionContext::CCC_ParenthesizedExpression - 1))
+        | (1LL << (CodeCompletionContext::CCC_Recovery - 1));
 
       if (AST.getASTContext().getLangOptions().CPlusPlus)
-        NormalContexts |= (1 << (CodeCompletionContext::CCC_EnumTag - 1))
-                    | (1 << (CodeCompletionContext::CCC_UnionTag - 1))
-                    | (1 << (CodeCompletionContext::CCC_ClassOrStructTag - 1));
+        NormalContexts |= (1LL << (CodeCompletionContext::CCC_EnumTag - 1))
+                   | (1LL << (CodeCompletionContext::CCC_UnionTag - 1))
+                   | (1LL << (CodeCompletionContext::CCC_ClassOrStructTag - 1));
     }
     
     virtual void ProcessCodeCompleteResults(Sema &S, 
@@ -1969,12 +1977,15 @@ static void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_Statement:
   case CodeCompletionContext::CCC_Expression:
   case CodeCompletionContext::CCC_ObjCMessageReceiver:
-  case CodeCompletionContext::CCC_MemberAccess:
+  case CodeCompletionContext::CCC_DotMemberAccess:
+  case CodeCompletionContext::CCC_ArrowMemberAccess:
+  case CodeCompletionContext::CCC_ObjCPropertyAccess:
   case CodeCompletionContext::CCC_Namespace:
   case CodeCompletionContext::CCC_Type:
   case CodeCompletionContext::CCC_Name:
   case CodeCompletionContext::CCC_PotentiallyQualifiedName:
   case CodeCompletionContext::CCC_ParenthesizedExpression:
+  case CodeCompletionContext::CCC_ObjCSuperclass:
     break;
     
   case CodeCompletionContext::CCC_EnumTag:
@@ -1993,6 +2004,9 @@ static void CalculateHiddenNames(const CodeCompletionContext &Context,
   case CodeCompletionContext::CCC_TypeQualifiers:
   case CodeCompletionContext::CCC_Other:
   case CodeCompletionContext::CCC_OtherWithMacros:
+  case CodeCompletionContext::CCC_ObjCInstanceMessage:
+  case CodeCompletionContext::CCC_ObjCClassMessage:
+  case CodeCompletionContext::CCC_ObjCCategoryName:
     // We're looking for nothing, or we're looking for names that cannot
     // be hidden.
     return;

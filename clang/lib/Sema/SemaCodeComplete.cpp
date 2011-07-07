@@ -3244,8 +3244,23 @@ void Sema::CodeCompleteMemberReferenceExpr(Scope *S, ExprTy *BaseE,
       return;
   }
   
+  enum CodeCompletionContext::Kind contextKind;
+  
+  if (IsArrow) {
+    contextKind = CodeCompletionContext::CCC_ArrowMemberAccess;
+  }
+  else {
+    if (BaseType->isObjCObjectPointerType() ||
+        BaseType->isObjCObjectOrInterfaceType()) {
+      contextKind = CodeCompletionContext::CCC_ObjCPropertyAccess;
+    }
+    else {
+      contextKind = CodeCompletionContext::CCC_DotMemberAccess;
+    }
+  }
+  
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                  CodeCompletionContext(CodeCompletionContext::CCC_MemberAccess,
+                  CodeCompletionContext(contextKind,
                                         BaseType),
                         &ResultBuilder::IsMember);
   Results.EnterNewScope();
@@ -3471,10 +3486,17 @@ void Sema::CodeCompleteCase(Scope *S) {
   }
   Results.ExitScope();
 
-  if (CodeCompleter->includeMacros())
+  //We need to make sure we're setting the right context, 
+  //so only say we include macros if the code completer says we do
+  enum CodeCompletionContext::Kind kind = CodeCompletionContext::CCC_Other;
+  if (CodeCompleter->includeMacros()) {
     AddMacroResults(PP, Results);
+    kind = CodeCompletionContext::CCC_OtherWithMacros;
+  }
+  
+  
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_OtherWithMacros,
+                            kind,
                             Results.data(),Results.size());
 }
 
@@ -4934,7 +4956,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
                                         bool AtArgumentExpression,
                                         bool IsSuper) {
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompletionContext::CCC_Other);
+                        CodeCompletionContext::CCC_ObjCClassMessage);
   AddClassMessageCompletions(*this, S, Receiver, SelIdents, NumSelIdents, 
                              AtArgumentExpression, IsSuper, Results);
   
@@ -4954,7 +4976,7 @@ void Sema::CodeCompleteObjCClassMessage(Scope *S, ParsedType Receiver,
   }
 
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_ObjCClassMessage,
                             Results.data(), Results.size());
 }
 
@@ -4997,7 +5019,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
 
   // Build the set of methods we can see.
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompletionContext::CCC_Other);
+                        CodeCompletionContext::CCC_ObjCInstanceMessage);
   Results.EnterNewScope();
 
   // If this is a send-to-super, try to add the special "super" send 
@@ -5110,7 +5132,7 @@ void Sema::CodeCompleteObjCInstanceMessage(Scope *S, ExprTy *Receiver,
   }
   
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_ObjCInstanceMessage,
                             Results.data(),Results.size());
 }
 
@@ -5301,8 +5323,7 @@ void Sema::CodeCompleteObjCInterfaceDecl(Scope *S) {
                       false, Results);
 
   Results.ExitScope();
-  // FIXME: Add a special context for this, use cached global completion 
-  // results.
+  // FIXME: Use cached global completion results.
   HandleCodeCompleteResults(this, CodeCompleter,
                             CodeCompletionContext::CCC_Other,
                             Results.data(),Results.size());
@@ -5311,7 +5332,7 @@ void Sema::CodeCompleteObjCInterfaceDecl(Scope *S) {
 void Sema::CodeCompleteObjCSuperclass(Scope *S, IdentifierInfo *ClassName,
                                       SourceLocation ClassNameLoc) { 
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompletionContext::CCC_Other);
+                        CodeCompletionContext::CCC_ObjCSuperclass);
   Results.EnterNewScope();
   
   // Make sure that we ignore the class we're currently defining.
@@ -5325,10 +5346,9 @@ void Sema::CodeCompleteObjCSuperclass(Scope *S, IdentifierInfo *ClassName,
                       false, Results);
 
   Results.ExitScope();
-  // FIXME: Add a special context for this, use cached global completion 
-  // results.
+  // FIXME: Use cached global completion results.
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_ObjCSuperclass,
                             Results.data(),Results.size());
 }
 
@@ -5342,8 +5362,7 @@ void Sema::CodeCompleteObjCImplementationDecl(Scope *S) {
                       true, Results);
 
   Results.ExitScope();
-  // FIXME: Add a special context for this, use cached global completion 
-  // results.
+  // FIXME: Use cached global completion results.
   HandleCodeCompleteResults(this, CodeCompleter, 
                             CodeCompletionContext::CCC_Other,
                             Results.data(),Results.size());
@@ -5355,7 +5374,7 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
   typedef CodeCompletionResult Result;
   
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompletionContext::CCC_Other);
+                        CodeCompletionContext::CCC_ObjCCategoryName);
   
   // Ignore any categories we find that have already been implemented by this
   // interface.
@@ -5379,7 +5398,7 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_ObjCCategoryName,
                             Results.data(),Results.size());  
 }
 
@@ -5398,7 +5417,7 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
     return CodeCompleteObjCInterfaceCategory(S, ClassName, ClassNameLoc);
     
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompletionContext::CCC_Other);
+                        CodeCompletionContext::CCC_ObjCCategoryName);
   
   // Add all of the categories that have have corresponding interface 
   // declarations in this class and any of its superclasses, except for
@@ -5419,7 +5438,7 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, 
-                            CodeCompletionContext::CCC_Other,
+                            CodeCompletionContext::CCC_ObjCCategoryName,
                             Results.data(),Results.size());  
 }
 
