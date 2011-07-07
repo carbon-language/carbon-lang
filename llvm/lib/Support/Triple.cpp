@@ -282,7 +282,8 @@ Triple::ArchType Triple::ParseArch(StringRef ArchName) {
     return cellspu;
   else if (ArchName == "msp430")
     return msp430;
-  else if (ArchName == "mips" || ArchName == "mipsallegrex")
+  else if (ArchName == "mips" || ArchName == "mipseb" ||
+           ArchName == "mipsallegrex")
     return mips;
   else if (ArchName == "mipsel" || ArchName == "mipsallegrexel" ||
            ArchName == "psp")
