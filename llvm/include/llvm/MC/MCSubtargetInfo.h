@@ -34,7 +34,7 @@ class MCSubtargetInfo {
   const unsigned *ForwardingPathes;    // Forwarding pathes
   unsigned NumFeatures;                // Number of processor features
   unsigned NumProcs;                   // Number of processors
-  unsigned FeatureBits;                // Feature bits for current CPU
+  uint64_t FeatureBits;                // Feature bits for current CPU
 
 public:
   void InitMCSubtargetInfo(StringRef CPU, StringRef FS,
