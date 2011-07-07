@@ -327,9 +327,11 @@ static void ParseProgName(llvm::SmallVectorImpl<const char *> &ArgVector,
 
   std::string IgnoredError;
   if (llvm::TargetRegistry::lookupTarget(Prefix, IgnoredError)) {
-    ArgVector.insert(&ArgVector[1],
-      SaveStringInSet(SavedStrings, Prefix));
-    ArgVector.insert(&ArgVector[1],
+    llvm::SmallVectorImpl<const char *>::iterator it = ArgVector.begin();
+    if (it != ArgVector.end())
+      ++it;
+    ArgVector.insert(it, SaveStringInSet(SavedStrings, Prefix));
+    ArgVector.insert(it,
       SaveStringInSet(SavedStrings, std::string("-ccc-host-triple")));
   }
 }
