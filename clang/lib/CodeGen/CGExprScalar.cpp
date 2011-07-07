@@ -1677,9 +1677,11 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 void ScalarExprEmitter::EmitUndefinedBehaviorIntegerDivAndRemCheck(
      					    const BinOpInfo &Ops, 
 				     	    llvm::Value *Zero, bool isDiv) {
-  llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow", CGF.CurFn);
+  llvm::Function::iterator insertPt = Builder.GetInsertBlock();
   llvm::BasicBlock *contBB =
-    CGF.createBasicBlock(isDiv ? "div.cont" : "rem.cont", CGF.CurFn);
+    CGF.createBasicBlock(isDiv ? "div.cont" : "rem.cont", CGF.CurFn,
+                         llvm::next(insertPt));
+  llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow", CGF.CurFn);
 
   const llvm::IntegerType *Ty = cast<llvm::IntegerType>(Zero->getType());
 
@@ -1709,9 +1711,11 @@ Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
     if (Ops.Ty->isIntegerType())
       EmitUndefinedBehaviorIntegerDivAndRemCheck(Ops, Zero, true);
     else if (Ops.Ty->isRealFloatingType()) {
+      llvm::Function::iterator insertPt = Builder.GetInsertBlock();
+      llvm::BasicBlock *DivCont = CGF.createBasicBlock("div.cont", CGF.CurFn,
+                                                       llvm::next(insertPt));
       llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow",
                                                           CGF.CurFn);
-      llvm::BasicBlock *DivCont = CGF.createBasicBlock("div.cont", CGF.CurFn);
       CGF.Builder.CreateCondBr(Builder.CreateFCmpOEQ(Ops.RHS, Zero), 
                                overflowBB, DivCont);
       EmitOverflowBB(overflowBB);
@@ -1778,8 +1782,10 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 
   // Branch in case of overflow.
   llvm::BasicBlock *initialBB = Builder.GetInsertBlock();
+  llvm::Function::iterator insertPt = initialBB;
+  llvm::BasicBlock *continueBB = CGF.createBasicBlock("nooverflow", CGF.CurFn,
+                                                      llvm::next(insertPt));
   llvm::BasicBlock *overflowBB = CGF.createBasicBlock("overflow", CGF.CurFn);
-  llvm::BasicBlock *continueBB = CGF.createBasicBlock("nooverflow", CGF.CurFn);
 
   Builder.CreateCondBr(overflow, overflowBB, continueBB);
 
