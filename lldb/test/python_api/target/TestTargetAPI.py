@@ -134,6 +134,7 @@ class TargetAPITestCase(TestBase):
         self.assertTrue(num == 1 and list.GetSize() == 1)
 
         for sc in list:
+            self.assertTrue(sc.GetModule().GetFileSpec().GetFilename() == exe_name)
             self.assertTrue(sc.GetSymbol().GetName() == 'c')                
 
     def get_description(self):
