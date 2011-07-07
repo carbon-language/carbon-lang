@@ -33,6 +33,23 @@ class TargetAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    def test_find_functions_with_dsym(self):
+        """Exercise SBTaget.FindFunctions() API."""
+        d = {'EXE': 'a.out'}
+        self.buildDsym(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.find_functions('a.out')
+
+    @python_api_test
+    def test_find_functions_with_dwarf(self):
+        """Exercise SBTarget.FindFunctions() API."""
+        d = {'EXE': 'b.out'}
+        self.buildDwarf(dictionary=d)
+        self.setTearDownCleanup(dictionary=d)
+        self.find_functions('b.out')
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_get_description_with_dsym(self):
         """Exercise SBTaget.GetDescription() API."""
         self.buildDsym()
@@ -88,6 +105,7 @@ class TargetAPITestCase(TestBase):
         value_list = target.FindGlobalVariables('my_global_var_of_char_type', 3)
         self.assertTrue(value_list.GetSize() == 1)
         my_global_var = value_list.GetValueAtIndex(0)
+        self.assertTrue(my_global_var)
         self.expect(my_global_var.GetName(), exe=False,
             startstr = "my_global_var_of_char_type")
         self.expect(my_global_var.GetTypeName(), exe=False,
@@ -102,6 +120,21 @@ class TargetAPITestCase(TestBase):
                 self.assertTrue(value_list.GetSize() == 1)
                 self.assertTrue(value_list.GetValueAtIndex(0).GetValue() == "'X'")
                 break
+
+    def find_functions(self, exe_name):
+        """Exercise SBTaget.FindFunctions() API."""
+        exe = os.path.join(os.getcwd(), exe_name)
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        list = lldb.SBSymbolContextList()
+        num = target.FindFunctions('c', lldb.eFunctionNameTypeAuto, False, list)
+        self.assertTrue(num == 1 and list.GetSize() == 1)
+
+        for sc in list:
+            self.assertTrue(sc.GetSymbol().GetName() == 'c')                
 
     def get_description(self):
         """Exercise SBTaget.GetDescription() API."""
