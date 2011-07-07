@@ -356,8 +356,6 @@ def ast_dump_xml : Flag<"-ast-dump-xml">,
   HelpText<"Build ASTs and then debug dump them in a verbose XML format">;
 def ast_view : Flag<"-ast-view">,
   HelpText<"Build ASTs and view them with GraphViz">;
-def boostcon : Flag<"-boostcon">,
-  HelpText<"BoostCon workshop mode">;
 def print_decl_contexts : Flag<"-print-decl-contexts">,
   HelpText<"Print DeclContexts and their Decls">;
 def emit_pth : Flag<"-emit-pth">,

@@ -567,7 +567,6 @@
 		BF9FEE321225E898003A8B71 /* ItaniumCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ItaniumCXXABI.cpp; path = lib/CodeGen/ItaniumCXXABI.cpp; sourceTree = "<group>"; };
 		BF9FEE341225E8B1003A8B71 /* MicrosoftCXXABI.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MicrosoftCXXABI.cpp; path = lib/CodeGen/MicrosoftCXXABI.cpp; sourceTree = "<group>"; };
 		BF9FEE361225E8CF003A8B71 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README.txt; path = lib/CodeGen/README.txt; sourceTree = "<group>"; };
-		BF9FEE371225E925003A8B71 /* BoostConAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BoostConAction.cpp; path = lib/Frontend/BoostConAction.cpp; sourceTree = "<group>"; };
 		BF9FEE451225EA24003A8B71 /* DelayedDiagnostic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DelayedDiagnostic.h; path = clang/Sema/DelayedDiagnostic.h; sourceTree = "<group>"; };
 		BF9FEE511226FE9F003A8B71 /* ParseAST.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ParseAST.cpp; path = lib/Parse/ParseAST.cpp; sourceTree = "<group>"; };
 		BF9FEE531226FEC1003A8B71 /* RAIIObjectsForParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RAIIObjectsForParser.h; path = lib/Parse/RAIIObjectsForParser.h; sourceTree = "<group>"; };
@@ -906,7 +905,6 @@
 		352246E00F5C6BC000D0D279 /* Frontend */ = {
 			isa = PBXGroup;
 			children = (
-				BF9FEE371225E925003A8B71 /* BoostConAction.cpp */,
 				1AFDD8701161085D00AE030A /* ASTMerge.cpp */,
 				9012911C1048068D0083456D /* ASTUnit.cpp */,
 				1A2A54A50FD1DD1C00F4CE45 /* ASTConsumers.cpp */,

@@ -97,12 +97,6 @@ public:
   virtual bool hasCodeCompletionSupport() const { return true; }
 };
 
-class BoostConAction : public SyntaxOnlyAction {
-protected:
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         llvm::StringRef InFile);
-};
-
 /**
  * \brief Frontend action adaptor that merges ASTs together.
  *
