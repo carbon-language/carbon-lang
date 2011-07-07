@@ -802,6 +802,11 @@ bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
         return false;
     }
   }
+  // If DebugLoc does not match then two dbg.values are not identical.
+  if (isDebugValue())
+    if (!getDebugLoc().isUnknown() && !Other->getDebugLoc().isUnknown()
+        && getDebugLoc() != Other->getDebugLoc())
+      return false;
   return true;
 }
 
