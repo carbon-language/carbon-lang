@@ -27,7 +27,7 @@
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionGroupArchitecture.h"
 #include "lldb/Interpreter/OptionGroupFile.h"
-#include "lldb/Interpreter/OptionGroupFormat.h"
+#include "lldb/Interpreter/OptionGroupVariable.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Interpreter/OptionGroupUInt64.h"
 #include "lldb/Interpreter/OptionGroupUUID.h"
@@ -417,13 +417,13 @@ public:
                        NULL,
                        0),
         m_option_group (interpreter),
-        m_format_options (eFormatDefault, 0, false),
+        m_option_variable (false), // Don't include frame options
         m_option_compile_units    (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypePath, "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
         m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'s', 0, eArgTypePath, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
         m_varobj_options()
     {
         m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
-        m_option_group.Append (&m_format_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_option_variable, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_compile_units, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
         m_option_group.Append (&m_option_shared_libraries, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
         m_option_group.Finalize();
@@ -447,19 +447,39 @@ public:
                 for (size_t idx = 0; idx < argc; ++idx)
                 {
                     VariableList global_var_list;
-                    const char *global_var_name = args.GetArgumentAtIndex(idx);
-                    const uint32_t matches = exe_ctx.target->GetImages().FindGlobalVariables (global_var_name,
-                                                                                              true, 
-                                                                                              UINT32_MAX, 
-                                                                                              global_var_list);
-                    
-                    if (matches == 0)
+                    const char *arg = args.GetArgumentAtIndex(idx);
+                    uint32_t matches = 0;
+                    if (m_option_variable.use_regex)
                     {
-                        result.GetErrorStream().Printf ("error: can't find global variable '%s'\n", 
-                                                        global_var_name);
+                        RegularExpression regex(arg);
+                        if (!regex.IsValid ())
+                        {
+                            result.GetErrorStream().Printf ("error: invalid regular expression: '%s'\n", arg);
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                        matches = exe_ctx.target->GetImages().FindGlobalVariables (regex,
+                                                                                   true, 
+                                                                                   UINT32_MAX, 
+                                                                                   global_var_list);
                     }
                     else
                     {
+                        matches = exe_ctx.target->GetImages().FindGlobalVariables (arg,
+                                                                                   true, 
+                                                                                   UINT32_MAX, 
+                                                                                   global_var_list);
+                    }
+                    
+                    if (matches == 0)
+                    {
+                        result.GetErrorStream().Printf ("error: can't find global variable '%s'\n", arg);
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                    else
+                    {
+                        Stream &s = result.GetOutputStream();
                         for (uint32_t global_idx=0; global_idx<matches; ++global_idx)
                         {
                             VariableSP var_sp (global_var_list.GetVariableAtIndex(global_idx));
@@ -469,19 +489,48 @@ public:
                                 
                                 if (valobj_sp)
                                 {
-                                    const Format format = m_format_options.GetFormat ();
+                                    if (m_option_variable.format != eFormatDefault)
+                                        valobj_sp->SetFormat (m_option_variable.format);
+
+                                    switch (var_sp->GetScope())
+                                    {
+                                        case eValueTypeVariableGlobal:
+                                            if (m_option_variable.show_scope)
+                                                s.PutCString("GLOBAL: ");
+                                            break;
+                                            
+                                        case eValueTypeVariableStatic:
+                                            if (m_option_variable.show_scope)
+                                                s.PutCString("STATIC: ");
+                                            break;
+                                            
+                                        case eValueTypeVariableArgument:
+                                            if (m_option_variable.show_scope)
+                                                s.PutCString("   ARG: ");
+                                            break;
+                                            
+                                        case eValueTypeVariableLocal:
+                                            if (m_option_variable.show_scope)
+                                                s.PutCString(" LOCAL: ");
+                                            break;
+                                            
+                                        default:
+                                            break;
+                                    }
+
+                                    if (m_option_variable.show_decl && var_sp->GetDeclaration ().GetFile())
+                                    {
+                                        var_sp->GetDeclaration ().DumpStopContext (&s, false);
+                                        s.PutCString (": ");
+                                    }
+
+                                    const Format format = m_option_variable.format;
                                     if (format != eFormatDefault)
                                         valobj_sp->SetFormat (format);
                                     
-//                                    if (m_format_options.show_decl && var_sp->GetDeclaration ().GetFile())
-//                                    {
-//                                        var_sp->GetDeclaration ().DumpStopContext (&s, false);
-//                                        s.PutCString (": ");
-//                                    }
-                                    
-                                    ValueObject::DumpValueObject (result.GetOutputStream(), 
+                                    ValueObject::DumpValueObject (s, 
                                                                   valobj_sp.get(), 
-                                                                  global_var_name, 
+                                                                  var_sp->GetName().GetCString(), 
                                                                   m_varobj_options.ptr_depth, 
                                                                   0, 
                                                                   m_varobj_options.max_depth, 
@@ -520,7 +569,7 @@ public:
     
 protected:
     OptionGroupOptions m_option_group;
-    OptionGroupFormat m_format_options;
+    OptionGroupVariable m_option_variable;
     OptionGroupFileList m_option_compile_units;
     OptionGroupFileList m_option_shared_libraries;
     OptionGroupValueObjectDisplay m_varobj_options;

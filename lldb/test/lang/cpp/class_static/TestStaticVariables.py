@@ -60,9 +60,11 @@ class StaticVariableTestCase(TestBase):
         # On Mac OS X, gcc 4.2 emits the wrong debug info for A::g_points.
         slist = ['(PointType [2]) g_points', 'A::g_points']
 
+# global variables are no longer displayed with the "frame variable" command. 
+# add tests for the "target variable" command soon
         # 'frame variable -G' finds and displays global variable(s) by name.
-        self.expect('frame variable -G g_points', VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = slist)
+        # self.expect('frame variable -G g_points', VARIABLES_DISPLAYED_CORRECTLY,
+        #     substrs = slist)
 
         # A::g_points is an array of two elements.
         if sys.platform.startswith("darwin") and self.getCompiler() in ['clang', 'llvm-gcc']:
