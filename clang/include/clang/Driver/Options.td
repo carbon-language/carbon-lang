@@ -112,10 +112,12 @@ def ccc_print_phases : Flag<"-ccc-print-phases">, CCCDebugOpt,
 def ccc_print_bindings : Flag<"-ccc-print-bindings">, CCCDebugOpt,
   HelpText<"Show bindings of tools to actions">;
 
-def ccc_arrmt_check : Flag<"-ccc-arrmt-check">, CCCDriverOpt,
+def ccc_arcmt_check : Flag<"-ccc-arcmt-check">, CCCDriverOpt,
   HelpText<"Check for ARC migration issues that need manual handling">;
-def ccc_arrmt_modify : Flag<"-ccc-arrmt-modify">, CCCDriverOpt,
+def ccc_arcmt_modify : Flag<"-ccc-arcmt-modify">, CCCDriverOpt,
   HelpText<"Apply modifications to files to conform to ARC">;
+def ccc_arrmt_check : Flag<"-ccc-arrmt-check">, Alias<ccc_arcmt_check>;
+def ccc_arrmt_modify : Flag<"-ccc-arrmt-modify">, Alias<ccc_arcmt_modify>;
 
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<"-ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;

@@ -1422,15 +1422,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddLastArg(CmdArgs, options::OPT_working_directory);
 
   if (!Args.hasArg(options::OPT_fno_objc_arc)) {
-    if (const Arg *A = Args.getLastArg(options::OPT_ccc_arrmt_check,
-                                       options::OPT_ccc_arrmt_modify)) {
+    if (const Arg *A = Args.getLastArg(options::OPT_ccc_arcmt_check,
+                                       options::OPT_ccc_arcmt_modify)) {
       switch (A->getOption().getID()) {
       default:
         llvm_unreachable("missed a case");
-      case options::OPT_ccc_arrmt_check:
+      case options::OPT_ccc_arcmt_check:
         CmdArgs.push_back("-arcmt-check");
         break;
-      case options::OPT_ccc_arrmt_modify:
+      case options::OPT_ccc_arcmt_modify:
         CmdArgs.push_back("-arcmt-modify");
         break;
       }
