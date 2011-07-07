@@ -14,10 +14,18 @@
 #ifndef ARMMCTARGETDESC_H
 #define ARMMCTARGETDESC_H
 
+#include <string>
+
 namespace llvm {
 class Target;
+class StringRef;
 
 extern Target TheARMTarget, TheThumbTarget;
+
+namespace ARM_MC {
+  std::string ParseARMTriple(StringRef TT, bool &IsThumb);
+}
+
 } // End llvm namespace
 
 // Defines symbolic names for ARM registers.  This defines a mapping from

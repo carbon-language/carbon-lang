@@ -37,7 +37,7 @@ StrictAlign("arm-strict-align", cl::Hidden,
             cl::desc("Disallow all unaligned memory accesses"));
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS, bool isT)
+                           const std::string &FS)
   : ARMGenSubtargetInfo()
   , ARMArchVersion(V4)
   , ARMProcFamily(Others)
@@ -46,8 +46,8 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , SlowFPVMLx(false)
   , HasVMLxForwarding(false)
   , SlowFPBrcc(false)
-  , IsThumb(isT)
-  , ThumbMode(Thumb1)
+  , IsThumb(false)
+  , HasThumb2(false)
   , NoARM(false)
   , PostRAScheduler(false)
   , IsR9Reserved(ReserveR9)
@@ -68,65 +68,8 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , TargetTriple(TT)
   , TargetABI(ARM_ABI_APCS) {
   // Determine default and user specified characteristics
-
-  // When no arch is specified either by CPU or by attributes, make the default
-  // ARMv4T.
-  const char *ARMArchFeature = "";
   if (CPUString.empty())
     CPUString = "generic";
-  if (CPUString == "generic" && (FS.empty() || FS == "generic")) {
-    ARMArchVersion = V4T;
-    ARMArchFeature = "+v4t";
-  }
-
-  // Set the boolean corresponding to the current target triple, or the default
-  // if one cannot be determined, to true.
-  unsigned Len = TT.length();
-  unsigned Idx = 0;
-
-  if (Len >= 5 && TT.substr(0, 4) == "armv")
-    Idx = 4;
-  else if (Len >= 6 && TT.substr(0, 5) == "thumb") {
-    IsThumb = true;
-    if (Len >= 7 && TT[5] == 'v')
-      Idx = 6;
-  }
-  if (Idx) {
-    unsigned SubVer = TT[Idx];
-    if (SubVer >= '7' && SubVer <= '9') {
-      ARMArchVersion = V7A;
-      ARMArchFeature = "+v7a";
-      if (Len >= Idx+2 && TT[Idx+1] == 'm') {
-        ARMArchVersion = V7M;
-        ARMArchFeature = "+v7m";
-      } else if (Len >= Idx+3 && TT[Idx+1] == 'e'&& TT[Idx+2] == 'm') {
-        ARMArchVersion = V7EM;
-        ARMArchFeature = "+v7em";
-      }
-    } else if (SubVer == '6') {
-      ARMArchVersion = V6;
-      ARMArchFeature = "+v6";
-      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2') {
-        ARMArchVersion = V6T2;
-        ARMArchFeature = "+v6t2";
-      }
-    } else if (SubVer == '5') {
-      ARMArchVersion = V5T;
-      ARMArchFeature = "+v5t";
-      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e') {
-        ARMArchVersion = V5TE;
-        ARMArchFeature = "+v5te";
-      }
-    } else if (SubVer == '4') {
-      if (Len >= Idx+2 && TT[Idx+1] == 't') {
-        ARMArchVersion = V4T;
-        ARMArchFeature = "+v4t";
-      } else {
-        ARMArchVersion = V4;
-        ARMArchFeature = "";
-      }
-    }
-  }
 
   if (TT.find("eabi") != std::string::npos)
     TargetABI = ARM_ABI_AAPCS;
@@ -134,24 +77,26 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   // Insert the architecture feature derived from the target triple into the
   // feature string. This is important for setting features that are implied
   // based on the architecture version.
-  std::string FSWithArch = std::string(ARMArchFeature);
-  if (FSWithArch.empty())
-    FSWithArch = FS;
-  else if (!FS.empty())
-    FSWithArch = FSWithArch + "," + FS;
-  ParseSubtargetFeatures(FSWithArch, CPUString);
+  std::string ArchFS = ARM_MC::ParseARMTriple(TT, IsThumb);
+  if (!FS.empty()) {
+    if (!ArchFS.empty())
+      ArchFS = ArchFS + "," + FS;
+    else
+      ArchFS = FS;
+  }
+
+  ParseSubtargetFeatures(ArchFS, CPUString);
+
+  // Thumb2 implies at least V6T2. FIXME: Fix tests to explicitly specify a
+  // ARM version or CPU and then remove this.
+  if (ARMArchVersion < V6T2 && hasThumb2())
+    ARMArchVersion = V6T2;
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
 
   // After parsing Itineraries, set ItinData.IssueWidth.
   computeIssueWidth();
-
-  // Thumb2 implies at least V6T2.
-  if (ARMArchVersion >= V6T2)
-    ThumbMode = Thumb2;
-  else if (ThumbMode >= Thumb2)
-    ARMArchVersion = V6T2;
 
   if (isAAPCS_ABI())
     stackAlignment = 8;

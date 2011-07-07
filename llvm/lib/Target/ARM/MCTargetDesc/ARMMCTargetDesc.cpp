@@ -72,3 +72,49 @@ extern "C" void LLVMInitializeARMMCSubtargetInfo() {
   TargetRegistry::RegisterMCSubtargetInfo(TheThumbTarget,
                                           createARMMCSubtargetInfo);
 }
+
+std::string ARM_MC::ParseARMTriple(StringRef TT, bool &IsThumb) {
+  // Set the boolean corresponding to the current target triple, or the default
+  // if one cannot be determined, to true.
+  unsigned Len = TT.size();
+  unsigned Idx = 0;
+
+  if (Len >= 5 && TT.substr(0, 4) == "armv")
+    Idx = 4;
+  else if (Len >= 6 && TT.substr(0, 5) == "thumb") {
+    IsThumb = true;
+    if (Len >= 7 && TT[5] == 'v')
+      Idx = 6;
+  }
+
+  std::string ARMArchFeature;
+  if (Idx) {
+    unsigned SubVer = TT[Idx];
+    if (SubVer >= '7' && SubVer <= '9') {
+      ARMArchFeature = "+v7a";
+      if (Len >= Idx+2 && TT[Idx+1] == 'm') {
+        ARMArchFeature = "+v7m";
+      } else if (Len >= Idx+3 && TT[Idx+1] == 'e'&& TT[Idx+2] == 'm') {
+        ARMArchFeature = "+v7em";
+      }
+    } else if (SubVer == '6') {
+      ARMArchFeature = "+v6";
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2') {
+        ARMArchFeature = "+v6t2";
+      }
+    } else if (SubVer == '5') {
+      ARMArchFeature = "+v5t";
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e') {
+        ARMArchFeature = "+v5te";
+      }
+    } else if (SubVer == '4') {
+      if (Len >= Idx+2 && TT[Idx+1] == 't') {
+        ARMArchFeature = "+v4t";
+      } else {
+        ARMArchFeature = "";
+      }
+    }
+  }
+
+  return ARMArchFeature;
+}

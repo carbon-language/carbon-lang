@@ -14,6 +14,7 @@
 #ifndef ARMSUBTARGET_H
 #define ARMSUBTARGET_H
 
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/ADT/Triple.h"
@@ -37,11 +38,6 @@ protected:
 
   enum ARMFPEnum {
     None, VFPv2, VFPv3, NEON
-  };
-
-  enum ThumbTypeEnum {
-    Thumb1,
-    Thumb2
   };
 
   /// ARMArchVersion - ARM architecture version: V4, V4T (base), V5T, V5TE,
@@ -73,8 +69,8 @@ protected:
   /// IsThumb - True if we are in thumb mode, false if in ARM mode.
   bool IsThumb;
 
-  /// ThumbMode - Indicates supported Thumb version.
-  ThumbTypeEnum ThumbMode;
+  /// HasThumb2 - True if Thumb2 instructions are supported.
+  bool HasThumb2;
 
   /// NoARM - True if subtarget does not support ARM mode execution.
   bool NoARM;
@@ -161,7 +157,7 @@ protected:
   /// of the specified triple.
   ///
   ARMSubtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, bool isThumb);
+               const std::string &FS);
 
   /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
   /// that still makes it profitable to inline the call.
@@ -217,9 +213,9 @@ protected:
   bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
 
   bool isThumb() const { return IsThumb; }
-  bool isThumb1Only() const { return IsThumb && (ThumbMode == Thumb1); }
-  bool isThumb2() const { return IsThumb && (ThumbMode == Thumb2); }
-  bool hasThumb2() const { return ThumbMode >= Thumb2; }
+  bool isThumb1Only() const { return IsThumb && !HasThumb2; }
+  bool isThumb2() const { return IsThumb && HasThumb2; }
+  bool hasThumb2() const { return HasThumb2; }
 
   bool isR9Reserved() const { return IsR9Reserved; }
 

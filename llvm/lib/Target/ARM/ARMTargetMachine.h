@@ -41,8 +41,7 @@ private:
 
 public:
   ARMBaseTargetMachine(const Target &T, const std::string &TT,
-                       const std::string &CPU, const std::string &FS,
-                       bool isThumb);
+                       const std::string &CPU, const std::string &FS);
 
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }

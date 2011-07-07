@@ -79,10 +79,9 @@ extern "C" void LLVMInitializeARMTarget() {
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
                                            const std::string &TT,
                                            const std::string &CPU,
-                                           const std::string &FS,
-                                           bool isThumb)
+                                           const std::string &FS)
   : LLVMTargetMachine(T, TT),
-    Subtarget(TT, CPU, FS, isThumb),
+    Subtarget(TT, CPU, FS),
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {
   DefRelocModel = getRelocationModel();
@@ -95,7 +94,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
 ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
                                    const std::string &CPU,
                                    const std::string &FS)
-  : ARMBaseTargetMachine(T, TT, CPU, FS, false), InstrInfo(Subtarget),
+  : ARMBaseTargetMachine(T, TT, CPU, FS), InstrInfo(Subtarget),
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:64-i64:32:64-"
                            "v128:32:128-v64:32:64-n32") :
@@ -113,7 +112,7 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, const std::string &TT,
 ThumbTargetMachine::ThumbTargetMachine(const Target &T, const std::string &TT,
                                        const std::string &CPU,
                                        const std::string &FS)
-  : ARMBaseTargetMachine(T, TT, CPU, FS, true),
+  : ARMBaseTargetMachine(T, TT, CPU, FS),
     InstrInfo(Subtarget.hasThumb2()
               ? ((ARMBaseInstrInfo*)new Thumb2InstrInfo(Subtarget))
               : ((ARMBaseInstrInfo*)new Thumb1InstrInfo(Subtarget))),

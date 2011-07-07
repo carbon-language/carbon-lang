@@ -27,7 +27,7 @@ def FeatureVFP3 : SubtargetFeature<"vfp3", "ARMFPUType", "VFPv3",
                                    "Enable VFP3 instructions">;
 def FeatureNEON : SubtargetFeature<"neon", "ARMFPUType", "NEON",
                                    "Enable NEON instructions">;
-def FeatureThumb2 : SubtargetFeature<"thumb2", "ThumbMode", "Thumb2",
+def FeatureThumb2 : SubtargetFeature<"thumb2", "HasThumb2", "true",
                                      "Enable Thumb2 instructions">;
 def FeatureNoARM  : SubtargetFeature<"noarm", "NoARM", "true",
                                      "Does not support ARM mode execution">;
