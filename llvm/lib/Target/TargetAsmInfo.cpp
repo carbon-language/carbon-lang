@@ -26,3 +26,9 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &TM) {
   TRI = TM.getRegisterInfo();
   TFI->getInitialFrameState(InitialFrameState);
 }
+
+int TargetAsmInfo::getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
+                                            int DataAlignmentFactor,
+                                            bool IsEH) const {
+  return TFI->getCompactUnwindEncoding(Instrs, DataAlignmentFactor, IsEH);
+}

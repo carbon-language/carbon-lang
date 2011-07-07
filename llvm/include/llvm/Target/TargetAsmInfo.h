@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
+  template <typename T> class ArrayRef;
   class MCSection;
   class MCContext;
   class MachineFunction;
@@ -84,10 +85,8 @@ public:
     return TLOF->isFunctionEHFrameSymbolPrivate();
   }
 
-  int getCompactUnwindEncoding(const std::vector<MCCFIInstruction> &Instrs,
-                               int DataAlignmentFactor, bool IsEH) const {
-    return TFI->getCompactUnwindEncoding(Instrs, DataAlignmentFactor, IsEH);
-  }
+  int getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
+                               int DataAlignmentFactor, bool IsEH) const;
 
   const unsigned *getCalleeSavedRegs(MachineFunction *MF = 0) const {
     return TRI->getCalleeSavedRegs(MF);
