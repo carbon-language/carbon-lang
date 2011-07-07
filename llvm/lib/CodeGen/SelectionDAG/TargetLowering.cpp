@@ -2623,7 +2623,6 @@ PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
 
 TargetLowering::ConstraintType
 TargetLowering::getConstraintType(const std::string &Constraint) const {
-  // FIXME: lots more standard ones to handle.
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     default: break;
