@@ -5,7 +5,7 @@ void f() {
 
   asm ("foo\n" : : "a" (i + 2));
   asm ("foo\n" : : "a" (f())); // expected-error {{invalid type 'void' in asm input}}
-  
+
   asm ("foo\n" : "=a" (f())); // expected-error {{invalid lvalue in asm output}}
   asm ("foo\n" : "=a" (i + 2)); // expected-error {{invalid lvalue in asm output}}
 
@@ -21,7 +21,7 @@ void clobbers() {
   asm ("nop" : : : "0", "%0", "#0");
   asm ("nop" : : : "foo"); // expected-error {{unknown register name 'foo' in asm}}
   asm ("nop" : : : "52");
-  asm ("nop" : : : "53"); // expected-error {{unknown register name '53' in asm}}
+  asm ("nop" : : : "54"); // expected-error {{unknown register name '54' in asm}}
   asm ("nop" : : : "-1"); // expected-error {{unknown register name '-1' in asm}}
   asm ("nop" : : : "+1"); // expected-error {{unknown register name '+1' in asm}}
 }
@@ -47,7 +47,7 @@ void test4(const volatile void *addr)
 
 // <rdar://problem/6512595>
 void test5() {
-  asm("nop" : : "X" (8)); 
+  asm("nop" : : "X" (8));
 }
 
 // PR3385
@@ -56,7 +56,7 @@ void test6(long i) {
 }
 
 void asm_string_tests(int i) {
-  asm("%!");   // simple asm string, %! is not an error.   
+  asm("%!");   // simple asm string, %! is not an error.
   asm("%!" : );   // expected-error {{invalid % escape in inline assembly string}}
   asm("xyz %" : );   // expected-error {{invalid % escape in inline assembly string}}
 
@@ -64,7 +64,7 @@ void asm_string_tests(int i) {
   asm ("%[somename]" :: "i"(4)); // expected-error {{unknown symbolic operand name in inline assembly string}}
   asm ("%[somename" :: "i"(4)); // expected-error {{unterminated symbolic operand name in inline assembly string}}
   asm ("%[]" :: "i"(4)); // expected-error {{empty symbolic operand name in inline assembly string}}
-  
+
   // PR3258
   asm("%9" :: "i"(4)); // expected-error {{invalid operand number in inline asm string}}
   asm("%1" : "+r"(i)); // ok, referring to input.
