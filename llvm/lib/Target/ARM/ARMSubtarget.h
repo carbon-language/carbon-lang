@@ -67,8 +67,8 @@ protected:
   /// SlowFPBrcc - True if floating point compare + branch is slow.
   bool SlowFPBrcc;
 
-  /// IsThumb - True if we are in thumb mode, false if in ARM mode.
-  bool IsThumb;
+  /// InThumbMode - True if we are in thumb mode, false if in ARM mode.
+  bool InThumbMode;
 
   /// HasThumb2 - True if Thumb2 instructions are supported.
   bool HasThumb2;
@@ -214,9 +214,9 @@ protected:
   bool isAPCS_ABI() const { return TargetABI == ARM_ABI_APCS; }
   bool isAAPCS_ABI() const { return TargetABI == ARM_ABI_AAPCS; }
 
-  bool isThumb() const { return IsThumb; }
-  bool isThumb1Only() const { return IsThumb && !HasThumb2; }
-  bool isThumb2() const { return IsThumb && HasThumb2; }
+  bool isThumb() const { return InThumbMode; }
+  bool isThumb1Only() const { return InThumbMode && !HasThumb2; }
+  bool isThumb2() const { return InThumbMode && HasThumb2; }
   bool hasThumb2() const { return HasThumb2; }
 
   bool isR9Reserved() const { return IsR9Reserved; }

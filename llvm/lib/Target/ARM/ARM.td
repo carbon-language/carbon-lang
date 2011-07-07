@@ -20,7 +20,7 @@ include "llvm/Target/Target.td"
 // ARM Subtarget state.
 //
 
-def ModeThumb  : SubtargetFeature<"thumb", "IsThumb", "true",
+def ModeThumb  : SubtargetFeature<"thumb-mode", "InThumbMode", "true",
                                   "Thumb mode">;
 
 //===----------------------------------------------------------------------===//

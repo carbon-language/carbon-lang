@@ -53,7 +53,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , SlowFPVMLx(false)
   , HasVMLxForwarding(false)
   , SlowFPBrcc(false)
-  , IsThumb(false)
+  , InThumbMode(false)
   , HasThumb2(false)
   , NoARM(false)
   , PostRAScheduler(false)

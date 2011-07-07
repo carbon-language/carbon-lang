@@ -88,6 +88,7 @@ std::string ARM_MC::ParseARMTriple(StringRef TT) {
   unsigned Len = TT.size();
   unsigned Idx = 0;
 
+  // FIXME: Enahnce Triple helper class to extract ARM version.
   bool isThumb = false;
   if (Len >= 5 && TT.substr(0, 4) == "armv")
     Idx = 4;
@@ -127,9 +128,9 @@ std::string ARM_MC::ParseARMTriple(StringRef TT) {
 
   if (isThumb) {
     if (ARMArchFeature.empty())
-      ARMArchFeature = "+thumb";
+      ARMArchFeature = "+thumb-mode";
     else
-      ARMArchFeature += ",+thumb";
+      ARMArchFeature += ",+thumb-mode";
   }
 
   return ARMArchFeature;
