@@ -20,7 +20,7 @@ namespace lldb {
 "SBDebugger is the primordial object that creates SBTargets and provides
 access to them.  It also manages the overall debugging experiences.
 
-For example (in example/disasm.py),
+For example (from example/disasm.py),
 
 import lldb
 import os
