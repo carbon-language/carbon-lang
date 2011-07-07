@@ -4250,17 +4250,7 @@ static void EncodeBitField(const ASTContext *Ctx, std::string& S,
   if (!Ctx->getLangOptions().NeXTRuntime) {
     const RecordDecl *RD = FD->getParent();
     const ASTRecordLayout &RL = Ctx->getASTRecordLayout(RD);
-    // FIXME: This same linear search is also used in ExprConstant - it might
-    // be better if the FieldDecl stored its offset.  We'd be increasing the
-    // size of the object slightly, but saving some time every time it is used.
-    unsigned i = 0;
-    for (RecordDecl::field_iterator Field = RD->field_begin(),
-                                 FieldEnd = RD->field_end();
-         Field != FieldEnd; (void)++Field, ++i) {
-      if (*Field == FD)
-        break;
-    }
-    S += llvm::utostr(RL.getFieldOffset(i));
+    S += llvm::utostr(RL.getFieldOffset(FD->getFieldIndex()));
     if (T->isEnumeralType())
       S += 'i';
     else

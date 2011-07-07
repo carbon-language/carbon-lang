@@ -536,15 +536,7 @@ bool LValueExprEvaluator::VisitMemberExpr(const MemberExpr *E) {
   if (FD->getType()->isReferenceType())
     return false;
 
-  // FIXME: This is linear time.
-  unsigned i = 0;
-  for (RecordDecl::field_iterator Field = RD->field_begin(),
-                               FieldEnd = RD->field_end();
-       Field != FieldEnd; (void)++Field, ++i) {
-    if (*Field == FD)
-      break;
-  }
-
+  unsigned i = FD->getFieldIndex();
   Result.Offset += Info.Ctx.toCharUnitsFromBits(RL.getFieldOffset(i));
   return true;
 }
