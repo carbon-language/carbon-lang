@@ -45,13 +45,14 @@ static const char *const x86_asm_table[] = {
   "{flags}", "",
   "{dirflag}", "",
   "{fpsr}", "",
+  "{fpcr}", "",
   "{cc}", "cc",
   0,0};
 
 X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &Triple) {
   AsmTransCBE = x86_asm_table;
   AssemblerDialect = AsmWriterFlavor;
-    
+
   bool is64Bit = Triple.getArch() == Triple::x86_64;
 
   TextAlignFillValue = 0x90;
