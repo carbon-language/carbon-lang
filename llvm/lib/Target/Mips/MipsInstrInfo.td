@@ -137,6 +137,11 @@ def mem : Operand<i32> {
   let MIOperandInfo = (ops CPURegs, simm16);
 }
 
+def mem_ea : Operand<i32> {
+  let PrintMethod = "printMemOperandEA";
+  let MIOperandInfo = (ops CPURegs, simm16);
+}
+
 // Transformation Function - get the lower 16 bits.
 def LO16 : SDNodeXForm<imm, [{
   return getI32Imm((unsigned)N->getZExtValue() & 0xFFFF);
@@ -351,7 +356,7 @@ class MoveToLOHI<bits<6> func, string instr_asm>:
      !strconcat(instr_asm, "\t$src"), [], IIHiLo>;
 
 class EffectiveAddress<string instr_asm> :
-  FI<0x09, (outs CPURegs:$dst), (ins mem:$addr),
+  FI<0x09, (outs CPURegs:$dst), (ins mem_ea:$addr),
      instr_asm, [(set CPURegs:$dst, addr:$addr)], IIAlu>;
 
 // Count Leading Ones/Zeros in Word
@@ -680,13 +685,13 @@ let addr=0 in
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
+def LEA_ADDiu : EffectiveAddress<"addiu\t$dst, $addr">;
 
 // DynAlloc node points to dynamically allocated stack space.
 // $sp is added to the list of implicitly used registers to prevent dead code
 // elimination from removing instructions that modify $sp.
 let Uses = [SP] in
-def DynAlloc : EffectiveAddress<"addiu\t$dst, ${addr:stackloc}">;
+def DynAlloc : EffectiveAddress<"addiu\t$dst, $addr">;
 
 // MADD*/MSUB*
 def MADD  : MArithR<0, "madd", MipsMAdd, 1>;

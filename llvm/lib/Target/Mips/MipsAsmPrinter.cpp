@@ -359,17 +359,7 @@ void MipsAsmPrinter::printUnsignedImm(const MachineInstr *MI, int opNum,
 }
 
 void MipsAsmPrinter::
-printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                const char *Modifier) {
-  // when using stack locations for not load/store instructions
-  // print the same way as all normal 3 operand instructions.
-  if (Modifier && !strcmp(Modifier, "stackloc")) {
-    printOperand(MI, opNum, O);
-    O << ", ";
-    printOperand(MI, opNum+1, O);
-    return;
-  }
-
+printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O) {
   // Load/Store memory operands -- imm($reg)
   // If PIC target the target is loaded as the
   // pattern lw $25,%call16($28)
@@ -377,6 +367,16 @@ printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
   O << "(";
   printOperand(MI, opNum, O);
   O << ")";
+}
+
+void MipsAsmPrinter::
+printMemOperandEA(const MachineInstr *MI, int opNum, raw_ostream &O) {
+  // when using stack locations for not load/store instructions
+  // print the same way as all normal 3 operand instructions.
+  printOperand(MI, opNum, O);
+  O << ", ";
+  printOperand(MI, opNum+1, O);
+  return;
 }
 
 void MipsAsmPrinter::
