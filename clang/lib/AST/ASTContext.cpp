@@ -6376,7 +6376,7 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     // Forward declarations aren't required.
     if (!FD->doesThisDeclarationHaveABody())
-      return FD->doesDeclarationForceExternallyVisibleDefinition();
+      return false;
 
     // Constructors and destructors are required.
     if (FD->hasAttr<ConstructorAttr>() || FD->hasAttr<DestructorAttr>())

@@ -597,7 +597,7 @@ void CodeGenModule::EmitLLVMUsed() {
 void CodeGenModule::EmitDeferred() {
   // Emit code for any potentially referenced deferred decls.  Since a
   // previously unused static decl may become used during the generation of code
-  // for a static function, iterate until no changes are made.
+  // for a static function, iterate until no  changes are made.
 
   while (!DeferredDeclsToEmit.empty() || !DeferredVTables.empty()) {
     if (!DeferredVTables.empty()) {
@@ -740,21 +740,8 @@ void CodeGenModule::EmitGlobal(GlobalDecl GD) {
     }
 
     // Forward declarations are emitted lazily on first use.
-    if (!FD->doesThisDeclarationHaveABody()) {
-      if (!FD->doesDeclarationForceExternallyVisibleDefinition())
-        return;
-
-      const FunctionDecl *InlineDefinition = 0;
-      FD->getBody(InlineDefinition);
-
-      llvm::StringRef MangledName = getMangledName(GD);
-      llvm::StringMap<GlobalDecl>::iterator DDI =
-          DeferredDecls.find(MangledName);
-      if (DDI != DeferredDecls.end())
-        DeferredDecls.erase(DDI);
-      EmitGlobalDefinition(InlineDefinition);
+    if (!FD->doesThisDeclarationHaveABody())
       return;
-    }
   } else {
     const VarDecl *VD = cast<VarDecl>(Global);
     assert(VD->isFileVarDecl() && "Cannot emit local var decl as global.");
