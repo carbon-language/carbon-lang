@@ -728,10 +728,7 @@ new pointee, unless that object is currently undergoing deallocation,
 in which case it the lvalue is updated to a null pointer.  This must
 execute atomically with respect to other assignments to the object, to
 reads from the object, and to the final release of the new pointed-to
-value. If class is not compatible with weak references, 
-<tt>objc_arc_weak_unavailable</tt>
-attribute must be specified on class declaration to disallow weak 
-references to their objects.</li>
+value.</li>
 <li>For <tt>__unsafe_unretained</tt> objects, the new pointee is
 stored into the lvalue using primitive semantics.</li>
 <li>For <tt>__autoreleasing</tt> objects, the new pointee is retained,
@@ -773,8 +770,39 @@ lvalues, moving is equivalent to reading the object.</p>
 <div id="ownership.restrictions">
 <h1>Restrictions</h1>
 
+<div id="ownership.restrictions.weak">
+<h1>Weak-unavailable types</h1>
+
+<p>It is explicitly permitted for Objective-C classes to not
+support <tt>__weak</tt> references.  It is undefined behavior to
+perform an operation with weak assignment semantics with a pointer to
+an Objective-C object whose class does not support <tt>__weak</tt>
+references.</p>
+
+<div class="rationale"><p>Rationale: historically, it has been
+possible for a class to provide its own reference-count implementation
+by overriding <tt>retain</tt>, <tt>release</tt>, etc.  However, weak
+references to an object require coordination with its class's
+reference-count implementation because, among other things, weak loads
+and stores must be atomic with respect to the final release.
+Therefore, existing custom reference-count implementations will
+generally not support weak references without additional effort.  This
+is unavoidable without breaking binary compatibility.</p></div>
+
+<p>A class may indicate that it does not support weak references by
+providing the <tt>objc_arc_weak_unavailable</tt> attribute on the
+class's interface declaration.  A retainable object pointer type
+is <span class="term">weak-unavailable</span> if is a pointer to an
+(optionally protocol-qualified) Objective-C class <tt>T</tt>
+where <tt>T</tt> or one of its superclasses has
+the <tt>objc_arc_weak_unavailable</tt> attribute.  A program is
+ill-formed if it applies the <tt>__weak</tt> ownership qualifier to a
+weak-unavailable type or if the value operand of a weak assignment
+operation has a weak-unavailable type.</p>
+</div> <!-- ownership.restrictions.weak -->
+
 <div id="ownership.restrictions.autoreleasing">
-<h1>Storage duration of<tt> __autoreleasing</tt> objects</h1>
+<h1>Storage duration of <tt>__autoreleasing</tt> objects</h1>
 
 <p>A program is ill-formed if it declares an <tt>__autoreleasing</tt>
 object of non-automatic storage duration.</p>
