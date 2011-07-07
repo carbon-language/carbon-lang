@@ -388,7 +388,7 @@ bool TransformActionsImpl::canInsert(SourceLocation loc) {
 
   if (loc.isFileID())
     return true;
-  return SM.isAtStartOfMacroInstantiation(loc);
+  return SM.isAtStartOfMacroInstantiation(loc, Ctx.getLangOptions());
 }
 
 bool TransformActionsImpl::canInsertAfterToken(SourceLocation loc) {
@@ -401,7 +401,7 @@ bool TransformActionsImpl::canInsertAfterToken(SourceLocation loc) {
 
   if (loc.isFileID())
     return true;
-  return SM.isAtEndOfMacroInstantiation(loc);
+  return SM.isAtEndOfMacroInstantiation(loc, Ctx.getLangOptions());
 }
 
 bool TransformActionsImpl::canRemoveRange(SourceRange range) {

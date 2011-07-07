@@ -683,7 +683,7 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
     return SourceLocation();
 
   if (Loc.isMacroID()) {
-    if (Offset > 0 || !SM.isAtEndOfMacroInstantiation(Loc))
+    if (Offset > 0 || !SM.isAtEndOfMacroInstantiation(Loc, Features))
       return SourceLocation(); // Points inside the macro instantiation.
 
     // Continue and find the location just after the macro instantiation.

@@ -89,3 +89,12 @@ void test1(void) {
   int y = x;
   int z = y;
 }
+
+void test2(int x) {
+#define VALUE2 VALUE+VALUE
+#define VALUE3 VALUE+0
+#define VALUE4(x) x+0
+  x = VALUE2 // expected-error{{expected ';' after expression}}
+  x = VALUE3 // expected-error{{expected ';' after expression}}
+  x = VALUE4(0) // expected-error{{expected ';' after expression}}
+}

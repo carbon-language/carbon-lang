@@ -23,4 +23,3 @@ int MAKE_HAPPY(Very);
 
 int UNIQUE(a);  // a0
 int UNIQUE(a);  // a1
-

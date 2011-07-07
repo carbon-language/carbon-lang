@@ -25,6 +25,7 @@ MacroInfo::MacroInfo(SourceLocation DefLoc) : Location(DefLoc) {
   IsUsed = false;
   IsAllowRedefinitionsWithoutWarning = false;
   IsWarnIfUnused = false;
+  IsDefinitionLengthCached = false;
 
   ArgumentList = 0;
   NumArguments = 0;
@@ -43,9 +44,40 @@ MacroInfo::MacroInfo(const MacroInfo &MI, llvm::BumpPtrAllocator &PPAllocator) {
   IsUsed = MI.IsUsed;
   IsAllowRedefinitionsWithoutWarning = MI.IsAllowRedefinitionsWithoutWarning;
   IsWarnIfUnused = MI.IsWarnIfUnused;
+  IsDefinitionLengthCached = MI.IsDefinitionLengthCached;
+  DefinitionLength = MI.DefinitionLength;
   ArgumentList = 0;
   NumArguments = 0;
   setArgumentList(MI.ArgumentList, MI.NumArguments, PPAllocator);
+}
+
+unsigned MacroInfo::getDefinitionLengthSlow(SourceManager &SM) const {
+  assert(!IsDefinitionLengthCached);
+  IsDefinitionLengthCached = true;
+
+  if (ReplacementTokens.empty())
+    return (DefinitionLength = 0);
+
+  const Token &firstToken = ReplacementTokens.front();
+  const Token &lastToken = ReplacementTokens.back();
+  SourceLocation macroStart = firstToken.getLocation();
+  SourceLocation macroEnd = lastToken.getLocation();
+  assert(macroStart.isValid() && macroEnd.isValid());
+  assert((macroStart.isFileID() || firstToken.is(tok::comment)) &&
+         "Macro defined in macro?");
+  assert((macroEnd.isFileID() || lastToken.is(tok::comment)) &&
+         "Macro defined in macro?");
+  std::pair<FileID, unsigned>
+      startInfo = SM.getDecomposedInstantiationLoc(macroStart);
+  std::pair<FileID, unsigned>
+      endInfo = SM.getDecomposedInstantiationLoc(macroEnd);
+  assert(startInfo.first == endInfo.first &&
+         "Macro definition spanning multiple FileIDs ?");
+  assert(startInfo.second <= endInfo.second);
+  DefinitionLength = endInfo.second - startInfo.second;
+  DefinitionLength += lastToken.getLength();
+
+  return DefinitionLength;
 }
 
 /// isIdenticalTo - Return true if the specified macro definition is equal to

@@ -20,6 +20,7 @@ namespace clang {
   class MacroInfo;
   class Preprocessor;
   class Token;
+  class SourceLocation;
 
 /// MacroArgs - An instance of this class captures information about
 /// the formal arguments specified to a function-like macro invocation.
@@ -86,7 +87,8 @@ public:
 
   /// getStringifiedArgument - Compute, cache, and return the specified argument
   /// that has been 'stringified' as required by the # operator.
-  const Token &getStringifiedArgument(unsigned ArgNo, Preprocessor &PP);
+  const Token &getStringifiedArgument(unsigned ArgNo, Preprocessor &PP,
+                                      SourceLocation hashInstLoc);
 
   /// getNumArguments - Return the number of arguments passed into this macro
   /// invocation.
@@ -106,7 +108,8 @@ public:
   /// a character literal for the Microsoft charize (#@) extension.
   ///
   static Token StringifyArgument(const Token *ArgToks,
-                                 Preprocessor &PP, bool Charify = false);
+                                 Preprocessor &PP, bool Charify,
+                                 SourceLocation hashInstLoc);
   
   
   /// deallocate - This should only be called by the Preprocessor when managing

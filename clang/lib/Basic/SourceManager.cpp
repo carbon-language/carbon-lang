@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/Diagnostic.h"
@@ -1216,73 +1217,56 @@ PresumedLoc SourceManager::getPresumedLoc(SourceLocation Loc) const {
 
 /// \brief Returns true if the given MacroID location points at the first
 /// token of the macro instantiation.
-bool SourceManager::isAtStartOfMacroInstantiation(SourceLocation loc) const {
+bool SourceManager::isAtStartOfMacroInstantiation(SourceLocation loc,
+                                            const LangOptions &LangOpts) const {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
 
   std::pair<FileID, unsigned> infoLoc = getDecomposedLoc(loc);
+  // FIXME: If the token comes from the macro token paste operator ('##')
+  // this function will always return false;
   if (infoLoc.second > 0)
     return false; // Does not point at the start of token.
 
-  unsigned FID = infoLoc.first.ID;
-  assert(FID > 1);
-  std::pair<SourceLocation, SourceLocation>
-    instRange = getImmediateInstantiationRange(loc);
+  SourceLocation instLoc = 
+      getSLocEntry(infoLoc.first).getInstantiation().getInstantiationLocStart();
+  if (instLoc.isFileID())
+    return true; // No other macro instantiations, this is the first.
 
-  bool invalid = false;
-  const SrcMgr::SLocEntry &Entry = getSLocEntry(FID-1, &invalid);
-  if (invalid)
-    return false;
-
-  // If the FileID immediately before it is a file then this is the first token
-  // in the macro.
-  if (Entry.isFile())
-    return true;
-
-  // If the FileID immediately before it (which is a macro token) is the
-  // immediate instantiated macro, check this macro token's location.
-  if (getFileID(instRange.second).ID == FID-1)
-    return isAtStartOfMacroInstantiation(instRange.first);
-
-  // If the FileID immediately before it (which is a macro token) came from a
-  // different instantiation, then this is the first token in the macro.
-  if (getInstantiationLoc(Entry.getInstantiation().getInstantiationLocStart())
-        != getInstantiationLoc(loc))
-    return true;
-
-  // It is inside the macro or the last token in the macro.
-  return false;
+  return isAtStartOfMacroInstantiation(instLoc, LangOpts);
 }
 
 /// \brief Returns true if the given MacroID location points at the last
 /// token of the macro instantiation.
-bool SourceManager::isAtEndOfMacroInstantiation(SourceLocation loc) const {
+bool SourceManager::isAtEndOfMacroInstantiation(SourceLocation loc,
+                                            const LangOptions &LangOpts) const {
   assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
 
-  unsigned FID = getFileID(loc).ID;
-  assert(FID > 1);
-  std::pair<SourceLocation, SourceLocation>
-    instRange = getInstantiationRange(loc);
-
-  // If there's no FileID after it, it is the last token in the macro.
-  if (FID+1 == sloc_entry_size())
-    return true;
-
-  bool invalid = false;
-  const SrcMgr::SLocEntry &Entry = getSLocEntry(FID+1, &invalid);
-  if (invalid)
+  SourceLocation spellLoc = getSpellingLoc(loc);
+  unsigned tokLen = Lexer::MeasureTokenLength(spellLoc, *this, LangOpts);
+  if (tokLen == 0)
     return false;
 
-  // If the FileID immediately after it is a file or a macro token which
-  // came from a different instantiation, then this is the last token in the
-  // macro.
-  if (Entry.isFile())
-    return true;
-  if (getInstantiationLoc(Entry.getInstantiation().getInstantiationLocStart())
-        != instRange.first)
-    return true;
+  std::pair<FileID, unsigned> infoLoc = getDecomposedLoc(loc);
+  unsigned FID = infoLoc.first.ID;
 
-  // It is inside the macro or the first token in the macro.
-  return false;
+  unsigned NextOffset;
+  if (FID+1 == sloc_entry_size())
+    NextOffset = getNextOffset();
+  else
+    NextOffset = getSLocEntry(FID+1).getOffset();
+
+  // FIXME: If the token comes from the macro token paste operator ('##')
+  // or the stringify operator ('#') this function will always return false;
+  assert(loc.getOffset() + tokLen < NextOffset);
+  if (loc.getOffset() + tokLen < NextOffset-1)
+    return false; // Does not point to the last token.
+  
+  SourceLocation instLoc = 
+      getSLocEntry(infoLoc.first).getInstantiation().getInstantiationLocEnd();
+  if (instLoc.isFileID())
+    return true; // No other macro instantiations.
+
+  return isAtEndOfMacroInstantiation(instLoc, LangOpts);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1479,8 +1463,6 @@ bool SourceManager::isBeforeInTranslationUnit(SourceLocation LHS,
   // reflect the order that the tokens, pointed to by these locations, were
   // instantiated (during parsing each token that is instantiated by a macro,
   // expands the SLocEntries).
-  if (LHS.isMacroID() && RHS.isMacroID())
-    return LHS.getOffset() < RHS.getOffset();
 
   std::pair<FileID, unsigned> LOffs = getDecomposedLoc(LHS);
   std::pair<FileID, unsigned> ROffs = getDecomposedLoc(RHS);
