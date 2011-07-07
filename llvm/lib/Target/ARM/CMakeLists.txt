@@ -66,5 +66,3 @@ add_subdirectory(AsmParser)
 add_subdirectory(Disassembler)
 add_subdirectory(InstPrinter)
 add_subdirectory(MCTargetDesc)
-
-target_link_libraries(LLVMARMCodeGen LLVMARMDesc)
