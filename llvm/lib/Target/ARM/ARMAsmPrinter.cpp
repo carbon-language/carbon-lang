@@ -654,7 +654,7 @@ void ARMAsmPrinter::emitAttributes() {
   }
 
   /* TODO: ARMBuildAttrs::Allowed is not completely accurate,
-   * since NEON can have 1 (allowed) or 2 (fused MAC operations) */
+   * since NEON can have 1 (allowed) or 2 (MAC operations) */
   if (Subtarget->hasNEON()) {
     AttrEmitter->EmitAttribute(ARMBuildAttrs::Advanced_SIMD_arch,
                                ARMBuildAttrs::Allowed);
