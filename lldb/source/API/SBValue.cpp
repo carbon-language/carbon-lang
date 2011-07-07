@@ -82,6 +82,14 @@ SBValue::GetError()
     return sb_error;
 }
 
+user_id_t
+SBValue::GetID()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetID();
+    return LLDB_INVALID_UID;
+}
+
 const char *
 SBValue::GetName()
 {
