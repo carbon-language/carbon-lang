@@ -749,18 +749,19 @@ SourceLocation SourceManager::getSpellingLocSlowCase(SourceLocation Loc) const {
 
 
 std::pair<FileID, unsigned>
-SourceManager::getDecomposedInstantiationLocSlowCase(const SrcMgr::SLocEntry *E,
-                                                     unsigned Offset) const {
+SourceManager::getDecomposedInstantiationLocSlowCase(
+                                             const SrcMgr::SLocEntry *E) const {
   // If this is an instantiation record, walk through all the instantiation
   // points.
   FileID FID;
   SourceLocation Loc;
+  unsigned Offset;
   do {
     Loc = E->getInstantiation().getInstantiationLocStart();
 
     FID = getFileID(Loc);
     E = &getSLocEntry(FID);
-    Offset += Loc.getOffset()-E->getOffset();
+    Offset = Loc.getOffset()-E->getOffset();
   } while (!Loc.isFileID());
 
   return std::make_pair(FID, Offset);
