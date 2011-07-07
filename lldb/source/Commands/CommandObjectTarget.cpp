@@ -465,7 +465,7 @@ public:
                     }
                     else
                     {
-                        matches = exe_ctx.target->GetImages().FindGlobalVariables (arg,
+                        matches = exe_ctx.target->GetImages().FindGlobalVariables (ConstString(arg),
                                                                                    true, 
                                                                                    UINT32_MAX, 
                                                                                    global_var_list);

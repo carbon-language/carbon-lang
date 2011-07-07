@@ -4428,7 +4428,7 @@ SymbolFileDWARF::SearchNamespace (const clang::NamespaceDecl *namespace_decl,
     
     std::vector<NameToDIE::Info> die_info_array;
     
-    size_t num_matches = m_type_index.Find (name, die_info_array);
+    size_t num_matches = m_type_index.Find (ConstString(name), die_info_array);
     
     if (num_matches)
     {

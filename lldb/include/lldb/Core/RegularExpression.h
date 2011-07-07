@@ -51,6 +51,7 @@ public:
     /// @param[in] flags
     ///     Flags that are passed the the \c regcomp() function.
     //------------------------------------------------------------------
+    explicit
     RegularExpression (const char* re, int flags = REG_EXTENDED);
 
     //------------------------------------------------------------------
