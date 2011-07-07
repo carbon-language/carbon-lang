@@ -78,8 +78,10 @@ namespace {
       SmallString<128> Str;
       raw_svector_ostream OS(Str);
 
-      if (MI->isDebugValue())
+      if (MI->isDebugValue()) {
         PrintDebugValueComment(MI, OS);
+        return;
+      }
 
       printInstruction(MI, OS);
       OutStreamer.EmitRawText(OS.str());
