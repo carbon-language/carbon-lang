@@ -146,7 +146,7 @@ public:
     /// and returns the results in \a sc_list.
     ///
     /// @param[in] path
-    ///     The name of the function we are looking for.
+    ///     The name of the compile unit we are looking for.
     ///
     /// @param[in] append
     ///     If \b true, then append any compile units that were found

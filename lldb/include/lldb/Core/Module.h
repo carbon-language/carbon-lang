@@ -187,7 +187,7 @@ public:
     /// Find functions by name.
     ///
     /// @param[in] name
-    ///     The name of the function we are looking for.
+    ///     The name of the compile unit we are looking for.
     ///
     /// @param[in] name_type_mask
     ///     A bit mask of bits that indicate what kind of names should
