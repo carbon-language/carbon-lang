@@ -1164,12 +1164,12 @@ public:
           DbgVal = DIB->insertDbgValueIntrinsic(SI->getOperand(0), 0, 
                                                 DIVariable(DVI->getVariable()),
                                                 SI);
-        DbgVal->setDebugLoc(SI->getDebugLoc());
+        DbgVal->setDebugLoc(DVI->getDebugLoc());
       } else if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
         Instruction *DbgVal = 
           DIB->insertDbgValueIntrinsic(LI->getOperand(0), 0, 
                                        DIVariable(DVI->getVariable()), LI);
-        DbgVal->setDebugLoc(LI->getDebugLoc());
+        DbgVal->setDebugLoc(DVI->getDebugLoc());
       }
     }
   }
