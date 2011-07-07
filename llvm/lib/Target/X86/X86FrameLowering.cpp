@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
@@ -1028,4 +1029,101 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
            "Slot for EBP register must be last in order to be found!");
     FrameIdx = 0;
   }
+}
+
+uint32_t X86FrameLowering::
+getCompactUnwindEncoding(const std::vector<MCCFIInstruction> &Instrs,
+                         int DataAlignmentFactor, bool IsEH) const {
+  uint32_t Encoding = 0;
+  int CFAOffset = 0;
+  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  SmallVector<unsigned, 8> SavedRegs;
+  int FramePointerReg = -1;
+
+  for (std::vector<MCCFIInstruction>::const_iterator
+         I = Instrs.begin(), E = Instrs.end(); I != E; ++I) {
+    const MCCFIInstruction &Inst = *I;
+    MCSymbol *Label = Inst.getLabel();
+
+    // Ignore invalid labels.
+    if (Label && !Label->isDefined()) continue;
+
+    unsigned Operation = Inst.getOperation();
+    if (Operation != MCCFIInstruction::Move &&
+        Operation != MCCFIInstruction::RelMove)
+      // FIXME: We can't handle this frame just yet.
+      return 0;
+
+    const MachineLocation &Dst = Inst.getDestination();
+    const MachineLocation &Src = Inst.getSource();
+    const bool IsRelative = (Operation == MCCFIInstruction::RelMove);
+
+    if (Dst.isReg() && Dst.getReg() == MachineLocation::VirtualFP) {
+      if (Src.getReg() == MachineLocation::VirtualFP) {
+        // DW_CFA_def_cfa_offset
+        if (IsRelative)
+          CFAOffset += Src.getOffset();
+        else
+          CFAOffset = -Src.getOffset();
+      } // else DW_CFA_def_cfa
+
+      continue;
+    }
+
+    if (Src.isReg() && Src.getReg() == MachineLocation::VirtualFP) {
+      // DW_CFA_def_cfa_register
+      FramePointerReg = Dst.getReg();
+      continue;
+    }
+
+    unsigned Reg = Src.getReg();
+    int Offset = Dst.getOffset();
+    if (IsRelative)
+      Offset -= CFAOffset;
+    Offset /= DataAlignmentFactor;
+
+    if (Offset < 0) {
+      // FIXME: Handle?
+      // DW_CFA_offset_extended_sf
+      return 0;
+    } else if (Reg < 64) {
+      // DW_CFA_offset + Reg
+      SavedRegs.push_back(Reg);
+    } else {
+      // FIXME: Handle?
+      // DW_CFA_offset_extended
+      return 0;
+    }
+  }
+
+  CFAOffset /= 4;
+
+  // Check if the offset is too big.
+  if ((CFAOffset & 0xFF) != CFAOffset)
+    return 0;
+
+  // Bail if there are too many registers to encode.
+  unsigned NumRegsToEncode = SavedRegs.size() - (FramePointerReg != -1 ? 1 : 0);
+  if (NumRegsToEncode > 5) return 0;
+
+  if (TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::EBP &&
+      TRI->getLLVMRegNum(FramePointerReg, IsEH) != X86::RBP)
+    // FIXME: Handle frameless version!
+    return 0;
+
+  Encoding |= 1 << 24;
+  Encoding |= (CFAOffset & 0xFF) << 16;
+
+  unsigned Idx = 0;
+  for (SmallVectorImpl<unsigned>::iterator
+         I = SavedRegs.begin(), E = SavedRegs.end(); I != E; ++I) {
+    if (*I == unsigned(FramePointerReg)) continue;
+
+    int CURegNum = TRI->getCompactUnwindRegNum(*I, IsEH);
+    if (CURegNum == -1) return 0;
+
+    Encoding |= (CURegNum & 0x7) << (Idx++ * 3);
+  }
+
+  return Encoding;
 }

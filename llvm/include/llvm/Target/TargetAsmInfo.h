@@ -30,8 +30,9 @@ class TargetAsmInfo {
   unsigned PointerSize;
   bool IsLittleEndian;
   TargetFrameLowering::StackDirection StackDir;
-  const TargetRegisterInfo *TRI;
   std::vector<MachineMove> InitialFrameState;
+  const TargetRegisterInfo *TRI;
+  const TargetFrameLowering *TFI;
   const TargetLoweringObjectFile *TLOF;
 
 public:
@@ -83,6 +84,11 @@ public:
     return TLOF->isFunctionEHFrameSymbolPrivate();
   }
 
+  int getCompactUnwindEncoding(const std::vector<MCCFIInstruction> &Instrs,
+                               int DataAlignmentFactor, bool IsEH) const {
+    return TFI->getCompactUnwindEncoding(Instrs, DataAlignmentFactor, IsEH);
+  }
+
   const unsigned *getCalleeSavedRegs(MachineFunction *MF = 0) const {
     return TRI->getCalleeSavedRegs(MF);
   }
@@ -105,10 +111,6 @@ public:
 
   int getSEHRegNum(unsigned RegNum) const {
     return TRI->getSEHRegNum(RegNum);
-  }
-
-  int getCompactUnwindRegNum(unsigned RegNum, bool isEH) const {
-    return TRI->getCompactUnwindRegNum(RegNum, isEH);
   }
 };
 

@@ -499,7 +499,6 @@ namespace {
     bool UsingCFI;
     bool IsEH;
     const MCSymbol *SectionStart;
-
   public:
     FrameEmitterImpl(bool usingCFI, bool isEH, const MCSymbol *sectionStart) :
       CFAOffset(0), CIENum(0), UsingCFI(usingCFI), IsEH(isEH),
@@ -714,6 +713,11 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   //   .quad __gxx_personality
   //   .quad except_tab1
 
+  uint32_t Encoding =
+    TAI.getCompactUnwindEncoding(Frame.Instructions,
+                                 getDataAlignmentFactor(Streamer), IsEH);
+  if (!Encoding) return false;
+
   Streamer.SwitchSection(TAI.getCompactUnwindSection());
 
   // Range Start
@@ -728,12 +732,10 @@ bool FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
   if (VerboseAsm) Streamer.AddComment("Range Length");
   Streamer.EmitAbsValue(Range, 4);
 
-  // FIXME:
   // Compact Encoding
-  const std::vector<MachineMove> &Moves = TAI.getInitialFrameState();
-  uint32_t Encoding = 0;
   Size = getSizeForEncoding(Streamer, dwarf::DW_EH_PE_udata4);
-  if (VerboseAsm) Streamer.AddComment("Compact Unwind Encoding");
+  if (VerboseAsm) Streamer.AddComment(Twine("Compact Unwind Encoding: 0x") +
+                                      Twine(llvm::utohexstr(Encoding)));
   Streamer.EmitIntValue(Encoding, Size);
 
   // Personality Function
@@ -774,7 +776,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   streamer.EmitLabel(sectionStart);
   CIENum++;
 
-  MCSymbol *sectionEnd = streamer.getContext().CreateTempSymbol();
+  MCSymbol *sectionEnd = context.CreateTempSymbol();
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *sectionStart,
