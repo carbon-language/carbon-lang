@@ -134,7 +134,7 @@ def uimm16      : Operand<i32> {
 // Address operand
 def mem : Operand<i32> {
   let PrintMethod = "printMemOperand";
-  let MIOperandInfo = (ops simm16, CPURegs);
+  let MIOperandInfo = (ops CPURegs, simm16);
 }
 
 // Transformation Function - get the lower 16 bits.

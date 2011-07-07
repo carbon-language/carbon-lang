@@ -224,7 +224,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
     return;
   }
 
-  Offset    += MI.getOperand(i-1).getImm();
+  Offset    += MI.getOperand(i+1).getImm();
 
   DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
@@ -262,7 +262,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
     BuildMI(MBB, ++II, MI.getDebugLoc(), TII.get(Mips::ATMACRO));
 
   MI.getOperand(i).ChangeToRegister(NewReg, false);
-  MI.getOperand(i-1).ChangeToImmediate(NewImm);
+  MI.getOperand(i+1).ChangeToImmediate(NewImm);
 }
 
 unsigned MipsRegisterInfo::

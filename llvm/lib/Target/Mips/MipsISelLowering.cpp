@@ -774,7 +774,7 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
     }
 
     BuildMI(BB, dl, TII->get(Mips::SW))
-        .addReg(Incr).addImm(0).addFrameIndex(fi);
+        .addReg(Incr).addFrameIndex(fi).addImm(0);
   }
   BB->addSuccessor(loopMBB);
 
@@ -785,7 +785,7 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   //    sc tmp1, 0(ptr)
   //    beq tmp1, $0, loopMBB
   BB = loopMBB;
-  BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addImm(0).addReg(Ptr);
+  BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::OR), Dest).addReg(Mips::ZERO).addReg(Oldval);
   if (Nand) {
     //  and tmp2, oldval, incr
@@ -798,10 +798,10 @@ MipsTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
   } else {
     //  lw tmp2, fi(sp)              // load incr from stack
     //  or tmp1, $zero, tmp2
-    BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addImm(0).addFrameIndex(fi);;
+    BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addFrameIndex(fi).addImm(0);
     BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
   }
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp1).addReg(Tmp1).addImm(0).addReg(Ptr);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp1).addReg(Tmp1).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
     .addReg(Tmp1).addReg(Mips::ZERO).addMBB(loopMBB);
   BB->addSuccessor(loopMBB);
@@ -910,7 +910,7 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
     }
 
     BuildMI(BB, dl, TII->get(Mips::SW))
-        .addReg(Incr2).addImm(0).addFrameIndex(fi);
+        .addReg(Incr2).addFrameIndex(fi).addImm(0);
   }
   BB->addSuccessor(loopMBB);
 
@@ -923,7 +923,7 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   //   sc      tmp9,0(addr)
   //   beq     tmp9,$0,loopMBB
   BB = loopMBB;
-  BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addImm(0).addReg(Addr);
+  BuildMI(BB, dl, TII->get(Mips::LL), Oldval).addReg(Addr).addImm(0);
   if (Nand) {
     //  and tmp6, oldval, incr2
     //  nor tmp7, $0, tmp6
@@ -938,13 +938,13 @@ MipsTargetLowering::EmitAtomicBinaryPartword(MachineInstr *MI,
   } else {
     //  lw tmp6, fi(sp)              // load incr2 from stack
     //  or tmp7, $zero, tmp6
-    BuildMI(BB, dl, TII->get(Mips::LW), Tmp6).addImm(0).addFrameIndex(fi);;
+    BuildMI(BB, dl, TII->get(Mips::LW), Tmp6).addFrameIndex(fi).addImm(0);
     BuildMI(BB, dl, TII->get(Mips::OR), Tmp7).addReg(Mips::ZERO).addReg(Tmp6);
   }
   BuildMI(BB, dl, TII->get(Mips::AND), Newval).addReg(Tmp7).addReg(Mask);
   BuildMI(BB, dl, TII->get(Mips::AND), Tmp8).addReg(Oldval).addReg(Mask2);
   BuildMI(BB, dl, TII->get(Mips::OR), Tmp9).addReg(Tmp8).addReg(Newval);
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp9).addReg(Tmp9).addImm(0).addReg(Addr);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp9).addReg(Tmp9).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
       .addReg(Tmp9).addReg(Mips::ZERO).addMBB(loopMBB);
   BB->addSuccessor(loopMBB);
@@ -1027,14 +1027,14 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   // hoist "or" instruction out of the block loop2MBB.
 
   BuildMI(BB, dl, TII->get(Mips::SW))
-      .addReg(Newval).addImm(0).addFrameIndex(fi);
+      .addReg(Newval).addFrameIndex(fi).addImm(0);
   BB->addSuccessor(loop1MBB);
 
   // loop1MBB:
   //   ll dest, 0(ptr)
   //   bne dest, oldval, exitMBB
   BB = loop1MBB;
-  BuildMI(BB, dl, TII->get(Mips::LL), Dest).addImm(0).addReg(Ptr);
+  BuildMI(BB, dl, TII->get(Mips::LL), Dest).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BNE))
     .addReg(Dest).addReg(Oldval).addMBB(exitMBB);
   BB->addSuccessor(exitMBB);
@@ -1046,9 +1046,9 @@ MipsTargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
   //   sc tmp1, 0(ptr)
   //   beq tmp1, $0, loop1MBB
   BB = loop2MBB;
-  BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addImm(0).addFrameIndex(fi);;
+  BuildMI(BB, dl, TII->get(Mips::LW), Tmp2).addFrameIndex(fi).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::OR), Tmp1).addReg(Mips::ZERO).addReg(Tmp2);
-  BuildMI(BB, dl, TII->get(Mips::SC), Tmp1).addReg(Tmp1).addImm(0).addReg(Ptr);
+  BuildMI(BB, dl, TII->get(Mips::SC), Tmp1).addReg(Tmp1).addReg(Ptr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
     .addReg(Tmp1).addReg(Mips::ZERO).addMBB(loop1MBB);
   BB->addSuccessor(loop1MBB);
@@ -1143,7 +1143,7 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   //    and     oldval4,oldval3,mask
   //    bne     oldval4,oldval2,exitMBB
   BB = loop1MBB;
-  BuildMI(BB, dl, TII->get(Mips::LL), Oldval3).addImm(0).addReg(Addr);
+  BuildMI(BB, dl, TII->get(Mips::LL), Oldval3).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::AND), Oldval4).addReg(Oldval3).addReg(Mask);
   BuildMI(BB, dl, TII->get(Mips::BNE))
       .addReg(Oldval4).addReg(Oldval2).addMBB(exitMBB);
@@ -1159,7 +1159,7 @@ MipsTargetLowering::EmitAtomicCmpSwapPartword(MachineInstr *MI,
   BuildMI(BB, dl, TII->get(Mips::AND), Tmp6).addReg(Oldval3).addReg(Mask2);
   BuildMI(BB, dl, TII->get(Mips::OR), Tmp7).addReg(Tmp6).addReg(Newval2);
   BuildMI(BB, dl, TII->get(Mips::SC), Tmp7)
-      .addReg(Tmp7).addImm(0).addReg(Addr);
+      .addReg(Tmp7).addReg(Addr).addImm(0);
   BuildMI(BB, dl, TII->get(Mips::BEQ))
       .addReg(Tmp7).addReg(Mips::ZERO).addMBB(loop1MBB);
   BB->addSuccessor(loop1MBB);

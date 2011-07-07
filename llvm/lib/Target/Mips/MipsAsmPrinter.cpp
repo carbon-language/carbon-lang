@@ -412,18 +412,18 @@ printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
   // when using stack locations for not load/store instructions
   // print the same way as all normal 3 operand instructions.
   if (Modifier && !strcmp(Modifier, "stackloc")) {
-    printOperand(MI, opNum+1, O);
-    O << ", ";
     printOperand(MI, opNum, O);
+    O << ", ";
+    printOperand(MI, opNum+1, O);
     return;
   }
 
   // Load/Store memory operands -- imm($reg)
   // If PIC target the target is loaded as the
   // pattern lw $25,%call16($28)
-  printOperand(MI, opNum, O);
-  O << "(";
   printOperand(MI, opNum+1, O);
+  O << "(";
+  printOperand(MI, opNum, O);
   O << ")";
 }
 
