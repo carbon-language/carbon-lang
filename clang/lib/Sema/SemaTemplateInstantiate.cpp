@@ -1812,9 +1812,11 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     ExprResult NewInit = SubstExpr(OldInit, TemplateArgs);
 
     // If the initialization is no longer dependent, check it now.
-    if ((OldField->getType()->isDependentType() || OldInit->isTypeDependent())
-        && !NewField->getType()->isDependentType()
-        && !NewInit.get()->isTypeDependent()) {
+    if ((OldField->getType()->isDependentType() || OldInit->isTypeDependent() ||
+         OldInit->isValueDependent()) &&
+        !NewField->getType()->isDependentType() &&
+        !NewInit.get()->isTypeDependent() &&
+        !NewInit.get()->isValueDependent()) {
       // FIXME: handle list-initialization
       SourceLocation EqualLoc = NewField->getLocation();
       NewInit = PerformCopyInitialization(
