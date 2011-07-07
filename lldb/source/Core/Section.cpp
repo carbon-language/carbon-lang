@@ -331,8 +331,25 @@ Section::ReadSectionDataFromObjectFile (const ObjectFile* objfile, off_t section
 
         if (file)
         {
-            off_t section_file_offset = GetFileOffset() + objfile->GetOffset() + section_offset;        
-            return file.ReadFileContents (section_file_offset, dst, dst_len);
+            size_t bytes_left = dst_len;
+            size_t bytes_read = 0;
+            const uint64_t file_size = GetFileSize();
+            if (section_offset < file_size)
+            {
+                off_t section_file_offset = objfile->GetOffset() + GetFileOffset() + section_offset;
+                bytes_read = file.ReadFileContents (section_file_offset, dst, dst_len);
+                if (bytes_read >= dst_len)
+                    return bytes_read;
+                bytes_left -= bytes_read;
+            }
+            
+            const uint64_t byte_size = GetByteSize();
+            if (section_offset + bytes_read < byte_size)
+            {
+                memset ((uint8_t*)dst + bytes_read, 0, bytes_left);
+                bytes_read += bytes_left;
+            }
+            return bytes_read;
         }
     }
     return 0;

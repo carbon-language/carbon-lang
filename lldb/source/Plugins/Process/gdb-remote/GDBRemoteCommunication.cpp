@@ -190,6 +190,8 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
     uint8_t buffer[8192];
     Error error;
 
+    LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS | GDBR_LOG_VERBOSE));
+
     // Check for a packet from our cache first without trying any reading...
     if (CheckForPacket (NULL, 0, packet))
         return packet.GetStringRef().size();
@@ -199,6 +201,15 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
     {
         lldb::ConnectionStatus status;
         size_t bytes_read = Read (buffer, sizeof(buffer), timeout_usec, status, &error);
+        
+        if (log)
+            log->Printf ("%s: Read (buffer, (sizeof(buffer), timeout_usec = 0x%x, status = %s, error = %s) => bytes_read = %zu",
+                         __PRETTY_FUNCTION__,
+                         timeout_usec, 
+                         Communication::ConnectionStatusAsCString (status),
+                         error.AsCString(), 
+                         bytes_read);
+
         if (bytes_read > 0)
         {
             if (CheckForPacket (buffer, bytes_read, packet))

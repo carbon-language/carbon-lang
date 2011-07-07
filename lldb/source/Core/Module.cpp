@@ -193,16 +193,6 @@ Module::GetCompileUnitAtIndex (uint32_t index)
     return cu_sp;
 }
 
-//CompUnitSP
-//Module::FindCompUnit(lldb::user_id_t uid)
-//{
-//  CompUnitSP cu_sp;
-//  SymbolVendor *symbols = GetSymbolVendor ();
-//  if (symbols)
-//      cu_sp = symbols->FindCompUnit(uid);
-//  return cu_sp;
-//}
-
 bool
 Module::ResolveFileAddress (lldb::addr_t vm_addr, Address& so_addr)
 {
@@ -320,6 +310,28 @@ Module::FindGlobalVariables(const RegularExpression& regex, bool append, uint32_
     if (symbols)
         return symbols->FindGlobalVariables(regex, append, max_matches, variables);
     return 0;
+}
+
+uint32_t
+Module::FindCompileUnits (const FileSpec &path,
+                          bool append,
+                          SymbolContextList &sc_list)
+{
+    if (!append)
+        sc_list.Clear();
+    
+    const uint32_t start_size = sc_list.GetSize();
+    const uint32_t num_compile_units = GetNumCompileUnits();
+    SymbolContext sc;
+    sc.module_sp = GetSP();
+    const bool compare_directory = path.GetDirectory();
+    for (uint32_t i=0; i<num_compile_units; ++i)
+    {
+        sc.comp_unit = GetCompileUnitAtIndex(i).get();
+        if (FileSpec::Equal (*sc.comp_unit, path, compare_directory))
+            sc_list.Append(sc);
+    }
+    return sc_list.GetSize() - start_size;
 }
 
 uint32_t

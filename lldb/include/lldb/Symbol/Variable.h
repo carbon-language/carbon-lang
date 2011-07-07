@@ -53,6 +53,12 @@ public:
     const ConstString&
     GetName() const;
 
+    SymbolContextScope *
+    GetSymbolContextScope() const
+    {
+        return m_owner_scope;
+    }
+
     // Since a variable can have a basename "i" and also a mangled 
     // named "_ZN12_GLOBAL__N_11iE" and a demangled mangled name 
     // "(anonymous namespace)::i", this function will allow a generic match

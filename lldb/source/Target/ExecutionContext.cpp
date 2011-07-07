@@ -99,3 +99,13 @@ ExecutionContext::GetBestExecutionContextScope () const
         return process;
     return target;
 }
+
+Process *
+ExecutionContext::GetProcess () const
+{
+    if (process)
+        return process;
+    if (target)
+        return target->GetProcessSP().get();
+    return NULL;
+}

@@ -973,7 +973,7 @@ ValueObject::SetValueFromCString (const char *value_str)
             unsigned long long ull_val = strtoull(value_str, &end, 0);
             if (end && *end != '\0')
                 return false;
-            m_value = ull_val;
+            m_value.GetScalar() = ull_val;
             // Limit the bytes in our m_data appropriately.
             m_value.GetScalar().GetData (m_data, byte_size);
         }
@@ -989,7 +989,7 @@ ValueObject::SetValueFromCString (const char *value_str)
             long long sll_val = strtoll(value_str, &end, 0);
             if (end && *end != '\0')
                 return false;
-            m_value = sll_val;
+            m_value.GetScalar() = sll_val;
             // Limit the bytes in our m_data appropriately.
             m_value.GetScalar().GetData (m_data, byte_size);
         }
@@ -1612,7 +1612,7 @@ ValueObject::CreateConstantValue (const ConstString &name)
             data.SetByteOrder (m_data.GetByteOrder());
             data.SetAddressByteSize(m_data.GetAddressByteSize());
 
-            m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0);
+            m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0, GetModule());
 
             valobj_sp = ValueObjectConstResult::Create (exe_scope, 
                                                         ast,

@@ -48,31 +48,15 @@ public:
         eContextTypeRegisterInfo,       // RegisterInfo *
         eContextTypeLLDBType,           // lldb_private::Type *
         eContextTypeVariable,           // lldb_private::Variable *
-        eContextTypeValue               // Value * (making this a proxy value.  Used when putting locals on the DWARF expression parser stack)
     };
 
     Value();
     Value(const Scalar& scalar);
-    Value(int v);
-    Value(unsigned int v);
-    Value(long v);
-    Value(unsigned long v);
-    Value(long long v);
-    Value(unsigned long long v);
-    Value(float v);
-    Value(double v);
-    Value(long double v);
     Value(const uint8_t *bytes, int len);
     Value(const Value &rhs);
     
     Value &
     operator=(const Value &rhs);
-
-    Value *
-    CreateProxy();
-    
-    Value *
-    GetProxyTarget();
 
     lldb::clang_type_t
     GetClangType();
@@ -84,16 +68,30 @@ public:
     GetValueAddressType () const;
 
     ContextType
-    GetContextType() const;
+    GetContextType() const
+    {
+        return m_context_type;
+    }
 
     void
-    SetValueType (ValueType value_type);
+    SetValueType (ValueType value_type)
+    {
+        m_value_type = value_type;
+    }
 
     void
-    ClearContext ();
+    ClearContext ()
+    {
+        m_context = NULL;
+        m_context_type = eContextTypeInvalid;
+    }
 
     void
-    SetContext (ContextType context_type, void *p);
+    SetContext (ContextType context_type, void *p)
+    {
+        m_context_type = context_type;
+        m_context = p;
+    }
 
     RegisterInfo *
     GetRegisterInfo();
@@ -105,7 +103,10 @@ public:
     ResolveValue (ExecutionContext *exe_ctx, clang::ASTContext *ast_context);
 
     Scalar &
-    GetScalar();
+    GetScalar()
+    {
+        return m_value;
+    }
     
     void
     ResizeData(int len);
@@ -126,7 +127,11 @@ public:
     GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr);
 
     Error
-    GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context, DataExtractor &data, uint32_t data_offset);
+    GetValueAsData (ExecutionContext *exe_ctx, 
+                    clang::ASTContext *ast_context, 
+                    DataExtractor &data, 
+                    uint32_t data_offset,
+                    Module *module);     // Can be NULL
 
     static const char *
     GetValueTypeAsCString (ValueType context_type);

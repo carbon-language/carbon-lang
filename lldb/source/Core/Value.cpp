@@ -31,98 +31,30 @@ using namespace lldb;
 using namespace lldb_private;
 
 Value::Value() :
-    m_value(),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
+    m_value (),
+    m_value_type (eValueTypeScalar),
+    m_context (NULL),
+    m_context_type (eContextTypeInvalid),
+    m_data_buffer ()
 {
 }
 
 Value::Value(const Scalar& scalar) :
-    m_value(scalar),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
+    m_value (scalar),
+    m_value_type (eValueTypeScalar),
+    m_context (NULL),
+    m_context_type (eContextTypeInvalid),
+    m_data_buffer ()
 {
 }
 
-Value::Value(int v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
-
-Value::Value(unsigned int v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
-
-Value::Value(long v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
-
-Value::Value(unsigned long v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
-
-Value::Value(long long v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
-
-Value::Value(unsigned long long v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
-
-Value::Value(float v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
-
-Value::Value(double v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
-
-Value::Value(long double v) :
-    m_value(v),
-    m_value_type(eValueTypeScalar),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
-{
-}
 
 Value::Value(const uint8_t *bytes, int len) :
-    m_value(),
-    m_value_type(eValueTypeHostAddress),
-    m_context(NULL),
-    m_context_type(eContextTypeInvalid)
+    m_value (),
+    m_value_type (eValueTypeHostAddress),
+    m_context (NULL),
+    m_context_type (eContextTypeInvalid),
+    m_data_buffer ()
 {
     m_data_buffer.CopyData(bytes, len);
     m_value = (uintptr_t)m_data_buffer.GetBytes();
@@ -163,35 +95,9 @@ Value::operator=(const Value &rhs)
     return *this;
 }
 
-Value *
-Value::CreateProxy()
-{
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->CreateProxy ();
-    
-    Value *ret = new Value;
-    ret->SetContext(eContextTypeValue, this);
-    return ret;
-}
-
-Value *
-Value::GetProxyTarget()
-{
-    if (m_context_type == eContextTypeValue)
-        return (Value*)m_context;
-    else
-        return NULL;
-}
-
 void
 Value::Dump (Stream* strm)
 {
-    if (m_context_type == eContextTypeValue)
-    {
-        ((Value*)m_context)->Dump (strm);
-        return;
-    }
-    
     m_value.GetValue (strm, true);
     strm->Printf(", value_type = %s, context = %p, context_type = %s",
                 Value::GetValueTypeAsCString(m_value_type),
@@ -202,18 +108,12 @@ Value::Dump (Stream* strm)
 Value::ValueType
 Value::GetValueType() const
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetValueType ();
-    
     return m_value_type;
 }
 
 AddressType
 Value::GetValueAddressType () const
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetValueAddressType ();
-    
     switch (m_value_type)
     {
     default:
@@ -226,60 +126,9 @@ Value::GetValueAddressType () const
     return eAddressTypeInvalid;
 }
 
-
-Value::ContextType
-Value::GetContextType() const
-{
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetContextType ();
-    
-    return m_context_type;
-}
-
-void
-Value::SetValueType (Value::ValueType value_type)
-{
-    if (m_context_type == eContextTypeValue)
-    {
-        ((Value*)m_context)->SetValueType(value_type);
-        return;
-    }
-        
-    m_value_type = value_type;
-}
-
-void
-Value::ClearContext ()
-{
-    if (m_context_type == eContextTypeValue)
-    {
-        ((Value*)m_context)->ClearContext();
-        return;
-    }
-    
-    m_context = NULL;
-    m_context_type = eContextTypeInvalid;
-}
-
-void
-Value::SetContext (Value::ContextType context_type, void *p)
-{
-    if (m_context_type == eContextTypeValue)
-    {
-        ((Value*)m_context)->SetContext(context_type, p);
-        return;
-    }
-    
-    m_context_type = context_type;
-    m_context = p;
-}
-
 RegisterInfo *
 Value::GetRegisterInfo()
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetRegisterInfo();
-        
     if (m_context_type == eContextTypeRegisterInfo)
         return static_cast<RegisterInfo *> (m_context);
     return NULL;
@@ -288,32 +137,14 @@ Value::GetRegisterInfo()
 Type *
 Value::GetType()
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetType();
-    
     if (m_context_type == eContextTypeLLDBType)
         return static_cast<Type *> (m_context);
     return NULL;
 }
 
-Scalar &
-Value::GetScalar()
-{
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetScalar();
-    
-    return m_value;
-}
-
 void
 Value::ResizeData(int len)
 {
-    if (m_context_type == eContextTypeValue)
-    {
-        ((Value*)m_context)->ResizeData(len);
-        return;
-    }
-    
     m_value_type = eValueTypeHostAddress;
     m_data_buffer.SetByteSize(len);
     m_value = (uintptr_t)m_data_buffer.GetBytes();
@@ -322,19 +153,16 @@ Value::ResizeData(int len)
 bool
 Value::ValueOf(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->ValueOf(exe_ctx, ast_context);
-    
     switch (m_context_type)
     {
     default:
     case eContextTypeInvalid:
-    case eContextTypeClangType:          // clang::Type *
-    case eContextTypeRegisterInfo:     // RegisterInfo *
-    case eContextTypeLLDBType:             // Type *
+    case eContextTypeClangType:         // clang::Type *
+    case eContextTypeRegisterInfo:      // RegisterInfo *
+    case eContextTypeLLDBType:          // Type *
         break;
 
-    case eContextTypeVariable:         // Variable *
+    case eContextTypeVariable:          // Variable *
         ResolveValue(exe_ctx, ast_context);
         return true;
     }
@@ -344,9 +172,6 @@ Value::ValueOf(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
 size_t
 Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetValueByteSize(ast_context, error_ptr);
-    
     size_t byte_size = 0;
 
     switch (m_context_type)
@@ -412,9 +237,6 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
 clang_type_t
 Value::GetClangType ()
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetClangType();
-    
     switch (m_context_type)
     {
     default:
@@ -444,9 +266,6 @@ Value::GetClangType ()
 lldb::Format
 Value::GetValueDefaultFormat ()
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetValueDefaultFormat();
-    
     switch (m_context_type)
     {
     default:
@@ -506,11 +325,12 @@ Value::GetData (DataExtractor &data)
 }
 
 Error
-Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context, DataExtractor &data, uint32_t data_offset)
+Value::GetValueAsData (ExecutionContext *exe_ctx, 
+                       clang::ASTContext *ast_context, 
+                       DataExtractor &data, 
+                       uint32_t data_offset,
+                       Module *module)
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetValueAsData(exe_ctx, ast_context, data, data_offset);
-    
     data.Clear();
 
     Error error;
@@ -544,16 +364,20 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
         {
             error.SetErrorString ("can't read load address (no execution context)");
         }
-        else if (exe_ctx->process == NULL)
+        else 
         {
-            error.SetErrorString ("can't read load address (invalid process)");
-        }
-        else
-        {
-            address = m_value.ULongLong(LLDB_INVALID_ADDRESS);
-            address_type = eAddressTypeLoad;
-            data.SetByteOrder(exe_ctx->process->GetTarget().GetArchitecture().GetByteOrder());
-            data.SetAddressByteSize(exe_ctx->process->GetTarget().GetArchitecture().GetAddressByteSize());
+            Process *process = exe_ctx->GetProcess();
+            if (process == NULL)
+            {
+                error.SetErrorString ("can't read load address (invalid process)");
+            }
+            else
+            {
+                address = m_value.ULongLong(LLDB_INVALID_ADDRESS);
+                address_type = eAddressTypeLoad;
+                data.SetByteOrder(process->GetTarget().GetArchitecture().GetByteOrder());
+                data.SetAddressByteSize(process->GetTarget().GetArchitecture().GetAddressByteSize());
+            }
         }
         break;
 
@@ -568,70 +392,90 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
         }
         else
         {
-            // The only thing we can currently lock down to a module so that
-            // we can resolve a file address, is a variable.
-            Variable *variable = GetVariable();
-
-            if (GetVariable())
+            address = m_value.ULongLong(LLDB_INVALID_ADDRESS);
+            if (address == LLDB_INVALID_ADDRESS)
             {
-                address = m_value.ULongLong(LLDB_INVALID_ADDRESS);
-                if (address != LLDB_INVALID_ADDRESS)
+                error.SetErrorString ("invalid file address");
+            }
+            else
+            {
+                if (module == NULL)
+                {
+                    // The only thing we can currently lock down to a module so that
+                    // we can resolve a file address, is a variable.
+                    Variable *variable = GetVariable();
+                    if (variable)
+                    {
+                        SymbolContext var_sc;
+                        variable->CalculateSymbolContext(&var_sc);
+                        module = var_sc.module_sp.get();
+                    }
+                }
+                
+                if (module)
                 {
                     bool resolved = false;
-                    SymbolContext var_sc;
-                    variable->CalculateSymbolContext(&var_sc);
-                    if (var_sc.module_sp)
+                    ObjectFile *objfile = module->GetObjectFile();
+                    if (objfile)
                     {
-                        ObjectFile *objfile = var_sc.module_sp->GetObjectFile();
-                        if (objfile)
+                        Address so_addr(address, objfile->GetSectionList());
+                        addr_t load_address = so_addr.GetLoadAddress (exe_ctx->target);
+                        if (load_address != LLDB_INVALID_ADDRESS)
                         {
-                            Address so_addr(address, objfile->GetSectionList());
-                            addr_t load_address = so_addr.GetLoadAddress (exe_ctx->target);
-                            if (load_address != LLDB_INVALID_ADDRESS)
+                            resolved = true;
+                            address = load_address;
+                            address_type = eAddressTypeLoad;
+                            data.SetByteOrder(exe_ctx->target->GetArchitecture().GetByteOrder());
+                            data.SetAddressByteSize(exe_ctx->target->GetArchitecture().GetAddressByteSize());
+                        }
+                        else
+                        {
+                            if (so_addr.IsSectionOffset())
                             {
                                 resolved = true;
-                                address = load_address;
-                                address_type = eAddressTypeLoad;
-                                data.SetByteOrder(exe_ctx->target->GetArchitecture().GetByteOrder());
-                                data.SetAddressByteSize(exe_ctx->target->GetArchitecture().GetAddressByteSize());
-                            }
-                            else
-                            {
-                                if (so_addr.IsSectionOffset())
-                                {
-                                    resolved = true;
-                                    file_so_addr = so_addr;
-                                    data.SetByteOrder(objfile->GetByteOrder());
-                                    data.SetAddressByteSize(objfile->GetAddressByteSize());
-                                }
+                                file_so_addr = so_addr;
+                                data.SetByteOrder(objfile->GetByteOrder());
+                                data.SetAddressByteSize(objfile->GetAddressByteSize());
                             }
                         }
                     }
                     if (!resolved)
                     {
-                        if (var_sc.module_sp)
-                            error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx for variable '%s' in %s%s%s", 
-                                                            address, 
-                                                            variable->GetName().AsCString(""),
-                                                            var_sc.module_sp->GetFileSpec().GetDirectory().GetCString(),
-                                                            var_sc.module_sp->GetFileSpec().GetDirectory() ? "/" : "",
-                                                            var_sc.module_sp->GetFileSpec().GetFilename().GetCString());
+                        Variable *variable = GetVariable();
+                        
+                        if (module)
+                        {
+                            if (variable)
+                                error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx for variable '%s' in %s%s%s", 
+                                                                address, 
+                                                                variable->GetName().AsCString(""),
+                                                                module->GetFileSpec().GetDirectory().GetCString(),
+                                                                module->GetFileSpec().GetDirectory() ? "/" : "",
+                                                                module->GetFileSpec().GetFilename().GetCString());
+                            else
+                                error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx in %s%s%s", 
+                                                                address, 
+                                                                module->GetFileSpec().GetDirectory().GetCString(),
+                                                                module->GetFileSpec().GetDirectory() ? "/" : "",
+                                                                module->GetFileSpec().GetFilename().GetCString());
+                        }
                         else
-                            error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx for variable '%s'", 
-                                                            address, 
-                                                            variable->GetName().AsCString(""));
+                        {
+                            if (variable)
+                                error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx for variable '%s'", 
+                                                                address, 
+                                                                variable->GetName().AsCString(""));
+                            else
+                                error.SetErrorStringWithFormat ("unable to resolve the module for file address 0x%llx", address);
+                        }
                     }
                 }
                 else
                 {
-                    error.SetErrorString ("invalid file address");
+                    // Can't convert a file address to anything valid without more
+                    // context (which Module it came from)
+                    error.SetErrorString ("can't read memory from file address without more context");
                 }
-            }
-            else
-            {
-                // Can't convert a file address to anything valid without more
-                // context (which Module it came from)
-                error.SetErrorString ("can't read memory from file address without more context");
             }
         }
         break;
@@ -695,9 +539,24 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
             }
             else
             {
-                if (exe_ctx->process->ReadMemory(address, dst, byte_size, error) != byte_size)
+                // The execution context might have a NULL process, but it
+                // might have a valid process in the exe_ctx->target, so use
+                // the ExecutionContext::GetProcess accessor to ensure we
+                // get the process if there is one.
+                Process *process = exe_ctx->GetProcess();
+
+                if (process)
                 {
-                    error.SetErrorStringWithFormat("read memory from 0x%llx failed", (uint64_t)address);
+                    const size_t bytes_read = process->ReadMemory(address, dst, byte_size, error);
+                    if (bytes_read != byte_size)
+                        error.SetErrorStringWithFormat("read memory from 0x%llx failed (%u of %u bytes read)", 
+                                                       (uint64_t)address, 
+                                                       (uint32_t)bytes_read, 
+                                                       (uint32_t)byte_size);
+                }
+                else
+                {
+                    error.SetErrorStringWithFormat("read memory from 0x%llx failed (invalid process)", (uint64_t)address);                    
                 }
             }
         }
@@ -717,30 +576,9 @@ Value::GetValueAsData (ExecutionContext *exe_ctx, clang::ASTContext *ast_context
 Scalar &
 Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
 {    
-    Scalar scalar;
-    if (m_context_type == eContextTypeValue)
+    void *opaque_clang_qual_type = GetClangType();
+    if (opaque_clang_qual_type)
     {
-        // Resolve the proxy
-        
-        Value * rhs = (Value*)m_context;
-        
-        m_value = rhs->m_value;
-        m_value_type = rhs->m_value_type;
-        m_context = rhs->m_context;
-        m_context_type = rhs->m_context_type;
-        
-        if ((uintptr_t)rhs->m_value.ULongLong(LLDB_INVALID_ADDRESS) == (uintptr_t)rhs->m_data_buffer.GetBytes())
-        {
-            m_data_buffer.CopyData(rhs->m_data_buffer.GetBytes(),
-                                   rhs->m_data_buffer.GetByteSize());
-            
-            m_value = (uintptr_t)m_data_buffer.GetBytes();
-        }
-    }
-    
-    if (m_context_type == eContextTypeClangType)
-    {
-        void *opaque_clang_qual_type = GetClangType();
         switch (m_value_type)
         {
         case eValueTypeScalar:               // raw scalar value
@@ -759,6 +597,7 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
                 DataExtractor data;
                 if (ClangASTType::ReadFromMemory (ast_context, opaque_clang_qual_type, exe_ctx, addr, address_type, data))
                 {
+                    Scalar scalar;
                     if (ClangASTType::GetValueAsScalar (ast_context, opaque_clang_qual_type, data, 0, data.GetByteSize(), scalar))
                     {
                         m_value = scalar;
@@ -784,8 +623,6 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
             }
             break;
         }
-
-
     }
     return m_value;
 }
@@ -793,15 +630,10 @@ Value::ResolveValue(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
 Variable *
 Value::GetVariable()
 {
-    if (m_context_type == eContextTypeValue)
-        return ((Value*)m_context)->GetVariable();
-    
     if (m_context_type == eContextTypeVariable)
         return static_cast<Variable *> (m_context);
     return NULL;
 }
-
-
 
 const char *
 Value::GetValueTypeAsCString (ValueType value_type)
@@ -821,12 +653,11 @@ Value::GetContextTypeAsCString (ContextType context_type)
 {
     switch (context_type)
     {
-    case eContextTypeInvalid:               return "invalid";
-    case eContextTypeClangType:   return "clang::Type *";
-    case eContextTypeRegisterInfo:        return "RegisterInfo *";
-    case eContextTypeLLDBType:                return "Type *";
-    case eContextTypeVariable:            return "Variable *";
-    case eContextTypeValue:                 return "Value"; // TODO: Sean, more description here?
+    case eContextTypeInvalid:       return "invalid";
+    case eContextTypeClangType:     return "clang::Type *";
+    case eContextTypeRegisterInfo:  return "RegisterInfo *";
+    case eContextTypeLLDBType:      return "Type *";
+    case eContextTypeVariable:      return "Variable *";
     };
     return "???";
 }

@@ -80,6 +80,9 @@ public:
     ExecutionContextScope *
     GetBestExecutionContextScope () const;
     
+    Process *
+    GetProcess () const;
+
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------

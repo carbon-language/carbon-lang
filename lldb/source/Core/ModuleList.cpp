@@ -150,7 +150,7 @@ ModuleList::GetModuleAtIndex(uint32_t idx)
     return module_sp;
 }
 
-size_t
+uint32_t
 ModuleList::FindFunctions (const ConstString &name, 
                            uint32_t name_type_mask, 
                            bool include_symbols,
@@ -165,6 +165,24 @@ ModuleList::FindFunctions (const ConstString &name,
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
         (*pos)->FindFunctions (name, name_type_mask, include_symbols, true, sc_list);
+    }
+    
+    return sc_list.GetSize();
+}
+
+uint32_t
+ModuleList::FindCompileUnits (const FileSpec &path, 
+                              bool append, 
+                              SymbolContextList &sc_list)
+{
+    if (!append)
+        sc_list.Clear();
+    
+    Mutex::Locker locker(m_modules_mutex);
+    collection::const_iterator pos, end = m_modules.end();
+    for (pos = m_modules.begin(); pos != end; ++pos)
+    {
+        (*pos)->FindCompileUnits (path, true, sc_list);
     }
     
     return sc_list.GetSize();

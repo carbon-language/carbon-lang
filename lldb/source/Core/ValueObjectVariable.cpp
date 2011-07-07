@@ -20,6 +20,7 @@
 
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Symbol/SymbolContextScope.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/Variable.h"
 
@@ -154,7 +155,7 @@ ValueObjectVariable::UpdateValue ()
             case Value::eValueTypeScalar:
                 // The variable value is in the Scalar value inside the m_value.
                 // We can point our m_data right to it.
-                m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0);
+                m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0, GetModule());
                 break;
 
             case Value::eValueTypeFileAddress:
@@ -206,7 +207,7 @@ ValueObjectVariable::UpdateValue ()
                     // so it can extract read its value into m_data appropriately
                     Value value(m_value);
                     value.SetContext(Value::eContextTypeVariable, variable);
-                    m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0);
+                    m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0, GetModule());
                 }
                 break;
             }
@@ -232,4 +233,21 @@ ValueObjectVariable::IsInScope ()
          
     return m_variable_sp->IsInScope (frame);
 }
+
+Module *
+ValueObjectVariable::GetModule()
+{
+    if (m_variable_sp)
+    {
+        SymbolContextScope *sc_scope = m_variable_sp->GetSymbolContextScope();
+        if (sc_scope)
+        {
+            SymbolContext sc;
+            sc_scope->CalculateSymbolContext (&sc);
+            return sc.module_sp.get();
+        }
+    }
+    return NULL;
+}
+
 

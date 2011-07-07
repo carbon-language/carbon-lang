@@ -407,7 +407,11 @@ AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton,
         // Now get a pointer value from the zeroth argument.
         Error error;
         DataExtractor data;
-        error = argument_values.GetValueAtIndex(0)->GetValueAsData(&(context->exe_ctx), clang_ast_context->getASTContext(), data, 0);
+        error = argument_values.GetValueAtIndex(0)->GetValueAsData (&(context->exe_ctx), 
+                                                                    clang_ast_context->getASTContext(), 
+                                                                    data, 
+                                                                    0,
+                                                                    NULL);
         uint32_t offset_ptr = 0;
         lldb::addr_t region_addr = data.GetPointer(&offset_ptr);
         

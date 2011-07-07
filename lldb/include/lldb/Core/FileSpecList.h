@@ -102,7 +102,7 @@ public:
     ///     The stream that will be used to dump the object description.
     //------------------------------------------------------------------
     void
-    Dump (Stream *s) const;
+    Dump (Stream *s, const char *separator_cstr = "\n") const;
 
     //------------------------------------------------------------------
     /// Find a file index.

@@ -444,7 +444,6 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
                                                           m_arch));
                 if (image_module_sp.get())
                 {
-                    //image_module_sp->Dump(&s);// REMOVE THIS, DEBUG ONLY
                     ObjectFile *objfile = image_module_sp->GetObjectFile();
                     if (objfile)
                         objfile->GetDependentModules(dependent_files);

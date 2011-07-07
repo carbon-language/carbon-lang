@@ -315,6 +315,27 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr)
     return Error();
 }
 
+//-------------------------------------------------------------------------
+// OptionValueFileSpecList
+//-------------------------------------------------------------------------
+void
+OptionValueFileSpecList::DumpValue (Stream &strm)
+{
+    m_current_value.Dump(&strm, "\n");
+}
+
+Error
+OptionValueFileSpecList::SetValueFromCString (const char *value_cstr)
+{
+    if (value_cstr && value_cstr[0])
+    {
+        FileSpec file (value_cstr, false);
+        m_current_value.Append(file);
+    }
+    m_value_was_set = true;
+    return Error();
+}
+
 
 //-------------------------------------------------------------------------
 // OptionValueUUID

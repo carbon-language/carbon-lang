@@ -18,6 +18,7 @@
 #include "lldb/Interpreter/NamedOptionValue.h"
 
 namespace lldb_private {
+
 //-------------------------------------------------------------------------
 // OptionGroupFile
 //-------------------------------------------------------------------------
@@ -72,6 +73,65 @@ public:
 
 protected:
     OptionValueFileSpec m_file;
+    OptionDefinition m_option_definition;
+    
+};
+
+//-------------------------------------------------------------------------
+// OptionGroupFileList
+//-------------------------------------------------------------------------
+
+class OptionGroupFileList : public OptionGroup
+{
+public:
+    
+    OptionGroupFileList (uint32_t usage_mask,
+                         bool required,
+                         const char *long_option, 
+                         char short_option,
+                         uint32_t completion_type,
+                         lldb::CommandArgumentType argument_type,
+                         const char *usage_text);
+    
+    virtual
+    ~OptionGroupFileList ();
+    
+    
+    virtual uint32_t
+    GetNumDefinitions ()
+    {
+        return 1;
+    }
+    
+    virtual const OptionDefinition*
+    GetDefinitions ()
+    {
+        return &m_option_definition;
+    }
+    
+    virtual Error
+    SetOptionValue (CommandInterpreter &interpreter,
+                    uint32_t option_idx,
+                    const char *option_value);
+    
+    virtual void
+    OptionParsingStarting (CommandInterpreter &interpreter);
+    
+
+    OptionValueFileSpecList &
+    GetOptionValue ()
+    {
+        return m_file_list;
+    }
+    
+    const OptionValueFileSpecList &
+    GetOptionValue () const
+    {
+        return m_file_list;
+    }
+    
+protected:
+    OptionValueFileSpecList m_file_list;
     OptionDefinition m_option_definition;
     
 };

@@ -88,9 +88,15 @@ FileSpecList::Clear()
 // Dumps the file list to the supplied stream pointer "s".
 //------------------------------------------------------------------
 void
-FileSpecList::Dump(Stream *s) const
+FileSpecList::Dump(Stream *s, const char *separator_cstr) const
 {
-    for_each (m_files.begin(), m_files.end(), bind2nd(mem_fun_ref(&FileSpec::Dump),s));
+    collection::const_iterator pos, end = m_files.end();
+    for (pos = m_files.begin(); pos != end; ++pos)
+    {
+        pos->Dump(s);
+        if (separator_cstr)
+            s->PutCString(separator_cstr);
+    }
 }
 
 //------------------------------------------------------------------

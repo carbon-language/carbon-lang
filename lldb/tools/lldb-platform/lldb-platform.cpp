@@ -211,6 +211,11 @@ main (int argc, char *argv[])
                 if (!gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done))
                     break;
             }
+            
+            if (error.Fail())
+            {
+                fprintf(stderr, "error: %s\n", error.AsCString());
+            }
         }
         else
         {

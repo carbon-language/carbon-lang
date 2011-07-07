@@ -368,7 +368,10 @@ Communication::ReadThread (void *p)
         case eConnectionStatusError:            // Check GetError() for details
         case eConnectionStatusTimedOut:         // Request timed out
             if (log)
-                error.LogIfError(log.get(), "%p Communication::ReadFromConnection () => status = %i", p, status);
+                error.LogIfError(log.get(), 
+                                 "%p Communication::ReadFromConnection () => status = %s", 
+                                 p, 
+                                 Communication::ConnectionStatusAsCString (status));
             break;
         }
     }

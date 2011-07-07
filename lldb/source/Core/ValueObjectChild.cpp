@@ -169,7 +169,7 @@ ValueObjectChild::UpdateValue ()
             if (m_error.Success())
             {
                 ExecutionContext exe_ctx (GetExecutionContextScope());
-                m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST (), m_data, 0);
+                m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST (), m_data, 0, GetModule());
             }
         }
         else

@@ -19,6 +19,7 @@
 // Project includes
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/UUID.h"
+#include "lldb/Core/FileSpecList.h"
 #include "lldb/Host/FileSpec.h"
 
 namespace lldb_private {
@@ -28,6 +29,7 @@ namespace lldb_private {
     class OptionValueUInt64;
     class OptionValueString;
     class OptionValueFileSpec;
+    class OptionValueFileSpecList;
     class OptionValueFormat;
     class OptionValueUUID;
     class OptionValueArray;
@@ -46,6 +48,7 @@ namespace lldb_private {
             eTypeDictionary,
             eTypeEnum,
             eTypeFileSpec,
+            eTypeFileSpecList,
             eTypeFormat,
             eTypeSInt64,
             eTypeUInt64,
@@ -107,6 +110,9 @@ namespace lldb_private {
         
         OptionValueFileSpec *
         GetAsFileSpec ();
+        
+        OptionValueFileSpecList *
+        GetAsFileSpecList ();
         
         OptionValueFormat *
         GetAsFormat ();
@@ -644,7 +650,79 @@ namespace lldb_private {
         FileSpec m_current_value;
         FileSpec m_default_value;
     };
-    
+
+    //---------------------------------------------------------------------
+    // OptionValueFileSpecList
+    //---------------------------------------------------------------------
+    class OptionValueFileSpecList : public OptionValue
+    {
+    public:
+        OptionValueFileSpecList () :
+            m_current_value ()
+        {
+        }
+        
+        OptionValueFileSpecList (const FileSpecList &current_value) :
+            m_current_value (current_value)
+        {
+        }
+        
+        
+        virtual 
+        ~OptionValueFileSpecList()
+        {
+        }
+        
+        //---------------------------------------------------------------------
+        // Virtual subclass pure virtual overrides
+        //---------------------------------------------------------------------
+        
+        virtual OptionValue::Type
+        GetType ()
+        {
+            return eTypeFileSpecList;
+        }
+        
+        virtual void
+        DumpValue (Stream &strm);
+        
+        virtual Error
+        SetValueFromCString (const char *value);
+        
+        virtual bool
+        Clear ()
+        {
+            m_current_value.Clear();
+            m_value_was_set = false;
+            return true;
+        }
+        
+        //---------------------------------------------------------------------
+        // Subclass specific functions
+        //---------------------------------------------------------------------
+        
+        FileSpecList &
+        GetCurrentValue()
+        {
+            return m_current_value;
+        }
+        
+        const FileSpecList &
+        GetCurrentValue() const
+        {
+            return m_current_value;
+        }
+        
+        void
+        SetCurrentValue (const FileSpecList &value)
+        {
+            m_current_value = value;
+        }
+        
+    protected:
+        FileSpecList m_current_value;
+    };
+
     //---------------------------------------------------------------------
     // OptionValueFormat
     //---------------------------------------------------------------------

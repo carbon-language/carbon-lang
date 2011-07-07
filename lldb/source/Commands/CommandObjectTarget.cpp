@@ -21,18 +21,22 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionGroupArchitecture.h"
 #include "lldb/Interpreter/OptionGroupFile.h"
+#include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Interpreter/OptionGroupUInt64.h"
 #include "lldb/Interpreter/OptionGroupUUID.h"
+#include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Thread.h"
@@ -141,7 +145,7 @@ public:
                        "Create a target using the argument as the main executable.",
                        NULL),
         m_option_group (interpreter),
-        m_file_options (),
+        m_arch_option (),
         m_platform_options(true) // Do include the "--platform" option in the platform settings by passing true
     {
         CommandArgumentEntry arg;
@@ -157,7 +161,7 @@ public:
         // Push the data for the first argument into the m_arguments vector.
         m_arguments.push_back (arg);
         
-        m_option_group.Append (&m_file_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_arch_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
     }
@@ -199,12 +203,12 @@ public:
             }
             ArchSpec file_arch;
             
-            const char *arch_cstr = m_file_options.GetArchitectureName();
+            const char *arch_cstr = m_arch_option.GetArchitectureName();
             if (arch_cstr)
             {        
                 if (!platform_sp)
                     platform_sp = m_interpreter.GetDebugger().GetPlatformList().GetSelectedPlatform();
-                if (!m_file_options.GetArchitecture(platform_sp.get(), file_arch))
+                if (!m_arch_option.GetArchitecture(platform_sp.get(), file_arch))
                 {
                     result.AppendErrorWithFormat("invalid architecture '%s'\n", arch_cstr);
                     result.SetStatus (eReturnStatusFailed);
@@ -269,7 +273,7 @@ public:
     }
 private:
     OptionGroupOptions m_option_group;
-    OptionGroupArchitecture m_file_options;
+    OptionGroupArchitecture m_arch_option;
     OptionGroupPlatform m_platform_options;
 
 };
@@ -394,6 +398,133 @@ public:
         }
         return result.Succeeded();
     }
+};
+
+
+#pragma mark CommandObjectTargetVariable
+
+//----------------------------------------------------------------------
+// "target variable"
+//----------------------------------------------------------------------
+
+class CommandObjectTargetVariable : public CommandObject
+{
+public:
+    CommandObjectTargetVariable (CommandInterpreter &interpreter) :
+        CommandObject (interpreter,
+                       "target select",
+                       "Select a target as the current target by target index.",
+                       NULL,
+                       0),
+        m_option_group (interpreter),
+        m_format_options (eFormatDefault, 0, false),
+        m_option_compile_units    (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypePath, "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
+        m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'s', 0, eArgTypePath, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
+        m_varobj_options()
+    {
+        m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_format_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_option_compile_units, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
+        m_option_group.Append (&m_option_shared_libraries, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);   
+        m_option_group.Finalize();
+    }
+    
+    virtual
+    ~CommandObjectTargetVariable ()
+    {
+    }
+    
+    virtual bool
+    Execute (Args& args, CommandReturnObject &result)
+    {
+        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+
+        if (exe_ctx.target)
+        {
+            const size_t argc = args.GetArgumentCount();
+            if (argc > 0)
+            {
+                for (size_t idx = 0; idx < argc; ++idx)
+                {
+                    VariableList global_var_list;
+                    const char *global_var_name = args.GetArgumentAtIndex(idx);
+                    const uint32_t matches = exe_ctx.target->GetImages().FindGlobalVariables (global_var_name,
+                                                                                              true, 
+                                                                                              UINT32_MAX, 
+                                                                                              global_var_list);
+                    
+                    if (matches == 0)
+                    {
+                        result.GetErrorStream().Printf ("error: can't find global variable '%s'\n", 
+                                                        global_var_name);
+                    }
+                    else
+                    {
+                        for (uint32_t global_idx=0; global_idx<matches; ++global_idx)
+                        {
+                            VariableSP var_sp (global_var_list.GetVariableAtIndex(global_idx));
+                            if (var_sp)
+                            {
+                                ValueObjectSP valobj_sp(ValueObjectVariable::Create (exe_ctx.target, var_sp));
+                                
+                                if (valobj_sp)
+                                {
+                                    const Format format = m_format_options.GetFormat ();
+                                    if (format != eFormatDefault)
+                                        valobj_sp->SetFormat (format);
+                                    
+//                                    if (m_format_options.show_decl && var_sp->GetDeclaration ().GetFile())
+//                                    {
+//                                        var_sp->GetDeclaration ().DumpStopContext (&s, false);
+//                                        s.PutCString (": ");
+//                                    }
+                                    
+                                    ValueObject::DumpValueObject (result.GetOutputStream(), 
+                                                                  valobj_sp.get(), 
+                                                                  global_var_name, 
+                                                                  m_varobj_options.ptr_depth, 
+                                                                  0, 
+                                                                  m_varobj_options.max_depth, 
+                                                                  m_varobj_options.show_types,
+                                                                  m_varobj_options.show_location,
+                                                                  m_varobj_options.use_objc,
+                                                                  m_varobj_options.use_dynamic,
+                                                                  false,
+                                                                  m_varobj_options.flat_output);                                        
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                result.AppendError ("'target variable' takes one or more global variable names as arguments\n");
+                result.SetStatus (eReturnStatusFailed);
+            }
+        }
+        else
+        {
+            result.AppendError ("invalid target, create a debug target using the 'target create' command");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        return result.Succeeded();
+    }
+    
+    Options *
+    GetOptions ()
+    {
+        return &m_option_group;
+    }
+    
+protected:
+    OptionGroupOptions m_option_group;
+    OptionGroupFormat m_format_options;
+    OptionGroupFileList m_option_compile_units;
+    OptionGroupFileList m_option_shared_libraries;
+    OptionGroupValueObjectDisplay m_varobj_options;
+
 };
 
 
@@ -1137,14 +1268,11 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
 }
 
 static uint32_t
-LookupTypeInModule 
-(
- CommandInterpreter &interpreter, 
- Stream &strm, 
- Module *module, 
- const char *name_cstr, 
- bool name_is_regex
- )
+LookupTypeInModule (CommandInterpreter &interpreter, 
+                    Stream &strm, 
+                    Module *module, 
+                    const char *name_cstr, 
+                    bool name_is_regex)
 {
     if (module && name_cstr && name_cstr[0])
     {
@@ -3565,6 +3693,7 @@ CommandObjectMultiwordTarget::CommandObjectMultiwordTarget (CommandInterpreter &
     LoadSubCommand ("select",    CommandObjectSP (new CommandObjectTargetSelect (interpreter)));
     LoadSubCommand ("stop-hook", CommandObjectSP (new CommandObjectMultiwordTargetStopHooks (interpreter)));
     LoadSubCommand ("modules",   CommandObjectSP (new CommandObjectTargetModules (interpreter)));
+    LoadSubCommand ("variable",  CommandObjectSP (new CommandObjectTargetVariable (interpreter)));
 }
 
 CommandObjectMultiwordTarget::~CommandObjectMultiwordTarget ()

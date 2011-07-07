@@ -239,13 +239,6 @@ Broadcaster::PrivateBroadcastEvent (EventSP &event_sp, bool unique)
 
     if (hijacking_listener)
     {
-        // FIXME: REMOVE THIS EXTRA LOGGING
-        LogSP log_process(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS));
-        if (log_process)
-            log_process->Printf ("Hijacking event delivery for Broadcaster(\"%s\") to Listener(\"%s\").", 
-                                 m_broadcaster_name.AsCString(""),
-                                 hijacking_listener->GetName());
-            
         if (unique && hijacking_listener->PeekAtNextEventForBroadcasterWithType (this, event_type))
             return;
         hijacking_listener->AddEvent (event_sp);

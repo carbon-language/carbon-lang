@@ -285,7 +285,7 @@ CompileUnit::ResolveSymbolContext
     // "file_spec" has an empty directory, then only compare the basenames
     // when finding file indexes
     std::vector<uint32_t> file_indexes;
-    bool file_spec_matches_cu_file_spec = FileSpec::Compare(file_spec, this, !file_spec.GetDirectory().IsEmpty()) == 0;
+    bool file_spec_matches_cu_file_spec = FileSpec::Equal(file_spec, this, !file_spec.GetDirectory().IsEmpty());
 
     // If we are not looking for inlined functions and our file spec doesn't
     // match then we are done...

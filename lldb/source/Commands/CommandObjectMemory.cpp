@@ -692,7 +692,6 @@ public:
     }
 
 protected:
-//    CommandOptions m_options;
     OptionGroupOptions m_option_group;
     OptionGroupFormat m_format_options;
     OptionGroupReadMemory m_memory_options;
@@ -700,26 +699,6 @@ protected:
     OptionGroupValueObjectDisplay m_varobj_options;
 
 };
-
-//OptionDefinition
-//CommandObjectMemoryRead::CommandOptions::g_option_table[] =
-//{
-//{ LLDB_OPT_SET_1, false, "format"       ,'f', required_argument, NULL, 0, eArgTypeFormat        ,"The format that will be used to display the memory. Defaults to bytes with ASCII (--format=Y)."},
-//{ LLDB_OPT_SET_1, false, "size"         ,'s', required_argument, NULL, 0, eArgTypeByteSize      ,"The size in bytes to use when displaying with the selected format."},
-//{ LLDB_OPT_SET_1, false, "num-per-line" ,'l', required_argument, NULL, 0, eArgTypeNumberPerLine ,"The number of items per line to display."},
-//{ LLDB_OPT_SET_1|
-//  LLDB_OPT_SET_2|
-//  LLDB_OPT_SET_3, false, "count"        ,'c', required_argument, NULL, 0, eArgTypeCount         ,"The number of total items to display."},
-//{ LLDB_OPT_SET_1|
-//  LLDB_OPT_SET_2|
-//  LLDB_OPT_SET_3, false, "outfile"      ,'o', required_argument, NULL, 0, eArgTypeFilename      ,"Dump memory read results into a file."},
-//{ LLDB_OPT_SET_1|
-//  LLDB_OPT_SET_2|
-//  LLDB_OPT_SET_3, false, "append"       ,'a', no_argument      , NULL, 0, eArgTypeNone          ,"Append memory read results to 'outfile'."},
-//{ LLDB_OPT_SET_2, false, "binary"       ,'b', no_argument      , NULL, 0, eArgTypeNone          ,"If true, memory will be saved as binary. If false, the memory is saved save as an ASCII dump that uses the format, size, count and number per line settings."},
-//{ LLDB_OPT_SET_3, true , "view-as"      ,'t', required_argument, NULL, 0, eArgTypeNone          ,"The name of a type to view memory as."},
-//{ 0             , false, NULL           , 0 , 0                , NULL, 0, eArgTypeNone          , NULL }
-//};
 
 //----------------------------------------------------------------------
 // Write memory to the inferior process

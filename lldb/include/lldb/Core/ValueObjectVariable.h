@@ -52,6 +52,9 @@ public:
     virtual bool
     IsInScope ();
 
+    virtual Module*
+    GetModule();
+
 protected:
     virtual bool
     UpdateValue ();

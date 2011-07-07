@@ -279,7 +279,7 @@ SourceManager::File::DisplaySourceLines (uint32_t line, uint32_t context_before,
 bool
 SourceManager::File::FileSpecMatches (const FileSpec &file_spec)
 {
-    return FileSpec::Compare (m_file_spec, file_spec, false) == 0;
+    return FileSpec::Equal (m_file_spec, file_spec, false);
 }
 
 

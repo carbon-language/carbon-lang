@@ -205,7 +205,7 @@ ValueObjectMemory::UpdateValue ()
         case Value::eValueTypeScalar:
             // The variable value is in the Scalar value inside the m_value.
             // We can point our m_data right to it.
-            m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0);
+            m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0, GetModule());
             break;
 
         case Value::eValueTypeFileAddress:
@@ -247,7 +247,7 @@ ValueObjectMemory::UpdateValue ()
                 else
                     value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
 
-                m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0);
+                m_error = value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0, GetModule());
             }
             break;
         }
@@ -266,4 +266,12 @@ ValueObjectMemory::IsInScope ()
     // we are in scope?
     return true;
 }
+
+
+Module *
+ValueObjectMemory::GetModule()
+{
+    return m_address.GetModule();
+}
+
 

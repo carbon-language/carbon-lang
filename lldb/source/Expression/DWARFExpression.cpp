@@ -896,7 +896,7 @@ DWARFExpression::Evaluate
         // address and whose size is the size of an address on the target machine.
         //----------------------------------------------------------------------
         case DW_OP_addr:
-            stack.push_back(opcodes.GetAddress(&offset));
+            stack.push_back(Scalar(opcodes.GetAddress(&offset)));
             stack.back().SetValueType (Value::eValueTypeFileAddress);
             break;
 
@@ -1157,16 +1157,16 @@ DWARFExpression::Evaluate
         // DW_OP_constu     unsigned LEB128 integer constant
         // DW_OP_consts     signed LEB128 integer constant
         //----------------------------------------------------------------------
-        case DW_OP_const1u             :    stack.push_back(( uint8_t)opcodes.GetU8(&offset)); break;
-        case DW_OP_const1s             :    stack.push_back((  int8_t)opcodes.GetU8(&offset)); break;
-        case DW_OP_const2u             :    stack.push_back((uint16_t)opcodes.GetU16(&offset)); break;
-        case DW_OP_const2s             :    stack.push_back(( int16_t)opcodes.GetU16(&offset)); break;
-        case DW_OP_const4u             :    stack.push_back((uint32_t)opcodes.GetU32(&offset)); break;
-        case DW_OP_const4s             :    stack.push_back(( int32_t)opcodes.GetU32(&offset)); break;
-        case DW_OP_const8u             :    stack.push_back((uint64_t)opcodes.GetU64(&offset)); break;
-        case DW_OP_const8s             :    stack.push_back(( int64_t)opcodes.GetU64(&offset)); break;
-        case DW_OP_constu              :    stack.push_back(opcodes.GetULEB128(&offset)); break;
-        case DW_OP_consts              :    stack.push_back(opcodes.GetSLEB128(&offset)); break;
+        case DW_OP_const1u             :    stack.push_back(Scalar(( uint8_t)opcodes.GetU8 (&offset))); break;
+        case DW_OP_const1s             :    stack.push_back(Scalar((  int8_t)opcodes.GetU8 (&offset))); break;
+        case DW_OP_const2u             :    stack.push_back(Scalar((uint16_t)opcodes.GetU16 (&offset))); break;
+        case DW_OP_const2s             :    stack.push_back(Scalar(( int16_t)opcodes.GetU16 (&offset))); break;
+        case DW_OP_const4u             :    stack.push_back(Scalar((uint32_t)opcodes.GetU32 (&offset))); break;
+        case DW_OP_const4s             :    stack.push_back(Scalar(( int32_t)opcodes.GetU32 (&offset))); break;
+        case DW_OP_const8u             :    stack.push_back(Scalar((uint64_t)opcodes.GetU64 (&offset))); break;
+        case DW_OP_const8s             :    stack.push_back(Scalar(( int64_t)opcodes.GetU64 (&offset))); break;
+        case DW_OP_constu              :    stack.push_back(Scalar(opcodes.GetULEB128 (&offset))); break;
+        case DW_OP_consts              :    stack.push_back(Scalar(opcodes.GetSLEB128 (&offset))); break;
 
         //----------------------------------------------------------------------
         // OPCODE: DW_OP_dup
@@ -1877,7 +1877,7 @@ DWARFExpression::Evaluate
         case DW_OP_lit29:
         case DW_OP_lit30:
         case DW_OP_lit31:
-            stack.push_back(op - DW_OP_lit0);
+            stack.push_back(Scalar(op - DW_OP_lit0));
             break;
 
         //----------------------------------------------------------------------
@@ -2567,6 +2567,10 @@ DWARFExpression::Evaluate
                         error_ptr->SetErrorStringWithFormat ("DW_OP_APPLE_expr_local(%u) with invalid index %u.\n", idx, idx);
                     return false;
                 }
+                 // The proxy code has been removed. If it is ever re-added, please
+                 // use shared pointers or return by value to avoid possible memory
+                 // leak (there is no leak here, but in general, no returning pointers
+                 // that must be manually freed please.
                 Value *proxy = expr_local_variable->CreateProxy();
                 stack.push_back(*proxy);
                 delete proxy;
@@ -2598,6 +2602,10 @@ DWARFExpression::Evaluate
                         error_ptr->SetErrorStringWithFormat ("DW_OP_APPLE_extern(%u) with invalid index %u.\n", idx, idx);
                     return false;
                 }
+                // The proxy code has been removed. If it is ever re-added, please
+                // use shared pointers or return by value to avoid possible memory
+                // leak (there is no leak here, but in general, no returning pointers
+                // that must be manually freed please.
                 Value *proxy = extern_var->CreateProxy();
                 stack.push_back(*proxy);
                 delete proxy;

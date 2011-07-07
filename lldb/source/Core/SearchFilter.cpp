@@ -326,7 +326,7 @@ SearchFilterByModule::~SearchFilterByModule()
 bool
 SearchFilterByModule::ModulePasses (const ModuleSP &module_sp)
 {
-    if (module_sp && FileSpec::Compare (module_sp->GetFileSpec(), m_module_spec, false) == 0)
+    if (module_sp && FileSpec::Equal(module_sp->GetFileSpec(), m_module_spec, false))
         return true;
     else
         return false;

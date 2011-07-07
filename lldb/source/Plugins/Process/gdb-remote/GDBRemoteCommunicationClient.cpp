@@ -237,11 +237,16 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
 {
     Mutex::Locker locker;
     LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
-
+    size_t response_len = 0;
     if (GetSequenceMutex (locker))
     {
         if (SendPacketNoLock (payload, payload_length))
-            return WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
+           response_len = WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds ());
+        else 
+        {
+            if (log)
+                log->Printf("error: failed to send '%*s'", payload_length, payload);   
+        }
     }
     else
     {
@@ -266,12 +271,15 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
 
                     if (log) 
                         log->Printf ("async: sent interrupt");
+
                     if (m_async_packet_predicate.WaitForValueEqualTo (false, &timeout_time, &timed_out))
                     {
                         if (log) 
                             log->Printf ("async: got response");
-                        response = m_async_response;
-                        return response.GetStringRef().size();
+
+                        // Swap the response buffer to avoid malloc and string copy
+                        response.GetStringRef().swap (m_async_response.GetStringRef());
+                        response_len = response.GetStringRef().size();
                     }
                     else
                     {
@@ -289,7 +297,9 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
                 else
                 {
                     // We had a racy condition where we went to send the interrupt
-                    // yet we were able to get the loc
+                    // yet we were able to get the lock
+                    if (log) 
+                        log->Printf ("async: got lock but failed to send interrupt");
                 }
             }
             else
@@ -301,10 +311,15 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
         else
         {
             if (log) 
-                log->Printf ("mutex taken and send_async == false, aborting packet");
+                log->Printf("error: packet mutex taken and send_async == false, not sending packet '%*s'", payload_length, payload);
         }
     }
-    return 0;
+    if (response_len == 0)
+    {
+        if (log) 
+            log->Printf("error: failed to get response for '%*s'", payload_length, payload);
+    }        
+    return response_len;
 }
 
 //template<typename _Tp>

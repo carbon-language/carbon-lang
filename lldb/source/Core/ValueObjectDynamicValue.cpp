@@ -177,7 +177,7 @@ ValueObjectDynamicValue::UpdateValue ()
         if (m_type_sp)
             SetValueDidChange(true);
         m_value = m_parent->GetValue();
-        m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0);
+        m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0, GetModule());
         return m_error.Success();
     }
     
@@ -225,7 +225,7 @@ ValueObjectDynamicValue::UpdateValue ()
     {
         // The variable value is in the Scalar value inside the m_value.
         // We can point our m_data right to it.
-        m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0);
+        m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST(), m_data, 0, GetModule());
         if (m_error.Success())
         {
             if (ClangASTContext::IsAggregateType (GetClangType()))

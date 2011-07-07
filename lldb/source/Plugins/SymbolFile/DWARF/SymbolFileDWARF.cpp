@@ -3381,8 +3381,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         clang_type = m_forward_decl_die_to_clang_type.lookup (die);
                         if (clang_type == NULL)
                         {
-                            if (die->GetOffset() == 0x1c436)
-                                printf("REMOVE THIS!!!\n");
                             enumerator_clang_type = ast.GetBuiltinTypeForDWARFEncodingAndBitSize (NULL, 
                                                                                                   DW_ATE_signed, 
                                                                                                   byte_size * 8);
