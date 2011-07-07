@@ -292,6 +292,56 @@ static void SelectInterestingSourceRegion(std::string &SourceLine,
   }
 }
 
+/// Look through spelling locations for a macro argument instantiation, and
+/// if found skip to it so that we can trace the argument rather than the macros
+/// in which that argument is used. If no macro argument instantiation is found,
+/// don't skip anything and return the starting location.
+static SourceLocation skipToMacroArgInstantiation(const SourceManager &SM,
+                                                  SourceLocation StartLoc) {
+  for (SourceLocation L = StartLoc; L.isMacroID();
+       L = SM.getImmediateSpellingLoc(L)) {
+    if (SM.isMacroArgInstantiation(L))
+      return L;
+  }
+
+  // Otherwise just return initial location, there's nothing to skip.
+  return StartLoc;
+}
+
+/// Gets the location of the immediate macro caller, one level up the stack
+/// toward the initial macro typed into the source.
+static SourceLocation getImmediateMacroCallerLoc(const SourceManager &SM,
+                                                 SourceLocation Loc) {
+  if (!Loc.isMacroID()) return Loc;
+
+  // When we have the location of (part of) an expanded parameter, its spelling
+  // location points to the argument as typed into the macro call, and
+  // therefore is used to locate the macro caller.
+  if (SM.isMacroArgInstantiation(Loc))
+    return SM.getImmediateSpellingLoc(Loc);
+
+  // Otherwise, the caller of the macro is located where this macro is
+  // instantiated (while the spelling is part of the macro definition).
+  return SM.getImmediateInstantiationRange(Loc).first;
+}
+
+/// Gets the location of the immediate macro callee, one level down the stack
+/// toward the leaf macro.
+static SourceLocation getImmediateMacroCalleeLoc(const SourceManager &SM,
+                                                 SourceLocation Loc) {
+  if (!Loc.isMacroID()) return Loc;
+
+  // When we have the location of (part of) an expanded parameter, its
+  // instantiation location points to the unexpanded paramater reference within
+  // the macro definition (or callee).
+  if (SM.isMacroArgInstantiation(Loc))
+    return SM.getImmediateInstantiationRange(Loc).first;
+
+  // Otherwise, the callee of the macro is located where this location was
+  // spelled inside the macro definition.
+  return SM.getImmediateSpellingLoc(Loc);
+}
+
 void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
                                                 CharSourceRange *Ranges,
                                                 unsigned NumRanges,
@@ -312,33 +362,40 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
     // Whether to suppress printing this macro instantiation.
     bool Suppressed 
       = OnMacroInst >= MacroSkipStart && OnMacroInst < MacroSkipEnd;
-    
-    SourceLocation OneLevelUp = SM.getImmediateInstantiationRange(Loc).first;
-    
+
+    // When processing macros, skip over the instantiations leading up to
+    // a macro argument, and trace the argument's instantiation stack instead.
+    Loc = skipToMacroArgInstantiation(SM, Loc);
+
+    SourceLocation OneLevelUp = getImmediateMacroCallerLoc(SM, Loc);
+
     // FIXME: Map ranges?
     EmitCaretDiagnostic(OneLevelUp, Ranges, NumRanges, SM,
                         Hints, NumHints, Columns,
                         OnMacroInst + 1, MacroSkipStart, MacroSkipEnd);
-    
+
     // Map the location.
-    Loc = SM.getImmediateSpellingLoc(Loc);
+    Loc = getImmediateMacroCalleeLoc(SM, Loc);
 
     // Map the ranges.
     for (unsigned i = 0; i != NumRanges; ++i) {
       CharSourceRange &R = Ranges[i];
       SourceLocation S = R.getBegin(), E = R.getEnd();
       if (S.isMacroID())
-        R.setBegin(SM.getImmediateSpellingLoc(S));
+        R.setBegin(getImmediateMacroCalleeLoc(SM, S));
       if (E.isMacroID())
-        R.setEnd(SM.getImmediateSpellingLoc(E));
+        R.setEnd(getImmediateMacroCalleeLoc(SM, E));
     }
 
     if (!Suppressed) {
+      // Don't print recursive instantiation notes from an instantiation note.
+      Loc = SM.getSpellingLoc(Loc);
+
       // Get the pretty name, according to #line directives etc.
       PresumedLoc PLoc = SM.getPresumedLoc(Loc);
       if (PLoc.isInvalid())
         return;
-      
+
       // If this diagnostic is not in the main file, print out the
       // "included from" lines.
       if (LastWarningLoc != PLoc.getIncludeLoc()) {
@@ -354,9 +411,6 @@ void TextDiagnosticPrinter::EmitCaretDiagnostic(SourceLocation Loc,
         OS << ' ';
       }
       OS << "note: instantiated from:\n";
-      
-      // Don't print recursive instantiation notes from an instantiation note.
-      Loc = SM.getSpellingLoc(Loc);
 
       EmitCaretDiagnostic(Loc, Ranges, NumRanges, SM, 0, 0,
                           Columns, OnMacroInst + 1, MacroSkipStart,
@@ -772,6 +826,20 @@ static bool PrintWordWrapped(llvm::raw_ostream &OS,
   return true;
 }
 
+/// Get the presumed location of a diagnostic message. This computes the
+/// presumed location for the top of any macro backtrace when present.
+static PresumedLoc getDiagnosticPresumedLoc(const SourceManager &SM,
+                                            SourceLocation Loc) {
+  // This is a condensed form of the algorithm used by EmitCaretDiagnostic to
+  // walk to the top of the macro call stack.
+  while (Loc.isMacroID()) {
+    Loc = skipToMacroArgInstantiation(SM, Loc);
+    Loc = getImmediateMacroCallerLoc(SM, Loc);
+  }
+
+  return SM.getPresumedLoc(Loc);
+}
+
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
                                              const DiagnosticInfo &Info) {
   // Default implementation (Warnings/errors count).
@@ -790,7 +858,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
   // if enabled.
   if (Info.getLocation().isValid()) {
     const SourceManager &SM = Info.getSourceManager();
-    PresumedLoc PLoc = SM.getPresumedLoc(Info.getLocation());
+    PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Info.getLocation());
     if (PLoc.isInvalid()) {
       // At least print the file name if available:
       FileID FID = SM.getFileID(Info.getLocation());
@@ -1043,6 +1111,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       }
     }
 
+    const SourceManager &SM = LastLoc.getManager();
     unsigned MacroInstSkipStart = 0, MacroInstSkipEnd = 0;
     if (DiagOpts && DiagOpts->MacroBacktraceLimit && !LastLoc.isFileID()) {
       // Compute the length of the macro-instantiation backtrace, so that we
@@ -1051,7 +1120,8 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
       unsigned Depth = 0;
       do {
         ++Depth;
-        Loc = LastLoc.getManager().getImmediateInstantiationRange(Loc).first;
+        Loc = skipToMacroArgInstantiation(SM, Loc);
+        Loc = getImmediateMacroCallerLoc(SM, Loc);
       } while (!Loc.isFileID());
       
       if (Depth > DiagOpts->MacroBacktraceLimit) {

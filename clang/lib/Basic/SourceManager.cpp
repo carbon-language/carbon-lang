@@ -531,16 +531,31 @@ FileID SourceManager::createFileID(const ContentCache *File,
   return LastFileIDLookup = FID;
 }
 
-/// createInstantiationLoc - Return a new SourceLocation that encodes the fact
-/// that a token from SpellingLoc should actually be referenced from
-/// InstantiationLoc.
+SourceLocation
+SourceManager::createMacroArgInstantiationLoc(SourceLocation SpellingLoc,
+                                              SourceLocation ILoc,
+                                              unsigned TokLength) {
+  InstantiationInfo II =
+    InstantiationInfo::createForMacroArg(SpellingLoc, ILoc);
+  return createInstantiationLocImpl(II, TokLength);
+}
+
 SourceLocation SourceManager::createInstantiationLoc(SourceLocation SpellingLoc,
                                                      SourceLocation ILocStart,
                                                      SourceLocation ILocEnd,
                                                      unsigned TokLength,
                                                      unsigned PreallocatedID,
                                                      unsigned Offset) {
-  InstantiationInfo II = InstantiationInfo::get(ILocStart,ILocEnd, SpellingLoc);
+  InstantiationInfo II =
+    InstantiationInfo::create(SpellingLoc, ILocStart, ILocEnd);
+  return createInstantiationLocImpl(II, TokLength, PreallocatedID, Offset);
+}
+
+SourceLocation
+SourceManager::createInstantiationLocImpl(const InstantiationInfo &II,
+                                          unsigned TokLength,
+                                          unsigned PreallocatedID,
+                                          unsigned Offset) {
   if (PreallocatedID) {
     // If we're filling in a preallocated ID, just load in the
     // instantiation entry and return.
@@ -824,6 +839,14 @@ SourceManager::getInstantiationRange(SourceLocation Loc) const {
   return Res;
 }
 
+bool SourceManager::isMacroArgInstantiation(SourceLocation Loc) const {
+  if (!Loc.isMacroID()) return false;
+
+  FileID FID = getFileID(Loc);
+  const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
+  const SrcMgr::InstantiationInfo &II = E->getInstantiation();
+  return II.isMacroArgInstantiation();
+}
 
 
 //===----------------------------------------------------------------------===//

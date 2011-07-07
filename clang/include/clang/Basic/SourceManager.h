@@ -239,8 +239,11 @@ namespace SrcMgr {
     /// InstantiationLocStart/InstantiationLocEnd - In a macro expansion, these
     /// indicate the start and end of the instantiation.  In object-like macros,
     /// these will be the same.  In a function-like macro instantiation, the
-    /// start will be the identifier and the end will be the ')'.
+    /// start will be the identifier and the end will be the ')'.  Finally, in
+    /// macro-argument instantitions, the end will be 'SourceLocation()', an
+    /// invalid location.
     unsigned InstantiationLocStart, InstantiationLocEnd;
+
   public:
     SourceLocation getSpellingLoc() const {
       return SourceLocation::getFromRawEncoding(SpellingLoc);
@@ -249,7 +252,9 @@ namespace SrcMgr {
       return SourceLocation::getFromRawEncoding(InstantiationLocStart);
     }
     SourceLocation getInstantiationLocEnd() const {
-      return SourceLocation::getFromRawEncoding(InstantiationLocEnd);
+      SourceLocation EndLoc =
+        SourceLocation::getFromRawEncoding(InstantiationLocEnd);
+      return EndLoc.isInvalid() ? getInstantiationLocStart() : EndLoc;
     }
 
     std::pair<SourceLocation,SourceLocation> getInstantiationLocRange() const {
@@ -257,18 +262,51 @@ namespace SrcMgr {
                             getInstantiationLocEnd());
     }
 
-    /// get - Return a InstantiationInfo for an expansion.  IL specifies
-    /// the instantiation location (where the macro is expanded), and SL
-    /// specifies the spelling location (where the characters from the token
-    /// come from).  IL and PL can both refer to normal File SLocs or
+    bool isMacroArgInstantiation() const {
+      // Note that this needs to return false for default constructed objects.
+      return getInstantiationLocStart().isValid() &&
+        SourceLocation::getFromRawEncoding(InstantiationLocEnd).isInvalid();
+    }
+
+    /// create - Return a InstantiationInfo for an expansion. ILStart and
+    /// ILEnd specify the instantiation range (where the macro is expanded),
+    /// and SL specifies the spelling location (where the characters from the
+    /// token come from). All three can refer to normal File SLocs or
     /// instantiation locations.
-    static InstantiationInfo get(SourceLocation ILStart, SourceLocation ILEnd,
-                                 SourceLocation SL) {
+    static InstantiationInfo create(SourceLocation SL,
+                                    SourceLocation ILStart,
+                                    SourceLocation ILEnd) {
       InstantiationInfo X;
       X.SpellingLoc = SL.getRawEncoding();
       X.InstantiationLocStart = ILStart.getRawEncoding();
       X.InstantiationLocEnd = ILEnd.getRawEncoding();
       return X;
+    }
+
+    /// createForMacroArg - Return a special InstantiationInfo for the
+    /// expansion of a macro argument into a function-like macro's body. IL
+    /// specifies the instantiation location (where the macro is expanded).
+    /// This doesn't need to be a range because a macro is always instantiated
+    /// at a macro parameter reference, and macro parameters are always exactly
+    /// one token. SL specifies the spelling location (where the characters
+    /// from the token come from). IL and SL can both refer to normal File
+    /// SLocs or instantiation locations.
+    ///
+    /// Given the code:
+    /// \code
+    ///   #define F(x) f(x)
+    ///   F(42);
+    /// \endcode
+    ///
+    /// When expanding '\c F(42)', the '\c x' would call this with an SL
+    /// pointing at '\c 42' anad an IL pointing at its location in the
+    /// definition of '\c F'.
+    static InstantiationInfo createForMacroArg(SourceLocation SL,
+                                               SourceLocation IL) {
+      // We store an intentionally invalid source location for the end of the
+      // instantiation range to mark that this is a macro argument instantation
+      // rather than a normal one.
+      return create(SL, IL, SourceLocation());
     }
   };
 
@@ -533,9 +571,17 @@ public:
     return MainFileID;
   }
 
+  /// createMacroArgInstantiationLoc - Return a new SourceLocation that encodes
+  /// the fact that a token from SpellingLoc should actually be referenced from
+  /// InstantiationLoc, and that it represents the instantiation of a macro
+  /// argument into the function-like macro body.
+  SourceLocation createMacroArgInstantiationLoc(SourceLocation Loc,
+                                                SourceLocation InstantiationLoc,
+                                                unsigned TokLength);
+
   /// createInstantiationLoc - Return a new SourceLocation that encodes the fact
-  /// that a token at Loc should actually be referenced from InstantiationLoc.
-  /// TokLength is the length of the token being instantiated.
+  /// that a token from SpellingLoc should actually be referenced from
+  /// InstantiationLoc.
   SourceLocation createInstantiationLoc(SourceLocation Loc,
                                         SourceLocation InstantiationLocStart,
                                         SourceLocation InstantiationLocEnd,
@@ -746,6 +792,12 @@ public:
     return getDecomposedLoc(SpellingLoc).second;
   }
 
+  /// isMacroArgInstantiation - This method tests whether the given source
+  /// location represents a macro argument's instantiation into the
+  /// function-like macro definition. Such source locations only appear inside
+  /// of the instantiation locations representing where a particular
+  /// function-like macro was expanded.
+  bool isMacroArgInstantiation(SourceLocation Loc) const;
 
   //===--------------------------------------------------------------------===//
   // Queries about the code at a SourceLocation.
@@ -990,6 +1042,14 @@ public:
 
 private:
   const llvm::MemoryBuffer *getFakeBufferForRecovery() const;
+
+  /// createInstantiationLoc - Implements the common elements of storing an
+  /// instantiation info struct into the SLocEntry table and producing a source
+  /// location that refers to it.
+  SourceLocation createInstantiationLocImpl(const SrcMgr::InstantiationInfo &II,
+                                            unsigned TokLength,
+                                            unsigned PreallocatedID = 0,
+                                            unsigned Offset = 0);
 
   /// isOffsetInFileID - Return true if the specified FileID contains the
   /// specified SourceLocation offset.  This is a very hot method.

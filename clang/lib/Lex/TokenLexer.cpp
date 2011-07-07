@@ -231,9 +231,9 @@ void TokenLexer::ExpandFunctionArguments() {
                  "Expected arg identifier to come from definition");
           for (unsigned i = FirstResult, e = ResultToks.size(); i != e; ++i) {
             Token &Tok = ResultToks[i];
-            Tok.setLocation(SM.createInstantiationLoc(Tok.getLocation(),
-                                                      curInst, curInst,
-                                                      Tok.getLength()));
+            Tok.setLocation(SM.createMacroArgInstantiationLoc(Tok.getLocation(),
+                                                              curInst,
+                                                              Tok.getLength()));
           }
         }
 
