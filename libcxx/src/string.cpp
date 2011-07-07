@@ -19,52 +19,6 @@ template class __basic_string_common<true>;
 template class basic_string<char>;
 template class basic_string<wchar_t>;
 
-template enable_if<__is_forward_iterator<char const*>::value, void>::type
-    basic_string<char, char_traits<char>, allocator<char> >
-    ::__init<char const*>(char const*, char const*);
-
-template enable_if<__is_forward_iterator<wchar_t const*>::value, void>::type
-    basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t> >
-    ::__init<wchar_t const*>(wchar_t const*, wchar_t const*);
-
-template
-    enable_if<__is_forward_iterator<char*>::value,
-    basic_string<char, char_traits<char>, allocator<char> >&>::type
-    basic_string<char, char_traits<char>, allocator<char> >::
-    append<char*>(char*, char*);
-
-template
-    enable_if<__is_forward_iterator<wchar_t*>::value,
-    basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t> >&>::type
-    basic_string<wchar_t, char_traits<wchar_t>, allocator<wchar_t> >::
-    append<wchar_t*>(wchar_t*, wchar_t*);
-
-template
-    enable_if<__is_forward_iterator<char const*>::value,
-    string::iterator>::type
-    string::
-    insert<char const*>(string::const_iterator, char const*, char const*);
-
-template
-    enable_if<__is_forward_iterator<wchar_t const*>::value,
-    wstring::iterator>::type
-    wstring::
-    insert<wchar_t const*>(wstring::const_iterator, wchar_t const*, wchar_t const*);
-
-template
-    enable_if<__is_input_iterator<char const*>::value, string&>::type
-    string::
-    replace<char const*>(string::const_iterator, string::const_iterator, char const*, char const*);
-
-template
-    enable_if<__is_input_iterator<wchar_t const*>::value, wstring&>::type
-    wstring::
-    replace<wchar_t const*>(wstring::const_iterator, wstring::const_iterator, wchar_t const*, wchar_t const*);
-
-template
-    enable_if<__is_forward_iterator<wchar_t*>::value, wstring&>::type
-    wstring::assign<wchar_t*>(wchar_t*, wchar_t*);
-
 template
     string
     operator+<char, char_traits<char>, allocator<char> >(char const*, string const&);

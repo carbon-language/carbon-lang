@@ -452,6 +452,8 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     const error_code& code() const throw() {return __ec_;}
+
+    virtual ~future_error() _NOEXCEPT;
 };
 
 class __assoc_sub_state

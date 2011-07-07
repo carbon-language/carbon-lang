@@ -154,11 +154,13 @@ public:
     virtual ~basic_ostream();
 protected:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream(basic_ostream&& __rhs);
 #endif
 
     // 27.7.2.3 Assign/swap
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     basic_ostream& operator=(basic_ostream&& __rhs);
 #endif
     void swap(basic_ostream& __rhs);

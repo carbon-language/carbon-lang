@@ -100,41 +100,6 @@ strstreambuf::strstreambuf(const unsigned char* __gnext, streamsize __n)
     __init((char*)__gnext, __n, nullptr);
 }
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
-strstreambuf::strstreambuf(strstreambuf&& __rhs)
-    : streambuf(__rhs),
-      __strmode_(__rhs.__strmode_),
-      __alsize_(__rhs.__alsize_),
-      __palloc_(__rhs.__palloc_),
-      __pfree_(__rhs.__pfree_)
-{
-    __rhs.setg(nullptr, nullptr, nullptr);
-    __rhs.setp(nullptr, nullptr);
-}
-
-strstreambuf&
-strstreambuf::operator=(strstreambuf&& __rhs)
-{
-    if (eback() && (__strmode_ & __allocated) != 0 && (__strmode_ & __frozen) == 0)
-    {
-        if (__pfree_)
-            __pfree_(eback());
-        else
-            delete [] eback();
-    }
-    streambuf::operator=(__rhs);
-    __strmode_ = __rhs.__strmode_;
-    __alsize_ = __rhs.__alsize_;
-    __palloc_ = __rhs.__palloc_;
-    __pfree_ = __rhs.__pfree_;
-    __rhs.setg(nullptr, nullptr, nullptr);
-    __rhs.setp(nullptr, nullptr);
-    return *this;
-}
-
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
-
 strstreambuf::~strstreambuf()
 {
     if (eback() && (__strmode_ & __allocated) != 0 && (__strmode_ & __frozen) == 0)

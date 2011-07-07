@@ -28,8 +28,18 @@ int main()
     assert( (t1 <= t2));
     assert(!(t1 >  t2));
     assert( (t1 >= t2));
-    assert(!(t1 <  t3));
-    assert(!(t1 <= t3));
-    assert( (t1 >  t3));
-    assert( (t1 >= t3));
+    if (t1 < t3)
+    {
+        assert( (t1 <  t3));
+        assert( (t1 <= t3));
+        assert(!(t1 >  t3));
+        assert(!(t1 >= t3));
+    }
+    else
+    {
+        assert(!(t1 <  t3));
+        assert(!(t1 <= t3));
+        assert( (t1 >  t3));
+        assert( (t1 >= t3));
+    }
 }

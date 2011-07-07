@@ -177,11 +177,13 @@ public:
     virtual ~basic_istream();
 protected:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     basic_istream(basic_istream&& __rhs);
 #endif
 
     // 27.7.1.1.2 Assign/swap:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     basic_istream& operator=(basic_istream&& __rhs);
 #endif
     void swap(basic_istream& __rhs);
@@ -1504,11 +1506,13 @@ public:
     virtual ~basic_iostream();
 protected:
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     basic_iostream(basic_iostream&& __rhs);
 #endif
 
     // assign/swap
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    _LIBCPP_INLINE_VISIBILITY
     basic_iostream& operator=(basic_iostream&& __rhs);
 #endif
     void swap(basic_iostream& __rhs);
