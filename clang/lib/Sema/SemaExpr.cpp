@@ -4066,22 +4066,12 @@ ExprResult Sema::CheckCastTypes(SourceLocation CastStartLoc, SourceRange TyR,
         }
       }
     } 
-    else {
-      QualType canCastType = 
-        Context.getCanonicalType(castType).getUnqualifiedType();
-        if (isa<ObjCObjectPointerType>(canCastType) &&
-            castType.getObjCLifetime() == Qualifiers::OCL_Weak &&
-            castExprType->isObjCObjectPointerType()) {
-          if (const ObjCObjectPointerType *ObjT =
-              castExprType->getAs<ObjCObjectPointerType>())
-            if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable()) {
-              Diag(castExpr->getLocStart(), 
-                   diag::err_arc_cast_of_weak_unavailable)
+    else if (!CheckObjCARCUnavailableWeakConversion(castType, castExprType)) {
+           Diag(castExpr->getLocStart(), 
+                diag::err_arc_cast_of_weak_unavailable)
                 << castExprType << castType 
                 << castExpr->getSourceRange();
-              return ExprError();
-            }
-        }
+          return ExprError();
     }
   }
   
@@ -5300,12 +5290,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
         checkObjCPointerTypesForAssignment(*this, lhsType, rhsType);
       if (getLangOptions().ObjCAutoRefCount &&
           result == Compatible && 
-          origLhsType.getObjCLifetime() == Qualifiers::OCL_Weak) {
-        if (const ObjCObjectPointerType *ObjT = 
-              rhsType->getAs<ObjCObjectPointerType>())
-          if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable())
-            result = IncompatibleObjCWeakRef;
-      }
+          !CheckObjCARCUnavailableWeakConversion(origLhsType, rhsType))
+        result = IncompatibleObjCWeakRef;
       return result;
     }
 
@@ -5474,8 +5460,12 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, ExprResult &rExpr) {
                                                  AA_Assigning);
       if (Res.isInvalid())
         return Incompatible;
+      Sema::AssignConvertType result = Compatible;
+      if (getLangOptions().ObjCAutoRefCount &&
+          !CheckObjCARCUnavailableWeakConversion(lhsType, rExpr.get()->getType()))
+        result = IncompatibleObjCWeakRef;
       rExpr = move(Res);
-      return Compatible;
+      return result;
     }
 
     // FIXME: Currently, we fall through and treat C++ classes like C

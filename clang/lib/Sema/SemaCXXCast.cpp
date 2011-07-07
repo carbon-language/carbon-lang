@@ -1717,7 +1717,8 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
     Kind = CK_Dependent;
     return Owned(CastExpr);
   }
-
+  
+  QualType origCastExprType = CastExpr->getType();
   if (VK == VK_RValue && !CastTy->isRecordType()) {
     ExprResult CastExprRes = DefaultFunctionArrayLvalueConversion(CastExpr);
     if (CastExprRes.isInvalid())
@@ -1773,8 +1774,15 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
     }
   }
 
-  if (getLangOptions().ObjCAutoRefCount && tcr == TC_Success)
+  if (getLangOptions().ObjCAutoRefCount && tcr == TC_Success) {
     CheckObjCARCConversion(R, CastTy, CastExpr, CCK);
+    if (!CheckObjCARCUnavailableWeakConversion(CastTy, 
+                                               origCastExprType))
+      Diag(CastExpr->getLocStart(), 
+           diag::err_arc_cast_of_weak_unavailable)
+      << origCastExprType << CastTy 
+      << CastExpr->getSourceRange();
+  }
 
   if (tcr != TC_Success && msg != 0) {
     if (CastExpr->getType() == Context.OverloadTy) {

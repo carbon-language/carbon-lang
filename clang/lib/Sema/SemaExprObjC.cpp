@@ -1771,6 +1771,23 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
     << castRange << castExpr->getSourceRange();
 }
 
+bool Sema::CheckObjCARCUnavailableWeakConversion(QualType castType,
+                                                 QualType exprType) {
+  QualType canCastType = 
+    Context.getCanonicalType(castType).getUnqualifiedType();
+  QualType canExprType = 
+    Context.getCanonicalType(exprType).getUnqualifiedType();
+  if (isa<ObjCObjectPointerType>(canCastType) &&
+      castType.getObjCLifetime() == Qualifiers::OCL_Weak &&
+      canExprType->isObjCObjectPointerType()) {
+    if (const ObjCObjectPointerType *ObjT =
+        canExprType->getAs<ObjCObjectPointerType>())
+      if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable())
+        return false;
+  }
+  return true;
+}
+
 /// Look for an ObjCReclaimReturnedObject cast and destroy it.
 static Expr *maybeUndoReclaimObject(Expr *e) {
   // For now, we just undo operands that are *immediately* reclaim
