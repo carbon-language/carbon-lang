@@ -42,8 +42,16 @@ MCRegisterInfo *createARMMCRegisterInfo() {
 
 MCSubtargetInfo *createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
                                           StringRef FS) {
+  std::string ArchFS = ARM_MC::ParseARMTriple(TT);
+  if (!FS.empty()) {
+    if (!ArchFS.empty())
+      ArchFS = ArchFS + "," + FS.str();
+    else
+      ArchFS = FS;
+  }
+
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitARMMCSubtargetInfo(X, CPU, FS);
+  InitARMMCSubtargetInfo(X, CPU, ArchFS);
   return X;
 }
 
@@ -74,16 +82,17 @@ extern "C" void LLVMInitializeARMMCSubtargetInfo() {
                                           createARMMCSubtargetInfo);
 }
 
-std::string ARM_MC::ParseARMTriple(StringRef TT, bool &IsThumb) {
+std::string ARM_MC::ParseARMTriple(StringRef TT) {
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   unsigned Len = TT.size();
   unsigned Idx = 0;
 
+  bool isThumb = false;
   if (Len >= 5 && TT.substr(0, 4) == "armv")
     Idx = 4;
   else if (Len >= 6 && TT.substr(0, 5) == "thumb") {
-    IsThumb = true;
+    isThumb = true;
     if (Len >= 7 && TT[5] == 'v')
       Idx = 6;
   }
@@ -114,6 +123,13 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, bool &IsThumb) {
         ARMArchFeature = "+v5t";
     } else if (SubVer == '4' && Len >= Idx+2 && TT[Idx+1] == 't')
       ARMArchFeature = "+v4t";
+  }
+
+  if (isThumb) {
+    if (ARMArchFeature.empty())
+      ARMArchFeature = "+thumb";
+    else
+      ARMArchFeature += ",+thumb";
   }
 
   return ARMArchFeature;

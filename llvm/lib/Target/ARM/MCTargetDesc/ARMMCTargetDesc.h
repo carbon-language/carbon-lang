@@ -23,7 +23,7 @@ class StringRef;
 extern Target TheARMTarget, TheThumbTarget;
 
 namespace ARM_MC {
-  std::string ParseARMTriple(StringRef TT, bool &IsThumb);
+  std::string ParseARMTriple(StringRef TT);
 }
 
 } // End llvm namespace

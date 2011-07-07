@@ -81,14 +81,13 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   // Insert the architecture feature derived from the target triple into the
   // feature string. This is important for setting features that are implied
   // based on the architecture version.
-  std::string ArchFS = ARM_MC::ParseARMTriple(TT, IsThumb);
+  std::string ArchFS = ARM_MC::ParseARMTriple(TT);
   if (!FS.empty()) {
     if (!ArchFS.empty())
       ArchFS = ArchFS + "," + FS;
     else
       ArchFS = FS;
   }
-
   ParseSubtargetFeatures(CPUString, ArchFS);
 
   // Thumb2 implies at least V6T2. FIXME: Fix tests to explicitly specify a

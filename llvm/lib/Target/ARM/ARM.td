@@ -16,6 +16,12 @@
 
 include "llvm/Target/Target.td"
 
+//===----------------------------------------------------------------------===//
+// ARM Subtarget state.
+//
+
+def ModeThumb  : SubtargetFeature<"thumb", "IsThumb", "true",
+                                  "Thumb mode">;
 
 //===----------------------------------------------------------------------===//
 // ARM Subtarget features.
@@ -85,23 +91,23 @@ def FeatureDSPThumb2 : SubtargetFeature<"t2dsp", "Thumb2DSP", "true",
 def FeatureMP : SubtargetFeature<"mp", "HasMPExtension", "true",
                                  "Supports Multiprocessing extension">;
 
-// ARM architectures.
+// ARM ISAs.
 def HasV4TOps   : SubtargetFeature<"v4t", "HasV4TOps", "true",
-                                   "ARM v4T">;
+                                   "Support ARM v4T instructions">;
 def HasV5TOps   : SubtargetFeature<"v5t", "HasV5TOps", "true",
-                                   "ARM v5T",
+                                   "Support ARM v5T instructions",
                                    [HasV4TOps]>;
 def HasV5TEOps  : SubtargetFeature<"v5te", "HasV5TEOps", "true",
-                                   "ARM v5TE, v5TEj, v5TExp",
+                             "Support ARM v5TE, v5TEj, and v5TExp instructions",
                                    [HasV5TOps]>;
 def HasV6Ops    : SubtargetFeature<"v6", "HasV6Ops", "true",
-                                   "ARM v6",
+                                   "Support ARM v6 instructions",
                                    [HasV5TEOps]>;
 def HasV6T2Ops  : SubtargetFeature<"v6t2", "HasV6T2Ops", "true",
-                                   "ARM v6t2",
+                                   "Support ARM v6t2 instructions",
                                    [HasV6Ops, FeatureThumb2, FeatureDSPThumb2]>;
 def HasV7Ops    : SubtargetFeature<"v7", "HasV7Ops", "true",
-                                   "ARM v7",
+                                   "Support ARM v7 instructions",
                                    [HasV6T2Ops]>;
 
 //===----------------------------------------------------------------------===//
@@ -111,8 +117,6 @@ def HasV7Ops    : SubtargetFeature<"v7", "HasV7Ops", "true",
 include "ARMSchedule.td"
 
 // ARM processor families.
-def ProcOthers  : SubtargetFeature<"others", "ARMProcFamily", "Others",
-                                   "One of the other ARM processor families">;
 def ProcA8      : SubtargetFeature<"a8", "ARMProcFamily", "CortexA8",
                                    "Cortex-A8 ARM processors",
                                    [FeatureSlowFPBrcc, FeatureNEONForFP,
