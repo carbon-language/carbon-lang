@@ -20,8 +20,8 @@
 #include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
-#include "llvm/Intrinsics.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
