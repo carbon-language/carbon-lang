@@ -26,7 +26,7 @@ using namespace llvm;
 MBlazeSubtarget::MBlazeSubtarget(const std::string &TT,
                                  const std::string &CPU,
                                  const std::string &FS):
-  MBlazeGenSubtargetInfo(),
+  MBlazeGenSubtargetInfo(TT, CPU, FS),
   HasBarrel(false), HasDiv(false), HasMul(false), HasPatCmp(false),
   HasFPU(false), HasMul64(false), HasSqrt(false)
 {
@@ -34,7 +34,7 @@ MBlazeSubtarget::MBlazeSubtarget(const std::string &TT,
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "mblaze";
-  ParseSubtargetFeatures(FS, CPUName);
+  ParseSubtargetFeatures(CPUName, FS);
 
   // Only use instruction scheduling if the selected CPU has an instruction
   // itinerary (the default CPU is the only one that doesn't).

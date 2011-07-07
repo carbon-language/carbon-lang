@@ -34,30 +34,29 @@ class MCSubtargetInfo {
   const unsigned *ForwardingPathes;    // Forwarding pathes
   unsigned NumFeatures;                // Number of processor features
   unsigned NumProcs;                   // Number of processors
-    
+  unsigned FeatureBits;                // Feature bits for current CPU
+
 public:
-  void InitMCSubtargetInfo(const SubtargetFeatureKV *PF,
+  void InitMCSubtargetInfo(StringRef CPU, StringRef FS,
+                           const SubtargetFeatureKV *PF,
                            const SubtargetFeatureKV *PD,
                            const SubtargetInfoKV *PI, const InstrStage *IS,
                            const unsigned *OC, const unsigned *FP,
-                           unsigned NF, unsigned NP) {
-    ProcFeatures = PF;
-    ProcDesc = PD;
-    ProcItins = PI;
-    Stages = IS;
-    OperandCycles = OC;
-    ForwardingPathes = FP;
-    NumFeatures = NF;
-    NumProcs = NP;
+                           unsigned NF, unsigned NP);
+
+  /// getFeatureBits - Get the feature bits.
+  ///
+  uint64_t getFeatureBits() const {
+    return FeatureBits;
   }
+
+  /// ReInitMCSubtargetInfo - Change CPU (and optionally supplemented with
+  /// feature string), recompute and return feature bits.
+  uint64_t ReInitMCSubtargetInfo(StringRef CPU, StringRef FS);
 
   /// getInstrItineraryForCPU - Get scheduling itinerary of a CPU.
   ///
   InstrItineraryData getInstrItineraryForCPU(StringRef CPU) const;
-
-  /// getFeatureBits - Get the feature bits for a CPU (optionally supplemented
-  /// with feature string).
-  uint64_t getFeatureBits(StringRef CPU, StringRef FS) const;
 };
 
 } // End llvm namespace

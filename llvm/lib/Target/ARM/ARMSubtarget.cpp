@@ -38,7 +38,7 @@ StrictAlign("arm-strict-align", cl::Hidden,
 
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS)
-  : ARMGenSubtargetInfo()
+  : ARMGenSubtargetInfo(TT, CPU, FS)
   , ARMProcFamily(Others)
   , HasV4TOps(false)
   , HasV5TOps(false)
@@ -78,9 +78,6 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   if (CPUString.empty())
     CPUString = "generic";
 
-  if (TT.find("eabi") != std::string::npos)
-    TargetABI = ARM_ABI_AAPCS;
-
   // Insert the architecture feature derived from the target triple into the
   // feature string. This is important for setting features that are implied
   // based on the architecture version.
@@ -92,7 +89,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
       ArchFS = FS;
   }
 
-  ParseSubtargetFeatures(ArchFS, CPUString);
+  ParseSubtargetFeatures(CPUString, ArchFS);
 
   // Thumb2 implies at least V6T2. FIXME: Fix tests to explicitly specify a
   // ARM version or CPU and then remove this.
@@ -104,6 +101,9 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
 
   // After parsing Itineraries, set ItinData.IssueWidth.
   computeIssueWidth();
+
+  if (TT.find("eabi") != std::string::npos)
+    TargetABI = ARM_ABI_AAPCS;
 
   if (isAAPCS_ABI())
     stackAlignment = 8;

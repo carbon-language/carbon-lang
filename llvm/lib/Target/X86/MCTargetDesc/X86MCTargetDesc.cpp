@@ -40,9 +40,10 @@ MCRegisterInfo *createX86MCRegisterInfo() {
   return X;
 }
 
-MCSubtargetInfo *createX86MCSubtargetInfo() {
+MCSubtargetInfo *createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
+                                          StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitX86MCSubtargetInfo(X);
+  InitX86MCSubtargetInfo(X, CPU, FS);
   return X;
 }
 

@@ -25,7 +25,7 @@ using namespace llvm;
 
 SPUSubtarget::SPUSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS) :
-  SPUGenSubtargetInfo(),
+  SPUGenSubtargetInfo(TT, CPU, FS),
   StackAlignment(16),
   ProcDirective(SPU::DEFAULT_PROC),
   UseLargeMem(false)
@@ -35,7 +35,7 @@ SPUSubtarget::SPUSubtarget(const std::string &TT, const std::string &CPU,
   std::string default_cpu("v0");
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, default_cpu);
+  ParseSubtargetFeatures(default_cpu, FS);
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(default_cpu);

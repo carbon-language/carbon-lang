@@ -22,10 +22,11 @@
 using namespace llvm;
 
 MSP430Subtarget::MSP430Subtarget(const std::string &TT,
-                                 const std::string &CPUIgnored,
-                                 const std::string &FS) {
-  std::string CPU = "generic";
+                                 const std::string &CPU,
+                                 const std::string &FS) :
+  MSP430GenSubtargetInfo(TT, CPU, FS) {
+  std::string CPUName = "generic";
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPU);
+  ParseSubtargetFeatures(CPUName, FS);
 }

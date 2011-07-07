@@ -292,7 +292,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, 
                            bool is64Bit, unsigned StackAlignOverride)
-  : X86GenSubtargetInfo()
+  : X86GenSubtargetInfo(TT, CPU, FS)
   , PICStyle(PICStyles::None)
   , X86SSELevel(NoMMXSSE)
   , X863DNowLevel(NoThreeDNow)
@@ -320,7 +320,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
     std::string CPUName = CPU;
     if (CPUName.empty())
       CPUName = sys::getHostCPUName();
-    ParseSubtargetFeatures(FS, CPUName);
+    ParseSubtargetFeatures(CPUName, FS);
     // All X86-64 CPUs also have SSE2, however user might request no SSE via 
     // -mattr, so don't force SSELevel here.
     if (HasAVX)

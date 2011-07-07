@@ -26,13 +26,13 @@ using namespace llvm;
 SystemZSubtarget::SystemZSubtarget(const std::string &TT, 
                                    const std::string &CPU,
                                    const std::string &FS):
-  SystemZGenSubtargetInfo(), HasZ10Insts(false) {
+  SystemZGenSubtargetInfo(TT, CPU, FS), HasZ10Insts(false) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "z9";
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPUName);
+  ParseSubtargetFeatures(CPUName, FS);
 }
 
 /// True if accessing the GV requires an extra load.

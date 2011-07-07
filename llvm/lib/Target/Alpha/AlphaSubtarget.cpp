@@ -23,13 +23,13 @@ using namespace llvm;
 
 AlphaSubtarget::AlphaSubtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS)
-  : AlphaGenSubtargetInfo(), HasCT(false) {
+  : AlphaGenSubtargetInfo(TT, CPU, FS), HasCT(false) {
   std::string CPUName = CPU;
   if (CPUName.empty())
     CPUName = "generic";
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPUName);
+  ParseSubtargetFeatures(CPUName, FS);
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);

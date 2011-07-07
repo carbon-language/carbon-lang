@@ -23,7 +23,7 @@ using namespace llvm;
 
 PTXSubtarget::PTXSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, bool is64Bit)
-  : PTXGenSubtargetInfo(),
+  : PTXGenSubtargetInfo(TT, CPU, FS),
     PTXTarget(PTX_COMPUTE_1_0),
     PTXVersion(PTX_VERSION_2_0),
     SupportsDouble(false),
@@ -32,7 +32,7 @@ PTXSubtarget::PTXSubtarget(const std::string &TT, const std::string &CPU,
   std::string TARGET = CPU;
   if (TARGET.empty())
     TARGET = "generic";
-  ParseSubtargetFeatures(FS, TARGET);
+  ParseSubtargetFeatures(TARGET, FS);
 }
 
 std::string PTXSubtarget::getTargetString() const {

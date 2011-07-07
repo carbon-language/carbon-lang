@@ -23,6 +23,6 @@ using namespace llvm;
 
 XCoreSubtarget::XCoreSubtarget(const std::string &TT,
                                const std::string &CPU, const std::string &FS)
-  : XCoreGenSubtargetInfo()
+  : XCoreGenSubtargetInfo(TT, CPU, FS)
 {
 }

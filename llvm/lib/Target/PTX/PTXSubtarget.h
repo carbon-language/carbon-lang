@@ -20,6 +20,8 @@
 #include "PTXGenSubtargetInfo.inc"
 
 namespace llvm {
+class StringRef;
+
   class PTXSubtarget : public PTXGenSubtargetInfo {
     public:
 
@@ -112,8 +114,7 @@ namespace llvm {
                (PTXTarget >= PTX_COMPUTE_2_0 && PTXTarget < PTX_LAST_COMPUTE);
       }
 
-      void ParseSubtargetFeatures(const std::string &FS,
-                                  const std::string &CPU);
+    void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
   }; // class PTXSubtarget
 } // namespace llvm
 

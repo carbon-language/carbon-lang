@@ -64,7 +64,7 @@ static const char *GetCurrentPowerPCCPU() {
 
 PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, bool is64Bit)
-  : PPCGenSubtargetInfo()
+  : PPCGenSubtargetInfo(TT, CPU, FS)
   , StackAlignment(16)
   , DarwinDirective(PPC::DIR_NONE)
   , IsGigaProcessor(false)
@@ -88,7 +88,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
 #endif
 
   // Parse features string.
-  ParseSubtargetFeatures(FS, CPUName);
+  ParseSubtargetFeatures(CPUName, FS);
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);

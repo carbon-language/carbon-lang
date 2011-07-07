@@ -231,8 +231,9 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
                                          size_t CPUTableSize,
                                          const SubtargetFeatureKV *FeatureTable,
                                          size_t FeatureTableSize) {
-  assert(CPUTable && "missing CPU table");
-  assert(FeatureTable && "missing features table");
+  if (!FeatureTableSize || !CPUTableSize)
+    return 0;
+
 #ifndef NDEBUG
   for (size_t i = 1; i < CPUTableSize; i++) {
     assert(strcmp(CPUTable[i - 1].Key, CPUTable[i].Key) < 0 &&
@@ -249,24 +250,27 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
   if (CPU == "help")
     Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
   
-  // Find CPU entry
-  const SubtargetFeatureKV *CPUEntry = Find(CPU, CPUTable, CPUTableSize);
-  // If there is a match
-  if (CPUEntry) {
-    // Set base feature bits
-    Bits = CPUEntry->Value;
+  // Find CPU entry if CPU name is specified.
+  if (!CPU.empty()) {
+    const SubtargetFeatureKV *CPUEntry = Find(CPU, CPUTable, CPUTableSize);
+    // If there is a match
+    if (CPUEntry) {
+      // Set base feature bits
+      Bits = CPUEntry->Value;
 
-    // Set the feature implied by this CPU feature, if any.
-    for (size_t i = 0; i < FeatureTableSize; ++i) {
-      const SubtargetFeatureKV &FE = FeatureTable[i];
-      if (CPUEntry->Value & FE.Value)
-        SetImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
+      // Set the feature implied by this CPU feature, if any.
+      for (size_t i = 0; i < FeatureTableSize; ++i) {
+        const SubtargetFeatureKV &FE = FeatureTable[i];
+        if (CPUEntry->Value & FE.Value)
+          SetImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
+      }
+    } else {
+      errs() << "'" << CPU
+             << "' is not a recognized processor for this target"
+             << " (ignoring processor)\n";
     }
-  } else {
-    errs() << "'" << CPU
-           << "' is not a recognized processor for this target"
-           << " (ignoring processor)\n";
   }
+
   // Iterate through each feature
   for (size_t i = 0, E = Features.size(); i < E; i++) {
     const StringRef Feature = Features[i];

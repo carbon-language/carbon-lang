@@ -40,9 +40,10 @@ MCRegisterInfo *createARMMCRegisterInfo() {
   return X;
 }
 
-MCSubtargetInfo *createARMMCSubtargetInfo() {
+MCSubtargetInfo *createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                          StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitARMMCSubtargetInfo(X);
+  InitARMMCSubtargetInfo(X, CPU, FS);
   return X;
 }
 

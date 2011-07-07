@@ -16,6 +16,38 @@
 
 using namespace llvm;
 
+void MCSubtargetInfo::InitMCSubtargetInfo(StringRef CPU, StringRef FS,
+                                          const SubtargetFeatureKV *PF,
+                                          const SubtargetFeatureKV *PD,
+                                          const SubtargetInfoKV *PI,
+                                          const InstrStage *IS,
+                                          const unsigned *OC,
+                                          const unsigned *FP,
+                                          unsigned NF, unsigned NP) {
+  ProcFeatures = PF;
+  ProcDesc = PD;
+  ProcItins = PI;
+  Stages = IS;
+  OperandCycles = OC;
+  ForwardingPathes = FP;
+  NumFeatures = NF;
+  NumProcs = NP;
+
+  SubtargetFeatures Features(FS);
+  FeatureBits = Features.getFeatureBits(CPU, ProcDesc, NumProcs,
+                                        ProcFeatures, NumFeatures);
+}
+
+
+/// ReInitMCSubtargetInfo - Change CPU (and optionally supplemented with
+/// feature string) and recompute feature bits.
+uint64_t MCSubtargetInfo::ReInitMCSubtargetInfo(StringRef CPU, StringRef FS) {
+  SubtargetFeatures Features(FS);
+  FeatureBits = Features.getFeatureBits(CPU, ProcDesc, NumProcs,
+                                        ProcFeatures, NumFeatures);
+  return FeatureBits;
+}
+
 InstrItineraryData
 MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
   assert(ProcItins && "Instruction itineraries information not available!");
@@ -41,12 +73,4 @@ MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
 
   return InstrItineraryData(Stages, OperandCycles, ForwardingPathes,
                             (InstrItinerary *)Found->Value);
-}
-
-/// getFeatureBits - Get the feature bits for a CPU (optionally supplemented
-/// with feature string).
-uint64_t MCSubtargetInfo::getFeatureBits(StringRef CPU, StringRef FS) const {
-  SubtargetFeatures Features(FS);
-  return Features.getFeatureBits(CPU, ProcDesc, NumProcs,
-                                 ProcFeatures, NumFeatures);
 }

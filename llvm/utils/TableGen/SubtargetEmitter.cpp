@@ -605,8 +605,7 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
      << "// subtarget options.\n"
      << "void llvm::";
   OS << Target;
-  OS << "Subtarget::ParseSubtargetFeatures(const std::string &FS,\n"
-     << "                                  const std::string &CPU) {\n"
+  OS << "Subtarget::ParseSubtargetFeatures(StringRef CPU, StringRef FS) {\n"
      << "  DEBUG(dbgs() << \"\\nFeatures:\" << FS);\n"
      << "  DEBUG(dbgs() << \"\\nCPU:\" << CPU);\n";
 
@@ -615,11 +614,7 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
     return;
   }
 
-  OS << "  SubtargetFeatures Features(FS);\n"
-     << "  uint64_t Bits =  Features.getFeatureBits(CPU, "
-     << Target << "SubTypeKV, " << NumProcs << ",\n"
-     << "                                    " << Target << "FeatureKV, "
-     << NumFeatures << ");\n";
+  OS << "  uint64_t Bits = ReInitMCSubtargetInfo(CPU, FS);\n";
 
   for (unsigned i = 0; i < Features.size(); i++) {
     // Next record
@@ -629,10 +624,12 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
     const std::string &Attribute = R->getValueAsString("Attribute");
 
     if (Value=="true" || Value=="false")
-      OS << "  if ((Bits & " << Target << "::" << Instance << ") != 0) "
+      OS << "  if ((Bits & " << Target << "::"
+         << Instance << ") != 0) "
          << Attribute << " = " << Value << ";\n";
     else
-      OS << "  if ((Bits & " << Target << "::" << Instance << ") != 0 && "
+      OS << "  if ((Bits & " << Target << "::"
+         << Instance << ") != 0 && "
          << Attribute << " < " << Value << ") "
          << Attribute << " = " << Value << ";\n";
   }
@@ -663,8 +660,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   // MCInstrInfo initialization routine.
   OS << "static inline void Init" << Target
-     << "MCSubtargetInfo(MCSubtargetInfo *II) {\n";
-  OS << "  II->InitMCSubtargetInfo(";
+     << "MCSubtargetInfo(MCSubtargetInfo *II, StringRef CPU, StringRef FS) {\n";
+  OS << "  II->InitMCSubtargetInfo(CPU, FS, ";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";
   else
@@ -702,7 +699,8 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   std::string ClassName = Target + "GenSubtargetInfo";
   OS << "namespace llvm {\n";
   OS << "struct " << ClassName << " : public TargetSubtargetInfo {\n"
-     << "  explicit " << ClassName << "();\n"
+     << "  explicit " << ClassName << "(StringRef TT, StringRef CPU, "
+     << "StringRef FS);\n"
      << "};\n";
   OS << "} // End llvm namespace \n";
 
@@ -712,9 +710,10 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_SUBTARGETINFO_CTOR\n";
 
   OS << "namespace llvm {\n";
-  OS << ClassName << "::" << ClassName << "()\n"
+  OS << ClassName << "::" << ClassName << "(StringRef TT, StringRef CPU, "
+     << "StringRef FS)\n"
      << "  : TargetSubtargetInfo() {\n"
-     << "  InitMCSubtargetInfo(";
+     << "  InitMCSubtargetInfo(CPU, FS, ";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";
   else
