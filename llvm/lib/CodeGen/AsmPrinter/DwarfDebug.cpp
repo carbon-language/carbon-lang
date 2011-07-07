@@ -1885,8 +1885,12 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
           if (Prev->isDebugValue()) {
             // Coalesce identical entries at the end of History.
             if (History.size() >= 2 &&
-                Prev->isIdenticalTo(History[History.size() - 2]))
+                Prev->isIdenticalTo(History[History.size() - 2])) {
+              DEBUG(dbgs() << "Coalesce identical DBG_VALUE entries:\n"
+                    << "\t" << *Prev 
+                    << "\t" << *History[History.size() - 2] << "\n");
               History.pop_back();
+            }
 
             // Terminate old register assignments that don't reach MI;
             MachineFunction::const_iterator PrevMBB = Prev->getParent();
@@ -1896,9 +1900,12 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
               // its basic block.
               MachineBasicBlock::const_iterator LastMI =
                 PrevMBB->getLastNonDebugInstr();
-              if (LastMI == PrevMBB->end())
+              if (LastMI == PrevMBB->end()) {
                 // Drop DBG_VALUE for empty range.
+                DEBUG(dbgs() << "Drop DBG_VALUE for empty range:\n"
+                      << "\t" << *Prev << "\n");
                 History.pop_back();
+              }
               else {
                 // Terminate after LastMI.
                 History.push_back(LastMI);
