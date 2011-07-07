@@ -310,8 +310,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
         SourceLocation FILoc = Tok.getLocation();
         const char *FIText = ": ";
         const SourceManager &SM = PP.getSourceManager();
-        if (FILoc.isFileID() ||
-            SM.isAtStartOfMacroInstantiation(FILoc, getLang())) {
+        if (FILoc.isFileID() || PP.isAtStartOfMacroInstantiation(FILoc)) {
           FILoc = SM.getInstantiationLoc(FILoc);
           bool IsInvalid = false;
           const char *SourcePtr =

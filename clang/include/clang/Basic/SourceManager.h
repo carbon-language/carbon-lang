@@ -832,16 +832,6 @@ public:
     return getFileCharacteristic(Loc) == SrcMgr::C_ExternCSystem;
   }
 
-  /// \brief Returns true if the given MacroID location points at the first
-  /// token of the macro instantiation.
-  bool isAtStartOfMacroInstantiation(SourceLocation Loc,
-                                     const LangOptions &LangOpts) const;
-
-  /// \brief Returns true if the given MacroID location points at the last
-  /// token of the macro instantiation.
-  bool isAtEndOfMacroInstantiation(SourceLocation Loc,
-                                   const LangOptions &LangOpts) const;
-
   /// \brief Given a specific chunk of a FileID (FileID with offset+length),
   /// returns true if \arg Loc is inside that chunk and sets relative offset
   /// (offset of \arg Loc from beginning of chunk) to \arg relativeOffset.

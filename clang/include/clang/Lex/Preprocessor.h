@@ -753,6 +753,18 @@ public:
     return Lexer::getLocForEndOfToken(Loc, Offset, SourceMgr, Features);
   }
 
+  /// \brief Returns true if the given MacroID location points at the first
+  /// token of the macro instantiation.
+  bool isAtStartOfMacroInstantiation(SourceLocation loc) const {
+    return Lexer::isAtStartOfMacroInstantiation(loc, SourceMgr, Features);
+  }
+
+  /// \brief Returns true if the given MacroID location points at the last
+  /// token of the macro instantiation.
+  bool isAtEndOfMacroInstantiation(SourceLocation loc) const {
+    return Lexer::isAtEndOfMacroInstantiation(loc, SourceMgr, Features);
+  }
+
   /// DumpToken - Print the token to stderr, used for debugging.
   ///
   void DumpToken(const Token &Tok, bool DumpFlags = false) const;

@@ -293,7 +293,19 @@ public:
   static SourceLocation getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
                                             const SourceManager &SM,
                                             const LangOptions &Features);
-    
+
+  /// \brief Returns true if the given MacroID location points at the first
+  /// token of the macro instantiation.
+  static bool isAtStartOfMacroInstantiation(SourceLocation loc,
+                                            const SourceManager &SM,
+                                            const LangOptions &LangOpts);
+
+  /// \brief Returns true if the given MacroID location points at the last
+  /// token of the macro instantiation.
+  static bool isAtEndOfMacroInstantiation(SourceLocation loc,
+                                          const SourceManager &SM,
+                                          const LangOptions &LangOpts);
+
   /// \brief Compute the preamble of the given file.
   ///
   /// The preamble of a file contains the initial comments, include directives,

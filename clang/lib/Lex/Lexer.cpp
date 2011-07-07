@@ -683,7 +683,7 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
     return SourceLocation();
 
   if (Loc.isMacroID()) {
-    if (Offset > 0 || !SM.isAtEndOfMacroInstantiation(Loc, Features))
+    if (Offset > 0 || !isAtEndOfMacroInstantiation(Loc, SM, Features))
       return SourceLocation(); // Points inside the macro instantiation.
 
     // Continue and find the location just after the macro instantiation.
@@ -697,6 +697,57 @@ SourceLocation Lexer::getLocForEndOfToken(SourceLocation Loc, unsigned Offset,
     return Loc;
   
   return Loc.getFileLocWithOffset(Len);
+}
+
+/// \brief Returns true if the given MacroID location points at the first
+/// token of the macro instantiation.
+bool Lexer::isAtStartOfMacroInstantiation(SourceLocation loc,
+                                          const SourceManager &SM,
+                                          const LangOptions &LangOpts) {
+  assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
+
+  std::pair<FileID, unsigned> infoLoc = SM.getDecomposedLoc(loc);
+  // FIXME: If the token comes from the macro token paste operator ('##')
+  // this function will always return false;
+  if (infoLoc.second > 0)
+    return false; // Does not point at the start of token.
+
+  SourceLocation instLoc = 
+      SM.getSLocEntry(infoLoc.first).getInstantiation().getInstantiationLocStart();
+  if (instLoc.isFileID())
+    return true; // No other macro instantiations, this is the first.
+
+  return isAtStartOfMacroInstantiation(instLoc, SM, LangOpts);
+}
+
+/// \brief Returns true if the given MacroID location points at the last
+/// token of the macro instantiation.
+bool Lexer::isAtEndOfMacroInstantiation(SourceLocation loc,
+                                        const SourceManager &SM,
+                                        const LangOptions &LangOpts) {
+  assert(loc.isValid() && loc.isMacroID() && "Expected a valid macro loc");
+
+  SourceLocation spellLoc = SM.getSpellingLoc(loc);
+  unsigned tokLen = MeasureTokenLength(spellLoc, SM, LangOpts);
+  if (tokLen == 0)
+    return false;
+
+  FileID FID = SM.getFileID(loc);
+  SourceLocation afterLoc = loc.getFileLocWithOffset(tokLen+1);
+  if (!SM.isBeforeInSourceLocationOffset(afterLoc, SM.getNextOffset()))
+    return true; // We got past the last FileID, this points to the last token.
+
+  // FIXME: If the token comes from the macro token paste operator ('##')
+  // or the stringify operator ('#') this function will always return false;
+  if (FID == SM.getFileID(afterLoc))
+    return false; // Still in the same FileID, does not point to the last token.
+  
+  SourceLocation instLoc = 
+    SM.getSLocEntry(FID).getInstantiation().getInstantiationLocEnd();
+  if (instLoc.isFileID())
+    return true; // No other macro instantiations.
+
+  return isAtEndOfMacroInstantiation(instLoc, SM, LangOpts);
 }
 
 //===----------------------------------------------------------------------===//
