@@ -212,7 +212,7 @@ public:
 private:
   const Type *getTypeByID(unsigned ID, bool isTypeTable = false);
   Value *getFnValueByID(unsigned ID, const Type *Ty) {
-    if (Ty->isMetadataTy())
+    if (Ty && Ty->isMetadataTy())
       return MDValueList.getValueFwdRef(ID);
     return ValueList.getValueFwdRef(ID, Ty);
   }
