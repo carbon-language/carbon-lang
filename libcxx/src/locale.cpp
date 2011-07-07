@@ -4032,7 +4032,7 @@ numpunct_byname<char>::__init(const char* nm)
         if (*lc->thousands_sep)
             __thousands_sep_ = *lc->thousands_sep;
         __grouping_ = lc->grouping;
-        // locallization for truename and falsename is not available
+        // localization for truename and falsename is not available
     }
 }
 
