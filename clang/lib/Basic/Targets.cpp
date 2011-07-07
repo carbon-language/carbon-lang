@@ -93,12 +93,12 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
       Builder.defineMacro("__strong", "__attribute__((objc_gc(strong)))");
     else
       Builder.defineMacro("__strong", "");
-    
+
     // __unsafe_unretained is defined to nothing in non-ARC mode. We even
     // allow this in C, since one might have block pointers in structs that
     // are used in pure C code and in Objective-C ARC.
     Builder.defineMacro("__unsafe_unretained", "");
-    
+
     // The Objective-C bridged cast keywords are defined to nothing in non-ARC
     // mode; then they become normal, C-style casts.
     Builder.defineMacro("__bridge", "");
@@ -106,7 +106,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
     Builder.defineMacro("__bridge_retained", "");
     Builder.defineMacro("__bridge_retain", "");
   }
-  
+
   if (Opts.Static)
     Builder.defineMacro("__STATIC__");
   else
@@ -182,7 +182,7 @@ class DarwinTargetInfo : public OSTargetInfo<Target> {
 protected:
   virtual void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
                             MacroBuilder &Builder) const {
-    getDarwinDefines(Builder, Opts, Triple, this->PlatformName, 
+    getDarwinDefines(Builder, Opts, Triple, this->PlatformName,
                      this->PlatformMinVersion);
   }
 
@@ -1088,7 +1088,7 @@ const Builtin::Info BuiltinInfo[] = {
 static const char* const GCCRegNames[] = {
   "ax", "dx", "cx", "bx", "si", "di", "bp", "sp",
   "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
-  "argp", "flags", "fspr", "dirflag", "frame",
+  "argp", "flags", "fpcr", "fpsr", "dirflag", "frame",
   "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
   "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
   "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
