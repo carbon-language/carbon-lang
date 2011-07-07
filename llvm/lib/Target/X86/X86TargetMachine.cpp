@@ -120,7 +120,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, const std::string &TT,
                                    const std::string &CPU,
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T, TT),
-    Subtarget(TT, CPU, FS, is64Bit, StackAlignmentOverride),
+    Subtarget(TT, CPU, FS, StackAlignmentOverride),
     FrameLowering(*this, Subtarget),
     ELFWriterInfo(is64Bit, true) {
   DefRelocModel = getRelocationModel();

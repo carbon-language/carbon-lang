@@ -112,9 +112,8 @@ protected:
   Triple TargetTriple;
 
 private:
-  /// Is64Bit - True if the processor supports 64-bit instructions and
-  /// pointer size is 64 bit.
-  bool Is64Bit;
+  /// In64BitMode - True if compiling for 64-bit, false for 32-bit.
+  bool In64BitMode;
 
 public:
 
@@ -122,7 +121,7 @@ public:
   /// of the specified triple.
   ///
   X86Subtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, bool is64Bit,
+               const std::string &FS,
                unsigned StackAlignOverride);
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
@@ -142,7 +141,7 @@ public:
   /// instruction.
   void AutoDetectSubtargetFeatures();
 
-  bool is64Bit() const { return Is64Bit; }
+  bool is64Bit() const { return In64BitMode; }
 
   PICStyles::Style getPICStyle() const { return PICStyle; }
   void setPICStyle(PICStyles::Style Style)  { PICStyle = Style; }
@@ -200,7 +199,7 @@ public:
   }
 
   bool isTargetWin64() const {
-    return Is64Bit && (isTargetMingw() || isTargetWindows());
+    return In64BitMode && (isTargetMingw() || isTargetWindows());
   }
 
   bool isTargetEnvMacho() const {
@@ -208,7 +207,7 @@ public:
   }
 
   bool isTargetWin32() const {
-    return !Is64Bit && (isTargetMingw() || isTargetWindows());
+    return !In64BitMode && (isTargetMingw() || isTargetWindows());
   }
 
   bool isPICStyleSet() const { return PICStyle != PICStyles::None; }

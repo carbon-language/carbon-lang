@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu | FileCheck %s -check-prefix=LINUX
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s -check-prefix=DARWIN
+; RUN: llc < %s -mtriple=x86_64-unknown-linux-gnu -mcpu=core2 | FileCheck %s -check-prefix=LINUX
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=core2 | FileCheck %s -check-prefix=DARWIN
 
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
 
