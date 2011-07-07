@@ -15,8 +15,24 @@
 
 namespace lldb {
 
+#ifdef SWIG
+%feature("docstring",
+"Represents one unique instance (by address) of a logical breakpoint.
+
+A breakpoint location is defined by the breakpoint that produces it,
+and the address that resulted in this particular instantiation.
+Each breakpoint location has its settable options.
+
+SBBreakpoint contains SBBreakpointLocation(s). See docstring of SBBreakpoint
+for retrieval of an SBBreakpointLocation from an SBBreakpoint.
+"
+         ) SBBreakpointLocation;
+#endif
 class SBBreakpointLocation
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
 
     SBBreakpointLocation ();
@@ -87,7 +103,9 @@ public:
     SBBreakpoint
     GetBreakpoint ();
 
+#ifndef SWIG
     SBBreakpointLocation (const lldb::BreakpointLocationSP &break_loc_sp);
+#endif
 
 private:
     friend class SBBreakpoint;

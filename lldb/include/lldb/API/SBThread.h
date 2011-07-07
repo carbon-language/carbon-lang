@@ -22,7 +22,7 @@ class SBFrame;
 %feature("docstring",
 "Represents a thread of execution. SBProcess contains SBThread(s).
 
-For example (in test/lldbutil.py),
+For example (from test/lldbutil.py),
 
 # ==================================================
 # Utility functions related to Threads and Processes
