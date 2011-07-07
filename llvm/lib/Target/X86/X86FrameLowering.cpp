@@ -1032,7 +1032,7 @@ X86FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 }
 
 uint32_t X86FrameLowering::
-getCompactUnwindEncoding(const std::vector<MCCFIInstruction> &Instrs,
+getCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs,
                          int DataAlignmentFactor, bool IsEH) const {
   uint32_t Encoding = 0;
   int CFAOffset = 0;
@@ -1040,7 +1040,7 @@ getCompactUnwindEncoding(const std::vector<MCCFIInstruction> &Instrs,
   SmallVector<unsigned, 8> SavedRegs;
   int FramePointerReg = -1;
 
-  for (std::vector<MCCFIInstruction>::const_iterator
+  for (ArrayRef<MCCFIInstruction>::const_iterator
          I = Instrs.begin(), E = Instrs.end(); I != E; ++I) {
     const MCCFIInstruction &Inst = *I;
     MCSymbol *Label = Inst.getLabel();
