@@ -13,14 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-asm-printer"
+#include "MipsAsmPrinter.h"
 #include "Mips.h"
-#include "MipsSubtarget.h"
 #include "MipsInstrInfo.h"
-#include "MipsTargetMachine.h"
 #include "MipsMachineFunction.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
-#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -31,7 +29,6 @@
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallString.h"
@@ -42,65 +39,20 @@
 
 using namespace llvm;
 
-namespace {
-  class MipsAsmPrinter : public AsmPrinter {
-    const MipsSubtarget *Subtarget;
-  public:
-    explicit MipsAsmPrinter(TargetMachine &TM,  MCStreamer &Streamer)
-      : AsmPrinter(TM, Streamer) {
-      Subtarget = &TM.getSubtarget<MipsSubtarget>();
-    }
-
-    virtual const char *getPassName() const {
-      return "Mips Assembly Printer";
-    }
-
-    bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
-                         unsigned AsmVariant, const char *ExtraCode,
-                         raw_ostream &O);
-    bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
-                               unsigned AsmVariant, const char *ExtraCode,
-                               raw_ostream &O);
-    void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
-    void printUnsignedImm(const MachineInstr *MI, int opNum, raw_ostream &O);
-    void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                         const char *Modifier = 0);
-    void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                         const char *Modifier = 0);
-    void printSavedRegsBitmask(raw_ostream &O);
-    void printHex32(unsigned int Value, raw_ostream &O);
-
-    const char *getCurrentABIString() const;
-    void emitFrameDirective();
-
-    void printInstruction(const MachineInstr *MI, raw_ostream &O); // autogen'd.
-    void EmitInstruction(const MachineInstr *MI) {
-      SmallString<128> Str;
-      raw_svector_ostream OS(Str);
-
-      if (MI->isDebugValue()) {
-        PrintDebugValueComment(MI, OS);
-        return;
-      }
-
-      printInstruction(MI, OS);
-      OutStreamer.EmitRawText(OS.str());
-    }
-    virtual void EmitFunctionBodyStart();
-    virtual void EmitFunctionBodyEnd();
-    virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock*
-                                                   MBB) const;
-    static const char *getRegisterName(unsigned RegNo);
-
-    virtual void EmitFunctionEntryLabel();
-    void EmitStartOfAsmFile(Module &M);
-    virtual MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
-
-    void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
-  };
-} // end of anonymous namespace
-
 #include "MipsGenAsmWriter.inc"
+
+void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  SmallString<128> Str;
+  raw_svector_ostream OS(Str);
+
+  if (MI->isDebugValue()) {
+    PrintDebugValueComment(MI, OS);
+    return;
+  }
+
+  printInstruction(MI, OS);
+  OutStreamer.EmitRawText(OS.str());
+}
 
 //===----------------------------------------------------------------------===//
 //
