@@ -4065,6 +4065,23 @@ ExprResult Sema::CheckCastTypes(SourceLocation CastStartLoc, SourceRange TyR,
           return ExprError();
         }
       }
+    } 
+    else {
+      QualType canCastType = 
+        Context.getCanonicalType(castType).getUnqualifiedType();
+        if (isa<ObjCObjectPointerType>(canCastType) &&
+            castType.getObjCLifetime() == Qualifiers::OCL_Weak &&
+            castExprType->isObjCObjectPointerType()) {
+          if (const ObjCObjectPointerType *ObjT =
+              castExprType->getAs<ObjCObjectPointerType>())
+            if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable()) {
+              Diag(castExpr->getLocStart(), 
+                   diag::err_arc_cast_of_weak_unavailable)
+                << castExprType << castType 
+                << castExpr->getSourceRange();
+              return ExprError();
+            }
+        }
     }
   }
   
@@ -5124,6 +5141,7 @@ Sema::AssignConvertType
 Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
                                  CastKind &Kind) {
   QualType rhsType = rhs.get()->getType();
+  QualType origLhsType = lhsType;
 
   // Get canonical types.  We're not formatting these types, just comparing
   // them.
@@ -5278,7 +5296,17 @@ Sema::CheckAssignmentConstraints(QualType lhsType, ExprResult &rhs,
     // A* -> B*
     if (rhsType->isObjCObjectPointerType()) {
       Kind = CK_BitCast;
-      return checkObjCPointerTypesForAssignment(*this, lhsType, rhsType);
+      Sema::AssignConvertType result = 
+        checkObjCPointerTypesForAssignment(*this, lhsType, rhsType);
+      if (getLangOptions().ObjCAutoRefCount &&
+          result == Compatible && 
+          origLhsType.getObjCLifetime() == Qualifiers::OCL_Weak) {
+        if (const ObjCObjectPointerType *ObjT = 
+              rhsType->getAs<ObjCObjectPointerType>())
+          if (ObjT->getInterfaceDecl()->isArcWeakrefUnavailable())
+            result = IncompatibleObjCWeakRef;
+      }
+      return result;
     }
 
     // int or null -> A*
@@ -8678,6 +8706,9 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
     break;
   case IncompatibleVectors:
     DiagKind = diag::warn_incompatible_vectors;
+    break;
+  case IncompatibleObjCWeakRef:
+    DiagKind = diag::err_arc_weak_unavailable_assign;
     break;
   case Incompatible:
     DiagKind = diag::err_typecheck_convert_incompatible;

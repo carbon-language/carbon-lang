@@ -2572,6 +2572,11 @@ def err_arc_weak_no_runtime : Error<
   "the current deployment target does not support automated __weak references">;
 def err_arc_unsupported_weak_class : Error<
   "class is incompatible with __weak references">;
+def err_arc_weak_unavailable_assign : Error<
+  "assignment of a weak-unavailable object to a __weak object">;
+def err_arc_cast_of_weak_unavailable : Error<
+  "cast of weak-unavailable object of type %0 to"
+  " a __weak object of type %1">;
 def err_arc_illegal_explicit_message : Error<
   "ARC forbids explicit message send of %0">;
 def err_arc_unused_init_message : Error<
