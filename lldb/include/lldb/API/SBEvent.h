@@ -49,8 +49,10 @@ public:
     lldb::SBBroadcaster
     GetBroadcaster () const;
 
+#ifndef SWIG
     bool
     BroadcasterMatchesPtr (const lldb::SBBroadcaster *broadcaster);
+#endif
 
     bool
     BroadcasterMatchesRef (const lldb::SBBroadcaster &broadcaster);
