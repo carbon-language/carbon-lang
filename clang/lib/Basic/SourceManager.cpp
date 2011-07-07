@@ -1566,7 +1566,9 @@ void SourceManager::PrintStats() const {
   llvm::errs() << "\n*** Source Manager Stats:\n";
   llvm::errs() << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
                << " mem buffers mapped.\n";
-  llvm::errs() << SLocEntryTable.size() << " SLocEntry's allocated, "
+  llvm::errs() << SLocEntryTable.size() << " SLocEntry's allocated ("
+               << SLocEntryTable.capacity()*sizeof(SrcMgr::SLocEntry)
+               << " bytes of capacity), "
                << NextOffset << "B of Sloc address space used.\n";
 
   unsigned NumLineNumsComputed = 0;
