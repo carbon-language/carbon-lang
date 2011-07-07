@@ -4039,13 +4039,12 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
       ReturnsRetained = (D && D->hasAttr<NSReturnsRetainedAttr>());
     }
 
-    if (ReturnsRetained) {
-      ExprNeedsCleanups = true;
-      E = ImplicitCastExpr::Create(Context, E->getType(),
-                                   CK_ObjCConsumeObject, E, 0,
-                                   VK_RValue);
-    }
-    return Owned(E);
+    ExprNeedsCleanups = true;
+
+    CastKind ck = (ReturnsRetained ? CK_ObjCConsumeObject
+                                   : CK_ObjCReclaimReturnedObject);
+    return Owned(ImplicitCastExpr::Create(Context, E->getType(), ck, E, 0,
+                                          VK_RValue));
   }
 
   if (!getLangOptions().CPlusPlus)

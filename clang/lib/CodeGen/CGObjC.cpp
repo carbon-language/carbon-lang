@@ -2333,6 +2333,14 @@ tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e) {
         return TryEmitResult(result, true);
       }
 
+      // For reclaims, emit the subexpression as a retained call and
+      // skip the consumption.
+      case CK_ObjCReclaimReturnedObject: {
+        llvm::Value *result = emitARCRetainCall(CGF, ce->getSubExpr());
+        if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);
+        return TryEmitResult(result, true);
+      }
+
       case CK_GetObjCProperty: {
         llvm::Value *result = emitARCRetainCall(CGF, ce);
         if (resultType) result = CGF.Builder.CreateBitCast(result, resultType);

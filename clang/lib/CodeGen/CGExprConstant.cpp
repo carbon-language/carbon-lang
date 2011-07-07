@@ -582,6 +582,7 @@ public:
     case CK_Dynamic:
     case CK_ObjCProduceObject:
     case CK_ObjCConsumeObject:
+    case CK_ObjCReclaimReturnedObject:
       return 0;
 
     // These might need to be supported for constexpr.

@@ -293,6 +293,10 @@ public:
   ///   works on systems with GraphViz (Mac OS X) or dot+gv installed.
   void viewAST() const;
 
+  /// Skip past any implicit AST nodes which might surround this
+  /// statement, such as ExprWithCleanups or ImplicitCastExpr nodes.
+  Stmt *IgnoreImplicit();
+
   // Implement isa<T> support.
   static bool classof(const Stmt *) { return true; }
 

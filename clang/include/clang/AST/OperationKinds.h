@@ -247,15 +247,20 @@ enum CastKind {
   ///   _Complex unsigned -> _Complex float
   CK_IntegralComplexToFloatingComplex,
 
-  /// \brief Produces an Objective-C object so that it may be
+  /// \brief Produces a retainable object pointer so that it may be
   /// consumed, e.g. by being passed to a consuming parameter.  Calls
   /// objc_retain.
   CK_ObjCProduceObject,
 
-  /// \brief Consumes an Objective-C object that has just been
+  /// \brief Consumes a retainable object pointer that has just been
   /// produced, e.g. as the return value of a retaining call.  Enters
   /// a cleanup to call objc_release at some indefinite time.
-  CK_ObjCConsumeObject
+  CK_ObjCConsumeObject,
+
+  /// \brief Reclaim a retainable object pointer object that may have
+  /// been produced and autoreleased as part of a function return
+  /// sequence.
+  CK_ObjCReclaimReturnedObject
 };
 
 #define CK_Invalid ((CastKind) -1)

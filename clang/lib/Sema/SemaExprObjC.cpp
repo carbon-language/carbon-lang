@@ -1771,6 +1771,20 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
     << castRange << castExpr->getSourceRange();
 }
 
+/// Look for an ObjCReclaimReturnedObject cast and destroy it.
+static Expr *maybeUndoReclaimObject(Expr *e) {
+  // For now, we just undo operands that are *immediately* reclaim
+  // expressions, which prevents the vast majority of potential
+  // problems here.  To catch them all, we'd need to rebuild arbitrary
+  // value-propagating subexpressions --- we can't reliably rebuild
+  // in-place because of expression sharing.
+  if (ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(e))
+    if (ice->getCastKind() == CK_ObjCReclaimReturnedObject)
+      return ice->getSubExpr();
+
+  return e;
+}
+
 ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
                                       ObjCBridgeCastKind Kind,
                                       SourceLocation BridgeKeywordLoc,
@@ -1815,6 +1829,9 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
     // Okay: id -> CF
     switch (Kind) {
     case OBC_Bridge:
+      // Reclaiming a value that's going to be __bridge-casted to CF
+      // is very dangerous, so we don't do it.
+      SubExpr = maybeUndoReclaimObject(SubExpr);
       break;
       
     case OBC_BridgeRetained:        

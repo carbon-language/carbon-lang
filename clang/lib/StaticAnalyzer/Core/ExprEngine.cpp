@@ -2194,7 +2194,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       // The analyzer doesn't do anything special with these casts,
       // since it understands retain/release semantics already.
       case CK_ObjCProduceObject:
-      case CK_ObjCConsumeObject: // Fall-through.
+      case CK_ObjCConsumeObject:
+      case CK_ObjCReclaimReturnedObject: // Fall-through.
       // True no-ops.
       case CK_NoOp:
       case CK_FunctionToPointerDecay: {

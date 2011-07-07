@@ -1102,6 +1102,8 @@ const char *CastExpr::getCastKindName() const {
     return "ObjCConsumeObject";
   case CK_ObjCProduceObject:
     return "ObjCProduceObject";
+  case CK_ObjCReclaimReturnedObject:
+    return "ObjCReclaimReturnedObject";
   }
 
   llvm_unreachable("Unhandled cast kind!");

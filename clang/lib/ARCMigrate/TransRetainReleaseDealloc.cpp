@@ -116,11 +116,16 @@ private:
       return true;
     }
 
-    if (ParenExpr *parenE = dyn_cast_or_null<ParenExpr>(StmtMap->getParent(E)))
+    Stmt *parent = StmtMap->getParent(E);
+
+    if (ImplicitCastExpr *castE = dyn_cast_or_null<ImplicitCastExpr>(parent))
+      return tryRemoving(castE);
+
+    if (ParenExpr *parenE = dyn_cast_or_null<ParenExpr>(parent))
       return tryRemoving(parenE);
 
     if (BinaryOperator *
-          bopE = dyn_cast_or_null<BinaryOperator>(StmtMap->getParent(E))) {
+          bopE = dyn_cast_or_null<BinaryOperator>(parent)) {
       if (bopE->getOpcode() == BO_Comma && bopE->getLHS() == E &&
           isRemovable(bopE)) {
         Pass.TA.replace(bopE->getSourceRange(), bopE->getRHS()->getSourceRange());

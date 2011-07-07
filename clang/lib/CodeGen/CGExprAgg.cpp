@@ -360,6 +360,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   case CK_IntegralComplexToFloatingComplex:
   case CK_ObjCProduceObject:
   case CK_ObjCConsumeObject:
+  case CK_ObjCReclaimReturnedObject:
     llvm_unreachable("cast kind invalid for aggregate types");
   }
 }

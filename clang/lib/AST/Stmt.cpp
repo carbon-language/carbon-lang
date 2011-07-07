@@ -85,6 +85,18 @@ bool Stmt::CollectingStats(bool Enable) {
   return StatSwitch;
 }
 
+Stmt *Stmt::IgnoreImplicit() {
+  Stmt *s = this;
+
+  if (ExprWithCleanups *ewc = dyn_cast<ExprWithCleanups>(s))
+    s = ewc->getSubExpr();
+
+  while (ImplicitCastExpr *ice = dyn_cast<ImplicitCastExpr>(s))
+    s = ice->getSubExpr();
+
+  return s;
+}
+
 namespace {
   struct good {};
   struct bad {};
