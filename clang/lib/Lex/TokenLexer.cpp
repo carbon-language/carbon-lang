@@ -193,10 +193,7 @@ void TokenLexer::ExpandFunctionArguments() {
     // Otherwise, this is a use of the argument.  Find out if there is a paste
     // (##) operator before or after the argument.
     bool PasteBefore =
-      !ResultToks.empty() && ResultToks.back().is(tok::hashhash) &&
-      // If the '##' came from expanding an argument,treat it as a normal token.
-      SM.isBeforeInSourceLocationOffset(ResultToks.back().getLocation(),
-                                        MacroStartSLocOffset);
+      !ResultToks.empty() && ResultToks.back().is(tok::hashhash);
     bool PasteAfter = i+1 != e && Tokens[i+1].is(tok::hashhash);
 
     // If it is not the LHS/RHS of a ## operator, we must pre-expand the
@@ -218,6 +215,14 @@ void TokenLexer::ExpandFunctionArguments() {
         unsigned FirstResult = ResultToks.size();
         unsigned NumToks = MacroArgs::getArgLength(ResultArgToks);
         ResultToks.append(ResultArgToks, ResultArgToks+NumToks);
+
+        // If the '##' came from expanding an argument, turn it into 'unknown'
+        // to avoid pasting.
+        for (unsigned i = FirstResult, e = ResultToks.size(); i != e; ++i) {
+          Token &Tok = ResultToks[i];
+          if (Tok.is(tok::hashhash))
+            Tok.setKind(tok::unknown);
+        }
 
         if(InstantiateLocStart.isValid()) {
           SourceLocation curInst =
@@ -266,6 +271,15 @@ void TokenLexer::ExpandFunctionArguments() {
       }
 
       ResultToks.append(ArgToks, ArgToks+NumToks);
+
+      // If the '##' came from expanding an argument, turn it into 'unknown'
+      // to avoid pasting.
+      for (unsigned i = ResultToks.size() - NumToks, e = ResultToks.size();
+             i != e; ++i) {
+        Token &Tok = ResultToks[i];
+        if (Tok.is(tok::hashhash))
+          Tok.setKind(tok::unknown);
+      }
 
       if(InstantiateLocStart.isValid()) {
         SourceLocation curInst =
@@ -387,10 +401,7 @@ void TokenLexer::Lex(Token &Tok) {
 
   // If this token is followed by a token paste (##) operator, paste the tokens!
   // Note that ## is a normal token when not expanding a macro.
-  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash) && Macro &&
-      // If the '##' came from expanding an argument,treat it as a normal token.
-      SM.isBeforeInSourceLocationOffset(Tokens[CurToken].getLocation(),
-                                        MacroStartSLocOffset)) {
+  if (!isAtEnd() && Tokens[CurToken].is(tok::hashhash) && Macro) {
     // When handling the microsoft /##/ extension, the final token is
     // returned by PasteTokens, not the pasted token.
     if (PasteTokens(Tok))
