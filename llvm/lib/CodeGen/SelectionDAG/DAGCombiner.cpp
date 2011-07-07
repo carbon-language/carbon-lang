@@ -5929,12 +5929,17 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
 
   // Now check for #3 and #4.
   bool RealUse = false;
+
+  // Caches for hasPredecessorHelper
+  SmallPtrSet<const SDNode *, 32> Visited;
+  SmallVector<const SDNode *, 16> Worklist;
+
   for (SDNode::use_iterator I = Ptr.getNode()->use_begin(),
          E = Ptr.getNode()->use_end(); I != E; ++I) {
     SDNode *Use = *I;
     if (Use == N)
       continue;
-    if (Use->isPredecessorOf(N))
+    if (N->hasPredecessorHelper(Use, Visited, Worklist))
       return false;
 
     if (!((Use->getOpcode() == ISD::LOAD &&

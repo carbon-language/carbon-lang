@@ -23,6 +23,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
@@ -496,11 +497,29 @@ public:
   ///
   bool isOperandOf(SDNode *N) const;
 
-  /// isPredecessorOf - Return true if this node is a predecessor of N. This
-  /// node is either an operand of N or it can be reached by recursively
+  /// isPredecessorOf - Return true if this node is a predecessor of N.
+  /// NOTE: Implemented on top of hasPredecessor and every bit as
+  /// expensive. Use carefully.
+  bool isPredecessorOf(const SDNode *N) const { return N->hasPredecessor(this); }
+
+  /// hasPredecessor - Return true if N is a predecessor of this node.
+  /// N is either an operand of this node, or can be reached by recursively
   /// traversing up the operands.
-  /// NOTE: this is an expensive method. Use it carefully.
-  bool isPredecessorOf(SDNode *N) const;
+  /// NOTE: This is an expensive method. Use it carefully.
+  bool hasPredecessor(const SDNode *N) const;
+
+  /// hasPredecesorHelper - Return true if N is a predecessor of this node.
+  /// N is either an operand of this node, or can be reached by recursively
+  /// traversing up the operands.
+  /// In this helper the Visited and worklist sets are held externally to
+  /// cache predecessors over multiple invocations. If you want to test for
+  /// multiple predecessors this method is preferable to multiple calls to
+  /// hasPredecessor. Be sure to clear Visited and Worklist if the DAG
+  /// changes.
+  /// NOTE: This is still very expensive. Use carefully.
+  bool hasPredecessorHelper(const SDNode *N,
+                            SmallPtrSet<const SDNode *, 32> &Visited,
+                            SmallVector<const SDNode *, 16> &Worklist) const; 
 
   /// getNumOperands - Return the number of values used by this operation.
   ///

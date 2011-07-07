@@ -5691,24 +5691,39 @@ bool SDValue::reachesChainWithoutSideEffects(SDValue Dest,
   return false;
 }
 
-/// isPredecessorOf - Return true if this node is a predecessor of N. This node
-/// is either an operand of N or it can be reached by traversing up the operands.
-/// NOTE: this is an expensive method. Use it carefully.
-bool SDNode::isPredecessorOf(SDNode *N) const {
-  SmallPtrSet<SDNode *, 32> Visited;
-  SmallVector<SDNode *, 16> Worklist;
-  Worklist.push_back(N);
+/// hasPredecessor - Return true if N is a predecessor of this node.
+/// N is either an operand of this node, or can be reached by recursively
+/// traversing up the operands.
+/// NOTE: This is an expensive method. Use it carefully.
+bool SDNode::hasPredecessor(const SDNode *N) const {
+  SmallPtrSet<const SDNode *, 32> Visited;
+  SmallVector<const SDNode *, 16> Worklist;
+  return hasPredecessorHelper(N, Visited, Worklist);
+}
 
-  do {
-    N = Worklist.pop_back_val();
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-      SDNode *Op = N->getOperand(i).getNode();
-      if (Op == this)
-        return true;
+bool SDNode::hasPredecessorHelper(const SDNode *N,
+                                  SmallPtrSet<const SDNode *, 32> &Visited,
+                                  SmallVector<const SDNode *, 16> &Worklist) const {
+  if (Visited.empty()) {
+    Worklist.push_back(this);
+  } else {
+    // Take a look in the visited set. If we've already encountered this node
+    // we needn't search further.
+    if (Visited.count(N))
+      return true;
+  }
+
+  // Haven't visited N yet. Continue the search.
+  while (!Worklist.empty()) {
+    const SDNode *M = Worklist.pop_back_val();
+    for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
+      SDNode *Op = M->getOperand(i).getNode();
       if (Visited.insert(Op))
         Worklist.push_back(Op);
+      if (Op == N)
+        return true;
     }
-  } while (!Worklist.empty());
+  }
 
   return false;
 }
