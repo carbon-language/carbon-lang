@@ -33,24 +33,6 @@ public:
     {
         ArgumentHelpCallbackFunction  *help_callback;
         bool                           self_formatting;
-        ArgumentHelpCallback(ArgumentHelpCallbackFunction *p,
-                             bool f = false) :
-        help_callback(p),
-        self_formatting(f)
-        {
-        }
-        
-        const char*
-        operator () () const
-        {
-            return (*help_callback)();
-        }
-        
-        operator bool() const
-        {
-            return (help_callback != NULL);
-        }
-        
     };
     
     struct ArgumentTableEntry  // Entries in the main argument information table
