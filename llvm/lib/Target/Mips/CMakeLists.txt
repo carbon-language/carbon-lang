@@ -17,6 +17,7 @@ add_llvm_target(MipsCodeGen
   MipsISelLowering.cpp
   MipsFrameLowering.cpp
   MipsMCAsmInfo.cpp
+  MipsMCSymbolRefExpr.cpp
   MipsRegisterInfo.cpp
   MipsSubtarget.cpp
   MipsTargetMachine.cpp
