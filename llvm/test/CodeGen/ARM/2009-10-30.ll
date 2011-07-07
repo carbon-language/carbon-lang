@@ -1,4 +1,4 @@
-; RUN: llc < %s  -mtriple=arm-linux-gnueabi  | FileCheck %s
+; RUN: llc < %s  -mtriple=armv6-linux-gnueabi  | FileCheck %s
 ; This test checks that the address of the varg arguments is correctly
 ; computed when there are 5 or more regular arguments.
 

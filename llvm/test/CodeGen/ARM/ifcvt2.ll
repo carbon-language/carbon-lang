@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+v4t | FileCheck %s
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; CHECK: t1:

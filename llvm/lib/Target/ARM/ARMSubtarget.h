@@ -28,27 +28,27 @@ class GlobalValue;
 
 class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
-  enum ARMArchEnum {
-    V4, V4T, V5T, V5TE, V6, V6M, V6T2, V7A, V7M, V7EM
-  };
-
   enum ARMProcFamilyEnum {
     Others, CortexA8, CortexA9
   };
 
-  enum ARMFPEnum {
-    None, VFPv2, VFPv3, NEON
-  };
-
-  /// ARMArchVersion - ARM architecture version: V4, V4T (base), V5T, V5TE,
-  /// V6, V6T2, V7A, V7M, V7EM.
-  ARMArchEnum ARMArchVersion;
-
   /// ARMProcFamily - ARM processor family: Cortex-A8, Cortex-A9, and others.
   ARMProcFamilyEnum ARMProcFamily;
 
-  /// ARMFPUType - Floating Point Unit type.
-  ARMFPEnum ARMFPUType;
+  /// HasV4TOps, HasV5TOps, HasV5TEOps, HasV6Ops, HasV6T2Ops, HasV7Ops -
+  /// Specify whether target support specific ARM ISA variants.
+  bool HasV4TOps;
+  bool HasV5TOps;
+  bool HasV5TEOps;
+  bool HasV6Ops;
+  bool HasV6T2Ops;
+  bool HasV7Ops;
+
+  /// HasVFPv2, HasVFPv3, HasNEON - Specify what floating point ISAs are
+  /// supported.
+  bool HasVFPv2;
+  bool HasVFPv3;
+  bool HasNEON;
 
   /// UseNEONForSinglePrecisionFP - if the NEONFP attribute has been
   /// specified. Use the method useNEONForSinglePrecisionFP() to
@@ -172,23 +172,24 @@ protected:
 
   void computeIssueWidth();
 
-  bool hasV4TOps()  const { return ARMArchVersion >= V4T;  }
-  bool hasV5TOps()  const { return ARMArchVersion >= V5T;  }
-  bool hasV5TEOps() const { return ARMArchVersion >= V5TE; }
-  bool hasV6Ops()   const { return ARMArchVersion >= V6;   }
-  bool hasV6T2Ops() const { return ARMArchVersion >= V6T2; }
-  bool hasV7Ops()   const { return ARMArchVersion >= V7A;  }
+  bool hasV4TOps()  const { return HasV4TOps;  }
+  bool hasV5TOps()  const { return HasV5TOps;  }
+  bool hasV5TEOps() const { return HasV5TEOps; }
+  bool hasV6Ops()   const { return HasV6Ops;   }
+  bool hasV6T2Ops() const { return HasV6T2Ops; }
+  bool hasV7Ops()   const { return HasV7Ops;  }
 
   bool isCortexA8() const { return ARMProcFamily == CortexA8; }
   bool isCortexA9() const { return ARMProcFamily == CortexA9; }
 
   bool hasARMOps() const { return !NoARM; }
 
-  bool hasVFP2() const { return ARMFPUType >= VFPv2; }
-  bool hasVFP3() const { return ARMFPUType >= VFPv3; }
-  bool hasNEON() const { return ARMFPUType >= NEON;  }
+  bool hasVFP2() const { return HasVFPv2; }
+  bool hasVFP3() const { return HasVFPv3; }
+  bool hasNEON() const { return HasNEON;  }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
+
   bool hasDivide() const { return HasHardwareDivide; }
   bool hasT2ExtractPack() const { return HasT2ExtractPack; }
   bool hasDataBarrier() const { return HasDataBarrier; }

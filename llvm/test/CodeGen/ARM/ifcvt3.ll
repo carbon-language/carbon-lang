@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=arm
-; RUN: llc < %s -march=arm | grep cmpne | count 1
-; RUN: llc < %s -march=arm | grep bx | count 2
+; RUN: llc < %s -march=arm -mattr=+v4t
+; RUN: llc < %s -march=arm -mattr=+v4t | grep cmpne | count 1
+; RUN: llc < %s -march=arm -mattr=+v4t | grep bx | count 2
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 	switch i32 %c, label %cond_next [

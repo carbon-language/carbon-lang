@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=arm | FileCheck %s -check-prefix=CHECKV4
+; RUN: llc < %s -march=arm -mattr=+v4t | FileCheck %s -check-prefix=CHECKV4
 ; RUN: llc < %s -march=arm -mattr=+v5t | FileCheck %s -check-prefix=CHECKV5
-; RUN: llc < %s -march=arm -mtriple=arm-linux-gnueabi\
+; RUN: llc < %s -mtriple=armv6-linux-gnueabi\
 ; RUN:   -relocation-model=pic | FileCheck %s -check-prefix=CHECKELF
 
 @t = weak global i32 ()* null           ; <i32 ()**> [#uses=1]

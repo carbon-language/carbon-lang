@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin   -mattr=+v7a,+mp -show-mc-encoding | FileCheck %s -check-prefix=ARM
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+v7a     -show-mc-encoding | FileCheck %s -check-prefix=T2
+; RUN: llc < %s -mtriple=armv7-apple-darwin   -mattr=+v7,+mp -show-mc-encoding | FileCheck %s -check-prefix=ARM
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+v7     -show-mc-encoding | FileCheck %s -check-prefix=T2
 ; rdar://8924681
 
 define void @t1(i8* %ptr) nounwind  {

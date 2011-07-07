@@ -1,4 +1,4 @@
-; RUN: llc -march=arm < %s | FileCheck %s
+; RUN: llc -march=arm -mattr=+v4t < %s | FileCheck %s
 ; <rdar://problem/8686347>
 
 define i32 @test1(i1 %a, i32* %b) {

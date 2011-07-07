@@ -1,5 +1,5 @@
-; RUN: llc < %s -relocation-model=pic -mtriple=arm-apple-darwin | FileCheck %s -check-prefix=ARM
-; RUN: llc < %s -relocation-model=pic -mtriple=thumb-apple-darwin | FileCheck %s -check-prefix=THUMB
+; RUN: llc < %s -relocation-model=pic -mtriple=armv6-apple-darwin | FileCheck %s -check-prefix=ARM
+; RUN: llc < %s -relocation-model=pic -mtriple=thumbv6-apple-darwin | FileCheck %s -check-prefix=THUMB
 ; RUN: llc < %s -relocation-model=static -mtriple=thumbv7-apple-darwin | FileCheck %s -check-prefix=THUMB2
 
 @nextaddr = global i8* null                       ; <i8**> [#uses=2]

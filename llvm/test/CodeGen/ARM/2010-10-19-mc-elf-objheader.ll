@@ -1,7 +1,7 @@
 ; RUN: llc  %s -mtriple=arm-linux-gnueabi -filetype=obj -o - | \
 ; RUN:    elf-dump --dump-section-data | FileCheck  -check-prefix=BASIC %s 
 ; RUN: llc  %s -mtriple=armv7-linux-gnueabi -march=arm -mcpu=cortex-a8 \
-; RUN:    -mattr=-neon -mattr=+vfp2 \
+; RUN:    -mattr=-neon,-vfp3,+vfp2 \
 ; RUN:    -arm-reserve-r9 -filetype=obj -o - | \
 ; RUN:    elf-dump --dump-section-data | FileCheck  -check-prefix=CORTEXA8 %s
 

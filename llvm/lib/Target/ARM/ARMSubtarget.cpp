@@ -39,9 +39,16 @@ StrictAlign("arm-strict-align", cl::Hidden,
 ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS)
   : ARMGenSubtargetInfo()
-  , ARMArchVersion(V4)
   , ARMProcFamily(Others)
-  , ARMFPUType(None)
+  , HasV4TOps(false)
+  , HasV5TOps(false)
+  , HasV5TEOps(false)
+  , HasV6Ops(false)
+  , HasV6T2Ops(false)
+  , HasV7Ops(false)
+  , HasVFPv2(false)
+  , HasVFPv3(false)
+  , HasNEON(false)
   , UseNEONForSinglePrecisionFP(false)
   , SlowFPVMLx(false)
   , HasVMLxForwarding(false)
@@ -89,8 +96,8 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
 
   // Thumb2 implies at least V6T2. FIXME: Fix tests to explicitly specify a
   // ARM version or CPU and then remove this.
-  if (ARMArchVersion < V6T2 && hasThumb2())
-    ARMArchVersion = V6T2;
+  if (!HasV6T2Ops && hasThumb2())
+    HasV4TOps = HasV5TOps = HasV5TEOps = HasV6Ops = HasV6T2Ops = true;
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUString);
@@ -104,7 +111,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   if (!isTargetDarwin())
     UseMovt = hasV6T2Ops();
   else {
-    IsR9Reserved = ReserveR9 | (ARMArchVersion < V6);
+    IsR9Reserved = ReserveR9 | !HasV6Ops;
     UseMovt = DarwinUseMOVT && hasV6T2Ops();
   }
 

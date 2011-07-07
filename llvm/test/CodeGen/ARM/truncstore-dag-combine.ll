@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm | not grep orr
-; RUN: llc < %s -march=arm | not grep mov
+; RUN: llc < %s -march=arm -mattr=+v4t | not grep orr
+; RUN: llc < %s -march=arm -mattr=+v4t | not grep mov
 
 define void @bar(i8* %P, i16* %Q) {
 entry:

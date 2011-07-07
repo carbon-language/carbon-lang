@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc < %s -march=arm -mattr=+v4t | FileCheck %s
 
 ;; Integer absolute value, should produce something as good as: ARM:
 ;;   add r3, r0, r0, asr #31

@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv6-apple-darwin  | FileCheck %s -check-prefix=V6
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=-db | FileCheck %s -check-prefix=V6
-; RUN: llc < %s -march=thumb -mattr=+v6m       | FileCheck %s -check-prefix=V6M
+; RUN: llc < %s -march=thumb -mcpu=cortex-m0   | FileCheck %s -check-prefix=V6M
 
 declare void @llvm.memory.barrier(i1 , i1 , i1 , i1 , i1)
 

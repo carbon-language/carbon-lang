@@ -1,8 +1,8 @@
 ; RUN: llc < %s -march=arm
-; RUN: llc < %s -mtriple=arm-linux-gnueabi | grep mov | count 1
-; RUN: llc < %s -mtriple=arm-linux-gnu --disable-fp-elim | \
+; RUN: llc < %s -mtriple=armv6-linux-gnueabi | grep mov | count 1
+; RUN: llc < %s -mtriple=armv6-linux-gnu --disable-fp-elim | \
 ; RUN:   grep mov | count 2
-; RUN: llc < %s -mtriple=arm-apple-darwin | grep mov | count 2
+; RUN: llc < %s -mtriple=armv6-apple-darwin | grep mov | count 2
 
 @str = internal constant [12 x i8] c"Hello World\00"
 

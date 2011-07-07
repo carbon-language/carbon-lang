@@ -91,29 +91,28 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, bool &IsThumb) {
   if (Idx) {
     unsigned SubVer = TT[Idx];
     if (SubVer >= '7' && SubVer <= '9') {
-      ARMArchFeature = "+v7a";
       if (Len >= Idx+2 && TT[Idx+1] == 'm') {
-        ARMArchFeature = "+v7m";
+        // v7m: FeatureNoARM, FeatureDB, FeatureHWDiv
+        ARMArchFeature = "+v7,+noarm,+db,+hwdiv";
       } else if (Len >= Idx+3 && TT[Idx+1] == 'e'&& TT[Idx+2] == 'm') {
-        ARMArchFeature = "+v7em";
-      }
+        // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
+        //       FeatureT2XtPk
+        ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,t2xtpk";
+      } else
+        // v7a: FeatureNEON, FeatureDB, FeatureDSPThumb2
+        ARMArchFeature = "+v7,+neon,+db,+t2dsp";
     } else if (SubVer == '6') {
-      ARMArchFeature = "+v6";
-      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2') {
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
         ARMArchFeature = "+v6t2";
-      }
+      else
+        ARMArchFeature = "+v6";
     } else if (SubVer == '5') {
-      ARMArchFeature = "+v5t";
-      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e') {
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e')
         ARMArchFeature = "+v5te";
-      }
-    } else if (SubVer == '4') {
-      if (Len >= Idx+2 && TT[Idx+1] == 't') {
-        ARMArchFeature = "+v4t";
-      } else {
-        ARMArchFeature = "";
-      }
-    }
+      else
+        ARMArchFeature = "+v5t";
+    } else if (SubVer == '4' && Len >= Idx+2 && TT[Idx+1] == 't')
+      ARMArchFeature = "+v4t";
   }
 
   return ARMArchFeature;
