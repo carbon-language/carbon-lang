@@ -1428,6 +1428,8 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
         SLabel = FunctionEndSym;
       else {
         const MachineInstr *End = HI[1];
+        DEBUG(dbgs() << "DotDebugLoc Pair:\n" 
+              << "\t" << *Begin << "\t" << *End << "\n");
         if (End->isDebugValue())
           SLabel = getLabelBeforeInsn(End);
         else {
