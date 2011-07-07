@@ -28,4 +28,5 @@ MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, StringRef TT) {
   SupportsDebugInformation = true;
   ExceptionsType = ExceptionHandling::DwarfCFI;
   HasLEB128 = true;
+  DwarfRegNumForCFI = true;
 }

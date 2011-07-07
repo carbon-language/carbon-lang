@@ -17,6 +17,8 @@
 #include "Mips.h"
 #include "MipsInstrInfo.h"
 #include "MipsMachineFunction.h"
+#include "MipsMCInstLower.h"
+#include "InstPrinter/MipsInstPrinter.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -25,6 +27,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
@@ -39,8 +42,6 @@
 
 using namespace llvm;
 
-#include "MipsGenAsmWriter.inc"
-
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
@@ -50,8 +51,10 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
-  printInstruction(MI, OS);
-  OutStreamer.EmitRawText(OS.str());
+  MipsMCInstLower MCInstLowering(Mang, *MF, *this);
+  MCInst TmpInst0;
+  MCInstLowering.Lower(MI, TmpInst0);
+  OutStreamer.EmitInstruction(TmpInst0);
 }
 
 //===----------------------------------------------------------------------===//
@@ -168,9 +171,9 @@ void MipsAsmPrinter::emitFrameDirective() {
   unsigned stackSize = MF->getFrameInfo()->getStackSize();
 
   OutStreamer.EmitRawText("\t.frame\t$" +
-                          Twine(LowercaseString(getRegisterName(stackReg))) +
-                          "," + Twine(stackSize) + ",$" +
-                          Twine(LowercaseString(getRegisterName(returnReg))));
+           Twine(LowercaseString(MipsInstPrinter::getRegisterName(stackReg))) +
+           "," + Twine(stackSize) + ",$" +
+           Twine(LowercaseString(MipsInstPrinter::getRegisterName(returnReg))));
 }
 
 /// Emit Set directives.
@@ -279,7 +282,7 @@ bool MipsAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
    
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isReg() && "unexpected inline asm memory operand");
-  O << "0($" << MipsAsmPrinter::getRegisterName(MO.getReg()) << ")";
+  O << "0($" << MipsInstPrinter::getRegisterName(MO.getReg()) << ")";
   return false;
 }
 
@@ -305,7 +308,8 @@ void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
 
   switch (MO.getType()) {
     case MachineOperand::MO_Register:
-      O << '$' << LowercaseString(getRegisterName(MO.getReg()));
+      O << '$'
+        << LowercaseString(MipsInstPrinter::getRegisterName(MO.getReg()));
       break;
 
     case MachineOperand::MO_Immediate:
@@ -420,7 +424,17 @@ void MipsAsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
 }
 
 // Force static initialization.
+static MCInstPrinter *createMipsMCInstPrinter(const Target &T,
+                                              unsigned SyntaxVariant,
+                                              const MCAsmInfo &MAI) {
+  return new MipsInstPrinter(MAI);
+}
+
 extern "C" void LLVMInitializeMipsAsmPrinter() {
   RegisterAsmPrinter<MipsAsmPrinter> X(TheMipsTarget);
   RegisterAsmPrinter<MipsAsmPrinter> Y(TheMipselTarget);
+
+  TargetRegistry::RegisterMCInstPrinter(TheMipsTarget, createMipsMCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheMipselTarget,
+                                        createMipsMCInstPrinter);
 }

@@ -88,6 +88,14 @@ def : Proc<"allegrex", [FeatureMips2, FeatureSingleFloat, FeatureEABI,
       FeatureVFPU, FeatureSEInReg, FeatureCondMov, FeatureMulDivAdd,
       FeatureMinMax, FeatureSwap, FeatureBitCount]>;
 
+def MipsAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
+}
+
 def Mips : Target {
   let InstructionSet = MipsInstrInfo;
+
+  let AssemblyWriters = [MipsAsmWriter];
 }
+

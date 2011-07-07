@@ -39,10 +39,6 @@ public:
     return "Mips Assembly Printer";
   }
 
-  // These two methods are autogen'd by tablegen.
-  void printInstruction(const MachineInstr *MI, raw_ostream &O);
-  static const char *getRegisterName(unsigned RegNo);
-
   void EmitInstruction(const MachineInstr *MI);
   void printSavedRegsBitmask(raw_ostream &O);
   void printHex32(unsigned int Value, raw_ostream &O);

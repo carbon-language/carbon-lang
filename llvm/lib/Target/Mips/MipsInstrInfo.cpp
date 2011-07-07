@@ -14,6 +14,7 @@
 #include "MipsInstrInfo.h"
 #include "MipsTargetMachine.h"
 #include "MipsMachineFunction.h"
+#include "InstPrinter/MipsInstPrinter.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -28,6 +29,11 @@ using namespace llvm;
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
   : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
     TM(tm), RI(*TM.getSubtargetImpl(), *this) {}
+
+
+const MipsRegisterInfo &MipsInstrInfo::getRegisterInfo() const { 
+  return RI;
+}
 
 static bool isZeroImm(const MachineOperand &op) {
   return op.isImm() && op.getImm() == 0;
