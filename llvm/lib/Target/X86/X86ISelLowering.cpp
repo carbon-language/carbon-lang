@@ -12592,6 +12592,7 @@ X86TargetLowering::getConstraintType(const std::string &Constraint) const {
     case 'y':
     case 'x':
     case 'Y':
+    case 'l':
       return C_RegisterClass;
     case 'a':
     case 'b':

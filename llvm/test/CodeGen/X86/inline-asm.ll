@@ -23,3 +23,10 @@ define void @test4() nounwind {
        tail call void asm sideeffect "bork $0", "J"(i32 37) nounwind
        ret void
 }
+
+; rdar://9738585
+define i32 @test5() nounwind {
+entry:
+  %0 = tail call i32 asm "test", "=l,~{dirflag},~{fpsr},~{flags}"() nounwind
+  ret i32 0
+}
