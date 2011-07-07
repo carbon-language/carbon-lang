@@ -552,6 +552,9 @@ ClangExpressionDeclMap::GetFunctionAddress
     else
         return false;
     
+    if (!func_so_addr || !func_so_addr->IsValid())
+        return false;
+    
     func_addr = func_so_addr->GetCallableLoadAddress (m_parser_vars->m_exe_ctx->target);
 
     return true;
@@ -573,6 +576,10 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target, const ConstString &nam
         sc_list.GetContextAtIndex(i, sym_ctx);
     
         const Address *sym_address = &sym_ctx.symbol->GetAddressRangeRef().GetBaseAddress();
+        
+        if (!sym_address || !sym_address->IsValid())
+            return LLDB_INVALID_ADDRESS;
+        
         if (sym_address)
         {
             switch (sym_ctx.symbol->GetType())
@@ -1261,7 +1268,7 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                                               NULL));
     }
     else if (sym)
-    {
+    {        
         location_value.reset(new Value);
         
         addr_t location_load_addr = GetSymbolAddress(*exe_ctx.target, name);
@@ -1591,6 +1598,11 @@ ClangExpressionDeclMap::FindVariableInScope
                 var_sp = program_globals.GetVariableAtIndex (0);
         }
     }
+    
+    if (!var_sp ||
+        !var_sp->IsInScope(&frame) ||
+        !var_sp->LocationIsValidForFrame (&frame))
+        return lldb::VariableSP();
 
     if (var_sp && type)
     {
