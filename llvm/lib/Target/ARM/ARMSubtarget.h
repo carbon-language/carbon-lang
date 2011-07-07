@@ -67,7 +67,7 @@ protected:
   /// SlowFPBrcc - True if floating point compare + branch is slow.
   bool SlowFPBrcc;
 
-  /// InThumbMode - True if we are in thumb mode, false if in ARM mode.
+  /// InThumbMode - True if compiling for Thumb, false for ARM.
   bool InThumbMode;
 
   /// HasThumb2 - True if Thumb2 instructions are supported.
