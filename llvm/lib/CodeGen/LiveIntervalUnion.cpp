@@ -244,7 +244,7 @@ bool LiveIntervalUnion::Query::isSeenInterference(LiveInterval *VirtReg) const {
 //
 // For comments on how to speed it up, see Query::findIntersection().
 unsigned LiveIntervalUnion::Query::
-collectInterferingVRegs(unsigned MaxInterferingRegs, float MaxWeight) {
+collectInterferingVRegs(unsigned MaxInterferingRegs) {
   InterferenceResult IR = firstInterference();
   LiveInterval::iterator VirtRegEnd = VirtReg->end();
   LiveInterval *RecentInterferingVReg = NULL;
@@ -286,10 +286,6 @@ collectInterferingVRegs(unsigned MaxInterferingRegs, float MaxWeight) {
       // Cache the most recent interfering vreg to bypass isSeenInterference.
       RecentInterferingVReg = IR.LiveUnionI.value();
       ++IR.LiveUnionI;
-
-      // Stop collecting when the max weight is exceeded.
-      if (RecentInterferingVReg->weight >= MaxWeight)
-        return InterferingVRegs.size();
 
       continue;
     }

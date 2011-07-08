@@ -5,8 +5,9 @@
 ; stick with indexing here.
 
 ; CHECK: movaps        (%{{rsi|rdx}},%rax,4), [[X3:%xmm[0-9]+]]
-; CHECK: movaps
-; CHECK:        [[X3]], (%{{rdi|rcx}},%rax,4)
+; CHECK: cvtdq2ps
+; CHECK: orps          {{%xmm[0-9]+}}, [[X4:%xmm[0-9]+]]
+; CHECK: movaps        [[X4]], (%{{rdi|rcx}},%rax,4)
 ; CHECK: addq  $4, %rax
 ; CHECK: cmpl  %eax, (%{{rdx|r8}})
 ; CHECK-NEXT: jg

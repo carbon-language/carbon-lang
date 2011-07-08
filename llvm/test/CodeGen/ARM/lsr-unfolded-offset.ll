@@ -4,12 +4,13 @@
 ; register pressure and therefore spilling. There is more room for improvement
 ; here.
 
-; CHECK: sub sp, #{{32|24}}
+; CHECK: sub sp, #{{32|28|24}}
 
-; CHECK:      ldr r{{.*}}, [sp, #4]
-; CHECK-NEXT: ldr r{{.*}}, [sp, #16]
-; CHECK-NEXT: ldr r{{.*}}, [sp, #12]
-; CHECK-NEXT: adds
+; CHECK: %for.inc
+; CHECK: ldr{{(.w)?}} r{{.*}}, [sp, #
+; CHECK: ldr{{(.w)?}} r{{.*}}, [sp, #
+; CHECK: ldr{{(.w)?}} r{{.*}}, [sp, #
+; CHECK: add
 
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:32:64-v128:32:128-a0:0:32-n32"
 target triple = "thumbv7-apple-macosx10.7.0"

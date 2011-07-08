@@ -225,6 +225,14 @@ public:
     return RegAllocHints[Reg];
   }
 
+  /// getSimpleHint - Return the preferred register allocation hint, or 0 if a
+  /// standard simple hint (Type == 0) is not set.
+  unsigned getSimpleHint(unsigned Reg) const {
+    std::pair<unsigned, unsigned> Hint = getRegAllocationHint(Reg);
+    return Hint.first ? 0 : Hint.second;
+  }
+
+
   //===--------------------------------------------------------------------===//
   // Physical Register Use Info
   //===--------------------------------------------------------------------===//

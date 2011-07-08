@@ -229,8 +229,7 @@ public:
 
     // Count the virtual registers in this union that interfere with this
     // query's live virtual register, up to maxInterferingRegs.
-    unsigned collectInterferingVRegs(unsigned MaxInterferingRegs = UINT_MAX,
-                                     float MaxWeight = HUGE_VALF);
+    unsigned collectInterferingVRegs(unsigned MaxInterferingRegs = UINT_MAX);
 
     // Was this virtual register visited during collectInterferingVRegs?
     bool isSeenInterference(LiveInterval *VReg) const;

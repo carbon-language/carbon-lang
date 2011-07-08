@@ -133,6 +133,20 @@ class RAGreedy : public MachineFunctionPass,
     }
   }
 
+  /// Cost of evicting interference.
+  struct EvictionCost {
+    unsigned BrokenHints; ///< Total number of broken hints.
+    float MaxWeight;      ///< Maximum spill weight evicted.
+
+    EvictionCost(unsigned B = 0) : BrokenHints(B), MaxWeight(0) {}
+
+    bool operator<(const EvictionCost &O) const {
+      if (BrokenHints != O.BrokenHints)
+        return BrokenHints < O.BrokenHints;
+      return MaxWeight < O.MaxWeight;
+    }
+  };
+
   // splitting state.
   std::auto_ptr<SplitAnalysis> SA;
   std::auto_ptr<SplitEditor> SE;
@@ -197,8 +211,10 @@ private:
   void splitAroundRegion(LiveInterval&, GlobalSplitCandidate&,
                          SmallVectorImpl<LiveInterval*>&);
   void calcGapWeights(unsigned, SmallVectorImpl<float>&);
-  bool canEvict(LiveInterval &A, LiveInterval &B);
-  bool canEvictInterference(LiveInterval&, unsigned, float&);
+  bool shouldEvict(LiveInterval &A, bool, LiveInterval &B, bool);
+  bool canEvictInterference(LiveInterval&, unsigned, bool, EvictionCost&);
+  void evictInterference(LiveInterval&, unsigned,
+                         SmallVectorImpl<LiveInterval*>&);
 
   unsigned tryAssign(LiveInterval&, AllocationOrder&,
                      SmallVectorImpl<LiveInterval*>&);
@@ -382,7 +398,21 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
   if (!PhysReg || Order.isHint(PhysReg))
     return PhysReg;
 
-  // PhysReg is available. Try to evict interference from a cheaper alternative.
+  // PhysReg is available, but there may be a better choice.
+
+  // If we missed a simple hint, try to cheaply evict interference from the
+  // preferred register.
+  if (unsigned Hint = MRI->getSimpleHint(VirtReg.reg))
+    if (Order.isHint(Hint)) {
+      DEBUG(dbgs() << "missed hint " << PrintReg(Hint, TRI) << '\n');
+      EvictionCost MaxCost(1);
+      if (canEvictInterference(VirtReg, Hint, true, MaxCost)) {
+        evictInterference(VirtReg, Hint, NewVRegs);
+        return Hint;
+      }
+    }
+
+  // Try to evict interference from a cheaper alternative.
   unsigned Cost = TRI->getCostPerUse(PhysReg);
 
   // Most registers have 0 additional cost.
@@ -400,23 +430,42 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
 //                         Interference eviction
 //===----------------------------------------------------------------------===//
 
-/// canEvict - determine if A can evict the assigned live range B. The eviction
-/// policy defined by this function together with the allocation order defined
-/// by enqueue() decides which registers ultimately end up being split and
-/// spilled.
+/// shouldEvict - determine if A should evict the assigned live range B. The
+/// eviction policy defined by this function together with the allocation order
+/// defined by enqueue() decides which registers ultimately end up being split
+/// and spilled.
 ///
 /// Cascade numbers are used to prevent infinite loops if this function is a
 /// cyclic relation.
-bool RAGreedy::canEvict(LiveInterval &A, LiveInterval &B) {
+///
+/// @param A          The live range to be assigned.
+/// @param IsHint     True when A is about to be assigned to its preferred
+///                   register.
+/// @param B          The live range to be evicted.
+/// @param BreaksHint True when B is already assigned to its preferred register.
+bool RAGreedy::shouldEvict(LiveInterval &A, bool IsHint,
+                           LiveInterval &B, bool BreaksHint) {
+  bool CanSplit = getStage(B) <= RS_Second;
+
+  // Be fairly aggressive about following hints as long as the evictee can be
+  // split.
+  if (CanSplit && IsHint && !BreaksHint)
+    return true;
+
   return A.weight > B.weight;
 }
 
-/// canEvict - Return true if all interferences between VirtReg and PhysReg can
-/// be evicted.
-/// Return false if any interference is heavier than MaxWeight.
-/// On return, set MaxWeight to the maximal spill weight of an interference.
+/// canEvictInterference - Return true if all interferences between VirtReg and
+/// PhysReg can be evicted.  When OnlyCheap is set, don't do anything
+///
+/// @param VirtReg Live range that is about to be assigned.
+/// @param PhysReg Desired register for assignment.
+/// @prarm IsHint  True when PhysReg is VirtReg's preferred register.
+/// @param MaxCost Only look for cheaper candidates and update with new cost
+///                when returning true.
+/// @returns True when interference can be evicted cheaper than MaxCost.
 bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
-                                    float &MaxWeight) {
+                                    bool IsHint, EvictionCost &MaxCost) {
   // Find VirtReg's cascade number. This will be unassigned if VirtReg was never
   // involved in an eviction before. If a cascade number was assigned, deny
   // evicting anything with the same or a newer cascade number. This prevents
@@ -428,11 +477,11 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
   if (!Cascade)
     Cascade = NextCascade;
 
-  float Weight = 0;
+  EvictionCost Cost;
   for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
     // If there is 10 or more interferences, chances are one is heavier.
-    if (Q.collectInterferingVRegs(10, MaxWeight) >= 10)
+    if (Q.collectInterferingVRegs(10) >= 10)
       return false;
 
     // Check if any interfering live range is heavier than MaxWeight.
@@ -440,17 +489,67 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
       LiveInterval *Intf = Q.interferingVRegs()[i - 1];
       if (TargetRegisterInfo::isPhysicalRegister(Intf->reg))
         return false;
-      if (Cascade <= ExtraRegInfo[Intf->reg].Cascade)
+      // Never evict spill products. They cannot split or spill.
+      if (getStage(*Intf) == RS_Spill)
         return false;
-      if (Intf->weight >= MaxWeight)
+      // Once a live range becomes small enough, it is urgent that we find a
+      // register for it. This is indicated by an infinite spill weight. These
+      // urgent live ranges get to evict almost anything.
+      bool Urgent = !VirtReg.isSpillable() && Intf->isSpillable();
+      // Only evict older cascades or live ranges without a cascade.
+      unsigned IntfCascade = ExtraRegInfo[Intf->reg].Cascade;
+      if (Cascade <= IntfCascade) {
+        if (!Urgent)
+          return false;
+        // We permit breaking cascades for urgent evictions. It should be the
+        // last resort, though, so make it really expensive.
+        Cost.BrokenHints += 10;
+      }
+      // Would this break a satisfied hint?
+      bool BreaksHint = VRM->hasPreferredPhys(Intf->reg);
+      // Update eviction cost.
+      Cost.BrokenHints += BreaksHint;
+      Cost.MaxWeight = std::max(Cost.MaxWeight, Intf->weight);
+      // Abort if this would be too expensive.
+      if (!(Cost < MaxCost))
         return false;
-      if (!canEvict(VirtReg, *Intf))
+      // Finally, apply the eviction policy for non-urgent evictions.
+      if (!Urgent && !shouldEvict(VirtReg, IsHint, *Intf, BreaksHint))
         return false;
-      Weight = std::max(Weight, Intf->weight);
     }
   }
-  MaxWeight = Weight;
+  MaxCost = Cost;
   return true;
+}
+
+/// evictInterference - Evict any interferring registers that prevent VirtReg
+/// from being assigned to Physreg. This assumes that canEvictInterference
+/// returned true.
+void RAGreedy::evictInterference(LiveInterval &VirtReg, unsigned PhysReg,
+                                 SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  // Make sure that VirtReg has a cascade number, and assign that cascade
+  // number to every evicted register. These live ranges than then only be
+  // evicted by a newer cascade, preventing infinite loops.
+  unsigned Cascade = ExtraRegInfo[VirtReg.reg].Cascade;
+  if (!Cascade)
+    Cascade = ExtraRegInfo[VirtReg.reg].Cascade = NextCascade++;
+
+  DEBUG(dbgs() << "evicting " << PrintReg(PhysReg, TRI)
+               << " interference: Cascade " << Cascade << '\n');
+  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
+    LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
+    assert(Q.seenAllInterferences() && "Didn't check all interfererences.");
+    for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
+      LiveInterval *Intf = Q.interferingVRegs()[i];
+      unassign(*Intf, VRM->getPhys(Intf->reg));
+      assert((ExtraRegInfo[Intf->reg].Cascade < Cascade ||
+              VirtReg.isSpillable() < Intf->isSpillable()) &&
+             "Cannot decrease cascade number, illegal eviction");
+      ExtraRegInfo[Intf->reg].Cascade = Cascade;
+      ++NumEvicted;
+      NewVRegs.push_back(Intf);
+    }
+  }
 }
 
 /// tryEvict - Try to evict all interferences for a physreg.
@@ -463,31 +562,37 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
                             unsigned CostPerUseLimit) {
   NamedRegionTimer T("Evict", TimerGroupName, TimePassesIsEnabled);
 
-  // Keep track of the lightest single interference seen so far.
-  float BestWeight = HUGE_VALF;
+  // Keep track of the cheapest interference seen so far.
+  EvictionCost BestCost(~0u);
   unsigned BestPhys = 0;
+
+  // When we are just looking for a reduced cost per use, don't break any
+  // hints, and only evict smaller spill weights.
+  if (CostPerUseLimit < ~0u) {
+    BestCost.BrokenHints = 0;
+    BestCost.MaxWeight = VirtReg.weight;
+  }
 
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
     if (TRI->getCostPerUse(PhysReg) >= CostPerUseLimit)
       continue;
-    // The first use of a register in a function has cost 1.
-    if (CostPerUseLimit == 1 && !MRI->isPhysRegUsed(PhysReg))
-      continue;
+    // The first use of a callee-saved register in a function has cost 1.
+    // Don't start using a CSR when the CostPerUseLimit is low.
+    if (CostPerUseLimit == 1)
+     if (unsigned CSR = RegClassInfo.getLastCalleeSavedAlias(PhysReg))
+       if (!MRI->isPhysRegUsed(CSR)) {
+         DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " would clobber CSR "
+                      << PrintReg(CSR, TRI) << '\n');
+         continue;
+       }
 
-    float Weight = BestWeight;
-    if (!canEvictInterference(VirtReg, PhysReg, Weight))
-      continue;
-
-    // This is an eviction candidate.
-    DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " interference = "
-                 << Weight << '\n');
-    if (BestPhys && Weight >= BestWeight)
+    if (!canEvictInterference(VirtReg, PhysReg, false, BestCost))
       continue;
 
     // Best so far.
     BestPhys = PhysReg;
-    BestWeight = Weight;
+
     // Stop if the hint can be used.
     if (Order.isHint(PhysReg))
       break;
@@ -496,29 +601,7 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
   if (!BestPhys)
     return 0;
 
-  // We will evict interference. Make sure that VirtReg has a cascade number,
-  // and assign that cascade number to every evicted register. These live
-  // ranges than then only be evicted by a newer cascade, preventing infinite
-  // loops.
-  unsigned Cascade = ExtraRegInfo[VirtReg.reg].Cascade;
-  if (!Cascade)
-    Cascade = ExtraRegInfo[VirtReg.reg].Cascade = NextCascade++;
-
-  DEBUG(dbgs() << "evicting " << PrintReg(BestPhys, TRI)
-               << " interference: Cascade " << Cascade << '\n');
-  for (const unsigned *AliasI = TRI->getOverlaps(BestPhys); *AliasI; ++AliasI) {
-    LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
-    assert(Q.seenAllInterferences() && "Didn't check all interfererences.");
-    for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
-      LiveInterval *Intf = Q.interferingVRegs()[i];
-      unassign(*Intf, VRM->getPhys(Intf->reg));
-      assert(ExtraRegInfo[Intf->reg].Cascade < Cascade &&
-             "Cannot decrease cascade number, illegal eviction");
-      ExtraRegInfo[Intf->reg].Cascade = Cascade;
-      ++NumEvicted;
-      NewVRegs.push_back(Intf);
-    }
-  }
+  evictInterference(VirtReg, BestPhys, NewVRegs);
   return BestPhys;
 }
 
@@ -1552,7 +1635,7 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
 
   // If we couldn't allocate a register from spilling, there is probably some
   // invalid inline assembly. The base class wil report it.
-  if (Stage >= RS_Spill)
+  if (Stage >= RS_Spill || !VirtReg.isSpillable())
     return ~0u;
 
   // Try splitting VirtReg or interferences.
