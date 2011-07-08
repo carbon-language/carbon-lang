@@ -15,6 +15,7 @@
 #include "MipsInstPrinter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
@@ -57,6 +58,7 @@ const char* Mips::MipsFCCToString(Mips::CondCode CC) {
   case FCOND_NGT:
   case FCOND_GT:  return "ngt";
   }
+  llvm_unreachable("Impossible condition code!");
 }
 
 StringRef MipsInstPrinter::getOpcodeName(unsigned Opcode) const {
