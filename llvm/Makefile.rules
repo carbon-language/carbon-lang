@@ -1750,6 +1750,11 @@ $(ObjDir)/%GenMCCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) MC code emitter with tblgen"
 	$(Verb) $(TableGen) -gen-emitter -mc-emitter -o $(call SYSPATH, $@) $<
 
+$(TARGET:%=$(ObjDir)/%GenMCPseudoLowering.inc.tmp): \
+$(ObjDir)/%GenMCPseudoLowering.inc.tmp: %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) MC Pseudo instruction expander with tblgen"
+	$(Verb) $(TableGen) -gen-pseudo-lowering -o $(call SYSPATH, $@) $<
+
 $(TARGET:%=$(ObjDir)/%GenCodeEmitter.inc.tmp): \
 $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) code emitter with tblgen"

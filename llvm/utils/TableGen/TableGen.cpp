@@ -33,6 +33,7 @@
 #include "LLVMCConfigurationEmitter.h"
 #include "NeonEmitter.h"
 #include "OptParserEmitter.h"
+#include "PseudoLoweringEmitter.h"
 #include "Record.h"
 #include "RegisterInfoEmitter.h"
 #include "ARMDecoderEmitter.h"
@@ -59,6 +60,7 @@ enum ActionType {
   GenAsmMatcher,
   GenARMDecoder,
   GenDisassembler,
+  GenPseudoLowering,
   GenCallingConv,
   GenClangAttrClasses,
   GenClangAttrImpl,
@@ -106,6 +108,8 @@ namespace {
                                "Generate decoders for ARM/Thumb"),
                     clEnumValN(GenDisassembler, "gen-disassembler",
                                "Generate disassembler"),
+                    clEnumValN(GenPseudoLowering, "gen-pseudo-lowering",
+                               "Generate pseudo instruction lowering"),
                     clEnumValN(GenAsmMatcher, "gen-asm-matcher",
                                "Generate assembly instruction matcher"),
                     clEnumValN(GenDAGISel, "gen-dag-isel",
@@ -313,6 +317,9 @@ int main(int argc, char **argv) {
       break;
     case GenDisassembler:
       DisassemblerEmitter(Records).run(Out.os());
+      break;
+    case GenPseudoLowering:
+      PseudoLoweringEmitter(Records).run(Out.os());
       break;
     case GenOptParserDefs:
       OptParserEmitter(Records, true).run(Out.os());

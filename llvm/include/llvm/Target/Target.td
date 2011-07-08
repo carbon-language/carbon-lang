@@ -373,6 +373,14 @@ class Instruction {
   ///@}
 }
 
+/// PseudoInstExpansion - Expansion information for a pseudo-instruction.
+/// Which instruction it expands to and how the operands map from the
+/// pseudo.
+class PseudoInstExpansion<dag Result> {
+  dag ResultInst = Result;     // The instruction to generate.
+  bit isPseudo = 1;
+}
+
 /// Predicates - These are extra conditionals which are turned into instruction
 /// selector matching code. Currently each predicate is just a string.
 class Predicate<string cond> {
