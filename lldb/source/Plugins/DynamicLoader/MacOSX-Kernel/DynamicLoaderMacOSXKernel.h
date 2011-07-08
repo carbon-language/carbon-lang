@@ -148,10 +148,6 @@ protected:
         return lldb::eByteOrderInvalid;
     }
 
-    bool
-    ReadMachHeader (lldb::addr_t addr,
-                    llvm::MachO::mach_header *header,
-                    lldb_private::DataExtractor *load_command_data);
     class Segment
     {
     public:
@@ -198,6 +194,7 @@ protected:
         char                     name[KERNEL_MODULE_MAX_NAME];
         lldb::ModuleSP           module_sp;
         lldb_private::UUID       uuid;            // UUID for this dylib if it has one, else all zeros
+        lldb_private::Address    so_address;        // The section offset address for this kext in case it can be read from object files
         uint64_t                 address;
         uint64_t                 size;
         uint64_t                 version;
@@ -210,6 +207,7 @@ protected:
         OSKextLoadedKextSummary() :
             module_sp (),
             uuid (),
+            so_address (),
             address (LLDB_INVALID_ADDRESS),
             size (0),
             version (0),
@@ -227,6 +225,7 @@ protected:
         {
             if (!load_cmd_data_only)
             {
+                so_address.Clear();
                 address = LLDB_INVALID_ADDRESS;
                 size = 0;
                 version = 0;
@@ -349,6 +348,10 @@ protected:
         }
     };
 
+    bool
+    ReadMachHeader (OSKextLoadedKextSummary& kext_summary,
+                    lldb_private::DataExtractor *load_command_data);
+
     void
     RegisterNotificationCallbacks();
 
@@ -377,14 +380,12 @@ protected:
     ReadKextSummaryHeader ();
     
     bool
-    ParseKextSummaries (lldb::addr_t kext_summary_addr, uint32_t count);
+    ParseKextSummaries (const lldb_private::Address &kext_summary_addr, 
+                        uint32_t count);
     
     bool
     AddModulesUsingImageInfos (OSKextLoadedKextSummary::collection &image_infos);
     
-    bool
-    RemoveModulesUsingImageInfosAddress (lldb::addr_t image_infos_addr, uint32_t image_infos_count);
-
     void
     UpdateImageInfosHeaderAndLoadCommands(OSKextLoadedKextSummary::collection &image_infos, 
                                           uint32_t infos_count, 
@@ -394,7 +395,7 @@ protected:
     UpdateCommPageLoadAddress (lldb_private::Module *module);
 
     uint32_t
-    ReadKextSummaries (lldb::addr_t image_infos_addr, 
+    ReadKextSummaries (const lldb_private::Address &kext_summary_addr,
                        uint32_t image_infos_count, 
                        OSKextLoadedKextSummary::collection &image_infos);
     
@@ -402,7 +403,7 @@ protected:
     UnloadImageLoadAddress (OSKextLoadedKextSummary& info);
 
     OSKextLoadedKextSummary m_kernel; // Info about the current kernel image being used
-    lldb::addr_t m_kext_summary_header_addr;
+    lldb_private::Address m_kext_summary_header_addr;
     OSKextLoadedKextSummaryHeader m_kext_summary_header;
     uint32_t m_kext_summary_header_stop_id;             // The process stop ID that "m_kext_summary_header" is valid for
     lldb::user_id_t m_break_id;

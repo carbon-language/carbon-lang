@@ -67,7 +67,7 @@ DynamicLoaderMacOSXKernel::CreateInstance (Process* process, bool force)
 DynamicLoaderMacOSXKernel::DynamicLoaderMacOSXKernel (Process* process) :
     DynamicLoader(process),
     m_kernel(),
-    m_kext_summary_header_addr (LLDB_INVALID_ADDRESS),
+    m_kext_summary_header_addr (),
     m_kext_summary_header (),
     m_kext_summary_header_stop_id (0),
     m_break_id (LLDB_INVALID_BREAK_ID),
@@ -129,7 +129,7 @@ DynamicLoaderMacOSXKernel::Clear (bool clear_process)
     if (clear_process)
         m_process = NULL;
     m_kernel.Clear(false);
-    m_kext_summary_header_addr = LLDB_INVALID_ADDRESS;
+    m_kext_summary_header_addr.Clear();
     m_kext_summaries.clear();
     m_kext_summaries_stop_id = 0;
     m_break_id = LLDB_INVALID_BREAK_ID;
@@ -153,7 +153,7 @@ DynamicLoaderMacOSXKernel::DidSetNotificationBreakpoint() const
 bool
 DynamicLoaderMacOSXKernel::LoadKernelModule()
 {
-    if (m_kext_summary_header_addr == LLDB_INVALID_ADDRESS)
+    if (!m_kext_summary_header_addr.IsValid())
     {
         m_kernel.Clear(false);
         m_kernel.module_sp = m_process->GetTarget().GetExecutableModule();
@@ -163,9 +163,9 @@ DynamicLoaderMacOSXKernel::LoadKernelModule()
             const Symbol *symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (mach_header_name, eSymbolTypeAbsolute);
             if (symbol)
             {
-                m_kernel.address = symbol->GetValue().GetFileAddress();
+                m_kernel.so_address = symbol->GetValue();
                 DataExtractor data; // Load command data
-                if (ReadMachHeader (m_kernel.address, &m_kernel.header, &data))
+                if (ReadMachHeader (m_kernel, &data))
                 {
                     if (m_kernel.header.filetype == llvm::MachO::HeaderFileTypeDynamicLinkEditor)
                     {
@@ -366,77 +366,12 @@ DynamicLoaderMacOSXKernel::UnloadImageLoadAddress (OSKextLoadedKextSummary& info
 //----------------------------------------------------------------------
 bool
 DynamicLoaderMacOSXKernel::NotifyBreakpointHit (void *baton, 
-                                              StoppointCallbackContext *context, 
-                                              lldb::user_id_t break_id, 
-                                              lldb::user_id_t break_loc_id)
-{
-    // Let the event know that the images have changed
-    // DYLD passes three arguments to the notification breakpoint.
-    // Arg1: enum dyld_image_mode mode - 0 = adding, 1 = removing 
-    // Arg2: uint32_t infoCount        - Number of shared libraries added  
-    // Arg3: dyld_image_info info[]    - Array of structs of the form:
-    //                                     const struct mach_header *imageLoadAddress
-    //                                     const char               *imageFilePath
-    //                                     uintptr_t                 imageFileModDate (a time_t)
-    
+                                                StoppointCallbackContext *context, 
+                                                lldb::user_id_t break_id, 
+                                                lldb::user_id_t break_loc_id)
+{    
     DynamicLoaderMacOSXKernel* dyld_instance = (DynamicLoaderMacOSXKernel*) baton;
     
-    // First step is to see if we've already initialized the all image infos.  If we haven't then this function
-    // will do so and return true.  In the course of initializing the all_image_infos it will read the complete
-    // current state, so we don't need to figure out what has changed from the data passed in to us.
-    
-    if (!dyld_instance->ReadAllKextSummaries(false))
-    {
-        Process *process = context->exe_ctx.process;
-        const lldb::ABISP &abi = process->GetABI();
-        if (abi != NULL)
-        {
-            // Build up the value array to store the three arguments given above, then get the values from the ABI:
-            
-            ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
-            ValueList argument_values;
-            Value input_value;
-            
-            void *clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
-            void *clang_uint32_type   = clang_ast_context->GetBuiltinTypeForEncodingAndBitSize(lldb::eEncodingUint, 32);
-            input_value.SetValueType (Value::eValueTypeScalar);
-            input_value.SetContext (Value::eContextTypeClangType, clang_uint32_type);
-            argument_values.PushValue(input_value);
-            argument_values.PushValue(input_value);
-            input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
-            argument_values.PushValue (input_value);
-            
-            if (abi->GetArgumentValues (*context->exe_ctx.thread, argument_values))
-            {
-                uint32_t dyld_mode = argument_values.GetValueAtIndex(0)->GetScalar().UInt (-1);
-                if (dyld_mode != -1)
-                {
-                    // Okay the mode was right, now get the number of elements, and the array of new elements...
-                    uint32_t image_infos_count = argument_values.GetValueAtIndex(1)->GetScalar().UInt (-1);
-                    if (image_infos_count != -1)
-                    {
-                        // Got the number added, now go through the array of added elements, putting out the mach header 
-                        // address, and adding the image.
-                        // Note, I'm not putting in logging here, since the AddModules & RemoveModules functions do
-                        // all the logging internally.
-                        
-                        lldb::addr_t kext_summary_addr = argument_values.GetValueAtIndex(2)->GetScalar().ULongLong();
-                        if (dyld_mode == 0)
-                        {
-                            // This is add:
-                            dyld_instance->ParseKextSummaries (kext_summary_addr, image_infos_count);
-                        }
-                        else
-                        {
-                            // This is remove:
-                            dyld_instance->RemoveModulesUsingImageInfosAddress (kext_summary_addr, image_infos_count);
-                        }
-                        
-                    }
-                }
-            }
-        }
-    }
     // Return true to stop the target, false to just let the target run
     return dyld_instance->GetStopWhenImagesChange();
 }
@@ -451,7 +386,7 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
         return true;
 
     m_kext_summaries.clear();
-    if (m_kext_summary_header_addr != LLDB_INVALID_ADDRESS)
+    if (m_kext_summary_header_addr.IsValid())
     {
         const uint32_t addr_size = m_kernel.GetAddressByteSize ();
         const ByteOrder byte_order = m_kernel.GetByteOrder();
@@ -461,7 +396,8 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
         uint8_t buf[24];
         DataExtractor data (buf, sizeof(buf), byte_order, addr_size);
         const size_t count = 4 * sizeof(uint32_t) + addr_size;
-        const size_t bytes_read = m_process->ReadMemory (m_kext_summary_header_addr, buf, count, error);
+        const bool prefer_file_cache = false;
+        const size_t bytes_read = m_process->GetTarget().ReadMemory (m_kext_summary_header_addr, prefer_file_cache, buf, count, error);
         if (bytes_read == count)
         {
             uint32_t offset = 0;
@@ -478,7 +414,8 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
 
 
 bool
-DynamicLoaderMacOSXKernel::ParseKextSummaries (lldb::addr_t kext_summary_addr, uint32_t count)
+DynamicLoaderMacOSXKernel::ParseKextSummaries (const lldb_private::Address &kext_summary_addr, 
+                                               uint32_t count)
 {
     OSKextLoadedKextSummary::collection kext_summaries;
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
@@ -497,7 +434,7 @@ DynamicLoaderMacOSXKernel::ParseKextSummaries (lldb::addr_t kext_summary_addr, u
         if (!kext_summaries[i].UUIDValid())
         {
             DataExtractor data; // Load command data
-            if (!ReadMachHeader (kext_summaries[i].address, &kext_summaries[i].header, &data))
+            if (!ReadMachHeader (kext_summaries[i], &data))
                 continue;
             
             ParseLoadCommands (data, kext_summaries[i]);
@@ -569,98 +506,9 @@ DynamicLoaderMacOSXKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
     return true;
 }
 
-bool
-DynamicLoaderMacOSXKernel::RemoveModulesUsingImageInfosAddress (lldb::addr_t kext_summary_addr, uint32_t image_infos_count)
-{
-    OSKextLoadedKextSummary::collection image_infos;
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
-    
-    Mutex::Locker locker(m_mutex);
-    if (m_process->GetStopID() == m_kext_summaries_stop_id)
-        return true;
-
-    // First read in the image_infos for the removed modules, and their headers & load commands.
-    if (!ReadKextSummaries (kext_summary_addr, image_infos_count, image_infos))
-    {
-        if (log)
-            log->PutCString ("Failed reading image infos array.");
-        return false;
-    }
-    
-    if (log)
-        log->Printf ("Removing %d modules.", image_infos_count);
-    
-    ModuleList unloaded_module_list;
-    for (uint32_t idx = 0; idx < image_infos.size(); ++idx)
-    {        
-        if (log)
-        {
-            log->Printf ("Removing module at address=0x%16.16llx.", image_infos[idx].address);
-            image_infos[idx].PutToLog (log.get());
-        }
-            
-        // Remove this image_infos from the m_all_image_infos.  We do the comparision by address
-        // rather than by file spec because we can have many modules with the same "file spec" in the
-        // case that they are modules loaded from memory.
-        //
-        // Also copy over the uuid from the old entry to the removed entry so we can 
-        // use it to lookup the module in the module list.
-        
-        OSKextLoadedKextSummary::collection::iterator pos, end = m_kext_summaries.end();
-        for (pos = m_kext_summaries.begin(); pos != end; pos++)
-        {
-            if (image_infos[idx].address == (*pos).address)
-            {
-                image_infos[idx].uuid = (*pos).uuid;
-
-                // Add the module from this image_info to the "unloaded_module_list".  We'll remove them all at
-                // one go later on.
-                
-                if (FindTargetModule (image_infos[idx], false, NULL))
-                {
-                    UnloadImageLoadAddress (image_infos[idx]);
-                    unloaded_module_list.AppendIfNeeded (image_infos[idx].module_sp);
-                }
-                else
-                {
-                    if (log)
-                    {
-                        log->Printf ("Could not find module for unloading info entry:");
-                        image_infos[idx].PutToLog(log.get());
-                    }
-                }
-                
-                // Then remove it from the m_kext_summaries:
-                
-                m_kext_summaries.erase(pos);
-                break;
-            }
-        }
-        
-        if (pos == end)
-        {
-            if (log)
-            {
-                log->Printf ("Could not find image_info entry for unloading image:");
-                image_infos[idx].PutToLog(log.get());            
-            }
-        }
-    }
-    if (unloaded_module_list.GetSize() > 0)
-    {
-        if (log)
-        {
-            log->PutCString("Unloaded:");
-            unloaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXKernel::ModulesDidUnload");
-        }
-        m_process->GetTarget().ModulesDidUnload (unloaded_module_list);
-    }
-    m_kext_summaries_stop_id = m_process->GetStopID();
-    return true;
-}
 
 uint32_t
-DynamicLoaderMacOSXKernel::ReadKextSummaries (lldb::addr_t kext_summary_addr, 
+DynamicLoaderMacOSXKernel::ReadKextSummaries (const lldb_private::Address &kext_summary_addr,
                                               uint32_t image_infos_count, 
                                               OSKextLoadedKextSummary::collection &image_infos)
 {
@@ -671,10 +519,12 @@ DynamicLoaderMacOSXKernel::ReadKextSummaries (lldb::addr_t kext_summary_addr,
     const size_t count = image_infos.size() * m_kext_summary_header.entry_size;
     DataBufferHeap data(count, 0);
     Error error;
-    const size_t bytes_read = m_process->ReadMemory (kext_summary_addr, 
-                                                     data.GetBytes(), 
-                                                     data.GetByteSize(),
-                                                     error);
+    const bool prefer_file_cache = false;
+    const size_t bytes_read = m_process->GetTarget().ReadMemory (kext_summary_addr, 
+                                                                 prefer_file_cache,
+                                                                 data.GetBytes(), 
+                                                                 data.GetByteSize(),
+                                                                 error);
     if (bytes_read == count)
     {
         uint32_t offset = 0;
@@ -688,6 +538,8 @@ DynamicLoaderMacOSXKernel::ReadKextSummaries (lldb::addr_t kext_summary_addr,
             memcpy (image_infos[i].name, name_data, KERNEL_MODULE_MAX_NAME);
             image_infos[i].uuid.SetBytes(extractor.GetData (&offset, 16));
             image_infos[i].address          = extractor.GetU64(&offset);
+            if (!image_infos[i].so_address.SetLoadAddress (image_infos[i].address, &m_process->GetTarget()))
+                m_process->GetTarget().GetImages().ResolveFileAddress (image_infos[i].address, image_infos[i].so_address);
             image_infos[i].size             = extractor.GetU64(&offset);
             image_infos[i].version          = extractor.GetU64(&offset);
             image_infos[i].load_tag         = extractor.GetU32(&offset);
@@ -720,7 +572,9 @@ DynamicLoaderMacOSXKernel::ReadAllKextSummaries (bool force)
     {
         if (m_kext_summary_header.entry_count > 0)
         {
-            if (!ParseKextSummaries (m_kext_summary_header_addr + 16, m_kext_summary_header.entry_count))
+            Address summary_addr (m_kext_summary_header_addr);
+            summary_addr.Slide(16);
+            if (!ParseKextSummaries (summary_addr, m_kext_summary_header.entry_count))
             {
                 DEBUG_PRINTF( "unable to read all data for all_dylib_infos.");
                 m_kext_summaries.clear();
@@ -738,36 +592,38 @@ DynamicLoaderMacOSXKernel::ReadAllKextSummaries (bool force)
 // Returns true if we succeed, false if we fail for any reason.
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXKernel::ReadMachHeader (lldb::addr_t addr, llvm::MachO::mach_header *header, DataExtractor *load_command_data)
+DynamicLoaderMacOSXKernel::ReadMachHeader (OSKextLoadedKextSummary& kext_summary, DataExtractor *load_command_data)
 {
     DataBufferHeap header_bytes(sizeof(llvm::MachO::mach_header), 0);
     Error error;
-    size_t bytes_read = m_process->ReadMemory (addr, 
-                                               header_bytes.GetBytes(), 
-                                               header_bytes.GetByteSize(), 
-                                               error);
+    const bool prefer_file_cache = false;
+    size_t bytes_read = m_process->GetTarget().ReadMemory (kext_summary.so_address,
+                                                           prefer_file_cache,
+                                                           header_bytes.GetBytes(), 
+                                                           header_bytes.GetByteSize(), 
+                                                           error);
     if (bytes_read == sizeof(llvm::MachO::mach_header))
     {
         uint32_t offset = 0;
-        ::memset (header, 0, sizeof(header));
+        ::memset (&kext_summary.header, 0, sizeof(kext_summary.header));
 
         // Get the magic byte unswapped so we can figure out what we are dealing with
         DataExtractor data(header_bytes.GetBytes(), header_bytes.GetByteSize(), lldb::endian::InlHostByteOrder(), 4);
-        header->magic = data.GetU32(&offset);
-        lldb::addr_t load_cmd_addr = addr;
-        data.SetByteOrder(DynamicLoaderMacOSXKernel::GetByteOrderFromMagic(header->magic));
-        switch (header->magic)
+        kext_summary.header.magic = data.GetU32(&offset);
+        Address load_cmd_addr = kext_summary.so_address;
+        data.SetByteOrder(DynamicLoaderMacOSXKernel::GetByteOrderFromMagic(kext_summary.header.magic));
+        switch (kext_summary.header.magic)
         {
         case llvm::MachO::HeaderMagic32:
         case llvm::MachO::HeaderMagic32Swapped:
             data.SetAddressByteSize(4);
-            load_cmd_addr += sizeof(llvm::MachO::mach_header);
+            load_cmd_addr.Slide (sizeof(llvm::MachO::mach_header));
             break;
 
         case llvm::MachO::HeaderMagic64:
         case llvm::MachO::HeaderMagic64Swapped:
             data.SetAddressByteSize(8);
-            load_cmd_addr += sizeof(llvm::MachO::mach_header_64);
+            load_cmd_addr.Slide (sizeof(llvm::MachO::mach_header_64));
             break;
 
         default:
@@ -775,23 +631,24 @@ DynamicLoaderMacOSXKernel::ReadMachHeader (lldb::addr_t addr, llvm::MachO::mach_
         }
 
         // Read the rest of dyld's mach header
-        if (data.GetU32(&offset, &header->cputype, (sizeof(llvm::MachO::mach_header)/sizeof(uint32_t)) - 1))
+        if (data.GetU32(&offset, &kext_summary.header.cputype, (sizeof(llvm::MachO::mach_header)/sizeof(uint32_t)) - 1))
         {
             if (load_command_data == NULL)
                 return true; // We were able to read the mach_header and weren't asked to read the load command bytes
 
-            DataBufferSP load_cmd_data_sp(new DataBufferHeap(header->sizeofcmds, 0));
+            DataBufferSP load_cmd_data_sp(new DataBufferHeap(kext_summary.header.sizeofcmds, 0));
 
-            size_t load_cmd_bytes_read = m_process->ReadMemory (load_cmd_addr, 
-                                                                load_cmd_data_sp->GetBytes(), 
-                                                                load_cmd_data_sp->GetByteSize(),
-                                                                error);
+            size_t load_cmd_bytes_read = m_process->GetTarget().ReadMemory (load_cmd_addr, 
+                                                                            prefer_file_cache,
+                                                                            load_cmd_data_sp->GetBytes(), 
+                                                                            load_cmd_data_sp->GetByteSize(),
+                                                                            error);
             
-            if (load_cmd_bytes_read == header->sizeofcmds)
+            if (load_cmd_bytes_read == kext_summary.header.sizeofcmds)
             {
                 // Set the load command data and also set the correct endian
                 // swap settings and the correct address size
-                load_command_data->SetData(load_cmd_data_sp, 0, header->sizeofcmds);
+                load_command_data->SetData(load_cmd_data_sp, 0, kext_summary.header.sizeofcmds);
                 load_command_data->SetByteOrder(data.GetByteOrder());
                 load_command_data->SetAddressByteSize(data.GetAddressByteSize());
                 return true; // We successfully read the mach_header and the load command data
@@ -997,7 +854,7 @@ DynamicLoaderMacOSXKernel::PutToLog(Log *log) const
 
     Mutex::Locker locker(m_mutex);
     log->Printf("gLoadedKextSummaries = 0x%16.16llx { version=%u, entry_size=%u, entry_count=%u, reserved=%u }",
-                m_kext_summary_header_addr,
+                m_kext_summary_header_addr.GetFileAddress(),
                 m_kext_summary_header.version,
                 m_kext_summary_header.entry_size,
                 m_kext_summary_header.entry_count,
