@@ -235,10 +235,16 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     // Setup Windows compiler runtime calls.
     setLibcallName(RTLIB::SDIV_I64, "_alldiv");
     setLibcallName(RTLIB::UDIV_I64, "_aulldiv");
+    setLibcallName(RTLIB::SREM_I64, "_allrem");
+    setLibcallName(RTLIB::UREM_I64, "_aullrem");
+    setLibcallName(RTLIB::MUL_I64, "_allmul");
     setLibcallName(RTLIB::FPTOUINT_F64_I64, "_ftol2");
     setLibcallName(RTLIB::FPTOUINT_F32_I64, "_ftol2");
     setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::X86_StdCall);
     setLibcallCallingConv(RTLIB::UDIV_I64, CallingConv::X86_StdCall);
+    setLibcallCallingConv(RTLIB::SREM_I64, CallingConv::X86_StdCall);
+    setLibcallCallingConv(RTLIB::UREM_I64, CallingConv::X86_StdCall);
+    setLibcallCallingConv(RTLIB::MUL_I64, CallingConv::X86_StdCall);
     setLibcallCallingConv(RTLIB::FPTOUINT_F64_I64, CallingConv::C);
     setLibcallCallingConv(RTLIB::FPTOUINT_F32_I64, CallingConv::C);
   }
