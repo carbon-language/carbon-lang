@@ -1799,20 +1799,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     }
     return;
   }
-  // Tail jump branches are really just branch instructions with additional
-  // code-gen attributes. Convert them to the canonical form here.
-  case ARM::tTAILJMPrND:
-  case ARM::tTAILJMPr: {
-    MCInst TmpInst;
-    TmpInst.setOpcode(ARM::tBX);
-    TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
-    // Predicate.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.AddComment("TAILCALL");
-    OutStreamer.EmitInstruction(TmpInst);
-    return;
-  }
   }
 
   MCInst TmpInst;
