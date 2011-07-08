@@ -24,12 +24,24 @@ __attribute__((objc_arc_weak_reference_unavailable))
 + (id) new;
 @end
 
-NOWEAK * Test9732636() {
+NOWEAK * Test1() {
   NOWEAK * strong1 = [NOWEAK new];
   __weak id weak1;
   weak1 = strong1; // expected-error {{assignment of a weak-unavailable object to a __weak object}}
 
   __weak id weak2 = strong1; // expected-error {{assignment of a weak-unavailable object to a __weak object}}
   return (__weak id)strong1; // expected-error {{cast of weak-unavailable object of type 'NOWEAK *' to a __weak object of type '__weak id'}}
+}
+
+@protocol P @end
+@protocol P1 @end
+
+NOWEAK<P, P1> * Test2() {
+  NOWEAK<P, P1> * strong1 = 0;
+  __weak id<P> weak1;
+  weak1 = strong1; // expected-error {{assignment of a weak-unavailable object to a __weak object}}
+
+  __weak id<P> weak2 = strong1; // expected-error {{assignment of a weak-unavailable object to a __weak object}}
+  return (__weak id<P>)strong1; // expected-error {{cast of weak-unavailable object of type 'NOWEAK<P,P1> *' to a __weak object of type '__weak id<P>'}}
 }
 

@@ -4068,7 +4068,7 @@ ExprResult Sema::CheckCastTypes(SourceLocation CastStartLoc, SourceRange TyR,
     } 
     else if (!CheckObjCARCUnavailableWeakConversion(castType, castExprType)) {
            Diag(castExpr->getLocStart(), 
-                diag::err_arc_cast_of_weak_unavailable)
+                diag::err_arc_convesion_of_weak_unavailable) << 1
                 << castExprType << castType 
                 << castExpr->getSourceRange();
           return ExprError();

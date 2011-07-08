@@ -2340,8 +2340,20 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       if (From->getType()->isObjCObjectPointerType() &&
           ToType->isObjCObjectPointerType())
         EmitRelatedResultTypeNote(From);
-    }
-
+    } 
+    else if (getLangOptions().ObjCAutoRefCount &&
+             !CheckObjCARCUnavailableWeakConversion(ToType, 
+                                                    From->getType())) {
+           if (Action == AA_Initializing)
+             Diag(From->getSourceRange().getBegin(), 
+                  diag::err_arc_weak_unavailable_assign);
+           else
+             Diag(From->getSourceRange().getBegin(),
+                  diag::err_arc_convesion_of_weak_unavailable) 
+                  << (Action == AA_Casting) << From->getType() << ToType 
+                  << From->getSourceRange();
+         }
+             
     CastKind Kind = CK_Invalid;
     CXXCastPath BasePath;
     if (CheckPointerConversion(From, ToType, Kind, BasePath, CStyle))
