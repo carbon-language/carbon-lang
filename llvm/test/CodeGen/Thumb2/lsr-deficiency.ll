@@ -13,16 +13,16 @@
 
 define void @t() nounwind optsize {
 ; CHECK: t:
-; CHECK: mov.w r2, #1000
+; CHECK: mov{{.*}}, #1000
 entry:
   %.pre = load i32* @G, align 4                   ; <i32> [#uses=1]
   br label %bb
 
 bb:                                               ; preds = %bb, %entry
 ; CHECK: LBB0_1:
-; CHECK: cmp r2, #0
-; CHECK: sub{{(.w)?}} [[REGISTER:(r[0-9]+)|(lr)]], r2, #1
-; CHECK: mov r2, [[REGISTER]]
+; CHECK: cmp [[R2:r[0-9]+]], #0
+; CHECK: sub{{(.w)?}} [[REGISTER:(r[0-9]+)|(lr)]], [[R2]], #1
+; CHECK: mov [[R2]], [[REGISTER]]
 
   %0 = phi i32 [ %.pre, %entry ], [ %3, %bb ]     ; <i32> [#uses=1]
   %indvar = phi i32 [ 0, %entry ], [ %indvar.next, %bb ] ; <i32> [#uses=2]

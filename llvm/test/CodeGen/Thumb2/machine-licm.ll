@@ -52,8 +52,8 @@ return:                                           ; preds = %bb, %entry
 define void @t2(i8* %ptr1, i8* %ptr2) nounwind {
 entry:
 ; CHECK: t2:
-; CHECK: mov.w r3, #1065353216
-; CHECK: vdup.32 q{{.*}}, r3
+; CHECK: mov.w [[R3:r[0-9]+]], #1065353216
+; CHECK: vdup.32 q{{.*}}, [[R3]]
   br i1 undef, label %bb1, label %bb2
 
 bb1:

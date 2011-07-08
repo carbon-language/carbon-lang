@@ -1,4 +1,4 @@
-; RUN: llc < %s -O3 -relocation-model=pic -mattr=+thumb2 -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc < %s -O3 -relocation-model=pic -mattr=+thumb2 -mcpu=cortex-a8 -disable-branch-fold | FileCheck %s
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32-n32"
 target triple = "thumbv7-apple-darwin10"
 
@@ -26,7 +26,7 @@ entry:
 ; CHECK: vldr.64 [[LDR:d.*]],
 ; CHECK: LPC0_0:
 ; CHECK: vadd.f64 [[ADD:d.*]], [[LDR]], [[LDR]]
-; CHECK: vmov.f64 [[LDR]]
+; CHECK-NOT: vmov.f64 [[ADD]]
   %5 = fadd <2 x double> %3, %3                   ; <<2 x double>> [#uses=2]
   %6 = fadd <2 x double> %4, %4                   ; <<2 x double>> [#uses=2]
   %tmp7 = extractelement <2 x double> %5, i32 0   ; <double> [#uses=1]
