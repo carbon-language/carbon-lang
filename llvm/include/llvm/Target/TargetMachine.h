@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETMACHINE_H
 #define LLVM_TARGET_TARGETMACHINE_H
 
+#include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <string>
 
@@ -91,7 +92,8 @@ class TargetMachine {
   TargetMachine(const TargetMachine &);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetMachine(const Target &);
+  TargetMachine(const Target &T, StringRef TargetTriple,
+                StringRef CPU, StringRef FS);
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtargetInfo-derived member variable.
@@ -99,6 +101,12 @@ protected: // Can only create subclasses.
 
   /// TheTarget - The Target that this machine was created for.
   const Target &TheTarget;
+
+  /// TargetTriple, TargetCPU, TargetFS - Triple string, CPU name, and target
+  /// feature strings the TargetMachine instance is created with.
+  std::string TargetTriple;
+  std::string TargetCPU;
+  std::string TargetFS;
 
   /// AsmInfo - Contains target specific asm information.
   ///
@@ -114,6 +122,10 @@ public:
   virtual ~TargetMachine();
 
   const Target &getTarget() const { return TheTarget; }
+
+  const StringRef getTargetTriple() const { return TargetTriple; }
+  const StringRef getTargetCPU() const { return TargetCPU; }
+  const StringRef getTargetFeatureString() const { return TargetFS; }
 
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information
@@ -295,10 +307,9 @@ public:
 /// implemented with the LLVM target-independent code generator.
 ///
 class LLVMTargetMachine : public TargetMachine {
-  std::string TargetTriple;
-
 protected: // Can only create subclasses.
-  LLVMTargetMachine(const Target &T, const std::string &TargetTriple);
+  LLVMTargetMachine(const Target &T, StringRef TargetTriple,
+                    StringRef CPU, StringRef FS);
 
 private:
   /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
@@ -311,9 +322,6 @@ private:
   virtual void setCodeModelForStatic();
 
 public:
-
-  const std::string &getTargetTriple() const { return TargetTriple; }
-
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.  If OptLevel is None, the code generator should emit code as

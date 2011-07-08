@@ -17,6 +17,7 @@
 #include <string>
 
 namespace llvm {
+class MCSubtargetInfo;
 class Target;
 class StringRef;
 
@@ -31,8 +32,16 @@ namespace X86_MC {
                        unsigned *rEBX, unsigned *rECX, unsigned *rEDX);
 
   void DetectFamilyModel(unsigned EAX, unsigned &Family, unsigned &Model);
+
+  /// createARMMCSubtargetInfo - Create a X86 MCSubtargetInfo instance.
+  /// This is exposed so Asm parser, etc. do not need to go through
+  /// TargetRegistry.
+  MCSubtargetInfo *createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
+                                            StringRef FS);
 }
+
 } // End llvm namespace
+
 
 // Defines symbolic names for X86 registers.  This defines a mapping from
 // register name to register number.

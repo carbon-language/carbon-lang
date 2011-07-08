@@ -32,7 +32,6 @@ struct MBlazeOperand;
 
 class MBlazeAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
-  TargetMachine &TM;
 
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
@@ -64,8 +63,9 @@ class MBlazeAsmParser : public TargetAsmParser {
 
 
 public:
-  MBlazeAsmParser(const Target &T, MCAsmParser &_Parser, TargetMachine &_TM)
-    : TargetAsmParser(T), Parser(_Parser), TM(_TM) {}
+  MBlazeAsmParser(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
+                  MCAsmParser &_Parser)
+    : TargetAsmParser(T), Parser(_Parser) {}
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);

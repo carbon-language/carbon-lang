@@ -13,9 +13,10 @@
 
 #include "BlackfinSubtarget.h"
 
-#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
+#define GET_SUBTARGETINFO_CTOR
 #include "BlackfinGenSubtargetInfo.inc"
 
 using namespace llvm;

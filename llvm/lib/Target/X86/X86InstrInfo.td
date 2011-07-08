@@ -438,8 +438,10 @@ def HasFMA3      : Predicate<"Subtarget->hasFMA3()">;
 def HasFMA4      : Predicate<"Subtarget->hasFMA4()">;
 def FPStackf32   : Predicate<"!Subtarget->hasXMM()">;
 def FPStackf64   : Predicate<"!Subtarget->hasXMMInt()">;
-def In32BitMode  : Predicate<"!Subtarget->is64Bit()">, AssemblerPredicate;
-def In64BitMode  : Predicate<"Subtarget->is64Bit()">, AssemblerPredicate;
+def In32BitMode  : Predicate<"!Subtarget->is64Bit()">,
+                             AssemblerPredicate<"!Mode64Bit">;
+def In64BitMode  : Predicate<"Subtarget->is64Bit()">,
+                             AssemblerPredicate<"Mode64Bit">;
 def IsWin64      : Predicate<"Subtarget->isTargetWin64()">;
 def NotWin64     : Predicate<"!Subtarget->isTargetWin64()">;
 def SmallCode    : Predicate<"TM.getCodeModel() == CodeModel::Small">;

@@ -28,7 +28,7 @@ BlackfinTargetMachine::BlackfinTargetMachine(const Target &T,
                                              const std::string &TT,
                                              const std::string &CPU,
                                              const std::string &FS)
-  : LLVMTargetMachine(T, TT),
+  : LLVMTargetMachine(T, TT, CPU, FS),
     DataLayout("e-p:32:32-i64:32-f64:32-n32"),
     Subtarget(TT, CPU, FS),
     TLInfo(*this),

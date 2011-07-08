@@ -619,7 +619,10 @@ bool LTOModule::addAsmGlobalSymbols(MCContext &Context) {
                                                   Context, *Streamer,
                                                   *_target->getMCAsmInfo()));
   OwningPtr<TargetAsmParser>
-    TAP(_target->getTarget().createAsmParser(*Parser.get(), *_target.get()));
+    TAP(_target->getTarget().createAsmParser(_target->getTargetTriple(),
+                                             _target->getTargetCPU(),
+                                             _target->getTargetFeatureString(),
+                                             *Parser.get()));
   Parser->setTargetParser(*TAP);
   int Res = Parser->Run(false);
   if (Res)

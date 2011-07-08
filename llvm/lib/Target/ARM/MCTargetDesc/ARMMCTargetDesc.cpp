@@ -23,64 +23,11 @@
 #define GET_INSTRINFO_MC_DESC
 #include "ARMGenInstrInfo.inc"
 
+#define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
 #include "ARMGenSubtargetInfo.inc"
 
 using namespace llvm;
-
-MCInstrInfo *createARMMCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitARMMCInstrInfo(X);
-  return X;
-}
-
-MCRegisterInfo *createARMMCRegisterInfo() {
-  MCRegisterInfo *X = new MCRegisterInfo();
-  InitARMMCRegisterInfo(X);
-  return X;
-}
-
-MCSubtargetInfo *createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                          StringRef FS) {
-  std::string ArchFS = ARM_MC::ParseARMTriple(TT);
-  if (!FS.empty()) {
-    if (!ArchFS.empty())
-      ArchFS = ArchFS + "," + FS.str();
-    else
-      ArchFS = FS;
-  }
-
-  MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitARMMCSubtargetInfo(X, CPU, ArchFS);
-  return X;
-}
-
-// Force static initialization.
-extern "C" void LLVMInitializeARMMCInstrInfo() {
-  RegisterMCInstrInfo<MCInstrInfo> X(TheARMTarget);
-  RegisterMCInstrInfo<MCInstrInfo> Y(TheThumbTarget);
-
-  TargetRegistry::RegisterMCInstrInfo(TheARMTarget, createARMMCInstrInfo);
-  TargetRegistry::RegisterMCInstrInfo(TheThumbTarget, createARMMCInstrInfo);
-}
-
-extern "C" void LLVMInitializeARMMCRegInfo() {
-  RegisterMCRegInfo<MCRegisterInfo> X(TheARMTarget);
-  RegisterMCRegInfo<MCRegisterInfo> Y(TheThumbTarget);
-
-  TargetRegistry::RegisterMCRegInfo(TheARMTarget, createARMMCRegisterInfo);
-  TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
-}
-
-extern "C" void LLVMInitializeARMMCSubtargetInfo() {
-  RegisterMCSubtargetInfo<MCSubtargetInfo> X(TheARMTarget);
-  RegisterMCSubtargetInfo<MCSubtargetInfo> Y(TheThumbTarget);
-
-  TargetRegistry::RegisterMCSubtargetInfo(TheARMTarget,
-                                          createARMMCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheThumbTarget,
-                                          createARMMCSubtargetInfo);
-}
 
 std::string ARM_MC::ParseARMTriple(StringRef TT) {
   // Set the boolean corresponding to the current target triple, or the default
@@ -134,4 +81,48 @@ std::string ARM_MC::ParseARMTriple(StringRef TT) {
   }
 
   return ARMArchFeature;
+}
+
+MCSubtargetInfo *ARM_MC::createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                  StringRef FS) {
+  std::string ArchFS = ARM_MC::ParseARMTriple(TT);
+  if (!FS.empty()) {
+    if (!ArchFS.empty())
+      ArchFS = ArchFS + "," + FS.str();
+    else
+      ArchFS = FS;
+  }
+
+  MCSubtargetInfo *X = new MCSubtargetInfo();
+  InitARMMCSubtargetInfo(X, CPU, ArchFS);
+  return X;
+}
+
+MCInstrInfo *createARMMCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitARMMCInstrInfo(X);
+  return X;
+}
+
+MCRegisterInfo *createARMMCRegisterInfo() {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitARMMCRegisterInfo(X);
+  return X;
+}
+
+// Force static initialization.
+extern "C" void LLVMInitializeARMMCInstrInfo() {
+  RegisterMCInstrInfo<MCInstrInfo> X(TheARMTarget);
+  RegisterMCInstrInfo<MCInstrInfo> Y(TheThumbTarget);
+
+  TargetRegistry::RegisterMCInstrInfo(TheARMTarget, createARMMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheThumbTarget, createARMMCInstrInfo);
+}
+
+extern "C" void LLVMInitializeARMMCRegInfo() {
+  RegisterMCRegInfo<MCRegisterInfo> X(TheARMTarget);
+  RegisterMCRegInfo<MCRegisterInfo> Y(TheThumbTarget);
+
+  TargetRegistry::RegisterMCRegInfo(TheARMTarget, createARMMCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
 }

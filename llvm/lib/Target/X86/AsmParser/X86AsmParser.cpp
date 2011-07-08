@@ -15,6 +15,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -25,6 +26,10 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+
+#define GET_SUBTARGETINFO_ENUM
+#include "X86GenSubtargetInfo.inc"
+
 using namespace llvm;
 
 namespace {
@@ -32,10 +37,7 @@ struct X86Operand;
 
 class X86ATTAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
-  TargetMachine &TM;
-
-protected:
-  unsigned Is64Bit : 1;
+  MCSubtargetInfo *STI;
 
 private:
   MCAsmParser &getParser() const { return Parser; }
@@ -61,6 +63,11 @@ private:
   /// or %es:(%edi) in 32bit mode.
   bool isDstOp(X86Operand &Op);
 
+  bool is64Bit() {
+    // FIXME: Can tablegen auto-generate this?
+    return (STI->getFeatureBits() & X86::Mode64Bit) != 0;
+  }
+
   /// @name Auto-generated Matcher Functions
   /// {
 
@@ -70,12 +77,13 @@ private:
   /// }
 
 public:
-  X86ATTAsmParser(const Target &T, MCAsmParser &parser, TargetMachine &TM)
-    : TargetAsmParser(T), Parser(parser), TM(TM) {
+  X86ATTAsmParser(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
+                  MCAsmParser &parser)
+    : TargetAsmParser(T), Parser(parser) {
+    STI = X86_MC::createX86MCSubtargetInfo(TT, CPU, FS);
 
     // Initialize the set of available features.
-    setAvailableFeatures(ComputeAvailableFeatures(
-                           &TM.getSubtarget<X86Subtarget>()));
+    setAvailableFeatures(ComputeAvailableFeatures(STI->getFeatureBits()));
   }
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
 
@@ -84,23 +92,6 @@ public:
 
   virtual bool ParseDirective(AsmToken DirectiveID);
 };
-
-class X86_32ATTAsmParser : public X86ATTAsmParser {
-public:
-  X86_32ATTAsmParser(const Target &T, MCAsmParser &Parser, TargetMachine &TM)
-    : X86ATTAsmParser(T, Parser, TM) {
-    Is64Bit = false;
-  }
-};
-
-class X86_64ATTAsmParser : public X86ATTAsmParser {
-public:
-  X86_64ATTAsmParser(const Target &T, MCAsmParser &Parser, TargetMachine &TM)
-    : X86ATTAsmParser(T, Parser, TM) {
-    Is64Bit = true;
-  }
-};
-
 } // end anonymous namespace
 
 /// @name Auto-generated Match Functions
@@ -365,7 +356,7 @@ struct X86Operand : public MCParsedAsmOperand {
 } // end anonymous namespace.
 
 bool X86ATTAsmParser::isSrcOp(X86Operand &Op) {
-  unsigned basereg = Is64Bit ? X86::RSI : X86::ESI;
+  unsigned basereg = is64Bit() ? X86::RSI : X86::ESI;
 
   return (Op.isMem() &&
     (Op.Mem.SegReg == 0 || Op.Mem.SegReg == X86::DS) &&
@@ -375,7 +366,7 @@ bool X86ATTAsmParser::isSrcOp(X86Operand &Op) {
 }
 
 bool X86ATTAsmParser::isDstOp(X86Operand &Op) {
-  unsigned basereg = Is64Bit ? X86::RDI : X86::EDI;
+  unsigned basereg = is64Bit() ? X86::RDI : X86::EDI;
 
   return Op.isMem() && Op.Mem.SegReg == X86::ES &&
     isa<MCConstantExpr>(Op.Mem.Disp) &&
@@ -406,7 +397,7 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   // FIXME: This should be done using Requires<In32BitMode> and
   // Requires<In64BitMode> so "eiz" usage in 64-bit instructions
   // can be also checked.
-  if (RegNo == X86::RIZ && !Is64Bit)
+  if (RegNo == X86::RIZ && !is64Bit())
     return Error(Tok.getLoc(), "riz register in 64-bit mode only");
 
   // Parse "%st" as "%st(0)" and "%st(1)", which is multiple tokens.
@@ -826,7 +817,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Transform "movs[bwl] %ds:(%esi), %es:(%edi)" into "movs[bwl]"
   if (Name.startswith("movs") && Operands.size() == 3 &&
       (Name == "movsb" || Name == "movsw" || Name == "movsl" ||
-       (Is64Bit && Name == "movsq"))) {
+       (is64Bit() && Name == "movsq"))) {
     X86Operand &Op = *(X86Operand*)Operands.begin()[1];
     X86Operand &Op2 = *(X86Operand*)Operands.begin()[2];
     if (isSrcOp(Op) && isDstOp(Op2)) {
@@ -839,7 +830,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Transform "lods[bwl] %ds:(%esi),{%al,%ax,%eax,%rax}" into "lods[bwl]"
   if (Name.startswith("lods") && Operands.size() == 3 &&
       (Name == "lods" || Name == "lodsb" || Name == "lodsw" ||
-       Name == "lodsl" || (Is64Bit && Name == "lodsq"))) {
+       Name == "lodsl" || (is64Bit() && Name == "lodsq"))) {
     X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
     X86Operand *Op2 = static_cast<X86Operand*>(Operands[2]);
     if (isSrcOp(*Op1) && Op2->isReg()) {
@@ -869,7 +860,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Transform "stos[bwl] {%al,%ax,%eax,%rax},%es:(%edi)" into "stos[bwl]"
   if (Name.startswith("stos") && Operands.size() == 3 &&
       (Name == "stos" || Name == "stosb" || Name == "stosw" ||
-       Name == "stosl" || (Is64Bit && Name == "stosq"))) {
+       Name == "stosl" || (is64Bit() && Name == "stosq"))) {
     X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
     X86Operand *Op2 = static_cast<X86Operand*>(Operands[2]);
     if (isDstOp(*Op2) && Op1->isReg()) {
@@ -1144,8 +1135,8 @@ extern "C" void LLVMInitializeX86AsmLexer();
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmParser() {
-  RegisterAsmParser<X86_32ATTAsmParser> X(TheX86_32Target);
-  RegisterAsmParser<X86_64ATTAsmParser> Y(TheX86_64Target);
+  RegisterAsmParser<X86ATTAsmParser> X(TheX86_32Target);
+  RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
   LLVMInitializeX86AsmLexer();
 }
 

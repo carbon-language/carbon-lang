@@ -382,6 +382,15 @@ class Predicate<string cond> {
   /// matcher, this is true.  Targets should set this by inheriting their
   /// feature from the AssemblerPredicate class in addition to Predicate.
   bit AssemblerMatcherPredicate = 0;
+
+  /// AssemblerCondString - Name of the subtarget feature being tested used
+  /// as alternative condition string used for assembler matcher.
+  /// e.g. "ModeThumb" is translated to "(Bits & ModeThumb) != 0".
+  ///      "!ModeThumb" is translated to "(Bits & ModeThumb) == 0".
+  /// It can also list multiple features separated by ",".
+  /// e.g. "ModeThumb,FeatureThumb2" is translated to
+  ///      "(Bits & ModeThumb) != 0 && (Bits & FeatureThumb2) != 0".
+  string AssemblerCondString = "";
 }
 
 /// NoHonorSignDependentRounding - This predicate is true if support for
@@ -689,8 +698,9 @@ def DefaultAsmParser : AsmParser;
 
 /// AssemblerPredicate - This is a Predicate that can be used when the assembler
 /// matches instructions and aliases.
-class AssemblerPredicate {
+class AssemblerPredicate<string cond> {
   bit AssemblerMatcherPredicate = 1;
+  string AssemblerCondString = cond;
 }
 
 

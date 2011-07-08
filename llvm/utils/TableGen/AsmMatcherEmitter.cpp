@@ -1817,15 +1817,43 @@ static void EmitComputeAvailableFeatures(AsmMatcherInfo &Info,
     Info.AsmParser->getValueAsString("AsmParserClassName");
 
   OS << "unsigned " << Info.Target.getName() << ClassName << "::\n"
-     << "ComputeAvailableFeatures(const " << Info.Target.getName()
-     << "Subtarget *Subtarget) const {\n";
+     << "ComputeAvailableFeatures(uint64_t FB) const {\n";
   OS << "  unsigned Features = 0;\n";
   for (std::map<Record*, SubtargetFeatureInfo*>::const_iterator
          it = Info.SubtargetFeatures.begin(),
          ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
     SubtargetFeatureInfo &SFI = *it->second;
-    OS << "  if (" << SFI.TheDef->getValueAsString("CondString")
-       << ")\n";
+
+    OS << "  if (";
+    StringRef Conds = SFI.TheDef->getValueAsString("AssemblerCondString");
+    std::pair<StringRef,StringRef> Comma = Conds.split(',');
+    bool First = true;
+    do {
+      if (!First)
+        OS << " && ";
+
+      bool Neg = false;
+      StringRef Cond = Comma.first;
+      if (Cond[0] == '!') {
+        Neg = true;
+        Cond = Cond.substr(1);
+      }
+
+      OS << "((FB & " << Info.Target.getName() << "::" << Cond << ")";
+      if (Neg)
+        OS << " == 0";
+      else
+        OS << " != 0";
+      OS << ")";
+
+      if (Comma.second.empty())
+        break;
+
+      First = false;
+      Comma = Comma.second.split(',');
+    } while (true);
+
+    OS << ")\n";
     OS << "    Features |= " << SFI.getEnumName() << ";\n";
   }
   OS << "  return Features;\n";
@@ -2140,8 +2168,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_ASSEMBLER_HEADER\n";
   OS << "  // This should be included into the middle of the declaration of\n";
   OS << "  // your subclasses implementation of TargetAsmParser.\n";
-  OS << "  unsigned ComputeAvailableFeatures(const " <<
-           Target.getName() << "Subtarget *Subtarget) const;\n";
+  OS << "  unsigned ComputeAvailableFeatures(uint64_t FeatureBits) const;\n";
   OS << "  enum MatchResultTy {\n";
   OS << "    Match_ConversionFail,\n";
   OS << "    Match_InvalidOperand,\n";

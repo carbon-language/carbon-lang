@@ -25,6 +25,7 @@
 #define GET_INSTRINFO_MC_DESC
 #include "X86GenInstrInfo.inc"
 
+#define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
 #include "X86GenSubtargetInfo.inc"
 
@@ -35,7 +36,7 @@ std::string X86_MC::ParseX86Triple(StringRef TT) {
   Triple TheTriple(TT);
   if (TheTriple.getArch() == Triple::x86_64)
     return "+64bit-mode";
-  return "";
+  return "-64bit-mode";
 }
 
 /// GetCpuIDAndInfo - Execute the specified cpuid and return the 4 values in the
@@ -128,20 +129,8 @@ static bool hasX86_64() {
   return false;
 }
 
-MCInstrInfo *createX86MCInstrInfo() {
-  MCInstrInfo *X = new MCInstrInfo();
-  InitX86MCInstrInfo(X);
-  return X;
-}
-
-MCRegisterInfo *createX86MCRegisterInfo() {
-  MCRegisterInfo *X = new MCRegisterInfo();
-  InitX86MCRegisterInfo(X);
-  return X;
-}
-
-MCSubtargetInfo *createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
-                                          StringRef FS) {
+MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
+                                                  StringRef FS) {
   std::string ArchFS = X86_MC::ParseX86Triple(TT);
   if (!FS.empty()) {
     if (!ArchFS.empty())
@@ -159,7 +148,19 @@ MCSubtargetInfo *createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
     ArchFS = "+64bit-mode";
 
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitX86MCSubtargetInfo(X, CPU, ArchFS);
+  InitX86MCSubtargetInfo(X, CPUName, ArchFS);
+  return X;
+}
+
+MCInstrInfo *createX86MCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitX86MCInstrInfo(X);
+  return X;
+}
+
+MCRegisterInfo *createX86MCRegisterInfo() {
+  MCRegisterInfo *X = new MCRegisterInfo();
+  InitX86MCRegisterInfo(X);
   return X;
 }
 
@@ -178,14 +179,4 @@ extern "C" void LLVMInitializeX86MCRegInfo() {
 
   TargetRegistry::RegisterMCRegInfo(TheX86_32Target, createX86MCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(TheX86_64Target, createX86MCRegisterInfo);
-}
-
-extern "C" void LLVMInitializeX86MCSubtargetInfo() {
-  RegisterMCSubtargetInfo<MCSubtargetInfo> X(TheX86_32Target);
-  RegisterMCSubtargetInfo<MCSubtargetInfo> Y(TheX86_64Target);
-
-  TargetRegistry::RegisterMCSubtargetInfo(TheX86_32Target,
-                                          createX86MCSubtargetInfo);
-  TargetRegistry::RegisterMCSubtargetInfo(TheX86_64Target,
-                                          createX86MCSubtargetInfo);
 }

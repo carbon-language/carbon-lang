@@ -645,12 +645,18 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   EmitSourceFileHeader("Subtarget Enumeration Source Fragment", OS);
 
+  OS << "\n#ifdef GET_SUBTARGETINFO_ENUM\n";
+  OS << "#undef GET_SUBTARGETINFO_ENUM\n";
+
+  OS << "namespace llvm {\n";
+  Enumeration(OS, "SubtargetFeature", true);
+  OS << "} // End llvm namespace \n";
+  OS << "#endif // GET_SUBTARGETINFO_ENUM\n\n";
+
   OS << "\n#ifdef GET_SUBTARGETINFO_MC_DESC\n";
   OS << "#undef GET_SUBTARGETINFO_MC_DESC\n";
 
   OS << "namespace llvm {\n";
-  Enumeration(OS, "SubtargetFeature", true);
-  OS<<"\n";
   unsigned NumFeatures = FeatureKeyValues(OS);
   OS<<"\n";
   unsigned NumProcs = CPUKeyValues(OS);

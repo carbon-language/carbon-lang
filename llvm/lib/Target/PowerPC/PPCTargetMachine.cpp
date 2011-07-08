@@ -69,7 +69,7 @@ extern "C" void LLVMInitializePowerPCTarget() {
 PPCTargetMachine::PPCTargetMachine(const Target &T, const std::string &TT,
                                    const std::string &CPU,
                                    const std::string &FS, bool is64Bit)
-  : LLVMTargetMachine(T, TT),
+  : LLVMTargetMachine(T, TT, CPU, FS),
     Subtarget(TT, CPU, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameLowering(Subtarget), JITInfo(*this, is64Bit),

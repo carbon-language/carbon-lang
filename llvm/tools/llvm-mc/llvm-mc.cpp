@@ -371,7 +371,8 @@ static int AssembleInput(const char *ProgName) {
 
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(*TheTarget, SrcMgr, Ctx,
                                                    *Str.get(), *MAI));
-  OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(*Parser, *TM));
+  OwningPtr<TargetAsmParser>
+    TAP(TheTarget->createAsmParser(TripleName, MCPU, FeaturesStr, *Parser));
   if (!TAP) {
     errs() << ProgName
            << ": error: this target does not support assembly parsing.\n";

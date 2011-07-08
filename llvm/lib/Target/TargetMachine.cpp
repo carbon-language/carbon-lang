@@ -216,8 +216,9 @@ FunctionSections("ffunction-sections",
 // TargetMachine Class
 //
 
-TargetMachine::TargetMachine(const Target &T) 
-  : TheTarget(T), AsmInfo(0),
+TargetMachine::TargetMachine(const Target &T,
+                             StringRef TT, StringRef CPU, StringRef FS)
+  : TheTarget(T), TargetTriple(TT), TargetCPU(CPU), TargetFS(FS), AsmInfo(0),
     MCRelaxAll(false),
     MCNoExecStack(false),
     MCSaveTempLabels(false),

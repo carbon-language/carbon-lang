@@ -30,7 +30,7 @@ MSP430TargetMachine::MSP430TargetMachine(const Target &T,
                                          const std::string &TT,
                                          const std::string &CPU,
                                          const std::string &FS)
-  : LLVMTargetMachine(T, TT),
+  : LLVMTargetMachine(T, TT, CPU, FS),
     Subtarget(TT, CPU, FS),
     // FIXME: Check TargetData string.
     DataLayout("e-p:16:16:16-i8:8:8-i16:16:16-i32:16:32-n8:16"),

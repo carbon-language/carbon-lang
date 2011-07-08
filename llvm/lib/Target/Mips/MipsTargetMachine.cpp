@@ -37,7 +37,7 @@ MipsTargetMachine::
 MipsTargetMachine(const Target &T, const std::string &TT,
                   const std::string &CPU, const std::string &FS,
                   bool isLittle=false):
-  LLVMTargetMachine(T, TT),
+  LLVMTargetMachine(T, TT, CPU, FS),
   Subtarget(TT, CPU, FS, isLittle),
   DataLayout(isLittle ? 
              std::string("e-p:32:32:32-i8:8:32-i16:16:32-i64:64:64-n32") :

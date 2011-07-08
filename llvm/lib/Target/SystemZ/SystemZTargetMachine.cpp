@@ -26,7 +26,7 @@ SystemZTargetMachine::SystemZTargetMachine(const Target &T,
                                            const std::string &TT,
                                            const std::string &CPU,
                                            const std::string &FS)
-  : LLVMTargetMachine(T, TT),
+  : LLVMTargetMachine(T, TT, CPU, FS),
     Subtarget(TT, CPU, FS),
     DataLayout("E-p:64:64:64-i8:8:16-i16:16:16-i32:32:32-i64:64:64-f32:32:32"
                "-f64:64:64-f128:128:128-a0:16:16-n32:64"),

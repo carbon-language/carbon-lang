@@ -16,9 +16,10 @@
 #include "MBlazeRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 
-#define GET_SUBTARGETINFO_CTOR
+#define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
 #define GET_SUBTARGETINFO_TARGET_DESC
+#define GET_SUBTARGETINFO_CTOR
 #include "MBlazeGenSubtargetInfo.inc"
 
 using namespace llvm;
@@ -61,4 +62,3 @@ enablePostRAScheduler(CodeGenOpt::Level OptLevel,
   CriticalPathRCs.push_back(&MBlaze::GPRRegClass);
   return HasItin && OptLevel >= CodeGenOpt::Default;
 }
-

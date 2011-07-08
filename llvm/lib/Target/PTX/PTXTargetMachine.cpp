@@ -55,7 +55,7 @@ PTXTargetMachine::PTXTargetMachine(const Target &T,
                                    const std::string &CPU,
                                    const std::string &FS,
                                    bool is64Bit)
-  : LLVMTargetMachine(T, TT),
+  : LLVMTargetMachine(T, TT, CPU, FS),
     DataLayout(is64Bit ? DataLayout64 : DataLayout32),
     Subtarget(TT, CPU, FS, is64Bit),
     FrameLowering(Subtarget),

@@ -32,7 +32,7 @@ extern "C" void LLVMInitializeSparcTarget() {
 SparcTargetMachine::SparcTargetMachine(const Target &T, const std::string &TT, 
                                        const std::string &CPU,
                                        const std::string &FS, bool is64bit)
-  : LLVMTargetMachine(T, TT),
+  : LLVMTargetMachine(T, TT, CPU, FS),
     Subtarget(TT, CPU, FS, is64bit),
     DataLayout(Subtarget.getDataLayout()),
     TLInfo(*this), TSInfo(*this), InstrInfo(Subtarget),
