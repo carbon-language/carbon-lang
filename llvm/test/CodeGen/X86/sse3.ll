@@ -1,6 +1,6 @@
-; These are tests for SSE3 codegen.  Yonah has SSE3 and earlier but not SSSE3+.
+; These are tests for SSE3 codegen.
 
-; RUN: llc < %s -march=x86-64 -mcpu=yonah -mtriple=i686-apple-darwin9 -O3 \
+; RUN: llc < %s -march=x86-64 -mcpu=nocona -mtriple=i686-apple-darwin9 -O3 \
 ; RUN:              | FileCheck %s --check-prefix=X64
 
 ; Test for v8xi16 lowering where we extract the first element of the vector and
