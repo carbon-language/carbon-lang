@@ -1100,17 +1100,20 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return ParseObjCAtExpression(AtLoc);
   }
   case tok::caret:
-    return ParsePostfixExpressionSuffix(ParseBlockLiteralExpression());
-  case tok::code_completion:
+    Res = ParseBlockLiteralExpression();
+    break;
+  case tok::code_completion: {
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
     ConsumeCodeCompletionToken();
     return ParseCastExpression(isUnaryExpression, isAddressOfOperand, 
                                NotCastExpr, isTypeCast);
+  }
   case tok::l_square:
-    // These can be followed by postfix-expr pieces.
-    if (getLang().ObjC1)
-      return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
-    // FALL THROUGH.      
+    if (getLang().ObjC1) {
+      Res = ParseObjCMessageExpression();
+      break;
+    }
+    // FALL THROUGH.
   default:
     NotCastExpr = true;
     return ExprError();
