@@ -2050,7 +2050,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     // that updates the condition codes if it ends in 's'.  So see if the
     // mnemonic ends in 's' and if so try removing the 's' and adding a CCOut
     // operand with a value of CPSR.
-    else if(MatchResult == Match_MnemonicFail) {
+    else if (MatchResult == Match_MnemonicFail) {
       // Get the instruction mnemonic, which is the first token.
       StringRef Mnemonic = ((ARMOperand*)Operands[0])->getToken();
       if (Mnemonic.substr(Mnemonic.size()-1) == "s") {
@@ -2242,7 +2242,7 @@ bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
   } else {
     if (isThumb()) SwitchMode();
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
-   }
+  }
 
   return false;
 }
