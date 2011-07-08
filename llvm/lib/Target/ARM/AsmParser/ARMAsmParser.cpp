@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -41,7 +42,7 @@ class ARMOperand;
 
 class ARMAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
-  const MCSubtargetInfo *STI;
+  OwningPtr<const MCSubtargetInfo> STI;
 
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
@@ -128,8 +129,8 @@ class ARMAsmParser : public TargetAsmParser {
 
 public:
   ARMAsmParser(StringRef TT, StringRef CPU, StringRef FS, MCAsmParser &_Parser)
-    : TargetAsmParser(), Parser(_Parser) {
-    STI = ARM_MC::createARMMCSubtargetInfo(TT, CPU, FS);
+    : TargetAsmParser(), Parser(_Parser),
+      STI(ARM_MC::createARMMCSubtargetInfo(TT, CPU, FS)) {
 
     MCAsmParserExtension::Initialize(_Parser);
     // Initialize the set of available features.
