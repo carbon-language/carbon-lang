@@ -1,0 +1,19 @@
+// RUN: %clang_cc1 -std=c++0x -fsyntax-only -verify %s
+class A
+{
+public:
+    A() {}
+
+    template <class _F>
+        explicit A(_F&& __f);
+
+    A(A&&) {}
+    A& operator=(A&&) {return *this;}
+};
+
+template <class T>
+void f(T t)
+{
+  A a;
+  a = f(t);
+}
