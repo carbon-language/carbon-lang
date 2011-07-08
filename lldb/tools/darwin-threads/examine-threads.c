@@ -96,33 +96,16 @@ get_process_name_for_pid (pid_t pid)
 struct kinfo_proc *
 get_kinfo_proc_for_pid (pid_t pid, const char *process_name)
 {
-  struct kinfo_proc *all_kinfos;
-  int mib[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
-  size_t len;
-  if (sysctl (mib, 3, NULL, &len, NULL, 0) != 0)
+  struct kinfo_proc *kinfo = (struct kinfo_proc *) malloc (sizeof (struct kinfo_proc));
+  int mib[] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, pid };
+  size_t len = sizeof (struct kinfo_proc);
+  if (sysctl (mib, sizeof (mib) / sizeof (mib[0]), kinfo, &len, NULL, 0) != 0)
     {
-      printf ("Could not number of processes\n");
+      free ((void *) kinfo);
+      printf ("Could not get kinfo_proc for pid %d\n", (int) pid);
       exit (1);
     }
-  all_kinfos = (struct kinfo_proc *) malloc (len);
-  if (sysctl (mib, 3, all_kinfos, &len, NULL, 0) != 0)
-    {
-      printf ("Could not get process infos\n");
-      exit (1);
-    }
-
-  int proc_count, i;
-  proc_count = len / sizeof (struct kinfo_proc);
-  for (i = 0 ; i < proc_count; i++)
-    if (all_kinfos[i].kp_proc.p_pid == pid)
-      {
-        struct kinfo_proc *kinfo = (struct kinfo_proc *) malloc (sizeof (struct kinfo_proc));
-        memcpy (kinfo, &all_kinfos[i], sizeof (struct kinfo_proc));
-        free ((void *) all_kinfos);
-        return kinfo;
-      }
-  printf ("Did not find process '%s' when re-getting proc table.\n", process_name);
-  exit (1);
+  return kinfo;
 }
 
 /* Get the basic information (thread_basic_info_t) about a given
