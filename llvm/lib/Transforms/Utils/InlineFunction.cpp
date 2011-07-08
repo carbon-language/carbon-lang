@@ -744,6 +744,41 @@ static bool hasLifetimeMarkers(AllocaInst *AI) {
   return false;
 }
 
+/// updateInlinedAtInfo - Helper function used by fixupLineNumbers to recursively
+/// update InlinedAtEntry of a DebugLoc.
+static DebugLoc updateInlinedAtInfo(const DebugLoc &DL, 
+                                    const DebugLoc &InlinedAtDL,
+                                    LLVMContext &Ctx) {
+  if (MDNode *IA = DL.getInlinedAt(Ctx)) {
+    DebugLoc NewInlinedAtDL 
+      = updateInlinedAtInfo(DebugLoc::getFromDILocation(IA), InlinedAtDL, Ctx);
+    return DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(Ctx),
+                         NewInlinedAtDL.getAsMDNode(Ctx));
+  }
+                                             
+  return DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(Ctx),
+                       InlinedAtDL.getAsMDNode(Ctx));
+}
+
+
+/// fixupLineNumbers - Update inlined instructions' line numbers to 
+/// to encode location where these instructions are inlined.
+static void fixupLineNumbers(Function *Fn, Function::iterator FI,
+                              Instruction *TheCall) {
+  DebugLoc TheCallDL = TheCall->getDebugLoc();
+  if (TheCallDL.isUnknown())
+    return;
+
+  for (; FI != Fn->end(); ++FI) {
+    for (BasicBlock::iterator BI = FI->begin(), BE = FI->end();
+         BI != BE; ++BI) {
+      DebugLoc DL = BI->getDebugLoc();
+      if (!DL.isUnknown())
+        BI->setDebugLoc(updateInlinedAtInfo(DL, TheCallDL, BI->getContext()));
+    }
+  }
+}
+
 // InlineFunction - This function inlines the called function into the basic
 // block of the caller.  This returns false if it is not possible to inline this
 // call.  The program is still in a well defined state if this occurs though.
@@ -846,6 +881,9 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
     // Update the callgraph if requested.
     if (IFI.CG)
       UpdateCallGraphAfterInlining(CS, FirstNewBlock, VMap, IFI);
+
+    // Update inlined instructions' line number information.
+    fixupLineNumbers(Caller, FirstNewBlock, TheCall);
   }
 
   // If there are any alloca instructions in the block that used to be the entry

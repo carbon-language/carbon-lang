@@ -418,50 +418,14 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
     if (PHINode *PN = dyn_cast<PHINode>(I)) {
       // Skip over all PHI nodes, remembering them for later.
       BasicBlock::const_iterator OldI = BI->begin();
-      for (; (PN = dyn_cast<PHINode>(I)); ++I, ++OldI) {
-        if (I->hasMetadata()) {
-          if (!TheCallDL.isUnknown()) {
-            DebugLoc IDL = I->getDebugLoc();
-            if (!IDL.isUnknown()) {
-              DebugLoc NewDL = UpdateInlinedAtInfo(IDL, TheCallDL,
-                                                   I->getContext());
-              I->setDebugLoc(NewDL);
-            }
-          } else {
-            // The cloned instruction has dbg info but the call instruction
-            // does not have dbg info. Remove dbg info from cloned instruction.
-            I->setDebugLoc(DebugLoc());
-          }
-        }
+      for (; (PN = dyn_cast<PHINode>(I)); ++I, ++OldI)
         PHIToResolve.push_back(cast<PHINode>(OldI));
-      }
     }
-    
-    // FIXME:
-    // FIXME:
-    // FIXME: Unclone all this metadata stuff.
-    // FIXME:
-    // FIXME:
     
     // Otherwise, remap the rest of the instructions normally.
-    for (; I != NewBB->end(); ++I) {
-      if (I->hasMetadata()) {
-        if (!TheCallDL.isUnknown()) {
-          DebugLoc IDL = I->getDebugLoc();
-          if (!IDL.isUnknown()) {
-            DebugLoc NewDL = UpdateInlinedAtInfo(IDL, TheCallDL,
-                                                 I->getContext());
-            I->setDebugLoc(NewDL);
-          }
-        } else {
-          // The cloned instruction has dbg info but the call instruction
-          // does not have dbg info. Remove dbg info from cloned instruction.
-          I->setDebugLoc(DebugLoc());
-        }
-      }
+    for (; I != NewBB->end(); ++I)
       RemapInstruction(I, VMap,
                        ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
-    }
   }
   
   // Defer PHI resolution until rest of function is resolved, PHI resolution
