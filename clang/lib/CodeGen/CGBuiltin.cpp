@@ -983,6 +983,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall2(F, Base, Exponent, "tmp"));
   }
 
+  case Builtin::BIfma:
+  case Builtin::BIfmaf:
+  case Builtin::BIfmal:
+  case Builtin::BI__builtin_fma:
+  case Builtin::BI__builtin_fmaf:
+  case Builtin::BI__builtin_fmal: {
+    // Rewrite fma to intrinsic.
+    Value *FirstArg = EmitScalarExpr(E->getArg(0));
+    const llvm::Type *ArgType = FirstArg->getType();
+    Value *F = CGM.getIntrinsic(Intrinsic::fma, &ArgType, 1);
+    return RValue::get(Builder.CreateCall3(F, FirstArg,
+                                              EmitScalarExpr(E->getArg(1)),
+                                              EmitScalarExpr(E->getArg(2)),
+                                              "tmp"));
+  }
+
   case Builtin::BI__builtin_signbit:
   case Builtin::BI__builtin_signbitf:
   case Builtin::BI__builtin_signbitl: {

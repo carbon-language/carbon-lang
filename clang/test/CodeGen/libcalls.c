@@ -50,3 +50,26 @@ void test_pow(float a0, double a1, long double a2) {
 // CHECK-NO: declare float @llvm.pow.f32(float, float) nounwind readonly
 // CHECK-NO: declare double @llvm.pow.f64(double, double) nounwind readonly
 // CHECK-NO: declare x86_fp80 @llvm.pow.f80(x86_fp80, x86_fp80) nounwind readonly
+
+// CHECK-YES: define void @test_fma
+// CHECK-NO: define void @test_fma
+void test_fma(float a0, double a1, long double a2) {
+    // CHECK-YES: call float @llvm.fma.f32
+    // CHECK-NO: call float @llvm.fma.f32
+    float l0 = fmaf(a0, a0, a0);
+
+    // CHECK-YES: call double @llvm.fma.f64
+    // CHECK-NO: call double @llvm.fma.f64
+    double l1 = fma(a1, a1, a1);
+
+    // CHECK-YES: call x86_fp80 @llvm.fma.f80
+    // CHECK-NO: call x86_fp80 @llvm.fma.f80
+    long double l2 = fmal(a2, a2, a2);
+}
+
+// CHECK-YES: declare float @llvm.fma.f32(float, float, float) nounwind readnone
+// CHECK-YES: declare double @llvm.fma.f64(double, double, double) nounwind readnone
+// CHECK-YES: declare x86_fp80 @llvm.fma.f80(x86_fp80, x86_fp80, x86_fp80) nounwind readnone
+// CHECK-NO: declare float @llvm.fma.f32(float, float, float) nounwind readnone
+// CHECK-NO: declare double @llvm.fma.f64(double, double, double) nounwind readnone
+// CHECK-NO: declare x86_fp80 @llvm.fma.f80(x86_fp80, x86_fp80, x86_fp80) nounwind readnone
