@@ -385,24 +385,13 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 }
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
-  def tBX_RET : TI<(outs), (ins), IIC_Br, "bx\tlr",
-                   [(ARMretflag)]>,
-                T1Special<{1,1,0,?}> {
-    // A6.2.3 & A8.6.25
-    let Inst{6-3} = 0b1110; // Rm = lr
-    let Inst{2-0} = 0b000;
-  }
+  def tBX_RET : tPseudoExpand<(outs), (ins), Size2Bytes, IIC_Br,
+                   [(ARMretflag)], (tBX LR, (ops 14, zero_reg))>;
 
   // Alternative return instruction used by vararg functions.
-  def tBX_RET_vararg : TI<(outs), (ins tGPR:$Rm),
-                          IIC_Br, "bx\t$Rm",
-                          []>,
-                       T1Special<{1,1,0,?}> {
-    // A6.2.3 & A8.6.25
-    bits<4> Rm;
-    let Inst{6-3} = Rm;
-    let Inst{2-0} = 0b000;
-  }
+  def tBX_RET_vararg : tPseudoExpand<(outs), (ins tGPR:$Rm),
+                   Size2Bytes, IIC_Br, [],
+                   (tBX GPR:$Rm, (ops 14, zero_reg))>;
 }
 
 // All calls clobber the non-callee saved registers. SP is marked as a use to
