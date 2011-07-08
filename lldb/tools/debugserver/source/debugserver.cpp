@@ -228,9 +228,15 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
 
     g_pid = pid;
 
-    if (pid == INVALID_NUB_PROCESS && strlen(launch_err_str) > 0)
+    if (pid == INVALID_NUB_PROCESS && strlen (launch_err_str) > 0)
     {
         DNBLogThreaded ("%s DNBProcessLaunch() returned error: '%s'", __FUNCTION__, launch_err_str);
+        ctx.LaunchStatus().SetError(-1, DNBError::Generic);
+        ctx.LaunchStatus().SetErrorString(launch_err_str);
+    }
+    else if (pid == INVALID_NUB_PROCESS)
+    {
+        DNBLogThreaded ("%s DNBProcessLaunch() failed to launch process, unknown failure", __FUNCTION__);
         ctx.LaunchStatus().SetError(-1, DNBError::Generic);
         ctx.LaunchStatus().SetErrorString(launch_err_str);
     }
