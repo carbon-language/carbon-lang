@@ -122,6 +122,9 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FPOW , MVT::f32, Expand);
   setOperationAction(ISD::FPOW , MVT::f64, Expand);
 
+  setOperationAction(ISD::FMA, MVT::f64, Expand);
+  setOperationAction(ISD::FMA, MVT::f32, Expand);
+
   setOperationAction(ISD::SETCC, MVT::f32, Promote);
 
   setOperationAction(ISD::BITCAST, MVT::f32, Promote);

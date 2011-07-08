@@ -5878,6 +5878,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FSUB:   return "fsub";
   case ISD::FMUL:   return "fmul";
   case ISD::FDIV:   return "fdiv";
+  case ISD::FMA:    return "fma";
   case ISD::FREM:   return "frem";
   case ISD::FCOPYSIGN: return "fcopysign";
   case ISD::FGETSIGN:  return "fgetsign";

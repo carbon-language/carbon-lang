@@ -74,6 +74,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     case ISD::FLOG:        R = SoftenFloatRes_FLOG(N); break;
     case ISD::FLOG2:       R = SoftenFloatRes_FLOG2(N); break;
     case ISD::FLOG10:      R = SoftenFloatRes_FLOG10(N); break;
+    case ISD::FMA:         R = SoftenFloatRes_FMA(N); break;
     case ISD::FMUL:        R = SoftenFloatRes_FMUL(N); break;
     case ISD::FNEARBYINT:  R = SoftenFloatRes_FNEARBYINT(N); break;
     case ISD::FNEG:        R = SoftenFloatRes_FNEG(N); break;
@@ -292,6 +293,19 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FLOG10(SDNode *N) {
                                   RTLIB::LOG10_F80,
                                   RTLIB::LOG10_PPCF128),
                      NVT, &Op, 1, false, N->getDebugLoc());
+}
+
+SDValue DAGTypeLegalizer::SoftenFloatRes_FMA(SDNode *N) {
+  EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
+  SDValue Ops[3] = { GetSoftenedFloat(N->getOperand(0)),
+                     GetSoftenedFloat(N->getOperand(1)),
+                     GetSoftenedFloat(N->getOperand(2)) };
+  return MakeLibCall(GetFPLibCall(N->getValueType(0),
+                                  RTLIB::FMA_F32,
+                                  RTLIB::FMA_F64,
+                                  RTLIB::FMA_F80,
+                                  RTLIB::FMA_PPCF128),
+                     NVT, Ops, 3, false, N->getDebugLoc());
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatRes_FMUL(SDNode *N) {
@@ -837,6 +851,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
   case ISD::FLOG:       ExpandFloatRes_FLOG(N, Lo, Hi); break;
   case ISD::FLOG2:      ExpandFloatRes_FLOG2(N, Lo, Hi); break;
   case ISD::FLOG10:     ExpandFloatRes_FLOG10(N, Lo, Hi); break;
+  case ISD::FMA:        ExpandFloatRes_FMA(N, Lo, Hi); break;
   case ISD::FMUL:       ExpandFloatRes_FMUL(N, Lo, Hi); break;
   case ISD::FNEARBYINT: ExpandFloatRes_FNEARBYINT(N, Lo, Hi); break;
   case ISD::FNEG:       ExpandFloatRes_FNEG(N, Lo, Hi); break;
@@ -986,6 +1001,19 @@ void DAGTypeLegalizer::ExpandFloatRes_FLOG10(SDNode *N,
                                          RTLIB::LOG10_F32,RTLIB::LOG10_F64,
                                          RTLIB::LOG10_F80,RTLIB::LOG10_PPCF128),
                             N, false);
+  GetPairElements(Call, Lo, Hi);
+}
+
+void DAGTypeLegalizer::ExpandFloatRes_FMA(SDNode *N, SDValue &Lo,
+                                          SDValue &Hi) {
+  SDValue Ops[3] = { N->getOperand(0), N->getOperand(1), N->getOperand(2) };
+  SDValue Call = MakeLibCall(GetFPLibCall(N->getValueType(0),
+                                          RTLIB::FMA_F32,
+                                          RTLIB::FMA_F64,
+                                          RTLIB::FMA_F80,
+                                          RTLIB::FMA_PPCF128),
+                             N->getValueType(0), Ops, 3, false,
+                             N->getDebugLoc());
   GetPairElements(Call, Lo, Hi);
 }
 

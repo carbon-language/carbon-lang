@@ -646,6 +646,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     addLegalFPImmediate(APFloat(-1.0f)); // FLD1/FCHS
   }
 
+  // We don't support FMA.
+  setOperationAction(ISD::FMA, MVT::f64, Expand);
+  setOperationAction(ISD::FMA, MVT::f32, Expand);
+
   // Long double always uses X87.
   if (!UseSoftFloat) {
     addRegisterClass(MVT::f80, X86::RFP80RegisterClass);
@@ -670,6 +674,8 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       setOperationAction(ISD::FSIN           , MVT::f80  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
     }
+
+    setOperationAction(ISD::FMA, MVT::f80, Expand);
   }
 
   // Always use a library call for pow.

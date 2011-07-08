@@ -708,6 +708,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FPOW,      MVT::f64, Expand);
   setOperationAction(ISD::FPOW,      MVT::f32, Expand);
 
+  setOperationAction(ISD::FMA, MVT::f64, Expand);
+  setOperationAction(ISD::FMA, MVT::f32, Expand);
+
   // Various VFP goodness
   if (!UseSoftFloat && !Subtarget->isThumb1Only()) {
     // int <-> fp are custom expanded into bit_convert + ARMISD ops.

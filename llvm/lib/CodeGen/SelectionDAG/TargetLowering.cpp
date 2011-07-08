@@ -139,6 +139,10 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::REM_F64] = "fmod";
   Names[RTLIB::REM_F80] = "fmodl";
   Names[RTLIB::REM_PPCF128] = "fmodl";
+  Names[RTLIB::FMA_F32] = "fmaf";
+  Names[RTLIB::FMA_F64] = "fma";
+  Names[RTLIB::FMA_F80] = "fmal";
+  Names[RTLIB::FMA_PPCF128] = "fmal";
   Names[RTLIB::POWI_F32] = "__powisf2";
   Names[RTLIB::POWI_F64] = "__powidf2";
   Names[RTLIB::POWI_F80] = "__powixf2";

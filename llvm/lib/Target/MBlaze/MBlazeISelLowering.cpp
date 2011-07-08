@@ -69,6 +69,7 @@ MBlazeTargetLowering::MBlazeTargetLowering(MBlazeTargetMachine &TM)
 
   // Floating point operations which are not supported
   setOperationAction(ISD::FREM,       MVT::f32, Expand);
+  setOperationAction(ISD::FMA,        MVT::f32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i8,  Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i16, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);

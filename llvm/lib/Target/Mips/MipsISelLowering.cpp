@@ -146,6 +146,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::FLOG2,             MVT::f32,   Expand);
   setOperationAction(ISD::FLOG10,            MVT::f32,   Expand);
   setOperationAction(ISD::FEXP,              MVT::f32,   Expand);
+  setOperationAction(ISD::FMA,               MVT::f32,   Expand);
+  setOperationAction(ISD::FMA,               MVT::f64,   Expand);
 
   setOperationAction(ISD::EXCEPTIONADDR,     MVT::i32, Expand);
   setOperationAction(ISD::EHSELECTION,       MVT::i32, Expand);

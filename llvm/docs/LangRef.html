@@ -241,6 +241,7 @@
           <li><a href="#int_pow">'<tt>llvm.pow.*</tt>' Intrinsic</a></li>
           <li><a href="#int_exp">'<tt>llvm.exp.*</tt>' Intrinsic</a></li>
           <li><a href="#int_log">'<tt>llvm.log.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_fma">'<tt>llvm.fma.*</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_manip">Bit Manipulation Intrinsics</a>
@@ -6569,6 +6570,37 @@ LLVM</a>.</p>
 <h5>Semantics:</h5>
 <p>This function returns the same values as the libm <tt>log</tt> functions
    would, and handles error conditions in the same way.</p>
+
+<h4>
+  <a name="int_fma">'<tt>llvm.fma.*</tt>' Intrinsic</a>
+</h4>
+
+<div>
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.fma</tt> on any
+   floating point or vector of floating point type. Not all targets support all
+   types however.</p>
+
+<pre>
+  declare float     @llvm.fma.f32(float  %a, float  %b, float  %c)
+  declare double    @llvm.fma.f64(double %a, double %b, double %c)
+  declare x86_fp80  @llvm.fma.f80(x86_fp80 %a, x86_fp80 %b, x86_fp80 %c)
+  declare fp128     @llvm.fma.f128(fp128 %a, fp128 %b, fp128 %c)
+  declare ppc_fp128 @llvm.fma.ppcf128(ppc_fp128 %a, ppc_fp128 %b, ppc_fp128 %c)
+</pre>
+
+<h5>Overview:</h5>
+<p>The '<tt>llvm.fma.*</tt>' intrinsics perform the fused multiply-accumulate
+   operation.</p>
+
+<h5>Arguments:</h5>
+<p>The argument and return value are floating point numbers of the same
+   type.</p>
+
+<h5>Semantics:</h5>
+<p>This function returns the same values as the libm <tt>fma</tt> functions
+   would.</p>
 
 </div>
 
