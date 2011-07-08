@@ -289,9 +289,9 @@ void TokenLexer::ExpandFunctionArguments() {
         for (unsigned i = ResultToks.size() - NumToks, e = ResultToks.size();
                i != e; ++i) {
           Token &Tok = ResultToks[i];
-          Tok.setLocation(SM.createInstantiationLoc(Tok.getLocation(),
-                                                    curInst, curInst,
-                                                    Tok.getLength()));
+          Tok.setLocation(SM.createMacroArgInstantiationLoc(Tok.getLocation(),
+                                                            curInst,
+                                                            Tok.getLength()));
         }
       }
 

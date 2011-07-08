@@ -84,3 +84,40 @@ void test() {
   // CHECK: {{.*}}:39:55: note: instantiated from:
   // CHECK: {{.*}}:38:35: note: instantiated from:
 }
+
+#define variadic_args1(x, y, ...) y
+#define variadic_args2(x, ...) variadic_args1(x, __VA_ARGS__)
+#define variadic_args3(x, y, ...) variadic_args2(x, y, __VA_ARGS__)
+
+void test2() {
+  variadic_args3(1, 2, 3, 4);
+  // CHECK: {{.*}}:93:21: warning: expression result unused
+  // CHECK-NEXT: variadic_args3(1, 2, 3, 4);
+  // CHECK-NEXT: ~~~~~~~~~~~~~~~~~~^~~~~~~~
+  // CHECK: {{.*}}:90:53: note: instantiated from:
+  // CHECK: {{.*}}:89:50: note: instantiated from:
+  // CHECK: {{.*}}:88:35: note: instantiated from:
+}
+
+#define variadic_pasting_args1(x, y, z) y
+#define variadic_pasting_args2(x, ...) variadic_pasting_args1(x ## __VA_ARGS__)
+#define variadic_pasting_args2a(x, y, ...) variadic_pasting_args1(x, y ## __VA_ARGS__)
+#define variadic_pasting_args3(x, y, ...) variadic_pasting_args2(x, y, __VA_ARGS__)
+#define variadic_pasting_args3a(x, y, ...) variadic_pasting_args2a(x, y, __VA_ARGS__)
+
+void test3() {
+  variadic_pasting_args3(1, 2, 3, 4);
+  // CHECK: {{.*}}:109:32: warning: expression result unused
+  // CHECK: {{.*}}:105:72: note: instantiated from:
+  // CHECK: {{.*}}:103:68: note: instantiated from:
+  // CHECK: {{.*}}:102:41: note: instantiated from:
+
+  variadic_pasting_args3a(1, 2, 3, 4);
+  // FIXME: It'd be really nice to retain the start location of the first token
+  // involved in the token paste instead of falling back on the full macro
+  // location in the first two locations here.
+  // CHECK: {{.*}}:115:3: warning: expression result unused
+  // CHECK: {{.*}}:106:44: note: instantiated from:
+  // CHECK: {{.*}}:104:72: note: instantiated from:
+  // CHECK: {{.*}}:102:41: note: instantiated from:
+}
