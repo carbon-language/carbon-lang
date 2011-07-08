@@ -1088,7 +1088,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst) {
     }
   }
 
-  // FIXME: Node the fixup comments for Thumb2 are completely bogus since the
+  // FIXME: Note the fixup comments for Thumb2 are completely bogus since the
   // high order halfword of a 32-bit Thumb2 instruction is emitted first.
   OS << "encoding: [";
   for (unsigned i = 0, e = Code.size(); i != e; ++i) {
