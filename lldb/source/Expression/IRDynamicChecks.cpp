@@ -314,7 +314,7 @@ private:
         if (!m_valid_pointer_check_func)
             m_valid_pointer_check_func = BuildPointerValidatorFunc(m_checker_functions.m_valid_pointer_check->StartAddress());
         
-        llvm::Value *dereferenced_ptr;
+        llvm::Value *dereferenced_ptr = NULL;
         
         if (llvm::LoadInst *li = dyn_cast<llvm::LoadInst> (inst))
             dereferenced_ptr = li->getPointerOperand();
@@ -382,7 +382,7 @@ private:
         if (!m_objc_object_check_func)
             m_objc_object_check_func = BuildPointerValidatorFunc(m_checker_functions.m_objc_object_check->StartAddress());
         
-        llvm::Value *target_object;
+        llvm::Value *target_object = NULL;
         
         // id objc_msgSend(id theReceiver, SEL theSelector, ...)
         

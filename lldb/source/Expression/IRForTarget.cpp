@@ -641,12 +641,10 @@ IRForTarget::RewriteObjCConstString (llvm::GlobalVariable *ns_str,
         m_CFStringCreateWithBytes = ConstantExpr::getIntToPtr(CFSCWB_addr_int, CFSCWB_ptr_ty);
     }
     
-    ConstantArray *string_array;
+    ConstantArray *string_array = NULL;
     
     if (cstr)
         string_array = dyn_cast<ConstantArray>(cstr->getInitializer());
-    else
-        string_array = NULL;
                         
     SmallVector <Value*, 5> CFSCWB_arguments;
     
@@ -1266,7 +1264,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
         }
         
         clang::QualType qual_type;
-        const Type *value_type;
+        const Type *value_type = NULL;
         
         if (name[0] == '$')
         {
@@ -1493,7 +1491,7 @@ IRForTarget::MaybeHandleCall (CallInst *llvm_call_inst)
     if (log)
         log->Printf("Found \"%s\" at 0x%llx", str.GetCString(), fun_addr);
     
-    Value *fun_addr_ptr;
+    Value *fun_addr_ptr = NULL;
             
     if (!fun_value_ptr || !*fun_value_ptr)
     {
@@ -1806,12 +1804,12 @@ IRForTarget::ReplaceStaticLiterals (llvm::BasicBlock &basic_block)
 
 static bool isGuardVariableRef(Value *V)
 {
-    Constant *Old;
+    Constant *Old = NULL;
     
     if (!(Old = dyn_cast<Constant>(V)))
         return false;
     
-    ConstantExpr *CE;
+    ConstantExpr *CE = NULL;
     
     if ((CE = dyn_cast<ConstantExpr>(V)))
     {
@@ -2121,8 +2119,8 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
         
     for (element_index = 0; element_index < num_elements; ++element_index)
     {
-        const clang::NamedDecl *decl;
-        Value *value;
+        const clang::NamedDecl *decl = NULL;
+        Value *value = NULL;
         off_t offset;
         lldb_private::ConstString name;
         
@@ -2144,7 +2142,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
         ConstantInt *offset_int(ConstantInt::getSigned(offset_type, offset));
         GetElementPtrInst *get_element_ptr = GetElementPtrInst::Create(argument, offset_int, "", FirstEntryInstruction);
                 
-        Value *replacement;
+        Value *replacement = NULL;
         
         // Per the comment at ASTResultSynthesizer::SynthesizeBodyResult, in cases where the result
         // variable is an rvalue, we have to synthesize a dereference of the appropriate structure

@@ -309,7 +309,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
         log->Printf("Last statement is an %s with type: %s", (is_lvalue ? "lvalue" : "rvalue"), s.c_str());
     }
     
-    clang::VarDecl *result_decl;
+    clang::VarDecl *result_decl = NULL;
     
     if (is_lvalue)
     {

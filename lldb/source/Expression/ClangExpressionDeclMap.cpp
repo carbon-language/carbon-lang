@@ -1684,8 +1684,8 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
         
         if (const NamespaceDecl *namespace_decl = dyn_cast<NamespaceDecl>(context_decl))
         {
-            Decl *original_decl;
-            ASTContext *original_ctx;
+            Decl *original_decl = NULL;
+            ASTContext *original_ctx = NULL;
             
             if (log)
                 log->Printf("Resolving the containing context's origin...");
@@ -1717,7 +1717,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
                 
             DeclContextLookupConstResult original_lookup_result = original_ctx->getExternalSource()->FindExternalVisibleDeclsByName(original_decl_context, context.m_decl_name);
                         
-            NamedDecl *const *iter;
+            NamedDecl *const *iter = NULL;
             
             for (iter = original_lookup_result.first;
                  iter != original_lookup_result.second;
@@ -1866,7 +1866,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             
             m_struct_vars->m_object_pointer_type = this_user_type;
             
-            void *pointer_target_type;
+            void *pointer_target_type = NULL;
             
             if (!ClangASTContext::IsPointerType(this_user_type.GetOpaqueQualType(),
                                                 &pointer_target_type))
@@ -1915,7 +1915,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             
             m_struct_vars->m_object_pointer_type = self_user_type;
 
-            void *pointer_target_type;
+            void *pointer_target_type = NULL;
         
             if (!ClangASTContext::IsPointerType(self_user_type.GetOpaqueQualType(),
                                                 &pointer_target_type))
@@ -2075,7 +2075,7 @@ ClangExpressionDeclMap::GetVariableValue
         return NULL;
     }
         
-    void *type_to_use;
+    void *type_to_use = NULL;
     
     if (parser_ast_context)
     {
@@ -2395,9 +2395,9 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    NamedDecl *fun_decl;
+    NamedDecl *fun_decl = NULL;
     std::auto_ptr<Value> fun_location(new Value);
-    const Address *fun_address;
+    const Address *fun_address = NULL;
     
     // only valid for Functions, not for Symbols
     void *fun_opaque_type = NULL;
