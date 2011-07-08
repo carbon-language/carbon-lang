@@ -123,10 +123,8 @@ const FileEntry *DirectoryLookup::LookupFile(
   llvm::SmallString<1024> TmpDir;
   if (isNormalDir()) {
     // Concatenate the requested file onto the directory.
-    // FIXME: Portability.  Filename concatenation should be in sys::Path.
-    TmpDir += getDir()->getName();
-    TmpDir.push_back('/');
-    TmpDir.append(Filename.begin(), Filename.end());
+    TmpDir = getDir()->getName();
+    llvm::sys::path::append(TmpDir, Filename);
     if (SearchPath != NULL) {
       llvm::StringRef SearchPathRef(getDir()->getName());
       SearchPath->clear();

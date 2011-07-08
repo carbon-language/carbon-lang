@@ -20,6 +20,7 @@
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -103,13 +104,18 @@ void DependencyFileCallback::FileChanged(SourceLocation Loc,
     SM.getFileEntryForID(SM.getFileID(SM.getInstantiationLoc(Loc)));
   if (FE == 0) return;
 
-  const char *Filename = FE->getName();
-  if (!FileMatchesDepCriteria(Filename, FileType))
+  llvm::StringRef Filename = FE->getName();
+  if (!FileMatchesDepCriteria(Filename.data(), FileType))
     return;
 
-  // Remove leading "./"
-  if (Filename[0] == '.' && Filename[1] == '/')
-    Filename = &Filename[2];
+  // Remove leading "./" (or ".//" or "././" etc.)
+  while (Filename.size() > 2 && Filename[0] == '.' &&
+         llvm::sys::path::is_separator(Filename[1])) {
+    Filename = Filename.substr(1);
+    while (llvm::sys::path::is_separator(Filename[0]))
+      Filename = Filename.substr(1);
+  }
+    
 
   if (FilesSet.insert(Filename))
     Files.push_back(Filename);
