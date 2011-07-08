@@ -5364,7 +5364,7 @@ Sema::CheckDependentFunctionTemplateSpecialization(FunctionDecl *FD,
 /// explicitly provided as in, e.g., \c void sort<>(char*, char*);
 /// as it anyway contains info on the angle brackets locations.
 ///
-/// \param PrevDecl the set of declarations that may be specialized by
+/// \param Previous the set of declarations that may be specialized by
 /// this function specialization.
 bool
 Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
@@ -5428,13 +5428,12 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
   FunctionTemplateSpecializationInfo *SpecInfo
     = Specialization->getTemplateSpecializationInfo();
   assert(SpecInfo && "Function template specialization info missing?");
-  {
-    // Note: do not overwrite location info if previous template
-    // specialization kind was explicit.
-    TemplateSpecializationKind TSK = SpecInfo->getTemplateSpecializationKind();
-    if (TSK == TSK_Undeclared || TSK == TSK_ImplicitInstantiation)
-      Specialization->setLocation(FD->getLocation());
-  }
+
+  // Note: do not overwrite location info if previous template
+  // specialization kind was explicit.
+  TemplateSpecializationKind TSK = SpecInfo->getTemplateSpecializationKind();
+  if (TSK == TSK_Undeclared || TSK == TSK_ImplicitInstantiation)
+    Specialization->setLocation(FD->getLocation());
 
   // FIXME: Check if the prior specialization has a point of instantiation.
   // If so, we have run afoul of .
