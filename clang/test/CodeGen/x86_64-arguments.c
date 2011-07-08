@@ -262,3 +262,18 @@ void f9122143()
 // CHECK: define double @f36(double %arg.coerce)
 typedef unsigned v2i32 __attribute((__vector_size__(8)));
 v2i32 f36(v2i32 arg) { return arg; }
+
+// CHECK: declare void @f38(<8 x float>)
+// CHECK: declare void @f37(<8 x float>)
+typedef float __m256 __attribute__ ((__vector_size__ (32)));
+typedef struct {
+  __m256 m;
+} s256;
+
+s256 x38;
+__m256 x37;
+
+void f38(s256 x);
+void f37(__m256 x);
+void f39() { f38(x38); f37(x37); }
+
