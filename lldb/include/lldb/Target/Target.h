@@ -474,6 +474,32 @@ public:
     }
 
 
+    //------------------------------------------------------------------
+    /// Load a module in this target by at the section file addresses
+    /// with an optional constant slide applied to each section.
+    ///
+    /// This function will load all top level sections at their file
+    /// addresses and apply an optional constant slide amount to each 
+    /// section. This can be used to easily load a module at the same 
+    /// addresses that are contained in the object file (trust that
+    /// the addresses in an object file are the correct load addresses).
+    ///
+    /// @param[in] module
+    ///     The module to load.
+    ///
+    /// @param[in] slide
+    ///     A constant slide to add to each file address as each section
+    ///     is being loaded.
+    ///
+    /// @return
+    ///     \b true if loading the module at the specified address 
+    ///     causes a section to be loaded when it previously wasn't, or
+    ///     if a section changes load address. Returns \b false if
+    ///     the sections were all already loaded at these addresses.
+    //------------------------------------------------------------------
+    bool
+    LoadModuleWithSlide (Module *module, lldb::addr_t slide);
+
     static Target *
     GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, 
                            const SymbolContext *sc_ptr);

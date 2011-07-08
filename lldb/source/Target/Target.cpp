@@ -1275,6 +1275,46 @@ Target::RunStopHooks ()
     result.GetImmediateErrorStream()->Flush();
 }
 
+bool 
+Target::LoadModuleWithSlide (Module *module, lldb::addr_t slide)
+{
+    bool changed = false;
+    if (module)
+    {
+        ObjectFile *object_file = module->GetObjectFile();
+        if (object_file)
+        {
+            SectionList *section_list = object_file->GetSectionList ();
+            if (section_list)
+            {
+                // All sections listed in the dyld image info structure will all
+                // either be fixed up already, or they will all be off by a single
+                // slide amount that is determined by finding the first segment
+                // that is at file offset zero which also has bytes (a file size
+                // that is greater than zero) in the object file.
+                
+                // Determine the slide amount (if any)
+                const size_t num_sections = section_list->GetSize();
+                size_t sect_idx = 0;
+                for (sect_idx = 0; sect_idx < num_sections; ++sect_idx)
+                {
+                    // Iterate through the object file sections to find the
+                    // first section that starts of file offset zero and that
+                    // has bytes in the file...
+                    Section *section = section_list->GetSectionAtIndex (sect_idx).get();
+                    if (section)
+                    {
+                        if (m_section_load_list.SetSectionLoadAddress (section, section->GetFileAddress() + slide))
+                            changed = true;
+                    }
+                }
+            }
+        }
+    }
+    return changed;
+}
+
+
 //--------------------------------------------------------------
 // class Target::StopHook
 //--------------------------------------------------------------
