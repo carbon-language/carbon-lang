@@ -140,6 +140,19 @@ public:
     {
         m_loc_is_const_data = b;
     }
+    
+    typedef uint32_t (*GetVariableCallback) (void *baton, 
+                                             const char *name,
+                                             VariableList &var_list);
+
+
+    static Error
+    GetValuesForVariableExpressionPath (const char *variable_expr_path,
+                                        ExecutionContextScope *scope,
+                                        GetVariableCallback callback,
+                                        void *baton,
+                                        VariableList &variable_list,
+                                        ValueObjectList &valobj_list);
 
 protected:
     ConstString m_name;                 // The basename of the variable (no namespaces)

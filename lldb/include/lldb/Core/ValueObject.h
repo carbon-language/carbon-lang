@@ -121,9 +121,9 @@ public:
         GetValueForExpressionPathOptions(bool dot = false,
                                          bool no_ivar = false,
                                          bool bitfield = true) :
-        m_check_dot_vs_arrow_syntax(dot),
-        m_no_fragile_ivar(no_ivar),
-        m_allow_bitfields_syntax(bitfield)
+            m_check_dot_vs_arrow_syntax(dot),
+            m_no_fragile_ivar(no_ivar),
+            m_allow_bitfields_syntax(bitfield)
         {
         }
         

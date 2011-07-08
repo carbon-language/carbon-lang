@@ -11,10 +11,13 @@
 
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
@@ -227,5 +230,165 @@ Variable::IsInScope (StackFrame *frame)
         break;
     }
     return false;
+}
+
+Error
+Variable::GetValuesForVariableExpressionPath (const char *variable_expr_path,
+                                              ExecutionContextScope *scope,
+                                              GetVariableCallback callback,
+                                              void *baton,
+                                              VariableList &variable_list,
+                                              ValueObjectList &valobj_list)
+{
+    Error error;
+    if (variable_expr_path && callback)
+    {
+        switch (variable_expr_path[0])
+        {
+        case '*':
+            {
+                error = Variable::GetValuesForVariableExpressionPath (variable_expr_path + 1,
+                                                                      scope,
+                                                                      callback,
+                                                                      baton,
+                                                                      variable_list,
+                                                                      valobj_list);
+                if (error.Success())
+                {
+                    for (uint32_t i=0; i<valobj_list.GetSize(); )
+                    {
+                        Error tmp_error;
+                        ValueObjectSP valobj_sp (valobj_list.GetValueObjectAtIndex(i)->Dereference(tmp_error));
+                        if (tmp_error.Fail())
+                        {
+                            variable_list.RemoveVariableAtIndex (i);
+                            valobj_list.RemoveValueObjectAtIndex (i);
+                        }
+                        else
+                        {
+                            valobj_list.SetValueObjectAtIndex (i, valobj_sp);
+                            ++i;
+                        }
+                    }
+                }
+                else
+                {
+                    error.SetErrorString ("unknown error");
+                }
+                return error;
+            }
+            break;
+        
+        case '&':
+            {
+                error = Variable::GetValuesForVariableExpressionPath (variable_expr_path + 1,
+                                                                      scope,
+                                                                      callback,
+                                                                      baton,
+                                                                      variable_list,
+                                                                      valobj_list);
+                if (error.Success())
+                {
+                    for (uint32_t i=0; i<valobj_list.GetSize(); )
+                    {
+                        Error tmp_error;
+                        ValueObjectSP valobj_sp (valobj_list.GetValueObjectAtIndex(i)->AddressOf(tmp_error));
+                        if (tmp_error.Fail())
+                        {
+                            variable_list.RemoveVariableAtIndex (i);
+                            valobj_list.RemoveValueObjectAtIndex (i);
+                        }
+                        else
+                        {
+                            valobj_list.SetValueObjectAtIndex (i, valobj_sp);
+                            ++i;
+                        }
+                    }
+                }
+                else
+                {
+                    error.SetErrorString ("unknown error");
+                }
+                return error;
+            }
+            break;
+            
+        default:
+            {
+                RegularExpression regex ("^([A-Za-z_:][A-Za-z_0-9:]*)(.*)");
+                if (regex.Execute(variable_expr_path, 1))
+                {
+                    std::string variable_name;
+                    if (regex.GetMatchAtIndex(variable_expr_path, 1, variable_name))
+                    {
+                        variable_list.Clear();
+                        if (callback (baton, variable_name.c_str(), variable_list))
+                        {
+                            uint32_t i=0;
+                            while (i < variable_list.GetSize())
+                            {
+                                VariableSP var_sp (variable_list.GetVariableAtIndex (i));
+                                ValueObjectSP valobj_sp;
+                                if (var_sp)
+                                {
+                                    ValueObjectSP variable_valobj_sp(ValueObjectVariable::Create (scope, var_sp));
+                                    if (variable_valobj_sp)
+                                    {
+                                        variable_expr_path += variable_name.size();
+                                        if (*variable_expr_path)
+                                        {
+                                            const char* first_unparsed = NULL;
+                                            ValueObject::ExpressionPathScanEndReason reason_to_stop;
+                                            ValueObject::ExpressionPathEndResultType final_value_type;
+                                            ValueObject::GetValueForExpressionPathOptions options;
+                                            ValueObject::ExpressionPathAftermath final_task_on_target;
+
+                                            valobj_sp = variable_valobj_sp->GetValueForExpressionPath (variable_expr_path,
+                                                                                                       &first_unparsed,
+                                                                                                       &reason_to_stop,
+                                                                                                       &final_value_type,
+                                                                                                       options,
+                                                                                                       &final_task_on_target);
+                                            if (!valobj_sp)
+                                            {
+                                                error.SetErrorStringWithFormat ("invalid expression path '%s' for variable '%s'",
+                                                                                variable_expr_path,
+                                                                                var_sp->GetName().GetCString());
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // Just the name of a variable with no extras
+                                            valobj_sp = variable_valobj_sp;
+                                        }
+                                    }
+                                }
+
+                                if (!var_sp || !valobj_sp)
+                                {
+                                    variable_list.RemoveVariableAtIndex (i);
+                                }
+                                else
+                                {
+                                    valobj_list.Append(valobj_sp);
+                                    ++i;
+                                }
+                            }
+                            
+                            if (variable_list.GetSize() > 0)
+                            {
+                                error.Clear();
+                                return error;
+                            }
+                        }
+                    }
+                }
+                error.SetErrorStringWithFormat ("unable to extracta variable name from '%s'", variable_expr_path);
+            }
+            break;
+        }
+    }
+    error.SetErrorString ("unknown error");
+    return error;
 }
 

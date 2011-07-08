@@ -72,6 +72,18 @@ VariableList::GetVariableAtIndex(uint32_t idx)
     return var_sp;
 }
 
+VariableSP
+VariableList::RemoveVariableAtIndex(uint32_t idx)
+{
+    VariableSP var_sp;
+    if (idx < m_variables.size())
+    {
+        var_sp = m_variables[idx];
+        m_variables.erase (m_variables.begin() + idx);
+    }
+    return var_sp;
+}
+
 uint32_t
 VariableList::FindVariableIndex (const VariableSP &var_sp)
 {

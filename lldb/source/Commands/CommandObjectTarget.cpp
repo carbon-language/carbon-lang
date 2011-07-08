@@ -433,7 +433,82 @@ public:
     ~CommandObjectTargetVariable ()
     {
     }
+
+    void
+    DumpValueObject (Stream &s, VariableSP &var_sp, ValueObjectSP &valobj_sp, const char *root_name)
+    {
+        if (m_option_variable.format != eFormatDefault)
+            valobj_sp->SetFormat (m_option_variable.format);
+        
+        switch (var_sp->GetScope())
+        {
+            case eValueTypeVariableGlobal:
+                if (m_option_variable.show_scope)
+                    s.PutCString("GLOBAL: ");
+                break;
+                
+            case eValueTypeVariableStatic:
+                if (m_option_variable.show_scope)
+                    s.PutCString("STATIC: ");
+                break;
+                
+            case eValueTypeVariableArgument:
+                if (m_option_variable.show_scope)
+                    s.PutCString("   ARG: ");
+                break;
+                
+            case eValueTypeVariableLocal:
+                if (m_option_variable.show_scope)
+                    s.PutCString(" LOCAL: ");
+                break;
+                
+            default:
+                break;
+        }
+        
+        if (m_option_variable.show_decl && var_sp->GetDeclaration ().GetFile())
+        {
+            var_sp->GetDeclaration ().DumpStopContext (&s, false);
+            s.PutCString (": ");
+        }
+        
+        const Format format = m_option_variable.format;
+        if (format != eFormatDefault)
+            valobj_sp->SetFormat (format);
+        
+        ValueObject::DumpValueObject (s, 
+                                      valobj_sp.get(), 
+                                      root_name,
+                                      m_varobj_options.ptr_depth, 
+                                      0, 
+                                      m_varobj_options.max_depth, 
+                                      m_varobj_options.show_types,
+                                      m_varobj_options.show_location,
+                                      m_varobj_options.use_objc,
+                                      m_varobj_options.use_dynamic,
+                                      false,
+                                      m_varobj_options.flat_output);                                        
+
+    }
     
+    
+    static uint32_t GetVariableCallback (void *baton, 
+                                         const char *name,
+                                         VariableList &variable_list)
+    {
+        Target *target = static_cast<Target *>(baton);
+        if (target)
+        {
+            return target->GetImages().FindGlobalVariables (ConstString(name),
+                                                            true, 
+                                                            UINT32_MAX, 
+                                                            variable_list);
+        }
+        return 0;
+    }
+    
+
+
     virtual bool
     Execute (Args& args, CommandReturnObject &result)
     {
@@ -444,9 +519,13 @@ public:
             const size_t argc = args.GetArgumentCount();
             if (argc > 0)
             {
+                Stream &s = result.GetOutputStream();
+
                 for (size_t idx = 0; idx < argc; ++idx)
                 {
-                    VariableList global_var_list;
+                    VariableList variable_list;
+                    ValueObjectList valobj_list;
+
                     const char *arg = args.GetArgumentAtIndex(idx);
                     uint32_t matches = 0;
                     if (m_option_variable.use_regex)
@@ -461,14 +540,22 @@ public:
                         matches = exe_ctx.target->GetImages().FindGlobalVariables (regex,
                                                                                    true, 
                                                                                    UINT32_MAX, 
-                                                                                   global_var_list);
+                                                                                   variable_list);
                     }
                     else
                     {
-                        matches = exe_ctx.target->GetImages().FindGlobalVariables (ConstString(arg),
-                                                                                   true, 
-                                                                                   UINT32_MAX, 
-                                                                                   global_var_list);
+                        Error error (Variable::GetValuesForVariableExpressionPath (arg,
+                                                                                   exe_ctx.target,
+                                                                                   GetVariableCallback,
+                                                                                   exe_ctx.target,
+                                                                                   variable_list,
+                                                                                   valobj_list));
+                        
+//                        matches = exe_ctx.target->GetImages().FindGlobalVariables (ConstString(arg),
+//                                                                                   true, 
+//                                                                                   UINT32_MAX, 
+//                                                                                   variable_list);
+                        matches = variable_list.GetSize();
                     }
                     
                     if (matches == 0)
@@ -479,68 +566,17 @@ public:
                     }
                     else
                     {
-                        Stream &s = result.GetOutputStream();
                         for (uint32_t global_idx=0; global_idx<matches; ++global_idx)
                         {
-                            VariableSP var_sp (global_var_list.GetVariableAtIndex(global_idx));
+                            VariableSP var_sp (variable_list.GetVariableAtIndex(global_idx));
                             if (var_sp)
                             {
-                                ValueObjectSP valobj_sp(ValueObjectVariable::Create (exe_ctx.target, var_sp));
+                                ValueObjectSP valobj_sp (valobj_list.GetValueObjectAtIndex(global_idx));
+                                if (!valobj_sp)
+                                    valobj_sp = ValueObjectVariable::Create (exe_ctx.target, var_sp);
                                 
                                 if (valobj_sp)
-                                {
-                                    if (m_option_variable.format != eFormatDefault)
-                                        valobj_sp->SetFormat (m_option_variable.format);
-
-                                    switch (var_sp->GetScope())
-                                    {
-                                        case eValueTypeVariableGlobal:
-                                            if (m_option_variable.show_scope)
-                                                s.PutCString("GLOBAL: ");
-                                            break;
-                                            
-                                        case eValueTypeVariableStatic:
-                                            if (m_option_variable.show_scope)
-                                                s.PutCString("STATIC: ");
-                                            break;
-                                            
-                                        case eValueTypeVariableArgument:
-                                            if (m_option_variable.show_scope)
-                                                s.PutCString("   ARG: ");
-                                            break;
-                                            
-                                        case eValueTypeVariableLocal:
-                                            if (m_option_variable.show_scope)
-                                                s.PutCString(" LOCAL: ");
-                                            break;
-                                            
-                                        default:
-                                            break;
-                                    }
-
-                                    if (m_option_variable.show_decl && var_sp->GetDeclaration ().GetFile())
-                                    {
-                                        var_sp->GetDeclaration ().DumpStopContext (&s, false);
-                                        s.PutCString (": ");
-                                    }
-
-                                    const Format format = m_option_variable.format;
-                                    if (format != eFormatDefault)
-                                        valobj_sp->SetFormat (format);
-                                    
-                                    ValueObject::DumpValueObject (s, 
-                                                                  valobj_sp.get(), 
-                                                                  var_sp->GetName().GetCString(), 
-                                                                  m_varobj_options.ptr_depth, 
-                                                                  0, 
-                                                                  m_varobj_options.max_depth, 
-                                                                  m_varobj_options.show_types,
-                                                                  m_varobj_options.show_location,
-                                                                  m_varobj_options.use_objc,
-                                                                  m_varobj_options.use_dynamic,
-                                                                  false,
-                                                                  m_varobj_options.flat_output);                                        
-                                }
+                                    DumpValueObject (s, var_sp, valobj_sp, arg);
                             }
                         }
                     }

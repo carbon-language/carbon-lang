@@ -59,6 +59,9 @@ public:
     lldb::ValueObjectSP
     GetValueObjectAtIndex (uint32_t idx);
 
+    lldb::ValueObjectSP
+    RemoveValueObjectAtIndex (uint32_t idx);
+    
     void
     SetValueObjectAtIndex (uint32_t idx, 
                            const lldb::ValueObjectSP &valobj_sp);

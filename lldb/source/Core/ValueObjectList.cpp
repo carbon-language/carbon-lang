@@ -82,6 +82,18 @@ ValueObjectList::GetValueObjectAtIndex (uint32_t idx)
     return valobj_sp;
 }
 
+lldb::ValueObjectSP
+ValueObjectList::RemoveValueObjectAtIndex (uint32_t idx)
+{
+    lldb::ValueObjectSP valobj_sp;
+    if (idx < m_value_objects.size())
+    {
+        valobj_sp = m_value_objects[idx];
+        m_value_objects.erase (m_value_objects.begin() + idx);
+    }
+    return valobj_sp;
+}
+
 void
 ValueObjectList::SetValueObjectAtIndex (uint32_t idx, const ValueObjectSP &valobj_sp)
 {

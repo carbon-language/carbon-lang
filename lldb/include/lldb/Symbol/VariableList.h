@@ -45,6 +45,9 @@ public:
     GetVariableAtIndex(uint32_t idx);
 
     lldb::VariableSP
+    RemoveVariableAtIndex (uint32_t idx);
+    
+    lldb::VariableSP
     FindVariable (const ConstString& name);
 
     uint32_t
