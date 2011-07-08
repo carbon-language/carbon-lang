@@ -1825,7 +1825,8 @@ static void EmitComputeAvailableFeatures(AsmMatcherInfo &Info,
     SubtargetFeatureInfo &SFI = *it->second;
 
     OS << "  if (";
-    StringRef Conds = SFI.TheDef->getValueAsString("AssemblerCondString");
+    std::string CondStorage = SFI.TheDef->getValueAsString("AssemblerCondString");
+    StringRef Conds = CondStorage;
     std::pair<StringRef,StringRef> Comma = Conds.split(',');
     bool First = true;
     do {
