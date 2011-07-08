@@ -22,6 +22,7 @@
 #include "clang/Basic/TargetBuiltins.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Target/TargetData.h"
+
 using namespace clang;
 using namespace CodeGen;
 using namespace llvm;
@@ -311,11 +312,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Result);
   }
   case Builtin::BI__builtin_expect: {
-    // FIXME: pass expect through to LLVM
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
-    if (E->getArg(1)->HasSideEffects(getContext()))
-      (void)EmitScalarExpr(E->getArg(1));
-    return RValue::get(ArgValue);
+    const llvm::Type *ArgType = ArgValue->getType();
+
+    Value *FnExpect = CGM.getIntrinsic(Intrinsic::expect, &ArgType, 1);
+    Value *ExpectedValue = EmitScalarExpr(E->getArg(1));
+
+    Value *Result = Builder.CreateCall2(FnExpect, ArgValue, ExpectedValue,
+                                        "expval");
+    return RValue::get(Result);
+
   }
   case Builtin::BI__builtin_bswap32:
   case Builtin::BI__builtin_bswap64: {

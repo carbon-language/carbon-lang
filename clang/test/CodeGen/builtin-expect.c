@@ -19,3 +19,29 @@ int main() {
 
 // CHECK: call void @isigprocmask()
 // CHECK: [[C:%.*]] = call i64 (...)* @bar()
+
+
+// CHECK: @test1
+int test1(int x) {
+// CHECK: @llvm.expect
+  if (__builtin_expect (x, 1))
+    return 0;
+  return x;
+}
+
+// CHECK: @test2
+int test2(int x) {
+// CHECK: @llvm.expect
+  switch(__builtin_expect(x, 5)) {
+  default:
+    return 0;
+  case 0:
+  case 1:
+  case 2:
+    return 1;
+  case 5:
+    return 5;
+  };
+
+  return 0;
+}
