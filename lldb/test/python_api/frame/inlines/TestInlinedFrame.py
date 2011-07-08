@@ -47,16 +47,16 @@ class InlinedFrameAPITestCase(TestBase):
         self.assertTrue(process.GetState() == lldb.eStateStopped,
                         PROCESS_STOPPED)
 
-        # The first breakpoint should correspond to an inlined call frame.
-        frame0 = process.GetThreadAtIndex(0).GetFrameAtIndex(0)
-        self.assertTrue(frame0.IsInlined() and
-                        frame0.GetFunctionName() == 'outer_inline')
-
         self.runCmd("bt")
         if self.TraceOn():
             print "Full stack traces when first stopped on the breakpoint 'outer_inline':"
             import lldbutil
-            print lldbutil.print_stacktraces(process)
+            print lldbutil.print_stacktraces(process, string_buffer=True)
+
+        # The first breakpoint should correspond to an inlined call frame.
+        frame0 = process.GetThreadAtIndex(0).GetFrameAtIndex(0)
+        self.assertTrue(frame0.IsInlined() and
+                        frame0.GetFunctionName() == 'outer_inline')
 
 
 if __name__ == '__main__':
