@@ -35,7 +35,7 @@ using namespace llvm;
 std::string X86_MC::ParseX86Triple(StringRef TT) {
   Triple TheTriple(TT);
   if (TheTriple.getArch() == Triple::x86_64)
-    return "+64bit-mode,+64bit,+sse2";
+    return "+64bit-mode";
   return "-64bit-mode";
 }
 

@@ -269,9 +269,14 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
     // Otherwise, use CPUID to auto-detect feature set.
     AutoDetectSubtargetFeatures();
 
-    // Make sure SSE2 is enabled; it is available on all X86-64 CPUs.
-    if (In64BitMode && !HasAVX && X86SSELevel < SSE2)
-      X86SSELevel = SSE2;
+    // Make sure 64-bit features are available in 64-bit mode.
+    if (In64BitMode) {
+      HasX86_64 = true;
+      HasCMov = true;
+
+      if (!HasAVX && X86SSELevel < SSE2)
+        X86SSELevel = SSE2;
+    }
   }
     
   DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
