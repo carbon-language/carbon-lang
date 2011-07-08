@@ -42,7 +42,11 @@ class ARMOperand;
 
 class ARMAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
-  OwningPtr<const MCSubtargetInfo> STI;
+  /// STI, ARM_STI, Thumb_STI - Subtarget info for ARM and Thumb modes. STI
+  /// points to either ARM_STI or Thumb_STI depending on the mode.
+  const MCSubtargetInfo *STI;
+  OwningPtr<const MCSubtargetInfo> ARM_STI;
+  OwningPtr<const MCSubtargetInfo> Thumb_STI;
 
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
@@ -89,9 +93,12 @@ class ARMAsmParser : public TargetAsmParser {
     // FIXME: Can tablegen auto-generate this?
     return (STI->getFeatureBits() & ARM::ModeThumb) != 0;
   }
-
   bool isThumbOne() const {
     return isThumb() && (STI->getFeatureBits() & ARM::FeatureThumb2) == 0;
+  }
+  void SwitchMode() {
+    STI = isThumb() ? ARM_STI.get() : Thumb_STI.get();
+    setAvailableFeatures(ComputeAvailableFeatures(STI->getFeatureBits()));
   }
 
   /// @name Auto-generated Match Functions
@@ -129,10 +136,24 @@ class ARMAsmParser : public TargetAsmParser {
 
 public:
   ARMAsmParser(StringRef TT, StringRef CPU, StringRef FS, MCAsmParser &_Parser)
-    : TargetAsmParser(), Parser(_Parser),
-      STI(ARM_MC::createARMMCSubtargetInfo(TT, CPU, FS)) {
-
+    : TargetAsmParser(), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
+
+    STI = ARM_MC::createARMMCSubtargetInfo(TT, CPU, FS);
+    // FIXME: Design a better way to create two subtargets with only difference
+    // being a feature change.
+    if (isThumb()) {
+      Thumb_STI.reset(STI);
+      assert(TT.startswith("thumb") && "Unexpected Triple string for Thumb!");
+      Twine ARM_TT = "arm" + TT.substr(5);
+      ARM_STI.reset(ARM_MC::createARMMCSubtargetInfo(ARM_TT.str(), CPU, FS));
+    } else {
+      ARM_STI.reset(STI);
+      assert(TT.startswith("arm") && "Unexpected Triple string for ARM!");
+      Twine Thumb_TT = "thumb" + TT.substr(3);
+      Thumb_STI.reset(ARM_MC::createARMMCSubtargetInfo(Thumb_TT.str(),CPU, FS));
+    }
+
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI->getFeatureBits()));
   }
@@ -2215,18 +2236,11 @@ bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
     return Error(Parser.getTok().getLoc(), "unexpected token in directive");
   Parser.Lex();
 
-  // FIXME: We need to be able switch subtargets at this point so that
-  // MatchInstructionImpl() will work when it gets the AvailableFeatures which
-  // includes Feature_IsThumb or not to match the right instructions.  This is
-  // blocked on the FIXME in llvm-mc.cpp when creating the TargetMachine.
-  if (Val == 16){
-    assert(isThumb() &&
-	   "switching between arm/thumb not yet suppported via .code 16)");
+  if (Val == 16) {
+    if (!isThumb()) SwitchMode();
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
-  }
-  else{
-    assert(!isThumb() &&
-           "switching between thumb/arm not yet suppported via .code 32)");
+  } else {
+    if (isThumb()) SwitchMode();
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
    }
 
