@@ -286,16 +286,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
     if (In64BitMode && !HasAVX && X86SSELevel < SSE2)
       X86SSELevel = SSE2;
   }
-
-  // If requesting codegen for X86-64, make sure that 64-bit features
-  // are enabled.
-  // FIXME: Remove this feature since it's not actually being used.
-  if (In64BitMode) {
-    HasX86_64 = true;
-
-    // All 64-bit cpus have cmov support.
-    HasCMov = true;
-  }
     
   DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
                << ", 3DNowLevel " << X863DNowLevel

@@ -35,7 +35,7 @@ using namespace llvm;
 std::string X86_MC::ParseX86Triple(StringRef TT) {
   Triple TheTriple(TT);
   if (TheTriple.getArch() == Triple::x86_64)
-    return "+64bit-mode";
+    return "+64bit-mode,+64bit,+sse2";
   return "-64bit-mode";
 }
 
@@ -107,28 +107,6 @@ void X86_MC::DetectFamilyModel(unsigned EAX, unsigned &Family,
   }
 }
 
-static bool hasX86_64() {
-  // FIXME: Code duplication. See X86Subtarget::AutoDetectSubtargetFeatures.
-  unsigned EAX = 0, EBX = 0, ECX = 0, EDX = 0;
-  union {
-    unsigned u[3];
-    char     c[12];
-  } text;
-  
-  if (X86_MC::GetCpuIDAndInfo(0, &EAX, text.u+0, text.u+2, text.u+1))
-    return false;
-
-  bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
-  bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
-  if (IsIntel || IsAMD) {
-    X86_MC::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
-    if ((EDX >> 29) & 0x1)
-      return true;
-  }
-
-  return false;
-}
-
 MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
                                                   StringRef FS) {
   std::string ArchFS = X86_MC::ParseX86Triple(TT);
@@ -147,10 +125,6 @@ MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
     CPUName = "generic";
 #endif
   }
-
-  if (ArchFS.empty() && CPUName.empty() && hasX86_64())
-    // Auto-detect if host is 64-bit capable, it's the default if true.
-    ArchFS = "+64bit-mode";
 
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitX86MCSubtargetInfo(X, CPUName, ArchFS);
