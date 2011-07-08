@@ -281,7 +281,7 @@ void TokenLexer::ExpandFunctionArguments() {
           Tok.setKind(tok::unknown);
       }
 
-      if(InstantiateLocStart.isValid()) {
+      if (InstantiateLocStart.isValid()) {
         SourceLocation curInst =
             getMacroExpansionLocation(CurTok.getLocation());
         assert(curInst.isValid() &&
