@@ -1355,6 +1355,34 @@ static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
          MI->getOperand(1).isImm() && MI->getOperand(1).getImm() == 0;
 }
 
+/// getDebugLocEntry - Get .debug_loc entry for the instraction range starting
+/// at MI.
+static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm, 
+                                         const MCSymbol *FLabel, 
+                                         const MCSymbol *SLabel,
+                                         const MachineInstr *MI) {
+  const MDNode *Var =  MI->getOperand(MI->getNumOperands() - 1).getMetadata();
+
+  if (MI->getNumOperands() != 3) {
+    MachineLocation MLoc = Asm->getDebugValueLocation(MI);
+    return DotDebugLocEntry(FLabel, SLabel, MLoc, Var);
+  }
+  if (MI->getOperand(0).isReg() && MI->getOperand(1).isImm()) {
+    MachineLocation MLoc;
+    MLoc.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
+    return DotDebugLocEntry(FLabel, SLabel, MLoc, Var);
+  }
+  if (MI->getOperand(0).isImm())
+    return DotDebugLocEntry(FLabel, SLabel, MI->getOperand(0).getImm());
+  if (MI->getOperand(0).isFPImm())
+    return DotDebugLocEntry(FLabel, SLabel, MI->getOperand(0).getFPImm());
+  if (MI->getOperand(0).isCImm())
+    return DotDebugLocEntry(FLabel, SLabel, MI->getOperand(0).getCImm());
+
+  assert (0 && "Unexpected 3 operand DBG_VALUE instruction!");
+  return DotDebugLocEntry();
+}
+
 /// collectVariableInfo - Populate DbgScope entries with variables' info.
 void
 DwarfDebug::collectVariableInfo(const MachineFunction *MF,
@@ -1441,34 +1469,7 @@ DwarfDebug::collectVariableInfo(const MachineFunction *MF,
       }
 
       // The value is valid until the next DBG_VALUE or clobber.
-      MachineLocation MLoc;
-      if (Begin->getNumOperands() == 3) {
-        if (Begin->getOperand(0).isReg() && Begin->getOperand(1).isImm()) {
-          MLoc.set(Begin->getOperand(0).getReg(), 
-                   Begin->getOperand(1).getImm());
-          DotDebugLocEntries.
-            push_back(DotDebugLocEntry(FLabel, SLabel, MLoc, Var));
-        }
-        else if (Begin->getOperand(0).isImm()) {
-          DotDebugLocEntries.
-            push_back(DotDebugLocEntry(FLabel, SLabel, 
-                                       Begin->getOperand(0).getImm()));
-        } else if (Begin->getOperand(0).isFPImm()) {
-          DotDebugLocEntries.
-            push_back(DotDebugLocEntry(FLabel, SLabel, 
-                                       Begin->getOperand(0).getFPImm()));
-        } else if (Begin->getOperand(0).isCImm()) {
-          DotDebugLocEntries.
-            push_back(DotDebugLocEntry(FLabel, SLabel, 
-                                       Begin->getOperand(0).getCImm()));
-        } else {
-          assert (0 && "Unexpected 3 operand DBG_VALUE instruction!");
-        }
-      } else {
-        MLoc = Asm->getDebugValueLocation(Begin);
-        DotDebugLocEntries.
-          push_back(DotDebugLocEntry(FLabel, SLabel, MLoc, Var));
-      }
+      DotDebugLocEntries.push_back(getDebugLocEntry(Asm, FLabel, SLabel, Begin));
     }
     DotDebugLocEntries.push_back(DotDebugLocEntry());
   }
