@@ -1717,8 +1717,7 @@ Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, ExprValueKind &VK,
     Kind = CK_Dependent;
     return Owned(CastExpr);
   }
-  
-  QualType origCastExprType = CastExpr->getType();
+
   if (VK == VK_RValue && !CastTy->isRecordType()) {
     ExprResult CastExprRes = DefaultFunctionArrayLvalueConversion(CastExpr);
     if (CastExprRes.isInvalid())
