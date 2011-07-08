@@ -118,6 +118,7 @@ class APIDefaultConstructorTestCase(TestBase):
     @python_api_test
     def test_SBEvent(self):
         obj = lldb.SBEvent()
+        # This is just to test that typemap, as defined in lldb.swig, works.
         obj2 = lldb.SBEvent(0, "abc")
         if self.TraceOn():
             print obj
