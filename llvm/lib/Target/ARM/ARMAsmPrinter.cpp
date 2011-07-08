@@ -1123,24 +1123,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   // Darwin call instructions are just normal call instructions with different
   // clobber semantics (they clobber R9).
-  case ARM::BLr9:
-  case ARM::BLr9_pred:
-  case ARM::BLXr9:
-  case ARM::BLXr9_pred: {
-    unsigned newOpc;
-    switch (Opc) {
-    default: assert(0);
-    case ARM::BLr9:       newOpc = ARM::BL; break;
-    case ARM::BLr9_pred:  newOpc = ARM::BL_pred; break;
-    case ARM::BLXr9:      newOpc = ARM::BLX; break;
-    case ARM::BLXr9_pred: newOpc = ARM::BLX_pred; break;
-    }
-    MCInst TmpInst;
-    LowerARMMachineInstrToMCInst(MI, TmpInst, *this);
-    TmpInst.setOpcode(newOpc);
-    OutStreamer.EmitInstruction(TmpInst);
-    return;
-  }
   case ARM::BXr9_CALL:
   case ARM::BX_CALL: {
     {

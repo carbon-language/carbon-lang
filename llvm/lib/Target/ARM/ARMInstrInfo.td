@@ -1429,24 +1429,29 @@ let isCall = 1,
   // moved above / below calls.
   Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR, QQQQ0, QQQQ2, QQQQ3, CPSR, FPSCR],
   Uses = [R7, SP] in {
-  def BLr9  : ARMPseudoInst<(outs), (ins bltarget:$func, variable_ops),
+  def BLr9  : ARMPseudoExpand<(outs), (ins bl_target:$func, variable_ops),
                 Size4Bytes, IIC_Br,
-                [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]>;
+                [(ARMcall tglobaladdr:$func)], (BL bl_target:$func)>,
+              Requires<[IsARM, IsDarwin]>;
 
-  def BLr9_pred : ARMPseudoInst<(outs),
-                   (ins bltarget:$func, pred:$p, variable_ops),
+  def BLr9_pred : ARMPseudoExpand<(outs),
+                   (ins bl_target:$func, pred:$p, variable_ops),
                    Size4Bytes, IIC_Br,
-                   [(ARMcall_pred tglobaladdr:$func)]>,
+                   [(ARMcall_pred tglobaladdr:$func)],
+                   (BL_pred bl_target:$func, pred:$p)>,
                   Requires<[IsARM, IsDarwin]>;
 
   // ARMv5T and above
-  def BLXr9 : ARMPseudoInst<(outs), (ins GPR:$func, variable_ops),
+  def BLXr9 : ARMPseudoExpand<(outs), (ins GPR:$func, variable_ops),
                 Size4Bytes, IIC_Br,
-                [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T, IsDarwin]>;
+                [(ARMcall GPR:$func)],
+                (BLX GPR:$func)>,
+               Requires<[IsARM, HasV5T, IsDarwin]>;
 
-  def BLXr9_pred: ARMPseudoInst<(outs), (ins GPR:$func, pred:$p,  variable_ops),
-                      Size4Bytes, IIC_Br,
-                      [(ARMcall_pred GPR:$func)]>,
+  def BLXr9_pred: ARMPseudoExpand<(outs), (ins GPR:$func, pred:$p,variable_ops),
+                Size4Bytes, IIC_Br,
+                [(ARMcall_pred GPR:$func)],
+                (BLX_pred GPR:$func, pred:$p)>,
                    Requires<[IsARM, HasV5T, IsDarwin]>;
 
   // ARMv4T
