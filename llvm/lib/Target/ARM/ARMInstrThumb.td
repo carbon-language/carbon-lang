@@ -361,27 +361,6 @@ def tADDspr : TIt<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs), IIC_iALUr,
 //  Control Flow Instructions.
 //
 
-let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
-  def tBX_RET : TI<(outs), (ins), IIC_Br, "bx\tlr",
-                   [(ARMretflag)]>,
-                T1Special<{1,1,0,?}> {
-    // A6.2.3 & A8.6.25
-    let Inst{6-3} = 0b1110; // Rm = lr
-    let Inst{2-0} = 0b000;
-  }
-
-  // Alternative return instruction used by vararg functions.
-  def tBX_RET_vararg : TI<(outs), (ins tGPR:$Rm),
-                          IIC_Br, "bx\t$Rm",
-                          []>,
-                       T1Special<{1,1,0,?}> {
-    // A6.2.3 & A8.6.25
-    bits<4> Rm;
-    let Inst{6-3} = Rm;
-    let Inst{2-0} = 0b000;
-  }
-}
-
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def tBX : TI<(outs), (ins GPR:$Rm, pred:$p), IIC_Br, "bx${p}\t$Rm", []>,
@@ -402,6 +381,27 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
     let Inst{7}   = 1;          // <Rd> = Inst{7:2-0} = pc
     let Inst{6-3} = Rm;
     let Inst{2-0} = 0b111;
+  }
+}
+
+let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
+  def tBX_RET : TI<(outs), (ins), IIC_Br, "bx\tlr",
+                   [(ARMretflag)]>,
+                T1Special<{1,1,0,?}> {
+    // A6.2.3 & A8.6.25
+    let Inst{6-3} = 0b1110; // Rm = lr
+    let Inst{2-0} = 0b000;
+  }
+
+  // Alternative return instruction used by vararg functions.
+  def tBX_RET_vararg : TI<(outs), (ins tGPR:$Rm),
+                          IIC_Br, "bx\t$Rm",
+                          []>,
+                       T1Special<{1,1,0,?}> {
+    // A6.2.3 & A8.6.25
+    bits<4> Rm;
+    let Inst{6-3} = Rm;
+    let Inst{2-0} = 0b000;
   }
 }
 
