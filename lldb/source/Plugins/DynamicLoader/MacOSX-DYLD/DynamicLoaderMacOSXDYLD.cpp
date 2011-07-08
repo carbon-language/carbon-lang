@@ -88,9 +88,30 @@ DynamicLoaderMacOSXDYLD::CreateInstance (Process* process, bool force)
     bool create = force;
     if (!create)
     {
-        const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
-        if (triple_ref.getOS() == llvm::Triple::Darwin && triple_ref.getVendor() == llvm::Triple::Apple)
-            create = true;
+        create = true;
+        Module* exe_module = process->GetTarget().GetExecutableModule().get();
+        if (exe_module)
+        {
+            ObjectFile *object_file = exe_module->GetObjectFile();
+            if (object_file)
+            {
+                SectionList *section_list = object_file->GetSectionList();
+                if (section_list)
+                {
+                    static ConstString g_kld_section_name ("__KLD");
+                    if (section_list->FindSectionByName (g_kld_section_name))
+                    {
+                        create = false;
+                    }
+                }
+            }
+        }
+        
+        if (create)
+        {
+            const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
+            create = triple_ref.getOS() == llvm::Triple::Darwin && triple_ref.getVendor() == llvm::Triple::Apple;
+        }
     }
     
     if (create)

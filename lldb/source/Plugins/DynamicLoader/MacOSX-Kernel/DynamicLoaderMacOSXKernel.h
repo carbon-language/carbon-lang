@@ -193,6 +193,7 @@ protected:
     {
         char                     name[KERNEL_MODULE_MAX_NAME];
         lldb::ModuleSP           module_sp;
+        uint32_t                 module_create_stop_id;
         lldb_private::UUID       uuid;            // UUID for this dylib if it has one, else all zeros
         lldb_private::Address    so_address;        // The section offset address for this kext in case it can be read from object files
         uint64_t                 address;
@@ -206,6 +207,7 @@ protected:
 
         OSKextLoadedKextSummary() :
             module_sp (),
+            module_create_stop_id (UINT32_MAX),
             uuid (),
             so_address (),
             address (LLDB_INVALID_ADDRESS),
@@ -236,6 +238,7 @@ protected:
                 ::memset (&header, 0, sizeof(header));
             }
             module_sp.reset();
+            module_create_stop_id = UINT32_MAX;
             uuid.Clear();
             segments.clear();
         }

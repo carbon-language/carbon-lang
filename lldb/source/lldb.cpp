@@ -38,6 +38,7 @@
 
 #if defined (__APPLE__)
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
+#include "Plugins/DynamicLoader/MacOSX-Kernel/DynamicLoaderMacOSXKernel.h"
 #include "Plugins/LanguageRuntime/CPlusPlus/ItaniumABI/ItaniumABILanguageRuntime.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV1.h"
 #include "Plugins/LanguageRuntime/ObjC/AppleObjCRuntime/AppleObjCRuntimeV2.h"
@@ -94,6 +95,7 @@ lldb_private::Initialize ()
         // Apple/Darwin hosted plugins
         //----------------------------------------------------------------------
         DynamicLoaderMacOSXDYLD::Initialize();
+        DynamicLoaderMacOSXKernel::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
         ItaniumABILanguageRuntime::Initialize();
         AppleObjCRuntimeV2::Initialize();
@@ -158,6 +160,7 @@ lldb_private::Terminate ()
 
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
+    DynamicLoaderMacOSXKernel::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
     ItaniumABILanguageRuntime::Terminate();
     AppleObjCRuntimeV2::Terminate();

@@ -51,9 +51,29 @@ DynamicLoaderMacOSXKernel::CreateInstance (Process* process, bool force)
     bool create = force;
     if (!create)
     {
-        const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
-        if (triple_ref.getOS() == llvm::Triple::Darwin && triple_ref.getVendor() == llvm::Triple::Apple)
-            create = true;
+        Module* exe_module = process->GetTarget().GetExecutableModule().get();
+        if (exe_module)
+        {
+            ObjectFile *object_file = exe_module->GetObjectFile();
+            if (object_file)
+            {
+                SectionList *section_list = object_file->GetSectionList();
+                if (section_list)
+                {
+                    static ConstString g_kld_section_name ("__KLD");
+                    if (section_list->FindSectionByName (g_kld_section_name))
+                    {
+                        create = true;
+                    }
+                }
+            }
+        }
+        
+        if (create)
+        {
+            const llvm::Triple &triple_ref = process->GetTarget().GetArchitecture().GetTriple();
+            create = triple_ref.getOS() == llvm::Triple::Darwin && triple_ref.getVendor() == llvm::Triple::Apple;
+        }
     }
     
     if (create)
@@ -160,14 +180,22 @@ DynamicLoaderMacOSXKernel::LoadKernelModule()
         if (m_kernel.module_sp)
         {
             static ConstString mach_header_name ("_mh_execute_header");
-            const Symbol *symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (mach_header_name, eSymbolTypeAbsolute);
+            static ConstString kext_summary_symbol ("gLoadedKextSummaries");
+            const Symbol *symbol = NULL;
+            symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (kext_summary_symbol, eSymbolTypeData);
+            if (symbol)
+                m_kext_summary_header_addr = symbol->GetValue();
+
+            symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (mach_header_name, eSymbolTypeAbsolute);
             if (symbol)
             {
-                m_kernel.so_address = symbol->GetValue();
+                // The "_mh_execute_header" symbol is absolute and not a section based 
+                // symbol that will have a valid address, so we need to resolve it...
+                m_process->GetTarget().GetImages().ResolveFileAddress (symbol->GetValue().GetFileAddress(), m_kernel.so_address);
                 DataExtractor data; // Load command data
                 if (ReadMachHeader (m_kernel, &data))
                 {
-                    if (m_kernel.header.filetype == llvm::MachO::HeaderFileTypeDynamicLinkEditor)
+                    if (m_kernel.header.filetype == llvm::MachO::HeaderFileTypeExecutable)
                     {
                         if (ParseLoadCommands (data, m_kernel))
                             UpdateImageLoadAddress (m_kernel);
@@ -665,16 +693,16 @@ DynamicLoaderMacOSXKernel::ReadMachHeader (OSKextLoadedKextSummary& kext_summary
 // Parse the load commands for an image
 //----------------------------------------------------------------------
 uint32_t
-DynamicLoaderMacOSXKernel::ParseLoadCommands (const DataExtractor& data, OSKextLoadedKextSummary& dylib_info)
+DynamicLoaderMacOSXKernel::ParseLoadCommands (const DataExtractor& data, OSKextLoadedKextSummary& image_info)
 {
     uint32_t offset = 0;
     uint32_t cmd_idx;
     Segment segment;
-    dylib_info.Clear (true);
+    image_info.Clear (true);
 
-    for (cmd_idx = 0; cmd_idx < dylib_info.header.ncmds; cmd_idx++)
+    for (cmd_idx = 0; cmd_idx < image_info.header.ncmds; cmd_idx++)
     {
-        // Clear out any load command specific data from DYLIB_INFO since
+        // Clear out any load command specific data from image_info since
         // we are about to read it.
 
         if (data.ValidOffsetForDataOfSize (offset, sizeof(llvm::MachO::load_command)))
@@ -696,7 +724,7 @@ DynamicLoaderMacOSXKernel::ParseLoadCommands (const DataExtractor& data, OSKextL
                     segment.filesize = data.GetU32 (&offset);
                     // Extract maxprot, initprot, nsects and flags all at once
                     data.GetU32(&offset, &segment.maxprot, 4);
-                    dylib_info.segments.push_back (segment);
+                    image_info.segments.push_back (segment);
                 }
                 break;
 
@@ -707,12 +735,12 @@ DynamicLoaderMacOSXKernel::ParseLoadCommands (const DataExtractor& data, OSKextL
                     data.GetU64(&offset, &segment.vmaddr, 4);
                     // Extract maxprot, initprot, nsects and flags all at once
                     data.GetU32(&offset, &segment.maxprot, 4);
-                    dylib_info.segments.push_back (segment);
+                    image_info.segments.push_back (segment);
                 }
                 break;
 
             case llvm::MachO::LoadCommandUUID:
-                dylib_info.uuid.SetBytes(data.GetData (&offset, 16));
+                image_info.uuid.SetBytes(data.GetData (&offset, 16));
                 break;
 
             default:
@@ -732,21 +760,30 @@ DynamicLoaderMacOSXKernel::ParseLoadCommands (const DataExtractor& data, OSKextL
     // that is greater than zero) in the object file.
     
     // Determine the slide amount (if any)
-    const size_t num_sections = dylib_info.segments.size();
+    const size_t num_sections = image_info.segments.size();
     for (size_t i = 0; i < num_sections; ++i)
     {
         // Iterate through the object file sections to find the
         // first section that starts of file offset zero and that
         // has bytes in the file...
-        if (dylib_info.segments[i].fileoff == 0 && dylib_info.segments[i].filesize > 0)
+        if (image_info.segments[i].fileoff == 0 && image_info.segments[i].filesize > 0)
         {
-            dylib_info.slide = dylib_info.address - dylib_info.segments[i].vmaddr;
+            image_info.slide = image_info.address - image_info.segments[i].vmaddr;
             // We have found the slide amount, so we can exit
             // this for loop.
             break;
         }
     }
 #endif
+    if (image_info.uuid.IsValid())
+    {
+        bool did_create = false;
+        if (FindTargetModule(image_info, true, &did_create))
+        {
+            if (did_create)
+                image_info.module_create_stop_id = m_process->GetStopID();
+        }
+    }
     return cmd_idx;
 }
 
