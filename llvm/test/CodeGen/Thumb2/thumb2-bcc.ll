@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | FileCheck %s
-; RUN: llc < %s -march=thumb -mattr=+thumb2 | not grep it
+; RUN: llc < %s -ifcvt-limit=0 -march=thumb -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -ifcvt-limit=0 -march=thumb -mattr=+thumb2 | not grep it
+; If-conversion defeats the purpose of this test, which is to check CBZ
+; generation, so turn it off.
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) {
 ; CHECK: t1:

@@ -1,4 +1,6 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -ifcvt-limit=0 -mtriple=thumbv7-apple-darwin -mattr=+thumb2 | FileCheck %s
+; If-conversion defeats the purpose of this test, which is to check conditional
+; branch generation, so turn it off.
 
 define i32 @f1(i32 %a, i32 %b, i32* %v) {
 entry:
