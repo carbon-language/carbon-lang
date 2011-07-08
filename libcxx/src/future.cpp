@@ -59,6 +59,10 @@ future_error::future_error(error_code __ec)
 {
 }
 
+future_error::~future_error() _NOEXCEPT
+{
+}
+
 void
 __assoc_sub_state::__on_zero_shared() _NOEXCEPT
 {
