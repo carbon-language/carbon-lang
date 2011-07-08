@@ -288,28 +288,28 @@ class DataflowWorklist {
 public:
   DataflowWorklist(const CFG &cfg) : enqueuedBlocks(cfg.getNumBlockIDs()) {}
   
-  void enqueue(const CFGBlock *block);
   void enqueueSuccessors(const CFGBlock *block);
   const CFGBlock *dequeue();
-  
 };
 }
 
-void DataflowWorklist::enqueue(const CFGBlock *block) {
-  if (!block)
-    return;
-  unsigned idx = block->getBlockID();
-  if (enqueuedBlocks[idx])
-    return;
-  worklist.push_back(block);
-  enqueuedBlocks[idx] = true;
-}
-
 void DataflowWorklist::enqueueSuccessors(const clang::CFGBlock *block) {
+  unsigned OldWorklistSize = worklist.size();
   for (CFGBlock::const_succ_iterator I = block->succ_begin(),
        E = block->succ_end(); I != E; ++I) {
-    enqueue(*I);
+    const CFGBlock *Successor = *I;
+    if (!Successor || enqueuedBlocks[Successor->getBlockID()])
+      continue;
+    worklist.push_back(Successor);
+    enqueuedBlocks[Successor->getBlockID()] = true;
   }
+  if (OldWorklistSize == 0 || OldWorklistSize == worklist.size())
+    return;
+
+  // Rotate the newly added blocks to the start of the worklist so that it forms
+  // a proper queue when we pop off the end of the worklist.
+  std::rotate(worklist.begin(), worklist.begin() + OldWorklistSize,
+              worklist.end());
 }
 
 const CFGBlock *DataflowWorklist::dequeue() {
