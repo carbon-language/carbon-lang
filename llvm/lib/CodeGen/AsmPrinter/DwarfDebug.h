@@ -69,17 +69,35 @@ typedef struct DotDebugLocEntry {
   const MDNode *Variable;
   bool Merged;
   bool Constant;
-  int64_t iConstant;
+  enum EntryType {
+    E_Location,
+    E_Integer,
+    E_ConstantFP,
+    E_ConstantInt
+  };
+  enum EntryType EntryKind;
+
+  union {
+    int64_t Int;
+    const ConstantFP *CFP;
+    const ConstantInt *CIP;
+  } Constants;
   DotDebugLocEntry() 
     : Begin(0), End(0), Variable(0), Merged(false), 
-      Constant(false), iConstant(0) {}
+      Constant(false) { Constants.Int = 0;}
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, MachineLocation &L,
                    const MDNode *V) 
     : Begin(B), End(E), Loc(L), Variable(V), Merged(false), 
-      Constant(false), iConstant(0) {}
+      Constant(false) { Constants.Int = 0; EntryKind = E_Location; }
   DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i)
     : Begin(B), End(E), Variable(0), Merged(false), 
-      Constant(true), iConstant(i) {}
+      Constant(true) { Constants.Int = i; EntryKind = E_Integer; }
+  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr)
+    : Begin(B), End(E), Variable(0), Merged(false), 
+      Constant(true) { Constants.CFP = FPtr; EntryKind = E_ConstantFP; }
+  DotDebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantInt *IPtr)
+    : Begin(B), End(E), Variable(0), Merged(false), 
+      Constant(true) { Constants.CIP = IPtr; EntryKind = E_ConstantInt; }
 
   /// Empty entries are also used as a trigger to emit temp label. Such
   /// labels are referenced is used to find debug_loc offset for a given DIE.
@@ -91,8 +109,13 @@ typedef struct DotDebugLocEntry {
     Next->Begin = Begin;
     Merged = true;
   }
-  bool isConstant() { return Constant; }
-  int64_t getConstant() { return iConstant; }
+  bool isLocation() const    { return EntryKind == E_Location; }
+  bool isInt() const         { return EntryKind == E_Integer; }
+  bool isConstantFP() const  { return EntryKind == E_ConstantFP; }
+  bool isConstantInt() const { return EntryKind == E_ConstantInt; }
+  int64_t getInt()                    { return Constants.Int; }
+  const ConstantFP *getConstantFP()   { return Constants.CFP; }
+  const ConstantInt *getConstantInt() { return Constants.CIP; }
 } DotDebugLocEntry;
 
 //===----------------------------------------------------------------------===//
