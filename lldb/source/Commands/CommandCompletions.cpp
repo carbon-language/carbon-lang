@@ -272,7 +272,7 @@ DiskFilesOrDirectories
             else if (dirent_buf->d_type & DT_LNK)
             { 
                 struct stat stat_buf;
-                if ((stat(partial_name_copy, &stat_buf) == 0) && (stat_buf.st_mode & S_IFDIR))
+                if ((stat(partial_name_copy, &stat_buf) == 0) && S_ISDIR(stat_buf.st_mode))
                     isa_directory = true;
             }
             
