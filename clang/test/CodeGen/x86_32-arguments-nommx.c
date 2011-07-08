@@ -8,4 +8,4 @@ int a(i32v2 x) { return x[0]; }
 // but SSE2 vectors should still go into an SSE2 register 
 typedef int __attribute__((vector_size (16))) i32v4;
 int b(i32v4 x) { return x[0]; }
-// CHECK: define i32 @b(<4 x i32> %x.coerce)
+// CHECK: define i32 @b(<4 x i32> %x)
