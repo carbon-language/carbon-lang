@@ -1527,7 +1527,6 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
 
 // Tail calls.
 
-// FIXME: The Thumb versions of these should live in ARMInstrThumb.td
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Darwin versions.
   let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
@@ -1543,18 +1542,11 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                    (Bcc br_target:$dst, (ops 14, zero_reg))>,
                    Requires<[IsARM, IsDarwin]>;
 
-    def tTAILJMPd: tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsDarwin]>;
-
     def TAILJMPr : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
                    Size4Bytes, IIC_Br, [],
                    (BX GPR:$dst)>,
                    Requires<[IsARM, IsDarwin]>;
 
-    def tTAILJMPr : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsDarwin]>;
   }
 
   // Non-Darwin versions (the difference is R9).
@@ -1571,17 +1563,10 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                    (Bcc br_target:$dst, (ops 14, zero_reg))>,
                    Requires<[IsARM, IsNotDarwin]>;
 
-    def tTAILJMPdND : tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsNotDarwin]>;
-
     def TAILJMPrND : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
                      Size4Bytes, IIC_Br, [],
                      (BX GPR:$dst)>,
                      Requires<[IsARM, IsNotDarwin]>;
-    def tTAILJMPrND : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsNotDarwin]>;
   }
 }
 
