@@ -140,8 +140,13 @@ MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
   }
 
   std::string CPUName = CPU;
-  if (CPUName.empty())
+  if (CPUName.empty()) {
+#if defined (__x86_64__) || defined(__i386__)
     CPUName = sys::getHostCPUName();
+#else
+    CPUName = "generic";
+#endif
+  }
 
   if (ArchFS.empty() && CPUName.empty() && hasX86_64())
     // Auto-detect if host is 64-bit capable, it's the default if true.

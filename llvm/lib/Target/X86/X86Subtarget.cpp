@@ -258,12 +258,17 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
       ArchFS = FS;
   }
 
-  std::string CPUName = CPU;
-  if (CPUName.empty())
-    CPUName = sys::getHostCPUName();
-
   // Determine default and user specified characteristics
-  if (!CPUName.empty() || !ArchFS.empty()) {
+  if (!ArchFS.empty()) {
+    std::string CPUName = CPU;
+    if (CPUName.empty()) {
+#if defined (__x86_64__) || defined(__i386__)
+      CPUName = sys::getHostCPUName();
+#else
+      CPUName = "generic";
+#endif
+    }
+
     // If feature string is not empty, parse features string.
     ParseSubtargetFeatures(CPUName, ArchFS);
     // All X86-64 CPUs also have SSE2, however user might request no SSE via 
