@@ -2501,6 +2501,22 @@ void SelectionDAGBuilder::visitShift(const User &I, unsigned Opcode) {
                            Op1.getValueType(), Op1, Op2));
 }
 
+void SelectionDAGBuilder::visitSDiv(const User &I) {
+  const BinaryOperator *BO = cast<BinaryOperator>(&I);
+  SDValue Op1 = getValue(I.getOperand(0));
+  SDValue Op2 = getValue(I.getOperand(1));
+
+  // Turn exact SDivs into multiplications.
+  // FIXME: This should be in DAGCombiner, but it doesn't have access to the
+  // exact bit.
+  if (BO->isExact() && !isa<ConstantSDNode>(Op1) &&
+      isa<ConstantSDNode>(Op2) && !cast<ConstantSDNode>(Op2)->isNullValue())
+    setValue(&I, TLI.BuildExactSDIV(Op1, Op2, getCurDebugLoc(), DAG));
+  else
+    setValue(&I, DAG.getNode(ISD::SDIV, getCurDebugLoc(), Op1.getValueType(),
+                             Op1, Op2));
+}
+
 void SelectionDAGBuilder::visitICmp(const User &I) {
   ICmpInst::Predicate predicate = ICmpInst::BAD_ICMP_PREDICATE;
   if (const ICmpInst *IC = dyn_cast<ICmpInst>(&I))

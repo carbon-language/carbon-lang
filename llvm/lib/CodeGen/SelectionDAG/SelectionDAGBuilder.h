@@ -467,7 +467,7 @@ private:
   void visitSRem(const User &I) { visitBinary(I, ISD::SREM); }
   void visitFRem(const User &I) { visitBinary(I, ISD::FREM); }
   void visitUDiv(const User &I) { visitBinary(I, ISD::UDIV); }
-  void visitSDiv(const User &I) { visitBinary(I, ISD::SDIV); }
+  void visitSDiv(const User &I);
   void visitFDiv(const User &I) { visitBinary(I, ISD::FDIV); }
   void visitAnd (const User &I) { visitBinary(I, ISD::AND); }
   void visitOr  (const User &I) { visitBinary(I, ISD::OR); }

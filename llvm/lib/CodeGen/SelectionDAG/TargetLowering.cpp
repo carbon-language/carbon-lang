@@ -3211,6 +3211,32 @@ bool TargetLowering::isLegalAddressingMode(const AddrMode &AM,
   return true;
 }
 
+/// BuildExactDiv - Given an exact SDIV by a constant, create a multiplication
+/// with the multiplicative inverse of the constant.
+SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, DebugLoc dl,
+                                       SelectionDAG &DAG) const {
+  ConstantSDNode *C = cast<ConstantSDNode>(Op2);
+  APInt d = C->getAPIntValue();
+  assert(d != 0 && "Division by zero!");
+
+  // Shift the value upfront if it is even, so the LSB is one.
+  unsigned ShAmt = d.countTrailingZeros();
+  if (ShAmt) {
+    // TODO: For UDIV use SRL instead of SRA.
+    SDValue Amt = DAG.getConstant(ShAmt, getShiftAmountTy(Op1.getValueType()));
+    Op1 = DAG.getNode(ISD::SRA, dl, Op1.getValueType(), Op1, Amt);
+    d = d.ashr(ShAmt);
+  }
+
+  // Calculate the multiplicative inverse, using Newton's method.
+  APInt t, xn = d;
+  while ((t = d*xn) != 1)
+    xn *= APInt(d.getBitWidth(), 2) - t;
+
+  Op2 = DAG.getConstant(xn, Op1.getValueType());
+  return DAG.getNode(ISD::MUL, dl, Op1.getValueType(), Op1, Op2);
+}
+
 /// BuildSDIVSequence - Given an ISD::SDIV node expressing a divide by constant,
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
