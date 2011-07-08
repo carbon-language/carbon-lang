@@ -4087,7 +4087,7 @@ ClangASTContext::IsPossibleDynamicType (clang::ASTContext *ast, clang_type_t cla
                 break;
                 
             case clang::Type::Typedef:
-                return ClangASTContext::IsPossibleCPlusPlusDynamicType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), dynamic_pointee_type);
+                return ClangASTContext::IsPossibleDynamicType (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), dynamic_pointee_type);
                 
             default:
                 break;
@@ -4382,8 +4382,11 @@ ClangASTContext::IsIntegerType (clang_type_t clang_type, bool &is_signed)
 }
 
 bool
-ClangASTContext::IsPointerType (clang_type_t clang_type, clang_type_t*target_type)
+ClangASTContext::IsPointerType (clang_type_t clang_type, clang_type_t *target_type)
 {
+    if (target_type)
+        *target_type = NULL;
+
     if (clang_type)
     {
         QualType qual_type (QualType::getFromOpaquePtr(clang_type));
@@ -4417,7 +4420,7 @@ ClangASTContext::IsPointerType (clang_type_t clang_type, clang_type_t*target_typ
                 *target_type = cast<MemberPointerType>(qual_type)->getPointeeType().getAsOpaquePtr();
             return true;
         case clang::Type::Typedef:
-            return ClangASTContext::IsPointerOrReferenceType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), target_type);
+            return ClangASTContext::IsPointerType (cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), target_type);
         default:
             break;
         }
