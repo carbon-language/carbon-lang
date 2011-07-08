@@ -1918,7 +1918,7 @@ ClangExpressionDeclMap::GetDecls (NameSearchContext &context, const ConstString 
             void *pointer_target_type = NULL;
         
             if (!ClangASTContext::IsPointerType(self_user_type.GetOpaqueQualType(),
-                                                &pointer_target_type))
+                                                &pointer_target_type)
                 || pointer_target_type == NULL)
                 return;
         
