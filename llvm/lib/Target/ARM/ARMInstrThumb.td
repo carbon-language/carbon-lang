@@ -405,12 +405,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   }
 }
 
-// FIXME: remove when we have a way to marking a MI with these properties.
-let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
-    hasExtraDefRegAllocReq = 1 in
-def tPOP_RET : tPseudoInst<(outs), (ins pred:$p, reglist:$regs, variable_ops),
-                           Size2Bytes, IIC_iPop_Br, []>;
-
 // All calls clobber the non-callee saved registers. SP is marked as a use to
 // prevent stack-pointer assignments that appear immediately before calls from
 // potentially appearing dead.
@@ -528,8 +522,8 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
   // Just a pseudo for a tBL instruction. Needed to let regalloc know about
   // the clobber of LR.
   let Defs = [LR] in
-  def tBfar : tPseudoInst<(outs), (ins t_bltarget:$target),
-                          Size4Bytes, IIC_Br, []>;
+  def tBfar : tPseudoExpand<(outs), (ins t_bltarget:$target),
+                          Size4Bytes, IIC_Br, [], (tBL t_bltarget:$target)>;
 
   def tBR_JTr : tPseudoInst<(outs),
                       (ins tGPR:$target, i32imm:$jt, i32imm:$id),
@@ -1477,3 +1471,12 @@ def tLDRpci_pic : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr, pclabel:$cp),
                [(set GPR:$dst, (ARMpic_add (load (ARMWrapper tconstpool:$addr)),
                                            imm:$cp))]>,
                Requires<[IsThumb, IsThumb1Only]>;
+
+// Pseudo-instruction for merged POP and return.
+// FIXME: remove when we have a way to marking a MI with these properties.
+let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
+    hasExtraDefRegAllocReq = 1 in
+def tPOP_RET : tPseudoExpand<(outs), (ins pred:$p, reglist:$regs, variable_ops),
+                           Size2Bytes, IIC_iPop_Br, [],
+                           (tPOP pred:$p, reglist:$regs)>;
+

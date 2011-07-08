@@ -2978,9 +2978,10 @@ let Defs =
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-def t2LDMIA_RET: t2PseudoInst<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
+def t2LDMIA_RET: t2PseudoExpand<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
                                                    reglist:$regs, variable_ops),
-                              Size4Bytes, IIC_iLoad_mBr, []>,
+                              Size4Bytes, IIC_iLoad_mBr, [],
+            (t2LDMIA_UPD GPR:$wb, GPR:$Rn, pred:$p, reglist:$regs)>,
                          RegConstraint<"$Rn = $wb">;
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {

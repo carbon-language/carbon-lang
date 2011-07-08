@@ -21,6 +21,8 @@
 
 namespace llvm {
 
+class MCOperand;
+
 namespace ARM {
   enum DW_ISA {
     DW_ISA_ARM_thumb = 1,
@@ -72,6 +74,9 @@ public:
   void EmitStartOfAsmFile(Module &M);
   void EmitEndOfAsmFile(Module &M);
 
+  // lowerOperand - Convert a MachineOperand into the equivalent MCOperand.
+  bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
+
 private:
   // Helpers for EmitStartOfAsmFile() and EmitEndOfAsmFile()
   void emitAttributes();
@@ -83,6 +88,10 @@ private:
   void EmitPatchedInstruction(const MachineInstr *MI, unsigned TargetOpc);
 
   void EmitUnwindingInstruction(const MachineInstr *MI);
+
+  // emitPseudoExpansionLowering - tblgen'erated.
+  bool emitPseudoExpansionLowering(MCStreamer &OutStreamer,
+                                   const MachineInstr *MI);
 
 public:
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
@@ -100,6 +109,7 @@ public:
       llvm::ARM::DW_ISA_ARM_thumb : llvm::ARM::DW_ISA_ARM_arm;
   }
 
+  MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol);
   MCSymbol *GetARMSetPICJumpTableLabel2(unsigned uid, unsigned uid2,
                                         const MachineBasicBlock *MBB) const;
   MCSymbol *GetARMJTIPICJumpTableLabel2(unsigned uid, unsigned uid2) const;
@@ -107,7 +117,7 @@ public:
   MCSymbol *GetARMSJLJEHLabel(void) const;
 
   MCSymbol *GetARMGVSymbol(const GlobalValue *GV);
-  
+
   /// EmitMachineConstantPoolValue - Print a machine constantpool value to
   /// the .s file.
   virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);

@@ -1363,14 +1363,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
     let Inst{27-4} = 0b000100101111111111110001;
     let Inst{3-0}  = dst;
   }
-
-  // ARMV4 only
-  // FIXME: We would really like to define this as a vanilla ARMPat like:
-  // ARMPat<(brind GPR:$dst), (MOVr PC, GPR:$dst)>
-  // With that, however, we can't set isBranch, isTerminator, etc..
-  def MOVPCRX : ARMPseudoInst<(outs), (ins GPR:$dst),
-                    Size4Bytes, IIC_Br, [(brind GPR:$dst)]>,
-                    Requires<[IsARM, NoV4T]>;
 }
 
 // All calls clobber the non-callee saved registers. SP is marked as
@@ -1526,13 +1518,23 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1 in {
-  // B is "predicable" since it's just a Bcc with an 'always' condition.
+  // FIXME: should be able to write a pattern for ARMBrcond, but can't use
+  // a two-value operand where a dag node expects two operands. :(
+  def Bcc : ABI<0b1010, (outs), (ins br_target:$target),
+               IIC_Br, "b", "\t$target",
+               [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]> {
+    bits<24> target;
+    let Inst{23-0} = target;
+  }
+
   let isBarrier = 1 in {
+    // B is "predicable" since it's just a Bcc with an 'always' condition.
     let isPredicable = 1 in
     // FIXME: We shouldn't need this pseudo at all. Just using Bcc directly
     // should be sufficient.
-    def B : ARMPseudoInst<(outs), (ins brtarget:$target), Size4Bytes, IIC_Br,
-                [(br bb:$target)]>;
+    // FIXME: Is B really a Barrier? That doesn't seem right.
+    def B : ARMPseudoExpand<(outs), (ins br_target:$target), Size4Bytes, IIC_Br,
+                [(br bb:$target)], (Bcc br_target:$target, (ops 14, zero_reg))>;
 
     let isNotDuplicable = 1, isIndirectBranch = 1 in {
     def BR_JTr : ARMPseudoInst<(outs),
@@ -1554,14 +1556,6 @@ let isBranch = 1, isTerminator = 1 in {
     } // isNotDuplicable = 1, isIndirectBranch = 1
   } // isBarrier = 1
 
-  // FIXME: should be able to write a pattern for ARMBrcond, but can't use
-  // a two-value operand where a dag node expects two operands. :(
-  def Bcc : ABI<0b1010, (outs), (ins br_target:$target),
-               IIC_Br, "b", "\t$target",
-               [/*(ARMbrcond bb:$target, imm:$cc, CCR:$ccr)*/]> {
-    bits<24> target;
-    let Inst{23-0} = target;
-  }
 }
 
 // BLX (immediate) -- for disassembly only
@@ -2030,9 +2024,10 @@ def : MnemonicAlias<"stm", "stmia">;
 // FIXME: Should pc be an implicit operand like PICADD, etc?
 let isReturn = 1, isTerminator = 1, isBarrier = 1, mayLoad = 1,
     hasExtraDefRegAllocReq = 1, isCodeGenOnly = 1 in
-def LDMIA_RET : ARMPseudoInst<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
-                                               reglist:$regs, variable_ops),
-                     Size4Bytes, IIC_iLoad_mBr, []>,
+def LDMIA_RET : ARMPseudoExpand<(outs GPR:$wb), (ins GPR:$Rn, pred:$p,
+                                                 reglist:$regs, variable_ops),
+                     Size4Bytes, IIC_iLoad_mBr, [],
+                     (LDMIA_UPD GPR:$wb, GPR:$Rn, pred:$p, reglist:$regs)>,
       RegConstraint<"$Rn = $wb">;
 
 //===----------------------------------------------------------------------===//
@@ -2690,28 +2685,26 @@ class AsMul1I64<bits<7> opcod, dag oops, dag iops, InstrItinClass itin,
   let Inst{3-0}   = Rn;
 }
 
+// FIXME: The v5 pseudos are only necessary for the additional Constraint
+//        property. Remove them when it's possible to add those properties
+//        on an individual MachineInstr, not just an instuction description.
 let isCommutable = 1 in {
-let Constraints = "@earlyclobber $Rd" in
-def MULv5: ARMPseudoInst<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
-                                          pred:$p, cc_out:$s),
-                          Size4Bytes, IIC_iMUL32,
-                         [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
-                        Requires<[IsARM, NoV6]>;
-
 def MUL  : AsMul1I32<0b0000000, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
                    IIC_iMUL32, "mul", "\t$Rd, $Rn, $Rm",
                    [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))]>,
                    Requires<[IsARM, HasV6]> {
   let Inst{15-12} = 0b0000;
 }
-}
 
 let Constraints = "@earlyclobber $Rd" in
-def MLAv5: ARMPseudoInst<(outs GPR:$Rd),
-                        (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
-                        Size4Bytes, IIC_iMAC32,
-                        [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]>,
+def MULv5: ARMPseudoExpand<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm,
+                                            pred:$p, cc_out:$s),
+                          Size4Bytes, IIC_iMUL32,
+                         [(set GPR:$Rd, (mul GPR:$Rn, GPR:$Rm))],
+                         (MUL GPR:$Rd, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
                         Requires<[IsARM, NoV6]>;
+}
+
 def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
                     IIC_iMAC32, "mla", "\t$Rd, $Rn, $Rm, $Ra",
                    [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))]>,
@@ -2719,6 +2712,14 @@ def MLA  : AsMul1I32<0b0000001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
   bits<4> Ra;
   let Inst{15-12} = Ra;
 }
+
+let Constraints = "@earlyclobber $Rd" in
+def MLAv5: ARMPseudoExpand<(outs GPR:$Rd),
+                          (ins GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s),
+                          Size4Bytes, IIC_iMAC32,
+                        [(set GPR:$Rd, (add (mul GPR:$Rn, GPR:$Rm), GPR:$Ra))],
+                  (MLA GPR:$Rd, GPR:$Rn, GPR:$Rm, GPR:$Ra, pred:$p, cc_out:$s)>,
+                        Requires<[IsARM, NoV6]>;
 
 def MLS  : AMul1I<0b0000011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
                    IIC_iMAC32, "mls", "\t$Rd, $Rn, $Rm, $Ra",
@@ -2735,49 +2736,34 @@ def MLS  : AMul1I<0b0000011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
 }
 
 // Extra precision multiplies with low / high results
-
 let neverHasSideEffects = 1 in {
 let isCommutable = 1 in {
-let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
-def SMULLv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            Size4Bytes, IIC_iMUL64, []>,
-                           Requires<[IsARM, NoV6]>;
-
-def UMULLv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            Size4Bytes, IIC_iMUL64, []>,
-                           Requires<[IsARM, NoV6]>;
-}
-
 def SMULL : AsMul1I64<0b0000110, (outs GPR:$RdLo, GPR:$RdHi),
-                               (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
+                                 (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
                     "smull", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
                     Requires<[IsARM, HasV6]>;
 
 def UMULL : AsMul1I64<0b0000100, (outs GPR:$RdLo, GPR:$RdHi),
-                               (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
+                                 (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
                     "umull", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
                     Requires<[IsARM, HasV6]>;
+
+let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
+def SMULLv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                            Size4Bytes, IIC_iMUL64, [],
+          (SMULL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
+                           Requires<[IsARM, NoV6]>;
+
+def UMULLv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
+                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                            Size4Bytes, IIC_iMUL64, [],
+          (UMULL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
+                           Requires<[IsARM, NoV6]>;
+}
 }
 
 // Multiply + accumulate
-let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
-def SMLALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            Size4Bytes, IIC_iMAC64, []>,
-                           Requires<[IsARM, NoV6]>;
-def UMLALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            Size4Bytes, IIC_iMAC64, []>,
-                           Requires<[IsARM, NoV6]>;
-def UMAALv5 : ARMPseudoInst<(outs GPR:$RdLo, GPR:$RdHi),
-                            (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            Size4Bytes, IIC_iMAC64, []>,
-                           Requires<[IsARM, NoV6]>;
-
-}
-
 def SMLAL : AsMul1I64<0b0000111, (outs GPR:$RdLo, GPR:$RdHi),
                                (ins GPR:$Rn, GPR:$Rm), IIC_iMAC64,
                     "smlal", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
@@ -2800,6 +2786,25 @@ def UMAAL : AMul1I <0b0000010, (outs GPR:$RdLo, GPR:$RdHi),
   let Inst{11-8}  = Rm;
   let Inst{3-0}   = Rn;
 }
+
+let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
+def SMLALv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
+                              (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                              Size4Bytes, IIC_iMAC64, [],
+          (SMLAL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
+                           Requires<[IsARM, NoV6]>;
+def UMLALv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
+                              (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
+                              Size4Bytes, IIC_iMAC64, [],
+          (UMLAL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
+                           Requires<[IsARM, NoV6]>;
+def UMAALv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
+                              (ins GPR:$Rn, GPR:$Rm, pred:$p),
+                              Size4Bytes, IIC_iMAC64, [],
+          (UMAAL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p)>,
+                           Requires<[IsARM, NoV6]>;
+}
+
 } // neverHasSideEffects
 
 // Most significant word multiply
@@ -3837,6 +3842,13 @@ def Int_eh_sjlj_dispatchsetup :
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
+
+// ARMv4 indirect branch using (MOVr PC, dst)
+let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in
+  def MOVPCRX : ARMPseudoExpand<(outs), (ins GPR:$dst),
+                    Size4Bytes, IIC_Br, [(brind GPR:$dst)],
+                    (MOVr PC, GPR:$dst, (ops 14, zero_reg), zero_reg)>,
+                  Requires<[IsARM, NoV4T]>;
 
 // Large immediate handling.
 
