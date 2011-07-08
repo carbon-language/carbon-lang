@@ -12891,19 +12891,19 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
       // in the normal allocation?
     case 'q':   // GENERAL_REGS in 64-bit mode, Q_REGS in 32-bit mode.
       if (Subtarget->is64Bit()) {
-	if (VT == MVT::i32)
+	if (VT == MVT::i32 || VT == MVT::f32)
 	  return std::make_pair(0U, X86::GR32RegisterClass);
 	else if (VT == MVT::i16)
 	  return std::make_pair(0U, X86::GR16RegisterClass);
 	else if (VT == MVT::i8)
 	  return std::make_pair(0U, X86::GR8RegisterClass);
-	else if (VT == MVT::i64)
+	else if (VT == MVT::i64 || VT == MVT::f64)
 	  return std::make_pair(0U, X86::GR64RegisterClass);
 	break;
       }
       // 32-bit fallthrough
     case 'Q':   // Q_REGS
-      if (VT == MVT::i32)
+      if (VT == MVT::i32 || VT == MVT::f32)
 	return std::make_pair(0U, X86::GR32_ABCDRegisterClass);
       else if (VT == MVT::i16)
 	return std::make_pair(0U, X86::GR16_ABCDRegisterClass);
