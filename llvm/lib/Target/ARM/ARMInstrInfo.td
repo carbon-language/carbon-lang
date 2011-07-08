@@ -1538,17 +1538,19 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
                        IIC_Br, []>, Requires<[IsDarwin]>;
 
-    def TAILJMPd : ARMPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsARM, IsDarwin]>;
+    def TAILJMPd : ARMPseudoExpand<(outs), (ins br_target:$dst, variable_ops),
+                   Size4Bytes, IIC_Br, [],
+                   (Bcc br_target:$dst, (ops 14, zero_reg))>,
+                   Requires<[IsARM, IsDarwin]>;
 
     def tTAILJMPd: tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
                    Size4Bytes, IIC_Br,
                    []>, Requires<[IsThumb, IsDarwin]>;
 
-    def TAILJMPr : ARMPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br,
-                   []>, Requires<[IsARM, IsDarwin]>;
+    def TAILJMPr : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
+                   Size4Bytes, IIC_Br, [],
+                   (BX GPR:$dst)>,
+                   Requires<[IsARM, IsDarwin]>;
 
     def tTAILJMPr : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
                      Size4Bytes, IIC_Br,
@@ -1564,17 +1566,19 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     def TCRETURNriND : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
                        IIC_Br, []>, Requires<[IsNotDarwin]>;
 
-    def TAILJMPdND : ARMPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsARM, IsNotDarwin]>;
+    def TAILJMPdND : ARMPseudoExpand<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br, [],
+                   (Bcc br_target:$dst, (ops 14, zero_reg))>,
+                   Requires<[IsARM, IsNotDarwin]>;
 
     def tTAILJMPdND : tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
                    Size4Bytes, IIC_Br,
                    []>, Requires<[IsThumb, IsNotDarwin]>;
 
-    def TAILJMPrND : ARMPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br,
-                   []>, Requires<[IsARM, IsNotDarwin]>;
+    def TAILJMPrND : ARMPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br, [],
+                     (BX GPR:$dst)>,
+                     Requires<[IsARM, IsNotDarwin]>;
     def tTAILJMPrND : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
                      Size4Bytes, IIC_Br,
                    []>, Requires<[IsThumb, IsNotDarwin]>;

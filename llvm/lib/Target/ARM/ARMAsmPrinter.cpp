@@ -1801,20 +1801,6 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   // Tail jump branches are really just branch instructions with additional
   // code-gen attributes. Convert them to the canonical form here.
-  case ARM::TAILJMPd:
-  case ARM::TAILJMPdND: {
-    MCInst TmpInst, TmpInst2;
-    // Lower the instruction as-is to get the operands properly converted.
-    LowerARMMachineInstrToMCInst(MI, TmpInst2, *this);
-    TmpInst.setOpcode(ARM::Bcc);
-    TmpInst.addOperand(TmpInst2.getOperand(0));
-    // Add predicate operands.
-    TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
-    TmpInst.addOperand(MCOperand::CreateReg(0));
-    OutStreamer.AddComment("TAILCALL");
-    OutStreamer.EmitInstruction(TmpInst);
-    return;
-  }
   case ARM::tTAILJMPd:
   case ARM::tTAILJMPdND: {
     MCInst TmpInst, TmpInst2;
@@ -1827,14 +1813,10 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
-  case ARM::TAILJMPrND:
   case ARM::tTAILJMPrND:
-  case ARM::TAILJMPr:
   case ARM::tTAILJMPr: {
-    unsigned newOpc = (Opc == ARM::TAILJMPr || Opc == ARM::TAILJMPrND)
-      ? ARM::BX : ARM::tBX;
     MCInst TmpInst;
-    TmpInst.setOpcode(newOpc);
+    TmpInst.setOpcode(ARM::tBX);
     TmpInst.addOperand(MCOperand::CreateReg(MI->getOperand(0).getReg()));
     // Predicate.
     TmpInst.addOperand(MCOperand::CreateImm(ARMCC::AL));

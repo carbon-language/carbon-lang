@@ -15,11 +15,11 @@ define void @t1() {
 
 define void @t2() {
 ; CHECKV6: t2:
-; CHECKV6: bx r0 @ TAILCALL
+; CHECKV6: bx r0
 ; CHECKT2D: t2:
 ; CHECKT2D: ldr
 ; CHECKT2D-NEXT: ldr
-; CHECKT2D-NEXT: bx r0 @ TAILCALL
+; CHECKT2D-NEXT: bx r0
         %tmp = load i32 ()** @t         ; <i32 ()*> [#uses=1]
         %tmp.upgrd.2 = tail call i32 %tmp( )            ; <i32> [#uses=0]
         ret void
@@ -27,11 +27,11 @@ define void @t2() {
 
 define void @t3() {
 ; CHECKV6: t3:
-; CHECKV6: b _t2  @ TAILCALL
+; CHECKV6: b _t2
 ; CHECKELF: t3:
-; CHECKELF: b t2(PLT) @ TAILCALL
+; CHECKELF: b t2(PLT)
 ; CHECKT2D: t3:
-; CHECKT2D: b.w _t2  @ TAILCALL
+; CHECKT2D: b.w _t2
 
         tail call void @t2( )            ; <i32> [#uses=0]
         ret void
@@ -41,9 +41,9 @@ define void @t3() {
 define double @t4(double %a) nounwind readonly ssp {
 entry:
 ; CHECKV6: t4:
-; CHECKV6: b _sin @ TAILCALL
+; CHECKV6: b _sin
 ; CHECKELF: t4:
-; CHECKELF: b sin(PLT) @ TAILCALL
+; CHECKELF: b sin(PLT)
   %0 = tail call double @sin(double %a) nounwind readonly ; <double> [#uses=1]
   ret double %0
 }
@@ -51,9 +51,9 @@ entry:
 define float @t5(float %a) nounwind readonly ssp {
 entry:
 ; CHECKV6: t5:
-; CHECKV6: b _sinf @ TAILCALL
+; CHECKV6: b _sinf
 ; CHECKELF: t5:
-; CHECKELF: b sinf(PLT) @ TAILCALL
+; CHECKELF: b sinf(PLT)
   %0 = tail call float @sinf(float %a) nounwind readonly ; <float> [#uses=1]
   ret float %0
 }
@@ -65,9 +65,9 @@ declare double @sin(double) nounwind readonly
 define i32 @t6(i32 %a, i32 %b) nounwind readnone {
 entry:
 ; CHECKV6: t6:
-; CHECKV6: b ___divsi3 @ TAILCALL
+; CHECKV6: b ___divsi3
 ; CHECKELF: t6:
-; CHECKELF: b __aeabi_idiv(PLT) @ TAILCALL
+; CHECKELF: b __aeabi_idiv(PLT)
   %0 = sdiv i32 %a, %b
   ret i32 %0
 }
