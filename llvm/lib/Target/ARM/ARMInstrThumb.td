@@ -370,18 +370,6 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
     let Inst{6-3} = Rm;
     let Inst{2-0} = 0b000;
   }
-
-  def tBRIND : TI<(outs), (ins GPR:$Rm),
-                  IIC_Br,
-                  "mov\tpc, $Rm",
-                  [(brind GPR:$Rm)]>,
-               T1Special<{1,0,?,?}> {
-    // A8.6.97
-    bits<4> Rm;
-    let Inst{7}   = 1;          // <Rd> = Inst{7:2-0} = pc
-    let Inst{6-3} = Rm;
-    let Inst{2-0} = 0b111;
-  }
 }
 
 let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
@@ -1496,3 +1484,9 @@ def tPOP_RET : tPseudoExpand<(outs), (ins pred:$p, reglist:$regs, variable_ops),
                            Size2Bytes, IIC_iPop_Br, [],
                            (tPOP pred:$p, reglist:$regs)>;
 
+// Indirect branch using "mov pc, $Rm"
+let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
+  def tBRIND : tPseudoExpand<(outs), (ins GPR:$Rm),
+                  Size2Bytes, IIC_Br, [(brind GPR:$Rm)],
+                  (tMOVr PC, GPR:$Rm, (ops 14, zero_reg))>;
+}
