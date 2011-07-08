@@ -792,7 +792,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     return ParseBuiltinPrimaryExpression();
   case tok::kw___null:
     return Actions.ActOnGNUNullExpr(ConsumeToken());
-    break;
+
   case tok::plusplus:      // unary-expression: '++' unary-expression [C99]
   case tok::minusminus: {  // unary-expression: '--' unary-expression [C99]
     // C++ [expr.unary] has:
@@ -1718,7 +1718,7 @@ ExprResult Parser::ParseBuiltinPrimaryExpression() {
                                   ConsumeParen());
     break;
   }
-}
+  }
 
   if (Res.isInvalid())
     return ExprError();
