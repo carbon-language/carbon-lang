@@ -9067,10 +9067,11 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
 SDValue X86TargetLowering::LowerMEMBARRIER(SDValue Op, SelectionDAG &DAG) const{
   DebugLoc dl = Op.getDebugLoc();
 
-  if (!Subtarget->hasSSE2()) {
+  // Go ahead and emit the fence on x86-64 even if we asked for no-sse2.
+  // There isn't any reason to disable it if the target processor supports it.
+  if (!Subtarget->hasSSE2() && !Subtarget->is64Bit()) {
     SDValue Chain = Op.getOperand(0);
-    SDValue Zero = DAG.getConstant(0,
-                                   Subtarget->is64Bit() ? MVT::i64 : MVT::i32);
+    SDValue Zero = DAG.getConstant(0, MVT::i32);
     SDValue Ops[] = {
       DAG.getRegister(X86::ESP, MVT::i32), // Base
       DAG.getTargetConstant(1, MVT::i8),   // Scale
