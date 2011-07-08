@@ -1466,62 +1466,6 @@ let isCall = 1,
                   Requires<[IsARM, NoV4T, IsDarwin]>;
 }
 
-// Tail calls.
-
-// FIXME: The Thumb versions of these should live in ARMInstrThumb.td
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
-  // Darwin versions.
-  let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
-      Uses = [SP] in {
-    def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsDarwin]>;
-
-    def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsDarwin]>;
-
-    def TAILJMPd : ARMPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsARM, IsDarwin]>;
-
-    def tTAILJMPd: tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsDarwin]>;
-
-    def TAILJMPr : ARMPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br,
-                   []>, Requires<[IsARM, IsDarwin]>;
-
-    def tTAILJMPr : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsDarwin]>;
-  }
-
-  // Non-Darwin versions (the difference is R9).
-  let Defs = [R0, R1, R2, R3, R12, QQQQ0, QQQQ2, QQQQ3, PC],
-      Uses = [SP] in {
-    def TCRETURNdiND : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsNotDarwin]>;
-
-    def TCRETURNriND : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                       IIC_Br, []>, Requires<[IsNotDarwin]>;
-
-    def TAILJMPdND : ARMPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsARM, IsNotDarwin]>;
-
-    def tTAILJMPdND : tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsNotDarwin]>;
-
-    def TAILJMPrND : ARMPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br,
-                   []>, Requires<[IsARM, IsNotDarwin]>;
-    def tTAILJMPrND : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
-                     Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsNotDarwin]>;
-  }
-}
-
 let isBranch = 1, isTerminator = 1 in {
   // FIXME: should be able to write a pattern for ARMBrcond, but can't use
   // a two-value operand where a dag node expects two operands. :(
@@ -1580,6 +1524,66 @@ def BXJ : ABI<0b0001, (outs), (ins GPR:$func), NoItinerary, "bxj", "\t$func",
   //let Inst{19-8} = 0xfff;
   let Inst{7-4} = 0b0010;
 }
+
+// Tail calls.
+
+// FIXME: The Thumb versions of these should live in ARMInstrThumb.td
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
+  // Darwin versions.
+  let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
+      Uses = [SP] in {
+    def TCRETURNdi : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
+                       IIC_Br, []>, Requires<[IsDarwin]>;
+
+    def TCRETURNri : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                       IIC_Br, []>, Requires<[IsDarwin]>;
+
+    def TAILJMPd : ARMPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br,
+                   []>, Requires<[IsARM, IsDarwin]>;
+
+    def tTAILJMPd: tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br,
+                   []>, Requires<[IsThumb, IsDarwin]>;
+
+    def TAILJMPr : ARMPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br,
+                   []>, Requires<[IsARM, IsDarwin]>;
+
+    def tTAILJMPr : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br,
+                   []>, Requires<[IsThumb, IsDarwin]>;
+  }
+
+  // Non-Darwin versions (the difference is R9).
+  let Defs = [R0, R1, R2, R3, R12, QQQQ0, QQQQ2, QQQQ3, PC],
+      Uses = [SP] in {
+    def TCRETURNdiND : PseudoInst<(outs), (ins i32imm:$dst, variable_ops),
+                       IIC_Br, []>, Requires<[IsNotDarwin]>;
+
+    def TCRETURNriND : PseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                       IIC_Br, []>, Requires<[IsNotDarwin]>;
+
+    def TAILJMPdND : ARMPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br,
+                   []>, Requires<[IsARM, IsNotDarwin]>;
+
+    def tTAILJMPdND : tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br,
+                   []>, Requires<[IsThumb, IsNotDarwin]>;
+
+    def TAILJMPrND : ARMPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br,
+                   []>, Requires<[IsARM, IsNotDarwin]>;
+    def tTAILJMPrND : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
+                     Size4Bytes, IIC_Br,
+                   []>, Requires<[IsThumb, IsNotDarwin]>;
+  }
+}
+
+
+
+
 
 // Secure Monitor Call is a system instruction -- for disassembly only
 def SMC : ABI<0b0001, (outs), (ins i32imm:$opt), NoItinerary, "smc", "\t$opt",
