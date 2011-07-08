@@ -3062,6 +3062,17 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
   let Inst{10-0} = target{11-1};
 }
 
+// Tail calls. The Darwin version of thumb tail calls uses a t2 branch, so
+// it goes here.
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
+  // Darwin version.
+  let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
+      Uses = [SP] in
+  def tTAILJMPd: tPseudoExpand<(outs), (ins uncondbrtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br, [],
+                   (t2B uncondbrtarget:$dst)>,
+                 Requires<[IsThumb2, IsDarwin]>;
+}
 
 // IT block
 let Defs = [ITSTATE] in

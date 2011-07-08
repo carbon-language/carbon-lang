@@ -576,9 +576,8 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Darwin versions.
   let Defs = [R0, R1, R2, R3, R9, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in {
-    def tTAILJMPd: tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsDarwin]>;
+    // tTAILJMPd: Darwin version uses a Thumb2 branch (no Thumb1 tail calls
+    // on Darwin), so it's in ARMInstrThumb2.td.
     def tTAILJMPr : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
                      Size4Bytes, IIC_Br,
                    []>, Requires<[IsThumb, IsDarwin]>;
@@ -586,9 +585,10 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // Non-Darwin versions (the difference is R9).
   let Defs = [R0, R1, R2, R3, R12, QQQQ0, QQQQ2, QQQQ3, PC],
       Uses = [SP] in {
-    def tTAILJMPdND : tPseudoInst<(outs), (ins brtarget:$dst, variable_ops),
-                   Size4Bytes, IIC_Br,
-                   []>, Requires<[IsThumb, IsNotDarwin]>;
+    def tTAILJMPdND : tPseudoExpand<(outs), (ins t_brtarget:$dst, variable_ops),
+                   Size4Bytes, IIC_Br, [],
+                   (tB t_brtarget:$dst)>,
+                 Requires<[IsThumb, IsNotDarwin]>;
     def tTAILJMPrND : tPseudoInst<(outs), (ins tcGPR:$dst, variable_ops),
                      Size4Bytes, IIC_Br,
                    []>, Requires<[IsThumb, IsNotDarwin]>;
