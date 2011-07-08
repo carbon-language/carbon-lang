@@ -1486,7 +1486,7 @@ def tPOP_RET : tPseudoExpand<(outs), (ins pred:$p, reglist:$regs, variable_ops),
 
 // Indirect branch using "mov pc, $Rm"
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
-  def tBRIND : tPseudoExpand<(outs), (ins GPR:$Rm),
+  def tBRIND : tPseudoExpand<(outs), (ins GPR:$Rm, pred:$p),
                   Size2Bytes, IIC_Br, [(brind GPR:$Rm)],
-                  (tMOVr PC, GPR:$Rm, (ops 14, zero_reg))>;
+                  (tMOVr PC, GPR:$Rm, pred:$p)>;
 }
