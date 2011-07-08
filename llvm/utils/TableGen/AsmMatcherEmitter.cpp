@@ -1153,7 +1153,7 @@ void AsmMatcherInfo::BuildInfo() {
     assert(FeatureNo < 32 && "Too many subtarget features!");
   }
 
-  StringRef CommentDelimiter = AsmParser->getValueAsString("CommentDelimiter");
+  std::string CommentDelimiter = AsmParser->getValueAsString("CommentDelimiter");
 
   // Parse the instructions; we need to do this first so that we can gather the
   // singleton register classes.
