@@ -308,7 +308,9 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts, Diagnostic &Diags) {
 
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(*TheTarget, SrcMgr, Ctx,
                                                   *Str.get(), *MAI));
-  OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(*Parser, *TM));
+  OwningPtr<TargetAsmParser> TAP(
+    TheTarget->createAsmParser(TM->getTargetTriple(), TM->getTargetCPU(),
+                               TM->getTargetFeatureString(), *Parser));
   if (!TAP) {
     Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
     return false;
