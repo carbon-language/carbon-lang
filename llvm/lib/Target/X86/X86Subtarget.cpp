@@ -258,11 +258,19 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
 #endif
     }
 
-    // If feature string is not empty, parse features string.
-    ParseSubtargetFeatures(CPUName, FS);
+    // Make sure 64-bit features are available in 64-bit mode. (But make sure
+    // SSE2 can be turned off explicitly.)
+    std::string FullFS = FS;
+    if (In64BitMode) {
+      if (!FullFS.empty())
+        FullFS = "+64bit,+sse2," + FullFS;
+      else
+        FullFS = "+64bit,+sse2";
+    }
 
-    // All X86-64 CPUs also have SSE2, however user might request no SSE via 
-    // -mattr, so don't force SSELevel here.
+    // If feature string is not empty, parse features string.
+    ParseSubtargetFeatures(CPUName, FullFS);
+
     if (HasAVX)
       X86SSELevel = NoMMXSSE;
   } else {
