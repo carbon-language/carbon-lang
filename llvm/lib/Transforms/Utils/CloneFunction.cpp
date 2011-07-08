@@ -342,18 +342,6 @@ ConstantFoldMappedInstruction(const Instruction *I) {
                                   Ops.size(), TD);
 }
 
-static DebugLoc
-UpdateInlinedAtInfo(const DebugLoc &InsnDL, const DebugLoc &TheCallDL,
-                    LLVMContext &Ctx) {
-  DebugLoc NewLoc = TheCallDL;
-  if (MDNode *IA = InsnDL.getInlinedAt(Ctx))
-    NewLoc = UpdateInlinedAtInfo(DebugLoc::getFromDILocation(IA), TheCallDL,
-                                 Ctx);
-
-  return DebugLoc::get(InsnDL.getLine(), InsnDL.getCol(),
-                       InsnDL.getScope(Ctx), NewLoc.getAsMDNode(Ctx));
-}
-
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
 /// except that it does some simple constant prop and DCE on the fly.  The
 /// effect of this is to copy significantly less code in cases where (for
