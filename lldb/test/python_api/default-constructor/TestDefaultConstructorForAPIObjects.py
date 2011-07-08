@@ -118,6 +118,7 @@ class APIDefaultConstructorTestCase(TestBase):
     @python_api_test
     def test_SBEvent(self):
         obj = lldb.SBEvent()
+        obj2 = lldb.SBEvent(0, "abc")
         if self.TraceOn():
             print obj
         self.assertFalse(obj)

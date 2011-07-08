@@ -102,7 +102,16 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 
 
 // typemap for an outgoing buffer
-// See also SBProcess::WriteMemory.
+// See also SBEvent::SBEvent(uint32_t event, const char *cstr, uint32_t cstr_len).
+%typemap(in) (const char *cstr, uint32_t cstr_len) {
+   if (!PyString_Check($input)) {
+       PyErr_SetString(PyExc_ValueError, "Expecting a string");
+       return NULL;
+   }
+   $1 = (char *) PyString_AsString($input);
+   $2 = PyString_Size($input);
+}
+// And SBProcess::WriteMemory.
 %typemap(in) (const void *buf, size_t size) {
    if (!PyString_Check($input)) {
        PyErr_SetString(PyExc_ValueError, "Expecting a string");

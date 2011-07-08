@@ -14,6 +14,19 @@ class EventAPITestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
+    def test_listen_for_and_print_event_with_dsym(self):
+        """Exercise SBEvent API."""
+        self.buildDsym()
+        self.do_listen_for_and_print_event()
+
+    @python_api_test
+    def test_listen_for_and_print_event_with_dwarf(self):
+        """Exercise SBEvent API."""
+        self.buildDwarf()
+        self.do_listen_for_and_print_event()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
     def test_wait_for_event_with_dsym(self):
         """Exercise SBListener.WaitForEvent() API."""
         self.buildDsym()
@@ -43,6 +56,78 @@ class EventAPITestCase(TestBase):
         TestBase.setUp(self)
         # Find the line number to of function 'c'.
         self.line = line_number('main.c', '// Find the line number of function "c" here.')
+
+    def do_listen_for_and_print_event(self):
+        """Create a listener and use SBEvent API to print the events received."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        # Now create a breakpoint on main.c by name 'c'.
+        breakpoint = target.BreakpointCreateByName('c', 'a.out')
+
+        # Now launch the process, and do not stop at the entry point.
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
+                        PROCESS_STOPPED)
+
+        # Get a handle on the process's broadcaster.
+        broadcaster = process.GetBroadcaster()
+
+        # Create an empty event object.
+        event = lldb.SBEvent()
+
+        # Create a listener object and register with the broadcaster.
+        listener = lldb.SBListener("my listener")
+        rc = broadcaster.AddListener(listener, lldb.SBProcess.eBroadcastBitStateChanged)
+        self.assertTrue(rc, "AddListener successfully retruns")
+
+        traceOn = self.TraceOn()
+        if traceOn:
+            lldbutil.print_stacktraces(process)
+
+        # Create MyListeningThread class to wait for any kind of event.
+        import threading
+        class MyListeningThread(threading.Thread):
+            def run(self):
+                count = 0
+                # Let's only try at most 4 times to retrieve any kind of event.
+                # After that, the thread exits.
+                while not count > 3:
+                    if traceOn:
+                        print "Try wait for event..."
+                    if listener.WaitForEventForBroadcasterWithType(5,
+                                                                   broadcaster,
+                                                                   lldb.SBProcess.eBroadcastBitStateChanged,
+                                                                   event):
+                        if traceOn:
+                            desc = lldbutil.get_description(event)
+                            print "Event description:", desc
+                            print "Event data flavor:", event.GetDataFlavor()
+                            print "Process state:", lldbutil.state_type_to_str(process.GetState())
+                            print
+                    else:
+                        if traceOn:
+                            print "timeout occurred waiting for event..."
+                    count = count + 1
+                return
+
+        # Let's start the listening thread to retrieve the events.
+        my_thread = MyListeningThread()
+        my_thread.start()
+
+        # Use Python API to continue the process.  The listening thread should be
+        # able to receive the state changed events.
+        process.Continue()
+
+        # Use Python API to kill the process.  The listening thread should be
+        # able to receive the state changed event, too.
+        process.Kill()
+
+        # Wait until the 'MyListeningThread' terminates.
+        my_thread.join()
 
     def do_wait_for_event(self):
         """Get the listener associated with the debugger and exercise WaitForEvent API."""
@@ -84,6 +169,8 @@ class EventAPITestCase(TestBase):
                 while not count > 3:
                     if listener.WaitForEvent(5, event):
                         #print "Got a valid event:", event
+                        #print "Event data flavor:", event.GetDataFlavor()
+                        #print "Event type:", lldbutil.state_type_to_str(event.GetType())
                         return
                     count = count + 1
                     print "Timeout: listener.WaitForEvent"

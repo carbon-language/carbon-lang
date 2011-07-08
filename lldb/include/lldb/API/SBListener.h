@@ -16,6 +16,9 @@ namespace lldb {
 
 class SBListener
 {
+#ifdef SWIG
+    %feature("autodoc", "1");
+#endif
 public:
     SBListener ();
 
