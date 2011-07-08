@@ -1637,7 +1637,11 @@ ARMTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     return false;
 
   // FIXME: Completely disable sibcall for Thumb1 since Thumb1RegisterInfo::
-  // emitEpilogue is not ready for them.
+  // emitEpilogue is not ready for them. Thumb tail calls also use t2B, as
+  // the Thumb1 16-bit unconditional branch doesn't have sufficient relocation
+  // support in the assembler and linker to be used. This would need to be
+  // fixed to fully support tail calls in Thumb1.
+  //
   // Doing this is tricky, since the LDM/POP instruction on Thumb doesn't take
   // LR.  This means if we need to reload LR, it takes an extra instructions,
   // which outweighs the value of the tail call; but here we don't know yet
