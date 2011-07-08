@@ -59,6 +59,14 @@ class GlobalVariablesTestCase(TestBase):
         # 'frame variable' should support address-of operator.
         self.runCmd("frame variable &g_file_global_int")
 
+        # Exercise the 'target variable' command to display globals in a.c file.
+        self.expect("target variable g_a", VARIABLES_DISPLAYED_CORRECTLY,
+                    substrs = ['g_a', '123'])
+        self.expect("target variable g_marked_spot.x", VARIABLES_DISPLAYED_CORRECTLY,
+                    substrs = ['g_marked_spot.x', '20'])
+        self.expect("target variable g_marked_spot.y", VARIABLES_DISPLAYED_CORRECTLY,
+                    substrs = ['g_marked_spot.y', '21'])
+
 
 if __name__ == '__main__':
     import atexit
