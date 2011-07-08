@@ -91,6 +91,7 @@ namespace {
     uint32_t nextValueNumber;
 
     Expression create_expression(Instruction* I);
+    Expression create_extractvalue_expression(ExtractValueInst* EI);
     uint32_t lookup_or_add_call(CallInst* C);
   public:
     ValueTable() : nextValueNumber(1) { }
@@ -141,7 +142,6 @@ template <> struct DenseMapInfo<Expression> {
 //                     ValueTable Internal Functions
 //===----------------------------------------------------------------------===//
 
-
 Expression ValueTable::create_expression(Instruction *I) {
   Expression e;
   e.type = I->getType();
@@ -150,18 +150,63 @@ Expression ValueTable::create_expression(Instruction *I) {
        OI != OE; ++OI)
     e.varargs.push_back(lookup_or_add(*OI));
   
-  if (CmpInst *C = dyn_cast<CmpInst>(I))
+  if (CmpInst *C = dyn_cast<CmpInst>(I)) {
     e.opcode = (C->getOpcode() << 8) | C->getPredicate();
-  else if (ExtractValueInst *E = dyn_cast<ExtractValueInst>(I)) {
-    for (ExtractValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
-         II != IE; ++II)
-      e.varargs.push_back(*II);
   } else if (InsertValueInst *E = dyn_cast<InsertValueInst>(I)) {
     for (InsertValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
          II != IE; ++II)
       e.varargs.push_back(*II);
   }
   
+  return e;
+}
+
+Expression ValueTable::create_extractvalue_expression(ExtractValueInst *EI) {
+  assert(EI != 0 && "Not an ExtractValueInst?");
+  Expression e;
+  e.type = EI->getType();
+  e.opcode = 0;
+
+  IntrinsicInst *I = dyn_cast<IntrinsicInst>(EI->getAggregateOperand());
+  if (I != 0 && EI->getNumIndices() == 1 && *EI->idx_begin() == 0 ) {
+    // EI might be an extract from one of our recognised intrinsics. If it
+    // is we'll synthesize a semantically equivalent expression instead on
+    // an extract value expression.
+    switch (I->getIntrinsicID()) {
+      case Intrinsic::uadd_with_overflow:
+        e.opcode = Instruction::Add;
+        break;
+      case Intrinsic::usub_with_overflow:
+        e.opcode = Instruction::Sub;
+        break;
+      case Intrinsic::umul_with_overflow:
+        e.opcode = Instruction::Mul;
+        break;
+      default:
+        break;
+    }
+
+    if (e.opcode != 0) {
+      // Intrinsic recognized. Grab its args to finish building the expression.
+      assert(I->getNumArgOperands() == 2 &&
+             "Expect two args for recognised intrinsics.");
+      e.varargs.push_back(lookup_or_add(I->getArgOperand(0)));
+      e.varargs.push_back(lookup_or_add(I->getArgOperand(1)));
+      return e;
+    }
+  }
+
+  // Not a recognised intrinsic. Fall back to producing an extract value
+  // expression.
+  e.opcode = EI->getOpcode();
+  for (Instruction::op_iterator OI = EI->op_begin(), OE = EI->op_end();
+       OI != OE; ++OI)
+    e.varargs.push_back(lookup_or_add(*OI));
+
+  for (ExtractValueInst::idx_iterator II = EI->idx_begin(), IE = EI->idx_end();
+         II != IE; ++II)
+    e.varargs.push_back(*II);
+
   return e;
 }
 
@@ -336,10 +381,12 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
     case Instruction::ExtractElement:
     case Instruction::InsertElement:
     case Instruction::ShuffleVector:
-    case Instruction::ExtractValue:
     case Instruction::InsertValue:
     case Instruction::GetElementPtr:
       exp = create_expression(I);
+      break;
+    case Instruction::ExtractValue:
+      exp = create_extractvalue_expression(cast<ExtractValueInst>(I));
       break;
     default:
       valueNumbering[V] = nextValueNumber;
