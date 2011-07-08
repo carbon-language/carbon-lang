@@ -52,7 +52,9 @@ def char_to_str_xform(line):
 #
 # The one-liner docstring also needs char_to_str transformation, btw.
 #
-one_liner_docstring_pattern = re.compile('^        """.*"""$')
+TWO_SPACES = ' ' * 2
+EIGHT_SPACES = ' ' * 8
+one_liner_docstring_pattern = re.compile('^(%s|%s)""".*"""$' % (TWO_SPACES, EIGHT_SPACES))
 
 #
 # lldb_iter() should appear before our first SB* class definition.
