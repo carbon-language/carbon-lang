@@ -35,7 +35,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   int Offset = 0;
 
   switch(MO.getTargetFlags()) {
-  case MipsII::MO_NO_FLAG:  Kind = MipsMCSymbolRefExpr::VK_Mips_None; break;
+  default:                  Kind = MipsMCSymbolRefExpr::VK_Mips_None; break;
   case MipsII::MO_GPREL:    Kind = MipsMCSymbolRefExpr::VK_Mips_GPREL; break;
   case MipsII::MO_GOT_CALL: Kind = MipsMCSymbolRefExpr::VK_Mips_GOT_CALL; break;
   case MipsII::MO_GOT:      Kind = MipsMCSymbolRefExpr::VK_Mips_GOT; break;
