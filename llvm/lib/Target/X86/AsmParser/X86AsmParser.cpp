@@ -37,7 +37,7 @@ struct X86Operand;
 
 class X86ATTAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
-  MCSubtargetInfo *STI;
+  const MCSubtargetInfo *STI;
 
 private:
   MCAsmParser &getParser() const { return Parser; }
@@ -77,9 +77,9 @@ private:
   /// }
 
 public:
-  X86ATTAsmParser(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
+  X86ATTAsmParser(StringRef TT, StringRef CPU, StringRef FS,
                   MCAsmParser &parser)
-    : TargetAsmParser(T), Parser(parser) {
+    : TargetAsmParser(), Parser(parser) {
     STI = X86_MC::createX86MCSubtargetInfo(TT, CPU, FS);
 
     // Initialize the set of available features.

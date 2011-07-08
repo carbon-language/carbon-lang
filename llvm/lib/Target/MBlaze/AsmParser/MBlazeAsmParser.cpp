@@ -63,9 +63,9 @@ class MBlazeAsmParser : public TargetAsmParser {
 
 
 public:
-  MBlazeAsmParser(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
+  MBlazeAsmParser(StringRef TT, StringRef CPU, StringRef FS,
                   MCAsmParser &_Parser)
-    : TargetAsmParser(T), Parser(_Parser) {}
+    : TargetAsmParser(), Parser(_Parser) {}
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);

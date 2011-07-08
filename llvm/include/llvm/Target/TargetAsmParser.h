@@ -15,7 +15,6 @@
 namespace llvm {
 class MCStreamer;
 class StringRef;
-class Target;
 class SMLoc;
 class AsmToken;
 class MCParsedAsmOperand;
@@ -26,23 +25,19 @@ class TargetAsmParser : public MCAsmParserExtension {
   TargetAsmParser(const TargetAsmParser &);   // DO NOT IMPLEMENT
   void operator=(const TargetAsmParser &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetAsmParser(const Target &);
+  TargetAsmParser();
  
-  /// The Target that this machine was created for.
-  const Target &TheTarget;
-
-  /// The current set of available features.
+  /// AvailableFeatures - The current set of available features.
   unsigned AvailableFeatures;
 
 public:
   virtual ~TargetAsmParser();
 
-  const Target &getTarget() const { return TheTarget; }
-
   unsigned getAvailableFeatures() const { return AvailableFeatures; }
   void setAvailableFeatures(unsigned Value) { AvailableFeatures = Value; }
 
-  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) = 0;
+  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
+                             SMLoc &EndLoc) = 0;
 
   /// ParseInstruction - Parse one assembly instruction.
   ///

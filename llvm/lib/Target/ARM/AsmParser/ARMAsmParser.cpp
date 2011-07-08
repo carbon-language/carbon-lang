@@ -41,7 +41,7 @@ class ARMOperand;
 
 class ARMAsmParser : public TargetAsmParser {
   MCAsmParser &Parser;
-  MCSubtargetInfo *STI;
+  const MCSubtargetInfo *STI;
 
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
@@ -127,9 +127,8 @@ class ARMAsmParser : public TargetAsmParser {
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
 
 public:
-  ARMAsmParser(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
-               MCAsmParser &_Parser)
-    : TargetAsmParser(T), Parser(_Parser) {
+  ARMAsmParser(StringRef TT, StringRef CPU, StringRef FS, MCAsmParser &_Parser)
+    : TargetAsmParser(), Parser(_Parser) {
     STI = ARM_MC::createARMMCSubtargetInfo(TT, CPU, FS);
 
     MCAsmParserExtension::Initialize(_Parser);
