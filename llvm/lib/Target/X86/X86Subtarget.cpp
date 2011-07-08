@@ -225,7 +225,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, 
-                           unsigned StackAlignOverride)
+                           unsigned StackAlignOverride, bool is64Bit)
   : X86GenSubtargetInfo(TT, CPU, FS)
   , PICStyle(PICStyles::None)
   , X86SSELevel(NoMMXSSE)
@@ -246,20 +246,9 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   // FIXME: this is a known good value for Yonah. How about others?
   , MaxInlineSizeThreshold(128)
   , TargetTriple(TT)
-  , In64BitMode(false) {
-  // Insert the architecture feature derived from the target triple into the
-  // feature string. This is important for setting features that are implied
-  // based on the architecture version.
-  std::string ArchFS = X86_MC::ParseX86Triple(TT);
-  if (!FS.empty()) {
-    if (!ArchFS.empty())
-      ArchFS = ArchFS + "," + FS;
-    else
-      ArchFS = FS;
-  }
-
+  , In64BitMode(is64Bit) {
   // Determine default and user specified characteristics
-  if (!ArchFS.empty()) {
+  if (!FS.empty() || !CPU.empty()) {
     std::string CPUName = CPU;
     if (CPUName.empty()) {
 #if defined (__x86_64__) || defined(__i386__)
@@ -270,7 +259,8 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
     }
 
     // If feature string is not empty, parse features string.
-    ParseSubtargetFeatures(CPUName, ArchFS);
+    ParseSubtargetFeatures(CPUName, FS);
+
     // All X86-64 CPUs also have SSE2, however user might request no SSE via 
     // -mattr, so don't force SSELevel here.
     if (HasAVX)
@@ -278,9 +268,6 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   } else {
     // Otherwise, use CPUID to auto-detect feature set.
     AutoDetectSubtargetFeatures();
-
-    // If CPU is 64-bit capable, default to 64-bit mode if not specified.
-    In64BitMode = HasX86_64;
 
     // Make sure SSE2 is enabled; it is available on all X86-64 CPUs.
     if (In64BitMode && !HasAVX && X86SSELevel < SSE2)
