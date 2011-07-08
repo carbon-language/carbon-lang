@@ -1366,6 +1366,412 @@ ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExp
     }
 }
 
+lldb::ValueObjectSP
+ValueObject::GetValueForExpressionPath(const char* expression,
+                                       const char** first_unparsed,
+                                       ExpressionPathScanEndReason* reason_to_stop,
+                                       ExpressionPathEndResultType* final_value_type,
+                                       const GetValueForExpressionPathOptions& options,
+                                       ExpressionPathAftermath* final_task_on_target)
+{
+    
+    const char* dummy_first_unparsed;
+    ExpressionPathScanEndReason dummy_reason_to_stop;
+    ExpressionPathEndResultType dummy_final_value_type;
+    ExpressionPathAftermath dummy_final_task_on_target = ValueObject::eNothing;
+    
+    ValueObjectSP ret_val = GetValueForExpressionPath_Impl(expression,
+                                                           first_unparsed ? first_unparsed : &dummy_first_unparsed,
+                                                           reason_to_stop ? reason_to_stop : &dummy_reason_to_stop,
+                                                           final_value_type ? final_value_type : &dummy_final_value_type,
+                                                           options,
+                                                           final_task_on_target ? final_task_on_target : &dummy_final_task_on_target);
+    
+    if (!final_task_on_target || *final_task_on_target == ValueObject::eNothing)
+    {
+        return ret_val;
+    }
+    if (ret_val.get() && *final_value_type == ePlain) // I can only deref and takeaddress of plain objects
+    {
+        if (*final_task_on_target == ValueObject::eDereference)
+        {
+            Error error;
+            ValueObjectSP final_value = ret_val->Dereference(error);
+            if (error.Fail() || !final_value.get())
+            {
+                *reason_to_stop = ValueObject::eDereferencingFailed;
+                *final_value_type = ValueObject::eInvalid;
+                return ValueObjectSP();
+            }
+            else
+            {
+                *final_task_on_target = ValueObject::eNothing;
+                return final_value;
+            }
+        }
+        if (*final_task_on_target == ValueObject::eTakeAddress)
+        {
+            Error error;
+            ValueObjectSP final_value = ret_val->AddressOf(error);
+            if (error.Fail() || !final_value.get())
+            {
+                *reason_to_stop = ValueObject::eTakingAddressFailed;
+                *final_value_type = ValueObject::eInvalid;
+                return ValueObjectSP();
+            }
+            else
+            {
+                *final_task_on_target = ValueObject::eNothing;
+                return final_value;
+            }
+        }
+    }
+    return ret_val; // final_task_on_target will still have its original value, so you know I did not do it
+}
+
+lldb::ValueObjectSP
+ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
+                                            const char** first_unparsed,
+                                            ExpressionPathScanEndReason* reason_to_stop,
+                                            ExpressionPathEndResultType* final_result,
+                                            const GetValueForExpressionPathOptions& options,
+                                            ExpressionPathAftermath* what_next)
+{
+    ValueObjectSP root = GetSP();
+    
+    if (!root.get())
+        return ValueObjectSP();
+    
+    *first_unparsed = expression_cstr;
+    
+    while (true)
+    {
+        
+        const char* expression_cstr = *first_unparsed; // hide the top level expression_cstr
+        
+        lldb::clang_type_t root_clang_type = root->GetClangType();
+        
+        if (!expression_cstr || *expression_cstr == '\0')
+        {
+            *reason_to_stop = ValueObject::eEndOfString;
+            return root;
+        }
+        
+        switch (*expression_cstr)
+        {
+            case '-':
+            {
+                if (options.m_check_dot_vs_arrow_syntax &&
+                    !ClangASTContext::IsPointerType(root_clang_type)) // if you are trying to use -> on a non-pointer and I must catch the error
+                {
+                    *first_unparsed = expression_cstr;
+                    *reason_to_stop = ValueObject::eArrowInsteadOfDot;
+                    *final_result = ValueObject::eInvalid;
+                    return ValueObjectSP();
+                }
+                const uint32_t pointer_type_flags = ClangASTContext::GetTypeInfo (root_clang_type, NULL, NULL);
+                if ((pointer_type_flags & ClangASTContext::eTypeIsObjC) &&  // if yo are trying to extract an ObjC IVar when this is forbidden
+                    (pointer_type_flags & ClangASTContext::eTypeIsPointer) &&
+                    options.m_no_fragile_ivar)
+                {
+                    *first_unparsed = expression_cstr;
+                    *reason_to_stop = ValueObject::eFragileIVarNotAllowed;
+                    *final_result = ValueObject::eInvalid;
+                    return ValueObjectSP();
+                }
+                if (expression_cstr[1] != '>')
+                {
+                    *first_unparsed = expression_cstr;
+                    *reason_to_stop = ValueObject::eUnexpectedSymbol;
+                    *final_result = ValueObject::eInvalid;
+                    return ValueObjectSP();
+                }
+                expression_cstr++; // skip the -
+            }
+            case '.': // or fallthrough from ->
+            {
+                if (options.m_check_dot_vs_arrow_syntax && *expression_cstr == '.' &&
+                    ClangASTContext::IsPointerType(root_clang_type)) // if you are trying to use . on a pointer and I must catch the error
+                {
+                    *first_unparsed = expression_cstr;
+                    *reason_to_stop = ValueObject::eDotInsteadOfArrow;
+                    *final_result = ValueObject::eInvalid;
+                    return ValueObjectSP();
+                }
+                expression_cstr++; // skip .
+                const char *next_separator = strpbrk(expression_cstr+1,"-.[");
+                ConstString child_name;
+                if (!next_separator) // if no other separator just expand this last layer
+                {
+                    child_name.SetCString (expression_cstr);
+                    root = root->GetChildMemberWithName(child_name, true);
+                    if (root.get()) // we know we are done, so just return
+                    {
+                        *first_unparsed = '\0';
+                        *reason_to_stop = ValueObject::eEndOfString;
+                        *final_result = ValueObject::ePlain;
+                        return root;
+                    }
+                    else
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eNoSuchChild;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
+                    }
+                }
+                else // other layers do expand
+                {
+                    child_name.SetCStringWithLength(expression_cstr, next_separator - expression_cstr);
+                    root = root->GetChildMemberWithName(child_name, true);
+                    if (root.get()) // store the new root and move on
+                    {
+                        *first_unparsed = next_separator;
+                        *final_result = ValueObject::ePlain;
+                        continue;
+                    }
+                    else
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eNoSuchChild;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
+                    }
+                }
+                break;
+            }
+            case '[':
+            {
+                if (!ClangASTContext::IsArrayType(root_clang_type) && !ClangASTContext::IsPointerType(root_clang_type)) // if this is not a T[] nor a T*
+                {
+                    if (!ClangASTContext::IsScalarType(root_clang_type)) // if this is not even a scalar, this syntax is just plain wrong!
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eRangeOperatorInvalid;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
+                    }
+                    else if (!options.m_allow_bitfields_syntax) // if this is a scalar, check that we can expand bitfields
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eRangeOperatorNotAllowed;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
+                    }
+                }
+                if (*(expression_cstr+1) == ']') // if this is an unbounded range it only works for arrays
+                {
+                    if (!ClangASTContext::IsArrayType(root_clang_type))
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eEmptyRangeNotAllowed;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
+                    }
+                    else // even if something follows, we cannot expand unbounded ranges, just let the caller do it
+                    {
+                        *first_unparsed = expression_cstr+2;
+                        *reason_to_stop = ValueObject::eArrayRangeOperatorMet;
+                        *final_result = ValueObject::eUnboundedRange;
+                        return root;
+                    }
+                }
+                const char *separator_position = ::strchr(expression_cstr+1,'-');
+                const char *close_bracket_position = ::strchr(expression_cstr+1,']');
+                if (!close_bracket_position) // if there is no ], this is a syntax error
+                {
+                    *first_unparsed = expression_cstr;
+                    *reason_to_stop = ValueObject::eUnexpectedSymbol;
+                    *final_result = ValueObject::eInvalid;
+                    return ValueObjectSP();
+                }
+                if (!separator_position || separator_position > close_bracket_position) // if no separator, this is either [] or [N]
+                {
+                    char *end = NULL;
+                    unsigned long index = ::strtoul (expression_cstr+1, &end, 0);
+                    if (!end || end != close_bracket_position) // if something weird is in our way return an error
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
+                    }
+                    if (end - expression_cstr == 1) // if this is [], only return a valid value for arrays
+                    {
+                        if (ClangASTContext::IsArrayType(root_clang_type))
+                        {
+                            *first_unparsed = expression_cstr+2;
+                            *reason_to_stop = ValueObject::eArrayRangeOperatorMet;
+                            *final_result = ValueObject::eUnboundedRange;
+                            return root;
+                        }
+                        else
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eEmptyRangeNotAllowed;
+                            *final_result = ValueObject::eInvalid;
+                            return ValueObjectSP();
+                        }
+                    }
+                    // from here on we do have a valid index
+                    if (ClangASTContext::IsArrayType(root_clang_type))
+                    {
+                        root = root->GetChildAtIndex(index, true);
+                        if (!root.get())
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eNoSuchChild;
+                            *final_result = ValueObject::eInvalid;
+                            return ValueObjectSP();
+                        }
+                        else
+                        {
+                            *first_unparsed = end+1; // skip ]
+                            *final_result = ValueObject::ePlain;
+                            continue;
+                        }
+                    }
+                    else if (ClangASTContext::IsPointerType(root_clang_type))
+                    {
+                        if (*what_next == ValueObject::eDereference &&  // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
+                            ClangASTContext::IsScalarType(clang::QualType::getFromOpaquePtr(root_clang_type).getTypePtr()->getPointeeType().getAsOpaquePtr()))
+                        {
+                            Error error;
+                            root = root->Dereference(error);
+                            if (error.Fail() || !root.get())
+                            {
+                                *first_unparsed = expression_cstr;
+                                *reason_to_stop = ValueObject::eDereferencingFailed;
+                                *final_result = ValueObject::eInvalid;
+                                return ValueObjectSP();
+                            }
+                            else
+                            {
+                                *what_next = eNothing;
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            root = root->GetSyntheticArrayMemberFromPointer(index, true);
+                            if (!root.get())
+                            {
+                                *first_unparsed = expression_cstr;
+                                *reason_to_stop = ValueObject::eNoSuchChild;
+                                *final_result = ValueObject::eInvalid;
+                                return ValueObjectSP();
+                            }
+                            else
+                            {
+                                *first_unparsed = end+1; // skip ]
+                                *final_result = ValueObject::ePlain;
+                                continue;
+                            }
+                        }
+                    }
+                    else /*if (ClangASTContext::IsScalarType(root_clang_type))*/
+                    {
+                        root = root->GetSyntheticBitFieldChild(index, index, true);
+                        if (!root.get())
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eNoSuchChild;
+                            *final_result = ValueObject::eInvalid;
+                            return ValueObjectSP();
+                        }
+                        else // we do not know how to expand members of bitfields, so we just return and let the caller do any further processing
+                        {
+                            *first_unparsed = end+1; // skip ]
+                            *reason_to_stop = ValueObject::eBitfieldRangeOperatorMet;
+                            *final_result = ValueObject::eBitfield;
+                            return root;
+                        }
+                    }
+                }
+                else // we have a low and a high index
+                {
+                    char *end = NULL;
+                    unsigned long index_lower = ::strtoul (expression_cstr+1, &end, 0);
+                    if (!end || end != separator_position) // if something weird is in our way return an error
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
+                    }
+                    unsigned long index_higher = ::strtoul (separator_position+1, &end, 0);
+                    if (!end || end != close_bracket_position) // if something weird is in our way return an error
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eUnexpectedSymbol;
+                        *final_result = ValueObject::eInvalid;
+                        return ValueObjectSP();
+                    }
+                    if (index_lower > index_higher) // swap indices if required
+                    {
+                        unsigned long temp = index_lower;
+                        index_lower = index_higher;
+                        index_higher = temp;
+                    }
+                    if (ClangASTContext::IsScalarType(root_clang_type)) // expansion only works for scalars
+                    {
+                        root = root->GetSyntheticBitFieldChild(index_lower, index_higher, true);
+                        if (!root.get())
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eNoSuchChild;
+                            *final_result = ValueObject::eInvalid;
+                            return ValueObjectSP();
+                        }
+                        else
+                        {
+                            *first_unparsed = end+1; // skip ]
+                            *reason_to_stop = ValueObject::eBitfieldRangeOperatorMet;
+                            *final_result = ValueObject::eBitfield;
+                            return root;
+                        }
+                    }
+                    else if (ClangASTContext::IsPointerType(root_clang_type) && // if this is a ptr-to-scalar, I am accessing it by index and I would have deref'ed anyway, then do it now and use this as a bitfield
+                             *what_next == ValueObject::eDereference &&
+                             ClangASTContext::IsScalarType(clang::QualType::getFromOpaquePtr(root_clang_type).getTypePtr()->getPointeeType().getAsOpaquePtr()))
+                    {
+                        Error error;
+                        root = root->Dereference(error);
+                        if (error.Fail() || !root.get())
+                        {
+                            *first_unparsed = expression_cstr;
+                            *reason_to_stop = ValueObject::eDereferencingFailed;
+                            *final_result = ValueObject::eInvalid;
+                            return ValueObjectSP();
+                        }
+                        else
+                        {
+                            *what_next = ValueObject::eNothing;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        *first_unparsed = expression_cstr;
+                        *reason_to_stop = ValueObject::eArrayRangeOperatorMet;
+                        *final_result = ValueObject::eBoundedRange;
+                        return root;
+                    }
+                }
+                break;
+            }
+            default: // some non-separator is in the way
+            {
+                *first_unparsed = expression_cstr;
+                *reason_to_stop = ValueObject::eUnexpectedSymbol;
+                *final_result = ValueObject::eInvalid;
+                return ValueObjectSP();
+                break;
+            }
+        }
+    }
+}
+
 void
 ValueObject::DumpValueObject 
 (

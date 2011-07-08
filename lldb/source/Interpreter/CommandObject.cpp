@@ -469,9 +469,9 @@ CommandObject::GetArgumentHelp (Stream &str, CommandArgumentType arg_type, Comma
     StreamString name_str;
     name_str.Printf ("<%s>", entry->arg_name);
 
-    if (entry->help_function.help_callback)
+    if (entry->help_function)
     {
-        const char* help_text = (*entry->help_function.help_callback)();
+        const char* help_text = entry->help_function();
         if (!entry->help_function.self_formatting)
         {
             interpreter.OutputFormattedHelpText (str, name_str.GetData(), "--", help_text,

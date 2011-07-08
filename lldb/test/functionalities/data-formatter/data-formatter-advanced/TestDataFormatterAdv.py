@@ -159,6 +159,19 @@ class DataFormatterTestCase(TestBase):
             substrs = ['0x',
                        '7'])
 
+        self.runCmd("type summary clear")
+
+        self.runCmd("type summary add -f \"${*var[].x[0-3]%hex} is a bitfield on a set of integers\" -x \"SimpleWithPointers \[[0-9]\]\"")
+        self.runCmd("type summary add -f \"${*var.sp.x[0-2]} are low bits of integer ${*var.sp.x}. If I pretend it is an array I get ${var.sp.x[0-5]}\" Couple")
+
+        self.expect("frame variable couple",
+            substrs = ['1 are low bits of integer 9.',
+                       'If I pretend it is an array I get [9,'])
+
+        self.expect("frame variable sparray",
+            substrs = ['[0x0000000f,0x0000000c,0x00000009]'])
+        
+
 
 if __name__ == '__main__':
     import atexit

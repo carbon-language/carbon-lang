@@ -41,6 +41,38 @@ struct IWrapPointers
 	IWrapPointers() : int_pointer(new int(4)), float_pointer(new float(1.111)) {}
 };
 
+struct Simple
+{
+	int x;
+	float y;
+	char z;
+	Simple(int X, float Y, char Z) :
+	x(X),
+	y(Y),
+	z(Z)
+	{}
+};
+
+struct SimpleWithPointers
+{
+	int *x;
+	float *y;
+	char *z;
+	SimpleWithPointers(int X, float Y, char Z) :
+	x(new int (X)),
+	y(new float (Y)),
+	z(new char (Z))
+	{}
+};
+
+struct Couple
+{
+	SimpleWithPointers sp;
+	Simple* s;
+	Couple(int X, float Y, char Z) : sp(X,Y,Z),
+	s(new Simple(X,Y,Z)) {}
+};
+
 int main (int argc, const char * argv[])
 {
     
@@ -66,6 +98,13 @@ int main (int argc, const char * argv[])
     int* pointer = &cool_array[4].integer;
     
     IWrapPointers *wrap_pointer = &wrapper;
-        
+    
+    Couple couple(9,9.99,'X');
+	
+	SimpleWithPointers sparray[] = 
+        {SimpleWithPointers(-1,-2,'3'),
+        SimpleWithPointers(-4,-5,'6'),
+        SimpleWithPointers(-7,-8,'9')};
+    
     return 0; // Set break point at this line.
 }

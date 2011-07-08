@@ -99,6 +99,12 @@ class DataFormatterTestCase(TestBase):
 
         self.expect("frame variable iAmSomewhere",
             substrs = ['y=0x'])
+        
+        self.runCmd("type summary add -f \"y=${var.y},x=${var.x}\" Point")
+        
+        self.expect("frame variable iAmSomewhere",
+                    substrs = ['y=6',
+                               'x=4'])
 
         self.runCmd("type summary add -f \"hello\" Point -e")
 

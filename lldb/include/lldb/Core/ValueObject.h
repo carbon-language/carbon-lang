@@ -73,9 +73,110 @@ public:
     
     enum ValueObjectRepresentationStyle
     {
-        eDisplayValue,
+        eDisplayValue = 1,
         eDisplaySummary,
         eDisplayLanguageSpecific
+    };
+    
+    enum ExpressionPathScanEndReason
+    {
+        eEndOfString = 1,           // out of data to parse
+        eNoSuchChild,               // child element not found
+        eEmptyRangeNotAllowed,      // [] only allowed for arrays
+        eDotInsteadOfArrow,         // . used when -> should be used
+        eArrowInsteadOfDot,         // -> used when . should be used
+        eFragileIVarNotAllowed,     // ObjC ivar expansion not allowed
+        eRangeOperatorNotAllowed,   // [] not allowed by options
+        eRangeOperatorInvalid,      // [] not valid on objects other than scalars, pointers or arrays
+        eArrayRangeOperatorMet,     // [] is good for arrays, but I cannot parse it
+        eBitfieldRangeOperatorMet,  // [] is good for bitfields, but I cannot parse after it
+        eUnexpectedSymbol,          // something is malformed in the expression
+        eTakingAddressFailed,       // impossible to apply & operator
+        eDereferencingFailed,       // impossible to apply * operator
+        eUnknown = 0xFFFF
+    };
+    
+    enum ExpressionPathEndResultType
+    {
+        ePlain = 1,                 // anything but...
+        eBitfield,                  // a bitfield
+        eBoundedRange,              // a range [low-high]
+        eUnboundedRange,            // a range []
+        eInvalid = 0xFFFF
+    };
+    
+    enum ExpressionPathAftermath
+    {
+        eNothing = 1,               // just return it
+        eDereference,               // dereference the target
+        eTakeAddress                // take target's address
+    };
+    
+    struct GetValueForExpressionPathOptions
+    {
+        bool m_check_dot_vs_arrow_syntax;
+        bool m_no_fragile_ivar;
+        bool m_allow_bitfields_syntax;
+        
+        GetValueForExpressionPathOptions(bool dot = false,
+                                         bool no_ivar = false,
+                                         bool bitfield = true) :
+        m_check_dot_vs_arrow_syntax(dot),
+        m_no_fragile_ivar(no_ivar),
+        m_allow_bitfields_syntax(bitfield)
+        {
+        }
+        
+        GetValueForExpressionPathOptions&
+        DoCheckDotVsArrowSyntax()
+        {
+            m_check_dot_vs_arrow_syntax = true;
+            return *this;
+        }
+        
+        GetValueForExpressionPathOptions&
+        DontCheckDotVsArrowSyntax()
+        {
+            m_check_dot_vs_arrow_syntax = false;
+            return *this;
+        }
+        
+        GetValueForExpressionPathOptions&
+        DoAllowFragileIVar()
+        {
+            m_no_fragile_ivar = false;
+            return *this;
+        }
+        
+        GetValueForExpressionPathOptions&
+        DontAllowFragileIVar()
+        {
+            m_no_fragile_ivar = true;
+            return *this;
+        }
+
+        GetValueForExpressionPathOptions&
+        DoAllowBitfieldSyntax()
+        {
+            m_allow_bitfields_syntax = true;
+            return *this;
+        }
+        
+        GetValueForExpressionPathOptions&
+        DontAllowBitfieldSyntax()
+        {
+            m_allow_bitfields_syntax = false;
+            return *this;
+        }
+        
+        static const GetValueForExpressionPathOptions
+        DefaultOptions()
+        {
+            static GetValueForExpressionPathOptions g_default_options;
+            
+            return g_default_options;
+        }
+
     };
 
     class EvaluationPoint 
@@ -279,6 +380,14 @@ public:
 
     virtual void
     GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExpressionPathFormat = eDereferencePointers);
+    
+    lldb::ValueObjectSP
+    GetValueForExpressionPath(const char* expression,
+                              const char** first_unparsed = NULL,
+                              ExpressionPathScanEndReason* reason_to_stop = NULL,
+                              ExpressionPathEndResultType* final_value_type = NULL,
+                              const GetValueForExpressionPathOptions& options = GetValueForExpressionPathOptions::DefaultOptions(),
+                              ExpressionPathAftermath* final_task_on_target = NULL);
     
     virtual bool
     IsInScope ()
@@ -636,6 +745,15 @@ private:
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------
+    
+    lldb::ValueObjectSP
+    GetValueForExpressionPath_Impl(const char* expression,
+                                   const char** first_unparsed,
+                                   ExpressionPathScanEndReason* reason_to_stop,
+                                   ExpressionPathEndResultType* final_value_type,
+                                   const GetValueForExpressionPathOptions& options,
+                                   ExpressionPathAftermath* final_task_on_target);
+    
     DISALLOW_COPY_AND_ASSIGN (ValueObject);
 
 };

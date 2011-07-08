@@ -694,7 +694,7 @@ TestPromptFormats (StackFrame *frame)
     }
 }
 
-// #define VERBOSE_FORMATPROMPT_OUTPUT
+//#define VERBOSE_FORMATPROMPT_OUTPUT
 #ifdef VERBOSE_FORMATPROMPT_OUTPUT
 #define IFERROR_PRINT_IT if (error.Fail()) \
 { \
@@ -832,35 +832,41 @@ static ValueObjectSP
 ExpandIndexedExpression(ValueObject* vobj,
                         uint32_t index,
                         StackFrame* frame,
-                        Error error)
+                        bool deref_pointer)
 {
-    ValueObjectSP item;
-    bool is_array = ClangASTContext::IsArrayType(vobj->GetClangType());
-
-    if (is_array)
-        return vobj->GetChildAtIndex(index, true);
+    const char* ptr_deref_format = "[%d]";
+    std::auto_ptr<char> ptr_deref_buffer(new char[10]);
+    ::sprintf(ptr_deref_buffer.get(), ptr_deref_format, index);
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT
+    printf("name to deref: %s\n",ptr_deref_buffer.get());
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+    const char* first_unparsed;
+    ValueObject::GetValueForExpressionPathOptions options;
+    ValueObject::ExpressionPathEndResultType final_value_type;
+    ValueObject::ExpressionPathScanEndReason reason_to_stop;
+    ValueObject::ExpressionPathAftermath what_next = (deref_pointer ? ValueObject::eDereference : ValueObject::eNothing);
+    ValueObjectSP item = vobj->GetValueForExpressionPath (ptr_deref_buffer.get(),
+                                                          &first_unparsed,
+                                                          &reason_to_stop,
+                                                          &final_value_type,
+                                                          options,
+                                                          &what_next);
+    if (!item)
+    {
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+        printf("ERROR: unparsed portion = %s, why stopping = %d,"
+               " final_value_type %d\n",
+               first_unparsed, reason_to_stop, final_value_type);
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+    }
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
     else
     {
-        const char* ptr_deref_format = "%s[%d]";
-        char* ptr_deref_buffer = new char[1024];
-        StreamString expr_path_string;
-        vobj->GetExpressionPath(expr_path_string, true, ValueObject::eHonorPointers);
-        const char* expr_path = expr_path_string.GetData();
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT
-        printf("name to deref in phase 0: %s\n",expr_path);
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
-        ::sprintf(ptr_deref_buffer, ptr_deref_format, expr_path, index);
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT
-        printf("name to deref in phase 1: %s\n",ptr_deref_buffer);
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
-        lldb::VariableSP var_sp;
-        item = frame->GetValueForVariableExpressionPath (ptr_deref_buffer,
-                                                         eNoDynamicValues, 
-                                                         0,
-                                                         var_sp,
-                                                         error);
-        delete ptr_deref_buffer;
+        printf("ALL RIGHT: unparsed portion = %s, why stopping = %d,"
+               " final_value_type %d\n",
+               first_unparsed, reason_to_stop, final_value_type);
     }
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
     return item;
 }
 
@@ -954,8 +960,9 @@ Debugger::FormatPrompt
                         const RegisterInfo *reg_info = NULL;
                         RegisterContext *reg_ctx = NULL;
                         bool do_deref_pointer = false;
-                        bool did_deref_pointer = true;
-
+                        ValueObject::ExpressionPathScanEndReason reason_to_stop;
+                        ValueObject::ExpressionPathEndResultType final_value_type;
+                        
                         // Each variable must set success to true below...
                         bool var_success = false;
                         switch (var_name_begin[0])
@@ -971,6 +978,10 @@ Debugger::FormatPrompt
 
                         case 'v':
                             {
+                                ValueObject::ExpressionPathAftermath what_next = (do_deref_pointer ?
+                                                                                  ValueObject::eDereference : ValueObject::eNothing);
+                                ValueObject::GetValueForExpressionPathOptions options;
+                                options.DontCheckDotVsArrowSyntax().DoAllowBitfieldSyntax().DoAllowFragileIVar();
                                 ValueObject::ValueObjectRepresentationStyle val_obj_display = ValueObject::eDisplaySummary;
                                 ValueObject* target = NULL;
                                 lldb::Format custom_format = eFormatInvalid;
@@ -980,6 +991,8 @@ Debugger::FormatPrompt
                                 int64_t index_lower = -1;
                                 int64_t index_higher = -1;
                                 bool is_array_range = false;
+                                const char* first_unparsed;
+
                                 if (!vobj) break;
                                 // simplest case ${var}, just print vobj's value
                                 if (::strncmp (var_name_begin, "var}", strlen("var}")) == 0)
@@ -1025,57 +1038,47 @@ Debugger::FormatPrompt
                                                         &index_higher);
                                                                     
                                     Error error;
-                                    target = ExpandExpressionPath (vobj,
-                                                                   exe_ctx->frame,
-                                                                   &do_deref_pointer,
-                                                                   var_name_begin,
-                                                                   var_name_final,
-                                                                   error).get();
-
-                                    if (error.Fail() || !target)
+                                                                        
+                                    std::auto_ptr<char> expr_path(new char[var_name_final-var_name_begin-1]);
+                                    ::memset(expr_path.get(), 0, var_name_final-var_name_begin-1);
+                                    memcpy(expr_path.get(), var_name_begin+3,var_name_final-var_name_begin-3);
+                                                                        
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                    printf("symbol to expand: %s\n",expr_path.get());
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                    
+                                    target = vobj->GetValueForExpressionPath(expr_path.get(),
+                                                                             &first_unparsed,
+                                                                             &reason_to_stop,
+                                                                             &final_value_type,
+                                                                             options,
+                                                                             &what_next).get();
+                                    
+                                    if (!target)
                                     {
 #ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
-                                        printf("ERROR: %s\n",error.AsCString("unknown"));
+                                        printf("ERROR: unparsed portion = %s, why stopping = %d,"
+                                               " final_value_type %d\n",
+                                               first_unparsed, reason_to_stop, final_value_type);
 #endif //VERBOSE_FORMATPROMPT_OUTPUT
-                                        if (var_name_final_if_array_range)
-                                        {
-                                            target = ExpandExpressionPath(vobj,
-                                                                          exe_ctx->frame,
-                                                                          &do_deref_pointer,
-                                                                          var_name_begin,
-                                                                          var_name_final_if_array_range,
-                                                                          error).get();
-                                        }
-                                        
-                                        if (var_name_final_if_array_range && (error.Fail() || !target))
-                                        {
-                                            bool fake_do_deref = false;
-                                            target = ExpandExpressionPath(vobj,
-                                                                          exe_ctx->frame,
-                                                                          &fake_do_deref,
-                                                                          var_name_begin,
-                                                                          var_name_final_if_array_range,
-                                                                          error).get();
-                                            
-                                            did_deref_pointer = false;
-                                            
-                                            if (target && ClangASTContext::IsArrayType(target->GetClangType()))
-                                                error.Clear();
-                                            else
-                                                error.SetErrorString("error in expression");
-                                        }
-                                        
-                                        IFERROR_PRINT_IT
-                                        else
-                                            is_array_range = true;
+                                        break;
                                     }
-                                    
-                                    if (did_deref_pointer)
-                                        do_deref_pointer = false; // I have honored the request to deref                               
-
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                    else
+                                    {
+                                        printf("ALL RIGHT: unparsed portion = %s, why stopping = %d,"
+                                               " final_value_type %d\n",
+                                               first_unparsed, reason_to_stop, final_value_type);
+                                    }
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
                                 }
                                 else
                                     break;
+                                
+                                is_array_range = (final_value_type == ValueObject::eBoundedRange ||
+                                                  final_value_type == ValueObject::eUnboundedRange);
+                                
+                                do_deref_pointer = (what_next == ValueObject::eDereference);
 
                                 if (do_deref_pointer && !is_array_range)
                                 {
@@ -1092,30 +1095,22 @@ Debugger::FormatPrompt
                                     var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
                                 else
                                 {
-                                    bool is_array = ClangASTContext::IsArrayType(vobj->GetClangType());
-                                    bool is_pointer = ClangASTContext::IsPointerType(vobj->GetClangType());
+                                    bool is_array = ClangASTContext::IsArrayType(target->GetClangType());
+                                    bool is_pointer = ClangASTContext::IsPointerType(target->GetClangType());
                                     
                                     if (!is_array && !is_pointer)
                                         break;
                                     
-                                    char* special_directions = NULL;
+                                    const char* special_directions = NULL;
+                                    StreamString special_directions_writer;
                                     if (close_bracket_position && (var_name_end-close_bracket_position > 1))
                                     {
-                                        int base_len = var_name_end-close_bracket_position;
-                                        special_directions = new char[7+base_len];
-                                        int star_offset = (do_deref_pointer ? 1 : 0);
-                                        special_directions[0] = '$';
-                                        special_directions[1] = '{';
-                                        if (do_deref_pointer)
-                                            special_directions[2] = '*';
-                                        special_directions[2+star_offset] = 'v';
-                                        special_directions[3+star_offset] = 'a';
-                                        special_directions[4+star_offset] = 'r';
-                                        memcpy(special_directions+5+star_offset, close_bracket_position+1, base_len);
-                                        special_directions[base_len+5+star_offset] = '\0';
-#ifdef VERBOSE_FORMATPROMPT_OUTPUT
-                                        printf("%s\n",special_directions);
-#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                        ConstString additional_data;
+                                        additional_data.SetCStringWithLength(close_bracket_position+1, var_name_end-close_bracket_position-1);
+                                        special_directions_writer.Printf("${%svar%s}",
+                                                                         do_deref_pointer ? "*" : "",
+                                                                         additional_data.GetCString());
+                                        special_directions = special_directions_writer.GetData();
                                     }
                                     
                                     // let us display items index_lower thru index_higher of this array
@@ -1127,13 +1122,24 @@ Debugger::FormatPrompt
                                     
                                     for (;index_lower<=index_higher;index_lower++)
                                     {
-                                        Error error;
-                                        ValueObject* item = ExpandIndexedExpression(vobj,
+                                        ValueObject* item = ExpandIndexedExpression(target,
                                                                                     index_lower,
                                                                                     exe_ctx->frame,
-                                                                                    error).get();
+                                                                                    false).get();
                                         
-                                        IFERROR_PRINT_IT
+                                        if (!item)
+                                        {
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                            printf("ERROR\n");
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                        }
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                        else
+                                        {
+                                            printf("special_directions: %s\n",special_directions);
+                                        }
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+
                                         if (!special_directions)
                                             var_success &= item->DumpPrintableRepresentation(s,val_obj_display, custom_format);
                                         else

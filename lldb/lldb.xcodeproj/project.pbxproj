@@ -1786,12 +1786,12 @@
 				26F996A7119B79C300412154 /* ARM_DWARF_Registers.h */,
 				26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */,
 				26F996A8119B79C300412154 /* ARM_GCC_Registers.h */,
-				2660D9F611922A1300958FBD /* StringExtractor.cpp */,
 				2660D9F711922A1300958FBD /* StringExtractor.h */,
-				2676A093119C93C8008A98EF /* StringExtractorGDBRemote.cpp */,
+				2660D9F611922A1300958FBD /* StringExtractor.cpp */,
 				2676A094119C93C8008A98EF /* StringExtractorGDBRemote.h */,
-				2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */,
+				2676A093119C93C8008A98EF /* StringExtractorGDBRemote.cpp */,
 				2682F16B115EDA0D00CCFF99 /* PseudoTerminal.h */,
+				2682F16A115EDA0D00CCFF99 /* PseudoTerminal.cpp */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
