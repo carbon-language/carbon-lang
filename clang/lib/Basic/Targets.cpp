@@ -1110,18 +1110,18 @@ const TargetInfo::AddlRegName AddlRegNames[] = {
 // most of the implementation can be shared.
 class X86TargetInfo : public TargetInfo {
   enum X86SSEEnum {
-    NoMMXSSE, MMX, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
+    NoSSE, SSE1, SSE2, SSE3, SSSE3, SSE41, SSE42
   } SSELevel;
-  enum AMD3DNowEnum {
-    NoAMD3DNow, AMD3DNow, AMD3DNowAthlon
-  } AMD3DNowLevel;
+  enum MMX3DNowEnum {
+    NoMMX3DNow, MMX, AMD3DNow, AMD3DNowAthlon
+  } MMX3DNowLevel;
 
   bool HasAES;
   bool HasAVX;
 
 public:
   X86TargetInfo(const std::string& triple)
-    : TargetInfo(triple), SSELevel(NoMMXSSE), AMD3DNowLevel(NoAMD3DNow),
+    : TargetInfo(triple), SSELevel(NoSSE), MMX3DNowLevel(NoMMX3DNow),
       HasAES(false), HasAVX(false) {
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
   }
@@ -1159,6 +1159,9 @@ public:
   virtual void getDefaultFeatures(const std::string &CPU,
                                   llvm::StringMap<bool> &Features) const;
   virtual void HandleTargetFeatures(std::vector<std::string> &Features);
+  virtual const char* getABI() const {
+    return MMX3DNowLevel == NoMMX3DNow ? "no-mmx" : "";
+  }
 };
 
 void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
@@ -1190,23 +1193,31 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
     ;
   else if (CPU == "pentium-mmx" || CPU == "pentium2")
     setFeatureEnabled(Features, "mmx", true);
-  else if (CPU == "pentium3")
+  else if (CPU == "pentium3") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse", true);
-  else if (CPU == "pentium-m" || CPU == "pentium4" || CPU == "x86-64")
+  } else if (CPU == "pentium-m" || CPU == "pentium4" || CPU == "x86-64") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse2", true);
-  else if (CPU == "yonah" || CPU == "prescott" || CPU == "nocona")
+  } else if (CPU == "yonah" || CPU == "prescott" || CPU == "nocona") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse3", true);
-  else if (CPU == "core2")
+  } else if (CPU == "core2") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "ssse3", true);
-  else if (CPU == "penryn") {
+  } else if (CPU == "penryn") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     Features["sse42"] = false;
-  } else if (CPU == "atom")
+  } else if (CPU == "atom") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse3", true);
-  else if (CPU == "corei7") {
+  } else if (CPU == "corei7") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
   } else if (CPU == "corei7-avx") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
 //    setFeatureEnabled(Features, "avx", true);
@@ -1214,7 +1225,6 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
     setFeatureEnabled(Features, "mmx", true);
   else if (CPU == "k6-2" || CPU == "k6-3" || CPU == "athlon" ||
            CPU == "athlon-tbird" || CPU == "winchip2" || CPU == "c3") {
-    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "3dnow", true);
   } else if (CPU == "athlon-4" || CPU == "athlon-xp" || CPU == "athlon-mp") {
     setFeatureEnabled(Features, "sse", true);
@@ -1226,8 +1236,10 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
   } else if (CPU == "k8-sse3") {
     setFeatureEnabled(Features, "sse3", true);
     setFeatureEnabled(Features, "3dnowa", true);
-  } else if (CPU == "c3-2")
+  } else if (CPU == "c3-2") {
+    setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse", true);
+  }
 }
 
 bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
@@ -1243,34 +1255,31 @@ bool X86TargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
     if (Name == "mmx")
       Features["mmx"] = true;
     else if (Name == "sse")
-      Features["mmx"] = Features["sse"] = true;
+      Features["sse"] = true;
     else if (Name == "sse2")
-      Features["mmx"] = Features["sse"] = Features["sse2"] = true;
+      Features["sse"] = Features["sse2"] = true;
     else if (Name == "sse3")
-      Features["mmx"] = Features["sse"] = Features["sse2"] =
-        Features["sse3"] = true;
+      Features["sse"] = Features["sse2"] = Features["sse3"] = true;
     else if (Name == "ssse3")
-      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = true;
     else if (Name == "sse4" || Name == "sse4.2")
-      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = true;
     else if (Name == "sse4.1")
-      Features["mmx"] = Features["sse"] = Features["sse2"] = Features["sse3"] =
+      Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = true;
     else if (Name == "3dnow")
-      Features["3dnowa"] = true;
+      Features["mmx"] = Features["3dnow"] = true;
     else if (Name == "3dnowa")
-      Features["3dnow"] = Features["3dnowa"] = true;
+      Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = true;
     else if (Name == "aes")
       Features["aes"] = true;
     else if (Name == "avx")
       Features["avx"] = true;
   } else {
     if (Name == "mmx")
-      Features["mmx"] = Features["3dnow"] = Features["3dnowa"] =
-        Features["sse"] = Features["sse2"] = Features["sse3"] =
-        Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
+      Features["mmx"] = Features["3dnow"] = Features["3dnowa"] = false;
     else if (Name == "sse")
       Features["sse"] = Features["sse2"] = Features["sse3"] =
         Features["ssse3"] = Features["sse41"] = Features["sse42"] = false;
@@ -1328,18 +1337,25 @@ void X86TargetInfo::HandleTargetFeatures(std::vector<std::string> &Features) {
       .Case("sse3", SSE3)
       .Case("sse2", SSE2)
       .Case("sse", SSE1)
-      .Case("mmx", MMX)
-      .Default(NoMMXSSE);
+      .Default(NoSSE);
     SSELevel = std::max(SSELevel, Level);
 
-    AMD3DNowEnum ThreeDNowLevel =
-      llvm::StringSwitch<AMD3DNowEnum>(Features[i].substr(1))
+    MMX3DNowEnum ThreeDNowLevel =
+      llvm::StringSwitch<MMX3DNowEnum>(Features[i].substr(1))
         .Case("3dnowa", AMD3DNowAthlon)
         .Case("3dnow", AMD3DNow)
-        .Default(NoAMD3DNow);
+        .Case("mmx", MMX)
+        .Default(NoMMX3DNow);
 
-    AMD3DNowLevel = std::max(AMD3DNowLevel, ThreeDNowLevel);
+    MMX3DNowLevel = std::max(MMX3DNowLevel, ThreeDNowLevel);
   }
+
+  // Don't tell the backend if we're turning off mmx; it will end up disabling
+  // SSE, which we don't want.
+  std::vector<std::string>::iterator it;
+  it = std::find(Features.begin(), Features.end(), "-mmx");
+  if (it != Features.end())
+    Features.erase(it);
 }
 
 /// X86TargetInfo::getTargetDefines - Return a set of the X86-specific #defines
@@ -1394,9 +1410,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   case SSE1:
     Builder.defineMacro("__SSE__");
     Builder.defineMacro("__SSE_MATH__");   // -mfp-math=sse always implied.
-  case MMX:
-    Builder.defineMacro("__MMX__");
-  case NoMMXSSE:
+  case NoSSE:
     break;
   }
 
@@ -1418,12 +1432,14 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   }
 
   // Each case falls through to the previous one here.
-  switch (AMD3DNowLevel) {
+  switch (MMX3DNowLevel) {
   case AMD3DNowAthlon:
     Builder.defineMacro("__3dNOW_A__");
   case AMD3DNow:
     Builder.defineMacro("__3dNOW__");
-  case NoAMD3DNow:
+  case MMX:
+    Builder.defineMacro("__MMX__");
+  case NoMMX3DNow:
     break;
   }
 }

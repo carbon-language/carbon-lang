@@ -374,6 +374,7 @@ class X86_32ABIInfo : public ABIInfo {
 
   bool IsDarwinVectorABI;
   bool IsSmallStructInRegABI;
+  bool IsMMXDisabled;
 
   static bool isRegisterSize(unsigned Size) {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
@@ -403,14 +404,15 @@ public:
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                  CodeGenFunction &CGF) const;
 
-  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p)
-    : ABIInfo(CGT), IsDarwinVectorABI(d), IsSmallStructInRegABI(p) {}
+  X86_32ABIInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool m)
+    : ABIInfo(CGT), IsDarwinVectorABI(d), IsSmallStructInRegABI(p),
+      IsMMXDisabled(m) {}
 };
 
 class X86_32TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  X86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p)
-    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p)) {}
+  X86_32TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool d, bool p, bool m)
+    :TargetCodeGenInfo(new X86_32ABIInfo(CGT, d, p, m)) {}
 
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const;
@@ -701,6 +703,9 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
 
     const llvm::Type *IRType = CGT.ConvertTypeRecursive(Ty);
     if (UseX86_MMXType(IRType)) {
+      if (IsMMXDisabled)
+        return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
+                                                            64));
       ABIArgInfo AAI = ABIArgInfo::getDirect(IRType);
       AAI.setCoerceToType(llvm::Type::getX86_MMXTy(getVMContext()));
       return AAI;
@@ -3006,10 +3011,12 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::msp430:
     return *(TheTargetCodeGenInfo = new MSP430TargetCodeGenInfo(Types));
 
-  case llvm::Triple::x86:
+  case llvm::Triple::x86: {
+    bool DisableMMX = strcmp(getContext().Target.getABI(), "no-mmx") == 0;
+
     if (Triple.isOSDarwin())
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, true, true));
+               new X86_32TargetCodeGenInfo(Types, true, true, DisableMMX));
 
     switch (Triple.getOS()) {
     case llvm::Triple::Cygwin:
@@ -3020,12 +3027,13 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     case llvm::Triple::OpenBSD:
     case llvm::Triple::NetBSD:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, true));
+               new X86_32TargetCodeGenInfo(Types, false, true, DisableMMX));
 
     default:
       return *(TheTargetCodeGenInfo =
-               new X86_32TargetCodeGenInfo(Types, false, false));
+               new X86_32TargetCodeGenInfo(Types, false, false, DisableMMX));
     }
+  }
 
   case llvm::Triple::x86_64:
     switch (Triple.getOS()) {

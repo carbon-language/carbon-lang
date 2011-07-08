@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -ffreestanding -fsyntax-only -target-feature +ssse3 -verify -triple x86_64-pc-linux-gnu %s
-// RUN: %clang_cc1 -ffreestanding -fsyntax-only -target-feature +ssse3 -verify -triple i686-apple-darwin10 %s
+// RUN: %clang_cc1 -ffreestanding -fsyntax-only -target-feature +ssse3 -target-feature +mmx -verify -triple x86_64-pc-linux-gnu %s
+// RUN: %clang_cc1 -ffreestanding -fsyntax-only -target-feature +ssse3 -target-feature +mmx -verify -triple i686-apple-darwin10 %s
 
 #include <tmmintrin.h>
 

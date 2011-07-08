@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -w -fblocks -triple i386-pc-linux-gnu -emit-llvm -o %t %s
+// RUN: %clang_cc1 -w -fblocks -triple i386-pc-linux-gnu -target-cpu pentium4 -emit-llvm -o %t %s
 // RUN: FileCheck < %t %s
 
 // CHECK: define void @f56(

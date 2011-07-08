@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -w -fblocks -triple i386-apple-darwin9 -emit-llvm -o %t %s
-// RUN: FileCheck < %t %s
+// RUN: %clang_cc1 -w -fblocks -triple i386-apple-darwin9 -target-cpu yonah -emit-llvm -o - %s | FileCheck %s
 
 // CHECK: define signext i8 @f0()
 char f0(void) {
