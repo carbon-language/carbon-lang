@@ -1967,11 +1967,6 @@ public:
 
   void getDefaultFeatures(const std::string &CPU,
                           llvm::StringMap<bool> &Features) const {
-    // FIXME: This should not be here.
-    Features["vfp2"] = false;
-    Features["vfp3"] = false;
-    Features["neon"] = false;
-
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
     else if (CPU == "cortex-a8" || CPU == "cortex-a9")
@@ -1981,12 +1976,8 @@ public:
   virtual bool setFeatureEnabled(llvm::StringMap<bool> &Features,
                                  const std::string &Name,
                                  bool Enabled) const {
-    if (Name == "soft-float" || Name == "soft-float-abi") {
-      Features[Name] = Enabled;
-    } else if (Name == "vfp2" || Name == "vfp3" || Name == "neon") {
-      // These effectively are a single option, reset them when any is enabled.
-      if (Enabled)
-        Features["vfp2"] = Features["vfp3"] = Features["neon"] = false;
+    if (Name == "soft-float" || Name == "soft-float-abi" ||
+        Name == "vfp2" || Name == "vfp3" || Name == "neon") {
       Features[Name] = Enabled;
     } else
       return false;
