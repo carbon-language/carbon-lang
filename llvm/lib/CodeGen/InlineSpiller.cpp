@@ -344,7 +344,7 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
         // This is a valid spill location dominating UseVNI.
         // Prefer to spill at a smaller loop depth.
         unsigned Depth = Loops.getLoopDepth(MBB);
-        if (Depth <= SpillDepth) {
+        if (Depth < SpillDepth) {
           DEBUG(dbgs() << "  spill depth " << Depth << ": " << PrintReg(Reg)
                        << ':' << VNI->id << '@' << VNI->def << '\n');
           SVI.SpillReg = Reg;
