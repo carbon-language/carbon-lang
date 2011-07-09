@@ -194,6 +194,7 @@ public:
       CurAbbrevs[i]->addRef();
     
     // Copy block scope and bump ref counts.
+    BlockScope = RHS.BlockScope;
     for (unsigned S = 0, e = static_cast<unsigned>(BlockScope.size());
          S != e; ++S) {
       std::vector<BitCodeAbbrev*> &Abbrevs = BlockScope[S].PrevAbbrevs;
