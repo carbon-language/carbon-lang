@@ -567,10 +567,20 @@ ValueObject::GetSummaryAsCString ()
                             AddressType cstr_address_type = eAddressTypeInvalid;
 
                             size_t cstr_len = 0;
+                            bool capped_data = false;
                             if (type_flags.Test (ClangASTContext::eTypeIsArray))
                             {
                                 // We have an array
                                 cstr_len = ClangASTContext::GetArraySize (clang_type);
+                                if (cstr_len > 512) // TODO: make cap a setting
+                                {
+                                    cstr_len = ClangASTContext::GetArraySize (clang_type);
+                                    if (cstr_len > 512) // TODO: make cap a setting
+                                    {
+                                        capped_data = true;
+                                        cstr_len = 512;
+                                    }
+                                }
                                 cstr_address = GetAddressOf (cstr_address_type, true);
                             }
                             else
@@ -601,6 +611,8 @@ ValueObject::GetSummaryAsCString ()
                                                    LLDB_INVALID_ADDRESS,// base address
                                                    0,                 // bitfield bit size
                                                    0);                // bitfield bit offset
+                                        if (capped_data)
+                                            sstr << "...";
                                         sstr << '"';
                                     }
                                 }
