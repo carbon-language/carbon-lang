@@ -71,11 +71,8 @@ bool FileRemapper::initFromDisk(llvm::StringRef outputDir, Diagnostic &Diag,
     fin >> fromFilename >> timeModified >> toFilename;
     if (fin.eof())
       break;
-    if (!fin.good()) {
-      if (ignoreIfFilesChanged)
-        return false;
+    if (!fin.good())
       return report(std::string("Error in format of file: ") + infoFile, Diag);
-    }
 
     const FileEntry *origFE = FileMgr->getFile(fromFilename);
     if (!origFE) {
@@ -115,8 +112,7 @@ bool FileRemapper::flushToDisk(llvm::StringRef outputDir, Diagnostic &Diag) {
 
   std::string errMsg;
   std::string infoFile = getRemapInfoFile(outputDir);
-  llvm::raw_fd_ostream infoOut(infoFile.c_str(), errMsg,
-                               llvm::raw_fd_ostream::F_Binary);
+  llvm::raw_fd_ostream infoOut(infoFile.c_str(), errMsg);
   if (!errMsg.empty() || infoOut.has_error())
     return report(errMsg, Diag);
 
@@ -124,11 +120,15 @@ bool FileRemapper::flushToDisk(llvm::StringRef outputDir, Diagnostic &Diag) {
          I = FromToMappings.begin(), E = FromToMappings.end(); I != E; ++I) {
 
     const FileEntry *origFE = I->first;
-    infoOut << origFE->getName() << '\n';
+    llvm::SmallString<200> origPath = llvm::StringRef(origFE->getName());
+    fs::make_absolute(origPath);
+    infoOut << origPath << '\n';
     infoOut << (uint64_t)origFE->getModificationTime() << '\n';
 
     if (const FileEntry *FE = I->second.dyn_cast<const FileEntry *>()) {
-      infoOut << FE->getName() << '\n';
+      llvm::SmallString<200> newPath = llvm::StringRef(FE->getName());
+      fs::make_absolute(newPath);
+      infoOut << newPath << '\n';
     } else {
 
       llvm::SmallString<64> tempPath;

@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ..
-DIRS := driver libclang c-index-test arcmt-test
+DIRS := driver libclang c-index-test arcmt-test c-arcmt-test
 
 include $(CLANG_LEVEL)/../../Makefile.config
 

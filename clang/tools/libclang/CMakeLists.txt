@@ -1,4 +1,5 @@
 set(LLVM_USED_LIBS
+  clangARCMigrate
   clangFrontend
   clangDriver
   clangSerialization
@@ -14,6 +15,7 @@ set( LLVM_LINK_COMPONENTS
   )
 
 set(SOURCES
+  ARCMigrate.cpp
   CIndex.cpp
   CIndexCXX.cpp
   CIndexCodeCompletion.cpp
@@ -25,6 +27,7 @@ set(SOURCES
   CXString.cpp
   CXType.cpp
   ../../include/clang-c/Index.h
+  ../../include/clang-c/ARCMigrate.h
   )
 
 if( LLVM_ENABLE_PIC )

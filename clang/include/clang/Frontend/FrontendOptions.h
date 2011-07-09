@@ -79,8 +79,11 @@ public:
   enum {
     ARCMT_None,
     ARCMT_Check,
-    ARCMT_Modify
+    ARCMT_Modify,
+    ARCMT_Migrate
   } ARCMTAction;
+
+  std::string ARCMTMigrateDir;
 
   /// The input files and their types.
   std::vector<std::pair<InputKind, std::string> > Inputs;

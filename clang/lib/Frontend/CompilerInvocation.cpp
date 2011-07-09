@@ -431,6 +431,13 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
   case FrontendOptions::ARCMT_Modify:
     Res.push_back("-arcmt-modify");
     break;
+  case FrontendOptions::ARCMT_Migrate:
+    Res.push_back("-arcmt-migrate");
+    break;
+  }
+  if (!Opts.ARCMTMigrateDir.empty()) {
+    Res.push_back("-arcmt-migrate-directory");
+    Res.push_back(Opts.ARCMTMigrateDir);
   }
 
   bool NeedLang = false;
@@ -1251,7 +1258,8 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
 
   Opts.ARCMTAction = FrontendOptions::ARCMT_None;
   if (const Arg *A = Args.getLastArg(OPT_arcmt_check,
-                                     OPT_arcmt_modify)) {
+                                     OPT_arcmt_modify,
+                                     OPT_arcmt_migrate)) {
     switch (A->getOption().getID()) {
     default:
       llvm_unreachable("missed a case");
@@ -1261,8 +1269,12 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     case OPT_arcmt_modify:
       Opts.ARCMTAction = FrontendOptions::ARCMT_Modify;
       break;
+    case OPT_arcmt_migrate:
+      Opts.ARCMTAction = FrontendOptions::ARCMT_Migrate;
+      break;
     }
   }
+  Opts.ARCMTMigrateDir = Args.getLastArgValue(OPT_arcmt_migrate_directory);
 
   InputKind DashX = IK_None;
   if (const Arg *A = Args.getLastArg(OPT_x)) {

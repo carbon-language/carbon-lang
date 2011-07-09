@@ -118,6 +118,10 @@ def ccc_arcmt_modify : Flag<"-ccc-arcmt-modify">, CCCDriverOpt,
   HelpText<"Apply modifications to files to conform to ARC">;
 def ccc_arrmt_check : Flag<"-ccc-arrmt-check">, Alias<ccc_arcmt_check>;
 def ccc_arrmt_modify : Flag<"-ccc-arrmt-modify">, Alias<ccc_arcmt_modify>;
+def ccc_arcmt_migrate : Separate<"-ccc-arcmt-migrate">, CCCDriverOpt,
+  HelpText<"Apply modifications and produces temporary files that conform to ARC">;
+def ccc_arcmt_migrate_EQ : Joined<"-ccc-arcmt-migrate=">, CCCDriverOpt,
+  Alias<ccc_arcmt_migrate>;
 
 // Make sure all other -ccc- options are rejected.
 def ccc_ : Joined<"-ccc-">, Group<ccc_Group>, Flags<[Unsupported]>;

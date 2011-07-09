@@ -28,11 +28,26 @@ bool CheckAction::BeginInvocation(CompilerInstance &CI) {
 CheckAction::CheckAction(FrontendAction *WrappedAction)
   : WrapperFrontendAction(WrappedAction) {}
 
-bool TransformationAction::BeginInvocation(CompilerInstance &CI) {
-  return !arcmt::applyTransformations(CI.getInvocation(), getCurrentFile(),
-                                  getCurrentFileKind(),
-                                  CI.getDiagnostics().getClient());
+bool ModifyAction::BeginInvocation(CompilerInstance &CI) {
+  return !arcmt::applyTransformations(CI.getInvocation(),
+                                      getCurrentFile(), getCurrentFileKind(),
+                                      CI.getDiagnostics().getClient());
 }
 
-TransformationAction::TransformationAction(FrontendAction *WrappedAction)
+ModifyAction::ModifyAction(FrontendAction *WrappedAction)
   : WrapperFrontendAction(WrappedAction) {}
+
+bool MigrateAction::BeginInvocation(CompilerInstance &CI) {
+  return !arcmt::migrateWithTemporaryFiles(CI.getInvocation(),
+                                           getCurrentFile(),
+                                           getCurrentFileKind(),
+                                           CI.getDiagnostics().getClient(),
+                                           MigrateDir);
+}
+
+MigrateAction::MigrateAction(FrontendAction *WrappedAction,
+                             llvm::StringRef migrateDir)
+  : WrapperFrontendAction(WrappedAction), MigrateDir(migrateDir) {
+  if (MigrateDir.empty())
+    MigrateDir = "."; // user current directory if none is given.
+}

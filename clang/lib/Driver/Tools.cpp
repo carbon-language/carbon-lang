@@ -1423,7 +1423,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (!Args.hasArg(options::OPT_fno_objc_arc)) {
     if (const Arg *A = Args.getLastArg(options::OPT_ccc_arcmt_check,
-                                       options::OPT_ccc_arcmt_modify)) {
+                                       options::OPT_ccc_arcmt_modify,
+                                       options::OPT_ccc_arcmt_migrate)) {
       switch (A->getOption().getID()) {
       default:
         llvm_unreachable("missed a case");
@@ -1432,6 +1433,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         break;
       case options::OPT_ccc_arcmt_modify:
         CmdArgs.push_back("-arcmt-modify");
+        break;
+      case options::OPT_ccc_arcmt_migrate:
+        CmdArgs.push_back("-arcmt-migrate");
+        CmdArgs.push_back("-arcmt-migrate-directory");
+        CmdArgs.push_back(A->getValue(Args));
         break;
       }
     }

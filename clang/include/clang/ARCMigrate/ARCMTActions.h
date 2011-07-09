@@ -24,12 +24,21 @@ public:
   CheckAction(FrontendAction *WrappedAction);
 };
 
-class TransformationAction : public WrapperFrontendAction {
+class ModifyAction : public WrapperFrontendAction {
 protected:
   virtual bool BeginInvocation(CompilerInstance &CI);
 
 public:
-  TransformationAction(FrontendAction *WrappedAction);
+  ModifyAction(FrontendAction *WrappedAction);
+};
+
+class MigrateAction : public WrapperFrontendAction {
+  std::string MigrateDir;
+protected:
+  virtual bool BeginInvocation(CompilerInstance &CI);
+
+public:
+  MigrateAction(FrontendAction *WrappedAction, llvm::StringRef migrateDir);
 };
 
 }

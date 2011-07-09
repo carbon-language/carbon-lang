@@ -389,6 +389,10 @@ def arcmt_check : Flag<"-arcmt-check">,
   HelpText<"Check for ARC migration issues that need manual handling">;
 def arcmt_modify : Flag<"-arcmt-modify">,
   HelpText<"Apply modifications to files to conform to ARC">;
+def arcmt_migrate : Flag<"-arcmt-migrate">,
+  HelpText<"Apply modifications and produces temporary files that conform to ARC">;
+def arcmt_migrate_directory : Separate<"-arcmt-migrate-directory">,
+  HelpText<"Directory for temporary files produced during ARC migration">;
 
 def import_module : Separate<"-import-module">,
   HelpText<"Import a module definition file">;

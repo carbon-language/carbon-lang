@@ -41,6 +41,23 @@ bool applyTransformations(CompilerInvocation &origCI,
                           llvm::StringRef Filename, InputKind Kind,
                           DiagnosticClient *DiagClient);
 
+/// \brief Applies automatic modifications and produces temporary files
+/// and metadata into the \arg outputDir path.
+///
+/// \returns false if no error is produced, true otherwise.
+bool migrateWithTemporaryFiles(CompilerInvocation &origCI,
+                               llvm::StringRef Filename, InputKind Kind,
+                               DiagnosticClient *DiagClient,
+                               llvm::StringRef outputDir);
+
+/// \brief Get the set of file remappings from the \arg outputDir path that
+/// migrateWithTemporaryFiles produced.
+///
+/// \returns false if no error is produced, true otherwise.
+bool getFileRemappings(std::vector<std::pair<std::string,std::string> > &remap,
+                       llvm::StringRef outputDir,
+                       DiagnosticClient *DiagClient);
+
 typedef void (*TransformFn)(MigrationPass &pass);
 
 std::vector<TransformFn> getAllTransformations();
@@ -51,8 +68,8 @@ class MigrationProcess {
   FileRemapper Remapper;
 
 public:
-  MigrationProcess(const CompilerInvocation &CI, DiagnosticClient *diagClient)
-    : OrigCI(CI), DiagClient(diagClient) { }
+  MigrationProcess(const CompilerInvocation &CI, DiagnosticClient *diagClient,
+                   llvm::StringRef outputDir = llvm::StringRef());
 
   class RewriteListener {
   public:
