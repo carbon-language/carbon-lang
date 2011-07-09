@@ -971,7 +971,7 @@ DynamicLoaderMacOSXDYLD::ReadMachHeader (lldb::addr_t addr, llvm::MachO::mach_he
     if (bytes_read == sizeof(llvm::MachO::mach_header))
     {
         uint32_t offset = 0;
-        ::memset (header, 0, sizeof(header));
+        ::memset (header, 0, sizeof(llvm::MachO::mach_header));
 
         // Get the magic byte unswapped so we can figure out what we are dealing with
         DataExtractor data(header_bytes.GetBytes(), header_bytes.GetByteSize(), lldb::endian::InlHostByteOrder(), 4);
