@@ -1,6 +1,6 @@
 (* RUN: %ocamlopt -warn-error A llvm.cmxa llvm_bitreader.cmxa llvm_bitwriter.cmxa %s -o %t
  * RUN: %t %t.bc
- * RUN: llvm-dis < %t.bc | grep caml_int_ty
+ * RUN: llvm-dis < %t.bc
  * XFAIL: vg_leak
  *)
 
@@ -14,8 +14,6 @@ let test x = if not x then exit 1 else ()
 let _ =
   let fn = Sys.argv.(1) in
   let m = Llvm.create_module context "ocaml_test_module" in
-  
-  ignore (Llvm.define_type_name "caml_int_ty" (Llvm.i32_type context) m);
   
   test (Llvm_bitwriter.write_bitcode_file m fn);
   

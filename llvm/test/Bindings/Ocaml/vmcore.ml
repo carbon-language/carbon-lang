@@ -80,130 +80,6 @@ let test_target () =
     insist (layout = data_layout m)
   end
 
-(*===-- Types -------------------------------------------------------------===*)
-
-let test_types () =
-  (* RUN: grep {void_type.*void} < %t.ll
-   *)
-  group "void";
-  insist (define_type_name "void_type" void_type m);
-  insist (TypeKind.Void == classify_type void_type);
-
-  (* RUN: grep {i1_type.*i1} < %t.ll
-   *)
-  group "i1";
-  insist (define_type_name "i1_type" i1_type m);
-  insist (TypeKind.Integer == classify_type i1_type);
-
-  (* RUN: grep {i32_type.*i32} < %t.ll
-   *)
-  group "i32";
-  insist (define_type_name "i32_type" i32_type m);
-
-  (* RUN: grep {i42_type.*i42} < %t.ll
-   *)
-  group "i42";
-  let ty = integer_type context 42 in
-  insist (define_type_name "i42_type" ty m);
-
-  (* RUN: grep {float_type.*float} < %t.ll
-   *)
-  group "float";
-  insist (define_type_name "float_type" float_type m);
-  insist (TypeKind.Float == classify_type float_type);
-
-  (* RUN: grep {double_type.*double} < %t.ll
-   *)
-  group "double";
-  insist (define_type_name "double_type" double_type m);
-  insist (TypeKind.Double == classify_type double_type);
-
-  (* RUN: grep {function_type.*i32.*i1, double} < %t.ll
-   *)
-  group "function";
-  let ty = function_type i32_type [| i1_type; double_type |] in
-  insist (define_type_name "function_type" ty m);
-  insist (TypeKind.Function = classify_type ty);
-  insist (not (is_var_arg ty));
-  insist (i32_type == return_type ty);
-  insist (double_type == (param_types ty).(1));
-  
-  (* RUN: grep {var_arg_type.*\.\.\.} < %t.ll
-   *)
-  group "var arg function";
-  let ty = var_arg_function_type void_type [| i32_type |] in
-  insist (define_type_name "var_arg_type" ty m);
-  insist (is_var_arg ty);
-  
-  (* RUN: grep {array_type.*\\\[7 x i8\\\]} < %t.ll
-   *)
-  group "array";
-  let ty = array_type i8_type 7 in
-  insist (define_type_name "array_type" ty m);
-  insist (7 = array_length ty);
-  insist (i8_type == element_type ty);
-  insist (TypeKind.Array == classify_type ty);
-  
-  begin group "pointer";
-    (* RUN: grep {pointer_type.*float\*} < %t.ll
-     *)
-    let ty = pointer_type float_type in
-    insist (define_type_name "pointer_type" ty m);
-    insist (float_type == element_type ty);
-    insist (0 == address_space ty);
-    insist (TypeKind.Pointer == classify_type ty)
-  end;
-  
-  begin group "qualified_pointer";
-    (* RUN: grep {qualified_pointer_type.*i8.*3.*\*} < %t.ll
-     *)
-    let ty = qualified_pointer_type i8_type 3 in
-    insist (define_type_name "qualified_pointer_type" ty m);
-    insist (i8_type == element_type ty);
-    insist (3 == address_space ty)
-  end;
-  
-  (* RUN: grep {vector_type.*\<4 x i16\>} < %t.ll
-   *)
-  group "vector";
-  let ty = vector_type i16_type 4 in
-  insist (define_type_name "vector_type" ty m);
-  insist (i16_type == element_type ty);
-  insist (4 = vector_size ty);
-  
-  (* RUN: grep {opaque_type.*opaque} < %t.ll
-   *)
-  group "opaque";
-  let ty = opaque_type context in
-  insist (define_type_name "opaque_type" ty m);
-  insist (ty == ty);
-  insist (ty <> opaque_type context);
-  
-  (* RUN: grep -v {delete_type} < %t.ll
-   *)
-  group "delete";
-  let ty = opaque_type context in
-  insist (define_type_name "delete_type" ty m);
-  delete_type_name "delete_type" m;
-
-  (* RUN: grep {type_name.*opaque} < %t.ll
-   *)
-  group "type_name"; begin
-    let ty = opaque_type context in
-    insist (define_type_name "type_name" ty m);
-    insist ((type_by_name m "type_name") = Some ty)
-  end;
-  
-  (* RUN: grep -v {recursive_type.*recursive_type} < %t.ll
-   *)
-  group "recursive";
-  let ty = opaque_type context in
-  let th = handle_to_type ty in
-  refine_type ty (pointer_type ty);
-  let ty = type_of_handle th in
-  insist (define_type_name "recursive_type" ty m);
-  insist (ty == element_type ty)
-
 
 (*===-- Constants ---------------------------------------------------------===*)
 
@@ -1314,7 +1190,6 @@ let test_writer () =
 
 let _ =
   suite "target"           test_target;
-  suite "types"            test_types;
   suite "constants"        test_constants;
   suite "global values"    test_global_values;
   suite "global variables" test_global_variables;
