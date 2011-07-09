@@ -25,6 +25,7 @@
 #include "openscop/openscop.h"
 
 #include "stdio.h"
+#include "isl/map.h"
 #include "isl/set.h"
 #include "isl/constraint.h"
 

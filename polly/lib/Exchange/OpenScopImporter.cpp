@@ -26,6 +26,7 @@
 #define OPENSCOP_INT_T_IS_MP
 #include "openscop/openscop.h"
 
+#include "isl/map.h"
 #include "isl/set.h"
 #include "isl/constraint.h"
 
