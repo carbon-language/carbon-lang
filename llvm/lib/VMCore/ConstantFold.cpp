@@ -2172,9 +2172,9 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
                                                bool inBounds,
                                                IndexTy const *Idxs,
                                                unsigned NumIdx) {
+  if (NumIdx == 0) return C;
   Constant *Idx0 = cast<Constant>(Idxs[0]);
-  if (NumIdx == 0 ||
-      (NumIdx == 1 && Idx0->isNullValue()))
+  if ((NumIdx == 1 && Idx0->isNullValue()))
     return C;
 
   if (isa<UndefValue>(C)) {
