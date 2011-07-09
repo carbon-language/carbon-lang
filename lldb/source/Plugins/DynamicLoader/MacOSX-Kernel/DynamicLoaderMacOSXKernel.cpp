@@ -89,12 +89,9 @@ DynamicLoaderMacOSXKernel::DynamicLoaderMacOSXKernel (Process* process) :
     m_kernel(),
     m_kext_summary_header_addr (),
     m_kext_summary_header (),
-    m_kext_summary_header_stop_id (0),
     m_break_id (LLDB_INVALID_BREAK_ID),
     m_kext_summaries(),
-    m_kext_summaries_stop_id (UINT32_MAX),
-    m_mutex(Mutex::eMutexTypeRecursive),
-    m_notification_callbacks ()
+    m_mutex(Mutex::eMutexTypeRecursive)
 {
 }
 
@@ -106,6 +103,12 @@ DynamicLoaderMacOSXKernel::~DynamicLoaderMacOSXKernel()
     Clear(true);
 }
 
+void
+DynamicLoaderMacOSXKernel::UpdateIfNeeded()
+{
+    LoadKernelModuleIfNeeded();
+    SetNotificationBreakpointIfNeeded ();
+}
 //------------------------------------------------------------------
 /// Called after attaching a process.
 ///
@@ -116,8 +119,7 @@ void
 DynamicLoaderMacOSXKernel::DidAttach ()
 {
     PrivateInitialize(m_process);
-    LoadKernelModule();
-    SetNotificationBreakpoint ();
+    UpdateIfNeeded();
 }
 
 //------------------------------------------------------------------
@@ -130,8 +132,7 @@ void
 DynamicLoaderMacOSXKernel::DidLaunch ()
 {
     PrivateInitialize(m_process);
-    LoadKernelModule();
-    SetNotificationBreakpoint ();
+    UpdateIfNeeded();
 }
 
 
@@ -151,18 +152,9 @@ DynamicLoaderMacOSXKernel::Clear (bool clear_process)
     m_kernel.Clear(false);
     m_kext_summary_header_addr.Clear();
     m_kext_summaries.clear();
-    m_kext_summaries_stop_id = 0;
     m_break_id = LLDB_INVALID_BREAK_ID;
 }
 
-//----------------------------------------------------------------------
-// Check if we have found DYLD yet
-//----------------------------------------------------------------------
-bool
-DynamicLoaderMacOSXKernel::DidSetNotificationBreakpoint() const
-{
-    return LLDB_BREAK_ID_IS_VALID (m_break_id);
-}
 
 //----------------------------------------------------------------------
 // Load the kernel module and initialize the "m_kernel" member. Return
@@ -170,8 +162,8 @@ DynamicLoaderMacOSXKernel::DidSetNotificationBreakpoint() const
 // calls to this function should return false after the kernel has been
 // already loaded).
 //----------------------------------------------------------------------
-bool
-DynamicLoaderMacOSXKernel::LoadKernelModule()
+void
+DynamicLoaderMacOSXKernel::LoadKernelModuleIfNeeded()
 {
     if (!m_kext_summary_header_addr.IsValid())
     {
@@ -201,19 +193,16 @@ DynamicLoaderMacOSXKernel::LoadKernelModule()
                             UpdateImageLoadAddress (m_kernel);
                                                 
                         // Update all image infos
-                        ReadAllKextSummaries (false);
-                        return true;
+                        ReadAllKextSummaries ();
                     }
                 }
                 else
                 {
                     m_kernel.Clear(false);
                 }
-                return false;
             }
         }
     }
-    return false;
 }
 
 bool
@@ -393,16 +382,23 @@ DynamicLoaderMacOSXKernel::UnloadImageLoadAddress (OSKextLoadedKextSummary& info
 // or not (based on global preference).
 //----------------------------------------------------------------------
 bool
-DynamicLoaderMacOSXKernel::NotifyBreakpointHit (void *baton, 
-                                                StoppointCallbackContext *context, 
-                                                lldb::user_id_t break_id, 
-                                                lldb::user_id_t break_loc_id)
+DynamicLoaderMacOSXKernel::BreakpointHitCallback (void *baton, 
+                                                  StoppointCallbackContext *context, 
+                                                  user_id_t break_id, 
+                                                  user_id_t break_loc_id)
 {    
-    DynamicLoaderMacOSXKernel* dyld_instance = (DynamicLoaderMacOSXKernel*) baton;
-    
-    // Return true to stop the target, false to just let the target run
-    return dyld_instance->GetStopWhenImagesChange();
+    return static_cast<DynamicLoaderMacOSXKernel*>(baton)->BreakpointHit (context, break_id, break_loc_id);    
 }
+
+bool
+DynamicLoaderMacOSXKernel::BreakpointHit (StoppointCallbackContext *context, 
+                                          user_id_t break_id, 
+                                          user_id_t break_loc_id)
+{    
+    ReadAllKextSummaries ();
+    return GetStopWhenImagesChange();
+}
+
 
 bool
 DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
@@ -410,8 +406,6 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
     Mutex::Locker locker(m_mutex);
 
     // the all image infos is already valid for this process stop ID
-    if (m_process->GetStopID() == m_kext_summaries_stop_id)
-        return true;
 
     m_kext_summaries.clear();
     if (m_kext_summary_header_addr.IsValid())
@@ -433,7 +427,6 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
             m_kext_summary_header.entry_size    = data.GetU32(&offset);
             m_kext_summary_header.entry_count   = data.GetU32(&offset);
             m_kext_summary_header.reserved      = data.GetU32(&offset);
-            m_kext_summary_header_stop_id       = m_process->GetStopID();
             return true;
         }
     }
@@ -442,17 +435,15 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
 
 
 bool
-DynamicLoaderMacOSXKernel::ParseKextSummaries (const lldb_private::Address &kext_summary_addr, 
+DynamicLoaderMacOSXKernel::ParseKextSummaries (const Address &kext_summary_addr, 
                                                uint32_t count)
 {
     OSKextLoadedKextSummary::collection kext_summaries;
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     if (log)
         log->Printf ("Adding %d modules.\n");
         
     Mutex::Locker locker(m_mutex);
-    if (m_process->GetStopID() == m_kext_summaries_stop_id)
-        return true;
 
     if (!ReadKextSummaries (kext_summary_addr, count, kext_summaries))
         return false;
@@ -469,7 +460,6 @@ DynamicLoaderMacOSXKernel::ParseKextSummaries (const lldb_private::Address &kext
         }
     }
     bool return_value = AddModulesUsingImageInfos (kext_summaries);
-    m_kext_summaries_stop_id = m_process->GetStopID();
     return return_value;
 }
 
@@ -481,7 +471,7 @@ DynamicLoaderMacOSXKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
 {
     // Now add these images to the main list.
     ModuleList loaded_module_list;
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     
     for (uint32_t idx = 0; idx < image_infos.size(); ++idx)
     {
@@ -536,7 +526,7 @@ DynamicLoaderMacOSXKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
 
 
 uint32_t
-DynamicLoaderMacOSXKernel::ReadKextSummaries (const lldb_private::Address &kext_summary_addr,
+DynamicLoaderMacOSXKernel::ReadKextSummaries (const Address &kext_summary_addr,
                                               uint32_t image_infos_count, 
                                               OSKextLoadedKextSummary::collection &image_infos)
 {
@@ -585,26 +575,20 @@ DynamicLoaderMacOSXKernel::ReadKextSummaries (const lldb_private::Address &kext_
 }
 
 bool
-DynamicLoaderMacOSXKernel::ReadAllKextSummaries (bool force)
+DynamicLoaderMacOSXKernel::ReadAllKextSummaries ()
 {
-    LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     
     Mutex::Locker locker(m_mutex);
-    if (!force)
-    {
-        if (m_process->GetStopID() == m_kext_summaries_stop_id || m_kext_summaries.size() != 0)
-            return false;
-    }
-
+    
     if (ReadKextSummaryHeader ())
     {
-        if (m_kext_summary_header.entry_count > 0)
+        if (m_kext_summary_header.entry_count > 0 && m_kext_summary_header_addr.IsValid())
         {
             Address summary_addr (m_kext_summary_header_addr);
             summary_addr.Slide(16);
             if (!ParseKextSummaries (summary_addr, m_kext_summary_header.entry_count))
             {
-                DEBUG_PRINTF( "unable to read all data for all_dylib_infos.");
                 m_kext_summaries.clear();
             }
             return true;
@@ -636,7 +620,7 @@ DynamicLoaderMacOSXKernel::ReadMachHeader (OSKextLoadedKextSummary& kext_summary
         ::memset (&kext_summary.header, 0, sizeof(kext_summary.header));
 
         // Get the magic byte unswapped so we can figure out what we are dealing with
-        DataExtractor data(header_bytes.GetBytes(), header_bytes.GetByteSize(), lldb::endian::InlHostByteOrder(), 4);
+        DataExtractor data(header_bytes.GetBytes(), header_bytes.GetByteSize(), endian::InlHostByteOrder(), 4);
         kext_summary.header.magic = data.GetU32(&offset);
         Address load_cmd_addr = kext_summary.so_address;
         data.SetByteOrder(DynamicLoaderMacOSXKernel::GetByteOrderFromMagic(kext_summary.header.magic));
@@ -791,7 +775,7 @@ DynamicLoaderMacOSXKernel::ParseLoadCommands (const DataExtractor& data, OSKextL
 // Dump a Segment to the file handle provided.
 //----------------------------------------------------------------------
 void
-DynamicLoaderMacOSXKernel::Segment::PutToLog (Log *log, lldb::addr_t slide) const
+DynamicLoaderMacOSXKernel::Segment::PutToLog (Log *log, addr_t slide) const
 {
     if (log)
     {
@@ -831,18 +815,6 @@ DynamicLoaderMacOSXKernel::OSKextLoadedKextSummary::PutToLog (Log *log) const
     if (log == NULL)
         return;
     uint8_t *u = (uint8_t *)uuid.GetBytes();
-//
-//    char                     name[KERNEL_MODULE_MAX_NAME];
-//    lldb::ModuleSP           module_sp;
-//    lldb_private::UUID       uuid;            // UUID for this dylib if it has one, else all zeros
-//    uint64_t                 address;
-//    uint64_t                 size;
-//    uint64_t                 version;
-//    uint32_t                 load_tag;
-//    uint32_t                 flags;
-//    uint64_t                 reference_list;
-//    llvm::MachO::mach_header header;    // The mach header for this image
-//    std::vector<Segment>     segments;      // All segment vmaddr and vmsize pairs for this executable (from memory of inferior)
 
     if (address == LLDB_INVALID_ADDRESS)
     {
@@ -916,32 +888,22 @@ DynamicLoaderMacOSXKernel::PrivateInitialize(Process *process)
     m_process->GetTarget().GetSectionLoadList().Clear();
 }
 
-bool
-DynamicLoaderMacOSXKernel::SetNotificationBreakpoint ()
+void
+DynamicLoaderMacOSXKernel::SetNotificationBreakpointIfNeeded ()
 {
-    // TODO: Add breakpoint to detected dynamic kext loads/unloads. We aren't 
-    // doing any live dynamic checks for kernel kexts being loaded or unloaded 
-    // on the fly yet.
-//    DEBUG_PRINTF("DynamicLoaderMacOSXKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
-//    if (m_break_id == LLDB_INVALID_BREAK_ID)
-//    {
-//        if (m_kext_summaries.notification != LLDB_INVALID_ADDRESS)
-//        {
-//            Address so_addr;
-//            // Set the notification breakpoint and install a breakpoint
-//            // callback function that will get called each time the
-//            // breakpoint gets hit. We will use this to track when shared
-//            // libraries get loaded/unloaded.
-//
-//            if (m_process->GetTarget().GetSectionLoadList().ResolveLoadAddress(m_kext_summaries.notification, so_addr))
-//            {
-//                Breakpoint *dyld_break = m_process->GetTarget().CreateBreakpoint (so_addr, true).get();
-//                dyld_break->SetCallback (DynamicLoaderMacOSXKernel::NotifyBreakpointHit, this, true);
-//                m_break_id = dyld_break->GetID();
-//            }
-//        }
-//    }
-    return m_break_id != LLDB_INVALID_BREAK_ID;
+    if (m_break_id == LLDB_INVALID_BREAK_ID)
+    {
+        DEBUG_PRINTF("DynamicLoaderMacOSXKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
+
+        const bool internal_bp = false;
+        Breakpoint *bp = m_process->GetTarget().CreateBreakpoint (&m_kernel.module_sp->GetFileSpec(),
+                                                                  "OSKextLoadedKextSummariesUpdated",
+                                                                  eFunctionNameTypeFull,
+                                                                  internal_bp).get();
+
+        bp->SetCallback (DynamicLoaderMacOSXKernel::BreakpointHitCallback, this, true);
+        m_break_id = bp->GetID();
+    }
 }
 
 //----------------------------------------------------------------------
@@ -964,16 +926,7 @@ DynamicLoaderMacOSXKernel::PrivateProcessStateChanged (Process *process, StateTy
         break;
 
     case eStateStopped:
-        // Keep trying find dyld and set our notification breakpoint each time
-        // we stop until we succeed
-        if (!DidSetNotificationBreakpoint () && m_process->IsAlive())
-        {
-            if (LoadKernelModule())
-            {
-            }
-
-            SetNotificationBreakpoint ();
-        }
+        UpdateIfNeeded();
         break;
 
     case eStateRunning:
@@ -991,79 +944,9 @@ ThreadPlanSP
 DynamicLoaderMacOSXKernel::GetStepThroughTrampolinePlan (Thread &thread, bool stop_others)
 {
     ThreadPlanSP thread_plan_sp;
-    StackFrame *current_frame = thread.GetStackFrameAtIndex(0).get();
-    const SymbolContext &current_context = current_frame->GetSymbolContext(eSymbolContextSymbol);
-    Symbol *current_symbol = current_context.symbol;
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-
-    if (current_symbol != NULL)
-    {
-        if (current_symbol->IsTrampoline())
-        {
-            const ConstString &trampoline_name = current_symbol->GetMangled().GetName(Mangled::ePreferMangled);
-            
-            if (trampoline_name)
-            {
-                SymbolContextList target_symbols;
-                ModuleList &images = thread.GetProcess().GetTarget().GetImages();
-                images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeCode, target_symbols);
-                // FIXME - Make the Run to Address take multiple addresses, and
-                // run to any of them.
-                uint32_t num_symbols = target_symbols.GetSize();
-                if (num_symbols == 1)
-                {
-                    SymbolContext context;
-                    AddressRange addr_range;
-                    if (target_symbols.GetContextAtIndex(0, context))
-                    {
-                        context.GetAddressRange (eSymbolContextEverything, 0, false, addr_range);
-                        thread_plan_sp.reset (new ThreadPlanRunToAddress (thread, addr_range.GetBaseAddress(), stop_others));
-                    }
-                    else
-                    {
-                        if (log)
-                            log->Printf ("Couldn't resolve the symbol context.");
-                    }
-                }
-                else if (num_symbols > 1)
-                {
-                    std::vector<lldb::addr_t>  addresses;
-                    addresses.resize (num_symbols);
-                    for (uint32_t i = 0; i < num_symbols; i++)
-                    {
-                        SymbolContext context;
-                        AddressRange addr_range;
-                        if (target_symbols.GetContextAtIndex(i, context))
-                        {
-                            context.GetAddressRange (eSymbolContextEverything, 0, false, addr_range);
-                            lldb::addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(&thread.GetProcess().GetTarget());
-                            addresses[i] = load_addr;
-                        }
-                    }
-                    if (addresses.size() > 0)
-                        thread_plan_sp.reset (new ThreadPlanRunToAddress (thread, addresses, stop_others));
-                    else
-                    {
-                        if (log)
-                            log->Printf ("Couldn't resolve the symbol contexts.");
-                    }
-                }
-                else
-                {
-                    if (log)
-                    {
-                        log->Printf ("Could not find symbol for trampoline target: \"%s\"", trampoline_name.AsCString());
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        if (log)
-            log->Printf ("Could not find symbol for step through.");
-    }
-
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    if (log)
+        log->Printf ("Could not find symbol for step through.");
     return thread_plan_sp;
 }
 

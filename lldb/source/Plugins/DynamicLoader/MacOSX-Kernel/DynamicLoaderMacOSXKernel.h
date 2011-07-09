@@ -89,11 +89,12 @@ protected:
     void
     PrivateProcessStateChanged (lldb_private::Process *process,
                                 lldb::StateType state);
-    bool
-    LoadKernelModule ();
+    
+    void
+    UpdateIfNeeded();
 
-    bool
-    DidSetNotificationBreakpoint () const;
+    void
+    LoadKernelModuleIfNeeded ();
 
     void
     Clear (bool clear_process);
@@ -102,11 +103,15 @@ protected:
     PutToLog (lldb_private::Log *log) const;
 
     static bool
-    NotifyBreakpointHit (void *baton,
-                         lldb_private::StoppointCallbackContext *context,
-                         lldb::user_id_t break_id,
-                         lldb::user_id_t break_loc_id);
+    BreakpointHitCallback (void *baton,
+                           lldb_private::StoppointCallbackContext *context,
+                           lldb::user_id_t break_id,
+                           lldb::user_id_t break_loc_id);
 
+    bool
+    BreakpointHit (lldb_private::StoppointCallbackContext *context, 
+                   lldb::user_id_t break_id, 
+                   lldb::user_id_t break_loc_id);
     uint32_t
     AddrByteSize()
     {
@@ -373,11 +378,11 @@ protected:
                       bool can_create,
                       bool *did_create_ptr);
 
-    bool
-    SetNotificationBreakpoint ();
+    void
+    SetNotificationBreakpointIfNeeded ();
 
     bool
-    ReadAllKextSummaries (bool force);
+    ReadAllKextSummaries ();
 
     bool
     ReadKextSummaryHeader ();
@@ -408,12 +413,9 @@ protected:
     OSKextLoadedKextSummary m_kernel; // Info about the current kernel image being used
     lldb_private::Address m_kext_summary_header_addr;
     OSKextLoadedKextSummaryHeader m_kext_summary_header;
-    uint32_t m_kext_summary_header_stop_id;             // The process stop ID that "m_kext_summary_header" is valid for
-    lldb::user_id_t m_break_id;
     OSKextLoadedKextSummary::collection m_kext_summaries;
-    uint32_t m_kext_summaries_stop_id;                     // The process stop ID that "m_kext_summaries" is valid for
     mutable lldb_private::Mutex m_mutex;
-    lldb_private::Process::Notifications m_notification_callbacks;
+    lldb::user_id_t m_break_id;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (DynamicLoaderMacOSXKernel);
