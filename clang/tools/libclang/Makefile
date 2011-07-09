@@ -16,7 +16,8 @@ LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
 LINK_COMPONENTS := support mc
-USEDLIBS = clangARCMigrate.a clangFrontend.a clangDriver.a clangSerialization.a \
+USEDLIBS = clangARCMigrate.a clangRewrite.a clangFrontend.a clangDriver.a \
+     clangSerialization.a \
 		 clangParse.a clangSema.a clangAnalysis.a clangAST.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
