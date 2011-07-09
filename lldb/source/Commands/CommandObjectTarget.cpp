@@ -545,7 +545,7 @@ public:
                     else
                     {
                         Error error (Variable::GetValuesForVariableExpressionPath (arg,
-                                                                                   exe_ctx.target,
+                                                                                   exe_ctx.GetBestExecutionContextScope(),
                                                                                    GetVariableCallback,
                                                                                    exe_ctx.target,
                                                                                    variable_list,

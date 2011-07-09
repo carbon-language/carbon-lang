@@ -2460,6 +2460,7 @@ ClangASTContext::GetChildClangTypeAtIndex
     uint32_t idx,
     bool transparent_pointers,
     bool omit_empty_base_classes,
+    bool ignore_array_bounds,
     std::string& child_name,
     uint32_t &child_byte_size,
     int32_t &child_byte_offset,
@@ -2478,6 +2479,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                                          idx,
                                          transparent_pointers,
                                          omit_empty_base_classes,
+                                         ignore_array_bounds,
                                          child_name,
                                          child_byte_size,
                                          child_byte_offset,
@@ -2498,6 +2500,7 @@ ClangASTContext::GetChildClangTypeAtIndex
     uint32_t idx,
     bool transparent_pointers,
     bool omit_empty_base_classes,
+    bool ignore_array_bounds,
     std::string& child_name,
     uint32_t &child_byte_size,
     int32_t &child_byte_offset,
@@ -2736,6 +2739,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                                                      idx,
                                                      transparent_pointers,
                                                      omit_empty_base_classes,
+                                                     ignore_array_bounds,
                                                      child_name,
                                                      child_byte_size,
                                                      child_byte_offset,
@@ -2771,7 +2775,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                 const ConstantArrayType *array = cast<ConstantArrayType>(parent_qual_type.getTypePtr());
                 const uint64_t element_count = array->getSize().getLimitedValue();
 
-                if (idx < element_count)
+                if (ignore_array_bounds || idx < element_count)
                 {
                     if (GetCompleteQualType (ast, array->getElementType()))
                     {
@@ -2783,7 +2787,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                         child_name.assign(element_name);
                         assert(field_type_info.first % 8 == 0);
                         child_byte_size = field_type_info.first / 8;
-                        child_byte_offset = idx * child_byte_size;
+                        child_byte_offset = (int32_t)idx * (int32_t)child_byte_size;
                         return array->getElementType().getAsOpaquePtr();
                     }
                 }
@@ -2810,6 +2814,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                                                      idx,
                                                      transparent_pointers,
                                                      omit_empty_base_classes,
+                                                     ignore_array_bounds,
                                                      child_name,
                                                      child_byte_size,
                                                      child_byte_offset,
@@ -2858,6 +2863,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                                                      idx,
                                                      transparent_pointers,
                                                      omit_empty_base_classes,
+                                                     ignore_array_bounds,
                                                      child_name,
                                                      child_byte_size,
                                                      child_byte_offset,
@@ -2895,6 +2901,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                                              idx,
                                              transparent_pointers,
                                              omit_empty_base_classes,
+                                             ignore_array_bounds,
                                              child_name,
                                              child_byte_size,
                                              child_byte_offset,

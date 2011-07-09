@@ -199,10 +199,10 @@ Variable::IsInScope (StackFrame *frame)
         return frame != NULL;
 
     case eValueTypeConstResult:
-        return true;
-
     case eValueTypeVariableGlobal:
     case eValueTypeVariableStatic:
+        return true;
+
     case eValueTypeVariableArgument:
     case eValueTypeVariableLocal:
         if (frame)

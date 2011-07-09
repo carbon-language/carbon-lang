@@ -107,6 +107,7 @@ bool
 SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMember &member)
 {
     void *child_clang_type = NULL;
+    bool ignore_array_bounds = false;
     std::string child_name;
     uint32_t child_byte_size = 0;
     int32_t child_byte_offset = 0;
@@ -125,6 +126,7 @@ SBType::GetChildAtIndex (bool omit_empty_base_classes, uint32_t idx, SBTypeMembe
                                                                       idx,
                                                                       false, // transparent pointers
                                                                       omit_empty_base_classes,
+                                                                      ignore_array_bounds,
                                                                       child_name,
                                                                       child_byte_size,
                                                                       child_byte_offset,

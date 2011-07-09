@@ -349,6 +349,9 @@ public:
     IsPointerType ();
     
     virtual bool
+    IsArrayType ();
+    
+    virtual bool
     IsScalarType ();
 
     virtual bool
@@ -522,6 +525,9 @@ public:
 
     lldb::ValueObjectSP
     GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create);
+    
+    lldb::ValueObjectSP
+    GetSyntheticArrayMemberFromArray (int32_t index, bool can_create);
     
     lldb::ValueObjectSP
     GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_create);

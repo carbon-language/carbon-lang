@@ -430,7 +430,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
     ValueObject *valobj = NULL;
     
     bool omit_empty_base_classes = true;
-
+    bool ignore_array_bounds = synthetic_array_member;
     std::string child_name_str;
     uint32_t child_byte_size = 0;
     int32_t child_byte_offset = 0;
@@ -454,6 +454,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
                                                                   idx,
                                                                   transparent_pointers,
                                                                   omit_empty_base_classes,
+                                                                  ignore_array_bounds,
                                                                   child_name_str,
                                                                   child_byte_size,
                                                                   child_byte_offset,
@@ -499,7 +500,9 @@ ValueObject::GetSummaryAsCString ()
                 StreamString s;
                 ExecutionContext exe_ctx;
                 this->GetExecutionContextScope()->CalculateExecutionContext(exe_ctx);
-                SymbolContext sc = exe_ctx.frame->GetSymbolContext(eSymbolContextEverything);
+                SymbolContext sc;
+                if (exe_ctx.frame)
+                    sc = exe_ctx.frame->GetSymbolContext(eSymbolContextEverything);
                 
                 if (m_last_summary_format->m_show_members_oneliner)
                 {
@@ -1110,6 +1113,12 @@ ValueObject::IsPointerType ()
 }
 
 bool
+ValueObject::IsArrayType ()
+{
+    return ClangASTContext::IsArrayType (GetClangType());
+}
+
+bool
 ValueObject::IsScalarType ()
 {
     return ClangASTContext::IsScalarType (GetClangType());
@@ -1158,6 +1167,49 @@ ValueObject::GetSyntheticArrayMemberFromPointer (int32_t index, bool can_create)
             // lets make one and cache it for any future reference.
             synthetic_child = CreateChildAtIndex(0, true, index);
 
+            // Cache the value if we got one back...
+            if (synthetic_child)
+            {
+                AddSyntheticChild(index_const_str, synthetic_child);
+                synthetic_child_sp = synthetic_child->GetSP();
+                synthetic_child_sp->SetName(index_str);
+                synthetic_child_sp->m_is_array_item_for_pointer = true;
+            }
+        }
+    }
+    return synthetic_child_sp;
+}
+
+// This allows you to create an array member using and index
+// that doesn't not fall in the normal bounds of the array.
+// Many times structure can be defined as:
+// struct Collection
+// {
+//     uint32_t item_count;
+//     Item item_array[0];
+// };
+// The size of the "item_array" is 1, but many times in practice
+// there are more items in "item_array".
+
+ValueObjectSP
+ValueObject::GetSyntheticArrayMemberFromArray (int32_t index, bool can_create)
+{
+    ValueObjectSP synthetic_child_sp;
+    if (IsArrayType ())
+    {
+        char index_str[64];
+        snprintf(index_str, sizeof(index_str), "[%i]", index);
+        ConstString index_const_str(index_str);
+        // Check if we have already created a synthetic array member in this
+        // valid object. If we have we will re-use it.
+        synthetic_child_sp = GetSyntheticChild (index_const_str);
+        if (!synthetic_child_sp)
+        {
+            ValueObject *synthetic_child;
+            // We haven't made a synthetic array member for INDEX yet, so
+            // lets make one and cache it for any future reference.
+            synthetic_child = CreateChildAtIndex(0, true, index);
+            
             // Cache the value if we got one back...
             if (synthetic_child)
             {
@@ -1628,19 +1680,22 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     // from here on we do have a valid index
                     if (ClangASTContext::IsArrayType(root_clang_type))
                     {
-                        root = root->GetChildAtIndex(index, true);
-                        if (!root.get())
+                        ValueObjectSP child_valobj_sp = root->GetChildAtIndex(index, true);
+                        if (!child_valobj_sp)
+                            child_valobj_sp = root->GetSyntheticArrayMemberFromArray(index, true);
+                        if (child_valobj_sp)
+                        {
+                            root = child_valobj_sp;
+                            *first_unparsed = end+1; // skip ]
+                            *final_result = ValueObject::ePlain;
+                            continue;
+                        }
+                        else
                         {
                             *first_unparsed = expression_cstr;
                             *reason_to_stop = ValueObject::eNoSuchChild;
                             *final_result = ValueObject::eInvalid;
                             return ValueObjectSP();
-                        }
-                        else
-                        {
-                            *first_unparsed = end+1; // skip ]
-                            *final_result = ValueObject::ePlain;
-                            continue;
                         }
                     }
                     else if (ClangASTContext::IsPointerType(root_clang_type))
@@ -2057,6 +2112,7 @@ ValueObject::Dereference (Error &error)
     if (is_pointer_type)
     {
         bool omit_empty_base_classes = true;
+        bool ignore_array_bounds = false;
 
         std::string child_name_str;
         uint32_t child_byte_size = 0;
@@ -2080,6 +2136,7 @@ ValueObject::Dereference (Error &error)
                                                                       0,
                                                                       transparent_pointers,
                                                                       omit_empty_base_classes,
+                                                                      ignore_array_bounds,
                                                                       child_name_str,
                                                                       child_byte_size,
                                                                       child_byte_offset,
