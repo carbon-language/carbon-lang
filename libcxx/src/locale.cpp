@@ -1114,7 +1114,21 @@ ctype_byname<wchar_t>::~ctype_byname()
 bool
 ctype_byname<wchar_t>::do_is(mask m, char_type c) const
 {
+#ifdef _LIBCPP_WCTYPE_IS_MASK
     return static_cast<bool>(iswctype_l(c, m, __l));
+#else
+    if (m & space && !iswspace_l(c, __l)) return false;
+    if (m & print && !iswprint_l(c, __l)) return false;
+    if (m & cntrl && !iswcntrl_l(c, __l)) return false;
+    if (m & upper && !iswupper_l(c, __l)) return false;
+    if (m & lower && !iswlower_l(c, __l)) return false;
+    if (m & alpha && !iswalpha_l(c, __l)) return false;
+    if (m & digit && !iswdigit_l(c, __l)) return false;
+    if (m & punct && !iswpunct_l(c, __l)) return false;
+    if (m & xdigit && !iswxdigit_l(c, __l)) return false;
+    if (m & blank && !iswblank_l(c, __l)) return false;
+    return true;
+#endif
 }
 
 const wchar_t*
@@ -1154,8 +1168,24 @@ const wchar_t*
 ctype_byname<wchar_t>::do_scan_is(mask m, const char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
+    {
+#ifdef _LIBCPP_WCTYPE_IS_MASK
         if (iswctype_l(*low, m, __l))
             break;
+#else
+        if (m & space && !iswspace_l(*low, __l)) continue;
+        if (m & print && !iswprint_l(*low, __l)) continue;
+        if (m & cntrl && !iswcntrl_l(*low, __l)) continue;
+        if (m & upper && !iswupper_l(*low, __l)) continue;
+        if (m & lower && !iswlower_l(*low, __l)) continue;
+        if (m & alpha && !iswalpha_l(*low, __l)) continue;
+        if (m & digit && !iswdigit_l(*low, __l)) continue;
+        if (m & punct && !iswpunct_l(*low, __l)) continue;
+        if (m & xdigit && !iswxdigit_l(*low, __l)) continue;
+        if (m & blank && !iswblank_l(*low, __l)) continue;
+        break;
+#endif
+    }
     return low;
 }
 
@@ -1163,8 +1193,24 @@ const wchar_t*
 ctype_byname<wchar_t>::do_scan_not(mask m, const char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
+    {
+#ifdef _LIBCPP_WCTYPE_IS_MASK
         if (!iswctype_l(*low, m, __l))
             break;
+#else
+        if (m & space && iswspace_l(*low, __l)) continue;
+        if (m & print && iswprint_l(*low, __l)) continue;
+        if (m & cntrl && iswcntrl_l(*low, __l)) continue;
+        if (m & upper && iswupper_l(*low, __l)) continue;
+        if (m & lower && iswlower_l(*low, __l)) continue;
+        if (m & alpha && iswalpha_l(*low, __l)) continue;
+        if (m & digit && iswdigit_l(*low, __l)) continue;
+        if (m & punct && iswpunct_l(*low, __l)) continue;
+        if (m & xdigit && iswxdigit_l(*low, __l)) continue;
+        if (m & blank && iswblank_l(*low, __l)) continue;
+        break;
+#endif
+    }
     return low;
 }
 
