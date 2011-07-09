@@ -15,7 +15,6 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/TypeSymbolTable.h"
 #include "llvm/Constant.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 using namespace llvm;
@@ -32,20 +31,13 @@ Module *llvm::CloneModule(const Module *M) {
   return CloneModule(M, VMap);
 }
 
-Module *llvm::CloneModule(const Module *M,
-                          ValueToValueMapTy &VMap) {
-  // First off, we need to create the new module...
+Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
+  // First off, we need to create the new module.
   Module *New = new Module(M->getModuleIdentifier(), M->getContext());
   New->setDataLayout(M->getDataLayout());
   New->setTargetTriple(M->getTargetTriple());
   New->setModuleInlineAsm(M->getModuleInlineAsm());
-
-  // Copy all of the type symbol table entries over.
-  const TypeSymbolTable &TST = M->getTypeSymbolTable();
-  for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end(); 
-       TI != TE; ++TI)
-    New->addTypeName(TI->first, TI->second);
-  
+   
   // Copy all of the dependent libraries over.
   for (Module::lib_iterator I = M->lib_begin(), E = M->lib_end(); I != E; ++I)
     New->addLibrary(*I);
@@ -88,8 +80,7 @@ Module *llvm::CloneModule(const Module *M,
        I != E; ++I) {
     GlobalVariable *GV = cast<GlobalVariable>(VMap[I]);
     if (I->hasInitializer())
-      GV->setInitializer(cast<Constant>(MapValue(I->getInitializer(),
-                                                 VMap, RF_None)));
+      GV->setInitializer(MapValue(I->getInitializer(), VMap));
     GV->setLinkage(I->getLinkage());
     GV->setThreadLocal(I->isThreadLocal());
     GV->setConstant(I->isConstant());
@@ -119,8 +110,8 @@ Module *llvm::CloneModule(const Module *M,
        I != E; ++I) {
     GlobalAlias *GA = cast<GlobalAlias>(VMap[I]);
     GA->setLinkage(I->getLinkage());
-    if (const Constant* C = I->getAliasee())
-      GA->setAliasee(cast<Constant>(MapValue(C, VMap, RF_None)));
+    if (const Constant *C = I->getAliasee())
+      GA->setAliasee(MapValue(C, VMap));
   }
 
   // And named metadata....
@@ -129,8 +120,7 @@ Module *llvm::CloneModule(const Module *M,
     const NamedMDNode &NMD = *I;
     NamedMDNode *NewNMD = New->getOrInsertNamedMetadata(NMD.getName());
     for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
-      NewNMD->addOperand(cast<MDNode>(MapValue(NMD.getOperand(i), VMap,
-                                               RF_None)));
+      NewNMD->addOperand(MapValue(NMD.getOperand(i), VMap));
   }
 
   return New;

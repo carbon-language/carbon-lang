@@ -31,14 +31,10 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
     Int8Ty(C, 8),
     Int16Ty(C, 16),
     Int32Ty(C, 32),
-    Int64Ty(C, 64),
-    AlwaysOpaqueTy(new OpaqueType(C)) {
+    Int64Ty(C, 64) {
   InlineAsmDiagHandler = 0;
   InlineAsmDiagContext = 0;
-      
-  // Make sure the AlwaysOpaqueTy stays alive as long as the Context.
-  AlwaysOpaqueTy->addRef();
-  OpaqueTypes.insert(AlwaysOpaqueTy);
+  NamedStructTypesUniqueID = 0;
 }
 
 namespace {
@@ -86,12 +82,7 @@ LLVMContextImpl::~LLVMContextImpl() {
        I != E; ++I) {
     delete I->second;
   }
-  AlwaysOpaqueTy->dropRef();
-  for (OpaqueTypesTy::iterator I = OpaqueTypes.begin(), E = OpaqueTypes.end();
-       I != E; ++I) {
-    (*I)->AbstractTypeUsers.clear();
-    delete *I;
-  }
+  
   // Destroy MDNodes.  ~MDNode can move and remove nodes between the MDNodeSet
   // and the NonUniquedMDNodes sets, so copy the values out first.
   SmallVector<MDNode*, 8> MDNodes;
@@ -109,7 +100,6 @@ LLVMContextImpl::~LLVMContextImpl() {
          "Destroying all MDNodes didn't empty the Context's sets.");
   // Destroy MDStrings.
   for (StringMap<MDString*>::iterator I = MDStringCache.begin(),
-         E = MDStringCache.end(); I != E; ++I) {
+         E = MDStringCache.end(); I != E; ++I)
     delete I->second;
-  }
 }

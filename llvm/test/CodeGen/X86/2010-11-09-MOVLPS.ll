@@ -5,11 +5,11 @@ target triple = "x86_64-unknown-linux-gnu"
 
 module asm "\09.ident\09\22GCC: (GNU) 4.5.2 20100914 (prerelease) LLVM: 114628\22"
 
+%"int[]" = type [4 x i32]
 %0 = type { %"int[]" }
 %float = type float
 %"float[]" = type [4 x float]
 %int = type i32
-%"int[]" = type [4 x i32]
 %"long unsigned int" = type i64
 
 define void @swizzle(i8* %a, %0* %b, %0* %c) nounwind {

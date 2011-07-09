@@ -74,16 +74,14 @@
             <ol>
               <li><a href="#t_array">Array Type</a></li>
               <li><a href="#t_struct">Structure Type</a></li>
-              <li><a href="#t_pstruct">Packed Structure Type</a></li>
+              <li><a href="#t_opaque">Opaque Type</a></li>
               <li><a href="#t_vector">Vector Type</a></li>
             </ol>
           </li>
           <li><a href="#t_function">Function Type</a></li>
           <li><a href="#t_pointer">Pointer Type</a></li>
-          <li><a href="#t_opaque">Opaque Type</a></li>
         </ol>
       </li>
-      <li><a href="#t_uprefs">Type Up-references</a></li>
     </ol>
   </li>
   <li><a href="#constants">Constants</a>
@@ -1535,7 +1533,6 @@ synchronization behavior.</p>
           <a href="#t_function">function</a>,
           <a href="#t_pointer">pointer</a>,
           <a href="#t_struct">structure</a>,
-          <a href="#t_pstruct">packed structure</a>,
           <a href="#t_vector">vector</a>,
           <a href="#t_opaque">opaque</a>.
       </td>
@@ -1703,7 +1700,9 @@ synchronization behavior.</p>
    possible to have a two dimensional array, using an array as the element type
    of another array.</p>
 
-   
+</div>
+  
+
 <!-- _______________________________________________________________________ -->
 <h4>
   <a name="t_aggregate">Aggregate Types</a>
@@ -1842,9 +1841,7 @@ synchronization behavior.</p>
 
 <h5>Overview:</h5>
 <p>The structure type is used to represent a collection of data members together
-   in memory.  The packing of the field types is defined to match the ABI of the
-   underlying processor.  The elements of a structure may be any type that has a
-   size.</p>
+  in memory.  The elements of a structure may be any type that has a size.</p>
 
 <p>Structures in memory are accessed using '<tt><a href="#i_load">load</a></tt>'
    and '<tt><a href="#i_store">store</a></tt>' by getting a pointer to a field
@@ -1852,65 +1849,75 @@ synchronization behavior.</p>
    Structures in registers are accessed using the
    '<tt><a href="#i_extractvalue">extractvalue</a></tt>' and
    '<tt><a href="#i_insertvalue">insertvalue</a></tt>' instructions.</p>
+  
+<p>Structures may optionally be "packed" structures, which indicate that the 
+  alignment of the struct is one byte, and that there is no padding between
+  the elements.  In non-packed structs, padding between field types is defined
+  by the target data string to match the underlying processor.</p>
+
+<p>Structures can either be "anonymous" or "named".  An anonymous structure is
+  defined inline with other types (e.g. <tt>{i32, i32}*</tt>) and a named types
+  are always defined at the top level with a name.  Anonmyous types are uniqued
+  by their contents and can never be recursive since there is no way to write
+  one.  Named types can be recursive.
+</p>
+  
 <h5>Syntax:</h5>
 <pre>
-  { &lt;type list&gt; }
+  %T1 = type { &lt;type list&gt; }     <i>; Named normal struct type</i>
+  %T2 = type &lt;{ &lt;type list&gt; }&gt;   <i>; Named packed struct type</i>
 </pre>
-
+  
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
     <td class="left"><tt>{ i32, i32, i32 }</tt></td>
     <td class="left">A triple of three <tt>i32</tt> values</td>
-  </tr><tr class="layout">
+  </tr>
+  <tr class="layout">
     <td class="left"><tt>{&nbsp;float,&nbsp;i32&nbsp;(i32)&nbsp;*&nbsp;}</tt></td>
     <td class="left">A pair, where the first element is a <tt>float</tt> and the
       second element is a <a href="#t_pointer">pointer</a> to a
       <a href="#t_function">function</a> that takes an <tt>i32</tt>, returning
       an <tt>i32</tt>.</td>
   </tr>
+  <tr class="layout">
+    <td class="left"><tt>&lt;{ i8, i32 }&gt;</tt></td>
+    <td class="left">A packed struct known to be 5 bytes in size.</td>
+  </tr>
 </table>
 
 </div>
-
+  
 <!-- _______________________________________________________________________ -->
 <h4>
-  <a name="t_pstruct">Packed Structure Type</a>
+  <a name="t_opaque">Opaque Type</a>
 </h4>
 
 <div>
 
 <h5>Overview:</h5>
-<p>The packed structure type is used to represent a collection of data members
-   together in memory.  There is no padding between fields.  Further, the
-   alignment of a packed structure is 1 byte.  The elements of a packed
-   structure may be any type that has a size.</p>
-
-<p>Structures are accessed using '<tt><a href="#i_load">load</a></tt> and
-   '<tt><a href="#i_store">store</a></tt>' by getting a pointer to a field with
-   the '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.</p>
+<p>Opaque types are used to represent named structure types that do not have a
+   body specified.  This corresponds (for example) to the C notion of a forward 
+   declared structure.</p>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt; { &lt;type list&gt; } &gt;
+  %X = type opaque
+  %52 = type opaque
 </pre>
 
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
-    <td class="left"><tt>&lt; { i32, i32, i32 } &gt;</tt></td>
-    <td class="left">A triple of three <tt>i32</tt> values</td>
-  </tr><tr class="layout">
-  <td class="left">
-<tt>&lt;&nbsp;{&nbsp;float,&nbsp;i32&nbsp;(i32)*&nbsp;}&nbsp;&gt;</tt></td>
-    <td class="left">A pair, where the first element is a <tt>float</tt> and the
-      second element is a <a href="#t_pointer">pointer</a> to a
-      <a href="#t_function">function</a> that takes an <tt>i32</tt>, returning
-      an <tt>i32</tt>.</td>
+    <td class="left"><tt>opaque</tt></td>
+    <td class="left">An opaque type.</td>
   </tr>
 </table>
 
 </div>
+
+
 
 <!-- _______________________________________________________________________ -->
 <h4>
@@ -1996,86 +2003,6 @@ synchronization behavior.</p>
     <td class="left">Vector of 2 64-bit integer values.</td>
   </tr>
 </table>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<h4>
-  <a name="t_opaque">Opaque Type</a>
-</h4>
-
-<div>
-
-<h5>Overview:</h5>
-<p>Opaque types are used to represent unknown types in the system.  This
-   corresponds (for example) to the C notion of a forward declared structure
-   type.  In LLVM, opaque types can eventually be resolved to any type (not just
-   a structure type).</p>
-
-<h5>Syntax:</h5>
-<pre>
-  opaque
-</pre>
-
-<h5>Examples:</h5>
-<table class="layout">
-  <tr class="layout">
-    <td class="left"><tt>opaque</tt></td>
-    <td class="left">An opaque type.</td>
-  </tr>
-</table>
-
-</div>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="t_uprefs">Type Up-references</a>
-</h3>
-
-<div>
-
-<h5>Overview:</h5>
-<p>An "up reference" allows you to refer to a lexically enclosing type without
-   requiring it to have a name. For instance, a structure declaration may
-   contain a pointer to any of the types it is lexically a member of.  Example
-   of up references (with their equivalent as named type declarations)
-   include:</p>
-
-<pre>
-   { \2 * }                %x = type { %x* }
-   { \2 }*                 %y = type { %y }*
-   \1*                     %z = type %z*
-</pre>
-
-<p>An up reference is needed by the asmprinter for printing out cyclic types
-   when there is no declared name for a type in the cycle.  Because the
-   asmprinter does not want to print out an infinite type string, it needs a
-   syntax to handle recursive types that have no names (all names are optional
-   in llvm IR).</p>
-
-<h5>Syntax:</h5>
-<pre>
-   \&lt;level&gt;
-</pre>
-
-<p>The level is the count of the lexical type that is being referred to.</p>
-
-<h5>Examples:</h5>
-<table class="layout">
-  <tr class="layout">
-    <td class="left"><tt>\1*</tt></td>
-    <td class="left">Self-referential pointer.</td>
-  </tr>
-  <tr class="layout">
-    <td class="left"><tt>{ { \3*, i8 }, i32 }</tt></td>
-    <td class="left">Recursive structure where the upref refers to the out-most
-                     structure.</td>
-  </tr>
-</table>
-
-</div>
 
 </div>
 

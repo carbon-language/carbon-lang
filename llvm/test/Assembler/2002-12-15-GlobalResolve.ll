@@ -4,4 +4,4 @@
 @X1 = external global %T* 
 @X2 = external global i32*
 
-%T = type i32
+%T = type {i32}

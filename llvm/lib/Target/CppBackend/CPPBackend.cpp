@@ -22,7 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
-#include "llvm/TypeSymbolTable.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
@@ -33,7 +33,7 @@
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <set>
-
+#include <map>
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -193,24 +193,9 @@ static std::string getTypePrefix(const Type *Ty) {
   case Type::ArrayTyID:    return "array_";
   case Type::PointerTyID:  return "ptr_";
   case Type::VectorTyID:   return "packed_";
-  case Type::OpaqueTyID:   return "opaque_";
   default:                 return "other_";
   }
   return "unknown_";
-}
-
-// Looks up the type in the symbol table and returns a pointer to its name or
-// a null pointer if it wasn't found. Note that this isn't the same as the
-// Mode::getTypeName function which will return an empty string, not a null
-// pointer if the name is not found.
-static const std::string *
-findTypeName(const TypeSymbolTable& ST, const Type* Ty) {
-  TypeSymbolTable::const_iterator TI = ST.begin();
-  TypeSymbolTable::const_iterator TE = ST.end();
-  for (;TI != TE; ++TI)
-    if (TI->second == Ty)
-      return &(TI->first);
-  return 0;
 }
 
 void CppWriter::error(const std::string& msg) {
@@ -384,18 +369,20 @@ std::string CppWriter::getCppName(const Type* Ty) {
   case Type::StructTyID:      prefix = "StructTy_"; break;
   case Type::ArrayTyID:       prefix = "ArrayTy_"; break;
   case Type::PointerTyID:     prefix = "PointerTy_"; break;
-  case Type::OpaqueTyID:      prefix = "OpaqueTy_"; break;
   case Type::VectorTyID:      prefix = "VectorTy_"; break;
   default:                    prefix = "OtherTy_"; break; // prevent breakage
   }
 
   // See if the type has a name in the symboltable and build accordingly
-  const std::string* tName = findTypeName(TheModule->getTypeSymbolTable(), Ty);
   std::string name;
-  if (tName)
-    name = std::string(prefix) + *tName;
-  else
-    name = std::string(prefix) + utostr(uniqueNum++);
+  if (const StructType *STy = dyn_cast<StructType>(Ty))
+    if (STy->hasName())
+      name = STy->getName();
+  
+  if (name.empty())
+    name = utostr(uniqueNum++);
+  
+  name = std::string(prefix) + name;
   sanitize(name);
 
   // Save the name
@@ -590,8 +577,18 @@ bool CppWriter::printTypeInternal(const Type* Ty) {
       Out << ");";
       nl(Out);
     }
-    Out << "StructType* " << typeName << " = StructType::get("
-        << typeName << "_fields, /*isPacked=*/"
+    
+    Out << "StructType *" << typeName << " = ";
+    if (ST->isAnonymous()) {
+      Out << "StructType::get(" << "mod->getContext(), ";
+    } else {
+      Out << "StructType::createNamed(mod->getContext(), \"";
+      printEscapedString(ST->getName());
+      Out << "\");";
+      nl(Out);
+      Out << typeName << "->setBody(";
+    }
+    Out << typeName << "_fields, /*isPacked=*/"
         << (ST->isPacked() ? "true" : "false") << ");";
     nl(Out);
     break;
@@ -629,23 +626,8 @@ bool CppWriter::printTypeInternal(const Type* Ty) {
     nl(Out);
     break;
   }
-  case Type::OpaqueTyID: {
-    Out << "OpaqueType* " << typeName;
-    Out << " = OpaqueType::get(mod->getContext());";
-    nl(Out);
-    break;
-  }
   default:
     error("Invalid TypeID");
-  }
-
-  // If the type had a name, make sure we recreate it.
-  const std::string* progTypeName =
-    findTypeName(TheModule->getTypeSymbolTable(),Ty);
-  if (progTypeName) {
-    Out << "mod->addTypeName(\"" << *progTypeName << "\", "
-        << typeName << ");";
-    nl(Out);
   }
 
   // Pop us off the type stack
@@ -670,7 +652,6 @@ bool CppWriter::printTypeInternal(const Type* Ty) {
     case Type::StructTyID:   Out << "StructType"; break;
     case Type::VectorTyID:   Out << "VectorType"; break;
     case Type::PointerTyID:  Out << "PointerType"; break;
-    case Type::OpaqueTyID:   Out << "OpaqueType"; break;
     default:                 Out << "NoSuchDerivedType"; break;
     }
     Out << ">(" << I->second << "_fwd.get());";
@@ -695,26 +676,7 @@ void CppWriter::printType(const Type* Ty) {
 }
 
 void CppWriter::printTypes(const Module* M) {
-  // Walk the symbol table and print out all its types
-  const TypeSymbolTable& symtab = M->getTypeSymbolTable();
-  for (TypeSymbolTable::const_iterator TI = symtab.begin(), TE = symtab.end();
-       TI != TE; ++TI) {
-
-    // For primitive types and types already defined, just add a name
-    TypeMap::const_iterator TNI = TypeNames.find(TI->second);
-    if (TI->second->isIntegerTy() || TI->second->isPrimitiveType() ||
-        TNI != TypeNames.end()) {
-      Out << "mod->addTypeName(\"";
-      printEscapedString(TI->first);
-      Out << "\", " << getCppName(TI->second) << ");";
-      nl(Out);
-      // For everything else, define the type
-    } else {
-      printType(TI->second);
-    }
-  }
-
-  // Add all of the global variables to the value table...
+  // Add all of the global variables to the value table.
   for (Module::const_global_iterator I = TheModule->global_begin(),
          E = TheModule->global_end(); I != E; ++I) {
     if (I->hasInitializer())
@@ -1959,8 +1921,8 @@ void CppWriter::printVariable(const std::string& fname,
   Out << "}\n";
 }
 
-void CppWriter::printType(const std::string& fname,
-                          const std::string& typeName) {
+void CppWriter::printType(const std::string &fname,
+                          const std::string &typeName) {
   const Type* Ty = TheModule->getTypeByName(typeName);
   if (!Ty) {
     error(std::string("Type '") + typeName + "' not found in input module");

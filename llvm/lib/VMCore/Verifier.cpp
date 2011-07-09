@@ -49,7 +49,6 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
-#include "llvm/TypeSymbolTable.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/ValueTypes.h"
@@ -109,54 +108,6 @@ INITIALIZE_PASS(PreVerifier, "preverify", "Preliminary module verification",
 static char &PreVerifyID = PreVerifier::ID;
 
 namespace {
-  class TypeSet : public AbstractTypeUser {
-  public:
-    TypeSet() {}
-
-    /// Insert a type into the set of types.
-    bool insert(const Type *Ty) {
-      if (!Types.insert(Ty))
-        return false;
-      if (Ty->isAbstract())
-        Ty->addAbstractTypeUser(this);
-      return true;
-    }
-
-    // Remove ourselves as abstract type listeners for any types that remain
-    // abstract when the TypeSet is destroyed.
-    ~TypeSet() {
-      for (SmallSetVector<const Type *, 16>::iterator I = Types.begin(),
-             E = Types.end(); I != E; ++I) {
-        const Type *Ty = *I;
-        if (Ty->isAbstract())
-          Ty->removeAbstractTypeUser(this);
-      }
-    }
-
-    // Abstract type user interface.
-
-    /// Remove types from the set when refined. Do not insert the type it was
-    /// refined to because that type hasn't been verified yet.
-    void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-      Types.remove(OldTy);
-      OldTy->removeAbstractTypeUser(this);
-    }
-
-    /// Stop listening for changes to a type which is no longer abstract.
-    void typeBecameConcrete(const DerivedType *AbsTy) {
-      AbsTy->removeAbstractTypeUser(this);
-    }
-
-    void dump() const {}
-
-  private:
-    SmallSetVector<const Type *, 16> Types;
-
-    // Disallow copying.
-    TypeSet(const TypeSet &);
-    TypeSet &operator=(const TypeSet &);
-  };
-
   struct Verifier : public FunctionPass, public InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
     bool Broken;          // Is this module found to be broken?
@@ -175,9 +126,6 @@ namespace {
     /// dominance checks for the case when an instruction has an operand that is
     /// an instruction in the same block.
     SmallPtrSet<Instruction*, 16> InstsInThisBlock;
-
-    /// Types - keep track of the types that have been checked already.
-    TypeSet Types;
 
     /// MDNodes - keep track of the metadata nodes that have been checked
     /// already.
@@ -199,7 +147,6 @@ namespace {
     bool doInitialization(Module &M) {
       Mod = &M;
       Context = &M.getContext();
-      verifyTypeSymbolTable(M.getTypeSymbolTable());
 
       // If this is a real pass, in a pass manager, we must abort before
       // returning back to the pass manager, or else the pass manager may try to
@@ -285,7 +232,6 @@ namespace {
 
 
     // Verification methods...
-    void verifyTypeSymbolTable(TypeSymbolTable &ST);
     void visitGlobalValue(GlobalValue &GV);
     void visitGlobalVariable(GlobalVariable &GV);
     void visitGlobalAlias(GlobalAlias &GA);
@@ -345,7 +291,6 @@ namespace {
                               bool isReturnValue, const Value *V);
     void VerifyFunctionAttrs(const FunctionType *FT, const AttrListPtr &Attrs,
                              const Value *V);
-    void VerifyType(const Type *Ty);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -359,8 +304,7 @@ namespace {
 
     void WriteType(const Type *T) {
       if (!T) return;
-      MessagesStr << ' ';
-      WriteTypeSymbolic(MessagesStr, T, Mod);
+      MessagesStr << ' ' << *T;
     }
 
 
@@ -566,11 +510,6 @@ void Verifier::visitMDNode(MDNode &MD, Function *F) {
     Assert2(ActualF == F, "function-local metadata used in wrong function",
             &MD, Op);
   }
-}
-
-void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
-  for (TypeSymbolTable::iterator I = ST.begin(), E = ST.end(); I != E; ++I)
-    VerifyType(I->second);
 }
 
 // VerifyParameterAttrs - Check the given attributes for an argument or return
@@ -1192,11 +1131,11 @@ void Verifier::VerifyCallSite(CallSite CS) {
     }
 
   // Verify that there's no metadata unless it's a direct call to an intrinsic.
-  if (!CS.getCalledFunction() ||
+  if (CS.getCalledFunction() == 0 ||
       !CS.getCalledFunction()->getName().startswith("llvm.")) {
     for (FunctionType::param_iterator PI = FTy->param_begin(),
            PE = FTy->param_end(); PI != PE; ++PI)
-      Assert1(!PI->get()->isMetadataTy(),
+      Assert1(!(*PI)->isMetadataTy(),
               "Function has metadata parameter but isn't an intrinsic", I);
   }
 
@@ -1542,69 +1481,6 @@ void Verifier::visitInstruction(Instruction &I) {
     }
   }
   InstsInThisBlock.insert(&I);
-
-  VerifyType(I.getType());
-}
-
-/// VerifyType - Verify that a type is well formed.
-///
-void Verifier::VerifyType(const Type *Ty) {
-  if (!Types.insert(Ty)) return;
-
-  Assert1(Context == &Ty->getContext(),
-          "Type context does not match Module context!", Ty);
-
-  switch (Ty->getTypeID()) {
-  case Type::FunctionTyID: {
-    const FunctionType *FTy = cast<FunctionType>(Ty);
-
-    const Type *RetTy = FTy->getReturnType();
-    Assert2(FunctionType::isValidReturnType(RetTy),
-            "Function type with invalid return type", RetTy, FTy);
-    VerifyType(RetTy);
-
-    for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i) {
-      const Type *ElTy = FTy->getParamType(i);
-      Assert2(FunctionType::isValidArgumentType(ElTy),
-              "Function type with invalid parameter type", ElTy, FTy);
-      VerifyType(ElTy);
-    }
-    break;
-  }
-  case Type::StructTyID: {
-    const StructType *STy = cast<StructType>(Ty);
-    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      const Type *ElTy = STy->getElementType(i);
-      Assert2(StructType::isValidElementType(ElTy),
-              "Structure type with invalid element type", ElTy, STy);
-      VerifyType(ElTy);
-    }
-    break;
-  }
-  case Type::ArrayTyID: {
-    const ArrayType *ATy = cast<ArrayType>(Ty);
-    Assert1(ArrayType::isValidElementType(ATy->getElementType()),
-            "Array type with invalid element type", ATy);
-    VerifyType(ATy->getElementType());
-    break;
-  }
-  case Type::PointerTyID: {
-    const PointerType *PTy = cast<PointerType>(Ty);
-    Assert1(PointerType::isValidElementType(PTy->getElementType()),
-            "Pointer type with invalid element type", PTy);
-    VerifyType(PTy->getElementType());
-    break;
-  }
-  case Type::VectorTyID: {
-    const VectorType *VTy = cast<VectorType>(Ty);
-    Assert1(VectorType::isValidElementType(VTy->getElementType()),
-            "Vector type with invalid element type", VTy);
-    VerifyType(VTy->getElementType());
-    break;
-  }
-  default:
-    break;
-  }
 }
 
 // Flags used by TableGen to mark intrinsic parameters with the

@@ -14,7 +14,6 @@
 #ifndef LLVM_VALUE_H
 #define LLVM_VALUE_H
 
-#include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
@@ -32,7 +31,6 @@ class GlobalVariable;
 class GlobalAlias;
 class InlineAsm;
 class ValueSymbolTable;
-class TypeSymbolTable;
 template<typename ValueTy> class StringMapEntry;
 template <typename ValueTy = Value>
 class AssertingVH;
@@ -43,6 +41,7 @@ class ValueHandleBase;
 class LLVMContext;
 class Twine;
 class MDNode;
+class Type;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -77,12 +76,11 @@ private:
   /// This field is initialized to zero by the ctor.
   unsigned short SubclassData;
 
-  PATypeHolder VTy;
+  Type *VTy;
   Use *UseList;
 
   friend class ValueSymbolTable; // Allow ValueSymbolTable to directly mod Name.
   friend class ValueHandleBase;
-  friend class AbstractTypeUser;
   ValueName *Name;
 
   void operator=(const Value &);     // Do not implement
@@ -107,13 +105,13 @@ public:
 
   /// All values are typed, get the type of this value.
   ///
-  inline const Type *getType() const { return VTy; }
+  Type *getType() const { return VTy; }
 
   /// All values hold a context through their type.
   LLVMContext &getContext() const;
 
   // All values can potentially be named...
-  inline bool hasName() const { return Name != 0; }
+  bool hasName() const { return Name != 0; }
   ValueName *getValueName() const { return Name; }
   
   /// getName() - Return a constant reference to the value's name. This is cheap
@@ -279,10 +277,6 @@ public:
     return true; // Values are always values.
   }
 
-  /// getRawType - This should only be used to implement the vmcore library.
-  ///
-  const Type *getRawType() const { return VTy.getRawType(); }
-
   /// stripPointerCasts - This method strips off any unneeded pointer
   /// casts from the specified value, returning the original uncasted value.
   /// Note that the returned value has pointer type if the specified value does.
@@ -309,6 +303,15 @@ public:
   /// MaximumAlignment - This is the greatest alignment value supported by
   /// load, store, and alloca instructions, and global values.
   static const unsigned MaximumAlignment = 1u << 29;
+  
+  /// mutateType - Mutate the type of this Value to be of the specified type.
+  /// Note that this is an extremely dangerous operation which can create
+  /// completely invalid IR very easily.  It is strongly recommended that you
+  /// recreate IR objects with the right types instead of mutating them in
+  /// place.
+  void mutateType(Type *Ty) {
+    VTy = Ty;
+  }
   
 protected:
   unsigned short getSubclassDataFromValue() const { return SubclassData; }

@@ -1,4 +1,4 @@
-; RUN: not llvm-as < %s |& grep {return type does not match operand type}
+; RUN: not llvm-as < %s |& grep {value doesn't match function result type 'i32'}
 
 ; Verify the the operand type of the ret instructions in a function match the
 ; delcared return type of the function they live in.

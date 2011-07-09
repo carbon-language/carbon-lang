@@ -2,7 +2,7 @@
         %RPyString = type { i32, %arraytype.Char }
         %arraytype.Char = type { i32, [0 x i8] }
         %arraytype.Signed = type { i32, [0 x i32] }
-        %functiontype.1 = type %RPyString* (i32)
+        %functiontype.1 = type { %RPyString* (i32) *} 
         %structtype.test = type { i32, %arraytype.Signed }
 @structinstance.test = internal global { i32, { i32, [2 x i32] } } { i32 41, { i32, [2 x i32] } { i32 2, [2 x i32] [ i32 100, i32 101 ] } }              ; <{ i32, { i32, [2 x i32] } }*> [#uses=1]
 

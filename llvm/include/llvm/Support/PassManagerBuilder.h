@@ -237,8 +237,8 @@ public:
     MPM.add(createInstructionCombiningPass());  // Clean up after everything.
     
     if (!DisableUnitAtATime) {
+      // FIXME: We shouldn't bother with this anymore.
       MPM.add(createStripDeadPrototypesPass()); // Get rid of dead prototypes
-      MPM.add(createDeadTypeEliminationPass()); // Eliminate dead types
       
       // GlobalOpt already deletes dead functions and globals, at -O3 try a
       // late pass of GlobalDCE.  It is capable of deleting dead cycles.

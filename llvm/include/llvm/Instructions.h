@@ -76,7 +76,7 @@ public:
   /// getAllocatedType - Return the type that is being allocated by the
   /// instruction.
   ///
-  const Type *getAllocatedType() const;
+  Type *getAllocatedType() const;
 
   /// getAlignment - Return the alignment of the memory that is being allocated
   /// by the instruction.
@@ -271,10 +271,10 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(StoreInst, Value)
 //                             GetElementPtrInst Class
 //===----------------------------------------------------------------------===//
 
-// checkType - Simple wrapper function to give a better assertion failure
+// checkGEPType - Simple wrapper function to give a better assertion failure
 // message on bad indexes for a gep instruction.
 //
-static inline const Type *checkType(const Type *Ty) {
+static inline const Type *checkGEPType(const Type *Ty) {
   assert(Ty && "Invalid GetElementPtrInst indices for type!");
   return Ty;
 }
@@ -315,13 +315,13 @@ class GetElementPtrInst : public Instruction {
   /// pointer type.
   ///
   template<typename RandomAccessIterator>
-  static const Type *getIndexedType(const Type *Ptr,
-                                    RandomAccessIterator IdxBegin,
-                                    RandomAccessIterator IdxEnd,
-                                    // This argument ensures that we
-                                    // have an iterator we can do
-                                    // arithmetic on in constant time
-                                    std::random_access_iterator_tag) {
+  static Type *getIndexedType(const Type *Ptr,
+                              RandomAccessIterator IdxBegin,
+                              RandomAccessIterator IdxEnd,
+                              // This argument ensures that we
+                              // have an iterator we can do
+                              // arithmetic on in constant time
+                              std::random_access_iterator_tag) {
     unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
 
     if (NumIdx > 0)
@@ -446,24 +446,22 @@ public:
   /// pointer type.
   ///
   template<typename RandomAccessIterator>
-  static const Type *getIndexedType(const Type *Ptr,
-                                    RandomAccessIterator IdxBegin,
-                                    RandomAccessIterator IdxEnd) {
+  static Type *getIndexedType(const Type *Ptr, RandomAccessIterator IdxBegin,
+                              RandomAccessIterator IdxEnd) {
     return getIndexedType(Ptr, IdxBegin, IdxEnd,
                           typename std::iterator_traits<RandomAccessIterator>::
                           iterator_category());
   }
 
-  static const Type *getIndexedType(const Type *Ptr,
-                                    Value* const *Idx, unsigned NumIdx);
+  // FIXME: Use ArrayRef
+  static Type *getIndexedType(const Type *Ptr,
+                              Value* const *Idx, unsigned NumIdx);
+  static Type *getIndexedType(const Type *Ptr,
+                              Constant* const *Idx, unsigned NumIdx);
 
-  static const Type *getIndexedType(const Type *Ptr,
-                                    Constant* const *Idx, unsigned NumIdx);
-
-  static const Type *getIndexedType(const Type *Ptr,
-                                    uint64_t const *Idx, unsigned NumIdx);
-
-  static const Type *getIndexedType(const Type *Ptr, Value *Idx);
+  static Type *getIndexedType(const Type *Ptr,
+                              uint64_t const *Idx, unsigned NumIdx);
+  static Type *getIndexedType(const Type *Ptr, Value *Idx);
 
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
@@ -538,7 +536,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr,
                                      unsigned Values,
                                      const Twine &NameStr,
                                      Instruction *InsertBefore)
-  : Instruction(PointerType::get(checkType(
+  : Instruction(PointerType::get(checkGEPType(
                                    getIndexedType(Ptr->getType(),
                                                   IdxBegin, IdxEnd)),
                                  cast<PointerType>(Ptr->getType())
@@ -557,7 +555,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr,
                                      unsigned Values,
                                      const Twine &NameStr,
                                      BasicBlock *InsertAtEnd)
-  : Instruction(PointerType::get(checkType(
+  : Instruction(PointerType::get(checkGEPType(
                                    getIndexedType(Ptr->getType(),
                                                   IdxBegin, IdxEnd)),
                                  cast<PointerType>(Ptr->getType())
@@ -1459,17 +1457,18 @@ class ExtractValueInst : public UnaryInstruction {
   ///
   /// Null is returned if the indices are invalid for the specified type.
   ///
-  static const Type *getIndexedType(const Type *Agg,
-                                    const unsigned *Idx, unsigned NumIdx);
+  /// FIXME: Use ArrayRef
+  static Type *getIndexedType(const Type *Agg,
+                              const unsigned *Idx, unsigned NumIdx);
 
   template<typename RandomAccessIterator>
-  static const Type *getIndexedType(const Type *Ptr,
-                                    RandomAccessIterator IdxBegin,
-                                    RandomAccessIterator IdxEnd,
-                                    // This argument ensures that we
-                                    // have an iterator we can do
-                                    // arithmetic on in constant time
-                                    std::random_access_iterator_tag) {
+  static Type *getIndexedType(const Type *Ptr,
+                              RandomAccessIterator IdxBegin,
+                              RandomAccessIterator IdxEnd,
+                              // This argument ensures that we
+                              // have an iterator we can do
+                              // arithmetic on in constant time
+                              std::random_access_iterator_tag) {
     unsigned NumIdx = static_cast<unsigned>(std::distance(IdxBegin, IdxEnd));
 
     if (NumIdx > 0)
@@ -1542,15 +1541,16 @@ public:
   ///
   /// Null is returned if the indices are invalid for the specified type.
   ///
+  /// FIXME: Remove the templates and just use ArrayRef.
   template<typename RandomAccessIterator>
-  static const Type *getIndexedType(const Type *Ptr,
-                                    RandomAccessIterator IdxBegin,
-                                    RandomAccessIterator IdxEnd) {
+  static Type *getIndexedType(const Type *Ptr,
+                              RandomAccessIterator IdxBegin,
+                              RandomAccessIterator IdxEnd) {
     return getIndexedType(Ptr, IdxBegin, IdxEnd,
                           typename std::iterator_traits<RandomAccessIterator>::
                           iterator_category());
   }
-  static const Type *getIndexedType(const Type *Ptr, unsigned Idx);
+  static Type *getIndexedType(const Type *Ptr, unsigned Idx);
 
   typedef const unsigned* idx_iterator;
   inline idx_iterator idx_begin() const { return Indices.begin(); }
@@ -1590,8 +1590,8 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    RandomAccessIterator IdxEnd,
                                    const Twine &NameStr,
                                    Instruction *InsertBefore)
-  : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
-                                              IdxBegin, IdxEnd)),
+  : UnaryInstruction(checkGEPType(getIndexedType(Agg->getType(),
+                                                 IdxBegin, IdxEnd)),
                      ExtractValue, Agg, InsertBefore) {
   init(IdxBegin, IdxEnd, NameStr,
        typename std::iterator_traits<RandomAccessIterator>
@@ -1603,8 +1603,8 @@ ExtractValueInst::ExtractValueInst(Value *Agg,
                                    RandomAccessIterator IdxEnd,
                                    const Twine &NameStr,
                                    BasicBlock *InsertAtEnd)
-  : UnaryInstruction(checkType(getIndexedType(Agg->getType(),
-                                              IdxBegin, IdxEnd)),
+  : UnaryInstruction(checkGEPType(getIndexedType(Agg->getType(),
+                                                 IdxBegin, IdxEnd)),
                      ExtractValue, Agg, InsertAtEnd) {
   init(IdxBegin, IdxEnd, NameStr,
        typename std::iterator_traits<RandomAccessIterator>

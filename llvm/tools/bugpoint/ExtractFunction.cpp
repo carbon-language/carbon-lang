@@ -116,8 +116,6 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   else
     CleanupPasses.push_back("deadargelim");
 
-  CleanupPasses.push_back("deadtypeelim");
-
   Module *New = runPassesOn(M, CleanupPasses);
   if (New == 0) {
     errs() << "Final cleanups failed.  Sorry. :(  Please report a bug!\n";

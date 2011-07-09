@@ -5,5 +5,6 @@
 ; RUN: llvm-as < %s > %t.2.bc
 ; RUN: llvm-link %t.1.bc %t.2.bc -S | grep {%Ty } | not grep opaque
 
-%Ty = type i32
+%Ty = type {i32}
 
+@GV = global %Ty* null

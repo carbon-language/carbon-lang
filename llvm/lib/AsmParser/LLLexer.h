@@ -38,7 +38,7 @@ namespace llvm {
     lltok::Kind CurKind;
     std::string StrVal;
     unsigned UIntVal;
-    const Type *TyVal;
+    Type *TyVal;
     APFloat APFloatVal;
     APSInt  APSIntVal;
 
@@ -56,7 +56,7 @@ namespace llvm {
     LocTy getLoc() const { return SMLoc::getFromPointer(TokStart); }
     lltok::Kind getKind() const { return CurKind; }
     const std::string &getStrVal() const { return StrVal; }
-    const Type *getTyVal() const { return TyVal; }
+    Type *getTyVal() const { return TyVal; }
     unsigned getUIntVal() const { return UIntVal; }
     const APSInt &getAPSIntVal() const { return APSIntVal; }
     const APFloat &getAPFloatVal() const { return APFloatVal; }

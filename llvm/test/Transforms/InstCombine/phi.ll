@@ -139,7 +139,7 @@ BB2:
 ; CHECK: @test8
 ; CHECK-NOT: phi
 ; CHECK: BB2:
-; CHECK-NEXT: %B = getelementptr %0 
+; CHECK-NEXT: %B = getelementptr { i32, i32 }* %A 
 ; CHECK-NEXT: ret i32* %B
 }
 

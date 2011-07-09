@@ -40,7 +40,7 @@ define i32* @test4({ i32 }* %I) {
         %B = getelementptr { i32 }* %A, i64 0, i32 0
         ret i32* %B
 ; CHECK: @test4
-; CHECK: getelementptr %intstruct* %I, i64 1, i32 0
+; CHECK: getelementptr { i32 }* %I, i64 1, i32 0
 }
 
 define void @test5(i8 %B) {
@@ -86,7 +86,7 @@ define i1 @test10({ i32, i32 }* %x, { i32, i32 }* %y) {
         %tmp.4 = icmp eq i32* %tmp.1, %tmp.3       
         ret i1 %tmp.4
 ; CHECK: @test10
-; CHECK: icmp eq %pair* %x, %y
+; CHECK: icmp eq { i32, i32 }* %x, %y
 }
 
 define i1 @test11({ i32, i32 }* %X) {
@@ -94,7 +94,7 @@ define i1 @test11({ i32, i32 }* %X) {
         %Q = icmp eq i32* %P, null             
         ret i1 %Q
 ; CHECK: @test11
-; CHECK: icmp eq %pair* %X, null
+; CHECK: icmp eq { i32, i32 }* %X, null
 }
 
 
@@ -226,19 +226,6 @@ define i1 @test23() {
         ret i1 %B
 ; CHECK: @test23
 ; CHECK: ret i1 false
-}
-
-%"java/lang/Object" = type { %struct.llvm_java_object_base }
-%"java/lang/StringBuffer" = type { %"java/lang/Object", i32, { %"java/lang/Object", i32, [0 x i16] }*, i1 }
-%struct.llvm_java_object_base = type opaque
-
-define void @test24() {
-bc0:
-        %tmp53 = getelementptr %"java/lang/StringBuffer"* null, i32 0, i32 1            ; <i32*> [#uses=1]
-        store i32 0, i32* %tmp53
-        ret void
-; CHECK: @test24
-; CHECK: store i32 0, i32* getelementptr (%"java/lang/StringBuffer"* null, i64 0, i32 1)
 }
 
 define void @test25() {

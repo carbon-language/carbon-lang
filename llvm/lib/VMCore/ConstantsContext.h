@@ -570,13 +570,11 @@ struct ConstantKeyData<InlineAsm> {
 
 template<class ValType, class ValRefType, class TypeClass, class ConstantClass,
          bool HasLargeKey = false /*true for arrays and structs*/ >
-class ConstantUniqueMap : public AbstractTypeUser {
+class ConstantUniqueMap {
 public:
   typedef std::pair<const TypeClass*, ValType> MapKey;
   typedef std::map<MapKey, ConstantClass *> MapTy;
   typedef std::map<ConstantClass *, typename MapTy::iterator> InverseMapTy;
-  typedef std::map<const DerivedType*, typename MapTy::iterator>
-    AbstractTypeMapTy;
 private:
   /// Map - This is the main map from the element descriptor to the Constants.
   /// This is the primary way we avoid creating two of the same shape
@@ -589,10 +587,6 @@ private:
   /// through the map with very large keys.
   InverseMapTy InverseMap;
 
-  /// AbstractTypeMap - Map for abstract type constants.
-  ///
-  AbstractTypeMapTy AbstractTypeMap;
-    
 public:
   typename MapTy::iterator map_begin() { return Map.begin(); }
   typename MapTy::iterator map_end() { return Map.end(); }
@@ -629,7 +623,7 @@ private:
     }
       
     typename MapTy::iterator I =
-      Map.find(MapKey(static_cast<const TypeClass*>(CP->getRawType()),
+      Map.find(MapKey(static_cast<const TypeClass*>(CP->getType()),
                       ConstantKeyData<ConstantClass>::getValType(CP)));
     if (I == Map.end() || I->second != CP) {
       // FIXME: This should not use a linear scan.  If this gets to be a
@@ -639,24 +633,8 @@ private:
     }
     return I;
   }
-    
-  void AddAbstractTypeUser(const Type *Ty, typename MapTy::iterator I) {
-    // If the type of the constant is abstract, make sure that an entry
-    // exists for it in the AbstractTypeMap.
-    if (Ty->isAbstract()) {
-      const DerivedType *DTy = static_cast<const DerivedType *>(Ty);
-      typename AbstractTypeMapTy::iterator TI = AbstractTypeMap.find(DTy);
 
-      if (TI == AbstractTypeMap.end()) {
-        // Add ourselves to the ATU list of the type.
-        cast<DerivedType>(DTy)->addAbstractTypeUser(this);
-
-        AbstractTypeMap.insert(TI, std::make_pair(DTy, I));
-      }
-    }
-  }
-
-  ConstantClass* Create(const TypeClass *Ty, ValRefType V,
+  ConstantClass *Create(const TypeClass *Ty, ValRefType V,
                         typename MapTy::iterator I) {
     ConstantClass* Result =
       ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
@@ -667,8 +645,6 @@ private:
     if (HasLargeKey)  // Remember the reverse mapping if needed.
       InverseMap.insert(std::make_pair(Result, I));
 
-    AddAbstractTypeUser(Ty, I);
-      
     return Result;
   }
 public:
@@ -692,43 +668,6 @@ public:
     return Result;
   }
 
-  void UpdateAbstractTypeMap(const DerivedType *Ty,
-                             typename MapTy::iterator I) {
-    assert(AbstractTypeMap.count(Ty) &&
-           "Abstract type not in AbstractTypeMap?");
-    typename MapTy::iterator &ATMEntryIt = AbstractTypeMap[Ty];
-    if (ATMEntryIt == I) {
-      // Yes, we are removing the representative entry for this type.
-      // See if there are any other entries of the same type.
-      typename MapTy::iterator TmpIt = ATMEntryIt;
-
-      // First check the entry before this one...
-      if (TmpIt != Map.begin()) {
-        --TmpIt;
-        if (TmpIt->first.first != Ty) // Not the same type, move back...
-          ++TmpIt;
-      }
-
-      // If we didn't find the same type, try to move forward...
-      if (TmpIt == ATMEntryIt) {
-        ++TmpIt;
-        if (TmpIt == Map.end() || TmpIt->first.first != Ty)
-          --TmpIt;   // No entry afterwards with the same type
-      }
-
-      // If there is another entry in the map of the same abstract type,
-      // update the AbstractTypeMap entry now.
-      if (TmpIt != ATMEntryIt) {
-        ATMEntryIt = TmpIt;
-      } else {
-        // Otherwise, we are removing the last instance of this type
-        // from the table.  Remove from the ATM, and from user list.
-        cast<DerivedType>(Ty)->removeAbstractTypeUser(this);
-        AbstractTypeMap.erase(Ty);
-      }
-    }
-  }
-
   void remove(ConstantClass *CP) {
     typename MapTy::iterator I = FindExistingElement(CP);
     assert(I != Map.end() && "Constant not found in constant table!");
@@ -736,12 +675,6 @@ public:
 
     if (HasLargeKey)  // Remember the reverse mapping if needed.
       InverseMap.erase(CP);
-      
-    // Now that we found the entry, make sure this isn't the entry that
-    // the AbstractTypeMap points to.
-    const TypeClass *Ty = I->first.first;
-    if (Ty->isAbstract())
-      UpdateAbstractTypeMap(static_cast<const DerivedType *>(Ty), I);
 
     Map.erase(I);
   }
@@ -755,22 +688,7 @@ public:
     assert(OldI != Map.end() && "Constant not found in constant table!");
     assert(OldI->second == C && "Didn't find correct element?");
       
-    // If this constant is the representative element for its abstract type,
-    // update the AbstractTypeMap so that the representative element is I.
-    //
-    // This must use getRawType() because if the type is under refinement, we
-    // will get the refineAbstractType callback below, and we don't want to
-    // kick union find in on the constant.
-    if (C->getRawType()->isAbstract()) {
-      typename AbstractTypeMapTy::iterator ATI =
-          AbstractTypeMap.find(cast<DerivedType>(C->getRawType()));
-      assert(ATI != AbstractTypeMap.end() &&
-             "Abstract type not in AbstractTypeMap?");
-      if (ATI->second == OldI)
-        ATI->second = I;
-    }
-      
-    // Remove the old entry from the map.
+     // Remove the old entry from the map.
     Map.erase(OldI);
     
     // Update the inverse map so that we know that this constant is now
@@ -779,58 +697,6 @@ public:
       assert(I->second == C && "Bad inversemap entry!");
       InverseMap[C] = I;
     }
-  }
-    
-  void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-    typename AbstractTypeMapTy::iterator I = AbstractTypeMap.find(OldTy);
-
-    assert(I != AbstractTypeMap.end() &&
-           "Abstract type not in AbstractTypeMap?");
-
-    // Convert a constant at a time until the last one is gone.  The last one
-    // leaving will remove() itself, causing the AbstractTypeMapEntry to be
-    // eliminated eventually.
-    do {
-      ConstantClass *C = I->second->second;
-      MapKey Key(cast<TypeClass>(NewTy),
-                 ConstantKeyData<ConstantClass>::getValType(C));
-
-      std::pair<typename MapTy::iterator, bool> IP =
-        Map.insert(std::make_pair(Key, C));
-      if (IP.second) {
-        // The map didn't previously have an appropriate constant in the
-        // new type.
-        
-        // Remove the old entry.
-        typename MapTy::iterator OldI =
-          Map.find(MapKey(cast<TypeClass>(OldTy), IP.first->first.second));
-        assert(OldI != Map.end() && "Constant not in map!");
-        UpdateAbstractTypeMap(OldTy, OldI);
-        Map.erase(OldI);
-
-        // Set the constant's type. This is done in place!
-        setType(C, NewTy);
-
-        // Update the inverse map so that we know that this constant is now
-        // located at descriptor I.
-        if (HasLargeKey)
-          InverseMap[C] = IP.first;
-
-        AddAbstractTypeUser(NewTy, IP.first);
-      } else {
-        // The map already had an appropriate constant in the new type, so
-        // there's no longer a need for the old constant.
-        C->uncheckedReplaceAllUsesWith(IP.first->second);
-        C->destroyConstant();    // This constant is now dead, destroy it.
-      }
-      I = AbstractTypeMap.find(OldTy);
-    } while (I != AbstractTypeMap.end());
-  }
-
-  // If the type became concrete without being refined to any other existing
-  // type, we just remove ourselves from the ATU list.
-  void typeBecameConcrete(const DerivedType *AbsTy) {
-    AbsTy->removeAbstractTypeUser(this);
   }
 
   void dump() const {

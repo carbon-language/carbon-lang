@@ -19,6 +19,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ValueHandle.h"

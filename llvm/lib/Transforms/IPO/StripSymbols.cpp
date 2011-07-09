@@ -28,8 +28,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/ValueSymbolTable.h"
-#include "llvm/TypeSymbolTable.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 using namespace llvm;
 
@@ -174,13 +174,19 @@ static void StripSymtab(ValueSymbolTable &ST, bool PreserveDbgInfo) {
   }
 }
 
-// Strip the symbol table of its names.
-static void StripTypeSymtab(TypeSymbolTable &ST, bool PreserveDbgInfo) {
-  for (TypeSymbolTable::iterator TI = ST.begin(), E = ST.end(); TI != E; ) {
-    if (PreserveDbgInfo && StringRef(TI->first).startswith("llvm.dbg"))
-      ++TI;
-    else
-      ST.remove(TI++);
+// Strip any named types of their names.
+static void StripTypeNames(Module &M, bool PreserveDbgInfo) {
+  std::vector<StructType*> StructTypes;
+  M.findUsedStructTypes(StructTypes);
+
+  for (unsigned i = 0, e = StructTypes.size(); i != e; ++i) {
+    StructType *STy = StructTypes[i];
+    if (STy->isAnonymous() || STy->getName().empty()) continue;
+    
+    if (PreserveDbgInfo && STy->getName().startswith("llvm.dbg"))
+      continue;
+
+    STy->setName("");
   }
 }
 
@@ -221,7 +227,7 @@ static bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
   }
   
   // Remove all names from types.
-  StripTypeSymtab(M.getTypeSymbolTable(), PreserveDbgInfo);
+  StripTypeNames(M, PreserveDbgInfo);
 
   return true;
 }

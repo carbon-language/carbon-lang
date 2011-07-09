@@ -1,28 +1,25 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
-%T = type <4 x float>
-
-
-define %T @test1(%T %v1) {
+define <4 x float> @test1(<4 x float> %v1) {
 ; CHECK: @test1
-; CHECK: ret %T %v1
-  %v2 = shufflevector %T %v1, %T undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-  ret %T %v2
+; CHECK: ret <4 x float> %v1
+  %v2 = shufflevector <4 x float> %v1, <4 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  ret <4 x float> %v2
 }
 
-define %T @test2(%T %v1) {
+define <4 x float> @test2(<4 x float> %v1) {
 ; CHECK: @test2
-; CHECK: ret %T %v1
-  %v2 = shufflevector %T %v1, %T %v1, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
-  ret %T %v2
+; CHECK: ret <4 x float> %v1
+  %v2 = shufflevector <4 x float> %v1, <4 x float> %v1, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
+  ret <4 x float> %v2
 }
 
-define float @test3(%T %A, %T %B, float %f) {
+define float @test3(<4 x float> %A, <4 x float> %B, float %f) {
 ; CHECK: @test3
 ; CHECK: ret float %f
-        %C = insertelement %T %A, float %f, i32 0
-        %D = shufflevector %T %C, %T %B, <4 x i32> <i32 5, i32 0, i32 2, i32 7>
-        %E = extractelement %T %D, i32 1
+        %C = insertelement <4 x float> %A, float %f, i32 0
+        %D = shufflevector <4 x float> %C, <4 x float> %B, <4 x i32> <i32 5, i32 0, i32 2, i32 7>
+        %E = extractelement <4 x float> %D, i32 1
         ret float %E
 }
 
@@ -57,7 +54,7 @@ define float @test6(<4 x float> %X) {
 
 define <4 x float> @test7(<4 x float> %tmp45.i) {
 ; CHECK: @test7
-; CHECK-NEXT: ret %T %tmp45.i
+; CHECK-NEXT: ret <4 x float> %tmp45.i
         %tmp1642.i = shufflevector <4 x float> %tmp45.i, <4 x float> undef, <4 x i32> < i32 0, i32 1, i32 6, i32 7 >
         ret <4 x float> %tmp1642.i
 }

@@ -29,7 +29,6 @@ extern unsigned char ConstantMergeID;
 extern unsigned char CorrelatedValuePropagationID;
 extern unsigned char DeadArgEliminationID;
 extern unsigned char DeadStoreEliminationID;
-extern unsigned char DeadTypeEliminationID;
 extern unsigned char EarlyCSEID;
 extern unsigned char FunctionAttrsID;
 extern unsigned char FunctionInliningID;

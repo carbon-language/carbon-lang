@@ -22,6 +22,18 @@ namespace llvm {
   class Instruction;
   typedef ValueMap<const Value *, TrackingVH<Value> > ValueToValueMapTy;
 
+  /// ValueMapTypeRemapper - This is a class that can be implemented by clients
+  /// to remap types when cloning constants and instructions.
+  class ValueMapTypeRemapper {
+    virtual void Anchor();  // Out of line method.
+  public:
+    ~ValueMapTypeRemapper() {}
+    
+    /// remapType - The client should implement this method if they want to
+    /// remap types while mapping values.
+    virtual Type *remapType(Type *SrcTy) = 0;
+  };
+  
   /// RemapFlags - These are flags that the value mapping APIs allow.
   enum RemapFlags {
     RF_None = 0,
@@ -42,9 +54,27 @@ namespace llvm {
   }
   
   Value *MapValue(const Value *V, ValueToValueMapTy &VM,
-                  RemapFlags Flags = RF_None);
+                  RemapFlags Flags = RF_None,
+                  ValueMapTypeRemapper *TypeMapper = 0);
+
   void RemapInstruction(Instruction *I, ValueToValueMapTy &VM,
-                        RemapFlags Flags = RF_None);
+                        RemapFlags Flags = RF_None,
+                        ValueMapTypeRemapper *TypeMapper = 0);
+  
+  /// MapValue - provide versions that preserve type safety for MDNode and
+  /// Constants.
+  inline MDNode *MapValue(const MDNode *V, ValueToValueMapTy &VM,
+                          RemapFlags Flags = RF_None,
+                          ValueMapTypeRemapper *TypeMapper = 0) {
+    return (MDNode*)MapValue((const Value*)V, VM, Flags, TypeMapper);
+  }
+  inline Constant *MapValue(const Constant *V, ValueToValueMapTy &VM,
+                            RemapFlags Flags = RF_None,
+                            ValueMapTypeRemapper *TypeMapper = 0) {
+    return (Constant*)MapValue((const Value*)V, VM, Flags, TypeMapper);
+  }
+  
+
 } // End llvm namespace
 
 #endif

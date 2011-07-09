@@ -17,12 +17,12 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GVMaterializer.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/LeakDetector.h"
 #include "SymbolTableListTraitsImpl.h"
-#include "llvm/TypeSymbolTable.h"
 #include <algorithm>
 #include <cstdarg>
 #include <cstdlib>
@@ -60,7 +60,6 @@ template class llvm::SymbolTableListTraits<GlobalAlias, Module>;
 Module::Module(StringRef MID, LLVMContext& C)
   : Context(C), Materializer(NULL), ModuleID(MID) {
   ValSymTab = new ValueSymbolTable();
-  TypeSymTab = new TypeSymbolTable();
   NamedMDSymTab = new StringMap<NamedMDNode *>();
   Context.addModule(this);
 }
@@ -74,11 +73,10 @@ Module::~Module() {
   LibraryList.clear();
   NamedMDList.clear();
   delete ValSymTab;
-  delete TypeSymTab;
   delete static_cast<StringMap<NamedMDNode *> *>(NamedMDSymTab);
 }
 
-/// Target endian information...
+/// Target endian information.
 Module::Endianness Module::getEndianness() const {
   StringRef temp = DataLayout;
   Module::Endianness ret = AnyEndianness;
@@ -340,51 +338,6 @@ void Module::eraseNamedMetadata(NamedMDNode *NMD) {
   NamedMDList.erase(NMD);
 }
 
-//===----------------------------------------------------------------------===//
-// Methods for easy access to the types in the module.
-//
-
-
-// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
-// there is already an entry for this name, true is returned and the symbol
-// table is not modified.
-//
-bool Module::addTypeName(StringRef Name, const Type *Ty) {
-  TypeSymbolTable &ST = getTypeSymbolTable();
-
-  if (ST.lookup(Name)) return true;  // Already in symtab...
-
-  // Not in symbol table?  Set the name with the Symtab as an argument so the
-  // type knows what to update...
-  ST.insert(Name, Ty);
-
-  return false;
-}
-
-/// getTypeByName - Return the type with the specified name in this module, or
-/// null if there is none by that name.
-const Type *Module::getTypeByName(StringRef Name) const {
-  const TypeSymbolTable &ST = getTypeSymbolTable();
-  return cast_or_null<Type>(ST.lookup(Name));
-}
-
-// getTypeName - If there is at least one entry in the symbol table for the
-// specified type, return it.
-//
-std::string Module::getTypeName(const Type *Ty) const {
-  const TypeSymbolTable &ST = getTypeSymbolTable();
-
-  TypeSymbolTable::const_iterator TI = ST.begin();
-  TypeSymbolTable::const_iterator TE = ST.end();
-  if ( TI == TE ) return ""; // No names for types
-
-  while (TI != TE && TI->second != Ty)
-    ++TI;
-
-  if (TI != TE)  // Must have found an entry!
-    return TI->first;
-  return "";     // Must not have found anything...
-}
 
 //===----------------------------------------------------------------------===//
 // Methods to control the materialization of GlobalValues in the Module.
@@ -471,3 +424,130 @@ void Module::removeLibrary(StringRef Lib) {
       return;
     }
 }
+
+//===----------------------------------------------------------------------===//
+// Type finding functionality.
+//===----------------------------------------------------------------------===//
+
+namespace {
+  /// TypeFinder - Walk over a module, identifying all of the types that are
+  /// used by the module.
+  class TypeFinder {
+    // To avoid walking constant expressions multiple times and other IR
+    // objects, we keep several helper maps.
+    DenseSet<const Value*> VisitedConstants;
+    DenseSet<const Type*> VisitedTypes;
+    
+    std::vector<StructType*> &StructTypes;
+  public:
+    TypeFinder(std::vector<StructType*> &structTypes)
+      : StructTypes(structTypes) {}
+    
+    void run(const Module &M) {
+      // Get types from global variables.
+      for (Module::const_global_iterator I = M.global_begin(),
+           E = M.global_end(); I != E; ++I) {
+        incorporateType(I->getType());
+        if (I->hasInitializer())
+          incorporateValue(I->getInitializer());
+      }
+      
+      // Get types from aliases.
+      for (Module::const_alias_iterator I = M.alias_begin(),
+           E = M.alias_end(); I != E; ++I) {
+        incorporateType(I->getType());
+        if (const Value *Aliasee = I->getAliasee())
+          incorporateValue(Aliasee);
+      }
+      
+      SmallVector<std::pair<unsigned, MDNode*>, 4> MDForInst;
+
+      // Get types from functions.
+      for (Module::const_iterator FI = M.begin(), E = M.end(); FI != E; ++FI) {
+        incorporateType(FI->getType());
+        
+        for (Function::const_iterator BB = FI->begin(), E = FI->end();
+             BB != E;++BB)
+          for (BasicBlock::const_iterator II = BB->begin(),
+               E = BB->end(); II != E; ++II) {
+            const Instruction &I = *II;
+            // Incorporate the type of the instruction and all its operands.
+            incorporateType(I.getType());
+            for (User::const_op_iterator OI = I.op_begin(), OE = I.op_end();
+                 OI != OE; ++OI)
+              incorporateValue(*OI);
+            
+            // Incorporate types hiding in metadata.
+            I.getAllMetadata(MDForInst);
+            for (unsigned i = 0, e = MDForInst.size(); i != e; ++i)
+              incorporateMDNode(MDForInst[i].second);
+            MDForInst.clear();
+          }
+      }
+      
+      for (Module::const_named_metadata_iterator I = M.named_metadata_begin(),
+           E = M.named_metadata_end(); I != E; ++I) {
+        const NamedMDNode *NMD = I;
+        for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
+          incorporateMDNode(NMD->getOperand(i));
+      }
+    }
+    
+  private:
+    void incorporateType(Type *Ty) {
+      // Check to see if we're already visited this type.
+      if (!VisitedTypes.insert(Ty).second)
+        return;
+      
+      // If this is a structure or opaque type, add a name for the type.
+      if (StructType *STy = dyn_cast<StructType>(Ty))
+        StructTypes.push_back(STy);
+      
+      // Recursively walk all contained types.
+      for (Type::subtype_iterator I = Ty->subtype_begin(),
+           E = Ty->subtype_end(); I != E; ++I)
+        incorporateType(*I);
+    }
+    
+    /// incorporateValue - This method is used to walk operand lists finding
+    /// types hiding in constant expressions and other operands that won't be
+    /// walked in other ways.  GlobalValues, basic blocks, instructions, and
+    /// inst operands are all explicitly enumerated.
+    void incorporateValue(const Value *V) {
+      if (const MDNode *M = dyn_cast<MDNode>(V))
+        return incorporateMDNode(M);
+      if (!isa<Constant>(V) || isa<GlobalValue>(V)) return;
+      
+      // Already visited?
+      if (!VisitedConstants.insert(V).second)
+        return;
+      
+      // Check this type.
+      incorporateType(V->getType());
+      
+      // Look in operands for types.
+      const User *U = cast<User>(V);
+      for (Constant::const_op_iterator I = U->op_begin(),
+           E = U->op_end(); I != E;++I)
+        incorporateValue(*I);
+    }
+    
+    void incorporateMDNode(const MDNode *V) {
+      
+      // Already visited?
+      if (!VisitedConstants.insert(V).second)
+        return;
+      
+      // Look in operands for types.
+      for (unsigned i = 0, e = V->getNumOperands(); i != e; ++i)
+        if (Value *Op = V->getOperand(i))
+          incorporateValue(Op);
+    }
+  };
+} // end anonymous namespace
+
+void Module::findUsedStructTypes(std::vector<StructType*> &StructTypes) const {
+  TypeFinder(StructTypes).run(*this);
+}
+
+

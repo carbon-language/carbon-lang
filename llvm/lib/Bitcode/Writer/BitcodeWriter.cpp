@@ -21,7 +21,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
-#include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -29,6 +28,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Program.h"
 #include <cctype>
+#include <map>
 using namespace llvm;
 
 /// These are manifest constants used by the bitcode writer. They do not need to
@@ -101,13 +101,16 @@ static unsigned GetEncodedBinaryOpcode(unsigned Opcode) {
   }
 }
 
-static void WriteStringRecord(unsigned Code, const std::string &Str,
+static void WriteStringRecord(unsigned Code, StringRef Str,
                               unsigned AbbrevToUse, BitstreamWriter &Stream) {
   SmallVector<unsigned, 64> Vals;
 
   // Code: [strchar x N]
-  for (unsigned i = 0, e = Str.size(); i != e; ++i)
+  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
+    if (AbbrevToUse && !BitCodeAbbrevOp::isChar6(Str[i]))
+      AbbrevToUse = 0;
     Vals.push_back(Str[i]);
+  }
 
   // Emit the finished record.
   Stream.EmitRecord(Code, Vals, AbbrevToUse);
@@ -151,7 +154,7 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
 static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   const ValueEnumerator::TypeList &TypeList = VE.getTypes();
 
-  Stream.EnterSubblock(bitc::TYPE_BLOCK_ID, 4 /*count from # abbrevs */);
+  Stream.EnterSubblock(bitc::TYPE_BLOCK_ID_NEW, 4 /*count from # abbrevs */);
   SmallVector<uint64_t, 64> TypeVals;
 
   // Abbrev for TYPE_CODE_POINTER.
@@ -172,15 +175,32 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
                             Log2_32_Ceil(VE.getTypes().size()+1)));
   unsigned FunctionAbbrev = Stream.EmitAbbrev(Abbv);
 
-  // Abbrev for TYPE_CODE_STRUCT.
+  // Abbrev for TYPE_CODE_STRUCT_ANON.
   Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_STRUCT));
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_STRUCT_ANON));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // ispacked
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
                             Log2_32_Ceil(VE.getTypes().size()+1)));
-  unsigned StructAbbrev = Stream.EmitAbbrev(Abbv);
+  unsigned StructAnonAbbrev = Stream.EmitAbbrev(Abbv);
 
+  // Abbrev for TYPE_CODE_STRUCT_NAME.
+  Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_STRUCT_NAME));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
+  unsigned StructNameAbbrev = Stream.EmitAbbrev(Abbv);
+
+  // Abbrev for TYPE_CODE_STRUCT_NAMED.
+  Abbv = new BitCodeAbbrev();
+  Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_STRUCT_NAMED));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1));  // ispacked
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
+                            Log2_32_Ceil(VE.getTypes().size()+1)));
+  unsigned StructNamedAbbrev = Stream.EmitAbbrev(Abbv);
+
+  
   // Abbrev for TYPE_CODE_ARRAY.
   Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_ARRAY));
@@ -202,16 +222,15 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
 
     switch (T->getTypeID()) {
     default: llvm_unreachable("Unknown type!");
-    case Type::VoidTyID:   Code = bitc::TYPE_CODE_VOID;   break;
-    case Type::FloatTyID:  Code = bitc::TYPE_CODE_FLOAT;  break;
-    case Type::DoubleTyID: Code = bitc::TYPE_CODE_DOUBLE; break;
-    case Type::X86_FP80TyID: Code = bitc::TYPE_CODE_X86_FP80; break;
-    case Type::FP128TyID: Code = bitc::TYPE_CODE_FP128; break;
+    case Type::VoidTyID:      Code = bitc::TYPE_CODE_VOID;   break;
+    case Type::FloatTyID:     Code = bitc::TYPE_CODE_FLOAT;  break;
+    case Type::DoubleTyID:    Code = bitc::TYPE_CODE_DOUBLE; break;
+    case Type::X86_FP80TyID:  Code = bitc::TYPE_CODE_X86_FP80; break;
+    case Type::FP128TyID:     Code = bitc::TYPE_CODE_FP128; break;
     case Type::PPC_FP128TyID: Code = bitc::TYPE_CODE_PPC_FP128; break;
-    case Type::LabelTyID:  Code = bitc::TYPE_CODE_LABEL;  break;
-    case Type::OpaqueTyID: Code = bitc::TYPE_CODE_OPAQUE; break;
-    case Type::MetadataTyID: Code = bitc::TYPE_CODE_METADATA; break;
-    case Type::X86_MMXTyID: Code = bitc::TYPE_CODE_X86_MMX; break;
+    case Type::LabelTyID:     Code = bitc::TYPE_CODE_LABEL;  break;
+    case Type::MetadataTyID:  Code = bitc::TYPE_CODE_METADATA; break;
+    case Type::X86_MMXTyID:   Code = bitc::TYPE_CODE_X86_MMX; break;
     case Type::IntegerTyID:
       // INTEGER: [width]
       Code = bitc::TYPE_CODE_INTEGER;
@@ -242,13 +261,28 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     case Type::StructTyID: {
       const StructType *ST = cast<StructType>(T);
       // STRUCT: [ispacked, eltty x N]
-      Code = bitc::TYPE_CODE_STRUCT;
       TypeVals.push_back(ST->isPacked());
       // Output all of the element types.
       for (StructType::element_iterator I = ST->element_begin(),
            E = ST->element_end(); I != E; ++I)
         TypeVals.push_back(VE.getTypeID(*I));
-      AbbrevToUse = StructAbbrev;
+      
+      if (ST->isAnonymous()) {
+        Code = bitc::TYPE_CODE_STRUCT_ANON;
+        AbbrevToUse = StructAnonAbbrev;
+      } else {
+        if (ST->isOpaque()) {
+          Code = bitc::TYPE_CODE_OPAQUE;
+        } else {
+          Code = bitc::TYPE_CODE_STRUCT_NAMED;
+          AbbrevToUse = StructNamedAbbrev;
+        }
+
+        // Emit the name if it is present.
+        if (!ST->getName().empty())
+          WriteStringRecord(bitc::TYPE_CODE_STRUCT_NAME, ST->getName(),
+                            StructNameAbbrev, Stream);
+      }
       break;
     }
     case Type::ArrayTyID: {
@@ -1278,46 +1312,6 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
   Stream.ExitBlock();
 }
 
-/// WriteTypeSymbolTable - Emit a block for the specified type symtab.
-static void WriteTypeSymbolTable(const TypeSymbolTable &TST,
-                                 const ValueEnumerator &VE,
-                                 BitstreamWriter &Stream) {
-  if (TST.empty()) return;
-
-  Stream.EnterSubblock(bitc::TYPE_SYMTAB_BLOCK_ID, 3);
-
-  // 7-bit fixed width VST_CODE_ENTRY strings.
-  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::VST_CODE_ENTRY));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
-                            Log2_32_Ceil(VE.getTypes().size()+1)));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7));
-  unsigned V7Abbrev = Stream.EmitAbbrev(Abbv);
-
-  SmallVector<unsigned, 64> NameVals;
-
-  for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end();
-       TI != TE; ++TI) {
-    // TST_ENTRY: [typeid, namechar x N]
-    NameVals.push_back(VE.getTypeID(TI->second));
-
-    const std::string &Str = TI->first;
-    bool is7Bit = true;
-    for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-      NameVals.push_back((unsigned char)Str[i]);
-      if (Str[i] & 128)
-        is7Bit = false;
-    }
-
-    // Emit the finished record.
-    Stream.EmitRecord(bitc::VST_CODE_ENTRY, NameVals, is7Bit ? V7Abbrev : 0);
-    NameVals.clear();
-  }
-
-  Stream.ExitBlock();
-}
-
 // Emit blockinfo, which defines the standard abbreviations etc.
 static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   // We only want to emit block info records for blocks that have multiple
@@ -1520,9 +1514,6 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
 
   // Emit metadata.
   WriteModuleMetadataStore(M, Stream);
-
-  // Emit the type symbol table information.
-  WriteTypeSymbolTable(M->getTypeSymbolTable(), VE, Stream);
 
   // Emit names for globals/functions etc.
   WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);

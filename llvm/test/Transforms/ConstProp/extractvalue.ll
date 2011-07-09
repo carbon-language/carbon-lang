@@ -1,7 +1,6 @@
 ; RUN: opt < %s -constprop -S | FileCheck %s
 
 %struct = type { i32, [4 x i8] }
-%array = type [3 x %struct]
 
 define i32 @test1() {
   %A = extractvalue %struct { i32 2, [4 x i8] c"foo\00" }, 0
@@ -18,7 +17,7 @@ define i8 @test2() {
 }
 
 define i32 @test3() {
-  %A = extractvalue %array [ %struct { i32 0, [4 x i8] c"aaaa" }, %struct { i32 1, [4 x i8] c"bbbb" }, %struct { i32 2, [4 x i8] c"cccc" } ], 1, 0
+  %A = extractvalue [3 x %struct] [ %struct { i32 0, [4 x i8] c"aaaa" }, %struct { i32 1, [4 x i8] c"bbbb" }, %struct { i32 2, [4 x i8] c"cccc" } ], 1, 0
   ret i32 %A
 ; CHECK: @test3
 ; CHECK: ret i32 1
@@ -39,7 +38,7 @@ define i8 @zeroinitializer-test2() {
 }
 
 define i32 @zeroinitializer-test3() {
-  %A = extractvalue %array zeroinitializer, 1, 0
+  %A = extractvalue [3 x %struct] zeroinitializer, 1, 0
   ret i32 %A
 ; CHECK: @zeroinitializer-test3
 ; CHECK: ret i32 0
@@ -60,7 +59,7 @@ define i8 @undef-test2() {
 }
 
 define i32 @undef-test3() {
-  %A = extractvalue %array undef, 1, 0
+  %A = extractvalue [3 x %struct] undef, 1, 0
   ret i32 %A
 ; CHECK: @undef-test3
 ; CHECK: ret i32 undef

@@ -134,7 +134,7 @@ LLVMContext &Function::getContext() const {
   return getType()->getContext();
 }
 
-const FunctionType *Function::getFunctionType() const {
+FunctionType *Function::getFunctionType() const {
   return cast<FunctionType>(getType()->getElementType());
 }
 
@@ -142,7 +142,7 @@ bool Function::isVarArg() const {
   return getFunctionType()->isVarArg();
 }
 
-const Type *Function::getReturnType() const {
+Type *Function::getReturnType() const {
   return getFunctionType()->getReturnType();
 }
 
@@ -163,7 +163,7 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
   : GlobalValue(PointerType::getUnqual(Ty), 
                 Value::FunctionVal, 0, 0, Linkage, name) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&
-         !getReturnType()->isOpaqueTy() && "invalid return type");
+         "invalid return type");
   SymTab = new ValueSymbolTable();
 
   // If the function has arguments, mark them as lazily built.

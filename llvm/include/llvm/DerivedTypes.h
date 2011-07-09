@@ -24,50 +24,15 @@
 namespace llvm {
 
 class Value;
-template<class ValType, class TypeClass> class TypeMap;
-class FunctionValType;
-class ArrayValType;
-class StructValType;
-class PointerValType;
-class VectorValType;
-class IntegerValType;
 class APInt;
 class LLVMContext;
 template<typename T> class ArrayRef;
+class StringRef;
 
 class DerivedType : public Type {
-  friend class Type;
-
 protected:
   explicit DerivedType(LLVMContext &C, TypeID id) : Type(C, id) {}
-
-  /// notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type
-  /// that the current type has transitioned from being abstract to being
-  /// concrete.
-  ///
-  void notifyUsesThatTypeBecameConcrete();
-
-  /// dropAllTypeUses - When this (abstract) type is resolved to be equal to
-  /// another (more concrete) type, we must eliminate all references to other
-  /// types, to avoid some circular reference problems.
-  ///
-  void dropAllTypeUses();
-
 public:
-
-  //===--------------------------------------------------------------------===//
-  // Abstract Type handling methods - These types have special lifetimes, which
-  // are managed by (add|remove)AbstractTypeUser. See comments in
-  // AbstractTypeUser.h for more information.
-
-  /// refineAbstractTypeTo - This function is used to when it is discovered that
-  /// the 'this' abstract type is actually equivalent to the NewType specified.
-  /// This causes all users of 'this' to switch to reference the more concrete
-  /// type NewType and for 'this' to be deleted.
-  ///
-  void refineAbstractTypeTo(const Type *NewType);
-
-  void dump() const { Type::dump(); }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const DerivedType *) { return true; }
@@ -88,7 +53,6 @@ protected:
       DerivedType(C, IntegerTyID) {
     setSubclassData(NumBits);
   }
-  friend class TypeMap<IntegerValType, IntegerType>;
 public:
   /// This enum is just used to hold constants we need for IntegerType.
   enum {
@@ -103,7 +67,7 @@ public:
   /// that instance will be returned. Otherwise a new one will be created. Only
   /// one instance with a given NumBits value is ever created.
   /// @brief Get or create an IntegerType instance.
-  static const IntegerType *get(LLVMContext &C, unsigned NumBits);
+  static IntegerType *get(LLVMContext &C, unsigned NumBits);
 
   /// @brief Get the number of bits in this IntegerType
   unsigned getBitWidth() const { return getSubclassData(); }
@@ -143,11 +107,9 @@ public:
 /// FunctionType - Class to represent function types
 ///
 class FunctionType : public DerivedType {
-  friend class TypeMap<FunctionValType, FunctionType>;
   FunctionType(const FunctionType &);                   // Do not implement
   const FunctionType &operator=(const FunctionType &);  // Do not implement
-  FunctionType(const Type *Result, ArrayRef<const Type*> Params,
-               bool IsVarArgs);
+  FunctionType(const Type *Result, ArrayRef<Type*> Params, bool IsVarArgs);
 
 public:
   /// FunctionType::get - This static method is the primary way of constructing
@@ -155,6 +117,8 @@ public:
   ///
   static FunctionType *get(const Type *Result,
                            ArrayRef<const Type*> Params, bool isVarArg);
+  static FunctionType *get(const Type *Result,
+                           ArrayRef<Type*> Params, bool isVarArg);
 
   /// FunctionType::get - Create a FunctionType taking no parameters.
   ///
@@ -169,23 +133,19 @@ public:
   static bool isValidArgumentType(const Type *ArgTy);
 
   bool isVarArg() const { return getSubclassData(); }
-  const Type *getReturnType() const { return ContainedTys[0]; }
+  Type *getReturnType() const { return ContainedTys[0]; }
 
   typedef Type::subtype_iterator param_iterator;
   param_iterator param_begin() const { return ContainedTys + 1; }
   param_iterator param_end() const { return &ContainedTys[NumContainedTys]; }
 
   // Parameter type accessors.
-  const Type *getParamType(unsigned i) const { return ContainedTys[i+1]; }
+  Type *getParamType(unsigned i) const { return ContainedTys[i+1]; }
 
   /// getNumParams - Return the number of fixed parameters this function type
   /// requires.  This does not consider varargs.
   ///
   unsigned getNumParams() const { return NumContainedTys - 1; }
-
-  // Implement the AbstractTypeUser interface.
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-  virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const FunctionType *) { return true; }
@@ -205,8 +165,8 @@ public:
   /// getTypeAtIndex - Given an index value into the type, return the type of
   /// the element.
   ///
-  const Type *getTypeAtIndex(const Value *V) const;
-  const Type *getTypeAtIndex(unsigned Idx) const;
+  Type *getTypeAtIndex(const Value *V) const;
+  Type *getTypeAtIndex(unsigned Idx) const;
   bool indexValid(const Value *V) const;
   bool indexValid(unsigned Idx) const;
 
@@ -222,17 +182,48 @@ public:
 
 
 /// StructType - Class to represent struct types, both normal and packed.
+/// Besides being optionally packed, structs can be either "anonymous" or may
+/// have an identity.  Anonymous structs are uniqued by structural equivalence,
+/// but types are each unique when created, and optionally have a name.
 ///
 class StructType : public CompositeType {
-  friend class TypeMap<StructValType, StructType>;
   StructType(const StructType &);                   // Do not implement
   const StructType &operator=(const StructType &);  // Do not implement
-  StructType(LLVMContext &C, ArrayRef<const Type*> Types, bool isPacked);
+  StructType(LLVMContext &C)
+    : CompositeType(C, StructTyID), SymbolTableEntry(0) {}
+  enum {
+    // This is the contents of the SubClassData field.
+    SCDB_HasBody = 1,
+    SCDB_Packed = 2,
+    SCDB_IsAnonymous = 4
+  };
+  
+  /// SymbolTableEntry - For a named struct that actually has a name, this is a
+  /// pointer to the symbol table entry (maintained by LLVMContext) for the
+  /// struct.  This is null if the type is an anonymous struct or if it is
+  /// 
+  void *SymbolTableEntry;
 public:
+  /// StructType::createNamed - This creates a named struct with no body
+  /// specified.  If the name is empty, it creates an unnamed struct, which has
+  /// a unique identity but no actual name.
+  static StructType *createNamed(LLVMContext &Context, StringRef Name);
+  
+  static StructType *createNamed(StringRef Name, ArrayRef<Type*> Elements,
+                                 bool isPacked = false);
+  static StructType *createNamed(LLVMContext &Context, StringRef Name,
+                                 ArrayRef<Type*> Elements,
+                                 bool isPacked = false);
+  static StructType *createNamed(StringRef Name, Type *elt1, ...) END_WITH_NULL;
+
   /// StructType::get - This static method is the primary way to create a
   /// StructType.
   ///
+  /// FIXME: Remove the 'const Type*' version of this when types are pervasively
+  /// de-constified.
   static StructType *get(LLVMContext &Context, ArrayRef<const Type*> Elements,
+                         bool isPacked = false);
+  static StructType *get(LLVMContext &Context, ArrayRef<Type*> Elements,
                          bool isPacked = false);
 
   /// StructType::get - Create an empty structure type.
@@ -245,11 +236,37 @@ public:
   /// element type.
   static StructType *get(const Type *elt1, ...) END_WITH_NULL;
 
+  bool isPacked() const { return (getSubclassData() & SCDB_Packed) != 0; }
+  
+  /// isAnonymous - Return true if this type is uniqued by structural
+  /// equivalence, false if it has an identity.
+  bool isAnonymous() const {return (getSubclassData() & SCDB_IsAnonymous) != 0;}
+  
+  /// isOpaque - Return true if this is a type with an identity that has no body
+  /// specified yet.  These prints as 'opaque' in .ll files.
+  bool isOpaque() const { return (getSubclassData() & SCDB_HasBody) == 0; }
+  
+  /// hasName - Return true if this is a named struct that has a non-empty name.
+  bool hasName() const { return SymbolTableEntry != 0; }
+  
+  /// getName - Return the name for this struct type if it has an identity.
+  /// This may return an empty string for an unnamed struct type.  Do not call
+  /// this on an anonymous type.
+  StringRef getName() const;
+  
+  /// setName - Change the name of this type to the specified name, or to a name
+  /// with a suffix if there is a collision.  Do not call this on an anonymous
+  /// type.
+  void setName(StringRef Name);
+
+  /// setBody - Specify a body for an opaque type.
+  void setBody(ArrayRef<Type*> Elements, bool isPacked = false);
+  void setBody(Type *elt1, ...) END_WITH_NULL;
+  
   /// isValidElementType - Return true if the specified type is valid as a
   /// element type.
   static bool isValidElementType(const Type *ElemTy);
-
-  bool isPacked() const { return getSubclassData() != 0 ? true : false; }
+  
 
   // Iterator access to the elements.
   typedef Type::subtype_iterator element_iterator;
@@ -258,21 +275,14 @@ public:
 
   /// isLayoutIdentical - Return true if this is layout identical to the
   /// specified struct.
-  bool isLayoutIdentical(const StructType *Other) const {
-    return this == Other;
-  }
-  
+  bool isLayoutIdentical(const StructType *Other) const;  
   
   // Random access to the elements
   unsigned getNumElements() const { return NumContainedTys; }
-  const Type *getElementType(unsigned N) const {
+  Type *getElementType(unsigned N) const {
     assert(N < NumContainedTys && "Element number out of range!");
     return ContainedTys[N];
   }
-
-  // Implement the AbstractTypeUser interface.
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-  virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
   // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const StructType *) { return true; }
@@ -290,21 +300,19 @@ public:
 /// components out in memory identically.
 ///
 class SequentialType : public CompositeType {
-  PATypeHandle ContainedType;       ///< Storage for the single contained type.
+  Type *ContainedType;               ///< Storage for the single contained type.
   SequentialType(const SequentialType &);                  // Do not implement!
   const SequentialType &operator=(const SequentialType &); // Do not implement!
 
-  // avoiding warning: 'this' : used in base member initializer list
-  SequentialType *this_() { return this; }
 protected:
-  SequentialType(TypeID TID, const Type *ElType)
-    : CompositeType(ElType->getContext(), TID), ContainedType(ElType, this_()) {
+  SequentialType(TypeID TID, Type *ElType)
+    : CompositeType(ElType->getContext(), TID), ContainedType(ElType) {
     ContainedTys = &ContainedType;
     NumContainedTys = 1;
   }
 
 public:
-  const Type *getElementType() const { return ContainedTys[0]; }
+  Type *getElementType() const { return ContainedTys[0]; }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const SequentialType *) { return true; }
@@ -319,12 +327,11 @@ public:
 /// ArrayType - Class to represent array types.
 ///
 class ArrayType : public SequentialType {
-  friend class TypeMap<ArrayValType, ArrayType>;
   uint64_t NumElements;
 
   ArrayType(const ArrayType &);                   // Do not implement
   const ArrayType &operator=(const ArrayType &);  // Do not implement
-  ArrayType(const Type *ElType, uint64_t NumEl);
+  ArrayType(Type *ElType, uint64_t NumEl);
 public:
   /// ArrayType::get - This static method is the primary way to construct an
   /// ArrayType
@@ -337,10 +344,6 @@ public:
 
   uint64_t getNumElements() const { return NumElements; }
 
-  // Implement the AbstractTypeUser interface.
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-  virtual void typeBecameConcrete(const DerivedType *AbsTy);
-
   // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const ArrayType *) { return true; }
   static inline bool classof(const Type *T) {
@@ -351,12 +354,11 @@ public:
 /// VectorType - Class to represent vector types.
 ///
 class VectorType : public SequentialType {
-  friend class TypeMap<VectorValType, VectorType>;
   unsigned NumElements;
 
   VectorType(const VectorType &);                   // Do not implement
   const VectorType &operator=(const VectorType &);  // Do not implement
-  VectorType(const Type *ElType, unsigned NumEl);
+  VectorType(Type *ElType, unsigned NumEl);
 public:
   /// VectorType::get - This static method is the primary way to construct an
   /// VectorType.
@@ -369,7 +371,7 @@ public:
   ///
   static VectorType *getInteger(const VectorType *VTy) {
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
-    const Type *EltTy = IntegerType::get(VTy->getContext(), EltBits);
+    Type *EltTy = IntegerType::get(VTy->getContext(), EltBits);
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 
@@ -379,7 +381,7 @@ public:
   ///
   static VectorType *getExtendedElementVectorType(const VectorType *VTy) {
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
-    const Type *EltTy = IntegerType::get(VTy->getContext(), EltBits * 2);
+    Type *EltTy = IntegerType::get(VTy->getContext(), EltBits * 2);
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 
@@ -391,7 +393,7 @@ public:
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
     assert((EltBits & 1) == 0 &&
            "Cannot truncate vector element with odd bit-width");
-    const Type *EltTy = IntegerType::get(VTy->getContext(), EltBits / 2);
+    Type *EltTy = IntegerType::get(VTy->getContext(), EltBits / 2);
     return VectorType::get(EltTy, VTy->getNumElements());
   }
 
@@ -407,10 +409,6 @@ public:
     return NumElements * getElementType()->getPrimitiveSizeInBits();
   }
 
-  // Implement the AbstractTypeUser interface.
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-  virtual void typeBecameConcrete(const DerivedType *AbsTy);
-
   // Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const VectorType *) { return true; }
   static inline bool classof(const Type *T) {
@@ -422,11 +420,9 @@ public:
 /// PointerType - Class to represent pointers.
 ///
 class PointerType : public SequentialType {
-  friend class TypeMap<PointerValType, PointerType>;
-
   PointerType(const PointerType &);                   // Do not implement
   const PointerType &operator=(const PointerType &);  // Do not implement
-  explicit PointerType(const Type *ElType, unsigned AddrSpace);
+  explicit PointerType(Type *ElType, unsigned AddrSpace);
 public:
   /// PointerType::get - This constructs a pointer to an object of the specified
   /// type in a numbered address space.
@@ -445,34 +441,10 @@ public:
   /// @brief Return the address space of the Pointer type.
   inline unsigned getAddressSpace() const { return getSubclassData(); }
 
-  // Implement the AbstractTypeUser interface.
-  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
-  virtual void typeBecameConcrete(const DerivedType *AbsTy);
-
   // Implement support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const PointerType *) { return true; }
   static inline bool classof(const Type *T) {
     return T->getTypeID() == PointerTyID;
-  }
-};
-
-
-/// OpaqueType - Class to represent opaque types.
-///
-class OpaqueType : public DerivedType {
-  friend class LLVMContextImpl;
-  OpaqueType(const OpaqueType &);                   // DO NOT IMPLEMENT
-  const OpaqueType &operator=(const OpaqueType &);  // DO NOT IMPLEMENT
-  OpaqueType(LLVMContext &C);
-public:
-  /// OpaqueType::get - Static factory method for the OpaqueType class.
-  ///
-  static OpaqueType *get(LLVMContext &C);
-
-  // Implement support for type inquiry through isa, cast, and dyn_cast.
-  static inline bool classof(const OpaqueType *) { return true; }
-  static inline bool classof(const Type *T) {
-    return T->getTypeID() == OpaqueTyID;
   }
 };
 

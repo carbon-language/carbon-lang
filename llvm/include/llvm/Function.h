@@ -128,8 +128,8 @@ public:
 
   ~Function();
 
-  const Type *getReturnType() const;           // Return the type of the ret val
-  const FunctionType *getFunctionType() const; // Return the FunctionType for me
+  Type *getReturnType() const;           // Return the type of the ret val
+  FunctionType *getFunctionType() const; // Return the FunctionType for me
 
   /// getContext - Return a pointer to the LLVMContext associated with this 
   /// function, or NULL if this function is not bound to a context yet.

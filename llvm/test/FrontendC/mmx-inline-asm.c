@@ -5,7 +5,7 @@
 #include <mmintrin.h>
 #include <stdint.h>
 
-// CHECK: type { x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx }
+// CHECK: { x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx }
 
 void foo(__m64 vfill) {
   __m64 v1, v2, v3, v4, v5, v6, v7;

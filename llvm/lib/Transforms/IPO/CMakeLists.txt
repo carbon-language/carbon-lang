@@ -2,7 +2,6 @@ add_llvm_library(LLVMipo
   ArgumentPromotion.cpp
   ConstantMerge.cpp
   DeadArgumentElimination.cpp
-  DeadTypeElimination.cpp
   ExtractGV.cpp
   FunctionAttrs.cpp
   GlobalDCE.cpp

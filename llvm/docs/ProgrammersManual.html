@@ -160,15 +160,8 @@ with another <tt>Value</tt></a> </li>
 
   <li><a href="#advanced">Advanced Topics</a>
   <ul>
-  <li><a href="#TypeResolve">LLVM Type Resolution</a>
-  <ul>
-    <li><a href="#BuildRecType">Basic Recursive Type Construction</a></li>
-    <li><a href="#refineAbstractTypeTo">The <tt>refineAbstractTypeTo</tt> method</a></li>
-    <li><a href="#PATypeHolder">The PATypeHolder Class</a></li>
-    <li><a href="#AbstractTypeUser">The AbstractTypeUser Class</a></li>
-  </ul></li>
 
-  <li><a href="#SymbolTable">The <tt>ValueSymbolTable</tt> and <tt>TypeSymbolTable</tt> classes</a></li>
+  <li><a href="#SymbolTable">The <tt>ValueSymbolTable</tt> class</a></li>
   <li><a href="#UserLayout">The <tt>User</tt> and owned <tt>Use</tt> classes' memory layout</a></li>
   </ul></li>
 
@@ -2645,173 +2638,10 @@ do not need to be aware of.  These API's tend manage the inner workings of the
 LLVM system, and only need to be accessed in unusual circumstances.
 </p>
 
+  
 <!-- ======================================================================= -->
 <h3>
-  <a name="TypeResolve">LLVM Type Resolution</a>
-</h3>
-
-<div>
-
-<p>
-The LLVM type system has a very simple goal: allow clients to compare types for
-structural equality with a simple pointer comparison (aka a shallow compare).
-This goal makes clients much simpler and faster, and is used throughout the LLVM
-system.
-</p>
-
-<p>
-Unfortunately achieving this goal is not a simple matter.  In particular,
-recursive types and late resolution of opaque types makes the situation very
-difficult to handle.  Fortunately, for the most part, our implementation makes
-most clients able to be completely unaware of the nasty internal details.  The
-primary case where clients are exposed to the inner workings of it are when
-building a recursive type.  In addition to this case, the LLVM bitcode reader,
-assembly parser, and linker also have to be aware of the inner workings of this
-system.
-</p>
-
-<p>
-For our purposes below, we need three concepts.  First, an "Opaque Type" is 
-exactly as defined in the <a href="LangRef.html#t_opaque">language 
-reference</a>.  Second an "Abstract Type" is any type which includes an 
-opaque type as part of its type graph (for example "<tt>{ opaque, i32 }</tt>").
-Third, a concrete type is a type that is not an abstract type (e.g. "<tt>{ i32, 
-float }</tt>").
-</p>
-
-<!-- ______________________________________________________________________ -->
-<h4>
-  <a name="BuildRecType">Basic Recursive Type Construction</a>
-</h4>
-
-<div>
-
-<p>
-Because the most common question is "how do I build a recursive type with LLVM",
-we answer it now and explain it as we go.  Here we include enough to cause this
-to be emitted to an output .ll file:
-</p>
-
-<div class="doc_code">
-<pre>
-%mylist = type { %mylist*, i32 }
-</pre>
-</div>
-
-<p>
-To build this, use the following LLVM APIs:
-</p>
-
-<div class="doc_code">
-<pre>
-// <i>Create the initial outer struct</i>
-<a href="#PATypeHolder">PATypeHolder</a> StructTy = OpaqueType::get();
-std::vector&lt;const Type*&gt; Elts;
-Elts.push_back(PointerType::getUnqual(StructTy));
-Elts.push_back(Type::Int32Ty);
-StructType *NewSTy = StructType::get(Elts);
-
-// <i>At this point, NewSTy = "{ opaque*, i32 }". Tell VMCore that</i>
-// <i>the struct and the opaque type are actually the same.</i>
-cast&lt;OpaqueType&gt;(StructTy.get())-&gt;<a href="#refineAbstractTypeTo">refineAbstractTypeTo</a>(NewSTy);
-
-// <i>NewSTy is potentially invalidated, but StructTy (a <a href="#PATypeHolder">PATypeHolder</a>) is</i>
-// <i>kept up-to-date</i>
-NewSTy = cast&lt;StructType&gt;(StructTy.get());
-
-// <i>Add a name for the type to the module symbol table (optional)</i>
-MyModule-&gt;addTypeName("mylist", NewSTy);
-</pre>
-</div>
-
-<p>
-This code shows the basic approach used to build recursive types: build a
-non-recursive type using 'opaque', then use type unification to close the cycle.
-The type unification step is performed by the <tt><a
-href="#refineAbstractTypeTo">refineAbstractTypeTo</a></tt> method, which is
-described next.  After that, we describe the <a
-href="#PATypeHolder">PATypeHolder class</a>.
-</p>
-
-</div>
-
-<!-- ______________________________________________________________________ -->
-<h4>
-  <a name="refineAbstractTypeTo">The <tt>refineAbstractTypeTo</tt> method</a>
-</h4>
-
-<div>
-<p>
-The <tt>refineAbstractTypeTo</tt> method starts the type unification process.
-While this method is actually a member of the DerivedType class, it is most
-often used on OpaqueType instances.  Type unification is actually a recursive
-process.  After unification, types can become structurally isomorphic to
-existing types, and all duplicates are deleted (to preserve pointer equality).
-</p>
-
-<p>
-In the example above, the OpaqueType object is definitely deleted.
-Additionally, if there is an "{ \2*, i32}" type already created in the system,
-the pointer and struct type created are <b>also</b> deleted.  Obviously whenever
-a type is deleted, any "Type*" pointers in the program are invalidated.  As
-such, it is safest to avoid having <i>any</i> "Type*" pointers to abstract types
-live across a call to <tt>refineAbstractTypeTo</tt> (note that non-abstract
-types can never move or be deleted).  To deal with this, the <a
-href="#PATypeHolder">PATypeHolder</a> class is used to maintain a stable
-reference to a possibly refined type, and the <a
-href="#AbstractTypeUser">AbstractTypeUser</a> class is used to update more
-complex datastructures.
-</p>
-
-</div>
-
-<!-- ______________________________________________________________________ -->
-<h4>
-  <a name="PATypeHolder">The PATypeHolder Class</a>
-</h4>
-
-<div>
-<p>
-PATypeHolder is a form of a "smart pointer" for Type objects.  When VMCore
-happily goes about nuking types that become isomorphic to existing types, it
-automatically updates all PATypeHolder objects to point to the new type.  In the
-example above, this allows the code to maintain a pointer to the resultant
-resolved recursive type, even though the Type*'s are potentially invalidated.
-</p>
-
-<p>
-PATypeHolder is an extremely light-weight object that uses a lazy union-find
-implementation to update pointers.  For example the pointer from a Value to its
-Type is maintained by PATypeHolder objects.
-</p>
-
-</div>
-
-<!-- ______________________________________________________________________ -->
-<h4>
-  <a name="AbstractTypeUser">The AbstractTypeUser Class</a>
-</h4>
-
-<div>
-
-<p>
-Some data structures need more to perform more complex updates when types get
-resolved.  To support this, a class can derive from the AbstractTypeUser class.
-This class
-allows it to get callbacks when certain types are resolved.  To register to get
-callbacks for a particular type, the DerivedType::{add/remove}AbstractTypeUser
-methods can be called on a type.  Note that these methods only work for <i>
-  abstract</i> types.  Concrete types (those that do not include any opaque 
-objects) can never be refined.
-</p>
-</div>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
-  <a name="SymbolTable">The <tt>ValueSymbolTable</tt> and
-   <tt>TypeSymbolTable</tt> classes</a>
+  <a name="SymbolTable">The <tt>ValueSymbolTable</tt> class</a>
 </h3>
 
 <div>
@@ -2820,9 +2650,7 @@ ValueSymbolTable</a></tt> class provides a symbol table that the <a
 href="#Function"><tt>Function</tt></a> and <a href="#Module">
 <tt>Module</tt></a> classes use for naming value definitions. The symbol table
 can provide a name for any <a href="#Value"><tt>Value</tt></a>. 
-The <tt><a href="http://llvm.org/doxygen/classllvm_1_1TypeSymbolTable.html">
-TypeSymbolTable</a></tt> class is used by the <tt>Module</tt> class to store
-names for types.</p>
+</p>
 
 <p>Note that the <tt>SymbolTable</tt> class should not be directly accessed 
 by most clients.  It should only be used when iteration over the symbol table 
@@ -2832,13 +2660,12 @@ all LLVM
 an empty name) do not exist in the symbol table.
 </p>
 
-<p>These symbol tables support iteration over the values/types in the symbol
+<p>Symbol tables support iteration over the values in the symbol
 table with <tt>begin/end/iterator</tt> and supports querying to see if a
 specific name is in the symbol table (with <tt>lookup</tt>).  The
 <tt>ValueSymbolTable</tt> class exposes no public mutator methods, instead,
 simply call <tt>setName</tt> on a value, which will autoinsert it into the
-appropriate symbol table.  For types, use the Module::addTypeName method to
-insert entries into the symbol table.</p>
+appropriate symbol table.</p>
 
 </div>
 
@@ -3128,9 +2955,6 @@ the <tt>lib/VMCore</tt> directory.</p>
   <li><tt>bool isFloatingPointTy()</tt>: Return true if this is one of the five
   floating point types.</li>
 
-  <li><tt>bool isAbstract()</tt>: Return true if the type is abstract (contains
-  an OpaqueType anywhere in its definition).</li>
-
   <li><tt>bool isSized()</tt>: Return true if the type has known size. Things
   that don't have a size are abstract types, labels and void.</li>
 
@@ -3192,14 +3016,6 @@ the <tt>lib/VMCore</tt> directory.</p>
       number of formal parameters.</li>
     </ul>
   </dd>
-  <dt><tt>OpaqueType</tt></dt>
-  <dd>Sublcass of DerivedType for abstract types. This class 
-  defines no content and is used as a placeholder for some other type. Note 
-  that OpaqueType is used (temporarily) during type resolution for forward 
-  references of types. Once the referenced type is resolved, the OpaqueType 
-  is replaced with the actual type. OpaqueType can also be used for data 
-  abstraction. At link time opaque types can be resolved to actual types 
-  of the same name.</dd>
 </dl>
 </div>
 

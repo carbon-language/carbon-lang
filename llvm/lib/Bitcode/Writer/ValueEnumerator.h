@@ -30,7 +30,6 @@ class Module;
 class MDNode;
 class NamedMDNode;
 class AttrListPtr;
-class TypeSymbolTable;
 class ValueSymbolTable;
 class MDSymbolTable;
 
@@ -135,7 +134,6 @@ public:
 
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
-  void OptimizeTypes();
     
   void EnumerateMDNodeOperands(const MDNode *N);
   void EnumerateMetadata(const Value *MD);
@@ -146,7 +144,6 @@ private:
   void EnumerateOperandType(const Value *V);
   void EnumerateAttributes(const AttrListPtr &PAL);
   
-  void EnumerateTypeSymbolTable(const TypeSymbolTable &ST);
   void EnumerateValueSymbolTable(const ValueSymbolTable &ST);
   void EnumerateNamedMetadata(const Module *M);
 };

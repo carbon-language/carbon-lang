@@ -29,13 +29,23 @@ namespace bitc {
 
     // Module sub-block id's.
     PARAMATTR_BLOCK_ID,
-    TYPE_BLOCK_ID,
+    
+    /// TYPE_BLOCK_ID_OLD - This is the type descriptor block in LLVM 2.9 and
+    /// earlier, replaced with TYPE_BLOCK_ID2.  FIXME: Remove in LLVM 3.1.
+    TYPE_BLOCK_ID_OLD,
+    
     CONSTANTS_BLOCK_ID,
     FUNCTION_BLOCK_ID,
-    TYPE_SYMTAB_BLOCK_ID,
+    
+    /// TYPE_SYMTAB_BLOCK_ID_OLD - This type descriptor is from LLVM 2.9 and
+    /// earlier bitcode files.  FIXME: Remove in LLVM 3.1
+    TYPE_SYMTAB_BLOCK_ID_OLD,
+    
     VALUE_SYMTAB_BLOCK_ID,
     METADATA_BLOCK_ID,
-    METADATA_ATTACHMENT_ID
+    METADATA_ATTACHMENT_ID,
+    
+    TYPE_BLOCK_ID_NEW
   };
 
 
@@ -72,31 +82,38 @@ namespace bitc {
 
   /// TYPE blocks have codes for each type primitive they use.
   enum TypeCodes {
-    TYPE_CODE_NUMENTRY =  1,   // NUMENTRY: [numentries]
+    TYPE_CODE_NUMENTRY =  1,    // NUMENTRY: [numentries]
 
     // Type Codes
-    TYPE_CODE_VOID     =  2,   // VOID
-    TYPE_CODE_FLOAT    =  3,   // FLOAT
-    TYPE_CODE_DOUBLE   =  4,   // DOUBLE
-    TYPE_CODE_LABEL    =  5,   // LABEL
-    TYPE_CODE_OPAQUE   =  6,   // OPAQUE
-    TYPE_CODE_INTEGER  =  7,   // INTEGER: [width]
-    TYPE_CODE_POINTER  =  8,   // POINTER: [pointee type]
-    TYPE_CODE_FUNCTION =  9,   // FUNCTION: [vararg, retty, paramty x N]
-    TYPE_CODE_STRUCT   = 10,   // STRUCT: [ispacked, eltty x N]
-    TYPE_CODE_ARRAY    = 11,   // ARRAY: [numelts, eltty]
-    TYPE_CODE_VECTOR   = 12,   // VECTOR: [numelts, eltty]
+    TYPE_CODE_VOID     =  2,    // VOID
+    TYPE_CODE_FLOAT    =  3,    // FLOAT
+    TYPE_CODE_DOUBLE   =  4,    // DOUBLE
+    TYPE_CODE_LABEL    =  5,    // LABEL
+    TYPE_CODE_OPAQUE   =  6,    // OPAQUE
+    TYPE_CODE_INTEGER  =  7,    // INTEGER: [width]
+    TYPE_CODE_POINTER  =  8,    // POINTER: [pointee type]
+    TYPE_CODE_FUNCTION =  9,    // FUNCTION: [vararg, retty, paramty x N]
+    
+    // FIXME: This is the encoding used for structs in LLVM 2.9 and earlier.
+    // REMOVE this in LLVM 3.1
+    TYPE_CODE_STRUCT_OLD = 10,  // STRUCT: [ispacked, eltty x N]
+    TYPE_CODE_ARRAY    = 11,    // ARRAY: [numelts, eltty]
+    TYPE_CODE_VECTOR   = 12,    // VECTOR: [numelts, eltty]
 
     // These are not with the other floating point types because they're
     // a late addition, and putting them in the right place breaks
     // binary compatibility.
-    TYPE_CODE_X86_FP80 = 13,   // X86 LONG DOUBLE
-    TYPE_CODE_FP128    = 14,   // LONG DOUBLE (112 bit mantissa)
-    TYPE_CODE_PPC_FP128= 15,   // PPC LONG DOUBLE (2 doubles)
+    TYPE_CODE_X86_FP80 = 13,    // X86 LONG DOUBLE
+    TYPE_CODE_FP128    = 14,    // LONG DOUBLE (112 bit mantissa)
+    TYPE_CODE_PPC_FP128= 15,    // PPC LONG DOUBLE (2 doubles)
 
-    TYPE_CODE_METADATA = 16,   // METADATA
+    TYPE_CODE_METADATA = 16,    // METADATA
 
-    TYPE_CODE_X86_MMX = 17     // X86 MMX
+    TYPE_CODE_X86_MMX = 17,     // X86 MMX
+    
+    TYPE_CODE_STRUCT_ANON = 18, // STRUCT_ANON: [ispacked, eltty x N]
+    TYPE_CODE_STRUCT_NAME = 19, // STRUCT_NAME: [strchr x N]
+    TYPE_CODE_STRUCT_NAMED = 20 // STRUCT_NAMED: [ispacked, eltty x N]
   };
 
   // The type symbol table only has one code (TST_ENTRY_CODE).

@@ -13,16 +13,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/Type.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Metadata.h"
-#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM,
-                      RemapFlags Flags) {
+// Out of line method to get vtable etc for class.
+void ValueMapTypeRemapper::Anchor() {}
+
+Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
+                      ValueMapTypeRemapper *TypeMapper) {
   ValueToValueMapTy::iterator I = VM.find(V);
   
   // If the value already exists in the map, use it.
@@ -46,14 +47,14 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM,
     // Check all operands to see if any need to be remapped.
     for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i) {
       Value *OP = MD->getOperand(i);
-      if (OP == 0 || MapValue(OP, VM, Flags) == OP) continue;
+      if (OP == 0 || MapValue(OP, VM, Flags, TypeMapper) == OP) continue;
 
       // Ok, at least one operand needs remapping.  
       SmallVector<Value*, 4> Elts;
       Elts.reserve(MD->getNumOperands());
       for (i = 0; i != e; ++i) {
         Value *Op = MD->getOperand(i);
-        Elts.push_back(Op ? MapValue(Op, VM, Flags) : 0);
+        Elts.push_back(Op ? MapValue(Op, VM, Flags, TypeMapper) : 0);
       }
       MDNode *NewMD = MDNode::get(V->getContext(), Elts);
       Dummy->replaceAllUsesWith(NewMD);
@@ -76,51 +77,75 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM,
     return 0;
   
   if (BlockAddress *BA = dyn_cast<BlockAddress>(C)) {
-    Function *F = cast<Function>(MapValue(BA->getFunction(), VM, Flags));
+    Function *F = 
+      cast<Function>(MapValue(BA->getFunction(), VM, Flags, TypeMapper));
     BasicBlock *BB = cast_or_null<BasicBlock>(MapValue(BA->getBasicBlock(), VM,
-                                                       Flags));
+                                                       Flags, TypeMapper));
     return VM[V] = BlockAddress::get(F, BB ? BB : BA->getBasicBlock());
   }
   
-  for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
-    Value *Op = C->getOperand(i);
-    Value *Mapped = MapValue(Op, VM, Flags);
-    if (Mapped == C) continue;
-    
-    // Okay, the operands don't all match.  We've already processed some or all
-    // of the operands, set them up now.
-    std::vector<Constant*> Ops;
-    Ops.reserve(C->getNumOperands());
-    for (unsigned j = 0; j != i; ++j)
-      Ops.push_back(cast<Constant>(C->getOperand(i)));
-    Ops.push_back(cast<Constant>(Mapped));
-    
-    // Map the rest of the operands that aren't processed yet.
-    for (++i; i != e; ++i)
-      Ops.push_back(cast<Constant>(MapValue(C->getOperand(i), VM, Flags)));
-    
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-      return VM[V] = CE->getWithOperands(Ops);
-    if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
-      return VM[V] = ConstantArray::get(CA->getType(), Ops);
-    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C))
-      return VM[V] = ConstantStruct::get(CS->getType(), Ops);
-    assert(isa<ConstantVector>(C) && "Unknown mapped constant type");
-    return VM[V] = ConstantVector::get(Ops);
+  // Otherwise, we have some other constant to remap.  Start by checking to see
+  // if all operands have an identity remapping.
+  unsigned OpNo = 0, NumOperands = C->getNumOperands();
+  Value *Mapped = 0;
+  for (; OpNo != NumOperands; ++OpNo) {
+    Value *Op = C->getOperand(OpNo);
+    Mapped = MapValue(Op, VM, Flags, TypeMapper);
+    if (Mapped != C) break;
   }
+  
+  // See if the type mapper wants to remap the type as well.
+  Type *NewTy = C->getType();
+  if (TypeMapper)
+    NewTy = TypeMapper->remapType(NewTy);
 
-  // If we reach here, all of the operands of the constant match.
-  return VM[V] = C;
+  // If the result type and all operands match up, then just insert an identity
+  // mapping.
+  if (OpNo == NumOperands && NewTy == C->getType())
+    return VM[V] = C;
+  
+  // Okay, we need to create a new constant.  We've already processed some or
+  // all of the operands, set them all up now.
+  SmallVector<Constant*, 8> Ops;
+  Ops.reserve(NumOperands);
+  for (unsigned j = 0; j != OpNo; ++j)
+    Ops.push_back(cast<Constant>(C->getOperand(j)));
+  
+  // If one of the operands mismatch, push it and the other mapped operands.
+  if (OpNo != NumOperands) {
+    Ops.push_back(cast<Constant>(Mapped));
+  
+    // Map the rest of the operands that aren't processed yet.
+    for (++OpNo; OpNo != NumOperands; ++OpNo)
+      Ops.push_back(MapValue(cast<Constant>(C->getOperand(OpNo)), VM,
+                             Flags, TypeMapper));
+  }
+  
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    return VM[V] = CE->getWithOperands(Ops, NewTy);
+  if (isa<ConstantArray>(C))
+    return VM[V] = ConstantArray::get(cast<ArrayType>(NewTy), Ops);
+  if (isa<ConstantStruct>(C))
+    return VM[V] = ConstantStruct::get(cast<StructType>(NewTy), Ops);
+  if (isa<ConstantVector>(C))
+    return VM[V] = ConstantVector::get(Ops);
+  // If this is a no-operand constant, it must be because the type was remapped.
+  if (isa<UndefValue>(C))
+    return VM[V] = UndefValue::get(NewTy);
+  if (isa<ConstantAggregateZero>(C))
+    return VM[V] = ConstantAggregateZero::get(NewTy);
+  assert(isa<ConstantPointerNull>(C));
+  return VM[V] = ConstantPointerNull::get(cast<PointerType>(NewTy));
 }
 
 /// RemapInstruction - Convert the instruction operands from referencing the
 /// current values into those specified by VMap.
 ///
 void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
-                            RemapFlags Flags) {
+                            RemapFlags Flags, ValueMapTypeRemapper *TypeMapper){
   // Remap operands.
   for (User::op_iterator op = I->op_begin(), E = I->op_end(); op != E; ++op) {
-    Value *V = MapValue(*op, VMap, Flags);
+    Value *V = MapValue(*op, VMap, Flags, TypeMapper);
     // If we aren't ignoring missing entries, assert that something happened.
     if (V != 0)
       *op = V;
@@ -147,9 +172,13 @@ void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
   I->getAllMetadata(MDs);
   for (SmallVectorImpl<std::pair<unsigned, MDNode *> >::iterator
        MI = MDs.begin(), ME = MDs.end(); MI != ME; ++MI) {
-    Value *Old = MI->second;
-    Value *New = MapValue(Old, VMap, Flags);
+    MDNode *Old = MI->second;
+    MDNode *New = MapValue(Old, VMap, Flags, TypeMapper);
     if (New != Old)
-      I->setMetadata(MI->first, cast<MDNode>(New));
+      I->setMetadata(MI->first, New);
   }
+  
+  // If the instruction's type is being remapped, do so now.
+  if (TypeMapper)
+    I->mutateType(TypeMapper->remapType(I->getType()));
 }

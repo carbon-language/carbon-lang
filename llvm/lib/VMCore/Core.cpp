@@ -19,7 +19,6 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/TypeSymbolTable.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/PassManager.h"
@@ -111,27 +110,6 @@ void LLVMSetTarget(LLVMModuleRef M, const char *Triple) {
   unwrap(M)->setTargetTriple(Triple);
 }
 
-/*--.. Type names ..........................................................--*/
-LLVMBool LLVMAddTypeName(LLVMModuleRef M, const char *Name, LLVMTypeRef Ty) {
-  return unwrap(M)->addTypeName(Name, unwrap(Ty));
-}
-
-void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name) {
-  TypeSymbolTable &TST = unwrap(M)->getTypeSymbolTable();
-
-  TypeSymbolTable::iterator I = TST.find(Name);
-  if (I != TST.end())
-    TST.remove(I);
-}
-
-LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name) {
-  return wrap(unwrap(M)->getTypeByName(Name));
-}
-
-const char *LLVMGetTypeName(LLVMModuleRef M, LLVMTypeRef Ty) {
-  return unwrap(M)->getTypeName(unwrap(Ty)).c_str();
-}
-
 void LLVMDumpModule(LLVMModuleRef M) {
   unwrap(M)->dump();
 }
@@ -182,8 +160,6 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
     return LLVMArrayTypeKind;
   case Type::PointerTyID:
     return LLVMPointerTypeKind;
-  case Type::OpaqueTyID:
-    return LLVMOpaqueTypeKind;
   case Type::VectorTyID:
     return LLVMVectorTypeKind;
   case Type::X86_MMXTyID:
@@ -382,9 +358,6 @@ LLVMTypeRef LLVMVoidTypeInContext(LLVMContextRef C)  {
 LLVMTypeRef LLVMLabelTypeInContext(LLVMContextRef C) {
   return wrap(Type::getLabelTy(*unwrap(C)));
 }
-LLVMTypeRef LLVMOpaqueTypeInContext(LLVMContextRef C) {
-  return wrap(OpaqueType::get(*unwrap(C)));
-}
 
 LLVMTypeRef LLVMVoidType(void)  {
   return LLVMVoidTypeInContext(LLVMGetGlobalContext());
@@ -392,28 +365,6 @@ LLVMTypeRef LLVMVoidType(void)  {
 LLVMTypeRef LLVMLabelType(void) {
   return LLVMLabelTypeInContext(LLVMGetGlobalContext());
 }
-LLVMTypeRef LLVMOpaqueType(void) {
-  return LLVMOpaqueTypeInContext(LLVMGetGlobalContext());
-}
-
-/*--.. Operations on type handles ..........................................--*/
-
-LLVMTypeHandleRef LLVMCreateTypeHandle(LLVMTypeRef PotentiallyAbstractTy) {
-  return wrap(new PATypeHolder(unwrap(PotentiallyAbstractTy)));
-}
-
-void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle) {
-  delete unwrap(TypeHandle);
-}
-
-LLVMTypeRef LLVMResolveTypeHandle(LLVMTypeHandleRef TypeHandle) {
-  return wrap(unwrap(TypeHandle)->get());
-}
-
-void LLVMRefineType(LLVMTypeRef AbstractTy, LLVMTypeRef ConcreteTy) {
-  unwrap<DerivedType>(AbstractTy)->refineAbstractTypeTo(unwrap(ConcreteTy));
-}
-
 
 /*===-- Operations on values ----------------------------------------------===*/
 

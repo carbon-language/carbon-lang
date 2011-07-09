@@ -7,13 +7,13 @@
         %inners = type { float, { i8 } }
         %struct = type { i32, %inners, i64 }
 
-%fwdref = type { %fwd* }
 %fwd    = type %fwdref*
+%fwdref = type { %fwd* }
 
 ; same as above with unnamed types
-%0 = type { %1* }
 %1 = type %0* 
 %test = type %1
+%0 = type { %1* }
 
 %test2 = type [2 x i32]
 ;%x = type %undefined*

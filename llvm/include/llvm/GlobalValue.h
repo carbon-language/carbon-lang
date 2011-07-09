@@ -106,8 +106,8 @@ public:
   bool use_empty_except_constants();
 
   /// getType - Global values are always pointers.
-  inline const PointerType *getType() const {
-    return reinterpret_cast<const PointerType*>(User::getType());
+  inline PointerType *getType() const {
+    return reinterpret_cast<PointerType*>(User::getType());
   }
 
   static LinkageTypes getLinkOnceLinkage(bool ODR) {

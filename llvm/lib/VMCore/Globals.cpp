@@ -51,6 +51,7 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setAlignment(Src->getAlignment());
   setSection(Src->getSection());
   setVisibility(Src->getVisibility());
+  setUnnamedAddr(Src->hasUnnamedAddr());
 }
 
 void GlobalValue::setAlignment(unsigned Align) {

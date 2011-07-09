@@ -131,7 +131,7 @@ class BitcodeReader : public GVMaterializer {
   
   const char *ErrorString;
   
-  std::vector<PATypeHolder> TypeList;
+  std::vector<Type*> TypeList;
   BitcodeReaderValueList ValueList;
   BitcodeReaderMDValueList MDValueList;
   SmallVector<Instruction *, 64> InstructionList;
@@ -210,7 +210,8 @@ public:
   /// @returns true if an error occurred.
   bool ParseTriple(std::string &Triple);
 private:
-  const Type *getTypeByID(unsigned ID, bool isTypeTable = false);
+  Type *getTypeByID(unsigned ID);
+  Type *getTypeByIDOrNull(unsigned ID);
   Value *getFnValueByID(unsigned ID, const Type *Ty) {
     if (Ty && Ty->isMetadataTy())
       return MDValueList.getValueFwdRef(ID);
@@ -258,7 +259,10 @@ private:
   bool ParseModule();
   bool ParseAttributeBlock();
   bool ParseTypeTable();
-  bool ParseTypeSymbolTable();
+  bool ParseOldTypeTable();         // FIXME: Remove in LLVM 3.1
+  bool ParseTypeTableBody();
+
+  bool ParseOldTypeSymbolTable();   // FIXME: Remove in LLVM 3.1
   bool ParseValueSymbolTable();
   bool ParseConstants();
   bool RememberAndSkipFunctionBody();

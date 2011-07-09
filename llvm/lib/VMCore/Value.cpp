@@ -35,22 +35,21 @@ using namespace llvm;
 //                                Value Class
 //===----------------------------------------------------------------------===//
 
-static inline const Type *checkType(const Type *Ty) {
+static inline Type *checkType(const Type *Ty) {
   assert(Ty && "Value defined with a null type: Error!");
-  return Ty;
+  return const_cast<Type*>(Ty);
 }
 
 Value::Value(const Type *ty, unsigned scid)
   : SubclassID(scid), HasValueHandle(0),
-    SubclassOptionalData(0), SubclassData(0), VTy(checkType(ty)),
+    SubclassOptionalData(0), SubclassData(0), VTy((Type*)checkType(ty)),
     UseList(0), Name(0) {
+  // FIXME: Why isn't this in the subclass gunk??
   if (isa<CallInst>(this) || isa<InvokeInst>(this))
-    assert((VTy->isFirstClassType() || VTy->isVoidTy() ||
-            ty->isOpaqueTy() || VTy->isStructTy()) &&
-           "invalid CallInst  type!");
+    assert((VTy->isFirstClassType() || VTy->isVoidTy() || VTy->isStructTy()) &&
+           "invalid CallInst type!");
   else if (!isa<Constant>(this) && !isa<BasicBlock>(this))
-    assert((VTy->isFirstClassType() || VTy->isVoidTy() ||
-            ty->isOpaqueTy()) &&
+    assert((VTy->isFirstClassType() || VTy->isVoidTy()) &&
            "Cannot create non-first-class values except for constants!");
 }
 

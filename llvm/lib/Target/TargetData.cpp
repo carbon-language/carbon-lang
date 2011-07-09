@@ -42,6 +42,7 @@ char TargetData::ID = 0;
 //===----------------------------------------------------------------------===//
 
 StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
+  assert(!ST->isOpaque() && "Cannot get layout of opaque structs");
   StructAlignment = 0;
   StructSize = 0;
   NumElements = ST->getNumElements();
@@ -313,52 +314,16 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
 
 namespace {
 
-class StructLayoutMap : public AbstractTypeUser {
+class StructLayoutMap {
   typedef DenseMap<const StructType*, StructLayout*> LayoutInfoTy;
   LayoutInfoTy LayoutInfo;
-
-  void RemoveEntry(LayoutInfoTy::iterator I, bool WasAbstract) {
-    I->second->~StructLayout();
-    free(I->second);
-    if (WasAbstract)
-      I->first->removeAbstractTypeUser(this);
-    LayoutInfo.erase(I);
-  }
-
-
-  /// refineAbstractType - The callback method invoked when an abstract type is
-  /// resolved to another type.  An object must override this method to update
-  /// its internal state to reference NewType instead of OldType.
-  ///
-  virtual void refineAbstractType(const DerivedType *OldTy,
-                                  const Type *) {
-    LayoutInfoTy::iterator I = LayoutInfo.find(cast<const StructType>(OldTy));
-    assert(I != LayoutInfo.end() && "Using type but not in map?");
-    RemoveEntry(I, true);
-  }
-
-  /// typeBecameConcrete - The other case which AbstractTypeUsers must be aware
-  /// of is when a type makes the transition from being abstract (where it has
-  /// clients on its AbstractTypeUsers list) to concrete (where it does not).
-  /// This method notifies ATU's when this occurs for a type.
-  ///
-  virtual void typeBecameConcrete(const DerivedType *AbsTy) {
-    LayoutInfoTy::iterator I = LayoutInfo.find(cast<const StructType>(AbsTy));
-    assert(I != LayoutInfo.end() && "Using type but not in map?");
-    RemoveEntry(I, true);
-  }
 
 public:
   virtual ~StructLayoutMap() {
     // Remove any layouts.
-    for (LayoutInfoTy::iterator
-           I = LayoutInfo.begin(), E = LayoutInfo.end(); I != E; ++I) {
-      const Type *Key = I->first;
+    for (LayoutInfoTy::iterator I = LayoutInfo.begin(), E = LayoutInfo.end();
+         I != E; ++I) {
       StructLayout *Value = I->second;
-
-      if (Key->isAbstract())
-        Key->removeAbstractTypeUser(this);
-
       Value->~StructLayout();
       free(Value);
     }
@@ -367,7 +332,10 @@ public:
   void InvalidateEntry(const StructType *Ty) {
     LayoutInfoTy::iterator I = LayoutInfo.find(Ty);
     if (I == LayoutInfo.end()) return;
-    RemoveEntry(I, Ty->isAbstract());
+    
+    I->second->~StructLayout();
+    free(I->second);
+    LayoutInfo.erase(I);
   }
 
   StructLayout *&operator[](const StructType *STy) {
@@ -403,9 +371,6 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
   SL = L;
 
   new (L) StructLayout(Ty, *this);
-
-  if (Ty->isAbstract())
-    Ty->addAbstractTypeUser(STM);
 
   return L;
 }

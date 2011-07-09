@@ -78,7 +78,6 @@ static char getTypeID(const Type *Ty) {
   case Type::FunctionTyID:return 'M';
   case Type::StructTyID:  return 'T';
   case Type::ArrayTyID:   return 'A';
-  case Type::OpaqueTyID:  return 'O';
   default: return 'U';
   }
 }

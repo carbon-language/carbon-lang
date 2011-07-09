@@ -5,8 +5,8 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 target triple = "i686-pc-linux-gnu"
 
 %opaque_t = type opaque
-
-%op_ts = type {opaque, i32}
+%opaque2 = type opaque
+%op_ts = type {%opaque2, i32}
 
 @g = external global %opaque_t
 @h = external global %op_ts

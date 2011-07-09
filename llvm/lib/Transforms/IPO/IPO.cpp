@@ -25,7 +25,6 @@ void llvm::initializeIPO(PassRegistry &Registry) {
   initializeConstantMergePass(Registry);
   initializeDAEPass(Registry);
   initializeDAHPass(Registry);
-  initializeDTEPass(Registry);
   initializeFunctionAttrsPass(Registry);
   initializeGlobalDCEPass(Registry);
   initializeGlobalOptPass(Registry);
@@ -61,10 +60,6 @@ void LLVMAddConstantMergePass(LLVMPassManagerRef PM) {
 
 void LLVMAddDeadArgEliminationPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createDeadArgEliminationPass());
-}
-
-void LLVMAddDeadTypeEliminationPass(LLVMPassManagerRef PM) {
-  unwrap(PM)->add(createDeadTypeEliminationPass());
 }
 
 void LLVMAddFunctionAttrsPass(LLVMPassManagerRef PM) {

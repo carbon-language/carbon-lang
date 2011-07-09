@@ -1,6 +1,5 @@
 ; RUN: opt < %s -lowersetjmp -S | grep invoke
 
-	%JmpBuf = type i32
 @.str_1 = internal constant [13 x i8] c"returned %d\0A\00"		; <[13 x i8]*> [#uses=1]
 
 declare void @llvm.longjmp(i32*, i32)

@@ -372,7 +372,7 @@ static Instruction *createMalloc(Instruction *InsertBefore,
   // Create the call to Malloc.
   BasicBlock* BB = InsertBefore ? InsertBefore->getParent() : InsertAtEnd;
   Module* M = BB->getParent()->getParent();
-  const Type *BPTy = Type::getInt8PtrTy(BB->getContext());
+  Type *BPTy = Type::getInt8PtrTy(BB->getContext());
   Value *MallocFunc = MallocF;
   if (!MallocFunc)
     // prototype malloc as "void *malloc(size_t)"
@@ -823,7 +823,7 @@ bool AllocaInst::isArrayAllocation() const {
   return true;
 }
 
-const Type *AllocaInst::getAllocatedType() const {
+Type *AllocaInst::getAllocatedType() const {
   return getType()->getElementType();
 }
 
@@ -1098,7 +1098,7 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const Twine &Name, Instruction *InBe)
   : Instruction(PointerType::get(
-      checkType(getIndexedType(Ptr->getType(),Idx)), retrieveAddrSpace(Ptr)),
+      checkGEPType(getIndexedType(Ptr->getType(),Idx)), retrieveAddrSpace(Ptr)),
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - 2,
                 2, InBe) {
@@ -1108,7 +1108,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const Twine &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(
-            checkType(getIndexedType(Ptr->getType(),Idx)),  
+            checkGEPType(getIndexedType(Ptr->getType(),Idx)),  
                 retrieveAddrSpace(Ptr)),
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - 2,
@@ -1126,60 +1126,50 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 /// pointer type.
 ///
 template <typename IndexTy>
-static const Type* getIndexedTypeInternal(const Type *Ptr, IndexTy const *Idxs,
-                                          unsigned NumIdx) {
+static Type *getIndexedTypeInternal(const Type *Ptr, IndexTy const *Idxs,
+                                    unsigned NumIdx) {
   const PointerType *PTy = dyn_cast<PointerType>(Ptr);
   if (!PTy) return 0;   // Type isn't a pointer type!
-  const Type *Agg = PTy->getElementType();
+  Type *Agg = PTy->getElementType();
 
   // Handle the special case of the empty set index set, which is always valid.
   if (NumIdx == 0)
     return Agg;
   
   // If there is at least one index, the top level type must be sized, otherwise
-  // it cannot be 'stepped over'.  We explicitly allow abstract types (those
-  // that contain opaque types) under the assumption that it will be resolved to
-  // a sane type later.
-  if (!Agg->isSized() && !Agg->isAbstract())
+  // it cannot be 'stepped over'.
+  if (!Agg->isSized())
     return 0;
 
   unsigned CurIdx = 1;
   for (; CurIdx != NumIdx; ++CurIdx) {
-    const CompositeType *CT = dyn_cast<CompositeType>(Agg);
+    CompositeType *CT = dyn_cast<CompositeType>(Agg);
     if (!CT || CT->isPointerTy()) return 0;
     IndexTy Index = Idxs[CurIdx];
     if (!CT->indexValid(Index)) return 0;
     Agg = CT->getTypeAtIndex(Index);
-
-    // If the new type forwards to another type, then it is in the middle
-    // of being refined to another type (and hence, may have dropped all
-    // references to what it was using before).  So, use the new forwarded
-    // type.
-    if (const Type *Ty = Agg->getForwardedType())
-      Agg = Ty;
   }
   return CurIdx == NumIdx ? Agg : 0;
 }
 
-const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
-                                              Value* const *Idxs,
-                                              unsigned NumIdx) {
+Type *GetElementPtrInst::getIndexedType(const Type *Ptr, Value* const *Idxs,
+                                        unsigned NumIdx) {
   return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
 }
 
-const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
-                                              Constant* const *Idxs,
-                                              unsigned NumIdx) {
+Type *GetElementPtrInst::getIndexedType(const Type *Ptr,
+                                        Constant* const *Idxs,
+                                        unsigned NumIdx) {
   return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
 }
 
-const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
-                                              uint64_t const *Idxs,
-                                              unsigned NumIdx) {
+Type *GetElementPtrInst::getIndexedType(const Type *Ptr,
+                                        uint64_t const *Idxs,
+                                        unsigned NumIdx) {
   return getIndexedTypeInternal(Ptr, Idxs, NumIdx);
 }
 
-const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
+Type *GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
   const PointerType *PTy = dyn_cast<PointerType>(Ptr);
   if (!PTy) return 0;   // Type isn't a pointer type!
 
@@ -1482,9 +1472,9 @@ ExtractValueInst::ExtractValueInst(const ExtractValueInst &EVI)
 // A null type is returned if the indices are invalid for the specified
 // pointer type.
 //
-const Type* ExtractValueInst::getIndexedType(const Type *Agg,
-                                             const unsigned *Idxs,
-                                             unsigned NumIdx) {
+Type *ExtractValueInst::getIndexedType(const Type *Agg,
+                                       const unsigned *Idxs,
+                                       unsigned NumIdx) {
   for (unsigned CurIdx = 0; CurIdx != NumIdx; ++CurIdx) {
     unsigned Index = Idxs[CurIdx];
     // We can't use CompositeType::indexValid(Index) here.
@@ -1505,19 +1495,11 @@ const Type* ExtractValueInst::getIndexedType(const Type *Agg,
     }
 
     Agg = cast<CompositeType>(Agg)->getTypeAtIndex(Index);
-
-    // If the new type forwards to another type, then it is in the middle
-    // of being refined to another type (and hence, may have dropped all
-    // references to what it was using before).  So, use the new forwarded
-    // type.
-    if (const Type *Ty = Agg->getForwardedType())
-      Agg = Ty;
   }
-  return Agg;
+  return const_cast<Type*>(Agg);
 }
 
-const Type* ExtractValueInst::getIndexedType(const Type *Agg,
-                                             unsigned Idx) {
+Type *ExtractValueInst::getIndexedType(const Type *Agg, unsigned Idx) {
   return getIndexedType(Agg, &Idx, 1);
 }
 

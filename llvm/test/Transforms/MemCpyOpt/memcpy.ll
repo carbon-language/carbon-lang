@@ -6,7 +6,7 @@ target triple = "i686-apple-darwin9"
 %0 = type { x86_fp80, x86_fp80 }
 %1 = type { i32, i32 }
 
-define void @test1({ x86_fp80, x86_fp80 }* sret  %agg.result, x86_fp80 %z.0, x86_fp80 %z.1) nounwind  {
+define void @test1(%0* sret  %agg.result, x86_fp80 %z.0, x86_fp80 %z.1) nounwind  {
 entry:
   %tmp2 = alloca %0
   %memtmp = alloca %0, align 16
@@ -29,7 +29,7 @@ entry:
 ; CHECK: ret void
 }
 
-declare void @ccoshl({ x86_fp80, x86_fp80 }* sret , x86_fp80, x86_fp80) nounwind 
+declare void @ccoshl(%0* sret , x86_fp80, x86_fp80) nounwind 
 
 
 ; The intermediate alloca and one of the memcpy's should be eliminated, the
@@ -49,9 +49,9 @@ define void @test2(i8* %P, i8* %Q) nounwind  {
 
 
 
-@x = external global { x86_fp80, x86_fp80 }
+@x = external global %0
 
-define void @test3({ x86_fp80, x86_fp80 }* noalias sret %agg.result) nounwind  {
+define void @test3(%0* noalias sret %agg.result) nounwind  {
   %x.0 = alloca %0
   %x.01 = bitcast %0* %x.0 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %x.01, i8* bitcast (%0* @x to i8*), i32 32, i32 16, i1 false)

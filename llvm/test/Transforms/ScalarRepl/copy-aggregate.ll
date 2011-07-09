@@ -68,16 +68,15 @@ define i128 @test4(float %a, float %b) nounwind {
 ;; If the elements of a struct or array alloca contain padding, SROA can still
 ;; split up the alloca as long as there is no padding between the elements.
 %padded = type { i16, i8 }
-%arr = type [4 x %padded]
-define void @test5(%arr* %p, %arr* %q) {
+define void @test5([4 x %padded]* %p, [4 x %padded]* %q) {
 entry:
 ; CHECK: test5
 ; CHECK-NOT: i128
-  %var = alloca %arr, align 4
-  %vari8 = bitcast %arr* %var to i8*
-  %pi8 = bitcast %arr* %p to i8*
+  %var = alloca [4 x %padded], align 4
+  %vari8 = bitcast [4 x %padded]* %var to i8*
+  %pi8 = bitcast [4 x %padded]* %p to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %vari8, i8* %pi8, i32 16, i32 4, i1 false)
-  %qi8 = bitcast %arr* %q to i8*
+  %qi8 = bitcast [4 x %padded]* %q to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %qi8, i8* %vari8, i32 16, i32 4, i1 false)
   ret void
 }

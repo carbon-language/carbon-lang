@@ -106,7 +106,6 @@ add_llvm_unittest(Transforms/Utils
 
 set(VMCoreSources
   VMCore/ConstantsTest.cpp
-  VMCore/DerivedTypesTest.cpp
   VMCore/InstructionsTest.cpp
   VMCore/MetadataTest.cpp
   VMCore/PassManagerTest.cpp

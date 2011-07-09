@@ -1466,8 +1466,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
 /// isZeroSizedType - This type is zero sized if its an array or structure of
 /// zero sized types.  The only leaf zero sized type is an empty structure.
 static bool isMaybeZeroSizedType(const Type *Ty) {
-  if (Ty->isOpaqueTy()) return true;  // Can't say.
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
+    if (STy->isOpaque()) return true;  // Can't say.
 
     // If all of elements have zero size, this does too.
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)

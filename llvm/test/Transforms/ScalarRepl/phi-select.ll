@@ -65,9 +65,9 @@ entry:
   %A = alloca %PairTy
   ; CHECK: @test4
   ; CHECK: %A = alloca %PairTy
-  %B = getelementptr {i32, i32}* %A, i32 0, i32 0
+  %B = getelementptr %PairTy* %A, i32 0, i32 0
   store i32 1, i32* %B
-  %C = getelementptr {i32, i32}* %A, i32 0, i32 1
+  %C = getelementptr %PairTy* %A, i32 0, i32 1
   store i32 2, i32* %B
   
   %X = select i1 %c, i32* %B, i32* %C

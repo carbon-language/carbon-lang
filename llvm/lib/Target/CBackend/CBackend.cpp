@@ -20,7 +20,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
-#include "llvm/TypeSymbolTable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/InlineAsm.h"
@@ -74,29 +73,6 @@ namespace {
       PrivateGlobalPrefix = "";
     }
   };
-  /// CBackendNameAllUsedStructsAndMergeFunctions - This pass inserts names for
-  /// any unnamed structure types that are used by the program, and merges
-  /// external functions with the same name.
-  ///
-  class CBackendNameAllUsedStructsAndMergeFunctions : public ModulePass {
-  public:
-    static char ID;
-    CBackendNameAllUsedStructsAndMergeFunctions()
-        : ModulePass(ID) {
-          initializeFindUsedTypesPass(*PassRegistry::getPassRegistry());
-        }
-    void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<FindUsedTypes>();
-    }
-
-    virtual const char *getPassName() const {
-      return "C backend type canonicalizer";
-    }
-
-    virtual bool runOnModule(Module &M);
-  };
-
-  char CBackendNameAllUsedStructsAndMergeFunctions::ID = 0;
 
   /// CWriter - This class is the main chunk of code that converts an LLVM
   /// module to a C translation unit.
@@ -109,7 +85,7 @@ namespace {
     const MCAsmInfo* TAsm;
     MCContext *TCtx;
     const TargetData* TD;
-    std::map<const Type *, std::string> TypeNames;
+    
     std::map<const ConstantFP *, unsigned> FPConstantMap;
     std::set<Function*> intrinsicPrototypesAlreadyGenerated;
     std::set<const Argument*> ByValParams;
@@ -118,6 +94,10 @@ namespace {
     DenseMap<const Value*, unsigned> AnonValueNumbers;
     unsigned NextAnonValueNumber;
 
+    /// UnnamedStructIDs - This contains a unique ID for each struct that is
+    /// either anonymous or has no name.
+    DenseMap<const StructType*, unsigned> UnnamedStructIDs;
+    
   public:
     static char ID;
     explicit CWriter(formatted_raw_ostream &o)
@@ -163,9 +143,9 @@ namespace {
       delete TCtx;
       delete TAsm;
       FPConstantMap.clear();
-      TypeNames.clear();
       ByValParams.clear();
       intrinsicPrototypesAlreadyGenerated.clear();
+      UnnamedStructIDs.clear();
       return false;
     }
 
@@ -182,6 +162,8 @@ namespace {
                                               const AttrListPtr &PAL,
                                               const PointerType *Ty);
 
+    std::string getStructName(const StructType *ST);
+    
     /// writeOperandDeref - Print the result of dereferencing the specified
     /// operand with '*'.  This is equivalent to printing '*' then using
     /// writeOperand, but avoids excess syntax in some cases.
@@ -214,8 +196,8 @@ namespace {
     /// intrinsics which need to be explicitly defined in the CBackend.
     void printIntrinsicDefinition(const Function &F, raw_ostream &Out);
 
-    void printModuleTypes(const TypeSymbolTable &ST);
-    void printContainedStructs(const Type *Ty, std::set<const Type *> &);
+    void printModuleTypes();
+    void printContainedStructs(const Type *Ty, SmallPtrSet<const Type *, 16> &);
     void printFloatingPointConstants(Function &F);
     void printFloatingPointConstants(const Constant *C);
     void printFunctionSignature(const Function *F, bool Prototype);
@@ -359,6 +341,7 @@ namespace {
 char CWriter::ID = 0;
 
 
+
 static std::string CBEMangle(const std::string &S) {
   std::string Result;
 
@@ -374,89 +357,13 @@ static std::string CBEMangle(const std::string &S) {
   return Result;
 }
 
-
-/// This method inserts names for any unnamed structure types that are used by
-/// the program, and removes names from structure types that are not used by the
-/// program.
-///
-bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
-  // Get a set of types that are used by the program...
-  SetVector<const Type *> UT = getAnalysis<FindUsedTypes>().getTypes();
-
-  // Loop over the module symbol table, removing types from UT that are
-  // already named, and removing names for types that are not used.
-  //
-  TypeSymbolTable &TST = M.getTypeSymbolTable();
-  for (TypeSymbolTable::iterator TI = TST.begin(), TE = TST.end();
-       TI != TE; ) {
-    TypeSymbolTable::iterator I = TI++;
-
-    // If this isn't a struct or array type, remove it from our set of types
-    // to name. This simplifies emission later.
-    if (!I->second->isStructTy() && !I->second->isOpaqueTy() &&
-        !I->second->isArrayTy()) {
-      TST.remove(I);
-    } else {
-      // If this is not used, remove it from the symbol table.
-      if (!UT.count(I->second))
-        TST.remove(I);
-      else
-        UT.remove(I->second); // Only keep one name for this type.
-    }
-  }
-
-  // UT now contains types that are not named.  Loop over it, naming
-  // structure types.
-  //
-  bool Changed = false;
-  unsigned RenameCounter = 0;
-  for (SetVector<const Type *>::const_iterator I = UT.begin(), E = UT.end();
-       I != E; ++I)
-    if ((*I)->isStructTy() || (*I)->isArrayTy()) {
-      while (M.addTypeName("unnamed"+utostr(RenameCounter), *I))
-        ++RenameCounter;
-      Changed = true;
-    }
-
-
-  // Loop over all external functions and globals.  If we have two with
-  // identical names, merge them.
-  // FIXME: This code should disappear when we don't allow values with the same
-  // names when they have different types!
-  std::map<std::string, GlobalValue*> ExtSymbols;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E;) {
-    Function *GV = I++;
-    if (GV->isDeclaration() && GV->hasName()) {
-      std::pair<std::map<std::string, GlobalValue*>::iterator, bool> X
-        = ExtSymbols.insert(std::make_pair(GV->getName(), GV));
-      if (!X.second) {
-        // Found a conflict, replace this global with the previous one.
-        GlobalValue *OldGV = X.first->second;
-        GV->replaceAllUsesWith(ConstantExpr::getBitCast(OldGV, GV->getType()));
-        GV->eraseFromParent();
-        Changed = true;
-      }
-    }
-  }
-  // Do the same for globals.
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E;) {
-    GlobalVariable *GV = I++;
-    if (GV->isDeclaration() && GV->hasName()) {
-      std::pair<std::map<std::string, GlobalValue*>::iterator, bool> X
-        = ExtSymbols.insert(std::make_pair(GV->getName(), GV));
-      if (!X.second) {
-        // Found a conflict, replace this global with the previous one.
-        GlobalValue *OldGV = X.first->second;
-        GV->replaceAllUsesWith(ConstantExpr::getBitCast(OldGV, GV->getType()));
-        GV->eraseFromParent();
-        Changed = true;
-      }
-    }
-  }
-
-  return Changed;
+std::string CWriter::getStructName(const StructType *ST) {
+  if (!ST->isAnonymous() && !ST->getName().empty())
+    return CBEMangle("l_"+ST->getName().str());
+  
+  return "l_unnamed_" + utostr(UnnamedStructIDs[ST]);
 }
+
 
 /// printStructReturnPointerFunctionType - This is like printType for a struct
 /// return type, except, instead of printing the type as void (*)(Struct*, ...)
@@ -471,7 +378,7 @@ void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
   bool PrintedType = false;
 
   FunctionType::param_iterator I = FTy->param_begin(), E = FTy->param_end();
-  const Type *RetTy = cast<PointerType>(I->get())->getElementType();
+  const Type *RetTy = cast<PointerType>(*I)->getElementType();
   unsigned Idx = 1;
   for (++I, ++Idx; I != E; ++I, ++Idx) {
     if (PrintedType)
@@ -559,12 +466,6 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
     return Out;
   }
 
-  // Check to see if the type is named.
-  if (!IgnoreName || Ty->isOpaqueTy()) {
-    std::map<const Type *, std::string>::iterator I = TypeNames.find(Ty);
-    if (I != TypeNames.end()) return Out << I->second << ' ' << NameSoFar;
-  }
-
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
@@ -599,6 +500,11 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
   }
   case Type::StructTyID: {
     const StructType *STy = cast<StructType>(Ty);
+    
+    // Check to see if the type is named.
+    if (!IgnoreName)
+      return Out << getStructName(STy) << ' ' << NameSoFar;
+    
     Out << NameSoFar + " {\n";
     unsigned Idx = 0;
     for (StructType::element_iterator I = STy->element_begin(),
@@ -639,12 +545,6 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
     return Out << "; }";
   }
 
-  case Type::OpaqueTyID: {
-    std::string TyName = "struct opaque_" + itostr(OpaqueCounter++);
-    assert(TypeNames.find(Ty) == TypeNames.end());
-    TypeNames[Ty] = TyName;
-    return Out << TyName << ' ' << NameSoFar;
-  }
   default:
     llvm_unreachable("Unhandled case in getTypeProps!");
   }
@@ -1829,8 +1729,8 @@ bool CWriter::doInitialization(Module &M) {
         << "/* End Module asm statements */\n";
   }
 
-  // Loop over the symbol table, emitting all named constants...
-  printModuleTypes(M.getTypeSymbolTable());
+  // Loop over the symbol table, emitting all named constants.
+  printModuleTypes();
 
   // Global variable declarations...
   if (!M.global_empty()) {
@@ -2119,11 +2019,10 @@ void CWriter::printFloatingPointConstants(const Constant *C) {
 }
 
 
-
 /// printSymbolTable - Run through symbol table looking for type names.  If a
 /// type name is found, emit its declaration...
 ///
-void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
+void CWriter::printModuleTypes() {
   Out << "/* Helper union for bitcasts */\n";
   Out << "typedef union {\n";
   Out << "  unsigned int Int32;\n";
@@ -2132,46 +2031,42 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
   Out << "  double Double;\n";
   Out << "} llvmBitCastUnion;\n";
 
-  // We are only interested in the type plane of the symbol table.
-  TypeSymbolTable::const_iterator I   = TST.begin();
-  TypeSymbolTable::const_iterator End = TST.end();
+  // Get all of the struct types used in the module.
+  std::vector<StructType*> StructTypes;
+  TheModule->findUsedStructTypes(StructTypes);
 
-  // If there are no type names, exit early.
-  if (I == End) return;
+  if (StructTypes.empty()) return;
 
-  // Print out forward declarations for structure types before anything else!
   Out << "/* Structure forward decls */\n";
-  for (; I != End; ++I) {
-    std::string Name = "struct " + CBEMangle("l_"+I->first);
-    Out << Name << ";\n";
-    TypeNames.insert(std::make_pair(I->second, Name));
+
+  unsigned NextTypeID = 0;
+  
+  // If any of them are missing names, add a unique ID to UnnamedStructIDs.
+  // Print out forward declarations for structure types.
+  for (unsigned i = 0, e = StructTypes.size(); i != e; ++i) {
+    StructType *ST = StructTypes[i];
+
+    if (ST->isAnonymous() || ST->getName().empty())
+      UnnamedStructIDs[ST] = NextTypeID++;
+
+    std::string Name = getStructName(ST);
+
+    Out << "typedef struct " << Name << ' ' << Name << ";\n";
   }
 
   Out << '\n';
 
-  // Now we can print out typedefs.  Above, we guaranteed that this can only be
-  // for struct or opaque types.
-  Out << "/* Typedefs */\n";
-  for (I = TST.begin(); I != End; ++I) {
-    std::string Name = CBEMangle("l_"+I->first);
-    Out << "typedef ";
-    printType(Out, I->second, false, Name);
-    Out << ";\n";
-  }
-
-  Out << '\n';
-
-  // Keep track of which structures have been printed so far...
-  std::set<const Type *> StructPrinted;
+  // Keep track of which structures have been printed so far.
+  SmallPtrSet<const Type *, 16> StructPrinted;
 
   // Loop over all structures then push them into the stack so they are
   // printed in the correct order.
   //
   Out << "/* Structure contents */\n";
-  for (I = TST.begin(); I != End; ++I)
-    if (I->second->isStructTy() || I->second->isArrayTy())
+  for (unsigned i = 0, e = StructTypes.size(); i != e; ++i)
+    if (StructTypes[i]->isStructTy())
       // Only print out used types!
-      printContainedStructs(I->second, StructPrinted);
+      printContainedStructs(StructTypes[i], StructPrinted);
 }
 
 // Push the struct onto the stack and recursively push all structs
@@ -2180,7 +2075,7 @@ void CWriter::printModuleTypes(const TypeSymbolTable &TST) {
 // TODO:  Make this work properly with vector types
 //
 void CWriter::printContainedStructs(const Type *Ty,
-                                    std::set<const Type*> &StructPrinted) {
+                                SmallPtrSet<const Type *, 16> &StructPrinted) {
   // Don't walk through pointers.
   if (Ty->isPointerTy() || Ty->isPrimitiveType() || Ty->isIntegerTy())
     return;
@@ -2190,14 +2085,13 @@ void CWriter::printContainedStructs(const Type *Ty,
        E = Ty->subtype_end(); I != E; ++I)
     printContainedStructs(*I, StructPrinted);
 
-  if (Ty->isStructTy() || Ty->isArrayTy()) {
+  if (const StructType *ST = dyn_cast<StructType>(Ty)) {
     // Check to see if we have already printed this struct.
-    if (StructPrinted.insert(Ty).second) {
-      // Print structure type out.
-      std::string Name = TypeNames[Ty];
-      printType(Out, Ty, false, Name, true);
-      Out << ";\n\n";
-    }
+    if (!StructPrinted.insert(Ty)) return;
+    
+    // Print structure type out.
+    printType(Out, ST, false, getStructName(ST), true);
+    Out << ";\n\n";
   }
 }
 
@@ -2847,10 +2741,12 @@ static void printLimitValue(const IntegerType &Ty, bool isSigned, bool isMax,
     Out << "U" << type << (isMax ? "_MAX" : "0");
 }
 
+#ifndef NDEBUG
 static bool isSupportedIntegerSize(const IntegerType &T) {
   return T.getBitWidth() == 8 || T.getBitWidth() == 16 ||
          T.getBitWidth() == 32 || T.getBitWidth() == 64;
 }
+#endif
 
 void CWriter::printIntrinsicDefinition(const Function &F, raw_ostream &Out) {
   const FunctionType *funT = F.getFunctionType();
@@ -3704,7 +3600,6 @@ bool CTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   PM.add(createGCLoweringPass());
   PM.add(createLowerInvokePass());
   PM.add(createCFGSimplificationPass());   // clean up after lower invoke.
-  PM.add(new CBackendNameAllUsedStructsAndMergeFunctions());
   PM.add(new CWriter(o));
   PM.add(createGCInfoDeleter());
   return false;

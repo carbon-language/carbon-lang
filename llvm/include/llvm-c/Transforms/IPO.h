@@ -30,9 +30,6 @@ void LLVMAddConstantMergePass(LLVMPassManagerRef PM);
 /** See llvm::createDeadArgEliminationPass function. */
 void LLVMAddDeadArgEliminationPass(LLVMPassManagerRef PM);
 
-/** See llvm::createDeadTypeEliminationPass function. */
-void LLVMAddDeadTypeEliminationPass(LLVMPassManagerRef PM);
-
 /** See llvm::createFunctionAttrsPass function. */
 void LLVMAddFunctionAttrsPass(LLVMPassManagerRef PM);
 

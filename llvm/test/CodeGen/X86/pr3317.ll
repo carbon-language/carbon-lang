@@ -1,6 +1,7 @@
 ; RUN: llc < %s -march=x86
 ; PR3317
 
+%VT = type [0 x i32 (...)*]
         %ArraySInt16 = type { %JavaObject, i8*, [0 x i16] }
         %ArraySInt8 = type { %JavaObject, i8*, [0 x i8] }
         %Attribut = type { %ArraySInt16*, i32, i32 }
@@ -14,7 +15,6 @@
         %JavaObject = type { %VT*, %JavaCommonClass*, i8* }
         %TaskClassMirror = type { i32, i8* }
         %UTF8 = type { %JavaObject, i8*, [0 x i16] }
-        %VT = type [0 x i32 (...)*]
 
 declare void @jnjvmNullPointerException()
 

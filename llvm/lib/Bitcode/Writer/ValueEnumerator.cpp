@@ -17,7 +17,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Instructions.h"
 #include <algorithm>
@@ -58,9 +57,6 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I)
     EnumerateValue(I->getAliasee());
-
-  // Enumerate types used by the type symbol table.
-  EnumerateTypeSymbolTable(M->getTypeSymbolTable());
 
   // Insert constants and metadata that are named at module level into the slot 
   // pool so that the module symbol table can refer to them...
@@ -109,78 +105,12 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
 
   // Optimize constant ordering.
   OptimizeConstants(FirstConstant, Values.size());
-
-  OptimizeTypes();
-
-  // Now that we rearranged the type table, rebuild TypeMap.
-  for (unsigned i = 0, e = Types.size(); i != e; ++i)
-    TypeMap[Types[i]] = i+1;
 }
 
-struct TypeAndDeps {
-  const Type *Ty;
-  unsigned NumDeps;
-};
-
-static int CompareByDeps(const void *a, const void *b) {
-  const TypeAndDeps &ta = *(const TypeAndDeps*) a;
-  const TypeAndDeps &tb = *(const TypeAndDeps*) b;
-  return ta.NumDeps - tb.NumDeps;
-}
-
-static void VisitType(const Type *Ty, SmallPtrSet<const Type*, 16> &Visited,
-                      std::vector<const Type*> &Out) {
-  if (Visited.count(Ty))
-    return;
-
-  Visited.insert(Ty);
-
-  for (Type::subtype_iterator I2 = Ty->subtype_begin(),
-         E2 = Ty->subtype_end(); I2 != E2; ++I2) {
-    const Type *InnerType = I2->get();
-    VisitType(InnerType, Visited, Out);
-  }
-
-  Out.push_back(Ty);
-}
-
-void ValueEnumerator::OptimizeTypes(void) {
-  // If the types form a DAG, this will compute a topological sort and
-  // no forward references will be needed when reading them in.
-  // If there are cycles, this is a simple but reasonable heuristic for
-  // the minimum feedback arc set problem.
-  const unsigned NumTypes = Types.size();
-  std::vector<TypeAndDeps> TypeDeps;
-  TypeDeps.resize(NumTypes);
-
-  for (unsigned I = 0; I < NumTypes; ++I) {
-    const Type *Ty = Types[I];
-    TypeDeps[I].Ty = Ty;
-    TypeDeps[I].NumDeps = 0;
-  }
-
-  for (unsigned I = 0; I < NumTypes; ++I) {
-    const Type *Ty = TypeDeps[I].Ty;
-    for (Type::subtype_iterator I2 = Ty->subtype_begin(),
-           E2 = Ty->subtype_end(); I2 != E2; ++I2) {
-      const Type *InnerType = I2->get();
-      unsigned InnerIndex = TypeMap.lookup(InnerType) - 1;
-      TypeDeps[InnerIndex].NumDeps++;
-    }
-  }
-  array_pod_sort(TypeDeps.begin(), TypeDeps.end(), CompareByDeps);
-
-  SmallPtrSet<const Type*, 16> Visited;
-  Types.clear();
-  Types.reserve(NumTypes);
-  for (unsigned I = 0; I < NumTypes; ++I) {
-    VisitType(TypeDeps[I].Ty, Visited, Types);
-  }
-}
 
 unsigned ValueEnumerator::getInstructionID(const Instruction *Inst) const {
   InstructionMapType::const_iterator I = InstructionMap.find(Inst);
-  assert (I != InstructionMap.end() && "Instruction is not mapped!");
+  assert(I != InstructionMap.end() && "Instruction is not mapped!");
   return I->second;
 }
 
@@ -234,14 +164,6 @@ void ValueEnumerator::OptimizeConstants(unsigned CstStart, unsigned CstEnd) {
     ValueMap[Values[CstStart].first] = CstStart+1;
 }
 
-
-/// EnumerateTypeSymbolTable - Insert all of the types in the specified symbol
-/// table.
-void ValueEnumerator::EnumerateTypeSymbolTable(const TypeSymbolTable &TST) {
-  for (TypeSymbolTable::const_iterator TI = TST.begin(), TE = TST.end();
-       TI != TE; ++TI)
-    EnumerateType(TI->second);
-}
 
 /// EnumerateValueSymbolTable - Insert all of the values in the specified symbol
 /// table into the values table.
@@ -394,20 +316,40 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
 
 
 void ValueEnumerator::EnumerateType(const Type *Ty) {
-  unsigned &TypeID = TypeMap[Ty];
+  unsigned *TypeID = &TypeMap[Ty];
 
   // We've already seen this type.
-  if (TypeID)
+  if (*TypeID)
     return;
 
-  // First time we saw this type, add it.
-  Types.push_back(Ty);
-  TypeID = Types.size();
-
-  // Enumerate subtypes.
+  // If it is a non-anonymous struct, mark the type as being visited so that we
+  // don't recursively visit it.  This is safe because we allow forward
+  // references of these in the bitcode reader.
+  if (const StructType *STy = dyn_cast<StructType>(Ty))
+    if (!STy->isAnonymous())
+      *TypeID = ~0U;
+  
+  // Enumerate all of the subtypes before we enumerate this type.  This ensures
+  // that the type will be enumerated in an order that can be directly built.
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I)
     EnumerateType(*I);
+  
+  // Refresh the TypeID pointer in case the table rehashed.
+  TypeID = &TypeMap[Ty];
+  
+  // Check to see if we got the pointer another way.  This can happen when
+  // enumerating recursive types that hit the base case deeper than they start.
+  //
+  // If this is actually a struct that we are treating as forward ref'able,
+  // then emit the definition now that all of its contents are available.
+  if (*TypeID && *TypeID != ~0U)
+    return;
+  
+  // Add this type now that its contents are all happily enumerated.
+  Types.push_back(Ty);
+  
+  *TypeID = Types.size();
 }
 
 // Enumerate the types for the specified value.  If the value is a constant,

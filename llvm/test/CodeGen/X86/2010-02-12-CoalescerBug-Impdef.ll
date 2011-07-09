@@ -22,6 +22,7 @@ module asm "\09.ident\09\22GCC: (GNU) 4.5.0 20100212 (experimental) LLVM: 95975\
 
 %0 = type { %"union gimple_statement_d"* }
 %"BITMAP_WORD[]" = type [2 x i64]
+%"uchar[]" = type [1 x i8]
 %"char[]" = type [4 x i8]
 %"enum dom_state[]" = type [2 x i32]
 %"int[]" = type [4 x i32]
@@ -61,6 +62,7 @@ module asm "\09.ident\09\22GCC: (GNU) 4.5.0 20100212 (experimental) LLVM: 95975\
 %"struct gimple_seq_d" = type { %"struct gimple_seq_node_d"*, %"struct gimple_seq_node_d"*, %"struct gimple_seq_d"* }
 %"struct gimple_seq_node_d" = type { %"union gimple_statement_d"*, %"struct gimple_seq_node_d"*, %"struct gimple_seq_node_d"* }
 %"struct gimple_statement_base" = type { i8, i8, i16, i32, i32, i32, %"struct basic_block_def"*, %"union tree_node"* }
+%"struct phi_arg_d[]" = type [1 x %"struct phi_arg_d"]
 %"struct gimple_statement_phi" = type { %"struct gimple_statement_base", i32, i32, %"union tree_node"*, %"struct phi_arg_d[]" }
 %"struct htab" = type { i32 (i8*)*, i32 (i8*, i8*)*, void (i8*)*, i8**, i64, i64, i64, i32, i32, i8* (i64, i64)*, void (i8*)*, i8*, i8* (i8*, i64, i64)*, void (i8*, i8*)*, i32 }
 %"struct iv" = type { %"union tree_node"*, %"union tree_node"*, %"union tree_node"*, %"union tree_node"*, i8, i8, i32 }
@@ -78,7 +80,6 @@ module asm "\09.ident\09\22GCC: (GNU) 4.5.0 20100212 (experimental) LLVM: 95975\
 %"struct object_block" = type { %"union section"*, i32, i64, %"struct VEC_rtx_gc"*, %"struct VEC_rtx_gc"* }
 %"struct obstack" = type { i64, %"struct _obstack_chunk"*, i8*, i8*, i8*, i64, i32, %"struct _obstack_chunk"* (i8*, i64)*, void (i8*, %"struct _obstack_chunk"*)*, i8*, i8 }
 %"struct phi_arg_d" = type { %"struct ssa_use_operand_d", %"union tree_node"*, i32 }
-%"struct phi_arg_d[]" = type [1 x %"struct phi_arg_d"]
 %"struct pointer_map_t" = type opaque
 %"struct pt_solution" = type { i8, %"struct bitmap_head_def"* }
 %"struct rtx_def" = type { i16, i8, i8, %"union u" }
@@ -98,7 +99,6 @@ module asm "\09.ident\09\22GCC: (GNU) 4.5.0 20100212 (experimental) LLVM: 95975\
 %"struct unnamed_section" = type { %"struct section_common", void (i8*)*, i8*, %"union section"* }
 %"struct use_optype_d" = type { %"struct use_optype_d"*, %"struct ssa_use_operand_d" }
 %"struct version_info" = type { %"union tree_node"*, %"struct iv"*, i8, i32, i8 }
-%"uchar[]" = type [1 x i8]
 %"union basic_block_il_dependent" = type { %"struct gimple_bb_info"* }
 %"union edge_def_insns" = type { %"struct gimple_seq_d"* }
 %"union gimple_statement_d" = type { %"struct gimple_statement_phi" }

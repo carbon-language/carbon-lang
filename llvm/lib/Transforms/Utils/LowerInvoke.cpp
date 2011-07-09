@@ -66,7 +66,7 @@ namespace {
     Constant *AbortFn;
 
     // Used for expensive EH support.
-    const Type *JBLinkTy;
+    StructType *JBLinkTy;
     GlobalVariable *JBListHead;
     Constant *SetJmpFn, *LongJmpFn, *StackSaveFn, *StackRestoreFn;
     bool useExpensiveEHSupport;
@@ -120,24 +120,16 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI,
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
-  const Type *VoidPtrTy =
-          Type::getInt8PtrTy(M.getContext());
+  const Type *VoidPtrTy = Type::getInt8PtrTy(M.getContext());
   if (useExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
     unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
     JBSize = JBSize ? JBSize : 200;
-    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
+    Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
 
-    { // The type is recursive, so use a type holder.
-      std::vector<const Type*> Elements;
-      Elements.push_back(JmpBufTy);
-      OpaqueType *OT = OpaqueType::get(M.getContext());
-      Elements.push_back(PointerType::getUnqual(OT));
-      PATypeHolder JBLType(StructType::get(M.getContext(), Elements));
-      OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.
-      JBLinkTy = JBLType.get();
-      M.addTypeName("llvm.sjljeh.jmpbufty", JBLinkTy);
-    }
+    JBLinkTy = StructType::createNamed(M.getContext(), "llvm.sjljeh.jmpbufty");
+    Type *Elts[] = { JmpBufTy, PointerType::getUnqual(JBLinkTy) };
+    JBLinkTy->setBody(Elts);
 
     const Type *PtrJBList = PointerType::getUnqual(JBLinkTy);
 
