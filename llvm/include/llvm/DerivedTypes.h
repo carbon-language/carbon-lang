@@ -29,28 +29,15 @@ class LLVMContext;
 template<typename T> class ArrayRef;
 class StringRef;
 
-class DerivedType : public Type {
-protected:
-  explicit DerivedType(LLVMContext &C, TypeID id) : Type(C, id) {}
-public:
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast.
-  static inline bool classof(const DerivedType *) { return true; }
-  static inline bool classof(const Type *T) {
-    return T->isDerivedType();
-  }
-};
-
 /// Class to represent integer types. Note that this class is also used to
 /// represent the built-in integer types: Int1Ty, Int8Ty, Int16Ty, Int32Ty and
 /// Int64Ty.
 /// @brief Integer representation type
-class IntegerType : public DerivedType {
+class IntegerType : public Type {
   friend class LLVMContextImpl;
   
 protected:
-  explicit IntegerType(LLVMContext &C, unsigned NumBits) : 
-      DerivedType(C, IntegerTyID) {
+  explicit IntegerType(LLVMContext &C, unsigned NumBits) : Type(C, IntegerTyID){
     setSubclassData(NumBits);
   }
 public:
@@ -106,7 +93,7 @@ public:
 
 /// FunctionType - Class to represent function types
 ///
-class FunctionType : public DerivedType {
+class FunctionType : public Type {
   FunctionType(const FunctionType &);                   // Do not implement
   const FunctionType &operator=(const FunctionType &);  // Do not implement
   FunctionType(const Type *Result, ArrayRef<Type*> Params, bool IsVarArgs);
@@ -157,9 +144,9 @@ public:
 
 /// CompositeType - Common super class of ArrayType, StructType, PointerType
 /// and VectorType.
-class CompositeType : public DerivedType {
+class CompositeType : public Type {
 protected:
-  explicit CompositeType(LLVMContext &C, TypeID tid) : DerivedType(C, tid) { }
+  explicit CompositeType(LLVMContext &C, TypeID tid) : Type(C, tid) { }
 public:
 
   /// getTypeAtIndex - Given an index value into the type, return the type of

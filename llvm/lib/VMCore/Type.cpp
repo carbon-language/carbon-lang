@@ -308,7 +308,7 @@ APInt IntegerType::getMask() const {
 
 FunctionType::FunctionType(const Type *Result, ArrayRef<Type*> Params,
                            bool IsVarArgs)
-  : DerivedType(Result->getContext(), FunctionTyID) {
+  : Type(Result->getContext(), FunctionTyID) {
   Type **SubTys = reinterpret_cast<Type**>(this+1);
   assert(isValidReturnType(Result) && "invalid return type for function");
   setSubclassData(IsVarArgs);

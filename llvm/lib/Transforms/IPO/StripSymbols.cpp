@@ -143,8 +143,7 @@ static void RemoveDeadConstant(Constant *C) {
   assert(C->use_empty() && "Constant is not dead!");
   SmallPtrSet<Constant*, 4> Operands;
   for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
-    if (isa<DerivedType>(C->getOperand(i)->getType()) &&
-        OnlyUsedBy(C->getOperand(i), C)) 
+    if (OnlyUsedBy(C->getOperand(i), C)) 
       Operands.insert(cast<Constant>(C->getOperand(i)));
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (!GV->hasLocalLinkage()) return;   // Don't delete non static globals.

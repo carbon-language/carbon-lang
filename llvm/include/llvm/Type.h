@@ -19,7 +19,6 @@
 
 namespace llvm {
 
-class DerivedType;
 class PointerType;
 class IntegerType;
 class raw_ostream;
@@ -40,7 +39,7 @@ class Type {
 public:
   //===--------------------------------------------------------------------===//
   /// Definitions of all of the base types for the Type system.  Based on this
-  /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)
+  /// value, you can cast to a class defined in DerivedTypes.h.
   /// Note: If you add an element to this, you need to add an element to the
   /// Type::getPrimitiveType function, or else things will break!
   /// Also update LLVMTypeKind and LLVMGetTypeKind () in the C binding.
