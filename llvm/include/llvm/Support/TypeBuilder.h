@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
 #include <limits.h>
+#include <vector>
 
 namespace llvm {
 
