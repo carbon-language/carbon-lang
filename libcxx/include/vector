@@ -1801,10 +1801,10 @@ private:
     __storage_pointer                                      __begin_;
     size_type                                              __size_;
     __compressed_pair<size_type, __storage_allocator> __cap_alloc_;
-
+public:
     typedef __bit_reference<vector>                  reference;
     typedef __bit_const_reference<vector>            const_reference;
-
+private:
     _LIBCPP_INLINE_VISIBILITY
     size_type& __cap() _NOEXCEPT
         {return __cap_alloc_.first();}
