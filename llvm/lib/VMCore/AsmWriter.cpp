@@ -290,11 +290,6 @@ void TypePrinting::printStructBody(StructType *STy, raw_ostream &OS) {
 
 
 
-void llvm::WriteTypeSymbolic(raw_ostream &OS, const Type *Ty, const Module *M) {
-  // FIXME: remove this function.
-  OS << *Ty;
-}
-
 //===----------------------------------------------------------------------===//
 // SlotTracker Class: Enumerate slot numbers for unnamed values
 //===----------------------------------------------------------------------===//

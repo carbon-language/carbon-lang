@@ -24,12 +24,6 @@ class Module;
 class Value;
 class raw_ostream;
 
-// WriteTypeSymbolic - This attempts to write the specified type as a symbolic
-// type, if there is an entry in the Module's symbol table for the specified
-// type or one of its component types.
-//
-void WriteTypeSymbolic(raw_ostream &, const Type *, const Module *M);
-
 // WriteAsOperand - Write the name of the specified value out to the specified
 // ostream.  This can be useful when you just want to print int %reg126, not the
 // whole instruction that generated it.  If you specify a Module for context,
