@@ -173,12 +173,15 @@ Expression ValueTable::create_extractvalue_expression(ExtractValueInst *EI) {
     // is we'll synthesize a semantically equivalent expression instead on
     // an extract value expression.
     switch (I->getIntrinsicID()) {
+      case Intrinsic::sadd_with_overflow:
       case Intrinsic::uadd_with_overflow:
         e.opcode = Instruction::Add;
         break;
+      case Intrinsic::ssub_with_overflow:
       case Intrinsic::usub_with_overflow:
         e.opcode = Instruction::Sub;
         break;
+      case Intrinsic::smul_with_overflow:
       case Intrinsic::umul_with_overflow:
         e.opcode = Instruction::Mul;
         break;
