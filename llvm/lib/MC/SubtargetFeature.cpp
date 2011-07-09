@@ -224,6 +224,38 @@ void ClearImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
   }
 }
 
+/// ToggleFeature - Toggle a feature and returns the newly updated feature
+/// bits.
+uint64_t
+SubtargetFeatures::ToggleFeature(uint64_t Bits, const StringRef Feature,
+                                 const SubtargetFeatureKV *FeatureTable,
+                                 size_t FeatureTableSize) {
+  // Find feature in table.
+  const SubtargetFeatureKV *FeatureEntry =
+    Find(StripFlag(Feature), FeatureTable, FeatureTableSize);
+  // If there is a match
+  if (FeatureEntry) {
+    if ((Bits & FeatureEntry->Value) == FeatureEntry->Value) {
+      Bits &= ~FeatureEntry->Value;
+
+      // For each feature that implies this, clear it.
+      ClearImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
+    } else {
+      Bits |=  FeatureEntry->Value;
+
+      // For each feature that this implies, set it.
+      SetImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
+    }
+  } else {
+    errs() << "'" << Feature
+           << "' is not a recognized feature for this target"
+           << " (ignoring feature)\n";
+  }
+
+  return Bits;
+}
+           
+
 /// getFeatureBits - Get feature bits a CPU.
 ///
 uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,

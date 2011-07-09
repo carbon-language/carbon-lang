@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetMachine.h"
@@ -112,11 +113,15 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode) const {
                                                   OutContext, OutStreamer,
                                                   *MAI));
 
-  OwningPtr<TargetAsmParser>
-    TAP(TM.getTarget().createAsmParser(TM.getTargetTriple(),
-                                       TM.getTargetCPU(),
-                                       TM.getTargetFeatureString(),
-                                       *Parser));
+  // FIXME: It would be nice if we can avoid createing a new instance of
+  // MCSubtargetInfo here given TargetSubtargetInfo is available. However,
+  // we have to watch out for asm directives which can change subtarget
+  // state. e.g. .code 16, .code 32.
+  OwningPtr<MCSubtargetInfo>
+    STI(TM.getTarget().createMCSubtargetInfo(TM.getTargetTriple(),
+                                             TM.getTargetCPU(),
+                                             TM.getTargetFeatureString()));
+  OwningPtr<TargetAsmParser> TAP(TM.getTarget().createAsmParser(*STI, *Parser));
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"
                        " we don't have an asm parser for this target\n");

@@ -23,6 +23,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -373,7 +374,8 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
                                                          *AsmInfo));
 
   StringRef triple = tripleFromArch(Key.Arch);
-  OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(triple, "", "",
+  OwningPtr<MCSubtargetInfo> STI(Tgt->createMCSubtargetInfo(triple, "", ""));
+  OwningPtr<TargetAsmParser> TargetParser(Tgt->createAsmParser(*STI,
                                                                *genericParser));
   
   AsmToken OpcodeToken = genericParser->Lex();

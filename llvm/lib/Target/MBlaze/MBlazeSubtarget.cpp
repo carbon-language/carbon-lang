@@ -15,6 +15,7 @@
 #include "MBlaze.h"
 #include "MBlazeRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Target/TargetRegistry.h"
 
 #define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
@@ -61,4 +62,16 @@ enablePostRAScheduler(CodeGenOpt::Level OptLevel,
   CriticalPathRCs.clear();
   CriticalPathRCs.push_back(&MBlaze::GPRRegClass);
   return HasItin && OptLevel >= CodeGenOpt::Default;
+}
+
+MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                            StringRef FS) {
+  MCSubtargetInfo *X = new MCSubtargetInfo();
+  InitMBlazeMCSubtargetInfo(X, CPU, FS);
+  return X;
+}
+
+extern "C" void LLVMInitializeMBlazeMCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheMBlazeTarget,
+                                          createMBlazeMCSubtargetInfo);
 }

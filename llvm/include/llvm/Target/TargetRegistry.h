@@ -36,6 +36,7 @@ namespace llvm {
   class MCInstrInfo;
   class MCRegisterInfo;
   class MCStreamer;
+  class MCSubtargetInfo;
   class TargetAsmBackend;
   class TargetAsmLexer;
   class TargetAsmParser;
@@ -69,6 +70,9 @@ namespace llvm {
                                           StringRef TT);
     typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
     typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(void);
+    typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(StringRef TT,
+                                                        StringRef CPU,
+                                                        StringRef Features);
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &T,
                                                   const std::string &TT,
                                                   const std::string &CPU,
@@ -79,8 +83,7 @@ namespace llvm {
                                                   const std::string &TT);
     typedef TargetAsmLexer *(*AsmLexerCtorTy)(const Target &T,
                                               const MCAsmInfo &MAI);
-    typedef TargetAsmParser *(*AsmParserCtorTy)(StringRef TT,
-                                                StringRef CPU, StringRef Features,
+    typedef TargetAsmParser *(*AsmParserCtorTy)(MCSubtargetInfo &STI,
                                                 MCAsmParser &P);
     typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
@@ -136,6 +139,10 @@ namespace llvm {
     /// MCRegInfoCtorFn - Constructor function for this target's MCRegisterInfo,
     /// if registered.
     MCRegInfoCtorFnTy MCRegInfoCtorFn;
+
+    /// MCSubtargetInfoCtorFn - Constructor function for this target's
+    /// MCSubtargetInfo, if registered.
+    MCSubtargetInfoCtorFnTy MCSubtargetInfoCtorFn;
 
     /// TargetMachineCtorFn - Construction function for this target's
     /// TargetMachine, if registered.
@@ -262,6 +269,22 @@ namespace llvm {
       return MCRegInfoCtorFn();
     }
 
+    /// createMCSubtargetInfo - Create a MCSubtargetInfo implementation.
+    ///
+    /// \arg Triple - This argument is used to determine the target machine
+    /// feature set; it should always be provided. Generally this should be
+    /// either the target triple from the module, or the target triple of the
+    /// host if that does not exist.
+    /// \arg CPU - This specifies the name of the target CPU.
+    /// \arg Features - This specifies the string representation of the
+    /// additional target features.
+    MCSubtargetInfo *createMCSubtargetInfo(StringRef Triple, StringRef CPU,
+                                           StringRef Features) const {
+      if (!MCSubtargetInfoCtorFn)
+        return 0;
+      return MCSubtargetInfoCtorFn(Triple, CPU, Features);
+    }
+
     /// createTargetMachine - Create a target specific machine implementation
     /// for the specified \arg Triple.
     ///
@@ -299,12 +322,11 @@ namespace llvm {
     ///
     /// \arg Parser - The target independent parser implementation to use for
     /// parsing and lexing.
-    TargetAsmParser *createAsmParser(StringRef Triple, StringRef CPU,
-                                     StringRef Features,
+    TargetAsmParser *createAsmParser(MCSubtargetInfo &STI,
                                      MCAsmParser &Parser) const {
       if (!AsmParserCtorFn)
         return 0;
-      return AsmParserCtorFn(Triple, CPU, Features, Parser);
+      return AsmParserCtorFn(STI, Parser);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
@@ -504,6 +526,22 @@ namespace llvm {
       // Ignore duplicate registration.
       if (!T.MCRegInfoCtorFn)
         T.MCRegInfoCtorFn = Fn;
+    }
+
+    /// RegisterMCSubtargetInfo - Register a MCSubtargetInfo implementation for
+    /// the given target.
+    ///
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct a MCSubtargetInfo for the target.
+    static void RegisterMCSubtargetInfo(Target &T,
+                                        Target::MCSubtargetInfoCtorFnTy Fn) {
+      // Ignore duplicate registration.
+      if (!T.MCSubtargetInfoCtorFn)
+        T.MCSubtargetInfoCtorFn = Fn;
     }
 
     /// RegisterTargetMachine - Register a TargetMachine implementation for the
@@ -782,6 +820,40 @@ namespace llvm {
     }
   };
 
+  /// RegisterMCSubtargetInfo - Helper template for registering a target
+  /// subtarget info implementation.  This invokes the static "Create" method
+  /// on the class to actually do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCSubtargetInfo<FooMCSubtargetInfo> X(TheFooTarget);
+  /// }
+  template<class MCSubtargetInfoImpl>
+  struct RegisterMCSubtargetInfo {
+    RegisterMCSubtargetInfo(Target &T) {
+      TargetRegistry::RegisterMCSubtargetInfo(T, &Allocator);
+    }
+  private:
+    static MCSubtargetInfo *Allocator(StringRef TT, StringRef CPU,
+                                      StringRef FS) {
+      return new MCSubtargetInfoImpl();
+    }
+  };
+
+  /// RegisterMCSubtargetInfoFn - Helper template for registering a target
+  /// subtarget info implementation.  This invokes the specified function to
+  /// do the construction.  Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterMCSubtargetInfoFn X(TheFooTarget, TheFunction);
+  /// }
+  struct RegisterMCSubtargetInfoFn {
+    RegisterMCSubtargetInfoFn(Target &T, Target::MCSubtargetInfoCtorFnTy Fn) {
+      TargetRegistry::RegisterMCSubtargetInfo(T, Fn);
+    }
+  };
+
   /// RegisterTargetMachine - Helper template for registering a target machine
   /// implementation, for use in the target machine initialization
   /// function. Usage:
@@ -859,9 +931,8 @@ namespace llvm {
     }
 
   private:
-    static TargetAsmParser *Allocator(StringRef TT, StringRef CPU,
-                                      StringRef FS, MCAsmParser &P) {
-      return new AsmParserImpl(TT, CPU, FS, P);
+    static TargetAsmParser *Allocator(MCSubtargetInfo &STI, MCAsmParser &P) {
+      return new AsmParserImpl(STI, P);
     }
   };
 

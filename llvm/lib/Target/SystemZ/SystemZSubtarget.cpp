@@ -15,6 +15,7 @@
 #include "SystemZ.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegistry.h"
 
 #define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
@@ -52,4 +53,16 @@ bool SystemZSubtarget::GVRequiresExtraLoad(const GlobalValue* GV,
   }
 
   return false;
+}
+
+MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                              StringRef FS) {
+  MCSubtargetInfo *X = new MCSubtargetInfo();
+  InitSystemZMCSubtargetInfo(X, CPU, FS);
+  return X;
+}
+
+extern "C" void LLVMInitializeSystemZMCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheSystemZTarget,
+                                          createSystemZMCSubtargetInfo);
 }

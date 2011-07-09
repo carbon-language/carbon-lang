@@ -19,6 +19,7 @@
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Target/TargetAsmBackend.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -340,6 +341,9 @@ static int AssembleInput(const char *ProgName) {
     TM->getTargetLowering()->getObjFileLowering();
   const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(Ctx, *TM);
 
+  OwningPtr<MCSubtargetInfo>
+    STI(TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
+
   // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (FileType == OFT_AssemblyFile) {
     MCInstPrinter *IP =
@@ -371,8 +375,7 @@ static int AssembleInput(const char *ProgName) {
 
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(*TheTarget, SrcMgr, Ctx,
                                                    *Str.get(), *MAI));
-  OwningPtr<TargetAsmParser>
-    TAP(TheTarget->createAsmParser(TripleName, MCPU, FeaturesStr, *Parser));
+  OwningPtr<TargetAsmParser> TAP(TheTarget->createAsmParser(*STI, *Parser));
   if (!TAP) {
     errs() << ProgName
            << ": error: this target does not support assembly parsing.\n";
@@ -448,6 +451,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargetInfos();
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
+  llvm::InitializeAllMCSubtargetInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllDisassemblers();

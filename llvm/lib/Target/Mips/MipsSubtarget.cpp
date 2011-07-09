@@ -13,6 +13,7 @@
 
 #include "MipsSubtarget.h"
 #include "Mips.h"
+#include "llvm/Target/TargetRegistry.h"
 
 #define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
@@ -60,4 +61,16 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
     HasSwap = true;
     HasCondMov = true;
   }
+}
+
+MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                           StringRef FS) {
+  MCSubtargetInfo *X = new MCSubtargetInfo();
+  InitMipsMCSubtargetInfo(X, CPU, FS);
+  return X;
+}
+
+extern "C" void LLVMInitializeMipsMCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheMipsTarget,
+                                          createMipsMCSubtargetInfo);
 }

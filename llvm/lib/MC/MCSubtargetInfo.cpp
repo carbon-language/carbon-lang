@@ -48,6 +48,23 @@ uint64_t MCSubtargetInfo::ReInitMCSubtargetInfo(StringRef CPU, StringRef FS) {
   return FeatureBits;
 }
 
+/// ToggleFeature - Toggle a feature and returns the re-computed feature
+/// bits. This version does not change the implied bits.
+uint64_t MCSubtargetInfo::ToggleFeature(uint64_t FB) {
+  FeatureBits ^= FB;
+  return FeatureBits;
+}
+
+/// ToggleFeature - Toggle a feature and returns the re-computed feature
+/// bits. This version will also change all implied bits.
+uint64_t MCSubtargetInfo::ToggleFeature(StringRef FS) {
+  SubtargetFeatures Features;
+  FeatureBits = Features.ToggleFeature(FeatureBits, FS,
+                                       ProcFeatures, NumFeatures);
+  return FeatureBits;
+}
+
+
 InstrItineraryData
 MCSubtargetInfo::getInstrItineraryForCPU(StringRef CPU) const {
   assert(ProcItins && "Instruction itineraries information not available!");

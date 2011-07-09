@@ -145,17 +145,19 @@ MCRegisterInfo *createX86MCRegisterInfo() {
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86MCInstrInfo() {
-  RegisterMCInstrInfo<MCInstrInfo> X(TheX86_32Target);
-  RegisterMCInstrInfo<MCInstrInfo> Y(TheX86_64Target);
-
   TargetRegistry::RegisterMCInstrInfo(TheX86_32Target, createX86MCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(TheX86_64Target, createX86MCInstrInfo);
 }
 
 extern "C" void LLVMInitializeX86MCRegInfo() {
-  RegisterMCRegInfo<MCRegisterInfo> X(TheX86_32Target);
-  RegisterMCRegInfo<MCRegisterInfo> Y(TheX86_64Target);
-
   TargetRegistry::RegisterMCRegInfo(TheX86_32Target, createX86MCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(TheX86_64Target, createX86MCRegisterInfo);
+}
+
+
+extern "C" void LLVMInitializeX86MCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheX86_32Target,
+                                          X86_MC::createX86MCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheX86_64Target,
+                                          X86_MC::createX86MCSubtargetInfo);
 }

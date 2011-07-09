@@ -41,12 +41,8 @@ namespace {
 class ARMOperand;
 
 class ARMAsmParser : public TargetAsmParser {
+  MCSubtargetInfo &STI;
   MCAsmParser &Parser;
-  /// STI, ARM_STI, Thumb_STI - Subtarget info for ARM and Thumb modes. STI
-  /// points to either ARM_STI or Thumb_STI depending on the mode.
-  const MCSubtargetInfo *STI;
-  OwningPtr<const MCSubtargetInfo> ARM_STI;
-  OwningPtr<const MCSubtargetInfo> Thumb_STI;
 
   MCAsmParser &getParser() const { return Parser; }
   MCAsmLexer &getLexer() const { return Parser.getLexer(); }
@@ -91,14 +87,14 @@ class ARMAsmParser : public TargetAsmParser {
 
   bool isThumb() const {
     // FIXME: Can tablegen auto-generate this?
-    return (STI->getFeatureBits() & ARM::ModeThumb) != 0;
+    return (STI.getFeatureBits() & ARM::ModeThumb) != 0;
   }
   bool isThumbOne() const {
-    return isThumb() && (STI->getFeatureBits() & ARM::FeatureThumb2) == 0;
+    return isThumb() && (STI.getFeatureBits() & ARM::FeatureThumb2) == 0;
   }
   void SwitchMode() {
-    STI = isThumb() ? ARM_STI.get() : Thumb_STI.get();
-    setAvailableFeatures(ComputeAvailableFeatures(STI->getFeatureBits()));
+    unsigned FB = ComputeAvailableFeatures(STI.ToggleFeature(ARM::ModeThumb));
+    setAvailableFeatures(FB);
   }
 
   /// @name Auto-generated Match Functions
@@ -135,27 +131,12 @@ class ARMAsmParser : public TargetAsmParser {
                                   const SmallVectorImpl<MCParsedAsmOperand*> &);
 
 public:
-  ARMAsmParser(StringRef TT, StringRef CPU, StringRef FS, MCAsmParser &_Parser)
-    : TargetAsmParser(), Parser(_Parser) {
+  ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
+    : TargetAsmParser(), STI(_STI), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
 
-    STI = ARM_MC::createARMMCSubtargetInfo(TT, CPU, FS);
-    // FIXME: Design a better way to create two subtargets with only difference
-    // being a feature change.
-    if (isThumb()) {
-      Thumb_STI.reset(STI);
-      assert(TT.startswith("thumb") && "Unexpected Triple string for Thumb!");
-      Twine ARM_TT = "arm" + TT.substr(5);
-      ARM_STI.reset(ARM_MC::createARMMCSubtargetInfo(ARM_TT.str(), CPU, FS));
-    } else {
-      ARM_STI.reset(STI);
-      assert(TT.startswith("arm") && "Unexpected Triple string for ARM!");
-      Twine Thumb_TT = "thumb" + TT.substr(3);
-      Thumb_STI.reset(ARM_MC::createARMMCSubtargetInfo(Thumb_TT.str(),CPU, FS));
-    }
-
     // Initialize the set of available features.
-    setAvailableFeatures(ComputeAvailableFeatures(STI->getFeatureBits()));
+    setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,
@@ -2237,10 +2218,12 @@ bool ARMAsmParser::ParseDirectiveCode(SMLoc L) {
   Parser.Lex();
 
   if (Val == 16) {
-    if (!isThumb()) SwitchMode();
+    if (!isThumb())
+      SwitchMode();
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code16);
   } else {
-    if (isThumb()) SwitchMode();
+    if (isThumb())
+      SwitchMode();
     getParser().getStreamer().EmitAssemblerFlag(MCAF_Code32);
   }
 

@@ -54,3 +54,9 @@ configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/Disassemblers.def.in
   ${LLVM_BINARY_DIR}/include/llvm/Config/Disassemblers.def
   )
+
+# Produce llvm/Config/MCSubtargetInfos.def
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/MCSubtargetInfos.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/MCSubtargtInfos.def
+  )

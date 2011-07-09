@@ -13,6 +13,7 @@
 
 #include "AlphaSubtarget.h"
 #include "Alpha.h"
+#include "llvm/Target/TargetRegistry.h"
 
 #define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
@@ -34,4 +35,16 @@ AlphaSubtarget::AlphaSubtarget(const std::string &TT, const std::string &CPU,
 
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
+}
+
+MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                            StringRef FS) {
+  MCSubtargetInfo *X = new MCSubtargetInfo();
+  InitAlphaMCSubtargetInfo(X, CPU, FS);
+  return X;
+}
+
+extern "C" void LLVMInitializeAlphaMCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheAlphaTarget,
+                                          createAlphaMCSubtargetInfo);
 }

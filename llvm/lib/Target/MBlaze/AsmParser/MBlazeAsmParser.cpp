@@ -63,8 +63,7 @@ class MBlazeAsmParser : public TargetAsmParser {
 
 
 public:
-  MBlazeAsmParser(StringRef TT, StringRef CPU, StringRef FS,
-                  MCAsmParser &_Parser)
+  MBlazeAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
     : TargetAsmParser(), Parser(_Parser) {}
 
   virtual bool ParseInstruction(StringRef Name, SMLoc NameLoc,

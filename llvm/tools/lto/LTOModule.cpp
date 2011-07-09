@@ -35,6 +35,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -618,11 +619,12 @@ bool LTOModule::addAsmGlobalSymbols(MCContext &Context) {
   OwningPtr<MCAsmParser> Parser(createMCAsmParser(_target->getTarget(), SrcMgr,
                                                   Context, *Streamer,
                                                   *_target->getMCAsmInfo()));
+  OwningPtr<MCSubtargetInfo> STI(_target->getTarget().
+                      createMCSubtargetInfo(_target->getTargetTriple(),
+                                            _target->getTargetCPU(),
+                                            _target->getTargetFeatureString()));
   OwningPtr<TargetAsmParser>
-    TAP(_target->getTarget().createAsmParser(_target->getTargetTriple(),
-                                             _target->getTargetCPU(),
-                                             _target->getTargetFeatureString(),
-                                             *Parser.get()));
+    TAP(_target->getTarget().createAsmParser(*STI, *Parser.get()));
   Parser->setTargetParser(*TAP);
   int Res = Parser->Run(false);
   if (Res)

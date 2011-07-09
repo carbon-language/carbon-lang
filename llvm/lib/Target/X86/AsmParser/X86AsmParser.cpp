@@ -37,8 +37,8 @@ namespace {
 struct X86Operand;
 
 class X86ATTAsmParser : public TargetAsmParser {
+  MCSubtargetInfo &STI;
   MCAsmParser &Parser;
-  OwningPtr<const MCSubtargetInfo> STI;
 
 private:
   MCAsmParser &getParser() const { return Parser; }
@@ -66,7 +66,7 @@ private:
 
   bool is64Bit() {
     // FIXME: Can tablegen auto-generate this?
-    return (STI->getFeatureBits() & X86::Mode64Bit) != 0;
+    return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
   }
 
   /// @name Auto-generated Matcher Functions
@@ -78,13 +78,11 @@ private:
   /// }
 
 public:
-  X86ATTAsmParser(StringRef TT, StringRef CPU, StringRef FS,
-                  MCAsmParser &parser)
-    : TargetAsmParser(), Parser(parser),
-      STI(X86_MC::createX86MCSubtargetInfo(TT, CPU, FS)) {
+  X86ATTAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
+    : TargetAsmParser(), STI(sti), Parser(parser) {
 
     // Initialize the set of available features.
-    setAvailableFeatures(ComputeAvailableFeatures(STI->getFeatureBits()));
+    setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
   virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
 

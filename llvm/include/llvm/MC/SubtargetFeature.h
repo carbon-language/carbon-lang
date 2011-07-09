@@ -82,6 +82,12 @@ public:
   /// Adding Features.
   void AddFeature(const StringRef String, bool IsEnabled = true);
            
+  /// ToggleFeature - Toggle a feature and returns the newly updated feature
+  /// bits.
+  uint64_t ToggleFeature(uint64_t Bits, const StringRef String,
+                         const SubtargetFeatureKV *FeatureTable,
+                         size_t FeatureTableSize);
+           
   /// Get feature bits of a CPU.
   uint64_t getFeatureBits(const StringRef CPU,
                           const SubtargetFeatureKV *CPUTable,

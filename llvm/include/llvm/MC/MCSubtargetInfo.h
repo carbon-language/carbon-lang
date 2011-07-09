@@ -34,7 +34,8 @@ class MCSubtargetInfo {
   const unsigned *ForwardingPathes;    // Forwarding pathes
   unsigned NumFeatures;                // Number of processor features
   unsigned NumProcs;                   // Number of processors
-  uint64_t FeatureBits;                // Feature bits for current CPU
+
+  uint64_t FeatureBits;                // Feature bits for current CPU + FS
 
 public:
   void InitMCSubtargetInfo(StringRef CPU, StringRef FS,
@@ -53,6 +54,14 @@ public:
   /// ReInitMCSubtargetInfo - Change CPU (and optionally supplemented with
   /// feature string), recompute and return feature bits.
   uint64_t ReInitMCSubtargetInfo(StringRef CPU, StringRef FS);
+
+  /// ToggleFeature - Toggle a feature and returns the re-computed feature
+  /// bits. This version does not change the implied bits.
+  uint64_t ToggleFeature(uint64_t FB);
+
+  /// ToggleFeature - Toggle a feature and returns the re-computed feature
+  /// bits. This version will also change all implied bits.
+  uint64_t ToggleFeature(StringRef FS);
 
   /// getInstrItineraryForCPU - Get scheduling itinerary of a CPU.
   ///

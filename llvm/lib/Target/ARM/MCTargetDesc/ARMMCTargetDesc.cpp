@@ -112,17 +112,18 @@ MCRegisterInfo *createARMMCRegisterInfo() {
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMMCInstrInfo() {
-  RegisterMCInstrInfo<MCInstrInfo> X(TheARMTarget);
-  RegisterMCInstrInfo<MCInstrInfo> Y(TheThumbTarget);
-
   TargetRegistry::RegisterMCInstrInfo(TheARMTarget, createARMMCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(TheThumbTarget, createARMMCInstrInfo);
 }
 
 extern "C" void LLVMInitializeARMMCRegInfo() {
-  RegisterMCRegInfo<MCRegisterInfo> X(TheARMTarget);
-  RegisterMCRegInfo<MCRegisterInfo> Y(TheThumbTarget);
-
   TargetRegistry::RegisterMCRegInfo(TheARMTarget, createARMMCRegisterInfo);
   TargetRegistry::RegisterMCRegInfo(TheThumbTarget, createARMMCRegisterInfo);
+}
+
+extern "C" void LLVMInitializeARMMCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheARMTarget,
+                                          ARM_MC::createARMMCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheThumbTarget,
+                                          ARM_MC::createARMMCSubtargetInfo);
 }

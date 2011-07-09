@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcSubtarget.h"
+#include "Sparc.h"
+#include "llvm/Target/TargetRegistry.h"
 
 #define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_MC_DESC
@@ -41,4 +43,16 @@ SparcSubtarget::SparcSubtarget(const std::string &TT, const std::string &CPU,
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
+}
+
+MCSubtargetInfo *createSparcMCSubtargetInfo(StringRef TT, StringRef CPU,
+                                            StringRef FS) {
+  MCSubtargetInfo *X = new MCSubtargetInfo();
+  InitSparcMCSubtargetInfo(X, CPU, FS);
+  return X;
+}
+
+extern "C" void LLVMInitializeSparcMCSubtargetInfo() {
+  TargetRegistry::RegisterMCSubtargetInfo(TheSparcTarget,
+                                          createSparcMCSubtargetInfo);
 }
