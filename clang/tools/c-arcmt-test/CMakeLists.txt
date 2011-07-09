@@ -6,7 +6,7 @@ set( LLVM_LINK_COMPONENTS
   )
 
 add_clang_executable(c-arcmt-test
-  c-arcmt-test.cpp
+  c-arcmt-test.c
   )
 
 set_target_properties(c-arcmt-test
