@@ -475,14 +475,12 @@ void test19() {
   // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[BEGIN]], i64 5
   // CHECK-NEXT: br label
 
-  // CHECK:      [[CUR:%.*]] = phi i8**
-  // CHECK-NEXT: [[EQ:%.*]] = icmp eq i8** [[CUR]], [[END]]
-  // CHECK-NEXT: br i1 [[EQ]],
-
-  // CHECK:      [[T0:%.*]] = load i8** [[CUR]]
+  // CHECK:      [[AFTER:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[NEXT:%.*]], {{%.*}} ]
+  // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds i8** [[AFTER]], i64 -1
+  // CHECK-NEXT: [[T0:%.*]] = load i8** [[CUR]]
   // CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind, !clang.imprecise_release
-  // CHECK-NEXT: [[NEXT:%.*]] = getelementptr inbounds i8** [[CUR]], i32 1
-  // CHECK-NEXT: br label
+  // CHECK-NEXT: [[EQ:%.*]] = icmp eq i8** [[CUR]], [[BEGIN]]
+  // CHECK-NEXT: br i1 [[EQ]],
 
   // CHECK:      ret void
 }
@@ -515,14 +513,12 @@ void test20(unsigned n) {
   // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[VLA]], i64 [[DIM]]
   // CHECK-NEXT: br label
 
-  // CHECK:      [[CUR:%.*]] = phi i8**
-  // CHECK-NEXT: [[EQ:%.*]] = icmp eq i8** [[CUR]], [[END]]
-  // CHECK-NEXT: br i1 [[EQ]],
-
-  // CHECK:      [[T0:%.*]] = load i8** [[CUR]]
+  // CHECK:      [[AFTER:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
+  // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds i8** [[AFTER]], i64 -1
+  // CHECK-NEXT: [[T0:%.*]] = load i8** [[CUR]]
   // CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind, !clang.imprecise_release
-  // CHECK-NEXT: [[NEXT:%.*]] = getelementptr inbounds i8** [[CUR]], i32 1
-  // CHECK-NEXT: br label
+  // CHECK-NEXT: [[EQ:%.*]] = icmp eq i8** [[CUR]], [[VLA]]
+  // CHECK-NEXT: br i1 [[EQ]],
 
   // CHECK:      [[T0:%.*]] = load i8** [[SAVED_STACK]]
   // CHECK-NEXT: call void @llvm.stackrestore(i8* [[T0]])
@@ -562,14 +558,12 @@ void test21(unsigned n) {
   // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds i8** [[BEGIN]], i64 [[T1]]
   // CHECK-NEXT: br label
 
-  // CHECK:      [[CUR:%.*]] = phi i8**
-  // CHECK-NEXT: [[EQ:%.*]] = icmp eq i8** [[CUR]], [[END]]
-  // CHECK-NEXT: br i1 [[EQ]],
-
-  // CHECK:      [[T0:%.*]] = load i8** [[CUR]]
+  // CHECK:      [[AFTER:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
+  // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds i8** [[AFTER]], i64 -1
+  // CHECK-NEXT: [[T0:%.*]] = load i8** [[CUR]]
   // CHECK-NEXT: call void @objc_release(i8* [[T0]]) nounwind, !clang.imprecise_release
-  // CHECK-NEXT: [[NEXT:%.*]] = getelementptr inbounds i8** [[CUR]], i32 1
-  // CHECK-NEXT: br label
+  // CHECK-NEXT: [[EQ:%.*]] = icmp eq i8** [[CUR]], [[BEGIN]]
+  // CHECK-NEXT: br i1 [[EQ]],
 
   // CHECK:      [[T0:%.*]] = load i8** [[SAVED_STACK]]
   // CHECK-NEXT: call void @llvm.stackrestore(i8* [[T0]])
@@ -1120,7 +1114,7 @@ void test36(id x) {
 
   // CHECK: br label
   // CHECK: call void @objc_release
-  // CHECK: br label
+  // CHECK: br i1
 
   // CHECK: call void @objc_release
   // CHECK-NEXT: ret void

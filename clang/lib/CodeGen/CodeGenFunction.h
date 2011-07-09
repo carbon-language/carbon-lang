@@ -1151,6 +1151,40 @@ public:
   llvm::LLVMContext &getLLVMContext() { return CGM.getLLVMContext(); }
 
   //===--------------------------------------------------------------------===//
+  //                                  Cleanups
+  //===--------------------------------------------------------------------===//
+
+  typedef void Destroyer(CodeGenFunction &CGF, llvm::Value *addr, QualType ty);
+
+  void pushPartialArrayCleanup(llvm::Value *arrayBegin,
+                               QualType elementType,
+                               Destroyer &destroyer,
+                               llvm::Value *arrayEndPointer);
+
+  Destroyer &getDestroyer(QualType::DestructionKind destructionKind);
+  void pushDestroy(CleanupKind kind, llvm::Value *addr, QualType type,
+                   Destroyer &destroyer);
+  void emitDestroy(llvm::Value *addr, QualType type, Destroyer &destroyer);
+  void emitArrayDestroy(llvm::Value *begin, llvm::Value *end,
+                        QualType type, Destroyer &destroyer);
+
+  /// Determines whether an EH cleanup is required to destroy a type
+  /// with the given destruction kind.
+  bool needsEHCleanup(QualType::DestructionKind kind) {
+    switch (kind) {
+    case QualType::DK_none:
+      return false;
+    case QualType::DK_cxx_destructor:
+    case QualType::DK_objc_weak_lifetime:
+      return getLangOptions().Exceptions;
+    case QualType::DK_objc_strong_lifetime:
+      return getLangOptions().Exceptions &&
+             CGM.getCodeGenOpts().ObjCAutoRefCountExceptions;
+    }
+    llvm_unreachable("bad destruction kind");
+  }
+
+  //===--------------------------------------------------------------------===//
   //                                  Objective-C
   //===--------------------------------------------------------------------===//
 
@@ -1526,6 +1560,12 @@ public:
   // instruction in LLVM instead once it works well enough.
   llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty);
 
+  /// emitArrayLength - Compute the length of an array, even if it's a
+  /// VLA, and drill down to the base element type.
+  llvm::Value *emitArrayLength(const ArrayType *arrayType,
+                               QualType &baseType,
+                               llvm::Value *&addr);
+
   /// EmitVLASize - Capture all the sizes for the VLA expressions in
   /// the given variably-modified type and store them in the VLASizeMap.
   ///
@@ -1615,6 +1655,8 @@ public:
   void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                  const ArrayType *Array,
                                  llvm::Value *This);
+
+  static Destroyer destroyCXXObject;
 
   void EmitCXXAggrDestructorCall(const CXXDestructorDecl *D,
                                  llvm::Value *NumElements,
@@ -1720,6 +1762,8 @@ public:
   AutoVarEmission EmitAutoVarAlloca(const VarDecl &var);
   void EmitAutoVarInit(const AutoVarEmission &emission);
   void EmitAutoVarCleanups(const AutoVarEmission &emission);  
+  void emitAutoVarTypeCleanup(const AutoVarEmission &emission,
+                              QualType::DestructionKind dtorKind);
 
   void EmitStaticVarDecl(const VarDecl &D,
                          llvm::GlobalValue::LinkageTypes Linkage);
@@ -2101,8 +2145,20 @@ public:
   void PushARCReleaseCleanup(CleanupKind kind, QualType type,
                              llvm::Value *addr, bool precise,
                              bool forFullExpr = false);
+  void PushARCArrayReleaseCleanup(CleanupKind kind, QualType elementType,
+                                  llvm::Value *addr,
+                                  llvm::Value *countOrCountPtr,
+                                  bool precise, bool forFullExpr = false);
   void PushARCWeakReleaseCleanup(CleanupKind kind, QualType type,
                                  llvm::Value *addr, bool forFullExpr = false);
+  void PushARCArrayWeakReleaseCleanup(CleanupKind kind, QualType elementType,
+                                      llvm::Value *addr,
+                                      llvm::Value *countOrCountPtr,
+                                      bool forFullExpr = false);
+  static Destroyer destroyARCStrongImprecise;
+  static Destroyer destroyARCStrongPrecise;
+  static Destroyer destroyARCWeak;
+
   void PushARCFieldReleaseCleanup(CleanupKind cleanupKind,
                                   const FieldDecl *Field);
   void PushARCFieldWeakReleaseCleanup(CleanupKind cleanupKind,

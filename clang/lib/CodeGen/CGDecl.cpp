@@ -304,30 +304,25 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
 }
 
 namespace {
-  struct CallArrayDtor : EHScopeStack::Cleanup {
-    CallArrayDtor(const CXXDestructorDecl *Dtor, 
-                  const ConstantArrayType *Type,
-                  llvm::Value *Loc)
-      : Dtor(Dtor), Type(Type), Loc(Loc) {}
+  struct DestroyObject : EHScopeStack::Cleanup {
+    DestroyObject(llvm::Value *addr, QualType type,
+                  CodeGenFunction::Destroyer *destroyer)
+      : addr(addr), type(type), destroyer(*destroyer) {}
 
-    const CXXDestructorDecl *Dtor;
-    const ConstantArrayType *Type;
-    llvm::Value *Loc;
+    llvm::Value *addr;
+    QualType type;
+    CodeGenFunction::Destroyer &destroyer;
 
     void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      QualType BaseElementTy = CGF.getContext().getBaseElementType(Type);
-      const llvm::Type *BasePtr = CGF.ConvertType(BaseElementTy);
-      BasePtr = llvm::PointerType::getUnqual(BasePtr);
-      llvm::Value *BaseAddrPtr = CGF.Builder.CreateBitCast(Loc, BasePtr);
-      CGF.EmitCXXAggrDestructorCall(Dtor, Type, BaseAddrPtr);
+      CGF.emitDestroy(addr, type, destroyer);
     }
   };
 
-  struct CallVarDtor : EHScopeStack::Cleanup {
-    CallVarDtor(const CXXDestructorDecl *Dtor,
-                llvm::Value *NRVOFlag,
-                llvm::Value *Loc)
-      : Dtor(Dtor), NRVOFlag(NRVOFlag), Loc(Loc) {}
+  struct DestroyNRVOVariable : EHScopeStack::Cleanup {
+    DestroyNRVOVariable(llvm::Value *addr,
+                        const CXXDestructorDecl *Dtor,
+                        llvm::Value *NRVOFlag)
+      : Dtor(Dtor), NRVOFlag(NRVOFlag), Loc(addr) {}
 
     const CXXDestructorDecl *Dtor;
     llvm::Value *NRVOFlag;
@@ -1014,6 +1009,59 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
   }
 }
 
+/// Enter a destroy cleanup for the given local variable.
+void CodeGenFunction::emitAutoVarTypeCleanup(
+                            const CodeGenFunction::AutoVarEmission &emission,
+                            QualType::DestructionKind dtorKind) {
+  assert(dtorKind != QualType::DK_none);
+
+  // Note that for __block variables, we want to destroy the
+  // original stack object, not the possibly forwarded object.
+  llvm::Value *addr = emission.getObjectAddress(*this);
+
+  const VarDecl *var = emission.Variable;
+  QualType type = var->getType();
+
+  CleanupKind cleanupKind = NormalAndEHCleanup;
+  CodeGenFunction::Destroyer *destroyer = 0;
+
+  switch (dtorKind) {
+  case QualType::DK_none:
+    llvm_unreachable("no cleanup for trivially-destructible variable");
+
+  case QualType::DK_cxx_destructor:
+    // If there's an NRVO flag on the emission, we need a different
+    // cleanup.
+    if (emission.NRVOFlag) {
+      assert(!type->isArrayType());
+      CXXDestructorDecl *dtor = type->getAsCXXRecordDecl()->getDestructor();
+      EHStack.pushCleanup<DestroyNRVOVariable>(cleanupKind, addr, dtor,
+                                               emission.NRVOFlag);
+      return;
+    }
+    break;
+
+  case QualType::DK_objc_strong_lifetime:
+    // Suppress cleanups for pseudo-strong variables.
+    if (var->isARCPseudoStrong()) return;
+    
+    // Otherwise, consider whether to use an EH cleanup or not.
+    cleanupKind = getARCCleanupKind();
+
+    // Use the imprecise destroyer by default.
+    if (!var->hasAttr<ObjCPreciseLifetimeAttr>())
+      destroyer = CodeGenFunction::destroyARCStrongImprecise;
+    break;
+
+  case QualType::DK_objc_weak_lifetime:
+    break;
+  }
+
+  // If we haven't chosen a more specific destroyer, use the default.
+  if (!destroyer) destroyer = &getDestroyer(dtorKind);
+  EHStack.pushCleanup<DestroyObject>(cleanupKind, addr, type, destroyer);
+}
+
 void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
   assert(emission.Variable && "emission was not valid!");
 
@@ -1022,44 +1070,9 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
 
   const VarDecl &D = *emission.Variable;
 
-  // Handle C++ or ARC destruction of variables.
-  if (getLangOptions().CPlusPlus) {
-    QualType type = D.getType();
-    QualType baseType = getContext().getBaseElementType(type);
-    if (const RecordType *RT = baseType->getAs<RecordType>()) {
-      CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
-      if (!ClassDecl->hasTrivialDestructor()) {
-        // Note: We suppress the destructor call when the corresponding NRVO
-        // flag has been set.
-
-        // Note that for __block variables, we want to destroy the
-        // original stack object, not the possible forwarded object.
-        llvm::Value *Loc = emission.getObjectAddress(*this);
-        
-        const CXXDestructorDecl *D = ClassDecl->getDestructor();
-        assert(D && "EmitLocalBlockVarDecl - destructor is nul");
-        
-        if (type != baseType) {
-          const ConstantArrayType *Array = 
-            getContext().getAsConstantArrayType(type);
-          assert(Array && "types changed without array?");
-          EHStack.pushCleanup<CallArrayDtor>(NormalAndEHCleanup,
-                                             D, Array, Loc);
-        } else {
-          EHStack.pushCleanup<CallVarDtor>(NormalAndEHCleanup,
-                                           D, emission.NRVOFlag, Loc);
-        }
-      }
-    }
-  }
-
-  if (Qualifiers::ObjCLifetime lifetime
-        = D.getType().getQualifiers().getObjCLifetime()) {
-    if (!D.isARCPseudoStrong()) {
-      llvm::Value *loc = emission.getObjectAddress(*this);
-      EmitAutoVarWithLifetime(*this, D, loc, lifetime);
-    }
-  }
+  // Check the type for a cleanup.
+  if (QualType::DestructionKind dtorKind = D.getType().isDestructedType())
+    emitAutoVarTypeCleanup(emission, dtorKind);
 
   // In GC mode, honor objc_precise_lifetime.
   if (getLangOptions().getGCMode() != LangOptions::NonGC &&
@@ -1082,6 +1095,151 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
   // (on the unforwarded address).
   if (emission.IsByRef)
     enterByrefCleanup(emission);
+}
+
+CodeGenFunction::Destroyer &
+CodeGenFunction::getDestroyer(QualType::DestructionKind kind) {
+  switch (kind) {
+  case QualType::DK_none: llvm_unreachable("no destroyer for trivial dtor");
+  case QualType::DK_cxx_destructor: return destroyCXXObject;
+  case QualType::DK_objc_strong_lifetime: return destroyARCStrongPrecise;
+  case QualType::DK_objc_weak_lifetime: return destroyARCWeak;
+  }
+}
+
+void CodeGenFunction::pushDestroy(CleanupKind cleanupKind, llvm::Value *addr,
+                                  QualType type, Destroyer &destroyer) {
+  EHStack.pushCleanup<DestroyObject>(cleanupKind, addr, type, destroyer);
+}
+
+void CodeGenFunction::emitDestroy(llvm::Value *addr, QualType type,
+                                  Destroyer &destroyer) {
+  const ArrayType *arrayType = getContext().getAsArrayType(type);
+  if (!arrayType)
+    return destroyer(*this, addr, type);
+
+  llvm::Value *begin = addr;
+  llvm::Value *length = emitArrayLength(arrayType, type, begin);
+  llvm::Value *end = Builder.CreateInBoundsGEP(begin, length);
+  emitArrayDestroy(begin, end, type, destroyer);
+}
+
+void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
+                                       llvm::Value *end,
+                                       QualType type,
+                                       Destroyer &destroyer) {
+  assert(!type->isArrayType());
+
+  // The basic structure here is a do-while loop, because we don't
+  // need to check for the zero-element case.
+  llvm::BasicBlock *bodyBB = createBasicBlock("arraydestroy.body");
+  llvm::BasicBlock *doneBB = createBasicBlock("arraydestroy.done");
+
+  // Enter the loop body, making that address the current address.
+  llvm::BasicBlock *entryBB = Builder.GetInsertBlock();
+  EmitBlock(bodyBB);
+  llvm::PHINode *elementPast =
+    Builder.CreatePHI(begin->getType(), 2, "arraydestroy.elementPast");
+  elementPast->addIncoming(end, entryBB);
+
+  // Shift the address back by one element.
+  llvm::Value *negativeOne = llvm::ConstantInt::get(SizeTy, -1, true);
+  llvm::Value *element = Builder.CreateInBoundsGEP(elementPast, negativeOne,
+                                                   "arraydestroy.element");
+
+  // Perform the actual destruction there.
+  destroyer(*this, element, type);
+
+  // Check whether we've reached the end.
+  llvm::Value *done = Builder.CreateICmpEQ(element, begin, "arraydestroy.done");
+  Builder.CreateCondBr(done, doneBB, bodyBB);
+  elementPast->addIncoming(element, Builder.GetInsertBlock());
+
+  // Done.
+  EmitBlock(doneBB);
+}
+
+namespace {
+  class PartialArrayDestroy : public EHScopeStack::Cleanup {
+    llvm::Value *ArrayBegin;
+    llvm::Value *ArrayEndPointer;
+    QualType ElementType;
+    CodeGenFunction::Destroyer &Destroyer;
+  public:
+    PartialArrayDestroy(llvm::Value *arrayBegin, llvm::Value *arrayEndPointer,
+                        QualType elementType,
+                        CodeGenFunction::Destroyer *destroyer)
+      : ArrayBegin(arrayBegin), ArrayEndPointer(arrayEndPointer),
+        ElementType(elementType), Destroyer(*destroyer) {}
+
+    void Emit(CodeGenFunction &CGF, bool isForEH) {
+      llvm::Value *arrayBegin = ArrayBegin;
+      llvm::Value *arrayEnd = CGF.Builder.CreateLoad(ArrayEndPointer);
+
+      // It's possible for the count to be zero here, so we're going
+      // to need a check.  For the sake of prettier IR, we just want
+      // to jump to the end of the array destroy loop.  This assumes
+      // the structure of the IR generated by emitArrayDestroy, but
+      // that assumption is pretty reliable.
+      llvm::Value *earlyTest =
+        CGF.Builder.CreateICmpEQ(arrayBegin, arrayEnd, "pad.isempty");
+
+      llvm::BasicBlock *nextBB = CGF.createBasicBlock("pad.arraydestroy");
+
+      // For now, use a conditional branch with both successors the
+      // same.  We'll patch this later.
+      llvm::BranchInst *br =
+        CGF.Builder.CreateCondBr(earlyTest, nextBB, nextBB);
+      CGF.EmitBlock(nextBB);
+
+      llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
+
+      // If the element type is itself an array, drill down.
+      QualType type = ElementType;
+      llvm::SmallVector<llvm::Value*,4> gepIndices;
+      gepIndices.push_back(zero);
+      while (const ArrayType *arrayType = CGF.getContext().getAsArrayType(type)) {
+        // VLAs don't require a GEP index to walk into.
+        if (!isa<VariableArrayType>(arrayType))
+          gepIndices.push_back(zero);
+        type = arrayType->getElementType();
+      }
+      if (gepIndices.size() != 1) {
+        arrayBegin =
+          CGF.Builder.CreateInBoundsGEP(arrayBegin, gepIndices.begin(),
+                                        gepIndices.end(), "pad.arraybegin");
+        arrayEnd =
+          CGF.Builder.CreateInBoundsGEP(arrayEnd, gepIndices.begin(),
+                                        gepIndices.end(), "pad.arrayend");
+      }
+
+      CGF.emitArrayDestroy(arrayBegin, arrayEnd, type, Destroyer);
+
+      // Set the conditional branch's 'false' successor to doneBB.
+      llvm::BasicBlock *doneBB = CGF.Builder.GetInsertBlock();
+      assert(CGF.Builder.GetInsertPoint() == doneBB->begin());
+      br->setSuccessor(1, doneBB);
+    }
+  };
+}
+
+/// pushPartialArrayCleanup - Push a cleanup to destroy
+/// already-constructed elements of the given array.  The cleanup
+/// may be popped with DeactivateCleanupBlock.
+/// 
+/// \param elementType - the immediate element type of the array;
+///   possibly still an array type
+/// \param array - a value of type elementType*
+/// \param destructionKind - the kind of destruction required
+/// \param initializedElementCount - a value of type size_t* holding
+///   the number of successfully-constructed elements
+void CodeGenFunction::pushPartialArrayCleanup(llvm::Value *array,
+                                              QualType elementType,
+                                              Destroyer &destroyer,
+                                              llvm::Value *arrayEndPointer) {
+  // FIXME: can this be in a conditional expression?
+  EHStack.pushCleanup<PartialArrayDestroy>(EHCleanup, array, arrayEndPointer,
+                                           elementType, &destroyer);
 }
 
 namespace {

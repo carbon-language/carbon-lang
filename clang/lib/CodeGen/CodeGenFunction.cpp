@@ -785,6 +785,84 @@ llvm::BasicBlock *CodeGenFunction::GetIndirectGotoBlock() {
   return IndirectBranch->getParent();
 }
 
+/// Computes the length of an array in elements, as well as the base
+/// element type and a properly-typed first element pointer.
+llvm::Value *CodeGenFunction::emitArrayLength(const ArrayType *origArrayType,
+                                              QualType &baseType,
+                                              llvm::Value *&addr) {
+  const ArrayType *arrayType = origArrayType;
+
+  // If it's a VLA, we have to load the stored size.  Note that
+  // this is the size of the VLA in bytes, not its size in elements.
+  llvm::Value *numVLAElements = 0;
+  if (isa<VariableArrayType>(arrayType)) {
+    numVLAElements = getVLASize(cast<VariableArrayType>(arrayType)).first;
+
+    // Walk into all VLAs.  This doesn't require changes to addr,
+    // which has type T* where T is the first non-VLA element type.
+    do {
+      QualType elementType = arrayType->getElementType();
+      arrayType = getContext().getAsArrayType(elementType);
+
+      // If we only have VLA components, 'addr' requires no adjustment.
+      if (!arrayType) {
+        baseType = elementType;
+        return numVLAElements;
+      }
+    } while (isa<VariableArrayType>(arrayType));
+
+    // We get out here only if we find a constant array type
+    // inside the VLA.
+  }
+
+  // We have some number of constant-length arrays, so addr should
+  // have LLVM type [M x [N x [...]]]*.  Build a GEP that walks
+  // down to the first element of addr.
+  llvm::SmallVector<llvm::Value*, 8> gepIndices;
+
+  // GEP down to the array type.
+  llvm::ConstantInt *zero = Builder.getInt32(0);
+  gepIndices.push_back(zero);
+
+  // It's more efficient to calculate the count from the LLVM
+  // constant-length arrays than to re-evaluate the array bounds.
+  uint64_t countFromCLAs = 1;
+
+  const llvm::ArrayType *llvmArrayType =
+    cast<llvm::ArrayType>(
+      cast<llvm::PointerType>(addr->getType())->getElementType());
+  while (true) {
+    assert(isa<ConstantArrayType>(arrayType));
+    assert(cast<ConstantArrayType>(arrayType)->getSize().getZExtValue()
+             == llvmArrayType->getNumElements());
+
+    gepIndices.push_back(zero);
+    countFromCLAs *= llvmArrayType->getNumElements();
+
+    llvmArrayType =
+      dyn_cast<llvm::ArrayType>(llvmArrayType->getElementType());
+    if (!llvmArrayType) break;
+
+    arrayType = getContext().getAsArrayType(arrayType->getElementType());
+    assert(arrayType && "LLVM and Clang types are out-of-synch");
+  }
+
+  baseType = arrayType->getElementType();
+
+  // Create the actual GEP.
+  addr = Builder.CreateInBoundsGEP(addr, gepIndices.begin(),
+                                   gepIndices.end(), "array.begin");
+
+  llvm::Value *numElements
+    = llvm::ConstantInt::get(SizeTy, countFromCLAs);
+
+  // If we had any VLA dimensions, factor them in.
+  if (numVLAElements)
+    numElements = Builder.CreateNUWMul(numVLAElements, numElements);
+
+  return numElements;
+}
+
 std::pair<llvm::Value*, QualType>
 CodeGenFunction::getVLASize(QualType type) {
   const VariableArrayType *vla = getContext().getAsVariableArrayType(type);

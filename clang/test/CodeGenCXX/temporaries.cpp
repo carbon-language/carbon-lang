@@ -421,28 +421,24 @@ namespace Elision {
   void test4() {
     // CHECK:      [[X:%.*]] = alloca [[A]], align 8
     // CHECK-NEXT: [[XS:%.*]] = alloca [2 x [[A]]], align 16
-    // CHECK-NEXT: [[I:%.*]] = alloca i64
 
     // CHECK-NEXT: call void @_ZN7Elision1AC1Ev([[A]]* [[X]])
     A x;
 
-    // CHECK-NEXT: [[XS0:%.*]] = getelementptr inbounds [2 x [[A]]]* [[XS]], i32 0, i32 0
+    // CHECK-NEXT: [[XS0:%.*]] = getelementptr inbounds [2 x [[A]]]* [[XS]], i64 0, i64 0
     // CHECK-NEXT: call void @_ZN7Elision1AC1Ev([[A]]* [[XS0]])
-    // CHECK-NEXT: [[XS1:%.*]] = getelementptr inbounds [2 x [[A]]]* [[XS]], i32 0, i32 1
+    // CHECK-NEXT: [[XS1:%.*]] = getelementptr inbounds [[A]]* [[XS0]], i64 1
     // CHECK-NEXT: call void @_ZN7Elision1AC1ERKS0_([[A]]* [[XS1]], [[A]]* [[X]])
-    // CHECK-NEXT: [[XSB:%.*]] = bitcast [2 x [[A]]]* [[XS]] to [[A]]*
     A xs[] = { A(), x };
 
-    // CHECK-NEXT: store i64 2, i64* [[I]]
+    // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [2 x [[A]]]* [[XS]], i32 0, i32 0
+    // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 2
     // CHECK-NEXT: br label
-    // CHECK:      [[I0:%.*]] = load i64* [[I]]
-    // CHECK-NEXT: icmp ne i64 [[I0]], 0
-    // CHECK-NEXT: br i1
-    // CHECK:      [[I1:%.*]] = load i64* [[I]]
-    // CHECK-NEXT: [[I2:%.*]] = sub i64 [[I1]], 1
-    // CHECK-NEXT: [[XSI:%.*]] = getelementptr inbounds [[A]]* [[XSB]], i64 [[I2]]
-    // CHECK-NEXT: call void @_ZN7Elision1AD1Ev([[A]]* [[XSI]])
-    // CHECK-NEXT: br label
+    // CHECK:      [[AFTER:%.*]] = phi [[A]]*
+    // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]]* [[AFTER]], i64 -1
+    // CHECK-NEXT: call void @_ZN7Elision1AD1Ev([[A]]* [[CUR]])
+    // CHECK-NEXT: [[T0:%.*]] = icmp eq [[A]]* [[CUR]], [[BEGIN]]
+    // CHECK-NEXT: br i1 [[T0]],
 
     // CHECK:      call void @_ZN7Elision1AD1Ev([[A]]* [[X]])
   }

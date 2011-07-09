@@ -1172,6 +1172,17 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *D,
   EmitBlock(AfterFor, true);
 }
 
+void CodeGenFunction::destroyCXXObject(CodeGenFunction &CGF,
+                                       llvm::Value *addr,
+                                       QualType type) {
+  const RecordType *rtype = type->castAs<RecordType>();
+  const CXXRecordDecl *record = cast<CXXRecordDecl>(rtype->getDecl());
+  const CXXDestructorDecl *dtor = record->getDestructor();
+  assert(!dtor->isTrivial());
+  CGF.EmitCXXDestructorCall(dtor, Dtor_Complete, /*for vbase*/ false,
+                            addr);
+}
+
 /// EmitCXXAggrDestructorCall - calls the default destructor on array
 /// elements in reverse order of construction.
 void
