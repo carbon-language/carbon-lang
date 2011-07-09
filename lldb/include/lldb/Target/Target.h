@@ -239,13 +239,13 @@ public:
 
     // Use this to create a function breakpoint by regexp in containingModule, or all modules if it is NULL
     lldb::BreakpointSP
-    CreateBreakpoint (FileSpec *containingModule,
+    CreateBreakpoint (const FileSpec *containingModule,
                       RegularExpression &func_regexp,
                       bool internal = false);
 
     // Use this to create a function breakpoint by name in containingModule, or all modules if it is NULL
     lldb::BreakpointSP
-    CreateBreakpoint (FileSpec *containingModule,
+    CreateBreakpoint (const FileSpec *containingModule,
                       const char *func_name,
                       uint32_t func_name_type_mask, 
                       bool internal = false);

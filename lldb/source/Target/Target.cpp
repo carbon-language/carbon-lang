@@ -213,7 +213,7 @@ Target::CreateBreakpoint (Address &addr, bool internal)
 }
 
 BreakpointSP
-Target::CreateBreakpoint (FileSpec *containingModule, const char *func_name, uint32_t func_name_type_mask, bool internal)
+Target::CreateBreakpoint (const FileSpec *containingModule, const char *func_name, uint32_t func_name_type_mask, bool internal)
 {
     BreakpointSP bp_sp;
     if (func_name)
@@ -247,7 +247,7 @@ Target::GetSearchFilterForModule (const FileSpec *containingModule)
 }
 
 BreakpointSP
-Target::CreateBreakpoint (FileSpec *containingModule, RegularExpression &func_regex, bool internal)
+Target::CreateBreakpoint (const FileSpec *containingModule, RegularExpression &func_regex, bool internal)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModule (containingModule));
     BreakpointResolverSP resolver_sp(new BreakpointResolverName (NULL, func_regex));
