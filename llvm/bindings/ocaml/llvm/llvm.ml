@@ -11,7 +11,6 @@
 type llcontext
 type llmodule
 type lltype
-type lltypehandle
 type llvalue
 type lluse
 type llbasicblock
@@ -32,7 +31,6 @@ module TypeKind = struct
   | Struct
   | Array
   | Pointer
-  | Opaque
   | Vector
   | Metadata
 end
@@ -162,12 +160,6 @@ external data_layout: llmodule -> string
                     = "llvm_data_layout"
 external set_data_layout: string -> llmodule -> unit
                         = "llvm_set_data_layout"
-external define_type_name : string -> lltype -> llmodule -> bool
-                          = "llvm_add_type_name"
-external delete_type_name : string -> llmodule -> unit
-                          = "llvm_delete_type_name"
-external type_by_name : llmodule -> string -> lltype option
-                      = "llvm_type_by_name"
 external dump_module : llmodule -> unit = "llvm_dump_module"
 external set_module_inline_asm : llmodule -> string -> unit
                                = "llvm_set_module_inline_asm"
@@ -222,15 +214,8 @@ external address_space : lltype -> int = "llvm_address_space"
 external vector_size : lltype -> int = "llvm_vector_size"
 
 (*--... Operations on other types ..........................................--*)
-external opaque_type : llcontext -> lltype = "llvm_opaque_type"
 external void_type : llcontext -> lltype = "llvm_void_type"
 external label_type : llcontext -> lltype = "llvm_label_type"
-
-(*--... Operations on type handles .........................................--*)
-external handle_to_type : lltype -> lltypehandle = "llvm_handle_to_type"
-external type_of_handle : lltypehandle -> lltype = "llvm_type_of_handle"
-external refine_type : lltype -> lltype -> unit = "llvm_refine_type"
-
 
 (*===-- Values ------------------------------------------------------------===*)
 external type_of : llvalue -> lltype = "llvm_type_of"
@@ -1049,7 +1034,6 @@ let rec string_of_lltype ty =
                       " x " ^ (string_of_lltype (element_type ty)) ^ "]"
   | TypeKind.Vector -> "<"   ^ (string_of_int (vector_size ty)) ^
                        " x " ^ (string_of_lltype (element_type ty)) ^ ">"
-  | TypeKind.Opaque -> "opaque"
   | TypeKind.Function -> string_of_lltype (return_type ty) ^
                          " (" ^ (concat2 ", " (
                            Array.map string_of_lltype (param_types ty)

@@ -152,30 +152,6 @@ CAMLprim value llvm_set_data_layout(value Layout, LLVMModuleRef M) {
   return Val_unit;
 }
 
-/* string -> lltype -> llmodule -> bool */
-CAMLprim value llvm_add_type_name(value Name, LLVMTypeRef Ty, LLVMModuleRef M) {
-  int res = LLVMAddTypeName(M, String_val(Name), Ty);
-  return Val_bool(res == 0);
-}
-
-/* string -> llmodule -> unit */
-CAMLprim value llvm_delete_type_name(value Name, LLVMModuleRef M) {
-  LLVMDeleteTypeName(M, String_val(Name));
-  return Val_unit;
-}
-
-/* llmodule -> string -> lltype option */
-CAMLprim value llvm_type_by_name(LLVMModuleRef M, value Name) {
-  CAMLparam1(Name);
-  LLVMTypeRef T;
-  if ((T = LLVMGetTypeByName(M, String_val(Name)))) {
-    value Option = alloc(1, 0);
-    Field(Option, 0) = (value) T;
-    CAMLreturn(Option);
-  }
-  CAMLreturn(Val_int(0));
-}
-
 /* llmodule -> unit */
 CAMLprim value llvm_dump_module(LLVMModuleRef M) {
   LLVMDumpModule(M);
@@ -372,44 +348,6 @@ CAMLprim LLVMTypeRef llvm_void_type (LLVMContextRef Context) {
 CAMLprim LLVMTypeRef llvm_label_type(LLVMContextRef Context) {
   return LLVMLabelTypeInContext(Context);
 }
-
-/* llcontext -> lltype */
-CAMLprim LLVMTypeRef llvm_opaque_type(LLVMContextRef Context) {
-  return LLVMOpaqueTypeInContext(Context);
-}
-
-/*--... Operations on type handles .........................................--*/
-
-#define Typehandle_val(v)  (*(LLVMTypeHandleRef *)(Data_custom_val(v)))
-
-static void llvm_finalize_handle(value TH) {
-  LLVMDisposeTypeHandle(Typehandle_val(TH));
-}
-
-static struct custom_operations typehandle_ops = {
-  (char *) "LLVMTypeHandle",
-  llvm_finalize_handle,
-  custom_compare_default,
-  custom_hash_default,
-  custom_serialize_default,
-  custom_deserialize_default
-};
-
-CAMLprim value llvm_handle_to_type(LLVMTypeRef PATy) {
-  value TH = alloc_custom(&typehandle_ops, sizeof(LLVMBuilderRef), 0, 1);
-  Typehandle_val(TH) = LLVMCreateTypeHandle(PATy);
-  return TH;
-}
-
-CAMLprim LLVMTypeRef llvm_type_of_handle(value TH) {
-  return LLVMResolveTypeHandle(Typehandle_val(TH));
-}
-
-CAMLprim value llvm_refine_type(LLVMTypeRef AbstractTy, LLVMTypeRef ConcreteTy){
-  LLVMRefineType(AbstractTy, ConcreteTy);
-  return Val_unit;
-}
-
 
 /*===-- VALUES ------------------------------------------------------------===*/
 

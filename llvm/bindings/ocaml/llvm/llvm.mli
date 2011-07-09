@@ -29,11 +29,6 @@ type llmodule
     [llvm::Type] class. *)
 type lltype
 
-(** When building recursive types using {!refine_type}, [lltype] values may
-    become invalid; use [lltypehandle] to resolve this problem. See the
-    [llvm::AbstractTypeHolder] class. *)
-type lltypehandle
-
 (** Any value in the LLVM IR. Functions, instructions, global variables,
     constants, and much more are all [llvalues]. See the [llvm::Value] class.
     This type covers a wide range of subclasses. *)
@@ -69,7 +64,6 @@ module TypeKind : sig
   | Struct
   | Array
   | Pointer
-  | Opaque
   | Vector
   | Metadata
 end
@@ -261,24 +255,6 @@ val data_layout: llmodule -> string
     to the string [s]. See the method [llvm::Module::setDataLayout]. *)
 val set_data_layout: string -> llmodule -> unit
 
-
-(** [define_type_name name ty m] adds a named type to the module's symbol table.
-    Returns [true] if successful. If such a name already exists, then no entry
-    is added and [false] is returned. See the [llvm::Module::addTypeName]
-    method. *)
-val define_type_name : string -> lltype -> llmodule -> bool
-
-
-(** [delete_type_name name] removes a type name from the module's symbol
-    table. *)
-val delete_type_name : string -> llmodule -> unit
-
-
-(** [type_by_name m n] returns the type in the module [m] named [n], or [None]
-    if it does not exist. See the method [llvm::Module::getTypeByName]. *)
-val type_by_name : llmodule -> string -> lltype option
-
-
 (** [dump_module m] prints the .ll representation of the module [m] to standard
     error. See the method [llvm::Module::dump]. *)
 val dump_module : llmodule -> unit
@@ -447,11 +423,6 @@ val vector_size : lltype -> int
 
 (** {7 Operations on other types} *)
 
-(** [opaque_type c] creates a new opaque type distinct from any other in the
-    context [c]. Opaque types are useful for building recursive types in
-    combination with {!refine_type}. See [llvm::OpaqueType::get]. *)
-val opaque_type : llcontext -> lltype
-
 (** [void_type c] creates a type of a function which does not return any
     value in the context [c]. See [llvm::Type::VoidTy]. *)
 val void_type : llcontext -> lltype
@@ -459,25 +430,6 @@ val void_type : llcontext -> lltype
 (** [label_type c] creates a type of a basic block in the context [c]. See
     [llvm::Type::LabelTy]. *)
 val label_type : llcontext -> lltype
-
-(** {7 Operations on type handles} *)
-
-(** [handle_to_type ty] creates a handle to the type [ty]. If [ty] is later
-    refined as a result of a call to {!refine_type}, the handle will be updated;
-    any bare [lltype] references will become invalid.
-    See the class [llvm::PATypeHolder]. *)
-val handle_to_type : lltype -> lltypehandle
-
-(** [type_of_handle tyh] resolves the type handle [tyh].
-    See the method [llvm::PATypeHolder::get()]. *)
-val type_of_handle : lltypehandle -> lltype
-
-(** [refine_type opaque_ty ty] replaces the abstract type [opaque_ty] with the
-    concrete type [ty] in all users. Warning: This may invalidate {!lltype}
-    values! Use {!lltypehandle} to manipulate potentially abstract types. See
-    the method [llvm::Type::refineAbstractType]. *)
-val refine_type : lltype -> lltype -> unit
-
 
 (* {6 Values} *)
 
