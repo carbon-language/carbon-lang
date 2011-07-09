@@ -1099,11 +1099,12 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
 
 CodeGenFunction::Destroyer &
 CodeGenFunction::getDestroyer(QualType::DestructionKind kind) {
+  // GCC 4.2 requires the *& on these function references.
   switch (kind) {
   case QualType::DK_none: llvm_unreachable("no destroyer for trivial dtor");
-  case QualType::DK_cxx_destructor: return destroyCXXObject;
-  case QualType::DK_objc_strong_lifetime: return destroyARCStrongPrecise;
-  case QualType::DK_objc_weak_lifetime: return destroyARCWeak;
+  case QualType::DK_cxx_destructor: return *&destroyCXXObject;
+  case QualType::DK_objc_strong_lifetime: return *&destroyARCStrongPrecise;
+  case QualType::DK_objc_weak_lifetime: return *&destroyARCWeak;
   }
 }
 
