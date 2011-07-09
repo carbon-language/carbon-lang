@@ -114,8 +114,10 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
   // If this is an enum being completed, then we flush all non-struct types from
   // the cache.  This allows function types and other things that may be derived
   // from the enum to be recomputed.
-  if (isa<EnumDecl>(TD)) {
-    TypeCache.clear();
+  if (const EnumDecl *ED = dyn_cast<EnumDecl>(TD)) {
+    // Only flush the cache if we've actually already converted this type.
+    if (TypeCache.count(ED->getTypeForDecl()))
+      TypeCache.clear();
     return;
   }
   
