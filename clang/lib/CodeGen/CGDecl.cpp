@@ -1099,13 +1099,23 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
 
 CodeGenFunction::Destroyer &
 CodeGenFunction::getDestroyer(QualType::DestructionKind kind) {
-  // GCC 4.2 requires the *& on these function references.
+  // This is surprisingly compiler-dependent.  GCC 4.2 can't bind
+  // references to functions directly in returns, and using '*&foo'
+  // confuses MSVC.  Luckily, the following code pattern works in both.
+  Destroyer *destroyer = 0;
   switch (kind) {
   case QualType::DK_none: llvm_unreachable("no destroyer for trivial dtor");
-  case QualType::DK_cxx_destructor: return *&destroyCXXObject;
-  case QualType::DK_objc_strong_lifetime: return *&destroyARCStrongPrecise;
-  case QualType::DK_objc_weak_lifetime: return *&destroyARCWeak;
+  case QualType::DK_cxx_destructor:
+    destroyer = &destroyCXXObject;
+    break;
+  case QualType::DK_objc_strong_lifetime:
+    destroyer = &destroyARCStrongPrecise;
+    break;
+  case QualType::DK_objc_weak_lifetime:
+    destroyer = &destroyARCWeak;
+    break;
   }
+  return *destroyer;
 }
 
 void CodeGenFunction::pushDestroy(CleanupKind cleanupKind, llvm::Value *addr,
