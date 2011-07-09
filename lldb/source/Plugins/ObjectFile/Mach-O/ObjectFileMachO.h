@@ -110,6 +110,12 @@ public:
     virtual lldb_private::Address
     GetEntryPointAddress ();
 
+    virtual ObjectFile::Type
+    CalculateType();
+    
+    virtual ObjectFile::Strata
+    CalculateStrata();
+
 protected:
     mutable lldb_private::Mutex m_mutex;
     llvm::MachO::mach_header m_header;

@@ -56,6 +56,27 @@ class ObjectFile:
 friend class lldb_private::Module;
 
 public:
+    typedef enum 
+    {
+        eTypeInvalid = 0,
+        eTypeCoreFile,      /// A core file that has a checkpoint of a program's execution state
+        eTypeExecutable,    /// A normal executable
+        eTypeDebugInfo,     /// An object file that contains only debug information
+        eTypeDynamicLinker, /// The platform's dynamic linker executable
+        eTypeObjectFile,    /// An intermediate object file
+        eTypeSharedLibrary, /// A shared library that can be used during execution
+        eTypeStubLibrary,   /// A library that can be linked against but not used for execution
+        eTypeUnknown,
+    } Type;
+
+    typedef enum 
+    {
+        eStrataInvalid = 0,
+        eStrataUnknown,
+        eStrataUser,
+        eStrataKernel
+    } Strata;
+        
     //------------------------------------------------------------------
     /// Construct with a parent module, offset, and header data.
     ///
@@ -66,6 +87,8 @@ public:
     ObjectFile (Module* module, const FileSpec *file_spec_ptr, lldb::addr_t offset, lldb::addr_t length, lldb::DataBufferSP& headerDataSP) :
         ModuleChild (module),
         m_file (),  // This file could be different from the original module's file
+        m_type (eTypeInvalid),
+        m_strata (eStrataInvalid),
         m_offset (offset),
         m_length (length),
         m_data (headerDataSP, lldb::endian::InlHostByteOrder(), 4),
@@ -356,11 +379,64 @@ public:
     virtual lldb_private::Address
     GetEntryPointAddress () { return Address();}
 
+    //------------------------------------------------------------------
+    /// The object file should be able to calculate its type by looking
+    /// at its file header and possibly the sections or other data in
+    /// the object file. The file type is used in the debugger to help
+    /// select the correct plug-ins for the job at hand, so this is 
+    /// important to get right. If any eTypeXXX definitions do not match
+    /// up with the type of file you are loading, please feel free to
+    /// add a new enumeration value.
+    ///
+    /// @return
+    ///     The calculated file type for the current object file.
+    //------------------------------------------------------------------
+    virtual Type
+    CalculateType() = 0;
+
+    //------------------------------------------------------------------
+    /// The object file should be able to calculate the strata of the
+    /// object file.
+    ///
+    /// Many object files for platforms might be for either user space
+    /// debugging or for kernel debugging. If your object file subclass
+    /// can figure this out, it will help with debugger plug-in selection
+    /// when it comes time to debug.
+    ///
+    /// @return
+    ///     The calculated object file strata for the current object 
+    ///     file.
+    //------------------------------------------------------------------
+    virtual Strata
+    CalculateStrata() = 0;
+    
+    //------------------------------------------------------------------
+    // Member Functions
+    //------------------------------------------------------------------
+    Type
+    GetType ()
+    {
+        if (m_type == eTypeInvalid)
+            m_type = CalculateType();
+        return m_type;
+    }
+    
+    Strata
+    GetStrata ()
+    {
+        if (m_strata == eStrataInvalid)
+            m_strata = CalculateStrata();
+        return m_strata;
+    }
+    
+
 protected:
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
     FileSpec m_file;
+    Type m_type;
+    Strata m_strata;
     lldb::addr_t m_offset; ///< The offset in bytes into the file, or the address in memory
     lldb::addr_t m_length; ///< The length of this object file if it is known (can be zero if length is unknown or can't be determined).
     DataExtractor m_data; ///< The data for this object file so things can be parsed lazily.

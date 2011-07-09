@@ -1421,3 +1421,74 @@ ObjectFileELF::GetArchitecture (ArchSpec &arch)
     return true;
 }
 
+ObjectFile::Type
+ObjectFileELF::CalculateType()
+{
+    switch (m_header.e_type)
+    {
+        case llvm::ELF::ET_NONE:
+            // 0 - No file type
+            return eTypeUnknown;
+
+        case llvm::ELF::ET_REL:
+            // 1 - Relocatable file
+            return eTypeObjectFile;
+
+        case llvm::ELF::ET_EXEC:
+            // 2 - Executable file
+            return eTypeExecutable;
+
+        case llvm::ELF::ET_DYN:
+            // 3 - Shared object file
+            return eTypeSharedLibrary;
+
+        case ET_CORE:
+            // 4 - Core file
+            return eTypeCoreFile;
+
+        default:
+            break;
+    }
+    return eTypeUnknown;
+}
+
+ObjectFile::Strata
+ObjectFileELF::CalculateStrata()
+{
+    switch (m_header.e_type)
+    {
+        case llvm::ELF::ET_NONE:    
+            // 0 - No file type
+            return eStrataUnknown;
+
+        case llvm::ELF::ET_REL:
+            // 1 - Relocatable file
+            return eStrataUnknown;
+
+        case llvm::ELF::ET_EXEC:
+            // 2 - Executable file
+            // TODO: is there any way to detect that an executable is a kernel
+            // related executable by inspecting the program headers, section 
+            // headers, symbols, or any other flag bits???
+            return eStrataUser;
+
+        case llvm::ELF::ET_DYN:
+            // 3 - Shared object file
+            // TODO: is there any way to detect that an shared library is a kernel
+            // related executable by inspecting the program headers, section 
+            // headers, symbols, or any other flag bits???
+            return eStrataUnknown;
+
+        case ET_CORE:
+            // 4 - Core file
+            // TODO: is there any way to detect that an core file is a kernel
+            // related executable by inspecting the program headers, section 
+            // headers, symbols, or any other flag bits???
+            return eStrataUnknown;
+
+        default:
+            break;
+    }
+    return eStrataUnknown;
+}
+

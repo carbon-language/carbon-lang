@@ -104,6 +104,12 @@ public:
     
     virtual lldb_private::Address
     GetEntryPointAddress ();
+    
+    virtual ObjectFile::Type
+    CalculateType();
+    
+    virtual ObjectFile::Strata
+    CalculateStrata();
 
 private:
     ObjectFileELF(lldb_private::Module* module,
