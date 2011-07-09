@@ -192,6 +192,9 @@ template <class charT> class messages_byname;
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+// Get the C locale object
+locale_t __cloc();
+
 // OSX has nice foo_l() functions that let you turn off use of the global
 // locale.  Linux, not so much.  The following functions avoid the locale when
 // that's possible and otherwise do the wrong thing.  FIXME.

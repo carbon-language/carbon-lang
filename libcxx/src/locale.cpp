@@ -116,6 +116,18 @@ namespace with_locale { namespace {
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+locale_t __cloc() {
+  // In theory this could create a race condition. In practice
+  // the race condition is non-fatal since it will just create
+  // a little resource leak. Better approach would be appreciated.
+#ifdef __APPLE__
+  return 0;
+#else
+  static locale_t result = newlocale(LC_ALL_MASK, "C", 0);
+  return result;
+#endif
+}
+
 namespace {
 
 struct release
@@ -767,93 +779,64 @@ ctype<wchar_t>::~ctype()
 bool
 ctype<wchar_t>::do_is(mask m, char_type c) const
 {
-#ifdef __APPLE__
-    return isascii(c) ? _DefaultRuneLocale.__runetype[c] & m : false;
-#else
-    return false;
-#endif
+    return isascii(c) ? ctype<char>::classic_table()[c] & m : false;
 }
 
 const wchar_t*
 ctype<wchar_t>::do_is(const char_type* low, const char_type* high, mask* vec) const
 {
-#ifdef __APPLE__
     for (; low != high; ++low, ++vec)
-        *vec = static_cast<mask>(isascii(*low) ? _DefaultRuneLocale.__runetype[*low] : 0);
+        *vec = static_cast<mask>(isascii(*low) ?
+                                   ctype<char>::classic_table()[*low] : 0);
     return low;
-#else
-    return NULL;
-#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_scan_is(mask m, const char_type* low, const char_type* high) const
 {
-#ifdef __APPLE__
     for (; low != high; ++low)
-        if (isascii(*low) && (_DefaultRuneLocale.__runetype[*low] & m))
+        if (isascii(*low) && (ctype<char>::classic_table()[*low] & m))
             break;
     return low;
-#else
-    return NULL;
-#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_scan_not(mask m, const char_type* low, const char_type* high) const
 {
-#ifdef __APPLE__
     for (; low != high; ++low)
-        if (!(isascii(*low) && (_DefaultRuneLocale.__runetype[*low] & m)))
+        if (!(isascii(*low) && (ctype<char>::classic_table()[*low] & m)))
             break;
     return low;
-#else
-    return NULL;
-#endif
 }
 
 wchar_t
 ctype<wchar_t>::do_toupper(char_type c) const
 {
-#ifdef __APPLE__
-    return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
-#else
-    return 0;
-#endif
+    return isascii(c) ? ctype<char>::__classic_upper_table()[c] : c;
 }
 
 const wchar_t*
 ctype<wchar_t>::do_toupper(char_type* low, const char_type* high) const
 {
-#ifdef __APPLE__
     for (; low != high; ++low)
-        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
+        *low = isascii(*low) ? ctype<char>::__classic_upper_table()[*low]
+                             : *low;
     return low;
-#else
-    return NULL;
-#endif
 }
 
 wchar_t
 ctype<wchar_t>::do_tolower(char_type c) const
 {
-#ifdef __APPLE__
-    return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
-#else
-    return 0;
-#endif
+    return isascii(c) ? ctype<char>::__classic_lower_table()[c] : c;
 }
 
 const wchar_t*
 ctype<wchar_t>::do_tolower(char_type* low, const char_type* high) const
 {
-#ifdef __APPLE__
     for (; low != high; ++low)
-        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
+        *low = isascii(*low) ? ctype<char>::__classic_lower_table()[*low]
+                             : *low;
     return low;
-#else
-    return NULL;
-#endif
 }
 
 wchar_t
@@ -898,10 +881,8 @@ ctype<char>::ctype(const mask* tab, bool del, size_t refs)
       __tab_(tab),
       __del_(del)
 {
-#ifdef __APPLE__
-    if (__tab_ == 0)
-        __tab_ = _DefaultRuneLocale.__runetype;
-#endif
+  if (__tab_ == 0)
+      __tab_ = classic_table();
 }
 
 ctype<char>::~ctype()
@@ -913,45 +894,29 @@ ctype<char>::~ctype()
 char
 ctype<char>::do_toupper(char_type c) const
 {
-#ifdef __APPLE__
-    return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
-#else
-    return 0;
-#endif
+    return isascii(c) ? __classic_upper_table()[c] : c;
 }
 
 const char*
 ctype<char>::do_toupper(char_type* low, const char_type* high) const
 {
-#ifdef __APPLE__
     for (; low != high; ++low)
-        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
+        *low = isascii(*low) ? __classic_upper_table()[*low] : *low;
     return low;
-#else
-    return NULL;
-#endif
 }
 
 char
 ctype<char>::do_tolower(char_type c) const
 {
-#ifdef __APPLE__
-    return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
-#else
-    return 0;
-#endif
+    return isascii(c) ? __classic_lower_table()[c] : c;
 }
 
 const char*
 ctype<char>::do_tolower(char_type* low, const char_type* high) const
 {
-#ifdef __APPLE__
     for (; low != high; ++low)
-        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
+        *low = isascii(*low) ? __classic_lower_table()[*low] : *low;
     return low;
-#else
-    return NULL;
-#endif
 }
 
 char
@@ -992,6 +957,33 @@ ctype<char>::classic_table()  _NOEXCEPT
 {
 #ifdef __APPLE__
     return _DefaultRuneLocale.__runetype;
+#elif defined(__GLIBC__)
+    return __cloc()->__ctype_b;
+// This is assumed to be safe.
+#else
+    return NULL;
+#endif
+}
+
+const int*
+ctype<char>::__classic_lower_table() _NOEXCEPT
+{
+#ifdef __APPLE__
+    return _DefaultRuneLocale.__maplower;
+#elif defined(__GLIBC__)
+    return __cloc()->__ctype_tolower;
+#else
+    return NULL;
+#endif
+}
+
+const int*
+ctype<char>::__classic_upper_table() _NOEXCEPT
+{
+#ifdef __APPLE__
+    return _DefaultRuneLocale.__mapupper;
+#elif defined(__GLIBC__)
+    return __cloc()->__ctype_toupper;
 #else
     return NULL;
 #endif
@@ -1092,11 +1084,10 @@ ctype_byname<wchar_t>::do_is(mask m, char_type c) const
 const wchar_t*
 ctype_byname<wchar_t>::do_is(const char_type* low, const char_type* high, mask* vec) const
 {
-#ifdef __APPLE__
     for (; low != high; ++low, ++vec)
     {
         if (isascii(*low))
-            *vec = static_cast<mask>(_DefaultRuneLocale.__runetype[*low]);
+            *vec = static_cast<mask>(ctype<char>::classic_table()[*low]);
         else
         {
             *vec = 0;
@@ -1121,9 +1112,6 @@ ctype_byname<wchar_t>::do_is(const char_type* low, const char_type* high, mask* 
         }
     }
     return low;
-#else
-    return NULL;
-#endif
 }
 
 const wchar_t*

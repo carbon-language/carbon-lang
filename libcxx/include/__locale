@@ -302,7 +302,11 @@ locale::operator()(const basic_string<_CharT, _Traits, _Allocator>& __x,
 class _LIBCPP_VISIBLE ctype_base
 {
 public:
+#ifdef __GLIBC__
+    typedef unsigned short mask;
+#else
     typedef __uint32_t mask;
+#endif
 
 #if __APPLE__
     static const mask space  = _CTYPE_S;
@@ -537,6 +541,8 @@ public:
 #endif
     _LIBCPP_ALWAYS_INLINE const mask* table() const  _NOEXCEPT {return __tab_;}
     static const mask* classic_table()  _NOEXCEPT;
+    static const int* __classic_upper_table() _NOEXCEPT;
+    static const int* __classic_lower_table() _NOEXCEPT;
 
 protected:
     ~ctype();
