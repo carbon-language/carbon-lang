@@ -1421,49 +1421,15 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
   return getFoldedCast(Instruction::BitCast, C, DstTy);
 }
 
-Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
-                              Constant *C1, Constant *C2,
-                              unsigned Flags) {
-  // Check the operands for consistency first
+Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
+                            unsigned Flags) {
+  // Check the operands for consistency first.
   assert(Opcode >= Instruction::BinaryOpsBegin &&
          Opcode <  Instruction::BinaryOpsEnd   &&
          "Invalid opcode in binary constant expression");
   assert(C1->getType() == C2->getType() &&
          "Operand types in binary constant expression should match");
-
-  if (ReqTy == C1->getType() || ReqTy == Type::getInt1Ty(ReqTy->getContext()))
-    if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
-      return FC;          // Fold a few common cases...
-
-  std::vector<Constant*> argVec(1, C1); argVec.push_back(C2);
-  ExprMapKeyType Key(Opcode, argVec, 0, Flags);
   
-  LLVMContextImpl *pImpl = ReqTy->getContext().pImpl;
-  return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
-}
-
-Constant *ConstantExpr::getCompareTy(unsigned short predicate,
-                                     Constant *C1, Constant *C2) {
-  switch (predicate) {
-    default: llvm_unreachable("Invalid CmpInst predicate");
-    case CmpInst::FCMP_FALSE: case CmpInst::FCMP_OEQ: case CmpInst::FCMP_OGT:
-    case CmpInst::FCMP_OGE:   case CmpInst::FCMP_OLT: case CmpInst::FCMP_OLE:
-    case CmpInst::FCMP_ONE:   case CmpInst::FCMP_ORD: case CmpInst::FCMP_UNO:
-    case CmpInst::FCMP_UEQ:   case CmpInst::FCMP_UGT: case CmpInst::FCMP_UGE:
-    case CmpInst::FCMP_ULT:   case CmpInst::FCMP_ULE: case CmpInst::FCMP_UNE:
-    case CmpInst::FCMP_TRUE:
-      return getFCmp(predicate, C1, C2);
-
-    case CmpInst::ICMP_EQ:  case CmpInst::ICMP_NE:  case CmpInst::ICMP_UGT:
-    case CmpInst::ICMP_UGE: case CmpInst::ICMP_ULT: case CmpInst::ICMP_ULE:
-    case CmpInst::ICMP_SGT: case CmpInst::ICMP_SGE: case CmpInst::ICMP_SLT:
-    case CmpInst::ICMP_SLE:
-      return getICmp(predicate, C1, C2);
-  }
-}
-
-Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
-                            unsigned Flags) {
 #ifndef NDEBUG
   switch (Opcode) {
   case Instruction::Add:
@@ -1522,7 +1488,15 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
   }
 #endif
 
-  return getTy(C1->getType(), Opcode, C1, C2, Flags);
+  if (Constant *FC = ConstantFoldBinaryInstruction(Opcode, C1, C2))
+    return FC;          // Fold a few common cases.
+  
+  std::vector<Constant*> argVec(1, C1);
+  argVec.push_back(C2);
+  ExprMapKeyType Key(Opcode, argVec, 0, Flags);
+  
+  LLVMContextImpl *pImpl = C1->getContext().pImpl;
+  return pImpl->ExprConstants.getOrCreate(C1->getType(), Key);
 }
 
 Constant *ConstantExpr::getSizeOf(const Type* Ty) {
@@ -1567,41 +1541,55 @@ Constant *ConstantExpr::getOffsetOf(const Type* Ty, Constant *FieldNo) {
                      Type::getInt64Ty(Ty->getContext()));
 }
 
-Constant *ConstantExpr::getCompare(unsigned short pred, 
-                            Constant *C1, Constant *C2) {
+Constant *ConstantExpr::getCompare(unsigned short Predicate, 
+                                   Constant *C1, Constant *C2) {
   assert(C1->getType() == C2->getType() && "Op types should be identical!");
-  return getCompareTy(pred, C1, C2);
+  
+  switch (Predicate) {
+  default: llvm_unreachable("Invalid CmpInst predicate");
+  case CmpInst::FCMP_FALSE: case CmpInst::FCMP_OEQ: case CmpInst::FCMP_OGT:
+  case CmpInst::FCMP_OGE:   case CmpInst::FCMP_OLT: case CmpInst::FCMP_OLE:
+  case CmpInst::FCMP_ONE:   case CmpInst::FCMP_ORD: case CmpInst::FCMP_UNO:
+  case CmpInst::FCMP_UEQ:   case CmpInst::FCMP_UGT: case CmpInst::FCMP_UGE:
+  case CmpInst::FCMP_ULT:   case CmpInst::FCMP_ULE: case CmpInst::FCMP_UNE:
+  case CmpInst::FCMP_TRUE:
+    return getFCmp(Predicate, C1, C2);
+    
+  case CmpInst::ICMP_EQ:  case CmpInst::ICMP_NE:  case CmpInst::ICMP_UGT:
+  case CmpInst::ICMP_UGE: case CmpInst::ICMP_ULT: case CmpInst::ICMP_ULE:
+  case CmpInst::ICMP_SGT: case CmpInst::ICMP_SGE: case CmpInst::ICMP_SLT:
+  case CmpInst::ICMP_SLE:
+    return getICmp(Predicate, C1, C2);
+  }
 }
 
-Constant *ConstantExpr::getSelectTy(const Type *ReqTy, Constant *C,
-                                    Constant *V1, Constant *V2) {
+Constant *ConstantExpr::getSelect(Constant *C, Constant *V1, Constant *V2) {
   assert(!SelectInst::areInvalidOperands(C, V1, V2)&&"Invalid select operands");
 
-  if (ReqTy == V1->getType())
-    if (Constant *SC = ConstantFoldSelectInstruction(C, V1, V2))
-      return SC;        // Fold common cases
+  if (Constant *SC = ConstantFoldSelectInstruction(C, V1, V2))
+    return SC;        // Fold common cases
 
   std::vector<Constant*> argVec(3, C);
   argVec[1] = V1;
   argVec[2] = V2;
   ExprMapKeyType Key(Instruction::Select, argVec);
   
-  LLVMContextImpl *pImpl = ReqTy->getContext().pImpl;
-  return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
+  LLVMContextImpl *pImpl = C->getContext().pImpl;
+  return pImpl->ExprConstants.getOrCreate(V1->getType(), Key);
 }
 
-template<typename IndexTy>
-Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
-                                           IndexTy const *Idxs,
-                                           unsigned NumIdx, bool InBounds) {
-  assert(GetElementPtrInst::getIndexedType(C->getType(), Idxs,
-                                           Idxs+NumIdx) ==
-         cast<PointerType>(ReqTy)->getElementType() &&
-         "GEP indices invalid!");
-
+Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
+                                         unsigned NumIdx, bool InBounds) {
   if (Constant *FC = ConstantFoldGetElementPtr(C, InBounds, Idxs, NumIdx))
     return FC;          // Fold a few common cases.
 
+  // Get the result type of the getelementptr!
+  const Type *Ty = 
+    GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx);
+  assert(Ty && "GEP indices invalid!");
+  unsigned AS = cast<PointerType>(C->getType())->getAddressSpace();
+  Type *ReqTy = Ty->getPointerTo(AS);
+  
   assert(C->getType()->isPointerTy() &&
          "Non-pointer type for constant GetElementPtr expression");
   // Look up the constant in the table first to ensure uniqueness
@@ -1612,30 +1600,9 @@ Constant *ConstantExpr::getGetElementPtrTy(const Type *ReqTy, Constant *C,
     ArgVec.push_back(cast<Constant>(Idxs[i]));
   const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec, 0,
                            InBounds ? GEPOperator::IsInBounds : 0);
-
-  LLVMContextImpl *pImpl = ReqTy->getContext().pImpl;
+  
+  LLVMContextImpl *pImpl = C->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
-}
-
-template<typename IndexTy>
-Constant *ConstantExpr::getGetElementPtrImpl(Constant *C, IndexTy const *Idxs,
-                                             unsigned NumIdx, bool InBounds) {
-  // Get the result type of the getelementptr!
-  const Type *Ty = 
-    GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx);
-  assert(Ty && "GEP indices invalid!");
-  unsigned As = cast<PointerType>(C->getType())->getAddressSpace();
-  return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx,InBounds);
-}
-
-Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
-                                         unsigned NumIdx, bool InBounds) {
-  return getGetElementPtrImpl(C, Idxs, NumIdx, InBounds);
-}
-
-Constant *ConstantExpr::getGetElementPtr(Constant *C, Constant *const *Idxs,
-                                         unsigned NumIdx, bool InBounds) {
-  return getGetElementPtrImpl(C, Idxs, NumIdx, InBounds);
 }
 
 Constant *
@@ -1685,39 +1652,22 @@ ConstantExpr::getFCmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   return pImpl->ExprConstants.getOrCreate(ResultTy, Key);
 }
 
-Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
-                                            Constant *Idx) {
-  if (Constant *FC = ConstantFoldExtractElementInstruction(Val, Idx))
-    return FC;          // Fold a few common cases.
-  // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec(1, Val);
-  ArgVec.push_back(Idx);
-  const ExprMapKeyType Key(Instruction::ExtractElement,ArgVec);
-  
-  LLVMContextImpl *pImpl = ReqTy->getContext().pImpl;
-  return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
-}
-
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(Val->getType()->isVectorTy() &&
          "Tried to create extractelement operation on non-vector type!");
   assert(Idx->getType()->isIntegerTy(32) &&
          "Extractelement index must be i32 type!");
-  return getExtractElementTy(cast<VectorType>(Val->getType())->getElementType(),
-                             Val, Idx);
-}
-
-Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
-                                           Constant *Elt, Constant *Idx) {
-  if (Constant *FC = ConstantFoldInsertElementInstruction(Val, Elt, Idx))
+  
+  if (Constant *FC = ConstantFoldExtractElementInstruction(Val, Idx))
     return FC;          // Fold a few common cases.
+  
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, Val);
-  ArgVec.push_back(Elt);
   ArgVec.push_back(Idx);
-  const ExprMapKeyType Key(Instruction::InsertElement,ArgVec);
+  const ExprMapKeyType Key(Instruction::ExtractElement,ArgVec);
   
-  LLVMContextImpl *pImpl = ReqTy->getContext().pImpl;
+  LLVMContextImpl *pImpl = Val->getContext().pImpl;
+  Type *ReqTy = cast<VectorType>(Val->getType())->getElementType();
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
 }
 
@@ -1729,21 +1679,17 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
          && "Insertelement types must match!");
   assert(Idx->getType()->isIntegerTy(32) &&
          "Insertelement index must be i32 type!");
-  return getInsertElementTy(Val->getType(), Val, Elt, Idx);
-}
 
-Constant *ConstantExpr::getShuffleVectorTy(const Type *ReqTy, Constant *V1,
-                                           Constant *V2, Constant *Mask) {
-  if (Constant *FC = ConstantFoldShuffleVectorInstruction(V1, V2, Mask))
-    return FC;          // Fold a few common cases...
+  if (Constant *FC = ConstantFoldInsertElementInstruction(Val, Elt, Idx))
+    return FC;          // Fold a few common cases.
   // Look up the constant in the table first to ensure uniqueness
-  std::vector<Constant*> ArgVec(1, V1);
-  ArgVec.push_back(V2);
-  ArgVec.push_back(Mask);
-  const ExprMapKeyType Key(Instruction::ShuffleVector,ArgVec);
+  std::vector<Constant*> ArgVec(1, Val);
+  ArgVec.push_back(Elt);
+  ArgVec.push_back(Idx);
+  const ExprMapKeyType Key(Instruction::InsertElement,ArgVec);
   
-  LLVMContextImpl *pImpl = ReqTy->getContext().pImpl;
-  return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
+  LLVMContextImpl *pImpl = Val->getContext().pImpl;
+  return pImpl->ExprConstants.getOrCreate(Val->getType(), Key);
 }
 
 Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2, 
@@ -1751,15 +1697,35 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
   assert(ShuffleVectorInst::isValidOperands(V1, V2, Mask) &&
          "Invalid shuffle vector constant expr operands!");
 
+  if (Constant *FC = ConstantFoldShuffleVectorInstruction(V1, V2, Mask))
+    return FC;          // Fold a few common cases.
+
   unsigned NElts = cast<VectorType>(Mask->getType())->getNumElements();
   const Type *EltTy = cast<VectorType>(V1->getType())->getElementType();
   const Type *ShufTy = VectorType::get(EltTy, NElts);
-  return getShuffleVectorTy(ShufTy, V1, V2, Mask);
+
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec(1, V1);
+  ArgVec.push_back(V2);
+  ArgVec.push_back(Mask);
+  const ExprMapKeyType Key(Instruction::ShuffleVector,ArgVec);
+  
+  LLVMContextImpl *pImpl = ShufTy->getContext().pImpl;
+  return pImpl->ExprConstants.getOrCreate(ShufTy, Key);
 }
 
-Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
-                                         Constant *Val,
-                                        const unsigned *Idxs, unsigned NumIdx) {
+Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
+                                     const unsigned *Idxs, unsigned NumIdx) {
+  assert(Agg->getType()->isFirstClassType() &&
+         "Tried to create insertelement operation on non-first-class type!");
+
+  const Type *ReqTy = Agg->getType();
+#ifndef NDEBUG
+  const Type *ValTy =
+    ExtractValueInst::getIndexedType(Agg->getType(), Idxs, Idxs+NumIdx);
+  assert(ValTy == Val->getType() && "insertvalue indices invalid!");
+#endif
+
   assert(ExtractValueInst::getIndexedType(Agg->getType(), Idxs,
                                           Idxs+NumIdx) == Val->getType() &&
          "insertvalue indices invalid!");
@@ -1772,41 +1738,20 @@ Constant *ConstantExpr::getInsertValueTy(const Type *ReqTy, Constant *Agg,
   return FC;
 }
 
-Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
-                                     const unsigned *IdxList, unsigned NumIdx) {
+Constant *ConstantExpr::getExtractValue(Constant *Agg,
+                                     const unsigned *Idxs, unsigned NumIdx) {
   assert(Agg->getType()->isFirstClassType() &&
-         "Tried to create insertelement operation on non-first-class type!");
+         "Tried to create extractelement operation on non-first-class type!");
 
-  const Type *ReqTy = Agg->getType();
-#ifndef NDEBUG
-  const Type *ValTy =
-    ExtractValueInst::getIndexedType(Agg->getType(), IdxList, IdxList+NumIdx);
-#endif
-  assert(ValTy == Val->getType() && "insertvalue indices invalid!");
-  return getInsertValueTy(ReqTy, Agg, Val, IdxList, NumIdx);
-}
-
-Constant *ConstantExpr::getExtractValueTy(const Type *ReqTy, Constant *Agg,
-                                        const unsigned *Idxs, unsigned NumIdx) {
-  assert(ExtractValueInst::getIndexedType(Agg->getType(), Idxs,
-                                          Idxs+NumIdx) == ReqTy &&
-         "extractvalue indices invalid!");
+  const Type *ReqTy =
+    ExtractValueInst::getIndexedType(Agg->getType(), Idxs, Idxs+NumIdx);
+  assert(ReqTy && "extractvalue indices invalid!");
+  
   assert(Agg->getType()->isFirstClassType() &&
          "Non-first-class type for constant extractvalue expression");
   Constant *FC = ConstantFoldExtractValueInstruction(Agg, Idxs, NumIdx);
   assert(FC && "ExtractValue constant expr couldn't be folded!");
   return FC;
-}
-
-Constant *ConstantExpr::getExtractValue(Constant *Agg,
-                                     const unsigned *IdxList, unsigned NumIdx) {
-  assert(Agg->getType()->isFirstClassType() &&
-         "Tried to create extractelement operation on non-first-class type!");
-
-  const Type *ReqTy =
-    ExtractValueInst::getIndexedType(Agg->getType(), IdxList, IdxList+NumIdx);
-  assert(ReqTy && "extractvalue indices invalid!");
-  return getExtractValueTy(ReqTy, Agg, IdxList, NumIdx);
 }
 
 Constant *ConstantExpr::getNeg(Constant *C, bool HasNUW, bool HasNSW) {

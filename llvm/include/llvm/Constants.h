@@ -640,35 +640,6 @@ protected:
     setValueSubclassData(Opcode);
   }
 
-  // These private methods are used by the type resolution code to create
-  // ConstantExprs in intermediate forms.
-  static Constant *getTy(const Type *Ty, unsigned Opcode,
-                         Constant *C1, Constant *C2,
-                         unsigned Flags = 0);
-  static Constant *getCompareTy(unsigned short pred, Constant *C1,
-                                Constant *C2);
-  static Constant *getSelectTy(const Type *Ty,
-                               Constant *C1, Constant *C2, Constant *C3);
-  template<typename IndexTy>
-  static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
-                                      IndexTy const *Idxs, unsigned NumIdxs,
-                                      bool InBounds);
-  static Constant *getExtractElementTy(const Type *Ty, Constant *Val,
-                                       Constant *Idx);
-  static Constant *getInsertElementTy(const Type *Ty, Constant *Val,
-                                      Constant *Elt, Constant *Idx);
-  static Constant *getShuffleVectorTy(const Type *Ty, Constant *V1,
-                                      Constant *V2, Constant *Mask);
-  static Constant *getExtractValueTy(const Type *Ty, Constant *Agg,
-                                     const unsigned *Idxs, unsigned NumIdxs);
-  static Constant *getInsertValueTy(const Type *Ty, Constant *Agg,
-                                    Constant *Val,
-                                    const unsigned *Idxs, unsigned NumIdxs);
-  template<typename IndexTy>
-  static Constant *getGetElementPtrImpl(Constant *C,
-                                        IndexTy const *IdxList,
-                                        unsigned NumIdx, bool InBounds);
-
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
   // these methods may return a object that is not an instance of the
@@ -839,9 +810,7 @@ public:
 
   /// Select constant expr
   ///
-  static Constant *getSelect(Constant *C, Constant *V1, Constant *V2) {
-    return getSelectTy(V1->getType(), C, V1, V2);
-  }
+  static Constant *getSelect(Constant *C, Constant *V1, Constant *V2);
 
   /// get - Return a binary or shift operator constant expression,
   /// folding if possible.
@@ -863,7 +832,9 @@ public:
   ///
   static Constant *getGetElementPtr(Constant *C,
                                     Constant *const *IdxList, unsigned NumIdx,
-                                    bool InBounds = false);
+                                    bool InBounds = false) {
+    return getGetElementPtr(C, (Value**)IdxList, NumIdx, InBounds);
+  }
   static Constant *getGetElementPtr(Constant *C,
                                     Value *const *IdxList, unsigned NumIdx,
                                     bool InBounds = false);
