@@ -21,7 +21,7 @@ namespace no_elide_base {
     Derived(const Other &O);
   };
 
-  // CHECK: define {{.*}} @_ZN13no_elide_base7DerivedC1ERKNS_5OtherE(%"struct.no_elide_base::Derived"* %this, %"struct.PR8683::A"* %O) unnamed_addr
+  // CHECK: define {{.*}} @_ZN13no_elide_base7DerivedC1ERKNS_5OtherE(%"struct.no_elide_base::Derived"* %this, %"struct.no_elide_base::Other"* %O) unnamed_addr
   Derived::Derived(const Other &O) 
     // CHECK: call {{.*}} @_ZNK13no_elide_base5OthercvNS_4BaseEEv
     // CHECK: call {{.*}} @_ZN13no_elide_base4BaseC2ERKS0_

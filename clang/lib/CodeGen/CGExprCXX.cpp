@@ -619,7 +619,7 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
     // can be ignored because the result shouldn't be used if
     // allocation fails.
     if (typeSizeMultiplier != 1) {
-      const llvm::Type *intrinsicTypes[] = { CGF.SizeTy };
+      llvm::Type *intrinsicTypes[] = { CGF.SizeTy };
       llvm::Value *umul_with_overflow
         = CGF.CGM.getIntrinsic(llvm::Intrinsic::umul_with_overflow,
                                intrinsicTypes, 1);
@@ -661,7 +661,7 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
     if (cookieSize != 0) {
       sizeWithoutCookie = size;
 
-      const llvm::Type *intrinsicTypes[] = { CGF.SizeTy };
+      llvm::Type *intrinsicTypes[] = { CGF.SizeTy };
       llvm::Value *uadd_with_overflow
         = CGF.CGM.getIntrinsic(llvm::Intrinsic::uadd_with_overflow,
                                intrinsicTypes, 1);
@@ -1569,11 +1569,11 @@ static llvm::Constant *getDynamicCastFn(CodeGenFunction &CGF) {
   //                      const abi::__class_type_info *dst,
   //                      std::ptrdiff_t src2dst_offset);
   
-  const llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-  const llvm::Type *PtrDiffTy = 
+  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  llvm::Type *PtrDiffTy = 
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
 
-  const llvm::Type *Args[4] = { Int8PtrTy, Int8PtrTy, Int8PtrTy, PtrDiffTy };
+  llvm::Type *Args[4] = { Int8PtrTy, Int8PtrTy, Int8PtrTy, PtrDiffTy };
   
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(Int8PtrTy, Args, false);

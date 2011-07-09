@@ -20,8 +20,8 @@ struct C : virtual A {
   C(bool);
 };
 
-// CHECK: define void @_ZN1CC1Eb(%struct.B* %this, i1 zeroext) unnamed_addr
-// CHECK: define void @_ZN1CC2Eb(%struct.B* %this, i8** %vtt, i1 zeroext) unnamed_addr
+// CHECK: define void @_ZN1CC1Eb(%struct.C* %this, i1 zeroext) unnamed_addr
+// CHECK: define void @_ZN1CC2Eb(%struct.C* %this, i8** %vtt, i1 zeroext) unnamed_addr
 C::C(bool) { }
 
 // PR6251

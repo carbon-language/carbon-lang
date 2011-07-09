@@ -7,4 +7,4 @@ void a(char *a) {
 
 // CHECK: private unnamed_addr global
 // CHECK: private unnamed_addr global
-// CHECK: @llvm.global.annotations = appending global [2 x %0]
+// CHECK: @llvm.global.annotations = appending global [2 x { i8*, i8*, i8*, i32 }]

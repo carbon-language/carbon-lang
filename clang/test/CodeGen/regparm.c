@@ -20,7 +20,7 @@ void f1(int i, int j, int k) { }
 
 int
 main(void) {
-  // CHECK: call void @reduced(i8 signext inreg 0, {{.*}} %struct.foo* inreg null
+  // CHECK: call void @reduced(i8 signext inreg 0, {{.*}} %"struct.<anonymous>"* inreg null
   reduced(0, 0.0, 0, 0.0, 0);
   // CHECK: call x86_stdcallcc void {{.*}}(i32 inreg 1, i32 inreg 2)
   bar(1,2);

@@ -42,8 +42,8 @@ void f7(e7 a0) {
 
 // Test merging/passing of upper eightbyte with X87 class.
 //
-// CHECK: define void @f8_1(%struct.s19* sret %agg.result)
-// CHECK: define void @f8_2(%struct.s19* byval align 16 %a0)
+// CHECK: define void @f8_1(%union.u8* sret %agg.result)
+// CHECK: define void @f8_2(%union.u8* byval align 16 %a0)
 union u8 {
   long double a;
   int b;
@@ -58,7 +58,7 @@ struct s9 { int a; int b; int : 0; } f9(void) { while (1) {} }
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
-// CHECK: define void @f11(%struct.s19* sret %agg.result)
+// CHECK: define void @f11(%"union.<anonymous>"* sret %agg.result)
 union { long double a; float b; } f11() { while (1) {} }
 
 // CHECK: define i32 @f12_0()
@@ -147,7 +147,7 @@ struct f24s { long a; int b; };
 struct f23S f24(struct f23S *X, struct f24s *P2) {
   return *X;
   
-  // CHECK: define %struct.f24s @f24(%struct.f23S* %X, %struct.f24s* %P2)
+  // CHECK: define { i64, i32 } @f24(%struct.f23S* %X, %struct.f24s* %P2)
 }
 
 // rdar://8248065
@@ -169,7 +169,7 @@ struct foo26 {
 };
 
 struct foo26 f26(struct foo26 *P) {
-  // CHECK: define %struct.foo26 @f26(%struct.foo26* %P)
+  // CHECK: define { i32*, float* } @f26(%struct.foo26* %P)
   return *P;
 }
 

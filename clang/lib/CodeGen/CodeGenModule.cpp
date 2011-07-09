@@ -857,8 +857,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
       return Entry;
 
     // Make sure the result is of the correct type.
-    const llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
-    return llvm::ConstantExpr::getBitCast(Entry, PTy);
+    return llvm::ConstantExpr::getBitCast(Entry, Ty->getPointerTo());
   }
 
   // This function doesn't have a complete type (for example, the return
@@ -928,7 +927,7 @@ CodeGenModule::GetOrCreateLLVMFunction(llvm::StringRef MangledName,
     return F;
   }
 
-  const llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
+  llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
   return llvm::ConstantExpr::getBitCast(F, PTy);
 }
 
@@ -1442,7 +1441,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   bool variadic = false;
   if (const FunctionProtoType *fpt = D->getType()->getAs<FunctionProtoType>())
     variadic = fpt->isVariadic();
-  const llvm::FunctionType *Ty = getTypes().GetFunctionType(FI, variadic, false);
+  const llvm::FunctionType *Ty = getTypes().GetFunctionType(FI, variadic);
 
   // Get or create the prototype for the function.
   llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);
@@ -1613,10 +1612,12 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
   return GetOrCreateLLVMFunction(Name, Ty, D, /*ForVTable=*/false);
 }
 
-llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,
+llvm::Function *CodeGenModule::getIntrinsic(unsigned IID, llvm::Type **Tys,
                                             unsigned NumTys) {
   return llvm::Intrinsic::getDeclaration(&getModule(),
-                                         (llvm::Intrinsic::ID)IID, Tys, NumTys);
+                                         (llvm::Intrinsic::ID)IID,
+                                         const_cast<const llvm::Type **>(Tys),
+                                         NumTys);
 }
 
 static llvm::StringMapEntry<llvm::Constant*> &

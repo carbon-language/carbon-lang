@@ -5,4 +5,4 @@ struct B : A {};
 struct C : B { virtual void a(); };
 void (C::*x)() = &C::a;
 
-// CHECK: @x = global %0 { i{{[0-9]+}} 1, i{{[0-9]+}} 0 }
+// CHECK: @x = global { i64, i64 } { i{{[0-9]+}} 1, i{{[0-9]+}} 0 }

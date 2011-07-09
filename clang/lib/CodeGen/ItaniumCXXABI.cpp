@@ -34,15 +34,15 @@ using namespace CodeGen;
 namespace {
 class ItaniumCXXABI : public CodeGen::CGCXXABI {
 private:
-  const llvm::IntegerType *PtrDiffTy;
+  llvm::IntegerType *PtrDiffTy;
 protected:
   bool IsARM;
 
   // It's a little silly for us to cache this.
-  const llvm::IntegerType *getPtrDiffTy() {
+  llvm::IntegerType *getPtrDiffTy() {
     if (!PtrDiffTy) {
       QualType T = getContext().getPointerDiffType();
-      const llvm::Type *Ty = CGM.getTypes().ConvertTypeRecursive(T);
+      llvm::Type *Ty = CGM.getTypes().ConvertType(T);
       PtrDiffTy = cast<llvm::IntegerType>(Ty);
     }
     return PtrDiffTy;
@@ -58,7 +58,7 @@ public:
 
   bool isZeroInitializable(const MemberPointerType *MPT);
 
-  const llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
+  llvm::Type *ConvertMemberPointerType(const MemberPointerType *MPT);
 
   llvm::Value *EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
                                                llvm::Value *&This,
@@ -176,7 +176,7 @@ CodeGen::CGCXXABI *CodeGen::CreateARMCXXABI(CodeGenModule &CGM) {
   return new ARMCXXABI(CGM);
 }
 
-const llvm::Type *
+llvm::Type *
 ItaniumCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
   if (MPT->isMemberDataPointer())
     return getPtrDiffTy();
@@ -1034,31 +1034,34 @@ void ARMCXXABI::ReadArrayCookie(CodeGenFunction &CGF,
 /*********************** Static local initialization **************************/
 
 static llvm::Constant *getGuardAcquireFn(CodeGenModule &CGM,
-                                         const llvm::PointerType *GuardPtrTy) {
+                                         llvm::PointerType *GuardPtrTy) {
   // int __cxa_guard_acquire(__guard *guard_object);
+  llvm::Type *ArgTys[] = { GuardPtrTy };
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(CGM.getTypes().ConvertType(CGM.getContext().IntTy),
-                            GuardPtrTy, /*isVarArg=*/false);
+                            ArgTys, /*isVarArg=*/false);
   
   return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_acquire");
 }
 
 static llvm::Constant *getGuardReleaseFn(CodeGenModule &CGM,
-                                         const llvm::PointerType *GuardPtrTy) {
+                                         llvm::PointerType *GuardPtrTy) {
   // void __cxa_guard_release(__guard *guard_object);
+  llvm::Type *ArgTys[] = { GuardPtrTy };
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
-                            GuardPtrTy, /*isVarArg=*/false);
+                            ArgTys, /*isVarArg=*/false);
   
   return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_release");
 }
 
 static llvm::Constant *getGuardAbortFn(CodeGenModule &CGM,
-                                       const llvm::PointerType *GuardPtrTy) {
+                                       llvm::PointerType *GuardPtrTy) {
   // void __cxa_guard_abort(__guard *guard_object);
+  llvm::Type *ArgTys[] = { GuardPtrTy };
   const llvm::FunctionType *FTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()),
-                            GuardPtrTy, /*isVarArg=*/false);
+                            ArgTys, /*isVarArg=*/false);
   
   return CGM.CreateRuntimeFunction(FTy, "__cxa_guard_abort");
 }
@@ -1098,7 +1101,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
     // Guard variables are 64 bits in the generic ABI and 32 bits on ARM.
     GuardTy = (IsARM ? CGF.Int32Ty : CGF.Int64Ty);
   }
-  const llvm::PointerType *GuardPtrTy = GuardTy->getPointerTo();
+  llvm::PointerType *GuardPtrTy = GuardTy->getPointerTo();
 
   // Create the guard variable.
   llvm::SmallString<256> GuardVName;

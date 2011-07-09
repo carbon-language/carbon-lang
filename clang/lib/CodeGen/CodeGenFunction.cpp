@@ -45,11 +45,11 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
 }
 
 
-const llvm::Type *CodeGenFunction::ConvertTypeForMem(QualType T) {
+llvm::Type *CodeGenFunction::ConvertTypeForMem(QualType T) {
   return CGM.getTypes().ConvertTypeForMem(T);
 }
 
-const llvm::Type *CodeGenFunction::ConvertType(QualType T) {
+llvm::Type *CodeGenFunction::ConvertType(QualType T) {
   return CGM.getTypes().ConvertType(T);
 }
 
@@ -213,8 +213,8 @@ bool CodeGenFunction::ShouldInstrumentFunction() {
 /// function instrumentation is enabled.
 void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
   // void __cyg_profile_func_{enter,exit} (void *this_fn, void *call_site);
-  const llvm::PointerType *PointerTy = Int8PtrTy;
-  const llvm::Type *ProfileFuncArgs[] = { PointerTy, PointerTy };
+  llvm::PointerType *PointerTy = Int8PtrTy;
+  llvm::Type *ProfileFuncArgs[] = { PointerTy, PointerTy };
   const llvm::FunctionType *FunctionTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
                             ProfileFuncArgs, false);

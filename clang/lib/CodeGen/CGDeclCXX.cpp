@@ -117,12 +117,13 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
   }
 
   // Get the destructor function type
-  const llvm::Type *DtorFnTy =
+  llvm::Type *ArgTys[] = { Int8PtrTy };
+  llvm::Type *DtorFnTy =
     llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
-                            Int8PtrTy, false);
+                            ArgTys, false);
   DtorFnTy = llvm::PointerType::getUnqual(DtorFnTy);
 
-  const llvm::Type *Params[] = { DtorFnTy, Int8PtrTy, Int8PtrTy };
+  llvm::Type *Params[] = { DtorFnTy, Int8PtrTy, Int8PtrTy };
 
   // Get the __cxa_atexit function type
   // extern "C" int __cxa_atexit ( void (*f)(void *), void *p, void *d );

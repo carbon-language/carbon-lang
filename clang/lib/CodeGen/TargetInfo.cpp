@@ -564,7 +564,7 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
       } else if (SeltTy->isPointerType()) {
         // FIXME: It would be really nice if this could come out as the proper
         // pointer type.
-        const llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(getVMContext());
+        llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(getVMContext());
         return ABIArgInfo::getDirect(PtrTy);
       } else if (SeltTy->isVectorType()) {
         // 64- and 128-bit vectors are never returned in a
@@ -701,7 +701,7 @@ ABIArgInfo X86_32ABIInfo::classifyArgumentType(QualType Ty) const {
                                                             Size));
     }
 
-    const llvm::Type *IRType = CGT.ConvertTypeRecursive(Ty);
+    llvm::Type *IRType = CGT.ConvertType(Ty);
     if (UseX86_MMXType(IRType)) {
       if (IsMMXDisabled)
         return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
@@ -848,13 +848,13 @@ class X86_64ABIInfo : public ABIInfo {
   /// also be ComplexX87.
   void classify(QualType T, uint64_t OffsetBase, Class &Lo, Class &Hi) const;
 
-  const llvm::Type *Get16ByteVectorType(QualType Ty) const;
-  const llvm::Type *GetSSETypeAtOffset(const llvm::Type *IRType,
-                                       unsigned IROffset, QualType SourceTy,
-                                       unsigned SourceOffset) const;
-  const llvm::Type *GetINTEGERTypeAtOffset(const llvm::Type *IRType,
-                                           unsigned IROffset, QualType SourceTy,
-                                           unsigned SourceOffset) const;
+  llvm::Type *Get16ByteVectorType(QualType Ty) const;
+  llvm::Type *GetSSETypeAtOffset(llvm::Type *IRType,
+                                 unsigned IROffset, QualType SourceTy,
+                                 unsigned SourceOffset) const;
+  llvm::Type *GetINTEGERTypeAtOffset(llvm::Type *IRType,
+                                     unsigned IROffset, QualType SourceTy,
+                                     unsigned SourceOffset) const;
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be returned in memory.
@@ -1329,20 +1329,20 @@ ABIArgInfo X86_64ABIInfo::getIndirectResult(QualType Ty) const {
 /// Get16ByteVectorType - The ABI specifies that a value should be passed in an
 /// full vector XMM register.  Pick an LLVM IR type that will be passed as a
 /// vector register.
-const llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
-  const llvm::Type *IRType = CGT.ConvertTypeRecursive(Ty);
+llvm::Type *X86_64ABIInfo::Get16ByteVectorType(QualType Ty) const {
+  llvm::Type *IRType = CGT.ConvertType(Ty);
 
   // Wrapper structs that just contain vectors are passed just like vectors,
   // strip them off if present.
-  const llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType);
+  llvm::StructType *STy = dyn_cast<llvm::StructType>(IRType);
   while (STy && STy->getNumElements() == 1) {
     IRType = STy->getElementType(0);
     STy = dyn_cast<llvm::StructType>(IRType);
   }
 
   // If the preferred type is a 16-byte vector, prefer to pass it.
-  if (const llvm::VectorType *VT = dyn_cast<llvm::VectorType>(IRType)){
-    const llvm::Type *EltTy = VT->getElementType();
+  if (llvm::VectorType *VT = dyn_cast<llvm::VectorType>(IRType)){
+    llvm::Type *EltTy = VT->getElementType();
     if (VT->getBitWidth() == 128 &&
         (EltTy->isFloatTy() || EltTy->isDoubleTy() ||
          EltTy->isIntegerTy(8) || EltTy->isIntegerTy(16) ||
@@ -1471,8 +1471,8 @@ static bool ContainsFloatAtOffset(const llvm::Type *IRType, unsigned IROffset,
 
 /// GetSSETypeAtOffset - Return a type that will be passed by the backend in the
 /// low 8 bytes of an XMM register, corresponding to the SSE class.
-const llvm::Type *X86_64ABIInfo::
-GetSSETypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
+llvm::Type *X86_64ABIInfo::
+GetSSETypeAtOffset(llvm::Type *IRType, unsigned IROffset,
                    QualType SourceTy, unsigned SourceOffset) const {
   // The only three choices we have are either double, <2 x float>, or float. We
   // pass as float if the last 4 bytes is just padding.  This happens for
@@ -1506,8 +1506,8 @@ GetSSETypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
 /// SourceTy is the source level type for the entire argument.  SourceOffset is
 /// an offset into this that we're processing (which is always either 0 or 8).
 ///
-const llvm::Type *X86_64ABIInfo::
-GetINTEGERTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
+llvm::Type *X86_64ABIInfo::
+GetINTEGERTypeAtOffset(llvm::Type *IRType, unsigned IROffset,
                        QualType SourceTy, unsigned SourceOffset) const {
   // If we're dealing with an un-offset LLVM IR type, then it means that we're
   // returning an 8-byte unit starting with it.  See if we can safely use it.
@@ -1545,7 +1545,7 @@ GetINTEGERTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
   }
 
   if (const llvm::ArrayType *ATy = dyn_cast<llvm::ArrayType>(IRType)) {
-    const llvm::Type *EltTy = ATy->getElementType();
+    llvm::Type *EltTy = ATy->getElementType();
     unsigned EltSize = getTargetData().getTypeAllocSize(EltTy);
     unsigned EltOffset = IROffset/EltSize*EltSize;
     return GetINTEGERTypeAtOffset(EltTy, IROffset-EltOffset, SourceTy,
@@ -1571,7 +1571,7 @@ GetINTEGERTypeAtOffset(const llvm::Type *IRType, unsigned IROffset,
 /// first class aggregate to represent them.  For example, if the low part of
 /// a by-value argument should be passed as i32* and the high part as float,
 /// return {i32*, float}.
-static const llvm::Type *
+static llvm::Type *
 GetX86_64ByValArgumentPair(const llvm::Type *Lo, const llvm::Type *Hi,
                            const llvm::TargetData &TD) {
   // In order to correctly satisfy the ABI, we need to the high part to start
@@ -1599,7 +1599,7 @@ GetX86_64ByValArgumentPair(const llvm::Type *Lo, const llvm::Type *Hi,
     }
   }
 
-  const llvm::StructType *Result = llvm::StructType::get(Lo, Hi, NULL);
+  llvm::StructType *Result = llvm::StructType::get(Lo, Hi, NULL);
 
 
   // Verify that the second element is at an 8-byte offset.
@@ -1619,7 +1619,7 @@ classifyReturnType(QualType RetTy) const {
   assert((Hi != Memory || Lo == Memory) && "Invalid memory classification.");
   assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp classification.");
 
-  const llvm::Type *ResType = 0;
+  llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
     if (Hi == NoClass)
@@ -1642,8 +1642,7 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 3. If the class is INTEGER, the next
     // available register of the sequence %rax, %rdx is used.
   case Integer:
-    ResType = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0,
-                                     RetTy, 0);
+    ResType = GetINTEGERTypeAtOffset(CGT.ConvertType(RetTy), 0, RetTy, 0);
 
     // If we have a sign or zero extended integer, make sure to return Extend
     // so that the parameter gets the right LLVM IR attributes.
@@ -1661,7 +1660,7 @@ classifyReturnType(QualType RetTy) const {
     // AMD64-ABI 3.2.3p4: Rule 4. If the class is SSE, the next
     // available SSE register of the sequence %xmm0, %xmm1 is used.
   case SSE:
-    ResType = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 0, RetTy, 0);
+    ResType = GetSSETypeAtOffset(CGT.ConvertType(RetTy), 0, RetTy, 0);
     break;
 
     // AMD64-ABI 3.2.3p4: Rule 6. If the class is X87, the value is
@@ -1681,7 +1680,7 @@ classifyReturnType(QualType RetTy) const {
     break;
   }
 
-  const llvm::Type *HighPart = 0;
+  llvm::Type *HighPart = 0;
   switch (Hi) {
     // Memory was handled previously and X87 should
     // never occur as a hi class.
@@ -1694,13 +1693,12 @@ classifyReturnType(QualType RetTy) const {
     break;
 
   case Integer:
-    HighPart = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(RetTy),
-                                      8, RetTy, 8);
+    HighPart = GetINTEGERTypeAtOffset(CGT.ConvertType(RetTy), 8, RetTy, 8);
     if (Lo == NoClass)  // Return HighPart at offset 8 in memory.
       return ABIArgInfo::getDirect(HighPart, 8);
     break;
   case SSE:
-    HighPart = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy), 8, RetTy, 8);
+    HighPart = GetSSETypeAtOffset(CGT.ConvertType(RetTy), 8, RetTy, 8);
     if (Lo == NoClass)  // Return HighPart at offset 8 in memory.
       return ABIArgInfo::getDirect(HighPart, 8);
     break;
@@ -1722,8 +1720,7 @@ classifyReturnType(QualType RetTy) const {
     // preceded by X87. In such situations we follow gcc and pass the
     // extra bits in an SSE reg.
     if (Lo != X87) {
-      HighPart = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(RetTy),
-                                    8, RetTy, 8);
+      HighPart = GetSSETypeAtOffset(CGT.ConvertType(RetTy), 8, RetTy, 8);
       if (Lo == NoClass)  // Return HighPart at offset 8 in memory.
         return ABIArgInfo::getDirect(HighPart, 8);
     }
@@ -1751,7 +1748,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
 
   neededInt = 0;
   neededSSE = 0;
-  const llvm::Type *ResType = 0;
+  llvm::Type *ResType = 0;
   switch (Lo) {
   case NoClass:
     if (Hi == NoClass)
@@ -1785,7 +1782,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     ++neededInt;
 
     // Pick an 8-byte type based on the preferred type.
-    ResType = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 0, Ty, 0);
+    ResType = GetINTEGERTypeAtOffset(CGT.ConvertType(Ty), 0, Ty, 0);
 
     // If we have a sign or zero extended integer, make sure to return Extend
     // so that the parameter gets the right LLVM IR attributes.
@@ -1805,14 +1802,14 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // available SSE register is used, the registers are taken in the
     // order from %xmm0 to %xmm7.
   case SSE: {
-    const llvm::Type *IRType = CGT.ConvertTypeRecursive(Ty);
+    llvm::Type *IRType = CGT.ConvertType(Ty);
     ResType = GetSSETypeAtOffset(IRType, 0, Ty, 0);
     ++neededSSE;
     break;
   }
   }
 
-  const llvm::Type *HighPart = 0;
+  llvm::Type *HighPart = 0;
   switch (Hi) {
     // Memory was handled previously, ComplexX87 and X87 should
     // never occur as hi classes, and X87Up must be preceded by X87,
@@ -1828,7 +1825,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
   case Integer:
     ++neededInt;
     // Pick an 8-byte type based on the preferred type.
-    HighPart = GetINTEGERTypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
+    HighPart = GetINTEGERTypeAtOffset(CGT.ConvertType(Ty), 8, Ty, 8);
 
     if (Lo == NoClass)  // Pass HighPart at offset 8 in memory.
       return ABIArgInfo::getDirect(HighPart, 8);
@@ -1838,7 +1835,7 @@ ABIArgInfo X86_64ABIInfo::classifyArgumentType(QualType Ty, unsigned &neededInt,
     // memory), except in situations involving unions.
   case X87Up:
   case SSE:
-    HighPart = GetSSETypeAtOffset(CGT.ConvertTypeRecursive(Ty), 8, Ty, 8);
+    HighPart = GetSSETypeAtOffset(CGT.ConvertType(Ty), 8, Ty, 8);
 
     if (Lo == NoClass)  // Pass HighPart at offset 8 in memory.
       return ABIArgInfo::getDirect(HighPart, 8);
@@ -2373,7 +2370,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty) const {
     SizeRegs = (getContext().getTypeSize(Ty) + 63) / 64;
   }
 
-  const llvm::Type *STy =
+  llvm::Type *STy =
     llvm::StructType::get(llvm::ArrayType::get(ElemTy, SizeRegs), NULL);
   return ABIArgInfo::getDirect(STy);
 }

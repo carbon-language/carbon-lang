@@ -11,56 +11,56 @@ void (A::*volatile vpa)();
 void (B::*pb)();
 void (C::*pc)();
 
-// CHECK: @pa2 = global %0 { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }, align 8
+// CHECK: @pa2 = global { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }, align 8
 void (A::*pa2)() = &A::f;
 
-// CHECK:      @pa3 = global %0 { i64 1, i64 0 }, align 8
-// CHECK-LP32: @pa3 = global %0 { i32 1, i32 0 }, align 4
+// CHECK:      @pa3 = global { i64, i64 } { i64 1, i64 0 }, align 8
+// CHECK-LP32: @pa3 = global { i32, i32 } { i32 1, i32 0 }, align 4
 void (A::*pa3)() = &A::vf1;
 
-// CHECK:      @pa4 = global %0 { i64 9, i64 0 }, align 8
-// CHECK-LP32: @pa4 = global %0 { i32 5, i32 0 }, align 4
+// CHECK:      @pa4 = global { i64, i64 } { i64 9, i64 0 }, align 8
+// CHECK-LP32: @pa4 = global { i32, i32 } { i32 5, i32 0 }, align 4
 void (A::*pa4)() = &A::vf2;
 
-// CHECK: @pc2 = global %0 { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 16 }, align 8
+// CHECK: @pc2 = global { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 16 }, align 8
 void (C::*pc2)() = &C::f;
 
-// CHECK: @pc3 = global %0 { i64 1, i64 0 }, align 8
+// CHECK: @pc3 = global { i64, i64 } { i64 1, i64 0 }, align 8
 void (A::*pc3)() = &A::vf1;
 
 void f() {
-  // CHECK: store %0 zeroinitializer, %0* @pa
+  // CHECK: store { i64, i64 } zeroinitializer, { i64, i64 }* @pa
   pa = 0;
 
   // Is this okay?  What are LLVM's volatile semantics for structs?
-  // CHECK: volatile store %0 zeroinitializer, %0* @vpa
+  // CHECK: volatile store { i64, i64 } zeroinitializer, { i64, i64 }* @vpa
   vpa = 0;
 
-  // CHECK: [[TMP:%.*]] = load %0* @pa, align 8
-  // CHECK: [[TMPADJ:%.*]] = extractvalue %0 [[TMP]], 1
+  // CHECK: [[TMP:%.*]] = load { i64, i64 }* @pa, align 8
+  // CHECK: [[TMPADJ:%.*]] = extractvalue { i64, i64 } [[TMP]], 1
   // CHECK: [[ADJ:%.*]] = add nsw i64 [[TMPADJ]], 16
-  // CHECK: [[RES:%.*]] = insertvalue %0 [[TMP]], i64 [[ADJ]], 1
-  // CHECK: store %0 [[RES]], %0* @pc, align 8
+  // CHECK: [[RES:%.*]] = insertvalue { i64, i64 } [[TMP]], i64 [[ADJ]], 1
+  // CHECK: store { i64, i64 } [[RES]], { i64, i64 }* @pc, align 8
   pc = pa;
 
-  // CHECK: [[TMP:%.*]] = load %0* @pc, align 8
-  // CHECK: [[TMPADJ:%.*]] = extractvalue %0 [[TMP]], 1
+  // CHECK: [[TMP:%.*]] = load { i64, i64 }* @pc, align 8
+  // CHECK: [[TMPADJ:%.*]] = extractvalue { i64, i64 } [[TMP]], 1
   // CHECK: [[ADJ:%.*]] = sub nsw i64 [[TMPADJ]], 16
-  // CHECK: [[RES:%.*]] = insertvalue %0 [[TMP]], i64 [[ADJ]], 1
-  // CHECK: store %0 [[RES]], %0* @pa, align 8
+  // CHECK: [[RES:%.*]] = insertvalue { i64, i64 } [[TMP]], i64 [[ADJ]], 1
+  // CHECK: store { i64, i64 } [[RES]], { i64, i64 }* @pa, align 8
   pa = static_cast<void (A::*)()>(pc);
 }
 
 void f2() {
-  // CHECK:      store %0 { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }
+  // CHECK:      store { i64, i64 } { i64 ptrtoint (void (%struct.A*)* @_ZN1A1fEv to i64), i64 0 }
   void (A::*pa2)() = &A::f;
   
-  // CHECK:      store %0 { i64 1, i64 0 }
-  // CHECK-LP32: store %0 { i32 1, i32 0 }
+  // CHECK:      store { i64, i64 } { i64 1, i64 0 }
+  // CHECK-LP32: store { i32, i32 } { i32 1, i32 0 }
   void (A::*pa3)() = &A::vf1;
   
-  // CHECK:      store %0 { i64 9, i64 0 }
-  // CHECK-LP32: store %0 { i32 5, i32 0 }
+  // CHECK:      store { i64, i64 } { i64 9, i64 0 }
+  // CHECK-LP32: store { i32, i32 } { i32 5, i32 0 }
   void (A::*pa4)() = &A::vf2;
 }
 

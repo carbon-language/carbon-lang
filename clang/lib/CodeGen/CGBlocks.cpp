@@ -654,11 +654,11 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
 }
 
 
-const llvm::Type *CodeGenModule::getBlockDescriptorType() {
+llvm::Type *CodeGenModule::getBlockDescriptorType() {
   if (BlockDescriptorType)
     return BlockDescriptorType;
 
-  const llvm::Type *UnsignedLongTy =
+  llvm::Type *UnsignedLongTy =
     getTypes().ConvertType(getContext().UnsignedLongTy);
 
   // struct __block_descriptor {
@@ -676,21 +676,19 @@ const llvm::Type *CodeGenModule::getBlockDescriptorType() {
   //   const char *layout;      // reserved
   // };
   BlockDescriptorType =
-    llvm::StructType::get(UnsignedLongTy, UnsignedLongTy, NULL);
-
-  getModule().addTypeName("struct.__block_descriptor",
-                          BlockDescriptorType);
+    llvm::StructType::createNamed("struct.__block_descriptor",
+                                  UnsignedLongTy, UnsignedLongTy, NULL);
 
   // Now form a pointer to that.
   BlockDescriptorType = llvm::PointerType::getUnqual(BlockDescriptorType);
   return BlockDescriptorType;
 }
 
-const llvm::Type *CodeGenModule::getGenericBlockLiteralType() {
+llvm::Type *CodeGenModule::getGenericBlockLiteralType() {
   if (GenericBlockLiteralType)
     return GenericBlockLiteralType;
 
-  const llvm::Type *BlockDescPtrTy = getBlockDescriptorType();
+  llvm::Type *BlockDescPtrTy = getBlockDescriptorType();
 
   // struct __block_literal_generic {
   //   void *__isa;
@@ -699,15 +697,14 @@ const llvm::Type *CodeGenModule::getGenericBlockLiteralType() {
   //   void (*__invoke)(void *);
   //   struct __block_descriptor *__descriptor;
   // };
-  GenericBlockLiteralType = llvm::StructType::get(VoidPtrTy,
-                                                  IntTy,
-                                                  IntTy,
-                                                  VoidPtrTy,
-                                                  BlockDescPtrTy,
-                                                  NULL);
-
-  getModule().addTypeName("struct.__block_literal_generic",
-                          GenericBlockLiteralType);
+  GenericBlockLiteralType =
+    llvm::StructType::createNamed("struct.__block_literal_generic",
+                                  VoidPtrTy,
+                                  IntTy,
+                                  IntTy,
+                                  VoidPtrTy,
+                                  BlockDescPtrTy,
+                                  NULL);
 
   return GenericBlockLiteralType;
 }
@@ -1663,15 +1660,17 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
   
   QualType Ty = D->getType();
 
-  llvm::SmallVector<const llvm::Type *, 8> types;
+  llvm::SmallVector<llvm::Type *, 8> types;
   
-  llvm::PATypeHolder ByRefTypeHolder = llvm::OpaqueType::get(getLLVMContext());
+  llvm::StructType *ByRefType =
+    llvm::StructType::createNamed(getLLVMContext(),
+                                "struct.__block_byref_" + D->getNameAsString());
   
   // void *__isa;
   types.push_back(Int8PtrTy);
   
   // void *__forwarding;
-  types.push_back(llvm::PointerType::getUnqual(ByRefTypeHolder));
+  types.push_back(llvm::PointerType::getUnqual(ByRefType));
   
   // int32_t __flags;
   types.push_back(Int32Ty);
@@ -1706,7 +1705,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
     
     unsigned NumPaddingBytes = AlignedOffsetInBytes - CurrentOffsetInBytes;
     if (NumPaddingBytes > 0) {
-      const llvm::Type *Ty = llvm::Type::getInt8Ty(getLLVMContext());
+      llvm::Type *Ty = llvm::Type::getInt8Ty(getLLVMContext());
       // FIXME: We need a sema error for alignment larger than the minimum of
       // the maximal stack alignment and the alignment of malloc on the system.
       if (NumPaddingBytes > 1)
@@ -1722,13 +1721,9 @@ const llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
   // T x;
   types.push_back(ConvertTypeForMem(Ty));
   
-  const llvm::Type *T = llvm::StructType::get(getLLVMContext(), types, Packed);
+  ByRefType->setBody(types, Packed);
   
-  cast<llvm::OpaqueType>(ByRefTypeHolder.get())->refineAbstractTypeTo(T);
-  CGM.getModule().addTypeName("struct.__block_byref_" + D->getNameAsString(), 
-                              ByRefTypeHolder.get());
-  
-  Info.first = ByRefTypeHolder.get();
+  Info.first = ByRefType;
   
   Info.second = types.size() - 1;
   

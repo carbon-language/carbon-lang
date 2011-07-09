@@ -1346,9 +1346,9 @@ public:
   /// a terminate scope encloses a try.
   llvm::BasicBlock *getTerminateHandler();
 
-  const llvm::Type *ConvertTypeForMem(QualType T);
-  const llvm::Type *ConvertType(QualType T);
-  const llvm::Type *ConvertType(const TypeDecl *T) {
+  llvm::Type *ConvertTypeForMem(QualType T);
+  llvm::Type *ConvertType(QualType T);
+  llvm::Type *ConvertType(const TypeDecl *T) {
     return ConvertType(getContext().getTypeDeclType(T));
   }
 

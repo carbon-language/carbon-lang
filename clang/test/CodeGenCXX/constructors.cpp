@@ -83,12 +83,12 @@ struct D : A {
 
 D::D(int x, ...) : A(ValueClass(x, x+1)), mem(x*x) {}
 
-// CHECK: define void @_ZN1DC1Eiz(%struct.B* %this, i32 %x, ...) unnamed_addr
+// CHECK: define void @_ZN1DC1Eiz(%struct.D* %this, i32 %x, ...) unnamed_addr
 // CHECK: call void @_ZN10ValueClassC1Eii(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(
 
-// CHECK: define void @_ZN1DC2Eiz(%struct.B* %this, i32 %x, ...) unnamed_addr
+// CHECK: define void @_ZN1DC2Eiz(%struct.D* %this, i32 %x, ...) unnamed_addr
 // CHECK: call void @_ZN10ValueClassC1Eii(
 // CHECK: call void @_ZN1AC2E10ValueClass(
 // CHECK: call void @_ZN6MemberC1Ei(

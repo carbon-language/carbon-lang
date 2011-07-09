@@ -34,7 +34,7 @@ static llvm::Constant *GetBogusMemberPointer(CodeGenModule &CGM,
   return llvm::Constant::getNullValue(CGM.getTypes().ConvertType(T));
 }
 
-const llvm::Type *
+llvm::Type *
 CGCXXABI::ConvertMemberPointerType(const MemberPointerType *MPT) {
   return CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
 }

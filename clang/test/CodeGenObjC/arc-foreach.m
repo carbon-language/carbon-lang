@@ -21,7 +21,7 @@ void test0(NSArray *array) {
 // CHECK-LP64-NEXT: [[X:%.*]] = alloca i8*,
 // CHECK-LP64-NEXT: [[STATE:%.*]] = alloca [[STATE_T:%.*]],
 // CHECK-LP64-NEXT: alloca [16 x i8*], align 8
-// CHECK-LP64-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:%.*]],
+// CHECK-LP64-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
 
 // CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[STATE_T]]* [[STATE]], i32 0, i32 1
 // CHECK-LP64-NEXT: [[T1:%.*]] = load i8*** [[T0]]
@@ -55,7 +55,7 @@ void test1(NSArray *array) {
 // CHECK-LP64-NEXT: [[X:%.*]] = alloca i8*,
 // CHECK-LP64-NEXT: [[STATE:%.*]] = alloca [[STATE_T:%.*]],
 // CHECK-LP64-NEXT: alloca [16 x i8*], align 8
-// CHECK-LP64-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:%.*]],
+// CHECK-LP64-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
 
 // CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[STATE_T]]* [[STATE]], i32 0, i32 1
 // CHECK-LP64-NEXT: [[T1:%.*]] = load i8*** [[T0]]

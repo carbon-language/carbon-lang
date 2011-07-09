@@ -40,11 +40,11 @@ namespace PR7526 {
 
   struct allocator_derived : allocator { };
 
-  // CHECK: define void @_ZN6PR75269allocatorD2Ev(%"struct.PR5529::A"* %this) unnamed_addr
+  // CHECK: define void @_ZN6PR75269allocatorD2Ev(%"struct.PR7526::allocator"* %this) unnamed_addr
   // CHECK: call void @__cxa_call_unexpected
   allocator::~allocator() throw() { foo(); }
 
-  // CHECK: define linkonce_odr void @_ZN6PR752617allocator_derivedD1Ev(%"struct.PR5529::A"* %this) unnamed_addr
+  // CHECK: define linkonce_odr void @_ZN6PR752617allocator_derivedD1Ev(%"struct.PR7526::allocator_derived"* %this) unnamed_addr
   // CHECK-NOT: call void @__cxa_call_unexpected
   // CHECK:     }
   void foo() {
@@ -145,10 +145,10 @@ namespace test1 {
   P::~P() {} // CHECK: define void @_ZN5test11PD2Ev(%"struct.test1::P"* %this) unnamed_addr
 
   struct Q : A, B { ~Q(); };
-  Q::~Q() {} // CHECK: define void @_ZN5test11QD2Ev(%"struct.test1::M"* %this) unnamed_addr
+  Q::~Q() {} // CHECK: define void @_ZN5test11QD2Ev(%"struct.test1::Q"* %this) unnamed_addr
 
   struct R : A { ~R(); };
-  R::~R() { A a; } // CHECK: define void @_ZN5test11RD2Ev(%"struct.test1::M"* %this) unnamed_addr
+  R::~R() { A a; } // CHECK: define void @_ZN5test11RD2Ev(%"struct.test1::R"* %this) unnamed_addr
 
   struct S : A { ~S(); int x; };
   S::~S() {} // alias tested above
@@ -168,7 +168,7 @@ namespace test2 {
   struct B : A { ~B(); };
 
   B::~B() {}
-  // CHECK: define void @_ZN5test21BD2Ev(%"struct.test1::M"* %this) unnamed_addr
+  // CHECK: define void @_ZN5test21BD2Ev(%"struct.test2::B"* %this) unnamed_addr
   // CHECK: call void @_ZN5test21AD2Ev
 }
 

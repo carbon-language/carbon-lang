@@ -20,8 +20,8 @@ namespace Test3 {
 
 namespace Test4 {
   // Test from PR5589.
-  // CHECK: %"struct.Test4::A" = type { i32, i8, float }
   // CHECK: %"struct.Test4::B" = type { %"struct.Test4::A", i16, double }
+  // CHECK: %"struct.Test4::A" = type { i32, i8, float }
   struct A {
     int a;
     char c;

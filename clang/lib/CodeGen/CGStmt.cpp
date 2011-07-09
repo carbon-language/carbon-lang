@@ -1410,13 +1410,13 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
   std::vector<QualType> ResultRegQualTys;
   std::vector<const llvm::Type *> ResultRegTypes;
   std::vector<const llvm::Type *> ResultTruncRegTypes;
-  std::vector<const llvm::Type*> ArgTypes;
+  std::vector<llvm::Type*> ArgTypes;
   std::vector<llvm::Value*> Args;
 
   // Keep track of inout constraints.
   std::string InOutConstraints;
   std::vector<llvm::Value*> InOutArgs;
-  std::vector<const llvm::Type*> InOutArgTypes;
+  std::vector<llvm::Type*> InOutArgTypes;
 
   for (unsigned i = 0, e = S.getNumOutputs(); i != e; i++) {
     TargetInfo::ConstraintInfo &Info = OutputConstraintInfos[i];

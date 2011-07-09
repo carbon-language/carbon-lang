@@ -46,7 +46,7 @@ void test2(Test2 *x) {
   // CHECK:    define void @test2(
   // CHECK:      [[X:%.*]] = alloca [[TEST2:%.*]]*,
   // CHECK-NEXT: [[WEAKX:%.*]] = alloca [[WEAK_T:%.*]],
-  // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:%.*]],
+  // CHECK-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
   // CHECK-NEXT: store [[TEST2]]*
 
   // isa=1 for weak byrefs.
@@ -95,8 +95,8 @@ void test2(Test2 *x) {
 // CHECK:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-NEXT: [[T1:%.*]] = load i8** [[T0]]
-// CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[WEAK_T]]*
-// CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]]* [[T2]], i32 0, i32 1
-// CHECK-NEXT: [[T4:%.*]] = load [[WEAK_T]]** [[T3]]
-// CHECK-NEXT: [[WEAKX:%.*]] = getelementptr inbounds [[WEAK_T]]* [[T4]], i32 0, i32 6
+// CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[WEAK_T]]{{.*}}*
+// CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]]{{.*}}* [[T2]], i32 0, i32 1
+// CHECK-NEXT: [[T4:%.*]] = load [[WEAK_T]]{{.*}}** [[T3]]
+// CHECK-NEXT: [[WEAKX:%.*]] = getelementptr inbounds [[WEAK_T]]{{.*}}* [[T4]], i32 0, i32 6
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST2]]** [[WEAKX]], align 4

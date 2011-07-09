@@ -2,7 +2,7 @@
 // CHECK-NOT: callq	_objc_msgSend_stret
 // CHECK: call void @_ZN1SC1ERKS_
 // CHECK: call %class.S* @_ZN1SaSERKS_
-// CHECK: call %class.S* @_ZN6CGRectaSERKS_
+// CHECK: call %struct.CGRect* @_ZN6CGRectaSERKS_
 
 class S {
 public:

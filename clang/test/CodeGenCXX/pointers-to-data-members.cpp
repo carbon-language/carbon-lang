@@ -22,7 +22,7 @@ namespace ZeroInit {
   // CHECK-GLOBAL: @_ZN8ZeroInit1bE = global i64 -1,
   int A::* b = 0;
 
-  // CHECK-GLOBAL: @_ZN8ZeroInit2saE = internal global %struct.anon { i64 -1 }
+  // CHECK-GLOBAL: @_ZN8ZeroInit2saE = internal global %"struct.ZeroInit::<anonymous>" { i64 -1 }
   struct {
     int A::*a;
   } sa;
@@ -35,7 +35,7 @@ namespace ZeroInit {
   } ssa[2];
   void test_ssa() { (void) ssa; }
   
-  // CHECK-GLOBAL: @_ZN8ZeroInit2ssE = internal global %1 { %struct.anon { i64 -1 } }
+  // CHECK-GLOBAL: @_ZN8ZeroInit2ssE = internal global %"struct.ZeroInit::<anonymous>.1" { %"struct.ZeroInit::<anonymous struct>::<anonymous>" { i64 -1 } }
   struct {
     struct {
       int A::*pa;
@@ -55,7 +55,7 @@ namespace ZeroInit {
   };
 
   struct C : A, B { int j; };
-  // CHECK-GLOBAL: @_ZN8ZeroInit1cE = global {{%.*}} { %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.ZeroInit::B" { [10 x %"struct.PR7139::ptr_to_member_struct"] [%"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }, %"struct.PR7139::ptr_to_member_struct" { i64 -1, i32 0 }], i8 0, i64 -1 }, i32 0 }, align 8
+  // CHECK-GLOBAL: @_ZN8ZeroInit1cE = global {{%.*}} { %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::B" { [10 x %"struct.ZeroInit::A"] [%"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }, %"struct.ZeroInit::A" { i64 -1, i32 0 }], i8 0, i64 -1 }, i32 0 }, align 8
   C c;
 }
 
@@ -227,6 +227,6 @@ namespace test4 {
   struct C : virtual B { int    *C_p; };
   struct D :         C { int    *D_p; };
 
-  // CHECK-GLOBAL: @_ZN5test41dE = global %"struct.test4::D" { %"struct.test4::C.base" zeroinitializer, i32* null, %"struct.VirtualBases::C.base" { i32 (...)** null, i64 -1 }, %"struct.test4::A" zeroinitializer }, align 8
+  // CHECK-GLOBAL: @_ZN5test41dE = global %"struct.test4::D" { %"struct.test4::C.base" zeroinitializer, i32* null, %"struct.test4::B.base" { i32 (...)** null, i64 -1 }, %"struct.test4::A" zeroinitializer }, align 8
   D d;
 }

@@ -31,7 +31,7 @@ namespace test1 {
 
   // ...unless they have mutable fields...
   // CHECK: define void @_ZN5test15test3Ev()
-  // CHECK:   [[BLOCK:%.*]] = alloca [[BLOCK_T:%.*]],
+  // CHECK:   [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
   // CHECK:   [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to void ()*
   // CHECK:   store void ()* [[T0]], void ()** @out
   struct mut { mutable int x; };
@@ -43,7 +43,7 @@ namespace test1 {
   // ...or non-trivial destructors...
   // CHECK: define void @_ZN5test15test4Ev()
   // CHECK:   [[OBJ:%.*]] = alloca
-  // CHECK:   [[BLOCK:%.*]] = alloca [[BLOCK_T:%.*]],
+  // CHECK:   [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
   // CHECK:   [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to void ()*
   // CHECK:   store void ()* [[T0]], void ()** @out
   struct scope { int x; ~scope(); };

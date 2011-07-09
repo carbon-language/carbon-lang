@@ -6,5 +6,5 @@
 void a(int,int,int,int,int,int,__complex__ char);
 void b(__complex__ char *y) { a(0,0,0,0,0,0,*y); }
 // CHECK: define void @b
-// CHECK: alloca %0, align 8
-// CHECK: call void @a(i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, %0* byval align 8
+// CHECK: alloca { i8, i8 }*, align 8
+// CHECK: call void @a(i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, { i8, i8 }* byval align 8

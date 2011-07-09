@@ -15,8 +15,8 @@
 namespace std {
   struct A { A(); };
   
-  // CHECK: define void @_ZNSt1AC1Ev(%"struct.N::std::A"* %this) unnamed_addr
-  // CHECK: define void @_ZNSt1AC2Ev(%"struct.N::std::A"* %this) unnamed_addr
+  // CHECK: define void @_ZNSt1AC1Ev(%"struct.std::A"* %this) unnamed_addr
+  // CHECK: define void @_ZNSt1AC2Ev(%"struct.std::A"* %this) unnamed_addr
   A::A() { }
 };
 

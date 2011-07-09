@@ -4,7 +4,7 @@
 volatile int i, j, k;
 volatile int ar[5];
 volatile char c;
-// CHECK: @ci = common global [[CINT:%.*]] zeroinitializer
+// CHECK: @ci = common global [[CINT:.*]] zeroinitializer
 volatile _Complex int ci;
 volatile struct S {
 #ifdef __cplusplus

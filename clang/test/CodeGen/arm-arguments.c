@@ -61,7 +61,7 @@ struct s10 { int f0; int : 0; int : 0; };
 struct s10 f10(void) {}
 
 // APCS-GNU: define void @f11(
-// APCS-GNU: struct.s10* sret
+// APCS-GNU: struct.s11* sret
 // AAPCS: define arm_aapcscc i32 @f11()
 struct s11 { int : 0; int f0; };
 struct s11 f11(void) {}
@@ -80,7 +80,7 @@ struct s13 { float f0; };
 struct s13 f13(void) {}
 
 // APCS-GNU: define void @f14(
-// APCS-GNU: struct.s13* sret
+// APCS-GNU: union.u14* sret
 // AAPCS: define arm_aapcscc i32 @f14()
 union u14 { float f0; };
 union u14 f14(void) {}

@@ -5,13 +5,13 @@ struct foo {
     int b;
 };
 
-// CHECK: @u = global %union.anon zeroinitializer
+// CHECK: @u = global %"union.<anonymous>" zeroinitializer
 union { int i; float f; } u = { };
 
-// CHECK: @u2 = global %2 { i32 0, [4 x i8] undef }
+// CHECK: @u2 = global { i32, [4 x i8] } { i32 0, [4 x i8] undef }
 union { int i; double f; } u2 = { };
 
-// CHECK: @u3 = global %3 zeroinitializer
+// CHECK: @u3 = global %"union.<anonymous>.1" zeroinitializer
 union { double f; int i; } u3 = { };
 
 // CHECK: @b = global [2 x i32] [i32 0, i32 22]
@@ -39,11 +39,11 @@ struct ds ds0 = { { { .a = 0 } } };
 struct ds ds1 = { { .a = 1 } };
 struct ds ds2 = { { .b = 1 } };
 struct ds ds3 = { .a = 0 };
-// CHECK: @ds4 = global %struct.ds { %1 { %struct.anon zeroinitializer, i16 0, %struct.anon { i16 1 } } }
+// CHECK: @ds4 = global %struct.ds { %"struct.ds::<anonymous>" { %"struct.ds::<anonymous struct>::<anonymous>" zeroinitializer, i16 0, %"struct.ds::<anonymous struct>::<anonymous>.2" { i16 1 } } }
 struct ds ds4 = { .c = 1 };
 struct ds ds5 = { { { .a = 0 } }, .b = 1 };
 struct ds ds6 = { { .a = 0, .b = 1 } };
-// CHECK: @ds7 = global %struct.ds { %1 { %struct.anon { i16 2 }, i16 3, %struct.anon zeroinitializer } }
+// CHECK: @ds7 = global %struct.ds { %"struct.ds::<anonymous>" { %"struct.ds::<anonymous struct>::<anonymous>" { i16 2 }, i16 3, %"struct.ds::<anonymous struct>::<anonymous>.2" zeroinitializer } }
 struct ds ds7 = {
   { {
       .a = 1
@@ -59,7 +59,7 @@ void test1(int argc, char **argv)
     .b = 1024,
   };
 
-  // CHECK: bitcast %union.anon* %u2
+  // CHECK: bitcast %union.* %u2
   // CHECK: call void @llvm.memset
    union { int i; float f; } u2 = { };
 

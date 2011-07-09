@@ -50,7 +50,7 @@ namespace {
 /// avoids constructing the type more than once if it's used more than once.
 class LazyRuntimeFunction {
   CodeGenModule *CGM;
-  std::vector<const llvm::Type*> ArgTys;
+  std::vector<llvm::Type*> ArgTys;
   const char *FunctionName;
   llvm::Constant *Function;
   public:
@@ -63,14 +63,14 @@ class LazyRuntimeFunction {
     /// of the arguments.
     END_WITH_NULL
     void init(CodeGenModule *Mod, const char *name,
-        const llvm::Type *RetTy, ...) {
+        llvm::Type *RetTy, ...) {
        CGM =Mod;
        FunctionName = name;
        Function = 0;
        ArgTys.clear();
        va_list Args;
        va_start(Args, RetTy);
-         while (const llvm::Type *ArgTy = va_arg(Args, const llvm::Type*))
+         while (llvm::Type *ArgTy = va_arg(Args, llvm::Type*))
            ArgTys.push_back(ArgTy);
        va_end(Args);
        // Push the return type on at the end so we can pop it off easily
@@ -118,24 +118,24 @@ protected:
   /// LLVM type for selectors.  Opaque pointer (i8*) unless a header declaring
   /// SEL is included in a header somewhere, in which case it will be whatever
   /// type is declared in that header, most likely {i8*, i8*}.
-  const llvm::PointerType *SelectorTy;
+  llvm::PointerType *SelectorTy;
   /// LLVM i8 type.  Cached here to avoid repeatedly getting it in all of the
   /// places where it's used
   const llvm::IntegerType *Int8Ty;
   /// Pointer to i8 - LLVM type of char*, for all of the places where the
   /// runtime needs to deal with C strings.
-  const llvm::PointerType *PtrToInt8Ty;
+  llvm::PointerType *PtrToInt8Ty;
   /// Instance Method Pointer type.  This is a pointer to a function that takes,
   /// at a minimum, an object and a selector, and is the generic type for
   /// Objective-C methods.  Due to differences between variadic / non-variadic
   /// calling conventions, it must always be cast to the correct type before
   /// actually being used.
-  const llvm::PointerType *IMPTy;
+  llvm::PointerType *IMPTy;
   /// Type of an untyped Objective-C object.  Clang treats id as a built-in type
   /// when compiling Objective-C code, so this may be an opaque pointer (i8*),
   /// but if the runtime header declaring it is included then it may be a
   /// pointer to a structure.
-  const llvm::PointerType *IdTy;
+  llvm::PointerType *IdTy;
   /// Pointer to a pointer to an Objective-C object.  Used in the new ABI
   /// message lookup function and some GC-related functions.
   const llvm::PointerType *PtrToIdTy;
@@ -143,11 +143,11 @@ protected:
   /// call Objective-C methods.
   CanQualType ASTIdTy;
   /// LLVM type for C int type.
-  const llvm::IntegerType *IntTy;
+  llvm::IntegerType *IntTy;
   /// LLVM type for an opaque pointer.  This is identical to PtrToInt8Ty, but is
   /// used in the code to document the difference between i8* meaning a pointer
   /// to a C string and i8* meaning a pointer to some opaque type.
-  const llvm::PointerType *PtrTy;
+  llvm::PointerType *PtrTy;
   /// LLVM type for C long type.  The runtime uses this in a lot of places where
   /// it should be using intptr_t, but we can't fix this without breaking
   /// compatibility with GCC...
@@ -619,7 +619,7 @@ class CGObjCGNUstep : public CGObjCGNU {
               PtrToObjCSuperTy, SelectorTy, NULL);
       // If we're in ObjC++ mode, then we want to make 
       if (CGM.getLangOptions().CPlusPlus) {
-        const llvm::Type *VoidTy = llvm::Type::getVoidTy(VMContext);
+        llvm::Type *VoidTy = llvm::Type::getVoidTy(VMContext);
         // void *__cxa_begin_catch(void *e)
         EnterCatchFn.init(&CGM, "__cxa_begin_catch", PtrTy, PtrTy, NULL);
         // void __cxa_end_catch(void)
@@ -712,7 +712,7 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
   ObjCSuperTy = llvm::StructType::get(IdTy, IdTy, NULL);
   PtrToObjCSuperTy = llvm::PointerType::getUnqual(ObjCSuperTy);
 
-  const llvm::Type *VoidTy = llvm::Type::getVoidTy(VMContext);
+  llvm::Type *VoidTy = llvm::Type::getVoidTy(VMContext);
 
   // void objc_exception_throw(id);
   ExceptionThrowFn.init(&CGM, "objc_exception_throw", VoidTy, IdTy, NULL);
@@ -740,7 +740,7 @@ CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
       PtrDiffTy, BoolTy, BoolTy, NULL);
 
   // IMP type
-  const llvm::Type *IMPArgs[] = { IdTy, SelectorTy };
+  llvm::Type *IMPArgs[] = { IdTy, SelectorTy };
   IMPTy = llvm::PointerType::getUnqual(llvm::FunctionType::get(IdTy, IMPArgs,
               true));
 
@@ -794,8 +794,9 @@ llvm::Value *CGObjCGNU::GetClassNamed(CGBuilderTy &Builder,
     EmitClassRef(Name);
   ClassName = Builder.CreateStructGEP(ClassName, 0);
 
+  llvm::Type *ArgTys[] = { PtrToInt8Ty };
   llvm::Constant *ClassLookupFn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, PtrToInt8Ty, true),
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, ArgTys, true),
                               "objc_lookup_class");
   return Builder.CreateCall(ClassLookupFn, ClassName);
 }
@@ -999,11 +1000,13 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   if (isCategoryImpl) {
     llvm::Constant *classLookupFunction = 0;
     if (IsClassMessage)  {
+      llvm::Type *ArgTys[] = { PtrTy };
       classLookupFunction = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-            IdTy, PtrTy, true), "objc_get_meta_class");
+            IdTy, ArgTys, true), "objc_get_meta_class");
     } else {
+      llvm::Type *ArgTys[] = { PtrTy };
       classLookupFunction = CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-            IdTy, PtrTy, true), "objc_get_class");
+            IdTy, ArgTys, true), "objc_get_class");
     }
     ReceiverClass = Builder.CreateCall(classLookupFunction,
         MakeConstantString(Class->getNameAsString()));
@@ -1237,18 +1240,14 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const llvm::StringRef &ClassName,
                                                          Methods);
 
   // Structure containing list pointer, array and array count
-  llvm::SmallVector<const llvm::Type*, 16> ObjCMethodListFields;
-  llvm::PATypeHolder OpaqueNextTy = llvm::OpaqueType::get(VMContext);
-  llvm::Type *NextPtrTy = llvm::PointerType::getUnqual(OpaqueNextTy);
-  llvm::StructType *ObjCMethodListTy = llvm::StructType::get(
+  llvm::StructType *ObjCMethodListTy =
+    llvm::StructType::createNamed(VMContext, "");
+  llvm::Type *NextPtrTy = llvm::PointerType::getUnqual(ObjCMethodListTy);
+  ObjCMethodListTy->setBody(
       NextPtrTy,
       IntTy,
       ObjCMethodArrayTy,
       NULL);
-  // Refine next pointer type to concrete type
-  llvm::cast<llvm::OpaqueType>(
-      OpaqueNextTy.get())->refineAbstractTypeTo(ObjCMethodListTy);
-  ObjCMethodListTy = llvm::cast<llvm::StructType>(OpaqueNextTy.get());
 
   Methods.clear();
   Methods.push_back(llvm::ConstantPointerNull::get(
@@ -2043,11 +2042,6 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     SelStructPtrTy = llvm::PointerType::getUnqual(SelStructTy);
   }
 
-  // Name the ObjC types to make the IR a bit easier to read
-  TheModule.addTypeName(".objc_selector", SelStructPtrTy);
-  TheModule.addTypeName(".objc_id", IdTy);
-  TheModule.addTypeName(".objc_imp", IMPTy);
-
   std::vector<llvm::Constant*> Elements;
   llvm::Constant *Statics = NULLPtr;
   // Generate statics list:
@@ -2212,9 +2206,9 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   CGBuilderTy Builder(VMContext);
   Builder.SetInsertPoint(EntryBB);
 
+  llvm::Type *ArgTys[] = { llvm::PointerType::getUnqual(ModuleTy) };
   llvm::FunctionType *FT =
-    llvm::FunctionType::get(Builder.getVoidTy(),
-                            llvm::PointerType::getUnqual(ModuleTy), true);
+    llvm::FunctionType::get(Builder.getVoidTy(), ArgTys, true);
   llvm::Value *Register = CGM.CreateRuntimeFunction(FT, "__objc_exec_class");
   Builder.CreateCall(Register, Module);
   Builder.CreateRetVoid();

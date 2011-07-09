@@ -99,31 +99,31 @@ namespace CodeGen {
 
   struct CodeGenTypeCache {
     /// void
-    const llvm::Type *VoidTy;
+    llvm::Type *VoidTy;
 
     /// i8, i32, and i64
-    const llvm::IntegerType *Int8Ty, *Int32Ty, *Int64Ty;
+    llvm::IntegerType *Int8Ty, *Int32Ty, *Int64Ty;
 
     /// int
-    const llvm::IntegerType *IntTy;
+    llvm::IntegerType *IntTy;
 
     /// intptr_t, size_t, and ptrdiff_t, which we assume are the same size.
     union {
-      const llvm::IntegerType *IntPtrTy;
-      const llvm::IntegerType *SizeTy;
-      const llvm::IntegerType *PtrDiffTy;
+      llvm::IntegerType *IntPtrTy;
+      llvm::IntegerType *SizeTy;
+      llvm::IntegerType *PtrDiffTy;
     };
 
     /// void* in address space 0
     union {
-      const llvm::PointerType *VoidPtrTy;
-      const llvm::PointerType *Int8PtrTy;
+      llvm::PointerType *VoidPtrTy;
+      llvm::PointerType *Int8PtrTy;
     };
 
     /// void** in address space 0
     union {
-      const llvm::PointerType *VoidPtrPtrTy;
-      const llvm::PointerType *Int8PtrPtrTy;
+      llvm::PointerType *VoidPtrPtrTy;
+      llvm::PointerType *Int8PtrPtrTy;
     };
 
     /// The width of a pointer into the generic address space.
@@ -312,8 +312,8 @@ class CodeGenModule : public CodeGenTypeCache {
   llvm::Constant *BlockObjectAssign;
   llvm::Constant *BlockObjectDispose;
 
-  const llvm::Type *BlockDescriptorType;
-  const llvm::Type *GenericBlockLiteralType;
+  llvm::Type *BlockDescriptorType;
+  llvm::Type *GenericBlockLiteralType;
 
   struct {
     int GlobalUniqueCount;
@@ -503,10 +503,10 @@ public:
 
   /// getBlockDescriptorType - Fetches the type of a generic block
   /// descriptor.
-  const llvm::Type *getBlockDescriptorType();
+  llvm::Type *getBlockDescriptorType();
 
   /// getGenericBlockLiteralType - The type of a generic block literal.
-  const llvm::Type *getGenericBlockLiteralType();
+  llvm::Type *getGenericBlockLiteralType();
 
   /// GetAddrOfGlobalBlock - Gets the address of a block which
   /// requires no captures.
@@ -573,7 +573,7 @@ public:
   llvm::Value *getBuiltinLibFunction(const FunctionDecl *FD,
                                      unsigned BuiltinID);
 
-  llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0,
+  llvm::Function *getIntrinsic(unsigned IID, llvm::Type **Tys = 0,
                                unsigned NumTys = 0);
 
   /// EmitTopLevelDecl - Emit code for a single top level declaration.

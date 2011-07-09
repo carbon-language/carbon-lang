@@ -32,7 +32,7 @@ struct ManyFields FewInits = {1, 2};
 
 
 // PR6766
-// CHECK: @l = global %0 { [24 x i8] c"f\00\00\00o\00\00\00o\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00", i32 1 }
+// CHECK: @l = global { [24 x i8], i32 } { [24 x i8] c"f\00\00\00o\00\00\00o\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00", i32 1 }
 typedef __WCHAR_TYPE__ wchar_t;
 struct K {
   wchar_t L[6];

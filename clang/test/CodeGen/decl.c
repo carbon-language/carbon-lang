@@ -2,8 +2,8 @@
 
 // CHECK: @test1.x = internal constant [12 x i32] [i32 1
 // CHECK: @test2.x = internal unnamed_addr constant [13 x i32] [i32 1,
-// CHECK: @test5w = global %0 { i32 2, [4 x i8] undef }
-// CHECK: @test5y = global %union.test5u { double 7.300000e+0{{[0]*}}1 }
+// CHECK: @test5w = global { i32, [4 x i8] } { i32 2, [4 x i8] undef }
+// CHECK: @test5y = global { double } { double 7.300000e+0{{[0]*}}1 }
 
 // CHECK: @test6.x = internal unnamed_addr constant %struct.SelectDest { i8 1, i8 2, i32 3, i32 0 }
 

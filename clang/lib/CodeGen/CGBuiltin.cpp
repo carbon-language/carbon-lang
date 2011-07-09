@@ -95,12 +95,12 @@ static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
   unsigned AddrSpace =
     cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
 
-  const llvm::IntegerType *IntType =
+  llvm::IntegerType *IntType =
     llvm::IntegerType::get(CGF.getLLVMContext(),
                            CGF.getContext().getTypeSize(T));
-  const llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
+  llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
-  const llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
+  llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
   llvm::Value *AtomF = CGF.CGM.getIntrinsic(Id, IntrinsicTypes, 2);
 
   llvm::Value *Args[2];
@@ -130,12 +130,12 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
   unsigned AddrSpace =
     cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
 
-  const llvm::IntegerType *IntType =
+  llvm::IntegerType *IntType =
     llvm::IntegerType::get(CGF.getLLVMContext(),
                            CGF.getContext().getTypeSize(T));
-  const llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
+  llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
-  const llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
+  llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
   llvm::Value *AtomF = CGF.CGM.getIntrinsic(Id, IntrinsicTypes, 2);
 
   llvm::Value *Args[2];
@@ -165,7 +165,8 @@ static Value *EmitFAbs(CodeGenFunction &CGF, Value *V, QualType ValTy) {
   }
   
   // The prototype is something that takes and returns whatever V's type is.
-  llvm::FunctionType *FT = llvm::FunctionType::get(V->getType(), V->getType(),
+  llvm::Type *ArgTys[] = { V->getType() };
+  llvm::FunctionType *FT = llvm::FunctionType::get(V->getType(), ArgTys,
                                                    false);
   llvm::Value *Fn = CGF.CGM.CreateRuntimeFunction(FT, FnName);
 
@@ -233,7 +234,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_ctzll: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
 
-    const llvm::Type *ArgType = ArgValue->getType();
+    llvm::Type *ArgType = ArgValue->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::cttz, &ArgType, 1);
 
     const llvm::Type *ResultType = ConvertType(E->getType());
@@ -248,7 +249,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_clzll: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
 
-    const llvm::Type *ArgType = ArgValue->getType();
+    llvm::Type *ArgType = ArgValue->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::ctlz, &ArgType, 1);
 
     const llvm::Type *ResultType = ConvertType(E->getType());
@@ -264,7 +265,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     // ffs(x) -> x ? cttz(x) + 1 : 0
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
 
-    const llvm::Type *ArgType = ArgValue->getType();
+    llvm::Type *ArgType = ArgValue->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::cttz, &ArgType, 1);
 
     const llvm::Type *ResultType = ConvertType(E->getType());
@@ -284,7 +285,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     // parity(x) -> ctpop(x) & 1
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
 
-    const llvm::Type *ArgType = ArgValue->getType();
+    llvm::Type *ArgType = ArgValue->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::ctpop, &ArgType, 1);
 
     const llvm::Type *ResultType = ConvertType(E->getType());
@@ -301,7 +302,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_popcountll: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
 
-    const llvm::Type *ArgType = ArgValue->getType();
+    llvm::Type *ArgType = ArgValue->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::ctpop, &ArgType, 1);
 
     const llvm::Type *ResultType = ConvertType(E->getType());
@@ -313,7 +314,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
   case Builtin::BI__builtin_expect: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
-    const llvm::Type *ArgType = ArgValue->getType();
+    llvm::Type *ArgType = ArgValue->getType();
 
     Value *FnExpect = CGM.getIntrinsic(Intrinsic::expect, &ArgType, 1);
     Value *ExpectedValue = EmitScalarExpr(E->getArg(1));
@@ -321,19 +322,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Result = Builder.CreateCall2(FnExpect, ArgValue, ExpectedValue,
                                         "expval");
     return RValue::get(Result);
-
   }
   case Builtin::BI__builtin_bswap32:
   case Builtin::BI__builtin_bswap64: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
-    const llvm::Type *ArgType = ArgValue->getType();
+    llvm::Type *ArgType = ArgValue->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::bswap, &ArgType, 1);
     return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
   }
   case Builtin::BI__builtin_object_size: {
     // We pass this builtin onto the optimizer so that it can
     // figure out the object size in more complex cases.
-    const llvm::Type *ResType[] = {
+    llvm::Type *ResType[] = {
       ConvertType(E->getType())
     };
     
@@ -382,7 +382,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_powil: {
     Value *Base = EmitScalarExpr(E->getArg(0));
     Value *Exponent = EmitScalarExpr(E->getArg(1));
-    const llvm::Type *ArgType = Base->getType();
+    llvm::Type *ArgType = Base->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::powi, &ArgType, 1);
     return RValue::get(Builder.CreateCall2(F, Base, Exponent, "tmp"));
   }
@@ -867,11 +867,11 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     unsigned AddrSpace =
       cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
     
-    const llvm::IntegerType *IntType =
+    llvm::IntegerType *IntType =
       llvm::IntegerType::get(getLLVMContext(),
                              getContext().getTypeSize(T));
-    const llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
-    const llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
+    llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
+    llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
     Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap,
                                     IntrinsicTypes, 2);
 
@@ -897,11 +897,11 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     unsigned AddrSpace =
       cast<llvm::PointerType>(DestPtr->getType())->getAddressSpace();
     
-    const llvm::IntegerType *IntType =
+    llvm::IntegerType *IntType =
       llvm::IntegerType::get(getLLVMContext(),
                              getContext().getTypeSize(T));
-    const llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
-    const llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
+    llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
+    llvm::Type *IntrinsicTypes[2] = { IntType, IntPtrType };
     Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap,
                                     IntrinsicTypes, 2);
 
@@ -984,7 +984,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       break;
     Value *Base = EmitScalarExpr(E->getArg(0));
     Value *Exponent = EmitScalarExpr(E->getArg(1));
-    const llvm::Type *ArgType = Base->getType();
+    llvm::Type *ArgType = Base->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::pow, &ArgType, 1);
     return RValue::get(Builder.CreateCall2(F, Base, Exponent, "tmp"));
   }
@@ -997,7 +997,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_fmal: {
     // Rewrite fma to intrinsic.
     Value *FirstArg = EmitScalarExpr(E->getArg(0));
-    const llvm::Type *ArgType = FirstArg->getType();
+    llvm::Type *ArgType = FirstArg->getType();
     Value *F = CGM.getIntrinsic(Intrinsic::fma, &ArgType, 1);
     return RValue::get(Builder.CreateCall3(F, FirstArg,
                                               EmitScalarExpr(E->getArg(1)),
@@ -1122,8 +1122,7 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
   }
 }
 
-static const llvm::VectorType *GetNeonType(LLVMContext &C, unsigned type,
-                                           bool q) {
+static llvm::VectorType *GetNeonType(LLVMContext &C, unsigned type, bool q) {
   switch (type) {
     default: break;
     case 0: 
@@ -1254,7 +1253,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   if (BuiltinID == ARM::BI__builtin_arm_vcvtr_f ||
       BuiltinID == ARM::BI__builtin_arm_vcvtr_d) {
     // Determine the overloaded type of this builtin.
-    const llvm::Type *Ty;
+    llvm::Type *Ty;
     if (BuiltinID == ARM::BI__builtin_arm_vcvtr_f)
       Ty = llvm::Type::getFloatTy(getLLVMContext());
     else
@@ -1277,8 +1276,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   (void)poly;  // Only used in assert()s.
   bool rightShift = false;
 
-  const llvm::VectorType *VTy = GetNeonType(getLLVMContext(), type & 0x7, quad);
-  const llvm::Type *Ty = VTy;
+  llvm::VectorType *VTy = GetNeonType(getLLVMContext(), type & 0x7, quad);
+  llvm::Type *Ty = VTy;
   if (!Ty)
     return 0;
 
@@ -1362,7 +1361,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
   case ARM::BI__builtin_neon_vcvt_n_f32_v:
   case ARM::BI__builtin_neon_vcvtq_n_f32_v: {
-    const llvm::Type *Tys[2] = { GetNeonType(getLLVMContext(), 4, quad), Ty };
+    llvm::Type *Tys[2] = { GetNeonType(getLLVMContext(), 4, quad), Ty };
     Int = usgn ? Intrinsic::arm_neon_vcvtfxu2fp : Intrinsic::arm_neon_vcvtfxs2fp;
     Function *F = CGM.getIntrinsic(Int, Tys, 2);
     return EmitNeonCall(F, Ops, "vcvt_n");
@@ -1371,7 +1370,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vcvt_n_u32_v:
   case ARM::BI__builtin_neon_vcvtq_n_s32_v:
   case ARM::BI__builtin_neon_vcvtq_n_u32_v: {
-    const llvm::Type *Tys[2] = { Ty, GetNeonType(getLLVMContext(), 4, quad) };
+    llvm::Type *Tys[2] = { Ty, GetNeonType(getLLVMContext(), 4, quad) };
     Int = usgn ? Intrinsic::arm_neon_vcvtfp2fxu : Intrinsic::arm_neon_vcvtfp2fxs;
     Function *F = CGM.getIntrinsic(Int, Tys, 2);
     return EmitNeonCall(F, Ops, "vcvt_n");
@@ -1589,9 +1588,9 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
     const llvm::Type *EltTy =
       llvm::IntegerType::get(getLLVMContext(), EltBits / 2);
-    const llvm::Type *NarrowTy =
+    llvm::Type *NarrowTy =
       llvm::VectorType::get(EltTy, VTy->getNumElements() * 2);
-    const llvm::Type *Tys[2] = { Ty, NarrowTy };
+    llvm::Type *Tys[2] = { Ty, NarrowTy };
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys, 2), Ops, "vpadal");
   }
   case ARM::BI__builtin_neon_vpadd_v:
@@ -1603,9 +1602,9 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     // The source operand type has twice as many elements of half the size.
     unsigned EltBits = VTy->getElementType()->getPrimitiveSizeInBits();
     const llvm::Type *EltTy = llvm::IntegerType::get(getLLVMContext(), EltBits / 2);
-    const llvm::Type *NarrowTy =
+    llvm::Type *NarrowTy =
       llvm::VectorType::get(EltTy, VTy->getNumElements() * 2);
-    const llvm::Type *Tys[2] = { Ty, NarrowTy };
+    llvm::Type *Tys[2] = { Ty, NarrowTy };
     return EmitNeonCall(CGM.getIntrinsic(Int, Tys, 2), Ops, "vpaddl");
   }
   case ARM::BI__builtin_neon_vpmax_v:

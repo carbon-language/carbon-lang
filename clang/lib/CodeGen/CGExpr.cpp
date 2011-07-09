@@ -505,7 +505,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
   // This needs to be to the standard address space.
   Address = Builder.CreateBitCast(Address, Int8PtrTy);
 
-  const llvm::Type *IntPtrT = IntPtrTy;
+  llvm::Type *IntPtrT = IntPtrTy;
   llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::objectsize, &IntPtrT, 1);
 
   // In time, people may want to control this and use a 1 here.

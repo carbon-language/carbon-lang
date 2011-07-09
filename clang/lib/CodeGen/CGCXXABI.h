@@ -82,7 +82,7 @@ public:
 
   /// Find the LLVM type used to represent the given member pointer
   /// type.
-  virtual const llvm::Type *
+  virtual llvm::Type *
   ConvertMemberPointerType(const MemberPointerType *MPT);
 
   /// Load a member function from an object and a member function

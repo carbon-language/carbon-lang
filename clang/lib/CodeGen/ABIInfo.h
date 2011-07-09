@@ -68,22 +68,22 @@ namespace clang {
 
   private:
     Kind TheKind;
-    llvm::PATypeHolder TypeData;
+    llvm::Type *TypeData;
     unsigned UIntData;
     bool BoolData0;
     bool BoolData1;
 
-    ABIArgInfo(Kind K, const llvm::Type *TD=0,
+    ABIArgInfo(Kind K, llvm::Type *TD=0,
                unsigned UI=0, bool B0 = false, bool B1 = false)
       : TheKind(K), TypeData(TD), UIntData(UI), BoolData0(B0), BoolData1(B1) {}
 
   public:
     ABIArgInfo() : TheKind(Direct), TypeData(0), UIntData(0) {}
 
-    static ABIArgInfo getDirect(const llvm::Type *T = 0, unsigned Offset = 0) {
+    static ABIArgInfo getDirect(llvm::Type *T = 0, unsigned Offset = 0) {
       return ABIArgInfo(Direct, T, Offset);
     }
-    static ABIArgInfo getExtend(const llvm::Type *T = 0) {
+    static ABIArgInfo getExtend(llvm::Type *T = 0) {
       return ABIArgInfo(Extend, T, 0);
     }
     static ABIArgInfo getIgnore() {
@@ -113,12 +113,12 @@ namespace clang {
       assert((isDirect() || isExtend()) && "Not a direct or extend kind");
       return UIntData;
     }
-    const llvm::Type *getCoerceToType() const {
+    llvm::Type *getCoerceToType() const {
       assert(canHaveCoerceToType() && "Invalid kind!");
       return TypeData;
     }
 
-    void setCoerceToType(const llvm::Type *T) {
+    void setCoerceToType(llvm::Type *T) {
       assert(canHaveCoerceToType() && "Invalid kind!");
       TypeData = T;
     }

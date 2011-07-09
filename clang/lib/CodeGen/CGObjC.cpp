@@ -1328,7 +1328,7 @@ static llvm::Value *emitARCValueOperation(CodeGenFunction &CGF,
   if (isa<llvm::ConstantPointerNull>(value)) return value;
 
   if (!fn) {
-    std::vector<const llvm::Type*> args(1, CGF.Int8PtrTy);
+    std::vector<llvm::Type*> args(1, CGF.Int8PtrTy);
     const llvm::FunctionType *fnType =
       llvm::FunctionType::get(CGF.Int8PtrTy, args, false);
     fn = createARCRuntimeFunction(CGF.CGM, fnType, fnName);
@@ -1353,7 +1353,7 @@ static llvm::Value *emitARCLoadOperation(CodeGenFunction &CGF,
                                          llvm::Constant *&fn,
                                          llvm::StringRef fnName) {
   if (!fn) {
-    std::vector<const llvm::Type*> args(1, CGF.Int8PtrPtrTy);
+    std::vector<llvm::Type*> args(1, CGF.Int8PtrPtrTy);
     const llvm::FunctionType *fnType =
       llvm::FunctionType::get(CGF.Int8PtrTy, args, false);
     fn = createARCRuntimeFunction(CGF.CGM, fnType, fnName);
@@ -1388,7 +1388,7 @@ static llvm::Value *emitARCStoreOperation(CodeGenFunction &CGF,
            == value->getType());
 
   if (!fn) {
-    std::vector<const llvm::Type*> argTypes(2);
+    std::vector<llvm::Type*> argTypes(2);
     argTypes[0] = CGF.Int8PtrPtrTy;
     argTypes[1] = CGF.Int8PtrTy;
 
@@ -1420,7 +1420,7 @@ static void emitARCCopyOperation(CodeGenFunction &CGF,
   assert(dst->getType() == src->getType());
 
   if (!fn) {
-    std::vector<const llvm::Type*> argTypes(2, CGF.Int8PtrPtrTy);
+    std::vector<llvm::Type*> argTypes(2, CGF.Int8PtrPtrTy);
     const llvm::FunctionType *fnType
       = llvm::FunctionType::get(CGF.Builder.getVoidTy(), argTypes, false);
     fn = createARCRuntimeFunction(CGF.CGM, fnType, fnName);
@@ -1518,7 +1518,7 @@ void CodeGenFunction::EmitARCRelease(llvm::Value *value, bool precise) {
 
   llvm::Constant *&fn = CGM.getARCEntrypoints().objc_release;
   if (!fn) {
-    std::vector<const llvm::Type*> args(1, Int8PtrTy);
+    std::vector<llvm::Type*> args(1, Int8PtrTy);
     const llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), args, false);
     fn = createARCRuntimeFunction(CGM, fnType, "objc_release");
@@ -1548,7 +1548,7 @@ llvm::Value *CodeGenFunction::EmitARCStoreStrongCall(llvm::Value *addr,
 
   llvm::Constant *&fn = CGM.getARCEntrypoints().objc_storeStrong;
   if (!fn) {
-    const llvm::Type *argTypes[] = { Int8PtrPtrTy, Int8PtrTy };
+    llvm::Type *argTypes[] = { Int8PtrPtrTy, Int8PtrTy };
     const llvm::FunctionType *fnType
       = llvm::FunctionType::get(Builder.getVoidTy(), argTypes, false);
     fn = createARCRuntimeFunction(CGM, fnType, "objc_storeStrong");
@@ -1702,7 +1702,7 @@ void CodeGenFunction::EmitARCInitWeak(llvm::Value *addr, llvm::Value *value) {
 void CodeGenFunction::EmitARCDestroyWeak(llvm::Value *addr) {
   llvm::Constant *&fn = CGM.getARCEntrypoints().objc_destroyWeak;
   if (!fn) {
-    std::vector<const llvm::Type*> args(1, Int8PtrPtrTy);
+    std::vector<llvm::Type*> args(1, Int8PtrPtrTy);
     const llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), args, false);
     fn = createARCRuntimeFunction(CGM, fnType, "objc_destroyWeak");
@@ -1756,7 +1756,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolPop(llvm::Value *value) {
 
   llvm::Constant *&fn = CGM.getRREntrypoints().objc_autoreleasePoolPop;
   if (!fn) {
-    std::vector<const llvm::Type*> args(1, Int8PtrTy);
+    std::vector<llvm::Type*> args(1, Int8PtrTy);
     const llvm::FunctionType *fnType =
       llvm::FunctionType::get(Builder.getVoidTy(), args, false);
 
@@ -2406,7 +2406,7 @@ void CodeGenFunction::EmitObjCAutoreleasePoolStmt(
 /// make sure it survives garbage collection until this point.
 void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
   // We just use an inline assembly.
-  const llvm::Type *paramTypes[] = { VoidPtrTy };
+  llvm::Type *paramTypes[] = { VoidPtrTy };
   llvm::FunctionType *extenderType
     = llvm::FunctionType::get(VoidTy, paramTypes, /*variadic*/ false);
   llvm::Value *extender

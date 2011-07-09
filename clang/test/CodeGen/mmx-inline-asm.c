@@ -2,7 +2,7 @@
 // <rdar://problem/9091220>
 #include <mmintrin.h>
 
-// CHECK: type { x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx }
+// CHECK: { x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx, x86_mmx }
 
 void foo(long long fill) {
   __m64 vfill = _mm_cvtsi64_m64(fill);
