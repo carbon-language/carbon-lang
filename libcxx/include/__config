@@ -285,4 +285,8 @@ template <unsigned> struct __static_assert_check {};
 #define __has_feature(__x) 0
 #endif
 
+#ifdef __APPLE__
+#define _LIBCPP_STABLE_APPLE_ABI
+#endif
+
 #endif  // _LIBCPP_CONFIG

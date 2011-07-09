@@ -116,6 +116,7 @@ namespace with_locale { namespace {
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+#ifndef _LIBCPP_APPLE_STABLE_ABI
 locale_t __cloc() {
   // In theory this could create a race condition. In practice
   // the race condition is non-fatal since it will just create
@@ -127,6 +128,7 @@ locale_t __cloc() {
   return result;
 #endif
 }
+#endif // _LIBCPP_APPLE_STABLE_ABI
 
 namespace {
 
@@ -812,30 +814,46 @@ ctype<wchar_t>::do_scan_not(mask m, const char_type* low, const char_type* high)
 wchar_t
 ctype<wchar_t>::do_toupper(char_type c) const
 {
+#ifndef _LIBCPP_STABLE_APPLE_ABI
     return isascii(c) ? ctype<char>::__classic_upper_table()[c] : c;
+#else
+    return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
+#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_toupper(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
+#ifndef _LIBCPP_STABLE_APPLE_ABI
         *low = isascii(*low) ? ctype<char>::__classic_upper_table()[*low]
                              : *low;
+#else
+        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
+#endif
     return low;
 }
 
 wchar_t
 ctype<wchar_t>::do_tolower(char_type c) const
 {
+#ifndef _LIBCPP_STABLE_APPLE_ABI
     return isascii(c) ? ctype<char>::__classic_lower_table()[c] : c;
+#else
+    return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
+#endif
 }
 
 const wchar_t*
 ctype<wchar_t>::do_tolower(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
+#ifndef _LIBCPP_STABLE_APPLE_ABI
         *low = isascii(*low) ? ctype<char>::__classic_lower_table()[*low]
                              : *low;
+#else
+        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
+#endif
     return low;
 }
 
@@ -894,28 +912,44 @@ ctype<char>::~ctype()
 char
 ctype<char>::do_toupper(char_type c) const
 {
+#ifndef _LIBCPP_STABLE_APPLE_ABI
     return isascii(c) ? __classic_upper_table()[c] : c;
+#else
+    return isascii(c) ? _DefaultRuneLocale.__mapupper[c] : c;
+#endif
 }
 
 const char*
 ctype<char>::do_toupper(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
+#ifndef _LIBCPP_STABLE_APPLE_ABI
         *low = isascii(*low) ? __classic_upper_table()[*low] : *low;
+#else
+        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[c] : c;
+#endif
     return low;
 }
 
 char
 ctype<char>::do_tolower(char_type c) const
 {
+#ifndef _LIBCPP_STABLE_APPLE_ABI
     return isascii(c) ? __classic_lower_table()[c] : c;
+#else
+    return isascii(c) ? _DefaultRuneLocale.__maplower[c] : c;
+#endif
 }
 
 const char*
 ctype<char>::do_tolower(char_type* low, const char_type* high) const
 {
     for (; low != high; ++low)
+#ifndef _LIBCPP_STABLE_APPLE_ABI
         *low = isascii(*low) ? __classic_lower_table()[*low] : *low;
+#else
+        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[c] : c;
+#endif
     return low;
 }
 
@@ -965,6 +999,7 @@ ctype<char>::classic_table()  _NOEXCEPT
 #endif
 }
 
+#ifndef _LIBCPP_APPLE_STABLE_ABI
 const int*
 ctype<char>::__classic_lower_table() _NOEXCEPT
 {
@@ -988,6 +1023,7 @@ ctype<char>::__classic_upper_table() _NOEXCEPT
     return NULL;
 #endif
 }
+#endif // _LIBCPP_APPLE_STABLE_ABI
 
 // template <> class ctype_byname<char>
 
