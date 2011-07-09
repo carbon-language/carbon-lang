@@ -298,7 +298,7 @@ public:
                        "memory read",
                        "Read from the memory of the process being debugged.",
                        NULL,
-                       eFlagProcessMustBeLaunched),
+                       eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_format_options (eFormatBytesWithASCII, 0, true),
         m_memory_options (),
@@ -351,9 +351,9 @@ public:
              CommandReturnObject &result)
     {
         ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
-        if (exe_ctx.process == NULL)
+        if (exe_ctx.target == NULL)
         {
-            result.AppendError("need a process to read memory");
+            result.AppendError("need at least a target to read memory");
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -561,7 +561,8 @@ public:
         if (!clang_ast_type.GetOpaqueQualType())
         {
             data_sp.reset (new DataBufferHeap (total_byte_size, '\0'));
-            bytes_read = exe_ctx.process->ReadMemory(addr, data_sp->GetBytes (), data_sp->GetByteSize(), error);
+            Address address(NULL, addr);
+            bytes_read = exe_ctx.target->ReadMemory(address, false, data_sp->GetBytes (), data_sp->GetByteSize(), error);
             if (bytes_read == 0)
             {
                 result.AppendWarningWithFormat("Read from 0x%llx failed.\n", addr);

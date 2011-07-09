@@ -39,7 +39,6 @@ ThreadPlanStepOverBreakpoint::ThreadPlanStepOverBreakpoint (Thread &thread) :
 {
     m_breakpoint_addr = m_thread.GetRegisterContext()->GetPC();
     m_breakpoint_site_id =  m_thread.GetProcess().GetBreakpointSiteList().FindIDByAddress (m_breakpoint_addr);
-
 }
 
 ThreadPlanStepOverBreakpoint::~ThreadPlanStepOverBreakpoint ()

@@ -229,9 +229,13 @@ CommandObject::ExecuteWithOptions (Args& args, CommandReturnObject &result)
         Process *process = m_interpreter.GetExecutionContext().process;
         if (process == NULL)
         {
-            result.AppendError ("Process must exist.");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
+            // A process that is not running is considered paused.
+            if (GetFlags().Test(CommandObject::eFlagProcessMustBeLaunched))
+            {
+                result.AppendError ("Process must exist.");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
         }
         else
         {
