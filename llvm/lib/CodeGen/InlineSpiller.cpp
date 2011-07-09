@@ -303,7 +303,8 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
   // Best spill candidate seen so far. This must dominate UseVNI.
   SibValueInfo SVI(UseReg, UseVNI);
   MachineBasicBlock *UseMBB = LIS.getMBBFromIndex(UseVNI->def);
-  unsigned SpillDepth = Loops.getLoopDepth(UseMBB);
+  MachineBasicBlock *SpillMBB = UseMBB;
+  unsigned SpillDepth = Loops.getLoopDepth(SpillMBB);
   bool SeenOrigPHI = false; // Original PHI met.
 
   do {
@@ -316,15 +317,39 @@ MachineInstr *InlineSpiller::traceSiblingValue(unsigned UseReg, VNInfo *UseVNI,
     // Is this value a better spill candidate?
     if (!isRegToSpill(Reg)) {
       MachineBasicBlock *MBB = LIS.getMBBFromIndex(VNI->def);
-      if (MBB != UseMBB && MDT.dominates(MBB, UseMBB)) {
+      if (MBB == SpillMBB) {
+        // This is an alternative def earlier in the same MBB.
+        // Hoist the spill as far as possible in SpillMBB. This can ease
+        // register pressure:
+        //
+        //   x = def
+        //   y = use x
+        //   s = copy x
+        //
+        // Hoisting the spill of s to immediately after the def removes the
+        // interference between x and y:
+        //
+        //   x = def
+        //   spill x
+        //   y = use x<kill>
+        //
+        if (VNI->def < SVI.SpillVNI->def) {
+          DEBUG(dbgs() << "  hoist in BB#" << MBB->getNumber() << ": "
+                       << PrintReg(Reg) << ':' << VNI->id << '@' << VNI->def
+                       << '\n');
+          SVI.SpillReg = Reg;
+          SVI.SpillVNI = VNI;
+        }
+      } else if (MBB != UseMBB && MDT.dominates(MBB, UseMBB)) {
         // This is a valid spill location dominating UseVNI.
         // Prefer to spill at a smaller loop depth.
         unsigned Depth = Loops.getLoopDepth(MBB);
-        if (Depth < SpillDepth) {
+        if (Depth <= SpillDepth) {
           DEBUG(dbgs() << "  spill depth " << Depth << ": " << PrintReg(Reg)
                        << ':' << VNI->id << '@' << VNI->def << '\n');
           SVI.SpillReg = Reg;
           SVI.SpillVNI = VNI;
+          SpillMBB = MBB;
           SpillDepth = Depth;
         }
       }
