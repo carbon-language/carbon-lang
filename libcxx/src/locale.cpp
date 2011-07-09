@@ -926,7 +926,7 @@ ctype<char>::do_toupper(char_type* low, const char_type* high) const
 #ifndef _LIBCPP_STABLE_APPLE_ABI
         *low = isascii(*low) ? __classic_upper_table()[*low] : *low;
 #else
-        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[c] : c;
+        *low = isascii(*low) ? _DefaultRuneLocale.__mapupper[*low] : *low;
 #endif
     return low;
 }
@@ -948,7 +948,7 @@ ctype<char>::do_tolower(char_type* low, const char_type* high) const
 #ifndef _LIBCPP_STABLE_APPLE_ABI
         *low = isascii(*low) ? __classic_lower_table()[*low] : *low;
 #else
-        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[c] : c;
+        *low = isascii(*low) ? _DefaultRuneLocale.__maplower[*low] : *low;
 #endif
     return low;
 }
@@ -999,7 +999,7 @@ ctype<char>::classic_table()  _NOEXCEPT
 #endif
 }
 
-#ifndef _LIBCPP_APPLE_STABLE_ABI
+#ifndef _LIBCPP_STABLE_APPLE_ABI
 const int*
 ctype<char>::__classic_lower_table() _NOEXCEPT
 {
