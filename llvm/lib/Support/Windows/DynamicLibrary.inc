@@ -115,7 +115,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
        E = OpenedHandles.end(); I != E; ++I) {
     FARPROC ptr = GetProcAddress((HMODULE)*I, symbolName);
     if (ptr) {
-      return (void *) ptr;
+      return (void *)(intptr_t)ptr;
     }
   }
 

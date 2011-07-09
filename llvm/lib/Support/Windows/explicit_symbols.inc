@@ -2,7 +2,7 @@
 
 #ifdef HAVE__ALLOCA
   EXPLICIT_SYMBOL(_alloca)
-  EXPLICIT_SYMBOL2(alloca, _alloca);
+  EXPLICIT_SYMBOL2(alloca, _alloca)
 #endif
 #ifdef HAVE___ALLOCA
   EXPLICIT_SYMBOL(__alloca)
@@ -62,5 +62,5 @@
 
 /* msvcrt */
 #if defined(_MSC_VER)
-  EXPLICIT_SYMBOL2(alloca, _alloca_probe);
+  EXPLICIT_SYMBOL2(alloca, _alloca_probe)
 #endif
