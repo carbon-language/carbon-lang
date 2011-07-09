@@ -126,6 +126,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
 
   // Initialize targets first, so that --version shows registered targets.
   llvm::InitializeAllTargets();
+  llvm::InitializeAllMCSubtargetInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();
 
