@@ -31,6 +31,7 @@ CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
                            CGCXXABI &CXXABI, const CodeGenOptions &CGO)
   : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD),
     TheABIInfo(Info), TheCXXABI(CXXABI), CodeGenOpts(CGO) {
+  RecursionState = RS_Normal;
 }
 
 CodeGenTypes::~CodeGenTypes() {
