@@ -18,20 +18,10 @@
 
 namespace llvm {
 
-template<class BlockT, class FunctionT, class BranchProbInfoT>
-class BlockFrequencyImpl;
-class BranchProbabilityInfo;
-class MachineBranchProbabilityInfo;
-class MachineBasicBlock;
 class raw_ostream;
 
 // This class represents Branch Probability as a non-negative fraction.
 class BranchProbability {
-  template<class BlockT, class FunctionT, class BranchProbInfoT>
-  friend class BlockFrequencyImpl;
-  friend class BranchProbabilityInfo;
-  friend class MachineBranchProbabilityInfo;
-  friend class MachineBasicBlock;
 
   // Numerator
   uint32_t N;
@@ -39,12 +29,16 @@ class BranchProbability {
   // Denominator
   uint32_t D;
 
-  BranchProbability(uint32_t n, uint32_t d);
-
 public:
+  BranchProbability(uint32_t n, uint32_t d);
 
   uint32_t getNumerator() const { return N; }
   uint32_t getDenominator() const { return D; }
+  
+  // Return (1 - Probability).
+  BranchProbability getCompl() {
+    return BranchProbability(D - N, D);
+  }
 
   raw_ostream &print(raw_ostream &OS) const;
 

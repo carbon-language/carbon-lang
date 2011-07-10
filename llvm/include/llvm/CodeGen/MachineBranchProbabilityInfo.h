@@ -22,6 +22,7 @@
 namespace llvm {
 
 class raw_ostream;
+class MachineBasicBlock;
 
 class MachineBranchProbabilityInfo : public ImmutablePass {
 
