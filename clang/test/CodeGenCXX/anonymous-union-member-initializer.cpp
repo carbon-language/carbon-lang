@@ -86,7 +86,7 @@ namespace test3 {
   // CHECK-NEXT: [[UNION:%.*]] = getelementptr inbounds {{.*}} [[THIS]], i32 0, i32 0
   // CHECK-NEXT: [[STRUCT:%.*]] = bitcast {{.*}}* [[UNION]] to 
   // CHECK-NEXT: [[CALLBACK:%.*]] = getelementptr inbounds {{.*}} [[STRUCT]], i32 0, i32 0
-  // CHECK: store {{.*}}* null, {{.*}}** [[CALLBACK]]
+  // CHECK: store 
   // CHECK-NEXT: [[UNION:%.*]] = getelementptr inbounds {{.*}} [[THIS]], i32 0, i32 0
   // CHECK-NEXT: [[STRUCT:%.*]] = bitcast {{.*}}* [[UNION]] to 
   // CHECK-NEXT: [[CVALUE:%.*]] = getelementptr inbounds {{.*}} [[STRUCT]], i32 0, i32 1
