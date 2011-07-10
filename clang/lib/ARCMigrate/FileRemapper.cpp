@@ -114,7 +114,7 @@ bool FileRemapper::flushToDisk(llvm::StringRef outputDir, Diagnostic &Diag) {
   std::string infoFile = getRemapInfoFile(outputDir);
   llvm::raw_fd_ostream infoOut(infoFile.c_str(), errMsg,
                                llvm::raw_fd_ostream::F_Binary);
-  if (!errMsg.empty() || infoOut.has_error())
+  if (!errMsg.empty())
     return report(errMsg, Diag);
 
   for (MappingsTy::iterator
@@ -184,7 +184,7 @@ bool FileRemapper::overwriteOriginal(Diagnostic &Diag,
       std::string errMsg;
       llvm::raw_fd_ostream Out(origFE->getName(), errMsg,
                                llvm::raw_fd_ostream::F_Binary);
-      if (!errMsg.empty() || Out.has_error())
+      if (!errMsg.empty())
         return report(errMsg, Diag);
 
       llvm::MemoryBuffer *mem = I->second.get<llvm::MemoryBuffer *>();
