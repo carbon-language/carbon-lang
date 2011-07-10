@@ -764,14 +764,6 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         llvm::MDNode *TBAAInfo) {
   Value = EmitToMemory(Value, Ty);
   
-  // If this is a pointer r-value, make sure that it has the right scalar type.
-  if (isa<llvm::PointerType>(Value->getType())) {
-    llvm::Type *EltTy =
-      cast<llvm::PointerType>(Addr->getType())->getElementType();
-    if (EltTy != Value->getType())
-      Value = Builder.CreateBitCast(Value, EltTy);
-  }
-  
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (Alignment)
     Store->setAlignment(Alignment);
@@ -1880,9 +1872,17 @@ CodeGenFunction::EmitLValueForFieldInitialization(llvm::Value *BaseValue,
     CGM.getTypes().getCGRecordLayout(Field->getParent());
   unsigned idx = RL.getLLVMFieldNo(Field);
   llvm::Value *V = Builder.CreateStructGEP(BaseValue, idx, "tmp");
-
   assert(!FieldType.getObjCGCAttr() && "fields cannot have GC attrs");
 
+  
+  // Make sure that the address is pointing to the right type.  This is critical
+  // for both unions and structs.  A union needs a bitcast, a struct element
+  // will need a bitcast if the LLVM type laid out doesn't match the desired
+  // type.
+  const llvm::Type *llvmType = ConvertTypeForMem(FieldType);
+  unsigned AS = cast<llvm::PointerType>(V->getType())->getAddressSpace();
+  V = Builder.CreateBitCast(V, llvmType->getPointerTo(AS));
+  
   unsigned Alignment = getContext().getDeclAlign(Field).getQuantity();
   return MakeAddrLValue(V, FieldType, Alignment);
 }
