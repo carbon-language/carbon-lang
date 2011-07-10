@@ -112,7 +112,8 @@ bool FileRemapper::flushToDisk(llvm::StringRef outputDir, Diagnostic &Diag) {
 
   std::string errMsg;
   std::string infoFile = getRemapInfoFile(outputDir);
-  llvm::raw_fd_ostream infoOut(infoFile.c_str(), errMsg);
+  llvm::raw_fd_ostream infoOut(infoFile.c_str(), errMsg,
+                               llvm::raw_fd_ostream::F_Binary);
   if (!errMsg.empty() || infoOut.has_error())
     return report(errMsg, Diag);
 
