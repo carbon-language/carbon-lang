@@ -2937,7 +2937,8 @@ void CodeGenVTables::MaybeEmitThunkAvailableExternally(GlobalDecl GD,
 
   // We can't emit thunks for member functions with incomplete types.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
-  if (CGM.getTypes().VerifyFuncTypeComplete(MD->getType().getTypePtr()))
+  if (!CGM.getTypes().isFuncTypeConvertible(
+                                cast<FunctionType>(MD->getType().getTypePtr())))
     return;
 
   EmitThunk(GD, Thunk, /*UseAvailableExternallyLinkage=*/true);

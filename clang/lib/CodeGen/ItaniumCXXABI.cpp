@@ -537,7 +537,7 @@ llvm::Constant *ItaniumCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
     const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
     const llvm::Type *Ty;
     // Check whether the function has a computable LLVM signature.
-    if (!CodeGenTypes::VerifyFuncTypeComplete(FPT)) {
+    if (Types.isFuncTypeConvertible(FPT)) {
       // The function has a computable LLVM signature; use the correct type.
       Ty = Types.GetFunctionType(Types.getFunctionInfo(MD),
                                  FPT->isVariadic());

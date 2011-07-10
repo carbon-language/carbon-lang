@@ -115,3 +115,11 @@ void test11(struct test11S *P) {
   // CHECK: store i32 4
   // CHECK: ret void
 }
+
+
+// Verify that we can convert a recursive struct with a memory that returns
+// an instance of the struct we're converting.
+struct test12 {
+  struct test12 (*p)(void);
+} test12g;
+

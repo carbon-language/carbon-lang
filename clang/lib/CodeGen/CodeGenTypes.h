@@ -137,11 +137,12 @@ public:
 
   llvm::FunctionType *GetFunctionType(GlobalDecl GD);
 
-  /// VerifyFuncTypeComplete - Utility to check whether a function type can
+  /// isFuncTypeConvertible - Utility to check whether a function type can
   /// be converted to an LLVM type (i.e. doesn't depend on an incomplete tag
   /// type).
-  static const TagType *VerifyFuncTypeComplete(const Type* T);
-
+  bool isFuncTypeConvertible(const FunctionType *FT);
+  bool isFuncTypeArgumentConvertible(QualType Ty);
+  
   /// GetFunctionTypeForVTable - Get the LLVM function type for use in a vtable,
   /// given a CXXMethodDecl. If the method to has an incomplete return type,
   /// and/or incomplete argument types, this will return the opaque type.

@@ -704,16 +704,15 @@ const llvm::Type *CodeGenTypes::GetFunctionTypeForVTable(GlobalDecl GD) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
 
-  if (!VerifyFuncTypeComplete(FPT)) {
-    const CGFunctionInfo *Info;
-    if (isa<CXXDestructorDecl>(MD))
-      Info = &getFunctionInfo(cast<CXXDestructorDecl>(MD), GD.getDtorType());
-    else
-      Info = &getFunctionInfo(MD);
-    return GetFunctionType(*Info, FPT->isVariadic());
-  }
-
-  return llvm::StructType::get(getLLVMContext());
+  if (!isFuncTypeConvertible(FPT))
+    return llvm::StructType::get(getLLVMContext());
+    
+  const CGFunctionInfo *Info;
+  if (isa<CXXDestructorDecl>(MD))
+    Info = &getFunctionInfo(cast<CXXDestructorDecl>(MD), GD.getDtorType());
+  else
+    Info = &getFunctionInfo(MD);
+  return GetFunctionType(*Info, FPT->isVariadic());
 }
 
 void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
