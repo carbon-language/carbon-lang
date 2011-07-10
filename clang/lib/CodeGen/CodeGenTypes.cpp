@@ -167,7 +167,7 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
 
   // Only complete it if we converted it already.  If we haven't converted it
   // yet, we'll just do it lazily.
- // if (RecordDeclTypes.count(Context.getTagDeclType(RD).getTypePtr()))
+  if (RecordDeclTypes.count(Context.getTagDeclType(RD).getTypePtr()))
     ConvertRecordDeclType(RD);
 }
 
