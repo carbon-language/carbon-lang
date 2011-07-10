@@ -751,8 +751,9 @@ IfConverter::BBInfo &IfConverter::AnalyzeBlock(MachineBasicBlock *BB,
 
   ScanInstructions(BBI);
 
-  // Unanalyzable or ends with fallthrough or unconditional branch.
-  if (!BBI.IsBrAnalyzable || BBI.BrCond.empty()) {
+  // Unanalyzable or ends with fallthrough or unconditional branch, or if is not
+  // considered for ifcvt anymore.
+  if (!BBI.IsBrAnalyzable || BBI.BrCond.empty() || BBI.IsDone) {
     BBI.IsBeingAnalyzed = false;
     BBI.IsAnalyzed = true;
     return BBI;
