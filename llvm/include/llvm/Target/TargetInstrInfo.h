@@ -32,6 +32,7 @@ class SelectionDAG;
 class ScheduleDAG;
 class TargetRegisterClass;
 class TargetRegisterInfo;
+class BranchProbability;
 
 template<class T> class SmallVectorImpl;
 
@@ -321,7 +322,7 @@ public:
   virtual
   bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCyles,
                            unsigned ExtraPredCycles,
-                           float Probability, float Confidence) const {
+                           const BranchProbability &Probability) const {
     return false;
   }
 
@@ -336,7 +337,7 @@ public:
                       unsigned NumTCycles, unsigned ExtraTCycles,
                       MachineBasicBlock &FMBB,
                       unsigned NumFCycles, unsigned ExtraFCycles,
-                      float Probability, float Confidence) const {
+                      const BranchProbability &Probability) const {
     return false;
   }
 
@@ -348,7 +349,7 @@ public:
   /// will be properly predicted.
   virtual bool
   isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCyles,
-                            float Probability, float Confidence) const {
+                            const BranchProbability &Probability) const {
     return false;
   }
 

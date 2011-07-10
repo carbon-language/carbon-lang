@@ -311,18 +311,18 @@ public:
 
   virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB,
                                    unsigned NumCycles, unsigned ExtraPredCycles,
-                                   float Prob, float Confidence) const;
+                                   const BranchProbability &Probability) const;
 
   virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
                                    unsigned NumT, unsigned ExtraT,
                                    MachineBasicBlock &FMBB,
                                    unsigned NumF, unsigned ExtraF,
-                                   float Probability, float Confidence) const;
+                                   const BranchProbability &Probability) const;
 
   virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
                                          unsigned NumCycles,
-                                         float Probability,
-                                         float Confidence) const {
+                                         const BranchProbability
+                                           &Probability) const {
     return NumCycles == 1;
   }
 

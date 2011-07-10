@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -1273,20 +1274,20 @@ bool ARMBaseInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
   return false;
 }
 
-bool ARMBaseInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
-                                           unsigned NumCycles,
-                                           unsigned ExtraPredCycles,
-                                           float Probability,
-                                           float Confidence) const {
+bool ARMBaseInstrInfo::
+isProfitableToIfCvt(MachineBasicBlock &MBB,
+                    unsigned NumCycles, unsigned ExtraPredCycles,
+                    const BranchProbability &Probability) const {
   if (!NumCycles)
     return false;
 
   // Attempt to estimate the relative costs of predication versus branching.
-  float UnpredCost = Probability * NumCycles;
-  UnpredCost += 1.0; // The branch itself
-  UnpredCost += (1.0 - Confidence) * Subtarget.getMispredictionPenalty();
+  unsigned UnpredCost = Probability.getNumerator() * NumCycles;
+  UnpredCost /= Probability.getDenominator();
+  UnpredCost += 1; // The branch itself
+  UnpredCost += Subtarget.getMispredictionPenalty() / 10;
 
-  return (float)(NumCycles + ExtraPredCycles) < UnpredCost;
+  return (NumCycles + ExtraPredCycles) <= UnpredCost;
 }
 
 bool ARMBaseInstrInfo::
@@ -1294,16 +1295,23 @@ isProfitableToIfCvt(MachineBasicBlock &TMBB,
                     unsigned TCycles, unsigned TExtra,
                     MachineBasicBlock &FMBB,
                     unsigned FCycles, unsigned FExtra,
-                    float Probability, float Confidence) const {
+                    const BranchProbability &Probability) const {
   if (!TCycles || !FCycles)
     return false;
 
   // Attempt to estimate the relative costs of predication versus branching.
-  float UnpredCost = Probability * TCycles + (1.0 - Probability) * FCycles;
-  UnpredCost += 1.0; // The branch itself
-  UnpredCost += (1.0 - Confidence) * Subtarget.getMispredictionPenalty();
+  unsigned TUnpredCost = Probability.getNumerator() * TCycles;
+  TUnpredCost /= Probability.getDenominator();
+    
+  uint32_t Comp = Probability.getDenominator() - Probability.getNumerator();
+  unsigned FUnpredCost = Comp * FCycles;
+  FUnpredCost /= Probability.getDenominator();
 
-  return (float)(TCycles + FCycles + TExtra + FExtra) < UnpredCost;
+  unsigned UnpredCost = TUnpredCost + FUnpredCost;
+  UnpredCost += 1; // The branch itself
+  UnpredCost += Subtarget.getMispredictionPenalty() / 10;
+
+  return (TCycles + FCycles + TExtra + FExtra) <= UnpredCost;
 }
 
 /// getInstrPredicate - If instruction is predicated, returns its predicate
