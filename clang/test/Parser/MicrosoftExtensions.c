@@ -60,5 +60,5 @@ void ms_intrinsics(int a)
 {
   __noop();
   __assume(a);
-
+  __debugbreak();
 }

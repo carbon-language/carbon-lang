@@ -604,7 +604,7 @@ BUILTIN(__builtin_rindex, "c*cC*i", "Fn")
 // Microsoft builtins.
 BUILTIN(__assume, "vb", "n")
 BUILTIN(__noop, "v.", "n")
-BUILTIN(__debugbreak, "v.", "n")
+BUILTIN(__debugbreak, "v", "n")
 
 
 // C99 library functions
