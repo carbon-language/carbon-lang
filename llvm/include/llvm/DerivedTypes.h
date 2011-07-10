@@ -188,6 +188,7 @@ class StructType : public CompositeType {
   /// SymbolTableEntry - For a named struct that actually has a name, this is a
   /// pointer to the symbol table entry (maintained by LLVMContext) for the
   /// struct.  This is null if the type is an anonymous struct or if it is
+  /// a named type that has an empty name.
   /// 
   void *SymbolTableEntry;
 public:
