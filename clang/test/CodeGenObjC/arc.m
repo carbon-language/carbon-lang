@@ -1225,8 +1225,8 @@ void test39(void) {
   // CHECK:      [[CAPTURE:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
   // CHECK-NEXT: [[T0:%.*]] = load i8** [[VAR]]
   // CHECK-NEXT: store i8* [[T0]], i8** [[CAPTURE]]
-  // CHECK-NEXT: [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to void ()*
-  // CHECK-NEXT: call void @test39_helper(void ()* [[T0]])
+  // CHECK-NEXT: [[T0:%.*]] = bitcast [[BLOCK_T]]* [[BLOCK]] to
+  // CHECK-NEXT: call void @test39_helper({{.*}} [[T0]])
   // CHECK-NEXT: ret void
 }
 
@@ -1338,7 +1338,7 @@ void test41(void) {
 // CHECK-NEXT: [[T3:%.*]] = call i8* @objc_retain(i8* [[T2]])
 // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to [[TEST42]]*
 // CHECK-NEXT: store [[TEST42]]* [[T4]], [[TEST42]]** [[T0]]
-// CHECK-NEXT: bitcast [[BLOCK_T]]* [[BLOCK]] to void ()*
+// CHECK-NEXT: bitcast [[BLOCK_T]]* [[BLOCK]] to
 // CHECK-NEXT: call void @test42_helper(
 // CHECK-NEXT: [[T1:%.*]] = load [[TEST42]]** [[T0]]
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST42]]* [[T1]] to i8*

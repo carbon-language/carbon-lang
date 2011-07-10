@@ -104,6 +104,7 @@ bool CodeGenTypes::isFuncTypeArgumentConvertible(QualType Ty){
   const TagType *TT = Ty->getAs<TagType>();
   if (TT == 0) return true;
   
+  
   // If it's a tagged type, but is a forward decl, we can't convert it.
   if (!TT->getDecl()->isDefinition())
     return false;
@@ -158,8 +159,14 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
     return;
   }
   
+  // If we completed a RecordDecl that we previously used and converted to an
+  // anonymous type, then go ahead and complete it now.
   const RecordDecl *RD = cast<RecordDecl>(TD);
-  if (!RD->isDependentType())
+  if (RD->isDependentType()) return;
+
+  // Only complete it if we converted it already.  If we haven't converted it
+  // yet, we'll just do it lazily.
+ // if (RecordDeclTypes.count(Context.getTagDeclType(RD).getTypePtr()))
     ConvertRecordDeclType(RD);
 }
 
@@ -333,13 +340,20 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // First, check whether we can build the full function type.  If the
     // function type depends on an incomplete type (e.g. a struct or enum), we
     // cannot lower the function type.
-    if (!isFuncTypeConvertible(cast<FunctionType>(Ty))) {
+    if (RecursionState == RS_StructPointer ||
+        !isFuncTypeConvertible(cast<FunctionType>(Ty))) {
       // This function's type depends on an incomplete tag type.
       // Return a placeholder type.
       ResultType = llvm::StructType::get(getLLVMContext());
       break;
     }
 
+    // While we're converting the argument types for a function, we don't want
+    // to recursively convert any pointed-to structs.  Converting directly-used
+    // structs is ok though.
+    RecursionStateTy SavedRecursionState = RecursionState;
+    RecursionState = RS_Struct;
+    
     // The function type can be built; call the appropriate routines to
     // build it.
     const CGFunctionInfo *FI;
@@ -354,8 +368,15 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
                 CanQual<FunctionNoProtoType>::CreateUnsafe(QualType(FNPT, 0)));
       isVariadic = true;
     }
-
+    
     ResultType = GetFunctionType(*FI, isVariadic);
+    
+    // Restore our recursion state.
+    RecursionState = SavedRecursionState;
+    
+    if (RecursionState == RS_Normal)
+      while (!DeferredRecords.empty())
+        ConvertRecordDeclType(DeferredRecords.pop_back_val());
     break;
   }
 
@@ -463,10 +484,16 @@ llvm::StructType *CodeGenTypes::ConvertRecordDeclType(const RecordDecl *RD) {
   CGRecordLayout *Layout = ComputeRecordLayout(RD, Ty);
   CGRecordLayouts[Key] = Layout;
 
+  // If this struct blocked a FunctionType conversion, then recompute whatever
+  // was derived from that.
+  // FIXME: This is hugely overconservative.
+  TypeCache.clear();
+  
   
   // Restore our recursion state.  If we're done converting the outer-most
   // record, then convert any deferred structs as well.
   RecursionState = SavedRecursionState;
+  
   if (RecursionState == RS_Normal)
     while (!DeferredRecords.empty())
       ConvertRecordDeclType(DeferredRecords.pop_back_val());

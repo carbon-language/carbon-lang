@@ -181,3 +181,16 @@ range f18() {
   rangepair rp;
   return (rp = f18_ext()).range1;
 }
+
+
+
+// Complex forward reference of struct.
+struct f19S;
+extern struct f19T {
+  struct f19S (*p)(void);
+} t;
+struct f19S { int i; };
+void f19(void) {
+  t.p();
+}
+
