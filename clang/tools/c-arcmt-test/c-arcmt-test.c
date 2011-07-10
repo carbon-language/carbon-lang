@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#if defined(_WIN32)
+#include <io.h>
+#include <fcntl.h>
+#endif
 
 static int print_remappings(const char *path) {
   CMTRemap remap;
@@ -73,6 +77,7 @@ int main(int argc, const char **argv) {
 #if defined(_WIN32)
   if (getenv("LIBCLANG_LOGGING") == NULL)
     putenv("LIBCLANG_LOGGING=1");
+  _setmode( _fileno(stdout), _O_BINARY );
 #else
   setenv("LIBCLANG_LOGGING", "1", /*overwrite=*/0);
 #endif
