@@ -675,9 +675,15 @@ public:
             {
                 Section *section = m_section_list->FindSectionByID (n_sect).get();
                 m_section_infos[n_sect].section = section;
-                assert (section != NULL);
-                m_section_infos[n_sect].vm_range.SetBaseAddress (section->GetFileAddress());
-                m_section_infos[n_sect].vm_range.SetByteSize (section->GetByteSize());
+                if (section != NULL)
+                {
+                    m_section_infos[n_sect].vm_range.SetBaseAddress (section->GetFileAddress());
+                    m_section_infos[n_sect].vm_range.SetByteSize (section->GetByteSize());
+                }
+                else
+                {
+                    fprintf (stderr, "error: unable to find section for section %u\n", n_sect);
+                }
             }
             if (m_section_infos[n_sect].vm_range.Contains(file_addr))
                 return m_section_infos[n_sect].section;
