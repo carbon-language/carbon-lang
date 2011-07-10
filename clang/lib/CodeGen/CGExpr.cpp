@@ -756,6 +756,10 @@ llvm::Value *CodeGenFunction::EmitFromMemory(llvm::Value *Value, QualType Ty) {
     return Builder.CreateTrunc(Value, Builder.getInt1Ty(), "tobool");
   }
 
+  // If this is a pointer r-value, make sure that it has the right scalar type.
+  if (isa<llvm::PointerType>(Value->getType()))
+    return Builder.CreateBitCast(Value, ConvertType(Ty));
+
   return Value;
 }
 
@@ -764,6 +768,14 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         QualType Ty,
                                         llvm::MDNode *TBAAInfo) {
   Value = EmitToMemory(Value, Ty);
+  
+  if (isa<llvm::PointerType>(Value->getType())) {
+    llvm::Type *EltTy =
+      cast<llvm::PointerType>(Addr->getType())->getElementType();
+    if (EltTy != Value->getType())
+      Value = Builder.CreateBitCast(Value, EltTy);
+  }
+  
   llvm::StoreInst *Store = Builder.CreateStore(Value, Addr, Volatile);
   if (Alignment)
     Store->setAlignment(Alignment);
