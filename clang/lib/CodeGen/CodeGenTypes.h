@@ -86,7 +86,11 @@ class CodeGenTypes {
     RS_Struct,        // Recursively inside a struct conversion.
     RS_StructPointer  // Recursively inside a pointer in a struct.
   } RecursionState;
-  
+
+  /// SkippedLayout - True if we didn't layout a function bit due to a
+  /// RS_StructPointer RecursionState.
+  bool SkippedLayout;
+
   llvm::SmallVector<const RecordDecl *, 8> DeferredRecords;
   
   struct RecursionStatePointerRAII {
