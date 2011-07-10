@@ -142,6 +142,32 @@ Variable::Dump(Stream *s, bool show_context) const
     s->EOL();
 }
 
+bool
+Variable::DumpDeclaration (Stream *s, bool show_fullpaths, bool show_module)
+{
+    bool dumped_declaration_info = false;
+    if (m_owner_scope)
+    {
+        SymbolContext sc;
+        m_owner_scope->CalculateSymbolContext(&sc);
+        sc.block = NULL;
+        sc.line_entry.Clear();
+        bool show_inlined_frames = false;
+    
+        dumped_declaration_info = sc.DumpStopContext (s, 
+                                                      NULL, 
+                                                      Address(), 
+                                                      show_fullpaths, 
+                                                      show_module, 
+                                                      show_inlined_frames);
+        
+        if (sc.function)
+            s->PutChar(':');
+    }
+    if (m_declaration.DumpStopContext (s, false))
+        dumped_declaration_info = true;
+    return dumped_declaration_info;
+}
 
 size_t
 Variable::MemorySize() const

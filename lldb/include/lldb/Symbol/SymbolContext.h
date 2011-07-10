@@ -160,7 +160,7 @@ public:
     /// @param[in] so_addr
     ///     The resolved section offset address.
     //------------------------------------------------------------------
-    void
+    bool
     DumpStopContext (Stream *s,
                      ExecutionContextScope *exe_scope,
                      const Address &so_addr,

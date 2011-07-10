@@ -46,7 +46,7 @@ Declaration::Dump(Stream *s, bool show_fullpaths) const
     }
 }
 
-void
+bool
 Declaration::DumpStopContext (Stream *s, bool show_fullpaths) const
 {
     if (m_file)
@@ -62,15 +62,18 @@ Declaration::DumpStopContext (Stream *s, bool show_fullpaths) const
         if (m_column > 0)
             s->Printf(":%u", m_column);
 #endif
+        return true;
     }
-    else
+    else if (m_line > 0)
     {
         s->Printf(" line %u", m_line);
 #ifdef LLDB_ENABLE_DECLARATION_COLUMNS
         if (m_column > 0)
             s->Printf(":%u", m_column);
 #endif
+        return true;
     }
+    return false;
 }
 
 size_t

@@ -563,8 +563,8 @@ ValueObject::GetSummaryAsCString ()
                     if (type_flags.AnySet (ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer) &&
                         ClangASTContext::IsCharType (elem_or_pointee_clang_type))
                     {
-                        Process *process = exe_scope->CalculateProcess();
-                        if (process != NULL)
+                        Target *target = exe_scope->CalculateTarget();
+                        if (target != NULL)
                         {
                             lldb::addr_t cstr_address = LLDB_INVALID_ADDRESS;
                             AddressType cstr_address_type = eAddressTypeInvalid;
@@ -593,15 +593,21 @@ ValueObject::GetSummaryAsCString ()
                             }
                             if (cstr_address != LLDB_INVALID_ADDRESS)
                             {
+                                Address cstr_so_addr (NULL, cstr_address);
                                 DataExtractor data;
                                 size_t bytes_read = 0;
                                 std::vector<char> data_buffer;
                                 Error error;
+                                bool prefer_file_cache = false;
                                 if (cstr_len > 0)
                                 {
                                     data_buffer.resize(cstr_len);
                                     data.SetData (&data_buffer.front(), data_buffer.size(), lldb::endian::InlHostByteOrder());
-                                    bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), cstr_len, error);
+                                    bytes_read = target->ReadMemory (cstr_so_addr, 
+                                                                     prefer_file_cache, 
+                                                                     &data_buffer.front(), 
+                                                                     cstr_len, 
+                                                                     error);
                                     if (bytes_read > 0)
                                     {
                                         sstr << '"';
@@ -629,7 +635,11 @@ ValueObject::GetSummaryAsCString ()
                                     sstr << '"';
 
                                     data.SetData (&data_buffer.front(), data_buffer.size(), endian::InlHostByteOrder());
-                                    while ((bytes_read = process->ReadMemory (cstr_address, &data_buffer.front(), k_max_buf_size, error)) > 0)
+                                    while ((bytes_read = target->ReadMemory (cstr_so_addr, 
+                                                                             prefer_file_cache,
+                                                                             &data_buffer.front(), 
+                                                                             k_max_buf_size, 
+                                                                             error)) > 0)
                                     {
                                         size_t len = strlen(&data_buffer.front());
                                         if (len == 0)
@@ -649,7 +659,7 @@ ValueObject::GetSummaryAsCString ()
                                         
                                         if (len < k_max_buf_size)
                                             break;
-                                        cstr_address += k_max_buf_size;
+                                        cstr_so_addr.Slide (k_max_buf_size);
                                     }
                                     sstr << '"';
                                 }

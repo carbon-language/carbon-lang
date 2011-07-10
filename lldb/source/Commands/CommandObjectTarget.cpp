@@ -466,10 +466,12 @@ public:
                 break;
         }
         
-        if (m_option_variable.show_decl && var_sp->GetDeclaration ().GetFile())
+        if (m_option_variable.show_decl)
         {
-            var_sp->GetDeclaration ().DumpStopContext (&s, false);
-            s.PutCString (": ");
+            bool show_fullpaths = false;
+            bool show_module = true;
+            if (var_sp->DumpDeclaration(&s, show_fullpaths, show_module))
+                s.PutCString (": ");
         }
         
         const Format format = m_option_variable.format;
@@ -528,6 +530,7 @@ public:
 
                     const char *arg = args.GetArgumentAtIndex(idx);
                     uint32_t matches = 0;
+                    bool use_var_name = false;
                     if (m_option_variable.use_regex)
                     {
                         RegularExpression regex(arg);
@@ -537,6 +540,7 @@ public:
                             result.SetStatus (eReturnStatusFailed);
                             return false;
                         }
+                        use_var_name = true;
                         matches = exe_ctx.target->GetImages().FindGlobalVariables (regex,
                                                                                    true, 
                                                                                    UINT32_MAX, 
@@ -573,10 +577,10 @@ public:
                             {
                                 ValueObjectSP valobj_sp (valobj_list.GetValueObjectAtIndex(global_idx));
                                 if (!valobj_sp)
-                                    valobj_sp = ValueObjectVariable::Create (exe_ctx.target, var_sp);
+                                    valobj_sp = ValueObjectVariable::Create (exe_ctx.GetBestExecutionContextScope(), var_sp);
                                 
                                 if (valobj_sp)
-                                    DumpValueObject (s, var_sp, valobj_sp, arg);
+                                    DumpValueObject (s, var_sp, valobj_sp, use_var_name ? var_sp->GetName().GetCString() : arg);
                             }
                         }
                     }

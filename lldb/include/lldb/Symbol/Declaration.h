@@ -141,7 +141,7 @@ public:
     void
     Dump (Stream *s, bool show_fullpaths) const;
 
-    void
+    bool
     DumpStopContext (Stream *s, bool show_fullpaths) const;
     //------------------------------------------------------------------
     /// Get accessor for the declaration column number.

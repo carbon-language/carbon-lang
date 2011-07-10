@@ -479,8 +479,10 @@ public:
                                                 
                                                 if (m_option_variable.show_decl && var_sp->GetDeclaration ().GetFile())
                                                 {
-                                                    var_sp->GetDeclaration ().DumpStopContext (&s, false);
-                                                    s.PutCString (": ");
+                                                    bool show_fullpaths = false;
+                                                    bool show_module = true;
+                                                    if (var_sp->DumpDeclaration(&s, show_fullpaths, show_module))
+                                                        s.PutCString (": ");
                                                 }
                                                 
                                                 ValueObject::DumpValueObject (result.GetOutputStream(), 

@@ -110,7 +110,7 @@ SymbolContext::Clear()
     symbol      = NULL;
 }
 
-void
+bool
 SymbolContext::DumpStopContext
 (
     Stream *s,
@@ -121,6 +121,7 @@ SymbolContext::DumpStopContext
     bool show_inlined_frames
 ) const
 {
+    bool dumped_something = false;
     if (show_module && module_sp)
     {
         if (show_fullpaths)
@@ -128,18 +129,25 @@ SymbolContext::DumpStopContext
         else
             *s << module_sp->GetFileSpec().GetFilename();
         s->PutChar('`');
+        dumped_something = true;
     }
 
     if (function != NULL)
     {
         if (function->GetMangled().GetName())
+        {
+            dumped_something = true;
             function->GetMangled().GetName().Dump(s);
+        }
 
         if (addr.IsValid())
         {
             const addr_t function_offset = addr.GetOffset() - function->GetAddressRange().GetBaseAddress().GetOffset();
             if (function_offset)
-                s->Printf(" + %llu", function_offset);
+            {
+                dumped_something = true;
+                s->Printf(" + %llu", function_offset);                
+            }
         }
 
         if (block != NULL)
@@ -147,11 +155,13 @@ SymbolContext::DumpStopContext
             s->IndentMore();
             block->DumpStopContext (s, this, NULL, show_fullpaths, show_inlined_frames);
             s->IndentLess();
+            dumped_something = true;
         }
         else
         {
             if (line_entry.IsValid())
             {
+                dumped_something = true;
                 s->PutCString(" at ");
                 if (line_entry.DumpStopContext(s, show_fullpaths))
                     return;
@@ -160,19 +170,28 @@ SymbolContext::DumpStopContext
     }
     else if (symbol != NULL)
     {
-        symbol->GetMangled().GetName().Dump(s);
+        if (symbol->GetMangled().GetName())
+        {
+            dumped_something = true;
+            symbol->GetMangled().GetName().Dump(s);
+        }
 
         if (addr.IsValid() && symbol->GetAddressRangePtr())
         {
             const addr_t symbol_offset = addr.GetOffset() - symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset();
             if (symbol_offset)
-                s->Printf(" + %llu", symbol_offset);
+            {
+                dumped_something = true;
+                s->Printf(" + %llu", symbol_offset);                
+            }
         }
     }
     else if (addr.IsValid())
     {
         addr.Dump(s, exe_scope, Address::DumpStyleModuleWithFileAddress);
+        dumped_something = true;
     }
+    return dumped_something;
 }
 
 void

@@ -44,6 +44,11 @@ public:
     void
     Dump(Stream *s, bool show_context) const;
 
+    bool
+    DumpDeclaration (Stream *s, 
+                     bool show_fullpaths, 
+                     bool show_module);
+    
     const Declaration&
     GetDeclaration() const
     {
