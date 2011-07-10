@@ -1720,6 +1720,7 @@ Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
          "Tried to create insertelement operation on non-first-class type!");
 
   const Type *ReqTy = Agg->getType();
+  (void)ReqTy;
 #ifndef NDEBUG
   const Type *ValTy =
     ExtractValueInst::getIndexedType(Agg->getType(), Idxs, Idxs+NumIdx);
@@ -1745,6 +1746,7 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
 
   const Type *ReqTy =
     ExtractValueInst::getIndexedType(Agg->getType(), Idxs, Idxs+NumIdx);
+  (void)ReqTy;
   assert(ReqTy && "extractvalue indices invalid!");
   
   assert(Agg->getType()->isFirstClassType() &&
