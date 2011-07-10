@@ -247,6 +247,7 @@ EmitExprForReferenceBinding(CodeGenFunction &CGF, const Expr *E,
       RV = CGF.EmitLoadOfPropertyRefLValue(LV);
       return RV.getScalarVal();
     }
+    
     if (LV.isSimple())
       return LV.getAddress();
     
@@ -460,9 +461,7 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
   else {
     switch (ObjCARCReferenceLifetimeType.getObjCLifetime()) {
     case Qualifiers::OCL_None:
-      llvm_unreachable("Not a reference temporary that needs to be deallocated");
-      break;
-        
+      assert(0 && "Not a reference temporary that needs to be deallocated");
     case Qualifiers::OCL_ExplicitNone:
     case Qualifiers::OCL_Autoreleasing:
       // Nothing to do.
@@ -769,6 +768,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                         llvm::MDNode *TBAAInfo) {
   Value = EmitToMemory(Value, Ty);
   
+  // If this is a pointer r-value, make sure that it has the right scalar type.
   if (isa<llvm::PointerType>(Value->getType())) {
     llvm::Type *EltTy =
       cast<llvm::PointerType>(Addr->getType())->getElementType();
@@ -1295,13 +1295,14 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   if (VD->getType()->isReferenceType())
     V = CGF.Builder.CreateLoad(V, "tmp");
   unsigned Alignment = CGF.getContext().getDeclAlign(VD).getQuantity();
+  
   LValue LV = CGF.MakeAddrLValue(V, E->getType(), Alignment);
   setObjCGCLValueClass(CGF.getContext(), E, LV);
   return LV;
 }
 
 static LValue EmitFunctionDeclLValue(CodeGenFunction &CGF,
-                                      const Expr *E, const FunctionDecl *FD) {
+                                     const Expr *E, const FunctionDecl *FD) {
   llvm::Value *V = CGF.CGM.GetAddrOfFunction(FD);
   if (!FD->hasPrototype()) {
     if (const FunctionProtoType *Proto =
@@ -1813,20 +1814,14 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
 
   bool mayAlias = rec->hasAttr<MayAliasAttr>();
 
-  llvm::Value *addr;
+  llvm::Value *addr = baseAddr;
   if (rec->isUnion()) {
-    // For unions, we just cast to the appropriate type.
+    // For unions, there is no pointer adjustment.
     assert(!type->isReferenceType() && "union has reference member");
-
-    const llvm::Type *llvmType = CGM.getTypes().ConvertTypeForMem(type);
-    unsigned AS =
-      cast<llvm::PointerType>(baseAddr->getType())->getAddressSpace();
-    addr = Builder.CreateBitCast(baseAddr, llvmType->getPointerTo(AS),
-                                 field->getName());
   } else {
     // For structs, we GEP to the field that the record layout suggests.
     unsigned idx = CGM.getTypes().getCGRecordLayout(rec).getLLVMFieldNo(field);
-    addr = Builder.CreateStructGEP(baseAddr, idx, field->getName());
+    addr = Builder.CreateStructGEP(addr, idx, field->getName());
 
     // If this is a reference field, load the reference right now.
     if (const ReferenceType *refType = type->getAs<ReferenceType>()) {
@@ -1848,6 +1843,16 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
       cvr = 0; // qualifiers don't recursively apply to referencee
     }
   }
+  
+  // Make sure that the address is pointing to the right type.  This is critical
+  // for both unions and structs.  A union needs a bitcast, a struct element
+  // will need a bitcast if the LLVM type laid out doesn't match the desired
+  // type.
+  const llvm::Type *llvmType = CGM.getTypes().ConvertTypeForMem(type);
+  unsigned AS = cast<llvm::PointerType>(baseAddr->getType())->getAddressSpace();
+  addr = Builder.CreateBitCast(addr, llvmType->getPointerTo(AS),
+                               field->getName());
+
 
   unsigned alignment = getContext().getDeclAlign(field).getQuantity();
   LValue LV = MakeAddrLValue(addr, type, alignment);
