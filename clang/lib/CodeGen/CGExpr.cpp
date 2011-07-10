@@ -755,10 +755,6 @@ llvm::Value *CodeGenFunction::EmitFromMemory(llvm::Value *Value, QualType Ty) {
     return Builder.CreateTrunc(Value, Builder.getInt1Ty(), "tobool");
   }
 
-  // If this is a pointer r-value, make sure that it has the right scalar type.
-  if (isa<llvm::PointerType>(Value->getType()))
-    return Builder.CreateBitCast(Value, ConvertType(Ty));
-
   return Value;
 }
 
