@@ -27,7 +27,7 @@ namespace llvm {
   class ValueMapTypeRemapper {
     virtual void Anchor();  // Out of line method.
   public:
-    ~ValueMapTypeRemapper() {}
+    virtual ~ValueMapTypeRemapper() {}
     
     /// remapType - The client should implement this method if they want to
     /// remap types while mapping values.
