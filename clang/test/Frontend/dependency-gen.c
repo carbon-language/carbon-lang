@@ -1,4 +1,8 @@
 // REQUIRES: shell
+
+// PR10331
+// XFAIL: mingw
+
 // Basic test
 // RUN: rm -rf %t.dir
 // RUN: mkdir -p %t.dir/a/b
