@@ -33,10 +33,9 @@ class RegistersIteratorTestCase(TestBase):
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Now launch the process, and do not stop at entry point.
-        rc = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, rc)
+        process = target.LaunchSimple(None, None, os.getcwd())
 
-        if not rc.Success() or not process:
+        if not process:
             self.fail("SBTarget.LaunchProcess() failed")
 
         import lldbutil

@@ -43,8 +43,7 @@ class SourceManagerTestCase(TestBase):
         self.assertTrue(target, VALID_TARGET)
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.LaunchSimple(None, None, os.getcwd())
 
         #
         # Exercise Python APIs to display source lines.

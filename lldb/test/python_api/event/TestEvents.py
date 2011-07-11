@@ -149,7 +149,7 @@ class EventAPITestCase(TestBase):
 
         # Now launch the process, and do not stop at entry point.
         error = lldb.SBError()
-        process = target.Launch (listener, None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.Launch (listener, None, None, None, None, None, None, 0, False, error)
         self.assertTrue(process, PROCESS_IS_VALID)
 
         # Get a handle on the process's broadcaster.

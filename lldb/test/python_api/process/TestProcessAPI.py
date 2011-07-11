@@ -75,8 +75,7 @@ class ProcessAPITestCase(TestBase):
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
@@ -95,6 +94,7 @@ class ProcessAPITestCase(TestBase):
 
         # Due to the typemap magic (see lldb.swig), we pass in 1 to ReadMemory and
         # expect to get a Python string as the result object!
+        error = lldb.SBError()
         content = process.ReadMemory(location, 1, error)
         if not error.Success():
             self.fail("SBProcess.ReadMemory() failed")
@@ -117,8 +117,7 @@ class ProcessAPITestCase(TestBase):
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
@@ -139,6 +138,7 @@ class ProcessAPITestCase(TestBase):
         # But we want to use the WriteMemory() API to assign 'a' to the variable.
 
         # Now use WriteMemory() API to write 'a' into the global variable.
+        error = lldb.SBError()
         result = process.WriteMemory(location, 'a', error)
         if not error.Success() or result != 1:
             self.fail("SBProcess.WriteMemory() failed")
@@ -168,8 +168,7 @@ class ProcessAPITestCase(TestBase):
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.LaunchSimple(None, None, os.getcwd())
 
         thread = get_stopped_thread(process, lldb.eStopReasonBreakpoint)
         self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint")
@@ -207,6 +206,7 @@ class ProcessAPITestCase(TestBase):
 
         # Now use WriteMemory() API to write 256 into the global variable.
         new_value = str(bytes)
+        error = lldb.SBError()
         result = process.WriteMemory(location, new_value, error)
         if not error.Success() or result != byteSize:
             self.fail("SBProcess.WriteMemory() failed")
@@ -254,13 +254,13 @@ class ProcessAPITestCase(TestBase):
         self.assertTrue(target, VALID_TARGET)
 
         # Launch the process, and do not stop at the entry point.
-        error = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.LaunchSimple(None, None, os.getcwd())
 
         if self.TraceOn():
             print "process state:", state_type_to_str(process.GetState())
         self.assertTrue(process.GetState() != lldb.eStateConnected)
 
+        error = lldb.SBError()
         success = process.RemoteLaunch(None, None, None, None, None, None, 0, False, error)
         self.assertTrue(not success, "RemoteLaunch() should fail for process state != eStateConnected")
 

@@ -68,12 +68,12 @@ class NamespaceTestCase(TestBase):
             substrs = slist)
 
         # 'frame variable' with basename 'i' should work.
-        self.expect("frame variable -c -G i",
+        self.expect("frame variable -c -g i",
             startstr = "main.cpp:%d: (int) (anonymous namespace)::i = 3" % self.line_var_i)
         # main.cpp:12: (int) (anonymous namespace)::i = 3
 
         # 'frame variable' with basename 'j' should work, too.
-        self.expect("frame variable -c -G j",
+        self.expect("frame variable -c -g j",
             startstr = "main.cpp:%d: (int) A::B::j = 4" % self.line_var_j)
         # main.cpp:19: (int) A::B::j = 4
 

@@ -119,10 +119,9 @@ class ClassTypesTestCase(TestBase):
                        str(self.line)])
 
         # Now launch the process, and do not stop at entry point.
-        error = lldb.SBError()
-        process = target.Launch (self.dbg.GetListener(), None, None, os.ctermid(), os.ctermid(), os.ctermid(), None, 0, False, error)
+        process = target.LaunchSimple(None, None, os.getcwd())
 
-        if not error.Success() or not process:
+        if not process:
             self.fail("SBTarget.Launch() failed")
 
         if process.GetState() != lldb.eStateStopped:
