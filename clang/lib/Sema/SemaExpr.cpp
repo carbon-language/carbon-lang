@@ -8570,6 +8570,23 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
           diag::warn_second_parameter_to_va_arg_not_pod)
         << TInfo->getType()
         << TInfo->getTypeLoc().getSourceRange();
+
+    // Check for va_arg where arguments of the given type will be promoted
+    // (i.e. this va_arg is guaranteed to have undefined behavior).
+    QualType PromoteType;
+    if (TInfo->getType()->isPromotableIntegerType()) {
+      PromoteType = Context.getPromotedIntegerType(TInfo->getType());
+      if (Context.typesAreCompatible(PromoteType, TInfo->getType()))
+        PromoteType = QualType();
+    }
+    if (TInfo->getType()->isSpecificBuiltinType(BuiltinType::Float))
+      PromoteType = Context.DoubleTy;
+    if (!PromoteType.isNull())
+      Diag(TInfo->getTypeLoc().getBeginLoc(),
+          diag::warn_second_parameter_to_va_arg_never_compatible)
+        << TInfo->getType()
+        << PromoteType
+        << TInfo->getTypeLoc().getSourceRange();
   }
 
   QualType T = TInfo->getType().getNonLValueExprType(Context);

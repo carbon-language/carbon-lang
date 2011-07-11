@@ -4208,6 +4208,9 @@ def err_second_parameter_to_va_arg_abstract: Error<
 def warn_second_parameter_to_va_arg_not_pod : Warning<
   "second argument to 'va_arg' is of non-POD type %0">,
   InGroup<DiagGroup<"non-pod-varargs">>, DefaultError;
+def warn_second_parameter_to_va_arg_never_compatible : Warning<
+  "second argument to 'va_arg' is of promotable type %0; this va_arg has "
+  "undefined behavior because arguments will be promoted to %1">;
 
 def warn_return_missing_expr : Warning<
   "non-void %select{function|method}1 %0 should return a value">, DefaultError,
