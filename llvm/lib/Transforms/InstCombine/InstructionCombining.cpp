@@ -785,6 +785,14 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // getelementptr instructions into a single instruction.
   //
   if (GEPOperator *Src = dyn_cast<GEPOperator>(PtrOp)) {
+
+    // If this GEP has only 0 indices, it is the same pointer as
+    // Src. If Src is not a trivial GEP too, don't combine
+    // the indices.
+    if (GEP.hasAllZeroIndices() && !Src->hasAllZeroIndices() &&
+        !Src->hasOneUse())
+      return 0;
+
     // Note that if our source is a gep chain itself that we wait for that
     // chain to be resolved before we perform this transformation.  This
     // avoids us creating a TON of code in some cases.

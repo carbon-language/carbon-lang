@@ -456,3 +456,19 @@ define i32* @test38(i32* %I, i32 %n) {
 ; CHECK: = sext i32 %n to i64
 ; CHECK: %A = getelementptr i32* %I, i64 %
 }
+
+; Test that we don't duplicate work when the second gep is a "bitcast".
+%pr10322_t = type { i8* }
+declare void @pr10322_f2(%pr10322_t*)
+declare void @pr10322_f3(i8**)
+define void @pr10322_f1(%pr10322_t* %foo) {
+entry:
+  %arrayidx8 = getelementptr inbounds %pr10322_t* %foo, i64 2
+  call void @pr10322_f2(%pr10322_t* %arrayidx8) nounwind
+  %tmp2 = getelementptr inbounds %pr10322_t* %arrayidx8, i64 0, i32 0
+  call void @pr10322_f3(i8** %tmp2) nounwind
+  ret void
+
+; CHECK: @pr10322_f1
+; CHECK: %tmp2 = getelementptr inbounds %pr10322_t* %arrayidx8, i64 0, i32 0
+}
