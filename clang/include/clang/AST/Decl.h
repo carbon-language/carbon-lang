@@ -2039,6 +2039,11 @@ public:
     InitializerOrBitWidth.setPointer(BW);
     InitializerOrBitWidth.setInt(1);
   }
+  /// removeBitWidth - Remove the bitfield width from this member.
+  void removeBitWidth() {
+    assert(isBitField() && "no bit width to remove");
+    InitializerOrBitWidth.setPointer(0);
+  }
 
   /// hasInClassInitializer - Determine whether this member has a C++0x in-class
   /// initializer.
