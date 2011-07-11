@@ -938,7 +938,7 @@ class TestBase(unittest2.TestCase):
     # Misc. helper methods for debugging test execution
     # =================================================
 
-    def DebugSBValue(self, frame, val):
+    def DebugSBValue(self, val):
         """Debug print a SBValue object, if traceAlways is True."""
         from lldbutil import value_type_to_str
 
@@ -950,11 +950,11 @@ class TestBase(unittest2.TestCase):
         err.write('\t' + "TypeName      -> " + val.GetTypeName()            + '\n')
         err.write('\t' + "ByteSize      -> " + str(val.GetByteSize())       + '\n')
         err.write('\t' + "NumChildren   -> " + str(val.GetNumChildren())    + '\n')
-        err.write('\t' + "Value         -> " + str(val.GetValue(frame))     + '\n')
+        err.write('\t' + "Value         -> " + str(val.GetValue())          + '\n')
         err.write('\t' + "ValueType     -> " + value_type_to_str(val.GetValueType()) + '\n')
-        err.write('\t' + "Summary       -> " + str(val.GetSummary(frame))   + '\n')
+        err.write('\t' + "Summary       -> " + str(val.GetSummary())        + '\n')
         err.write('\t' + "IsPointerType -> " + str(val.TypeIsPointerType()) + '\n')
-        err.write('\t' + "Location      -> " + val.GetLocation(frame)       + '\n')
+        err.write('\t' + "Location      -> " + val.GetLocation()            + '\n')
 
     def DebugPExpect(self, child):
         """Debug the spwaned pexpect object."""
