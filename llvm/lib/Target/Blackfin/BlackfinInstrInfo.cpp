@@ -14,10 +14,11 @@
 #include "BlackfinInstrInfo.h"
 #include "BlackfinSubtarget.h"
 #include "Blackfin.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/TargetRegistry.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_CTOR
@@ -253,4 +254,15 @@ loadRegFromAddr(MachineFunction &MF,
                 const TargetRegisterClass *RC,
                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   llvm_unreachable("loadRegFromAddr not implemented");
+}
+
+MCInstrInfo *createBlackfinMCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitBlackfinMCInstrInfo(X);
+  return X;
+}
+
+extern "C" void LLVMInitializeBlackfinMCInstrInfo() {
+  TargetRegistry::RegisterMCInstrInfo(TheBlackfinTarget,
+                                      createBlackfinMCInstrInfo);
 }

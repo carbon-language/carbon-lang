@@ -11,19 +11,22 @@
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
 using namespace llvm;
 
-void MCSubtargetInfo::InitMCSubtargetInfo(StringRef CPU, StringRef FS,
-                                          const SubtargetFeatureKV *PF,
-                                          const SubtargetFeatureKV *PD,
-                                          const SubtargetInfoKV *PI,
-                                          const InstrStage *IS,
-                                          const unsigned *OC,
-                                          const unsigned *FP,
-                                          unsigned NF, unsigned NP) {
+void
+MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
+                                     const SubtargetFeatureKV *PF,
+                                     const SubtargetFeatureKV *PD,
+                                     const SubtargetInfoKV *PI,
+                                     const InstrStage *IS,
+                                     const unsigned *OC,
+                                     const unsigned *FP,
+                                     unsigned NF, unsigned NP) {
+  TargetTriple = TT;
   ProcFeatures = PF;
   ProcDesc = PD;
   ProcItins = PI;

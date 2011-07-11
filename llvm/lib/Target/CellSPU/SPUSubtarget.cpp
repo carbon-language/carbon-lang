@@ -70,7 +70,7 @@ bool SPUSubtarget::enablePostRAScheduler(
 MCSubtargetInfo *createSPUMCSubtargetInfo(StringRef TT, StringRef CPU,
                                           StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitSPUMCSubtargetInfo(X, CPU, FS);
+  InitSPUMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

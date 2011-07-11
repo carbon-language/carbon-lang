@@ -127,7 +127,7 @@ MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
   }
 
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitX86MCSubtargetInfo(X, CPUName, ArchFS);
+  InitX86MCSubtargetInfo(X, TT, CPUName, ArchFS);
   return X;
 }
 

@@ -58,7 +58,7 @@ bool SystemZSubtarget::GVRequiresExtraLoad(const GlobalValue* GV,
 MCSubtargetInfo *createSystemZMCSubtargetInfo(StringRef TT, StringRef CPU,
                                               StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitSystemZMCSubtargetInfo(X, CPU, FS);
+  InitSystemZMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

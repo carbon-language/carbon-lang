@@ -28,12 +28,12 @@ namespace {
 class PPCMCCodeEmitter : public MCCodeEmitter {
   PPCMCCodeEmitter(const PPCMCCodeEmitter &); // DO NOT IMPLEMENT
   void operator=(const PPCMCCodeEmitter &);   // DO NOT IMPLEMENT
-  const TargetMachine &TM;
   MCContext &Ctx;
   
 public:
-  PPCMCCodeEmitter(TargetMachine &tm, MCContext &ctx)
-    : TM(tm), Ctx(ctx) {
+  PPCMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
+                   MCContext &ctx)
+    : Ctx(ctx) {
   }
   
   ~PPCMCCodeEmitter() {}
@@ -79,9 +79,10 @@ public:
   
 } // end anonymous namespace
   
-MCCodeEmitter *llvm::createPPCMCCodeEmitter(const Target &, TargetMachine &TM,
+MCCodeEmitter *llvm::createPPCMCCodeEmitter(const MCInstrInfo &MCII,
+                                            const MCSubtargetInfo &STI,
                                             MCContext &Ctx) {
-  return new PPCMCCodeEmitter(TM, Ctx);
+  return new PPCMCCodeEmitter(MCII, STI, Ctx);
 }
 
 unsigned PPCMCCodeEmitter::

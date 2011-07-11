@@ -94,7 +94,7 @@ MCSubtargetInfo *ARM_MC::createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
   }
 
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitARMMCSubtargetInfo(X, CPU, ArchFS);
+  InitARMMCSubtargetInfo(X, TT, CPU, ArchFS);
   return X;
 }
 

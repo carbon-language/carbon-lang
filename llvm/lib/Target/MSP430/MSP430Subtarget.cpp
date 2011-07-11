@@ -36,7 +36,7 @@ MSP430Subtarget::MSP430Subtarget(const std::string &TT,
 MCSubtargetInfo *createMSP430MCSubtargetInfo(StringRef TT, StringRef CPU,
                                              StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitMSP430MCSubtargetInfo(X, CPU, FS);
+  InitMSP430MCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

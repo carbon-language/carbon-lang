@@ -27,6 +27,10 @@ extern "C" {
 #include "llvm/Config/Targets.def"
   
 #define LLVM_TARGET(TargetName) \
+  void LLVMInitialize##TargetName##MCInstrInfo();
+#include "llvm/Config/Targets.def"
+
+#define LLVM_TARGET(TargetName) \
   void LLVMInitialize##TargetName##MCSubtargetInfo();
 #include "llvm/Config/Targets.def"
 
@@ -65,6 +69,17 @@ namespace llvm {
     InitializeAllTargetInfos();
 
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
+#include "llvm/Config/Targets.def"
+  }
+  
+  /// InitializeAllMCInstrInfos - The main program should call this function
+  /// if it wants access to all available instruction infos for targets that
+  /// LLVM is configured to support, to make them available via the
+  /// TargetRegistry.
+  ///
+  /// It is legal for a client to make multiple calls to this function.
+  inline void InitializeAllMCInstrInfos() {
+#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##MCInstrInfo();
 #include "llvm/Config/Targets.def"
   }
   

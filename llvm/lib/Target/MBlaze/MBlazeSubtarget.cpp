@@ -67,7 +67,7 @@ enablePostRAScheduler(CodeGenOpt::Level OptLevel,
 MCSubtargetInfo *createMBlazeMCSubtargetInfo(StringRef TT, StringRef CPU,
                                             StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitMBlazeMCSubtargetInfo(X, CPU, FS);
+  InitMBlazeMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

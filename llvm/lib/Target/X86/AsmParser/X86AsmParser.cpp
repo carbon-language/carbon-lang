@@ -64,7 +64,7 @@ private:
   /// or %es:(%edi) in 32bit mode.
   bool isDstOp(X86Operand &Op);
 
-  bool is64Bit() {
+  bool is64BitMode() const {
     // FIXME: Can tablegen auto-generate this?
     return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
   }
@@ -355,7 +355,7 @@ struct X86Operand : public MCParsedAsmOperand {
 } // end anonymous namespace.
 
 bool X86ATTAsmParser::isSrcOp(X86Operand &Op) {
-  unsigned basereg = is64Bit() ? X86::RSI : X86::ESI;
+  unsigned basereg = is64BitMode() ? X86::RSI : X86::ESI;
 
   return (Op.isMem() &&
     (Op.Mem.SegReg == 0 || Op.Mem.SegReg == X86::DS) &&
@@ -365,7 +365,7 @@ bool X86ATTAsmParser::isSrcOp(X86Operand &Op) {
 }
 
 bool X86ATTAsmParser::isDstOp(X86Operand &Op) {
-  unsigned basereg = is64Bit() ? X86::RDI : X86::EDI;
+  unsigned basereg = is64BitMode() ? X86::RDI : X86::EDI;
 
   return Op.isMem() && Op.Mem.SegReg == X86::ES &&
     isa<MCConstantExpr>(Op.Mem.Disp) &&
@@ -396,7 +396,7 @@ bool X86ATTAsmParser::ParseRegister(unsigned &RegNo,
   // FIXME: This should be done using Requires<In32BitMode> and
   // Requires<In64BitMode> so "eiz" usage in 64-bit instructions
   // can be also checked.
-  if (RegNo == X86::RIZ && !is64Bit())
+  if (RegNo == X86::RIZ && !is64BitMode())
     return Error(Tok.getLoc(), "riz register in 64-bit mode only");
 
   // Parse "%st" as "%st(0)" and "%st(1)", which is multiple tokens.
@@ -816,7 +816,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Transform "movs[bwl] %ds:(%esi), %es:(%edi)" into "movs[bwl]"
   if (Name.startswith("movs") && Operands.size() == 3 &&
       (Name == "movsb" || Name == "movsw" || Name == "movsl" ||
-       (is64Bit() && Name == "movsq"))) {
+       (is64BitMode() && Name == "movsq"))) {
     X86Operand &Op = *(X86Operand*)Operands.begin()[1];
     X86Operand &Op2 = *(X86Operand*)Operands.begin()[2];
     if (isSrcOp(Op) && isDstOp(Op2)) {
@@ -829,7 +829,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Transform "lods[bwl] %ds:(%esi),{%al,%ax,%eax,%rax}" into "lods[bwl]"
   if (Name.startswith("lods") && Operands.size() == 3 &&
       (Name == "lods" || Name == "lodsb" || Name == "lodsw" ||
-       Name == "lodsl" || (is64Bit() && Name == "lodsq"))) {
+       Name == "lodsl" || (is64BitMode() && Name == "lodsq"))) {
     X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
     X86Operand *Op2 = static_cast<X86Operand*>(Operands[2]);
     if (isSrcOp(*Op1) && Op2->isReg()) {
@@ -859,7 +859,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
   // Transform "stos[bwl] {%al,%ax,%eax,%rax},%es:(%edi)" into "stos[bwl]"
   if (Name.startswith("stos") && Operands.size() == 3 &&
       (Name == "stos" || Name == "stosb" || Name == "stosw" ||
-       Name == "stosl" || (is64Bit() && Name == "stosq"))) {
+       Name == "stosl" || (is64BitMode() && Name == "stosq"))) {
     X86Operand *Op1 = static_cast<X86Operand*>(Operands[1]);
     X86Operand *Op2 = static_cast<X86Operand*>(Operands[2]);
     if (isDstOp(*Op2) && Op1->isReg()) {

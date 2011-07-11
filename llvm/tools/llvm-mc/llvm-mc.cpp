@@ -17,6 +17,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -341,6 +342,7 @@ static int AssembleInput(const char *ProgName) {
     TM->getTargetLowering()->getObjFileLowering();
   const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(Ctx, *TM);
 
+  OwningPtr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
   OwningPtr<MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
 
@@ -351,7 +353,7 @@ static int AssembleInput(const char *ProgName) {
     MCCodeEmitter *CE = 0;
     TargetAsmBackend *TAB = 0;
     if (ShowEncoding) {
-      CE = TheTarget->createCodeEmitter(*TM, Ctx);
+      CE = TheTarget->createCodeEmitter(*MCII, *STI, Ctx);
       TAB = TheTarget->createAsmBackend(TripleName);
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/true,
@@ -362,7 +364,7 @@ static int AssembleInput(const char *ProgName) {
     Str.reset(createNullStreamer(Ctx));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
-    MCCodeEmitter *CE = TheTarget->createCodeEmitter(*TM, Ctx);
+    MCCodeEmitter *CE = TheTarget->createCodeEmitter(*MCII, *STI, Ctx);
     TargetAsmBackend *TAB = TheTarget->createAsmBackend(TripleName);
     Str.reset(TheTarget->createObjectStreamer(TripleName, Ctx, *TAB,
                                               FOS, CE, RelaxAll,
@@ -451,6 +453,7 @@ int main(int argc, char **argv) {
   llvm::InitializeAllTargetInfos();
   // FIXME: We shouldn't need to initialize the Target(Machine)s.
   llvm::InitializeAllTargets();
+  llvm::InitializeAllMCInstrInfos();
   llvm::InitializeAllMCSubtargetInfos();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllAsmParsers();

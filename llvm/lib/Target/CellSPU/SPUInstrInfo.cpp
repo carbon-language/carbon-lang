@@ -17,10 +17,11 @@
 #include "SPUTargetMachine.h"
 #include "SPUHazardRecognizers.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/MC/MCContext.h"
 
 #define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_MC_DESC
@@ -449,4 +450,14 @@ SPUInstrInfo::ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond)
   }
 
   return true;
+}
+
+MCInstrInfo *createSPUMCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitSPUMCInstrInfo(X);
+  return X;
+}
+
+extern "C" void LLVMInitializeCellSPUMCInstrInfo() {
+  TargetRegistry::RegisterMCInstrInfo(TheCellSPUTarget, createSPUMCInstrInfo);
 }

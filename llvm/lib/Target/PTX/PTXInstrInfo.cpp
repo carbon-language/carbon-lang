@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -407,4 +408,15 @@ MachineBasicBlock *PTXInstrInfo::GetBranchTarget(const MachineInstr& inst) {
   const MachineOperand& target = inst.getOperand(0);
   assert(target.isMBB() && "FIXME: detect branch target operand");
   return target.getMBB();
+}
+
+MCInstrInfo *createPTXMCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitPTXMCInstrInfo(X);
+  return X;
+}
+
+extern "C" void LLVMInitializePTXMCInstrInfo() {
+  TargetRegistry::RegisterMCInstrInfo(ThePTX32Target, createPTXMCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(ThePTX64Target, createPTXMCInstrInfo);
 }

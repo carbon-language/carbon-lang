@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_CTOR
@@ -333,4 +334,14 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   }
 
   return 6;
+}
+
+MCInstrInfo *createMSP430MCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitMSP430MCInstrInfo(X);
+  return X;
+}
+
+extern "C" void LLVMInitializeMSP430MCInstrInfo() {
+  TargetRegistry::RegisterMCInstrInfo(TheMSP430Target, createMSP430MCInstrInfo);
 }

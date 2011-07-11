@@ -31,6 +31,8 @@ namespace llvm {
   class MCInst;
   class MCCodeEmitter;
   class MCContext;
+  class MCInstrInfo;
+  class MCSubtargetInfo;
   class TargetMachine;
   class TargetAsmBackend;
   
@@ -38,7 +40,8 @@ namespace llvm {
   FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
   FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                             JITCodeEmitter &MCE);
-  MCCodeEmitter *createPPCMCCodeEmitter(const Target &, TargetMachine &TM,
+  MCCodeEmitter *createPPCMCCodeEmitter(const MCInstrInfo &MCII,
+                                        const MCSubtargetInfo &STI,
                                         MCContext &Ctx);
   TargetAsmBackend *createPPCAsmBackend(const Target &, const std::string &);
   

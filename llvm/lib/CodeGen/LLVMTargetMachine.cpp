@@ -24,10 +24,14 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
@@ -142,7 +146,8 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
     MCCodeEmitter *MCE = 0;
     TargetAsmBackend *TAB = 0;
     if (ShowMCEncoding) {
-      MCE = getTarget().createCodeEmitter(*this, *Context);
+      const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
+      MCE = getTarget().createCodeEmitter(*getInstrInfo(), STI, *Context);
       TAB = getTarget().createAsmBackend(getTargetTriple());
     }
 
@@ -159,7 +164,9 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   case CGFT_ObjectFile: {
     // Create the code emitter for the target if it exists.  If not, .o file
     // emission fails.
-    MCCodeEmitter *MCE = getTarget().createCodeEmitter(*this, *Context);
+    const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
+    MCCodeEmitter *MCE = getTarget().createCodeEmitter(*getInstrInfo(), STI,
+                                                       *Context);
     TargetAsmBackend *TAB = getTarget().createAsmBackend(getTargetTriple());
     if (MCE == 0 || TAB == 0)
       return true;
@@ -240,7 +247,8 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
 
   // Create the code emitter for the target if it exists.  If not, .o file
   // emission fails.
-  MCCodeEmitter *MCE = getTarget().createCodeEmitter(*this, *Ctx);
+  const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
+  MCCodeEmitter *MCE = getTarget().createCodeEmitter(*getInstrInfo(),STI, *Ctx);
   TargetAsmBackend *TAB = getTarget().createAsmBackend(getTargetTriple());
   if (MCE == 0 || TAB == 0)
     return true;

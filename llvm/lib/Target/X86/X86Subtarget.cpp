@@ -187,39 +187,53 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
 
   X86_MC::GetCpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
   
-  if ((EDX >> 15) & 1) HasCMov = true;
-  if ((EDX >> 23) & 1) X86SSELevel = MMX;
-  if ((EDX >> 25) & 1) X86SSELevel = SSE1;
-  if ((EDX >> 26) & 1) X86SSELevel = SSE2;
-  if (ECX & 0x1)       X86SSELevel = SSE3;
-  if ((ECX >> 9)  & 1) X86SSELevel = SSSE3;
-  if ((ECX >> 19) & 1) X86SSELevel = SSE41;
-  if ((ECX >> 20) & 1) X86SSELevel = SSE42;
+  if ((EDX >> 15) & 1) HasCMov = true;      ToggleFeature(X86::FeatureCMOV);
+  if ((EDX >> 23) & 1) X86SSELevel = MMX;   ToggleFeature(X86::FeatureMMX);
+  if ((EDX >> 25) & 1) X86SSELevel = SSE1;  ToggleFeature(X86::FeatureSSE1);
+  if ((EDX >> 26) & 1) X86SSELevel = SSE2;  ToggleFeature(X86::FeatureSSE2);
+  if (ECX & 0x1)       X86SSELevel = SSE3;  ToggleFeature(X86::FeatureSSE3);
+  if ((ECX >> 9)  & 1) X86SSELevel = SSSE3; ToggleFeature(X86::FeatureSSSE3);
+  if ((ECX >> 19) & 1) X86SSELevel = SSE41; ToggleFeature(X86::FeatureSSE41);
+  if ((ECX >> 20) & 1) X86SSELevel = SSE42; ToggleFeature(X86::FeatureSSE42);
   // FIXME: AVX codegen support is not ready.
-  //if ((ECX >> 28) & 1) { HasAVX = true; X86SSELevel = NoMMXSSE; }
+  //if ((ECX >> 28) & 1) { HasAVX = true; } ToggleFeature(X86::FeatureAVX);
 
   bool IsIntel = memcmp(text.c, "GenuineIntel", 12) == 0;
   bool IsAMD   = !IsIntel && memcmp(text.c, "AuthenticAMD", 12) == 0;
 
-  HasCLMUL = IsIntel && ((ECX >> 1) & 0x1);
-  HasFMA3  = IsIntel && ((ECX >> 12) & 0x1);
-  HasPOPCNT = IsIntel && ((ECX >> 23) & 0x1);
-  HasAES   = IsIntel && ((ECX >> 25) & 0x1);
+  HasCLMUL = IsIntel && ((ECX >> 1) & 0x1);   ToggleFeature(X86::FeatureCLMUL);
+  HasFMA3  = IsIntel && ((ECX >> 12) & 0x1);  ToggleFeature(X86::FeatureFMA3);
+  HasPOPCNT = IsIntel && ((ECX >> 23) & 0x1); ToggleFeature(X86::FeaturePOPCNT);
+  HasAES   = IsIntel && ((ECX >> 25) & 0x1);  ToggleFeature(X86::FeatureAES);
 
   if (IsIntel || IsAMD) {
     // Determine if bit test memory instructions are slow.
     unsigned Family = 0;
     unsigned Model  = 0;
     X86_MC::DetectFamilyModel(EAX, Family, Model);
-    IsBTMemSlow = IsAMD || (Family == 6 && Model >= 13);
+    if (IsAMD || (Family == 6 && Model >= 13)) {
+      IsBTMemSlow = true;
+      ToggleFeature(X86::FeatureSlowBTMem);
+    }
     // If it's Nehalem, unaligned memory access is fast.
-    if (Family == 15 && Model == 26)
+    if (Family == 15 && Model == 26) {
       IsUAMemFast = true;
+      ToggleFeature(X86::FeatureFastUAMem);
+    }
 
     X86_MC::GetCpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
-    HasX86_64 = (EDX >> 29) & 0x1;
-    HasSSE4A = IsAMD && ((ECX >> 6) & 0x1);
-    HasFMA4 = IsAMD && ((ECX >> 16) & 0x1);
+    if ((EDX >> 29) & 0x1) {
+      HasX86_64 = true;
+      ToggleFeature(X86::Feature64Bit);
+    }
+    if (IsAMD && ((ECX >> 6) & 0x1)) {
+      HasSSE4A = true;
+      ToggleFeature(X86::FeatureSSE4A);
+    }
+    if (IsAMD && ((ECX >> 16) & 0x1)) {
+      HasFMA4 = true;
+      ToggleFeature(X86::FeatureFMA4);
+    }
   }
 }
 
@@ -270,22 +284,30 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
 
     // If feature string is not empty, parse features string.
     ParseSubtargetFeatures(CPUName, FullFS);
-
-    if (HasAVX)
-      X86SSELevel = NoMMXSSE;
   } else {
     // Otherwise, use CPUID to auto-detect feature set.
     AutoDetectSubtargetFeatures();
 
     // Make sure 64-bit features are available in 64-bit mode.
     if (In64BitMode) {
-      HasX86_64 = true;
-      HasCMov = true;
+      HasX86_64 = true; ToggleFeature(X86::Feature64Bit);
+      HasCMov = true;   ToggleFeature(X86::FeatureCMOV);
 
-      if (!HasAVX && X86SSELevel < SSE2)
+      if (!HasAVX && X86SSELevel < SSE2) {
         X86SSELevel = SSE2;
+        ToggleFeature(X86::FeatureSSE1);
+        ToggleFeature(X86::FeatureSSE2);
+      }
     }
   }
+
+  // It's important to keep the MCSubtargetInfo feature bits in sync with
+  // target data structure which is shared with MC code emitter, etc.
+  if (In64BitMode)
+    ToggleFeature(X86::Mode64Bit);
+
+  if (HasAVX)
+    X86SSELevel = NoMMXSSE;
     
   DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
                << ", 3DNowLevel " << X863DNowLevel

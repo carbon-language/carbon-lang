@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -395,4 +396,14 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
           "Invalid XCore branch condition!");
   Cond[0].setImm(GetOppositeBranchCondition((XCore::CondCode)Cond[0].getImm()));
   return false;
+}
+
+MCInstrInfo *createXCoreMCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitXCoreMCInstrInfo(X);
+  return X;
+}
+
+extern "C" void LLVMInitializeXCoreMCInstrInfo() {
+  TargetRegistry::RegisterMCInstrInfo(TheXCoreTarget, createXCoreMCInstrInfo);
 }

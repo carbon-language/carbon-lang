@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 
 #define GET_INSTRINFO_CTOR
@@ -436,4 +437,15 @@ SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   case SystemZ::MOV64Pmr:  return get(SystemZ::MOV64Pmry);
   case SystemZ::MOV64Prm:  return get(SystemZ::MOV64Prmy);
   }
+}
+
+MCInstrInfo *createSystemZMCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitSystemZMCInstrInfo(X);
+  return X;
+}
+
+extern "C" void LLVMInitializeSystemZMCInstrInfo() {
+  TargetRegistry::RegisterMCInstrInfo(TheSystemZTarget,
+                                      createSystemZMCInstrInfo);
 }

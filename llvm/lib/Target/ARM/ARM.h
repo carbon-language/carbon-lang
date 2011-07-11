@@ -23,19 +23,21 @@
 
 namespace llvm {
 
+class ARMAsmPrinter;
 class ARMBaseTargetMachine;
 class FunctionPass;
 class JITCodeEmitter;
-class formatted_raw_ostream;
-class MCCodeEmitter;
-class MCObjectWriter;
-class TargetAsmBackend;
 class MachineInstr;
-class ARMAsmPrinter;
+class MCCodeEmitter;
 class MCInst;
+class MCInstrInfo;
+class MCObjectWriter;
+class MCSubtargetInfo;
+class TargetAsmBackend;
+class formatted_raw_ostream;
 
-MCCodeEmitter *createARMMCCodeEmitter(const Target &,
-                                      TargetMachine &TM,
+MCCodeEmitter *createARMMCCodeEmitter(const MCInstrInfo &MCII,
+                                      const MCSubtargetInfo &STI,
                                       MCContext &Ctx);
 
 TargetAsmBackend *createARMAsmBackend(const Target &, const std::string &);

@@ -40,7 +40,7 @@ AlphaSubtarget::AlphaSubtarget(const std::string &TT, const std::string &CPU,
 MCSubtargetInfo *createAlphaMCSubtargetInfo(StringRef TT, StringRef CPU,
                                             StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitAlphaMCSubtargetInfo(X, CPU, FS);
+  InitAlphaMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

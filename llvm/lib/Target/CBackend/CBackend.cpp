@@ -36,6 +36,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetData.h"
@@ -59,6 +60,10 @@ using namespace llvm;
 extern "C" void LLVMInitializeCBackendTarget() {
   // Register the target.
   RegisterTargetMachine<CTargetMachine> X(TheCBackendTarget);
+}
+
+extern "C" void LLVMInitializeCBackendMCInstrInfo() {
+  RegisterMCInstrInfo<MCInstrInfo> X(TheCBackendTarget);
 }
 
 extern "C" void LLVMInitializeCBackendMCSubtargetInfo() {

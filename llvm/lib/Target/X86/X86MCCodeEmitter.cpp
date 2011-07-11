@@ -18,25 +18,34 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/raw_ostream.h"
+
+#define GET_SUBTARGETINFO_ENUM
+#include "X86GenSubtargetInfo.inc"
+
 using namespace llvm;
 
 namespace {
 class X86MCCodeEmitter : public MCCodeEmitter {
   X86MCCodeEmitter(const X86MCCodeEmitter &); // DO NOT IMPLEMENT
   void operator=(const X86MCCodeEmitter &); // DO NOT IMPLEMENT
-  const TargetMachine &TM;
-  const TargetInstrInfo &TII;
+  const MCInstrInfo &MCII;
+  const MCSubtargetInfo &STI;
   MCContext &Ctx;
-  bool Is64BitMode;
 public:
-  X86MCCodeEmitter(TargetMachine &tm, MCContext &ctx, bool is64Bit)
-    : TM(tm), TII(*TM.getInstrInfo()), Ctx(ctx) {
-    Is64BitMode = is64Bit;
+  X86MCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
+                   MCContext &ctx)
+    : MCII(mcii), STI(sti), Ctx(ctx) {
   }
 
   ~X86MCCodeEmitter() {}
+
+  bool is64BitMode() const {
+    // FIXME: Can tablegen auto-generate this?
+    return (STI.getFeatureBits() & X86::Mode64Bit) != 0;
+  }
 
   static unsigned GetX86RegNum(const MCOperand &MO) {
     return X86RegisterInfo::getX86RegNum(MO.getReg());
@@ -126,16 +135,10 @@ public:
 } // end anonymous namespace
 
 
-MCCodeEmitter *llvm::createX86_32MCCodeEmitter(const Target &,
-                                               TargetMachine &TM,
-                                               MCContext &Ctx) {
-  return new X86MCCodeEmitter(TM, Ctx, false);
-}
-
-MCCodeEmitter *llvm::createX86_64MCCodeEmitter(const Target &,
-                                               TargetMachine &TM,
-                                               MCContext &Ctx) {
-  return new X86MCCodeEmitter(TM, Ctx, true);
+MCCodeEmitter *llvm::createX86MCCodeEmitter(const MCInstrInfo &MCII,
+                                            const MCSubtargetInfo &STI,
+                                            MCContext &Ctx) {
+  return new X86MCCodeEmitter(MCII, STI, Ctx);
 }
 
 /// isDisp8 - Return true if this signed displacement fits in a 8-bit
@@ -245,7 +248,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
 
   // Handle %rip relative addressing.
   if (BaseReg == X86::RIP) {    // [disp32+RIP] in X86-64 mode
-    assert(Is64BitMode && "Rip-relative addressing requires 64-bit mode");
+    assert(is64BitMode() && "Rip-relative addressing requires 64-bit mode");
     assert(IndexReg.getReg() == 0 && "Invalid rip-relative address");
     EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
 
@@ -284,7 +287,7 @@ void X86MCCodeEmitter::EmitMemModRMByte(const MCInst &MI, unsigned Op,
       BaseRegNo != N86::ESP &&
       // If there is no base register and we're in 64-bit mode, we need a SIB
       // byte to emit an addr that is just 'disp32' (the non-RIP relative form).
-      (!Is64BitMode || BaseReg != 0)) {
+      (!is64BitMode() || BaseReg != 0)) {
 
     if (BaseReg == 0) {          // [disp32]     in X86-32 mode
       EmitByte(ModRMByte(0, RegOpcodeField, 5), CurByte, OS);
@@ -729,7 +732,7 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // Emit the address size opcode prefix as needed.
   if ((TSFlags & X86II::AdSize) ||
-      (MemOperand != -1 && Is64BitMode && Is32BitMemOperand(MI, MemOperand)))
+      (MemOperand != -1 && is64BitMode() && Is32BitMemOperand(MI, MemOperand)))
     EmitByte(0x67, CurByte, OS);
   
   // Emit the operand size opcode prefix as needed.
@@ -772,7 +775,7 @@ void X86MCCodeEmitter::EmitOpcodePrefix(uint64_t TSFlags, unsigned &CurByte,
 
   // Handle REX prefix.
   // FIXME: Can this come before F2 etc to simplify emission?
-  if (Is64BitMode) {
+  if (is64BitMode()) {
     if (unsigned REX = DetermineREXPrefix(MI, TSFlags, Desc))
       EmitByte(0x40 | REX, CurByte, OS);
   }
@@ -803,7 +806,7 @@ void X86MCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   unsigned Opcode = MI.getOpcode();
-  const MCInstrDesc &Desc = TII.get(Opcode);
+  const MCInstrDesc &Desc = MCII.get(Opcode);
   uint64_t TSFlags = Desc.TSFlags;
 
   // Pseudo instructions don't get encoded.

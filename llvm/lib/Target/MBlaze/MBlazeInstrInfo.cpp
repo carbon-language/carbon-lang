@@ -14,12 +14,13 @@
 #include "MBlazeInstrInfo.h"
 #include "MBlazeTargetMachine.h"
 #include "MBlazeMachineFunction.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/ADT/STLExtras.h"
 
 #define GET_INSTRINFO_CTOR
 #define GET_INSTRINFO_MC_DESC
@@ -293,4 +294,14 @@ unsigned MBlazeInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
 
   MBlazeFI->setGlobalBaseReg(GlobalBaseReg);
   return GlobalBaseReg;
+}
+
+MCInstrInfo *createMBlazeMCInstrInfo() {
+  MCInstrInfo *X = new MCInstrInfo();
+  InitMBlazeMCInstrInfo(X);
+  return X;
+}
+
+extern "C" void LLVMInitializeMBlazeMCInstrInfo() {
+  TargetRegistry::RegisterMCInstrInfo(TheMBlazeTarget, createMBlazeMCInstrInfo);
 }

@@ -29,13 +29,13 @@ namespace {
 class MBlazeMCCodeEmitter : public MCCodeEmitter {
   MBlazeMCCodeEmitter(const MBlazeMCCodeEmitter &); // DO NOT IMPLEMENT
   void operator=(const MBlazeMCCodeEmitter &); // DO NOT IMPLEMENT
-  const TargetMachine &TM;
-  const TargetInstrInfo &TII;
+  const MCInstrInfo &MCII;
   MCContext &Ctx;
 
 public:
-  MBlazeMCCodeEmitter(TargetMachine &tm, MCContext &ctx)
-    : TM(tm), TII(*TM.getInstrInfo()), Ctx(ctx) {
+  MBlazeMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
+                      MCContext &ctx)
+    : MCII(mcii), Ctx(ctx) {
   }
 
   ~MBlazeMCCodeEmitter() {}
@@ -96,10 +96,10 @@ public:
 } // end anonymous namespace
 
 
-MCCodeEmitter *llvm::createMBlazeMCCodeEmitter(const Target &,
-                                               TargetMachine &TM,
+MCCodeEmitter *llvm::createMBlazeMCCodeEmitter(const MCInstrInfo &MCII,
+                                               const MCSubtargetInfo &STI,
                                                MCContext &Ctx) {
-  return new MBlazeMCCodeEmitter(TM, Ctx);
+  return new MBlazeMCCodeEmitter(MCII, STI, Ctx);
 }
 
 /// getMachineOpValue - Return binary encoding of operand. If the machine
@@ -179,7 +179,7 @@ void MBlazeMCCodeEmitter::
 EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                   SmallVectorImpl<MCFixup> &Fixups) const {
   unsigned Opcode = MI.getOpcode();
-  const MCInstrDesc &Desc = TII.get(Opcode);
+  const MCInstrDesc &Desc = MCII.get(Opcode);
   uint64_t TSFlags = Desc.TSFlags;
   // Keep track of the current byte being emitted.
   unsigned CurByte = 0;

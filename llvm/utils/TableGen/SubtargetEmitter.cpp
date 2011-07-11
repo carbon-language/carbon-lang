@@ -666,8 +666,9 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 
   // MCInstrInfo initialization routine.
   OS << "static inline void Init" << Target
-     << "MCSubtargetInfo(MCSubtargetInfo *II, StringRef CPU, StringRef FS) {\n";
-  OS << "  II->InitMCSubtargetInfo(CPU, FS, ";
+     << "MCSubtargetInfo(MCSubtargetInfo *II, "
+     << "StringRef TT, StringRef CPU, StringRef FS) {\n";
+  OS << "  II->InitMCSubtargetInfo(TT, CPU, FS, ";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";
   else
@@ -719,7 +720,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << ClassName << "::" << ClassName << "(StringRef TT, StringRef CPU, "
      << "StringRef FS)\n"
      << "  : TargetSubtargetInfo() {\n"
-     << "  InitMCSubtargetInfo(CPU, FS, ";
+     << "  InitMCSubtargetInfo(TT, CPU, FS, ";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";
   else

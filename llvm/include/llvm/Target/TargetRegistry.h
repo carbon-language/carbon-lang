@@ -89,8 +89,8 @@ namespace llvm {
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
                                                   const MCAsmInfo &MAI);
-    typedef MCCodeEmitter *(*CodeEmitterCtorTy)(const Target &T,
-                                                TargetMachine &TM,
+    typedef MCCodeEmitter *(*CodeEmitterCtorTy)(const MCInstrInfo &II,
+                                                const MCSubtargetInfo &STI,
                                                 MCContext &Ctx);
     typedef MCStreamer *(*ObjectStreamerCtorTy)(const Target &T,
                                                 const std::string &TT,
@@ -352,10 +352,12 @@ namespace llvm {
 
 
     /// createCodeEmitter - Create a target specific code emitter.
-    MCCodeEmitter *createCodeEmitter(TargetMachine &TM, MCContext &Ctx) const {
+    MCCodeEmitter *createCodeEmitter(const MCInstrInfo &II,
+                                     const MCSubtargetInfo &STI,
+                                     MCContext &Ctx) const {
       if (!CodeEmitterCtorFn)
         return 0;
-      return CodeEmitterCtorFn(*this, TM, Ctx);
+      return CodeEmitterCtorFn(II, STI, Ctx);
     }
 
     /// createObjectStreamer - Create a target specific MCStreamer.
@@ -971,9 +973,10 @@ namespace llvm {
     }
 
   private:
-    static MCCodeEmitter *Allocator(const Target &T, TargetMachine &TM,
+    static MCCodeEmitter *Allocator(const MCInstrInfo &II,
+                                    const MCSubtargetInfo &STI,
                                     MCContext &Ctx) {
-      return new CodeEmitterImpl(T, TM, Ctx);
+      return new CodeEmitterImpl();
     }
   };
 

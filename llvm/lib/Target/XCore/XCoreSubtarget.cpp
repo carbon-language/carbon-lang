@@ -33,7 +33,7 @@ XCoreSubtarget::XCoreSubtarget(const std::string &TT,
 MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
                                             StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitXCoreMCSubtargetInfo(X, CPU, FS);
+  InitXCoreMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

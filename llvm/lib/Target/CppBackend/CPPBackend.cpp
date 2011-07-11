@@ -22,7 +22,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
-#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
@@ -74,6 +74,10 @@ static cl::opt<std::string> NameToGenerate("cppfor", cl::Optional,
 extern "C" void LLVMInitializeCppBackendTarget() {
   // Register the target.
   RegisterTargetMachine<CPPTargetMachine> X(TheCppBackendTarget);
+}
+
+extern "C" void LLVMInitializeCppBackendMCInstrInfo() {
+  RegisterMCInstrInfo<MCInstrInfo> X(TheCppBackendTarget);
 }
 
 extern "C" void LLVMInitializeCppBackendMCSubtargetInfo() {

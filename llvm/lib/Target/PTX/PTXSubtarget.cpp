@@ -71,7 +71,7 @@ std::string PTXSubtarget::getPTXVersionString() const {
 MCSubtargetInfo *createPTXMCSubtargetInfo(StringRef TT, StringRef CPU,
                                             StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitPTXMCSubtargetInfo(X, CPU, FS);
+  InitPTXMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

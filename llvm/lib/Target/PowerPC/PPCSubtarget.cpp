@@ -145,7 +145,7 @@ bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV,
 MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
                                           StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitPPCMCSubtargetInfo(X, CPU, FS);
+  InitPPCMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

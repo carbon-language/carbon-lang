@@ -66,7 +66,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
 MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
                                            StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitMipsMCSubtargetInfo(X, CPU, FS);
+  InitMipsMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 

@@ -48,7 +48,7 @@ BlackfinSubtarget::BlackfinSubtarget(const std::string &TT,
 MCSubtargetInfo *createBlackfinMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
-  InitBlackfinMCSubtargetInfo(X, CPU, FS);
+  InitBlackfinMCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
 
