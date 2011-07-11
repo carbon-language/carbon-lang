@@ -30,12 +30,11 @@ class MBlazeMCCodeEmitter : public MCCodeEmitter {
   MBlazeMCCodeEmitter(const MBlazeMCCodeEmitter &); // DO NOT IMPLEMENT
   void operator=(const MBlazeMCCodeEmitter &); // DO NOT IMPLEMENT
   const MCInstrInfo &MCII;
-  MCContext &Ctx;
 
 public:
   MBlazeMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
                       MCContext &ctx)
-    : MCII(mcii), Ctx(ctx) {
+    : MCII(mcii) {
   }
 
   ~MBlazeMCCodeEmitter() {}

@@ -40,12 +40,11 @@ class ARMMCCodeEmitter : public MCCodeEmitter {
   void operator=(const ARMMCCodeEmitter &); // DO NOT IMPLEMENT
   const MCInstrInfo &MCII;
   const MCSubtargetInfo &STI;
-  MCContext &Ctx;
 
 public:
   ARMMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
                    MCContext &ctx)
-    : MCII(mcii), STI(sti), Ctx(ctx) {
+    : MCII(mcii), STI(sti) {
   }
 
   ~ARMMCCodeEmitter() {}

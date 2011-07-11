@@ -28,12 +28,10 @@ namespace {
 class PPCMCCodeEmitter : public MCCodeEmitter {
   PPCMCCodeEmitter(const PPCMCCodeEmitter &); // DO NOT IMPLEMENT
   void operator=(const PPCMCCodeEmitter &);   // DO NOT IMPLEMENT
-  MCContext &Ctx;
   
 public:
   PPCMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
-                   MCContext &ctx)
-    : Ctx(ctx) {
+                   MCContext &ctx) {
   }
   
   ~PPCMCCodeEmitter() {}
