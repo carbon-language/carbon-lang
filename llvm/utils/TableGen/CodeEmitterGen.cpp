@@ -56,7 +56,7 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
       NewBits[middle] = BI->getBit(middle);
     }
  
-    const BitsInit *NewBI = BitsInit::Create(NewBits.begin(), NewBits.end());
+    const BitsInit *NewBI = BitsInit::get(NewBits.begin(), NewBits.end());
 
     // Update the bits in reversed order so that emitInstrOpBits will get the
     // correct endianness.

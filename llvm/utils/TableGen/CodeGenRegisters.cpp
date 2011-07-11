@@ -184,7 +184,7 @@ struct TupleExpander : SetTheory::Expander {
     // Precompute some types.
     Record *RegisterCl = Def->getRecords().getClass("Register");
     RecTy *RegisterRecTy = new RecordRecTy(RegisterCl);
-    const StringInit *BlankName = StringInit::Create("");
+    const StringInit *BlankName = StringInit::get("");
 
     // Zip them up.
     for (unsigned n = 0; n != Length; ++n) {
@@ -196,7 +196,7 @@ struct TupleExpander : SetTheory::Expander {
         Record *Reg = Lists[i][n];
         if (i) Name += '_';
         Name += Reg->getName();
-        Tuple.push_back(DefInit::Create(Reg));
+        Tuple.push_back(DefInit::get(Reg));
         CostPerUse = std::max(CostPerUse,
                               unsigned(Reg->getValueAsInt("CostPerUse")));
       }
@@ -217,7 +217,7 @@ struct TupleExpander : SetTheory::Expander {
 
         // Replace the sub-register list with Tuple.
         if (RV.getName() == "SubRegs")
-          RV.setValue(ListInit::Create(Tuple, RegisterRecTy));
+          RV.setValue(ListInit::get(Tuple, RegisterRecTy));
 
         // Provide a blank AsmName. MC hacks are required anyway.
         if (RV.getName() == "AsmName")
@@ -225,7 +225,7 @@ struct TupleExpander : SetTheory::Expander {
 
         // CostPerUse is aggregated from all Tuple members.
         if (RV.getName() == "CostPerUse")
-          RV.setValue(IntInit::Create(CostPerUse));
+          RV.setValue(IntInit::get(CostPerUse));
 
         // Copy fields from the RegisterTuples def.
         if (RV.getName() == "SubRegIndices" ||

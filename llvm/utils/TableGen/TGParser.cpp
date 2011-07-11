@@ -131,7 +131,7 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, const std::string &ValName,
       if (NewBits[i] == 0)
         NewBits[i] = CurVal->getBit(i);
 
-    V = BitsInit::Create(NewBits.begin(), NewBits.end());
+    V = BitsInit::get(NewBits.begin(), NewBits.end());
   }
 
   if (RV->setValue(V))
@@ -647,13 +647,13 @@ const Init *TGParser::ParseIDValue(Record *CurRec,
                              const std::string &Name, SMLoc NameLoc) {
   if (CurRec) {
     if (const RecordVal *RV = CurRec->getValue(Name))
-      return VarInit::Create(Name, RV->getType());
+      return VarInit::get(Name, RV->getType());
 
     std::string TemplateArgName = CurRec->getName()+":"+Name;
     if (CurRec->isTemplateArg(TemplateArgName)) {
       const RecordVal *RV = CurRec->getValue(TemplateArgName);
       assert(RV && "Template arg doesn't exist??");
-      return VarInit::Create(TemplateArgName, RV->getType());
+      return VarInit::get(TemplateArgName, RV->getType());
     }
   }
 
@@ -662,12 +662,12 @@ const Init *TGParser::ParseIDValue(Record *CurRec,
     if (CurMultiClass->Rec.isTemplateArg(MCName)) {
       const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
       assert(RV && "Template arg doesn't exist??");
-      return VarInit::Create(MCName, RV->getType());
+      return VarInit::get(MCName, RV->getType());
     }
   }
 
   if (Record *D = Records.getDef(Name))
-    return DefInit::Create(D);
+    return DefInit::get(D);
 
   Error(NameLoc, "Variable not defined: '" + Name + "'");
   return 0;
@@ -790,7 +790,7 @@ const Init *TGParser::ParseOperation(Record *CurRec) {
       return 0;
     }
     Lex.Lex();  // eat the ')'
-    return (UnOpInit::Create(Code, LHS, Type))->Fold(CurRec, CurMultiClass);
+    return (UnOpInit::get(Code, LHS, Type))->Fold(CurRec, CurMultiClass);
   }
 
   case tgtok::XConcat:
@@ -848,14 +848,14 @@ const Init *TGParser::ParseOperation(Record *CurRec) {
     if (Code == BinOpInit::STRCONCAT) {
       while (InitList.size() > 2) {
         const Init *RHS = InitList.pop_back_val();
-        RHS = (BinOpInit::Create(Code, InitList.back(), RHS, Type))
+        RHS = (BinOpInit::get(Code, InitList.back(), RHS, Type))
                       ->Fold(CurRec, CurMultiClass);
         InitList.back() = RHS;
       }
     }
 
     if (InitList.size() == 2)
-      return (BinOpInit::Create(Code, InitList[0], InitList[1], Type))
+      return (BinOpInit::get(Code, InitList[0], InitList[1], Type))
         ->Fold(CurRec, CurMultiClass);
 
     Error(OpLoc, "expected two operands to operator");
@@ -982,7 +982,7 @@ const Init *TGParser::ParseOperation(Record *CurRec) {
       break;
     }
     }
-    return (TernOpInit::Create(Code, LHS, MHS, RHS, Type))->Fold(CurRec,
+    return (TernOpInit::get(Code, LHS, MHS, RHS, Type))->Fold(CurRec,
                                                              CurMultiClass);
   }
   }
@@ -1042,7 +1042,7 @@ const Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
   const Init *R = 0;
   switch (Lex.getCode()) {
   default: TokError("Unknown token when parsing a value"); break;
-  case tgtok::IntVal: R = IntInit::Create(Lex.getCurIntVal()); Lex.Lex(); break;
+  case tgtok::IntVal: R = IntInit::get(Lex.getCurIntVal()); Lex.Lex(); break;
   case tgtok::StrVal: {
     std::string Val = Lex.getCurStrVal();
     Lex.Lex();
@@ -1053,15 +1053,15 @@ const Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
       Lex.Lex();
     }
 
-    R = StringInit::Create(Val);
+    R = StringInit::get(Val);
     break;
   }
   case tgtok::CodeFragment:
-    R = CodeInit::Create(Lex.getCurStrVal());
+    R = CodeInit::get(Lex.getCurStrVal());
     Lex.Lex();
     break;
   case tgtok::question:
-    R = UnsetInit::Create();
+    R = UnsetInit::get();
     Lex.Lex();
     break;
   case tgtok::Id: {
@@ -1110,7 +1110,7 @@ const Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
     Records.addDef(NewRec);
 
     // The result of the expression is a reference to the new record.
-    return DefInit::Create(NewRec);
+    return DefInit::get(NewRec);
   }
   case tgtok::l_brace: {           // Value ::= '{' ValueList '}'
     SMLoc BraceLoc = Lex.getLoc();
@@ -1138,7 +1138,7 @@ const Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
       }
       NewBits[Vals.size()-i-1] = Bit;
     }
-    return BitsInit::Create(NewBits.begin(), NewBits.end());
+    return BitsInit::get(NewBits.begin(), NewBits.end());
   }
   case tgtok::l_square: {          // Value ::= '[' ValueList ']'
     Lex.Lex(); // eat the '['
@@ -1237,7 +1237,7 @@ const Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
       DeducedEltTy = EltTy;
     }
 
-    return ListInit::Create(Vals, DeducedEltTy);
+    return ListInit::get(Vals, DeducedEltTy);
   }
   case tgtok::l_paren: {         // Value ::= '(' IDValue DagArgList ')'
     Lex.Lex();   // eat the '('
@@ -1272,7 +1272,7 @@ const Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType) {
     }
     Lex.Lex();  // eat the ')'
 
-    return DagInit::Create(Operator, OperatorName, DagArgs);
+    return DagInit::get(Operator, OperatorName, DagArgs);
   }
 
   case tgtok::XHead:
@@ -1362,7 +1362,7 @@ const Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType) {
                  Result->getAsString() + "'");
         return 0;
       }
-      Result = FieldInit::Create(Result, Lex.getCurStrVal());
+      Result = FieldInit::get(Result, Lex.getCurStrVal());
       Lex.Lex();  // eat field name
       break;
     }

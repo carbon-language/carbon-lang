@@ -40,7 +40,7 @@ const Init *BitRecTy::convertValue(const IntInit *II) {
   int64_t Val = II->getValue();
   if (Val != 0 && Val != 1) return 0;  // Only accept 0 or 1 for a bit!
 
-  return BitInit::Create(Val != 0);
+  return BitInit::get(Val != 0);
 }
 
 const Init *BitRecTy::convertValue(const TypedInit *VI) {
@@ -57,9 +57,9 @@ const Init *BitsRecTy::convertValue(const UnsetInit *UI) {
   SmallVector<const Init *, 16> Bits(Size);
 
   for (unsigned i = 0; i != Size; ++i)
-    Bits[i] = UnsetInit::Create();
+    Bits[i] = UnsetInit::get();
  
-  return BitsInit::Create(Bits.begin(), Bits.end());
+  return BitsInit::get(Bits.begin(), Bits.end());
 }
 
 const Init *BitsRecTy::convertValue(const BitInit *UI) {
@@ -67,7 +67,7 @@ const Init *BitsRecTy::convertValue(const BitInit *UI) {
 
   const Init *Bits[1] = { UI };
 
-  return BitsInit::Create(Bits, array_endof(Bits));
+  return BitsInit::get(Bits, array_endof(Bits));
 }
 
 /// canFitInBitfield - Return true if the number of bits is large enough to hold
@@ -90,9 +90,9 @@ const Init *BitsRecTy::convertValue(const IntInit *II) {
   SmallVector<const Init *, 16> Bits(Size); 
 
   for (unsigned i = 0; i != Size; ++i)
-    Bits[i] = BitInit::Create(Value & (1LL << i));
+    Bits[i] = BitInit::get(Value & (1LL << i));
 
-  return BitsInit::Create(Bits.begin(), Bits.end());
+  return BitsInit::get(Bits.begin(), Bits.end());
 }
 
 const Init *BitsRecTy::convertValue(const BitsInit *BI) {
@@ -108,14 +108,14 @@ const Init *BitsRecTy::convertValue(const TypedInit *VI) {
       SmallVector<const Init *, 16> Bits(Size);
  
       for (unsigned i = 0; i != Size; ++i)
-         Bits[i] = VarBitInit::Create(VI, i);
-      return BitsInit::Create(Bits.begin(), Bits.end());
+         Bits[i] = VarBitInit::get(VI, i);
+      return BitsInit::get(Bits.begin(), Bits.end());
     }
 
   if (Size == 1 && dynamic_cast<BitRecTy*>(VI->getType())) {
     const Init *Bits[1] = { VI };
  
-    return BitsInit::Create(Bits, array_endof(Bits));
+    return BitsInit::get(Bits, array_endof(Bits));
   }
 
   if (const TernOpInit *Tern = dynamic_cast<const TernOpInit*>(VI)) {
@@ -136,12 +136,12 @@ const Init *BitsRecTy::convertValue(const TypedInit *VI) {
 
           for (unsigned i = 0; i != Size; ++i)
             NewBits[i] =
-              TernOpInit::Create(TernOpInit::IF, LHS,
-                                 IntInit::Create((MHSVal & (1LL << i)) ? 1 : 0),
-                                 IntInit::Create((RHSVal & (1LL << i)) ? 1 : 0),
+              TernOpInit::get(TernOpInit::IF, LHS,
+                                 IntInit::get((MHSVal & (1LL << i)) ? 1 : 0),
+                                 IntInit::get((RHSVal & (1LL << i)) ? 1 : 0),
                                  VI->getType());
           
-          return BitsInit::Create(NewBits.begin(), NewBits.end());
+          return BitsInit::get(NewBits.begin(), NewBits.end());
         }
       } else {
         const BitsInit *MHSbs = dynamic_cast<const BitsInit*>(MHS);
@@ -151,12 +151,12 @@ const Init *BitsRecTy::convertValue(const TypedInit *VI) {
           SmallVector<const Init *, 16> NewBits(Size);
 
           for (unsigned i = 0; i != Size; ++i)
-            NewBits[i] = TernOpInit::Create(TernOpInit::IF, LHS,
+            NewBits[i] = TernOpInit::get(TernOpInit::IF, LHS,
                                             MHSbs->getBit(i),
                                             RHSbs->getBit(i),
                                             VI->getType());
 
-          return BitsInit::Create(NewBits.begin(), NewBits.end());
+          return BitsInit::get(NewBits.begin(), NewBits.end());
         }
       }
     }
@@ -166,7 +166,7 @@ const Init *BitsRecTy::convertValue(const TypedInit *VI) {
 }
 
 const Init *IntRecTy::convertValue(const BitInit *BI) {
-  return IntInit::Create(BI->getValue());
+  return IntInit::get(BI->getValue());
 }
 
 const Init *IntRecTy::convertValue(const BitsInit *BI) {
@@ -177,7 +177,7 @@ const Init *IntRecTy::convertValue(const BitsInit *BI) {
     } else {
       return 0;
     }
-  return IntInit::Create(Result);
+  return IntInit::get(Result);
 }
 
 const Init *IntRecTy::convertValue(const TypedInit *TI) {
@@ -191,7 +191,7 @@ const Init *StringRecTy::convertValue(const UnOpInit *BO) {
     const Init *L = BO->getOperand()->convertInitializerTo(this);
     if (L == 0) return 0;
     if (L != BO->getOperand())
-      return UnOpInit::Create(UnOpInit::CAST, L, new StringRecTy);
+      return UnOpInit::get(UnOpInit::CAST, L, new StringRecTy);
     return BO;
   }
 
@@ -204,7 +204,7 @@ const Init *StringRecTy::convertValue(const BinOpInit *BO) {
     const Init *R = BO->getRHS()->convertInitializerTo(this);
     if (L == 0 || R == 0) return 0;
     if (L != BO->getLHS() || R != BO->getRHS())
-      return BinOpInit::Create(BinOpInit::STRCONCAT, L, R, new StringRecTy);
+      return BinOpInit::get(BinOpInit::STRCONCAT, L, R, new StringRecTy);
     return BO;
   }
 
@@ -238,7 +238,7 @@ const Init *ListRecTy::convertValue(const ListInit *LI) {
     return 0;
   }
 
-  return ListInit::Create(Elements, new ListRecTy(Ty));
+  return ListInit::get(Elements, new ListRecTy(Ty));
 }
 
 const Init *ListRecTy::convertValue(const TypedInit *TI) {
@@ -266,7 +266,7 @@ const Init *DagRecTy::convertValue(const UnOpInit *BO) {
     const Init *L = BO->getOperand()->convertInitializerTo(this);
     if (L == 0) return 0;
     if (L != BO->getOperand())
-      return UnOpInit::Create(UnOpInit::CAST, L, new DagRecTy);
+      return UnOpInit::get(UnOpInit::CAST, L, new DagRecTy);
     return BO;
   }
   return 0;
@@ -278,7 +278,7 @@ const Init *DagRecTy::convertValue(const BinOpInit *BO) {
     const Init *R = BO->getRHS()->convertInitializerTo(this);
     if (L == 0 || R == 0) return 0;
     if (L != BO->getLHS() || R != BO->getRHS())
-      return BinOpInit::Create(BinOpInit::CONCAT, L, R, new DagRecTy);
+      return BinOpInit::get(BinOpInit::CONCAT, L, R, new DagRecTy);
     return BO;
   }
   return 0;
@@ -379,7 +379,7 @@ BumpPtrAllocator Init::InitAllocator;
 
 void Init::dump() const { return print(errs()); }
 
-const UnsetInit *UnsetInit::Create() {
+const UnsetInit *UnsetInit::get() {
   FoldingSetNodeID ID;
   ID.AddInteger(initUnset);
 
@@ -393,7 +393,7 @@ const UnsetInit *UnsetInit::Create() {
   return I;
 }
 
-const BitInit *BitInit::Create(bool V) {
+const BitInit *BitInit::get(bool V) {
   FoldingSetNodeID ID;
   ID.AddInteger(initBit);
   ID.AddBoolean(V);
@@ -419,7 +419,7 @@ BitsInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
     NewBits[i] = getBit(Bits[i]);
   }
 
-  return BitsInit::Create(NewBits.begin(), NewBits.end());
+  return BitsInit::get(NewBits.begin(), NewBits.end());
 }
 
 std::string BitsInit::getAsString() const {
@@ -456,12 +456,12 @@ const Init *BitsInit::resolveReferences(Record &R,
   }
 
   if (Changed)
-    return BitsInit::Create(Bits.begin(), Bits.end());
+    return BitsInit::get(Bits.begin(), Bits.end());
 
   return this;
 }
 
-const IntInit *IntInit::Create(int64_t V) {
+const IntInit *IntInit::get(int64_t V) {
   FoldingSetNodeID ID;
   ID.AddInteger(initInt);
   ID.AddInteger(V);
@@ -488,13 +488,13 @@ IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
     if (Bits[i] >= 64)
       return 0;
 
-    NewBits[i] = BitInit::Create(Value & (INT64_C(1) << Bits[i]));
+    NewBits[i] = BitInit::get(Value & (INT64_C(1) << Bits[i]));
   }
 
-  return BitsInit::Create(NewBits.begin(), NewBits.end());
+  return BitsInit::get(NewBits.begin(), NewBits.end());
 }
 
-const StringInit *StringInit::Create(const std::string &V) {
+const StringInit *StringInit::get(const std::string &V) {
   FoldingSetNodeID ID;
   ID.AddInteger(initString);
   ID.AddString(V);
@@ -509,7 +509,7 @@ const StringInit *StringInit::Create(const std::string &V) {
   return I;
 }
 
-const CodeInit *CodeInit::Create(const std::string &V) {
+const CodeInit *CodeInit::get(const std::string &V) {
   FoldingSetNodeID ID;
   ID.AddInteger(initCode);
   ID.AddString(V);
@@ -524,7 +524,7 @@ const CodeInit *CodeInit::Create(const std::string &V) {
   return I;
 }
 
-const ListInit *ListInit::Create(std::vector<const Init *> &Vs, RecTy *EltTy) {
+const ListInit *ListInit::get(std::vector<const Init *> &Vs, RecTy *EltTy) {
   FoldingSetNodeID ID;
   ID.AddInteger(initList);
   ID.AddString(EltTy->getAsString());
@@ -553,7 +553,7 @@ ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
       return 0;
     Vals.push_back(getElement(Elements[i]));
   }
-  return ListInit::Create(Vals, getType());
+  return ListInit::get(Vals, getType());
 }
 
 Record *ListInit::getElementAsRecord(unsigned i) const {
@@ -582,7 +582,7 @@ const Init *ListInit::resolveReferences(Record &R,
   }
 
   if (Changed)
-    return ListInit::Create(Resolved, getType());
+    return ListInit::get(Resolved, getType());
  
   return this;
 }
@@ -641,7 +641,7 @@ const Init *OpInit::resolveListElementReference(Record &R, const RecordVal *IRV,
   return 0;
 }
 
-const UnOpInit *UnOpInit::Create(UnaryOp opc, const Init *lhs, RecTy *Type) {
+const UnOpInit *UnOpInit::get(UnaryOp opc, const Init *lhs, RecTy *Type) {
   FoldingSetNodeID ID;
   ID.AddInteger(initUnOp);
   ID.AddInteger(opc);
@@ -670,7 +670,7 @@ const Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
 
       const DefInit *LHSd = dynamic_cast<const DefInit*>(LHS);
       if (LHSd) {
-        return StringInit::Create(LHSd->getDef()->getName());
+        return StringInit::get(LHSd->getDef()->getName());
       }
     } else {
       const StringInit *LHSs = dynamic_cast<const StringInit*>(LHS);
@@ -682,7 +682,7 @@ const Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
           if (const RecordVal *RV = CurRec->getValue(Name)) {
             if (RV->getType() != getType())
               throw "type mismatch in cast";
-            return VarInit::Create(Name, RV->getType());
+            return VarInit::get(Name, RV->getType());
           }
 
           std::string TemplateArgName = CurRec->getName()+":"+Name;
@@ -693,7 +693,7 @@ const Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
             if (RV->getType() != getType())
               throw "type mismatch in cast";
 
-            return VarInit::Create(TemplateArgName, RV->getType());
+            return VarInit::get(TemplateArgName, RV->getType());
           }
         }
 
@@ -706,12 +706,12 @@ const Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
             if (RV->getType() != getType())
               throw "type mismatch in cast";
 
-            return VarInit::Create(MCName, RV->getType());
+            return VarInit::get(MCName, RV->getType());
           }
         }
 
         if (Record *D = (CurRec->getRecords()).getDef(Name))
-          return DefInit::Create(D);
+          return DefInit::get(D);
 
         throw TGError(CurRec->getLoc(), "Undefined reference:'" + Name + "'\n");
       }
@@ -736,7 +736,7 @@ const Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         assert(0 && "Empty list in cdr");
         return 0;
       }
-      const ListInit *Result = ListInit::Create(LHSl->begin()+1, LHSl->end(),
+      const ListInit *Result = ListInit::get(LHSl->begin()+1, LHSl->end(),
                                           LHSl->getType());
       return Result;
     }
@@ -746,17 +746,17 @@ const Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     const ListInit *LHSl = dynamic_cast<const ListInit*>(LHS);
     if (LHSl) {
       if (LHSl->getSize() == 0) {
-        return IntInit::Create(1);
+        return IntInit::get(1);
       } else {
-        return IntInit::Create(0);
+        return IntInit::get(0);
       }
     }
     const StringInit *LHSs = dynamic_cast<const StringInit*>(LHS);
     if (LHSs) {
       if (LHSs->getValue().empty()) {
-        return IntInit::Create(1);
+        return IntInit::get(1);
       } else {
-        return IntInit::Create(0);
+        return IntInit::get(0);
       }
     }
 
@@ -771,7 +771,7 @@ const Init *UnOpInit::resolveReferences(Record &R,
   const Init *lhs = LHS->resolveReferences(R, RV);
 
   if (LHS != lhs)
-    return (UnOpInit::Create(getOpcode(), lhs, getType()))->Fold(&R, 0);
+    return (UnOpInit::get(getOpcode(), lhs, getType()))->Fold(&R, 0);
   return Fold(&R, 0);
 }
 
@@ -786,7 +786,7 @@ std::string UnOpInit::getAsString() const {
   return Result + "(" + LHS->getAsString() + ")";
 }
 
-const BinOpInit *BinOpInit::Create(BinaryOp opc, const Init *lhs,
+const BinOpInit *BinOpInit::get(BinaryOp opc, const Init *lhs,
                                    const Init *rhs, RecTy *Type) {
   FoldingSetNodeID ID;
   ID.AddInteger(initBinOp);
@@ -826,7 +826,7 @@ const Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         Args.push_back(RHSs->getArg(i));
         ArgNames.push_back(RHSs->getArgName(i));
       }
-      return DagInit::Create(LHSs->getOperator(), "", Args, ArgNames);
+      return DagInit::get(LHSs->getOperator(), "", Args, ArgNames);
     }
     break;
   }
@@ -834,7 +834,7 @@ const Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     const StringInit *LHSs = dynamic_cast<const StringInit*>(LHS);
     const StringInit *RHSs = dynamic_cast<const StringInit*>(RHS);
     if (LHSs && RHSs)
-      return StringInit::Create(LHSs->getValue() + RHSs->getValue());
+      return StringInit::get(LHSs->getValue() + RHSs->getValue());
     break;
   }
   case EQ: {
@@ -846,14 +846,14 @@ const Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       dynamic_cast<const IntInit*>(RHS->convertInitializerTo(new IntRecTy()));
 
     if (L && R)
-      return IntInit::Create(L->getValue() == R->getValue());
+      return IntInit::get(L->getValue() == R->getValue());
 
     const StringInit *LHSs = dynamic_cast<const StringInit*>(LHS);
     const StringInit *RHSs = dynamic_cast<const StringInit*>(RHS);
 
     // Make sure we've resolved
     if (LHSs && RHSs)
-      return IntInit::Create(LHSs->getValue() == RHSs->getValue());
+      return IntInit::get(LHSs->getValue() == RHSs->getValue());
 
     break;
   }
@@ -871,7 +871,7 @@ const Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       case SRA: Result = LHSv >> RHSv; break;
       case SRL: Result = (uint64_t)LHSv >> (uint64_t)RHSv; break;
       }
-      return IntInit::Create(Result);
+      return IntInit::get(Result);
     }
     break;
   }
@@ -885,7 +885,7 @@ const Init *BinOpInit::resolveReferences(Record &R,
   const Init *rhs = RHS->resolveReferences(R, RV);
 
   if (LHS != lhs || RHS != rhs)
-    return (BinOpInit::Create(getOpcode(), lhs, rhs, getType()))->Fold(&R, 0);
+    return (BinOpInit::get(getOpcode(), lhs, rhs, getType()))->Fold(&R, 0);
   return Fold(&R, 0);
 }
 
@@ -902,7 +902,7 @@ std::string BinOpInit::getAsString() const {
   return Result + "(" + LHS->getAsString() + ", " + RHS->getAsString() + ")";
 }
 
-const TernOpInit *TernOpInit::Create(TernaryOp opc, const Init *lhs,
+const TernOpInit *TernOpInit::get(TernaryOp opc, const Init *lhs,
                                      const Init *mhs, const Init *rhs,
                                      RecTy *Type) {
   FoldingSetNodeID ID;
@@ -1025,7 +1025,7 @@ static const Init *ForeachHelper(const Init *LHS, const Init *MHS,
         args.push_back(std::make_pair(Arg, ArgName));
       }
 
-      return DagInit::Create(Val, "", args);
+      return DagInit::get(Val, "", args);
     }
     if (MHSl) {
       std::vector<const Init *> NewOperands;
@@ -1053,7 +1053,7 @@ static const Init *ForeachHelper(const Init *LHS, const Init *MHS,
           *li = NewItem;
         }
       }
-      return ListInit::Create(NewList, MHSl->getType());
+      return ListInit::get(NewList, MHSl->getType());
     }
   }
   return 0;
@@ -1083,14 +1083,14 @@ const Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         if (LHSd->getAsString() == RHSd->getAsString()) {
           Val = MHSd->getDef();
         }
-        return DefInit::Create(Val);
+        return DefInit::get(Val);
       }
       if (RHSv) {
         std::string Val = RHSv->getName();
         if (LHSv->getAsString() == RHSv->getAsString()) {
           Val = MHSv->getName();
         }
-        return VarInit::Create(Val, getType());
+        return VarInit::get(Val, getType());
       }
       if (RHSs) {
         std::string Val = RHSs->getValue();
@@ -1105,7 +1105,7 @@ const Init *TernOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
           idx = found +  MHSs->getValue().size();
         } while (found != std::string::npos);
 
-        return StringInit::Create(Val);
+        return StringInit::get(Val);
       }
     }
     break;
@@ -1151,11 +1151,11 @@ TernOpInit::resolveReferences(Record &R,
       // Short-circuit
       if (Value->getValue()) {
         const Init *mhs = MHS->resolveReferences(R, RV);
-        return (TernOpInit::Create(getOpcode(), lhs, mhs,
+        return (TernOpInit::get(getOpcode(), lhs, mhs,
                                    RHS, getType()))->Fold(&R, 0);
       } else {
         const Init *rhs = RHS->resolveReferences(R, RV);
-        return (TernOpInit::Create(getOpcode(), lhs, MHS,
+        return (TernOpInit::get(getOpcode(), lhs, MHS,
                                    rhs, getType()))->Fold(&R, 0);
       }
     }
@@ -1165,7 +1165,7 @@ TernOpInit::resolveReferences(Record &R,
   const Init *rhs = RHS->resolveReferences(R, RV);
 
   if (LHS != lhs || MHS != mhs || RHS != rhs)
-    return (TernOpInit::Create(getOpcode(), lhs, mhs, rhs, getType()))->
+    return (TernOpInit::get(getOpcode(), lhs, mhs, rhs, getType()))->
       Fold(&R, 0);
   return Fold(&R, 0);
 }
@@ -1203,9 +1203,9 @@ TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
     if (Bits[i] >= NumBits) {
       return 0;
     }
-    NewBits[i] = VarBitInit::Create(this, Bits[i]);
+    NewBits[i] = VarBitInit::get(this, Bits[i]);
   }
-  return BitsInit::Create(NewBits.begin(), NewBits.end());
+  return BitsInit::get(NewBits.begin(), NewBits.end());
 }
 
 const Init *
@@ -1214,17 +1214,17 @@ TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
   if (T == 0) return 0;  // Cannot subscript a non-list variable.
 
   if (Elements.size() == 1)
-    return VarListElementInit::Create(this, Elements[0]);
+    return VarListElementInit::get(this, Elements[0]);
 
   std::vector<const Init*> ListInits;
   ListInits.reserve(Elements.size());
   for (unsigned i = 0, e = Elements.size(); i != e; ++i)
-    ListInits.push_back(VarListElementInit::Create(this, Elements[i]));
-  return ListInit::Create(ListInits, T);
+    ListInits.push_back(VarListElementInit::get(this, Elements[i]));
+  return ListInit::get(ListInits, T);
 }
 
 
-const VarInit *VarInit::Create(const std::string &VN, RecTy *T) {
+const VarInit *VarInit::get(const std::string &VN, RecTy *T) {
   FoldingSetNodeID ID;
   ID.AddInteger(initVar);
   ID.AddString(VN);
@@ -1273,7 +1273,7 @@ const Init *VarInit::resolveListElementReference(Record &R,
   if (!LI) {
     const VarInit *VI = dynamic_cast<const VarInit*>(RV->getValue());
     assert(VI && "Invalid list element!");
-    return VarListElementInit::Create(VI, Elt);
+    return VarListElementInit::get(VI, Elt);
   }
 
   if (Elt >= LI->getSize())
@@ -1325,7 +1325,7 @@ const Init *VarInit::resolveReferences(Record &R,
   return this;
 }
 
-const VarBitInit *VarBitInit::Create(const TypedInit *T, unsigned B) {
+const VarBitInit *VarBitInit::get(const TypedInit *T, unsigned B) {
   FoldingSetNodeID ID;
   ID.AddInteger(initVarBit);
   ID.AddPointer(T);
@@ -1353,7 +1353,7 @@ VarBitInit::resolveReferences(Record &R,
   return this;
 }
 
-const VarListElementInit *VarListElementInit::Create(const TypedInit *T,
+const VarListElementInit *VarListElementInit::get(const TypedInit *T,
                                                      unsigned E) {
   FoldingSetNodeID ID;
   ID.AddInteger(initVarListElement);
@@ -1399,7 +1399,7 @@ VarListElementInit::resolveListElementReference(Record &R,
   return 0;
 }
 
-const DefInit *DefInit::Create(Record *D) {
+const DefInit *DefInit::get(Record *D) {
   FoldingSetNodeID ID;
   ID.AddInteger(initDef);
   ID.AddString(D->getName());
@@ -1430,7 +1430,7 @@ std::string DefInit::getAsString() const {
   return Def->getName();
 }
 
-const FieldInit *FieldInit::Create(const Init *R, const std::string &FN) {
+const FieldInit *FieldInit::get(const Init *R, const std::string &FN) {
   FoldingSetNodeID ID;
   ID.AddInteger(initField);
   ID.AddPointer(R);
@@ -1487,13 +1487,13 @@ const Init *FieldInit::resolveReferences(Record &R,
   }
 
   if (NewRec != Rec) {
-    return FieldInit::Create(NewRec, FieldName);
+    return FieldInit::get(NewRec, FieldName);
   }
   return this;
 }
 
 const DagInit *
-DagInit::Create(const Init *V, const std::string &VN,
+DagInit::get(const Init *V, const std::string &VN,
                 const std::vector<std::pair<const Init*, std::string> > &args) {
   FoldingSetNodeID ID;
   ID.AddInteger(initDag);
@@ -1520,7 +1520,7 @@ DagInit::Create(const Init *V, const std::string &VN,
 }
 
 const DagInit *
-DagInit::Create(const Init *V, const std::string &VN,
+DagInit::get(const Init *V, const std::string &VN,
                 const std::vector<const Init *> &args,
                 const std::vector<std::string> &argNames) {
   FoldingSetNodeID ID;
@@ -1557,7 +1557,7 @@ const Init *DagInit::resolveReferences(Record &R,
   const Init *Op = Val->resolveReferences(R, RV);
 
   if (Args != NewArgs || Op != Val)
-    return DagInit::Create(Op, ValName, NewArgs, ArgNames);
+    return DagInit::get(Op, ValName, NewArgs, ArgNames);
 
   return this;
 }
@@ -1585,7 +1585,7 @@ std::string DagInit::getAsString() const {
 
 RecordVal::RecordVal(const std::string &N, RecTy *T, unsigned P)
   : Name(N), Ty(T), Prefix(P) {
-  Value = Ty->convertValue(UnsetInit::Create());
+  Value = Ty->convertValue(UnsetInit::get());
   assert(Value && "Cannot create unset value for current type!");
 }
 

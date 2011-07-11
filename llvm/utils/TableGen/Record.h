@@ -710,7 +710,7 @@ class UnsetInit : public Init {
   UnsetInit &operator=(const UnsetInit &Other);  // Do not define.
 
 public:
-  static const UnsetInit *Create();
+  static const UnsetInit *get();
 
   virtual const Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(this);
@@ -731,7 +731,7 @@ class BitInit : public Init {
   BitInit &operator=(BitInit &Other);  // Do not define.
 
 public:
-  static const BitInit *Create(bool V);
+  static const BitInit *get(bool V);
 
   bool getValue() const { return Value; }
 
@@ -760,7 +760,7 @@ class BitsInit : public Init {
 
 public:
   template<typename InputIterator>
-  static const BitsInit *Create(InputIterator Start, InputIterator End) {
+  static const BitsInit *get(InputIterator Start, InputIterator End) {
     FoldingSetNodeID ID;
     ID.AddInteger(initBits);
     ID.AddInteger(std::distance(Start, End));
@@ -826,7 +826,7 @@ class IntInit : public TypedInit {
   IntInit &operator=(const IntInit &Other);  // Do note define.
 
 public:
-  static const IntInit *Create(int64_t V);
+  static const IntInit *get(int64_t V);
 
   int64_t getValue() const { return Value; }
 
@@ -872,7 +872,7 @@ class StringInit : public TypedInit {
   StringInit &operator=(const StringInit &Other);  // Do not define.
 
 public:
-  static const StringInit *Create(const std::string &V);
+  static const StringInit *get(const std::string &V);
 
   const std::string &getValue() const { return Value; }
 
@@ -915,7 +915,7 @@ class CodeInit : public Init {
   CodeInit &operator=(const CodeInit &Other);  // Do not define.
 
 public:
-  static const CodeInit *Create(const std::string &V);
+  static const CodeInit *get(const std::string &V);
 
   const std::string &getValue() const { return Value; }
 
@@ -950,11 +950,11 @@ private:
   ListInit &operator=(const ListInit &Other);  // Do not define.
 
 public:
-  static const ListInit *Create(std::vector<const Init*> &Vs, RecTy *EltTy);
+  static const ListInit *get(std::vector<const Init*> &Vs, RecTy *EltTy);
 
   template<typename InputIterator>
-  static const ListInit *Create(InputIterator Start, InputIterator End,
-                                RecTy *EltTy) {
+  static const ListInit *get(InputIterator Start, InputIterator End,
+                             RecTy *EltTy) {
     FoldingSetNodeID ID;
     ID.AddInteger(initList);
     ID.AddString(EltTy->getAsString());
@@ -1072,13 +1072,13 @@ private:
   UnOpInit &operator=(const UnOpInit &Other);  // Do not define.
 
 public:
-  static const UnOpInit *Create(UnaryOp opc, const Init *lhs, RecTy *Type);
+  static const UnOpInit *get(UnaryOp opc, const Init *lhs, RecTy *Type);
 
   // Clone - Clone this operator, replacing arguments with the new list
   virtual const OpInit *clone(std::vector<const Init *> &Operands) const {
     assert(Operands.size() == 1 &&
            "Wrong number of operands for unary operation");
-    return UnOpInit::Create(getOpcode(), *Operands.begin(), getType());
+    return UnOpInit::get(getOpcode(), *Operands.begin(), getType());
   }
 
   int getNumOperands() const { return 1; }
@@ -1117,14 +1117,14 @@ private:
   BinOpInit &operator=(const BinOpInit &Other);  // Do not define.
 
 public:
-  static const BinOpInit *Create(BinaryOp opc, const Init *lhs, const Init *rhs,
-                                 RecTy *Type);
+  static const BinOpInit *get(BinaryOp opc, const Init *lhs, const Init *rhs,
+                              RecTy *Type);
 
   // Clone - Clone this operator, replacing arguments with the new list
   virtual const OpInit *clone(std::vector<const Init *> &Operands) const {
     assert(Operands.size() == 2 &&
            "Wrong number of operands for binary operation");
-    return BinOpInit::Create(getOpcode(), Operands[0], Operands[1], getType());
+    return BinOpInit::get(getOpcode(), Operands[0], Operands[1], getType());
   }
 
   int getNumOperands() const { return 2; }
@@ -1168,16 +1168,16 @@ private:
   TernOpInit &operator=(const TernOpInit &Other);  // Do not define.
 
 public:
-  static const TernOpInit *Create(TernaryOp opc, const Init *lhs,
-                                  const Init *mhs, const Init *rhs,
-                                  RecTy *Type);
+  static const TernOpInit *get(TernaryOp opc, const Init *lhs,
+                               const Init *mhs, const Init *rhs,
+                               RecTy *Type);
 
   // Clone - Clone this operator, replacing arguments with the new list
   virtual const OpInit *clone(std::vector<const Init *> &Operands) const {
     assert(Operands.size() == 3 &&
            "Wrong number of operands for ternary operation");
-    return TernOpInit::Create(getOpcode(), Operands[0], Operands[1],
-                              Operands[2], getType());
+    return TernOpInit::get(getOpcode(), Operands[0], Operands[1],
+                           Operands[2], getType());
   }
 
   int getNumOperands() const { return 3; }
@@ -1223,8 +1223,8 @@ class VarInit : public TypedInit {
   VarInit &operator=(const VarInit &Other);  // Do not define.
 
 public:
-  static const VarInit *Create(const std::string &VN, RecTy *T);
-  static const VarInit *Create(const Init *VN, RecTy *T);
+  static const VarInit *get(const std::string &VN, RecTy *T);
+  static const VarInit *get(const Init *VN, RecTy *T);
 
   virtual const Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(this);
@@ -1271,7 +1271,7 @@ class VarBitInit : public Init {
   VarBitInit &operator=(const VarBitInit &Other);  // Do not define.
 
 public:
-  static const VarBitInit *Create(const TypedInit *T, unsigned B);
+  static const VarBitInit *get(const TypedInit *T, unsigned B);
 
   virtual const Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(this);
@@ -1304,7 +1304,7 @@ class VarListElementInit : public TypedInit {
                                                                    // define.
 
 public:
-  static const VarListElementInit *Create(const TypedInit *T, unsigned E);
+  static const VarListElementInit *get(const TypedInit *T, unsigned E);
 
   virtual const Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(this);
@@ -1339,7 +1339,7 @@ class DefInit : public TypedInit {
   DefInit &operator=(const DefInit &Other);  // Do not define.
 
 public:
-  static const DefInit *Create(Record *D);
+  static const DefInit *get(Record *D);
 
   virtual const Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(this);
@@ -1393,8 +1393,8 @@ class FieldInit : public TypedInit {
   FieldInit &operator=(const FieldInit &Other);  // Do not define.
 
 public:
-  static const FieldInit *Create(const Init *R, const std::string &FN);
-  static const FieldInit *Create(const Init *R, const Init *FN);
+  static const FieldInit *get(const Init *R, const std::string &FN);
+  static const FieldInit *get(const Init *R, const Init *FN);
 
   virtual const Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(this);
@@ -1444,12 +1444,12 @@ class DagInit : public TypedInit {
   DagInit &operator=(const DagInit &Other);  // Do not define.
 
 public:
-  static const DagInit *Create(const Init *V, const std::string &VN,
-                               const std::vector<
-                                 std::pair<const Init*, std::string> > &args);
-  static const DagInit *Create(const Init *V, const std::string &VN,
-                               const std::vector<const Init*> &args,
-                               const std::vector<std::string> &argNames);
+  static const DagInit *get(const Init *V, const std::string &VN,
+                            const std::vector<
+                              std::pair<const Init*, std::string> > &args);
+  static const DagInit *get(const Init *V, const std::string &VN,
+                            const std::vector<const Init*> &args,
+                            const std::vector<std::string> &argNames);
 
   virtual const Init *convertInitializerTo(RecTy *Ty) const {
     return Ty->convertValue(this);
