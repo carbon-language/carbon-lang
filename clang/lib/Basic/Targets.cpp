@@ -1220,7 +1220,7 @@ void X86TargetInfo::getDefaultFeatures(const std::string &CPU,
     setFeatureEnabled(Features, "mmx", true);
     setFeatureEnabled(Features, "sse4", true);
     setFeatureEnabled(Features, "aes", true);
-//    setFeatureEnabled(Features, "avx", true);
+    setFeatureEnabled(Features, "avx", true);
   } else if (CPU == "k6" || CPU == "winchip-c6")
     setFeatureEnabled(Features, "mmx", true);
   else if (CPU == "k6-2" || CPU == "k6-3" || CPU == "athlon" ||
