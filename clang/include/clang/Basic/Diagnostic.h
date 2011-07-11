@@ -277,13 +277,15 @@ private:
   /// can use this information to avoid redundancy across arguments.
   ///
   /// This is a hack to avoid a layering violation between libbasic and libsema.
-  typedef void (*ArgToStringFnTy)(ArgumentKind Kind, intptr_t Val,
-                                  const char *Modifier, unsigned ModifierLen,
-                                  const char *Argument, unsigned ArgumentLen,
-                                  const ArgumentValue *PrevArgs,
-                                  unsigned NumPrevArgs,
-                                  llvm::SmallVectorImpl<char> &Output,
-                                  void *Cookie);
+  typedef void (*ArgToStringFnTy)(
+      ArgumentKind Kind, intptr_t Val,
+      const char *Modifier, unsigned ModifierLen,
+      const char *Argument, unsigned ArgumentLen,
+      const ArgumentValue *PrevArgs,
+      unsigned NumPrevArgs,
+      llvm::SmallVectorImpl<char> &Output,
+      void *Cookie,
+      llvm::SmallVectorImpl<intptr_t> &QualTypeVals);
   void *ArgToStringCookie;
   ArgToStringFnTy ArgToStringFn;
 
@@ -465,9 +467,11 @@ public:
                           const char *Modifier, unsigned ModLen,
                           const char *Argument, unsigned ArgLen,
                           const ArgumentValue *PrevArgs, unsigned NumPrevArgs,
-                          llvm::SmallVectorImpl<char> &Output) const {
+                          llvm::SmallVectorImpl<char> &Output,
+                          llvm::SmallVectorImpl<intptr_t> &QualTypeVals) const {
     ArgToStringFn(Kind, Val, Modifier, ModLen, Argument, ArgLen,
-                  PrevArgs, NumPrevArgs, Output, ArgToStringCookie);
+                  PrevArgs, NumPrevArgs, Output, ArgToStringCookie,
+                  QualTypeVals);
   }
 
   void SetArgToStringFn(ArgToStringFnTy Fn, void *Cookie) {

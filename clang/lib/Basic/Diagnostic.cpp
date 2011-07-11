@@ -26,7 +26,8 @@ static void DummyArgToStringFn(Diagnostic::ArgumentKind AK, intptr_t QT,
                                const Diagnostic::ArgumentValue *PrevArgs,
                                unsigned NumPrevArgs,
                                llvm::SmallVectorImpl<char> &Output,
-                               void *Cookie) {
+                               void *Cookie,
+                               llvm::SmallVectorImpl<intptr_t> &QualTypeVals) {
   const char *Str = "<can't format argument>";
   Output.append(Str, Str+strlen(Str));
 }
@@ -544,7 +545,14 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
   /// ConvertArgToString, allowing the implementation to avoid redundancies in
   /// obvious cases.
   llvm::SmallVector<Diagnostic::ArgumentValue, 8> FormattedArgs;
-  
+
+  /// QualTypeVals - Pass a vector of arrays so that QualType names can be
+  /// compared to see if more information is needed to be printed.
+  llvm::SmallVector<intptr_t, 2> QualTypeVals;
+  for (unsigned i = 0, e = getNumArgs(); i < e; ++i)
+    if (getArgKind(i) == Diagnostic::ak_qualtype)
+      QualTypeVals.push_back(getRawArg(i));
+
   while (DiagStr != DiagEnd) {
     if (DiagStr[0] != '%') {
       // Append non-%0 substrings to Str if we have one.
@@ -675,7 +683,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
                                      Modifier, ModifierLen,
                                      Argument, ArgumentLen,
                                      FormattedArgs.data(), FormattedArgs.size(),
-                                     OutStr);
+                                     OutStr, QualTypeVals);
       break;
     }
     

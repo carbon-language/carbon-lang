@@ -33,16 +33,18 @@ namespace clang {
   /// diagnostics. It is meant to be used as the argument to
   /// \c Diagnostic::SetArgToStringFn(), where the cookie is an \c ASTContext
   /// pointer.
-  void FormatASTNodeDiagnosticArgument(Diagnostic::ArgumentKind Kind, 
-                                       intptr_t Val,
-                                       const char *Modifier, 
-                                       unsigned ModLen,
-                                       const char *Argument, 
-                                       unsigned ArgLen,
-                                      const Diagnostic::ArgumentValue *PrevArgs,
-                                       unsigned NumPrevArgs,
-                                       llvm::SmallVectorImpl<char> &Output,
-                                       void *Cookie);
+  void FormatASTNodeDiagnosticArgument(
+      Diagnostic::ArgumentKind Kind,
+      intptr_t Val,
+      const char *Modifier,
+      unsigned ModLen,
+      const char *Argument,
+      unsigned ArgLen,
+      const Diagnostic::ArgumentValue *PrevArgs,
+      unsigned NumPrevArgs,
+      llvm::SmallVectorImpl<char> &Output,
+      void *Cookie,
+      llvm::SmallVectorImpl<intptr_t> &QualTypeVals);
 }  // end namespace clang
 
 #endif

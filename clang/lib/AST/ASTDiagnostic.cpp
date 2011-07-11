@@ -129,7 +129,7 @@ break; \
 /// \brief Convert the given type to a string suitable for printing as part of 
 /// a diagnostic.
 ///
-/// There are three main criteria when determining whether we should have an
+/// There are four main criteria when determining whether we should have an
 /// a.k.a. clause when pretty-printing a type:
 ///
 /// 1) Some types provide very minimal sugar that doesn't impede the
@@ -142,15 +142,44 @@ break; \
 ///    want to desugar these, even if we do produce an a.k.a. clause.
 /// 3) Some types may have already been desugared previously in this diagnostic.
 ///    if this is the case, doing another "aka" would just be clutter.
+/// 4) Two different types within the same diagnostic have the same output
+///    string.  In this case, force an a.k.a with the desugared type when
+///    doing so will provide additional information.
 ///
 /// \param Context the context in which the type was allocated
 /// \param Ty the type to print
+/// \param QualTypeVals pointer values to QualTypes which are used in the
+/// diagnostic message
 static std::string
 ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
                               const Diagnostic::ArgumentValue *PrevArgs,
-                              unsigned NumPrevArgs) {
+                              unsigned NumPrevArgs,
+                              llvm::SmallVectorImpl<intptr_t> &QualTypeVals) {
   // FIXME: Playing with std::string is really slow.
+  bool ForceAKA = false;
+  QualType CanTy = Ty.getCanonicalType();
   std::string S = Ty.getAsString(Context.PrintingPolicy);
+  std::string CanS = CanTy.getAsString(Context.PrintingPolicy);
+
+  for (llvm::SmallVectorImpl<intptr_t>::iterator I = QualTypeVals.begin(),
+       E = QualTypeVals.end(); I != E; ++I) {
+    QualType CompareTy =
+        QualType::getFromOpaquePtr(reinterpret_cast<void*>(*I));
+    if (CompareTy == Ty)
+      continue;  // Same types
+    QualType CompareCanTy = CompareTy.getCanonicalType();
+    if (CompareCanTy == CanTy)
+      continue;  // Same canonical types
+    std::string CompareS = CompareTy.getAsString(Context.PrintingPolicy);
+    if (CompareS != S)
+      continue;  // Original strings are different
+    std::string CompareCanS = CompareCanTy.getAsString(Context.PrintingPolicy);
+    if (CompareCanS == CanS)
+      continue;  // No new info from canonical type
+
+    ForceAKA = true;
+    break;
+  }
 
   // Check to see if we already desugared this type in this
   // diagnostic.  If so, don't do it again.
@@ -172,11 +201,15 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
   if (!Repeated) {
     bool ShouldAKA = false;
     QualType DesugaredTy = Desugar(Context, Ty, ShouldAKA);
-    if (ShouldAKA) {
-      S = "'" + S + "' (aka '";
-      S += DesugaredTy.getAsString(Context.PrintingPolicy);
-      S += "')";
-      return S;
+    if (ShouldAKA || ForceAKA) {
+      if (DesugaredTy == Ty) {
+        DesugaredTy = Ty.getCanonicalType();
+      }
+      std::string akaStr = DesugaredTy.getAsString(Context.PrintingPolicy);
+      if (akaStr != S) {
+        S = "'" + S + "' (aka '" + akaStr + "')";
+        return S;
+      }
     }
   }
 
@@ -184,16 +217,18 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
   return S;
 }
 
-void clang::FormatASTNodeDiagnosticArgument(Diagnostic::ArgumentKind Kind, 
-                                            intptr_t Val,
-                                            const char *Modifier, 
-                                            unsigned ModLen,
-                                            const char *Argument, 
-                                            unsigned ArgLen,
-                                    const Diagnostic::ArgumentValue *PrevArgs,
-                                            unsigned NumPrevArgs,
-                                            llvm::SmallVectorImpl<char> &Output,
-                                            void *Cookie) {
+void clang::FormatASTNodeDiagnosticArgument(
+    Diagnostic::ArgumentKind Kind,
+    intptr_t Val,
+    const char *Modifier,
+    unsigned ModLen,
+    const char *Argument,
+    unsigned ArgLen,
+    const Diagnostic::ArgumentValue *PrevArgs,
+    unsigned NumPrevArgs,
+    llvm::SmallVectorImpl<char> &Output,
+    void *Cookie,
+    llvm::SmallVectorImpl<intptr_t> &QualTypeVals) {
   ASTContext &Context = *static_cast<ASTContext*>(Cookie);
   
   std::string S;
@@ -206,7 +241,8 @@ void clang::FormatASTNodeDiagnosticArgument(Diagnostic::ArgumentKind Kind,
              "Invalid modifier for QualType argument");
       
       QualType Ty(QualType::getFromOpaquePtr(reinterpret_cast<void*>(Val)));
-      S = ConvertTypeToDiagnosticString(Context, Ty, PrevArgs, NumPrevArgs);
+      S = ConvertTypeToDiagnosticString(Context, Ty, PrevArgs, NumPrevArgs,
+                                        QualTypeVals);
       NeedQuotes = false;
       break;
     }
@@ -257,7 +293,7 @@ void clang::FormatASTNodeDiagnosticArgument(Diagnostic::ArgumentKind Kind,
       } else if (TypeDecl *Type = dyn_cast<TypeDecl>(DC)) {
         S = ConvertTypeToDiagnosticString(Context, 
                                           Context.getTypeDeclType(Type),
-                                          PrevArgs, NumPrevArgs);
+                                          PrevArgs, NumPrevArgs, QualTypeVals);
       } else {
         // FIXME: Get these strings from some localized place
         NamedDecl *ND = cast<NamedDecl>(DC);
