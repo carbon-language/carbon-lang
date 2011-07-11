@@ -36,7 +36,7 @@ class DagRecTy;
 class RecordRecTy;
 
 // Init subclasses.
-struct Init;
+class Init;
 class UnsetInit;
 class BitInit;
 class BitsInit;
