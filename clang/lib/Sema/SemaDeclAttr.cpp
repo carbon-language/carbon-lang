@@ -812,7 +812,7 @@ static void handleMayAliasAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleNoCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  assert(Attr.isInvalid() == false);
+  assert(!Attr.isInvalid());
   if (isa<VarDecl>(D))
     D->addAttr(::new (S.Context) NoCommonAttr(Attr.getLoc(), S.Context));
   else
@@ -821,7 +821,7 @@ static void handleNoCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleCommonAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  assert(Attr.isInvalid() == false);
+  assert(!Attr.isInvalid());
   if (isa<VarDecl>(D))
     D->addAttr(::new (S.Context) CommonAttr(Attr.getLoc(), S.Context));
   else
@@ -2492,7 +2492,7 @@ static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleOpenCLKernelAttr(Sema &S, Decl *D, const AttributeList &Attr){
-  assert(Attr.isInvalid() == false);
+  assert(!Attr.isInvalid());
   D->addAttr(::new (S.Context) OpenCLKernelAttr(Attr.getLoc(), S.Context));
 }
 
