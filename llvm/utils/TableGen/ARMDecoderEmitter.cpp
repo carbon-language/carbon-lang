@@ -114,7 +114,7 @@ enum {
 
 /// byteFromBitsInit - Return the byte value from a BitsInit.
 /// Called from getByteField().
-static uint8_t byteFromBitsInit(const BitsInit &init) {
+static uint8_t byteFromBitsInit(BitsInit &init) {
   int width = init.getNumBits();
 
   assert(width <= 8 && "Field is too large for uint8_t!");
@@ -125,7 +125,7 @@ static uint8_t byteFromBitsInit(const BitsInit &init) {
   uint8_t ret = 0;
 
   for (index = 0; index < width; index++) {
-    if (static_cast<const BitInit*>(init.getBit(index))->getValue())
+    if (static_cast<BitInit*>(init.getBit(index))->getValue())
       ret |= mask;
 
     mask <<= 1;
@@ -135,12 +135,12 @@ static uint8_t byteFromBitsInit(const BitsInit &init) {
 }
 
 static uint8_t getByteField(const Record &def, const char *str) {
-  const BitsInit *bits = def.getValueAsBitsInit(str);
+  BitsInit *bits = def.getValueAsBitsInit(str);
   return byteFromBitsInit(*bits);
 }
 
-static const BitsInit &getBitsField(const Record &def, const char *str) {
-  const BitsInit *bits = def.getValueAsBitsInit(str);
+static BitsInit &getBitsField(const Record &def, const char *str) {
+  BitsInit *bits = def.getValueAsBitsInit(str);
   return *bits;
 }
 
@@ -183,15 +183,15 @@ static bool ValueNotSet(bit_value_t V) {
 static int Value(bit_value_t V) {
   return ValueNotSet(V) ? -1 : (V == BIT_FALSE ? 0 : 1);
 }
-static bit_value_t bitFromBits(const BitsInit &bits, unsigned index) {
-  if (const BitInit *bit = dynamic_cast<const BitInit*>(bits.getBit(index)))
+static bit_value_t bitFromBits(BitsInit &bits, unsigned index) {
+  if (BitInit *bit = dynamic_cast<BitInit*>(bits.getBit(index)))
     return bit->getValue() ? BIT_TRUE : BIT_FALSE;
 
   // The bit is uninitialized.
   return BIT_UNSET;
 }
 // Prints the bit value for each position.
-static void dumpBits(raw_ostream &o, const BitsInit &bits) {
+static void dumpBits(raw_ostream &o, BitsInit &bits) {
   unsigned index;
 
   for (index = bits.getNumBits(); index > 0; index--) {
@@ -424,8 +424,7 @@ protected:
     if (AllInstructions[Opcode]->isPseudo)
       return;
 
-    const BitsInit &Bits = getBitsField(*AllInstructions[Opcode]->TheDef,
-                                        "Inst");
+    BitsInit &Bits = getBitsField(*AllInstructions[Opcode]->TheDef, "Inst");
 
     for (unsigned i = 0; i < BIT_WIDTH; ++i)
       Insn[i] = bitFromBits(Bits, i);
@@ -1559,7 +1558,7 @@ ARMDEBackend::populateInstruction(const CodeGenInstruction &CGI,
   const StringRef Name = Def.getName();
   uint8_t Form = getByteField(Def, "Form");
 
-  const BitsInit &Bits = getBitsField(Def, "Inst");
+  BitsInit &Bits = getBitsField(Def, "Inst");
 
   // If all the bit positions are not specified; do not decode this instruction.
   // We are bound to fail!  For proper disassembly, the well-known encoding bits

@@ -162,7 +162,7 @@ static bool isRegFormat(uint8_t form) {
 /// @param init - A reference to the BitsInit to be decoded.
 /// @return     - The field, with the first bit in the BitsInit as the lowest
 ///               order bit.
-static uint8_t byteFromBitsInit(const BitsInit &init) {
+static uint8_t byteFromBitsInit(BitsInit &init) {
   int width = init.getNumBits();
 
   assert(width <= 8 && "Field is too large for uint8_t!");
@@ -173,7 +173,7 @@ static uint8_t byteFromBitsInit(const BitsInit &init) {
   uint8_t ret = 0;
 
   for (index = 0; index < width; index++) {
-    if (static_cast<const BitInit*>(init.getBit(index))->getValue())
+    if (static_cast<BitInit*>(init.getBit(index))->getValue())
       ret |= mask;
 
     mask <<= 1;
@@ -189,7 +189,7 @@ static uint8_t byteFromBitsInit(const BitsInit &init) {
 /// @param name - The name of the field in the record.
 /// @return     - The field, as translated by byteFromBitsInit().
 static uint8_t byteFromRec(const Record* rec, const std::string &name) {
-  const BitsInit* bits = rec->getValueAsBitsInit(name);
+  BitsInit* bits = rec->getValueAsBitsInit(name);
   return byteFromBitsInit(*bits);
 }
 

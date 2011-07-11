@@ -91,15 +91,14 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   }
 
   // Process the composites.
-  const ListInit *Comps = TheDef->getValueAsListInit("CompositeIndices");
+  ListInit *Comps = TheDef->getValueAsListInit("CompositeIndices");
   for (unsigned i = 0, e = Comps->size(); i != e; ++i) {
-    const DagInit *Pat = dynamic_cast<const DagInit*>(Comps->getElement(i));
+    DagInit *Pat = dynamic_cast<DagInit*>(Comps->getElement(i));
     if (!Pat)
       throw TGError(TheDef->getLoc(), "Invalid dag '" +
                     Comps->getElement(i)->getAsString() +
                     "' in CompositeIndices");
-    const DefInit *BaseIdxInit =
-      dynamic_cast<const DefInit*>(Pat->getOperator());
+    DefInit *BaseIdxInit = dynamic_cast<DefInit*>(Pat->getOperator());
     if (!BaseIdxInit || !BaseIdxInit->getDef()->isSubClassOf("SubRegIndex"))
       throw TGError(TheDef->getLoc(), "Invalid SubClassIndex in " +
                     Pat->getAsString());
@@ -108,7 +107,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
     CodeGenRegister *R2 = this;
     for (DagInit::const_arg_iterator di = Pat->arg_begin(),
          de = Pat->arg_end(); di != de; ++di) {
-      const DefInit *IdxInit = dynamic_cast<const DefInit*>(*di);
+      DefInit *IdxInit = dynamic_cast<DefInit*>(*di);
       if (!IdxInit || !IdxInit->getDef()->isSubClassOf("SubRegIndex"))
         throw TGError(TheDef->getLoc(), "Invalid SubClassIndex in " +
                       Pat->getAsString());
@@ -164,7 +163,7 @@ struct TupleExpander : SetTheory::Expander {
   void expand(SetTheory &ST, Record *Def, SetTheory::RecSet &Elts) {
     std::vector<Record*> Indices = Def->getValueAsListOfDefs("SubRegIndices");
     unsigned Dim = Indices.size();
-    const ListInit *SubRegs = Def->getValueAsListInit("SubRegs");
+    ListInit *SubRegs = Def->getValueAsListInit("SubRegs");
     if (Dim != SubRegs->getSize())
       throw TGError(Def->getLoc(), "SubRegIndices and SubRegs size mismatch");
     if (Dim < 2)
@@ -184,19 +183,19 @@ struct TupleExpander : SetTheory::Expander {
     // Precompute some types.
     Record *RegisterCl = Def->getRecords().getClass("Register");
     RecTy *RegisterRecTy = new RecordRecTy(RegisterCl);
-    const StringInit *BlankName = StringInit::get("");
+    StringInit *BlankName = new StringInit("");
 
     // Zip them up.
     for (unsigned n = 0; n != Length; ++n) {
       std::string Name;
       Record *Proto = Lists[0][n];
-      std::vector<const Init*> Tuple;
+      std::vector<Init*> Tuple;
       unsigned CostPerUse = 0;
       for (unsigned i = 0; i != Dim; ++i) {
         Record *Reg = Lists[i][n];
         if (i) Name += '_';
         Name += Reg->getName();
-        Tuple.push_back(DefInit::get(Reg));
+        Tuple.push_back(new DefInit(Reg));
         CostPerUse = std::max(CostPerUse,
                               unsigned(Reg->getValueAsInt("CostPerUse")));
       }
@@ -217,7 +216,7 @@ struct TupleExpander : SetTheory::Expander {
 
         // Replace the sub-register list with Tuple.
         if (RV.getName() == "SubRegs")
-          RV.setValue(ListInit::get(Tuple, RegisterRecTy));
+          RV.setValue(new ListInit(Tuple, RegisterRecTy));
 
         // Provide a blank AsmName. MC hacks are required anyway.
         if (RV.getName() == "AsmName")
@@ -225,7 +224,7 @@ struct TupleExpander : SetTheory::Expander {
 
         // CostPerUse is aggregated from all Tuple members.
         if (RV.getName() == "CostPerUse")
-          RV.setValue(IntInit::get(CostPerUse));
+          RV.setValue(new IntInit(CostPerUse));
 
         // Copy fields from the RegisterTuples def.
         if (RV.getName() == "SubRegIndices" ||
@@ -279,7 +278,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
     Members.insert(RegBank.getReg((*Elements)[i]));
 
   // Alternative allocation orders may be subsets.
-  const ListInit *Alts = R->getValueAsListInit("AltOrders");
+  ListInit *Alts = R->getValueAsListInit("AltOrders");
   AltOrders.resize(Alts->size());
   SetTheory::RecSet Order;
   for (unsigned i = 0, e = Alts->size(); i != e; ++i) {
@@ -296,11 +295,11 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   }
 
   // SubRegClasses is a list<dag> containing (RC, subregindex, ...) dags.
-  const ListInit *SRC = R->getValueAsListInit("SubRegClasses");
+  ListInit *SRC = R->getValueAsListInit("SubRegClasses");
   for (ListInit::const_iterator i = SRC->begin(), e = SRC->end(); i != e; ++i) {
-    const DagInit *DAG = dynamic_cast<const DagInit*>(*i);
+    DagInit *DAG = dynamic_cast<DagInit*>(*i);
     if (!DAG) throw "SubRegClasses must contain DAGs";
-    const DefInit *DAGOp = dynamic_cast<const DefInit*>(DAG->getOperator());
+    DefInit *DAGOp = dynamic_cast<DefInit*>(DAG->getOperator());
     Record *RCRec;
     if (!DAGOp || !(RCRec = DAGOp->getDef())->isSubClassOf("RegisterClass"))
       throw "Operator '" + DAG->getOperator()->getAsString() +
@@ -308,7 +307,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
     // Iterate over args, all SubRegIndex instances.
     for (DagInit::const_arg_iterator ai = DAG->arg_begin(), ae = DAG->arg_end();
          ai != ae; ++ai) {
-      const DefInit *Idx = dynamic_cast<const DefInit*>(*ai);
+      DefInit *Idx = dynamic_cast<DefInit*>(*ai);
       Record *IdxRec;
       if (!Idx || !(IdxRec = Idx->getDef())->isSubClassOf("SubRegIndex"))
         throw "Argument '" + (*ai)->getAsString() +

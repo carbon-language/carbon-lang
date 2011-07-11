@@ -38,25 +38,21 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
         R->getValueAsBit("isPseudo"))
       continue;
 
-    const BitsInit *BI = R->getValueAsBitsInit("Inst");
+    BitsInit *BI = R->getValueAsBitsInit("Inst");
 
     unsigned numBits = BI->getNumBits();
- 
-    SmallVector<const Init *, 16> NewBits(numBits);
- 
+    BitsInit *NewBI = new BitsInit(numBits);
     for (unsigned bit = 0, end = numBits / 2; bit != end; ++bit) {
       unsigned bitSwapIdx = numBits - bit - 1;
-      const Init *OrigBit = BI->getBit(bit);
-      const Init *BitSwap = BI->getBit(bitSwapIdx);
-      NewBits[bit]        = BitSwap;
-      NewBits[bitSwapIdx] = OrigBit;
+      Init *OrigBit = BI->getBit(bit);
+      Init *BitSwap = BI->getBit(bitSwapIdx);
+      NewBI->setBit(bit, BitSwap);
+      NewBI->setBit(bitSwapIdx, OrigBit);
     }
     if (numBits % 2) {
       unsigned middle = (numBits + 1) / 2;
-      NewBits[middle] = BI->getBit(middle);
+      NewBI->setBit(middle, BI->getBit(middle));
     }
- 
-    const BitsInit *NewBI = BitsInit::get(NewBits.begin(), NewBits.end());
 
     // Update the bits in reversed order so that emitInstrOpBits will get the
     // correct endianness.
@@ -67,14 +63,12 @@ void CodeEmitterGen::reverseBits(std::vector<Record*> &Insts) {
 // If the VarBitInit at position 'bit' matches the specified variable then
 // return the variable bit position.  Otherwise return -1.
 int CodeEmitterGen::getVariableBit(const std::string &VarName,
-                                   const BitsInit *BI, int bit) {
-  if (const VarBitInit *VBI =
-      dynamic_cast<const VarBitInit*>(BI->getBit(bit))) {
-    if (const VarInit *VI = dynamic_cast<const VarInit*>(VBI->getVariable()))
+                                   BitsInit *BI, int bit) {
+  if (VarBitInit *VBI = dynamic_cast<VarBitInit*>(BI->getBit(bit))) {
+    if (VarInit *VI = dynamic_cast<VarInit*>(VBI->getVariable()))
       if (VI->getName() == VarName)
         return VBI->getBitNum();
-  } else if (const VarInit *VI =
-             dynamic_cast<const VarInit*>(BI->getBit(bit))) {
+  } else if (VarInit *VI = dynamic_cast<VarInit*>(BI->getBit(bit))) {
     if (VI->getName() == VarName)
       return 0;
   }
@@ -83,8 +77,8 @@ int CodeEmitterGen::getVariableBit(const std::string &VarName,
 }
 
 void CodeEmitterGen::
-AddCodeToMergeInOperand(Record *R, const BitsInit *BI,
-                        const std::string &VarName, unsigned &NumberedOp,
+AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
+                        unsigned &NumberedOp,
                         std::string &Case, CodeGenTarget &Target) {
   CodeGenInstruction &CGI = Target.getInstruction(R);
 
@@ -187,7 +181,7 @@ std::string CodeEmitterGen::getInstructionCase(Record *R,
                                                CodeGenTarget &Target) {
   std::string Case;
   
-  const BitsInit *BI = R->getValueAsBitsInit("Inst");
+  BitsInit *BI = R->getValueAsBitsInit("Inst");
   const std::vector<RecordVal> &Vals = R->getValues();
   unsigned NumberedOp = 0;
 
@@ -244,12 +238,12 @@ void CodeEmitterGen::run(raw_ostream &o) {
       continue;
     }
 
-    const BitsInit *BI = R->getValueAsBitsInit("Inst");
+    BitsInit *BI = R->getValueAsBitsInit("Inst");
 
     // Start by filling in fixed values.
     unsigned Value = 0;
     for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i) {
-      if (const BitInit *B = dynamic_cast<const BitInit*>(BI->getBit(e-i-1)))
+      if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(e-i-1)))
         Value |= B->getValue() << (e-i-1);
     }
     o << "    " << Value << "U," << '\t' << "// " << R->getName() << "\n";

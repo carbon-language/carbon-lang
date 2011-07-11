@@ -28,8 +28,7 @@ static bool isHidden(const Record &R) {
   if (R.getValueAsBit("Hidden"))
     return true;
   // Not declared as hidden, check the parent package if it is hidden.
-  if (const DefInit *DI =
-      dynamic_cast<const DefInit*>(R.getValueInit("ParentPackage")))
+  if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("ParentPackage")))
     return isHidden(*DI->getDef());
 
   return false;
@@ -43,8 +42,7 @@ static std::string getPackageFullName(const Record *R);
 
 static std::string getParentPackageFullName(const Record *R) {
   std::string name;
-  if (const DefInit *DI =
-      dynamic_cast<const DefInit*>(R->getValueInit("ParentPackage")))
+  if (DefInit *DI = dynamic_cast<DefInit*>(R->getValueInit("ParentPackage")))
     name = getPackageFullName(DI->getDef());
   return name;
 }
@@ -65,8 +63,8 @@ static std::string getCheckerFullName(const Record *R) {
 }
 
 static std::string getStringValue(const Record &R, StringRef field) {
-  if (const StringInit *
-        SI = dynamic_cast<const StringInit*>(R.getValueInit(field)))
+  if (StringInit *
+        SI = dynamic_cast<StringInit*>(R.getValueInit(field)))
     return SI->getValue();
   return std::string();
 }
@@ -131,8 +129,8 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
   for (unsigned i = 0, e = checkers.size(); i != e; ++i) {
     Record *R = checkers[i];
     Record *package = 0;
-    if (const DefInit *
-          DI = dynamic_cast<const DefInit*>(R->getValueInit("ParentPackage")))
+    if (DefInit *
+          DI = dynamic_cast<DefInit*>(R->getValueInit("ParentPackage")))
       package = DI->getDef();
     if (!isCheckerNamed(R) && !package)
       throw "Checker '" + R->getName() + "' is neither named, nor in a package!";
@@ -151,23 +149,21 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
     Record *currR = isCheckerNamed(R) ? R : package;
     // Insert the checker and its parent packages into the subgroups set of
     // the corresponding parent package.
-    while (const DefInit *DI =
-           dynamic_cast<const DefInit*>(currR->getValueInit("ParentPackage"))) {
+    while (DefInit *DI
+             = dynamic_cast<DefInit*>(currR->getValueInit("ParentPackage"))) {
       Record *parentPackage = DI->getDef();
       recordGroupMap[parentPackage]->SubGroups.insert(currR);
       currR = parentPackage;
     }
     // Insert the checker into the set of its group.
-    if (const DefInit *DI =
-        dynamic_cast<const DefInit*>(R->getValueInit("Group")))
+    if (DefInit *DI = dynamic_cast<DefInit*>(R->getValueInit("Group")))
       recordGroupMap[DI->getDef()]->Checkers.insert(R);
   }
 
   // If a package is in group, add all its checkers and its sub-packages
   // checkers into the group.
   for (unsigned i = 0, e = packages.size(); i != e; ++i)
-    if (const DefInit *DI =
-        dynamic_cast<const DefInit*>(packages[i]->getValueInit("Group")))
+    if (DefInit *DI = dynamic_cast<DefInit*>(packages[i]->getValueInit("Group")))
       addPackageToCheckerGroup(packages[i], DI->getDef(), recordGroupMap);
 
   typedef std::map<std::string, const Record *> SortedRecords;
@@ -208,8 +204,7 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
       OS << "PACKAGE(" << "\"";
       OS.write_escaped(getPackageFullName(&R)) << "\", ";
       // Group index
-      if (const DefInit *DI =
-          dynamic_cast<const DefInit*>(R.getValueInit("Group")))
+      if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group")))
         OS << groupToSortIndex[DI->getDef()] << ", ";
       else
         OS << "-1, ";
@@ -237,8 +232,7 @@ void ClangSACheckersEmitter::run(raw_ostream &OS) {
     OS << "\"";
     OS.write_escaped(getStringValue(R, "HelpText")) << "\", ";
     // Group index
-    if (const DefInit *DI =
-        dynamic_cast<const DefInit*>(R.getValueInit("Group")))
+    if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group")))
       OS << groupToSortIndex[DI->getDef()] << ", ";
     else
       OS << "-1, ";

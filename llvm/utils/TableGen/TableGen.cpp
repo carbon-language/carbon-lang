@@ -208,7 +208,6 @@ int main(int argc, char **argv) {
     if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename.c_str(), File)) {
       errs() << "Could not open input file '" << InputFilename << "': "
              << ec.message() <<"\n";
-      Init::ReleaseMemory();
       return 1;
     }
     MemoryBuffer *F = File.take();
@@ -222,30 +221,25 @@ int main(int argc, char **argv) {
 
     TGParser Parser(SrcMgr, Records);
 
-    if (Parser.ParseFile()) {
-      Init::ReleaseMemory();
+    if (Parser.ParseFile())
       return 1;
-    }
 
     std::string Error;
     tool_output_file Out(OutputFilename.c_str(), Error);
     if (!Error.empty()) {
       errs() << argv[0] << ": error opening " << OutputFilename
         << ":" << Error << "\n";
-      Init::ReleaseMemory();
       return 1;
     }
     if (!DependFilename.empty()) {
       if (OutputFilename == "-") {
         errs() << argv[0] << ": the option -d must be used together with -o\n";
-        Init::ReleaseMemory();
         return 1;
       }
       tool_output_file DepOut(DependFilename.c_str(), Error);
       if (!Error.empty()) {
         errs() << argv[0] << ": error opening " << DependFilename
           << ":" << Error << "\n";
-        Init::ReleaseMemory();
         return 1;
       }
       DepOut.os() << DependFilename << ":";
@@ -388,14 +382,11 @@ int main(int argc, char **argv) {
     }
     default:
       assert(1 && "Invalid Action");
-      Init::ReleaseMemory();
       return 1;
     }
 
     // Declare success.
     Out.keep();
-
-    Init::ReleaseMemory();
     return 0;
 
   } catch (const TGError &Error) {
@@ -407,8 +398,6 @@ int main(int argc, char **argv) {
   } catch (...) {
     errs() << argv[0] << ": Unknown unexpected exception occurred.\n";
   }
-
-  Init::ReleaseMemory();
 
   return 1;
 }
