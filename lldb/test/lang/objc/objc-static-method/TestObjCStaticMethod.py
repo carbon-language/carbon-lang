@@ -30,6 +30,8 @@ class TestObjCStaticMethod(TestBase):
         self.main_source = "static.m"
         self.break_line = line_number(self.main_source, '// Set breakpoint here.')
 
+    @unittest2.expectedFailure
+    #rdar://problem/9745789 "expression" can't call functions in class methods
     def objc_static_method(self):
         """Test calling functions in static methods."""
         exe = os.path.join(os.getcwd(), "a.out")
