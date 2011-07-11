@@ -88,3 +88,33 @@ namespace test0 {
   // CHECK-NEXT: br i1 [[T0]],
 
 }
+
+namespace test1 {
+  struct A { A(); A(int); ~A(); };
+  struct B { A x, y, z; int w; };
+
+  void test() {
+    B v = { 5, 6, 7, 8 };
+  }
+  // CHECK:    define void @_ZN5test14testEv()
+  // CHECK:      [[V:%.*]] = alloca [[B:%.*]], align 4
+  // CHECK-NEXT: alloca i8*
+  // CHECK-NEXT: alloca i32
+  // CHECK-NEXT: alloca i32
+  // CHECK-NEXT: [[X:%.*]] = getelementptr inbounds [[B]]* [[V]], i32 0, i32 0
+  // CHECK-NEXT: call void @_ZN5test11AC1Ei([[A:%.*]]* [[X]], i32 5)
+  // CHECK-NEXT: [[Y:%.*]] = getelementptr inbounds [[B]]* [[V]], i32 0, i32 1
+  // CHECK-NEXT: invoke void @_ZN5test11AC1Ei([[A]]* [[Y]], i32 6)
+  // CHECK:      [[Z:%.*]] = getelementptr inbounds [[B]]* [[V]], i32 0, i32 2
+  // CHECK-NEXT: invoke void @_ZN5test11AC1Ei([[A]]* [[Z]], i32 7)
+  // CHECK:      [[W:%.*]] = getelementptr inbounds [[B]]* [[V]], i32 0, i32 3
+  // CHECK-NEXT: store i32 8, i32* [[W]], align 4
+  // CHECK-NEXT: call void @_ZN5test11BD1Ev([[B]]* [[V]])
+  // CHECK-NEXT: ret void
+
+  // FIXME: again, the block ordering is pretty bad here
+  // CHECK:      eh.selector({{.*}}, i32 0)
+  // CHECK:      eh.selector({{.*}}, i32 0)
+  // CHECK:      invoke void @_ZN5test11AD1Ev([[A]]* [[Y]])
+  // CHECK:      invoke void @_ZN5test11AD1Ev([[A]]* [[X]])
+}
