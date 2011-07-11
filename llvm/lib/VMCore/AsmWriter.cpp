@@ -311,11 +311,11 @@ private:
   const Function* TheFunction;
   bool FunctionProcessed;
 
-  /// mMap - The TypePlanes map for the module level data.
+  /// mMap - The slot map for the module level data.
   ValueMap mMap;
   unsigned mNext;
 
-  /// fMap - The TypePlanes map for the function level data.
+  /// fMap - The slot map for the function level data.
   ValueMap fMap;
   unsigned fNext;
 
@@ -536,7 +536,7 @@ int SlotTracker::getGlobalSlot(const GlobalValue *V) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
 
-  // Find the type plane in the module map
+  // Find the value in the module map
   ValueMap::iterator MI = mMap.find(V);
   return MI == mMap.end() ? -1 : (int)MI->second;
 }
@@ -546,7 +546,7 @@ int SlotTracker::getMetadataSlot(const MDNode *N) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
 
-  // Find the type plane in the module map
+  // Find the MDNode in the module map
   mdn_iterator MI = mdnMap.find(N);
   return MI == mdnMap.end() ? -1 : (int)MI->second;
 }
