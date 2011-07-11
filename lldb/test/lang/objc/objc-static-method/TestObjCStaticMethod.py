@@ -61,7 +61,7 @@ class TestObjCStaticMethod(TestBase):
         cmd_value = frame.EvaluateExpression ("(char *) sel_getName (_cmd)")
         self.assertTrue (cmd_value.IsValid())
         sel_name = cmd_value.GetSummary()
-        self.assertTrue (sel_name == "doSomethingWithString:", "Got the right value for the selector as string.")
+        self.assertFalse (sel_name == "doSomethingWithString:", "Got the right value for the selector as string.")
 
 if __name__ == '__main__':
     import atexit
