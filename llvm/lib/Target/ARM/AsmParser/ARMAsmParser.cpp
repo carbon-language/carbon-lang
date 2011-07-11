@@ -1808,29 +1808,32 @@ static StringRef SplitMnemonic(StringRef Mnemonic,
        Mnemonic == "vqdmlal" || Mnemonic == "bics"))
     return Mnemonic;
 
-  // First, split out any predication code.
-  unsigned CC = StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2))
-    .Case("eq", ARMCC::EQ)
-    .Case("ne", ARMCC::NE)
-    .Case("hs", ARMCC::HS)
-    .Case("cs", ARMCC::HS)
-    .Case("lo", ARMCC::LO)
-    .Case("cc", ARMCC::LO)
-    .Case("mi", ARMCC::MI)
-    .Case("pl", ARMCC::PL)
-    .Case("vs", ARMCC::VS)
-    .Case("vc", ARMCC::VC)
-    .Case("hi", ARMCC::HI)
-    .Case("ls", ARMCC::LS)
-    .Case("ge", ARMCC::GE)
-    .Case("lt", ARMCC::LT)
-    .Case("gt", ARMCC::GT)
-    .Case("le", ARMCC::LE)
-    .Case("al", ARMCC::AL)
-    .Default(~0U);
-  if (CC != ~0U) {
-    Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 2);
-    PredicationCode = CC;
+  // First, split out any predication code. Ignore mnemonics we know aren't
+  // predicated but do have a carry-set and so weren't caught above.
+  if (Mnemonic != "adcs") {
+    unsigned CC = StringSwitch<unsigned>(Mnemonic.substr(Mnemonic.size()-2))
+      .Case("eq", ARMCC::EQ)
+      .Case("ne", ARMCC::NE)
+      .Case("hs", ARMCC::HS)
+      .Case("cs", ARMCC::HS)
+      .Case("lo", ARMCC::LO)
+      .Case("cc", ARMCC::LO)
+      .Case("mi", ARMCC::MI)
+      .Case("pl", ARMCC::PL)
+      .Case("vs", ARMCC::VS)
+      .Case("vc", ARMCC::VC)
+      .Case("hi", ARMCC::HI)
+      .Case("ls", ARMCC::LS)
+      .Case("ge", ARMCC::GE)
+      .Case("lt", ARMCC::LT)
+      .Case("gt", ARMCC::GT)
+      .Case("le", ARMCC::LE)
+      .Case("al", ARMCC::AL)
+      .Default(~0U);
+    if (CC != ~0U) {
+      Mnemonic = Mnemonic.slice(0, Mnemonic.size() - 2);
+      PredicationCode = CC;
+    }
   }
 
   // Next, determine if we have a carry setting bit. We explicitly ignore all
