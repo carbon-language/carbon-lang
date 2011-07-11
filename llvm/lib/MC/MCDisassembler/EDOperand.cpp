@@ -61,11 +61,14 @@ EDOperand::EDOperand(const EDDisassembler &disassembler,
     switch (operandType) {
     default:
     case kOperandTypeARMRegisterList:
+    case kOperandTypeARMDPRRegisterList:
+    case kOperandTypeARMSPRRegisterList:
       break;
     case kOperandTypeImmediate:
     case kOperandTypeRegister:
     case kOperandTypeARMBranchTarget:
     case kOperandTypeARMSoImm:
+    case kOperandTypeARMRotImm:
     case kOperandTypeThumb2SoImm:
     case kOperandTypeARMSoImm2Part:
     case kOperandTypeARMPredicate:
@@ -78,6 +81,7 @@ EDOperand::EDOperand(const EDDisassembler &disassembler,
       numMCOperands = 1;
       break;
     case kOperandTypeThumb2SoReg:
+    case kOperandTypeAddrModeImm12:
     case kOperandTypeARMAddrMode2Offset:
     case kOperandTypeARMAddrMode3Offset:
     case kOperandTypeARMAddrMode4:
@@ -86,17 +90,22 @@ EDOperand::EDOperand(const EDDisassembler &disassembler,
     case kOperandTypeThumb2AddrModeImm8:
     case kOperandTypeThumb2AddrModeImm12:
     case kOperandTypeThumb2AddrModeImm8s4:
+    case kOperandTypeThumbAddrModeImmS1:
+    case kOperandTypeThumbAddrModeImmS2:
+    case kOperandTypeThumbAddrModeImmS4:
     case kOperandTypeThumbAddrModeRR:
     case kOperandTypeThumbAddrModeSP:
+    case kOperandTypeThumbAddrModePC:
       numMCOperands = 2;
       break;
     case kOperandTypeARMSoReg:
+    case kOperandTypeLdStSOReg:
     case kOperandTypeARMAddrMode2:
     case kOperandTypeARMAddrMode3:
     case kOperandTypeThumb2AddrModeSoReg:
-    case kOperandTypeThumbAddrModeS1:
-    case kOperandTypeThumbAddrModeS2:
-    case kOperandTypeThumbAddrModeS4:
+    case kOperandTypeThumbAddrModeRegS1:
+    case kOperandTypeThumbAddrModeRegS2:
+    case kOperandTypeThumbAddrModeRegS4:
     case kOperandTypeARMAddrMode6Offset:
       numMCOperands = 3;
       break;
@@ -270,9 +279,9 @@ int EDOperand::isMemory() {
   case kOperandTypeARMAddrMode7:
   case kOperandTypeARMAddrModePC:
   case kOperandTypeARMBranchTarget:
-  case kOperandTypeThumbAddrModeS1:
-  case kOperandTypeThumbAddrModeS2:
-  case kOperandTypeThumbAddrModeS4:
+  case kOperandTypeThumbAddrModeRegS1:
+  case kOperandTypeThumbAddrModeRegS2:
+  case kOperandTypeThumbAddrModeRegS4:
   case kOperandTypeThumbAddrModeRR:
   case kOperandTypeThumbAddrModeSP:
   case kOperandTypeThumb2SoImm:
