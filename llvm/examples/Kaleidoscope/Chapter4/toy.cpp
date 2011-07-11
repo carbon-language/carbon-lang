@@ -408,8 +408,8 @@ Value *CallExprAST::Codegen() {
 
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
-  std::vector<const Type*> Doubles(Args.size(),
-                                   Type::getDoubleTy(getGlobalContext()));
+  std::vector<Type*> Doubles(Args.size(),
+                             Type::getDoubleTy(getGlobalContext()));
   FunctionType *FT = FunctionType::get(Type::getDoubleTy(getGlobalContext()),
                                        Doubles, false);
   
