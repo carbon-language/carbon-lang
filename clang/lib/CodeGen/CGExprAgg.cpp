@@ -689,8 +689,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       endOfInit = CGF.CreateTempAlloca(begin->getType(),
                                        "arrayinit.endOfInit");
       Builder.CreateStore(begin, endOfInit);
-      CGF.pushPartialArrayCleanup(begin, elementType,
-                                  CGF.getDestroyer(dtorKind), endOfInit);
+      CGF.pushIrregularPartialArrayCleanup(begin, endOfInit, elementType,
+                                           CGF.getDestroyer(dtorKind));
       cleanup = CGF.EHStack.stable_begin();
 
     // Otherwise, remember that we didn't need a cleanup.
@@ -710,16 +710,17 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     // Emit the explicit initializers.
     for (uint64_t i = 0; i != NumInitElements; ++i) {
       // Advance to the next element.
-      if (i > 0)
+      if (i > 0) {
         element = Builder.CreateInBoundsGEP(element, one, "arrayinit.element");
+
+        // Tell the cleanup that it needs to destroy up to this
+        // element.  TODO: some of these stores can be trivially
+        // observed to be unnecessary.
+        if (endOfInit) Builder.CreateStore(element, endOfInit);
+      }
 
       LValue elementLV = CGF.MakeAddrLValue(element, elementType);
       EmitInitializationToLValue(E->getInit(i), elementLV);
-
-      // Tell the cleanup that it needs to destroy this element.
-      // TODO: some of these stores can be trivially observed to be
-      // unnecessary.
-      if (endOfInit) Builder.CreateStore(element, endOfInit);
     }
 
     // Check whether there's a non-trivial array-fill expression.
@@ -743,8 +744,10 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       //   do { *array++ = filler; } while (array != end);
 
       // Advance to the start of the rest of the array.
-      if (NumInitElements)
+      if (NumInitElements) {
         element = Builder.CreateInBoundsGEP(element, one, "arrayinit.start");
+        if (endOfInit) Builder.CreateStore(element, endOfInit);
+      }
 
       // Compute the end of the array.
       llvm::Value *end = Builder.CreateInBoundsGEP(begin,
@@ -767,12 +770,12 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       else
         EmitNullInitializationToLValue(elementLV);
 
-      // Tell the EH cleanup that we finished with that element.
-      if (endOfInit) Builder.CreateStore(element, endOfInit);
-
       // Move on to the next element.
       llvm::Value *nextElement =
         Builder.CreateInBoundsGEP(currentElement, one, "arrayinit.next");
+
+      // Tell the EH cleanup that we finished with the last element.
+      if (endOfInit) Builder.CreateStore(nextElement, endOfInit);
 
       // Leave the loop if we're done.
       llvm::Value *done = Builder.CreateICmpEQ(nextElement, end,

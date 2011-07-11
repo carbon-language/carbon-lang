@@ -1156,17 +1156,23 @@ public:
 
   typedef void Destroyer(CodeGenFunction &CGF, llvm::Value *addr, QualType ty);
 
-  void pushPartialArrayCleanup(llvm::Value *arrayBegin,
-                               QualType elementType,
-                               Destroyer &destroyer,
-                               llvm::Value *arrayEndPointer);
+  void pushIrregularPartialArrayCleanup(llvm::Value *arrayBegin,
+                                        llvm::Value *arrayEndPointer,
+                                        QualType elementType,
+                                        Destroyer &destroyer);
+  void pushRegularPartialArrayCleanup(llvm::Value *arrayBegin,
+                                      llvm::Value *arrayEnd,
+                                      QualType elementType,
+                                      Destroyer &destroyer);
 
   Destroyer &getDestroyer(QualType::DestructionKind destructionKind);
   void pushDestroy(CleanupKind kind, llvm::Value *addr, QualType type,
-                   Destroyer &destroyer);
-  void emitDestroy(llvm::Value *addr, QualType type, Destroyer &destroyer);
+                   Destroyer &destroyer, bool useEHCleanupForArray);
+  void emitDestroy(llvm::Value *addr, QualType type, Destroyer &destroyer,
+                   bool useEHCleanupForArray);
   void emitArrayDestroy(llvm::Value *begin, llvm::Value *end,
-                        QualType type, Destroyer &destroyer);
+                        QualType type, Destroyer &destroyer,
+                        bool useEHCleanup);
 
   /// Determines whether an EH cleanup is required to destroy a type
   /// with the given destruction kind.

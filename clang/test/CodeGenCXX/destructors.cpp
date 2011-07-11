@@ -235,15 +235,26 @@ namespace test5 {
 
   // CHECK: define void @_ZN5test53fooEv()
   // CHECK:      [[ELEMS:%.*]] = alloca [5 x [[A:%.*]]], align
+  // CHECK-NEXT: [[EXN:%.*]] = alloca i8*
+  // CHECK-NEXT: [[SEL:%.*]] = alloca i32
+  // CHECK-NEXT: [[EHCLEANUP:%.*]] = alloca i32
   // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [5 x [[A]]]* [[ELEMS]], i32 0, i32 0
   // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 5
   // CHECK-NEXT: br label
   // CHECK:      [[POST:%.*]] = phi [[A]]* [ [[END]], {{%.*}} ], [ [[ELT:%.*]], {{%.*}} ]
   // CHECK-NEXT: [[ELT]] = getelementptr inbounds [[A]]* [[POST]], i64 -1
-  // CHECK-NEXT: call void @_ZN5test51AD1Ev([[A]]* [[ELT]])
-  // CHECK-NEXT: [[T0:%.*]] = icmp eq [[A]]* [[ELT]], [[BEGIN]]
+  // CHECK-NEXT: invoke void @_ZN5test51AD1Ev([[A]]* [[ELT]])
+  // CHECK:      [[T0:%.*]] = icmp eq [[A]]* [[ELT]], [[BEGIN]]
   // CHECK-NEXT: br i1 [[T0]],
   // CHECK:      ret void
+  // lpad
+  // CHECK:      [[EMPTY:%.*]] = icmp eq [[A]]* [[BEGIN]], [[ELT]]
+  // CHECK-NEXT: br i1 [[EMPTY]]
+  // CHECK:      [[AFTER:%.*]] = phi [[A]]* [ [[ELT]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
+  // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]]* [[AFTER]], i64 -1
+  // CHECK-NEXT: invoke void @_ZN5test51AD1Ev([[A]]* [[CUR]])
+  // CHECK:      [[DONE:%.*]] = icmp eq [[A]]* [[CUR]], [[BEGIN]]
+  // CHECK-NEXT: br i1 [[DONE]],
   void foo() {
     A elems[5];
   }

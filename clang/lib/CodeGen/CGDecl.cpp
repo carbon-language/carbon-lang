@@ -306,15 +306,21 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
 namespace {
   struct DestroyObject : EHScopeStack::Cleanup {
     DestroyObject(llvm::Value *addr, QualType type,
-                  CodeGenFunction::Destroyer *destroyer)
-      : addr(addr), type(type), destroyer(*destroyer) {}
+                  CodeGenFunction::Destroyer *destroyer,
+                  bool useEHCleanupForArray)
+      : addr(addr), type(type), destroyer(*destroyer),
+        useEHCleanupForArray(useEHCleanupForArray) {}
 
     llvm::Value *addr;
     QualType type;
     CodeGenFunction::Destroyer &destroyer;
+    bool useEHCleanupForArray;
 
-    void Emit(CodeGenFunction &CGF, bool IsForEH) {
-      CGF.emitDestroy(addr, type, destroyer);
+    void Emit(CodeGenFunction &CGF, bool isForEH) {
+      // Don't use an EH cleanup recursively from an EH cleanup.
+      bool useEHCleanupForArray = !isForEH && this->useEHCleanupForArray;
+
+      CGF.emitDestroy(addr, type, destroyer, useEHCleanupForArray);
     }
   };
 
@@ -1059,7 +1065,12 @@ void CodeGenFunction::emitAutoVarTypeCleanup(
 
   // If we haven't chosen a more specific destroyer, use the default.
   if (!destroyer) destroyer = &getDestroyer(dtorKind);
-  EHStack.pushCleanup<DestroyObject>(cleanupKind, addr, type, destroyer);
+
+  // Use an EH cleanup in array destructors iff the destructor itself
+  // is being pushed as an EH cleanup.
+  bool useEHCleanup = (cleanupKind & EHCleanup);
+  EHStack.pushCleanup<DestroyObject>(cleanupKind, addr, type, destroyer,
+                                     useEHCleanup);
 }
 
 void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
@@ -1119,12 +1130,26 @@ CodeGenFunction::getDestroyer(QualType::DestructionKind kind) {
 }
 
 void CodeGenFunction::pushDestroy(CleanupKind cleanupKind, llvm::Value *addr,
-                                  QualType type, Destroyer &destroyer) {
-  EHStack.pushCleanup<DestroyObject>(cleanupKind, addr, type, destroyer);
+                                  QualType type, Destroyer &destroyer,
+                                  bool useEHCleanupForArray) {
+  EHStack.pushCleanup<DestroyObject>(cleanupKind, addr, type, destroyer,
+                                     useEHCleanupForArray);
 }
 
+/// emitDestroy - Immediately perform the destruction of the given
+/// object.
+///
+/// \param addr - the address of the object; a type*
+/// \param type - the type of the object; if an array type, all
+///   objects are destroyed in reverse order
+/// \param destroyer - the function to call to destroy individual
+///   elements
+/// \param useEHCleanupForArray - whether an EH cleanup should be
+///   used when destroying array elements, in case one of the
+///   destructions throws an exception
 void CodeGenFunction::emitDestroy(llvm::Value *addr, QualType type,
-                                  Destroyer &destroyer) {
+                                  Destroyer &destroyer,
+                                  bool useEHCleanupForArray) {
   const ArrayType *arrayType = getContext().getAsArrayType(type);
   if (!arrayType)
     return destroyer(*this, addr, type);
@@ -1132,13 +1157,24 @@ void CodeGenFunction::emitDestroy(llvm::Value *addr, QualType type,
   llvm::Value *begin = addr;
   llvm::Value *length = emitArrayLength(arrayType, type, begin);
   llvm::Value *end = Builder.CreateInBoundsGEP(begin, length);
-  emitArrayDestroy(begin, end, type, destroyer);
+  emitArrayDestroy(begin, end, type, destroyer, useEHCleanupForArray);
 }
 
+/// emitArrayDestroy - Destroys all the elements of the given array,
+/// beginning from last to first.  The array cannot be zero-length.
+///
+/// \param begin - a type* denoting the first element of the array
+/// \param end - a type* denoting one past the end of the array
+/// \param type - the element type of the array
+/// \param destroyer - the function to call to destroy elements
+/// \param useEHCleanup - whether to push an EH cleanup to destroy
+///   the remaining elements in case the destruction of a single
+///   element throws
 void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
                                        llvm::Value *end,
                                        QualType type,
-                                       Destroyer &destroyer) {
+                                       Destroyer &destroyer,
+                                       bool useEHCleanup) {
   assert(!type->isArrayType());
 
   // The basic structure here is a do-while loop, because we don't
@@ -1158,8 +1194,14 @@ void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
   llvm::Value *element = Builder.CreateInBoundsGEP(elementPast, negativeOne,
                                                    "arraydestroy.element");
 
+  if (useEHCleanup)
+    pushRegularPartialArrayCleanup(begin, element, type, destroyer);
+
   // Perform the actual destruction there.
   destroyer(*this, element, type);
+
+  if (useEHCleanup)
+    PopCleanupBlock();
 
   // Check whether we've reached the end.
   llvm::Value *done = Builder.CreateICmpEQ(element, begin, "arraydestroy.done");
@@ -1170,73 +1212,111 @@ void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
   EmitBlock(doneBB);
 }
 
+/// Perform partial array destruction as if in an EH cleanup.  Unlike
+/// emitArrayDestroy, the element type here may still be an array type.
+///
+/// Essentially does an emitArrayDestroy, but checking for the
+/// possibility of a zero-length array (in case the initializer for
+/// the first element throws).
+static void emitPartialArrayDestroy(CodeGenFunction &CGF,
+                                    llvm::Value *begin, llvm::Value *end,
+                                    QualType type,
+                                    CodeGenFunction::Destroyer &destroyer) {
+  // Check whether the array is empty.  For the sake of prettier IR,
+  // we want to jump to the end of the array destroy loop instead of
+  // jumping to yet another block.  We can do this with some modest
+  // assumptions about how emitArrayDestroy works.
+
+  llvm::Value *earlyTest =
+    CGF.Builder.CreateICmpEQ(begin, end, "pad.isempty");
+
+  llvm::BasicBlock *nextBB = CGF.createBasicBlock("pad.arraydestroy");
+
+  // Temporarily, build the conditional branch with identical
+  // successors.  We'll patch this in a bit.
+  llvm::BranchInst *br =
+    CGF.Builder.CreateCondBr(earlyTest, nextBB, nextBB);
+  CGF.EmitBlock(nextBB);
+
+  llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
+
+  // If the element type is itself an array, drill down.
+  llvm::SmallVector<llvm::Value*,4> gepIndices;
+  gepIndices.push_back(zero);
+  while (const ArrayType *arrayType = CGF.getContext().getAsArrayType(type)) {
+    // VLAs don't require a GEP index to walk into.
+    if (!isa<VariableArrayType>(arrayType))
+      gepIndices.push_back(zero);
+    type = arrayType->getElementType();
+  }
+  if (gepIndices.size() != 1) {
+    begin = CGF.Builder.CreateInBoundsGEP(begin, gepIndices.begin(),
+                                          gepIndices.end(), "pad.arraybegin");
+    end = CGF.Builder.CreateInBoundsGEP(end, gepIndices.begin(),
+                                        gepIndices.end(), "pad.arrayend");
+  }
+
+  // Now that we know that the array isn't empty, destroy it.  We
+  // don't ever need an EH cleanup because we assume that we're in an
+  // EH cleanup ourselves, so a throwing destructor causes an
+  // immediate terminate.
+  CGF.emitArrayDestroy(begin, end, type, destroyer, /*useEHCleanup*/ false);
+
+  // Set the conditional branch's 'false' successor to doneBB.
+  llvm::BasicBlock *doneBB = CGF.Builder.GetInsertBlock();
+  assert(CGF.Builder.GetInsertPoint() == doneBB->begin());
+  br->setSuccessor(0, doneBB);
+}
+
 namespace {
-  class PartialArrayDestroy : public EHScopeStack::Cleanup {
+  /// RegularPartialArrayDestroy - a cleanup which performs a partial
+  /// array destroy where the end pointer is regularly determined and
+  /// does not need to be loaded from a local.
+  class RegularPartialArrayDestroy : public EHScopeStack::Cleanup {
+    llvm::Value *ArrayBegin;
+    llvm::Value *ArrayEnd;
+    QualType ElementType;
+    CodeGenFunction::Destroyer &Destroyer;
+  public:
+    RegularPartialArrayDestroy(llvm::Value *arrayBegin, llvm::Value *arrayEnd,
+                               QualType elementType,
+                               CodeGenFunction::Destroyer *destroyer)
+      : ArrayBegin(arrayBegin), ArrayEnd(arrayEnd),
+        ElementType(elementType), Destroyer(*destroyer) {}
+
+    void Emit(CodeGenFunction &CGF, bool isForEH) {
+      emitPartialArrayDestroy(CGF, ArrayBegin, ArrayEnd,
+                              ElementType, Destroyer);
+    }
+  };
+
+  /// IrregularPartialArrayDestroy - a cleanup which performs a
+  /// partial array destroy where the end pointer is irregularly
+  /// determined and must be loaded from a local.
+  class IrregularPartialArrayDestroy : public EHScopeStack::Cleanup {
     llvm::Value *ArrayBegin;
     llvm::Value *ArrayEndPointer;
     QualType ElementType;
     CodeGenFunction::Destroyer &Destroyer;
   public:
-    PartialArrayDestroy(llvm::Value *arrayBegin, llvm::Value *arrayEndPointer,
-                        QualType elementType,
-                        CodeGenFunction::Destroyer *destroyer)
+    IrregularPartialArrayDestroy(llvm::Value *arrayBegin,
+                                 llvm::Value *arrayEndPointer,
+                                 QualType elementType,
+                                 CodeGenFunction::Destroyer *destroyer)
       : ArrayBegin(arrayBegin), ArrayEndPointer(arrayEndPointer),
         ElementType(elementType), Destroyer(*destroyer) {}
 
     void Emit(CodeGenFunction &CGF, bool isForEH) {
-      llvm::Value *arrayBegin = ArrayBegin;
       llvm::Value *arrayEnd = CGF.Builder.CreateLoad(ArrayEndPointer);
-
-      // It's possible for the count to be zero here, so we're going
-      // to need a check.  For the sake of prettier IR, we just want
-      // to jump to the end of the array destroy loop.  This assumes
-      // the structure of the IR generated by emitArrayDestroy, but
-      // that assumption is pretty reliable.
-      llvm::Value *earlyTest =
-        CGF.Builder.CreateICmpEQ(arrayBegin, arrayEnd, "pad.isempty");
-
-      llvm::BasicBlock *nextBB = CGF.createBasicBlock("pad.arraydestroy");
-
-      // For now, use a conditional branch with both successors the
-      // same.  We'll patch this later.
-      llvm::BranchInst *br =
-        CGF.Builder.CreateCondBr(earlyTest, nextBB, nextBB);
-      CGF.EmitBlock(nextBB);
-
-      llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
-
-      // If the element type is itself an array, drill down.
-      QualType type = ElementType;
-      llvm::SmallVector<llvm::Value*,4> gepIndices;
-      gepIndices.push_back(zero);
-      while (const ArrayType *arrayType = CGF.getContext().getAsArrayType(type)) {
-        // VLAs don't require a GEP index to walk into.
-        if (!isa<VariableArrayType>(arrayType))
-          gepIndices.push_back(zero);
-        type = arrayType->getElementType();
-      }
-      if (gepIndices.size() != 1) {
-        arrayBegin =
-          CGF.Builder.CreateInBoundsGEP(arrayBegin, gepIndices.begin(),
-                                        gepIndices.end(), "pad.arraybegin");
-        arrayEnd =
-          CGF.Builder.CreateInBoundsGEP(arrayEnd, gepIndices.begin(),
-                                        gepIndices.end(), "pad.arrayend");
-      }
-
-      CGF.emitArrayDestroy(arrayBegin, arrayEnd, type, Destroyer);
-
-      // Set the conditional branch's 'false' successor to doneBB.
-      llvm::BasicBlock *doneBB = CGF.Builder.GetInsertBlock();
-      assert(CGF.Builder.GetInsertPoint() == doneBB->begin());
-      br->setSuccessor(1, doneBB);
+      emitPartialArrayDestroy(CGF, ArrayBegin, arrayEnd,
+                              ElementType, Destroyer);
     }
   };
 }
 
-/// pushPartialArrayCleanup - Push a cleanup to destroy
+/// pushIrregularPartialArrayCleanup - Push an EH cleanup to destroy
 /// already-constructed elements of the given array.  The cleanup
-/// may be popped with DeactivateCleanupBlock.
+/// may be popped with DeactivateCleanupBlock or PopCleanupBlock.
 /// 
 /// \param elementType - the immediate element type of the array;
 ///   possibly still an array type
@@ -1244,13 +1324,34 @@ namespace {
 /// \param destructionKind - the kind of destruction required
 /// \param initializedElementCount - a value of type size_t* holding
 ///   the number of successfully-constructed elements
-void CodeGenFunction::pushPartialArrayCleanup(llvm::Value *array,
-                                              QualType elementType,
-                                              Destroyer &destroyer,
-                                              llvm::Value *arrayEndPointer) {
+void CodeGenFunction::pushIrregularPartialArrayCleanup(llvm::Value *array,
+                                                 llvm::Value *arrayEndPointer,
+                                                       QualType elementType,
+                                                       Destroyer &destroyer) {
   // FIXME: can this be in a conditional expression?
-  EHStack.pushCleanup<PartialArrayDestroy>(EHCleanup, array, arrayEndPointer,
-                                           elementType, &destroyer);
+  EHStack.pushCleanup<IrregularPartialArrayDestroy>(EHCleanup, array,
+                                                    arrayEndPointer,
+                                                    elementType, &destroyer);
+}
+
+/// pushRegularPartialArrayCleanup - Push an EH cleanup to destroy
+/// already-constructed elements of the given array.  The cleanup
+/// may be popped with DeactivateCleanupBlock or PopCleanupBlock.
+/// 
+/// \param elementType - the immediate element type of the array;
+///   possibly still an array type
+/// \param array - a value of type elementType*
+/// \param destructionKind - the kind of destruction required
+/// \param initializedElementCount - a value of type size_t* holding
+///   the number of successfully-constructed elements
+void CodeGenFunction::pushRegularPartialArrayCleanup(llvm::Value *arrayBegin,
+                                                     llvm::Value *arrayEnd,
+                                                     QualType elementType,
+                                                     Destroyer &destroyer) {
+  // FIXME: can this be in a conditional expression?
+  EHStack.pushCleanup<RegularPartialArrayDestroy>(EHCleanup,
+                                                  arrayBegin, arrayEnd,
+                                                  elementType, &destroyer);
 }
 
 namespace {
