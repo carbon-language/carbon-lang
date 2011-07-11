@@ -3387,7 +3387,7 @@ void Sema::CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *DD) {
 bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
   CXXRecordDecl *RD = CD->getParent();
   assert(!RD->isDependentType() && "do deletion after instantiation");
-  if (!LangOpts.CPlusPlus0x)
+  if (!LangOpts.CPlusPlus0x || RD->isInvalidDecl())
     return false;
 
   SourceLocation Loc = CD->getLocation();
@@ -3568,7 +3568,7 @@ bool Sema::ShouldDeleteDefaultConstructor(CXXConstructorDecl *CD) {
 bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
   CXXRecordDecl *RD = CD->getParent();
   assert(!RD->isDependentType() && "do deletion after instantiation");
-  if (!LangOpts.CPlusPlus0x)
+  if (!LangOpts.CPlusPlus0x || RD->isInvalidDecl())
     return false;
 
   SourceLocation Loc = CD->getLocation();
@@ -3724,7 +3724,7 @@ bool Sema::ShouldDeleteCopyConstructor(CXXConstructorDecl *CD) {
 bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
   CXXRecordDecl *RD = MD->getParent();
   assert(!RD->isDependentType() && "do deletion after instantiation");
-  if (!LangOpts.CPlusPlus0x)
+  if (!LangOpts.CPlusPlus0x || RD->isInvalidDecl())
     return false;
 
   SourceLocation Loc = MD->getLocation();
@@ -3849,7 +3849,7 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
 bool Sema::ShouldDeleteDestructor(CXXDestructorDecl *DD) {
   CXXRecordDecl *RD = DD->getParent();
   assert(!RD->isDependentType() && "do deletion after instantiation");
-  if (!LangOpts.CPlusPlus0x)
+  if (!LangOpts.CPlusPlus0x || RD->isInvalidDecl())
     return false;
 
   SourceLocation Loc = DD->getLocation();
@@ -5881,6 +5881,8 @@ Sema::ComputeDefaultedDefaultCtorExceptionSpec(CXXRecordDecl *ClassDecl) {
   //   An implicitly declared special member function (Clause 12) shall have an 
   //   exception-specification. [...]
   ImplicitExceptionSpecification ExceptSpec(Context);
+  if (ClassDecl->isInvalidDecl())
+    return ExceptSpec;
 
   // Direct base-class constructors.
   for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
@@ -6254,7 +6256,9 @@ Sema::ComputeDefaultedDtorExceptionSpec(CXXRecordDecl *ClassDecl) {
   //   An implicitly declared special member function (Clause 12) shall have 
   //   an exception-specification.
   ImplicitExceptionSpecification ExceptSpec(Context);
-  
+  if (ClassDecl->isInvalidDecl())
+    return ExceptSpec;
+
   // Direct base-class destructors.
   for (CXXRecordDecl::base_class_iterator B = ClassDecl->bases_begin(),
                                        BEnd = ClassDecl->bases_end();
@@ -6589,6 +6593,9 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
 std::pair<Sema::ImplicitExceptionSpecification, bool>
 Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
                                                    CXXRecordDecl *ClassDecl) {
+  if (ClassDecl->isInvalidDecl())
+    return std::make_pair(ImplicitExceptionSpecification(Context), false);
+
   // C++ [class.copy]p10:
   //   If the class definition does not explicitly declare a copy
   //   assignment operator, one is declared implicitly.
@@ -6694,7 +6701,7 @@ Sema::ComputeDefaultedCopyAssignmentExceptionSpecAndConst(
       if (CXXMethodDecl *CopyAssign =
           LookupCopyingAssignment(FieldClassDecl, ArgQuals, false, 0))
         ExceptSpec.CalledDecl(CopyAssign);
-    }      
+    }
   }
 
   return std::make_pair(ExceptSpec, HasConstCopyAssignment);
@@ -7063,6 +7070,9 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
 
 std::pair<Sema::ImplicitExceptionSpecification, bool>
 Sema::ComputeDefaultedCopyCtorExceptionSpecAndConst(CXXRecordDecl *ClassDecl) {
+  if (ClassDecl->isInvalidDecl())
+    return std::make_pair(ImplicitExceptionSpecification(Context), false);
+
   // C++ [class.copy]p5:
   //   The implicitly-declared copy constructor for a class X will
   //   have the form
