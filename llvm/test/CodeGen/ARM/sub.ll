@@ -12,7 +12,7 @@ define i64 @f1(i64 %a) {
 ; 66846720 = 0x03fc0000
 define i64 @f2(i64 %a) {
 ; CHECK: f2
-; CHECK: subs r0, r0, #255, #14
+; CHECK: subs r0, r0, #66846720
 ; CHECK: sbc r1, r1, #0
     %tmp = sub i64 %a, 66846720
     ret i64 %tmp

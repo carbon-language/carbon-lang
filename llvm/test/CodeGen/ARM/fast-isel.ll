@@ -43,7 +43,7 @@ b1:
   br label %b2
 
 ; THUMB: add.w {{.*}} #4096
-; ARM: add {{.*}} #1, #20
+; ARM: add {{.*}} #4096
 
 b2:
   %b = add i32 %tmp, 4095

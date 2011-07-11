@@ -434,7 +434,6 @@ def so_imm : Operand<i32>, ImmLeaf<i32, [{
     return ARM_AM::getSOImmVal(Imm) != -1;
   }]> {
   let EncoderMethod = "getSOImmOpValue";
-  let PrintMethod = "printSOImmOperand";
 }
 
 // Break so_imm's up into two pieces.  This handles immediates with up to 16

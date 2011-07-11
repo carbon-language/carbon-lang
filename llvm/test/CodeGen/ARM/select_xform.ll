@@ -4,7 +4,7 @@
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
 ; ARM: t1:
-; ARM: sub r0, r1, #6, #2
+; ARM: sub r0, r1, #-2147483647
 ; ARM: movgt r0, r1
 
 ; T2: t1:

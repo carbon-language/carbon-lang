@@ -42,7 +42,7 @@ entry:
 
 define double @h(double* %v) {
 ;CHECK: h:
-;CHECK: vldr.64 
+;CHECK: vldr.64
 ;CHECK-NEXT: vmov
 entry:
         %tmp = load double* %v          ; <double> [#uses=1]
@@ -51,7 +51,7 @@ entry:
 
 define float @h2() {
 ;CHECK: h2:
-;CHECK: mov r0, #254, #10
+;CHECK: mov r0, #1065353216
 entry:
         ret float 1.000000e+00
 }

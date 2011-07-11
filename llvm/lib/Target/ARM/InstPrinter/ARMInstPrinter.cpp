@@ -126,38 +126,6 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
-static void printSOImm(raw_ostream &O, int64_t V, raw_ostream *CommentStream,
-                       const MCAsmInfo *MAI) {
-  // Break it up into two parts that make up a shifter immediate.
-  V = ARM_AM::getSOImmVal(V);
-  assert(V != -1 && "Not a valid so_imm value!");
-
-  unsigned Imm = ARM_AM::getSOImmValImm(V);
-  unsigned Rot = ARM_AM::getSOImmValRot(V);
-
-  // Print low-level immediate formation info, per
-  // A5.2.3: Data-processing (immediate), and
-  // A5.2.4: Modified immediate constants in ARM instructions
-  if (Rot) {
-    O << "#" << Imm << ", #" << Rot;
-    // Pretty printed version.
-    if (CommentStream)
-      *CommentStream << (int)ARM_AM::rotr32(Imm, Rot) << "\n";
-  } else {
-    O << "#" << Imm;
-  }
-}
-
-
-/// printSOImmOperand - SOImm is 4-bit rotate amount in bits 8-11 with 8-bit
-/// immediate in bits 0-7.
-void ARMInstPrinter::printSOImmOperand(const MCInst *MI, unsigned OpNum,
-                                       raw_ostream &O) {
-  const MCOperand &MO = MI->getOperand(OpNum);
-  assert(MO.isImm() && "Not a valid so_imm value!");
-  printSOImm(O, MO.getImm(), CommentStream, &MAI);
-}
-
 // so_reg is a 4-operand unit corresponding to register forms of the A5.1
 // "Addressing Mode 1 - Data-processing operands" forms.  This includes:
 //    REG 0   0           - e.g. R5

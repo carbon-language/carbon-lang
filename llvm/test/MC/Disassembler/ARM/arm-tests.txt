@@ -1,6 +1,6 @@
 # RUN: llvm-mc --disassemble %s -triple=arm-apple-darwin9 | FileCheck %s
 
-# CHECK:	addpl	r4, pc, #19, #8
+# CHECK:	addpl	r4, pc, #318767104
 0x4c 0x45 0x8f 0x52
 
 # CHECK:	b	#0
@@ -21,7 +21,7 @@
 # CHECK:	mov	pc, lr
 0x0e 0xf0 0xa0 0xe1
 
-# CHECK:	mov	pc, #255, #2
+# CHECK:	mov	pc, #3221225535
 0xff 0xf1 0xa0 0xe3
 
 # CHECK:	movw	r7, #4096
@@ -72,7 +72,7 @@
 # CHECK:	movt	r8, #65535
 0xff 0x8f 0x4f 0xe3
 
-# CHECK:	mvnspl	r7, #245, #2
+# CHECK:	mvnspl	r7, #1073741885
 0xf5 0x71 0xf0 0x53
 
 # CHECK-NOT:	orr	r7, r8, r7, rrx #0
@@ -152,7 +152,7 @@
 # CHECK: msr cpsr_fc, r0
 0x00 0xf0 0x29 0xe1
 
-# CHECK:	msrmi	cpsr_c, #241, #8
+# CHECK:	msrmi	cpsr_c, #4043309056
 0xf1 0xf4 0x21 0x43
 
 # CHECK: rsbs r6, r7, r8

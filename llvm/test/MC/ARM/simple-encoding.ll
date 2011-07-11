@@ -39,8 +39,7 @@ define i32 @f3(i32 %a, i32 %b) {
 
 define i32 @f4(i32 %a, i32 %b) {
 ; CHECK: f4
-; CHECK: add r0, r0, #254, #28        @ encoding: [0xfe,0x0e,0x80,0xe2]
-; CHECK:                              @ 4064
+; CHECK: add r0, r0, #4064            @ encoding: [0xfe,0x0e,0x80,0xe2]
 ; CHECK: bx lr                        @ encoding: [0x1e,0xff,0x2f,0xe1]
   %add = add nsw i32 %a, 4064
   ret i32 %add
@@ -118,7 +117,7 @@ define i32 @f12(i32 %a) {
 define i64 @f13() {
 ; CHECK: f13:
 ; CHECK: mvn r0, #0                   @ encoding: [0x00,0x00,0xe0,0xe3]
-; CHECK: mvn r1, #2, #2               @ encoding: [0x02,0x11,0xe0,0xe3]
+; CHECK: mvn r1, #-2147483648         @ encoding: [0x02,0x11,0xe0,0xe3]
         ret i64 9223372036854775807
 }
 
@@ -229,7 +228,7 @@ define i32 @f23(i32 %X, i32 %Y) {
 
 define void @f24(i32 %a) {
 ; CHECK: f24
-; CHECK: cmp r0, #1, #16               @ encoding: [0x01,0x08,0x50,0xe3]
+; CHECK: cmp r0, #65536               @ encoding: [0x01,0x08,0x50,0xe3]
         %b = icmp ugt i32 %a, 65536
         br i1 %b, label %r, label %r
 r:
