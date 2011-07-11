@@ -594,17 +594,31 @@ Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size
     bool process_is_valid = m_process_sp && m_process_sp->IsAlive();
 
     size_t bytes_read = 0;
+
+    addr_t load_addr = LLDB_INVALID_ADDRESS;
+    addr_t file_addr = LLDB_INVALID_ADDRESS;
     Address resolved_addr;
     if (!addr.IsSectionOffset())
     {
         if (process_is_valid)
+        {
+            // Process is valid and we were given an address that
+            // isn't section offset, so assume this is a load address
+            load_addr = addr.GetOffset();
             m_section_load_list.ResolveLoadAddress (addr.GetOffset(), resolved_addr);
+        }
         else
+        {
+            // Process is NOT valid and we were given an address that
+            // isn't section offset, so assume this is a file address
+            file_addr = addr.GetOffset();
             m_images.ResolveFileAddress(addr.GetOffset(), resolved_addr);
+        }
     }
     if (!resolved_addr.IsValid())
         resolved_addr = addr;
     
+
     if (prefer_file_cache)
     {
         bytes_read = ReadMemoryFromFileCache (resolved_addr, dst, dst_len, error);
@@ -614,7 +628,9 @@ Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size
     
     if (process_is_valid)
     {
-        lldb::addr_t load_addr = resolved_addr.GetLoadAddress (this);
+        if (load_addr == LLDB_INVALID_ADDRESS)
+            load_addr = resolved_addr.GetLoadAddress (this);
+
         if (load_addr == LLDB_INVALID_ADDRESS)
         {
             if (resolved_addr.GetModule() && resolved_addr.GetModule()->GetFileSpec())
@@ -649,7 +665,7 @@ Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size
         }
     }
     
-    if (!prefer_file_cache)
+    if (!prefer_file_cache && resolved_addr.IsSectionOffset())
     {
         // If we didn't already try and read from the object file cache, then
         // try it after failing to read from the process.

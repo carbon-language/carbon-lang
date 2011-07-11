@@ -121,6 +121,10 @@ public:
     {
         return m_location;
     }
+    
+    bool
+    DumpLocationForAddress (Stream *s, 
+                            const Address &address);
 
     size_t
     MemorySize() const;
@@ -134,6 +138,9 @@ public:
     bool
     LocationIsValidForFrame (StackFrame *frame);
 
+    bool
+    LocationIsValidForAddress (const Address &address);
+    
     bool
     GetLocationIsConstantValueData () const
     {

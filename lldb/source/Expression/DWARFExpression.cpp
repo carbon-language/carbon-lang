@@ -299,51 +299,51 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
 
         switch (op)
         {
-        case DW_OP_addr:    *s << "addr(" << m_data.GetAddress(&offset) << ") "; break;         // 0x03 1 address
-        case DW_OP_deref:   *s << "deref"; break;                                               // 0x06
-        case DW_OP_const1u: s->Printf("const1u(0x%2.2x) ", m_data.GetU8(&offset)); break;       // 0x08 1 1-byte constant
-        case DW_OP_const1s: s->Printf("const1s(0x%2.2x) ", m_data.GetU8(&offset)); break;       // 0x09 1 1-byte constant
-        case DW_OP_const2u: s->Printf("const2u(0x%4.4x) ", m_data.GetU16(&offset)); break;      // 0x0a 1 2-byte constant
-        case DW_OP_const2s: s->Printf("const2s(0x%4.4x) ", m_data.GetU16(&offset)); break;      // 0x0b 1 2-byte constant
-        case DW_OP_const4u: s->Printf("const4u(0x%8.8x) ", m_data.GetU32(&offset)); break;      // 0x0c 1 4-byte constant
-        case DW_OP_const4s: s->Printf("const4s(0x%8.8x) ", m_data.GetU32(&offset)); break;      // 0x0d 1 4-byte constant
-        case DW_OP_const8u: s->Printf("const8u(0x%16.16llx) ", m_data.GetU64(&offset)); break;  // 0x0e 1 8-byte constant
-        case DW_OP_const8s: s->Printf("const8s(0x%16.16llx) ", m_data.GetU64(&offset)); break;  // 0x0f 1 8-byte constant
-        case DW_OP_constu:  s->Printf("constu(0x%x) ", m_data.GetULEB128(&offset)); break;      // 0x10 1 ULEB128 constant
-        case DW_OP_consts:  s->Printf("consts(0x%x) ", m_data.GetSLEB128(&offset)); break;      // 0x11 1 SLEB128 constant
-        case DW_OP_dup:     s->PutCString("dup"); break;                                        // 0x12
-        case DW_OP_drop:    s->PutCString("drop"); break;                                       // 0x13
-        case DW_OP_over:    s->PutCString("over"); break;                                       // 0x14
-        case DW_OP_pick:    s->Printf("pick(0x%2.2x) ", m_data.GetU8(&offset)); break;          // 0x15 1 1-byte stack index
-        case DW_OP_swap:    s->PutCString("swap"); break;                                       // 0x16
-        case DW_OP_rot:     s->PutCString("rot"); break;                                        // 0x17
-        case DW_OP_xderef:  s->PutCString("xderef"); break;                                     // 0x18
-        case DW_OP_abs:     s->PutCString("abs"); break;                                        // 0x19
-        case DW_OP_and:     s->PutCString("and"); break;                                        // 0x1a
-        case DW_OP_div:     s->PutCString("div"); break;                                        // 0x1b
-        case DW_OP_minus:   s->PutCString("minus"); break;                                      // 0x1c
-        case DW_OP_mod:     s->PutCString("mod"); break;                                        // 0x1d
-        case DW_OP_mul:     s->PutCString("mul"); break;                                        // 0x1e
-        case DW_OP_neg:     s->PutCString("neg"); break;                                        // 0x1f
-        case DW_OP_not:     s->PutCString("not"); break;                                        // 0x20
-        case DW_OP_or:      s->PutCString("or"); break;                                         // 0x21
-        case DW_OP_plus:    s->PutCString("plus"); break;                                       // 0x22
+        case DW_OP_addr:    *s << "DW_OP_addr(" << m_data.GetAddress(&offset) << ") "; break;         // 0x03 1 address
+        case DW_OP_deref:   *s << "DW_OP_deref"; break;                                               // 0x06
+        case DW_OP_const1u: s->Printf("DW_OP_const1u(0x%2.2x) ", m_data.GetU8(&offset)); break;       // 0x08 1 1-byte constant
+        case DW_OP_const1s: s->Printf("DW_OP_const1s(0x%2.2x) ", m_data.GetU8(&offset)); break;       // 0x09 1 1-byte constant
+        case DW_OP_const2u: s->Printf("DW_OP_const2u(0x%4.4x) ", m_data.GetU16(&offset)); break;      // 0x0a 1 2-byte constant
+        case DW_OP_const2s: s->Printf("DW_OP_const2s(0x%4.4x) ", m_data.GetU16(&offset)); break;      // 0x0b 1 2-byte constant
+        case DW_OP_const4u: s->Printf("DW_OP_const4u(0x%8.8x) ", m_data.GetU32(&offset)); break;      // 0x0c 1 4-byte constant
+        case DW_OP_const4s: s->Printf("DW_OP_const4s(0x%8.8x) ", m_data.GetU32(&offset)); break;      // 0x0d 1 4-byte constant
+        case DW_OP_const8u: s->Printf("DW_OP_const8u(0x%16.16llx) ", m_data.GetU64(&offset)); break;  // 0x0e 1 8-byte constant
+        case DW_OP_const8s: s->Printf("DW_OP_const8s(0x%16.16llx) ", m_data.GetU64(&offset)); break;  // 0x0f 1 8-byte constant
+        case DW_OP_constu:  s->Printf("DW_OP_constu(0x%x) ", m_data.GetULEB128(&offset)); break;      // 0x10 1 ULEB128 constant
+        case DW_OP_consts:  s->Printf("DW_OP_consts(0x%x) ", m_data.GetSLEB128(&offset)); break;      // 0x11 1 SLEB128 constant
+        case DW_OP_dup:     s->PutCString("DW_OP_dup"); break;                                        // 0x12
+        case DW_OP_drop:    s->PutCString("DW_OP_drop"); break;                                       // 0x13
+        case DW_OP_over:    s->PutCString("DW_OP_over"); break;                                       // 0x14
+        case DW_OP_pick:    s->Printf("DW_OP_pick(0x%2.2x) ", m_data.GetU8(&offset)); break;          // 0x15 1 1-byte stack index
+        case DW_OP_swap:    s->PutCString("DW_OP_swap"); break;                                       // 0x16
+        case DW_OP_rot:     s->PutCString("DW_OP_rot"); break;                                        // 0x17
+        case DW_OP_xderef:  s->PutCString("DW_OP_xderef"); break;                                     // 0x18
+        case DW_OP_abs:     s->PutCString("DW_OP_abs"); break;                                        // 0x19
+        case DW_OP_and:     s->PutCString("DW_OP_and"); break;                                        // 0x1a
+        case DW_OP_div:     s->PutCString("DW_OP_div"); break;                                        // 0x1b
+        case DW_OP_minus:   s->PutCString("DW_OP_minus"); break;                                      // 0x1c
+        case DW_OP_mod:     s->PutCString("DW_OP_mod"); break;                                        // 0x1d
+        case DW_OP_mul:     s->PutCString("DW_OP_mul"); break;                                        // 0x1e
+        case DW_OP_neg:     s->PutCString("DW_OP_neg"); break;                                        // 0x1f
+        case DW_OP_not:     s->PutCString("DW_OP_not"); break;                                        // 0x20
+        case DW_OP_or:      s->PutCString("DW_OP_or"); break;                                         // 0x21
+        case DW_OP_plus:    s->PutCString("DW_OP_plus"); break;                                       // 0x22
         case DW_OP_plus_uconst:                                                                 // 0x23 1 ULEB128 addend
-            s->Printf("plus_uconst(0x%x) ", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_plus_uconst(0x%x) ", m_data.GetULEB128(&offset));
             break;
 
-        case DW_OP_shl:     s->PutCString("shl"); break;                                        // 0x24
-        case DW_OP_shr:     s->PutCString("shr"); break;                                        // 0x25
-        case DW_OP_shra:    s->PutCString("shra"); break;                                       // 0x26
-        case DW_OP_xor:     s->PutCString("xor"); break;                                        // 0x27
-        case DW_OP_skip:    s->Printf("skip(0x%4.4x)", m_data.GetU16(&offset)); break;          // 0x2f 1 signed 2-byte constant
-        case DW_OP_bra:     s->Printf("bra(0x%4.4x)", m_data.GetU16(&offset)); break;           // 0x28 1 signed 2-byte constant
-        case DW_OP_eq:      s->PutCString("eq"); break;                                         // 0x29
-        case DW_OP_ge:      s->PutCString("ge"); break;                                         // 0x2a
-        case DW_OP_gt:      s->PutCString("gt"); break;                                         // 0x2b
-        case DW_OP_le:      s->PutCString("le"); break;                                         // 0x2c
-        case DW_OP_lt:      s->PutCString("lt"); break;                                         // 0x2d
-        case DW_OP_ne:      s->PutCString("ne"); break;                                         // 0x2e
+        case DW_OP_shl:     s->PutCString("DW_OP_shl"); break;                                        // 0x24
+        case DW_OP_shr:     s->PutCString("DW_OP_shr"); break;                                        // 0x25
+        case DW_OP_shra:    s->PutCString("DW_OP_shra"); break;                                       // 0x26
+        case DW_OP_xor:     s->PutCString("DW_OP_xor"); break;                                        // 0x27
+        case DW_OP_skip:    s->Printf("DW_OP_skip(0x%4.4x)", m_data.GetU16(&offset)); break;          // 0x2f 1 signed 2-byte constant
+        case DW_OP_bra:     s->Printf("DW_OP_bra(0x%4.4x)", m_data.GetU16(&offset)); break;           // 0x28 1 signed 2-byte constant
+        case DW_OP_eq:      s->PutCString("DW_OP_eq"); break;                                         // 0x29
+        case DW_OP_ge:      s->PutCString("DW_OP_ge"); break;                                         // 0x2a
+        case DW_OP_gt:      s->PutCString("DW_OP_gt"); break;                                         // 0x2b
+        case DW_OP_le:      s->PutCString("DW_OP_le"); break;                                         // 0x2c
+        case DW_OP_lt:      s->PutCString("DW_OP_lt"); break;                                         // 0x2d
+        case DW_OP_ne:      s->PutCString("DW_OP_ne"); break;                                         // 0x2e
 
         case DW_OP_lit0:    // 0x30
         case DW_OP_lit1:    // 0x31
@@ -376,7 +376,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_lit28:   // 0x4C
         case DW_OP_lit29:   // 0x4D
         case DW_OP_lit30:   // 0x4E
-        case DW_OP_lit31:   s->Printf("lit%i", op - DW_OP_lit0); break; // 0x4f
+        case DW_OP_lit31:   s->Printf("DW_OP_lit%i", op - DW_OP_lit0); break; // 0x4f
 
         case DW_OP_reg0:    // 0x50
         case DW_OP_reg1:    // 0x51
@@ -409,7 +409,7 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_reg28:   // 0x6C
         case DW_OP_reg29:   // 0x6D
         case DW_OP_reg30:   // 0x6E
-        case DW_OP_reg31:   s->Printf("reg%i", op - DW_OP_reg0); break; // 0x6f
+        case DW_OP_reg31:   s->Printf("DW_OP_reg%i", op - DW_OP_reg0); break; // 0x6f
 
         case DW_OP_breg0:
         case DW_OP_breg1:
@@ -442,72 +442,72 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
         case DW_OP_breg28:
         case DW_OP_breg29:
         case DW_OP_breg30:
-        case DW_OP_breg31:  s->Printf("breg%i(0x%x)", op - DW_OP_breg0, m_data.GetULEB128(&offset)); break;
+        case DW_OP_breg31:  s->Printf("DW_OP_breg%i(0x%x)", op - DW_OP_breg0, m_data.GetULEB128(&offset)); break;
 
         case DW_OP_regx:                                                    // 0x90 1 ULEB128 register
-            s->Printf("regx(0x%x)", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_regx(0x%x)", m_data.GetULEB128(&offset));
             break;
         case DW_OP_fbreg:                                                   // 0x91 1 SLEB128 offset
-            s->Printf("fbreg(0x%x)",m_data.GetSLEB128(&offset));
+            s->Printf("DW_OP_fbreg(0x%x)",m_data.GetSLEB128(&offset));
             break;
         case DW_OP_bregx:                                                   // 0x92 2 ULEB128 register followed by SLEB128 offset
-            s->Printf("bregx(0x%x, 0x%x)", m_data.GetULEB128(&offset), m_data.GetSLEB128(&offset));
+            s->Printf("DW_OP_bregx(0x%x, 0x%x)", m_data.GetULEB128(&offset), m_data.GetSLEB128(&offset));
             break;
         case DW_OP_piece:                                                   // 0x93 1 ULEB128 size of piece addressed
-            s->Printf("piece(0x%x)", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_piece(0x%x)", m_data.GetULEB128(&offset));
             break;
         case DW_OP_deref_size:                                              // 0x94 1 1-byte size of data retrieved
-            s->Printf("deref_size(0x%2.2x)", m_data.GetU8(&offset));
+            s->Printf("DW_OP_deref_size(0x%2.2x)", m_data.GetU8(&offset));
             break;
         case DW_OP_xderef_size:                                             // 0x95 1 1-byte size of data retrieved
-            s->Printf("xderef_size(0x%2.2x)", m_data.GetU8(&offset));
+            s->Printf("DW_OP_xderef_size(0x%2.2x)", m_data.GetU8(&offset));
             break;
-        case DW_OP_nop: s->PutCString("nop"); break;                                    // 0x96
-        case DW_OP_push_object_address: s->PutCString("push_object_address"); break;    // 0x97 DWARF3
+        case DW_OP_nop: s->PutCString("DW_OP_nop"); break;                                    // 0x96
+        case DW_OP_push_object_address: s->PutCString("DW_OP_push_object_address"); break;    // 0x97 DWARF3
         case DW_OP_call2:                                                   // 0x98 DWARF3 1 2-byte offset of DIE
-            s->Printf("call2(0x%4.4x)", m_data.GetU16(&offset));
+            s->Printf("DW_OP_call2(0x%4.4x)", m_data.GetU16(&offset));
             break;
         case DW_OP_call4:                                                   // 0x99 DWARF3 1 4-byte offset of DIE
-            s->Printf("call4(0x%8.8x)", m_data.GetU32(&offset));
+            s->Printf("DW_OP_call4(0x%8.8x)", m_data.GetU32(&offset));
             break;
         case DW_OP_call_ref:                                                // 0x9a DWARF3 1 4- or 8-byte offset of DIE
-            s->Printf("call_ref(0x%8.8llx)", m_data.GetAddress(&offset));
+            s->Printf("DW_OP_call_ref(0x%8.8llx)", m_data.GetAddress(&offset));
             break;
 //      case DW_OP_form_tls_address: s << "form_tls_address"; break;        // 0x9b DWARF3
 //      case DW_OP_call_frame_cfa: s << "call_frame_cfa"; break;            // 0x9c DWARF3
 //      case DW_OP_bit_piece:                                               // 0x9d DWARF3 2
-//          s->Printf("bit_piece(0x%x, 0x%x)", m_data.GetULEB128(&offset), m_data.GetULEB128(&offset));
+//          s->Printf("DW_OP_bit_piece(0x%x, 0x%x)", m_data.GetULEB128(&offset), m_data.GetULEB128(&offset));
 //          break;
-//      case DW_OP_lo_user:     s->PutCString("lo_user"); break;                        // 0xe0
-//      case DW_OP_hi_user:     s->PutCString("hi_user"); break;                        // 0xff
+//      case DW_OP_lo_user:     s->PutCString("DW_OP_lo_user"); break;                        // 0xe0
+//      case DW_OP_hi_user:     s->PutCString("DW_OP_hi_user"); break;                        // 0xff
         case DW_OP_APPLE_extern:
-            s->Printf("extern(%u)", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_APPLE_extern(%u)", m_data.GetULEB128(&offset));
             break;
         case DW_OP_APPLE_array_ref:
-            s->PutCString("array_ref");
+            s->PutCString("DW_OP_APPLE_array_ref");
             break;
         case DW_OP_APPLE_uninit:
-            s->PutCString("uninit");  // 0xF0
+            s->PutCString("DW_OP_APPLE_uninit");  // 0xF0
             break;
         case DW_OP_APPLE_assign:        // 0xF1 - pops value off and assigns it to second item on stack (2nd item must have assignable context)
-            s->PutCString("assign");
+            s->PutCString("DW_OP_APPLE_assign");
             break;
         case DW_OP_APPLE_address_of:    // 0xF2 - gets the address of the top stack item (top item must be a variable, or have value_type that is an address already)
-            s->PutCString("address_of");
+            s->PutCString("DW_OP_APPLE_address_of");
             break;
         case DW_OP_APPLE_value_of:      // 0xF3 - pops the value off the stack and pushes the value of that object (top item must be a variable, or expression local)
-            s->PutCString("value_of");
+            s->PutCString("DW_OP_APPLE_value_of");
             break;
         case DW_OP_APPLE_deref_type:    // 0xF4 - gets the address of the top stack item (top item must be a variable, or a clang type)
-            s->PutCString("deref_type");
+            s->PutCString("DW_OP_APPLE_deref_type");
             break;
         case DW_OP_APPLE_expr_local:    // 0xF5 - ULEB128 expression local index
-            s->Printf("expr_local(%u)", m_data.GetULEB128(&offset));
+            s->Printf("DW_OP_APPLE_expr_local(%u)", m_data.GetULEB128(&offset));
             break;
         case DW_OP_APPLE_constf:        // 0xF6 - 1 byte float size, followed by constant float data
             {
                 uint8_t float_length = m_data.GetU8(&offset);
-                s->Printf("constf(<%u> ", float_length);
+                s->Printf("DW_OP_APPLE_constf(<%u> ", float_length);
                 m_data.Dump(s, offset, eFormatHex, float_length, 1, UINT32_MAX, DW_INVALID_ADDRESS, 0, 0);
                 s->PutChar(')');
                 // Consume the float data
@@ -515,19 +515,19 @@ DWARFExpression::DumpLocation (Stream *s, uint32_t offset, uint32_t length, lldb
             }
             break;
         case DW_OP_APPLE_scalar_cast:
-            s->Printf("scalar_cast(%s)", Scalar::GetValueTypeAsCString ((Scalar::Type)m_data.GetU8(&offset)));
+            s->Printf("DW_OP_APPLE_scalar_cast(%s)", Scalar::GetValueTypeAsCString ((Scalar::Type)m_data.GetU8(&offset)));
             break;
         case DW_OP_APPLE_clang_cast:
             {
                 clang::Type *clang_type = (clang::Type *)m_data.GetMaxU64(&offset, sizeof(void*));
-                s->Printf("clang_cast(%p)", clang_type);
+                s->Printf("DW_OP_APPLE_clang_cast(%p)", clang_type);
             }
             break;
         case DW_OP_APPLE_clear:
-            s->PutCString("clear");
+            s->PutCString("DW_OP_APPLE_clear");
             break;
         case DW_OP_APPLE_error:         // 0xFF - Stops expression evaluation and returns an error (no args)
-            s->PutCString("error");
+            s->PutCString("DW_OP_APPLE_error");
             break;
         }
     }
@@ -740,6 +740,68 @@ DWARFExpression::LocationListContainsAddress (lldb::addr_t loclist_base_addr, ll
 
                 offset += m_data.GetU16(&offset);
             }
+        }
+    }
+    return false;
+}
+
+bool
+DWARFExpression::GetLocation (addr_t base_addr, addr_t pc, uint32_t &offset, uint32_t &length)
+{
+    offset = 0;
+    if (!IsLocationList())
+    {
+        length = m_data.GetByteSize();
+        return true;
+    }
+
+    if (base_addr != LLDB_INVALID_ADDRESS && pc != LLDB_INVALID_ADDRESS)
+    {
+        addr_t curr_base_addr = base_addr;
+
+        while (m_data.ValidOffset(offset))
+        {
+            // We need to figure out what the value is for the location.
+            addr_t lo_pc = m_data.GetAddress(&offset);
+            addr_t hi_pc = m_data.GetAddress(&offset);
+            if (lo_pc == 0 && hi_pc == 0)
+            {
+                break;
+            }
+            else
+            {
+                lo_pc += curr_base_addr - m_loclist_slide;
+                hi_pc += curr_base_addr - m_loclist_slide;
+                
+                length = m_data.GetU16(&offset);
+                
+                if (length > 0 && lo_pc <= pc && pc < hi_pc)
+                    return true;
+
+                offset += length;
+            }
+        }
+    }
+    offset = UINT32_MAX;
+    length = 0;
+    return false;
+}
+
+bool
+DWARFExpression::DumpLocationForAddress (Stream *s,
+                                         lldb::DescriptionLevel level,
+                                         addr_t base_addr,
+                                         addr_t address)
+{
+    uint32_t offset = 0;
+    uint32_t length = 0;
+    
+    if (GetLocation (base_addr, address, offset, length))
+    {
+        if (length > 0)
+        {
+            DumpLocation(s, offset, length, level);
+            return true;
         }
     }
     return false;

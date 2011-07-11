@@ -11,6 +11,8 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/Variable.h"
+#include "lldb/Symbol/VariableList.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
@@ -682,11 +684,43 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                         sc.symbol = NULL;
                 }
                 sc.GetDescription(s, eDescriptionLevelBrief, target);
+                
+                if (sc.block)
+                {
+                    bool can_create = true;
+                    bool get_parent_variables = true;
+                    bool stop_if_block_is_inlined_function = false;
+                    VariableList variable_list;
+                    sc.block->AppendVariables (can_create,
+                                               get_parent_variables, 
+                                               stop_if_block_is_inlined_function, 
+                                               &variable_list);
+                    
+                    uint32_t num_variables = variable_list.GetSize();
+                    for (uint32_t var_idx = 0; var_idx < num_variables; ++var_idx)
+                    {
+                        Variable *var = variable_list.GetVariableAtIndex (var_idx).get();
+                        if (var && var->LocationIsValidForAddress (*this))
+                        {
+                            s->Printf ("     Variable: id = {0x%8.8x}, name = \"%s\", type= \"%s\", location =",
+                                       var->GetID(),
+                                       var->GetName().GetCString(),
+                                       var->GetType()->GetName().GetCString());
+                            var->DumpLocationForAddress(s, *this);
+                            s->PutCString(", decl = ");
+                            var->GetDeclaration().DumpStopContext(s, false);
+                            s->EOL();
+                        }
+                    }
+                }
             }
         }
-        if (fallback_style != DumpStyleInvalid)
-            return Dump (s, exe_scope, fallback_style, DumpStyleInvalid, addr_size);
-        return false;
+        else
+        {
+            if (fallback_style != DumpStyleInvalid)
+                return Dump (s, exe_scope, fallback_style, DumpStyleInvalid, addr_size);
+            return false;
+        }
         break;
     }
 

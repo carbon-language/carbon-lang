@@ -310,6 +310,12 @@ public:
         data = m_data;
         return data.GetByteSize() > 0;
     }
+    
+    bool
+    DumpLocationForAddress (Stream *s, 
+                            lldb::DescriptionLevel level,
+                            lldb::addr_t loclist_base_load_addr,
+                            lldb::addr_t address);
 
 protected:
     //------------------------------------------------------------------
@@ -333,6 +339,12 @@ protected:
                  uint32_t length, 
                  lldb::DescriptionLevel level) const;
     
+    bool
+    GetLocation (lldb::addr_t base_addr, 
+                 lldb::addr_t pc, 
+                 uint32_t &offset, 
+                 uint32_t &len);
+
     //------------------------------------------------------------------
     /// Classes that inherit from DWARFExpression can see and modify these
     //------------------------------------------------------------------

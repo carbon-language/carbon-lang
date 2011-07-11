@@ -216,6 +216,40 @@ Variable::LocationIsValidForFrame (StackFrame *frame)
 }
 
 bool
+Variable::LocationIsValidForAddress (const Address &address)
+{
+    // Be sure to resolve the address to section offset prior to 
+    // calling this function.
+    if (address.IsSectionOffset())
+    {
+        SymbolContext sc;
+        CalculateSymbolContext(&sc);
+        if (sc.module_sp.get() == address.GetModule())
+        {
+            // Is the variable is described by a single location?
+            if (!m_location.IsLocationList())
+            {
+                // Yes it is, the location is valid. 
+                return true;
+            }
+            
+            if (sc.function)
+            {
+                addr_t loclist_base_file_addr = sc.function->GetAddressRange().GetBaseAddress().GetFileAddress();
+                if (loclist_base_file_addr == LLDB_INVALID_ADDRESS)
+                    return false;
+                // It is a location list. We just need to tell if the location
+                // list contains the current address when converted to a load
+                // address
+                return m_location.LocationListContainsAddress (loclist_base_file_addr, 
+                                                               address.GetFileAddress());
+            }
+        }
+    }
+    return false;
+}
+
+bool
 Variable::IsInScope (StackFrame *frame)
 {
     switch (m_scope)
@@ -416,5 +450,41 @@ Variable::GetValuesForVariableExpressionPath (const char *variable_expr_path,
     }
     error.SetErrorString ("unknown error");
     return error;
+}
+
+bool
+Variable::DumpLocationForAddress (Stream *s, const Address &address)
+{
+    // Be sure to resolve the address to section offset prior to 
+    // calling this function.
+    if (address.IsSectionOffset())
+    {
+        SymbolContext sc;
+        CalculateSymbolContext(&sc);
+        if (sc.module_sp.get() == address.GetModule())
+        {
+            const addr_t file_addr = address.GetFileAddress();
+            if (sc.function)
+            {
+                if (sc.function->GetAddressRange().ContainsFileAddress(address))
+                {
+                    addr_t loclist_base_file_addr = sc.function->GetAddressRange().GetBaseAddress().GetFileAddress();
+                    if (loclist_base_file_addr == LLDB_INVALID_ADDRESS)
+                        return false;
+                    return m_location.DumpLocationForAddress (s, 
+                                                              eDescriptionLevelBrief, 
+                                                              loclist_base_file_addr, 
+                                                              file_addr);
+                }
+            }
+            return m_location.DumpLocationForAddress (s, 
+                                                      eDescriptionLevelBrief, 
+                                                      LLDB_INVALID_ADDRESS, 
+                                                      file_addr);
+            
+        }
+    }
+    return false;
+
 }
 
