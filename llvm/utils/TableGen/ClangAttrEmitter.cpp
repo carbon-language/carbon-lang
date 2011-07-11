@@ -21,17 +21,19 @@ using namespace llvm;
 
 static const std::vector<StringRef>
 getValueAsListOfStrings(Record &R, StringRef FieldName) {
-  ListInit *List = R.getValueAsListInit(FieldName);
+  const ListInit *List = R.getValueAsListInit(FieldName);
   assert (List && "Got a null ListInit");
 
   std::vector<StringRef> Strings;
   Strings.reserve(List->getSize());
 
-  for (ListInit::iterator i = List->begin(), e = List->end(); i != e; ++i) {
+  for (ListInit::const_iterator i = List->begin(), e = List->end();
+       i != e;
+       ++i) {
     assert(*i && "Got a null element in a ListInit");
-    if (StringInit *S = dynamic_cast<StringInit *>(*i))
+    if (const StringInit *S = dynamic_cast<const StringInit *>(*i))
       Strings.push_back(S->getValue());
-    else if (CodeInit *C = dynamic_cast<CodeInit *>(*i))
+    else if (const CodeInit *C = dynamic_cast<const CodeInit *>(*i))
       Strings.push_back(C->getValue());
     else
       assert(false && "Got a non-string, non-code element in a ListInit");

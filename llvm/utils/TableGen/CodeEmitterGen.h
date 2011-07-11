@@ -35,11 +35,11 @@ private:
   void emitMachineOpEmitter(raw_ostream &o, const std::string &Namespace);
   void emitGetValueBit(raw_ostream &o, const std::string &Namespace);
   void reverseBits(std::vector<Record*> &Insts);
-  int getVariableBit(const std::string &VarName, BitsInit *BI, int bit);
+  int getVariableBit(const std::string &VarName, const BitsInit *BI, int bit);
   std::string getInstructionCase(Record *R, CodeGenTarget &Target);
   void
-  AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
-                          unsigned &NumberedOp,
+  AddCodeToMergeInOperand(Record *R, const BitsInit *BI,
+                          const std::string &VarName, unsigned &NumberedOp,
                           std::string &Case, CodeGenTarget &Target);
     
 };

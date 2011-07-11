@@ -402,7 +402,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
 
   // Parse the list of return types.
   std::vector<MVT::SimpleValueType> OverloadedVTs;
-  ListInit *TypeList = R->getValueAsListInit("RetTypes");
+  const ListInit *TypeList = R->getValueAsListInit("RetTypes");
   for (unsigned i = 0, e = TypeList->getSize(); i != e; ++i) {
     Record *TyEl = TypeList->getElementAsRecord(i);
     assert(TyEl->isSubClassOf("LLVMType") && "Expected a type!");
@@ -470,7 +470,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
   }
 
   // Parse the intrinsic properties.
-  ListInit *PropList = R->getValueAsListInit("Properties");
+  const ListInit *PropList = R->getValueAsListInit("Properties");
   for (unsigned i = 0, e = PropList->getSize(); i != e; ++i) {
     Record *Property = PropList->getElementAsRecord(i);
     assert(Property->isSubClassOf("IntrinsicProperty") &&

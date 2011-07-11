@@ -722,7 +722,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     if (!V || !V->getValue())
       continue;
 
-    DefInit *DI = dynamic_cast<DefInit*>(V->getValue());
+    const DefInit *DI = dynamic_cast<const DefInit*>(V->getValue());
     Record *Alias = DI->getDef();
     DwarfRegNums[Reg] = DwarfRegNums[Alias];
   }
