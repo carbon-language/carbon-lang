@@ -120,7 +120,7 @@ TEST(TypeBuilderTest, Derived) {
 }
 
 TEST(TypeBuilderTest, Functions) {
-  std::vector<const Type*> params;
+  std::vector<Type*> params;
   EXPECT_EQ(FunctionType::get(Type::getVoidTy(getGlobalContext()), params, false),
             (TypeBuilder<void(), true>::get(getGlobalContext())));
   EXPECT_EQ(FunctionType::get(Type::getInt8Ty(getGlobalContext()), params, true),

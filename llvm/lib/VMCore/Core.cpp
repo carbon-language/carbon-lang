@@ -260,7 +260,7 @@ LLVMTypeRef LLVMX86MMXType(void) {
 LLVMTypeRef LLVMFunctionType(LLVMTypeRef ReturnType,
                              LLVMTypeRef *ParamTypes, unsigned ParamCount,
                              LLVMBool IsVarArg) {
-  std::vector<const Type*> Tys;
+  std::vector<Type*> Tys;
   for (LLVMTypeRef *I = ParamTypes, *E = ParamTypes + ParamCount; I != E; ++I)
     Tys.push_back(unwrap(*I));
   

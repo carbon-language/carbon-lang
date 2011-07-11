@@ -23,7 +23,7 @@ TEST(ScalarEvolutionsTest, SCEVUnknownRAUW) {
   Module M("world", Context);
 
   const FunctionType *FTy = FunctionType::get(Type::getVoidTy(Context),
-                                              std::vector<const Type *>(), false);
+                                              std::vector<Type *>(), false);
   Function *F = cast<Function>(M.getOrInsertFunction("f", FTy));
   BasicBlock *BB = BasicBlock::Create(Context, "entry", F);
   ReturnInst::Create(Context, 0, BB);

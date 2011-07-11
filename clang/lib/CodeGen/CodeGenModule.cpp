@@ -1614,10 +1614,8 @@ llvm::Value *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
 
 llvm::Function *CodeGenModule::getIntrinsic(unsigned IID, llvm::Type **Tys,
                                             unsigned NumTys) {
-  return llvm::Intrinsic::getDeclaration(&getModule(),
-                                         (llvm::Intrinsic::ID)IID,
-                                         const_cast<const llvm::Type **>(Tys),
-                                         NumTys);
+  return llvm::Intrinsic::getDeclaration(&getModule(), (llvm::Intrinsic::ID)IID,
+                                         Tys, NumTys);
 }
 
 static llvm::StringMapEntry<llvm::Constant*> &
@@ -2295,7 +2293,7 @@ llvm::Constant *CodeGenModule::getBlockObjectDispose() {
   }
 
   // Otherwise construct the function by hand.
-  const llvm::Type *args[] = { Int8PtrTy, Int32Ty };
+  llvm::Type *args[] = { Int8PtrTy, Int32Ty };
   const llvm::FunctionType *fty
     = llvm::FunctionType::get(VoidTy, args, false);
   return BlockObjectDispose =
@@ -2314,7 +2312,7 @@ llvm::Constant *CodeGenModule::getBlockObjectAssign() {
   }
 
   // Otherwise construct the function by hand.
-  const llvm::Type *args[] = { Int8PtrTy, Int8PtrTy, Int32Ty };
+  llvm::Type *args[] = { Int8PtrTy, Int8PtrTy, Int32Ty };
   const llvm::FunctionType *fty
     = llvm::FunctionType::get(VoidTy, args, false);
   return BlockObjectAssign =

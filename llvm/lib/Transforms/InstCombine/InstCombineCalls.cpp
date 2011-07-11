@@ -217,9 +217,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
           Intrinsic::ID MemCpyID = Intrinsic::memcpy;
-          const Type *Tys[3] = { CI.getArgOperand(0)->getType(),
-                                 CI.getArgOperand(1)->getType(),
-                                 CI.getArgOperand(2)->getType() };
+          Type *Tys[3] = { CI.getArgOperand(0)->getType(),
+                           CI.getArgOperand(1)->getType(),
+                           CI.getArgOperand(2)->getType() };
           CI.setCalledFunction(Intrinsic::getDeclaration(M, MemCpyID, Tys, 3));
           Changed = true;
         }
@@ -1187,7 +1187,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   const AttrListPtr &NestAttrs = NestF->getAttributes();
   if (!NestAttrs.isEmpty()) {
     unsigned NestIdx = 1;
-    const Type *NestTy = 0;
+    Type *NestTy = 0;
     Attributes NestAttr = Attribute::None;
 
     // Look for a parameter marked with the 'nest' attribute.
@@ -1249,7 +1249,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       // Handle this by synthesizing a new function type, equal to FTy
       // with the chain parameter inserted.
 
-      std::vector<const Type*> NewTypes;
+      std::vector<Type*> NewTypes;
       NewTypes.reserve(FTy->getNumParams()+1);
 
       // Insert the chain's type into the list of parameter types, which may

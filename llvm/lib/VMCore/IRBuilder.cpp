@@ -65,7 +65,7 @@ CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
              bool isVolatile, MDNode *TBAATag) {
   Ptr = getCastedInt8PtrValue(Ptr);
   Value *Ops[] = { Ptr, Val, Size, getInt32(Align), getInt1(isVolatile) };
-  const Type *Tys[] = { Ptr->getType(), Size->getType() };
+  Type *Tys[] = { Ptr->getType(), Size->getType() };
   Module *M = BB->getParent()->getParent();
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memset, Tys, 2);
   
@@ -85,7 +85,7 @@ CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
   Src = getCastedInt8PtrValue(Src);
 
   Value *Ops[] = { Dst, Src, Size, getInt32(Align), getInt1(isVolatile) };
-  const Type *Tys[] = { Dst->getType(), Src->getType(), Size->getType() };
+  Type *Tys[] = { Dst->getType(), Src->getType(), Size->getType() };
   Module *M = BB->getParent()->getParent();
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memcpy, Tys, 3);
   
@@ -105,7 +105,7 @@ CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
   Src = getCastedInt8PtrValue(Src);
   
   Value *Ops[] = { Dst, Src, Size, getInt32(Align), getInt1(isVolatile) };
-  const Type *Tys[] = { Dst->getType(), Src->getType(), Size->getType() };
+  Type *Tys[] = { Dst->getType(), Src->getType(), Size->getType() };
   Module *M = BB->getParent()->getParent();
   Value *TheFn = Intrinsic::getDeclaration(M, Intrinsic::memmove, Tys, 3);
   

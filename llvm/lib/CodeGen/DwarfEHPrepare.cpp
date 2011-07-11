@@ -497,10 +497,8 @@ bool DwarfEHPrepare::LowerUnwindsAndResumes() {
   // Find the rewind function if we didn't already.
   if (!RewindFunction) {
     LLVMContext &Ctx = ResumeInsts[0]->getContext();
-    std::vector<const Type*>
-      Params(1, Type::getInt8PtrTy(Ctx));
     FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
-                                          Params, false);
+                                          Type::getInt8PtrTy(Ctx), false);
     const char *RewindName = TLI->getLibcallName(RTLIB::UNWIND_RESUME);
     RewindFunction = F->getParent()->getOrInsertFunction(RewindName, FTy);
   }

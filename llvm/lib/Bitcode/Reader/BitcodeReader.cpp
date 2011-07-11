@@ -582,7 +582,7 @@ bool BitcodeReader::ParseTypeTableBody() {
       // FUNCTION: [vararg, attrid, retty, paramty x N]
       if (Record.size() < 3)
         return Error("Invalid FUNCTION type record");
-      std::vector<const Type*> ArgTys;
+      std::vector<Type*> ArgTys;
       for (unsigned i = 3, e = Record.size(); i != e; ++i) {
         if (Type *T = getTypeByID(Record[i]))
           ArgTys.push_back(T);
@@ -838,7 +838,7 @@ RestartScan:
       // FUNCTION: [vararg, attrid, retty, paramty x N]
       if (Record.size() < 3)
         return Error("Invalid FUNCTION type record");
-      std::vector<const Type*> ArgTys;
+      std::vector<Type*> ArgTys;
       for (unsigned i = 3, e = Record.size(); i != e; ++i) {
         if (Type *Elt = getTypeByIDOrNull(Record[i]))
           ArgTys.push_back(Elt);

@@ -103,8 +103,6 @@ public:
   /// a FunctionType.
   ///
   static FunctionType *get(const Type *Result,
-                           ArrayRef<const Type*> Params, bool isVarArg);
-  static FunctionType *get(const Type *Result,
                            ArrayRef<Type*> Params, bool isVarArg);
 
   /// FunctionType::get - Create a FunctionType taking no parameters.
