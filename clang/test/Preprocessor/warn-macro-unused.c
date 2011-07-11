@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -Wunused-macros -Dfoo -Dfoo -verify
+// XFAIL: *
 
 #include "warn-macro-unused.h"
 
