@@ -190,7 +190,7 @@ static llvm::ConstantInt *ourExceptionThrownState;
 static llvm::ConstantInt *ourExceptionCaughtState;
 
 typedef std::vector<std::string> ArgNames;
-typedef std::vector<const llvm::Type*> ArgTypes;
+typedef std::vector<llvm::Type*> ArgTypes;
 
 //
 // Code Generation Utilities
@@ -987,7 +987,7 @@ static llvm::BasicBlock *createFinallyBlock(llvm::LLVMContext &context,
                          ourExceptionNotThrownState);
   
   const llvm::PointerType *exceptionStorageType = 
-  builder.getInt8Ty()->getPointerTo();
+      builder.getInt8Ty()->getPointerTo();
   *exceptionStorage = 
   createEntryBlockAlloca(toAddTo,
                          "exceptionStorage",
@@ -1098,7 +1098,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   llvm::Function *toPrint32Int = module.getFunction("print32Int");
   
   ArgTypes argTypes;
-  argTypes.push_back(builder.getInt32Ty());
+  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
   
   ArgNames argNames;
   argNames.push_back("exceptTypeToThrow");
@@ -1376,7 +1376,7 @@ llvm::Function *createThrowExceptionFunction(llvm::Module &module,
   llvm::LLVMContext &context = module.getContext();
   namedValues.clear();
   ArgTypes unwindArgTypes;
-  unwindArgTypes.push_back(builder.getInt32Ty());
+  unwindArgTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
   ArgNames unwindArgNames;
   unwindArgNames.push_back("exceptTypeToThrow");
   
@@ -1622,7 +1622,7 @@ void runExceptionThrow(llvm::ExecutionEngine *engine,
 // End test functions
 //
 
-typedef llvm::ArrayRef<const llvm::Type*> TypeArray;
+typedef llvm::ArrayRef<llvm::Type*> TypeArray;
 
 /// This initialization routine creates type info globals and 
 /// adds external function declarations to module.
@@ -1650,8 +1650,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   
   // Create our type info type
   ourTypeInfoType = llvm::StructType::get(context, 
-                                          TypeArray(builder.getInt32Ty()));
-  
+                      TypeArray(llvm::Type::getInt32Ty(builder.getContext())));
   // Create OurException type
   ourExceptionType = llvm::StructType::get(context, 
                                            TypeArray(ourTypeInfoType));
@@ -1661,7 +1660,9 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   // Note: Declaring only a portion of the _Unwind_Exception struct.
   //       Does this cause problems?
   ourUnwindExceptionType =
-    llvm::StructType::get(context, TypeArray(builder.getInt64Ty()));
+    llvm::StructType::get(context, 
+                    TypeArray(llvm::Type::getInt64Ty(builder.getContext())));
+
   struct OurBaseException_t dummyException;
   
   // Calculate offset of OurException::unwindException member.
@@ -1726,7 +1727,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   const llvm::Type *retType = builder.getVoidTy();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt32Ty());
+  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
   argTypes.push_back(builder.getInt8Ty()->getPointerTo());
   
   argNames.clear();
@@ -1745,7 +1746,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getVoidTy();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt64Ty());
+  argTypes.push_back(llvm::Type::getInt64Ty(builder.getContext()));
   argTypes.push_back(builder.getInt8Ty()->getPointerTo());
   
   argNames.clear();
@@ -1782,7 +1783,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getVoidTy();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt32Ty());
+  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
   
   argNames.clear();
   
@@ -1818,7 +1819,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getInt8Ty()->getPointerTo();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt32Ty());
+  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
   
   argNames.clear();
   
@@ -1876,9 +1877,9 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getInt32Ty();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt32Ty());
-  argTypes.push_back(builder.getInt32Ty());
-  argTypes.push_back(builder.getInt64Ty());
+  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
+  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
+  argTypes.push_back(llvm::Type::getInt64Ty(builder.getContext()));
   argTypes.push_back(builder.getInt8Ty()->getPointerTo());
   argTypes.push_back(builder.getInt8Ty()->getPointerTo());
   
