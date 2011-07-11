@@ -28,7 +28,6 @@ set(SOURCES
   CXString.cpp
   CXType.cpp
   ../../include/clang-c/Index.h
-  ../../include/clang-c/ARCMigrate.h
   )
 
 if( LLVM_ENABLE_PIC )
