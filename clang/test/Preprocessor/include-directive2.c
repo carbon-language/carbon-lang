@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -ffreestanding -Eonly -verify %s 
-#  define HEADER <float.h>
+#  define HEADER <stdarg.h>
 
 #  include HEADER
 
