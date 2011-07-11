@@ -415,23 +415,6 @@ static int DisassembleInput(const char *ProgName, bool Enhanced) {
     Res =
       Disassembler::disassembleEnhanced(TripleName, *Buffer.take(), Out->os());
   } else {
-    // Package up features to be passed to target/subtarget
-    std::string FeaturesStr;
-
-    // FIXME: We shouldn't need to do this (and link in codegen).
-    //        When we split this out, we should do it in a way that makes
-    //        it straightforward to switch subtargets on the fly (.e.g,
-    //        the .cpu and .code16 directives).
-    OwningPtr<TargetMachine> TM(TheTarget->createTargetMachine(TripleName,
-                                                               MCPU, 
-                                                               FeaturesStr));
-
-    if (!TM) {
-      errs() << ProgName << ": error: could not create target for triple '"
-             << TripleName << "'.\n";
-      return 1;
-    }
-
     Res = Disassembler::disassemble(*TheTarget, TripleName,
                                     *Buffer.take(), Out->os());
   }
