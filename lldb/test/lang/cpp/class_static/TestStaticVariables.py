@@ -102,7 +102,7 @@ class StaticVariableTestCase(TestBase):
         valList = frame.GetVariables(False, False, True, False)
 
         for val in valList:
-            self.DebugSBValue(frame, val)
+            self.DebugSBValue(val)
             self.assertTrue(val.GetValueType() == lldb.eValueTypeVariableGlobal)
             name = val.GetName()
             self.assertTrue(name in ['g_points', 'A::g_points'])
@@ -112,28 +112,28 @@ class StaticVariableTestCase(TestBase):
                 # On Mac OS X, gcc 4.2 emits the wrong debug info for A::g_points.        
                 self.assertTrue(val.GetNumChildren() == 2)
                 child1 = val.GetChildAtIndex(1)
-                self.DebugSBValue(frame, child1)
+                self.DebugSBValue(child1)
                 child1_x = child1.GetChildAtIndex(0)
-                self.DebugSBValue(frame, child1_x)
+                self.DebugSBValue(child1_x)
                 self.assertTrue(child1_x.GetTypeName() == 'int' and
                                 child1_x.GetValue(frame) == '11')
 
         # SBFrame.FindValue() should also work.
         val = frame.FindValue("A::g_points", lldb.eValueTypeVariableGlobal)
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
         self.assertTrue(val.GetName() == 'A::g_points')
 
         # Also exercise the "parameter" and "local" scopes while we are at it.
         val = frame.FindValue("argc", lldb.eValueTypeVariableArgument)
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
         self.assertTrue(val.GetName() == 'argc')
 
         val = frame.FindValue("argv", lldb.eValueTypeVariableArgument)
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
         self.assertTrue(val.GetName() == 'argv')
 
         val = frame.FindValue("hello_world", lldb.eValueTypeVariableLocal)
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
         self.assertTrue(val.GetName() == 'hello_world')
 
 

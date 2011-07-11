@@ -84,7 +84,7 @@ class ProcessAPITestCase(TestBase):
 
         # Get the SBValue for the global variable 'my_char'.
         val = frame.FindValue("my_char", lldb.eValueTypeVariableGlobal)
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
 
         # If the variable does not have a load address, there's no sense continuing.
         if not val.GetLocation(frame).startswith("0x"):
@@ -126,7 +126,7 @@ class ProcessAPITestCase(TestBase):
 
         # Get the SBValue for the global variable 'my_char'.
         val = frame.FindValue("my_char", lldb.eValueTypeVariableGlobal)
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
 
         # If the variable does not have a load address, there's no sense continuing.
         if not val.GetLocation(frame).startswith("0x"):
@@ -177,7 +177,7 @@ class ProcessAPITestCase(TestBase):
 
         # Get the SBValue for the global variable 'my_int'.
         val = frame.FindValue("my_int", lldb.eValueTypeVariableGlobal)
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
 
         # If the variable does not have a load address, there's no sense continuing.
         if not val.GetLocation(frame).startswith("0x"):

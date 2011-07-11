@@ -110,7 +110,7 @@ class BitfieldsTestCase(TestBase):
         # Lookup the "bits" variable which contains 8 bitfields.
         frame = thread.GetFrameAtIndex(0)
         bits = frame.FindVariable("bits")
-        self.DebugSBValue(frame, bits)
+        self.DebugSBValue(bits)
         self.assertTrue(bits.GetTypeName() == "Bits" and
                         bits.GetNumChildren() == 8 and
                         bits.GetByteSize() == 4,
@@ -120,7 +120,7 @@ class BitfieldsTestCase(TestBase):
         # so that the proper radix is determined based on the contents of the
         # string.
         b1 = bits.GetChildAtIndex(0)
-        self.DebugSBValue(frame, b1)
+        self.DebugSBValue(b1)
         self.assertTrue(b1.GetName() == "b1" and
                         b1.GetTypeName() == "uint32_t:1" and
                         b1.IsInScope(frame) and
@@ -128,7 +128,7 @@ class BitfieldsTestCase(TestBase):
                         'bits.b1 has type uint32_t:1, is in scope, and == 1')
 
         b7 = bits.GetChildAtIndex(6)
-        self.DebugSBValue(frame, b7)
+        self.DebugSBValue(b7)
         self.assertTrue(b7.GetName() == "b7" and
                         b7.GetTypeName() == "uint32_t:7" and
                         b7.IsInScope(frame) and
@@ -136,7 +136,7 @@ class BitfieldsTestCase(TestBase):
                         'bits.b7 has type uint32_t:7, is in scope, and == 127')
 
         four = bits.GetChildAtIndex(7)
-        self.DebugSBValue(frame, four)
+        self.DebugSBValue(four)
         self.assertTrue(four.GetName() == "four" and
                         four.GetTypeName() == "uint32_t:4" and
                         four.IsInScope(frame) and

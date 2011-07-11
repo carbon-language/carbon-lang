@@ -139,27 +139,27 @@ class BasicExprCommandsTestCase(TestBase):
             startstr = "2.234")
         self.expect(val.GetTypeName(), "2.345 evaluated correctly", exe=False,
             startstr = "double")
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
 
         val = frame.EvaluateExpression("argc")
         self.expect(val.GetValue(frame), "Argc evaluated correctly", exe=False,
             startstr = "4")
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
 
         val = frame.EvaluateExpression("*argv[1]")
         self.expect(val.GetValue(frame), "Argv[1] evaluated correctly", exe=False,
             startstr = "'X'")
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
 
         val = frame.EvaluateExpression("*argv[2]")
         self.expect(val.GetValue(frame), "Argv[2] evaluated correctly", exe=False,
             startstr = "'Y'")
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
 
         val = frame.EvaluateExpression("*argv[3]")
         self.expect(val.GetValue(frame), "Argv[3] evaluated correctly", exe=False,
             startstr = "'Z'")
-        self.DebugSBValue(frame, val)
+        self.DebugSBValue(val)
 
     # rdar://problem/8686536
     # CommandInterpreter::HandleCommand is stripping \'s from input for WantsRawCommand commands
