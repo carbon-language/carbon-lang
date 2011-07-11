@@ -1,6 +1,6 @@
 /* c-arcmt-test.c */
 
-#include "clang-c/ARCMigrate.h"
+#include "clang-c/Index.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,19 +10,18 @@
 #endif
 
 static int print_remappings(const char *path) {
-  CMTRemap remap;
+  CXRemapping remap;
   unsigned i, N;
   CXString origFname;
   CXString transFname;
 
-  remap = arcmt_getRemappings(path);
+  remap = clang_getRemappings(path);
   if (!remap)
     return 1;
 
-  N = arcmt_remap_getNumFiles(remap);
+  N = clang_remap_getNumFiles(remap);
   for (i = 0; i != N; ++i) {
-    origFname = arcmt_remap_getOriginalFile(remap, i);
-    transFname = arcmt_remap_getTransformedFile(remap, i);
+    clang_remap_getFilenames(remap, i, &origFname, &transFname);
 
     fprintf(stdout, "%s\n", clang_getCString(origFname));
     fprintf(stdout, "%s\n", clang_getCString(transFname));
@@ -31,7 +30,7 @@ static int print_remappings(const char *path) {
     clang_disposeString(transFname);
   }
 
-  arcmt_remap_dispose(remap);
+  clang_remap_dispose(remap);
   return 0;
 }
 

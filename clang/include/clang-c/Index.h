@@ -3190,6 +3190,51 @@ CINDEX_LINKAGE void clang_getInclusions(CXTranslationUnit tu,
  * @}
  */
 
+/** \defgroup CINDEX_REMAPPING Remapping functions
+ *
+ * @{
+ */
+
+/**
+ * \brief A remapping of original source files and their translated files.
+ */
+typedef void *CXRemapping;
+
+/**
+ * \brief Retrieve a remapping.
+ *
+ * \param path the path that contains metadata about remappings.
+ *
+ * \returns the requested remapping. This remapping must be freed
+ * via a call to \c clang_remap_dispose(). Can return NULL if an error occurred.
+ */
+CINDEX_LINKAGE CXRemapping clang_getRemappings(const char *path);
+
+/**
+ * \brief Determine the number of remappings.
+ */
+CINDEX_LINKAGE unsigned clang_remap_getNumFiles(CXRemapping);
+
+/**
+ * \brief Get the original and the associated filename from the remapping.
+ * 
+ * \param original If non-NULL, will be set to the original filename.
+ *
+ * \param transformed If non-NULL, will be set to the filename that the original
+ * is associated with.
+ */
+CINDEX_LINKAGE void clang_remap_getFilenames(CXRemapping, unsigned index,
+                                     CXString *original, CXString *transformed);
+
+/**
+ * \brief Dispose the remapping.
+ */
+CINDEX_LINKAGE void clang_remap_dispose(CXRemapping);
+
+/**
+ * @}
+ */
+
 /**
  * @}
  */

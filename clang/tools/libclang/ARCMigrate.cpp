@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang-c/ARCMigrate.h"
+#include "clang-c/Index.h"
 
 #include "CXString.h"
 #include "clang/ARCMigrate/ARCMT.h"
@@ -35,12 +35,12 @@ struct Remap {
 
 extern "C" {
 
-CMTRemap arcmt_getRemappings(const char *migrate_dir_path) {
+CXRemapping clang_getRemappings(const char *migrate_dir_path) {
   bool Logging = ::getenv("LIBCLANG_LOGGING");
 
   if (!migrate_dir_path) {
     if (Logging)
-      llvm::errs() << "arcmt_getRemappings was called with NULL parameter\n";
+      llvm::errs() << "clang_getRemappings was called with NULL parameter\n";
     return 0;
   }
 
@@ -48,7 +48,7 @@ CMTRemap arcmt_getRemappings(const char *migrate_dir_path) {
   llvm::sys::fs::exists(migrate_dir_path, exists);
   if (!exists) {
     if (Logging) {
-      llvm::errs() << "Error by arcmt_getRemappings(\"" << migrate_dir_path
+      llvm::errs() << "Error by clang_getRemappings(\"" << migrate_dir_path
                    << "\")\n";
       llvm::errs() << "\"" << migrate_dir_path << "\" does not exist\n";
     }
@@ -62,7 +62,7 @@ CMTRemap arcmt_getRemappings(const char *migrate_dir_path) {
 
   if (err) {
     if (Logging) {
-      llvm::errs() << "Error by arcmt_getRemappings(\"" << migrate_dir_path
+      llvm::errs() << "Error by clang_getRemappings(\"" << migrate_dir_path
                    << "\")\n";
       for (TextDiagnosticBuffer::const_iterator
              I = diagBuffer.err_begin(), E = diagBuffer.err_end(); I != E; ++I)
@@ -74,22 +74,24 @@ CMTRemap arcmt_getRemappings(const char *migrate_dir_path) {
   return remap.take();
 }
 
-unsigned arcmt_remap_getNumFiles(CMTRemap map) {
+unsigned clang_remap_getNumFiles(CXRemapping map) {
   return static_cast<Remap *>(map)->Vec.size();
   
 }
 
-CXString arcmt_remap_getOriginalFile(CMTRemap map, unsigned index) {
-  return cxstring::createCXString(static_cast<Remap *>(map)->Vec[index].first,
+void clang_remap_getFilenames(CXRemapping map, unsigned index,
+                              CXString *original, CXString *transformed) {
+  if (original)
+    *original = cxstring::createCXString(
+                                    static_cast<Remap *>(map)->Vec[index].first,
+                                        /*DupString =*/ true);
+  if (transformed)
+    *transformed = cxstring::createCXString(
+                                   static_cast<Remap *>(map)->Vec[index].second,
                                   /*DupString =*/ true);
 }
 
-CXString arcmt_remap_getTransformedFile(CMTRemap map, unsigned index) {
-  return cxstring::createCXString(static_cast<Remap *>(map)->Vec[index].second,
-                                  /*DupString =*/ true);
-}
-
-void arcmt_remap_dispose(CMTRemap map) {
+void clang_remap_dispose(CXRemapping map) {
   delete static_cast<Remap *>(map);
 }
 

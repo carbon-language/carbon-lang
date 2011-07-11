@@ -137,8 +137,7 @@ _clang_toggleCrashRecovery
 _clang_tokenize
 _clang_visitChildren
 _clang_visitChildrenWithBlock
-_arcmt_getRemappings
-_arcmt_remap_getNumFiles
-_arcmt_remap_getOriginalFile
-_arcmt_remap_getTransformedFile
-_arcmt_remap_dispose
+_clang_getRemappings
+_clang_remap_getNumFiles
+_clang_remap_getFilenames
+_clang_remap_dispose
