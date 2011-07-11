@@ -802,3 +802,11 @@ namespace test33 {
     // CHECK: call i32 @_ZN6test333fooINS_1BEEENS_1AIT_Xsr1XIS3_EE5valueEE4typeEv()
   }
 }
+
+namespace test34 {
+  template<typename T>
+  void f(decltype(sizeof(decltype(T() + T())))) {}
+
+  // CHECK: define weak_odr void @_ZN6test341fIiEEvDTstDTplcvT__EcvS1__EEE
+  template void f<int>(decltype(sizeof(1)));
+}

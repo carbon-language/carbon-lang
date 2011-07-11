@@ -1980,8 +1980,8 @@ static CachedProperties computeCachedProperties(const Type *T) {
 #define DEPENDENT_TYPE(Class,Base) case Type::Class:
 #define NON_CANONICAL_UNLESS_DEPENDENT_TYPE(Class,Base) case Type::Class:
 #include "clang/AST/TypeNodes.def"
-    // Treat dependent types as external.
-    assert(T->isDependentType());
+    // Treat instantiation-dependent types as external.
+    assert(T->isInstantiationDependentType());
     return CachedProperties(ExternalLinkage, DefaultVisibility, false);
 
   case Type::Builtin:
