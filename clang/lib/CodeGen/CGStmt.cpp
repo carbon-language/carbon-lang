@@ -1408,8 +1408,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
 
   std::vector<LValue> ResultRegDests;
   std::vector<QualType> ResultRegQualTys;
-  std::vector<const llvm::Type *> ResultRegTypes;
-  std::vector<const llvm::Type *> ResultTruncRegTypes;
+  std::vector<llvm::Type *> ResultRegTypes;
+  std::vector<llvm::Type *> ResultTruncRegTypes;
   std::vector<llvm::Type*> ArgTypes;
   std::vector<llvm::Value*> Args;
 
@@ -1465,7 +1465,7 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
           ResultRegTypes.back() = ConvertType(InputTy);
         }
       }
-      if (const llvm::Type* AdjTy = 
+      if (llvm::Type* AdjTy = 
             getTargetHooks().adjustInlineAsmType(*this, OutputConstraint,
                                                  ResultRegTypes.back()))
         ResultRegTypes.back() = AdjTy;

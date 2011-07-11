@@ -403,7 +403,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
   AllocaInst *Struct = 0;
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
-    std::vector<const Type*> ArgTypes;
+    std::vector<Type*> ArgTypes;
     for (Values::iterator v = StructValues.begin(),
            ve = StructValues.end(); v != ve; ++v)
       ArgTypes.push_back((*v)->getType());

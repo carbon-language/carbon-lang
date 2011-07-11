@@ -259,7 +259,7 @@ public:
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.
   ///
-  const IntegerType *getIntPtrType(LLVMContext &C) const;
+  IntegerType *getIntPtrType(LLVMContext &C) const;
 
   /// getIndexedOffset - return the offset from the beginning of the type for
   /// the specified indices.  This is used to implement getelementptr.

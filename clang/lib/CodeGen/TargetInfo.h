@@ -106,9 +106,9 @@ namespace clang {
       return Address;
     }
 
-    virtual const llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                                  llvm::StringRef Constraint, 
-                                                  const llvm::Type* Ty) const {
+    virtual llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
+                                            llvm::StringRef Constraint, 
+                                            llvm::Type* Ty) const {
       return Ty;
     }
 

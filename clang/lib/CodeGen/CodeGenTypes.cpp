@@ -279,8 +279,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     break;
   }
   case Type::Complex: {
-    const llvm::Type *EltTy =
-      ConvertType(cast<ComplexType>(Ty)->getElementType());
+    llvm::Type *EltTy = ConvertType(cast<ComplexType>(Ty)->getElementType());
     ResultType = llvm::StructType::get(EltTy, EltTy, NULL);
     break;
   }

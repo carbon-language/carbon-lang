@@ -356,9 +356,9 @@ bool UseX86_MMXType(const llvm::Type *IRType) {
     IRType->getScalarSizeInBits() != 64;
 }
 
-static const llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                                llvm::StringRef Constraint,
-                                                const llvm::Type* Ty) {
+static llvm::Type* X86AdjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
+                                          llvm::StringRef Constraint,
+                                          llvm::Type* Ty) {
   if ((Constraint == "y" || Constraint == "&y") && Ty->isVectorTy())
     return llvm::Type::getX86_MMXTy(CGF.getLLVMContext());
   return Ty;
@@ -427,9 +427,9 @@ public:
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const;
 
-  const llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                        llvm::StringRef Constraint,
-                                        const llvm::Type* Ty) const {
+  llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
+                                  llvm::StringRef Constraint,
+                                  llvm::Type* Ty) const {
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
   }
 
@@ -926,9 +926,9 @@ public:
     return false;
   }
 
-  const llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
-                                        llvm::StringRef Constraint,
-                                        const llvm::Type* Ty) const {
+  llvm::Type* adjustInlineAsmType(CodeGen::CodeGenFunction &CGF,
+                                  llvm::StringRef Constraint,
+                                  llvm::Type* Ty) const {
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
   }
 
@@ -1572,7 +1572,7 @@ GetINTEGERTypeAtOffset(llvm::Type *IRType, unsigned IROffset,
 /// a by-value argument should be passed as i32* and the high part as float,
 /// return {i32*, float}.
 static llvm::Type *
-GetX86_64ByValArgumentPair(const llvm::Type *Lo, const llvm::Type *Hi,
+GetX86_64ByValArgumentPair(llvm::Type *Lo, llvm::Type *Hi,
                            const llvm::TargetData &TD) {
   // In order to correctly satisfy the ABI, we need to the high part to start
   // at offset 8.  If the high and low parts we inferred are both 4-byte types
@@ -2056,7 +2056,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     // area, we need to collect the two eightbytes together.
     llvm::Value *RegAddrLo = CGF.Builder.CreateGEP(RegAddr, fp_offset);
     llvm::Value *RegAddrHi = CGF.Builder.CreateConstGEP1_32(RegAddrLo, 16);
-    const llvm::Type *DoubleTy = llvm::Type::getDoubleTy(VMContext);
+    llvm::Type *DoubleTy = llvm::Type::getDoubleTy(VMContext);
     const llvm::Type *DblPtrTy =
       llvm::PointerType::getUnqual(DoubleTy);
     const llvm::StructType *ST = llvm::StructType::get(DoubleTy,

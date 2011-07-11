@@ -128,10 +128,10 @@ bool ARMGlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
   for (size_t i = 0, e = Globals.size(); i != e; ) {
     size_t j = 0;
     uint64_t MergedSize = 0;
-    std::vector<const Type*> Tys;
+    std::vector<Type*> Tys;
     std::vector<Constant*> Inits;
     for (j = i; j != e; ++j) {
-      const Type *Ty = Globals[j]->getType()->getElementType();
+      Type *Ty = Globals[j]->getType()->getElementType();
       MergedSize += TD->getTypeAllocSize(Ty);
       if (MergedSize > MaxOffset) {
         break;

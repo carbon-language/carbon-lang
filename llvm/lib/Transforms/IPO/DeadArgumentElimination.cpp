@@ -659,13 +659,13 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
   // Find out the new return value.
 
-  const Type *RetTy = FTy->getReturnType();
+  Type *RetTy = FTy->getReturnType();
   const Type *NRetTy = NULL;
   unsigned RetCount = NumRetVals(F);
 
   // -1 means unused, other numbers are the new index
   SmallVector<int, 5> NewRetIdxs(RetCount, -1);
-  std::vector<const Type*> RetTypes;
+  std::vector<Type*> RetTypes;
   if (RetTy->isVoidTy()) {
     NRetTy = RetTy;
   } else {

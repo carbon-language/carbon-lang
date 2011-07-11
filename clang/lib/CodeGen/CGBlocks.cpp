@@ -164,11 +164,11 @@ namespace {
     CharUnits Alignment;
     CharUnits Size;
     const BlockDecl::Capture *Capture; // null for 'this'
-    const llvm::Type *Type;
+    llvm::Type *Type;
 
     BlockLayoutChunk(CharUnits align, CharUnits size,
                      const BlockDecl::Capture *capture,
-                     const llvm::Type *type)
+                     llvm::Type *type)
       : Alignment(align), Size(size), Capture(capture), Type(type) {}
 
     /// Tell the block info that this chunk has the given field index.
@@ -243,7 +243,7 @@ static CharUnits getLowBit(CharUnits v) {
 }
 
 static void initializeForBlockHeader(CodeGenModule &CGM, CGBlockInfo &info,
-                    llvm::SmallVectorImpl<const llvm::Type*> &elementTypes) {
+                             llvm::SmallVectorImpl<llvm::Type*> &elementTypes) {
   ASTContext &C = CGM.getContext();
 
   // The header is basically a 'struct { void *; int; int; void *; void *; }'.
@@ -263,8 +263,8 @@ static void initializeForBlockHeader(CodeGenModule &CGM, CGBlockInfo &info,
   info.BlockSize = headerSize;
 
   assert(elementTypes.empty());
-  const llvm::Type *i8p = CGM.getTypes().ConvertType(C.VoidPtrTy);
-  const llvm::Type *intTy = CGM.getTypes().ConvertType(C.IntTy);
+  llvm::Type *i8p = CGM.getTypes().ConvertType(C.VoidPtrTy);
+  llvm::Type *intTy = CGM.getTypes().ConvertType(C.IntTy);
   elementTypes.push_back(i8p);
   elementTypes.push_back(intTy);
   elementTypes.push_back(intTy);
@@ -280,7 +280,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
   ASTContext &C = CGM.getContext();
   const BlockDecl *block = info.getBlockDecl();
 
-  llvm::SmallVector<const llvm::Type*, 8> elementTypes;
+  llvm::SmallVector<llvm::Type*, 8> elementTypes;
   initializeForBlockHeader(CGM, info, elementTypes);
 
   if (!block->hasCaptures()) {
@@ -308,7 +308,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
     else
       thisType = cast<CXXMethodDecl>(DC)->getThisType(C);
 
-    const llvm::Type *llvmType = CGM.getTypes().ConvertType(thisType);
+    llvm::Type *llvmType = CGM.getTypes().ConvertType(thisType);
     std::pair<CharUnits,CharUnits> tinfo
       = CGM.getContext().getTypeInfoInChars(thisType);
     maxFieldAlign = std::max(maxFieldAlign, tinfo.second);
@@ -328,7 +328,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
       // Just use void* instead of a pointer to the byref type.
       QualType byRefPtrTy = C.VoidPtrTy;
 
-      const llvm::Type *llvmType = CGM.getTypes().ConvertType(byRefPtrTy);
+      llvm::Type *llvmType = CGM.getTypes().ConvertType(byRefPtrTy);
       std::pair<CharUnits,CharUnits> tinfo
         = CGM.getContext().getTypeInfoInChars(byRefPtrTy);
       maxFieldAlign = std::max(maxFieldAlign, tinfo.second);
@@ -384,7 +384,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CGBlockInfo &info) {
     CharUnits align = C.getDeclAlign(variable);
     maxFieldAlign = std::max(maxFieldAlign, align);
 
-    const llvm::Type *llvmType =
+    llvm::Type *llvmType =
       CGM.getTypes().ConvertTypeForMem(variable->getType());
 
     layout.push_back(BlockLayoutChunk(align, size, &*ci, llvmType));

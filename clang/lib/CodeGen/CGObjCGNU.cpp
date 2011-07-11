@@ -151,7 +151,7 @@ protected:
   /// LLVM type for C long type.  The runtime uses this in a lot of places where
   /// it should be using intptr_t, but we can't fix this without breaking
   /// compatibility with GCC...
-  const llvm::IntegerType *LongTy;
+  llvm::IntegerType *LongTy;
   /// LLVM type for C size_t.  Used in various runtime data structures.
   const llvm::IntegerType *SizeTy;
   /// LLVM type for C ptrdiff_t.  Mainly used in property accessor functions.
@@ -2036,7 +2036,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
 
   const llvm::StructType *SelStructTy = dyn_cast<llvm::StructType>(
           SelectorTy->getElementType());
-  const llvm::Type *SelStructPtrTy = SelectorTy;
+  llvm::Type *SelStructPtrTy = SelectorTy;
   if (SelStructTy == 0) {
     SelStructTy = llvm::StructType::get(PtrToInt8Ty, PtrToInt8Ty, NULL);
     SelStructPtrTy = llvm::PointerType::getUnqual(SelStructTy);
