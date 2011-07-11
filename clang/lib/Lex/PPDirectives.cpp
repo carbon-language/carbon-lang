@@ -1594,7 +1594,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   // If the macro is not defined, this is a noop undef, just return.
   if (MI == 0) return;
 
-  if (!MI->isUsed())
+  if (!MI->isUsed() && MI->isWarnIfUnused())
     Diag(MI->getDefinitionLoc(), diag::pp_macro_not_used);
 
   // If the callbacks want to know, tell them about the macro #undef.
