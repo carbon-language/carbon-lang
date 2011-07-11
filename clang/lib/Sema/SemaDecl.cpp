@@ -6457,6 +6457,10 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       // Implements C++ [basic.start.main]p5 and C99 5.1.2.2.3.
       FD->setHasImplicitReturnZero(true);
       WP.disableCheckFallThrough();
+    } else if (FD->hasAttr<NakedAttr>()) {
+      // If the function is marked 'naked', don't complain about missing return
+      // statements.
+      WP.disableCheckFallThrough();
     }
 
     // MSVC permits the use of pure specifier (=0) on function definition,
