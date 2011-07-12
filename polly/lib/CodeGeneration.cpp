@@ -823,7 +823,7 @@ public:
     Function *F = Builder.GetInsertBlock()->getParent();
     const std::string &Name = F->getNameStr() + ".omp_subfn";
 
-    std::vector<const Type*> Arguments(1, Builder.getInt8PtrTy());
+    std::vector<Type*> Arguments(1, Builder.getInt8PtrTy());
     FunctionType *FT = FunctionType::get(Builder.getVoidTy(), Arguments, false);
     Function *FN = Function::Create(FT, Function::InternalLinkage, Name, M);
     // Do not run any polly pass on the new function.
@@ -840,18 +840,14 @@ public:
   /// Create the subfunction structure and add the values from the list.
   Value *addValuesToOpenMPStruct(SetVector<Value*> OMPDataVals,
                                  Function *SubFunction) {
-    Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-    std::vector<const Type*> structMembers;
+    std::vector<Type*> structMembers;
 
     // Create the structure.
     for (unsigned i = 0; i < OMPDataVals.size(); i++)
       structMembers.push_back(OMPDataVals[i]->getType());
 
-    const std::string &Name = SubFunction->getNameStr() + ".omp.userContext";
     StructType *structTy = StructType::get(Builder.getContext(),
                                            structMembers);
-    M->addTypeName(Name, structTy);
-
     // Store the values into the structure.
     Value *structData = Builder.CreateAlloca(structTy, 0, "omp.userContext");
     for (unsigned i = 0; i < OMPDataVals.size(); i++) {
@@ -1275,7 +1271,7 @@ class CodeGeneration : public ScopPass {
   {
     Module *M = Builder.GetInsertBlock()->getParent()->getParent();
     LLVMContext &Context = Builder.getContext();
-    const IntegerType *intPtrTy = TD->getIntPtrType(Context);
+    IntegerType *intPtrTy = TD->getIntPtrType(Context);
 
     if (!M->getFunction("GOMP_parallel_end")) {
       FunctionType *FT = FunctionType::get(Type::getVoidTy(Context), false);
@@ -1284,12 +1280,12 @@ class CodeGeneration : public ScopPass {
 
     if (!M->getFunction("GOMP_parallel_loop_runtime_start")) {
       // Type of first argument.
-      std::vector<const Type*> Arguments(1, Builder.getInt8PtrTy());
+      std::vector<Type*> Arguments(1, Builder.getInt8PtrTy());
       FunctionType *FnArgTy = FunctionType::get(Builder.getVoidTy(), Arguments,
                                                 false);
       PointerType *FnPtrTy = PointerType::getUnqual(FnArgTy);
 
-      std::vector<const Type*> args;
+      std::vector<Type*> args;
       args.push_back(FnPtrTy);
       args.push_back(Builder.getInt8PtrTy());
       args.push_back(Builder.getInt32Ty());
@@ -1305,7 +1301,7 @@ class CodeGeneration : public ScopPass {
     if (!M->getFunction("GOMP_loop_runtime_next")) {
       PointerType *intLongPtrTy = PointerType::getUnqual(intPtrTy);
 
-      std::vector<const Type*> args;
+      std::vector<Type*> args;
       args.push_back(intLongPtrTy);
       args.push_back(intLongPtrTy);
 
@@ -1316,7 +1312,7 @@ class CodeGeneration : public ScopPass {
 
     if (!M->getFunction("GOMP_loop_end_nowait")) {
       FunctionType *FT = FunctionType::get(Builder.getVoidTy(),
-                                           std::vector<const Type*>(), false);
+                                           std::vector<Type*>(), false);
       Function::Create(FT, Function::ExternalLinkage,
 		       "GOMP_loop_end_nowait", M);
     }

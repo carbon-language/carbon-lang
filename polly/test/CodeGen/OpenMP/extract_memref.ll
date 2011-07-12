@@ -31,7 +31,9 @@ entry:
   call void @foo()
   ret i32 0
 }
-; CHECK: store [10 x float]* %A, [10 x float]**
-; CHECK: getelementptr inbounds %foo.omp_subfn.omp.userContext* %omp.userContext1
+; CHECK: getelementptr inbounds { [10 x float]* }* %omp.userContext, i32 0, i32 0
+; CHECK: store [10 x float]* %A, [10 x float]** %0
+; CHECK: %omp_data = bitcast { [10 x float]* }* %omp.userContext to i8*
+; CHECK: inbounds { [10 x float]* }* %omp.userContext1, i32 0, i32 0
 ; CHECK: load [10 x float]**
-; CHECK: getelementptr inbounds [10 x float]*
+
