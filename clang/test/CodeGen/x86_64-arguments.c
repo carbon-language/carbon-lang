@@ -280,7 +280,7 @@ void f39() { f38(x38); f37(x37); }
 // The two next tests make sure that the struct below is passed
 // in the same way regardless of avx being used
 
-// CHECK: declare void @func40(%struct.t128* byval align 16)
+// TOBECHECKED: declare void @func40(%struct.t128* byval align 16)
 typedef float __m128 __attribute__ ((__vector_size__ (16)));
 typedef struct t128 {
   __m128 m;
@@ -292,7 +292,7 @@ void func41(two128 s) {
   func40(s);
 }
 
-// CHECK: declare void @func42(%struct.t128_2* byval align 16)
+// TOBECHECKED: declare void @func42(%struct.t128_2* byval align 16)
 typedef struct xxx {
   __m128 array[2];
 } Atwo128;
