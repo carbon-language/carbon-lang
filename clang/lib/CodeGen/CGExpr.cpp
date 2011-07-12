@@ -1275,11 +1275,11 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
 }
 
 static llvm::Value *
-EmitBitCastOfLValueToProperType(llvm::IRBuilder<> &Builder, 
+EmitBitCastOfLValueToProperType(CodeGenFunction &CGF,
                                 llvm::Value *V, llvm::Type *IRType,
                                 llvm::StringRef Name = llvm::StringRef()) {
   unsigned AS = cast<llvm::PointerType>(V->getType())->getAddressSpace();
-  return Builder.CreateBitCast(V, IRType->getPointerTo(AS), Name);
+  return CGF.Builder.CreateBitCast(V, IRType->getPointerTo(AS), Name);
 }
 
 static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
@@ -1291,7 +1291,7 @@ static LValue EmitGlobalVarDeclLValue(CodeGenFunction &CGF,
   if (VD->getType()->isReferenceType())
     V = CGF.Builder.CreateLoad(V, "tmp");
   
-  V = EmitBitCastOfLValueToProperType(CGF.Builder, V,
+  V = EmitBitCastOfLValueToProperType(CGF, V,
                                 CGF.getTypes().ConvertTypeForMem(E->getType()));
 
   unsigned Alignment = CGF.getContext().getDeclAlign(VD).getQuantity();
@@ -1350,7 +1350,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "tmp");
 
-    V = EmitBitCastOfLValueToProperType(Builder, V,
+    V = EmitBitCastOfLValueToProperType(*this, V,
                                     getTypes().ConvertTypeForMem(E->getType()));
 
     LValue LV = MakeAddrLValue(V, E->getType(), Alignment);
@@ -1850,7 +1850,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value *baseAddr,
   // for both unions and structs.  A union needs a bitcast, a struct element
   // will need a bitcast if the LLVM type laid out doesn't match the desired
   // type.
-  addr = EmitBitCastOfLValueToProperType(Builder, addr,
+  addr = EmitBitCastOfLValueToProperType(*this, addr,
                                          CGM.getTypes().ConvertTypeForMem(type),
                                          field->getName());
 
