@@ -572,14 +572,13 @@ GlobalVariable *GCOVProfiler::buildEdgeLookupTable(
 }
 
 Constant *GCOVProfiler::getStartFileFunc() {
-  const Type *Args[] = { Type::getInt8PtrTy(*Ctx) };
   const FunctionType *FTy = FunctionType::get(Type::getVoidTy(*Ctx),
-                                              Args, false);
+                                              Type::getInt8PtrTy(*Ctx), false);
   return M->getOrInsertFunction("llvm_gcda_start_file", FTy);
 }
 
 Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
-  const Type *Args[] = {
+  Type *Args[] = {
     Type::getInt32PtrTy(*Ctx),                  // uint32_t *predecessor
     Type::getInt64PtrTy(*Ctx)->getPointerTo(),  // uint64_t **state_table_row
   };
@@ -589,7 +588,7 @@ Constant *GCOVProfiler::getIncrementIndirectCounterFunc() {
 }
 
 Constant *GCOVProfiler::getEmitFunctionFunc() {
-  const Type *Args[2] = {
+  Type *Args[2] = {
     Type::getInt32Ty(*Ctx),    // uint32_t ident
     Type::getInt8PtrTy(*Ctx),  // const char *function_name
   };
@@ -599,7 +598,7 @@ Constant *GCOVProfiler::getEmitFunctionFunc() {
 }
 
 Constant *GCOVProfiler::getEmitArcsFunc() {
-  const Type *Args[] = {
+  Type *Args[] = {
     Type::getInt32Ty(*Ctx),     // uint32_t num_counters
     Type::getInt64PtrTy(*Ctx),  // uint64_t *counters
   };

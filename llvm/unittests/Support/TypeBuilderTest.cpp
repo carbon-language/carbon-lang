@@ -120,7 +120,7 @@ TEST(TypeBuilderTest, Derived) {
 }
 
 TEST(TypeBuilderTest, Functions) {
-  std::vector<const Type*> params;
+  std::vector<Type*> params;
   EXPECT_EQ(FunctionType::get(Type::getVoidTy(getGlobalContext()), params, false),
             (TypeBuilder<void(), true>::get(getGlobalContext())));
   EXPECT_EQ(FunctionType::get(Type::getInt8Ty(getGlobalContext()), params, true),
@@ -187,7 +187,7 @@ public:
   static const StructType *get(LLVMContext &Context) {
     // Using the static result variable ensures that the type is
     // only looked up once.
-    std::vector<const Type*> st;
+    std::vector<Type*> st;
     st.push_back(TypeBuilder<int, cross>::get(Context));
     st.push_back(TypeBuilder<int*, cross>::get(Context));
     st.push_back(TypeBuilder<void*[], cross>::get(Context));
@@ -210,7 +210,7 @@ public:
   static const StructType *get(LLVMContext &Context) {
     // Using the static result variable ensures that the type is
     // only looked up once.
-    std::vector<const Type*> st;
+    std::vector<Type*> st;
     st.push_back(TypeBuilder<types::i<32>, cross>::get(Context));
     st.push_back(TypeBuilder<types::i<32>*, cross>::get(Context));
     st.push_back(TypeBuilder<types::i<8>*[], cross>::get(Context));

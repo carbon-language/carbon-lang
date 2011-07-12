@@ -1400,7 +1400,7 @@ static bool CollectBSwapParts(Value *V, int OverallLeftShift, uint32_t ByteMask,
 /// MatchBSwap - Given an OR instruction, check to see if this is a bswap idiom.
 /// If so, insert the new bswap intrinsic and return it.
 Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
-  const IntegerType *ITy = dyn_cast<IntegerType>(I.getType());
+  IntegerType *ITy = dyn_cast<IntegerType>(I.getType());
   if (!ITy || ITy->getBitWidth() % 16 || 
       // ByteMask only allows up to 32-byte values.
       ITy->getBitWidth() > 32*8) 
@@ -1424,7 +1424,7 @@ Instruction *InstCombiner::MatchBSwap(BinaryOperator &I) {
   for (unsigned i = 1, e = ByteValues.size(); i != e; ++i)
     if (ByteValues[i] != V)
       return 0;
-  const Type *Tys[] = { ITy };
+  Type *Tys[] = { ITy };
   Module *M = I.getParent()->getParent()->getParent();
   Function *F = Intrinsic::getDeclaration(M, Intrinsic::bswap, Tys, 1);
   return CallInst::Create(F, V);

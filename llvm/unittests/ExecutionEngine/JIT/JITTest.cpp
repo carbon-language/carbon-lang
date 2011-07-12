@@ -37,7 +37,7 @@ using namespace llvm;
 namespace {
 
 Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
-  std::vector<const Type*> params;
+  std::vector<Type*> params;
   const FunctionType *FTy = FunctionType::get(G->getType()->getElementType(),
                                               params, false);
   Function *F = Function::Create(FTy, GlobalValue::ExternalLinkage, Name, M);
@@ -322,7 +322,7 @@ TEST_F(JITTest, NonLazyCompilationStillNeedsStubs) {
 
   const FunctionType *Func1Ty =
       cast<FunctionType>(TypeBuilder<void(void), false>::get(Context));
-  std::vector<const Type*> arg_types;
+  std::vector<Type*> arg_types;
   arg_types.push_back(Type::getInt1Ty(Context));
   const FunctionType *FuncTy = FunctionType::get(
       Type::getVoidTy(Context), arg_types, false);

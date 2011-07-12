@@ -325,13 +325,6 @@ FunctionType::FunctionType(const Type *Result, ArrayRef<Type*> Params,
   NumContainedTys = Params.size() + 1; // + 1 for result type
 }
 
-// FIXME: Remove this version.
-FunctionType *FunctionType::get(const Type *ReturnType,
-                                ArrayRef<const Type*> Params, bool isVarArg) {
-  return get(ReturnType, ArrayRef<Type*>(const_cast<Type**>(Params.data()),
-                                         Params.size()), isVarArg);
-}
-
 // FunctionType::get - The factory function for the FunctionType class.
 FunctionType *FunctionType::get(const Type *ReturnType,
                                 ArrayRef<Type*> Params, bool isVarArg) {
@@ -357,7 +350,7 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 
 
 FunctionType *FunctionType::get(const Type *Result, bool isVarArg) {
-  return get(Result, ArrayRef<const Type *>(), isVarArg);
+  return get(Result, ArrayRef<Type *>(), isVarArg);
 }
 
 
@@ -465,22 +458,15 @@ void StructType::setName(StringRef Name) {
 //===----------------------------------------------------------------------===//
 // StructType Helper functions.
 
-// FIXME: Remove this version.
-StructType *StructType::get(LLVMContext &Context, ArrayRef<const Type*>Elements,
-                            bool isPacked) {
-  return get(Context, ArrayRef<Type*>(const_cast<Type**>(Elements.data()),
-             Elements.size()), isPacked);
-}
-
 StructType *StructType::get(LLVMContext &Context, bool isPacked) {
-  return get(Context, llvm::ArrayRef<const Type*>(), isPacked);
+  return get(Context, llvm::ArrayRef<Type*>(), isPacked);
 }
 
-StructType *StructType::get(const Type *type, ...) {
+StructType *StructType::get(Type *type, ...) {
   assert(type != 0 && "Cannot create a struct type with no elements with this");
   LLVMContext &Ctx = type->getContext();
   va_list ap;
-  SmallVector<const llvm::Type*, 8> StructFields;
+  SmallVector<llvm::Type*, 8> StructFields;
   va_start(ap, type);
   while (type) {
     StructFields.push_back(type);
