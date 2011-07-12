@@ -1645,8 +1645,15 @@ TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
     TOExpr(E) {
 }
 
+bool TypeOfExprType::isSugared() const {
+  return !TOExpr->isTypeDependent();
+}
+
 QualType TypeOfExprType::desugar() const {
-  return getUnderlyingExpr()->getType();
+  if (isSugared())
+    return getUnderlyingExpr()->getType();
+  
+  return QualType(this, 0);
 }
 
 void DependentTypeOfExprType::Profile(llvm::FoldingSetNodeID &ID,
@@ -1661,6 +1668,15 @@ DecltypeType::DecltypeType(Expr *E, QualType underlyingType, QualType can)
          E->containsUnexpandedParameterPack()), 
     E(E),
   UnderlyingType(underlyingType) {
+}
+
+bool DecltypeType::isSugared() const { return !E->isInstantiationDependent(); }
+
+QualType DecltypeType::desugar() const {
+  if (isSugared())
+    return getUnderlyingType();
+  
+  return QualType(this, 0);
 }
 
 DependentDecltypeType::DependentDecltypeType(const ASTContext &Context, Expr *E)
