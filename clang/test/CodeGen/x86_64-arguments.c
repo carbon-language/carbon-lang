@@ -280,9 +280,9 @@ void f39() { f38(x38); f37(x37); }
 // Make sure that the struct below is passed in the same way
 // regardless of avx being used
 //
-// CHECK: define void @func41(<2 x double> %s.coerce)
+// CHECK: declare void @func40(%struct.t128* byval align 16)
 typedef float __m128 __attribute__ ((__vector_size__ (16)));
-typedef struct {
+typedef struct t128 {
   __m128 m;
   __m128 n;
 } two128;
