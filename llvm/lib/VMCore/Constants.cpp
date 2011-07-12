@@ -1716,26 +1716,13 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
 
 Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
                                      const unsigned *Idxs, unsigned NumIdx) {
-  assert(Agg->getType()->isFirstClassType() &&
-         "Tried to create insertelement operation on non-first-class type!");
-
-  const Type *ReqTy = Agg->getType();
-  (void)ReqTy;
-#ifndef NDEBUG
-  const Type *ValTy =
-    ExtractValueInst::getIndexedType(Agg->getType(), Idxs, Idxs+NumIdx);
-  assert(ValTy == Val->getType() && "insertvalue indices invalid!");
-#endif
-
   assert(ExtractValueInst::getIndexedType(Agg->getType(), Idxs,
                                           Idxs+NumIdx) == Val->getType() &&
          "insertvalue indices invalid!");
-  assert(Agg->getType() == ReqTy &&
-         "insertvalue type invalid!");
   assert(Agg->getType()->isFirstClassType() &&
-         "Non-first-class type for constant InsertValue expression");
+         "Non-first-class type for constant insertvalue expression");
   Constant *FC = ConstantFoldInsertValueInstruction(Agg, Val, Idxs, NumIdx);
-  assert(FC && "InsertValue constant expr couldn't be folded!");
+  assert(FC && "insertvalue constant expr couldn't be folded!");
   return FC;
 }
 
