@@ -180,6 +180,26 @@ QualType QualType::getDesugaredType(QualType T, const ASTContext &Context) {
   return Context.getQualifiedType(split.first, split.second);
 }
 
+QualType QualType::getSingleStepDesugaredType(const ASTContext &Context) const {
+  QualifierCollector Qs;
+  
+  const Type *CurTy = Qs.strip(*this);
+  switch (CurTy->getTypeClass()) {
+#define ABSTRACT_TYPE(Class, Parent)
+#define TYPE(Class, Parent) \
+  case Type::Class: { \
+    const Class##Type *Ty = cast<Class##Type>(CurTy); \
+    if (!Ty->isSugared()) \
+      return *this; \
+    return Context.getQualifiedType(Ty->desugar(), Qs); \
+    break; \
+  }
+#include "clang/AST/TypeNodes.def"
+  }
+
+  return *this;
+}
+
 SplitQualType QualType::getSplitDesugaredType(QualType T) {
   QualifierCollector Qs;
 

@@ -757,6 +757,13 @@ public:
     return getSplitDesugaredType(*this);
   }
 
+  /// \brief Return the specified type with one level of "sugar" removed from
+  /// the type. 
+  ///
+  /// This routine takes off the first typedef, typeof, etc. If the outer level
+  /// of the type is already concrete, it returns it unmodified.
+  QualType getSingleStepDesugaredType(const ASTContext &Context) const;
+  
   /// IgnoreParens - Returns the specified type after dropping any
   /// outer-level parentheses.
   QualType IgnoreParens() const {

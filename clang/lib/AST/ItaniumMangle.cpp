@@ -319,7 +319,7 @@ private:
                           unsigned NumTemplateArgs);
   void mangleTemplateArgs(const TemplateParameterList &PL,
                           const TemplateArgumentList &AL);
-  void mangleTemplateArg(const NamedDecl *P, const TemplateArgument &A);
+  void mangleTemplateArg(const NamedDecl *P, TemplateArgument A);
   void mangleUnresolvedTemplateArgs(const TemplateArgument *args,
                                     unsigned numArgs);
 
@@ -1596,26 +1596,59 @@ void CXXNameMangler::mangleObjCMethodName(const ObjCMethodDecl *MD) {
   Context.mangleObjCMethodName(MD, Out);
 }
 
-void CXXNameMangler::mangleType(QualType nonCanon) {
-  // Only operate on the canonical type!
-  QualType canon = nonCanon.getCanonicalType();
+void CXXNameMangler::mangleType(QualType T) {
+  // If our type is instantiation-dependent but not dependent, we mangle
+  // it as it was written in the source, removing any top-level sugar. 
+  // Otherwise, use the canonical type.
+  //
+  // FIXME: This is an approximation of the instantiation-dependent name 
+  // mangling rules, since we should really be using the type as written and
+  // augmented via semantic analysis (i.e., with implicit conversions and
+  // default template arguments) for any instantiation-dependent type. 
+  // Unfortunately, that requires several changes to our AST:
+  //   - Instantiation-dependent TemplateSpecializationTypes will need to be 
+  //     uniqued, so that we can handle substitutions properly
+  //   - Default template arguments will need to be represented in the
+  //     TemplateSpecializationType, since they need to be mangled even though
+  //     they aren't written.
+  //   - Conversions on non-type template arguments need to be expressed, since
+  //     they can affect the mangling of sizeof/alignof.
+  if (!T->isInstantiationDependentType() || T->isDependentType())
+    T = T.getCanonicalType();
+  else {
+    // Desugar any types that are purely sugar.
+    do {
+      // Don't desugar through template specialization types that aren't
+      // type aliases. We need to mangle the template arguments as written.
+      if (const TemplateSpecializationType *TST 
+                                      = dyn_cast<TemplateSpecializationType>(T))
+        if (!TST->isTypeAlias())
+          break;
 
-  SplitQualType split = canon.split();
+      QualType Desugared 
+        = T.getSingleStepDesugaredType(Context.getASTContext());
+      if (Desugared == T)
+        break;
+      
+      T = Desugared;
+    } while (true);
+  }
+  SplitQualType split = T.split();
   Qualifiers quals = split.second;
   const Type *ty = split.first;
 
-  bool isSubstitutable = quals || !isa<BuiltinType>(ty);
-  if (isSubstitutable && mangleSubstitution(canon))
+  bool isSubstitutable = quals || !isa<BuiltinType>(T);
+  if (isSubstitutable && mangleSubstitution(T))
     return;
 
   // If we're mangling a qualified array type, push the qualifiers to
   // the element type.
-  if (quals && isa<ArrayType>(ty)) {
-    ty = Context.getASTContext().getAsArrayType(canon);
+  if (quals && isa<ArrayType>(T)) {
+    ty = Context.getASTContext().getAsArrayType(T);
     quals = Qualifiers();
 
-    // Note that we don't update canon: we want to add the
-    // substitution at the canonical type.
+    // Note that we don't update T: we want to add the
+    // substitution at the original type.
   }
 
   if (quals) {
@@ -1640,7 +1673,7 @@ void CXXNameMangler::mangleType(QualType nonCanon) {
 
   // Add the substitution.
   if (isSubstitutable)
-    addSubstitution(canon);
+    addSubstitution(T);
 }
 
 void CXXNameMangler::mangleNameOrStandardSubstitution(const NamedDecl *ND) {
@@ -2826,12 +2859,15 @@ void CXXNameMangler::mangleTemplateArgs(const TemplateParameterList &PL,
 }
 
 void CXXNameMangler::mangleTemplateArg(const NamedDecl *P,
-                                       const TemplateArgument &A) {
+                                       TemplateArgument A) {
   // <template-arg> ::= <type>              # type or template
   //                ::= X <expression> E    # expression
   //                ::= <expr-primary>      # simple expressions
   //                ::= J <template-arg>* E # argument pack
-  //                ::= sp <expression>     # pack expansion of (C++0x)
+  //                ::= sp <expression>     # pack expansion of (C++0x)  
+  if (!A.isInstantiationDependent() || A.isDependent())
+    A = Context.getASTContext().getCanonicalTemplateArgument(A);
+  
   switch (A.getKind()) {
   case TemplateArgument::Null:
     llvm_unreachable("Cannot mangle NULL template argument");

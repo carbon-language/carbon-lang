@@ -825,6 +825,15 @@ namespace test34 {
 
   // CHECK: define weak_odr void @_ZN6test342f3ILy4EEEvRAplT_Ly8E_i
   template void f3<4>(int (&)[4 + sizeof(int*)]);
+
+  // Mangling for instantiation-dependent sizeof() expressions as
+  // template arguments.
+  template<unsigned> struct A { };
+
+  template<typename T> void f4(::test34::A<sizeof(sizeof(decltype(T() + T())))>) { }
+
+  // CHECK: define weak_odr void @_ZN6test342f4IiEEvNS_1AIXszstDTplcvT__EcvS2__EEEEE
+  template void f4<int>(A<sizeof(sizeof(int))>);
 }
 
 namespace test35 {
