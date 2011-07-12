@@ -1048,6 +1048,7 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   Opts.UsePhonyTargets = Args.hasArg(OPT_MP);
   Opts.ShowHeaderIncludes = Args.hasArg(OPT_H);
   Opts.HeaderIncludeOutputFile = Args.getLastArgValue(OPT_header_include_file);
+  Opts.AddMissingHeaderDeps = Args.hasArg(OPT_MG);
 }
 
 static void ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,

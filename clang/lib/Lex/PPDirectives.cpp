@@ -1180,15 +1180,16 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   const FileEntry *File = LookupFile(
       Filename, isAngled, LookupFrom, CurDir,
       Callbacks ? &SearchPath : NULL, Callbacks ? &RelativePath : NULL);
-  if (File == 0) {
-    Diag(FilenameTok, diag::err_pp_file_not_found) << Filename;
-    return;
-  }
 
   // Notify the callback object that we've seen an inclusion directive.
   if (Callbacks)
     Callbacks->InclusionDirective(HashLoc, IncludeTok, Filename, isAngled, File,
                                   End, SearchPath, RelativePath);
+
+  if (File == 0) {
+    Diag(FilenameTok, diag::warn_pp_file_not_found) << Filename;
+    return;
+  }
 
   // The #included file will be considered to be a system header if either it is
   // in a system include directory, or if the #includer is a system include

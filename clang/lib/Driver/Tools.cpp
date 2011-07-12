@@ -242,6 +242,13 @@ void Clang::AddPreprocessingOptions(const Driver &D,
       CmdArgs.push_back("-sys-header-deps");
   }
 
+  if (Args.hasArg(options::OPT_MG)) {
+    if (!A || A->getOption().matches(options::OPT_MD) ||
+              A->getOption().matches(options::OPT_MMD))
+      D.Diag(clang::diag::err_drv_mg_requires_m_or_mm);
+    CmdArgs.push_back("-MG");
+  }
+
   Args.AddLastArg(CmdArgs, options::OPT_MP);
 
   // Convert all -MQ <target> args to -MT <quoted target>
@@ -1354,8 +1361,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   types::ID InputType = Inputs[0].getType();
   if (!Args.hasArg(options::OPT_fallow_unsupported)) {
     Arg *Unsupported;
-    if ((Unsupported = Args.getLastArg(options::OPT_MG)) ||
-        (Unsupported = Args.getLastArg(options::OPT_iframework)))
+    if ((Unsupported = Args.getLastArg(options::OPT_iframework)))
       D.Diag(clang::diag::err_drv_clang_unsupported)
         << Unsupported->getOption().getName();
 

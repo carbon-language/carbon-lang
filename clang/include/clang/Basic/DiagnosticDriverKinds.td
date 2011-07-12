@@ -86,6 +86,8 @@ def err_drv_objc_gc_arr : Error<
   "cannot specify both '-fobjc-arc' and '%0'">;
 def err_arc_nonfragile_abi : Error<
   "-fobjc-arc is not supported with fragile abi">;
+def err_drv_mg_requires_m_or_mm : Error<
+  "option '-MG' requires '-M' or '-MM'">;
 
 def warn_c_kext : Warning<
   "ignoring -fapple-kext which is valid for c++ and objective-c++ only">;

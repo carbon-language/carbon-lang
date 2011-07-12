@@ -24,6 +24,7 @@ public:
   unsigned UsePhonyTargets : 1;      ///< Include phony targets for each
                                      /// dependency, which can avoid some 'make'
                                      /// problems.
+  unsigned AddMissingHeaderDeps : 1; ///< Add missing headers to dependency list
 
   /// The file to write dependency output to.
   std::string OutputFile;
@@ -43,6 +44,7 @@ public:
     IncludeSystemHeaders = 0;
     ShowHeaderIncludes = 0;
     UsePhonyTargets = 0;
+    AddMissingHeaderDeps = 0;
   }
 };
 

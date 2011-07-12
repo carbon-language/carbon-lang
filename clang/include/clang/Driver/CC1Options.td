@@ -208,6 +208,7 @@ def MQ : Separate<"-MQ">, HelpText<"Specify target to quote for dependency">;
 def MT : Separate<"-MT">, HelpText<"Specify target for dependency">;
 def MP : Flag<"-MP">,
   HelpText<"Create phony target for each dependency (other than main file)">;
+def MG : Flag<"-MG">, HelpText<"Add missing headers to dependency list">;
 
 //===----------------------------------------------------------------------===//
 // Diagnostic Options
