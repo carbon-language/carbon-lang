@@ -826,3 +826,16 @@ namespace test34 {
   // CHECK: define weak_odr void @_ZN6test342f3ILy4EEEvRAplT_Ly8E_i
   template void f3<4>(int (&)[4 + sizeof(int*)]);
 }
+
+namespace test35 {
+  // Dependent operator names of unknown arity.
+  struct A { 
+    template<typename U> A operator+(U) const;
+  };
+
+  template<typename T>
+  void f1(decltype(sizeof(&T::template operator+<int>))) {}
+
+  // CHECK: define weak_odr void @_ZN6test352f1INS_1AEEEvDTszadsrT_plIiEE
+  template void f1<A>(__SIZE_TYPE__);
+}

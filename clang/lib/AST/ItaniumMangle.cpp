@@ -593,19 +593,13 @@ void CXXNameMangler::mangleUnscopedTemplateName(TemplateName Template) {
   if (mangleSubstitution(Template))
     return;
 
-  // FIXME: How to cope with operators here?
   DependentTemplateName *Dependent = Template.getAsDependentTemplateName();
   assert(Dependent && "Not a dependent template name?");
-  if (!Dependent->isIdentifier()) {
-    // FIXME: We can't possibly know the arity of the operator here!
-    Diagnostic &Diags = Context.getDiags();
-    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
-                                      "cannot mangle dependent operator name");
-    Diags.Report(DiagID);
-    return;
-  }
+  if (const IdentifierInfo *Id = Dependent->getIdentifier())
+    mangleSourceName(Id);
+  else
+    mangleOperatorName(Dependent->getOperator(), UnknownArity);
   
-  mangleSourceName(Dependent->getIdentifier());
   addSubstitution(Template);
 }
 
