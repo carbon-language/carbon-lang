@@ -633,11 +633,13 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
 
       // Block captures count as local values and have imprecise semantics.
       // They also can't be arrays, so need to worry about that.
-      case QualType::DK_objc_strong_lifetime:
+      case QualType::DK_objc_strong_lifetime: {
+        // This local is a GCC and MSVC compiler workaround.
+        Destroyer *destroyer = &destroyARCStrongImprecise;
         pushDestroy(getCleanupKind(dtorKind), blockField, type,
-                    destroyARCStrongImprecise,
-                    /*useEHCleanupForArray*/ false);
+                    *destroyer, /*useEHCleanupForArray*/ false);
         break;
+      }
 
       case QualType::DK_objc_weak_lifetime:
       case QualType::DK_cxx_destructor:
