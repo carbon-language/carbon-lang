@@ -839,3 +839,13 @@ namespace test35 {
   // CHECK: define weak_odr void @_ZN6test352f1INS_1AEEEvDTszadsrT_plIiEE
   template void f1<A>(__SIZE_TYPE__);
 }
+
+namespace test36 {
+  template<unsigned> struct A { };
+
+  template<typename ...Types>
+  auto f1(Types... values) -> A<sizeof...(values)> { }
+
+  // CHECK: define weak_odr {{.*}} @_ZN6test362f1IJifEEENS_1AIXsZfp_EEEDpT_
+  template A<2> f1(int, float);
+}

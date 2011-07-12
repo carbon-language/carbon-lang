@@ -2669,15 +2669,8 @@ recurse:
     else if (const TemplateTemplateParmDecl *TempTP
                                     = dyn_cast<TemplateTemplateParmDecl>(Pack))
       mangleTemplateParameter(TempTP->getIndex());
-    else {
-      // Note: proposed by Mike Herrick on 11/30/10
-      // <expression> ::= sZ <function-param>  # size of function parameter pack
-      Diagnostic &Diags = Context.getDiags();
-      unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error,
-                            "cannot mangle sizeof...(function parameter pack)");
-      Diags.Report(DiagID);
-      return;
-    }
+    else
+      mangleFunctionParam(cast<ParmVarDecl>(Pack));
     break;
   }
       
