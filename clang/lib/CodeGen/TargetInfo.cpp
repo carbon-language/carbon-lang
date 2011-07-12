@@ -1198,6 +1198,13 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     Current = NoClass;
     uint64_t EltSize = getContext().getTypeSize(AT->getElementType());
     uint64_t ArraySize = AT->getSize().getZExtValue();
+
+    // The only case a 256-bit wide vector could be used is when the array
+    // contains a single 256-bit element. Since Lo and Hi logic isn't extended
+    // to work for sizes wider than 128, early check and fallback to memory.
+    if (Size > 128 && EltSize != 256)
+      return;
+
     for (uint64_t i=0, Offset=OffsetBase; i<ArraySize; ++i, Offset += EltSize) {
       Class FieldLo, FieldHi;
       classify(AT->getElementType(), Offset, FieldLo, FieldHi);
