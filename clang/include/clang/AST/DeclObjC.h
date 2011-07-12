@@ -1414,10 +1414,13 @@ public:
     OBJC_PR_atomic    = 0x100,
     OBJC_PR_weak      = 0x200,
     OBJC_PR_strong    = 0x400,
-    OBJC_PR_unsafe_unretained = 0x800,
+    OBJC_PR_unsafe_unretained = 0x800
+    // Adding a property should change NumPropertyAttrsBits
+  };
 
+  enum {
     /// \brief Number of bits fitting all the property attributes.
-    OBJC_PR_NumBits = 12
+    NumPropertyAttrsBits = 12
   };
 
   enum SetterKind { Assign, Retain, Copy };
@@ -1425,8 +1428,8 @@ public:
 private:
   SourceLocation AtLoc;   // location of @property
   TypeSourceInfo *DeclType;
-  unsigned PropertyAttributes : OBJC_PR_NumBits;
-  unsigned PropertyAttributesAsWritten : OBJC_PR_NumBits;
+  unsigned PropertyAttributes : NumPropertyAttrsBits;
+  unsigned PropertyAttributesAsWritten : NumPropertyAttrsBits;
   // @required/@optional
   unsigned PropertyImplementation : 2;
 
