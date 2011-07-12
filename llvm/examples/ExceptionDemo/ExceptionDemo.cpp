@@ -895,7 +895,7 @@ void generateStringPrint(llvm::LLVMContext &context,
   
   llvm::Value *cast = 
   builder.CreatePointerCast(stringVar, 
-                            builder.getInt8Ty()->getPointerTo());
+                            builder.getInt8PtrTy());
   builder.CreateCall(printFunct, cast);
 }
 
@@ -939,7 +939,7 @@ void generateIntegerPrint(llvm::LLVMContext &context,
   
   llvm::Value *cast = 
   builder.CreateBitCast(stringVar, 
-                        builder.getInt8Ty()->getPointerTo());
+                        builder.getInt8PtrTy());
   builder.CreateCall2(&printFunct, &toPrint, cast);
 }
 
@@ -987,7 +987,7 @@ static llvm::BasicBlock *createFinallyBlock(llvm::LLVMContext &context,
                          ourExceptionNotThrownState);
   
   const llvm::PointerType *exceptionStorageType = 
-      builder.getInt8Ty()->getPointerTo();
+      builder.getInt8PtrTy();
   *exceptionStorage = 
   createEntryBlockAlloca(toAddTo,
                          "exceptionStorage",
@@ -1098,7 +1098,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   llvm::Function *toPrint32Int = module.getFunction("print32Int");
   
   ArgTypes argTypes;
-  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
+  argTypes.push_back(builder.getInt32Ty());
   
   ArgNames argNames;
   argNames.push_back("exceptTypeToThrow");
@@ -1239,7 +1239,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   llvm::Function *personality = module.getFunction("ourPersonality");
   llvm::Value *functPtr = 
   builder.CreatePointerCast(personality, 
-                            builder.getInt8Ty()->getPointerTo());
+                            builder.getInt8PtrTy());
   
   args.clear();
   args.push_back(unwindException);
@@ -1376,7 +1376,7 @@ llvm::Function *createThrowExceptionFunction(llvm::Module &module,
   llvm::LLVMContext &context = module.getContext();
   namedValues.clear();
   ArgTypes unwindArgTypes;
-  unwindArgTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
+  unwindArgTypes.push_back(builder.getInt32Ty());
   ArgNames unwindArgNames;
   unwindArgNames.push_back("exceptTypeToThrow");
   
@@ -1650,7 +1650,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   
   // Create our type info type
   ourTypeInfoType = llvm::StructType::get(context, 
-                      TypeArray(llvm::Type::getInt32Ty(builder.getContext())));
+                      TypeArray(builder.getInt32Ty()));
   // Create OurException type
   ourExceptionType = llvm::StructType::get(context, 
                                            TypeArray(ourTypeInfoType));
@@ -1661,7 +1661,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   //       Does this cause problems?
   ourUnwindExceptionType =
     llvm::StructType::get(context, 
-                    TypeArray(llvm::Type::getInt64Ty(builder.getContext())));
+                    TypeArray(builder.getInt64Ty()));
 
   struct OurBaseException_t dummyException;
   
@@ -1727,8 +1727,8 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   const llvm::Type *retType = builder.getVoidTy();
   
   argTypes.clear();
-  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
-  argTypes.push_back(builder.getInt8Ty()->getPointerTo());
+  argTypes.push_back(builder.getInt32Ty());
+  argTypes.push_back(builder.getInt8PtrTy());
   
   argNames.clear();
   
@@ -1746,8 +1746,8 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getVoidTy();
   
   argTypes.clear();
-  argTypes.push_back(llvm::Type::getInt64Ty(builder.getContext()));
-  argTypes.push_back(builder.getInt8Ty()->getPointerTo());
+  argTypes.push_back(builder.getInt64Ty());
+  argTypes.push_back(builder.getInt8PtrTy());
   
   argNames.clear();
   
@@ -1765,7 +1765,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getVoidTy();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt8Ty()->getPointerTo());
+  argTypes.push_back(builder.getInt8PtrTy());
   
   argNames.clear();
   
@@ -1783,7 +1783,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getVoidTy();
   
   argTypes.clear();
-  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
+  argTypes.push_back(builder.getInt32Ty());
   
   argNames.clear();
   
@@ -1801,7 +1801,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getVoidTy();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt8Ty()->getPointerTo());
+  argTypes.push_back(builder.getInt8PtrTy());
   
   argNames.clear();
   
@@ -1816,10 +1816,10 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   
   // createOurException
   
-  retType = builder.getInt8Ty()->getPointerTo();
+  retType = builder.getInt8PtrTy();
   
   argTypes.clear();
-  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
+  argTypes.push_back(builder.getInt32Ty());
   
   argNames.clear();
   
@@ -1837,7 +1837,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getInt32Ty();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt8Ty()->getPointerTo());
+  argTypes.push_back(builder.getInt8PtrTy());
   
   argNames.clear();
   
@@ -1857,7 +1857,7 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getInt32Ty();
   
   argTypes.clear();
-  argTypes.push_back(builder.getInt8Ty()->getPointerTo());
+  argTypes.push_back(builder.getInt8PtrTy());
   
   argNames.clear();
   
@@ -1877,11 +1877,11 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   retType = builder.getInt32Ty();
   
   argTypes.clear();
-  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
-  argTypes.push_back(llvm::Type::getInt32Ty(builder.getContext()));
-  argTypes.push_back(llvm::Type::getInt64Ty(builder.getContext()));
-  argTypes.push_back(builder.getInt8Ty()->getPointerTo());
-  argTypes.push_back(builder.getInt8Ty()->getPointerTo());
+  argTypes.push_back(builder.getInt32Ty());
+  argTypes.push_back(builder.getInt32Ty());
+  argTypes.push_back(builder.getInt64Ty());
+  argTypes.push_back(builder.getInt8PtrTy());
+  argTypes.push_back(builder.getInt8PtrTy());
   
   argNames.clear();
   
