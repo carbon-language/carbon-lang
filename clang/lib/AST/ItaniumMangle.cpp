@@ -2169,6 +2169,9 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   // <expr-primary> ::= L <type> <value number> E    # integer literal
   //                ::= L <type <value float> E      # floating literal
   //                ::= L <mangled-name> E           # external name
+  QualType ImplicitlyConvertedToType;
+  
+recurse:
   switch (E->getStmtClass()) {
   case Expr::NoStmtClass:
 #define ABSTRACT_STMT(Type)
@@ -2363,6 +2366,23 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
 
   case Expr::UnaryExprOrTypeTraitExprClass: {
     const UnaryExprOrTypeTraitExpr *SAE = cast<UnaryExprOrTypeTraitExpr>(E);
+    
+    if (!SAE->isInstantiationDependent()) {
+      // Itanium C++ ABI:
+      //   If the operand of a sizeof or alignof operator is not 
+      //   instantiation-dependent it is encoded as an integer literal 
+      //   reflecting the result of the operator.
+      //
+      //   If the result of the operator is implicitly converted to a known 
+      //   integer type, that type is used for the literal; otherwise, the type 
+      //   of std::size_t or std::ptrdiff_t is used.
+      QualType T = (ImplicitlyConvertedToType.isNull() || 
+                    !ImplicitlyConvertedToType->isIntegerType())? SAE->getType()
+                                                    : ImplicitlyConvertedToType;
+      mangleIntegerLiteral(T, SAE->EvaluateAsInt(Context.getASTContext()));
+      break;
+    }
+    
     switch(SAE->getKind()) {
     case UETT_SizeOf:
       Out << 's';
@@ -2466,8 +2486,9 @@ void CXXNameMangler::mangleExpression(const Expr *E, unsigned Arity) {
   }
 
   case Expr::ImplicitCastExprClass: {
-    mangleExpression(cast<ImplicitCastExpr>(E)->getSubExpr(), Arity);
-    break;
+    ImplicitlyConvertedToType = E->getType();
+    E = cast<ImplicitCastExpr>(E)->getSubExpr();
+    goto recurse;
   }
       
   case Expr::ObjCBridgedCastExprClass: {
