@@ -1,5 +1,5 @@
 """
-Test some target commands: create, list, select.
+Test some target commands: create, list, select, variable.
 """
 
 import unittest2
@@ -21,18 +21,30 @@ class targetCommandTestCase(TestBase):
     def test_target_command_with_dwarf(self):
         """Test some target commands: create, list, select."""
         da = {'C_SOURCES': 'a.c', 'EXE': 'a.out'}
-        self.buildDefault(dictionary=da)
+        self.buildDwarf(dictionary=da)
         self.addTearDownCleanup(dictionary=da)
 
         db = {'C_SOURCES': 'b.c', 'EXE': 'b.out'}
-        self.buildDefault(dictionary=db)
+        self.buildDwarf(dictionary=db)
         self.addTearDownCleanup(dictionary=db)
 
         dc = {'C_SOURCES': 'c.c', 'EXE': 'c.out'}
-        self.buildDefault(dictionary=dc)
+        self.buildDwarf(dictionary=dc)
         self.addTearDownCleanup(dictionary=dc)
 
         self.do_target_command()
+
+    # rdar://problem/9763907
+    # 'target variable' command fails if the target program has been run
+    #@unittest2.expectedFailure
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_target_variable_command_with_dsym(self):
+        """Test 'target variable' command before and after starting the inferior."""
+        d = {'C_SOURCES': 'globals.c', 'EXE': 'globals'}
+        self.buildDsym(dictionary=d)
+        self.addTearDownCleanup(dictionary=d)
+
+        self.do_target_variable_command('globals')
 
     def do_target_command(self):
         """Exercise 'target create', 'target list', 'target select' commands."""
@@ -86,6 +98,24 @@ class targetCommandTestCase(TestBase):
                        'stop reason = breakpoint'])
 
         self.runCmd("target list")
+
+    def do_target_variable_command(self, exe_name):
+        """Exercise 'target variable' command before and after starting the inferior."""
+        self.runCmd("file " + exe_name, CURRENT_EXECUTABLE_SET)
+
+        self.expect("target variable my_global_char", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["my_global_char", "'X'"])
+        self.expect("target variable my_global_str", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['my_global_str', '"abc"'])
+
+        self.runCmd("run")
+
+        # rdar://problem/9763907
+        # 'target variable' command fails if the target program has been run
+        self.expect("target variable my_global_char", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["my_global_char", "'X'"])
+        self.expect("target variable my_global_str", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ['my_global_str', '"abc"'])
 
 
 if __name__ == '__main__':
