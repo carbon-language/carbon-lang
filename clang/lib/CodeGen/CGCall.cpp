@@ -1568,9 +1568,13 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         else
           V = Builder.CreateLoad(RV.getAggregateAddr());
         
+        // If the argument doesn't match, perform a bitcast to coerce it.  This
+        // can happen due to trivial type mismatches.
+        if (IRArgNo < IRFuncTy->getNumParams() &&
+            V->getType() != IRFuncTy->getParamType(IRArgNo))
+          V = Builder.CreateBitCast(V, IRFuncTy->getParamType(IRArgNo));
         Args.push_back(V);
         
-        // Validate argument match.
         checkArgMatches(V, IRArgNo, IRFuncTy);
         break;
       }
