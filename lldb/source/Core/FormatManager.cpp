@@ -187,3 +187,33 @@ FormatNavigator<lldb::RegularExpressionSP, SummaryFormat>::Delete(const char* ty
     }
     return false;
 }
+
+lldb::Format
+FormatManager::GetSingleItemFormat(lldb::Format vector_format)
+{
+    switch(vector_format)
+    {
+        case eFormatVectorOfChar:
+            return eFormatCharArray;
+            
+        case eFormatVectorOfSInt8:
+        case eFormatVectorOfSInt16:
+        case eFormatVectorOfSInt32:
+        case eFormatVectorOfSInt64:
+            return eFormatDecimal;
+            
+        case eFormatVectorOfUInt8:
+        case eFormatVectorOfUInt16:
+        case eFormatVectorOfUInt32:
+        case eFormatVectorOfUInt64:
+        case eFormatVectorOfUInt128:
+            return eFormatHex;
+            
+        case eFormatVectorOfFloat32:
+        case eFormatVectorOfFloat64:
+            return eFormatFloat;
+            
+        default:
+            return lldb::eFormatInvalid;
+    }
+}

@@ -97,8 +97,13 @@
               variables in your program to print out as hex, you can add
               a format to the <code>int</code> type.<br></p>
           
-          <p>This is done by typing <code>type format add -f hex
-                  int</code> at the LLDB command line.</p>
+          <p>This is done by typing
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type format add -f hex int
+                        </td>
+                <table>
+          at the LLDB command line.</p>
                   
               <p>The <code>-f</code> option accepts a <a
                   href="#formatstable">format name</a>, and a list of
@@ -124,8 +129,12 @@
                 untouched for other types.</p>
                 
               <p>If you simply type <br>
-              <code>type format add -f hex A<br>
-                  type format add -f pointer C</code><br>
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type format add -f hex A<br>
+                            <b>(lldb)</b> type format add -f pointer C
+                        </td>
+                <table>
               <br>           
               values of type <code>B</code> will be shown as hex
                 and values of type <code>D</code> as pointers.</p>
@@ -135,8 +144,12 @@
                 you can use the option <code>-C no</code> to prevent
                 cascading, thus making the two commands required to
                 achieve your goal:<br>
-                <code> type format add -f hex -C no A<br>
-                  type format add -f pointer -C no C </code></p>
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> type format add -C no -f hex A<br>
+                            <b>(lldb)</b> type format add -C no -f pointer C
+                        </td>
+                <table>
                   
               <p>Two additional options that you will want to look at
                 are <code>-p</code> and <code>-r</code>. These two
@@ -169,7 +182,11 @@
                 in a custom format, while leaving the others of the same
                 type untouched, you can simply type:<br>
               <br>
-              <code>frame variable counter -f hex</code></p>
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> frame variable counter -f hex
+                        </td>
+                <table>
               
               <p>This has the effect of displaying the value of <code>counter</code>
                 as an hexadecimal number, and will keep showing it this
@@ -365,42 +382,34 @@
           <div class="post">
             <h1 class="postheader">type summary</h1>
             <div class="postcontent">
-              <p>Type summaries enable you to add more information to
-                the default viewing format for a type, or to completely
-                replace it with your own display option. Unlike formats
-                which only apply to basic types, summaries can be used
-                on every type (basic types, classes (C++ and
-                Objective-C), arrays, ...).</p>
-              <p>The basic idea beneath type summaries is extracting
-                information from variables and arranging it in a format
-                that is suitable for display:</p>
+              <p>Type formats work by showing a different kind of display for
+              the value of a variable. However, they only work for basic types.
+              When you want to display a class or struct in a custom format, you
+              cannot do that using formats.</p>
+              <p>A different feature, type summaries, works by extracting
+                information from classes, structures, ... (<i>aggregate types</i>)
+                and arranging it in a user-defined format, as in the following example:</p>
               <p> <i>before adding a summary...</i><br>
                 <code> <b>(lldb)</b> fr var -T one<br>
                   (i_am_cool) one = {<br>
-                  (int) integer = 3<br>
-                  (float) floating = 3.14159<br>
-                  (char) character = 'E'<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;(int) integer = 3<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;(float) floating = 3.14159<br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;(char) character = 'E'<br>
                   }<br>
                 </code> <br>
                 <i>after adding a summary...</i><br>
                 <code> <b>(lldb)</b> fr var one<br>
                   (i_am_cool) one = int = 3, float = 3.14159, char = 69<br>
                 </code> </p>
-              <p>Evidently, somehow we managed to tell LLDB to grab the
-                three member variables of the <code>i_am_cool</code>
-                datatype, mix their values with some text, and even ask
-                it to display the <code>character</code> member using a
-                custom format.</p>
-              <p>The way to do this is add a <i>summary string</i> to
+              <p>The way to obtain this effect is to bind a <i>summary string</i> to
                 the datatype using the <code>type summary add</code>
                 command.</p>
-              <p>Its syntax is similar to <code>type format add</code>,
-                but some more options are supported that will be
-                described in the follow-up.</p>
-              <p>The main option to <code>type summary add</code> is <code>-f</code>
-                which accepts as parameter a summary string. After that,
-                you can type as many type names as you want to associate
-                the given summary string to them.</p>
+              <p>In the example, the command we type was:</p>
+                <table class="stats" width="620" cellspacing="0">
+                        <td class="content">
+                            <b>(lldb)</b> frame variable counter -f hex
+                        </td>
+                <table>
             </div>
           </div>
           <div class="post">
@@ -687,7 +696,13 @@
                   classes, look at the virtual base classes (and bases
                   of bases, ...)</li>
                 <li>If this object's type is a typedef, go through
-                  typedef hierarchy</li>
+                  typedef hierarchy (LLDB might not be able to do this if
+                  the compiler has not emitted enough information. If the
+                  required information to traverse typedef hierarchies is
+                  missing, type cascading will not work. The
+                  <a href="http://clang.llvm.org/">clang compiler</a>,
+                  part of the LLVM project, emits the correct debugging
+                  information for LLDB to cascade)</li>
                 <li>If everything has failed, repeat the above search,
                   looking for regular expressions instead of exact
                   matches</li>

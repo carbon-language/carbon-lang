@@ -1610,8 +1610,11 @@ DataExtractor::Dump
             s->Printf("0x%8.8x", GetU32 (&offset));
             break;
 
-        case eFormatVectorOfChar:
-            s->PutChar('{');
+// please keep the single-item formats below in sync with FormatManager::GetSingleItemFormat
+// if you fail to do so, users will start getting different outputs depending on internal
+// implementation details they should not care about ||
+        case eFormatVectorOfChar:               //   ||
+            s->PutChar('{');                    //   \/   
             offset = Dump (s, start_offset, eFormatCharArray, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;

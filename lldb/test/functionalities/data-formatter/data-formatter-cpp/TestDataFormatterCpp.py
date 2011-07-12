@@ -97,7 +97,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("type summary add -f \"arr = ${var%s}\" -x \"char \\[[0-9]+\\]\" -v")
         
         self.expect("frame variable strarr",
-                    substrs = ['arr = "Hello world!\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0"'])
+                    substrs = ['arr = "Hello world!"'])
         
         self.runCmd("type summary clear")
         
@@ -109,7 +109,7 @@ class DataFormatterTestCase(TestBase):
         self.runCmd("type summary add -f \"arr = ${var%s}\" -x \"char \\[[0-9]+\\]\" -v")
         
         self.expect("frame variable strarr",
-                    substrs = ['arr = "Hello world!\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0\\0"'])
+                    substrs = ['arr = "Hello world!'])
         
         self.expect("frame variable strptr",
                     substrs = ['ptr = "Hello world!"'])

@@ -694,6 +694,7 @@ TestPromptFormats (StackFrame *frame)
     }
 }
 
+// FIXME this should eventually be replaced by proper use of LLDB logging facilities
 //#define VERBOSE_FORMATPROMPT_OUTPUT
 #ifdef VERBOSE_FORMATPROMPT_OUTPUT
 #define IFERROR_PRINT_IT if (error.Fail()) \
@@ -1090,14 +1091,29 @@ Debugger::FormatPrompt
                                     IFERROR_PRINT_IT
                                     do_deref_pointer = false;
                                 }
+                                
+                                bool is_array = ClangASTContext::IsArrayType(target->GetClangType());
+                                bool is_pointer = ClangASTContext::IsPointerType(target->GetClangType());
+                                
+                                if ((is_array || is_pointer) && (!is_array_range) && val_obj_display == ValueObject::eDisplayValue) // this should be wrong, but there are some exceptions
+                                {
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                    printf("I am into array || pointer && !range\n");
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                    // try to use the special cases
+                                    var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
+                                    if (!var_success)
+                                        s << "<invalid, please use [] operator>";
+#ifdef VERBOSE_FORMATPROMPT_OUTPUT                                
+                                    printf("outcome was : %s\n", var_success ? "good" : "bad");
+#endif //VERBOSE_FORMATPROMPT_OUTPUT
+                                    break;
+                                }
                                                                 
                                 if (!is_array_range)
                                     var_success = target->DumpPrintableRepresentation(s,val_obj_display, custom_format);
                                 else
-                                {
-                                    bool is_array = ClangASTContext::IsArrayType(target->GetClangType());
-                                    bool is_pointer = ClangASTContext::IsPointerType(target->GetClangType());
-                                    
+                                {                                    
                                     if (!is_array && !is_pointer)
                                         break;
                                     

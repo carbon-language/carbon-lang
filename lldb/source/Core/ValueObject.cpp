@@ -40,8 +40,11 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 
+#include "lldb/Utility/RefCounter.h"
+
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_utility;
 
 static lldb::user_id_t g_value_obj_uid = 0;
 
@@ -78,7 +81,8 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_last_format_mgr_revision(0),
     m_last_summary_format(),
     m_last_value_format(),
-    m_forced_summary_format()
+    m_forced_summary_format(),
+    m_dump_printable_counter(0)
 {
     m_manager->ManageObject(this);
 }
@@ -116,7 +120,8 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope) :
     m_last_format_mgr_revision(0),
     m_last_summary_format(),
     m_last_value_format(),
-    m_forced_summary_format()
+    m_forced_summary_format(),
+    m_dump_printable_counter(0)
 {
     m_manager = new ValueObjectManager();
     m_manager->ManageObject (this);
@@ -752,11 +757,13 @@ ValueObject::IsCStringContainer(bool check_pointer)
 void
 ValueObject::ReadPointedString(Stream& s,
                                Error& error,
-                               uint32_t max_length)
+                               uint32_t max_length,
+                               bool honor_array,
+                               lldb::Format item_format)
 {
     
     if (max_length == 0)
-        max_length = 128;   // this should be a setting, or a formatting parameter
+        max_length = 128;   // FIXME this should be a setting, or a formatting parameter
     
     clang_type_t clang_type = GetClangType();
     clang_type_t elem_or_pointee_clang_type;
@@ -781,14 +788,10 @@ ValueObject::ReadPointedString(Stream& s,
                     {
                         // We have an array
                         cstr_len = ClangASTContext::GetArraySize (clang_type);
-                        if (cstr_len > max_length) // TODO: make cap a setting
+                        if (cstr_len > max_length)
                         {
-                            cstr_len = ClangASTContext::GetArraySize (clang_type);
-                            if (cstr_len > max_length) // TODO: make cap a setting
-                            {
-                                capped_data = true;
-                                cstr_len = max_length;
-                            }
+                            capped_data = true;
+                            cstr_len = max_length;
                         }
                         cstr_address = GetAddressOf (cstr_address_type, true);
                     }
@@ -803,9 +806,8 @@ ValueObject::ReadPointedString(Stream& s,
                         DataExtractor data;
                         size_t bytes_read = 0;
                         std::vector<char> data_buffer;
-                        Error error;
                         bool prefer_file_cache = false;
-                        if (cstr_len > 0)
+                        if (cstr_len > 0 && honor_array)
                         {
                             data_buffer.resize(cstr_len);
                             data.SetData (&data_buffer.front(), data_buffer.size(), lldb::endian::InlHostByteOrder());
@@ -819,7 +821,7 @@ ValueObject::ReadPointedString(Stream& s,
                                 s << '"';
                                 data.Dump (&s,
                                            0,                 // Start offset in "data"
-                                           eFormatCharArray,  // Print as characters
+                                           item_format,
                                            1,                 // Size of item (1 byte for a char!)
                                            bytes_read,        // How many bytes to print?
                                            UINT32_MAX,        // num per line
@@ -833,7 +835,8 @@ ValueObject::ReadPointedString(Stream& s,
                         }
                         else
                         {
-                            const size_t k_max_buf_size = 256;
+                            cstr_len = max_length;
+                            const size_t k_max_buf_size = 64;
                             data_buffer.resize (k_max_buf_size + 1);
                             // NULL terminate in case we don't get the entire C string
                             data_buffer.back() = '\0';
@@ -852,10 +855,12 @@ ValueObject::ReadPointedString(Stream& s,
                                     break;
                                 if (len > bytes_read)
                                     len = bytes_read;
+                                if (len > cstr_len)
+                                    len = cstr_len;
                                 
                                 data.Dump (&s,
                                            0,                 // Start offset in "data"
-                                           eFormatCharArray,  // Print as characters
+                                           item_format,
                                            1,                 // Size of item (1 byte for a char!)
                                            len,               // How many bytes to print?
                                            UINT32_MAX,        // num per line
@@ -865,6 +870,12 @@ ValueObject::ReadPointedString(Stream& s,
                                 
                                 if (len < k_max_buf_size)
                                     break;
+                                if (len >= cstr_len)
+                                {
+                                    s << "...";
+                                    break;
+                                }
+                                cstr_len -= len;
                                 cstr_so_addr.Slide (k_max_buf_size);
                             }
                             s << '"';
@@ -1016,6 +1027,9 @@ const char *
 ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_display,
                                         lldb::Format custom_format)
 {
+
+    RefCounter ref(&m_dump_printable_counter);
+    
     if(custom_format != lldb::eFormatInvalid)
         SetFormat(custom_format);
     
@@ -1034,18 +1048,18 @@ ValueObject::GetPrintableRepresentation(ValueObjectRepresentationStyle val_obj_d
             break;
     }
     
-    if (!return_value)
+    // this code snippet might lead to endless recursion, thus we use a RefCounter here to
+    // check that we are not looping endlessly
+    if (!return_value && (m_dump_printable_counter < 3))
     {
         // try to pick the other choice
         if (val_obj_display == eDisplayValue)
             return_value = GetSummaryAsCString();
         else if (val_obj_display == eDisplaySummary)
             return_value = GetValueAsCString();
-        else
-            return_value = "";
     }
     
-    return (return_value ? return_value : "");
+    return (return_value ? return_value : "<error>");
 
 }
 
@@ -1054,25 +1068,129 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                                          ValueObjectRepresentationStyle val_obj_display,
                                          lldb::Format custom_format)
 {
+
+    clang_type_t elem_or_pointee_type;
+    Flags flags(ClangASTContext::GetTypeInfo(GetClangType(), GetClangAST(), &elem_or_pointee_type));
     
-    if (IsCStringContainer(true) &&
-        val_obj_display == ValueObject::eDisplayValue &&
-        custom_format == lldb::eFormatCString)
+    if (flags.AnySet(ClangASTContext::eTypeIsArray | ClangASTContext::eTypeIsPointer)
+         && val_obj_display == ValueObject::eDisplayValue)
     {
-        Error error;
-        ReadPointedString(s, error);
-        return error.Success();
+        // when being asked to get a printable display an array or pointer type directly, 
+        // try to "do the right thing"
+        
+        if (IsCStringContainer(true) && 
+            (custom_format == lldb::eFormatCString ||
+             custom_format == lldb::eFormatCharArray ||
+             custom_format == lldb::eFormatChar ||
+             custom_format == lldb::eFormatVectorOfChar)) // print char[] & char* directly
+        {
+            Error error;
+            ReadPointedString(s,
+                              error,
+                              0,
+                              (custom_format == lldb::eFormatVectorOfChar) ||
+                              (custom_format == lldb::eFormatCharArray));
+            return !error.Fail();
+        }
+        
+        if (custom_format == lldb::eFormatEnum)
+            return false;
+        
+        // this only works for arrays, because I have no way to know when
+        // the pointed memory ends, and no special \0 end of data marker
+        if (flags.Test(ClangASTContext::eTypeIsArray))
+        {
+            if ((custom_format == lldb::eFormatBytes) ||
+                (custom_format == lldb::eFormatBytesWithASCII))
+            {
+                uint32_t count = GetNumChildren();
+                                
+                s << '[';
+                for (uint32_t low = 0; low < count; low++)
+                {
+                    
+                    if (low)
+                        s << ',';
+                    
+                    ValueObjectSP child = GetChildAtIndex(low,true);
+                    if (!child.get())
+                    {
+                        s << "<error>";
+                        continue;
+                    }
+                    child->DumpPrintableRepresentation(s, ValueObject::eDisplayValue, custom_format);
+                }                
+                
+                s << ']';
+                
+                return true;
+            }
+            
+            if ((custom_format == lldb::eFormatVectorOfChar) ||
+                (custom_format == lldb::eFormatVectorOfFloat32) ||
+                (custom_format == lldb::eFormatVectorOfFloat64) ||
+                (custom_format == lldb::eFormatVectorOfSInt16) ||
+                (custom_format == lldb::eFormatVectorOfSInt32) ||
+                (custom_format == lldb::eFormatVectorOfSInt64) ||
+                (custom_format == lldb::eFormatVectorOfSInt8) ||
+                (custom_format == lldb::eFormatVectorOfUInt128) ||
+                (custom_format == lldb::eFormatVectorOfUInt16) ||
+                (custom_format == lldb::eFormatVectorOfUInt32) ||
+                (custom_format == lldb::eFormatVectorOfUInt64) ||
+                (custom_format == lldb::eFormatVectorOfUInt8)) // arrays of bytes, bytes with ASCII or any vector format should be printed directly
+            {
+                uint32_t count = GetNumChildren();
+
+                lldb::Format format = FormatManager::GetSingleItemFormat(custom_format);
+                
+                s << '[';
+                for (uint32_t low = 0; low < count; low++)
+                {
+                    
+                    if (low)
+                        s << ',';
+                    
+                    ValueObjectSP child = GetChildAtIndex(low,true);
+                    if (!child.get())
+                    {
+                        s << "<error>";
+                        continue;
+                    }
+                    child->DumpPrintableRepresentation(s, ValueObject::eDisplayValue, format);
+                }                
+                
+                s << ']';
+                
+                return true;
+            }
+        }
+        
+        if ((custom_format == lldb::eFormatBoolean) ||
+            (custom_format == lldb::eFormatBinary) ||
+            (custom_format == lldb::eFormatChar) ||
+            (custom_format == lldb::eFormatCharPrintable) ||
+            (custom_format == lldb::eFormatComplexFloat) ||
+            (custom_format == lldb::eFormatDecimal) ||
+            (custom_format == lldb::eFormatHex) ||
+            (custom_format == lldb::eFormatFloat) ||
+            (custom_format == lldb::eFormatOctal) ||
+            (custom_format == lldb::eFormatOSType) ||
+            (custom_format == lldb::eFormatUnicode16) ||
+            (custom_format == lldb::eFormatUnicode32) ||
+            (custom_format == lldb::eFormatUnsigned) ||
+            (custom_format == lldb::eFormatPointer) ||
+            (custom_format == lldb::eFormatComplexInteger) ||
+            (custom_format == lldb::eFormatComplex) ||
+            (custom_format == lldb::eFormatDefault)) // use the [] operator
+            return false;
     }
-    else
-    {
-        const char *targetvalue = GetPrintableRepresentation(val_obj_display, custom_format);
-        if(targetvalue)
-            s.PutCString(targetvalue);
-        bool var_success = (targetvalue != NULL);
-        if(custom_format != eFormatInvalid)
-            SetFormat(eFormatDefault);
-        return var_success;
-    }
+    const char *targetvalue = GetPrintableRepresentation(val_obj_display, custom_format);
+    if(targetvalue)
+        s.PutCString(targetvalue);
+    bool var_success = (targetvalue != NULL);
+    if(custom_format != eFormatInvalid)
+        SetFormat(eFormatDefault);
+    return var_success;
 }
 
 addr_t

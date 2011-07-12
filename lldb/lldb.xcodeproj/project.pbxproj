@@ -403,6 +403,7 @@
 		4CCA645813B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA644A13B40B82003BDF98 /* AppleThreadPlanStepThroughObjCTrampoline.cpp */; };
 		4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CD0BD0E134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp */; };
 		9415F61813B2C0EF00A52B36 /* FormatManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9415F61713B2C0EF00A52B36 /* FormatManager.cpp */; };
+		94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94611EB113CCA4A4003A22AF /* RefCounter.cpp */; };
 		9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */; };
 		9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -1170,6 +1171,8 @@
 		69A01E201236C5D400C660B5 /* TimeValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TimeValue.cpp; sourceTree = "<group>"; };
 		9415F61613B2C0DC00A52B36 /* FormatManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FormatManager.h; path = include/lldb/Core/FormatManager.h; sourceTree = "<group>"; };
 		9415F61713B2C0EF00A52B36 /* FormatManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FormatManager.cpp; path = source/Core/FormatManager.cpp; sourceTree = "<group>"; };
+		94611EAF13CCA363003A22AF /* RefCounter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RefCounter.h; path = include/lldb/Utility/RefCounter.h; sourceTree = "<group>"; };
+		94611EB113CCA4A4003A22AF /* RefCounter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RefCounter.cpp; path = source/Utility/RefCounter.cpp; sourceTree = "<group>"; };
 		9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectType.cpp; path = source/Commands/CommandObjectType.cpp; sourceTree = "<group>"; };
 		9463D4CE13B179A500C230D4 /* CommandObjectType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectType.h; path = source/Commands/CommandObjectType.h; sourceTree = "<group>"; };
 		9467E65113C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeHierarchyNavigator.cpp; path = source/Symbol/TypeHierarchyNavigator.cpp; sourceTree = "<group>"; };
@@ -1780,6 +1783,8 @@
 			isa = PBXGroup;
 			children = (
 				264723A511FA076E00DE380C /* CleanUp.h */,
+				94611EAF13CCA363003A22AF /* RefCounter.h */,
+				94611EB113CCA4A4003A22AF /* RefCounter.cpp */,
 				261B5A5211C3F2AD00AABD0A /* SharingPtr.cpp */,
 				4C2FAE2E135E3A70001EDE44 /* SharedCluster.h */,
 				261B5A5311C3F2AD00AABD0A /* SharingPtr.h */,
@@ -3265,6 +3270,7 @@
 				9467E65213C3D97600B3B6F3 /* TypeHierarchyNavigator.cpp in Sources */,
 				26ED3D6D13C563810017D45E /* OptionGroupVariable.cpp in Sources */,
 				26F4214413C6515B00E04E5E /* DynamicLoaderMacOSXKernel.cpp in Sources */,
+				94611EB213CCA4A4003A22AF /* RefCounter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -602,7 +602,9 @@ public:
     void
     ReadPointedString(Stream& s,
                       Error& error,
-                      uint32_t max_length = 0);
+                      uint32_t max_length = 0,
+                      bool honor_array = true,
+                      lldb::Format item_format = lldb::eFormatCharArray);
 
     bool
     GetIsConstant () const
@@ -741,6 +743,8 @@ protected:
                         m_is_array_item_for_pointer:1,
                         m_is_bitfield_for_scalar:1;
     
+    // used to prevent endless looping into GetpPrintableRepresentation()
+    uint32_t            m_dump_printable_counter;
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName
     friend class Target;                  // For SetName

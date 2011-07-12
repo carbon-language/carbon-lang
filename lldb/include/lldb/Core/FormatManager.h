@@ -499,6 +499,11 @@ public:
     static const char *
     GetFormatAsCString (lldb::Format format);
     
+    // when DataExtractor dumps a vectorOfT, it uses a predefined format for each item
+    // this method returns it, or eFormatInvalid if vector_format is not a vectorOf
+    static lldb::Format
+    GetSingleItemFormat(lldb::Format vector_format);
+    
     void
     Changed()
     {
