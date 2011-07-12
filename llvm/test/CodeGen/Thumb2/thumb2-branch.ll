@@ -1,6 +1,7 @@
-; RUN: llc < %s -ifcvt-limit=0 -mtriple=thumbv7-apple-darwin -mattr=+thumb2 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-darwin -mattr=+thumb2 | FileCheck %s
 ; If-conversion defeats the purpose of this test, which is to check conditional
-; branch generation, so turn it off.
+; branch generation, so use memory barrier instruction to make sure it doesn't
+; happen and we get actual branches.
 
 define i32 @f1(i32 %a, i32 %b, i32* %v) {
 entry:
@@ -10,10 +11,12 @@ entry:
         br i1 %tmp, label %cond_true, label %return
 
 cond_true:              ; preds = %entry
+        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
         store i32 0, i32* %v
         ret i32 0
 
 return:         ; preds = %entry
+        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
         ret i32 1
 }
 
@@ -25,10 +28,12 @@ entry:
         br i1 %tmp, label %cond_true, label %return
 
 cond_true:              ; preds = %entry
+        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
         store i32 0, i32* %v
         ret i32 0
 
 return:         ; preds = %entry
+        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
         ret i32 1
 }
 
@@ -40,10 +45,12 @@ entry:
         br i1 %tmp, label %cond_true, label %return
 
 cond_true:              ; preds = %entry
+        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
         store i32 0, i32* %v
         ret i32 0
 
 return:         ; preds = %entry
+        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
         ret i32 1
 }
 
@@ -55,9 +62,13 @@ entry:
         br i1 %tmp, label %return, label %cond_true
 
 cond_true:              ; preds = %entry
+        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
         store i32 0, i32* %v
         ret i32 0
 
 return:         ; preds = %entry
+        call void @llvm.memory.barrier(i1 true, i1 true, i1 true, i1 true, i1 false)
         ret i32 1
 }
+
+declare void @llvm.memory.barrier(i1, i1, i1, i1, i1) nounwind
