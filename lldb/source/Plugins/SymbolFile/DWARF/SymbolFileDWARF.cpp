@@ -1218,16 +1218,30 @@ SymbolFileDWARF::ParseChildMembers
                     if (is_artificial == false)
                     {
                         Type *member_type = ResolveTypeUID(encoding_uid);
-                        assert(member_type);
-                        if (accessibility == eAccessNone)
-                            accessibility = default_accessibility;
-                        member_accessibilities.push_back(accessibility);
+                        if (member_type)
+                        {
+                            if (accessibility == eAccessNone)
+                                accessibility = default_accessibility;
+                            member_accessibilities.push_back(accessibility);
 
-                        GetClangASTContext().AddFieldToRecordType (class_clang_type, 
-                                                                   name, 
-                                                                   member_type->GetClangLayoutType(), 
-                                                                   accessibility, 
-                                                                   bit_size);
+                            GetClangASTContext().AddFieldToRecordType (class_clang_type, 
+                                                                       name, 
+                                                                       member_type->GetClangLayoutType(), 
+                                                                       accessibility, 
+                                                                       bit_size);
+                        }
+                        else
+                        {
+                            if (name)
+                                ReportError ("0x%8.8x: DW_TAG_member '%s' refers to type 0x%8.8x which was unable to be parsed",
+                                             die->GetOffset(),
+                                             name,
+                                             encoding_uid);
+                            else
+                                ReportError ("0x%8.8x: DW_TAG_member refers to type 0x%8.8x which was unable to be parsed",
+                                             die->GetOffset(),
+                                             encoding_uid);
+                        }
                     }
                 }
                 ++member_idx;
@@ -2236,6 +2250,19 @@ SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, Symb
 
     // Return the number of variable that were appended to the list
     return sc_list.GetSize() - original_size;
+}
+void
+SymbolFileDWARF::ReportError (const char *format, ...)
+{
+    ::fprintf (stderr, 
+               "error: %s/%s ", 
+               m_obj_file->GetFileSpec().GetDirectory().GetCString(),
+               m_obj_file->GetFileSpec().GetFilename().GetCString());
+
+    va_list args;
+    va_start (args, format);
+    vfprintf (stderr, format, args);
+    va_end (args);
 }
 
 uint32_t

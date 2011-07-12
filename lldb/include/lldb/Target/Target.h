@@ -238,17 +238,23 @@ public:
                       bool internal = false);
 
     // Use this to create a function breakpoint by regexp in containingModule, or all modules if it is NULL
+    // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
+    // setting, else we use the values passed in
     lldb::BreakpointSP
     CreateBreakpoint (const FileSpec *containingModule,
                       RegularExpression &func_regexp,
-                      bool internal = false);
+                      bool internal = false,
+                      LazyBool skip_prologue = eLazyBoolCalculate);
 
     // Use this to create a function breakpoint by name in containingModule, or all modules if it is NULL
+    // When "skip_prologue is set to eLazyBoolCalculate, we use the current target 
+    // setting, else we use the values passed in
     lldb::BreakpointSP
     CreateBreakpoint (const FileSpec *containingModule,
                       const char *func_name,
                       uint32_t func_name_type_mask, 
-                      bool internal = false);
+                      bool internal = false,
+                      LazyBool skip_prologue = eLazyBoolCalculate);
 
     // Use this to create a general breakpoint:
     lldb::BreakpointSP
@@ -460,6 +466,27 @@ public:
                 void *dst,
                 size_t dst_len,
                 Error &error);
+
+    size_t
+    ReadScalarIntegerFromMemory (const Address& addr, 
+                                 bool prefer_file_cache,
+                                 uint32_t byte_size, 
+                                 bool is_signed, 
+                                 Scalar &scalar, 
+                                 Error &error);
+
+    uint64_t
+    ReadUnsignedIntegerFromMemory (const Address& addr, 
+                                   bool prefer_file_cache,
+                                   size_t integer_byte_size, 
+                                   uint64_t fail_value, 
+                                   Error &error);
+
+    bool
+    ReadPointerFromMemory (const Address& addr, 
+                           bool prefer_file_cache,
+                           Error &error,
+                           Address &pointer_addr);
 
     SectionLoadList&
     GetSectionLoadList()

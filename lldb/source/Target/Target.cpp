@@ -213,13 +213,22 @@ Target::CreateBreakpoint (Address &addr, bool internal)
 }
 
 BreakpointSP
-Target::CreateBreakpoint (const FileSpec *containingModule, const char *func_name, uint32_t func_name_type_mask, bool internal)
+Target::CreateBreakpoint (const FileSpec *containingModule, 
+                          const char *func_name, 
+                          uint32_t func_name_type_mask, 
+                          bool internal,
+                          LazyBool skip_prologue)
 {
     BreakpointSP bp_sp;
     if (func_name)
     {
         SearchFilterSP filter_sp(GetSearchFilterForModule (containingModule));
-        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, func_name, func_name_type_mask, Breakpoint::Exact));
+        
+        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, 
+                                                                      func_name, 
+                                                                      func_name_type_mask, 
+                                                                      Breakpoint::Exact, 
+                                                                      skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
         bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
     }
     return bp_sp;
@@ -247,10 +256,15 @@ Target::GetSearchFilterForModule (const FileSpec *containingModule)
 }
 
 BreakpointSP
-Target::CreateBreakpoint (const FileSpec *containingModule, RegularExpression &func_regex, bool internal)
+Target::CreateBreakpoint (const FileSpec *containingModule, 
+                          RegularExpression &func_regex, 
+                          bool internal,
+                          LazyBool skip_prologue)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModule (containingModule));
-    BreakpointResolverSP resolver_sp(new BreakpointResolverName (NULL, func_regex));
+    BreakpointResolverSP resolver_sp(new BreakpointResolverName (NULL, 
+                                                                 func_regex, 
+                                                                 skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
 
     return CreateBreakpoint (filter_sp, resolver_sp, internal);
 }
@@ -600,19 +614,21 @@ Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size
     Address resolved_addr;
     if (!addr.IsSectionOffset())
     {
-        if (process_is_valid)
+        if (m_section_load_list.IsEmpty())
         {
-            // Process is valid and we were given an address that
-            // isn't section offset, so assume this is a load address
-            load_addr = addr.GetOffset();
-            m_section_load_list.ResolveLoadAddress (addr.GetOffset(), resolved_addr);
+            // No sections are loaded, so we must assume we are not running
+            // yet and anything we are given is a file address.
+            file_addr = addr.GetOffset(); // "addr" doesn't have a section, so its offset is the file address
+            m_images.ResolveFileAddress (file_addr, resolved_addr);            
         }
         else
         {
-            // Process is NOT valid and we were given an address that
-            // isn't section offset, so assume this is a file address
-            file_addr = addr.GetOffset();
-            m_images.ResolveFileAddress(addr.GetOffset(), resolved_addr);
+            // We have at least one section loaded. This can be becuase
+            // we have manually loaded some sections with "target modules load ..."
+            // or because we have have a live process that has sections loaded
+            // through the dynamic loader
+            load_addr = addr.GetOffset(); // "addr" doesn't have a section, so its offset is the load address
+            m_section_load_list.ResolveLoadAddress (load_addr, resolved_addr);
         }
     }
     if (!resolved_addr.IsValid())
@@ -674,6 +690,99 @@ Target::ReadMemory (const Address& addr, bool prefer_file_cache, void *dst, size
     return 0;
 }
 
+size_t
+Target::ReadScalarIntegerFromMemory (const Address& addr, 
+                                     bool prefer_file_cache,
+                                     uint32_t byte_size, 
+                                     bool is_signed, 
+                                     Scalar &scalar, 
+                                     Error &error)
+{
+    uint64_t uval;
+    
+    if (byte_size <= sizeof(uval))
+    {
+        size_t bytes_read = ReadMemory (addr, prefer_file_cache, &uval, byte_size, error);
+        if (bytes_read == byte_size)
+        {
+            DataExtractor data (&uval, sizeof(uval), m_arch.GetByteOrder(), m_arch.GetAddressByteSize());
+            uint32_t offset = 0;
+            if (byte_size <= 4)
+                scalar = data.GetMaxU32 (&offset, byte_size);
+            else
+                scalar = data.GetMaxU64 (&offset, byte_size);
+            
+            if (is_signed)
+                scalar.SignExtend(byte_size * 8);
+            return bytes_read;
+        }
+    }
+    else
+    {
+        error.SetErrorStringWithFormat ("byte size of %u is too large for integer scalar type", byte_size);
+    }
+    return 0;
+}
+
+uint64_t
+Target::ReadUnsignedIntegerFromMemory (const Address& addr, 
+                                       bool prefer_file_cache,
+                                       size_t integer_byte_size, 
+                                       uint64_t fail_value, 
+                                       Error &error)
+{
+    Scalar scalar;
+    if (ReadScalarIntegerFromMemory (addr, 
+                                     prefer_file_cache, 
+                                     integer_byte_size, 
+                                     false, 
+                                     scalar, 
+                                     error))
+        return scalar.ULongLong(fail_value);
+    return fail_value;
+}
+
+bool
+Target::ReadPointerFromMemory (const Address& addr, 
+                               bool prefer_file_cache,
+                               Error &error,
+                               Address &pointer_addr)
+{
+    Scalar scalar;
+    if (ReadScalarIntegerFromMemory (addr, 
+                                     prefer_file_cache, 
+                                     m_arch.GetAddressByteSize(), 
+                                     false, 
+                                     scalar, 
+                                     error))
+    {
+        addr_t pointer_vm_addr = scalar.ULongLong(LLDB_INVALID_ADDRESS);
+        if (pointer_vm_addr != LLDB_INVALID_ADDRESS)
+        {
+            if (m_section_load_list.IsEmpty())
+            {
+                // No sections are loaded, so we must assume we are not running
+                // yet and anything we are given is a file address.
+                m_images.ResolveFileAddress (pointer_vm_addr, pointer_addr);
+            }
+            else
+            {
+                // We have at least one section loaded. This can be becuase
+                // we have manually loaded some sections with "target modules load ..."
+                // or because we have have a live process that has sections loaded
+                // through the dynamic loader
+                m_section_load_list.ResolveLoadAddress (pointer_vm_addr, pointer_addr);
+            }
+            // We weren't able to resolve the pointer value, so just return
+            // an address with no section
+            if (!pointer_addr.IsValid())
+                pointer_addr.SetOffset (pointer_vm_addr);
+            return true;
+            
+        }
+    }
+    return false;
+}
 
 ModuleSP
 Target::GetSharedModule

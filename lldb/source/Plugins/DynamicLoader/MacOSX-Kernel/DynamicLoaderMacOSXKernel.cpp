@@ -87,6 +87,7 @@ DynamicLoaderMacOSXKernel::CreateInstance (Process* process, bool force)
 DynamicLoaderMacOSXKernel::DynamicLoaderMacOSXKernel (Process* process) :
     DynamicLoader(process),
     m_kernel(),
+    m_kext_summary_header_ptr_addr (),
     m_kext_summary_header_addr (),
     m_kext_summary_header (),
     m_break_id (LLDB_INVALID_BREAK_ID),
@@ -150,6 +151,7 @@ DynamicLoaderMacOSXKernel::Clear (bool clear_process)
     if (clear_process)
         m_process = NULL;
     m_kernel.Clear(false);
+    m_kext_summary_header_ptr_addr.Clear();
     m_kext_summary_header_addr.Clear();
     m_kext_summaries.clear();
     m_break_id = LLDB_INVALID_BREAK_ID;
@@ -165,7 +167,7 @@ DynamicLoaderMacOSXKernel::Clear (bool clear_process)
 void
 DynamicLoaderMacOSXKernel::LoadKernelModuleIfNeeded()
 {
-    if (!m_kext_summary_header_addr.IsValid())
+    if (!m_kext_summary_header_ptr_addr.IsValid())
     {
         m_kernel.Clear(false);
         m_kernel.module_sp = m_process->GetTarget().GetExecutableModule();
@@ -176,7 +178,7 @@ DynamicLoaderMacOSXKernel::LoadKernelModuleIfNeeded()
             const Symbol *symbol = NULL;
             symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (kext_summary_symbol, eSymbolTypeData);
             if (symbol)
-                m_kext_summary_header_addr = symbol->GetValue();
+                m_kext_summary_header_ptr_addr = symbol->GetValue();
 
             symbol = m_kernel.module_sp->FindFirstSymbolWithNameAndType (mach_header_name, eSymbolTypeAbsolute);
             if (symbol)
@@ -395,7 +397,15 @@ DynamicLoaderMacOSXKernel::BreakpointHit (StoppointCallbackContext *context,
                                           user_id_t break_id, 
                                           user_id_t break_loc_id)
 {    
+    LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
+    if (log)
+        log->Printf ("DynamicLoaderMacOSXKernel::BreakpointHit (...)\n");
+
     ReadAllKextSummaries ();
+    
+    if (log)
+        PutToLog(log.get());
+
     return GetStopWhenImagesChange();
 }
 
@@ -408,7 +418,7 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
     // the all image infos is already valid for this process stop ID
 
     m_kext_summaries.clear();
-    if (m_kext_summary_header_addr.IsValid())
+    if (m_kext_summary_header_ptr_addr.IsValid())
     {
         const uint32_t addr_size = m_kernel.GetAddressByteSize ();
         const ByteOrder byte_order = m_kernel.GetByteOrder();
@@ -419,17 +429,29 @@ DynamicLoaderMacOSXKernel::ReadKextSummaryHeader ()
         DataExtractor data (buf, sizeof(buf), byte_order, addr_size);
         const size_t count = 4 * sizeof(uint32_t) + addr_size;
         const bool prefer_file_cache = false;
-        const size_t bytes_read = m_process->GetTarget().ReadMemory (m_kext_summary_header_addr, prefer_file_cache, buf, count, error);
-        if (bytes_read == count)
+        if (m_process->GetTarget().ReadPointerFromMemory (m_kext_summary_header_ptr_addr, 
+                                                          prefer_file_cache,
+                                                          error,
+                                                          m_kext_summary_header_addr))
         {
-            uint32_t offset = 0;
-            m_kext_summary_header.version       = data.GetU32(&offset);
-            m_kext_summary_header.entry_size    = data.GetU32(&offset);
-            m_kext_summary_header.entry_count   = data.GetU32(&offset);
-            m_kext_summary_header.reserved      = data.GetU32(&offset);
-            return true;
+            // We got a valid address for our kext summary header and make sure it isn't NULL
+            if (m_kext_summary_header_addr.IsValid() && 
+                m_kext_summary_header_addr.GetFileAddress() != 0)
+            {
+                const size_t bytes_read = m_process->GetTarget().ReadMemory (m_kext_summary_header_addr, prefer_file_cache, buf, count, error);
+                if (bytes_read == count)
+                {
+                    uint32_t offset = 0;
+                    m_kext_summary_header.version       = data.GetU32(&offset);
+                    m_kext_summary_header.entry_size    = data.GetU32(&offset);
+                    m_kext_summary_header.entry_count   = data.GetU32(&offset);
+                    m_kext_summary_header.reserved      = data.GetU32(&offset);
+                    return true;
+                }
+            }
         }
     }
+    m_kext_summary_header_addr.Clear();
     return false;
 }
 
@@ -471,16 +493,9 @@ DynamicLoaderMacOSXKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
 {
     // Now add these images to the main list.
     ModuleList loaded_module_list;
-    LogSP log(GetLogIfAnyCategoriesSet (LIBLLDB_LOG_DYNAMIC_LOADER));
     
     for (uint32_t idx = 0; idx < image_infos.size(); ++idx)
     {
-        if (log)
-        {
-            log->Printf ("Adding new image at address=0x%16.16llx.", image_infos[idx].address);
-            image_infos[idx].PutToLog (log.get());
-        }
-        
         m_kext_summaries.push_back(image_infos[idx]);
         
         if (FindTargetModule (image_infos[idx], true, NULL))
@@ -517,8 +532,8 @@ DynamicLoaderMacOSXKernel::AddModulesUsingImageInfos (OSKextLoadedKextSummary::c
                 }
             }
         }
-        if (log)
-            loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXKernel::ModulesDidLoad");
+//        if (log)
+//            loaded_module_list.LogUUIDAndPaths (log, "DynamicLoaderMacOSXKernel::ModulesDidLoad");
         m_process->GetTarget().ModulesDidLoad (loaded_module_list);
     }
     return true;
@@ -895,11 +910,14 @@ DynamicLoaderMacOSXKernel::SetNotificationBreakpointIfNeeded ()
     {
         DEBUG_PRINTF("DynamicLoaderMacOSXKernel::%s() process state = %s\n", __FUNCTION__, StateAsCString(m_process->GetState()));
 
+        
         const bool internal_bp = false;
+        const LazyBool skip_prologue = eLazyBoolNo;
         Breakpoint *bp = m_process->GetTarget().CreateBreakpoint (&m_kernel.module_sp->GetFileSpec(),
                                                                   "OSKextLoadedKextSummariesUpdated",
                                                                   eFunctionNameTypeFull,
-                                                                  internal_bp).get();
+                                                                  internal_bp,
+                                                                  skip_prologue).get();
 
         bp->SetCallback (DynamicLoaderMacOSXKernel::BreakpointHitCallback, this, true);
         m_break_id = bp->GetID();

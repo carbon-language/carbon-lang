@@ -347,6 +347,9 @@ protected:
                                 m_decl_ctx_to_die[decl_ctx] = die;
                             }
     
+    void
+    ReportError (const char *format, ...);
+    
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;
     lldb_private::Flags             m_flags;

@@ -411,6 +411,7 @@ protected:
     UnloadImageLoadAddress (OSKextLoadedKextSummary& info);
 
     OSKextLoadedKextSummary m_kernel; // Info about the current kernel image being used
+    lldb_private::Address m_kext_summary_header_ptr_addr;
     lldb_private::Address m_kext_summary_header_addr;
     OSKextLoadedKextSummaryHeader m_kext_summary_header;
     OSKextLoadedKextSummary::collection m_kext_summaries;

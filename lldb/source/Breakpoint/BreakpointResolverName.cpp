@@ -26,7 +26,8 @@ BreakpointResolverName::BreakpointResolverName
     Breakpoint *bkpt,
     const char *func_name,
     uint32_t func_name_type_mask,
-    Breakpoint::MatchType type
+    Breakpoint::MatchType type,
+    bool skip_prologue
 ) :
     BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
     m_func_name (),
@@ -34,7 +35,8 @@ BreakpointResolverName::BreakpointResolverName
     m_func_name_type_mask (func_name_type_mask),
     m_class_name (),
     m_regex (),
-    m_match_type (type)
+    m_match_type (type),
+    m_skip_prologue (skip_prologue)
 {
     if (func_name_type_mask == eFunctionNameTypeAuto)
     {
@@ -92,13 +94,15 @@ BreakpointResolverName::BreakpointResolverName
 BreakpointResolverName::BreakpointResolverName
 (
     Breakpoint *bkpt,
-    RegularExpression &func_regex
+    RegularExpression &func_regex,
+    bool skip_prologue
 ) :
     BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
     m_func_name (NULL),
     m_class_name (NULL),
     m_regex (func_regex),
-    m_match_type (Breakpoint::Regexp)
+    m_match_type (Breakpoint::Regexp),
+    m_skip_prologue (skip_prologue)
 {
 
 }
@@ -108,13 +112,15 @@ BreakpointResolverName::BreakpointResolverName
     Breakpoint *bkpt,
     const char *class_name,
     const char *method,
-    Breakpoint::MatchType type
+    Breakpoint::MatchType type,
+    bool skip_prologue
 ) :
     BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
     m_func_name (method),
     m_class_name (class_name),
     m_regex (),
-    m_match_type (type)
+    m_match_type (type),
+    m_skip_prologue (skip_prologue)
 {
 
 }
@@ -139,18 +145,12 @@ BreakpointResolverName::SearchCallback
     SymbolContextList func_list;
     SymbolContextList sym_list;
     
-    bool skip_prologue = true;
     uint32_t i;
     bool new_location;
     SymbolContext sc;
     Address break_addr;
     assert (m_breakpoint != NULL);
     
-    if (context.target_sp)
-    {
-        skip_prologue = context.target_sp->GetSkipPrologue();
-    }
-
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
     
     if (m_class_name)
@@ -294,7 +294,7 @@ BreakpointResolverName::SearchCallback
                 else if (sc.function)
                 {
                     break_addr = sc.function->GetAddressRange().GetBaseAddress();
-                    if (skip_prologue)
+                    if (m_skip_prologue)
                     {
                         if (break_addr.IsValid())
                         {
@@ -333,7 +333,7 @@ BreakpointResolverName::SearchCallback
             {
                 break_addr = sc.symbol->GetAddressRangePtr()->GetBaseAddress();
                 
-                if (skip_prologue)
+                if (m_skip_prologue)
                 {
                     const uint32_t prologue_byte_size = sc.symbol->GetPrologueByteSize();
                     if (prologue_byte_size)

@@ -32,16 +32,19 @@ public:
     BreakpointResolverName (Breakpoint *bkpt,
                             const char *name,
                             uint32_t name_type_mask,
-                            Breakpoint::MatchType type);
+                            Breakpoint::MatchType type,
+                            bool skip_prologue);
 
     // Creates a function breakpoint by regular expression.  Takes over control of the lifespan of func_regex.
     BreakpointResolverName (Breakpoint *bkpt,
-                            RegularExpression &func_regex);
+                            RegularExpression &func_regex,
+                            bool skip_prologue);
 
     BreakpointResolverName (Breakpoint *bkpt,
                             const char *class_name,
                             const char *method,
-                            Breakpoint::MatchType type);
+                            Breakpoint::MatchType type,
+                            bool skip_prologue);
 
     virtual
     ~BreakpointResolverName ();
@@ -81,6 +84,7 @@ protected:
     ConstString m_class_name;  // FIXME: Not used yet.  The idea would be to stop on methods of this class.
     RegularExpression m_regex;
     Breakpoint::MatchType m_match_type;
+    bool m_skip_prologue;
 
 private:
     DISALLOW_COPY_AND_ASSIGN(BreakpointResolverName);

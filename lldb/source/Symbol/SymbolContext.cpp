@@ -164,7 +164,7 @@ SymbolContext::DumpStopContext
                 dumped_something = true;
                 s->PutCString(" at ");
                 if (line_entry.DumpStopContext(s, show_fullpaths))
-                    return dumped_something;
+                    dumped_something = true;
             }
         }
     }
