@@ -915,8 +915,6 @@ bool QualType::isPODType(ASTContext &Context) const {
       return false;
 
     case Qualifiers::OCL_None:
-      if ((*this)->isObjCLifetimeType())
-        return false;
       break;
     }        
   }

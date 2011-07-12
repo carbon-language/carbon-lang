@@ -618,3 +618,11 @@ void test35(void) {
 
   __strong int non_objc_type; // expected-warning {{'__strong' only applies to objective-c object or block pointer types}} 
 }
+
+void test36(int first, ...) {
+  // <rdar://problem/9758798>
+  __builtin_va_list arglist;
+  __builtin_va_start(arglist, first);
+  id obj = __builtin_va_arg(arglist, id);
+  __builtin_va_end(arglist);
+}

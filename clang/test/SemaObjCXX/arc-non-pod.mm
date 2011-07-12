@@ -75,13 +75,14 @@ struct HasBlockPointerMemberAndNonPOD1 { // expected-warning{{'HasBlockPointerMe
   int (^bp[2][3])(int);
 };
 
-int check_non_pod_objc_pointer0[__is_pod(id)? -1 : 1];
+int check_non_pod_objc_pointer0[__is_pod(id)? 1 : -1];
 int check_non_pod_objc_pointer1[__is_pod(__strong id)? -1 : 1];
 int check_non_pod_objc_pointer2[__is_pod(__unsafe_unretained id)? 1 : -1];
-int check_non_pod_objc_pointer3[__is_pod(id[2][3])? -1 : 1];
+int check_non_pod_objc_pointer3[__is_pod(id[2][3])? 1 : -1];
 int check_non_pod_objc_pointer4[__is_pod(__unsafe_unretained id[2][3])? 1 : -1];
-int check_non_pod_block0[__is_pod(int (^)(int))? -1 : 1];
+int check_non_pod_block0[__is_pod(int (^)(int))? 1 : -1];
 int check_non_pod_block1[__is_pod(int (^ __unsafe_unretained)(int))? 1 : -1];
+int check_non_pod_block2[__is_pod(int (^ __strong)(int))? -1 : 1];
 
 struct FlexibleArrayMember0 {
   int length;
